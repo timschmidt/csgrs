@@ -1,7 +1,8 @@
 use hypercurve::{
-    Aabb2, BooleanFragmentAction, BooleanOp, BulgeVertex2, CircleCircleRelation, CircularArc2,
-    Classification, Contour2, ContourPointLocation, CurvePolicy, CurveString2, FillRule,
-    LineCircleRelation, LineSeg2, OffsetCap, Point2, Real, Region2, RegionPointLocation, Segment2,
+    Aabb2, BooleanFragmentAction, BooleanOp, BoundaryContourNestingStatus, BulgeVertex2,
+    CircleCircleRelation, CircularArc2, Classification, Contour2, ContourPointLocation,
+    CurvePolicy, CurveString2, FillRule, LineCircleRelation, LineSeg2, OffsetCap, Point2, Real,
+    Region2, RegionPointLocation, Segment2,
 };
 use proptest::prelude::*;
 
@@ -526,6 +527,43 @@ proptest! {
                     Region2::from_boundary_contours(contours.clone(), &policy).unwrap()
             {
                 prop_assert_eq!(rebuilt, region.clone());
+                let Classification::Decided(pipeline) = a_region
+                    .boolean_region_pipeline_report(&b_region, op, fill_rule, &policy)
+                    .unwrap()
+                else {
+                    panic!("decided region should also have a pipeline report");
+                };
+                prop_assert_eq!(pipeline.result, region.clone());
+                prop_assert_eq!(pipeline.boundary_contours, contours.clone());
+                prop_assert_eq!(
+                    pipeline.boundary_audit.is_valid(),
+                    matches!(
+                        pipeline.boundary_audit.status,
+                        hypercurve::BooleanBoundaryAuditStatus::Empty
+                            | hypercurve::BooleanBoundaryAuditStatus::Valid
+                    )
+                );
+                prop_assert!(pipeline.nesting_audit.is_valid());
+                prop_assert_eq!(
+                    pipeline.region_audit.is_valid(),
+                    matches!(
+                        pipeline.region_audit.status,
+                        hypercurve::BooleanRegionAuditStatus::Empty
+                            | hypercurve::BooleanRegionAuditStatus::Valid
+                    )
+                );
+                let Classification::Decided(report) =
+                    Region2::from_boundary_contours_report(contours.clone(), &policy).unwrap()
+                else {
+                    panic!("decided contour nesting should also have a report");
+                };
+                prop_assert_eq!(report.result, region.clone());
+                prop_assert!(report.audit.is_valid());
+                prop_assert_eq!(report.audit.input_contour_count, contours.len());
+                prop_assert_eq!(
+                    report.audit.material_contour_count + report.audit.hole_contour_count,
+                    contours.len()
+                );
             }
         }
     }
@@ -547,9 +585,18 @@ proptest! {
             })
             .collect();
         let contours: Vec<_> = rects.iter().copied().map(rect_contour).collect();
+        let Classification::Decided(report) =
+            Region2::from_boundary_contours_report(contours.clone(), &policy).unwrap()
+        else {
+            panic!("strict nested rectangles should classify nesting");
+        };
+        prop_assert_eq!(report.audit.status, BoundaryContourNestingStatus::Valid);
+        prop_assert_eq!(report.audit.input_contour_count, depth);
+        prop_assert_eq!(report.audit.checked_containment_pair_count, depth * (depth - 1));
         let Classification::Decided(region) = Region2::from_boundary_contours(contours, &policy).unwrap() else {
             panic!("strict nested rectangles should classify nesting");
         };
+        prop_assert_eq!(report.result, region.clone());
         let prepared = region.prepare_topology_queries(&policy);
 
         prop_assert_eq!(region.material_contours().len(), depth.div_ceil(2));

@@ -10,14 +10,19 @@
 mod area;
 mod bbox;
 mod bezier;
+mod bezier_boolean;
 mod bezier_fit;
+mod bezier_fit_source;
 mod bezier_flatten;
 mod bezier_metric;
 mod bezier_moment;
 mod bezier_offset;
+mod bezier_region;
 mod bezier_topology;
 mod boolean;
 mod boolean_boundary;
+mod boolean_report;
+mod boolean_traversal_report;
 mod bulge;
 mod classify;
 mod contour;
@@ -44,6 +49,8 @@ mod segment;
 mod self_intersect;
 mod split;
 mod transform;
+#[cfg(feature = "triangulation")]
+mod triangulation;
 
 pub use area::{
     ContourAreaUnsupportedReason, ContourAreaUnsupportedSegment2, ContourSignedAreaReport2,
@@ -51,11 +58,19 @@ pub use area::{
 };
 pub use bbox::Aabb2;
 pub use bezier::{BezierEndpoint, CubicBezier2, EndpointTangent2, QuadraticBezier2};
+pub use bezier_boolean::{
+    BezierBooleanHandoffReport2, BezierBooleanHandoffStatus, BezierBooleanOverlapEvent2,
+    BezierBooleanPointEvent2,
+};
 pub use bezier_fit::{
-    BezierFitBoundKind, BezierFitCertificate, BezierFitErrorMetric, BezierLineFitRelation,
-    BezierLineImageFitRelation, BezierPointFitRelation, BezierPointImageFitRelation,
-    CertifiedBezierLineFit2, CertifiedBezierLineImage2, CertifiedBezierLineImageOffset2,
-    CertifiedBezierLineOffset2, CertifiedBezierPointFit2, CertifiedBezierPointImage2,
+    BezierFitBoundKind, BezierFitCertificate, BezierFitErrorMetric, BezierFitReadinessReport2,
+    BezierFitReadinessStatus, BezierLineFitRelation, BezierLineImageFitRelation,
+    BezierPointFitRelation, BezierPointImageFitRelation, CertifiedBezierLineFit2,
+    CertifiedBezierLineImage2, CertifiedBezierLineImageOffset2, CertifiedBezierLineOffset2,
+    CertifiedBezierPointFit2, CertifiedBezierPointImage2,
+};
+pub use bezier_fit_source::{
+    BezierFitSourceBatchReport2, BezierFitSourcePrefixSums2, BezierFitSourceReport2,
 };
 pub use bezier_flatten::{
     BezierFlatteningCertificate, BezierFlatteningOptions, BezierSimplificationBoundKind,
@@ -64,7 +79,20 @@ pub use bezier_flatten::{
 };
 pub use bezier_metric::{BezierArcLengthParameterRegion2, BezierLengthBounds2};
 pub use bezier_moment::{BezierAreaMomentPrefixSums2, BezierAreaMoments2, BezierAreaPrefixSums2};
-pub use bezier_offset::{BezierOffsetCandidate2, BezierOffsetPreflight2, BezierOffsetRisk};
+pub use bezier_offset::{
+    BezierOffsetAdapterReport2, BezierOffsetAdapterStatus, BezierOffsetCandidate2,
+    BezierOffsetPreflight2, BezierOffsetRisk,
+};
+pub use bezier_region::{
+    BezierIntersectionRegionFacts, BezierIntersectionRegionIsolationBudget,
+    BezierIntersectionRegionIsolationCertificate, BezierIntersectionRegionIsolationReport,
+    BezierIntersectionRegionIsolationStopReason, BezierIntersectionRegionRefinement,
+    BezierIntersectionRegionRefinementAction, BezierIntersectionRegionShape,
+    BezierIntersectionRegionSummary, BezierRegionWidthStatus, bezier_intersection_region_facts,
+    certify_bezier_intersection_region_isolation, isolate_bezier_intersection_regions,
+    isolate_bezier_intersection_regions_until_width, refine_bezier_intersection_region,
+    refine_bezier_intersection_regions, summarize_bezier_intersection_regions,
+};
 pub use bezier_topology::{
     Axis2, BezierCurveIntersectionPoint, BezierCurveIntersectionRegion, BezierCurveRelation,
     BezierCuspClassification, BezierGraphContact, BezierInflectionClassification,
@@ -77,6 +105,14 @@ pub use boolean::{
 pub use boolean_boundary::{
     BooleanBoundaryChain, BooleanBoundaryChainSet, BooleanBoundaryFragmentSet, BooleanBoundaryLoop,
     BooleanBoundaryLoopSet, DirectedBooleanFragment,
+};
+pub use boolean_report::{
+    BooleanBoundaryAuditStatus, BooleanBoundaryContourAuditReport2, BooleanBoundaryContourReport2,
+    BooleanBoundaryLoopAuditReport2, BooleanBoundaryLoopReport2, BooleanRegionAuditReport2,
+    BooleanRegionAuditStatus, BooleanRegionPipelineReport2, BooleanRegionReport2,
+};
+pub use boolean_traversal_report::{
+    BooleanBoundaryTraversalReport2, BooleanBoundaryTraversalStatus,
 };
 pub use bulge::BulgeVertex2;
 pub use classify::{Classification, LineSide, UncertaintyReason};
@@ -93,7 +129,8 @@ pub use facts::{
 };
 pub use finite_projection::{
     FinitePolyline2, FiniteProjectionCertificate, FiniteProjectionOptions, FiniteRegionProfile2,
-    FiniteRegionProjection2, FiniteRegionProjectionCertificate, finite_ring_signed_area,
+    FiniteRegionProjection2, FiniteRegionProjectionCertificate, finite_polyline_vertex_centroid,
+    finite_ring_signed_area,
 };
 pub use fragment::{ContourFragment, ContourFragmentSet};
 pub use intersect::{
@@ -119,9 +156,14 @@ pub use region_events::{
     RegionSide,
 };
 pub use region_fragments::{RegionContourFragments, RegionFragmentSet};
+pub use region_nesting::{
+    BoundaryContourNestingAuditReport2, BoundaryContourNestingReport2, BoundaryContourNestingStatus,
+};
 pub use segment::{CircularArc2, LineSeg2, Segment2};
 pub use split::{ContourSplitMap, ContourSplitMarkers, SegmentSplitMarker, SegmentSplitPoint};
 pub use transform::Similarity2;
+#[cfg(feature = "triangulation")]
+pub use triangulation::{FiniteTriangle2, triangulate_finite_rings};
 
 pub use hyperreal::Rational;
 pub use hyperreal::{Real, RealSign, SymbolicDependencyMask, ZeroKnowledge as ZeroStatus};

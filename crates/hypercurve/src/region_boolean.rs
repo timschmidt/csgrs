@@ -5,12 +5,14 @@
 //! shared-boundary cases that also involve interior containment remain explicit
 //! uncertainty instead of being guessed through.
 
+use crate::classify::compare_reals;
 use crate::{
-    BooleanBoundaryFragmentSet, BooleanBoundaryLoopSet, BooleanFragmentSelection, BooleanOp,
-    Classification, Contour2, ContourIntersection, CurvePolicy, CurveResult, FillRule,
-    IntersectionKind, Point2, Region2, RegionFragmentSet, RegionIntersectionSet,
-    RegionPointLocation, RegionSide, RegionView2,
+    Aabb2, BooleanBoundaryFragmentSet, BooleanBoundaryLoopSet, BooleanFragmentSelection, BooleanOp,
+    BulgeVertex2, Classification, Contour2, ContourIntersection, CurvePolicy, CurveResult,
+    FillRule, IntersectionKind, Point2, Real, Region2, RegionFragmentSet, RegionIntersectionSet,
+    RegionPointLocation, RegionSide, RegionView2, Segment2, UncertaintyReason,
 };
+use std::cmp::Ordering;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum BoundaryContactKind {
@@ -32,6 +34,335 @@ enum BoundaryContactResolution {
         relation: BoundaryContainmentRelation,
         contact: BoundaryContactKind,
     },
+}
+
+#[derive(Clone, Debug)]
+struct AxisRect {
+    min_x: Real,
+    min_y: Real,
+    max_x: Real,
+    max_y: Real,
+}
+
+impl AxisRect {
+    fn from_view(
+        region: &RegionView2<'_>,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<Option<Self>>> {
+        if region.material_contours().len() != 1 || !region.hole_contours().is_empty() {
+            return Ok(Classification::Decided(None));
+        }
+        let contour = region.material_contours()[0];
+        if contour.segments().len() != 4 {
+            return Ok(Classification::Decided(None));
+        }
+        for segment in contour.segments() {
+            let Segment2::Line(line) = segment else {
+                return Ok(Classification::Decided(None));
+            };
+            let same_x = real_eq(line.start().x(), line.end().x(), policy);
+            let same_y = real_eq(line.start().y(), line.end().y(), policy);
+            match (same_x, same_y) {
+                (Some(true), Some(false)) | (Some(false), Some(true)) => {}
+                (Some(_), Some(_)) => return Ok(Classification::Decided(None)),
+                _ => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
+            }
+        }
+
+        let bbox = match Aabb2::from_contour(contour, policy) {
+            Ok(Classification::Decided(bbox)) => bbox,
+            Ok(Classification::Uncertain(reason)) => return Ok(Classification::Uncertain(reason)),
+            Err(err) => return Err(err),
+        };
+        Ok(Classification::Decided(Some(Self {
+            min_x: bbox.min_x().clone(),
+            min_y: bbox.min_y().clone(),
+            max_x: bbox.max_x().clone(),
+            max_y: bbox.max_y().clone(),
+        })))
+    }
+}
+
+fn real_eq(left: &Real, right: &Real, policy: &CurvePolicy) -> Option<bool> {
+    compare_reals(left, right, policy).map(|ordering| ordering == Ordering::Equal)
+}
+
+fn real_min(left: &Real, right: &Real, policy: &CurvePolicy) -> Option<Real> {
+    match compare_reals(left, right, policy)? {
+        Ordering::Less | Ordering::Equal => Some(left.clone()),
+        Ordering::Greater => Some(right.clone()),
+    }
+}
+
+fn real_max(left: &Real, right: &Real, policy: &CurvePolicy) -> Option<Real> {
+    match compare_reals(left, right, policy)? {
+        Ordering::Less | Ordering::Equal => Some(right.clone()),
+        Ordering::Greater => Some(left.clone()),
+    }
+}
+
+fn real_lt(left: &Real, right: &Real, policy: &CurvePolicy) -> Option<bool> {
+    compare_reals(left, right, policy).map(|ordering| ordering == Ordering::Less)
+}
+
+fn rect_from_bounds(min_x: Real, min_y: Real, max_x: Real, max_y: Real) -> Option<Contour2> {
+    if min_x == max_x || min_y == max_y {
+        return None;
+    }
+    Contour2::from_bulge_vertices(&[
+        BulgeVertex2::new(Point2::new(min_x.clone(), min_y.clone()), Real::zero()),
+        BulgeVertex2::new(Point2::new(max_x.clone(), min_y.clone()), Real::zero()),
+        BulgeVertex2::new(Point2::new(max_x.clone(), max_y.clone()), Real::zero()),
+        BulgeVertex2::new(Point2::new(min_x.clone(), max_y.clone()), Real::zero()),
+    ])
+    .ok()
+}
+
+// Regularizes the degenerate strip case where both input boundaries share a
+// full collinear span. That case is the canonical failure mode highlighted by
+// Foster, Hormann, and Popa, "Clipping simple polygons with degenerate
+// intersections," Computers & Graphics: X 2, 100007, 2019,
+// https://doi.org/10.1016/j.cagx.2019.100007, and it must be resolved in the
+// geometry kernel so CAD callers receive ordinary Region2 values rather than
+// crate-local workarounds.
+pub(crate) fn coextensive_axis_rect_region_boolean(
+    first: &RegionView2<'_>,
+    second: &RegionView2<'_>,
+    op: BooleanOp,
+    policy: &CurvePolicy,
+) -> CurveResult<Classification<Option<Region2>>> {
+    let first = match AxisRect::from_view(first, policy)? {
+        Classification::Decided(Some(rect)) => rect,
+        Classification::Decided(None) => return Ok(Classification::Decided(None)),
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let second = match AxisRect::from_view(second, policy)? {
+        Classification::Decided(Some(rect)) => rect,
+        Classification::Decided(None) => return Ok(Classification::Decided(None)),
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+
+    let same_y = real_eq(&first.min_y, &second.min_y, policy) == Some(true)
+        && real_eq(&first.max_y, &second.max_y, policy) == Some(true);
+    let same_x = real_eq(&first.min_x, &second.min_x, policy) == Some(true)
+        && real_eq(&first.max_x, &second.max_x, policy) == Some(true);
+    if !same_y && !same_x {
+        return Ok(Classification::Decided(None));
+    }
+
+    if same_y {
+        return match strip_boolean_region(
+            first.min_x,
+            first.max_x,
+            second.min_x,
+            second.max_x,
+            first.min_y,
+            first.max_y,
+            true,
+            op,
+            policy,
+        ) {
+            Classification::Decided(region) => Ok(Classification::Decided(Some(region))),
+            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+        };
+    }
+
+    match strip_boolean_region(
+        first.min_y,
+        first.max_y,
+        second.min_y,
+        second.max_y,
+        first.min_x,
+        first.max_x,
+        false,
+        op,
+        policy,
+    ) {
+        Classification::Decided(region) => Ok(Classification::Decided(Some(region))),
+        Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+    }
+}
+
+fn strip_boolean_region(
+    first_min: Real,
+    first_max: Real,
+    second_min: Real,
+    second_max: Real,
+    cross_min: Real,
+    cross_max: Real,
+    horizontal: bool,
+    op: BooleanOp,
+    policy: &CurvePolicy,
+) -> Classification<Region2> {
+    let overlap_min = real_max(&first_min, &second_min, policy).ok_or(UncertaintyReason::Ordering);
+    let Ok(overlap_min) = overlap_min else {
+        return Classification::Uncertain(overlap_min.unwrap_err());
+    };
+    let overlap_max = real_min(&first_max, &second_max, policy).ok_or(UncertaintyReason::Ordering);
+    let Ok(overlap_max) = overlap_max else {
+        return Classification::Uncertain(overlap_max.unwrap_err());
+    };
+    let overlaps = real_lt(&overlap_min, &overlap_max, policy).ok_or(UncertaintyReason::Ordering);
+    let Ok(overlaps) = overlaps else {
+        return Classification::Uncertain(overlaps.unwrap_err());
+    };
+    if !overlaps {
+        let touches = real_eq(&overlap_min, &overlap_max, policy).unwrap_or(false);
+        if touches && matches!(op, BooleanOp::Union | BooleanOp::Xor) {
+            // A zero-width overlap here means two same-width strips share an
+            // entire edge. Regularized polygon clipping removes that internal
+            // edge for union and symmetric difference; see Foster, Hormann,
+            // and Popa, "Clipping simple polygons with degenerate
+            // intersections" (2019). Keeping this in the rectangle fast path
+            // makes it agree with the general shared-boundary resolver instead
+            // of leaking two touching material contours.
+            let min = real_min(&first_min, &second_min, policy).ok_or(UncertaintyReason::Ordering);
+            let Ok(min) = min else {
+                return Classification::Uncertain(min.unwrap_err());
+            };
+            let max = real_max(&first_max, &second_max, policy).ok_or(UncertaintyReason::Ordering);
+            let Ok(max) = max else {
+                return Classification::Uncertain(max.unwrap_err());
+            };
+            return Classification::Decided(Region2::from_material_contours(vec![
+                oriented_strip_rect(min, cross_min, max, cross_max, horizontal).unwrap(),
+            ]));
+        }
+        return Classification::Decided(match op {
+            BooleanOp::Union | BooleanOp::Xor => Region2::from_material_contours(vec![
+                oriented_strip_rect(
+                    first_min,
+                    cross_min.clone(),
+                    first_max,
+                    cross_max.clone(),
+                    horizontal,
+                )
+                .unwrap(),
+                oriented_strip_rect(second_min, cross_min, second_max, cross_max, horizontal)
+                    .unwrap(),
+            ]),
+            BooleanOp::Difference => Region2::from_material_contours(vec![
+                oriented_strip_rect(first_min, cross_min, first_max, cross_max, horizontal)
+                    .unwrap(),
+            ]),
+            BooleanOp::Intersection => Region2::empty(),
+        });
+    }
+
+    let contours = match op {
+        BooleanOp::Union => {
+            let min = real_min(&first_min, &second_min, policy).ok_or(UncertaintyReason::Ordering);
+            let Ok(min) = min else {
+                return Classification::Uncertain(min.unwrap_err());
+            };
+            let max = real_max(&first_max, &second_max, policy).ok_or(UncertaintyReason::Ordering);
+            let Ok(max) = max else {
+                return Classification::Uncertain(max.unwrap_err());
+            };
+            vec![oriented_strip_rect(min, cross_min, max, cross_max, horizontal).unwrap()]
+        }
+        BooleanOp::Intersection => vec![
+            oriented_strip_rect(overlap_min, cross_min, overlap_max, cross_max, horizontal)
+                .unwrap(),
+        ],
+        BooleanOp::Difference => match strip_difference_contours(
+            first_min, first_max, second_min, second_max, cross_min, cross_max, horizontal, policy,
+        ) {
+            Classification::Decided(contours) => contours,
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        },
+        BooleanOp::Xor => {
+            let mut contours = match strip_difference_contours(
+                first_min.clone(),
+                first_max.clone(),
+                second_min.clone(),
+                second_max.clone(),
+                cross_min.clone(),
+                cross_max.clone(),
+                horizontal,
+                policy,
+            ) {
+                Classification::Decided(contours) => contours,
+                Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+            };
+            let second_contours = match strip_difference_contours(
+                second_min, second_max, first_min, first_max, cross_min, cross_max, horizontal,
+                policy,
+            ) {
+                Classification::Decided(contours) => contours,
+                Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+            };
+            contours.extend(second_contours);
+            contours
+        }
+    };
+    Classification::Decided(Region2::from_material_contours(contours))
+}
+
+fn strip_difference_contours(
+    first_min: Real,
+    first_max: Real,
+    second_min: Real,
+    second_max: Real,
+    cross_min: Real,
+    cross_max: Real,
+    horizontal: bool,
+    policy: &CurvePolicy,
+) -> Classification<Vec<Contour2>> {
+    let mut contours = Vec::new();
+    let left_kept = real_lt(&first_min, &second_min, policy).ok_or(UncertaintyReason::Ordering);
+    let Ok(left_kept) = left_kept else {
+        return Classification::Uncertain(left_kept.unwrap_err());
+    };
+    if left_kept {
+        let end = real_min(&first_max, &second_min, policy).ok_or(UncertaintyReason::Ordering);
+        let Ok(end) = end else {
+            return Classification::Uncertain(end.unwrap_err());
+        };
+        if real_lt(&first_min, &end, policy).unwrap_or(false) {
+            if let Some(contour) = oriented_strip_rect(
+                first_min.clone(),
+                cross_min.clone(),
+                end,
+                cross_max.clone(),
+                horizontal,
+            ) {
+                contours.push(contour);
+            }
+        }
+    }
+    let right_kept = real_lt(&second_max, &first_max, policy).ok_or(UncertaintyReason::Ordering);
+    let Ok(right_kept) = right_kept else {
+        return Classification::Uncertain(right_kept.unwrap_err());
+    };
+    if right_kept {
+        let start = real_max(&first_min, &second_max, policy).ok_or(UncertaintyReason::Ordering);
+        let Ok(start) = start else {
+            return Classification::Uncertain(start.unwrap_err());
+        };
+        if real_lt(&start, &first_max, policy).unwrap_or(false) {
+            if let Some(contour) =
+                oriented_strip_rect(start, cross_min, first_max, cross_max, horizontal)
+            {
+                contours.push(contour);
+            }
+        }
+    }
+    Classification::Decided(contours)
+}
+
+fn oriented_strip_rect(
+    along_min: Real,
+    cross_min: Real,
+    along_max: Real,
+    cross_max: Real,
+    horizontal: bool,
+) -> Option<Contour2> {
+    if horizontal {
+        rect_from_bounds(along_min, cross_min, along_max, cross_max)
+    } else {
+        rect_from_bounds(cross_min, along_min, cross_max, along_max)
+    }
 }
 
 impl Region2 {
@@ -147,6 +478,80 @@ pub(crate) fn boolean_boundary_loops_between(
     op: BooleanOp,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<BooleanBoundaryLoopSet>> {
+    if same_region_view(first, second) {
+        return Ok(Classification::Decided(BooleanBoundaryLoopSet::from_contours(
+            match op {
+                BooleanOp::Union | BooleanOp::Intersection => {
+                    clone_boundary_contours(first)
+                }
+                BooleanOp::Difference | BooleanOp::Xor => Vec::new(),
+            },
+        )));
+    }
+    if first.is_empty() || second.is_empty() {
+        return Ok(Classification::Decided(BooleanBoundaryLoopSet::from_contours(
+            empty_operand_boundary_contours(first, second, op),
+        )));
+    }
+    match coextensive_axis_rect_region_boolean(first, second, op, policy)? {
+        Classification::Decided(Some(region)) => {
+            return Ok(Classification::Decided(BooleanBoundaryLoopSet::from_contours(
+                clone_boundary_contours(&region.as_view()),
+            )));
+        }
+        Classification::Decided(None) => {}
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    }
+    match boundary_contact_resolution(first, second, policy)? {
+        // Shared-boundary topology is a known degenerate branch. Following the
+        // contour-level policy in `boundary_contact_boundary_contours` keeps this
+        // stage consistent with the explicit regularization used for degenerate
+        // contacts in `BooleanBoundaryLoopSet` construction, which remains a
+        // structural transfer after resolved contacts are decided.
+        Classification::Decided(Some(BoundaryContactResolution::BoundaryOnly(kind))) => {
+            return boundary_contact_boundary_contours(first, second, op, FillRule::NonZero, policy, kind)
+                .map(|contours| contours.map(BooleanBoundaryLoopSet::from_contours));
+        }
+        Classification::Decided(Some(BoundaryContactResolution::Containment {
+            relation,
+            contact,
+        })) => {
+            // This follows Martinez et al.'s selection decomposition for
+            // containments and then converts the contour-level closed-result
+            // set directly to role-less loops.
+            // F. Martinez, A. J. Rueda, and F. R. Feito, "A new algorithm
+            // for computing Boolean operations on polygons," Computers &
+            // Geosciences 35(6), 1177-1185, 2009.
+            if let Some(contours) = containment_boundary_contours(first, second, op, relation) {
+                return Ok(Classification::Decided(BooleanBoundaryLoopSet::from_contours(
+                    contours,
+                )));
+            }
+            if relation == BoundaryContainmentRelation::FirstContainsSecond
+                && contact == BoundaryContactKind::Overlap
+                && op == BooleanOp::Difference
+            {
+                return containment_difference_boundary_contours(first, second, FillRule::NonZero, policy)
+                .map(|contours| contours.map(BooleanBoundaryLoopSet::from_contours));
+            }
+        }
+        Classification::Decided(None) => {
+            // Union overlap on a boundary-only contact retains this dedicated
+            // fast path both for region correctness and to prevent shared
+            // boundary leakage when no interior overlap is detected.
+            if op == BooleanOp::Union && region_boundary_has_overlap(first, second, policy)? {
+                return boundary_overlap_union_contours(first, second, op, FillRule::NonZero, policy)
+                    .map(|contours| contours.map(BooleanBoundaryLoopSet::from_contours));
+            }
+        }
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    }
+
+    if op == BooleanOp::Xor {
+            return xor_boundary_contours_by_region(first, second, FillRule::NonZero, policy)
+                .map(|contours| contours.map(BooleanBoundaryLoopSet::from_contours));
+    }
+
     let intersections = first.intersect_region(second, policy)?;
 
     let fragments = match intersections.split_regions(first, second, policy)? {
@@ -186,6 +591,15 @@ pub(crate) fn boolean_boundary_contours_between(
             first, second, op,
         )));
     }
+    match coextensive_axis_rect_region_boolean(first, second, op, policy)? {
+        Classification::Decided(Some(region)) => {
+            return Ok(Classification::Decided(clone_boundary_contours(
+                &region.as_view(),
+            )));
+        }
+        Classification::Decided(None) => {}
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    }
     match boundary_contact_resolution(first, second, policy)? {
         Classification::Decided(Some(BoundaryContactResolution::BoundaryOnly(kind))) => {
             return boundary_contact_boundary_contours(first, second, op, fill_rule, policy, kind);
@@ -204,7 +618,11 @@ pub(crate) fn boolean_boundary_contours_between(
                 return containment_difference_boundary_contours(first, second, fill_rule, policy);
             }
         }
-        Classification::Decided(None) => {}
+        Classification::Decided(None) => {
+            if op == BooleanOp::Union && region_boundary_has_overlap(first, second, policy)? {
+                return boundary_overlap_union_contours(first, second, op, fill_rule, policy);
+            }
+        }
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     }
     if op == BooleanOp::Xor {
@@ -260,6 +678,11 @@ pub(crate) fn boolean_region_between(
             first, second, op,
         )));
     }
+    match coextensive_axis_rect_region_boolean(first, second, op, policy)? {
+        Classification::Decided(Some(region)) => return Ok(Classification::Decided(region)),
+        Classification::Decided(None) => {}
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    }
     match boundary_contact_resolution(first, second, policy)? {
         Classification::Decided(Some(BoundaryContactResolution::BoundaryOnly(kind))) => {
             return boundary_contact_region(first, second, op, fill_rule, policy, kind);
@@ -285,7 +708,17 @@ pub(crate) fn boolean_region_between(
                 };
             }
         }
-        Classification::Decided(None) => {}
+        Classification::Decided(None) => {
+            if op == BooleanOp::Union && region_boundary_has_overlap(first, second, policy)? {
+                return match boundary_overlap_union_contours(first, second, op, fill_rule, policy)?
+                {
+                    Classification::Decided(contours) => {
+                        Region2::from_boundary_contours(contours, policy)
+                    }
+                    Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+                };
+            }
+        }
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     }
     if op == BooleanOp::Xor {
@@ -377,6 +810,28 @@ pub(crate) fn boundary_contact_overlap_flag(
     }
 
     Classification::Decided(saw_contact.then_some(saw_overlap))
+}
+
+/// Tests whether the two region boundaries have any overlapping boundary segment.
+///
+/// This is the boundary-stage part of the classical overlap fast-path used by
+/// clipping kernels: if boundaries share non-point overlap, boolean branches that
+/// are sensitive to shared edges (for example Union and Difference special cases)
+/// can avoid entering the full fragment traversal.
+///
+/// This follows the shared-boundary split analysis in Foster, Hormann, and Popa,
+/// *Clipping simple polygons with degenerate intersections*, Computers & Graphics:
+/// X 2, 100007, 2019.
+pub(crate) fn region_boundary_has_overlap(
+    first: &RegionView2<'_>,
+    second: &RegionView2<'_>,
+    policy: &CurvePolicy,
+) -> CurveResult<bool> {
+    let intersections = first.intersect_region(second, policy)?;
+    Ok(matches!(
+        boundary_contact_overlap_flag(&intersections),
+        Classification::Decided(Some(true))
+    ))
 }
 
 fn split_contact_interiors_are_disjoint(

@@ -1,14 +1,22 @@
 use hypercurve::{
-    Axis2, BezierAreaMomentPrefixSums2, BezierAreaPrefixSums2, BezierCurveRelation,
-    BezierCuspClassification, BezierDegree, BezierEndpoint, BezierFitBoundKind,
-    BezierFitErrorMetric, BezierFlatteningOptions, BezierInflectionClassification,
-    BezierLineContactKind, BezierLineContactRelation, BezierLineFitRelation,
-    BezierLineImageFitRelation, BezierLineRelation, BezierMonotoneGraphContactOrder,
-    BezierMonotoneGraphOrder, BezierOffsetCandidate2, BezierOffsetRisk, BezierPointFitRelation,
-    BezierPointImageFitRelation, BezierSimplificationBoundKind, BezierSimplificationErrorMetric,
-    Classification, CubicBezier2, CurvePolicy, IntersectionKind, LineLineIntersection, LineSeg2,
-    NumericMode, Point2, QuadraticBezier2, RationalQuadraticBezier2, RationalQuadraticConicKind,
-    Real, SymbolicDependencyMask, UncertaintyReason, ZeroStatus,
+    Axis2, BezierAreaMomentPrefixSums2, BezierAreaPrefixSums2, BezierBooleanHandoffReport2,
+    BezierBooleanHandoffStatus, BezierCurveRelation, BezierCuspClassification, BezierDegree,
+    BezierEndpoint, BezierFitBoundKind, BezierFitErrorMetric, BezierFitReadinessStatus,
+    BezierFitSourceBatchReport2, BezierFitSourcePrefixSums2, BezierFlatteningOptions,
+    BezierInflectionClassification, BezierIntersectionRegionIsolationBudget,
+    BezierIntersectionRegionIsolationStopReason, BezierIntersectionRegionRefinementAction,
+    BezierIntersectionRegionShape, BezierLineContactKind, BezierLineContactRelation,
+    BezierLineFitRelation, BezierLineImageFitRelation, BezierLineRelation,
+    BezierMonotoneGraphContactOrder, BezierMonotoneGraphOrder, BezierMonotoneSpan,
+    BezierOffsetAdapterStatus, BezierOffsetCandidate2, BezierOffsetRisk, BezierPointFitRelation,
+    BezierPointImageFitRelation, BezierRegionWidthStatus, BezierSimplificationBoundKind,
+    BezierSimplificationErrorMetric, Classification, CubicBezier2, CurvePolicy, IntersectionKind,
+    LineLineIntersection, LineSeg2, NumericMode, Point2, QuadraticBezier2,
+    RationalQuadraticBezier2, RationalQuadraticConicKind, Real, SymbolicDependencyMask,
+    UncertaintyReason, ZeroStatus, bezier_intersection_region_facts,
+    certify_bezier_intersection_region_isolation, isolate_bezier_intersection_regions,
+    isolate_bezier_intersection_regions_until_width, refine_bezier_intersection_region,
+    refine_bezier_intersection_regions, summarize_bezier_intersection_regions,
 };
 use proptest::prelude::*;
 
@@ -26,6 +34,13 @@ fn point(x: i32, y: i32) -> Point2 {
 
 fn half() -> Real {
     (Real::one() / Real::from(2_i8)).unwrap()
+}
+
+fn certifies_zero(value: Real) -> bool {
+    matches!(
+        value.refine_sign_until(-64),
+        Some(hypercurve::RealSign::Zero)
+    )
 }
 
 fn quadratic_through_point_at(
@@ -115,6 +130,10 @@ fn assert_same_parameter_regions_include_bracket(
         }),
         "expected at least one nonzero same-parameter isolating bracket: {regions:?}"
     );
+}
+
+fn span(start: Real, end: Real) -> BezierMonotoneSpan {
+    BezierMonotoneSpan::new(start, end)
 }
 
 #[test]
@@ -236,6 +255,374 @@ fn parameterized_point_on_bezier_is_certified_exactly() {
         cubic.contains_point_at_parameter(&point(2, 2), half(), &policy()),
         Classification::Decided(false)
     );
+}
+
+#[test]
+fn bezier_intersection_region_facts_classify_exact_region_shapes() {
+    let exact =
+        hypercurve::BezierCurveIntersectionRegion::new(span(half(), half()), span(half(), half()));
+    let bracket = hypercurve::BezierCurveIntersectionRegion::new(
+        span(ratio(1, 4), ratio(1, 2)),
+        span(ratio(1, 4), ratio(1, 2)),
+    );
+    let product = hypercurve::BezierCurveIntersectionRegion::new(
+        span(ratio(1, 4), ratio(1, 2)),
+        span(ratio(1, 8), ratio(3, 8)),
+    );
+    let invalid =
+        hypercurve::BezierCurveIntersectionRegion::new(span(r(1), r(0)), span(r(0), r(1)));
+
+    let exact_facts = bezier_intersection_region_facts(&exact);
+    let bracket_facts = bezier_intersection_region_facts(&bracket);
+    let product_facts = bezier_intersection_region_facts(&product);
+    let invalid_facts = bezier_intersection_region_facts(&invalid);
+
+    assert_eq!(
+        exact_facts.shape,
+        BezierIntersectionRegionShape::ExactPointCell
+    );
+    assert_eq!(
+        exact_facts.first_width_status,
+        BezierRegionWidthStatus::Zero
+    );
+    assert_eq!(
+        exact_facts.second_width_status,
+        BezierRegionWidthStatus::Zero
+    );
+    assert_eq!(
+        bracket_facts.shape,
+        BezierIntersectionRegionShape::SameParameterIsolatingSpan
+    );
+    assert_eq!(bracket_facts.same_parameter_span, Some(true));
+    assert_eq!(bracket_facts.first_width, ratio(1, 4));
+    assert_eq!(
+        product_facts.shape,
+        BezierIntersectionRegionShape::ProductCell
+    );
+    assert_eq!(product_facts.same_parameter_span, Some(false));
+    assert_eq!(
+        invalid_facts.shape,
+        BezierIntersectionRegionShape::InvalidSpan
+    );
+    assert_eq!(
+        invalid_facts.first_width_status,
+        BezierRegionWidthStatus::Negative
+    );
+}
+
+#[test]
+fn bezier_intersection_region_summary_counts_exact_shapes() {
+    let regions = [
+        hypercurve::BezierCurveIntersectionRegion::new(span(r(0), r(0)), span(r(0), r(0))),
+        hypercurve::BezierCurveIntersectionRegion::new(
+            span(ratio(1, 4), ratio(1, 2)),
+            span(ratio(1, 4), ratio(1, 2)),
+        ),
+        hypercurve::BezierCurveIntersectionRegion::new(
+            span(ratio(1, 4), ratio(1, 2)),
+            span(ratio(1, 8), ratio(3, 8)),
+        ),
+    ];
+
+    let summary = summarize_bezier_intersection_regions(&regions);
+
+    assert_eq!(summary.region_count, 3);
+    assert_eq!(summary.exact_point_cells, 1);
+    assert_eq!(summary.same_parameter_isolating_spans, 1);
+    assert_eq!(summary.product_cells, 1);
+    assert_eq!(summary.invalid_spans, 0);
+    assert_eq!(summary.unknown_regions, 0);
+}
+
+#[test]
+fn bezier_intersection_region_refinement_splits_exact_parameter_cells() {
+    let exact =
+        hypercurve::BezierCurveIntersectionRegion::new(span(half(), half()), span(half(), half()));
+    let bracket = hypercurve::BezierCurveIntersectionRegion::new(
+        span(ratio(1, 4), ratio(1, 2)),
+        span(ratio(1, 4), ratio(1, 2)),
+    );
+    let wider_first = hypercurve::BezierCurveIntersectionRegion::new(
+        span(ratio(1, 8), ratio(7, 8)),
+        span(ratio(1, 4), ratio(1, 2)),
+    );
+    let equal_product = hypercurve::BezierCurveIntersectionRegion::new(
+        span(ratio(1, 4), ratio(1, 2)),
+        span(ratio(1, 8), ratio(3, 8)),
+    );
+    let invalid =
+        hypercurve::BezierCurveIntersectionRegion::new(span(r(1), r(0)), span(r(0), r(1)));
+
+    let exact_refinement = refine_bezier_intersection_region(&exact);
+    let bracket_refinement = refine_bezier_intersection_region(&bracket);
+    let wider_first_refinement = refine_bezier_intersection_region(&wider_first);
+    let equal_product_refinement = refine_bezier_intersection_region(&equal_product);
+    let invalid_refinement = refine_bezier_intersection_region(&invalid);
+
+    assert_eq!(
+        exact_refinement.action,
+        BezierIntersectionRegionRefinementAction::RetainExactPoint
+    );
+    assert_eq!(exact_refinement.children, vec![exact]);
+    assert_eq!(
+        bracket_refinement.action,
+        BezierIntersectionRegionRefinementAction::BisectBothSpans
+    );
+    assert_eq!(bracket_refinement.first_midpoint, Some(ratio(3, 8)));
+    assert_eq!(bracket_refinement.second_midpoint, Some(ratio(3, 8)));
+    assert_eq!(bracket_refinement.children.len(), 2);
+    assert_eq!(
+        wider_first_refinement.action,
+        BezierIntersectionRegionRefinementAction::BisectFirstSpan
+    );
+    assert_eq!(wider_first_refinement.first_midpoint, Some(half()));
+    assert_eq!(wider_first_refinement.children.len(), 2);
+    assert_eq!(
+        equal_product_refinement.action,
+        BezierIntersectionRegionRefinementAction::BisectBothSpans
+    );
+    assert_eq!(equal_product_refinement.children.len(), 4);
+    assert_eq!(
+        invalid_refinement.action,
+        BezierIntersectionRegionRefinementAction::RejectInvalidSpan
+    );
+    assert!(invalid_refinement.children.is_empty());
+}
+
+#[test]
+fn bezier_intersection_region_batch_refinement_preserves_input_order() {
+    let first =
+        hypercurve::BezierCurveIntersectionRegion::new(span(half(), half()), span(half(), half()));
+    let second = hypercurve::BezierCurveIntersectionRegion::new(
+        span(ratio(1, 4), ratio(1, 2)),
+        span(ratio(1, 4), ratio(1, 2)),
+    );
+
+    let refinements = refine_bezier_intersection_regions(&[first, second]);
+
+    assert_eq!(refinements.len(), 2);
+    assert_eq!(
+        refinements[0].action,
+        BezierIntersectionRegionRefinementAction::RetainExactPoint
+    );
+    assert_eq!(
+        refinements[1].action,
+        BezierIntersectionRegionRefinementAction::BisectBothSpans
+    );
+}
+
+#[test]
+fn bezier_intersection_region_isolation_reports_depth_limited_frontier() {
+    let region = hypercurve::BezierCurveIntersectionRegion::new(
+        span(ratio(1, 4), ratio(1, 2)),
+        span(ratio(1, 4), ratio(1, 2)),
+    );
+    let report = isolate_bezier_intersection_regions(
+        &[region],
+        BezierIntersectionRegionIsolationBudget {
+            max_steps: 8,
+            max_depth: 2,
+            max_terminal_regions: 8,
+        },
+    );
+
+    assert_eq!(
+        report.stop_reason,
+        BezierIntersectionRegionIsolationStopReason::WorklistExhausted
+    );
+    assert_eq!(report.steps, 7);
+    assert_eq!(report.terminal_regions.len(), 4);
+    assert_eq!(report.exact_point_cells, 0);
+    assert_eq!(report.rejected_invalid_spans, 0);
+    assert_eq!(report.deferred_unknown_regions, 0);
+    assert_eq!(report.refinements.len(), 7);
+    assert_eq!(report.terminal_regions[0].first().start(), &ratio(1, 4));
+    assert_eq!(report.terminal_regions[3].first().end(), &ratio(1, 2));
+}
+
+#[test]
+fn bezier_intersection_region_isolation_reports_step_and_terminal_budgets() {
+    let region = hypercurve::BezierCurveIntersectionRegion::new(
+        span(ratio(1, 4), ratio(1, 2)),
+        span(ratio(1, 8), ratio(3, 8)),
+    );
+    let step_report = isolate_bezier_intersection_regions(
+        std::slice::from_ref(&region),
+        BezierIntersectionRegionIsolationBudget {
+            max_steps: 1,
+            max_depth: 8,
+            max_terminal_regions: 8,
+        },
+    );
+    let terminal_report = isolate_bezier_intersection_regions(
+        &[region],
+        BezierIntersectionRegionIsolationBudget {
+            max_steps: 16,
+            max_depth: 1,
+            max_terminal_regions: 0,
+        },
+    );
+
+    assert_eq!(
+        step_report.stop_reason,
+        BezierIntersectionRegionIsolationStopReason::StepBudgetReached
+    );
+    assert_eq!(step_report.steps, 1);
+    assert_eq!(
+        terminal_report.stop_reason,
+        BezierIntersectionRegionIsolationStopReason::TerminalRegionBudgetReached
+    );
+    assert!(terminal_report.terminal_regions.is_empty());
+}
+
+#[test]
+fn bezier_intersection_region_isolation_refines_until_width_target() {
+    let region = hypercurve::BezierCurveIntersectionRegion::new(
+        span(ratio(1, 4), ratio(1, 2)),
+        span(ratio(1, 4), ratio(1, 2)),
+    );
+    let report = isolate_bezier_intersection_regions_until_width(
+        &[region],
+        BezierIntersectionRegionIsolationBudget {
+            max_steps: 16,
+            max_depth: 8,
+            max_terminal_regions: 16,
+        },
+        ratio(1, 16),
+    );
+
+    assert_eq!(
+        report.stop_reason,
+        BezierIntersectionRegionIsolationStopReason::TargetWidthReached
+    );
+    assert_eq!(report.target_max_span_width, Some(ratio(1, 16)));
+    assert_eq!(report.terminal_regions.len(), 4);
+    assert_eq!(report.target_satisfied_terminal_regions, 4);
+    assert_eq!(report.target_unmet_terminal_regions, 0);
+    assert!(report.terminal_regions.iter().all(|region| {
+        let facts = bezier_intersection_region_facts(region);
+        matches!(
+            (&facts.first_width - &ratio(1, 16)).refine_sign_until(-64),
+            Some(hypercurve::RealSign::Negative | hypercurve::RealSign::Zero)
+        ) && matches!(
+            (&facts.second_width - &ratio(1, 16)).refine_sign_until(-64),
+            Some(hypercurve::RealSign::Negative | hypercurve::RealSign::Zero)
+        )
+    }));
+}
+
+#[test]
+fn bezier_intersection_region_isolation_certificate_summarizes_terminal_frontier() {
+    let region = hypercurve::BezierCurveIntersectionRegion::new(
+        span(ratio(1, 4), ratio(1, 2)),
+        span(ratio(1, 4), ratio(1, 2)),
+    );
+    let report = isolate_bezier_intersection_regions_until_width(
+        &[region],
+        BezierIntersectionRegionIsolationBudget {
+            max_steps: 64,
+            max_depth: 4,
+            max_terminal_regions: 64,
+        },
+        ratio(1, 16),
+    );
+
+    let certificate = certify_bezier_intersection_region_isolation(&report);
+
+    assert_eq!(
+        certificate.stop_reason,
+        BezierIntersectionRegionIsolationStopReason::TargetWidthReached
+    );
+    assert!(certificate.target_width_satisfied);
+    assert_eq!(certificate.target_max_span_width, Some(ratio(1, 16)));
+    assert_eq!(
+        certificate.terminal_region_count,
+        report.terminal_regions.len()
+    );
+    assert_eq!(
+        certificate.terminal_summary.region_count,
+        report.terminal_regions.len()
+    );
+    assert_eq!(
+        certificate.terminal_summary.same_parameter_isolating_spans,
+        report.terminal_regions.len()
+    );
+    assert!(certificate.all_terminal_widths_certified);
+    assert!(matches!(
+        (&certificate.max_first_width.unwrap() - &ratio(1, 16)).refine_sign_until(-64),
+        Some(hypercurve::RealSign::Negative | hypercurve::RealSign::Zero)
+    ));
+    assert!(matches!(
+        (&certificate.max_second_width.unwrap() - &ratio(1, 16)).refine_sign_until(-64),
+        Some(hypercurve::RealSign::Negative | hypercurve::RealSign::Zero)
+    ));
+}
+
+#[test]
+fn bezier_intersection_region_isolation_certificate_marks_unmet_targets() {
+    let region = hypercurve::BezierCurveIntersectionRegion::new(
+        span(ratio(1, 4), ratio(1, 2)),
+        span(ratio(1, 4), ratio(1, 2)),
+    );
+    let report = isolate_bezier_intersection_regions_until_width(
+        &[region],
+        BezierIntersectionRegionIsolationBudget {
+            max_steps: 4,
+            max_depth: 1,
+            max_terminal_regions: 64,
+        },
+        ratio(1, 64),
+    );
+
+    let certificate = certify_bezier_intersection_region_isolation(&report);
+
+    assert!(!certificate.target_width_satisfied);
+    assert_eq!(certificate.terminal_region_count, 2);
+    assert!(certificate.all_terminal_widths_certified);
+    assert!(matches!(
+        (&certificate.max_first_width.unwrap() - &ratio(1, 64)).refine_sign_until(-64),
+        Some(hypercurve::RealSign::Positive)
+    ));
+    assert_eq!(certificate.source_steps, report.steps);
+}
+
+#[test]
+fn bezier_intersection_region_isolation_reports_unmet_and_invalid_width_targets() {
+    let region = hypercurve::BezierCurveIntersectionRegion::new(
+        span(ratio(1, 4), ratio(1, 2)),
+        span(ratio(1, 4), ratio(1, 2)),
+    );
+    let depth_report = isolate_bezier_intersection_regions_until_width(
+        std::slice::from_ref(&region),
+        BezierIntersectionRegionIsolationBudget {
+            max_steps: 16,
+            max_depth: 1,
+            max_terminal_regions: 16,
+        },
+        ratio(1, 16),
+    );
+    let invalid_report = isolate_bezier_intersection_regions_until_width(
+        &[region],
+        BezierIntersectionRegionIsolationBudget {
+            max_steps: 16,
+            max_depth: 1,
+            max_terminal_regions: 16,
+        },
+        -Real::one(),
+    );
+
+    assert_eq!(
+        depth_report.stop_reason,
+        BezierIntersectionRegionIsolationStopReason::WorklistExhausted
+    );
+    assert_eq!(depth_report.target_satisfied_terminal_regions, 0);
+    assert_eq!(depth_report.target_unmet_terminal_regions, 2);
+    assert_eq!(
+        invalid_report.stop_reason,
+        BezierIntersectionRegionIsolationStopReason::InvalidTargetWidth
+    );
+    assert_eq!(invalid_report.steps, 0);
+    assert!(invalid_report.terminal_regions.is_empty());
 }
 
 #[test]
@@ -482,6 +869,68 @@ fn staged_bezier_offset_emits_exact_line_or_unresolved_preflight() {
         candidate.unresolved_preflight().unwrap().degree(),
         BezierDegree::Quadratic
     );
+}
+
+#[test]
+fn staged_bezier_offset_adapter_report_classifies_exact_ready_and_blocked_cases() {
+    let line = QuadraticBezier2::new(point(0, 3), point(2, 3), point(6, 3));
+    let Classification::Decided(candidate) = line
+        .offset_left_staged(Real::from(2_i8), &policy())
+        .unwrap()
+    else {
+        panic!("certified line image should produce a decided staged offset");
+    };
+    let report = candidate.adapter_report();
+    assert_eq!(
+        report.status,
+        BezierOffsetAdapterStatus::ExactPrimitiveLineImage
+    );
+    assert_eq!(report.distance_status, ZeroStatus::NonZero);
+    assert!(report.has_exact_primitive);
+    assert!(!report.may_attempt_certified_adapter);
+    assert!(report.risks.is_empty());
+
+    let arch = QuadraticBezier2::new(point(0, 0), point(2, 4), point(4, 0));
+    let Classification::Decided(candidate) =
+        arch.offset_left_staged(Real::one(), &policy()).unwrap()
+    else {
+        panic!("free-form quadratic should decide as unresolved");
+    };
+    let report = candidate.adapter_report();
+    assert_eq!(
+        report.status,
+        BezierOffsetAdapterStatus::ReadyForCertifiedAdapter
+    );
+    assert_eq!(report.distance, Real::one());
+    assert_eq!(report.distance_status, ZeroStatus::NonZero);
+    assert!(!report.has_exact_primitive);
+    assert!(report.may_attempt_certified_adapter);
+    assert!(report.preflight.is_clear());
+
+    let zero_report = arch
+        .offset_left_staged(Real::zero(), &policy())
+        .unwrap()
+        .unwrap_decided_for_test()
+        .adapter_report();
+    assert_eq!(
+        zero_report.status,
+        BezierOffsetAdapterStatus::ZeroDistanceIdentity
+    );
+    assert_eq!(zero_report.distance_status, ZeroStatus::Zero);
+    assert!(zero_report.may_attempt_certified_adapter);
+
+    let collapsed = CubicBezier2::new(point(2, 3), point(2, 3), point(2, 3), point(2, 3));
+    let report = collapsed
+        .offset_left_staged(Real::from(2_i8), &policy())
+        .unwrap()
+        .unwrap_decided_for_test()
+        .adapter_report();
+    assert_eq!(
+        report.status,
+        BezierOffsetAdapterStatus::BlockedByPreflightRisks
+    );
+    assert!(report.risks.contains(&BezierOffsetRisk::DegeneratePoint));
+    assert!(!report.may_attempt_certified_adapter);
 }
 
 #[test]
@@ -866,6 +1315,186 @@ fn bezier_area_moments_integrate_green_boundary_identities_exactly() {
             .unwrap_err(),
         hypercurve::CurveError::InvalidBezierParameter
     );
+}
+
+#[test]
+fn bezier_fit_source_report_collects_quadratic_exact_facts() {
+    let curve = QuadraticBezier2::new(point(0, 0), point(2, 4), point(4, 0));
+    let report = curve.fit_source_report(&policy()).unwrap();
+
+    assert_eq!(report.degree(), BezierDegree::Quadratic);
+    assert_eq!(report.structural_facts(), curve.structural_facts());
+    assert!(matches!(report.control_hull(), Classification::Decided(_)));
+    assert!(matches!(report.monotone_spans(), Classification::Decided(spans) if !spans.is_empty()));
+    assert_eq!(
+        report.cusp_classification(),
+        &Classification::Decided(BezierCuspClassification::None)
+    );
+    assert_eq!(
+        report.inflection_classification(),
+        &Classification::Decided(BezierInflectionClassification::NotApplicable)
+    );
+    assert_eq!(report.length_bounds(), &curve.length_bounds().unwrap());
+    assert_eq!(
+        report.area_moments(),
+        &curve.area_moments_contribution().unwrap()
+    );
+    assert_eq!(
+        report.start_tangent(),
+        &curve.endpoint_tangent(BezierEndpoint::Start)
+    );
+    assert_eq!(
+        report.end_tangent(),
+        &curve.endpoint_tangent(BezierEndpoint::End)
+    );
+    assert!(!report.has_exact_primitive_image());
+    assert!(report.needs_higher_order_fit());
+    assert_eq!(
+        report.exact_line_image_fit(),
+        &Classification::Decided(BezierLineImageFitRelation::NotLine)
+    );
+    assert_eq!(
+        report.exact_point_image_fit(),
+        &Classification::Decided(BezierPointImageFitRelation::NotPoint)
+    );
+}
+
+#[test]
+fn bezier_fit_source_report_classifies_exact_cubic_line_image() {
+    let curve = CubicBezier2::new(point(0, 3), point(2, 3), point(4, 3), point(6, 3));
+    let report = curve.fit_source_report(&policy()).unwrap();
+
+    assert_eq!(report.degree(), BezierDegree::Cubic);
+    assert_eq!(report.structural_facts(), curve.structural_facts());
+    assert!(matches!(
+        report.inflection_classification(),
+        Classification::Decided(
+            BezierInflectionClassification::None | BezierInflectionClassification::AllCurvatureZero
+        )
+    ));
+    assert!(report.length_bounds().is_exact());
+    assert!(report.has_exact_primitive_image());
+    assert!(!report.needs_higher_order_fit());
+    assert!(matches!(
+        report.exact_line_image_fit(),
+        Classification::Decided(BezierLineImageFitRelation::Fit(_))
+    ));
+    assert!(matches!(
+        report.exact_point_image_fit(),
+        Classification::Decided(BezierPointImageFitRelation::NotPoint)
+    ));
+}
+
+#[test]
+fn bezier_fit_source_batch_report_aggregates_path_range_facts() {
+    let line = QuadraticBezier2::new(point(0, 0), point(2, 0), point(4, 0));
+    let arch = QuadraticBezier2::new(point(4, 0), point(6, 4), point(8, 0));
+    let line_report = line.fit_source_report(&policy()).unwrap();
+    let arch_report = arch.fit_source_report(&policy()).unwrap();
+
+    let batch = BezierFitSourceBatchReport2::from_reports([&line_report, &arch_report]);
+
+    assert_eq!(batch.segment_count(), 2);
+    assert_eq!(batch.exact_primitive_sources(), 1);
+    assert_eq!(batch.higher_order_sources(), 1);
+    assert_eq!(batch.uncertain_sources(), 0);
+    assert!(batch.all_sources_exact_rational());
+    assert!(batch.all_monotone_spans_decided());
+    let expected_lower =
+        line.length_bounds().unwrap().lower() + arch.length_bounds().unwrap().lower();
+    let expected_area = line.area_moments_contribution().unwrap().signed_area()
+        + arch.area_moments_contribution().unwrap().signed_area();
+    assert!(certifies_zero(batch.total_length_lower() - &expected_lower));
+    assert!(certifies_zero(batch.total_signed_area() - &expected_area));
+    assert!(matches!(
+        batch.total_length_width().refine_sign_until(-64),
+        Some(hypercurve::RealSign::Positive | hypercurve::RealSign::Zero)
+    ));
+}
+
+#[test]
+fn bezier_fit_source_batch_constructors_match_manual_reports() {
+    let curves = [
+        CubicBezier2::new(point(0, 0), point(2, 0), point(4, 0), point(6, 0)),
+        CubicBezier2::new(point(6, 0), point(7, 3), point(9, 3), point(10, 0)),
+    ];
+    let reports = curves
+        .iter()
+        .map(|curve| curve.fit_source_report(&policy()))
+        .collect::<Result<Vec<_>, _>>()
+        .unwrap();
+    let manual = BezierFitSourceBatchReport2::from_reports(&reports);
+    let constructed = BezierFitSourceBatchReport2::from_cubics(&curves, &policy()).unwrap();
+
+    assert_eq!(constructed.segment_count(), 2);
+    assert_eq!(constructed.exact_primitive_sources(), 1);
+    assert_eq!(constructed.higher_order_sources(), 1);
+    assert_eq!(constructed.uncertain_sources(), manual.uncertain_sources());
+    assert!(certifies_zero(
+        constructed.total_length_lower() - manual.total_length_lower()
+    ));
+    assert!(certifies_zero(
+        constructed.total_signed_area() - manual.total_signed_area()
+    ));
+}
+
+#[test]
+fn bezier_fit_source_prefix_sums_answer_range_queries_without_rewalking_sources() {
+    let sources = [
+        QuadraticBezier2::new(point(0, 0), point(2, 0), point(4, 0)),
+        QuadraticBezier2::new(point(4, 0), point(6, 4), point(8, 0)),
+        QuadraticBezier2::new(point(8, 0), point(10, 0), point(12, 0)),
+    ];
+    let reports = sources
+        .iter()
+        .map(|curve| curve.fit_source_report(&policy()))
+        .collect::<Result<Vec<_>, _>>()
+        .unwrap();
+    let table = BezierFitSourcePrefixSums2::from_reports(&reports);
+    let range = table.range_report(1..3).unwrap();
+    let manual = BezierFitSourceBatchReport2::from_reports(&reports[1..3]);
+    let empty = table.range_report(2..2).unwrap();
+
+    assert_eq!(table.segment_count(), 3);
+    assert_eq!(table.prefixes().len(), 4);
+    assert_eq!(range.segment_count(), 2);
+    assert_eq!(range.exact_primitive_sources(), 1);
+    assert_eq!(range.higher_order_sources(), 1);
+    assert_eq!(empty.segment_count(), 0);
+    assert!(certifies_zero(
+        range.total_length_lower() - manual.total_length_lower()
+    ));
+    assert!(certifies_zero(
+        range.total_signed_area() - manual.total_signed_area()
+    ));
+    assert_eq!(
+        table.range_report(2..4).unwrap_err(),
+        hypercurve::CurveError::InvalidBezierRange
+    );
+}
+
+#[test]
+fn bezier_fit_source_prefix_sum_constructors_match_manual_ranges() {
+    let sources = [
+        CubicBezier2::new(point(0, 0), point(2, 0), point(4, 0), point(6, 0)),
+        CubicBezier2::new(point(6, 0), point(7, 3), point(9, 3), point(10, 0)),
+    ];
+    let table = BezierFitSourcePrefixSums2::from_cubics(&sources, &policy()).unwrap();
+    let whole = table.range_report(0..2).unwrap();
+    let manual = BezierFitSourceBatchReport2::from_cubics(&sources, &policy()).unwrap();
+
+    assert_eq!(whole.segment_count(), manual.segment_count());
+    assert_eq!(
+        whole.exact_primitive_sources(),
+        manual.exact_primitive_sources()
+    );
+    assert_eq!(whole.higher_order_sources(), manual.higher_order_sources());
+    assert!(certifies_zero(
+        whole.total_length_lower() - manual.total_length_lower()
+    ));
+    assert!(certifies_zero(
+        whole.total_signed_area() - manual.total_signed_area()
+    ));
 }
 
 #[test]
@@ -2834,6 +3463,96 @@ fn certified_flattened_polyline_fits_exact_line_only_for_zero_error_cases() {
 }
 
 #[test]
+fn certified_fit_readiness_reports_exact_point_line_and_higher_order_cases() {
+    let options = BezierFlatteningOptions::try_new(Real::one(), 12, &policy()).unwrap();
+
+    let collapsed = CubicBezier2::new(point(2, 3), point(2, 3), point(2, 3), point(2, 3))
+        .flatten_certified(&options, &policy())
+        .unwrap_decided_for_test();
+    let point_report = collapsed
+        .fit_readiness_report(&policy())
+        .unwrap()
+        .unwrap_decided_for_test();
+    assert_eq!(point_report.status(), BezierFitReadinessStatus::ExactPoint);
+    assert!(point_report.has_exact_primitive_fit());
+    assert!(!point_report.needs_higher_order_fit());
+    assert_eq!(point_report.source_vertex_count(), collapsed.points().len());
+    assert_eq!(
+        point_report.source_segment_count(),
+        collapsed.points().len().saturating_sub(1)
+    );
+    assert_eq!(
+        point_report.source_certificate().max_error(),
+        collapsed.certificate().max_error()
+    );
+    assert!(point_report.point_fit_certificate().is_some());
+    assert!(point_report.line_fit_certificate().is_none());
+
+    let line_like = QuadraticBezier2::new(point(0, 0), point(2, 0), point(4, 0))
+        .flatten_certified(&options, &policy())
+        .unwrap_decided_for_test();
+    let line_report = line_like
+        .fit_readiness_report(&policy())
+        .unwrap()
+        .unwrap_decided_for_test();
+    assert_eq!(line_report.status(), BezierFitReadinessStatus::ExactLine);
+    assert!(line_report.has_exact_primitive_fit());
+    assert!(line_report.point_fit_certificate().is_none());
+    assert!(line_report.line_fit_certificate().is_some());
+    assert_eq!(
+        line_report
+            .line_fit_certificate()
+            .expect("line readiness should retain a fit certificate")
+            .source_end(),
+        line_like.points().len()
+    );
+
+    let curved = QuadraticBezier2::new(point(0, 0), point(2, 4), point(4, 0))
+        .flatten_certified(&options, &policy())
+        .unwrap_decided_for_test();
+    let curved_report = curved
+        .fit_readiness_report(&policy())
+        .unwrap()
+        .unwrap_decided_for_test();
+    assert_eq!(
+        curved_report.status(),
+        BezierFitReadinessStatus::NeedsHigherOrderFit
+    );
+    assert!(!curved_report.has_exact_primitive_fit());
+    assert!(curved_report.needs_higher_order_fit());
+    assert!(curved_report.point_fit_certificate().is_none());
+    assert!(curved_report.line_fit_certificate().is_none());
+}
+
+#[test]
+fn certified_fit_readiness_preserves_simplification_certificate() {
+    let curve = QuadraticBezier2::new(point(0, 0), point(2, 0), point(4, 0));
+    let options = BezierFlatteningOptions::try_new(Real::one(), 12, &policy()).unwrap();
+    let polyline = curve
+        .flatten_certified(&options, &policy())
+        .unwrap_decided_for_test();
+    let simplified = polyline
+        .simplify_exact_collinear(&policy())
+        .unwrap_decided_for_test();
+
+    let report = simplified
+        .fit_readiness_report(&policy())
+        .unwrap()
+        .unwrap_decided_for_test();
+
+    assert_eq!(report.status(), BezierFitReadinessStatus::ExactLine);
+    let simplification = report
+        .simplification_certificate()
+        .expect("readiness should retain upstream simplification certificate");
+    assert_eq!(simplification.source_end(), polyline.points().len());
+    assert_eq!(
+        simplification.retained_vertex_count(),
+        simplified.points().len()
+    );
+    assert_eq!(simplification.error_bound(), &Real::zero());
+}
+
+#[test]
 fn polynomial_bezier_line_image_fits_without_flattening() {
     let quadratic = QuadraticBezier2::new(point(0, 3), point(2, 3), point(6, 3));
     let fit = quadratic
@@ -3651,7 +4370,200 @@ fn certified_flattened_polyline_fits_exact_point_with_certificate() {
     );
 }
 
+#[test]
+fn bezier_boolean_handoff_accepts_parameterized_line_image_point_events() {
+    let first = LineSeg2::try_new(point(0, 0), point(4, 0)).unwrap();
+    let second = LineSeg2::try_new(point(2, -2), point(2, 2)).unwrap();
+    let intersection = first.intersect_line(&second, &policy()).unwrap();
+    let relation = BezierCurveRelation::LineSegmentIntersection { intersection };
+
+    let report = BezierBooleanHandoffReport2::from_relation(&relation);
+
+    assert_eq!(report.status, BezierBooleanHandoffStatus::SplitEventsReady);
+    assert!(report.can_feed_split_events());
+    assert!(!report.has_blockers());
+    assert_eq!(report.point_events.len(), 1);
+    assert_eq!(report.point_events[0].first_param, half());
+    assert_eq!(report.point_events[0].second_param, half());
+    assert_eq!(report.point_events[0].point, Some(point(2, 0)));
+    assert_eq!(
+        report.point_events[0].kind,
+        Some(IntersectionKind::Crossing)
+    );
+}
+
+#[test]
+fn bezier_boolean_handoff_blocks_point_witnesses_without_parameters() {
+    let relation = BezierCurveRelation::IntersectionPoints {
+        points: vec![hypercurve::BezierCurveIntersectionPoint::new(point(1, 1))],
+    };
+
+    let report = BezierBooleanHandoffReport2::from_relation(&relation);
+
+    assert_eq!(
+        report.status,
+        BezierBooleanHandoffStatus::NeedsParameterRecovery
+    );
+    assert!(report.has_blockers());
+    assert_eq!(report.point_witnesses_needing_parameters, 1);
+    assert!(report.point_events.is_empty());
+}
+
+#[test]
+fn bezier_boolean_handoff_keeps_overlap_resolution_explicit() {
+    let first = LineSeg2::try_new(point(0, 0), point(4, 0)).unwrap();
+    let second = LineSeg2::try_new(point(2, 0), point(6, 0)).unwrap();
+    let intersection = first.intersect_line(&second, &policy()).unwrap();
+    let relation = BezierCurveRelation::LineSegmentIntersection { intersection };
+
+    let report = BezierBooleanHandoffReport2::from_relation(&relation);
+
+    assert_eq!(
+        report.status,
+        BezierBooleanHandoffStatus::NeedsOverlapResolver
+    );
+    assert!(report.has_blockers());
+    assert_eq!(report.overlap_relations_needing_resolution, 1);
+    assert_eq!(report.overlap_events.len(), 1);
+}
+
+#[test]
+fn bezier_boolean_handoff_promotes_exact_point_regions_to_split_events() {
+    let region =
+        hypercurve::BezierCurveIntersectionRegion::new(span(half(), half()), span(half(), half()));
+    let relation = BezierCurveRelation::IntersectionRegions {
+        regions: vec![region],
+    };
+
+    let report = BezierBooleanHandoffReport2::from_relation(&relation);
+
+    assert_eq!(report.status, BezierBooleanHandoffStatus::SplitEventsReady);
+    assert!(report.can_feed_split_events());
+    assert_eq!(report.point_events.len(), 1);
+    assert_eq!(report.point_events[0].first_param, half());
+    assert_eq!(report.point_events[0].second_param, half());
+    assert_eq!(report.region_summary.as_ref().unwrap().exact_point_cells, 1);
+}
+
+#[test]
+fn bezier_boolean_handoff_requires_isolation_for_positive_width_regions() {
+    let region = hypercurve::BezierCurveIntersectionRegion::new(
+        span(ratio(1, 4), ratio(1, 2)),
+        span(ratio(1, 4), ratio(1, 2)),
+    );
+    let relation = BezierCurveRelation::IntersectionRegions {
+        regions: vec![region],
+    };
+
+    let report = BezierBooleanHandoffReport2::from_relation(&relation);
+
+    assert_eq!(
+        report.status,
+        BezierBooleanHandoffStatus::NeedsRegionIsolation
+    );
+    assert!(report.has_blockers());
+    assert_eq!(
+        report
+            .region_summary
+            .as_ref()
+            .unwrap()
+            .same_parameter_isolating_spans,
+        1
+    );
+}
+
+#[test]
+fn bezier_boolean_handoff_replays_isolation_certificate_readiness() {
+    let region =
+        hypercurve::BezierCurveIntersectionRegion::new(span(half(), half()), span(half(), half()));
+    let report = isolate_bezier_intersection_regions(
+        &[region],
+        BezierIntersectionRegionIsolationBudget {
+            max_steps: 8,
+            max_depth: 2,
+            max_terminal_regions: 8,
+        },
+    );
+    let certificate = certify_bezier_intersection_region_isolation(&report);
+
+    let handoff = BezierBooleanHandoffReport2::from_isolation_certificate(&certificate);
+
+    assert_eq!(handoff.status, BezierBooleanHandoffStatus::SplitEventsReady);
+    assert!(handoff.can_feed_split_events());
+    assert_eq!(
+        handoff.region_summary.as_ref().unwrap().exact_point_cells,
+        1
+    );
+    assert_eq!(handoff.isolation_certificate, Some(certificate));
+}
+
+#[test]
+fn bezier_boolean_handoff_preserves_classified_uncertainty() {
+    let relation = Classification::Uncertain(UncertaintyReason::Ordering);
+
+    let report = BezierBooleanHandoffReport2::from_classified_relation(&relation);
+
+    assert_eq!(report.status, BezierBooleanHandoffStatus::Uncertain);
+    assert!(report.has_blockers());
+    assert_eq!(report.uncertain_relations, 1);
+    assert_eq!(report.uncertainty_reason, Some(UncertaintyReason::Ordering));
+}
+
 proptest! {
+    #[test]
+    fn generated_bezier_boolean_handoff_exact_point_regions_are_split_ready(
+        numerator in 0_i32..=128,
+    ) {
+        let parameter = (Real::from(numerator) / Real::from(128_i32)).unwrap();
+        let region = hypercurve::BezierCurveIntersectionRegion::new(
+            span(parameter.clone(), parameter.clone()),
+            span(parameter.clone(), parameter.clone()),
+        );
+        let relation = BezierCurveRelation::IntersectionRegions {
+            regions: vec![region],
+        };
+
+        let report = BezierBooleanHandoffReport2::from_relation(&relation);
+
+        prop_assert_eq!(report.status, BezierBooleanHandoffStatus::SplitEventsReady);
+        prop_assert!(report.can_feed_split_events());
+        prop_assert_eq!(report.point_events.len(), 1);
+        prop_assert_eq!(&report.point_events[0].first_param, &parameter);
+        prop_assert_eq!(&report.point_events[0].second_param, &parameter);
+        prop_assert!(!report.has_blockers());
+    }
+
+    #[test]
+    fn generated_bezier_boolean_handoff_positive_regions_remain_isolation_blockers(
+        numerator in 0_i32..64,
+        width in 1_i32..64,
+    ) {
+        let start = (Real::from(numerator) / Real::from(128_i32)).unwrap();
+        let end = &start + &(Real::from(width) / Real::from(256_i32)).unwrap();
+        prop_assume!(matches!((&Real::one() - &end).refine_sign_until(-64), Some(hypercurve::RealSign::Positive | hypercurve::RealSign::Zero)));
+        let region = hypercurve::BezierCurveIntersectionRegion::new(
+            span(start.clone(), end.clone()),
+            span(start, end),
+        );
+        let relation = BezierCurveRelation::IntersectionRegions {
+            regions: vec![region],
+        };
+
+        let report = BezierBooleanHandoffReport2::from_relation(&relation);
+
+        prop_assert_eq!(report.status, BezierBooleanHandoffStatus::NeedsRegionIsolation);
+        prop_assert!(report.has_blockers());
+        prop_assert_eq!(
+            report
+                .region_summary
+                .as_ref()
+                .expect("region handoff should retain a summary")
+                .same_parameter_isolating_spans,
+            1
+        );
+        prop_assert!(report.point_events.is_empty());
+    }
+
     #[test]
     fn quadratic_endpoint_evaluation_is_exact(
         ax in -32_i32..32,
@@ -4087,6 +4999,44 @@ proptest! {
     }
 
     #[test]
+    fn generated_offset_adapter_reports_separate_ready_from_exact_line_images(
+        ax in -16_i32..16,
+        ay in -16_i32..16,
+        dx in 1_i32..16,
+        lift in 1_i32..16,
+    ) {
+        let line = QuadraticBezier2::new(point(ax, ay), point(ax + dx, ay), point(ax + 2 * dx, ay));
+        let Classification::Decided(line_candidate) = line.offset_left_staged(Real::one(), &policy()).unwrap() else {
+            panic!("generated line image should decide");
+        };
+        let line_report = line_candidate.adapter_report();
+        prop_assert_eq!(
+            line_report.status,
+            BezierOffsetAdapterStatus::ExactPrimitiveLineImage
+        );
+        prop_assert!(line_report.has_exact_primitive);
+
+        let arch = QuadraticBezier2::new(point(ax, ay), point(ax + dx, ay + lift), point(ax + 2 * dx, ay));
+        let Classification::Decided(arch_candidate) = arch.offset_left_staged(Real::one(), &policy()).unwrap() else {
+            panic!("generated arch should decide as unresolved");
+        };
+        let arch_report = arch_candidate.adapter_report();
+        prop_assert_eq!(
+            arch_report.status,
+            BezierOffsetAdapterStatus::ReadyForCertifiedAdapter
+        );
+        prop_assert!(!arch_report.has_exact_primitive);
+        prop_assert!(arch_report.may_attempt_certified_adapter);
+
+        let zero_report = arch.offset_left_staged(Real::zero(), &policy()).unwrap().unwrap_decided_for_test().adapter_report();
+        prop_assert_eq!(
+            zero_report.status,
+            BezierOffsetAdapterStatus::ZeroDistanceIdentity
+        );
+        prop_assert_eq!(zero_report.distance_status, ZeroStatus::Zero);
+    }
+
+    #[test]
     fn exact_collinear_simplification_preserves_generated_endpoints(
         ax in -16_i32..16,
         ay in -16_i32..16,
@@ -4160,6 +5110,77 @@ proptest! {
         prop_assert_eq!(fit.source_certificate().max_error(), polyline.certificate().max_error());
         prop_assert_eq!(fit.fit_certificate().fit_error_bound(), &Real::zero());
         prop_assert_eq!(fit.fit_certificate().bound_kind(), BezierFitBoundKind::ProvenExact);
+    }
+
+    #[test]
+    fn fit_readiness_reports_generated_exact_line_or_point_without_higher_order_claims(
+        ax in -16_i32..16,
+        ay in -16_i32..16,
+        bx in -16_i32..16,
+        cx in -16_i32..16,
+    ) {
+        prop_assume!(ax != cx);
+        let options = BezierFlatteningOptions::try_new(Real::from(1000_i32), 4, &policy()).unwrap();
+
+        let line_curve = QuadraticBezier2::new(point(ax, ay), point(bx, ay), point(cx, ay));
+        let line_polyline = line_curve
+            .flatten_certified(&options, &policy())
+            .unwrap_decided_for_test();
+        let line_report = line_polyline
+            .fit_readiness_report(&policy())
+            .unwrap()
+            .unwrap_decided_for_test();
+        prop_assert_eq!(line_report.status(), BezierFitReadinessStatus::ExactLine);
+        prop_assert!(line_report.has_exact_primitive_fit());
+        prop_assert!(!line_report.needs_higher_order_fit());
+        prop_assert!(line_report.line_fit_certificate().is_some());
+        prop_assert!(line_report.point_fit_certificate().is_none());
+
+        let point_curve = CubicBezier2::new(point(ax, ay), point(ax, ay), point(ax, ay), point(ax, ay));
+        let point_polyline = point_curve
+            .flatten_certified(&options, &policy())
+            .unwrap_decided_for_test();
+        let point_report = point_polyline
+            .fit_readiness_report(&policy())
+            .unwrap()
+            .unwrap_decided_for_test();
+        prop_assert_eq!(point_report.status(), BezierFitReadinessStatus::ExactPoint);
+        prop_assert!(point_report.has_exact_primitive_fit());
+        prop_assert!(point_report.point_fit_certificate().is_some());
+        prop_assert!(point_report.line_fit_certificate().is_none());
+    }
+
+    #[test]
+    fn fit_readiness_routes_generated_arcs_to_higher_order_fitting(
+        ax in -8_i32..8,
+        ay in -8_i32..8,
+        width in 2_i32..16,
+        lift in 2_i32..16,
+    ) {
+        let curve = QuadraticBezier2::new(
+            point(ax, ay),
+            point(ax + width / 2, ay + lift),
+            point(ax + width, ay),
+        );
+        let options = BezierFlatteningOptions::try_new(Real::one(), 10, &policy()).unwrap();
+        let polyline = curve
+            .flatten_certified(&options, &policy())
+            .unwrap_decided_for_test();
+        let report = polyline
+            .fit_readiness_report(&policy())
+            .unwrap()
+            .unwrap_decided_for_test();
+
+        prop_assert_eq!(
+            report.status(),
+            BezierFitReadinessStatus::NeedsHigherOrderFit
+        );
+        prop_assert!(!report.has_exact_primitive_fit());
+        prop_assert!(report.needs_higher_order_fit());
+        prop_assert!(report.point_fit_certificate().is_none());
+        prop_assert!(report.line_fit_certificate().is_none());
+        prop_assert_eq!(report.source_vertex_count(), polyline.points().len());
+        prop_assert_eq!(report.source_certificate().max_error(), polyline.certificate().max_error());
     }
 
     #[test]
@@ -5667,6 +6688,105 @@ proptest! {
     }
 
     #[test]
+    fn fit_source_reports_generated_line_images_as_primitive_sources(
+        ax in -16_i32..16,
+        ay in -16_i32..16,
+        ab in 1_i32..16,
+        bc in 0_i32..16,
+        cd in 0_i32..16,
+    ) {
+        let bx = ax + ab;
+        let cx = bx + bc;
+        let dx = cx + cd;
+        let quadratic = QuadraticBezier2::new(point(ax, ay), point(bx, ay), point(dx, ay));
+        let cubic = CubicBezier2::new(point(ax, ay), point(bx, ay), point(cx, ay), point(dx, ay));
+
+        let quadratic_report = quadratic.fit_source_report(&policy()).unwrap();
+        let cubic_report = cubic.fit_source_report(&policy()).unwrap();
+
+        prop_assert_eq!(quadratic_report.degree(), BezierDegree::Quadratic);
+        prop_assert_eq!(cubic_report.degree(), BezierDegree::Cubic);
+        prop_assert!(quadratic_report.length_bounds().is_exact());
+        prop_assert!(cubic_report.length_bounds().is_exact());
+        prop_assert!(quadratic_report.has_exact_primitive_image());
+        prop_assert!(cubic_report.has_exact_primitive_image());
+        prop_assert!(!quadratic_report.needs_higher_order_fit());
+        prop_assert!(!cubic_report.needs_higher_order_fit());
+        prop_assert!(matches!(
+            quadratic_report.exact_line_image_fit(),
+            Classification::Decided(BezierLineImageFitRelation::Fit(_))
+        ));
+        prop_assert!(matches!(
+            cubic_report.exact_line_image_fit(),
+            Classification::Decided(BezierLineImageFitRelation::Fit(_))
+        ));
+        prop_assert!(matches!(quadratic_report.monotone_spans(), Classification::Decided(spans) if !spans.is_empty()));
+        prop_assert!(matches!(cubic_report.monotone_spans(), Classification::Decided(spans) if !spans.is_empty()));
+    }
+
+    #[test]
+    fn fit_source_batch_reports_generated_mixed_primitive_and_higher_order_sources(
+        ax in -16_i32..16,
+        ay in -16_i32..16,
+        dx in 2_i32..16,
+        lift in 1_i32..16,
+    ) {
+        let line = QuadraticBezier2::new(point(ax, ay), point(ax + dx, ay), point(ax + 2 * dx, ay));
+        let arch = QuadraticBezier2::new(
+            point(ax + 2 * dx, ay),
+            point(ax + 3 * dx, ay + lift),
+            point(ax + 4 * dx, ay),
+        );
+
+        let batch = BezierFitSourceBatchReport2::from_quadratics([&line, &arch], &policy()).unwrap();
+
+        prop_assert_eq!(batch.segment_count(), 2);
+        prop_assert_eq!(batch.exact_primitive_sources(), 1);
+        prop_assert_eq!(batch.higher_order_sources(), 1);
+        prop_assert_eq!(batch.uncertain_sources(), 0);
+        prop_assert!(batch.all_sources_exact_rational());
+        prop_assert!(batch.all_monotone_spans_decided());
+        prop_assert!(matches!(
+            batch.total_length_width().refine_sign_until(-64),
+            Some(hypercurve::RealSign::Positive | hypercurve::RealSign::Zero)
+        ));
+    }
+
+    #[test]
+    fn fit_source_prefix_sums_match_generated_tail_batches(
+        ax in -16_i32..16,
+        ay in -16_i32..16,
+        dx in 2_i32..16,
+        lift in 1_i32..16,
+    ) {
+        let first = QuadraticBezier2::new(point(ax, ay), point(ax + dx, ay), point(ax + 2 * dx, ay));
+        let second = QuadraticBezier2::new(
+            point(ax + 2 * dx, ay),
+            point(ax + 3 * dx, ay + lift),
+            point(ax + 4 * dx, ay),
+        );
+        let third = QuadraticBezier2::new(
+            point(ax + 4 * dx, ay),
+            point(ax + 5 * dx, ay),
+            point(ax + 6 * dx, ay),
+        );
+        let sources = [&first, &second, &third];
+        let table = BezierFitSourcePrefixSums2::from_quadratics(sources, &policy()).unwrap();
+        let tail = table.range_report(1..3).unwrap();
+
+        prop_assert_eq!(tail.segment_count(), 2);
+        prop_assert_eq!(tail.exact_primitive_sources(), 1);
+        prop_assert_eq!(tail.higher_order_sources(), 1);
+        prop_assert_eq!(tail.uncertain_sources(), 0);
+        prop_assert!(tail.all_sources_exact_rational());
+        prop_assert!(tail.all_monotone_spans_decided());
+        prop_assert!(matches!(
+            tail.total_length_width().refine_sign_until(-64),
+            Some(hypercurve::RealSign::Positive | hypercurve::RealSign::Zero)
+        ));
+    }
+
+    #[test]
     fn inverse_length_exact_for_generated_linear_parameterizations(
         ax in -16_i32..16,
         ay in -16_i32..16,
@@ -5881,6 +7001,184 @@ proptest! {
         prop_assert_eq!(right_offset.curve().segments().len(), 1);
         prop_assert_eq!(right_offset.source_certificate().segment_count(), polyline.certificate().segment_count());
         prop_assert_eq!(right_offset.distance(), &Real::from(-distance));
+    }
+
+    #[test]
+    fn generated_bezier_region_facts_classify_same_parameter_spans(
+        numerator in 0_i32..64,
+        width in 1_i32..64,
+    ) {
+        let start = (Real::from(numerator) / Real::from(128_i32)).unwrap();
+        let end = &start + &(Real::from(width) / Real::from(256_i32)).unwrap();
+        prop_assume!(matches!(end.refine_sign_until(-64), Some(hypercurve::RealSign::Positive | hypercurve::RealSign::Zero)));
+        prop_assume!(matches!((&Real::one() - &end).refine_sign_until(-64), Some(hypercurve::RealSign::Positive | hypercurve::RealSign::Zero)));
+        let region = hypercurve::BezierCurveIntersectionRegion::new(
+            span(start.clone(), end.clone()),
+            span(start, end),
+        );
+
+        let facts = bezier_intersection_region_facts(&region);
+
+        prop_assert_eq!(
+            facts.shape,
+            BezierIntersectionRegionShape::SameParameterIsolatingSpan
+        );
+        prop_assert_eq!(facts.first_width_status, BezierRegionWidthStatus::Positive);
+        prop_assert_eq!(facts.second_width_status, BezierRegionWidthStatus::Positive);
+        prop_assert_eq!(facts.same_parameter_span, Some(true));
+    }
+
+    #[test]
+    fn generated_bezier_region_refinement_splits_same_parameter_span_at_midpoint(
+        numerator in 0_i32..64,
+        width in 1_i32..64,
+    ) {
+        let start = (Real::from(numerator) / Real::from(128_i32)).unwrap();
+        let step = (Real::from(width) / Real::from(256_i32)).unwrap();
+        let end = &start + &step;
+        prop_assume!(matches!(end.refine_sign_until(-64), Some(hypercurve::RealSign::Positive | hypercurve::RealSign::Zero)));
+        prop_assume!(matches!((&Real::one() - &end).refine_sign_until(-64), Some(hypercurve::RealSign::Positive | hypercurve::RealSign::Zero)));
+        let region = hypercurve::BezierCurveIntersectionRegion::new(
+            span(start.clone(), end.clone()),
+            span(start.clone(), end.clone()),
+        );
+
+        let refinement = refine_bezier_intersection_region(&region);
+        let midpoint = ((&start + &end) / Real::from(2_i8)).unwrap();
+
+        prop_assert_eq!(
+            refinement.action,
+            BezierIntersectionRegionRefinementAction::BisectBothSpans
+        );
+        prop_assert_eq!(refinement.first_midpoint, Some(midpoint.clone()));
+        prop_assert_eq!(refinement.second_midpoint, Some(midpoint));
+        prop_assert_eq!(refinement.children.len(), 2);
+        prop_assert_eq!(refinement.children[0].first().start(), &start);
+        prop_assert_eq!(refinement.children[1].first().end(), &end);
+    }
+
+    #[test]
+    fn generated_bezier_region_isolation_depth_budget_retains_power_of_two_frontier(
+        numerator in 0_i32..32,
+        width in 1_i32..32,
+        depth in 0_usize..4,
+    ) {
+        let start = (Real::from(numerator) / Real::from(128_i32)).unwrap();
+        let end = &start + &(Real::from(width) / Real::from(128_i32)).unwrap();
+        prop_assume!(matches!(end.refine_sign_until(-64), Some(hypercurve::RealSign::Positive | hypercurve::RealSign::Zero)));
+        prop_assume!(matches!((&Real::one() - &end).refine_sign_until(-64), Some(hypercurve::RealSign::Positive | hypercurve::RealSign::Zero)));
+        let region = hypercurve::BezierCurveIntersectionRegion::new(
+            span(start.clone(), end.clone()),
+            span(start, end),
+        );
+
+        let report = isolate_bezier_intersection_regions(
+            &[region],
+            BezierIntersectionRegionIsolationBudget {
+                max_steps: 128,
+                max_depth: depth,
+                max_terminal_regions: 128,
+            },
+        );
+
+        prop_assert_eq!(
+            report.stop_reason,
+            BezierIntersectionRegionIsolationStopReason::WorklistExhausted
+        );
+        prop_assert_eq!(report.terminal_regions.len(), 1_usize << depth);
+        prop_assert_eq!(report.rejected_invalid_spans, 0);
+        prop_assert_eq!(report.deferred_unknown_regions, 0);
+    }
+
+    #[test]
+    fn generated_bezier_region_isolation_width_target_retains_certified_frontier(
+        numerator in 0_i32..16,
+        width_power in 3_u32..6,
+    ) {
+        let width_denominator = 1_i32 << width_power;
+        let start = (Real::from(numerator) / Real::from(128_i32)).unwrap();
+        let end = &start + &(Real::one() / Real::from(width_denominator)).unwrap();
+        prop_assume!(matches!((&Real::one() - &end).refine_sign_until(-64), Some(hypercurve::RealSign::Positive | hypercurve::RealSign::Zero)));
+        let second_end = end.clone();
+        let region = hypercurve::BezierCurveIntersectionRegion::new(
+            span(start.clone(), end),
+            span(start, second_end),
+        );
+        let target = (Real::one() / Real::from(width_denominator * 4)).unwrap();
+
+        let report = isolate_bezier_intersection_regions_until_width(
+            &[region],
+            BezierIntersectionRegionIsolationBudget {
+                max_steps: 64,
+                max_depth: 4,
+                max_terminal_regions: 64,
+            },
+            target.clone(),
+        );
+
+        prop_assert_eq!(
+            report.stop_reason,
+            BezierIntersectionRegionIsolationStopReason::TargetWidthReached
+        );
+        prop_assert_eq!(report.target_satisfied_terminal_regions, report.terminal_regions.len());
+        prop_assert_eq!(report.target_unmet_terminal_regions, 0);
+        for terminal in &report.terminal_regions {
+            let facts = bezier_intersection_region_facts(terminal);
+            prop_assert!(matches!(
+                (&facts.first_width - &target).refine_sign_until(-64),
+                Some(hypercurve::RealSign::Negative | hypercurve::RealSign::Zero)
+            ));
+            prop_assert!(matches!(
+                (&facts.second_width - &target).refine_sign_until(-64),
+                Some(hypercurve::RealSign::Negative | hypercurve::RealSign::Zero)
+            ));
+        }
+    }
+
+    #[test]
+    fn generated_bezier_region_isolation_certificates_bound_terminal_widths(
+        numerator in 0_i32..16,
+        width_power in 3_u32..6,
+    ) {
+        let width_denominator = 1_i32 << width_power;
+        let start = (Real::from(numerator) / Real::from(128_i32)).unwrap();
+        let end = &start + &(Real::one() / Real::from(width_denominator)).unwrap();
+        prop_assume!(matches!((&Real::one() - &end).refine_sign_until(-64), Some(hypercurve::RealSign::Positive | hypercurve::RealSign::Zero)));
+        let region = hypercurve::BezierCurveIntersectionRegion::new(
+            span(start.clone(), end.clone()),
+            span(start, end),
+        );
+        let target = (Real::one() / Real::from(width_denominator * 4)).unwrap();
+        let report = isolate_bezier_intersection_regions_until_width(
+            &[region],
+            BezierIntersectionRegionIsolationBudget {
+                max_steps: 64,
+                max_depth: 4,
+                max_terminal_regions: 64,
+            },
+            target.clone(),
+        );
+
+        let certificate = certify_bezier_intersection_region_isolation(&report);
+
+        prop_assert_eq!(certificate.terminal_region_count, report.terminal_regions.len());
+        prop_assert_eq!(certificate.terminal_summary.region_count, report.terminal_regions.len());
+        prop_assert!(certificate.target_width_satisfied);
+        prop_assert!(certificate.all_terminal_widths_certified);
+        let max_first = certificate
+            .max_first_width
+            .expect("certified frontier should expose a first-span maximum");
+        let max_second = certificate
+            .max_second_width
+            .expect("certified frontier should expose a second-span maximum");
+        prop_assert!(matches!(
+            (&max_first - &target).refine_sign_until(-64),
+            Some(hypercurve::RealSign::Negative | hypercurve::RealSign::Zero)
+        ));
+        prop_assert!(matches!(
+            (&max_second - &target).refine_sign_until(-64),
+            Some(hypercurve::RealSign::Negative | hypercurve::RealSign::Zero)
+        ));
     }
 }
 

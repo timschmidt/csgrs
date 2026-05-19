@@ -194,6 +194,19 @@ impl FinitePolyline2 {
     pub fn signed_ring_area(&self) -> f64 {
         finite_ring_signed_area(&self.points)
     }
+
+    /// Returns the arithmetic centroid of this finite projected polyline.
+    ///
+    /// This is a boundary-product measurement over emitted finite vertices, not
+    /// an exact centroid of the native curve or filled area. A repeated closing
+    /// vertex is ignored. Keeping this helper on the projected polyline type
+    /// prevents downstream crates from reimplementing small finite adapters
+    /// around hypercurve output. The exact-object/boundary split follows Yap,
+    /// "Towards Exact Geometric Computation," *Computational Geometry* 7(1-2),
+    /// 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+    pub fn vertex_centroid(&self) -> Option<[f64; 2]> {
+        finite_polyline_vertex_centroid(&self.points)
+    }
 }
 
 impl FiniteRegionProjectionCertificate {
@@ -281,6 +294,23 @@ impl FiniteRegionProfile2 {
     pub fn holes(&self) -> &[FinitePolyline2] {
         &self.holes
     }
+
+    /// Returns the finite projected material-minus-hole area.
+    ///
+    /// Hole ownership has already been decided by native region topology before
+    /// this projected profile exists, so this method does not infer roles from
+    /// winding. It only measures the finite output rings with the shoelace
+    /// formula. Exact CAD area should use [`Region2::filled_area`]; this helper
+    /// exists for IO, diagnostics, and tests at the projection boundary.
+    pub fn projected_filled_area(&self) -> f64 {
+        let material = self.material.signed_ring_area().abs();
+        let holes = self
+            .holes
+            .iter()
+            .map(|hole| hole.signed_ring_area().abs())
+            .sum::<f64>();
+        material - holes
+    }
 }
 
 /// Returns the finite signed shoelace area of projected ring vertices.
@@ -303,6 +333,30 @@ pub fn finite_ring_signed_area(ring: &[[f64; 2]]) -> f64 {
         area += last[0] * first[1] - first[0] * last[1];
     }
     0.5 * area
+}
+
+/// Returns the arithmetic centroid of finite polyline vertices.
+///
+/// A repeated final closing point is ignored so closed-ring projections do not
+/// overweight the first vertex. This is a finite boundary statistic only; exact
+/// geometric centroids belong on native curve/region facts.
+pub fn finite_polyline_vertex_centroid(points: &[[f64; 2]]) -> Option<[f64; 2]> {
+    let unique = points
+        .iter()
+        .copied()
+        .enumerate()
+        .filter_map(|(index, point)| {
+            (index + 1 != points.len() || Some(&point) != points.first()).then_some(point)
+        })
+        .collect::<Vec<_>>();
+    if unique.is_empty() {
+        return None;
+    }
+    let count = unique.len() as f64;
+    let (sum_x, sum_y) = unique
+        .iter()
+        .fold((0.0, 0.0), |(x, y), point| (x + point[0], y + point[1]));
+    Some([sum_x / count, sum_y / count])
 }
 
 impl CurveString2 {

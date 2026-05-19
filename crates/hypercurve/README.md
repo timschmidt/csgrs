@@ -55,6 +55,30 @@ cases are reported explicitly instead of hidden behind display polylines.
 - `QuadraticBezier2`, `CubicBezier2`, `RationalQuadraticBezier2`, and their fact,
   relation, metric, fitting, flattening, and offset reports represent polynomial and
   rational curve work.
+- `BezierOffsetAdapterReport2` classifies staged offset outputs as exact primitive,
+  zero-distance identity, ready for a certified adapter, or blocked by preflight risks.
+- `BezierFitReadinessReport2` classifies certified flattened polylines as exact point
+  fits, exact line fits, or future higher-order fitting candidates while retaining
+  flattening and simplification certificates.
+- `BezierFitSourceReport2` gathers exact polynomial Bezier source facts for future
+  higher-order fitting: control facts, monotone spans, cusp/inflection status,
+  endpoint tangents, moments, length bounds, and primitive-image fit attempts.
+- `BezierFitSourceBatchReport2` aggregates those source reports over path ranges so
+  future simplifiers can inspect exact primitive counts, higher-order-fit counts,
+  length intervals, and moment totals without resampling.
+- `BezierFitSourcePrefixSums2` stores prefix aggregates for those source reports so
+  half-open path ranges can be queried by exact subtraction instead of rewalking
+  sources.
+- `BezierIntersectionRegionFacts`, `BezierIntersectionRegionSummary`,
+  `BezierIntersectionRegionRefinement`, and
+  `BezierIntersectionRegionIsolationReport` classify retained Bezier curve/curve
+  parameter regions and run bounded or target-width exact bisection with explicit stop
+  reasons. `BezierIntersectionRegionIsolationCertificate` compacts a retained frontier
+  into auditable shape counts and certified maximum parameter widths for later solvers.
+- `BezierBooleanHandoffReport2` converts Bezier curve/curve relation results into a
+  boolean-topology readiness report: split-ready parameterized events, point witnesses
+  that still need parameter recovery, overlap obligations, retained-region isolation
+  blockers, unresolved cases, or primitive predicate uncertainty.
 - `Aabb2`, prepared line/arc/curve-string/contour/region views, and segment/region fact
   types preserve repeated-query structure.
 - Boolean, event, fragment, split, and boundary-loop types describe staged region
@@ -73,10 +97,14 @@ adapter status so callers can tell whether they are using topology evidence or d
 geometry.
 
 The crate promotes exact low-degree certificates where it can: line/arc relations,
-selected Bezier roots, monotone graph ordering, exact area and moment contributions,
-length intervals, zero-error simplification, and zero-error line/point fitting. Cases
-that need a more complete root solver or offset trimmer return unresolved regions or
-explicit uncertainty.
+selected Bezier roots, retained intersection-region shape/refinement/isolation facts and
+frontier certificates, Bezier boolean handoff reports, monotone graph ordering, exact
+area and moment contributions, length intervals, zero-error simplification, zero-error line/point fitting,
+fitting-readiness reports, exact source-fact, source-batch, and source-prefix reports
+for higher-order fitting, and exact staged-offset readiness reports. Cases that need a
+more complete root solver, bounded higher-order fit, or offset trimmer return unresolved
+regions, exact bisection or target-width isolation reports, boolean handoff blockers,
+adapter-readiness reports, or explicit uncertainty.
 
 ## Performance Model
 
@@ -99,7 +127,8 @@ Implemented today:
   bounding-box APIs;
 - polynomial quadratic/cubic Bezier and rational quadratic/conic objects with structural
   facts, evaluation, subdivision, certified bounds, monotone spans, graph-order
-  predicates, and exact low-degree relation fast paths;
+  predicates, retained intersection-region summaries/refinement/isolation reports, and
+  exact low-degree relation fast paths;
 - intersection surfaces for line/line, line/arc, arc/arc, Bezier contact cases, curve
   strings, contours, regions, and prepared repeated-query views;
 - signed area, area moment, length interval, flattening, simplification, fitting, and

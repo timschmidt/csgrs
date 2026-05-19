@@ -13,9 +13,9 @@ use crate::classify::{classify_oriented_line, is_zero, real_sign};
 use hyperreal::{Real, RealSign};
 
 use crate::{
-    Aabb2, BezierFlatteningCertificate, CertifiedBezierPolyline2, Classification, CubicBezier2,
-    CurveError, CurvePolicy, CurveResult, LineSeg2, LineSide, Point2, QuadraticBezier2,
-    RationalQuadraticBezier2, UncertaintyReason,
+    Aabb2, BezierFlatteningCertificate, BezierSimplificationCertificate, CertifiedBezierPolyline2,
+    Classification, CubicBezier2, CurveError, CurvePolicy, CurveResult, LineSeg2, LineSide, Point2,
+    QuadraticBezier2, RationalQuadraticBezier2, UncertaintyReason,
 };
 
 /// Error metric used by a certified Bezier fitting adapter.
@@ -216,6 +216,46 @@ pub enum BezierPointImageFitRelation {
     Fit(CertifiedBezierPointImage2),
     /// At least one control point is certified different from the endpoint point.
     NotPoint,
+}
+
+/// Readiness class for fitting a certified flattened Bezier polyline.
+///
+/// This is a scheduling report, not a fitted higher-order curve. It separates
+/// zero-error primitive cases that are already certified from polylines that
+/// must go through a later bounded fitting stage. That boundary follows Yap's
+/// requirement that approximate views carry proof obligations instead of
+/// becoming topology evidence by convention; see Yap, "Towards Exact
+/// Geometric Computation," *Computational Geometry* 7.1-2 (1997). The
+/// future higher-order branch is where Levien-style cubic fitting and path
+/// simplification error contracts belong; see Raph Levien, "Fitting cubic
+/// Bezier curves" (2021).
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum BezierFitReadinessStatus {
+    /// The retained flattened vertices are certified to be one exact point.
+    ExactPoint,
+    /// The retained flattened vertices are certified to lie on one exact line segment.
+    ExactLine,
+    /// The retained flattened vertices need a future bounded higher-order fit.
+    NeedsHigherOrderFit,
+}
+
+/// Report describing whether a certified flattened Bezier polyline is ready for fitting.
+///
+/// The report preserves the original flattening certificate and any exact
+/// collinear simplification certificate while recording the zero-error
+/// primitive-fit certificates that were actually proven. This keeps the
+/// curve-to-polyline, simplification, and fit errors as separate obligations,
+/// matching Yap's exact-geometric-computation model and Levien's emphasis on
+/// explicit fitting error metrics.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BezierFitReadinessReport2 {
+    status: BezierFitReadinessStatus,
+    source_vertex_count: usize,
+    source_segment_count: usize,
+    source_certificate: BezierFlatteningCertificate,
+    simplification_certificate: Option<BezierSimplificationCertificate>,
+    point_fit_certificate: Option<BezierFitCertificate>,
+    line_fit_certificate: Option<BezierFitCertificate>,
 }
 
 impl BezierFitCertificate {
@@ -431,6 +471,56 @@ impl CertifiedBezierPointFit2 {
     }
 }
 
+impl BezierFitReadinessReport2 {
+    /// Returns the readiness class certified for this flattened polyline.
+    pub const fn status(&self) -> BezierFitReadinessStatus {
+        self.status
+    }
+
+    /// Returns the number of retained source polyline vertices inspected.
+    pub const fn source_vertex_count(&self) -> usize {
+        self.source_vertex_count
+    }
+
+    /// Returns the number of retained source chord segments inspected.
+    pub const fn source_segment_count(&self) -> usize {
+        self.source_segment_count
+    }
+
+    /// Returns the upstream Bezier flattening certificate.
+    pub const fn source_certificate(&self) -> &BezierFlatteningCertificate {
+        &self.source_certificate
+    }
+
+    /// Returns the upstream exact simplification certificate, when present.
+    pub const fn simplification_certificate(&self) -> Option<&BezierSimplificationCertificate> {
+        self.simplification_certificate.as_ref()
+    }
+
+    /// Returns the exact point-fit certificate when [`Self::status`] is exact point.
+    pub const fn point_fit_certificate(&self) -> Option<&BezierFitCertificate> {
+        self.point_fit_certificate.as_ref()
+    }
+
+    /// Returns the exact line-fit certificate when [`Self::status`] is exact line.
+    pub const fn line_fit_certificate(&self) -> Option<&BezierFitCertificate> {
+        self.line_fit_certificate.as_ref()
+    }
+
+    /// Returns true when this report already contains a certified primitive fit.
+    pub const fn has_exact_primitive_fit(&self) -> bool {
+        matches!(
+            self.status,
+            BezierFitReadinessStatus::ExactPoint | BezierFitReadinessStatus::ExactLine
+        )
+    }
+
+    /// Returns true when the source should be routed to a later bounded fit adapter.
+    pub const fn needs_higher_order_fit(&self) -> bool {
+        matches!(self.status, BezierFitReadinessStatus::NeedsHigherOrderFit)
+    }
+}
+
 impl QuadraticBezier2 {
     /// Fits this quadratic Bezier to one exact point when possible.
     pub fn fit_exact_point_image(
@@ -510,6 +600,71 @@ impl RationalQuadraticBezier2 {
 }
 
 impl CertifiedBezierPolyline2 {
+    /// Reports whether this flattened polyline is already an exact primitive fit.
+    ///
+    /// The method first attempts the stronger zero-dimensional certificate,
+    /// then the line-segment certificate, and otherwise reports that a later
+    /// bounded higher-order fitting adapter is required. It does not create a
+    /// Bezier approximant or infer topology from the flattened vertices. This
+    /// is the explicit approximation-boundary scheduling advocated by Yap,
+    /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+    /// (1997), with the future nonprimitive branch reserved for the
+    /// error-contract style of Raph Levien, "Fitting cubic Bezier curves"
+    /// (2021).
+    pub fn fit_readiness_report(
+        &self,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<BezierFitReadinessReport2>> {
+        match self.fit_exact_point(policy)? {
+            Classification::Decided(BezierPointFitRelation::Fit(fit)) => {
+                return Ok(Classification::Decided(self.fit_readiness_report_with(
+                    BezierFitReadinessStatus::ExactPoint,
+                    Some(fit.fit_certificate().clone()),
+                    None,
+                )));
+            }
+            Classification::Decided(BezierPointFitRelation::NotPoint) => {}
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        }
+
+        match self.fit_exact_line(policy) {
+            Ok(Classification::Decided(BezierLineFitRelation::Fit(fit))) => {
+                Ok(Classification::Decided(self.fit_readiness_report_with(
+                    BezierFitReadinessStatus::ExactLine,
+                    None,
+                    Some(fit.fit_certificate().clone()),
+                )))
+            }
+            Ok(Classification::Decided(BezierLineFitRelation::NotLine))
+            | Err(CurveError::ZeroLengthLine) => {
+                Ok(Classification::Decided(self.fit_readiness_report_with(
+                    BezierFitReadinessStatus::NeedsHigherOrderFit,
+                    None,
+                    None,
+                )))
+            }
+            Ok(Classification::Uncertain(reason)) => Ok(Classification::Uncertain(reason)),
+            Err(error) => Err(error),
+        }
+    }
+
+    fn fit_readiness_report_with(
+        &self,
+        status: BezierFitReadinessStatus,
+        point_fit_certificate: Option<BezierFitCertificate>,
+        line_fit_certificate: Option<BezierFitCertificate>,
+    ) -> BezierFitReadinessReport2 {
+        BezierFitReadinessReport2 {
+            status,
+            source_vertex_count: self.points().len(),
+            source_segment_count: self.points().len().saturating_sub(1),
+            source_certificate: self.certificate().clone(),
+            simplification_certificate: self.simplification_certificate().cloned(),
+            point_fit_certificate,
+            line_fit_certificate,
+        }
+    }
+
     /// Fits this certified polyline to one exact point when the fit has zero error.
     ///
     /// This is the flattened-polyline companion to

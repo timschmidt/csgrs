@@ -239,6 +239,7 @@ fn contour_projection_closes_finite_ring_without_owning_topology() {
     assert_eq!(ring.points().len(), 5);
     assert_eq!(ring.signed_ring_area(), 100.0);
     assert_eq!(finite_ring_signed_area(ring.points()), 100.0);
+    assert_eq!(ring.vertex_centroid(), Some([5.0, 5.0]));
 }
 
 #[test]
@@ -275,9 +276,12 @@ fn curve_string_projection_subdivides_arc_and_keeps_exact_endpoints() {
 fn finite_line_string_import_promotes_boundary_f64_to_native_lines() {
     let curve =
         CurveString2::from_finite_line_string(&[[0.0, 0.0], [2.0, 0.0], [2.0, 1.0]]).unwrap();
+    let iter_curve =
+        CurveString2::from_finite_point_iter([[0.0, 0.0], [2.0, 0.0], [2.0, 1.0]]).unwrap();
     let report =
         CurveString2::import_finite_line_string(&[[0.0, 0.0], [2.0, 0.0], [2.0, 1.0]]).unwrap();
 
+    assert_eq!(iter_curve, curve);
     assert_eq!(curve.len(), 2);
     assert_eq!(report.curve_string(), &curve);
     assert_eq!(report.certificate().input_point_count(), 3);
@@ -390,6 +394,8 @@ fn finite_profile_projection_preserves_exact_hole_ownership() {
     assert_eq!(profiles[0].holes()[0].points()[0], [2.0, 2.0]);
     assert_eq!(profiles[1].material().points()[0], [20.0, 0.0]);
     assert_eq!(profiles[1].holes()[0].points()[0], [22.0, 2.0]);
+    assert_eq!(profiles[0].projected_filled_area(), 96.0);
+    assert_eq!(profiles[1].projected_filled_area(), 96.0);
 }
 
 #[test]

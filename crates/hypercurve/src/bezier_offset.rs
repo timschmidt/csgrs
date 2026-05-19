@@ -108,6 +108,51 @@ pub enum BezierOffsetCandidate2 {
     },
 }
 
+/// Certified readiness state for a staged Bezier offset candidate.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum BezierOffsetAdapterStatus {
+    /// A true primitive offset was produced from a certified endpoint line image.
+    ExactPrimitiveLineImage,
+    /// A zero-distance request can be represented by the source curve identity.
+    ZeroDistanceIdentity,
+    /// No source-risk was detected, but a certified analytic/fitted offset
+    /// adapter is still needed before topology may consume the result.
+    ReadyForCertifiedAdapter,
+    /// Exact source preflight found risks that a later adapter must resolve.
+    BlockedByPreflightRisks,
+    /// The signed offset distance could not be classified by the current exact budget.
+    UnknownDistance,
+}
+
+/// Report describing what a staged Bezier offset candidate can safely do next.
+///
+/// This report is deliberately separate from [`BezierOffsetCandidate2`]. A
+/// candidate is the constructed output available today; this report states
+/// whether the output is already an exact primitive, is an exact zero-distance
+/// identity request, or must wait for a certified analytic/fitted adapter. The
+/// separation follows Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997): exact objects and unresolved
+/// branches are reported instead of quietly replacing topology with samples.
+/// The need to keep free-form offset fitting and trimming explicit follows
+/// Tiller and Hanson (1984), Farouki and Neff (1990), and Levien (2022).
+#[derive(Clone, Debug, PartialEq)]
+pub struct BezierOffsetAdapterReport2 {
+    /// Readiness status for this staged candidate.
+    pub status: BezierOffsetAdapterStatus,
+    /// Preflight certificate retained from source-curve analysis.
+    pub preflight: BezierOffsetPreflight2,
+    /// Signed distance along the curve's left normal.
+    pub distance: Real,
+    /// Structural zero knowledge for `distance`.
+    pub distance_status: ZeroStatus,
+    /// Exact preflight risks copied for adapter scheduling.
+    pub risks: Vec<BezierOffsetRisk>,
+    /// Whether this staged result already contains a true primitive offset.
+    pub has_exact_primitive: bool,
+    /// Whether a later non-line analytic/fitted adapter may attempt the case.
+    pub may_attempt_certified_adapter: bool,
+}
+
 impl BezierOffsetPreflight2 {
     /// Returns the polynomial Bezier degree covered by this preflight report.
     pub const fn degree(&self) -> BezierDegree {
@@ -188,6 +233,48 @@ impl BezierOffsetCandidate2 {
         match self {
             Self::ExactLineImage { offset, .. } => offset.distance(),
             Self::Unresolved { distance, .. } => distance,
+        }
+    }
+
+    /// Builds a machine-readable report for the next offset adapter stage.
+    ///
+    /// The report does not manufacture an offset curve. It only classifies the
+    /// staged candidate as an exact primitive, zero-distance identity request,
+    /// clear-but-unimplemented free-form case, risk-blocked case, or unknown
+    /// distance-sign case. This keeps the offset API aligned with Yap's
+    /// exact/unresolved boundary and avoids treating Tiller-Hanson or
+    /// Levien-style approximation proposals as topology until a later adapter
+    /// supplies certified error and trimming contracts.
+    pub fn adapter_report(&self) -> BezierOffsetAdapterReport2 {
+        let preflight = self.preflight().clone();
+        let distance = self.distance().clone();
+        let distance_status = distance.zero_status();
+        let risks = preflight.risks().to_vec();
+        let has_exact_primitive = self.exact_line_image_offset().is_some();
+        let status = match self {
+            Self::ExactLineImage { .. } => BezierOffsetAdapterStatus::ExactPrimitiveLineImage,
+            Self::Unresolved { preflight, .. } => match distance_status {
+                ZeroStatus::Zero => BezierOffsetAdapterStatus::ZeroDistanceIdentity,
+                ZeroStatus::Unknown => BezierOffsetAdapterStatus::UnknownDistance,
+                ZeroStatus::NonZero if preflight.is_clear() => {
+                    BezierOffsetAdapterStatus::ReadyForCertifiedAdapter
+                }
+                ZeroStatus::NonZero => BezierOffsetAdapterStatus::BlockedByPreflightRisks,
+            },
+        };
+        let may_attempt_certified_adapter = matches!(
+            status,
+            BezierOffsetAdapterStatus::ZeroDistanceIdentity
+                | BezierOffsetAdapterStatus::ReadyForCertifiedAdapter
+        );
+        BezierOffsetAdapterReport2 {
+            status,
+            preflight,
+            distance,
+            distance_status,
+            risks,
+            has_exact_primitive,
+            may_attempt_certified_adapter,
         }
     }
 }

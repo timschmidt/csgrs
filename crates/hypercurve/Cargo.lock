@@ -329,6 +329,7 @@ dependencies = [
  "geo",
  "hyperlimit",
  "hyperreal",
+ "hypertri",
  "proptest",
  "static_aabb2d_index",
 ]
@@ -352,6 +353,16 @@ dependencies = [
  "num",
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "hypertri"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f14c9c0eb515c91bb2be2d8c924c7484e774d2330ff0d2435f09eb8be2a00db0"
+dependencies = [
+ "hyperlimit",
+ "hyperreal",
 ]
 
 [[package]]

@@ -2,8 +2,12 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    Axis2, BezierAreaMomentPrefixSums2, BezierAreaPrefixSums2, BezierFlatteningOptions,
+    Axis2, BezierAreaMomentPrefixSums2, BezierAreaPrefixSums2, BezierBooleanHandoffReport2,
+    BezierFlatteningOptions, BezierIntersectionRegionIsolationBudget, BezierMonotoneSpan,
     CubicBezier2, CurvePolicy, LineSeg2, Point2, QuadraticBezier2, RationalQuadraticBezier2, Real,
+    certify_bezier_intersection_region_isolation, isolate_bezier_intersection_regions,
+    isolate_bezier_intersection_regions_until_width, refine_bezier_intersection_regions,
+    summarize_bezier_intersection_regions,
 };
 
 fn p(x: i32, y: i32) -> Point2 {
@@ -16,6 +20,10 @@ fn half() -> Real {
 
 fn ratio(numerator: i32, denominator: i32) -> Real {
     (Real::from(numerator) / Real::from(denominator)).unwrap()
+}
+
+fn span(start: Real, end: Real) -> BezierMonotoneSpan {
+    BezierMonotoneSpan::new(start, end)
 }
 
 fn quadratic_through_point_at(
@@ -150,6 +158,24 @@ fn bench_quadratic_facts(curve: &QuadraticBezier2) {
         .len() as u16;
         checksum ^= format!("{:?}", black_box(curve).fit_exact_line_image(&policy)).len() as u16;
         checksum ^= format!("{:?}", black_box(curve).fit_exact_point_image(&policy)).len() as u16;
+        checksum ^= format!("{:?}", black_box(curve).fit_source_report(&policy)).len() as u16;
+        checksum ^= format!(
+            "{:?}",
+            hypercurve::BezierFitSourceBatchReport2::from_quadratics(
+                [black_box(curve), black_box(&linear)],
+                &policy
+            )
+        )
+        .len() as u16;
+        checksum ^= format!(
+            "{:?}",
+            hypercurve::BezierFitSourcePrefixSums2::from_quadratics(
+                [black_box(curve), black_box(&linear)],
+                &policy
+            )
+            .and_then(|table| table.range_report(0..2))
+        )
+        .len() as u16;
     }
     let elapsed = start.elapsed();
     println!("quadratic_bezier_facts: {iterations} iterations in {elapsed:?} checksum={checksum}");
@@ -209,6 +235,24 @@ fn bench_cubic_facts(curve: &CubicBezier2) {
         .len() as u16;
         checksum ^= format!("{:?}", black_box(curve).fit_exact_line_image(&policy)).len() as u16;
         checksum ^= format!("{:?}", black_box(curve).fit_exact_point_image(&policy)).len() as u16;
+        checksum ^= format!("{:?}", black_box(curve).fit_source_report(&policy)).len() as u16;
+        checksum ^= format!(
+            "{:?}",
+            hypercurve::BezierFitSourceBatchReport2::from_cubics(
+                [black_box(curve), black_box(&linear)],
+                &policy
+            )
+        )
+        .len() as u16;
+        checksum ^= format!(
+            "{:?}",
+            hypercurve::BezierFitSourcePrefixSums2::from_cubics(
+                [black_box(curve), black_box(&linear)],
+                &policy
+            )
+            .and_then(|table| table.range_report(0..2))
+        )
+        .len() as u16;
     }
     let elapsed = start.elapsed();
     println!("cubic_bezier_facts: {iterations} iterations in {elapsed:?} checksum={checksum}");
@@ -723,6 +767,17 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
         p(180, 220),
         degree_elevated_arch.point_at(quarter),
     );
+    let retained_regions = [
+        hypercurve::BezierCurveIntersectionRegion::new(span(half(), half()), span(half(), half())),
+        hypercurve::BezierCurveIntersectionRegion::new(
+            span(ratio(1, 4), ratio(1, 2)),
+            span(ratio(1, 4), ratio(1, 2)),
+        ),
+        hypercurve::BezierCurveIntersectionRegion::new(
+            span(ratio(1, 4), ratio(1, 2)),
+            span(ratio(1, 8), ratio(3, 8)),
+        ),
+    ];
     let start = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..iterations {
@@ -818,9 +873,46 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
         let quadratic_staged_right_offset =
             black_box(quadratic).offset_right_staged(Real::one(), &policy);
         let cubic_staged_right_offset = black_box(cubic).offset_right_staged(Real::one(), &policy);
+        let quadratic_offset_adapter_report =
+            quadratic_staged_offset
+                .as_ref()
+                .ok()
+                .and_then(|classification| match classification {
+                    hypercurve::Classification::Decided(candidate) => {
+                        Some(candidate.adapter_report())
+                    }
+                    hypercurve::Classification::Uncertain(_) => None,
+                });
+        let region_summary = summarize_bezier_intersection_regions(black_box(&retained_regions));
+        let region_refinements = refine_bezier_intersection_regions(black_box(&retained_regions));
+        let region_isolation = isolate_bezier_intersection_regions(
+            black_box(&retained_regions),
+            BezierIntersectionRegionIsolationBudget {
+                max_steps: 16,
+                max_depth: 2,
+                max_terminal_regions: 32,
+            },
+        );
+        let targeted_region_isolation = isolate_bezier_intersection_regions_until_width(
+            black_box(&retained_regions),
+            BezierIntersectionRegionIsolationBudget {
+                max_steps: 32,
+                max_depth: 4,
+                max_terminal_regions: 64,
+            },
+            ratio(1, 16),
+        );
+        let region_isolation_certificate =
+            certify_bezier_intersection_region_isolation(&targeted_region_isolation);
+        let boolean_handoff_from_line_image =
+            BezierBooleanHandoffReport2::from_classified_relation(&line_image_relation);
+        let boolean_handoff_from_regions =
+            BezierBooleanHandoffReport2::from_classified_relation(&region_relation);
+        let boolean_handoff_from_certificate =
+            BezierBooleanHandoffReport2::from_isolation_certificate(&region_isolation_certificate);
 
         checksum ^= format!(
-            "{y_roots:?}{spans:?}{bounds:?}{line_relation:?}{line_contact_relation:?}{point_parameters:?}{cubic_line_relation:?}{cubic_line_contact_relation:?}{mixed_relation:?}{region_relation:?}{line_image_relation:?}{line_image_isolated_relation:?}{point_image_relation:?}{line_image_curve_relation:?}{endpoint_relation:?}{shared_endpoint_midpoint_relation:?}{same_axis_no_hit_relation:?}{degree_normalized_no_hit_relation:?}{degree_normalized_graph_order:?}{degree_normalized_crossing_graph_order:?}{degree_normalized_graph_contact_order:?}{degree_elevated_identity_relation:?}{mixed_degree_midpoint_relation:?}{mixed_degree_quarter_relation:?}{mixed_degree_thirty_second_relation:?}{mixed_degree_sixty_fourth_relation:?}{mixed_degree_one_hundred_twenty_eighth_relation:?}{mixed_degree_two_hundred_fifty_sixth_relation:?}{mixed_degree_five_hundred_twelfth_relation:?}{mixed_degree_non_dyadic_graph_relation:?}{non_dyadic_quadratic_root_relation:?}{non_graph_deep_dyadic_relation:?}{non_graph_irreducible_relation:?}{cubic_quarter_relation:?}{cubic_eighth_relation:?}{cubic_sixteenth_relation:?}{cubic_thirty_second_relation:?}{cubic_sixty_fourth_relation:?}{cubic_one_hundred_twenty_eighth_relation:?}{cubic_two_hundred_fifty_sixth_relation:?}{cubic_five_hundred_twelfth_relation:?}{cubic_endpoint_relation:?}{inflections:?}{quadratic_offset_preflight:?}{cubic_offset_preflight:?}{quadratic_staged_offset:?}{cubic_staged_offset:?}{quadratic_staged_right_offset:?}{cubic_staged_right_offset:?}"
+            "{y_roots:?}{spans:?}{bounds:?}{line_relation:?}{line_contact_relation:?}{point_parameters:?}{cubic_line_relation:?}{cubic_line_contact_relation:?}{mixed_relation:?}{region_relation:?}{line_image_relation:?}{line_image_isolated_relation:?}{point_image_relation:?}{line_image_curve_relation:?}{endpoint_relation:?}{shared_endpoint_midpoint_relation:?}{same_axis_no_hit_relation:?}{degree_normalized_no_hit_relation:?}{degree_normalized_graph_order:?}{degree_normalized_crossing_graph_order:?}{degree_normalized_graph_contact_order:?}{degree_elevated_identity_relation:?}{mixed_degree_midpoint_relation:?}{mixed_degree_quarter_relation:?}{mixed_degree_thirty_second_relation:?}{mixed_degree_sixty_fourth_relation:?}{mixed_degree_one_hundred_twenty_eighth_relation:?}{mixed_degree_two_hundred_fifty_sixth_relation:?}{mixed_degree_five_hundred_twelfth_relation:?}{mixed_degree_non_dyadic_graph_relation:?}{non_dyadic_quadratic_root_relation:?}{non_graph_deep_dyadic_relation:?}{non_graph_irreducible_relation:?}{cubic_quarter_relation:?}{cubic_eighth_relation:?}{cubic_sixteenth_relation:?}{cubic_thirty_second_relation:?}{cubic_sixty_fourth_relation:?}{cubic_one_hundred_twenty_eighth_relation:?}{cubic_two_hundred_fifty_sixth_relation:?}{cubic_five_hundred_twelfth_relation:?}{cubic_endpoint_relation:?}{inflections:?}{quadratic_offset_preflight:?}{cubic_offset_preflight:?}{quadratic_staged_offset:?}{cubic_staged_offset:?}{quadratic_staged_right_offset:?}{cubic_staged_right_offset:?}{quadratic_offset_adapter_report:?}{region_summary:?}{region_refinements:?}{region_isolation:?}{targeted_region_isolation:?}{region_isolation_certificate:?}{boolean_handoff_from_line_image:?}{boolean_handoff_from_regions:?}{boolean_handoff_from_certificate:?}"
         )
         .len();
     }
@@ -874,6 +966,9 @@ fn bench_bezier_flattening(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
         let point_fit = quadratic_polyline
             .clone()
             .map(|polyline| format!("{:?}", polyline.fit_exact_point(&policy)));
+        let fit_readiness = quadratic_polyline
+            .clone()
+            .map(|polyline| format!("{:?}", polyline.fit_readiness_report(&policy)));
         let fit_certificate =
             quadratic_polyline
                 .clone()
@@ -902,7 +997,7 @@ fn bench_bezier_flattening(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     other => format!("{other:?}"),
                 });
         checksum ^= format!(
-            "{quadratic_polyline:?}{cubic_polyline:?}{simplified:?}{simplification_certificate:?}{offset_preview:?}{checked_offset:?}{line_fit:?}{point_fit:?}{fit_certificate:?}{exact_line_offset:?}"
+            "{quadratic_polyline:?}{cubic_polyline:?}{simplified:?}{simplification_certificate:?}{offset_preview:?}{checked_offset:?}{line_fit:?}{point_fit:?}{fit_readiness:?}{fit_certificate:?}{exact_line_offset:?}"
         )
         .len();
     }

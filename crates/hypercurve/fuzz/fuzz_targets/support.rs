@@ -23,10 +23,15 @@ use hypercurve::{
     BezierPointImageFitRelation as HBezierPointImageFitRelation,
     BezierSimplificationBoundKind as HBezierSimplificationBoundKind,
     BezierSimplificationErrorMetric as HBezierSimplificationErrorMetric, BooleanOp as HBooleanOp,
-    BulgeVertex2 as HBulgeVertex2, CircularArc2 as HCircularArc2,
-    Classification as HClassification, Contour2 as HContour2, ContourOperand as HContourOperand,
-    ContourPointLocation as HContourPointLocation, ContourSplitMap as HContourSplitMap,
-    CurvePolicy as HCurvePolicy, CurveString2 as HCurveString2,
+    BooleanBoundaryAuditStatus as HBooleanBoundaryAuditStatus,
+    BooleanBoundaryTraversalReport2 as HBooleanBoundaryTraversalReport2,
+    BooleanBoundaryTraversalStatus as HBooleanBoundaryTraversalStatus,
+    BooleanRegionAuditStatus as HBooleanRegionAuditStatus,
+    BoundaryContourNestingStatus as HBoundaryContourNestingStatus, BulgeVertex2 as HBulgeVertex2,
+    CircularArc2 as HCircularArc2, Classification as HClassification, Contour2 as HContour2,
+    ContourOperand as HContourOperand, ContourPointLocation as HContourPointLocation,
+    ContourSplitMap as HContourSplitMap, CurvePolicy as HCurvePolicy,
+    CurveString2 as HCurveString2,
     CurveStringIntersection as HCurveStringIntersection, FillRule as HFillRule,
     LineArcIntersection as HLineArcIntersection,
     LineArcIntersectionPoint as HLineArcIntersectionPoint,
@@ -35,7 +40,7 @@ use hypercurve::{
     PolylineReconstructionOptions as HPolylineReconstructionOptions,
     CubicBezier2 as HCubicBezier2, QuadraticBezier2 as HQuadraticBezier2,
     RationalQuadraticBezier2 as HRationalQuadraticBezier2, Real as HReal, Region2 as HRegion2,
-    RegionPointLocation as HRegionPointLocation, Segment2 as HSegment2,
+    RegionPointLocation as HRegionPointLocation, Segment2 as HSegment2, UncertaintyReason as HUncertaintyReason,
     SegmentIntersection as HSegmentIntersection, Tolerance as HTolerance,
 };
 use std::f64::consts::PI;
@@ -415,6 +420,69 @@ fn h_assert_region_semantics(a: &HRegion, b: &HRegion, result: &HRegion, op: HBo
             );
         }
     }
+}
+
+/// Validates traversal accounting against explicit unresolved/shared/ready blockers.
+///
+/// This mirrors the invariants used by `BooleanBoundaryTraversalReport2` in
+/// degenerate-contact-aware boolean dispatch (Yap, *Towards Exact Geometric
+/// Computation*, 1997).
+fn h_assert_traversal_report_invariants(
+    report: &HBooleanBoundaryTraversalReport2,
+    expected_status: HBooleanBoundaryTraversalStatus,
+    expected_blocker: Option<HUncertaintyReason>,
+) {
+    assert_eq!(report.status, expected_status);
+    assert_eq!(report.blocker_reason, expected_blocker);
+    assert_eq!(
+        report.is_ready(),
+        matches!(
+            expected_status,
+            HBooleanBoundaryTraversalStatus::Empty | HBooleanBoundaryTraversalStatus::LoopsReady
+        )
+    );
+    assert_eq!(
+        report.classified_fragment_count,
+        report.discarded_fragment_count
+            + report.kept_source_direction_count
+            + report.kept_reversed_count
+            + report.unresolved_boundary_count
+    );
+    assert_eq!(
+        report.directed_fragment_count,
+        report.kept_source_direction_count + report.kept_reversed_count
+    );
+    if report.is_ready() {
+        assert_eq!(report.open_chain_count, 0);
+        assert_eq!(
+            report.closed_chain_count + report.open_chain_count,
+            report.assembled_chain_count
+        );
+    }
+}
+
+/// Asserts an audited boundary report status in the expected "usable decision" set.
+fn h_assert_boundary_audit_is_valid(audit: &HBooleanBoundaryAuditStatus) {
+    assert!(audit.is_valid());
+    assert!(matches!(
+        audit,
+        HBooleanBoundaryAuditStatus::Empty
+            | HBooleanBoundaryAuditStatus::Valid
+            | HBooleanBoundaryAuditStatus::SelfContact
+            | HBooleanBoundaryAuditStatus::InterContourContact
+    ));
+}
+
+/// Asserts an audited region report status in the expected "usable decision" set.
+fn h_assert_region_audit_is_valid(audit: &HBooleanRegionAuditStatus) {
+    assert!(audit.is_valid());
+    assert!(matches!(
+        audit,
+        HBooleanRegionAuditStatus::Empty
+            | HBooleanRegionAuditStatus::Valid
+            | HBooleanRegionAuditStatus::SelfContact
+            | HBooleanRegionAuditStatus::InterContourContact
+    ));
 }
 
 fn h_line_from_i32(start: (i32, i32), end: (i32, i32)) -> HLineSeg2 {
@@ -907,6 +975,15 @@ pub fn h_assert_contour_region_classification(reader: &mut ByteReader<'_>) {
 }
 
 /// Fuzz native region booleans and prepared/ordinary consistency.
+///
+/// The boolean path follows Yap's exact-predicate discipline by checking both
+/// exact and prepared dispatches side-by-side and only accepting reported
+/// invariants when they remain decided under the active certified policy.
+/// Specifically, degeneracy behavior follows boundary-contact handling from
+/// Foster, Hormann, and Popa ("Clipping simple polygons with degenerate
+/// intersections," *Computers & Graphics: X* 2, 100007, 2019), ensuring that
+/// shared-boundary contacts are explicit blockers while unsupported traversal
+/// cases remain explicit `UncertaintyReason::Unsupported`.
 pub fn h_assert_region_boolean(reader: &mut ByteReader<'_>) {
     let a = h_region_from_bytes(reader, 3, 2);
     let b = h_region_from_bytes(reader, 3, 2);
@@ -946,7 +1023,411 @@ pub fn h_assert_region_boolean(reader: &mut ByteReader<'_>) {
         plain_contours
     );
 
+    let plain_loops = a.boolean_boundary_loops(&b, op, &policy).unwrap();
+    assert_eq!(
+        prepared_a
+            .boolean_boundary_loops(&prepared_b, op, &policy)
+            .unwrap(),
+        plain_loops
+    );
+    assert_eq!(
+        prepared_a
+            .boolean_boundary_loops_against_region(&b.as_view(), op, &policy)
+            .unwrap(),
+        plain_loops
+    );
+    assert_eq!(
+        a.as_view()
+            .boolean_boundary_loops_against_prepared_region(&prepared_b, op, &policy)
+            .unwrap(),
+        plain_loops
+    );
+
+    let shared_edge_a = HRegion2::from_material_contours(vec![h_rectangle_contour(HRect {
+        xmin: 0.0,
+        ymin: 0.0,
+        xmax: 4.0,
+        ymax: 4.0,
+    })]);
+    let shared_edge_b = HRegion2::from_material_contours(vec![h_rectangle_contour(HRect {
+        xmin: 2.0,
+        ymin: -2.0,
+        xmax: 6.0,
+        ymax: 0.0,
+    })]);
+    let point_touch_a = HRegion2::from_material_contours(vec![h_rectangle_contour(HRect {
+        xmin: 0.0,
+        ymin: 0.0,
+        xmax: 2.0,
+        ymax: 2.0,
+    })]);
+    let point_touch_b = HRegion2::from_material_contours(vec![h_rectangle_contour(HRect {
+        xmin: 2.0,
+        ymin: 2.0,
+        xmax: 4.0,
+        ymax: 4.0,
+    })]);
+    let shared_edge_prepared_a = shared_edge_a.prepare_topology_queries(&policy);
+    let shared_edge_prepared_b = shared_edge_b.prepare_topology_queries(&policy);
+    let point_touch_prepared_a = point_touch_a.prepare_topology_queries(&policy);
+    let point_touch_prepared_b = point_touch_b.prepare_topology_queries(&policy);
+
+    let shared_edge_plain_loops = shared_edge_a
+        .boolean_boundary_loops(&shared_edge_b, HBooleanOp::Union, &policy)
+        .unwrap();
+    let shared_edge_prepared_loops = shared_edge_prepared_a
+        .boolean_boundary_loops(&shared_edge_prepared_b, HBooleanOp::Union, &policy)
+        .unwrap();
+    let shared_edge_plain_contours = shared_edge_a
+        .boolean_boundary_contours(
+            &shared_edge_b,
+            HBooleanOp::Union,
+            HFillRule::NonZero,
+            &policy,
+        )
+        .unwrap();
+    let point_touch_plain_loops = point_touch_a
+        .boolean_boundary_loops(&point_touch_b, HBooleanOp::Union, &policy)
+        .unwrap();
+    let point_touch_prepared_loops = point_touch_prepared_a
+        .boolean_boundary_loops(&point_touch_prepared_b, HBooleanOp::Union, &policy)
+        .unwrap();
+    let point_touch_plain_contours = point_touch_a
+        .boolean_boundary_contours(
+            &point_touch_b,
+            HBooleanOp::Union,
+            HFillRule::NonZero,
+            &policy,
+        )
+        .unwrap();
+
+    assert_eq!(shared_edge_prepared_loops, shared_edge_plain_loops);
+    assert_eq!(point_touch_prepared_loops, point_touch_plain_loops);
+    let HClassification::Decided(shared_edge_loops) = &shared_edge_plain_loops else {
+        panic!("shared-edge fuzz probe should regularize to decided boundary loops");
+    };
+    let HClassification::Decided(shared_edge_contours) = &shared_edge_plain_contours else {
+        panic!("shared-edge fuzz probe should regularize to decided boundary contours");
+    };
+    assert_eq!(shared_edge_loops.len(), 1);
+    assert_eq!(shared_edge_loops.len(), shared_edge_contours.len());
+    let HClassification::Decided(point_touch_loops) = &point_touch_plain_loops else {
+        panic!("point-touch fuzz probe should regularize to decided boundary loops");
+    };
+    let HClassification::Decided(point_touch_contours) = &point_touch_plain_contours else {
+        panic!("point-touch fuzz probe should regularize to decided boundary contours");
+    };
+    assert_eq!(point_touch_loops.len(), 2);
+    assert_eq!(point_touch_loops.len(), point_touch_contours.len());
+    for contour in shared_edge_loops.to_contours(HFillRule::NonZero).unwrap() {
+        h_assert_contour_finite(&contour);
+    }
+
+    let shared_edge_traversal = match shared_edge_a
+        .boolean_boundary_traversal_report(&shared_edge_b, HBooleanOp::Union, &policy)
+        .unwrap()
+    {
+        HClassification::Decided(report) => report,
+        HClassification::Uncertain(reason) => {
+            panic!("shared-edge fuzz traversal report should be decided: {reason:?}")
+        }
+    };
+    assert_eq!(
+        shared_edge_traversal.status,
+        HBooleanBoundaryTraversalStatus::UnresolvedBoundaries
+    );
+    assert_eq!(
+        shared_edge_traversal.blocker_reason,
+        Some(HUncertaintyReason::Boundary),
+    );
+
+    let shared_edge_prepared_traversal = match shared_edge_prepared_a
+        .boolean_boundary_traversal_report(&shared_edge_prepared_b, HBooleanOp::Union, &policy)
+        .unwrap()
+    {
+        HClassification::Decided(report) => report,
+        HClassification::Uncertain(reason) => {
+            panic!("shared-edge prepared traversal report should be decided: {reason:?}")
+        }
+    };
+    assert_eq!(shared_edge_prepared_traversal, shared_edge_traversal);
+    let shared_edge_prepared_against_plain_traversal = match shared_edge_prepared_a
+        .boolean_boundary_traversal_report_against_region(&shared_edge_b.as_view(), HBooleanOp::Union, &policy)
+        .unwrap()
+    {
+        HClassification::Decided(report) => report,
+        HClassification::Uncertain(reason) => {
+            panic!(
+                "shared-edge prepared-vs-plain traversal report should be decided: {reason:?}"
+            )
+        }
+    };
+    let shared_edge_plain_against_prepared_traversal = match shared_edge_a
+        .as_view()
+        .boolean_boundary_traversal_report_against_prepared_region(
+            &shared_edge_prepared_b,
+            HBooleanOp::Union,
+            &policy,
+        )
+        .unwrap()
+    {
+        HClassification::Decided(report) => report,
+        HClassification::Uncertain(reason) => {
+            panic!(
+                "shared-edge plain-vs-prepared traversal report should be decided: {reason:?}"
+            )
+        }
+    };
+
+    // Point touch should be reported as an unsupported traversal blocker in this
+    // raw traversal surface.
+    let point_touch_traversal = match point_touch_a
+        .boolean_boundary_traversal_report(&point_touch_b, HBooleanOp::Union, &policy)
+        .unwrap()
+    {
+        HClassification::Decided(report) => report,
+        HClassification::Uncertain(reason) => {
+            panic!("point-touch fuzz traversal report should be decided: {reason:?}")
+        }
+    };
+    assert_eq!(
+        point_touch_traversal.status,
+        HBooleanBoundaryTraversalStatus::UnsupportedTraversal
+    );
+    assert_eq!(
+        point_touch_traversal.blocker_reason,
+        Some(HUncertaintyReason::Unsupported)
+    );
+
+    let point_touch_prepared_traversal = match point_touch_prepared_a
+        .boolean_boundary_traversal_report(&point_touch_prepared_b, HBooleanOp::Union, &policy)
+        .unwrap()
+    {
+        HClassification::Decided(report) => report,
+        HClassification::Uncertain(reason) => {
+            panic!("point-touch prepared traversal report should be decided: {reason:?}")
+        }
+    };
+    assert_eq!(point_touch_prepared_traversal, point_touch_traversal);
+    let point_touch_prepared_against_plain = match point_touch_prepared_a
+        .boolean_boundary_traversal_report_against_region(
+            &point_touch_b.as_view(),
+            HBooleanOp::Union,
+            &policy,
+        )
+        .unwrap()
+    {
+        HClassification::Decided(report) => report,
+        HClassification::Uncertain(reason) => {
+            panic!(
+                "point-touch prepared-vs-plain traversal report should be decided: {reason:?}"
+            )
+        }
+    };
+    let point_touch_plain_against_prepared = match point_touch_a
+        .as_view()
+        .boolean_boundary_traversal_report_against_prepared_region(
+            &point_touch_prepared_b,
+            HBooleanOp::Union,
+            &policy,
+        )
+        .unwrap()
+    {
+        HClassification::Decided(report) => report,
+        HClassification::Uncertain(reason) => {
+            panic!(
+                "point-touch plain-vs-prepared traversal report should be decided: {reason:?}"
+            )
+        }
+    };
+
+    assert_eq!(shared_edge_prepared_traversal, shared_edge_prepared_against_plain_traversal);
+    assert_eq!(
+        shared_edge_plain_against_prepared_traversal,
+        shared_edge_prepared_traversal
+    );
+    assert_eq!(point_touch_prepared_traversal, point_touch_prepared_against_plain);
+    assert_eq!(
+        point_touch_plain_against_prepared,
+        point_touch_prepared_traversal
+    );
+    for contour in point_touch_loops.to_contours(HFillRule::NonZero).unwrap() {
+        h_assert_contour_finite(&contour);
+    }
+
+    // Foster, Hormann, and Popa (2019) require full shared-edge contacts inside
+    // holes to be regularized consistently before traversal as a canonical
+    // contour product instead of unresolved boundary-only blockers.
+    let hole_with_cavity = HRegion2::new(
+        vec![h_rectangle_contour(HRect {
+            xmin: 0.0,
+            ymin: 0.0,
+            xmax: 10.0,
+            ymax: 10.0,
+        })],
+        vec![h_rectangle_contour(HRect {
+            xmin: 3.0,
+            ymin: 3.0,
+            xmax: 7.0,
+            ymax: 7.0,
+        })],
+    );
+    let hole_strip = HRegion2::from_material_contours(vec![h_rectangle_contour(HRect {
+        xmin: 4.0,
+        ymin: 3.0,
+        xmax: 6.0,
+        ymax: 5.0,
+    })]);
+    let prepared_hole_with_cavity = hole_with_cavity.prepare_topology_queries(&policy);
+    let prepared_hole_strip = hole_strip.prepare_topology_queries(&policy);
+
+    let HClassification::Decided(hole_strip_loops) = hole_with_cavity
+        .boolean_boundary_loops(&hole_strip, HBooleanOp::Union, &policy)
+        .unwrap()
+    else {
+        panic!("hole-boundary touching strip union should be decided");
+    };
+    assert_eq!(
+        prepared_hole_with_cavity
+            .boolean_boundary_loops(&prepared_hole_strip, HBooleanOp::Union, &policy)
+            .unwrap(),
+        HClassification::Decided(hole_strip_loops.clone())
+    );
+    assert_eq!(
+        prepared_hole_with_cavity
+            .boolean_boundary_loops_against_region(
+                &hole_strip.as_view(),
+                HBooleanOp::Union,
+                &policy,
+            )
+            .unwrap(),
+        HClassification::Decided(hole_strip_loops.clone())
+    );
+    assert_eq!(
+        hole_with_cavity
+            .as_view()
+            .boolean_boundary_loops_against_prepared_region(
+                &prepared_hole_strip,
+                HBooleanOp::Union,
+                &policy,
+            )
+            .unwrap(),
+        HClassification::Decided(hole_strip_loops.clone())
+    );
+    let HClassification::Decided(hole_strip_contours) = hole_with_cavity
+        .boolean_boundary_contours(
+            &hole_strip,
+            HBooleanOp::Union,
+            HFillRule::NonZero,
+            &policy,
+        )
+        .unwrap()
+    else {
+        panic!("hole-boundary touching strip union contours should be decided");
+    };
+    assert_eq!(
+        prepared_hole_with_cavity
+            .boolean_boundary_contours(
+                &prepared_hole_strip,
+                HBooleanOp::Union,
+                HFillRule::NonZero,
+                &policy,
+            )
+            .unwrap(),
+        HClassification::Decided(hole_strip_contours.clone())
+    );
+    for contour in hole_strip_loops.to_contours(HFillRule::NonZero).unwrap() {
+        h_assert_contour_finite(&contour);
+    }
+    for contour in hole_strip_contours {
+        h_assert_contour_finite(&contour);
+    }
+
+    let traversal_report = match a
+        .boolean_boundary_traversal_report(&b, op, &policy)
+        .unwrap()
+    {
+        HClassification::Decided(report) => report,
+        HClassification::Uncertain(reason) => {
+            panic!("plain traversal report should classify raw loop status: {reason:?}")
+        }
+    };
+    assert_eq!(
+        prepared_a
+            .boolean_boundary_traversal_report(&prepared_b, op, &policy)
+            .unwrap(),
+        HClassification::Decided(traversal_report.clone())
+    );
+    assert_eq!(
+        prepared_a
+            .boolean_boundary_traversal_report_against_region(&b.as_view(), op, &policy)
+            .unwrap(),
+        HClassification::Decided(traversal_report.clone())
+    );
+    assert_eq!(
+        a.as_view()
+            .boolean_boundary_traversal_report_against_prepared_region(&prepared_b, op, &policy)
+            .unwrap(),
+        HClassification::Decided(traversal_report.clone())
+    );
+    assert_eq!(
+        traversal_report.is_ready(),
+        matches!(
+            traversal_report.status,
+            HBooleanBoundaryTraversalStatus::Empty | HBooleanBoundaryTraversalStatus::LoopsReady
+        )
+    );
+    if let HClassification::Decided(loops) = &plain_loops {
+        if traversal_report.is_ready() {
+            assert_eq!(traversal_report.loops.as_ref(), Some(loops));
+            assert_eq!(traversal_report.blocker_reason, None);
+        }
+    } else {
+        assert!(!traversal_report.is_ready());
+        assert!(traversal_report.blocker_reason.is_some());
+    }
+
     if let HClassification::Decided(result) = &plain {
+        let report = match a
+            .boolean_region_report(&b, op, fill_rule, &policy)
+            .unwrap()
+        {
+            HClassification::Decided(report) => report,
+            HClassification::Uncertain(reason) => {
+                panic!("plain boolean report should match decided boolean result: {reason:?}")
+            }
+        };
+        assert_eq!(
+            prepared_a
+                .boolean_region_report(&prepared_b, op, fill_rule, &policy)
+                .unwrap(),
+            HClassification::Decided(report.clone())
+        );
+        assert_eq!(
+            prepared_a
+                .boolean_region_report_against_region(&b.as_view(), op, fill_rule, &policy)
+                .unwrap(),
+            HClassification::Decided(report.clone())
+        );
+        assert_eq!(
+            a.as_view()
+                .boolean_region_report_against_prepared_region(
+                    &prepared_b,
+                    op,
+                    fill_rule,
+                    &policy,
+                )
+                .unwrap(),
+            HClassification::Decided(report.clone())
+        );
+        assert_eq!(&report.result, result);
+        assert_eq!(
+            report.audit.is_valid(),
+            matches!(
+                report.audit.status,
+                HBooleanRegionAuditStatus::Empty | HBooleanRegionAuditStatus::Valid
+            )
+        );
         for contour in result
             .material_contours()
             .iter()
@@ -957,10 +1438,472 @@ pub fn h_assert_region_boolean(reader: &mut ByteReader<'_>) {
         h_assert_region_semantics(&a, &b, result, op);
     }
 
+    if let (HClassification::Decided(result), HClassification::Decided(contours)) =
+        (&plain, &plain_contours)
+    {
+        let report = match a
+            .boolean_region_pipeline_report(&b, op, fill_rule, &policy)
+            .unwrap()
+        {
+            HClassification::Decided(report) => report,
+            HClassification::Uncertain(reason) => {
+                panic!("plain pipeline report should match decided region: {reason:?}")
+            }
+        };
+        assert_eq!(
+            prepared_a
+                .boolean_region_pipeline_report(&prepared_b, op, fill_rule, &policy)
+                .unwrap(),
+            HClassification::Decided(report.clone())
+        );
+        assert_eq!(
+            prepared_a
+                .boolean_region_pipeline_report_against_region(
+                    &b.as_view(),
+                    op,
+                    fill_rule,
+                    &policy,
+                )
+                .unwrap(),
+            HClassification::Decided(report.clone())
+        );
+        assert_eq!(
+            a.as_view()
+                .boolean_region_pipeline_report_against_prepared_region(
+                    &prepared_b,
+                    op,
+                    fill_rule,
+                    &policy,
+                )
+                .unwrap(),
+            HClassification::Decided(report.clone())
+        );
+        assert_eq!(&report.result, result);
+        assert_eq!(&report.boundary_contours, contours);
+        assert_eq!(report.boundary_audit.contour_count, contours.len());
+        assert_eq!(report.nesting_audit.input_contour_count, contours.len());
+        assert_eq!(
+            report.nesting_audit.material_contour_count + report.nesting_audit.hole_contour_count,
+            contours.len()
+        );
+        assert_eq!(
+            report.region_audit.is_valid(),
+            matches!(
+                report.region_audit.status,
+                HBooleanRegionAuditStatus::Empty | HBooleanRegionAuditStatus::Valid
+            )
+        );
+    }
+
     if let HClassification::Decided(contours) = plain_contours {
+        let report = match a
+            .boolean_boundary_contour_report(&b, op, fill_rule, &policy)
+            .unwrap()
+        {
+            HClassification::Decided(report) => report,
+            HClassification::Uncertain(reason) => {
+                panic!("plain boundary report should match decided contours: {reason:?}")
+            }
+        };
+        assert_eq!(
+            prepared_a
+                .boolean_boundary_contour_report(&prepared_b, op, fill_rule, &policy)
+                .unwrap(),
+            HClassification::Decided(report.clone())
+        );
+        assert_eq!(
+            prepared_a
+                .boolean_boundary_contour_report_against_region(
+                    &b.as_view(),
+                    op,
+                    fill_rule,
+                    &policy,
+                )
+                .unwrap(),
+            HClassification::Decided(report.clone())
+        );
+        assert_eq!(
+            a.as_view()
+                .boolean_boundary_contour_report_against_prepared_region(
+                    &prepared_b,
+                    op,
+                    fill_rule,
+                    &policy,
+                )
+                .unwrap(),
+            HClassification::Decided(report.clone())
+        );
+        assert_eq!(&report.contours, &contours);
+        assert_eq!(
+            report.audit.is_valid(),
+            matches!(
+                report.audit.status,
+                HBooleanBoundaryAuditStatus::Empty | HBooleanBoundaryAuditStatus::Valid
+            )
+        );
         for contour in &contours {
             h_assert_contour_finite(contour);
         }
+    }
+
+    if let HClassification::Decided(loops) = plain_loops {
+        let report = match a
+            .boolean_boundary_loop_report(&b, op, fill_rule, &policy)
+            .unwrap()
+        {
+            HClassification::Decided(report) => report,
+            HClassification::Uncertain(reason) => {
+                panic!("plain boundary loop report should match decided loops: {reason:?}")
+            }
+        };
+        assert_eq!(
+            prepared_a
+                .boolean_boundary_loop_report(&prepared_b, op, fill_rule, &policy)
+                .unwrap(),
+            HClassification::Decided(report.clone())
+        );
+        assert_eq!(
+            prepared_a
+                .boolean_boundary_loop_report_against_region(
+                    &b.as_view(),
+                    op,
+                    fill_rule,
+                    &policy,
+                )
+                .unwrap(),
+            HClassification::Decided(report.clone())
+        );
+        assert_eq!(
+            a.as_view()
+                .boolean_boundary_loop_report_against_prepared_region(
+                    &prepared_b,
+                    op,
+                    fill_rule,
+                    &policy,
+                )
+                .unwrap(),
+            HClassification::Decided(report.clone())
+        );
+        assert_eq!(&report.loops, &loops);
+        assert_eq!(
+            report.audit.is_valid(),
+            matches!(
+                report.audit.status,
+                HBooleanBoundaryAuditStatus::Empty | HBooleanBoundaryAuditStatus::Valid
+            )
+        );
+        for contour in loops.to_contours(fill_rule).unwrap() {
+            h_assert_contour_finite(&contour);
+        }
+    }
+}
+
+/// Fuzz contract for adversarial degenerate boolean pairs.
+///
+/// This contract mirrors Yap's exactness contract (1997): every API flavor should
+/// return equivalent decided artifacts when called through plain, prepared, or mixed
+/// prepared/view call surfaces. It also keeps degeneracy blockers visible following
+/// Foster, Hormann, and Popa's treatment of boundary intersections (2019).
+pub fn h_assert_region_boolean_antagonistic_contract(reader: &mut ByteReader<'_>) {
+    let policy = h_policy();
+    let fill_rule = HFillRule::NonZero;
+    let _ = reader.byte();
+
+    let shared_edge_a = HRegion2::from_material_contours(vec![h_rectangle_contour(HRect {
+        xmin: 0.0,
+        ymin: 0.0,
+        xmax: 4.0,
+        ymax: 4.0,
+    })]);
+    let shared_edge_b = HRegion2::from_material_contours(vec![h_rectangle_contour(HRect {
+        xmin: 2.0,
+        ymin: -2.0,
+        xmax: 6.0,
+        ymax: 0.0,
+    })]);
+    let point_touch_a = HRegion2::from_material_contours(vec![h_rectangle_contour(HRect {
+        xmin: 0.0,
+        ymin: 0.0,
+        xmax: 2.0,
+        ymax: 2.0,
+    })]);
+    let point_touch_b = HRegion2::from_material_contours(vec![h_rectangle_contour(HRect {
+        xmin: 2.0,
+        ymin: 2.0,
+        xmax: 4.0,
+        ymax: 4.0,
+    })]);
+    let hole_outer = HRegion2::new(
+        vec![h_rectangle_contour(HRect {
+            xmin: 0.0,
+            ymin: 0.0,
+            xmax: 12.0,
+            ymax: 12.0,
+        })],
+        vec![h_rectangle_contour(HRect {
+            xmin: 4.0,
+            ymin: 4.0,
+            xmax: 8.0,
+            ymax: 8.0,
+        })],
+    );
+    let hole_strip = HRegion2::from_material_contours(vec![h_rectangle_contour(HRect {
+        xmin: 6.0,
+        ymin: 2.0,
+        xmax: 10.0,
+        ymax: 10.0,
+    })]);
+
+    let cases: [(
+        HRegion2,
+        HRegion2,
+        HBooleanBoundaryTraversalStatus,
+        Option<HUncertaintyReason>,
+    ); 3] = [
+        (
+            shared_edge_a,
+            shared_edge_b,
+            HBooleanBoundaryTraversalStatus::UnresolvedBoundaries,
+            Some(HUncertaintyReason::Boundary),
+        ),
+        (
+            point_touch_a,
+            point_touch_b,
+            HBooleanBoundaryTraversalStatus::UnsupportedTraversal,
+            Some(HUncertaintyReason::Unsupported),
+        ),
+        (
+            hole_outer,
+            hole_strip,
+            HBooleanBoundaryTraversalStatus::LoopsReady,
+            None,
+        ),
+    ];
+
+    for (left, right, expected_status, expected_blocker) in cases {
+        let left_prepared = left.prepare_topology_queries(&policy);
+        let right_prepared = right.prepare_topology_queries(&policy);
+
+        let traversal = match left
+            .boolean_boundary_traversal_report(&right, HBooleanOp::Union, &policy)
+            .unwrap()
+        {
+            HClassification::Decided(report) => report,
+            HClassification::Uncertain(reason) => {
+                panic!("antagonistic contract traversal should be decided: {reason:?}")
+            }
+        };
+        h_assert_traversal_report_invariants(&traversal, expected_status, expected_blocker);
+        assert_eq!(
+            left_prepared
+                .boolean_boundary_traversal_report(&right_prepared, HBooleanOp::Union, &policy)
+                .unwrap(),
+            HClassification::Decided(traversal.clone())
+        );
+        assert_eq!(
+            left_prepared
+                .boolean_boundary_traversal_report_against_region(
+                    &right.as_view(),
+                    HBooleanOp::Union,
+                    &policy,
+                )
+                .unwrap(),
+            HClassification::Decided(traversal.clone())
+        );
+        assert_eq!(
+            left.as_view()
+                .boolean_boundary_traversal_report_against_prepared_region(
+                    &right_prepared,
+                    HBooleanOp::Union,
+                    &policy,
+                )
+                .unwrap(),
+            HClassification::Decided(traversal)
+        );
+
+        let region = match left.boolean_region(&right, HBooleanOp::Union, fill_rule, &policy).unwrap() {
+            HClassification::Decided(region) => region,
+            HClassification::Uncertain(reason) => {
+                panic!("antagonistic contract plain region boolean should be decided: {reason:?}")
+            }
+        };
+        let boundary_contour_report = match left
+            .boolean_boundary_contour_report(&right, HBooleanOp::Union, fill_rule, &policy)
+            .unwrap()
+        {
+            HClassification::Decided(report) => report,
+            HClassification::Uncertain(reason) => {
+                panic!("antagonistic contract boundary contour report should be decided: {reason:?}")
+            }
+        };
+        let boundary_loop_report = match left
+            .boolean_boundary_loop_report(&right, HBooleanOp::Union, fill_rule, &policy)
+            .unwrap()
+        {
+            HClassification::Decided(report) => report,
+            HClassification::Uncertain(reason) => {
+                panic!("antagonistic contract boundary loop report should be decided: {reason:?}")
+            }
+        };
+        let region_report = match left
+            .boolean_region_report(&right, HBooleanOp::Union, fill_rule, &policy)
+            .unwrap()
+        {
+            HClassification::Decided(report) => report,
+            HClassification::Uncertain(reason) => {
+                panic!("antagonistic contract region report should be decided: {reason:?}")
+            }
+        };
+        let pipeline_report = match left
+            .boolean_region_pipeline_report(&right, HBooleanOp::Union, fill_rule, &policy)
+            .unwrap()
+        {
+            HClassification::Decided(report) => report,
+            HClassification::Uncertain(reason) => {
+                panic!("antagonistic contract pipeline report should be decided: {reason:?}")
+            }
+        };
+
+        assert_eq!(boundary_loop_report.operation, HBooleanOp::Union);
+        assert_eq!(boundary_contour_report.operation, HBooleanOp::Union);
+        assert_eq!(region_report.operation, HBooleanOp::Union);
+        assert_eq!(pipeline_report.operation, HBooleanOp::Union);
+
+        assert_eq!(&region_report.result, &region);
+        assert_eq!(&pipeline_report.result, &region);
+        assert_eq!(
+            &pipeline_report.boundary_contours,
+            &boundary_contour_report.contours
+        );
+        assert_eq!(boundary_loop_report.loops.len(), boundary_contour_report.contours.len());
+        h_assert_boundary_audit_is_valid(&boundary_contour_report.audit);
+        h_assert_boundary_audit_is_valid(&boundary_loop_report.audit);
+        h_assert_region_audit_is_valid(&region_report.audit);
+        h_assert_boundary_audit_is_valid(&pipeline_report.boundary_audit);
+        assert!(pipeline_report.nesting_audit.is_valid());
+        h_assert_region_audit_is_valid(&pipeline_report.region_audit);
+        assert_eq!(
+            pipeline_report.boundary_audit.contour_count,
+            boundary_contour_report.contours.len()
+        );
+        assert_eq!(
+            pipeline_report.nesting_audit.material_contour_count
+                + pipeline_report.nesting_audit.hole_contour_count,
+            boundary_contour_report.contours.len()
+        );
+
+        assert_eq!(
+            left_prepared
+                .boolean_boundary_contour_report(&right_prepared, HBooleanOp::Union, fill_rule, &policy)
+                .unwrap(),
+            HClassification::Decided(boundary_contour_report.clone())
+        );
+        assert_eq!(
+            left_prepared
+                .boolean_boundary_contour_report_against_region(
+                    &right.as_view(),
+                    HBooleanOp::Union,
+                    fill_rule,
+                    &policy,
+                )
+                .unwrap(),
+            HClassification::Decided(boundary_contour_report.clone())
+        );
+        assert_eq!(
+            left
+                .as_view()
+                .boolean_boundary_contour_report_against_prepared_region(
+                    &right_prepared,
+                    HBooleanOp::Union,
+                    fill_rule,
+                    &policy,
+                )
+                .unwrap(),
+            HClassification::Decided(boundary_contour_report.clone())
+        );
+        assert_eq!(
+            left_prepared
+                .boolean_boundary_loop_report(&right_prepared, HBooleanOp::Union, fill_rule, &policy)
+                .unwrap(),
+            HClassification::Decided(boundary_loop_report.clone())
+        );
+        assert_eq!(
+            left_prepared
+                .boolean_boundary_loop_report_against_region(
+                    &right.as_view(),
+                    HBooleanOp::Union,
+                    fill_rule,
+                    &policy,
+                )
+                .unwrap(),
+            HClassification::Decided(boundary_loop_report.clone())
+        );
+        assert_eq!(
+            left
+                .as_view()
+                .boolean_boundary_loop_report_against_prepared_region(
+                    &right_prepared,
+                    HBooleanOp::Union,
+                    fill_rule,
+                    &policy,
+                )
+                .unwrap(),
+            HClassification::Decided(boundary_loop_report.clone())
+        );
+
+        assert_eq!(
+            left_prepared
+                .boolean_region_report(&right_prepared, HBooleanOp::Union, fill_rule, &policy)
+                .unwrap(),
+            HClassification::Decided(region_report.clone())
+        );
+        assert_eq!(
+            left_prepared
+                .boolean_region_report_against_region(&right.as_view(), HBooleanOp::Union, fill_rule, &policy)
+                .unwrap(),
+            HClassification::Decided(region_report.clone())
+        );
+        assert_eq!(
+            left
+                .as_view()
+                .boolean_region_report_against_prepared_region(
+                    &right_prepared,
+                    HBooleanOp::Union,
+                    fill_rule,
+                    &policy,
+                )
+                .unwrap(),
+            HClassification::Decided(region_report.clone())
+        );
+        assert_eq!(
+            left_prepared
+                .boolean_region_pipeline_report(&right_prepared, HBooleanOp::Union, fill_rule, &policy)
+                .unwrap(),
+            HClassification::Decided(pipeline_report.clone())
+        );
+        assert_eq!(
+            left_prepared
+                .boolean_region_pipeline_report_against_region(
+                    &right.as_view(),
+                    HBooleanOp::Union,
+                    fill_rule,
+                    &policy,
+                )
+                .unwrap(),
+            HClassification::Decided(pipeline_report.clone())
+        );
+        assert_eq!(
+            left
+                .as_view()
+                .boolean_region_pipeline_report_against_prepared_region(
+                    &right_prepared,
+                    HBooleanOp::Union,
+                    fill_rule,
+                    &policy,
+                )
+                .unwrap(),
+            HClassification::Decided(pipeline_report.clone())
+        );
     }
 }
 
@@ -1466,6 +2409,53 @@ pub fn h_assert_boolean_boundary_pipeline(reader: &mut ByteReader<'_>) {
             .unwrap(),
         plain_loops
     );
+    if let HClassification::Decided(loops) = &plain_loops {
+        let report = match a
+            .boolean_boundary_loop_report(&b, op, fill_rule, &policy)
+            .unwrap()
+        {
+            HClassification::Decided(report) => report,
+            HClassification::Uncertain(reason) => {
+                panic!("plain boundary loop report should match decided loops: {reason:?}")
+            }
+        };
+        assert_eq!(
+            prepared_a
+                .boolean_boundary_loop_report(&prepared_b, op, fill_rule, &policy)
+                .unwrap(),
+            HClassification::Decided(report.clone())
+        );
+        assert_eq!(
+            prepared_a
+                .boolean_boundary_loop_report_against_region(
+                    &b.as_view(),
+                    op,
+                    fill_rule,
+                    &policy,
+                )
+                .unwrap(),
+            HClassification::Decided(report.clone())
+        );
+        assert_eq!(
+            a.as_view()
+                .boolean_boundary_loop_report_against_prepared_region(
+                    &prepared_b,
+                    op,
+                    fill_rule,
+                    &policy,
+                )
+                .unwrap(),
+            HClassification::Decided(report.clone())
+        );
+        assert_eq!(&report.loops, loops);
+        assert_eq!(
+            report.audit.is_valid(),
+            matches!(
+                report.audit.status,
+                HBooleanBoundaryAuditStatus::Empty | HBooleanBoundaryAuditStatus::Valid
+            )
+        );
+    }
 
     let plain_contours = a
         .boolean_boundary_contours(&b, op, fill_rule, &policy)
@@ -1525,6 +2515,29 @@ pub fn h_assert_boolean_boundary_pipeline(reader: &mut ByteReader<'_>) {
             HRegion2::from_boundary_contours(contours.clone(), &policy).unwrap()
         {
             assert_eq!(rebuilt, *region);
+            let report = match HRegion2::from_boundary_contours_report(contours.clone(), &policy)
+                .unwrap()
+            {
+                HClassification::Decided(report) => report,
+                HClassification::Uncertain(reason) => {
+                    panic!("decided contour nesting should also have a report: {reason:?}")
+                }
+            };
+            assert_eq!(&report.result, region);
+            assert_eq!(
+                report.audit.status,
+                if contours.is_empty() {
+                    HBoundaryContourNestingStatus::Empty
+                } else {
+                    HBoundaryContourNestingStatus::Valid
+                }
+            );
+            assert!(report.audit.is_valid());
+            assert_eq!(report.audit.input_contour_count, contours.len());
+            assert_eq!(
+                report.audit.material_contour_count + report.audit.hole_contour_count,
+                contours.len()
+            );
         }
     }
 }
@@ -2626,7 +3639,7 @@ fn h_assert_bezier_point_image_fits(reader: &mut ByteReader<'_>) {
 
 /// Aggregate hypercurve fuzz entrypoint covering public APIs and cross-path invariants.
 pub fn h_assert_full_api(reader: &mut ByteReader<'_>) {
-    match reader.byte() % 14 {
+    match reader.byte() % 15 {
         0 => h_assert_segment_intersections(reader),
         1 => h_assert_segment_containment_and_reversal(reader),
         2 => h_assert_contour_region_classification(reader),
@@ -2640,6 +3653,7 @@ pub fn h_assert_full_api(reader: &mut ByteReader<'_>) {
         10 => h_assert_polyline_reconstruction(reader),
         11 => h_assert_bezier_conic_relations(reader),
         12 => h_assert_bezier_point_image_fits(reader),
+        13 => h_assert_region_boolean_antagonistic_contract(reader),
         _ => h_assert_adversarial_polygon_pipeline(reader),
     }
 }

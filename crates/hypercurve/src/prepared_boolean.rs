@@ -36,6 +36,108 @@ pub(crate) fn boolean_boundary_loops_between_prepared(
 ) -> CurveResult<Classification<BooleanBoundaryLoopSet>> {
     let first_view = first.as_region_view();
     let second_view = second.as_region_view();
+    if crate::region_boolean::same_region_view(&first_view, &second_view) {
+        return Ok(Classification::Decided(BooleanBoundaryLoopSet::from_contours(
+            match op {
+                BooleanOp::Union | BooleanOp::Intersection => {
+                    crate::region_boolean::clone_boundary_contours(&first_view)
+                }
+                BooleanOp::Difference | BooleanOp::Xor => Vec::new(),
+            },
+        )));
+    }
+    if first_view.is_empty() || second_view.is_empty() {
+        return Ok(Classification::Decided(BooleanBoundaryLoopSet::from_contours(
+            crate::region_boolean::empty_operand_boundary_contours(&first_view, &second_view, op),
+        )));
+    }
+        match crate::region_boolean::coextensive_axis_rect_region_boolean(
+            &first_view,
+            &second_view,
+            op,
+            policy,
+        )? {
+            Classification::Decided(Some(region)) => {
+                return Ok(Classification::Decided(BooleanBoundaryLoopSet::from_contours(
+                    crate::region_boolean::clone_boundary_contours(&region.as_view()),
+                )));
+            }
+            Classification::Decided(None) => {}
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        }
+        match boundary_contact_resolution_prepared(first, second, policy)? {
+        // Shared-boundary topology is resolved to explicit closed contours above the
+        // traversal graph, matching the plain-path contract from
+        // `boundary_contact_boundary_contours_prepared`.
+        // This follows Greiner and Hormann's split-and-classify stage for polygon
+        // clipping and preserves `Boundary` uncertainty as a pre-loop signal.
+        // G. Greiner and K. Hormann, "Efficient clipping of arbitrary polygons,"
+        // ACM Transactions on Graphics 17(2), 71-83, 1998.
+        // The containment branch mirrors the selection decomposition from
+        // Martinez et al., "A new algorithm for computing Boolean operations on
+        // polygons," Computers & Geosciences 35(6), 1177-1185, 2009.
+        Classification::Decided(Some(PreparedBoundaryContactResolution::BoundaryOnly(kind))) => {
+            return boundary_contact_boundary_contours_prepared(
+                first,
+                second,
+                op,
+                FillRule::NonZero,
+                policy,
+                kind,
+            )
+            .map(|contours| contours.map(BooleanBoundaryLoopSet::from_contours));
+        }
+        Classification::Decided(Some(PreparedBoundaryContactResolution::Containment {
+            relation,
+            contact,
+        })) => {
+            if let Some(contours) =
+                containment_boundary_contours_prepared(first, second, op, relation)
+            {
+                return Ok(Classification::Decided(BooleanBoundaryLoopSet::from_contours(
+                    contours,
+                )));
+            }
+            if relation == crate::region_boolean::BoundaryContainmentRelation::FirstContainsSecond
+                && contact == PreparedBoundaryContactKind::Overlap
+                && op == BooleanOp::Difference
+            {
+                return containment_difference_boundary_contours_prepared(
+                    first,
+                    second,
+                    FillRule::NonZero,
+                    policy,
+                )
+                .map(|contours| contours.map(BooleanBoundaryLoopSet::from_contours));
+            }
+        }
+        Classification::Decided(None) => {
+            // Union overlap is decided through contour reconstruction to preserve a
+            // shared-edge fast path before entering fragment traversal.
+            if op == BooleanOp::Union
+                && crate::region_boolean::region_boundary_has_overlap(
+                    &first_view,
+                    &second_view,
+                    policy,
+                )?
+            {
+                return boundary_overlap_union_contours_prepared(
+                    first,
+                    second,
+                    BooleanOp::Union,
+                    FillRule::NonZero,
+                    policy,
+                )
+                .map(|contours| contours.map(BooleanBoundaryLoopSet::from_contours));
+            }
+        }
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    }
+    if op == BooleanOp::Xor {
+            return xor_boundary_contours_by_prepared_region(first, second, FillRule::NonZero, policy)
+                .map(|contours| contours.map(BooleanBoundaryLoopSet::from_contours));
+    }
+
     let intersections = first.intersect_prepared_region(second, policy)?;
 
     let fragments = match intersections.split_regions(&first_view, &second_view, policy)? {
@@ -83,6 +185,20 @@ pub(crate) fn boolean_boundary_contours_between_prepared(
         return Ok(Classification::Decided(
             crate::region_boolean::empty_operand_boundary_contours(&first_view, &second_view, op),
         ));
+    }
+    match crate::region_boolean::coextensive_axis_rect_region_boolean(
+        &first_view,
+        &second_view,
+        op,
+        policy,
+    )? {
+        Classification::Decided(Some(region)) => {
+            return Ok(Classification::Decided(
+                crate::region_boolean::clone_boundary_contours(&region.as_view()),
+            ));
+        }
+        Classification::Decided(None) => {}
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     }
     match boundary_contact_resolution_prepared(first, second, policy)? {
         Classification::Decided(Some(PreparedBoundaryContactResolution::BoundaryOnly(kind))) => {
@@ -144,6 +260,16 @@ pub(crate) fn boolean_region_between_prepared(
         return Ok(Classification::Decided(
             crate::region_boolean::empty_operand_region(&first_view, &second_view, op),
         ));
+    }
+    match crate::region_boolean::coextensive_axis_rect_region_boolean(
+        &first_view,
+        &second_view,
+        op,
+        policy,
+    )? {
+        Classification::Decided(Some(region)) => return Ok(Classification::Decided(region)),
+        Classification::Decided(None) => {}
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     }
     match boundary_contact_resolution_prepared(first, second, policy)? {
         Classification::Decided(Some(PreparedBoundaryContactResolution::BoundaryOnly(kind))) => {
@@ -633,7 +759,7 @@ fn boundary_contact_region_prepared(
     }))
 }
 
-fn classify_fragments_with_prepared_regions(
+pub(crate) fn classify_fragments_with_prepared_regions(
     fragments: &RegionFragmentSet,
     first: &PreparedRegionView2<'_>,
     second: &PreparedRegionView2<'_>,

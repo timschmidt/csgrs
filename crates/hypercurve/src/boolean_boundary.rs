@@ -6,7 +6,10 @@
 
 use crate::boolean::BooleanFragmentClassification;
 use crate::classify::is_zero;
-use crate::{Classification, Contour2, CurvePolicy, CurveResult, FillRule, Segment2};
+use crate::{
+    Classification, Contour2, CurvePolicy, CurveResult, FillRule, RegionContourKey,
+    RegionContourRole, RegionSide, Segment2,
+};
 
 /// A selected fragment with geometry already oriented for result traversal.
 #[derive(Clone, Debug, PartialEq)]
@@ -319,6 +322,39 @@ pub struct BooleanBoundaryLoopSet {
 impl BooleanBoundaryLoopSet {
     /// Constructs a loop set from already-extracted loops.
     pub const fn new(loops: Vec<BooleanBoundaryLoop>) -> Self {
+        Self { loops }
+    }
+
+    /// Builds a loop set from already-decided closed contours.
+    ///
+    /// When higher-level boolean stages have already regularized a degenerate
+    /// boundary-contact case to a set of closed contours (for example, when two
+    /// boundaries share an edge that is a known full-seam overlap), the
+    /// remaining work is structural transfer, not graph reconstruction. This
+    /// conversion keeps the topological decision external to contour construction,
+    /// matching the graph extraction model used by G. Greiner and K. Hormann while
+    /// preserving the contour-only assumptions in `Contour2` as boundary facts
+    /// rather than topology claims.
+    ///
+    /// Greiner and Hormann, "Efficient clipping of arbitrary polygons," ACM TOG 17(2),
+    /// 71-83, 1998.
+    pub fn from_contours(contours: Vec<Contour2>) -> Self {
+        let mut loops = Vec::with_capacity(contours.len());
+
+        for (index, contour) in contours.into_iter().enumerate() {
+            let fragments = contour
+                .segments()
+                .iter()
+                .enumerate()
+                .map(|(fragment_index, segment)| DirectedBooleanFragment {
+                    key: RegionContourKey::new(RegionSide::First, RegionContourRole::Material, index),
+                    fragment_index,
+                    segment: segment.clone(),
+                })
+                .collect();
+            loops.push(BooleanBoundaryLoop::new(fragments));
+        }
+
         Self { loops }
     }
 

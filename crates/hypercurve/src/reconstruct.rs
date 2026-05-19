@@ -243,6 +243,24 @@ impl CurveString2 {
         Self::import_finite_line_string(points).map(FiniteCurveStringImport2::into_curve_string)
     }
 
+    /// Constructs an open line-segment curve string from an iterator of finite
+    /// `f64` points.
+    ///
+    /// This is the ownership-friendly counterpart to
+    /// [`CurveString2::from_finite_line_string`] for callers that generate
+    /// finite boundary samples lazily. The samples are still a boundary import:
+    /// they are collected, promoted to [`Real`], and stored as native line
+    /// geometry before topology-sensitive work proceeds. This follows Yap,
+    /// "Towards Exact Geometric Computation," *Computational Geometry* 7(1-2),
+    /// 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+    pub fn from_finite_point_iter<I>(points: I) -> CurveResult<Self>
+    where
+        I: IntoIterator<Item = [f64; 2]>,
+    {
+        let points = points.into_iter().collect::<Vec<_>>();
+        Self::from_finite_line_string(&points)
+    }
+
     /// Imports an open finite line string and returns an audit certificate.
     ///
     /// Adjacent duplicate finite points are not represented as zero-length
