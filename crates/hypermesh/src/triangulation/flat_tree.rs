@@ -48,6 +48,7 @@ where
     //}
 }
 
+#[allow(dead_code)]
 pub fn query_two_d_tree<F>(pts: &[Pt], r: Rect, mut f: F)
 where
     F: FnMut(&Pt),
@@ -156,6 +157,7 @@ impl Rect {
         a_min.max(a_max)
     }
 
+    #[allow(dead_code)]
     pub fn overlap(&self, r: &Rect) -> bool {
         self.max.x >= r.min.x
             && self.max.y >= r.min.y

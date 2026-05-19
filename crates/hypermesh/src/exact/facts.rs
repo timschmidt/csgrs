@@ -9,6 +9,8 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use super::provenance::PredicateUse;
 use super::scalar::ExactReal;
+use super::validation::validate_triangles;
+use hyperlimit::Point3;
 
 /// Facts known for one mesh vertex.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -204,6 +206,9 @@ pub enum MeshFactsValidationError {
         /// Value stored in the summary.
         actual: bool,
     },
+    /// Recomputing facts from the supplied source vertices and triangle rows
+    /// did not reproduce this retained fact object.
+    SourceReplayMismatch,
     /// A vertex fact is stored at a different slot than its retained index.
     VertexIndexMismatch {
         /// Slot in the retained vertex table.
@@ -511,6 +516,29 @@ impl MeshValidationFacts {
         }
 
         Ok(())
+    }
+
+    /// Validate retained mesh facts against exact source geometry and topology.
+    ///
+    /// Local validation proves that the retained summary, vertex, edge, and
+    /// face tables are internally coherent. Source replay rebuilds those facts
+    /// from `points` and `triangles` and requires the retained object to match
+    /// the replay. This follows Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7.1-2 (1997): object-level structural facts
+    /// remain reusable only while they can be audited against the exact source
+    /// objects they summarize.
+    pub fn validate_against_sources(
+        &self,
+        points: &[Point3],
+        triangles: &[[usize; 3]],
+    ) -> Result<(), MeshFactsValidationError> {
+        self.validate()?;
+        let replay = validate_triangles(points, triangles);
+        if self == &replay.facts {
+            Ok(())
+        } else {
+            Err(MeshFactsValidationError::SourceReplayMismatch)
+        }
     }
 }
 

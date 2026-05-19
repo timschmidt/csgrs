@@ -67,6 +67,9 @@ pub enum CoplanarTriangleValidationError {
     MissingVertexLocations,
     /// Retained edge and vertex facts derive a different relation.
     RelationMismatch,
+    /// Recomputing the classifier from the supplied source triangles did not
+    /// reproduce this retained report.
+    SourceReplayMismatch,
 }
 
 impl CoplanarTriangleRelation {
@@ -147,6 +150,35 @@ impl CoplanarTriangleClassification {
             Ok(())
         } else {
             Err(CoplanarTriangleValidationError::RelationMismatch)
+        }
+    }
+
+    /// Validate this coplanar classifier against the source point and triangle handles.
+    ///
+    /// Local validation checks that retained projected edge and containment
+    /// facts imply the relation. Source replay recomputes the projection
+    /// selection, projected segment predicates, and point-in-triangle
+    /// predicates from `points`, `left`, and `right`, then requires exact
+    /// equality with the retained classifier. This follows Yap, "Towards Exact
+    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997), and the
+    /// coplanar predicate decomposition of Guigue and Devillers, "Fast and
+    /// Robust Triangle-Triangle Overlap Test Using Orientation Predicates,"
+    /// *Journal of Graphics Tools* 8.1 (2003).
+    pub fn validate_against_sources(
+        &self,
+        points: &[Point3],
+        left: [usize; 3],
+        right: [usize; 3],
+    ) -> Result<(), CoplanarTriangleValidationError> {
+        self.validate()?;
+        if !indices_in_range(points, left) || !indices_in_range(points, right) {
+            return Err(CoplanarTriangleValidationError::SourceReplayMismatch);
+        }
+        let replay = classify_coplanar_triangles(points, left, right);
+        if self == &replay {
+            Ok(())
+        } else {
+            Err(CoplanarTriangleValidationError::SourceReplayMismatch)
         }
     }
 }
@@ -270,6 +302,10 @@ fn project_triangle(
         project_point(&points[tri[1]], projection),
         project_point(&points[tri[2]], projection),
     ]
+}
+
+fn indices_in_range(points: &[Point3], indices: [usize; 3]) -> bool {
+    indices.iter().all(|&index| index < points.len())
 }
 
 fn project_point(point: &Point3, projection: CoplanarProjection) -> Point2 {

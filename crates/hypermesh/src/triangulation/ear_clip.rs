@@ -42,6 +42,7 @@ impl Ecvt {
     pub fn dir_l(&self) -> Vec2 {
         self.ptr_l().borrow().dir
     }
+    #[allow(dead_code)]
     pub fn dir_r(&self) -> Vec2 {
         self.ptr_r().borrow().dir
     }
@@ -627,11 +628,9 @@ impl EarClip {
         let eb = end.borrow();
         let p_end = end.borrow().pos;
         let p_bgn = bgn.borrow().pos;
-        let mut con = if p_end.x < p_bgn.x {
-            eb.ptr_r()
-        } else if eb.pos_r().x < p_bgn.x {
-            Rc::clone(end)
-        } else if eb.pos_r().y - p_bgn.y > p_bgn.y - p_end.y {
+        let mut con = if p_end.x >= p_bgn.x
+            && (eb.pos_r().x < p_bgn.x || eb.pos_r().y - p_bgn.y > p_bgn.y - p_end.y)
+        {
             Rc::clone(end)
         } else {
             eb.ptr_r()

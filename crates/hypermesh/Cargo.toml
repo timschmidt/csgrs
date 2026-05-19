@@ -40,7 +40,6 @@ exact = ["dep:hyperlattice", "dep:hyperlimit", "dep:hyperreal"]
 exact-triangulation = ["exact", "dep:hypertri", "hypertri/earcut"]
 legacy-boolean = ["dep:glam"]
 verbose = []
-f32 = ["legacy-boolean"]
 rayon = ["legacy-boolean", "dep:rayon"]
 
 bevy = [

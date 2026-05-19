@@ -1,18 +1,14 @@
 //--- Copyright (C) 2025 Saki Komikado <komietty@gmail.com>,
 //--- This Source Code Form is subject to the terms of the Mozilla Public License v.2.0.
 
-#[cfg(feature = "f32")]
 mod precision {
-    pub type Vec2 = glam::Vec2;
-    pub type Vec3 = glam::Vec3A;
-    pub type Vec4 = glam::Vec4;
-    pub type Mat3 = glam::Mat3A;
-    pub type Real = f32;
-    pub const K_PRECISION: Real = 1e-4;
-}
-
-#[cfg(not(feature = "f32"))]
-mod precision {
+    //! Primitive-float carriers for the gated legacy adapter.
+    //!
+    //! The exact API uses `hyperreal::Real`; this module exists only for the
+    //! boolmesh-derived compatibility path. Keeping one f64 adapter instead of
+    //! an f32/f64 topology split narrows the primitive-float surface and keeps
+    //! these aliases outside the Yap-style retained exact predicate and
+    //! construction-fact runtime.
     pub type Vec2 = glam::DVec2;
     pub type Vec3 = glam::DVec3;
     pub type Vec4 = glam::DVec4;
@@ -26,7 +22,7 @@ pub type Vec3u = glam::USizeVec3;
 pub use precision::{K_PRECISION, Mat3, Real, Vec2, Vec3, Vec4};
 pub const K_BEST: Real = Real::MIN;
 
-#[derive(PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum OpType {
     Add,
     Subtract,

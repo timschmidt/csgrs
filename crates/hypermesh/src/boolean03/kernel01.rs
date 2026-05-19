@@ -40,20 +40,21 @@ pub fn intersect(pl: Vec3, pr: Vec3, ql: Vec3, qr: Vec3) -> Vec4 {
     if lambda.is_infinite() || lambda.is_nan() {
         lambda = 0.;
     }
-    let mut xyzz = Vec4::default();
-    xyzz.x = lambda * dx + if use_l { pl.x } else { pr.x };
     let p_dy = pr.y - pl.y;
     let q_dy = qr.y - ql.y;
     let use_p = p_dy.abs() < q_dy.abs();
-    xyzz.y = lambda * if use_p { p_dy } else { q_dy }
+    let y = lambda * if use_p { p_dy } else { q_dy }
         + (if use_l {
             if use_p { pl.y } else { ql.y }
         } else {
             if use_p { pr.y } else { qr.y }
         });
-    xyzz.z = lambda * (pr.z - pl.z) + if use_l { pl.z } else { pr.z };
-    xyzz.w = lambda * (qr.z - ql.z) + if use_l { ql.z } else { qr.z };
-    xyzz
+    Vec4::new(
+        lambda * dx + if use_l { pl.x } else { pr.x },
+        y,
+        lambda * (pr.z - pl.z) + if use_l { pl.z } else { pr.z },
+        lambda * (qr.z - ql.z) + if use_l { ql.z } else { qr.z },
+    )
 }
 
 pub fn shadows(p: Real, q: Real, dir: Real) -> bool {

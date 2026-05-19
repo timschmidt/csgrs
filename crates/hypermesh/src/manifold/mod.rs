@@ -41,10 +41,10 @@ impl Manifold {
     /// validates primitive-float input before it reaches epsilon-based legacy
     /// code.
     pub fn new(pos: &[f64], idx: &[usize]) -> Result<Self, String> {
-        if pos.len() % 3 != 0 {
+        if !pos.len().is_multiple_of(3) {
             return Err("pos must be a multiple of 3".into());
         }
-        if idx.len() % 3 != 0 {
+        if !idx.len().is_multiple_of(3) {
             return Err("idx must be a multiple of 3".into());
         }
         if let Some(i) = pos.iter().position(|coordinate| !coordinate.is_finite()) {
@@ -287,7 +287,7 @@ pub fn cleanup_unused_verts(ps: &mut Vec<Vec3>, hs: &mut Vec<Half>) {
     // truncate pos container
     let nv = new2old
         .iter()
-        .position(|&v| mt[v] >= K_NO_CODE)
+        .position(|&v| mt[v] == K_NO_CODE)
         .unwrap_or(new2old.len());
 
     new2old.truncate(nv);

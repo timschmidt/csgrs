@@ -3,13 +3,14 @@
 //! This module keeps sheet/surface shortcuts separate from volumetric convex
 //! shortcuts. The certified cases are intentionally narrow: single coplanar
 //! triangle containment, positive-area intersection, convex union, simple
-//! single-loop planar-arrangement union/difference, and the convex one-corner
-//! difference shapes that can be represented as an open triangle mesh. The
+//! single-loop planar-arrangement union/difference, one-hole and bounded
+//! multi-hole differences, and the convex one-corner difference shapes that
+//! can be represented as an open triangle mesh. The
 //! predicates are the same projected orientation and point-in-triangle facts
 //! used by the coplanar overlap classifier, following
 //! Yap, "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
 //! (1997): topology claims are emitted only when the combinatorial relation is
-//! certified, and missing output models such as holed sheets remain explicit.
+//! certified, and missing general planar-cell output models remain explicit.
 //!
 //! The underlying coplanar test follows the orientation-predicate style of
 //! Guigue and Devillers, "Fast and Robust Triangle-Triangle Overlap Test Using
@@ -108,6 +109,9 @@ pub enum CoplanarSurfaceContainmentReportError {
     InvalidCoplanarClassifier,
     /// The retained classifier relations do not justify the report status.
     StatusRelationMismatch,
+    /// The retained classifiers no longer match classifiers recomputed from
+    /// the supplied source meshes.
+    SourceReplayMismatch,
 }
 
 impl CoplanarSurfaceContainmentReport {
@@ -183,6 +187,33 @@ impl CoplanarSurfaceContainmentReport {
                 }
                 Ok(())
             }
+        }
+    }
+
+    /// Validate this report against the source meshes that produced it.
+    ///
+    /// [`Self::validate`] checks that retained classifier artifacts agree with
+    /// the stored status. This stronger source-aware check recomputes the
+    /// single-triangle containment report from `left` and `right`, then
+    /// compares the retained status and classifiers with that replay. This is
+    /// the same exact-computation discipline Yap advocates in "Towards Exact
+    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997): a
+    /// shortcut certificate is not only locally well-formed, it must remain
+    /// attached to the source objects whose predicates justified it.
+    pub fn validate_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<(), CoplanarSurfaceContainmentReportError> {
+        self.validate()?;
+        let replay = certify_single_triangle_coplanar_containment_report(left, right);
+        if self.status == replay.status
+            && self.triangle == replay.triangle
+            && self.coplanar == replay.coplanar
+        {
+            Ok(())
+        } else {
+            Err(CoplanarSurfaceContainmentReportError::SourceReplayMismatch)
         }
     }
 }
@@ -272,6 +303,38 @@ impl CoplanarTriangleIntersection {
             "coplanar intersection",
         )
     }
+
+    /// Validate this intersection output against the source meshes.
+    ///
+    /// Local validation proves the retained polygon and mesh agree with each
+    /// other. Source replay recomputes the exact Sutherland-Hodgman clipped
+    /// intersection from `left` and `right` and requires the retained object to
+    /// match that replay. This keeps the shortcut output tied to its certified
+    /// predicate history, following Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7.1-2 (1997), and the clipping construction of
+    /// Sutherland and Hodgman, "Reentrant Polygon Clipping," *Communications of
+    /// the ACM* 17.1 (1974).
+    pub fn validate_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<(), MeshError> {
+        self.validate()?;
+        let replay = intersect_single_triangle_coplanar_surfaces(left, right).ok_or_else(|| {
+            surface_validation_error(
+                "coplanar intersection",
+                "source replay did not reproduce a positive-area intersection",
+            )
+        })?;
+        if self == &replay {
+            Ok(())
+        } else {
+            Err(surface_validation_error(
+                "coplanar intersection",
+                "retained intersection does not match source replay",
+            ))
+        }
+    }
 }
 
 /// Exact convex union of two single-triangle coplanar sheets.
@@ -314,6 +377,25 @@ pub struct CoplanarTriangleArrangement {
     pub mesh: ExactMesh,
 }
 
+/// Coplanar surface arrangement operation used for source-aware output replay.
+///
+/// The retained arrangement output is operation-specific: the same two source
+/// sheets may have different certified loops for union, intersection, and
+/// difference. Passing the operation explicitly keeps the replay check inside
+/// Yap's "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+/// (1997), model of auditable computation history instead of treating a
+/// triangulated sheet as a context-free mesh.
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CoplanarArrangementOperation {
+    /// Replay a certified coplanar union arrangement.
+    Union,
+    /// Replay a certified coplanar intersection arrangement.
+    Intersection,
+    /// Replay a certified coplanar difference arrangement.
+    Difference,
+}
+
 #[cfg(feature = "exact-triangulation")]
 impl CoplanarTriangleArrangement {
     /// Validate the materialized planar-arrangement polygon and mesh.
@@ -324,6 +406,48 @@ impl CoplanarTriangleArrangement {
             &self.mesh,
             "coplanar triangle planar arrangement",
         )
+    }
+
+    /// Validate this single-triangle arrangement against its source meshes.
+    ///
+    /// This first validates the retained loop and `hypertri` mesh, then
+    /// recomputes the exact single-triangle arrangement for `operation` from
+    /// the supplied sources and requires the retained artifact to match the
+    /// replay. The boundary-fragment traversal follows Weiler and Atherton,
+    /// "Hidden Surface Removal Using Polygon Area Sorting," *SIGGRAPH Computer
+    /// Graphics* 11.2 (1977); the source replay follows Yap's exact-computation
+    /// requirement that constructed topology remain attached to its predicate
+    /// history.
+    pub fn validate_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+        operation: CoplanarArrangementOperation,
+    ) -> Result<(), MeshError> {
+        self.validate()?;
+        let replay = match operation {
+            CoplanarArrangementOperation::Union => {
+                arrange_single_triangle_coplanar_union(left, right)
+            }
+            CoplanarArrangementOperation::Difference => {
+                arrange_single_triangle_coplanar_difference(left, right)
+            }
+            CoplanarArrangementOperation::Intersection => None,
+        }
+        .ok_or_else(|| {
+            surface_validation_error(
+                "coplanar triangle planar arrangement",
+                "source replay did not reproduce this arrangement operation",
+            )
+        })?;
+        if self == &replay {
+            Ok(())
+        } else {
+            Err(surface_validation_error(
+                "coplanar triangle planar arrangement",
+                "retained arrangement does not match source replay",
+            ))
+        }
     }
 }
 
@@ -448,6 +572,9 @@ pub enum CoplanarConvexSurfaceReportError {
     InvalidContainmentCertificate,
     /// The retained containment certificate relation disagreed with status.
     ContainmentRelationMismatch,
+    /// The retained convex-surface certificate no longer matches classifiers
+    /// recomputed from the supplied source meshes.
+    SourceReplayMismatch,
 }
 
 /// Auditable convex coplanar surface relation report.
@@ -516,6 +643,32 @@ impl CoplanarConvexSurfaceReport {
                     .validate()
                     .map_err(|_| CoplanarConvexSurfaceReportError::InvalidContainmentCertificate)
             }
+        }
+    }
+
+    /// Validate this report against the source meshes that produced it.
+    ///
+    /// Convex-surface certificates collapse several exact object facts: shared
+    /// coplanarity, retained projected hulls, covered area, and containment
+    /// ordering. This method first validates those retained facts locally, then
+    /// recomputes the report from `left` and `right` and requires the replay
+    /// to match. That keeps the shortcut certificate attached to its source
+    /// objects in Yap's sense; see Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7.1-2 (1997).
+    pub fn validate_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<(), CoplanarConvexSurfaceReportError> {
+        self.validate()?;
+        let replay = certify_coplanar_convex_surface_report(left, right);
+        if self.status == replay.status
+            && self.equivalence == replay.equivalence
+            && self.containment == replay.containment
+        {
+            Ok(())
+        } else {
+            Err(CoplanarConvexSurfaceReportError::SourceReplayMismatch)
         }
     }
 }
@@ -611,6 +764,38 @@ impl CoplanarConvexSurfaceContainmentCertificate {
             ))
         }
     }
+
+    /// Validate this containment certificate against its source meshes.
+    ///
+    /// The retained hulls and projected areas are public certificate state. This
+    /// method recomputes the convex coplanar containment certificate from the
+    /// supplied meshes and requires the retained state to match that replay,
+    /// following Yap, "Towards Exact Geometric Computation," *Computational
+    /// Geometry* 7.1-2 (1997): a shortcut certificate must remain attached to
+    /// the exact object facts that produced it. The hull construction follows
+    /// Andrew, "Another Efficient Algorithm for Convex Hulls in Two Dimensions,"
+    /// *Information Processing Letters* 9.5 (1979).
+    pub fn validate_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<(), MeshError> {
+        self.validate()?;
+        let replay = certify_coplanar_convex_surface_containment(left, right).ok_or_else(|| {
+            surface_validation_error(
+                "coplanar convex surface containment",
+                "source replay did not reproduce containment certificate",
+            )
+        })?;
+        if self == &replay {
+            Ok(())
+        } else {
+            Err(surface_validation_error(
+                "coplanar convex surface containment",
+                "retained certificate does not match source replay",
+            ))
+        }
+    }
 }
 
 /// Exact one-hole arrangement output for convex coplanar surface containment.
@@ -634,6 +819,30 @@ pub struct CoplanarConvexHoledArrangement {
     pub mesh: ExactMesh,
 }
 
+/// Exact multi-hole arrangement output for convex coplanar surface difference.
+///
+/// This is a bounded planar-cell promotion: one certified convex outer sheet
+/// minus several disjoint certified single-triangle holes. The output keeps
+/// every ring as exact topology and triangulates through `hypertri` using
+/// earcut-compatible hole starts. Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997), is the governing rule here: the
+/// multi-hole object is accepted only while its retained rings, exact area, and
+/// materialized mesh all replay from the source predicates. The triangulation
+/// handoff follows Held, "FIST: Fast Industrial-Strength Triangulation of
+/// Polygons," *Algorithmica* 30 (2001).
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Debug, PartialEq)]
+pub struct CoplanarConvexMultiHoledArrangement {
+    /// Projection used by exact 2D arrangement predicates and triangulation.
+    pub projection: CoplanarProjection,
+    /// Exact 3D outer convex hull.
+    pub outer: Vec<Point3>,
+    /// Exact 3D hole rings, each clockwise and strictly inside `outer`.
+    pub holes: Vec<Vec<Point3>>,
+    /// Exact triangulated open surface mesh.
+    pub mesh: ExactMesh,
+}
+
 #[cfg(feature = "exact-triangulation")]
 impl CoplanarConvexHoledArrangement {
     /// Validate ring shape, strict containment, projected area, and mesh state.
@@ -652,6 +861,80 @@ impl CoplanarConvexHoledArrangement {
             &self.mesh,
             "coplanar convex holed arrangement",
         )
+    }
+
+    /// Validate this one-hole convex arrangement against its source meshes.
+    ///
+    /// The only operation represented by this artifact is `left - right` where
+    /// the right convex sheet is strictly inside the left. Recomputing that
+    /// arrangement from the sources prevents a locally valid ring pair from
+    /// being reused after either source hull changes. This follows Yap,
+    /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+    /// (1997), and retains Andrew's exact convex-hull certificate boundary.
+    pub fn validate_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<(), MeshError> {
+        self.validate()?;
+        let replay =
+            arrange_coplanar_convex_surface_holed_difference(left, right).ok_or_else(|| {
+                surface_validation_error(
+                    "coplanar convex holed arrangement",
+                    "source replay did not reproduce a one-hole difference",
+                )
+            })?;
+        if self == &replay {
+            Ok(())
+        } else {
+            Err(surface_validation_error(
+                "coplanar convex holed arrangement",
+                "retained arrangement does not match source replay",
+            ))
+        }
+    }
+}
+
+#[cfg(feature = "exact-triangulation")]
+impl CoplanarConvexMultiHoledArrangement {
+    /// Validate ring shape, disjointness, projected area, and mesh state.
+    pub fn validate(&self) -> Result<(), MeshError> {
+        validate_multi_holed_surface_output(
+            self.projection,
+            &self.outer,
+            &self.holes,
+            &self.mesh,
+            "coplanar convex multi-holed arrangement",
+        )
+    }
+
+    /// Validate this multi-hole convex arrangement against its source meshes.
+    ///
+    /// Replaying the bounded multi-hole construction from the exact inputs
+    /// prevents a locally valid set of rings from being reused after source
+    /// topology changes. That keeps the artifact in Yap's retained-state
+    /// model rather than treating the output mesh as detached geometry.
+    pub fn validate_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<(), MeshError> {
+        self.validate()?;
+        let replay = arrange_coplanar_convex_surface_multi_holed_difference(left, right)
+            .ok_or_else(|| {
+                surface_validation_error(
+                    "coplanar convex multi-holed arrangement",
+                    "source replay did not reproduce a multi-hole difference",
+                )
+            })?;
+        if self == &replay {
+            Ok(())
+        } else {
+            Err(surface_validation_error(
+                "coplanar convex multi-holed arrangement",
+                "retained arrangement does not match source replay",
+            ))
+        }
     }
 }
 
@@ -689,20 +972,66 @@ impl CoplanarConvexArrangement {
             "coplanar convex surface arrangement",
         )
     }
+
+    /// Validate this convex simple-loop arrangement against its source meshes.
+    ///
+    /// The replay is operation-specific because convex coplanar intersection,
+    /// union, and difference retain different boundary loops. The construction
+    /// uses Sutherland-Hodgman half-plane clipping for convex intersection and
+    /// Weiler-Atherton-style boundary fragments for union/difference, but this
+    /// method accepts the output only when exact source replay reproduces the
+    /// retained loop and mesh, following Yap's certified-state discipline.
+    pub fn validate_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+        operation: CoplanarArrangementOperation,
+    ) -> Result<(), MeshError> {
+        self.validate()?;
+        let replay = match operation {
+            CoplanarArrangementOperation::Union => {
+                arrange_coplanar_convex_surface_union(left, right)
+            }
+            CoplanarArrangementOperation::Intersection => {
+                arrange_coplanar_convex_surface_intersection(left, right)
+            }
+            CoplanarArrangementOperation::Difference => {
+                arrange_coplanar_convex_surface_difference(left, right)
+            }
+        }
+        .ok_or_else(|| {
+            surface_validation_error(
+                "coplanar convex surface arrangement",
+                "source replay did not reproduce this arrangement operation",
+            )
+        })?;
+        if self == &replay {
+            Ok(())
+        } else {
+            Err(surface_validation_error(
+                "coplanar convex surface arrangement",
+                "retained arrangement does not match source replay",
+            ))
+        }
+    }
 }
 
-/// Exact multi-component arrangement output for convex coplanar differences.
+/// Exact multi-component arrangement output for convex coplanar fragments.
 ///
-/// This artifact handles the first multi-component planar arrangement case:
-/// a convex coplanar sheet cut by another convex sheet so `left - right`
-/// produces several disjoint simple loops. It deliberately retains each loop
-/// separately instead of flattening the result into an opaque triangle soup.
-/// The loop construction follows the Weiler-Atherton boundary-fragment
-/// traversal idea, while exact predicates and exact area replay keep the
-/// output within Yap's exact geometric computation contract; see Weiler and
-/// Atherton, "Hidden Surface Removal Using Polygon Area Sorting," *SIGGRAPH
-/// Computer Graphics* 11.2 (1977), and Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997).
+/// This artifact handles bounded multi-component planar arrangement cases:
+/// convex coplanar differences whose boundary traversal splits into several
+/// disjoint loops, and pairwise clipped coplanar intersections that produce
+/// several disjoint positive-area components. It deliberately retains each
+/// loop separately instead of flattening the result into an opaque triangle
+/// soup. Difference loop construction follows the Weiler-Atherton
+/// boundary-fragment traversal idea, while intersection loops use the
+/// Sutherland-Hodgman convex clipping model; exact predicates and exact area
+/// replay keep both output forms within Yap's exact geometric computation
+/// contract. See Weiler and Atherton, "Hidden Surface Removal Using Polygon
+/// Area Sorting," *SIGGRAPH Computer Graphics* 11.2 (1977), Sutherland and
+/// Hodgman, "Reentrant Polygon Clipping," *Communications of the ACM* 17.1
+/// (1974), and Yap, "Towards Exact Geometric Computation," *Computational
+/// Geometry* 7.1-2 (1997).
 #[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, PartialEq)]
 pub struct CoplanarConvexMultiArrangement {
@@ -724,6 +1053,68 @@ impl CoplanarConvexMultiArrangement {
             &self.mesh,
             "coplanar convex multi-component arrangement",
         )
+    }
+
+    /// Validate this multi-component convex difference against its sources.
+    ///
+    /// Multi-component outputs retain one exact loop per connected component.
+    /// Source replay recomputes the convex difference and verifies both the
+    /// component loops and the materialized mesh, so a locally valid component
+    /// set cannot be transplanted to a different pair of source sheets. This is
+    /// the same retained-computation contract described by Yap, "Towards Exact
+    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+    pub fn validate_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<(), MeshError> {
+        self.validate()?;
+        let replay =
+            arrange_coplanar_convex_surface_multi_difference(left, right).ok_or_else(|| {
+                surface_validation_error(
+                    "coplanar convex multi-component arrangement",
+                    "source replay did not reproduce a multi-component difference",
+                )
+            })?;
+        if self == &replay {
+            Ok(())
+        } else {
+            Err(surface_validation_error(
+                "coplanar convex multi-component arrangement",
+                "retained arrangement does not match source replay",
+            ))
+        }
+    }
+
+    /// Validate this multi-component intersection against its source meshes.
+    ///
+    /// Pairwise clipped intersections are accepted only when every retained
+    /// component loop and the combined mesh replay from the exact source
+    /// triangles. This prevents a locally valid multi-loop artifact from being
+    /// reused after source topology or coordinates change, following Yap,
+    /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+    /// (1997).
+    pub fn validate_intersection_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<(), MeshError> {
+        self.validate()?;
+        let replay =
+            arrange_coplanar_convex_surface_multi_intersection(left, right).ok_or_else(|| {
+                surface_validation_error(
+                    "coplanar convex multi-component arrangement",
+                    "source replay did not reproduce a multi-component intersection",
+                )
+            })?;
+        if self == &replay {
+            Ok(())
+        } else {
+            Err(surface_validation_error(
+                "coplanar convex multi-component arrangement",
+                "retained intersection does not match source replay",
+            ))
+        }
     }
 }
 
@@ -766,6 +1157,38 @@ impl CoplanarConvexSurfaceEquivalence {
         }
         Ok(())
     }
+
+    /// Validate this equivalence certificate against its source meshes.
+    ///
+    /// The retained shared hull and both covered-area facts are recomputed from
+    /// `left` and `right` and compared with this certificate. That prevents a
+    /// locally valid hull/area tuple from being transplanted between source
+    /// sheets, matching Yap's retained-computation discipline from "Towards
+    /// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997). The
+    /// replayed convex hull uses Andrew, "Another Efficient Algorithm for
+    /// Convex Hulls in Two Dimensions," *Information Processing Letters* 9.5
+    /// (1979), with exact predicate decisions.
+    pub fn validate_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<(), MeshError> {
+        self.validate()?;
+        let replay = certify_coplanar_convex_surface_equivalence(left, right).ok_or_else(|| {
+            surface_validation_error(
+                "coplanar convex surface equivalence",
+                "source replay did not reproduce equivalence certificate",
+            )
+        })?;
+        if self == &replay {
+            Ok(())
+        } else {
+            Err(surface_validation_error(
+                "coplanar convex surface equivalence",
+                "retained certificate does not match source replay",
+            ))
+        }
+    }
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -786,6 +1209,37 @@ impl CoplanarTriangleHoledArrangement {
             "coplanar triangle holed arrangement",
         )
     }
+
+    /// Validate this one-hole triangle arrangement against its source meshes.
+    ///
+    /// The artifact represents `left - right` for a strictly contained coplanar
+    /// triangle. Replaying the exact arrangement from the sources ties the
+    /// retained outer ring, hole ring, and `hypertri` mesh to the predicate
+    /// history that produced them, following Yap, "Towards Exact Geometric
+    /// Computation," *Computational Geometry* 7.1-2 (1997), and Held's
+    /// FIST-style triangulation handoff for polygon-with-hole inputs.
+    pub fn validate_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<(), MeshError> {
+        self.validate()?;
+        let replay =
+            arrange_single_triangle_coplanar_holed_difference(left, right).ok_or_else(|| {
+                surface_validation_error(
+                    "coplanar triangle holed arrangement",
+                    "source replay did not reproduce a one-hole difference",
+                )
+            })?;
+        if self == &replay {
+            Ok(())
+        } else {
+            Err(surface_validation_error(
+                "coplanar triangle holed arrangement",
+                "retained arrangement does not match source replay",
+            ))
+        }
+    }
 }
 
 impl CoplanarTriangleUnion {
@@ -804,6 +1258,36 @@ impl CoplanarTriangleUnion {
             &self.mesh,
             "coplanar convex union",
         )
+    }
+
+    /// Validate this convex-union output against the source meshes.
+    ///
+    /// The convex union shortcut is valid only when exact coverage proves the
+    /// combined triangle surface equals the retained hull. This method recomputes
+    /// that Andrew monotone-chain hull and its exact coverage checks from the
+    /// supplied sources before accepting the retained polygon and mesh. That is
+    /// the retained-object discipline advocated by Yap, "Towards Exact Geometric
+    /// Computation," *Computational Geometry* 7.1-2 (1997).
+    pub fn validate_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<(), MeshError> {
+        self.validate()?;
+        let replay = union_single_triangle_coplanar_surfaces(left, right).ok_or_else(|| {
+            surface_validation_error(
+                "coplanar convex union",
+                "source replay did not reproduce a convex union",
+            )
+        })?;
+        if self == &replay {
+            Ok(())
+        } else {
+            Err(surface_validation_error(
+                "coplanar convex union",
+                "retained union does not match source replay",
+            ))
+        }
     }
 }
 
@@ -843,6 +1327,37 @@ impl CoplanarTriangleDifference {
             &self.mesh,
             "coplanar one-corner difference",
         )
+    }
+
+    /// Validate this one-corner difference against the source meshes.
+    ///
+    /// One-corner difference is accepted only when exact area conservation proves
+    /// the retained polygon is `left - right` for the source triangles. This
+    /// replay check recomputes that bounded arrangement fragment and rejects a
+    /// locally valid polygon/mesh pair that no longer belongs to the supplied
+    /// sources, following Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7.1-2 (1997).
+    pub fn validate_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<(), MeshError> {
+        self.validate()?;
+        let replay =
+            difference_single_triangle_coplanar_surfaces(left, right).ok_or_else(|| {
+                surface_validation_error(
+                    "coplanar one-corner difference",
+                    "source replay did not reproduce a one-corner difference",
+                )
+            })?;
+        if self == &replay {
+            Ok(())
+        } else {
+            Err(surface_validation_error(
+                "coplanar one-corner difference",
+                "retained difference does not match source replay",
+            ))
+        }
     }
 }
 
@@ -1286,6 +1801,161 @@ pub fn arrange_coplanar_convex_surface_holed_difference(
     Some(arrangement)
 }
 
+/// Materialize a convex coplanar difference with several triangle holes.
+///
+/// This bounded materializer handles one convex coplanar left sheet and a
+/// right operand made of two or more disjoint connected convex sheets, all
+/// strictly inside the left hull. It is intentionally narrower than arbitrary
+/// planar-cell extraction: touching holes, nested holes, and nonconvex
+/// coverage still fail closed. The accepted case retains every component hull
+/// as a ring and replays exact area, matching Yap's exact-computation
+/// discipline.
+#[cfg(feature = "exact-triangulation")]
+pub fn arrange_coplanar_convex_surface_multi_holed_difference(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Option<CoplanarConvexMultiHoledArrangement> {
+    if right.triangles().len() < 2 {
+        return None;
+    }
+    if arrange_coplanar_convex_surface_holed_difference(left, right).is_some() {
+        return None;
+    }
+
+    let (projection, mut outer, _, _, _) = convex_surface_hulls_and_areas(left, left)?;
+    orient_polygon_ccw(&mut outer, projection)?;
+    let outer_area = projected_area2_abs(&outer, projection)?;
+    let mut holes = Vec::new();
+    let mut hole_area_sum = ExactReal::from(0);
+    for component in connected_face_component_meshes(right)? {
+        let hole_mesh = component;
+        let certificate = certify_coplanar_convex_surface_containment(left, &hole_mesh)?;
+        if certificate.projection != projection
+            || certificate.relation != CoplanarConvexSurfaceContainment::RightInsideLeft
+        {
+            return None;
+        }
+        let mut hole = certificate.right_hull;
+        orient_polygon_cw(&mut hole, projection)?;
+        hole_area_sum = add(&hole_area_sum, &projected_area2_abs(&hole, projection)?);
+        holes.push(hole);
+    }
+    if holes.len() < 2
+        || compare_reals(&outer_area, &hole_area_sum).value() != Some(Ordering::Greater)
+    {
+        return None;
+    }
+    validate_component_loops_disjoint(
+        &holes,
+        projection,
+        "coplanar convex multi-holed arrangement",
+    )
+    .ok()?;
+    let mesh = polygon_to_earcut_open_mesh_with_holes(
+        &outer,
+        &holes,
+        projection,
+        "exact coplanar convex multi-holed arrangement",
+    )?;
+    let arrangement = CoplanarConvexMultiHoledArrangement {
+        projection,
+        outer,
+        holes,
+        mesh,
+    };
+    arrangement.validate().ok()?;
+    Some(arrangement)
+}
+
+/// Split a mesh into connected face components using retained triangle edges.
+///
+/// This is a topology-only decomposition, not a geometric planar arrangement.
+/// Components are formed by shared undirected source edges and are then
+/// recertified as convex coplanar sheets before they can become holes. That
+/// follows Yap's retained-state model from "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997): component boundaries
+/// come from exact mesh topology and must replay through later predicates
+/// rather than being inferred from rounded coordinates.
+#[cfg(feature = "exact-triangulation")]
+fn connected_face_component_meshes(mesh: &ExactMesh) -> Option<Vec<ExactMesh>> {
+    if mesh.triangles().is_empty() {
+        return None;
+    }
+    let mut visited = vec![false; mesh.triangles().len()];
+    let mut components = Vec::new();
+    for seed in 0..mesh.triangles().len() {
+        if visited[seed] {
+            continue;
+        }
+        let mut stack = vec![seed];
+        let mut faces = Vec::new();
+        visited[seed] = true;
+        while let Some(face) = stack.pop() {
+            faces.push(face);
+            for (neighbor, seen) in visited.iter_mut().enumerate() {
+                if !*seen
+                    && triangles_share_edge(mesh.triangles()[face], mesh.triangles()[neighbor])
+                {
+                    *seen = true;
+                    stack.push(neighbor);
+                }
+            }
+        }
+        components.push(component_mesh(mesh, &faces)?);
+    }
+    Some(components)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn triangles_share_edge(left: Triangle, right: Triangle) -> bool {
+    let left_edges = triangle_edges(left);
+    let right_edges = triangle_edges(right);
+    left_edges
+        .iter()
+        .any(|left| right_edges.iter().any(|right| left == right))
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn triangle_edges(triangle: Triangle) -> [(usize, usize); 3] {
+    [
+        canonical_edge(triangle.0[0], triangle.0[1]),
+        canonical_edge(triangle.0[1], triangle.0[2]),
+        canonical_edge(triangle.0[2], triangle.0[0]),
+    ]
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn component_mesh(mesh: &ExactMesh, faces: &[usize]) -> Option<ExactMesh> {
+    let mut vertices = Vec::new();
+    let mut old_to_new: Vec<(usize, usize)> = Vec::new();
+    let mut triangles = Vec::new();
+    for &face in faces {
+        let source = mesh.triangles().get(face)?.0;
+        let mut remapped = [0; 3];
+        for (slot, old) in source.into_iter().enumerate() {
+            let new = if let Some((_, new)) =
+                old_to_new.iter().find(|(candidate, _)| *candidate == old)
+            {
+                *new
+            } else {
+                let new = vertices.len();
+                vertices.push(mesh.vertices().get(old)?.clone());
+                old_to_new.push((old, new));
+                new
+            };
+            remapped[slot] = new;
+        }
+        triangles.push(Triangle(remapped));
+    }
+    ExactMesh::new_with_policy(
+        vertices,
+        triangles,
+        SourceProvenance::exact("exact coplanar source connected component"),
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .ok()
+}
+
 /// Certify and materialize the positive-area intersection of convex coplanar surfaces.
 ///
 /// This is the multi-face counterpart to
@@ -1329,6 +1999,82 @@ pub fn arrange_coplanar_convex_surface_intersection(
     };
     arrangement.validate().ok()?;
     Some(arrangement)
+}
+
+/// Certify and materialize disjoint coplanar intersection components.
+///
+/// This conservative materializer clips every source triangle pair with the
+/// single-triangle Sutherland-Hodgman path, then accepts the result only when
+/// those positive-area clips form several pairwise disjoint simple loops. It
+/// is a bounded bridge toward full planar arrangements: adjacent fragments,
+/// nested loops, or overlapping components still return `None` and remain
+/// explicit planar-cell work. That keeps the implementation aligned with Yap,
+/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+/// (1997), while using Sutherland and Hodgman's convex clipping construction
+/// for the local component geometry.
+#[cfg(feature = "exact-triangulation")]
+pub fn arrange_coplanar_convex_surface_multi_intersection(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Option<CoplanarConvexMultiArrangement> {
+    if left.triangles().is_empty() || right.triangles().is_empty() {
+        return None;
+    }
+    if arrange_coplanar_convex_surface_intersection(left, right).is_some()
+        || intersect_single_triangle_coplanar_surfaces(left, right).is_some()
+    {
+        return None;
+    }
+
+    let mut projection = None;
+    let mut polygons = Vec::new();
+    for left_face in 0..left.triangles().len() {
+        let left_triangle = single_face_mesh(left, left_face)?;
+        for right_face in 0..right.triangles().len() {
+            let right_triangle = single_face_mesh(right, right_face)?;
+            let Some(intersection) =
+                intersect_single_triangle_coplanar_surfaces(&left_triangle, &right_triangle)
+            else {
+                continue;
+            };
+            match projection {
+                Some(expected) if expected != intersection.projection => return None,
+                None => projection = Some(intersection.projection),
+                _ => {}
+            }
+            let mut polygon = intersection.polygon;
+            orient_polygon_ccw(&mut polygon, intersection.projection)?;
+            polygons.push(polygon);
+        }
+    }
+    if polygons.len() < 2 {
+        return None;
+    }
+    let projection = projection?;
+    let mesh = polygons_to_earcut_open_mesh(&polygons, projection)?;
+    let arrangement = CoplanarConvexMultiArrangement {
+        projection,
+        polygons,
+        mesh,
+    };
+    arrangement.validate().ok()?;
+    Some(arrangement)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn single_face_mesh(mesh: &ExactMesh, face: usize) -> Option<ExactMesh> {
+    let triangle = mesh.triangles().get(face)?.0;
+    let vertices = triangle
+        .iter()
+        .map(|&index| mesh.vertices().get(index).cloned())
+        .collect::<Option<Vec<_>>>()?;
+    ExactMesh::new_with_policy(
+        vertices,
+        vec![Triangle([0, 1, 2])],
+        SourceProvenance::exact("exact coplanar source triangle component"),
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .ok()
 }
 
 /// Certify and materialize a simple-loop union of convex coplanar surfaces.
@@ -1908,6 +2654,47 @@ fn polygon_to_earcut_open_mesh_with_hole(
 }
 
 #[cfg(feature = "exact-triangulation")]
+fn polygon_to_earcut_open_mesh_with_holes(
+    outer: &[Point3],
+    holes: &[Vec<Point3>],
+    projection: CoplanarProjection,
+    label: &'static str,
+) -> Option<ExactMesh> {
+    if outer.len() < 3 || holes.len() < 2 || holes.iter().any(|hole| hole.len() < 3) {
+        return None;
+    }
+    let mut points = outer.to_vec();
+    let mut hole_indices = Vec::with_capacity(holes.len());
+    for hole in holes {
+        hole_indices.push(points.len());
+        points.extend(hole.iter().cloned());
+    }
+    let vertices2 = points
+        .iter()
+        .map(|point| project_for_hypertri(point, projection))
+        .collect::<Vec<_>>();
+    let indices = hypertri::earcut(&vertices2, &hole_indices).ok()?;
+    if indices.len() % 3 != 0 || indices.is_empty() {
+        return None;
+    }
+    let vertices = points
+        .iter()
+        .map(|point| ExactPoint3::new(point.x.clone(), point.y.clone(), point.z.clone()))
+        .collect::<Vec<_>>();
+    let triangles = indices
+        .chunks_exact(3)
+        .map(|chunk| Triangle([chunk[0], chunk[1], chunk[2]]))
+        .collect::<Vec<_>>();
+    ExactMesh::new_with_policy(
+        vertices,
+        triangles,
+        SourceProvenance::exact(label),
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .ok()
+}
+
+#[cfg(feature = "exact-triangulation")]
 fn polygons_to_earcut_open_mesh(
     polygons: &[Vec<Point3>],
     projection: CoplanarProjection,
@@ -2013,10 +2800,11 @@ fn validate_coplanar_surface_output(
             ));
         }
     }
+    let retained_rings = core::iter::once(0..polygon.len()).collect::<Vec<_>>();
     validate_mesh_edges_respect_retained_rings(
         mesh,
         projection,
-        &[0..polygon.len()],
+        &retained_rings,
         label,
         "surface mesh edge crosses the retained polygon boundary",
     )?;
@@ -2028,7 +2816,7 @@ fn validate_coplanar_surface_output(
     )?;
     validate_mesh_boundary_matches_retained_rings(
         mesh,
-        &[0..polygon.len()],
+        &retained_rings,
         label,
         "surface mesh boundary does not match retained polygon boundary",
     )?;
@@ -2126,8 +2914,8 @@ fn validate_multi_surface_output(
         validate_projected_strictly_convex_loop(polygon, projection, label)?;
         retained_area = add(&retained_area, &area);
         for point in polygon {
-            for other_component in component + 1..polygons.len() {
-                for other in &polygons[other_component] {
+            for other_polygon in polygons.iter().skip(component + 1) {
+                for other in other_polygon {
                     if points_equal(point, other) {
                         return Err(surface_validation_error(
                             label,
@@ -2263,7 +3051,6 @@ fn component_for_retained_vertex(
 /// summaries are allowed to stand in for the object. This catches isolated
 /// ring vertices directly at the API boundary instead of relying on aggregate
 /// area replay to notice missing topology.
-#[cfg(feature = "exact-triangulation")]
 fn validate_mesh_uses_all_retained_vertices(
     mesh: &ExactMesh,
     retained_vertices: usize,
@@ -2296,7 +3083,6 @@ fn validate_mesh_uses_all_retained_vertices(
 /// viewpoint is the standard planar subdivision invariant; see de Berg,
 /// Cheong, van Kreveld, and Overmars, *Computational Geometry: Algorithms and
 /// Applications*, 3rd ed. (2008), Chapter 2.
-#[cfg(feature = "exact-triangulation")]
 fn validate_mesh_boundary_matches_retained_rings(
     mesh: &ExactMesh,
     retained_rings: &[core::ops::Range<usize>],
@@ -2354,7 +3140,6 @@ fn validate_mesh_boundary_matches_retained_rings(
     Ok(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn canonical_edge(a: usize, b: usize) -> (usize, usize) {
     if a <= b { (a, b) } else { (b, a) }
 }
@@ -2371,7 +3156,6 @@ fn canonical_edge(a: usize, b: usize) -> (usize, usize) {
 /// is the orientation-based closed-segment classifier used by Guigue and
 /// Devillers, "Fast and Robust Triangle-Triangle Overlap Test Using
 /// Orientation Predicates," *Journal of Graphics Tools* 8.1 (2003).
-#[cfg(feature = "exact-triangulation")]
 fn validate_mesh_edges_respect_retained_rings(
     mesh: &ExactMesh,
     projection: CoplanarProjection,
@@ -2435,7 +3219,6 @@ fn validate_mesh_edges_respect_retained_rings(
     Ok(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn retained_ring_edges(
     retained_rings: &[core::ops::Range<usize>],
     label: &'static str,
@@ -2890,6 +3673,169 @@ fn validate_holed_surface_output(
     })
 }
 
+#[cfg(feature = "exact-triangulation")]
+fn validate_multi_holed_surface_output(
+    projection: CoplanarProjection,
+    outer: &[Point3],
+    holes: &[Vec<Point3>],
+    mesh: &ExactMesh,
+    label: &'static str,
+) -> Result<(), MeshError> {
+    if outer.len() < 3 || holes.len() < 2 || holes.iter().any(|hole| hole.len() < 3) {
+        return Err(surface_validation_error(
+            label,
+            "outer and hole rings must all contain at least three vertices",
+        ));
+    }
+    let retained_vertices = outer.len() + holes.iter().map(Vec::len).sum::<usize>();
+    if mesh.triangles().is_empty() || mesh.vertices().len() != retained_vertices {
+        return Err(surface_validation_error(
+            label,
+            "multi-holed surface mesh does not match retained rings",
+        ));
+    }
+    let retained_points = outer
+        .iter()
+        .chain(holes.iter().flat_map(|hole| hole.iter()))
+        .collect::<Vec<_>>();
+    for (index, point) in retained_points.iter().enumerate() {
+        if !points_equal(point, &mesh.vertices()[index].to_hyperlimit_point()) {
+            return Err(surface_validation_error(
+                label,
+                "mesh vertex does not match retained ring point",
+            ));
+        }
+    }
+    let mut ranges = Vec::with_capacity(holes.len() + 1);
+    ranges.push(0..outer.len());
+    let mut start = outer.len();
+    for hole in holes {
+        ranges.push(start..start + hole.len());
+        start += hole.len();
+    }
+    for triangle in mesh.triangles() {
+        if triangle.0.iter().any(|&index| index >= retained_vertices) {
+            return Err(surface_validation_error(
+                label,
+                "multi-holed surface mesh triangle index is out of retained ring range",
+            ));
+        }
+        for hole_range in ranges.iter().skip(1) {
+            if triangle.0.iter().all(|index| hole_range.contains(index)) {
+                return Err(surface_validation_error(
+                    label,
+                    "multi-holed surface mesh triangle fills a retained hole",
+                ));
+            }
+        }
+    }
+    validate_mesh_edges_respect_retained_rings(
+        mesh,
+        projection,
+        &ranges,
+        label,
+        "multi-holed surface mesh edge crosses a retained ring",
+    )?;
+    validate_mesh_uses_all_retained_vertices(
+        mesh,
+        retained_vertices,
+        label,
+        "multi-holed surface mesh leaves a retained ring vertex unused",
+    )?;
+    validate_mesh_boundary_matches_retained_rings(
+        mesh,
+        &ranges,
+        label,
+        "multi-holed surface mesh boundary does not match retained rings",
+    )?;
+    validate_exact_point_set_distinct(outer, label, "outer ring repeats an exact point")?;
+    validate_projected_simple_loop(outer, projection, label)?;
+    validate_projected_strictly_convex_loop(outer, projection, label)?;
+    validate_projected_ring_orientation(
+        outer,
+        projection,
+        Sign::Positive,
+        label,
+        "outer ring orientation must be counter-clockwise",
+    )?;
+    let outer_area = projected_area2_abs(outer, projection)
+        .ok_or_else(|| surface_validation_error(label, "outer projected area was undecided"))?;
+    let outer_signed_area = projected_area2_signed(outer, projection)
+        .ok_or_else(|| surface_validation_error(label, "outer signed area was undecided"))?;
+    let mut hole_area_sum = ExactReal::from(0);
+    let mut retained_signed_area = outer_signed_area;
+    for hole in holes {
+        validate_exact_point_set_distinct(hole, label, "hole ring repeats an exact point")?;
+        validate_projected_simple_loop(hole, projection, label)?;
+        validate_projected_strictly_convex_loop(hole, projection, label)?;
+        validate_projected_ring_orientation(
+            hole,
+            projection,
+            Sign::Negative,
+            label,
+            "hole ring orientation must be clockwise",
+        )?;
+        let hole_area = projected_area2_abs(hole, projection)
+            .ok_or_else(|| surface_validation_error(label, "hole projected area was undecided"))?;
+        let hole_signed_area = projected_area2_signed(hole, projection)
+            .ok_or_else(|| surface_validation_error(label, "hole signed area was undecided"))?;
+        if compare_reals(&hole_area, &ExactReal::from(0)).value() != Some(Ordering::Greater) {
+            return Err(surface_validation_error(
+                label,
+                "hole rings must have positive projected area",
+            ));
+        }
+        hole_area_sum = add(&hole_area_sum, &hole_area);
+        retained_signed_area = add(&retained_signed_area, &hole_signed_area);
+        for point in hole {
+            let Some(location) = convex_polygon_location(point, outer, projection) else {
+                return Err(surface_validation_error(
+                    label,
+                    "hole containment predicate was undecided",
+                ));
+            };
+            if location != ConvexPolygonLocation::Inside {
+                return Err(surface_validation_error(
+                    label,
+                    "hole ring must be strictly inside the outer ring",
+                ));
+            }
+        }
+    }
+    if compare_reals(&outer_area, &hole_area_sum).value() != Some(Ordering::Greater) {
+        return Err(surface_validation_error(
+            label,
+            "combined hole area must be strictly smaller than outer area",
+        ));
+    }
+    validate_component_loops_disjoint(holes, projection, label)?;
+    let mesh_area = projected_mesh_area2_abs(mesh, projection).ok_or_else(|| {
+        surface_validation_error(
+            label,
+            "multi-holed surface mesh projected area was undecided",
+        )
+    })?;
+    if compare_reals(&mesh_area, &sub(&outer_area, &hole_area_sum)).value() != Some(Ordering::Equal)
+    {
+        return Err(surface_validation_error(
+            label,
+            "multi-holed surface mesh projected area does not match retained rings",
+        ));
+    }
+    let mesh_signed_area = projected_mesh_area2_signed(mesh, projection).ok_or_else(|| {
+        surface_validation_error(label, "multi-holed surface mesh signed area was undecided")
+    })?;
+    if compare_reals(&mesh_signed_area, &retained_signed_area).value() != Some(Ordering::Equal) {
+        return Err(surface_validation_error(
+            label,
+            "multi-holed surface mesh signed area does not match retained ring orientation",
+        ));
+    }
+    mesh.validate_retained_state().map_err(|_| {
+        surface_validation_error(label, "materialized mesh retained-state validation failed")
+    })
+}
+
 /// Validate that a holed output triangle does not fill the retained void.
 ///
 /// One-hole planar arrangement artifacts retain the outer ring and the hole
@@ -3095,16 +4041,19 @@ fn single_retained_plane(left: &ExactMesh, right: &ExactMesh) -> Option<bool> {
 }
 
 #[cfg(feature = "exact-triangulation")]
-fn convex_surface_hulls_and_areas(
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> Option<(
+type ConvexSurfaceHullsAndAreas = (
     CoplanarProjection,
     Vec<Point3>,
     Vec<Point3>,
     ExactReal,
     ExactReal,
-)> {
+);
+
+#[cfg(feature = "exact-triangulation")]
+fn convex_surface_hulls_and_areas(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Option<ConvexSurfaceHullsAndAreas> {
     if left.triangles().is_empty() || right.triangles().is_empty() {
         return None;
     }
@@ -3417,7 +4366,6 @@ fn triangle_points(points: &[Point3], tri: [usize; 3]) -> Vec<Point3> {
     tri.iter().map(|&index| points[index].clone()).collect()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn orient_polygon_ccw(points: &mut [Point3], projection: CoplanarProjection) -> Option<()> {
     let area = projected_area2_signed(points, projection)?;
     if compare_reals(&area, &ExactReal::from(0)).value() == Some(Ordering::Less) {
@@ -3470,12 +4418,20 @@ fn collect_boundary_fragments(
             }
             let midpoint = midpoint3(a, b);
             let location = point_in_projected_triangle(&midpoint, other, projection)?;
-            let keep = match (operation, from_left, location) {
-                (ArrangementOperation::Union, _, TriangleLocation::Outside) => true,
-                (ArrangementOperation::Difference, true, TriangleLocation::Outside) => true,
-                (ArrangementOperation::Difference, false, TriangleLocation::Inside) => true,
-                _ => false,
-            };
+            let keep = matches!(
+                (operation, from_left, location),
+                (ArrangementOperation::Union, _, TriangleLocation::Outside)
+                    | (
+                        ArrangementOperation::Difference,
+                        true,
+                        TriangleLocation::Outside
+                    )
+                    | (
+                        ArrangementOperation::Difference,
+                        false,
+                        TriangleLocation::Inside
+                    )
+            );
             if keep {
                 let (fragment_start, fragment_end) =
                     if operation == ArrangementOperation::Difference && !from_left {
@@ -3773,7 +4729,6 @@ fn point_in_projected_triangle(
     classify_point_triangle(&a, &b, &c, &query).value()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn projected_area2_signed(points: &[Point3], projection: CoplanarProjection) -> Option<ExactReal> {
     if points.len() < 3 {
         return Some(ExactReal::from(0));

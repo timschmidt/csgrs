@@ -53,6 +53,9 @@ pub enum MeshFacePairValidationError {
     CoplanarRelationMissingCoplanarClassifier,
     /// A non-coplanar mesh relation retained a coplanar classifier.
     NonCoplanarRelationHasCoplanarClassifier,
+    /// Recomputing the face-pair classifier from the supplied source meshes
+    /// did not reproduce this retained scheduler record.
+    SourceReplayMismatch,
 }
 
 /// Coarse exact relation for one pair of mesh faces.
@@ -173,6 +176,31 @@ impl MeshFacePairClassification {
             MeshFacePairRelation::BoundsDisjoint => {}
         }
         Ok(())
+    }
+
+    /// Validate this scheduler record against the exact source meshes.
+    ///
+    /// Local validation checks that the retained broad-phase relation, optional
+    /// narrow-phase classifier, and candidate split events agree. Source replay
+    /// recomputes the face-pair scheduler from `left` and `right` using the
+    /// retained face handles and requires exact equality with this record. This
+    /// keeps broad-phase rejection, retained-plane separation, coplanar
+    /// refinement, and candidate construction evidence attached to the source
+    /// objects that produced them, following Yap, "Towards Exact Geometric
+    /// Computation," *Computational Geometry* 7.1-2 (1997).
+    pub fn validate_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<(), MeshFacePairValidationError> {
+        self.validate()?;
+        let replay = classify_mesh_face_pair(left, self.left_face, right, self.right_face)
+            .map_err(|_| MeshFacePairValidationError::SourceReplayMismatch)?;
+        if self == &replay {
+            Ok(())
+        } else {
+            Err(MeshFacePairValidationError::SourceReplayMismatch)
+        }
     }
 }
 

@@ -8,7 +8,7 @@ mod test_intersection {
     use crate::boolean03::kernel03::winding03;
     use crate::boolean03::kernel12::intersect12;
     use crate::boolean45::boolean45;
-    use crate::{OpType, Vec3};
+    use crate::{LegacyBooleanReportError, OpType, Vec3, compute_boolean_with_report};
 
     pub fn gen_tet_a() -> Manifold {
         Manifold::new(
@@ -76,7 +76,7 @@ mod test_intersection {
             v12,
             v21,
         };
-        let b45 = boolean45(&mfd_p, &mfd_q, &b03, &op);
+        let _b45 = boolean45(&mfd_p, &mfd_q, &b03, &op);
     }
 
     #[test]
@@ -124,7 +124,48 @@ mod test_intersection {
             v12,
             v21,
         };
-        let b45 = boolean45(&mfd_p, &mfd_q, &b03, &op);
+        let _b45 = boolean45(&mfd_p, &mfd_q, &b03, &op);
+    }
+
+    #[test]
+    fn legacy_boolean_report_marks_primitive_float_boundary() {
+        let mfd_p = gen_tet_a();
+        let mfd_q = gen_tet_b();
+        let result = compute_boolean_with_report(&mfd_p, &mfd_q, OpType::Subtract).unwrap();
+        result.validate_against_inputs(&mfd_p, &mfd_q).unwrap();
+        assert!(result.report.used_primitive_float_adapter);
+        assert_eq!(result.report.operation, OpType::Subtract);
+        assert_eq!(result.report.left_vertices, mfd_p.nv);
+        assert_eq!(result.report.right_vertices, mfd_q.nv);
+        assert_eq!(result.report.output_vertices, result.mesh.nv);
+        assert_eq!(result.report.output_faces, result.mesh.nf);
+    }
+
+    #[test]
+    fn legacy_boolean_report_rejects_stale_or_unmarked_adapter_state() {
+        let mfd_p = gen_tet_a();
+        let mfd_q = gen_tet_b();
+        let mut result = compute_boolean_with_report(&mfd_p, &mfd_q, OpType::Subtract).unwrap();
+
+        result.report.used_primitive_float_adapter = false;
+        assert_eq!(
+            result.validate_against_inputs(&mfd_p, &mfd_q).unwrap_err(),
+            LegacyBooleanReportError::MissingAdapterFlag
+        );
+        result.report.used_primitive_float_adapter = true;
+
+        result.report.left_vertices += 1;
+        assert_eq!(
+            result.validate_against_inputs(&mfd_p, &mfd_q).unwrap_err(),
+            LegacyBooleanReportError::InputCountMismatch
+        );
+        result.report.left_vertices = mfd_p.nv;
+
+        result.report.output_faces += 1;
+        assert_eq!(
+            result.validate_against_inputs(&mfd_p, &mfd_q).unwrap_err(),
+            LegacyBooleanReportError::OutputCountMismatch
+        );
     }
 }
 
@@ -132,7 +173,7 @@ mod test_intersection {
 mod test_triangulation {
     use crate::triangulation::Pt;
     use crate::triangulation::ear_clip::EarClip;
-    use crate::{Vec2, Vec3, Vec3u};
+    use crate::{Vec2, Vec3u};
 
     #[test]
     fn test_ear_clip() {

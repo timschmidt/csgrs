@@ -108,6 +108,9 @@ pub enum FaceRegionPlaneValidationError {
         /// Relation stored in the artifact.
         actual: FaceRegionPlaneRelation,
     },
+    /// Recomputing the region/plane classification from source meshes did not
+    /// reproduce the retained artifact.
+    SourceReplayMismatch,
 }
 
 impl FaceRegionPlaneClassification {
@@ -117,6 +120,18 @@ impl FaceRegionPlaneClassification {
             .iter()
             .copied()
             .all(PredicateUse::is_proof_producing)
+    }
+
+    /// Return whether the classification is ready for winding policy.
+    ///
+    /// A retained region/plane side fact is only consumable by inside/outside
+    /// policy when every predicate was proof-producing and the derived
+    /// relation is decided. Keeping this as a named predicate mirrors Yap's
+    /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+    /// (1997): topology stages consume certified combinatorial facts, while
+    /// undecided relations remain explicit refinement state.
+    pub fn is_decided_and_proof_producing(&self) -> bool {
+        self.all_proof_producing() && !matches!(self.relation, FaceRegionPlaneRelation::Unknown)
     }
 
     /// Validate the coarse region/plane relation against retained node sides.
@@ -154,6 +169,35 @@ impl FaceRegionPlaneClassification {
             });
         }
         Ok(())
+    }
+
+    /// Recompute this region/plane classification from the source meshes.
+    ///
+    /// Local validation proves that the retained node-side vector justifies the
+    /// coarse relation. This source replay is stronger: it rebuilds the exact
+    /// intersection graph, derives the face-region plan, reclassifies regions
+    /// against opposite planes, and requires this artifact to appear in that
+    /// recomputed set. Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7.1-2 (1997), treats these predicate facts as
+    /// computation history, so a future winding policy must not consume a
+    /// copied or relabeled region/plane record.
+    #[cfg(feature = "exact-triangulation")]
+    pub fn validate_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<(), FaceRegionPlaneValidationError> {
+        self.validate()?;
+        let region_plan = replay_region_plan(left, right)
+            .map_err(|_| FaceRegionPlaneValidationError::SourceReplayMismatch)?;
+        let replay =
+            checked_classify_face_regions_against_opposite_planes(&region_plan, left, right)
+                .map_err(|_| FaceRegionPlaneValidationError::SourceReplayMismatch)?;
+        if replay.iter().any(|classification| classification == self) {
+            Ok(())
+        } else {
+            Err(FaceRegionPlaneValidationError::SourceReplayMismatch)
+        }
     }
 }
 
@@ -280,7 +324,7 @@ impl FaceRegionTriangulation {
                 reason: "region triangulation vertex and boundary lengths differ",
             });
         }
-        if self.triangles.len() % 3 != 0 {
+        if !self.triangles.len().is_multiple_of(3) {
             return Err(hypertri::Error::InvalidInput {
                 reason: "region triangulation index buffer is not triangular",
             });
@@ -310,6 +354,58 @@ impl FaceRegionTriangulation {
 
         Ok(())
     }
+
+    /// Recompute this exact region triangulation from the source meshes.
+    ///
+    /// The local audit checks projection and triangle-index invariants. This
+    /// replay rebuilds the exact graph and region loops from the operands,
+    /// reruns the feature-gated exact `hypertri` handoff, and requires this
+    /// retained triangulation to match one recomputed artifact. That keeps
+    /// split-region triangulation aligned with Yap, "Towards Exact Geometric
+    /// Computation," *Computational Geometry* 7.1-2 (1997): triangulated
+    /// combinatorics remain tied to the exact source faces and graph vertices
+    /// that produced them.
+    pub fn validate_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> hypertri::Result<()> {
+        self.validate()?;
+        let region_plan =
+            replay_region_plan(left, right).map_err(|_| hypertri::Error::InvalidInput {
+                reason: "region triangulation source replay could not rebuild region plan",
+            })?;
+        let replay = checked_triangulate_face_regions_with_earcut(&region_plan, left, right)
+            .map_err(|_| hypertri::Error::InvalidInput {
+                reason: "region triangulation source replay could not triangulate region plan",
+            })?;
+        if replay.iter().any(|triangulation| triangulation == self) {
+            Ok(())
+        } else {
+            Err(hypertri::Error::InvalidInput {
+                reason: "region triangulation source replay mismatch",
+            })
+        }
+    }
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn replay_region_plan(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Result<ExactFaceRegionPlan, super::error::MeshError> {
+    let graph = super::graph::build_intersection_graph(left, right)?;
+    graph
+        .validate_against_meshes(left, right)
+        .map_err(|error| {
+            super::error::MeshError::one(super::error::MeshDiagnostic::new(
+                super::error::Severity::Error,
+                super::error::DiagnosticKind::UnsupportedExactOperation,
+                format!("exact region source replay failed: {error:?}"),
+            ))
+        })?;
+    let geometry = graph.face_split_geometry_plan(left, right)?;
+    Ok(geometry.region_plan(left, right))
 }
 
 /// Region selection policy for exact output assembly.
@@ -384,7 +480,25 @@ impl ExactBooleanAssemblyPlan {
         triangulations: &[FaceRegionTriangulation],
         selection: ExactRegionSelection,
     ) -> hypertri::Result<Self> {
-        assemble_region_triangulations(triangulations, selection)
+        assemble_region_triangulations_with_selection(
+            triangulations,
+            move |triangulation| selection.keeps(triangulation.side),
+        )
+    }
+
+    /// Assemble exact output triangles from feature-gated region
+    /// triangulations with an arbitrary retention predicate.
+    ///
+    /// The same split-region triangulation can be reused under alternate
+    /// inside/outside semantics without replaying the narrow phase. This
+    /// follows Yap, "Towards Exact Geometric Computation," *Computational
+    /// Geometry* 7.1-2 (1997): split geometry is an exact intermediate
+    /// artifact, while semantic policy stays explicit at the assembly boundary.
+    pub fn from_region_triangulations_with_selection(
+        triangulations: &[FaceRegionTriangulation],
+        mut should_keep: impl FnMut(&FaceRegionTriangulation) -> bool,
+    ) -> hypertri::Result<Self> {
+        assemble_region_triangulations_with_selection(triangulations, &mut should_keep)
     }
 
     /// Validate output topology, geometry, and retained source-point provenance.
@@ -533,6 +647,47 @@ impl ExactBooleanAssemblyPlan {
         right: &ExactMesh,
     ) -> hypertri::Result<()> {
         validate_assembly_source_face_incidence(self, left, right)
+    }
+
+    /// Recompute this assembly plan from source meshes and a region selection.
+    ///
+    /// Local validation and source-face incidence prove that this plan is
+    /// internally coherent and lies on claimed source faces. This replay also
+    /// rebuilds the intersection graph, region plan, exact `hypertri`
+    /// triangulations, and selected-region assembly for the supplied policy,
+    /// then requires the retained plan to match the recomputed one. That makes
+    /// the selected-region policy part of the exact artifact boundary, in the
+    /// sense of Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7.1-2 (1997): downstream topology cannot
+    /// consume a locally valid assembly that was relabeled from a different
+    /// source pair or region-retention rule.
+    pub fn validate_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+        selection: ExactRegionSelection,
+    ) -> hypertri::Result<()> {
+        self.validate()?;
+        self.validate_source_face_incidence(left, right)?;
+        let region_plan =
+            replay_region_plan(left, right).map_err(|_| hypertri::Error::InvalidInput {
+                reason: "assembly source replay could not rebuild region plan",
+            })?;
+        let triangulations =
+            checked_triangulate_face_regions_with_earcut(&region_plan, left, right).map_err(
+                |_| hypertri::Error::InvalidInput {
+                    reason: "assembly source replay could not triangulate region plan",
+                },
+            )?;
+        let replay =
+            ExactBooleanAssemblyPlan::from_region_triangulations(&triangulations, selection)?;
+        if self == &replay {
+            Ok(())
+        } else {
+            Err(hypertri::Error::InvalidInput {
+                reason: "assembly source replay mismatch",
+            })
+        }
     }
 }
 
@@ -782,8 +937,47 @@ pub fn build_selected_region_mesh(
     policy: ValidationPolicy,
 ) -> Result<ExactMesh, super::error::MeshError> {
     let graph = super::graph::build_intersection_graph(left, right)?;
+    graph
+        .validate_against_meshes(left, right)
+        .map_err(|error| {
+            super::error::MeshError::one(super::error::MeshDiagnostic::new(
+                super::error::Severity::Error,
+                super::error::DiagnosticKind::UnsupportedExactOperation,
+                format!("exact selected-region graph/source replay failed: {error:?}"),
+            ))
+        })?;
+    if graph.has_unknowns() {
+        return Err(super::error::MeshError::one(
+            super::error::MeshDiagnostic::new(
+                super::error::Severity::Error,
+                super::error::DiagnosticKind::UnsupportedExactOperation,
+                "exact selected-region graph contains unresolved predicate events",
+            ),
+        ));
+    }
     let geometry = graph.face_split_geometry_plan(left, right)?;
     let region_plan = geometry.region_plan(left, right);
+    let region_classifications =
+        checked_classify_face_regions_against_opposite_planes(&region_plan, left, right)?;
+    // `build_selected_region_mesh` is a mesh-only convenience wrapper around
+    // the richer report API. It must still cross the same certified
+    // winding-handoff boundary as `boolean_selected_regions`: every retained
+    // region/plane fact is audited and proof-producing before triangulation
+    // may materialize topology. This follows Yap, "Towards Exact Geometric
+    // Computation," Comput. Geom. 7.1-2 (1997): a shorter API cannot erase
+    // undecided predicate state just because it returns fewer report fields.
+    if region_classifications
+        .iter()
+        .any(|classification| !classification.is_decided_and_proof_producing())
+    {
+        return Err(super::error::MeshError::one(
+            super::error::MeshDiagnostic::new(
+                super::error::Severity::Error,
+                super::error::DiagnosticKind::UnsupportedExactOperation,
+                "exact selected-region classification retained undecided predicate evidence",
+            ),
+        ));
+    }
     let triangulations = checked_triangulate_face_regions_with_earcut(&region_plan, left, right)
         .map_err(|error| {
             super::error::MeshError::one(super::error::MeshDiagnostic::new(
@@ -804,16 +998,16 @@ pub fn build_selected_region_mesh(
 }
 
 #[cfg(feature = "exact-triangulation")]
-fn assemble_region_triangulations(
+fn assemble_region_triangulations_with_selection(
     triangulations: &[FaceRegionTriangulation],
-    selection: ExactRegionSelection,
+    should_keep: &mut impl FnMut(&FaceRegionTriangulation) -> bool,
 ) -> hypertri::Result<ExactBooleanAssemblyPlan> {
     let mut vertices = Vec::new();
     let mut triangles = Vec::new();
 
     for triangulation in triangulations {
         triangulation.validate()?;
-        if !selection.keeps(triangulation.side) {
+        if !should_keep(triangulation) {
             continue;
         }
 

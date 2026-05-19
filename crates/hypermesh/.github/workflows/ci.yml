@@ -22,14 +22,14 @@ jobs:
             command: cargo test --no-default-features --features exact-triangulation
           - name: all-features
             command: cargo test --all-features
+          - name: all-features-clippy
+            command: cargo clippy --all-features -- -D warnings
+          - name: all-features-docs
+            command: cargo doc --all-features --no-deps
           - name: legacy-only
             command: cargo test --no-default-features --features legacy-boolean
-          - name: f32-compat
-            command: cargo test --no-default-features --features legacy-boolean,f32
           - name: rayon
             command: cargo test --no-default-features --features legacy-boolean,rayon
-          - name: f32-rayon
-            command: cargo test --no-default-features --features legacy-boolean,f32,rayon
           - name: bevy-examples
             command: cargo check --no-default-features --features bevy --examples
           - name: benches
@@ -40,6 +40,8 @@ jobs:
             command: cargo check --manifest-path fuzz/Cargo.toml
           - name: fuzz-targets-exact-triangulation
             command: cargo check --manifest-path fuzz/Cargo.toml --features exact-triangulation
+          - name: fuzz-targets-legacy-adapter
+            command: cargo check --manifest-path fuzz/Cargo.toml --features legacy-boolean
 
     steps:
       - uses: actions/checkout@v4

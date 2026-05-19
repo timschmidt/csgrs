@@ -17,6 +17,8 @@
 #[cfg(feature = "exact-triangulation")]
 use super::bounds::AabbIntersectionKind;
 #[cfg(feature = "exact-triangulation")]
+use super::convex::{intersect_closed_convex_solids, subtract_closed_convex_solids_single_cap};
+#[cfg(feature = "exact-triangulation")]
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
 #[cfg(feature = "exact-triangulation")]
 use super::graph::build_intersection_graph;
@@ -48,11 +50,13 @@ use super::surface::{
     CoplanarConvexSurfaceContainment, CoplanarSurfaceContainment,
     arrange_coplanar_convex_surface_difference, arrange_coplanar_convex_surface_holed_difference,
     arrange_coplanar_convex_surface_intersection, arrange_coplanar_convex_surface_multi_difference,
-    arrange_coplanar_convex_surface_union, arrange_single_triangle_coplanar_difference,
-    arrange_single_triangle_coplanar_holed_difference, arrange_single_triangle_coplanar_union,
-    certify_coplanar_convex_surface_containment, certify_coplanar_convex_surface_equivalence,
-    certify_single_triangle_coplanar_containment, difference_single_triangle_coplanar_surfaces,
-    intersect_single_triangle_coplanar_surfaces, union_single_triangle_coplanar_surfaces,
+    arrange_coplanar_convex_surface_multi_holed_difference,
+    arrange_coplanar_convex_surface_multi_intersection, arrange_coplanar_convex_surface_union,
+    arrange_single_triangle_coplanar_difference, arrange_single_triangle_coplanar_holed_difference,
+    arrange_single_triangle_coplanar_union, certify_coplanar_convex_surface_containment,
+    certify_coplanar_convex_surface_equivalence, certify_single_triangle_coplanar_containment,
+    difference_single_triangle_coplanar_surfaces, intersect_single_triangle_coplanar_surfaces,
+    union_single_triangle_coplanar_surfaces,
 };
 #[cfg(feature = "exact-triangulation")]
 use super::validation::ValidationPolicy;
@@ -145,7 +149,7 @@ pub fn boolean_selected_regions(
     if policy.reject_unknowns && graph_had_unknowns {
         return Err(MeshError::one(MeshDiagnostic::new(
             Severity::Error,
-            DiagnosticKind::DegenerateTriangle,
+            DiagnosticKind::UnsupportedExactOperation,
             "exact boolean graph contains unresolved predicate events",
         )));
     }
@@ -173,7 +177,7 @@ pub fn boolean_selected_regions(
             })?;
     let mesh = assembly.checked_to_exact_mesh_with_sources(left, right, policy.validation)?;
 
-    Ok(ExactBooleanResult {
+    let result = ExactBooleanResult {
         kind: ExactBooleanResultKind::SelectedRegions {
             selection: policy.selection,
         },
@@ -182,7 +186,17 @@ pub fn boolean_selected_regions(
         triangulations,
         assembly,
         mesh,
-    })
+    };
+    result
+        .validate_against_sources(left, right)
+        .map_err(|error| {
+            MeshError::one(MeshDiagnostic::new(
+                Severity::Error,
+                DiagnosticKind::UnsupportedExactOperation,
+                format!("exact selected-region result/source replay failed: {error:?}"),
+            ))
+        })?;
+    Ok(result)
 }
 
 /// Preflight an exact boolean operation without materializing output topology.
@@ -241,6 +255,11 @@ pub fn preflight_boolean_exact(
         {
             ExactBooleanSupport::CertifiedCoplanarConvexSurfaceIntersection
         }
+        ExactBooleanOperation::Intersection
+            if arrange_coplanar_convex_surface_multi_intersection(left, right).is_some() =>
+        {
+            ExactBooleanSupport::CertifiedCoplanarConvexSurfaceIntersection
+        }
         ExactBooleanOperation::Union
             if arrange_coplanar_convex_surface_union(left, right).is_some() =>
         {
@@ -260,6 +279,11 @@ pub fn preflight_boolean_exact(
             if arrange_coplanar_convex_surface_holed_difference(left, right).is_some() =>
         {
             ExactBooleanSupport::CertifiedCoplanarConvexSurfaceHoledDifference
+        }
+        ExactBooleanOperation::Difference
+            if arrange_coplanar_convex_surface_multi_holed_difference(left, right).is_some() =>
+        {
+            ExactBooleanSupport::CertifiedCoplanarConvexSurfaceMultiHoledDifference
         }
         ExactBooleanOperation::Union
         | ExactBooleanOperation::Intersection
@@ -315,6 +339,8 @@ pub fn preflight_boolean_exact(
         ExactBooleanOperation::Union
         | ExactBooleanOperation::Intersection
         | ExactBooleanOperation::Difference => certified_convex_boolean_support(left, right)?
+            .or_else(|| certified_convex_intersection_support(left, right, operation))
+            .or_else(|| certified_convex_single_cap_difference_support(left, right, operation))
             .unwrap_or(ExactBooleanSupport::RequiresCertifiedWinding),
     };
 
@@ -331,6 +357,7 @@ pub fn preflight_boolean_exact(
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceMultiDifference
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceContainment
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceHoledDifference
+            | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceMultiHoledDifference
             | ExactBooleanSupport::CertifiedOpenSurfaceDisjoint
             | ExactBooleanSupport::CertifiedCoplanarSurfaceContainment
             | ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
@@ -339,6 +366,8 @@ pub fn preflight_boolean_exact(
             | ExactBooleanSupport::CertifiedCoplanarSurfaceCornerDifference
             | ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementDifference
             | ExactBooleanSupport::CertifiedCoplanarSurfaceHoledDifference
+            | ExactBooleanSupport::CertifiedConvexIntersection
+            | ExactBooleanSupport::CertifiedConvexSingleCapDifference
             | ExactBooleanSupport::CertifiedConvexContainment
             | ExactBooleanSupport::CertifiedConvexSeparated
     ) {
@@ -613,6 +642,11 @@ pub fn boolean_exact_with_boundary_policy(
         {
             boolean_coplanar_convex_arrangement_intersection(left, right, validation)
         }
+        ExactBooleanOperation::Intersection
+            if arrange_coplanar_convex_surface_multi_intersection(left, right).is_some() =>
+        {
+            boolean_coplanar_convex_multi_intersection(left, right, validation)
+        }
         ExactBooleanOperation::Union
             if arrange_coplanar_convex_surface_union(left, right).is_some() =>
         {
@@ -627,6 +661,13 @@ pub fn boolean_exact_with_boundary_policy(
             if arrange_coplanar_convex_surface_multi_difference(left, right).is_some() =>
         {
             boolean_coplanar_convex_multi_difference(left, right, validation)
+        }
+        ExactBooleanOperation::Difference
+            if arrange_coplanar_convex_surface_multi_holed_difference(left, right).is_some() =>
+        {
+            boolean_coplanar_convex_multi_holed_difference(left, right, operation, validation).map(
+                |result| result.expect("caller checked convex coplanar multi-holed difference"),
+            )
         }
         ExactBooleanOperation::Union
         | ExactBooleanOperation::Intersection
@@ -674,12 +715,27 @@ pub fn boolean_exact_with_boundary_policy(
                 return Ok(result);
             }
             if let Some(result) =
+                boolean_coplanar_convex_multi_holed_difference(left, right, operation, validation)?
+            {
+                return Ok(result);
+            }
+            if let Some(result) =
                 boolean_open_surface_disjoint_meshes(left, right, operation, validation)?
             {
                 return Ok(result);
             }
             if let Some(result) =
                 boolean_convex_containment_meshes(left, right, operation, validation)?
+            {
+                return Ok(result);
+            }
+            if let Some(result) =
+                boolean_convex_intersection_meshes(left, right, operation, validation)?
+            {
+                return Ok(result);
+            }
+            if let Some(result) =
+                boolean_convex_single_cap_difference_meshes(left, right, operation, validation)?
             {
                 return Ok(result);
             }
@@ -721,6 +777,31 @@ fn boolean_coplanar_convex_arrangement_union(
 }
 
 #[cfg(feature = "exact-triangulation")]
+fn boolean_convex_intersection_meshes(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    if operation != ExactBooleanOperation::Intersection {
+        return Ok(None);
+    }
+    let Some(intersection) = intersect_closed_convex_solids(left, right) else {
+        return Ok(None);
+    };
+    intersection.validate_against_sources(left, right)?;
+    let mesh = copy_mesh(
+        &intersection.mesh,
+        "exact closed-convex solid intersection",
+        validation,
+    )?;
+    Ok(Some(certified_shortcut_result(
+        mesh,
+        ExactBooleanShortcutKind::ConvexIntersection,
+    )))
+}
+
+#[cfg(feature = "exact-triangulation")]
 fn boolean_coplanar_convex_arrangement_intersection(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -731,6 +812,25 @@ fn boolean_coplanar_convex_arrangement_intersection(
     let mesh = copy_mesh(
         &intersection.mesh,
         "exact coplanar convex arrangement intersection",
+        validation,
+    )?;
+    Ok(certified_shortcut_result(
+        mesh,
+        ExactBooleanShortcutKind::CoplanarConvexSurfaceIntersection,
+    ))
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn boolean_coplanar_convex_multi_intersection(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    validation: ValidationPolicy,
+) -> Result<ExactBooleanResult, MeshError> {
+    let intersection = arrange_coplanar_convex_surface_multi_intersection(left, right)
+        .expect("caller checked convex coplanar multi-component intersection");
+    let mesh = copy_mesh(
+        &intersection.mesh,
+        "exact coplanar convex multi-component intersection",
         validation,
     )?;
     Ok(certified_shortcut_result(
@@ -918,6 +1018,32 @@ fn boolean_coplanar_surface_holed_difference(
     Ok(Some(certified_shortcut_result(
         mesh,
         ExactBooleanShortcutKind::CoplanarSurfaceHoledDifference,
+    )))
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn boolean_coplanar_convex_multi_holed_difference(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    if operation != ExactBooleanOperation::Difference {
+        return Ok(None);
+    }
+    let Some(difference) = arrange_coplanar_convex_surface_multi_holed_difference(left, right)
+    else {
+        return Ok(None);
+    };
+    difference.validate_against_sources(left, right)?;
+    let mesh = copy_mesh(
+        &difference.mesh,
+        "exact coplanar convex multi-holed difference",
+        validation,
+    )?;
+    Ok(Some(certified_shortcut_result(
+        mesh,
+        ExactBooleanShortcutKind::CoplanarConvexSurfaceMultiHoledDifference,
     )))
 }
 
@@ -1303,7 +1429,7 @@ pub fn certify_boundary_touching_report(
 ///
 /// The report is intentionally narrower than full winding preflight. It only
 /// answers the coplanar positive-area case where exact graph facts prove that
-/// union or difference output is a planar arrangement problem. Existing
+/// intersection, union, or difference output is a planar arrangement problem. Existing
 /// single-triangle and convex multi-face coplanar shortcuts are reported as
 /// already materialized so callers can distinguish a missing output model from
 /// a handled certified fragment.
@@ -1381,13 +1507,15 @@ fn validate_graph_source_handoff(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<(), MeshError> {
-    graph.validate_against_meshes(left, right).map_err(|error| {
-        MeshError::one(MeshDiagnostic::new(
-            Severity::Error,
-            DiagnosticKind::UnsupportedExactOperation,
-            format!("retained exact intersection graph failed source replay: {error:?}"),
-        ))
-    })
+    graph
+        .validate_against_sources(left, right)
+        .map_err(|error| {
+            MeshError::one(MeshDiagnostic::new(
+                Severity::Error,
+                DiagnosticKind::UnsupportedExactOperation,
+                format!("retained exact intersection graph failed source replay: {error:?}"),
+            ))
+        })
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -1459,9 +1587,7 @@ fn planar_arrangement_report_from_graph(
         ExactPlanarArrangementStatus::GraphUnknowns
     } else if coplanar_surface_output_already_materialized(left, right, operation) {
         ExactPlanarArrangementStatus::AlreadyMaterialized
-    } else if operation != ExactBooleanOperation::Intersection
-        && graph_requires_planar_arrangement(graph)
-    {
+    } else if graph_requires_planar_arrangement(graph) {
         ExactPlanarArrangementStatus::Required
     } else {
         ExactPlanarArrangementStatus::NoPositiveOverlap
@@ -1517,6 +1643,7 @@ fn coplanar_surface_output_already_materialized(
     match operation {
         ExactBooleanOperation::Intersection => {
             arrange_coplanar_convex_surface_intersection(left, right).is_some()
+                || arrange_coplanar_convex_surface_multi_intersection(left, right).is_some()
                 || intersect_single_triangle_coplanar_surfaces(left, right).is_some()
         }
         ExactBooleanOperation::Union => {
@@ -1528,6 +1655,7 @@ fn coplanar_surface_output_already_materialized(
             arrange_coplanar_convex_surface_difference(left, right).is_some()
                 || arrange_coplanar_convex_surface_multi_difference(left, right).is_some()
                 || arrange_coplanar_convex_surface_holed_difference(left, right).is_some()
+                || arrange_coplanar_convex_surface_multi_holed_difference(left, right).is_some()
                 || difference_single_triangle_coplanar_surfaces(left, right).is_some()
                 || arrange_single_triangle_coplanar_difference(left, right).is_some()
                 || arrange_single_triangle_coplanar_holed_difference(left, right).is_some()
@@ -1758,6 +1886,62 @@ fn boolean_convex_containment_meshes(
             _ => unreachable!("convex support helper returns only certified convex shortcuts"),
         },
     )))
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn boolean_convex_single_cap_difference_meshes(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    if operation != ExactBooleanOperation::Difference {
+        return Ok(None);
+    }
+    let Some(difference) = subtract_closed_convex_solids_single_cap(left, right) else {
+        return Ok(None);
+    };
+    difference.validate_against_sources(left, right)?;
+    let mesh = copy_mesh(
+        &difference.mesh,
+        "exact closed-convex single-cap difference",
+        validation,
+    )?;
+    Ok(Some(certified_shortcut_result(
+        mesh,
+        ExactBooleanShortcutKind::ConvexSingleCapDifference,
+    )))
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn certified_convex_intersection_support(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> Option<ExactBooleanSupport> {
+    match operation {
+        ExactBooleanOperation::Intersection
+            if intersect_closed_convex_solids(left, right).is_some() =>
+        {
+            Some(ExactBooleanSupport::CertifiedConvexIntersection)
+        }
+        _ => None,
+    }
+}
+
+fn certified_convex_single_cap_difference_support(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> Option<ExactBooleanSupport> {
+    match operation {
+        ExactBooleanOperation::Difference
+            if subtract_closed_convex_solids_single_cap(left, right).is_some() =>
+        {
+            Some(ExactBooleanSupport::CertifiedConvexSingleCapDifference)
+        }
+        _ => None,
+    }
 }
 
 #[cfg(feature = "exact-triangulation")]

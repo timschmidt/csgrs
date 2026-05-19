@@ -11,6 +11,7 @@
 pub mod boolean;
 pub mod bounds;
 pub mod construction;
+pub mod convex;
 pub mod coplanar;
 pub mod error;
 pub mod facts;
@@ -40,6 +41,10 @@ pub use construction::{
     SegmentPlaneConstructionFailure, SegmentPlaneIntersection, SegmentPlaneParameterRatio,
     SegmentPlaneRelation, SegmentPlaneValidationError, intersect_segment_with_face_plane,
     intersect_segment_with_oriented_plane, intersect_segment_with_retained_face_plane,
+};
+pub use convex::{
+    ConvexSolidIntersection, ConvexSolidSingleCapDifference, intersect_closed_convex_solids,
+    subtract_closed_convex_solids_single_cap,
 };
 pub use coplanar::{
     CoplanarProjection, CoplanarTriangleClassification, CoplanarTriangleRelation,
@@ -112,17 +117,19 @@ pub use solid::{
 };
 #[cfg(feature = "exact-triangulation")]
 pub use surface::{
-    CoplanarConvexArrangement, CoplanarConvexHoledArrangement, CoplanarConvexMultiArrangement,
+    CoplanarArrangementOperation, CoplanarConvexArrangement, CoplanarConvexHoledArrangement,
+    CoplanarConvexMultiArrangement, CoplanarConvexMultiHoledArrangement,
     CoplanarConvexSurfaceContainment, CoplanarConvexSurfaceContainmentCertificate,
     CoplanarConvexSurfaceEquivalence, CoplanarConvexSurfaceReport,
     CoplanarConvexSurfaceReportError, CoplanarConvexSurfaceReportStatus,
     CoplanarTriangleArrangement, CoplanarTriangleHoledArrangement,
     arrange_coplanar_convex_surface_difference, arrange_coplanar_convex_surface_holed_difference,
     arrange_coplanar_convex_surface_intersection, arrange_coplanar_convex_surface_multi_difference,
-    arrange_coplanar_convex_surface_union, arrange_single_triangle_coplanar_difference,
-    arrange_single_triangle_coplanar_holed_difference, arrange_single_triangle_coplanar_union,
-    certify_coplanar_convex_surface_containment, certify_coplanar_convex_surface_equivalence,
-    certify_coplanar_convex_surface_report,
+    arrange_coplanar_convex_surface_multi_holed_difference,
+    arrange_coplanar_convex_surface_multi_intersection, arrange_coplanar_convex_surface_union,
+    arrange_single_triangle_coplanar_difference, arrange_single_triangle_coplanar_holed_difference,
+    arrange_single_triangle_coplanar_union, certify_coplanar_convex_surface_containment,
+    certify_coplanar_convex_surface_equivalence, certify_coplanar_convex_surface_report,
 };
 pub use surface::{
     CoplanarSurfaceContainment, CoplanarSurfaceContainmentReport,

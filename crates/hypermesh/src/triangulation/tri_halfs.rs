@@ -7,6 +7,7 @@ use rayon::prelude::*;
 
 const REMOVE_FLAG: usize = usize::MAX - 1;
 
+#[cfg_attr(feature = "rayon", allow(dead_code))]
 pub fn tri_halfs_single(ts: &[Vec3u]) -> Vec<Half> {
     let nh = ts.len() * 3;
     let ne = nh / 2;

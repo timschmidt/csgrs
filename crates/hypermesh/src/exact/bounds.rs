@@ -35,6 +35,9 @@ pub enum BoundsValidationError {
     UnexpectedMeshBounds,
     /// The retained face-bound vector length does not match the face count.
     FaceBoundsCountMismatch,
+    /// Recomputing bounds from the supplied source vertices and triangles did
+    /// not reproduce the retained bounds object.
+    SourceReplayMismatch,
 }
 
 /// Exact 3D axis-aligned bounding box.
@@ -108,6 +111,43 @@ impl ExactAabb3 {
         }
         Ok(())
     }
+
+    /// Validate this box against the source points it summarizes.
+    ///
+    /// Local validation proves only that each interval is ordered. Source
+    /// replay rebuilds the box from the exact points and requires equality
+    /// before the box may act as broad-phase evidence. This is the bounds-level
+    /// form of Yap's exact-geometric-computation contract from "Towards Exact
+    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997): a cheap
+    /// object summary can schedule predicate work only while it still replays
+    /// from the exact object it summarizes.
+    pub fn validate_against_points(&self, points: &[Point3]) -> Result<(), BoundsValidationError> {
+        self.validate()?;
+        let replay = Self::from_points(points).ok_or(BoundsValidationError::MissingMeshBounds)?;
+        if self == &replay {
+            Ok(())
+        } else {
+            Err(BoundsValidationError::SourceReplayMismatch)
+        }
+    }
+
+    /// Validate this box against one source triangle.
+    ///
+    /// This is the per-face counterpart to [`Self::validate_against_points`].
+    /// It lets callers audit retained face AABBs directly before broad-phase
+    /// face-pair scheduling consumes them.
+    pub fn validate_against_triangle(
+        &self,
+        points: [&Point3; 3],
+    ) -> Result<(), BoundsValidationError> {
+        self.validate()?;
+        let replay = Self::from_triangle(points);
+        if self == &replay {
+            Ok(())
+        } else {
+            Err(BoundsValidationError::SourceReplayMismatch)
+        }
+    }
 }
 
 /// Retained mesh and face bounds.
@@ -168,6 +208,36 @@ impl MeshBounds {
             face.validate()?;
         }
         Ok(())
+    }
+
+    /// Validate retained bounds against the source points and triangle rows.
+    ///
+    /// Local validation proves only interval ordering and table shape. Source
+    /// replay rebuilds the mesh and per-face AABBs from exact source geometry
+    /// and requires equality with this retained object. This preserves Yap's
+    /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+    /// (1997), distinction between acceleration facts and topology decisions:
+    /// broad-phase facts may schedule or reject work only while they still
+    /// replay from the exact objects they summarize.
+    pub fn validate_against_sources(
+        &self,
+        points: &[Point3],
+        triangles: &[[usize; 3]],
+    ) -> Result<(), BoundsValidationError> {
+        self.validate(points.len(), triangles.len())?;
+        if triangles
+            .iter()
+            .flatten()
+            .any(|&vertex| vertex >= points.len())
+        {
+            return Err(BoundsValidationError::SourceReplayMismatch);
+        }
+        let replay = Self::from_triangles(points, triangles);
+        if self == &replay {
+            Ok(())
+        } else {
+            Err(BoundsValidationError::SourceReplayMismatch)
+        }
     }
 }
 

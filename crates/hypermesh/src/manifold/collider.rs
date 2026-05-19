@@ -262,18 +262,19 @@ fn find_collisions<F>(
     let mut rec = |node: i32| {
         let q = &queries[query_idx];
         let overlap = node_bb[node as usize].overlaps(q);
-        if overlap && let Some(il) = node2leaf(node) {
-            if !self_collision || il != query_idx as i32 {
-                match q {
-                    Query::Bb(q) => {
-                        if let Some(iq) = q.id {
-                            record(iq, il as usize);
-                        }
+        if overlap
+            && let Some(il) = node2leaf(node)
+            && (!self_collision || il != query_idx as i32)
+        {
+            match q {
+                Query::Bb(q) => {
+                    if let Some(iq) = q.id {
+                        record(iq, il as usize);
                     }
-                    Query::Pt(q) => {
-                        if let Some(iq) = q.id {
-                            record(iq, il as usize);
-                        }
+                }
+                Query::Pt(q) => {
+                    if let Some(iq) = q.id {
+                        record(iq, il as usize);
                     }
                 }
             }

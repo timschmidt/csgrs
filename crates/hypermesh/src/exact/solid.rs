@@ -73,6 +73,9 @@ pub enum ConvexSolidReportError {
     MeshRelationMismatch,
     /// A nested solid-facts or point-classification report was invalid.
     NestedReport,
+    /// The retained report no longer matches facts recomputed from the
+    /// supplied source solid, point, or subject mesh.
+    SourceReplayMismatch,
 }
 
 /// Exact facts retained while certifying a closed convex solid.
@@ -131,6 +134,24 @@ impl ConvexSolidFacts {
             ) => Ok(()),
         }
     }
+
+    /// Validate these retained facts against their source mesh.
+    ///
+    /// The local validator checks only the state tuple and retained predicate
+    /// shape. This replay check recomputes convex-solid certification from the
+    /// supplied mesh and requires equality with the retained facts. In Yap's
+    /// exact-geometric-computation model, "Towards Exact Geometric
+    /// Computation," *Computational Geometry* 7.1-2 (1997), this is the
+    /// boundary between a coherent certificate object and one still attached
+    /// to the particular geometry whose predicates produced it.
+    pub fn validate_against_source(&self, mesh: &ExactMesh) -> Result<(), ConvexSolidReportError> {
+        self.validate()?;
+        if self == &certify_convex_solid(mesh) {
+            Ok(())
+        } else {
+            Err(ConvexSolidReportError::SourceReplayMismatch)
+        }
+    }
 }
 
 /// Certified point/solid classification with retained predicate provenance.
@@ -164,6 +185,27 @@ impl ConvexSolidPointClassification {
             return Err(ConvexSolidReportError::NonCertifiedPointHasPredicates);
         }
         Ok(())
+    }
+
+    /// Validate this point/solid classification against its source objects.
+    ///
+    /// This recomputes the point halfspace walk from `point` and `solid` after
+    /// the local report audit succeeds. Keeping the retained relation and
+    /// predicate certificates replayable against the original source objects
+    /// follows Yap, "Towards Exact Geometric Computation," *Computational
+    /// Geometry* 7.1-2 (1997): a containment shortcut must not be separable
+    /// from the exact predicates that justified it.
+    pub fn validate_against_sources(
+        &self,
+        point: &Point3,
+        solid: &ExactMesh,
+    ) -> Result<(), ConvexSolidReportError> {
+        self.validate()?;
+        if self == &classify_point_against_convex_solid_report(point, solid) {
+            Ok(())
+        } else {
+            Err(ConvexSolidReportError::SourceReplayMismatch)
+        }
     }
 }
 
@@ -279,6 +321,28 @@ impl ConvexSolidMeshClassification {
             Ok(())
         } else {
             Err(ConvexSolidReportError::MeshRelationMismatch)
+        }
+    }
+
+    /// Validate this mesh/solid classification against its source meshes.
+    ///
+    /// The local audit proves that the summary relation follows from the
+    /// retained per-vertex point classifications. This replay check
+    /// recomputes the whole report from `subject` and `solid`, catching stale
+    /// report objects that remain internally coherent but no longer belong to
+    /// the source meshes. That is Yap's retained-state discipline applied to
+    /// convex shortcut booleans; see "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7.1-2 (1997).
+    pub fn validate_against_sources(
+        &self,
+        subject: &ExactMesh,
+        solid: &ExactMesh,
+    ) -> Result<(), ConvexSolidReportError> {
+        self.validate()?;
+        if self == &classify_mesh_vertices_against_convex_solid_report(subject, solid) {
+            Ok(())
+        } else {
+            Err(ConvexSolidReportError::SourceReplayMismatch)
         }
     }
 }

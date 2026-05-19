@@ -13,6 +13,7 @@ libfuzzer-sys = "0.4"
 
 [features]
 exact-triangulation = ["hypermesh/exact-triangulation"]
+legacy-boolean = ["hypermesh/legacy-boolean"]
 
 [[bin]]
 name = "exact_mesh_input"
@@ -35,3 +36,11 @@ test = false
 doc = false
 bench = false
 required-features = ["exact-triangulation"]
+
+[[bin]]
+name = "legacy_boolean_adapter"
+path = "fuzz_targets/legacy_boolean_adapter.rs"
+test = false
+doc = false
+bench = false
+required-features = ["legacy-boolean"]

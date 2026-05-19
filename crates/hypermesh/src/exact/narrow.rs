@@ -51,6 +51,9 @@ pub enum TrianglePlaneRelation {
 pub enum TrianglePlaneValidationError {
     /// The retained vertex sides do not derive the retained relation.
     RelationMismatch,
+    /// Recomputing the classifier from the supplied source triangle and plane
+    /// did not reproduce this retained report.
+    SourceReplayMismatch,
 }
 
 /// Certified triangle/plane classification with retained predicate routes.
@@ -82,6 +85,35 @@ impl TrianglePlaneClassification {
             Ok(())
         } else {
             Err(TrianglePlaneValidationError::RelationMismatch)
+        }
+    }
+
+    /// Validate this classifier against the source point and triangle handles.
+    ///
+    /// Local validation checks only that retained side facts imply the retained
+    /// relation. Source replay recomputes the three exact orientation
+    /// predicates from `points`, `face`, and `query`, then requires the
+    /// retained classifier to match the replay. This keeps the plane-side
+    /// certificate attached to the exact predicate history required by Yap,
+    /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+    /// (1997), and by the orientation-predicate formulation of Guigue and
+    /// Devillers, "Fast and Robust Triangle-Triangle Overlap Test Using
+    /// Orientation Predicates," *Journal of Graphics Tools* 8.1 (2003).
+    pub fn validate_against_sources(
+        &self,
+        points: &[Point3],
+        face: [usize; 3],
+        query: [usize; 3],
+    ) -> Result<(), TrianglePlaneValidationError> {
+        self.validate()?;
+        if !indices_in_range(points, face) || !indices_in_range(points, query) {
+            return Err(TrianglePlaneValidationError::SourceReplayMismatch);
+        }
+        let replay = classify_triangle_against_face_plane(points, face, query);
+        if self == &replay {
+            Ok(())
+        } else {
+            Err(TrianglePlaneValidationError::SourceReplayMismatch)
         }
     }
 }
@@ -139,6 +171,9 @@ pub enum TriangleTriangleValidationError {
     InvalidSegmentPlaneEvent,
     /// A non-candidate relation retained segment/plane construction events.
     UnexpectedEdgeEvents,
+    /// Recomputing the classifier from the supplied source triangles did not
+    /// reproduce this retained report.
+    SourceReplayMismatch,
 }
 
 /// Certified triangle/triangle coarse classification.
@@ -251,6 +286,34 @@ impl TriangleTriangleClassification {
             return Err(TriangleTriangleValidationError::UnexpectedEdgeEvents);
         }
         Ok(())
+    }
+
+    /// Validate this classifier against the source point and triangle handles.
+    ///
+    /// Local validation proves that retained subreports agree with the coarse
+    /// relation. Source replay recomputes the full narrow-phase classifier,
+    /// including plane-side predicates, coplanar projection predicates, and
+    /// candidate segment/plane construction events, then requires exact
+    /// equality with this retained report. This is the auditable-object
+    /// boundary advocated by Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7.1-2 (1997), applied to the
+    /// Guigue-Devillers triangle/triangle predicate staging.
+    pub fn validate_against_sources(
+        &self,
+        points: &[Point3],
+        left: [usize; 3],
+        right: [usize; 3],
+    ) -> Result<(), TriangleTriangleValidationError> {
+        self.validate()?;
+        if !indices_in_range(points, left) || !indices_in_range(points, right) {
+            return Err(TriangleTriangleValidationError::SourceReplayMismatch);
+        }
+        let replay = classify_triangle_triangle(points, left, right);
+        if self == &replay {
+            Ok(())
+        } else {
+            Err(TriangleTriangleValidationError::SourceReplayMismatch)
+        }
     }
 }
 
@@ -444,6 +507,10 @@ fn relation_from_sides(sides: [Option<PlaneSide>; 3]) -> TrianglePlaneRelation {
 
 fn transpose_sides(sides: [Option<PlaneSide>; 3]) -> Option<[PlaneSide; 3]> {
     Some([sides[0]?, sides[1]?, sides[2]?])
+}
+
+fn indices_in_range(points: &[Point3], indices: [usize; 3]) -> bool {
+    indices.iter().all(|&index| index < points.len())
 }
 
 fn triangle_triangle_relation(

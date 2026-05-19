@@ -105,6 +105,9 @@ pub enum SegmentPlaneValidationError {
     UnexpectedConstruction,
     /// A relation that did not fail retained a construction-failure reason.
     UnexpectedConstructionFailureReason,
+    /// Recomputing the event from the supplied segment and plane did not
+    /// reproduce this retained construction record.
+    SourceReplayMismatch,
 }
 
 /// Certified segment/plane event with retained construction data.
@@ -259,6 +262,33 @@ impl SegmentPlaneIntersection {
                 }
                 self.expect_no_success_construction()
             }
+        }
+    }
+
+    /// Validate this event against the segment and oriented face plane that
+    /// produced it.
+    ///
+    /// Local validation proves that retained relation, endpoint-side facts,
+    /// exact point, and determinant ratio agree with each other. Source replay
+    /// recomputes the same segment/plane construction from the supplied points
+    /// and requires exact equality with this event. This follows Yap, "Towards
+    /// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997):
+    /// a construction artifact remains safe for topology mutation only while
+    /// it is tied to the object facts and predicate route that produced it.
+    pub fn validate_against_sources(
+        &self,
+        a: &Point3,
+        b: &Point3,
+        c: &Point3,
+        p0: &Point3,
+        p1: &Point3,
+    ) -> Result<(), SegmentPlaneValidationError> {
+        self.validate()?;
+        let replay = intersect_segment_with_oriented_plane(a, b, c, p0, p1);
+        if self == &replay {
+            Ok(())
+        } else {
+            Err(SegmentPlaneValidationError::SourceReplayMismatch)
         }
     }
 
@@ -529,7 +559,7 @@ fn construct_crossing_from_values(
     p0: &Point3,
     p1: &Point3,
 ) -> Result<(ExactReal, SegmentPlaneParameterRatio, Point3), SegmentPlaneConstructionFailure> {
-    let denominator = sub(&d0, &d1);
+    let denominator = sub(d0, d1);
     if matches!(
         compare_reals(&denominator, &ExactReal::from(0)).value(),
         Some(core::cmp::Ordering::Equal)

@@ -45,7 +45,16 @@ pub enum MeshSide {
 }
 
 /// Exact intersection event extracted from a retained face pair.
+///
+/// The segment-plane variant intentionally retains the full exact construction
+/// certificate inline so graph validation can replay predicate, ratio, and
+/// point evidence without chasing side tables. Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997), treats that retained
+/// computation history as part of the exact object boundary; boxing the fields
+/// would reduce enum size but not the retained state that downstream audit
+/// paths must carry.
 #[derive(Clone, Debug, PartialEq)]
+#[allow(clippy::large_enum_variant)]
 pub enum IntersectionEvent {
     /// A triangle edge intersects the opposite triangle plane.
     SegmentPlane {
@@ -312,6 +321,9 @@ pub enum CoplanarOverlapGraphValidationError {
     NonConstructiveVertexOverlap,
     /// A vertex record does not connect left and right meshes.
     SameSideVertexOverlap,
+    /// Recomputing coplanar overlap graphs from the supplied source meshes did
+    /// not reproduce this retained graph.
+    SourceReplayMismatch,
 }
 
 /// Structural inconsistency in retained coplanar split construction records.
@@ -352,6 +364,9 @@ pub enum CoplanarOverlapSplitValidationError {
     /// A retained split point could not be certified against replayed source
     /// edge interpolation.
     UnknownSplitPointEquality,
+    /// Recomputing coplanar split constructions from the supplied source
+    /// meshes did not reproduce this retained split artifact.
+    SourceReplayMismatch,
 }
 
 /// Structural inconsistency in a coplanar arrangement readiness report.
@@ -374,6 +389,9 @@ pub enum CoplanarArrangementReadinessValidationError {
     /// Retained interval endpoint facts do not match retained interval
     /// contacts.
     IntervalEndpointCountMismatch,
+    /// Recomputing the readiness summary from the supplied source meshes did
+    /// not reproduce this retained report.
+    SourceReplayMismatch,
 }
 
 impl CoplanarOverlapGraph {
@@ -405,6 +423,31 @@ impl CoplanarOverlapGraph {
             }
         }
         Ok(())
+    }
+
+    /// Validate this overlap graph against the source meshes that produced it.
+    ///
+    /// Structural validation proves that retained edge and vertex facts are
+    /// locally coherent. Source replay rebuilds the exact intersection graph
+    /// from `left` and `right`, extracts all coplanar overlap graphs, and
+    /// requires this graph to be present unchanged. This is the Yap-style
+    /// exact object boundary from "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7.1-2 (1997): projected coplanar topology
+    /// evidence must remain tied to the operands whose predicates produced it.
+    pub fn validate_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<(), CoplanarOverlapGraphValidationError> {
+        self.validate()?;
+        let replay = build_intersection_graph(left, right)
+            .map(|graph| graph.coplanar_overlap_graphs())
+            .map_err(|_| CoplanarOverlapGraphValidationError::SourceReplayMismatch)?;
+        if replay.iter().any(|graph| graph == self) {
+            Ok(())
+        } else {
+            Err(CoplanarOverlapGraphValidationError::SourceReplayMismatch)
+        }
     }
 
     /// Construct exact point/interval records for this coplanar overlap graph.
@@ -494,6 +537,31 @@ impl CoplanarArrangementReadinessReport {
             }
         }
     }
+
+    /// Validate this readiness report against the source meshes that produced it.
+    ///
+    /// Local validation proves only that the compact counters are internally
+    /// coherent. Source replay rebuilds the exact intersection graph and
+    /// coplanar split summaries from `left` and `right`, then requires the
+    /// retained report to match that replay. This follows Yap, "Towards Exact
+    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997): a
+    /// summarized exact-topology handoff must remain attached to the predicate
+    /// and construction history that produced its numerical structure.
+    pub fn validate_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<(), CoplanarArrangementReadinessValidationError> {
+        self.validate()?;
+        let replay = build_intersection_graph(left, right)
+            .and_then(|graph| graph.coplanar_arrangement_readiness_report(left, right))
+            .map_err(|_| CoplanarArrangementReadinessValidationError::SourceReplayMismatch)?;
+        if self == &replay {
+            Ok(())
+        } else {
+            Err(CoplanarArrangementReadinessValidationError::SourceReplayMismatch)
+        }
+    }
 }
 
 impl CoplanarOverlapSplitPlan {
@@ -521,6 +589,33 @@ impl CoplanarOverlapSplitPlan {
         }
         Ok(())
     }
+
+    /// Validate this split plan by replaying it from source operands.
+    ///
+    /// Mesh validation checks each retained split point against source-edge
+    /// interpolation. This stronger audit also rebuilds the coplanar overlap
+    /// graphs and split constructions from `left` and `right`, then compares
+    /// the whole public plan. Following Yap, exact planar-cell extraction
+    /// should consume only split records whose construction history still
+    /// replays from the source operands.
+    pub fn validate_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<(), CoplanarOverlapSplitValidationError> {
+        self.validate()?;
+        for graph in &self.graphs {
+            graph.validate_against_sources(left, right)?;
+        }
+        let replay = build_intersection_graph(left, right)
+            .and_then(|graph| graph.coplanar_overlap_split_plan(left, right))
+            .map_err(|_| CoplanarOverlapSplitValidationError::SourceReplayMismatch)?;
+        if self == &replay {
+            Ok(())
+        } else {
+            Err(CoplanarOverlapSplitValidationError::SourceReplayMismatch)
+        }
+    }
 }
 
 impl CoplanarOverlapSplitGraph {
@@ -547,6 +642,36 @@ impl CoplanarOverlapSplitGraph {
                 .map_err(coplanar_split_validation_mesh_error)?;
         }
         Ok(())
+    }
+
+    /// Validate this split graph by replaying it from source operands.
+    ///
+    /// This combines exact source-edge interpolation checks with a full replay
+    /// of the coplanar split plan, then requires this graph to appear
+    /// unchanged. It keeps interval and point-split construction records as
+    /// certified objects rather than detachable projected labels, matching the
+    /// exact-topology staging advocated by Yap.
+    pub fn validate_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<(), CoplanarOverlapSplitValidationError> {
+        self.validate()?;
+        for split in &self.edge_splits {
+            let left_edge = edge_points(left, split.overlap.left_edge)
+                .map_err(|_| CoplanarOverlapSplitValidationError::SourceReplayMismatch)?;
+            let right_edge = edge_points(right, split.overlap.right_edge)
+                .map_err(|_| CoplanarOverlapSplitValidationError::SourceReplayMismatch)?;
+            validate_coplanar_edge_split_against_edges(split, &left_edge, &right_edge)?;
+        }
+        let replay = build_intersection_graph(left, right)
+            .and_then(|graph| graph.coplanar_overlap_split_plan(left, right))
+            .map_err(|_| CoplanarOverlapSplitValidationError::SourceReplayMismatch)?;
+        if replay.graphs.iter().any(|graph| graph == self) {
+            Ok(())
+        } else {
+            Err(CoplanarOverlapSplitValidationError::SourceReplayMismatch)
+        }
     }
 }
 
@@ -584,6 +709,9 @@ pub enum IntersectionGraphValidationError {
     DisjointCoplanarEdgeEvent,
     /// A coplanar vertex event retained an outside or degenerate location.
     NonConstructiveCoplanarVertexEvent,
+    /// Recomputing graph events from the supplied source meshes did not
+    /// reproduce this retained graph artifact.
+    SourceReplayMismatch,
 }
 
 /// Event records for one retained face pair.
@@ -696,6 +824,30 @@ impl FacePairEvents {
             validate_intersection_event_sources(event, self, left, right, left_tri, right_tri)?;
         }
         Ok(())
+    }
+
+    /// Validate this face-pair event record by replaying source classification.
+    ///
+    /// Source-handle validation proves the retained events still point into
+    /// the supplied meshes. This method additionally rebuilds the exact
+    /// intersection graph from `left` and `right`, then requires this pair to
+    /// appear unchanged. The replay check follows Yap, "Towards Exact
+    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997): exact
+    /// event records are certified numerical/combinatorial objects, not labels
+    /// that can be copied between face pairs.
+    pub fn validate_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<(), IntersectionGraphValidationError> {
+        self.validate_against_meshes(left, right)?;
+        let replay = build_intersection_graph(left, right)
+            .map_err(|_| IntersectionGraphValidationError::SourceReplayMismatch)?;
+        if replay.face_pairs.iter().any(|pair| pair == self) {
+            Ok(())
+        } else {
+            Err(IntersectionGraphValidationError::SourceReplayMismatch)
+        }
     }
 
     /// Group retained coplanar events into a non-mutating overlap graph.
@@ -813,6 +965,28 @@ impl ExactIntersectionGraph {
         Ok(())
     }
 
+    /// Validate this graph by replaying it from source operands.
+    ///
+    /// [`Self::validate_against_meshes`] checks that retained event handles
+    /// still belong to `left` and `right`. Source replay rebuilds the graph
+    /// from those operands and requires exact equality, making the whole graph
+    /// artifact auditable before split planning consumes it under Yap's exact
+    /// geometric-computation boundary.
+    pub fn validate_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<(), IntersectionGraphValidationError> {
+        self.validate_against_meshes(left, right)?;
+        let replay = build_intersection_graph(left, right)
+            .map_err(|_| IntersectionGraphValidationError::SourceReplayMismatch)?;
+        if self == &replay {
+            Ok(())
+        } else {
+            Err(IntersectionGraphValidationError::SourceReplayMismatch)
+        }
+    }
+
     /// Return grouped coplanar overlap graphs for retained coplanar face pairs.
     pub fn coplanar_overlap_graphs(&self) -> Vec<CoplanarOverlapGraph> {
         self.face_pairs
@@ -848,6 +1022,20 @@ impl ExactIntersectionGraph {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<CoplanarArrangementReadinessReport, MeshError> {
+        // Planar-readiness is a public compact view of retained graph state.
+        // Before collapsing counts, replay the graph's face/edge/vertex handles
+        // against the source meshes and later replay split parameters against
+        // source edges. Yap, "Towards Exact Geometric Computation," Comput.
+        // Geom. 7.1-2 (1997), makes those object handles part of the exact
+        // state; stale handles must not survive simply because the summary
+        // counters are internally coherent.
+        self.validate_against_meshes(left, right).map_err(|error| {
+            MeshError::one(MeshDiagnostic::new(
+                Severity::Error,
+                DiagnosticKind::UnsupportedExactOperation,
+                format!("retained coplanar arrangement graph failed source replay: {error:?}"),
+            ))
+        })?;
         let overlap_graphs = self.coplanar_overlap_graphs();
         if overlap_graphs.is_empty() {
             return Ok(CoplanarArrangementReadinessReport {
@@ -888,13 +1076,17 @@ impl ExactIntersectionGraph {
             vertex_overlap_count += graph.vertex_overlaps.len();
 
             let split = graph.split_constructions(left, right)?;
-            split.validate().map_err(|_| MeshError {
-                diagnostics: vec![MeshDiagnostic::new(
-                    Severity::Error,
-                    DiagnosticKind::UnsupportedExactOperation,
-                    "retained coplanar split construction failed readiness validation",
-                )],
-            })?;
+            split
+                .validate_against_meshes(left, right)
+                .map_err(|error| {
+                    MeshError::one(MeshDiagnostic::new(
+                        Severity::Error,
+                        DiagnosticKind::UnsupportedExactOperation,
+                        format!(
+                            "retained coplanar split construction failed source replay: {error:?}"
+                        ),
+                    ))
+                })?;
             for edge_split in split.edge_splits {
                 point_split_count += edge_split.points.len();
                 if edge_split.interval_overlap {
@@ -1141,6 +1333,22 @@ impl ExactEdgeSplitPlan {
     pub fn validate(&self) -> SplitPlanValidationReport {
         validate_edge_split_plan(self)
     }
+
+    /// Validate edge split extraction by replaying from source operands.
+    ///
+    /// This rebuilds the exact intersection graph from `left` and `right`,
+    /// extracts its edge split plan, and compares it with this artifact after
+    /// local construction-fact validation. Replaying the first split handoff
+    /// keeps segment/plane certificates attached to their original operands,
+    /// matching Yap's exact-computation discipline from "Towards Exact
+    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+    pub fn validate_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> SplitPlanValidationReport {
+        validate_edge_split_plan_against_sources(self, left, right)
+    }
 }
 
 /// One merged exact graph vertex.
@@ -1195,6 +1403,21 @@ impl ExactGraphVertexPlan {
     /// facts instead of trusting the representative coordinate alone.
     pub fn validate(&self) -> SplitPlanValidationReport {
         validate_graph_vertex_plan(self)
+    }
+
+    /// Validate graph-vertex merging by replaying from source operands.
+    ///
+    /// Merged graph vertices are only meaningful for the exact split events
+    /// that produced them. This method rebuilds those events from `left` and
+    /// `right`, redoes the merge, and requires the public artifact to match the
+    /// replay, preserving Yap's distinction between certified algebraic facts
+    /// and later combinatorial topology.
+    pub fn validate_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> SplitPlanValidationReport {
+        validate_graph_vertex_plan_against_sources(self, left, right)
     }
 }
 
@@ -1262,6 +1485,21 @@ impl ExactSplitTopologyPlan {
     pub fn validate(&self) -> SplitPlanValidationReport {
         validate_split_topology_plan(self)
     }
+
+    /// Validate split topology by replaying from source operands.
+    ///
+    /// The topology plan orders original edge endpoints and exact graph
+    /// vertices into non-mutating chains. This source replay rebuilds the
+    /// graph, graph-vertex merge, and topology from `left` and `right` before
+    /// comparing the public artifact, following Yap's requirement that topology
+    /// decisions remain tied to exact predicate and construction evidence.
+    pub fn validate_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> SplitPlanValidationReport {
+        validate_split_topology_plan_against_sources(self, left, right)
+    }
 }
 
 /// One split edge chain as used by an affected face.
@@ -1315,6 +1553,23 @@ impl ExactFaceSplitPlan {
     ) -> SplitPlanValidationReport {
         validate_face_split_plan(self, topology)
     }
+
+    /// Validate face-local split work items by replaying from source operands.
+    ///
+    /// [`Self::validate_against_topology`] is useful when a caller already has
+    /// a checked topology handoff. This source replay rebuilds the exact graph,
+    /// topology, and face-local work items from `left` and `right`, then
+    /// compares the rebuilt plan with this public artifact. That keeps the
+    /// copied face work list tied to the certified predicate/construction
+    /// chain required by Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7.1-2 (1997).
+    pub fn validate_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> SplitPlanValidationReport {
+        validate_face_split_plan_against_sources(self, left, right)
+    }
 }
 
 /// Stable category for split-plan validation diagnostics.
@@ -1356,6 +1611,8 @@ pub enum SplitPlanDiagnosticKind {
     UnknownBoundaryIncidence,
     /// A split boundary node is not on the original face plane.
     BoundaryNodeOffFacePlane,
+    /// A public split-region artifact no longer matches source replay.
+    SourceReplayMismatch,
     /// A split face region has fewer than three boundary nodes.
     EmptyOrShortRegionBoundary,
     /// A split face region contains consecutive duplicate boundary nodes.
@@ -1496,7 +1753,8 @@ fn validate_split_plan_diagnostic(
     match diagnostic.kind {
         SplitPlanDiagnosticKind::UnknownOrdering
         | SplitPlanDiagnosticKind::UnresolvedEquality
-        | SplitPlanDiagnosticKind::UnresolvedVertexLookup => Ok(()),
+        | SplitPlanDiagnosticKind::UnresolvedVertexLookup
+        | SplitPlanDiagnosticKind::SourceReplayMismatch => Ok(()),
         SplitPlanDiagnosticKind::MissingEndpointSideFacts
         | SplitPlanDiagnosticKind::NonCrossingEndpointSideFacts
         | SplitPlanDiagnosticKind::InvalidConstructionRatio
@@ -1646,6 +1904,24 @@ impl ExactFaceSplitGeometryPlan {
         validate_face_split_geometry_incidence(self, left, right)
     }
 
+    /// Validate split-boundary geometry by replaying it from source operands.
+    ///
+    /// Boundary incidence proves that each retained point lies on the source
+    /// face plane. This check also rebuilds the exact intersection graph,
+    /// topology, and split-boundary geometry from `left` and `right`, then
+    /// compares the rebuilt artifact with this value. The replay boundary is
+    /// the same exact-artifact discipline described by Yap, "Towards Exact
+    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997): derived
+    /// combinatorics are consumed only with their certified construction
+    /// history still attached to the original operands.
+    pub fn validate_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> SplitPlanValidationReport {
+        validate_face_split_geometry_against_sources(self, left, right)
+    }
+
     /// Build full face-region boundary loops for downstream exact triangulation.
     ///
     /// The geometry handoff stores only split edge chains. This method expands
@@ -1698,6 +1974,24 @@ impl ExactFaceRegionPlan {
     /// construction assumptions.
     pub fn validate(&self, left: &ExactMesh, right: &ExactMesh) -> SplitPlanValidationReport {
         validate_face_region_plan(self, left, right)
+    }
+
+    /// Validate this region plan by replaying it from its source operands.
+    ///
+    /// Local loop validation proves that boundary nodes are structurally usable
+    /// and incident to their source face planes. This stronger check rebuilds
+    /// the exact intersection graph, split topology, split boundary geometry,
+    /// and final region loops from `left` and `right`, then requires the public
+    /// artifact to match that replay. The staging follows Yap, "Towards Exact
+    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997): exact
+    /// algorithms should pass certified algebraic artifacts across topology
+    /// boundaries instead of trusting copied combinatorial state.
+    pub fn validate_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> SplitPlanValidationReport {
+        validate_face_region_plan_against_sources(self, left, right)
     }
 }
 
@@ -1887,6 +2181,36 @@ fn validate_graph_vertex_plan(plan: &ExactGraphVertexPlan) -> SplitPlanValidatio
     }
 
     SplitPlanValidationReport { diagnostics }
+}
+
+fn validate_graph_vertex_plan_against_sources(
+    plan: &ExactGraphVertexPlan,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> SplitPlanValidationReport {
+    let mut report = validate_graph_vertex_plan(plan);
+    if !report.is_valid() {
+        return report;
+    }
+
+    let replay = build_intersection_graph(left, right).map(|graph| graph.graph_vertex_plan());
+    match replay {
+        Ok(replay) if replay == *plan => report,
+        Ok(_) => {
+            report.diagnostics.push(SplitPlanDiagnostic::new(
+                SplitPlanDiagnosticKind::SourceReplayMismatch,
+                "graph-vertex plan does not match exact replay from source operands",
+            ));
+            report
+        }
+        Err(error) => {
+            report.diagnostics.push(SplitPlanDiagnostic::new(
+                SplitPlanDiagnosticKind::SourceReplayMismatch,
+                format!("graph-vertex plan source replay failed: {error}"),
+            ));
+            report
+        }
+    }
 }
 
 fn push_graph_vertex_source_use_diagnostics(
@@ -2294,6 +2618,36 @@ fn validate_edge_split_plan(split_plan: &ExactEdgeSplitPlan) -> SplitPlanValidat
     SplitPlanValidationReport { diagnostics }
 }
 
+fn validate_edge_split_plan_against_sources(
+    split_plan: &ExactEdgeSplitPlan,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> SplitPlanValidationReport {
+    let mut report = validate_edge_split_plan(split_plan);
+    if !report.is_valid() {
+        return report;
+    }
+
+    let replay = build_intersection_graph(left, right).map(|graph| graph.edge_split_plan());
+    match replay {
+        Ok(replay) if replay == *split_plan => report,
+        Ok(_) => {
+            report.diagnostics.push(SplitPlanDiagnostic::new(
+                SplitPlanDiagnosticKind::SourceReplayMismatch,
+                "edge split plan does not match exact replay from source operands",
+            ));
+            report
+        }
+        Err(error) => {
+            report.diagnostics.push(SplitPlanDiagnostic::new(
+                SplitPlanDiagnosticKind::SourceReplayMismatch,
+                format!("edge split plan source replay failed: {error}"),
+            ));
+            report
+        }
+    }
+}
+
 fn face_split_plan(topology: &ExactSplitTopologyPlan) -> ExactFaceSplitPlan {
     let mut faces = BTreeMap::<(u8, usize), FaceSplitPlan>::new();
     for chain in &topology.edge_chains {
@@ -2460,6 +2814,36 @@ fn validate_split_topology_plan(topology: &ExactSplitTopologyPlan) -> SplitPlanV
     SplitPlanValidationReport { diagnostics }
 }
 
+fn validate_split_topology_plan_against_sources(
+    topology: &ExactSplitTopologyPlan,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> SplitPlanValidationReport {
+    let mut report = validate_split_topology_plan(topology);
+    if !report.is_valid() {
+        return report;
+    }
+
+    let replay = build_intersection_graph(left, right).map(|graph| graph.split_topology_plan());
+    match replay {
+        Ok(replay) if replay == *topology => report,
+        Ok(_) => {
+            report.diagnostics.push(SplitPlanDiagnostic::new(
+                SplitPlanDiagnosticKind::SourceReplayMismatch,
+                "split topology plan does not match exact replay from source operands",
+            ));
+            report
+        }
+        Err(error) => {
+            report.diagnostics.push(SplitPlanDiagnostic::new(
+                SplitPlanDiagnosticKind::SourceReplayMismatch,
+                format!("split topology plan source replay failed: {error}"),
+            ));
+            report
+        }
+    }
+}
+
 fn validate_face_split_plan(
     face_plan: &ExactFaceSplitPlan,
     topology: &ExactSplitTopologyPlan,
@@ -2557,6 +2941,39 @@ fn validate_face_split_plan(
     }
 
     SplitPlanValidationReport { diagnostics }
+}
+
+fn validate_face_split_plan_against_sources(
+    face_plan: &ExactFaceSplitPlan,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> SplitPlanValidationReport {
+    let topology =
+        match build_intersection_graph(left, right).map(|graph| graph.split_topology_plan()) {
+            Ok(topology) => topology,
+            Err(error) => {
+                return SplitPlanValidationReport {
+                    diagnostics: vec![SplitPlanDiagnostic::new(
+                        SplitPlanDiagnosticKind::SourceReplayMismatch,
+                        format!("face split plan source replay failed: {error}"),
+                    )],
+                };
+            }
+        };
+
+    let mut report = validate_face_split_plan(face_plan, &topology);
+    if !report.is_valid() {
+        return report;
+    }
+
+    let replay = face_split_plan(&topology);
+    if replay != *face_plan {
+        report.diagnostics.push(SplitPlanDiagnostic::new(
+            SplitPlanDiagnosticKind::SourceReplayMismatch,
+            "face split plan does not match exact replay from source operands",
+        ));
+    }
+    report
 }
 
 fn face_split_geometry_plan(
@@ -2778,6 +3195,37 @@ fn validate_face_split_geometry_incidence(
     SplitPlanValidationReport { diagnostics }
 }
 
+fn validate_face_split_geometry_against_sources(
+    geometry: &ExactFaceSplitGeometryPlan,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> SplitPlanValidationReport {
+    let mut report = validate_face_split_geometry_incidence(geometry, left, right);
+    if !report.is_valid() {
+        return report;
+    }
+
+    let replay = build_intersection_graph(left, right)
+        .and_then(|graph| graph.face_split_geometry_plan(left, right));
+    match replay {
+        Ok(replay) if replay == *geometry => report,
+        Ok(_) => {
+            report.diagnostics.push(SplitPlanDiagnostic::new(
+                SplitPlanDiagnosticKind::SourceReplayMismatch,
+                "split-face geometry does not match exact replay from source operands",
+            ));
+            report
+        }
+        Err(error) => {
+            report.diagnostics.push(SplitPlanDiagnostic::new(
+                SplitPlanDiagnosticKind::SourceReplayMismatch,
+                format!("split-face geometry source replay failed: {error}"),
+            ));
+            report
+        }
+    }
+}
+
 fn face_region_plan(
     geometry: &ExactFaceSplitGeometryPlan,
     left: &ExactMesh,
@@ -2899,6 +3347,38 @@ fn validate_face_region_plan(
     }
 
     SplitPlanValidationReport { diagnostics }
+}
+
+fn validate_face_region_plan_against_sources(
+    plan: &ExactFaceRegionPlan,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> SplitPlanValidationReport {
+    let mut report = validate_face_region_plan(plan, left, right);
+    if !report.is_valid() {
+        return report;
+    }
+
+    let replay = build_intersection_graph(left, right)
+        .and_then(|graph| graph.face_split_geometry_plan(left, right))
+        .map(|geometry| geometry.region_plan(left, right));
+    match replay {
+        Ok(replay) if replay == *plan => report,
+        Ok(_) => {
+            report.diagnostics.push(SplitPlanDiagnostic::new(
+                SplitPlanDiagnosticKind::SourceReplayMismatch,
+                "face region plan does not match exact replay from source operands",
+            ));
+            report
+        }
+        Err(error) => {
+            report.diagnostics.push(SplitPlanDiagnostic::new(
+                SplitPlanDiagnosticKind::SourceReplayMismatch,
+                format!("face region plan source replay failed: {error}"),
+            ));
+            report
+        }
+    }
 }
 
 fn coplanar_overlap_split_graph(

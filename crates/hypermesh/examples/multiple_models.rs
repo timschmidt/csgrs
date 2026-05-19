@@ -58,7 +58,11 @@ fn setup(
             .unwrap(),
         );
     }
-    mfs.push(compute_boolean(&mfs[0], &mfs[1], OpType::Subtract).unwrap());
+    mfs.push(
+        compute_boolean_with_report(&mfs[0], &mfs[1], OpType::Subtract)
+            .unwrap()
+            .mesh,
+    );
 
     for (i, mf) in mfs.iter().enumerate() {
         let mut m = Mesh::new(

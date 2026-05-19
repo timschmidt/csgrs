@@ -6,8 +6,6 @@ use super::kernel02::Kernel02;
 use super::kernel11::Kernel11;
 use crate::bounds::{BBox, Query};
 use crate::{Half, Manifold, Real, Vec3};
-#[cfg(feature = "rayon")]
-use rayon::prelude::*;
 
 pub struct Kernel12<'a> {
     pub hs_p: &'a [Half],
@@ -35,9 +33,8 @@ impl<'a> Kernel12<'a> {
                 if k < 2 && (k == 0 || (s != 0) != shadow_) {
                     shadow_ = s != 0;
                     xzy_lr0[k] = self.ps_p[*vid];
-                    let temp = xzy_lr0[k].y;
-                    xzy_lr0[k].y = xzy_lr0[k].z;
-                    xzy_lr0[k].z = temp;
+                    let point = &mut xzy_lr0[k];
+                    std::mem::swap(&mut point.y, &mut point.z);
                     xzy_lr1[k] = xzy_lr0[k];
                     xzy_lr1[k].y = z;
                     k += 1;

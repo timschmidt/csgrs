@@ -54,19 +54,39 @@ fuzz_target!(|data: &[u8]| {
             });
             if let Ok(graph) = build_intersection_graph(&mesh, &mesh) {
                 let _ = graph.validate();
+                let _ = graph.validate_against_sources(&mesh, &mesh);
+                for pair in &graph.face_pairs {
+                    let _ = pair.validate_against_sources(&mesh, &mesh);
+                }
                 for overlap in graph.coplanar_overlap_graphs() {
                     let _ = overlap.validate();
+                    let _ = overlap.validate_against_sources(&mesh, &mesh);
                 }
                 let _ = graph
                     .coplanar_overlap_split_plan(&mesh, &mesh)
-                    .map(|plan| plan.validate());
+                    .map(|plan| {
+                        let _ = plan.validate();
+                        let _ = plan.validate_against_sources(&mesh, &mesh);
+                        for graph in &plan.graphs {
+                            let _ = graph.validate_against_sources(&mesh, &mesh);
+                        }
+                    });
                 let _ = graph
                     .coplanar_arrangement_readiness_report(&mesh, &mesh)
                     .map(|report| report.validate());
-                let _ = graph.edge_split_plan();
-                let _ = graph.graph_vertex_plan();
+                let edge_split_plan = graph.edge_split_plan();
+                let _ = edge_split_plan
+                    .validate_against_sources(&mesh, &mesh)
+                    .validate();
+                let graph_vertex_plan = graph.graph_vertex_plan();
+                let _ = graph_vertex_plan
+                    .validate_against_sources(&mesh, &mesh)
+                    .validate();
                 let topology_plan = graph.split_topology_plan();
                 let _ = topology_plan.validate().validate();
+                let _ = topology_plan
+                    .validate_against_sources(&mesh, &mesh)
+                    .validate();
                 let _ = graph.checked_graph_vertex_plan();
                 let _ = graph.checked_split_topology_plan();
                 let _ = graph.checked_face_split_plan();
@@ -74,12 +94,21 @@ fuzz_target!(|data: &[u8]| {
                 let _ = face_plan
                     .validate_against_topology(&topology_plan)
                     .validate();
+                let _ = face_plan
+                    .validate_against_sources(&mesh, &mesh)
+                    .validate();
                 if let Ok(geometry_plan) = graph.face_split_geometry_plan(&mesh, &mesh) {
                     let _ = geometry_plan
                         .validate_boundary_incidence(&mesh, &mesh)
                         .validate();
+                    let _ = geometry_plan
+                        .validate_against_sources(&mesh, &mesh)
+                        .validate();
                     let region_plan = geometry_plan.region_plan(&mesh, &mesh);
                     let _ = region_plan.validate(&mesh, &mesh).validate();
+                    let _ = region_plan
+                        .validate_against_sources(&mesh, &mesh)
+                        .validate();
                     let classifications =
                         classify_face_regions_against_opposite_planes(&region_plan, &mesh, &mesh);
                     for classification in classifications {

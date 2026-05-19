@@ -11,20 +11,22 @@ use hypermesh::exact::{
     AabbIntersectionKind, ApproximationPolicy, ConstructionProvenance, CoplanarTriangleRelation,
     DiagnosticKind, EdgeSplit, EdgeSplitPoint, ExactAabb3, ExactEdgeSplitPlan,
     ExactFaceSplitGeometryPlan, ExactFaceSplitPlan, ExactGraphVertex, ExactGraphVertexPlan,
-    ExactGraphVertexUse, ExactIntersectionGraph, ExactMesh, ExactPoint3, ExactReal,
-    ExactSplitTopologyPlan, FacePairEvents, FaceRegionBoundary, FaceSplitBoundaryChain,
-    FaceSplitBoundaryNode, FaceSplitEdge, FaceSplitGeometry, FaceSplitPlan, IntersectionEvent,
-    MeshFacePairRelation, MeshSide, MeshSource, SegmentPlaneRelation, Severity, SourceProvenance,
-    SplitEdgeChain, SplitEdgeNode, SplitPlanDiagnosticKind, Triangle, TrianglePlaneRelation,
-    TriangleTriangleRelation, ValidationPolicy, VertexLinkKind, build_intersection_graph,
-    certify_convex_solid, classify_coplanar_triangles, classify_mesh_face_pair,
-    classify_mesh_face_pairs, classify_mesh_triangle_against_retained_face_plane,
+    ExactGraphVertexUse, ExactIntersectionGraph, ExactMesh, ExactReal, ExactSplitTopologyPlan,
+    FacePairEvents, FaceRegionBoundary, FaceSplitBoundaryChain, FaceSplitBoundaryNode,
+    FaceSplitEdge, FaceSplitGeometry, FaceSplitPlan, IntersectionEvent, MeshFacePairRelation,
+    MeshSide, MeshSource, SegmentPlaneRelation, Severity, SourceProvenance, SplitEdgeChain,
+    SplitEdgeNode, SplitPlanDiagnosticKind, TrianglePlaneRelation, TriangleTriangleRelation,
+    ValidationPolicy, VertexLinkKind, build_intersection_graph, certify_convex_solid,
+    classify_coplanar_triangles, classify_mesh_face_pair, classify_mesh_face_pairs,
+    classify_mesh_triangle_against_retained_face_plane,
     classify_mesh_vertices_against_convex_solid,
     classify_mesh_vertices_against_convex_solid_report, classify_point_against_convex_solid,
     classify_point_against_convex_solid_report, classify_triangle_against_face_plane,
     classify_triangle_triangle, intersect_segment_with_face_plane,
     intersect_segment_with_retained_face_plane, validate_triangles, validate_triangles_with_policy,
 };
+#[cfg(feature = "exact-triangulation")]
+use hypermesh::exact::{ExactPoint3, Triangle};
 use hyperreal::Real;
 use proptest::prelude::*;
 use std::cmp::Ordering;
@@ -59,6 +61,26 @@ fn exact_mesh_accepts_closed_tetrahedron_with_certified_facts() {
             .all(|vertex| vertex.link == VertexLinkKind::Circle)
     );
     mesh.facts().validate().unwrap();
+    let points = mesh
+        .vertices()
+        .iter()
+        .map(|vertex| vertex.to_hyperlimit_point())
+        .collect::<Vec<_>>();
+    let triangles = mesh
+        .triangles()
+        .iter()
+        .map(|triangle| triangle.0)
+        .collect::<Vec<_>>();
+    mesh.facts()
+        .validate_against_sources(&points, &triangles)
+        .unwrap();
+    let shifted = [p3(10, 0, 0), p3(11, 0, 0), p3(10, 1, 0), p3(10, 0, 1)];
+    assert_eq!(
+        mesh.facts()
+            .validate_against_sources(&shifted, &triangles)
+            .unwrap_err(),
+        hypermesh::exact::MeshFactsValidationError::SourceReplayMismatch
+    );
     mesh.validate_retained_state().unwrap();
     let base_plane = &mesh.facts().faces[0].plane;
     assert_eq!(
@@ -137,6 +159,46 @@ fn exact_provenance_validation_rejects_inconsistent_artifacts() {
         exact_as_edge.validate().unwrap_err(),
         hypermesh::exact::ConstructionProvenanceValidationError::SourceApproximationMismatch
     );
+
+    SourceProvenance::exact("direct exact provenance")
+        .validate()
+        .unwrap();
+    assert_eq!(
+        SourceProvenance {
+            source: MeshSource::LossyF64,
+            label: "bad direct lossy policy".to_string(),
+            approximation: ApproximationPolicy::ExplicitApproximateDecision,
+        }
+        .validate()
+        .unwrap_err(),
+        hypermesh::exact::ConstructionProvenanceValidationError::LossySourcePolicyMismatch
+    );
+
+    let predicate = hypermesh::exact::PredicateUse::from_certificate(
+        hyperlimit::PredicateCertificate::ExactRealFact,
+    );
+    predicate.validate().unwrap();
+
+    let mut stale_stage = predicate;
+    stale_stage.stage = hyperlimit::PredicatePrecisionStage::CertifiedFilter;
+    assert_eq!(
+        stale_stage.validate().unwrap_err(),
+        hypermesh::exact::ConstructionProvenanceValidationError::PredicateMetadataMismatch
+    );
+
+    let mut stale_semantics = predicate;
+    stale_semantics.semantics = hyperlimit::PredicateApiSemantics::ApproximationDeferring;
+    assert_eq!(
+        stale_semantics.validate().unwrap_err(),
+        hypermesh::exact::ConstructionProvenanceValidationError::PredicateMetadataMismatch
+    );
+
+    assert_eq!(
+        hypermesh::exact::PredicateUse::from_certificate(hyperlimit::PredicateCertificate::Unknown)
+            .validate()
+            .unwrap_err(),
+        hypermesh::exact::ConstructionProvenanceValidationError::NonProofProducingPredicate
+    );
 }
 
 #[test]
@@ -182,6 +244,44 @@ fn exact_mesh_fact_validation_rejects_inconsistent_artifacts() {
 
 #[test]
 fn exact_bounds_validation_rejects_inconsistent_artifacts() {
+    let points = [p3(0, 0, 0), p3(1, 0, 0), p3(0, 1, 0)];
+    let triangles = [[0, 1, 2]];
+    let bounds = hypermesh::exact::MeshBounds::from_triangles(&points, &triangles);
+    bounds
+        .mesh
+        .as_ref()
+        .unwrap()
+        .validate_against_points(&points)
+        .unwrap();
+    bounds.faces[0]
+        .validate_against_triangle([&points[0], &points[1], &points[2]])
+        .unwrap();
+    bounds
+        .validate_against_sources(&points, &triangles)
+        .unwrap();
+    let shifted = [p3(2, 0, 0), p3(3, 0, 0), p3(2, 1, 0)];
+    assert_eq!(
+        bounds
+            .mesh
+            .as_ref()
+            .unwrap()
+            .validate_against_points(&shifted)
+            .unwrap_err(),
+        hypermesh::exact::BoundsValidationError::SourceReplayMismatch
+    );
+    assert_eq!(
+        bounds.faces[0]
+            .validate_against_triangle([&shifted[0], &shifted[1], &shifted[2]])
+            .unwrap_err(),
+        hypermesh::exact::BoundsValidationError::SourceReplayMismatch
+    );
+    assert_eq!(
+        bounds
+            .validate_against_sources(&shifted, &triangles)
+            .unwrap_err(),
+        hypermesh::exact::BoundsValidationError::SourceReplayMismatch
+    );
+
     let inverted = ExactAabb3 {
         min: p3(1, 0, 0),
         max: p3(0, 0, 0),
@@ -360,6 +460,25 @@ fn exact_narrow_phase_classifies_coplanar_and_straddling_triangles() {
 
 #[test]
 fn exact_narrow_phase_validation_rejects_inconsistent_plane_artifacts() {
+    let points = [
+        p3(0, 0, 0),
+        p3(1, 0, 0),
+        p3(0, 1, 0),
+        p3(0, 0, 1),
+        p3(1, 0, 1),
+        p3(0, 1, 1),
+    ];
+    let replayed = classify_triangle_against_face_plane(&points, [0, 1, 2], [3, 4, 5]);
+    replayed
+        .validate_against_sources(&points, [0, 1, 2], [3, 4, 5])
+        .unwrap();
+    assert_eq!(
+        replayed
+            .validate_against_sources(&points, [3, 4, 5], [0, 1, 2])
+            .unwrap_err(),
+        hypermesh::exact::TrianglePlaneValidationError::SourceReplayMismatch
+    );
+
     let classification = hypermesh::exact::TrianglePlaneClassification {
         relation: TrianglePlaneRelation::Coplanar,
         vertex_sides: [
@@ -390,6 +509,15 @@ fn exact_segment_plane_constructs_proper_crossing_as_ratio() {
 
     assert_eq!(event.relation, SegmentPlaneRelation::ProperCrossing);
     event.validate().unwrap();
+    event
+        .validate_against_sources(&points[0], &points[1], &points[2], &points[3], &points[4])
+        .unwrap();
+    assert_eq!(
+        event
+            .validate_against_sources(&points[0], &points[1], &points[2], &points[4], &points[3])
+            .unwrap_err(),
+        hypermesh::exact::SegmentPlaneValidationError::SourceReplayMismatch
+    );
     assert_eq!(
         event.endpoint_sides,
         [Some(PlaneSide::Above), Some(PlaneSide::Below)]
@@ -625,6 +753,15 @@ fn exact_triangle_triangle_rejects_plane_separated_pair() {
         TriangleTriangleRelation::SeparatedByFirstPlane
     );
     classification.validate().unwrap();
+    classification
+        .validate_against_sources(&points, [0, 1, 2], [3, 4, 5])
+        .unwrap();
+    assert_eq!(
+        classification
+            .validate_against_sources(&points, [3, 4, 5], [0, 1, 2])
+            .unwrap_err(),
+        hypermesh::exact::TriangleTriangleValidationError::SourceReplayMismatch
+    );
     assert!(classification.right_edge_events.is_empty());
     assert!(classification.all_proof_producing());
 }
@@ -653,6 +790,9 @@ fn exact_triangle_triangle_keeps_coplanar_overlap_for_later_graph() {
     assert!(classification.right_edge_events.is_empty());
     assert!(classification.left_edge_events.is_empty());
     classification.validate().unwrap();
+    classification
+        .validate_against_sources(&points, [0, 1, 2], [3, 4, 5])
+        .unwrap();
     assert!(classification.all_proof_producing());
 }
 
@@ -693,6 +833,21 @@ fn exact_coplanar_triangle_classifier_distinguishes_disjoint_touching_and_overla
     disjoint.validate().unwrap();
     touching.validate().unwrap();
     overlapping.validate().unwrap();
+    disjoint
+        .validate_against_sources(&disjoint_points, [0, 1, 2], [3, 4, 5])
+        .unwrap();
+    touching
+        .validate_against_sources(&touching_points, [0, 1, 2], [3, 4, 5])
+        .unwrap();
+    overlapping
+        .validate_against_sources(&overlapping_points, [0, 1, 2], [3, 4, 5])
+        .unwrap();
+    assert_eq!(
+        overlapping
+            .validate_against_sources(&disjoint_points, [0, 1, 2], [3, 4, 5])
+            .unwrap_err(),
+        hypermesh::exact::CoplanarTriangleValidationError::SourceReplayMismatch
+    );
 }
 
 #[test]
@@ -819,6 +974,15 @@ fn exact_mesh_face_pair_classifier_uses_bounds_before_triangle_predicates() {
         MeshFacePairRelation::BoundsDisjoint
     );
     classification.validate().unwrap();
+    classification
+        .validate_against_sources(&left, &right)
+        .unwrap();
+    assert_eq!(
+        classification
+            .validate_against_sources(&left, &left)
+            .unwrap_err(),
+        hypermesh::exact::MeshFacePairValidationError::SourceReplayMismatch
+    );
     assert!(!classification.needs_graph_construction());
     assert!(classification.triangle.is_none());
 }
@@ -852,6 +1016,9 @@ fn exact_mesh_face_pair_classifier_uses_retained_planes_before_triangle_predicat
         MeshFacePairRelation::PlaneSeparated
     );
     classification.validate().unwrap();
+    classification
+        .validate_against_sources(&left, &right)
+        .unwrap();
     assert!(!classification.needs_graph_construction());
     assert!(classification.triangle.is_none());
 }
@@ -875,6 +1042,15 @@ fn exact_mesh_face_pair_classifier_retains_triangle_candidates() {
 
     assert_eq!(classification.relation, MeshFacePairRelation::Candidate);
     classification.validate().unwrap();
+    classification
+        .validate_against_sources(&left, &right)
+        .unwrap();
+    assert_eq!(
+        classification
+            .validate_against_sources(&right, &left)
+            .unwrap_err(),
+        hypermesh::exact::MeshFacePairValidationError::SourceReplayMismatch
+    );
     assert!(classification.needs_graph_construction());
     let triangle = classification.triangle.as_ref().unwrap();
     assert_eq!(triangle.right_edge_events.len(), 3);
@@ -1404,6 +1580,18 @@ fn exact_intersection_graph_records_noncoplanar_split_events() {
     let graph = build_intersection_graph(&left, &right).unwrap();
 
     graph.validate().unwrap();
+    graph.validate_against_sources(&left, &right).unwrap();
+    graph.face_pairs[0]
+        .validate_against_sources(&left, &right)
+        .unwrap();
+    let mut stale_graph = graph.clone();
+    stale_graph.face_pairs[0].right_face = usize::MAX;
+    assert_eq!(
+        stale_graph
+            .validate_against_sources(&left, &right)
+            .unwrap_err(),
+        hypermesh::exact::IntersectionGraphValidationError::FaceIndexOutOfRange
+    );
     assert_eq!(graph.face_pairs.len(), 1);
     assert!(!graph.has_unknowns());
     assert!(graph.face_pairs[0].events.iter().any(|event| matches!(
@@ -1421,6 +1609,11 @@ fn exact_intersection_graph_records_noncoplanar_split_events() {
     let split_plan = graph.edge_split_plan();
     assert_eq!(split_plan.unknown_orderings, 0);
     assert!(split_plan.validate().is_valid());
+    assert!(
+        split_plan
+            .validate_against_sources(&left, &right)
+            .is_valid()
+    );
     assert!(split_plan.point_count() >= 2);
     assert!(split_plan.splits.iter().all(|split| {
         split.points.iter().all(|point| {
@@ -1432,10 +1625,28 @@ fn exact_intersection_graph_records_noncoplanar_split_events() {
                 )
         })
     }));
+    let mut relabeled_split_plan = split_plan.clone();
+    relabeled_split_plan.splits.reverse();
+    let relabeled_split_report = relabeled_split_plan.validate_against_sources(&left, &right);
+    if relabeled_split_plan != split_plan {
+        assert_eq!(
+            relabeled_split_report
+                .diagnostics
+                .first()
+                .map(|diagnostic| diagnostic.kind),
+            Some(hypermesh::exact::SplitPlanDiagnosticKind::SourceReplayMismatch)
+        );
+        assert!(relabeled_split_report.validate().is_ok());
+    }
 
     let vertex_plan = graph.graph_vertex_plan();
     assert_eq!(vertex_plan.unresolved_equalities, 0);
     assert!(vertex_plan.validate().is_valid());
+    assert!(
+        vertex_plan
+            .validate_against_sources(&left, &right)
+            .is_valid()
+    );
     assert!(vertex_plan.vertices.len() <= split_plan.point_count());
     assert!(
         vertex_plan
@@ -1443,6 +1654,19 @@ fn exact_intersection_graph_records_noncoplanar_split_events() {
             .iter()
             .all(|vertex| !vertex.uses.is_empty())
     );
+    let mut relabeled_vertex_plan = vertex_plan.clone();
+    relabeled_vertex_plan.vertices.reverse();
+    let relabeled_vertex_report = relabeled_vertex_plan.validate_against_sources(&left, &right);
+    if relabeled_vertex_plan != vertex_plan {
+        assert_eq!(
+            relabeled_vertex_report
+                .diagnostics
+                .first()
+                .map(|diagnostic| diagnostic.kind),
+            Some(hypermesh::exact::SplitPlanDiagnosticKind::SourceReplayMismatch)
+        );
+        assert!(relabeled_vertex_report.validate().is_ok());
+    }
 
     let topology_plan = graph.split_topology_plan();
     let checked_topology_plan = graph.checked_split_topology_plan().unwrap();
@@ -1456,6 +1680,24 @@ fn exact_intersection_graph_records_noncoplanar_split_events() {
         topology_plan.referenced_graph_vertices(),
         split_plan.point_count()
     );
+    assert!(
+        topology_plan
+            .validate_against_sources(&left, &right)
+            .is_valid()
+    );
+    let mut relabeled_topology_plan = topology_plan.clone();
+    relabeled_topology_plan.edge_chains.reverse();
+    let relabeled_topology_report = relabeled_topology_plan.validate_against_sources(&left, &right);
+    if relabeled_topology_plan != topology_plan {
+        assert_eq!(
+            relabeled_topology_report
+                .diagnostics
+                .first()
+                .map(|diagnostic| diagnostic.kind),
+            Some(hypermesh::exact::SplitPlanDiagnosticKind::SourceReplayMismatch)
+        );
+        assert!(relabeled_topology_report.validate().is_ok());
+    }
     assert!(
         topology_plan
             .edge_chains
@@ -1474,6 +1716,20 @@ fn exact_intersection_graph_records_noncoplanar_split_events() {
             .validate_against_topology(&topology_plan)
             .is_valid()
     );
+    assert!(face_plan.validate_against_sources(&left, &right).is_valid());
+    let mut relabeled_face_plan = face_plan.clone();
+    relabeled_face_plan.faces.reverse();
+    let relabeled_face_report = relabeled_face_plan.validate_against_sources(&left, &right);
+    if relabeled_face_plan != face_plan {
+        assert_eq!(
+            relabeled_face_report
+                .diagnostics
+                .first()
+                .map(|diagnostic| diagnostic.kind),
+            Some(hypermesh::exact::SplitPlanDiagnosticKind::SourceReplayMismatch)
+        );
+        assert!(relabeled_face_report.validate().is_ok());
+    }
 
     let geometry_plan = graph.face_split_geometry_plan(&left, &right).unwrap();
     assert_eq!(geometry_plan.faces.len(), face_plan.faces.len());
@@ -1504,6 +1760,22 @@ fn exact_intersection_graph_records_noncoplanar_split_events() {
             .validate_boundary_incidence(&left, &right)
             .is_valid()
     );
+    assert!(
+        geometry_plan
+            .validate_against_sources(&left, &right)
+            .is_valid()
+    );
+    let mut relabeled_geometry_plan = geometry_plan.clone();
+    relabeled_geometry_plan.faces[0].triangle.swap(0, 1);
+    let relabeled_geometry_report = relabeled_geometry_plan.validate_against_sources(&left, &right);
+    assert_eq!(
+        relabeled_geometry_report
+            .diagnostics
+            .first()
+            .map(|diagnostic| diagnostic.kind),
+        Some(hypermesh::exact::SplitPlanDiagnosticKind::SourceReplayMismatch)
+    );
+    assert!(relabeled_geometry_report.validate().is_ok());
 
     let region_plan = geometry_plan.region_plan(&left, &right);
     assert_eq!(region_plan.regions.len(), geometry_plan.faces.len());
@@ -1512,6 +1784,27 @@ fn exact_intersection_graph_records_noncoplanar_split_events() {
         geometry_plan.graph_vertex_references()
     );
     assert!(region_plan.validate(&left, &right).is_valid());
+    assert!(
+        region_plan
+            .validate_against_sources(&left, &right)
+            .is_valid()
+    );
+    let mut stale_region_plan = region_plan.clone();
+    stale_region_plan.regions[0].face = usize::MAX;
+    let stale_region_report = stale_region_plan.validate_against_sources(&left, &right);
+    assert!(!stale_region_report.is_valid());
+    assert!(stale_region_report.validate().is_ok());
+    let mut relabeled_region_plan = region_plan.clone();
+    relabeled_region_plan.regions[0].triangle.swap(0, 1);
+    let relabeled_region_report = relabeled_region_plan.validate_against_sources(&left, &right);
+    assert_eq!(
+        relabeled_region_report
+            .diagnostics
+            .first()
+            .map(|diagnostic| diagnostic.kind),
+        Some(hypermesh::exact::SplitPlanDiagnosticKind::SourceReplayMismatch)
+    );
+    assert!(relabeled_region_report.validate().is_ok());
     assert!(region_plan.regions.iter().all(|region| {
         region.boundary.len() >= 4
             && region
@@ -1536,6 +1829,29 @@ fn exact_intersection_graph_records_noncoplanar_split_events() {
             .all(|classification| classification.all_proof_producing()
                 && classification.validate().is_ok())
     );
+    #[cfg(feature = "exact-triangulation")]
+    {
+        let first_classification = region_classifications
+            .first()
+            .expect("intersecting triangles produce at least one region classification");
+        first_classification
+            .validate_against_sources(&left, &right)
+            .unwrap();
+        let mut stale_classification = first_classification.clone();
+        stale_classification.plane_face = usize::MAX;
+        assert_eq!(
+            stale_classification
+                .validate_against_sources(&left, &right)
+                .unwrap_err(),
+            hypermesh::exact::FaceRegionPlaneValidationError::SourceReplayMismatch
+        );
+        assert_eq!(
+            first_classification
+                .validate_against_sources(&right, &left)
+                .unwrap_err(),
+            hypermesh::exact::FaceRegionPlaneValidationError::SourceReplayMismatch
+        );
+    }
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -1612,6 +1928,25 @@ fn exact_face_region_plane_validation_rejects_inconsistent_artifacts() {
             actual: 1,
         }
     );
+
+    let undecided = hypermesh::exact::FaceRegionPlaneClassification {
+        region_side: MeshSide::Left,
+        region_face: 0,
+        plane_side: MeshSide::Right,
+        plane_face: 0,
+        relation: hypermesh::exact::FaceRegionPlaneRelation::Unknown,
+        node_sides: vec![None, Some(PlaneSide::Above)],
+        predicates: vec![
+            hypermesh::exact::PredicateUse::from_certificate(
+                hyperlimit::PredicateCertificate::Unknown,
+            ),
+            hypermesh::exact::PredicateUse::from_certificate(
+                hyperlimit::PredicateCertificate::ExactRealFact,
+            ),
+        ],
+    };
+    undecided.validate().unwrap();
+    assert!(!undecided.is_decided_and_proof_producing());
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -1645,12 +1980,54 @@ fn exact_face_region_triangulates_through_feature_gated_hypertri() {
                 .iter()
                 .all(|&index| index < triangulation.vertices.len())
     }));
+    triangulations[0]
+        .validate_against_sources(&left, &right)
+        .unwrap();
+    let mut stale_triangulation = triangulations[0].clone();
+    stale_triangulation.face = usize::MAX;
+    assert!(
+        stale_triangulation
+            .validate_against_sources(&left, &right)
+            .is_err()
+    );
+    assert!(
+        triangulations[0]
+            .validate_against_sources(&right, &left)
+            .is_err()
+    );
 
     let assembly = hypermesh::exact::ExactBooleanAssemblyPlan::from_region_triangulations(
         &triangulations,
         hypermesh::exact::ExactRegionSelection::KeepAll,
     )
     .unwrap();
+    assembly
+        .validate_against_sources(
+            &left,
+            &right,
+            hypermesh::exact::ExactRegionSelection::KeepAll,
+        )
+        .unwrap();
+    assert!(
+        assembly
+            .validate_against_sources(
+                &left,
+                &right,
+                hypermesh::exact::ExactRegionSelection::KeepLeft,
+            )
+            .is_err()
+    );
+    let mut stale_assembly = assembly.clone();
+    stale_assembly.triangles[0].source_face = usize::MAX;
+    assert!(
+        stale_assembly
+            .validate_against_sources(
+                &left,
+                &right,
+                hypermesh::exact::ExactRegionSelection::KeepAll,
+            )
+            .is_err()
+    );
 
     assert!(!assembly.vertices.is_empty());
     assert!(!assembly.triangles.is_empty());
@@ -1710,6 +2087,8 @@ fn exact_face_region_triangulates_through_feature_gated_hypertri() {
     )
     .unwrap();
     assert_eq!(pipelined.triangles().len(), output.triangles().len());
+    assert_eq!(pipelined.vertices().len(), output.vertices().len());
+    pipelined.validate_retained_state().unwrap();
 
     let boolean = hypermesh::exact::boolean_selected_regions(
         &left,
@@ -1718,6 +2097,7 @@ fn exact_face_region_triangulates_through_feature_gated_hypertri() {
     )
     .unwrap();
     boolean.validate().unwrap();
+    boolean.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         boolean.kind,
         hypermesh::exact::ExactBooleanResultKind::SelectedRegions {
@@ -1741,7 +2121,13 @@ fn exact_face_region_triangulates_through_feature_gated_hypertri() {
     )
     .unwrap();
     exact.validate().unwrap();
+    exact.validate_against_sources(&left, &right).unwrap();
     assert_eq!(exact.mesh.triangles().len(), output.triangles().len());
+
+    assert_eq!(
+        boolean.validate_against_sources(&right, &left).unwrap_err(),
+        hypermesh::exact::ExactReportValidationError::OutputSourceReplayMismatch
+    );
 
     let mut bad_result = boolean.clone();
     bad_result.kind = hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
@@ -1785,10 +2171,28 @@ fn exact_face_region_triangulates_through_feature_gated_hypertri() {
     );
 
     let mut bad_result = boolean.clone();
+    bad_result
+        .region_classifications
+        .push(bad_result.region_classifications[0].clone());
+    assert_eq!(
+        bad_result.validate().unwrap_err(),
+        hypermesh::exact::ExactReportValidationError::DuplicateRegionClassification
+    );
+
+    let mut bad_result = boolean.clone();
     bad_result.triangulations.clear();
     assert_eq!(
         bad_result.validate().unwrap_err(),
         hypermesh::exact::ExactReportValidationError::MissingRegionFacts
+    );
+
+    let mut bad_result = boolean.clone();
+    bad_result
+        .triangulations
+        .push(bad_result.triangulations[0].clone());
+    assert_eq!(
+        bad_result.validate().unwrap_err(),
+        hypermesh::exact::ExactReportValidationError::DuplicateRegionTriangulation
     );
 
     let mut bad_result = boolean.clone();
@@ -1843,6 +2247,36 @@ fn exact_face_region_triangulates_through_feature_gated_hypertri() {
         hypermesh::exact::ExactReportValidationError::InvalidAssembly
     );
 
+    let mut bad_result = boolean.clone();
+    let mut mesh_vertices = bad_result.mesh.vertices().to_vec();
+    mesh_vertices[0] = ExactPoint3::new(Real::from(99), Real::from(0), Real::from(0));
+    bad_result.mesh = ExactMesh::new_with_policy(
+        mesh_vertices,
+        bad_result.mesh.triangles().to_vec(),
+        SourceProvenance::exact("adversarial selected-region mesh vertex payload"),
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert_eq!(
+        bad_result.validate().unwrap_err(),
+        hypermesh::exact::ExactReportValidationError::OutputMeshAssemblyMismatch
+    );
+
+    let mut bad_result = boolean.clone();
+    let mut mesh_triangles = bad_result.mesh.triangles().to_vec();
+    mesh_triangles[0].0.swap(1, 2);
+    bad_result.mesh = ExactMesh::new_with_policy(
+        bad_result.mesh.vertices().to_vec(),
+        mesh_triangles,
+        SourceProvenance::exact("adversarial selected-region mesh payload"),
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert_eq!(
+        bad_result.validate().unwrap_err(),
+        hypermesh::exact::ExactReportValidationError::OutputMeshAssemblyMismatch
+    );
+
     let unsupported = hypermesh::exact::boolean_exact(
         &left,
         &right,
@@ -1864,6 +2298,7 @@ fn exact_face_region_triangulates_through_feature_gated_hypertri() {
     )
     .unwrap();
     preflight.validate().unwrap();
+    preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
         hypermesh::exact::ExactBooleanSupport::RequiresCertifiedWinding
@@ -1888,6 +2323,15 @@ fn exact_face_region_triangulates_through_feature_gated_hypertri() {
         hypermesh::exact::ExactBooleanBlockerKind::NeedsWinding
     );
     assert!(blocker.candidate_pairs > 0);
+    blocker.validate_against_sources(&left, &right).unwrap();
+    let mut stale_blocker = blocker.clone();
+    stale_blocker.candidate_pairs += 1;
+    assert_eq!(
+        stale_blocker
+            .validate_against_sources(&left, &right)
+            .unwrap_err(),
+        hypermesh::exact::ExactReportValidationError::SourceReplayMismatch
+    );
 
     let selected_preflight = hypermesh::exact::preflight_boolean_exact(
         &left,
@@ -1898,6 +2342,15 @@ fn exact_face_region_triangulates_through_feature_gated_hypertri() {
     )
     .unwrap();
     selected_preflight.validate().unwrap();
+    selected_preflight
+        .validate_against_sources(&left, &right)
+        .unwrap();
+    assert_eq!(
+        selected_preflight
+            .validate_against_sources(&right, &left)
+            .unwrap_err(),
+        hypermesh::exact::ExactReportValidationError::SourceReplayMismatch
+    );
     assert_eq!(
         selected_preflight.support,
         hypermesh::exact::ExactBooleanSupport::SelectedRegionPolicy
@@ -1920,6 +2373,20 @@ fn exact_face_region_triangulates_through_feature_gated_hypertri() {
     assert_eq!(
         blocked_selected_preflight.validate().unwrap_err(),
         hypermesh::exact::ExactReportValidationError::StatusEvidenceMismatch
+    );
+    let mut mismatched_region_count = selected_preflight.clone();
+    mismatched_region_count.region_count += 1;
+    assert_eq!(
+        mismatched_region_count.validate().unwrap_err(),
+        hypermesh::exact::ExactReportValidationError::RegionCountMismatch
+    );
+    let mut duplicated_region_classification = selected_preflight.clone();
+    duplicated_region_classification
+        .region_classifications
+        .push(duplicated_region_classification.region_classifications[0].clone());
+    assert_eq!(
+        duplicated_region_classification.validate().unwrap_err(),
+        hypermesh::exact::ExactReportValidationError::DuplicateRegionClassification
     );
     let mut event_without_pair_selected_preflight = selected_preflight.clone();
     event_without_pair_selected_preflight.retained_face_pairs = 0;
@@ -1952,6 +2419,9 @@ fn exact_face_region_triangulates_through_feature_gated_hypertri() {
     )
     .unwrap();
     refinement_report.validate().unwrap();
+    refinement_report
+        .validate_against_sources(&left, &right)
+        .unwrap();
     assert_eq!(
         refinement_report.status,
         hypermesh::exact::ExactRefinementStatus::NotRequired
@@ -1966,6 +2436,9 @@ fn exact_face_region_triangulates_through_feature_gated_hypertri() {
     )
     .unwrap();
     winding_report.validate().unwrap();
+    winding_report
+        .validate_against_sources(&left, &right)
+        .unwrap();
     assert!(winding_report.is_ready());
     assert_eq!(
         winding_report.status,
@@ -1981,6 +2454,20 @@ fn exact_face_region_triangulates_through_feature_gated_hypertri() {
     assert_eq!(
         winding_report.blocker.kind,
         hypermesh::exact::ExactBooleanBlockerKind::NeedsWinding
+    );
+    let mut mismatched_winding_region_count = winding_report.clone();
+    mismatched_winding_region_count.region_count += 1;
+    assert_eq!(
+        mismatched_winding_region_count.validate().unwrap_err(),
+        hypermesh::exact::ExactReportValidationError::RegionCountMismatch
+    );
+    let mut duplicated_winding_classification = winding_report.clone();
+    duplicated_winding_classification
+        .region_classifications
+        .push(duplicated_winding_classification.region_classifications[0].clone());
+    assert_eq!(
+        duplicated_winding_classification.validate().unwrap_err(),
+        hypermesh::exact::ExactReportValidationError::DuplicateRegionClassification
     );
     winding_report
         .blocker
@@ -2694,9 +3181,13 @@ fn exact_preflight_reports_boundary_touching_policy_gap() {
     assert_eq!(blocker.coplanar_touching_pairs, 1);
     assert_eq!(blocker.candidate_pairs, 0);
     assert_eq!(blocker.coplanar_overlapping_pairs, 0);
+    blocker.validate_against_sources(&left, &right).unwrap();
     let boundary_report =
         hypermesh::exact::certify_boundary_touching_report(&left, &right).unwrap();
     boundary_report.validate().unwrap();
+    boundary_report
+        .validate_against_sources(&left, &right)
+        .unwrap();
     assert!(boundary_report.is_certified());
     assert_eq!(
         boundary_report.status,
@@ -2713,6 +3204,9 @@ fn exact_preflight_reports_boundary_touching_policy_gap() {
     )
     .unwrap();
     winding_report.validate().unwrap();
+    winding_report
+        .validate_against_sources(&left, &right)
+        .unwrap();
     assert_eq!(
         winding_report.status,
         hypermesh::exact::ExactWindingReadinessStatus::BoundaryPolicyRequired
@@ -2802,6 +3296,15 @@ fn exact_named_booleans_handle_single_triangle_coplanar_containment() {
     let containment =
         hypermesh::exact::certify_single_triangle_coplanar_containment_report(&inner, &outer);
     containment.validate().unwrap();
+    containment
+        .validate_against_sources(&inner, &outer)
+        .unwrap();
+    assert_eq!(
+        containment
+            .validate_against_sources(&outer, &inner)
+            .unwrap_err(),
+        hypermesh::exact::CoplanarSurfaceContainmentReportError::SourceReplayMismatch
+    );
     assert_eq!(
         containment.status,
         hypermesh::exact::CoplanarSurfaceContainmentStatus::Certified(
@@ -2965,6 +3468,7 @@ fn exact_named_booleans_handle_open_surface_disjoint_with_overlapping_bounds() {
     assert!(retained.is_empty());
     let report = hypermesh::exact::certify_open_surface_disjoint_report(&left, &right).unwrap();
     report.validate().unwrap();
+    report.validate_against_sources(&left, &right).unwrap();
     assert!(report.is_certified());
     assert_eq!(
         report.status,
@@ -3192,6 +3696,27 @@ fn exact_graph_shortcut_reports_retain_rejection_state() {
         hypermesh::exact::ExactReportValidationError::WrongBlockerKind
     );
 
+    let construction_failed_open_report = hypermesh::exact::ExactOpenSurfaceDisjointReport {
+        status: hypermesh::exact::ExactOpenSurfaceDisjointStatus::GraphHasFacePairs,
+        left_open_surface: true,
+        right_open_surface: true,
+        graph_had_unknowns: false,
+        retained_face_pairs: 1,
+        retained_events: 1,
+        blocker: hypermesh::exact::ExactBooleanBlocker {
+            kind: hypermesh::exact::ExactBooleanBlockerKind::NeedsWinding,
+            candidate_pairs: 1,
+            coplanar_overlapping_pairs: 0,
+            coplanar_touching_pairs: 0,
+            unknown_pairs: 0,
+            construction_failed_events: 1,
+        },
+    };
+    assert_eq!(
+        construction_failed_open_report.validate().unwrap_err(),
+        hypermesh::exact::ExactReportValidationError::StatusEvidenceMismatch
+    );
+
     let unknown_boundary_status_mismatch = hypermesh::exact::ExactBoundaryTouchingReport {
         status: hypermesh::exact::ExactBoundaryTouchingStatus::Certified,
         graph_had_unknowns: true,
@@ -3228,6 +3753,25 @@ fn exact_graph_shortcut_reports_retain_rejection_state() {
     assert_eq!(
         unknown_boundary_wrong_blocker.validate().unwrap_err(),
         hypermesh::exact::ExactReportValidationError::WrongBlockerKind
+    );
+
+    let construction_failed_boundary_report = hypermesh::exact::ExactBoundaryTouchingReport {
+        status: hypermesh::exact::ExactBoundaryTouchingStatus::NotBoundaryOnly,
+        graph_had_unknowns: false,
+        retained_face_pairs: 1,
+        retained_events: 1,
+        blocker: hypermesh::exact::ExactBooleanBlocker {
+            kind: hypermesh::exact::ExactBooleanBlockerKind::NeedsBoundaryPolicy,
+            candidate_pairs: 1,
+            coplanar_overlapping_pairs: 0,
+            coplanar_touching_pairs: 0,
+            unknown_pairs: 0,
+            construction_failed_events: 1,
+        },
+    };
+    assert_eq!(
+        construction_failed_boundary_report.validate().unwrap_err(),
+        hypermesh::exact::ExactReportValidationError::StatusEvidenceMismatch
     );
 
     let unknown_planar_status_mismatch = hypermesh::exact::ExactPlanarArrangementReport {
@@ -3272,6 +3816,27 @@ fn exact_graph_shortcut_reports_retain_rejection_state() {
         hypermesh::exact::ExactReportValidationError::WrongBlockerKind
     );
 
+    let construction_failed_planar_report = hypermesh::exact::ExactPlanarArrangementReport {
+        operation: hypermesh::exact::ExactBooleanOperation::Union,
+        status: hypermesh::exact::ExactPlanarArrangementStatus::NoPositiveOverlap,
+        graph_had_unknowns: false,
+        retained_face_pairs: 1,
+        retained_events: 1,
+        blocker: hypermesh::exact::ExactBooleanBlocker {
+            kind: hypermesh::exact::ExactBooleanBlockerKind::NeedsPlanarArrangement,
+            candidate_pairs: 1,
+            coplanar_overlapping_pairs: 0,
+            coplanar_touching_pairs: 0,
+            unknown_pairs: 0,
+            construction_failed_events: 1,
+        },
+        arrangement_readiness: None,
+    };
+    assert_eq!(
+        construction_failed_planar_report.validate().unwrap_err(),
+        hypermesh::exact::ExactReportValidationError::StatusEvidenceMismatch
+    );
+
     let unknown_winding_status_mismatch = hypermesh::exact::ExactWindingReadinessReport {
         operation: hypermesh::exact::ExactBooleanOperation::Union,
         status: hypermesh::exact::ExactWindingReadinessStatus::Ready,
@@ -3293,6 +3858,29 @@ fn exact_graph_shortcut_reports_retain_rejection_state() {
     assert_eq!(
         unknown_winding_status_mismatch.validate().unwrap_err(),
         hypermesh::exact::ExactReportValidationError::GraphUnknownStatusMismatch
+    );
+
+    let construction_failed_winding_report = hypermesh::exact::ExactWindingReadinessReport {
+        operation: hypermesh::exact::ExactBooleanOperation::Union,
+        status: hypermesh::exact::ExactWindingReadinessStatus::NoNontrivialOverlap,
+        graph_had_unknowns: false,
+        retained_face_pairs: 0,
+        retained_events: 0,
+        region_count: 0,
+        region_classifications: Vec::new(),
+        blocker: hypermesh::exact::ExactBooleanBlocker {
+            kind: hypermesh::exact::ExactBooleanBlockerKind::NeedsWinding,
+            candidate_pairs: 0,
+            coplanar_overlapping_pairs: 0,
+            coplanar_touching_pairs: 0,
+            unknown_pairs: 0,
+            construction_failed_events: 1,
+        },
+        arrangement_readiness: None,
+    };
+    assert_eq!(
+        construction_failed_winding_report.validate().unwrap_err(),
+        hypermesh::exact::ExactReportValidationError::StatusEvidenceMismatch
     );
 
     let undecided_winding_region = hypermesh::exact::ExactWindingReadinessReport {
@@ -3389,7 +3977,7 @@ fn exact_graph_shortcut_reports_retain_rejection_state() {
         hypermesh::exact::ExactReportValidationError::StatusEvidenceMismatch
     );
 
-    let planar_required_intersection = hypermesh::exact::ExactPlanarArrangementReport {
+    let planar_required_without_readiness = hypermesh::exact::ExactPlanarArrangementReport {
         operation: hypermesh::exact::ExactBooleanOperation::Intersection,
         status: hypermesh::exact::ExactPlanarArrangementStatus::Required,
         graph_had_unknowns: false,
@@ -3406,8 +3994,8 @@ fn exact_graph_shortcut_reports_retain_rejection_state() {
         arrangement_readiness: None,
     };
     assert_eq!(
-        planar_required_intersection.validate().unwrap_err(),
-        hypermesh::exact::ExactReportValidationError::StatusEvidenceMismatch
+        planar_required_without_readiness.validate().unwrap_err(),
+        hypermesh::exact::ExactReportValidationError::MissingArrangementReadiness
     );
 
     let winding_selected_ready = hypermesh::exact::ExactWindingReadinessReport {
@@ -3480,6 +4068,8 @@ fn exact_named_booleans_intersect_partially_overlapping_coplanar_triangles() {
     assert_eq!(clipped.polygon.len(), 3);
     assert_eq!(clipped.mesh.triangles().len(), 1);
     clipped.validate().unwrap();
+    clipped.validate_against_sources(&left, &right).unwrap();
+    assert!(clipped.validate_against_sources(&right, &left).is_err());
 
     let preflight = hypermesh::exact::preflight_boolean_exact(
         &left,
@@ -3544,6 +4134,9 @@ fn exact_named_booleans_intersect_partially_overlapping_coplanar_triangles() {
     )
     .unwrap();
     union_report.validate().unwrap();
+    union_report
+        .validate_against_sources(&left, &right)
+        .unwrap();
     assert_eq!(
         union_report.status,
         hypermesh::exact::ExactPlanarArrangementStatus::AlreadyMaterialized
@@ -3566,6 +4159,9 @@ fn exact_named_booleans_intersect_partially_overlapping_coplanar_triangles() {
     )
     .unwrap();
     winding_report.validate().unwrap();
+    winding_report
+        .validate_against_sources(&left, &right)
+        .unwrap();
     assert_eq!(
         winding_report.status,
         hypermesh::exact::ExactWindingReadinessStatus::PlanarArrangementAlreadyMaterialized
@@ -3648,6 +4244,87 @@ fn surface_mesh_from_polygon(polygon: &[Point3], label: &'static str) -> Result<
 
 #[cfg(feature = "exact-triangulation")]
 #[test]
+fn exact_multi_component_coplanar_intersection_materializes_before_winding() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 4, 0, 0, 0, 4, 0, 10, 0, 0, 14, 0, 0, 10, 4, 0],
+        &[0, 1, 2, 3, 4, 5],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let right = ExactMesh::from_i64_triangles_with_policy(
+        &[1, 1, 0, 13, 1, 0, 1, 3, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+
+    assert!(
+        hypermesh::exact::arrange_coplanar_convex_surface_intersection(&left, &right).is_none()
+    );
+    let multi = hypermesh::exact::arrange_coplanar_convex_surface_multi_intersection(&left, &right)
+        .expect("disconnected coplanar clips should materialize as retained components");
+    multi.validate().unwrap();
+    multi
+        .validate_intersection_against_sources(&left, &right)
+        .unwrap();
+    assert_eq!(multi.polygons.len(), 2);
+
+    let report = hypermesh::exact::certify_planar_arrangement_report(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+    )
+    .unwrap();
+    report.validate().unwrap();
+    report.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        report.status,
+        hypermesh::exact::ExactPlanarArrangementStatus::AlreadyMaterialized
+    );
+    assert!(report.blocker.coplanar_overlapping_pairs > 0);
+    report
+        .blocker
+        .validate_against_sources(&left, &right)
+        .unwrap();
+    assert!(
+        report
+            .arrangement_readiness
+            .as_ref()
+            .unwrap()
+            .needs_planar_cells()
+    );
+
+    let winding = hypermesh::exact::certify_winding_readiness_report(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+    )
+    .unwrap();
+    winding.validate().unwrap();
+    winding.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        winding.status,
+        hypermesh::exact::ExactWindingReadinessStatus::PlanarArrangementAlreadyMaterialized
+    );
+
+    let result = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    result.validate().unwrap();
+    assert_eq!(
+        result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarConvexSurfaceIntersection
+        }
+    );
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
 fn exact_coplanar_surface_outputs_validate_public_artifacts() {
     let left = ExactMesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 4, 0, 0, 0, 4, 0],
@@ -3688,6 +4365,7 @@ fn exact_coplanar_surface_outputs_validate_public_artifacts() {
     let mut union = hypermesh::exact::union_single_triangle_coplanar_surfaces(&left, &right)
         .expect("diagonal-adjacent triangles should union into a square");
     union.validate().unwrap();
+    union.validate_against_sources(&left, &right).unwrap();
     union.polygon.push(p3(2, 2, 0));
     let drift = union.validate().unwrap_err();
     assert!(
@@ -3719,6 +4397,8 @@ fn exact_coplanar_triangle_union_materializes_convex_edge_touching_square() {
     assert_eq!(union.polygon.len(), 4);
     assert_eq!(union.mesh.triangles().len(), 2);
     union.validate().unwrap();
+    union.validate_against_sources(&left, &right).unwrap();
+    assert!(union.validate_against_sources(&left, &left).is_err());
     let mut nonconvex_union = union.clone();
     nonconvex_union.polygon = vec![p3(0, 0, 0), p3(3, 0, 0), p3(1, 1, 0), p3(0, 3, 0)];
     nonconvex_union.mesh = fan_mesh_from_points(&nonconvex_union.polygon);
@@ -3773,6 +4453,22 @@ fn exact_coplanar_triangle_union_materializes_simple_planar_arrangement() {
     let arrangement = hypermesh::exact::arrange_single_triangle_coplanar_union(&left, &right)
         .expect("simple single-loop triangle union should materialize");
     arrangement.validate().unwrap();
+    arrangement
+        .validate_against_sources(
+            &left,
+            &right,
+            hypermesh::exact::CoplanarArrangementOperation::Union,
+        )
+        .unwrap();
+    assert!(
+        arrangement
+            .validate_against_sources(
+                &left,
+                &right,
+                hypermesh::exact::CoplanarArrangementOperation::Difference,
+            )
+            .is_err()
+    );
     assert!(arrangement.polygon.len() >= 4);
     assert_eq!(arrangement.mesh.vertices().len(), arrangement.polygon.len());
     assert_eq!(
@@ -3829,6 +4525,8 @@ fn exact_coplanar_triangle_difference_materializes_one_corner_cut() {
     assert_eq!(difference.mesh.vertices().len(), 4);
     assert_eq!(difference.mesh.triangles().len(), 2);
     difference.validate().unwrap();
+    difference.validate_against_sources(&left, &right).unwrap();
+    assert!(difference.validate_against_sources(&right, &left).is_err());
     let mut nonconvex_difference = difference.clone();
     nonconvex_difference.polygon = vec![p3(0, 0, 0), p3(3, 0, 0), p3(1, 1, 0), p3(0, 3, 0)];
     nonconvex_difference.mesh = fan_mesh_from_points(&nonconvex_difference.polygon);
@@ -3879,6 +4577,7 @@ fn exact_coplanar_triangle_difference_materializes_remaining_corner_cut() {
     assert_eq!(difference.mesh.vertices().len(), 3);
     assert_eq!(difference.mesh.triangles().len(), 1);
     difference.validate().unwrap();
+    difference.validate_against_sources(&left, &right).unwrap();
 
     let result = hypermesh::exact::boolean_exact(
         &left,
@@ -3929,6 +4628,8 @@ fn exact_coplanar_triangle_difference_materializes_contained_hole_case() {
     assert_eq!(holed.mesh.vertices().len(), 6);
     assert!(!holed.mesh.triangles().is_empty());
     holed.validate().unwrap();
+    holed.validate_against_sources(&outer, &inner).unwrap();
+    assert!(holed.validate_against_sources(&inner, &outer).is_err());
     let mut reversed_outer = holed.clone();
     reversed_outer.outer.reverse();
     assert!(reversed_outer.validate().is_err());
@@ -4207,11 +4908,16 @@ fn exact_named_booleans_handle_reindexed_same_surface() {
     );
     let report = hypermesh::exact::certify_same_surface_report(&left, &right);
     report.validate().unwrap();
+    report.validate_against_sources(&left, &right).unwrap();
     assert!(report.is_certified());
     assert_eq!(report.left_to_right, vec![1, 3, 2, 0]);
     assert_eq!(report.right_to_left, vec![3, 0, 2, 1]);
     assert_eq!(report.left_triangles, report.right_triangles);
     assert!(report.all_proof_producing());
+    assert_eq!(
+        report.validate_against_sources(&right, &left).unwrap_err(),
+        hypermesh::exact::ExactReportValidationError::SourceReplayMismatch
+    );
 
     let intersection = hypermesh::exact::boolean_exact(
         &left,
@@ -4245,6 +4951,18 @@ fn exact_named_booleans_handle_coplanar_convex_surface_retriangulation() {
     let certificate = hypermesh::exact::certify_coplanar_convex_surface_equivalence(&left, &right)
         .expect("same square with opposite diagonals should certify by exact hull/area");
     certificate.validate().unwrap();
+    certificate.validate_against_sources(&left, &right).unwrap();
+    let shifted = ExactMesh::from_i64_triangles_with_policy(
+        &[10, 0, 0, 12, 0, 0, 12, 2, 0, 10, 2, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert!(
+        certificate
+            .validate_against_sources(&left, &shifted)
+            .is_err()
+    );
     assert_eq!(certificate.polygon.len(), 4);
     let mut reversed_hull = certificate.clone();
     reversed_hull.polygon.reverse();
@@ -4257,6 +4975,7 @@ fn exact_named_booleans_handle_coplanar_convex_surface_retriangulation() {
     assert!(nonconvex_hull.validate().is_err());
     let report = hypermesh::exact::certify_coplanar_convex_surface_report(&left, &right);
     report.validate().unwrap();
+    report.validate_against_sources(&left, &right).unwrap();
     assert!(report.is_certified());
     assert_eq!(
         report.status,
@@ -4264,6 +4983,19 @@ fn exact_named_booleans_handle_coplanar_convex_surface_retriangulation() {
     );
     assert!(report.equivalence.is_some());
     assert!(report.containment.is_none());
+    let mut stale_report = report.clone();
+    stale_report
+        .equivalence
+        .as_mut()
+        .unwrap()
+        .polygon
+        .rotate_left(1);
+    assert_eq!(
+        stale_report
+            .validate_against_sources(&left, &right)
+            .unwrap_err(),
+        hypermesh::exact::CoplanarConvexSurfaceReportError::SourceReplayMismatch
+    );
 
     let preflight = hypermesh::exact::preflight_boolean_exact(
         &left,
@@ -4322,6 +5054,14 @@ fn exact_named_booleans_handle_coplanar_convex_surface_containment() {
     let certificate = hypermesh::exact::certify_coplanar_convex_surface_containment(&outer, &inner)
         .expect("inner square should certify inside outer square");
     certificate.validate().unwrap();
+    certificate
+        .validate_against_sources(&outer, &inner)
+        .unwrap();
+    assert!(
+        certificate
+            .validate_against_sources(&inner, &outer)
+            .is_err()
+    );
     assert_eq!(
         certificate.relation,
         hypermesh::exact::CoplanarConvexSurfaceContainment::RightInsideLeft
@@ -4338,6 +5078,7 @@ fn exact_named_booleans_handle_coplanar_convex_surface_containment() {
     assert!(outside_right_hull.validate().is_err());
     let report = hypermesh::exact::certify_coplanar_convex_surface_report(&outer, &inner);
     report.validate().unwrap();
+    report.validate_against_sources(&outer, &inner).unwrap();
     assert_eq!(
         report.status,
         hypermesh::exact::CoplanarConvexSurfaceReportStatus::Contained(
@@ -4346,10 +5087,16 @@ fn exact_named_booleans_handle_coplanar_convex_surface_containment() {
     );
     assert!(report.equivalence.is_none());
     assert!(report.containment.is_some());
+    assert_eq!(
+        report.validate_against_sources(&inner, &outer).unwrap_err(),
+        hypermesh::exact::CoplanarConvexSurfaceReportError::SourceReplayMismatch
+    );
 
     let holed = hypermesh::exact::arrange_coplanar_convex_surface_holed_difference(&outer, &inner)
         .expect("outer minus inner convex sheets should materialize one hole");
     holed.validate().unwrap();
+    holed.validate_against_sources(&outer, &inner).unwrap();
+    assert!(holed.validate_against_sources(&inner, &outer).is_err());
     assert_eq!(holed.outer.len(), 4);
     assert_eq!(holed.hole.len(), 4);
     assert_eq!(holed.mesh.vertices().len(), 8);
@@ -4449,6 +5196,22 @@ fn exact_coplanar_convex_surface_union_materializes_simple_loop() {
     let union = hypermesh::exact::arrange_coplanar_convex_surface_union(&left, &right)
         .expect("overlapping convex sheets should materialize one simple union loop");
     union.validate().unwrap();
+    union
+        .validate_against_sources(
+            &left,
+            &right,
+            hypermesh::exact::CoplanarArrangementOperation::Union,
+        )
+        .unwrap();
+    assert!(
+        union
+            .validate_against_sources(
+                &left,
+                &right,
+                hypermesh::exact::CoplanarArrangementOperation::Difference,
+            )
+            .is_err()
+    );
     assert_eq!(union.polygon.len(), 8);
     assert!(!union.mesh.triangles().is_empty());
     let mut self_intersecting_union = union.clone();
@@ -4487,6 +5250,9 @@ fn exact_coplanar_convex_surface_union_materializes_simple_loop() {
     )
     .unwrap();
     arrangement_report.validate().unwrap();
+    arrangement_report
+        .validate_against_sources(&left, &right)
+        .unwrap();
     assert_eq!(
         arrangement_report.status,
         hypermesh::exact::ExactPlanarArrangementStatus::AlreadyMaterialized
@@ -4498,6 +5264,9 @@ fn exact_coplanar_convex_surface_union_materializes_simple_loop() {
     )
     .unwrap();
     winding_report.validate().unwrap();
+    winding_report
+        .validate_against_sources(&left, &right)
+        .unwrap();
     assert_eq!(
         winding_report.status,
         hypermesh::exact::ExactWindingReadinessStatus::PlanarArrangementAlreadyMaterialized
@@ -4548,6 +5317,13 @@ fn exact_coplanar_convex_surface_union_materializes_simple_loop() {
         hypermesh::exact::arrange_coplanar_convex_surface_intersection(&left, &right)
             .expect("overlapping convex sheets should materialize their convex intersection");
     intersection_output.validate().unwrap();
+    intersection_output
+        .validate_against_sources(
+            &left,
+            &right,
+            hypermesh::exact::CoplanarArrangementOperation::Intersection,
+        )
+        .unwrap();
     assert_eq!(intersection_output.polygon.len(), 4);
     let intersection_result = hypermesh::exact::boolean_exact(
         &left,
@@ -4631,6 +5407,13 @@ fn exact_coplanar_convex_surface_difference_materializes_simple_loop() {
     let difference = hypermesh::exact::arrange_coplanar_convex_surface_difference(&left, &right)
         .expect("overlapping convex sheets should materialize one simple difference loop");
     difference.validate().unwrap();
+    difference
+        .validate_against_sources(
+            &left,
+            &right,
+            hypermesh::exact::CoplanarArrangementOperation::Difference,
+        )
+        .unwrap();
     assert_eq!(difference.polygon.len(), 6);
     assert!(!difference.mesh.triangles().is_empty());
 
@@ -4691,6 +5474,8 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_components() {
         hypermesh::exact::arrange_coplanar_convex_surface_multi_difference(&left, &right)
             .expect("convex strip cut should produce two exact output components");
     difference.validate().unwrap();
+    difference.validate_against_sources(&left, &right).unwrap();
+    assert!(difference.validate_against_sources(&right, &left).is_err());
     assert_eq!(difference.polygons.len(), 2);
     assert!(difference.polygons.iter().all(|polygon| polygon.len() == 4));
     assert_eq!(difference.mesh.vertices().len(), 8);
@@ -4771,6 +5556,128 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_components() {
 
 #[cfg(feature = "exact-triangulation")]
 #[test]
+fn exact_coplanar_convex_surface_difference_materializes_multiple_holes() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 10, 0, 0, 10, 10, 0, 0, 10, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let right = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            1, 1, 0, 2, 1, 0, 1, 2, 0, //
+            7, 7, 0, 8, 7, 0, 7, 8, 0,
+        ],
+        &[0, 1, 2, 3, 4, 5],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+
+    assert!(
+        hypermesh::exact::arrange_coplanar_convex_surface_holed_difference(&left, &right).is_none()
+    );
+    let difference =
+        hypermesh::exact::arrange_coplanar_convex_surface_multi_holed_difference(&left, &right)
+            .expect("two contained triangle islands should materialize two retained holes");
+    difference.validate().unwrap();
+    difference.validate_against_sources(&left, &right).unwrap();
+    assert!(difference.validate_against_sources(&right, &left).is_err());
+    assert_eq!(difference.outer.len(), 4);
+    assert_eq!(difference.holes.len(), 2);
+    assert!(difference.holes.iter().all(|hole| hole.len() == 3));
+    assert_eq!(difference.mesh.vertices().len(), 10);
+    assert!(!difference.mesh.triangles().is_empty());
+
+    let mut reversed_hole = difference.clone();
+    reversed_hole.holes[0].reverse();
+    assert!(reversed_hole.validate().is_err());
+    let mut shared_hole_point = difference.clone();
+    shared_hole_point.holes[1][0] = shared_hole_point.holes[0][0].clone();
+    assert!(shared_hole_point.validate().is_err());
+    let mut outside_hole = difference.clone();
+    outside_hole.holes[0] = vec![p3(11, 1, 0), p3(12, 1, 0), p3(11, 2, 0)];
+    assert!(outside_hole.validate().is_err());
+
+    let preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    preflight.validate().unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarConvexSurfaceMultiHoledDifference
+    );
+    assert!(preflight.blocker.is_none());
+
+    let result = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    result.validate().unwrap();
+    assert_eq!(
+        result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut:
+                hypermesh::exact::ExactBooleanShortcutKind::CoplanarConvexSurfaceMultiHoledDifference
+        }
+    );
+    assert_eq!(
+        result.mesh.vertices().len(),
+        difference.mesh.vertices().len()
+    );
+    assert_eq!(
+        result.mesh.triangles().len(),
+        difference.mesh.triangles().len()
+    );
+
+    let square_holes = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            1, 1, 0, 3, 1, 0, 3, 3, 0, 1, 3, 0, //
+            6, 6, 0, 8, 6, 0, 8, 8, 0, 6, 8, 0,
+        ],
+        &[0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let square_difference =
+        hypermesh::exact::arrange_coplanar_convex_surface_multi_holed_difference(
+            &left,
+            &square_holes,
+        )
+        .expect("two connected square components should materialize two retained holes");
+    square_difference.validate().unwrap();
+    square_difference
+        .validate_against_sources(&left, &square_holes)
+        .unwrap();
+    assert_eq!(square_difference.outer.len(), 4);
+    assert_eq!(square_difference.holes.len(), 2);
+    assert!(square_difference.holes.iter().all(|hole| hole.len() == 4));
+    assert_eq!(square_difference.mesh.vertices().len(), 12);
+
+    let square_result = hypermesh::exact::boolean_exact(
+        &left,
+        &square_holes,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    square_result.validate().unwrap();
+    assert_eq!(
+        square_result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut:
+                hypermesh::exact::ExactBooleanShortcutKind::CoplanarConvexSurfaceMultiHoledDifference
+        }
+    );
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
 fn exact_coplanar_convex_surface_report_rejects_inconsistent_artifacts() {
     let vertices = &[0, 0, 0, 2, 0, 0, 2, 2, 0, 0, 2, 0];
     let left = ExactMesh::from_i64_triangles_with_policy(
@@ -4839,6 +5746,9 @@ fn exact_same_surface_report_retains_rejection_state() {
     .unwrap();
     let shifted_report = hypermesh::exact::certify_same_surface_report(&left, &shifted);
     shifted_report.validate().unwrap();
+    shifted_report
+        .validate_against_sources(&left, &shifted)
+        .unwrap();
     assert_eq!(
         shifted_report.status,
         hypermesh::exact::ExactSameSurfaceStatus::VertexCoordinateMismatch
@@ -4860,6 +5770,9 @@ fn exact_same_surface_report_retains_rejection_state() {
     .unwrap();
     let count_report = hypermesh::exact::certify_same_surface_report(&left, &different_topology);
     count_report.validate().unwrap();
+    count_report
+        .validate_against_sources(&left, &different_topology)
+        .unwrap();
     assert_eq!(
         count_report.status,
         hypermesh::exact::ExactSameSurfaceStatus::VertexCountMismatch
@@ -4962,6 +5875,7 @@ fn exact_convex_solid_facts_classify_points_and_vertex_sets() {
     assert!(facts.is_certified_convex());
     assert!(facts.all_proof_producing());
     facts.validate().unwrap();
+    facts.validate_against_source(&outer).unwrap();
     assert_eq!(
         classify_point_against_convex_solid(&p3(1, 1, 1), &outer),
         hypermesh::exact::ConvexSolidPointRelation::Inside
@@ -4982,6 +5896,15 @@ fn exact_convex_solid_facts_classify_points_and_vertex_sets() {
     assert_eq!(inside.predicates.len(), outer.triangles().len());
     assert!(inside.all_proof_producing());
     inside.validate().unwrap();
+    inside
+        .validate_against_sources(&p3(1, 1, 1), &outer)
+        .unwrap();
+    assert_eq!(
+        inside
+            .validate_against_sources(&p3(11, 1, 1), &outer)
+            .unwrap_err(),
+        hypermesh::exact::ConvexSolidReportError::SourceReplayMismatch
+    );
 
     let outside = classify_point_against_convex_solid_report(&p3(11, 1, 1), &outer);
     assert_eq!(
@@ -4992,6 +5915,9 @@ fn exact_convex_solid_facts_classify_points_and_vertex_sets() {
     assert!(outside.predicates.len() <= outer.triangles().len());
     assert!(outside.all_proof_producing());
     outside.validate().unwrap();
+    outside
+        .validate_against_sources(&p3(11, 1, 1), &outer)
+        .unwrap();
 
     assert_eq!(
         classify_mesh_vertices_against_convex_solid(&inner, &outer),
@@ -5006,6 +5932,15 @@ fn exact_convex_solid_facts_classify_points_and_vertex_sets() {
     assert_eq!(containment.vertices.len(), inner.vertices().len());
     assert!(containment.all_proof_producing());
     containment.validate().unwrap();
+    containment
+        .validate_against_sources(&inner, &outer)
+        .unwrap();
+    assert_eq!(
+        containment
+            .validate_against_sources(&outer, &inner)
+            .unwrap_err(),
+        hypermesh::exact::ConvexSolidReportError::SourceReplayMismatch
+    );
 
     assert_eq!(
         classify_mesh_vertices_against_convex_solid(&outer, &inner),
@@ -5019,6 +5954,7 @@ fn exact_convex_solid_facts_classify_points_and_vertex_sets() {
     assert_eq!(separated.vertices.len(), outer.vertices().len());
     assert!(separated.all_proof_producing());
     separated.validate().unwrap();
+    separated.validate_against_sources(&outer, &inner).unwrap();
 }
 
 #[test]
@@ -5055,6 +5991,15 @@ fn exact_convex_solid_reports_retain_not_certified_state() {
     );
     assert!(mesh.vertices.is_empty());
     mesh.validate().unwrap();
+    mesh.validate_against_sources(&subject, &open).unwrap();
+
+    let (closed_vertices, closed_triangles) = tetrahedron();
+    let closed = ExactMesh::from_f64_triangles(&closed_vertices, &closed_triangles).unwrap();
+    let closed_facts = certify_convex_solid(&closed);
+    assert_eq!(
+        closed_facts.validate_against_source(&open).unwrap_err(),
+        hypermesh::exact::ConvexSolidReportError::SourceReplayMismatch
+    );
 }
 
 #[test]
@@ -5141,6 +6086,43 @@ fn exact_named_booleans_handle_certified_convex_containment() {
         union.mesh.provenance().source.label,
         "exact convex containment union keeps outer left"
     );
+    union
+        .validate_operation_against_sources(
+            &outer,
+            &inner,
+            hypermesh::exact::ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        union
+            .validate_operation_against_sources(
+                &outer,
+                &inner,
+                hypermesh::exact::ExactBooleanOperation::Intersection,
+                ValidationPolicy::CLOSED,
+                hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+            )
+            .unwrap_err(),
+        hypermesh::exact::ExactReportValidationError::SourceReplayMismatch
+    );
+    let mut relabeled_union = union.clone();
+    relabeled_union.kind = hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+        shortcut: hypermesh::exact::ExactBooleanShortcutKind::ConvexSeparated,
+    };
+    assert_eq!(
+        relabeled_union
+            .validate_operation_against_sources(
+                &outer,
+                &inner,
+                hypermesh::exact::ExactBooleanOperation::Union,
+                ValidationPolicy::CLOSED,
+                hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+            )
+            .unwrap_err(),
+        hypermesh::exact::ExactReportValidationError::SourceReplayMismatch
+    );
     let preflight = hypermesh::exact::preflight_boolean_exact(
         &outer,
         &inner,
@@ -5180,6 +6162,273 @@ fn exact_named_booleans_handle_certified_convex_containment() {
     )
     .unwrap();
     assert!(empty_difference.mesh.triangles().is_empty());
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
+fn exact_named_booleans_materialize_partial_convex_intersection() {
+    let left = ExactMesh::from_i64_triangles(
+        &[
+            0, 0, 0, //
+            4, 0, 0, //
+            0, 4, 0, //
+            0, 0, 4,
+        ],
+        &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+    )
+    .unwrap();
+    let right = ExactMesh::from_i64_triangles(
+        &[
+            1, 1, 1, //
+            5, 1, 1, //
+            1, 5, 1, //
+            1, 1, 5,
+        ],
+        &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+    )
+    .unwrap();
+
+    assert!(
+        hypermesh::exact::classify_mesh_vertices_against_convex_solid(&right, &left)
+            != hypermesh::exact::ConvexSolidMeshRelation::StrictlyInside
+    );
+    let intersection = hypermesh::exact::intersect_closed_convex_solids(&left, &right)
+        .expect("overlapping convex tetrahedra should clip to an exact convex solid");
+    intersection.validate().unwrap();
+    intersection
+        .validate_against_sources(&left, &right)
+        .unwrap();
+    assert!(
+        intersection
+            .validate_against_sources(&right, &left)
+            .is_err()
+    );
+    assert!(intersection.mesh.facts().mesh.closed_manifold);
+    assert_eq!(intersection.mesh.vertices().len(), 4);
+    assert_eq!(intersection.mesh.triangles().len(), 4);
+    let mut stale_intersection = intersection.clone();
+    stale_intersection.mesh = reverse_mesh_triangles(&stale_intersection.mesh);
+    stale_intersection.validate().unwrap();
+    assert!(
+        stale_intersection
+            .validate_against_sources(&left, &right)
+            .is_err()
+    );
+
+    let preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+    )
+    .unwrap();
+    preflight.validate().unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedConvexIntersection
+    );
+
+    let result = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    result.validate().unwrap();
+    assert_eq!(
+        result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ConvexIntersection
+        }
+    );
+    assert_eq!(result.mesh.triangles().len(), 4);
+
+    let union_preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+    )
+    .unwrap();
+    union_preflight.validate().unwrap();
+    assert_eq!(
+        union_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::RequiresCertifiedWinding
+    );
+    let union = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap_err();
+    assert!(
+        union
+            .diagnostics
+            .iter()
+            .any(|diagnostic| diagnostic.kind == DiagnosticKind::UnsupportedExactOperation)
+    );
+
+    let difference = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap_err();
+    assert!(
+        difference
+            .diagnostics
+            .iter()
+            .any(|diagnostic| diagnostic.kind == DiagnosticKind::UnsupportedExactOperation)
+    );
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
+fn exact_named_booleans_materialize_single_cap_convex_difference() {
+    let left = ExactMesh::from_i64_triangles(
+        &[
+            0, 0, 0, //
+            4, 0, 0, //
+            0, 4, 0, //
+            0, 0, 4,
+        ],
+        &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+    )
+    .unwrap();
+    let cutter = ExactMesh::from_i64_triangles(
+        &[
+            0, 0, 0, //
+            1, 0, 0, //
+            0, 1, 0, //
+            0, 0, 1,
+        ],
+        &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+    )
+    .unwrap();
+
+    let difference = hypermesh::exact::subtract_closed_convex_solids_single_cap(&left, &cutter)
+        .expect("small tetra at the origin should remove one triangular cap");
+    difference.validate().unwrap();
+    difference.validate_against_sources(&left, &cutter).unwrap();
+    assert_eq!(difference.mesh.vertices().len(), 6);
+    assert_eq!(difference.mesh.triangles().len(), 8);
+    assert!(difference.mesh.facts().mesh.closed_manifold);
+    assert!(difference.validate_against_sources(&cutter, &left).is_err());
+
+    let preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &cutter,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    preflight.validate().unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedConvexSingleCapDifference
+    );
+
+    let result = hypermesh::exact::boolean_exact(
+        &left,
+        &cutter,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    result.validate().unwrap();
+    assert_eq!(
+        result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ConvexSingleCapDifference
+        }
+    );
+    assert_eq!(
+        result.mesh.triangles().len(),
+        difference.mesh.triangles().len()
+    );
+
+    let unsupported_reverse = hypermesh::exact::boolean_exact(
+        &cutter,
+        &left,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::CLOSED,
+    );
+    assert!(unsupported_reverse.is_err());
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
+fn exact_named_booleans_materialize_polygonal_cap_convex_difference() {
+    let cube = ExactMesh::from_i64_triangles(
+        &[
+            0, 0, 0, //
+            2, 0, 0, //
+            2, 2, 0, //
+            0, 2, 0, //
+            0, 0, 2, //
+            2, 0, 2, //
+            2, 2, 2, //
+            0, 2, 2,
+        ],
+        &[
+            0, 2, 1, 0, 3, 2, // bottom
+            4, 5, 6, 4, 6, 7, // top
+            0, 1, 5, 0, 5, 4, // y-min
+            1, 2, 6, 1, 6, 5, // x-max
+            2, 3, 7, 2, 7, 6, // y-max
+            3, 0, 4, 3, 4, 7, // x-min
+        ],
+    )
+    .unwrap();
+    let cutter = ExactMesh::from_i64_triangles(
+        &[
+            -10, -10, -10, //
+            23, -10, -10, //
+            -10, 23, -10, //
+            -10, -10, 23,
+        ],
+        &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+    )
+    .unwrap();
+
+    let difference = hypermesh::exact::subtract_closed_convex_solids_single_cap(&cube, &cutter)
+        .expect("one large tetrahedron face should cut a hexagonal cap from the cube");
+    difference.validate().unwrap();
+    difference.validate_against_sources(&cube, &cutter).unwrap();
+    assert_eq!(difference.mesh.vertices().len(), 15);
+    assert_eq!(difference.mesh.triangles().len(), 26);
+    assert!(difference.mesh.facts().mesh.closed_manifold);
+
+    let preflight = hypermesh::exact::preflight_boolean_exact(
+        &cube,
+        &cutter,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    preflight.validate().unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedConvexSingleCapDifference
+    );
+
+    let result = hypermesh::exact::boolean_exact(
+        &cube,
+        &cutter,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    result.validate().unwrap();
+    assert_eq!(
+        result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ConvexSingleCapDifference
+        }
+    );
+    assert_eq!(
+        result.mesh.triangles().len(),
+        difference.mesh.triangles().len()
+    );
 }
 
 #[test]
@@ -5466,6 +6715,10 @@ fn exact_intersection_graph_records_coplanar_edge_and_vertex_events() {
     let graph = build_intersection_graph(&left, &right).unwrap();
 
     graph.validate().unwrap();
+    graph.validate_against_sources(&left, &right).unwrap();
+    graph.face_pairs[0]
+        .validate_against_sources(&left, &right)
+        .unwrap();
     assert_eq!(graph.face_pairs.len(), 1);
     assert_eq!(
         graph.face_pairs[0].relation,
@@ -5488,6 +6741,9 @@ fn exact_intersection_graph_records_coplanar_edge_and_vertex_events() {
         .coplanar_overlap_graph()
         .expect("coplanar pair should expose an overlap graph");
     overlap_graph.validate().unwrap();
+    overlap_graph
+        .validate_against_sources(&left, &right)
+        .unwrap();
     assert_eq!(overlap_graph.left_face, 0);
     assert_eq!(overlap_graph.right_face, 0);
     assert_eq!(
@@ -5496,10 +6752,22 @@ fn exact_intersection_graph_records_coplanar_edge_and_vertex_events() {
     );
     assert!(!overlap_graph.edge_overlaps.is_empty());
     assert!(!overlap_graph.vertex_overlaps.is_empty());
-    assert_eq!(graph.coplanar_overlap_graphs(), vec![overlap_graph]);
+    assert_eq!(graph.coplanar_overlap_graphs(), vec![overlap_graph.clone()]);
+    let mut stale_overlap_graph = overlap_graph.clone();
+    stale_overlap_graph.left_face = usize::MAX;
+    assert_eq!(
+        stale_overlap_graph
+            .validate_against_sources(&left, &right)
+            .unwrap_err(),
+        hypermesh::exact::CoplanarOverlapGraphValidationError::SourceReplayMismatch
+    );
     let split_plan = graph.coplanar_overlap_split_plan(&left, &right).unwrap();
     split_plan.validate().unwrap();
+    split_plan.validate_against_sources(&left, &right).unwrap();
     assert_eq!(split_plan.graphs.len(), 1);
+    split_plan.graphs[0]
+        .validate_against_sources(&left, &right)
+        .unwrap();
     assert_eq!(split_plan.graphs[0].left_face, 0);
     assert_eq!(split_plan.graphs[0].right_face, 0);
     assert!(
@@ -5522,11 +6790,20 @@ fn exact_intersection_graph_records_coplanar_edge_and_vertex_events() {
                     == Some(Ordering::Less)
             }))
     );
+    let mut stale_split_plan = split_plan.clone();
+    stale_split_plan.graphs[0].left_face = usize::MAX;
+    assert_eq!(
+        stale_split_plan
+            .validate_against_sources(&left, &right)
+            .unwrap_err(),
+        hypermesh::exact::CoplanarOverlapSplitValidationError::SourceReplayMismatch
+    );
 
     let readiness = graph
         .coplanar_arrangement_readiness_report(&left, &right)
         .unwrap();
     readiness.validate().unwrap();
+    readiness.validate_against_sources(&left, &right).unwrap();
     assert!(readiness.needs_planar_cells());
     assert_eq!(
         readiness.status,
@@ -5535,6 +6812,46 @@ fn exact_intersection_graph_records_coplanar_edge_and_vertex_events() {
     assert_eq!(readiness.graph_count, 1);
     assert_eq!(readiness.overlapping_graphs, 1);
     assert!(readiness.edge_overlap_count > 0);
+    let separated = ExactMesh::from_i64_triangles_with_policy(
+        &[5, 0, 0, 7, 0, 0, 5, 2, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert_eq!(
+        readiness
+            .validate_against_sources(&left, &separated)
+            .unwrap_err(),
+        hypermesh::exact::CoplanarArrangementReadinessValidationError::SourceReplayMismatch
+    );
+
+    let mut relabeled_graph = graph.clone();
+    relabeled_graph.face_pairs[0].left_face = usize::MAX;
+    assert!(relabeled_graph.validate().is_ok());
+    assert!(
+        relabeled_graph
+            .coplanar_arrangement_readiness_report(&left, &right)
+            .is_err()
+    );
+
+    let mut relabeled_edge_graph = graph.clone();
+    if let Some(IntersectionEvent::CoplanarEdge { left_edge, .. }) = relabeled_edge_graph
+        .face_pairs
+        .first_mut()
+        .and_then(|pair| {
+            pair.events
+                .iter_mut()
+                .find(|event| matches!(event, IntersectionEvent::CoplanarEdge { .. }))
+        })
+    {
+        *left_edge = [usize::MAX, usize::MAX];
+        assert!(relabeled_edge_graph.validate().is_ok());
+        assert!(
+            relabeled_edge_graph
+                .coplanar_arrangement_readiness_report(&left, &right)
+                .is_err()
+        );
+    }
 }
 
 #[test]

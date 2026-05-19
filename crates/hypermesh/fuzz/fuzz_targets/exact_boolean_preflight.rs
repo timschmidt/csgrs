@@ -1,28 +1,36 @@
 #![no_main]
 
 use hypermesh::exact::{
-    CoplanarSurfaceContainment, CoplanarSurfaceContainmentStatus, CoplanarTriangleRelation,
-    ExactBooleanOperation, ExactBooleanPolicy, ExactBoundaryBooleanPolicy, ExactMesh,
-    ExactRegionSelection, FaceRegionPlaneRelation, FaceSplitBoundaryNode, SourceProvenance,
-    Triangle, ValidationPolicy,
+    CoplanarArrangementOperation, CoplanarSurfaceContainment, CoplanarSurfaceContainmentStatus,
+    CoplanarTriangleRelation, ExactBooleanOperation, ExactBooleanPolicy,
+    ExactBooleanSupport, ExactBoundaryBooleanPolicy, ExactMesh, ExactRegionSelection,
+    FaceRegionPlaneRelation, FaceSplitBoundaryNode, SourceProvenance, Triangle, ValidationPolicy,
     arrange_single_triangle_coplanar_difference, arrange_single_triangle_coplanar_holed_difference,
     arrange_single_triangle_coplanar_union, arrange_coplanar_convex_surface_difference,
     arrange_coplanar_convex_surface_holed_difference, arrange_coplanar_convex_surface_intersection,
-    arrange_coplanar_convex_surface_multi_difference, arrange_coplanar_convex_surface_union,
+    arrange_coplanar_convex_surface_multi_difference,
+    arrange_coplanar_convex_surface_multi_holed_difference,
+    arrange_coplanar_convex_surface_multi_intersection, arrange_coplanar_convex_surface_union,
     boolean_exact_with_boundary_policy, boolean_selected_regions, certify_boundary_touching_report,
     certify_convex_solid, certify_open_surface_disjoint_report, certify_planar_arrangement_report,
     certify_refinement_report, certify_coplanar_convex_surface_containment,
     certify_coplanar_convex_surface_equivalence, certify_coplanar_convex_surface_report,
     certify_same_surface_report,
     certify_single_triangle_coplanar_containment, certify_single_triangle_coplanar_containment_report,
-    certify_winding_readiness_report, classify_mesh_vertices_against_convex_solid,
-    classify_mesh_vertices_against_convex_solid_report, difference_single_triangle_coplanar_surfaces,
-    build_intersection_graph, intersect_single_triangle_coplanar_surfaces, preflight_boolean_exact,
-    union_single_triangle_coplanar_surfaces,
+    certify_winding_readiness_report, classify_coplanar_triangles, classify_triangle_against_face_plane,
+    classify_triangle_triangle, classify_mesh_vertices_against_convex_solid,
+    classify_mesh_face_pair, classify_mesh_face_pairs,
+    classify_mesh_vertices_against_convex_solid_report, classify_point_against_convex_solid_report,
+    difference_single_triangle_coplanar_surfaces, build_intersection_graph,
+    build_selected_region_mesh, intersect_closed_convex_solids,
+    intersect_single_triangle_coplanar_surfaces, preflight_boolean_exact,
+    subtract_closed_convex_solids_single_cap, union_single_triangle_coplanar_surfaces,
 };
 use libfuzzer_sys::fuzz_target;
 
 fuzz_target!(|data: &[u8]| {
+    exercise_partial_convex_union_boundary();
+
     let mut values = Vec::new();
     let mut indices = Vec::new();
 
@@ -64,19 +72,172 @@ fuzz_target!(|data: &[u8]| {
         return;
     };
 
+    let left_points = left
+        .vertices()
+        .iter()
+        .map(|vertex| vertex.to_hyperlimit_point())
+        .collect::<Vec<_>>();
+    let left_triangles = left
+        .triangles()
+        .iter()
+        .map(|triangle| triangle.0)
+        .collect::<Vec<_>>();
+    let _ = left
+        .bounds()
+        .validate_against_sources(&left_points, &left_triangles);
+    if let Some(bounds) = left.bounds().mesh.as_ref() {
+        let _ = bounds.validate_against_points(&left_points);
+    }
+    for (bounds, triangle) in left.bounds().faces.iter().zip(left_triangles.iter()) {
+        let _ = bounds.validate_against_triangle([
+            &left_points[triangle[0]],
+            &left_points[triangle[1]],
+            &left_points[triangle[2]],
+        ]);
+    }
+    let _ = left
+        .facts()
+        .validate_against_sources(&left_points, &left_triangles);
+    let _ = left.provenance().source.validate();
+    for predicate in &left.provenance().predicates {
+        let _ = predicate.validate();
+    }
+    let _ = left.provenance().validate();
+    let right_points = right
+        .vertices()
+        .iter()
+        .map(|vertex| vertex.to_hyperlimit_point())
+        .collect::<Vec<_>>();
+    let right_triangles = right
+        .triangles()
+        .iter()
+        .map(|triangle| triangle.0)
+        .collect::<Vec<_>>();
+    let _ = right
+        .bounds()
+        .validate_against_sources(&right_points, &right_triangles);
+    if let Some(bounds) = right.bounds().mesh.as_ref() {
+        let _ = bounds.validate_against_points(&right_points);
+    }
+    for (bounds, triangle) in right.bounds().faces.iter().zip(right_triangles.iter()) {
+        let _ = bounds.validate_against_triangle([
+            &right_points[triangle[0]],
+            &right_points[triangle[1]],
+            &right_points[triangle[2]],
+        ]);
+    }
+    let _ = right
+        .facts()
+        .validate_against_sources(&right_points, &right_triangles);
+    let _ = right.provenance().source.validate();
+    for predicate in &right.provenance().predicates {
+        let _ = predicate.validate();
+    }
+    let _ = right.provenance().validate();
+
+    if let (Some(left_tri), Some(right_tri)) = (left.triangles().first(), right.triangles().first())
+    {
+        let _ = classify_mesh_face_pair(&left, 0, &right, 0)
+            .map(|classification| classification.validate_against_sources(&left, &right));
+        let mut points = left
+            .vertices()
+            .iter()
+            .map(|vertex| vertex.to_hyperlimit_point())
+            .collect::<Vec<_>>();
+        let right_offset = points.len();
+        points.extend(
+            right
+                .vertices()
+                .iter()
+                .map(|vertex| vertex.to_hyperlimit_point()),
+        );
+        let left_face = left_tri.0;
+        let right_face = [
+            right_tri.0[0] + right_offset,
+            right_tri.0[1] + right_offset,
+            right_tri.0[2] + right_offset,
+        ];
+        let plane = classify_triangle_against_face_plane(&points, left_face, right_face);
+        let _ = plane.validate_against_sources(&points, left_face, right_face);
+        let coplanar = classify_coplanar_triangles(&points, left_face, right_face);
+        let _ = coplanar.validate_against_sources(&points, left_face, right_face);
+        let narrow = classify_triangle_triangle(&points, left_face, right_face);
+        let _ = narrow.validate_against_sources(&points, left_face, right_face);
+        for event in narrow
+            .right_edge_events
+            .iter()
+            .chain(narrow.left_edge_events.iter())
+        {
+            let _ = event.validate();
+        }
+        if let Some(event) = narrow.right_edge_events.first() {
+            let edge = [right_face[0], right_face[1]];
+            let _ = event.validate_against_sources(
+                &points[left_face[0]],
+                &points[left_face[1]],
+                &points[left_face[2]],
+                &points[edge[0]],
+                &points[edge[1]],
+            );
+        }
+    }
+    let _ = classify_mesh_face_pairs(&left, &right).map(|classifications| {
+        classifications
+            .iter()
+            .map(|classification| classification.validate_against_sources(&left, &right))
+            .collect::<Vec<_>>()
+    });
+
     let _ = preflight_boolean_exact(&left, &right, ExactBooleanOperation::Union)
-        .map(|report| report.validate());
+        .map(|report| report.validate_against_sources(&left, &right));
     let _ = preflight_boolean_exact(&left, &right, ExactBooleanOperation::Intersection)
-        .map(|report| report.validate());
+        .map(|report| report.validate_against_sources(&left, &right));
     let _ = preflight_boolean_exact(&left, &right, ExactBooleanOperation::Difference)
-        .map(|report| report.validate());
+        .map(|report| report.validate_against_sources(&left, &right));
+    for operation in [
+        ExactBooleanOperation::Union,
+        ExactBooleanOperation::Intersection,
+        ExactBooleanOperation::Difference,
+    ] {
+        if let Ok(result) = boolean_exact_with_boundary_policy(
+            &left,
+            &right,
+            operation,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactBoundaryBooleanPolicy::PreserveSeparateShells,
+        ) {
+            let _ = result.validate_operation_against_sources(
+                &left,
+                &right,
+                operation,
+                ValidationPolicy::ALLOW_BOUNDARY,
+                ExactBoundaryBooleanPolicy::PreserveSeparateShells,
+            );
+            let mut stale_result = result;
+            stale_result.graph_had_unknowns = true;
+            assert!(
+                stale_result
+                    .validate_operation_against_sources(
+                        &left,
+                        &right,
+                        operation,
+                        ValidationPolicy::ALLOW_BOUNDARY,
+                        ExactBoundaryBooleanPolicy::PreserveSeparateShells,
+                    )
+                    .is_err()
+            );
+        }
+    }
     let _ = preflight_boolean_exact(
         &left,
         &right,
         ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepAll),
     )
     .map(|report| {
-        let _ = report.validate();
+        let _ = report.validate_against_sources(&left, &right);
+        if let Some(blocker) = &report.blocker {
+            let _ = blocker.validate_against_sources(&left, &right);
+        }
         let mut blocked = report.clone();
         blocked.blocker = Some(hypermesh::exact::ExactBooleanBlocker {
             kind: hypermesh::exact::ExactBooleanBlockerKind::NeedsWinding,
@@ -99,6 +260,22 @@ fuzz_target!(|data: &[u8]| {
         empty_pair.region_count = 0;
         empty_pair.region_classifications.clear();
         assert!(empty_pair.validate().is_err());
+        let mut mismatched_region_count = report.clone();
+        if !mismatched_region_count.region_classifications.is_empty() {
+            mismatched_region_count.region_count += 1;
+            assert!(mismatched_region_count.validate().is_err());
+        }
+        let mut duplicated_region_classification = report.clone();
+        if let Some(classification) = duplicated_region_classification
+            .region_classifications
+            .first()
+            .cloned()
+        {
+            duplicated_region_classification
+                .region_classifications
+                .push(classification);
+            assert!(duplicated_region_classification.validate().is_err());
+        }
         let mut undecided_region = report;
         if let Some(classification) = undecided_region.region_classifications.first_mut() {
             classification.relation = FaceRegionPlaneRelation::Unknown;
@@ -111,6 +288,7 @@ fuzz_target!(|data: &[u8]| {
         certify_same_surface_report(&right, &left),
     ] {
         let _ = report.validate();
+        let _ = report.validate_against_sources(&left, &right);
         if report.is_certified() {
             if !report.right_to_left.is_empty() {
                 report.right_to_left[0] = usize::MAX;
@@ -122,7 +300,7 @@ fuzz_target!(|data: &[u8]| {
         }
     }
     if let Some(certificate) = certify_coplanar_convex_surface_equivalence(&left, &right) {
-        let _ = certificate.validate();
+        let _ = certificate.validate_against_sources(&left, &right);
         let mut reversed_hull = certificate.clone();
         reversed_hull.polygon.reverse();
         assert!(reversed_hull.validate().is_err());
@@ -133,7 +311,7 @@ fuzz_target!(|data: &[u8]| {
         }
     }
     if let Some(certificate) = certify_coplanar_convex_surface_equivalence(&right, &left) {
-        let _ = certificate.validate();
+        let _ = certificate.validate_against_sources(&right, &left);
         let mut reversed_hull = certificate.clone();
         reversed_hull.polygon.reverse();
         assert!(reversed_hull.validate().is_err());
@@ -143,10 +321,25 @@ fuzz_target!(|data: &[u8]| {
             assert!(repeated_hull_point.validate().is_err());
         }
     }
-    let _ = certify_coplanar_convex_surface_report(&left, &right).validate();
-    let _ = certify_coplanar_convex_surface_report(&right, &left).validate();
+    for report in [
+        certify_coplanar_convex_surface_report(&left, &right),
+        certify_coplanar_convex_surface_report(&right, &left),
+    ] {
+        let _ = report.validate();
+        let _ = report.validate_against_sources(&left, &right);
+        let mut stale_report = report.clone();
+        if let Some(equivalence) = stale_report.equivalence.as_mut() {
+            equivalence.polygon.reverse();
+            assert!(stale_report.validate_against_sources(&left, &right).is_err());
+        }
+        let mut stale_report = report.clone();
+        if let Some(containment) = stale_report.containment.as_mut() {
+            containment.left_hull.reverse();
+            assert!(stale_report.validate_against_sources(&left, &right).is_err());
+        }
+    }
     if let Some(certificate) = certify_coplanar_convex_surface_containment(&left, &right) {
-        let _ = certificate.validate();
+        let _ = certificate.validate_against_sources(&left, &right);
         let mut reversed_left_hull = certificate.clone();
         reversed_left_hull.left_hull.reverse();
         assert!(reversed_left_hull.validate().is_err());
@@ -158,7 +351,7 @@ fuzz_target!(|data: &[u8]| {
         }
     }
     if let Some(certificate) = certify_coplanar_convex_surface_containment(&right, &left) {
-        let _ = certificate.validate();
+        let _ = certificate.validate_against_sources(&right, &left);
         let mut reversed_left_hull = certificate.clone();
         reversed_left_hull.left_hull.reverse();
         assert!(reversed_left_hull.validate().is_err());
@@ -171,6 +364,7 @@ fuzz_target!(|data: &[u8]| {
     }
     let _ = certify_open_surface_disjoint_report(&left, &right).map(|mut report| {
         let _ = report.validate();
+        let _ = report.validate_against_sources(&left, &right);
         if matches!(
             report.status,
             hypermesh::exact::ExactOpenSurfaceDisjointStatus::GraphUnknowns
@@ -178,6 +372,10 @@ fuzz_target!(|data: &[u8]| {
             let mut wrong_kind = report.clone();
             wrong_kind.blocker.kind = hypermesh::exact::ExactBooleanBlockerKind::NeedsWinding;
             assert!(wrong_kind.validate().is_err());
+        } else {
+            let mut unresolved = report.clone();
+            unresolved.blocker.construction_failed_events += 1;
+            assert!(unresolved.validate().is_err());
         }
         if report.retained_face_pairs > 0 {
             report.blocker.candidate_pairs = 0;
@@ -189,6 +387,7 @@ fuzz_target!(|data: &[u8]| {
     });
     let _ = certify_open_surface_disjoint_report(&right, &left).map(|mut report| {
         let _ = report.validate();
+        let _ = report.validate_against_sources(&right, &left);
         if matches!(
             report.status,
             hypermesh::exact::ExactOpenSurfaceDisjointStatus::GraphUnknowns
@@ -196,6 +395,10 @@ fuzz_target!(|data: &[u8]| {
             let mut wrong_kind = report.clone();
             wrong_kind.blocker.kind = hypermesh::exact::ExactBooleanBlockerKind::NeedsWinding;
             assert!(wrong_kind.validate().is_err());
+        } else {
+            let mut unresolved = report.clone();
+            unresolved.blocker.construction_failed_events += 1;
+            assert!(unresolved.validate().is_err());
         }
         if report.retained_face_pairs > 0 {
             report.blocker.candidate_pairs = 0;
@@ -207,6 +410,7 @@ fuzz_target!(|data: &[u8]| {
     });
     let _ = certify_boundary_touching_report(&left, &right).map(|mut report| {
         let _ = report.validate();
+        let _ = report.validate_against_sources(&left, &right);
         if matches!(
             report.status,
             hypermesh::exact::ExactBoundaryTouchingStatus::GraphUnknowns
@@ -215,6 +419,10 @@ fuzz_target!(|data: &[u8]| {
             wrong_kind.blocker.kind =
                 hypermesh::exact::ExactBooleanBlockerKind::NeedsBoundaryPolicy;
             assert!(wrong_kind.validate().is_err());
+        } else {
+            let mut unresolved = report.clone();
+            unresolved.blocker.construction_failed_events += 1;
+            assert!(unresolved.validate().is_err());
         }
         if report.retained_face_pairs > 0 {
             report.blocker.candidate_pairs = 0;
@@ -226,6 +434,7 @@ fuzz_target!(|data: &[u8]| {
     });
     let _ = certify_boundary_touching_report(&right, &left).map(|mut report| {
         let _ = report.validate();
+        let _ = report.validate_against_sources(&right, &left);
         if matches!(
             report.status,
             hypermesh::exact::ExactBoundaryTouchingStatus::GraphUnknowns
@@ -234,6 +443,10 @@ fuzz_target!(|data: &[u8]| {
             wrong_kind.blocker.kind =
                 hypermesh::exact::ExactBooleanBlockerKind::NeedsBoundaryPolicy;
             assert!(wrong_kind.validate().is_err());
+        } else {
+            let mut unresolved = report.clone();
+            unresolved.blocker.construction_failed_events += 1;
+            assert!(unresolved.validate().is_err());
         }
         if report.retained_face_pairs > 0 {
             report.blocker.candidate_pairs = 0;
@@ -246,6 +459,8 @@ fuzz_target!(|data: &[u8]| {
     let _ = certify_planar_arrangement_report(&left, &right, ExactBooleanOperation::Union).map(
         |report| {
             let _ = report.validate();
+            let _ = report.validate_against_sources(&left, &right);
+            let _ = report.blocker.validate_against_sources(&left, &right);
             if matches!(
                 report.status,
                 hypermesh::exact::ExactPlanarArrangementStatus::GraphUnknowns
@@ -254,6 +469,10 @@ fuzz_target!(|data: &[u8]| {
                 wrong_kind.blocker.kind =
                     hypermesh::exact::ExactBooleanBlockerKind::NeedsPlanarArrangement;
                 assert!(wrong_kind.validate().is_err());
+            } else {
+                let mut unresolved = report.clone();
+                unresolved.blocker.construction_failed_events += 1;
+                assert!(unresolved.validate().is_err());
             }
             if report.arrangement_readiness.is_some() {
                 let mut mismatched_readiness = report.clone();
@@ -266,30 +485,51 @@ fuzz_target!(|data: &[u8]| {
         },
     );
     let _ = certify_planar_arrangement_report(&left, &right, ExactBooleanOperation::Intersection)
-        .map(|report| report.validate());
+        .map(|report| {
+            let _ = report.validate();
+            let _ = report.validate_against_sources(&left, &right);
+            let _ = report.blocker.validate_against_sources(&left, &right);
+            if report.arrangement_readiness.is_some() {
+                let mut mismatched_readiness = report;
+                if let Some(readiness) = mismatched_readiness.arrangement_readiness.as_mut() {
+                    readiness.graph_count += 1;
+                    readiness.touching_graphs += 1;
+                }
+                assert!(mismatched_readiness.validate().is_err());
+            }
+        });
     let _ = certify_planar_arrangement_report(&left, &right, ExactBooleanOperation::Difference)
-        .map(|report| report.validate());
+        .map(|report| report.validate_against_sources(&left, &right));
     let _ = certify_planar_arrangement_report(&right, &left, ExactBooleanOperation::Union)
-        .map(|report| report.validate());
+        .map(|report| report.validate_against_sources(&right, &left));
     let _ = certify_planar_arrangement_report(&right, &left, ExactBooleanOperation::Intersection)
-        .map(|report| report.validate());
+        .map(|report| report.validate_against_sources(&right, &left));
     let _ = certify_planar_arrangement_report(&right, &left, ExactBooleanOperation::Difference)
-        .map(|report| report.validate());
+        .map(|report| report.validate_against_sources(&right, &left));
     let _ = certify_refinement_report(&left, &right, ExactBooleanOperation::Union)
-        .map(|report| report.validate());
+        .map(|report| report.validate_against_sources(&left, &right));
     let _ = certify_refinement_report(&left, &right, ExactBooleanOperation::Intersection)
-        .map(|report| report.validate());
+        .map(|report| report.validate_against_sources(&left, &right));
     let _ = certify_refinement_report(&left, &right, ExactBooleanOperation::Difference)
-        .map(|report| report.validate());
+        .map(|report| report.validate_against_sources(&left, &right));
     let _ = certify_refinement_report(&right, &left, ExactBooleanOperation::Union)
-        .map(|report| report.validate());
+        .map(|report| report.validate_against_sources(&right, &left));
     let _ = certify_refinement_report(&right, &left, ExactBooleanOperation::Intersection)
-        .map(|report| report.validate());
+        .map(|report| report.validate_against_sources(&right, &left));
     let _ = certify_refinement_report(&right, &left, ExactBooleanOperation::Difference)
-        .map(|report| report.validate());
+        .map(|report| report.validate_against_sources(&right, &left));
     let _ = certify_winding_readiness_report(&left, &right, ExactBooleanOperation::Union).map(
         |report| {
             let _ = report.validate();
+            let _ = report.validate_against_sources(&left, &right);
+            if !matches!(
+                report.status,
+                hypermesh::exact::ExactWindingReadinessStatus::GraphUnknowns
+            ) {
+                let mut unresolved = report.clone();
+                unresolved.blocker.construction_failed_events += 1;
+                assert!(unresolved.validate().is_err());
+            }
             if report.arrangement_readiness.is_some() {
                 let mut mismatched_readiness = report.clone();
                 if let Some(readiness) = mismatched_readiness.arrangement_readiness.as_mut() {
@@ -307,15 +547,18 @@ fuzz_target!(|data: &[u8]| {
         },
     );
     let _ = certify_winding_readiness_report(&left, &right, ExactBooleanOperation::Intersection)
-        .map(|report| report.validate());
+        .map(|report| {
+            let _ = report.validate();
+            let _ = report.validate_against_sources(&left, &right);
+        });
     let _ = certify_winding_readiness_report(&left, &right, ExactBooleanOperation::Difference)
-        .map(|report| report.validate());
+        .map(|report| report.validate_against_sources(&left, &right));
     let _ = certify_winding_readiness_report(&right, &left, ExactBooleanOperation::Union)
-        .map(|report| report.validate());
+        .map(|report| report.validate_against_sources(&right, &left));
     let _ = certify_winding_readiness_report(&right, &left, ExactBooleanOperation::Intersection)
-        .map(|report| report.validate());
+        .map(|report| report.validate_against_sources(&right, &left));
     let _ = certify_winding_readiness_report(&right, &left, ExactBooleanOperation::Difference)
-        .map(|report| report.validate());
+        .map(|report| report.validate_against_sources(&right, &left));
     if let Ok(graph) = build_intersection_graph(&left, &right) {
         let _ = graph.validate();
         let _ = graph.validate_against_meshes(&left, &right);
@@ -323,13 +566,22 @@ fuzz_target!(|data: &[u8]| {
         if let Some(pair) = relabeled_graph.face_pairs.first_mut() {
             pair.left_face = usize::MAX;
             assert!(relabeled_graph.validate_against_meshes(&left, &right).is_err());
+            assert!(
+                relabeled_graph
+                    .coplanar_arrangement_readiness_report(&left, &right)
+                    .is_err()
+            );
         }
         let _ = graph
             .coplanar_overlap_split_plan(&left, &right)
             .map(|plan| plan.validate_against_meshes(&left, &right));
         let _ = graph
             .coplanar_arrangement_readiness_report(&left, &right)
-            .map(|report| report.validate());
+            .map(|report| {
+                let local = report.validate();
+                let source = report.validate_against_sources(&left, &right);
+                (local, source)
+            });
     }
     let _ = boolean_exact_with_boundary_policy(
         &left,
@@ -348,6 +600,12 @@ fuzz_target!(|data: &[u8]| {
         certify_single_triangle_coplanar_containment_report(&right, &left),
     ] {
         let _ = report.validate();
+        let _ = report.validate_against_sources(&left, &right);
+        let mut stale_report = report.clone();
+        if stale_report.triangle.is_some() {
+            stale_report.triangle = None;
+            assert!(stale_report.validate_against_sources(&left, &right).is_err());
+        }
         if let Some(coplanar) = &report.coplanar {
             report.status = match coplanar.relation {
                 CoplanarTriangleRelation::Disjoint | CoplanarTriangleRelation::Unknown => {
@@ -366,13 +624,13 @@ fuzz_target!(|data: &[u8]| {
         }
     }
     if let Some(output) = intersect_single_triangle_coplanar_surfaces(&left, &right) {
-        let _ = output.validate();
+        let _ = output.validate_against_sources(&left, &right);
     }
     if let Some(output) = intersect_single_triangle_coplanar_surfaces(&right, &left) {
-        let _ = output.validate();
+        let _ = output.validate_against_sources(&right, &left);
     }
     if let Some(output) = union_single_triangle_coplanar_surfaces(&left, &right) {
-        let _ = output.validate();
+        let _ = output.validate_against_sources(&left, &right);
         let mut nonconvex = output.clone();
         if nonconvex.polygon.len() >= 4 {
             nonconvex.polygon.swap(2, 3);
@@ -383,7 +641,7 @@ fuzz_target!(|data: &[u8]| {
         }
     }
     if let Some(output) = union_single_triangle_coplanar_surfaces(&right, &left) {
-        let _ = output.validate();
+        let _ = output.validate_against_sources(&right, &left);
         let mut nonconvex = output.clone();
         if nonconvex.polygon.len() >= 4 {
             nonconvex.polygon.swap(2, 3);
@@ -394,7 +652,7 @@ fuzz_target!(|data: &[u8]| {
         }
     }
     if let Some(output) = arrange_single_triangle_coplanar_union(&left, &right) {
-        let _ = output.validate();
+        let _ = output.validate_against_sources(&left, &right, CoplanarArrangementOperation::Union);
         let mut reversed_loop = output.clone();
         reversed_loop.polygon.reverse();
         if let Some(mesh) = reversed_vertex_fan_surface_mesh(&output.mesh) {
@@ -403,7 +661,7 @@ fuzz_target!(|data: &[u8]| {
         }
     }
     if let Some(output) = arrange_single_triangle_coplanar_union(&right, &left) {
-        let _ = output.validate();
+        let _ = output.validate_against_sources(&right, &left, CoplanarArrangementOperation::Union);
         let mut reversed_loop = output.clone();
         reversed_loop.polygon.reverse();
         if let Some(mesh) = reversed_vertex_fan_surface_mesh(&output.mesh) {
@@ -412,7 +670,7 @@ fuzz_target!(|data: &[u8]| {
         }
     }
     if let Some(output) = difference_single_triangle_coplanar_surfaces(&left, &right) {
-        let _ = output.validate();
+        let _ = output.validate_against_sources(&left, &right);
         let mut nonconvex = output.clone();
         if nonconvex.polygon.len() >= 4 {
             nonconvex.polygon.swap(2, 3);
@@ -423,7 +681,7 @@ fuzz_target!(|data: &[u8]| {
         }
     }
     if let Some(output) = difference_single_triangle_coplanar_surfaces(&right, &left) {
-        let _ = output.validate();
+        let _ = output.validate_against_sources(&right, &left);
         let mut nonconvex = output.clone();
         if nonconvex.polygon.len() >= 4 {
             nonconvex.polygon.swap(2, 3);
@@ -434,13 +692,15 @@ fuzz_target!(|data: &[u8]| {
         }
     }
     if let Some(output) = arrange_single_triangle_coplanar_difference(&left, &right) {
-        let _ = output.validate();
+        let _ =
+            output.validate_against_sources(&left, &right, CoplanarArrangementOperation::Difference);
     }
     if let Some(output) = arrange_single_triangle_coplanar_difference(&right, &left) {
-        let _ = output.validate();
+        let _ =
+            output.validate_against_sources(&right, &left, CoplanarArrangementOperation::Difference);
     }
     if let Some(output) = arrange_single_triangle_coplanar_holed_difference(&left, &right) {
-        let _ = output.validate();
+        let _ = output.validate_against_sources(&left, &right);
         let mut reversed_outer = output.clone();
         reversed_outer.outer.reverse();
         assert!(reversed_outer.validate().is_err());
@@ -474,7 +734,7 @@ fuzz_target!(|data: &[u8]| {
         }
     }
     if let Some(output) = arrange_single_triangle_coplanar_holed_difference(&right, &left) {
-        let _ = output.validate();
+        let _ = output.validate_against_sources(&right, &left);
         let mut reversed_outer = output.clone();
         reversed_outer.outer.reverse();
         assert!(reversed_outer.validate().is_err());
@@ -508,7 +768,7 @@ fuzz_target!(|data: &[u8]| {
         }
     }
     if let Some(output) = arrange_coplanar_convex_surface_holed_difference(&left, &right) {
-        let _ = output.validate();
+        let _ = output.validate_against_sources(&left, &right);
         let mut reversed_outer = output.clone();
         reversed_outer.outer.reverse();
         assert!(reversed_outer.validate().is_err());
@@ -542,7 +802,7 @@ fuzz_target!(|data: &[u8]| {
         }
     }
     if let Some(output) = arrange_coplanar_convex_surface_holed_difference(&right, &left) {
-        let _ = output.validate();
+        let _ = output.validate_against_sources(&right, &left);
         let mut reversed_outer = output.clone();
         reversed_outer.outer.reverse();
         assert!(reversed_outer.validate().is_err());
@@ -575,26 +835,104 @@ fuzz_target!(|data: &[u8]| {
             assert!(crossing_ring.validate().is_err());
         }
     }
+    if let Some(output) = arrange_coplanar_convex_surface_multi_holed_difference(&left, &right) {
+        let _ = output.validate_against_sources(&left, &right);
+        let mut reversed_outer = output.clone();
+        reversed_outer.outer.reverse();
+        assert!(reversed_outer.validate().is_err());
+        let mut reversed_hole = output.clone();
+        if let Some(hole) = reversed_hole.holes.first_mut() {
+            hole.reverse();
+            assert!(reversed_hole.validate().is_err());
+        }
+        if let Some(mesh) = reversed_surface_mesh(&output.mesh) {
+            let mut reversed_mesh = output.clone();
+            reversed_mesh.mesh = mesh;
+            assert!(reversed_mesh.validate().is_err());
+        }
+        if let Some(mesh) = first_triangle_only_surface_mesh(&output.mesh) {
+            let mut isolated_vertex = output.clone();
+            isolated_vertex.mesh = mesh;
+            assert!(isolated_vertex.validate().is_err());
+        }
+        if let Some(mesh) = boundary_mismatched_surface_mesh(&output.mesh) {
+            let mut bad_boundary = output.clone();
+            bad_boundary.mesh = mesh;
+            assert!(bad_boundary.validate().is_err());
+        }
+    }
+    if let Some(output) = arrange_coplanar_convex_surface_multi_holed_difference(&right, &left) {
+        let _ = output.validate_against_sources(&right, &left);
+        let mut reversed_outer = output.clone();
+        reversed_outer.outer.reverse();
+        assert!(reversed_outer.validate().is_err());
+        let mut reversed_hole = output.clone();
+        if let Some(hole) = reversed_hole.holes.first_mut() {
+            hole.reverse();
+            assert!(reversed_hole.validate().is_err());
+        }
+        if let Some(mesh) = reversed_surface_mesh(&output.mesh) {
+            let mut reversed_mesh = output.clone();
+            reversed_mesh.mesh = mesh;
+            assert!(reversed_mesh.validate().is_err());
+        }
+        if let Some(mesh) = first_triangle_only_surface_mesh(&output.mesh) {
+            let mut isolated_vertex = output.clone();
+            isolated_vertex.mesh = mesh;
+            assert!(isolated_vertex.validate().is_err());
+        }
+        if let Some(mesh) = boundary_mismatched_surface_mesh(&output.mesh) {
+            let mut bad_boundary = output.clone();
+            bad_boundary.mesh = mesh;
+            assert!(bad_boundary.validate().is_err());
+        }
+    }
     if let Some(output) = arrange_coplanar_convex_surface_intersection(&left, &right) {
-        let _ = output.validate();
+        let _ =
+            output.validate_against_sources(&left, &right, CoplanarArrangementOperation::Intersection);
     }
     if let Some(output) = arrange_coplanar_convex_surface_intersection(&right, &left) {
-        let _ = output.validate();
+        let _ =
+            output.validate_against_sources(&right, &left, CoplanarArrangementOperation::Intersection);
+    }
+    if let Some(output) = arrange_coplanar_convex_surface_multi_intersection(&left, &right) {
+        let _ = output.validate_intersection_against_sources(&left, &right);
+        let mut reversed_component = output.clone();
+        if let Some(component) = reversed_component.polygons.first_mut() {
+            component.reverse();
+            assert!(reversed_component.validate().is_err());
+        }
+        if let Some(mesh) = cross_component_surface_mesh(&output.mesh, output.polygons.first().map(Vec::len))
+        {
+            let mut cross_component = output.clone();
+            cross_component.mesh = mesh;
+            assert!(cross_component.validate().is_err());
+        }
+    }
+    if let Some(output) = arrange_coplanar_convex_surface_multi_intersection(&right, &left) {
+        let _ = output.validate_intersection_against_sources(&right, &left);
+        let mut reversed_component = output.clone();
+        if let Some(component) = reversed_component.polygons.first_mut() {
+            component.reverse();
+            assert!(reversed_component.validate().is_err());
+        }
     }
     if let Some(output) = arrange_coplanar_convex_surface_union(&left, &right) {
-        let _ = output.validate();
+        let _ = output.validate_against_sources(&left, &right, CoplanarArrangementOperation::Union);
     }
     if let Some(output) = arrange_coplanar_convex_surface_union(&right, &left) {
-        let _ = output.validate();
+        let _ = output.validate_against_sources(&right, &left, CoplanarArrangementOperation::Union);
     }
     if let Some(output) = arrange_coplanar_convex_surface_difference(&left, &right) {
-        let _ = output.validate();
+        let _ =
+            output.validate_against_sources(&left, &right, CoplanarArrangementOperation::Difference);
     }
     if let Some(output) = arrange_coplanar_convex_surface_difference(&right, &left) {
-        let _ = output.validate();
+        let _ =
+            output.validate_against_sources(&right, &left, CoplanarArrangementOperation::Difference);
     }
     if let Some(output) = arrange_coplanar_convex_surface_multi_difference(&left, &right) {
-        let _ = output.validate();
+        let _ = output.validate_against_sources(&left, &right);
         let mut reversed_component = output.clone();
         if let Some(component) = reversed_component.polygons.first_mut() {
             component.reverse();
@@ -624,7 +962,7 @@ fuzz_target!(|data: &[u8]| {
         }
     }
     if let Some(output) = arrange_coplanar_convex_surface_multi_difference(&right, &left) {
-        let _ = output.validate();
+        let _ = output.validate_against_sources(&right, &left);
         let mut reversed_component = output.clone();
         if let Some(component) = reversed_component.polygons.first_mut() {
             component.reverse();
@@ -655,14 +993,70 @@ fuzz_target!(|data: &[u8]| {
     }
     let _ = classify_mesh_vertices_against_convex_solid(&left, &right);
     let _ = classify_mesh_vertices_against_convex_solid(&right, &left);
-    let _ = classify_mesh_vertices_against_convex_solid_report(&left, &right).validate();
-    let _ = classify_mesh_vertices_against_convex_solid_report(&right, &left).validate();
+    let _ = certify_convex_solid(&left)
+        .validate()
+        .and_then(|_| certify_convex_solid(&left).validate_against_source(&left));
+    let _ = certify_convex_solid(&right)
+        .validate()
+        .and_then(|_| certify_convex_solid(&right).validate_against_source(&right));
+    if let Some(intersection) = intersect_closed_convex_solids(&left, &right) {
+        let _ = intersection.validate();
+        let _ = intersection.validate_against_sources(&left, &right);
+    }
+    if let Some(intersection) = intersect_closed_convex_solids(&right, &left) {
+        let _ = intersection.validate();
+        let _ = intersection.validate_against_sources(&right, &left);
+    }
+    if let Some(difference) = subtract_closed_convex_solids_single_cap(&left, &right) {
+        let _ = difference.validate();
+        let _ = difference.validate_against_sources(&left, &right);
+    }
+    if let Some(difference) = subtract_closed_convex_solids_single_cap(&right, &left) {
+        let _ = difference.validate();
+        let _ = difference.validate_against_sources(&right, &left);
+    }
+    if let Some(point) = left.vertices().first() {
+        let point = point.to_hyperlimit_point();
+        let _ = classify_point_against_convex_solid_report(&point, &right)
+            .validate_against_sources(&point, &right);
+    }
+    let _ = classify_mesh_vertices_against_convex_solid_report(&left, &right)
+        .validate()
+        .and_then(|_| {
+            classify_mesh_vertices_against_convex_solid_report(&left, &right)
+                .validate_against_sources(&left, &right)
+        });
+    let _ = classify_mesh_vertices_against_convex_solid_report(&right, &left)
+        .validate()
+        .and_then(|_| {
+            classify_mesh_vertices_against_convex_solid_report(&right, &left)
+                .validate_against_sources(&right, &left)
+        });
 
     if left.triangles().len() <= 4 && right.triangles().len() <= 4 {
+        let _ = build_selected_region_mesh(
+            &left,
+            &right,
+            ExactRegionSelection::KeepAll,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .map(|mesh| mesh.validate_retained_state());
         let _ =
             boolean_selected_regions(&left, &right, ExactBooleanPolicy::KEEP_ALL_BOUNDARY).map(
                 |result| {
                     let _ = result.validate();
+                    let _ = result.validate_against_sources(&left, &right);
+                    let _ = result.assembly.validate_against_sources(
+                        &left,
+                        &right,
+                        ExactRegionSelection::KeepAll,
+                    );
+                    for classification in &result.region_classifications {
+                        let _ = classification.validate_against_sources(&left, &right);
+                    }
+                    for triangulation in &result.triangulations {
+                        let _ = triangulation.validate_against_sources(&left, &right);
+                    }
                     let mut unknown_graph = result;
                     unknown_graph.graph_had_unknowns = true;
                     assert!(unknown_graph.validate().is_err());
@@ -675,6 +1069,13 @@ fuzz_target!(|data: &[u8]| {
                         unknown_graph.region_classifications.clone();
                     missing_triangulations.triangulations.clear();
                     assert!(missing_triangulations.validate().is_err());
+                    let mut duplicated_triangulation = unknown_graph.clone();
+                    if let Some(triangulation) =
+                        duplicated_triangulation.triangulations.first().cloned()
+                    {
+                        duplicated_triangulation.triangulations.push(triangulation);
+                        assert!(duplicated_triangulation.validate().is_err());
+                    }
                     let mut unclassified_triangulation = unknown_graph;
                     let mut same_side_classification = unclassified_triangulation.clone();
                     if let Some(classification) =
@@ -690,6 +1091,17 @@ fuzz_target!(|data: &[u8]| {
                         classification.relation = FaceRegionPlaneRelation::Unknown;
                         classification.node_sides.fill(None);
                         assert!(undecided_classification.validate().is_err());
+                    }
+                    let mut duplicated_classification = unclassified_triangulation.clone();
+                    if let Some(classification) = duplicated_classification
+                        .region_classifications
+                        .first()
+                        .cloned()
+                    {
+                        duplicated_classification
+                            .region_classifications
+                            .push(classification);
+                        assert!(duplicated_classification.validate().is_err());
                     }
                     let mut orphaned_classification = unclassified_triangulation.clone();
                     if let Some(mut classification) = orphaned_classification
@@ -732,6 +1144,9 @@ fuzz_target!(|data: &[u8]| {
                             .validate_source_face_incidence(&left, &right)
                             .is_err());
                         assert!(reversed_orientation
+                            .validate_against_sources(&left, &right)
+                            .is_err());
+                        assert!(reversed_orientation
                             .assembly
                             .checked_to_exact_mesh_with_sources(
                                 &left,
@@ -750,6 +1165,38 @@ fuzz_target!(|data: &[u8]| {
                             .is_err());
                         assert!(unreferenced_vertex.validate().is_err());
                     }
+                    let mut mismatched_mesh = unclassified_triangulation.clone();
+                    let mut mesh_vertices = mismatched_mesh.mesh.vertices().to_vec();
+                    if let Some(vertex) = mesh_vertices.first_mut() {
+                        *vertex = hypermesh::exact::ExactPoint3::new(
+                            hypermesh::exact::ExactReal::from(99),
+                            hypermesh::exact::ExactReal::from(0),
+                            hypermesh::exact::ExactReal::from(0),
+                        );
+                        if let Ok(mesh) = ExactMesh::new_with_policy(
+                            mesh_vertices,
+                            mismatched_mesh.mesh.triangles().to_vec(),
+                            SourceProvenance::exact("fuzz selected-region mesh vertex payload"),
+                            ValidationPolicy::ALLOW_BOUNDARY,
+                        ) {
+                            mismatched_mesh.mesh = mesh;
+                            assert!(mismatched_mesh.validate().is_err());
+                        }
+                    }
+                    let mut mismatched_mesh = unclassified_triangulation.clone();
+                    let mut mesh_triangles = mismatched_mesh.mesh.triangles().to_vec();
+                    if let Some(triangle) = mesh_triangles.first_mut() {
+                        triangle.0.swap(1, 2);
+                        if let Ok(mesh) = ExactMesh::new_with_policy(
+                            mismatched_mesh.mesh.vertices().to_vec(),
+                            mesh_triangles,
+                            SourceProvenance::exact("fuzz selected-region mesh payload"),
+                            ValidationPolicy::ALLOW_BOUNDARY,
+                        ) {
+                            mismatched_mesh.mesh = mesh;
+                            assert!(mismatched_mesh.validate().is_err());
+                        }
+                    }
                     if let Some(triangulation) = unclassified_triangulation.triangulations.first_mut()
                     {
                         triangulation.face = usize::MAX;
@@ -759,6 +1206,32 @@ fuzz_target!(|data: &[u8]| {
             );
     }
 });
+
+fn exercise_partial_convex_union_boundary() {
+    let left = ExactMesh::from_i64_triangles(
+        &[0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 4],
+        &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+    )
+    .expect("deterministic convex left fixture must import");
+    let right = ExactMesh::from_i64_triangles(
+        &[1, 1, 1, 5, 1, 1, 1, 5, 1, 1, 1, 5],
+        &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+    )
+    .expect("deterministic convex right fixture must import");
+    let preflight = preflight_boolean_exact(&left, &right, ExactBooleanOperation::Union)
+        .expect("partial convex union preflight should report a blocker");
+    preflight.validate().expect("preflight report must validate");
+    assert_eq!(preflight.support, ExactBooleanSupport::RequiresCertifiedWinding);
+    assert!(
+        hypermesh::exact::boolean_exact(
+            &left,
+            &right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+        )
+        .is_err()
+    );
+}
 
 fn reversed_surface_mesh(mesh: &ExactMesh) -> Option<ExactMesh> {
     let triangles = mesh

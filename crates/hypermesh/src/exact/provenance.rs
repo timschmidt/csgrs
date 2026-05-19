@@ -118,6 +118,60 @@ pub enum ConstructionProvenanceValidationError {
     LossySourcePolicyMismatch,
     /// A retained predicate use did not produce an exact-preserving proof.
     NonProofProducingPredicate,
+    /// The cached predicate stage or semantic label does not match the
+    /// retained certificate.
+    PredicateMetadataMismatch,
+}
+
+impl SourceProvenance {
+    /// Validate that a source label and approximation policy agree.
+    ///
+    /// Source provenance is the smallest public boundary between exact mesh
+    /// objects and edge adapters. Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7.1-2 (1997), separates exact computation from
+    /// approximate views; validating the source atom directly keeps adapters
+    /// from marking lossy or external data as exact-only before a mesh is even
+    /// constructed.
+    pub fn validate(&self) -> Result<(), ConstructionProvenanceValidationError> {
+        if self.label.trim().is_empty() {
+            return Err(ConstructionProvenanceValidationError::EmptySourceLabel);
+        }
+        match (self.source, self.approximation) {
+            (MeshSource::Exact, ApproximationPolicy::ExactOnly) => Ok(()),
+            (MeshSource::Exact, _) | (_, ApproximationPolicy::ExactOnly) => {
+                Err(ConstructionProvenanceValidationError::SourceApproximationMismatch)
+            }
+            (MeshSource::LossyF64, ApproximationPolicy::EdgeOnly) => Ok(()),
+            (MeshSource::LossyF64, _) => {
+                Err(ConstructionProvenanceValidationError::LossySourcePolicyMismatch)
+            }
+            (MeshSource::LegacyBoolmeshAdapter | MeshSource::ExternalAdapter, _) => Ok(()),
+        }
+    }
+}
+
+impl PredicateUse {
+    /// Validate that this predicate route produced exact-preserving evidence.
+    ///
+    /// Predicate summaries cross many report boundaries. This direct validator
+    /// mirrors the embedded construction-provenance check so fuzzing and
+    /// downstream policy code can reject an undecided or approximate predicate
+    /// atom before it is copied into a larger exact artifact. The cached stage
+    /// and API semantic label are checked against the certificate for the same
+    /// reason: Yap's exact-object model keeps the certificate as the
+    /// proof-bearing object, while derived scheduling and diagnostic labels are
+    /// only valid when they faithfully replay that proof route.
+    pub fn validate(&self) -> Result<(), ConstructionProvenanceValidationError> {
+        if !self.is_proof_producing() {
+            return Err(ConstructionProvenanceValidationError::NonProofProducingPredicate);
+        }
+        if self.stage != self.certificate.precision_stage()
+            || self.semantics != self.certificate.api_semantics()
+        {
+            return Err(ConstructionProvenanceValidationError::PredicateMetadataMismatch);
+        }
+        Ok(())
+    }
 }
 
 impl ConstructionProvenance {
@@ -141,26 +195,9 @@ impl ConstructionProvenance {
     /// should consume exact facts and proof-producing predicates, while
     /// approximate or adapter provenance remains explicit.
     pub fn validate(&self) -> Result<(), ConstructionProvenanceValidationError> {
-        if self.source.label.trim().is_empty() {
-            return Err(ConstructionProvenanceValidationError::EmptySourceLabel);
-        }
-        match (self.source.source, self.source.approximation) {
-            (MeshSource::Exact, ApproximationPolicy::ExactOnly) => {}
-            (MeshSource::Exact, _) | (_, ApproximationPolicy::ExactOnly) => {
-                return Err(ConstructionProvenanceValidationError::SourceApproximationMismatch);
-            }
-            (MeshSource::LossyF64, ApproximationPolicy::EdgeOnly) => {}
-            (MeshSource::LossyF64, _) => {
-                return Err(ConstructionProvenanceValidationError::LossySourcePolicyMismatch);
-            }
-            (MeshSource::LegacyBoolmeshAdapter | MeshSource::ExternalAdapter, _) => {}
-        }
-        if self
-            .predicates
-            .iter()
-            .any(|predicate| !predicate.is_proof_producing())
-        {
-            return Err(ConstructionProvenanceValidationError::NonProofProducingPredicate);
+        self.source.validate()?;
+        for predicate in &self.predicates {
+            predicate.validate()?;
         }
         Ok(())
     }

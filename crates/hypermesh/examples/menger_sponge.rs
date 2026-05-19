@@ -131,9 +131,15 @@ pub fn menger_sponge(n: usize) -> Manifold {
     let holes_x = rot(PI / 2., 0., 0.);
     let holes_y = rot(0., PI / 2., 0.);
 
-    let res = compute_boolean(&res, &holes_z, OpType::Subtract).unwrap();
-    let res = compute_boolean(&res, &holes_x, OpType::Subtract).unwrap();
-    let res = compute_boolean(&res, &holes_y, OpType::Subtract).unwrap();
+    let res = compute_boolean_with_report(&res, &holes_z, OpType::Subtract)
+        .unwrap()
+        .mesh;
+    let res = compute_boolean_with_report(&res, &holes_x, OpType::Subtract)
+        .unwrap()
+        .mesh;
+    let res = compute_boolean_with_report(&res, &holes_y, OpType::Subtract)
+        .unwrap()
+        .mesh;
     res
 }
 

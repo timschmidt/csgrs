@@ -162,14 +162,14 @@ impl ExactMesh {
         idx: &[usize],
         policy: ValidationPolicy,
     ) -> Result<Self, MeshError> {
-        if pos.len() % 3 != 0 {
+        if !pos.len().is_multiple_of(3) {
             return Err(MeshError::one(MeshDiagnostic::new(
                 Severity::Error,
                 DiagnosticKind::VertexBufferArity,
                 "position buffer length must be a multiple of 3",
             )));
         }
-        if idx.len() % 3 != 0 {
+        if !idx.len().is_multiple_of(3) {
             return Err(MeshError::one(MeshDiagnostic::new(
                 Severity::Error,
                 DiagnosticKind::IndexBufferArity,
@@ -213,14 +213,14 @@ impl ExactMesh {
         idx: &[usize],
         policy: ValidationPolicy,
     ) -> Result<Self, MeshError> {
-        if pos.len() % 3 != 0 {
+        if !pos.len().is_multiple_of(3) {
             return Err(MeshError::one(MeshDiagnostic::new(
                 Severity::Error,
                 DiagnosticKind::VertexBufferArity,
                 "position buffer length must be a multiple of 3",
             )));
         }
-        if idx.len() % 3 != 0 {
+        if !idx.len().is_multiple_of(3) {
             return Err(MeshError::one(MeshDiagnostic::new(
                 Severity::Error,
                 DiagnosticKind::IndexBufferArity,
@@ -286,7 +286,12 @@ impl ExactMesh {
     /// method exists for tests, fuzzing, serialization boundaries, and
     /// downstream exact algorithms that receive an `ExactMesh` artifact and
     /// want to audit that its retained bounds, topology facts, and provenance
-    /// still agree before consuming them.
+    /// still agree before consuming them. The bounds and topology facts are
+    /// replayed from the exact vertices and triangle rows before acceptance;
+    /// this follows Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7.1-2 (1997), by treating retained object
+    /// structure as valid only while it reproduces from the exact source
+    /// object it summarizes.
     pub fn validate_retained_state(&self) -> Result<(), ExactMeshValidationError> {
         if self.vertices.len() != self.facts.mesh.vertex_count {
             return Err(ExactMeshValidationError::VertexCountMismatch {
@@ -300,11 +305,21 @@ impl ExactMesh {
                 actual: self.facts.mesh.face_count,
             });
         }
+        let points = self
+            .vertices
+            .iter()
+            .map(ExactPoint3::to_hyperlimit_point)
+            .collect::<Vec<_>>();
+        let triangles = self
+            .triangles
+            .iter()
+            .map(|triangle| triangle.0)
+            .collect::<Vec<_>>();
         self.bounds
-            .validate(self.vertices.len(), self.triangles.len())
+            .validate_against_sources(&points, &triangles)
             .map_err(ExactMeshValidationError::Bounds)?;
         self.facts
-            .validate()
+            .validate_against_sources(&points, &triangles)
             .map_err(ExactMeshValidationError::Facts)?;
         self.provenance
             .validate()
