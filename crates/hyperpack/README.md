@@ -51,8 +51,8 @@ has a certified handoff for them.
   clearance reports, and height/objective reports make necessary bounds and side
   constraints auditable.
 - Shelf, skyline, MaxRects, guillotine, corner-point, extreme-point, maximal-space,
-  LAFF, local-search, multistart, reinsertion, and bin-emptying helpers are proposal
-  engines; their reports are useful only after exact replay.
+  LAFF, local-search, tabu, multistart, reinsertion, and bin-emptying helpers are
+  proposal engines; their reports are useful only after exact replay.
 - `PreparedPacking3`, snapshot helpers, no-overlap model exports, exact search reports,
   and domain handoff reports preserve performance caches, fixtures, solver-adapter
   boundaries, and ecosystem provenance without becoming proof by themselves.
@@ -106,6 +106,8 @@ capacity bounds, branches over exact candidate points, and returns `Unknown` whe
 item or node limit prevents a certificate. Portfolio and local-search helpers spend
 their budgets on diverse proposals, but ranking is based on replay status and exact
 objective evidence rather than hidden floating-point scores.
+Tabu memory is reported explicitly, and tabu moves are admissible only when exact
+replay proves an aspiration improvement over the current best report.
 
 ## Current Status
 
@@ -116,7 +118,7 @@ Implemented today:
   snapshot, model-export, prepared-problem, and domain-handoff reports;
 - 2D shelf, skyline, MaxRects, guillotine, and portfolio proposal engines;
 - 3D corner-point, extreme-point, maximal-space, guillotine, LAFF, portfolio,
-  local-search, multistart, repair, and bin-emptying proposal engines;
+  local-search, tabu, multistart, repair, and bin-emptying proposal engines;
 - bounded small-instance exact 3D branch-and-bound and explicit feasible, infeasible,
   and unknown replay states.
 

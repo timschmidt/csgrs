@@ -106,8 +106,8 @@ pub use search::{
     LocalSearchConfig3, LocalSearchReport3, LocalSearchStatus3, MultiBinEvaluation3,
     MultistartConfig3, MultistartReport3, MultistartStatus3, OrderEvaluation3, OrderMove3,
     ReinsertMove3, ReinsertUnplacedConfig3, ReinsertUnplacedReport3, ReinsertUnplacedStatus3,
-    SeededOrderEvaluation3, empty_bins_3d, local_search_order_3d, multistart_order_3d,
-    reinsert_unplaced_order_3d,
+    SeededOrderEvaluation3, TabuSearchConfig3, TabuSearchReport3, TabuSearchStatus3, empty_bins_3d,
+    local_search_order_3d, multistart_order_3d, reinsert_unplaced_order_3d, tabu_search_order_3d,
 };
 pub use sheet::{
     Orientation2, OrientationValidationReport2, OrientedSheetItem2, OrientedSheetPlacement2,

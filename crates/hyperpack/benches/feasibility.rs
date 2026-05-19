@@ -8,15 +8,15 @@ use hyperpack::{
     ObjectiveTerm3, Orientation2, Orientation3, OrientedItem3, OrientedPlacement3,
     OrientedSheetItem2, OrientedSheetPlacement2, Placement3, Real, Rect2, ReinsertUnplacedConfig3,
     SheetBin2, SheetItem2, SheetPlacement2, SheetPortfolioBudget2, StockBin1, StockItem1,
-    StockPlacement1, SupportPolicy3, auto_cuboid_portfolio_3d, auto_sheet_portfolio_2d,
-    branch_and_bound_one_bin_3d, capacity_bounds_2d, capacity_bounds_3d, compare_objectives_3d,
-    cuboid_best_fit_decreasing_footprint_area_3d, cuboid_best_fit_decreasing_max_side_3d,
-    cuboid_best_fit_decreasing_volume_3d, cuboid_extreme_point_decreasing_volume_3d,
-    cuboid_first_fit_decreasing_footprint_area_3d, cuboid_first_fit_decreasing_max_side_3d,
-    cuboid_first_fit_decreasing_volume_3d, cuboid_guillotine_best_volume_fit_3d,
-    cuboid_laff_largest_area_fit_first_3d, cuboid_maximal_space_decreasing_volume_3d,
-    empty_bins_3d, export_no_overlap_model_2d, export_no_overlap_model_3d,
-    guillotine_best_area_fit_2d, guillotine_best_long_side_fit_2d,
+    StockPlacement1, SupportPolicy3, TabuSearchConfig3, auto_cuboid_portfolio_3d,
+    auto_sheet_portfolio_2d, branch_and_bound_one_bin_3d, capacity_bounds_2d, capacity_bounds_3d,
+    compare_objectives_3d, cuboid_best_fit_decreasing_footprint_area_3d,
+    cuboid_best_fit_decreasing_max_side_3d, cuboid_best_fit_decreasing_volume_3d,
+    cuboid_extreme_point_decreasing_volume_3d, cuboid_first_fit_decreasing_footprint_area_3d,
+    cuboid_first_fit_decreasing_max_side_3d, cuboid_first_fit_decreasing_volume_3d,
+    cuboid_guillotine_best_volume_fit_3d, cuboid_laff_largest_area_fit_first_3d,
+    cuboid_maximal_space_decreasing_volume_3d, empty_bins_3d, export_no_overlap_model_2d,
+    export_no_overlap_model_3d, guillotine_best_area_fit_2d, guillotine_best_long_side_fit_2d,
     guillotine_best_short_side_fit_2d, height_objective_3d, import_domain_items_3d,
     local_search_order_3d, maxrects_best_area_fit_2d, maxrects_best_long_side_fit_2d,
     maxrects_best_short_side_fit_2d, maxrects_bottom_left_2d, maxrects_contact_point_2d,
@@ -25,10 +25,10 @@ use hyperpack::{
     shelf_best_fit_decreasing_height_2d, shelf_first_fit_decreasing_height_2d,
     shelf_next_fit_decreasing_height_2d, skyline_bottom_left_2d, skyline_minimum_waste_2d,
     snapshot_packing_3d_binary, snapshot_packing_3d_text, snapshot_sheet_2d_binary,
-    snapshot_sheet_2d_text, snapshot_stock_1d_binary, snapshot_stock_1d_text, verify_clearance_2d,
-    verify_clearance_3d, verify_direct_stack_load_3d, verify_multi_bin_packing_3d,
-    verify_oriented_packing_2d, verify_oriented_packing_3d, verify_packing_1d, verify_packing_2d,
-    verify_packing_3d, verify_support_3d,
+    snapshot_sheet_2d_text, snapshot_stock_1d_binary, snapshot_stock_1d_text, tabu_search_order_3d,
+    verify_clearance_2d, verify_clearance_3d, verify_direct_stack_load_3d,
+    verify_multi_bin_packing_3d, verify_oriented_packing_2d, verify_oriented_packing_3d,
+    verify_packing_1d, verify_packing_2d, verify_packing_3d, verify_support_3d,
 };
 
 fn r(value: i32) -> Real {
@@ -238,6 +238,17 @@ fn main() {
         )
         .unwrap();
         checks ^= local_search.evaluated_moves;
+        let tabu = tabu_search_order_3d(
+            black_box(&bin),
+            &items[..5],
+            TabuSearchConfig3 {
+                max_steps: 2,
+                max_neighbors_per_step: 32,
+                tabu_tenure: 2,
+            },
+        )
+        .unwrap();
+        checks ^= tabu.evaluated_moves;
         let multistart = multistart_order_3d(
             black_box(&bin),
             &items[..5],

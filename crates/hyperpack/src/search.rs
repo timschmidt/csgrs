@@ -78,6 +78,49 @@ pub struct LocalSearchReport3 {
     pub status: LocalSearchStatus3,
 }
 
+/// Limits for deterministic tabu search over 3D item order.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct TabuSearchConfig3 {
+    /// Maximum accepted-neighbor steps.
+    pub max_steps: usize,
+    /// Maximum neighbor moves inspected per step.
+    pub max_neighbors_per_step: usize,
+    /// Number of accepted moves retained in tabu memory.
+    pub tabu_tenure: usize,
+}
+
+/// Tabu-search completion status.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum TabuSearchStatus3 {
+    /// No admissible neighbor was available before another limit interrupted search.
+    LocalOptimum,
+    /// Search stopped after reaching `max_steps`.
+    StepLimit,
+    /// Search stopped after reaching `max_neighbors_per_step` in a step.
+    NeighborLimit,
+}
+
+/// Report from deterministic replay-gated tabu search.
+#[derive(Clone, Debug, PartialEq)]
+pub struct TabuSearchReport3 {
+    /// Initial order evaluation.
+    pub initial: OrderEvaluation3,
+    /// Best certified evaluation found.
+    pub best: OrderEvaluation3,
+    /// Accepted moves, including non-improving admissible moves.
+    pub accepted_moves: Vec<OrderMove3>,
+    /// Final tabu memory after the search stops.
+    pub tabu_memory: Vec<OrderMove3>,
+    /// Candidate neighbor moves evaluated.
+    pub evaluated_moves: usize,
+    /// Evaluated tabu candidates rejected because aspiration did not apply.
+    pub tabu_rejections: usize,
+    /// Accepted-neighbor steps performed.
+    pub steps: usize,
+    /// Completion status.
+    pub status: TabuSearchStatus3,
+}
+
 /// Limits for deterministic seeded multistart over 3D item order.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct MultistartConfig3 {
@@ -282,6 +325,91 @@ pub fn local_search_order_3d(
         steps: config.max_steps,
         evaluated_moves,
         status,
+    })
+}
+
+/// Runs deterministic tabu search over fixed-orientation cuboid order.
+///
+/// Each neighbor order is converted into exact corner first-fit placements and
+/// replayed before ranking. The tabu memory stores accepted order moves for a
+/// bounded tenure. A tabu move is admissible only by aspiration: its exact
+/// replayed objective must improve the best certified candidate. This follows
+/// Yap's requirement that approximate or heuristic stages produce candidates
+/// rather than truth, and Glover, "Tabu Search - Part I," *ORSA Journal on
+/// Computing* 1(3), 1989, for the short-term-memory search mechanism.
+pub fn tabu_search_order_3d(
+    bin: &Bin3,
+    items: &[Item3],
+    config: TabuSearchConfig3,
+) -> PackResult<TabuSearchReport3> {
+    let initial = evaluate_order(bin, items, items)?;
+    let mut best = initial.clone();
+    let mut current_items = items.to_vec();
+    let mut accepted_moves = Vec::new();
+    let mut tabu_memory = Vec::<OrderMove3>::new();
+    let mut evaluated_moves = 0_usize;
+    let mut tabu_rejections = 0_usize;
+
+    for step in 0..config.max_steps {
+        let mut selected = None::<(OrderMove3, Vec<Item3>, OrderEvaluation3)>;
+        for (inspected, order_move) in order_moves(current_items.len()).into_iter().enumerate() {
+            if inspected >= config.max_neighbors_per_step {
+                return Ok(TabuSearchReport3 {
+                    initial,
+                    best,
+                    accepted_moves,
+                    tabu_memory,
+                    evaluated_moves,
+                    tabu_rejections,
+                    steps: step,
+                    status: TabuSearchStatus3::NeighborLimit,
+                });
+            }
+            let neighbor_items = apply_order_move(&current_items, &order_move);
+            let evaluation = evaluate_order(bin, items, &neighbor_items)?;
+            evaluated_moves += 1;
+            let improves_best = evaluation_better(&evaluation, &best);
+            if is_tabu(&tabu_memory, &order_move) && !improves_best {
+                tabu_rejections += 1;
+                continue;
+            }
+            if selected.as_ref().is_none_or(|(_, _, selected_evaluation)| {
+                evaluation_better(&evaluation, selected_evaluation)
+            }) {
+                selected = Some((order_move, neighbor_items, evaluation));
+            }
+        }
+
+        let Some((order_move, neighbor_items, evaluation)) = selected else {
+            return Ok(TabuSearchReport3 {
+                initial,
+                best,
+                accepted_moves,
+                tabu_memory,
+                evaluated_moves,
+                tabu_rejections,
+                steps: step,
+                status: TabuSearchStatus3::LocalOptimum,
+            });
+        };
+
+        remember_tabu(&mut tabu_memory, order_move.clone(), config.tabu_tenure);
+        accepted_moves.push(order_move);
+        current_items = neighbor_items;
+        if evaluation_better(&evaluation, &best) {
+            best = evaluation;
+        }
+    }
+
+    Ok(TabuSearchReport3 {
+        initial,
+        best,
+        accepted_moves,
+        tabu_memory,
+        evaluated_moves,
+        tabu_rejections,
+        steps: config.max_steps,
+        status: TabuSearchStatus3::StepLimit,
     })
 }
 
@@ -695,6 +823,21 @@ fn apply_order_move(items: &[Item3], order_move: &OrderMove3) -> Vec<Item3> {
         OrderMove3::Reverse { start, end } => moved[start..=end].reverse(),
     }
     moved
+}
+
+fn is_tabu(tabu_memory: &[OrderMove3], order_move: &OrderMove3) -> bool {
+    tabu_memory.iter().any(|tabu| tabu == order_move)
+}
+
+fn remember_tabu(tabu_memory: &mut Vec<OrderMove3>, order_move: OrderMove3, tabu_tenure: usize) {
+    if tabu_tenure == 0 {
+        tabu_memory.clear();
+        return;
+    }
+    tabu_memory.push(order_move);
+    if tabu_memory.len() > tabu_tenure {
+        tabu_memory.remove(0);
+    }
 }
 
 fn shuffled_order(items: &[Item3], seed: u64) -> Vec<Item3> {

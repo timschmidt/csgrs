@@ -37,6 +37,7 @@ use hyperpack::{
 use hyperpack::{Orientation3, OrientedItem3, OrientedPlacement3, verify_oriented_packing_3d};
 use hyperpack::{ReinsertUnplacedConfig3, ReinsertUnplacedStatus3};
 use hyperpack::{StockBin1, StockItem1, StockPlacement1, verify_packing_1d};
+use hyperpack::{TabuSearchConfig3, TabuSearchStatus3};
 use hyperpack::{
     snapshot_packing_3d_binary, snapshot_packing_3d_text, snapshot_sheet_2d_binary,
     snapshot_sheet_2d_text, snapshot_stock_1d_binary, snapshot_stock_1d_text,
@@ -2322,6 +2323,66 @@ fn local_search_order_reports_neighbor_limit_explicitly() {
 }
 
 #[test]
+fn tabu_search_order_reports_memory_and_replay_gated_best() {
+    let bin = Bin3 {
+        size: AxisBox3::new(r(4), r(3), r(1)).unwrap(),
+    };
+    let items = [
+        item("wide", 4, 1, 1),
+        item("block", 2, 2, 1),
+        item("tall", 1, 3, 1),
+    ];
+
+    let report = hyperpack::tabu_search_order_3d(
+        &bin,
+        &items,
+        TabuSearchConfig3 {
+            max_steps: 3,
+            max_neighbors_per_step: 16,
+            tabu_tenure: 2,
+        },
+    )
+    .unwrap();
+
+    assert_eq!(report.status, TabuSearchStatus3::StepLimit);
+    assert_eq!(report.accepted_moves.len(), 3);
+    assert!(report.tabu_memory.len() <= 2);
+    assert!(report.evaluated_moves > 0);
+    assert!(
+        report.best.replay.objective.unplaced_items
+            <= report.initial.replay.objective.unplaced_items
+    );
+    assert_eq!(
+        report.best.replay.feasibility.status,
+        FeasibilityStatus::Feasible
+    );
+}
+
+#[test]
+fn tabu_search_order_reports_neighbor_limit_explicitly() {
+    let bin = Bin3 {
+        size: AxisBox3::new(r(3), r(3), r(1)).unwrap(),
+    };
+    let items = [item("a", 2, 2, 1), item("b", 1, 1, 1), item("c", 1, 1, 1)];
+
+    let report = hyperpack::tabu_search_order_3d(
+        &bin,
+        &items,
+        TabuSearchConfig3 {
+            max_steps: 2,
+            max_neighbors_per_step: 0,
+            tabu_tenure: 1,
+        },
+    )
+    .unwrap();
+
+    assert_eq!(report.status, TabuSearchStatus3::NeighborLimit);
+    assert_eq!(report.evaluated_moves, 0);
+    assert!(report.accepted_moves.is_empty());
+    assert!(report.tabu_memory.is_empty());
+}
+
+#[test]
 fn multistart_order_reports_seeded_replay_ranked_candidates() {
     let bin = Bin3 {
         size: AxisBox3::new(r(4), r(3), r(1)).unwrap(),
@@ -2840,6 +2901,42 @@ proptest! {
             LocalSearchConfig3 {
                 max_steps: 2,
                 max_neighbors_per_step: 8,
+            },
+        )
+        .unwrap();
+
+        prop_assert_eq!(report.best.replay.feasibility.status, FeasibilityStatus::Feasible);
+        prop_assert_eq!(report.best.replay.objective.unplaced_items, 0);
+        prop_assert_eq!(
+            report.best.replay.objective.used_volume,
+            r(item_x * item_y * item_z)
+        );
+    }
+
+    #[test]
+    fn generated_tabu_search_order_accepts_single_contained_item(
+        bin_x in 1_i32..=20,
+        bin_y in 1_i32..=20,
+        bin_z in 1_i32..=20,
+        item_x in 1_i32..=10,
+        item_y in 1_i32..=10,
+        item_z in 1_i32..=10,
+    ) {
+        prop_assume!(item_x <= bin_x);
+        prop_assume!(item_y <= bin_y);
+        prop_assume!(item_z <= bin_z);
+        let bin = Bin3 {
+            size: AxisBox3::new(r(bin_x), r(bin_y), r(bin_z)).unwrap(),
+        };
+        let items = [item("only", item_x, item_y, item_z)];
+
+        let report = hyperpack::tabu_search_order_3d(
+            &bin,
+            &items,
+            TabuSearchConfig3 {
+                max_steps: 2,
+                max_neighbors_per_step: 8,
+                tabu_tenure: 1,
             },
         )
         .unwrap();
