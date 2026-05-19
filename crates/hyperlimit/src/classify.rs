@@ -34,6 +34,37 @@ pub enum PlaneSide {
     Above,
 }
 
+/// Relation between a closed 3D segment and an oriented plane.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum PlaneSegmentRelation {
+    /// Both segment endpoints are below the plane.
+    Below,
+    /// Both segment endpoints are above the plane.
+    Above,
+    /// Both segment endpoints lie on the plane.
+    Coplanar,
+    /// The segment crosses the plane with endpoints on opposite sides.
+    Crossing,
+    /// Exactly one endpoint lies on the plane.
+    EndpointTouch,
+}
+
+/// Relation between a 3D triangle and an oriented plane.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum PlaneTriangleRelation {
+    /// All triangle vertices are below the plane.
+    Below,
+    /// All triangle vertices are above the plane.
+    Above,
+    /// All triangle vertices lie on the plane.
+    Coplanar,
+    /// The triangle has vertices strictly on both sides of the plane.
+    Split,
+    /// The triangle touches the plane at one or two vertices, while all
+    /// remaining vertices are on the same strict side.
+    BoundaryTouch,
+}
+
 impl From<Sign> for PlaneSide {
     fn from(sign: Sign) -> Self {
         match sign {
@@ -57,6 +88,51 @@ pub enum TriangleLocation {
     OnEdge,
     /// The point lies on a triangle vertex.
     OnVertex,
+}
+
+/// Location of a point relative to a 3D triangle.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum Triangle3Location {
+    /// The triangle vertices are collinear or otherwise degenerate.
+    Degenerate,
+    /// The point is not on the triangle's supporting plane.
+    OffPlane,
+    /// The point lies on the supporting plane but outside the triangle.
+    Outside,
+    /// The point lies strictly inside the triangle.
+    Inside,
+    /// The point lies on one triangle edge and is not a vertex.
+    OnEdge,
+    /// The point lies on a triangle vertex.
+    OnVertex,
+}
+
+/// Location of a point relative to a 3D tetrahedron.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum TetrahedronLocation {
+    /// The tetrahedron vertices are coplanar or otherwise degenerate.
+    Degenerate,
+    /// The point lies outside the tetrahedron.
+    Outside,
+    /// The point lies strictly inside the tetrahedron.
+    Inside,
+    /// The point lies on one tetrahedron face and is not on an edge.
+    OnFace,
+    /// The point lies on one tetrahedron edge and is not a vertex.
+    OnEdge,
+    /// The point lies on a tetrahedron vertex.
+    OnVertex,
+}
+
+/// Location of a point relative to an explicit 3D sphere.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum SpherePointLocation {
+    /// The point lies outside the sphere.
+    Outside,
+    /// The point lies on the sphere.
+    On,
+    /// The point lies inside the sphere.
+    Inside,
 }
 
 /// Location of a point relative to a closed 2D segment.
@@ -169,6 +245,24 @@ pub enum Aabb2PointLocation {
 }
 
 impl Aabb2PointLocation {
+    /// Returns whether the location is inside or on the box boundary.
+    pub const fn is_inside_or_boundary(self) -> bool {
+        matches!(self, Self::Boundary | Self::Inside)
+    }
+}
+
+/// Location of a point relative to a closed 3D axis-aligned box.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum Aabb3PointLocation {
+    /// The point lies outside the box.
+    Outside,
+    /// The point lies on a box face, edge, or corner.
+    Boundary,
+    /// The point lies strictly inside the box.
+    Inside,
+}
+
+impl Aabb3PointLocation {
     /// Returns whether the location is inside or on the box boundary.
     pub const fn is_inside_or_boundary(self) -> bool {
         matches!(self, Self::Boundary | Self::Inside)

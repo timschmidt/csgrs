@@ -6,12 +6,12 @@
 //! `hypertri`.
 
 use crate::classify::{PointSegmentLocation, SegmentIntersection};
-use crate::geometry::{Point2, Segment2Facts};
+use crate::geometry::{Point2, Point3, Segment2Facts};
 use crate::predicate::{
     Certainty, Escalation, PredicateOutcome, PredicatePolicy, RefinementNeed, Sign,
 };
 use crate::predicates::orient::orient2d_with_policy;
-use crate::real::sub_ref;
+use crate::real::{mul_ref, sub_ref};
 use crate::resolve::resolve_real_sign;
 use hyperreal::Real;
 
@@ -125,6 +125,59 @@ impl<'a> PreparedSegment2<'a> {
     }
 }
 
+/// Reusable exact predicates for one closed 3D segment.
+#[derive(Clone, Copy, Debug)]
+pub struct PreparedSegment3<'a> {
+    start: &'a Point3,
+    end: &'a Point3,
+}
+
+impl<'a> PreparedSegment3<'a> {
+    /// Prepare a borrowed 3D segment predicate.
+    pub fn new(start: &'a Point3, end: &'a Point3) -> Self {
+        crate::trace_dispatch!("hyperlimit", "prepared_segment3", "new");
+        Self { start, end }
+    }
+
+    /// Return the segment start endpoint.
+    pub const fn start(&self) -> &'a Point3 {
+        self.start
+    }
+
+    /// Return the segment end endpoint.
+    pub const fn end(&self) -> &'a Point3 {
+        self.end
+    }
+
+    /// Classify a point relative to this segment using the default policy.
+    pub fn classify_point(&self, point: &Point3) -> PredicateOutcome<PointSegmentLocation> {
+        self.classify_point_with_policy(point, PredicatePolicy::default())
+    }
+
+    /// Classify a point relative to this segment using an explicit policy.
+    pub fn classify_point_with_policy(
+        &self,
+        point: &Point3,
+        policy: PredicatePolicy,
+    ) -> PredicateOutcome<PointSegmentLocation> {
+        classify_point_segment3_with_policy(self.start, self.end, point, policy)
+    }
+
+    /// Return whether a point lies on this segment using the default policy.
+    pub fn point_on_segment(&self, point: &Point3) -> PredicateOutcome<bool> {
+        self.point_on_segment_with_policy(point, PredicatePolicy::default())
+    }
+
+    /// Return whether a point lies on this segment using an explicit policy.
+    pub fn point_on_segment_with_policy(
+        &self,
+        point: &Point3,
+        policy: PredicatePolicy,
+    ) -> PredicateOutcome<bool> {
+        point_on_segment3_with_policy(self.start, self.end, point, policy)
+    }
+}
+
 /// Classify `point` relative to the closed segment `ab`.
 pub fn classify_point_segment(
     a: &Point2,
@@ -132,6 +185,58 @@ pub fn classify_point_segment(
     point: &Point2,
 ) -> PredicateOutcome<PointSegmentLocation> {
     classify_point_segment_with_policy(a, b, point, PredicatePolicy::default())
+}
+
+/// Classify `point` relative to the closed 3D segment `ab`.
+pub fn classify_point_segment3(
+    a: &Point3,
+    b: &Point3,
+    point: &Point3,
+) -> PredicateOutcome<PointSegmentLocation> {
+    classify_point_segment3_with_policy(a, b, point, PredicatePolicy::default())
+}
+
+/// Classify `point` relative to the closed 3D segment `ab` with an explicit
+/// predicate escalation policy.
+///
+/// Collinearity is certified by the three exact components of
+/// `(b - a) x (point - a)`. Interval containment then uses exact coordinate
+/// comparisons on all three axes.
+pub fn classify_point_segment3_with_policy(
+    a: &Point3,
+    b: &Point3,
+    point: &Point3,
+    policy: PredicatePolicy,
+) -> PredicateOutcome<PointSegmentLocation> {
+    let mut trace = DecisionTrace::default();
+
+    match points_equal3(a, b, policy, &mut trace) {
+        Ok(true) => {
+            return match classify_degenerate_point_segment3(a, point, policy, &mut trace) {
+                Ok(location) => PredicateOutcome::decided(location, trace.certainty, trace.stage),
+                Err(unknown) => unknown.into_outcome(),
+            };
+        }
+        Ok(false) => {}
+        Err(unknown) => return unknown.into_outcome(),
+    }
+
+    match point_segment3_cross_signs(a, b, point, policy, &mut trace) {
+        Ok([Sign::Zero, Sign::Zero, Sign::Zero]) => {}
+        Ok(_) => {
+            return PredicateOutcome::decided(
+                PointSegmentLocation::OffLine,
+                trace.certainty,
+                trace.stage,
+            );
+        }
+        Err(unknown) => return unknown.into_outcome(),
+    }
+
+    match classify_collinear_point_segment3(a, b, point, policy, &mut trace) {
+        Ok(location) => PredicateOutcome::decided(location, trace.certainty, trace.stage),
+        Err(unknown) => unknown.into_outcome(),
+    }
 }
 
 /// Classify `point` relative to the closed segment `ab` with an explicit
@@ -221,6 +326,29 @@ fn classify_point_segment_impl(
 /// Return whether `point` lies on the closed segment `ab`.
 pub fn point_on_segment(a: &Point2, b: &Point2, point: &Point2) -> PredicateOutcome<bool> {
     point_on_segment_with_policy(a, b, point, PredicatePolicy::default())
+}
+
+/// Return whether `point` lies on the closed 3D segment `ab`.
+pub fn point_on_segment3(a: &Point3, b: &Point3, point: &Point3) -> PredicateOutcome<bool> {
+    point_on_segment3_with_policy(a, b, point, PredicatePolicy::default())
+}
+
+/// Return whether `point` lies on the closed 3D segment `ab` with an explicit
+/// predicate escalation policy.
+pub fn point_on_segment3_with_policy(
+    a: &Point3,
+    b: &Point3,
+    point: &Point3,
+    policy: PredicatePolicy,
+) -> PredicateOutcome<bool> {
+    match classify_point_segment3_with_policy(a, b, point, policy) {
+        PredicateOutcome::Decided {
+            value,
+            certainty,
+            stage,
+        } => PredicateOutcome::decided(value.is_on_segment(), certainty, stage),
+        PredicateOutcome::Unknown { needed, stage } => PredicateOutcome::unknown(needed, stage),
+    }
 }
 
 /// Return whether `point` lies on the closed segment `ab` with an explicit
@@ -555,6 +683,65 @@ fn classify_degenerate_point_segment(
     }
 }
 
+fn classify_collinear_point_segment3(
+    a: &Point3,
+    b: &Point3,
+    point: &Point3,
+    policy: PredicatePolicy,
+    trace: &mut DecisionTrace,
+) -> Result<PointSegmentLocation, UnknownDecision> {
+    if !between_closed(&a.x, &b.x, &point.x, policy, trace)?
+        || !between_closed(&a.y, &b.y, &point.y, policy, trace)?
+        || !between_closed(&a.z, &b.z, &point.z, policy, trace)?
+    {
+        return Ok(PointSegmentLocation::CollinearOutside);
+    }
+
+    if points_equal3(a, point, policy, trace)? || points_equal3(b, point, policy, trace)? {
+        Ok(PointSegmentLocation::OnEndpoint)
+    } else {
+        Ok(PointSegmentLocation::OnSegment)
+    }
+}
+
+fn classify_degenerate_point_segment3(
+    endpoint: &Point3,
+    point: &Point3,
+    policy: PredicatePolicy,
+    trace: &mut DecisionTrace,
+) -> Result<PointSegmentLocation, UnknownDecision> {
+    if points_equal3(endpoint, point, policy, trace)? {
+        Ok(PointSegmentLocation::OnEndpoint)
+    } else {
+        Ok(PointSegmentLocation::CollinearOutside)
+    }
+}
+
+fn point_segment3_cross_signs(
+    a: &Point3,
+    b: &Point3,
+    point: &Point3,
+    policy: PredicatePolicy,
+    trace: &mut DecisionTrace,
+) -> Result<[Sign; 3], UnknownDecision> {
+    let abx = sub_ref(&b.x, &a.x);
+    let aby = sub_ref(&b.y, &a.y);
+    let abz = sub_ref(&b.z, &a.z);
+    let apx = sub_ref(&point.x, &a.x);
+    let apy = sub_ref(&point.y, &a.y);
+    let apz = sub_ref(&point.z, &a.z);
+
+    let cross_x = sub_ref(&mul_ref(&aby, &apz), &mul_ref(&abz, &apy));
+    let cross_y = sub_ref(&mul_ref(&abz, &apx), &mul_ref(&abx, &apz));
+    let cross_z = sub_ref(&mul_ref(&abx, &apy), &mul_ref(&aby, &apx));
+
+    Ok([
+        sign_of_real(&cross_x, policy, trace)?,
+        sign_of_real(&cross_y, policy, trace)?,
+        sign_of_real(&cross_z, policy, trace)?,
+    ])
+}
+
 fn between_closed(
     a: &Real,
     b: &Real,
@@ -585,6 +772,19 @@ fn points_equal(
     )
 }
 
+fn points_equal3(
+    left: &Point3,
+    right: &Point3,
+    policy: PredicatePolicy,
+    trace: &mut DecisionTrace,
+) -> Result<bool, UnknownDecision> {
+    Ok(
+        sign_of_difference(&left.x, &right.x, policy, trace)? == Sign::Zero
+            && sign_of_difference(&left.y, &right.y, policy, trace)? == Sign::Zero
+            && sign_of_difference(&left.z, &right.z, policy, trace)? == Sign::Zero,
+    )
+}
+
 fn push_unique_point<'a>(
     points: &mut Vec<&'a Point2>,
     point: &'a Point2,
@@ -610,6 +810,23 @@ fn sign_of_difference(
     decided(
         resolve_real_sign(
             &diff,
+            policy,
+            || None,
+            || None,
+            RefinementNeed::RealRefinement,
+        ),
+        trace,
+    )
+}
+
+fn sign_of_real(
+    value: &Real,
+    policy: PredicatePolicy,
+    trace: &mut DecisionTrace,
+) -> Result<Sign, UnknownDecision> {
+    decided(
+        resolve_real_sign(
+            value,
             policy,
             || None,
             || None,
@@ -716,6 +933,10 @@ mod tests {
         Point2::new(real(x), real(y))
     }
 
+    fn p3(x: i32, y: i32, z: i32) -> Point3 {
+        Point3::new(real(x), real(y), real(z))
+    }
+
     #[test]
     fn point_segment_classifier_distinguishes_endpoint_inside_and_outside() {
         let a = p2(0, 0);
@@ -737,6 +958,30 @@ mod tests {
             classify_point_segment(&a, &b, &p2(2, 1)).value(),
             Some(PointSegmentLocation::OffLine)
         );
+    }
+
+    #[test]
+    fn point_segment3_classifier_distinguishes_endpoint_inside_outside_and_offline() {
+        let a = p3(0, 0, 0);
+        let b = p3(4, 4, 4);
+
+        assert_eq!(
+            classify_point_segment3(&a, &b, &p3(2, 2, 2)).value(),
+            Some(PointSegmentLocation::OnSegment)
+        );
+        assert_eq!(
+            classify_point_segment3(&a, &b, &p3(4, 4, 4)).value(),
+            Some(PointSegmentLocation::OnEndpoint)
+        );
+        assert_eq!(
+            classify_point_segment3(&a, &b, &p3(5, 5, 5)).value(),
+            Some(PointSegmentLocation::CollinearOutside)
+        );
+        assert_eq!(
+            classify_point_segment3(&a, &b, &p3(2, 2, 3)).value(),
+            Some(PointSegmentLocation::OffLine)
+        );
+        assert_eq!(point_on_segment3(&a, &b, &p3(2, 2, 2)).value(), Some(true));
     }
 
     #[test]
@@ -856,5 +1101,20 @@ mod tests {
             prepared.classify_intersection(&prepared_point).value(),
             Some(SegmentIntersection::EndpointTouch)
         );
+    }
+
+    #[test]
+    fn prepared_segment3_reuses_borrowed_endpoints() {
+        let a = p3(0, 0, 0);
+        let b = p3(0, 0, 3);
+        let prepared = PreparedSegment3::new(&a, &b);
+
+        assert_eq!(prepared.start(), &a);
+        assert_eq!(prepared.end(), &b);
+        assert_eq!(
+            prepared.classify_point(&p3(0, 0, 2)).value(),
+            Some(PointSegmentLocation::OnSegment)
+        );
+        assert_eq!(prepared.point_on_segment(&p3(0, 1, 2)).value(), Some(false));
     }
 }

@@ -3,9 +3,11 @@
 use hyperreal::{Real, RealExactSetFacts, ZeroKnowledge};
 
 use crate::RealSymbolicDependencyMask;
-use crate::classify::PlaneSide;
+use crate::classify::{PlaneSegmentRelation, PlaneSide, PlaneTriangleRelation};
 use crate::geometry::Point3;
-use crate::predicate::{PredicateOutcome, PredicatePolicy, RefinementNeed, Sign};
+use crate::predicate::{
+    Certainty, Escalation, PredicateOutcome, PredicatePolicy, RefinementNeed, Sign,
+};
 use crate::predicates::orient3d_with_policy;
 use crate::real::{add_ref, mul_ref, sub_ref};
 use crate::resolve::{map_outcome, resolve_real_sign, signed_term_filter};
@@ -167,6 +169,50 @@ impl<'a> PreparedPlane3<'a> {
     ) -> PredicateOutcome<PlaneSide> {
         classify_point_plane_prepared(point, self.plane, self.facts, policy)
     }
+
+    /// Classify a closed segment relative to this plane using the default
+    /// predicate policy.
+    pub fn classify_segment(
+        &self,
+        start: &Point3,
+        end: &Point3,
+    ) -> PredicateOutcome<PlaneSegmentRelation> {
+        self.classify_segment_with_policy(start, end, PredicatePolicy::default())
+    }
+
+    /// Classify a closed segment relative to this plane using an explicit
+    /// predicate policy.
+    pub fn classify_segment_with_policy(
+        &self,
+        start: &Point3,
+        end: &Point3,
+        policy: PredicatePolicy,
+    ) -> PredicateOutcome<PlaneSegmentRelation> {
+        classify_plane_segment_with_policy(self.plane, start, end, policy)
+    }
+
+    /// Classify a triangle relative to this plane using the default predicate
+    /// policy.
+    pub fn classify_triangle(
+        &self,
+        a: &Point3,
+        b: &Point3,
+        c: &Point3,
+    ) -> PredicateOutcome<PlaneTriangleRelation> {
+        self.classify_triangle_with_policy(a, b, c, PredicatePolicy::default())
+    }
+
+    /// Classify a triangle relative to this plane using an explicit predicate
+    /// policy.
+    pub fn classify_triangle_with_policy(
+        &self,
+        a: &Point3,
+        b: &Point3,
+        c: &Point3,
+        policy: PredicatePolicy,
+    ) -> PredicateOutcome<PlaneTriangleRelation> {
+        classify_plane_triangle_with_policy(self.plane, a, b, c, policy)
+    }
 }
 
 /// Reusable oriented-plane classifier for a fixed triangle plane.
@@ -257,6 +303,127 @@ pub fn classify_point_plane_with_policy(
     policy: PredicatePolicy,
 ) -> PredicateOutcome<PlaneSide> {
     classify_point_plane_real(point, plane, None, policy)
+}
+
+/// Classify a closed segment relative to a plane.
+pub fn classify_plane_segment(
+    plane: &Plane3,
+    start: &Point3,
+    end: &Point3,
+) -> PredicateOutcome<PlaneSegmentRelation> {
+    classify_plane_segment_with_policy(plane, start, end, PredicatePolicy::default())
+}
+
+/// Classify a closed segment relative to a plane with an explicit escalation
+/// policy.
+pub fn classify_plane_segment_with_policy(
+    plane: &Plane3,
+    start: &Point3,
+    end: &Point3,
+    policy: PredicatePolicy,
+) -> PredicateOutcome<PlaneSegmentRelation> {
+    let start_outcome = classify_point_plane_with_policy(start, plane, policy);
+    let (start_side, start_certainty, start_stage) = match start_outcome {
+        PredicateOutcome::Decided {
+            value,
+            certainty,
+            stage,
+        } => (value, certainty, stage),
+        PredicateOutcome::Unknown { needed, stage } => {
+            return PredicateOutcome::unknown(needed, stage);
+        }
+    };
+
+    let end_outcome = classify_point_plane_with_policy(end, plane, policy);
+    let (end_side, end_certainty, end_stage) = match end_outcome {
+        PredicateOutcome::Decided {
+            value,
+            certainty,
+            stage,
+        } => (value, certainty, stage),
+        PredicateOutcome::Unknown { needed, stage } => {
+            return PredicateOutcome::unknown(needed, stage);
+        }
+    };
+
+    let relation = match (start_side, end_side) {
+        (PlaneSide::Below, PlaneSide::Below) => PlaneSegmentRelation::Below,
+        (PlaneSide::Above, PlaneSide::Above) => PlaneSegmentRelation::Above,
+        (PlaneSide::On, PlaneSide::On) => PlaneSegmentRelation::Coplanar,
+        (PlaneSide::On, _) | (_, PlaneSide::On) => PlaneSegmentRelation::EndpointTouch,
+        (PlaneSide::Below, PlaneSide::Above) | (PlaneSide::Above, PlaneSide::Below) => {
+            PlaneSegmentRelation::Crossing
+        }
+    };
+    PredicateOutcome::decided(
+        relation,
+        max_certainty(start_certainty, end_certainty),
+        max_stage(start_stage, end_stage),
+    )
+}
+
+/// Classify a triangle relative to a plane.
+pub fn classify_plane_triangle(
+    plane: &Plane3,
+    a: &Point3,
+    b: &Point3,
+    c: &Point3,
+) -> PredicateOutcome<PlaneTriangleRelation> {
+    classify_plane_triangle_with_policy(plane, a, b, c, PredicatePolicy::default())
+}
+
+/// Classify a triangle relative to a plane with an explicit escalation policy.
+pub fn classify_plane_triangle_with_policy(
+    plane: &Plane3,
+    a: &Point3,
+    b: &Point3,
+    c: &Point3,
+    policy: PredicatePolicy,
+) -> PredicateOutcome<PlaneTriangleRelation> {
+    let outcomes = [
+        classify_point_plane_with_policy(a, plane, policy),
+        classify_point_plane_with_policy(b, plane, policy),
+        classify_point_plane_with_policy(c, plane, policy),
+    ];
+    let mut certainty = Certainty::Exact;
+    let mut stage = Escalation::Structural;
+    let mut below = 0_u8;
+    let mut above = 0_u8;
+    let mut on = 0_u8;
+
+    for outcome in outcomes {
+        match outcome {
+            PredicateOutcome::Decided {
+                value,
+                certainty: value_certainty,
+                stage: value_stage,
+            } => {
+                certainty = max_certainty(certainty, value_certainty);
+                stage = max_stage(stage, value_stage);
+                match value {
+                    PlaneSide::Below => below += 1,
+                    PlaneSide::Above => above += 1,
+                    PlaneSide::On => on += 1,
+                }
+            }
+            PredicateOutcome::Unknown { needed, stage } => {
+                return PredicateOutcome::unknown(needed, stage);
+            }
+        }
+    }
+
+    let relation = if below == 3 {
+        PlaneTriangleRelation::Below
+    } else if above == 3 {
+        PlaneTriangleRelation::Above
+    } else if on == 3 {
+        PlaneTriangleRelation::Coplanar
+    } else if below > 0 && above > 0 {
+        PlaneTriangleRelation::Split
+    } else {
+        PlaneTriangleRelation::BoundaryTouch
+    };
+    PredicateOutcome::decided(relation, certainty, stage)
 }
 
 fn classify_point_plane_real(
@@ -380,6 +547,39 @@ fn plane_coefficient_zero_masks(coordinates: [&Real; 4]) -> (u8, u8, u8) {
     (known_zero_mask, known_nonzero_mask, unknown_zero_mask)
 }
 
+fn max_certainty(left: Certainty, right: Certainty) -> Certainty {
+    if certainty_rank(left) >= certainty_rank(right) {
+        left
+    } else {
+        right
+    }
+}
+
+fn certainty_rank(certainty: Certainty) -> u8 {
+    match certainty {
+        Certainty::Exact => 0,
+        Certainty::Filtered => 1,
+    }
+}
+
+fn max_stage(left: Escalation, right: Escalation) -> Escalation {
+    if stage_rank(left) >= stage_rank(right) {
+        left
+    } else {
+        right
+    }
+}
+
+fn stage_rank(stage: Escalation) -> u8 {
+    match stage {
+        Escalation::Structural => 0,
+        Escalation::Filter => 1,
+        Escalation::Exact => 2,
+        Escalation::Refined => 3,
+        Escalation::Undecided => 4,
+    }
+}
+
 /// Classify a point relative to the oriented plane through `a`, `b`, and `c`.
 pub fn classify_point_oriented_plane(
     a: &Point3,
@@ -449,6 +649,88 @@ mod tests {
         assert_eq!(
             classify_point_plane(&p3(0.0, 0.0, 1.0), &plane).value(),
             Some(PlaneSide::Below)
+        );
+    }
+
+    #[test]
+    fn classifies_plane_segment_relation() {
+        let plane = Plane3::new(p3(0.0, 0.0, 1.0), real(-2.0));
+
+        assert_eq!(
+            classify_plane_segment(&plane, &p3(0.0, 0.0, 0.0), &p3(1.0, 0.0, 1.0)).value(),
+            Some(PlaneSegmentRelation::Below)
+        );
+        assert_eq!(
+            classify_plane_segment(&plane, &p3(0.0, 0.0, 3.0), &p3(1.0, 0.0, 4.0)).value(),
+            Some(PlaneSegmentRelation::Above)
+        );
+        assert_eq!(
+            classify_plane_segment(&plane, &p3(0.0, 0.0, 2.0), &p3(1.0, 0.0, 2.0)).value(),
+            Some(PlaneSegmentRelation::Coplanar)
+        );
+        assert_eq!(
+            classify_plane_segment(&plane, &p3(0.0, 0.0, 1.0), &p3(1.0, 0.0, 3.0)).value(),
+            Some(PlaneSegmentRelation::Crossing)
+        );
+        assert_eq!(
+            plane
+                .prepare()
+                .classify_segment(&p3(0.0, 0.0, 2.0), &p3(1.0, 0.0, 3.0))
+                .value(),
+            Some(PlaneSegmentRelation::EndpointTouch)
+        );
+    }
+
+    #[test]
+    fn classifies_plane_triangle_relation() {
+        let plane = Plane3::new(p3(0.0, 0.0, 1.0), real(-2.0));
+
+        assert_eq!(
+            classify_plane_triangle(
+                &plane,
+                &p3(0.0, 0.0, 0.0),
+                &p3(1.0, 0.0, 1.0),
+                &p3(0.0, 1.0, 1.0)
+            )
+            .value(),
+            Some(PlaneTriangleRelation::Below)
+        );
+        assert_eq!(
+            classify_plane_triangle(
+                &plane,
+                &p3(0.0, 0.0, 3.0),
+                &p3(1.0, 0.0, 4.0),
+                &p3(0.0, 1.0, 3.0)
+            )
+            .value(),
+            Some(PlaneTriangleRelation::Above)
+        );
+        assert_eq!(
+            classify_plane_triangle(
+                &plane,
+                &p3(0.0, 0.0, 2.0),
+                &p3(1.0, 0.0, 2.0),
+                &p3(0.0, 1.0, 2.0)
+            )
+            .value(),
+            Some(PlaneTriangleRelation::Coplanar)
+        );
+        assert_eq!(
+            classify_plane_triangle(
+                &plane,
+                &p3(0.0, 0.0, 1.0),
+                &p3(1.0, 0.0, 3.0),
+                &p3(0.0, 1.0, 1.0)
+            )
+            .value(),
+            Some(PlaneTriangleRelation::Split)
+        );
+        assert_eq!(
+            plane
+                .prepare()
+                .classify_triangle(&p3(0.0, 0.0, 2.0), &p3(1.0, 0.0, 3.0), &p3(0.0, 1.0, 3.0))
+                .value(),
+            Some(PlaneTriangleRelation::BoundaryTouch)
         );
     }
 

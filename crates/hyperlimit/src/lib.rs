@@ -56,9 +56,10 @@ pub use batch::{
     orient3d_batch_parallel_with_policy,
 };
 pub use classify::{
-    Aabb2Intersection, Aabb2PointLocation, Aabb3Intersection, ClosedIntervalIntersection, LineSide,
-    PlaneSide, PointSegmentLocation, RealIntervalLocation, RingPointLocation, SegmentIntersection,
-    TriangleLocation,
+    Aabb2Intersection, Aabb2PointLocation, Aabb3Intersection, Aabb3PointLocation,
+    ClosedIntervalIntersection, LineSide, PlaneSegmentRelation, PlaneSide, PlaneTriangleRelation,
+    PointSegmentLocation, RealIntervalLocation, RingPointLocation, SegmentIntersection,
+    SpherePointLocation, TetrahedronLocation, Triangle3Location, TriangleLocation,
 };
 pub use geometry::{
     Aabb2Facts, CoordinateAxis2, Plane3Facts, Point2DisplacementFacts, Point2Facts, Point3Facts,
@@ -75,8 +76,9 @@ pub use orient::{
     orient3d_report_with_policy, orient3d_with_policy,
 };
 pub use plane::{
-    Plane3, PreparedOrientedPlane3, PreparedPlane3, classify_point_oriented_plane,
-    classify_point_plane,
+    Plane3, PreparedOrientedPlane3, PreparedPlane3, classify_plane_segment,
+    classify_plane_segment_with_policy, classify_plane_triangle,
+    classify_plane_triangle_with_policy, classify_point_oriented_plane, classify_point_plane,
 };
 pub use predicate::{
     Certainty, DeterminantScheduleHint, Escalation, ExactPredicateKernel, PredicateApiSemantics,
@@ -84,15 +86,18 @@ pub use predicate::{
     PredicateReport, RefinementNeed, Sign, SignKnowledge,
 };
 pub use predicates::aabb::{
-    PreparedAabb2, aabb2s_intersect, aabb2s_intersect_with_policy, aabb3s_intersect,
+    PreparedAabb2, PreparedAabb3, aabb2s_intersect, aabb2s_intersect_with_policy, aabb3s_intersect,
     aabb3s_intersect_with_policy, classify_aabb2_intersection,
     classify_aabb2_intersection_with_facts, classify_aabb2_intersection_with_policy,
     classify_aabb2_intersection_with_policy_and_facts, classify_aabb3_intersection,
     classify_aabb3_intersection_with_policy, classify_point_aabb2,
-    classify_point_aabb2_with_policy, point_in_aabb2, point_in_aabb2_with_policy,
+    classify_point_aabb2_with_policy, classify_point_aabb3, classify_point_aabb3_with_policy,
+    point_in_aabb2, point_in_aabb2_with_policy, point_in_aabb3, point_in_aabb3_with_policy,
 };
 pub use predicates::distance::{
+    PreparedExplicitSphere3, classify_point_sphere3, classify_point_sphere3_with_policy,
     compare_point2_distance_squared, compare_point2_distance_squared_with_policy,
+    compare_point3_distance_squared, compare_point3_distance_squared_with_policy,
 };
 pub use predicates::filters::{
     certified_ball_sign, certified_ball_sign_report, certified_ball_sign_report_with_policy,
@@ -121,16 +126,20 @@ pub use predicates::ring::{
     point_in_ring_even_odd_with_policy, ring_area_sign, ring_area_sign_with_policy,
 };
 pub use predicates::segment::{
-    PreparedSegment2, classify_point_segment, classify_point_segment_with_facts,
+    PreparedSegment2, PreparedSegment3, classify_point_segment, classify_point_segment_with_facts,
     classify_point_segment_with_policy, classify_point_segment_with_policy_and_facts,
-    classify_segment_intersection, classify_segment_intersection_with_facts,
-    classify_segment_intersection_with_policy, classify_segment_intersection_with_policy_and_facts,
-    point_on_segment, point_on_segment_with_facts, point_on_segment_with_policy,
-    point_on_segment_with_policy_and_facts,
+    classify_point_segment3, classify_point_segment3_with_policy, classify_segment_intersection,
+    classify_segment_intersection_with_facts, classify_segment_intersection_with_policy,
+    classify_segment_intersection_with_policy_and_facts, point_on_segment,
+    point_on_segment_with_facts, point_on_segment_with_policy,
+    point_on_segment_with_policy_and_facts, point_on_segment3, point_on_segment3_with_policy,
 };
 pub use predicates::triangle::{
-    PreparedTriangle2, classify_point_triangle, classify_point_triangle_with_facts,
-    classify_point_triangle_with_policy, classify_point_triangle_with_policy_and_facts,
+    PreparedTriangle2, PreparedTriangle3, classify_point_tetrahedron,
+    classify_point_tetrahedron_with_policy, classify_point_triangle,
+    classify_point_triangle_with_facts, classify_point_triangle_with_policy,
+    classify_point_triangle_with_policy_and_facts, classify_point_triangle3,
+    classify_point_triangle3_with_policy,
 };
 pub use real::{RealFacts, RealPredicateExt, RealZeroKnowledge};
 pub use session::{
