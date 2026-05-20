@@ -5,7 +5,9 @@ use hyperlimit::Point3;
 use hypermesh::exact::{
     CoplanarArrangementOperation, ExactMesh, ExactPoint3, ExactReportValidationError,
     FaceRegionPlaneRelation, MeshFacePairClassification, PredicateUse, SourceProvenance, Triangle,
-    ValidationPolicy, arrange_coplanar_convex_surface_component_holed_difference,
+    ValidationPolicy, arrange_coplanar_affine_surface_difference,
+    arrange_coplanar_affine_surface_intersection, arrange_coplanar_affine_surface_union,
+    arrange_coplanar_convex_surface_component_holed_difference,
     arrange_coplanar_convex_surface_component_union, arrange_coplanar_convex_surface_difference,
     arrange_coplanar_convex_surface_intersection, arrange_coplanar_convex_surface_multi_difference,
     arrange_coplanar_convex_surface_multi_holed_difference,
@@ -45,6 +47,37 @@ fn rect_surface_i64(rectangles: &[(i64, i64, i64, i64)]) -> ExactMesh {
             x1, y1, 0, //
             x0, y1, 0,
         ]);
+        indices.extend_from_slice(&[base, base + 1, base + 2, base, base + 2, base + 3]);
+    }
+    ExactMesh::from_i64_triangles_with_policy(
+        &coordinates,
+        &indices,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap()
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn affine_rect_surface_i64(
+    rectangles: &[(i64, i64, i64, i64)],
+    origin: (i64, i64, i64),
+    basis_u: (i64, i64, i64),
+    basis_v: (i64, i64, i64),
+) -> ExactMesh {
+    let mut coordinates = Vec::with_capacity(rectangles.len() * 12);
+    let mut indices = Vec::with_capacity(rectangles.len() * 6);
+    let lift = |u: i64, v: i64| -> [i64; 3] {
+        [
+            origin.0 + u * basis_u.0 + v * basis_v.0,
+            origin.1 + u * basis_u.1 + v * basis_v.1,
+            origin.2 + u * basis_u.2 + v * basis_v.2,
+        ]
+    };
+    for (rectangle, &(u0, v0, u1, v1)) in rectangles.iter().enumerate() {
+        let base = rectangle * 4;
+        for point in [lift(u0, v0), lift(u1, v0), lift(u1, v1), lift(u0, v1)] {
+            coordinates.extend_from_slice(&point);
+        }
         indices.extend_from_slice(&[base, base + 1, base + 2, base, base + 2, base + 3]);
     }
     ExactMesh::from_i64_triangles_with_policy(
@@ -3220,6 +3253,83 @@ fn exact_boolean_coplanar_orthogonal_surface_cells(c: &mut Criterion) {
     }
 }
 
+fn exact_boolean_coplanar_affine_surface_cells(c: &mut Criterion) {
+    #[cfg(feature = "exact-triangulation")]
+    {
+        let origin = (0, 0, 0);
+        let basis_u = (2, 1, 0);
+        let basis_v = (-1, 2, 0);
+        let l_left =
+            affine_rect_surface_i64(&[(0, 0, 2, 6), (2, 0, 6, 2)], origin, basis_u, basis_v);
+        let l_right = affine_rect_surface_i64(&[(2, 2, 4, 4)], origin, basis_u, basis_v);
+        let intersection_left =
+            affine_rect_surface_i64(&[(0, 0, 6, 2), (0, 2, 2, 6)], origin, basis_u, basis_v);
+        let intersection_right = affine_rect_surface_i64(&[(0, 0, 6, 6)], origin, basis_u, basis_v);
+        let holed_left =
+            affine_rect_surface_i64(&[(0, 0, 10, 10), (10, 0, 12, 2)], origin, basis_u, basis_v);
+        let holed_right = affine_rect_surface_i64(&[(2, 2, 4, 4)], origin, basis_u, basis_v);
+
+        c.bench_function("exact_boolean_coplanar_affine_surface_cells", |b| {
+            b.iter(|| {
+                let union = arrange_coplanar_affine_surface_union(&l_left, &l_right);
+                let intersection = arrange_coplanar_affine_surface_intersection(
+                    &intersection_left,
+                    &intersection_right,
+                );
+                let difference =
+                    arrange_coplanar_affine_surface_difference(&holed_left, &holed_right);
+                let union_result = hypermesh::exact::boolean_exact(
+                    &l_left,
+                    &l_right,
+                    hypermesh::exact::ExactBooleanOperation::Union,
+                    ValidationPolicy::ALLOW_BOUNDARY,
+                )
+                .unwrap();
+                (
+                    union
+                        .as_ref()
+                        .map(|output| output.validate_against_sources(&l_left, &l_right)),
+                    hypermesh::exact::preflight_boolean_exact(
+                        &l_left,
+                        &l_right,
+                        hypermesh::exact::ExactBooleanOperation::Union,
+                    )
+                    .map(|report| report.validate()),
+                    union_result.validate_operation_against_sources(
+                        &l_left,
+                        &l_right,
+                        hypermesh::exact::ExactBooleanOperation::Union,
+                        ValidationPolicy::ALLOW_BOUNDARY,
+                        hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+                    ),
+                    intersection.as_ref().map(|output| {
+                        output.validate_against_sources(&intersection_left, &intersection_right)
+                    }),
+                    hypermesh::exact::preflight_boolean_exact(
+                        &intersection_left,
+                        &intersection_right,
+                        hypermesh::exact::ExactBooleanOperation::Intersection,
+                    )
+                    .map(|report| report.validate()),
+                    difference
+                        .as_ref()
+                        .map(|output| output.validate_against_sources(&holed_left, &holed_right)),
+                    hypermesh::exact::preflight_boolean_exact(
+                        &holed_left,
+                        &holed_right,
+                        hypermesh::exact::ExactBooleanOperation::Difference,
+                    )
+                    .map(|report| report.validate()),
+                )
+            })
+        });
+    }
+    #[cfg(not(feature = "exact-triangulation"))]
+    {
+        let _ = c;
+    }
+}
+
 fn exact_convex_solid_classification(c: &mut Criterion) {
     let outer = ExactMesh::from_i64_triangles(
         &[
@@ -4455,6 +4565,7 @@ criterion_group!(
     exact_boolean_coplanar_convex_surface_multi_difference,
     exact_boolean_coplanar_convex_surface_multi_holed_difference,
     exact_boolean_coplanar_orthogonal_surface_cells,
+    exact_boolean_coplanar_affine_surface_cells,
     exact_convex_solid_classification,
     exact_boolean_coplanar_surface_containment,
     exact_boolean_open_surface_disjoint,

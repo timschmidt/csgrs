@@ -9,6 +9,8 @@
 //! mesh decisions must be certified or explicitly reported as unknown.
 
 pub mod adapter;
+#[cfg(feature = "exact-triangulation")]
+pub mod affine_surface;
 pub mod audit;
 pub mod boolean;
 pub mod bounds;
@@ -48,6 +50,12 @@ pub use adapter::{
     ExactI64MeshInputReadiness, ExactI64MeshInputReport, ExactI64MeshInputReportValidationError,
     LossyF64MeshInputReadiness, LossyF64MeshInputReport, LossyF64MeshInputReportValidationError,
     inspect_f64_mesh_input, inspect_i64_mesh_input,
+};
+#[cfg(feature = "exact-triangulation")]
+pub use affine_surface::{
+    CoplanarAffineSurfaceArrangement, CoplanarAffineSurfaceBasis,
+    arrange_coplanar_affine_surface_difference, arrange_coplanar_affine_surface_intersection,
+    arrange_coplanar_affine_surface_union,
 };
 pub use audit::{
     ExactMeshAuditError, ExactMeshAuditFreshness, ExactMeshAuditReport, audit_exact_mesh,

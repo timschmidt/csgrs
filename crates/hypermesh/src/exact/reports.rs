@@ -500,6 +500,12 @@ pub enum ExactBooleanShortcutKind {
     CoplanarOrthogonalSurfaceIntersection,
     /// Certified orthogonal-cell difference of coplanar rectangular surfaces.
     CoplanarOrthogonalSurfaceDifference,
+    /// Certified affine-cell union of coplanar parallelogram surface pieces.
+    CoplanarAffineSurfaceUnion,
+    /// Certified affine-cell intersection of coplanar parallelogram surfaces.
+    CoplanarAffineSurfaceIntersection,
+    /// Certified affine-cell difference of coplanar parallelogram surfaces.
+    CoplanarAffineSurfaceDifference,
     /// Exact coplanar convex surface containment, modulo triangulation.
     CoplanarConvexSurfaceContainment,
     /// Certified one-hole coplanar convex surface difference.
@@ -1016,6 +1022,14 @@ pub enum ExactBooleanSupport {
     /// Difference was materialized by an exact orthogonal coplanar surface cell
     /// complex.
     CertifiedCoplanarOrthogonalSurfaceDifference,
+    /// Union was materialized by an exact affine coplanar surface cell complex.
+    CertifiedCoplanarAffineSurfaceUnion,
+    /// Intersection was materialized by an exact affine coplanar surface cell
+    /// complex.
+    CertifiedCoplanarAffineSurfaceIntersection,
+    /// Difference was materialized by an exact affine coplanar surface cell
+    /// complex.
+    CertifiedCoplanarAffineSurfaceDifference,
     /// A named operation was answered by exact coplanar convex surface
     /// containment, ignoring triangulation.
     CertifiedCoplanarConvexSurfaceContainment,
@@ -1210,6 +1224,9 @@ impl ExactBooleanPreflight {
             | ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceUnion
             | ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceIntersection
             | ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceDifference
+            | ExactBooleanSupport::CertifiedCoplanarAffineSurfaceUnion
+            | ExactBooleanSupport::CertifiedCoplanarAffineSurfaceIntersection
+            | ExactBooleanSupport::CertifiedCoplanarAffineSurfaceDifference
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceContainment
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceHoledDifference
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceMultiHoledDifference

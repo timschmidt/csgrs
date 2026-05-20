@@ -1,6 +1,8 @@
 #![no_main]
 
 use hypermesh::exact::{
+    arrange_coplanar_affine_surface_difference, arrange_coplanar_affine_surface_intersection,
+    arrange_coplanar_affine_surface_union,
     CoplanarArrangementOperation, CoplanarSurfaceContainment, CoplanarSurfaceContainmentStatus,
     CoplanarTriangleRelation, ExactBooleanOperation, ExactBooleanPolicy,
     ExactBooleanSupport, ExactBoundaryBooleanPolicy, ExactMesh, ExactRegionSelection,
@@ -2204,6 +2206,56 @@ fn exercise_component_coplanar_difference() {
     graph_difference
         .validate_against_sources(&graph_left, &graph_right)
         .unwrap();
+
+    let origin = (0, 0, 0);
+    let basis_u = (2, 1, 0);
+    let basis_v = (-1, 2, 0);
+    let affine_l_left =
+        affine_rect_surface_i64(&[(0, 0, 2, 6), (2, 0, 6, 2)], origin, basis_u, basis_v);
+    let affine_l_right = affine_rect_surface_i64(&[(2, 2, 4, 4)], origin, basis_u, basis_v);
+    assert!(arrange_coplanar_orthogonal_surface_union(&affine_l_left, &affine_l_right).is_none());
+    let affine_union = arrange_coplanar_affine_surface_union(&affine_l_left, &affine_l_right)
+        .expect("affine L-shaped union fixture should materialize");
+    affine_union.validate().unwrap();
+    affine_union
+        .validate_against_sources(&affine_l_left, &affine_l_right)
+        .unwrap();
+    let affine_union_preflight = preflight_boolean_exact(
+        &affine_l_left,
+        &affine_l_right,
+        ExactBooleanOperation::Union,
+    )
+    .expect("affine union preflight should classify shortcut");
+    affine_union_preflight.validate().unwrap();
+    assert_eq!(
+        affine_union_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarAffineSurfaceUnion
+    );
+
+    let affine_intersection_left =
+        affine_rect_surface_i64(&[(0, 0, 6, 2), (0, 2, 2, 6)], origin, basis_u, basis_v);
+    let affine_intersection_right =
+        affine_rect_surface_i64(&[(0, 0, 6, 6)], origin, basis_u, basis_v);
+    let affine_intersection = arrange_coplanar_affine_surface_intersection(
+        &affine_intersection_left,
+        &affine_intersection_right,
+    )
+    .expect("affine nonconvex intersection fixture should materialize");
+    affine_intersection.validate().unwrap();
+    affine_intersection
+        .validate_against_sources(&affine_intersection_left, &affine_intersection_right)
+        .unwrap();
+
+    let affine_holed_left =
+        affine_rect_surface_i64(&[(0, 0, 10, 10), (10, 0, 12, 2)], origin, basis_u, basis_v);
+    let affine_holed_right = affine_rect_surface_i64(&[(2, 2, 4, 4)], origin, basis_u, basis_v);
+    let affine_difference =
+        arrange_coplanar_affine_surface_difference(&affine_holed_left, &affine_holed_right)
+            .expect("affine holed difference fixture should materialize");
+    affine_difference.validate().unwrap();
+    affine_difference
+        .validate_against_sources(&affine_holed_left, &affine_holed_right)
+        .unwrap();
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -2932,6 +2984,37 @@ fn rect_surface_i64(rectangles: &[(i64, i64, i64, i64)]) -> ExactMesh {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .expect("rectangular fuzz surface fixture must import")
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn affine_rect_surface_i64(
+    rectangles: &[(i64, i64, i64, i64)],
+    origin: (i64, i64, i64),
+    basis_u: (i64, i64, i64),
+    basis_v: (i64, i64, i64),
+) -> ExactMesh {
+    let mut coordinates = Vec::with_capacity(rectangles.len() * 12);
+    let mut indices = Vec::with_capacity(rectangles.len() * 6);
+    let lift = |u: i64, v: i64| -> [i64; 3] {
+        [
+            origin.0 + u * basis_u.0 + v * basis_v.0,
+            origin.1 + u * basis_u.1 + v * basis_v.1,
+            origin.2 + u * basis_u.2 + v * basis_v.2,
+        ]
+    };
+    for (rectangle, &(u0, v0, u1, v1)) in rectangles.iter().enumerate() {
+        let base = rectangle * 4;
+        for point in [lift(u0, v0), lift(u1, v0), lift(u1, v1), lift(u0, v1)] {
+            coordinates.extend_from_slice(&point);
+        }
+        indices.extend_from_slice(&[base, base + 1, base + 2, base, base + 2, base + 3]);
+    }
+    ExactMesh::from_i64_triangles_with_policy(
+        &coordinates,
+        &indices,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("affine rectangular fuzz surface fixture must import")
 }
 
 #[cfg(feature = "exact-triangulation")]
