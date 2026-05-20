@@ -6116,6 +6116,235 @@ impl BezierBooleanResultReport2 {
         )
     }
 
+    /// Accepts a simple linear result from locator vectors and depth facts.
+    ///
+    /// This is the non-uniform locator counterpart to
+    /// [`Self::from_schedule_uniform_linear_identity_depth_facts`]. The
+    /// constructor expands exact per-fragment locator vectors into keyed
+    /// ownership facts, validates emitted operand references, generates the
+    /// no-branch linear graph certificate internally, copies any
+    /// resolved-overlap obligations from the schedule so overlap cases still
+    /// block, accepts only identity traversal, then validates keyed nesting
+    /// depths. This follows Yap, "Towards Exact Geometric Computation" (1997):
+    /// every topological claim is replayable certificate data and unsupported
+    /// predicates remain blockers. The staged boolean split follows Vatti
+    /// (1992), Greiner-Hormann (1998), and Martinez-Rueda-Feito (2009).
+    pub fn from_schedule_operand_locations_linear_identity_depth_facts(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        first_fragments_in_second: &[BezierBooleanFragmentOwnershipLocation],
+        second_fragments_in_first: &[BezierBooleanFragmentOwnershipLocation],
+        first_endpoints: &[(Point2, Point2)],
+        second_endpoints: &[(Point2, Point2)],
+        depth_facts: &[BezierBooleanLoopNestingDepthFact2],
+    ) -> Self {
+        let facts = BezierBooleanOwnershipFactReport2::from_operand_locations(
+            schedule,
+            first_fragments_in_second,
+            second_fragments_in_first,
+        );
+        let ownership = facts.classify(schedule, operation);
+        let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
+        let assembly = BezierBooleanAssemblyReadinessReport2::from_fragment_counts(
+            &emission,
+            first_endpoints.len(),
+            second_endpoints.len(),
+        );
+        let plan =
+            BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(&assembly, &emission);
+        let graph_facts = BezierBooleanLoopGraphFacts2 {
+            emitted_step_count: plan.emitted_steps.len(),
+            branch_vertex_count: 0,
+            resolved_overlap_count: schedule.resolved_overlap_count,
+        };
+        let graph = BezierBooleanLoopGraphFactReport2::from_plan_facts(&plan, &graph_facts);
+        let traversal = graph.to_traversal_report(&plan);
+        let walk = BezierBooleanLoopGraphWalkReport2::from_identity_traversal(&traversal, &plan);
+        Self::from_graph_walk_depth_facts(
+            &walk,
+            &plan,
+            first_endpoints,
+            second_endpoints,
+            depth_facts,
+        )
+    }
+
+    /// Accepts a simple linear result from locator vectors and containment facts.
+    ///
+    /// This is the containment-pair counterpart to
+    /// [`Self::from_schedule_operand_locations_linear_identity_depth_facts`].
+    /// The method validates non-uniform locator outputs, generates only the
+    /// linear no-branch graph certificate, preserves resolved-overlap blockers,
+    /// then derives nesting depths from keyed containment pairs after output
+    /// loops exist. Yap (1997) supplies the exact-computation contract; Vatti
+    /// (1992), Greiner-Hormann (1998), and Martinez-Rueda-Feito (2009) supply
+    /// the staged clipping/traversal/fill model.
+    pub fn from_schedule_operand_locations_linear_identity_containment_facts(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        first_fragments_in_second: &[BezierBooleanFragmentOwnershipLocation],
+        second_fragments_in_first: &[BezierBooleanFragmentOwnershipLocation],
+        first_endpoints: &[(Point2, Point2)],
+        second_endpoints: &[(Point2, Point2)],
+        containment_facts: &[BezierBooleanLoopContainmentFact2],
+    ) -> Self {
+        let facts = BezierBooleanOwnershipFactReport2::from_operand_locations(
+            schedule,
+            first_fragments_in_second,
+            second_fragments_in_first,
+        );
+        let ownership = facts.classify(schedule, operation);
+        let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
+        let assembly = BezierBooleanAssemblyReadinessReport2::from_fragment_counts(
+            &emission,
+            first_endpoints.len(),
+            second_endpoints.len(),
+        );
+        let plan =
+            BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(&assembly, &emission);
+        let graph_facts = BezierBooleanLoopGraphFacts2 {
+            emitted_step_count: plan.emitted_steps.len(),
+            branch_vertex_count: 0,
+            resolved_overlap_count: schedule.resolved_overlap_count,
+        };
+        let graph = BezierBooleanLoopGraphFactReport2::from_plan_facts(&plan, &graph_facts);
+        let traversal = graph.to_traversal_report(&plan);
+        let walk = BezierBooleanLoopGraphWalkReport2::from_identity_traversal(&traversal, &plan);
+        Self::from_graph_walk_containment_facts(
+            &walk,
+            &plan,
+            first_endpoints,
+            second_endpoints,
+            containment_facts,
+        )
+    }
+
+    /// Accepts a simple quadratic Bezier result from locator vectors using linear identity traversal.
+    pub fn from_quadratic_schedule_operand_locations_linear_identity_depth_facts(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        first_fragments_in_second: &[BezierBooleanFragmentOwnershipLocation],
+        second_fragments_in_first: &[BezierBooleanFragmentOwnershipLocation],
+        first: &BezierBooleanQuadraticFragmentReport2,
+        second: &BezierBooleanQuadraticFragmentReport2,
+        depth_facts: &[BezierBooleanLoopNestingDepthFact2],
+    ) -> Self {
+        Self::from_schedule_operand_locations_linear_identity_depth_facts(
+            schedule,
+            operation,
+            first_fragments_in_second,
+            second_fragments_in_first,
+            &quadratic_fragment_endpoints(&first.fragments),
+            &quadratic_fragment_endpoints(&second.fragments),
+            depth_facts,
+        )
+    }
+
+    /// Accepts a simple quadratic Bezier result from locator vectors and containment facts.
+    pub fn from_quadratic_schedule_operand_locations_linear_identity_containment_facts(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        first_fragments_in_second: &[BezierBooleanFragmentOwnershipLocation],
+        second_fragments_in_first: &[BezierBooleanFragmentOwnershipLocation],
+        first: &BezierBooleanQuadraticFragmentReport2,
+        second: &BezierBooleanQuadraticFragmentReport2,
+        containment_facts: &[BezierBooleanLoopContainmentFact2],
+    ) -> Self {
+        Self::from_schedule_operand_locations_linear_identity_containment_facts(
+            schedule,
+            operation,
+            first_fragments_in_second,
+            second_fragments_in_first,
+            &quadratic_fragment_endpoints(&first.fragments),
+            &quadratic_fragment_endpoints(&second.fragments),
+            containment_facts,
+        )
+    }
+
+    /// Accepts a simple cubic Bezier result from locator vectors using linear identity traversal.
+    pub fn from_cubic_schedule_operand_locations_linear_identity_depth_facts(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        first_fragments_in_second: &[BezierBooleanFragmentOwnershipLocation],
+        second_fragments_in_first: &[BezierBooleanFragmentOwnershipLocation],
+        first: &BezierBooleanCubicFragmentReport2,
+        second: &BezierBooleanCubicFragmentReport2,
+        depth_facts: &[BezierBooleanLoopNestingDepthFact2],
+    ) -> Self {
+        Self::from_schedule_operand_locations_linear_identity_depth_facts(
+            schedule,
+            operation,
+            first_fragments_in_second,
+            second_fragments_in_first,
+            &cubic_fragment_endpoints(&first.fragments),
+            &cubic_fragment_endpoints(&second.fragments),
+            depth_facts,
+        )
+    }
+
+    /// Accepts a simple cubic Bezier result from locator vectors and containment facts.
+    pub fn from_cubic_schedule_operand_locations_linear_identity_containment_facts(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        first_fragments_in_second: &[BezierBooleanFragmentOwnershipLocation],
+        second_fragments_in_first: &[BezierBooleanFragmentOwnershipLocation],
+        first: &BezierBooleanCubicFragmentReport2,
+        second: &BezierBooleanCubicFragmentReport2,
+        containment_facts: &[BezierBooleanLoopContainmentFact2],
+    ) -> Self {
+        Self::from_schedule_operand_locations_linear_identity_containment_facts(
+            schedule,
+            operation,
+            first_fragments_in_second,
+            second_fragments_in_first,
+            &cubic_fragment_endpoints(&first.fragments),
+            &cubic_fragment_endpoints(&second.fragments),
+            containment_facts,
+        )
+    }
+
+    /// Accepts a simple rational quadratic/conic result from locator vectors using linear identity traversal.
+    pub fn from_rational_quadratic_schedule_operand_locations_linear_identity_depth_facts(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        first_fragments_in_second: &[BezierBooleanFragmentOwnershipLocation],
+        second_fragments_in_first: &[BezierBooleanFragmentOwnershipLocation],
+        first: &BezierBooleanRationalQuadraticFragmentReport2,
+        second: &BezierBooleanRationalQuadraticFragmentReport2,
+        depth_facts: &[BezierBooleanLoopNestingDepthFact2],
+    ) -> Self {
+        Self::from_schedule_operand_locations_linear_identity_depth_facts(
+            schedule,
+            operation,
+            first_fragments_in_second,
+            second_fragments_in_first,
+            &rational_quadratic_fragment_endpoints(&first.fragments),
+            &rational_quadratic_fragment_endpoints(&second.fragments),
+            depth_facts,
+        )
+    }
+
+    /// Accepts a simple rational quadratic/conic result from locator vectors and containment facts.
+    pub fn from_rational_quadratic_schedule_operand_locations_linear_identity_containment_facts(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        first_fragments_in_second: &[BezierBooleanFragmentOwnershipLocation],
+        second_fragments_in_first: &[BezierBooleanFragmentOwnershipLocation],
+        first: &BezierBooleanRationalQuadraticFragmentReport2,
+        second: &BezierBooleanRationalQuadraticFragmentReport2,
+        containment_facts: &[BezierBooleanLoopContainmentFact2],
+    ) -> Self {
+        Self::from_schedule_operand_locations_linear_identity_containment_facts(
+            schedule,
+            operation,
+            first_fragments_in_second,
+            second_fragments_in_first,
+            &rational_quadratic_fragment_endpoints(&first.fragments),
+            &rational_quadratic_fragment_endpoints(&second.fragments),
+            containment_facts,
+        )
+    }
+
     /// Accepts a simple certified result from per-fragment locator outputs.
     ///
     /// This is the non-uniform exact-locator counterpart to

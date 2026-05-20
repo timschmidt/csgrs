@@ -2398,6 +2398,100 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
             }
             other => format!("{other:?}"),
         };
+        let boolean_operand_location_linear_depth_result = match (
+            &boolean_quadratic_fragments,
+            &boolean_quadratic_fragments,
+            &boolean_overlap_resolution,
+        ) {
+            (
+                hypercurve::Classification::Decided(first),
+                hypercurve::Classification::Decided(second),
+                hypercurve::Classification::Decided(overlaps),
+            ) => {
+                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
+                    first, second, overlaps,
+                );
+                let preconditions =
+                    BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
+                        &readiness, first, second,
+                    );
+                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
+                    &preconditions,
+                    first,
+                    second,
+                );
+                let first_locations = vec![
+                    BezierBooleanFragmentOwnershipLocation::Outside;
+                    schedule.first_fragment_count
+                ];
+                let second_locations = vec![
+                    BezierBooleanFragmentOwnershipLocation::Outside;
+                    schedule.second_fragment_count
+                ];
+                let depth_facts = [hypercurve::BezierBooleanLoopNestingDepthFact2 {
+                    loop_index: 0,
+                    nesting_depth: 0,
+                }];
+                format!(
+                    "{:?}",
+                    BezierBooleanResultReport2::from_quadratic_schedule_operand_locations_linear_identity_depth_facts(
+                        &schedule,
+                        BooleanOp::Union,
+                        &first_locations,
+                        &second_locations,
+                        first,
+                        second,
+                        &depth_facts
+                    )
+                )
+            }
+            other => format!("{other:?}"),
+        };
+        let boolean_operand_location_linear_containment_result = match (
+            &boolean_quadratic_fragments,
+            &boolean_quadratic_fragments,
+            &boolean_overlap_resolution,
+        ) {
+            (
+                hypercurve::Classification::Decided(first),
+                hypercurve::Classification::Decided(second),
+                hypercurve::Classification::Decided(overlaps),
+            ) => {
+                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
+                    first, second, overlaps,
+                );
+                let preconditions =
+                    BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
+                        &readiness, first, second,
+                    );
+                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
+                    &preconditions,
+                    first,
+                    second,
+                );
+                let first_locations = vec![
+                    BezierBooleanFragmentOwnershipLocation::Outside;
+                    schedule.first_fragment_count
+                ];
+                let second_locations = vec![
+                    BezierBooleanFragmentOwnershipLocation::Outside;
+                    schedule.second_fragment_count
+                ];
+                format!(
+                    "{:?}",
+                    BezierBooleanResultReport2::from_quadratic_schedule_operand_locations_linear_identity_containment_facts(
+                        &schedule,
+                        BooleanOp::Union,
+                        &first_locations,
+                        &second_locations,
+                        first,
+                        second,
+                        &[]
+                    )
+                )
+            }
+            other => format!("{other:?}"),
+        };
         let boolean_operand_location_graph_walk_depth_result = match (
             &boolean_quadratic_fragments,
             &boolean_quadratic_fragments,
@@ -2689,7 +2783,7 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
         };
 
         checksum ^= format!(
-            "{y_roots:?}{spans:?}{bounds:?}{line_relation:?}{line_contact_relation:?}{point_parameters:?}{cubic_line_relation:?}{cubic_line_contact_relation:?}{mixed_relation:?}{region_relation:?}{line_image_relation:?}{line_image_isolated_relation:?}{point_image_relation:?}{line_image_curve_relation:?}{endpoint_relation:?}{shared_endpoint_midpoint_relation:?}{same_axis_no_hit_relation:?}{degree_normalized_no_hit_relation:?}{degree_normalized_graph_order:?}{degree_normalized_crossing_graph_order:?}{degree_normalized_graph_contact_order:?}{degree_elevated_identity_relation:?}{mixed_degree_midpoint_relation:?}{mixed_degree_quarter_relation:?}{mixed_degree_thirty_second_relation:?}{mixed_degree_sixty_fourth_relation:?}{mixed_degree_one_hundred_twenty_eighth_relation:?}{mixed_degree_two_hundred_fifty_sixth_relation:?}{mixed_degree_five_hundred_twelfth_relation:?}{mixed_degree_non_dyadic_graph_relation:?}{non_dyadic_quadratic_root_relation:?}{non_graph_deep_dyadic_relation:?}{non_graph_irreducible_relation:?}{cubic_quarter_relation:?}{cubic_eighth_relation:?}{cubic_sixteenth_relation:?}{cubic_thirty_second_relation:?}{cubic_sixty_fourth_relation:?}{cubic_one_hundred_twenty_eighth_relation:?}{cubic_two_hundred_fifty_sixth_relation:?}{cubic_five_hundred_twelfth_relation:?}{cubic_endpoint_relation:?}{inflections:?}{quadratic_offset_preflight:?}{cubic_offset_preflight:?}{quadratic_staged_offset:?}{cubic_staged_offset:?}{quadratic_staged_right_offset:?}{cubic_staged_right_offset:?}{quadratic_offset_adapter_report:?}{region_summary:?}{region_refinements:?}{region_isolation:?}{targeted_region_isolation:?}{region_isolation_certificate:?}{boolean_handoff_from_line_image:?}{boolean_handoff_from_regions:?}{boolean_handoff_from_certificate:?}{boolean_handoff_batch:?}{boolean_overlap_resolution:?}{path_order_from_graph:?}{path_order_from_contact:?}{path_range_batch:?}{boolean_path_scheduler:?}{boolean_split_plan:?}{boolean_split_plan_audit:?}{boolean_split_insertion_report:?}{boolean_construction_readiness:?}{boolean_quadratic_fragments:?}{boolean_cubic_fragments:?}{boolean_rational_quadratic_fragments:?}{boolean_arrangement_readiness:?}{boolean_traversal_preconditions:?}{boolean_traversal_schedule:?}{boolean_ownership_classification:?}{boolean_ownership_facts:?}{boolean_uniform_ownership_facts:?}{boolean_emission_plan:?}{boolean_assembly_readiness:?}{boolean_loop_assembly_plan:?}{boolean_loop_graph_traversal:?}{boolean_loop_graph_facts:?}{boolean_loop_graph_walk:?}{boolean_loop_graph_walk_closure:?}{boolean_loop_closure:?}{boolean_output_loops:?}{boolean_graph_walk_output_loops:?}{boolean_nesting_roles:?}{boolean_nesting_depth_facts:?}{boolean_loop_containment_facts:?}{boolean_loop_roles:?}{boolean_region_assembly:?}{boolean_graph_walk_region_assembly:?}{boolean_graph_walk_result:?}{boolean_schedule_graph_walk_result:?}{boolean_schedule_graph_fact_result:?}{boolean_schedule_graph_fact_containment_result:?}{boolean_uniform_identity_containment_result:?}{boolean_uniform_graph_fact_identity_depth_result:?}{boolean_operand_location_identity_depth_result:?}{boolean_operand_location_graph_walk_depth_result:?}{boolean_operand_location_identity_containment_result:?}{boolean_operand_location_graph_walk_containment_result:?}{boolean_uniform_linear_identity_containment_result:?}{boolean_uniform_linear_identity_depth_result:?}{boolean_result:?}"
+            "{y_roots:?}{spans:?}{bounds:?}{line_relation:?}{line_contact_relation:?}{point_parameters:?}{cubic_line_relation:?}{cubic_line_contact_relation:?}{mixed_relation:?}{region_relation:?}{line_image_relation:?}{line_image_isolated_relation:?}{point_image_relation:?}{line_image_curve_relation:?}{endpoint_relation:?}{shared_endpoint_midpoint_relation:?}{same_axis_no_hit_relation:?}{degree_normalized_no_hit_relation:?}{degree_normalized_graph_order:?}{degree_normalized_crossing_graph_order:?}{degree_normalized_graph_contact_order:?}{degree_elevated_identity_relation:?}{mixed_degree_midpoint_relation:?}{mixed_degree_quarter_relation:?}{mixed_degree_thirty_second_relation:?}{mixed_degree_sixty_fourth_relation:?}{mixed_degree_one_hundred_twenty_eighth_relation:?}{mixed_degree_two_hundred_fifty_sixth_relation:?}{mixed_degree_five_hundred_twelfth_relation:?}{mixed_degree_non_dyadic_graph_relation:?}{non_dyadic_quadratic_root_relation:?}{non_graph_deep_dyadic_relation:?}{non_graph_irreducible_relation:?}{cubic_quarter_relation:?}{cubic_eighth_relation:?}{cubic_sixteenth_relation:?}{cubic_thirty_second_relation:?}{cubic_sixty_fourth_relation:?}{cubic_one_hundred_twenty_eighth_relation:?}{cubic_two_hundred_fifty_sixth_relation:?}{cubic_five_hundred_twelfth_relation:?}{cubic_endpoint_relation:?}{inflections:?}{quadratic_offset_preflight:?}{cubic_offset_preflight:?}{quadratic_staged_offset:?}{cubic_staged_offset:?}{quadratic_staged_right_offset:?}{cubic_staged_right_offset:?}{quadratic_offset_adapter_report:?}{region_summary:?}{region_refinements:?}{region_isolation:?}{targeted_region_isolation:?}{region_isolation_certificate:?}{boolean_handoff_from_line_image:?}{boolean_handoff_from_regions:?}{boolean_handoff_from_certificate:?}{boolean_handoff_batch:?}{boolean_overlap_resolution:?}{path_order_from_graph:?}{path_order_from_contact:?}{path_range_batch:?}{boolean_path_scheduler:?}{boolean_split_plan:?}{boolean_split_plan_audit:?}{boolean_split_insertion_report:?}{boolean_construction_readiness:?}{boolean_quadratic_fragments:?}{boolean_cubic_fragments:?}{boolean_rational_quadratic_fragments:?}{boolean_arrangement_readiness:?}{boolean_traversal_preconditions:?}{boolean_traversal_schedule:?}{boolean_ownership_classification:?}{boolean_ownership_facts:?}{boolean_uniform_ownership_facts:?}{boolean_emission_plan:?}{boolean_assembly_readiness:?}{boolean_loop_assembly_plan:?}{boolean_loop_graph_traversal:?}{boolean_loop_graph_facts:?}{boolean_loop_graph_walk:?}{boolean_loop_graph_walk_closure:?}{boolean_loop_closure:?}{boolean_output_loops:?}{boolean_graph_walk_output_loops:?}{boolean_nesting_roles:?}{boolean_nesting_depth_facts:?}{boolean_loop_containment_facts:?}{boolean_loop_roles:?}{boolean_region_assembly:?}{boolean_graph_walk_region_assembly:?}{boolean_graph_walk_result:?}{boolean_schedule_graph_walk_result:?}{boolean_schedule_graph_fact_result:?}{boolean_schedule_graph_fact_containment_result:?}{boolean_uniform_identity_containment_result:?}{boolean_uniform_graph_fact_identity_depth_result:?}{boolean_operand_location_identity_depth_result:?}{boolean_operand_location_linear_depth_result:?}{boolean_operand_location_linear_containment_result:?}{boolean_operand_location_graph_walk_depth_result:?}{boolean_operand_location_identity_containment_result:?}{boolean_operand_location_graph_walk_containment_result:?}{boolean_uniform_linear_identity_containment_result:?}{boolean_uniform_linear_identity_depth_result:?}{boolean_result:?}"
         )
         .len();
     }

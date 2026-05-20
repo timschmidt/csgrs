@@ -7122,6 +7122,140 @@ fn bezier_boolean_result_consumes_operand_locations_graph_fact_identity_depth_fa
 }
 
 #[test]
+fn bezier_boolean_result_consumes_operand_locations_linear_identity_depth_facts() {
+    let schedule = BezierBooleanTraversalScheduleReport2 {
+        status: BezierBooleanTraversalScheduleStatus::Ready,
+        precondition_status: BezierBooleanTraversalPreconditionStatus::Ready,
+        first_fragment_count: 2,
+        second_fragment_count: 1,
+        steps: vec![
+            hypercurve::BezierBooleanTraversalStep2 {
+                operand: BezierBooleanTraversalOperand::First,
+                fragment_index: 0,
+            },
+            hypercurve::BezierBooleanTraversalStep2 {
+                operand: BezierBooleanTraversalOperand::First,
+                fragment_index: 1,
+            },
+            hypercurve::BezierBooleanTraversalStep2 {
+                operand: BezierBooleanTraversalOperand::Second,
+                fragment_index: 0,
+            },
+        ],
+        resolved_overlap_count: 0,
+        overlap_boundary_parameter_count: 0,
+        blocker_count: 0,
+    };
+    let depth_facts = [BezierBooleanLoopNestingDepthFact2 {
+        loop_index: 0,
+        nesting_depth: 0,
+    }];
+
+    let result =
+        BezierBooleanResultReport2::from_schedule_operand_locations_linear_identity_depth_facts(
+            &schedule,
+            BooleanOp::Union,
+            &[
+                BezierBooleanFragmentOwnershipLocation::Outside,
+                BezierBooleanFragmentOwnershipLocation::Outside,
+            ],
+            &[BezierBooleanFragmentOwnershipLocation::Inside],
+            &[(point(0, 0), point(1, 0)), (point(1, 0), point(0, 0))],
+            &[(point(3, 0), point(3, 0))],
+            &depth_facts,
+        );
+
+    assert_eq!(result.status, BezierBooleanResultStatus::Ready);
+    assert!(result.is_ready());
+    assert_eq!(result.assigned_loop_count, 1);
+    assert_eq!(result.material_loop_indices, vec![0]);
+
+    let overlap_blocked_schedule = BezierBooleanTraversalScheduleReport2 {
+        resolved_overlap_count: 1,
+        overlap_boundary_parameter_count: 2,
+        ..schedule
+    };
+    let blocked =
+        BezierBooleanResultReport2::from_schedule_operand_locations_linear_identity_depth_facts(
+            &overlap_blocked_schedule,
+            BooleanOp::Union,
+            &[
+                BezierBooleanFragmentOwnershipLocation::Outside,
+                BezierBooleanFragmentOwnershipLocation::Outside,
+            ],
+            &[BezierBooleanFragmentOwnershipLocation::Inside],
+            &[(point(0, 0), point(1, 0)), (point(1, 0), point(0, 0))],
+            &[(point(3, 0), point(3, 0))],
+            &depth_facts,
+        );
+    assert_eq!(
+        blocked.status,
+        BezierBooleanResultStatus::RegionAssemblyBlocked
+    );
+    assert!(blocked.has_blockers());
+}
+
+#[test]
+fn bezier_boolean_result_consumes_operand_locations_linear_identity_containment_facts() {
+    let schedule = BezierBooleanTraversalScheduleReport2 {
+        status: BezierBooleanTraversalScheduleStatus::Ready,
+        precondition_status: BezierBooleanTraversalPreconditionStatus::Ready,
+        first_fragment_count: 2,
+        second_fragment_count: 1,
+        steps: vec![
+            hypercurve::BezierBooleanTraversalStep2 {
+                operand: BezierBooleanTraversalOperand::First,
+                fragment_index: 0,
+            },
+            hypercurve::BezierBooleanTraversalStep2 {
+                operand: BezierBooleanTraversalOperand::First,
+                fragment_index: 1,
+            },
+            hypercurve::BezierBooleanTraversalStep2 {
+                operand: BezierBooleanTraversalOperand::Second,
+                fragment_index: 0,
+            },
+        ],
+        resolved_overlap_count: 0,
+        overlap_boundary_parameter_count: 0,
+        blocker_count: 0,
+    };
+
+    let result = BezierBooleanResultReport2::from_schedule_operand_locations_linear_identity_containment_facts(
+        &schedule,
+        BooleanOp::Union,
+        &[
+            BezierBooleanFragmentOwnershipLocation::Outside,
+            BezierBooleanFragmentOwnershipLocation::Outside,
+        ],
+        &[BezierBooleanFragmentOwnershipLocation::Inside],
+        &[(point(0, 0), point(1, 0)), (point(1, 0), point(0, 0))],
+        &[(point(3, 0), point(3, 0))],
+        &[],
+    );
+
+    assert_eq!(result.status, BezierBooleanResultStatus::Ready);
+    assert!(result.is_ready());
+    assert_eq!(result.assigned_loop_count, 1);
+    assert_eq!(result.material_loop_indices, vec![0]);
+
+    let missing_location = BezierBooleanResultReport2::from_schedule_operand_locations_linear_identity_containment_facts(
+        &schedule,
+        BooleanOp::Union,
+        &[BezierBooleanFragmentOwnershipLocation::Outside],
+        &[BezierBooleanFragmentOwnershipLocation::Inside],
+        &[(point(0, 0), point(1, 0)), (point(1, 0), point(0, 0))],
+        &[(point(3, 0), point(3, 0))],
+        &[],
+    );
+    assert_eq!(
+        missing_location.status,
+        BezierBooleanResultStatus::RegionAssemblyBlocked
+    );
+    assert!(missing_location.has_blockers());
+}
+
+#[test]
 fn bezier_boolean_result_consumes_operand_locations_graph_fact_identity_containment_facts() {
     let schedule = BezierBooleanTraversalScheduleReport2 {
         status: BezierBooleanTraversalScheduleStatus::Ready,
@@ -10157,6 +10291,118 @@ proptest! {
         prop_assert_eq!(result.directed_fragment_count, loop_count * 2);
         prop_assert_eq!(result.material_loop_count, loop_count);
         prop_assert_eq!(result.hole_loop_count, 0);
+        prop_assert!(result.is_ready());
+        prop_assert!(!result.has_blockers());
+    }
+
+    #[test]
+    fn generated_bezier_boolean_result_consumes_operand_locations_linear_depths(
+        loop_count in 1_usize..6,
+    ) {
+        let mut steps = Vec::new();
+        let mut first_endpoints = Vec::new();
+        for index in 0..loop_count {
+            let x = (index as i32) * 4;
+            steps.push(hypercurve::BezierBooleanTraversalStep2 {
+                operand: BezierBooleanTraversalOperand::First,
+                fragment_index: index * 2,
+            });
+            first_endpoints.push((point(x, 0), point(x + 1, 0)));
+            steps.push(hypercurve::BezierBooleanTraversalStep2 {
+                operand: BezierBooleanTraversalOperand::First,
+                fragment_index: index * 2 + 1,
+            });
+            first_endpoints.push((point(x + 1, 0), point(x, 0)));
+        }
+        let schedule = BezierBooleanTraversalScheduleReport2 {
+            status: BezierBooleanTraversalScheduleStatus::Ready,
+            precondition_status: BezierBooleanTraversalPreconditionStatus::Ready,
+            first_fragment_count: loop_count * 2,
+            second_fragment_count: 0,
+            steps,
+            resolved_overlap_count: 0,
+            overlap_boundary_parameter_count: 0,
+            blocker_count: 0,
+        };
+        let first_locations = vec![BezierBooleanFragmentOwnershipLocation::Outside; loop_count * 2];
+        let depth_facts = (0..loop_count)
+            .map(|loop_index| BezierBooleanLoopNestingDepthFact2 {
+                loop_index,
+                nesting_depth: loop_index * 2,
+            })
+            .collect::<Vec<_>>();
+
+        let result = BezierBooleanResultReport2::from_schedule_operand_locations_linear_identity_depth_facts(
+            &schedule,
+            BooleanOp::Union,
+            &first_locations,
+            &[],
+            &first_endpoints,
+            &[],
+            &depth_facts,
+        );
+
+        prop_assert_eq!(result.status, BezierBooleanResultStatus::Ready);
+        prop_assert_eq!(result.assigned_loop_count, loop_count);
+        prop_assert_eq!(result.directed_fragment_count, loop_count * 2);
+        prop_assert_eq!(result.material_loop_count, loop_count);
+        prop_assert_eq!(result.hole_loop_count, 0);
+        prop_assert!(result.is_ready());
+        prop_assert!(!result.has_blockers());
+    }
+
+    #[test]
+    fn generated_bezier_boolean_result_consumes_operand_locations_linear_containment(
+        loop_count in 1_usize..6,
+    ) {
+        let mut steps = Vec::new();
+        let mut first_endpoints = Vec::new();
+        for index in 0..loop_count {
+            let x = (index as i32) * 4;
+            steps.push(hypercurve::BezierBooleanTraversalStep2 {
+                operand: BezierBooleanTraversalOperand::First,
+                fragment_index: index * 2,
+            });
+            first_endpoints.push((point(x, 0), point(x + 1, 0)));
+            steps.push(hypercurve::BezierBooleanTraversalStep2 {
+                operand: BezierBooleanTraversalOperand::First,
+                fragment_index: index * 2 + 1,
+            });
+            first_endpoints.push((point(x + 1, 0), point(x, 0)));
+        }
+        let schedule = BezierBooleanTraversalScheduleReport2 {
+            status: BezierBooleanTraversalScheduleStatus::Ready,
+            precondition_status: BezierBooleanTraversalPreconditionStatus::Ready,
+            first_fragment_count: loop_count * 2,
+            second_fragment_count: 0,
+            steps,
+            resolved_overlap_count: 0,
+            overlap_boundary_parameter_count: 0,
+            blocker_count: 0,
+        };
+        let first_locations = vec![BezierBooleanFragmentOwnershipLocation::Outside; loop_count * 2];
+        let containment_facts = (1..loop_count)
+            .map(|contained_loop_index| BezierBooleanLoopContainmentFact2 {
+                container_loop_index: 0,
+                contained_loop_index,
+            })
+            .collect::<Vec<_>>();
+
+        let result = BezierBooleanResultReport2::from_schedule_operand_locations_linear_identity_containment_facts(
+            &schedule,
+            BooleanOp::Union,
+            &first_locations,
+            &[],
+            &first_endpoints,
+            &[],
+            &containment_facts,
+        );
+
+        prop_assert_eq!(result.status, BezierBooleanResultStatus::Ready);
+        prop_assert_eq!(result.assigned_loop_count, loop_count);
+        prop_assert_eq!(result.directed_fragment_count, loop_count * 2);
+        prop_assert_eq!(result.material_loop_count, 1);
+        prop_assert_eq!(result.hole_loop_count, loop_count.saturating_sub(1));
         prop_assert!(result.is_ready());
         prop_assert!(!result.has_blockers());
     }
