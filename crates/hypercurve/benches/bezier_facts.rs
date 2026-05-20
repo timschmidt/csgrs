@@ -2146,8 +2146,8 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 );
                 let graph_facts = BezierBooleanLoopGraphFacts2 {
                     emitted_step_count: plan.emitted_steps.len(),
-                    branch_vertex_count: 0,
-                    resolved_overlap_count: 0,
+                    branch_vertex_count: usize::from(!plan.emitted_steps.is_empty()),
+                    resolved_overlap_count: usize::from(!plan.emitted_steps.is_empty()),
                 };
                 let depth_facts = (0..output.loops.len())
                     .map(|loop_index| BezierBooleanLoopNestingDepthFact2 {

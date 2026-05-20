@@ -6364,6 +6364,74 @@ fn bezier_boolean_loop_graph_facts_validate_plan_key_and_blockers() {
 }
 
 #[test]
+fn bezier_boolean_loop_graph_facts_allow_certified_explicit_walks() {
+    let plan = BezierBooleanLoopAssemblyPlanReport2 {
+        status: BezierBooleanLoopAssemblyPlanStatus::Ready,
+        assembly_status: BezierBooleanAssemblyReadinessStatus::Ready,
+        operation: BooleanOp::Union,
+        emitted_steps: vec![
+            hypercurve::BezierBooleanOwnedTraversalStep2 {
+                step: hypercurve::BezierBooleanTraversalStep2 {
+                    operand: BezierBooleanTraversalOperand::First,
+                    fragment_index: 0,
+                },
+                opposite_location: BezierBooleanFragmentOwnershipLocation::Outside,
+                action: BooleanFragmentAction::KeepSourceDirection,
+            },
+            hypercurve::BezierBooleanOwnedTraversalStep2 {
+                step: hypercurve::BezierBooleanTraversalStep2 {
+                    operand: BezierBooleanTraversalOperand::First,
+                    fragment_index: 1,
+                },
+                opposite_location: BezierBooleanFragmentOwnershipLocation::Outside,
+                action: BooleanFragmentAction::KeepSourceDirection,
+            },
+        ],
+        first_emitted_count: 2,
+        second_emitted_count: 0,
+        keep_source_count: 2,
+        keep_reversed_count: 0,
+        invalid_reference_count: 0,
+        blocker_count: 0,
+    };
+    let graph = BezierBooleanLoopGraphFactReport2::from_plan_facts(
+        &plan,
+        &BezierBooleanLoopGraphFacts2 {
+            emitted_step_count: 2,
+            branch_vertex_count: 1,
+            resolved_overlap_count: 1,
+        },
+    );
+
+    assert_eq!(
+        graph.status,
+        BezierBooleanLoopGraphFactStatus::BranchPointsNeedTraversal
+    );
+    assert!(graph.has_blockers());
+
+    let linear = graph.to_traversal_report(&plan);
+    assert_eq!(
+        linear.status,
+        BezierBooleanLoopGraphTraversalStatus::BranchPointsNeedTraversal
+    );
+    assert!(linear.has_blockers());
+
+    let certified = graph.to_certified_walk_traversal_report(&plan);
+    assert_eq!(
+        certified.status,
+        BezierBooleanLoopGraphTraversalStatus::Ready
+    );
+    assert!(certified.is_ready());
+    assert!(!certified.has_blockers());
+    assert_eq!(certified.branch_vertex_count, 1);
+    assert_eq!(certified.resolved_overlap_count, 1);
+
+    let walk = BezierBooleanLoopGraphWalkReport2::from_traversal_order(&certified, &plan, &[1, 0]);
+    assert_eq!(walk.status, BezierBooleanLoopGraphWalkStatus::Ready);
+    assert_eq!(walk.ordered_steps[0].step.fragment_index, 1);
+}
+
+#[test]
 fn bezier_boolean_loop_graph_walk_validates_permutation_and_reorders_plan() {
     let plan = BezierBooleanLoopAssemblyPlanReport2 {
         status: BezierBooleanLoopAssemblyPlanStatus::Ready,
@@ -7414,6 +7482,88 @@ fn bezier_boolean_result_consumes_operand_locations_graph_fact_walk_depth_facts(
         BezierBooleanResultStatus::RegionAssemblyBlocked
     );
     assert!(duplicate_walk.has_blockers());
+}
+
+#[test]
+fn bezier_boolean_result_accepts_certified_walk_for_branch_graph_facts() {
+    let schedule = BezierBooleanTraversalScheduleReport2 {
+        status: BezierBooleanTraversalScheduleStatus::Ready,
+        precondition_status: BezierBooleanTraversalPreconditionStatus::Ready,
+        first_fragment_count: 2,
+        second_fragment_count: 0,
+        steps: vec![
+            hypercurve::BezierBooleanTraversalStep2 {
+                operand: BezierBooleanTraversalOperand::First,
+                fragment_index: 0,
+            },
+            hypercurve::BezierBooleanTraversalStep2 {
+                operand: BezierBooleanTraversalOperand::First,
+                fragment_index: 1,
+            },
+        ],
+        resolved_overlap_count: 1,
+        overlap_boundary_parameter_count: 2,
+        blocker_count: 0,
+    };
+    let ownership_facts = schedule
+        .steps
+        .iter()
+        .map(|step| BezierBooleanOwnershipFact2 {
+            step: step.clone(),
+            opposite_location: BezierBooleanFragmentOwnershipLocation::Outside,
+        })
+        .collect::<Vec<_>>();
+    let depth_facts = [
+        BezierBooleanLoopNestingDepthFact2 {
+            loop_index: 0,
+            nesting_depth: 0,
+        },
+        BezierBooleanLoopNestingDepthFact2 {
+            loop_index: 1,
+            nesting_depth: 2,
+        },
+    ];
+
+    let result = BezierBooleanResultReport2::from_schedule_graph_fact_walk_depth_facts(
+        &schedule,
+        BooleanOp::Union,
+        &ownership_facts,
+        &[(point(0, 0), point(0, 0)), (point(1, 0), point(1, 0))],
+        &[],
+        &BezierBooleanLoopGraphFacts2 {
+            emitted_step_count: 2,
+            branch_vertex_count: 1,
+            resolved_overlap_count: 1,
+        },
+        &[1, 0],
+        &depth_facts,
+    );
+
+    assert_eq!(result.status, BezierBooleanResultStatus::Ready);
+    assert!(result.is_ready());
+    assert_eq!(result.assigned_loop_count, 2);
+    assert_eq!(result.directed_fragments[0].start, point(1, 0));
+
+    let identity_blocked =
+        BezierBooleanResultReport2::from_schedule_uniform_graph_fact_identity_depth_facts(
+            &schedule,
+            BooleanOp::Union,
+            BezierBooleanFragmentOwnershipLocation::Outside,
+            BezierBooleanFragmentOwnershipLocation::Outside,
+            &[(point(0, 0), point(0, 0)), (point(1, 0), point(1, 0))],
+            &[],
+            &BezierBooleanLoopGraphFacts2 {
+                emitted_step_count: 2,
+                branch_vertex_count: 1,
+                resolved_overlap_count: 1,
+            },
+            &depth_facts,
+        );
+    assert_eq!(
+        identity_blocked.status,
+        BezierBooleanResultStatus::RegionAssemblyBlocked
+    );
+    assert!(identity_blocked.has_blockers());
 }
 
 #[test]
@@ -10031,6 +10181,75 @@ proptest! {
             &[],
             0,
             0,
+            &walk_indices,
+            &depth_facts,
+        );
+
+        prop_assert_eq!(result.status, BezierBooleanResultStatus::Ready);
+        prop_assert_eq!(result.assigned_loop_count, loop_count);
+        prop_assert_eq!(result.directed_fragment_count, loop_count * 2);
+        prop_assert_eq!(result.material_loop_count, loop_count);
+        prop_assert_eq!(result.hole_loop_count, 0);
+        prop_assert!(result.is_ready());
+        prop_assert!(!result.has_blockers());
+    }
+
+    #[test]
+    fn generated_bezier_boolean_result_accepts_certified_walk_for_graph_obligations(
+        loop_count in 1_usize..6,
+    ) {
+        let mut steps = Vec::new();
+        let mut endpoints = Vec::new();
+        for index in 0..loop_count {
+            let x = (index as i32) * 4;
+            steps.push(hypercurve::BezierBooleanTraversalStep2 {
+                operand: BezierBooleanTraversalOperand::First,
+                fragment_index: index * 2,
+            });
+            endpoints.push((point(x, 0), point(x + 1, 0)));
+            steps.push(hypercurve::BezierBooleanTraversalStep2 {
+                operand: BezierBooleanTraversalOperand::First,
+                fragment_index: index * 2 + 1,
+            });
+            endpoints.push((point(x + 1, 0), point(x, 0)));
+        }
+        let schedule = BezierBooleanTraversalScheduleReport2 {
+            status: BezierBooleanTraversalScheduleStatus::Ready,
+            precondition_status: BezierBooleanTraversalPreconditionStatus::Ready,
+            first_fragment_count: loop_count * 2,
+            second_fragment_count: 0,
+            steps,
+            resolved_overlap_count: 1,
+            overlap_boundary_parameter_count: 2,
+            blocker_count: 0,
+        };
+        let ownership_facts = schedule
+            .steps
+            .iter()
+            .map(|step| BezierBooleanOwnershipFact2 {
+                step: step.clone(),
+                opposite_location: BezierBooleanFragmentOwnershipLocation::Outside,
+            })
+            .collect::<Vec<_>>();
+        let walk_indices = (0..loop_count * 2).collect::<Vec<_>>();
+        let depth_facts = (0..loop_count)
+            .map(|loop_index| BezierBooleanLoopNestingDepthFact2 {
+                loop_index,
+                nesting_depth: loop_index * 2,
+            })
+            .collect::<Vec<_>>();
+
+        let result = BezierBooleanResultReport2::from_schedule_graph_fact_walk_depth_facts(
+            &schedule,
+            BooleanOp::Union,
+            &ownership_facts,
+            &endpoints,
+            &[],
+            &BezierBooleanLoopGraphFacts2 {
+                emitted_step_count: loop_count * 2,
+                branch_vertex_count: 1,
+                resolved_overlap_count: 1,
+            },
             &walk_indices,
             &depth_facts,
         );

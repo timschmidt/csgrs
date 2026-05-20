@@ -3970,6 +3970,83 @@ impl BezierBooleanLoopGraphFactReport2 {
         }
     }
 
+    /// Converts keyed graph facts into a traversal report for an explicit walk.
+    ///
+    /// [`Self::to_traversal_report`] preserves branch vertices and resolved
+    /// overlaps as blockers because identity closure has no graph walk to
+    /// justify a reorder. This variant is used only by constructors that also
+    /// validate a caller-supplied walk permutation. In that setting nonzero
+    /// branch/overlap counts are certified obligations already handled by the
+    /// external graph walker, so the traversal report is ready once the graph
+    /// fact is keyed to the emitted plan. Emitted-step mismatches and blocked
+    /// plans remain blockers. This is the Yap (1997) predicate/construction
+    /// boundary: topology may advance only when the exact graph-walk
+    /// certificate is supplied as data. The traversal role follows Vatti
+    /// (1992), Greiner-Hormann (1998), and Martinez-Rueda-Feito (2009).
+    pub fn to_certified_walk_traversal_report(
+        &self,
+        plan: &BezierBooleanLoopAssemblyPlanReport2,
+    ) -> BezierBooleanLoopGraphTraversalReport2 {
+        match self.status {
+            BezierBooleanLoopGraphFactStatus::Ready
+            | BezierBooleanLoopGraphFactStatus::BranchPointsNeedTraversal
+            | BezierBooleanLoopGraphFactStatus::ResolvedOverlapsNeedTraversal => {
+                BezierBooleanLoopGraphTraversalReport2 {
+                    status: BezierBooleanLoopGraphTraversalStatus::Ready,
+                    plan_status: plan.status,
+                    operation: self.operation,
+                    emitted_step_count: plan.emitted_steps.len(),
+                    branch_vertex_count: self.branch_vertex_count,
+                    resolved_overlap_count: self.resolved_overlap_count,
+                    blocker_count: 0,
+                }
+            }
+            BezierBooleanLoopGraphFactStatus::Empty => BezierBooleanLoopGraphTraversalReport2 {
+                status: BezierBooleanLoopGraphTraversalStatus::Empty,
+                plan_status: plan.status,
+                operation: self.operation,
+                emitted_step_count: plan.emitted_steps.len(),
+                branch_vertex_count: self.branch_vertex_count,
+                resolved_overlap_count: self.resolved_overlap_count,
+                blocker_count: 0,
+            },
+            BezierBooleanLoopGraphFactStatus::NoInteriorSplits => {
+                BezierBooleanLoopGraphTraversalReport2 {
+                    status: BezierBooleanLoopGraphTraversalStatus::NoInteriorSplits,
+                    plan_status: plan.status,
+                    operation: self.operation,
+                    emitted_step_count: plan.emitted_steps.len(),
+                    branch_vertex_count: self.branch_vertex_count,
+                    resolved_overlap_count: self.resolved_overlap_count,
+                    blocker_count: 0,
+                }
+            }
+            BezierBooleanLoopGraphFactStatus::NoEmittedFragments => {
+                BezierBooleanLoopGraphTraversalReport2 {
+                    status: BezierBooleanLoopGraphTraversalStatus::NoEmittedFragments,
+                    plan_status: plan.status,
+                    operation: self.operation,
+                    emitted_step_count: plan.emitted_steps.len(),
+                    branch_vertex_count: self.branch_vertex_count,
+                    resolved_overlap_count: self.resolved_overlap_count,
+                    blocker_count: 0,
+                }
+            }
+            BezierBooleanLoopGraphFactStatus::PlanBlocked
+            | BezierBooleanLoopGraphFactStatus::EmittedStepCountMismatch => {
+                BezierBooleanLoopGraphTraversalReport2 {
+                    status: BezierBooleanLoopGraphTraversalStatus::PlanBlocked,
+                    plan_status: plan.status,
+                    operation: self.operation,
+                    emitted_step_count: plan.emitted_steps.len(),
+                    branch_vertex_count: self.branch_vertex_count,
+                    resolved_overlap_count: self.resolved_overlap_count,
+                    blocker_count: self.blocker_count.max(1),
+                }
+            }
+        }
+    }
+
     /// Returns true when graph facts allow linear endpoint closure.
     pub fn is_ready(&self) -> bool {
         self.status == BezierBooleanLoopGraphFactStatus::Ready
@@ -6658,7 +6735,7 @@ impl BezierBooleanResultReport2 {
         let plan =
             BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(&assembly, &emission);
         let graph = BezierBooleanLoopGraphFactReport2::from_plan_facts(&plan, graph_facts);
-        let traversal = graph.to_traversal_report(&plan);
+        let traversal = graph.to_certified_walk_traversal_report(&plan);
         let walk = BezierBooleanLoopGraphWalkReport2::from_traversal_order(
             &traversal,
             &plan,
@@ -6883,7 +6960,7 @@ impl BezierBooleanResultReport2 {
         let plan =
             BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(&assembly, &emission);
         let graph = BezierBooleanLoopGraphFactReport2::from_plan_facts(&plan, graph_facts);
-        let traversal = graph.to_traversal_report(&plan);
+        let traversal = graph.to_certified_walk_traversal_report(&plan);
         let walk = BezierBooleanLoopGraphWalkReport2::from_traversal_order(
             &traversal,
             &plan,
@@ -6937,7 +7014,7 @@ impl BezierBooleanResultReport2 {
         let plan =
             BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(&assembly, &emission);
         let graph = BezierBooleanLoopGraphFactReport2::from_plan_facts(&plan, graph_facts);
-        let traversal = graph.to_traversal_report(&plan);
+        let traversal = graph.to_certified_walk_traversal_report(&plan);
         let walk = BezierBooleanLoopGraphWalkReport2::from_traversal_order(
             &traversal,
             &plan,
@@ -6990,7 +7067,7 @@ impl BezierBooleanResultReport2 {
         let plan =
             BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(&assembly, &emission);
         let graph = BezierBooleanLoopGraphFactReport2::from_plan_facts(&plan, graph_facts);
-        let traversal = graph.to_traversal_report(&plan);
+        let traversal = graph.to_certified_walk_traversal_report(&plan);
         let walk = BezierBooleanLoopGraphWalkReport2::from_traversal_order(
             &traversal,
             &plan,
