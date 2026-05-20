@@ -1,8 +1,8 @@
 use hypercurve::{
     BooleanBoundaryAuditStatus, BooleanBoundaryTraversalStatus, BooleanOp,
     BooleanRegionAuditStatus, BoundaryContourNestingStatus, BulgeVertex2, Classification, Contour2,
-    ContourPointLocation, CurvePolicy, FillRule, Real, Region2, RegionPointLocation,
-    Segment2, UncertaintyReason,
+    ContourPointLocation, CurvePolicy, FillRule, Real, Region2, RegionPointLocation, Segment2,
+    UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -311,8 +311,14 @@ fn prepared_boundary_traversal_reports_preserve_blockers_on_boundary_contacts() 
     // Foster, Hormann, and Popa degeneracy model (2019), so traversal should
     // return a blocker reason rather than silently forcing an unsupported
     // topological guess.
-    assert_eq!(shared_plain.status, BooleanBoundaryTraversalStatus::UnresolvedBoundaries);
-    assert_eq!(shared_plain.blocker_reason, Some(UncertaintyReason::Boundary));
+    assert_eq!(
+        shared_plain.status,
+        BooleanBoundaryTraversalStatus::UnresolvedBoundaries
+    );
+    assert_eq!(
+        shared_plain.blocker_reason,
+        Some(UncertaintyReason::Boundary)
+    );
     assert!(shared_plain.unresolved_boundary_count > 0);
     assert!(shared_plain.loops.is_none());
 
@@ -324,14 +330,22 @@ fn prepared_boundary_traversal_reports_preserve_blockers_on_boundary_contacts() 
     );
     assert_eq!(
         shared_first_prepared
-            .boolean_boundary_traversal_report_against_region(&shared_edge_second.as_view(), BooleanOp::Union, &policy)
+            .boolean_boundary_traversal_report_against_region(
+                &shared_edge_second.as_view(),
+                BooleanOp::Union,
+                &policy
+            )
             .unwrap(),
         Classification::Decided(shared_plain.clone())
     );
     assert_eq!(
         shared_edge_first
             .as_view()
-            .boolean_boundary_traversal_report_against_prepared_region(&shared_second_prepared, BooleanOp::Union, &policy)
+            .boolean_boundary_traversal_report_against_prepared_region(
+                &shared_second_prepared,
+                BooleanOp::Union,
+                &policy
+            )
             .unwrap(),
         Classification::Decided(shared_plain)
     );
@@ -366,14 +380,22 @@ fn prepared_boundary_traversal_reports_preserve_blockers_on_boundary_contacts() 
     );
     assert_eq!(
         point_first_prepared
-            .boolean_boundary_traversal_report_against_region(&point_touch_second.as_view(), BooleanOp::Union, &policy)
+            .boolean_boundary_traversal_report_against_region(
+                &point_touch_second.as_view(),
+                BooleanOp::Union,
+                &policy
+            )
             .unwrap(),
         Classification::Decided(point_plain.clone())
     );
     assert_eq!(
         point_touch_first
             .as_view()
-            .boolean_boundary_traversal_report_against_prepared_region(&point_second_prepared, BooleanOp::Union, &policy)
+            .boolean_boundary_traversal_report_against_prepared_region(
+                &point_second_prepared,
+                BooleanOp::Union,
+                &policy
+            )
             .unwrap(),
         Classification::Decided(point_plain)
     );
@@ -2238,8 +2260,9 @@ fn region_boolean_boundary_pipeline_regularizes_shared_edges() {
     let first = region(vec![rectangle(0, 0, 4, 4)]);
     let second = region(vec![rectangle(2, -2, 6, 0)]);
 
-    let Classification::Decided(loops) =
-        first.boolean_boundary_loops(&second, BooleanOp::Union, &policy()).unwrap()
+    let Classification::Decided(loops) = first
+        .boolean_boundary_loops(&second, BooleanOp::Union, &policy())
+        .unwrap()
     else {
         panic!("shared-edge union should be decided");
     };
@@ -2251,8 +2274,9 @@ fn region_boolean_boundary_pipeline_regularizes_point_touch_branch_vertices() {
     let first = region(vec![rectangle(0, 0, 2, 2)]);
     let second = region(vec![rectangle(2, 2, 4, 4)]);
 
-    let Classification::Decided(loops) =
-        first.boolean_boundary_loops(&second, BooleanOp::Union, &policy()).unwrap()
+    let Classification::Decided(loops) = first
+        .boolean_boundary_loops(&second, BooleanOp::Union, &policy())
+        .unwrap()
     else {
         panic!("point-touch union should be decided");
     };
@@ -2261,10 +2285,7 @@ fn region_boolean_boundary_pipeline_regularizes_point_touch_branch_vertices() {
 
 #[test]
 fn region_boolean_prepared_boundary_reports_match_plain_on_hole_boundary_shared_strip() {
-    let outer_with_hole = Region2::new(
-        vec![rectangle(0, 0, 10, 10)],
-        vec![rectangle(3, 3, 7, 7)],
-    );
+    let outer_with_hole = Region2::new(vec![rectangle(0, 0, 10, 10)], vec![rectangle(3, 3, 7, 7)]);
     // The strip lies in the removed hole interior and shares its entire
     // lower side with the hole boundary. According to Foster, Hormann, and
     // Popa (2019), full shared-edge boundary contacts should be regularized at
@@ -2292,14 +2313,22 @@ fn region_boolean_prepared_boundary_reports_match_plain_on_hole_boundary_shared_
     );
     assert_eq!(
         prepared_outer
-            .boolean_boundary_loops_against_region(&shared_strip.as_view(), BooleanOp::Union, &policy)
+            .boolean_boundary_loops_against_region(
+                &shared_strip.as_view(),
+                BooleanOp::Union,
+                &policy
+            )
             .unwrap(),
         Classification::Decided(plain_loops.clone())
     );
     assert_eq!(
         outer_with_hole
             .as_view()
-            .boolean_boundary_loops_against_prepared_region(&prepared_strip, BooleanOp::Union, &policy)
+            .boolean_boundary_loops_against_prepared_region(
+                &prepared_strip,
+                BooleanOp::Union,
+                &policy
+            )
             .unwrap(),
         Classification::Decided(plain_loops.clone())
     );
@@ -2315,7 +2344,12 @@ fn region_boolean_prepared_boundary_reports_match_plain_on_hole_boundary_shared_
     };
     assert_eq!(
         prepared_outer
-            .boolean_boundary_contours(&prepared_strip, BooleanOp::Union, FillRule::NonZero, &policy)
+            .boolean_boundary_contours(
+                &prepared_strip,
+                BooleanOp::Union,
+                FillRule::NonZero,
+                &policy
+            )
             .unwrap(),
         Classification::Decided(plain_contours.clone())
     );
@@ -2336,7 +2370,12 @@ fn region_boolean_prepared_boundary_reports_match_plain_on_hole_boundary_shared_
     assert!(plain_loop_report.audit.is_valid());
     assert_eq!(
         prepared_outer
-            .boolean_boundary_loop_report(&prepared_strip, BooleanOp::Union, FillRule::NonZero, &policy)
+            .boolean_boundary_loop_report(
+                &prepared_strip,
+                BooleanOp::Union,
+                FillRule::NonZero,
+                &policy
+            )
             .unwrap(),
         Classification::Decided(plain_loop_report.clone())
     );
@@ -2353,13 +2392,23 @@ fn region_boolean_prepared_boundary_reports_match_plain_on_hole_boundary_shared_
     assert!(plain_region_report.audit.is_valid());
     assert_eq!(
         prepared_outer
-            .boolean_region_report(&prepared_strip, BooleanOp::Union, FillRule::NonZero, &policy)
+            .boolean_region_report(
+                &prepared_strip,
+                BooleanOp::Union,
+                FillRule::NonZero,
+                &policy
+            )
             .unwrap(),
         Classification::Decided(plain_region_report.clone())
     );
     assert_eq!(
         prepared_outer
-            .boolean_region_report_against_region(&shared_strip.as_view(), BooleanOp::Union, FillRule::NonZero, &policy)
+            .boolean_region_report_against_region(
+                &shared_strip.as_view(),
+                BooleanOp::Union,
+                FillRule::NonZero,
+                &policy
+            )
             .unwrap(),
         Classification::Decided(plain_region_report.clone())
     );

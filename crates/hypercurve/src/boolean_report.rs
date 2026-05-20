@@ -11,8 +11,9 @@
 
 use crate::{
     ArcArcIntersection, BooleanBoundaryLoopSet, BooleanOp, BoundaryContourNestingAuditReport2,
-    Classification, Contour2, CurvePolicy, CurveResult, FillRule, LineArcIntersection,
-    LineLineIntersection, Region2, RegionView2, SegmentIntersection, prepared::PreparedRegionView2,
+    BoundaryContourNestingStatus, Classification, Contour2, CurvePolicy, CurveResult, FillRule,
+    LineArcIntersection, LineLineIntersection, Region2, RegionView2, SegmentIntersection,
+    UncertaintyReason, prepared::PreparedRegionView2,
 };
 
 /// Exact boundary-audit status for boolean boundary output.
@@ -23,16 +24,18 @@ pub enum BooleanBoundaryAuditStatus {
     /// Every output contour is free of self contacts and no two output contours
     /// have a boundary contact under the active exact policy.
     Valid,
+    /// Distinct output contours meet only at certified point contacts.
+    PointContact,
     /// At least one output contour has a non-adjacent self contact.
     SelfContact,
-    /// Two distinct output contours touch, cross, or overlap.
+    /// Two distinct output contours cross or overlap.
     InterContourContact,
 }
 
 impl BooleanBoundaryAuditStatus {
     /// Returns true when the status certifies a usable regularized boundary.
     pub const fn is_valid(self) -> bool {
-        matches!(self, Self::Empty | Self::Valid)
+        matches!(self, Self::Empty | Self::Valid | Self::PointContact)
     }
 }
 
@@ -44,9 +47,11 @@ pub enum BooleanRegionAuditStatus {
     /// Every result contour is free of self contacts and no two result contours
     /// have a boundary contact under the active exact policy.
     Valid,
+    /// Distinct result contours meet only at certified point contacts.
+    PointContact,
     /// At least one result contour has a non-adjacent self contact.
     SelfContact,
-    /// Two distinct result contours touch, cross, or overlap.
+    /// Two distinct result contours cross or overlap.
     InterContourContact,
 }
 
@@ -55,6 +60,7 @@ impl From<BooleanBoundaryAuditStatus> for BooleanRegionAuditStatus {
         match status {
             BooleanBoundaryAuditStatus::Empty => Self::Empty,
             BooleanBoundaryAuditStatus::Valid => Self::Valid,
+            BooleanBoundaryAuditStatus::PointContact => Self::PointContact,
             BooleanBoundaryAuditStatus::SelfContact => Self::SelfContact,
             BooleanBoundaryAuditStatus::InterContourContact => Self::InterContourContact,
         }
@@ -117,7 +123,9 @@ impl BooleanRegionAuditReport2 {
     pub const fn is_valid(&self) -> bool {
         matches!(
             self.status,
-            BooleanRegionAuditStatus::Empty | BooleanRegionAuditStatus::Valid
+            BooleanRegionAuditStatus::Empty
+                | BooleanRegionAuditStatus::Valid
+                | BooleanRegionAuditStatus::PointContact
         )
     }
 }
@@ -342,7 +350,11 @@ impl RegionView2<'_> {
             Classification::Decided(contours) => contours,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        boolean_region_pipeline_report_from_contours(op, contours, policy)
+        let result = match self.boolean_region(other, op, fill_rule, policy)? {
+            Classification::Decided(result) => result,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        boolean_region_pipeline_report_from_contours(op, contours, Some(result), policy)
     }
 
     /// Computes boolean boundary loops and returns an audit report.
@@ -513,7 +525,11 @@ impl PreparedRegionView2<'_> {
             Classification::Decided(contours) => contours,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        boolean_region_pipeline_report_from_contours(op, contours, policy)
+        let result = match self.boolean_region(other, op, fill_rule, policy)? {
+            Classification::Decided(result) => result,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        boolean_region_pipeline_report_from_contours(op, contours, Some(result), policy)
     }
 
     /// Computes boolean boundary loops against another prepared region and
@@ -601,6 +617,7 @@ impl PreparedRegionView2<'_> {
 fn boolean_region_pipeline_report_from_contours(
     op: BooleanOp,
     contours: Vec<Contour2>,
+    decided_result: Option<Region2>,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<BooleanRegionPipelineReport2>> {
     let boundary_audit = match audit_boolean_boundary_contours(&contours, policy)? {
@@ -609,6 +626,15 @@ fn boolean_region_pipeline_report_from_contours(
     };
     let nesting = match Region2::from_boundary_contours_report(contours.clone(), policy)? {
         Classification::Decided(report) => report,
+        Classification::Uncertain(UncertaintyReason::Boundary) => {
+            let Some(result) = decided_result else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            };
+            let Some(audit) = contact_nesting_audit_from_decided_result(&contours, &result) else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            };
+            crate::BoundaryContourNestingReport2 { result, audit }
+        }
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
     let region_audit = match audit_boolean_region_result(&nesting.result, policy)? {
@@ -624,6 +650,67 @@ fn boolean_region_pipeline_report_from_contours(
         result: nesting.result,
         region_audit,
     }))
+}
+
+fn contact_nesting_audit_from_decided_result(
+    contours: &[Contour2],
+    result: &Region2,
+) -> Option<BoundaryContourNestingAuditReport2> {
+    let mut material_used = vec![false; result.material_contours().len()];
+    let mut hole_used = vec![false; result.hole_contours().len()];
+    let mut contour_depths = Vec::with_capacity(contours.len());
+
+    for contour in contours {
+        if let Some((index, _)) =
+            result
+                .material_contours()
+                .iter()
+                .enumerate()
+                .find(|(index, material)| {
+                    !material_used[*index] && contour.has_same_exact_boundary(material)
+                })
+        {
+            material_used[index] = true;
+            contour_depths.push(0);
+            continue;
+        }
+
+        if let Some((index, _)) = result
+            .hole_contours()
+            .iter()
+            .enumerate()
+            .find(|(index, hole)| !hole_used[*index] && contour.has_same_exact_boundary(hole))
+        {
+            hole_used[index] = true;
+            contour_depths.push(1);
+            continue;
+        }
+
+        return None;
+    }
+
+    if material_used.iter().any(|used| !used) || hole_used.iter().any(|used| !used) {
+        return None;
+    }
+
+    // Point-touching output components are valid boolean products even though
+    // standalone contour nesting deliberately reports a boundary ambiguity.
+    // The role assignment here is certified by exact boundary identity against
+    // the already-decided boolean result, preserving Yap's object-level proof
+    // boundary while following Foster, Hormann, and Popa's treatment of
+    // degenerate contacts as explicit clipping cases.
+    Some(BoundaryContourNestingAuditReport2 {
+        status: if contours.is_empty() {
+            BoundaryContourNestingStatus::Empty
+        } else {
+            BoundaryContourNestingStatus::Valid
+        },
+        input_contour_count: contours.len(),
+        checked_containment_pair_count: 0,
+        material_contour_count: result.material_contours().len(),
+        hole_contour_count: result.hole_contours().len(),
+        contour_depths,
+    })
 }
 
 fn boolean_boundary_loop_report_from_loops(
@@ -711,6 +798,7 @@ fn audit_boolean_contour_refs(
     }
 
     let mut checked_pairs = 0_usize;
+    let mut saw_point_contact = false;
     for first_index in 0..contours.len() {
         for second_index in (first_index + 1)..contours.len() {
             checked_pairs += 1;
@@ -718,9 +806,12 @@ fn audit_boolean_contour_refs(
                 .curve_string()
                 .intersect_curve_string(contours[second_index].curve_string(), policy)?;
             for event in events {
-                match segment_intersection_has_contact(&event.relation) {
-                    Classification::Decided(false) => {}
-                    Classification::Decided(true) => {
+                match segment_intersection_contact_audit(&event.relation) {
+                    Classification::Decided(ContourContactAudit::None) => {}
+                    Classification::Decided(ContourContactAudit::PointOnly) => {
+                        saw_point_contact = true;
+                    }
+                    Classification::Decided(ContourContactAudit::Invalid) => {
                         return Ok(Classification::Decided(
                             BooleanBoundaryContourAuditReport2 {
                                 status: BooleanBoundaryAuditStatus::InterContourContact,
@@ -739,19 +830,62 @@ fn audit_boolean_contour_refs(
 
     Ok(Classification::Decided(
         BooleanBoundaryContourAuditReport2 {
-            status: BooleanBoundaryAuditStatus::Valid,
+            status: if saw_point_contact {
+                BooleanBoundaryAuditStatus::PointContact
+            } else {
+                BooleanBoundaryAuditStatus::Valid
+            },
             contour_count: contours.len(),
             checked_contour_pair_count: checked_pairs,
         },
     ))
 }
 
-fn segment_intersection_has_contact(relation: &SegmentIntersection) -> Classification<bool> {
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum ContourContactAudit {
+    None,
+    PointOnly,
+    Invalid,
+}
+
+fn point_contact_audit(kind: crate::IntersectionKind) -> ContourContactAudit {
+    match kind {
+        crate::IntersectionKind::Endpoint | crate::IntersectionKind::Tangent => {
+            ContourContactAudit::PointOnly
+        }
+        crate::IntersectionKind::Crossing | crate::IntersectionKind::Overlap => {
+            ContourContactAudit::Invalid
+        }
+    }
+}
+
+fn combine_contact_audit(
+    first: ContourContactAudit,
+    second: ContourContactAudit,
+) -> ContourContactAudit {
+    match (first, second) {
+        (ContourContactAudit::Invalid, _) | (_, ContourContactAudit::Invalid) => {
+            ContourContactAudit::Invalid
+        }
+        (ContourContactAudit::PointOnly, _) | (_, ContourContactAudit::PointOnly) => {
+            ContourContactAudit::PointOnly
+        }
+        (ContourContactAudit::None, ContourContactAudit::None) => ContourContactAudit::None,
+    }
+}
+
+fn segment_intersection_contact_audit(
+    relation: &SegmentIntersection,
+) -> Classification<ContourContactAudit> {
     match relation {
-        SegmentIntersection::LineLine(LineLineIntersection::None) => Classification::Decided(false),
-        SegmentIntersection::LineLine(LineLineIntersection::Point { .. })
-        | SegmentIntersection::LineLine(LineLineIntersection::Overlap { .. }) => {
-            Classification::Decided(true)
+        SegmentIntersection::LineLine(LineLineIntersection::None) => {
+            Classification::Decided(ContourContactAudit::None)
+        }
+        SegmentIntersection::LineLine(LineLineIntersection::Point { kind, .. }) => {
+            Classification::Decided(point_contact_audit(*kind))
+        }
+        SegmentIntersection::LineLine(LineLineIntersection::Overlap { .. }) => {
+            Classification::Decided(ContourContactAudit::Invalid)
         }
         SegmentIntersection::LineLine(LineLineIntersection::Uncertain { reason }) => {
             Classification::Uncertain(*reason)
@@ -759,29 +893,37 @@ fn segment_intersection_has_contact(relation: &SegmentIntersection) -> Classific
         SegmentIntersection::LineArc {
             result: LineArcIntersection::None,
             ..
-        } => Classification::Decided(false),
+        } => Classification::Decided(ContourContactAudit::None),
         SegmentIntersection::LineArc {
-            result:
-                LineArcIntersection::Point(_)
-                | LineArcIntersection::TwoPoints {
-                    first: _,
-                    second: _,
-                },
+            result: LineArcIntersection::Point(point),
             ..
-        } => Classification::Decided(true),
+        } => Classification::Decided(point_contact_audit(point.kind)),
+        SegmentIntersection::LineArc {
+            result: LineArcIntersection::TwoPoints { first, second },
+            ..
+        } => Classification::Decided(combine_contact_audit(
+            point_contact_audit(first.kind),
+            point_contact_audit(second.kind),
+        )),
         SegmentIntersection::LineArc {
             result: LineArcIntersection::Uncertain { reason },
             ..
         } => Classification::Uncertain(*reason),
-        SegmentIntersection::ArcArc(ArcArcIntersection::None) => Classification::Decided(false),
-        SegmentIntersection::ArcArc(
-            ArcArcIntersection::Point(_)
-            | ArcArcIntersection::TwoPoints {
-                first: _,
-                second: _,
-            }
-            | ArcArcIntersection::Overlap { .. },
-        ) => Classification::Decided(true),
+        SegmentIntersection::ArcArc(ArcArcIntersection::None) => {
+            Classification::Decided(ContourContactAudit::None)
+        }
+        SegmentIntersection::ArcArc(ArcArcIntersection::Point(point)) => {
+            Classification::Decided(point_contact_audit(point.kind))
+        }
+        SegmentIntersection::ArcArc(ArcArcIntersection::TwoPoints { first, second }) => {
+            Classification::Decided(combine_contact_audit(
+                point_contact_audit(first.kind),
+                point_contact_audit(second.kind),
+            ))
+        }
+        SegmentIntersection::ArcArc(ArcArcIntersection::Overlap { .. }) => {
+            Classification::Decided(ContourContactAudit::Invalid)
+        }
         SegmentIntersection::ArcArc(ArcArcIntersection::Uncertain { reason }) => {
             Classification::Uncertain(*reason)
         }

@@ -347,7 +347,11 @@ impl BooleanBoundaryLoopSet {
                 .iter()
                 .enumerate()
                 .map(|(fragment_index, segment)| DirectedBooleanFragment {
-                    key: RegionContourKey::new(RegionSide::First, RegionContourRole::Material, index),
+                    key: RegionContourKey::new(
+                        RegionSide::First,
+                        RegionContourRole::Material,
+                        index,
+                    ),
                     fragment_index,
                     segment: segment.clone(),
                 })

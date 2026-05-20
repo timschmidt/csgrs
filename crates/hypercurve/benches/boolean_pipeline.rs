@@ -9,12 +9,25 @@ fn s(value: i32) -> Real {
     value.into()
 }
 
+fn q(numerator: i32, denominator: i32) -> Real {
+    (Real::from(numerator) / Real::from(denominator))
+        .expect("positive integer benchmark denominator must define an exact rational")
+}
+
 fn p(x: i32, y: i32) -> hypercurve::Point2 {
     hypercurve::Point2::new(s(x), s(y))
 }
 
+fn pr(x: Real, y: Real) -> hypercurve::Point2 {
+    hypercurve::Point2::new(x, y)
+}
+
 fn vertex(x: i32, y: i32, bulge: i32) -> BulgeVertex2 {
     BulgeVertex2::new(p(x, y), s(bulge))
+}
+
+fn real_vertex(x: Real, y: Real) -> BulgeVertex2 {
+    BulgeVertex2::new(pr(x, y), Real::zero())
 }
 
 fn rectangle(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2 {
@@ -23,6 +36,16 @@ fn rectangle(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2 {
         vertex(xmax, ymin, 0),
         vertex(xmax, ymax, 0),
         vertex(xmin, ymax, 0),
+    ])
+    .unwrap()
+}
+
+fn real_rectangle(xmin: Real, ymin: Real, xmax: Real, ymax: Real) -> Contour2 {
+    Contour2::from_bulge_vertices(&[
+        real_vertex(xmin.clone(), ymin.clone()),
+        real_vertex(xmax.clone(), ymin),
+        real_vertex(xmax, ymax.clone()),
+        real_vertex(xmin, ymax),
     ])
     .unwrap()
 }
@@ -156,7 +179,7 @@ fn bench_left_prepared_boundary_loop_report_case(
 
     for _ in 0..iterations {
         let report = match first
-            .boolean_boundary_loop_report(&second, op, FillRule::NonZero, &policy)
+            .boolean_boundary_loop_report_against_region(&second, op, FillRule::NonZero, &policy)
             .unwrap()
         {
             Classification::Decided(report) => report,
@@ -164,8 +187,9 @@ fn bench_left_prepared_boundary_loop_report_case(
                 panic!("{name} left-prepared loop report became uncertain: {reason:?}");
             }
         };
-        total_checks +=
-            black_box(report.audit.loop_count + report.audit.checked_loop_pair_count + report.loops.len());
+        total_checks += black_box(
+            report.audit.loop_count + report.audit.checked_loop_pair_count + report.loops.len(),
+        );
     }
 
     let elapsed = started.elapsed();
@@ -193,7 +217,12 @@ fn bench_right_prepared_boundary_loop_report_case(
 
     for _ in 0..iterations {
         let report = match first
-            .boolean_boundary_loop_report_against_prepared_region(&second, op, FillRule::NonZero, &policy)
+            .boolean_boundary_loop_report_against_prepared_region(
+                &second,
+                op,
+                FillRule::NonZero,
+                &policy,
+            )
             .unwrap()
         {
             Classification::Decided(report) => report,
@@ -201,8 +230,9 @@ fn bench_right_prepared_boundary_loop_report_case(
                 panic!("{name} right-prepared loop report became uncertain: {reason:?}");
             }
         };
-        total_checks +=
-            black_box(report.audit.loop_count + report.audit.checked_loop_pair_count + report.loops.len());
+        total_checks += black_box(
+            report.audit.loop_count + report.audit.checked_loop_pair_count + report.loops.len(),
+        );
     }
 
     let elapsed = started.elapsed();
@@ -231,7 +261,7 @@ fn bench_left_prepared_region_report_case(
 
     for _ in 0..iterations {
         let report = match first
-            .boolean_region_report(&second, op, FillRule::NonZero, &policy)
+            .boolean_region_report_against_region(&second, op, FillRule::NonZero, &policy)
             .unwrap()
         {
             Classification::Decided(report) => report,
@@ -239,9 +269,8 @@ fn bench_left_prepared_region_report_case(
                 panic!("{name} left-prepared region report became uncertain: {reason:?}");
             }
         };
-        total_checks += black_box(
-            report.audit.checked_contour_count + report.audit.checked_contour_pair_count,
-        );
+        total_checks +=
+            black_box(report.audit.checked_contour_count + report.audit.checked_contour_pair_count);
     }
 
     let elapsed = started.elapsed();
@@ -278,9 +307,8 @@ fn bench_right_prepared_region_report_case(
                 panic!("{name} right-prepared region report became uncertain: {reason:?}");
             }
         };
-        total_checks += black_box(
-            report.audit.checked_contour_count + report.audit.checked_contour_pair_count,
-        );
+        total_checks +=
+            black_box(report.audit.checked_contour_count + report.audit.checked_contour_pair_count);
     }
 
     let elapsed = started.elapsed();
@@ -309,7 +337,7 @@ fn bench_left_prepared_region_pipeline_report_case(
 
     for _ in 0..iterations {
         let report = match first
-            .boolean_region_pipeline_report(&second, op, FillRule::NonZero, &policy)
+            .boolean_region_pipeline_report_against_region(&second, op, FillRule::NonZero, &policy)
             .unwrap()
         {
             Classification::Decided(report) => report,
@@ -352,7 +380,12 @@ fn bench_right_prepared_region_pipeline_report_case(
 
     for _ in 0..iterations {
         let report = match first
-            .boolean_region_pipeline_report_against_prepared_region(&second, op, FillRule::NonZero, &policy)
+            .boolean_region_pipeline_report_against_prepared_region(
+                &second,
+                op,
+                FillRule::NonZero,
+                &policy,
+            )
             .unwrap()
         {
             Classification::Decided(report) => report,
@@ -838,7 +871,7 @@ fn bench_left_prepared_boundary_contour_report_case(
 
     for _ in 0..iterations {
         let report = match first
-            .boolean_boundary_contour_report(&second, op, FillRule::NonZero, &policy)
+            .boolean_boundary_contour_report_against_region(&second, op, FillRule::NonZero, &policy)
             .unwrap()
         {
             Classification::Decided(report) => report,
@@ -846,9 +879,8 @@ fn bench_left_prepared_boundary_contour_report_case(
                 panic!("{name} left-prepared boundary-contour report became uncertain: {reason:?}");
             }
         };
-        total_checked += black_box(
-            report.audit.contour_count + report.audit.checked_contour_pair_count,
-        );
+        total_checked +=
+            black_box(report.audit.contour_count + report.audit.checked_contour_pair_count);
     }
 
     let elapsed = started.elapsed();
@@ -877,17 +909,23 @@ fn bench_right_prepared_boundary_contour_report_case(
 
     for _ in 0..iterations {
         let report = match first
-            .boolean_boundary_contour_report_against_prepared_region(&second, op, FillRule::NonZero, &policy)
+            .boolean_boundary_contour_report_against_prepared_region(
+                &second,
+                op,
+                FillRule::NonZero,
+                &policy,
+            )
             .unwrap()
         {
             Classification::Decided(report) => report,
             Classification::Uncertain(reason) => {
-                panic!("{name} right-prepared boundary-contour report became uncertain: {reason:?}");
+                panic!(
+                    "{name} right-prepared boundary-contour report became uncertain: {reason:?}"
+                );
             }
         };
-        total_checked += black_box(
-            report.audit.contour_count + report.audit.checked_contour_pair_count,
-        );
+        total_checked +=
+            black_box(report.audit.contour_count + report.audit.checked_contour_pair_count);
     }
 
     let elapsed = started.elapsed();
@@ -1509,6 +1547,39 @@ fn main() {
         "right_prepared_point_touch_rectangles_union_region_pipeline_report",
         &point_touch_a,
         &point_touch_b,
+        BooleanOp::Union,
+        10_000,
+    );
+
+    let epsilon = q(1, 1024);
+    let near_collinear_base = region(vec![rectangle(0, 0, 8, 4)]);
+    let near_collinear_gap = region(vec![real_rectangle(s(2), s(-2), s(6), -epsilon.clone())]);
+    let near_collinear_overlap = region(vec![real_rectangle(s(2), s(-2), s(6), epsilon)]);
+    bench_traversal_report_case(
+        "near_collinear_gap_rectangles_union_boundary_traversal_report",
+        &near_collinear_base,
+        &near_collinear_gap,
+        BooleanOp::Union,
+        10_000,
+    );
+    bench_region_pipeline_report_case(
+        "near_collinear_gap_rectangles_union_region_pipeline_report",
+        &near_collinear_base,
+        &near_collinear_gap,
+        BooleanOp::Union,
+        10_000,
+    );
+    bench_traversal_report_case(
+        "near_collinear_overlap_rectangles_union_boundary_traversal_report",
+        &near_collinear_base,
+        &near_collinear_overlap,
+        BooleanOp::Union,
+        10_000,
+    );
+    bench_region_pipeline_report_case(
+        "near_collinear_overlap_rectangles_union_region_pipeline_report",
+        &near_collinear_base,
+        &near_collinear_overlap,
         BooleanOp::Union,
         10_000,
     );

@@ -37,35 +37,43 @@ pub(crate) fn boolean_boundary_loops_between_prepared(
     let first_view = first.as_region_view();
     let second_view = second.as_region_view();
     if crate::region_boolean::same_region_view(&first_view, &second_view) {
-        return Ok(Classification::Decided(BooleanBoundaryLoopSet::from_contours(
-            match op {
+        return Ok(Classification::Decided(
+            BooleanBoundaryLoopSet::from_contours(match op {
                 BooleanOp::Union | BooleanOp::Intersection => {
                     crate::region_boolean::clone_boundary_contours(&first_view)
                 }
                 BooleanOp::Difference | BooleanOp::Xor => Vec::new(),
-            },
-        )));
+            }),
+        ));
     }
     if first_view.is_empty() || second_view.is_empty() {
-        return Ok(Classification::Decided(BooleanBoundaryLoopSet::from_contours(
-            crate::region_boolean::empty_operand_boundary_contours(&first_view, &second_view, op),
-        )));
+        return Ok(Classification::Decided(
+            BooleanBoundaryLoopSet::from_contours(
+                crate::region_boolean::empty_operand_boundary_contours(
+                    &first_view,
+                    &second_view,
+                    op,
+                ),
+            ),
+        ));
     }
-        match crate::region_boolean::coextensive_axis_rect_region_boolean(
-            &first_view,
-            &second_view,
-            op,
-            policy,
-        )? {
-            Classification::Decided(Some(region)) => {
-                return Ok(Classification::Decided(BooleanBoundaryLoopSet::from_contours(
+    match crate::region_boolean::coextensive_axis_rect_region_boolean(
+        &first_view,
+        &second_view,
+        op,
+        policy,
+    )? {
+        Classification::Decided(Some(region)) => {
+            return Ok(Classification::Decided(
+                BooleanBoundaryLoopSet::from_contours(
                     crate::region_boolean::clone_boundary_contours(&region.as_view()),
-                )));
-            }
-            Classification::Decided(None) => {}
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+                ),
+            ));
         }
-        match boundary_contact_resolution_prepared(first, second, policy)? {
+        Classification::Decided(None) => {}
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    }
+    match boundary_contact_resolution_prepared(first, second, policy)? {
         // Shared-boundary topology is resolved to explicit closed contours above the
         // traversal graph, matching the plain-path contract from
         // `boundary_contact_boundary_contours_prepared`.
@@ -94,9 +102,9 @@ pub(crate) fn boolean_boundary_loops_between_prepared(
             if let Some(contours) =
                 containment_boundary_contours_prepared(first, second, op, relation)
             {
-                return Ok(Classification::Decided(BooleanBoundaryLoopSet::from_contours(
-                    contours,
-                )));
+                return Ok(Classification::Decided(
+                    BooleanBoundaryLoopSet::from_contours(contours),
+                ));
             }
             if relation == crate::region_boolean::BoundaryContainmentRelation::FirstContainsSecond
                 && contact == PreparedBoundaryContactKind::Overlap
@@ -134,8 +142,8 @@ pub(crate) fn boolean_boundary_loops_between_prepared(
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     }
     if op == BooleanOp::Xor {
-            return xor_boundary_contours_by_prepared_region(first, second, FillRule::NonZero, policy)
-                .map(|contours| contours.map(BooleanBoundaryLoopSet::from_contours));
+        return xor_boundary_contours_by_prepared_region(first, second, FillRule::NonZero, policy)
+            .map(|contours| contours.map(BooleanBoundaryLoopSet::from_contours));
     }
 
     let intersections = first.intersect_prepared_region(second, policy)?;

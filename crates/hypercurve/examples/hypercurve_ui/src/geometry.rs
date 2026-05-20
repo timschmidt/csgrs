@@ -957,13 +957,24 @@ pub fn contour_slices(
             .fragments()
             .iter()
             .map(|fragment| Polyline::from_segments(&[fragment.segment.clone()], false))
+            .filter(display_slice_is_non_degenerate)
             .collect(),
         second_fragments
             .fragments()
             .iter()
             .map(|fragment| Polyline::from_segments(&[fragment.segment.clone()], false))
+            .filter(display_slice_is_non_degenerate)
             .collect(),
     ))
+}
+
+fn display_slice_is_non_degenerate(slice: &Polyline) -> bool {
+    let points = slice.sample_points(0.03);
+    points.len() >= 2
+        && points.windows(2).any(|pair| {
+            (pair[0][0] - pair[1][0]).abs() > DISPLAY_COORD_EPS
+                || (pair[0][1] - pair[1][1]).abs() > DISPLAY_COORD_EPS
+        })
 }
 
 fn split_contour_for_slices(

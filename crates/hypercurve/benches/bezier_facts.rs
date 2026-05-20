@@ -2,12 +2,30 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    Axis2, BezierAreaMomentPrefixSums2, BezierAreaPrefixSums2, BezierBooleanHandoffReport2,
-    BezierFlatteningOptions, BezierIntersectionRegionIsolationBudget, BezierMonotoneSpan,
-    CubicBezier2, CurvePolicy, LineSeg2, Point2, QuadraticBezier2, RationalQuadraticBezier2, Real,
-    certify_bezier_intersection_region_isolation, isolate_bezier_intersection_regions,
-    isolate_bezier_intersection_regions_until_width, refine_bezier_intersection_regions,
-    summarize_bezier_intersection_regions,
+    Axis2, BezierAreaMomentPrefixSums2, BezierAreaPrefixSums2,
+    BezierBooleanArrangementReadinessReport2, BezierBooleanAssemblyReadinessReport2,
+    BezierBooleanBatchHandoffReport2, BezierBooleanConstructionReadinessReport2,
+    BezierBooleanCubicFragmentReport2, BezierBooleanEmissionPlanReport2,
+    BezierBooleanFragmentOwnershipLocation, BezierBooleanHandoffReport2,
+    BezierBooleanLoopAssemblyPlanReport2, BezierBooleanLoopClosureReport2,
+    BezierBooleanLoopContainmentFact2, BezierBooleanLoopContainmentFactReport2,
+    BezierBooleanLoopGraphFactReport2, BezierBooleanLoopGraphFacts2,
+    BezierBooleanLoopGraphTraversalReport2, BezierBooleanLoopGraphWalkReport2,
+    BezierBooleanLoopNestingDepthFact2, BezierBooleanLoopNestingDepthFactReport2,
+    BezierBooleanLoopNestingRoleReport2, BezierBooleanLoopRoleAssignmentReport2,
+    BezierBooleanOutputLoopReport2, BezierBooleanOutputLoopRole,
+    BezierBooleanOverlapResolutionReport2, BezierBooleanOwnershipClassificationReport2,
+    BezierBooleanOwnershipFact2, BezierBooleanOwnershipFactReport2,
+    BezierBooleanPathSchedulerReport2, BezierBooleanQuadraticFragmentReport2,
+    BezierBooleanRationalQuadraticFragmentReport2, BezierBooleanRegionAssemblyReport2,
+    BezierBooleanResultReport2, BezierBooleanSplitPlanReport2,
+    BezierBooleanTraversalPreconditionReport2, BezierBooleanTraversalScheduleReport2,
+    BezierBooleanUniformOwnershipFactReport2, BezierFlatteningOptions,
+    BezierIntersectionRegionIsolationBudget, BezierMonotoneSpan, BezierPathRangeBatchReport2,
+    BezierPathRangeOrderReport2, BooleanOp, CubicBezier2, CurvePolicy, LineSeg2, Point2,
+    QuadraticBezier2, RationalQuadraticBezier2, Real, certify_bezier_intersection_region_isolation,
+    isolate_bezier_intersection_regions, isolate_bezier_intersection_regions_until_width,
+    refine_bezier_intersection_regions, summarize_bezier_intersection_regions,
 };
 
 fn p(x: i32, y: i32) -> Point2 {
@@ -778,6 +796,22 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
             span(ratio(1, 8), ratio(3, 8)),
         ),
     ];
+    let boolean_rational_fragment_source = RationalQuadraticBezier2::try_unit_end_weights(
+        p(0, 0),
+        p(20, 16),
+        p(40, 0),
+        Real::from(2_i8),
+    )
+    .unwrap();
+    let boolean_overlap_first = LineSeg2::try_new(p(0, 0), p(40, 0)).unwrap();
+    let boolean_overlap_second = LineSeg2::try_new(p(20, 0), p(60, 0)).unwrap();
+    let boolean_overlap_handoff = BezierBooleanHandoffReport2::from_relation(
+        &hypercurve::BezierCurveRelation::LineSegmentIntersection {
+            intersection: boolean_overlap_first
+                .intersect_line(&boolean_overlap_second, &policy)
+                .unwrap(),
+        },
+    );
     let start = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..iterations {
@@ -910,9 +944,1368 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
             BezierBooleanHandoffReport2::from_classified_relation(&region_relation);
         let boolean_handoff_from_certificate =
             BezierBooleanHandoffReport2::from_isolation_certificate(&region_isolation_certificate);
+        let boolean_handoff_batch = BezierBooleanBatchHandoffReport2::from_handoff_reports(&[
+            boolean_handoff_from_line_image.clone(),
+            boolean_handoff_from_regions.clone(),
+            boolean_handoff_from_certificate.clone(),
+        ]);
+        let boolean_overlap_resolution =
+            BezierBooleanOverlapResolutionReport2::from_handoff_reports(
+                &[boolean_overlap_handoff.clone()],
+                &policy,
+            );
+        let path_order_from_graph = BezierPathRangeOrderReport2::from_classified_graph_order(
+            &degree_normalized_graph_order,
+        );
+        let path_order_from_contact =
+            BezierPathRangeOrderReport2::from_classified_graph_contact_order(
+                &degree_normalized_graph_contact_order,
+            );
+        let path_range_batch = BezierPathRangeBatchReport2::from_range_reports(&[
+            path_order_from_graph.clone(),
+            path_order_from_contact.clone(),
+        ]);
+        let boolean_path_scheduler = BezierBooleanPathSchedulerReport2::from_batches(
+            boolean_handoff_batch.clone(),
+            path_range_batch.clone(),
+        );
+        let boolean_split_plan =
+            BezierBooleanSplitPlanReport2::from_scheduler(&boolean_path_scheduler);
+        let boolean_split_plan_audit = boolean_split_plan.audit(&policy);
+        let boolean_split_insertion_report = boolean_split_plan.insertion_report(&policy);
+        let boolean_construction_readiness =
+            BezierBooleanConstructionReadinessReport2::from_scheduler(
+                boolean_path_scheduler.clone(),
+                &policy,
+            );
+        let boolean_quadratic_fragments = match boolean_construction_readiness.clone() {
+            hypercurve::Classification::Decided(readiness) => {
+                BezierBooleanQuadraticFragmentReport2::from_first_curve_readiness(
+                    quadratic, &readiness, &policy,
+                )
+            }
+            hypercurve::Classification::Uncertain(reason) => {
+                hypercurve::Classification::Uncertain(reason)
+            }
+        };
+        let boolean_cubic_fragments = match boolean_construction_readiness.clone() {
+            hypercurve::Classification::Decided(readiness) => {
+                BezierBooleanCubicFragmentReport2::from_second_curve_readiness(
+                    cubic, &readiness, &policy,
+                )
+            }
+            hypercurve::Classification::Uncertain(reason) => {
+                hypercurve::Classification::Uncertain(reason)
+            }
+        };
+        let boolean_rational_quadratic_fragments = match boolean_construction_readiness.clone() {
+            hypercurve::Classification::Decided(readiness) => {
+                BezierBooleanRationalQuadraticFragmentReport2::from_first_curve_readiness(
+                    &boolean_rational_fragment_source,
+                    &readiness,
+                    &policy,
+                )
+            }
+            hypercurve::Classification::Uncertain(reason) => {
+                hypercurve::Classification::Uncertain(reason)
+            }
+        };
+        let boolean_arrangement_readiness = match (
+            &boolean_quadratic_fragments,
+            &boolean_quadratic_fragments,
+            &boolean_overlap_resolution,
+        ) {
+            (
+                hypercurve::Classification::Decided(first),
+                hypercurve::Classification::Decided(second),
+                hypercurve::Classification::Decided(overlaps),
+            ) => format!(
+                "{:?}",
+                BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
+                    first, second, overlaps
+                )
+            ),
+            other => format!("{other:?}"),
+        };
+        let boolean_traversal_preconditions = match (
+            &boolean_quadratic_fragments,
+            &boolean_quadratic_fragments,
+            &boolean_overlap_resolution,
+        ) {
+            (
+                hypercurve::Classification::Decided(first),
+                hypercurve::Classification::Decided(second),
+                hypercurve::Classification::Decided(overlaps),
+            ) => {
+                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
+                    first, second, overlaps,
+                );
+                format!(
+                    "{:?}",
+                    BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
+                        &readiness, first, second
+                    )
+                )
+            }
+            other => format!("{other:?}"),
+        };
+        let boolean_traversal_schedule = match (
+            &boolean_quadratic_fragments,
+            &boolean_quadratic_fragments,
+            &boolean_overlap_resolution,
+        ) {
+            (
+                hypercurve::Classification::Decided(first),
+                hypercurve::Classification::Decided(second),
+                hypercurve::Classification::Decided(overlaps),
+            ) => {
+                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
+                    first, second, overlaps,
+                );
+                let preconditions =
+                    BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
+                        &readiness, first, second,
+                    );
+                format!(
+                    "{:?}",
+                    BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
+                        &preconditions,
+                        first,
+                        second
+                    )
+                )
+            }
+            other => format!("{other:?}"),
+        };
+        let boolean_ownership_classification = match (
+            &boolean_quadratic_fragments,
+            &boolean_quadratic_fragments,
+            &boolean_overlap_resolution,
+        ) {
+            (
+                hypercurve::Classification::Decided(first),
+                hypercurve::Classification::Decided(second),
+                hypercurve::Classification::Decided(overlaps),
+            ) => {
+                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
+                    first, second, overlaps,
+                );
+                let preconditions =
+                    BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
+                        &readiness, first, second,
+                    );
+                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
+                    &preconditions,
+                    first,
+                    second,
+                );
+                let ownerships =
+                    vec![BezierBooleanFragmentOwnershipLocation::Outside; schedule.steps.len()];
+                format!(
+                    "{:?}",
+                    BezierBooleanOwnershipClassificationReport2::from_schedule(
+                        &schedule,
+                        BooleanOp::Union,
+                        &ownerships
+                    )
+                )
+            }
+            other => format!("{other:?}"),
+        };
+        let boolean_ownership_facts = match (
+            &boolean_quadratic_fragments,
+            &boolean_quadratic_fragments,
+            &boolean_overlap_resolution,
+        ) {
+            (
+                hypercurve::Classification::Decided(first),
+                hypercurve::Classification::Decided(second),
+                hypercurve::Classification::Decided(overlaps),
+            ) => {
+                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
+                    first, second, overlaps,
+                );
+                let preconditions =
+                    BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
+                        &readiness, first, second,
+                    );
+                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
+                    &preconditions,
+                    first,
+                    second,
+                );
+                let facts = schedule
+                    .steps
+                    .iter()
+                    .map(|step| BezierBooleanOwnershipFact2 {
+                        step: step.clone(),
+                        opposite_location: BezierBooleanFragmentOwnershipLocation::Outside,
+                    })
+                    .collect::<Vec<_>>();
+                format!(
+                    "{:?}",
+                    BezierBooleanOwnershipFactReport2::from_schedule_facts(&schedule, &facts)
+                )
+            }
+            other => format!("{other:?}"),
+        };
+        let boolean_uniform_ownership_facts = match (
+            &boolean_quadratic_fragments,
+            &boolean_quadratic_fragments,
+            &boolean_overlap_resolution,
+        ) {
+            (
+                hypercurve::Classification::Decided(first),
+                hypercurve::Classification::Decided(second),
+                hypercurve::Classification::Decided(overlaps),
+            ) => {
+                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
+                    first, second, overlaps,
+                );
+                let preconditions =
+                    BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
+                        &readiness, first, second,
+                    );
+                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
+                    &preconditions,
+                    first,
+                    second,
+                );
+                format!(
+                    "{:?}",
+                    BezierBooleanUniformOwnershipFactReport2::from_schedule_locations(
+                        &schedule,
+                        BezierBooleanFragmentOwnershipLocation::Outside,
+                        BezierBooleanFragmentOwnershipLocation::Outside,
+                    )
+                )
+            }
+            other => format!("{other:?}"),
+        };
+        let boolean_emission_plan = match (
+            &boolean_quadratic_fragments,
+            &boolean_quadratic_fragments,
+            &boolean_overlap_resolution,
+        ) {
+            (
+                hypercurve::Classification::Decided(first),
+                hypercurve::Classification::Decided(second),
+                hypercurve::Classification::Decided(overlaps),
+            ) => {
+                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
+                    first, second, overlaps,
+                );
+                let preconditions =
+                    BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
+                        &readiness, first, second,
+                    );
+                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
+                    &preconditions,
+                    first,
+                    second,
+                );
+                let ownerships =
+                    vec![BezierBooleanFragmentOwnershipLocation::Outside; schedule.steps.len()];
+                let ownership = BezierBooleanOwnershipClassificationReport2::from_schedule(
+                    &schedule,
+                    BooleanOp::Union,
+                    &ownerships,
+                );
+                format!(
+                    "{:?}",
+                    BezierBooleanEmissionPlanReport2::from_ownership(&ownership)
+                )
+            }
+            other => format!("{other:?}"),
+        };
+        let boolean_assembly_readiness = match (
+            &boolean_quadratic_fragments,
+            &boolean_quadratic_fragments,
+            &boolean_overlap_resolution,
+        ) {
+            (
+                hypercurve::Classification::Decided(first),
+                hypercurve::Classification::Decided(second),
+                hypercurve::Classification::Decided(overlaps),
+            ) => {
+                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
+                    first, second, overlaps,
+                );
+                let preconditions =
+                    BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
+                        &readiness, first, second,
+                    );
+                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
+                    &preconditions,
+                    first,
+                    second,
+                );
+                let ownerships =
+                    vec![BezierBooleanFragmentOwnershipLocation::Outside; schedule.steps.len()];
+                let ownership = BezierBooleanOwnershipClassificationReport2::from_schedule(
+                    &schedule,
+                    BooleanOp::Union,
+                    &ownerships,
+                );
+                let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
+                format!(
+                    "{:?}",
+                    BezierBooleanAssemblyReadinessReport2::from_quadratic_fragments(
+                        &emission, first, second
+                    )
+                )
+            }
+            other => format!("{other:?}"),
+        };
+        let boolean_loop_assembly_plan = match (
+            &boolean_quadratic_fragments,
+            &boolean_quadratic_fragments,
+            &boolean_overlap_resolution,
+        ) {
+            (
+                hypercurve::Classification::Decided(first),
+                hypercurve::Classification::Decided(second),
+                hypercurve::Classification::Decided(overlaps),
+            ) => {
+                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
+                    first, second, overlaps,
+                );
+                let preconditions =
+                    BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
+                        &readiness, first, second,
+                    );
+                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
+                    &preconditions,
+                    first,
+                    second,
+                );
+                let ownerships =
+                    vec![BezierBooleanFragmentOwnershipLocation::Outside; schedule.steps.len()];
+                let ownership = BezierBooleanOwnershipClassificationReport2::from_schedule(
+                    &schedule,
+                    BooleanOp::Union,
+                    &ownerships,
+                );
+                let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
+                let assembly = BezierBooleanAssemblyReadinessReport2::from_quadratic_fragments(
+                    &emission, first, second,
+                );
+                format!(
+                    "{:?}",
+                    BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(
+                        &assembly, &emission
+                    )
+                )
+            }
+            other => format!("{other:?}"),
+        };
+        let boolean_loop_graph_traversal = match (
+            &boolean_quadratic_fragments,
+            &boolean_quadratic_fragments,
+            &boolean_overlap_resolution,
+        ) {
+            (
+                hypercurve::Classification::Decided(first),
+                hypercurve::Classification::Decided(second),
+                hypercurve::Classification::Decided(overlaps),
+            ) => {
+                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
+                    first, second, overlaps,
+                );
+                let preconditions =
+                    BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
+                        &readiness, first, second,
+                    );
+                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
+                    &preconditions,
+                    first,
+                    second,
+                );
+                let ownerships =
+                    vec![BezierBooleanFragmentOwnershipLocation::Outside; schedule.steps.len()];
+                let ownership = BezierBooleanOwnershipClassificationReport2::from_schedule(
+                    &schedule,
+                    BooleanOp::Union,
+                    &ownerships,
+                );
+                let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
+                let assembly = BezierBooleanAssemblyReadinessReport2::from_quadratic_fragments(
+                    &emission, first, second,
+                );
+                let plan = BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(
+                    &assembly, &emission,
+                );
+                format!(
+                    "{:?}",
+                    BezierBooleanLoopGraphTraversalReport2::from_plan_graph_facts(
+                        &plan,
+                        0,
+                        overlaps.resolved_events.len()
+                    )
+                )
+            }
+            other => format!("{other:?}"),
+        };
+        let boolean_loop_graph_facts = match (
+            &boolean_quadratic_fragments,
+            &boolean_quadratic_fragments,
+            &boolean_overlap_resolution,
+        ) {
+            (
+                hypercurve::Classification::Decided(first),
+                hypercurve::Classification::Decided(second),
+                hypercurve::Classification::Decided(overlaps),
+            ) => {
+                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
+                    first, second, overlaps,
+                );
+                let preconditions =
+                    BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
+                        &readiness, first, second,
+                    );
+                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
+                    &preconditions,
+                    first,
+                    second,
+                );
+                let ownerships =
+                    vec![BezierBooleanFragmentOwnershipLocation::Outside; schedule.steps.len()];
+                let ownership = BezierBooleanOwnershipClassificationReport2::from_schedule(
+                    &schedule,
+                    BooleanOp::Union,
+                    &ownerships,
+                );
+                let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
+                let assembly = BezierBooleanAssemblyReadinessReport2::from_quadratic_fragments(
+                    &emission, first, second,
+                );
+                let plan = BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(
+                    &assembly, &emission,
+                );
+                let facts = BezierBooleanLoopGraphFacts2 {
+                    emitted_step_count: plan.emitted_steps.len(),
+                    branch_vertex_count: 0,
+                    resolved_overlap_count: 0,
+                };
+                format!(
+                    "{:?}",
+                    BezierBooleanLoopGraphFactReport2::from_plan_facts(&plan, &facts)
+                )
+            }
+            other => format!("{other:?}"),
+        };
+        let boolean_loop_graph_walk = match (
+            &boolean_quadratic_fragments,
+            &boolean_quadratic_fragments,
+            &boolean_overlap_resolution,
+        ) {
+            (
+                hypercurve::Classification::Decided(first),
+                hypercurve::Classification::Decided(second),
+                hypercurve::Classification::Decided(overlaps),
+            ) => {
+                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
+                    first, second, overlaps,
+                );
+                let preconditions =
+                    BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
+                        &readiness, first, second,
+                    );
+                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
+                    &preconditions,
+                    first,
+                    second,
+                );
+                let ownerships =
+                    vec![BezierBooleanFragmentOwnershipLocation::Outside; schedule.steps.len()];
+                let ownership = BezierBooleanOwnershipClassificationReport2::from_schedule(
+                    &schedule,
+                    BooleanOp::Union,
+                    &ownerships,
+                );
+                let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
+                let assembly = BezierBooleanAssemblyReadinessReport2::from_quadratic_fragments(
+                    &emission, first, second,
+                );
+                let plan = BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(
+                    &assembly, &emission,
+                );
+                let traversal =
+                    BezierBooleanLoopGraphTraversalReport2::from_plan_graph_facts(&plan, 0, 0);
+                format!(
+                    "{:?}",
+                    BezierBooleanLoopGraphWalkReport2::from_identity_traversal(&traversal, &plan)
+                )
+            }
+            other => format!("{other:?}"),
+        };
+        let boolean_loop_graph_walk_closure = match (
+            &boolean_quadratic_fragments,
+            &boolean_quadratic_fragments,
+            &boolean_overlap_resolution,
+        ) {
+            (
+                hypercurve::Classification::Decided(first),
+                hypercurve::Classification::Decided(second),
+                hypercurve::Classification::Decided(overlaps),
+            ) => {
+                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
+                    first, second, overlaps,
+                );
+                let preconditions =
+                    BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
+                        &readiness, first, second,
+                    );
+                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
+                    &preconditions,
+                    first,
+                    second,
+                );
+                let ownerships =
+                    vec![BezierBooleanFragmentOwnershipLocation::Outside; schedule.steps.len()];
+                let ownership = BezierBooleanOwnershipClassificationReport2::from_schedule(
+                    &schedule,
+                    BooleanOp::Union,
+                    &ownerships,
+                );
+                let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
+                let assembly = BezierBooleanAssemblyReadinessReport2::from_quadratic_fragments(
+                    &emission, first, second,
+                );
+                let plan = BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(
+                    &assembly, &emission,
+                );
+                let traversal =
+                    BezierBooleanLoopGraphTraversalReport2::from_plan_graph_facts(&plan, 0, 0);
+                let walk =
+                    BezierBooleanLoopGraphWalkReport2::from_identity_traversal(&traversal, &plan);
+                format!(
+                    "{:?}",
+                    BezierBooleanLoopClosureReport2::from_quadratic_graph_walk(
+                        &walk, &plan, first, second
+                    )
+                )
+            }
+            other => format!("{other:?}"),
+        };
+        let boolean_loop_closure = match (
+            &boolean_quadratic_fragments,
+            &boolean_quadratic_fragments,
+            &boolean_overlap_resolution,
+        ) {
+            (
+                hypercurve::Classification::Decided(first),
+                hypercurve::Classification::Decided(second),
+                hypercurve::Classification::Decided(overlaps),
+            ) => {
+                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
+                    first, second, overlaps,
+                );
+                let preconditions =
+                    BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
+                        &readiness, first, second,
+                    );
+                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
+                    &preconditions,
+                    first,
+                    second,
+                );
+                let ownerships =
+                    vec![BezierBooleanFragmentOwnershipLocation::Outside; schedule.steps.len()];
+                let ownership = BezierBooleanOwnershipClassificationReport2::from_schedule(
+                    &schedule,
+                    BooleanOp::Union,
+                    &ownerships,
+                );
+                let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
+                let assembly = BezierBooleanAssemblyReadinessReport2::from_quadratic_fragments(
+                    &emission, first, second,
+                );
+                let plan = BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(
+                    &assembly, &emission,
+                );
+                format!(
+                    "{:?}",
+                    BezierBooleanLoopClosureReport2::from_quadratic_fragments(&plan, first, second)
+                )
+            }
+            other => format!("{other:?}"),
+        };
+        let boolean_output_loops = match (
+            &boolean_quadratic_fragments,
+            &boolean_quadratic_fragments,
+            &boolean_overlap_resolution,
+        ) {
+            (
+                hypercurve::Classification::Decided(first),
+                hypercurve::Classification::Decided(second),
+                hypercurve::Classification::Decided(overlaps),
+            ) => {
+                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
+                    first, second, overlaps,
+                );
+                let preconditions =
+                    BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
+                        &readiness, first, second,
+                    );
+                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
+                    &preconditions,
+                    first,
+                    second,
+                );
+                let ownerships =
+                    vec![BezierBooleanFragmentOwnershipLocation::Outside; schedule.steps.len()];
+                let ownership = BezierBooleanOwnershipClassificationReport2::from_schedule(
+                    &schedule,
+                    BooleanOp::Union,
+                    &ownerships,
+                );
+                let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
+                let assembly = BezierBooleanAssemblyReadinessReport2::from_quadratic_fragments(
+                    &emission, first, second,
+                );
+                let plan = BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(
+                    &assembly, &emission,
+                );
+                let closure =
+                    BezierBooleanLoopClosureReport2::from_quadratic_fragments(&plan, first, second);
+                format!(
+                    "{:?}",
+                    BezierBooleanOutputLoopReport2::from_loop_closure(&closure)
+                )
+            }
+            other => format!("{other:?}"),
+        };
+        let boolean_graph_walk_output_loops = match (
+            &boolean_quadratic_fragments,
+            &boolean_quadratic_fragments,
+            &boolean_overlap_resolution,
+        ) {
+            (
+                hypercurve::Classification::Decided(first),
+                hypercurve::Classification::Decided(second),
+                hypercurve::Classification::Decided(overlaps),
+            ) => {
+                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
+                    first, second, overlaps,
+                );
+                let preconditions =
+                    BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
+                        &readiness, first, second,
+                    );
+                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
+                    &preconditions,
+                    first,
+                    second,
+                );
+                let ownerships =
+                    vec![BezierBooleanFragmentOwnershipLocation::Outside; schedule.steps.len()];
+                let ownership = BezierBooleanOwnershipClassificationReport2::from_schedule(
+                    &schedule,
+                    BooleanOp::Union,
+                    &ownerships,
+                );
+                let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
+                let assembly = BezierBooleanAssemblyReadinessReport2::from_quadratic_fragments(
+                    &emission, first, second,
+                );
+                let plan = BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(
+                    &assembly, &emission,
+                );
+                let traversal =
+                    BezierBooleanLoopGraphTraversalReport2::from_plan_graph_facts(&plan, 0, 0);
+                let walk_indices = (0..plan.emitted_steps.len()).collect::<Vec<_>>();
+                let walk = BezierBooleanLoopGraphWalkReport2::from_traversal_order(
+                    &traversal,
+                    &plan,
+                    &walk_indices,
+                );
+                format!(
+                    "{:?}",
+                    BezierBooleanOutputLoopReport2::from_quadratic_graph_walk(
+                        &walk, &plan, first, second
+                    )
+                )
+            }
+            other => format!("{other:?}"),
+        };
+        let boolean_nesting_roles = match (
+            &boolean_quadratic_fragments,
+            &boolean_quadratic_fragments,
+            &boolean_overlap_resolution,
+        ) {
+            (
+                hypercurve::Classification::Decided(first),
+                hypercurve::Classification::Decided(second),
+                hypercurve::Classification::Decided(overlaps),
+            ) => {
+                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
+                    first, second, overlaps,
+                );
+                let preconditions =
+                    BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
+                        &readiness, first, second,
+                    );
+                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
+                    &preconditions,
+                    first,
+                    second,
+                );
+                let ownerships =
+                    vec![BezierBooleanFragmentOwnershipLocation::Outside; schedule.steps.len()];
+                let ownership = BezierBooleanOwnershipClassificationReport2::from_schedule(
+                    &schedule,
+                    BooleanOp::Union,
+                    &ownerships,
+                );
+                let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
+                let assembly = BezierBooleanAssemblyReadinessReport2::from_quadratic_fragments(
+                    &emission, first, second,
+                );
+                let plan = BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(
+                    &assembly, &emission,
+                );
+                let closure =
+                    BezierBooleanLoopClosureReport2::from_quadratic_fragments(&plan, first, second);
+                let output = BezierBooleanOutputLoopReport2::from_loop_closure(&closure);
+                let depths = vec![0_usize; output.loops.len()];
+                format!(
+                    "{:?}",
+                    BezierBooleanLoopNestingRoleReport2::from_output_loop_depths(&output, &depths)
+                )
+            }
+            other => format!("{other:?}"),
+        };
+        let boolean_nesting_depth_facts = match (
+            &boolean_quadratic_fragments,
+            &boolean_quadratic_fragments,
+            &boolean_overlap_resolution,
+        ) {
+            (
+                hypercurve::Classification::Decided(first),
+                hypercurve::Classification::Decided(second),
+                hypercurve::Classification::Decided(overlaps),
+            ) => {
+                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
+                    first, second, overlaps,
+                );
+                let preconditions =
+                    BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
+                        &readiness, first, second,
+                    );
+                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
+                    &preconditions,
+                    first,
+                    second,
+                );
+                let ownerships =
+                    vec![BezierBooleanFragmentOwnershipLocation::Outside; schedule.steps.len()];
+                let ownership = BezierBooleanOwnershipClassificationReport2::from_schedule(
+                    &schedule,
+                    BooleanOp::Union,
+                    &ownerships,
+                );
+                let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
+                let assembly = BezierBooleanAssemblyReadinessReport2::from_quadratic_fragments(
+                    &emission, first, second,
+                );
+                let plan = BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(
+                    &assembly, &emission,
+                );
+                let closure =
+                    BezierBooleanLoopClosureReport2::from_quadratic_fragments(&plan, first, second);
+                let output = BezierBooleanOutputLoopReport2::from_loop_closure(&closure);
+                let facts = (0..output.loops.len())
+                    .map(|loop_index| BezierBooleanLoopNestingDepthFact2 {
+                        loop_index,
+                        nesting_depth: 0,
+                    })
+                    .collect::<Vec<_>>();
+                format!(
+                    "{:?}",
+                    BezierBooleanLoopNestingDepthFactReport2::from_output_loop_facts(
+                        &output, &facts
+                    )
+                )
+            }
+            other => format!("{other:?}"),
+        };
+        let boolean_loop_containment_facts = match (
+            &boolean_quadratic_fragments,
+            &boolean_quadratic_fragments,
+            &boolean_overlap_resolution,
+        ) {
+            (
+                hypercurve::Classification::Decided(first),
+                hypercurve::Classification::Decided(second),
+                hypercurve::Classification::Decided(overlaps),
+            ) => {
+                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
+                    first, second, overlaps,
+                );
+                let preconditions =
+                    BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
+                        &readiness, first, second,
+                    );
+                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
+                    &preconditions,
+                    first,
+                    second,
+                );
+                let ownerships =
+                    vec![BezierBooleanFragmentOwnershipLocation::Outside; schedule.steps.len()];
+                let ownership = BezierBooleanOwnershipClassificationReport2::from_schedule(
+                    &schedule,
+                    BooleanOp::Union,
+                    &ownerships,
+                );
+                let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
+                let assembly = BezierBooleanAssemblyReadinessReport2::from_quadratic_fragments(
+                    &emission, first, second,
+                );
+                let plan = BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(
+                    &assembly, &emission,
+                );
+                let closure =
+                    BezierBooleanLoopClosureReport2::from_quadratic_fragments(&plan, first, second);
+                let output = BezierBooleanOutputLoopReport2::from_loop_closure(&closure);
+                let containment_facts = if output.loops.len() > 1 {
+                    vec![BezierBooleanLoopContainmentFact2 {
+                        container_loop_index: 0,
+                        contained_loop_index: 1,
+                    }]
+                } else {
+                    Vec::new()
+                };
+                format!(
+                    "{:?}",
+                    BezierBooleanLoopContainmentFactReport2::from_output_loop_containment_facts(
+                        &output,
+                        &containment_facts
+                    )
+                )
+            }
+            other => format!("{other:?}"),
+        };
+        let boolean_loop_roles = match (
+            &boolean_quadratic_fragments,
+            &boolean_quadratic_fragments,
+            &boolean_overlap_resolution,
+        ) {
+            (
+                hypercurve::Classification::Decided(first),
+                hypercurve::Classification::Decided(second),
+                hypercurve::Classification::Decided(overlaps),
+            ) => {
+                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
+                    first, second, overlaps,
+                );
+                let preconditions =
+                    BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
+                        &readiness, first, second,
+                    );
+                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
+                    &preconditions,
+                    first,
+                    second,
+                );
+                let ownerships =
+                    vec![BezierBooleanFragmentOwnershipLocation::Outside; schedule.steps.len()];
+                let ownership = BezierBooleanOwnershipClassificationReport2::from_schedule(
+                    &schedule,
+                    BooleanOp::Union,
+                    &ownerships,
+                );
+                let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
+                let assembly = BezierBooleanAssemblyReadinessReport2::from_quadratic_fragments(
+                    &emission, first, second,
+                );
+                let plan = BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(
+                    &assembly, &emission,
+                );
+                let closure =
+                    BezierBooleanLoopClosureReport2::from_quadratic_fragments(&plan, first, second);
+                let output = BezierBooleanOutputLoopReport2::from_loop_closure(&closure);
+                let roles = vec![BezierBooleanOutputLoopRole::Material; output.loops.len()];
+                format!(
+                    "{:?}",
+                    BezierBooleanLoopRoleAssignmentReport2::from_output_loops(&output, &roles)
+                )
+            }
+            other => format!("{other:?}"),
+        };
+        let boolean_region_assembly = match (
+            &boolean_quadratic_fragments,
+            &boolean_quadratic_fragments,
+            &boolean_overlap_resolution,
+        ) {
+            (
+                hypercurve::Classification::Decided(first),
+                hypercurve::Classification::Decided(second),
+                hypercurve::Classification::Decided(overlaps),
+            ) => {
+                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
+                    first, second, overlaps,
+                );
+                let preconditions =
+                    BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
+                        &readiness, first, second,
+                    );
+                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
+                    &preconditions,
+                    first,
+                    second,
+                );
+                let ownerships =
+                    vec![BezierBooleanFragmentOwnershipLocation::Outside; schedule.steps.len()];
+                let ownership = BezierBooleanOwnershipClassificationReport2::from_schedule(
+                    &schedule,
+                    BooleanOp::Union,
+                    &ownerships,
+                );
+                let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
+                let assembly = BezierBooleanAssemblyReadinessReport2::from_quadratic_fragments(
+                    &emission, first, second,
+                );
+                let plan = BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(
+                    &assembly, &emission,
+                );
+                let closure =
+                    BezierBooleanLoopClosureReport2::from_quadratic_fragments(&plan, first, second);
+                let output = BezierBooleanOutputLoopReport2::from_loop_closure(&closure);
+                let roles = vec![BezierBooleanOutputLoopRole::Material; output.loops.len()];
+                let assigned =
+                    BezierBooleanLoopRoleAssignmentReport2::from_output_loops(&output, &roles);
+                format!(
+                    "{:?}",
+                    BezierBooleanRegionAssemblyReport2::from_role_assignment(&assigned)
+                )
+            }
+            other => format!("{other:?}"),
+        };
+        let boolean_graph_walk_region_assembly = match (
+            &boolean_quadratic_fragments,
+            &boolean_quadratic_fragments,
+            &boolean_overlap_resolution,
+        ) {
+            (
+                hypercurve::Classification::Decided(first),
+                hypercurve::Classification::Decided(second),
+                hypercurve::Classification::Decided(overlaps),
+            ) => {
+                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
+                    first, second, overlaps,
+                );
+                let preconditions =
+                    BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
+                        &readiness, first, second,
+                    );
+                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
+                    &preconditions,
+                    first,
+                    second,
+                );
+                let ownerships =
+                    vec![BezierBooleanFragmentOwnershipLocation::Outside; schedule.steps.len()];
+                let ownership = BezierBooleanOwnershipClassificationReport2::from_schedule(
+                    &schedule,
+                    BooleanOp::Union,
+                    &ownerships,
+                );
+                let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
+                let assembly = BezierBooleanAssemblyReadinessReport2::from_quadratic_fragments(
+                    &emission, first, second,
+                );
+                let plan = BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(
+                    &assembly, &emission,
+                );
+                let traversal =
+                    BezierBooleanLoopGraphTraversalReport2::from_plan_graph_facts(&plan, 0, 0);
+                let walk_indices = (0..plan.emitted_steps.len()).collect::<Vec<_>>();
+                let walk = BezierBooleanLoopGraphWalkReport2::from_traversal_order(
+                    &traversal,
+                    &plan,
+                    &walk_indices,
+                );
+                let output = BezierBooleanOutputLoopReport2::from_quadratic_graph_walk(
+                    &walk, &plan, first, second,
+                );
+                let depth_facts = (0..output.loops.len())
+                    .map(|loop_index| BezierBooleanLoopNestingDepthFact2 {
+                        loop_index,
+                        nesting_depth: 0,
+                    })
+                    .collect::<Vec<_>>();
+                format!(
+                    "{:?}",
+                    BezierBooleanRegionAssemblyReport2::from_quadratic_graph_walk_depth_facts(
+                        &walk,
+                        &plan,
+                        first,
+                        second,
+                        &depth_facts
+                    )
+                )
+            }
+            other => format!("{other:?}"),
+        };
+        let boolean_graph_walk_result = match (
+            &boolean_quadratic_fragments,
+            &boolean_quadratic_fragments,
+            &boolean_overlap_resolution,
+        ) {
+            (
+                hypercurve::Classification::Decided(first),
+                hypercurve::Classification::Decided(second),
+                hypercurve::Classification::Decided(overlaps),
+            ) => {
+                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
+                    first, second, overlaps,
+                );
+                let preconditions =
+                    BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
+                        &readiness, first, second,
+                    );
+                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
+                    &preconditions,
+                    first,
+                    second,
+                );
+                let ownerships =
+                    vec![BezierBooleanFragmentOwnershipLocation::Outside; schedule.steps.len()];
+                let ownership = BezierBooleanOwnershipClassificationReport2::from_schedule(
+                    &schedule,
+                    BooleanOp::Union,
+                    &ownerships,
+                );
+                let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
+                let assembly = BezierBooleanAssemblyReadinessReport2::from_quadratic_fragments(
+                    &emission, first, second,
+                );
+                let plan = BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(
+                    &assembly, &emission,
+                );
+                let traversal =
+                    BezierBooleanLoopGraphTraversalReport2::from_plan_graph_facts(&plan, 0, 0);
+                let walk_indices = (0..plan.emitted_steps.len()).collect::<Vec<_>>();
+                let walk = BezierBooleanLoopGraphWalkReport2::from_traversal_order(
+                    &traversal,
+                    &plan,
+                    &walk_indices,
+                );
+                let output = BezierBooleanOutputLoopReport2::from_quadratic_graph_walk(
+                    &walk, &plan, first, second,
+                );
+                let depth_facts = (0..output.loops.len())
+                    .map(|loop_index| BezierBooleanLoopNestingDepthFact2 {
+                        loop_index,
+                        nesting_depth: 0,
+                    })
+                    .collect::<Vec<_>>();
+                format!(
+                    "{:?}",
+                    BezierBooleanResultReport2::from_quadratic_graph_walk_depth_facts(
+                        &walk,
+                        &plan,
+                        first,
+                        second,
+                        &depth_facts
+                    )
+                )
+            }
+            other => format!("{other:?}"),
+        };
+        let boolean_schedule_graph_walk_result = match (
+            &boolean_quadratic_fragments,
+            &boolean_quadratic_fragments,
+            &boolean_overlap_resolution,
+        ) {
+            (
+                hypercurve::Classification::Decided(first),
+                hypercurve::Classification::Decided(second),
+                hypercurve::Classification::Decided(overlaps),
+            ) => {
+                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
+                    first, second, overlaps,
+                );
+                let preconditions =
+                    BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
+                        &readiness, first, second,
+                    );
+                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
+                    &preconditions,
+                    first,
+                    second,
+                );
+                let ownership_facts = schedule
+                    .steps
+                    .iter()
+                    .map(|step| BezierBooleanOwnershipFact2 {
+                        step: step.clone(),
+                        opposite_location: BezierBooleanFragmentOwnershipLocation::Outside,
+                    })
+                    .collect::<Vec<_>>();
+                let ownership = BezierBooleanOwnershipFactReport2::from_schedule_facts(
+                    &schedule,
+                    &ownership_facts,
+                )
+                .classify(&schedule, BooleanOp::Union);
+                let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
+                let assembly = BezierBooleanAssemblyReadinessReport2::from_quadratic_fragments(
+                    &emission, first, second,
+                );
+                let plan = BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(
+                    &assembly, &emission,
+                );
+                let traversal =
+                    BezierBooleanLoopGraphTraversalReport2::from_plan_graph_facts(&plan, 0, 0);
+                let walk_indices = (0..plan.emitted_steps.len()).collect::<Vec<_>>();
+                let walk = BezierBooleanLoopGraphWalkReport2::from_traversal_order(
+                    &traversal,
+                    &plan,
+                    &walk_indices,
+                );
+                let output = BezierBooleanOutputLoopReport2::from_quadratic_graph_walk(
+                    &walk, &plan, first, second,
+                );
+                let depth_facts = (0..output.loops.len())
+                    .map(|loop_index| BezierBooleanLoopNestingDepthFact2 {
+                        loop_index,
+                        nesting_depth: 0,
+                    })
+                    .collect::<Vec<_>>();
+                format!(
+                    "{:?}",
+                    BezierBooleanResultReport2::from_quadratic_schedule_graph_walk_depth_facts(
+                        &schedule,
+                        BooleanOp::Union,
+                        &ownership_facts,
+                        first,
+                        second,
+                        0,
+                        0,
+                        &walk_indices,
+                        &depth_facts
+                    )
+                )
+            }
+            other => format!("{other:?}"),
+        };
+        let boolean_schedule_graph_fact_result = match (
+            &boolean_quadratic_fragments,
+            &boolean_quadratic_fragments,
+            &boolean_overlap_resolution,
+        ) {
+            (
+                hypercurve::Classification::Decided(first),
+                hypercurve::Classification::Decided(second),
+                hypercurve::Classification::Decided(overlaps),
+            ) => {
+                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
+                    first, second, overlaps,
+                );
+                let preconditions =
+                    BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
+                        &readiness, first, second,
+                    );
+                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
+                    &preconditions,
+                    first,
+                    second,
+                );
+                let ownership_facts = schedule
+                    .steps
+                    .iter()
+                    .map(|step| BezierBooleanOwnershipFact2 {
+                        step: step.clone(),
+                        opposite_location: BezierBooleanFragmentOwnershipLocation::Outside,
+                    })
+                    .collect::<Vec<_>>();
+                let ownership = BezierBooleanOwnershipFactReport2::from_schedule_facts(
+                    &schedule,
+                    &ownership_facts,
+                )
+                .classify(&schedule, BooleanOp::Union);
+                let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
+                let assembly = BezierBooleanAssemblyReadinessReport2::from_quadratic_fragments(
+                    &emission, first, second,
+                );
+                let plan = BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(
+                    &assembly, &emission,
+                );
+                let traversal =
+                    BezierBooleanLoopGraphTraversalReport2::from_plan_graph_facts(&plan, 0, 0);
+                let walk_indices = (0..plan.emitted_steps.len()).collect::<Vec<_>>();
+                let walk = BezierBooleanLoopGraphWalkReport2::from_traversal_order(
+                    &traversal,
+                    &plan,
+                    &walk_indices,
+                );
+                let output = BezierBooleanOutputLoopReport2::from_quadratic_graph_walk(
+                    &walk, &plan, first, second,
+                );
+                let graph_facts = BezierBooleanLoopGraphFacts2 {
+                    emitted_step_count: plan.emitted_steps.len(),
+                    branch_vertex_count: 0,
+                    resolved_overlap_count: 0,
+                };
+                let depth_facts = (0..output.loops.len())
+                    .map(|loop_index| BezierBooleanLoopNestingDepthFact2 {
+                        loop_index,
+                        nesting_depth: 0,
+                    })
+                    .collect::<Vec<_>>();
+                format!(
+                    "{:?}",
+                    BezierBooleanResultReport2::from_quadratic_schedule_graph_fact_walk_depth_facts(
+                        &schedule,
+                        BooleanOp::Union,
+                        &ownership_facts,
+                        first,
+                        second,
+                        &graph_facts,
+                        &walk_indices,
+                        &depth_facts
+                    )
+                )
+            }
+            other => format!("{other:?}"),
+        };
+        let boolean_schedule_graph_fact_containment_result = match (
+            &boolean_quadratic_fragments,
+            &boolean_quadratic_fragments,
+            &boolean_overlap_resolution,
+        ) {
+            (
+                hypercurve::Classification::Decided(first),
+                hypercurve::Classification::Decided(second),
+                hypercurve::Classification::Decided(overlaps),
+            ) => {
+                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
+                    first, second, overlaps,
+                );
+                let preconditions =
+                    BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
+                        &readiness, first, second,
+                    );
+                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
+                    &preconditions,
+                    first,
+                    second,
+                );
+                let ownership_facts = schedule
+                    .steps
+                    .iter()
+                    .map(|step| BezierBooleanOwnershipFact2 {
+                        step: step.clone(),
+                        opposite_location: BezierBooleanFragmentOwnershipLocation::Outside,
+                    })
+                    .collect::<Vec<_>>();
+                let ownership = BezierBooleanOwnershipFactReport2::from_schedule_facts(
+                    &schedule,
+                    &ownership_facts,
+                )
+                .classify(&schedule, BooleanOp::Union);
+                let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
+                let assembly = BezierBooleanAssemblyReadinessReport2::from_quadratic_fragments(
+                    &emission, first, second,
+                );
+                let plan = BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(
+                    &assembly, &emission,
+                );
+                let traversal =
+                    BezierBooleanLoopGraphTraversalReport2::from_plan_graph_facts(&plan, 0, 0);
+                let walk_indices = (0..plan.emitted_steps.len()).collect::<Vec<_>>();
+                let walk = BezierBooleanLoopGraphWalkReport2::from_traversal_order(
+                    &traversal,
+                    &plan,
+                    &walk_indices,
+                );
+                let output = BezierBooleanOutputLoopReport2::from_quadratic_graph_walk(
+                    &walk, &plan, first, second,
+                );
+                let containment_facts = if output.loops.len() > 1 {
+                    vec![BezierBooleanLoopContainmentFact2 {
+                        container_loop_index: 0,
+                        contained_loop_index: 1,
+                    }]
+                } else {
+                    Vec::new()
+                };
+                let graph_facts = BezierBooleanLoopGraphFacts2 {
+                    emitted_step_count: plan.emitted_steps.len(),
+                    branch_vertex_count: 0,
+                    resolved_overlap_count: 0,
+                };
+                format!(
+                    "{:?}",
+                    BezierBooleanResultReport2::from_quadratic_schedule_graph_fact_walk_containment_facts(
+                        &schedule,
+                        BooleanOp::Union,
+                        &ownership_facts,
+                        first,
+                        second,
+                        &graph_facts,
+                        &walk_indices,
+                        &containment_facts
+                    )
+                )
+            }
+            other => format!("{other:?}"),
+        };
+        let boolean_result = match (
+            &boolean_quadratic_fragments,
+            &boolean_quadratic_fragments,
+            &boolean_overlap_resolution,
+        ) {
+            (
+                hypercurve::Classification::Decided(first),
+                hypercurve::Classification::Decided(second),
+                hypercurve::Classification::Decided(overlaps),
+            ) => {
+                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
+                    first, second, overlaps,
+                );
+                let preconditions =
+                    BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
+                        &readiness, first, second,
+                    );
+                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
+                    &preconditions,
+                    first,
+                    second,
+                );
+                let ownerships =
+                    vec![BezierBooleanFragmentOwnershipLocation::Outside; schedule.steps.len()];
+                let ownership = BezierBooleanOwnershipClassificationReport2::from_schedule(
+                    &schedule,
+                    BooleanOp::Union,
+                    &ownerships,
+                );
+                let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
+                let assembly = BezierBooleanAssemblyReadinessReport2::from_quadratic_fragments(
+                    &emission, first, second,
+                );
+                let plan = BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(
+                    &assembly, &emission,
+                );
+                let closure =
+                    BezierBooleanLoopClosureReport2::from_quadratic_fragments(&plan, first, second);
+                let output = BezierBooleanOutputLoopReport2::from_loop_closure(&closure);
+                let roles = vec![BezierBooleanOutputLoopRole::Material; output.loops.len()];
+                let assigned =
+                    BezierBooleanLoopRoleAssignmentReport2::from_output_loops(&output, &roles);
+                let region = BezierBooleanRegionAssemblyReport2::from_role_assignment(&assigned);
+                format!(
+                    "{:?}",
+                    BezierBooleanResultReport2::from_region_assembly(&region)
+                )
+            }
+            other => format!("{other:?}"),
+        };
 
         checksum ^= format!(
-            "{y_roots:?}{spans:?}{bounds:?}{line_relation:?}{line_contact_relation:?}{point_parameters:?}{cubic_line_relation:?}{cubic_line_contact_relation:?}{mixed_relation:?}{region_relation:?}{line_image_relation:?}{line_image_isolated_relation:?}{point_image_relation:?}{line_image_curve_relation:?}{endpoint_relation:?}{shared_endpoint_midpoint_relation:?}{same_axis_no_hit_relation:?}{degree_normalized_no_hit_relation:?}{degree_normalized_graph_order:?}{degree_normalized_crossing_graph_order:?}{degree_normalized_graph_contact_order:?}{degree_elevated_identity_relation:?}{mixed_degree_midpoint_relation:?}{mixed_degree_quarter_relation:?}{mixed_degree_thirty_second_relation:?}{mixed_degree_sixty_fourth_relation:?}{mixed_degree_one_hundred_twenty_eighth_relation:?}{mixed_degree_two_hundred_fifty_sixth_relation:?}{mixed_degree_five_hundred_twelfth_relation:?}{mixed_degree_non_dyadic_graph_relation:?}{non_dyadic_quadratic_root_relation:?}{non_graph_deep_dyadic_relation:?}{non_graph_irreducible_relation:?}{cubic_quarter_relation:?}{cubic_eighth_relation:?}{cubic_sixteenth_relation:?}{cubic_thirty_second_relation:?}{cubic_sixty_fourth_relation:?}{cubic_one_hundred_twenty_eighth_relation:?}{cubic_two_hundred_fifty_sixth_relation:?}{cubic_five_hundred_twelfth_relation:?}{cubic_endpoint_relation:?}{inflections:?}{quadratic_offset_preflight:?}{cubic_offset_preflight:?}{quadratic_staged_offset:?}{cubic_staged_offset:?}{quadratic_staged_right_offset:?}{cubic_staged_right_offset:?}{quadratic_offset_adapter_report:?}{region_summary:?}{region_refinements:?}{region_isolation:?}{targeted_region_isolation:?}{region_isolation_certificate:?}{boolean_handoff_from_line_image:?}{boolean_handoff_from_regions:?}{boolean_handoff_from_certificate:?}"
+            "{y_roots:?}{spans:?}{bounds:?}{line_relation:?}{line_contact_relation:?}{point_parameters:?}{cubic_line_relation:?}{cubic_line_contact_relation:?}{mixed_relation:?}{region_relation:?}{line_image_relation:?}{line_image_isolated_relation:?}{point_image_relation:?}{line_image_curve_relation:?}{endpoint_relation:?}{shared_endpoint_midpoint_relation:?}{same_axis_no_hit_relation:?}{degree_normalized_no_hit_relation:?}{degree_normalized_graph_order:?}{degree_normalized_crossing_graph_order:?}{degree_normalized_graph_contact_order:?}{degree_elevated_identity_relation:?}{mixed_degree_midpoint_relation:?}{mixed_degree_quarter_relation:?}{mixed_degree_thirty_second_relation:?}{mixed_degree_sixty_fourth_relation:?}{mixed_degree_one_hundred_twenty_eighth_relation:?}{mixed_degree_two_hundred_fifty_sixth_relation:?}{mixed_degree_five_hundred_twelfth_relation:?}{mixed_degree_non_dyadic_graph_relation:?}{non_dyadic_quadratic_root_relation:?}{non_graph_deep_dyadic_relation:?}{non_graph_irreducible_relation:?}{cubic_quarter_relation:?}{cubic_eighth_relation:?}{cubic_sixteenth_relation:?}{cubic_thirty_second_relation:?}{cubic_sixty_fourth_relation:?}{cubic_one_hundred_twenty_eighth_relation:?}{cubic_two_hundred_fifty_sixth_relation:?}{cubic_five_hundred_twelfth_relation:?}{cubic_endpoint_relation:?}{inflections:?}{quadratic_offset_preflight:?}{cubic_offset_preflight:?}{quadratic_staged_offset:?}{cubic_staged_offset:?}{quadratic_staged_right_offset:?}{cubic_staged_right_offset:?}{quadratic_offset_adapter_report:?}{region_summary:?}{region_refinements:?}{region_isolation:?}{targeted_region_isolation:?}{region_isolation_certificate:?}{boolean_handoff_from_line_image:?}{boolean_handoff_from_regions:?}{boolean_handoff_from_certificate:?}{boolean_handoff_batch:?}{boolean_overlap_resolution:?}{path_order_from_graph:?}{path_order_from_contact:?}{path_range_batch:?}{boolean_path_scheduler:?}{boolean_split_plan:?}{boolean_split_plan_audit:?}{boolean_split_insertion_report:?}{boolean_construction_readiness:?}{boolean_quadratic_fragments:?}{boolean_cubic_fragments:?}{boolean_rational_quadratic_fragments:?}{boolean_arrangement_readiness:?}{boolean_traversal_preconditions:?}{boolean_traversal_schedule:?}{boolean_ownership_classification:?}{boolean_ownership_facts:?}{boolean_uniform_ownership_facts:?}{boolean_emission_plan:?}{boolean_assembly_readiness:?}{boolean_loop_assembly_plan:?}{boolean_loop_graph_traversal:?}{boolean_loop_graph_facts:?}{boolean_loop_graph_walk:?}{boolean_loop_graph_walk_closure:?}{boolean_loop_closure:?}{boolean_output_loops:?}{boolean_graph_walk_output_loops:?}{boolean_nesting_roles:?}{boolean_nesting_depth_facts:?}{boolean_loop_containment_facts:?}{boolean_loop_roles:?}{boolean_region_assembly:?}{boolean_graph_walk_region_assembly:?}{boolean_graph_walk_result:?}{boolean_schedule_graph_walk_result:?}{boolean_schedule_graph_fact_result:?}{boolean_schedule_graph_fact_containment_result:?}{boolean_result:?}"
         )
         .len();
     }

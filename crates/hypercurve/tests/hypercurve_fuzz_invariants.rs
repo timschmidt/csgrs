@@ -541,6 +541,7 @@ proptest! {
                         pipeline.boundary_audit.status,
                         hypercurve::BooleanBoundaryAuditStatus::Empty
                             | hypercurve::BooleanBoundaryAuditStatus::Valid
+                            | hypercurve::BooleanBoundaryAuditStatus::PointContact
                     )
                 );
                 prop_assert!(pipeline.nesting_audit.is_valid());
@@ -550,6 +551,7 @@ proptest! {
                         pipeline.region_audit.status,
                         hypercurve::BooleanRegionAuditStatus::Empty
                             | hypercurve::BooleanRegionAuditStatus::Valid
+                            | hypercurve::BooleanRegionAuditStatus::PointContact
                     )
                 );
                 let Classification::Decided(report) =
