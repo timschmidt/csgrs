@@ -5603,6 +5603,55 @@ impl BezierBooleanResultReport2 {
         )
     }
 
+    /// Accepts a simple certified result from uniform ownership, graph facts, and depth facts.
+    ///
+    /// This is the keyed-depth counterpart to
+    /// [`Self::from_schedule_uniform_graph_fact_identity_containment_facts`].
+    /// The caller supplies operand-level locator facts, graph facts for the
+    /// emitted plan, and exact loop nesting depths. The constructor expands
+    /// ownership, validates the graph certificate, accepts only the identity
+    /// walk for no-branch/no-overlap traversal, checks endpoint closure, then
+    /// assigns material and hole roles from keyed depths. Yap, "Towards Exact
+    /// Geometric Computation" (1997), is the acceptance model here: every
+    /// combinatorial fact is explicit input and any missing or stale fact
+    /// remains a blocker. The boolean staging follows Vatti (1992),
+    /// Greiner-Hormann (1998), and Martinez-Rueda-Feito (2009).
+    pub fn from_schedule_uniform_graph_fact_identity_depth_facts(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        first_fragments_in_second: BezierBooleanFragmentOwnershipLocation,
+        second_fragments_in_first: BezierBooleanFragmentOwnershipLocation,
+        first_endpoints: &[(Point2, Point2)],
+        second_endpoints: &[(Point2, Point2)],
+        graph_facts: &BezierBooleanLoopGraphFacts2,
+        depth_facts: &[BezierBooleanLoopNestingDepthFact2],
+    ) -> Self {
+        let facts = BezierBooleanOwnershipFactReport2::from_uniform_operand_locations(
+            schedule,
+            first_fragments_in_second,
+            second_fragments_in_first,
+        );
+        let ownership = facts.classify(schedule, operation);
+        let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
+        let assembly = BezierBooleanAssemblyReadinessReport2::from_fragment_counts(
+            &emission,
+            first_endpoints.len(),
+            second_endpoints.len(),
+        );
+        let plan =
+            BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(&assembly, &emission);
+        let graph = BezierBooleanLoopGraphFactReport2::from_plan_facts(&plan, graph_facts);
+        let traversal = graph.to_traversal_report(&plan);
+        let walk = BezierBooleanLoopGraphWalkReport2::from_identity_traversal(&traversal, &plan);
+        Self::from_graph_walk_depth_facts(
+            &walk,
+            &plan,
+            first_endpoints,
+            second_endpoints,
+            depth_facts,
+        )
+    }
+
     /// Accepts a simple quadratic Bezier result from uniform ownership and graph facts.
     pub fn from_quadratic_schedule_uniform_graph_fact_identity_containment_facts(
         schedule: &BezierBooleanTraversalScheduleReport2,
@@ -5623,6 +5672,29 @@ impl BezierBooleanResultReport2 {
             &quadratic_fragment_endpoints(&second.fragments),
             graph_facts,
             containment_facts,
+        )
+    }
+
+    /// Accepts a simple quadratic Bezier result from uniform ownership, graph facts, and depth facts.
+    pub fn from_quadratic_schedule_uniform_graph_fact_identity_depth_facts(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        first_fragments_in_second: BezierBooleanFragmentOwnershipLocation,
+        second_fragments_in_first: BezierBooleanFragmentOwnershipLocation,
+        first: &BezierBooleanQuadraticFragmentReport2,
+        second: &BezierBooleanQuadraticFragmentReport2,
+        graph_facts: &BezierBooleanLoopGraphFacts2,
+        depth_facts: &[BezierBooleanLoopNestingDepthFact2],
+    ) -> Self {
+        Self::from_schedule_uniform_graph_fact_identity_depth_facts(
+            schedule,
+            operation,
+            first_fragments_in_second,
+            second_fragments_in_first,
+            &quadratic_fragment_endpoints(&first.fragments),
+            &quadratic_fragment_endpoints(&second.fragments),
+            graph_facts,
+            depth_facts,
         )
     }
 
@@ -5649,6 +5721,29 @@ impl BezierBooleanResultReport2 {
         )
     }
 
+    /// Accepts a simple cubic Bezier result from uniform ownership, graph facts, and depth facts.
+    pub fn from_cubic_schedule_uniform_graph_fact_identity_depth_facts(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        first_fragments_in_second: BezierBooleanFragmentOwnershipLocation,
+        second_fragments_in_first: BezierBooleanFragmentOwnershipLocation,
+        first: &BezierBooleanCubicFragmentReport2,
+        second: &BezierBooleanCubicFragmentReport2,
+        graph_facts: &BezierBooleanLoopGraphFacts2,
+        depth_facts: &[BezierBooleanLoopNestingDepthFact2],
+    ) -> Self {
+        Self::from_schedule_uniform_graph_fact_identity_depth_facts(
+            schedule,
+            operation,
+            first_fragments_in_second,
+            second_fragments_in_first,
+            &cubic_fragment_endpoints(&first.fragments),
+            &cubic_fragment_endpoints(&second.fragments),
+            graph_facts,
+            depth_facts,
+        )
+    }
+
     /// Accepts a simple rational quadratic/conic result from uniform ownership and graph facts.
     pub fn from_rational_quadratic_schedule_uniform_graph_fact_identity_containment_facts(
         schedule: &BezierBooleanTraversalScheduleReport2,
@@ -5669,6 +5764,29 @@ impl BezierBooleanResultReport2 {
             &rational_quadratic_fragment_endpoints(&second.fragments),
             graph_facts,
             containment_facts,
+        )
+    }
+
+    /// Accepts a simple rational quadratic/conic result from uniform ownership, graph facts, and depth facts.
+    pub fn from_rational_quadratic_schedule_uniform_graph_fact_identity_depth_facts(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        first_fragments_in_second: BezierBooleanFragmentOwnershipLocation,
+        second_fragments_in_first: BezierBooleanFragmentOwnershipLocation,
+        first: &BezierBooleanRationalQuadraticFragmentReport2,
+        second: &BezierBooleanRationalQuadraticFragmentReport2,
+        graph_facts: &BezierBooleanLoopGraphFacts2,
+        depth_facts: &[BezierBooleanLoopNestingDepthFact2],
+    ) -> Self {
+        Self::from_schedule_uniform_graph_fact_identity_depth_facts(
+            schedule,
+            operation,
+            first_fragments_in_second,
+            second_fragments_in_first,
+            &rational_quadratic_fragment_endpoints(&first.fragments),
+            &rational_quadratic_fragment_endpoints(&second.fragments),
+            graph_facts,
+            depth_facts,
         )
     }
 
