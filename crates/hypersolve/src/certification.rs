@@ -14,6 +14,7 @@
 use hyperlimit::{PredicatePolicy, Sign, certified_ball_sign_report_with_policy};
 use hyperreal::{CertifiedRealSign, Real, RealSign, RealSignCertificate};
 
+use crate::diagnostics::{ProposalEngineKind, ProposalEnginePrecision, ProposalEngineReport};
 use crate::eval::{EvalError, EvaluationContext, positive_part};
 use crate::model::ConstraintKind;
 use crate::prepared::PreparedProblem;
@@ -74,6 +75,23 @@ pub enum CertifiedCandidateStatus {
         /// Compact diagnostic for the expression/domain failure.
         message: String,
     },
+    /// A proposal engine produced candidate data, but no exact replay proof was
+    /// requested for this row.
+    ///
+    /// This is an explicit non-certificate. It records the selected numerical
+    /// adapter boundary so callers cannot accidentally treat primitive-float
+    /// convergence as exact residual truth. That separation is Yap's core
+    /// exact-geometric-computation rule applied to solver outputs; see Yap,
+    /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+    /// (1997).
+    LossyAdapterOnly {
+        /// Proposal engine requested by the caller.
+        requested: ProposalEngineKind,
+        /// Proposal engine actually used, if any.
+        used: Option<ProposalEngineKind>,
+        /// Precision boundary crossed by the proposal route.
+        precision: ProposalEnginePrecision,
+    },
 }
 
 impl CertifiedCandidateStatus {
@@ -102,7 +120,15 @@ impl CertifiedCandidateStatus {
 
     /// Returns whether this row remains explicitly uncertain.
     pub const fn is_unknown(&self) -> bool {
-        matches!(self, Self::BoundedUnknown { .. })
+        matches!(
+            self,
+            Self::BoundedUnknown { .. } | Self::LossyAdapterOnly { .. }
+        )
+    }
+
+    /// Returns whether this row has only numerical adapter evidence.
+    pub const fn is_lossy_adapter_only(&self) -> bool {
+        matches!(self, Self::LossyAdapterOnly { .. })
     }
 }
 
@@ -132,6 +158,8 @@ pub struct CandidateCertificationReport {
     pub certified_violation_rows: usize,
     /// Count of rows still explicitly uncertain.
     pub bounded_unknown_rows: usize,
+    /// Count of rows carrying only lossy proposal-adapter evidence.
+    pub lossy_adapter_only_rows: usize,
     /// Count of rows that failed during exact replay.
     pub domain_failure_rows: usize,
 }
@@ -223,6 +251,10 @@ pub fn certify_candidate_with_config(
         .filter(|row| row.status.is_certified_violation())
         .count();
     let bounded_unknown_rows = rows.iter().filter(|row| row.status.is_unknown()).count();
+    let lossy_adapter_only_rows = rows
+        .iter()
+        .filter(|row| row.status.is_lossy_adapter_only())
+        .count();
     let domain_failure_rows = rows
         .iter()
         .filter(|row| matches!(row.status, CertifiedCandidateStatus::DomainFailure { .. }))
@@ -233,7 +265,49 @@ pub fn certify_candidate_with_config(
         certified_satisfied_rows,
         certified_violation_rows,
         bounded_unknown_rows,
+        lossy_adapter_only_rows,
         domain_failure_rows,
+    }
+}
+
+/// Build an explicit non-certificate for a numerical proposal-only candidate.
+///
+/// Some callers need to preserve a solver result even when they have not yet
+/// replayed exact residuals. This helper emits one row per active constraint
+/// with [`CertifiedCandidateStatus::LossyAdapterOnly`], carrying the selected
+/// proposal-engine report. It is intentionally not an acceptance API: exact
+/// replay through [`certify_candidate`] or a stronger interval/alpha proof
+/// remains mandatory before trusting the candidate.
+pub fn report_lossy_adapter_only_candidate(
+    prepared: &PreparedProblem<'_>,
+    proposal_engine: ProposalEngineReport,
+) -> CandidateCertificationReport {
+    let rows = prepared
+        .problem()
+        .constraints
+        .iter()
+        .enumerate()
+        .filter(|(_, constraint)| constraint.active)
+        .map(|(constraint_index, constraint)| CertifiedCandidateRow {
+            constraint_index,
+            name: constraint.name.clone(),
+            kind: constraint.kind,
+            signed_residual: None,
+            status: CertifiedCandidateStatus::LossyAdapterOnly {
+                requested: proposal_engine.requested,
+                used: proposal_engine.used,
+                precision: proposal_engine.precision,
+            },
+        })
+        .collect::<Vec<_>>();
+    let lossy_adapter_only_rows = rows.len();
+    CandidateCertificationReport {
+        rows,
+        certified_satisfied_rows: 0,
+        certified_violation_rows: 0,
+        bounded_unknown_rows: lossy_adapter_only_rows,
+        lossy_adapter_only_rows,
+        domain_failure_rows: 0,
     }
 }
 
@@ -337,6 +411,11 @@ fn recompute_report_counts(report: &mut CandidateCertificationReport) {
         .rows
         .iter()
         .filter(|row| row.status.is_unknown())
+        .count();
+    report.lossy_adapter_only_rows = report
+        .rows
+        .iter()
+        .filter(|row| row.status.is_lossy_adapter_only())
         .count();
     report.domain_failure_rows = report
         .rows

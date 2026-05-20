@@ -33,6 +33,7 @@ pub use certification::{
     CandidateCertificationConfig, CandidateCertificationReport, CandidateResidualBall,
     CertifiedCandidateRow, CertifiedCandidateStatus, certify_candidate,
     certify_candidate_with_config, certify_candidate_with_residual_balls,
+    report_lossy_adapter_only_candidate,
 };
 pub use diagnostics::{
     ConvergenceReason, ProposalEngineKind, ProposalEnginePrecision, ProposalEngineReport,

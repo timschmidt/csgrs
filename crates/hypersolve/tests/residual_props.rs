@@ -2,12 +2,13 @@ use hyperreal::{Real, RealSign};
 use hypersolve::{
     CertifiedCandidateStatus, Constraint, DomainCheckKind, DomainCheckStatus, EqualitySubstitution,
     EqualitySubstitutionProblem, Expr, PreparedProblem, PreparedSolverBlock, Problem,
-    RectangularRegion, SolverBlockRowKind, SolverPoint2, SymbolId, VariableBall,
-    center_clearance_squared_constraint, certify_affine_krawczyk_box, certify_candidate,
-    certify_candidate_domains, certify_multivariate_quadratic_interval_candidate,
-    certify_quadratic_interval_candidate, certify_univariate_quadratic_alpha, context_from_problem,
-    differential_pair_skew_equation, eliminate_affine_rows_with_substitution_classes,
-    rectangular_difference_area_equation, solve_direct_univariate_quadratic_equalities,
+    ProposalEngineKind, ProposalEnginePrecision, ProposalEngineReport, RectangularRegion,
+    SolverBlockRowKind, SolverPoint2, SymbolId, VariableBall, center_clearance_squared_constraint,
+    certify_affine_krawczyk_box, certify_candidate, certify_candidate_domains,
+    certify_multivariate_quadratic_interval_candidate, certify_quadratic_interval_candidate,
+    certify_univariate_quadratic_alpha, context_from_problem, differential_pair_skew_equation,
+    eliminate_affine_rows_with_substitution_classes, rectangular_difference_area_equation,
+    report_lossy_adapter_only_candidate, solve_direct_univariate_quadratic_equalities,
     squared_distance_equation, validate_equality_substitutions,
 };
 use proptest::prelude::*;
@@ -188,6 +189,45 @@ proptest! {
             SolverBlockRowKind::ConstantCertifiedZero
                 | SolverBlockRowKind::ConstantCertifiedContradiction
         )));
+    }
+
+    #[test]
+    fn lossy_adapter_only_generated_reports_cover_active_rows(
+        active_flags in prop::collection::vec(any::<bool>(), 1..24),
+    ) {
+        let x = Expr::symbol(SymbolId(0), "x");
+        let mut problem = Problem::default();
+        problem.add_variable("x", Real::from(1));
+        for (index, active) in active_flags.iter().copied().enumerate() {
+            let mut constraint = Constraint::equality(
+                format!("generated row {index}"),
+                x.clone() - Expr::int(index as i64),
+            );
+            constraint.active = active;
+            problem.add_constraint(constraint);
+        }
+        let prepared = PreparedProblem::new(&problem);
+        let report = report_lossy_adapter_only_candidate(
+            &prepared,
+            ProposalEngineReport {
+                requested: ProposalEngineKind::DampedLeastSquares,
+                used: Some(ProposalEngineKind::DampedLeastSquares),
+                precision: ProposalEnginePrecision::LossyF64,
+                supported: true,
+            },
+        );
+        let active_count = active_flags.iter().filter(|active| **active).count();
+
+        prop_assert_eq!(report.rows.len(), active_count);
+        prop_assert_eq!(report.lossy_adapter_only_rows, active_count);
+        prop_assert_eq!(report.bounded_unknown_rows, active_count);
+        prop_assert_eq!(report.certified_satisfied_rows, 0);
+        prop_assert_eq!(report.certified_violation_rows, 0);
+        let all_lossy_only = report.rows.iter().all(|row| matches!(
+            row.status,
+            CertifiedCandidateStatus::LossyAdapterOnly { .. }
+        ));
+        prop_assert!(all_lossy_only);
     }
 
     #[test]

@@ -56,9 +56,10 @@ than internal truth.
 - `PreparedAffineResidual`, polynomial residual types, solver-block facts, equality
   substitution classes, affine-row elimination reports, and direct equality helpers
   expose reusable exact subproblems.
-- `CandidateCertificationReport`, candidate-domain reports, residual balls, interval
-  certification helpers, affine Krawczyk reports, univariate quadratic alpha reports,
-  and predicate reports describe proof or uncertainty.
+- `CandidateCertificationReport`, lossy-adapter-only reports, candidate-domain
+  reports, residual balls, interval certification helpers, affine Krawczyk reports,
+  univariate quadratic alpha reports, and predicate reports describe proof or
+  uncertainty.
 - `ProposalEngineKind`, `ProposalEngineReport`, `DenseLinearBackend`,
   `LinearSolveReport`, `SolverConfig`, `SolverState`, and `SolveReport` make
   lossy candidate generation explicit.
@@ -99,8 +100,8 @@ Implemented today:
 - direct affine and univariate-quadratic equality helpers plus equality-substitution
   analysis, exact substitution-class construction, and non-mutating affine row
   elimination reports;
-- candidate, candidate-domain, interval, affine Krawczyk, and univariate quadratic
-  alpha certification surfaces;
+- candidate, lossy-adapter-only, candidate-domain, interval, affine Krawczyk, and
+  univariate quadratic alpha certification surfaces;
 - a dense damped least-squares prototype with proposal-engine and adapter diagnostics;
 - geometry, PCB, and toolpath constraint helper modules.
 

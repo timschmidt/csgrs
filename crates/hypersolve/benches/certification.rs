@@ -2,13 +2,15 @@ use criterion::{Criterion, criterion_group, criterion_main};
 use hyperreal::{Rational, Real};
 use hypersolve::{
     Constraint, EqualitySubstitution, Expr, PreparedProblem, PreparedSolverBlock, Problem,
-    RectangularRegion, SolverPoint2, SymbolId, VariableBall, bezier_offset_sample_constraints,
+    ProposalEngineKind, ProposalEnginePrecision, ProposalEngineReport, RectangularRegion,
+    SolverPoint2, SymbolId, VariableBall, bezier_offset_sample_constraints,
     build_equality_substitution_classes, center_clearance_squared_constraint,
     certify_affine_krawczyk_box, certify_candidate, certify_candidate_domains,
     certify_multivariate_quadratic_interval_candidate, certify_quadratic_interval_candidate,
     certify_univariate_quadratic_alpha, context_from_problem, differential_pair_skew_equation,
     eliminate_affine_rows_with_substitution_classes, rectangular_difference_area_equation,
-    solve_direct_univariate_quadratic_equalities, squared_distance_equation,
+    report_lossy_adapter_only_candidate, solve_direct_univariate_quadratic_equalities,
+    squared_distance_equation,
 };
 
 fn r(value: i64) -> Real {
@@ -239,6 +241,19 @@ fn certification(c: &mut Criterion) {
     });
     c.bench_function("certify_affine_candidate_exact", |b| {
         b.iter(|| certify_candidate(&prepared, &context))
+    });
+    c.bench_function("report_lossy_adapter_only_candidate", |b| {
+        b.iter(|| {
+            report_lossy_adapter_only_candidate(
+                &prepared,
+                ProposalEngineReport {
+                    requested: ProposalEngineKind::DampedLeastSquares,
+                    used: Some(ProposalEngineKind::DampedLeastSquares),
+                    precision: ProposalEnginePrecision::LossyF64,
+                    supported: true,
+                },
+            )
+        })
     });
     let domain_problem = domain_problem(16);
     let domain_context = context_from_problem(&domain_problem);

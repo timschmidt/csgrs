@@ -17,9 +17,10 @@ use hypersolve::{
     evaluate_residuals, facts_depend_on_symbol, find_equality_substitutions, length_match_equation,
     point_coincidence_equations, rectangular_difference_area_equation,
     rectangular_region_area_equation, rectangular_region_containment_constraints,
-    solve_damped_least_squares, solve_direct_affine_equalities,
-    solve_direct_univariate_quadratic_equalities, squared_distance_equation,
-    tangent_parallel_equation, tangent_same_direction_constraint, validate_equality_substitutions,
+    report_lossy_adapter_only_candidate, solve_damped_least_squares,
+    solve_direct_affine_equalities, solve_direct_univariate_quadratic_equalities,
+    squared_distance_equation, tangent_parallel_equation, tangent_same_direction_constraint,
+    validate_equality_substitutions,
 };
 
 fn real(value: i64) -> Real {
@@ -122,6 +123,45 @@ fn unsupported_proposal_engine_is_reported_without_dense_fallback() {
         ProposalEnginePrecision::Unsupported
     );
     assert!(report.linear_reports.is_empty());
+}
+
+#[test]
+fn lossy_adapter_only_report_preserves_proposal_boundary_without_exact_replay() {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let mut problem = Problem::default();
+    problem.add_variable("x", real(2));
+    problem.add_constraint(Constraint::equality(
+        "x squared",
+        x.clone().powi(2) - Expr::int(4),
+    ));
+    problem.add_constraint(Constraint::equality("inactive", x - Expr::int(2)));
+    problem.constraints[1].active = false;
+    let prepared = PreparedProblem::new(&problem);
+
+    let report = report_lossy_adapter_only_candidate(
+        &prepared,
+        hypersolve::ProposalEngineReport {
+            requested: ProposalEngineKind::DampedLeastSquares,
+            used: Some(ProposalEngineKind::DampedLeastSquares),
+            precision: ProposalEnginePrecision::LossyF64,
+            supported: true,
+        },
+    );
+
+    assert_eq!(report.rows.len(), 1);
+    assert_eq!(report.certified_satisfied_rows, 0);
+    assert_eq!(report.certified_violation_rows, 0);
+    assert_eq!(report.bounded_unknown_rows, 1);
+    assert_eq!(report.lossy_adapter_only_rows, 1);
+    assert!(report.has_only_uncertainty());
+    assert!(matches!(
+        report.rows[0].status,
+        CertifiedCandidateStatus::LossyAdapterOnly {
+            requested: ProposalEngineKind::DampedLeastSquares,
+            used: Some(ProposalEngineKind::DampedLeastSquares),
+            precision: ProposalEnginePrecision::LossyF64,
+        }
+    ));
 }
 
 #[test]
