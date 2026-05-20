@@ -1779,9 +1779,28 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 };
                 format!(
                     "{:?}",
-                    BezierBooleanLoopContainmentFactReport2::from_output_loop_containment_facts(
-                        &output,
-                        &containment_facts
+                    (
+                        BezierBooleanLoopContainmentFactReport2::from_output_loop_containment_facts(
+                            &output,
+                            &containment_facts
+                        ),
+                        BezierBooleanLoopContainmentFactReport2::from_output_loop_containment_facts(
+                            &output,
+                            &if output.loops.len() > 1 {
+                                vec![
+                                    BezierBooleanLoopContainmentFact2 {
+                                        container_loop_index: 0,
+                                        contained_loop_index: 1,
+                                    },
+                                    BezierBooleanLoopContainmentFact2 {
+                                        container_loop_index: 1,
+                                        contained_loop_index: 0,
+                                    },
+                                ]
+                            } else {
+                                Vec::new()
+                            }
+                        )
                     )
                 )
             }

@@ -1127,17 +1127,21 @@ pub enum BezierBooleanLoopContainmentFactStatus {
     SelfContainment,
     /// The same ordered containment relation was supplied more than once.
     DuplicateContainmentFact,
+    /// The supplied containment graph contains a directed cycle.
+    CyclicContainmentFacts,
 }
 
 /// Validated containment facts and derived nesting depths for output loops.
 ///
 /// This is a certificate-validation layer, not a geometric containment solver.
 /// A future exact loop-containment predicate supplies pair facts; this report
-/// validates their loop indices, rejects self-containment and duplicate ordered
-/// pairs, and derives one nesting-depth fact per output loop by counting
-/// certified containers. The separation matches the nesting/fill phases of
-/// Vatti (1992), Greiner-Hormann (1998), and Martinez-Rueda-Feito (2009).
-/// Yap (1997) is the exactness rule: invalid or stale containment facts block
+/// validates their loop indices, rejects self-containment, duplicate ordered
+/// pairs, and directed cycles, and derives one nesting-depth fact per output
+/// loop by counting certified containers. A cycle would claim that distinct
+/// Jordan loops mutually contain each other, which is impossible for exact
+/// containment. The separation matches the nesting/fill phases of Vatti
+/// (1992), Greiner-Hormann (1998), and Martinez-Rueda-Feito (2009). Yap
+/// (1997) is the exactness rule: invalid or stale containment facts block
 /// construction instead of being repaired with orientation or bounding-box
 /// guesses.
 #[derive(Clone, Debug, PartialEq)]
@@ -1162,6 +1166,8 @@ pub struct BezierBooleanLoopContainmentFactReport2 {
     pub self_containment_count: usize,
     /// Number of duplicate ordered containment facts.
     pub duplicate_fact_count: usize,
+    /// Number of detected directed containment cycles.
+    pub cyclic_fact_count: usize,
     /// Number of blocking preconditions retained by this report.
     pub blocker_count: usize,
 }
@@ -4947,6 +4953,7 @@ impl BezierBooleanLoopContainmentFactReport2 {
                     0,
                     0,
                     0,
+                    0,
                 );
             }
             BezierBooleanOutputLoopStatus::NoInteriorSplits => {
@@ -4954,6 +4961,7 @@ impl BezierBooleanLoopContainmentFactReport2 {
                     BezierBooleanLoopContainmentFactStatus::NoInteriorSplits,
                     output,
                     facts.len(),
+                    0,
                     0,
                     0,
                     0,
@@ -4969,6 +4977,7 @@ impl BezierBooleanLoopContainmentFactReport2 {
                     0,
                     0,
                     0,
+                    0,
                     output.blocker_count.max(1),
                 );
             }
@@ -4977,6 +4986,7 @@ impl BezierBooleanLoopContainmentFactReport2 {
                     BezierBooleanLoopContainmentFactStatus::NoEmittedFragments,
                     output,
                     facts.len(),
+                    0,
                     0,
                     0,
                     0,
@@ -5001,6 +5011,7 @@ impl BezierBooleanLoopContainmentFactReport2 {
                 out_of_range_fact_count,
                 0,
                 0,
+                0,
                 out_of_range_fact_count,
             );
         }
@@ -5016,6 +5027,7 @@ impl BezierBooleanLoopContainmentFactReport2 {
                 facts.len(),
                 0,
                 self_containment_count,
+                0,
                 0,
                 self_containment_count,
             );
@@ -5036,7 +5048,33 @@ impl BezierBooleanLoopContainmentFactReport2 {
                 0,
                 0,
                 duplicate_fact_count,
+                0,
                 duplicate_fact_count,
+            );
+        }
+
+        let mut adjacency = vec![Vec::new(); loop_count];
+        for fact in facts {
+            adjacency[fact.container_loop_index].push(fact.contained_loop_index);
+        }
+        let mut states = vec![0_u8; loop_count];
+        let mut cyclic_fact_count = 0_usize;
+        for loop_index in 0..loop_count {
+            if states[loop_index] == 0 && containment_has_cycle(loop_index, &adjacency, &mut states)
+            {
+                cyclic_fact_count += 1;
+            }
+        }
+        if cyclic_fact_count > 0 {
+            return Self::empty_like(
+                BezierBooleanLoopContainmentFactStatus::CyclicContainmentFacts,
+                output,
+                facts.len(),
+                0,
+                0,
+                0,
+                cyclic_fact_count,
+                cyclic_fact_count,
             );
         }
 
@@ -5066,6 +5104,7 @@ impl BezierBooleanLoopContainmentFactReport2 {
             out_of_range_fact_count: 0,
             self_containment_count: 0,
             duplicate_fact_count: 0,
+            cyclic_fact_count: 0,
             blocker_count: 0,
         }
     }
@@ -5077,6 +5116,7 @@ impl BezierBooleanLoopContainmentFactReport2 {
         out_of_range_fact_count: usize,
         self_containment_count: usize,
         duplicate_fact_count: usize,
+        cyclic_fact_count: usize,
         blocker_count: usize,
     ) -> Self {
         Self {
@@ -5090,6 +5130,7 @@ impl BezierBooleanLoopContainmentFactReport2 {
             out_of_range_fact_count,
             self_containment_count,
             duplicate_fact_count,
+            cyclic_fact_count,
             blocker_count,
         }
     }
@@ -5107,8 +5148,25 @@ impl BezierBooleanLoopContainmentFactReport2 {
                 | BezierBooleanLoopContainmentFactStatus::OutOfRangeLoopIndex
                 | BezierBooleanLoopContainmentFactStatus::SelfContainment
                 | BezierBooleanLoopContainmentFactStatus::DuplicateContainmentFact
+                | BezierBooleanLoopContainmentFactStatus::CyclicContainmentFacts
         )
     }
+}
+
+fn containment_has_cycle(loop_index: usize, adjacency: &[Vec<usize>], states: &mut [u8]) -> bool {
+    states[loop_index] = 1;
+    for &contained_loop_index in &adjacency[loop_index] {
+        if states[contained_loop_index] == 1 {
+            return true;
+        }
+        if states[contained_loop_index] == 0
+            && containment_has_cycle(contained_loop_index, adjacency, states)
+        {
+            return true;
+        }
+    }
+    states[loop_index] = 2;
+    false
 }
 
 impl BezierBooleanLoopNestingDepthFactReport2 {
