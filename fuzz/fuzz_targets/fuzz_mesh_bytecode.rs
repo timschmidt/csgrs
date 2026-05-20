@@ -40,7 +40,7 @@ fuzz_target!(|bytes: &[u8]| {
     let mut stack: Vec<Mesh<()>> = Vec::new();
 
     while idx < bytes.len() && stack.len() < 12 {
-        let op = bytes[idx] % 12;
+        let op = bytes[idx] % 14;
         idx += 1;
         match op {
             0 => {
@@ -109,12 +109,27 @@ fuzz_target!(|bytes: &[u8]| {
                     stack.push(a.intersection(&b));
                 }
             },
-            _ => {
+            11 => {
                 if stack.len() >= 2 {
                     let b = stack.pop().unwrap();
                     let a = stack.pop().unwrap();
                     stack.push(a.xor(&b));
                 }
+            },
+            12 => {
+                let Some(mesh) = stack.pop() else { continue };
+                let lambda = decode_real(bytes, &mut idx).clamp(-1.0, 1.0);
+                let iterations = bytes[idx % bytes.len()] as usize % 3;
+                idx += 1;
+                stack.push(mesh.triangulate().laplacian_smooth(lambda, iterations, false));
+            },
+            _ => {
+                let Some(mesh) = stack.pop() else { continue };
+                let lambda = decode_real(bytes, &mut idx).clamp(-1.0, 1.0);
+                let mu = decode_real(bytes, &mut idx).clamp(-1.0, 1.0);
+                let iterations = bytes[idx % bytes.len()] as usize % 3;
+                idx += 1;
+                stack.push(mesh.triangulate().taubin_smooth(lambda, mu, iterations, false));
             },
         }
     }

@@ -1,6 +1,8 @@
 //! Mesh smoothing and refinement operations.
 
-use crate::float_types::{Real, hpoint_distance, tolerance};
+use crate::float_types::{
+    Real, hpoint_centroid, hpoint_distance, hpoint_lerp, hreal_from_f64, tolerance,
+};
 use crate::mesh::Mesh;
 use crate::polygon::Polygon;
 use crate::vertex::Vertex;
@@ -42,6 +44,10 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         iterations: usize,
         preserve_boundaries: bool,
     ) -> Mesh<M> {
+        if hreal_from_f64(lambda).is_err() {
+            return self.clone();
+        }
+
         let (vertex_map, adjacency) = self.build_connectivity();
         let mut smoothed_polygons = self.polygons.clone();
 
@@ -67,22 +73,17 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                         continue;
                     }
 
-                    // Compute neighbor average
-                    let mut neighbor_sum = Point3::origin();
-                    let mut valid_neighbors = 0;
+                    let neighbor_positions = neighbors
+                        .iter()
+                        .filter_map(|neighbor_idx| {
+                            current_positions.get(neighbor_idx).copied()
+                        })
+                        .collect::<Vec<_>>();
 
-                    for &neighbor_idx in neighbors {
-                        if let Some(&neighbor_position) = current_positions.get(&neighbor_idx)
-                        {
-                            neighbor_sum += neighbor_position.coords;
-                            valid_neighbors += 1;
-                        }
-                    }
-
-                    if valid_neighbors > 0 {
-                        let neighbor_avg = neighbor_sum / valid_neighbors as Real;
-                        let laplacian = neighbor_avg - current_position;
-                        let new_position = current_position + laplacian * lambda;
+                    if let Some(neighbor_avg) = hpoint_centroid(&neighbor_positions) {
+                        let new_position =
+                            hpoint_lerp(&current_position, &neighbor_avg, lambda)
+                                .unwrap_or(current_position);
                         laplacian_updates.insert(vertex_idx, new_position);
                     } else {
                         laplacian_updates.insert(vertex_idx, current_position);
@@ -139,6 +140,10 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         iterations: usize,
         preserve_boundaries: bool,
     ) -> Mesh<M> {
+        if hreal_from_f64(lambda).is_err() || hreal_from_f64(mu).is_err() {
+            return self.clone();
+        }
+
         let (vertex_map, adjacency) = self.build_connectivity();
         let mut smoothed_polygons = self.polygons.clone();
 
@@ -161,20 +166,19 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                         continue;
                     }
 
-                    let mut neighbor_sum = Point3::origin();
-                    let mut valid_neighbors = 0;
-                    for &neighbor_idx in neighbors {
-                        if let Some(&neighbor_position) = current_positions.get(&neighbor_idx)
-                        {
-                            neighbor_sum += neighbor_position.coords;
-                            valid_neighbors += 1;
-                        }
-                    }
+                    let neighbor_positions = neighbors
+                        .iter()
+                        .filter_map(|neighbor_idx| {
+                            current_positions.get(neighbor_idx).copied()
+                        })
+                        .collect::<Vec<_>>();
 
-                    if valid_neighbors > 0 {
-                        let neighbor_avg = neighbor_sum / valid_neighbors as Real;
-                        let laplacian = neighbor_avg - current_position;
-                        updates.insert(vertex_idx, current_position + laplacian * lambda);
+                    if let Some(neighbor_avg) = hpoint_centroid(&neighbor_positions) {
+                        updates.insert(
+                            vertex_idx,
+                            hpoint_lerp(&current_position, &neighbor_avg, lambda)
+                                .unwrap_or(current_position),
+                        );
                     }
                 }
             }
@@ -207,20 +211,19 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                         continue;
                     }
 
-                    let mut neighbor_sum = Point3::origin();
-                    let mut valid_neighbors = 0;
-                    for &neighbor_idx in neighbors {
-                        if let Some(&neighbor_position) = current_positions.get(&neighbor_idx)
-                        {
-                            neighbor_sum += neighbor_position.coords;
-                            valid_neighbors += 1;
-                        }
-                    }
+                    let neighbor_positions = neighbors
+                        .iter()
+                        .filter_map(|neighbor_idx| {
+                            current_positions.get(neighbor_idx).copied()
+                        })
+                        .collect::<Vec<_>>();
 
-                    if valid_neighbors > 0 {
-                        let neighbor_avg = neighbor_sum / valid_neighbors as Real;
-                        let laplacian = neighbor_avg - current_position;
-                        updates.insert(vertex_idx, current_position + laplacian * mu);
+                    if let Some(neighbor_avg) = hpoint_centroid(&neighbor_positions) {
+                        updates.insert(
+                            vertex_idx,
+                            hpoint_lerp(&current_position, &neighbor_avg, mu)
+                                .unwrap_or(current_position),
+                        );
                     }
                 }
             }

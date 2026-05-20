@@ -406,6 +406,48 @@ pub(crate) fn hpoint_distance(lhs: &Point3<Real>, rhs: &Point3<Real>) -> Option<
     hreal_to_f64(&lhs.squared_distance(&rhs).sqrt().ok()?)
 }
 
+/// Return the finite centroid of public boundary points using hyperlattice.
+///
+/// Count-to-scalar conversion is the only integer boundary here; coordinate
+/// summation and division are evaluated as `hyperreal::Real` values inside
+/// `hyperlattice::Vector3`. This is the shared smoothing/refinement helper for
+/// avoiding local `Point3<f64>` accumulation in CAD algorithms, following Yap,
+/// "Towards Exact Geometric Computation," *Computational Geometry* 7(1-2),
+/// 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+pub(crate) fn hpoint_centroid(points: &[Point3<Real>]) -> Option<Point3<Real>> {
+    if points.is_empty() {
+        return None;
+    }
+    let sum = points
+        .iter()
+        .map(hvector3_from_point3)
+        .try_fold(hyperlattice::Vector3::zero(), |acc, point| {
+            point.map(|point| acc + point)
+        })?;
+    let count = hreal_from_f64(points.len() as Real).ok()?;
+    let centroid = (sum / count).ok()?.to_f64_array_lossy()?;
+    Some(Point3::new(centroid[0], centroid[1], centroid[2]))
+}
+
+/// Interpolate two public boundary points through hyperreal arithmetic.
+///
+/// This keeps smoothing stencils and other topology-sensitive movement steps
+/// from doing local f64 vector math after the current mesh carrier has crossed
+/// into hyperlattice coordinates. The returned point is the transitional
+/// boundary representation.
+pub(crate) fn hpoint_lerp(
+    from: &Point3<Real>,
+    to: &Point3<Real>,
+    t: Real,
+) -> Option<Point3<Real>> {
+    let from = hvector3_from_point3(from)?;
+    let to = hvector3_from_point3(to)?;
+    let t = hreal_from_f64(t).ok()?;
+    let result = from.clone() + (to - from) * t;
+    let coords = result.to_f64_array_lossy()?;
+    Some(Point3::new(coords[0], coords[1], coords[2]))
+}
+
 /// Return the finite area of a triangle from public boundary points.
 ///
 /// The doubled-area determinant `(b-a) x (c-a)` and magnitude are evaluated in
@@ -792,6 +834,22 @@ mod tests {
         ));
         assert!(htriangle_area(&a, &a, &c).is_none());
         assert!(htriangle_area(&a, &Point3::new(Real::NAN, 0.0, 0.0), &c).is_none());
+    }
+
+    #[test]
+    fn hpoint_centroid_and_lerp_use_hyperreal_boundaries() {
+        let points = [
+            Point3::new(0.0, 0.0, 0.0),
+            Point3::new(2.0, 4.0, 6.0),
+            Point3::new(4.0, 8.0, 12.0),
+        ];
+        assert_eq!(hpoint_centroid(&points).unwrap(), Point3::new(2.0, 4.0, 6.0));
+        assert!(hpoint_centroid(&[]).is_none());
+        assert!(hpoint_centroid(&[Point3::new(Real::NAN, 0.0, 0.0)]).is_none());
+
+        let interpolated = hpoint_lerp(&points[0], &points[2], 0.25).unwrap();
+        assert_eq!(interpolated, Point3::new(1.0, 2.0, 3.0));
+        assert!(hpoint_lerp(&points[0], &points[2], Real::INFINITY).is_none());
     }
 
     #[test]
