@@ -48,30 +48,45 @@ impl MetaBall {
     /// **Mathematical Foundation**: Metaball influence function I(p) = r²/(|p-c|² + ε)
     /// where ε prevents division by zero and maintains numerical stability.
     ///
-    /// The distance predicate is evaluated through `hyperlattice` and exported
-    /// only after the hyperreal squared distance is finite. That keeps
-    /// non-finite API-boundary points out of local nalgebra arithmetic and
-    /// follows Yap's exact-geometric-computation boundary split
-    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+    /// This public method is an f64 reporting boundary. Internally, radius,
+    /// distance, denominator, and division are evaluated as `hyperreal::Real`
+    /// through [`MetaBall::influence_hreal`], following Yap's exact-geometric-
+    /// computation boundary split (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+    /// The implicit-field model follows Blinn, "A Generalization of Algebraic
+    /// Surface Drawing," *ACM Transactions on Graphics* 1(3), 1982
+    /// (<https://doi.org/10.1145/357306.357310>).
     pub fn influence(&self, p: &Point3<Real>) -> Real {
-        if hreal_from_f64(self.radius).is_err() || self.radius <= 0.0 {
-            return 0.0;
+        self.influence_hreal(p)
+            .and_then(|value| hreal_to_f64(&value))
+            .unwrap_or(0.0)
+    }
+
+    /// Return this metaball's finite influence as a hyperreal field value.
+    ///
+    /// This is the internal sampling primitive. It keeps the implicit scalar
+    /// field in hyperreal space until diagnostics or `fast_surface_nets` require
+    /// lossy boundary scalars.
+    fn influence_hreal(&self, p: &Point3<Real>) -> Option<HReal> {
+        let radius = hreal_from_f64(self.radius).ok()?;
+        if !matches!(hreal_sign(&radius), Some(RealSign::Positive)) {
+            return None;
         }
 
-        let Some(distance_squared) = hyper_point_distance_squared(p, &self.center) else {
-            return 0.0;
-        };
+        let distance_squared = hyper_point_distance_squared(p, &self.center)?;
+        let radius_squared = radius.clone() * radius;
 
-        // Early termination optimization: if point is very far from metaball,
-        // influence approaches zero - can skip expensive division
-        let threshold_distance_sq = self.radius * self.radius * 1000.0; // 1000x radius
-        if distance_squared > threshold_distance_sq {
-            return 0.0;
+        // Early termination optimization: if point is very far from the
+        // metaball, influence approaches zero and can skip division.
+        let threshold_distance_sq = radius_squared.clone() * hreal_from_f64(1000.0).ok()?;
+        if matches!(
+            hreal_sign(&(distance_squared.clone() - threshold_distance_sq)),
+            Some(RealSign::Positive)
+        ) {
+            return Some(HReal::zero());
         }
 
-        // Numerically stable influence calculation with tolerance
-        let denominator = distance_squared + tolerance();
-        (self.radius * self.radius) / denominator
+        let denominator = distance_squared + hreal_from_f64(tolerance()).ok()?;
+        (radius_squared / denominator).ok()
     }
 }
 
@@ -185,14 +200,18 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                         continue;
                     };
 
-                    let field_value = valid_balls
-                        .iter()
-                        .map(|ball| ball.influence(&p))
-                        .sum::<Real>();
-                    let Some(shifted) = hreal_from_f64(field_value)
-                        .ok()
-                        .map(|field_value| field_value - iso_value_h.clone())
+                    let Some(field_value_h) =
+                        valid_balls.iter().try_fold(HReal::zero(), |acc, ball| {
+                            ball.influence_hreal(&p).map(|value| acc + value)
+                        })
                     else {
+                        diagnostics.non_finite_sample_count += 1;
+                        diagnostics.positive_sample_count += 1;
+                        field_values.push_nonfinite_sample();
+                        continue;
+                    };
+                    let shifted = field_value_h.clone() - iso_value_h.clone();
+                    let Some(field_value) = hreal_to_f64(&field_value_h) else {
                         diagnostics.non_finite_sample_count += 1;
                         diagnostics.positive_sample_count += 1;
                         field_values.push_nonfinite_sample();
@@ -444,10 +463,10 @@ impl MetaballSamplingGrid {
     }
 }
 
-fn hyper_point_distance_squared(lhs: &Point3<Real>, rhs: &Point3<Real>) -> Option<Real> {
+fn hyper_point_distance_squared(lhs: &Point3<Real>, rhs: &Point3<Real>) -> Option<HReal> {
     let lhs = hvector3_from_point3(lhs)?;
     let rhs = hvector3_from_point3(rhs)?;
-    hreal_to_f64(&lhs.squared_distance(&rhs))
+    Some(lhs.squared_distance(&rhs))
 }
 
 fn hpoint3_from_point3(point: &Point3<Real>) -> Option<HPoint3> {

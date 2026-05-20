@@ -1772,6 +1772,7 @@ dependencies = [
 name = "hyperlimit"
 version = "0.3.0"
 dependencies = [
+ "hyperlattice",
  "hyperreal",
 ]
 
@@ -1789,6 +1790,8 @@ name = "hyperphysics"
 version = "0.2.1"
 dependencies = [
  "hyperlattice",
+ "hyperlimit",
+ "hypermesh",
  "hyperreal",
  "hypersolve",
 ]
