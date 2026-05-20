@@ -148,7 +148,8 @@ impl Rational {
         if denominator == BigUint::ZERO {
             return Err(Problem::DivideByZero);
         }
-        let answer = Self::from_fraction_parts(n.sign(), n.magnitude().clone(), denominator);
+        let (sign, numerator) = n.into_parts();
+        let answer = Self::from_fraction_parts(sign, numerator, denominator);
         Ok(answer.reduce())
     }
 
