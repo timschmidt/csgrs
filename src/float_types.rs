@@ -535,19 +535,20 @@ pub(crate) fn hpoint_lerp(
     Some(Point3::new(coords[0], coords[1], coords[2]))
 }
 
-/// Return the finite area of a triangle from public boundary points.
+/// Return the finite hyperreal area of a triangle from public boundary points.
 ///
 /// The doubled-area determinant `(b-a) x (c-a)` and magnitude are evaluated in
-/// `hyperlattice::Vector3`/`hyperreal::Real`; only the final reporting scalar
-/// crosses back to `f64`. This avoids repeating local nalgebra cross/dot area
-/// predicates in mesh quality and import paths, following Yap, "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7(1-2), 1997
+/// `hyperlattice::Vector3`/`hyperreal::Real` and kept there for callers that
+/// still need to compose additional CAD metrics. This avoids repeating local
+/// nalgebra cross/dot area predicates in mesh quality and import paths,
+/// following Yap, "Towards Exact Geometric Computation," *Computational
+/// Geometry* 7(1-2), 1997
 /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-pub(crate) fn htriangle_area(
+pub(crate) fn htriangle_area_hreal(
     a: &Point3<Real>,
     b: &Point3<Real>,
     c: &Point3<Real>,
-) -> Option<Real> {
+) -> Option<HReal> {
     let a = hvector3_from_point3(a)?;
     let b = hvector3_from_point3(b)?;
     let c = hvector3_from_point3(c)?;
@@ -557,7 +558,7 @@ pub(crate) fn htriangle_area(
         return None;
     }
     let twice_area = magnitude_squared.sqrt().ok()?;
-    hreal_to_f64(&twice_area).map(|twice_area| twice_area * 0.5)
+    Some(twice_area * hreal_from_f64(0.5).ok()?)
 }
 
 /// Return true when a triangle's doubled area exceeds `epsilon`.
@@ -1020,18 +1021,18 @@ mod tests {
 
     #[test]
     #[cfg(feature = "mesh")]
-    fn htriangle_area_rejects_degenerate_and_nonfinite_boundary_points() {
+    fn htriangle_area_hreal_rejects_degenerate_and_nonfinite_boundary_points() {
         let a = Point3::new(0.0, 0.0, 0.0);
         let b = Point3::new(2.0, 0.0, 0.0);
         let c = Point3::new(0.0, 3.0, 0.0);
 
         assert!(hreal_f64s_within_epsilon(
-            htriangle_area(&a, &b, &c).unwrap(),
+            hreal_to_f64(&htriangle_area_hreal(&a, &b, &c).unwrap()).unwrap(),
             3.0,
             tolerance()
         ));
-        assert!(htriangle_area(&a, &a, &c).is_none());
-        assert!(htriangle_area(&a, &Point3::new(Real::NAN, 0.0, 0.0), &c).is_none());
+        assert!(htriangle_area_hreal(&a, &a, &c).is_none());
+        assert!(htriangle_area_hreal(&a, &Point3::new(Real::NAN, 0.0, 0.0), &c).is_none());
     }
 
     #[test]
