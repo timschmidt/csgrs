@@ -1,8 +1,10 @@
 #![cfg(feature = "sdf")]
 
 use csgrs::csg::CSG;
-use csgrs::float_types::Real;
+use csgrs::float_types::{Real, hreal_from_f64};
 use csgrs::mesh::{Mesh, sdf::SdfDiagnostics};
+use hyperlimit::Point3 as HPoint3;
+use hypersdf::{SdfExpr, SdfSampleTopologyStatus};
 use nalgebra::Point3;
 use std::collections::HashMap;
 
@@ -88,6 +90,14 @@ fn assert_sdf_diagnostics_consistent(mesh: &Mesh<&'static str>, diagnostics: &Sd
         diagnostics.surface_nets_index_count / 3,
         diagnostics.emitted_triangle_count + diagnostics.skipped_non_finite_triangle_count
     );
+}
+
+fn hpoint3(x: Real, y: Real, z: Real) -> HPoint3 {
+    HPoint3::new(
+        hreal_from_f64(x).unwrap(),
+        hreal_from_f64(y).unwrap(),
+        hreal_from_f64(z).unwrap(),
+    )
 }
 
 fn gyroid_value(point: &Point3<Real>, period: Real) -> Real {
@@ -183,6 +193,40 @@ fn sdf_sphere_triangle_counts_do_not_collapse_as_resolution_increases() {
         assert_eq!(diagnostics.skipped_non_finite_triangle_count, 0);
         previous = diagnostics.emitted_triangle_count;
     }
+}
+
+#[test]
+fn hypersdf_sphere_expression_is_the_preferred_sdf_mesh_source() {
+    let expr = SdfExpr::sphere(hpoint3(0.0, 0.0, 0.0), hreal_from_f64(0.72 * 0.72).unwrap());
+    let (mesh, diagnostics) = Mesh::<&'static str>::sdf_expr_with_diagnostics(
+        expr,
+        (12, 12, 12),
+        Point3::new(-1.0, -1.0, -1.0),
+        Point3::new(1.0, 1.0, 1.0),
+        0.0,
+        "hypersdf_sphere",
+    );
+
+    assert_sdf_diagnostics_consistent(&mesh, &diagnostics);
+    assert_mesh_vertices_finite(&mesh);
+    assert_sdf_mesh_is_triangular(&mesh);
+    assert!(
+        diagnostics.emitted_triangle_count > 0,
+        "retained hypersdf sphere should emit a mesh preview: {diagnostics:#?}"
+    );
+    let preview = diagnostics
+        .hypersdf_preview
+        .as_ref()
+        .expect("hypersdf expression path should retain a preview report");
+    assert_eq!(preview.topology_status, SdfSampleTopologyStatus::PreviewOnly);
+    assert_eq!(
+        preview.grid_samples.samples.sample_count,
+        diagnostics.sample_count
+    );
+    assert_eq!(
+        preview.grid_samples.samples.non_finite_count,
+        diagnostics.non_finite_sample_count
+    );
 }
 
 #[test]

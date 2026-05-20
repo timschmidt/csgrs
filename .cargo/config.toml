@@ -41,7 +41,9 @@ xtask = "run --manifest-path ./xtask/Cargo.toml --"
 [patch.crates-io]
 hypercurve = { path = "../hypercurve" }
 hyperlattice = { path = "../hyperlattice" }
+hyperlimit = { path = "../hyperlimit" }
 hypermesh = { path = "../hypermesh" }
 hyperphysics = { path = "../hyperphysics" }
 hyperreal = { path = "../hyperreal" }
+hypersdf = { path = "../hypersdf" }
 hypertri = { path = "../hypertri" }

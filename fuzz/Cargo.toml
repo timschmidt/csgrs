@@ -9,6 +9,8 @@ cargo-fuzz = true
 
 [dependencies]
 csgrs = { path = "..", features = ["offset"] }
+hyperlimit = "0.3.0"
+hypersdf = "0.1.0"
 libfuzzer-sys = "0.4"
 nalgebra = "0.34.1"
 hashbrown = "0.15"
