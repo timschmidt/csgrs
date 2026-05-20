@@ -9610,6 +9610,147 @@ fn exact_coplanar_convex_surface_difference_materializes_component_holes() {
 
 #[cfg(feature = "exact-triangulation")]
 #[test]
+fn exact_coplanar_orthogonal_surface_cells_materialize_nonconvex_outputs() {
+    let l_left = rect_surface_i64(&[(0, 0, 2, 6), (2, 0, 6, 2)]);
+    let l_right = rect_surface_i64(&[(2, 2, 4, 4)]);
+    assert!(hypermesh::exact::arrange_coplanar_convex_surface_union(&l_left, &l_right).is_none());
+    let l_union = hypermesh::exact::arrange_coplanar_orthogonal_surface_union(&l_left, &l_right)
+        .expect("full-edge L-shaped rectangle union should materialize as orthogonal cells");
+    l_union.validate().unwrap();
+    l_union.validate_against_sources(&l_left, &l_right).unwrap();
+    assert_eq!(l_union.components.len(), 1);
+    assert_eq!(l_union.components[0].holes.len(), 0);
+    assert_eq!(l_union.components[0].outer.len(), 8);
+    let mut reversed_union = l_union.clone();
+    reversed_union.components[0].outer.reverse();
+    assert!(reversed_union.validate().is_err());
+    let union_preflight = hypermesh::exact::preflight_boolean_exact(
+        &l_left,
+        &l_right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+    )
+    .unwrap();
+    union_preflight.validate().unwrap();
+    union_preflight
+        .validate_against_sources(&l_left, &l_right)
+        .unwrap();
+    assert_eq!(
+        union_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceUnion
+    );
+    let union_result = hypermesh::exact::boolean_exact(
+        &l_left,
+        &l_right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    union_result.validate().unwrap();
+    assert_eq!(
+        union_result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarOrthogonalSurfaceUnion
+        }
+    );
+
+    let intersection_left = rect_surface_i64(&[(0, 0, 6, 2), (0, 2, 2, 6)]);
+    let intersection_right = rect_surface_i64(&[(0, 0, 6, 6)]);
+    let intersection = hypermesh::exact::arrange_coplanar_orthogonal_surface_intersection(
+        &intersection_left,
+        &intersection_right,
+    )
+    .expect("nonconvex rectangular source intersection should replay from cells");
+    intersection.validate().unwrap();
+    intersection
+        .validate_against_sources(&intersection_left, &intersection_right)
+        .unwrap();
+    assert_eq!(intersection.components.len(), 1);
+    assert_eq!(intersection.components[0].outer.len(), 6);
+    let intersection_result = hypermesh::exact::boolean_exact(
+        &intersection_left,
+        &intersection_right,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    intersection_result.validate().unwrap();
+    assert_eq!(
+        intersection_result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut:
+                hypermesh::exact::ExactBooleanShortcutKind::CoplanarOrthogonalSurfaceIntersection
+        }
+    );
+
+    let holed_left = rect_surface_i64(&[(0, 0, 10, 10), (10, 0, 12, 2)]);
+    let holed_right = rect_surface_i64(&[(2, 2, 4, 4)]);
+    let holed_difference =
+        hypermesh::exact::arrange_coplanar_orthogonal_surface_difference(&holed_left, &holed_right)
+            .expect("nonconvex outer with an exact rectangular hole should materialize");
+    holed_difference.validate().unwrap();
+    holed_difference
+        .validate_against_sources(&holed_left, &holed_right)
+        .unwrap();
+    assert_eq!(holed_difference.components.len(), 1);
+    assert_eq!(holed_difference.components[0].holes.len(), 1);
+    assert!(holed_difference.components[0].outer.len() > 4);
+    let mut wrong_operation = holed_difference.clone();
+    wrong_operation.operation = hypermesh::exact::CoplanarOrthogonalSurfaceOperation::Union;
+    assert!(
+        wrong_operation
+            .validate_against_sources(&holed_left, &holed_right)
+            .is_err()
+    );
+    let holed_result = hypermesh::exact::boolean_exact(
+        &holed_left,
+        &holed_right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    holed_result.validate().unwrap();
+    assert_eq!(
+        holed_result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut:
+                hypermesh::exact::ExactBooleanShortcutKind::CoplanarOrthogonalSurfaceDifference
+        }
+    );
+
+    let graph_left = rect_surface_i64(&[(0, 0, 12, 10)]);
+    let graph_right = rect_surface_i64(&[(3, 3, 5, 5), (7, 3, 9, 5), (5, 4, 7, 5), (-1, 4, 3, 5)]);
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_cutter_hole_contact_difference(
+            &graph_left,
+            &graph_right,
+        )
+        .is_none()
+    );
+    let graph_difference =
+        hypermesh::exact::arrange_coplanar_orthogonal_surface_difference(&graph_left, &graph_right)
+            .expect("multi-rectangle cutter/hole contact graph should replay through cells");
+    graph_difference.validate().unwrap();
+    graph_difference
+        .validate_against_sources(&graph_left, &graph_right)
+        .unwrap();
+    assert_eq!(graph_difference.components.len(), 1);
+    assert!(graph_difference.components[0].holes.is_empty());
+    assert!(graph_difference.components[0].outer.len() > 10);
+    let graph_preflight = hypermesh::exact::preflight_boolean_exact(
+        &graph_left,
+        &graph_right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    graph_preflight.validate().unwrap();
+    assert_eq!(
+        graph_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceDifference
+    );
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
 fn exact_coplanar_convex_surface_report_rejects_inconsistent_artifacts() {
     let vertices = &[0, 0, 0, 2, 0, 0, 2, 2, 0, 0, 2, 0];
     let left = ExactMesh::from_i64_triangles_with_policy(
@@ -11477,6 +11618,28 @@ fn partial_mesh_from_points(points: &[Point3]) -> ExactMesh {
         vertices,
         vec![Triangle([0, 1, 2])],
         SourceProvenance::exact("adversarial partial surface mesh"),
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap()
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn rect_surface_i64(rectangles: &[(i64, i64, i64, i64)]) -> ExactMesh {
+    let mut coordinates = Vec::with_capacity(rectangles.len() * 12);
+    let mut indices = Vec::with_capacity(rectangles.len() * 6);
+    for (rectangle, &(x0, y0, x1, y1)) in rectangles.iter().enumerate() {
+        let base = rectangle * 4;
+        coordinates.extend_from_slice(&[
+            x0, y0, 0, //
+            x1, y0, 0, //
+            x1, y1, 0, //
+            x0, y1, 0,
+        ]);
+        indices.extend_from_slice(&[base, base + 1, base + 2, base, base + 2, base + 3]);
+    }
+    ExactMesh::from_i64_triangles_with_policy(
+        &coordinates,
+        &indices,
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap()

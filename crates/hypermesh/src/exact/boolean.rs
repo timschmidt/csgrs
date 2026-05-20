@@ -44,6 +44,11 @@ use super::intersection::MeshFacePairRelation;
 #[cfg(feature = "exact-triangulation")]
 use super::mesh::{ExactMesh, Triangle};
 #[cfg(feature = "exact-triangulation")]
+use super::orthogonal_surface::{
+    CoplanarOrthogonalSurfaceOperation, arrange_coplanar_orthogonal_surface_difference,
+    arrange_coplanar_orthogonal_surface_intersection, arrange_coplanar_orthogonal_surface_union,
+};
+#[cfg(feature = "exact-triangulation")]
 use super::provenance::PredicateUse;
 #[cfg(feature = "exact-triangulation")]
 use super::region::{
@@ -289,6 +294,11 @@ pub fn preflight_boolean_exact(
         {
             ExactBooleanSupport::CertifiedCoplanarConvexSurfaceEquivalence
         }
+        ExactBooleanOperation::Union | ExactBooleanOperation::Intersection
+            if certify_coplanar_convex_surface_containment(left, right).is_some() =>
+        {
+            ExactBooleanSupport::CertifiedCoplanarConvexSurfaceContainment
+        }
         ExactBooleanOperation::Intersection
             if arrange_coplanar_convex_surface_intersection(left, right).is_some() =>
         {
@@ -298,6 +308,11 @@ pub fn preflight_boolean_exact(
             if arrange_coplanar_convex_surface_multi_intersection(left, right).is_some() =>
         {
             ExactBooleanSupport::CertifiedCoplanarConvexSurfaceIntersection
+        }
+        ExactBooleanOperation::Intersection
+            if arrange_coplanar_orthogonal_surface_intersection(left, right).is_some() =>
+        {
+            ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceIntersection
         }
         ExactBooleanOperation::Union
             if arrange_coplanar_convex_surface_union(left, right).is_some() =>
@@ -313,6 +328,11 @@ pub fn preflight_boolean_exact(
             if arrange_coplanar_convex_surface_multi_union(left, right).is_some() =>
         {
             ExactBooleanSupport::CertifiedCoplanarConvexSurfaceMultiUnion
+        }
+        ExactBooleanOperation::Union
+            if arrange_coplanar_orthogonal_surface_union(left, right).is_some() =>
+        {
+            ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceUnion
         }
         ExactBooleanOperation::Difference
             if arrange_coplanar_convex_surface_difference(left, right).is_some() =>
@@ -349,6 +369,11 @@ pub fn preflight_boolean_exact(
                 .is_some() =>
         {
             ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+        }
+        ExactBooleanOperation::Difference
+            if arrange_coplanar_orthogonal_surface_difference(left, right).is_some() =>
+        {
+            ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceDifference
         }
         ExactBooleanOperation::Union if has_axis_aligned_box_union(left, right) => {
             ExactBooleanSupport::CertifiedAxisAlignedBoxUnion
@@ -444,6 +469,9 @@ pub fn preflight_boolean_exact(
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceMultiDifference
             | ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
             | ExactBooleanSupport::CertifiedCoplanarSurfaceCutterHoleContactDifference
+            | ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceUnion
+            | ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceIntersection
+            | ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceDifference
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceContainment
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceHoledDifference
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceMultiHoledDifference
@@ -931,6 +959,11 @@ pub fn boolean_exact_with_boundary_policy(
         {
             boolean_coplanar_convex_equivalent_surfaces(left, operation, validation)
         }
+        ExactBooleanOperation::Union | ExactBooleanOperation::Intersection
+            if certify_coplanar_convex_surface_containment(left, right).is_some() =>
+        {
+            boolean_coplanar_convex_containment_surfaces(left, right, operation, validation)
+        }
         ExactBooleanOperation::Intersection
             if arrange_coplanar_convex_surface_intersection(left, right).is_some() =>
         {
@@ -940,6 +973,11 @@ pub fn boolean_exact_with_boundary_policy(
             if arrange_coplanar_convex_surface_multi_intersection(left, right).is_some() =>
         {
             boolean_coplanar_convex_multi_intersection(left, right, validation)
+        }
+        ExactBooleanOperation::Intersection
+            if arrange_coplanar_orthogonal_surface_intersection(left, right).is_some() =>
+        {
+            boolean_coplanar_orthogonal_surface(left, right, operation, validation)
         }
         ExactBooleanOperation::Union
             if arrange_coplanar_convex_surface_union(left, right).is_some() =>
@@ -955,6 +993,11 @@ pub fn boolean_exact_with_boundary_policy(
             if arrange_coplanar_convex_surface_multi_union(left, right).is_some() =>
         {
             boolean_coplanar_convex_multi_union(left, right, validation)
+        }
+        ExactBooleanOperation::Union
+            if arrange_coplanar_orthogonal_surface_union(left, right).is_some() =>
+        {
+            boolean_coplanar_orthogonal_surface(left, right, operation, validation)
         }
         ExactBooleanOperation::Difference
             if arrange_coplanar_convex_surface_difference(left, right).is_some() =>
@@ -977,6 +1020,11 @@ pub fn boolean_exact_with_boundary_policy(
             boolean_coplanar_cutter_hole_contact_difference(left, right, validation)
         }
         ExactBooleanOperation::Difference
+            if arrange_coplanar_convex_surface_holed_difference(left, right).is_some() =>
+        {
+            boolean_coplanar_convex_containment_surfaces(left, right, operation, validation)
+        }
+        ExactBooleanOperation::Difference
             if arrange_coplanar_convex_surface_multi_holed_difference(left, right).is_some() =>
         {
             boolean_coplanar_convex_multi_holed_difference(left, right, operation, validation).map(
@@ -988,6 +1036,11 @@ pub fn boolean_exact_with_boundary_policy(
                 .is_some() =>
         {
             boolean_coplanar_convex_component_holed_difference(left, right, validation)
+        }
+        ExactBooleanOperation::Difference
+            if arrange_coplanar_orthogonal_surface_difference(left, right).is_some() =>
+        {
+            boolean_coplanar_orthogonal_surface(left, right, operation, validation)
         }
         ExactBooleanOperation::Union if has_axis_aligned_box_union(left, right) => {
             boolean_axis_aligned_box_union(left, right, validation)
@@ -1067,6 +1120,11 @@ pub fn boolean_exact_with_boundary_policy(
             if let Some(result) = boolean_coplanar_convex_component_holed_difference_optional(
                 left, right, operation, validation,
             )? {
+                return Ok(result);
+            }
+            if let Some(result) =
+                boolean_coplanar_orthogonal_surface_optional(left, right, operation, validation)?
+            {
                 return Ok(result);
             }
             if let Some(result) =
@@ -1535,6 +1593,56 @@ fn boolean_coplanar_convex_component_holed_difference(
         validation,
     )
     .map(|result| result.expect("caller checked convex coplanar component-holed difference"))
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn boolean_coplanar_orthogonal_surface_optional(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    let arrangement = match operation {
+        ExactBooleanOperation::Union => arrange_coplanar_orthogonal_surface_union(left, right),
+        ExactBooleanOperation::Intersection => {
+            arrange_coplanar_orthogonal_surface_intersection(left, right)
+        }
+        ExactBooleanOperation::Difference => {
+            arrange_coplanar_orthogonal_surface_difference(left, right)
+        }
+        ExactBooleanOperation::SelectedRegions(_) => None,
+    };
+    let Some(arrangement) = arrangement else {
+        return Ok(None);
+    };
+    arrangement.validate_against_sources(left, right)?;
+    let (label, shortcut) = match arrangement.operation {
+        CoplanarOrthogonalSurfaceOperation::Union => (
+            "exact coplanar orthogonal surface union",
+            ExactBooleanShortcutKind::CoplanarOrthogonalSurfaceUnion,
+        ),
+        CoplanarOrthogonalSurfaceOperation::Intersection => (
+            "exact coplanar orthogonal surface intersection",
+            ExactBooleanShortcutKind::CoplanarOrthogonalSurfaceIntersection,
+        ),
+        CoplanarOrthogonalSurfaceOperation::Difference => (
+            "exact coplanar orthogonal surface difference",
+            ExactBooleanShortcutKind::CoplanarOrthogonalSurfaceDifference,
+        ),
+    };
+    let mesh = copy_mesh(&arrangement.mesh, label, validation)?;
+    Ok(Some(certified_shortcut_result(mesh, shortcut)))
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn boolean_coplanar_orthogonal_surface(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<ExactBooleanResult, MeshError> {
+    boolean_coplanar_orthogonal_surface_optional(left, right, operation, validation)
+        .map(|result| result.expect("caller checked coplanar orthogonal surface arrangement"))
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -2251,12 +2359,14 @@ fn coplanar_surface_output_already_materialized(
         ExactBooleanOperation::Intersection => {
             arrange_coplanar_convex_surface_intersection(left, right).is_some()
                 || arrange_coplanar_convex_surface_multi_intersection(left, right).is_some()
+                || arrange_coplanar_orthogonal_surface_intersection(left, right).is_some()
                 || intersect_single_triangle_coplanar_surfaces(left, right).is_some()
         }
         ExactBooleanOperation::Union => {
             arrange_coplanar_convex_surface_union(left, right).is_some()
                 || arrange_coplanar_convex_surface_component_union(left, right).is_some()
                 || arrange_coplanar_convex_surface_multi_union(left, right).is_some()
+                || arrange_coplanar_orthogonal_surface_union(left, right).is_some()
                 || union_single_triangle_coplanar_surfaces(left, right).is_some()
                 || arrange_single_triangle_coplanar_union(left, right).is_some()
         }
@@ -2267,6 +2377,7 @@ fn coplanar_surface_output_already_materialized(
                 || arrange_coplanar_surface_cutter_hole_contact_difference(left, right).is_some()
                 || arrange_coplanar_convex_surface_holed_difference(left, right).is_some()
                 || arrange_coplanar_convex_surface_multi_holed_difference(left, right).is_some()
+                || arrange_coplanar_orthogonal_surface_difference(left, right).is_some()
                 || difference_single_triangle_coplanar_surfaces(left, right).is_some()
                 || arrange_single_triangle_coplanar_difference(left, right).is_some()
                 || arrange_single_triangle_coplanar_holed_difference(left, right).is_some()

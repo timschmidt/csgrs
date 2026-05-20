@@ -13,6 +13,8 @@ use hypermesh::exact::{
     arrange_coplanar_convex_surface_multi_holed_difference,
     arrange_coplanar_convex_surface_multi_intersection, arrange_coplanar_convex_surface_union,
     arrange_coplanar_convex_surface_multi_union,
+    arrange_coplanar_orthogonal_surface_difference,
+    arrange_coplanar_orthogonal_surface_intersection, arrange_coplanar_orthogonal_surface_union,
     arrange_coplanar_surface_cutter_hole_contact_difference,
     arrange_coplanar_surface_multi_difference, boolean_exact_with_boundary_policy,
     boolean_selected_regions, certify_boundary_touching_report,
@@ -2103,6 +2105,105 @@ fn exercise_component_coplanar_difference() {
         contact_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarSurfaceCutterHoleContactDifference
     );
+
+    let l_left = rect_surface_i64(&[(0, 0, 2, 6), (2, 0, 6, 2)]);
+    let l_right = rect_surface_i64(&[(2, 2, 4, 4)]);
+    assert!(arrange_coplanar_convex_surface_union(&l_left, &l_right).is_none());
+    let l_union = arrange_coplanar_orthogonal_surface_union(&l_left, &l_right)
+        .expect("orthogonal L-shaped union fixture should materialize");
+    l_union.validate().unwrap();
+    l_union.validate_against_sources(&l_left, &l_right).unwrap();
+    assert_eq!(l_union.components.len(), 1);
+    assert_eq!(l_union.components[0].holes.len(), 0);
+    let union_preflight = preflight_boolean_exact(
+        &l_left,
+        &l_right,
+        ExactBooleanOperation::Union,
+    )
+    .expect("orthogonal union preflight should classify shortcut");
+    union_preflight.validate().unwrap();
+    union_preflight
+        .validate_against_sources(&l_left, &l_right)
+        .unwrap();
+    assert_eq!(
+        union_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceUnion
+    );
+    hypermesh::exact::boolean_exact(
+        &l_left,
+        &l_right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap()
+    .validate_operation_against_sources(
+        &l_left,
+        &l_right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+
+    let intersection_left = rect_surface_i64(&[(0, 0, 6, 2), (0, 2, 2, 6)]);
+    let intersection_right = rect_surface_i64(&[(0, 0, 6, 6)]);
+    let intersection =
+        arrange_coplanar_orthogonal_surface_intersection(&intersection_left, &intersection_right)
+            .expect("orthogonal nonconvex intersection fixture should materialize");
+    intersection.validate().unwrap();
+    intersection
+        .validate_against_sources(&intersection_left, &intersection_right)
+        .unwrap();
+    assert_eq!(intersection.components.len(), 1);
+    let intersection_preflight = preflight_boolean_exact(
+        &intersection_left,
+        &intersection_right,
+        ExactBooleanOperation::Intersection,
+    )
+    .expect("orthogonal intersection preflight should classify shortcut");
+    intersection_preflight.validate().unwrap();
+    assert_eq!(
+        intersection_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceIntersection
+    );
+
+    let holed_left = rect_surface_i64(&[(0, 0, 10, 10), (10, 0, 12, 2)]);
+    let holed_right = rect_surface_i64(&[(2, 2, 4, 4)]);
+    let holed_difference =
+        arrange_coplanar_orthogonal_surface_difference(&holed_left, &holed_right)
+            .expect("orthogonal holed difference fixture should materialize");
+    holed_difference.validate().unwrap();
+    holed_difference
+        .validate_against_sources(&holed_left, &holed_right)
+        .unwrap();
+    assert_eq!(holed_difference.components.len(), 1);
+    assert_eq!(holed_difference.components[0].holes.len(), 1);
+    let holed_preflight = preflight_boolean_exact(
+        &holed_left,
+        &holed_right,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("orthogonal holed difference preflight should classify shortcut");
+    holed_preflight.validate().unwrap();
+    assert_eq!(
+        holed_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceDifference
+    );
+
+    let graph_left = rect_surface_i64(&[(0, 0, 12, 10)]);
+    let graph_right =
+        rect_surface_i64(&[(3, 3, 5, 5), (7, 3, 9, 5), (5, 4, 7, 5), (-1, 4, 3, 5)]);
+    assert!(
+        arrange_coplanar_surface_cutter_hole_contact_difference(&graph_left, &graph_right)
+            .is_none()
+    );
+    let graph_difference =
+        arrange_coplanar_orthogonal_surface_difference(&graph_left, &graph_right)
+            .expect("orthogonal cutter/hole contact graph fixture should materialize");
+    graph_difference.validate().unwrap();
+    graph_difference
+        .validate_against_sources(&graph_left, &graph_right)
+        .unwrap();
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -2809,6 +2910,28 @@ fn exercise_mixed_coplanar_volumetric_materialization() {
             ExactBoundaryBooleanPolicy::Reject,
         )
         .unwrap();
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn rect_surface_i64(rectangles: &[(i64, i64, i64, i64)]) -> ExactMesh {
+    let mut coordinates = Vec::with_capacity(rectangles.len() * 12);
+    let mut indices = Vec::with_capacity(rectangles.len() * 6);
+    for (rectangle, &(x0, y0, x1, y1)) in rectangles.iter().enumerate() {
+        let base = rectangle * 4;
+        coordinates.extend_from_slice(&[
+            x0, y0, 0, //
+            x1, y0, 0, //
+            x1, y1, 0, //
+            x0, y1, 0,
+        ]);
+        indices.extend_from_slice(&[base, base + 1, base + 2, base, base + 2, base + 3]);
+    }
+    ExactMesh::from_i64_triangles_with_policy(
+        &coordinates,
+        &indices,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("rectangular fuzz surface fixture must import")
 }
 
 #[cfg(feature = "exact-triangulation")]

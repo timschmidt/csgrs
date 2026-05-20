@@ -26,6 +26,8 @@ pub mod handoff;
 pub mod intersection;
 pub mod mesh;
 pub mod narrow;
+#[cfg(feature = "exact-triangulation")]
+pub mod orthogonal_surface;
 pub mod package;
 pub mod predicates;
 pub mod provenance;
@@ -108,6 +110,12 @@ pub use narrow::{
     TriangleTriangleClassification, TriangleTriangleRelation, TriangleTriangleValidationError,
     classify_mesh_triangle_against_retained_face_plane, classify_triangle_against_face_plane,
     classify_triangle_triangle,
+};
+#[cfg(feature = "exact-triangulation")]
+pub use orthogonal_surface::{
+    CoplanarOrthogonalSurfaceArrangement, CoplanarOrthogonalSurfaceComponent,
+    CoplanarOrthogonalSurfaceOperation, arrange_coplanar_orthogonal_surface_difference,
+    arrange_coplanar_orthogonal_surface_intersection, arrange_coplanar_orthogonal_surface_union,
 };
 pub use package::{
     ExactMeshConsumerDomain, ExactMeshDomainReportRef, ExactMeshDomainSummary,

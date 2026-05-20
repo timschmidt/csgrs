@@ -10,6 +10,8 @@ use hypermesh::exact::{
     arrange_coplanar_convex_surface_intersection, arrange_coplanar_convex_surface_multi_difference,
     arrange_coplanar_convex_surface_multi_holed_difference,
     arrange_coplanar_convex_surface_multi_union, arrange_coplanar_convex_surface_union,
+    arrange_coplanar_orthogonal_surface_difference,
+    arrange_coplanar_orthogonal_surface_intersection, arrange_coplanar_orthogonal_surface_union,
     arrange_coplanar_surface_cutter_hole_contact_difference,
     arrange_coplanar_surface_multi_difference, arrange_single_triangle_coplanar_holed_difference,
     arrange_single_triangle_coplanar_union, audit_exact_mesh, build_intersection_graph,
@@ -30,6 +32,28 @@ use hypermesh::exact::{
     subtract_closed_convex_solids_single_cap, union_single_triangle_coplanar_surfaces,
 };
 use hyperreal::Real;
+
+#[cfg(feature = "exact-triangulation")]
+fn rect_surface_i64(rectangles: &[(i64, i64, i64, i64)]) -> ExactMesh {
+    let mut coordinates = Vec::with_capacity(rectangles.len() * 12);
+    let mut indices = Vec::with_capacity(rectangles.len() * 6);
+    for (rectangle, &(x0, y0, x1, y1)) in rectangles.iter().enumerate() {
+        let base = rectangle * 4;
+        coordinates.extend_from_slice(&[
+            x0, y0, 0, //
+            x1, y0, 0, //
+            x1, y1, 0, //
+            x0, y1, 0,
+        ]);
+        indices.extend_from_slice(&[base, base + 1, base + 2, base, base + 2, base + 3]);
+    }
+    ExactMesh::from_i64_triangles_with_policy(
+        &coordinates,
+        &indices,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap()
+}
 
 #[cfg(feature = "exact-triangulation")]
 fn axis_aligned_box_i64(min: [i64; 3], max: [i64; 3]) -> ExactMesh {
@@ -3068,6 +3092,134 @@ fn exact_boolean_coplanar_convex_surface_multi_holed_difference(c: &mut Criterio
     }
 }
 
+fn exact_boolean_coplanar_orthogonal_surface_cells(c: &mut Criterion) {
+    #[cfg(feature = "exact-triangulation")]
+    {
+        let l_left = rect_surface_i64(&[(0, 0, 2, 6), (2, 0, 6, 2)]);
+        let l_right = rect_surface_i64(&[(2, 2, 4, 4)]);
+        let intersection_left = rect_surface_i64(&[(0, 0, 6, 2), (0, 2, 2, 6)]);
+        let intersection_right = rect_surface_i64(&[(0, 0, 6, 6)]);
+        let holed_left = rect_surface_i64(&[(0, 0, 10, 10), (10, 0, 12, 2)]);
+        let holed_right = rect_surface_i64(&[(2, 2, 4, 4)]);
+        let graph_left = rect_surface_i64(&[(0, 0, 12, 10)]);
+        let graph_right =
+            rect_surface_i64(&[(3, 3, 5, 5), (7, 3, 9, 5), (5, 4, 7, 5), (-1, 4, 3, 5)]);
+
+        c.bench_function("exact_boolean_coplanar_orthogonal_surface_cells", |b| {
+            b.iter(|| {
+                let union = arrange_coplanar_orthogonal_surface_union(&l_left, &l_right);
+                let intersection = arrange_coplanar_orthogonal_surface_intersection(
+                    &intersection_left,
+                    &intersection_right,
+                );
+                let difference =
+                    arrange_coplanar_orthogonal_surface_difference(&holed_left, &holed_right);
+                let graph_difference =
+                    arrange_coplanar_orthogonal_surface_difference(&graph_left, &graph_right);
+                let graph_contact_fallback =
+                    arrange_coplanar_surface_cutter_hole_contact_difference(
+                        &graph_left,
+                        &graph_right,
+                    );
+                let union_result = hypermesh::exact::boolean_exact(
+                    &l_left,
+                    &l_right,
+                    hypermesh::exact::ExactBooleanOperation::Union,
+                    ValidationPolicy::ALLOW_BOUNDARY,
+                )
+                .unwrap();
+                let intersection_result = hypermesh::exact::boolean_exact(
+                    &intersection_left,
+                    &intersection_right,
+                    hypermesh::exact::ExactBooleanOperation::Intersection,
+                    ValidationPolicy::ALLOW_BOUNDARY,
+                )
+                .unwrap();
+                let difference_result = hypermesh::exact::boolean_exact(
+                    &holed_left,
+                    &holed_right,
+                    hypermesh::exact::ExactBooleanOperation::Difference,
+                    ValidationPolicy::ALLOW_BOUNDARY,
+                )
+                .unwrap();
+                (
+                    union
+                        .as_ref()
+                        .map(|output| output.validate_against_sources(&l_left, &l_right)),
+                    union.as_ref().map(|output| output.validate()),
+                    hypermesh::exact::preflight_boolean_exact(
+                        &l_left,
+                        &l_right,
+                        hypermesh::exact::ExactBooleanOperation::Union,
+                    )
+                    .map(|report| {
+                        (
+                            report.validate(),
+                            report.validate_against_sources(&l_left, &l_right),
+                        )
+                    }),
+                    union_result.validate_operation_against_sources(
+                        &l_left,
+                        &l_right,
+                        hypermesh::exact::ExactBooleanOperation::Union,
+                        ValidationPolicy::ALLOW_BOUNDARY,
+                        hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+                    ),
+                    intersection.as_ref().map(|output| {
+                        output.validate_against_sources(&intersection_left, &intersection_right)
+                    }),
+                    intersection.as_ref().map(|output| output.validate()),
+                    hypermesh::exact::preflight_boolean_exact(
+                        &intersection_left,
+                        &intersection_right,
+                        hypermesh::exact::ExactBooleanOperation::Intersection,
+                    )
+                    .map(|report| report.validate()),
+                    intersection_result.validate_operation_against_sources(
+                        &intersection_left,
+                        &intersection_right,
+                        hypermesh::exact::ExactBooleanOperation::Intersection,
+                        ValidationPolicy::ALLOW_BOUNDARY,
+                        hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+                    ),
+                    difference
+                        .as_ref()
+                        .map(|output| output.validate_against_sources(&holed_left, &holed_right)),
+                    difference.as_ref().map(|output| output.validate()),
+                    hypermesh::exact::preflight_boolean_exact(
+                        &holed_left,
+                        &holed_right,
+                        hypermesh::exact::ExactBooleanOperation::Difference,
+                    )
+                    .map(|report| report.validate()),
+                    difference_result.validate_operation_against_sources(
+                        &holed_left,
+                        &holed_right,
+                        hypermesh::exact::ExactBooleanOperation::Difference,
+                        ValidationPolicy::ALLOW_BOUNDARY,
+                        hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+                    ),
+                    graph_contact_fallback.is_none(),
+                    graph_difference
+                        .as_ref()
+                        .map(|output| output.validate_against_sources(&graph_left, &graph_right)),
+                    graph_difference.as_ref().map(|output| output.validate()),
+                    hypermesh::exact::preflight_boolean_exact(
+                        &graph_left,
+                        &graph_right,
+                        hypermesh::exact::ExactBooleanOperation::Difference,
+                    )
+                    .map(|report| report.validate()),
+                )
+            })
+        });
+    }
+    #[cfg(not(feature = "exact-triangulation"))]
+    {
+        let _ = c;
+    }
+}
+
 fn exact_convex_solid_classification(c: &mut Criterion) {
     let outer = ExactMesh::from_i64_triangles(
         &[
@@ -4302,6 +4454,7 @@ criterion_group!(
     exact_boolean_coplanar_convex_surface_arrangement_difference,
     exact_boolean_coplanar_convex_surface_multi_difference,
     exact_boolean_coplanar_convex_surface_multi_holed_difference,
+    exact_boolean_coplanar_orthogonal_surface_cells,
     exact_convex_solid_classification,
     exact_boolean_coplanar_surface_containment,
     exact_boolean_open_surface_disjoint,
