@@ -314,6 +314,34 @@ fn prepared_problem_extracts_multivariate_quadratic_residuals() {
 }
 
 #[test]
+fn candidate_replay_uses_prepared_quadratic_residual_blocks() {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let y = Expr::symbol(SymbolId(1), "y");
+    let mut problem = Problem::default();
+    problem.add_variable("x", real(3));
+    problem.add_variable("y", real(4));
+    problem.add_constraint(Constraint::equality(
+        "quadratic replay block",
+        x.clone().powi(2) + x.clone() * y.clone() * Expr::int(2) + y.clone().powi(2)
+            - Expr::int(49),
+    ));
+    let prepared = PreparedProblem::new(&problem);
+    let context = context_from_problem(&problem);
+
+    assert!(prepared.quadratic_residuals()[0].is_some());
+    assert_eq!(
+        prepared
+            .evaluate_constraint_residual(0, &context)
+            .expect("prepared quadratic replay should succeed"),
+        Real::zero()
+    );
+    assert!(
+        certify_candidate(&prepared, &context).all_satisfied(),
+        "candidate certification should use the retained quadratic replay route"
+    );
+}
+
+#[test]
 fn geometry_domain_builds_exact_distance_and_tangent_residuals() {
     let mut problem = Problem::default();
     let ax = problem.add_variable("ax", real(0));

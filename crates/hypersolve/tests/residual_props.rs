@@ -323,6 +323,48 @@ proptest! {
     }
 
     #[test]
+    fn candidate_certification_generated_multivariate_quadratics_replay_exactly(
+        ax2 in -4_i16..=4,
+        bxy in -4_i16..=4,
+        cy2 in -4_i16..=4,
+        dx in -8_i16..=8,
+        ey in -8_i16..=8,
+        x_value in -8_i16..=8,
+        y_value in -8_i16..=8,
+    ) {
+        prop_assume!(ax2 != 0 || bxy != 0 || cy2 != 0);
+        let x = Expr::symbol(SymbolId(0), "x");
+        let y = Expr::symbol(SymbolId(1), "y");
+        let expected = i64::from(ax2) * i64::from(x_value) * i64::from(x_value)
+            + i64::from(bxy) * i64::from(x_value) * i64::from(y_value)
+            + i64::from(cy2) * i64::from(y_value) * i64::from(y_value)
+            + i64::from(dx) * i64::from(x_value)
+            + i64::from(ey) * i64::from(y_value);
+        let mut problem = Problem::default();
+        problem.add_variable("x", Real::from(i64::from(x_value)));
+        problem.add_variable("y", Real::from(i64::from(y_value)));
+        problem.add_constraint(Constraint::equality(
+            "generated certified quadratic replay",
+            x.clone() * x.clone() * Expr::int(i64::from(ax2))
+                + x.clone() * y.clone() * Expr::int(i64::from(bxy))
+                + y.clone() * y.clone() * Expr::int(i64::from(cy2))
+                + x * Expr::int(i64::from(dx))
+                + y * Expr::int(i64::from(ey))
+                - Expr::int(expected),
+        ));
+        let prepared = PreparedProblem::new(&problem);
+        let context = context_from_problem(&problem);
+        let report = certify_candidate(&prepared, &context);
+
+        prop_assert!(prepared.quadratic_residuals()[0].is_some());
+        prop_assert_eq!(
+            prepared.evaluate_constraint_residual(0, &context).unwrap(),
+            Real::zero()
+        );
+        prop_assert!(report.all_satisfied());
+    }
+
+    #[test]
     fn direct_quadratic_solver_generated_integer_roots_replay_exactly(
         first in -16_i16..=16,
         second in -16_i16..=16,

@@ -265,6 +265,14 @@ fn certification(c: &mut Criterion) {
             )
         })
     });
+    c.bench_function("prepared_quadratic_candidate_replay", |b| {
+        b.iter(|| {
+            for row in 0..prepared_multivariate_quadratic.problem().constraints.len() {
+                let _ = prepared_multivariate_quadratic
+                    .evaluate_constraint_residual(row, &multivariate_quadratic_context);
+            }
+        })
+    });
     c.bench_function("certify_affine_candidate_exact", |b| {
         b.iter(|| certify_candidate(&prepared, &context))
     });

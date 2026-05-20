@@ -320,6 +320,31 @@ impl<'a> PreparedProblem<'a> {
         &self.quadratic_residuals
     }
 
+    /// Evaluate one source residual through the best retained exact package.
+    ///
+    /// Prepared affine rows use fixed product-sum coefficient blocks; prepared
+    /// quadratic rows use retained constant, linear, square, and cross terms;
+    /// all other rows fall back to the original expression tree. This is the
+    /// solver analogue of Yap's recommendation to choose an arithmetic package
+    /// from object structure before expanding into scalar questions. See Yap,
+    /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+    /// (1997).
+    pub fn evaluate_constraint_residual(
+        &self,
+        constraint_index: usize,
+        context: &EvaluationContext,
+    ) -> Result<hyperreal::Real, EvalError> {
+        if let Some(affine) = &self.affine_residuals[constraint_index] {
+            return Ok(affine.eval_real(&self.problem.variables, context.bindings())?);
+        }
+        if let Some(quadratic) = &self.quadratic_residuals[constraint_index] {
+            return Ok(quadratic.eval_real(&self.problem.variables, context.bindings())?);
+        }
+        Ok(self.problem.constraints[constraint_index]
+            .residual
+            .eval_real(context.bindings())?)
+    }
+
     /// Evaluate residuals against a context using the source problem.
     ///
     /// The prepared metadata is intentionally not required for correctness;
@@ -335,11 +360,7 @@ impl<'a> PreparedProblem<'a> {
             if !constraint.active {
                 continue;
             }
-            let value = if let Some(affine) = &self.affine_residuals[constraint_index] {
-                affine.eval_real(&self.problem.variables, context.bindings())?
-            } else {
-                constraint.residual.eval_real(context.bindings())?
-            };
+            let value = self.evaluate_constraint_residual(constraint_index, context)?;
             let signed = match constraint.kind {
                 ConstraintKind::Equality | ConstraintKind::Soft => value,
                 ConstraintKind::LessOrEqual => positive_part(value),

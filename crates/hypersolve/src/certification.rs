@@ -15,7 +15,7 @@ use hyperlimit::{PredicatePolicy, Sign, certified_ball_sign_report_with_policy};
 use hyperreal::{CertifiedRealSign, Real, RealSign, RealSignCertificate};
 
 use crate::diagnostics::{ProposalEngineKind, ProposalEnginePrecision, ProposalEngineReport};
-use crate::eval::{EvalError, EvaluationContext, positive_part};
+use crate::eval::{EvaluationContext, positive_part};
 use crate::model::ConstraintKind;
 use crate::prepared::PreparedProblem;
 
@@ -212,11 +212,7 @@ pub fn certify_candidate_with_config(
         if !constraint.active {
             continue;
         }
-        let replayed = if let Some(affine) = &prepared.affine_residuals()[constraint_index] {
-            affine.eval_real(prepared.problem().variables.as_slice(), context.bindings())
-        } else {
-            constraint.residual.eval_real(context.bindings())
-        };
+        let replayed = prepared.evaluate_constraint_residual(constraint_index, context);
         let row = match replayed {
             Ok(value) => {
                 let signed = normalize_residual(value, constraint.kind);
@@ -235,7 +231,7 @@ pub fn certify_candidate_with_config(
                 kind: constraint.kind,
                 signed_residual: None,
                 status: CertifiedCandidateStatus::DomainFailure {
-                    message: format!("{:?}", EvalError::from(error)),
+                    message: format!("{error:?}"),
                 },
             },
         };
