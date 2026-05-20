@@ -143,6 +143,50 @@ pub struct AlgebraicRootCandidateReport {
     pub status: AlgebraicRootCandidateStatus,
 }
 
+/// Status for Descartes-sign root-count bounds.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum DescartesRootCountStatus {
+    /// Descartes variation bounds were computed exactly.
+    Counted,
+    /// The expression is outside the exact-rational univariate package.
+    UnsupportedCoefficient,
+    /// Exact coefficient signs or degree trimming did not decide.
+    Undecided,
+}
+
+/// Descartes sign-variation bounds for one univariate polynomial row.
+///
+/// Descartes' rule of signs gives an exact upper bound on positive real roots
+/// and the parity of the gap to the true count. Applying the same rule to
+/// `p(-x)` gives the negative-root bound. This is not full isolation, but it
+/// is a cheap proof-producing algebraic filter that can reject impossible
+/// root topologies before Sturm subdivision. See Descartes, *La Géométrie*
+/// (1637), Collins and Loos (1982), and Yap (1997).
+#[derive(Clone, Debug, PartialEq)]
+pub struct DescartesRootCountReport {
+    /// Source constraint index.
+    pub constraint_index: usize,
+    /// Solver symbol used by the univariate polynomial, when supported.
+    pub symbol: Option<SymbolId>,
+    /// Degree after exact trimming.
+    pub degree: Option<usize>,
+    /// Count status.
+    pub status: DescartesRootCountStatus,
+    /// Multiplicity of the root at zero, detected from leading zero
+    /// coefficients. This is exact for supported rows.
+    pub zero_root_multiplicity: Option<usize>,
+    /// Descartes upper bound for positive roots.
+    pub positive_variations: Option<usize>,
+    /// Descartes upper bound for negative roots, computed from `p(-x)`.
+    pub negative_variations: Option<usize>,
+    /// True positive-root count has the same parity as this value.
+    pub positive_root_count_parity: Option<usize>,
+    /// True negative-root count has the same parity as this value.
+    pub negative_root_count_parity: Option<usize>,
+    /// Compact unsupported/undecided reason.
+    pub message: Option<String>,
+}
+
 /// Isolate distinct real roots for active univariate equality residuals.
 ///
 /// The first implementation accepts exact-rational univariate polynomial rows
@@ -450,6 +494,172 @@ pub fn certify_isolated_rational_root_witnesses_with_config(
         }
     }
     candidates
+}
+
+/// Compute Descartes sign-variation root-count bounds for active equality rows.
+///
+/// This is a bounded algebraic prefilter. It reports exact upper bounds and
+/// parity constraints for positive and negative real roots of supported
+/// exact-rational univariate polynomials. It deliberately does not estimate
+/// roots numerically or certify a candidate solution.
+pub fn count_descartes_univariate_polynomial_roots(
+    prepared: &PreparedProblem<'_>,
+    policy: PredicatePolicy,
+) -> Vec<DescartesRootCountReport> {
+    let mut reports = Vec::new();
+    for (constraint_index, constraint) in prepared.problem().constraints.iter().enumerate() {
+        if !constraint.active || constraint.kind != ConstraintKind::Equality {
+            continue;
+        }
+        reports.push(count_descartes_univariate_polynomial_expr(
+            constraint_index,
+            &constraint.residual,
+            prepared.problem(),
+            policy,
+        ));
+    }
+    reports
+}
+
+/// Compute Descartes sign-variation bounds for one expression.
+pub fn count_descartes_univariate_polynomial_expr(
+    constraint_index: usize,
+    expression: &Expr,
+    problem: &Problem,
+    policy: PredicatePolicy,
+) -> DescartesRootCountReport {
+    let extracted = match collect_univariate_polynomial(expression) {
+        Some(extracted) => extracted,
+        None => {
+            return descartes_report(
+                constraint_index,
+                None,
+                None,
+                DescartesRootCountStatus::UnsupportedCoefficient,
+                None,
+                None,
+                None,
+                Some("expression is not a supported univariate polynomial".to_owned()),
+            );
+        }
+    };
+    let Some(symbol) = extracted.symbol else {
+        return descartes_report(
+            constraint_index,
+            None,
+            Some(0),
+            DescartesRootCountStatus::Counted,
+            Some(0),
+            Some(0),
+            Some(0),
+            Some("constant polynomial row has no variable roots".to_owned()),
+        );
+    };
+    if !problem
+        .variables
+        .iter()
+        .any(|variable| variable.symbol == symbol)
+    {
+        return descartes_report(
+            constraint_index,
+            Some(symbol),
+            None,
+            DescartesRootCountStatus::UnsupportedCoefficient,
+            None,
+            None,
+            None,
+            Some("polynomial symbol is not present in the problem".to_owned()),
+        );
+    }
+
+    let zero_root_multiplicity = match leading_zero_multiplicity(&extracted.coefficients, policy) {
+        Some(multiplicity) => multiplicity,
+        None => {
+            return descartes_report(
+                constraint_index,
+                Some(symbol),
+                None,
+                DescartesRootCountStatus::Undecided,
+                None,
+                None,
+                None,
+                Some("could not decide zero-root multiplicity".to_owned()),
+            );
+        }
+    };
+    let Some(poly) = trim_polynomial(extracted.coefficients, policy) else {
+        return descartes_report(
+            constraint_index,
+            Some(symbol),
+            None,
+            DescartesRootCountStatus::Undecided,
+            Some(zero_root_multiplicity),
+            None,
+            None,
+            Some("could not decide polynomial degree".to_owned()),
+        );
+    };
+    if poly
+        .iter()
+        .any(|coefficient| coefficient.exact_rational_ref().is_none())
+    {
+        return descartes_report(
+            constraint_index,
+            Some(symbol),
+            Some(poly.len().saturating_sub(1)),
+            DescartesRootCountStatus::UnsupportedCoefficient,
+            Some(zero_root_multiplicity),
+            None,
+            None,
+            Some("all Descartes coefficients must be exact rationals".to_owned()),
+        );
+    }
+    let positive = match sign_variations_for_coefficients(&poly, policy) {
+        Some(variations) => variations,
+        None => {
+            return descartes_report(
+                constraint_index,
+                Some(symbol),
+                Some(poly.len().saturating_sub(1)),
+                DescartesRootCountStatus::Undecided,
+                Some(zero_root_multiplicity),
+                None,
+                None,
+                Some("could not decide positive coefficient signs".to_owned()),
+            );
+        }
+    };
+    let mut reflected = poly.clone();
+    for (degree, coefficient) in reflected.iter_mut().enumerate() {
+        if degree % 2 == 1 {
+            *coefficient = -coefficient.clone();
+        }
+    }
+    let negative = match sign_variations_for_coefficients(&reflected, policy) {
+        Some(variations) => variations,
+        None => {
+            return descartes_report(
+                constraint_index,
+                Some(symbol),
+                Some(poly.len().saturating_sub(1)),
+                DescartesRootCountStatus::Undecided,
+                Some(zero_root_multiplicity),
+                Some(positive),
+                None,
+                Some("could not decide negative coefficient signs".to_owned()),
+            );
+        }
+    };
+    descartes_report(
+        constraint_index,
+        Some(symbol),
+        Some(poly.len().saturating_sub(1)),
+        DescartesRootCountStatus::Counted,
+        Some(zero_root_multiplicity),
+        Some(positive),
+        Some(negative),
+        None,
+    )
 }
 
 #[derive(Clone, Debug)]
@@ -881,6 +1091,38 @@ fn abs_real(value: &Real, policy: PredicatePolicy) -> Option<Real> {
     }
 }
 
+fn leading_zero_multiplicity(polynomial: &[Real], policy: PredicatePolicy) -> Option<usize> {
+    let mut multiplicity = 0;
+    for coefficient in polynomial {
+        match compare_reals_with_policy(coefficient, &Real::zero(), policy).value()? {
+            Ordering::Equal => multiplicity += 1,
+            Ordering::Less | Ordering::Greater => return Some(multiplicity),
+        }
+    }
+    Some(0)
+}
+
+fn sign_variations_for_coefficients(
+    coefficients: &[Real],
+    policy: PredicatePolicy,
+) -> Option<usize> {
+    let mut previous = None;
+    let mut variations = 0;
+    for coefficient in coefficients.iter().rev() {
+        let sign = compare_reals_with_policy(coefficient, &Real::zero(), policy).value()?;
+        if sign == Ordering::Equal {
+            continue;
+        }
+        if let Some(previous) = previous
+            && previous != sign
+        {
+            variations += 1;
+        }
+        previous = Some(sign);
+    }
+    Some(variations)
+}
+
 fn root_isolation_report(
     constraint_index: usize,
     symbol: Option<SymbolId>,
@@ -897,6 +1139,31 @@ fn root_isolation_report(
         status,
         multiplicity,
         intervals,
+        message,
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn descartes_report(
+    constraint_index: usize,
+    symbol: Option<SymbolId>,
+    degree: Option<usize>,
+    status: DescartesRootCountStatus,
+    zero_root_multiplicity: Option<usize>,
+    positive_variations: Option<usize>,
+    negative_variations: Option<usize>,
+    message: Option<String>,
+) -> DescartesRootCountReport {
+    DescartesRootCountReport {
+        constraint_index,
+        symbol,
+        degree,
+        status,
+        zero_root_multiplicity,
+        positive_root_count_parity: positive_variations.map(|count| count % 2),
+        positive_variations,
+        negative_root_count_parity: negative_variations.map(|count| count % 2),
+        negative_variations,
         message,
     }
 }
@@ -1015,5 +1282,47 @@ mod tests {
             candidate.exact_root == Some(real(-1))
                 && candidate.status == AlgebraicRootCandidateStatus::ReplayRejected
         }));
+    }
+
+    #[test]
+    fn descartes_counts_positive_negative_and_zero_root_bounds() {
+        let x = Expr::symbol(SymbolId(0), "x");
+        let y = Expr::symbol(SymbolId(1), "y");
+        let mut problem = Problem::default();
+        problem.add_variable("x", real(0));
+        problem.add_variable("y", real(0));
+        problem.add_constraint(Constraint::equality(
+            "mixed signs",
+            x.clone().powi(3) - Expr::int(6) * x.clone().powi(2) + Expr::int(11) * x.clone()
+                - Expr::int(6),
+        ));
+        problem.add_constraint(Constraint::equality(
+            "zero and negative roots",
+            x.clone() * (x.clone() + Expr::int(2)),
+        ));
+        problem.add_constraint(Constraint::equality("multivariate unsupported", x * y));
+
+        let reports = count_descartes_univariate_polynomial_roots(
+            &PreparedProblem::new(&problem),
+            PredicatePolicy::default(),
+        );
+
+        assert_eq!(reports.len(), 3);
+        assert_eq!(reports[0].status, DescartesRootCountStatus::Counted);
+        assert_eq!(reports[0].positive_variations, Some(3));
+        assert_eq!(reports[0].positive_root_count_parity, Some(1));
+        assert_eq!(reports[0].negative_variations, Some(0));
+        assert_eq!(reports[0].negative_root_count_parity, Some(0));
+        assert_eq!(reports[0].zero_root_multiplicity, Some(0));
+
+        assert_eq!(reports[1].status, DescartesRootCountStatus::Counted);
+        assert_eq!(reports[1].zero_root_multiplicity, Some(1));
+        assert_eq!(reports[1].positive_variations, Some(0));
+        assert_eq!(reports[1].negative_variations, Some(1));
+
+        assert_eq!(
+            reports[2].status,
+            DescartesRootCountStatus::UnsupportedCoefficient
+        );
     }
 }

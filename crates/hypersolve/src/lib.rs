@@ -100,12 +100,13 @@ pub use prepared::{
     PreparedConstraintFacts, PreparedProblem, PreparedProblemFacts, facts_depend_on_symbol,
 };
 pub use root_isolation::{
-    AlgebraicRootCandidateReport, AlgebraicRootCandidateStatus, IsolatedRootInterval,
-    RootIsolationConfig, RootIsolationStatus, RootMultiplicityStatus,
-    UnivariateRootIsolationReport, certify_isolated_rational_root_witnesses,
-    certify_isolated_rational_root_witnesses_with_config, isolate_univariate_polynomial_expr,
-    isolate_univariate_polynomial_expr_with_config, isolate_univariate_polynomial_roots,
-    isolate_univariate_polynomial_roots_with_config,
+    AlgebraicRootCandidateReport, AlgebraicRootCandidateStatus, DescartesRootCountReport,
+    DescartesRootCountStatus, IsolatedRootInterval, RootIsolationConfig, RootIsolationStatus,
+    RootMultiplicityStatus, UnivariateRootIsolationReport,
+    certify_isolated_rational_root_witnesses, certify_isolated_rational_root_witnesses_with_config,
+    count_descartes_univariate_polynomial_expr, count_descartes_univariate_polynomial_roots,
+    isolate_univariate_polynomial_expr, isolate_univariate_polynomial_expr_with_config,
+    isolate_univariate_polynomial_roots, isolate_univariate_polynomial_roots_with_config,
 };
 pub use solver::{SolverConfig, SolverState, solve_damped_least_squares};
 pub use solver_block::{

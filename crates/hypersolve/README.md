@@ -103,8 +103,9 @@ Implemented today:
   helpers with full-candidate replay reports, equality-substitution analysis,
   exact substitution-class construction, class-based candidate propagation, and
   non-mutating affine row elimination reports;
-- exact-rational univariate polynomial root isolation by square-free reduction,
-  Sturm intervals, bounded interval refinement, and exact rational witness replay;
+- exact-rational univariate polynomial root isolation by Descartes count bounds,
+  square-free reduction, Sturm intervals, bounded interval refinement, and exact
+  rational witness replay;
 - candidate, lossy-adapter-only, candidate-domain, interval, affine Krawczyk,
   univariate and multivariate quadratic Krawczyk, and univariate quadratic alpha
   certification surfaces;
