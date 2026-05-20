@@ -11,14 +11,14 @@ use hypersolve::{
     certify_affine_interval_candidate, certify_affine_krawczyk_box, certify_candidate,
     certify_candidate_with_config, certify_candidate_with_residual_balls,
     certify_multivariate_quadratic_interval_candidate, certify_quadratic_interval_candidate,
-    constant_feed_time_equation, context_from_problem, differential_pair_skew_equation,
-    eliminate_affine_rows_with_substitution_classes, evaluate_residuals, facts_depend_on_symbol,
-    find_equality_substitutions, length_match_equation, point_coincidence_equations,
-    rectangular_difference_area_equation, rectangular_region_area_equation,
-    rectangular_region_containment_constraints, solve_damped_least_squares,
-    solve_direct_affine_equalities, solve_direct_univariate_quadratic_equalities,
-    squared_distance_equation, tangent_parallel_equation, tangent_same_direction_constraint,
-    validate_equality_substitutions,
+    certify_univariate_quadratic_alpha, constant_feed_time_equation, context_from_problem,
+    differential_pair_skew_equation, eliminate_affine_rows_with_substitution_classes,
+    evaluate_residuals, facts_depend_on_symbol, find_equality_substitutions, length_match_equation,
+    point_coincidence_equations, rectangular_difference_area_equation,
+    rectangular_region_area_equation, rectangular_region_containment_constraints,
+    solve_damped_least_squares, solve_direct_affine_equalities,
+    solve_direct_univariate_quadratic_equalities, squared_distance_equation,
+    tangent_parallel_equation, tangent_same_direction_constraint, validate_equality_substitutions,
 };
 
 fn real(value: i64) -> Real {
@@ -763,6 +763,83 @@ fn prepared_problem_extracts_univariate_quadratic_residuals() {
             )
             .unwrap(),
         Real::zero()
+    );
+}
+
+#[test]
+fn univariate_quadratic_alpha_certifies_exact_simple_root_and_nearby_basin() {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let mut exact_root = Problem::default();
+    exact_root.add_variable("x", real(2));
+    exact_root.add_constraint(Constraint::equality(
+        "simple root",
+        x.clone().powi(2) - Expr::int(4),
+    ));
+    let exact_report = certify_univariate_quadratic_alpha(
+        &PreparedProblem::new(&exact_root),
+        &context_from_problem(&exact_root),
+        hyperlimit::PredicatePolicy::default(),
+    );
+
+    assert_eq!(exact_report.examined_rows, 1);
+    assert_eq!(
+        exact_report.rows[0].status,
+        hypersolve::UnivariateQuadraticAlphaStatus::ExactSimpleRoot
+    );
+    assert!(exact_report.all_examined_rows_certified());
+
+    let mut near = Problem::default();
+    near.add_variable("x", real(5));
+    near.add_constraint(Constraint::equality(
+        "near root",
+        x.clone().powi(2) - Expr::int(24),
+    ));
+    let near_report = certify_univariate_quadratic_alpha(
+        &PreparedProblem::new(&near),
+        &context_from_problem(&near),
+        hyperlimit::PredicatePolicy::default(),
+    );
+
+    assert_eq!(
+        near_report.rows[0].status,
+        hypersolve::UnivariateQuadraticAlphaStatus::CertifiedSmaleAlphaBound
+    );
+    assert_eq!(near_report.rows[0].alpha_numerator, Some(real(1)));
+    assert_eq!(near_report.rows[0].alpha_denominator, Some(real(100)));
+    assert!(near_report.all_examined_rows_certified());
+}
+
+#[test]
+fn univariate_quadratic_alpha_reports_multiple_root_and_failed_bound() {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let mut multiple = Problem::default();
+    multiple.add_variable("x", real(0));
+    multiple.add_constraint(Constraint::equality("multiple root", x.clone().powi(2)));
+    let multiple_report = certify_univariate_quadratic_alpha(
+        &PreparedProblem::new(&multiple),
+        &context_from_problem(&multiple),
+        hyperlimit::PredicatePolicy::default(),
+    );
+    assert_eq!(
+        multiple_report.rows[0].status,
+        hypersolve::UnivariateQuadraticAlphaStatus::ExactMultipleRoot
+    );
+    assert!(!multiple_report.all_examined_rows_certified());
+
+    let mut far = Problem::default();
+    far.add_variable("x", real(1));
+    far.add_constraint(Constraint::equality(
+        "far from roots",
+        x.clone().powi(2) - Expr::int(100),
+    ));
+    let far_report = certify_univariate_quadratic_alpha(
+        &PreparedProblem::new(&far),
+        &context_from_problem(&far),
+        hyperlimit::PredicatePolicy::default(),
+    );
+    assert_eq!(
+        far_report.rows[0].status,
+        hypersolve::UnivariateQuadraticAlphaStatus::BoundFailed
     );
 }
 

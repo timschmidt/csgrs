@@ -6,6 +6,7 @@
 //! skeleton.
 
 pub mod affine;
+pub mod alpha;
 pub mod certification;
 pub mod diagnostics;
 pub mod direct;
@@ -23,6 +24,10 @@ pub mod solver_block;
 pub mod symbolic;
 
 pub use affine::PreparedAffineResidual;
+pub use alpha::{
+    UnivariateQuadraticAlphaReport, UnivariateQuadraticAlphaRow, UnivariateQuadraticAlphaStatus,
+    certify_univariate_quadratic_alpha,
+};
 pub use certification::{
     CandidateCertificationConfig, CandidateCertificationReport, CandidateResidualBall,
     CertifiedCandidateRow, CertifiedCandidateStatus, certify_candidate,

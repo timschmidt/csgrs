@@ -6,7 +6,7 @@ use hypersolve::{
     build_equality_substitution_classes, center_clearance_squared_constraint,
     certify_affine_krawczyk_box, certify_candidate,
     certify_multivariate_quadratic_interval_candidate, certify_quadratic_interval_candidate,
-    context_from_problem, differential_pair_skew_equation,
+    certify_univariate_quadratic_alpha, context_from_problem, differential_pair_skew_equation,
     eliminate_affine_rows_with_substitution_classes, rectangular_difference_area_equation,
     solve_direct_univariate_quadratic_equalities, squared_distance_equation,
 };
@@ -190,6 +190,15 @@ fn certification(c: &mut Criterion) {
                     symbol: SymbolId(0),
                     radius: r(1),
                 }],
+                hyperlimit::PredicatePolicy::default(),
+            )
+        })
+    });
+    c.bench_function("certify_univariate_quadratic_alpha_rows", |b| {
+        b.iter(|| {
+            certify_univariate_quadratic_alpha(
+                &prepared_quadratic,
+                &quadratic_context,
                 hyperlimit::PredicatePolicy::default(),
             )
         })
