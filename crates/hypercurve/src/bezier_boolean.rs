@@ -7394,6 +7394,57 @@ impl BezierBooleanResultReport2 {
         )
     }
 
+    /// Accepts a full generic endpoint result using keyed graph facts and depth-certified roles.
+    ///
+    /// This is the explicit-role counterpart to
+    /// [`Self::from_schedule_graph_fact_walk_depth_facts`]. Ownership, graph,
+    /// walk, depth, and role facts are all supplied as replayable certificate
+    /// data and are validated in order before the result is accepted. The
+    /// graph certificate may describe branch or resolved-overlap obligations
+    /// because the caller also supplies an explicit graph walk. Yap, "Towards
+    /// Exact Geometric Computation" (1997), is the acceptance rule: stale role
+    /// parity is a blocker, not a topology hint to repair. The stage split
+    /// follows Vatti (1992), Greiner-Hormann (1998), and
+    /// Martinez-Rueda-Feito (2009).
+    pub fn from_schedule_graph_fact_walk_depth_role_facts(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        ownership_facts: &[BezierBooleanOwnershipFact2],
+        first_endpoints: &[(Point2, Point2)],
+        second_endpoints: &[(Point2, Point2)],
+        graph_facts: &BezierBooleanLoopGraphFacts2,
+        walk_indices: &[usize],
+        depth_facts: &[BezierBooleanLoopNestingDepthFact2],
+        roles: &[BezierBooleanOutputLoopRole],
+    ) -> Self {
+        let facts =
+            BezierBooleanOwnershipFactReport2::from_schedule_facts(schedule, ownership_facts);
+        let ownership = facts.classify(schedule, operation);
+        let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
+        let assembly = BezierBooleanAssemblyReadinessReport2::from_fragment_counts(
+            &emission,
+            first_endpoints.len(),
+            second_endpoints.len(),
+        );
+        let plan =
+            BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(&assembly, &emission);
+        let graph = BezierBooleanLoopGraphFactReport2::from_plan_facts(&plan, graph_facts);
+        let traversal = graph.to_certified_walk_traversal_report(&plan);
+        let walk = BezierBooleanLoopGraphWalkReport2::from_traversal_order(
+            &traversal,
+            &plan,
+            walk_indices,
+        );
+        Self::from_graph_walk_depth_role_facts(
+            &walk,
+            &plan,
+            first_endpoints,
+            second_endpoints,
+            depth_facts,
+            roles,
+        )
+    }
+
     /// Accepts a full generic endpoint result from locator vectors and graph-walk facts.
     ///
     /// This is the non-uniform locator counterpart to
@@ -7636,6 +7687,31 @@ impl BezierBooleanResultReport2 {
         )
     }
 
+    /// Accepts a full quadratic Bezier result using keyed graph facts and depth-certified roles.
+    pub fn from_quadratic_schedule_graph_fact_walk_depth_role_facts(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        ownership_facts: &[BezierBooleanOwnershipFact2],
+        first: &BezierBooleanQuadraticFragmentReport2,
+        second: &BezierBooleanQuadraticFragmentReport2,
+        graph_facts: &BezierBooleanLoopGraphFacts2,
+        walk_indices: &[usize],
+        depth_facts: &[BezierBooleanLoopNestingDepthFact2],
+        roles: &[BezierBooleanOutputLoopRole],
+    ) -> Self {
+        Self::from_schedule_graph_fact_walk_depth_role_facts(
+            schedule,
+            operation,
+            ownership_facts,
+            &quadratic_fragment_endpoints(&first.fragments),
+            &quadratic_fragment_endpoints(&second.fragments),
+            graph_facts,
+            walk_indices,
+            depth_facts,
+            roles,
+        )
+    }
+
     /// Accepts a full quadratic Bezier result from locator vectors and graph-walk facts.
     pub fn from_quadratic_schedule_operand_locations_graph_fact_walk_depth_facts(
         schedule: &BezierBooleanTraversalScheduleReport2,
@@ -7763,6 +7839,31 @@ impl BezierBooleanResultReport2 {
         )
     }
 
+    /// Accepts a full cubic Bezier result using keyed graph facts and depth-certified roles.
+    pub fn from_cubic_schedule_graph_fact_walk_depth_role_facts(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        ownership_facts: &[BezierBooleanOwnershipFact2],
+        first: &BezierBooleanCubicFragmentReport2,
+        second: &BezierBooleanCubicFragmentReport2,
+        graph_facts: &BezierBooleanLoopGraphFacts2,
+        walk_indices: &[usize],
+        depth_facts: &[BezierBooleanLoopNestingDepthFact2],
+        roles: &[BezierBooleanOutputLoopRole],
+    ) -> Self {
+        Self::from_schedule_graph_fact_walk_depth_role_facts(
+            schedule,
+            operation,
+            ownership_facts,
+            &cubic_fragment_endpoints(&first.fragments),
+            &cubic_fragment_endpoints(&second.fragments),
+            graph_facts,
+            walk_indices,
+            depth_facts,
+            roles,
+        )
+    }
+
     /// Accepts a full cubic Bezier result from locator vectors and graph-walk facts.
     pub fn from_cubic_schedule_operand_locations_graph_fact_walk_depth_facts(
         schedule: &BezierBooleanTraversalScheduleReport2,
@@ -7887,6 +7988,31 @@ impl BezierBooleanResultReport2 {
             graph_facts,
             walk_indices,
             depth_facts,
+        )
+    }
+
+    /// Accepts a full rational quadratic/conic result using keyed graph facts and depth-certified roles.
+    pub fn from_rational_quadratic_schedule_graph_fact_walk_depth_role_facts(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        ownership_facts: &[BezierBooleanOwnershipFact2],
+        first: &BezierBooleanRationalQuadraticFragmentReport2,
+        second: &BezierBooleanRationalQuadraticFragmentReport2,
+        graph_facts: &BezierBooleanLoopGraphFacts2,
+        walk_indices: &[usize],
+        depth_facts: &[BezierBooleanLoopNestingDepthFact2],
+        roles: &[BezierBooleanOutputLoopRole],
+    ) -> Self {
+        Self::from_schedule_graph_fact_walk_depth_role_facts(
+            schedule,
+            operation,
+            ownership_facts,
+            &rational_quadratic_fragment_endpoints(&first.fragments),
+            &rational_quadratic_fragment_endpoints(&second.fragments),
+            graph_facts,
+            walk_indices,
+            depth_facts,
+            roles,
         )
     }
 
@@ -8049,6 +8175,58 @@ impl BezierBooleanResultReport2 {
         )
     }
 
+    /// Accepts a full generic endpoint result from keyed ownership and depth-certified roles.
+    ///
+    /// This is the raw graph-count counterpart to
+    /// [`Self::from_schedule_graph_fact_walk_depth_role_facts`]. It is useful
+    /// when the exact graph walker reports branch and overlap counts directly
+    /// beside an explicit walk permutation. The constructor still validates
+    /// ownership keys, emitted references, graph-walk permutation, exact
+    /// endpoint closure, keyed depths, and explicit role parity before result
+    /// acceptance.
+    pub fn from_schedule_graph_walk_depth_role_facts(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        ownership_facts: &[BezierBooleanOwnershipFact2],
+        first_endpoints: &[(Point2, Point2)],
+        second_endpoints: &[(Point2, Point2)],
+        branch_vertex_count: usize,
+        resolved_overlap_count: usize,
+        walk_indices: &[usize],
+        depth_facts: &[BezierBooleanLoopNestingDepthFact2],
+        roles: &[BezierBooleanOutputLoopRole],
+    ) -> Self {
+        let facts =
+            BezierBooleanOwnershipFactReport2::from_schedule_facts(schedule, ownership_facts);
+        let ownership = facts.classify(schedule, operation);
+        let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
+        let assembly = BezierBooleanAssemblyReadinessReport2::from_fragment_counts(
+            &emission,
+            first_endpoints.len(),
+            second_endpoints.len(),
+        );
+        let plan =
+            BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(&assembly, &emission);
+        let traversal = BezierBooleanLoopGraphTraversalReport2::from_certified_walk_graph_facts(
+            &plan,
+            branch_vertex_count,
+            resolved_overlap_count,
+        );
+        let walk = BezierBooleanLoopGraphWalkReport2::from_traversal_order(
+            &traversal,
+            &plan,
+            walk_indices,
+        );
+        Self::from_graph_walk_depth_role_facts(
+            &walk,
+            &plan,
+            first_endpoints,
+            second_endpoints,
+            depth_facts,
+            roles,
+        )
+    }
+
     /// Accepts a full quadratic Bezier result from keyed ownership and depth facts.
     ///
     /// The quadratic fragments provide exact endpoint carriers and fragment
@@ -8079,6 +8257,33 @@ impl BezierBooleanResultReport2 {
         )
     }
 
+    /// Accepts a full quadratic Bezier result from keyed ownership and depth-certified roles.
+    pub fn from_quadratic_schedule_graph_walk_depth_role_facts(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        ownership_facts: &[BezierBooleanOwnershipFact2],
+        first: &BezierBooleanQuadraticFragmentReport2,
+        second: &BezierBooleanQuadraticFragmentReport2,
+        branch_vertex_count: usize,
+        resolved_overlap_count: usize,
+        walk_indices: &[usize],
+        depth_facts: &[BezierBooleanLoopNestingDepthFact2],
+        roles: &[BezierBooleanOutputLoopRole],
+    ) -> Self {
+        Self::from_schedule_graph_walk_depth_role_facts(
+            schedule,
+            operation,
+            ownership_facts,
+            &quadratic_fragment_endpoints(&first.fragments),
+            &quadratic_fragment_endpoints(&second.fragments),
+            branch_vertex_count,
+            resolved_overlap_count,
+            walk_indices,
+            depth_facts,
+            roles,
+        )
+    }
+
     /// Accepts a full cubic Bezier result from keyed ownership and depth facts.
     pub fn from_cubic_schedule_graph_walk_depth_facts(
         schedule: &BezierBooleanTraversalScheduleReport2,
@@ -8104,6 +8309,33 @@ impl BezierBooleanResultReport2 {
         )
     }
 
+    /// Accepts a full cubic Bezier result from keyed ownership and depth-certified roles.
+    pub fn from_cubic_schedule_graph_walk_depth_role_facts(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        ownership_facts: &[BezierBooleanOwnershipFact2],
+        first: &BezierBooleanCubicFragmentReport2,
+        second: &BezierBooleanCubicFragmentReport2,
+        branch_vertex_count: usize,
+        resolved_overlap_count: usize,
+        walk_indices: &[usize],
+        depth_facts: &[BezierBooleanLoopNestingDepthFact2],
+        roles: &[BezierBooleanOutputLoopRole],
+    ) -> Self {
+        Self::from_schedule_graph_walk_depth_role_facts(
+            schedule,
+            operation,
+            ownership_facts,
+            &cubic_fragment_endpoints(&first.fragments),
+            &cubic_fragment_endpoints(&second.fragments),
+            branch_vertex_count,
+            resolved_overlap_count,
+            walk_indices,
+            depth_facts,
+            roles,
+        )
+    }
+
     /// Accepts a full rational quadratic/conic result from keyed ownership and depth facts.
     pub fn from_rational_quadratic_schedule_graph_walk_depth_facts(
         schedule: &BezierBooleanTraversalScheduleReport2,
@@ -8126,6 +8358,33 @@ impl BezierBooleanResultReport2 {
             resolved_overlap_count,
             walk_indices,
             depth_facts,
+        )
+    }
+
+    /// Accepts a full rational quadratic/conic result from keyed ownership and depth-certified roles.
+    pub fn from_rational_quadratic_schedule_graph_walk_depth_role_facts(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        ownership_facts: &[BezierBooleanOwnershipFact2],
+        first: &BezierBooleanRationalQuadraticFragmentReport2,
+        second: &BezierBooleanRationalQuadraticFragmentReport2,
+        branch_vertex_count: usize,
+        resolved_overlap_count: usize,
+        walk_indices: &[usize],
+        depth_facts: &[BezierBooleanLoopNestingDepthFact2],
+        roles: &[BezierBooleanOutputLoopRole],
+    ) -> Self {
+        Self::from_schedule_graph_walk_depth_role_facts(
+            schedule,
+            operation,
+            ownership_facts,
+            &rational_quadratic_fragment_endpoints(&first.fragments),
+            &rational_quadratic_fragment_endpoints(&second.fragments),
+            branch_vertex_count,
+            resolved_overlap_count,
+            walk_indices,
+            depth_facts,
+            roles,
         )
     }
 

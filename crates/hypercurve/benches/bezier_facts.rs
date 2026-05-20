@@ -2144,8 +2144,9 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                         nesting_depth: 0,
                     })
                     .collect::<Vec<_>>();
+                let roles = vec![BezierBooleanOutputLoopRole::Material; output.loops.len()];
                 format!(
-                    "{:?}",
+                    "{:?}{:?}",
                     BezierBooleanResultReport2::from_quadratic_schedule_graph_walk_depth_facts(
                         &schedule,
                         BooleanOp::Union,
@@ -2156,6 +2157,18 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                         usize::from(!plan.emitted_steps.is_empty()),
                         &walk_indices,
                         &depth_facts
+                    ),
+                    BezierBooleanResultReport2::from_quadratic_schedule_graph_walk_depth_role_facts(
+                        &schedule,
+                        BooleanOp::Union,
+                        &ownership_facts,
+                        first,
+                        second,
+                        usize::from(!plan.emitted_steps.is_empty()),
+                        usize::from(!plan.emitted_steps.is_empty()),
+                        &walk_indices,
+                        &depth_facts,
+                        &roles
                     )
                 )
             }
