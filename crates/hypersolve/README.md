@@ -55,7 +55,8 @@ than internal truth.
   types evaluate residuals and preserve structure.
 - `PreparedAffineResidual`, polynomial residual types, solver-block facts, equality
   substitution classes, class-application reports, affine-row elimination reports,
-  and direct equality helpers expose reusable exact subproblems.
+  direct equality helpers, and univariate root-isolation reports expose reusable
+  exact subproblems.
 - `CandidateCertificationReport`, lossy-adapter-only reports, candidate-domain
   reports, residual balls, interval certification helpers, affine Krawczyk reports,
   univariate quadratic alpha reports, and predicate reports describe proof or
@@ -81,8 +82,8 @@ look complete.
 an answer. Prepared facts record constant rows, affine rows, polynomial rows,
 dependency masks, sparse Jacobian structure, and affine residual reuse. Direct equality
 substitution, substitution-class candidate propagation, substitution-class affine row
-elimination, and univariate quadratic helpers handle small exact cases before a
-generic nonlinear loop is needed.
+elimination, univariate quadratic helpers, and Sturm root isolation handle small exact
+cases before a generic nonlinear loop is needed.
 
 Future backend work should exploit the same records: skip structural zeros, reuse
 prepared Jacobians, route affine blocks to exact/direct solvers, and report when a dense
@@ -102,6 +103,8 @@ Implemented today:
   helpers with full-candidate replay reports, equality-substitution analysis,
   exact substitution-class construction, class-based candidate propagation, and
   non-mutating affine row elimination reports;
+- exact-rational univariate polynomial root isolation by square-free reduction
+  and Sturm intervals;
 - candidate, lossy-adapter-only, candidate-domain, interval, affine Krawczyk,
   univariate and multivariate quadratic Krawczyk, and univariate quadratic alpha
   certification surfaces;

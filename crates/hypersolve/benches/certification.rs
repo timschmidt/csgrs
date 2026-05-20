@@ -11,8 +11,9 @@ use hypersolve::{
     certify_multivariate_quadratic_krawczyk_box, certify_quadratic_interval_candidate,
     certify_univariate_quadratic_alpha, certify_univariate_quadratic_krawczyk_box,
     context_from_problem, differential_pair_skew_equation,
-    eliminate_affine_rows_with_substitution_classes, rectangular_difference_area_equation,
-    report_lossy_adapter_only_candidate, solve_damped_least_squares, solve_direct_affine_system,
+    eliminate_affine_rows_with_substitution_classes, isolate_univariate_polynomial_roots,
+    rectangular_difference_area_equation, report_lossy_adapter_only_candidate,
+    solve_damped_least_squares, solve_direct_affine_system,
     solve_direct_univariate_quadratic_equalities, squared_distance_equation,
 };
 
@@ -237,6 +238,14 @@ fn certification(c: &mut Criterion) {
     c.bench_function("certify_direct_univariate_quadratic_roots", |b| {
         b.iter(|| {
             certify_direct_univariate_quadratic_roots(&prepared_quadratic, &quadratic_context)
+        })
+    });
+    c.bench_function("isolate_univariate_polynomial_roots_sturm", |b| {
+        b.iter(|| {
+            isolate_univariate_polynomial_roots(
+                &prepared_quadratic,
+                hyperlimit::PredicatePolicy::default(),
+            )
         })
     });
     c.bench_function("certify_quadratic_interval_rows", |b| {

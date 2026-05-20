@@ -3,16 +3,16 @@ use hypersolve::{
     CertifiedCandidateStatus, Constraint, DomainCheckKind, DomainCheckStatus, EqualitySubstitution,
     EqualitySubstitutionProblem, Expr, MultivariateQuadraticKrawczykStatus, PreparedProblem,
     PreparedSolverBlock, Problem, ProposalEngineKind, ProposalEnginePrecision,
-    ProposalEngineReport, RectangularRegion, SolverBlockRowKind, SolverConfig, SolverPoint2,
-    SolverState, SymbolId, VariableBall, apply_equality_substitution_classes,
+    ProposalEngineReport, RectangularRegion, RootIsolationStatus, SolverBlockRowKind, SolverConfig,
+    SolverPoint2, SolverState, SymbolId, VariableBall, apply_equality_substitution_classes,
     center_clearance_squared_constraint, certify_affine_krawczyk_box, certify_candidate,
     certify_candidate_domains, certify_direct_univariate_quadratic_roots,
     certify_multivariate_quadratic_interval_candidate, certify_multivariate_quadratic_krawczyk_box,
     certify_quadratic_interval_candidate, certify_univariate_quadratic_alpha,
     certify_univariate_quadratic_krawczyk_box, context_from_problem,
     differential_pair_skew_equation, eliminate_affine_rows_with_substitution_classes,
-    rectangular_difference_area_equation, report_lossy_adapter_only_candidate,
-    solve_damped_least_squares, solve_direct_affine_system,
+    isolate_univariate_polynomial_roots, rectangular_difference_area_equation,
+    report_lossy_adapter_only_candidate, solve_damped_least_squares, solve_direct_affine_system,
     solve_direct_univariate_quadratic_equalities, squared_distance_equation,
     validate_equality_substitutions,
 };
@@ -480,6 +480,58 @@ proptest! {
             .expect("one root should replay exactly");
         prop_assert_eq!(&certified.root, &Some(Real::from(selected)));
         prop_assert!(certified.certification.as_ref().unwrap().all_satisfied());
+    }
+
+    #[test]
+    fn root_isolation_generated_integer_roots_are_distinct_intervals(
+        first in -24_i16..=24,
+        second in -24_i16..=24,
+    ) {
+        prop_assume!(first != second);
+        let first = i64::from(first);
+        let second = i64::from(second);
+        let x = Expr::symbol(SymbolId(0), "x");
+        let mut problem = Problem::default();
+        problem.add_variable("x", Real::from(0));
+        problem.add_constraint(Constraint::equality(
+            "generated root isolation",
+            x.clone().powi(2)
+                - x.clone() * Expr::int(first + second)
+                + Expr::int(first * second),
+        ));
+
+        let reports = isolate_univariate_polynomial_roots(
+            &PreparedProblem::new(&problem),
+            hyperlimit::PredicatePolicy::default(),
+        );
+
+        prop_assert_eq!(reports.len(), 1);
+        prop_assert_eq!(&reports[0].status, &RootIsolationStatus::Isolated);
+        prop_assert_eq!(reports[0].intervals.len(), 2);
+        for root in [first, second] {
+            let root = Real::from(root);
+            let containing = reports[0].intervals.iter().any(|interval| {
+                if interval.exact_root.as_ref() == Some(&root) {
+                    return true;
+                }
+                let lower_ok = hyperlimit::compare_reals_with_policy(
+                    &interval.lower,
+                    &root,
+                    hyperlimit::PredicatePolicy::default(),
+                )
+                .value()
+                    == Some(std::cmp::Ordering::Less);
+                let upper_ok = hyperlimit::compare_reals_with_policy(
+                    &root,
+                    &interval.upper,
+                    hyperlimit::PredicatePolicy::default(),
+                )
+                .value()
+                    == Some(std::cmp::Ordering::Less);
+                lower_ok && upper_ok
+            });
+            prop_assert!(containing);
+        }
     }
 
     #[test]

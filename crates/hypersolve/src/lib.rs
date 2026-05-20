@@ -20,6 +20,7 @@ pub mod model;
 pub mod polynomial;
 pub mod predicates;
 pub mod prepared;
+pub mod root_isolation;
 pub mod solver;
 pub mod solver_block;
 pub mod symbolic;
@@ -97,6 +98,11 @@ pub use polynomial::{
 pub use predicates::{Classification, PredicateBackend, PredicateReport};
 pub use prepared::{
     PreparedConstraintFacts, PreparedProblem, PreparedProblemFacts, facts_depend_on_symbol,
+};
+pub use root_isolation::{
+    IsolatedRootInterval, RootIsolationStatus, RootMultiplicityStatus,
+    UnivariateRootIsolationReport, isolate_univariate_polynomial_expr,
+    isolate_univariate_polynomial_roots,
 };
 pub use solver::{SolverConfig, SolverState, solve_damped_least_squares};
 pub use solver_block::{

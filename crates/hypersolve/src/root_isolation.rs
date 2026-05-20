@@ -1,0 +1,740 @@
+//! Exact univariate algebraic root isolation.
+//!
+//! This module is a proof package, not a numerical proposal engine. It extracts
+//! exact-rational univariate polynomial residuals, reduces repeated factors,
+//! and isolates distinct real roots with Sturm sign-variation counts over
+//! rational intervals. That keeps the Yap boundary explicit: algebraic
+//! isolation constructs certified exact intervals, while ordinary candidate
+//! replay still decides whether a solver assignment is acceptable. See Yap,
+//! "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+//! (1997); Sturm, "Mémoire sur la résolution des équations numériques" (1835);
+//! and Collins and Loos, "Real Zeros of Polynomials," in *Computer Algebra:
+//! Symbolic and Algebraic Computation* (1982).
+
+use std::cmp::Ordering;
+use std::collections::HashMap;
+
+use hyperlimit::{PredicatePolicy, compare_reals_with_policy};
+use hyperreal::Real;
+
+use crate::model::{ConstraintKind, Problem};
+use crate::prepared::PreparedProblem;
+use crate::symbolic::{Expr, SymbolId};
+
+/// Multiplicity evidence found before Sturm isolation.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum RootMultiplicityStatus {
+    /// The input polynomial is square-free.
+    SquareFree,
+    /// A nonconstant gcd with the derivative was found exactly.
+    RepeatedRootsDetected {
+        /// Degree of `gcd(p, p')`.
+        gcd_degree: usize,
+    },
+}
+
+/// Status for one univariate root-isolation row.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum RootIsolationStatus {
+    /// Every distinct real root was isolated.
+    Isolated,
+    /// Roots were isolated after removing repeated factors.
+    MultipleRoot,
+    /// The row is nonconstant and has no real roots.
+    NoRealRoots,
+    /// The row is outside the exact-rational univariate package.
+    UnsupportedCoefficient,
+    /// Exact comparisons or polynomial division did not decide.
+    Undecided,
+}
+
+/// One exact isolating interval for a distinct real root.
+#[derive(Clone, Debug, PartialEq)]
+pub struct IsolatedRootInterval {
+    /// Lower exact rational endpoint.
+    pub lower: Real,
+    /// Upper exact rational endpoint.
+    pub upper: Real,
+    /// Exact root value when subdivision landed on a rational root.
+    pub exact_root: Option<Real>,
+    /// Number of distinct roots certified in the interval.
+    pub distinct_root_count: usize,
+}
+
+/// Report for isolating roots of one active univariate equality residual.
+#[derive(Clone, Debug, PartialEq)]
+pub struct UnivariateRootIsolationReport {
+    /// Source constraint index.
+    pub constraint_index: usize,
+    /// Solver symbol used by the univariate polynomial, if extraction reached
+    /// symbol discovery.
+    pub symbol: Option<SymbolId>,
+    /// Degree of the extracted polynomial after trimming structural zeros.
+    pub degree: Option<usize>,
+    /// Final isolation status.
+    pub status: RootIsolationStatus,
+    /// Multiplicity evidence for supported nonconstant rows.
+    pub multiplicity: Option<RootMultiplicityStatus>,
+    /// Exact isolating intervals for distinct real roots.
+    pub intervals: Vec<IsolatedRootInterval>,
+    /// Compact unsupported/undecided reason for diagnostics.
+    pub message: Option<String>,
+}
+
+/// Isolate distinct real roots for active univariate equality residuals.
+///
+/// The first implementation accepts exact-rational univariate polynomial rows
+/// collected from the source expression tree. It deliberately rejects
+/// non-equality, multivariate, transcendental, and non-exact-rational rows
+/// instead of hiding them behind primitive floating-point estimates.
+pub fn isolate_univariate_polynomial_roots(
+    prepared: &PreparedProblem<'_>,
+    policy: PredicatePolicy,
+) -> Vec<UnivariateRootIsolationReport> {
+    let mut reports = Vec::new();
+    for (constraint_index, constraint) in prepared.problem().constraints.iter().enumerate() {
+        if !constraint.active {
+            continue;
+        }
+        if constraint.kind != ConstraintKind::Equality {
+            continue;
+        }
+        reports.push(isolate_univariate_polynomial_expr(
+            constraint_index,
+            &constraint.residual,
+            prepared.problem(),
+            policy,
+        ));
+    }
+    reports
+}
+
+/// Isolate distinct real roots for one univariate polynomial expression.
+///
+/// This lower-level entry point is useful for tests and domain builders that
+/// want the exact algebraic package without constructing a full solver pass.
+pub fn isolate_univariate_polynomial_expr(
+    constraint_index: usize,
+    expression: &Expr,
+    problem: &Problem,
+    policy: PredicatePolicy,
+) -> UnivariateRootIsolationReport {
+    let extracted = match collect_univariate_polynomial(expression) {
+        Some(extracted) => extracted,
+        None => {
+            return root_isolation_report(
+                constraint_index,
+                None,
+                None,
+                RootIsolationStatus::UnsupportedCoefficient,
+                None,
+                Vec::new(),
+                Some("expression is not a supported univariate polynomial".to_owned()),
+            );
+        }
+    };
+    let Some(symbol) = extracted.symbol else {
+        return root_isolation_report(
+            constraint_index,
+            None,
+            Some(0),
+            RootIsolationStatus::NoRealRoots,
+            Some(RootMultiplicityStatus::SquareFree),
+            Vec::new(),
+            Some("constant polynomial row has no isolated variable roots".to_owned()),
+        );
+    };
+    if !problem
+        .variables
+        .iter()
+        .any(|variable| variable.symbol == symbol)
+    {
+        return root_isolation_report(
+            constraint_index,
+            Some(symbol),
+            None,
+            RootIsolationStatus::UnsupportedCoefficient,
+            None,
+            Vec::new(),
+            Some("polynomial symbol is not present in the problem".to_owned()),
+        );
+    }
+    let Some(poly) = trim_polynomial(extracted.coefficients, policy) else {
+        return root_isolation_report(
+            constraint_index,
+            Some(symbol),
+            None,
+            RootIsolationStatus::Undecided,
+            None,
+            Vec::new(),
+            Some("could not decide polynomial degree".to_owned()),
+        );
+    };
+    let degree = poly.len().saturating_sub(1);
+    if degree == 0 {
+        return root_isolation_report(
+            constraint_index,
+            Some(symbol),
+            Some(degree),
+            RootIsolationStatus::NoRealRoots,
+            Some(RootMultiplicityStatus::SquareFree),
+            Vec::new(),
+            Some("constant polynomial row has no isolated variable roots".to_owned()),
+        );
+    }
+    if poly
+        .iter()
+        .any(|coefficient| coefficient.exact_rational_ref().is_none())
+    {
+        return root_isolation_report(
+            constraint_index,
+            Some(symbol),
+            Some(degree),
+            RootIsolationStatus::UnsupportedCoefficient,
+            None,
+            Vec::new(),
+            Some("all root-isolation coefficients must be exact rationals".to_owned()),
+        );
+    }
+
+    let derivative = derivative(&poly);
+    let gcd = match polynomial_gcd(poly.clone(), derivative, policy) {
+        Some(gcd) => gcd,
+        None => {
+            return root_isolation_report(
+                constraint_index,
+                Some(symbol),
+                Some(degree),
+                RootIsolationStatus::Undecided,
+                None,
+                Vec::new(),
+                Some("polynomial gcd was undecided".to_owned()),
+            );
+        }
+    };
+    let gcd_degree = gcd.len().saturating_sub(1);
+    let multiplicity = if gcd_degree > 0 {
+        RootMultiplicityStatus::RepeatedRootsDetected { gcd_degree }
+    } else {
+        RootMultiplicityStatus::SquareFree
+    };
+    let square_free = if gcd_degree > 0 {
+        match polynomial_div_rem(poly, &gcd, policy).and_then(|(quotient, remainder)| {
+            is_zero_polynomial(&remainder, policy)?.then_some(quotient)
+        }) {
+            Some(square_free) => square_free,
+            None => {
+                return root_isolation_report(
+                    constraint_index,
+                    Some(symbol),
+                    Some(degree),
+                    RootIsolationStatus::Undecided,
+                    Some(multiplicity),
+                    Vec::new(),
+                    Some("square-free quotient was undecided".to_owned()),
+                );
+            }
+        }
+    } else {
+        // The original polynomial is already square-free.
+        trim_polynomial(
+            collect_univariate_polynomial(expression)
+                .expect("already collected")
+                .coefficients,
+            policy,
+        )
+        .expect("already trimmed")
+    };
+
+    let intervals = match isolate_square_free_roots(&square_free, policy) {
+        Some(intervals) => intervals,
+        None => {
+            return root_isolation_report(
+                constraint_index,
+                Some(symbol),
+                Some(degree),
+                RootIsolationStatus::Undecided,
+                Some(multiplicity),
+                Vec::new(),
+                Some("Sturm isolation did not decide".to_owned()),
+            );
+        }
+    };
+    let status = if intervals.is_empty() {
+        RootIsolationStatus::NoRealRoots
+    } else if matches!(
+        multiplicity,
+        RootMultiplicityStatus::RepeatedRootsDetected { .. }
+    ) {
+        RootIsolationStatus::MultipleRoot
+    } else {
+        RootIsolationStatus::Isolated
+    };
+    root_isolation_report(
+        constraint_index,
+        Some(symbol),
+        Some(degree),
+        status,
+        Some(multiplicity),
+        intervals,
+        None,
+    )
+}
+
+#[derive(Clone, Debug)]
+struct ExtractedPolynomial {
+    symbol: Option<SymbolId>,
+    coefficients: Vec<Real>,
+}
+
+impl ExtractedPolynomial {
+    fn constant(value: Real) -> Self {
+        Self {
+            symbol: None,
+            coefficients: vec![value],
+        }
+    }
+
+    fn symbol(symbol: SymbolId) -> Self {
+        Self {
+            symbol: Some(symbol),
+            coefficients: vec![Real::zero(), Real::one()],
+        }
+    }
+
+    fn scale(mut self, scale: Real) -> Self {
+        for coefficient in &mut self.coefficients {
+            *coefficient = coefficient.clone() * scale.clone();
+        }
+        self
+    }
+
+    fn add(self, other: Self) -> Option<Self> {
+        let symbol = merge_symbol(self.symbol, other.symbol)?;
+        let len = self.coefficients.len().max(other.coefficients.len());
+        let mut coefficients = vec![Real::zero(); len];
+        for (index, coefficient) in self.coefficients.into_iter().enumerate() {
+            coefficients[index] = coefficients[index].clone() + coefficient;
+        }
+        for (index, coefficient) in other.coefficients.into_iter().enumerate() {
+            coefficients[index] = coefficients[index].clone() + coefficient;
+        }
+        Some(Self {
+            symbol,
+            coefficients,
+        })
+    }
+
+    fn multiply(self, other: Self) -> Option<Self> {
+        let symbol = merge_symbol(self.symbol, other.symbol)?;
+        let mut coefficients =
+            vec![Real::zero(); self.coefficients.len() + other.coefficients.len() - 1];
+        for (left_index, left) in self.coefficients.into_iter().enumerate() {
+            for (right_index, right) in other.coefficients.iter().enumerate() {
+                let index = left_index + right_index;
+                coefficients[index] = coefficients[index].clone() + left.clone() * right.clone();
+            }
+        }
+        Some(Self {
+            symbol,
+            coefficients,
+        })
+    }
+
+    fn powi(self, exponent: i64) -> Option<Self> {
+        if exponent < 0 {
+            return None;
+        }
+        let mut result = Self::constant(Real::one());
+        for _ in 0..exponent {
+            result = result.multiply(self.clone())?;
+        }
+        Some(result)
+    }
+}
+
+fn collect_univariate_polynomial(expression: &Expr) -> Option<ExtractedPolynomial> {
+    match expression {
+        Expr::Constant(value) => Some(ExtractedPolynomial::constant(value.clone())),
+        Expr::Symbol(symbol) => Some(ExtractedPolynomial::symbol(symbol.id)),
+        Expr::Add(left, right) => {
+            collect_univariate_polynomial(left)?.add(collect_univariate_polynomial(right)?)
+        }
+        Expr::Sub(left, right) => collect_univariate_polynomial(left)?
+            .add(collect_univariate_polynomial(right)?.scale(-Real::one())),
+        Expr::Neg(value) => Some(collect_univariate_polynomial(value)?.scale(-Real::one())),
+        Expr::Mul(left, right) => {
+            collect_univariate_polynomial(left)?.multiply(collect_univariate_polynomial(right)?)
+        }
+        Expr::Div(left, right) => {
+            let denominator = constant_value(right)?;
+            let reciprocal = (Real::one() / denominator).ok()?;
+            Some(collect_univariate_polynomial(left)?.scale(reciprocal))
+        }
+        Expr::PowI(value, exponent) => collect_univariate_polynomial(value)?.powi(*exponent),
+        Expr::Sqrt(_)
+        | Expr::Sin(_)
+        | Expr::Cos(_)
+        | Expr::Ln(_)
+        | Expr::Log10(_)
+        | Expr::Asin(_)
+        | Expr::Acos(_)
+        | Expr::Acosh(_)
+        | Expr::Atanh(_) => None,
+    }
+}
+
+fn merge_symbol(left: Option<SymbolId>, right: Option<SymbolId>) -> Option<Option<SymbolId>> {
+    match (left, right) {
+        (None, None) => Some(None),
+        (Some(symbol), None) | (None, Some(symbol)) => Some(Some(symbol)),
+        (Some(left), Some(right)) if left == right => Some(Some(left)),
+        (Some(_), Some(_)) => None,
+    }
+}
+
+fn constant_value(expression: &Expr) -> Option<Real> {
+    let facts = expression.structural_facts();
+    if !facts.dependencies.is_empty() {
+        return None;
+    }
+    expression.eval_real(&HashMap::new()).ok()
+}
+
+fn isolate_square_free_roots(
+    polynomial: &[Real],
+    policy: PredicatePolicy,
+) -> Option<Vec<IsolatedRootInterval>> {
+    let sturm = sturm_sequence(polynomial, policy)?;
+    let bound = cauchy_bound(polynomial, policy)?;
+    let lower = -bound.clone();
+    let upper = bound;
+    let root_count = sturm_count(&sturm, &lower, &upper, policy)?;
+    let mut intervals = Vec::new();
+    isolate_interval(&sturm, &lower, &upper, root_count, policy, &mut intervals)?;
+    Some(intervals)
+}
+
+fn isolate_interval(
+    sturm: &[Vec<Real>],
+    lower: &Real,
+    upper: &Real,
+    root_count: usize,
+    policy: PredicatePolicy,
+    intervals: &mut Vec<IsolatedRootInterval>,
+) -> Option<()> {
+    if root_count == 0 {
+        return Some(());
+    }
+    if root_count == 1 {
+        intervals.push(IsolatedRootInterval {
+            lower: lower.clone(),
+            upper: upper.clone(),
+            exact_root: None,
+            distinct_root_count: 1,
+        });
+        return Some(());
+    }
+
+    let midpoint = ((lower.clone() + upper.clone()) / Real::from(2)).ok()?;
+    let first = &sturm[0];
+    if sign_at(first, &midpoint, policy)? == Ordering::Equal {
+        intervals.push(IsolatedRootInterval {
+            lower: midpoint.clone(),
+            upper: midpoint.clone(),
+            exact_root: Some(midpoint.clone()),
+            distinct_root_count: 1,
+        });
+        let mut left_count = sturm_count(sturm, lower, &midpoint, policy)?;
+        let mut right_count = sturm_count(sturm, &midpoint, upper, policy)?;
+        // Sturm endpoint conventions can count a rational root that lies
+        // exactly on the split point as part of one adjacent interval. The
+        // point root has already been emitted above, so trim the adjacent
+        // counts back to the remaining distinct roots before recursing.
+        let remaining = root_count.checked_sub(1)?;
+        while left_count + right_count > remaining {
+            if left_count > 0 {
+                left_count -= 1;
+            } else if right_count > 0 {
+                right_count -= 1;
+            } else {
+                return None;
+            }
+        }
+        isolate_interval(sturm, lower, &midpoint, left_count, policy, intervals)?;
+        isolate_interval(sturm, &midpoint, upper, right_count, policy, intervals)?;
+        return Some(());
+    }
+
+    let left_count = sturm_count(sturm, lower, &midpoint, policy)?;
+    let right_count = root_count.checked_sub(left_count)?;
+    isolate_interval(sturm, lower, &midpoint, left_count, policy, intervals)?;
+    isolate_interval(sturm, &midpoint, upper, right_count, policy, intervals)
+}
+
+fn sturm_sequence(polynomial: &[Real], policy: PredicatePolicy) -> Option<Vec<Vec<Real>>> {
+    let p0 = trim_polynomial(polynomial.to_vec(), policy)?;
+    let p1 = trim_polynomial(derivative(&p0), policy)?;
+    let mut sequence = vec![p0, p1];
+    loop {
+        let last = sequence.last()?.clone();
+        if last.len() == 1 {
+            break;
+        }
+        let previous = sequence.get(sequence.len() - 2)?.clone();
+        let (_, remainder) = polynomial_div_rem(previous, &last, policy)?;
+        if is_zero_polynomial(&remainder, policy)? {
+            break;
+        }
+        sequence.push(remainder.into_iter().map(|value| -value).collect());
+    }
+    Some(sequence)
+}
+
+fn sturm_count(
+    sturm: &[Vec<Real>],
+    lower: &Real,
+    upper: &Real,
+    policy: PredicatePolicy,
+) -> Option<usize> {
+    let lower_variations = sign_variations(sturm, lower, policy)?;
+    let upper_variations = sign_variations(sturm, upper, policy)?;
+    lower_variations.checked_sub(upper_variations)
+}
+
+fn sign_variations(sturm: &[Vec<Real>], point: &Real, policy: PredicatePolicy) -> Option<usize> {
+    let mut previous = None;
+    let mut variations = 0;
+    for polynomial in sturm {
+        let sign = sign_at(polynomial, point, policy)?;
+        if sign == Ordering::Equal {
+            continue;
+        }
+        if let Some(previous) = previous
+            && previous != sign
+        {
+            variations += 1;
+        }
+        previous = Some(sign);
+    }
+    Some(variations)
+}
+
+fn sign_at(polynomial: &[Real], point: &Real, policy: PredicatePolicy) -> Option<Ordering> {
+    let value = evaluate_polynomial(polynomial, point);
+    compare_reals_with_policy(&value, &Real::zero(), policy).value()
+}
+
+fn cauchy_bound(polynomial: &[Real], policy: PredicatePolicy) -> Option<Real> {
+    let leading = abs_real(polynomial.last()?, policy)?;
+    let mut max_ratio = Real::zero();
+    for coefficient in &polynomial[..polynomial.len() - 1] {
+        let ratio = (abs_real(coefficient, policy)? / leading.clone()).ok()?;
+        if compare_reals_with_policy(&ratio, &max_ratio, policy).value()? == Ordering::Greater {
+            max_ratio = ratio;
+        }
+    }
+    Some(max_ratio + Real::one())
+}
+
+fn evaluate_polynomial(polynomial: &[Real], point: &Real) -> Real {
+    polynomial
+        .iter()
+        .rev()
+        .cloned()
+        .fold(Real::zero(), |value, coefficient| {
+            value * point.clone() + coefficient
+        })
+}
+
+fn derivative(polynomial: &[Real]) -> Vec<Real> {
+    if polynomial.len() <= 1 {
+        return vec![Real::zero()];
+    }
+    polynomial
+        .iter()
+        .enumerate()
+        .skip(1)
+        .map(|(degree, coefficient)| coefficient.clone() * Real::from(degree as i64))
+        .collect()
+}
+
+fn polynomial_gcd(
+    mut left: Vec<Real>,
+    mut right: Vec<Real>,
+    policy: PredicatePolicy,
+) -> Option<Vec<Real>> {
+    left = trim_polynomial(left, policy)?;
+    right = trim_polynomial(right, policy)?;
+    while !is_zero_polynomial(&right, policy)? {
+        let (_, remainder) = polynomial_div_rem(left, &right, policy)?;
+        left = right;
+        right = trim_polynomial(remainder, policy)?;
+    }
+    Some(gcd_monic_normalize(left, policy)?)
+}
+
+fn polynomial_div_rem(
+    dividend: Vec<Real>,
+    divisor: &[Real],
+    policy: PredicatePolicy,
+) -> Option<(Vec<Real>, Vec<Real>)> {
+    let divisor = trim_polynomial(divisor.to_vec(), policy)?;
+    if is_zero_polynomial(&divisor, policy)? {
+        return None;
+    }
+    let mut remainder = trim_polynomial(dividend, policy)?;
+    if remainder.len() < divisor.len() {
+        return Some((vec![Real::zero()], remainder));
+    }
+    let mut quotient = vec![Real::zero(); remainder.len() - divisor.len() + 1];
+    let divisor_degree = divisor.len() - 1;
+    let divisor_leading = divisor.last()?.clone();
+    while remainder.len() >= divisor.len() && !is_zero_polynomial(&remainder, policy)? {
+        let degree_delta = remainder.len() - divisor.len();
+        let scale = (remainder.last()?.clone() / divisor_leading.clone()).ok()?;
+        quotient[degree_delta] = quotient[degree_delta].clone() + scale.clone();
+        for (index, divisor_coefficient) in divisor.iter().enumerate().take(divisor_degree + 1) {
+            let target = degree_delta + index;
+            remainder[target] =
+                remainder[target].clone() - scale.clone() * divisor_coefficient.clone();
+        }
+        remainder = trim_polynomial(remainder, policy)?;
+    }
+    Some((trim_polynomial(quotient, policy)?, remainder))
+}
+
+fn trim_polynomial(mut polynomial: Vec<Real>, policy: PredicatePolicy) -> Option<Vec<Real>> {
+    while polynomial.len() > 1 {
+        let trailing = polynomial.last()?;
+        match compare_reals_with_policy(trailing, &Real::zero(), policy).value()? {
+            Ordering::Equal => {
+                polynomial.pop();
+            }
+            Ordering::Less | Ordering::Greater => break,
+        }
+    }
+    if polynomial.is_empty() {
+        polynomial.push(Real::zero());
+    }
+    Some(polynomial)
+}
+
+fn is_zero_polynomial(polynomial: &[Real], policy: PredicatePolicy) -> Option<bool> {
+    polynomial.iter().try_fold(true, |all_zero, coefficient| {
+        let sign = compare_reals_with_policy(coefficient, &Real::zero(), policy).value()?;
+        Some(all_zero && sign == Ordering::Equal)
+    })
+}
+
+fn gcd_monic_normalize(mut polynomial: Vec<Real>, policy: PredicatePolicy) -> Option<Vec<Real>> {
+    polynomial = trim_polynomial(polynomial, policy)?;
+    if polynomial.len() == 1 {
+        return Some(polynomial);
+    }
+    let leading = polynomial.last()?.clone();
+    polynomial
+        .into_iter()
+        .map(|coefficient| (coefficient / leading.clone()).ok())
+        .collect()
+}
+
+fn abs_real(value: &Real, policy: PredicatePolicy) -> Option<Real> {
+    match compare_reals_with_policy(value, &Real::zero(), policy).value()? {
+        Ordering::Less => Some(-value.clone()),
+        Ordering::Equal | Ordering::Greater => Some(value.clone()),
+    }
+}
+
+fn root_isolation_report(
+    constraint_index: usize,
+    symbol: Option<SymbolId>,
+    degree: Option<usize>,
+    status: RootIsolationStatus,
+    multiplicity: Option<RootMultiplicityStatus>,
+    intervals: Vec<IsolatedRootInterval>,
+    message: Option<String>,
+) -> UnivariateRootIsolationReport {
+    UnivariateRootIsolationReport {
+        constraint_index,
+        symbol,
+        degree,
+        status,
+        multiplicity,
+        intervals,
+        message,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::model::Constraint;
+
+    fn real(value: i64) -> Real {
+        Real::from(value)
+    }
+
+    #[test]
+    fn sturm_isolates_distinct_repeated_and_no_real_roots() {
+        let x = Expr::symbol(SymbolId(0), "x");
+        let mut problem = Problem::default();
+        problem.add_variable("x", real(0));
+        problem.add_constraint(Constraint::equality(
+            "three roots",
+            x.clone().powi(3) - Expr::int(6) * x.clone().powi(2) + Expr::int(11) * x.clone()
+                - Expr::int(6),
+        ));
+        problem.add_constraint(Constraint::equality(
+            "repeated root",
+            (x.clone() - Expr::int(2)).powi(2) * (x.clone() + Expr::int(1)),
+        ));
+        problem.add_constraint(Constraint::equality(
+            "no real roots",
+            x.powi(2) + Expr::int(1),
+        ));
+
+        let reports = isolate_univariate_polynomial_roots(
+            &PreparedProblem::new(&problem),
+            PredicatePolicy::default(),
+        );
+
+        assert_eq!(reports.len(), 3);
+        assert_eq!(reports[0].status, RootIsolationStatus::Isolated);
+        assert_eq!(reports[0].intervals.len(), 3);
+        assert_eq!(
+            reports[0].multiplicity,
+            Some(RootMultiplicityStatus::SquareFree)
+        );
+        assert_eq!(reports[1].status, RootIsolationStatus::MultipleRoot);
+        assert_eq!(
+            reports[1].multiplicity,
+            Some(RootMultiplicityStatus::RepeatedRootsDetected { gcd_degree: 1 })
+        );
+        assert_eq!(reports[1].intervals.len(), 2);
+        assert_eq!(reports[2].status, RootIsolationStatus::NoRealRoots);
+        assert!(reports[2].intervals.is_empty());
+    }
+
+    #[test]
+    fn sturm_rejects_multivariate_rows_explicitly() {
+        let x = Expr::symbol(SymbolId(0), "x");
+        let y = Expr::symbol(SymbolId(1), "y");
+        let mut problem = Problem::default();
+        problem.add_variable("x", real(0));
+        problem.add_variable("y", real(0));
+        problem.add_constraint(Constraint::equality("xy", x * y));
+
+        let reports = isolate_univariate_polynomial_roots(
+            &PreparedProblem::new(&problem),
+            PredicatePolicy::default(),
+        );
+
+        assert_eq!(reports.len(), 1);
+        assert_eq!(
+            reports[0].status,
+            RootIsolationStatus::UnsupportedCoefficient
+        );
+        assert!(reports[0].message.is_some());
+    }
+}

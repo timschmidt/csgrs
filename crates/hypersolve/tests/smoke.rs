@@ -6,18 +6,19 @@ use hypersolve::{
     DomainCheckKind, DomainCheckStatus, Expr, ExprDegree, LinearAdapterKind,
     LinearAdapterPrecision, LinearBackend, MultivariateQuadraticKrawczykStatus, PcbConstraintSet,
     PreparedProblem, PreparedSolverBlock, Problem, ProposalEngineKind, ProposalEnginePrecision,
-    RectangularRegion, SolverBlockRowKind, SolverConfig, SolverPoint2, SolverState, SymbolId,
-    ToolpathConstraintSet, VariableBall, apply_equality_substitution_classes,
-    apply_equality_substitutions, bezier_offset_sample_constraints,
-    build_equality_substitution_classes, center_clearance_squared_constraint,
-    certify_affine_interval_candidate, certify_affine_krawczyk_box, certify_candidate,
-    certify_candidate_domains, certify_candidate_with_config,
-    certify_candidate_with_residual_balls, certify_direct_univariate_quadratic_roots,
-    certify_multivariate_quadratic_interval_candidate, certify_multivariate_quadratic_krawczyk_box,
-    certify_quadratic_interval_candidate, certify_univariate_quadratic_alpha,
-    certify_univariate_quadratic_krawczyk_box, constant_feed_time_equation, context_from_problem,
-    differential_pair_skew_equation, eliminate_affine_rows_with_substitution_classes,
-    evaluate_residuals, facts_depend_on_symbol, find_equality_substitutions, length_match_equation,
+    RectangularRegion, RootIsolationStatus, RootMultiplicityStatus, SolverBlockRowKind,
+    SolverConfig, SolverPoint2, SolverState, SymbolId, ToolpathConstraintSet, VariableBall,
+    apply_equality_substitution_classes, apply_equality_substitutions,
+    bezier_offset_sample_constraints, build_equality_substitution_classes,
+    center_clearance_squared_constraint, certify_affine_interval_candidate,
+    certify_affine_krawczyk_box, certify_candidate, certify_candidate_domains,
+    certify_candidate_with_config, certify_candidate_with_residual_balls,
+    certify_direct_univariate_quadratic_roots, certify_multivariate_quadratic_interval_candidate,
+    certify_multivariate_quadratic_krawczyk_box, certify_quadratic_interval_candidate,
+    certify_univariate_quadratic_alpha, certify_univariate_quadratic_krawczyk_box,
+    constant_feed_time_equation, context_from_problem, differential_pair_skew_equation,
+    eliminate_affine_rows_with_substitution_classes, evaluate_residuals, facts_depend_on_symbol,
+    find_equality_substitutions, isolate_univariate_polynomial_roots, length_match_equation,
     point_coincidence_equations, rectangular_difference_area_equation,
     rectangular_region_area_equation, rectangular_region_containment_constraints,
     report_lossy_adapter_only_candidate, solve_damped_least_squares,
@@ -1202,6 +1203,66 @@ fn direct_quadratic_root_candidates_replay_full_problem_exactly() {
         hypersolve::DirectQuadraticCandidateStatus::ReplayCertified
     );
     assert!(reports[1].certification.as_ref().unwrap().all_satisfied());
+}
+
+#[test]
+fn root_isolation_sturm_reports_distinct_repeated_and_unsupported_rows() {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let y = Expr::symbol(SymbolId(1), "y");
+    let mut problem = Problem::default();
+    problem.add_variable("x", real(0));
+    problem.add_variable("y", real(0));
+    problem.add_constraint(Constraint::equality(
+        "three integer roots",
+        x.clone().powi(3) - Expr::int(6) * x.clone().powi(2) + Expr::int(11) * x.clone()
+            - Expr::int(6),
+    ));
+    problem.add_constraint(Constraint::equality(
+        "repeated root package",
+        (x.clone() - Expr::int(2)).powi(2) * (x.clone() + Expr::int(1)),
+    ));
+    problem.add_constraint(Constraint::equality(
+        "no real roots",
+        x.clone().powi(2) + Expr::int(1),
+    ));
+    problem.add_constraint(Constraint::equality("multivariate unsupported", x * y));
+
+    let reports = isolate_univariate_polynomial_roots(
+        &PreparedProblem::new(&problem),
+        hyperlimit::PredicatePolicy::default(),
+    );
+
+    assert_eq!(reports.len(), 4);
+    assert_eq!(reports[0].status, RootIsolationStatus::Isolated);
+    assert_eq!(reports[0].symbol, Some(SymbolId(0)));
+    assert_eq!(reports[0].degree, Some(3));
+    assert_eq!(
+        reports[0].multiplicity,
+        Some(RootMultiplicityStatus::SquareFree)
+    );
+    assert_eq!(reports[0].intervals.len(), 3);
+    assert!(
+        reports[0]
+            .intervals
+            .iter()
+            .all(|interval| interval.distinct_root_count == 1)
+    );
+
+    assert_eq!(reports[1].status, RootIsolationStatus::MultipleRoot);
+    assert_eq!(
+        reports[1].multiplicity,
+        Some(RootMultiplicityStatus::RepeatedRootsDetected { gcd_degree: 1 })
+    );
+    assert_eq!(reports[1].intervals.len(), 2);
+
+    assert_eq!(reports[2].status, RootIsolationStatus::NoRealRoots);
+    assert!(reports[2].intervals.is_empty());
+
+    assert_eq!(
+        reports[3].status,
+        RootIsolationStatus::UnsupportedCoefficient
+    );
+    assert!(reports[3].message.is_some());
 }
 
 #[test]
