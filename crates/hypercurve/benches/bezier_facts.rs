@@ -2465,8 +2465,19 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     loop_index: 0,
                     nesting_depth: 0,
                 }];
+                let roles = [BezierBooleanOutputLoopRole::Material];
+                let first_endpoints = first
+                    .fragments
+                    .iter()
+                    .map(|fragment| (fragment.start().clone(), fragment.end().clone()))
+                    .collect::<Vec<_>>();
+                let second_endpoints = second
+                    .fragments
+                    .iter()
+                    .map(|fragment| (fragment.start().clone(), fragment.end().clone()))
+                    .collect::<Vec<_>>();
                 format!(
-                    "{:?}",
+                    "{:?}{:?}",
                     BezierBooleanResultReport2::from_quadratic_schedule_operand_locations_graph_fact_identity_depth_facts(
                         &schedule,
                         BooleanOp::Union,
@@ -2476,6 +2487,17 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                         second,
                         &graph_facts,
                         &depth_facts
+                    ),
+                    BezierBooleanResultReport2::from_schedule_operand_locations_graph_fact_identity_depth_role_facts(
+                        &schedule,
+                        BooleanOp::Union,
+                        &first_locations,
+                        &second_locations,
+                        &first_endpoints,
+                        &second_endpoints,
+                        &graph_facts,
+                        &depth_facts,
+                        &roles
                     )
                 )
             }
@@ -2515,8 +2537,19 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     loop_index: 0,
                     nesting_depth: 0,
                 }];
+                let roles = [BezierBooleanOutputLoopRole::Material];
+                let first_endpoints = first
+                    .fragments
+                    .iter()
+                    .map(|fragment| (fragment.start().clone(), fragment.end().clone()))
+                    .collect::<Vec<_>>();
+                let second_endpoints = second
+                    .fragments
+                    .iter()
+                    .map(|fragment| (fragment.start().clone(), fragment.end().clone()))
+                    .collect::<Vec<_>>();
                 format!(
-                    "{:?}",
+                    "{:?}{:?}",
                     BezierBooleanResultReport2::from_quadratic_schedule_operand_locations_linear_identity_depth_facts(
                         &schedule,
                         BooleanOp::Union,
@@ -2525,6 +2558,16 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                         first,
                         second,
                         &depth_facts
+                    ),
+                    BezierBooleanResultReport2::from_schedule_operand_locations_linear_identity_depth_role_facts(
+                        &schedule,
+                        BooleanOp::Union,
+                        &first_locations,
+                        &second_locations,
+                        &first_endpoints,
+                        &second_endpoints,
+                        &depth_facts,
+                        &roles
                     )
                 )
             }
