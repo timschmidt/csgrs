@@ -1,9 +1,10 @@
 //! Struct and functions for working with `Vertex`s.
 
 use crate::float_types::{
-    PI, Real, hangle_between_vectors, hpoint_distance, hpoints_within_epsilon, hreal_from_f64,
-    hreal_gt_f64, hreal_lt_f64, hreal_to_f64, hunit_vector3, hvector3_distance, hvector3_dot,
-    hvector3_from_point3, tolerance,
+    PI, Real, hangle_between_vectors, hpoint_centroid, hpoint_distance, hpoint_weighted_sum,
+    hpoints_within_epsilon, hreal_div, hreal_from_f64, hreal_gt_f64, hreal_lt_f64, hreal_mean,
+    hreal_sample_stddev, hreal_sum, hreal_to_f64, hunit_vector3, hvector3_distance,
+    hvector3_dot, hvector3_from_point3, hvector3_mean, hvector3_weighted_sum, tolerance,
 };
 use hashbrown::HashMap;
 use nalgebra::{Point3, Vector3};
@@ -245,24 +246,20 @@ impl Vertex {
 
         let normalized_weights = hyper_normalized_weights(vertices.iter().map(|(_, w)| *w))?;
 
-        let weighted_position = vertices
+        let positions = vertices
             .iter()
-            .zip(normalized_weights.iter().copied())
-            .fold(Point3::origin(), |acc, ((v, _), w)| {
-                acc + v.position.coords * w
-            });
-
-        let weighted_normal = vertices
+            .map(|(vertex, _)| vertex.position)
+            .collect::<Vec<_>>();
+        let normals = vertices
             .iter()
-            .zip(normalized_weights.iter().copied())
-            .fold(Vector3::zeros(), |acc, ((v, _), w)| acc + v.normal * w);
+            .map(|(vertex, _)| vertex.normal)
+            .collect::<Vec<_>>();
+        let weighted_position = hpoint_weighted_sum(&positions, &normalized_weights)?;
+        let weighted_normal = hvector3_weighted_sum(&normals, &normalized_weights)?;
 
         let normalized_normal = hunit_vector3(&weighted_normal).unwrap_or_else(Vector3::z);
 
-        Some(Vertex::new(
-            Point3::from(weighted_position),
-            normalized_normal,
-        ))
+        Some(Vertex::new(weighted_position, normalized_normal))
     }
 
     /// **Mathematical Foundation: Barycentric Coordinates Interpolation**
@@ -298,11 +295,14 @@ impl Vertex {
         ));
         let (u, v, w) = weights;
 
-        let new_position = Point3::from(
-            u * v1.position.coords + v * v2.position.coords + w * v3.position.coords,
-        );
+        let weights = [u, v, w];
+        let new_position =
+            hpoint_weighted_sum(&[v1.position, v2.position, v3.position], &weights)
+                .unwrap_or_else(|| Point3::origin());
 
-        let blended_normal = u * v1.normal + v * v2.normal + w * v3.normal;
+        let blended_normal =
+            hvector3_weighted_sum(&[v1.normal, v2.normal, v3.normal], &weights)
+                .unwrap_or_else(Vector3::z);
         let new_normal = hunit_vector3(&blended_normal).unwrap_or_else(Vector3::z);
 
         Vertex::new(new_position, new_normal)
@@ -407,8 +407,7 @@ impl Vertex {
         }
 
         // Find the third vertex in the triangle
-        let mut cot_sum = 0.0;
-        let mut weight_count = 0;
+        let mut cotangents = Vec::new();
 
         for i in 0..triangle_vertices.len() {
             let v1 = triangle_vertices[i];
@@ -439,14 +438,14 @@ impl Vertex {
                 if let Some(cotangent) =
                     hyper_cotangent_at_opposite(center, neighbor, opposite)
                 {
-                    cot_sum += cotangent;
-                    weight_count += 1;
+                    cotangents.push(cotangent);
                 }
             }
         }
 
-        if weight_count > 0 {
-            cot_sum / (2.0 * weight_count as Real)
+        if !cotangents.is_empty() {
+            let cot_sum = hreal_sum(&cotangents).unwrap_or(0.0);
+            hreal_div(cot_sum, 2.0 * cotangents.len() as Real).unwrap_or(1.0)
         } else {
             1.0 // Fallback to uniform weight
         }
@@ -482,8 +481,12 @@ impl Vertex {
         // Optimal valence is 6 for interior vertices in triangular meshes
         let target_valence = 6;
         let regularity: Real = if valence > 0 {
-            let deviation = (valence as Real - target_valence as Real).abs();
-            (1.0 / (1.0 + deviation / target_valence as Real)).max(0.0)
+            let deviation = hreal_div(
+                (valence as Real - target_valence as Real).abs(),
+                target_valence as Real,
+            )
+            .unwrap_or(Real::INFINITY);
+            hreal_div(1.0, 1.0 + deviation).unwrap_or(0.0).max(0.0)
         } else {
             0.0
         };
@@ -552,7 +555,7 @@ impl Vertex {
         }
 
         // Compute angle sum around vertex
-        let mut angle_sum = 0.0;
+        let mut angles = Vec::with_capacity(neighbors.len());
         for i in 0..neighbors.len() {
             let prev = &neighbors[(i + neighbors.len() - 1) % neighbors.len()];
             let next = &neighbors[(i + 1) % neighbors.len()];
@@ -560,9 +563,10 @@ impl Vertex {
             let v1 = prev.position - self.position;
             let v2 = next.position - self.position;
             if let Some(angle) = hangle_between_vectors(&v1, &v2) {
-                angle_sum += angle;
+                angles.push(angle);
             }
         }
+        let angle_sum = hreal_sum(&angles).unwrap_or(0.0);
 
         // Compute mixed area (average of face areas)
         let finite_face_areas: Vec<_> = face_areas
@@ -570,16 +574,12 @@ impl Vertex {
             .copied()
             .filter(|area| area.is_finite() && *area > 0.0)
             .collect();
-        let mixed_area = if !finite_face_areas.is_empty() {
-            finite_face_areas.iter().sum::<Real>() / finite_face_areas.len() as Real
-        } else {
-            1.0 // Fallback to avoid division by zero
-        };
+        let mixed_area = hreal_mean(&finite_face_areas).unwrap_or(1.0);
 
         // Discrete mean curvature
         let angle_deficit = 2.0 * PI - angle_sum;
         if mixed_area > tolerance() {
-            angle_deficit / mixed_area
+            hreal_div(angle_deficit, mixed_area).unwrap_or(0.0)
         } else {
             0.0
         }
@@ -642,16 +642,15 @@ impl Vertex {
 
         // Edge uniformity (lower standard deviation = more uniform)
         let edge_uniformity = if edge_lengths.len() > 1 {
-            let mean_edge = edge_lengths.iter().sum::<Real>() / edge_lengths.len() as Real;
-            let variance = edge_lengths
-                .iter()
-                .map(|&len| (len - mean_edge).powi(2))
-                .sum::<Real>()
-                / edge_lengths.len() as Real;
-            let std_dev = variance.sqrt();
+            let mean_edge = hreal_mean(&edge_lengths).unwrap_or(0.0);
+            let std_dev = hreal_sample_stddev(&edge_lengths).unwrap_or(0.0);
 
             // Normalize to [0,1] where 1 = perfectly uniform
-            1.0 / (1.0 + std_dev / mean_edge)
+            if mean_edge > tolerance() {
+                1.0 / (1.0 + std_dev / mean_edge)
+            } else {
+                0.0
+            }
         } else {
             1.0
         };
@@ -673,10 +672,7 @@ impl Vertex {
 
         // Simple curvature estimation based on normal variation
         let curvature = if !neighbor_normals.is_empty() {
-            let avg_normal = neighbor_normals
-                .iter()
-                .fold(Vector3::zeros(), |acc, &n| acc + n)
-                / neighbor_normals.len() as Real;
+            let avg_normal = hvector3_mean(&neighbor_normals).unwrap_or_else(Vector3::zeros);
             // Fail closed instead of re-entering primitive nalgebra norms when
             // hostile public normals cannot be promoted to hyperlattice.
             hvector3_distance(&self.normal, &avg_normal).unwrap_or(0.0)
@@ -717,25 +713,28 @@ impl VertexCluster {
         }
 
         // Compute centroid position
-        let centroid = vertices
+        let positions = vertices
             .iter()
-            .fold(Point3::origin(), |acc, v| acc + v.position.coords)
-            / vertices.len() as Real;
+            .map(|vertex| vertex.position)
+            .collect::<Vec<_>>();
+        let centroid = hpoint_centroid(&positions)?;
 
         // Compute average normal
-        let avg_normal = vertices
+        let normals = vertices
             .iter()
-            .fold(Vector3::zeros(), |acc, v| acc + v.normal);
+            .map(|vertex| vertex.normal)
+            .collect::<Vec<_>>();
+        let avg_normal = hvector3_mean(&normals).unwrap_or_else(Vector3::z);
         let normalized_normal = hunit_vector3(&avg_normal).unwrap_or_else(Vector3::z);
 
         // Compute bounding radius
         let radius = vertices
             .iter()
-            .filter_map(|v| hpoint_distance(&v.position, &Point3::from(centroid)))
+            .filter_map(|v| hpoint_distance(&v.position, &centroid))
             .fold(0.0, |a: Real, b| a.max(b));
 
         Some(VertexCluster {
-            position: Point3::from(centroid),
+            position: centroid,
             normal: normalized_normal,
             count: vertices.len(),
             radius,

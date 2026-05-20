@@ -298,6 +298,79 @@ pub(crate) fn hvector3_distance(lhs: &Vector3<Real>, rhs: &Vector3<Real>) -> Opt
     hreal_to_f64(&lhs.squared_distance(&rhs).sqrt().ok()?)
 }
 
+/// Return the finite arithmetic mean of public boundary vectors.
+///
+/// Coordinate summation and count division are evaluated by
+/// `hyperlattice::Vector3` over `hyperreal::Real`; only the returned boundary
+/// vector is lossy-exported. This is the vector analogue of [`hpoint_centroid`]
+/// for analysis paths that still expose `Vector3<f64>` normals, following
+/// Yap's exact-geometric-computation boundary split
+/// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+pub(crate) fn hvector3_mean(vectors: &[Vector3<Real>]) -> Option<Vector3<Real>> {
+    if vectors.is_empty() {
+        return None;
+    }
+    let sum = vectors
+        .iter()
+        .map(hvector3_from_vector3)
+        .try_fold(hyperlattice::Vector3::zero(), |acc, vector| {
+            vector.map(|vector| acc + vector)
+        })?;
+    let count = hreal_from_f64(vectors.len() as Real).ok()?;
+    let mean = (sum / count).ok()?.to_f64_array_lossy()?;
+    Some(Vector3::new(mean[0], mean[1], mean[2]))
+}
+
+/// Return a finite weighted sum of public boundary points.
+///
+/// The caller owns weight normalization semantics; this helper only guarantees
+/// that finite coordinates and weights are promoted to hyperreal-backed
+/// vectors before the affine sum crosses back to the transitional point type.
+pub(crate) fn hpoint_weighted_sum(
+    points: &[Point3<Real>],
+    weights: &[Real],
+) -> Option<Point3<Real>> {
+    if points.len() != weights.len() || points.is_empty() {
+        return None;
+    }
+    let sum = points
+        .iter()
+        .zip(weights.iter().copied())
+        .map(|(point, weight)| {
+            Some(hvector3_from_point3(point)? * hreal_from_f64(weight).ok()?)
+        })
+        .try_fold(hyperlattice::Vector3::zero(), |acc, point| {
+            point.map(|point| acc + point)
+        })?;
+    let coords = sum.to_f64_array_lossy()?;
+    Some(Point3::new(coords[0], coords[1], coords[2]))
+}
+
+/// Return a finite weighted sum of public boundary vectors.
+///
+/// This keeps normal blending and smoothing stencils in hyperlattice instead
+/// of local primitive vector folds while csgrs still exposes `Vector3<f64>` at
+/// API edges.
+pub(crate) fn hvector3_weighted_sum(
+    vectors: &[Vector3<Real>],
+    weights: &[Real],
+) -> Option<Vector3<Real>> {
+    if vectors.len() != weights.len() || vectors.is_empty() {
+        return None;
+    }
+    let sum = vectors
+        .iter()
+        .zip(weights.iter().copied())
+        .map(|(vector, weight)| {
+            Some(hvector3_from_vector3(vector)? * hreal_from_f64(weight).ok()?)
+        })
+        .try_fold(hyperlattice::Vector3::zero(), |acc, vector| {
+            vector.map(|vector| acc + vector)
+        })?;
+    let coords = sum.to_f64_array_lossy()?;
+    Some(Vector3::new(coords[0], coords[1], coords[2]))
+}
+
 /// Return whether two public boundary vectors are orthogonal within epsilon.
 ///
 /// The dot product is evaluated in hyperreal space and only the tolerance is a
@@ -591,6 +664,88 @@ pub(crate) fn hreal_f64s_within_epsilon(lhs: F64, rhs: F64, epsilon: F64) -> boo
     hreal_lt_f64(&(delta.clone() * delta), epsilon * epsilon)
 }
 
+/// Return the finite sum of public boundary scalars.
+///
+/// This helper is for aggregate reporting paths that still receive `f64`
+/// slices. Values are promoted to `hyperreal::Real`, accumulated there, and
+/// exported once at the boundary.
+pub(crate) fn hreal_sum(values: &[Real]) -> Option<Real> {
+    values
+        .iter()
+        .copied()
+        .map(hreal_from_f64)
+        .collect::<Result<Vec<_>, _>>()
+        .ok()
+        .and_then(|values| {
+            hreal_to_f64(
+                &values
+                    .into_iter()
+                    .fold(HReal::zero(), |acc, value| acc + value),
+            )
+        })
+}
+
+/// Divide two finite public boundary scalars through hyperreal arithmetic.
+pub(crate) fn hreal_div(lhs: Real, rhs: Real) -> Option<Real> {
+    let lhs = hreal_from_f64(lhs).ok()?;
+    let rhs = hreal_from_f64(rhs).ok()?;
+    hreal_to_f64(&(lhs / rhs).ok()?)
+}
+
+/// Return the finite arithmetic mean of public boundary scalars.
+///
+/// This is a reporting-edge helper for aggregate metrics. The input scalars
+/// are promoted into `hyperreal::Real`, accumulated there, divided by an
+/// integer count promoted at the boundary, and only then exported to `f64`.
+pub(crate) fn hreal_mean(values: &[Real]) -> Option<Real> {
+    if values.is_empty() {
+        return None;
+    }
+    let sum = values
+        .iter()
+        .copied()
+        .map(hreal_from_f64)
+        .collect::<Result<Vec<_>, _>>()
+        .ok()?
+        .into_iter()
+        .fold(HReal::zero(), |acc, value| acc + value);
+    let count_len = values.len();
+    let count = hreal_from_f64(count_len as Real).ok()?;
+    hreal_to_f64(&(sum / count).ok()?)
+}
+
+/// Return the finite sample standard deviation of public boundary scalars.
+///
+/// Mean and squared-difference accumulation stay in hyperreal space; only the
+/// final standard deviation crosses back to the transitional scalar type. This
+/// follows Yap's exact-geometric-computation boundary split used throughout the
+/// crate (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+pub(crate) fn hreal_sample_stddev(values: &[Real]) -> Option<Real> {
+    if values.len() < 2 {
+        return None;
+    }
+    let count_len = values.len();
+    let values = values
+        .iter()
+        .copied()
+        .map(hreal_from_f64)
+        .collect::<Result<Vec<_>, _>>()
+        .ok()?;
+    let count = hreal_from_f64(values.len() as Real).ok()?;
+    let mean = (values
+        .iter()
+        .cloned()
+        .fold(HReal::zero(), |acc, value| acc + value)
+        / count)
+        .ok()?;
+    let sum_squared = values.into_iter().fold(HReal::zero(), |acc, value| {
+        let delta = value - mean.clone();
+        acc + delta.clone() * delta
+    });
+    let divisor = hreal_from_f64((count_len - 1) as Real).ok()?;
+    hreal_to_f64(&(sum_squared / divisor).ok()?.sqrt().ok()?)
+}
+
 use std::sync::OnceLock;
 
 /// Lazily-initialized tolerance used across the crate.
@@ -850,6 +1005,36 @@ mod tests {
         let interpolated = hpoint_lerp(&points[0], &points[2], 0.25).unwrap();
         assert_eq!(interpolated, Point3::new(1.0, 2.0, 3.0));
         assert!(hpoint_lerp(&points[0], &points[2], Real::INFINITY).is_none());
+    }
+
+    #[test]
+    fn hreal_aggregate_helpers_use_hyperreal_boundaries() {
+        let values = [1.0, 2.0, 3.0];
+        assert_eq!(hreal_sum(&values).unwrap(), 6.0);
+        assert_eq!(hreal_div(6.0, 3.0).unwrap(), 2.0);
+        assert_eq!(hreal_mean(&values).unwrap(), 2.0);
+        assert!(hreal_sample_stddev(&values).unwrap() > 0.99);
+        assert_eq!(
+            hvector3_mean(&[Vector3::x(), Vector3::y()]).unwrap(),
+            Vector3::new(0.5, 0.5, 0.0)
+        );
+        assert_eq!(
+            hpoint_weighted_sum(
+                &[Point3::origin(), Point3::new(2.0, 4.0, 6.0)],
+                &[0.25, 0.75],
+            )
+            .unwrap(),
+            Point3::new(1.5, 3.0, 4.5)
+        );
+        assert_eq!(
+            hvector3_weighted_sum(&[Vector3::x(), Vector3::y()], &[0.25, 0.75]).unwrap(),
+            Vector3::new(0.25, 0.75, 0.0)
+        );
+        assert!(hreal_mean(&[]).is_none());
+        assert!(hreal_sample_stddev(&[1.0]).is_none());
+        assert!(hvector3_mean(&[Vector3::new(Real::NAN, 0.0, 0.0)]).is_none());
+        assert!(hreal_mean(&[1.0, Real::NAN]).is_none());
+        assert!(hreal_sample_stddev(&[1.0, Real::INFINITY]).is_none());
     }
 
     #[test]

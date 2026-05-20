@@ -1197,6 +1197,15 @@ fn adversarial_vertex_cluster_uses_hyperreal_radius_and_checked_normal() {
     assert!(cluster.normal.dot(&Vector3::z()) > 1.0 - tolerance());
     assert!(cluster.radius.is_finite());
     assert!(cluster.radius > 0.0);
+
+    let hostile = [
+        Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::z()),
+        Vertex {
+            position: Point3::new(Real::NAN, 0.0, 0.0),
+            normal: Vector3::z(),
+        },
+    ];
+    assert!(VertexCluster::from_vertices(&hostile).is_none());
 }
 
 #[test]
