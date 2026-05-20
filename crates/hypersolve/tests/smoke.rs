@@ -204,6 +204,19 @@ fn expression_facts_preserve_real_symbolic_dependency_families() {
 }
 
 #[test]
+fn simplify_folds_exact_unary_endpoints_without_hiding_invalid_domains() {
+    assert_eq!(Expr::zero().sin().simplify(), Expr::zero());
+    assert_eq!(Expr::zero().cos().simplify(), Expr::int(1));
+    assert_eq!(Expr::int(1).sqrt().simplify(), Expr::int(1));
+    assert_eq!(Expr::int(1).log10().simplify(), Expr::zero());
+
+    let invalid_sqrt = Expr::int(-1).sqrt().simplify();
+    assert!(matches!(invalid_sqrt, Expr::Sqrt(_)));
+    let invalid_log = Expr::zero().log10().simplify();
+    assert!(matches!(invalid_log, Expr::Log10(_)));
+}
+
+#[test]
 fn prepared_problem_caches_residual_dependency_and_sparsity_facts() {
     let x = Expr::symbol(SymbolId(0), "x");
     let y = Expr::symbol(SymbolId(1), "y");

@@ -484,6 +484,26 @@ proptest! {
     }
 
     #[test]
+    fn simplify_generated_sqrt_and_log_domains_preserve_invalid_nodes(
+        sqrt_value in -64_i16..=64,
+        log_value in -64_i16..=64,
+    ) {
+        let simplified_sqrt = Expr::int(i64::from(sqrt_value)).sqrt().simplify();
+        let simplified_log = Expr::int(i64::from(log_value)).log10().simplify();
+
+        if sqrt_value < 0 {
+            prop_assert!(matches!(simplified_sqrt, Expr::Sqrt(_)));
+        } else {
+            prop_assert!(matches!(simplified_sqrt, Expr::Constant(_)));
+        }
+        if log_value <= 0 {
+            prop_assert!(matches!(simplified_log, Expr::Log10(_)));
+        } else {
+            prop_assert!(matches!(simplified_log, Expr::Constant(_)));
+        }
+    }
+
+    #[test]
     fn candidate_domain_generated_division_and_log_boundaries_are_certified(
         denominator in -64_i16..=64,
         log_operand in -64_i16..=64,

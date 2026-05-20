@@ -273,10 +273,10 @@ impl Expr {
             Self::Div(left, right) => simplify_div(left.simplify(), right.simplify()),
             Self::Neg(value) => simplify_neg(value.simplify()),
             Self::PowI(value, exponent) => simplify_powi(value.simplify(), exponent),
-            Self::Sqrt(value) => Self::Sqrt(Box::new(value.simplify())),
-            Self::Sin(value) => Self::Sin(Box::new(value.simplify())),
-            Self::Cos(value) => Self::Cos(Box::new(value.simplify())),
-            Self::Log10(value) => Self::Log10(Box::new(value.simplify())),
+            Self::Sqrt(value) => simplify_sqrt(value.simplify()),
+            Self::Sin(value) => simplify_sin(value.simplify()),
+            Self::Cos(value) => simplify_cos(value.simplify()),
+            Self::Log10(value) => simplify_log10(value.simplify()),
             value => value,
         }
     }
@@ -484,5 +484,56 @@ fn simplify_powi(value: Expr, exponent: i64) -> Expr {
             Err(_) => Expr::PowI(Box::new(Expr::zero()), exponent),
         },
         (value, exponent) => Expr::PowI(Box::new(value), exponent),
+    }
+}
+
+/// Simplify a square-root endpoint without hiding invalid domains.
+///
+/// Yap's exact-geometric-computation model favors retaining expression
+/// structure until a certified arithmetic package can decide a fact. For
+/// square roots, only exact in-domain constants are folded here; invalid or
+/// unsupported constants remain as `sqrt` nodes so
+/// `certify_candidate_domains` can report the domain failure explicitly. See
+/// Yap, "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+/// (1997).
+fn simplify_sqrt(value: Expr) -> Expr {
+    match value {
+        Expr::Constant(value) => match value.clone().sqrt() {
+            Ok(sqrt) => Expr::Constant(sqrt),
+            Err(_) => Expr::Sqrt(Box::new(Expr::Constant(value))),
+        },
+        value => Expr::Sqrt(Box::new(value)),
+    }
+}
+
+/// Simplify exact sine endpoints.
+///
+/// Constants are folded through `Real::sin`, which preserves `hyperreal`'s
+/// symbolic/computable representation instead of lowering through primitive
+/// floats. This keeps trigonometric endpoint reduction inside the exact scalar
+/// package described by Yap rather than in a solver-local approximation.
+fn simplify_sin(value: Expr) -> Expr {
+    match value {
+        Expr::Constant(value) => Expr::Constant(value.sin()),
+        value => Expr::Sin(Box::new(value)),
+    }
+}
+
+/// Simplify exact cosine endpoints through `hyperreal`.
+fn simplify_cos(value: Expr) -> Expr {
+    match value {
+        Expr::Constant(value) => Expr::Constant(value.cos()),
+        value => Expr::Cos(Box::new(value)),
+    }
+}
+
+/// Simplify exact base-10 logarithm endpoints without hiding invalid domains.
+fn simplify_log10(value: Expr) -> Expr {
+    match value {
+        Expr::Constant(value) => match value.clone().log10() {
+            Ok(log) => Expr::Constant(log),
+            Err(_) => Expr::Log10(Box::new(Expr::Constant(value))),
+        },
+        value => Expr::Log10(Box::new(value)),
     }
 }

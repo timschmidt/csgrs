@@ -129,6 +129,18 @@ fn domain_problem(row_count: usize) -> Problem {
     problem
 }
 
+fn unary_endpoint_expression(row_count: usize) -> Expr {
+    let mut expression = Expr::zero();
+    for index in 1..=row_count {
+        expression = expression
+            + Expr::zero().sin()
+            + Expr::zero().cos()
+            + Expr::int(index as i64).sqrt()
+            + Expr::int(1).log10();
+    }
+    expression
+}
+
 fn certification(c: &mut Criterion) {
     let problem = affine_problem(16);
     let prepared = PreparedProblem::new(&problem);
@@ -279,6 +291,10 @@ fn certification(c: &mut Criterion) {
                 hyperlimit::PredicatePolicy::default(),
             )
         })
+    });
+    c.bench_function("simplify_unary_endpoint_expression", |b| {
+        let expression = unary_endpoint_expression(16);
+        b.iter(|| expression.clone().simplify())
     });
 
     let substitutions = (0..16)
