@@ -124,7 +124,13 @@ fn domain_problem(row_count: usize) -> Problem {
     for index in 0..row_count {
         problem.add_constraint(Constraint::equality(
             format!("domain row {index}"),
-            (x.clone().sqrt() + (x.clone() / y.clone()).log10()) / Expr::int(index as i64 + 1),
+            (x.clone().sqrt()
+                + (x.clone() / y.clone()).log10()
+                + x.clone().ln()
+                + y.clone().acos()
+                + y.clone().atanh()
+                + x.clone().acosh())
+                / Expr::int(index as i64 + 1),
         ));
     }
     problem
@@ -137,7 +143,12 @@ fn unary_endpoint_expression(row_count: usize) -> Expr {
             + Expr::zero().sin()
             + Expr::zero().cos()
             + Expr::int(index as i64).sqrt()
-            + Expr::int(1).log10();
+            + Expr::int(1).log10()
+            + Expr::int(1).ln()
+            + Expr::zero().asin()
+            + Expr::int(1).acos()
+            + Expr::int(1).acosh()
+            + Expr::zero().atanh();
     }
     expression
 }

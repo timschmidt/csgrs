@@ -4,12 +4,13 @@
 //! domain of a residual, but callers often need that information before asking
 //! for a scalar value. This module walks residual expression trees and reports
 //! proof-bearing domain checks for division, negative powers, square roots,
-//! and base-10 logarithms. The checks use exact `Real` comparisons through
-//! `hyperlimit`, preserving Yap's "Towards Exact Geometric Computation"
-//! (*Computational Geometry* 7.1-2, 1997) rule that decisions should consume
-//! certified facts or return explicit uncertainty. The interval/domain
-//! separation also follows Moore's interval-analysis discipline: domain
-//! validity is a precondition certificate, not a residual tolerance.
+//! logarithms, inverse circular functions, and inverse hyperbolic functions.
+//! The checks use exact `Real` comparisons through `hyperlimit`, preserving
+//! Yap's "Towards Exact Geometric Computation" (*Computational Geometry*
+//! 7.1-2, 1997) rule that decisions should consume certified facts or return
+//! explicit uncertainty. The interval/domain separation also follows Moore's
+//! interval-analysis discipline: domain validity is a precondition
+//! certificate, not a residual tolerance.
 
 use std::cmp::Ordering;
 
@@ -31,6 +32,16 @@ pub enum DomainCheckKind {
     SqrtOperandNonNegative,
     /// Operand of `log10(value)` must be strictly positive.
     Log10OperandPositive,
+    /// Operand of `ln(value)` must be strictly positive.
+    LnOperandPositive,
+    /// Operand of `asin(value)` must lie in the closed interval `[-1, 1]`.
+    AsinOperandInClosedUnitInterval,
+    /// Operand of `acos(value)` must lie in the closed interval `[-1, 1]`.
+    AcosOperandInClosedUnitInterval,
+    /// Operand of `acosh(value)` must be greater than or equal to `1`.
+    AcoshOperandAtLeastOne,
+    /// Operand of `atanh(value)` must lie in the open interval `(-1, 1)`.
+    AtanhOperandInOpenUnitInterval,
 }
 
 /// Proof status for one domain check.
@@ -223,15 +234,17 @@ fn collect_domain_checks(
                 );
             }
         }
-        Expr::Neg(value) | Expr::Sin(value) | Expr::Cos(value) => collect_domain_checks(
-            value,
-            &format!("{path}.arg"),
-            constraint_index,
-            constraint_name,
-            context,
-            policy,
-            checks,
-        ),
+        Expr::Neg(value) | Expr::Sin(value) | Expr::Cos(value) => {
+            collect_domain_checks(
+                value,
+                &format!("{path}.arg"),
+                constraint_index,
+                constraint_name,
+                context,
+                policy,
+                checks,
+            );
+        }
         Expr::PowI(value, exponent) => {
             collect_domain_checks(
                 value,
@@ -297,6 +310,111 @@ fn collect_domain_checks(
                 checks,
             );
         }
+        Expr::Ln(value) => {
+            collect_domain_checks(
+                value,
+                &format!("{path}.arg"),
+                constraint_index,
+                constraint_name,
+                context,
+                policy,
+                checks,
+            );
+            push_value_check(
+                value,
+                &format!("{path}.arg"),
+                constraint_index,
+                constraint_name,
+                DomainCheckKind::LnOperandPositive,
+                context,
+                policy,
+                checks,
+            );
+        }
+        Expr::Asin(value) => {
+            collect_domain_checks(
+                value,
+                &format!("{path}.arg"),
+                constraint_index,
+                constraint_name,
+                context,
+                policy,
+                checks,
+            );
+            push_value_check(
+                value,
+                &format!("{path}.arg"),
+                constraint_index,
+                constraint_name,
+                DomainCheckKind::AsinOperandInClosedUnitInterval,
+                context,
+                policy,
+                checks,
+            );
+        }
+        Expr::Acos(value) => {
+            collect_domain_checks(
+                value,
+                &format!("{path}.arg"),
+                constraint_index,
+                constraint_name,
+                context,
+                policy,
+                checks,
+            );
+            push_value_check(
+                value,
+                &format!("{path}.arg"),
+                constraint_index,
+                constraint_name,
+                DomainCheckKind::AcosOperandInClosedUnitInterval,
+                context,
+                policy,
+                checks,
+            );
+        }
+        Expr::Acosh(value) => {
+            collect_domain_checks(
+                value,
+                &format!("{path}.arg"),
+                constraint_index,
+                constraint_name,
+                context,
+                policy,
+                checks,
+            );
+            push_value_check(
+                value,
+                &format!("{path}.arg"),
+                constraint_index,
+                constraint_name,
+                DomainCheckKind::AcoshOperandAtLeastOne,
+                context,
+                policy,
+                checks,
+            );
+        }
+        Expr::Atanh(value) => {
+            collect_domain_checks(
+                value,
+                &format!("{path}.arg"),
+                constraint_index,
+                constraint_name,
+                context,
+                policy,
+                checks,
+            );
+            push_value_check(
+                value,
+                &format!("{path}.arg"),
+                constraint_index,
+                constraint_name,
+                DomainCheckKind::AtanhOperandInOpenUnitInterval,
+                context,
+                policy,
+                checks,
+            );
+        }
     }
 }
 
@@ -355,12 +473,51 @@ fn classify_domain_value(
                 None => DomainCheckStatus::Unknown,
             }
         }
-        DomainCheckKind::Log10OperandPositive => {
+        DomainCheckKind::Log10OperandPositive | DomainCheckKind::LnOperandPositive => {
             match compare_reals_with_policy(value, &Real::zero(), policy).value() {
                 Some(Ordering::Greater) => DomainCheckStatus::CertifiedValid,
                 Some(Ordering::Less | Ordering::Equal) => DomainCheckStatus::CertifiedInvalid,
                 None => DomainCheckStatus::Unknown,
             }
         }
+        DomainCheckKind::AsinOperandInClosedUnitInterval
+        | DomainCheckKind::AcosOperandInClosedUnitInterval => {
+            classify_closed_unit_interval(value, policy)
+        }
+        DomainCheckKind::AcoshOperandAtLeastOne => {
+            match compare_reals_with_policy(value, &Real::one(), policy).value() {
+                Some(Ordering::Equal | Ordering::Greater) => DomainCheckStatus::CertifiedValid,
+                Some(Ordering::Less) => DomainCheckStatus::CertifiedInvalid,
+                None => DomainCheckStatus::Unknown,
+            }
+        }
+        DomainCheckKind::AtanhOperandInOpenUnitInterval => {
+            classify_open_unit_interval(value, policy)
+        }
+    }
+}
+
+fn classify_closed_unit_interval(value: &Real, policy: PredicatePolicy) -> DomainCheckStatus {
+    let lower = compare_reals_with_policy(value, &(-Real::one()), policy).value();
+    let upper = compare_reals_with_policy(value, &Real::one(), policy).value();
+    match (lower, upper) {
+        (Some(Ordering::Less), _) | (_, Some(Ordering::Greater)) => {
+            DomainCheckStatus::CertifiedInvalid
+        }
+        (Some(Ordering::Equal | Ordering::Greater), Some(Ordering::Less | Ordering::Equal)) => {
+            DomainCheckStatus::CertifiedValid
+        }
+        _ => DomainCheckStatus::Unknown,
+    }
+}
+
+fn classify_open_unit_interval(value: &Real, policy: PredicatePolicy) -> DomainCheckStatus {
+    let lower = compare_reals_with_policy(value, &(-Real::one()), policy).value();
+    let upper = compare_reals_with_policy(value, &Real::one(), policy).value();
+    match (lower, upper) {
+        (Some(Ordering::Greater), Some(Ordering::Less)) => DomainCheckStatus::CertifiedValid,
+        (Some(Ordering::Less | Ordering::Equal), _)
+        | (_, Some(Ordering::Equal | Ordering::Greater)) => DomainCheckStatus::CertifiedInvalid,
+        _ => DomainCheckStatus::Unknown,
     }
 }

@@ -249,11 +249,20 @@ fn simplify_folds_exact_unary_endpoints_without_hiding_invalid_domains() {
     assert_eq!(Expr::zero().cos().simplify(), Expr::int(1));
     assert_eq!(Expr::int(1).sqrt().simplify(), Expr::int(1));
     assert_eq!(Expr::int(1).log10().simplify(), Expr::zero());
+    assert_eq!(Expr::int(1).ln().simplify(), Expr::zero());
+    assert_eq!(Expr::zero().asin().simplify(), Expr::zero());
+    assert_eq!(Expr::int(1).acosh().simplify(), Expr::zero());
+    assert_eq!(Expr::zero().atanh().simplify(), Expr::zero());
 
     let invalid_sqrt = Expr::int(-1).sqrt().simplify();
     assert!(matches!(invalid_sqrt, Expr::Sqrt(_)));
     let invalid_log = Expr::zero().log10().simplify();
     assert!(matches!(invalid_log, Expr::Log10(_)));
+    assert!(matches!(Expr::zero().ln().simplify(), Expr::Ln(_)));
+    assert!(matches!(Expr::int(2).asin().simplify(), Expr::Asin(_)));
+    assert!(matches!(Expr::int(-2).acos().simplify(), Expr::Acos(_)));
+    assert!(matches!(Expr::zero().acosh().simplify(), Expr::Acosh(_)));
+    assert!(matches!(Expr::int(1).atanh().simplify(), Expr::Atanh(_)));
 }
 
 #[test]
@@ -1987,4 +1996,63 @@ fn candidate_domain_certification_reports_negative_power_and_unbound_symbols() {
             symbol: SymbolId(9)
         }
     ));
+}
+
+#[test]
+fn candidate_domain_certification_reports_inverse_function_boundaries() {
+    let ln_value = Expr::symbol(SymbolId(0), "ln_value");
+    let asin_value = Expr::symbol(SymbolId(1), "asin_value");
+    let acos_value = Expr::symbol(SymbolId(2), "acos_value");
+    let acosh_value = Expr::symbol(SymbolId(3), "acosh_value");
+    let atanh_value = Expr::symbol(SymbolId(4), "atanh_value");
+    let mut problem = Problem::default();
+    problem.add_variable("ln_value", real(0));
+    problem.add_variable("asin_value", real(2));
+    problem.add_variable("acos_value", real(-1));
+    problem.add_variable("acosh_value", real(1));
+    problem.add_variable("atanh_value", real(1));
+    problem.add_constraint(Constraint::equality("ln invalid", ln_value.ln()));
+    problem.add_constraint(Constraint::equality("asin invalid", asin_value.asin()));
+    problem.add_constraint(Constraint::equality(
+        "acos valid boundary",
+        acos_value.acos(),
+    ));
+    problem.add_constraint(Constraint::equality(
+        "acosh valid boundary",
+        acosh_value.acosh(),
+    ));
+    problem.add_constraint(Constraint::equality(
+        "atanh invalid boundary",
+        atanh_value.atanh(),
+    ));
+
+    let report = certify_candidate_domains(
+        &problem,
+        &context_from_problem(&problem),
+        hyperlimit::PredicatePolicy::default(),
+    );
+
+    assert_eq!(report.checks.len(), 5);
+    assert_eq!(report.certified_valid_checks, 2);
+    assert_eq!(report.certified_invalid_checks, 3);
+    assert!(report.checks.iter().any(|check| {
+        check.kind == DomainCheckKind::LnOperandPositive
+            && check.status == DomainCheckStatus::CertifiedInvalid
+    }));
+    assert!(report.checks.iter().any(|check| {
+        check.kind == DomainCheckKind::AsinOperandInClosedUnitInterval
+            && check.status == DomainCheckStatus::CertifiedInvalid
+    }));
+    assert!(report.checks.iter().any(|check| {
+        check.kind == DomainCheckKind::AcosOperandInClosedUnitInterval
+            && check.status == DomainCheckStatus::CertifiedValid
+    }));
+    assert!(report.checks.iter().any(|check| {
+        check.kind == DomainCheckKind::AcoshOperandAtLeastOne
+            && check.status == DomainCheckStatus::CertifiedValid
+    }));
+    assert!(report.checks.iter().any(|check| {
+        check.kind == DomainCheckKind::AtanhOperandInOpenUnitInterval
+            && check.status == DomainCheckStatus::CertifiedInvalid
+    }));
 }

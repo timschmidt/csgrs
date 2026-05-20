@@ -281,7 +281,16 @@ impl<'a> AffineBuilder<'a> {
                 Some(())
             }
             Expr::PowI(value, exponent) if *exponent == 1 => self.collect(value, scale),
-            Expr::PowI(_, _) | Expr::Sqrt(_) | Expr::Sin(_) | Expr::Cos(_) | Expr::Log10(_) => None,
+            Expr::PowI(_, _)
+            | Expr::Sqrt(_)
+            | Expr::Sin(_)
+            | Expr::Cos(_)
+            | Expr::Ln(_)
+            | Expr::Log10(_)
+            | Expr::Asin(_)
+            | Expr::Acos(_)
+            | Expr::Acosh(_)
+            | Expr::Atanh(_) => None,
         }
     }
 

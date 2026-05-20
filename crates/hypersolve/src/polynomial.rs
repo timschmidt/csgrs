@@ -360,7 +360,16 @@ fn collect_polynomial(expression: &Expr) -> Option<PolynomialAccumulator> {
             let value = collect_polynomial(value)?;
             value.clone().multiply(value)
         }
-        Expr::PowI(_, _) | Expr::Sqrt(_) | Expr::Sin(_) | Expr::Cos(_) | Expr::Log10(_) => None,
+        Expr::PowI(_, _)
+        | Expr::Sqrt(_)
+        | Expr::Sin(_)
+        | Expr::Cos(_)
+        | Expr::Ln(_)
+        | Expr::Log10(_)
+        | Expr::Asin(_)
+        | Expr::Acos(_)
+        | Expr::Acosh(_)
+        | Expr::Atanh(_) => None,
     }
 }
 
@@ -479,7 +488,16 @@ fn collect_multivariate_quadratic(expression: &Expr) -> Option<MultivariateQuadr
             let value = collect_multivariate_quadratic(value)?;
             Some(value.clone().multiply(value))
         }
-        Expr::PowI(_, _) | Expr::Sqrt(_) | Expr::Sin(_) | Expr::Cos(_) | Expr::Log10(_) => None,
+        Expr::PowI(_, _)
+        | Expr::Sqrt(_)
+        | Expr::Sin(_)
+        | Expr::Cos(_)
+        | Expr::Ln(_)
+        | Expr::Log10(_)
+        | Expr::Asin(_)
+        | Expr::Acos(_)
+        | Expr::Acosh(_)
+        | Expr::Atanh(_) => None,
     }
 }
 

@@ -619,9 +619,15 @@ proptest! {
     fn simplify_generated_sqrt_and_log_domains_preserve_invalid_nodes(
         sqrt_value in -64_i16..=64,
         log_value in -64_i16..=64,
+        unit_value in -2_i16..=2,
     ) {
         let simplified_sqrt = Expr::int(i64::from(sqrt_value)).sqrt().simplify();
         let simplified_log = Expr::int(i64::from(log_value)).log10().simplify();
+        let simplified_ln = Expr::int(i64::from(log_value)).ln().simplify();
+        let simplified_asin = Expr::int(i64::from(unit_value)).asin().simplify();
+        let simplified_acos = Expr::int(i64::from(unit_value)).acos().simplify();
+        let simplified_acosh = Expr::int(i64::from(unit_value)).acosh().simplify();
+        let simplified_atanh = Expr::int(i64::from(unit_value)).atanh().simplify();
 
         if sqrt_value < 0 {
             prop_assert!(matches!(simplified_sqrt, Expr::Sqrt(_)));
@@ -630,8 +636,27 @@ proptest! {
         }
         if log_value <= 0 {
             prop_assert!(matches!(simplified_log, Expr::Log10(_)));
+            prop_assert!(matches!(simplified_ln, Expr::Ln(_)));
         } else {
             prop_assert!(matches!(simplified_log, Expr::Constant(_)));
+            prop_assert!(matches!(simplified_ln, Expr::Constant(_)));
+        }
+        if !(-1..=1).contains(&unit_value) {
+            prop_assert!(matches!(simplified_asin, Expr::Asin(_)));
+            prop_assert!(matches!(simplified_acos, Expr::Acos(_)));
+        } else {
+            prop_assert!(matches!(simplified_asin, Expr::Constant(_)));
+            prop_assert!(matches!(simplified_acos, Expr::Constant(_)));
+        }
+        if unit_value < 1 {
+            prop_assert!(matches!(simplified_acosh, Expr::Acosh(_)));
+        } else {
+            prop_assert!(matches!(simplified_acosh, Expr::Constant(_)));
+        }
+        if unit_value <= -1 || unit_value >= 1 {
+            prop_assert!(matches!(simplified_atanh, Expr::Atanh(_)));
+        } else {
+            prop_assert!(matches!(simplified_atanh, Expr::Constant(_)));
         }
     }
 
@@ -639,23 +664,36 @@ proptest! {
     fn candidate_domain_generated_division_and_log_boundaries_are_certified(
         denominator in -64_i16..=64,
         log_operand in -64_i16..=64,
+        unit_operand in -3_i16..=3,
     ) {
         let y = Expr::symbol(SymbolId(0), "y");
         let l = Expr::symbol(SymbolId(1), "l");
+        let u = Expr::symbol(SymbolId(2), "u");
         let mut problem = Problem::default();
         problem.add_variable("y", Real::from(i64::from(denominator)));
         problem.add_variable("l", Real::from(i64::from(log_operand)));
+        problem.add_variable("u", Real::from(i64::from(unit_operand)));
         problem.add_constraint(Constraint::equality("generated reciprocal", Expr::int(1) / y));
-        problem.add_constraint(Constraint::equality("generated log", l.log10()));
+        problem.add_constraint(Constraint::equality("generated log", l.clone().log10()));
+        problem.add_constraint(Constraint::equality("generated ln", l.ln()));
+        problem.add_constraint(Constraint::equality("generated asin", u.clone().asin()));
+        problem.add_constraint(Constraint::equality("generated acos", u.clone().acos()));
+        problem.add_constraint(Constraint::equality("generated acosh", u.clone().acosh()));
+        problem.add_constraint(Constraint::equality("generated atanh", u.atanh()));
         let report = certify_candidate_domains(
             &problem,
             &context_from_problem(&problem),
             hyperlimit::PredicatePolicy::default(),
         );
 
-        prop_assert_eq!(report.checks.len(), 2);
+        prop_assert_eq!(report.checks.len(), 7);
         let division_status = &report.checks[0].status;
         let log_status = &report.checks[1].status;
+        let ln_status = &report.checks[2].status;
+        let asin_status = &report.checks[3].status;
+        let acos_status = &report.checks[4].status;
+        let acosh_status = &report.checks[5].status;
+        let atanh_status = &report.checks[6].status;
         prop_assert_eq!(
             *division_status == DomainCheckStatus::CertifiedValid,
             denominator != 0
@@ -671,6 +709,40 @@ proptest! {
         prop_assert_eq!(
             *log_status == DomainCheckStatus::CertifiedInvalid,
             log_operand <= 0
+        );
+        prop_assert_eq!(*ln_status == DomainCheckStatus::CertifiedValid, log_operand > 0);
+        prop_assert_eq!(*ln_status == DomainCheckStatus::CertifiedInvalid, log_operand <= 0);
+        prop_assert_eq!(
+            *asin_status == DomainCheckStatus::CertifiedValid,
+            (-1..=1).contains(&unit_operand)
+        );
+        prop_assert_eq!(
+            *asin_status == DomainCheckStatus::CertifiedInvalid,
+            !(-1..=1).contains(&unit_operand)
+        );
+        prop_assert_eq!(
+            *acos_status == DomainCheckStatus::CertifiedValid,
+            (-1..=1).contains(&unit_operand)
+        );
+        prop_assert_eq!(
+            *acos_status == DomainCheckStatus::CertifiedInvalid,
+            !(-1..=1).contains(&unit_operand)
+        );
+        prop_assert_eq!(
+            *acosh_status == DomainCheckStatus::CertifiedValid,
+            unit_operand >= 1
+        );
+        prop_assert_eq!(
+            *acosh_status == DomainCheckStatus::CertifiedInvalid,
+            unit_operand < 1
+        );
+        prop_assert_eq!(
+            *atanh_status == DomainCheckStatus::CertifiedValid,
+            unit_operand > -1 && unit_operand < 1
+        );
+        prop_assert_eq!(
+            *atanh_status == DomainCheckStatus::CertifiedInvalid,
+            unit_operand <= -1 || unit_operand >= 1
         );
     }
 

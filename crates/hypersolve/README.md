@@ -103,6 +103,8 @@ Implemented today:
 - candidate, lossy-adapter-only, candidate-domain, interval, affine Krawczyk,
   univariate and multivariate quadratic Krawczyk, and univariate quadratic alpha
   certification surfaces;
+- exact domain preflight for division, negative powers, square root, logarithm,
+  inverse circular, and inverse hyperbolic residual nodes;
 - a dense damped least-squares prototype with proposal-engine and adapter diagnostics;
 - geometry, PCB, and toolpath constraint helper modules.
 

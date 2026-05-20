@@ -95,7 +95,12 @@ pub enum Expr {
     Sqrt(Box<Expr>),
     Sin(Box<Expr>),
     Cos(Box<Expr>),
+    Ln(Box<Expr>),
     Log10(Box<Expr>),
+    Asin(Box<Expr>),
+    Acos(Box<Expr>),
+    Acosh(Box<Expr>),
+    Atanh(Box<Expr>),
 }
 
 impl Expr {
@@ -135,8 +140,28 @@ impl Expr {
         Self::Cos(Box::new(self))
     }
 
+    pub fn ln(self) -> Self {
+        Self::Ln(Box::new(self))
+    }
+
     pub fn log10(self) -> Self {
         Self::Log10(Box::new(self))
+    }
+
+    pub fn asin(self) -> Self {
+        Self::Asin(Box::new(self))
+    }
+
+    pub fn acos(self) -> Self {
+        Self::Acos(Box::new(self))
+    }
+
+    pub fn acosh(self) -> Self {
+        Self::Acosh(Box::new(self))
+    }
+
+    pub fn atanh(self) -> Self {
+        Self::Atanh(Box::new(self))
     }
 
     pub fn dependencies(&self) -> BTreeSet<SymbolId> {
@@ -181,7 +206,12 @@ impl Expr {
             | Self::Sqrt(value)
             | Self::Sin(value)
             | Self::Cos(value)
-            | Self::Log10(value) => value.collect_dependencies(deps),
+            | Self::Ln(value)
+            | Self::Log10(value)
+            | Self::Asin(value)
+            | Self::Acos(value)
+            | Self::Acosh(value)
+            | Self::Atanh(value) => value.collect_dependencies(deps),
         }
     }
 
@@ -224,14 +254,18 @@ impl Expr {
                 let degree = value.collect_facts(deps, real_dependencies);
                 pow_degree(degree, *exponent)
             }
-            Self::Sqrt(value) | Self::Sin(value) | Self::Cos(value) | Self::Log10(value) => {
-                match value.collect_facts(deps, real_dependencies) {
-                    ExprDegree::Constant => ExprDegree::Constant,
-                    ExprDegree::Polynomial(_) | ExprDegree::NonPolynomial => {
-                        ExprDegree::NonPolynomial
-                    }
-                }
-            }
+            Self::Sqrt(value)
+            | Self::Sin(value)
+            | Self::Cos(value)
+            | Self::Ln(value)
+            | Self::Log10(value)
+            | Self::Asin(value)
+            | Self::Acos(value)
+            | Self::Acosh(value)
+            | Self::Atanh(value) => match value.collect_facts(deps, real_dependencies) {
+                ExprDegree::Constant => ExprDegree::Constant,
+                ExprDegree::Polynomial(_) | ExprDegree::NonPolynomial => ExprDegree::NonPolynomial,
+            },
         }
     }
 
@@ -258,9 +292,29 @@ impl Expr {
                 .map_err(ExprEvalError::Hyperreal),
             Self::Sin(value) => Ok(value.eval_real(bindings)?.sin()),
             Self::Cos(value) => Ok(value.eval_real(bindings)?.cos()),
+            Self::Ln(value) => value
+                .eval_real(bindings)?
+                .ln()
+                .map_err(ExprEvalError::Hyperreal),
             Self::Log10(value) => value
                 .eval_real(bindings)?
                 .log10()
+                .map_err(ExprEvalError::Hyperreal),
+            Self::Asin(value) => value
+                .eval_real(bindings)?
+                .asin()
+                .map_err(ExprEvalError::Hyperreal),
+            Self::Acos(value) => value
+                .eval_real(bindings)?
+                .acos()
+                .map_err(ExprEvalError::Hyperreal),
+            Self::Acosh(value) => value
+                .eval_real(bindings)?
+                .acosh()
+                .map_err(ExprEvalError::Hyperreal),
+            Self::Atanh(value) => value
+                .eval_real(bindings)?
+                .atanh()
                 .map_err(ExprEvalError::Hyperreal),
         }
     }
@@ -276,7 +330,12 @@ impl Expr {
             Self::Sqrt(value) => simplify_sqrt(value.simplify()),
             Self::Sin(value) => simplify_sin(value.simplify()),
             Self::Cos(value) => simplify_cos(value.simplify()),
+            Self::Ln(value) => simplify_ln(value.simplify()),
             Self::Log10(value) => simplify_log10(value.simplify()),
+            Self::Asin(value) => simplify_asin(value.simplify()),
+            Self::Acos(value) => simplify_acos(value.simplify()),
+            Self::Acosh(value) => simplify_acosh(value.simplify()),
+            Self::Atanh(value) => simplify_atanh(value.simplify()),
             value => value,
         }
     }
@@ -317,11 +376,26 @@ impl Expr {
             }
             Self::Sin(value) => value.derivative(symbol) * (*value.clone()).cos(),
             Self::Cos(value) => -(value.derivative(symbol) * (*value.clone()).sin()),
+            Self::Ln(value) => value.derivative(symbol) / (*value.clone()),
             Self::Log10(value) => {
                 let ln_10 = Real::new(Rational::new(10))
                     .ln()
                     .expect("ln(10) is in domain");
                 value.derivative(symbol) / ((*value.clone()) * Self::real(ln_10))
+            }
+            Self::Asin(value) => {
+                value.derivative(symbol) / (Self::int(1) - (*value.clone()).powi(2)).sqrt()
+            }
+            Self::Acos(value) => {
+                -(value.derivative(symbol) / (Self::int(1) - (*value.clone()).powi(2)).sqrt())
+            }
+            Self::Acosh(value) => {
+                value.derivative(symbol)
+                    / (((*value.clone()) - Self::int(1)).sqrt()
+                        * ((*value.clone()) + Self::int(1)).sqrt())
+            }
+            Self::Atanh(value) => {
+                value.derivative(symbol) / (Self::int(1) - (*value.clone()).powi(2))
             }
         }
         .simplify()
@@ -527,6 +601,17 @@ fn simplify_cos(value: Expr) -> Expr {
     }
 }
 
+/// Simplify exact natural-logarithm endpoints without hiding invalid domains.
+fn simplify_ln(value: Expr) -> Expr {
+    match value {
+        Expr::Constant(value) => match value.clone().ln() {
+            Ok(log) => Expr::Constant(log),
+            Err(_) => Expr::Ln(Box::new(Expr::Constant(value))),
+        },
+        value => Expr::Ln(Box::new(value)),
+    }
+}
+
 /// Simplify exact base-10 logarithm endpoints without hiding invalid domains.
 fn simplify_log10(value: Expr) -> Expr {
     match value {
@@ -535,5 +620,49 @@ fn simplify_log10(value: Expr) -> Expr {
             Err(_) => Expr::Log10(Box::new(Expr::Constant(value))),
         },
         value => Expr::Log10(Box::new(value)),
+    }
+}
+
+/// Simplify exact inverse-sine endpoints without hiding invalid domains.
+fn simplify_asin(value: Expr) -> Expr {
+    match value {
+        Expr::Constant(value) => match value.clone().asin() {
+            Ok(asin) => Expr::Constant(asin),
+            Err(_) => Expr::Asin(Box::new(Expr::Constant(value))),
+        },
+        value => Expr::Asin(Box::new(value)),
+    }
+}
+
+/// Simplify exact inverse-cosine endpoints without hiding invalid domains.
+fn simplify_acos(value: Expr) -> Expr {
+    match value {
+        Expr::Constant(value) => match value.clone().acos() {
+            Ok(acos) => Expr::Constant(acos),
+            Err(_) => Expr::Acos(Box::new(Expr::Constant(value))),
+        },
+        value => Expr::Acos(Box::new(value)),
+    }
+}
+
+/// Simplify exact inverse-hyperbolic-cosine endpoints without hiding invalid domains.
+fn simplify_acosh(value: Expr) -> Expr {
+    match value {
+        Expr::Constant(value) => match value.clone().acosh() {
+            Ok(acosh) => Expr::Constant(acosh),
+            Err(_) => Expr::Acosh(Box::new(Expr::Constant(value))),
+        },
+        value => Expr::Acosh(Box::new(value)),
+    }
+}
+
+/// Simplify exact inverse-hyperbolic-tangent endpoints without hiding invalid domains.
+fn simplify_atanh(value: Expr) -> Expr {
+    match value {
+        Expr::Constant(value) => match value.clone().atanh() {
+            Ok(atanh) => Expr::Constant(atanh),
+            Err(_) => Expr::Atanh(Box::new(Expr::Constant(value))),
+        },
+        value => Expr::Atanh(Box::new(value)),
     }
 }
