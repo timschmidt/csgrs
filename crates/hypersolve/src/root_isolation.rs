@@ -17,6 +17,10 @@ use std::collections::HashMap;
 use hyperlimit::{PredicatePolicy, compare_reals_with_policy};
 use hyperreal::Real;
 
+use crate::certification::{
+    CandidateCertificationConfig, CandidateCertificationReport, certify_candidate_with_config,
+};
+use crate::eval::EvaluationContext;
 use crate::model::{ConstraintKind, Problem};
 use crate::prepared::PreparedProblem;
 use crate::symbolic::{Expr, SymbolId};
@@ -81,6 +85,64 @@ pub struct UnivariateRootIsolationReport {
     pub message: Option<String>,
 }
 
+/// Bounded refinement controls for univariate root isolation.
+///
+/// These controls do not introduce a tolerance acceptance rule. They only tell
+/// the exact Sturm isolator how far to subdivide intervals that already have a
+/// certified distinct-root count. Acceptance still belongs to exact candidate
+/// replay or to a future algebraic-number package, preserving Yap's
+/// construction/proof boundary.
+#[derive(Clone, Debug, PartialEq)]
+pub struct RootIsolationConfig {
+    /// Exact comparison/refinement policy used by `hyperlimit`.
+    pub policy: PredicatePolicy,
+    /// Optional exact maximum width for non-rational isolating intervals.
+    pub max_interval_width: Option<Real>,
+    /// Maximum additional bisection steps once an interval has one certified
+    /// root. This bounds work for clustered roots.
+    pub max_refinement_steps: usize,
+}
+
+impl Default for RootIsolationConfig {
+    fn default() -> Self {
+        Self {
+            policy: PredicatePolicy::default(),
+            max_interval_width: None,
+            max_refinement_steps: 0,
+        }
+    }
+}
+
+/// Replay status for an exact rational root witness found by isolation.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum AlgebraicRootCandidateStatus {
+    /// The isolating interval did not land on an exact rational root witness.
+    NoExactRationalWitness,
+    /// The exact rational witness was replayed and certified against all
+    /// active residuals.
+    ReplayCertified,
+    /// The exact rational witness replayed but did not satisfy every active
+    /// residual.
+    ReplayRejected,
+}
+
+/// Candidate replay report for one isolated root interval.
+#[derive(Clone, Debug, PartialEq)]
+pub struct AlgebraicRootCandidateReport {
+    /// Source constraint index from the isolation report.
+    pub constraint_index: usize,
+    /// Solver symbol bound for replay.
+    pub symbol: Option<SymbolId>,
+    /// Root interval ordinal within the isolation report.
+    pub interval_index: usize,
+    /// Exact rational root witness, when one exists.
+    pub exact_root: Option<Real>,
+    /// Full candidate certification report for exact rational witnesses.
+    pub certification: Option<CandidateCertificationReport>,
+    /// Replay status.
+    pub status: AlgebraicRootCandidateStatus,
+}
+
 /// Isolate distinct real roots for active univariate equality residuals.
 ///
 /// The first implementation accepts exact-rational univariate polynomial rows
@@ -91,6 +153,20 @@ pub fn isolate_univariate_polynomial_roots(
     prepared: &PreparedProblem<'_>,
     policy: PredicatePolicy,
 ) -> Vec<UnivariateRootIsolationReport> {
+    isolate_univariate_polynomial_roots_with_config(
+        prepared,
+        RootIsolationConfig {
+            policy,
+            ..RootIsolationConfig::default()
+        },
+    )
+}
+
+/// Isolate distinct real roots with explicit bounded-refinement controls.
+pub fn isolate_univariate_polynomial_roots_with_config(
+    prepared: &PreparedProblem<'_>,
+    config: RootIsolationConfig,
+) -> Vec<UnivariateRootIsolationReport> {
     let mut reports = Vec::new();
     for (constraint_index, constraint) in prepared.problem().constraints.iter().enumerate() {
         if !constraint.active {
@@ -99,11 +175,11 @@ pub fn isolate_univariate_polynomial_roots(
         if constraint.kind != ConstraintKind::Equality {
             continue;
         }
-        reports.push(isolate_univariate_polynomial_expr(
+        reports.push(isolate_univariate_polynomial_expr_with_config(
             constraint_index,
             &constraint.residual,
             prepared.problem(),
-            policy,
+            config.clone(),
         ));
     }
     reports
@@ -119,6 +195,25 @@ pub fn isolate_univariate_polynomial_expr(
     problem: &Problem,
     policy: PredicatePolicy,
 ) -> UnivariateRootIsolationReport {
+    isolate_univariate_polynomial_expr_with_config(
+        constraint_index,
+        expression,
+        problem,
+        RootIsolationConfig {
+            policy,
+            ..RootIsolationConfig::default()
+        },
+    )
+}
+
+/// Isolate distinct real roots for one expression with refinement controls.
+pub fn isolate_univariate_polynomial_expr_with_config(
+    constraint_index: usize,
+    expression: &Expr,
+    problem: &Problem,
+    config: RootIsolationConfig,
+) -> UnivariateRootIsolationReport {
+    let policy = config.policy;
     let extracted = match collect_univariate_polynomial(expression) {
         Some(extracted) => extracted,
         None => {
@@ -246,7 +341,7 @@ pub fn isolate_univariate_polynomial_expr(
         .expect("already trimmed")
     };
 
-    let intervals = match isolate_square_free_roots(&square_free, policy) {
+    let intervals = match isolate_square_free_roots(&square_free, &config) {
         Some(intervals) => intervals,
         None => {
             return root_isolation_report(
@@ -279,6 +374,82 @@ pub fn isolate_univariate_polynomial_expr(
         intervals,
         None,
     )
+}
+
+/// Replay exact rational root witnesses produced by isolation.
+///
+/// Sturm isolation usually returns intervals, not concrete algebraic numbers.
+/// When subdivision lands on a rational root exactly, this helper binds that
+/// witness into a cloned candidate context and replays the full prepared
+/// problem. Non-rational intervals are reported as explicit non-witnesses
+/// rather than approximated. This follows the Collins/Loos isolation model and
+/// Yap's rule that constructed algebraic evidence still needs exact replay
+/// before becoming a solver decision.
+pub fn certify_isolated_rational_root_witnesses(
+    prepared: &PreparedProblem<'_>,
+    base_context: &EvaluationContext,
+    reports: &[UnivariateRootIsolationReport],
+) -> Vec<AlgebraicRootCandidateReport> {
+    certify_isolated_rational_root_witnesses_with_config(
+        prepared,
+        base_context,
+        reports,
+        CandidateCertificationConfig::default(),
+    )
+}
+
+/// Replay exact rational root witnesses with a candidate-certification policy.
+pub fn certify_isolated_rational_root_witnesses_with_config(
+    prepared: &PreparedProblem<'_>,
+    base_context: &EvaluationContext,
+    reports: &[UnivariateRootIsolationReport],
+    certification_config: CandidateCertificationConfig,
+) -> Vec<AlgebraicRootCandidateReport> {
+    let mut candidates = Vec::new();
+    for report in reports {
+        for (interval_index, interval) in report.intervals.iter().enumerate() {
+            let Some(root) = interval.exact_root.clone() else {
+                candidates.push(AlgebraicRootCandidateReport {
+                    constraint_index: report.constraint_index,
+                    symbol: report.symbol,
+                    interval_index,
+                    exact_root: None,
+                    certification: None,
+                    status: AlgebraicRootCandidateStatus::NoExactRationalWitness,
+                });
+                continue;
+            };
+            let Some(symbol) = report.symbol else {
+                candidates.push(AlgebraicRootCandidateReport {
+                    constraint_index: report.constraint_index,
+                    symbol: None,
+                    interval_index,
+                    exact_root: Some(root),
+                    certification: None,
+                    status: AlgebraicRootCandidateStatus::NoExactRationalWitness,
+                });
+                continue;
+            };
+            let mut candidate = base_context.clone();
+            candidate.bind(symbol, root.clone());
+            let certification =
+                certify_candidate_with_config(prepared, &candidate, certification_config);
+            let status = if certification.all_satisfied() {
+                AlgebraicRootCandidateStatus::ReplayCertified
+            } else {
+                AlgebraicRootCandidateStatus::ReplayRejected
+            };
+            candidates.push(AlgebraicRootCandidateReport {
+                constraint_index: report.constraint_index,
+                symbol: Some(symbol),
+                interval_index,
+                exact_root: Some(root),
+                certification: Some(certification),
+                status,
+            });
+        }
+    }
+    candidates
 }
 
 #[derive(Clone, Debug)]
@@ -403,15 +574,24 @@ fn constant_value(expression: &Expr) -> Option<Real> {
 
 fn isolate_square_free_roots(
     polynomial: &[Real],
-    policy: PredicatePolicy,
+    config: &RootIsolationConfig,
 ) -> Option<Vec<IsolatedRootInterval>> {
+    let policy = config.policy;
     let sturm = sturm_sequence(polynomial, policy)?;
     let bound = cauchy_bound(polynomial, policy)?;
     let lower = -bound.clone();
     let upper = bound;
     let root_count = sturm_count(&sturm, &lower, &upper, policy)?;
     let mut intervals = Vec::new();
-    isolate_interval(&sturm, &lower, &upper, root_count, policy, &mut intervals)?;
+    isolate_interval(
+        &sturm,
+        &lower,
+        &upper,
+        root_count,
+        config,
+        0,
+        &mut intervals,
+    )?;
     Some(intervals)
 }
 
@@ -420,13 +600,49 @@ fn isolate_interval(
     lower: &Real,
     upper: &Real,
     root_count: usize,
-    policy: PredicatePolicy,
+    config: &RootIsolationConfig,
+    refinement_step: usize,
     intervals: &mut Vec<IsolatedRootInterval>,
 ) -> Option<()> {
+    let policy = config.policy;
     if root_count == 0 {
         return Some(());
     }
     if root_count == 1 {
+        if should_refine_one_root_interval(lower, upper, config, refinement_step)? {
+            let midpoint = ((lower.clone() + upper.clone()) / Real::from(2)).ok()?;
+            let first = &sturm[0];
+            if sign_at(first, &midpoint, policy)? == Ordering::Equal {
+                intervals.push(IsolatedRootInterval {
+                    lower: midpoint.clone(),
+                    upper: midpoint.clone(),
+                    exact_root: Some(midpoint),
+                    distinct_root_count: 1,
+                });
+                return Some(());
+            }
+            let left_count = sturm_count(sturm, lower, &midpoint, policy)?;
+            let right_count = root_count.checked_sub(left_count)?;
+            isolate_interval(
+                sturm,
+                lower,
+                &midpoint,
+                left_count,
+                config,
+                refinement_step + 1,
+                intervals,
+            )?;
+            isolate_interval(
+                sturm,
+                &midpoint,
+                upper,
+                right_count,
+                config,
+                refinement_step + 1,
+                intervals,
+            )?;
+            return Some(());
+        }
         intervals.push(IsolatedRootInterval {
             lower: lower.clone(),
             upper: upper.clone(),
@@ -461,15 +677,34 @@ fn isolate_interval(
                 return None;
             }
         }
-        isolate_interval(sturm, lower, &midpoint, left_count, policy, intervals)?;
-        isolate_interval(sturm, &midpoint, upper, right_count, policy, intervals)?;
+        isolate_interval(sturm, lower, &midpoint, left_count, config, 0, intervals)?;
+        isolate_interval(sturm, &midpoint, upper, right_count, config, 0, intervals)?;
         return Some(());
     }
 
     let left_count = sturm_count(sturm, lower, &midpoint, policy)?;
     let right_count = root_count.checked_sub(left_count)?;
-    isolate_interval(sturm, lower, &midpoint, left_count, policy, intervals)?;
-    isolate_interval(sturm, &midpoint, upper, right_count, policy, intervals)
+    isolate_interval(sturm, lower, &midpoint, left_count, config, 0, intervals)?;
+    isolate_interval(sturm, &midpoint, upper, right_count, config, 0, intervals)
+}
+
+fn should_refine_one_root_interval(
+    lower: &Real,
+    upper: &Real,
+    config: &RootIsolationConfig,
+    refinement_step: usize,
+) -> Option<bool> {
+    if refinement_step >= config.max_refinement_steps {
+        return Some(false);
+    }
+    let Some(max_width) = &config.max_interval_width else {
+        return Some(false);
+    };
+    let width = upper.clone() - lower.clone();
+    match compare_reals_with_policy(&width, max_width, config.policy).value()? {
+        Ordering::Greater => Some(true),
+        Ordering::Equal | Ordering::Less => Some(false),
+    }
 }
 
 fn sturm_sequence(polynomial: &[Real], policy: PredicatePolicy) -> Option<Vec<Vec<Real>>> {
@@ -669,6 +904,7 @@ fn root_isolation_report(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::eval::context_from_problem;
     use crate::model::Constraint;
 
     fn real(value: i64) -> Real {
@@ -736,5 +972,48 @@ mod tests {
             RootIsolationStatus::UnsupportedCoefficient
         );
         assert!(reports[0].message.is_some());
+    }
+
+    #[test]
+    fn bounded_refinement_and_rational_witness_replay_are_explicit() {
+        let x = Expr::symbol(SymbolId(0), "x");
+        let mut problem = Problem::default();
+        problem.add_variable("x", real(0));
+        problem.add_constraint(Constraint::equality(
+            "root minus one or one",
+            x.clone().powi(2) - Expr::int(1),
+        ));
+        problem.add_constraint(Constraint::equality("select root one", x - Expr::int(1)));
+        let prepared = PreparedProblem::new(&problem);
+        let reports = isolate_univariate_polynomial_roots_with_config(
+            &prepared,
+            RootIsolationConfig {
+                policy: PredicatePolicy::default(),
+                max_interval_width: Some(Real::one()),
+                max_refinement_steps: 8,
+            },
+        );
+
+        assert_eq!(reports[0].intervals.len(), 2);
+        assert!(
+            reports[0]
+                .intervals
+                .iter()
+                .any(|interval| interval.exact_root == Some(real(1)))
+        );
+        let candidates = certify_isolated_rational_root_witnesses(
+            &prepared,
+            &context_from_problem(&problem),
+            &reports,
+        );
+
+        assert!(candidates.iter().any(|candidate| {
+            candidate.exact_root == Some(real(1))
+                && candidate.status == AlgebraicRootCandidateStatus::ReplayCertified
+        }));
+        assert!(candidates.iter().any(|candidate| {
+            candidate.exact_root == Some(real(-1))
+                && candidate.status == AlgebraicRootCandidateStatus::ReplayRejected
+        }));
     }
 }
