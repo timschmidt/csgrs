@@ -2373,9 +2373,14 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                         &role_result,
                         &containment_facts,
                     );
+                let laminar_materialized =
+                    BezierBooleanMaterializedRegionReport2::from_result_laminar_containment_facts(
+                        &role_result,
+                        &containment_facts,
+                    );
                 format!(
-                    "{:?}{:?}{:?}{:?}",
-                    containment_result, role_result, audit, materialized
+                    "{:?}{:?}{:?}{:?}{:?}",
+                    containment_result, role_result, audit, materialized, laminar_materialized
                 )
             }
             other => format!("{other:?}"),

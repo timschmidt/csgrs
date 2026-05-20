@@ -9922,6 +9922,189 @@ impl BezierBooleanMaterializedRegionReport2 {
         }
     }
 
+    /// Materializes a region carrier from a full laminar containment certificate.
+    ///
+    /// Unlike [`Self::from_result_containment_facts`], this constructor accepts
+    /// ancestor containment facts for nested islands. Each hole is attached to
+    /// its nearest certified material ancestor, so an outer material loop and
+    /// an inner island material loop may both contain the same deeper hole
+    /// without being treated as ambiguous. The containment graph is still
+    /// validated for stale indices, self-containment, duplicate facts, directed
+    /// cycles, and non-laminar shared containers before it can affect
+    /// materialization. This follows Yap (1997): containment is certified
+    /// combinatorial evidence consumed by construction. The nearest-ancestor
+    /// fill attachment is the explicit nesting/fill phase separated from
+    /// boundary construction in Vatti (1992), Greiner-Hormann (1998), and
+    /// Martinez-Rueda-Feito (2009).
+    pub fn from_result_laminar_containment_facts(
+        result: &BezierBooleanResultReport2,
+        containment_facts: &[BezierBooleanLoopContainmentFact2],
+    ) -> Self {
+        let audit = BezierBooleanMaterializationAuditReport2::from_result(result);
+        match audit.status {
+            BezierBooleanMaterializationAuditStatus::Empty => {
+                return Self::empty_like(
+                    BezierBooleanMaterializedRegionStatus::Empty,
+                    result,
+                    &audit,
+                    containment_facts.len(),
+                    0,
+                );
+            }
+            BezierBooleanMaterializationAuditStatus::NoInteriorSplits => {
+                return Self::empty_like(
+                    BezierBooleanMaterializedRegionStatus::NoInteriorSplits,
+                    result,
+                    &audit,
+                    containment_facts.len(),
+                    0,
+                );
+            }
+            BezierBooleanMaterializationAuditStatus::Ready => {}
+            BezierBooleanMaterializationAuditStatus::ResultBlocked
+            | BezierBooleanMaterializationAuditStatus::CountMismatch
+            | BezierBooleanMaterializationAuditStatus::RoleIndexMismatch
+            | BezierBooleanMaterializationAuditStatus::LoopRoleMismatch
+            | BezierBooleanMaterializationAuditStatus::FragmentRangeMismatch => {
+                return Self::empty_like(
+                    BezierBooleanMaterializedRegionStatus::AuditBlocked,
+                    result,
+                    &audit,
+                    containment_facts.len(),
+                    audit.blocker_count.max(1),
+                );
+            }
+        }
+
+        let loop_count = result.assigned_loops.len();
+        let mut stale_containment_count = 0;
+        let mut seen_pairs = HashSet::new();
+        let mut contains = vec![vec![false; loop_count]; loop_count];
+        for fact in containment_facts {
+            if fact.container_loop_index == fact.contained_loop_index
+                || fact.container_loop_index >= loop_count
+                || fact.contained_loop_index >= loop_count
+                || !seen_pairs.insert((fact.container_loop_index, fact.contained_loop_index))
+            {
+                stale_containment_count += 1;
+                continue;
+            }
+            contains[fact.container_loop_index][fact.contained_loop_index] = true;
+        }
+
+        for pivot in 0..loop_count {
+            for container in 0..loop_count {
+                if contains[container][pivot] {
+                    for contained in 0..loop_count {
+                        if contains[pivot][contained] {
+                            contains[container][contained] = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        for index in 0..loop_count {
+            if contains[index][index] {
+                stale_containment_count += 1;
+            }
+        }
+        for contained_loop_index in 0..loop_count {
+            let containers = (0..loop_count)
+                .filter(|container_loop_index| {
+                    contains[*container_loop_index][contained_loop_index]
+                })
+                .collect::<Vec<_>>();
+            for first_index in 0..containers.len() {
+                for second_index in (first_index + 1)..containers.len() {
+                    let first = containers[first_index];
+                    let second = containers[second_index];
+                    if !contains[first][second] && !contains[second][first] {
+                        stale_containment_count += 1;
+                    }
+                }
+            }
+        }
+
+        let mut material_position_by_loop = vec![None; loop_count];
+        let mut components = Vec::with_capacity(result.material_loop_indices.len());
+        for material_loop_index in result.material_loop_indices.iter().copied() {
+            material_position_by_loop[material_loop_index] = Some(components.len());
+            components.push(BezierBooleanMaterializedComponent2 {
+                material_loop_index,
+                hole_loop_indices: Vec::new(),
+            });
+        }
+
+        let mut missing_hole_containment_count = 0;
+        let mut ambiguous_hole_containment_count = 0;
+        if stale_containment_count == 0 {
+            for hole_loop_index in result.hole_loop_indices.iter().copied() {
+                let material_ancestors = result
+                    .material_loop_indices
+                    .iter()
+                    .copied()
+                    .filter(|material_loop_index| contains[*material_loop_index][hole_loop_index])
+                    .collect::<Vec<_>>();
+                if material_ancestors.is_empty() {
+                    missing_hole_containment_count += 1;
+                    continue;
+                }
+
+                let nearest = material_ancestors
+                    .iter()
+                    .copied()
+                    .filter(|candidate| {
+                        !material_ancestors
+                            .iter()
+                            .any(|other| candidate != other && contains[*candidate][*other])
+                    })
+                    .collect::<Vec<_>>();
+                if nearest.len() != 1 {
+                    ambiguous_hole_containment_count += 1;
+                    continue;
+                }
+
+                if let Some(component_index) = material_position_by_loop[nearest[0]] {
+                    components[component_index]
+                        .hole_loop_indices
+                        .push(hole_loop_index);
+                } else {
+                    stale_containment_count += 1;
+                }
+            }
+        }
+
+        let blocker_count = missing_hole_containment_count
+            + ambiguous_hole_containment_count
+            + stale_containment_count;
+        let status = if stale_containment_count > 0 {
+            BezierBooleanMaterializedRegionStatus::StaleContainmentFact
+        } else if ambiguous_hole_containment_count > 0 {
+            BezierBooleanMaterializedRegionStatus::AmbiguousHoleContainment
+        } else if missing_hole_containment_count > 0 {
+            BezierBooleanMaterializedRegionStatus::MissingHoleContainment
+        } else {
+            BezierBooleanMaterializedRegionStatus::Ready
+        };
+
+        Self {
+            status,
+            audit_status: audit.status,
+            operation: result.operation,
+            directed_fragments: result.directed_fragments.clone(),
+            assigned_loops: result.assigned_loops.clone(),
+            component_count: components.len(),
+            components,
+            supplied_containment_count: containment_facts.len(),
+            missing_hole_containment_count,
+            ambiguous_hole_containment_count,
+            stale_containment_count,
+            role_incompatible_containment_count: 0,
+            blocker_count,
+        }
+    }
+
     fn empty_like(
         status: BezierBooleanMaterializedRegionStatus,
         result: &BezierBooleanResultReport2,
