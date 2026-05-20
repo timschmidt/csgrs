@@ -22,7 +22,7 @@ use crate::{
     QuadraticBezier2, RationalQuadraticBezier2, UncertaintyReason,
 };
 use hyperreal::Real;
-use std::cmp::Ordering;
+use std::{cmp::Ordering, collections::HashSet};
 
 /// Boolean-readiness state of a Bezier curve/curve relation.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -1552,6 +1552,78 @@ pub struct BezierBooleanMaterializationAuditReport2 {
     /// Number of assigned-loop fragment ranges that do not fit the directed payload.
     pub fragment_range_mismatch_count: usize,
     /// Number of blocking preconditions retained by this audit.
+    pub blocker_count: usize,
+}
+
+/// Materialized higher-order Bezier/conic region status.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum BezierBooleanMaterializedRegionStatus {
+    /// No fragment or overlap work was supplied.
+    Empty,
+    /// The arrangement is a certified endpoint-only no-op.
+    NoInteriorSplits,
+    /// Material loops and their certified hole children are grouped.
+    Ready,
+    /// The accepted-result audit blocked materialization.
+    AuditBlocked,
+    /// At least one hole loop lacks a certified material container.
+    MissingHoleContainment,
+    /// At least one hole loop has more than one certified material container.
+    AmbiguousHoleContainment,
+    /// A containment fact is duplicate, self-containing, or names a missing loop.
+    StaleContainmentFact,
+    /// A containment fact does not connect a material loop to a hole loop.
+    RoleIncompatibleContainment,
+}
+
+/// One material loop plus the hole loops certified to belong to it.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BezierBooleanMaterializedComponent2 {
+    /// Index of the material loop in [`BezierBooleanResultReport2::assigned_loops`].
+    pub material_loop_index: usize,
+    /// Hole-loop indices in [`BezierBooleanResultReport2::assigned_loops`].
+    pub hole_loop_indices: Vec<usize>,
+}
+
+/// Report-bearing higher-order Bezier/conic region materialization.
+///
+/// This is a topology carrier for polynomial Bezier and rational conic boolean
+/// output, not a conversion to [`Region2`](crate::Region2). It first audits the
+/// accepted result with [`BezierBooleanMaterializationAuditReport2`], then
+/// consumes explicit containment facts to attach each certified hole loop to
+/// exactly one certified material loop. It does not infer containment from
+/// orientation, winding, bounding boxes, or sample points. That is the
+/// object-level exactness boundary required by Yap, "Towards Exact Geometric
+/// Computation" (1997). The material/hole attachment stage mirrors the
+/// post-boundary fill interpretation used by Vatti (1992), Greiner-Hormann
+/// (1998), and Martinez-Rueda-Feito (2009).
+#[derive(Clone, Debug, PartialEq)]
+pub struct BezierBooleanMaterializedRegionReport2 {
+    /// Coarse materialized-region status.
+    pub status: BezierBooleanMaterializedRegionStatus,
+    /// Audit status used before containment attachment.
+    pub audit_status: BezierBooleanMaterializationAuditStatus,
+    /// Requested boolean operation.
+    pub operation: BooleanOp,
+    /// Directed endpoint payloads retained from the accepted result.
+    pub directed_fragments: Vec<BezierBooleanDirectedLoopFragment2>,
+    /// Role-assigned output loops retained from the accepted result.
+    pub assigned_loops: Vec<BezierBooleanAssignedOutputLoop2>,
+    /// Material components with certified child holes.
+    pub components: Vec<BezierBooleanMaterializedComponent2>,
+    /// Number of material components emitted.
+    pub component_count: usize,
+    /// Number of containment facts supplied.
+    pub supplied_containment_count: usize,
+    /// Number of hole loops not attached to a material loop.
+    pub missing_hole_containment_count: usize,
+    /// Number of hole loops attached to more than one material loop.
+    pub ambiguous_hole_containment_count: usize,
+    /// Number of duplicate, self-containing, or out-of-range containment facts.
+    pub stale_containment_count: usize,
+    /// Number of containment facts whose endpoint roles are incompatible.
+    pub role_incompatible_containment_count: usize,
+    /// Number of blocking preconditions retained by this report.
     pub blocker_count: usize,
 }
 
@@ -9708,6 +9780,186 @@ impl BezierBooleanMaterializationAuditReport2 {
                 | BezierBooleanMaterializationAuditStatus::RoleIndexMismatch
                 | BezierBooleanMaterializationAuditStatus::LoopRoleMismatch
                 | BezierBooleanMaterializationAuditStatus::FragmentRangeMismatch
+        )
+    }
+}
+
+impl BezierBooleanMaterializedRegionReport2 {
+    /// Materializes a higher-order region carrier from a result and containment facts.
+    ///
+    /// A ready result is not enough to attach holes: each hole must have a
+    /// certified material container. This constructor validates that handoff
+    /// without running a geometric locator. Duplicate, self-containing,
+    /// out-of-range, material-to-material, hole-to-hole, and hole-containing-
+    /// material facts remain blockers. Following Yap (1997), containment is a
+    /// certified predicate fact consumed by construction, not a tolerance
+    /// fallback. The staged boundary/containment/fill decomposition follows
+    /// Vatti (1992), Greiner-Hormann (1998), and Martinez-Rueda-Feito (2009).
+    pub fn from_result_containment_facts(
+        result: &BezierBooleanResultReport2,
+        containment_facts: &[BezierBooleanLoopContainmentFact2],
+    ) -> Self {
+        let audit = BezierBooleanMaterializationAuditReport2::from_result(result);
+        match audit.status {
+            BezierBooleanMaterializationAuditStatus::Empty => {
+                return Self::empty_like(
+                    BezierBooleanMaterializedRegionStatus::Empty,
+                    result,
+                    &audit,
+                    containment_facts.len(),
+                    0,
+                );
+            }
+            BezierBooleanMaterializationAuditStatus::NoInteriorSplits => {
+                return Self::empty_like(
+                    BezierBooleanMaterializedRegionStatus::NoInteriorSplits,
+                    result,
+                    &audit,
+                    containment_facts.len(),
+                    0,
+                );
+            }
+            BezierBooleanMaterializationAuditStatus::Ready => {}
+            BezierBooleanMaterializationAuditStatus::ResultBlocked
+            | BezierBooleanMaterializationAuditStatus::CountMismatch
+            | BezierBooleanMaterializationAuditStatus::RoleIndexMismatch
+            | BezierBooleanMaterializationAuditStatus::LoopRoleMismatch
+            | BezierBooleanMaterializationAuditStatus::FragmentRangeMismatch => {
+                return Self::empty_like(
+                    BezierBooleanMaterializedRegionStatus::AuditBlocked,
+                    result,
+                    &audit,
+                    containment_facts.len(),
+                    audit.blocker_count.max(1),
+                );
+            }
+        }
+
+        let mut material_position_by_loop = vec![None; result.assigned_loops.len()];
+        let mut components = Vec::with_capacity(result.material_loop_indices.len());
+        for material_loop_index in result.material_loop_indices.iter().copied() {
+            material_position_by_loop[material_loop_index] = Some(components.len());
+            components.push(BezierBooleanMaterializedComponent2 {
+                material_loop_index,
+                hole_loop_indices: Vec::new(),
+            });
+        }
+
+        let mut hole_assignment_count = vec![0usize; result.assigned_loops.len()];
+        let mut seen_pairs = HashSet::new();
+        let mut stale_containment_count = 0;
+        let mut role_incompatible_containment_count = 0;
+        for fact in containment_facts {
+            let pair = (fact.container_loop_index, fact.contained_loop_index);
+            if fact.container_loop_index == fact.contained_loop_index
+                || fact.container_loop_index >= result.assigned_loops.len()
+                || fact.contained_loop_index >= result.assigned_loops.len()
+                || !seen_pairs.insert(pair)
+            {
+                stale_containment_count += 1;
+                continue;
+            }
+
+            let container = &result.assigned_loops[fact.container_loop_index];
+            let contained = &result.assigned_loops[fact.contained_loop_index];
+            if container.role != BezierBooleanOutputLoopRole::Material
+                || contained.role != BezierBooleanOutputLoopRole::Hole
+            {
+                role_incompatible_containment_count += 1;
+                continue;
+            }
+
+            if let Some(component_index) = material_position_by_loop[fact.container_loop_index] {
+                components[component_index]
+                    .hole_loop_indices
+                    .push(fact.contained_loop_index);
+                hole_assignment_count[fact.contained_loop_index] += 1;
+            } else {
+                role_incompatible_containment_count += 1;
+            }
+        }
+
+        let missing_hole_containment_count = result
+            .hole_loop_indices
+            .iter()
+            .filter(|index| hole_assignment_count[**index] == 0)
+            .count();
+        let ambiguous_hole_containment_count = result
+            .hole_loop_indices
+            .iter()
+            .filter(|index| hole_assignment_count[**index] > 1)
+            .count();
+        let blocker_count = missing_hole_containment_count
+            + ambiguous_hole_containment_count
+            + stale_containment_count
+            + role_incompatible_containment_count;
+        let status = if stale_containment_count > 0 {
+            BezierBooleanMaterializedRegionStatus::StaleContainmentFact
+        } else if role_incompatible_containment_count > 0 {
+            BezierBooleanMaterializedRegionStatus::RoleIncompatibleContainment
+        } else if ambiguous_hole_containment_count > 0 {
+            BezierBooleanMaterializedRegionStatus::AmbiguousHoleContainment
+        } else if missing_hole_containment_count > 0 {
+            BezierBooleanMaterializedRegionStatus::MissingHoleContainment
+        } else {
+            BezierBooleanMaterializedRegionStatus::Ready
+        };
+
+        Self {
+            status,
+            audit_status: audit.status,
+            operation: result.operation,
+            directed_fragments: result.directed_fragments.clone(),
+            assigned_loops: result.assigned_loops.clone(),
+            component_count: components.len(),
+            components,
+            supplied_containment_count: containment_facts.len(),
+            missing_hole_containment_count,
+            ambiguous_hole_containment_count,
+            stale_containment_count,
+            role_incompatible_containment_count,
+            blocker_count,
+        }
+    }
+
+    fn empty_like(
+        status: BezierBooleanMaterializedRegionStatus,
+        result: &BezierBooleanResultReport2,
+        audit: &BezierBooleanMaterializationAuditReport2,
+        supplied_containment_count: usize,
+        blocker_count: usize,
+    ) -> Self {
+        Self {
+            status,
+            audit_status: audit.status,
+            operation: result.operation,
+            directed_fragments: Vec::new(),
+            assigned_loops: Vec::new(),
+            components: Vec::new(),
+            component_count: 0,
+            supplied_containment_count,
+            missing_hole_containment_count: 0,
+            ambiguous_hole_containment_count: 0,
+            stale_containment_count: 0,
+            role_incompatible_containment_count: 0,
+            blocker_count,
+        }
+    }
+
+    /// Returns true when material loops and certified holes form a region carrier.
+    pub fn is_ready(&self) -> bool {
+        self.status == BezierBooleanMaterializedRegionStatus::Ready
+    }
+
+    /// Returns true when audit or containment facts block materialization.
+    pub fn has_blockers(&self) -> bool {
+        matches!(
+            self.status,
+            BezierBooleanMaterializedRegionStatus::AuditBlocked
+                | BezierBooleanMaterializedRegionStatus::MissingHoleContainment
+                | BezierBooleanMaterializedRegionStatus::AmbiguousHoleContainment
+                | BezierBooleanMaterializedRegionStatus::StaleContainmentFact
+                | BezierBooleanMaterializedRegionStatus::RoleIncompatibleContainment
         )
     }
 }
