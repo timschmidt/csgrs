@@ -391,6 +391,72 @@ pub struct BezierBooleanUniformOwnershipFactReport2 {
     pub blocker_count: usize,
 }
 
+/// Status for expanding per-operand locator vectors into keyed ownership facts.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum BezierBooleanOperandOwnershipLocationStatus {
+    /// No fragment or overlap work was supplied.
+    Empty,
+    /// The arrangement is a certified endpoint-only no-op.
+    NoInteriorSplits,
+    /// Every scheduled fragment received one non-boundary location.
+    Ready,
+    /// Traversal scheduling is blocked.
+    ScheduleBlocked,
+    /// The first-operand location vector is shorter than the first fragment list.
+    MissingFirstLocations,
+    /// The second-operand location vector is shorter than the second fragment list.
+    MissingSecondLocations,
+    /// The first-operand location vector is longer than the first fragment list.
+    ExtraFirstLocations,
+    /// The second-operand location vector is longer than the second fragment list.
+    ExtraSecondLocations,
+    /// At least one supplied location lies on the opposite boundary and needs overlap policy.
+    BoundaryNeedsResolution,
+}
+
+/// Expanded ownership facts from per-operand exact locator outputs.
+///
+/// A point/loop locator for a non-uniform Bezier/conic arrangement naturally
+/// produces one location for each first-operand fragment in the second operand
+/// and one location for each second-operand fragment in the first operand. This
+/// report validates those vector lengths against the traversal schedule and
+/// expands them into keyed [`BezierBooleanOwnershipFact2`] values in schedule
+/// order. It is intentionally only a certificate adapter: it does not choose a
+/// sample point, perturb boundary cases, or repair missing values. That is the
+/// predicate/construction separation required by Yap, "Towards Exact Geometric
+/// Computation" (1997). The explicit fill-state handoff matches the staged
+/// clipping models of Vatti (1992), Greiner-Hormann (1998), and
+/// Martinez-Rueda-Feito (2009).
+#[derive(Clone, Debug, PartialEq)]
+pub struct BezierBooleanOperandOwnershipLocationReport2 {
+    /// Coarse operand-location expansion status.
+    pub status: BezierBooleanOperandOwnershipLocationStatus,
+    /// Traversal-schedule status used to derive this report.
+    pub schedule_status: BezierBooleanTraversalScheduleStatus,
+    /// Number of scheduled first-operand fragments.
+    pub first_fragment_count: usize,
+    /// Number of scheduled second-operand fragments.
+    pub second_fragment_count: usize,
+    /// Number of first-operand locations supplied by the caller.
+    pub supplied_first_location_count: usize,
+    /// Number of second-operand locations supplied by the caller.
+    pub supplied_second_location_count: usize,
+    /// Expanded keyed ownership facts in schedule order.
+    pub facts: Vec<BezierBooleanOwnershipFact2>,
+    /// Number of missing first-operand locations.
+    pub missing_first_location_count: usize,
+    /// Number of missing second-operand locations.
+    pub missing_second_location_count: usize,
+    /// Number of extra first-operand locations.
+    pub extra_first_location_count: usize,
+    /// Number of extra second-operand locations.
+    pub extra_second_location_count: usize,
+    /// Number of expanded facts whose location is boundary.
+    pub boundary_fact_count: usize,
+    /// Number of blocking preconditions retained by this report.
+    pub blocker_count: usize,
+}
+
 /// Certification status for opposite-operand ownership facts.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum BezierBooleanOwnershipFactStatus {
@@ -2691,6 +2757,27 @@ impl BezierBooleanTraversalScheduleReport2 {
 }
 
 impl BezierBooleanOwnershipFactReport2 {
+    /// Expands per-fragment operand locator vectors and validates the facts.
+    ///
+    /// This is the non-uniform counterpart to
+    /// [`Self::from_uniform_operand_locations`]. A future exact locator can
+    /// classify each first-operand fragment against the second operand and
+    /// each second-operand fragment against the first operand, then hand those
+    /// vectors here without constructing keyed facts manually. Count and
+    /// boundary blockers remain explicit before boolean selection.
+    pub fn from_operand_locations(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        first_fragments_in_second: &[BezierBooleanFragmentOwnershipLocation],
+        second_fragments_in_first: &[BezierBooleanFragmentOwnershipLocation],
+    ) -> Self {
+        let locations = BezierBooleanOperandOwnershipLocationReport2::from_schedule_locations(
+            schedule,
+            first_fragments_in_second,
+            second_fragments_in_first,
+        );
+        Self::from_schedule_facts(schedule, &locations.facts)
+    }
+
     /// Expands uniform operand-level locator results and validates the facts.
     ///
     /// This is a convenience constructor over
@@ -2896,6 +2983,245 @@ impl BezierBooleanOwnershipFactReport2 {
                 | BezierBooleanOwnershipFactStatus::ExtraOwnershipFacts
                 | BezierBooleanOwnershipFactStatus::StepMismatch
                 | BezierBooleanOwnershipFactStatus::BoundaryNeedsResolution
+        )
+    }
+}
+
+impl BezierBooleanOperandOwnershipLocationReport2 {
+    /// Expands exact per-operand locator outputs into keyed per-fragment facts.
+    pub fn from_schedule_locations(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        first_fragments_in_second: &[BezierBooleanFragmentOwnershipLocation],
+        second_fragments_in_first: &[BezierBooleanFragmentOwnershipLocation],
+    ) -> Self {
+        match schedule.status {
+            BezierBooleanTraversalScheduleStatus::Empty => {
+                return Self::empty_like(
+                    BezierBooleanOperandOwnershipLocationStatus::Empty,
+                    schedule,
+                    first_fragments_in_second.len(),
+                    second_fragments_in_first.len(),
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                );
+            }
+            BezierBooleanTraversalScheduleStatus::NoInteriorSplits => {
+                return Self::empty_like(
+                    BezierBooleanOperandOwnershipLocationStatus::NoInteriorSplits,
+                    schedule,
+                    first_fragments_in_second.len(),
+                    second_fragments_in_first.len(),
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                );
+            }
+            BezierBooleanTraversalScheduleStatus::PreconditionBlocked => {
+                return Self::empty_like(
+                    BezierBooleanOperandOwnershipLocationStatus::ScheduleBlocked,
+                    schedule,
+                    first_fragments_in_second.len(),
+                    second_fragments_in_first.len(),
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    schedule.blocker_count.max(1),
+                );
+            }
+            BezierBooleanTraversalScheduleStatus::Ready => {}
+        }
+
+        if first_fragments_in_second.len() < schedule.first_fragment_count {
+            let missing = schedule.first_fragment_count - first_fragments_in_second.len();
+            return Self::empty_like(
+                BezierBooleanOperandOwnershipLocationStatus::MissingFirstLocations,
+                schedule,
+                first_fragments_in_second.len(),
+                second_fragments_in_first.len(),
+                missing,
+                0,
+                0,
+                0,
+                0,
+                missing.max(1),
+            );
+        }
+        if second_fragments_in_first.len() < schedule.second_fragment_count {
+            let missing = schedule.second_fragment_count - second_fragments_in_first.len();
+            return Self::empty_like(
+                BezierBooleanOperandOwnershipLocationStatus::MissingSecondLocations,
+                schedule,
+                first_fragments_in_second.len(),
+                second_fragments_in_first.len(),
+                0,
+                missing,
+                0,
+                0,
+                0,
+                missing.max(1),
+            );
+        }
+        if first_fragments_in_second.len() > schedule.first_fragment_count {
+            let extra = first_fragments_in_second.len() - schedule.first_fragment_count;
+            return Self::empty_like(
+                BezierBooleanOperandOwnershipLocationStatus::ExtraFirstLocations,
+                schedule,
+                first_fragments_in_second.len(),
+                second_fragments_in_first.len(),
+                0,
+                0,
+                extra,
+                0,
+                0,
+                extra.max(1),
+            );
+        }
+        if second_fragments_in_first.len() > schedule.second_fragment_count {
+            let extra = second_fragments_in_first.len() - schedule.second_fragment_count;
+            return Self::empty_like(
+                BezierBooleanOperandOwnershipLocationStatus::ExtraSecondLocations,
+                schedule,
+                first_fragments_in_second.len(),
+                second_fragments_in_first.len(),
+                0,
+                0,
+                0,
+                extra,
+                0,
+                extra.max(1),
+            );
+        }
+
+        let mut facts = Vec::with_capacity(schedule.steps.len());
+        let mut boundary_fact_count = 0;
+        for step in &schedule.steps {
+            let opposite_location = match step.operand {
+                BezierBooleanTraversalOperand::First => {
+                    let Some(location) = first_fragments_in_second.get(step.fragment_index) else {
+                        return Self::empty_like(
+                            BezierBooleanOperandOwnershipLocationStatus::MissingFirstLocations,
+                            schedule,
+                            first_fragments_in_second.len(),
+                            second_fragments_in_first.len(),
+                            1,
+                            0,
+                            0,
+                            0,
+                            0,
+                            1,
+                        );
+                    };
+                    *location
+                }
+                BezierBooleanTraversalOperand::Second => {
+                    let Some(location) = second_fragments_in_first.get(step.fragment_index) else {
+                        return Self::empty_like(
+                            BezierBooleanOperandOwnershipLocationStatus::MissingSecondLocations,
+                            schedule,
+                            first_fragments_in_second.len(),
+                            second_fragments_in_first.len(),
+                            0,
+                            1,
+                            0,
+                            0,
+                            0,
+                            1,
+                        );
+                    };
+                    *location
+                }
+            };
+            if opposite_location == BezierBooleanFragmentOwnershipLocation::Boundary {
+                boundary_fact_count += 1;
+            }
+            facts.push(BezierBooleanOwnershipFact2 {
+                step: step.clone(),
+                opposite_location,
+            });
+        }
+
+        Self {
+            status: if boundary_fact_count == 0 {
+                BezierBooleanOperandOwnershipLocationStatus::Ready
+            } else {
+                BezierBooleanOperandOwnershipLocationStatus::BoundaryNeedsResolution
+            },
+            schedule_status: schedule.status,
+            first_fragment_count: schedule.first_fragment_count,
+            second_fragment_count: schedule.second_fragment_count,
+            supplied_first_location_count: first_fragments_in_second.len(),
+            supplied_second_location_count: second_fragments_in_first.len(),
+            facts,
+            missing_first_location_count: 0,
+            missing_second_location_count: 0,
+            extra_first_location_count: 0,
+            extra_second_location_count: 0,
+            boundary_fact_count,
+            blocker_count: boundary_fact_count,
+        }
+    }
+
+    fn empty_like(
+        status: BezierBooleanOperandOwnershipLocationStatus,
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        supplied_first_location_count: usize,
+        supplied_second_location_count: usize,
+        missing_first_location_count: usize,
+        missing_second_location_count: usize,
+        extra_first_location_count: usize,
+        extra_second_location_count: usize,
+        boundary_fact_count: usize,
+        blocker_count: usize,
+    ) -> Self {
+        Self {
+            status,
+            schedule_status: schedule.status,
+            first_fragment_count: schedule.first_fragment_count,
+            second_fragment_count: schedule.second_fragment_count,
+            supplied_first_location_count,
+            supplied_second_location_count,
+            facts: Vec::new(),
+            missing_first_location_count,
+            missing_second_location_count,
+            extra_first_location_count,
+            extra_second_location_count,
+            boundary_fact_count,
+            blocker_count,
+        }
+    }
+
+    /// Applies ordinary keyed fact validation to the expanded facts.
+    pub fn validate(
+        &self,
+        schedule: &BezierBooleanTraversalScheduleReport2,
+    ) -> BezierBooleanOwnershipFactReport2 {
+        BezierBooleanOwnershipFactReport2::from_schedule_facts(schedule, &self.facts)
+    }
+
+    /// Returns true when all generated facts are present and non-boundary.
+    pub fn is_ready(&self) -> bool {
+        self.status == BezierBooleanOperandOwnershipLocationStatus::Ready
+    }
+
+    /// Returns true when schedule, counts, or boundary policy prevents fact use.
+    pub fn has_blockers(&self) -> bool {
+        matches!(
+            self.status,
+            BezierBooleanOperandOwnershipLocationStatus::ScheduleBlocked
+                | BezierBooleanOperandOwnershipLocationStatus::MissingFirstLocations
+                | BezierBooleanOperandOwnershipLocationStatus::MissingSecondLocations
+                | BezierBooleanOperandOwnershipLocationStatus::ExtraFirstLocations
+                | BezierBooleanOperandOwnershipLocationStatus::ExtraSecondLocations
+                | BezierBooleanOperandOwnershipLocationStatus::BoundaryNeedsResolution
         )
     }
 }
@@ -5779,6 +6105,124 @@ impl BezierBooleanResultReport2 {
         depth_facts: &[BezierBooleanLoopNestingDepthFact2],
     ) -> Self {
         Self::from_schedule_uniform_graph_fact_identity_depth_facts(
+            schedule,
+            operation,
+            first_fragments_in_second,
+            second_fragments_in_first,
+            &rational_quadratic_fragment_endpoints(&first.fragments),
+            &rational_quadratic_fragment_endpoints(&second.fragments),
+            graph_facts,
+            depth_facts,
+        )
+    }
+
+    /// Accepts a simple certified result from per-fragment locator outputs.
+    ///
+    /// This is the non-uniform exact-locator counterpart to
+    /// [`Self::from_schedule_uniform_graph_fact_identity_depth_facts`]. A
+    /// caller supplies one exact location per first fragment in the second
+    /// operand and one exact location per second fragment in the first operand,
+    /// plus graph and nesting-depth certificates. The locations are expanded
+    /// into keyed ownership facts before selection, so missing, extra, or
+    /// boundary locator outputs remain blockers rather than tolerance-derived
+    /// choices. This directly follows Yap, "Towards Exact Geometric
+    /// Computation" (1997). The separation of locator, traversal, and fill
+    /// stages follows Vatti (1992), Greiner-Hormann (1998), and
+    /// Martinez-Rueda-Feito (2009).
+    pub fn from_schedule_operand_locations_graph_fact_identity_depth_facts(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        first_fragments_in_second: &[BezierBooleanFragmentOwnershipLocation],
+        second_fragments_in_first: &[BezierBooleanFragmentOwnershipLocation],
+        first_endpoints: &[(Point2, Point2)],
+        second_endpoints: &[(Point2, Point2)],
+        graph_facts: &BezierBooleanLoopGraphFacts2,
+        depth_facts: &[BezierBooleanLoopNestingDepthFact2],
+    ) -> Self {
+        let facts = BezierBooleanOwnershipFactReport2::from_operand_locations(
+            schedule,
+            first_fragments_in_second,
+            second_fragments_in_first,
+        );
+        let ownership = facts.classify(schedule, operation);
+        let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
+        let assembly = BezierBooleanAssemblyReadinessReport2::from_fragment_counts(
+            &emission,
+            first_endpoints.len(),
+            second_endpoints.len(),
+        );
+        let plan =
+            BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(&assembly, &emission);
+        let graph = BezierBooleanLoopGraphFactReport2::from_plan_facts(&plan, graph_facts);
+        let traversal = graph.to_traversal_report(&plan);
+        let walk = BezierBooleanLoopGraphWalkReport2::from_identity_traversal(&traversal, &plan);
+        Self::from_graph_walk_depth_facts(
+            &walk,
+            &plan,
+            first_endpoints,
+            second_endpoints,
+            depth_facts,
+        )
+    }
+
+    /// Accepts a simple quadratic Bezier result from per-fragment locator outputs.
+    pub fn from_quadratic_schedule_operand_locations_graph_fact_identity_depth_facts(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        first_fragments_in_second: &[BezierBooleanFragmentOwnershipLocation],
+        second_fragments_in_first: &[BezierBooleanFragmentOwnershipLocation],
+        first: &BezierBooleanQuadraticFragmentReport2,
+        second: &BezierBooleanQuadraticFragmentReport2,
+        graph_facts: &BezierBooleanLoopGraphFacts2,
+        depth_facts: &[BezierBooleanLoopNestingDepthFact2],
+    ) -> Self {
+        Self::from_schedule_operand_locations_graph_fact_identity_depth_facts(
+            schedule,
+            operation,
+            first_fragments_in_second,
+            second_fragments_in_first,
+            &quadratic_fragment_endpoints(&first.fragments),
+            &quadratic_fragment_endpoints(&second.fragments),
+            graph_facts,
+            depth_facts,
+        )
+    }
+
+    /// Accepts a simple cubic Bezier result from per-fragment locator outputs.
+    pub fn from_cubic_schedule_operand_locations_graph_fact_identity_depth_facts(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        first_fragments_in_second: &[BezierBooleanFragmentOwnershipLocation],
+        second_fragments_in_first: &[BezierBooleanFragmentOwnershipLocation],
+        first: &BezierBooleanCubicFragmentReport2,
+        second: &BezierBooleanCubicFragmentReport2,
+        graph_facts: &BezierBooleanLoopGraphFacts2,
+        depth_facts: &[BezierBooleanLoopNestingDepthFact2],
+    ) -> Self {
+        Self::from_schedule_operand_locations_graph_fact_identity_depth_facts(
+            schedule,
+            operation,
+            first_fragments_in_second,
+            second_fragments_in_first,
+            &cubic_fragment_endpoints(&first.fragments),
+            &cubic_fragment_endpoints(&second.fragments),
+            graph_facts,
+            depth_facts,
+        )
+    }
+
+    /// Accepts a simple rational quadratic/conic result from per-fragment locator outputs.
+    pub fn from_rational_quadratic_schedule_operand_locations_graph_fact_identity_depth_facts(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        first_fragments_in_second: &[BezierBooleanFragmentOwnershipLocation],
+        second_fragments_in_first: &[BezierBooleanFragmentOwnershipLocation],
+        first: &BezierBooleanRationalQuadraticFragmentReport2,
+        second: &BezierBooleanRationalQuadraticFragmentReport2,
+        graph_facts: &BezierBooleanLoopGraphFacts2,
+        depth_facts: &[BezierBooleanLoopNestingDepthFact2],
+    ) -> Self {
+        Self::from_schedule_operand_locations_graph_fact_identity_depth_facts(
             schedule,
             operation,
             first_fragments_in_second,

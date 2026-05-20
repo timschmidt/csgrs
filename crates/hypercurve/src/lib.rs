@@ -77,6 +77,7 @@ pub use bezier_boolean::{
     BezierBooleanLoopNestingDepthFactReport2, BezierBooleanLoopNestingDepthFactStatus,
     BezierBooleanLoopNestingRoleReport2, BezierBooleanLoopNestingRoleStatus,
     BezierBooleanLoopRoleAssignmentReport2, BezierBooleanLoopRoleAssignmentStatus,
+    BezierBooleanOperandOwnershipLocationReport2, BezierBooleanOperandOwnershipLocationStatus,
     BezierBooleanOutputLoop2, BezierBooleanOutputLoopReport2, BezierBooleanOutputLoopRole,
     BezierBooleanOutputLoopStatus, BezierBooleanOverlapEvent2,
     BezierBooleanOverlapResolutionReport2, BezierBooleanOverlapResolutionStatus,
