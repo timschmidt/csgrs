@@ -5,9 +5,9 @@ use hyperlimit::Point3;
 use hypermesh::exact::{
     CoplanarArrangementOperation, ExactMesh, ExactPoint3, ExactReportValidationError,
     FaceRegionPlaneRelation, MeshFacePairClassification, PredicateUse, SourceProvenance, Triangle,
-    ValidationPolicy, arrange_coplanar_convex_surface_component_union,
-    arrange_coplanar_convex_surface_difference, arrange_coplanar_convex_surface_intersection,
-    arrange_coplanar_convex_surface_multi_difference,
+    ValidationPolicy, arrange_coplanar_convex_surface_component_holed_difference,
+    arrange_coplanar_convex_surface_component_union, arrange_coplanar_convex_surface_difference,
+    arrange_coplanar_convex_surface_intersection, arrange_coplanar_convex_surface_multi_difference,
     arrange_coplanar_convex_surface_multi_holed_difference,
     arrange_coplanar_convex_surface_multi_union, arrange_coplanar_convex_surface_union,
     arrange_single_triangle_coplanar_holed_difference, arrange_single_triangle_coplanar_union,
@@ -2559,6 +2559,86 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
             ValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
+        let component_left = ExactMesh::from_i64_triangles_with_policy(
+            &[
+                0, 0, 0, 2, 0, 0, 2, 2, 0, 0, 2, 0, //
+                4, 0, 0, 6, 0, 0, 6, 2, 0, 4, 2, 0,
+            ],
+            &[
+                0, 1, 2, 0, 2, 3, //
+                4, 5, 6, 4, 6, 7,
+            ],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let component_right = ExactMesh::from_i64_triangles_with_policy(
+            &[1, -1, 0, 3, -1, 0, 3, 3, 0, 1, 3, 0],
+            &[0, 1, 2, 0, 2, 3],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let multi_component_left = ExactMesh::from_i64_triangles_with_policy(
+            &[
+                0, 0, 0, 2, 0, 0, 2, 2, 0, 0, 2, 0, //
+                4, 0, 0, 6, 0, 0, 6, 2, 0, 4, 2, 0, //
+                8, 0, 0, 10, 0, 0, 10, 2, 0, 8, 2, 0,
+            ],
+            &[
+                0, 1, 2, 0, 2, 3, //
+                4, 5, 6, 4, 6, 7, //
+                8, 9, 10, 8, 10, 11,
+            ],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let multi_component_right = ExactMesh::from_i64_triangles_with_policy(
+            &[
+                1, -1, 0, 3, -1, 0, 3, 3, 0, 1, 3, 0, //
+                5, -1, 0, 7, -1, 0, 7, 3, 0, 5, 3, 0,
+            ],
+            &[
+                0, 1, 2, 0, 2, 3, //
+                4, 5, 6, 4, 6, 7,
+            ],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let component_holed_left = ExactMesh::from_i64_triangles_with_policy(
+            &[
+                0, 0, 0, 10, 0, 0, 10, 10, 0, 0, 10, 0, //
+                20, 0, 0, 22, 0, 0, 22, 2, 0, 20, 2, 0,
+            ],
+            &[
+                0, 1, 2, 0, 2, 3, //
+                4, 5, 6, 4, 6, 7,
+            ],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let component_holed_right = ExactMesh::from_i64_triangles_with_policy(
+            &[
+                1, 1, 0, 3, 1, 0, 3, 3, 0, 1, 3, 0, //
+                6, 6, 0, 8, 6, 0, 8, 8, 0, 6, 8, 0,
+            ],
+            &[0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let component_holed_cut_right = ExactMesh::from_i64_triangles_with_policy(
+            &[
+                1, 1, 0, 3, 1, 0, 3, 3, 0, 1, 3, 0, //
+                8, -1, 0, 11, -1, 0, 11, 11, 0, 8, 11, 0,
+            ],
+            &[0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let single_component_holed_left = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 0, 10, 0, 0, 10, 10, 0, 0, 10, 0],
+            &[0, 1, 2, 0, 2, 3],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
 
         c.bench_function(
             "exact_boolean_coplanar_convex_surface_multi_difference",
@@ -2585,6 +2665,111 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
                             ValidationPolicy::ALLOW_BOUNDARY,
                         )
                         .unwrap(),
+                        arrange_coplanar_convex_surface_multi_difference(
+                            &component_left,
+                            &component_right,
+                        )
+                        .map(|output| {
+                            output.validate_against_sources(&component_left, &component_right)
+                        }),
+                        hypermesh::exact::preflight_boolean_exact(
+                            &component_left,
+                            &component_right,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                        )
+                        .map(|report| report.validate()),
+                        hypermesh::exact::boolean_exact(
+                            &component_left,
+                            &component_right,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                            ValidationPolicy::ALLOW_BOUNDARY,
+                        )
+                        .unwrap(),
+                        arrange_coplanar_convex_surface_multi_difference(
+                            &multi_component_left,
+                            &multi_component_right,
+                        )
+                        .map(|output| {
+                            output.validate_against_sources(
+                                &multi_component_left,
+                                &multi_component_right,
+                            )
+                        }),
+                        hypermesh::exact::preflight_boolean_exact(
+                            &multi_component_left,
+                            &multi_component_right,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                        )
+                        .map(|report| report.validate()),
+                        hypermesh::exact::boolean_exact(
+                            &multi_component_left,
+                            &multi_component_right,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                            ValidationPolicy::ALLOW_BOUNDARY,
+                        )
+                        .unwrap(),
+                        arrange_coplanar_convex_surface_component_holed_difference(
+                            &component_holed_left,
+                            &component_holed_right,
+                        )
+                        .map(|output| {
+                            output.validate_against_sources(
+                                &component_holed_left,
+                                &component_holed_right,
+                            )
+                        }),
+                        hypermesh::exact::preflight_boolean_exact(
+                            &component_holed_left,
+                            &component_holed_right,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                        )
+                        .map(|report| report.validate()),
+                        hypermesh::exact::boolean_exact(
+                            &component_holed_left,
+                            &component_holed_right,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                            ValidationPolicy::ALLOW_BOUNDARY,
+                        )
+                        .unwrap(),
+                        arrange_coplanar_convex_surface_component_holed_difference(
+                            &component_holed_left,
+                            &component_holed_cut_right,
+                        )
+                        .map(|output| {
+                            output.validate_against_sources(
+                                &component_holed_left,
+                                &component_holed_cut_right,
+                            )
+                        }),
+                        hypermesh::exact::preflight_boolean_exact(
+                            &component_holed_left,
+                            &component_holed_cut_right,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                        )
+                        .map(|report| report.validate()),
+                        hypermesh::exact::boolean_exact(
+                            &component_holed_left,
+                            &component_holed_cut_right,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                            ValidationPolicy::ALLOW_BOUNDARY,
+                        )
+                        .unwrap(),
+                        arrange_coplanar_convex_surface_component_holed_difference(
+                            &single_component_holed_left,
+                            &component_holed_cut_right,
+                        )
+                        .map(|output| {
+                            output.validate_against_sources(
+                                &single_component_holed_left,
+                                &component_holed_cut_right,
+                            )
+                        }),
+                        hypermesh::exact::preflight_boolean_exact(
+                            &single_component_holed_left,
+                            &component_holed_cut_right,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                        )
+                        .map(|report| report.validate()),
                     )
                 })
             },
@@ -2908,6 +3093,24 @@ fn exact_boolean_coplanar_surface_intersection(c: &mut Criterion) {
             ValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
+        let component_left = ExactMesh::from_i64_triangles_with_policy(
+            &[
+                0, 0, 0, 4, 0, 0, 4, 4, 0, 0, 4, 0, //
+                8, 0, 0, 12, 0, 0, 12, 4, 0, 8, 4, 0,
+            ],
+            &[
+                0, 1, 2, 0, 2, 3, //
+                4, 5, 6, 4, 6, 7,
+            ],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let component_right = ExactMesh::from_i64_triangles_with_policy(
+            &[2, 1, 0, 10, 1, 0, 10, 3, 0, 2, 3, 0],
+            &[0, 1, 2, 0, 2, 3],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
 
         c.bench_function("exact_boolean_coplanar_surface_intersection", |b| {
             b.iter(|| {
@@ -2994,6 +3197,22 @@ fn exact_boolean_coplanar_surface_intersection(c: &mut Criterion) {
                     report.validate(),
                     winding.validate_against_sources(&split_left, &bridge_right),
                     winding.validate(),
+                    hypermesh::exact::arrange_coplanar_convex_surface_multi_intersection(
+                        &component_left,
+                        &component_right,
+                    )
+                    .map(|output| {
+                        output.validate_intersection_against_sources(
+                            &component_left,
+                            &component_right,
+                        )
+                    }),
+                    hypermesh::exact::preflight_boolean_exact(
+                        &component_left,
+                        &component_right,
+                        hypermesh::exact::ExactBooleanOperation::Intersection,
+                    )
+                    .map(|report| report.validate()),
                 )
             })
         });
@@ -3566,39 +3785,41 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
             },
         );
 
-        c.bench_function("exact_boolean_axis_aligned_box_face_touch_union", |b| {
-            b.iter(|| {
-                (
-                    hypermesh::exact::preflight_boolean_exact(
-                        &face_touch_left,
-                        &face_touch_right,
-                        hypermesh::exact::ExactBooleanOperation::Union,
+        c.bench_function(
+            "exact_boolean_axis_aligned_box_face_touch_union_difference",
+            |b| {
+                b.iter(|| {
+                    (
+                        hypermesh::exact::preflight_boolean_exact(
+                            &face_touch_left,
+                            &face_touch_right,
+                            hypermesh::exact::ExactBooleanOperation::Union,
+                        )
+                        .unwrap(),
+                        hypermesh::exact::boolean_exact(
+                            &face_touch_left,
+                            &face_touch_right,
+                            hypermesh::exact::ExactBooleanOperation::Union,
+                            ValidationPolicy::CLOSED,
+                        )
+                        .unwrap(),
+                        hypermesh::exact::preflight_boolean_exact(
+                            &face_touch_left,
+                            &face_touch_right,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                        )
+                        .unwrap(),
+                        hypermesh::exact::boolean_exact(
+                            &face_touch_left,
+                            &face_touch_right,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                            ValidationPolicy::CLOSED,
+                        )
+                        .unwrap(),
                     )
-                    .unwrap(),
-                    hypermesh::exact::boolean_exact(
-                        &face_touch_left,
-                        &face_touch_right,
-                        hypermesh::exact::ExactBooleanOperation::Union,
-                        ValidationPolicy::CLOSED,
-                    )
-                    .unwrap(),
-                    hypermesh::exact::preflight_boolean_exact(
-                        &face_touch_left,
-                        &face_touch_right,
-                        hypermesh::exact::ExactBooleanOperation::Difference,
-                    )
-                    .unwrap(),
-                    hypermesh::exact::boolean_exact_with_boundary_policy(
-                        &face_touch_left,
-                        &face_touch_right,
-                        hypermesh::exact::ExactBooleanOperation::Difference,
-                        ValidationPolicy::CLOSED,
-                        hypermesh::exact::ExactBoundaryBooleanPolicy::PreserveSeparateShells,
-                    )
-                    .unwrap(),
-                )
-            })
-        });
+                })
+            },
+        );
 
         c.bench_function(
             "exact_boolean_axis_aligned_box_cell_union_difference",

@@ -356,7 +356,14 @@ fn intersection_axis_aligned_box_bounds(
 /// Certify the exact bounds of a box slab-difference result.
 ///
 /// The retained output is one box only when the right box removes a positive
-/// slab from one side of the left box and shares the other two extents exactly.
+/// slab from one side of the left box and shares the other two extents exactly,
+/// or when the two boxes are full-face adjacent and the regularized
+/// difference is exactly the left box. The face-adjacent case follows the
+/// regularized-solid convention described by Requicha, "Representations for
+/// Rigid Solids: Theory, Methods, and Systems," *ACM Computing Surveys* 12.4
+/// (1980), while the acceptance test itself remains Yap-style exact retained
+/// interval evidence from "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997).
 fn difference_axis_aligned_box_bounds(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -365,7 +372,7 @@ fn difference_axis_aligned_box_bounds(
     let right = certify_axis_aligned_box(right)?;
     let axis = slab_merge_axis(&output, &right)?;
     if !intervals_overlap_with_positive_length(&output, &right, axis)? {
-        return None;
+        return intervals_touch_exactly(&output, &right, axis)?.then_some(output);
     }
 
     let left_min = axis_min(&output.min, axis);
@@ -387,6 +394,17 @@ fn difference_axis_aligned_box_bounds(
         return valid_box(output);
     }
     None
+}
+
+fn intervals_touch_exactly(
+    left: &AxisAlignedBox,
+    right: &AxisAlignedBox,
+    axis: Axis,
+) -> Option<bool> {
+    Some(
+        cmp(axis_max(&left.max, axis), axis_min(&right.min, axis))? == Ordering::Equal
+            || cmp(axis_max(&right.max, axis), axis_min(&left.min, axis))? == Ordering::Equal,
+    )
 }
 
 /// Certify a two-component box difference from an interior slab removal.

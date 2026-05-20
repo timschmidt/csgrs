@@ -6,8 +6,8 @@ use hypermesh::exact::{
     ExactBooleanSupport, ExactBoundaryBooleanPolicy, ExactMesh, ExactRegionSelection,
     FaceRegionPlaneRelation, FaceSplitBoundaryNode, SourceProvenance, Triangle, ValidationPolicy,
     arrange_single_triangle_coplanar_difference, arrange_single_triangle_coplanar_holed_difference,
-    arrange_single_triangle_coplanar_union, arrange_coplanar_convex_surface_difference,
-    arrange_coplanar_convex_surface_component_union,
+    arrange_single_triangle_coplanar_union, arrange_coplanar_convex_surface_component_holed_difference,
+    arrange_coplanar_convex_surface_difference, arrange_coplanar_convex_surface_component_union,
     arrange_coplanar_convex_surface_holed_difference, arrange_coplanar_convex_surface_intersection,
     arrange_coplanar_convex_surface_multi_difference,
     arrange_coplanar_convex_surface_multi_holed_difference,
@@ -38,6 +38,10 @@ fuzz_target!(|data: &[u8]| {
     exercise_face_interior_steiner_boundary();
     #[cfg(feature = "exact-triangulation")]
     exercise_multi_component_coplanar_union();
+    #[cfg(feature = "exact-triangulation")]
+    exercise_component_coplanar_intersection();
+    #[cfg(feature = "exact-triangulation")]
+    exercise_component_coplanar_difference();
     #[cfg(feature = "exact-triangulation")]
     exercise_boundary_centroid_volumetric_representative();
     #[cfg(feature = "exact-triangulation")]
@@ -1596,6 +1600,293 @@ fn exercise_multi_component_coplanar_union() {
 }
 
 #[cfg(feature = "exact-triangulation")]
+fn exercise_component_coplanar_intersection() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            0, 0, 0, 4, 0, 0, 4, 4, 0, 0, 4, 0, //
+            8, 0, 0, 12, 0, 0, 12, 4, 0, 8, 4, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("component intersection left fixture must import");
+    let right = ExactMesh::from_i64_triangles_with_policy(
+        &[2, 1, 0, 10, 1, 0, 10, 3, 0, 2, 3, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("component intersection right fixture must import");
+
+    let intersection = arrange_coplanar_convex_surface_multi_intersection(&left, &right)
+        .expect("component hull intersection should retain two exact loops");
+    intersection.validate().unwrap();
+    intersection
+        .validate_intersection_against_sources(&left, &right)
+        .unwrap();
+    assert_eq!(intersection.polygons.len(), 2);
+    let preflight = preflight_boolean_exact(&left, &right, ExactBooleanOperation::Intersection)
+        .expect("component intersection preflight should classify shortcut");
+    preflight.validate().unwrap();
+    assert_eq!(
+        preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceIntersection
+    );
+
+    let touching_right = ExactMesh::from_i64_triangles_with_policy(
+        &[4, 0, 0, 8, 0, 0, 8, 4, 0, 4, 4, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("component intersection touching fixture must import");
+    assert!(arrange_coplanar_convex_surface_multi_intersection(&left, &touching_right).is_none());
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn exercise_component_coplanar_difference() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            0, 0, 0, 2, 0, 0, 2, 2, 0, 0, 2, 0, //
+            4, 0, 0, 6, 0, 0, 6, 2, 0, 4, 2, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("component difference left fixture must import");
+    let right = ExactMesh::from_i64_triangles_with_policy(
+        &[1, -1, 0, 3, -1, 0, 3, 3, 0, 1, 3, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("component difference right fixture must import");
+
+    let difference = arrange_coplanar_convex_surface_multi_difference(&left, &right)
+        .expect("component-wise difference should retain cut and untouched loops");
+    difference.validate().unwrap();
+    difference.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(difference.polygons.len(), 2);
+
+    let preflight = preflight_boolean_exact(&left, &right, ExactBooleanOperation::Difference)
+        .expect("component-wise difference preflight should classify shortcut");
+    preflight.validate().unwrap();
+    assert_eq!(
+        preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceMultiDifference
+    );
+
+    let result = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("component-wise difference should materialize");
+    result
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+
+    let boundary_bridge = ExactMesh::from_i64_triangles_with_policy(
+        &[2, 0, 0, 4, 0, 0, 4, 2, 0, 2, 2, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("component difference boundary-only fixture must import");
+    assert!(arrange_coplanar_convex_surface_multi_difference(&left, &boundary_bridge).is_none());
+
+    let multi_left = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            0, 0, 0, 2, 0, 0, 2, 2, 0, 0, 2, 0, //
+            4, 0, 0, 6, 0, 0, 6, 2, 0, 4, 2, 0, //
+            8, 0, 0, 10, 0, 0, 10, 2, 0, 8, 2, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7, //
+            8, 9, 10, 8, 10, 11,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("multi-cutter component difference left fixture must import");
+    let multi_right = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            1, -1, 0, 3, -1, 0, 3, 3, 0, 1, 3, 0, //
+            5, -1, 0, 7, -1, 0, 7, 3, 0, 5, 3, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("multi-cutter component difference right fixture must import");
+    let multi_difference = arrange_coplanar_convex_surface_multi_difference(&multi_left, &multi_right)
+        .expect("independent right cutters should retain three exact output loops");
+    multi_difference.validate().unwrap();
+    multi_difference
+        .validate_against_sources(&multi_left, &multi_right)
+        .unwrap();
+    assert_eq!(multi_difference.polygons.len(), 3);
+    let multi_preflight =
+        preflight_boolean_exact(&multi_left, &multi_right, ExactBooleanOperation::Difference)
+            .expect("multi-cutter difference preflight should classify shortcut");
+    multi_preflight.validate().unwrap();
+    assert_eq!(
+        multi_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceMultiDifference
+    );
+
+    let wide_left = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            0, 0, 0, 6, 0, 0, 6, 2, 0, 0, 2, 0, //
+            10, 0, 0, 12, 0, 0, 12, 2, 0, 10, 2, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("same-left double-cutter fixture must import");
+    let two_cutters_one_component = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            1, -1, 0, 2, -1, 0, 2, 3, 0, 1, 3, 0, //
+            4, -1, 0, 5, -1, 0, 5, 3, 0, 4, 3, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("same-left double-cutter right fixture must import");
+    assert!(
+        arrange_coplanar_convex_surface_multi_difference(
+            &wide_left,
+            &two_cutters_one_component,
+        )
+        .is_none()
+    );
+
+    let holed_left = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            0, 0, 0, 10, 0, 0, 10, 10, 0, 0, 10, 0, //
+            20, 0, 0, 22, 0, 0, 22, 2, 0, 20, 2, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("component-holed difference left fixture must import");
+    let holed_right = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            1, 1, 0, 3, 1, 0, 3, 3, 0, 1, 3, 0, //
+            6, 6, 0, 8, 6, 0, 8, 8, 0, 6, 8, 0,
+        ],
+        &[0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("component-holed difference right fixture must import");
+    let component_holed =
+        arrange_coplanar_convex_surface_component_holed_difference(&holed_left, &holed_right)
+            .expect("component-holed difference should materialize retained holes and components");
+    component_holed.validate().unwrap();
+    component_holed
+        .validate_against_sources(&holed_left, &holed_right)
+        .unwrap();
+    assert_eq!(component_holed.components.len(), 2);
+    assert!(component_holed
+        .components
+        .iter()
+        .any(|component| !component.holes.is_empty()));
+    let holed_preflight =
+        preflight_boolean_exact(&holed_left, &holed_right, ExactBooleanOperation::Difference)
+            .expect("component-holed difference preflight should classify shortcut");
+    holed_preflight.validate().unwrap();
+    assert_eq!(
+        holed_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+    );
+
+    let holed_and_cut_right = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            1, 1, 0, 3, 1, 0, 3, 3, 0, 1, 3, 0, //
+            8, -1, 0, 11, -1, 0, 11, 11, 0, 8, 11, 0,
+        ],
+        &[0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("component-holed cut right fixture must import");
+    let component_holed_cut =
+        arrange_coplanar_convex_surface_component_holed_difference(
+            &holed_left,
+            &holed_and_cut_right,
+        )
+        .expect("component-holed difference should assign strict holes to cut remnants");
+    component_holed_cut.validate().unwrap();
+    component_holed_cut
+        .validate_against_sources(&holed_left, &holed_and_cut_right)
+        .unwrap();
+    assert_eq!(component_holed_cut.components.len(), 2);
+    assert!(component_holed_cut
+        .components
+        .iter()
+        .any(|component| component.holes.len() == 1));
+    let single_holed_left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 10, 0, 0, 10, 10, 0, 0, 10, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("single component-holed left fixture must import");
+    let single_component_holed_cut =
+        arrange_coplanar_convex_surface_component_holed_difference(
+            &single_holed_left,
+            &holed_and_cut_right,
+        )
+        .expect("single component-holed cut should materialize a retained holed remnant");
+    single_component_holed_cut.validate().unwrap();
+    single_component_holed_cut
+        .validate_against_sources(&single_holed_left, &holed_and_cut_right)
+        .unwrap();
+    assert_eq!(single_component_holed_cut.components.len(), 1);
+    assert_eq!(single_component_holed_cut.components[0].holes.len(), 1);
+
+    let holed_two_cutters_right = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            1, 1, 0, 3, 1, 0, 3, 3, 0, 1, 3, 0, //
+            4, -1, 0, 5, -1, 0, 5, 11, 0, 4, 11, 0, //
+            8, -1, 0, 11, -1, 0, 11, 11, 0, 8, 11, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7, //
+            8, 9, 10, 8, 10, 11,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("component-holed double-cutter fixture must import");
+    assert!(
+        arrange_coplanar_convex_surface_component_holed_difference(
+            &holed_left,
+            &holed_two_cutters_right,
+        )
+        .is_none()
+    );
+}
+
+#[cfg(feature = "exact-triangulation")]
 fn exercise_face_interior_steiner_boundary() {
     let mesh = ExactMesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 4, 0, 0, 0, 4, 0],
@@ -1948,21 +2239,33 @@ fn exercise_axis_aligned_coplanar_volumetric_boxes() {
         &face_right,
         ExactBooleanOperation::Difference,
     )
-    .expect("face-adjacent axis-aligned box difference should need boundary policy");
+    .expect("face-adjacent axis-aligned box difference should classify shortcut");
     face_difference.validate().unwrap();
     assert_eq!(
         face_difference.support,
-        ExactBooleanSupport::RequiresBoundaryPolicy
+        ExactBooleanSupport::CertifiedAxisAlignedBoxDifference
     );
     assert!(intersect_closed_convex_solids(&face_left, &face_right).is_none());
-    assert!(
-        hypermesh::exact::boolean_exact(
+    let face_difference_result = hypermesh::exact::boolean_exact(
+        &face_left,
+        &face_right,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("face-adjacent axis-aligned box difference should regularize to left box");
+    face_difference_result
+        .validate_operation_against_sources(
             &face_left,
             &face_right,
             ExactBooleanOperation::Difference,
             ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
         )
-        .is_err()
+        .unwrap();
+    assert_eq!(face_difference_result.mesh.vertices(), face_left.vertices());
+    assert_eq!(
+        face_difference_result.mesh.triangles(),
+        face_left.triangles()
     );
 
     let edge_right = axis_aligned_box_i64([2, 2, 0], [4, 4, 2]);

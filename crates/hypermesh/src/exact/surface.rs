@@ -843,6 +843,46 @@ pub struct CoplanarConvexMultiHoledArrangement {
     pub mesh: ExactMesh,
 }
 
+/// One retained component of a mixed coplanar difference output.
+///
+/// The component is either a simple outer loop or one outer loop with one or
+/// more retained hole loops. It is kept as exact topology, not inferred from
+/// the output triangles, following Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997). The ring triangulation handoff uses
+/// Held, "FIST: Fast Industrial-Strength Triangulation of Polygons,"
+/// *Algorithmica* 30 (2001), through `hypertri`'s exact earcut adapter.
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Debug, PartialEq)]
+pub struct CoplanarConvexHoledComponent {
+    /// Exact 3D outer ring, retained counter-clockwise.
+    pub outer: Vec<Point3>,
+    /// Exact 3D hole rings, retained clockwise and strictly inside `outer`.
+    pub holes: Vec<Vec<Point3>>,
+}
+
+/// Exact mixed component/holed coplanar difference output.
+///
+/// This artifact covers the bounded case where a source difference contains
+/// one or more disjoint convex components and at least one component carries
+/// exact holes. A component may also have one convex partial cutter when every
+/// retained hole is assigned strictly inside exactly one cut remnant. More
+/// tangled cut/hole interactions still require a full planar subdivision.
+/// Each retained component must replay from exact component decomposition,
+/// containment, disjointness, and convex difference certificates before the
+/// materialized mesh is accepted, matching the retained-object contract in
+/// Yap, "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+/// (1997).
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Debug, PartialEq)]
+pub struct CoplanarConvexComponentHoledArrangement {
+    /// Projection used by exact 2D arrangement predicates and triangulation.
+    pub projection: CoplanarProjection,
+    /// Retained output components, each with an outer loop and optional holes.
+    pub components: Vec<CoplanarConvexHoledComponent>,
+    /// Exact triangulated open surface mesh containing all components.
+    pub mesh: ExactMesh,
+}
+
 #[cfg(feature = "exact-triangulation")]
 impl CoplanarConvexHoledArrangement {
     /// Validate ring shape, strict containment, projected area, and mesh state.
@@ -932,6 +972,50 @@ impl CoplanarConvexMultiHoledArrangement {
         } else {
             Err(surface_validation_error(
                 "coplanar convex multi-holed arrangement",
+                "retained arrangement does not match source replay",
+            ))
+        }
+    }
+}
+
+#[cfg(feature = "exact-triangulation")]
+impl CoplanarConvexComponentHoledArrangement {
+    /// Validate component rings, holes, projected area, and mesh state.
+    pub fn validate(&self) -> Result<(), MeshError> {
+        validate_component_holed_surface_output(
+            self.projection,
+            &self.components,
+            &self.mesh,
+            "coplanar convex component-holed arrangement",
+        )
+    }
+
+    /// Validate this mixed component/holed arrangement against its sources.
+    ///
+    /// Recomputing the bounded construction from `left` and `right` prevents a
+    /// locally valid component/hole set from being transplanted to another
+    /// source pair. That is the same source-replay discipline Yap requires in
+    /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+    /// (1997): the output mesh is accepted only while its exact construction
+    /// facts remain attached to the objects that produced them.
+    pub fn validate_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<(), MeshError> {
+        self.validate()?;
+        let replay = arrange_coplanar_convex_surface_component_holed_difference(left, right)
+            .ok_or_else(|| {
+                surface_validation_error(
+                    "coplanar convex component-holed arrangement",
+                    "source replay did not reproduce a component-holed difference",
+                )
+            })?;
+        if self == &replay {
+            Ok(())
+        } else {
+            Err(surface_validation_error(
+                "coplanar convex component-holed arrangement",
                 "retained arrangement does not match source replay",
             ))
         }
@@ -2049,6 +2133,16 @@ pub fn arrange_coplanar_convex_surface_multi_intersection(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Option<CoplanarConvexMultiArrangement> {
+    arrange_coplanar_convex_surface_component_intersection(left, right).or_else(|| {
+        arrange_coplanar_convex_surface_pairwise_triangle_multi_intersection(left, right)
+    })
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn arrange_coplanar_convex_surface_pairwise_triangle_multi_intersection(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Option<CoplanarConvexMultiArrangement> {
     if left.triangles().is_empty() || right.triangles().is_empty() {
         return None;
     }
@@ -2083,6 +2177,138 @@ pub fn arrange_coplanar_convex_surface_multi_intersection(
         return None;
     }
     let projection = projection?;
+    let mesh = polygons_to_earcut_open_mesh(&polygons, projection)?;
+    let arrangement = CoplanarConvexMultiArrangement {
+        projection,
+        polygons,
+        mesh,
+    };
+    arrangement.validate().ok()?;
+    Some(arrangement)
+}
+
+/// Certify disjoint intersections from exact convex source components.
+///
+/// This component-level path is a bounded generalization of the convex
+/// coplanar intersection shortcut. It decomposes both operands by retained
+/// source topology, certifies each connected component as a convex coplanar
+/// sheet, and emits one exact loop per positive-area component/component
+/// intersection. Boundary-only contacts are ignored for triangle-mesh
+/// intersection output, while touching or overlapping output loops are
+/// rejected so the general arrangement layer remains explicit. The clipping
+/// step reuses Sutherland and Hodgman's convex half-plane construction, and
+/// the artifact contract follows Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997): exact component structure is kept
+/// until every output loop and triangulation replays from source facts.
+#[cfg(feature = "exact-triangulation")]
+fn arrange_coplanar_convex_surface_component_intersection(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Option<CoplanarConvexMultiArrangement> {
+    if arrange_coplanar_convex_surface_intersection(left, right).is_some()
+        || intersect_single_triangle_coplanar_surfaces(left, right).is_some()
+    {
+        return None;
+    }
+
+    let left_components = connected_face_component_meshes(left)?;
+    let right_components = connected_face_component_meshes(right)?;
+    if left_components.len() + right_components.len() < 3 {
+        return None;
+    }
+    let left_components = left_components
+        .into_iter()
+        .map(|mesh| ConvexUnionComponent::from_mesh(MultiUnionSide::Left, mesh))
+        .collect::<Option<Vec<_>>>()?;
+    let right_components = right_components
+        .into_iter()
+        .map(|mesh| ConvexUnionComponent::from_mesh(MultiUnionSide::Right, mesh))
+        .collect::<Option<Vec<_>>>()?;
+    let projection = left_components.first()?.projection;
+    if left_components
+        .iter()
+        .chain(right_components.iter())
+        .any(|component| component.projection != projection)
+    {
+        return None;
+    }
+    let left_hulls = left_components
+        .iter()
+        .map(|component| component.hull.clone())
+        .collect::<Vec<_>>();
+    validate_component_loops_disjoint(
+        &left_hulls,
+        projection,
+        "coplanar convex component intersection",
+    )
+    .ok()?;
+    let right_hulls = right_components
+        .iter()
+        .map(|component| component.hull.clone())
+        .collect::<Vec<_>>();
+    validate_component_loops_disjoint(
+        &right_hulls,
+        projection,
+        "coplanar convex component intersection",
+    )
+    .ok()?;
+
+    let mut polygons = Vec::new();
+    for left_component in &left_components {
+        for right_component in &right_components {
+            let polygon = if polygons_equal(&left_component.hull, &right_component.hull)
+                || polygon_in_closed_convex_polygon(
+                    &left_component.hull,
+                    &right_component.hull,
+                    projection,
+                )? {
+                Some(left_component.hull.clone())
+            } else if polygon_in_closed_convex_polygon(
+                &right_component.hull,
+                &left_component.hull,
+                projection,
+            )? {
+                Some(right_component.hull.clone())
+            } else {
+                match convex_union_component_relation(
+                    &left_component.hull,
+                    &right_component.hull,
+                    projection,
+                )? {
+                    ConvexUnionComponentRelation::Disjoint
+                    | ConvexUnionComponentRelation::BoundaryOnly => None,
+                    ConvexUnionComponentRelation::PositiveArea => {
+                        if let Some(intersection) = arrange_coplanar_convex_surface_intersection(
+                            &left_component.mesh,
+                            &right_component.mesh,
+                        ) {
+                            Some(intersection.polygon)
+                        } else {
+                            intersect_single_triangle_coplanar_surfaces(
+                                &left_component.mesh,
+                                &right_component.mesh,
+                            )
+                            .map(|intersection| intersection.polygon)
+                        }
+                    }
+                }
+            };
+            if let Some(mut polygon) = polygon {
+                orient_polygon_ccw(&mut polygon, projection)?;
+                polygons.push(polygon);
+            }
+        }
+    }
+    if polygons.len() < 2 {
+        return None;
+    }
+    sort_polygons_for_replay(&mut polygons, projection);
+    validate_component_loops_disjoint(
+        &polygons,
+        projection,
+        "coplanar convex component intersection",
+    )
+    .ok()?;
     let mesh = polygons_to_earcut_open_mesh(&polygons, projection)?;
     let arrangement = CoplanarConvexMultiArrangement {
         projection,
@@ -2519,6 +2745,20 @@ fn sort_polygons_for_replay(polygons: &mut [Vec<Point3>], projection: CoplanarPr
 }
 
 #[cfg(feature = "exact-triangulation")]
+fn sort_components_for_replay(
+    components: &mut [CoplanarConvexHoledComponent],
+    projection: CoplanarProjection,
+) {
+    components.sort_by(|left, right| {
+        compare_point2(
+            &polygon_min_projected_point(&left.outer, projection),
+            &polygon_min_projected_point(&right.outer, projection),
+        )
+        .unwrap_or(Ordering::Equal)
+    });
+}
+
+#[cfg(feature = "exact-triangulation")]
 fn polygon_min_projected_point(polygon: &[Point3], projection: CoplanarProjection) -> Point2 {
     polygon
         .iter()
@@ -2857,6 +3097,15 @@ pub fn arrange_coplanar_convex_surface_multi_difference(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Option<CoplanarConvexMultiArrangement> {
+    arrange_coplanar_convex_surface_multi_difference_convex(left, right)
+        .or_else(|| arrange_coplanar_convex_surface_component_difference(left, right))
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn arrange_coplanar_convex_surface_multi_difference_convex(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Option<CoplanarConvexMultiArrangement> {
     let (projection, mut left_hull, mut right_hull, _, _) =
         convex_surface_hulls_and_areas(left, right)?;
     if polygons_equal(&left_hull, &right_hull)
@@ -2906,6 +3155,384 @@ pub fn arrange_coplanar_convex_surface_multi_difference(
     };
     arrangement.validate().ok()?;
     Some(arrangement)
+}
+
+/// Certify a component-wise coplanar difference for disjoint convex sheets.
+///
+/// This is a bounded slice of the arbitrary multi-face arrangement problem.
+/// The left and right operands are decomposed by exact source topology into
+/// disjoint connected convex sheets, and each left component is subtracted
+/// independently. A left component is retained unchanged only after exact
+/// separation from every right component; a partially cut component must have
+/// exactly one effective right cutter and replay through the existing convex
+/// difference certificates. Boundary-only contacts, holes, nonconvex
+/// components, and several cutters hitting the same left component still
+/// return `None` so the general arrangement layer remains explicit. This
+/// follows Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997): the shortcut promotes output loops
+/// only from retained exact component, containment, intersection, and area
+/// evidence, never from sampled polygon surgery.
+#[cfg(feature = "exact-triangulation")]
+fn arrange_coplanar_convex_surface_component_difference(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Option<CoplanarConvexMultiArrangement> {
+    if arrange_coplanar_convex_surface_difference(left, right).is_some()
+        || arrange_coplanar_convex_surface_holed_difference(left, right).is_some()
+    {
+        return None;
+    }
+
+    let left_components = connected_face_component_meshes(left)?;
+    if left_components.len() < 2 {
+        return None;
+    }
+    let right_components = connected_face_component_meshes(right)?;
+    if right_components.is_empty() {
+        return None;
+    }
+
+    let mut left_components = left_components
+        .into_iter()
+        .map(|mesh| ConvexUnionComponent::from_mesh(MultiUnionSide::Left, mesh))
+        .collect::<Option<Vec<_>>>()?;
+    let right_components = right_components
+        .into_iter()
+        .map(|mesh| ConvexUnionComponent::from_mesh(MultiUnionSide::Right, mesh))
+        .collect::<Option<Vec<_>>>()?;
+    let projection = left_components.first()?.projection;
+    if left_components
+        .iter()
+        .chain(right_components.iter())
+        .any(|component| component.projection != projection)
+    {
+        return None;
+    }
+    let left_hulls = left_components
+        .iter()
+        .map(|component| component.hull.clone())
+        .collect::<Vec<_>>();
+    validate_component_loops_disjoint(
+        &left_hulls,
+        projection,
+        "coplanar convex component difference",
+    )
+    .ok()?;
+    let right_hulls = right_components
+        .iter()
+        .map(|component| component.hull.clone())
+        .collect::<Vec<_>>();
+    validate_component_loops_disjoint(
+        &right_hulls,
+        projection,
+        "coplanar convex component difference",
+    )
+    .ok()?;
+
+    let mut polygons = Vec::new();
+    for component in &mut left_components {
+        let mut action = ComponentDifferenceAction::Retain;
+        for (right_index, right_component) in right_components.iter().enumerate() {
+            if polygons_equal(&component.hull, &right_component.hull)
+                || polygon_in_closed_convex_polygon(
+                    &component.hull,
+                    &right_component.hull,
+                    projection,
+                )?
+            {
+                if action != ComponentDifferenceAction::Retain {
+                    return None;
+                }
+                action = ComponentDifferenceAction::Drop;
+                continue;
+            }
+            if polygon_in_closed_convex_polygon(&right_component.hull, &component.hull, projection)?
+            {
+                return None;
+            }
+
+            match convex_union_component_relation(
+                &component.hull,
+                &right_component.hull,
+                projection,
+            )? {
+                ConvexUnionComponentRelation::Disjoint => {}
+                ConvexUnionComponentRelation::BoundaryOnly => return None,
+                ConvexUnionComponentRelation::PositiveArea => {
+                    if action != ComponentDifferenceAction::Retain {
+                        return None;
+                    }
+                    action = ComponentDifferenceAction::Cut(right_index);
+                }
+            }
+        }
+        match action {
+            ComponentDifferenceAction::Retain => polygons.push(component.hull.clone()),
+            ComponentDifferenceAction::Drop => {}
+            ComponentDifferenceAction::Cut(right_index) => {
+                let right_component = &right_components[right_index];
+                if let Some(difference) = arrange_coplanar_convex_surface_difference(
+                    &component.mesh,
+                    &right_component.mesh,
+                ) {
+                    polygons.push(difference.polygon);
+                } else if let Some(difference) =
+                    arrange_coplanar_convex_surface_multi_difference_convex(
+                        &component.mesh,
+                        &right_component.mesh,
+                    )
+                {
+                    polygons.extend(difference.polygons);
+                } else {
+                    return None;
+                }
+            }
+        }
+    }
+    if polygons.len() < 2 {
+        return None;
+    }
+    for polygon in &mut polygons {
+        orient_polygon_ccw(polygon, projection)?;
+    }
+    sort_polygons_for_replay(&mut polygons, projection);
+    validate_component_loops_disjoint(
+        &polygons,
+        projection,
+        "coplanar convex component difference",
+    )
+    .ok()?;
+    let mesh = polygons_to_earcut_open_mesh(&polygons, projection)?;
+    let arrangement = CoplanarConvexMultiArrangement {
+        projection,
+        polygons,
+        mesh,
+    };
+    arrangement.validate().ok()?;
+    Some(arrangement)
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum ComponentDifferenceAction {
+    Retain,
+    Drop,
+    Cut(usize),
+}
+
+/// Certify a mixed component/holed coplanar difference.
+///
+/// This is the next bounded step toward arbitrary multi-component,
+/// multi-hole planar arrangements. The operands are decomposed into exact
+/// connected convex components. Each left component may be retained, removed,
+/// cut by one right component through the existing convex difference
+/// certificate, pierced by one or more strictly contained right components, or
+/// both cut once and pierced when every retained hole falls strictly inside a
+/// single cut remnant. Multiple cutters in one left component and holes that
+/// straddle or touch a cut boundary still need a full planar subdivision. This
+/// preserves Yap's rule from "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997): every promoted loop is justified by
+/// exact source topology, containment, or area replay, and unsupported
+/// combinatorics remain explicit.
+#[cfg(feature = "exact-triangulation")]
+pub fn arrange_coplanar_convex_surface_component_holed_difference(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Option<CoplanarConvexComponentHoledArrangement> {
+    let left_components = connected_face_component_meshes(left)?;
+    let right_components = connected_face_component_meshes(right)?;
+    if right_components.is_empty() {
+        return None;
+    }
+
+    let mut left_components = left_components
+        .into_iter()
+        .map(|mesh| ConvexUnionComponent::from_mesh(MultiUnionSide::Left, mesh))
+        .collect::<Option<Vec<_>>>()?;
+    let source_component_count = left_components.len();
+    let right_components = right_components
+        .into_iter()
+        .map(|mesh| ConvexUnionComponent::from_mesh(MultiUnionSide::Right, mesh))
+        .collect::<Option<Vec<_>>>()?;
+    let projection = left_components.first()?.projection;
+    if left_components
+        .iter()
+        .chain(right_components.iter())
+        .any(|component| component.projection != projection)
+    {
+        return None;
+    }
+
+    let left_hulls = left_components
+        .iter()
+        .map(|component| component.hull.clone())
+        .collect::<Vec<_>>();
+    validate_component_loops_disjoint(
+        &left_hulls,
+        projection,
+        "coplanar convex component-holed arrangement",
+    )
+    .ok()?;
+    let right_hulls = right_components
+        .iter()
+        .map(|component| component.hull.clone())
+        .collect::<Vec<_>>();
+    validate_component_loops_disjoint(
+        &right_hulls,
+        projection,
+        "coplanar convex component-holed arrangement",
+    )
+    .ok()?;
+
+    let mut components = Vec::new();
+    let mut emitted_cut = false;
+    for component in &mut left_components {
+        let mut dropped = false;
+        let mut cut_index = None;
+        let mut holes = Vec::new();
+        for (right_index, right_component) in right_components.iter().enumerate() {
+            if polygons_equal(&component.hull, &right_component.hull)
+                || polygon_in_closed_convex_polygon(
+                    &component.hull,
+                    &right_component.hull,
+                    projection,
+                )?
+            {
+                if dropped || cut_index.is_some() || !holes.is_empty() {
+                    return None;
+                }
+                dropped = true;
+                continue;
+            }
+            if polygon_in_closed_convex_polygon(&right_component.hull, &component.hull, projection)?
+            {
+                if dropped {
+                    return None;
+                }
+                let mut hole = right_component.hull.clone();
+                orient_polygon_cw(&mut hole, projection)?;
+                holes.push(hole);
+                continue;
+            }
+
+            match convex_union_component_relation(
+                &component.hull,
+                &right_component.hull,
+                projection,
+            )? {
+                ConvexUnionComponentRelation::Disjoint => {}
+                ConvexUnionComponentRelation::BoundaryOnly => return None,
+                ConvexUnionComponentRelation::PositiveArea => {
+                    if dropped || cut_index.is_some() {
+                        return None;
+                    }
+                    cut_index = Some(right_index);
+                }
+            }
+        }
+
+        if dropped {
+            continue;
+        }
+        if let Some(right_index) = cut_index {
+            emitted_cut = true;
+            let right_component = &right_components[right_index];
+            let mut cut_polygons = if let Some(difference) =
+                arrange_coplanar_convex_surface_difference(&component.mesh, &right_component.mesh)
+            {
+                vec![difference.polygon]
+            } else if let Some(difference) = arrange_coplanar_convex_surface_multi_difference_convex(
+                &component.mesh,
+                &right_component.mesh,
+            ) {
+                difference.polygons
+            } else {
+                return None;
+            };
+            for polygon in &mut cut_polygons {
+                orient_polygon_ccw(polygon, projection)?;
+            }
+            let holes_by_cut =
+                assign_holes_to_cut_component_outputs(&holes, &cut_polygons, projection)?;
+            components.extend(
+                cut_polygons
+                    .into_iter()
+                    .zip(holes_by_cut)
+                    .map(|(outer, holes)| CoplanarConvexHoledComponent { outer, holes }),
+            );
+        } else {
+            let mut outer = component.hull.clone();
+            orient_polygon_ccw(&mut outer, projection)?;
+            components.push(CoplanarConvexHoledComponent { outer, holes });
+        }
+    }
+    if !emitted_cut && source_component_count < 2 {
+        return None;
+    }
+    if components.is_empty()
+        || !components
+            .iter()
+            .any(|component| !component.holes.is_empty())
+    {
+        return None;
+    }
+    sort_components_for_replay(&mut components, projection);
+    let mesh = component_holed_components_to_earcut_open_mesh(&components, projection)?;
+    let arrangement = CoplanarConvexComponentHoledArrangement {
+        projection,
+        components,
+        mesh,
+    };
+    arrangement.validate().ok()?;
+    Some(arrangement)
+}
+
+/// Assign retained hole rings to exact cut remnants.
+///
+/// A component that mixes holes with one partial cutter is still a bounded
+/// arrangement: the cut itself is certified by the convex difference helper,
+/// then each hole must be strictly inside exactly one emitted remnant. This
+/// check is the local substitute for a full planar subdivision. Following Yap,
+/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+/// (1997), ambiguous boundary contact or partial hole/remnant overlap returns
+/// `None` rather than inventing topology from an approximate sample point.
+#[cfg(feature = "exact-triangulation")]
+fn assign_holes_to_cut_component_outputs(
+    holes: &[Vec<Point3>],
+    cut_polygons: &[Vec<Point3>],
+    projection: CoplanarProjection,
+) -> Option<Vec<Vec<Vec<Point3>>>> {
+    let mut holes_by_cut = vec![Vec::new(); cut_polygons.len()];
+    for hole in holes {
+        let mut owner = None;
+        for (index, polygon) in cut_polygons.iter().enumerate() {
+            if polygon_strictly_inside_convex_polygon(hole, polygon, projection)? {
+                if owner.is_some() {
+                    return None;
+                }
+                owner = Some(index);
+            }
+        }
+        holes_by_cut[owner?].push(hole.clone());
+    }
+    Some(holes_by_cut)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn polygon_strictly_inside_convex_polygon(
+    inner: &[Point3],
+    outer: &[Point3],
+    projection: CoplanarProjection,
+) -> Option<bool> {
+    if inner.len() < 3 || outer.len() < 3 {
+        return Some(false);
+    }
+    for point in inner {
+        if convex_polygon_location(point, outer, projection)? != ConvexPolygonLocation::Inside {
+            return Some(false);
+        }
+    }
+    Some(true)
 }
 
 /// Certify and materialize a one-corner coplanar triangle difference.
@@ -3395,6 +4022,59 @@ fn polygons_to_earcut_open_mesh(
 }
 
 #[cfg(feature = "exact-triangulation")]
+fn component_holed_components_to_earcut_open_mesh(
+    components: &[CoplanarConvexHoledComponent],
+    projection: CoplanarProjection,
+) -> Option<ExactMesh> {
+    if components.is_empty()
+        || components.iter().any(|component| {
+            component.outer.len() < 3 || component.holes.iter().any(|h| h.len() < 3)
+        })
+    {
+        return None;
+    }
+    let mut vertices = Vec::new();
+    let mut triangles = Vec::new();
+    for component in components {
+        let offset = vertices.len();
+        let mesh = component_holed_component_to_earcut_open_mesh(component, projection)?;
+        vertices.extend(mesh.vertices().iter().cloned());
+        triangles.extend(mesh.triangles().iter().map(|triangle| {
+            let [a, b, c] = triangle.0;
+            Triangle([a + offset, b + offset, c + offset])
+        }));
+    }
+    ExactMesh::new_with_policy(
+        vertices,
+        triangles,
+        SourceProvenance::exact("exact coplanar convex component-holed arrangement"),
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .ok()
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn component_holed_component_to_earcut_open_mesh(
+    component: &CoplanarConvexHoledComponent,
+    projection: CoplanarProjection,
+) -> Option<ExactMesh> {
+    match component.holes.len() {
+        0 => polygon_to_earcut_open_mesh(&component.outer, projection),
+        1 => polygon_to_earcut_open_mesh_with_hole(
+            &component.outer,
+            component.holes.first()?,
+            projection,
+        ),
+        _ => polygon_to_earcut_open_mesh_with_holes(
+            &component.outer,
+            &component.holes,
+            projection,
+            "exact coplanar convex component-holed sub-arrangement",
+        ),
+    }
+}
+
+#[cfg(feature = "exact-triangulation")]
 fn project_for_hypertri(point: &Point3, projection: CoplanarProjection) -> hypertri::ExactPoint {
     match projection {
         CoplanarProjection::Xy => hypertri::ExactPoint::new(point.x.clone(), point.y.clone()),
@@ -3689,6 +4369,239 @@ fn validate_multi_surface_output(
                 ));
             }
         }
+    }
+    mesh.validate_retained_state().map_err(|_| {
+        surface_validation_error(label, "materialized mesh retained-state validation failed")
+    })
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn validate_component_holed_surface_output(
+    projection: CoplanarProjection,
+    components: &[CoplanarConvexHoledComponent],
+    mesh: &ExactMesh,
+    label: &'static str,
+) -> Result<(), MeshError> {
+    if components.is_empty()
+        || !components
+            .iter()
+            .any(|component| !component.holes.is_empty())
+    {
+        return Err(surface_validation_error(
+            label,
+            "component-holed surface must retain at least one component and one hole",
+        ));
+    }
+    if mesh.triangles().is_empty() {
+        return Err(surface_validation_error(
+            label,
+            "component-holed surface mesh has no triangulation",
+        ));
+    }
+
+    let mut component_ranges = Vec::with_capacity(components.len());
+    let mut retained_rings = Vec::new();
+    let mut hole_ranges = Vec::new();
+    let mut expected_vertices = 0;
+    let mut retained_area = ExactReal::from(0);
+    let mut retained_signed_area = ExactReal::from(0);
+    let mut outers = Vec::with_capacity(components.len());
+
+    for component in components {
+        if component.outer.len() < 3 || component.holes.iter().any(|hole| hole.len() < 3) {
+            return Err(surface_validation_error(
+                label,
+                "component rings must contain at least three vertices",
+            ));
+        }
+        let component_start = expected_vertices;
+        let outer_start = expected_vertices;
+        expected_vertices += component.outer.len();
+        retained_rings.push(outer_start..expected_vertices);
+        validate_exact_point_set_distinct(
+            &component.outer,
+            label,
+            "component outer ring repeats an exact point",
+        )?;
+        validate_projected_simple_loop(&component.outer, projection, label)?;
+        validate_projected_strictly_convex_loop(&component.outer, projection, label)?;
+        validate_projected_ring_orientation(
+            &component.outer,
+            projection,
+            Sign::Positive,
+            label,
+            "component outer ring orientation must be counter-clockwise",
+        )?;
+        let outer_area = projected_area2_abs(&component.outer, projection).ok_or_else(|| {
+            surface_validation_error(label, "component outer projected area was undecided")
+        })?;
+        let outer_signed =
+            projected_area2_signed(&component.outer, projection).ok_or_else(|| {
+                surface_validation_error(label, "component outer signed area was undecided")
+            })?;
+        if compare_reals(&outer_area, &ExactReal::from(0)).value() != Some(Ordering::Greater) {
+            return Err(surface_validation_error(
+                label,
+                "component outer ring has zero projected area",
+            ));
+        }
+
+        let mut hole_area_sum = ExactReal::from(0);
+        let mut component_signed_area = outer_signed;
+        for hole in &component.holes {
+            let hole_start = expected_vertices;
+            expected_vertices += hole.len();
+            retained_rings.push(hole_start..expected_vertices);
+            hole_ranges.push(hole_start..expected_vertices);
+            validate_exact_point_set_distinct(
+                hole,
+                label,
+                "component hole repeats an exact point",
+            )?;
+            validate_projected_simple_loop(hole, projection, label)?;
+            validate_projected_strictly_convex_loop(hole, projection, label)?;
+            validate_projected_ring_orientation(
+                hole,
+                projection,
+                Sign::Negative,
+                label,
+                "component hole orientation must be clockwise",
+            )?;
+            let hole_area = projected_area2_abs(hole, projection).ok_or_else(|| {
+                surface_validation_error(label, "component hole projected area was undecided")
+            })?;
+            let hole_signed = projected_area2_signed(hole, projection).ok_or_else(|| {
+                surface_validation_error(label, "component hole signed area was undecided")
+            })?;
+            if compare_reals(&hole_area, &ExactReal::from(0)).value() != Some(Ordering::Greater) {
+                return Err(surface_validation_error(
+                    label,
+                    "component hole has zero projected area",
+                ));
+            }
+            for point in hole {
+                match convex_polygon_location(point, &component.outer, projection) {
+                    Some(ConvexPolygonLocation::Inside) => {}
+                    Some(ConvexPolygonLocation::Boundary | ConvexPolygonLocation::Outside) => {
+                        return Err(surface_validation_error(
+                            label,
+                            "component hole must lie strictly inside its outer ring",
+                        ));
+                    }
+                    None => {
+                        return Err(surface_validation_error(
+                            label,
+                            "component hole containment predicate was undecided",
+                        ));
+                    }
+                }
+            }
+            hole_area_sum = add(&hole_area_sum, &hole_area);
+            component_signed_area = add(&component_signed_area, &hole_signed);
+        }
+        if component.holes.len() > 1 {
+            validate_component_loops_disjoint(&component.holes, projection, label)?;
+        }
+        if compare_reals(&outer_area, &hole_area_sum).value() != Some(Ordering::Greater) {
+            return Err(surface_validation_error(
+                label,
+                "component hole area must be strictly smaller than outer area",
+            ));
+        }
+        retained_area = add(&retained_area, &sub(&outer_area, &hole_area_sum));
+        retained_signed_area = add(&retained_signed_area, &component_signed_area);
+        component_ranges.push(component_start..expected_vertices);
+        outers.push(component.outer.clone());
+    }
+    validate_component_loops_disjoint(&outers, projection, label)?;
+
+    if mesh.vertices().len() != expected_vertices {
+        return Err(surface_validation_error(
+            label,
+            "mesh vertex count does not match retained component-holed rings",
+        ));
+    }
+    let retained_points = components
+        .iter()
+        .flat_map(|component| {
+            component
+                .outer
+                .iter()
+                .chain(component.holes.iter().flatten())
+        })
+        .collect::<Vec<_>>();
+    for (index, point) in retained_points.iter().enumerate() {
+        if !points_equal(point, &mesh.vertices()[index].to_hyperlimit_point()) {
+            return Err(surface_validation_error(
+                label,
+                "mesh vertex does not match retained component-holed point",
+            ));
+        }
+    }
+    for triangle in mesh.triangles() {
+        if triangle.0.iter().any(|&index| index >= expected_vertices) {
+            return Err(surface_validation_error(
+                label,
+                "component-holed mesh triangle index is out of retained ring range",
+            ));
+        }
+        let first_component = component_for_retained_vertex(triangle.0[0], &component_ranges)
+            .ok_or_else(|| {
+                surface_validation_error(label, "triangle vertex has no retained component")
+            })?;
+        if triangle.0.iter().any(|&index| {
+            component_for_retained_vertex(index, &component_ranges) != Some(first_component)
+        }) {
+            return Err(surface_validation_error(
+                label,
+                "component-holed mesh triangle spans retained components",
+            ));
+        }
+        for hole_range in &hole_ranges {
+            if triangle.0.iter().all(|index| hole_range.contains(index)) {
+                return Err(surface_validation_error(
+                    label,
+                    "component-holed mesh triangle fills a retained hole",
+                ));
+            }
+        }
+    }
+    validate_mesh_edges_respect_retained_rings(
+        mesh,
+        projection,
+        &retained_rings,
+        label,
+        "component-holed mesh edge crosses a retained ring",
+    )?;
+    validate_mesh_uses_all_retained_vertices(
+        mesh,
+        expected_vertices,
+        label,
+        "component-holed mesh leaves a retained ring vertex unused",
+    )?;
+    validate_mesh_boundary_matches_retained_rings(
+        mesh,
+        &retained_rings,
+        label,
+        "component-holed mesh boundary does not match retained rings",
+    )?;
+    let mesh_area = projected_mesh_area2_abs(mesh, projection).ok_or_else(|| {
+        surface_validation_error(label, "component-holed mesh projected area was undecided")
+    })?;
+    if compare_reals(&mesh_area, &retained_area).value() != Some(Ordering::Equal) {
+        return Err(surface_validation_error(
+            label,
+            "component-holed mesh projected area does not match retained rings",
+        ));
+    }
+    let mesh_signed_area = projected_mesh_area2_signed(mesh, projection).ok_or_else(|| {
+        surface_validation_error(label, "component-holed mesh signed area was undecided")
+    })?;
+    if compare_reals(&mesh_signed_area, &retained_signed_area).value() != Some(Ordering::Equal) {
+        return Err(surface_validation_error(
+            label,
+            "component-holed mesh signed area does not match retained ring orientation",
+        ));
     }
     mesh.validate_retained_state().map_err(|_| {
         surface_validation_error(label, "materialized mesh retained-state validation failed")

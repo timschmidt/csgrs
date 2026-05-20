@@ -494,6 +494,9 @@ pub enum ExactBooleanShortcutKind {
     CoplanarConvexSurfaceHoledDifference,
     /// Certified multi-hole coplanar convex surface difference.
     CoplanarConvexSurfaceMultiHoledDifference,
+    /// Certified multi-component coplanar convex surface difference where at
+    /// least one component retains exact holes.
+    CoplanarConvexSurfaceComponentHoledDifference,
     /// Certified union of coplanar-volumetric axis-aligned boxes.
     AxisAlignedBoxUnion,
     /// Certified positive-volume intersection of coplanar-volumetric
@@ -995,6 +998,9 @@ pub enum ExactBooleanSupport {
     /// Difference was materialized as multiple retained holes inside a
     /// convex coplanar surface mesh.
     CertifiedCoplanarConvexSurfaceMultiHoledDifference,
+    /// Difference was materialized as multiple retained components where at
+    /// least one component carries retained holes.
+    CertifiedCoplanarConvexSurfaceComponentHoledDifference,
     /// Union was materialized as one exact axis-aligned box from two
     /// coplanar-volumetric slab-overlapping boxes.
     CertifiedAxisAlignedBoxUnion,
@@ -1175,6 +1181,7 @@ impl ExactBooleanPreflight {
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceContainment
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceHoledDifference
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceMultiHoledDifference
+            | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
             | ExactBooleanSupport::CertifiedAxisAlignedBoxUnion
             | ExactBooleanSupport::CertifiedAxisAlignedBoxIntersection
             | ExactBooleanSupport::CertifiedAxisAlignedBoxDifference

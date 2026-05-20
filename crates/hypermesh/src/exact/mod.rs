@@ -160,12 +160,14 @@ pub use support::{
 };
 #[cfg(feature = "exact-triangulation")]
 pub use surface::{
-    CoplanarArrangementOperation, CoplanarConvexArrangement, CoplanarConvexHoledArrangement,
-    CoplanarConvexMultiArrangement, CoplanarConvexMultiHoledArrangement,
-    CoplanarConvexSurfaceContainment, CoplanarConvexSurfaceContainmentCertificate,
-    CoplanarConvexSurfaceEquivalence, CoplanarConvexSurfaceReport,
-    CoplanarConvexSurfaceReportError, CoplanarConvexSurfaceReportStatus,
-    CoplanarTriangleArrangement, CoplanarTriangleHoledArrangement,
+    CoplanarArrangementOperation, CoplanarConvexArrangement,
+    CoplanarConvexComponentHoledArrangement, CoplanarConvexHoledArrangement,
+    CoplanarConvexHoledComponent, CoplanarConvexMultiArrangement,
+    CoplanarConvexMultiHoledArrangement, CoplanarConvexSurfaceContainment,
+    CoplanarConvexSurfaceContainmentCertificate, CoplanarConvexSurfaceEquivalence,
+    CoplanarConvexSurfaceReport, CoplanarConvexSurfaceReportError,
+    CoplanarConvexSurfaceReportStatus, CoplanarTriangleArrangement,
+    CoplanarTriangleHoledArrangement, arrange_coplanar_convex_surface_component_holed_difference,
     arrange_coplanar_convex_surface_component_union, arrange_coplanar_convex_surface_difference,
     arrange_coplanar_convex_surface_holed_difference, arrange_coplanar_convex_surface_intersection,
     arrange_coplanar_convex_surface_multi_difference,

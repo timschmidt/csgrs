@@ -66,6 +66,7 @@ use super::solid::{ConvexSolidMeshRelation, classify_mesh_vertices_against_conve
 #[cfg(feature = "exact-triangulation")]
 use super::surface::{
     CoplanarConvexSurfaceContainment, CoplanarSurfaceContainment,
+    arrange_coplanar_convex_surface_component_holed_difference,
     arrange_coplanar_convex_surface_component_union, arrange_coplanar_convex_surface_difference,
     arrange_coplanar_convex_surface_holed_difference, arrange_coplanar_convex_surface_intersection,
     arrange_coplanar_convex_surface_multi_difference,
@@ -332,6 +333,12 @@ pub fn preflight_boolean_exact(
         {
             ExactBooleanSupport::CertifiedCoplanarConvexSurfaceMultiHoledDifference
         }
+        ExactBooleanOperation::Difference
+            if arrange_coplanar_convex_surface_component_holed_difference(left, right)
+                .is_some() =>
+        {
+            ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+        }
         ExactBooleanOperation::Union if has_axis_aligned_box_union(left, right) => {
             ExactBooleanSupport::CertifiedAxisAlignedBoxUnion
         }
@@ -427,6 +434,7 @@ pub fn preflight_boolean_exact(
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceContainment
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceHoledDifference
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceMultiHoledDifference
+            | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
             | ExactBooleanSupport::CertifiedAxisAlignedBoxUnion
             | ExactBooleanSupport::CertifiedAxisAlignedBoxIntersection
             | ExactBooleanSupport::CertifiedAxisAlignedBoxDifference
@@ -952,6 +960,12 @@ pub fn boolean_exact_with_boundary_policy(
                 |result| result.expect("caller checked convex coplanar multi-holed difference"),
             )
         }
+        ExactBooleanOperation::Difference
+            if arrange_coplanar_convex_surface_component_holed_difference(left, right)
+                .is_some() =>
+        {
+            boolean_coplanar_convex_component_holed_difference(left, right, validation)
+        }
         ExactBooleanOperation::Union if has_axis_aligned_box_union(left, right) => {
             boolean_axis_aligned_box_union(left, right, validation)
         }
@@ -1020,6 +1034,11 @@ pub fn boolean_exact_with_boundary_policy(
             if let Some(result) =
                 boolean_coplanar_convex_multi_holed_difference(left, right, operation, validation)?
             {
+                return Ok(result);
+            }
+            if let Some(result) = boolean_coplanar_convex_component_holed_difference_optional(
+                left, right, operation, validation,
+            )? {
                 return Ok(result);
             }
             if let Some(result) =
@@ -1386,6 +1405,47 @@ fn boolean_coplanar_convex_multi_holed_difference(
         mesh,
         ExactBooleanShortcutKind::CoplanarConvexSurfaceMultiHoledDifference,
     )))
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn boolean_coplanar_convex_component_holed_difference_optional(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    if operation != ExactBooleanOperation::Difference {
+        return Ok(None);
+    }
+    arrange_coplanar_convex_surface_component_holed_difference(left, right)
+        .map(|difference| {
+            difference.validate_against_sources(left, right)?;
+            let mesh = copy_mesh(
+                &difference.mesh,
+                "exact coplanar convex component-holed difference",
+                validation,
+            )?;
+            Ok(certified_shortcut_result(
+                mesh,
+                ExactBooleanShortcutKind::CoplanarConvexSurfaceComponentHoledDifference,
+            ))
+        })
+        .transpose()
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn boolean_coplanar_convex_component_holed_difference(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    validation: ValidationPolicy,
+) -> Result<ExactBooleanResult, MeshError> {
+    boolean_coplanar_convex_component_holed_difference_optional(
+        left,
+        right,
+        ExactBooleanOperation::Difference,
+        validation,
+    )
+    .map(|result| result.expect("caller checked convex coplanar component-holed difference"))
 }
 
 #[cfg(feature = "exact-triangulation")]
