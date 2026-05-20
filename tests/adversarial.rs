@@ -723,6 +723,28 @@ fn adversarial_metaballs_reject_invalid_sampling_boundary_at_hyperreal_boundary(
 }
 
 #[test]
+#[cfg(feature = "metaballs")]
+fn adversarial_metaballs_accumulate_field_in_hyperreal_space() {
+    let balls = [
+        csgrs::mesh::metaballs::MetaBall::new(Point3::new(0.0, 0.0, 0.0), 1.0),
+        csgrs::mesh::metaballs::MetaBall::new(Point3::new(tolerance() * 0.5, 0.0, 0.0), 1.0),
+    ];
+
+    let (_mesh, diagnostics) =
+        Mesh::<()>::metaballs_with_diagnostics(&balls, (4, 4, 4), 1.0, 0.25, ());
+
+    assert_eq!(diagnostics.sample_count, 64);
+    assert_eq!(diagnostics.non_finite_sample_count, 0);
+    assert_eq!(diagnostics.finite_sample_count, diagnostics.sample_count);
+    assert!(diagnostics.min_finite_value.is_some_and(Real::is_finite));
+    assert!(diagnostics.max_finite_value.is_some_and(Real::is_finite));
+    assert!(
+        diagnostics.max_finite_value.unwrap() >= diagnostics.min_finite_value.unwrap(),
+        "{diagnostics:#?}"
+    );
+}
+
+#[test]
 fn adversarial_is_manifold_uses_hypermesh_closed_manifold_facts() {
     let cube: Mesh<()> = Mesh::cube(2.0, ());
     assert!(cube.is_manifold());
