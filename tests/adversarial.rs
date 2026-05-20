@@ -612,6 +612,75 @@ fn adversarial_hypermesh_adapter_rejects_nonfinite_struct_literal_vertices() {
 }
 
 #[test]
+#[cfg(feature = "sdf")]
+fn adversarial_sdf_rejects_nonfinite_sampling_boundary_at_hyperreal_boundary() {
+    let cases = [
+        (
+            Point3::new(Real::NAN, -1.0, -1.0),
+            Point3::new(1.0, 1.0, 1.0),
+            0.0,
+        ),
+        (
+            Point3::new(-1.0, -1.0, -1.0),
+            Point3::new(Real::INFINITY, 1.0, 1.0),
+            0.0,
+        ),
+        (
+            Point3::new(-1.0, -1.0, -1.0),
+            Point3::new(1.0, 1.0, 1.0),
+            Real::NAN,
+        ),
+    ];
+
+    for (min_pt, max_pt, iso_value) in cases {
+        let (mesh, diagnostics) = Mesh::<()>::sdf_with_diagnostics(
+            |_| 0.0,
+            (4, 4, 4),
+            min_pt,
+            max_pt,
+            iso_value,
+            (),
+        );
+
+        assert!(mesh.polygons.is_empty(), "{diagnostics:#?}");
+        assert_eq!(diagnostics.sample_count, 64);
+        assert_eq!(diagnostics.non_finite_sample_count, diagnostics.sample_count);
+        assert_eq!(diagnostics.positive_sample_count, diagnostics.sample_count);
+        assert_eq!(diagnostics.finite_sample_count, 0);
+        assert_eq!(diagnostics.emitted_triangle_count, 0);
+    }
+}
+
+#[test]
+#[cfg(feature = "metaballs")]
+fn adversarial_metaballs_reject_invalid_sampling_boundary_at_hyperreal_boundary() {
+    let valid = csgrs::mesh::metaballs::MetaBall::new(Point3::new(0.0, 0.0, 0.0), 1.0);
+    let invalid_center =
+        csgrs::mesh::metaballs::MetaBall::new(Point3::new(Real::NAN, 0.0, 0.0), 1.0);
+    let invalid_radius =
+        csgrs::mesh::metaballs::MetaBall::new(Point3::new(0.0, 0.0, 0.0), Real::INFINITY);
+
+    let cases = [
+        (vec![invalid_center], 1.0, 0.5),
+        (vec![invalid_radius], 1.0, 0.5),
+        (vec![valid.clone()], Real::NAN, 0.5),
+        (vec![valid], 1.0, Real::NAN),
+    ];
+
+    for (balls, iso_value, padding) in cases {
+        let (mesh, diagnostics) =
+            Mesh::<()>::metaballs_with_diagnostics(&balls, (4, 4, 4), iso_value, padding, ());
+
+        assert!(mesh.polygons.is_empty(), "{diagnostics:#?}");
+        assert_eq!(diagnostics.sample_count, 64);
+        assert_eq!(diagnostics.non_finite_sample_count, diagnostics.sample_count);
+        assert_eq!(diagnostics.positive_sample_count, diagnostics.sample_count);
+        assert_eq!(diagnostics.finite_sample_count, 0);
+        assert_eq!(diagnostics.emitted_triangle_count, 0);
+    }
+}
+
+#[test]
 fn adversarial_is_manifold_uses_hypermesh_closed_manifold_facts() {
     let cube: Mesh<()> = Mesh::cube(2.0, ());
     assert!(cube.is_manifold());

@@ -1,7 +1,8 @@
 //! Provides a `MetaBall` struct and functions for creating a `Mesh` from [MetaBalls](https://en.wikipedia.org/wiki/Metaballs)
 
 use crate::float_types::{
-    Real, hreal_to_f64, htriangle_area2_exceeds_epsilon, hvector3_from_point3, tolerance,
+    Real, hreal_from_f64, hreal_to_f64, htriangle_area2_exceeds_epsilon, hvector3_from_point3,
+    hvector3_from_vector3, tolerance,
 };
 use crate::mesh::Mesh;
 use crate::polygon::Polygon;
@@ -51,7 +52,7 @@ impl MetaBall {
     /// follows Yap's exact-geometric-computation boundary split
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     pub fn influence(&self, p: &Point3<Real>) -> Real {
-        if !self.radius.is_finite() || self.radius <= 0.0 {
+        if hreal_from_f64(self.radius).is_err() || self.radius <= 0.0 {
             return 0.0;
         }
 
@@ -70,13 +71,6 @@ impl MetaBall {
         let denominator = distance_squared + tolerance();
         (self.radius * self.radius) / denominator
     }
-}
-
-/// **Mathematical Foundation**: Scalar field F(p) = Σ I_i(p) where I_i is the influence
-/// function of the i-th metaball. This creates smooth isosurfaces at threshold values.
-/// **Optimization**: Iterator-based summation with potential for vectorization.
-fn scalar_field_metaballs(balls: &[MetaBall], p: &Point3<Real>) -> Real {
-    balls.iter().map(|ball| ball.influence(p)).sum()
 }
 
 impl<M: Clone + Debug + Send + Sync> Mesh<M> {
@@ -98,6 +92,16 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
 
     /// Creates a Mesh from metaballs and returns diagnostics for sampling and
     /// surface-net triangle conversion.
+    ///
+    /// Metaball centers, radii, padding, iso values, generated vertices, and
+    /// generated normals are promoted through hyperreal/hyperlattice boundary
+    /// adapters before they contribute to mesh topology. csgrs therefore only
+    /// composes the sampled surface into its transitional `Mesh` carrier while
+    /// exact-aware predicates remain in the hyper crates, following Yap,
+    /// "Towards Exact Geometric Computation," *Computational Geometry*
+    /// 7(1-2), 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>). Surface
+    /// extraction follows Gibson, "Constrained Elastic Surface Nets," MERL
+    /// TR99-24, 1999.
     pub fn metaballs_with_diagnostics(
         balls: &[MetaBall],
         resolution: (usize, usize, usize),
@@ -105,22 +109,42 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         padding: Real,
         metadata: M,
     ) -> (Mesh<M>, MetaballDiagnostics) {
+        let nx = resolution.0.max(2) as u32;
+        let ny = resolution.1.max(2) as u32;
+        let nz = resolution.2.max(2) as u32;
+        let mut diagnostics = MetaballDiagnostics {
+            resolution: (nx, ny, nz),
+            ball_count: balls.len(),
+            sample_count: (nx * ny * nz) as usize,
+            ..MetaballDiagnostics::default()
+        };
+
         if balls.is_empty() {
-            return (
-                Mesh::empty(metadata),
-                MetaballDiagnostics {
-                    resolution: (
-                        resolution.0.max(2) as u32,
-                        resolution.1.max(2) as u32,
-                        resolution.2.max(2) as u32,
-                    ),
-                    ..MetaballDiagnostics::default()
-                },
-            );
+            diagnostics.sample_count = 0;
+            return (Mesh::empty(metadata), diagnostics);
+        }
+
+        let valid_balls = balls
+            .iter()
+            .filter(|ball| {
+                hvector3_from_point3(&ball.center).is_some()
+                    && hreal_from_f64(ball.radius).is_ok()
+                    && ball.radius > 0.0
+            })
+            .collect::<Vec<_>>();
+
+        if valid_balls.is_empty()
+            || hreal_from_f64(padding).is_err()
+            || padding < 0.0
+            || hreal_from_f64(iso_value).is_err()
+        {
+            diagnostics.non_finite_sample_count = diagnostics.sample_count;
+            diagnostics.positive_sample_count = diagnostics.sample_count;
+            return (Mesh::empty(metadata), diagnostics);
         }
 
         // Determine bounding box of all metaballs (plus padding).
-        let (min_pt, max_pt) = balls.iter().fold(
+        let (min_pt, max_pt) = valid_balls.iter().fold(
             (
                 Point3::new(Real::MAX, Real::MAX, Real::MAX),
                 Point3::new(-Real::MAX, -Real::MAX, -Real::MAX),
@@ -136,17 +160,6 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                 (min_p, max_p)
             },
         );
-
-        // Resolution for X, Y, Z
-        let nx = resolution.0.max(2) as u32;
-        let ny = resolution.1.max(2) as u32;
-        let nz = resolution.2.max(2) as u32;
-        let mut diagnostics = MetaballDiagnostics {
-            resolution: (nx, ny, nz),
-            ball_count: balls.len(),
-            sample_count: (nx * ny * nz) as usize,
-            ..MetaballDiagnostics::default()
-        };
 
         // Spacing in each axis
         let dx = (max_pt.x - min_pt.x) / (nx as Real - 1.0);
@@ -170,8 +183,12 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                     let xf = min_pt.x + (ix as Real) * dx;
                     let p = Point3::new(xf, yf, zf);
 
-                    let field_value = scalar_field_metaballs(balls, &p);
-                    field_values[index_3d(ix, iy, iz)] = if field_value.is_finite() {
+                    let field_value = valid_balls
+                        .iter()
+                        .map(|ball| ball.influence(&p))
+                        .sum::<Real>();
+                    field_values[index_3d(ix, iy, iz)] = if hreal_from_f64(field_value).is_ok()
+                    {
                         diagnostics.finite_sample_count += 1;
                         diagnostics.min_finite_value = Some(
                             diagnostics
@@ -304,12 +321,12 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             let n1v = Vector3::new(n1[0] as Real, n1[1] as Real, n1[2] as Real);
             let n2v = Vector3::new(n2[0] as Real, n2[1] as Real, n2[2] as Real);
 
-            if !(point_finite(&p0_real)
-                && point_finite(&p1_real)
-                && point_finite(&p2_real)
-                && vec_finite(&n0v)
-                && vec_finite(&n1v)
-                && vec_finite(&n2v))
+            if !(finite_point3(&p0_real)
+                && finite_point3(&p1_real)
+                && finite_point3(&p2_real)
+                && finite_vector3(&n0v)
+                && finite_vector3(&n1v)
+                && finite_vector3(&n2v))
             {
                 diagnostics.skipped_non_finite_triangle_count += 1;
                 continue;
@@ -335,20 +352,20 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     }
 }
 
-#[inline]
-fn point_finite(p: &Point3<Real>) -> bool {
-    p.coords.iter().all(|&c| c.is_finite())
-}
-
-#[inline]
-fn vec_finite(v: &Vector3<Real>) -> bool {
-    v.iter().all(|&c| c.is_finite())
-}
-
 fn hyper_point_distance_squared(lhs: &Point3<Real>, rhs: &Point3<Real>) -> Option<Real> {
     let lhs = hvector3_from_point3(lhs)?;
     let rhs = hvector3_from_point3(rhs)?;
     hreal_to_f64(&lhs.squared_distance(&rhs))
+}
+
+#[inline]
+fn finite_point3(point: &Point3<Real>) -> bool {
+    hvector3_from_point3(point).is_some()
+}
+
+#[inline]
+fn finite_vector3(vector: &Vector3<Real>) -> bool {
+    hvector3_from_vector3(vector).is_some()
 }
 
 fn count_crossing_cells(field_values: &[f32], nx: u32, ny: u32, nz: u32) -> usize {
