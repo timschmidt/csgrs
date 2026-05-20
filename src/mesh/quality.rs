@@ -1,7 +1,8 @@
 //! Mesh quality metrics for triangles, vertices, and aggregate mesh health.
 
 use crate::float_types::{
-    PI, Real, hreal_to_f64, htriangle_area, hvector3_from_point3, tolerance,
+    PI, Real, hreal_div, hreal_mean, hreal_sample_stddev, hreal_to_f64, htriangle_area,
+    hvector3_from_point3, tolerance,
 };
 use crate::mesh::Mesh;
 use crate::vertex::Vertex;
@@ -268,8 +269,8 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             };
         }
 
-        let total_quality: Real = qualities.iter().map(|q| q.quality_score).sum();
-        let avg_quality = total_quality / qualities.len() as Real;
+        let quality_scores = qualities.iter().map(|q| q.quality_score).collect::<Vec<_>>();
+        let avg_quality = hreal_mean(&quality_scores).unwrap_or(0.0);
 
         let min_quality = qualities
             .iter()
@@ -277,7 +278,8 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             .fold(Real::INFINITY, |a, b| a.min(b));
 
         let high_quality_count = qualities.iter().filter(|q| q.quality_score > 0.7).count();
-        let high_quality_ratio = high_quality_count as Real / qualities.len() as Real;
+        let high_quality_ratio =
+            hreal_div(high_quality_count as Real, qualities.len() as Real).unwrap_or(0.0);
 
         let sliver_count = qualities
             .iter()
@@ -303,22 +305,9 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             })
             .collect();
 
-        let avg_edge_length = if !edge_lengths.is_empty() {
-            edge_lengths.iter().sum::<Real>() / edge_lengths.len() as Real
-        } else {
-            0.0
-        };
+        let avg_edge_length = hreal_mean(&edge_lengths).unwrap_or(0.0);
 
-        let edge_length_variance = if edge_lengths.len() > 1 {
-            let variance: Real = edge_lengths
-                .iter()
-                .map(|&len| (len - avg_edge_length).powi(2))
-                .sum::<Real>()
-                / (edge_lengths.len() - 1) as Real;
-            variance.sqrt()
-        } else {
-            0.0
-        };
+        let edge_length_std = hreal_sample_stddev(&edge_lengths).unwrap_or(0.0);
 
         MeshQualityMetrics {
             avg_quality,
@@ -326,7 +315,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             high_quality_ratio,
             sliver_count,
             avg_edge_length,
-            edge_length_std: edge_length_variance,
+            edge_length_std,
         }
     }
 }
