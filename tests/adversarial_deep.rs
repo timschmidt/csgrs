@@ -5,7 +5,7 @@ use csgrs::float_types::{Real, tolerance};
 use csgrs::mesh::Mesh;
 use csgrs::mesh::plane::Plane;
 use csgrs::polygon::Polygon;
-use csgrs::sketch::Sketch;
+use csgrs::sketch::Profile;
 use csgrs::vertex::{Vertex, VertexCluster};
 use hashbrown::HashMap;
 use hypercurve::{Contour2, CurveString2, Region2};
@@ -75,7 +75,7 @@ fn assert_mesh_sane<M: Clone + Send + Sync + std::fmt::Debug>(mesh: &Mesh<M>) {
     }
 }
 
-fn assert_sketch_sane<M: Clone + Send + Sync + std::fmt::Debug>(sketch: &Sketch<M>) {
+fn assert_sketch_sane<M: Clone + Send + Sync + std::fmt::Debug>(sketch: &Profile<M>) {
     let profiles = sketch.region_profiles();
     let wires = sketch.wire_polylines();
     for profile in &profiles {
@@ -104,7 +104,7 @@ fn assert_sketch_sane<M: Clone + Send + Sync + std::fmt::Debug>(sketch: &Sketch<
 }
 
 fn sketch_all_coords_finite<M: Clone + Send + Sync + std::fmt::Debug>(
-    sketch: &Sketch<M>,
+    sketch: &Profile<M>,
 ) -> bool {
     sketch.region_profiles().iter().all(|profile| {
         profile
@@ -222,32 +222,32 @@ fn adversarial_deep_sketch_shape_catalog_is_contained() {
             for &segments in &counts {
                 let attempts = [
                     catch_unwind(AssertUnwindSafe(|| {
-                        Sketch::<&str>::rectangle(a, b, "rectangle")
+                        Profile::<&str>::rectangle(a, b, "rectangle")
                     })),
-                    catch_unwind(AssertUnwindSafe(|| Sketch::<&str>::square(a, "square"))),
+                    catch_unwind(AssertUnwindSafe(|| Profile::<&str>::square(a, "square"))),
                     catch_unwind(AssertUnwindSafe(|| {
-                        Sketch::<&str>::circle(a, segments, "circle")
-                    })),
-                    catch_unwind(AssertUnwindSafe(|| {
-                        Sketch::<&str>::right_triangle(a, b, "right_triangle")
+                        Profile::<&str>::circle(a, segments, "circle")
                     })),
                     catch_unwind(AssertUnwindSafe(|| {
-                        Sketch::<&str>::ellipse(a, b, segments, "ellipse")
+                        Profile::<&str>::right_triangle(a, b, "right_triangle")
                     })),
                     catch_unwind(AssertUnwindSafe(|| {
-                        Sketch::<&str>::regular_ngon(segments, a, "ngon")
+                        Profile::<&str>::ellipse(a, b, segments, "ellipse")
                     })),
                     catch_unwind(AssertUnwindSafe(|| {
-                        Sketch::<&str>::arrow(a, b, 1.0, 0.5, "arrow")
+                        Profile::<&str>::regular_ngon(segments, a, "ngon")
                     })),
                     catch_unwind(AssertUnwindSafe(|| {
-                        Sketch::<&str>::trapezoid(a, b, 1.0, 0.25, "trapezoid")
+                        Profile::<&str>::arrow(a, b, 1.0, 0.5, "arrow")
                     })),
                     catch_unwind(AssertUnwindSafe(|| {
-                        Sketch::<&str>::star(segments, a, b, "star")
+                        Profile::<&str>::trapezoid(a, b, 1.0, 0.25, "trapezoid")
                     })),
                     catch_unwind(AssertUnwindSafe(|| {
-                        Sketch::<&str>::rounded_rectangle(
+                        Profile::<&str>::star(segments, a, b, "star")
+                    })),
+                    catch_unwind(AssertUnwindSafe(|| {
+                        Profile::<&str>::rounded_rectangle(
                             a,
                             b,
                             0.5,
@@ -256,22 +256,22 @@ fn adversarial_deep_sketch_shape_catalog_is_contained() {
                         )
                     })),
                     catch_unwind(AssertUnwindSafe(|| {
-                        Sketch::<&str>::squircle(a, b, segments, "squircle")
+                        Profile::<&str>::squircle(a, b, segments, "squircle")
                     })),
                     catch_unwind(AssertUnwindSafe(|| {
-                        Sketch::<&str>::keyhole(a, b, 1.0, segments, "keyhole")
+                        Profile::<&str>::keyhole(a, b, 1.0, segments, "keyhole")
                     })),
                     catch_unwind(AssertUnwindSafe(|| {
-                        Sketch::<&str>::reuleaux(segments, a, segments, "reuleaux")
+                        Profile::<&str>::reuleaux(segments, a, segments, "reuleaux")
                     })),
                     catch_unwind(AssertUnwindSafe(|| {
-                        Sketch::<&str>::ring(a, b, segments, "ring")
+                        Profile::<&str>::ring(a, b, segments, "ring")
                     })),
                     catch_unwind(AssertUnwindSafe(|| {
-                        Sketch::<&str>::pie_slice(a, -90.0, 450.0, segments, "pie_slice")
+                        Profile::<&str>::pie_slice(a, -90.0, 450.0, segments, "pie_slice")
                     })),
                     catch_unwind(AssertUnwindSafe(|| {
-                        Sketch::<&str>::supershape(
+                        Profile::<&str>::supershape(
                             a,
                             b,
                             0.0,
@@ -283,13 +283,13 @@ fn adversarial_deep_sketch_shape_catalog_is_contained() {
                         )
                     })),
                     catch_unwind(AssertUnwindSafe(|| {
-                        Sketch::<&str>::heart(a, b, segments, "heart")
+                        Profile::<&str>::heart(a, b, segments, "heart")
                     })),
                     catch_unwind(AssertUnwindSafe(|| {
-                        Sketch::<&str>::crescent(a, b, 0.25, segments, "crescent")
+                        Profile::<&str>::crescent(a, b, 0.25, segments, "crescent")
                     })),
                     catch_unwind(AssertUnwindSafe(|| {
-                        Sketch::<&str>::airfoil_naca4(a, b, 12.0, 1.0, segments, "airfoil")
+                        Profile::<&str>::airfoil_naca4(a, b, 12.0, 1.0, segments, "airfoil")
                     })),
                 ];
 
@@ -327,11 +327,11 @@ fn adversarial_deep_native_sketch_boolean_catalog() {
     }
 
     let mut sketches = vec![
-        Sketch::empty("native"),
-        Sketch::from_wires(vec![wire(&[[0.0, 0.0], [1.0, 0.0]])], "native"),
+        Profile::empty("native"),
+        Profile::from_wires(vec![wire(&[[0.0, 0.0], [1.0, 0.0]])], "native"),
     ];
     if let Some(bowtie) = contour(&[[0.0, 0.0], [1.0, 1.0], [0.0, 1.0], [1.0, 0.0]]) {
-        sketches.push(Sketch::from_region(
+        sketches.push(Profile::from_region(
             Region2::from_material_contours(vec![bowtie]),
             "native",
         ));
@@ -340,13 +340,13 @@ fn adversarial_deep_native_sketch_boolean_catalog() {
         contour(&[[0.0, 0.0], [4.0, 0.0], [4.0, 4.0], [0.0, 4.0]]),
         contour(&[[4.0, 2.0], [5.0, 2.0], [5.0, 3.0], [4.0, 3.0]]),
     ) {
-        sketches.push(Sketch::from_region(
+        sketches.push(Profile::from_region(
             Region2::new(vec![outer], vec![off_boundary_hole]),
             "native",
         ));
     }
 
-    let cutter = Sketch::<&str>::rectangle(0.5, 0.5, "cutter");
+    let cutter = Profile::<&str>::rectangle(0.5, 0.5, "cutter");
     for sketch in sketches {
         assert_sketch_sane(&sketch);
         for result in [
@@ -368,7 +368,7 @@ fn adversarial_deep_native_sketch_boolean_catalog() {
 
 #[test]
 fn adversarial_deep_extrude_loft_revolve_sweep_catalog() {
-    let profile = Sketch::<&str>::rectangle(1.0, 0.5, "profile").translate(0.5, 0.0, 0.0);
+    let profile = Profile::<&str>::rectangle(1.0, 0.5, "profile").translate(0.5, 0.0, 0.0);
     let paths = [
         vec![],
         vec![Point3::origin()],
@@ -412,12 +412,12 @@ fn adversarial_deep_extrude_loft_revolve_sweep_catalog() {
     let top = triangle_at_z(1.0);
     let mut bad_top = top.clone();
     bad_top.vertices.pop();
-    if let Ok(Ok(mesh)) = catch_unwind(AssertUnwindSafe(|| Sketch::loft(&bottom, &top, true)))
+    if let Ok(Ok(mesh)) = catch_unwind(AssertUnwindSafe(|| Profile::loft(&bottom, &top, true)))
     {
         assert_mesh_sane(&mesh);
     }
     assert!(matches!(
-        catch_unwind(AssertUnwindSafe(|| Sketch::loft(&bottom, &bad_top, true))),
+        catch_unwind(AssertUnwindSafe(|| Profile::loft(&bottom, &bad_top, true))),
         Ok(Err(_))
     ));
 }
@@ -505,7 +505,7 @@ fn adversarial_deep_sdf_tpms_image_and_text_catalog() {
                 }
             }
             if let Ok(sketch) = catch_unwind(AssertUnwindSafe(|| {
-                Sketch::<&str>::from_image(&image, 128, true, "image")
+                Profile::<&str>::from_image(&image, 128, true, "image")
             })) {
                 assert_sketch_sane(&sketch);
             }
@@ -519,7 +519,7 @@ fn adversarial_deep_sdf_tpms_image_and_text_catalog() {
             b"not a font".as_slice(),
             &[0, 1, 2, 3, 4, 5, 6, 7],
         ] {
-            let sketch = Sketch::<&str>::text("A\t\n\u{202e}", bytes, 1.0, "text");
+            let sketch = Profile::<&str>::text("A\t\n\u{202e}", bytes, 1.0, "text");
             assert_sketch_sane(&sketch);
         }
     }
@@ -673,10 +673,10 @@ fn adversarial_deep_toolpath_all_generators_emit_finite_gcode() {
         z_safe: 5.0,
     };
     let sketches = [
-        Sketch::<()>::new(),
-        Sketch::rectangle(10.0, 5.0, ()),
-        Sketch::ring(3.0, 1.0, 16, ()),
-        Sketch::polygon(&[[0.0, 0.0], [4.0, 0.0], [2.0, 0.01], [0.0, 0.0]], ()),
+        Profile::<()>::new(),
+        Profile::rectangle(10.0, 5.0, ()),
+        Profile::ring(3.0, 1.0, 16, ()),
+        Profile::polygon(&[[0.0, 0.0], [4.0, 0.0], [2.0, 0.01], [0.0, 0.0]], ()),
     ];
 
     for sketch in &sketches {
@@ -828,7 +828,7 @@ proptest! {
             [margin, h - margin],
         ])
         .expect("proptest generated positive inset rectangle");
-        let sketch = Sketch::<()>::from_region(Region2::new(vec![outer], vec![hole]), ());
+        let sketch = Profile::<()>::from_region(Region2::new(vec![outer], vec![hole]), ());
         assert_sketch_sane(&sketch);
         for tri in sketch.triangulate() {
             for point in tri {
@@ -867,15 +867,15 @@ proptest! {
     ) {
         let control = points.iter().map(|&(x, y)| [x, y]).collect::<Vec<_>>();
         for result in [
-            catch_unwind(AssertUnwindSafe(|| Sketch::<()>::bezier(&control, segments, ()))),
-            catch_unwind(AssertUnwindSafe(|| Sketch::<()>::bspline(&control, 3, segments, ()))),
+            catch_unwind(AssertUnwindSafe(|| Profile::<()>::bezier(&control, segments, ()))),
+            catch_unwind(AssertUnwindSafe(|| Profile::<()>::bspline(&control, 3, segments, ()))),
         ] {
             if let Ok(sketch) = result {
                 assert_sketch_sane(&sketch);
             }
         }
 
-        let base = Sketch::<()>::rectangle(10.0, 10.0, ());
+        let base = Profile::<()>::rectangle(10.0, 10.0, ());
         let hilbert = base.hilbert_curve(order, padding as Real);
         assert_sketch_sane(&hilbert);
     }

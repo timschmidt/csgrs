@@ -1,6 +1,6 @@
 //! Extrude, vector-extrude, revolve, loft, and sweep sketches into meshes.
 
-use csgrs::{csg::CSG, mesh::Mesh, polygon::Polygon, sketch::Sketch, vertex::Vertex};
+use csgrs::{csg::CSG, mesh::Mesh, polygon::Polygon, sketch::Profile, vertex::Vertex};
 use nalgebra::{Point3, Vector3};
 use std::{fs, path::Path};
 
@@ -9,9 +9,9 @@ const PATH: &str = "stl/examples/extrude";
 fn main() {
     fs::create_dir_all(PATH).unwrap();
 
-    let square = Sketch::<()>::square(1.5, ());
-    let circle = Sketch::<()>::circle(0.5, 32, ()).translate(1.5, 0.0, 0.0);
-    let star = Sketch::<()>::star(5, 1.2, 0.45, ());
+    let square = Profile::<()>::square(1.5, ());
+    let circle = Profile::<()>::circle(0.5, 32, ()).translate(1.5, 0.0, 0.0);
+    let star = Profile::<()>::star(5, 1.2, 0.45, ());
 
     write_mesh(&square.extrude(1.0), "square_extrude");
     write_mesh(
@@ -26,7 +26,7 @@ fn main() {
             Point3::new(t.cos() * 0.6, t.sin() * 0.6, i as f64 * 0.04)
         })
         .collect::<Vec<_>>();
-    write_mesh(&Sketch::<()>::circle(0.08, 12, ()).sweep(&path), "sweep");
+    write_mesh(&Profile::<()>::circle(0.08, 12, ()).sweep(&path), "sweep");
 
     let bottom = Polygon::new(
         vec![
@@ -46,7 +46,7 @@ fn main() {
         ],
         (),
     );
-    write_mesh(&Sketch::<()>::loft(&bottom, &top, true).unwrap(), "loft");
+    write_mesh(&Profile::<()>::loft(&bottom, &top, true).unwrap(), "loft");
 }
 
 fn write_mesh(mesh: &Mesh<()>, name: &str) {

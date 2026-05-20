@@ -2,7 +2,7 @@
 
 use crate::csg::CSG;
 use crate::float_types::{Real, hreal_from_f64, hreal_to_f64, tolerance};
-use crate::sketch::Sketch;
+use crate::sketch::Profile;
 use hypercurve::{
     Classification, Contour2, CurvePolicy, CurveString2, FiniteProjectionOptions,
     FiniteRegionProfile2, Point2, Region2, Segment2,
@@ -117,7 +117,7 @@ fn path_run_is_closed(run: &[SvgCoord]) -> bool {
 /// - Method suffix `_by` indicates a command that uses relative coordinates
 ///
 /// Parsed finite runs are promoted into `hypercurve::Region2` or
-/// `hypercurve::CurveString2` at the Sketch boundary. Keeping SVG's finite
+/// `hypercurve::CurveString2` at the Profile boundary. Keeping SVG's finite
 /// interchange coordinates at the boundary while native CAD ownership lives in
 /// hyper geometry follows Yap, "Towards Exact Geometric Computation,"
 /// *Computational Geometry* 7(1-2), 1997
@@ -486,7 +486,7 @@ pub trait FromSVG<M>: Sized {
     fn from_svg(doc: &str, metadata: M) -> Result<Self, IoError>;
 }
 
-impl<M> FromSVG<M> for Sketch<M>
+impl<M> FromSVG<M> for Profile<M>
 where
     M: Clone + Send + Sync + Debug,
 {
@@ -508,7 +508,7 @@ where
             };
         }
 
-        let mut sketch_union = Sketch::empty(metadata.clone());
+        let mut sketch_union = Profile::empty(metadata.clone());
 
         for event in svg::read(doc)? {
             match event {
@@ -666,11 +666,11 @@ where
     }
 }
 
-/// Promote one SVG path element's finite subpath runs into native Sketch topology.
+/// Promote one SVG path element's finite subpath runs into native Profile topology.
 ///
 /// Closed subpaths are passed together to [`Region2::from_boundary_contours`]
 /// so nested SVG rings become material/hole roles inside hypercurve rather
-/// than through per-ring `Sketch` booleans. Open subpaths become
+/// than through per-ring `Profile` booleans. Open subpaths become
 /// [`CurveString2`] wires. This keeps SVG's finite coordinates at the
 /// file-format boundary while the CAD state is composed from hypercurve types,
 /// following Yap, "Towards Exact Geometric Computation," *Computational
@@ -680,7 +680,7 @@ where
 /// Polygon Problem for Arbitrary Polygons," *Computational Geometry* 20(3),
 /// 2001 (<https://doi.org/10.1016/S0925-7721(01)00012-8>), while path syntax
 /// follows the W3C SVG 1.1 path-data specification.
-fn sketch_from_svg_runs<M>(runs: SvgPathRuns, metadata: M) -> Option<Sketch<M>>
+fn sketch_from_svg_runs<M>(runs: SvgPathRuns, metadata: M) -> Option<Profile<M>>
 where
     M: Clone + Send + Sync + Debug,
 {
@@ -708,11 +708,11 @@ where
         match Region2::from_boundary_contours(contours, &CurvePolicy::certified()) {
             Ok(Classification::Decided(region)) => region,
             Ok(Classification::Uncertain(_)) | Err(_) => {
-                let mut fallback = Sketch::empty(metadata.clone());
+                let mut fallback = Profile::empty(metadata.clone());
                 for points in closed_runs {
                     if let Ok(contour) = Contour2::from_finite_ring(&points) {
                         fallback =
-                            fallback.union(&Sketch::from_contour(contour, metadata.clone()));
+                            fallback.union(&Profile::from_contour(contour, metadata.clone()));
                     }
                 }
                 fallback.as_region().clone()
@@ -723,7 +723,7 @@ where
     if region.is_empty() && wires.is_empty() {
         None
     } else {
-        Some(Sketch::from_region_and_wires(region, wires, metadata))
+        Some(Profile::from_region_and_wires(region, wires, metadata))
     }
 }
 
@@ -747,7 +747,7 @@ pub trait ToSVG {
     fn to_svg(&self) -> String;
 }
 
-impl<M: Clone + Send + Sync + Debug> ToSVG for Sketch<M> {
+impl<M: Clone + Send + Sync + Debug> ToSVG for Profile<M> {
     fn to_svg(&self) -> String {
         use svg::node::element;
 
@@ -1234,9 +1234,9 @@ mod tests {
 </svg>
         "#;
 
-        let sketch = Sketch::<()>::from_svg(svg_in, ()).unwrap();
+        let sketch = Profile::<()>::from_svg(svg_in, ()).unwrap();
         let svg_out = sketch.to_svg();
-        let reparsed = Sketch::<()>::from_svg(&svg_out, ()).unwrap();
+        let reparsed = Profile::<()>::from_svg(&svg_out, ()).unwrap();
 
         assert_eq!(
             sketch.region_profiles().len(),
@@ -1312,7 +1312,7 @@ mod tests {
 <path d="M 1 2 l 3 4 H 10 v 6"/>
 </svg>
         "#;
-        let sketch = Sketch::<()>::from_svg(svg_in, ()).unwrap();
+        let sketch = Profile::<()>::from_svg(svg_in, ()).unwrap();
         assert_eq!(sketch.region_profiles().len(), 0);
         assert_eq!(sketch.wires().len(), 1);
     }
@@ -1329,7 +1329,7 @@ mod tests {
 </svg>
         "#;
 
-        let sketch = Sketch::<()>::from_svg(svg_in, ()).unwrap();
+        let sketch = Profile::<()>::from_svg(svg_in, ()).unwrap();
 
         assert_eq!(sketch.material_contour_count(), 2);
         assert_eq!(sketch.hole_contour_count(), 1);
@@ -1350,7 +1350,7 @@ mod tests {
 </svg>
         "#;
 
-        let sketch = Sketch::<()>::from_svg(svg_in, ()).unwrap();
+        let sketch = Profile::<()>::from_svg(svg_in, ()).unwrap();
 
         assert_eq!(sketch.material_contour_count(), 1);
         assert_eq!(sketch.hole_contour_count(), 0);

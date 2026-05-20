@@ -61,7 +61,7 @@ fn test_mesh_intersect_polyline_hits_cube() {
 
 #[test]
 fn test_negative_extrude_has_downward_top_normal() {
-    let square = Sketch::<()>::square(2.0, ());
+    let square = Profile::<()>::square(2.0, ());
     let mesh = square.extrude_vector(Vector3::new(0.0, 0.0, -1.0));
 
     assert!(

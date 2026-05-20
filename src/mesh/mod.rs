@@ -21,7 +21,7 @@ use crate::polygon::Polygon;
 use crate::vertex::Vertex;
 
 #[cfg(feature = "sketch")]
-use crate::sketch::Sketch;
+use crate::sketch::Profile;
 
 use crate::csg::CSG;
 use hashbrown::HashMap;
@@ -1240,8 +1240,8 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
 }
 
 #[cfg(feature = "sketch")]
-impl<M: Clone + Send + Sync + Debug> From<Sketch<M>> for Mesh<M> {
-    /// Convert a Sketch into a Mesh.
+impl<M: Clone + Send + Sync + Debug> From<Profile<M>> for Mesh<M> {
+    /// Convert a Profile into a Mesh.
     ///
     /// Closed area sketches are consumed only from hypercurve-owned finite
     /// [`hypercurve::FiniteRegionProfile2`] projections. `Region2` and
@@ -1256,7 +1256,7 @@ impl<M: Clone + Send + Sync + Debug> From<Sketch<M>> for Mesh<M> {
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>): topology lives in
     /// hyper geometry, while mesh vertices are the finite API-boundary
     /// realization.
-    fn from(sketch: Sketch<M>) -> Self {
+    fn from(sketch: Profile<M>) -> Self {
         fn ring_to_vertices(ring: &[[Real; 2]]) -> Vec<Vertex> {
             let mut vertices: Vec<_> = ring
                 .iter()

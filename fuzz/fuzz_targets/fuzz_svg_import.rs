@@ -3,12 +3,12 @@
 #![no_main]
 
 use csgrs::io::svg::FromSVG;
-use csgrs::sketch::Sketch;
+use csgrs::sketch::Profile;
 use libfuzzer_sys::fuzz_target;
 
 fuzz_target!(|bytes: &[u8]| {
     let text = String::from_utf8_lossy(bytes);
-    if let Ok(sketch) = Sketch::<()>::from_svg(&text, ()) {
+    if let Ok(sketch) = Profile::<()>::from_svg(&text, ()) {
         for triangle in sketch.triangulate() {
             for point in triangle {
                 assert!(point.x.is_finite());

@@ -15,7 +15,7 @@ use csgrs::float_types::{Real, hreal_from_f64};
 use csgrs::mesh::Mesh;
 use csgrs::mesh::metaballs::MetaBall;
 use csgrs::polygon::Polygon;
-use csgrs::sketch::Sketch;
+use csgrs::sketch::Profile;
 use csgrs::vertex::Vertex;
 use hypercurve::Point2;
 use image::{GrayImage, Luma, Rgba, RgbaImage};
@@ -44,73 +44,76 @@ fn main() {
 fn render_readme_sketches() {
     let font_data = include_bytes!("../asar.ttf");
 
-    let square = Sketch::<()>::square(2.0, ());
+    let square = Profile::<()>::square(2.0, ());
     render_sketch("square", &square);
-    render_sketch("rectangle", &Sketch::<()>::rectangle(2.4, 1.35, ()));
-    render_sketch("circle", &Sketch::<()>::circle(1.0, 96, ()));
+    render_sketch("rectangle", &Profile::<()>::rectangle(2.4, 1.35, ()));
+    render_sketch("circle", &Profile::<()>::circle(1.0, 96, ()));
     render_sketch(
         "polygon",
-        &Sketch::<()>::polygon(&[[0.0, 1.2], [-1.1, -0.8], [1.1, -0.8]], ()),
+        &Profile::<()>::polygon(&[[0.0, 1.2], [-1.1, -0.8], [1.1, -0.8]], ()),
     );
     render_sketch(
         "rounded_rectangle",
-        &Sketch::<()>::rounded_rectangle(2.4, 1.5, 0.28, 12, ()),
+        &Profile::<()>::rounded_rectangle(2.4, 1.5, 0.28, 12, ()),
     );
-    render_sketch("ellipse", &Sketch::<()>::ellipse(2.3, 1.3, 96, ()));
-    render_sketch("regular_ngon", &Sketch::<()>::regular_ngon(6, 1.0, ()));
-    render_sketch("sketch_arrow", &Sketch::<()>::arrow(2.2, 0.35, 0.8, 1.0, ()));
-    render_sketch("right_triangle", &Sketch::<()>::right_triangle(2.0, 1.5, ()));
-    render_sketch("trapezoid", &Sketch::<()>::trapezoid(1.2, 2.2, 1.4, 0.45, ()));
-    render_sketch("star", &Sketch::<()>::star(5, 1.1, 0.45, ()));
-    render_sketch("teardrop", &Sketch::<()>::teardrop(1.5, 2.2, 80, ()));
-    render_sketch("sketch_egg", &Sketch::<()>::egg(1.5, 2.2, 96, ()));
-    render_sketch("squircle", &Sketch::<()>::squircle(2.0, 2.0, 96, ()));
-    render_sketch("keyhole", &Sketch::<()>::keyhole(0.7, 0.55, 1.35, 64, ()));
-    render_sketch("reuleaux", &Sketch::<()>::reuleaux(3, 1.0, 24, ()));
-    render_sketch("ring", &Sketch::<()>::ring(1.4, 0.35, 96, ()));
+    render_sketch("ellipse", &Profile::<()>::ellipse(2.3, 1.3, 96, ()));
+    render_sketch("regular_ngon", &Profile::<()>::regular_ngon(6, 1.0, ()));
+    render_sketch("sketch_arrow", &Profile::<()>::arrow(2.2, 0.35, 0.8, 1.0, ()));
+    render_sketch("right_triangle", &Profile::<()>::right_triangle(2.0, 1.5, ()));
+    render_sketch(
+        "trapezoid",
+        &Profile::<()>::trapezoid(1.2, 2.2, 1.4, 0.45, ()),
+    );
+    render_sketch("star", &Profile::<()>::star(5, 1.1, 0.45, ()));
+    render_sketch("teardrop", &Profile::<()>::teardrop(1.5, 2.2, 80, ()));
+    render_sketch("sketch_egg", &Profile::<()>::egg(1.5, 2.2, 96, ()));
+    render_sketch("squircle", &Profile::<()>::squircle(2.0, 2.0, 96, ()));
+    render_sketch("keyhole", &Profile::<()>::keyhole(0.7, 0.55, 1.35, 64, ()));
+    render_sketch("reuleaux", &Profile::<()>::reuleaux(3, 1.0, 24, ()));
+    render_sketch("ring", &Profile::<()>::ring(1.4, 0.35, 96, ()));
     render_sketch(
         "pie_slice",
-        &Sketch::<()>::pie_slice(1.1, -35.0, 115.0, 64, ()),
+        &Profile::<()>::pie_slice(1.1, -35.0, 115.0, 64, ()),
     );
     render_sketch(
         "supershape",
-        &Sketch::<()>::supershape(1.0, 1.0, 6.0, 0.35, 0.8, 0.8, 240, ()),
+        &Profile::<()>::supershape(1.0, 1.0, 6.0, 0.35, 0.8, 0.8, 240, ()),
     );
     render_sketch(
         "circle_with_keyway",
-        &Sketch::<()>::circle_with_keyway(1.0, 96, 0.42, 0.35, ()),
+        &Profile::<()>::circle_with_keyway(1.0, 96, 0.42, 0.35, ()),
     );
     render_sketch(
         "circle_with_flat",
-        &Sketch::<()>::circle_with_flat(1.0, 96, 0.55, ()),
+        &Profile::<()>::circle_with_flat(1.0, 96, 0.55, ()),
     );
     render_sketch(
         "circle_with_two_flats",
-        &Sketch::<()>::circle_with_two_flats(1.0, 96, 0.55, ()),
+        &Profile::<()>::circle_with_two_flats(1.0, 96, 0.55, ()),
     );
-    render_sketch("text", &Sketch::<()>::text("HELLO", font_data, 28.0, ()));
+    render_sketch("text", &Profile::<()>::text("HELLO", font_data, 28.0, ()));
     render_sketch(
         "airfoil_naca4",
-        &Sketch::<()>::airfoil_naca4(2.0, 4.0, 12.0, 2.4, 80, ()),
+        &Profile::<()>::airfoil_naca4(2.0, 4.0, 12.0, 2.4, 80, ()),
     );
     render_sketch(
         "bspline",
-        &Sketch::<()>::bspline(
+        &Profile::<()>::bspline(
             &[[-1.3, -0.7], [-0.6, 1.0], [0.5, 1.1], [1.3, -0.6]],
             3,
             32,
             (),
         ),
     );
-    render_sketch("heart", &Sketch::<()>::heart(2.0, 1.8, 160, ()));
-    render_sketch("crescent", &Sketch::<()>::crescent(1.1, 0.85, 0.45, 96, ()));
+    render_sketch("heart", &Profile::<()>::heart(2.0, 1.8, 160, ()));
+    render_sketch("crescent", &Profile::<()>::crescent(1.1, 0.85, 0.45, 96, ()));
     render_sketch(
         "involute_gear",
-        &Sketch::<()>::involute_gear(0.2, 18, 20.0, 0.0, 0.0, 8, ()),
+        &Profile::<()>::involute_gear(0.2, 18, 20.0, 0.0, 0.0, 8, ()),
     );
     render_sketch(
         "hilbert_curve",
-        &Sketch::<()>::square(2.0, ()).hilbert_curve(5, 0.08),
+        &Profile::<()>::square(2.0, ()).hilbert_curve(5, 0.08),
     );
 
     let mut image = GrayImage::new(16, 16);
@@ -123,7 +126,10 @@ fn render_readme_sketches() {
             }
         }
     }
-    render_sketch("from_image", &Sketch::<()>::from_image(&image, 128, true, ()));
+    render_sketch(
+        "from_image",
+        &Profile::<()>::from_image(&image, 128, true, ()),
+    );
 
     let metaballs = [
         (
@@ -141,10 +147,10 @@ fn render_readme_sketches() {
     ];
     render_sketch(
         "metaballs_2d",
-        &Sketch::<()>::metaballs(&metaballs, (48, 48), 0.7, 0.25, ()),
+        &Profile::<()>::metaballs(&metaballs, (48, 48), 0.7, 0.25, ()),
     );
 
-    let bezier = Sketch::<()>::bezier(
+    let bezier = Profile::<()>::bezier(
         &[[-1.2, -0.75], [-0.55, 1.05], [0.55, -1.0], [1.2, 0.75]],
         96,
         (),
@@ -201,7 +207,7 @@ fn render_readme_meshes() {
         .expect("polyhedron"),
     );
 
-    let star = Sketch::<()>::star(5, 1.0, 0.45, ());
+    let star = Profile::<()>::star(5, 1.0, 0.45, ());
     render_mesh("extrude", &star.extrude(0.65));
     render_mesh(
         "extrude_vector",
@@ -209,7 +215,7 @@ fn render_readme_meshes() {
     );
     render_mesh(
         "revolve",
-        &Sketch::<()>::circle(0.18, 32, ())
+        &Profile::<()>::circle(0.18, 32, ())
             .translate(1.0, 0.0, 0.0)
             .revolve(265.0, 32)
             .expect("revolve"),
@@ -234,11 +240,11 @@ fn render_readme_meshes() {
     );
     render_mesh(
         "loft",
-        &Sketch::<()>::loft(&bottom, &top, true).expect("loft"),
+        &Profile::<()>::loft(&bottom, &top, true).expect("loft"),
     );
     render_mesh(
         "sweep",
-        &Sketch::<()>::circle(0.18, 24, ()).sweep(&[
+        &Profile::<()>::circle(0.18, 24, ()).sweep(&[
             Point3::new(-1.2, -0.6, 0.0),
             Point3::new(-0.45, 0.4, 0.55),
             Point3::new(0.4, -0.25, 1.0),
@@ -326,7 +332,7 @@ fn render_distribution_examples() {
     render_mesh("distribute_arc", &arc);
 }
 
-fn render_sketch(name: &str, sketch: &Sketch<()>) {
+fn render_sketch(name: &str, sketch: &Profile<()>) {
     let mut image = RgbaImage::from_pixel(SIZE, SIZE, BG);
     let profiles = sketch.region_profiles();
     let wires = sketch.wire_polylines();

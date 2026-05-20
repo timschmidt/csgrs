@@ -1,12 +1,12 @@
-//! Create `Sketch`s using single stroke Hershey fonts
+//! Create `Profile`s using single stroke Hershey fonts
 
 use crate::float_types::Real;
-use crate::sketch::Sketch;
+use crate::sketch::Profile;
 use hershey::{Font, Glyph as HersheyGlyph, Vector as HersheyVector};
 use hypercurve::CurveString2;
 use std::fmt::Debug;
 
-impl<M: Clone + Debug + Send + Sync> Sketch<M> {
+impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// Creates **2D line-stroke text** in the XY plane using a Hershey font.
     ///
     /// Each glyph stroke becomes a native `hypercurve::CurveString2` wire.
@@ -23,11 +23,11 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     /// - `text`: The text to render
     /// - `font`: The Hershey font (e.g., `hershey::fonts::GOTHIC_ENG_SANS`)
     /// - `size`: Scale factor for glyphs
-    /// - `metadata`: Optional user data to store in the resulting Sketch
+    /// - `metadata`: Optional user data to store in the resulting Profile
     ///
     /// # Returns
-    /// A new `Sketch` where each glyph stroke is a native open wire.
-    pub fn from_hershey(text: &str, font: &Font, size: Real, metadata: M) -> Sketch<M> {
+    /// A new `Profile` where each glyph stroke is a native open wire.
+    pub fn from_hershey(text: &str, font: &Font, size: Real, metadata: M) -> Profile<M> {
         let mut wires = Vec::new();
         let mut cursor_x: Real = 0.0;
 
@@ -60,7 +60,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
             }
         }
 
-        Sketch::from_wires(wires, metadata)
+        Profile::from_wires(wires, metadata)
     }
 }
 

@@ -322,7 +322,7 @@ fn test_csg_ray_intersections() {
 
 #[test]
 fn test_csg_square() {
-    let sq: Sketch<()> = Sketch::square(2.0, ());
+    let sq: Profile<()> = Profile::square(2.0, ());
     let mesh_2d: Mesh<()> = sq.into();
     // Single polygon, 4 vertices
     assert_eq!(mesh_2d.polygons.len(), 1);
@@ -336,7 +336,7 @@ fn test_csg_square() {
 
 #[test]
 fn test_csg_circle() {
-    let circle: Sketch<()> = Sketch::circle(2.0, 32, ());
+    let circle: Profile<()> = Profile::circle(2.0, 32, ());
     let mesh_2d: Mesh<()> = circle.into();
     // Single polygon with 32 segments => 32 or 33 vertices if closed
     assert_eq!(mesh_2d.polygons.len(), 1);
@@ -350,7 +350,7 @@ fn test_csg_circle() {
 
 #[test]
 fn test_csg_extrude() {
-    let sq: Sketch<()> = Sketch::square(2.0, ());
+    let sq: Profile<()> = Profile::square(2.0, ());
     let extruded = sq.extrude(5.0);
     // We expect:
     //   bottom polygon: 2 (square triangulated)
@@ -368,7 +368,7 @@ fn test_csg_extrude() {
 fn test_csg_revolve() {
     // Default square is from (0,0) to (1,1) in XY.
     // Shift it so it's from (1,0) to (2,1) — i.e. at least 1.0 unit away from the Z-axis.
-    let square: Sketch<()> = Sketch::square(2.0, ()).translate(1.0, 0.0, 0.0);
+    let square: Profile<()> = Profile::square(2.0, ()).translate(1.0, 0.0, 0.0);
 
     // Now revolve this translated square around the Z-axis, 360° in 16 segments.
     let revolve = square.revolve(360.0, 16).unwrap();
@@ -401,7 +401,7 @@ fn test_csg_vertices() {
 #[test]
 #[cfg(feature = "offset")]
 fn test_csg_offset_2d() {
-    let square: Sketch<()> = Sketch::square(2.0, ());
+    let square: Profile<()> = Profile::square(2.0, ());
     let grown = square.offset(0.5);
     let shrunk = square.offset(-0.5);
     let bb_square = square.bounding_box();
@@ -425,7 +425,7 @@ fn test_csg_text() {
     // We can't easily test visually, but we can at least test that it doesn't panic
     // and returns some polygons for normal ASCII letters.
     let font_data = include_bytes!("../../asar.ttf");
-    let text_csg: Sketch<()> = Sketch::text("ABC", font_data, 10.0, ());
+    let text_csg: Profile<()> = Profile::text("ABC", font_data, 10.0, ());
     assert!(!text_csg.region_profiles().is_empty());
 }
 
@@ -434,9 +434,9 @@ fn test_csg_text() {
 fn test_truetype_text_spacing_and_line_breaks() {
     let font_data = include_bytes!("../../asar.ttf");
 
-    let compact: Sketch<()> = Sketch::text("AA", font_data, 20.0, ());
-    let spaced: Sketch<()> = Sketch::text("A A", font_data, 20.0, ());
-    let stacked: Sketch<()> = Sketch::text("A\nA", font_data, 20.0, ());
+    let compact: Profile<()> = Profile::text("AA", font_data, 20.0, ());
+    let spaced: Profile<()> = Profile::text("A A", font_data, 20.0, ());
+    let stacked: Profile<()> = Profile::text("A\nA", font_data, 20.0, ());
 
     let compact_bb = compact.bounding_box();
     let spaced_bb = spaced.bounding_box();

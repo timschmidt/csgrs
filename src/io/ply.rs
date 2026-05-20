@@ -102,13 +102,13 @@ impl<M: Clone + Debug + Send + Sync> crate::mesh::Mesh<M> {
     }
 }
 
-impl<M: Clone + Debug + Send + Sync> crate::sketch::Sketch<M> {
-    #[doc = " Export this Sketch to PLY format as a string"]
+impl<M: Clone + Debug + Send + Sync> crate::sketch::Profile<M> {
+    #[doc = " Export this Profile to PLY format as a string"]
     pub fn to_ply(&self, comment: &str) -> String {
         self::to_ply(self, comment)
     }
 
-    #[doc = " Export this Sketch to a PLY file"]
+    #[doc = " Export this Profile to a PLY file"]
     pub fn write_ply<W: Write>(&self, writer: &mut W, comment: &str) -> std::io::Result<()> {
         self::write_ply(self, writer, comment)
     }

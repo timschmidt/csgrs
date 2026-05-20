@@ -6,7 +6,7 @@
 use crate::float_types::{Real, hunit_vector3, hvector3_from_point3};
 use crate::mesh::Mesh;
 use crate::polygon::Polygon;
-use crate::sketch::Sketch;
+use crate::sketch::Profile;
 use crate::triangulated::IndexedTriangulated3D;
 use crate::vertex::Vertex;
 use nalgebra::{Point3, Vector3};
@@ -261,13 +261,13 @@ fn parse_obj_positive_index(raw: &str, label: &str) -> std::io::Result<usize> {
     })
 }
 
-impl<M: Clone + Debug + Send + Sync> Sketch<M> {
-    #[doc = " Export this Sketch to OBJ format as a string"]
+impl<M: Clone + Debug + Send + Sync> Profile<M> {
+    #[doc = " Export this Profile to OBJ format as a string"]
     pub fn to_obj(&self, object_name: &str) -> String {
         self::to_obj(self, object_name)
     }
 
-    #[doc = " Export this Sketch to an OBJ file"]
+    #[doc = " Export this Profile to an OBJ file"]
     pub fn write_obj<W: Write>(
         &self,
         writer: &mut W,

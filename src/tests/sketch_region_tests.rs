@@ -1,7 +1,7 @@
-//! Native hypercurve Sketch tests.
+//! Native hypercurve Profile tests.
 //!
 //! These tests intentionally avoid the removed finite compatibility cache.
-//! `Sketch` should compose CAD from `hypercurve::Region2` and
+//! `Profile` should compose CAD from `hypercurve::Region2` and
 //! `hypercurve::CurveString2`, with primitive `f64` coordinates appearing only
 //! at API and file-format boundaries.
 
@@ -16,13 +16,13 @@ use hypercurve::{
 };
 
 #[cfg(feature = "offset")]
-fn first_profile_area(sketch: &Sketch<()>) -> Real {
+fn first_profile_area(sketch: &Profile<()>) -> Real {
     let profiles = sketch.region_profiles();
     assert!(!profiles.is_empty(), "expected at least one material profile");
     finite_ring_signed_area(profiles[0].material().points())
 }
 
-fn profile_area_sum(sketch: &Sketch<()>) -> Real {
+fn profile_area_sum(sketch: &Profile<()>) -> Real {
     sketch
         .region_profiles()
         .iter()
@@ -32,9 +32,9 @@ fn profile_area_sum(sketch: &Sketch<()>) -> Real {
 
 #[test]
 fn sketch_owns_region_and_wires_as_hypercurve_types() {
-    let region = Sketch::<()>::rectangle(2.0, 1.0, ()).as_region().clone();
+    let region = Profile::<()>::rectangle(2.0, 1.0, ()).as_region().clone();
     let wire = CurveString2::from_finite_line_string(&[[3.0, 0.0], [4.0, 1.0]]).unwrap();
-    let sketch = Sketch::from_region_and_wires(region, vec![wire], "native");
+    let sketch = Profile::from_region_and_wires(region, vec![wire], "native");
 
     assert_eq!(sketch.metadata(), &"native");
     assert_eq!(sketch.material_contour_count(), 1);
@@ -49,7 +49,7 @@ fn sketch_owns_region_and_wires_as_hypercurve_types() {
 
 #[test]
 fn region_profiles_are_hypercurve_projection_products() {
-    let sketch = Sketch::<()>::square(4.0, ());
+    let sketch = Profile::<()>::square(4.0, ());
     let options = FiniteProjectionOptions::try_new(1.0e-3).unwrap();
     let profiles = match sketch.project_region_profiles(&options).unwrap() {
         Classification::Decided(profiles) => profiles,
@@ -71,7 +71,7 @@ fn closed_rings_become_region_topology_not_sidecar_wires() {
         [0.0, 0.0],
     ])
     .unwrap();
-    let sketch = Sketch::from_region(Region2::from_material_contours(vec![contour]), ());
+    let sketch = Profile::from_region(Region2::from_material_contours(vec![contour]), ());
 
     assert_eq!(sketch.material_contour_count(), 1);
     assert!(sketch.wires().is_empty());
@@ -82,7 +82,7 @@ fn closed_rings_become_region_topology_not_sidecar_wires() {
 fn wire_projection_uses_curve_string_directly() {
     let wire =
         CurveString2::from_finite_line_string(&[[0.0, 0.0], [1.0, 1.0], [2.0, 0.0]]).unwrap();
-    let sketch = Sketch::from_wires(vec![wire], ());
+    let sketch = Profile::from_wires(vec![wire], ());
 
     assert!(sketch.as_region().is_empty());
     assert_eq!(sketch.wires().len(), 1);
@@ -94,8 +94,8 @@ fn wire_projection_uses_curve_string_directly() {
 #[test]
 fn transform_preserves_native_region_and_wire_topology() {
     let wire = CurveString2::from_finite_point_iter([[3.0, 0.0], [4.0, 0.0]]).unwrap();
-    let sketch = Sketch::from_region_and_wires(
-        Sketch::<()>::square(2.0, ()).as_region().clone(),
+    let sketch = Profile::from_region_and_wires(
+        Profile::<()>::square(2.0, ()).as_region().clone(),
         vec![wire],
         (),
     );
@@ -111,8 +111,8 @@ fn transform_preserves_native_region_and_wire_topology() {
 
 #[test]
 fn booleans_regularize_overlapping_rectangles_with_hypercurve_regions() {
-    let left = Sketch::<()>::rectangle(2.0, 2.0, ());
-    let right = Sketch::<()>::rectangle(2.0, 2.0, ()).translate(1.0, 0.0, 0.0);
+    let left = Profile::<()>::rectangle(2.0, 2.0, ());
+    let right = Profile::<()>::rectangle(2.0, 2.0, ()).translate(1.0, 0.0, 0.0);
 
     let union = left.union(&right);
     let intersection = left.intersection(&right);
@@ -152,8 +152,8 @@ fn disjoint_boolean_preserves_native_hole_roles() {
         [1.0, 1.0],
     ])
     .unwrap();
-    let holed = Sketch::from_region(Region2::new(vec![outer], vec![hole]), ());
-    let island = Sketch::<()>::square(1.0, ()).translate(10.0, 0.0, 0.0);
+    let holed = Profile::from_region(Region2::new(vec![outer], vec![hole]), ());
+    let island = Profile::<()>::square(1.0, ()).translate(10.0, 0.0, 0.0);
 
     let union = holed.union(&island);
 
@@ -166,10 +166,10 @@ fn disjoint_boolean_preserves_native_hole_roles() {
 
 #[test]
 fn booleans_preserve_open_wires_without_cache_fallback() {
-    let area = Sketch::<()>::square(2.0, ());
+    let area = Profile::<()>::square(2.0, ());
     let wire = CurveString2::from_finite_point_iter([[10.0, 0.0], [11.0, 1.0]]).unwrap();
-    let mixed = Sketch::from_region_and_wires(area.as_region().clone(), vec![wire], ());
-    let other = Sketch::<()>::square(1.0, ()).translate(0.5, 0.5, 0.0);
+    let mixed = Profile::from_region_and_wires(area.as_region().clone(), vec![wire], ());
+    let other = Profile::<()>::square(1.0, ()).translate(0.5, 0.5, 0.0);
 
     let union = mixed.union(&other);
     assert_eq!(union.wire_polylines().len(), 1);
@@ -179,7 +179,7 @@ fn booleans_preserve_open_wires_without_cache_fallback() {
 #[test]
 #[cfg(feature = "offset")]
 fn offsets_return_native_region_topology() {
-    let square = Sketch::<()>::square(2.0, ());
+    let square = Profile::<()>::square(2.0, ());
     let grown = square.offset(0.25);
     let shrunk = square.offset(-0.25);
 
@@ -193,7 +193,7 @@ fn offsets_return_native_region_topology() {
 #[cfg(feature = "offset")]
 fn wire_offsets_build_filled_hypercurve_outlines() {
     let wire = CurveString2::from_finite_point_iter([[0.0, 0.0], [4.0, 0.0]]).unwrap();
-    let sketch = Sketch::from_wires(vec![wire], ());
+    let sketch = Profile::from_wires(vec![wire], ());
     let outline = sketch.offset_rounded(0.5);
 
     assert!(!outline.as_region().is_empty());
@@ -204,7 +204,7 @@ fn wire_offsets_build_filled_hypercurve_outlines() {
 #[test]
 #[cfg(feature = "offset")]
 fn straight_skeleton_result_is_native_wire_topology() {
-    let skeleton = Sketch::<()>::square(2.0, ()).straight_skeleton(true);
+    let skeleton = Profile::<()>::square(2.0, ()).straight_skeleton(true);
 
     assert!(skeleton.as_region().is_empty());
     assert!(!skeleton.wires().is_empty());
@@ -213,7 +213,7 @@ fn straight_skeleton_result_is_native_wire_topology() {
 
 #[test]
 fn triangulation_extrusion_and_exports_consume_region_profiles() {
-    let sketch = Sketch::<()>::rectangle(2.0, 1.0, ());
+    let sketch = Profile::<()>::rectangle(2.0, 1.0, ());
 
     assert!(!sketch.triangulate().is_empty());
     assert!(!sketch.extrude(1.0).polygons.is_empty());

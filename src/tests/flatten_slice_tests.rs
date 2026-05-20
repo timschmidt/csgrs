@@ -50,7 +50,7 @@ fn sketch_from_mesh_uses_same_hypercurve_flatten_path() {
         polygon_from_xy_points(&[[0.0, 0.0], [2.0, 0.0], [2.0, 1.0], [0.0, 1.0]]);
     let csg = Mesh::from_polygons(&[square_poly], ());
 
-    let sketch = Sketch::from(csg);
+    let sketch = Profile::from(csg);
 
     assert!(!sketch.as_region().is_empty());
     assert_eq!(sketch.material_contour_count(), 1);
@@ -61,7 +61,7 @@ fn sketch_from_mesh_uses_same_hypercurve_flatten_path() {
     assert_eq!(bbox.maxs.x, 2.0);
     assert!(
         !sketch.region_profiles().is_empty(),
-        "Sketch::from(mesh) should not depend on retained finite union geometry"
+        "Profile::from(mesh) should not depend on retained finite union geometry"
     );
 }
 

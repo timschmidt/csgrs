@@ -7,7 +7,7 @@ pub use crate::mesh::Mesh;
 pub use crate::mesh::bsp::Node;
 pub use crate::mesh::plane::Plane;
 pub use crate::polygon::Polygon;
-pub use crate::sketch::Sketch;
+pub use crate::sketch::Profile;
 pub use crate::vertex::{Vertex, VertexCluster};
 pub use hashbrown::HashMap;
 pub use nalgebra::{Matrix4, Point3, Vector3};

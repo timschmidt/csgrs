@@ -1,4 +1,4 @@
-#![doc = " AMF file format support for Mesh and Sketch objects"]
+#![doc = " AMF file format support for Mesh and Profile objects"]
 #![doc = ""]
 #![doc = " This module provides export functionality for AMF (Additive Manufacturing File Format),"]
 #![doc = " an XML-based format specifically designed for 3D printing and additive manufacturing."]
@@ -176,7 +176,7 @@ impl<M: Clone + Debug + Send + Sync> crate::mesh::Mesh<M> {
     }
 }
 
-impl<M: Clone + Debug + Send + Sync> crate::sketch::Sketch<M> {
+impl<M: Clone + Debug + Send + Sync> crate::sketch::Profile<M> {
     pub fn to_amf(&self, object_name: &str, units: &str) -> String {
         self::to_amf(self, object_name, units)
     }

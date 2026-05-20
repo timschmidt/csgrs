@@ -1,7 +1,7 @@
-//! Provides a `MetaBall` struct and functions for creating a `Sketch` from [MetaBalls](https://en.wikipedia.org/wiki/Metaballs)
+//! Provides a `MetaBall` struct and functions for creating a `Profile` from [MetaBalls](https://en.wikipedia.org/wiki/Metaballs)
 
 use crate::float_types::{Real, hreal_from_f64, hreal_to_f64, tolerance};
-use crate::sketch::Sketch;
+use crate::sketch::Profile;
 use hashbrown::HashMap;
 use hypercurve::{Contour2, Point2, Region2};
 use std::fmt::Debug;
@@ -9,7 +9,7 @@ use std::fmt::Debug;
 type SamplePoint = [Real; 2];
 type Segment = [SamplePoint; 2];
 
-impl<M: Clone + Debug + Send + Sync> Sketch<M> {
+impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// Create a 2D metaball iso-contour in XY plane from hypercurve centers.
     /// - `balls`: array of (center, radius).
     /// - `resolution`: (nx, ny) grid resolution for marching squares.
@@ -37,10 +37,10 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         iso_value: Real,
         padding: Real,
         metadata: M,
-    ) -> Sketch<M> {
+    ) -> Profile<M> {
         let (nx, ny) = resolution;
         if balls.is_empty() || nx < 2 || ny < 2 {
-            return Sketch::empty(metadata);
+            return Profile::empty(metadata);
         }
 
         // 1) Compute bounding box around all metaballs
@@ -71,7 +71,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         }
         if !(min_x.is_finite() && min_y.is_finite() && max_x.is_finite() && max_y.is_finite())
         {
-            return Sketch::empty(metadata);
+            return Profile::empty(metadata);
         }
 
         let dx = (max_x - min_x) / (nx as Real - 1.0);
@@ -205,10 +205,10 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
             .collect::<Vec<_>>();
 
         if material.is_empty() {
-            return Sketch::empty(metadata);
+            return Profile::empty(metadata);
         }
 
-        Sketch::from_region(Region2::from_material_contours(material), metadata)
+        Profile::from_region(Region2::from_material_contours(material), metadata)
     }
 }
 

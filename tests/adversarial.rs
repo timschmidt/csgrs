@@ -9,7 +9,7 @@ use csgrs::mesh::bsp::Node;
 use csgrs::mesh::connectivity::VertexIndexMap;
 use csgrs::mesh::plane::Plane;
 use csgrs::polygon::Polygon;
-use csgrs::sketch::Sketch;
+use csgrs::sketch::Profile;
 use csgrs::triangulated::{IndexedTriangulated3D, Triangulated3D};
 use csgrs::vertex::{Vertex, VertexCluster};
 use hashbrown::HashMap;
@@ -323,27 +323,27 @@ fn adversarial_sketch_constructor_sweep_does_not_corrupt_successes() {
     for &a in scalars {
         for &b in scalars {
             for &segments in &counts {
-                if let Ok(sketch) = catch_unwind(AssertUnwindSafe(|| Sketch::square(a, ()))) {
+                if let Ok(sketch) = catch_unwind(AssertUnwindSafe(|| Profile::square(a, ()))) {
                     let _ = sketch.region_profiles();
                     let _ = sketch.wire_polylines();
                     let _ = catch_unwind(AssertUnwindSafe(|| sketch.triangulate()));
                 }
                 if let Ok(sketch) =
-                    catch_unwind(AssertUnwindSafe(|| Sketch::rectangle(a, b, ())))
+                    catch_unwind(AssertUnwindSafe(|| Profile::rectangle(a, b, ())))
                 {
                     let _ = sketch.region_profiles();
                     let _ = sketch.wire_polylines();
                     let _ = catch_unwind(AssertUnwindSafe(|| sketch.triangulate()));
                 }
                 if let Ok(sketch) =
-                    catch_unwind(AssertUnwindSafe(|| Sketch::circle(a, segments, ())))
+                    catch_unwind(AssertUnwindSafe(|| Profile::circle(a, segments, ())))
                 {
                     let _ = sketch.region_profiles();
                     let _ = sketch.wire_polylines();
                     let _ = catch_unwind(AssertUnwindSafe(|| sketch.triangulate()));
                 }
                 if let Ok(sketch) =
-                    catch_unwind(AssertUnwindSafe(|| Sketch::ellipse(a, b, segments, ())))
+                    catch_unwind(AssertUnwindSafe(|| Profile::ellipse(a, b, segments, ())))
                 {
                     let _ = sketch.region_profiles();
                     let _ = sketch.wire_polylines();
@@ -370,7 +370,7 @@ fn adversarial_invalid_polygon_catalog_is_contained() {
 
     for points in catalogs {
         let result = catch_unwind(AssertUnwindSafe(|| {
-            let sketch: Sketch<()> = Sketch::polygon(points, ());
+            let sketch: Profile<()> = Profile::polygon(points, ());
             sketch.triangulate()
         }));
         if let Ok(triangles) = result {
@@ -386,7 +386,7 @@ fn adversarial_sketch_polygon_points_uses_hypercurve_points_directly() {
         HPoint2::new(hreal_from_f64(2.0).unwrap(), hreal_from_f64(0.0).unwrap()),
         HPoint2::new(hreal_from_f64(1.0).unwrap(), hreal_from_f64(1.0).unwrap()),
     ];
-    let sketch = Sketch::<()>::polygon_points(&points, ());
+    let sketch = Profile::<()>::polygon_points(&points, ());
 
     assert!(!sketch.is_empty());
     assert!(sketch.contains_xy(1.0, 0.25).unwrap_or(false));
@@ -396,7 +396,7 @@ fn adversarial_sketch_polygon_points_uses_hypercurve_points_directly() {
         HPoint2::new(hreal_from_f64(0.0).unwrap(), hreal_from_f64(0.0).unwrap()),
         HPoint2::new(hreal_from_f64(1.0).unwrap(), hreal_from_f64(0.0).unwrap()),
     ];
-    assert!(Sketch::<()>::polygon_points(&duplicate, ()).is_empty());
+    assert!(Profile::<()>::polygon_points(&duplicate, ()).is_empty());
 }
 
 #[test]
@@ -1423,7 +1423,7 @@ fn adversarial_obj_import_rejects_nonfinite_vertices_and_degenerate_normals() {
 #[cfg(feature = "svg-io")]
 fn adversarial_svg_unknown_tag_regression_is_error_not_panic() {
     let svg = "<not-a-supported-shape />";
-    let result = catch_unwind(AssertUnwindSafe(|| Sketch::<()>::from_svg(svg, ())));
+    let result = catch_unwind(AssertUnwindSafe(|| Profile::<()>::from_svg(svg, ())));
     assert!(matches!(result, Ok(Err(_))));
 }
 
@@ -1438,7 +1438,7 @@ fn adversarial_svg_import_rejects_nonfinite_hyperreal_boundary_values() {
     ];
 
     for svg in cases {
-        let result = catch_unwind(AssertUnwindSafe(|| Sketch::<()>::from_svg(svg, ())));
+        let result = catch_unwind(AssertUnwindSafe(|| Profile::<()>::from_svg(svg, ())));
         assert!(
             matches!(result, Ok(Err(_))),
             "non-finite SVG input should reject without panic: {svg}"
@@ -1451,7 +1451,7 @@ fn adversarial_svg_import_rejects_nonfinite_hyperreal_boundary_values() {
 fn adversarial_gerber_short_command_regression_is_error_not_panic() {
     use csgrs::io::gerber::FromGerber;
 
-    let result = catch_unwind(AssertUnwindSafe(|| Sketch::<()>::from_gerber(b"G0", ())));
+    let result = catch_unwind(AssertUnwindSafe(|| Profile::<()>::from_gerber(b"G0", ())));
     assert!(matches!(result, Ok(Err(_))));
 }
 
@@ -1505,7 +1505,7 @@ proptest! {
 
     #[test]
     fn proptest_sketch_rectangles_triangulate(width in positive_real(), height in positive_real()) {
-        let sketch: Sketch<()> = Sketch::rectangle(width, height, ());
+        let sketch: Profile<()> = Profile::rectangle(width, height, ());
         let triangles = sketch.triangulate();
         assert_triangles_finite(&triangles);
         prop_assert!(!triangles.is_empty());
@@ -1514,7 +1514,7 @@ proptest! {
     #[test]
     fn proptest_sketch_polygon_convex_quad_triangulates(x in positive_real(), y in positive_real()) {
         let points = [[0.0, 0.0], [x, 0.0], [x, y], [0.0, y]];
-        let sketch: Sketch<()> = Sketch::polygon(&points, ());
+        let sketch: Profile<()> = Profile::polygon(&points, ());
         let triangles = sketch.triangulate();
         assert_triangles_finite(&triangles);
         prop_assert!(!triangles.is_empty());
@@ -1706,7 +1706,7 @@ proptest! {
     #[test]
     #[cfg(feature = "offset")]
     fn proptest_offset_extrude_slice_pipeline(width in positive_real(), height in positive_real(), depth in positive_real(), offset in -0.25f64..0.25f64) {
-        let sketch: Sketch<()> = Sketch::rectangle(width, height, ());
+        let sketch: Profile<()> = Profile::rectangle(width, height, ());
         let offset_sketch = sketch.offset(offset as Real);
         let mesh = offset_sketch.extrude(depth);
         assert_mesh_sane(&mesh);
@@ -1848,15 +1848,15 @@ proptest! {
     fn proptest_svg_roundtrip_and_malformed_import(width in positive_real(), height in positive_real(), bytes in prop::collection::vec(any::<u8>(), 0..512)) {
         use csgrs::io::svg::{FromSVG, ToSVG};
 
-        let sketch: Sketch<()> = Sketch::rectangle(width, height, ());
+        let sketch: Profile<()> = Profile::rectangle(width, height, ());
         let svg = sketch.to_svg();
-        let reparsed = Sketch::<()>::from_svg(&svg, ());
+        let reparsed = Profile::<()>::from_svg(&svg, ());
         if let Ok(sketch) = reparsed {
             assert_triangles_finite(&sketch.triangulate());
         }
 
         let malformed = String::from_utf8_lossy(&bytes);
-        let result = catch_unwind(AssertUnwindSafe(|| Sketch::<()>::from_svg(&malformed, ())));
+        let result = catch_unwind(AssertUnwindSafe(|| Profile::<()>::from_svg(&malformed, ())));
         if let Ok(Ok(sketch)) = result {
             assert_triangles_finite(&sketch.triangulate());
         }
@@ -1867,14 +1867,14 @@ proptest! {
     fn proptest_gerber_roundtrip_and_malformed_import(width in positive_real(), height in positive_real(), bytes in prop::collection::vec(any::<u8>(), 0..512)) {
         use csgrs::io::gerber::{FromGerber, ToGerber};
 
-        let sketch: Sketch<()> = Sketch::rectangle(width, height, ());
+        let sketch: Profile<()> = Profile::rectangle(width, height, ());
         let gerber = sketch.to_gerber().expect("Gerber export should succeed for rectangle");
-        let reparsed = Sketch::<()>::from_gerber(&gerber, ());
+        let reparsed = Profile::<()>::from_gerber(&gerber, ());
         if let Ok(sketch) = reparsed {
             assert_triangles_finite(&sketch.triangulate());
         }
 
-        let result = catch_unwind(AssertUnwindSafe(|| Sketch::<()>::from_gerber(&bytes, ())));
+        let result = catch_unwind(AssertUnwindSafe(|| Profile::<()>::from_gerber(&bytes, ())));
         if let Ok(Ok(sketch)) = result {
             assert_triangles_finite(&sketch.triangulate());
         }
@@ -1889,7 +1889,7 @@ proptest! {
         };
         use csgrs::toolpath::gcode::Post;
 
-        let sketch: Sketch<()> = Sketch::rectangle(width, height, ());
+        let sketch: Profile<()> = Profile::rectangle(width, height, ());
         let feeds = Feeds {
             travel: 3000.0,
             xy: 1200.0,

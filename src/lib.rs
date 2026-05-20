@@ -7,7 +7,7 @@
 //! #### Default
 //! - [**stl-io**](https://en.wikipedia.org/wiki/STL_(file_format)): `.stl` import/export
 //! - [**dxf-io**](https://en.wikipedia.org/wiki/AutoCAD_DXF): `.dxf` import/export
-//! - **gerber-io**: Gerber/RS-274X import/export for 2D `Sketch` geometry
+//! - **gerber-io**: Gerber/RS-274X import/export for 2D `Profile` geometry
 //! - **chull-io**: convex hull and minkowski sum
 //! - **metaballs**: enables an implementation of [metaballs](https://en.wikipedia.org/wiki/Metaballs)
 //! - **sdf**: signed distance fields ([sdf](https://en.wikipedia.org/wiki/Signed_distance_function)) using [fast-surface-nets](https://crates.io/crates/fast-surface-nets)
@@ -17,12 +17,12 @@
 //! - **parallel**: use rayon for multithreading
 //! - **offset**: transitional finite offset/skeleton bridge; certified simple
 //!   sharp offsets are handled by hypercurve and remaining regularized buffers
-//!   are recomposed into native `Sketch` topology
-//! - **svg-io**: create `Sketch`s from and convert `Sketch`s to SVG's
-//! - **gerber-io**: create `Sketch`s from and convert `Sketch`s to Gerber files
-//! - **truetype-text**: create `Sketch`s using TrueType fonts `.ttf`
-//! - **hershey-text**: create `Sketch`s using Hershey fonts (`.jhf`)
-//! - **image-io**: make `Sketch`s from images
+//!   are recomposed into native `Profile` topology
+//! - **svg-io**: create `Profile`s from and convert `Profile`s to SVG's
+//! - **gerber-io**: create `Profile`s from and convert `Profile`s to Gerber files
+//! - **truetype-text**: create `Profile`s using TrueType fonts `.ttf`
+//! - **hershey-text**: create `Profile`s using Hershey fonts (`.jhf`)
+//! - **image-io**: make `Profile`s from images
 //! - **bevymesh**: for conversion to a bevy `Mesh`
 
 #![forbid(unsafe_code)]
@@ -37,6 +37,12 @@ pub mod mesh;
 pub mod polygon;
 #[cfg(feature = "sketch")]
 pub mod sketch;
+#[cfg(feature = "sketch")]
+pub mod profile {
+    pub use crate::sketch::*;
+}
+#[cfg(feature = "sketch")]
+pub use sketch::Profile;
 pub mod vertex;
 
 #[cfg(feature = "offset")]

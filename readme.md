@@ -121,72 +121,72 @@ wasm-pack build --release --target bundler --out-dir pkg -- --features wasm
 
 ## Features and Structures
 
-### Sketch Structure
+### Profile Structure
 
-- **`Sketch<M>`** stores and manipulates 2D CAD geometry as hypercurve topology. It contains:
+- **`Profile<M>`** stores and manipulates 2D CAD geometry as hypercurve topology. It contains:
   - a [`hypercurve::Region2`](https://docs.rs/hypercurve/latest/hypercurve/struct.Region2.html) for filled material and hole contours
   - native [`hypercurve::CurveString2`](https://docs.rs/hypercurve/latest/hypercurve/struct.CurveString2.html) wires for open paths
   - a finite compatibility cache used only at IO/API boundaries while legacy import/export paths migrate
   - an internal cached bounding box for finite boundary projections
   - caller-owned metadata of type `M`, accessed through `metadata`, `metadata_mut`, `set_metadata`, `with_metadata`, and `map_metadata`
 
-`Sketch<M>` provides methods for working with planar XY shapes made of filled regions and open paths.
-Prefer `Sketch::from_region`, `Sketch::from_wires`, `Sketch::from_region_and_wires`,
+`Profile<M>` provides methods for working with planar XY shapes made of filled regions and open paths.
+Prefer `Profile::from_region`, `Profile::from_wires`, `Profile::from_region_and_wires`,
 `as_region`, `wires`, `into_region_and_wires`, `region_profiles`, and
 `wire_polylines` so topology stays in hypercurve objects instead of a finite
-compatibility projection. The old `geo`-based Sketch constructors and accessors
+compatibility projection. The old `geo`-based Profile constructors and accessors
 are no longer public API, and the crate no longer depends on `geo`.
-`Sketch` values are triangulated with hypertri when exported as STL or converted into a `Mesh<M>`.
+`Profile` values are triangulated with hypertri when exported as STL or converted into a `Mesh<M>`.
 
-### 2D Shapes in Sketch
+### 2D Shapes in Profile
 
-- <img src="docs/square.png" width="128" alt="top down view of a square"/> **`Sketch::square(width: Real, metadata: M)`**
-- <img src="docs/rectangle.png" width="128" alt="top down view of a rectangle"/> **`Sketch::rectangle(width: Real, length: Real, metadata: M)`**
-- <img src="docs/circle.png" width="128" alt="top down view of a circle"/> **`Sketch::circle(radius: Real, segments: usize, metadata: M)`**
-- <img src="docs/polygon.png" width="128" alt="top down view of a triangle"/> **`Sketch::polygon(&[[x1,y1],[x2,y2],...], metadata: M)`**
-- <img src="docs/rounded_rectangle.png" width="128" alt="top down view of a rectangle with rounded corners"/> **`Sketch::rounded_rectangle(width: Real, height: Real, corner_radius: Real, corner_segments: usize, metadata: M)`**
-- <img src="docs/ellipse.png" width="128" alt="top down view of an ellipse"/> **`Sketch::ellipse(width: Real, height: Real, segments: usize, metadata: M)`**
-- <img src="docs/regular_ngon.png" width="128" alt="top down view of a 6 sided n-gon"/> **`Sketch::regular_ngon(sides: usize, radius: Real, metadata: M)`**
-- <img src="docs/sketch_arrow.png" width="128" alt="top down view of a 2D arrow"/> **`Sketch::arrow(shaft_length: Real, shaft_width: Real, head_length: Real, head_width: Real, metadata: M)`**
-- <img src="docs/right_triangle.png" width="128" alt="top down view of a right triangle"/> **`Sketch::right_triangle(width: Real, height: Real, metadata: M)`**
-- <img src="docs/trapezoid.png" width="128" alt="top down view of trapezoid"/> **`Sketch::trapezoid(top_width: Real, bottom_width: Real, height: Real, top_offset: Real, metadata: M)`**
-- <img src="docs/star.png" width="128" alt="top down view of star"/> **`Sketch::star(num_points: usize, outer_radius: Real, inner_radius: Real, metadata: M)`**
-- <img src="docs/teardrop.png" width="128" alt="top down view of a teardrop"/> **`Sketch::teardrop(width: Real, height: Real, segments: usize, metadata: M)`**
-- <img src="docs/sketch_egg.png" width="128" alt="top down view of an egg shape"/> **`Sketch::egg(width: Real, length: Real, segments: usize, metadata: M)`**
-- <img src="docs/squircle.png" width="128" alt="top down view of a squircle"/> **`Sketch::squircle(width: Real, height: Real, segments: usize, metadata: M)`**
-- <img src="docs/keyhole.png" width="128" alt="top down view of a keyhole"/> **`Sketch::keyhole(circle_radius: Real, handle_width: Real, handle_height: Real, segments: usize, metadata: M)`**
-- <img src="docs/reuleaux.png" width="128"/> **`Sketch::reuleaux(sides: usize, radius: Real, arc_segments_per_side: usize, metadata: M)`**
-- <img src="docs/ring.png" width="128" alt="top down view of a ring"/> **`Sketch::ring(id: Real, thickness: Real, segments: usize, metadata: M)`**
-- <img src="docs/pie_slice.png" width="128" alt="top down view of a slice of a circle"/> **`Sketch::pie_slice(radius: Real, start_angle_deg: Real, end_angle_deg: Real, segments: usize, metadata: M)`**
-- <img src="docs/supershape.png" width="128"/> **`Sketch::supershape(a: Real, b: Real, m: Real, n1: Real, n2: Real, n3: Real, segments: usize, metadata: M)`**
-- <img src="docs/circle_with_keyway.png" width="128" alt="top down view of a circle with a notch taken out of it"/> **`Sketch::circle_with_keyway(radius: Real, segments: usize, key_width: Real, key_depth: Real, metadata: M)`**
-- <img src="docs/circle_with_flat.png" width="128" alt="top down view of a circle with a flat edge"/> **`Sketch::circle_with_flat(radius: Real, segments: usize, flat_dist: Real, metadata: M)`**
-- <img src="docs/circle_with_two_flats.png" width="128" alt="top down view of a circle with two flat edges"/> **`Sketch::circle_with_two_flats(radius: Real, segments: usize, flat_dist: Real, metadata: M)`**
-- <img src="docs/from_image.png" width="128" alt="top down view of a pixleated circle"/> **`Sketch::from_image(img: &GrayImage, threshold: u8, closepaths: bool, metadata: M)`** - Builds a new CSG from the “on” pixels of a grayscale image
-- <img src="docs/text.png" width="128" alt="top down view of the text 'HELLO'"/> **`Sketch::text(text: &str, font_data: &[u8], size: Real, metadata: M)`** - generate 2D text geometry in the XY plane from TTF fonts
-- <img src="docs/metaballs_2d.png" width="128" alt="top down view of three metaballs merged"/> **`Sketch::metaballs(balls: &[(nalgebra::Point2<Real>, Real)], resolution: (usize, usize), iso_value: Real, padding: Real, metadata: M)`**
-- <img src="docs/airfoil_naca4.png" width="128" alt="a side view of an airfoil"/> **`Sketch::airfoil_naca4(max_camber: Real, camber_position: Real, thickness: Real, chord: Real, samples: usize, metadata: M)`** - [NACA 4 digit](https://en.wikipedia.org/wiki/NACA_airfoil#Four-digit_series) airfoil
-- <img src="docs/bezier.png" width="128" alt="top down view of a bezier curve"/> **`Sketch::bezier(control: &[[Real; 2]], segments: usize, metadata: M)`**
-- <img src="docs/bspline.png" width="128" alt="top down view of a neer semi-circle shape"/> **`Sketch::bspline(control: &[[Real; 2]], p: usize, segments_per_span: usize, metadata: M)`**
-- <img src="docs/heart.png" width="128" alt="top down view of a cartune heart"/> **`Sketch::heart(width: Real, height: Real, segments: usize, metadata: M)`**
-- <img src="docs/crescent.png" width="128" alt="top down view of a crescent"/> **`Sketch::crescent(outer_r: Real, inner_r: Real, offset: Real, segments: usize, metadata: M)`** -
-- <img src="docs/hilbert_curve.png" width="128" alt="top down view of a hilbert curve"/> **`Sketch::hilbert(order: usize, padding: Real)`** - fill an existing Sketch with a hilbert curve
-- <img src="docs/involute_gear.png" width="128" alt="top down view of a involute gear profile"/> **`Sketch::involute_gear(module: Real, teeth: usize, pressure_angle_deg: Real, clearance: Real, backlash: Real, segments_per_flank: usize, metadata: M)`**
-- **`Sketch::cycloidal_gear(module_: Real, teeth: usize, pin_teeth: usize, clearance: Real, segments_per_flank: usize, metadata: M)`** - under construction
-- **`Sketch::involute_rack(module_: Real, num_teeth: usize, pressure_angle_deg: Real, clearance: Real, backlash: Real, metadata: M)`** - under construction
-- **`Sketch::cycloidal_rack(module_: Real, num_teeth: usize, generating_radius: Real, clearance: Real, segments_per_flank: usize, metadata: M)`** - under construction
+- <img src="docs/square.png" width="128" alt="top down view of a square"/> **`Profile::square(width: Real, metadata: M)`**
+- <img src="docs/rectangle.png" width="128" alt="top down view of a rectangle"/> **`Profile::rectangle(width: Real, length: Real, metadata: M)`**
+- <img src="docs/circle.png" width="128" alt="top down view of a circle"/> **`Profile::circle(radius: Real, segments: usize, metadata: M)`**
+- <img src="docs/polygon.png" width="128" alt="top down view of a triangle"/> **`Profile::polygon(&[[x1,y1],[x2,y2],...], metadata: M)`**
+- <img src="docs/rounded_rectangle.png" width="128" alt="top down view of a rectangle with rounded corners"/> **`Profile::rounded_rectangle(width: Real, height: Real, corner_radius: Real, corner_segments: usize, metadata: M)`**
+- <img src="docs/ellipse.png" width="128" alt="top down view of an ellipse"/> **`Profile::ellipse(width: Real, height: Real, segments: usize, metadata: M)`**
+- <img src="docs/regular_ngon.png" width="128" alt="top down view of a 6 sided n-gon"/> **`Profile::regular_ngon(sides: usize, radius: Real, metadata: M)`**
+- <img src="docs/sketch_arrow.png" width="128" alt="top down view of a 2D arrow"/> **`Profile::arrow(shaft_length: Real, shaft_width: Real, head_length: Real, head_width: Real, metadata: M)`**
+- <img src="docs/right_triangle.png" width="128" alt="top down view of a right triangle"/> **`Profile::right_triangle(width: Real, height: Real, metadata: M)`**
+- <img src="docs/trapezoid.png" width="128" alt="top down view of trapezoid"/> **`Profile::trapezoid(top_width: Real, bottom_width: Real, height: Real, top_offset: Real, metadata: M)`**
+- <img src="docs/star.png" width="128" alt="top down view of star"/> **`Profile::star(num_points: usize, outer_radius: Real, inner_radius: Real, metadata: M)`**
+- <img src="docs/teardrop.png" width="128" alt="top down view of a teardrop"/> **`Profile::teardrop(width: Real, height: Real, segments: usize, metadata: M)`**
+- <img src="docs/sketch_egg.png" width="128" alt="top down view of an egg shape"/> **`Profile::egg(width: Real, length: Real, segments: usize, metadata: M)`**
+- <img src="docs/squircle.png" width="128" alt="top down view of a squircle"/> **`Profile::squircle(width: Real, height: Real, segments: usize, metadata: M)`**
+- <img src="docs/keyhole.png" width="128" alt="top down view of a keyhole"/> **`Profile::keyhole(circle_radius: Real, handle_width: Real, handle_height: Real, segments: usize, metadata: M)`**
+- <img src="docs/reuleaux.png" width="128"/> **`Profile::reuleaux(sides: usize, radius: Real, arc_segments_per_side: usize, metadata: M)`**
+- <img src="docs/ring.png" width="128" alt="top down view of a ring"/> **`Profile::ring(id: Real, thickness: Real, segments: usize, metadata: M)`**
+- <img src="docs/pie_slice.png" width="128" alt="top down view of a slice of a circle"/> **`Profile::pie_slice(radius: Real, start_angle_deg: Real, end_angle_deg: Real, segments: usize, metadata: M)`**
+- <img src="docs/supershape.png" width="128"/> **`Profile::supershape(a: Real, b: Real, m: Real, n1: Real, n2: Real, n3: Real, segments: usize, metadata: M)`**
+- <img src="docs/circle_with_keyway.png" width="128" alt="top down view of a circle with a notch taken out of it"/> **`Profile::circle_with_keyway(radius: Real, segments: usize, key_width: Real, key_depth: Real, metadata: M)`**
+- <img src="docs/circle_with_flat.png" width="128" alt="top down view of a circle with a flat edge"/> **`Profile::circle_with_flat(radius: Real, segments: usize, flat_dist: Real, metadata: M)`**
+- <img src="docs/circle_with_two_flats.png" width="128" alt="top down view of a circle with two flat edges"/> **`Profile::circle_with_two_flats(radius: Real, segments: usize, flat_dist: Real, metadata: M)`**
+- <img src="docs/from_image.png" width="128" alt="top down view of a pixleated circle"/> **`Profile::from_image(img: &GrayImage, threshold: u8, closepaths: bool, metadata: M)`** - Builds a new CSG from the “on” pixels of a grayscale image
+- <img src="docs/text.png" width="128" alt="top down view of the text 'HELLO'"/> **`Profile::text(text: &str, font_data: &[u8], size: Real, metadata: M)`** - generate 2D text geometry in the XY plane from TTF fonts
+- <img src="docs/metaballs_2d.png" width="128" alt="top down view of three metaballs merged"/> **`Profile::metaballs(balls: &[(nalgebra::Point2<Real>, Real)], resolution: (usize, usize), iso_value: Real, padding: Real, metadata: M)`**
+- <img src="docs/airfoil_naca4.png" width="128" alt="a side view of an airfoil"/> **`Profile::airfoil_naca4(max_camber: Real, camber_position: Real, thickness: Real, chord: Real, samples: usize, metadata: M)`** - [NACA 4 digit](https://en.wikipedia.org/wiki/NACA_airfoil#Four-digit_series) airfoil
+- <img src="docs/bezier.png" width="128" alt="top down view of a bezier curve"/> **`Profile::bezier(control: &[[Real; 2]], segments: usize, metadata: M)`**
+- <img src="docs/bspline.png" width="128" alt="top down view of a neer semi-circle shape"/> **`Profile::bspline(control: &[[Real; 2]], p: usize, segments_per_span: usize, metadata: M)`**
+- <img src="docs/heart.png" width="128" alt="top down view of a cartune heart"/> **`Profile::heart(width: Real, height: Real, segments: usize, metadata: M)`**
+- <img src="docs/crescent.png" width="128" alt="top down view of a crescent"/> **`Profile::crescent(outer_r: Real, inner_r: Real, offset: Real, segments: usize, metadata: M)`** -
+- <img src="docs/hilbert_curve.png" width="128" alt="top down view of a hilbert curve"/> **`Profile::hilbert(order: usize, padding: Real)`** - fill an existing Profile with a hilbert curve
+- <img src="docs/involute_gear.png" width="128" alt="top down view of a involute gear profile"/> **`Profile::involute_gear(module: Real, teeth: usize, pressure_angle_deg: Real, clearance: Real, backlash: Real, segments_per_flank: usize, metadata: M)`**
+- **`Profile::cycloidal_gear(module_: Real, teeth: usize, pin_teeth: usize, clearance: Real, segments_per_flank: usize, metadata: M)`** - under construction
+- **`Profile::involute_rack(module_: Real, num_teeth: usize, pressure_angle_deg: Real, clearance: Real, backlash: Real, metadata: M)`** - under construction
+- **`Profile::cycloidal_rack(module_: Real, num_teeth: usize, generating_radius: Real, clearance: Real, segments_per_flank: usize, metadata: M)`** - under construction
 
 ```rust
-// Alias the library’s generic Sketch type with unit metadata:
-type Sketch = csgrs::sketch::Sketch<()>;
+// Alias the library’s generic Profile type with unit metadata:
+type Profile = csgrs::sketch::Profile<()>;
 
-let square = Sketch::square(1.0, ()); // 1×1 at origin
-let rect = Sketch::rectangle(2.0, 4.0, ());
-let circle = Sketch::circle(1.0, 32, ()); // radius=1, 32 segments
-let circle2 = Sketch::circle(2.0, 64, ());
+let square = Profile::square(1.0, ()); // 1×1 at origin
+let rect = Profile::rectangle(2.0, 4.0, ());
+let circle = Profile::circle(1.0, 32, ()); // radius=1, 32 segments
+let circle2 = Profile::circle(2.0, 64, ());
 
 let font_data = include_bytes!("../fonts/MyFont.ttf");
-let sketch_text = Sketch::text("Hello!", font_data, 20.0, ());
+let sketch_text = Profile::text("Hello!", font_data, 20.0, ());
 
 // Then extrude the text to make it 3D:
 let text_3d = sketch_text.extrude(1.0);
@@ -196,31 +196,31 @@ let text_3d = sketch_text.extrude(1.0);
 
 Extrusions build 3D polygons from 2D Geometries.
 
-- <img src="docs/extrude.png" width="128" alt="an angled view of an extruded star"/> **`Sketch::extrude(height: Real)`** - Simple extrude in Z+
-- <img src="docs/extrude_vector.png" width="128"  alt="an angled view of a star extruded at an angle"/> **`Sketch::extrude_vector(direction: Vector3)`** - Extrude along Vector3 direction
-- <img src="docs/revolve.png" width="128"  alt="an arch with round ends"/> **`Sketch::revolve(angle_degs, segments)`** - Extrude while rotating around the Y axis
-- <img src="docs/loft.png" width="128" alt="an angled view of a lofted tapered prism"/> **`Sketch::loft(&bottom_polygon, &top_polygon, false)`** - Helper function which extrudes between two Mesh Polygons, optionally with caps
-- <img src="docs/sweep.png" width="128" alt="a Sketch swept along a 3D path"/> **`Sketch::sweep(path: &[Point3<Real>])`** - Sweep a Sketch along a path defined by a series of Points
+- <img src="docs/extrude.png" width="128" alt="an angled view of an extruded star"/> **`Profile::extrude(height: Real)`** - Simple extrude in Z+
+- <img src="docs/extrude_vector.png" width="128"  alt="an angled view of a star extruded at an angle"/> **`Profile::extrude_vector(direction: Vector3)`** - Extrude along Vector3 direction
+- <img src="docs/revolve.png" width="128"  alt="an arch with round ends"/> **`Profile::revolve(angle_degs, segments)`** - Extrude while rotating around the Y axis
+- <img src="docs/loft.png" width="128" alt="an angled view of a lofted tapered prism"/> **`Profile::loft(&bottom_polygon, &top_polygon, false)`** - Helper function which extrudes between two Mesh Polygons, optionally with caps
+- <img src="docs/sweep.png" width="128" alt="a Profile swept along a 3D path"/> **`Profile::sweep(path: &[Point3<Real>])`** - Sweep a Profile along a path defined by a series of Points
 
 ```rust
-let square = Sketch::square(2.0, ());
+let square = Profile::square(2.0, ());
 let prism = square.extrude(5.0);
 
 let revolve_shape = square.revolve(360.0, 16);
 
-let bottom = Sketch::circle(2.0, 64, ());
+let bottom = Profile::circle(2.0, 64, ());
 let top = bottom.translate(0.0, 0.0, 5.0);
-let lofted = Sketch::loft(&bottom.polygons[0], &top.polygons[0], false);
+let lofted = Profile::loft(&bottom.polygons[0], &top.polygons[0], false);
 ```
 
-### Misc Sketch operations
+### Misc Profile operations
 
-- **`Sketch::offset(distance)`** - outward (or inward) offset in 2D. Certified simple sharp offsets use hypercurve directly; remaining regularized offset cases are behind the optional `offset` compatibility feature and are recomposed into native Sketch topology.
-- **`Sketch::offset_rounded(distance)`** - outward (or inward) rounded offset in 2D behind the optional `offset` compatibility feature, with results recomposed into native Sketch topology.
-- **`Sketch::straight_skeleton(&self, orientation: bool)`** - returns a Sketch containing the inside (orientation: true) or outside (orientation: false) straight skeleton behind the optional `offset` compatibility feature.
-- **`Sketch::bounding_box()`** - computes the bounding box of the shape.
-- **`Sketch::invalidate_bounding_box()`** - invalidates the bounding box of the shape, causing it to be recomputed on next access
-- **`Sketch::triangulate()`** - subdivides the Sketch into triangles
+- **`Profile::offset(distance)`** - outward (or inward) offset in 2D. Certified simple sharp offsets use hypercurve directly; remaining regularized offset cases are behind the optional `offset` compatibility feature and are recomposed into native Profile topology.
+- **`Profile::offset_rounded(distance)`** - outward (or inward) rounded offset in 2D behind the optional `offset` compatibility feature, with results recomposed into native Profile topology.
+- **`Profile::straight_skeleton(&self, orientation: bool)`** - returns a Profile containing the inside (orientation: true) or outside (orientation: false) straight skeleton behind the optional `offset` compatibility feature.
+- **`Profile::bounding_box()`** - computes the bounding box of the shape.
+- **`Profile::invalidate_bounding_box()`** - invalidates the bounding box of the shape, causing it to be recomputed on next access
+- **`Profile::triangulate()`** - subdivides the Profile into triangles
 
 ### Mesh Structure
 
@@ -336,7 +336,7 @@ let difference_result = cube.difference(&sphere);
 let intersection_result = cylinder.intersection(&sphere);
 ```
 
-Booleans on any type implementing the CSG trait such as `Mesh<M>` or `Sketch<M>` return their own type.
+Booleans on any type implementing the CSG trait such as `Mesh<M>` or `Profile<M>` return their own type.
 Types implementing the CSG trait also provide the following transformation functions:
 
 ### Transformations
@@ -425,7 +425,7 @@ Hershey fonts are single stroke fonts which produce open ended polylines in the 
 
 ```rust
 let font_data = include_bytes("../fonts/myfont.jhf");
-let csg_text = Sketch::from_hershey("Hello!", font_data, 20.0, ());
+let csg_text = Profile::from_hershey("Hello!", font_data, 20.0, ());
 ```
 
 ### Create a Bevy `Mesh`
@@ -522,7 +522,7 @@ fn main() {
 
 ## Working with Metadata
 
-`Mesh<M>` and `Sketch<M>` are generic over `M: Clone`. Each polygon in a `Mesh<M>` and each `Mesh<M>` and `Sketch<M>` carry caller-owned metadata. Use `M = ()` for no metadata or `M = Option<YourMetadata>` for optional metadata.
+`Mesh<M>` and `Profile<M>` are generic over `M: Clone`. Each polygon in a `Mesh<M>` and each `Mesh<M>` and `Profile<M>` carry caller-owned metadata. Use `M = ()` for no metadata or `M = Option<YourMetadata>` for optional metadata.
 Use cases include storing color, ID, or layer info.
 
 ```rust
@@ -571,7 +571,7 @@ if let Some(data_mut) = poly.metadata_mut() {
 ## Project Status
 
 `csgrs` is usable today as a Rust-first CSG and geometry toolkit. The stable
-core is BSP-backed `Mesh`, hypercurve-backed `Sketch`, hypertri polygon
+core is BSP-backed `Mesh`, hypercurve-backed `Profile`, hypertri polygon
 triangulation, common 2D/3D primitive construction, extrusion/revolve/sweep/loft
 operations, transformations, metadata propagation, cached bounding boxes,
 TriMesh query conversion, ray intersection helpers, mesh quality utilities, and
@@ -639,7 +639,7 @@ README_RENDER_OUTPUT_DIR=/tmp/csgrs-readme-renders cargo run --example readme_re
   fillets, 3D offsets, bending, threaded parts, richer gear options, and
   attachment/alignment helpers.
 - **Representations**: replace transitional `Mesh` storage with `hypermesh`,
-  keep `Sketch` backed by hypercurve, add metadata deduplication, UV support,
+  keep `Profile` backed by hypercurve, add metadata deduplication, UV support,
   and better conversion among hyper geometry types, query `TriMesh`, and file
   formats.
 - **Performance**: broaden Rayon use in operations that are embarrassingly
