@@ -58,9 +58,11 @@ nalgebra = { version = "0.34.1", features = ["serde-serialize"] }
 chull = { version = "0.2.4", optional = true }
 hypercurve = { version = "0.2.0", features = ["triangulation"] }
 hyperlattice = { version = "0.5.0" }
+hyperlimit = { version = "0.3.0", optional = true }
 hypermesh = { version = "0.2.0", default-features = false, features = ["exact"] }
 hyperphysics = { version = "0.2.0" }
 hyperreal = { version = "0.12.0", default-features = false }
+hypersdf = { version = "0.1.0", optional = true }
 hypertri = { version = "0.2.0", default-features = false, features = ["earcut"] }
 rapier3d-f64 = { version = "0.31.0" }
 parry3d-f64  = { version = "0.25.3" }
@@ -181,6 +183,8 @@ metaballs = [
 ]
 sdf = [
   "fast-surface-nets",
+  "hyperlimit",
+  "hypersdf",
 ]
 offset = [
   "sketch",

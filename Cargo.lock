@@ -1044,9 +1044,11 @@ dependencies = [
  "hershey",
  "hypercurve",
  "hyperlattice",
+ "hyperlimit",
  "hypermesh",
  "hyperphysics",
  "hyperreal",
+ "hypersdf",
  "hypertri",
  "image",
  "js-sys",
@@ -1769,8 +1771,6 @@ dependencies = [
 [[package]]
 name = "hyperlimit"
 version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9fedb9082553855f973ba3634c85855a90f4aa189b1c1a2b31b045f11fb13852"
 dependencies = [
  "hyperreal",
 ]
@@ -1801,6 +1801,15 @@ dependencies = [
  "num",
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "hypersdf"
+version = "0.1.0"
+dependencies = [
+ "hyperlattice",
+ "hyperlimit",
+ "hyperreal",
 ]
 
 [[package]]
