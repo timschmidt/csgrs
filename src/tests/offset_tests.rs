@@ -3,14 +3,14 @@
 use super::support::*;
 use hypercurve::finite_ring_signed_area;
 
-fn first_material_area(sketch: &Sketch<()>) -> Real {
+fn first_material_area(sketch: &Profile<()>) -> Real {
     let profiles = sketch.region_profiles();
     finite_ring_signed_area(profiles[0].material().points())
 }
 
 #[test]
 fn test_square_ccw_ordering() {
-    let square = Sketch::<()>::square(2.0, ());
+    let square = Profile::<()>::square(2.0, ());
     let profiles = square.region_profiles();
     assert_eq!(profiles.len(), 1);
     let area = finite_ring_signed_area(profiles[0].material().points());
@@ -20,7 +20,7 @@ fn test_square_ccw_ordering() {
 #[test]
 #[cfg(feature = "offset")]
 fn test_offset_2d_positive_distance_grows() {
-    let square = Sketch::<()>::square(2.0, ()); // Centered square with size 2x2
+    let square = Profile::<()>::square(2.0, ()); // Centered square with size 2x2
     let offset = square.offset(0.5); // Positive offset should grow the square
 
     // The original square has area 4.0
@@ -37,7 +37,7 @@ fn test_offset_2d_positive_distance_grows() {
 #[test]
 #[cfg(feature = "offset")]
 fn test_offset_2d_negative_distance_shrinks() {
-    let square = Sketch::<()>::square(2.0, ()); // Centered square with size 2x2
+    let square = Profile::<()>::square(2.0, ()); // Centered square with size 2x2
     let offset = square.offset(-0.5); // Negative offset should shrink the square
 
     // The original square has area 4.0
@@ -54,7 +54,7 @@ fn test_offset_2d_negative_distance_shrinks() {
 #[test]
 #[cfg(feature = "offset")]
 fn test_straight_skeleton_2d_non_empty() {
-    let square = Sketch::<()>::square(2.0, ());
+    let square = Profile::<()>::square(2.0, ());
     let skeleton = square.straight_skeleton(true);
 
     assert!(
@@ -67,7 +67,7 @@ fn test_straight_skeleton_2d_non_empty() {
 fn test_polygon_2d_enforce_ccw_ordering() {
     // Define a triangle in CW order
     let points_cw = vec![[0.0, 0.0], [1.0, 0.0], [0.5, 1.0]];
-    let csg_cw = Sketch::<()>::polygon(&points_cw, ());
+    let csg_cw = Profile::<()>::polygon(&points_cw, ());
     // Enforce CCW ordering
     let normalized = csg_cw.renormalize();
     let area = first_material_area(&normalized);
@@ -77,7 +77,7 @@ fn test_polygon_2d_enforce_ccw_ordering() {
 #[test]
 #[cfg(feature = "offset")]
 fn test_zero_offset_preserves_region_2d() {
-    let shape = Sketch::<()>::circle(1.0, 32, ());
+    let shape = Profile::<()>::circle(1.0, 32, ());
     let unchanged = shape.offset(0.0);
 
     let original_area = first_material_area(&shape);

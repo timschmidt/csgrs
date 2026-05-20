@@ -1,11 +1,11 @@
 //! Provides functions for flattening a `Mesh` against the Z=0 `Plane`
-//! or slicing a `Mesh` with an arbitrary `Plane` into a `Sketch`
+//! or slicing a `Mesh` with an arbitrary `Plane` into a `Profile`
 
 use crate::float_types::{Real, hpoints_within_epsilon, tolerance};
 use crate::mesh::Mesh;
 use crate::mesh::bsp::Node;
 use crate::mesh::plane::Plane;
-use crate::sketch::Sketch;
+use crate::sketch::Profile;
 use crate::vertex::Vertex;
 use hashbrown::HashMap;
 use hypercurve::{
@@ -18,7 +18,7 @@ use std::fmt::Debug;
 impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// Flattens any 3D polygons by projecting them onto the XY plane (z=0),
     /// unifies them into one or more 2D polygons, and returns a hypercurve-backed
-    /// 2D Sketch.
+    /// 2D Profile.
     ///
     /// - All `polygons` in the Mesh are tessellated, projected into XY, promoted
     ///   to hypercurve contours, and unioned as `Region2` topology.
@@ -29,7 +29,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     ///   discipline in Hobby, "Practical Segment Intersection with Finite
     ///   Precision Output," *Computational Geometry* 13(4), 1999
     ///   (<https://doi.org/10.1016/S0925-7721(99)00021-8>).
-    pub fn flatten(&self) -> Sketch<M> {
+    pub fn flatten(&self) -> Profile<M> {
         let policy = CurvePolicy::certified();
         let mut flattened_region = Region2::empty();
         let mut material_contours = Vec::new();
@@ -74,21 +74,21 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             }
         }
 
-        Sketch::from_region_and_wires_with_origin(
+        Profile::from_region_and_wires_with_origin(
             flattened_region,
             Vec::new(),
             self.metadata.clone(),
             Vertex::default(),
-            Sketch::<M>::prepare_origin_transform(Vertex::default()),
+            Profile::<M>::prepare_origin_transform(Vertex::default()),
         )
     }
 
-    /// Slice this solid by a given `plane`, returning a new `Sketch` whose polygons
+    /// Slice this solid by a given `plane`, returning a new `Profile` whose polygons
     /// are either:
     /// - The polygons that lie exactly in the slicing plane (coplanar), or
     /// - Polygons formed by the intersection edges (each a line, possibly open or closed).
     ///
-    /// The returned `Sketch` can contain:
+    /// The returned `Profile` can contain:
     /// - **Closed polygons** that are coplanar,
     /// - **Open polygons** (poly-lines) if the plane cuts through edges,
     /// - Potentially **closed loops** if the intersection lines form a cycle.
@@ -107,7 +107,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// ```
     /// use csgrs::mesh::Mesh;
     /// use csgrs::mesh::plane::Plane;
-    /// use csgrs::sketch::Sketch;
+    /// use csgrs::sketch::Profile;
     /// use nalgebra::Vector3;
     /// let cylinder = Mesh::<()>::cylinder(1.0, 2.0, 32, ());
     /// let plane_z0 = Plane::from_normal(Vector3::z(), 0.0);
@@ -116,7 +116,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// //   - Possibly an open or closed polygon(s) at z=0
     /// //   - Or empty if no intersection
     /// ```
-    pub fn slice(&self, plane: Plane) -> Sketch<M> {
+    pub fn slice(&self, plane: Plane) -> Profile<M> {
         // Build a BSP from all of our polygons:
         let node = Node::from_polygons(&self.polygons.clone());
 
@@ -186,12 +186,12 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             Region2::from_material_contours(material_contours)
         };
 
-        Sketch::from_region_and_wires_with_origin(
+        Profile::from_region_and_wires_with_origin(
             region,
             open_wires,
             self.metadata.clone(),
             Vertex::default(),
-            Sketch::<M>::prepare_origin_transform(Vertex::default()),
+            Profile::<M>::prepare_origin_transform(Vertex::default()),
         )
     }
 }

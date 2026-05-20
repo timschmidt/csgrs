@@ -1,7 +1,7 @@
-//! Create `Sketch`s using ttf fonts
+//! Create `Profile`s using ttf fonts
 
 use crate::float_types::{Real, tolerance};
-use crate::sketch::Sketch;
+use crate::sketch::Profile;
 use hypercurve::{Contour2, CurveString2, Region2, finite_ring_signed_area};
 use std::fmt::Debug;
 use ttf_parser::{Face, GlyphId, OutlineBuilder};
@@ -10,7 +10,7 @@ use ttf_utils::Outline;
 // For flattening curves, how many segments per quad/cubic
 const CURVE_STEPS: usize = 8;
 
-impl<M: Clone + Debug + Send + Sync> Sketch<M> {
+impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// Create **2D text** (outlines only) in the XY plane using ttf-utils + ttf-parser.
     ///
     /// Each glyph's closed contours become native `hypercurve::Region2`
@@ -26,25 +26,25 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     /// - `text`: the text string
     /// - `font_data`: raw bytes of a TTF file
     /// - `scale`: a uniform scale factor for glyphs
-    /// - `metadata`: optional metadata for the resulting `Sketch`
+    /// - `metadata`: optional metadata for the resulting `Profile`
     ///
     /// # Returns
-    /// A `Sketch` whose filled glyph outlines are stored as a native region and
+    /// A `Profile` whose filled glyph outlines are stored as a native region and
     /// whose rare open glyph contours are stored as native wires.
     pub fn text(text: &str, font_data: &[u8], scale: Real, metadata: M) -> Self {
         // 1) Parse the TTF font
         let face = match ttf_parser::Face::parse(font_data, 0) {
             Ok(f) => f,
             Err(_) => {
-                // If the font fails to parse, return an empty 2D Sketch
-                return Sketch::empty(metadata);
+                // If the font fails to parse, return an empty 2D Profile
+                return Profile::empty(metadata);
             },
         };
 
         // Treat `scale` as points-per-em and convert points to millimeters.
         let units_per_em = face.units_per_em() as Real;
         if units_per_em <= 0.0 || !scale.is_finite() {
-            return Sketch::empty(metadata);
+            return Profile::empty(metadata);
         }
         let font_scale = scale * 0.3527777 / units_per_em;
         let default_advance = default_advance(&face, font_scale);
@@ -133,12 +133,12 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
             }
         }
 
-        Sketch::from_region_and_wires_with_origin(
+        Profile::from_region_and_wires_with_origin(
             Region2::new(material_contours, hole_contours),
             wires,
             metadata,
             crate::vertex::Vertex::default(),
-            Sketch::<M>::prepare_origin_transform(crate::vertex::Vertex::default()),
+            Profile::<M>::prepare_origin_transform(crate::vertex::Vertex::default()),
         )
     }
 }

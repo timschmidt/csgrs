@@ -3,7 +3,7 @@
 #![no_main]
 
 use csgrs::float_types::{Real, tolerance};
-use csgrs::sketch::Sketch;
+use csgrs::sketch::Profile;
 use libfuzzer_sys::fuzz_target;
 
 fn decode_real(bytes: &[u8], idx: &mut usize) -> Real {
@@ -16,7 +16,7 @@ fn decode_real(bytes: &[u8], idx: &mut usize) -> Real {
     value.clamp(-1.0e3, 1.0e3) as Real
 }
 
-fn assert_sketch_finite<M: Clone + Send + Sync + std::fmt::Debug>(sketch: &Sketch<M>) {
+fn assert_sketch_finite<M: Clone + Send + Sync + std::fmt::Debug>(sketch: &Profile<M>) {
     let profiles = sketch.region_profiles();
     for ring in profiles.iter().flat_map(|profile| {
         std::iter::once(profile.material().points())
@@ -44,25 +44,25 @@ fuzz_target!(|bytes: &[u8]| {
     let positive_a = a.abs().max(tolerance());
     let positive_b = b.abs().max(tolerance());
 
-    let sketch: Sketch<Option<()>> = match tag {
-        0 => Sketch::rectangle(a, b, None),
-        1 => Sketch::square(a, None),
-        2 => Sketch::circle(a, segments, None),
-        3 => Sketch::right_triangle(a, b, None),
-        4 => Sketch::ellipse(a, b, segments, None),
-        5 => Sketch::regular_ngon(segments, a, None),
-        6 => Sketch::arrow(a, b, c, positive_b, None),
-        7 => Sketch::trapezoid(a, b, c, 0.25, None),
-        8 => Sketch::star(segments, a, b, None),
-        9 => Sketch::rounded_rectangle(a, b, c, segments, None),
-        10 => Sketch::squircle(a, b, segments, None),
-        11 => Sketch::keyhole(a, b, c, segments, None),
-        12 => Sketch::reuleaux(segments, a, segments, None),
-        13 => Sketch::ring(a, b, segments, None),
-        14 => Sketch::pie_slice(a, b, c, segments, None),
-        15 => Sketch::heart(a, b, segments, None),
-        16 => Sketch::crescent(positive_a, positive_b, c, segments, None),
-        _ => Sketch::airfoil_naca4(a, b, 12.0, positive_a, segments.max(2), None),
+    let sketch: Profile<Option<()>> = match tag {
+        0 => Profile::rectangle(a, b, None),
+        1 => Profile::square(a, None),
+        2 => Profile::circle(a, segments, None),
+        3 => Profile::right_triangle(a, b, None),
+        4 => Profile::ellipse(a, b, segments, None),
+        5 => Profile::regular_ngon(segments, a, None),
+        6 => Profile::arrow(a, b, c, positive_b, None),
+        7 => Profile::trapezoid(a, b, c, 0.25, None),
+        8 => Profile::star(segments, a, b, None),
+        9 => Profile::rounded_rectangle(a, b, c, segments, None),
+        10 => Profile::squircle(a, b, segments, None),
+        11 => Profile::keyhole(a, b, c, segments, None),
+        12 => Profile::reuleaux(segments, a, segments, None),
+        13 => Profile::ring(a, b, segments, None),
+        14 => Profile::pie_slice(a, b, c, segments, None),
+        15 => Profile::heart(a, b, segments, None),
+        16 => Profile::crescent(positive_a, positive_b, c, segments, None),
+        _ => Profile::airfoil_naca4(a, b, 12.0, positive_a, segments.max(2), None),
     };
 
     assert_sketch_finite(&sketch);

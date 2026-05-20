@@ -1,5 +1,5 @@
 //! Toolpath generation for FDM, milling/routing (2.5D), laser & plasma cutting, and lathing
-//! built on top of `csgrs` data structures (`Sketch`, `Mesh`, `Real`).
+//! built on top of `csgrs` data structures (`Profile`, `Mesh`, `Real`).
 //!
 //! The goal is to provide *robust, composable, and controller‑agnostic* path primitives
 //! plus a couple of high‑level strategies (perimeters+infill, contour+offset pocketing,
@@ -7,8 +7,8 @@
 //!
 //! ## Highlights
 //! - Pure‐Rust, no alloc-heavy geometry beyond what `csgrs` already uses
-//! - Works directly with `Sketch` (2D) and, for FDM, accepts pre‑sliced layer `Sketch`es
-//! - Uses `Sketch::offset/_rounded`, `Sketch::hilbert_curve`, and ring extraction
+//! - Works directly with `Profile` (2D) and, for FDM, accepts pre‑sliced layer `Profile`es
+//! - Uses `Profile::offset/_rounded`, `Profile::hilbert_curve`, and ring extraction
 //! - Emits neutral `Toolpath` moves and optional G‑code via `gcode` submodule
 //!
 //! ### Feature flags
@@ -18,7 +18,7 @@ use core::fmt::Debug;
 use nalgebra::Point3;
 
 use crate::float_types::{Real, tolerance};
-use crate::sketch::Sketch;
+use crate::sketch::Profile;
 use hypercurve::{
     Classification, FinitePolyline2, FiniteProjectionOptions, FiniteRegionProfile2,
 };
@@ -140,7 +140,7 @@ fn toolpath_projection_options() -> FiniteProjectionOptions {
 }
 
 fn native_profiles<M: Clone + Send + Sync + Debug>(
-    sk: &Sketch<M>,
+    sk: &Profile<M>,
 ) -> Vec<FiniteRegionProfile2> {
     match sk.project_region_profiles(&toolpath_projection_options()) {
         Ok(Classification::Decided(profiles)) => profiles,
@@ -149,7 +149,7 @@ fn native_profiles<M: Clone + Send + Sync + Debug>(
 }
 
 fn native_wire_polylines<M: Clone + Send + Sync + Debug>(
-    sk: &Sketch<M>,
+    sk: &Profile<M>,
 ) -> Vec<FinitePolyline2> {
     sk.project_wire_polylines(&toolpath_projection_options())
 }
@@ -166,7 +166,7 @@ fn native_wire_polylines<M: Clone + Send + Sync + Debug>(
 /// model surveyed by Hormann and Agathos, "The point in polygon problem for
 /// arbitrary polygons," *Computational Geometry* 20(3), 2001
 /// (<https://doi.org/10.1016/S0925-7721(01)00012-8>).
-fn rings_of<M: Clone + Send + Sync + Debug>(sk: &Sketch<M>) -> Vec<Vec<(Real, Real)>> {
+fn rings_of<M: Clone + Send + Sync + Debug>(sk: &Profile<M>) -> Vec<Vec<(Real, Real)>> {
     native_profiles(sk)
         .iter()
         .flat_map(|profile| {
@@ -210,14 +210,14 @@ impl Default for FdmLayerCfg {
     }
 }
 
-/// Build a single FDM layer toolpath from a **closed** 2D `Sketch` at plane `z`.
+/// Build a single FDM layer toolpath from a **closed** 2D `Profile` at plane `z`.
 ///
 /// Steps:
 /// 1) centerline compensation (offset by −nozzle_width/2)
 /// 2) N inward perimeter offsets
 /// 3) Hilbert infill clipped to remaining area
 pub fn fdm_layer_from_sketch<M: Clone + Send + Sync + Debug>(
-    region: &Sketch<M>,
+    region: &Profile<M>,
     z: Real,
     cfg: &FdmLayerCfg,
     feeds: &Feeds,
@@ -326,7 +326,7 @@ pub enum KerfSide {
 /// - `kerf` is full kerf width; we offset by ±kerf/2 toward Outside/Inside.
 /// - For exteriors we usually cut Outside; for holes (CW) we usually cut Inside.
 pub fn cut2d_contours<M: Clone + Send + Sync + Debug>(
-    region: &Sketch<M>,
+    region: &Profile<M>,
     z: Real,
     kerf: Real,
     side: KerfSide,
@@ -412,7 +412,7 @@ impl Default for PocketCfg {
 
 /// Concentric‐offset pocketing with Z stepdowns; emits Outside finish pass at final depth.
 pub fn pocket2d<M: Clone + Send + Sync + Debug>(
-    region: &Sketch<M>,
+    region: &Profile<M>,
     z_safety: Real,
     base_z: Real, // top surface Z (e.g. 0), pocket goes toward negative (base_z − depth)
     cfg: &PocketCfg,
@@ -543,11 +543,11 @@ impl Default for LatheCfg {
     }
 }
 
-/// Interpret a 2D `Sketch` as a lathe profile in the X (radius) vs Y (Z‑axis) plane.
+/// Interpret a 2D `Profile` as a lathe profile in the X (radius) vs Y (Z‑axis) plane.
 /// *Assumptions*: profile is a closed polygon whose **exterior** defines final OD.
 /// We generate simple roughing passes from initial stock radius down to profile.
 pub fn lathe_rough_from_profile<M: Clone + Send + Sync + Debug>(
-    profile_xy: &Sketch<M>,
+    profile_xy: &Profile<M>,
     z_min: Real,
     z_max: Real,
     stock_radius: Real,
@@ -731,10 +731,10 @@ pub mod gcode {
 // Tiny conveniences / API
 // ======================
 
-/// Convenience: Convert a `Sketch` that represents a single closed polygon (no holes)
+/// Convenience: Convert a `Profile` that represents a single closed polygon (no holes)
 /// into a planar travel+cut path at a constant Z.
 pub fn contour_only<M: Clone + Send + Sync + Debug>(
-    sk: &Sketch<M>,
+    sk: &Profile<M>,
     z: Real,
     feed: Real,
     kind: MachineKind,

@@ -87,7 +87,7 @@ impl<M: Clone + Debug + Send + Sync> crate::mesh::Mesh<M> {
     }
 }
 
-impl<M: Clone + Debug + Send + Sync> crate::sketch::Sketch<M> {
+impl<M: Clone + Debug + Send + Sync> crate::sketch::Profile<M> {
     pub fn to_stl_ascii(&self, name: &str) -> String {
         self::to_stl_ascii(self, name)
     }

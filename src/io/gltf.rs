@@ -180,7 +180,7 @@ impl<M: Clone + Debug + Send + Sync> crate::mesh::Mesh<M> {
     }
 }
 
-impl<M: Clone + Debug + Send + Sync> crate::sketch::Sketch<M> {
+impl<M: Clone + Debug + Send + Sync> crate::sketch::Profile<M> {
     pub fn to_gltf(&self, object_name: &str) -> String {
         self::to_gltf(self, object_name)
     }

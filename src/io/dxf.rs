@@ -5,7 +5,7 @@ use crate::float_types::{
 };
 use crate::mesh::Mesh;
 use crate::polygon::Polygon;
-use crate::sketch::Sketch;
+use crate::sketch::Profile;
 use crate::triangulated::Triangulated3D;
 use crate::vertex::Vertex;
 use nalgebra::{Point3, Vector3};
@@ -122,7 +122,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                         points[3].clone(),
                         points[0].clone(),
                     ];
-                    let extruded = Sketch::polygon_points(&ring, metadata.clone())
+                    let extruded = Profile::polygon_points(&ring, metadata.clone())
                         .extrude_vector(extrusion_direction * thickness)
                         .polygons;
                     polygons.extend(extruded);
@@ -182,7 +182,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     }
 }
 
-impl<M: Clone + Debug + Send + Sync> Sketch<M> {
+impl<M: Clone + Debug + Send + Sync> Profile<M> {
     pub fn to_dxf(&self) -> Result<Vec<u8>, Box<dyn Error>> {
         self::to_dxf(self)
     }

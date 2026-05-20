@@ -5,7 +5,7 @@ use csgrs::float_types::{Real, hreal_from_f64, tolerance};
 use csgrs::mesh::Mesh;
 use csgrs::mesh::metaballs::MetaBall;
 use csgrs::mesh::plane::Plane;
-use csgrs::sketch::Sketch;
+use csgrs::sketch::Profile;
 use hypercurve::Point2;
 use nalgebra::{Point3, Vector3};
 use std::panic::{AssertUnwindSafe, catch_unwind};
@@ -21,7 +21,7 @@ fn assert_mesh_finite<M: Clone + Send + Sync + std::fmt::Debug>(mesh: &Mesh<M>) 
     }
 }
 
-fn assert_sketch_finite<M: Clone + Send + Sync + std::fmt::Debug>(sketch: &Sketch<M>) {
+fn assert_sketch_finite<M: Clone + Send + Sync + std::fmt::Debug>(sketch: &Profile<M>) {
     let profiles = sketch.region_profiles();
     for ring in profiles.iter().flat_map(|profile| {
         std::iter::once(profile.material().points())
@@ -90,7 +90,7 @@ fn adversarial_stress_bounded_boolean_chains_and_cache_reuse() {
 fn adversarial_stress_high_vertex_triangulate_offset_sweep_and_slice() {
     for count in [100usize, 256, 512] {
         let points = regular_ring(count, 10.0, 0.01);
-        let sketch = Sketch::<()>::polygon(&points, ());
+        let sketch = Profile::<()>::polygon(&points, ());
         assert_sketch_finite(&sketch);
         let triangles = sketch.triangulate();
         for tri in triangles {
@@ -112,7 +112,7 @@ fn adversarial_stress_high_vertex_triangulate_offset_sweep_and_slice() {
                 )
             })
             .collect::<Vec<_>>();
-        let swept = Sketch::<()>::circle(0.1, 12, ()).sweep(&path);
+        let swept = Profile::<()>::circle(0.1, 12, ()).sweep(&path);
         assert_mesh_finite(&swept);
         let slice = swept.slice(Plane::from_normal(Vector3::z(), 0.5));
         assert_sketch_finite(&slice);
@@ -161,14 +161,14 @@ fn adversarial_stress_sdf_tpms_and_metaball_resolution_ladder() {
             })
             .collect::<Vec<_>>();
         let sketch =
-            Sketch::<()>::metaballs(&sketch_balls, (resolution, resolution), 0.5, 0.1, ());
+            Profile::<()>::metaballs(&sketch_balls, (resolution, resolution), 0.5, 0.1, ());
         assert_sketch_finite(&sketch);
     }
 }
 
 #[test]
 fn adversarial_stress_concrete_operation_chains_are_contained() {
-    let invalid = Sketch::<()>::polygon(
+    let invalid = Profile::<()>::polygon(
         &[[0.0, 0.0], [1.0, 1.0], [0.0, 1.0], [1.0, 0.0], [0.0, 0.0]],
         (),
     );

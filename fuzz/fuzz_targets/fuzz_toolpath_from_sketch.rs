@@ -3,7 +3,7 @@
 #![no_main]
 
 use csgrs::float_types::Real;
-use csgrs::sketch::Sketch;
+use csgrs::sketch::Profile;
 use csgrs::toolpath::gcode::Post;
 use csgrs::toolpath::{cut2d_contours, Feeds, KerfSide, LeadInOut, MachineKind};
 use libfuzzer_sys::fuzz_target;
@@ -29,7 +29,7 @@ fuzz_target!(|bytes: &[u8]| {
     let z = decode_real(bytes, &mut idx).clamp(-100.0, 100.0);
     let kerf = decode_real(bytes, &mut idx).clamp(-10.0, 10.0);
 
-    let sketch: Sketch<()> = Sketch::rectangle(width, height, ());
+    let sketch: Profile<()> = Profile::rectangle(width, height, ());
     let feeds = Feeds {
         travel: 3000.0,
         xy: 1200.0,

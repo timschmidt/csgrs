@@ -1,6 +1,6 @@
 //! Basic 2D sketches, including offset variants, exported as flat STL files.
 
-use csgrs::sketch::Sketch;
+use csgrs::sketch::Profile;
 use std::{fs, path::Path};
 
 const PATH: &str = "stl/examples/basic2d_shapes";
@@ -8,10 +8,10 @@ const PATH: &str = "stl/examples/basic2d_shapes";
 fn main() {
     fs::create_dir_all(PATH).unwrap();
 
-    let square = Sketch::<()>::square(2.0, ());
-    let circle = Sketch::<()>::circle(1.0, 64, ());
-    let ring = Sketch::<()>::ring(2.0, 0.25, 64, ());
-    let keyhole = Sketch::<()>::keyhole(1.0, 0.4, 1.5, 32, ());
+    let square = Profile::<()>::square(2.0, ());
+    let circle = Profile::<()>::circle(1.0, 64, ());
+    let ring = Profile::<()>::ring(2.0, 0.25, 64, ());
+    let keyhole = Profile::<()>::keyhole(1.0, 0.4, 1.5, 32, ());
 
     write_sketch(&square, "square");
     write_sketch(&circle, "circle");
@@ -25,7 +25,7 @@ fn main() {
     }
 }
 
-fn write_sketch(sketch: &Sketch<()>, name: &str) {
+fn write_sketch(sketch: &Profile<()>, name: &str) {
     fs::write(
         Path::new(PATH).join(name).with_extension("stl"),
         sketch.to_stl_binary(name).unwrap(),

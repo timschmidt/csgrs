@@ -80,5 +80,5 @@ pub enum ValidationError {
 
 // Plane::from_points "Degenerate polygon: vertices do not define a plane"
 // Mesh::polyhedron "Face index {} is out of range (points.len = {})."
-// Sketch::rotate_extrude "rotate_extrude requires at least 2 segments"
-// Sketch::extrude_between "extrude_between: both polygons must have the same number of vertices"
+// Profile::rotate_extrude "rotate_extrude requires at least 2 segments"
+// Profile::extrude_between "extrude_between: both polygons must have the same number of vertices"

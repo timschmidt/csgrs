@@ -5,7 +5,7 @@ use csgrs::errors::ValidationError;
 use csgrs::float_types::{Real, tolerance};
 use csgrs::mesh::Mesh;
 use csgrs::polygon::Polygon;
-use csgrs::sketch::Sketch;
+use csgrs::sketch::Profile;
 use csgrs::vertex::Vertex;
 use hypercurve::{Contour2, CurveString2, Region2};
 use nalgebra::{Point3, Vector3};
@@ -114,7 +114,7 @@ fn wire(points: &[[Real; 2]]) -> CurveString2 {
     CurveString2::from_finite_line_string(points).expect("adversarial catalog wire is valid")
 }
 
-fn sketch_catalog() -> Vec<Sketch<&'static str>> {
+fn sketch_catalog() -> Vec<Profile<&'static str>> {
     let holed = Region2::new(
         vec![contour(&[
             [-2.0, -2.0],
@@ -129,7 +129,7 @@ fn sketch_catalog() -> Vec<Sketch<&'static str>> {
             [0.5, -0.5],
         ])],
     );
-    let mixed_native = Sketch::from_region_and_wires(
+    let mixed_native = Profile::from_region_and_wires(
         Region2::from_material_contours(vec![
             contour(&[[-1.0, -1.0], [1.0, -1.0], [1.0, 1.0], [-1.0, 1.0]]),
             contour(&[[0.0, 0.0], [1.0, 0.0], [0.0, 1.0]]),
@@ -146,14 +146,14 @@ fn sketch_catalog() -> Vec<Sketch<&'static str>> {
     ]);
 
     vec![
-        Sketch::rectangle(1.0, 0.5, "rect"),
-        Sketch::rectangle(1.0, 0.5, "offset_profile").translate(1.5, 0.0, 0.0),
-        Sketch::circle(1.0, 16, "circle"),
-        Sketch::star(5, 1.0, 0.25, "star"),
-        Sketch::ring(2.0, 0.25, 24, "ring"),
-        Sketch::from_region(holed, "holed"),
+        Profile::rectangle(1.0, 0.5, "rect"),
+        Profile::rectangle(1.0, 0.5, "offset_profile").translate(1.5, 0.0, 0.0),
+        Profile::circle(1.0, 16, "circle"),
+        Profile::star(5, 1.0, 0.25, "star"),
+        Profile::ring(2.0, 0.25, 24, "ring"),
+        Profile::from_region(holed, "holed"),
         mixed_native,
-        Sketch::from_region(disjoint, "disjoint"),
+        Profile::from_region(disjoint, "disjoint"),
     ]
 }
 
@@ -203,7 +203,7 @@ fn adversarial_extrude_height_and_direction_catalog_is_finite() {
 
 #[test]
 fn adversarial_extrude_vector_rejects_hyperreal_degenerate_direction() {
-    let sketch = Sketch::<()>::rectangle(1.0, 1.0, ());
+    let sketch = Profile::<()>::rectangle(1.0, 1.0, ());
     let near_zero = sketch.extrude_vector(Vector3::new(tolerance() * 0.25, 0.0, 0.0));
     let nonfinite = sketch.extrude_vector(Vector3::new(Real::NAN, 0.0, 1.0));
 
@@ -220,7 +220,7 @@ fn adversarial_extrude_vector_rejects_hyperreal_degenerate_direction() {
 #[test]
 fn adversarial_sketch_origin_lift_uses_hyperlattice_rotation_matrix() {
     let origin = Vertex::new(Point3::new(10.0, -2.0, 0.5), Vector3::x());
-    let mesh = Sketch::<&str>::square(1.0, "origin")
+    let mesh = Profile::<&str>::square(1.0, "origin")
         .origin(origin)
         .extrude(1.0);
 
@@ -233,7 +233,7 @@ fn adversarial_sketch_origin_lift_uses_hyperlattice_rotation_matrix() {
         Point3::new(0.0, 0.0, 0.0),
         Vector3::new(Real::NAN, Real::INFINITY, 0.0),
     );
-    let hostile = Sketch::<&str>::square(1.0, "hostile")
+    let hostile = Profile::<&str>::square(1.0, "hostile")
         .origin(hostile_origin)
         .extrude(1.0);
     assert_mesh_finite(&hostile);
@@ -291,7 +291,7 @@ fn adversarial_sweep_path_catalog_is_finite() {
 
 #[test]
 fn adversarial_sweep_uses_hyperreal_path_closure_and_tangents() {
-    let sketch = Sketch::<()>::rectangle(0.5, 0.25, ());
+    let sketch = Profile::<()>::rectangle(0.5, 0.25, ());
     let path = vec![
         Point3::new(0.0, 0.0, 0.0),
         Point3::new(1.0, 0.0, 0.0),
@@ -340,7 +340,7 @@ fn adversarial_loft_polygon_pair_catalog_is_finite_or_errors() {
         for top in &tops {
             for flip in [false, true] {
                 let result =
-                    catch_unwind(AssertUnwindSafe(|| Sketch::loft(bottom, top, flip)))
+                    catch_unwind(AssertUnwindSafe(|| Profile::loft(bottom, top, flip)))
                         .expect("loft should not panic");
                 assert_result_finite(result);
             }
@@ -351,7 +351,7 @@ fn adversarial_loft_polygon_pair_catalog_is_finite_or_errors() {
         polygon_at_z(&[(0.0, 0.0), (1.0, 0.0), (0.0, 1.0)], 1.0, "bad_top");
     mismatched_top.vertices.pop();
     let result = catch_unwind(AssertUnwindSafe(|| {
-        Sketch::loft(&bottoms[0], &mismatched_top, true)
+        Profile::loft(&bottoms[0], &mismatched_top, true)
     }))
     .expect("loft should report mismatched vertices without panicking");
     assert!(matches!(
@@ -416,7 +416,7 @@ proptest! {
         dy in finite_real(),
         dz in finite_real(),
     ) {
-        let sketch = Sketch::<&str>::rectangle(width, height, "rect");
+        let sketch = Profile::<&str>::rectangle(width, height, "rect");
         let mesh = sketch.extrude_vector(Vector3::new(dx, dy, dz));
         assert_mesh_finite(&mesh);
     }
@@ -429,7 +429,7 @@ proptest! {
         angle in -1080.0f64..1080.0f64,
         segments in 2usize..96,
     ) {
-        let sketch = Sketch::<&str>::rectangle(radius, height, "revolve")
+        let sketch = Profile::<&str>::rectangle(radius, height, "revolve")
             .translate(x_offset as Real, 0.0, 0.0);
         let mesh = sketch.revolve(angle as Real, segments).unwrap();
         assert_mesh_finite(&mesh);
@@ -444,7 +444,7 @@ proptest! {
         duplicate_first in any::<bool>(),
         close_path in any::<bool>(),
     ) {
-        let sketch = Sketch::<&str>::circle(profile_radius as Real, 12, "sweep");
+        let sketch = Profile::<&str>::circle(profile_radius as Real, 12, "sweep");
         let start = Point3::new(p0.0, p0.1, p0.2);
         let mut path = vec![
             start,
@@ -474,7 +474,7 @@ proptest! {
             ],
             "top",
         );
-        let mesh = Sketch::loft(&bottom, &top, flip).unwrap();
+        let mesh = Profile::loft(&bottom, &top, flip).unwrap();
         assert_mesh_finite(&mesh);
     }
 }

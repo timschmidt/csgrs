@@ -1,9 +1,9 @@
-//! JavaScript wrapper for [`Sketch`].
+//! JavaScript wrapper for [`Profile`].
 
 use crate::csg::CSG;
 use crate::float_types::Real;
 use crate::io::svg::{FromSVG, ToSVG};
-use crate::sketch::Sketch;
+use crate::sketch::Profile;
 use crate::wasm::{
     finite_matrix4, js_metadata_to_string, matrix_js::Matrix4Js, mesh_js::MeshJs,
     point_js::Point3Js, vector_js::Vector3Js,
@@ -24,7 +24,7 @@ struct RegionProfileJs {
 
 #[wasm_bindgen]
 pub struct SketchJs {
-    pub(crate) inner: Sketch<Option<String>>,
+    pub(crate) inner: Profile<Option<String>>,
 }
 
 #[wasm_bindgen]
@@ -32,7 +32,7 @@ impl SketchJs {
     #[wasm_bindgen(constructor)]
     pub fn new() -> Self {
         Self {
-            inner: Sketch::empty(None),
+            inner: Profile::empty(None),
         }
     }
 
@@ -197,15 +197,15 @@ impl SketchJs {
             .map_err(|_| JsValue::from_str("Invalid polygon ring"))?;
 
         Ok(Self {
-            inner: Sketch::from_contour(contour, meta),
+            inner: Profile::from_contour(contour, meta),
         })
     }
 
-    /// Build a Sketch directly from hypercurve-style finite region profiles.
+    /// Build a Profile directly from hypercurve-style finite region profiles.
     ///
     /// Input shape is `[{ material: [[x, y], ...], holes: [[[x, y], ...], ...] }]`.
     /// Each finite ring is immediately promoted to a `hypercurve::Contour2`, and
-    /// the Sketch is backed by `hypercurve::Region2` rather than a GeoJSON cache.
+    /// the Profile is backed by `hypercurve::Region2` rather than a GeoJSON cache.
     /// This keeps ordinary `f64` values at the wasm boundary while internal CAD
     /// topology is owned by hyper geometry, following Yap, "Towards Exact
     /// Geometric Computation," *Computational Geometry* 7(1-2), 1997
@@ -232,11 +232,11 @@ impl SketchJs {
         }
         let meta = js_metadata_to_string(metadata).unwrap_or(None);
         Ok(Self {
-            inner: Sketch::from_region(hypercurve::Region2::new(material, holes), meta),
+            inner: Profile::from_region(hypercurve::Region2::new(material, holes), meta),
         })
     }
 
-    /// Build a wire-only Sketch directly from finite JS polylines.
+    /// Build a wire-only Profile directly from finite JS polylines.
     ///
     /// Input shape is `[[[x, y], ...], ...]`. Each finite polyline is immediately
     /// promoted to `hypercurve::CurveString2`; unsupported or degenerate
@@ -257,7 +257,7 @@ impl SketchJs {
         }
         let meta = js_metadata_to_string(metadata).unwrap_or(None);
         Ok(Self {
-            inner: Sketch::from_wires(wires, meta),
+            inner: Profile::from_wires(wires, meta),
         })
     }
 
@@ -288,7 +288,7 @@ impl SketchJs {
     #[wasm_bindgen(js_name = fromSVG)]
     pub fn from_svg(svg_data: &str, metadata: JsValue) -> Result<Self, JsValue> {
         let meta = js_metadata_to_string(metadata).unwrap_or(None);
-        let sketch = Sketch::from_svg(svg_data, meta)
+        let sketch = Profile::from_svg(svg_data, meta)
             .map_err(|e| JsValue::from_str(&format!("SVG parsing error: {:?}", e)))?;
         Ok(Self { inner: sketch })
     }
@@ -300,7 +300,7 @@ impl SketchJs {
 
     #[wasm_bindgen(js_name=fromMesh)]
     pub fn from_mesh(mesh_js: &MeshJs) -> SketchJs {
-        let sketch = Sketch::from(mesh_js.inner.clone());
+        let sketch = Profile::from(mesh_js.inner.clone());
         SketchJs { inner: sketch }
     }
 
@@ -519,7 +519,7 @@ impl SketchJs {
     pub fn square(width: Real, metadata: JsValue) -> Self {
         let meta = js_metadata_to_string(metadata).unwrap_or(None);
         Self {
-            inner: Sketch::square(width, meta),
+            inner: Profile::square(width, meta),
         }
     }
 
@@ -527,7 +527,7 @@ impl SketchJs {
     pub fn circle(radius: Real, segments: usize, metadata: JsValue) -> Self {
         let meta = js_metadata_to_string(metadata).unwrap_or(None);
         Self {
-            inner: Sketch::circle(radius, segments, meta),
+            inner: Profile::circle(radius, segments, meta),
         }
     }
 
@@ -535,7 +535,7 @@ impl SketchJs {
     pub fn rectangle(width: Real, length: Real, metadata: JsValue) -> Self {
         let meta = js_metadata_to_string(metadata).unwrap_or(None);
         Self {
-            inner: Sketch::rectangle(width, length, meta),
+            inner: Profile::rectangle(width, length, meta),
         }
     }
 
@@ -543,7 +543,7 @@ impl SketchJs {
     pub fn right_triangle(width: Real, height: Real, metadata: JsValue) -> Self {
         let meta = js_metadata_to_string(metadata).unwrap_or(None);
         Self {
-            inner: Sketch::right_triangle(width, height, meta),
+            inner: Profile::right_triangle(width, height, meta),
         }
     }
 
@@ -551,7 +551,7 @@ impl SketchJs {
     pub fn ellipse(width: Real, height: Real, segments: usize, metadata: JsValue) -> Self {
         let meta = js_metadata_to_string(metadata).unwrap_or(None);
         Self {
-            inner: Sketch::ellipse(width, height, segments, meta),
+            inner: Profile::ellipse(width, height, segments, meta),
         }
     }
 
@@ -559,7 +559,7 @@ impl SketchJs {
     pub fn regular_ngon(sides: usize, radius: Real, metadata: JsValue) -> Self {
         let meta = js_metadata_to_string(metadata).unwrap_or(None);
         Self {
-            inner: Sketch::regular_ngon(sides, radius, meta),
+            inner: Profile::regular_ngon(sides, radius, meta),
         }
     }
 
@@ -573,7 +573,7 @@ impl SketchJs {
     ) -> Self {
         let meta = js_metadata_to_string(metadata).unwrap_or(None);
         Self {
-            inner: Sketch::arrow(shaft_length, shaft_width, head_length, head_width, meta),
+            inner: Profile::arrow(shaft_length, shaft_width, head_length, head_width, meta),
         }
     }
 
@@ -587,7 +587,7 @@ impl SketchJs {
     ) -> Self {
         let meta = js_metadata_to_string(metadata).unwrap_or(None);
         Self {
-            inner: Sketch::trapezoid(top_width, bottom_width, height, top_offset, meta),
+            inner: Profile::trapezoid(top_width, bottom_width, height, top_offset, meta),
         }
     }
 
@@ -600,7 +600,7 @@ impl SketchJs {
     ) -> Self {
         let meta = js_metadata_to_string(metadata).unwrap_or(None);
         Self {
-            inner: Sketch::star(num_points, outer_radius, inner_radius, meta),
+            inner: Profile::star(num_points, outer_radius, inner_radius, meta),
         }
     }
 
@@ -608,7 +608,7 @@ impl SketchJs {
     pub fn teardrop(width: Real, length: Real, segments: usize, metadata: JsValue) -> Self {
         let meta = js_metadata_to_string(metadata).unwrap_or(None);
         Self {
-            inner: Sketch::teardrop(width, length, segments, meta),
+            inner: Profile::teardrop(width, length, segments, meta),
         }
     }
 
@@ -616,7 +616,7 @@ impl SketchJs {
     pub fn egg(width: Real, length: Real, segments: usize, metadata: JsValue) -> Self {
         let meta = js_metadata_to_string(metadata).unwrap_or(None);
         Self {
-            inner: Sketch::egg(width, length, segments, meta),
+            inner: Profile::egg(width, length, segments, meta),
         }
     }
 
@@ -630,7 +630,7 @@ impl SketchJs {
     ) -> Self {
         let meta = js_metadata_to_string(metadata).unwrap_or(None);
         Self {
-            inner: Sketch::rounded_rectangle(
+            inner: Profile::rounded_rectangle(
                 width,
                 height,
                 corner_radius,
@@ -644,7 +644,7 @@ impl SketchJs {
     pub fn squircle(width: Real, height: Real, segments: usize, metadata: JsValue) -> Self {
         let meta = js_metadata_to_string(metadata).unwrap_or(None);
         Self {
-            inner: Sketch::squircle(width, height, segments, meta),
+            inner: Profile::squircle(width, height, segments, meta),
         }
     }
 
@@ -658,7 +658,13 @@ impl SketchJs {
     ) -> Self {
         let meta = js_metadata_to_string(metadata).unwrap_or(None);
         Self {
-            inner: Sketch::keyhole(circle_radius, handle_width, handle_height, segments, meta),
+            inner: Profile::keyhole(
+                circle_radius,
+                handle_width,
+                handle_height,
+                segments,
+                meta,
+            ),
         }
     }
 
@@ -671,7 +677,7 @@ impl SketchJs {
     ) -> Self {
         let meta = js_metadata_to_string(metadata).unwrap_or(None);
         Self {
-            inner: Sketch::reuleaux(sides, diameter, circle_segments, meta),
+            inner: Profile::reuleaux(sides, diameter, circle_segments, meta),
         }
     }
 
@@ -679,7 +685,7 @@ impl SketchJs {
     pub fn ring(id: Real, thickness: Real, segments: usize, metadata: JsValue) -> Self {
         let meta = js_metadata_to_string(metadata).unwrap_or(None);
         Self {
-            inner: Sketch::ring(id, thickness, segments, meta),
+            inner: Profile::ring(id, thickness, segments, meta),
         }
     }
 
@@ -693,7 +699,7 @@ impl SketchJs {
     ) -> Self {
         let meta = js_metadata_to_string(metadata).unwrap_or(None);
         Self {
-            inner: Sketch::pie_slice(radius, start_angle_deg, end_angle_deg, segments, meta),
+            inner: Profile::pie_slice(radius, start_angle_deg, end_angle_deg, segments, meta),
         }
     }
 
@@ -710,7 +716,7 @@ impl SketchJs {
     ) -> Self {
         let meta = js_metadata_to_string(metadata).unwrap_or(None);
         Self {
-            inner: Sketch::supershape(a, b, m, n1, n2, n3, segments, meta),
+            inner: Profile::supershape(a, b, m, n1, n2, n3, segments, meta),
         }
     }
 
@@ -724,7 +730,7 @@ impl SketchJs {
     ) -> Self {
         let meta = js_metadata_to_string(metadata).unwrap_or(None);
         Self {
-            inner: Sketch::circle_with_keyway(radius, segments, key_width, key_depth, meta),
+            inner: Profile::circle_with_keyway(radius, segments, key_width, key_depth, meta),
         }
     }
 
@@ -737,7 +743,7 @@ impl SketchJs {
     ) -> Self {
         let meta = js_metadata_to_string(metadata).unwrap_or(None);
         Self {
-            inner: Sketch::circle_with_flat(radius, segments, flat_dist, meta),
+            inner: Profile::circle_with_flat(radius, segments, flat_dist, meta),
         }
     }
 
@@ -750,7 +756,7 @@ impl SketchJs {
     ) -> Self {
         let meta = js_metadata_to_string(metadata).unwrap_or(None);
         Self {
-            inner: Sketch::circle_with_two_flats(radius, segments, flat_dist, meta),
+            inner: Profile::circle_with_two_flats(radius, segments, flat_dist, meta),
         }
     }
 
@@ -772,7 +778,7 @@ impl SketchJs {
         let meta = js_metadata_to_string(metadata).unwrap_or(None);
 
         Ok(Self {
-            inner: Sketch::bezier(&control_2d, segments, meta),
+            inner: Profile::bezier(&control_2d, segments, meta),
         })
     }
 
@@ -795,7 +801,7 @@ impl SketchJs {
         let meta = js_metadata_to_string(metadata).unwrap_or(None);
 
         Ok(Self {
-            inner: Sketch::bspline(&control_2d, p, segments_per_span, meta),
+            inner: Profile::bspline(&control_2d, p, segments_per_span, meta),
         })
     }
 
@@ -803,7 +809,7 @@ impl SketchJs {
     pub fn heart(width: Real, height: Real, segments: usize, metadata: JsValue) -> Self {
         let meta = js_metadata_to_string(metadata).unwrap_or(None);
         Self {
-            inner: Sketch::heart(width, height, segments, meta),
+            inner: Profile::heart(width, height, segments, meta),
         }
     }
 
@@ -817,7 +823,7 @@ impl SketchJs {
     ) -> Self {
         let meta = js_metadata_to_string(metadata).unwrap_or(None);
         Self {
-            inner: Sketch::crescent(outer_r, inner_r, offset, segments, meta),
+            inner: Profile::crescent(outer_r, inner_r, offset, segments, meta),
         }
     }
 
@@ -833,7 +839,7 @@ impl SketchJs {
     ) -> Self {
         let meta = js_metadata_to_string(metadata).unwrap_or(None);
         Self {
-            inner: Sketch::involute_gear(
+            inner: Profile::involute_gear(
                 module_,
                 teeth,
                 pressure_angle_deg,
@@ -856,7 +862,7 @@ impl SketchJs {
     ) -> Self {
         let meta = js_metadata_to_string(metadata).unwrap_or(None);
         Self {
-            inner: Sketch::airfoil_naca4(
+            inner: Profile::airfoil_naca4(
                 max_camber,
                 camber_position,
                 thickness,
@@ -883,7 +889,7 @@ mod tests {
     #[test]
     fn sketch_js_transform_components_rejects_nonfinite_matrix() {
         let sketch = SketchJs {
-            inner: Sketch::square(1.0, None),
+            inner: Profile::square(1.0, None),
         };
         let original = sketch.inner.bounding_box();
 
@@ -912,7 +918,7 @@ mod tests {
     #[test]
     fn sketch_js_component_paths_reuse_hyper_boundary_wrappers() {
         let sketch = SketchJs {
-            inner: Sketch::square(1.0, None),
+            inner: Profile::square(1.0, None),
         };
 
         let mesh = sketch.extrude_vector_components(Real::NAN, Real::INFINITY, 0.0);

@@ -1,4 +1,4 @@
-//! Functions to extrude, revolve, loft, and otherwise transform 2D `Sketch`s into 3D `Mesh`s
+//! Functions to extrude, revolve, loft, and otherwise transform 2D `Profile`s into 3D `Mesh`s
 
 use crate::errors::ValidationError;
 use crate::float_types::{
@@ -8,7 +8,7 @@ use crate::float_types::{
 };
 use crate::mesh::Mesh;
 use crate::polygon::Polygon;
-use crate::sketch::Sketch;
+use crate::sketch::Profile;
 use crate::vertex::Vertex;
 use hypercurve::{
     Classification, FinitePolyline2, FiniteProjectionOptions, FiniteRegionProfile2,
@@ -46,7 +46,7 @@ fn hyper_direction_points_down(direction: &Vector3<Real>) -> bool {
     hreal_lt_f64(&direction.dot(&z_axis), 0.0)
 }
 
-impl<M: Clone + Debug + Send + Sync> Sketch<M> {
+impl<M: Clone + Debug + Send + Sync> Profile<M> {
     fn projected_region_profiles_for_mesh(&self) -> Vec<FiniteRegionProfile2> {
         match self.project_region_profiles(&mesh_projection_options()) {
             Ok(Classification::Decided(profiles)) => profiles,
@@ -67,7 +67,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
 
     /// **Mathematical Foundation: Vector-Based Linear Extrusion**
     ///
-    /// Linearly extrude any Sketch along the given direction vector.
+    /// Linearly extrude any Profile along the given direction vector.
     /// This implements the complete mathematical theory of linear extrusion
     /// with proper surface generation and normal calculation.
     ///
@@ -160,7 +160,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
             return self.extrude_wires_vector(direction);
         }
 
-        // Finite projection data is not Sketch's CAD source of truth. Linear
+        // Finite projection data is not Profile's CAD source of truth. Linear
         // extrusion therefore emits nothing when native
         // `Region2`/`CurveString2` topology is absent, matching the exact-object
         // boundary advocated by Yap, "Towards Exact Geometric Computation,"
@@ -560,7 +560,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
 
     /// **Mathematical Foundation: Surface of Revolution Generation**
     ///
-    /// Revolve 2D Sketch around the Y-axis to create surfaces of revolution.
+    /// Revolve 2D Profile around the Y-axis to create surfaces of revolution.
     /// This implements the complete mathematical theory of revolution surfaces with
     /// proper orientation handling and cap generation.
     ///
@@ -862,7 +862,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     /// aims the sketch’s +Z at the local path tangent,
     /// stitches side walls, and caps open ends.
     ///
-    /// Closed area profiles are read from Sketch's native hypercurve
+    /// Closed area profiles are read from Profile's native hypercurve
     /// [`Region2`](hypercurve::Region2) boundary rings and capped when the path
     /// is open. Native [`CurveString2`](hypercurve::CurveString2) wires are
     /// swept as independent open profile curves without caps. The path frames

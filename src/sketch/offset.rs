@@ -1,4 +1,4 @@
-//! Native hypercurve offset and skeleton-facing Sketch operations.
+//! Native hypercurve offset and skeleton-facing Profile operations.
 //!
 //! Offset construction is a classical CAD operation: a polygonal profile is
 //! displaced by a prescribed normal distance, then intersections, collapses,
@@ -10,7 +10,7 @@
 //! curves," *Computer Aided Geometric Design* 7(1-4), 1990
 //! (<https://doi.org/10.1016/0167-8396(90)90023-K>).
 //!
-//! `Sketch` does not own a second finite polygon datatype. Supported offsets
+//! `Profile` does not own a second finite polygon datatype. Supported offsets
 //! stay in [`hypercurve::Region2`], [`hypercurve::Contour2`], and
 //! [`hypercurve::CurveString2`]. Cases that require global trimming or
 //! component merging are kept visible at the native hypercurve boundary instead
@@ -28,7 +28,7 @@
 //! geometry model.
 
 use crate::float_types::{Real, hreal_from_f64, hreal_sign};
-use crate::sketch::Sketch;
+use crate::sketch::Profile;
 use hypercurve::{
     Classification, Contour2, CurvePolicy, CurveString2, FiniteRegionProfile2, OffsetCap,
     Region2,
@@ -36,15 +36,15 @@ use hypercurve::{
 use hyperreal::RealSign;
 use std::fmt::Debug;
 
-impl<M: Clone + Debug + Send + Sync> Sketch<M> {
-    fn preserve_offset_wires(&self, sketch: &mut Sketch<M>) {
+impl<M: Clone + Debug + Send + Sync> Profile<M> {
+    fn preserve_offset_wires(&self, sketch: &mut Profile<M>) {
         if !self.wires().is_empty() {
             sketch.append_native_wires(self.wires().iter().cloned());
         }
     }
 
-    fn empty_offset_result(&self) -> Sketch<M> {
-        Sketch::from_region_and_wires_with_origin(
+    fn empty_offset_result(&self) -> Profile<M> {
+        Profile::from_region_and_wires_with_origin(
             Region2::empty(),
             Vec::new(),
             self.metadata.clone(),
@@ -60,9 +60,9 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     /// boundary ownership aligned with Yap's exact geometric computation model
     /// (1997) while preserving the zero-radius offset identity discussed in
     /// Farouki and Neff (1990).
-    fn native_zero_offset(&self, distance: Real) -> Option<Sketch<M>> {
+    fn native_zero_offset(&self, distance: Real) -> Option<Profile<M>> {
         (distance == 0.0).then(|| {
-            Sketch::from_region_and_wires_with_origin(
+            Profile::from_region_and_wires_with_origin(
                 self.region.clone(),
                 self.wires.clone(),
                 self.metadata.clone(),
@@ -78,7 +78,11 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     /// [`CurveString2::offset_outline`], so wire-only offsets compose directly
     /// into filled [`Region2`] topology. This is the native counterpart to the
     /// cap-and-join decomposition of Tiller and Hanson (1984).
-    fn native_wire_outline_offset(&self, distance: Real, cap: OffsetCap) -> Option<Sketch<M>> {
+    fn native_wire_outline_offset(
+        &self,
+        distance: Real,
+        cap: OffsetCap,
+    ) -> Option<Profile<M>> {
         if !self.region.is_empty()
             || self.wires.is_empty()
             || !distance.is_finite()
@@ -102,7 +106,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
             Classification::Decided(region) => region,
             Classification::Uncertain(_) => Region2::from_material_contours(contours),
         };
-        Some(Sketch::from_region_and_wires_with_origin(
+        Some(Profile::from_region_and_wires_with_origin(
             region,
             Vec::new(),
             self.metadata.clone(),
@@ -120,7 +124,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     /// for negative distances. General regularization requiring trimming,
     /// collapsed holes, splits, or merged components belongs in hypercurve
     /// rather than in a finite bridge.
-    fn native_sharp_offset(&self, distance: Real) -> Option<Sketch<M>> {
+    fn native_sharp_offset(&self, distance: Real) -> Option<Profile<M>> {
         if self.region.is_empty()
             || !self.wires.is_empty()
             || !Self::region_has_nonzero_area(&self.region)
@@ -141,13 +145,13 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         }
 
         let mut sketch =
-            Sketch::from_region(Region2::new(material, holes), self.metadata.clone());
+            Profile::from_region(Region2::new(material, holes), self.metadata.clone());
         sketch.origin = self.origin;
         sketch.origin_transform = self.origin_transform;
         Some(sketch)
     }
 
-    /// Offset native Sketch topology with sharp joins where hypercurve can
+    /// Offset native Profile topology with sharp joins where hypercurve can
     /// certify the operation.
     ///
     /// A zero offset is identity. Wire-only input becomes a filled native
@@ -155,7 +159,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     /// prove the result does not need global regularization. Unsupported cases
     /// return an empty native sketch instead of manufacturing CAD state through
     /// another geometry crate.
-    pub fn offset(&self, distance: Real) -> Sketch<M> {
+    pub fn offset(&self, distance: Real) -> Profile<M> {
         if let Some(sketch) = self.native_zero_offset(distance) {
             return sketch;
         }
@@ -168,13 +172,13 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         self.empty_offset_result()
     }
 
-    /// Offset native Sketch topology with rounded caps for wire-only input.
+    /// Offset native Profile topology with rounded caps for wire-only input.
     ///
     /// Filled-region rounded regularization is not delegated to a finite
     /// compatibility datatype. Until rounded regularized region offsets are
     /// native in hypercurve, filled regions use the same certified raw-contour
-    /// path as [`Sketch::offset`].
-    pub fn offset_rounded(&self, distance: Real) -> Sketch<M> {
+    /// path as [`Profile::offset`].
+    pub fn offset_rounded(&self, distance: Real) -> Profile<M> {
         if let Some(sketch) = self.native_zero_offset(distance) {
             return sketch;
         }
@@ -195,14 +199,14 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     /// straight-skeleton algorithm. This keeps the API hyper-only while leaving
     /// the true Aichholzer et al. (1995) wavefront algorithm to be completed in
     /// hypercurve.
-    pub fn straight_skeleton(&self, orientation: bool) -> Sketch<M> {
+    pub fn straight_skeleton(&self, orientation: bool) -> Profile<M> {
         let wires = if orientation {
             inward_profile_rays(&self.region_profiles())
         } else {
             Vec::new()
         };
 
-        let mut sketch = Sketch::from_region_and_wires_with_origin(
+        let mut sketch = Profile::from_region_and_wires_with_origin(
             Region2::empty(),
             wires,
             self.metadata.clone(),

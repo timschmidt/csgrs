@@ -3,7 +3,7 @@
 #![no_main]
 
 use csgrs::float_types::Real;
-use csgrs::sketch::Sketch;
+use csgrs::sketch::Profile;
 use libfuzzer_sys::fuzz_target;
 
 fn decode_real(bytes: &[u8], idx: &mut usize) -> Real {
@@ -29,7 +29,7 @@ fuzz_target!(|bytes: &[u8]| {
         points.push([x, y]);
     }
 
-    let sketch: Sketch<Option<()>> = Sketch::polygon(&points, None);
+    let sketch: Profile<Option<()>> = Profile::polygon(&points, None);
     for triangle in sketch.triangulate() {
         for point in triangle {
             assert!(point.x.is_finite());

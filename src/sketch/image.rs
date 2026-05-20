@@ -1,12 +1,12 @@
-//! Create `Sketch`s from images
+//! Create `Profile`s from images
 
 use crate::io::svg::FromSVG;
-use crate::sketch::Sketch;
+use crate::sketch::Profile;
 use image::GrayImage;
 use std::fmt::Debug;
 
-impl<M: Clone + Debug + Send + Sync> Sketch<M> {
-    /// Builds a new Sketch from the "on" pixels of a grayscale image,
+impl<M: Clone + Debug + Send + Sync> Profile<M> {
+    /// Builds a new Profile from the "on" pixels of a grayscale image,
     /// tracing connected outlines (and holes) via the `contour_tracing` code.
     ///
     /// - `img` – The raster source (`image::GrayImage`).
@@ -17,15 +17,15 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     /// # Returns
     /// A 2D shape in the XY plane (z=0) representing all traced contours. Each contour
     /// becomes a polygon. The polygons are *not* automatically unioned; they are simply
-    /// collected in one `Sketch`.
+    /// collected in one `Profile`.
     ///
     /// # Example
     /// ```no_run
-    /// # use csgrs::sketch::Sketch;
+    /// # use csgrs::sketch::Profile;
     /// # use image::{GrayImage, Luma};
     /// # fn main() {
     /// let img: GrayImage = image::open("my_binary.png").unwrap().to_luma8();
-    /// let my_sketch = Sketch::<()>::from_image(&img, 128, true, ());
+    /// let my_sketch = Profile::<()>::from_image(&img, 128, true, ());
     /// // optionally extrude it:
     /// let my_mesh = my_sketch.extrude(5.0);
     /// # }
@@ -64,10 +64,10 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
             d = svg_path
         );
 
-        if let Ok(parsed) = <Sketch<M>>::from_svg(&svg_doc, metadata.clone()) {
+        if let Ok(parsed) = <Profile<M>>::from_svg(&svg_doc, metadata.clone()) {
             parsed
         } else {
-            Sketch::empty(metadata.clone())
+            Profile::empty(metadata.clone())
         }
     }
 }

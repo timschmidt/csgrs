@@ -4,7 +4,7 @@
 
 use csgrs::csg::CSG;
 use csgrs::float_types::{Real, tolerance};
-use csgrs::sketch::Sketch;
+use csgrs::sketch::Profile;
 use libfuzzer_sys::fuzz_target;
 
 fn decode_real(bytes: &[u8], idx: &mut usize) -> Real {
@@ -17,7 +17,7 @@ fn decode_real(bytes: &[u8], idx: &mut usize) -> Real {
     value.clamp(-100.0, 100.0) as Real
 }
 
-fn assert_sketch_finite<M: Clone + Send + Sync + std::fmt::Debug>(sketch: &Sketch<M>) {
+fn assert_sketch_finite<M: Clone + Send + Sync + std::fmt::Debug>(sketch: &Profile<M>) {
     let profiles = sketch.region_profiles();
     for ring in profiles.iter().flat_map(|profile| {
         std::iter::once(profile.material().points())
@@ -35,12 +35,12 @@ fuzz_target!(|bytes: &[u8]| {
         return;
     }
     let mut idx = 0usize;
-    let a: Sketch<Option<()>> = Sketch::rectangle(
+    let a: Profile<Option<()>> = Profile::rectangle(
         decode_real(bytes, &mut idx).abs().max(tolerance()),
         decode_real(bytes, &mut idx).abs().max(tolerance()),
         None,
     );
-    let b = Sketch::circle(
+    let b = Profile::circle(
         decode_real(bytes, &mut idx).abs().max(tolerance()),
         (bytes[idx % bytes.len()] as usize % 32) + 3,
         None,

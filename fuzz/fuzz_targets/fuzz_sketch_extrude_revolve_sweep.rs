@@ -5,7 +5,7 @@
 use csgrs::csg::CSG;
 use csgrs::float_types::{Real, tolerance};
 use csgrs::mesh::Mesh;
-use csgrs::sketch::Sketch;
+use csgrs::sketch::Profile;
 use libfuzzer_sys::fuzz_target;
 use nalgebra::{Point3, Vector3};
 
@@ -37,7 +37,7 @@ fuzz_target!(|bytes: &[u8]| {
     let mut idx = 0usize;
     let width = decode_real(bytes, &mut idx).abs().max(tolerance());
     let height = decode_real(bytes, &mut idx).abs().max(tolerance());
-    let sketch: Sketch<Option<()>> = Sketch::rectangle(width, height, None);
+    let sketch: Profile<Option<()>> = Profile::rectangle(width, height, None);
     let tag = bytes[idx % bytes.len()] % 4;
     idx += 1;
     let mesh = match tag {

@@ -10,7 +10,7 @@ use crate::float_types::{
 use crate::mesh::Mesh;
 use crate::polygon::Polygon;
 #[cfg(feature = "sketch")]
-use crate::sketch::Sketch;
+use crate::sketch::Profile;
 use crate::vertex::Vertex;
 use nalgebra::{Matrix4, Point3, Vector3};
 use std::fmt::Debug;
@@ -539,7 +539,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         Ok(Mesh::from_polygons(&polygons, metadata))
     }
 
-    /// Creates a 3D "egg" shape by revolving `Sketch::egg()`.
+    /// Creates a 3D "egg" shape by revolving `Profile::egg()`.
     ///
     /// # Parameters
     /// - `width`: The "width" of the 2D egg outline.
@@ -555,11 +555,11 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         outline_segments: usize,
         metadata: M,
     ) -> Self {
-        let egg_2d = Sketch::egg(width, length, outline_segments, metadata.clone());
+        let egg_2d = Profile::egg(width, length, outline_segments, metadata.clone());
 
         // Build a large rectangle that cuts off everything
         let cutter_height = 9999.0; // some large number
-        let rect_cutter = Sketch::square(cutter_height, metadata.clone()).translate(
+        let rect_cutter = Profile::square(cutter_height, metadata.clone()).translate(
             -cutter_height,
             -cutter_height / 2.0,
             0.0,
@@ -590,11 +590,11 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         metadata: M,
     ) -> Self {
         // Make a 2D teardrop in the XY plane.
-        let td_2d = Sketch::teardrop(width, length, shape_segments, metadata.clone());
+        let td_2d = Profile::teardrop(width, length, shape_segments, metadata.clone());
 
         // Build a large rectangle that cuts off everything
         let cutter_height = 9999.0; // some large number
-        let rect_cutter = Sketch::square(cutter_height, metadata.clone()).translate(
+        let rect_cutter = Profile::square(cutter_height, metadata.clone()).translate(
             -cutter_height,
             -cutter_height / 2.0,
             0.0,
@@ -626,7 +626,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         metadata: M,
     ) -> Self {
         // Make a 2D teardrop in the XY plane.
-        let td_2d = Sketch::teardrop(width, length, shape_segments, metadata.clone());
+        let td_2d = Profile::teardrop(width, length, shape_segments, metadata.clone());
         td_2d.extrude(height)
     }
 
@@ -857,7 +857,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         segments_minor: usize,
         metadata: M,
     ) -> Self {
-        let circle = Sketch::circle(minor_r, segments_minor.max(3), metadata.clone())
+        let circle = Profile::circle(minor_r, segments_minor.max(3), metadata.clone())
             .translate(major_r, 0.0, 0.0);
         circle
             .revolve(360.0, segments_major.max(3))
@@ -876,7 +876,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         thickness: Real,
         metadata: M,
     ) -> Mesh<M> {
-        Sketch::involute_gear(
+        Profile::involute_gear(
             module,
             teeth,
             pressure_angle_deg,
@@ -898,7 +898,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         thickness: Real,
         metadata: M,
     ) -> Mesh<M> {
-        Sketch::cycloidal_gear(
+        Profile::cycloidal_gear(
             module,
             teeth,
             pin_teeth,
@@ -924,7 +924,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         metadata: M,
     ) -> Mesh<M> {
         assert!(slices >= 2);
-        let base_slice = Sketch::involute_gear(
+        let base_slice = Profile::involute_gear(
             module,
             teeth,
             pressure_angle_deg,

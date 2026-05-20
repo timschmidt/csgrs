@@ -1,12 +1,12 @@
-//! 2D Shapes as `Sketch`s
+//! 2D Shapes as `Profile`s
 
 use crate::csg::CSG;
 use crate::float_types::{FRAC_PI_2, PI, Real, TAU, tolerance};
-use crate::sketch::Sketch;
+use crate::sketch::Profile;
 use hypercurve::{Contour2, CurveString2, LineSeg2, Point2, Segment2};
 use std::fmt::Debug;
 
-impl<M: Clone + Debug + Send + Sync> Sketch<M> {
+impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// Build a finite boundary sketch as a native hypercurve region.
     ///
     /// API callers still pass ordinary `Real` coordinates, but the boundary is
@@ -16,9 +16,9 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     /// Computational Geometry 7(1-2), 1997, DOI: 10.1016/0925-7721(95)00040-2.
     fn polygonal_region(points: Vec<[Real; 2]>, metadata: M) -> Self {
         let Ok(contour) = Contour2::from_finite_ring(&points) else {
-            return Sketch::empty(metadata);
+            return Profile::empty(metadata);
         };
-        Sketch::from_contour(contour, metadata)
+        Profile::from_contour(contour, metadata)
     }
 
     /// Creates a 2D rectangle in the XY plane.
@@ -31,8 +31,8 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     ///
     /// # Example
     /// ```
-    /// use csgrs::sketch::Sketch;
-    /// let sq2 = Sketch::<()>::rectangle(2.0, 3.0, ());
+    /// use csgrs::sketch::Profile;
+    /// let sq2 = Profile::<()>::rectangle(2.0, 3.0, ());
     /// ```
     pub fn rectangle(width: Real, length: Real, metadata: M) -> Self {
         let points = [[0.0, 0.0], [width, 0.0], [width, length], [0.0, length]];
@@ -47,7 +47,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     /// - `metadata`: optional metadata
     ///
     /// # Example
-    /// let sq2 = Sketch::square(2.0, None);
+    /// let sq2 = Profile::square(2.0, None);
     pub fn square(width: Real, metadata: M) -> Self {
         Self::rectangle(width, width, metadata)
     }
@@ -96,7 +96,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     /// - `metadata`: Optional metadata attached to the shape
     pub fn circle(radius: Real, segments: usize, metadata: M) -> Self {
         if segments < 3 {
-            return Sketch::empty(metadata);
+            return Profile::empty(metadata);
         }
         let points = (0..segments)
             .map(|i| {
@@ -122,17 +122,17 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     ///
     /// # Example
     /// let pts = vec![[0.0, 0.0], [2.0, 0.0], [1.0, 1.5]];
-    /// let poly2d = Sketch::polygon_points(&pts, metadata);
+    /// let poly2d = Profile::polygon_points(&pts, metadata);
     pub fn polygon(points: &[[Real; 2]], metadata: M) -> Self {
         let Ok(contour) = Contour2::from_finite_ring(points) else {
-            return Sketch::empty(metadata);
+            return Profile::empty(metadata);
         };
-        Sketch::from_contour(contour, metadata)
+        Profile::from_contour(contour, metadata)
     }
 
     /// Creates a 2D polygon from native hypercurve points.
     ///
-    /// Unlike [`Sketch::polygon`], this constructor does not first pass through
+    /// Unlike [`Profile::polygon`], this constructor does not first pass through
     /// finite `[f64; 2]` samples. The ring is converted directly to
     /// `hypercurve::LineSeg2` segments and then to a `Contour2`, so exact
     /// point topology stays with hypercurve from construction onward. This
@@ -141,28 +141,28 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     pub fn polygon_points(points: &[Point2], metadata: M) -> Self {
         if points.len() < 3 {
-            return Sketch::empty(metadata);
+            return Profile::empty(metadata);
         }
 
         let mut segments = Vec::with_capacity(points.len());
         for adjacent in points.windows(2) {
             let Ok(segment) = LineSeg2::try_new(adjacent[0].clone(), adjacent[1].clone())
             else {
-                return Sketch::empty(metadata);
+                return Profile::empty(metadata);
             };
             segments.push(Segment2::Line(segment));
         }
         let Ok(segment) =
             LineSeg2::try_new(points[points.len() - 1].clone(), points[0].clone())
         else {
-            return Sketch::empty(metadata);
+            return Profile::empty(metadata);
         };
         segments.push(Segment2::Line(segment));
 
         let Ok(contour) = Contour2::try_new(segments) else {
-            return Sketch::empty(metadata);
+            return Profile::empty(metadata);
         };
-        Sketch::from_contour(contour, metadata)
+        Profile::from_contour(contour, metadata)
     }
 
     /// **Mathematical Foundation: Parametric Ellipse Generation**
@@ -214,7 +214,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     /// - `metadata`: Optional metadata
     pub fn ellipse(width: Real, height: Real, segments: usize, metadata: M) -> Self {
         if segments < 3 {
-            return Sketch::empty(metadata);
+            return Profile::empty(metadata);
         }
         let rx = 0.5 * width;
         let ry = 0.5 * height;
@@ -281,7 +281,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     /// - `metadata`: Optional metadata
     pub fn regular_ngon(sides: usize, radius: Real, metadata: M) -> Self {
         if sides < 3 {
-            return Sketch::empty(metadata);
+            return Profile::empty(metadata);
         }
         let points = (0..sides)
             .map(|i| {
@@ -307,8 +307,8 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     ///
     /// # Example
     /// ```
-    /// use csgrs::sketch::Sketch;
-    /// let arrow = Sketch::<()>::arrow(5.0, 0.5, 2.0, 1.5, ());
+    /// use csgrs::sketch::Profile;
+    /// let arrow = Profile::<()>::arrow(5.0, 0.5, 2.0, 1.5, ());
     /// ```
     pub fn arrow(
         shaft_length: Real,
@@ -319,7 +319,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     ) -> Self {
         if shaft_length <= 0.0 || shaft_width <= 0.0 || head_length <= 0.0 || head_width <= 0.0
         {
-            return Sketch::empty(metadata);
+            return Profile::empty(metadata);
         }
 
         // Define the points for the arrow polygon
@@ -368,7 +368,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         metadata: M,
     ) -> Self {
         if num_points < 2 {
-            return Sketch::empty(metadata);
+            return Profile::empty(metadata);
         }
         let step = TAU / (num_points as Real);
         let points = (0..num_points)
@@ -395,9 +395,9 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     ///
     /// This is just one of many possible "teardrop" definitions.
     // todo: center on focus of the arc
-    pub fn teardrop(width: Real, length: Real, segments: usize, metadata: M) -> Sketch<M> {
+    pub fn teardrop(width: Real, length: Real, segments: usize, metadata: M) -> Profile<M> {
         if segments < 2 || width < tolerance() || length < tolerance() {
-            return Sketch::empty(metadata);
+            return Profile::empty(metadata);
         }
         let r = 0.5 * width;
         let center_y = length - r;
@@ -416,9 +416,9 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
 
     /// Egg outline.  Approximate an egg shape using a parametric approach.
     /// This is only a toy approximation.  It creates a closed "egg-ish" outline around the origin.
-    pub fn egg(width: Real, length: Real, segments: usize, metadata: M) -> Sketch<M> {
+    pub fn egg(width: Real, length: Real, segments: usize, metadata: M) -> Profile<M> {
         if segments < 3 {
-            return Sketch::empty(metadata);
+            return Profile::empty(metadata);
         }
         let rx = 0.5 * width;
         let ry = 0.5 * length;
@@ -447,7 +447,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     ) -> Self {
         let r = corner_radius.min(width * 0.5).min(height * 0.5);
         if r <= tolerance() {
-            return Sketch::rectangle(width, height, metadata);
+            return Profile::rectangle(width, height, metadata);
         }
         // We'll approximate each 90° corner with `corner_segments` arcs
         let step = FRAC_PI_2 / corner_segments as Real;
@@ -471,9 +471,9 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
 
     /// Squircle (superellipse) centered at (0,0) with bounding box width×height.
     /// We use an exponent = 4.0 for "classic" squircle shape. `segments` controls the resolution.
-    pub fn squircle(width: Real, height: Real, segments: usize, metadata: M) -> Sketch<M> {
+    pub fn squircle(width: Real, height: Real, segments: usize, metadata: M) -> Profile<M> {
         if segments < 3 {
-            return Sketch::empty(metadata);
+            return Profile::empty(metadata);
         }
         let rx = 0.5 * width;
         let ry = 0.5 * height;
@@ -499,15 +499,15 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         handle_height: Real,
         segments: usize,
         metadata: M,
-    ) -> Sketch<M> {
+    ) -> Profile<M> {
         if segments < 3 {
-            return Sketch::empty(metadata);
+            return Profile::empty(metadata);
         }
         // 1) Circle
-        let circle = Sketch::circle(circle_radius, segments, metadata.clone());
+        let circle = Profile::circle(circle_radius, segments, metadata.clone());
 
         // 2) Rectangle (handle)
-        let handle = Sketch::rectangle(handle_width, handle_height, metadata).translate(
+        let handle = Profile::rectangle(handle_width, handle_height, metadata).translate(
             -handle_width * 0.5,
             0.0,
             0.0,
@@ -533,9 +533,9 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         diameter: Real,
         circle_segments: usize,
         metadata: M,
-    ) -> Sketch<M> {
+    ) -> Profile<M> {
         if sides < 3 || circle_segments < 6 || diameter <= tolerance() {
-            return Sketch::empty(metadata);
+            return Profile::empty(metadata);
         }
 
         // Circumradius that gives the requested *diameter* for the regular n-gon
@@ -553,11 +553,11 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
             .collect();
 
         // Build the first disk and use it as the running intersection
-        let base = Sketch::circle(diameter, circle_segments, metadata.clone())
+        let base = Profile::circle(diameter, circle_segments, metadata.clone())
             .translate(verts[0].0, verts[0].1, 0.0);
 
         let shape = verts.iter().skip(1).fold(base, |acc, &(x, y)| {
-            let disk = Sketch::circle(diameter, circle_segments, metadata.clone())
+            let disk = Profile::circle(diameter, circle_segments, metadata.clone())
                 .translate(x, y, 0.0);
             acc.intersection(&disk)
         });
@@ -567,15 +567,15 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
 
     /// Outer diameter = `id + 2*thickness`. This yields an annulus in the XY plane.
     /// `segments` controls how smooth the outer/inner circles are.
-    pub fn ring(id: Real, thickness: Real, segments: usize, metadata: M) -> Sketch<M> {
+    pub fn ring(id: Real, thickness: Real, segments: usize, metadata: M) -> Profile<M> {
         if id <= 0.0 || thickness <= 0.0 || segments < 3 {
-            return Sketch::empty(metadata);
+            return Profile::empty(metadata);
         }
         let inner_radius = 0.5 * id;
         let outer_radius = inner_radius + thickness;
 
-        let outer_circle = Sketch::circle(outer_radius, segments, metadata.clone());
-        let inner_circle = Sketch::circle(inner_radius, segments, metadata);
+        let outer_circle = Profile::circle(outer_radius, segments, metadata.clone());
+        let inner_circle = Profile::circle(inner_radius, segments, metadata);
 
         outer_circle.difference(&inner_circle)
     }
@@ -592,9 +592,9 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         end_angle_deg: Real,
         segments: usize,
         metadata: M,
-    ) -> Sketch<M> {
+    ) -> Profile<M> {
         if segments < 1 {
-            return Sketch::empty(metadata);
+            return Profile::empty(metadata);
         }
 
         let start_rad = start_angle_deg.to_radians();
@@ -629,9 +629,9 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         n3: Real,
         segments: usize,
         metadata: M,
-    ) -> Sketch<M> {
+    ) -> Profile<M> {
         if segments < 3 {
-            return Sketch::empty(metadata);
+            return Profile::empty(metadata);
         }
 
         // The typical superformula radius function
@@ -674,12 +674,12 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         key_width: Real,
         key_depth: Real,
         metadata: M,
-    ) -> Sketch<M> {
+    ) -> Profile<M> {
         // 1. Full circle
-        let circle = Sketch::circle(radius, segments, metadata.clone());
+        let circle = Profile::circle(radius, segments, metadata.clone());
 
         // 2. Construct the keyway rectangle
-        let key_rect = Sketch::rectangle(key_depth, key_width, metadata.clone()).translate(
+        let key_rect = Profile::rectangle(key_depth, key_width, metadata.clone()).translate(
             radius - key_depth,
             -key_width * 0.5,
             0.0,
@@ -696,13 +696,13 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         segments: usize,
         flat_dist: Real,
         metadata: M,
-    ) -> Sketch<M> {
+    ) -> Profile<M> {
         // 1. Full circle
-        let circle = Sketch::circle(radius, segments, metadata.clone());
+        let circle = Profile::circle(radius, segments, metadata.clone());
 
         // 2. Build a large rectangle that cuts off everything below y = -flat_dist
         let cutter_height = 9999.0; // some large number
-        let rect_cutter = Sketch::rectangle(2.0 * radius, cutter_height, metadata.clone())
+        let rect_cutter = Profile::rectangle(2.0 * radius, cutter_height, metadata.clone())
             .translate(-radius, -cutter_height, 0.0) // put its bottom near "negative infinity"
             .translate(0.0, -flat_dist, 0.0); // now top edge is at y = -flat_dist
 
@@ -720,18 +720,18 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         segments: usize,
         flat_dist: Real,
         metadata: M,
-    ) -> Sketch<M> {
+    ) -> Profile<M> {
         // 1. Full circle
-        let circle = Sketch::circle(radius, segments, metadata.clone());
+        let circle = Profile::circle(radius, segments, metadata.clone());
 
         // 2. Large rectangle to cut the TOP (above +flat_dist)
         let cutter_height = 9999.0;
-        let top_rect = Sketch::rectangle(2.0 * radius, cutter_height, metadata.clone())
+        let top_rect = Profile::rectangle(2.0 * radius, cutter_height, metadata.clone())
             // place bottom at y=flat_dist
             .translate(-radius, flat_dist, 0.0);
 
         // 3. Large rectangle to cut the BOTTOM (below -flat_dist)
-        let bottom_rect = Sketch::rectangle(2.0 * radius, cutter_height, metadata.clone())
+        let bottom_rect = Profile::rectangle(2.0 * radius, cutter_height, metadata.clone())
             // place top at y=-flat_dist => bottom extends downward
             .translate(-radius, -cutter_height - flat_dist, 0.0);
 
@@ -755,7 +755,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     /// * `segments`: number of straight-line segments used for the tessellation
     pub fn bezier(control: &[[Real; 2]], segments: usize, metadata: M) -> Self {
         if control.len() < 2 || segments < 1 {
-            return Sketch::empty(metadata);
+            return Profile::empty(metadata);
         }
 
         /// Evaluates a Bézier curve at a given parameter `t` using de Casteljau's algorithm.
@@ -792,8 +792,8 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         }
 
         CurveString2::from_finite_point_iter(pts)
-            .map(|wire| Sketch::from_wire(wire, metadata.clone()))
-            .unwrap_or_else(|_| Sketch::empty(metadata))
+            .map(|wire| Profile::from_wire(wire, metadata.clone()))
+            .unwrap_or_else(|_| Profile::empty(metadata))
     }
 
     /// Sample an open-uniform B-spline of arbitrary degree (`p`) using the
@@ -817,7 +817,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         metadata: M,
     ) -> Self {
         if control.len() < p + 1 || segments_per_span < 1 {
-            return Sketch::empty(metadata);
+            return Profile::empty(metadata);
         }
 
         let n = control.len() - 1;
@@ -887,8 +887,8 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
             && (first[1] - last[1]).abs() < tolerance();
         if !closed {
             return CurveString2::from_finite_point_iter(pts)
-                .map(|wire| Sketch::from_wire(wire, metadata.clone()))
-                .unwrap_or_else(|_| Sketch::empty(metadata));
+                .map(|wire| Profile::from_wire(wire, metadata.clone()))
+                .unwrap_or_else(|_| Profile::empty(metadata));
         }
 
         Self::polygonal_region(pts, metadata)
@@ -899,7 +899,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     /// `segments` controls smoothness (≥ 8 recommended).
     pub fn heart(width: Real, height: Real, segments: usize, metadata: M) -> Self {
         if segments < 8 {
-            return Sketch::empty(metadata);
+            return Profile::empty(metadata);
         }
 
         let step = TAU / segments as Real;
@@ -940,8 +940,8 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     /// `segments` controls circle smoothness.
     ///
     /// ```
-    /// use csgrs::sketch::Sketch;
-    /// let cres = Sketch::<()>::crescent(2.0, 1.4, 0.8, 64, ());
+    /// use csgrs::sketch::Profile;
+    /// let cres = Profile::<()>::crescent(2.0, 1.4, 0.8, 64, ());
     /// ```
     pub fn crescent(
         outer_r: Real,
@@ -951,7 +951,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         metadata: M,
     ) -> Self {
         if outer_r <= inner_r + tolerance() || segments < 6 {
-            return Sketch::empty(metadata);
+            return Profile::empty(metadata);
         }
 
         let big = Self::circle(outer_r, segments, metadata.clone());
@@ -979,7 +979,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         backlash: Real,
         segments_per_flank: usize,
         metadata: M,
-    ) -> Sketch<M> {
+    ) -> Profile<M> {
         assert!(teeth >= 4, "Need at least 4 teeth");
         assert!(segments_per_flank >= 2);
 
@@ -1093,7 +1093,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         clearance: Real,
         segments_per_flank: usize,
         metadata: M,
-    ) -> Sketch<M> {
+    ) -> Profile<M> {
         assert!(teeth >= 3);
         assert!(segments_per_flank >= 2);
 
@@ -1202,7 +1202,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         clearance: Real,
         backlash: Real,
         metadata: M,
-    ) -> Sketch<M> {
+    ) -> Profile<M> {
         assert!(num_teeth >= 1);
         let m = module_;
         let p = PI * m; // linear pitch
@@ -1282,7 +1282,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         clearance: Real,
         segments_per_flank: usize,
         metadata: M,
-    ) -> Sketch<M> {
+    ) -> Profile<M> {
         assert!(num_teeth >= 1 && segments_per_flank >= 4);
         let m = module_;
         let p = PI * m;
@@ -1357,7 +1357,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         chord: Real,
         samples: usize,
         metadata: M,
-    ) -> Sketch<M> {
+    ) -> Profile<M> {
         let max_camber_percentage = max_camber / 100.0;
         let camber_pos = camber_position / 10.0;
 
@@ -1421,7 +1421,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     /// Build a Hilbert-curve path that fills this sketch.
     /// - `order`: recursion order (number of points ≈ 4^order).
     /// - `padding`: optional inset from the bounding-box edges (same units as the sketch).
-    ///   Returns a new `Sketch` containing only the inside segments as native wires.
+    ///   Returns a new `Profile` containing only the inside segments as native wires.
     ///
     /// Bounds are taken from the native hypercurve region/wire topology rather
     /// than from any finite compatibility cache. That keeps Hilbert
@@ -1429,13 +1429,13 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     /// the containment tests it uses; see Yap, "Towards Exact Geometric
     /// Computation," *Computational Geometry* 7(1-2), 1997
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-    pub fn hilbert_curve(&self, order: usize, padding: Real) -> Sketch<M> {
+    pub fn hilbert_curve(&self, order: usize, padding: Real) -> Profile<M> {
         if order == 0 {
-            return Sketch::empty(self.metadata.clone());
+            return Profile::empty(self.metadata.clone());
         }
         let bounds = self.native_xy_bounds();
         let Some((min_x, min_y, max_x, max_y)) = bounds else {
-            return Sketch::empty(self.metadata.clone());
+            return Profile::empty(self.metadata.clone());
         };
 
         // Bounding box and usable region (with padding).
@@ -1489,7 +1489,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
                 CurveString2::from_finite_point_iter(run.into_iter().map(|(x, y)| [x, y])).ok()
             })
             .collect::<Vec<_>>();
-        Sketch::from_wires(wires, self.metadata.clone())
+        Profile::from_wires(wires, self.metadata.clone())
     }
 }
 

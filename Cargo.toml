@@ -126,7 +126,7 @@ mesh-bbopt = [
   # Enable bounding box optimization for Mesh BSP
 ]
 sketch = [
-  # hypercurve backed Sketch datatype
+  # hypercurve backed Profile datatype
 ]
 # convex hull and minkowski sum
 chull-io = [
