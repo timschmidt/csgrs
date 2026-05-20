@@ -8928,6 +8928,72 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
                 .any(|point| real_eq(&point.x, &ExactReal::from(6)))
     }));
 
+    let corner_cutter_left = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            0, 0, 0, 10, 0, 0, 10, 10, 0, 0, 10, 0, //
+            20, 0, 0, 22, 0, 0, 22, 2, 0, 20, 2, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let nonrectangular_corner_cutters = ExactMesh::from_i64_triangles_with_policy(
+        &[-1, -1, 0, 3, -1, 0, -1, 3, 0, 7, 11, 0, 11, 7, 0, 11, 11, 0],
+        &[0, 1, 2, 3, 4, 5],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let nonrectangular_multi_cutter =
+        hypermesh::exact::arrange_coplanar_convex_surface_multi_difference(
+            &corner_cutter_left,
+            &nonrectangular_corner_cutters,
+        )
+        .expect("sequential exact corner cutters should retain convex remnants");
+    nonrectangular_multi_cutter.validate().unwrap();
+    nonrectangular_multi_cutter
+        .validate_against_sources(&corner_cutter_left, &nonrectangular_corner_cutters)
+        .unwrap();
+    assert_eq!(nonrectangular_multi_cutter.polygons.len(), 2);
+    assert!(
+        nonrectangular_multi_cutter
+            .polygons
+            .iter()
+            .any(|polygon| polygon.len() == 6)
+    );
+    assert_eq!(nonrectangular_multi_cutter.mesh.vertices().len(), 10);
+    let nonrectangular_preflight = hypermesh::exact::preflight_boolean_exact(
+        &corner_cutter_left,
+        &nonrectangular_corner_cutters,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    nonrectangular_preflight.validate().unwrap();
+    nonrectangular_preflight
+        .validate_against_sources(&corner_cutter_left, &nonrectangular_corner_cutters)
+        .unwrap();
+    assert_eq!(
+        nonrectangular_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarConvexSurfaceMultiDifference
+    );
+    let nonrectangular_result = hypermesh::exact::boolean_exact(
+        &corner_cutter_left,
+        &nonrectangular_corner_cutters,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    nonrectangular_result.validate().unwrap();
+    assert_eq!(
+        nonrectangular_result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut:
+                hypermesh::exact::ExactBooleanShortcutKind::CoplanarConvexSurfaceMultiDifference
+        }
+    );
+
     let partial_height_cutters = ExactMesh::from_i64_triangles_with_policy(
         &[
             1, 0, 0, 2, 0, 0, 2, 1, 0, 1, 1, 0, //
@@ -9278,6 +9344,54 @@ fn exact_coplanar_convex_surface_difference_materializes_component_holes() {
             .any(|component| component.holes.len() == 1)
     );
     assert_eq!(multi_cut_holed.mesh.vertices().len(), 16);
+
+    let hole_and_corner_cuts = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            4, 4, 0, 6, 4, 0, 6, 6, 0, 4, 6, 0, //
+            -1, -1, 0, 3, -1, 0, -1, 3, 0, //
+            7, 11, 0, 11, 7, 0, 11, 11, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, //
+            7, 8, 9,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let nonrectangular_holed =
+        hypermesh::exact::arrange_coplanar_convex_surface_component_holed_difference(
+            &left,
+            &hole_and_corner_cuts,
+        )
+        .expect("sequential exact corner cutters should retain a holed convex remnant");
+    nonrectangular_holed.validate().unwrap();
+    nonrectangular_holed
+        .validate_against_sources(&left, &hole_and_corner_cuts)
+        .unwrap();
+    assert_eq!(nonrectangular_holed.components.len(), 2);
+    assert!(
+        nonrectangular_holed
+            .components
+            .iter()
+            .any(|component| component.outer.len() == 6 && component.holes.len() == 1)
+    );
+    assert_eq!(nonrectangular_holed.mesh.vertices().len(), 14);
+    let nonrectangular_holed_result = hypermesh::exact::boolean_exact(
+        &left,
+        &hole_and_corner_cuts,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    nonrectangular_holed_result.validate().unwrap();
+    assert_eq!(
+        nonrectangular_holed_result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::
+                CoplanarConvexSurfaceComponentHoledDifference
+        }
+    );
 
     let hole_and_partial_height_cuts = ExactMesh::from_i64_triangles_with_policy(
         &[

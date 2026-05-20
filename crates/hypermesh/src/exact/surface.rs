@@ -864,14 +864,14 @@ pub struct CoplanarConvexHoledComponent {
 ///
 /// This artifact covers the bounded case where a source difference contains
 /// one or more disjoint convex components and at least one component carries
-/// exact holes. A component may also have one convex partial cutter when every
-/// retained hole is assigned strictly inside exactly one cut remnant. More
-/// tangled cut/hole interactions still require a full planar subdivision.
-/// Each retained component must replay from exact component decomposition,
-/// containment, disjointness, and convex difference certificates before the
-/// materialized mesh is accepted, matching the retained-object contract in
-/// Yap, "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997).
+/// exact holes. A component may also have bounded convex cutters when the
+/// emitted remnants are still convex loops and every retained hole is assigned
+/// strictly inside exactly one remnant. More tangled cut/hole interactions
+/// still require a full planar subdivision. Each retained component must
+/// replay from exact component decomposition, containment, disjointness, and
+/// convex difference certificates before the materialized mesh is accepted,
+/// matching the retained-object contract in Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997).
 #[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, PartialEq)]
 pub struct CoplanarConvexComponentHoledArrangement {
@@ -3166,10 +3166,13 @@ fn arrange_coplanar_convex_surface_multi_difference_convex(
 /// separation from every right component. A partially cut component replays
 /// through the existing convex difference certificates when there is one
 /// cutter, or through the bounded rectangle-slab certificate when several
-/// disjoint cutters span the component on one projected axis. Boundary-only
-/// contacts, holes, nonconvex components, and non-rectangular multi-cutter
-/// interactions still return `None` so the general arrangement layer remains
-/// explicit. This follows Yap, "Towards Exact Geometric Computation,"
+/// disjoint cutters span the component on one projected axis. Other
+/// multi-cutter cases are accepted only when each sequential cutter still
+/// replays through the existing exact convex difference certificates and
+/// emits convex remnants. Boundary-only contacts, holes, nonconvex components,
+/// and nonconvex multi-cutter outputs still return `None` so the general
+/// arrangement layer remains explicit. This follows Yap, "Towards Exact
+/// Geometric Computation,"
 /// *Computational Geometry* 7.1-2 (1997): the shortcut promotes output loops
 /// only from retained exact component, containment, intersection, and area
 /// evidence, never from sampled polygon surgery.
@@ -3289,13 +3292,10 @@ fn arrange_coplanar_convex_surface_component_difference(
                 }
             }
             _ => {
-                let cutters = cutter_indices
-                    .iter()
-                    .map(|&index| right_components[index].hull.clone())
-                    .collect::<Vec<_>>();
-                let mut remnants = materialize_rectangle_multi_cutter_difference(
-                    &component.hull,
-                    &cutters,
+                let mut remnants = materialize_component_multi_cutter_difference(
+                    component,
+                    &cutter_indices,
+                    &right_components,
                     projection,
                 )?;
                 polygons.append(&mut remnants);
@@ -3323,6 +3323,89 @@ fn arrange_coplanar_convex_surface_component_difference(
     };
     arrangement.validate().ok()?;
     Some(arrangement)
+}
+
+/// Materialize a bounded multi-cutter difference for one convex component.
+///
+/// The first accepted path is the exact rectangular strip certificate, because
+/// it promotes topology directly from retained interval facts. The fallback is
+/// still deliberately conservative: apply disjoint cutters one at a time, and
+/// after each step require the existing one-cutter convex difference
+/// certificates to replay the emitted remnant loops. A cutter contained in a
+/// remnant would create a hole, and a cutter whose result is nonconvex cannot
+/// be represented by the convex component output model, so both cases stay
+/// explicit planar-arrangement work. This is Yap's retained-computation model
+/// applied to a bounded Weiler-Atherton style traversal: each promoted loop is
+/// produced by an already audited exact arrangement fragment, not by a sampled
+/// polygon clip. See Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997), and Weiler and Atherton, "Hidden
+/// Surface Removal Using Polygon Area Sorting," *SIGGRAPH Computer Graphics*
+/// 11.2 (1977).
+#[cfg(feature = "exact-triangulation")]
+fn materialize_component_multi_cutter_difference(
+    component: &ConvexUnionComponent,
+    cutter_indices: &[usize],
+    right_components: &[ConvexUnionComponent],
+    projection: CoplanarProjection,
+) -> Option<Vec<Vec<Point3>>> {
+    if cutter_indices.len() < 2 {
+        return None;
+    }
+
+    let cutters = cutter_indices
+        .iter()
+        .map(|&index| right_components[index].hull.clone())
+        .collect::<Vec<_>>();
+    if let Some(rectangle_remnants) =
+        materialize_rectangle_multi_cutter_difference(&component.hull, &cutters, projection)
+    {
+        return Some(rectangle_remnants);
+    }
+
+    let mut remnants = vec![component.hull.clone()];
+    for &right_index in cutter_indices {
+        let cutter = &right_components[right_index];
+        let mut next_remnants = Vec::new();
+        for mut remnant in remnants {
+            if polygons_equal(&remnant, &cutter.hull)
+                || polygon_in_closed_convex_polygon(&remnant, &cutter.hull, projection)?
+            {
+                continue;
+            }
+            if polygon_in_closed_convex_polygon(&cutter.hull, &remnant, projection)? {
+                return None;
+            }
+
+            match convex_union_component_relation(&remnant, &cutter.hull, projection)? {
+                ConvexUnionComponentRelation::Disjoint => next_remnants.push(remnant),
+                ConvexUnionComponentRelation::BoundaryOnly => return None,
+                ConvexUnionComponentRelation::PositiveArea => {
+                    orient_polygon_ccw(&mut remnant, projection)?;
+                    let remnant_mesh = polygon_to_earcut_open_mesh(&remnant, projection)?;
+                    if let Some(difference) =
+                        arrange_coplanar_convex_surface_difference(&remnant_mesh, &cutter.mesh)
+                    {
+                        next_remnants.push(difference.polygon);
+                    } else if let Some(difference) =
+                        arrange_coplanar_convex_surface_multi_difference_convex(
+                            &remnant_mesh,
+                            &cutter.mesh,
+                        )
+                    {
+                        next_remnants.extend(difference.polygons);
+                    } else {
+                        return None;
+                    }
+                }
+            }
+        }
+        remnants = next_remnants;
+        if remnants.is_empty() {
+            break;
+        }
+    }
+
+    Some(remnants)
 }
 
 /// Materialize a bounded multi-cutter rectangle difference.
@@ -3493,14 +3576,16 @@ fn exact_max_real(left: &ExactReal, right: &ExactReal) -> Option<ExactReal> {
 /// connected convex components. Each left component may be retained, removed,
 /// cut by one right component through the existing convex difference
 /// certificate, cut by several full-span rectangular slab components through
-/// exact interval subtraction, pierced by one or more strictly contained right
+/// exact interval subtraction, cut by sequential non-rectangular convex
+/// cutters when each emitted remnant still replays through the exact convex
+/// difference certificates, pierced by one or more strictly contained right
 /// components, or both cut and pierced when every retained hole falls strictly
 /// inside one cut remnant. Holes that straddle or touch a cut boundary and
-/// non-rectangular multi-cutter interactions still need a full planar
-/// subdivision. This preserves Yap's rule from "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997): every promoted loop is
-/// justified by exact source topology, containment, or area replay, and
-/// unsupported combinatorics remain explicit.
+/// nonconvex multi-cutter outputs still need a full planar subdivision. This
+/// preserves Yap's rule from "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997): every promoted loop is justified by
+/// exact source topology, containment, or area replay, and unsupported
+/// combinatorics remain explicit.
 #[cfg(feature = "exact-triangulation")]
 pub fn arrange_coplanar_convex_surface_component_holed_difference(
     left: &ExactMesh,
@@ -3622,17 +3707,12 @@ pub fn arrange_coplanar_convex_surface_component_holed_difference(
                         return None;
                     }
                 }
-                _ => {
-                    let cutters = cut_indices
-                        .iter()
-                        .map(|&index| right_components[index].hull.clone())
-                        .collect::<Vec<_>>();
-                    materialize_rectangle_multi_cutter_difference(
-                        &component.hull,
-                        &cutters,
-                        projection,
-                    )?
-                }
+                _ => materialize_component_multi_cutter_difference(
+                    component,
+                    &cut_indices,
+                    &right_components,
+                    projection,
+                )?,
             };
             for polygon in &mut cut_polygons {
                 orient_polygon_ccw(polygon, projection)?;

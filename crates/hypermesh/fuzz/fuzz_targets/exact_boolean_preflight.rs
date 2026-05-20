@@ -1781,6 +1781,50 @@ fn exercise_component_coplanar_difference() {
         .unwrap();
     assert_eq!(same_component_multi_cutter.polygons.len(), 4);
 
+    let corner_cutter_left = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            0, 0, 0, 10, 0, 0, 10, 10, 0, 0, 10, 0, //
+            20, 0, 0, 22, 0, 0, 22, 2, 0, 20, 2, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("nonrectangular multi-cutter left fixture must import");
+    let nonrectangular_corner_cutters = ExactMesh::from_i64_triangles_with_policy(
+        &[-1, -1, 0, 3, -1, 0, -1, 3, 0, 7, 11, 0, 11, 7, 0, 11, 11, 0],
+        &[0, 1, 2, 3, 4, 5],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("nonrectangular multi-cutter right fixture must import");
+    let nonrectangular_multi_cutter = arrange_coplanar_convex_surface_multi_difference(
+        &corner_cutter_left,
+        &nonrectangular_corner_cutters,
+    )
+    .expect("sequential exact corner cutters should retain convex remnants");
+    nonrectangular_multi_cutter.validate().unwrap();
+    nonrectangular_multi_cutter
+        .validate_against_sources(&corner_cutter_left, &nonrectangular_corner_cutters)
+        .unwrap();
+    assert_eq!(nonrectangular_multi_cutter.polygons.len(), 2);
+    assert!(nonrectangular_multi_cutter
+        .polygons
+        .iter()
+        .any(|polygon| polygon.len() == 6));
+    let nonrectangular_preflight = preflight_boolean_exact(
+        &corner_cutter_left,
+        &nonrectangular_corner_cutters,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("nonrectangular multi-cutter preflight should classify shortcut");
+    nonrectangular_preflight.validate().unwrap();
+    assert_eq!(
+        nonrectangular_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceMultiDifference
+    );
+
     let partial_height_cutters = ExactMesh::from_i64_triangles_with_policy(
         &[
             1, 0, 0, 2, 0, 0, 2, 1, 0, 1, 1, 0, //
@@ -1923,6 +1967,36 @@ fn exercise_component_coplanar_difference() {
         holed_multi_cut_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
     );
+
+    let holed_corner_cutters_right = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            4, 4, 0, 6, 4, 0, 6, 6, 0, 4, 6, 0, //
+            -1, -1, 0, 3, -1, 0, -1, 3, 0, //
+            7, 11, 0, 11, 7, 0, 11, 11, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, //
+            7, 8, 9,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("component-holed corner-cutter fixture must import");
+    let component_holed_corner_cut =
+        arrange_coplanar_convex_surface_component_holed_difference(
+            &holed_left,
+            &holed_corner_cutters_right,
+        )
+        .expect("component-holed corner cutters should retain a holed convex remnant");
+    component_holed_corner_cut.validate().unwrap();
+    component_holed_corner_cut
+        .validate_against_sources(&holed_left, &holed_corner_cutters_right)
+        .unwrap();
+    assert_eq!(component_holed_corner_cut.components.len(), 2);
+    assert!(component_holed_corner_cut
+        .components
+        .iter()
+        .any(|component| component.outer.len() == 6 && component.holes.len() == 1));
 
     let holed_partial_height_cutters_right = ExactMesh::from_i64_triangles_with_policy(
         &[
