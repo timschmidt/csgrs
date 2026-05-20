@@ -8766,6 +8766,101 @@ fn bezier_boolean_loop_role_assignment_blocks_missing_extra_and_unknown_roles() 
 }
 
 #[test]
+fn bezier_boolean_loop_role_assignment_blocks_depth_role_parity_mismatches() {
+    let output = ready_two_loop_output_report();
+    let depth_facts = vec![
+        BezierBooleanLoopNestingDepthFact2 {
+            loop_index: 0,
+            nesting_depth: 0,
+        },
+        BezierBooleanLoopNestingDepthFact2 {
+            loop_index: 1,
+            nesting_depth: 1,
+        },
+    ];
+
+    let certified = BezierBooleanLoopRoleAssignmentReport2::from_output_loop_depth_role_facts(
+        &output,
+        &depth_facts,
+        &[
+            BezierBooleanOutputLoopRole::Material,
+            BezierBooleanOutputLoopRole::Hole,
+        ],
+    );
+    assert_eq!(
+        certified.status,
+        BezierBooleanLoopRoleAssignmentStatus::Ready
+    );
+    assert_eq!(certified.role_parity_mismatch_count, 0);
+
+    let stale = BezierBooleanLoopRoleAssignmentReport2::from_output_loop_depth_role_facts(
+        &output,
+        &depth_facts,
+        &[
+            BezierBooleanOutputLoopRole::Hole,
+            BezierBooleanOutputLoopRole::Material,
+        ],
+    );
+    assert_eq!(
+        stale.status,
+        BezierBooleanLoopRoleAssignmentStatus::RoleParityMismatch
+    );
+    assert!(stale.has_blockers());
+    assert_eq!(stale.role_parity_mismatch_count, 2);
+    assert_eq!(stale.blocker_count, 2);
+
+    let stale_region = BezierBooleanRegionAssemblyReport2::from_output_loop_depth_role_facts(
+        &output,
+        &depth_facts,
+        &[
+            BezierBooleanOutputLoopRole::Hole,
+            BezierBooleanOutputLoopRole::Material,
+        ],
+    );
+    assert_eq!(
+        stale_region.status,
+        BezierBooleanRegionAssemblyStatus::RoleAssignmentBlocked
+    );
+
+    let stale_result = BezierBooleanResultReport2::from_output_loop_depth_role_facts(
+        &output,
+        &depth_facts,
+        &[
+            BezierBooleanOutputLoopRole::Hole,
+            BezierBooleanOutputLoopRole::Material,
+        ],
+    );
+    assert_eq!(
+        stale_result.status,
+        BezierBooleanResultStatus::RegionAssemblyBlocked
+    );
+
+    let mismatched_depth_keys =
+        BezierBooleanLoopRoleAssignmentReport2::from_output_loop_depth_role_facts(
+            &output,
+            &[
+                BezierBooleanLoopNestingDepthFact2 {
+                    loop_index: 1,
+                    nesting_depth: 0,
+                },
+                BezierBooleanLoopNestingDepthFact2 {
+                    loop_index: 0,
+                    nesting_depth: 1,
+                },
+            ],
+            &[
+                BezierBooleanOutputLoopRole::Material,
+                BezierBooleanOutputLoopRole::Hole,
+            ],
+        );
+    assert_eq!(
+        mismatched_depth_keys.status,
+        BezierBooleanLoopRoleAssignmentStatus::NestingDepthFactBlocked
+    );
+    assert!(mismatched_depth_keys.has_blockers());
+}
+
+#[test]
 fn bezier_boolean_region_assembly_packages_material_and_hole_indices() {
     let plan = BezierBooleanLoopAssemblyPlanReport2 {
         status: BezierBooleanLoopAssemblyPlanStatus::Ready,
@@ -11707,6 +11802,99 @@ proptest! {
         prop_assert_eq!(assigned.unknown_role_count, 0);
         prop_assert!(assigned.is_ready());
         prop_assert!(!assigned.has_blockers());
+    }
+
+    #[test]
+    fn generated_bezier_boolean_depth_role_assignment_rejects_wrong_parity(
+        loop_count in 1_usize..6,
+        depth_offset in 0_usize..8,
+        flip_index in 0_usize..6,
+    ) {
+        let mut emitted_steps = Vec::new();
+        let mut endpoints = Vec::new();
+        for index in 0..loop_count {
+            let x = (index as i32) * 3;
+            emitted_steps.push(hypercurve::BezierBooleanOwnedTraversalStep2 {
+                step: hypercurve::BezierBooleanTraversalStep2 {
+                    operand: BezierBooleanTraversalOperand::First,
+                    fragment_index: index * 2,
+                },
+                opposite_location: BezierBooleanFragmentOwnershipLocation::Outside,
+                action: BooleanFragmentAction::KeepSourceDirection,
+            });
+            endpoints.push((point(x, 0), point(x + 1, 0)));
+
+            emitted_steps.push(hypercurve::BezierBooleanOwnedTraversalStep2 {
+                step: hypercurve::BezierBooleanTraversalStep2 {
+                    operand: BezierBooleanTraversalOperand::First,
+                    fragment_index: index * 2 + 1,
+                },
+                opposite_location: BezierBooleanFragmentOwnershipLocation::Outside,
+                action: BooleanFragmentAction::KeepSourceDirection,
+            });
+            endpoints.push((point(x + 1, 0), point(x, 0)));
+        }
+        let plan = BezierBooleanLoopAssemblyPlanReport2 {
+            status: BezierBooleanLoopAssemblyPlanStatus::Ready,
+            assembly_status: BezierBooleanAssemblyReadinessStatus::Ready,
+            operation: BooleanOp::Union,
+            emitted_steps,
+            first_emitted_count: loop_count * 2,
+            second_emitted_count: 0,
+            keep_source_count: loop_count * 2,
+            keep_reversed_count: 0,
+            invalid_reference_count: 0,
+            blocker_count: 0,
+        };
+        let closure = BezierBooleanLoopClosureReport2::from_fragment_endpoints(
+            &plan,
+            &endpoints,
+            &[],
+        );
+        let output = BezierBooleanOutputLoopReport2::from_loop_closure(&closure);
+        let depth_facts = (0..loop_count)
+            .map(|index| BezierBooleanLoopNestingDepthFact2 {
+                loop_index: index,
+                nesting_depth: index + depth_offset,
+            })
+            .collect::<Vec<_>>();
+        let mut roles = depth_facts
+            .iter()
+            .map(|fact| {
+                if fact.nesting_depth % 2 == 0 {
+                    BezierBooleanOutputLoopRole::Material
+                } else {
+                    BezierBooleanOutputLoopRole::Hole
+                }
+            })
+            .collect::<Vec<_>>();
+
+        let ready = BezierBooleanLoopRoleAssignmentReport2::from_output_loop_depth_role_facts(
+            &output,
+            &depth_facts,
+            &roles,
+        );
+        prop_assert_eq!(ready.status, BezierBooleanLoopRoleAssignmentStatus::Ready);
+        prop_assert_eq!(ready.role_parity_mismatch_count, 0);
+
+        let flipped = flip_index % loop_count;
+        roles[flipped] = match roles[flipped] {
+            BezierBooleanOutputLoopRole::Material => BezierBooleanOutputLoopRole::Hole,
+            BezierBooleanOutputLoopRole::Hole => BezierBooleanOutputLoopRole::Material,
+            BezierBooleanOutputLoopRole::Unknown => BezierBooleanOutputLoopRole::Material,
+        };
+        let stale = BezierBooleanLoopRoleAssignmentReport2::from_output_loop_depth_role_facts(
+            &output,
+            &depth_facts,
+            &roles,
+        );
+
+        prop_assert_eq!(
+            stale.status,
+            BezierBooleanLoopRoleAssignmentStatus::RoleParityMismatch
+        );
+        prop_assert_eq!(stale.role_parity_mismatch_count, 1);
+        prop_assert!(stale.has_blockers());
     }
 
     #[test]

@@ -1324,6 +1324,10 @@ pub enum BezierBooleanLoopRoleAssignmentStatus {
     ExtraRoleFacts,
     /// At least one supplied role fact is explicit unknown.
     UnknownRole,
+    /// The keyed nesting-depth facts needed to certify role parity were blocked.
+    NestingDepthFactBlocked,
+    /// At least one supplied role disagrees with certified nesting-depth parity.
+    RoleParityMismatch,
 }
 
 /// One closed Bezier/conic output loop with a certified material/hole role.
@@ -1368,6 +1372,8 @@ pub struct BezierBooleanLoopRoleAssignmentReport2 {
     pub hole_loop_count: usize,
     /// Number of explicit unknown role facts.
     pub unknown_role_count: usize,
+    /// Number of roles that disagree with certified nesting-depth parity.
+    pub role_parity_mismatch_count: usize,
     /// Number of missing role facts.
     pub missing_role_count: usize,
     /// Number of extra role facts.
@@ -5678,10 +5684,68 @@ impl BezierBooleanLoopRoleAssignmentReport2 {
             material_loop_count,
             hole_loop_count,
             unknown_role_count,
+            role_parity_mismatch_count: 0,
             missing_role_count: 0,
             extra_role_count: 0,
             blocker_count: unknown_role_count,
         }
+    }
+
+    /// Assigns externally supplied roles only when they match keyed depth parity.
+    ///
+    /// This is the stricter role-ingestion path for boolean callers that have
+    /// both nesting-depth certificates and explicit material/hole role facts.
+    /// It first validates [`BezierBooleanLoopNestingDepthFact2`] keys, then
+    /// validates role cardinality/unknowns, then checks the alternating
+    /// material/hole parity implied by the certified depth of each output loop.
+    /// The separation follows Vatti (1992), Greiner-Hormann (1998), and
+    /// Martinez-Rueda-Feito (2009), where boundary construction and nesting
+    /// interpretation are distinct stages. Yap, "Towards Exact Geometric
+    /// Computation" (1997), is the rule enforced here: a stale role certificate
+    /// is a blocker, not a reason to infer topology from orientation, sampled
+    /// points, or caller intent.
+    pub fn from_output_loop_depth_role_facts(
+        output: &BezierBooleanOutputLoopReport2,
+        depth_facts: &[BezierBooleanLoopNestingDepthFact2],
+        roles: &[BezierBooleanOutputLoopRole],
+    ) -> Self {
+        let depth_report =
+            BezierBooleanLoopNestingDepthFactReport2::from_output_loop_facts(output, depth_facts);
+        if !depth_report.is_ready() {
+            return Self::empty_like(
+                BezierBooleanLoopRoleAssignmentStatus::NestingDepthFactBlocked,
+                output,
+                roles.len(),
+                depth_report.blocker_count.max(1),
+            );
+        }
+
+        let mut assigned = Self::from_output_loops(output, roles);
+        if !assigned.is_ready() {
+            return assigned;
+        }
+
+        let role_parity_mismatch_count = depth_report
+            .depths
+            .iter()
+            .zip(roles.iter())
+            .filter(|(depth, role)| {
+                let expected = if **depth % 2 == 0 {
+                    BezierBooleanOutputLoopRole::Material
+                } else {
+                    BezierBooleanOutputLoopRole::Hole
+                };
+                **role != expected
+            })
+            .count();
+
+        if role_parity_mismatch_count > 0 {
+            assigned.status = BezierBooleanLoopRoleAssignmentStatus::RoleParityMismatch;
+            assigned.role_parity_mismatch_count = role_parity_mismatch_count;
+            assigned.blocker_count = role_parity_mismatch_count;
+        }
+
+        assigned
     }
 
     fn empty_like(
@@ -5712,6 +5776,7 @@ impl BezierBooleanLoopRoleAssignmentReport2 {
             material_loop_count: 0,
             hole_loop_count: 0,
             unknown_role_count: 0,
+            role_parity_mismatch_count: 0,
             missing_role_count,
             extra_role_count,
             blocker_count,
@@ -5731,6 +5796,8 @@ impl BezierBooleanLoopRoleAssignmentReport2 {
                 | BezierBooleanLoopRoleAssignmentStatus::MissingRoleFacts
                 | BezierBooleanLoopRoleAssignmentStatus::ExtraRoleFacts
                 | BezierBooleanLoopRoleAssignmentStatus::UnknownRole
+                | BezierBooleanLoopRoleAssignmentStatus::NestingDepthFactBlocked
+                | BezierBooleanLoopRoleAssignmentStatus::RoleParityMismatch
         )
     }
 }
@@ -5792,6 +5859,26 @@ impl BezierBooleanRegionAssemblyReport2 {
         let roles = depths.generate_roles(output);
         let assigned =
             BezierBooleanLoopRoleAssignmentReport2::from_output_loops(output, &roles.roles);
+        Self::from_role_assignment(&assigned)
+    }
+
+    /// Packages output loops when explicit roles agree with keyed depths.
+    ///
+    /// This constructor is useful when an upstream exact nesting stage emits
+    /// both loop-depth and role facts. The roles are accepted only if
+    /// [`BezierBooleanLoopRoleAssignmentReport2::from_output_loop_depth_role_facts`]
+    /// proves that every role matches depth parity; otherwise region assembly
+    /// receives a normal role-assignment blocker.
+    pub fn from_output_loop_depth_role_facts(
+        output: &BezierBooleanOutputLoopReport2,
+        depth_facts: &[BezierBooleanLoopNestingDepthFact2],
+        roles: &[BezierBooleanOutputLoopRole],
+    ) -> Self {
+        let assigned = BezierBooleanLoopRoleAssignmentReport2::from_output_loop_depth_role_facts(
+            output,
+            depth_facts,
+            roles,
+        );
         Self::from_role_assignment(&assigned)
     }
 
@@ -5873,7 +5960,9 @@ impl BezierBooleanRegionAssemblyReport2 {
             BezierBooleanLoopRoleAssignmentStatus::OutputLoopBlocked
             | BezierBooleanLoopRoleAssignmentStatus::MissingRoleFacts
             | BezierBooleanLoopRoleAssignmentStatus::ExtraRoleFacts
-            | BezierBooleanLoopRoleAssignmentStatus::UnknownRole => {
+            | BezierBooleanLoopRoleAssignmentStatus::UnknownRole
+            | BezierBooleanLoopRoleAssignmentStatus::NestingDepthFactBlocked
+            | BezierBooleanLoopRoleAssignmentStatus::RoleParityMismatch => {
                 return Self::empty_like(
                     BezierBooleanRegionAssemblyStatus::RoleAssignmentBlocked,
                     roles,
@@ -7961,6 +8050,26 @@ impl BezierBooleanResultReport2 {
     ) -> Self {
         let assembly =
             BezierBooleanRegionAssemblyReport2::from_output_loop_depth_facts(output, depth_facts);
+        Self::from_region_assembly(&assembly)
+    }
+
+    /// Accepts output loops when supplied roles are certified by keyed depths.
+    ///
+    /// This is the result-level counterpart to
+    /// [`BezierBooleanLoopRoleAssignmentReport2::from_output_loop_depth_role_facts`].
+    /// It lets callers carry explicit material/hole role facts through the
+    /// boolean result API without bypassing the exact nesting-depth parity
+    /// certificate required by Yap's predicate/construction discipline.
+    pub fn from_output_loop_depth_role_facts(
+        output: &BezierBooleanOutputLoopReport2,
+        depth_facts: &[BezierBooleanLoopNestingDepthFact2],
+        roles: &[BezierBooleanOutputLoopRole],
+    ) -> Self {
+        let assembly = BezierBooleanRegionAssemblyReport2::from_output_loop_depth_role_facts(
+            output,
+            depth_facts,
+            roles,
+        );
         Self::from_region_assembly(&assembly)
     }
 

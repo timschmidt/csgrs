@@ -1865,9 +1865,23 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     BezierBooleanLoopClosureReport2::from_quadratic_fragments(&plan, first, second);
                 let output = BezierBooleanOutputLoopReport2::from_loop_closure(&closure);
                 let roles = vec![BezierBooleanOutputLoopRole::Material; output.loops.len()];
+                let depth_facts = output
+                    .loops
+                    .iter()
+                    .enumerate()
+                    .map(|(loop_index, _)| BezierBooleanLoopNestingDepthFact2 {
+                        loop_index,
+                        nesting_depth: 0,
+                    })
+                    .collect::<Vec<_>>();
                 format!(
-                    "{:?}",
-                    BezierBooleanLoopRoleAssignmentReport2::from_output_loops(&output, &roles)
+                    "{:?}{:?}",
+                    BezierBooleanLoopRoleAssignmentReport2::from_output_loops(&output, &roles),
+                    BezierBooleanLoopRoleAssignmentReport2::from_output_loop_depth_role_facts(
+                        &output,
+                        &depth_facts,
+                        &roles,
+                    )
                 )
             }
             other => format!("{other:?}"),
