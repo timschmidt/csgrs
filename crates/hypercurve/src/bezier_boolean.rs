@@ -1735,6 +1735,10 @@ pub enum BezierBooleanRootIsolationHandoffStatus {
     BlockedByOverlapResolver,
     /// The relation is still unresolved and has no retained isolation frontier.
     BlockedByUnresolved,
+    /// Represented roots still need crossing/tangency classification.
+    BlockedByContactClassification,
+    /// A monotone range still needs decomposition or a certified graph axis.
+    BlockedByMonotoneDecomposition,
     /// A lower predicate reported explicit uncertainty.
     BlockedByUncertainty,
 }
@@ -1766,10 +1770,16 @@ pub struct BezierBooleanRootIsolationHandoffReport2 {
     pub exact_point_certificate_count: usize,
     /// Number of terminal region cells that still need exact root isolation.
     pub terminal_region_count: usize,
+    /// Number of monotone-range isolating spans that still need exact root isolation.
+    pub range_isolating_span_count: usize,
     /// Number of point witnesses that still need parameter recovery.
     pub point_witnesses_needing_parameters: usize,
+    /// Number of represented contact parameters still needing classification.
+    pub unclassified_parameter_count: usize,
     /// Number of overlap relations that must be resolved first.
     pub overlap_relations_needing_resolution: usize,
+    /// Number of monotone ranges still needing decomposition or axis proof.
+    pub not_shared_monotone_range_count: usize,
     /// Number of unresolved relation blockers.
     pub unresolved_relations: usize,
     /// Number of uncertain relation blockers.
@@ -11915,13 +11925,31 @@ impl BezierBooleanRootIsolationHandoffReport2 {
             isolation_certificate_count: 0,
             exact_point_certificate_count: 0,
             terminal_region_count: batch.region_isolation_relation_count,
+            range_isolating_span_count: 0,
             point_witnesses_needing_parameters: batch.point_witnesses_needing_parameters,
+            unclassified_parameter_count: 0,
             overlap_relations_needing_resolution: batch.overlap_relations_needing_resolution,
+            not_shared_monotone_range_count: 0,
             unresolved_relations: batch.unresolved_relations,
             uncertain_relations: batch.uncertain_relations,
             uncertainty_reason: batch.uncertainty_reason,
             blocker_count,
         }
+    }
+
+    /// Builds a root-isolation handoff from a combined path scheduler.
+    pub fn from_path_scheduler(scheduler: &BezierBooleanPathSchedulerReport2) -> Self {
+        let mut handoff = Self::from_batch_handoff(&scheduler.relation_batch);
+        handoff.range_isolating_span_count = scheduler.range_batch.isolating_spans.len();
+        handoff.unclassified_parameter_count = scheduler.range_batch.unclassified_parameters.len();
+        handoff.overlap_relations_needing_resolution += scheduler.range_batch.overlap_range_count;
+        handoff.not_shared_monotone_range_count =
+            scheduler.range_batch.not_shared_monotone_range_count;
+        handoff.uncertain_relations += scheduler.range_batch.uncertain_range_count;
+        if handoff.uncertainty_reason.is_none() {
+            handoff.uncertainty_reason = scheduler.range_batch.uncertainty_reason;
+        }
+        handoff.finalize()
     }
 
     fn empty() -> Self {
@@ -11933,8 +11961,11 @@ impl BezierBooleanRootIsolationHandoffReport2 {
             isolation_certificate_count: 0,
             exact_point_certificate_count: 0,
             terminal_region_count: 0,
+            range_isolating_span_count: 0,
             point_witnesses_needing_parameters: 0,
+            unclassified_parameter_count: 0,
             overlap_relations_needing_resolution: 0,
+            not_shared_monotone_range_count: 0,
             unresolved_relations: 0,
             uncertain_relations: 0,
             uncertainty_reason: None,
@@ -11989,20 +12020,32 @@ impl BezierBooleanRootIsolationHandoffReport2 {
 
     fn finalize(mut self) -> Self {
         self.blocker_count = self.point_witnesses_needing_parameters
+            + self.unclassified_parameter_count
             + self.overlap_relations_needing_resolution
+            + self.not_shared_monotone_range_count
             + self.unresolved_relations
             + self.uncertain_relations;
-        self.status = if self.relation_count == 0 {
+        self.status = if self.relation_count == 0
+            && self.range_isolating_span_count == 0
+            && self.unclassified_parameter_count == 0
+            && self.overlap_relations_needing_resolution == 0
+            && self.not_shared_monotone_range_count == 0
+            && self.uncertain_relations == 0
+        {
             BezierBooleanRootIsolationHandoffStatus::Empty
         } else if self.point_witnesses_needing_parameters > 0 {
             BezierBooleanRootIsolationHandoffStatus::BlockedByParameterRecovery
         } else if self.overlap_relations_needing_resolution > 0 {
             BezierBooleanRootIsolationHandoffStatus::BlockedByOverlapResolver
+        } else if self.unclassified_parameter_count > 0 {
+            BezierBooleanRootIsolationHandoffStatus::BlockedByContactClassification
+        } else if self.not_shared_monotone_range_count > 0 {
+            BezierBooleanRootIsolationHandoffStatus::BlockedByMonotoneDecomposition
         } else if self.unresolved_relations > 0 {
             BezierBooleanRootIsolationHandoffStatus::BlockedByUnresolved
         } else if self.uncertain_relations > 0 {
             BezierBooleanRootIsolationHandoffStatus::BlockedByUncertainty
-        } else if self.region_isolation_relation_count > 0 {
+        } else if self.region_isolation_relation_count > 0 || self.range_isolating_span_count > 0 {
             BezierBooleanRootIsolationHandoffStatus::ReadyForHypersolve
         } else if self.split_ready_relation_count > 0 {
             BezierBooleanRootIsolationHandoffStatus::SplitEventsReady
@@ -12023,6 +12066,8 @@ impl BezierBooleanRootIsolationHandoffReport2 {
             self.status,
             BezierBooleanRootIsolationHandoffStatus::BlockedByParameterRecovery
                 | BezierBooleanRootIsolationHandoffStatus::BlockedByOverlapResolver
+                | BezierBooleanRootIsolationHandoffStatus::BlockedByContactClassification
+                | BezierBooleanRootIsolationHandoffStatus::BlockedByMonotoneDecomposition
                 | BezierBooleanRootIsolationHandoffStatus::BlockedByUnresolved
                 | BezierBooleanRootIsolationHandoffStatus::BlockedByUncertainty
         )

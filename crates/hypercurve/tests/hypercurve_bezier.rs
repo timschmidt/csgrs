@@ -4649,6 +4649,41 @@ fn bezier_boolean_root_isolation_handoff_preserves_earlier_blockers() {
 }
 
 #[test]
+fn bezier_boolean_root_isolation_handoff_accepts_path_scheduler_range_spans() {
+    let range = BezierPathRangeOrderReport2::from_graph_order(
+        &BezierMonotoneGraphOrder::IntersectsOrTouches {
+            parameters: Vec::new(),
+            spans: vec![span(ratio(1, 4), ratio(1, 2))],
+        },
+    );
+    let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &[range]);
+
+    let root_handoff = BezierBooleanRootIsolationHandoffReport2::from_path_scheduler(&scheduler);
+
+    assert_eq!(
+        root_handoff.status,
+        BezierBooleanRootIsolationHandoffStatus::ReadyForHypersolve
+    );
+    assert_eq!(root_handoff.range_isolating_span_count, 1);
+    assert!(root_handoff.can_feed_hypersolve());
+    assert!(!root_handoff.has_blockers());
+
+    let unclassified = BezierPathRangeOrderReport2::from_graph_order(
+        &BezierMonotoneGraphOrder::IntersectsOrTouches {
+            parameters: vec![half()],
+            spans: Vec::new(),
+        },
+    );
+    let blocked = BezierBooleanPathSchedulerReport2::from_reports(&[], &[unclassified]);
+    let blocked_handoff = BezierBooleanRootIsolationHandoffReport2::from_path_scheduler(&blocked);
+    assert_eq!(
+        blocked_handoff.status,
+        BezierBooleanRootIsolationHandoffStatus::BlockedByContactClassification
+    );
+    assert!(blocked_handoff.has_blockers());
+}
+
+#[test]
 fn bezier_boolean_handoff_preserves_classified_uncertainty() {
     let relation = Classification::Uncertain(UncertaintyReason::Ordering);
 
@@ -10328,6 +10363,34 @@ proptest! {
         );
         prop_assert_eq!(root_handoff.region_isolation_relation_count, 1);
         prop_assert_eq!(root_handoff.terminal_region_count, region_count);
+        prop_assert!(root_handoff.can_feed_hypersolve());
+        prop_assert!(!root_handoff.has_blockers());
+    }
+
+    #[test]
+    fn generated_bezier_boolean_root_isolation_handoff_counts_range_spans(
+        span_count in 1_usize..8,
+    ) {
+        let reports = (0..span_count)
+            .map(|index| {
+                BezierPathRangeOrderReport2::from_graph_order(
+                    &BezierMonotoneGraphOrder::IntersectsOrTouches {
+                        parameters: Vec::new(),
+                        spans: vec![span(ratio(index as i32 + 1, 16), ratio(index as i32 + 2, 16))],
+                    },
+                )
+            })
+            .collect::<Vec<_>>();
+        let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &reports);
+
+        let root_handoff =
+            BezierBooleanRootIsolationHandoffReport2::from_path_scheduler(&scheduler);
+
+        prop_assert_eq!(
+            root_handoff.status,
+            BezierBooleanRootIsolationHandoffStatus::ReadyForHypersolve
+        );
+        prop_assert_eq!(root_handoff.range_isolating_span_count, span_count);
         prop_assert!(root_handoff.can_feed_hypersolve());
         prop_assert!(!root_handoff.has_blockers());
     }
