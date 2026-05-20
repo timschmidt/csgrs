@@ -2,11 +2,12 @@
 //!
 //! SolveSpace performs substitution and "soluble alone" passes before Newton
 //! iteration. This module adds the exact-stack version for prepared affine
-//! equality rows with one active variable. The result is a candidate assignment
-//! produced by exact `hyperreal::Real` arithmetic; callers still replay and
-//! certify the full problem before trusting it. This keeps the optimization in
-//! Yap's expression/object layer instead of making a lossy nonlinear backend
-//! responsible for obvious exact algebra.
+//! equality rows with one active variable and square affine equality systems.
+//! The result is a candidate assignment produced by exact `hyperreal::Real`
+//! arithmetic; callers still replay and certify the full problem before
+//! trusting it. This keeps the optimization in Yap's expression/object layer
+//! instead of making a lossy nonlinear backend responsible for obvious exact
+//! algebra.
 
 use hyperreal::{Real, RealSign};
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
@@ -25,6 +26,80 @@ pub struct DirectAffineSolution {
     pub symbol: SymbolId,
     /// Exact candidate value.
     pub value: Real,
+}
+
+/// Status for exact direct solving of a square affine equality system.
+///
+/// This is the report-bearing version of SolveSpace's pre-Newton affine
+/// reduction for the Hyper stack. It solves only active equality systems whose
+/// rows are already prepared affine blocks, using exact Gaussian elimination
+/// over [`Real`]. The output remains a candidate assignment: Yap's
+/// construction/proof boundary still requires ordinary residual replay before
+/// accepting it. See Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997), and SolveSpace's documented
+/// symbolic/direct solving pipeline.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum DirectAffineSystemStatus {
+    /// The square affine system was solved exactly.
+    Solved,
+    /// The active equality row count did not match the variable count.
+    ShapeMismatch {
+        /// Number of solver variables.
+        variables: usize,
+        /// Number of active equality rows considered.
+        equality_rows: usize,
+    },
+    /// An active row was not an equality row.
+    NonEqualityRow {
+        /// Source constraint index.
+        constraint_index: usize,
+    },
+    /// An active equality row did not have a prepared affine block.
+    NonAffineRow {
+        /// Source constraint index.
+        constraint_index: usize,
+    },
+    /// No certified nonzero pivot could be selected.
+    SingularOrUnsupportedPivot {
+        /// Pivot column where elimination failed.
+        pivot: usize,
+    },
+    /// The exact pivot division failed.
+    UnsupportedDivision {
+        /// Pivot column whose division failed.
+        pivot: usize,
+    },
+}
+
+/// Exact value assigned to one variable by direct affine system solving.
+#[derive(Clone, Debug, PartialEq)]
+pub struct DirectAffineSystemAssignment {
+    /// Solver symbol.
+    pub symbol: SymbolId,
+    /// Exact solved value.
+    pub value: Real,
+}
+
+/// Report for direct exact solving of a square affine equality system.
+#[derive(Clone, Debug, PartialEq)]
+pub struct DirectAffineSystemReport {
+    /// Final solve status.
+    pub status: DirectAffineSystemStatus,
+    /// Number of variables in the source problem.
+    pub variable_count: usize,
+    /// Number of active equality rows considered.
+    pub equality_rows: usize,
+    /// Source constraint indices used as affine rows.
+    pub constraint_indices: Vec<usize>,
+    /// Exact assignments when the system solved.
+    pub assignments: Vec<DirectAffineSystemAssignment>,
+}
+
+impl DirectAffineSystemReport {
+    /// Returns true when this report carries a complete exact assignment.
+    pub fn solved(&self) -> bool {
+        self.status == DirectAffineSystemStatus::Solved
+    }
 }
 
 /// Exact root candidates for one prepared univariate quadratic equality row.
@@ -230,6 +305,91 @@ pub enum DirectSolveError {
     },
 }
 
+/// Solve a square active affine equality system exactly.
+///
+/// This helper is intentionally stricter than the lossy dense solver: every
+/// active constraint must be an equality with a prepared affine residual, and
+/// the active equality row count must equal the variable count. It constructs
+/// `A*x = -c` directly from retained affine coefficients and solves with
+/// certified nonzero pivots. The returned assignments are proposal values that
+/// should be replayed through [`crate::certify_candidate`] before trust.
+pub fn solve_direct_affine_system(prepared: &PreparedProblem<'_>) -> DirectAffineSystemReport {
+    let variable_count = prepared.problem().variables.len();
+    let mut matrix = Vec::new();
+    let mut rhs = Vec::new();
+    let mut constraint_indices = Vec::new();
+
+    for (constraint_index, constraint) in prepared.problem().constraints.iter().enumerate() {
+        if !constraint.active {
+            continue;
+        }
+        if constraint.kind != ConstraintKind::Equality {
+            return direct_affine_system_report(
+                DirectAffineSystemStatus::NonEqualityRow { constraint_index },
+                variable_count,
+                matrix.len(),
+                constraint_indices,
+                Vec::new(),
+            );
+        }
+        let Some(affine) = &prepared.affine_residuals()[constraint_index] else {
+            return direct_affine_system_report(
+                DirectAffineSystemStatus::NonAffineRow { constraint_index },
+                variable_count,
+                matrix.len(),
+                constraint_indices,
+                Vec::new(),
+            );
+        };
+        matrix.push(affine.coefficients().to_vec());
+        rhs.push(-affine.constant().clone());
+        constraint_indices.push(constraint_index);
+    }
+
+    if matrix.len() != variable_count {
+        return direct_affine_system_report(
+            DirectAffineSystemStatus::ShapeMismatch {
+                variables: variable_count,
+                equality_rows: matrix.len(),
+            },
+            variable_count,
+            matrix.len(),
+            constraint_indices,
+            Vec::new(),
+        );
+    }
+
+    let solution = match solve_exact_affine_matrix(matrix, rhs) {
+        Ok(solution) => solution,
+        Err(status) => {
+            return direct_affine_system_report(
+                status,
+                variable_count,
+                variable_count,
+                constraint_indices,
+                Vec::new(),
+            );
+        }
+    };
+    let assignments = prepared
+        .problem()
+        .variables
+        .iter()
+        .zip(solution)
+        .map(|(variable, value)| DirectAffineSystemAssignment {
+            symbol: variable.symbol,
+            value,
+        })
+        .collect();
+    direct_affine_system_report(
+        DirectAffineSystemStatus::Solved,
+        variable_count,
+        variable_count,
+        constraint_indices,
+        assignments,
+    )
+}
+
 /// Solve every active one-variable affine equality row exactly.
 ///
 /// This is intentionally conservative. Rows with multiple structurally
@@ -276,6 +436,69 @@ pub fn solve_direct_affine_equalities(
         });
     }
     Ok(solutions)
+}
+
+fn solve_exact_affine_matrix(
+    mut matrix: Vec<Vec<Real>>,
+    mut rhs: Vec<Real>,
+) -> Result<Vec<Real>, DirectAffineSystemStatus> {
+    let n = rhs.len();
+    for pivot in 0..n {
+        let pivot_row = (pivot..n).find(|&row| {
+            matches!(
+                matrix[row][pivot].structural_facts().sign,
+                Some(RealSign::Negative | RealSign::Positive)
+            )
+        });
+        let Some(pivot_row) = pivot_row else {
+            return Err(DirectAffineSystemStatus::SingularOrUnsupportedPivot { pivot });
+        };
+        if pivot_row != pivot {
+            matrix.swap(pivot_row, pivot);
+            rhs.swap(pivot_row, pivot);
+        }
+
+        let pivot_value = matrix[pivot][pivot].clone();
+        for value in matrix[pivot].iter_mut().skip(pivot) {
+            *value = (value.clone() / pivot_value.clone())
+                .map_err(|_| DirectAffineSystemStatus::UnsupportedDivision { pivot })?;
+        }
+        rhs[pivot] = (rhs[pivot].clone() / pivot_value)
+            .map_err(|_| DirectAffineSystemStatus::UnsupportedDivision { pivot })?;
+        let pivot_tail = matrix[pivot][pivot..].to_vec();
+        let pivot_rhs = rhs[pivot].clone();
+
+        for row in 0..n {
+            if row == pivot {
+                continue;
+            }
+            let factor = matrix[row][pivot].clone();
+            if factor.structural_facts().sign == Some(RealSign::Zero) {
+                continue;
+            }
+            for (value, pivot_value) in matrix[row].iter_mut().skip(pivot).zip(&pivot_tail) {
+                *value = value.clone() - factor.clone() * pivot_value.clone();
+            }
+            rhs[row] = rhs[row].clone() - factor * pivot_rhs.clone();
+        }
+    }
+    Ok(rhs)
+}
+
+fn direct_affine_system_report(
+    status: DirectAffineSystemStatus,
+    variable_count: usize,
+    equality_rows: usize,
+    constraint_indices: Vec<usize>,
+    assignments: Vec<DirectAffineSystemAssignment>,
+) -> DirectAffineSystemReport {
+    DirectAffineSystemReport {
+        status,
+        variable_count,
+        equality_rows,
+        constraint_indices,
+        assignments,
+    }
 }
 
 /// Solve prepared univariate quadratic equality rows exactly when possible.

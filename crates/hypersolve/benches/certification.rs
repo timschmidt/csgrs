@@ -11,7 +11,7 @@ use hypersolve::{
     certify_univariate_quadratic_alpha, certify_univariate_quadratic_krawczyk_box,
     context_from_problem, differential_pair_skew_equation,
     eliminate_affine_rows_with_substitution_classes, rectangular_difference_area_equation,
-    report_lossy_adapter_only_candidate, solve_damped_least_squares,
+    report_lossy_adapter_only_candidate, solve_damped_least_squares, solve_direct_affine_system,
     solve_direct_univariate_quadratic_equalities, squared_distance_equation,
 };
 
@@ -182,6 +182,9 @@ fn certification(c: &mut Criterion) {
                 hyperlimit::PredicatePolicy::default(),
             )
         })
+    });
+    c.bench_function("solve_direct_affine_system", |b| {
+        b.iter(|| solve_direct_affine_system(&krawczyk_prepared))
     });
     let elimination_problem = substitution_elimination_problem(16);
     let elimination_prepared = PreparedProblem::new(&elimination_problem);

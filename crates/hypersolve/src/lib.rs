@@ -40,13 +40,15 @@ pub use diagnostics::{
     SolveReport,
 };
 pub use direct::{
-    DirectAffineSolution, DirectQuadraticSolution, DirectSolveError, EliminatedAffineRow,
+    DirectAffineSolution, DirectAffineSystemAssignment, DirectAffineSystemReport,
+    DirectAffineSystemStatus, DirectQuadraticSolution, DirectSolveError, EliminatedAffineRow,
     EqualitySubstitution, EqualitySubstitutionClass, EqualitySubstitutionClassMember,
     EqualitySubstitutionCycle, EqualitySubstitutionEliminationReport, EqualitySubstitutionProblem,
     EqualitySubstitutionValidation, apply_equality_substitutions,
     build_equality_substitution_classes, eliminate_affine_rows_with_substitution_classes,
     find_equality_substitution_cycles, find_equality_substitutions, solve_direct_affine_equalities,
-    solve_direct_univariate_quadratic_equalities, validate_equality_substitutions,
+    solve_direct_affine_system, solve_direct_univariate_quadratic_equalities,
+    validate_equality_substitutions,
 };
 pub use domain::geometry::{
     Point2 as SolverPoint2, named_equation, point_coincidence_equations, squared_distance_equation,

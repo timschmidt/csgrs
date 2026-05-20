@@ -2,24 +2,25 @@ use hyperreal::{Rational, Real, SymbolicDependencyMask};
 use hypersolve::jacobian::{symbolic_jacobian, symbolic_jacobian_prepared};
 use hypersolve::{
     CandidateCertificationConfig, CandidateResidualBall, CertifiedCandidateStatus, Constraint,
-    ConstraintKind, ConvergenceReason, DenseLinearBackend, DomainCheckKind, DomainCheckStatus,
-    Expr, ExprDegree, LinearAdapterKind, LinearAdapterPrecision, LinearBackend,
-    MultivariateQuadraticKrawczykStatus, PcbConstraintSet, PreparedProblem, PreparedSolverBlock,
-    Problem, ProposalEngineKind, ProposalEnginePrecision, RectangularRegion, SolverBlockRowKind,
-    SolverConfig, SolverPoint2, SolverState, SymbolId, ToolpathConstraintSet, VariableBall,
-    apply_equality_substitutions, bezier_offset_sample_constraints,
-    build_equality_substitution_classes, center_clearance_squared_constraint,
-    certify_affine_interval_candidate, certify_affine_krawczyk_box, certify_candidate,
-    certify_candidate_domains, certify_candidate_with_config,
-    certify_candidate_with_residual_balls, certify_multivariate_quadratic_interval_candidate,
-    certify_multivariate_quadratic_krawczyk_box, certify_quadratic_interval_candidate,
-    certify_univariate_quadratic_alpha, certify_univariate_quadratic_krawczyk_box,
-    constant_feed_time_equation, context_from_problem, differential_pair_skew_equation,
-    eliminate_affine_rows_with_substitution_classes, evaluate_residuals, facts_depend_on_symbol,
-    find_equality_substitutions, length_match_equation, point_coincidence_equations,
-    rectangular_difference_area_equation, rectangular_region_area_equation,
-    rectangular_region_containment_constraints, report_lossy_adapter_only_candidate,
-    solve_damped_least_squares, solve_direct_affine_equalities,
+    ConstraintKind, ConvergenceReason, DenseLinearBackend, DirectAffineSystemStatus,
+    DomainCheckKind, DomainCheckStatus, Expr, ExprDegree, LinearAdapterKind,
+    LinearAdapterPrecision, LinearBackend, MultivariateQuadraticKrawczykStatus, PcbConstraintSet,
+    PreparedProblem, PreparedSolverBlock, Problem, ProposalEngineKind, ProposalEnginePrecision,
+    RectangularRegion, SolverBlockRowKind, SolverConfig, SolverPoint2, SolverState, SymbolId,
+    ToolpathConstraintSet, VariableBall, apply_equality_substitutions,
+    bezier_offset_sample_constraints, build_equality_substitution_classes,
+    center_clearance_squared_constraint, certify_affine_interval_candidate,
+    certify_affine_krawczyk_box, certify_candidate, certify_candidate_domains,
+    certify_candidate_with_config, certify_candidate_with_residual_balls,
+    certify_multivariate_quadratic_interval_candidate, certify_multivariate_quadratic_krawczyk_box,
+    certify_quadratic_interval_candidate, certify_univariate_quadratic_alpha,
+    certify_univariate_quadratic_krawczyk_box, constant_feed_time_equation, context_from_problem,
+    differential_pair_skew_equation, eliminate_affine_rows_with_substitution_classes,
+    evaluate_residuals, facts_depend_on_symbol, find_equality_substitutions, length_match_equation,
+    point_coincidence_equations, rectangular_difference_area_equation,
+    rectangular_region_area_equation, rectangular_region_containment_constraints,
+    report_lossy_adapter_only_candidate, solve_damped_least_squares,
+    solve_direct_affine_equalities, solve_direct_affine_system,
     solve_direct_univariate_quadratic_equalities, squared_distance_equation,
     tangent_parallel_equation, tangent_same_direction_constraint, validate_equality_substitutions,
 };
@@ -1656,6 +1657,72 @@ fn direct_affine_solver_isolates_one_variable_exactly() {
     assert_eq!(solutions[0].constraint_index, 0);
     assert_eq!(solutions[0].symbol, SymbolId(0));
     assert_eq!(solutions[0].value, real(5));
+}
+
+#[test]
+fn direct_affine_system_solves_square_rows_and_replays_exactly() {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let y = Expr::symbol(SymbolId(1), "y");
+    let mut problem = Problem::default();
+    problem.add_variable("x", real(0));
+    problem.add_variable("y", real(0));
+    problem.add_constraint(Constraint::equality(
+        "2x plus y minus five",
+        x.clone() * Expr::int(2) + y.clone() - Expr::int(5),
+    ));
+    problem.add_constraint(Constraint::equality(
+        "x minus y minus one",
+        x - y - Expr::int(1),
+    ));
+
+    let report = solve_direct_affine_system(&PreparedProblem::new(&problem));
+
+    assert_eq!(report.status, DirectAffineSystemStatus::Solved);
+    assert!(report.solved());
+    assert_eq!(report.variable_count, 2);
+    assert_eq!(report.equality_rows, 2);
+    assert_eq!(report.constraint_indices, vec![0, 1]);
+    assert_eq!(report.assignments.len(), 2);
+    assert_eq!(report.assignments[0].symbol, SymbolId(0));
+    assert_eq!(report.assignments[0].value, real(2));
+    assert_eq!(report.assignments[1].symbol, SymbolId(1));
+    assert_eq!(report.assignments[1].value, real(1));
+
+    let mut candidate = context_from_problem(&problem);
+    for assignment in &report.assignments {
+        candidate.bind(assignment.symbol, assignment.value.clone());
+    }
+    let certification = certify_candidate(&PreparedProblem::new(&problem), &candidate);
+    assert!(certification.all_satisfied());
+
+    let mut underdetermined = Problem::default();
+    underdetermined.add_variable("x", real(0));
+    underdetermined.add_variable("y", real(0));
+    underdetermined.add_constraint(Constraint::equality(
+        "only one row",
+        Expr::symbol(SymbolId(0), "x") - Expr::int(2),
+    ));
+    let shape = solve_direct_affine_system(&PreparedProblem::new(&underdetermined));
+    assert_eq!(
+        shape.status,
+        DirectAffineSystemStatus::ShapeMismatch {
+            variables: 2,
+            equality_rows: 1
+        }
+    );
+
+    let mut singular = Problem::default();
+    let sx = Expr::symbol(SymbolId(0), "x");
+    let sy = Expr::symbol(SymbolId(1), "y");
+    singular.add_variable("x", real(0));
+    singular.add_variable("y", real(0));
+    singular.add_constraint(Constraint::equality("x plus y", sx.clone() + sy.clone()));
+    singular.add_constraint(Constraint::equality("duplicate", sx + sy));
+    let singular_report = solve_direct_affine_system(&PreparedProblem::new(&singular));
+    assert_eq!(
+        singular_report.status,
+        DirectAffineSystemStatus::SingularOrUnsupportedPivot { pivot: 1 }
+    );
 }
 
 #[test]

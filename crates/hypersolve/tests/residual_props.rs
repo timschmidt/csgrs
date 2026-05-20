@@ -11,8 +11,9 @@ use hypersolve::{
     certify_univariate_quadratic_krawczyk_box, context_from_problem,
     differential_pair_skew_equation, eliminate_affine_rows_with_substitution_classes,
     rectangular_difference_area_equation, report_lossy_adapter_only_candidate,
-    solve_damped_least_squares, solve_direct_univariate_quadratic_equalities,
-    squared_distance_equation, validate_equality_substitutions,
+    solve_damped_least_squares, solve_direct_affine_system,
+    solve_direct_univariate_quadratic_equalities, squared_distance_equation,
+    validate_equality_substitutions,
 };
 use proptest::prelude::*;
 
@@ -829,6 +830,40 @@ proptest! {
         prop_assert_eq!(report.steps[1].certified_root.clone(), Real::from(i64::from(y_root)));
         prop_assert_eq!(report.steps[0].step.clone(), Real::from(-i64::from(x_step)));
         prop_assert_eq!(report.steps[1].step.clone(), Real::from(-i64::from(y_step)));
+    }
+
+    #[test]
+    fn direct_affine_system_generated_diagonal_rows_replay_exactly(
+        x_root in -64_i16..=64,
+        y_root in -64_i16..=64,
+    ) {
+        let x = Expr::symbol(SymbolId(0), "x");
+        let y = Expr::symbol(SymbolId(1), "y");
+        let mut problem = Problem::default();
+        problem.add_variable("x", Real::zero());
+        problem.add_variable("y", Real::zero());
+        problem.add_constraint(Constraint::equality(
+            "generated direct x root",
+            x - Expr::int(i64::from(x_root)),
+        ));
+        problem.add_constraint(Constraint::equality(
+            "generated direct y root",
+            y - Expr::int(i64::from(y_root)),
+        ));
+
+        let prepared = PreparedProblem::new(&problem);
+        let report = solve_direct_affine_system(&prepared);
+
+        prop_assert!(report.solved());
+        prop_assert_eq!(report.assignments.len(), 2);
+        prop_assert_eq!(report.assignments[0].value.clone(), Real::from(i64::from(x_root)));
+        prop_assert_eq!(report.assignments[1].value.clone(), Real::from(i64::from(y_root)));
+        let mut context = context_from_problem(&problem);
+        for assignment in &report.assignments {
+            context.bind(assignment.symbol, assignment.value.clone());
+        }
+        let certification = certify_candidate(&prepared, &context);
+        prop_assert!(certification.all_satisfied());
     }
 
     #[test]

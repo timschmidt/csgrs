@@ -97,9 +97,9 @@ Implemented today:
 - symbolic expressions, simplification, structural facts, and differentiation;
 - exact residual evaluation contexts and finite-difference/symbolic Jacobian builders;
 - prepared problem, affine, polynomial, and solver-block fact records;
-- direct affine and univariate-quadratic equality helpers plus equality-substitution
-  analysis, exact substitution-class construction, and non-mutating affine row
-  elimination reports;
+- direct one-row and square-system affine helpers, univariate-quadratic equality
+  helpers, equality-substitution analysis, exact substitution-class construction,
+  and non-mutating affine row elimination reports;
 - candidate, lossy-adapter-only, candidate-domain, interval, affine Krawczyk,
   univariate and multivariate quadratic Krawczyk, and univariate quadratic alpha
   certification surfaces;
