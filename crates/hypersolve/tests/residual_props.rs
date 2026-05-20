@@ -1,11 +1,12 @@
 use hyperreal::{Real, RealSign};
 use hypersolve::{
     CertifiedCandidateStatus, Constraint, DomainCheckKind, DomainCheckStatus, EqualitySubstitution,
-    EqualitySubstitutionProblem, Expr, PreparedProblem, PreparedSolverBlock, Problem,
-    ProposalEngineKind, ProposalEnginePrecision, ProposalEngineReport, RectangularRegion,
-    SolverBlockRowKind, SolverConfig, SolverPoint2, SolverState, SymbolId, VariableBall,
-    center_clearance_squared_constraint, certify_affine_krawczyk_box, certify_candidate,
-    certify_candidate_domains, certify_multivariate_quadratic_interval_candidate,
+    EqualitySubstitutionProblem, Expr, MultivariateQuadraticKrawczykStatus, PreparedProblem,
+    PreparedSolverBlock, Problem, ProposalEngineKind, ProposalEnginePrecision,
+    ProposalEngineReport, RectangularRegion, SolverBlockRowKind, SolverConfig, SolverPoint2,
+    SolverState, SymbolId, VariableBall, center_clearance_squared_constraint,
+    certify_affine_krawczyk_box, certify_candidate, certify_candidate_domains,
+    certify_multivariate_quadratic_interval_candidate, certify_multivariate_quadratic_krawczyk_box,
     certify_quadratic_interval_candidate, certify_univariate_quadratic_alpha,
     certify_univariate_quadratic_krawczyk_box, context_from_problem,
     differential_pair_skew_equation, eliminate_affine_rows_with_substitution_classes,
@@ -501,6 +502,57 @@ proptest! {
         );
         prop_assert_eq!(report.rows[0].step.clone(), Some(Real::zero()));
         prop_assert!(report.all_examined_rows_certified());
+    }
+
+    #[test]
+    fn multivariate_quadratic_krawczyk_generated_diagonal_roots_certify(
+        x_root in 2_i16..=16,
+        y_root in 2_i16..=16,
+    ) {
+        let x_root = i64::from(x_root);
+        let y_root = i64::from(y_root);
+        let x = Expr::symbol(SymbolId(0), "x");
+        let y = Expr::symbol(SymbolId(1), "y");
+        let mut problem = Problem::default();
+        problem.add_variable("x", Real::from(x_root));
+        problem.add_variable("y", Real::from(y_root));
+        problem.add_constraint(Constraint::equality(
+            "generated x diagonal quadratic",
+            x.clone().powi(2) - Expr::int(x_root * x_root),
+        ));
+        problem.add_constraint(Constraint::equality(
+            "generated y diagonal quadratic",
+            y.clone().powi(2) - Expr::int(y_root * y_root),
+        ));
+
+        let report = certify_multivariate_quadratic_krawczyk_box(
+            &PreparedProblem::new(&problem),
+            &context_from_problem(&problem),
+            &[
+                VariableBall {
+                    symbol: SymbolId(0),
+                    radius: Real::from(1),
+                },
+                VariableBall {
+                    symbol: SymbolId(1),
+                    radius: Real::from(1),
+                },
+            ],
+            hyperlimit::PredicatePolicy::default(),
+        );
+
+        prop_assert_eq!(
+            &report.status,
+            &MultivariateQuadraticKrawczykStatus::CertifiedUniqueRoot
+        );
+        prop_assert!(report.certified_unique_root());
+        prop_assert_eq!(report.variables.len(), 2);
+        let all_variables_bounded = report.variables.iter().all(|variable| {
+            variable.step == Real::zero()
+                && variable.image_radius <= variable.radius
+                && variable.contraction_bound < Real::from(1)
+        });
+        prop_assert!(all_variables_bounded);
     }
 
     #[test]

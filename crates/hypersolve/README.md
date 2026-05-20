@@ -101,7 +101,8 @@ Implemented today:
   analysis, exact substitution-class construction, and non-mutating affine row
   elimination reports;
 - candidate, lossy-adapter-only, candidate-domain, interval, affine Krawczyk,
-  univariate quadratic Krawczyk, and univariate quadratic alpha certification surfaces;
+  univariate and multivariate quadratic Krawczyk, and univariate quadratic alpha
+  certification surfaces;
 - a dense damped least-squares prototype with proposal-engine and adapter diagnostics;
 - geometry, PCB, and toolpath constraint helper modules.
 

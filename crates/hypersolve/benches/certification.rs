@@ -7,12 +7,12 @@ use hypersolve::{
     bezier_offset_sample_constraints, build_equality_substitution_classes,
     center_clearance_squared_constraint, certify_affine_krawczyk_box, certify_candidate,
     certify_candidate_domains, certify_multivariate_quadratic_interval_candidate,
-    certify_quadratic_interval_candidate, certify_univariate_quadratic_alpha,
-    certify_univariate_quadratic_krawczyk_box, context_from_problem,
-    differential_pair_skew_equation, eliminate_affine_rows_with_substitution_classes,
-    rectangular_difference_area_equation, report_lossy_adapter_only_candidate,
-    solve_damped_least_squares, solve_direct_univariate_quadratic_equalities,
-    squared_distance_equation,
+    certify_multivariate_quadratic_krawczyk_box, certify_quadratic_interval_candidate,
+    certify_univariate_quadratic_alpha, certify_univariate_quadratic_krawczyk_box,
+    context_from_problem, differential_pair_skew_equation,
+    eliminate_affine_rows_with_substitution_classes, rectangular_difference_area_equation,
+    report_lossy_adapter_only_candidate, solve_damped_least_squares,
+    solve_direct_univariate_quadratic_equalities, squared_distance_equation,
 };
 
 fn r(value: i64) -> Real {
@@ -260,6 +260,25 @@ fn certification(c: &mut Criterion) {
                     VariableBall {
                         symbol: SymbolId(1),
                         radius: r(1),
+                    },
+                ],
+                hyperlimit::PredicatePolicy::default(),
+            )
+        })
+    });
+    c.bench_function("certify_multivariate_quadratic_krawczyk_rows", |b| {
+        b.iter(|| {
+            certify_multivariate_quadratic_krawczyk_box(
+                &prepared_multivariate_quadratic,
+                &multivariate_quadratic_context,
+                &[
+                    VariableBall {
+                        symbol: SymbolId(0),
+                        radius: r(0),
+                    },
+                    VariableBall {
+                        symbol: SymbolId(1),
+                        radius: r(0),
                     },
                 ],
                 hyperlimit::PredicatePolicy::default(),

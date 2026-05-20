@@ -3,15 +3,16 @@ use hypersolve::jacobian::{symbolic_jacobian, symbolic_jacobian_prepared};
 use hypersolve::{
     CandidateCertificationConfig, CandidateResidualBall, CertifiedCandidateStatus, Constraint,
     ConstraintKind, ConvergenceReason, DenseLinearBackend, DomainCheckKind, DomainCheckStatus,
-    Expr, ExprDegree, LinearAdapterKind, LinearAdapterPrecision, LinearBackend, PcbConstraintSet,
-    PreparedProblem, PreparedSolverBlock, Problem, ProposalEngineKind, ProposalEnginePrecision,
-    RectangularRegion, SolverBlockRowKind, SolverConfig, SolverPoint2, SolverState, SymbolId,
-    ToolpathConstraintSet, VariableBall, apply_equality_substitutions,
-    bezier_offset_sample_constraints, build_equality_substitution_classes,
-    center_clearance_squared_constraint, certify_affine_interval_candidate,
-    certify_affine_krawczyk_box, certify_candidate, certify_candidate_domains,
-    certify_candidate_with_config, certify_candidate_with_residual_balls,
-    certify_multivariate_quadratic_interval_candidate, certify_quadratic_interval_candidate,
+    Expr, ExprDegree, LinearAdapterKind, LinearAdapterPrecision, LinearBackend,
+    MultivariateQuadraticKrawczykStatus, PcbConstraintSet, PreparedProblem, PreparedSolverBlock,
+    Problem, ProposalEngineKind, ProposalEnginePrecision, RectangularRegion, SolverBlockRowKind,
+    SolverConfig, SolverPoint2, SolverState, SymbolId, ToolpathConstraintSet, VariableBall,
+    apply_equality_substitutions, bezier_offset_sample_constraints,
+    build_equality_substitution_classes, center_clearance_squared_constraint,
+    certify_affine_interval_candidate, certify_affine_krawczyk_box, certify_candidate,
+    certify_candidate_domains, certify_candidate_with_config,
+    certify_candidate_with_residual_balls, certify_multivariate_quadratic_interval_candidate,
+    certify_multivariate_quadratic_krawczyk_box, certify_quadratic_interval_candidate,
     certify_univariate_quadratic_alpha, certify_univariate_quadratic_krawczyk_box,
     constant_feed_time_equation, context_from_problem, differential_pair_skew_equation,
     eliminate_affine_rows_with_substitution_classes, evaluate_residuals, facts_depend_on_symbol,
@@ -1032,6 +1033,99 @@ fn univariate_quadratic_krawczyk_certifies_unique_root_and_reports_failures() {
     assert_eq!(
         far_report.rows[0].status,
         hypersolve::QuadraticKrawczykStatus::ImageOutsideBox
+    );
+}
+
+#[test]
+fn multivariate_quadratic_krawczyk_certifies_coupled_square_system() {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let y = Expr::symbol(SymbolId(1), "y");
+    let mut problem = Problem::default();
+    problem.add_variable("x", real(1));
+    problem.add_variable("y", real(2));
+    problem.add_constraint(Constraint::equality(
+        "x squared plus y minus three",
+        x.clone().powi(2) + y.clone() - Expr::int(3),
+    ));
+    problem.add_constraint(Constraint::equality(
+        "x plus y squared minus five",
+        x.clone() + y.clone().powi(2) - Expr::int(5),
+    ));
+
+    let report = certify_multivariate_quadratic_krawczyk_box(
+        &PreparedProblem::new(&problem),
+        &context_from_problem(&problem),
+        &[
+            VariableBall {
+                symbol: SymbolId(0),
+                radius: Real::new(Rational::fraction(1, 10).unwrap()),
+            },
+            VariableBall {
+                symbol: SymbolId(1),
+                radius: Real::new(Rational::fraction(1, 10).unwrap()),
+            },
+        ],
+        hyperlimit::PredicatePolicy::default(),
+    );
+
+    assert_eq!(
+        report.status,
+        MultivariateQuadraticKrawczykStatus::CertifiedUniqueRoot
+    );
+    assert!(report.certified_unique_root());
+    assert_eq!(report.variable_count, 2);
+    assert_eq!(report.equality_rows, 2);
+    assert_eq!(report.residuals.len(), 2);
+    assert_eq!(report.variables.len(), 2);
+    assert!(report.variables.iter().all(|variable| {
+        variable.step == Real::zero()
+            && variable.image_radius <= variable.radius
+            && variable.contraction_bound < Real::from(1)
+    }));
+
+    let tiny_box = certify_multivariate_quadratic_krawczyk_box(
+        &PreparedProblem::new(&problem),
+        &context_from_problem(&problem),
+        &[
+            VariableBall {
+                symbol: SymbolId(0),
+                radius: real(0),
+            },
+            VariableBall {
+                symbol: SymbolId(1),
+                radius: real(0),
+            },
+        ],
+        hyperlimit::PredicatePolicy::default(),
+    );
+    assert_eq!(
+        tiny_box.status,
+        MultivariateQuadraticKrawczykStatus::CertifiedUniqueRoot
+    );
+
+    let mut singular = Problem::default();
+    singular.add_variable("x", real(0));
+    singular.add_variable("y", real(0));
+    singular.add_constraint(Constraint::equality("x squared", x.clone().powi(2)));
+    singular.add_constraint(Constraint::equality("y squared", y.clone().powi(2)));
+    let singular_report = certify_multivariate_quadratic_krawczyk_box(
+        &PreparedProblem::new(&singular),
+        &context_from_problem(&singular),
+        &[
+            VariableBall {
+                symbol: SymbolId(0),
+                radius: real(1),
+            },
+            VariableBall {
+                symbol: SymbolId(1),
+                radius: real(1),
+            },
+        ],
+        hyperlimit::PredicatePolicy::default(),
+    );
+    assert_eq!(
+        singular_report.status,
+        MultivariateQuadraticKrawczykStatus::SingularOrUnsupportedPivot { pivot: 0 }
     );
 }
 

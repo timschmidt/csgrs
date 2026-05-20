@@ -70,10 +70,12 @@ pub use eval::{
 };
 pub use interval::{
     AffineIntervalError, AffineKrawczykReport, AffineKrawczykStatus, AffineKrawczykVariableStep,
+    MultivariateQuadraticKrawczykReport, MultivariateQuadraticKrawczykResidual,
+    MultivariateQuadraticKrawczykStatus, MultivariateQuadraticKrawczykVariable,
     QuadraticIntervalError, QuadraticKrawczykReport, QuadraticKrawczykRow, QuadraticKrawczykStatus,
     VariableBall, certify_affine_interval_candidate, certify_affine_krawczyk_box,
-    certify_multivariate_quadratic_interval_candidate, certify_quadratic_interval_candidate,
-    certify_univariate_quadratic_krawczyk_box,
+    certify_multivariate_quadratic_interval_candidate, certify_multivariate_quadratic_krawczyk_box,
+    certify_quadratic_interval_candidate, certify_univariate_quadratic_krawczyk_box,
 };
 pub use linalg::{
     DenseLinearBackend, LinearAdapterKind, LinearAdapterPrecision, LinearBackend, LinearSolveError,
