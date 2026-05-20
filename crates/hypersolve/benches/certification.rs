@@ -4,7 +4,7 @@ use hypersolve::{
     Constraint, EqualitySubstitution, Expr, PreparedProblem, PreparedSolverBlock, Problem,
     RectangularRegion, SolverPoint2, SymbolId, VariableBall, bezier_offset_sample_constraints,
     build_equality_substitution_classes, center_clearance_squared_constraint,
-    certify_affine_krawczyk_box, certify_candidate,
+    certify_affine_krawczyk_box, certify_candidate, certify_candidate_domains,
     certify_multivariate_quadratic_interval_candidate, certify_quadratic_interval_candidate,
     certify_univariate_quadratic_alpha, context_from_problem, differential_pair_skew_equation,
     eliminate_affine_rows_with_substitution_classes, rectangular_difference_area_equation,
@@ -106,6 +106,21 @@ fn multivariate_quadratic_problem(row_count: usize) -> Problem {
             x.clone() * y.clone() * Expr::int(scale) + x.clone().powi(2) * Expr::int(scale + 1)
                 - y.clone() * Expr::int(scale + 2)
                 + Expr::int(scale),
+        ));
+    }
+    problem
+}
+
+fn domain_problem(row_count: usize) -> Problem {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let y = Expr::symbol(SymbolId(1), "y");
+    let mut problem = Problem::default();
+    problem.add_variable("x", r(9));
+    problem.add_variable("y", r(3));
+    for index in 0..row_count {
+        problem.add_constraint(Constraint::equality(
+            format!("domain row {index}"),
+            (x.clone().sqrt() + (x.clone() / y.clone()).log10()) / Expr::int(index as i64 + 1),
         ));
     }
     problem
@@ -224,6 +239,17 @@ fn certification(c: &mut Criterion) {
     });
     c.bench_function("certify_affine_candidate_exact", |b| {
         b.iter(|| certify_candidate(&prepared, &context))
+    });
+    let domain_problem = domain_problem(16);
+    let domain_context = context_from_problem(&domain_problem);
+    c.bench_function("certify_candidate_domains", |b| {
+        b.iter(|| {
+            certify_candidate_domains(
+                &domain_problem,
+                &domain_context,
+                hyperlimit::PredicatePolicy::default(),
+            )
+        })
     });
 
     let substitutions = (0..16)

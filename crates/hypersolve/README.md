@@ -56,9 +56,9 @@ than internal truth.
 - `PreparedAffineResidual`, polynomial residual types, solver-block facts, equality
   substitution classes, affine-row elimination reports, and direct equality helpers
   expose reusable exact subproblems.
-- `CandidateCertificationReport`, residual balls, interval certification helpers,
-  affine Krawczyk reports, univariate quadratic alpha reports, and predicate reports
-  describe proof or uncertainty.
+- `CandidateCertificationReport`, candidate-domain reports, residual balls, interval
+  certification helpers, affine Krawczyk reports, univariate quadratic alpha reports,
+  and predicate reports describe proof or uncertainty.
 - `ProposalEngineKind`, `ProposalEngineReport`, `DenseLinearBackend`,
   `LinearSolveReport`, `SolverConfig`, `SolverState`, and `SolveReport` make
   lossy candidate generation explicit.
@@ -99,8 +99,8 @@ Implemented today:
 - direct affine and univariate-quadratic equality helpers plus equality-substitution
   analysis, exact substitution-class construction, and non-mutating affine row
   elimination reports;
-- candidate, interval, affine Krawczyk, and univariate quadratic alpha certification
-  surfaces;
+- candidate, candidate-domain, interval, affine Krawczyk, and univariate quadratic
+  alpha certification surfaces;
 - a dense damped least-squares prototype with proposal-engine and adapter diagnostics;
 - geometry, PCB, and toolpath constraint helper modules.
 
@@ -152,10 +152,10 @@ let certification = certify_candidate(&problem, &proposal.values);
 assert!(!certification.rows.is_empty());
 ```
 
-Prepared affine/quadratic residuals, direct equality substitution, interval,
-Krawczyk, and alpha reports, dense linear adapter diagnostics, predicate reports, and
-domain helper modules keep solver structure visible across geometry, PCB, and toolpath
-problems.
+Prepared affine/quadratic residuals, direct equality substitution, domain preflight,
+interval, Krawczyk, and alpha reports, dense linear adapter diagnostics, predicate
+reports, and domain helper modules keep solver structure visible across geometry, PCB,
+and toolpath problems.
 
 ## Development
 

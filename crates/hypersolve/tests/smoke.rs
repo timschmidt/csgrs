@@ -2,13 +2,14 @@ use hyperreal::{Rational, Real, SymbolicDependencyMask};
 use hypersolve::jacobian::{symbolic_jacobian, symbolic_jacobian_prepared};
 use hypersolve::{
     CandidateCertificationConfig, CandidateResidualBall, CertifiedCandidateStatus, Constraint,
-    ConstraintKind, ConvergenceReason, DenseLinearBackend, Expr, ExprDegree, LinearAdapterKind,
-    LinearAdapterPrecision, LinearBackend, PcbConstraintSet, PreparedProblem, PreparedSolverBlock,
-    Problem, ProposalEngineKind, ProposalEnginePrecision, RectangularRegion, SolverBlockRowKind,
-    SolverConfig, SolverPoint2, SolverState, SymbolId, ToolpathConstraintSet, VariableBall,
-    apply_equality_substitutions, bezier_offset_sample_constraints,
-    build_equality_substitution_classes, center_clearance_squared_constraint,
-    certify_affine_interval_candidate, certify_affine_krawczyk_box, certify_candidate,
+    ConstraintKind, ConvergenceReason, DenseLinearBackend, DomainCheckKind, DomainCheckStatus,
+    Expr, ExprDegree, LinearAdapterKind, LinearAdapterPrecision, LinearBackend, PcbConstraintSet,
+    PreparedProblem, PreparedSolverBlock, Problem, ProposalEngineKind, ProposalEnginePrecision,
+    RectangularRegion, SolverBlockRowKind, SolverConfig, SolverPoint2, SolverState, SymbolId,
+    ToolpathConstraintSet, VariableBall, apply_equality_substitutions,
+    bezier_offset_sample_constraints, build_equality_substitution_classes,
+    center_clearance_squared_constraint, certify_affine_interval_candidate,
+    certify_affine_krawczyk_box, certify_candidate, certify_candidate_domains,
     certify_candidate_with_config, certify_candidate_with_residual_balls,
     certify_multivariate_quadratic_interval_candidate, certify_quadratic_interval_candidate,
     certify_univariate_quadratic_alpha, constant_feed_time_equation, context_from_problem,
@@ -1630,4 +1631,75 @@ fn dense_linear_adapter_reports_lossy_pivot_diagnostics() {
     assert!(report.max_abs_pivot.unwrap() >= report.min_abs_pivot.unwrap());
     assert!((step[0] - 3.0).abs() < 1.0e-9);
     assert!((step[1] - 2.0).abs() < 1.0e-9);
+}
+
+#[test]
+fn candidate_domain_certification_reports_valid_invalid_and_nested_domains() {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let y = Expr::symbol(SymbolId(1), "y");
+    let mut problem = Problem::default();
+    problem.add_variable("x", real(4));
+    problem.add_variable("y", real(0));
+    problem.add_constraint(Constraint::equality("sqrt valid", x.clone().sqrt()));
+    problem.add_constraint(Constraint::equality("sqrt invalid", (-x.clone()).sqrt()));
+    problem.add_constraint(Constraint::equality(
+        "division invalid",
+        x.clone() / y.clone(),
+    ));
+    problem.add_constraint(Constraint::equality(
+        "nested log division",
+        (x.clone() / Expr::int(2)).log10(),
+    ));
+
+    let report = certify_candidate_domains(
+        &problem,
+        &context_from_problem(&problem),
+        hyperlimit::PredicatePolicy::default(),
+    );
+
+    assert_eq!(report.active_constraint_count, 4);
+    assert_eq!(report.checks.len(), 5);
+    assert_eq!(report.certified_valid_checks, 3);
+    assert_eq!(report.certified_invalid_checks, 2);
+    assert!(report.has_certified_invalid_domain());
+    assert!(report.checks.iter().any(|check| {
+        check.kind == DomainCheckKind::SqrtOperandNonNegative
+            && check.constraint_name == "sqrt invalid"
+            && check.status == DomainCheckStatus::CertifiedInvalid
+    }));
+    assert!(report.checks.iter().any(|check| {
+        check.kind == DomainCheckKind::DivisionDenominatorNonZero
+            && check.constraint_name == "division invalid"
+            && check.status == DomainCheckStatus::CertifiedInvalid
+    }));
+}
+
+#[test]
+fn candidate_domain_certification_reports_negative_power_and_unbound_symbols() {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let z = Expr::symbol(SymbolId(9), "z");
+    let mut problem = Problem::default();
+    problem.add_variable("x", real(0));
+    problem.add_constraint(Constraint::equality("inverse invalid", x.powi(-1)));
+    problem.add_constraint(Constraint::equality("unbound sqrt", z.sqrt()));
+
+    let report = certify_candidate_domains(
+        &problem,
+        &context_from_problem(&problem),
+        hyperlimit::PredicatePolicy::default(),
+    );
+
+    assert_eq!(report.checks.len(), 2);
+    assert_eq!(report.certified_invalid_checks, 1);
+    assert_eq!(report.evaluation_failure_checks, 1);
+    assert!(matches!(
+        report.checks[0].status,
+        DomainCheckStatus::CertifiedInvalid
+    ));
+    assert!(matches!(
+        report.checks[1].status,
+        DomainCheckStatus::UnboundSymbol {
+            symbol: SymbolId(9)
+        }
+    ));
 }

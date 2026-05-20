@@ -11,6 +11,7 @@ pub mod certification;
 pub mod diagnostics;
 pub mod direct;
 pub mod domain;
+pub mod domain_certification;
 pub mod eval;
 pub mod interval;
 pub mod jacobian;
@@ -58,6 +59,10 @@ pub use domain::toolpath::{
     RectangularRegion, ToolpathConstraintSet, bezier_offset_sample_constraints,
     constant_feed_time_equation, length_match_equation, rectangular_difference_area_equation,
     rectangular_region_area_equation, rectangular_region_containment_constraints,
+};
+pub use domain_certification::{
+    CandidateDomainReport, DomainCheck, DomainCheckKind, DomainCheckStatus,
+    certify_candidate_domains,
 };
 pub use eval::{
     EvalError, EvaluationContext, ResidualEvaluation, context_from_problem, evaluate_residuals,

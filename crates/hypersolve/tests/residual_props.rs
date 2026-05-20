@@ -1,14 +1,14 @@
 use hyperreal::{Real, RealSign};
 use hypersolve::{
-    CertifiedCandidateStatus, Constraint, EqualitySubstitution, EqualitySubstitutionProblem, Expr,
-    PreparedProblem, PreparedSolverBlock, Problem, RectangularRegion, SolverBlockRowKind,
-    SolverPoint2, SymbolId, VariableBall, center_clearance_squared_constraint,
-    certify_affine_krawczyk_box, certify_candidate,
-    certify_multivariate_quadratic_interval_candidate, certify_quadratic_interval_candidate,
-    certify_univariate_quadratic_alpha, context_from_problem, differential_pair_skew_equation,
-    eliminate_affine_rows_with_substitution_classes, rectangular_difference_area_equation,
-    solve_direct_univariate_quadratic_equalities, squared_distance_equation,
-    validate_equality_substitutions,
+    CertifiedCandidateStatus, Constraint, DomainCheckKind, DomainCheckStatus, EqualitySubstitution,
+    EqualitySubstitutionProblem, Expr, PreparedProblem, PreparedSolverBlock, Problem,
+    RectangularRegion, SolverBlockRowKind, SolverPoint2, SymbolId, VariableBall,
+    center_clearance_squared_constraint, certify_affine_krawczyk_box, certify_candidate,
+    certify_candidate_domains, certify_multivariate_quadratic_interval_candidate,
+    certify_quadratic_interval_candidate, certify_univariate_quadratic_alpha, context_from_problem,
+    differential_pair_skew_equation, eliminate_affine_rows_with_substitution_classes,
+    rectangular_difference_area_equation, solve_direct_univariate_quadratic_equalities,
+    squared_distance_equation, validate_equality_substitutions,
 };
 use proptest::prelude::*;
 
@@ -372,6 +372,76 @@ proptest! {
                 | hypersolve::UnivariateQuadraticAlphaStatus::ZeroDerivative
         ));
         prop_assert!(!report.all_examined_rows_certified());
+    }
+
+    #[test]
+    fn candidate_domain_generated_sqrt_signs_are_certified(
+        value in -64_i16..=64,
+    ) {
+        let x = Expr::symbol(SymbolId(0), "x");
+        let mut problem = Problem::default();
+        problem.add_variable("x", Real::from(i64::from(value)));
+        problem.add_constraint(Constraint::equality("generated sqrt", x.sqrt()));
+        let report = certify_candidate_domains(
+            &problem,
+            &context_from_problem(&problem),
+            hyperlimit::PredicatePolicy::default(),
+        );
+
+        prop_assert_eq!(report.checks.len(), 1);
+        prop_assert_eq!(report.checks[0].kind, DomainCheckKind::SqrtOperandNonNegative);
+        if value < 0 {
+            prop_assert_eq!(
+                &report.checks[0].status,
+                &DomainCheckStatus::CertifiedInvalid
+            );
+            prop_assert!(report.has_certified_invalid_domain());
+        } else {
+            prop_assert_eq!(
+                &report.checks[0].status,
+                &DomainCheckStatus::CertifiedValid
+            );
+            prop_assert!(report.all_checks_certified_valid());
+        }
+    }
+
+    #[test]
+    fn candidate_domain_generated_division_and_log_boundaries_are_certified(
+        denominator in -64_i16..=64,
+        log_operand in -64_i16..=64,
+    ) {
+        let y = Expr::symbol(SymbolId(0), "y");
+        let l = Expr::symbol(SymbolId(1), "l");
+        let mut problem = Problem::default();
+        problem.add_variable("y", Real::from(i64::from(denominator)));
+        problem.add_variable("l", Real::from(i64::from(log_operand)));
+        problem.add_constraint(Constraint::equality("generated reciprocal", Expr::int(1) / y));
+        problem.add_constraint(Constraint::equality("generated log", l.log10()));
+        let report = certify_candidate_domains(
+            &problem,
+            &context_from_problem(&problem),
+            hyperlimit::PredicatePolicy::default(),
+        );
+
+        prop_assert_eq!(report.checks.len(), 2);
+        let division_status = &report.checks[0].status;
+        let log_status = &report.checks[1].status;
+        prop_assert_eq!(
+            *division_status == DomainCheckStatus::CertifiedValid,
+            denominator != 0
+        );
+        prop_assert_eq!(
+            *division_status == DomainCheckStatus::CertifiedInvalid,
+            denominator == 0
+        );
+        prop_assert_eq!(
+            *log_status == DomainCheckStatus::CertifiedValid,
+            log_operand > 0
+        );
+        prop_assert_eq!(
+            *log_status == DomainCheckStatus::CertifiedInvalid,
+            log_operand <= 0
+        );
     }
 
     #[test]
