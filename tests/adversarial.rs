@@ -674,6 +674,26 @@ fn adversarial_sdf_tiny_nonzero_samples_keep_hyperreal_sign_before_surface_nets(
 }
 
 #[test]
+fn adversarial_smoothing_rejects_nonfinite_weights_at_hyperreal_lerp_boundary() {
+    let mesh: Mesh<()> = Mesh::cube(2.0, ()).triangulate();
+    let original_vertices = mesh.vertices();
+
+    for smoothed in [
+        mesh.laplacian_smooth(Real::NAN, 1, false),
+        mesh.laplacian_smooth(Real::INFINITY, 1, false),
+        mesh.taubin_smooth(Real::NAN, -0.2, 1, false),
+        mesh.taubin_smooth(0.2, Real::NEG_INFINITY, 1, false),
+    ] {
+        assert_mesh_sane(&smoothed);
+        let smoothed_vertices = smoothed.vertices();
+        assert_eq!(original_vertices.len(), smoothed_vertices.len());
+        for (before, after) in original_vertices.iter().zip(smoothed_vertices.iter()) {
+            assert_eq!(before.position, after.position);
+        }
+    }
+}
+
+#[test]
 #[cfg(feature = "metaballs")]
 fn adversarial_metaballs_reject_invalid_sampling_boundary_at_hyperreal_boundary() {
     let valid = csgrs::mesh::metaballs::MetaBall::new(Point3::new(0.0, 0.0, 0.0), 1.0);
