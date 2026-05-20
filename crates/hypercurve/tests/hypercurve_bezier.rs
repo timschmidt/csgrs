@@ -18,6 +18,7 @@ use hypercurve::{
     BezierBooleanLoopNestingDepthFactReport2, BezierBooleanLoopNestingDepthFactStatus,
     BezierBooleanLoopNestingRoleReport2, BezierBooleanLoopNestingRoleStatus,
     BezierBooleanLoopRoleAssignmentReport2, BezierBooleanLoopRoleAssignmentStatus,
+    BezierBooleanMaterializationAuditReport2, BezierBooleanMaterializationAuditStatus,
     BezierBooleanOperandOwnershipLocationReport2, BezierBooleanOperandOwnershipLocationStatus,
     BezierBooleanOutputLoopReport2, BezierBooleanOutputLoopRole, BezierBooleanOutputLoopStatus,
     BezierBooleanOverlapResolutionReport2, BezierBooleanOverlapResolutionStatus,
@@ -8600,6 +8601,90 @@ fn bezier_boolean_schedule_containment_role_facts_block_stale_roles() {
 }
 
 #[test]
+fn bezier_boolean_materialization_audit_blocks_stale_result_payloads() {
+    let schedule = BezierBooleanTraversalScheduleReport2 {
+        status: BezierBooleanTraversalScheduleStatus::Ready,
+        precondition_status: BezierBooleanTraversalPreconditionStatus::Ready,
+        first_fragment_count: 2,
+        second_fragment_count: 0,
+        steps: vec![
+            hypercurve::BezierBooleanTraversalStep2 {
+                operand: BezierBooleanTraversalOperand::First,
+                fragment_index: 0,
+            },
+            hypercurve::BezierBooleanTraversalStep2 {
+                operand: BezierBooleanTraversalOperand::First,
+                fragment_index: 1,
+            },
+        ],
+        resolved_overlap_count: 0,
+        overlap_boundary_parameter_count: 0,
+        blocker_count: 0,
+    };
+    let ownership_facts = schedule
+        .steps
+        .iter()
+        .map(|step| BezierBooleanOwnershipFact2 {
+            step: step.clone(),
+            opposite_location: BezierBooleanFragmentOwnershipLocation::Outside,
+        })
+        .collect::<Vec<_>>();
+    let containment_facts = [BezierBooleanLoopContainmentFact2 {
+        container_loop_index: 0,
+        contained_loop_index: 1,
+    }];
+    let result = BezierBooleanResultReport2::from_schedule_graph_walk_containment_facts(
+        &schedule,
+        BooleanOp::Union,
+        &ownership_facts,
+        &[(point(0, 0), point(0, 0)), (point(1, 0), point(1, 0))],
+        &[],
+        0,
+        0,
+        &[0, 1],
+        &containment_facts,
+    );
+
+    let audit = BezierBooleanMaterializationAuditReport2::from_result(&result);
+    assert_eq!(audit.status, BezierBooleanMaterializationAuditStatus::Ready);
+    assert!(audit.is_ready());
+    assert!(!audit.has_blockers());
+
+    let mut stale_index = result.clone();
+    stale_index.material_loop_indices = vec![0, 0];
+    stale_index.hole_loop_indices.clear();
+    stale_index.material_loop_count = 2;
+    stale_index.hole_loop_count = 0;
+    let stale_index_audit = BezierBooleanMaterializationAuditReport2::from_result(&stale_index);
+    assert_eq!(
+        stale_index_audit.status,
+        BezierBooleanMaterializationAuditStatus::RoleIndexMismatch
+    );
+    assert!(stale_index_audit.has_blockers());
+
+    let mut stale_role = result.clone();
+    stale_role.material_loop_indices = vec![1];
+    stale_role.hole_loop_indices = vec![0];
+    let stale_role_audit = BezierBooleanMaterializationAuditReport2::from_result(&stale_role);
+    assert_eq!(
+        stale_role_audit.status,
+        BezierBooleanMaterializationAuditStatus::LoopRoleMismatch
+    );
+    assert!(stale_role_audit.has_blockers());
+
+    let mut stale_range = result.clone();
+    stale_range.assigned_loops[0]
+        .output_loop
+        .directed_fragment_count = usize::MAX;
+    let stale_range_audit = BezierBooleanMaterializationAuditReport2::from_result(&stale_range);
+    assert_eq!(
+        stale_range_audit.status,
+        BezierBooleanMaterializationAuditStatus::FragmentRangeMismatch
+    );
+    assert!(stale_range_audit.has_blockers());
+}
+
+#[test]
 fn bezier_boolean_output_loop_report_preserves_closure_blockers() {
     let blocked_plan = BezierBooleanLoopAssemblyPlanReport2 {
         status: BezierBooleanLoopAssemblyPlanStatus::Ready,
@@ -12780,6 +12865,82 @@ proptest! {
         prop_assert_eq!(&result.material_loop_indices, &(0..loop_count).collect::<Vec<_>>());
         prop_assert!(result.is_ready());
         prop_assert!(!result.has_blockers());
+    }
+
+    #[test]
+    fn generated_bezier_boolean_materialization_audit_preserves_ready_payloads(
+        loop_count in 1_usize..6,
+        material_prefix in 1_usize..6,
+    ) {
+        let mut emitted_steps = Vec::new();
+        let mut endpoints = Vec::new();
+        for index in 0..loop_count {
+            let x = (index as i32) * 3;
+            emitted_steps.push(hypercurve::BezierBooleanOwnedTraversalStep2 {
+                step: hypercurve::BezierBooleanTraversalStep2 {
+                    operand: BezierBooleanTraversalOperand::First,
+                    fragment_index: index * 2,
+                },
+                opposite_location: BezierBooleanFragmentOwnershipLocation::Outside,
+                action: BooleanFragmentAction::KeepSourceDirection,
+            });
+            endpoints.push((point(x, 0), point(x + 1, 0)));
+
+            emitted_steps.push(hypercurve::BezierBooleanOwnedTraversalStep2 {
+                step: hypercurve::BezierBooleanTraversalStep2 {
+                    operand: BezierBooleanTraversalOperand::First,
+                    fragment_index: index * 2 + 1,
+                },
+                opposite_location: BezierBooleanFragmentOwnershipLocation::Outside,
+                action: BooleanFragmentAction::KeepSourceDirection,
+            });
+            endpoints.push((point(x + 1, 0), point(x, 0)));
+        }
+        let plan = BezierBooleanLoopAssemblyPlanReport2 {
+            status: BezierBooleanLoopAssemblyPlanStatus::Ready,
+            assembly_status: BezierBooleanAssemblyReadinessStatus::Ready,
+            operation: BooleanOp::Union,
+            emitted_steps,
+            first_emitted_count: loop_count * 2,
+            second_emitted_count: 0,
+            keep_source_count: loop_count * 2,
+            keep_reversed_count: 0,
+            invalid_reference_count: 0,
+            blocker_count: 0,
+        };
+        let closure = BezierBooleanLoopClosureReport2::from_fragment_endpoints(
+            &plan,
+            &endpoints,
+            &[],
+        );
+        let output = BezierBooleanOutputLoopReport2::from_loop_closure(&closure);
+        let material_count = material_prefix.min(loop_count).max(1);
+        let roles = (0..loop_count)
+            .map(|index| {
+                if index < material_count {
+                    BezierBooleanOutputLoopRole::Material
+                } else {
+                    BezierBooleanOutputLoopRole::Hole
+                }
+            })
+            .collect::<Vec<_>>();
+        let assigned = BezierBooleanLoopRoleAssignmentReport2::from_output_loops(
+            &output,
+            &roles,
+        );
+        let assembly = BezierBooleanRegionAssemblyReport2::from_role_assignment(&assigned);
+        let result = BezierBooleanResultReport2::from_region_assembly(&assembly);
+
+        let audit = BezierBooleanMaterializationAuditReport2::from_result(&result);
+
+        prop_assert_eq!(audit.status, BezierBooleanMaterializationAuditStatus::Ready);
+        prop_assert_eq!(audit.assigned_loop_count, loop_count);
+        prop_assert_eq!(audit.material_loop_count, material_count);
+        prop_assert_eq!(audit.hole_loop_count, loop_count - material_count);
+        prop_assert_eq!(audit.directed_fragment_count, loop_count * 2);
+        prop_assert_eq!(audit.audited_loop_count, loop_count);
+        prop_assert!(audit.is_ready());
+        prop_assert!(!audit.has_blockers());
     }
 
     #[test]

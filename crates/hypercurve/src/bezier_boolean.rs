@@ -1490,6 +1490,71 @@ pub struct BezierBooleanResultReport2 {
     pub blocker_count: usize,
 }
 
+/// Materialization-readiness audit status for accepted Bezier/conic results.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum BezierBooleanMaterializationAuditStatus {
+    /// No fragment or overlap work was supplied.
+    Empty,
+    /// The arrangement is a certified endpoint-only no-op.
+    NoInteriorSplits,
+    /// The accepted result is internally consistent and can feed a future region carrier.
+    Ready,
+    /// The result was blocked before materialization-readiness auditing.
+    ResultBlocked,
+    /// The result's public count fields do not match the retained payloads.
+    CountMismatch,
+    /// Material or hole loop index sets are stale, duplicate, or out of range.
+    RoleIndexMismatch,
+    /// A role-index set points at a loop whose certified role disagrees.
+    LoopRoleMismatch,
+    /// At least one output-loop range does not fit inside the retained directed fragments.
+    FragmentRangeMismatch,
+}
+
+/// Audit report for future Bezier/conic region materialization.
+///
+/// This report is the current safe endpoint for "actual region" work while
+/// `Region2` remains a line/arc contour carrier. It consumes an accepted
+/// [`BezierBooleanResultReport2`] and replays its internal invariants before a
+/// future higher-order Bezier/conic region type may trust the payload: public
+/// counts must match retained vectors, material/hole index sets must be keyed
+/// to existing assigned loops, indexed loops must have matching certified
+/// roles, and every loop range must be contained in the retained directed
+/// fragments. It performs no containment, winding, or orientation inference.
+/// That preserves Yap's "Towards Exact Geometric Computation" (1997)
+/// predicate/construction boundary, and keeps the post-boundary fill stage
+/// explicit in the style of Vatti (1992), Greiner-Hormann (1998), and
+/// Martinez-Rueda-Feito (2009).
+#[derive(Clone, Debug, PartialEq)]
+pub struct BezierBooleanMaterializationAuditReport2 {
+    /// Coarse materialization-readiness status.
+    pub status: BezierBooleanMaterializationAuditStatus,
+    /// Result status used to derive this audit.
+    pub result_status: BezierBooleanResultStatus,
+    /// Requested boolean operation.
+    pub operation: BooleanOp,
+    /// Number of assigned loops retained by the result payload.
+    pub assigned_loop_count: usize,
+    /// Number of material loops retained by the result payload.
+    pub material_loop_count: usize,
+    /// Number of hole loops retained by the result payload.
+    pub hole_loop_count: usize,
+    /// Number of directed fragments retained by the result payload.
+    pub directed_fragment_count: usize,
+    /// Number of assigned loops whose range was checked.
+    pub audited_loop_count: usize,
+    /// Number of public count fields that disagree with retained payload sizes.
+    pub count_mismatch_count: usize,
+    /// Number of stale, duplicate, or out-of-range material/hole indices.
+    pub role_index_mismatch_count: usize,
+    /// Number of material/hole indices whose loop role disagrees with the index set.
+    pub loop_role_mismatch_count: usize,
+    /// Number of assigned-loop fragment ranges that do not fit the directed payload.
+    pub fragment_range_mismatch_count: usize,
+    /// Number of blocking preconditions retained by this audit.
+    pub blocker_count: usize,
+}
+
 /// Machine-readable handoff from Bezier intersection predicates to booleans.
 #[derive(Clone, Debug, PartialEq)]
 pub struct BezierBooleanHandoffReport2 {
@@ -9487,6 +9552,163 @@ impl BezierBooleanResultReport2 {
     /// Returns true when any prerequisite prevents accepted boolean output.
     pub fn has_blockers(&self) -> bool {
         self.status == BezierBooleanResultStatus::RegionAssemblyBlocked
+    }
+}
+
+impl BezierBooleanMaterializationAuditReport2 {
+    /// Audits whether an accepted Bezier/conic boolean artifact is materialization-ready.
+    ///
+    /// The audit replays only already-certified structure. It does not compute
+    /// containment, orient loops, sample points, or repair stale indices. This
+    /// is the Yap (1997) exact-geometric-computation contract applied to the
+    /// final handoff boundary: future concrete region materialization may
+    /// consume this report only when every retained count, role index, and
+    /// output-loop range is self-consistent. The staged interpretation of
+    /// boundary loops and material/hole roles follows Vatti (1992),
+    /// Greiner-Hormann (1998), and Martinez-Rueda-Feito (2009).
+    pub fn from_result(result: &BezierBooleanResultReport2) -> Self {
+        match result.status {
+            BezierBooleanResultStatus::Empty => {
+                return Self::empty_like(BezierBooleanMaterializationAuditStatus::Empty, result, 0);
+            }
+            BezierBooleanResultStatus::NoInteriorSplits => {
+                return Self::empty_like(
+                    BezierBooleanMaterializationAuditStatus::NoInteriorSplits,
+                    result,
+                    0,
+                );
+            }
+            BezierBooleanResultStatus::RegionAssemblyBlocked => {
+                return Self::empty_like(
+                    BezierBooleanMaterializationAuditStatus::ResultBlocked,
+                    result,
+                    result.blocker_count.max(1),
+                );
+            }
+            BezierBooleanResultStatus::NoEmittedFragments => {
+                return Self::empty_like(
+                    BezierBooleanMaterializationAuditStatus::ResultBlocked,
+                    result,
+                    0,
+                );
+            }
+            BezierBooleanResultStatus::Ready => {}
+        }
+
+        let count_mismatch_count =
+            usize::from(result.assigned_loop_count != result.assigned_loops.len())
+                + usize::from(result.material_loop_count != result.material_loop_indices.len())
+                + usize::from(result.hole_loop_count != result.hole_loop_indices.len())
+                + usize::from(result.directed_fragment_count != result.directed_fragments.len());
+
+        let mut seen_roles = vec![false; result.assigned_loops.len()];
+        let mut role_index_mismatch_count = 0;
+        let mut loop_role_mismatch_count = 0;
+        for index in result.material_loop_indices.iter().copied() {
+            if index >= result.assigned_loops.len() || seen_roles[index] {
+                role_index_mismatch_count += 1;
+                continue;
+            }
+            seen_roles[index] = true;
+            if result.assigned_loops[index].role != BezierBooleanOutputLoopRole::Material {
+                loop_role_mismatch_count += 1;
+            }
+        }
+        for index in result.hole_loop_indices.iter().copied() {
+            if index >= result.assigned_loops.len() || seen_roles[index] {
+                role_index_mismatch_count += 1;
+                continue;
+            }
+            seen_roles[index] = true;
+            if result.assigned_loops[index].role != BezierBooleanOutputLoopRole::Hole {
+                loop_role_mismatch_count += 1;
+            }
+        }
+        role_index_mismatch_count += seen_roles.iter().filter(|seen| !**seen).count();
+
+        let fragment_range_mismatch_count = result
+            .assigned_loops
+            .iter()
+            .filter(|assigned| {
+                let start = assigned.output_loop.first_directed_fragment_index;
+                let count = assigned.output_loop.directed_fragment_count;
+                count == 0
+                    || start
+                        .checked_add(count)
+                        .map_or(true, |end| end > result.directed_fragments.len())
+            })
+            .count();
+
+        let blocker_count = count_mismatch_count
+            + role_index_mismatch_count
+            + loop_role_mismatch_count
+            + fragment_range_mismatch_count;
+        let status = if count_mismatch_count > 0 {
+            BezierBooleanMaterializationAuditStatus::CountMismatch
+        } else if role_index_mismatch_count > 0 {
+            BezierBooleanMaterializationAuditStatus::RoleIndexMismatch
+        } else if loop_role_mismatch_count > 0 {
+            BezierBooleanMaterializationAuditStatus::LoopRoleMismatch
+        } else if fragment_range_mismatch_count > 0 {
+            BezierBooleanMaterializationAuditStatus::FragmentRangeMismatch
+        } else {
+            BezierBooleanMaterializationAuditStatus::Ready
+        };
+
+        Self {
+            status,
+            result_status: result.status,
+            operation: result.operation,
+            assigned_loop_count: result.assigned_loops.len(),
+            material_loop_count: result.material_loop_indices.len(),
+            hole_loop_count: result.hole_loop_indices.len(),
+            directed_fragment_count: result.directed_fragments.len(),
+            audited_loop_count: result.assigned_loops.len(),
+            count_mismatch_count,
+            role_index_mismatch_count,
+            loop_role_mismatch_count,
+            fragment_range_mismatch_count,
+            blocker_count,
+        }
+    }
+
+    fn empty_like(
+        status: BezierBooleanMaterializationAuditStatus,
+        result: &BezierBooleanResultReport2,
+        blocker_count: usize,
+    ) -> Self {
+        Self {
+            status,
+            result_status: result.status,
+            operation: result.operation,
+            assigned_loop_count: 0,
+            material_loop_count: 0,
+            hole_loop_count: 0,
+            directed_fragment_count: 0,
+            audited_loop_count: 0,
+            count_mismatch_count: 0,
+            role_index_mismatch_count: 0,
+            loop_role_mismatch_count: 0,
+            fragment_range_mismatch_count: 0,
+            blocker_count,
+        }
+    }
+
+    /// Returns true when the retained higher-order result can feed materialization.
+    pub fn is_ready(&self) -> bool {
+        self.status == BezierBooleanMaterializationAuditStatus::Ready
+    }
+
+    /// Returns true when stale result payload data blocks materialization.
+    pub fn has_blockers(&self) -> bool {
+        matches!(
+            self.status,
+            BezierBooleanMaterializationAuditStatus::ResultBlocked
+                | BezierBooleanMaterializationAuditStatus::CountMismatch
+                | BezierBooleanMaterializationAuditStatus::RoleIndexMismatch
+                | BezierBooleanMaterializationAuditStatus::LoopRoleMismatch
+                | BezierBooleanMaterializationAuditStatus::FragmentRangeMismatch
+        )
     }
 }
 

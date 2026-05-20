@@ -13,12 +13,12 @@ use hypercurve::{
     BezierBooleanLoopGraphTraversalReport2, BezierBooleanLoopGraphWalkReport2,
     BezierBooleanLoopNestingDepthFact2, BezierBooleanLoopNestingDepthFactReport2,
     BezierBooleanLoopNestingRoleReport2, BezierBooleanLoopRoleAssignmentReport2,
-    BezierBooleanOutputLoopReport2, BezierBooleanOutputLoopRole,
-    BezierBooleanOverlapResolutionReport2, BezierBooleanOwnershipClassificationReport2,
-    BezierBooleanOwnershipFact2, BezierBooleanOwnershipFactReport2,
-    BezierBooleanPathSchedulerReport2, BezierBooleanQuadraticFragmentReport2,
-    BezierBooleanRationalQuadraticFragmentReport2, BezierBooleanRegionAssemblyReport2,
-    BezierBooleanResultReport2, BezierBooleanSplitPlanReport2,
+    BezierBooleanMaterializationAuditReport2, BezierBooleanOutputLoopReport2,
+    BezierBooleanOutputLoopRole, BezierBooleanOverlapResolutionReport2,
+    BezierBooleanOwnershipClassificationReport2, BezierBooleanOwnershipFact2,
+    BezierBooleanOwnershipFactReport2, BezierBooleanPathSchedulerReport2,
+    BezierBooleanQuadraticFragmentReport2, BezierBooleanRationalQuadraticFragmentReport2,
+    BezierBooleanRegionAssemblyReport2, BezierBooleanResultReport2, BezierBooleanSplitPlanReport2,
     BezierBooleanTraversalPreconditionReport2, BezierBooleanTraversalScheduleReport2,
     BezierBooleanUniformOwnershipFactReport2, BezierFlatteningOptions,
     BezierIntersectionRegionIsolationBudget, BezierMonotoneSpan, BezierPathRangeBatchReport2,
@@ -2343,8 +2343,7 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                         }
                     })
                     .collect::<Vec<_>>();
-                format!(
-                    "{:?}{:?}",
+                let containment_result =
                     BezierBooleanResultReport2::from_quadratic_schedule_graph_fact_walk_containment_facts(
                         &schedule,
                         BooleanOp::Union,
@@ -2353,8 +2352,9 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                         second,
                         &graph_facts,
                         &walk_indices,
-                        &containment_facts
-                    ),
+                        &containment_facts,
+                    );
+                let role_result =
                     BezierBooleanResultReport2::from_quadratic_schedule_graph_fact_walk_containment_role_facts(
                         &schedule,
                         BooleanOp::Union,
@@ -2364,9 +2364,10 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                         &graph_facts,
                         &walk_indices,
                         &containment_facts,
-                        &containment_roles
-                    )
-                )
+                        &containment_roles,
+                    );
+                let audit = BezierBooleanMaterializationAuditReport2::from_result(&role_result);
+                format!("{:?}{:?}{:?}", containment_result, role_result, audit)
             }
             other => format!("{other:?}"),
         };
