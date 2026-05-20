@@ -85,6 +85,31 @@ fn mesh_quality_uses_hyperreal_edge_and_area_measurements() {
 }
 
 #[test]
+fn mesh_quality_handles_nearly_collinear_triangle_with_hyperreal_metrics() {
+    let normal = Vector3::z();
+    let polygon = Polygon::new(
+        vec![
+            Vertex::new(Point3::new(0.0, 0.0, 0.0), normal),
+            Vertex::new(Point3::new(1.0, 0.0, 0.0), normal),
+            Vertex::new(Point3::new(1.0, tolerance() * 64.0, 0.0), normal),
+        ],
+        (),
+    );
+    let mesh: Mesh<()> = Mesh::from_polygons(&[polygon], ());
+
+    let qualities = mesh.analyze_triangle_quality();
+    assert_eq!(qualities.len(), 1);
+    let quality = &qualities[0];
+    assert!(quality.area.is_finite());
+    assert!(quality.edge_ratio.is_finite());
+    assert!(quality.min_angle.is_finite());
+    assert!(quality.max_angle.is_finite());
+    assert!(quality.quality_score.is_finite());
+    assert!(quality.quality_score >= 0.0);
+    assert!(quality.quality_score <= 1.0);
+}
+
+#[test]
 fn mesh_dihedral_angle_uses_hyperreal_normal_angle() {
     let xy = Polygon::new(
         vec![

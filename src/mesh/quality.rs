@@ -1,12 +1,14 @@
 //! Mesh quality metrics for triangles, vertices, and aggregate mesh health.
 
 use crate::float_types::{
-    PI, Real, hreal_div, hreal_mean, hreal_sample_stddev, hreal_to_f64, htriangle_area,
-    hvector3_from_point3, tolerance,
+    HReal, PI, Real, hreal_div, hreal_from_f64, hreal_gt_f64, hreal_mean, hreal_sample_stddev,
+    hreal_sign, hreal_to_f64, htriangle_area_hreal, hvector3_from_point3, tolerance,
 };
 use crate::mesh::Mesh;
 use crate::vertex::Vertex;
+use hyperreal::RealSign;
 use nalgebra::Point3;
+use std::cmp::Ordering;
 use std::fmt::Debug;
 
 #[cfg(feature = "parallel")]
@@ -28,6 +30,171 @@ fn hyper_edge_length(a: &Point3<Real>, b: &Point3<Real>) -> Option<Real> {
     let b = hvector3_from_point3(b)?;
     let length = a.squared_distance(&b).sqrt().ok()?;
     hreal_to_f64(&length)
+}
+
+fn hreal_cmp(lhs: &HReal, rhs: &HReal) -> Option<Ordering> {
+    match hreal_sign(&(lhs.clone() - rhs.clone())) {
+        Some(RealSign::Positive) => Some(Ordering::Greater),
+        Some(RealSign::Negative) => Some(Ordering::Less),
+        Some(RealSign::Zero) => Some(Ordering::Equal),
+        None => hreal_to_f64(lhs)?.partial_cmp(&hreal_to_f64(rhs)?),
+    }
+}
+
+fn hreal_min<'a>(lhs: &'a HReal, rhs: &'a HReal) -> Option<&'a HReal> {
+    match hreal_cmp(lhs, rhs)? {
+        Ordering::Greater => Some(rhs),
+        Ordering::Less | Ordering::Equal => Some(lhs),
+    }
+}
+
+fn hreal_max<'a>(lhs: &'a HReal, rhs: &'a HReal) -> Option<&'a HReal> {
+    match hreal_cmp(lhs, rhs)? {
+        Ordering::Greater | Ordering::Equal => Some(lhs),
+        Ordering::Less => Some(rhs),
+    }
+}
+
+fn hreal_clamp_f64(value: HReal, min: Real, max: Real) -> Option<HReal> {
+    let min_h = hreal_from_f64(min).ok()?;
+    let max_h = hreal_from_f64(max).ok()?;
+    if matches!(hreal_cmp(&value, &min_h)?, Ordering::Less) {
+        hreal_from_f64(min).ok()
+    } else if matches!(hreal_cmp(&value, &max_h)?, Ordering::Greater) {
+        hreal_from_f64(max).ok()
+    } else {
+        Some(value)
+    }
+}
+
+fn hreal_min3(a: &HReal, b: &HReal, c: &HReal) -> Option<HReal> {
+    Some(hreal_min(hreal_min(a, b)?, c)?.clone())
+}
+
+fn hreal_max3(a: &HReal, b: &HReal, c: &HReal) -> Option<HReal> {
+    Some(hreal_max(hreal_max(a, b)?, c)?.clone())
+}
+
+fn hreal_is_le(lhs: &HReal, rhs: &HReal) -> Option<bool> {
+    Some(matches!(
+        hreal_cmp(lhs, rhs)?,
+        Ordering::Less | Ordering::Equal
+    ))
+}
+
+fn hreal_is_ge(lhs: &HReal, rhs: &HReal) -> Option<bool> {
+    Some(matches!(
+        hreal_cmp(lhs, rhs)?,
+        Ordering::Greater | Ordering::Equal
+    ))
+}
+
+fn hyper_triangle_quality(vertices: &[Vertex]) -> Option<TriangleQuality> {
+    if vertices.len() != 3 {
+        return None;
+    }
+
+    let a = hvector3_from_point3(&vertices[0].position)?;
+    let b = hvector3_from_point3(&vertices[1].position)?;
+    let c = hvector3_from_point3(&vertices[2].position)?;
+
+    let len_ab = a.squared_distance(&b).sqrt().ok()?;
+    let len_bc = b.squared_distance(&c).sqrt().ok()?;
+    let len_ca = c.squared_distance(&a).sqrt().ok()?;
+
+    if !hreal_gt_f64(&len_ab, tolerance())
+        || !hreal_gt_f64(&len_bc, tolerance())
+        || !hreal_gt_f64(&len_ca, tolerance())
+    {
+        return None;
+    }
+
+    let Some(area) = htriangle_area_hreal(
+        &vertices[0].position,
+        &vertices[1].position,
+        &vertices[2].position,
+    ) else {
+        let min_edge = hreal_min3(&len_ab, &len_bc, &len_ca)?;
+        let max_edge = hreal_max3(&len_ab, &len_bc, &len_ca)?;
+        let edge_ratio = (max_edge / min_edge).ok()?;
+        return Some(TriangleQuality {
+            aspect_ratio: Real::INFINITY,
+            min_angle: 0.0,
+            max_angle: 0.0,
+            edge_ratio: hreal_to_f64(&edge_ratio)?,
+            area: 0.0,
+            quality_score: 0.0,
+        });
+    };
+
+    let two = hreal_from_f64(2.0).ok()?;
+    let angle = |opposite: &HReal, side_a: &HReal, side_b: &HReal| {
+        let numerator = side_a.clone() * side_a.clone() + side_b.clone() * side_b.clone()
+            - opposite.clone() * opposite.clone();
+        let denominator = two.clone() * side_a.clone() * side_b.clone();
+        let cos_angle = hreal_clamp_f64((numerator / denominator).ok()?, -1.0, 1.0)?;
+        hyperlattice::acos(cos_angle).ok()
+    };
+
+    let min_edge = hreal_min3(&len_ab, &len_bc, &len_ca)?;
+    let max_edge = hreal_max3(&len_ab, &len_bc, &len_ca)?;
+    let edge_ratio = (max_edge / min_edge).ok()?;
+
+    let min_angle = if hreal_is_le(&len_ab, &len_bc)? && hreal_is_le(&len_ab, &len_ca)? {
+        angle(&len_ab, &len_bc, &len_ca)?
+    } else if hreal_is_le(&len_bc, &len_ab)? && hreal_is_le(&len_bc, &len_ca)? {
+        angle(&len_bc, &len_ca, &len_ab)?
+    } else {
+        angle(&len_ca, &len_ab, &len_bc)?
+    };
+    let max_angle = if hreal_is_ge(&len_ab, &len_bc)? && hreal_is_ge(&len_ab, &len_ca)? {
+        angle(&len_ab, &len_bc, &len_ca)?
+    } else if hreal_is_ge(&len_bc, &len_ab)? && hreal_is_ge(&len_bc, &len_ca)? {
+        angle(&len_bc, &len_ca, &len_ab)?
+    } else {
+        angle(&len_ca, &len_ab, &len_bc)?
+    };
+
+    let semiperimeter = ((len_ab.clone() + len_bc.clone() + len_ca.clone())
+        / hreal_from_f64(2.0).ok()?)
+    .ok()?;
+    let circumradius =
+        (len_ab * len_bc * len_ca / (hreal_from_f64(4.0).ok()? * area.clone())).ok()?;
+    let inradius = (area.clone() / semiperimeter).ok()?;
+    let aspect_ratio = (circumradius / inradius).ok()?;
+
+    let angle_quality = hreal_clamp_f64(
+        (min_angle.clone() / hreal_from_f64(PI / 6.0).ok()?).ok()?,
+        0.0,
+        1.0,
+    )?;
+    let shape_quality = hreal_clamp_f64(
+        (hreal_from_f64(1.0).ok()? / aspect_ratio.clone()).ok()?,
+        0.0,
+        1.0,
+    )?;
+    let edge_quality = hreal_clamp_f64(
+        (hreal_from_f64(3.0).ok()? / edge_ratio.clone()).ok()?,
+        0.0,
+        1.0,
+    )?;
+
+    let quality_score = hreal_clamp_f64(
+        hreal_from_f64(0.4).ok()? * angle_quality
+            + hreal_from_f64(0.4).ok()? * shape_quality
+            + hreal_from_f64(0.2).ok()? * edge_quality,
+        0.0,
+        1.0,
+    )?;
+
+    Some(TriangleQuality {
+        aspect_ratio: hreal_to_f64(&aspect_ratio)?,
+        min_angle: hreal_to_f64(&min_angle)?,
+        max_angle: hreal_to_f64(&max_angle)?,
+        edge_ratio: hreal_to_f64(&edge_ratio)?,
+        area: hreal_to_f64(&area)?,
+        quality_score: hreal_to_f64(&quality_score)?,
+    })
 }
 
 /// **Mathematical Foundation: Triangle Quality Metrics**
@@ -119,12 +286,15 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// 5. **Inradius**: r = A/s, where s = (a+b+c)/2
     /// 6. **Quality score**: Weighted combination of all metrics
     ///
-    /// Edge lengths and areas are measured through `hyperlattice::Vector3` and
+    /// Edge lengths, areas, law-of-cosines angle terms, radii, and normalized
+    /// quality scores are measured through `hyperlattice::Vector3` and
     /// `hyperreal::Real`, then exported to finite scalars for this reporting
     /// API. This keeps degeneracy decisions on the exact-aware side of the
     /// boundary, following Yap, "Towards Exact Geometric Computation,"
     /// *Computational Geometry* 7(1-2), 1997
-    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>). The angle computation
+    /// uses the classical law of cosines; see Euclid, *Elements*, Book II,
+    /// Proposition 12/13.
     ///
     /// Returns quality metrics for each triangle in the mesh.
     pub fn analyze_triangle_quality(&self) -> Vec<TriangleQuality> {
@@ -149,95 +319,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
 
     /// Compute comprehensive quality metrics for a single triangle
     fn compute_triangle_quality(vertices: &[Vertex]) -> TriangleQuality {
-        if vertices.len() != 3 {
-            return degenerate_triangle_quality();
-        }
-
-        let a = vertices[0].position;
-        let b = vertices[1].position;
-        let c = vertices[2].position;
-
-        let Some(len_ab) = hyper_edge_length(&a, &b) else {
-            return degenerate_triangle_quality();
-        };
-        let Some(len_bc) = hyper_edge_length(&b, &c) else {
-            return degenerate_triangle_quality();
-        };
-        let Some(len_ca) = hyper_edge_length(&c, &a) else {
-            return degenerate_triangle_quality();
-        };
-
-        // Handle degenerate cases
-        if len_ab < tolerance() || len_bc < tolerance() || len_ca < tolerance() {
-            return degenerate_triangle_quality();
-        }
-
-        let Some(area) = htriangle_area(&a, &b, &c) else {
-            return TriangleQuality {
-                aspect_ratio: Real::INFINITY,
-                min_angle: 0.0,
-                max_angle: 0.0,
-                edge_ratio: len_ab.max(len_bc).max(len_ca) / len_ab.min(len_bc).min(len_ca),
-                area: 0.0,
-                quality_score: 0.0,
-            };
-        };
-
-        if area < tolerance() {
-            return TriangleQuality {
-                aspect_ratio: Real::INFINITY,
-                min_angle: 0.0,
-                max_angle: 0.0,
-                edge_ratio: len_ab.max(len_bc).max(len_ca) / len_ab.min(len_bc).min(len_ca),
-                area: 0.0,
-                quality_score: 0.0,
-            };
-        }
-
-        // Interior angles using law of cosines
-        let angle_a = ((len_bc.powi(2) + len_ca.powi(2) - len_ab.powi(2))
-            / (2.0 * len_bc * len_ca))
-            .clamp(-1.0, 1.0)
-            .acos();
-        let angle_b = ((len_ca.powi(2) + len_ab.powi(2) - len_bc.powi(2))
-            / (2.0 * len_ca * len_ab))
-            .clamp(-1.0, 1.0)
-            .acos();
-        let angle_c = ((len_ab.powi(2) + len_bc.powi(2) - len_ca.powi(2))
-            / (2.0 * len_ab * len_bc))
-            .clamp(-1.0, 1.0)
-            .acos();
-
-        let min_angle = angle_a.min(angle_b).min(angle_c);
-        let max_angle = angle_a.max(angle_b).max(angle_c);
-
-        // Edge length ratio
-        let min_edge = len_ab.min(len_bc).min(len_ca);
-        let max_edge = len_ab.max(len_bc).max(len_ca);
-        let edge_ratio = max_edge / min_edge;
-
-        // Aspect ratio (circumradius to inradius ratio)
-        let semiperimeter = (len_ab + len_bc + len_ca) / 2.0;
-        let circumradius = (len_ab * len_bc * len_ca) / (4.0 * area);
-        let inradius = area / semiperimeter;
-        let aspect_ratio = circumradius / inradius;
-
-        // Quality score: weighted combination of metrics
-        let angle_quality = (min_angle / (PI / 6.0)).min(1.0); // Normalized to 30°
-        let shape_quality = (1.0 / aspect_ratio).min(1.0);
-        let edge_quality = (3.0 / edge_ratio).min(1.0);
-
-        let quality_score =
-            (0.4 * angle_quality + 0.4 * shape_quality + 0.2 * edge_quality).clamp(0.0, 1.0);
-
-        TriangleQuality {
-            aspect_ratio,
-            min_angle,
-            max_angle,
-            edge_ratio,
-            area,
-            quality_score,
-        }
+        hyper_triangle_quality(vertices).unwrap_or_else(degenerate_triangle_quality)
     }
 
     /// **Mathematical Foundation: Mesh Quality Assessment**
