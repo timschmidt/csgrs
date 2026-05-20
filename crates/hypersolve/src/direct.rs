@@ -12,6 +12,9 @@
 use hyperreal::{Real, RealSign};
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
 
+use crate::certification::{
+    CandidateCertificationConfig, CandidateCertificationReport, certify_candidate_with_config,
+};
 use crate::eval::EvaluationContext;
 use crate::model::ConstraintKind;
 use crate::prepared::PreparedProblem;
@@ -111,6 +114,40 @@ pub struct DirectQuadraticSolution {
     pub symbol: SymbolId,
     /// Exact root candidates. Empty means the discriminant is certified negative.
     pub roots: Vec<Real>,
+}
+
+/// Replay status for one direct univariate quadratic root candidate.
+///
+/// Direct quadratic solving is still proposal machinery. Yap's exact
+/// computation model requires the candidate object to be replayed through the
+/// full residual set before it becomes a decision; see Yap, "Towards Exact
+/// Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum DirectQuadraticCandidateStatus {
+    /// The source quadratic row has no real roots.
+    NoRealRoots,
+    /// The root candidate satisfied every active row under exact replay.
+    ReplayCertified,
+    /// Exact replay ran, but at least one active row was not certified
+    /// satisfied.
+    ReplayRejected,
+}
+
+/// Certification report for one exact direct quadratic root candidate.
+#[derive(Clone, Debug, PartialEq)]
+pub struct DirectQuadraticCandidateReport {
+    /// Source constraint index that produced the root candidate.
+    pub constraint_index: usize,
+    /// Solver symbol solved by the source row.
+    pub symbol: SymbolId,
+    /// Root ordinal within the source row, if a root exists.
+    pub root_index: Option<usize>,
+    /// Exact root value, if a root exists.
+    pub root: Option<Real>,
+    /// Full exact replay report for the candidate, if a root exists.
+    pub certification: Option<CandidateCertificationReport>,
+    /// Replay status for this candidate.
+    pub status: DirectQuadraticCandidateStatus,
 }
 
 /// Exact equality substitution `left = right + offset`.
@@ -633,6 +670,74 @@ pub fn solve_direct_univariate_quadratic_equalities(
         });
     }
     Ok(solutions)
+}
+
+/// Solve direct univariate quadratic rows and certify each root candidate.
+///
+/// This is a convenience bridge between the exact soluble-alone pass and the
+/// ordinary candidate certification boundary. Each root from
+/// [`solve_direct_univariate_quadratic_equalities`] is bound into a cloned
+/// [`EvaluationContext`] and replayed against the full prepared problem. The
+/// helper follows SolveSpace's direct-solve-before-Newton pattern while making
+/// Yap's construction/proof split explicit: exact roots are still only
+/// proposals until residual replay certifies them.
+pub fn certify_direct_univariate_quadratic_roots(
+    prepared: &PreparedProblem<'_>,
+    base_context: &EvaluationContext,
+) -> Result<Vec<DirectQuadraticCandidateReport>, DirectSolveError> {
+    certify_direct_univariate_quadratic_roots_with_config(
+        prepared,
+        base_context,
+        CandidateCertificationConfig::default(),
+    )
+}
+
+/// Solve direct univariate quadratic rows and certify each root with a policy.
+///
+/// The bounded sign-refinement policy is passed through to
+/// [`crate::certify_candidate_with_config`]. No primitive-float acceptance
+/// threshold is introduced here; unresolved replay remains an explicit
+/// rejected/uncertain certification report.
+pub fn certify_direct_univariate_quadratic_roots_with_config(
+    prepared: &PreparedProblem<'_>,
+    base_context: &EvaluationContext,
+    config: CandidateCertificationConfig,
+) -> Result<Vec<DirectQuadraticCandidateReport>, DirectSolveError> {
+    let solutions = solve_direct_univariate_quadratic_equalities(prepared)?;
+    let mut reports = Vec::new();
+    for solution in solutions {
+        if solution.roots.is_empty() {
+            reports.push(DirectQuadraticCandidateReport {
+                constraint_index: solution.constraint_index,
+                symbol: solution.symbol,
+                root_index: None,
+                root: None,
+                certification: None,
+                status: DirectQuadraticCandidateStatus::NoRealRoots,
+            });
+            continue;
+        }
+
+        for (root_index, root) in solution.roots.into_iter().enumerate() {
+            let mut candidate = base_context.clone();
+            candidate.bind(solution.symbol, root.clone());
+            let certification = certify_candidate_with_config(prepared, &candidate, config);
+            let status = if certification.all_satisfied() {
+                DirectQuadraticCandidateStatus::ReplayCertified
+            } else {
+                DirectQuadraticCandidateStatus::ReplayRejected
+            };
+            reports.push(DirectQuadraticCandidateReport {
+                constraint_index: solution.constraint_index,
+                symbol: solution.symbol,
+                root_index: Some(root_index),
+                root: Some(root),
+                certification: Some(certification),
+                status,
+            });
+        }
+    }
+    Ok(reports)
 }
 
 /// Find exact two-variable equality substitutions from prepared affine rows.

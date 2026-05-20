@@ -7,12 +7,12 @@ use hypersolve::{
     apply_equality_substitution_classes, bezier_offset_sample_constraints,
     build_equality_substitution_classes, center_clearance_squared_constraint,
     certify_affine_krawczyk_box, certify_candidate, certify_candidate_domains,
-    certify_multivariate_quadratic_interval_candidate, certify_multivariate_quadratic_krawczyk_box,
-    certify_quadratic_interval_candidate, certify_univariate_quadratic_alpha,
-    certify_univariate_quadratic_krawczyk_box, context_from_problem,
-    differential_pair_skew_equation, eliminate_affine_rows_with_substitution_classes,
-    rectangular_difference_area_equation, report_lossy_adapter_only_candidate,
-    solve_damped_least_squares, solve_direct_affine_system,
+    certify_direct_univariate_quadratic_roots, certify_multivariate_quadratic_interval_candidate,
+    certify_multivariate_quadratic_krawczyk_box, certify_quadratic_interval_candidate,
+    certify_univariate_quadratic_alpha, certify_univariate_quadratic_krawczyk_box,
+    context_from_problem, differential_pair_skew_equation,
+    eliminate_affine_rows_with_substitution_classes, rectangular_difference_area_equation,
+    report_lossy_adapter_only_candidate, solve_damped_least_squares, solve_direct_affine_system,
     solve_direct_univariate_quadratic_equalities, squared_distance_equation,
 };
 
@@ -233,6 +233,11 @@ fn certification(c: &mut Criterion) {
     let quadratic_context = context_from_problem(&quadratic_problem);
     c.bench_function("solve_direct_univariate_quadratic_rows", |b| {
         b.iter(|| solve_direct_univariate_quadratic_equalities(&prepared_quadratic))
+    });
+    c.bench_function("certify_direct_univariate_quadratic_roots", |b| {
+        b.iter(|| {
+            certify_direct_univariate_quadratic_roots(&prepared_quadratic, &quadratic_context)
+        })
     });
     c.bench_function("certify_quadratic_interval_rows", |b| {
         b.iter(|| {

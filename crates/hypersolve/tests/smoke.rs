@@ -12,15 +12,16 @@ use hypersolve::{
     build_equality_substitution_classes, center_clearance_squared_constraint,
     certify_affine_interval_candidate, certify_affine_krawczyk_box, certify_candidate,
     certify_candidate_domains, certify_candidate_with_config,
-    certify_candidate_with_residual_balls, certify_multivariate_quadratic_interval_candidate,
-    certify_multivariate_quadratic_krawczyk_box, certify_quadratic_interval_candidate,
-    certify_univariate_quadratic_alpha, certify_univariate_quadratic_krawczyk_box,
-    constant_feed_time_equation, context_from_problem, differential_pair_skew_equation,
-    eliminate_affine_rows_with_substitution_classes, evaluate_residuals, facts_depend_on_symbol,
-    find_equality_substitutions, length_match_equation, point_coincidence_equations,
-    rectangular_difference_area_equation, rectangular_region_area_equation,
-    rectangular_region_containment_constraints, report_lossy_adapter_only_candidate,
-    solve_damped_least_squares, solve_direct_affine_equalities, solve_direct_affine_system,
+    certify_candidate_with_residual_balls, certify_direct_univariate_quadratic_roots,
+    certify_multivariate_quadratic_interval_candidate, certify_multivariate_quadratic_krawczyk_box,
+    certify_quadratic_interval_candidate, certify_univariate_quadratic_alpha,
+    certify_univariate_quadratic_krawczyk_box, constant_feed_time_equation, context_from_problem,
+    differential_pair_skew_equation, eliminate_affine_rows_with_substitution_classes,
+    evaluate_residuals, facts_depend_on_symbol, find_equality_substitutions, length_match_equation,
+    point_coincidence_equations, rectangular_difference_area_equation,
+    rectangular_region_area_equation, rectangular_region_containment_constraints,
+    report_lossy_adapter_only_candidate, solve_damped_least_squares,
+    solve_direct_affine_equalities, solve_direct_affine_system,
     solve_direct_univariate_quadratic_equalities, squared_distance_equation,
     tangent_parallel_equation, tangent_same_direction_constraint, validate_equality_substitutions,
 };
@@ -1165,6 +1166,42 @@ fn direct_quadratic_solver_returns_exact_root_candidates() {
     assert_eq!(solutions[0].roots, vec![real(3), real(2)]);
     assert_eq!(solutions[1].roots, vec![real(2)]);
     assert!(solutions[2].roots.is_empty());
+}
+
+#[test]
+fn direct_quadratic_root_candidates_replay_full_problem_exactly() {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let mut problem = Problem::default();
+    problem.add_variable("x", real(0));
+    problem.add_constraint(Constraint::equality(
+        "two roots",
+        x.clone().powi(2) - Expr::int(5) * x.clone() + Expr::int(6),
+    ));
+    problem.add_constraint(Constraint::equality("select root two", x - Expr::int(2)));
+    let prepared = PreparedProblem::new(&problem);
+    let base = context_from_problem(&problem);
+
+    let reports = certify_direct_univariate_quadratic_roots(&prepared, &base).unwrap();
+
+    assert_eq!(reports.len(), 2);
+    assert_eq!(reports[0].constraint_index, 0);
+    assert_eq!(reports[0].symbol, SymbolId(0));
+    assert_eq!(reports[0].root, Some(real(3)));
+    assert_eq!(reports[1].root, Some(real(2)));
+    let rejected = reports[0]
+        .certification
+        .as_ref()
+        .expect("root candidate should replay");
+    assert!(rejected.has_certified_violation());
+    assert_eq!(
+        reports[0].status,
+        hypersolve::DirectQuadraticCandidateStatus::ReplayRejected
+    );
+    assert_eq!(
+        reports[1].status,
+        hypersolve::DirectQuadraticCandidateStatus::ReplayCertified
+    );
+    assert!(reports[1].certification.as_ref().unwrap().all_satisfied());
 }
 
 #[test]

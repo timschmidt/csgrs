@@ -99,8 +99,9 @@ Implemented today:
 - exact residual evaluation contexts and finite-difference/symbolic Jacobian builders;
 - prepared problem, affine, polynomial, and solver-block fact records;
 - direct one-row and square-system affine helpers, univariate-quadratic equality
-  helpers, equality-substitution analysis, exact substitution-class construction,
-  class-based candidate propagation, and non-mutating affine row elimination reports;
+  helpers with full-candidate replay reports, equality-substitution analysis,
+  exact substitution-class construction, class-based candidate propagation, and
+  non-mutating affine row elimination reports;
 - candidate, lossy-adapter-only, candidate-domain, interval, affine Krawczyk,
   univariate and multivariate quadratic Krawczyk, and univariate quadratic alpha
   certification surfaces;

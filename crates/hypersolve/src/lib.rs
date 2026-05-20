@@ -41,13 +41,16 @@ pub use diagnostics::{
 };
 pub use direct::{
     DirectAffineSolution, DirectAffineSystemAssignment, DirectAffineSystemReport,
-    DirectAffineSystemStatus, DirectQuadraticSolution, DirectSolveError, EliminatedAffineRow,
-    EqualitySubstitution, EqualitySubstitutionClass, EqualitySubstitutionClassApplicationReport,
+    DirectAffineSystemStatus, DirectQuadraticCandidateReport, DirectQuadraticCandidateStatus,
+    DirectQuadraticSolution, DirectSolveError, EliminatedAffineRow, EqualitySubstitution,
+    EqualitySubstitutionClass, EqualitySubstitutionClassApplicationReport,
     EqualitySubstitutionClassApplicationRow, EqualitySubstitutionClassApplicationStatus,
     EqualitySubstitutionClassMember, EqualitySubstitutionCycle,
     EqualitySubstitutionEliminationReport, EqualitySubstitutionProblem,
     EqualitySubstitutionValidation, apply_equality_substitution_classes,
     apply_equality_substitutions, build_equality_substitution_classes,
+    certify_direct_univariate_quadratic_roots,
+    certify_direct_univariate_quadratic_roots_with_config,
     eliminate_affine_rows_with_substitution_classes, find_equality_substitution_cycles,
     find_equality_substitutions, solve_direct_affine_equalities, solve_direct_affine_system,
     solve_direct_univariate_quadratic_equalities, validate_equality_substitutions,

@@ -6,12 +6,13 @@ use hypersolve::{
     ProposalEngineReport, RectangularRegion, SolverBlockRowKind, SolverConfig, SolverPoint2,
     SolverState, SymbolId, VariableBall, apply_equality_substitution_classes,
     center_clearance_squared_constraint, certify_affine_krawczyk_box, certify_candidate,
-    certify_candidate_domains, certify_multivariate_quadratic_interval_candidate,
-    certify_multivariate_quadratic_krawczyk_box, certify_quadratic_interval_candidate,
-    certify_univariate_quadratic_alpha, certify_univariate_quadratic_krawczyk_box,
-    context_from_problem, differential_pair_skew_equation,
-    eliminate_affine_rows_with_substitution_classes, rectangular_difference_area_equation,
-    report_lossy_adapter_only_candidate, solve_damped_least_squares, solve_direct_affine_system,
+    certify_candidate_domains, certify_direct_univariate_quadratic_roots,
+    certify_multivariate_quadratic_interval_candidate, certify_multivariate_quadratic_krawczyk_box,
+    certify_quadratic_interval_candidate, certify_univariate_quadratic_alpha,
+    certify_univariate_quadratic_krawczyk_box, context_from_problem,
+    differential_pair_skew_equation, eliminate_affine_rows_with_substitution_classes,
+    rectangular_difference_area_equation, report_lossy_adapter_only_candidate,
+    solve_damped_least_squares, solve_direct_affine_system,
     solve_direct_univariate_quadratic_equalities, squared_distance_equation,
     validate_equality_substitutions,
 };
@@ -432,6 +433,53 @@ proptest! {
                 &vec![Real::from(first.max(second)), Real::from(first.min(second))]
             );
         }
+    }
+
+    #[test]
+    fn direct_quadratic_candidate_replay_selects_generated_root_exactly(
+        selected in -16_i16..=16,
+        rejected in -16_i16..=16,
+    ) {
+        prop_assume!(selected != rejected);
+        let selected = i64::from(selected);
+        let rejected = i64::from(rejected);
+        let x = Expr::symbol(SymbolId(0), "x");
+        let mut problem = Problem::default();
+        problem.add_variable("x", Real::from(0));
+        problem.add_constraint(Constraint::equality(
+            "generated integer roots",
+            x.clone().powi(2)
+                - x.clone() * Expr::int(selected + rejected)
+                + Expr::int(selected * rejected),
+        ));
+        problem.add_constraint(Constraint::equality(
+            "select generated root",
+            x - Expr::int(selected),
+        ));
+        let prepared = PreparedProblem::new(&problem);
+        let reports =
+            certify_direct_univariate_quadratic_roots(&prepared, &context_from_problem(&problem))
+                .unwrap();
+
+        prop_assert_eq!(reports.len(), 2);
+        prop_assert_eq!(
+            reports
+                .iter()
+                .filter(|report| {
+                    report.status
+                        == hypersolve::DirectQuadraticCandidateStatus::ReplayCertified
+                })
+                .count(),
+            1
+        );
+        let certified = reports
+            .iter()
+            .find(|report| {
+                report.status == hypersolve::DirectQuadraticCandidateStatus::ReplayCertified
+            })
+            .expect("one root should replay exactly");
+        prop_assert_eq!(&certified.root, &Some(Real::from(selected)));
+        prop_assert!(certified.certification.as_ref().unwrap().all_satisfied());
     }
 
     #[test]
