@@ -2082,8 +2082,8 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                         &ownership_facts,
                         first,
                         second,
-                        0,
-                        0,
+                        usize::from(!plan.emitted_steps.is_empty()),
+                        usize::from(!plan.emitted_steps.is_empty()),
                         &walk_indices,
                         &depth_facts
                     )

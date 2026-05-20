@@ -6432,6 +6432,47 @@ fn bezier_boolean_loop_graph_facts_allow_certified_explicit_walks() {
 }
 
 #[test]
+fn bezier_boolean_loop_graph_traversal_allows_certified_raw_walks() {
+    let plan = BezierBooleanLoopAssemblyPlanReport2 {
+        status: BezierBooleanLoopAssemblyPlanStatus::Ready,
+        assembly_status: BezierBooleanAssemblyReadinessStatus::Ready,
+        operation: BooleanOp::Union,
+        emitted_steps: vec![hypercurve::BezierBooleanOwnedTraversalStep2 {
+            step: hypercurve::BezierBooleanTraversalStep2 {
+                operand: BezierBooleanTraversalOperand::First,
+                fragment_index: 0,
+            },
+            opposite_location: BezierBooleanFragmentOwnershipLocation::Outside,
+            action: BooleanFragmentAction::KeepSourceDirection,
+        }],
+        first_emitted_count: 1,
+        second_emitted_count: 0,
+        keep_source_count: 1,
+        keep_reversed_count: 0,
+        invalid_reference_count: 0,
+        blocker_count: 0,
+    };
+
+    let linear = BezierBooleanLoopGraphTraversalReport2::from_plan_graph_facts(&plan, 1, 1);
+    assert_eq!(
+        linear.status,
+        BezierBooleanLoopGraphTraversalStatus::BranchPointsNeedTraversal
+    );
+    assert!(linear.has_blockers());
+
+    let certified =
+        BezierBooleanLoopGraphTraversalReport2::from_certified_walk_graph_facts(&plan, 1, 1);
+    assert_eq!(
+        certified.status,
+        BezierBooleanLoopGraphTraversalStatus::Ready
+    );
+    assert!(certified.is_ready());
+    assert!(!certified.has_blockers());
+    assert_eq!(certified.branch_vertex_count, 1);
+    assert_eq!(certified.resolved_overlap_count, 1);
+}
+
+#[test]
 fn bezier_boolean_loop_graph_walk_validates_permutation_and_reorders_plan() {
     let plan = BezierBooleanLoopAssemblyPlanReport2 {
         status: BezierBooleanLoopAssemblyPlanStatus::Ready,
@@ -6958,6 +6999,64 @@ fn bezier_boolean_result_consumes_schedule_ownership_walk_and_depth_facts() {
         BezierBooleanResultStatus::RegionAssemblyBlocked
     );
     assert!(blocked.has_blockers());
+}
+
+#[test]
+fn bezier_boolean_result_accepts_raw_certified_walk_for_graph_obligations() {
+    let schedule = BezierBooleanTraversalScheduleReport2 {
+        status: BezierBooleanTraversalScheduleStatus::Ready,
+        precondition_status: BezierBooleanTraversalPreconditionStatus::Ready,
+        first_fragment_count: 2,
+        second_fragment_count: 0,
+        steps: vec![
+            hypercurve::BezierBooleanTraversalStep2 {
+                operand: BezierBooleanTraversalOperand::First,
+                fragment_index: 0,
+            },
+            hypercurve::BezierBooleanTraversalStep2 {
+                operand: BezierBooleanTraversalOperand::First,
+                fragment_index: 1,
+            },
+        ],
+        resolved_overlap_count: 1,
+        overlap_boundary_parameter_count: 2,
+        blocker_count: 0,
+    };
+    let ownership_facts = schedule
+        .steps
+        .iter()
+        .map(|step| BezierBooleanOwnershipFact2 {
+            step: step.clone(),
+            opposite_location: BezierBooleanFragmentOwnershipLocation::Outside,
+        })
+        .collect::<Vec<_>>();
+    let depth_facts = [
+        BezierBooleanLoopNestingDepthFact2 {
+            loop_index: 0,
+            nesting_depth: 0,
+        },
+        BezierBooleanLoopNestingDepthFact2 {
+            loop_index: 1,
+            nesting_depth: 2,
+        },
+    ];
+
+    let result = BezierBooleanResultReport2::from_schedule_graph_walk_depth_facts(
+        &schedule,
+        BooleanOp::Union,
+        &ownership_facts,
+        &[(point(0, 0), point(0, 0)), (point(1, 0), point(1, 0))],
+        &[],
+        1,
+        1,
+        &[1, 0],
+        &depth_facts,
+    );
+
+    assert_eq!(result.status, BezierBooleanResultStatus::Ready);
+    assert!(result.is_ready());
+    assert_eq!(result.assigned_loop_count, 2);
+    assert_eq!(result.directed_fragments[0].start, point(1, 0));
 }
 
 #[test]
@@ -10179,8 +10278,8 @@ proptest! {
             &ownership_facts,
             &endpoints,
             &[],
-            0,
-            0,
+            1,
+            1,
             &walk_indices,
             &depth_facts,
         );

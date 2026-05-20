@@ -4149,6 +4149,75 @@ impl BezierBooleanLoopGraphTraversalReport2 {
         }
     }
 
+    /// Builds traversal readiness for a caller-certified explicit graph walk.
+    ///
+    /// [`Self::from_plan_graph_facts`] deliberately blocks nonzero branch
+    /// vertices and resolved overlaps because the emitted order alone is not a
+    /// proof of boundary traversal. This constructor is the counterpart for
+    /// APIs that also validate a caller-supplied walk permutation. In that
+    /// context the branch/overlap counts are retained as audited graph facts,
+    /// but they no longer block traversal once the plan itself is ready.
+    /// Degenerate overlap policy remains an external certificate producer, as
+    /// in Foster, Hormann, and Popa (2019); the exact-computation contract is
+    /// Yap, "Towards Exact Geometric Computation" (1997). The staged traversal
+    /// model follows Vatti (1992), Greiner-Hormann (1998), and
+    /// Martinez-Rueda-Feito (2009).
+    pub fn from_certified_walk_graph_facts(
+        plan: &BezierBooleanLoopAssemblyPlanReport2,
+        branch_vertex_count: usize,
+        resolved_overlap_count: usize,
+    ) -> Self {
+        match plan.status {
+            BezierBooleanLoopAssemblyPlanStatus::Empty => {
+                return Self::empty_like(
+                    BezierBooleanLoopGraphTraversalStatus::Empty,
+                    plan,
+                    branch_vertex_count,
+                    resolved_overlap_count,
+                    0,
+                );
+            }
+            BezierBooleanLoopAssemblyPlanStatus::NoInteriorSplits => {
+                return Self::empty_like(
+                    BezierBooleanLoopGraphTraversalStatus::NoInteriorSplits,
+                    plan,
+                    branch_vertex_count,
+                    resolved_overlap_count,
+                    0,
+                );
+            }
+            BezierBooleanLoopAssemblyPlanStatus::AssemblyBlocked => {
+                return Self::empty_like(
+                    BezierBooleanLoopGraphTraversalStatus::PlanBlocked,
+                    plan,
+                    branch_vertex_count,
+                    resolved_overlap_count,
+                    plan.blocker_count.max(1),
+                );
+            }
+            BezierBooleanLoopAssemblyPlanStatus::NoEmittedFragments => {
+                return Self::empty_like(
+                    BezierBooleanLoopGraphTraversalStatus::NoEmittedFragments,
+                    plan,
+                    branch_vertex_count,
+                    resolved_overlap_count,
+                    0,
+                );
+            }
+            BezierBooleanLoopAssemblyPlanStatus::Ready => {}
+        }
+
+        Self {
+            status: BezierBooleanLoopGraphTraversalStatus::Ready,
+            plan_status: plan.status,
+            operation: plan.operation,
+            emitted_step_count: plan.emitted_steps.len(),
+            branch_vertex_count,
+            resolved_overlap_count,
+            blocker_count: 0,
+        }
+    }
+
     fn empty_like(
         status: BezierBooleanLoopGraphTraversalStatus,
         plan: &BezierBooleanLoopAssemblyPlanReport2,
@@ -6688,7 +6757,7 @@ impl BezierBooleanResultReport2 {
         );
         let plan =
             BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(&assembly, &emission);
-        let traversal = BezierBooleanLoopGraphTraversalReport2::from_plan_graph_facts(
+        let traversal = BezierBooleanLoopGraphTraversalReport2::from_certified_walk_graph_facts(
             &plan,
             branch_vertex_count,
             resolved_overlap_count,
@@ -7337,7 +7406,7 @@ impl BezierBooleanResultReport2 {
         );
         let plan =
             BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(&assembly, &emission);
-        let traversal = BezierBooleanLoopGraphTraversalReport2::from_plan_graph_facts(
+        let traversal = BezierBooleanLoopGraphTraversalReport2::from_certified_walk_graph_facts(
             &plan,
             branch_vertex_count,
             resolved_overlap_count,
