@@ -9260,10 +9260,43 @@ fn exact_coplanar_convex_surface_difference_materializes_component_holes() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    assert!(
+    let multi_cut_holed =
         hypermesh::exact::arrange_coplanar_convex_surface_component_holed_difference(
             &left,
             &hole_and_two_cuts,
+        )
+        .expect("full-span rectangle cutters should assign holes to retained remnants");
+    multi_cut_holed.validate().unwrap();
+    multi_cut_holed
+        .validate_against_sources(&left, &hole_and_two_cuts)
+        .unwrap();
+    assert_eq!(multi_cut_holed.components.len(), 3);
+    assert!(
+        multi_cut_holed
+            .components
+            .iter()
+            .any(|component| component.holes.len() == 1)
+    );
+    assert_eq!(multi_cut_holed.mesh.vertices().len(), 16);
+
+    let hole_and_partial_height_cuts = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            1, 1, 0, 3, 1, 0, 3, 3, 0, 1, 3, 0, //
+            4, 0, 0, 5, 0, 0, 5, 5, 0, 4, 5, 0, //
+            8, -1, 0, 11, -1, 0, 11, 11, 0, 8, 11, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7, //
+            8, 9, 10, 8, 10, 11,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert!(
+        hypermesh::exact::arrange_coplanar_convex_surface_component_holed_difference(
+            &left,
+            &hole_and_partial_height_cuts,
         )
         .is_none()
     );

@@ -1897,10 +1897,51 @@ fn exercise_component_coplanar_difference() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .expect("component-holed double-cutter fixture must import");
-    assert!(
+    let component_holed_multi_cut =
         arrange_coplanar_convex_surface_component_holed_difference(
             &holed_left,
             &holed_two_cutters_right,
+        )
+        .expect("component-holed full-span double-cutter should materialize");
+    component_holed_multi_cut.validate().unwrap();
+    component_holed_multi_cut
+        .validate_against_sources(&holed_left, &holed_two_cutters_right)
+        .unwrap();
+    assert_eq!(component_holed_multi_cut.components.len(), 3);
+    assert!(component_holed_multi_cut
+        .components
+        .iter()
+        .any(|component| component.holes.len() == 1));
+    let holed_multi_cut_preflight = preflight_boolean_exact(
+        &holed_left,
+        &holed_two_cutters_right,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("component-holed double-cutter preflight should classify shortcut");
+    holed_multi_cut_preflight.validate().unwrap();
+    assert_eq!(
+        holed_multi_cut_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+    );
+
+    let holed_partial_height_cutters_right = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            1, 1, 0, 3, 1, 0, 3, 3, 0, 1, 3, 0, //
+            4, 0, 0, 5, 0, 0, 5, 5, 0, 4, 5, 0, //
+            8, -1, 0, 11, -1, 0, 11, 11, 0, 8, 11, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7, //
+            8, 9, 10, 8, 10, 11,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("component-holed partial-height double-cutter fixture must import");
+    assert!(
+        arrange_coplanar_convex_surface_component_holed_difference(
+            &holed_left,
+            &holed_partial_height_cutters_right,
         )
         .is_none()
     );

@@ -3492,14 +3492,15 @@ fn exact_max_real(left: &ExactReal, right: &ExactReal) -> Option<ExactReal> {
 /// multi-hole planar arrangements. The operands are decomposed into exact
 /// connected convex components. Each left component may be retained, removed,
 /// cut by one right component through the existing convex difference
-/// certificate, pierced by one or more strictly contained right components, or
-/// both cut once and pierced when every retained hole falls strictly inside a
-/// single cut remnant. Multiple cutters in one left component and holes that
-/// straddle or touch a cut boundary still need a full planar subdivision. This
-/// preserves Yap's rule from "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997): every promoted loop is justified by
-/// exact source topology, containment, or area replay, and unsupported
-/// combinatorics remain explicit.
+/// certificate, cut by several full-span rectangular slab components through
+/// exact interval subtraction, pierced by one or more strictly contained right
+/// components, or both cut and pierced when every retained hole falls strictly
+/// inside one cut remnant. Holes that straddle or touch a cut boundary and
+/// non-rectangular multi-cutter interactions still need a full planar
+/// subdivision. This preserves Yap's rule from "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997): every promoted loop is
+/// justified by exact source topology, containment, or area replay, and
+/// unsupported combinatorics remain explicit.
 #[cfg(feature = "exact-triangulation")]
 pub fn arrange_coplanar_convex_surface_component_holed_difference(
     left: &ExactMesh,
@@ -3554,7 +3555,7 @@ pub fn arrange_coplanar_convex_surface_component_holed_difference(
     let mut emitted_cut = false;
     for component in &mut left_components {
         let mut dropped = false;
-        let mut cut_index = None;
+        let mut cut_indices = Vec::new();
         let mut holes = Vec::new();
         for (right_index, right_component) in right_components.iter().enumerate() {
             if polygons_equal(&component.hull, &right_component.hull)
@@ -3564,7 +3565,7 @@ pub fn arrange_coplanar_convex_surface_component_holed_difference(
                     projection,
                 )?
             {
-                if dropped || cut_index.is_some() || !holes.is_empty() {
+                if dropped || !cut_indices.is_empty() || !holes.is_empty() {
                     return None;
                 }
                 dropped = true;
@@ -3589,10 +3590,10 @@ pub fn arrange_coplanar_convex_surface_component_holed_difference(
                 ConvexUnionComponentRelation::Disjoint => {}
                 ConvexUnionComponentRelation::BoundaryOnly => return None,
                 ConvexUnionComponentRelation::PositiveArea => {
-                    if dropped || cut_index.is_some() {
+                    if dropped {
                         return None;
                     }
-                    cut_index = Some(right_index);
+                    cut_indices.push(right_index);
                 }
             }
         }
@@ -3600,20 +3601,38 @@ pub fn arrange_coplanar_convex_surface_component_holed_difference(
         if dropped {
             continue;
         }
-        if let Some(right_index) = cut_index {
+        if !cut_indices.is_empty() {
             emitted_cut = true;
-            let right_component = &right_components[right_index];
-            let mut cut_polygons = if let Some(difference) =
-                arrange_coplanar_convex_surface_difference(&component.mesh, &right_component.mesh)
-            {
-                vec![difference.polygon]
-            } else if let Some(difference) = arrange_coplanar_convex_surface_multi_difference_convex(
-                &component.mesh,
-                &right_component.mesh,
-            ) {
-                difference.polygons
-            } else {
-                return None;
+            let mut cut_polygons = match cut_indices.as_slice() {
+                [right_index] => {
+                    let right_component = &right_components[*right_index];
+                    if let Some(difference) = arrange_coplanar_convex_surface_difference(
+                        &component.mesh,
+                        &right_component.mesh,
+                    ) {
+                        vec![difference.polygon]
+                    } else if let Some(difference) =
+                        arrange_coplanar_convex_surface_multi_difference_convex(
+                            &component.mesh,
+                            &right_component.mesh,
+                        )
+                    {
+                        difference.polygons
+                    } else {
+                        return None;
+                    }
+                }
+                _ => {
+                    let cutters = cut_indices
+                        .iter()
+                        .map(|&index| right_components[index].hull.clone())
+                        .collect::<Vec<_>>();
+                    materialize_rectangle_multi_cutter_difference(
+                        &component.hull,
+                        &cutters,
+                        projection,
+                    )?
+                }
             };
             for polygon in &mut cut_polygons {
                 orient_polygon_ccw(polygon, projection)?;
