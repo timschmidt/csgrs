@@ -53,6 +53,18 @@ fn assert_mesh_finite<M: Clone + Send + Sync + std::fmt::Debug>(mesh: &Mesh<M>) 
     }
 }
 
+fn assert_profile_finite<M: Clone + Send + Sync + std::fmt::Debug>(profile: &Profile<M>) {
+    for ring in profile.region_profiles().iter().flat_map(|profile| {
+        std::iter::once(profile.material().points())
+            .chain(profile.holes().iter().map(|hole| hole.points()))
+    }) {
+        for point in ring {
+            assert!(point[0].is_finite(), "{point:?}");
+            assert!(point[1].is_finite(), "{point:?}");
+        }
+    }
+}
+
 fn assert_result_finite(result: Result<Mesh<&'static str>, ValidationError>) {
     if let Ok(mesh) = result {
         assert_mesh_finite(&mesh);
@@ -398,6 +410,72 @@ fn adversarial_mesh_shape_helpers_that_delegate_to_extrusion_are_finite() {
                 }
             }
         }
+    }
+}
+
+#[test]
+fn adversarial_profile_and_mesh_shape_delegates_reject_invalid_parameters_without_panicking() {
+    let invalid_profiles = [
+        catch_unwind(AssertUnwindSafe(|| {
+            Profile::<&str>::involute_gear(0.0, 3, Real::NAN, 0.0, 0.0, 1, "involute")
+        })),
+        catch_unwind(AssertUnwindSafe(|| {
+            Profile::<&str>::cycloidal_gear(Real::INFINITY, 2, 0, Real::NAN, 1, "cycloid")
+        })),
+        catch_unwind(AssertUnwindSafe(|| {
+            Profile::<&str>::involute_rack(0.0, 0, 0.0, 0.0, 0.0, "rack")
+        })),
+        catch_unwind(AssertUnwindSafe(|| {
+            Profile::<&str>::cycloidal_rack(0.0, 0, 0.0, 0.0, 1, "cycloidal_rack")
+        })),
+    ];
+
+    for result in invalid_profiles {
+        let profile = result.expect("profile delegate should not panic");
+        assert!(profile.is_empty(), "{profile:?}");
+    }
+
+    let valid_profiles = [
+        Profile::<&str>::involute_gear(1.0, 12, 20.0, 0.05, 0.0, 4, "involute"),
+        Profile::<&str>::cycloidal_gear(1.0, 12, 13, 0.05, 4, "cycloid"),
+        Profile::<&str>::involute_rack(1.0, 4, 20.0, 0.05, 0.0, "rack"),
+        Profile::<&str>::cycloidal_rack(1.0, 4, 0.5, 0.05, 4, "cycloidal_rack"),
+    ];
+
+    for profile in valid_profiles {
+        assert!(!profile.is_empty(), "{profile:?}");
+        assert_profile_finite(&profile);
+    }
+
+    let invalid_meshes = [
+        catch_unwind(AssertUnwindSafe(|| {
+            Mesh::<&str>::torus(Real::NAN, 1.0, 0, 0, "torus")
+        })),
+        catch_unwind(AssertUnwindSafe(|| {
+            Mesh::<&str>::spur_gear_involute(0.0, 3, Real::NAN, 0.0, 0.0, 1, 1.0, "spur")
+        })),
+        catch_unwind(AssertUnwindSafe(|| {
+            Mesh::<&str>::spur_gear_cycloid(Real::INFINITY, 2, 0, 0.0, 1, 1.0, "cycloid")
+        })),
+        catch_unwind(AssertUnwindSafe(|| {
+            Mesh::<&str>::helical_involute_gear(
+                Real::NAN,
+                3,
+                20.0,
+                0.0,
+                0.0,
+                1,
+                1.0,
+                10.0,
+                1,
+                "helical",
+            )
+        })),
+    ];
+
+    for result in invalid_meshes {
+        let mesh = result.expect("mesh delegate should not panic");
+        assert!(mesh.polygons.is_empty(), "{mesh:?}");
     }
 }
 

@@ -35,12 +35,14 @@ fuzz_target!(|bytes: &[u8]| {
     }
 
     let mut idx = 0usize;
-    let tag = bytes[idx] % 18;
+    let tag = bytes[idx] % 22;
     idx += 1;
     let a = decode_real(bytes, &mut idx);
     let b = decode_real(bytes, &mut idx);
     let c = decode_real(bytes, &mut idx);
     let segments = (bytes[idx % bytes.len()] as usize % 32) + 1;
+    idx += 1;
+    let teeth = (bytes[idx % bytes.len()] as usize % 24) + 1;
     let positive_a = a.abs().max(tolerance());
     let positive_b = b.abs().max(tolerance());
 
@@ -62,7 +64,11 @@ fuzz_target!(|bytes: &[u8]| {
         14 => Profile::pie_slice(a, b, c, segments, None),
         15 => Profile::heart(a, b, segments, None),
         16 => Profile::crescent(positive_a, positive_b, c, segments, None),
-        _ => Profile::airfoil_naca4(a, b, 12.0, positive_a, segments.max(2), None),
+        17 => Profile::airfoil_naca4(a, b, 12.0, positive_a, segments.max(2), None),
+        18 => Profile::involute_gear(a, teeth, b, c, 0.01 * b, segments, None),
+        19 => Profile::cycloidal_gear(a, teeth, teeth.saturating_add(1), b, segments, None),
+        20 => Profile::involute_rack(a, teeth, b, c, 0.01 * c, None),
+        _ => Profile::cycloidal_rack(a, teeth, positive_b, c, segments, None),
     };
 
     assert_sketch_finite(&sketch);

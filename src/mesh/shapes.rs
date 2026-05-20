@@ -555,6 +555,10 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         outline_segments: usize,
         metadata: M,
     ) -> Self {
+        if !finite_mesh_scalar(width) || !finite_mesh_scalar(length) || revolve_segments < 3 {
+            return Mesh::empty(metadata);
+        }
+
         let egg_2d = Profile::egg(width, length, outline_segments, metadata.clone());
 
         // Build a large rectangle that cuts off everything
@@ -569,8 +573,8 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
 
         half_egg
             .revolve(360.0, revolve_segments)
-            .expect("Revolve failed")
-            .convex_hull()
+            .map(|mesh| mesh.convex_hull())
+            .unwrap_or_else(|_| Mesh::empty(metadata))
     }
 
     /// Creates a 3D "teardrop" solid by revolving the existing 2D `teardrop` profile 360° around the Y-axis (via revolve).
@@ -589,6 +593,10 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         shape_segments: usize,
         metadata: M,
     ) -> Self {
+        if !finite_mesh_scalar(width) || !finite_mesh_scalar(length) || revolve_segments < 3 {
+            return Mesh::empty(metadata);
+        }
+
         // Make a 2D teardrop in the XY plane.
         let td_2d = Profile::teardrop(width, length, shape_segments, metadata.clone());
 
@@ -605,8 +613,8 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         // revolve 360 degrees
         half_teardrop
             .revolve(360.0, revolve_segments)
-            .expect("Revolve failed")
-            .convex_hull()
+            .map(|mesh| mesh.convex_hull())
+            .unwrap_or_else(|_| Mesh::empty(metadata))
     }
 
     /// Creates a 3D "teardrop cylinder" by extruding the existing 2D `teardrop` in the Z+ axis.
@@ -625,6 +633,13 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         shape_segments: usize,
         metadata: M,
     ) -> Self {
+        if !(finite_mesh_scalar(width)
+            && finite_mesh_scalar(length)
+            && finite_mesh_scalar(height))
+        {
+            return Mesh::empty(metadata);
+        }
+
         // Make a 2D teardrop in the XY plane.
         let td_2d = Profile::teardrop(width, length, shape_segments, metadata.clone());
         td_2d.extrude(height)
@@ -647,6 +662,10 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         stacks: usize,
         metadata: M,
     ) -> Self {
+        if !(finite_mesh_scalar(rx) && finite_mesh_scalar(ry) && finite_mesh_scalar(rz)) {
+            return Mesh::empty(metadata);
+        }
+
         let base_sphere = Self::sphere(1.0, segments, stacks, metadata.clone());
         base_sphere.scale(rx, ry, rz)
     }
@@ -857,11 +876,21 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         segments_minor: usize,
         metadata: M,
     ) -> Self {
+        if !finite_mesh_scalar(major_r)
+            || !finite_mesh_scalar(minor_r)
+            || major_r.abs() <= tolerance()
+            || minor_r.abs() <= tolerance()
+            || segments_major < 3
+            || segments_minor < 3
+        {
+            return Mesh::empty(metadata);
+        }
+
         let circle = Profile::circle(minor_r, segments_minor.max(3), metadata.clone())
             .translate(major_r, 0.0, 0.0);
         circle
             .revolve(360.0, segments_major.max(3))
-            .expect("Revolve failed")
+            .unwrap_or_else(|_| Mesh::empty(metadata))
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -876,6 +905,10 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         thickness: Real,
         metadata: M,
     ) -> Mesh<M> {
+        if !finite_mesh_scalar(thickness) {
+            return Mesh::empty(metadata);
+        }
+
         Profile::involute_gear(
             module,
             teeth,
@@ -898,6 +931,10 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         thickness: Real,
         metadata: M,
     ) -> Mesh<M> {
+        if !finite_mesh_scalar(thickness) {
+            return Mesh::empty(metadata);
+        }
+
         Profile::cycloidal_gear(
             module,
             teeth,
@@ -923,7 +960,11 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         slices: usize,         // ≥ 2 – axial divisions
         metadata: M,
     ) -> Mesh<M> {
-        assert!(slices >= 2);
+        if slices < 2 || !finite_mesh_scalar(thickness) || !finite_mesh_scalar(helix_angle_deg)
+        {
+            return Mesh::empty(metadata);
+        }
+
         let base_slice = Profile::involute_gear(
             module,
             teeth,
@@ -933,9 +974,15 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             segments_per_flank,
             metadata.clone(),
         );
+        if base_slice.is_empty() {
+            return Mesh::empty(metadata);
+        }
 
         let dz = thickness / (slices as Real);
         let d_ψ = helix_angle_deg.to_radians() / (slices as Real);
+        if !finite_mesh_scalar(dz) || !finite_mesh_scalar(d_ψ) {
+            return Mesh::empty(metadata);
+        }
 
         let mut acc = Mesh::empty(metadata.clone());
         let mut z_curr = 0.0;
