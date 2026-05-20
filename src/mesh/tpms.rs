@@ -2,7 +2,10 @@
 //! signed‑distance mesher in `sdf.rs`.
 
 use crate::csg::CSG;
-use crate::float_types::{Real, hreal_to_f64, hvector3_from_vector3};
+use crate::float_types::{
+    HReal, Real, hreal_div, hreal_from_f64, hreal_gt_f64, hreal_to_f64, hvector3_from_vector3,
+    tolerance,
+};
 use crate::mesh::Mesh;
 use nalgebra::Point3;
 use std::fmt::Debug;
@@ -102,23 +105,11 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         metadata: M,
     ) -> Mesh<M> {
         let res = (resolution.max(2), resolution.max(2), resolution.max(2));
-        let scale = std::f64::consts::TAU as Real / period;
+        let Some(scale) = tpms_scale(period) else {
+            return Mesh::empty(metadata);
+        };
         self.tpms_from_sdf(
-            move |p: &Point3<Real>| {
-                // Pre-compute scaled coordinates for efficiency
-                let x_scaled = p.x * scale;
-                let y_scaled = p.y * scale;
-                let z_scaled = p.z * scale;
-
-                // Pre-compute trigonometric values to avoid redundant calculations
-                let (sin_x, cos_x) = x_scaled.sin_cos();
-                let (sin_y, cos_y) = y_scaled.sin_cos();
-                let (sin_z, cos_z) = z_scaled.sin_cos();
-
-                // **Mathematical Formula**: Gyroid surface equation
-                // G(x,y,z) = sin(x)cos(y) + sin(y)cos(z) + sin(z)cos(x)
-                (sin_x * cos_y) + (sin_y * cos_z) + (sin_z * cos_x)
-            },
+            move |p: &Point3<Real>| tpms_gyroid_value(p, scale).unwrap_or(Real::INFINITY),
             res,
             iso_value,
             metadata,
@@ -136,17 +127,11 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         metadata: M,
     ) -> Mesh<M> {
         let res = (resolution.max(2), resolution.max(2), resolution.max(2));
-        let scale = std::f64::consts::TAU as Real / period;
+        let Some(scale) = tpms_scale(period) else {
+            return Mesh::empty(metadata);
+        };
         self.tpms_solid_from_sdf(
-            move |p: &Point3<Real>| {
-                let x_scaled = p.x * scale;
-                let y_scaled = p.y * scale;
-                let z_scaled = p.z * scale;
-                let (sin_x, cos_x) = x_scaled.sin_cos();
-                let (sin_y, cos_y) = y_scaled.sin_cos();
-                let (sin_z, cos_z) = z_scaled.sin_cos();
-                (sin_x * cos_y) + (sin_y * cos_z) + (sin_z * cos_x)
-            },
+            move |p: &Point3<Real>| tpms_gyroid_value(p, scale).unwrap_or(Real::INFINITY),
             res,
             iso_value,
             thickness,
@@ -166,18 +151,11 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         metadata: M,
     ) -> Mesh<M> {
         let res = (resolution.max(2), resolution.max(2), resolution.max(2));
-        let scale = std::f64::consts::TAU as Real / period;
+        let Some(scale) = tpms_scale(period) else {
+            return Mesh::empty(metadata);
+        };
         self.tpms_from_sdf(
-            move |p: &Point3<Real>| {
-                // Pre-compute scaled coordinates
-                let x_scaled = p.x * scale;
-                let y_scaled = p.y * scale;
-                let z_scaled = p.z * scale;
-
-                // **Mathematical Formula**: Schwarz P-surface equation
-                // P(x,y,z) = cos(x) + cos(y) + cos(z)
-                x_scaled.cos() + y_scaled.cos() + z_scaled.cos()
-            },
+            move |p: &Point3<Real>| tpms_schwarz_p_value(p, scale).unwrap_or(Real::INFINITY),
             res,
             iso_value,
             metadata,
@@ -195,14 +173,11 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         metadata: M,
     ) -> Mesh<M> {
         let res = (resolution.max(2), resolution.max(2), resolution.max(2));
-        let scale = std::f64::consts::TAU as Real / period;
+        let Some(scale) = tpms_scale(period) else {
+            return Mesh::empty(metadata);
+        };
         self.tpms_solid_from_sdf(
-            move |p: &Point3<Real>| {
-                let x_scaled = p.x * scale;
-                let y_scaled = p.y * scale;
-                let z_scaled = p.z * scale;
-                x_scaled.cos() + y_scaled.cos() + z_scaled.cos()
-            },
+            move |p: &Point3<Real>| tpms_schwarz_p_value(p, scale).unwrap_or(Real::INFINITY),
             res,
             iso_value,
             thickness,
@@ -222,26 +197,11 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         metadata: M,
     ) -> Mesh<M> {
         let res = (resolution.max(2), resolution.max(2), resolution.max(2));
-        let scale = std::f64::consts::TAU as Real / period;
+        let Some(scale) = tpms_scale(period) else {
+            return Mesh::empty(metadata);
+        };
         self.tpms_from_sdf(
-            move |p: &Point3<Real>| {
-                // Pre-compute scaled coordinates
-                let x_scaled = p.x * scale;
-                let y_scaled = p.y * scale;
-                let z_scaled = p.z * scale;
-
-                // Pre-compute all trigonometric values once
-                let (sin_x, cos_x) = x_scaled.sin_cos();
-                let (sin_y, cos_y) = y_scaled.sin_cos();
-                let (sin_z, cos_z) = z_scaled.sin_cos();
-
-                // **Mathematical Formula**: Schwarz Diamond surface equation
-                // D(x,y,z) = sin(x)sin(y)sin(z) + sin(x)cos(y)cos(z) + cos(x)sin(y)cos(z) + cos(x)cos(y)sin(z)
-                (sin_x * sin_y * sin_z)
-                    + (sin_x * cos_y * cos_z)
-                    + (cos_x * sin_y * cos_z)
-                    + (cos_x * cos_y * sin_z)
-            },
+            move |p: &Point3<Real>| tpms_schwarz_d_value(p, scale).unwrap_or(Real::INFINITY),
             res,
             iso_value,
             metadata,
@@ -259,26 +219,78 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         metadata: M,
     ) -> Mesh<M> {
         let res = (resolution.max(2), resolution.max(2), resolution.max(2));
-        let scale = std::f64::consts::TAU as Real / period;
+        let Some(scale) = tpms_scale(period) else {
+            return Mesh::empty(metadata);
+        };
         self.tpms_solid_from_sdf(
-            move |p: &Point3<Real>| {
-                let x_scaled = p.x * scale;
-                let y_scaled = p.y * scale;
-                let z_scaled = p.z * scale;
-                let (sin_x, cos_x) = x_scaled.sin_cos();
-                let (sin_y, cos_y) = y_scaled.sin_cos();
-                let (sin_z, cos_z) = z_scaled.sin_cos();
-                (sin_x * sin_y * sin_z)
-                    + (sin_x * cos_y * cos_z)
-                    + (cos_x * sin_y * cos_z)
-                    + (cos_x * cos_y * sin_z)
-            },
+            move |p: &Point3<Real>| tpms_schwarz_d_value(p, scale).unwrap_or(Real::INFINITY),
             res,
             iso_value,
             thickness,
             metadata,
         )
     }
+}
+
+/// Return the TPMS angular scale `2π / period` in hyperreal space.
+///
+/// The integer/grid APIs still expose primitive periods, but the wavelength
+/// validation and reciprocal are promoted before any implicit-field samples are
+/// evaluated. This follows Yap's exact-geometric-computation split between
+/// primitive input boundaries and exact-aware predicates
+/// (<https://doi.org/10.1016/0925-7721(95)00040-2>). The TPMS families here
+/// follow Schoen, "Infinite Periodic Minimal Surfaces Without Self-
+/// Intersections," NASA Technical Note D-5541, 1970.
+fn tpms_scale(period: Real) -> Option<Real> {
+    let period = hreal_from_f64(period).ok()?;
+    if !hreal_gt_f64(&period, tolerance()) {
+        return None;
+    }
+    hreal_to_f64(&(hreal_from_f64(std::f64::consts::TAU).ok()? / period).ok()?)
+}
+
+fn tpms_scaled_axes(point: &Point3<Real>, scale: Real) -> Option<(HReal, HReal, HReal)> {
+    let scale = hreal_from_f64(scale).ok()?;
+    Some((
+        hreal_from_f64(point.x).ok()? * scale.clone(),
+        hreal_from_f64(point.y).ok()? * scale.clone(),
+        hreal_from_f64(point.z).ok()? * scale,
+    ))
+}
+
+/// Evaluate Schoen's gyroid approximation in hyperreal space.
+fn tpms_gyroid_value(point: &Point3<Real>, scale: Real) -> Option<Real> {
+    let (x, y, z) = tpms_scaled_axes(point, scale)?;
+    let sin_x = x.clone().sin();
+    let cos_x = x.cos();
+    let sin_y = y.clone().sin();
+    let cos_y = y.cos();
+    let sin_z = z.clone().sin();
+    let cos_z = z.cos();
+    hreal_to_f64(&(sin_x * cos_y + sin_y * cos_z + sin_z * cos_x))
+}
+
+/// Evaluate Schwarz's primitive cubic surface approximation in hyperreal space.
+fn tpms_schwarz_p_value(point: &Point3<Real>, scale: Real) -> Option<Real> {
+    let (x, y, z) = tpms_scaled_axes(point, scale)?;
+    hreal_to_f64(&(x.cos() + y.cos() + z.cos()))
+}
+
+/// Evaluate Schwarz's diamond surface approximation in hyperreal space.
+fn tpms_schwarz_d_value(point: &Point3<Real>, scale: Real) -> Option<Real> {
+    let (x, y, z) = tpms_scaled_axes(point, scale)?;
+    let sin_x = x.clone().sin();
+    let cos_x = x.cos();
+    let sin_y = y.clone().sin();
+    let cos_y = y.cos();
+    let sin_z = z.clone().sin();
+    let cos_z = z.cos();
+    hreal_to_f64(
+        &(sin_x.clone() * sin_y.clone() * sin_z.clone()
+            + sin_x * cos_y.clone() * cos_z.clone()
+            + cos_x.clone() * sin_y * cos_z
+            + cos_x * cos_y * sin_z),
+    )
 }
 
 fn axis_aligned_box_sdf(p: &Point3<Real>, min: &Point3<Real>, max: &Point3<Real>) -> Real {
@@ -303,8 +315,8 @@ fn max_axis_step(
     resolution: (usize, usize, usize),
 ) -> Real {
     let span = max - min;
-    let dx = span.x.abs() / (resolution.0.max(2) as Real - 1.0);
-    let dy = span.y.abs() / (resolution.1.max(2) as Real - 1.0);
-    let dz = span.z.abs() / (resolution.2.max(2) as Real - 1.0);
+    let dx = hreal_div(span.x.abs(), resolution.0.max(2) as Real - 1.0).unwrap_or(0.0);
+    let dy = hreal_div(span.y.abs(), resolution.1.max(2) as Real - 1.0).unwrap_or(0.0);
+    let dz = hreal_div(span.z.abs(), resolution.2.max(2) as Real - 1.0).unwrap_or(0.0);
     dx.max(dy).max(dz)
 }
