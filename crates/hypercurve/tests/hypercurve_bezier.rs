@@ -8885,6 +8885,101 @@ fn bezier_boolean_laminar_materialized_region_uses_nearest_material_ancestor() {
 }
 
 #[test]
+fn bezier_boolean_scheduled_laminar_materialization_replays_full_certificate_chain() {
+    let schedule = BezierBooleanTraversalScheduleReport2 {
+        status: BezierBooleanTraversalScheduleStatus::Ready,
+        precondition_status: BezierBooleanTraversalPreconditionStatus::Ready,
+        first_fragment_count: 4,
+        second_fragment_count: 0,
+        steps: (0..4)
+            .map(|fragment_index| hypercurve::BezierBooleanTraversalStep2 {
+                operand: BezierBooleanTraversalOperand::First,
+                fragment_index,
+            })
+            .collect(),
+        resolved_overlap_count: 0,
+        overlap_boundary_parameter_count: 0,
+        blocker_count: 0,
+    };
+    let ownership_facts = schedule
+        .steps
+        .iter()
+        .map(|step| BezierBooleanOwnershipFact2 {
+            step: step.clone(),
+            opposite_location: BezierBooleanFragmentOwnershipLocation::Outside,
+        })
+        .collect::<Vec<_>>();
+    let endpoints = [
+        (point(0, 0), point(0, 0)),
+        (point(1, 0), point(1, 0)),
+        (point(2, 0), point(2, 0)),
+        (point(3, 0), point(3, 0)),
+    ];
+    let containment_facts = [
+        BezierBooleanLoopContainmentFact2 {
+            container_loop_index: 0,
+            contained_loop_index: 1,
+        },
+        BezierBooleanLoopContainmentFact2 {
+            container_loop_index: 1,
+            contained_loop_index: 2,
+        },
+        BezierBooleanLoopContainmentFact2 {
+            container_loop_index: 2,
+            contained_loop_index: 3,
+        },
+    ];
+
+    let materialized =
+        BezierBooleanMaterializedRegionReport2::from_schedule_graph_walk_laminar_containment_facts(
+            &schedule,
+            BooleanOp::Union,
+            &ownership_facts,
+            &endpoints,
+            &[],
+            0,
+            0,
+            &[0, 1, 2, 3],
+            &containment_facts,
+        );
+
+    assert_eq!(
+        materialized.status,
+        BezierBooleanMaterializedRegionStatus::Ready
+    );
+    assert_eq!(materialized.component_count, 2);
+    assert_eq!(materialized.components[0].hole_loop_indices, vec![1]);
+    assert_eq!(materialized.components[1].hole_loop_indices, vec![3]);
+
+    let stale_roles =
+        BezierBooleanMaterializedRegionReport2::from_schedule_graph_fact_walk_laminar_containment_role_facts(
+            &schedule,
+            BooleanOp::Union,
+            &ownership_facts,
+            &endpoints,
+            &[],
+            &BezierBooleanLoopGraphFacts2 {
+                emitted_step_count: 4,
+                branch_vertex_count: 0,
+                resolved_overlap_count: 0,
+            },
+            &[0, 1, 2, 3],
+            &containment_facts,
+            &[
+                BezierBooleanOutputLoopRole::Hole,
+                BezierBooleanOutputLoopRole::Material,
+                BezierBooleanOutputLoopRole::Hole,
+                BezierBooleanOutputLoopRole::Material,
+            ],
+        );
+    assert_eq!(
+        stale_roles.status,
+        BezierBooleanMaterializedRegionStatus::AuditBlocked
+    );
+    assert!(stale_roles.has_blockers());
+}
+
+#[test]
 fn bezier_boolean_output_loop_report_preserves_closure_blockers() {
     let blocked_plan = BezierBooleanLoopAssemblyPlanReport2 {
         status: BezierBooleanLoopAssemblyPlanStatus::Ready,
@@ -13311,6 +13406,68 @@ proptest! {
         );
         prop_assert!(materialized.is_ready());
         prop_assert!(!materialized.has_blockers());
+    }
+
+    #[test]
+    fn generated_bezier_boolean_scheduled_laminar_materialization_matches_chain_depths(
+        loop_count in 1_usize..8,
+    ) {
+        let schedule = BezierBooleanTraversalScheduleReport2 {
+            status: BezierBooleanTraversalScheduleStatus::Ready,
+            precondition_status: BezierBooleanTraversalPreconditionStatus::Ready,
+            first_fragment_count: loop_count,
+            second_fragment_count: 0,
+            steps: (0..loop_count)
+                .map(|fragment_index| hypercurve::BezierBooleanTraversalStep2 {
+                    operand: BezierBooleanTraversalOperand::First,
+                    fragment_index,
+                })
+                .collect(),
+            resolved_overlap_count: 0,
+            overlap_boundary_parameter_count: 0,
+            blocker_count: 0,
+        };
+        let ownership_facts = schedule
+            .steps
+            .iter()
+            .map(|step| BezierBooleanOwnershipFact2 {
+                step: step.clone(),
+                opposite_location: BezierBooleanFragmentOwnershipLocation::Outside,
+            })
+            .collect::<Vec<_>>();
+        let endpoints = (0..loop_count)
+            .map(|index| {
+                let x = index as i32;
+                (point(x, 0), point(x, 0))
+            })
+            .collect::<Vec<_>>();
+        let containment_facts = (1..loop_count)
+            .map(|index| BezierBooleanLoopContainmentFact2 {
+                container_loop_index: index - 1,
+                contained_loop_index: index,
+            })
+            .collect::<Vec<_>>();
+        let walk_indices = (0..loop_count).collect::<Vec<_>>();
+
+        let materialized =
+            BezierBooleanMaterializedRegionReport2::from_schedule_graph_walk_laminar_containment_facts(
+                &schedule,
+                BooleanOp::Union,
+                &ownership_facts,
+                &endpoints,
+                &[],
+                0,
+                0,
+                &walk_indices,
+                &containment_facts,
+            );
+
+        prop_assert_eq!(materialized.status, BezierBooleanMaterializedRegionStatus::Ready);
+        prop_assert_eq!(materialized.component_count, loop_count.div_ceil(2));
+        prop_assert_eq!(
+            materialized.components.iter().map(|component| component.hole_loop_indices.len()).sum::<usize>(),
+            loop_count / 2
+        );
     }
 
     #[test]

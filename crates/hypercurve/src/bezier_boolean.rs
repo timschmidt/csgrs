@@ -9785,6 +9785,153 @@ impl BezierBooleanMaterializationAuditReport2 {
 }
 
 impl BezierBooleanMaterializedRegionReport2 {
+    /// Materializes a scheduled endpoint result with laminar containment facts.
+    ///
+    /// This is the single-call materialization handoff for callers that already
+    /// have a traversal schedule, exact ownership facts, a certified graph
+    /// walk, and exact loop-containment facts. The method first uses
+    /// [`BezierBooleanResultReport2::from_schedule_graph_walk_containment_facts`]
+    /// so ownership, emission, closure, output-loop extraction, and role parity
+    /// are validated exactly as in the normal result path. It then runs
+    /// [`Self::from_result_laminar_containment_facts`] to attach each hole to
+    /// its nearest certified material ancestor. The staged replay follows
+    /// Yap's "Towards Exact Geometric Computation" (1997) predicate/
+    /// construction boundary and the boundary/nesting/fill split of Vatti
+    /// (1992), Greiner-Hormann (1998), and Martinez-Rueda-Feito (2009).
+    pub fn from_schedule_graph_walk_laminar_containment_facts(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        ownership_facts: &[BezierBooleanOwnershipFact2],
+        first_endpoints: &[(Point2, Point2)],
+        second_endpoints: &[(Point2, Point2)],
+        branch_vertex_count: usize,
+        resolved_overlap_count: usize,
+        walk_indices: &[usize],
+        containment_facts: &[BezierBooleanLoopContainmentFact2],
+    ) -> Self {
+        let result = BezierBooleanResultReport2::from_schedule_graph_walk_containment_facts(
+            schedule,
+            operation,
+            ownership_facts,
+            first_endpoints,
+            second_endpoints,
+            branch_vertex_count,
+            resolved_overlap_count,
+            walk_indices,
+            containment_facts,
+        );
+        Self::from_result_laminar_containment_facts(&result, containment_facts)
+    }
+
+    /// Materializes a scheduled endpoint result with graph facts and laminar containment.
+    pub fn from_schedule_graph_fact_walk_laminar_containment_facts(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        ownership_facts: &[BezierBooleanOwnershipFact2],
+        first_endpoints: &[(Point2, Point2)],
+        second_endpoints: &[(Point2, Point2)],
+        graph_facts: &BezierBooleanLoopGraphFacts2,
+        walk_indices: &[usize],
+        containment_facts: &[BezierBooleanLoopContainmentFact2],
+    ) -> Self {
+        let result = BezierBooleanResultReport2::from_schedule_graph_fact_walk_containment_facts(
+            schedule,
+            operation,
+            ownership_facts,
+            first_endpoints,
+            second_endpoints,
+            graph_facts,
+            walk_indices,
+            containment_facts,
+        );
+        Self::from_result_laminar_containment_facts(&result, containment_facts)
+    }
+
+    /// Materializes a scheduled endpoint result when explicit roles match containment parity.
+    ///
+    /// The explicit roles are not trusted independently: the result constructor
+    /// first checks them against containment-derived depth parity, then this
+    /// materializer attaches holes through the same laminar containment
+    /// certificate. Stale role facts therefore block before materialization.
+    pub fn from_schedule_graph_walk_laminar_containment_role_facts(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        ownership_facts: &[BezierBooleanOwnershipFact2],
+        first_endpoints: &[(Point2, Point2)],
+        second_endpoints: &[(Point2, Point2)],
+        branch_vertex_count: usize,
+        resolved_overlap_count: usize,
+        walk_indices: &[usize],
+        containment_facts: &[BezierBooleanLoopContainmentFact2],
+        roles: &[BezierBooleanOutputLoopRole],
+    ) -> Self {
+        let result = BezierBooleanResultReport2::from_schedule_graph_walk_containment_role_facts(
+            schedule,
+            operation,
+            ownership_facts,
+            first_endpoints,
+            second_endpoints,
+            branch_vertex_count,
+            resolved_overlap_count,
+            walk_indices,
+            containment_facts,
+            roles,
+        );
+        Self::from_result_laminar_containment_facts(&result, containment_facts)
+    }
+
+    /// Materializes a scheduled endpoint result with graph facts and containment-certified roles.
+    pub fn from_schedule_graph_fact_walk_laminar_containment_role_facts(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        ownership_facts: &[BezierBooleanOwnershipFact2],
+        first_endpoints: &[(Point2, Point2)],
+        second_endpoints: &[(Point2, Point2)],
+        graph_facts: &BezierBooleanLoopGraphFacts2,
+        walk_indices: &[usize],
+        containment_facts: &[BezierBooleanLoopContainmentFact2],
+        roles: &[BezierBooleanOutputLoopRole],
+    ) -> Self {
+        let result =
+            BezierBooleanResultReport2::from_schedule_graph_fact_walk_containment_role_facts(
+                schedule,
+                operation,
+                ownership_facts,
+                first_endpoints,
+                second_endpoints,
+                graph_facts,
+                walk_indices,
+                containment_facts,
+                roles,
+            );
+        Self::from_result_laminar_containment_facts(&result, containment_facts)
+    }
+
+    /// Materializes a quadratic Bezier result with graph facts and containment-certified roles.
+    pub fn from_quadratic_schedule_graph_fact_walk_laminar_containment_role_facts(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        ownership_facts: &[BezierBooleanOwnershipFact2],
+        first: &BezierBooleanQuadraticFragmentReport2,
+        second: &BezierBooleanQuadraticFragmentReport2,
+        graph_facts: &BezierBooleanLoopGraphFacts2,
+        walk_indices: &[usize],
+        containment_facts: &[BezierBooleanLoopContainmentFact2],
+        roles: &[BezierBooleanOutputLoopRole],
+    ) -> Self {
+        Self::from_schedule_graph_fact_walk_laminar_containment_role_facts(
+            schedule,
+            operation,
+            ownership_facts,
+            &quadratic_fragment_endpoints(&first.fragments),
+            &quadratic_fragment_endpoints(&second.fragments),
+            graph_facts,
+            walk_indices,
+            containment_facts,
+            roles,
+        )
+    }
+
     /// Materializes a higher-order region carrier from a result and containment facts.
     ///
     /// A ready result is not enough to attach holes: each hole must have a

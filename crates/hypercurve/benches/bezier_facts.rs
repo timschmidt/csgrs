@@ -2378,9 +2378,26 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                         &role_result,
                         &containment_facts,
                     );
+                let scheduled_materialized =
+                    BezierBooleanMaterializedRegionReport2::from_quadratic_schedule_graph_fact_walk_laminar_containment_role_facts(
+                        &schedule,
+                        BooleanOp::Union,
+                        &ownership_facts,
+                        first,
+                        second,
+                        &graph_facts,
+                        &walk_indices,
+                        &containment_facts,
+                        &containment_roles,
+                    );
                 format!(
-                    "{:?}{:?}{:?}{:?}{:?}",
-                    containment_result, role_result, audit, materialized, laminar_materialized
+                    "{:?}{:?}{:?}{:?}{:?}{:?}",
+                    containment_result,
+                    role_result,
+                    audit,
+                    materialized,
+                    laminar_materialized,
+                    scheduled_materialized
                 )
             }
             other => format!("{other:?}"),
