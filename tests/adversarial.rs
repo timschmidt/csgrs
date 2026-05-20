@@ -652,6 +652,28 @@ fn adversarial_sdf_rejects_nonfinite_sampling_boundary_at_hyperreal_boundary() {
 }
 
 #[test]
+#[cfg(feature = "sdf")]
+fn adversarial_sdf_tiny_nonzero_samples_keep_hyperreal_sign_before_surface_nets() {
+    let (mesh, diagnostics) = Mesh::<()>::sdf_with_diagnostics(
+        |_| 1.0e-50,
+        (2, 2, 2),
+        Point3::new(-1.0, -1.0, -1.0),
+        Point3::new(1.0, 1.0, 1.0),
+        0.0,
+        (),
+    );
+
+    assert!(mesh.polygons.is_empty(), "{diagnostics:#?}");
+    assert_eq!(diagnostics.sample_count, 8);
+    assert_eq!(diagnostics.finite_sample_count, 8);
+    assert_eq!(diagnostics.positive_sample_count, 8);
+    assert_eq!(diagnostics.zero_sample_count, 0);
+    assert_eq!(diagnostics.negative_sample_count, 0);
+    assert_eq!(diagnostics.crossing_cell_count, 0);
+    assert_eq!(diagnostics.emitted_triangle_count, 0);
+}
+
+#[test]
 #[cfg(feature = "metaballs")]
 fn adversarial_metaballs_reject_invalid_sampling_boundary_at_hyperreal_boundary() {
     let valid = csgrs::mesh::metaballs::MetaBall::new(Point3::new(0.0, 0.0, 0.0), 1.0);

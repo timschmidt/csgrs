@@ -44,7 +44,7 @@ fuzz_target!(|bytes: &[u8]| {
     }
 
     let mut idx = 0usize;
-    let tag = bytes[idx] % 5;
+    let tag = bytes[idx] % 6;
     idx += 1;
     let res = (bytes[idx % bytes.len()] as usize % 10) + 1;
     idx += 1;
@@ -85,7 +85,22 @@ fuzz_target!(|bytes: &[u8]| {
         },
         2 => base.gyroid(res, period, iso, ()),
         3 => base.schwarz_p(res, period, iso, ()),
-        _ => base.schwarz_d(res, period, iso, ()),
+        4 => base.schwarz_d(res, period, iso, ()),
+        _ => {
+            let sign = if bytes[idx % bytes.len()] & 1 == 0 {
+                1.0
+            } else {
+                -1.0
+            };
+            Mesh::sdf(
+                |_| sign * 1.0e-50,
+                (res, res, res),
+                Point3::new(-1.0, -1.0, -1.0),
+                Point3::new(1.0, 1.0, 1.0),
+                0.0,
+                (),
+            )
+        },
     };
 
     assert_mesh_finite(&mesh);
