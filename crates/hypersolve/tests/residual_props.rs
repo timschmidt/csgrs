@@ -4,14 +4,14 @@ use hypersolve::{
     EqualitySubstitutionProblem, Expr, MultivariateQuadraticKrawczykStatus, PreparedProblem,
     PreparedSolverBlock, Problem, ProposalEngineKind, ProposalEnginePrecision,
     ProposalEngineReport, RectangularRegion, SolverBlockRowKind, SolverConfig, SolverPoint2,
-    SolverState, SymbolId, VariableBall, center_clearance_squared_constraint,
-    certify_affine_krawczyk_box, certify_candidate, certify_candidate_domains,
-    certify_multivariate_quadratic_interval_candidate, certify_multivariate_quadratic_krawczyk_box,
-    certify_quadratic_interval_candidate, certify_univariate_quadratic_alpha,
-    certify_univariate_quadratic_krawczyk_box, context_from_problem,
-    differential_pair_skew_equation, eliminate_affine_rows_with_substitution_classes,
-    rectangular_difference_area_equation, report_lossy_adapter_only_candidate,
-    solve_damped_least_squares, solve_direct_affine_system,
+    SolverState, SymbolId, VariableBall, apply_equality_substitution_classes,
+    center_clearance_squared_constraint, certify_affine_krawczyk_box, certify_candidate,
+    certify_candidate_domains, certify_multivariate_quadratic_interval_candidate,
+    certify_multivariate_quadratic_krawczyk_box, certify_quadratic_interval_candidate,
+    certify_univariate_quadratic_alpha, certify_univariate_quadratic_krawczyk_box,
+    context_from_problem, differential_pair_skew_equation,
+    eliminate_affine_rows_with_substitution_classes, rectangular_difference_area_equation,
+    report_lossy_adapter_only_candidate, solve_damped_least_squares, solve_direct_affine_system,
     solve_direct_univariate_quadratic_equalities, squared_distance_equation,
     validate_equality_substitutions,
 };
@@ -1009,6 +1009,59 @@ proptest! {
                 vec![(SymbolId(0), Real::from(expected_coefficient))]
             );
         }
+    }
+
+    #[test]
+    fn substitution_class_application_reconstructs_generated_contexts_exactly(
+        y_offset in -64_i16..=64,
+        z_offset in -64_i16..=64,
+        representative_value in -128_i16..=128,
+    ) {
+        let y_offset = i64::from(y_offset);
+        let z_offset = i64::from(z_offset);
+        let representative_value = i64::from(representative_value);
+        let substitutions = vec![
+            EqualitySubstitution {
+                constraint_index: 0,
+                left: SymbolId(1),
+                right: SymbolId(0),
+                offset: Real::from(y_offset),
+            },
+            EqualitySubstitution {
+                constraint_index: 1,
+                left: SymbolId(2),
+                right: SymbolId(1),
+                offset: Real::from(z_offset),
+            },
+        ];
+        let classes = hypersolve::build_equality_substitution_classes(&substitutions).unwrap();
+        let mut context = hypersolve::EvaluationContext::default();
+        context.bind(
+            SymbolId(2),
+            Real::from(representative_value + y_offset + z_offset),
+        );
+
+        let report = apply_equality_substitution_classes(&mut context, &classes);
+
+        prop_assert!(report.all_consistent());
+        prop_assert_eq!(report.applied_bindings, 3);
+        prop_assert_eq!(context.bindings().get(&SymbolId(0)), Some(&Real::from(representative_value)));
+        prop_assert_eq!(
+            context.bindings().get(&SymbolId(1)),
+            Some(&Real::from(representative_value + y_offset))
+        );
+        prop_assert_eq!(
+            context.bindings().get(&SymbolId(2)),
+            Some(&Real::from(representative_value + y_offset + z_offset))
+        );
+
+        let mut conflict = hypersolve::EvaluationContext::default();
+        conflict.bind(SymbolId(0), Real::from(representative_value));
+        conflict.bind(SymbolId(1), Real::from(representative_value + y_offset + 1));
+        let conflict_report = apply_equality_substitution_classes(&mut conflict, &classes);
+        prop_assert!(!conflict_report.all_consistent());
+        prop_assert_eq!(conflict_report.inconsistent_classes, 1);
+        prop_assert_eq!(conflict_report.applied_bindings, 0);
     }
 
     #[test]

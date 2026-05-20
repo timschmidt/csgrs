@@ -7,20 +7,20 @@ use hypersolve::{
     LinearAdapterPrecision, LinearBackend, MultivariateQuadraticKrawczykStatus, PcbConstraintSet,
     PreparedProblem, PreparedSolverBlock, Problem, ProposalEngineKind, ProposalEnginePrecision,
     RectangularRegion, SolverBlockRowKind, SolverConfig, SolverPoint2, SolverState, SymbolId,
-    ToolpathConstraintSet, VariableBall, apply_equality_substitutions,
-    bezier_offset_sample_constraints, build_equality_substitution_classes,
-    center_clearance_squared_constraint, certify_affine_interval_candidate,
-    certify_affine_krawczyk_box, certify_candidate, certify_candidate_domains,
-    certify_candidate_with_config, certify_candidate_with_residual_balls,
-    certify_multivariate_quadratic_interval_candidate, certify_multivariate_quadratic_krawczyk_box,
-    certify_quadratic_interval_candidate, certify_univariate_quadratic_alpha,
-    certify_univariate_quadratic_krawczyk_box, constant_feed_time_equation, context_from_problem,
-    differential_pair_skew_equation, eliminate_affine_rows_with_substitution_classes,
-    evaluate_residuals, facts_depend_on_symbol, find_equality_substitutions, length_match_equation,
-    point_coincidence_equations, rectangular_difference_area_equation,
-    rectangular_region_area_equation, rectangular_region_containment_constraints,
-    report_lossy_adapter_only_candidate, solve_damped_least_squares,
-    solve_direct_affine_equalities, solve_direct_affine_system,
+    ToolpathConstraintSet, VariableBall, apply_equality_substitution_classes,
+    apply_equality_substitutions, bezier_offset_sample_constraints,
+    build_equality_substitution_classes, center_clearance_squared_constraint,
+    certify_affine_interval_candidate, certify_affine_krawczyk_box, certify_candidate,
+    certify_candidate_domains, certify_candidate_with_config,
+    certify_candidate_with_residual_balls, certify_multivariate_quadratic_interval_candidate,
+    certify_multivariate_quadratic_krawczyk_box, certify_quadratic_interval_candidate,
+    certify_univariate_quadratic_alpha, certify_univariate_quadratic_krawczyk_box,
+    constant_feed_time_equation, context_from_problem, differential_pair_skew_equation,
+    eliminate_affine_rows_with_substitution_classes, evaluate_residuals, facts_depend_on_symbol,
+    find_equality_substitutions, length_match_equation, point_coincidence_equations,
+    rectangular_difference_area_equation, rectangular_region_area_equation,
+    rectangular_region_containment_constraints, report_lossy_adapter_only_candidate,
+    solve_damped_least_squares, solve_direct_affine_equalities, solve_direct_affine_system,
     solve_direct_univariate_quadratic_equalities, squared_distance_equation,
     tangent_parallel_equation, tangent_same_direction_constraint, validate_equality_substitutions,
 };
@@ -1849,6 +1849,67 @@ fn equality_substitution_classes_preserve_offsets_to_representative() {
     assert_eq!(classes[0].members[1].offset_from_representative, real(-3));
     assert_eq!(classes[0].members[2].symbol, SymbolId(2));
     assert_eq!(classes[0].members[2].offset_from_representative, real(2));
+}
+
+#[test]
+fn equality_substitution_class_application_populates_candidate_or_reports_conflict() {
+    let substitutions = vec![
+        hypersolve::EqualitySubstitution {
+            constraint_index: 0,
+            left: SymbolId(1),
+            right: SymbolId(0),
+            offset: real(3),
+        },
+        hypersolve::EqualitySubstitution {
+            constraint_index: 1,
+            left: SymbolId(2),
+            right: SymbolId(1),
+            offset: real(-5),
+        },
+    ];
+    let classes = build_equality_substitution_classes(&substitutions).unwrap();
+
+    let mut context = hypersolve::EvaluationContext::default();
+    context.bind(SymbolId(2), real(9));
+    let report = apply_equality_substitution_classes(&mut context, &classes);
+
+    assert!(report.all_consistent());
+    assert_eq!(report.applied_bindings, 3);
+    assert_eq!(report.skipped_classes, 0);
+    assert_eq!(context.bindings().get(&SymbolId(0)), Some(&real(11)));
+    assert_eq!(context.bindings().get(&SymbolId(1)), Some(&real(14)));
+    assert_eq!(context.bindings().get(&SymbolId(2)), Some(&real(9)));
+    assert!(matches!(
+        report.rows[0].status,
+        hypersolve::EqualitySubstitutionClassApplicationStatus::Applied {
+            anchor_symbol: SymbolId(2)
+        }
+    ));
+
+    let mut missing = hypersolve::EvaluationContext::default();
+    let missing_report = apply_equality_substitution_classes(&mut missing, &classes);
+    assert_eq!(missing_report.applied_bindings, 0);
+    assert_eq!(missing_report.skipped_classes, 1);
+    assert!(matches!(
+        missing_report.rows[0].status,
+        hypersolve::EqualitySubstitutionClassApplicationStatus::MissingBoundMember
+    ));
+
+    let mut conflict = hypersolve::EvaluationContext::default();
+    conflict.bind(SymbolId(0), real(11));
+    conflict.bind(SymbolId(1), real(13));
+    let conflict_report = apply_equality_substitution_classes(&mut conflict, &classes);
+    assert!(!conflict_report.all_consistent());
+    assert_eq!(conflict_report.applied_bindings, 0);
+    assert_eq!(conflict_report.inconsistent_classes, 1);
+    assert!(matches!(
+        &conflict_report.rows[0].status,
+        hypersolve::EqualitySubstitutionClassApplicationStatus::InconsistentBoundMember {
+            symbol: SymbolId(1),
+            expected,
+            actual,
+        } if expected == &real(14) && actual == &real(13)
+    ));
 }
 
 #[test]

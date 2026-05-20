@@ -4,14 +4,15 @@ use hypersolve::{
     Constraint, EqualitySubstitution, Expr, PreparedProblem, PreparedSolverBlock, Problem,
     ProposalEngineKind, ProposalEnginePrecision, ProposalEngineReport, RectangularRegion,
     SolverConfig, SolverPoint2, SolverState, SymbolId, VariableBall,
-    bezier_offset_sample_constraints, build_equality_substitution_classes,
-    center_clearance_squared_constraint, certify_affine_krawczyk_box, certify_candidate,
-    certify_candidate_domains, certify_multivariate_quadratic_interval_candidate,
-    certify_multivariate_quadratic_krawczyk_box, certify_quadratic_interval_candidate,
-    certify_univariate_quadratic_alpha, certify_univariate_quadratic_krawczyk_box,
-    context_from_problem, differential_pair_skew_equation,
-    eliminate_affine_rows_with_substitution_classes, rectangular_difference_area_equation,
-    report_lossy_adapter_only_candidate, solve_damped_least_squares, solve_direct_affine_system,
+    apply_equality_substitution_classes, bezier_offset_sample_constraints,
+    build_equality_substitution_classes, center_clearance_squared_constraint,
+    certify_affine_krawczyk_box, certify_candidate, certify_candidate_domains,
+    certify_multivariate_quadratic_interval_candidate, certify_multivariate_quadratic_krawczyk_box,
+    certify_quadratic_interval_candidate, certify_univariate_quadratic_alpha,
+    certify_univariate_quadratic_krawczyk_box, context_from_problem,
+    differential_pair_skew_equation, eliminate_affine_rows_with_substitution_classes,
+    rectangular_difference_area_equation, report_lossy_adapter_only_candidate,
+    solve_damped_least_squares, solve_direct_affine_system,
     solve_direct_univariate_quadratic_equalities, squared_distance_equation,
 };
 
@@ -209,6 +210,13 @@ fn certification(c: &mut Criterion) {
                 &elimination_prepared,
                 &substitution_classes,
             )
+        })
+    });
+    c.bench_function("apply_equality_substitution_classes", |b| {
+        b.iter(|| {
+            let mut context = hypersolve::EvaluationContext::default();
+            context.bind(SymbolId(2), r(8));
+            apply_equality_substitution_classes(&mut context, &substitution_classes)
         })
     });
     let quadratic_problem = univariate_quadratic_problem(16);

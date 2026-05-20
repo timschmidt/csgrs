@@ -185,6 +185,72 @@ pub struct EqualitySubstitutionClass {
     pub members: Vec<EqualitySubstitutionClassMember>,
 }
 
+/// Status for applying one equality-substitution class to a candidate context.
+///
+/// Applying a class is a construction step, not a proof step: it propagates
+/// exact representative offsets into an [`EvaluationContext`] so the ordinary
+/// residual replay can check the candidate. This is the same boundary Yap
+/// draws between exact object construction and certified geometric decisions;
+/// see Yap, "Towards Exact Geometric Computation," *Computational Geometry*
+/// 7.1-2 (1997).
+#[derive(Clone, Debug, PartialEq)]
+pub enum EqualitySubstitutionClassApplicationStatus {
+    /// At least one bound member anchored the class and every bound member was
+    /// exactly consistent with that anchor.
+    Applied {
+        /// Bound symbol used to reconstruct the representative value.
+        anchor_symbol: SymbolId,
+    },
+    /// No member in the class was bound in the candidate context.
+    MissingBoundMember,
+    /// Two already-bound members disagree exactly after carrying their
+    /// representative offsets.
+    InconsistentBoundMember {
+        /// Bound member that contradicted the first anchor.
+        symbol: SymbolId,
+        /// Exact value implied by the class anchor.
+        expected: Real,
+        /// Exact value already present in the context.
+        actual: Real,
+    },
+}
+
+/// Per-class result from applying equality-substitution classes.
+#[derive(Clone, Debug, PartialEq)]
+pub struct EqualitySubstitutionClassApplicationRow {
+    /// Stable class representative.
+    pub representative: SymbolId,
+    /// Application status for this class.
+    pub status: EqualitySubstitutionClassApplicationStatus,
+    /// Symbols written into the context when the class was applied.
+    pub applied_symbols: Vec<SymbolId>,
+}
+
+/// Report for applying exact equality-substitution classes to a candidate.
+///
+/// The report is intentionally explicit about skipped and inconsistent
+/// classes because substitution classes are proposal machinery. A caller that
+/// accepts a rewritten candidate without the later exact residual report would
+/// violate the Yap exact-computation discipline that this crate follows.
+#[derive(Clone, Debug, PartialEq)]
+pub struct EqualitySubstitutionClassApplicationReport {
+    /// Per-class application rows.
+    pub rows: Vec<EqualitySubstitutionClassApplicationRow>,
+    /// Number of symbol bindings written into the context.
+    pub applied_bindings: usize,
+    /// Number of classes skipped because no member was bound.
+    pub skipped_classes: usize,
+    /// Number of classes rejected because existing bindings conflict exactly.
+    pub inconsistent_classes: usize,
+}
+
+impl EqualitySubstitutionClassApplicationReport {
+    /// Returns true when no class reported an exact binding conflict.
+    pub fn all_consistent(&self) -> bool {
+        self.inconsistent_classes == 0
+    }
+}
+
 /// One affine row rewritten through equality-substitution classes.
 ///
 /// The row remains a proposal artifact: it is useful for future affine
@@ -808,6 +874,93 @@ pub fn build_equality_substitution_classes(
     }
 
     Ok(classes)
+}
+
+/// Apply exact equality-substitution classes to a candidate context.
+///
+/// For each class, any already-bound member can anchor the representative
+/// value because members store `symbol = representative + offset`. The helper
+/// then writes every member's exact value into the context, unless another
+/// already-bound member contradicts the anchor. This mirrors SolveSpace's
+/// symbolic equality-class propagation while keeping Yap's construction versus
+/// certification boundary intact: callers still replay residuals with
+/// [`crate::certify_candidate`] before trusting the candidate.
+pub fn apply_equality_substitution_classes(
+    context: &mut EvaluationContext,
+    classes: &[EqualitySubstitutionClass],
+) -> EqualitySubstitutionClassApplicationReport {
+    let mut rows = Vec::new();
+    let mut applied_bindings = 0;
+    let mut skipped_classes = 0;
+    let mut inconsistent_classes = 0;
+
+    for class in classes {
+        let mut anchor: Option<(SymbolId, Real)> = None;
+        let mut inconsistency = None;
+
+        for member in &class.members {
+            let Some(actual) = context.bindings().get(&member.symbol).cloned() else {
+                continue;
+            };
+            let representative_value = actual.clone() - member.offset_from_representative.clone();
+            if let Some((_, anchored_representative_value)) = &anchor {
+                let expected = anchored_representative_value.clone()
+                    + member.offset_from_representative.clone();
+                if expected != actual {
+                    inconsistency = Some((member.symbol, expected, actual));
+                    break;
+                }
+            } else {
+                anchor = Some((member.symbol, representative_value));
+            }
+        }
+
+        if let Some((symbol, expected, actual)) = inconsistency {
+            inconsistent_classes += 1;
+            rows.push(EqualitySubstitutionClassApplicationRow {
+                representative: class.representative,
+                status: EqualitySubstitutionClassApplicationStatus::InconsistentBoundMember {
+                    symbol,
+                    expected,
+                    actual,
+                },
+                applied_symbols: Vec::new(),
+            });
+            continue;
+        }
+
+        let Some((anchor_symbol, representative_value)) = anchor else {
+            skipped_classes += 1;
+            rows.push(EqualitySubstitutionClassApplicationRow {
+                representative: class.representative,
+                status: EqualitySubstitutionClassApplicationStatus::MissingBoundMember,
+                applied_symbols: Vec::new(),
+            });
+            continue;
+        };
+
+        let mut applied_symbols = Vec::new();
+        for member in &class.members {
+            context.bind(
+                member.symbol,
+                representative_value.clone() + member.offset_from_representative.clone(),
+            );
+            applied_symbols.push(member.symbol);
+        }
+        applied_bindings += applied_symbols.len();
+        rows.push(EqualitySubstitutionClassApplicationRow {
+            representative: class.representative,
+            status: EqualitySubstitutionClassApplicationStatus::Applied { anchor_symbol },
+            applied_symbols,
+        });
+    }
+
+    EqualitySubstitutionClassApplicationReport {
+        rows,
+        applied_bindings,
+        skipped_classes,
+        inconsistent_classes,
+    }
 }
 
 /// Rewrite prepared affine rows through equality-substitution classes.
