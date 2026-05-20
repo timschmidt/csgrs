@@ -5821,6 +5821,29 @@ impl BezierBooleanRegionAssemblyReport2 {
         Self::from_output_loop_depth_facts(output, &containment.depth_facts)
     }
 
+    /// Packages output loops when explicit roles agree with containment-derived depths.
+    ///
+    /// This constructor validates exact containment-pair certificates, derives
+    /// keyed nesting-depth facts, and then accepts explicit material/hole role
+    /// facts only when they match the derived depth parity. It keeps
+    /// containment, nesting, and fill-role interpretation as separate
+    /// certificate stages, following Vatti (1992), Greiner-Hormann (1998), and
+    /// Martinez-Rueda-Feito (2009). Yap, "Towards Exact Geometric
+    /// Computation" (1997), is the exactness rule: stale role facts block
+    /// construction rather than overriding containment evidence.
+    pub fn from_output_loop_containment_role_facts(
+        output: &BezierBooleanOutputLoopReport2,
+        containment_facts: &[BezierBooleanLoopContainmentFact2],
+        roles: &[BezierBooleanOutputLoopRole],
+    ) -> Self {
+        let containment =
+            BezierBooleanLoopContainmentFactReport2::from_output_loop_containment_facts(
+                output,
+                containment_facts,
+            );
+        Self::from_output_loop_depth_role_facts(output, &containment.depth_facts, roles)
+    }
+
     /// Packages graph-walk-certified generic endpoints using containment facts.
     pub fn from_graph_walk_containment_facts(
         walk: &BezierBooleanLoopGraphWalkReport2,
@@ -5836,6 +5859,28 @@ impl BezierBooleanRegionAssemblyReport2 {
             second_endpoints,
         );
         Self::from_output_loop_containment_facts(&output, containment_facts)
+    }
+
+    /// Packages graph-walk-certified endpoints using containment and role facts.
+    ///
+    /// The graph walk supplies exact output-loop order, containment facts
+    /// derive keyed depths, and explicit roles are accepted only when they
+    /// match containment-derived parity.
+    pub fn from_graph_walk_containment_role_facts(
+        walk: &BezierBooleanLoopGraphWalkReport2,
+        plan: &BezierBooleanLoopAssemblyPlanReport2,
+        first_endpoints: &[(Point2, Point2)],
+        second_endpoints: &[(Point2, Point2)],
+        containment_facts: &[BezierBooleanLoopContainmentFact2],
+        roles: &[BezierBooleanOutputLoopRole],
+    ) -> Self {
+        let output = BezierBooleanOutputLoopReport2::from_graph_walk_endpoints(
+            walk,
+            plan,
+            first_endpoints,
+            second_endpoints,
+        );
+        Self::from_output_loop_containment_role_facts(&output, containment_facts, roles)
     }
 
     /// Packages output loops into a higher-order region artifact using keyed depths.
@@ -7547,6 +7592,26 @@ impl BezierBooleanResultReport2 {
         Self::from_region_assembly(&assembly)
     }
 
+    /// Accepts output loops when roles match containment-derived depths.
+    ///
+    /// This is the result-level counterpart to
+    /// [`BezierBooleanRegionAssemblyReport2::from_output_loop_containment_role_facts`].
+    /// It lets callers carry explicit role certificates through containment
+    /// result APIs without bypassing the exact parity evidence derived from
+    /// validated containment pairs.
+    pub fn from_output_loop_containment_role_facts(
+        output: &BezierBooleanOutputLoopReport2,
+        containment_facts: &[BezierBooleanLoopContainmentFact2],
+        roles: &[BezierBooleanOutputLoopRole],
+    ) -> Self {
+        let assembly = BezierBooleanRegionAssemblyReport2::from_output_loop_containment_role_facts(
+            output,
+            containment_facts,
+            roles,
+        );
+        Self::from_region_assembly(&assembly)
+    }
+
     /// Accepts a graph-walk-certified endpoint result with depth-certified roles.
     ///
     /// This preserves the same result-boundary composition as
@@ -7586,6 +7651,26 @@ impl BezierBooleanResultReport2 {
             first_endpoints,
             second_endpoints,
             containment_facts,
+        );
+        Self::from_region_assembly(&assembly)
+    }
+
+    /// Accepts a graph-walk-certified endpoint result with containment-certified roles.
+    pub fn from_graph_walk_containment_role_facts(
+        walk: &BezierBooleanLoopGraphWalkReport2,
+        plan: &BezierBooleanLoopAssemblyPlanReport2,
+        first_endpoints: &[(Point2, Point2)],
+        second_endpoints: &[(Point2, Point2)],
+        containment_facts: &[BezierBooleanLoopContainmentFact2],
+        roles: &[BezierBooleanOutputLoopRole],
+    ) -> Self {
+        let assembly = BezierBooleanRegionAssemblyReport2::from_graph_walk_containment_role_facts(
+            walk,
+            plan,
+            first_endpoints,
+            second_endpoints,
+            containment_facts,
+            roles,
         );
         Self::from_region_assembly(&assembly)
     }

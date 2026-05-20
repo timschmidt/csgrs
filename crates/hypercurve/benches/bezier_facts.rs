@@ -1779,12 +1779,26 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 } else {
                     Vec::new()
                 };
+                let containment_roles = (0..output.loops.len())
+                    .map(|loop_index| {
+                        if loop_index % 2 == 0 {
+                            BezierBooleanOutputLoopRole::Material
+                        } else {
+                            BezierBooleanOutputLoopRole::Hole
+                        }
+                    })
+                    .collect::<Vec<_>>();
                 format!(
                     "{:?}",
                     (
                         BezierBooleanLoopContainmentFactReport2::from_output_loop_containment_facts(
                             &output,
                             &containment_facts
+                        ),
+                        BezierBooleanResultReport2::from_output_loop_containment_role_facts(
+                            &output,
+                            &containment_facts,
+                            &containment_roles
                         ),
                         BezierBooleanLoopContainmentFactReport2::from_output_loop_containment_facts(
                             &output,

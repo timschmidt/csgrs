@@ -8760,6 +8760,55 @@ fn bezier_boolean_loop_containment_facts_derive_keyed_depths() {
 }
 
 #[test]
+fn bezier_boolean_containment_role_facts_block_stale_roles() {
+    let output = ready_two_loop_output_report();
+    let containment_facts = [BezierBooleanLoopContainmentFact2 {
+        container_loop_index: 0,
+        contained_loop_index: 1,
+    }];
+
+    let ready = BezierBooleanResultReport2::from_output_loop_containment_role_facts(
+        &output,
+        &containment_facts,
+        &[
+            BezierBooleanOutputLoopRole::Material,
+            BezierBooleanOutputLoopRole::Hole,
+        ],
+    );
+    assert_eq!(ready.status, BezierBooleanResultStatus::Ready);
+    assert_eq!(ready.material_loop_indices, vec![0]);
+    assert_eq!(ready.hole_loop_indices, vec![1]);
+
+    let stale_region = BezierBooleanRegionAssemblyReport2::from_output_loop_containment_role_facts(
+        &output,
+        &containment_facts,
+        &[
+            BezierBooleanOutputLoopRole::Hole,
+            BezierBooleanOutputLoopRole::Material,
+        ],
+    );
+    assert_eq!(
+        stale_region.status,
+        BezierBooleanRegionAssemblyStatus::RoleAssignmentBlocked
+    );
+    assert!(stale_region.has_blockers());
+
+    let stale_result = BezierBooleanResultReport2::from_output_loop_containment_role_facts(
+        &output,
+        &containment_facts,
+        &[
+            BezierBooleanOutputLoopRole::Hole,
+            BezierBooleanOutputLoopRole::Material,
+        ],
+    );
+    assert_eq!(
+        stale_result.status,
+        BezierBooleanResultStatus::RegionAssemblyBlocked
+    );
+    assert!(stale_result.has_blockers());
+}
+
+#[test]
 fn bezier_boolean_loop_containment_facts_derive_transitive_depths() {
     let output = BezierBooleanOutputLoopReport2 {
         status: BezierBooleanOutputLoopStatus::Ready,
@@ -11859,6 +11908,69 @@ proptest! {
         for fact in &report.depth_facts {
             prop_assert_eq!(fact.nesting_depth, fact.loop_index);
         }
+    }
+
+    #[test]
+    fn generated_bezier_boolean_containment_role_facts_reject_wrong_parity(
+        loop_count in 2_usize..8,
+        flip_index in 0_usize..8,
+    ) {
+        let output = BezierBooleanOutputLoopReport2 {
+            status: BezierBooleanOutputLoopStatus::Ready,
+            closure_status: BezierBooleanLoopClosureStatus::Closed,
+            operation: BooleanOp::Union,
+            directed_fragments: Vec::new(),
+            loops: (0..loop_count)
+                .map(|loop_index| hypercurve::BezierBooleanOutputLoop2 {
+                    first_directed_fragment_index: loop_index,
+                    directed_fragment_count: 1,
+                    anchor: point(loop_index as i32, 0),
+                })
+                .collect(),
+            closed_loop_count: loop_count,
+            directed_fragment_count: loop_count,
+            open_chain_count: 0,
+            adjacency_gap_count: 0,
+            invalid_reference_count: 0,
+            blocker_count: 0,
+        };
+        let containment_facts = (0..loop_count.saturating_sub(1))
+            .map(|container_loop_index| BezierBooleanLoopContainmentFact2 {
+                container_loop_index,
+                contained_loop_index: container_loop_index + 1,
+            })
+            .collect::<Vec<_>>();
+        let mut roles = (0..loop_count)
+            .map(|depth| {
+                if depth % 2 == 0 {
+                    BezierBooleanOutputLoopRole::Material
+                } else {
+                    BezierBooleanOutputLoopRole::Hole
+                }
+            })
+            .collect::<Vec<_>>();
+
+        let ready = BezierBooleanResultReport2::from_output_loop_containment_role_facts(
+            &output,
+            &containment_facts,
+            &roles,
+        );
+        prop_assert_eq!(ready.status, BezierBooleanResultStatus::Ready);
+
+        let flipped = flip_index % loop_count;
+        roles[flipped] = match roles[flipped] {
+            BezierBooleanOutputLoopRole::Material => BezierBooleanOutputLoopRole::Hole,
+            BezierBooleanOutputLoopRole::Hole => BezierBooleanOutputLoopRole::Material,
+            BezierBooleanOutputLoopRole::Unknown => BezierBooleanOutputLoopRole::Material,
+        };
+        let stale = BezierBooleanResultReport2::from_output_loop_containment_role_facts(
+            &output,
+            &containment_facts,
+            &roles,
+        );
+
+        prop_assert_eq!(stale.status, BezierBooleanResultStatus::RegionAssemblyBlocked);
+        prop_assert!(stale.has_blockers());
     }
 
     #[test]
