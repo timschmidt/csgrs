@@ -518,6 +518,25 @@ fn vector_display_forwards_real_formatting() {
 }
 
 #[test]
+fn finite_f64_array_boundary_is_checked_and_lossy_export_is_explicit() {
+    let vector = Vector3::try_from_f64_array([3.0, 4.0, 12.0])
+        .expect("finite primitive boundary values should lift");
+
+    assert_eq!(vector.dot(&vector), r(169));
+    assert_eq!(vector.to_f64_array_lossy(), Some([3.0, 4.0, 12.0]));
+    assert!(Vector3::try_from_f64_array([1.0, f64::NAN, 2.0]).is_err());
+    assert!(Vector4::try_from_f64_array([1.0, 2.0, f64::INFINITY, 4.0]).is_err());
+}
+
+#[test]
+fn vector3_squared_distance_stays_in_hyperreal_space() {
+    let left = Vector3::new([frac(1, 3), frac(2, 3), r(1)]);
+    let right = Vector3::new([frac(4, 3), frac(-1, 3), r(3)]);
+
+    assert_eq!(left.squared_distance(&right), r(6));
+}
+
+#[test]
 fn checked_vector_operations_reject_zero_divisors() {
     let vector = Vector3::new([r(1), r(2), r(3)]);
     let zero_vector: Vector3 = Vector3::zero();

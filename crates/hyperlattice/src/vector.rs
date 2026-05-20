@@ -1013,6 +1013,43 @@ macro_rules! impl_vector {
                 Self(values)
             }
 
+            /// Lifts a finite `f64` component array into a hyperreal-backed vector.
+            ///
+            /// This is the explicit primitive boundary for downstream crates
+            /// that still receive renderer, file-format, physics, or FFI
+            /// coordinates as `f64`. Keeping the checked lift in `hyperlattice`
+            /// lets geometry crates compose with the vector type directly
+            /// instead of reimplementing scalar promotion. This follows Yap's
+            /// exact-geometric-computation boundary discipline: finite
+            /// coordinates may enter at APIs, but topology-sensitive algebra is
+            /// then carried by exact-aware geometric objects.
+            pub fn try_from_f64_array(values: [f64; $n]) -> BlasResult<Self> {
+                crate::trace_dispatch!("hyperlattice_vector", "constructor", "from-f64-array");
+                Ok(Self(
+                    values
+                        .map(Real::try_from)
+                        .into_iter()
+                        .collect::<Result<Vec<_>, _>>()?
+                        .try_into()
+                        .expect("mapped array length is fixed"),
+                ))
+            }
+
+            /// Lossily exports this vector to finite `f64` components.
+            ///
+            /// Returns `None` if any component cannot be represented as a
+            /// finite primitive value. This makes mesh, renderer, and
+            /// serialization boundaries explicit while keeping native vector
+            /// ownership in hyperreal coordinates.
+            pub fn to_f64_array_lossy(&self) -> Option<[f64; $n]> {
+                crate::trace_dispatch!("hyperlattice_vector", "export", "to-f64-array-lossy");
+                let mut out = [0.0_f64; $n];
+                for i in 0..$n {
+                    out[i] = self.0[i].to_f64_lossy().filter(|value| value.is_finite())?;
+                }
+                Some(out)
+            }
+
             /// Returns the zero vector.
             pub fn zero() -> Self {
                 crate::trace_dispatch!("hyperlattice_vector", "constructor", "zero");
@@ -1644,6 +1681,21 @@ impl Vector3 {
             [&self.0[0], &self.0[1], &self.0[2]],
             [&rhs.0[0], &rhs.0[1], &rhs.0[2]],
         )
+    }
+
+    /// Returns the squared distance to `rhs`.
+    ///
+    /// This keeps point-distance algebra in the hyper vector layer so CAD and
+    /// mesh crates do not need to lower vectors to primitive floats just to
+    /// compare distances. Use a predicate policy such as `hyperlimit` when the
+    /// sign or ordering of this value drives topology. The object-level
+    /// algebra boundary follows Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7(1-2), 1997
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+    pub fn squared_distance(&self, rhs: &Self) -> Real {
+        crate::trace_dispatch!("hyperlattice_vector", "method", "squared-distance3");
+        let delta = self - rhs;
+        delta.dot(&delta)
     }
 
     /// Returns the dot product after attaching an abort signal to operands.
