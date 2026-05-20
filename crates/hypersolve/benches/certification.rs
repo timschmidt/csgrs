@@ -3,14 +3,15 @@ use hyperreal::{Rational, Real};
 use hypersolve::{
     Constraint, EqualitySubstitution, Expr, PreparedProblem, PreparedSolverBlock, Problem,
     ProposalEngineKind, ProposalEnginePrecision, ProposalEngineReport, RectangularRegion,
-    SolverPoint2, SymbolId, VariableBall, bezier_offset_sample_constraints,
-    build_equality_substitution_classes, center_clearance_squared_constraint,
-    certify_affine_krawczyk_box, certify_candidate, certify_candidate_domains,
-    certify_multivariate_quadratic_interval_candidate, certify_quadratic_interval_candidate,
-    certify_univariate_quadratic_alpha, certify_univariate_quadratic_krawczyk_box,
-    context_from_problem, differential_pair_skew_equation,
-    eliminate_affine_rows_with_substitution_classes, rectangular_difference_area_equation,
-    report_lossy_adapter_only_candidate, solve_direct_univariate_quadratic_equalities,
+    SolverConfig, SolverPoint2, SolverState, SymbolId, VariableBall,
+    bezier_offset_sample_constraints, build_equality_substitution_classes,
+    center_clearance_squared_constraint, certify_affine_krawczyk_box, certify_candidate,
+    certify_candidate_domains, certify_multivariate_quadratic_interval_candidate,
+    certify_quadratic_interval_candidate, certify_univariate_quadratic_alpha,
+    certify_univariate_quadratic_krawczyk_box, context_from_problem,
+    differential_pair_skew_equation, eliminate_affine_rows_with_substitution_classes,
+    rectangular_difference_area_equation, report_lossy_adapter_only_candidate,
+    solve_damped_least_squares, solve_direct_univariate_quadratic_equalities,
     squared_distance_equation,
 };
 
@@ -287,6 +288,18 @@ fn certification(c: &mut Criterion) {
                     supported: true,
                 },
             )
+        })
+    });
+    c.bench_function("solve_levenberg_marquardt_affine", |b| {
+        b.iter(|| {
+            solve_damped_least_squares(SolverState {
+                problem: affine_problem(4),
+                config: SolverConfig {
+                    max_iterations: 4,
+                    proposal_engine: ProposalEngineKind::LevenbergMarquardt,
+                    ..SolverConfig::default()
+                },
+            })
         })
     });
     let domain_problem = domain_problem(16);

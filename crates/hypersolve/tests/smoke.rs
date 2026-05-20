@@ -126,6 +126,45 @@ fn unsupported_proposal_engine_is_reported_without_dense_fallback() {
 }
 
 #[test]
+fn levenberg_marquardt_proposal_route_reports_named_lossy_adapter() {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let mut problem = Problem::default();
+    problem.add_variable("x", real(0));
+    problem.add_constraint(Constraint::equality("x minus two", x - Expr::int(2)));
+    let config = SolverConfig {
+        max_iterations: 8,
+        residual_tolerance: edge_real(1.0e-6),
+        step_tolerance: edge_real(1.0e-12),
+        damping: edge_real(1.0e-9),
+        proposal_engine: ProposalEngineKind::LevenbergMarquardt,
+    };
+
+    let report = solve_damped_least_squares(SolverState { problem, config });
+
+    assert!(matches!(
+        report.reason,
+        ConvergenceReason::Converged | ConvergenceReason::StepTooSmall
+    ));
+    assert_eq!(
+        report.proposal_engine.requested,
+        ProposalEngineKind::LevenbergMarquardt
+    );
+    assert_eq!(
+        report.proposal_engine.used,
+        Some(ProposalEngineKind::LevenbergMarquardt)
+    );
+    assert_eq!(
+        report.proposal_engine.precision,
+        ProposalEnginePrecision::LossyF64
+    );
+    assert!(
+        !report.linear_reports.is_empty(),
+        "Levenberg-Marquardt still crosses the dense f64 adapter boundary"
+    );
+    assert!(report.linear_reports.iter().all(|row| row.is_lossy()));
+}
+
+#[test]
 fn lossy_adapter_only_report_preserves_proposal_boundary_without_exact_replay() {
     let x = Expr::symbol(SymbolId(0), "x");
     let mut problem = Problem::default();

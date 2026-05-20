@@ -10,13 +10,23 @@ use crate::linalg::LinearSolveReport;
 /// least-squares/Levenberg-Marquardt, Powell hybrid, dogleg, BFGS, and SQP.
 /// Yap's exact-geometric-computation boundary still applies: numerical
 /// engines propose, exact/certified replay decides.
+///
+/// See Yap, "Towards Exact Geometric Computation," *Computational Geometry*
+/// 7.1-2 (1997), for the exact/approximate boundary; Levenberg, "A Method for
+/// the Solution of Certain Non-Linear Problems in Least Squares" (1944), and
+/// Marquardt, "An Algorithm for Least-Squares Estimation of Nonlinear
+/// Parameters" (1963), for the damped least-squares proposal family.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ProposalEngineKind {
     /// Current dense damped least-squares implementation.
     DampedLeastSquares,
     /// MINPACK-style Powell hybrid proposal engine.
     PowellHybrid,
-    /// Levenberg-Marquardt proposal engine.
+    /// Levenberg-Marquardt proposal route.
+    ///
+    /// This is implemented by the same dense damped normal-equation step as
+    /// [`Self::DampedLeastSquares`], surfaced under the Levenberg-Marquardt
+    /// name so callers can audit which lossy proposal policy they requested.
     LevenbergMarquardt,
     /// Trust-region dogleg proposal engine.
     Dogleg,
@@ -29,7 +39,7 @@ pub enum ProposalEngineKind {
 impl ProposalEngineKind {
     /// Returns whether this engine is implemented in this crate today.
     pub const fn is_implemented(self) -> bool {
-        matches!(self, Self::DampedLeastSquares)
+        matches!(self, Self::DampedLeastSquares | Self::LevenbergMarquardt)
     }
 }
 
@@ -71,12 +81,13 @@ pub struct SolveReport {
     pub iterations: usize,
     /// Proposal engine selected for candidate generation.
     ///
-    /// This makes the construction/proof boundary explicit. The current
-    /// implementation only executes dense damped least squares, while other
-    /// common geometric-constraint engines are represented as unsupported
-    /// proposal choices rather than silently falling back. Accepted coordinates
-    /// still require exact candidate certification; see Yap, "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+    /// This makes the construction/proof boundary explicit. The current dense
+    /// step supports the default damped least-squares route and the named
+    /// Levenberg-Marquardt route; other common geometric-constraint engines
+    /// are represented as unsupported proposal choices rather than silently
+    /// falling back. Accepted coordinates still require exact candidate
+    /// certification; see Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7.1-2 (1997).
     pub proposal_engine: ProposalEngineReport,
     pub residuals: Vec<ResidualEvaluation>,
     /// Linear-solver adapter reports collected during iteration.

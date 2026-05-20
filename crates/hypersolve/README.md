@@ -85,10 +85,10 @@ helpers handle small exact cases before a generic nonlinear loop is needed.
 
 Future backend work should exploit the same records: skip structural zeros, reuse
 prepared Jacobians, route affine blocks to exact/direct solvers, and report when a dense
-or sparse numeric adapter has crossed a lossy boundary. Alternative engines such as
-Powell hybrid, Levenberg-Marquardt, dogleg, BFGS, and SQP are named proposal choices;
-unsupported choices are reported rather than silently mapped to the current dense
-damped least-squares implementation.
+or sparse numeric adapter has crossed a lossy boundary. Levenberg-Marquardt is a named
+lossy route through the current dense damped normal-equation proposal step. Powell
+hybrid, dogleg, BFGS, and SQP remain named proposal choices that are reported as
+unsupported rather than silently mapped to a different implementation.
 
 ## Current Status
 

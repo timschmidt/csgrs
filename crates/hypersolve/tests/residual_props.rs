@@ -3,13 +3,14 @@ use hypersolve::{
     CertifiedCandidateStatus, Constraint, DomainCheckKind, DomainCheckStatus, EqualitySubstitution,
     EqualitySubstitutionProblem, Expr, PreparedProblem, PreparedSolverBlock, Problem,
     ProposalEngineKind, ProposalEnginePrecision, ProposalEngineReport, RectangularRegion,
-    SolverBlockRowKind, SolverPoint2, SymbolId, VariableBall, center_clearance_squared_constraint,
-    certify_affine_krawczyk_box, certify_candidate, certify_candidate_domains,
-    certify_multivariate_quadratic_interval_candidate, certify_quadratic_interval_candidate,
-    certify_univariate_quadratic_alpha, certify_univariate_quadratic_krawczyk_box,
-    context_from_problem, differential_pair_skew_equation,
-    eliminate_affine_rows_with_substitution_classes, rectangular_difference_area_equation,
-    report_lossy_adapter_only_candidate, solve_direct_univariate_quadratic_equalities,
+    SolverBlockRowKind, SolverConfig, SolverPoint2, SolverState, SymbolId, VariableBall,
+    center_clearance_squared_constraint, certify_affine_krawczyk_box, certify_candidate,
+    certify_candidate_domains, certify_multivariate_quadratic_interval_candidate,
+    certify_quadratic_interval_candidate, certify_univariate_quadratic_alpha,
+    certify_univariate_quadratic_krawczyk_box, context_from_problem,
+    differential_pair_skew_equation, eliminate_affine_rows_with_substitution_classes,
+    rectangular_difference_area_equation, report_lossy_adapter_only_candidate,
+    solve_damped_least_squares, solve_direct_univariate_quadratic_equalities,
     squared_distance_equation, validate_equality_substitutions,
 };
 use proptest::prelude::*;
@@ -229,6 +230,43 @@ proptest! {
             CertifiedCandidateStatus::LossyAdapterOnly { .. }
         ));
         prop_assert!(all_lossy_only);
+    }
+
+    #[test]
+    fn levenberg_marquardt_generated_affine_targets_report_lossy_route(
+        target in (-24_i16..=24).prop_filter("nonzero target exercises dense step", |value| *value != 0),
+    ) {
+        let x = Expr::symbol(SymbolId(0), "x");
+        let mut problem = Problem::default();
+        problem.add_variable("x", Real::from(0));
+        problem.add_constraint(Constraint::equality(
+            "generated affine target",
+            x - Expr::int(i64::from(target)),
+        ));
+        let report = solve_damped_least_squares(SolverState {
+            problem,
+            config: SolverConfig {
+                max_iterations: 8,
+                proposal_engine: ProposalEngineKind::LevenbergMarquardt,
+                ..SolverConfig::default()
+            },
+        });
+
+        prop_assert!(report.proposal_engine.supported);
+        prop_assert_eq!(
+            report.proposal_engine.requested,
+            ProposalEngineKind::LevenbergMarquardt
+        );
+        prop_assert_eq!(
+            report.proposal_engine.used,
+            Some(ProposalEngineKind::LevenbergMarquardt)
+        );
+        prop_assert_eq!(
+            report.proposal_engine.precision,
+            ProposalEnginePrecision::LossyF64
+        );
+        prop_assert!(!report.linear_reports.is_empty());
+        prop_assert!(report.linear_reports.iter().all(|row| row.is_lossy()));
     }
 
     #[test]
