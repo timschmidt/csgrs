@@ -34,12 +34,14 @@ fuzz_target!(|bytes: &[u8]| {
     }
 
     let mut idx = 0usize;
-    let tag = bytes[idx] % 12;
+    let tag = bytes[idx] % 15;
     idx += 1;
     let a = decode_real(bytes, &mut idx);
     let b = decode_real(bytes, &mut idx);
     let c = decode_real(bytes, &mut idx);
     let segments = (bytes[idx % bytes.len()] as usize % 24) + 1;
+    idx += 1;
+    let teeth = (bytes[idx % bytes.len()] as usize % 24) + 1;
 
     let mesh = match tag {
         0 => Mesh::cuboid(a, b, c, ()),
@@ -53,7 +55,10 @@ fuzz_target!(|bytes: &[u8]| {
         8 => Mesh::octahedron(a, ()),
         9 => Mesh::icosahedron(a, ()),
         10 => Mesh::torus(a, b, segments, segments, ()),
-        _ => Mesh::teardrop_cylinder(a, b, c, segments, ()),
+        11 => Mesh::teardrop_cylinder(a, b, c, segments, ()),
+        12 => Mesh::spur_gear_involute(a, teeth, b, c, 0.01 * b, segments, c, ()),
+        13 => Mesh::spur_gear_cycloid(a, teeth, teeth.saturating_add(1), b, segments, c, ()),
+        _ => Mesh::helical_involute_gear(a, teeth, b, c, 0.01 * b, segments, c, b, segments, ()),
     };
 
     assert_mesh_finite(&mesh);

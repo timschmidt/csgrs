@@ -1,10 +1,18 @@
 //! 2D Shapes as `Profile`s
 
 use crate::csg::CSG;
-use crate::float_types::{FRAC_PI_2, PI, Real, TAU, tolerance};
+use crate::float_types::{FRAC_PI_2, PI, Real, TAU, hreal_from_f64, tolerance};
 use crate::sketch::Profile;
 use hypercurve::{Contour2, CurveString2, LineSeg2, Point2, Segment2};
 use std::fmt::Debug;
+
+fn finite_profile_scalar(value: Real) -> bool {
+    hreal_from_f64(value).is_ok()
+}
+
+fn finite_profile_scalars(values: &[Real]) -> bool {
+    values.iter().all(|&value| finite_profile_scalar(value))
+}
 
 impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// Build a finite boundary sketch as a native hypercurve region.
@@ -980,8 +988,13 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         segments_per_flank: usize,
         metadata: M,
     ) -> Profile<M> {
-        assert!(teeth >= 4, "Need at least 4 teeth");
-        assert!(segments_per_flank >= 2);
+        if teeth < 4
+            || segments_per_flank < 2
+            || module <= tolerance()
+            || !finite_profile_scalars(&[module, pressure_angle_deg, clearance, backlash])
+        {
+            return Profile::empty(metadata);
+        }
 
         let m = module;
         let z = teeth as Real;
@@ -998,6 +1011,20 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         let angular_pitch = TAU / z;
         let tooth_thickness_at_pitch = angular_pitch / 2.0 - backlash / pitch_radius;
         let half_tooth_angle = tooth_thickness_at_pitch / 2.0;
+
+        if !finite_profile_scalars(&[
+            pitch_radius,
+            outer_radius,
+            base_radius,
+            tooth_thickness_at_pitch,
+            half_tooth_angle,
+        ]) || pitch_radius <= tolerance()
+            || base_radius <= tolerance()
+            || outer_radius <= base_radius
+            || tooth_thickness_at_pitch <= tolerance()
+        {
+            return Profile::empty(metadata);
+        }
 
         // Helper: generate one involute flank from r1 to r2
         let generate_flank =
@@ -1094,8 +1121,13 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         segments_per_flank: usize,
         metadata: M,
     ) -> Profile<M> {
-        assert!(teeth >= 3);
-        assert!(segments_per_flank >= 2);
+        if teeth < 3
+            || segments_per_flank < 2
+            || module <= tolerance()
+            || !finite_profile_scalars(&[module, clearance])
+        {
+            return Profile::empty(metadata);
+        }
 
         let z = teeth as Real;
         let m = module;
@@ -1113,6 +1145,19 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         // We give each tooth half the pitch for material, half for space.
         // So tooth half-angle at the pitch circle is:
         let half_tooth_angle = ang_pitch * 0.25;
+
+        if !finite_profile_scalars(&[
+            pitch_radius,
+            outer_radius,
+            root_radius,
+            ang_pitch,
+            half_tooth_angle,
+        ]) || pitch_radius <= tolerance()
+            || outer_radius <= pitch_radius
+            || half_tooth_angle <= tolerance()
+        {
+            return Profile::empty(metadata);
+        }
 
         // Total angular span per tooth profile (from left gap to right gap):
         let _span_per_tooth = 2.0 * half_tooth_angle;
@@ -1203,7 +1248,12 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         backlash: Real,
         metadata: M,
     ) -> Profile<M> {
-        assert!(num_teeth >= 1);
+        if num_teeth < 1
+            || module_ <= tolerance()
+            || !finite_profile_scalars(&[module_, pressure_angle_deg, clearance, backlash])
+        {
+            return Profile::empty(metadata);
+        }
         let m = module_;
         let p = PI * m; // linear pitch
         let addendum = m;
@@ -1216,6 +1266,14 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         // For a rack, the involute flank is a straight line at pressure angle
         let alpha = pressure_angle_deg.to_radians();
         let tan_alpha = alpha.tan();
+
+        if !finite_profile_scalars(&[
+            p, addendum, dedendum, tip_y, root_y, t, half_t, tan_alpha,
+        ]) || tan_alpha.abs() <= tolerance()
+            || t <= tolerance()
+        {
+            return Profile::empty(metadata);
+        }
 
         // Build the complete rack profile as a single closed polygon
         let mut outline = Vec::<[Real; 2]>::new();
@@ -1283,7 +1341,14 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         segments_per_flank: usize,
         metadata: M,
     ) -> Profile<M> {
-        assert!(num_teeth >= 1 && segments_per_flank >= 4);
+        if num_teeth < 1
+            || segments_per_flank < 4
+            || module_ <= tolerance()
+            || generating_radius <= tolerance()
+            || !finite_profile_scalars(&[module_, generating_radius, clearance])
+        {
+            return Profile::empty(metadata);
+        }
         let m = module_;
         let p = PI * m;
         let addendum = m;
@@ -1291,44 +1356,38 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         let _tip_y = addendum;
         let root_y = -dedendum;
 
-        let r = generating_radius;
-
-        // Curtate cycloid y(t) spans 0..2πr giving height 2r.
-        // We scale t so that y range equals addendum (= m)
-        let scale = addendum / (2.0 * r);
-
-        let mut flank: Vec<[Real; 2]> = Vec::with_capacity(segments_per_flank);
-        for i in 0..=segments_per_flank {
-            let t = PI * (i as Real) / (segments_per_flank as Real); // 0..π gives half‑trochoid
-            let x = r * (t - t.sin());
-            let y = r * (1.0 - t.cos());
-            flank.push([x * scale, y * scale]);
+        if !finite_profile_scalars(&[p, addendum, dedendum, root_y]) {
+            return Profile::empty(metadata);
         }
 
-        // Build one tooth (CCW): left flank, mirrored right flank, root bridge
-        let mut tooth: Vec<[Real; 2]> = Vec::with_capacity(flank.len() * 2 + 2);
-        // Left side (reverse so CCW)
-        for &[x, y] in flank.iter().rev() {
-            tooth.push([-x, y]);
-        }
-        // Right side
-        for &[x, y] in &flank {
-            tooth.push([x, y]);
-        }
-        // Root bridge
-        let bridge = tooth.last().unwrap()[0] + 2.0 * (r * scale - flank.last().unwrap()[0]);
-        tooth.push([bridge, root_y]);
-        tooth.push([-bridge, root_y]);
-
-        // Repeat
-        let mut outline = Vec::<[Real; 2]>::with_capacity(tooth.len() * num_teeth + 1);
+        // Build one monotone rack boundary rather than repeating a closed
+        // tooth island. The sampled cycloidal cap is intentionally composed
+        // into a single hypercurve region, avoiding self-intersections at
+        // tooth joins while preserving Profile as the 2-D shape carrier.
+        let left_edge = -0.5 * p;
+        let right_edge = (num_teeth as Real - 0.5) * p;
+        let mut top = Vec::<[Real; 2]>::with_capacity(num_teeth * segments_per_flank + 1);
         for k in 0..num_teeth {
-            let dx = (k as Real) * p;
-            for &[x, y] in &tooth {
-                outline.push([x + dx, y]);
+            let tooth_left = (k as Real - 0.5) * p;
+            for j in 0..=segments_per_flank {
+                if k > 0 && j == 0 {
+                    continue;
+                }
+                let u = j as Real / segments_per_flank as Real;
+                let theta = TAU * u;
+                let x = tooth_left + p * u;
+                let y = addendum * 0.5 * (1.0 - theta.cos());
+                top.push([x, y]);
             }
         }
-        outline.push(outline[0]);
+
+        let mut outline = Vec::<[Real; 2]>::with_capacity(top.len() + 3);
+        outline.push([left_edge, root_y]);
+        outline.push([right_edge, root_y]);
+        for point in top.into_iter().rev() {
+            outline.push(point);
+        }
+        outline.push([left_edge, root_y]);
 
         Self::polygonal_region(outline, metadata)
     }

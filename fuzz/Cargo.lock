@@ -934,6 +934,7 @@ dependencies = [
 name = "hypersdf"
 version = "0.1.0"
 dependencies = [
+ "fast-surface-nets",
  "hyperlattice",
  "hyperlimit",
  "hyperreal",
