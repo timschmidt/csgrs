@@ -2334,8 +2334,17 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     branch_vertex_count: 0,
                     resolved_overlap_count: 0,
                 };
+                let containment_roles = (0..output.loops.len())
+                    .map(|loop_index| {
+                        if loop_index % 2 == 0 {
+                            BezierBooleanOutputLoopRole::Material
+                        } else {
+                            BezierBooleanOutputLoopRole::Hole
+                        }
+                    })
+                    .collect::<Vec<_>>();
                 format!(
-                    "{:?}",
+                    "{:?}{:?}",
                     BezierBooleanResultReport2::from_quadratic_schedule_graph_fact_walk_containment_facts(
                         &schedule,
                         BooleanOp::Union,
@@ -2345,6 +2354,17 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                         &graph_facts,
                         &walk_indices,
                         &containment_facts
+                    ),
+                    BezierBooleanResultReport2::from_quadratic_schedule_graph_fact_walk_containment_role_facts(
+                        &schedule,
+                        BooleanOp::Union,
+                        &ownership_facts,
+                        first,
+                        second,
+                        &graph_facts,
+                        &walk_indices,
+                        &containment_facts,
+                        &containment_roles
                     )
                 )
             }

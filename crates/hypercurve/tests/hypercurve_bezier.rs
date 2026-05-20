@@ -8521,6 +8521,85 @@ fn bezier_boolean_result_consumes_schedule_graph_walk_containment_facts() {
 }
 
 #[test]
+fn bezier_boolean_schedule_containment_role_facts_block_stale_roles() {
+    let schedule = BezierBooleanTraversalScheduleReport2 {
+        status: BezierBooleanTraversalScheduleStatus::Ready,
+        precondition_status: BezierBooleanTraversalPreconditionStatus::Ready,
+        first_fragment_count: 2,
+        second_fragment_count: 0,
+        steps: vec![
+            hypercurve::BezierBooleanTraversalStep2 {
+                operand: BezierBooleanTraversalOperand::First,
+                fragment_index: 0,
+            },
+            hypercurve::BezierBooleanTraversalStep2 {
+                operand: BezierBooleanTraversalOperand::First,
+                fragment_index: 1,
+            },
+        ],
+        resolved_overlap_count: 0,
+        overlap_boundary_parameter_count: 0,
+        blocker_count: 0,
+    };
+    let ownership_facts = schedule
+        .steps
+        .iter()
+        .map(|step| BezierBooleanOwnershipFact2 {
+            step: step.clone(),
+            opposite_location: BezierBooleanFragmentOwnershipLocation::Outside,
+        })
+        .collect::<Vec<_>>();
+    let endpoints = [(point(0, 0), point(0, 0)), (point(1, 0), point(1, 0))];
+    let containment_facts = [BezierBooleanLoopContainmentFact2 {
+        container_loop_index: 0,
+        contained_loop_index: 1,
+    }];
+
+    let ready = BezierBooleanResultReport2::from_schedule_graph_walk_containment_role_facts(
+        &schedule,
+        BooleanOp::Union,
+        &ownership_facts,
+        &endpoints,
+        &[],
+        0,
+        0,
+        &[0, 1],
+        &containment_facts,
+        &[
+            BezierBooleanOutputLoopRole::Material,
+            BezierBooleanOutputLoopRole::Hole,
+        ],
+    );
+    assert_eq!(ready.status, BezierBooleanResultStatus::Ready);
+    assert_eq!(ready.material_loop_indices, vec![0]);
+    assert_eq!(ready.hole_loop_indices, vec![1]);
+
+    let stale = BezierBooleanResultReport2::from_schedule_graph_fact_walk_containment_role_facts(
+        &schedule,
+        BooleanOp::Union,
+        &ownership_facts,
+        &endpoints,
+        &[],
+        &BezierBooleanLoopGraphFacts2 {
+            emitted_step_count: 2,
+            branch_vertex_count: 0,
+            resolved_overlap_count: 0,
+        },
+        &[0, 1],
+        &containment_facts,
+        &[
+            BezierBooleanOutputLoopRole::Hole,
+            BezierBooleanOutputLoopRole::Material,
+        ],
+    );
+    assert_eq!(
+        stale.status,
+        BezierBooleanResultStatus::RegionAssemblyBlocked
+    );
+    assert!(stale.has_blockers());
+}
+
+#[test]
 fn bezier_boolean_output_loop_report_preserves_closure_blockers() {
     let blocked_plan = BezierBooleanLoopAssemblyPlanReport2 {
         status: BezierBooleanLoopAssemblyPlanStatus::Ready,

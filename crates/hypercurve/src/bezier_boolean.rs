@@ -7388,6 +7388,60 @@ impl BezierBooleanResultReport2 {
         )
     }
 
+    /// Accepts a scheduled endpoint result with containment-certified explicit roles.
+    ///
+    /// This is the role-certified counterpart to
+    /// [`Self::from_schedule_graph_walk_containment_facts`]. Ownership facts,
+    /// raw graph-obligation counts, graph-walk order, containment pairs, and
+    /// explicit roles are all replayed before the result is accepted. The
+    /// supplied roles must match the nesting-depth parity derived from
+    /// containment pairs, preserving Yap's "Towards Exact Geometric
+    /// Computation" (1997) predicate/construction boundary and the staged
+    /// clipping/fill split of Vatti (1992), Greiner-Hormann (1998), and
+    /// Martinez-Rueda-Feito (2009).
+    pub fn from_schedule_graph_walk_containment_role_facts(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        ownership_facts: &[BezierBooleanOwnershipFact2],
+        first_endpoints: &[(Point2, Point2)],
+        second_endpoints: &[(Point2, Point2)],
+        branch_vertex_count: usize,
+        resolved_overlap_count: usize,
+        walk_indices: &[usize],
+        containment_facts: &[BezierBooleanLoopContainmentFact2],
+        roles: &[BezierBooleanOutputLoopRole],
+    ) -> Self {
+        let facts =
+            BezierBooleanOwnershipFactReport2::from_schedule_facts(schedule, ownership_facts);
+        let ownership = facts.classify(schedule, operation);
+        let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
+        let assembly = BezierBooleanAssemblyReadinessReport2::from_fragment_counts(
+            &emission,
+            first_endpoints.len(),
+            second_endpoints.len(),
+        );
+        let plan =
+            BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(&assembly, &emission);
+        let traversal = BezierBooleanLoopGraphTraversalReport2::from_certified_walk_graph_facts(
+            &plan,
+            branch_vertex_count,
+            resolved_overlap_count,
+        );
+        let walk = BezierBooleanLoopGraphWalkReport2::from_traversal_order(
+            &traversal,
+            &plan,
+            walk_indices,
+        );
+        Self::from_graph_walk_containment_role_facts(
+            &walk,
+            &plan,
+            first_endpoints,
+            second_endpoints,
+            containment_facts,
+            roles,
+        )
+    }
+
     /// Accepts a full generic endpoint result using keyed graph and containment facts.
     ///
     /// This is the strict containment counterpart to
@@ -7431,6 +7485,46 @@ impl BezierBooleanResultReport2 {
         )
     }
 
+    /// Accepts a scheduled endpoint result with keyed graph facts and containment-certified roles.
+    pub fn from_schedule_graph_fact_walk_containment_role_facts(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        ownership_facts: &[BezierBooleanOwnershipFact2],
+        first_endpoints: &[(Point2, Point2)],
+        second_endpoints: &[(Point2, Point2)],
+        graph_facts: &BezierBooleanLoopGraphFacts2,
+        walk_indices: &[usize],
+        containment_facts: &[BezierBooleanLoopContainmentFact2],
+        roles: &[BezierBooleanOutputLoopRole],
+    ) -> Self {
+        let facts =
+            BezierBooleanOwnershipFactReport2::from_schedule_facts(schedule, ownership_facts);
+        let ownership = facts.classify(schedule, operation);
+        let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
+        let assembly = BezierBooleanAssemblyReadinessReport2::from_fragment_counts(
+            &emission,
+            first_endpoints.len(),
+            second_endpoints.len(),
+        );
+        let plan =
+            BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(&assembly, &emission);
+        let graph = BezierBooleanLoopGraphFactReport2::from_plan_facts(&plan, graph_facts);
+        let traversal = graph.to_certified_walk_traversal_report(&plan);
+        let walk = BezierBooleanLoopGraphWalkReport2::from_traversal_order(
+            &traversal,
+            &plan,
+            walk_indices,
+        );
+        Self::from_graph_walk_containment_role_facts(
+            &walk,
+            &plan,
+            first_endpoints,
+            second_endpoints,
+            containment_facts,
+            roles,
+        )
+    }
+
     /// Accepts a full quadratic Bezier result using keyed containment facts.
     pub fn from_quadratic_schedule_graph_walk_containment_facts(
         schedule: &BezierBooleanTraversalScheduleReport2,
@@ -7456,6 +7550,33 @@ impl BezierBooleanResultReport2 {
         )
     }
 
+    /// Accepts a quadratic Bezier result using containment facts and explicit roles.
+    pub fn from_quadratic_schedule_graph_walk_containment_role_facts(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        ownership_facts: &[BezierBooleanOwnershipFact2],
+        first: &BezierBooleanQuadraticFragmentReport2,
+        second: &BezierBooleanQuadraticFragmentReport2,
+        branch_vertex_count: usize,
+        resolved_overlap_count: usize,
+        walk_indices: &[usize],
+        containment_facts: &[BezierBooleanLoopContainmentFact2],
+        roles: &[BezierBooleanOutputLoopRole],
+    ) -> Self {
+        Self::from_schedule_graph_walk_containment_role_facts(
+            schedule,
+            operation,
+            ownership_facts,
+            &quadratic_fragment_endpoints(&first.fragments),
+            &quadratic_fragment_endpoints(&second.fragments),
+            branch_vertex_count,
+            resolved_overlap_count,
+            walk_indices,
+            containment_facts,
+            roles,
+        )
+    }
+
     /// Accepts a full quadratic Bezier result using keyed graph and containment facts.
     pub fn from_quadratic_schedule_graph_fact_walk_containment_facts(
         schedule: &BezierBooleanTraversalScheduleReport2,
@@ -7476,6 +7597,31 @@ impl BezierBooleanResultReport2 {
             graph_facts,
             walk_indices,
             containment_facts,
+        )
+    }
+
+    /// Accepts a quadratic Bezier result using keyed graph facts, containment facts, and explicit roles.
+    pub fn from_quadratic_schedule_graph_fact_walk_containment_role_facts(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        ownership_facts: &[BezierBooleanOwnershipFact2],
+        first: &BezierBooleanQuadraticFragmentReport2,
+        second: &BezierBooleanQuadraticFragmentReport2,
+        graph_facts: &BezierBooleanLoopGraphFacts2,
+        walk_indices: &[usize],
+        containment_facts: &[BezierBooleanLoopContainmentFact2],
+        roles: &[BezierBooleanOutputLoopRole],
+    ) -> Self {
+        Self::from_schedule_graph_fact_walk_containment_role_facts(
+            schedule,
+            operation,
+            ownership_facts,
+            &quadratic_fragment_endpoints(&first.fragments),
+            &quadratic_fragment_endpoints(&second.fragments),
+            graph_facts,
+            walk_indices,
+            containment_facts,
+            roles,
         )
     }
 
@@ -7504,6 +7650,33 @@ impl BezierBooleanResultReport2 {
         )
     }
 
+    /// Accepts a cubic Bezier result using containment facts and explicit roles.
+    pub fn from_cubic_schedule_graph_walk_containment_role_facts(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        ownership_facts: &[BezierBooleanOwnershipFact2],
+        first: &BezierBooleanCubicFragmentReport2,
+        second: &BezierBooleanCubicFragmentReport2,
+        branch_vertex_count: usize,
+        resolved_overlap_count: usize,
+        walk_indices: &[usize],
+        containment_facts: &[BezierBooleanLoopContainmentFact2],
+        roles: &[BezierBooleanOutputLoopRole],
+    ) -> Self {
+        Self::from_schedule_graph_walk_containment_role_facts(
+            schedule,
+            operation,
+            ownership_facts,
+            &cubic_fragment_endpoints(&first.fragments),
+            &cubic_fragment_endpoints(&second.fragments),
+            branch_vertex_count,
+            resolved_overlap_count,
+            walk_indices,
+            containment_facts,
+            roles,
+        )
+    }
+
     /// Accepts a full cubic Bezier result using keyed graph and containment facts.
     pub fn from_cubic_schedule_graph_fact_walk_containment_facts(
         schedule: &BezierBooleanTraversalScheduleReport2,
@@ -7524,6 +7697,31 @@ impl BezierBooleanResultReport2 {
             graph_facts,
             walk_indices,
             containment_facts,
+        )
+    }
+
+    /// Accepts a cubic Bezier result using keyed graph facts, containment facts, and explicit roles.
+    pub fn from_cubic_schedule_graph_fact_walk_containment_role_facts(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        ownership_facts: &[BezierBooleanOwnershipFact2],
+        first: &BezierBooleanCubicFragmentReport2,
+        second: &BezierBooleanCubicFragmentReport2,
+        graph_facts: &BezierBooleanLoopGraphFacts2,
+        walk_indices: &[usize],
+        containment_facts: &[BezierBooleanLoopContainmentFact2],
+        roles: &[BezierBooleanOutputLoopRole],
+    ) -> Self {
+        Self::from_schedule_graph_fact_walk_containment_role_facts(
+            schedule,
+            operation,
+            ownership_facts,
+            &cubic_fragment_endpoints(&first.fragments),
+            &cubic_fragment_endpoints(&second.fragments),
+            graph_facts,
+            walk_indices,
+            containment_facts,
+            roles,
         )
     }
 
@@ -7552,6 +7750,33 @@ impl BezierBooleanResultReport2 {
         )
     }
 
+    /// Accepts a rational quadratic/conic result using containment facts and explicit roles.
+    pub fn from_rational_quadratic_schedule_graph_walk_containment_role_facts(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        ownership_facts: &[BezierBooleanOwnershipFact2],
+        first: &BezierBooleanRationalQuadraticFragmentReport2,
+        second: &BezierBooleanRationalQuadraticFragmentReport2,
+        branch_vertex_count: usize,
+        resolved_overlap_count: usize,
+        walk_indices: &[usize],
+        containment_facts: &[BezierBooleanLoopContainmentFact2],
+        roles: &[BezierBooleanOutputLoopRole],
+    ) -> Self {
+        Self::from_schedule_graph_walk_containment_role_facts(
+            schedule,
+            operation,
+            ownership_facts,
+            &rational_quadratic_fragment_endpoints(&first.fragments),
+            &rational_quadratic_fragment_endpoints(&second.fragments),
+            branch_vertex_count,
+            resolved_overlap_count,
+            walk_indices,
+            containment_facts,
+            roles,
+        )
+    }
+
     /// Accepts a full rational quadratic/conic result using keyed graph and containment facts.
     pub fn from_rational_quadratic_schedule_graph_fact_walk_containment_facts(
         schedule: &BezierBooleanTraversalScheduleReport2,
@@ -7572,6 +7797,31 @@ impl BezierBooleanResultReport2 {
             graph_facts,
             walk_indices,
             containment_facts,
+        )
+    }
+
+    /// Accepts a rational quadratic/conic result using keyed graph facts, containment facts, and explicit roles.
+    pub fn from_rational_quadratic_schedule_graph_fact_walk_containment_role_facts(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        ownership_facts: &[BezierBooleanOwnershipFact2],
+        first: &BezierBooleanRationalQuadraticFragmentReport2,
+        second: &BezierBooleanRationalQuadraticFragmentReport2,
+        graph_facts: &BezierBooleanLoopGraphFacts2,
+        walk_indices: &[usize],
+        containment_facts: &[BezierBooleanLoopContainmentFact2],
+        roles: &[BezierBooleanOutputLoopRole],
+    ) -> Self {
+        Self::from_schedule_graph_fact_walk_containment_role_facts(
+            schedule,
+            operation,
+            ownership_facts,
+            &rational_quadratic_fragment_endpoints(&first.fragments),
+            &rational_quadratic_fragment_endpoints(&second.fragments),
+            graph_facts,
+            walk_indices,
+            containment_facts,
+            roles,
         )
     }
 
