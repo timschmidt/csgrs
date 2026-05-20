@@ -7,10 +7,7 @@ use csgrs::mesh::Mesh;
 use csgrs::polygon::Polygon;
 use csgrs::sketch::Sketch;
 use csgrs::vertex::Vertex;
-use geo::{
-    Coord, Geometry, GeometryCollection, Line, LineString, MultiPolygon,
-    Polygon as GeoPolygon, Rect, Triangle,
-};
+use hypercurve::{Contour2, CurveString2, Region2};
 use nalgebra::{Point3, Vector3};
 use proptest::prelude::*;
 use std::panic::{AssertUnwindSafe, catch_unwind};
@@ -109,23 +106,44 @@ fn path_catalog() -> Vec<Vec<Point3<Real>>> {
     ]
 }
 
+fn contour(points: &[[Real; 2]]) -> Contour2 {
+    Contour2::from_finite_ring(points).expect("adversarial catalog contour is valid")
+}
+
+fn wire(points: &[[Real; 2]]) -> CurveString2 {
+    CurveString2::from_finite_line_string(points).expect("adversarial catalog wire is valid")
+}
+
 fn sketch_catalog() -> Vec<Sketch<&'static str>> {
-    let holed = GeoPolygon::new(
-        LineString::from(vec![
-            (-2.0, -2.0),
-            (2.0, -2.0),
-            (2.0, 2.0),
-            (-2.0, 2.0),
-            (-2.0, -2.0),
-        ]),
-        vec![LineString::from(vec![
-            (-0.5, -0.5),
-            (-0.5, 0.5),
-            (0.5, 0.5),
-            (0.5, -0.5),
-            (-0.5, -0.5),
+    let holed = Region2::new(
+        vec![contour(&[
+            [-2.0, -2.0],
+            [2.0, -2.0],
+            [2.0, 2.0],
+            [-2.0, 2.0],
+        ])],
+        vec![contour(&[
+            [-0.5, -0.5],
+            [-0.5, 0.5],
+            [0.5, 0.5],
+            [0.5, -0.5],
         ])],
     );
+    let mixed_native = Sketch::from_region_and_wires(
+        Region2::from_material_contours(vec![
+            contour(&[[-1.0, -1.0], [1.0, -1.0], [1.0, 1.0], [-1.0, 1.0]]),
+            contour(&[[0.0, 0.0], [1.0, 0.0], [0.0, 1.0]]),
+        ]),
+        vec![
+            wire(&[[0.0, 0.0], [1.0, 0.0]]),
+            wire(&[[0.0, 0.0], [0.0, 1.0], [1.0, 1.0]]),
+        ],
+        "mixed_native",
+    );
+    let disjoint = Region2::from_material_contours(vec![
+        contour(&[[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]]),
+        contour(&[[2.0, 0.0], [3.0, 0.0], [3.0, 1.0], [2.0, 1.0]]),
+    ]);
 
     vec![
         Sketch::rectangle(1.0, 0.5, "rect"),
@@ -133,53 +151,9 @@ fn sketch_catalog() -> Vec<Sketch<&'static str>> {
         Sketch::circle(1.0, 16, "circle"),
         Sketch::star(5, 1.0, 0.25, "star"),
         Sketch::ring(2.0, 0.25, 24, "ring"),
-        Sketch::from_geo(Geometry::Polygon(holed).into(), "holed"),
-        Sketch::from_geo(
-            GeometryCollection(vec![
-                Geometry::Line(Line::new(Coord { x: 0.0, y: 0.0 }, Coord { x: 1.0, y: 0.0 })),
-                Geometry::LineString(LineString::from(vec![
-                    (0.0, 0.0),
-                    (0.0, 1.0),
-                    (1.0, 1.0),
-                ])),
-                Geometry::Rect(Rect::new(
-                    Coord { x: -1.0, y: -1.0 },
-                    Coord { x: 1.0, y: 1.0 },
-                )),
-                Geometry::Triangle(Triangle::new(
-                    Coord { x: 0.0, y: 0.0 },
-                    Coord { x: 1.0, y: 0.0 },
-                    Coord { x: 0.0, y: 1.0 },
-                )),
-            ]),
-            "mixed_geo",
-        ),
-        Sketch::from_geo(
-            Geometry::MultiPolygon(MultiPolygon(vec![
-                GeoPolygon::new(
-                    LineString::from(vec![
-                        (0.0, 0.0),
-                        (1.0, 0.0),
-                        (1.0, 1.0),
-                        (0.0, 1.0),
-                        (0.0, 0.0),
-                    ]),
-                    vec![],
-                ),
-                GeoPolygon::new(
-                    LineString::from(vec![
-                        (2.0, 0.0),
-                        (3.0, 0.0),
-                        (3.0, 1.0),
-                        (2.0, 1.0),
-                        (2.0, 0.0),
-                    ]),
-                    vec![],
-                ),
-            ]))
-            .into(),
-            "multipolygon",
-        ),
+        Sketch::from_region(holed, "holed"),
+        mixed_native,
+        Sketch::from_region(disjoint, "disjoint"),
     ]
 }
 
@@ -244,6 +218,30 @@ fn adversarial_extrude_vector_rejects_hyperreal_degenerate_direction() {
 }
 
 #[test]
+fn adversarial_sketch_origin_lift_uses_hyperlattice_rotation_matrix() {
+    let origin = Vertex::new(Point3::new(10.0, -2.0, 0.5), Vector3::x());
+    let mesh = Sketch::<&str>::square(1.0, "origin")
+        .origin(origin)
+        .extrude(1.0);
+
+    assert_mesh_finite(&mesh);
+    let bbox = mesh.bounding_box();
+    assert!(bbox.maxs.x - bbox.mins.x > 0.5, "{bbox:?}");
+    assert!(bbox.mins.x >= 10.0 - tolerance(), "{bbox:?}");
+
+    let hostile_origin = Vertex::new(
+        Point3::new(0.0, 0.0, 0.0),
+        Vector3::new(Real::NAN, Real::INFINITY, 0.0),
+    );
+    let hostile = Sketch::<&str>::square(1.0, "hostile")
+        .origin(hostile_origin)
+        .extrude(1.0);
+    assert_mesh_finite(&hostile);
+    let hostile_bbox = hostile.bounding_box();
+    assert!(hostile_bbox.maxs.z - hostile_bbox.mins.z > 0.5);
+}
+
+#[test]
 fn adversarial_revolve_angle_segment_and_profile_catalog_is_finite() {
     let angles = [
         -1080.0,
@@ -289,6 +287,25 @@ fn adversarial_sweep_path_catalog_is_finite() {
             assert_mesh_finite(&mesh);
         }
     }
+}
+
+#[test]
+fn adversarial_sweep_uses_hyperreal_path_closure_and_tangents() {
+    let sketch = Sketch::<()>::rectangle(0.5, 0.25, ());
+    let path = vec![
+        Point3::new(0.0, 0.0, 0.0),
+        Point3::new(1.0, 0.0, 0.0),
+        Point3::new(1.0, 1.0, 0.0),
+        Point3::new(tolerance() * 0.25, 0.0, 0.0),
+    ];
+
+    let mesh = sketch.sweep(&path);
+
+    assert_mesh_finite(&mesh);
+    assert!(
+        !mesh.polygons.is_empty(),
+        "near-closed sweep path should still emit finite side walls"
+    );
 }
 
 #[test]

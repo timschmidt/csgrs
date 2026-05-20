@@ -1,7 +1,7 @@
 //! Triangulation support for converting 2D sketches into 3D triangle streams.
 
 use crate::sketch::Sketch;
-use crate::triangulated::Triangulated3D;
+use crate::triangulated::{IndexedTriangulated3D, Triangulated3D};
 use crate::vertex::Vertex;
 use nalgebra::Vector3;
 
@@ -31,3 +31,5 @@ impl<M: Clone + Send + Sync + std::fmt::Debug> Triangulated3D for Sketch<M> {
         }
     }
 }
+
+impl<M: Clone + Send + Sync + std::fmt::Debug> IndexedTriangulated3D for Sketch<M> {}

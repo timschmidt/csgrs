@@ -1,37 +1,24 @@
-#![doc = " AMF file format support for Mesh, Sketch, and BMesh objects"]
+#![doc = " AMF file format support for Mesh and Sketch objects"]
 #![doc = ""]
 #![doc = " This module provides export functionality for AMF (Additive Manufacturing File Format),"]
 #![doc = " an XML-based format specifically designed for 3D printing and additive manufacturing."]
 
-use crate::float_types::{Real, hpoints_within_epsilon, tolerance};
-use crate::triangulated::Triangulated3D;
+use crate::float_types::Real;
+use crate::triangulated::IndexedTriangulated3D;
 use nalgebra::Point3;
 use std::fmt::Debug;
 use std::io::Write;
 
-/// Add a vertex to the list, reusing an existing one if position is within `tolerance()`.
-fn add_unique_vertex_amf(vertices: &mut Vec<Point3<Real>>, vertex: Point3<Real>) -> usize {
-    for (i, existing) in vertices.iter().enumerate() {
-        if hpoints_within_epsilon(existing, &vertex, tolerance()) {
-            return i;
-        }
-    }
-    vertices.push(vertex);
-    vertices.len() - 1
-}
-
-fn build_amf_buffers<T: Triangulated3D>(shape: &T) -> (Vec<Point3<Real>>, Vec<[usize; 3]>) {
-    let mut vertices = Vec::<Point3<Real>>::new();
-    let mut triangles = Vec::<[usize; 3]>::new();
-
-    shape.visit_triangles(|tri| {
-        let i0 = add_unique_vertex_amf(&mut vertices, tri[0].position);
-        let i1 = add_unique_vertex_amf(&mut vertices, tri[1].position);
-        let i2 = add_unique_vertex_amf(&mut vertices, tri[2].position);
-        triangles.push([i0, i1, i2]);
-    });
-
-    (vertices, triangles)
+fn build_amf_buffers<T: IndexedTriangulated3D>(
+    shape: &T,
+) -> (Vec<Point3<Real>>, Vec<[usize; 3]>) {
+    let indexed = shape.indexed_triangles();
+    let triangles = indexed
+        .faces
+        .into_iter()
+        .map(|face| face.map(|(position, _normal)| position))
+        .collect();
+    (indexed.positions, triangles)
 }
 
 #[doc = " Export any `Triangulated3D` shape to AMF format as a string"]
@@ -42,7 +29,7 @@ fn build_amf_buffers<T: Triangulated3D>(shape: &T) -> (Vec<Point3<Real>>, Vec<[u
 #[doc = " # Arguments"]
 #[doc = " * `object_name` - Name for the object in the AMF file"]
 #[doc = " * `units` - Units for the geometry (e.g., \"millimeter\", \"inch\")"]
-pub fn to_amf<T: Triangulated3D>(shape: &T, object_name: &str, units: &str) -> String {
+pub fn to_amf<T: IndexedTriangulated3D>(shape: &T, object_name: &str, units: &str) -> String {
     let (vertices, triangles) = build_amf_buffers(shape);
 
     let mut amf_content = String::new();
@@ -92,7 +79,7 @@ pub fn to_amf<T: Triangulated3D>(shape: &T, object_name: &str, units: &str) -> S
 #[doc = " * `object_name` - Name for the object in the AMF file"]
 #[doc = " * `units` - Units for the geometry (e.g., \"millimeter\", \"inch\")"]
 #[doc = " * `color` - RGB color as (red, green, blue) where each component is 0.0-1.0"]
-pub fn to_amf_with_color<T: Triangulated3D>(
+pub fn to_amf_with_color<T: IndexedTriangulated3D>(
     shape: &T,
     object_name: &str,
     units: &str,
@@ -155,7 +142,7 @@ pub fn to_amf_with_color<T: Triangulated3D>(
 #[doc = " * `writer` - Where to write the AMF data"]
 #[doc = " * `object_name` - Name for the object in the AMF file"]
 #[doc = " * `units` - Units for the geometry (e.g., \"millimeter\", \"inch\")"]
-pub fn write_amf<T: Triangulated3D, W: Write>(
+pub fn write_amf<T: IndexedTriangulated3D, W: Write>(
     shape: &T,
     writer: &mut W,
     object_name: &str,
@@ -190,31 +177,6 @@ impl<M: Clone + Debug + Send + Sync> crate::mesh::Mesh<M> {
 }
 
 impl<M: Clone + Debug + Send + Sync> crate::sketch::Sketch<M> {
-    pub fn to_amf(&self, object_name: &str, units: &str) -> String {
-        self::to_amf(self, object_name, units)
-    }
-
-    pub fn write_amf<W: Write>(
-        &self,
-        writer: &mut W,
-        object_name: &str,
-        units: &str,
-    ) -> std::io::Result<()> {
-        self::write_amf(self, writer, object_name, units)
-    }
-
-    pub fn to_amf_with_color(
-        &self,
-        object_name: &str,
-        units: &str,
-        color: (Real, Real, Real),
-    ) -> String {
-        self::to_amf_with_color(self, object_name, units, color)
-    }
-}
-
-#[cfg(feature = "bmesh")]
-impl<M: Clone + Debug + Send + Sync> crate::bmesh::BMesh<M> {
     pub fn to_amf(&self, object_name: &str, units: &str) -> String {
         self::to_amf(self, object_name, units)
     }

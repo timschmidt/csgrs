@@ -1,6 +1,6 @@
 //! Create `Mesh`s by meshing signed distance fields ([sdf](https://en.wikipedia.org/wiki/Signed_distance_function)) within a bounding box.
 
-use crate::float_types::Real;
+use crate::float_types::{Real, htriangle_area2_exceeds_epsilon};
 use crate::mesh::Mesh;
 use crate::polygon::Polygon;
 use crate::vertex::Vertex;
@@ -35,7 +35,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// # use csgrs::{mesh::Mesh, float_types::Real};
     /// # use nalgebra::Point3;
     /// // Example SDF for a sphere of radius 1.5 centered at (0,0,0)
-    /// let my_sdf = |p: &Point3<Real>| p.coords.norm() - 1.5;
+    /// let my_sdf = |p: &Point3<Real>| (p.x * p.x + p.y * p.y + p.z * p.z).sqrt() - 1.5;
     ///
     /// let resolution = (60, 60, 60);
     /// let min_pt = Point3::new(-2.0, -2.0, -2.0);
@@ -64,6 +64,13 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
 
     /// Return a Mesh created by meshing a signed distance field and diagnostics
     /// describing the sampled field and generated triangle stream.
+    ///
+    /// Surface-net vertices still arrive from `fast_surface_nets` as primitive
+    /// floats, but degenerate-triangle classification is lifted through
+    /// `hyperlattice` before topology diagnostics are recorded. This preserves
+    /// csgrs as a CAD composition layer over hyper geometry types and follows
+    /// Yap's exact-geometric-computation boundary model
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     pub fn sdf_with_diagnostics<F>(
         sdf: F,
         resolution: (usize, usize, usize),
@@ -267,7 +274,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                 continue;
             }
 
-            if triangle_area2(p0, p1, p2) <= Real::EPSILON {
+            if !htriangle_area2_exceeds_epsilon(&p0, &p1, &p2, Real::EPSILON) {
                 diagnostics.degenerate_triangle_count += 1;
             }
 
@@ -321,8 +328,4 @@ fn count_crossing_cells(field_values: &[f32], nx: u32, ny: u32, nz: u32) -> usiz
     }
 
     count
-}
-
-fn triangle_area2(a: Point3<Real>, b: Point3<Real>, c: Point3<Real>) -> Real {
-    (b - a).cross(&(c - a)).norm()
 }

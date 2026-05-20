@@ -1,7 +1,10 @@
 //! Public scalar type, tolerance configuration, and physics backend re-exports.
 
 use hyperreal::RealSign;
-use nalgebra::{Point3, Vector3};
+use nalgebra::{Matrix4, Point3, Vector3};
+#[cfg(feature = "wasm")]
+use nalgebra::{Quaternion, UnitQuaternion};
+use std::cmp::Ordering;
 
 pub use parry3d_f64 as parry3d;
 pub use rapier3d_f64 as rapier3d;
@@ -38,21 +41,330 @@ pub fn hreal_to_f64(value: &HReal) -> Option<F64> {
 }
 
 /// Promote a finite f64 boundary point to a hyperreal lattice vector.
+///
+/// The checked primitive lift is owned by `hyperlattice`; `csgrs` only adapts
+/// nalgebra's current mesh boundary type into that hyper geometry API.
 pub(crate) fn hvector3_from_point3(point: &Point3<Real>) -> Option<hyperlattice::Vector3> {
-    Some(hyperlattice::Vector3::new([
-        hreal_from_f64(point.x).ok()?,
-        hreal_from_f64(point.y).ok()?,
-        hreal_from_f64(point.z).ok()?,
-    ]))
+    hyperlattice::Vector3::try_from_f64_array([point.x, point.y, point.z]).ok()
 }
 
 /// Promote a finite f64 boundary vector to a hyperreal lattice vector.
+///
+/// Keeping the finite-array constructor in `hyperlattice` avoids duplicating
+/// scalar promotion rules in CAD code, following Yap's exact-geometric-
+/// computation split between primitive input boundaries and exact-aware
+/// geometric objects (<https://doi.org/10.1016/0925-7721(95)00040-2>).
 pub(crate) fn hvector3_from_vector3(vector: &Vector3<Real>) -> Option<hyperlattice::Vector3> {
-    Some(hyperlattice::Vector3::new([
-        hreal_from_f64(vector.x).ok()?,
-        hreal_from_f64(vector.y).ok()?,
-        hreal_from_f64(vector.z).ok()?,
-    ]))
+    hyperlattice::Vector3::try_from_f64_array([vector.x, vector.y, vector.z]).ok()
+}
+
+/// Return a finite unit vector using hyperlattice normalization.
+///
+/// This is the shared replacement for ad hoc nalgebra `.normalize()` calls in
+/// topology-sensitive import and mesh paths. Invalid primitive inputs and
+/// degenerate directions fail closed before they can become public CAD state,
+/// following Yap's exact-geometric-computation boundary discipline
+/// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+pub(crate) fn hunit_vector3(vector: &Vector3<Real>) -> Option<Vector3<Real>> {
+    let unit = hvector3_from_vector3(vector).and_then(|vector| {
+        vector
+            .normalize_checked()
+            .ok()
+            .and_then(|unit| unit.to_f64_array_lossy())
+    })?;
+    Some(Vector3::new(unit[0], unit[1], unit[2]))
+}
+
+/// Return a finite unit vector and magnitude using hyperlattice normalization.
+///
+/// This supports legacy transformation APIs that still need a primitive length
+/// term, while keeping the zero/non-finite rejection and square root in
+/// hyperreal-backed vector algebra. See Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7(1-2), 1997
+/// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+pub(crate) fn hunit_vector3_and_magnitude(
+    vector: &Vector3<Real>,
+) -> Option<(Vector3<Real>, Real)> {
+    let vector = hvector3_from_vector3(vector)?;
+    let magnitude = vector
+        .magnitude()
+        .ok()
+        .and_then(|value| hreal_to_f64(&value))?;
+    let unit = vector
+        .normalize_checked()
+        .ok()
+        .and_then(|unit| unit.to_f64_array_lossy())?;
+    Some((Vector3::new(unit[0], unit[1], unit[2]), magnitude))
+}
+
+/// Return a finite Euclidean magnitude for a public boundary vector.
+#[cfg(feature = "wasm")]
+pub(crate) fn hvector3_magnitude(vector: &Vector3<Real>) -> Option<Real> {
+    let vector = hvector3_from_vector3(vector)?;
+    vector.magnitude().ok().and_then(|value| hreal_to_f64(&value))
+}
+
+/// Return a finite dot product for two public boundary vectors.
+pub(crate) fn hvector3_dot(lhs: &Vector3<Real>, rhs: &Vector3<Real>) -> Option<Real> {
+    let lhs = hvector3_from_vector3(lhs)?;
+    let rhs = hvector3_from_vector3(rhs)?;
+    hreal_to_f64(&lhs.dot(&rhs))
+}
+
+/// Return a finite cross product for two public boundary vectors.
+///
+/// The determinant is evaluated by `hyperlattice::Vector3`, keeping vector
+/// algebra used by JS-facing CAD helpers on the hyperreal side of the primitive
+/// boundary. This follows Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7(1-2), 1997
+/// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+pub(crate) fn hvector3_cross(
+    lhs: &Vector3<Real>,
+    rhs: &Vector3<Real>,
+) -> Option<Vector3<Real>> {
+    let lhs = hvector3_from_vector3(lhs)?;
+    let rhs = hvector3_from_vector3(rhs)?;
+    let cross = lhs.cross(&rhs).to_f64_array_lossy()?;
+    Some(Vector3::new(cross[0], cross[1], cross[2]))
+}
+
+/// Return the exact-aware orientation sign of three finite XY boundary points.
+///
+/// The determinant `(b - a) x (c - a)` is assembled in `hyperreal::Real` and
+/// refined through [`hreal_sign`]. This gives finite import/export adapters a
+/// shared 2D turn predicate instead of local f64 cross products, in line with
+/// Yap's exact-geometric-computation split between primitive boundary data and
+/// exact-aware predicates (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+#[cfg(feature = "gerber-io")]
+pub(crate) fn hxy_orientation_sign(
+    a: (Real, Real),
+    b: (Real, Real),
+    c: (Real, Real),
+) -> Option<RealSign> {
+    let ax = hreal_from_f64(a.0).ok()?;
+    let ay = hreal_from_f64(a.1).ok()?;
+    let bx = hreal_from_f64(b.0).ok()?;
+    let by = hreal_from_f64(b.1).ok()?;
+    let cx = hreal_from_f64(c.0).ok()?;
+    let cy = hreal_from_f64(c.1).ok()?;
+    let det = (bx - ax.clone()) * (cy - ay.clone()) - (by - ay) * (cx - ax);
+    hreal_sign(&det)
+}
+
+/// Return a finite checked unit cross product for two public boundary vectors.
+///
+/// This is the normal-construction path for ruled surfaces and other mesh
+/// carriers that still expose `Vector3<f64>` normals. Both the determinant and
+/// zero-vector rejection stay in `hyperlattice`, following Yap's exact-
+/// geometric-computation split between finite boundary data and exact-aware
+/// geometric objects (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+pub(crate) fn hunit_cross_vector3(
+    lhs: &Vector3<Real>,
+    rhs: &Vector3<Real>,
+) -> Option<Vector3<Real>> {
+    hunit_vector3(&hvector3_cross(lhs, rhs)?)
+}
+
+/// Return a finite homogeneous rotation matrix that maps `from` onto `to`.
+///
+/// Unit-vector checks, dot products, and cross products are delegated to
+/// `hyperlattice`, then the finite boundary matrix is assembled with Rodrigues'
+/// rotation formula. This keeps orientation construction in the hyper geometry
+/// layer while preserving the transitional `Matrix4<f64>` transform API.
+///
+/// References:
+/// - Yap, "Towards Exact Geometric Computation," *Computational Geometry*
+///   7(1-2), 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+/// - Rodrigues, "Des lois géométriques qui régissent les déplacements d'un
+///   système solide dans l'espace," *Journal de Mathématiques Pures et
+///   Appliquées* 5, 1840.
+pub(crate) fn hrotation_between_vectors(
+    from: &Vector3<Real>,
+    to: &Vector3<Real>,
+) -> Option<Matrix4<Real>> {
+    let from = hunit_vector3(from)?;
+    let to = hunit_vector3(to)?;
+    let dot = hvector3_dot(&from, &to)?;
+
+    if dot >= 1.0 - tolerance() {
+        return Some(Matrix4::identity());
+    }
+
+    let (axis, angle) = if dot <= -1.0 + tolerance() {
+        let seed = if from.x.abs() < 0.9 {
+            Vector3::x()
+        } else {
+            Vector3::y()
+        };
+        (hunit_vector3(&hvector3_cross(&from, &seed)?)?, PI)
+    } else {
+        (
+            hunit_vector3(&hvector3_cross(&from, &to)?)?,
+            hangle_between_vectors(&from, &to)?,
+        )
+    };
+
+    hrotation_axis_angle(&axis, angle)
+}
+
+/// Build a finite homogeneous translation matrix from a public boundary vector.
+///
+/// The vector is first promoted through `hyperlattice` so non-finite primitive
+/// inputs cannot become CAD transforms. The returned `Matrix4<f64>` is still
+/// the transitional transform carrier, but callers no longer depend on
+/// nalgebra's translation constructor for CAD API boundaries. This follows
+/// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
+/// 7(1-2), 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+pub(crate) fn htranslation_matrix(vector: &Vector3<Real>) -> Option<Matrix4<Real>> {
+    hvector3_from_vector3(vector)?;
+    Some(Matrix4::new(
+        1.0, 0.0, 0.0, vector.x, 0.0, 1.0, 0.0, vector.y, 0.0, 0.0, 1.0, vector.z, 0.0, 0.0,
+        0.0, 1.0,
+    ))
+}
+
+/// Build a finite homogeneous non-uniform scale matrix.
+///
+/// Scale factors are promoted through the same hyperlattice boundary adapter
+/// as vectors before matrix construction. This keeps non-finite primitive
+/// values out of CAD transforms while the transitional API still transports
+/// matrices as `Matrix4<f64>`, following Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7(1-2), 1997
+/// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+pub(crate) fn hscale_matrix(sx: Real, sy: Real, sz: Real) -> Option<Matrix4<Real>> {
+    hvector3_from_vector3(&Vector3::new(sx, sy, sz))?;
+    Some(Matrix4::new(
+        sx, 0.0, 0.0, 0.0, 0.0, sy, 0.0, 0.0, 0.0, 0.0, sz, 0.0, 0.0, 0.0, 0.0, 1.0,
+    ))
+}
+
+/// Return a finite orthonormal basis perpendicular to a finite axis.
+///
+/// The input axis is normalized and both perpendicular axes are generated by
+/// `hyperlattice` cross products before finite export. This gives mesh
+/// primitive constructors one shared basis builder instead of local ad hoc
+/// seed/cross code, following Yap's exact-geometric-computation boundary model
+/// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+pub(crate) fn hperpendicular_basis(
+    axis: &Vector3<Real>,
+) -> Option<(Vector3<Real>, Vector3<Real>)> {
+    let axis = hunit_vector3(axis)?;
+    let seed = if axis.y.abs() > 0.5 {
+        Vector3::x()
+    } else {
+        Vector3::y()
+    };
+    let x = hunit_vector3(&hvector3_cross(&seed, &axis)?)?;
+    let y = hunit_vector3(&hvector3_cross(&axis, &x)?)?;
+    Some((x, y))
+}
+
+fn hrotation_axis_angle(axis: &Vector3<Real>, angle: Real) -> Option<Matrix4<Real>> {
+    let axis = hunit_vector3(axis)?;
+    let sin = angle.sin();
+    let cos = angle.cos();
+    if !sin.is_finite() || !cos.is_finite() {
+        return None;
+    }
+
+    let one_minus_cos = 1.0 - cos;
+    let x = axis.x;
+    let y = axis.y;
+    let z = axis.z;
+    Some(Matrix4::new(
+        cos + x * x * one_minus_cos,
+        x * y * one_minus_cos - z * sin,
+        x * z * one_minus_cos + y * sin,
+        0.0,
+        y * x * one_minus_cos + z * sin,
+        cos + y * y * one_minus_cos,
+        y * z * one_minus_cos - x * sin,
+        0.0,
+        z * x * one_minus_cos - y * sin,
+        z * y * one_minus_cos + x * sin,
+        cos + z * z * one_minus_cos,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+    ))
+}
+
+/// Return a finite Euclidean distance between two public boundary vectors.
+pub(crate) fn hvector3_distance(lhs: &Vector3<Real>, rhs: &Vector3<Real>) -> Option<Real> {
+    let lhs = hvector3_from_vector3(lhs)?;
+    let rhs = hvector3_from_vector3(rhs)?;
+    hreal_to_f64(&lhs.squared_distance(&rhs).sqrt().ok()?)
+}
+
+/// Return whether two public boundary vectors are orthogonal within epsilon.
+///
+/// The dot product is evaluated in hyperreal space and only the tolerance is a
+/// primitive API-boundary scalar. This follows Yap's exact-geometric-
+/// computation boundary discipline
+/// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+#[cfg(feature = "wasm")]
+pub(crate) fn hvectors_orthogonal_within(
+    lhs: &Vector3<Real>,
+    rhs: &Vector3<Real>,
+    epsilon: Real,
+) -> bool {
+    if !epsilon.is_finite() || epsilon < 0.0 {
+        return false;
+    }
+    let Some(lhs) = hvector3_from_vector3(lhs) else {
+        return false;
+    };
+    let Some(rhs) = hvector3_from_vector3(rhs) else {
+        return false;
+    };
+    let dot = lhs.dot(&rhs);
+    !hreal_gt_f64(&dot, epsilon) && !hreal_lt_f64(&dot, -epsilon)
+}
+
+/// Return the finite angle between two public boundary vectors in radians.
+///
+/// Unit-vector normalization, dot product, clamping, and arccos are delegated
+/// to hyperreal-backed `hyperlattice`, with only the final radian value
+/// exported to `f64`.
+pub(crate) fn hangle_between_vectors(
+    lhs: &Vector3<Real>,
+    rhs: &Vector3<Real>,
+) -> Option<Real> {
+    let lhs = hvector3_from_vector3(lhs)?.normalize_checked().ok()?;
+    let rhs = hvector3_from_vector3(rhs)?.normalize_checked().ok()?;
+    let mut cos_angle = lhs.dot(&rhs);
+    if hreal_gt_f64(&cos_angle, 1.0) {
+        cos_angle = hreal_from_f64(1.0).ok()?;
+    } else if hreal_lt_f64(&cos_angle, -1.0) {
+        cos_angle = hreal_from_f64(-1.0).ok()?;
+    }
+    hreal_to_f64(&hyperlattice::acos(cos_angle).ok()?)
+}
+
+/// Return a finite unit quaternion from primitive boundary components.
+///
+/// Quaternion normalization is represented as a four-dimensional hyperlattice
+/// vector normalization before crossing back into nalgebra's transform carrier.
+/// This keeps invalid JS/API quaternion components out of CAD transforms and
+/// follows Yap's exact-geometric-computation boundary model
+/// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+#[cfg(feature = "wasm")]
+pub(crate) fn hunit_quaternion(
+    w: Real,
+    x: Real,
+    y: Real,
+    z: Real,
+) -> Option<UnitQuaternion<Real>> {
+    let vector = hyperlattice::Vector4::try_from_f64_array([w, x, y, z]).ok()?;
+    let unit = vector
+        .normalize_checked()
+        .ok()
+        .and_then(|unit| unit.to_f64_array_lossy())?;
+    Some(UnitQuaternion::new_unchecked(Quaternion::new(
+        unit[0], unit[1], unit[2], unit[3],
+    )))
 }
 
 /// Compare finite f64 boundary points by squared distance in hyperreal space.
@@ -78,8 +390,75 @@ pub(crate) fn hpoints_within_epsilon(
         return false;
     };
 
-    let delta = lhs - rhs;
-    hreal_lt_f64(&delta.dot(&delta), epsilon * epsilon)
+    hreal_lt_f64(&lhs.squared_distance(&rhs), epsilon * epsilon)
+}
+
+/// Return the finite Euclidean distance between two public boundary points.
+///
+/// Distance construction and square root are delegated to `hyperlattice` /
+/// `hyperreal`; only the final value crosses back to `f64`. Callers that need
+/// topology-sensitive segment lengths should use this instead of nalgebra
+/// vector norms, in line with Yap's exact-geometric-computation layering
+/// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+pub(crate) fn hpoint_distance(lhs: &Point3<Real>, rhs: &Point3<Real>) -> Option<Real> {
+    let lhs = hvector3_from_point3(lhs)?;
+    let rhs = hvector3_from_point3(rhs)?;
+    hreal_to_f64(&lhs.squared_distance(&rhs).sqrt().ok()?)
+}
+
+/// Return the finite area of a triangle from public boundary points.
+///
+/// The doubled-area determinant `(b-a) x (c-a)` and magnitude are evaluated in
+/// `hyperlattice::Vector3`/`hyperreal::Real`; only the final reporting scalar
+/// crosses back to `f64`. This avoids repeating local nalgebra cross/dot area
+/// predicates in mesh quality and import paths, following Yap, "Towards Exact
+/// Geometric Computation," *Computational Geometry* 7(1-2), 1997
+/// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+pub(crate) fn htriangle_area(
+    a: &Point3<Real>,
+    b: &Point3<Real>,
+    c: &Point3<Real>,
+) -> Option<Real> {
+    let a = hvector3_from_point3(a)?;
+    let b = hvector3_from_point3(b)?;
+    let c = hvector3_from_point3(c)?;
+    let area2 = (&b - &a).cross(&(&c - &a));
+    let magnitude_squared = area2.dot(&area2);
+    if !hreal_gt_f64(&magnitude_squared, tolerance() * tolerance()) {
+        return None;
+    }
+    let twice_area = magnitude_squared.sqrt().ok()?;
+    hreal_to_f64(&twice_area).map(|twice_area| twice_area * 0.5)
+}
+
+/// Return true when a triangle's doubled area exceeds `epsilon`.
+///
+/// The public mesh carrier still stores nalgebra points during the transition,
+/// but degenerate-triangle predicates should be evaluated after promotion to
+/// `hyperlattice::Vector3`. This keeps topology-affecting area checks in the
+/// exact-aware geometry layer, following Yap's exact-geometric-computation
+/// boundary model (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+#[cfg(any(feature = "sdf", feature = "metaballs"))]
+pub(crate) fn htriangle_area2_exceeds_epsilon(
+    a: &Point3<Real>,
+    b: &Point3<Real>,
+    c: &Point3<Real>,
+    epsilon: Real,
+) -> bool {
+    if !epsilon.is_finite() || epsilon <= 0.0 {
+        return false;
+    }
+    let Some(a) = hvector3_from_point3(a) else {
+        return false;
+    };
+    let Some(b) = hvector3_from_point3(b) else {
+        return false;
+    };
+    let Some(c) = hvector3_from_point3(c) else {
+        return false;
+    };
+    let area2 = (&b - &a).cross(&(&c - &a));
+    hreal_gt_f64(&area2.dot(&area2), epsilon * epsilon)
 }
 
 /// Compare finite f64 boundary vectors by squared distance in hyperreal space.
@@ -104,8 +483,7 @@ pub(crate) fn hvectors_within_epsilon(
         return false;
     };
 
-    let delta = lhs - rhs;
-    hreal_lt_f64(&delta.dot(&delta), epsilon * epsilon)
+    hreal_lt_f64(&lhs.squared_distance(&rhs), epsilon * epsilon)
 }
 
 /// Refine the sign of a hyperreal expression for topology decisions.
@@ -135,13 +513,52 @@ pub(crate) fn hreal_lt_f64(value: &HReal, threshold: F64) -> bool {
     )
 }
 
-use core::str::FromStr;
+/// Compare two finite f64 API-boundary scalar values in hyperreal space.
+///
+/// This is intentionally a boundary adapter, not a replacement for native
+/// hyperreal scalar ownership. It is used when external libraries report
+/// primitive parameters, but csgrs still needs topology-affecting ordering to
+/// follow the same exact-geometric-computation discipline as point/vector
+/// predicates (Yap, *Computational Geometry* 7(1-2), 1997,
+/// <https://doi.org/10.1016/0925-7721(95)00040-2>).
+pub(crate) fn hreal_cmp_f64(lhs: F64, rhs: F64) -> Ordering {
+    let (Ok(lhs), Ok(rhs)) = (hreal_from_f64(lhs), hreal_from_f64(rhs)) else {
+        return Ordering::Equal;
+    };
+    match hreal_sign(&(lhs - rhs)) {
+        Some(RealSign::Positive) => Ordering::Greater,
+        Some(RealSign::Negative) => Ordering::Less,
+        Some(RealSign::Zero) | None => Ordering::Equal,
+    }
+}
+
+/// Return true when two finite f64 API-boundary scalars are within `epsilon`.
+///
+/// The squared difference is evaluated in `hyperreal::Real` so callers avoid
+/// mixing f64 subtraction, absolute value, and tolerance logic in local CAD
+/// code. This follows the same Yap exact-computation boundary model cited in
+/// [`hreal_cmp_f64`].
+pub(crate) fn hreal_f64s_within_epsilon(lhs: F64, rhs: F64, epsilon: F64) -> bool {
+    if !epsilon.is_finite() || epsilon <= 0.0 {
+        return false;
+    }
+    let (Ok(lhs), Ok(rhs)) = (hreal_from_f64(lhs), hreal_from_f64(rhs)) else {
+        return false;
+    };
+    let delta = lhs - rhs;
+    hreal_lt_f64(&(delta.clone() * delta), epsilon * epsilon)
+}
+
 use std::sync::OnceLock;
 
 /// Lazily-initialized tolerance used across the crate.
-/// Defaults to `1e-6`, but can be overridden:
-///  1) **Build-time**: set env var `CSGRS_TOLERANCE` (e.g. `CSGRS_TOLERANCE=1e-6 cargo build`)
-///  2) **Runtime**: call [`set_tolerance`] once before using the library
+///
+/// Defaults to `1e-6` and may be overridden once at runtime with
+/// [`set_tolerance`]. Tolerance is deliberately not a Cargo/build-time knob:
+/// primitive `f32`/`f64` values are API-boundary data, while internal geometry
+/// promotes predicates into hyperreal space. Keeping that split explicit follows
+/// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
+/// 7(1-2), 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>).
 static TOLERANCE_CELL: OnceLock<Real> = OnceLock::new();
 
 #[inline]
@@ -150,24 +567,23 @@ const fn default_tolerance() -> Real {
 }
 
 /// Returns the current epsilon value.
-/// If not set yet, it tries `CSGRS_EPSILON` (parsed as the active `Real`) and
-/// falls back to a sensible default.
+/// If no runtime override was installed, this returns the crate default.
 pub fn tolerance() -> Real {
-    *TOLERANCE_CELL.get_or_init(|| {
-        // Compile-time env if provided, inherited by dependencies
-        if let Some(environment_variable) = option_env!("CSGRS_TOLERANCE") {
-            if let Ok(value) = Real::from_str(environment_variable) {
-                return value.max(Real::EPSILON);
-            }
-        }
-        default_tolerance()
-    })
+    *TOLERANCE_CELL.get_or_init(default_tolerance)
 }
 
 /// Set epsilon programmatically once (subsequent calls are ignored).
-/// Call near program start: `csgrs::float_types::set_epsilon(1e-6);`
+///
+/// Call near program start: `csgrs::float_types::set_tolerance(1e-6);`.
+/// Non-finite values are rejected back to the default because only finite
+/// primitive floats are accepted at csgrs API boundaries.
 pub fn set_tolerance(value: Real) {
-    let _ = TOLERANCE_CELL.set(value.max(Real::EPSILON));
+    let value = if value.is_finite() {
+        value.max(Real::EPSILON)
+    } else {
+        default_tolerance()
+    };
+    let _ = TOLERANCE_CELL.set(value);
 }
 
 /// Archimedes' constant (π)
@@ -226,5 +642,229 @@ mod tests {
         assert!(hvectors_within_epsilon(&lhs, &near, epsilon));
         assert!(!hvectors_within_epsilon(&lhs, &distant, epsilon));
         assert!(!hvectors_within_epsilon(&lhs, &nonfinite, epsilon));
+    }
+
+    #[test]
+    fn hunit_vector3_rejects_degenerate_and_nonfinite_inputs() {
+        let unit = hunit_vector3(&Vector3::new(3.0, 4.0, 0.0)).unwrap();
+        assert!(hreal_f64s_within_epsilon(unit.x, 0.6, tolerance()));
+        assert!(hreal_f64s_within_epsilon(unit.y, 0.8, tolerance()));
+        assert!(hreal_f64s_within_epsilon(unit.z, 0.0, tolerance()));
+
+        assert!(hunit_vector3(&Vector3::zeros()).is_none());
+        assert!(hunit_vector3(&Vector3::new(1.0, f64::NAN, 0.0)).is_none());
+    }
+
+    #[test]
+    fn hunit_vector3_and_magnitude_exports_finite_length() {
+        let (unit, magnitude) =
+            hunit_vector3_and_magnitude(&Vector3::new(0.0, 0.0, -2.5)).unwrap();
+        assert!(hreal_f64s_within_epsilon(unit.x, 0.0, tolerance()));
+        assert!(hreal_f64s_within_epsilon(unit.y, 0.0, tolerance()));
+        assert!(hreal_f64s_within_epsilon(unit.z, -1.0, tolerance()));
+        assert!(hreal_f64s_within_epsilon(magnitude, 2.5, tolerance()));
+
+        assert!(hunit_vector3_and_magnitude(&Vector3::zeros()).is_none());
+        assert!(
+            hunit_vector3_and_magnitude(&Vector3::new(Real::INFINITY, 0.0, 0.0)).is_none()
+        );
+    }
+
+    #[test]
+    fn hrotation_between_vectors_maps_axes_and_rejects_hostile_inputs() {
+        let x_to_y = hrotation_between_vectors(&Vector3::x(), &Vector3::y()).unwrap();
+        let rotated =
+            Point3::from_homogeneous(x_to_y * Point3::new(1.0, 0.0, 0.0).to_homogeneous())
+                .unwrap();
+        assert!(hreal_f64s_within_epsilon(rotated.x, 0.0, tolerance()));
+        assert!(hreal_f64s_within_epsilon(rotated.y, 1.0, tolerance()));
+        assert!(hreal_f64s_within_epsilon(rotated.z, 0.0, tolerance()));
+
+        let opposite = hrotation_between_vectors(&Vector3::x(), &-Vector3::x()).unwrap();
+        let rotated =
+            Point3::from_homogeneous(opposite * Point3::new(1.0, 0.0, 0.0).to_homogeneous())
+                .unwrap();
+        assert!(hreal_f64s_within_epsilon(rotated.x, -1.0, tolerance()));
+        assert!(hreal_f64s_within_epsilon(rotated.y, 0.0, tolerance()));
+        assert!(hreal_f64s_within_epsilon(rotated.z, 0.0, tolerance()));
+
+        assert!(
+            hrotation_between_vectors(&Vector3::new(Real::NAN, 0.0, 0.0), &Vector3::z())
+                .is_none()
+        );
+        assert!(hrotation_between_vectors(&Vector3::zeros(), &Vector3::z()).is_none());
+    }
+
+    #[test]
+    fn htranslation_matrix_rejects_nonfinite_boundary_vectors() {
+        let matrix = htranslation_matrix(&Vector3::new(1.0, -2.0, 3.0)).unwrap();
+        let moved =
+            Point3::from_homogeneous(matrix * Point3::new(4.0, 5.0, 6.0).to_homogeneous())
+                .unwrap();
+        assert!(hreal_f64s_within_epsilon(moved.x, 5.0, tolerance()));
+        assert!(hreal_f64s_within_epsilon(moved.y, 3.0, tolerance()));
+        assert!(hreal_f64s_within_epsilon(moved.z, 9.0, tolerance()));
+
+        assert!(htranslation_matrix(&Vector3::new(0.0, Real::NAN, 0.0)).is_none());
+    }
+
+    #[test]
+    fn hscale_matrix_rejects_nonfinite_scale_factors() {
+        let matrix = hscale_matrix(2.0, 3.0, -4.0).unwrap();
+        let scaled =
+            Point3::from_homogeneous(matrix * Point3::new(1.0, 2.0, -3.0).to_homogeneous())
+                .unwrap();
+        assert!(hreal_f64s_within_epsilon(scaled.x, 2.0, tolerance()));
+        assert!(hreal_f64s_within_epsilon(scaled.y, 6.0, tolerance()));
+        assert!(hreal_f64s_within_epsilon(scaled.z, 12.0, tolerance()));
+
+        assert!(hscale_matrix(1.0, Real::INFINITY, 1.0).is_none());
+    }
+
+    #[test]
+    fn hperpendicular_basis_returns_unit_orthogonal_axes() {
+        let axis = Vector3::new(1.0, 2.0, 3.0);
+        let axis_unit = hunit_vector3(&axis).unwrap();
+        let (x, y) = hperpendicular_basis(&axis).unwrap();
+
+        assert!(hreal_f64s_within_epsilon(
+            hvector3_dot(&x, &axis_unit).unwrap(),
+            0.0,
+            tolerance()
+        ));
+        assert!(hreal_f64s_within_epsilon(
+            hvector3_dot(&y, &axis_unit).unwrap(),
+            0.0,
+            tolerance()
+        ));
+        assert!(hreal_f64s_within_epsilon(
+            hvector3_dot(&x, &y).unwrap(),
+            0.0,
+            tolerance()
+        ));
+        assert!(hreal_f64s_within_epsilon(
+            hvector3_dot(&x, &x).unwrap(),
+            1.0,
+            tolerance()
+        ));
+        assert!(hreal_f64s_within_epsilon(
+            hvector3_dot(&y, &y).unwrap(),
+            1.0,
+            tolerance()
+        ));
+        let handed_normal = hunit_vector3(&hvector3_cross(&x, &y).unwrap()).unwrap();
+        assert!(hreal_f64s_within_epsilon(
+            hvector3_dot(&handed_normal, &axis_unit).unwrap(),
+            1.0,
+            tolerance()
+        ));
+
+        assert!(hperpendicular_basis(&Vector3::zeros()).is_none());
+        assert!(hperpendicular_basis(&Vector3::new(Real::NAN, 0.0, 0.0)).is_none());
+    }
+
+    #[test]
+    fn hunit_cross_vector3_rejects_degenerate_and_nonfinite_inputs() {
+        let normal = hunit_cross_vector3(&Vector3::x(), &Vector3::y()).unwrap();
+        assert!(hreal_f64s_within_epsilon(
+            hvector3_dot(&normal, &Vector3::z()).unwrap(),
+            1.0,
+            tolerance()
+        ));
+
+        assert!(hunit_cross_vector3(&Vector3::x(), &Vector3::x()).is_none());
+        assert!(
+            hunit_cross_vector3(&Vector3::new(Real::NAN, 0.0, 0.0), &Vector3::y()).is_none()
+        );
+    }
+
+    #[test]
+    #[cfg(feature = "mesh")]
+    fn htriangle_area_rejects_degenerate_and_nonfinite_boundary_points() {
+        let a = Point3::new(0.0, 0.0, 0.0);
+        let b = Point3::new(2.0, 0.0, 0.0);
+        let c = Point3::new(0.0, 3.0, 0.0);
+
+        assert!(hreal_f64s_within_epsilon(
+            htriangle_area(&a, &b, &c).unwrap(),
+            3.0,
+            tolerance()
+        ));
+        assert!(htriangle_area(&a, &a, &c).is_none());
+        assert!(htriangle_area(&a, &Point3::new(Real::NAN, 0.0, 0.0), &c).is_none());
+    }
+
+    #[test]
+    #[cfg(feature = "gerber-io")]
+    fn hxy_orientation_sign_rejects_nonfinite_and_classifies_turns() {
+        assert!(matches!(
+            hxy_orientation_sign((0.0, 0.0), (1.0, 0.0), (0.0, 1.0)),
+            Some(RealSign::Positive)
+        ));
+        assert!(matches!(
+            hxy_orientation_sign((0.0, 0.0), (0.0, 1.0), (1.0, 0.0)),
+            Some(RealSign::Negative)
+        ));
+        assert!(matches!(
+            hxy_orientation_sign((0.0, 0.0), (1.0, 1.0), (2.0, 2.0)),
+            Some(RealSign::Zero)
+        ));
+        assert!(hxy_orientation_sign((0.0, 0.0), (Real::NAN, 1.0), (2.0, 2.0)).is_none());
+    }
+
+    #[test]
+    #[cfg(feature = "wasm")]
+    fn hyper_vector_boundary_angle_and_dot_reject_nonfinite_inputs() {
+        let x = Vector3::x();
+        let y = Vector3::y();
+
+        assert!(hreal_f64s_within_epsilon(
+            hvector3_magnitude(&Vector3::new(0.0, 3.0, 4.0)).unwrap(),
+            5.0,
+            tolerance()
+        ));
+        assert!(hreal_f64s_within_epsilon(
+            hvector3_dot(&x, &y).unwrap(),
+            0.0,
+            tolerance()
+        ));
+        assert!(hvectors_orthogonal_within(&x, &y, tolerance()));
+        assert!(hreal_f64s_within_epsilon(
+            hangle_between_vectors(&x, &y).unwrap(),
+            FRAC_PI_2,
+            tolerance()
+        ));
+
+        let hostile = Vector3::new(Real::NAN, Real::INFINITY, 0.0);
+        assert!(hvector3_magnitude(&hostile).is_none());
+        assert!(hvector3_dot(&x, &hostile).is_none());
+        assert!(!hvectors_orthogonal_within(&x, &hostile, tolerance()));
+        assert!(hangle_between_vectors(&x, &hostile).is_none());
+    }
+
+    #[test]
+    #[cfg(feature = "wasm")]
+    fn hunit_quaternion_rejects_degenerate_and_nonfinite_components() {
+        let q = hunit_quaternion(2.0, 0.0, 0.0, 0.0).unwrap();
+        assert!(hreal_f64s_within_epsilon(q.scalar(), 1.0, tolerance()));
+        assert!(hreal_f64s_within_epsilon(q.vector().x, 0.0, tolerance()));
+
+        assert!(hunit_quaternion(0.0, 0.0, 0.0, 0.0).is_none());
+        assert!(hunit_quaternion(1.0, Real::NAN, 0.0, Real::INFINITY).is_none());
+    }
+
+    #[test]
+    fn hreal_scalar_boundary_comparison_rejects_nonfinite_values() {
+        let epsilon = 1e-6;
+
+        assert_eq!(hreal_cmp_f64(1.0, 2.0), Ordering::Less);
+        assert_eq!(hreal_cmp_f64(2.0, 1.0), Ordering::Greater);
+        assert_eq!(hreal_cmp_f64(1.0, 1.0), Ordering::Equal);
+        assert_eq!(hreal_cmp_f64(f64::NAN, 1.0), Ordering::Equal);
+
+        assert!(hreal_f64s_within_epsilon(1.0, 1.0 + epsilon * 0.25, epsilon));
+        assert!(!hreal_f64s_within_epsilon(1.0, 1.0 + epsilon * 2.0, epsilon));
+        assert!(!hreal_f64s_within_epsilon(1.0, f64::INFINITY, epsilon));
+        assert!(!hreal_f64s_within_epsilon(1.0, 1.0, 0.0));
     }
 }

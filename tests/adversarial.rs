@@ -1,7 +1,7 @@
 //! Broad adversarial tests for geometry constructors, booleans, and invariants.
 
 use csgrs::csg::CSG;
-use csgrs::float_types::{Real, tolerance};
+use csgrs::float_types::{PI, Real, hreal_from_f64, tolerance};
 #[cfg(feature = "svg-io")]
 use csgrs::io::svg::FromSVG;
 use csgrs::mesh::Mesh;
@@ -10,8 +10,10 @@ use csgrs::mesh::connectivity::VertexIndexMap;
 use csgrs::mesh::plane::Plane;
 use csgrs::polygon::Polygon;
 use csgrs::sketch::Sketch;
-use csgrs::vertex::Vertex;
+use csgrs::triangulated::{IndexedTriangulated3D, Triangulated3D};
+use csgrs::vertex::{Vertex, VertexCluster};
 use hashbrown::HashMap;
+use hypercurve::Point2 as HPoint2;
 use nalgebra::{Matrix4, Point3, Vector3};
 use proptest::prelude::*;
 use std::io::Cursor;
@@ -322,25 +324,29 @@ fn adversarial_sketch_constructor_sweep_does_not_corrupt_successes() {
         for &b in scalars {
             for &segments in &counts {
                 if let Ok(sketch) = catch_unwind(AssertUnwindSafe(|| Sketch::square(a, ()))) {
-                    let _ = sketch.to_multipolygon();
+                    let _ = sketch.region_profiles();
+                    let _ = sketch.wire_polylines();
                     let _ = catch_unwind(AssertUnwindSafe(|| sketch.triangulate()));
                 }
                 if let Ok(sketch) =
                     catch_unwind(AssertUnwindSafe(|| Sketch::rectangle(a, b, ())))
                 {
-                    let _ = sketch.to_multipolygon();
+                    let _ = sketch.region_profiles();
+                    let _ = sketch.wire_polylines();
                     let _ = catch_unwind(AssertUnwindSafe(|| sketch.triangulate()));
                 }
                 if let Ok(sketch) =
                     catch_unwind(AssertUnwindSafe(|| Sketch::circle(a, segments, ())))
                 {
-                    let _ = sketch.to_multipolygon();
+                    let _ = sketch.region_profiles();
+                    let _ = sketch.wire_polylines();
                     let _ = catch_unwind(AssertUnwindSafe(|| sketch.triangulate()));
                 }
                 if let Ok(sketch) =
                     catch_unwind(AssertUnwindSafe(|| Sketch::ellipse(a, b, segments, ())))
                 {
-                    let _ = sketch.to_multipolygon();
+                    let _ = sketch.region_profiles();
+                    let _ = sketch.wire_polylines();
                     let _ = catch_unwind(AssertUnwindSafe(|| sketch.triangulate()));
                 }
             }
@@ -371,6 +377,26 @@ fn adversarial_invalid_polygon_catalog_is_contained() {
             assert_triangles_finite(&triangles);
         }
     }
+}
+
+#[test]
+fn adversarial_sketch_polygon_points_uses_hypercurve_points_directly() {
+    let points = [
+        HPoint2::new(hreal_from_f64(0.0).unwrap(), hreal_from_f64(0.0).unwrap()),
+        HPoint2::new(hreal_from_f64(2.0).unwrap(), hreal_from_f64(0.0).unwrap()),
+        HPoint2::new(hreal_from_f64(1.0).unwrap(), hreal_from_f64(1.0).unwrap()),
+    ];
+    let sketch = Sketch::<()>::polygon_points(&points, ());
+
+    assert!(!sketch.is_empty());
+    assert!(sketch.contains_xy(1.0, 0.25).unwrap_or(false));
+
+    let duplicate = [
+        HPoint2::new(hreal_from_f64(0.0).unwrap(), hreal_from_f64(0.0).unwrap()),
+        HPoint2::new(hreal_from_f64(0.0).unwrap(), hreal_from_f64(0.0).unwrap()),
+        HPoint2::new(hreal_from_f64(1.0).unwrap(), hreal_from_f64(0.0).unwrap()),
+    ];
+    assert!(Sketch::<()>::polygon_points(&duplicate, ()).is_empty());
 }
 
 #[test]
@@ -453,6 +479,369 @@ fn adversarial_transform_matrix_fuzz_regression_preserves_finite_normals() {
 }
 
 #[test]
+fn adversarial_transform_normals_use_hyperreal_checked_normalization() {
+    let mesh: Mesh<()> = Mesh::cube(1.0, ());
+    let matrix = Matrix4::new_nonuniform_scaling(&Vector3::new(2.0, 3.0, 4.0));
+
+    let transformed = mesh.transform(&matrix);
+
+    assert_mesh_sane(&transformed);
+    for vertex in transformed.vertices() {
+        assert!((vertex.normal.norm() - 1.0).abs() < tolerance());
+    }
+}
+
+#[test]
+fn adversarial_mesh_triangulated_visit_uses_hyperreal_checked_normals() {
+    let mesh: Mesh<()> = Mesh::cube(1.0, ());
+    let mut count = 0usize;
+
+    mesh.visit_triangles(|triangle| {
+        count += 1;
+        for vertex in triangle {
+            assert_vertex_finite(&vertex);
+            assert!((vertex.normal.norm() - 1.0).abs() < tolerance());
+        }
+    });
+
+    assert!(count > 0);
+}
+
+#[test]
+fn adversarial_mesh_exports_closed_cube_to_hypermesh_exact() {
+    let mesh: Mesh<()> = Mesh::cube(2.0, ());
+    let buffers = mesh.to_hypermesh_buffers();
+
+    assert_eq!(buffers.positions.len(), 8 * 3);
+    assert_eq!(buffers.indices.len(), 12 * 3);
+    assert!(mesh.inspect_hypermesh_input().edge_ready());
+
+    let exact = mesh
+        .to_hypermesh_exact()
+        .expect("closed cube should validate as an exact hypermesh solid");
+    exact
+        .validate_retained_state()
+        .expect("retained hypermesh facts should replay");
+    assert_eq!(exact.vertices().len(), 8);
+    assert_eq!(exact.triangles().len(), 12);
+    assert_eq!(
+        exact.validation_policy(),
+        hypermesh::exact::ValidationPolicy::CLOSED
+    );
+}
+
+#[test]
+fn adversarial_hypermesh_adapter_keeps_surface_policy_explicit() {
+    let normal = Vector3::z();
+    let triangle = Polygon::new(
+        vec![
+            Vertex::new(Point3::new(0.0, 0.0, 0.0), normal),
+            Vertex::new(Point3::new(1.0, 0.0, 0.0), normal),
+            Vertex::new(Point3::new(0.0, 1.0, 0.0), normal),
+        ],
+        (),
+    );
+    let mesh = Mesh::from_polygons(&[triangle], ());
+
+    assert!(mesh.to_hypermesh_exact().is_err());
+    let surface = mesh
+        .to_hypermesh_exact_with_policy(hypermesh::exact::ValidationPolicy::ALLOW_BOUNDARY)
+        .expect("single triangle should remain an explicit boundary surface");
+    assert_eq!(
+        surface.validation_policy(),
+        hypermesh::exact::ValidationPolicy::ALLOW_BOUNDARY
+    );
+}
+
+#[test]
+fn adversarial_hypermesh_adapter_reports_degenerate_topology_before_construction() {
+    let normal = Vector3::z();
+    let degenerate = Polygon::new(
+        vec![
+            Vertex::new(Point3::new(0.0, 0.0, 0.0), normal),
+            Vertex::new(Point3::new(-0.0, 0.0, 0.0), normal),
+            Vertex::new(Point3::new(1.0, 0.0, 0.0), normal),
+        ],
+        (),
+    );
+    let mesh = Mesh::from_polygons(&[degenerate], ());
+    let report = mesh.inspect_hypermesh_input();
+
+    assert!(!report.edge_ready());
+    assert!(mesh.to_hypermesh_exact().is_err());
+}
+
+#[test]
+fn adversarial_hypermesh_adapter_rejects_nonfinite_struct_literal_vertices() {
+    let malicious = Polygon {
+        vertices: vec![
+            Vertex {
+                position: Point3::new(0.0, 0.0, 0.0),
+                normal: Vector3::z(),
+            },
+            Vertex {
+                position: Point3::new(Real::NAN, 0.0, 0.0),
+                normal: Vector3::z(),
+            },
+            Vertex {
+                position: Point3::new(1.0, 0.0, 0.0),
+                normal: Vector3::z(),
+            },
+        ],
+        plane: Plane::from_normal(Vector3::z(), 0.0),
+        bounding_box: std::sync::OnceLock::new(),
+        metadata: (),
+    };
+    let mesh = Mesh {
+        polygons: vec![malicious],
+        bounding_box: std::sync::OnceLock::new(),
+        query_trimesh: std::sync::OnceLock::new(),
+        metadata: (),
+    };
+
+    let buffers = mesh.to_hypermesh_buffers();
+    assert!(
+        buffers
+            .positions
+            .iter()
+            .all(|coordinate| coordinate.is_finite())
+    );
+    assert_eq!(buffers.positions.len(), 0);
+    assert!(mesh.to_hypermesh_exact().is_err());
+    assert!(mesh.to_hypermesh_handoff_package().is_err());
+}
+
+#[test]
+fn adversarial_is_manifold_uses_hypermesh_closed_manifold_facts() {
+    let cube: Mesh<()> = Mesh::cube(2.0, ());
+    assert!(cube.is_manifold());
+
+    let normal = Vector3::z();
+    let open_triangle = Polygon::new(
+        vec![
+            Vertex::new(Point3::new(0.0, 0.0, 0.0), normal),
+            Vertex::new(Point3::new(1.0, 0.0, 0.0), normal),
+            Vertex::new(Point3::new(0.0, 1.0, 0.0), normal),
+        ],
+        (),
+    );
+    assert!(!Mesh::from_polygons(&[open_triangle], ()).is_manifold());
+}
+
+#[test]
+fn adversarial_is_manifold_rejects_quantized_edge_false_positive() {
+    let normal = Vector3::z();
+    let offset = 4.0e-7;
+    let polygons = vec![
+        Polygon::new(
+            vec![
+                Vertex::new(Point3::new(0.0, 0.0, 0.0), normal),
+                Vertex::new(Point3::new(1.0, 0.0, 0.0), normal),
+                Vertex::new(Point3::new(0.0, 1.0, 0.0), normal),
+            ],
+            (),
+        ),
+        Polygon::new(
+            vec![
+                Vertex::new(Point3::new(offset, 0.0, 0.0), -normal),
+                Vertex::new(Point3::new(0.0, 1.0 + offset, 0.0), -normal),
+                Vertex::new(Point3::new(1.0 + offset, 0.0, 0.0), -normal),
+            ],
+            (),
+        ),
+    ];
+
+    let mesh = Mesh::from_polygons(&polygons, ());
+    assert!(!mesh.is_manifold());
+    assert!(mesh.to_hypermesh_exact().is_err());
+}
+
+#[test]
+fn adversarial_vertices_and_indices_share_hypermesh_topology() {
+    let mesh: Mesh<()> = Mesh::cube(2.0, ());
+    let (vertices, indices) = mesh.get_vertices_and_indices();
+    let exact = mesh
+        .to_hypermesh_exact()
+        .expect("cube should convert to exact hypermesh");
+
+    assert_eq!(vertices.len(), exact.vertices().len());
+    assert_eq!(indices.len(), exact.triangles().len());
+    assert_eq!(vertices.len(), 8);
+    assert_eq!(indices.len(), 12);
+    assert!(mesh.to_trimesh().is_ok());
+}
+
+#[test]
+fn adversarial_query_trimesh_uses_hypermesh_handoff_view() {
+    let normal = Vector3::z();
+    let surface = Mesh::from_polygons(
+        &[Polygon::new(
+            vec![
+                Vertex::new(Point3::new(0.0, 0.0, 0.0), normal),
+                Vertex::new(Point3::new(1.0, 0.0, 0.0), normal),
+                Vertex::new(Point3::new(0.0, 1.0, 0.0), normal),
+            ],
+            (),
+        )],
+        (),
+    );
+    assert!(surface.to_trimesh().is_ok());
+    assert!(surface.to_rapier_shape().is_ok());
+    assert!(!surface.try_get_vertices_and_indices().unwrap().0.is_empty());
+
+    let degenerate = Mesh::from_polygons(
+        &[Polygon::new(
+            vec![
+                Vertex::new(Point3::new(0.0, 0.0, 0.0), normal),
+                Vertex::new(Point3::new(-0.0, 0.0, 0.0), normal),
+                Vertex::new(Point3::new(1.0, 0.0, 0.0), normal),
+            ],
+            (),
+        )],
+        (),
+    );
+    assert!(degenerate.to_trimesh().is_err());
+    assert!(degenerate.to_rapier_shape().is_err());
+    assert!(degenerate.try_get_vertices_and_indices().is_err());
+    assert_eq!(
+        degenerate.get_vertices_and_indices(),
+        (Vec::new(), Vec::new())
+    );
+}
+
+#[test]
+fn adversarial_hypermesh_exact_roundtrips_through_lossy_csgrs_adapter() {
+    let source: Mesh<&'static str> = Mesh::cube(2.0, "source");
+    let exact = source
+        .to_hypermesh_exact()
+        .expect("cube should convert to exact hypermesh");
+    let roundtrip = Mesh::from_hypermesh_exact_lossy(&exact, "roundtrip")
+        .expect("exact mesh should provide a finite approximate view");
+
+    assert_eq!(roundtrip.metadata, "roundtrip");
+    assert_eq!(roundtrip.polygons.len(), exact.triangles().len());
+    assert!(roundtrip.is_manifold());
+    let (vertices, indices) = roundtrip.get_vertices_and_indices();
+    assert_eq!(vertices.len(), exact.vertices().len());
+    assert_eq!(indices.len(), exact.triangles().len());
+}
+
+#[test]
+fn adversarial_hypermesh_handoff_package_separates_exact_and_lossy_domains() {
+    let mesh: Mesh<()> = Mesh::cube(2.0, ());
+    let exact = mesh
+        .to_hypermesh_exact()
+        .expect("cube should convert to exact hypermesh");
+    let package = mesh
+        .to_hypermesh_handoff_package()
+        .expect("closed cube should package for hypermesh consumers");
+
+    package
+        .validate_against_mesh(&exact)
+        .expect("handoff package should replay from exact mesh");
+    assert!(package.readiness.closed_manifold);
+    assert!(package.readiness.solid_handoff_ready);
+    assert!(package.surface.is_some());
+    assert!(package.solid.is_some());
+    assert!(package.approximate_f64_view.is_some());
+}
+
+#[test]
+fn adversarial_hypermesh_handoff_package_keeps_open_surface_non_solid() {
+    let normal = Vector3::z();
+    let mesh = Mesh::from_polygons(
+        &[Polygon::new(
+            vec![
+                Vertex::new(Point3::new(0.0, 0.0, 0.0), normal),
+                Vertex::new(Point3::new(1.0, 0.0, 0.0), normal),
+                Vertex::new(Point3::new(0.0, 1.0, 0.0), normal),
+            ],
+            (),
+        )],
+        (),
+    );
+
+    assert!(mesh.to_hypermesh_handoff_package().is_err());
+    let exact = mesh
+        .to_hypermesh_exact_with_policy(hypermesh::exact::ValidationPolicy::ALLOW_BOUNDARY)
+        .expect("single triangle should import as a boundary-allowed surface");
+    let package = mesh
+        .to_hypermesh_handoff_package_with_policy(
+            hypermesh::exact::ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .expect("boundary-allowed surface should package without solid evidence");
+
+    package
+        .validate_against_mesh(&exact)
+        .expect("surface package should replay from exact mesh");
+    assert!(!package.readiness.closed_manifold);
+    assert!(!package.readiness.solid_handoff_ready);
+    assert!(package.readiness.boundary_allowed);
+    assert!(package.surface.is_some());
+    assert!(package.solid.is_none());
+    assert!(package.approximate_f64_view.is_some());
+}
+
+#[test]
+fn adversarial_hypermesh_exact_uses_triangulated3d_io_directly() {
+    let exact = Mesh::<()>::cube(2.0, ())
+        .to_hypermesh_exact()
+        .expect("cube should convert to exact hypermesh");
+
+    let mut triangle_count = 0usize;
+    exact.visit_triangles(|triangle| {
+        triangle_count += 1;
+        for vertex in triangle {
+            assert_vertex_finite(&vertex);
+            assert!((vertex.normal.norm() - 1.0).abs() < tolerance());
+        }
+    });
+    assert_eq!(triangle_count, exact.triangles().len());
+    let indexed = exact.indexed_triangles();
+    assert_eq!(indexed.positions.len(), exact.vertices().len());
+    assert_eq!(indexed.faces.len(), exact.triangles().len());
+
+    #[cfg(feature = "stl-io")]
+    assert!(csgrs::io::stl::to_stl_ascii(&exact, "exact").contains("facet normal"));
+    #[cfg(feature = "obj-io")]
+    assert!(csgrs::io::obj::to_obj(&exact, "exact").contains("\nf "));
+    #[cfg(feature = "ply-io")]
+    assert!(csgrs::io::ply::to_ply(&exact, "exact").contains("element face"));
+    #[cfg(feature = "amf-io")]
+    assert!(csgrs::io::amf::to_amf(&exact, "exact", "millimeter").contains("triangle"));
+    #[cfg(feature = "gltf-io")]
+    assert!(csgrs::io::gltf::to_gltf(&exact, "exact").contains("\"meshes\""));
+}
+
+#[test]
+fn adversarial_build_connectivity_uses_hypermesh_triangle_topology() {
+    let mesh: Mesh<()> = Mesh::cube(2.0, ());
+    let exact = mesh
+        .to_hypermesh_exact()
+        .expect("cube should convert to exact hypermesh");
+    let (vertex_map, adjacency) = mesh.build_connectivity();
+
+    assert_eq!(vertex_map.vertex_count(), exact.vertices().len());
+    for triangle in exact.triangles() {
+        let [a, b, c] = triangle.0;
+        for [lhs, rhs] in [[a, b], [b, c], [c, a]] {
+            assert!(
+                adjacency
+                    .get(&lhs)
+                    .is_some_and(|neighbors| neighbors.contains(&rhs)),
+                "missing hypermesh edge {lhs}->{rhs} in connectivity graph"
+            );
+            assert!(
+                adjacency
+                    .get(&rhs)
+                    .is_some_and(|neighbors| neighbors.contains(&lhs)),
+                "missing hypermesh edge {rhs}->{lhs} in connectivity graph"
+            );
+        }
+    }
+}
+
+#[test]
 fn adversarial_mesh_primitive_low_segments_regression_is_contained() {
     let result = catch_unwind(AssertUnwindSafe(|| {
         let sphere = Mesh::<()>::sphere(1.0, 1, 1, ());
@@ -468,6 +857,49 @@ fn adversarial_mesh_primitive_low_segments_regression_is_contained() {
         for vertex in mesh.vertices() {
             assert_vertex_finite(&vertex);
         }
+    }
+}
+
+#[test]
+fn adversarial_polyhedron_rejects_nonfinite_coordinates_before_vertex_sanitization() {
+    let points = &[
+        [0.0, 0.0, 0.0],
+        [1.0, 0.0, 0.0],
+        [Real::NAN, 1.0, 0.0],
+        [0.0, 0.0, 1.0],
+    ];
+    let faces: [&[usize]; 4] = [&[0, 1, 2], &[0, 1, 3], &[1, 2, 3], &[2, 0, 3]];
+
+    let result = catch_unwind(AssertUnwindSafe(|| {
+        Mesh::<()>::polyhedron(points, &faces, ())
+    }));
+    assert!(matches!(
+        result,
+        Ok(Err(csgrs::errors::ValidationError::InvalidCoordinate(_)))
+    ));
+}
+
+#[test]
+fn adversarial_mesh_primitives_reject_nonfinite_boundary_scalars() {
+    let primitives = [
+        Mesh::<()>::cuboid(1.0, Real::NAN, 1.0, ()),
+        Mesh::<()>::sphere(Real::INFINITY, 8, 4, ()),
+        Mesh::<()>::frustum(1.0, Real::NAN, 2.0, 8, ()),
+        Mesh::<()>::cylinder(1.0, Real::INFINITY, 8, ()),
+        Mesh::<()>::arrow(
+            Point3::new(Real::NAN, 0.0, 0.0),
+            Vector3::new(0.0, 0.0, 1.0),
+            8,
+            false,
+            (),
+        ),
+        Mesh::<()>::octahedron(Real::NAN, ()),
+        Mesh::<()>::icosahedron(Real::INFINITY, ()),
+    ];
+
+    for mesh in primitives {
+        assert!(mesh.polygons.is_empty());
+        assert_mesh_sane(&mesh);
     }
 }
 
@@ -510,6 +942,64 @@ fn adversarial_weighted_average_uses_hyperreal_weight_normalization() {
 }
 
 #[test]
+fn adversarial_vertex_distance_uses_hyperlattice_squared_distance() {
+    let a = Vertex::new(Point3::new(1.0 / 3.0, -2.0 / 3.0, 5.0), Vector3::z());
+    let b = Vertex::new(Point3::new(4.0 / 3.0, -5.0 / 3.0, 17.0), Vector3::z());
+
+    let distance_squared = a.distance_squared_to(&b);
+    let distance = a.distance_to(&b);
+
+    assert!((distance_squared - 146.0).abs() < tolerance());
+    assert!((distance - 146.0_f64.sqrt()).abs() < tolerance());
+    assert!(distance.is_finite());
+    assert!(distance_squared.is_finite());
+}
+
+#[test]
+fn adversarial_public_vertex_field_corruption_does_not_reenter_local_float_geometry() {
+    let mut corrupted = Vertex::new(Point3::origin(), Vector3::z());
+    corrupted.position.x = Real::NAN;
+    corrupted.normal.x = Real::INFINITY;
+    let clean = Vertex::new(Point3::new(1.0, 2.0, 3.0), Vector3::y());
+
+    assert_eq!(corrupted.distance_to(&clean), Real::INFINITY);
+    assert_eq!(corrupted.distance_squared_to(&clean), Real::INFINITY);
+    assert_eq!(corrupted.normal_angle_to(&clean), 0.0);
+}
+
+#[test]
+fn adversarial_vertex_normal_angle_uses_hyperlattice_checked_normals() {
+    let x = Vertex::new(Point3::origin(), Vector3::x());
+    let y = Vertex::new(Point3::origin(), Vector3::y());
+    let zero = Vertex::new(Point3::origin(), Vector3::zeros());
+
+    let right_angle = x.normal_angle_to(&y);
+    assert!((right_angle - PI / 2.0).abs() < tolerance());
+    assert_eq!(x.normal_angle_to(&zero), 0.0);
+    assert!(right_angle.is_finite());
+}
+
+#[test]
+fn adversarial_vertex_interpolation_normalization_uses_hyperlattice() {
+    let x = Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::x() * 2.0);
+    let y = Vertex::new(Point3::new(2.0, 0.0, 0.0), Vector3::y() * 3.0);
+    let zero = Vertex::new(Point3::new(0.0, 2.0, 0.0), Vector3::zeros());
+
+    let slerp = x.slerp_interpolate(&y, 0.5);
+    assert_vertex_finite(&slerp);
+    assert!((slerp.normal.norm() - 1.0).abs() < tolerance());
+
+    let averaged = Vertex::weighted_average(&[(x, 1.0), (y, 1.0)])
+        .expect("positive weights should average");
+    assert_vertex_finite(&averaged);
+    assert!((averaged.normal.norm() - 1.0).abs() < tolerance());
+
+    let barycentric = Vertex::barycentric_interpolate(&x, &zero, &zero, 0.0, 0.5, 0.5);
+    assert_vertex_finite(&barycentric);
+    assert_eq!(barycentric.normal, Vector3::z());
+}
+
+#[test]
 fn adversarial_cotangent_weight_degenerate_triangle_falls_back() {
     let center = Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::z());
     let neighbor = Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z());
@@ -543,6 +1033,62 @@ fn adversarial_connectivity_lookup_uses_hyperreal_distance() {
 }
 
 #[test]
+fn adversarial_vertex_quality_analysis_uses_hyperreal_distances_and_angles() {
+    let center = Vertex::new(Point3::origin(), Vector3::z());
+    let neighbors = vec![
+        Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
+        Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
+        Vertex::new(Point3::new(-1.0, 0.0, 0.0), Vector3::z()),
+        Vertex::new(Point3::new(0.0, -1.0, 0.0), Vector3::z()),
+    ];
+
+    let curvature = center.estimate_mean_curvature(&neighbors, &[0.5, 0.5, Real::NAN]);
+    assert!(curvature.is_finite());
+
+    let mut adjacency = HashMap::new();
+    adjacency.insert(0usize, vec![1, 2, 3, 4]);
+    let mut positions = HashMap::new();
+    let mut normals = HashMap::new();
+    for (idx, neighbor) in neighbors.iter().enumerate() {
+        positions.insert(idx + 1, neighbor.position);
+        normals.insert(idx + 1, neighbor.normal);
+    }
+
+    let (regularity, curvature_score, edge_uniformity, normal_variation) =
+        center.comprehensive_quality_analysis(0, &adjacency, &positions, &normals);
+
+    assert!(regularity.is_finite());
+    assert!(curvature_score.is_finite());
+    assert!(edge_uniformity.is_finite());
+    assert!(normal_variation.is_finite());
+    assert!(edge_uniformity > 0.99);
+    assert!(normal_variation > 0.99);
+
+    normals.insert(2, Vector3::new(Real::NAN, Real::INFINITY, 0.0));
+    let (_, hostile_curvature_score, _, hostile_normal_variation) =
+        center.comprehensive_quality_analysis(0, &adjacency, &positions, &normals);
+    assert!(hostile_curvature_score.is_finite());
+    assert!(hostile_normal_variation.is_finite());
+}
+
+#[test]
+fn adversarial_vertex_cluster_uses_hyperreal_radius_and_checked_normal() {
+    let vertices = vec![
+        Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::z()),
+        Vertex::new(Point3::new(2.0, 0.0, 0.0), Vector3::z()),
+        Vertex::new(Point3::new(0.0, 2.0, 0.0), Vector3::z()),
+    ];
+
+    let cluster = VertexCluster::from_vertices(&vertices).expect("valid cluster");
+
+    assert_eq!(cluster.count, vertices.len());
+    assert!((cluster.normal.norm() - 1.0).abs() < tolerance());
+    assert!(cluster.normal.dot(&Vector3::z()) > 1.0 - tolerance());
+    assert!(cluster.radius.is_finite());
+    assert!(cluster.radius > 0.0);
+}
+
+#[test]
 fn adversarial_bsp_slice_intersections_remain_hyperreal_coplanar() {
     let mesh: Mesh<()> = Mesh::cube(2.0, ());
     let plane = Plane::from_normal(Vector3::new(1.0, -2.0, 0.5), 0.0);
@@ -552,6 +1098,24 @@ fn adversarial_bsp_slice_intersections_remain_hyperreal_coplanar() {
 
     assert!(!edges.is_empty(), "central oblique slice should cut the cube");
     assert_slice_edges_on_plane(&edges, &plane);
+}
+
+#[test]
+fn adversarial_plane_from_normal_rejects_hostile_boundary_without_panic() {
+    let cases = [
+        (Vector3::zeros(), 0.0),
+        (Vector3::new(Real::NAN, 0.0, 0.0), 0.0),
+        (Vector3::new(0.0, Real::INFINITY, 0.0), 0.0),
+        (Vector3::z(), Real::NAN),
+    ];
+
+    for (normal, offset) in cases {
+        let result = catch_unwind(AssertUnwindSafe(|| Plane::from_normal(normal, offset)));
+        assert!(result.is_ok());
+        let plane = result.unwrap();
+        assert_vertex_finite(&Vertex::new(plane.point_a, plane.normal()));
+        assert!(Plane::try_from_normal(normal, offset).is_none());
+    }
 }
 
 #[test]
@@ -612,6 +1176,14 @@ fn adversarial_polygon_triangulate_filters_near_degenerate_hyperreal_winding() {
 }
 
 #[test]
+fn adversarial_polygon_basis_rejects_hostile_normals_without_nalgebra_fallback() {
+    let (u, v) =
+        csgrs::polygon::build_orthonormal_basis(Vector3::new(Real::NAN, Real::INFINITY, 0.0));
+    assert_eq!(u, Vector3::x());
+    assert_eq!(v, Vector3::y());
+}
+
+#[test]
 fn adversarial_vertex_index_map_uses_hyperreal_distance() {
     let mut map = VertexIndexMap::new(tolerance());
     let base = Point3::new(4.0, -2.0, 9.0);
@@ -643,6 +1215,74 @@ fn adversarial_polyline_intersection_deduplicates_segment_junction_hit() {
     );
     for window in hits.windows(2) {
         assert!((window[0] - window[1]).norm() >= tolerance());
+    }
+
+    let hostile_hits = mesh.intersect_polyline(&[
+        Point3::new(Real::NAN, 0.0, 0.0),
+        Point3::new(0.0, 0.0, 0.0),
+        Point3::new(Real::INFINITY, 0.0, 0.0),
+    ]);
+    assert!(hostile_hits.is_empty());
+}
+
+#[test]
+fn adversarial_ray_intersections_deduplicate_coplanar_triangle_face_hits() {
+    let mesh: Mesh<()> = Mesh::cube(2.0, ()).center();
+    let hits = mesh.ray_intersections(&Point3::new(-2.0, 0.0, 0.0), &Vector3::x());
+
+    assert_eq!(
+        hits.len(),
+        2,
+        "ray through two triangulated cube faces should return one hit per face: {hits:?}"
+    );
+    assert!((hits[0].1 - 1.0).abs() < tolerance());
+    assert!((hits[1].1 - 3.0).abs() < tolerance());
+}
+
+#[test]
+fn adversarial_axis_primitives_use_hyperreal_checked_direction() {
+    let empty_frustum = Mesh::<()>::frustum_ptp(
+        Point3::new(1.0, 2.0, 3.0),
+        Point3::new(1.0 + tolerance() * 0.25, 2.0, 3.0),
+        1.0,
+        1.0,
+        16,
+        (),
+    );
+    assert!(empty_frustum.polygons.is_empty());
+
+    let frustum = Mesh::<()>::frustum_ptp(
+        Point3::new(0.0, 0.0, 0.0),
+        Point3::new(1.0, 2.0, 3.0),
+        0.5,
+        0.25,
+        16,
+        (),
+    );
+    assert_mesh_sane(&frustum);
+
+    let empty_arrow = Mesh::<()>::arrow(Point3::origin(), Vector3::zeros(), 16, false, ());
+    assert!(empty_arrow.polygons.is_empty());
+
+    let arrow = Mesh::<()>::arrow(
+        Point3::new(0.0, 0.0, 0.0),
+        Vector3::new(1.0, 2.0, 3.0),
+        16,
+        false,
+        (),
+    );
+    assert_mesh_sane(&arrow);
+}
+
+#[test]
+#[cfg(feature = "chull-io")]
+fn adversarial_convex_hull_normals_are_hyperreal_checked() {
+    let hull = Mesh::<()>::cube(2.0, ()).convex_hull();
+    assert_mesh_sane(&hull);
+    assert!(!hull.polygons.is_empty());
+    for vertex in hull.vertices() {
+        assert!(vertex.normal.iter().all(|value| value.is_finite()));
+        assert!((vertex.normal.norm() - 1.0).abs() < tolerance());
     }
 }
 
@@ -689,11 +1329,52 @@ fn adversarial_obj_zero_face_index_regression_is_error_not_panic() {
 }
 
 #[test]
+#[cfg(feature = "obj-io")]
+fn adversarial_obj_import_rejects_nonfinite_vertices_and_degenerate_normals() {
+    let nonfinite_vertex = "v 0 0 0\nv NaN 0 0\nv 0 1 0\nf 1 2 3\n";
+    let result = catch_unwind(AssertUnwindSafe(|| {
+        Mesh::<()>::from_obj(Cursor::new(nonfinite_vertex), ())
+    }));
+    assert!(matches!(result, Ok(Err(_))));
+
+    let degenerate_normal = "v 0 0 0\nv 1 0 0\nv 0 1 0\nvn 0 0 0\nf 1//1 2//1 3//1\n";
+    let result = catch_unwind(AssertUnwindSafe(|| {
+        Mesh::<()>::from_obj(Cursor::new(degenerate_normal), ())
+    }));
+    assert!(matches!(result, Ok(Err(_))));
+
+    let scaled_normal = "v 0 0 0\nv 1 0 0\nv 0 1 0\nvn 0 0 5\nf 1//1 2//1 3//1\n";
+    let mesh = Mesh::<()>::from_obj(Cursor::new(scaled_normal), ()).unwrap();
+    for vertex in mesh.vertices() {
+        assert!((vertex.normal.norm() - 1.0).abs() < tolerance());
+    }
+}
+
+#[test]
 #[cfg(feature = "svg-io")]
 fn adversarial_svg_unknown_tag_regression_is_error_not_panic() {
     let svg = "<not-a-supported-shape />";
     let result = catch_unwind(AssertUnwindSafe(|| Sketch::<()>::from_svg(svg, ())));
     assert!(matches!(result, Ok(Err(_))));
+}
+
+#[test]
+#[cfg(feature = "svg-io")]
+fn adversarial_svg_import_rejects_nonfinite_hyperreal_boundary_values() {
+    let cases = [
+        r#"<svg><circle cx="0" cy="0" r="1e309" /></svg>"#,
+        r#"<svg><ellipse cx="0" cy="0" rx="1" ry="NaN" /></svg>"#,
+        r#"<svg><rect x="0" y="0" width="Infinity" height="1" /></svg>"#,
+        r#"<svg><polyline points="0,0 NaN,1" /></svg>"#,
+    ];
+
+    for svg in cases {
+        let result = catch_unwind(AssertUnwindSafe(|| Sketch::<()>::from_svg(svg, ())));
+        assert!(
+            matches!(result, Ok(Err(_))),
+            "non-finite SVG input should reject without panic: {svg}"
+        );
+    }
 }
 
 #[test]
@@ -1190,26 +1871,6 @@ proptest! {
     }
 
     #[test]
-    #[cfg(feature = "bmesh")]
-    fn proptest_bmesh_clean_cube_boolean_differential(size in positive_real(), offset in -20.0f64..20.0f64) {
-        use csgrs::bmesh::BMesh;
-
-        let a: Mesh<()> = Mesh::cube(size, ());
-        let b: Mesh<()> = Mesh::cube(size, ()).translate(offset as Real, 0.0, 0.0);
-        let ma = BMesh::from(a.clone());
-        let mb = BMesh::from(b.clone());
-
-        let mesh_union = a.union(&b);
-        let bmesh_union = ma.union(&mb);
-        assert_mesh_sane(&mesh_union);
-
-        let bb = bmesh_union.bounding_box();
-        prop_assert!(bb.mins.x.is_finite() && bb.maxs.x.is_finite());
-        prop_assert!(bb.mins.y.is_finite() && bb.maxs.y.is_finite());
-        prop_assert!(bb.mins.z.is_finite() && bb.maxs.z.is_finite());
-    }
-
-    #[test]
     #[cfg(feature = "chull-io")]
     fn proptest_convex_hull_and_minkowski_are_finite(size_a in positive_real(), size_b in positive_real(), dx in -10.0f64..10.0f64) {
         let a: Mesh<()> = Mesh::cube(size_a, ());
@@ -1259,4 +1920,51 @@ proptest! {
             prop_assert!((window[0] - window[1]).norm() >= tolerance());
         }
     }
+}
+
+#[test]
+fn adversarial_csg_transforms_fail_closed_on_hostile_vectors() {
+    let mesh: Mesh<()> = Mesh::cube(1.0, ());
+    let original_bbox = mesh.bounding_box();
+
+    let zero_line = mesh.distribute_linear(4, Vector3::zeros(), 1.0);
+    assert_eq!(zero_line.polygons.len(), mesh.polygons.len());
+    assert_eq!(zero_line.bounding_box(), original_bbox);
+
+    let hostile_line =
+        mesh.distribute_linear(4, Vector3::new(Real::NAN, Real::INFINITY, 0.0), 1.0);
+    assert_eq!(hostile_line.polygons.len(), mesh.polygons.len());
+    assert_eq!(hostile_line.bounding_box(), original_bbox);
+
+    let hostile_spacing = mesh.distribute_linear(4, Vector3::x(), Real::INFINITY);
+    assert_eq!(hostile_spacing.polygons.len(), mesh.polygons.len());
+    assert_eq!(hostile_spacing.bounding_box(), original_bbox);
+
+    let hostile_translate = mesh.translate(Real::NAN, 0.0, 0.0);
+    assert_eq!(hostile_translate.bounding_box(), original_bbox);
+
+    let hostile_rotate = mesh.rotate(0.0, Real::INFINITY, 0.0);
+    assert_eq!(hostile_rotate.bounding_box(), original_bbox);
+
+    let overflowing_rotate = mesh.rotate(Real::MAX, 0.0, 0.0);
+    assert_mesh_sane(&overflowing_rotate);
+
+    let hostile_scale = mesh.scale(1.0, Real::NAN, 1.0);
+    assert_eq!(hostile_scale.bounding_box(), original_bbox);
+
+    let hostile_arc = mesh.distribute_arc(4, Real::INFINITY, 0.0, 90.0);
+    assert_eq!(hostile_arc.bounding_box(), original_bbox);
+
+    let hostile_grid = mesh.distribute_grid(2, 2, 1.0, Real::NAN);
+    assert_eq!(hostile_grid.bounding_box(), original_bbox);
+
+    let hostile_plane = Plane {
+        point_a: Point3::new(Real::NAN, 0.0, 0.0),
+        point_b: Point3::new(1.0, Real::INFINITY, 0.0),
+        point_c: Point3::new(0.0, 1.0, 0.0),
+    };
+    let mirrored = mesh.mirror(hostile_plane);
+    assert_eq!(mirrored.polygons.len(), mesh.polygons.len());
+    assert_eq!(mirrored.bounding_box(), original_bbox);
+    assert_mesh_sane(&mirrored);
 }

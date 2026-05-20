@@ -53,6 +53,61 @@ fn test_mesh_quality_analysis() {
 }
 
 #[test]
+fn mesh_quality_uses_hyperreal_edge_and_area_measurements() {
+    let normal = Vector3::z();
+    let polygons = vec![
+        Polygon::new(
+            vec![
+                Vertex::new(Point3::new(0.0, 0.0, 0.0), normal),
+                Vertex::new(Point3::new(3.0, 0.0, 0.0), normal),
+                Vertex::new(Point3::new(0.0, 4.0, 0.0), normal),
+            ],
+            (),
+        ),
+        Polygon::new(
+            vec![
+                Vertex::new(Point3::new(0.0, 0.0, 1.0), normal),
+                Vertex::new(Point3::new(tolerance() * 0.25, 0.0, 1.0), normal),
+                Vertex::new(Point3::new(0.0, tolerance() * 0.25, 1.0), normal),
+            ],
+            (),
+        ),
+    ];
+    let mesh: Mesh<()> = Mesh::from_polygons(&polygons, ());
+
+    let qualities = mesh.analyze_triangle_quality();
+    assert_eq!(qualities.len(), 2);
+    assert!((qualities[0].area - 6.0).abs() < tolerance());
+    assert!(qualities[0].min_angle.is_finite());
+    assert!(qualities[0].max_angle.is_finite());
+    assert_eq!(qualities[1].area, 0.0);
+    assert_eq!(qualities[1].quality_score, 0.0);
+}
+
+#[test]
+fn mesh_dihedral_angle_uses_hyperreal_normal_angle() {
+    let xy = Polygon::new(
+        vec![
+            Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::z()),
+            Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
+            Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
+        ],
+        (),
+    );
+    let yz = Polygon::new(
+        vec![
+            Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::x()),
+            Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::x()),
+            Vertex::new(Point3::new(0.0, 0.0, 1.0), Vector3::x()),
+        ],
+        (),
+    );
+
+    let angle = Mesh::<()>::dihedral_angle(&xy, &yz);
+    assert!((angle - FRAC_PI_2).abs() < tolerance());
+}
+
+#[test]
 fn test_adaptive_mesh_refinement() {
     let cube: Mesh<()> = Mesh::cube(2.0, ());
     let original_polygon_count = cube.polygons.len();

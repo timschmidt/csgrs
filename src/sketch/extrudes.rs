@@ -1,16 +1,20 @@
 //! Functions to extrude, revolve, loft, and otherwise transform 2D `Sketch`s into 3D `Mesh`s
 
 use crate::errors::ValidationError;
-use crate::float_types::{Real, hvector3_from_vector3, hvectors_within_epsilon, tolerance};
+use crate::float_types::{
+    Real, hpoints_within_epsilon, hreal_lt_f64, hrotation_between_vectors,
+    htranslation_matrix, hunit_cross_vector3, hunit_vector3, hvector3_from_vector3,
+    hvectors_within_epsilon, tolerance,
+};
 use crate::mesh::Mesh;
 use crate::polygon::Polygon;
 use crate::sketch::Sketch;
 use crate::vertex::Vertex;
 use hypercurve::{
     Classification, FinitePolyline2, FiniteProjectionOptions, FiniteRegionProfile2,
-    finite_ring_signed_area,
+    FiniteTriangle2, finite_ring_signed_area, triangulate_finite_rings,
 };
-use nalgebra::{Matrix4, Point3, Rotation3, Translation3, Vector3};
+use nalgebra::{Matrix4, Point3, Vector3};
 use std::fmt::Debug;
 use std::sync::OnceLock;
 
@@ -19,8 +23,27 @@ fn mesh_projection_options() -> FiniteProjectionOptions {
         .expect("positive finite projection tolerance is valid")
 }
 
-fn finite_line_string_points(line_string: &geo::LineString<Real>) -> Vec<[Real; 2]> {
-    line_string.0.iter().map(|coord| [coord.x, coord.y]).collect()
+fn finite_triangles_to_xy_points(triangles: Vec<FiniteTriangle2>) -> Vec<[Point3<Real>; 3]> {
+    triangles
+        .into_iter()
+        .map(|tri| {
+            [
+                Point3::new(tri[0][0], tri[0][1], 0.0),
+                Point3::new(tri[1][0], tri[1][1], 0.0),
+                Point3::new(tri[2][0], tri[2][1], 0.0),
+            ]
+        })
+        .collect()
+}
+
+fn hyper_direction_points_down(direction: &Vector3<Real>) -> bool {
+    let Some(direction) = hvector3_from_vector3(direction) else {
+        return false;
+    };
+    let Ok(z_axis) = hyperlattice::Vector3::try_from_f64_array([0.0, 0.0, 1.0]) else {
+        return false;
+    };
+    hreal_lt_f64(&direction.dot(&z_axis), 0.0)
 }
 
 impl<M: Clone + Debug + Send + Sync> Sketch<M> {
@@ -61,25 +84,30 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     /// ### **Surface Normal Computation**
     /// For side surfaces, the normal is computed as:
     /// ```text
-    /// n⃗ = (∂M/∂u × ∂M/∂v).normalize()
-    ///   = (C'(u) × d⃗).normalize()
+    /// n⃗ = checked_unit(∂M/∂u × ∂M/∂v)
+    ///   = checked_unit(C'(u) × d⃗)
     /// ```
-    /// where C'(u) is the tangent to the boundary curve.
+    /// where C'(u) is the tangent to the boundary curve. The checked unit
+    /// vector is computed with `hyperlattice::Vector3<hyperreal::Real>`, so
+    /// degenerate or non-finite side normals are rejected before finite mesh
+    /// output. This follows Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7(1-2), 1997
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     ///
     /// ### **Surface Classification**
     /// The extrusion generates three surface types:
     ///
     /// 1. **Bottom Caps** (v=0):
     ///    - Triangulated 2D regions at z=0
-    ///    - Normal: n⃗ = -d⃗.normalize() (inward for solid)
+    ///    - Normal: n⃗ = -checked_unit(d⃗) (inward for solid)
     ///
     /// 2. **Top Caps** (v=1):
     ///    - Translated triangulated regions
-    ///    - Normal: n⃗ = +d⃗.normalize() (outward for solid)
+    ///    - Normal: n⃗ = +checked_unit(d⃗) (outward for solid)
     ///
     /// 3. **Side Surfaces**:
     ///    - Quadrilateral strips connecting boundary edges
-    ///    - Normal: n⃗ = (edge × direction).normalize()
+    ///    - Normal: n⃗ = checked_unit(edge × direction)
     ///
     /// ### **Boundary Orientation Rules**
     /// - **Exterior boundaries**: Counter-clockwise → outward-facing sides
@@ -132,8 +160,8 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
             return self.extrude_wires_vector(direction);
         }
 
-        // The finite `geo` cache is an interop projection, not Sketch's CAD
-        // source of truth. Linear extrusion therefore emits nothing when native
+        // Finite projection data is not Sketch's CAD source of truth. Linear
+        // extrusion therefore emits nothing when native
         // `Region2`/`CurveString2` topology is absent, matching the exact-object
         // boundary advocated by Yap, "Towards Exact Geometric Computation,"
         // *Computational Geometry* 7(1-2), 1997
@@ -147,18 +175,16 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     /// Filled `Region2` contours receive caps and side walls; open
     /// `CurveString2` wires are independent ruled side surfaces. Hypercurve
     /// contours are approximated only at the mesh boundary, while cap
-    /// triangulation is delegated to `Sketch::triangulate_with_holes`, which
-    /// promotes finite boundary coordinates back to hyperreal predicates before
-    /// ear clipping. This keeps the data model aligned with Yap, "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7(1-2), 1997
+    /// triangulation is delegated to `hypercurve::triangulate_finite_rings`,
+    /// which promotes finite boundary coordinates back to hyperreal predicates
+    /// before ear clipping. This keeps the data model aligned with Yap,
+    /// "Towards Exact Geometric Computation," *Computational Geometry* 7(1-2), 1997
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>), and Meisters,
     /// "Polygons Have Ears," *American Mathematical Monthly* 82(6), 1975
     /// (<https://doi.org/10.2307/2319703>).
     fn extrude_region_vector(&self, direction: Vector3<Real>) -> Mesh<M> {
-        let dir_unit = direction
-            .try_normalize(tolerance())
-            .unwrap_or_else(Vector3::z);
-        let flip = direction.dot(&Vector3::z()) < 0.0;
+        let dir_unit = hunit_vector3(&direction).unwrap_or_else(Vector3::z);
+        let flip = hyper_direction_points_down(&direction);
         let bottom_normal = -dir_unit;
         let top_normal = dir_unit;
         let mut polygons = Vec::new();
@@ -173,7 +199,9 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
             let exterior = close_region_ring(exterior);
             let holes = holes.into_iter().map(close_region_ring).collect::<Vec<_>>();
             let hole_refs = holes.iter().map(Vec::as_slice).collect::<Vec<_>>();
-            let triangles = Sketch::<()>::triangulate_with_holes(&exterior, &hole_refs);
+            let triangles = finite_triangles_to_xy_points(
+                triangulate_finite_rings(&exterior, &hole_refs).unwrap_or_default(),
+            );
 
             for tri in &triangles {
                 let (a, b, c) = if flip {
@@ -246,7 +274,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     /// Geometric Computation," *Computational Geometry* 7(1-2), 1997
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     fn extrude_wires_vector(&self, direction: Vector3<Real>) -> Mesh<M> {
-        let flip = direction.dot(&Vector3::z()) < 0.0;
+        let flip = hyper_direction_points_down(&direction);
         let mut polygons = Vec::new();
         for wire in self.projected_wire_polylines_for_mesh() {
             self.push_polyline_sides(wire.points(), direction, flip, &mut polygons);
@@ -278,8 +306,8 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
             let b_j = Point3::new(window[1][0], window[1][1], 0.0);
             let t_i = b_i + direction;
             let t_j = b_j + direction;
-            let Some(raw_normal) = (b_j - b_i).cross(&direction).try_normalize(tolerance())
-            else {
+            let edge = b_j - b_i;
+            let Some(raw_normal) = hunit_cross_vector3(&edge, &direction) else {
                 continue;
             };
             let normal = if flip { -raw_normal } else { raw_normal };
@@ -396,7 +424,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     // if segments < 1 {
     // return CSG::new();
     // }
-    // let height = direction.norm();
+    // let height = hyperlattice_magnitude(direction);
     // if height < tolerance() {
     // no real extrusion
     // return CSG::new();
@@ -412,7 +440,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     //   i.e. one 3D polyline for each boundary or hole in the shape.
     // let mut slices: Vec<Vec<Vec<Point3<Real>>>> = Vec::with_capacity(segments + 1);
     // The axis to rotate around is the unit of `direction`. We'll do final alignment after constructing them along +Z.
-    // let axis_dir = direction.normalize();
+    // let axis_dir = hyperlattice_checked_unit(direction);
     //
     // for i in 0..=segments {
     // let f = i as Real / segments as Real;
@@ -424,9 +452,9 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     //  - scale in XY
     //  - twist around Z
     //  - translate in Z
-    // let mat_scale = Matrix4::new_nonuniform_scaling(&Vector3::new(s_i, s_i, 1.0));
-    // let mat_rot = Rotation3::from_axis_angle(&Vector3::z_axis(), twist_rad).to_homogeneous();
-    // let mat_trans = Translation3::new(0.0, 0.0, z_i).to_homogeneous();
+    // let mat_scale = hscale_matrix(s_i, s_i, 1.0)?;
+    // let mat_rot = finite_rotation_z(twist_rad)?;
+    // let mat_trans = htranslation_matrix(&Vector3::new(0.0, 0.0, z_i))?;
     // let slice_mat = mat_trans * mat_rot * mat_scale;
     //
     // let slice_3d = project_shape_3d(shape, &slice_mat);
@@ -504,15 +532,14 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     // Step 3) If direction is not along +Z, rotate final mesh so +Z aligns with your direction
     // (This is optional or can be done up front. Typical OpenSCAD style is to do everything
     // along +Z, then rotate the final.)
-    // if (axis_dir - Vector3::z()).norm() > tolerance() {
+    // if hyperlattice_distance(axis_dir, Vector3::z()) > tolerance() {
     // rotate from +Z to axis_dir
-    // let rot_axis = Vector3::z().cross(&axis_dir);
-    // let sin_theta = rot_axis.norm();
+    // let rot_axis = hvector3_cross(&Vector3::z(), &axis_dir)?;
+    // let sin_theta = hyperlattice_magnitude(rot_axis);
     // if sin_theta > tolerance() {
-    // let cos_theta = Vector3::z().dot(&axis_dir);
+    // let cos_theta = hvector3_dot(&Vector3::z(), &axis_dir)?;
     // let angle = cos_theta.acos();
-    // let rot = Rotation3::from_axis_angle(&Unit::new_normalize(rot_axis), angle);
-    // let mat = rot.to_homogeneous();
+    // let mat = hrotation_between_vectors(&Vector3::z(), &axis_dir)?;
     // transform the polygons
     // let mut final_polys = Vec::with_capacity(polygons_3d.len());
     // for mut poly in polygons_3d {
@@ -726,8 +753,8 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
                 .map(|c| revolve_around_y(c[0], c[1], angle))
                 .collect();
 
-            // ensure closed if the ring wasn't strictly closed
-            // (the last point in a Geo ring is typically the same as the first)
+            // Ensure closed if the projected hypercurve ring was not emitted
+            // with an explicit duplicate endpoint.
             let last = pts_3d.last().unwrap();
             let first = pts_3d.first().unwrap();
             if (last.x - first.x).abs() > tolerance()
@@ -757,8 +784,8 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         }
 
         //----------------------------------------------------------------------
-        // 2) Iterate over each geometry (Polygon or MultiPolygon),
-        //    revolve the side walls, and possibly add caps if angle_degs < 360.
+        // 2) Iterate over each hypercurve finite profile, revolve side walls,
+        //    and possibly add caps when angle_degs < 360.
         //----------------------------------------------------------------------
         let full_revolve = (angle_degs - 360.0).abs() < tolerance(); // or angle_degs >= 359.999..., etc.
         let do_caps = !full_revolve && (angle_degs > 0.0);
@@ -807,34 +834,6 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
                     .collect::<Vec<_>>();
                 emit_profile(profile.material().points(), &holes);
             }
-        } else {
-            let geometry = self.effective_geometry();
-            for geom in geometry.iter() {
-                match geom {
-                    geo::Geometry::Polygon(poly2d) => {
-                        let outer = finite_line_string_points(poly2d.exterior());
-                        let holes = poly2d
-                            .interiors()
-                            .iter()
-                            .map(finite_line_string_points)
-                            .collect::<Vec<_>>();
-                        emit_profile(&outer, &holes);
-                    },
-                    geo::Geometry::MultiPolygon(mpoly) => {
-                        for poly2d in &mpoly.0 {
-                            let outer = finite_line_string_points(poly2d.exterior());
-                            let holes = poly2d
-                                .interiors()
-                                .iter()
-                                .map(finite_line_string_points)
-                                .collect::<Vec<_>>();
-                            emit_profile(&outer, &holes);
-                        }
-                    },
-                    // We should implement revolve for Lines and PolyLines, but we may ignore points, etc.
-                    _ => {},
-                }
-            }
         }
 
         for wire in self.projected_wire_polylines_for_mesh() {
@@ -877,8 +876,8 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     /// (<https://doi.org/10.2307/2319846>).
     ///
     /// * `path` - ordered list of 3-D points. If the first and last points
-    ///   coincide (`norm(p[0] - p[n]) < tolerance()`) the path is treated as
-    ///   **closed** and no caps are added.
+    ///   coincide under the hyperreal squared-distance predicate, the path is
+    ///   treated as **closed** and no caps are added.
     ///
     /// * returns - a `Mesh<M>` containing all side quads plus automatically triangulated caps (respecting any holes).
     pub fn sweep(&self, path: &[Point3<Real>]) -> Mesh<M> {
@@ -893,42 +892,40 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
             return Mesh::empty(self.metadata.clone());
         }
         let n_path = path.len();
-        let path_is_closed = (path[0] - path[n_path - 1]).norm() < tolerance();
+        let path_is_closed = hpoints_within_epsilon(&path[0], &path[n_path - 1], tolerance());
 
         // pre-compute a transform for each path vertex
         let mut slice_xforms: Vec<Matrix4<Real>> = Vec::with_capacity(n_path);
 
         // first slice
-        let mut dir_prev = (path[1] - path[0])
-            .try_normalize(tolerance())
-            .unwrap_or_else(Vector3::z);
-        let mut orientation = Rotation3::rotation_between(&Vector3::z(), &dir_prev)
-            .unwrap_or_else(Rotation3::identity)
-            .to_homogeneous();
-        slice_xforms.push(Translation3::from(path[0].coords).to_homogeneous() * orientation);
+        let mut dir_prev = hunit_vector3(&(path[1] - path[0])).unwrap_or_else(Vector3::z);
+        let mut orientation = hrotation_between_vectors(&Vector3::z(), &dir_prev)
+            .unwrap_or_else(Matrix4::identity);
+        let Some(first_translation) = htranslation_matrix(&path[0].coords) else {
+            return Mesh::empty(self.metadata.clone());
+        };
+        slice_xforms.push(first_translation * orientation);
 
         // propagate frame with parallel transport
         for i in 1..n_path {
             // pick the outgoing tangent _now_
             let dir_curr = if i == n_path - 1 && !path_is_closed {
-                (path[i] - path[i - 1])
-                    .try_normalize(tolerance())
-                    .unwrap_or(dir_prev) // look back at the end
+                hunit_vector3(&(path[i] - path[i - 1])).unwrap_or(dir_prev) // look back at the end
             } else {
-                (path[(i + 1) % n_path] - path[i])
-                    .try_normalize(tolerance())
-                    .unwrap_or(dir_prev)
+                hunit_vector3(&(path[(i + 1) % n_path] - path[i])).unwrap_or(dir_prev)
             };
 
-            // rotate the frame exactly **once**
-            let rot_between = Rotation3::rotation_between(&dir_prev, &dir_curr)
-                .unwrap_or_else(Rotation3::identity)
-                .to_homogeneous();
+            // Rotate the frame exactly once. The rotation matrix is assembled
+            // from hyperlattice-checked unit vectors, dot, and cross products.
+            let rot_between = hrotation_between_vectors(&dir_prev, &dir_curr)
+                .unwrap_or_else(Matrix4::identity);
             orientation = rot_between * orientation;
 
             // now the slice that lives at path[i]
-            slice_xforms
-                .push(Translation3::from(path[i].coords).to_homogeneous() * orientation);
+            let Some(translation) = htranslation_matrix(&path[i].coords) else {
+                return Mesh::empty(self.metadata.clone());
+            };
+            slice_xforms.push(translation * orientation);
 
             // ...and _immediately_ remember this tangent for the next turn
             dir_prev = dir_curr;
@@ -977,48 +974,6 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
                     holes.push(hole);
                 }
                 cap_profiles.push((material, holes));
-            }
-        } else {
-            let geometry = self.effective_geometry();
-            if geometry.0.is_empty() {
-                return Mesh::empty(self.metadata.clone());
-            }
-
-            use geo::Geometry;
-            for geom in geometry.iter() {
-                match geom {
-                    Geometry::Polygon(poly) => {
-                        let outer = finite_line_string_points(poly.exterior());
-                        add_ring(outer.clone());
-                        let holes = poly
-                            .interiors()
-                            .iter()
-                            .map(|hole| {
-                                let ring = finite_line_string_points(hole);
-                                add_ring(ring.clone());
-                                ring
-                            })
-                            .collect::<Vec<_>>();
-                        cap_profiles.push((outer, holes));
-                    },
-                    Geometry::MultiPolygon(mp) => {
-                        for poly in &mp.0 {
-                            let outer = finite_line_string_points(poly.exterior());
-                            add_ring(outer.clone());
-                            let holes = poly
-                                .interiors()
-                                .iter()
-                                .map(|hole| {
-                                    let ring = finite_line_string_points(hole);
-                                    add_ring(ring.clone());
-                                    ring
-                                })
-                                .collect::<Vec<_>>();
-                            cap_profiles.push((outer, holes));
-                        }
-                    },
-                    _ => {},
-                }
             }
         }
 
@@ -1080,7 +1035,9 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
             let mut add_caps = |ext: &[[Real; 2]], holes: &[Vec<[Real; 2]>]| {
                 let hole_refs: Vec<&[[Real; 2]]> = holes.iter().map(|v| &v[..]).collect();
 
-                let tris = Sketch::<()>::triangulate_with_holes(ext, &hole_refs);
+                let tris = finite_triangles_to_xy_points(
+                    triangulate_finite_rings(ext, &hole_refs).unwrap_or_default(),
+                );
 
                 // cap at the start of the path (flip winding)
                 for t in &tris {

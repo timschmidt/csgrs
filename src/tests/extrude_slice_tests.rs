@@ -148,7 +148,7 @@ fn test_flatten_cube() {
 
     // The flattened cube should have 1 polygon1, now in z=0
     assert_eq!(
-        flattened.geometry().len(),
+        flattened.region_profiles().len(),
         1,
         "Flattened cube should have 1 face in z=0"
     );
@@ -173,20 +173,17 @@ fn test_slice_cylinder() {
     // (unless the top or bottom also exactly intersect z=0, which they do not in this scenario).
     // So we expect exactly 1 polygon.
     assert_eq!(
-        cross_section.geometry().len(),
+        cross_section.region_profiles().len(),
         1,
         "Slicing a cylinder at z=0 should yield exactly 1 cross-section polygon"
     );
     assert_eq!(cross_section.material_contour_count(), 1);
 
-    let shell = cross_section.to_multipolygon();
-    let poly = shell
-        .0
+    let profiles = cross_section.region_profiles();
+    let profile = profiles
         .first()
-        .expect("Cross-section geometry is not an area shell");
-
-    // `geo::Polygon` stores a closed ring – skip the last (repeat) vertex.
-    let vcount = poly.exterior().0.len() - 1;
+        .expect("Cross-section region is not an area shell");
+    let vcount = profile.material().points().len().saturating_sub(1);
 
     // We used 32 slices for the cylinder, so we expect up to 32 edges
     // in the cross-section circle. Some slight differences might occur

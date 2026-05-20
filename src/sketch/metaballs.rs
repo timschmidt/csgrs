@@ -1,16 +1,16 @@
 //! Provides a `MetaBall` struct and functions for creating a `Sketch` from [MetaBalls](https://en.wikipedia.org/wiki/Metaballs)
 
-use crate::float_types::{Real, tolerance};
+use crate::float_types::{Real, hreal_from_f64, hreal_to_f64, tolerance};
 use crate::sketch::Sketch;
 use hashbrown::HashMap;
-use hypercurve::Region2;
+use hypercurve::{Contour2, Point2, Region2};
 use std::fmt::Debug;
 
-type Point = [Real; 2];
-type Segment = [Point; 2];
+type SamplePoint = [Real; 2];
+type Segment = [SamplePoint; 2];
 
 impl<M: Clone + Debug + Send + Sync> Sketch<M> {
-    /// Create a 2D metaball iso-contour in XY plane from a set of 2D metaballs.
+    /// Create a 2D metaball iso-contour in XY plane from hypercurve centers.
     /// - `balls`: array of (center, radius).
     /// - `resolution`: (nx, ny) grid resolution for marching squares.
     /// - `iso_value`: threshold for the iso-surface.
@@ -19,15 +19,20 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     ///
     /// This samples a Wyvill-style soft object field and extracts 2D
     /// isocontours with the marching-squares analogue of Lorensen and Cline's
-    /// marching-cubes cell traversal. Closed contour loops are promoted
-    /// directly into `hypercurve::Region2` so CAD topology is carried by
-    /// hyper geometry instead of by a temporary `geo::Polygon`. See Wyvill,
-    /// McPheeters, and Wyvill, "Data structure for soft objects", *The Visual
-    /// Computer* 2(4), 1986, DOI: 10.1007/BF01900346, and Lorensen and Cline,
-    /// "Marching Cubes: A High Resolution 3D Surface Construction Algorithm",
-    /// SIGGRAPH 1987, DOI: 10.1145/37401.37422.
+    /// marching-cubes cell traversal. Centers are native `hypercurve::Point2`
+    /// values and influence distances are evaluated with hyperreal squared
+    /// point distance before exporting finite samples to the marching-squares
+    /// boundary. Closed contour loops are promoted directly into
+    /// `hypercurve::Region2`, so CAD topology is carried by hyper geometry
+    /// instead of by a temporary finite polygon. See Wyvill, McPheeters, and
+    /// Wyvill, "Data structure for soft objects", *The Visual Computer* 2(4),
+    /// 1986, DOI: 10.1007/BF01900346; Lorensen and Cline, "Marching Cubes: A
+    /// High Resolution 3D Surface Construction Algorithm", SIGGRAPH 1987, DOI:
+    /// 10.1145/37401.37422; and Yap, "Towards Exact Geometric Computation",
+    /// *Computational Geometry* 7(1-2), 1997,
+    /// <https://doi.org/10.1016/0925-7721(95)00040-2>.
     pub fn metaballs(
-        balls: &[(nalgebra::Point2<Real>, Real)],
+        balls: &[(Point2, Real)],
         resolution: (usize, usize),
         iso_value: Real,
         padding: Real,
@@ -44,19 +49,29 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         let mut max_x = -Real::MAX;
         let mut max_y = -Real::MAX;
         for (center, r) in balls {
+            if !r.is_finite() || *r <= 0.0 {
+                continue;
+            }
+            let Some([cx, cy]) = finite_point2_coords(center) else {
+                continue;
+            };
             let rr = *r + padding;
-            if center.x - rr < min_x {
-                min_x = center.x - rr;
+            if cx - rr < min_x {
+                min_x = cx - rr;
             }
-            if center.x + rr > max_x {
-                max_x = center.x + rr;
+            if cx + rr > max_x {
+                max_x = cx + rr;
             }
-            if center.y - rr < min_y {
-                min_y = center.y - rr;
+            if cy - rr < min_y {
+                min_y = cy - rr;
             }
-            if center.y + rr > max_y {
-                max_y = center.y + rr;
+            if cy + rr > max_y {
+                max_y = cy + rr;
             }
+        }
+        if !(min_x.is_finite() && min_y.is_finite() && max_x.is_finite() && max_y.is_finite())
+        {
+            return Sketch::empty(metadata);
         }
 
         let dx = (max_x - min_x) / (nx as Real - 1.0);
@@ -65,13 +80,20 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         // 2) Fill a grid with the summed "influence" minus iso_value
         /// **Mathematical Foundation**: 2D metaball influence I(p) = r²/(|p-c|² + ε)
         /// **Optimization**: Iterator-based computation with early termination for distant points.
-        fn scalar_field(balls: &[(nalgebra::Point2<Real>, Real)], x: Real, y: Real) -> Real {
+        fn scalar_field(balls: &[(Point2, Real)], x: Real, y: Real) -> Real {
+            let Some(sample) = finite_point2(x, y) else {
+                return 0.0;
+            };
             balls
                 .iter()
                 .map(|(center, radius)| {
-                    let dx = x - center.x;
-                    let dy = y - center.y;
-                    let distance_sq = dx * dx + dy * dy;
+                    if !radius.is_finite() || *radius <= 0.0 {
+                        return 0.0;
+                    }
+                    let Some(distance_sq) = hreal_to_f64(&sample.distance_squared(center))
+                    else {
+                        return 0.0;
+                    };
 
                     // Early termination for very distant points
                     let threshold_distance_sq = radius * radius * 1000.0;
@@ -167,7 +189,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
 
                 // 2 intersections => one segment; 4 intersections in ambiguous
                 // cells => two segments. Keep these as native point pairs so
-                // `geo` is not the source representation for metaball topology.
+                // Finite polygon samples are not the source representation for metaball topology.
                 for pair in pts.chunks_exact(2) {
                     contours.push([[pair[0].0, pair[0].1], [pair[1].0, pair[1].1]]);
                 }
@@ -179,7 +201,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         let material = stitched
             .iter()
             .filter(|line| line.len() >= 4 && same_point(line[0], *line.last().unwrap()))
-            .filter_map(|line| Sketch::<M>::contour_from_points(line))
+            .filter_map(|line| Contour2::from_finite_ring(line).ok())
             .collect::<Vec<_>>();
 
         if material.is_empty() {
@@ -190,22 +212,30 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     }
 }
 
+fn finite_point2(x: Real, y: Real) -> Option<Point2> {
+    Some(Point2::new(hreal_from_f64(x).ok()?, hreal_from_f64(y).ok()?))
+}
+
+fn finite_point2_coords(point: &Point2) -> Option<[Real; 2]> {
+    Some([hreal_to_f64(point.x())?, hreal_to_f64(point.y())?])
+}
+
 // helper – quantise to avoid FP noise
 #[inline]
-fn key(point: Point) -> (i64, i64) {
+fn key(point: SamplePoint) -> (i64, i64) {
     (
         (point[0] * 1e8).round() as i64,
         (point[1] * 1e8).round() as i64,
     )
 }
 
-fn same_point(a: Point, b: Point) -> bool {
+fn same_point(a: SamplePoint, b: SamplePoint) -> bool {
     key(a) == key(b)
 }
 
 /// stitch all 2-point segments into longer polylines,
 /// close them when the ends meet
-fn stitch(contours: &[Segment]) -> Vec<Vec<Point>> {
+fn stitch(contours: &[Segment]) -> Vec<Vec<SamplePoint>> {
     // adjacency map  endpoint -> (line index, end-id 0|1)
     let mut adj: HashMap<(i64, i64), Vec<(usize, usize)>> = HashMap::new();
     for (idx, segment) in contours.iter().enumerate() {
@@ -237,7 +267,7 @@ fn stitch(contours: &[Segment]) -> Vec<Vec<Point>> {
 }
 
 fn extend_chain(
-    chain: &mut Vec<Point>,
+    chain: &mut Vec<SamplePoint>,
     contours: &[Segment],
     adj: &HashMap<(i64, i64), Vec<(usize, usize)>>,
     used: &mut [bool],

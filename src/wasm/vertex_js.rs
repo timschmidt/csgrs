@@ -29,11 +29,15 @@ impl VertexJs {
 
     #[wasm_bindgen(js_name = fromComponents)]
     pub fn from_components(x: f64, y: f64, z: f64) -> VertexJs {
+        // Component inputs are JS primitive boundary data. Reuse the point and
+        // vector wrappers so promotion/rejection stays centralized in
+        // hyperreal/hyperlattice adapters, following Yap, "Towards Exact
+        // Geometric Computation," Computational Geometry 7(1-2), 1997
+        // (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+        let position = Point3Js::new(x, y, z);
+        let normal = Vector3Js::new(0.0, 0.0, 1.0);
         VertexJs {
-            inner: Vertex::new(
-                Point3::new(x as Real, y as Real, z as Real),
-                Vector3::new(0.0, 0.0, 1.0), // default normal
-            ),
+            inner: Vertex::new(position.inner, normal.inner),
         }
     }
 
@@ -83,5 +87,17 @@ impl From<Vertex> for VertexJs {
 impl From<&VertexJs> for Vertex {
     fn from(v: &VertexJs) -> Self {
         v.inner
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn vertex_js_from_components_reuses_hyperreal_point_boundary() {
+        let vertex = VertexJs::from_components(f64::NAN, 1.0, f64::INFINITY);
+        assert_eq!(vertex.inner.position, Point3::origin());
+        assert_eq!(vertex.inner.normal, Vector3::z());
     }
 }

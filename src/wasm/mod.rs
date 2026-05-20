@@ -4,6 +4,9 @@ use serde_json::Value as JsonValue;
 use serde_wasm_bindgen::from_value;
 use wasm_bindgen::prelude::*;
 
+use crate::float_types::Real;
+use nalgebra::Matrix4;
+
 pub mod matrix_js;
 pub mod mesh_js;
 pub mod metaballs_js;
@@ -30,4 +33,14 @@ fn js_metadata_to_string(metadata: JsValue) -> Result<Option<String>, JsValue> {
     })?;
 
     Ok(Some(s))
+}
+
+pub(crate) fn finite_matrix4(values: [Real; 16]) -> Option<Matrix4<Real>> {
+    values.iter().all(|value| value.is_finite()).then(|| {
+        Matrix4::new(
+            values[0], values[1], values[2], values[3], values[4], values[5], values[6],
+            values[7], values[8], values[9], values[10], values[11], values[12], values[13],
+            values[14], values[15],
+        )
+    })
 }

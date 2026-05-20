@@ -1,12 +1,13 @@
 //! Stress tests for adversarial geometry workloads.
 
 use csgrs::csg::CSG;
-use csgrs::float_types::{Real, tolerance};
+use csgrs::float_types::{Real, hreal_from_f64, tolerance};
 use csgrs::mesh::Mesh;
 use csgrs::mesh::metaballs::MetaBall;
 use csgrs::mesh::plane::Plane;
 use csgrs::sketch::Sketch;
-use nalgebra::{Point2, Point3, Vector3};
+use hypercurve::Point2;
+use nalgebra::{Point3, Vector3};
 use std::panic::{AssertUnwindSafe, catch_unwind};
 
 fn assert_mesh_finite<M: Clone + Send + Sync + std::fmt::Debug>(mesh: &Mesh<M>) {
@@ -149,7 +150,15 @@ fn adversarial_stress_sdf_tpms_and_metaball_resolution_ladder() {
 
         let sketch_balls = balls
             .iter()
-            .map(|ball| (Point2::new(ball.center.x, ball.center.y), ball.radius))
+            .filter_map(|ball| {
+                Some((
+                    Point2::new(
+                        hreal_from_f64(ball.center.x).ok()?,
+                        hreal_from_f64(ball.center.y).ok()?,
+                    ),
+                    ball.radius,
+                ))
+            })
             .collect::<Vec<_>>();
         let sketch =
             Sketch::<()>::metaballs(&sketch_balls, (resolution, resolution), 0.5, 0.1, ());

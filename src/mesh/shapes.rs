@@ -2,13 +2,26 @@
 
 use crate::csg::CSG;
 use crate::errors::ValidationError;
-use crate::float_types::{PI, Real, TAU, tolerance};
+use crate::float_types::{
+    PI, Real, TAU, hperpendicular_basis, hreal_from_f64, hrotation_between_vectors,
+    hscale_matrix, htranslation_matrix, hunit_vector3, hunit_vector3_and_magnitude,
+    hvector3_from_point3, tolerance,
+};
 use crate::mesh::Mesh;
 use crate::polygon::Polygon;
+#[cfg(feature = "sketch")]
 use crate::sketch::Sketch;
 use crate::vertex::Vertex;
-use nalgebra::{Matrix4, Point3, Rotation3, Translation3, Vector3};
+use nalgebra::{Matrix4, Point3, Vector3};
 use std::fmt::Debug;
+
+fn finite_mesh_scalar(value: Real) -> bool {
+    hreal_from_f64(value).is_ok()
+}
+
+fn finite_mesh_point(point: &Point3<Real>) -> bool {
+    hvector3_from_point3(point).is_some()
+}
 
 impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// **Mathematical Foundations for 3D Box Geometry**
@@ -51,6 +64,12 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// - **Diagonal**: d = √(w² + l² + h²)
     /// - **Centroid**: (w/2, l/2, h/2)
     pub fn cuboid(width: Real, length: Real, height: Real, metadata: M) -> Mesh<M> {
+        if !(finite_mesh_scalar(width)
+            && finite_mesh_scalar(length)
+            && finite_mesh_scalar(height))
+        {
+            return Mesh::empty(metadata);
+        }
         // Define the eight corner points of the prism.
         //    (x, y, z)
         let p000 = Point3::new(0.0, 0.0, 0.0);
@@ -208,6 +227,9 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// - `stacks`: Latitude divisions (≥ 2, recommend ≥ 6)
     /// - `metadata`: Optional metadata for all faces
     pub fn sphere(radius: Real, segments: usize, stacks: usize, metadata: M) -> Mesh<M> {
+        if !finite_mesh_scalar(radius) {
+            return Mesh::empty(metadata);
+        }
         let segments = segments.max(3);
         let stacks = stacks.max(2);
         let mut polygons = Vec::new();
@@ -283,24 +305,36 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         segments: usize,
         metadata: M,
     ) -> Mesh<M> {
+        if !finite_mesh_point(&start)
+            || !finite_mesh_point(&end)
+            || !finite_mesh_scalar(radius1)
+            || !finite_mesh_scalar(radius2)
+        {
+            return Mesh::empty(metadata);
+        }
         let segments = segments.max(3);
         // Compute the axis and check that start and end do not coincide.
+        //
+        // The axis length and checked unit direction are evaluated through
+        // `hyperlattice::Vector3`/`hyperreal::Real`, then exported only for the
+        // finite mesh construction loops. This follows Yap's exact-geometric-
+        // computation boundary discipline, *Computational Geometry* 7(1-2),
+        // 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>).
         let s = start.coords;
         let e = end.coords;
         let ray = e - s;
-        if ray.norm_squared() < tolerance() {
+        let Some((axis_z, axis_length)) = hunit_vector3_and_magnitude(&ray) else {
+            return Mesh::empty(metadata);
+        };
+        if axis_length < tolerance() {
             return Mesh::empty(metadata);
         }
-        let axis_z = ray.normalize();
-        // Pick an axis not parallel to axis_z.
-        let axis_x = if axis_z.y.abs() > 0.5 {
-            Vector3::x()
-        } else {
-            Vector3::y()
-        }
-        .cross(&axis_z)
-        .normalize();
-        let axis_y = axis_x.cross(&axis_z).normalize();
+
+        // Pick axes in hyperlattice so primitive floats only carry the final
+        // mesh-boundary basis.
+        let Some((axis_x, axis_y)) = hperpendicular_basis(&axis_z) else {
+            return Mesh::empty(metadata);
+        };
 
         // The cap centers for the bottom and top.
         let start_v = Vertex::new(start, -axis_z);
@@ -316,7 +350,10 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             let radial_dir = axis_x * angle.cos() + axis_y * angle.sin();
             let position = s + ray * stack + radial_dir * r;
             let normal = radial_dir * (1.0 - normal_blend.abs()) + axis_z * normal_blend;
-            Vertex::new(Point3::from(position), normal.normalize())
+            Vertex::new(
+                Point3::from(position),
+                hunit_vector3(&normal).unwrap_or(axis_z),
+            )
         };
 
         let mut polygons = Vec::new();
@@ -418,6 +455,13 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
 
     /// Creates a Mesh polyhedron from raw vertex data (`points`) and face indices.
     ///
+    /// Raw coordinates are API-boundary data. Each selected point is promoted
+    /// through `hyperlattice::Vector3<hyperreal::Real>` before a polygon vertex
+    /// is built, so `NaN`/infinite values are rejected instead of being
+    /// sanitized by the transitional vertex carrier. This follows Yap,
+    /// "Towards Exact Geometric Computation," *Computational Geometry*
+    /// 7(1-2), 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+    ///
     /// # Parameters
     ///
     /// - `points`: a slice of `[x,y,z]` coordinates.
@@ -471,8 +515,12 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                     });
                 }
                 let [x, y, z] = points[idx];
+                let point = Point3::new(x, y, z);
+                if hvector3_from_point3(&point).is_none() {
+                    return Err(ValidationError::InvalidCoordinate(point));
+                }
                 face_vertices.push(Vertex::new(
-                    Point3::new(x, y, z),
+                    point,
                     Vector3::zeros(), // we'll set this later
                 ));
             }
@@ -499,7 +547,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// - `revolve_segments`: Number of segments for the revolution.
     /// - `outline_segments`: Number of segments for the 2D egg outline itself.
     /// - `metadata`: Optional metadata.
-    #[cfg(feature = "chull-io")]
+    #[cfg(all(feature = "chull-io", feature = "sketch"))]
     pub fn egg(
         width: Real,
         length: Real,
@@ -533,7 +581,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// - `revolve_segments`: Number of segments for the revolution (the "circular" direction).
     /// - `shape_segments`: Number of segments for the 2D teardrop outline itself.
     /// - `metadata`: Optional metadata.
-    #[cfg(feature = "chull-io")]
+    #[cfg(all(feature = "chull-io", feature = "sketch"))]
     pub fn teardrop(
         width: Real,
         length: Real,
@@ -569,6 +617,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// - `revolve_segments`: Number of segments for the revolution (the "circular" direction).
     /// - `shape_segments`: Number of segments for the 2D teardrop outline itself.
     /// - `metadata`: Optional metadata.
+    #[cfg(feature = "sketch")]
     pub fn teardrop_cylinder(
         width: Real,
         length: Real,
@@ -626,13 +675,17 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         orientation: bool,
         metadata: M,
     ) -> Mesh<M> {
-        // Compute the arrow's total length.
-        let arrow_length = direction.norm();
+        if !finite_mesh_point(&start) {
+            return Mesh::empty(metadata);
+        }
+        // Compute the arrow's total length and unit direction through the
+        // hyper geometry boundary used by primitive axis construction.
+        let Some((unit_dir, arrow_length)) = hunit_vector3_and_magnitude(&direction) else {
+            return Mesh::empty(metadata);
+        };
         if arrow_length < tolerance() {
             return Mesh::empty(metadata);
         }
-        // Compute the unit direction.
-        let unit_dir = direction / arrow_length;
 
         // Define proportions:
         // - Arrow head occupies 20% of total length.
@@ -665,21 +718,31 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         // The mirror transform about the plane z = arrow_length/2 maps any point (0,0,z) to (0,0, arrow_length - z).
         if orientation {
             let l = arrow_length;
-            let mirror_mat: Matrix4<Real> = Translation3::new(0.0, 0.0, l / 2.0)
-                .to_homogeneous()
-                * Matrix4::new_nonuniform_scaling(&Vector3::new(1.0, 1.0, -1.0))
-                * Translation3::new(0.0, 0.0, -l / 2.0).to_homogeneous();
+            let Some(to_midpoint) = htranslation_matrix(&Vector3::new(0.0, 0.0, l / 2.0))
+            else {
+                return Mesh::empty(metadata);
+            };
+            let Some(reflect_z) = hscale_matrix(1.0, 1.0, -1.0) else {
+                return Mesh::empty(metadata);
+            };
+            let Some(from_midpoint) = htranslation_matrix(&Vector3::new(0.0, 0.0, -l / 2.0))
+            else {
+                return Mesh::empty(metadata);
+            };
+            let mirror_mat: Matrix4<Real> = to_midpoint * reflect_z * from_midpoint;
             canonical_arrow = canonical_arrow.transform(&mirror_mat).inverse();
         }
         // In both cases, we now have a canonical arrow that extends from z=0 to z=arrow_length.
         // For orientation == false, z=0 is the base.
         // For orientation == true, after mirroring z=0 is now the tip.
 
-        // Compute the rotation that maps the canonical +Z axis to the provided direction.
+        // Compute the rotation that maps the canonical +Z axis to the provided
+        // direction. Dot/cross/unit-vector work is delegated to hyperlattice via
+        // `hrotation_between_vectors`, following Yap's exact geometric
+        // computation boundary split.
         let z_axis = Vector3::z();
-        let rotation = Rotation3::rotation_between(&z_axis, &unit_dir)
-            .unwrap_or_else(Rotation3::identity);
-        let rot_mat: Matrix4<Real> = rotation.to_homogeneous();
+        let rot_mat: Matrix4<Real> =
+            hrotation_between_vectors(&z_axis, &unit_dir).unwrap_or_else(Matrix4::identity);
 
         // Rotate the arrow.
         let rotated_arrow = canonical_arrow.transform(&rot_mat);
@@ -692,6 +755,9 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
 
     /// Regular octahedron scaled by `radius`
     pub fn octahedron(radius: Real, metadata: M) -> Self {
+        if !finite_mesh_scalar(radius) {
+            return Mesh::empty(metadata);
+        }
         let pts = &[
             [1.0, 0.0, 0.0],
             [-1.0, 0.0, 0.0],
@@ -714,11 +780,15 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             .iter()
             .map(|&[x, y, z]| [x * radius, y * radius, z * radius])
             .collect();
-        Self::polyhedron(&scaled, &faces, metadata).unwrap()
+        Self::polyhedron(&scaled, &faces, metadata.clone())
+            .unwrap_or_else(|_| Mesh::empty(metadata))
     }
 
     /// Regular icosahedron scaled by `radius`
     pub fn icosahedron(radius: Real, metadata: M) -> Self {
+        if !finite_mesh_scalar(radius) {
+            return Mesh::empty(metadata);
+        }
         // radius scale factor
         let factor = radius * 0.5878; // empirically determined todo: eliminate this
         // golden ratio
@@ -768,9 +838,9 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             &[9, 8, 1],
         ];
 
-        Self::polyhedron(&pts, &faces, metadata)
-            .unwrap()
-            .scale(factor, factor, factor)
+        Self::polyhedron(&pts, &faces, metadata.clone())
+            .map(|mesh| mesh.scale(factor, factor, factor))
+            .unwrap_or_else(|_| Mesh::empty(metadata))
     }
 
     /// Torus centred at the origin in the *XY* plane.
@@ -779,6 +849,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// * `minor_r` – tube radius ( r )  
     /// * `segments_major` – number of segments around the donut  
     /// * `segments_minor` – segments of the tube cross-section
+    #[cfg(feature = "sketch")]
     pub fn torus(
         major_r: Real,
         minor_r: Real,
@@ -794,6 +865,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     }
 
     #[allow(clippy::too_many_arguments)]
+    #[cfg(feature = "sketch")]
     pub fn spur_gear_involute(
         module: Real,
         teeth: usize,
@@ -816,6 +888,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         .extrude(thickness)
     }
 
+    #[cfg(feature = "sketch")]
     pub fn spur_gear_cycloid(
         module: Real,
         teeth: usize,
@@ -837,6 +910,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     }
 
     #[allow(clippy::too_many_arguments)]
+    #[cfg(feature = "sketch")]
     pub fn helical_involute_gear(
         module: Real,
         teeth: usize,

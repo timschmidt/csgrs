@@ -1,11 +1,13 @@
 //! Struct and functions for working with planar `Polygon`s without holes
 
 use crate::float_types::{
-    Real, hreal_from_f64, hreal_gt_f64, hreal_lt_f64, hvector3_from_point3,
-    hvector3_from_vector3, parry3d::bounding_volume::Aabb, tolerance,
+    Real, hperpendicular_basis, hreal_from_f64, hreal_gt_f64, hreal_lt_f64, hunit_vector3,
+    hvector3_dot, hvector3_from_point3, hvector3_from_vector3, parry3d::bounding_volume::Aabb,
+    tolerance,
 };
 use crate::mesh::plane::Plane;
 use crate::vertex::Vertex;
+use hyperlattice::Vector3 as HVector3;
 use nalgebra::{Point3, Vector3};
 use std::sync::OnceLock;
 
@@ -142,29 +144,24 @@ impl<M: Clone + Send + Sync> Polygon<M> {
             return vec![[a, b, c]];
         }
 
-        let raw_normal = self.plane.normal();
-        let normal_len = raw_normal.norm();
-        if normal_len < tolerance() || !normal_len.is_finite() {
+        let Some(normal_3d) = hunit_vector3(&self.plane.normal()) else {
             return Vec::new();
-        }
-
-        let normal_3d = raw_normal / normal_len;
-        if !normal_3d.x.is_finite() || !normal_3d.y.is_finite() || !normal_3d.z.is_finite() {
+        };
+        let Some((u, v)) = hperpendicular_basis(&normal_3d) else {
             return Vec::new();
-        }
-
-        let (u, v) = build_orthonormal_basis(normal_3d);
+        };
         let origin_3d = self.vertices[0].position;
 
         let n_verts = self.vertices.len();
         let mut points_2d = Vec::with_capacity(n_verts);
         for vert in &self.vertices {
             let offset = vert.position.coords - origin_3d.coords;
-            let x = offset.dot(&u);
-            let y = offset.dot(&v);
-            if !x.is_finite() || !y.is_finite() {
+            let Some(x) = hvector3_dot(&offset, &u) else {
                 return Vec::new();
-            }
+            };
+            let Some(y) = hvector3_dot(&offset, &v) else {
+                return Vec::new();
+            };
             let Ok(x) = hreal_from_f64(x) else {
                 return Vec::new();
             };
@@ -292,37 +289,34 @@ impl<M: Clone + Send + Sync> Polygon<M> {
             .collect()
     }
 
-    /// return a normal calculated from all polygon vertices
+    /// Return a normal calculated from all polygon vertices.
+    ///
+    /// The Newell-style accumulated area normal is evaluated with
+    /// `hyperlattice::Vector3<hyperreal::Real>` and checked-normalized before
+    /// export to the current finite mesh boundary type. This keeps polygon
+    /// normal recomputation on the same exact-geometric-computation boundary
+    /// model used by plane predicates (Yap, *Computational Geometry* 7(1-2),
+    /// 1997, <https://doi.org/10.1016/0925-7721(95)00040-2>).
     pub fn calculate_new_normal(&self) -> Vector3<Real> {
         let n = self.vertices.len();
         if n < 3 {
             return Vector3::z(); // degenerate or empty
         }
 
-        let mut points = Vec::new();
-        for vertex in &self.vertices {
-            points.push(vertex.position);
-        }
-        let mut normal = Vector3::zeros();
-
-        // Loop over each edge of the polygon.
-        for i in 0..n {
-            let current = points[i];
-            let next = points[(i + 1) % n]; // wrap around using modulo
-            normal.x += (current.y - next.y) * (current.z + next.z);
-            normal.y += (current.z - next.z) * (current.x + next.x);
-            normal.z += (current.x - next.x) * (current.y + next.y);
+        if let Some(mut poly_normal) = hyper_polygon_newell_normal(&self.vertices) {
+            let plane_normal = self.plane.normal();
+            if let (Some(poly_h), Some(plane_h)) = (
+                hvector3_from_vector3(&poly_normal),
+                hvector3_from_vector3(&plane_normal),
+            ) {
+                if hreal_lt_f64(&poly_h.dot(&plane_h), 0.0) {
+                    poly_normal = -poly_normal;
+                }
+            }
+            return poly_normal;
         }
 
-        // Normalize the computed normal.
-        let mut poly_normal = normal.normalize();
-
-        // Ensure the computed normal is in the same direction as the given normal.
-        if poly_normal.dot(&self.plane.normal()) < 0.0 {
-            poly_normal = -poly_normal;
-        }
-
-        poly_normal
+        Vector3::z()
     }
 
     /// Recompute this polygon's normal from all vertices, then set all vertices' normals to match (flat shading).
@@ -393,29 +387,35 @@ fn hyper_triangle_orientation(
     }
 }
 
-/// Given a normal vector `n`, build two perpendicular unit vectors `u` and `v` so that
-/// {u, v, n} forms an orthonormal basis. `n` is assumed non‐zero.
+fn hyper_polygon_newell_normal(vertices: &[Vertex]) -> Option<Vector3<Real>> {
+    let points = vertices
+        .iter()
+        .map(|vertex| hvector3_from_point3(&vertex.position))
+        .collect::<Option<Vec<_>>>()?;
+    let normal = points
+        .iter()
+        .zip(points.iter().cycle().skip(1))
+        .fold(HVector3::zero(), |acc, (current, next)| {
+            acc + current.cross(next)
+        });
+    let normal = normal.normalize_checked().ok()?;
+    let [x, y, z] = normal.to_f64_array_lossy()?;
+    Some(Vector3::new(x, y, z))
+}
+
+/// Given a normal vector `n`, build two perpendicular unit vectors `u` and `v`
+/// so that {u, v, n} forms an orthonormal basis.
+///
+/// The checked normalization and cross products are delegated to
+/// `hyperlattice::Vector3`; the returned vectors are finite mesh-boundary
+/// values used by projection code. This follows Yap's exact-geometric-
+/// computation boundary discipline (<https://doi.org/10.1016/0925-7721(95)00040-2>).
 pub fn build_orthonormal_basis(n: Vector3<Real>) -> (Vector3<Real>, Vector3<Real>) {
-    // Normalize the given normal
-    let n = n.normalize();
+    if let Some(basis) = hperpendicular_basis(&n) {
+        return basis;
+    }
 
-    // Pick a vector that is not parallel to `n`. For instance, pick the axis
-    // which has the smallest absolute component in `n`, and cross from there.
-    // Because crossing with that is least likely to cause numeric issues.
-    let other = if n.x.abs() < n.y.abs() && n.x.abs() < n.z.abs() {
-        Vector3::x()
-    } else if n.y.abs() < n.z.abs() {
-        Vector3::y()
-    } else {
-        Vector3::z()
-    };
-
-    // v = n × other
-    let v = n.cross(&other).normalize();
-    // u = v × n
-    let u = v.cross(&n).normalize();
-
-    (u, v)
+    (Vector3::x(), Vector3::y())
 }
 
 /// Helper function to subdivide a triangle into four smaller triangles.

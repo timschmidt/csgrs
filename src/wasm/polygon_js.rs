@@ -9,6 +9,13 @@ use crate::wasm::{
 use js_sys::{Object, Reflect};
 use wasm_bindgen::prelude::*;
 
+fn validate_polygon_vertices(vertices: &[VertexJs]) -> Result<(), &'static str> {
+    if vertices.len() < 3 {
+        return Err("Polygon.fromVertices requires at least 3 vertices");
+    }
+    Ok(())
+}
+
 #[wasm_bindgen]
 pub struct PolygonJs {
     pub(crate) inner: Polygon<Option<String>>,
@@ -21,23 +28,29 @@ impl PolygonJs {
     /// Metadata may be any JSON-serializable value; it is stored as a JSON string
     /// in the underlying Rust `Polygon<Option<String>>`.
     #[wasm_bindgen(constructor)]
-    pub fn new(vertices: Vec<VertexJs>, metadata: JsValue) -> PolygonJs {
+    pub fn new(vertices: Vec<VertexJs>, metadata: JsValue) -> Result<PolygonJs, JsValue> {
         PolygonJs::from_vertices(vertices, metadata)
     }
 
     /// Construct from vertices (same as constructor, but named).
     #[wasm_bindgen(js_name = fromVertices)]
-    pub fn from_vertices(vertices: Vec<VertexJs>, metadata: JsValue) -> PolygonJs {
-        if vertices.len() < 3 {
-            panic!("Polygon.fromVertices requires at least 3 vertices");
-        }
+    pub fn from_vertices(
+        vertices: Vec<VertexJs>,
+        metadata: JsValue,
+    ) -> Result<PolygonJs, JsValue> {
+        validate_polygon_vertices(&vertices).map_err(JsValue::from_str)?;
 
+        // Vertices are finite wasm boundary wrappers; polygon plane selection
+        // is delegated to hyperlattice/hyperreal predicates in `Polygon`/`Plane`,
+        // following Yap, "Towards Exact Geometric Computation," Computational
+        // Geometry 7(1-2), 1997
+        // (<https://doi.org/10.1016/0925-7721(95)00040-2>).
         let verts: Vec<Vertex> = vertices.into_iter().map(|v| v.inner).collect();
         let meta = js_metadata_to_string(metadata).unwrap_or(None);
 
-        PolygonJs {
+        Ok(PolygonJs {
             inner: Polygon::new(verts, meta),
-        }
+        })
     }
 
     /// Get the vertices as `VertexJs[]`.
@@ -168,5 +181,17 @@ impl From<Polygon<Option<String>>> for PolygonJs {
 impl From<&PolygonJs> for Polygon<Option<String>> {
     fn from(p: &PolygonJs) -> Self {
         p.inner.clone()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn polygon_js_from_vertices_rejects_short_input_without_panic() {
+        let result = std::panic::catch_unwind(|| validate_polygon_vertices(&[]));
+        assert!(result.is_ok());
+        assert!(result.unwrap().is_err());
     }
 }

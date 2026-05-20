@@ -5,22 +5,22 @@
 pub mod svg;
 
 #[cfg(feature = "stl-io")]
-mod stl;
+pub mod stl;
 
 #[cfg(feature = "dxf-io")]
-mod dxf;
+pub mod dxf;
 
 #[cfg(feature = "obj-io")]
-mod obj;
+pub mod obj;
 
 #[cfg(feature = "ply-io")]
-mod ply;
+pub mod ply;
 
 #[cfg(feature = "amf-io")]
-mod amf;
+pub mod amf;
 
 #[cfg(feature = "gltf-io")]
-mod gltf;
+pub mod gltf;
 
 #[cfg(feature = "gerber-io")]
 pub mod gerber;

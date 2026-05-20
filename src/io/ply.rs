@@ -3,42 +3,32 @@
 #![doc = " This module provides export functionality for Stanford PLY files,"]
 #![doc = " a popular format for 3D scanning, research, and mesh processing applications."]
 
-use crate::float_types::{Real, hpoints_within_epsilon, hvectors_within_epsilon, tolerance};
-use crate::triangulated::Triangulated3D;
+use crate::triangulated::IndexedTriangulated3D;
 use crate::vertex::Vertex;
-use nalgebra::{Point3, Vector3};
+use hashbrown::HashMap;
 use std::fmt::Debug;
 use std::io::Write;
 
-/// Add a vertex to the list, reusing an existing one if position and normal
-/// are within `tolerance()`.
-fn add_unique_vertex_ply(
-    vertices: &mut Vec<Vertex>,
-    position: Point3<Real>,
-    normal: Vector3<Real>,
-) -> usize {
-    for (i, existing) in vertices.iter().enumerate() {
-        if hpoints_within_epsilon(&existing.position, &position, tolerance())
-            && hvectors_within_epsilon(&existing.normal, &normal, tolerance())
-        {
-            return i;
-        }
-    }
-    vertices.push(Vertex { position, normal });
-    vertices.len() - 1
-}
-
-fn build_ply_buffers<T: Triangulated3D>(shape: &T) -> (Vec<Vertex>, Vec<[usize; 3]>) {
-    let mut vertices = Vec::<Vertex>::new();
-    let mut faces = Vec::<[usize; 3]>::new();
-
-    shape.visit_triangles(|tri| {
-        let i0 = add_unique_vertex_ply(&mut vertices, tri[0].position, tri[0].normal);
-        let i1 = add_unique_vertex_ply(&mut vertices, tri[1].position, tri[1].normal);
-        let i2 = add_unique_vertex_ply(&mut vertices, tri[2].position, tri[2].normal);
-        faces.push([i0, i1, i2]);
-    });
-
+fn build_ply_buffers<T: IndexedTriangulated3D>(shape: &T) -> (Vec<Vertex>, Vec<[usize; 3]>) {
+    let indexed = shape.indexed_triangles();
+    let mut vertices = Vec::new();
+    let mut vertex_map = HashMap::<(usize, usize), usize>::new();
+    let faces = indexed
+        .faces
+        .into_iter()
+        .map(|face| {
+            face.map(|key @ (position, normal)| {
+                *vertex_map.entry(key).or_insert_with(|| {
+                    let index = vertices.len();
+                    vertices.push(Vertex {
+                        position: indexed.positions[position],
+                        normal: indexed.normals[normal],
+                    });
+                    index
+                })
+            })
+        })
+        .collect();
     (vertices, faces)
 }
 
@@ -48,7 +38,7 @@ fn build_ply_buffers<T: Triangulated3D>(shape: &T) -> (Vec<Vertex>, Vec<[usize; 
 #[doc = ""]
 #[doc = " # Arguments"]
 #[doc = " * `comment` - Optional comment to include in PLY header"]
-pub fn to_ply<T: Triangulated3D>(shape: &T, comment: &str) -> String {
+pub fn to_ply<T: IndexedTriangulated3D>(shape: &T, comment: &str) -> String {
     let (vertices, faces) = build_ply_buffers(shape);
 
     let mut ply_content = String::new();
@@ -91,7 +81,7 @@ pub fn to_ply<T: Triangulated3D>(shape: &T, comment: &str) -> String {
 #[doc = " # Arguments"]
 #[doc = " * `writer` - Where to write the PLY data"]
 #[doc = " * `comment` - Comment to include in PLY header"]
-pub fn write_ply<T: Triangulated3D, W: Write>(
+pub fn write_ply<T: IndexedTriangulated3D, W: Write>(
     shape: &T,
     writer: &mut W,
     comment: &str,
@@ -119,19 +109,6 @@ impl<M: Clone + Debug + Send + Sync> crate::sketch::Sketch<M> {
     }
 
     #[doc = " Export this Sketch to a PLY file"]
-    pub fn write_ply<W: Write>(&self, writer: &mut W, comment: &str) -> std::io::Result<()> {
-        self::write_ply(self, writer, comment)
-    }
-}
-
-#[cfg(feature = "bmesh")]
-impl<M: Clone + Debug + Send + Sync> crate::bmesh::BMesh<M> {
-    #[doc = " Export this BMesh to PLY format as a string"]
-    pub fn to_ply(&self, comment: &str) -> String {
-        self::to_ply(self, comment)
-    }
-
-    #[doc = " Export this BMesh to a PLY file"]
     pub fn write_ply<W: Write>(&self, writer: &mut W, comment: &str) -> std::io::Result<()> {
         self::write_ply(self, writer, comment)
     }

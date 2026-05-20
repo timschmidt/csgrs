@@ -35,12 +35,12 @@ fuzz_target!(|bytes: &[u8]| {
     let mut idx = 0usize;
     let size_a = decode_real(bytes, &mut idx).abs().max(tolerance());
     let size_b = decode_real(bytes, &mut idx).abs().max(tolerance());
-    let b = Mesh::cube(size_b, None).translate(
+    let b = Mesh::cube(size_b, ()).translate(
         decode_real(bytes, &mut idx),
         decode_real(bytes, &mut idx),
         decode_real(bytes, &mut idx),
     );
-    let a = Mesh::cube(size_a, None);
+    let a = Mesh::cube(size_a, ());
     let result = match bytes[idx % bytes.len()] % 4 {
         0 => a.union(&b),
         1 => a.difference(&b),

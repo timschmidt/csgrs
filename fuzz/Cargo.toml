@@ -8,7 +8,7 @@ edition = "2024"
 cargo-fuzz = true
 
 [dependencies]
-csgrs = { path = ".." }
+csgrs = { path = "..", features = ["offset"] }
 libfuzzer-sys = "0.4"
 nalgebra = "0.34.1"
 hashbrown = "0.15"
@@ -128,6 +128,13 @@ bench = false
 [[bin]]
 name = "fuzz_mesh_boolean_pair"
 path = "fuzz_targets/fuzz_mesh_boolean_pair.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "fuzz_mesh_hypermesh_adapter"
+path = "fuzz_targets/fuzz_mesh_hypermesh_adapter.rs"
 test = false
 doc = false
 bench = false

@@ -1,6 +1,8 @@
 //! DXF import support for converting 2D CAD entities into `csgrs` geometry.
 
-use crate::float_types::Real;
+use crate::float_types::{
+    Real, hreal_from_f64, hunit_vector3, hvector3_from_point3, tolerance,
+};
 use crate::mesh::Mesh;
 use crate::polygon::Polygon;
 use crate::sketch::Sketch;
@@ -12,6 +14,7 @@ use std::fmt::Debug;
 
 use dxf::Drawing;
 use dxf::entities::*;
+use hypercurve::Point2;
 use std::io::Cursor;
 
 impl<M: Clone + Debug + Send + Sync> Mesh<M> {
@@ -23,6 +26,13 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     #[doc = ""]
     #[doc = " ## Returns"]
     #[doc = " A `Result` containing the Mesh object or an error if parsing fails."]
+    ///
+    /// DXF entity coordinates are treated as primitive file-boundary data.
+    /// Points and normals are promoted through hyperlattice adapters before
+    /// becoming mesh vertices, so malformed or non-finite entity data is
+    /// skipped instead of being sanitized into CAD topology. This follows Yap,
+    /// "Towards Exact Geometric Computation," *Computational Geometry*
+    /// 7(1-2), 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     pub fn from_dxf(dxf_data: &[u8], metadata: M) -> Result<Mesh<M>, Box<dyn Error>> {
         let drawing = Drawing::load(&mut Cursor::new(dxf_data))?;
         let mut polygons = Vec::new();
@@ -34,14 +44,14 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                     if polyline.is_closed() {
                         let mut verts = Vec::new();
                         for vertex in polyline.vertices() {
-                            verts.push(Vertex::new(
-                                Point3::new(
-                                    vertex.location.x as Real,
-                                    vertex.location.y as Real,
-                                    vertex.location.z as Real,
-                                ),
-                                Vector3::z(),
-                            ));
+                            let point = Point3::new(
+                                vertex.location.x as Real,
+                                vertex.location.y as Real,
+                                vertex.location.z as Real,
+                            );
+                            if hvector3_from_point3(&point).is_some() {
+                                verts.push(Vertex::new(point, Vector3::z()));
+                            }
                         }
                         if verts.len() >= 3 {
                             polygons.push(Polygon::new(verts, metadata.clone()));
@@ -54,15 +64,22 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                         circle.center.y as Real,
                         circle.center.z as Real,
                     );
+                    if hvector3_from_point3(&center).is_none() {
+                        continue;
+                    }
                     let radius = circle.radius as Real;
+                    if !radius.is_finite() || radius <= tolerance() {
+                        continue;
+                    }
                     let segments = 32;
                     let mut verts = Vec::with_capacity(segments + 1);
-                    let normal = Vector3::new(
+                    let Some(normal) = hunit_vector3(&Vector3::new(
                         circle.normal.x as Real,
                         circle.normal.y as Real,
                         circle.normal.z as Real,
-                    )
-                    .normalize();
+                    )) else {
+                        continue;
+                    };
                     for i in 0..segments {
                         let theta =
                             2.0 * crate::float_types::PI * (i as Real) / (segments as Real);
@@ -80,17 +97,34 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                         solid.extrusion_direction.y as Real,
                         solid.extrusion_direction.z as Real,
                     );
-                    let extruded = Sketch::polygon(
-                        &[
-                            [solid.first_corner.x as Real, solid.first_corner.y as Real],
-                            [solid.second_corner.x as Real, solid.second_corner.y as Real],
-                            [solid.third_corner.x as Real, solid.third_corner.y as Real],
-                            [solid.fourth_corner.x as Real, solid.fourth_corner.y as Real],
-                        ],
-                        metadata.clone(),
-                    )
-                    .extrude_vector(extrusion_direction * thickness)
-                    .polygons;
+                    let points = [
+                        Point2::new(
+                            hreal_from_f64(solid.first_corner.x as Real)?,
+                            hreal_from_f64(solid.first_corner.y as Real)?,
+                        ),
+                        Point2::new(
+                            hreal_from_f64(solid.second_corner.x as Real)?,
+                            hreal_from_f64(solid.second_corner.y as Real)?,
+                        ),
+                        Point2::new(
+                            hreal_from_f64(solid.third_corner.x as Real)?,
+                            hreal_from_f64(solid.third_corner.y as Real)?,
+                        ),
+                        Point2::new(
+                            hreal_from_f64(solid.fourth_corner.x as Real)?,
+                            hreal_from_f64(solid.fourth_corner.y as Real)?,
+                        ),
+                    ];
+                    let ring = [
+                        points[0].clone(),
+                        points[1].clone(),
+                        points[2].clone(),
+                        points[3].clone(),
+                        points[0].clone(),
+                    ];
+                    let extruded = Sketch::polygon_points(&ring, metadata.clone())
+                        .extrude_vector(extrusion_direction * thickness)
+                        .polygons;
                     polygons.extend(extruded);
                 },
                 _ => {},
@@ -149,13 +183,6 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
 }
 
 impl<M: Clone + Debug + Send + Sync> Sketch<M> {
-    pub fn to_dxf(&self) -> Result<Vec<u8>, Box<dyn Error>> {
-        self::to_dxf(self)
-    }
-}
-
-#[cfg(feature = "bmesh")]
-impl<M: Clone + Debug + Send + Sync> crate::bmesh::BMesh<M> {
     pub fn to_dxf(&self) -> Result<Vec<u8>, Box<dyn Error>> {
         self::to_dxf(self)
     }

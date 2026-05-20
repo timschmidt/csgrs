@@ -96,15 +96,5 @@ impl<M: Clone + Debug + Send + Sync> crate::sketch::Sketch<M> {
     }
 }
 
-#[cfg(feature = "bmesh")]
-impl<M: Clone + Debug + Send + Sync> crate::bmesh::BMesh<M> {
-    pub fn to_stl_ascii(&self, name: &str) -> String {
-        self::to_stl_ascii(self, name)
-    }
-    pub fn to_stl_binary(&self, name: &str) -> std::io::Result<Vec<u8>> {
-        self::to_stl_binary(self, name)
-    }
-}
-
 // TODO: re-impl Mesh::from_stl
 // was used in crate::tests::test_csg_to_stl_and_from_stl_file

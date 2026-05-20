@@ -2,7 +2,9 @@
 
 use crate::errors::ValidationError;
 use crate::float_types::{
-    hpoints_within_epsilon, hreal_gt_f64, hreal_lt_f64, hreal_to_f64, hvector3_from_point3,
+    hangle_between_vectors, hpoint_distance, hpoints_within_epsilon, hreal_cmp_f64,
+    hreal_f64s_within_epsilon, hreal_gt_f64, hreal_lt_f64, hreal_to_f64, hunit_vector3,
+    hvector3_from_point3,
     parry3d::{bounding_volume::Aabb, query::RayCast, shape::Shape},
     rapier3d::prelude::{
         ColliderBuilder, ColliderSet, Ray, RigidBodyBuilder, RigidBodyHandle, RigidBodySet,
@@ -21,8 +23,6 @@ use crate::vertex::Vertex;
 #[cfg(feature = "sketch")]
 use crate::sketch::Sketch;
 
-#[cfg(feature = "bmesh")]
-use crate::bmesh::BMesh;
 use crate::csg::CSG;
 use hashbrown::HashMap;
 #[cfg(feature = "sketch")]
@@ -35,12 +35,7 @@ use hyperphysics::{
 use nalgebra::{
     Isometry3, Matrix4, Point3, Quaternion, Unit, Vector3, partial_max, partial_min,
 };
-use std::{
-    cmp::{Ordering, PartialEq},
-    fmt::Debug,
-    num::NonZeroU32,
-    sync::OnceLock,
-};
+use std::{cmp::PartialEq, fmt::Debug, num::NonZeroU32, sync::OnceLock};
 
 #[cfg(feature = "parallel")]
 use rayon::{iter::IntoParallelRefIterator, prelude::*};
@@ -52,9 +47,11 @@ pub mod bsp_parallel;
 
 #[cfg(feature = "chull")]
 pub mod convex_hull;
+#[cfg(feature = "sketch")]
 pub mod flatten_slice;
 
 pub mod connectivity;
+pub mod hypermesh;
 pub mod manifold;
 #[cfg(feature = "metaballs")]
 pub mod metaballs;
@@ -277,7 +274,6 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     /// (<https://doi.org/10.1201/b10688>).
     fn fix_t_junctions_on_shared_edges(polygons: &mut [Polygon<M>]) {
         let eps = tolerance();
-        let eps2 = eps * eps;
 
         if polygons.len() < 2 {
             return;
@@ -316,8 +312,11 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
                         let entry = edge_splits[j].entry(edge_start).or_default();
                         let already_present = entry.iter().any(|(existing_t, existing_v)| {
                             (existing_t - t).abs() < eps
-                                || (existing_v.position - new_vertex.position).norm_squared()
-                                    < eps2
+                                || hpoints_within_epsilon(
+                                    &existing_v.position,
+                                    &new_vertex.position,
+                                    eps,
+                                )
                         });
 
                         if !already_present {
@@ -348,9 +347,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
 
                 if let Some(splits) = splits_map.get(&edge_start) {
                     let mut splits_sorted = splits.clone();
-                    splits_sorted.sort_by(|(t_a, _), (t_b, _)| {
-                        t_a.partial_cmp(t_b).unwrap_or(Ordering::Equal)
-                    });
+                    splits_sorted.sort_by(|(t_a, _), (t_b, _)| hreal_cmp_f64(*t_a, *t_b));
 
                     for (_, vertex) in splits_sorted {
                         new_vertices.push(vertex);
@@ -470,13 +467,17 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     ///
     /// Computes the dihedral angle between two polygons sharing an edge.
     /// The angle is computed as the angle between the normal vectors of the two polygons.
+    /// Normalization, dot product, clamping, and arccos are delegated to
+    /// `hyperlattice`/`hyperreal`, keeping the mesh query on the same exact-
+    /// geometric-computation boundary as other normal-angle predicates. See
+    /// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
+    /// 7(1-2), 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     ///
     /// Returns the angle in radians.
     pub fn dihedral_angle(p1: &Polygon<M>, p2: &Polygon<M>) -> Real {
         let n1 = p1.plane.normal();
         let n2 = p2.plane.normal();
-        let dot = n1.dot(&n2).clamp(-1.0, 1.0);
-        dot.acos()
+        hangle_between_vectors(&n1, &n2).unwrap_or(0.0)
     }
 
     /// Converts this mesh into f32 vertex/index buffers suitable for rendering.
@@ -518,31 +519,58 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         GraphicsMesh { vertices, indices }
     }
 
-    /// Extracts vertices and indices from the Mesh's tessellated polygons.
+    /// Try to extract query/export vertices and triangle indices from a replayed
+    /// hypermesh handoff package.
     ///
-    /// This intentionally does not remove duplicate vertices.
+    /// Primitive-float consumers such as Parry/Rapier still need flat finite
+    /// buffers, but those buffers are now lowered only after hypermesh validates
+    /// the mesh stream and packages an explicitly lossy display/query view.
+    /// This follows Yap, "Towards Exact
+    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997),
+    /// <https://doi.org/10.1016/0925-7721(95)00040-2>: approximate
+    /// representatives are valid handoff artifacts, not topology evidence.
+    pub fn try_get_vertices_and_indices(
+        &self,
+    ) -> Result<(Vec<Point3<Real>>, Vec<[u32; 3]>), ValidationError> {
+        let package = self
+            .to_hypermesh_surface_handoff_package()
+            .map_err(|err| ValidationError::TriMeshError(format!("{err}")))?;
+        let view = package.approximate_f64_view.ok_or_else(|| {
+            ValidationError::TriMeshError(
+                "hypermesh handoff package did not include a lossy query view".into(),
+            )
+        })?;
+
+        let vertices = view
+            .positions
+            .chunks_exact(3)
+            .map(|coords| Point3::new(coords[0], coords[1], coords[2]))
+            .collect();
+
+        let mut indices = Vec::with_capacity(view.indices.len() / 3);
+        for triangle in view.indices.chunks_exact(3) {
+            let a = u32::try_from(triangle[0]).map_err(|_| {
+                ValidationError::TriMeshError("hypermesh query index exceeded u32".into())
+            })?;
+            let b = u32::try_from(triangle[1]).map_err(|_| {
+                ValidationError::TriMeshError("hypermesh query index exceeded u32".into())
+            })?;
+            let c = u32::try_from(triangle[2]).map_err(|_| {
+                ValidationError::TriMeshError("hypermesh query index exceeded u32".into())
+            })?;
+            indices.push([a, b, c]);
+        }
+
+        Ok((vertices, indices))
+    }
+
+    /// Extract vertices and triangle indices through the `hypermesh` handoff path.
+    ///
+    /// This compatibility method returns empty buffers when exact handoff
+    /// rejects the mesh. Prefer [`Mesh::try_get_vertices_and_indices`] when the
+    /// caller needs to distinguish empty geometry from invalid topology.
     pub fn get_vertices_and_indices(&self) -> (Vec<Point3<Real>>, Vec<[u32; 3]>) {
-        let tri_csg = self.triangulate();
-        let vertices = tri_csg
-            .polygons
-            .iter()
-            .flat_map(|p| {
-                [
-                    p.vertices[0].position,
-                    p.vertices[1].position,
-                    p.vertices[2].position,
-                ]
-            })
-            .collect();
-
-        let indices = (0..tri_csg.polygons.len())
-            .map(|i| {
-                let offset = i as u32 * 3;
-                [offset, offset + 1, offset + 2]
-            })
-            .collect();
-
-        (vertices, indices)
+        self.try_get_vertices_and_indices().unwrap_or_default()
     }
 
     /// Casts a ray defined by `origin` + t * `direction` against all triangles
@@ -557,6 +585,13 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     /// A `Vec` of `(Point3<Real>, Real)` where:
     /// - `Point3<Real>` is the intersection coordinate in 3D,
     /// - `Real` is the distance (the ray parameter t) from `origin`.
+    ///
+    /// Parry reports finite ray parameters at this query boundary. csgrs sorts
+    /// and deduplicates those scalar parameters through `hyperreal::Real`
+    /// adapters, keeping the topology-affecting ordering/tolerance decisions
+    /// aligned with the exact-geometric-computation model of Yap,
+    /// *Computational Geometry* 7(1-2), 1997
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     pub fn ray_intersections(
         &self,
         origin: &Point3<Real>,
@@ -584,9 +619,12 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
             .collect();
 
         // 4) Sort hits by ascending distance (toi):
-        hits.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
+        hits.sort_by(|a, b| hreal_cmp_f64(a.1, b.1));
         // 5) remove duplicate hits if they fall within tolerance
-        hits.dedup_by(|a, b| (a.1 - b.1).abs() < tolerance());
+        hits.dedup_by(|a, b| {
+            hreal_f64s_within_epsilon(a.1, b.1, tolerance())
+                || hpoints_within_epsilon(&a.0, &b.0, tolerance())
+        });
 
         hits
     }
@@ -619,12 +657,14 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         for seg in polyline.windows(2) {
             let seg_start = seg[0];
             let seg_end = seg[1];
-            let seg_dir = seg_end - seg_start;
-            let seg_len = seg_dir.norm();
+            let Some(seg_len) = hpoint_distance(&seg_start, &seg_end) else {
+                continue;
+            };
             if seg_len < tol {
                 continue;
             }
 
+            let seg_dir = seg_end - seg_start;
             let ray = Ray::new(seg_start, seg_dir / seg_len);
             let mut seg_hits: Vec<(Point3<Real>, Real)> = Vec::new();
 
@@ -641,8 +681,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
                 }
             }
 
-            seg_hits
-                .sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
+            seg_hits.sort_by(|a, b| hreal_cmp_f64(a.1, b.1));
 
             for (point, _) in seg_hits {
                 if let Some(last) = hits.last() {
@@ -663,7 +702,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     /// ## Errors
     /// If any 3d polygon has fewer than 3 vertices, or Parry returns a `TriMeshBuilderError`
     pub fn to_rapier_shape(&self) -> Result<SharedShape, ValidationError> {
-        let (vertices, indices) = self.get_vertices_and_indices();
+        let (vertices, indices) = self.try_get_vertices_and_indices()?;
         let trimesh = TriMesh::new(vertices, indices)
             .map_err(|err| ValidationError::TriMeshError(format!("{err:?}")))?;
         Ok(SharedShape::new(trimesh))
@@ -675,7 +714,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     /// ## Errors
     /// If any 3d polygon has fewer than 3 vertices, or Parry returns a `TriMeshBuilderError`
     pub fn to_trimesh(&self) -> Result<TriMesh, ValidationError> {
-        let (vertices, indices) = self.get_vertices_and_indices();
+        let (vertices, indices) = self.try_get_vertices_and_indices()?;
         TriMesh::new(vertices, indices)
             .map_err(|err| ValidationError::TriMeshError(format!("{err:?}")))
     }
@@ -683,7 +722,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     fn cached_trimesh(&self) -> Result<&TriMesh, ValidationError> {
         self.query_trimesh
             .get_or_init(|| {
-                let (vertices, indices) = self.get_vertices_and_indices();
+                let (vertices, indices) = self.try_get_vertices_and_indices().ok()?;
                 TriMesh::new(vertices, indices).ok()
             })
             .as_ref()
@@ -1089,6 +1128,13 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
     /// - **Plane Updates**: O(n) plane reconstructions from transformed vertices
     ///
     /// The polygon z-coordinates and normal vectors are fully transformed in 3D
+    ///
+    /// Transformed normals are checked-normalized through
+    /// `hyperlattice::Vector3`/`hyperreal::Real` before being stored back at the
+    /// finite mesh boundary. This keeps the inverse-transpose normal path on
+    /// the same exact-aware boundary discipline as mesh predicates; see Yap,
+    /// "Towards Exact Geometric Computation," *Computational Geometry*
+    /// 7(1-2), 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     fn transform(&self, mat: &Matrix4<Real>) -> Mesh<M> {
         // Compute inverse transpose for normal transformation
         let mat_inv_transpose = match mat.try_inverse() {
@@ -1120,7 +1166,7 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
                 // Transform normal using inverse transpose rule
                 let transformed_normal = mat_inv_transpose.transform_vector(&vert.normal);
                 if transformed_normal.iter().all(|coord| coord.is_finite()) {
-                    if let Some(normal) = transformed_normal.try_normalize(tolerance()) {
+                    if let Some(normal) = hunit_vector3(&transformed_normal) {
                         vert.normal = normal;
                     }
                 }
@@ -1198,10 +1244,8 @@ impl<M: Clone + Send + Sync + Debug> From<Sketch<M>> for Mesh<M> {
     /// Convert a Sketch into a Mesh.
     ///
     /// Closed area sketches are consumed only from hypercurve-owned finite
-    /// [`hypercurve::FiniteRegionProfile2`] projections. The temporary `geo`
-    /// compatibility cache is deliberately ignored here: once a Sketch has been
-    /// imported, `Region2`/`CurveString2` are the CAD source of truth. The
-    /// grouping follows the
+    /// [`hypercurve::FiniteRegionProfile2`] projections. `Region2` and
+    /// `CurveString2` are the CAD source of truth. The grouping follows the
     /// point-in-polygon ownership structure surveyed by Hormann and Agathos,
     /// "The point in polygon problem for arbitrary polygons," *Computational
     /// Geometry* 20(3), 2001
@@ -1262,56 +1306,6 @@ impl<M: Clone + Send + Sync + Debug> From<Sketch<M>> for Mesh<M> {
             query_trimesh: OnceLock::new(),
             metadata: sketch.metadata.clone(),
         }
-    }
-}
-
-#[cfg(feature = "bmesh")]
-impl<M: Clone + Send + Sync + Debug> From<BMesh<M>> for Mesh<M> {
-    fn from(bmesh: BMesh<M>) -> Self {
-        // Empty BMesh -> empty Mesh
-        let Some(manifold) = bmesh.manifold else {
-            return Mesh::empty(bmesh.metadata);
-        };
-
-        // Convert boolmesh vertices (glam) into nalgebra points
-        let mut points: Vec<Point3<Real>> = Vec::with_capacity(manifold.ps.len());
-        for p in &manifold.ps {
-            points.push(Point3::new(p.x as Real, p.y as Real, p.z as Real));
-        }
-
-        // Each 3 half-edges in hs correspond to 1 triangle face
-        let mut polygons: Vec<Polygon<M>> = Vec::with_capacity(manifold.hs.len() / 3);
-
-        for halfs in manifold.hs.chunks_exact(3) {
-            let i0 = halfs[0].tail;
-            let i1 = halfs[1].tail;
-            let i2 = halfs[2].tail;
-
-            // Safeguard against invalid indices
-            if i0 >= points.len() || i1 >= points.len() || i2 >= points.len() {
-                continue;
-            }
-
-            let p0 = points[i0];
-            let p1 = points[i1];
-            let p2 = points[i2];
-
-            // Compute triangle normal
-            let e1: Vector3<Real> = p1 - p0;
-            let e2: Vector3<Real> = p2 - p0;
-            let mut n = e1.cross(&e2);
-            if let Some(unit) = n.try_normalize(1e-12) {
-                n = unit;
-            }
-
-            let v0 = Vertex::new(p0, n);
-            let v1 = Vertex::new(p1, n);
-            let v2 = Vertex::new(p2, n);
-
-            polygons.push(Polygon::new(vec![v0, v1, v2], bmesh.metadata.clone()));
-        }
-
-        Mesh::from_polygons(&polygons, bmesh.metadata.clone())
     }
 }
 

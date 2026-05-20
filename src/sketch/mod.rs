@@ -2,7 +2,8 @@
 
 use crate::float_types::parry3d::bounding_volume::Aabb;
 use crate::float_types::{
-    PI, Real, hreal_from_f64, hreal_gt_f64, hreal_lt_f64, hreal_sign, hreal_to_f64, tolerance,
+    Real, hreal_from_f64, hreal_gt_f64, hreal_lt_f64, hreal_sign, hreal_to_f64,
+    hrotation_between_vectors, hunit_vector3, tolerance,
 };
 
 #[cfg(feature = "mesh")]
@@ -10,19 +11,12 @@ use crate::mesh::Mesh;
 
 use crate::csg::CSG;
 use crate::vertex::Vertex;
-use geo::algorithm::winding_order::Winding;
-use geo::{
-    AffineOps, AffineTransform, BooleanOps as GeoBooleanOps, BoundingRect, Geometry,
-    GeometryCollection, Line, LineString, MultiPolygon, Orient, Polygon as GeoPolygon, Rect,
-    orient::Direction,
-};
 use hypercurve::{
     Aabb2 as HyperAabb2, BooleanOp, Classification, Contour2, CurvePolicy, CurveResult,
     CurveString2, FillRule, FinitePolyline2, FiniteProjectionOptions, FiniteRegionProfile2,
-    Point2, Region2, RegionPointLocation, Similarity2, finite_ring_signed_area,
+    Point2, Region2, RegionPointLocation, Similarity2,
 };
-use nalgebra::{Matrix4, Point3, UnitQuaternion, Vector3, partial_max, partial_min};
-use std::borrow::Cow;
+use nalgebra::{Matrix4, Point3, Vector3};
 use std::fmt::Debug;
 use std::sync::OnceLock;
 
@@ -47,7 +41,12 @@ pub mod truetype;
 pub mod triangulated;
 
 /// Position transform plus rotation from the sketch's local XY plane into 3D.
-pub(crate) type OriginTransform = (Vector3<Real>, UnitQuaternion<Real>);
+///
+/// The rotation is a finite homogeneous matrix assembled from hyperlattice
+/// unit-vector/dot/cross predicates instead of a nalgebra unit quaternion.
+/// This keeps sketch lifting aligned with Yap's exact-geometric-computation
+/// boundary discipline (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+pub(crate) type OriginTransform = (Vector3<Real>, Matrix4<Real>);
 
 #[derive(Debug, Clone)]
 pub struct GraphicLineString {
@@ -78,35 +77,26 @@ impl GraphicLineStrings {
 pub struct Sketch<M> {
     /// Primary hypercurve region for 2D CAD topology.
     ///
-    /// The legacy `geo` geometry collection is retained temporarily as an
-    /// interop cache while constructors, IO, text, and toolpath modules migrate.
-    /// New topology-sensitive operations should use this region and hypercurve
-    /// predicates. This follows Yap, "Towards Exact Geometric
+    /// Filled Sketch topology is owned by this region. Topology-sensitive
+    /// operations should use this region and hypercurve predicates. This
+    /// follows Yap, "Towards Exact Geometric
     /// Computation," *Computational Geometry* 7(1-2), 1997
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-    pub region: Region2,
+    pub(crate) region: Region2,
 
     /// Native open hypercurve wires for line/path sketches.
     ///
     /// Closed areas belong in [`Sketch::region`]. Open paths are represented as
-    /// `CurveString2` while the crate migrates text, SVG paths, Hilbert infill,
-    /// and toolpath helpers away from the temporary `geo` cache.
-    pub wires: Vec<CurveString2>,
-
-    /// Temporary finite `geo` interop cache.
-    ///
-    /// This is deliberately crate-private: the public Sketch topology is the
-    /// hypercurve [`Region2`]. Consumers that still need finite `geo` output
-    /// should call [`Sketch::geometry`], which derives a cache from the native
-    /// region when needed.
-    pub(crate) geometry: GeometryCollection<Real>,
+    /// `CurveString2`, so text strokes, SVG paths, Hilbert infill, and toolpath
+    /// helpers compose with hypercurve directly.
+    pub(crate) wires: Vec<CurveString2>,
 
     /// Lazily calculated AABB that spans the finite boundary projection.
-    pub bounding_box: OnceLock<Aabb>,
+    pub(crate) bounding_box: OnceLock<Aabb>,
 
     /// Whole-sketch metadata. Use `M = ()` for no metadata and `M = Option<YourMetadata>`
     /// for optional metadata.
-    pub metadata: M,
+    pub(crate) metadata: M,
 
     /// Origin of the sketch in 3D space.
     pub(crate) origin: Vertex,
@@ -120,7 +110,6 @@ impl<M: Clone + Send + Sync + Debug> Sketch<M> {
         Sketch {
             region: Region2::empty(),
             wires: Vec::new(),
-            geometry: GeometryCollection::default(),
             bounding_box: OnceLock::new(),
             metadata,
             origin: Vertex::default(),
@@ -128,36 +117,16 @@ impl<M: Clone + Send + Sync + Debug> Sketch<M> {
         }
     }
 
-    /// Project this sketch into a finite [`geo::MultiPolygon`] compatibility view.
+    /// True when the native hypercurve topology is empty.
     ///
-    /// Native hypercurve regions are projected directly to rings before falling
-    /// back to the temporary compatibility cache. This keeps the `geo` type at
-    /// the API edge rather than making it the source of sketch topology, in line
-    /// with Yap's exact-geometric-computation boundary split (Computational
-    /// Geometry 7(1-2), 1997,
-    /// <https://doi.org/10.1016/0925-7721(95)00040-2>).
-    pub fn to_multipolygon(&self) -> MultiPolygon<Real> {
-        let options = FiniteProjectionOptions::try_new(1e-3)
-            .expect("positive finite projection tolerance is valid");
-        if let Ok(Classification::Decided(profiles)) = self.project_region_profiles(&options) {
-            if !profiles.is_empty() {
-                return MultiPolygon(polygons_from_finite_region_profiles(&profiles));
-            }
-        }
-
-        let geometry = self.effective_geometry();
-
-        let polygons = geometry
-            .iter()
-            .flat_map(|geom| match geom {
-                Geometry::Polygon(poly) => vec![poly.clone()],
-                Geometry::MultiPolygon(mp) => mp.0.clone(),
-                _ => vec![],
-            })
-            .collect();
-
-        MultiPolygon(polygons)
+    /// Using `Region2` and `CurveString2` as the authoritative emptiness test
+    /// follows Yap, "Towards Exact Geometric Computation," *Computational
+    /// Geometry* 7(1-2), 1997
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+    pub fn is_empty(&self) -> bool {
+        !self.has_native_topology()
     }
+
     /// Project the native hypercurve region into finite material profiles with
     /// their owned holes.
     ///
@@ -222,8 +191,7 @@ impl<M: Clone + Send + Sync + Debug> Sketch<M> {
     /// Bounds of all native hypercurve topology projected to finite XY.
     ///
     /// This merges filled [`Region2`] contours and open [`CurveString2`] wires
-    /// before any temporary `geo` compatibility cache is consulted. Native
-    /// hypercurve AABBs preserve line and circular-arc geometry without
+    /// directly. Native hypercurve AABBs preserve line and circular-arc geometry without
     /// tessellating just to find extrema. Bounding boxes are still only
     /// broad-phase/API-edge data; exact topology stays in hyper geometry,
     /// following Yap, "Towards Exact Geometric Computation," *Computational
@@ -294,114 +262,6 @@ impl<M: Clone + Send + Sync + Debug> Sketch<M> {
         Some((min_x, min_y, max_x, max_y))
     }
 
-    pub(crate) fn effective_geometry(&self) -> Cow<'_, GeometryCollection<Real>> {
-        if !self.wires.is_empty()
-            || !self.region.is_empty()
-                && (self.geometry.0.is_empty() || Self::region_has_nonzero_area(&self.region))
-        {
-            Cow::Owned(Self::geometry_from_native(&self.region, &self.wires))
-        } else {
-            Cow::Borrowed(&self.geometry)
-        }
-    }
-
-    /// Finite `geo` compatibility view of this sketch.
-    ///
-    /// The returned geometry is an API-boundary projection of the native
-    /// hypercurve topology, not the authoritative CAD representation. This
-    /// split follows the exact-geometric-computation boundary advocated by Yap,
-    /// "Towards Exact Geometric Computation," *Computational Geometry* 7(1-2),
-    /// 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>): predicates and
-    /// topology stay in exact objects, while finite coordinates are emitted for
-    /// interop and display.
-    pub fn geometry(&self) -> Cow<'_, GeometryCollection<Real>> {
-        self.effective_geometry()
-    }
-
-    /// Create a Sketch from a finite `geo::GeometryCollection` API boundary.
-    ///
-    /// The input collection is treated as interop data, not as Sketch's
-    /// authoritative topology. Closed rings and open linework are promoted to
-    /// native `Region2`/`CurveString2` when possible, and the finite geometry
-    /// cache is then regenerated from those hyper types. This keeps `geo` at
-    /// the boundary described by Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7(1-2), 1997
-    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-    pub fn from_geo(geometry: GeometryCollection<Real>, metadata: M) -> Sketch<M> {
-        Self::from_compat_bridge_geometry_with_origin(
-            geometry,
-            metadata,
-            Vertex::default(),
-            Self::prepare_origin_transform(Vertex::default()),
-        )
-    }
-
-    /// Build a Sketch from finite compatibility geometry while immediately
-    /// deriving the authoritative hypercurve region.
-    ///
-    /// This is a migration bridge for algorithms that still emit `geo`
-    /// primitives, such as offsetting and text import. New CAD topology should
-    /// prefer [`Sketch::from_region`]. The conversion boundary follows Yap's
-    /// exact-geometric-computation split: finite coordinates may be accepted at
-    /// API and interop edges, but internal topology is represented by exact
-    /// geometric objects; see Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7(1-2), 1997
-    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-    pub(crate) fn from_compat_geometry_with_origin(
-        geometry: GeometryCollection<Real>,
-        metadata: M,
-        origin: Vertex,
-        origin_transform: OriginTransform,
-    ) -> Sketch<M> {
-        let region = Self::region_from_geo(&geometry);
-        let wires = Self::wires_from_geo(&geometry);
-        Sketch {
-            region,
-            wires,
-            geometry,
-            bounding_box: OnceLock::new(),
-            metadata,
-            origin,
-            origin_transform,
-        }
-    }
-
-    /// Rebuild a Sketch from a finite compatibility result, then discard that
-    /// result as the source of truth whenever it can be represented by native
-    /// hypercurve topology.
-    ///
-    /// This is for transitional algorithms that still need `geo` to compute a
-    /// finite answer, such as mixed boolean fallbacks. The returned `Sketch`
-    /// owns `Region2`/`CurveString2` and regenerates the compatibility cache
-    /// from those native types, matching the exact-computation boundary in Yap,
-    /// "Towards Exact Geometric Computation," *Computational Geometry*
-    /// 7(1-2), 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-    pub(crate) fn from_compat_bridge_geometry_with_origin(
-        geometry: GeometryCollection<Real>,
-        metadata: M,
-        origin: Vertex,
-        origin_transform: OriginTransform,
-    ) -> Sketch<M> {
-        let region = Self::region_from_geo(&geometry);
-        let wires = Self::wires_from_geo(&geometry);
-        if (region.is_empty() || !Self::region_has_nonzero_area(&region)) && wires.is_empty() {
-            Self::from_compat_geometry_with_origin(
-                geometry,
-                metadata,
-                origin,
-                origin_transform,
-            )
-        } else {
-            Self::from_region_and_wires_with_origin(
-                region,
-                wires,
-                metadata,
-                origin,
-                origin_transform,
-            )
-        }
-    }
-
     /// Decide whether a native region has any material contour with nonzero
     /// area.
     ///
@@ -428,20 +288,19 @@ impl<M: Clone + Send + Sync + Debug> Sketch<M> {
         let options = FiniteProjectionOptions::try_new(1e-3)
             .expect("positive finite projection tolerance");
         match region.project_to_finite_profiles(&options, &CurvePolicy::certified()) {
-            Ok(Classification::Decided(profiles)) => profiles.iter().any(|profile| {
-                finite_ring_signed_area(profile.material().points()).abs() > tolerance()
-            }),
+            Ok(Classification::Decided(profiles)) => profiles
+                .iter()
+                .any(|profile| profile.projected_filled_area().abs() > tolerance()),
             Ok(Classification::Uncertain(_)) | Err(_) => false,
         }
     }
 
     /// Create a Sketch from a native hypercurve region.
     ///
-    /// This is the preferred constructor for topology-producing code. The
-    /// `geo` geometry collection is regenerated as a finite interop cache for
-    /// IO and legacy rendering paths; core CAD topology remains in
-    /// [`Sketch::region`]. Keeping exact topology internal and emitting finite
-    /// coordinates only at compatibility boundaries follows Yap, "Towards Exact
+    /// This is the preferred constructor for topology-producing code. Core CAD
+    /// topology remains in [`Sketch::region`]. Keeping exact topology internal
+    /// and emitting finite
+    /// coordinates only at API and file-format boundaries follows Yap, "Towards Exact
     /// Geometric Computation," *Computational Geometry* 7(1-2), 1997
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>), and Hobby,
     /// "Practical Segment Intersection with Finite Precision Output,"
@@ -451,15 +310,26 @@ impl<M: Clone + Send + Sync + Debug> Sketch<M> {
         Self::from_region_and_wires(region, Vec::new(), metadata)
     }
 
+    /// Create a Sketch from one native hypercurve contour.
+    ///
+    /// This is the preferred constructor when callers already have exact
+    /// hypercurve boundary topology. `csgrs` does not mirror the contour with
+    /// a second polygon datatype; it wraps the contour in a `Region2` and keeps
+    /// all topology in hypercurve, following Yap, "Towards Exact Geometric
+    /// Computation," *Computational Geometry* 7(1-2), 1997
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+    pub fn from_contour(contour: Contour2, metadata: M) -> Sketch<M> {
+        Self::from_region(Region2::from_material_contours(vec![contour]), metadata)
+    }
+
     /// Create a Sketch from a native hypercurve region and open curve strings.
     ///
     /// This is the preferred constructor for mixed area/path CAD. It composes
     /// Sketch from hyper geometry directly: filled topology remains in
-    /// `Region2`, open paths remain in `CurveString2`, and the temporary finite
-    /// `geo` cache is regenerated only as an interop projection. This follows
+    /// `Region2`, and open paths remain in `CurveString2`. This follows
     /// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
     /// 7(1-2), 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>), and
-    /// avoids making the compatibility cache the source of CAD topology.
+    /// avoids making finite boundary products the source of CAD topology.
     pub fn from_region_and_wires(
         region: Region2,
         wires: Vec<CurveString2>,
@@ -481,11 +351,9 @@ impl<M: Clone + Send + Sync + Debug> Sketch<M> {
         origin: Vertex,
         origin_transform: OriginTransform,
     ) -> Sketch<M> {
-        let geometry = Self::geometry_from_native(&region, &wires);
         Sketch {
             region,
             wires,
-            geometry,
             bounding_box: OnceLock::new(),
             metadata,
             origin,
@@ -493,12 +361,26 @@ impl<M: Clone + Send + Sync + Debug> Sketch<M> {
         }
     }
 
+    /// Append native open wires and invalidate cached finite bounds.
+    ///
+    /// This keeps modules such as offsetting and importers composing with the
+    /// `CurveString2` list directly. That ownership split follows Yap, "Towards Exact
+    /// Geometric Computation," *Computational Geometry* 7(1-2), 1997
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+    #[cfg(feature = "offset")]
+    pub(crate) fn append_native_wires<I>(&mut self, wires: I)
+    where
+        I: IntoIterator<Item = CurveString2>,
+    {
+        self.wires.extend(wires);
+        self.invalidate_bounding_box();
+    }
+
     /// Create an open-path Sketch from native hypercurve curve strings.
     ///
     /// This is the preferred constructor for path-producing code such as text
-    /// strokes and infill curves. The finite `geo` cache is only an interop
-    /// projection; ownership of the path topology remains in `CurveString2`.
-    /// Keeping finite coordinates at API/export boundaries while internal
+    /// strokes and infill curves. Ownership of the path topology remains in
+    /// `CurveString2`. Keeping finite coordinates at API/export boundaries while internal
     /// predicates and topology use exact objects follows Yap, "Towards Exact
     /// Geometric Computation," *Computational Geometry* 7(1-2), 1997
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
@@ -506,208 +388,15 @@ impl<M: Clone + Send + Sync + Debug> Sketch<M> {
         Self::from_region_and_wires(Region2::empty(), wires, metadata)
     }
 
-    /// Build a native straight-segment contour from finite boundary
-    /// coordinates supplied at the API edge.
+    /// Create a wire-only Sketch from one native hypercurve curve string.
     ///
-    /// The `f64` coordinates are immediately promoted to `hyperreal::Real`; the
-    /// finite points are used only as the public boundary representation. This
-    /// keeps primitive Sketch constructors on the exact-predicate side of the
-    /// API boundary, following Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7(1-2), 1997
+    /// This keeps open-path construction in `hypercurve::CurveString2`
+    /// instead of forcing callers to go through finite line-string helpers.
+    /// It follows Yap's exact-geometric-computation split between source
+    /// topology and finite output boundaries
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-    pub(crate) fn contour_from_points(points: &[[Real; 2]]) -> Option<Contour2> {
-        Contour2::from_finite_ring(points).ok()
-    }
-
-    pub(crate) fn region_from_geo(geometry: &GeometryCollection<Real>) -> Region2 {
-        fn contour_from_line_string(line_string: &LineString<Real>) -> Option<Contour2> {
-            let mut points = finite_line_string_points(line_string);
-            if points.len() < 3 {
-                return None;
-            }
-            // Open polylines are native wires, not filled contours. Only closed
-            // compatibility rings are promoted into Region2, matching the
-            // boundary/topology separation in Yap, "Towards Exact Geometric
-            // Computation," Computational Geometry 7(1-2), 1997
-            // (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-            let first = *points.first()?;
-            let last = *points.last()?;
-            let closed = (first[0] - last[0]).abs() <= tolerance()
-                && (first[1] - last[1]).abs() <= tolerance();
-            if !closed {
-                return None;
-            }
-            points.pop();
-            if points.len() < 3 {
-                return None;
-            }
-            Contour2::from_finite_ring(&points).ok()
-        }
-
-        fn collect_geometry(
-            geometry: &Geometry<Real>,
-            material: &mut Vec<Contour2>,
-            holes: &mut Vec<Contour2>,
-        ) {
-            match geometry {
-                Geometry::Polygon(poly) => {
-                    if let Some(exterior) = contour_from_line_string(poly.exterior()) {
-                        material.push(exterior);
-                    }
-                    for interior in poly.interiors() {
-                        if let Some(hole) = contour_from_line_string(interior) {
-                            holes.push(hole);
-                        }
-                    }
-                },
-                Geometry::MultiPolygon(multi) => {
-                    for poly in multi {
-                        collect_geometry(&Geometry::Polygon(poly.clone()), material, holes);
-                    }
-                },
-                Geometry::LineString(line_string) => {
-                    if let Some(contour) = contour_from_line_string(line_string) {
-                        material.push(contour);
-                    }
-                },
-                Geometry::MultiLineString(lines) => {
-                    for line_string in lines {
-                        if let Some(contour) = contour_from_line_string(line_string) {
-                            material.push(contour);
-                        }
-                    }
-                },
-                Geometry::Rect(rect) => {
-                    collect_geometry(&Geometry::Polygon(rect.to_polygon()), material, holes);
-                },
-                Geometry::Triangle(triangle) => {
-                    collect_geometry(
-                        &Geometry::Polygon(triangle.to_polygon()),
-                        material,
-                        holes,
-                    );
-                },
-                Geometry::GeometryCollection(collection) => {
-                    for child in collection {
-                        collect_geometry(child, material, holes);
-                    }
-                },
-                _ => {},
-            }
-        }
-
-        let mut material = Vec::new();
-        let mut holes = Vec::new();
-        for geometry in geometry {
-            collect_geometry(geometry, &mut material, &mut holes);
-        }
-        Region2::new(material, holes)
-    }
-
-    pub(crate) fn geometry_from_region(region: &Region2) -> GeometryCollection<Real> {
-        let options = FiniteProjectionOptions::try_new(1e-3)
-            .expect("positive finite projection tolerance is valid");
-        let polygons =
-            match region.project_to_finite_profiles(&options, &CurvePolicy::certified()) {
-                Ok(Classification::Decided(profiles)) => {
-                    polygons_from_finite_region_profiles(&profiles)
-                },
-                Ok(Classification::Uncertain(_)) | Err(_) => Vec::new(),
-            };
-
-        if polygons.is_empty() {
-            GeometryCollection::default()
-        } else {
-            GeometryCollection(vec![Geometry::MultiPolygon(MultiPolygon(polygons))])
-        }
-    }
-
-    fn geometry_from_native(
-        region: &Region2,
-        wires: &[CurveString2],
-    ) -> GeometryCollection<Real> {
-        let mut geometry = Self::geometry_from_region(region);
-        geometry.0.extend(
-            wires
-                .iter()
-                .filter_map(wire_to_line_string)
-                .map(Geometry::LineString),
-        );
-        geometry
-    }
-
-    fn inverted_compat_geometry(
-        geometry: &GeometryCollection<Real>,
-    ) -> GeometryCollection<Real> {
-        GeometryCollection(
-            geometry
-                .iter()
-                .map(|geom| match geom {
-                    Geometry::Polygon(p) => {
-                        let flipped = if p.exterior().is_ccw() {
-                            p.clone().orient(Direction::Reversed)
-                        } else {
-                            p.clone().orient(Direction::Default)
-                        };
-                        Geometry::Polygon(flipped)
-                    },
-                    Geometry::MultiPolygon(mp) => {
-                        let flipped_polys: Vec<GeoPolygon<Real>> =
-                            mp.0.iter()
-                                .map(|p| {
-                                    if p.exterior().is_ccw() {
-                                        p.clone().orient(Direction::Reversed)
-                                    } else {
-                                        p.clone().orient(Direction::Default)
-                                    }
-                                })
-                                .collect();
-
-                        Geometry::MultiPolygon(MultiPolygon(flipped_polys))
-                    },
-                    _ => geom.clone(),
-                })
-                .collect(),
-        )
-    }
-
-    fn wires_from_geo(geometry: &GeometryCollection<Real>) -> Vec<CurveString2> {
-        fn collect_geometry(geometry: &Geometry<Real>, wires: &mut Vec<CurveString2>) {
-            match geometry {
-                Geometry::Line(line) => {
-                    if let Some(wire) = wire_from_points([
-                        [line.start.x, line.start.y],
-                        [line.end.x, line.end.y],
-                    ]) {
-                        wires.push(wire);
-                    }
-                },
-                Geometry::LineString(line_string) => {
-                    if let Some(wire) = line_string_to_wire(line_string) {
-                        wires.push(wire);
-                    }
-                },
-                Geometry::MultiLineString(line_strings) => {
-                    for line_string in line_strings {
-                        if let Some(wire) = line_string_to_wire(line_string) {
-                            wires.push(wire);
-                        }
-                    }
-                },
-                Geometry::GeometryCollection(collection) => {
-                    for child in collection {
-                        collect_geometry(child, wires);
-                    }
-                },
-                _ => {},
-            }
-        }
-
-        let mut wires = Vec::new();
-        for geometry in geometry {
-            collect_geometry(geometry, &mut wires);
-        }
-        wires
+    pub fn from_wire(wire: CurveString2, metadata: M) -> Sketch<M> {
+        Self::from_wires(vec![wire], metadata)
     }
 
     /// Borrow the native hypercurve region that now carries Sketch topology.
@@ -718,6 +407,20 @@ impl<M: Clone + Send + Sync + Debug> Sketch<M> {
     /// Borrow native open hypercurve wires carried by this sketch.
     pub fn wires(&self) -> &[CurveString2] {
         &self.wires
+    }
+
+    /// Consume this sketch into its native hypercurve CAD topology and metadata.
+    ///
+    /// This is the ownership counterpart to [`Sketch::as_region`] and
+    /// [`Sketch::wires`]. Callers that need to pass Sketch topology into other
+    /// hyper crates can take the [`Region2`] and [`CurveString2`] values
+    /// directly. Primitive `f32`/`f64` data remains restricted to
+    /// API and file-format boundaries; internal topology stays in hypercurve
+    /// objects backed by hyperreal predicates, following Yap, "Towards Exact
+    /// Geometric Computation," *Computational Geometry* 7(1-2), 1997
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+    pub fn into_region_and_wires(self) -> (Region2, Vec<CurveString2>, M) {
+        (self.region, self.wires, self.metadata)
     }
 
     /// Project native open wires into finite XY polylines.
@@ -736,8 +439,8 @@ impl<M: Clone + Send + Sync + Debug> Sketch<M> {
 
     /// Project native open wires to hypercurve-owned finite polylines.
     ///
-    /// This is the non-`geo` API-boundary view of open Sketch paths. It keeps
-    /// exact path ownership in [`CurveString2`] and delegates all sampling,
+    /// This is the API-boundary view of open Sketch paths. It keeps exact path
+    /// ownership in [`CurveString2`] and delegates all sampling,
     /// finite export, and projection certificates to hypercurve. That mirrors
     /// Yap's exact-object boundary model (Computational Geometry 7(1-2), 1997,
     /// <https://doi.org/10.1016/0925-7721(95)00040-2>) while allowing renderers
@@ -763,7 +466,7 @@ impl<M: Clone + Send + Sync + Debug> Sketch<M> {
         self.region.hole_contours().len()
     }
 
-    fn has_native_topology(&self) -> bool {
+    pub(crate) fn has_native_topology(&self) -> bool {
         !self.region.is_empty() || !self.wires.is_empty()
     }
 
@@ -771,64 +474,7 @@ impl<M: Clone + Send + Sync + Debug> Sketch<M> {
         self.has_native_topology() || other.has_native_topology()
     }
 
-    /// Append non-area boolean sidecars with native hypercurve wires as the
-    /// source of truth.
-    ///
-    /// Filled topology is handled by `Region2` booleans or, only when neither
-    /// operand carries native topology, the finite area bridge; open path
-    /// topology is independent CAD data and is therefore reattached from
-    /// `CurveString2` before consulting legacy finite compatibility geometry.
-    /// Empty filled regions are still valid boolean operands in the native path:
-    /// preserving that identity/annihilator algebra keeps stale finite caches
-    /// from becoming authoritative. Keeping exact-owned objects authoritative
-    /// follows Yap, "Towards Exact Geometric Computation," *Computational
-    /// Geometry* 7(1-2), 1997
-    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>), while the output
-    /// projection boundary follows Hobby, "Practical Segment Intersection with
-    /// Finite Precision Output," *Computational Geometry* 13(4), 1999
-    /// (<https://doi.org/10.1016/S0925-7721(99)00021-8>).
-    fn append_boolean_sidecars(&self, out: &mut GeometryCollection<Real>) {
-        if !self.wires.is_empty() {
-            for wire in &self.wires {
-                if let Some(line_string) = wire_to_line_string(wire) {
-                    out.0.push(Geometry::LineString(line_string));
-                }
-            }
-            return;
-        }
-
-        let geometry = self.effective_geometry();
-        for geometry in &geometry.0 {
-            match geometry {
-                Geometry::Polygon(_) | Geometry::MultiPolygon(_) => {},
-                _ => out.0.push(geometry.clone()),
-            }
-        }
-    }
-
-    #[cfg(feature = "offset")]
-    pub(crate) fn compat_geometry_is_area_only(&self) -> bool {
-        self.geometry.0.is_empty() || self.geometry.iter().all(is_area_geometry)
-    }
-
-    fn boolean_region_with(&self, other: &Self, op: BooleanOp) -> Option<Self> {
-        if !self.can_use_region_boolean_with(other) {
-            return None;
-        }
-        let policy = CurvePolicy::certified();
-        let region = match self
-            .region
-            .boolean_region(&other.region, op, FillRule::NonZero, &policy)
-            .ok()?
-        {
-            Classification::Decided(region) => region,
-            Classification::Uncertain(_) => return None,
-        };
-        // Region booleans operate on filled topology only. Open `CurveString2`
-        // wires are independent path topology, so preserve them with the same
-        // sidecar semantics as the finite compatibility fallback while keeping
-        // the filled result in hypercurve; this matches Yap's exact-object
-        // boundary by avoiding a detour through `geo` solely to retain wires.
+    fn boolean_wires_with(&self, other: &Self, op: BooleanOp) -> Vec<CurveString2> {
         let mut wires = match op {
             BooleanOp::Union | BooleanOp::Intersection | BooleanOp::Xor => {
                 let mut wires = self.wires.clone();
@@ -838,6 +484,82 @@ impl<M: Clone + Send + Sync + Debug> Sketch<M> {
             BooleanOp::Difference => self.wires.clone(),
         };
         wires.retain(|wire| curve_string_to_polyline(wire).is_some());
+        wires
+    }
+
+    /// Resolve certified-disjoint region booleans without entering a finite
+    /// polygon clipping backend.
+    ///
+    /// `Aabb2::overlaps` is inclusive, so tangent or shared-boundary cases still
+    /// proceed to the full hypercurve boolean pipeline. Only decided misses use
+    /// the algebraic identities here: disjoint union/xor are role-preserving
+    /// region merges, difference is the left region, and intersection is empty.
+    /// This broad-phase split follows Bentley and Ottmann, "Algorithms for
+    /// Reporting and Counting Geometric Intersections," *IEEE Transactions on
+    /// Computers* C-28(9), 1979, while keeping exact topology in `Region2`
+    /// follows Yap, "Towards Exact Geometric Computation," *Computational
+    /// Geometry* 7(1-2), 1997
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+    fn disjoint_region_boolean_with(
+        &self,
+        other: &Self,
+        op: BooleanOp,
+        policy: &CurvePolicy,
+    ) -> Option<Region2> {
+        if self.region.is_empty() || other.region.is_empty() {
+            return None;
+        }
+        let lhs = match HyperAabb2::from_region(&self.region, policy).ok()? {
+            Classification::Decided(bounds) => bounds,
+            Classification::Uncertain(_) => return None,
+        };
+        let rhs = match HyperAabb2::from_region(&other.region, policy).ok()? {
+            Classification::Decided(bounds) => bounds,
+            Classification::Uncertain(_) => return None,
+        };
+        match lhs.overlaps(&rhs, policy) {
+            Classification::Decided(true) | Classification::Uncertain(_) => None,
+            Classification::Decided(false) => {
+                let region = match op {
+                    BooleanOp::Union | BooleanOp::Xor => {
+                        let mut material = self.region.material_contours().to_vec();
+                        material.extend(other.region.material_contours().iter().cloned());
+                        let mut holes = self.region.hole_contours().to_vec();
+                        holes.extend(other.region.hole_contours().iter().cloned());
+                        Region2::new(material, holes)
+                    },
+                    BooleanOp::Difference => self.region.clone(),
+                    BooleanOp::Intersection => Region2::empty(),
+                };
+                Some(region)
+            },
+        }
+    }
+
+    fn boolean_region_with(&self, other: &Self, op: BooleanOp) -> Option<Self> {
+        if !self.can_use_region_boolean_with(other) {
+            return None;
+        }
+        let policy = CurvePolicy::certified();
+        let region =
+            if let Some(region) = self.disjoint_region_boolean_with(other, op, &policy) {
+                region
+            } else {
+                match self
+                    .region
+                    .boolean_region(&other.region, op, FillRule::NonZero, &policy)
+                    .ok()?
+                {
+                    Classification::Decided(region) => region,
+                    Classification::Uncertain(_) => return None,
+                }
+            };
+        // Region booleans operate on filled topology only. Open `CurveString2`
+        // wires are independent path topology, so preserve them as native
+        // curve strings while keeping the filled result in hypercurve; this
+        // matches Yap's exact-object
+        // boundary by avoiding a finite detour solely to retain wires.
+        let wires = self.boolean_wires_with(other, op);
         let mut sketch = Self::from_region_and_wires(region, wires, self.metadata.clone());
         sketch.origin = self.origin;
         sketch.origin_transform = self.origin_transform;
@@ -881,7 +603,7 @@ impl<M: Clone + Send + Sync + Debug> Sketch<M> {
                     .map(transform_point)
                     .collect::<Vec<[Real; 2]>>()
             })
-            .filter_map(|ring| Self::contour_from_points(&ring))
+            .filter_map(|ring| Contour2::from_finite_ring(&ring).ok())
             .collect::<Vec<_>>();
         let holes = profiles
             .iter()
@@ -892,7 +614,7 @@ impl<M: Clone + Send + Sync + Debug> Sketch<M> {
                     .map(transform_point)
                     .collect::<Vec<[Real; 2]>>()
             })
-            .filter_map(|ring| Self::contour_from_points(&ring))
+            .filter_map(|ring| Contour2::from_finite_ring(&ring).ok())
             .collect::<Vec<_>>();
 
         (!material.is_empty()).then(|| Region2::new(material, holes))
@@ -920,7 +642,10 @@ impl<M: Clone + Send + Sync + Debug> Sketch<M> {
         self.wires
             .iter()
             .filter_map(curve_string_to_polyline)
-            .filter_map(|points| wire_from_points(points.into_iter().map(transform_point)))
+            .filter_map(|points| {
+                CurveString2::from_finite_point_iter(points.into_iter().map(transform_point))
+                    .ok()
+            })
             .collect()
     }
 
@@ -932,7 +657,6 @@ impl<M: Clone + Send + Sync + Debug> Sketch<M> {
         Sketch {
             region: self.region,
             wires: self.wires,
-            geometry: self.geometry,
             bounding_box: OnceLock::new(),
             metadata,
             origin: self.origin,
@@ -948,12 +672,39 @@ impl<M: Clone + Send + Sync + Debug> Sketch<M> {
         Sketch {
             region: self.region,
             wires: self.wires,
-            geometry: self.geometry,
             bounding_box: OnceLock::new(),
             metadata: f(self.metadata),
             origin: self.origin,
             origin_transform: self.origin_transform,
         }
+    }
+
+    /// Borrow this sketch's metadata without exposing topology internals.
+    ///
+    /// Sketch geometry is owned by hypercurve [`Region2`] and [`CurveString2`]
+    /// fields behind constructor/accessor APIs. Metadata remains the caller's
+    /// domain payload, so this accessor mirrors [`crate::polygon::Polygon`]
+    /// while allowing the Sketch storage layout to keep moving toward
+    /// hypercurve-owned CAD topology. Keeping payload data separate from exact
+    /// geometric objects follows Yap's exact-geometric-computation split
+    /// between combinatorial/topological structure and finite API data:
+    /// "Towards Exact Geometric Computation," *Computational Geometry*
+    /// 7(1-2), 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+    pub const fn metadata(&self) -> &M {
+        &self.metadata
+    }
+
+    /// Mutably borrow this sketch's metadata.
+    ///
+    /// This changes only caller-owned payload data; hypercurve region and wire
+    /// topology remain accessible through dedicated Sketch APIs.
+    pub const fn metadata_mut(&mut self) -> &mut M {
+        &mut self.metadata
+    }
+
+    /// Replace this sketch's metadata in place.
+    pub fn set_metadata(&mut self, metadata: M) {
+        self.metadata = metadata;
     }
 
     /// Set the origin used when rendering or lifting this sketch into 3D.
@@ -971,27 +722,30 @@ impl<M: Clone + Send + Sync + Debug> Sketch<M> {
     pub(crate) fn prepare_origin_transform(origin: Vertex) -> OriginTransform {
         let default_origin = Vertex::default();
         let pos_transform = origin.position - default_origin.position;
-        let default_normal = default_origin
-            .normal
-            .try_normalize(crate::float_types::tolerance())
-            .unwrap_or_else(Vector3::z);
-        let origin_normal = origin
-            .normal
-            .try_normalize(crate::float_types::tolerance())
-            .unwrap_or(default_normal);
-        let rotation_quat = UnitQuaternion::rotation_between(&default_normal, &origin_normal)
-            .unwrap_or_else(|| UnitQuaternion::from_axis_angle(&Vector3::x_axis(), PI));
+        let default_normal = hunit_vector3(&default_origin.normal).unwrap_or_else(Vector3::z);
+        let origin_normal = hunit_vector3(&origin.normal).unwrap_or(default_normal);
+        let rotation = hrotation_between_vectors(&default_normal, &origin_normal)
+            .unwrap_or_else(Matrix4::identity);
 
-        (pos_transform, rotation_quat)
+        (pos_transform, rotation)
     }
 
     pub(crate) fn apply_origin_transform_vertex(
         vertex: Vertex,
         origin_transform: OriginTransform,
     ) -> Vertex {
-        let (pos_transform, rotation_quat) = origin_transform;
-        let position = Point3::from(rotation_quat * vertex.position.coords + pos_transform);
-        let normal = rotation_quat * vertex.normal;
+        let (pos_transform, rotation) = origin_transform;
+        let rotated_position =
+            Point3::from_homogeneous(rotation * vertex.position.to_homogeneous())
+                .unwrap_or(vertex.position);
+        let position = Point3::from(rotated_position.coords + pos_transform);
+        let rotated_normal = rotation * vertex.normal.push(0.0);
+        let normal = hunit_vector3(&Vector3::new(
+            rotated_normal.x,
+            rotated_normal.y,
+            rotated_normal.z,
+        ))
+        .unwrap_or_else(Vector3::z);
         Vertex::new(position, normal)
     }
 
@@ -999,8 +753,10 @@ impl<M: Clone + Send + Sync + Debug> Sketch<M> {
         point: Point3<Real>,
         origin_transform: OriginTransform,
     ) -> Point3<Real> {
-        let (pos_transform, rotation_quat) = origin_transform;
-        Point3::from(rotation_quat * point.coords + pos_transform)
+        let (pos_transform, rotation) = origin_transform;
+        let rotated =
+            Point3::from_homogeneous(rotation * point.to_homogeneous()).unwrap_or(point);
+        Point3::from(rotated.coords + pos_transform)
     }
 
     /// Create render-ready line strings from this sketch's visible edges in 3D space.
@@ -1008,9 +764,14 @@ impl<M: Clone + Send + Sync + Debug> Sketch<M> {
     /// Region- and wire-backed sketches project visible boundaries directly
     /// from hypercurve contours and curve strings. Finite `f32` output is a
     /// renderer boundary, while the source topology remains `Region2` and
-    /// `CurveString2`, following Yap's exact-geometric-computation split
-    /// (Computational Geometry 7(1-2), 1997,
-    /// <https://doi.org/10.1016/0925-7721(95)00040-2>).
+    /// `CurveString2`. If native topology is absent, display output is empty
+    /// rather than reconstructed from stale finite boundary products. This
+    /// follows Yap's exact-geometric-computation
+    /// split (Computational Geometry 7(1-2), 1997,
+    /// <https://doi.org/10.1016/0925-7721(95)00040-2>) and the finite-output
+    /// discipline in Hobby, "Practical Segment Intersection with Finite
+    /// Precision Output," Computational Geometry 13(4), 1999
+    /// (<https://doi.org/10.1016/S0925-7721(99)00021-8>).
     pub fn build_graphic_line_strings(&self) -> GraphicLineStrings {
         let mut graphic_line_strings = Vec::new();
 
@@ -1036,97 +797,9 @@ impl<M: Clone + Send + Sync + Debug> Sketch<M> {
             };
         }
 
-        self.collect_graphic_line_strings(
-            &self.effective_geometry(),
-            &mut graphic_line_strings,
-        );
         GraphicLineStrings {
             line_strings: graphic_line_strings,
         }
-    }
-
-    fn collect_graphic_line_strings(
-        &self,
-        geometry: &GeometryCollection<Real>,
-        out: &mut Vec<GraphicLineString>,
-    ) {
-        for geom in geometry {
-            match geom {
-                Geometry::Polygon(polygon) => {
-                    out.push(self.line_string_to_graphic_line_string(polygon.exterior()));
-                    for interior in polygon.interiors() {
-                        out.push(self.line_string_to_graphic_line_string(interior));
-                    }
-                },
-                Geometry::Line(line) => {
-                    out.push(self.ring_to_graphic_line_string(&[
-                        [line.start.x, line.start.y],
-                        [line.end.x, line.end.y],
-                    ]));
-                },
-                Geometry::LineString(line_string) => {
-                    out.push(self.line_string_to_graphic_line_string(line_string));
-                },
-                Geometry::MultiLineString(line_strings) => {
-                    for line_string in line_strings {
-                        out.push(self.line_string_to_graphic_line_string(line_string));
-                    }
-                },
-                Geometry::MultiPolygon(polygons) => {
-                    for polygon in polygons {
-                        out.push(self.line_string_to_graphic_line_string(polygon.exterior()));
-                        for interior in polygon.interiors() {
-                            out.push(self.line_string_to_graphic_line_string(interior));
-                        }
-                    }
-                },
-                Geometry::Rect(rect) => {
-                    let line_string = Self::lines_to_line_string(&rect.to_lines());
-                    out.push(self.line_string_to_graphic_line_string(&line_string));
-                },
-                Geometry::Triangle(triangle) => {
-                    let line_string = Self::lines_to_line_string(&triangle.to_lines());
-                    out.push(self.line_string_to_graphic_line_string(&line_string));
-                },
-                Geometry::GeometryCollection(collection) => {
-                    self.collect_graphic_line_strings(collection, out);
-                },
-                _ => {},
-            }
-        }
-    }
-
-    fn lines_to_line_string(lines: &[Line<Real>]) -> LineString<Real> {
-        let Some(first_line) = lines.first() else {
-            return LineString::empty();
-        };
-
-        let mut coord_vec = Vec::with_capacity(lines.len() + 1);
-        coord_vec.push(first_line.start);
-        coord_vec.extend(lines.iter().map(|line| line.end));
-        LineString::new(coord_vec)
-    }
-
-    fn line_string_to_graphic_line_string(
-        &self,
-        line_string: &LineString<Real>,
-    ) -> GraphicLineString {
-        let points = line_string
-            .0
-            .iter()
-            .map(|coord| {
-                let point = Point3::new(coord.x, coord.y, 0.0);
-                let point_transformed =
-                    Self::apply_origin_transform_point(point, self.origin_transform);
-                [
-                    point_transformed.x as f32,
-                    point_transformed.y as f32,
-                    point_transformed.z as f32,
-                ]
-            })
-            .collect();
-
-        GraphicLineString { points }
     }
 
     fn ring_to_graphic_line_string(&self, ring: &[[Real; 2]]) -> GraphicLineString {
@@ -1146,148 +819,37 @@ impl<M: Clone + Send + Sync + Debug> Sketch<M> {
         GraphicLineString { points }
     }
 
-    /// Triangulate a polygon and holes with hypertri.
+    /// Triangulate the native hypercurve region in this Sketch.
     ///
-    /// The input rings are finite `f64` boundary coordinates. This method
-    /// normalizes duplicate closing vertices, promotes coordinates to
-    /// `hyperreal::Real`, and lets hypertri make the 2D topology decisions with
-    /// exact predicates. The ear-clipping theorem is due to Meisters, "Polygons
-    /// Have Ears" (American Mathematical Monthly 82(6), 1975,
-    /// <https://doi.org/10.2307/2319703>); the exact-predicate boundary follows
-    /// Yap, "Towards Exact Geometric Computation" (Computational Geometry
-    /// 7(1-2), 1997, <https://doi.org/10.1016/0925-7721(95)00040-2>).
-    pub fn triangulate_with_holes(
-        outer: &[[Real; 2]],
-        holes: &[&[[Real; 2]]],
-    ) -> Vec<[Point3<Real>; 3]> {
-        fn push_ring(
-            ring: &[[Real; 2]],
-            vertices: &mut Vec<[Real; 2]>,
-            exact: &mut Vec<hypertri::Point2>,
-        ) -> Option<usize> {
-            let start = vertices.len();
-            let end = if ring.len() > 1
-                && (ring[0][0] - ring[ring.len() - 1][0]).abs() <= tolerance()
-                && (ring[0][1] - ring[ring.len() - 1][1]).abs() <= tolerance()
-            {
-                ring.len() - 1
-            } else {
-                ring.len()
-            };
-            if end < 3 {
-                return None;
-            }
-            for &[x, y] in ring.iter().take(end) {
-                if !x.is_finite() || !y.is_finite() {
-                    return None;
-                }
-                vertices.push([x, y]);
-                exact.push(hypertri::Point2::new(
-                    hreal_from_f64(x).ok()?,
-                    hreal_from_f64(y).ok()?,
-                ));
-            }
-            Some(start)
-        }
-
-        let mut vertices = Vec::new();
-        let mut exact = Vec::new();
-        if push_ring(outer, &mut vertices, &mut exact).is_none() {
-            return Vec::new();
-        }
-
-        let mut hole_indices = Vec::with_capacity(holes.len());
-        for hole in holes {
-            if let Some(start) = push_ring(hole, &mut vertices, &mut exact) {
-                hole_indices.push(start);
-            }
-        }
-
-        let indices = match hypertri::earcut(&exact, &hole_indices) {
-            Ok(indices) => indices,
-            Err(_) => return Vec::new(),
-        };
-
-        indices
-            .chunks_exact(3)
-            .filter_map(|tri| {
-                let a = *vertices.get(tri[0])?;
-                let b = *vertices.get(tri[1])?;
-                let c = *vertices.get(tri[2])?;
-                Some([
-                    Point3::new(a[0], a[1], 0.0),
-                    Point3::new(b[0], b[1], 0.0),
-                    Point3::new(c[0], c[1], 0.0),
-                ])
-            })
-            .collect()
-    }
-
-    /// Triangulate all polygons in this Sketch.
-    ///
-    /// This function converts all polygons (including those from MultiPolygons) contained
-    /// in the Sketch's geometry into a list of triangles. Each triangle is represented as
-    /// a `[Point3<Real>; 3]`, where the Z-coordinate is 0.0.
+    /// Filled topology is projected from [`Region2`] into hypercurve-owned finite profiles, then
+    /// triangulated with hypertri using hyperreal predicates at the mesh boundary.
+    /// This keeps exact topology authoritative as advocated by Yap, "Towards
+    /// Exact Geometric Computation," *Computational Geometry* 7(1-2), 1997
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>), while the ear-clipping
+    /// step follows Meisters, "Polygons Have Ears," *American Mathematical
+    /// Monthly* 82(6), 1975 (<https://doi.org/10.2307/2319703>).
     ///
     /// # Returns
     ///
     /// A `Vec<[Point3<Real>; 3]>` containing all the triangles resulting from the triangulation.
     pub fn triangulate(&self) -> Vec<[Point3<Real>; 3]> {
-        let mut all_triangles = Vec::new();
         let options = FiniteProjectionOptions::try_new(1e-3)
             .expect("positive finite projection tolerance is valid");
         let profiles = match self.project_region_profiles(&options) {
             Ok(Classification::Decided(profiles)) => profiles,
             Ok(Classification::Uncertain(_)) | Err(_) => Vec::new(),
         };
-        if !profiles.is_empty() {
-            for profile in profiles {
-                let hole_refs = profile
-                    .holes()
-                    .iter()
-                    .map(|hole| hole.points())
-                    .collect::<Vec<_>>();
-                all_triangles.extend(Self::triangulate_with_holes(
-                    profile.material().points(),
-                    &hole_refs,
-                ));
-            }
-            return all_triangles;
-        }
-
-        let geometry = self.effective_geometry();
-
-        for geom in geometry.iter() {
-            match geom {
-                geo::Geometry::Polygon(poly) => {
-                    let outer = finite_line_string_points(poly.exterior());
-                    let holes: Vec<Vec<[Real; 2]>> = poly
-                        .interiors()
-                        .iter()
-                        .map(finite_line_string_points)
-                        .collect();
-                    let hole_refs: Vec<&[[Real; 2]]> = holes.iter().map(|v| &v[..]).collect();
-                    let tris = Self::triangulate_with_holes(&outer, &hole_refs);
-                    all_triangles.extend(tris);
+        let mut all_triangles = Vec::new();
+        for profile in profiles {
+            all_triangles.extend(profile.triangulate().unwrap_or_default().into_iter().map(
+                |tri| {
+                    [
+                        Point3::new(tri[0][0], tri[0][1], 0.0),
+                        Point3::new(tri[1][0], tri[1][1], 0.0),
+                        Point3::new(tri[2][0], tri[2][1], 0.0),
+                    ]
                 },
-                geo::Geometry::MultiPolygon(mp) => {
-                    for poly in &mp.0 {
-                        let outer = finite_line_string_points(poly.exterior());
-                        let holes: Vec<Vec<[Real; 2]>> = poly
-                            .interiors()
-                            .iter()
-                            .map(finite_line_string_points)
-                            .collect();
-                        let hole_refs: Vec<&[[Real; 2]]> =
-                            holes.iter().map(|v| &v[..]).collect();
-                        let tris = Self::triangulate_with_holes(&outer, &hole_refs);
-                        all_triangles.extend(tris);
-                    }
-                },
-                // For other geometry types (LineString, Point, etc.), we might choose to ignore them
-                // or handle them differently if needed. Currently, ignoring them.
-                _ => {},
-            }
+            ));
         }
 
         all_triangles
@@ -1297,13 +859,15 @@ impl<M: Clone + Send + Sync + Debug> Sketch<M> {
     /// exterior rings wind counter-clockwise and interior rings clockwise.
     ///
     /// Native hypercurve sketches already separate material and hole contours,
-    /// and carry open paths as `CurveString2`, so renormalization can preserve
-    /// the native `Region2`/wire topology without rebuilding through
-    /// winding-sensitive `geo` polygons. For polygon winding conventions and
-    /// point-in-polygon background, see Hormann and Agathos, "The point in
-    /// polygon problem for arbitrary polygons," Computational Geometry 20(3),
-    /// 2001 (<https://doi.org/10.1016/S0925-7721(01)00012-8>). Keeping exact
-    /// topology internal follows Yap, "Towards Exact Geometric Computation,"
+    /// and carry open paths as `CurveString2`, so renormalization preserves the
+    /// native `Region2`/wire topology without rebuilding through winding-sensitive
+    /// finite polygons. If no native topology exists, renormalization returns
+    /// empty native topology rather than promoting boundary data into CAD topology.
+    /// For polygon winding conventions and point-in-polygon background, see
+    /// Hormann and Agathos, "The point in polygon problem for arbitrary
+    /// polygons," Computational Geometry 20(3), 2001
+    /// (<https://doi.org/10.1016/S0925-7721(01)00012-8>). Keeping exact topology
+    /// internal follows Yap, "Towards Exact Geometric Computation,"
     /// Computational Geometry 7(1-2), 1997
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     pub fn renormalize(&self) -> Sketch<M> {
@@ -1320,25 +884,9 @@ impl<M: Clone + Send + Sync + Debug> Sketch<M> {
             return sketch;
         }
 
-        // Re-build the collection, orienting only what’s supported.
-        let geometry = self.effective_geometry();
-        let oriented_geoms: Vec<Geometry<Real>> = geometry
-            .iter()
-            .map(|geom| match geom {
-                Geometry::Polygon(p) => {
-                    Geometry::Polygon(p.clone().orient(Direction::Default))
-                },
-                Geometry::MultiPolygon(mp) => {
-                    Geometry::MultiPolygon(mp.clone().orient(Direction::Default))
-                },
-                // Everything else keeps its original orientation.
-                _ => geom.clone(),
-            })
-            .collect();
-
-        let geometry = GeometryCollection(oriented_geoms);
-        Self::from_compat_bridge_geometry_with_origin(
-            geometry,
+        Self::from_region_and_wires_with_origin(
+            Region2::empty(),
+            Vec::new(),
             self.metadata.clone(),
             self.origin,
             self.origin_transform,
@@ -1351,46 +899,6 @@ impl Sketch<()> {
     pub fn new() -> Self {
         Self::empty(())
     }
-}
-
-#[cfg(feature = "offset")]
-fn is_area_geometry(geometry: &Geometry<Real>) -> bool {
-    match geometry {
-        Geometry::Polygon(_) | Geometry::MultiPolygon(_) => true,
-        Geometry::GeometryCollection(collection) => collection.iter().all(is_area_geometry),
-        _ => false,
-    }
-}
-
-fn line_string_from_ring(ring: &[[Real; 2]]) -> Option<LineString<Real>> {
-    (ring.len() >= 4).then(|| {
-        LineString::from(
-            ring.iter()
-                .map(|point| (point[0], point[1]))
-                .collect::<Vec<_>>(),
-        )
-    })
-}
-
-fn finite_line_string_points(line_string: &LineString<Real>) -> Vec<[Real; 2]> {
-    line_string.0.iter().map(|coord| [coord.x, coord.y]).collect()
-}
-
-fn polygons_from_finite_region_profiles(
-    profiles: &[FiniteRegionProfile2],
-) -> Vec<GeoPolygon<Real>> {
-    profiles
-        .iter()
-        .filter_map(|profile| {
-            let exterior = line_string_from_ring(profile.material().points())?;
-            let holes = profile
-                .holes()
-                .iter()
-                .filter_map(|hole| line_string_from_ring(hole.points()))
-                .collect();
-            Some(GeoPolygon::new(exterior, holes))
-        })
-        .collect()
 }
 
 fn hyper_aabb_to_finite_xy_bounds(bbox: &HyperAabb2) -> Option<(Real, Real, Real, Real)> {
@@ -1417,30 +925,6 @@ fn similarity_from_matrix(mat: &Matrix4<Real>) -> Option<Similarity2> {
         tolerance(),
     )
     .ok()
-}
-
-/// Group projected native material rings with the holes that they contain.
-///
-/// The grouping feeds both finite export projections and hypertri
-/// triangulation. It deliberately stays at the API boundary: authoritative
-/// ownership remains in `Region2`, while representative-point assignment is
-/// only used to build finite grouped rings for algorithms whose inputs are
-/// polygons-with-holes.
-fn line_string_to_wire(line_string: &LineString<Real>) -> Option<CurveString2> {
-    let points = finite_line_string_points(line_string);
-    CurveString2::from_finite_line_string(&points).ok()
-}
-
-fn wire_to_line_string(wire: &CurveString2) -> Option<LineString<Real>> {
-    curve_string_to_polyline(wire).map(LineString::from)
-}
-
-pub(crate) fn wire_from_points<I>(points: I) -> Option<CurveString2>
-where
-    I: IntoIterator<Item = [Real; 2]>,
-{
-    let points = points.into_iter().collect::<Vec<_>>();
-    CurveString2::from_finite_line_string(&points).ok()
 }
 
 fn curve_string_to_polyline(wire: &CurveString2) -> Option<Vec<(Real, Real)>> {
@@ -1473,24 +957,9 @@ impl<M: Clone + Send + Sync + Debug> CSG for Sketch<M> {
         if let Some(sketch) = self.boolean_region_with(other, BooleanOp::Union) {
             return sketch;
         }
-
-        // Extract multipolygon from geometry
-        let polys1 = self.to_multipolygon();
-        let polys2 = &other.to_multipolygon();
-
-        // Perform union on those multipolygons
-        let unioned = polys1.union(polys2); // This is valid if each is a MultiPolygon
-        let oriented = unioned.orient(Direction::Default);
-
-        // Wrap the unioned multipolygons + lines/points back into one GeometryCollection
-        let mut final_gc = GeometryCollection::default();
-        final_gc.0.push(Geometry::MultiPolygon(oriented));
-
-        self.append_boolean_sidecars(&mut final_gc);
-        other.append_boolean_sidecars(&mut final_gc);
-
-        Self::from_compat_bridge_geometry_with_origin(
-            final_gc,
+        Self::from_region_and_wires_with_origin(
+            Region2::empty(),
+            self.boolean_wires_with(other, BooleanOp::Union),
             self.metadata.clone(),
             self.origin,
             self.origin_transform,
@@ -1514,22 +983,9 @@ impl<M: Clone + Send + Sync + Debug> CSG for Sketch<M> {
         if let Some(sketch) = self.boolean_region_with(other, BooleanOp::Difference) {
             return sketch;
         }
-
-        let polys1 = &self.to_multipolygon();
-        let polys2 = &other.to_multipolygon();
-
-        // Perform difference on those multipolygons
-        let differenced = polys1.difference(polys2);
-        let oriented = differenced.orient(Direction::Default);
-
-        // Wrap the differenced multipolygons + lines/points back into one GeometryCollection
-        let mut final_gc = GeometryCollection::default();
-        final_gc.0.push(Geometry::MultiPolygon(oriented));
-
-        self.append_boolean_sidecars(&mut final_gc);
-
-        Self::from_compat_bridge_geometry_with_origin(
-            final_gc,
+        Self::from_region_and_wires_with_origin(
+            Region2::empty(),
+            self.boolean_wires_with(other, BooleanOp::Difference),
             self.metadata.clone(),
             self.origin,
             self.origin_transform,
@@ -1553,23 +1009,9 @@ impl<M: Clone + Send + Sync + Debug> CSG for Sketch<M> {
         if let Some(sketch) = self.boolean_region_with(other, BooleanOp::Intersection) {
             return sketch;
         }
-
-        let polys1 = &self.to_multipolygon();
-        let polys2 = &other.to_multipolygon();
-
-        // Perform intersection on those multipolygons
-        let intersected = polys1.intersection(polys2);
-        let oriented = intersected.orient(Direction::Default);
-
-        // Wrap the intersected multipolygons + lines/points into one GeometryCollection
-        let mut final_gc = GeometryCollection::default();
-        final_gc.0.push(Geometry::MultiPolygon(oriented));
-
-        self.append_boolean_sidecars(&mut final_gc);
-        other.append_boolean_sidecars(&mut final_gc);
-
-        Self::from_compat_bridge_geometry_with_origin(
-            final_gc,
+        Self::from_region_and_wires_with_origin(
+            Region2::empty(),
+            self.boolean_wires_with(other, BooleanOp::Intersection),
             self.metadata.clone(),
             self.origin,
             self.origin_transform,
@@ -1594,23 +1036,9 @@ impl<M: Clone + Send + Sync + Debug> CSG for Sketch<M> {
         if let Some(sketch) = self.boolean_region_with(other, BooleanOp::Xor) {
             return sketch;
         }
-
-        let polys1 = &self.to_multipolygon();
-        let polys2 = &other.to_multipolygon();
-
-        // Perform symmetric difference (XOR)
-        let xored = polys1.xor(polys2);
-        let oriented = xored.orient(Direction::Default);
-
-        // Wrap in a new GeometryCollection
-        let mut final_gc = GeometryCollection::default();
-        final_gc.0.push(Geometry::MultiPolygon(oriented));
-
-        self.append_boolean_sidecars(&mut final_gc);
-        other.append_boolean_sidecars(&mut final_gc);
-
-        Self::from_compat_bridge_geometry_with_origin(
-            final_gc,
+        Self::from_region_and_wires_with_origin(
+            Region2::empty(),
+            self.boolean_wires_with(other, BooleanOp::Xor),
             self.metadata.clone(),
             self.origin,
             self.origin_transform,
@@ -1623,12 +1051,10 @@ impl<M: Clone + Send + Sync + Debug> CSG for Sketch<M> {
     /// from the native hypercurve region: finite boundary rings are projected at
     /// the API edge, the XY affine part of the matrix is applied, and the result
     /// is promoted immediately back to `hypercurve::Region2`. This keeps
-    /// topology in hyperreal-backed objects rather than re-deriving it from the
-    /// temporary `geo` cache. Native open wires use the same finite affine
+    /// topology in hyperreal-backed objects. Native open wires use the same finite affine
     /// boundary and are immediately rebuilt as `CurveString2`. Projection-style
-    /// or singular transforms and non-area compatibility geometry still fall
-    /// back to finite `geo` transformation, then supported output is recomposed
-    /// into hypercurve types. The exact/topological boundary follows Yap,
+    /// or singular transforms return empty native topology when they cannot be
+    /// represented by the current hypercurve similarity path. The exact/topological boundary follows Yap,
     /// "Towards Exact Geometric Computation," *Computational Geometry*
     /// 7(1-2), 1997
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>); the affine projection
@@ -1638,7 +1064,7 @@ impl<M: Clone + Send + Sync + Debug> CSG for Sketch<M> {
         if let Some(region) = self.transformed_region_with_matrix(mat) {
             // Open wires follow the same finite projection boundary as region
             // rings, but rebuild directly as `CurveString2` instead of routing
-            // through a temporary `geo` line string. Keeping the ownership on
+            // through another line-string datatype. Keeping the ownership on
             // hypercurve after the affine API boundary follows Yap, "Towards
             // Exact Geometric Computation," Computational Geometry 7(1-2),
             // 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>).
@@ -1663,41 +1089,9 @@ impl<M: Clone + Send + Sync + Debug> CSG for Sketch<M> {
             );
         }
 
-        // Convert the top-left 2×2 submatrix + translation of a 4×4 into a geo::AffineTransform
-        // The 4x4 looks like:
-        //  [ m11  m12  m13  m14 ]
-        //  [ m21  m22  m23  m24 ]
-        //  [ m31  m32  m33  m34 ]
-        //  [ m41  m42  m43  m44 ]
-        //
-        // For 2D, we use the sub-block:
-        //   a = m11,  b = m12,
-        //   d = m21,  e = m22,
-        //   xoff = m14,
-        //   yoff = m24,
-        // ignoring anything in z.
-        //
-        // So the final affine transform in 2D has matrix:
-        //   [a   b   xoff]
-        //   [d   e   yoff]
-        //   [0   0    1  ]
-        let a = mat[(0, 0)];
-        let b = mat[(0, 1)];
-        let xoff = mat[(0, 3)];
-        let d = mat[(1, 0)];
-        let e = mat[(1, 1)];
-        let yoff = mat[(1, 3)];
-
-        let affine2 = AffineTransform::new(a, b, xoff, d, e, yoff);
-
-        // Transform the finite compatibility projection in 2D, then promote
-        // supported linework/area topology back into native hyper geometry.
-        // The affine operation is still a finite bridge for unsupported
-        // geometry, but it is no longer the authoritative Sketch state when a
-        // `Region2` or `CurveString2` can represent the result.
-        let geometry = self.effective_geometry().affine_transform(&affine2);
-        Self::from_compat_bridge_geometry_with_origin(
-            geometry,
+        Self::from_region_and_wires_with_origin(
+            Region2::empty(),
+            Vec::new(),
             self.metadata.clone(),
             self.origin,
             self.origin_transform,
@@ -1707,12 +1101,16 @@ impl<M: Clone + Send + Sync + Debug> CSG for Sketch<M> {
     /// Returns an axis-aligned bounding box containing the effective finite
     /// 2D boundary projection, interpreted at z=0.
     ///
-    /// Native hypercurve sketches compute bounds from projected `Region2`
-    /// contours before consulting the temporary `geo` cache. The finite AABB is
-    /// an acceleration/output boundary, while topological ownership remains in
-    /// hyper geometry; this follows Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7(1-2), 1997
-    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+    /// Native hypercurve sketches compute bounds from `Region2`/`CurveString2`
+    /// AABBs and only fall back to finite projection when hypercurve cannot
+    /// decide a bound directly. The finite AABB is an acceleration/output boundary, while topological
+    /// ownership remains in hyper geometry; this follows Yap, "Towards Exact
+    /// Geometric Computation," *Computational Geometry* 7(1-2), 1997
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>). The finite projection
+    /// fallback is a simple coordinate min/max envelope, the standard broad-phase box
+    /// primitive described by Gottschalk, Lin, and Manocha, "OBBTree: A
+    /// Hierarchical Structure for Rapid Interference Detection," SIGGRAPH 1996
+    /// (<https://doi.org/10.1145/237170.237244>).
     fn bounding_box(&self) -> Aabb {
         *self.bounding_box.get_or_init(|| {
             if let Some((min_x, min_y, max_x, max_y)) = self.native_xy_bounds() {
@@ -1722,43 +1120,7 @@ impl<M: Clone + Send + Sync + Debug> CSG for Sketch<M> {
                 );
             }
 
-            // Track overall min/max in x, y, z among the finite 2D projection's bounding rect.
-            let mut min_x = Real::MAX;
-            let mut min_y = Real::MAX;
-            let mut min_z = Real::MAX;
-            let mut max_x = -Real::MAX;
-            let mut max_y = -Real::MAX;
-            let mut max_z = -Real::MAX;
-
-            // Gather from the finite 2D compatibility projection using `geo::BoundingRect`.
-            // This gives us (min_x, min_y) / (max_x, max_y)
-            // Explicitly capture the result of `.bounding_rect()` as an Option<Rect<Real>>
-            let geometry = self.effective_geometry();
-            let maybe_rect: Option<Rect<Real>> = geometry.bounding_rect();
-
-            if let Some(rect) = maybe_rect {
-                let min_pt = rect.min();
-                let max_pt = rect.max();
-
-                // Merge the 2D bounds into our existing min/max, forcing z=0 for 2D geometry.
-                min_x = *partial_min(&min_x, &min_pt.x).unwrap();
-                min_y = *partial_min(&min_y, &min_pt.y).unwrap();
-                min_z = *partial_min(&min_z, &0.0).unwrap();
-
-                max_x = *partial_max(&max_x, &max_pt.x).unwrap();
-                max_y = *partial_max(&max_y, &max_pt.y).unwrap();
-                max_z = *partial_max(&max_z, &0.0).unwrap();
-            }
-
-            // If still uninitialized (e.g., no geometry), return a trivial AABB at origin
-            if min_x > max_x {
-                return Aabb::new(Point3::origin(), Point3::origin());
-            }
-
-            // Build a parry3d Aabb from these min/max corners
-            let mins = Point3::new(min_x, min_y, min_z);
-            let maxs = Point3::new(max_x, max_y, max_z);
-            Aabb::new(mins, maxs)
+            Aabb::new(Point3::origin(), Point3::origin())
         })
     }
 
@@ -1767,15 +1129,16 @@ impl<M: Clone + Send + Sync + Debug> CSG for Sketch<M> {
         self.bounding_box = OnceLock::new();
     }
 
-    /// Invert this Sketch's finite boundary orientation.
+    /// Return the topology-preserving Sketch inverse for native hypercurve data.
     ///
-    /// This preserves the historical Sketch behavior of flipping polygon
-    /// winding rather than constructing an unbounded planar complement. Native
-    /// hypercurve topology keeps its explicit material/hole bins, while only
-    /// the finite compatibility projection is wound the old way. This avoids
-    /// making ring orientation the source of CAD topology, matching Hormann and
-    /// Agathos, "The point in polygon problem for arbitrary polygons,"
-    /// *Computational Geometry* 20(3), 2001
+    /// Native Sketch topology is owned by hypercurve [`Region2`] and
+    /// [`CurveString2`], where material/hole semantics are explicit and not
+    /// inferred from temporary ring winding. Inverse is therefore a
+    /// topology-preserving operation for the hypercurve-backed Sketch type.
+    /// Keeping orientation out of the
+    /// CAD ownership model follows the point-in-polygon topology treatment by
+    /// Hormann and Agathos, "The point in polygon problem for arbitrary
+    /// polygons," *Computational Geometry* 20(3), 2001
     /// (<https://doi.org/10.1016/S0925-7721(01)00012-8>), and keeps finite
     /// coordinates at API boundaries as advocated by Yap, "Towards Exact
     /// Geometric Computation," *Computational Geometry* 7(1-2), 1997
@@ -1784,24 +1147,18 @@ impl<M: Clone + Send + Sync + Debug> CSG for Sketch<M> {
         if !self.wires.is_empty()
             || (!self.region.is_empty() && Self::region_has_nonzero_area(&self.region))
         {
-            return Sketch {
-                region: self.region.clone(),
-                wires: self.wires.clone(),
-                geometry: Self::inverted_compat_geometry(&Self::geometry_from_native(
-                    &self.region,
-                    &self.wires,
-                )),
-                bounding_box: OnceLock::new(),
-                metadata: self.metadata.clone(),
-                origin: self.origin,
-                origin_transform: self.origin_transform,
-            };
+            return Self::from_region_and_wires_with_origin(
+                self.region.clone(),
+                self.wires.clone(),
+                self.metadata.clone(),
+                self.origin,
+                self.origin_transform,
+            );
         }
 
-        let geometry = self.effective_geometry();
-        let geometry = Self::inverted_compat_geometry(&geometry);
-        Self::from_compat_bridge_geometry_with_origin(
-            geometry,
+        Self::from_region_and_wires_with_origin(
+            Region2::empty(),
+            Vec::new(),
             self.metadata.clone(),
             self.origin,
             self.origin_transform,

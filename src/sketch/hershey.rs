@@ -1,8 +1,9 @@
 //! Create `Sketch`s using single stroke Hershey fonts
 
 use crate::float_types::Real;
-use crate::sketch::{Sketch, wire_from_points};
+use crate::sketch::Sketch;
 use hershey::{Font, Glyph as HersheyGlyph, Vector as HersheyVector};
+use hypercurve::CurveString2;
 use std::fmt::Debug;
 
 impl<M: Clone + Debug + Send + Sync> Sketch<M> {
@@ -11,7 +12,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     /// Each glyph stroke becomes a native `hypercurve::CurveString2` wire.
     /// If you need the strokes filled or thickened, offset or extrude the
     /// finite projection at the API boundary. This keeps path topology in
-    /// hyperreal-backed curve strings rather than in the temporary `geo` cache,
+    /// hyperreal-backed curve strings rather than in a finite compatibility cache,
     /// following Yap, "Towards Exact Geometric Computation," *Computational
     /// Geometry* 7(1-2), 1997
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>). The stroke-font data
@@ -44,7 +45,9 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
                     wires.extend(
                         build_hershey_glyph_lines(&glyph, size, cursor_x, 0.0)
                             .into_iter()
-                            .filter_map(wire_from_points),
+                            .filter_map(|points| {
+                                CurveString2::from_finite_point_iter(points).ok()
+                            }),
                     );
 
                     // Advance the pen in X

@@ -45,13 +45,13 @@ fuzz_target!(|bytes: &[u8]| {
         match op {
             0 => {
                 let size = decode_real(bytes, &mut idx).abs().max(tolerance());
-                stack.push(Mesh::cube(size, None));
+                stack.push(Mesh::cube(size, ()));
             },
             1 => {
                 let radius = decode_real(bytes, &mut idx).abs().max(tolerance());
                 let segments = (bytes[idx % bytes.len()] as usize % 16) + 3;
                 idx += 1;
-                stack.push(Mesh::sphere(radius, segments, segments, None));
+                stack.push(Mesh::sphere(radius, segments, segments, ()));
             },
             2 => {
                 let Some(mesh) = stack.pop() else { continue };

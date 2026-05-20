@@ -1,6 +1,7 @@
 //! Tests for polygon construction and manipulation.
 
 use super::support::*;
+use crate::polygon::build_orthonormal_basis;
 
 #[test]
 fn test_polygon_new() {
@@ -107,6 +108,33 @@ fn test_polygon_recalc_plane_and_normals() {
         assert!(approx_eq(v.normal.y, 0.0, tolerance()));
         assert!(approx_eq(v.normal.z, 1.0, tolerance()));
     }
+}
+
+#[test]
+fn polygon_newell_normal_and_basis_use_hyperreal_checked_normalization() {
+    let mut poly: Polygon<()> = Polygon::new(
+        vec![
+            Vertex::new(Point3::new(0.0, 0.0, 2.0), Vector3::zeros()),
+            Vertex::new(Point3::new(3.0, 0.0, 2.0), Vector3::zeros()),
+            Vertex::new(Point3::new(3.0, 4.0, 2.0), Vector3::zeros()),
+            Vertex::new(Point3::new(0.0, 4.0, 2.0), Vector3::zeros()),
+        ],
+        (),
+    );
+    poly.set_new_normal();
+
+    for vertex in &poly.vertices {
+        assert!((vertex.normal.norm() - 1.0).abs() < tolerance());
+        assert!(vertex.normal.dot(&Vector3::z()) > 1.0 - tolerance());
+    }
+
+    let (u, v) = build_orthonormal_basis(Vector3::new(2.0, 3.0, 6.0));
+    let n = Vector3::new(2.0, 3.0, 6.0).normalize();
+    assert!((u.norm() - 1.0).abs() < tolerance());
+    assert!((v.norm() - 1.0).abs() < tolerance());
+    assert!(u.dot(&v).abs() < tolerance());
+    assert!(u.dot(&n).abs() < tolerance());
+    assert!(v.dot(&n).abs() < tolerance());
 }
 
 // ------------------------------------------------------------

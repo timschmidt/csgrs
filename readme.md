@@ -10,8 +10,8 @@ to be light weight and full featured through integration with the
 (e.g., [`nalgebra`](https://crates.io/crates/nalgebra),
 [`Parry`](https://crates.io/crates/parry3d),
 and [`Rapier`](https://crates.io/crates/rapier3d)) and
-[`geo`](https://crates.io/crates/geo) for robust processing of
-[Simple Features](https://en.wikipedia.org/wiki/Simple_Features).
+the local hyper geometry crates for exact-aware planar regions, curves,
+triangulation, and physical-property calculations.
 **csgrs** has a number of functions useful for generating CNC toolpaths. The
 crate accepts finite primitive floats at API boundaries, uses the hyperreal
 stack for new exact-aware internals, and can be built for WASM. Dependencies
@@ -123,16 +123,20 @@ wasm-pack build --release --target bundler --out-dir pkg -- --features wasm
 
 ### Sketch Structure
 
-- **`Sketch<M>`** is the type which stores and manipulates 2D polygonal geometry.  It contains:
-  - a [`geo`](https://crates.io/crates/geo) [`GeometryCollection<Real>`](https://docs.rs/geo/latest/geo/geometry/struct.GeometryCollection.html)
-  - a bounding box wrapped in a OnceLock (bounding_box: OnceLock<Aabb>)
-  - a metadata field of type `M` also defined by you
+- **`Sketch<M>`** stores and manipulates 2D CAD geometry as hypercurve topology. It contains:
+  - a [`hypercurve::Region2`](https://docs.rs/hypercurve/latest/hypercurve/struct.Region2.html) for filled material and hole contours
+  - native [`hypercurve::CurveString2`](https://docs.rs/hypercurve/latest/hypercurve/struct.CurveString2.html) wires for open paths
+  - a finite compatibility cache used only at IO/API boundaries while legacy import/export paths migrate
+  - an internal cached bounding box for finite boundary projections
+  - caller-owned metadata of type `M`, accessed through `metadata`, `metadata_mut`, `set_metadata`, `with_metadata`, and `map_metadata`
 
-`Sketch<M>` provides methods for working with 2D shapes made of points and lines.
-You can build a `Sketch<M>` from geo Geometries with `Sketch::from_geo(...)`.
-Geometries can be open or closed, and can have holes, but must be planar in the XY.
-`Sketch`'s are triangulated when exported as an STL, or when a Geometry is
-converted into a `Mesh<M>`.
+`Sketch<M>` provides methods for working with planar XY shapes made of filled regions and open paths.
+Prefer `Sketch::from_region`, `Sketch::from_wires`, `Sketch::from_region_and_wires`,
+`as_region`, `wires`, `into_region_and_wires`, `region_profiles`, and
+`wire_polylines` so topology stays in hypercurve objects instead of a finite
+compatibility projection. The old `geo`-based Sketch constructors and accessors
+are no longer public API, and the crate no longer depends on `geo`.
+`Sketch` values are triangulated with hypertri when exported as STL or converted into a `Mesh<M>`.
 
 ### 2D Shapes in Sketch
 
@@ -211,9 +215,9 @@ let lofted = Sketch::loft(&bottom.polygons[0], &top.polygons[0], false);
 
 ### Misc Sketch operations
 
-- **`Sketch::offset(distance)`** - outward (or inward) offset in 2D using [`geo-offset`](https://crates.io/crates/geo-offset).
-- **`Sketch::offset_rounded(distance)`** - outward (or inward) offset in 2D using [`geo-offset`](https://crates.io/crates/geo-offset).
-- **`Sketch::straight_skeleton(&self, orientation: bool)`** - returns a Sketch containing the inside (orientation: true) or outside (orientation: false) straight skeleton
+- **`Sketch::offset(distance)`** - outward (or inward) offset in 2D. Certified simple sharp offsets use hypercurve directly; remaining regularized offset cases are behind the optional `offset` compatibility feature and are recomposed into native Sketch topology.
+- **`Sketch::offset_rounded(distance)`** - outward (or inward) rounded offset in 2D behind the optional `offset` compatibility feature, with results recomposed into native Sketch topology.
+- **`Sketch::straight_skeleton(&self, orientation: bool)`** - returns a Sketch containing the inside (orientation: true) or outside (orientation: false) straight skeleton behind the optional `offset` compatibility feature.
 - **`Sketch::bounding_box()`** - computes the bounding box of the shape.
 - **`Sketch::invalidate_bounding_box()`** - invalidates the bounding box of the shape, causing it to be recomputed on next access
 - **`Sketch::triangulate()`** - subdivides the Sketch into triangles
@@ -499,43 +503,26 @@ if (mesh_obj.is_manifold()){
 
 ## Tolerance
 
-To account for error inherent in the storage of IEEE754 floating point numbers, and to maintain the speed of geometric calculations, `csgrs` provides a tunable tolerance value which can be set at compile time or once at the beginning of runtime as follows:
+Finite `f32`/`f64` values are accepted at API and IO boundaries, then promoted
+into hyperreal-backed geometry for topology-sensitive work. The remaining
+finite comparisons use one process-wide runtime tolerance for legacy mesh and
+interop boundaries; there are no Cargo precision flags for choosing `f32` or
+`f64`.
 
-* **Shell**:
+Set the tolerance once at program start:
 
-  ```bash
-  CSGRS_TOLERANCE=1e-6 cargo build
-  ```
-
-* **Cargo config** (project- or user-level `.cargo/config.toml`):
-
-  ```toml
-  [env]
-  CSGRS_TOLERANCE = "1e-6"
-  ```
-
-* **Build script in the *dependent* crate** (`build.rs`):
-
-  ```rust
-  fn main() {
-      println!("cargo:rustc-env=CSGRS_TOLERANCE=1e-6");
-  }
-  ```
-
-* **Runtime override** (in their `main`):
-
-  ```rust
-  fn main() {
-      csgrs::float_types::set_tolerance(1e-6);
-      // ... rest of the program ...
-  }
-  ```
+```rust
+fn main() {
+    csgrs::float_types::set_tolerance(1e-6);
+    // ... rest of the program ...
+}
+```
 
 > `set_tolerance` is a one-shot setter; subsequent calls are ignored. Use it at program start.
 
 ## Working with Metadata
 
-`Mesh<M>` and `Sketch<M>` are generic over `M: Clone`. Each polygon in a `Mesh<M>` and each `Mesh<M>` and `Sketch<M>` store `metadata: M`. Use `M = ()` for no metadata or `M = Option<YourMetadata>` for optional metadata.
+`Mesh<M>` and `Sketch<M>` are generic over `M: Clone`. Each polygon in a `Mesh<M>` and each `Mesh<M>` and `Sketch<M>` carry caller-owned metadata. Use `M = ()` for no metadata or `M = Option<YourMetadata>` for optional metadata.
 Use cases include storing color, ID, or layer info.
 
 ```rust
@@ -584,24 +571,30 @@ if let Some(data_mut) = poly.metadata_mut() {
 ## Project Status
 
 `csgrs` is usable today as a Rust-first CSG and geometry toolkit. The stable
-core is BSP-backed `Mesh`, `geo`-backed `Sketch`, polygon triangulation, common
-2D/3D primitive construction, extrusion/revolve/sweep/loft operations,
-transformations, metadata propagation, cached bounding boxes, TriMesh query
-conversion, ray intersection helpers, mesh quality utilities, and import/export
-for common mesh and manufacturing formats behind Cargo features.
+core is BSP-backed `Mesh`, hypercurve-backed `Sketch`, hypertri polygon
+triangulation, common 2D/3D primitive construction, extrusion/revolve/sweep/loft
+operations, transformations, metadata propagation, cached bounding boxes,
+TriMesh query conversion, ray intersection helpers, mesh quality utilities, and
+import/export for common mesh and manufacturing formats behind Cargo features.
 
 The project is also intentionally experimental in several areas:
 
-- **Boolean kernels**: BSP booleans are the compatibility baseline. `BMesh`
-  exposes a boolmesh-backed layer behind the `bmesh` feature, and future work is
-  aimed at making indexed mesh booleans lower cost and more robust.
+- **Boolean kernels**: BSP booleans are the compatibility baseline while mesh
+  representation migrates to `hypermesh`. The former alternate mesh carrier has
+  been removed so topology validation and indexed mesh handoff are concentrated
+  in the hyper geometry stack. Prefer `Mesh::to_hypermesh_handoff_package`
+  when a downstream consumer needs replayable surface, solid, readiness, or
+  lossy display/export artifacts; raw vertex/index buffers are compatibility
+  views, not topology authority.
 - **Triangulation**: hypertri is the single triangulation backend. It replaces
   the former Spade, Earcut, and `delaunay` dependency matrix.
-- **Numeric model**: hyperreals are the target internal scalar model. The
-  current compatibility boundary still exposes `Real = f64` in older modules
-  while new code promotes primitive input at the edge.
-- **Curves and offsets**: hcurve/hypercurve is the arc-preserving 2D backend.
-  The former Curvo-backed NURBS integration layer has been removed.
+- **Numeric model**: hyperreals are the internal scalar model being carried
+  through the codebase. Public constructors still accept finite primitive
+  `f32`/`f64`-shaped values at API and IO edges, then promote them before
+  topology-sensitive work.
+- **Curves and offsets**: hypercurve is the arc-preserving 2D backend. The
+  former Curvo-backed NURBS integration layer has been removed, and remaining
+  finite offset compatibility is isolated behind the optional `offset` feature.
 - **WASM**: JavaScript bindings cover the core mesh/sketch APIs and are useful
   for browser previews, but the Rust API remains the source of truth.
 - **Toolpaths**: contour, pocket, FDM layer, lathe roughing, and G-code helpers
@@ -630,23 +623,25 @@ README_RENDER_OUTPUT_DIR=/tmp/csgrs-readme-renders cargo run --example readme_re
 
 ## Roadmap
 
-- **Boolean robustness**: keep BSP as the early verification layer, complete the
-  boolmesh-backed boolean path, reduce excess polygon production by testing
-  only polygons whose cached bounding boxes intersect, and add indexed mesh
-  conversion/merge utilities.
-- **Numeric backend**: continue replacing tolerance-driven internals with
-  hyperreal predicates and explicit f32/f64 boundary conversions.
+- **Boolean robustness**: keep BSP as the early verification layer, route exact
+  mesh handoff and validation through `hypermesh`, reduce excess polygon
+  production by testing only polygons whose cached bounding boxes intersect,
+  and add indexed mesh conversion/merge utilities.
+- **Numeric backend**: continue removing tolerance-driven compatibility
+  branches by pushing more predicates into hyperreal-backed hyper geometry,
+  while keeping primitive `f32`/`f64` conversions at API and IO boundaries.
 - **Triangulation and polygon validity**: finish T-junction repair, coplanar
   polygon merging, validation hooks, and richer hypertri constrained
   triangulation integration.
-- **Curves and offsets**: harden Bezier, B-spline, hcurve offsets, straight
-  skeleton, and TrueType text paths.
+- **Curves and offsets**: harden Bezier, B-spline, hypercurve offsets,
+  straight skeleton, and TrueType text paths.
 - **Feature-complete modeling operations**: add rounded cuboids, chamfers,
   fillets, 3D offsets, bending, threaded parts, richer gear options, and
   attachment/alignment helpers.
-- **Representations**: add indexed mesh APIs, half-edge/radial-edge adapters,
-  metadata deduplication, UV support, and better conversion among `Mesh`,
-  `BMesh`, `Sketch`, `TriMesh`, and file formats.
+- **Representations**: replace transitional `Mesh` storage with `hypermesh`,
+  keep `Sketch` backed by hypercurve, add metadata deduplication, UV support,
+  and better conversion among hyper geometry types, query `TriMesh`, and file
+  formats.
 - **Performance**: broaden Rayon use in operations that are embarrassingly
   parallel, preserve borrowed-slice APIs, minimize allocations, and use cached
   AABBs/TriMesh acceleration structures in query-heavy code.

@@ -7,8 +7,8 @@ use csgrs::mesh::plane::Plane;
 use csgrs::polygon::Polygon;
 use csgrs::sketch::Sketch;
 use csgrs::vertex::{Vertex, VertexCluster};
-use geo::{CoordsIter, Geometry, GeometryCollection, LineString, Polygon as GeoPolygon};
 use hashbrown::HashMap;
+use hypercurve::{Contour2, CurveString2, Region2};
 use nalgebra::{Matrix4, Point3, Vector3};
 use proptest::prelude::*;
 use std::num::NonZeroU32;
@@ -76,12 +76,27 @@ fn assert_mesh_sane<M: Clone + Send + Sync + std::fmt::Debug>(mesh: &Mesh<M>) {
 }
 
 fn assert_sketch_sane<M: Clone + Send + Sync + std::fmt::Debug>(sketch: &Sketch<M>) {
-    let geometry = sketch.geometry();
-    for coord in geometry.coords_iter() {
-        assert!(coord.x.is_finite(), "non-finite sketch x: {coord:?}");
-        assert!(coord.y.is_finite(), "non-finite sketch y: {coord:?}");
+    let profiles = sketch.region_profiles();
+    let wires = sketch.wire_polylines();
+    for profile in &profiles {
+        for point in profile.material().points() {
+            assert!(point[0].is_finite(), "non-finite sketch x: {point:?}");
+            assert!(point[1].is_finite(), "non-finite sketch y: {point:?}");
+        }
+        for hole in profile.holes() {
+            for point in hole.points() {
+                assert!(point[0].is_finite(), "non-finite sketch x: {point:?}");
+                assert!(point[1].is_finite(), "non-finite sketch y: {point:?}");
+            }
+        }
     }
-    if geometry.coords_iter().next().is_some() {
+    for wire in &wires {
+        for point in wire {
+            assert!(point[0].is_finite(), "non-finite sketch x: {point:?}");
+            assert!(point[1].is_finite(), "non-finite sketch y: {point:?}");
+        }
+    }
+    if !profiles.is_empty() || !wires.is_empty() {
         let bbox = sketch.bounding_box();
         assert!(bbox.mins.x.is_finite() && bbox.maxs.x.is_finite(), "{bbox:?}");
         assert!(bbox.mins.y.is_finite() && bbox.maxs.y.is_finite(), "{bbox:?}");
@@ -91,10 +106,18 @@ fn assert_sketch_sane<M: Clone + Send + Sync + std::fmt::Debug>(sketch: &Sketch<
 fn sketch_all_coords_finite<M: Clone + Send + Sync + std::fmt::Debug>(
     sketch: &Sketch<M>,
 ) -> bool {
-    sketch
-        .geometry()
-        .coords_iter()
-        .all(|coord| coord.x.is_finite() && coord.y.is_finite())
+    sketch.region_profiles().iter().all(|profile| {
+        profile
+            .material()
+            .points()
+            .iter()
+            .chain(profile.holes().iter().flat_map(|hole| hole.points()))
+            .all(|point| point[0].is_finite() && point[1].is_finite())
+    }) && sketch
+        .wire_polylines()
+        .iter()
+        .flatten()
+        .all(|point| point[0].is_finite() && point[1].is_finite())
 }
 
 fn triangle_at_z(z: Real) -> Polygon<&'static str> {
@@ -294,44 +317,37 @@ fn adversarial_deep_sketch_shape_catalog_is_contained() {
 }
 
 #[test]
-fn adversarial_deep_invalid_geo_conversion_and_boolean_catalog() {
-    let collections = [
-        GeometryCollection(vec![]),
-        GeometryCollection(vec![Geometry::LineString(LineString::from(vec![
-            (0.0, 0.0),
-            (1.0, 0.0),
-        ]))]),
-        GeometryCollection(vec![Geometry::Polygon(GeoPolygon::new(
-            LineString::from(vec![
-                (0.0, 0.0),
-                (1.0, 1.0),
-                (0.0, 1.0),
-                (1.0, 0.0),
-                (0.0, 0.0),
-            ]),
-            vec![],
-        ))]),
-        GeometryCollection(vec![Geometry::Polygon(GeoPolygon::new(
-            LineString::from(vec![
-                (0.0, 0.0),
-                (4.0, 0.0),
-                (4.0, 4.0),
-                (0.0, 4.0),
-                (0.0, 0.0),
-            ]),
-            vec![LineString::from(vec![
-                (4.0, 2.0),
-                (5.0, 2.0),
-                (5.0, 3.0),
-                (4.0, 3.0),
-                (4.0, 2.0),
-            ])],
-        ))]),
+fn adversarial_deep_native_sketch_boolean_catalog() {
+    fn contour(points: &[[Real; 2]]) -> Option<Contour2> {
+        Contour2::from_finite_ring(points).ok()
+    }
+
+    fn wire(points: &[[Real; 2]]) -> CurveString2 {
+        CurveString2::from_finite_line_string(points).expect("adversarial wire is valid")
+    }
+
+    let mut sketches = vec![
+        Sketch::empty("native"),
+        Sketch::from_wires(vec![wire(&[[0.0, 0.0], [1.0, 0.0]])], "native"),
     ];
+    if let Some(bowtie) = contour(&[[0.0, 0.0], [1.0, 1.0], [0.0, 1.0], [1.0, 0.0]]) {
+        sketches.push(Sketch::from_region(
+            Region2::from_material_contours(vec![bowtie]),
+            "native",
+        ));
+    }
+    if let (Some(outer), Some(off_boundary_hole)) = (
+        contour(&[[0.0, 0.0], [4.0, 0.0], [4.0, 4.0], [0.0, 4.0]]),
+        contour(&[[4.0, 2.0], [5.0, 2.0], [5.0, 3.0], [4.0, 3.0]]),
+    ) {
+        sketches.push(Sketch::from_region(
+            Region2::new(vec![outer], vec![off_boundary_hole]),
+            "native",
+        ));
+    }
 
     let cutter = Sketch::<&str>::rectangle(0.5, 0.5, "cutter");
-    for collection in collections {
-        let sketch = Sketch::from_geo(collection, "geo");
+    for sketch in sketches {
         assert_sketch_sane(&sketch);
         for result in [
             catch_unwind(AssertUnwindSafe(|| sketch.union(&cutter))),
@@ -794,7 +810,7 @@ proptest! {
     }
 
     #[test]
-    fn proptest_deep_structured_geo_holes_triangulate_and_offset(
+    fn proptest_deep_structured_hypercurve_holes_triangulate_and_offset(
         width in 0.5f64..50.0f64,
         height in 0.5f64..50.0f64,
         inset in 0.01f64..0.45f64,
@@ -803,17 +819,16 @@ proptest! {
         let w = width as Real;
         let h = height as Real;
         let margin = (w.min(h) * inset as Real).max(tolerance());
-        let outer = LineString::from(vec![(0.0, 0.0), (w, 0.0), (w, h), (0.0, h), (0.0, 0.0)]);
-        let hole = LineString::from(vec![
-            (margin, margin),
-            (w - margin, margin),
-            (w - margin, h - margin),
-            (margin, h - margin),
-            (margin, margin),
-        ]);
-        let sketch = Sketch::<()>::from_geo(
-            GeometryCollection(vec![Geometry::Polygon(GeoPolygon::new(outer, vec![hole]))]),
-            (),        );
+        let outer = Contour2::from_finite_ring(&[[0.0, 0.0], [w, 0.0], [w, h], [0.0, h]])
+            .expect("proptest generated positive rectangle");
+        let hole = Contour2::from_finite_ring(&[
+            [margin, margin],
+            [w - margin, margin],
+            [w - margin, h - margin],
+            [margin, h - margin],
+        ])
+        .expect("proptest generated positive inset rectangle");
+        let sketch = Sketch::<()>::from_region(Region2::new(vec![outer], vec![hole]), ());
         assert_sketch_sane(&sketch);
         for tri in sketch.triangulate() {
             for point in tri {
