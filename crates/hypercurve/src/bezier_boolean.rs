@@ -5904,6 +5904,34 @@ impl BezierBooleanRegionAssemblyReport2 {
         Self::from_output_loop_depth_facts(&output, depth_facts)
     }
 
+    /// Packages graph-walk-certified endpoints when roles agree with depths.
+    ///
+    /// This is the graph-walk counterpart to
+    /// [`Self::from_output_loop_depth_role_facts`]. The walk first certifies
+    /// emitted fragment order and exact closure, keyed nesting-depth facts then
+    /// certify loop parity, and explicit role facts are accepted only when they
+    /// match that parity. This keeps the Vatti (1992), Greiner-Hormann (1998),
+    /// and Martinez-Rueda-Feito (2009) boundary-construction/nesting split
+    /// visible at the API surface. Following Yap, "Towards Exact Geometric
+    /// Computation" (1997), stale roles remain blockers rather than being
+    /// repaired by orientation or sample-point guesses.
+    pub fn from_graph_walk_depth_role_facts(
+        walk: &BezierBooleanLoopGraphWalkReport2,
+        plan: &BezierBooleanLoopAssemblyPlanReport2,
+        first_endpoints: &[(Point2, Point2)],
+        second_endpoints: &[(Point2, Point2)],
+        depth_facts: &[BezierBooleanLoopNestingDepthFact2],
+        roles: &[BezierBooleanOutputLoopRole],
+    ) -> Self {
+        let output = BezierBooleanOutputLoopReport2::from_graph_walk_endpoints(
+            walk,
+            plan,
+            first_endpoints,
+            second_endpoints,
+        );
+        Self::from_output_loop_depth_role_facts(&output, depth_facts, roles)
+    }
+
     /// Packages graph-walk-certified quadratic Bezier loops into a region artifact.
     pub fn from_quadratic_graph_walk_depth_facts(
         walk: &BezierBooleanLoopGraphWalkReport2,
@@ -5915,6 +5943,20 @@ impl BezierBooleanRegionAssemblyReport2 {
         let output =
             BezierBooleanOutputLoopReport2::from_quadratic_graph_walk(walk, plan, first, second);
         Self::from_output_loop_depth_facts(&output, depth_facts)
+    }
+
+    /// Packages graph-walk-certified quadratic Bezier loops with depth-certified roles.
+    pub fn from_quadratic_graph_walk_depth_role_facts(
+        walk: &BezierBooleanLoopGraphWalkReport2,
+        plan: &BezierBooleanLoopAssemblyPlanReport2,
+        first: &BezierBooleanQuadraticFragmentReport2,
+        second: &BezierBooleanQuadraticFragmentReport2,
+        depth_facts: &[BezierBooleanLoopNestingDepthFact2],
+        roles: &[BezierBooleanOutputLoopRole],
+    ) -> Self {
+        let output =
+            BezierBooleanOutputLoopReport2::from_quadratic_graph_walk(walk, plan, first, second);
+        Self::from_output_loop_depth_role_facts(&output, depth_facts, roles)
     }
 
     /// Packages graph-walk-certified cubic Bezier loops into a region artifact.
@@ -5930,6 +5972,20 @@ impl BezierBooleanRegionAssemblyReport2 {
         Self::from_output_loop_depth_facts(&output, depth_facts)
     }
 
+    /// Packages graph-walk-certified cubic Bezier loops with depth-certified roles.
+    pub fn from_cubic_graph_walk_depth_role_facts(
+        walk: &BezierBooleanLoopGraphWalkReport2,
+        plan: &BezierBooleanLoopAssemblyPlanReport2,
+        first: &BezierBooleanCubicFragmentReport2,
+        second: &BezierBooleanCubicFragmentReport2,
+        depth_facts: &[BezierBooleanLoopNestingDepthFact2],
+        roles: &[BezierBooleanOutputLoopRole],
+    ) -> Self {
+        let output =
+            BezierBooleanOutputLoopReport2::from_cubic_graph_walk(walk, plan, first, second);
+        Self::from_output_loop_depth_role_facts(&output, depth_facts, roles)
+    }
+
     /// Packages graph-walk-certified rational quadratic loops into a region artifact.
     pub fn from_rational_quadratic_graph_walk_depth_facts(
         walk: &BezierBooleanLoopGraphWalkReport2,
@@ -5942,6 +5998,21 @@ impl BezierBooleanRegionAssemblyReport2 {
             walk, plan, first, second,
         );
         Self::from_output_loop_depth_facts(&output, depth_facts)
+    }
+
+    /// Packages graph-walk-certified rational quadratic/conic loops with depth-certified roles.
+    pub fn from_rational_quadratic_graph_walk_depth_role_facts(
+        walk: &BezierBooleanLoopGraphWalkReport2,
+        plan: &BezierBooleanLoopAssemblyPlanReport2,
+        first: &BezierBooleanRationalQuadraticFragmentReport2,
+        second: &BezierBooleanRationalQuadraticFragmentReport2,
+        depth_facts: &[BezierBooleanLoopNestingDepthFact2],
+        roles: &[BezierBooleanOutputLoopRole],
+    ) -> Self {
+        let output = BezierBooleanOutputLoopReport2::from_rational_quadratic_graph_walk(
+            walk, plan, first, second,
+        );
+        Self::from_output_loop_depth_role_facts(&output, depth_facts, roles)
     }
 
     /// Packages role-assigned Bezier/conic loops for future region materialization.
@@ -7234,6 +7305,31 @@ impl BezierBooleanResultReport2 {
         Self::from_region_assembly(&assembly)
     }
 
+    /// Accepts a graph-walk-certified endpoint result with depth-certified roles.
+    ///
+    /// This preserves the same result-boundary composition as
+    /// [`Self::from_graph_walk_depth_facts`] while requiring caller-supplied
+    /// material/hole role facts to agree with keyed nesting-depth parity before
+    /// the higher-order boolean artifact is accepted.
+    pub fn from_graph_walk_depth_role_facts(
+        walk: &BezierBooleanLoopGraphWalkReport2,
+        plan: &BezierBooleanLoopAssemblyPlanReport2,
+        first_endpoints: &[(Point2, Point2)],
+        second_endpoints: &[(Point2, Point2)],
+        depth_facts: &[BezierBooleanLoopNestingDepthFact2],
+        roles: &[BezierBooleanOutputLoopRole],
+    ) -> Self {
+        let assembly = BezierBooleanRegionAssemblyReport2::from_graph_walk_depth_role_facts(
+            walk,
+            plan,
+            first_endpoints,
+            second_endpoints,
+            depth_facts,
+            roles,
+        );
+        Self::from_region_assembly(&assembly)
+    }
+
     /// Accepts a graph-walk-certified generic endpoint result with containment facts.
     pub fn from_graph_walk_containment_facts(
         walk: &BezierBooleanLoopGraphWalkReport2,
@@ -8113,6 +8209,27 @@ impl BezierBooleanResultReport2 {
         Self::from_region_assembly(&assembly)
     }
 
+    /// Accepts a graph-walk-certified quadratic Bezier result with depth-certified roles.
+    pub fn from_quadratic_graph_walk_depth_role_facts(
+        walk: &BezierBooleanLoopGraphWalkReport2,
+        plan: &BezierBooleanLoopAssemblyPlanReport2,
+        first: &BezierBooleanQuadraticFragmentReport2,
+        second: &BezierBooleanQuadraticFragmentReport2,
+        depth_facts: &[BezierBooleanLoopNestingDepthFact2],
+        roles: &[BezierBooleanOutputLoopRole],
+    ) -> Self {
+        let assembly =
+            BezierBooleanRegionAssemblyReport2::from_quadratic_graph_walk_depth_role_facts(
+                walk,
+                plan,
+                first,
+                second,
+                depth_facts,
+                roles,
+            );
+        Self::from_region_assembly(&assembly)
+    }
+
     /// Accepts a graph-walk-certified cubic Bezier result with keyed depths.
     pub fn from_cubic_graph_walk_depth_facts(
         walk: &BezierBooleanLoopGraphWalkReport2,
@@ -8127,6 +8244,26 @@ impl BezierBooleanResultReport2 {
             first,
             second,
             depth_facts,
+        );
+        Self::from_region_assembly(&assembly)
+    }
+
+    /// Accepts a graph-walk-certified cubic Bezier result with depth-certified roles.
+    pub fn from_cubic_graph_walk_depth_role_facts(
+        walk: &BezierBooleanLoopGraphWalkReport2,
+        plan: &BezierBooleanLoopAssemblyPlanReport2,
+        first: &BezierBooleanCubicFragmentReport2,
+        second: &BezierBooleanCubicFragmentReport2,
+        depth_facts: &[BezierBooleanLoopNestingDepthFact2],
+        roles: &[BezierBooleanOutputLoopRole],
+    ) -> Self {
+        let assembly = BezierBooleanRegionAssemblyReport2::from_cubic_graph_walk_depth_role_facts(
+            walk,
+            plan,
+            first,
+            second,
+            depth_facts,
+            roles,
         );
         Self::from_region_assembly(&assembly)
     }
@@ -8146,6 +8283,27 @@ impl BezierBooleanResultReport2 {
                 first,
                 second,
                 depth_facts,
+            );
+        Self::from_region_assembly(&assembly)
+    }
+
+    /// Accepts a graph-walk-certified rational quadratic result with depth-certified roles.
+    pub fn from_rational_quadratic_graph_walk_depth_role_facts(
+        walk: &BezierBooleanLoopGraphWalkReport2,
+        plan: &BezierBooleanLoopAssemblyPlanReport2,
+        first: &BezierBooleanRationalQuadraticFragmentReport2,
+        second: &BezierBooleanRationalQuadraticFragmentReport2,
+        depth_facts: &[BezierBooleanLoopNestingDepthFact2],
+        roles: &[BezierBooleanOutputLoopRole],
+    ) -> Self {
+        let assembly =
+            BezierBooleanRegionAssemblyReport2::from_rational_quadratic_graph_walk_depth_role_facts(
+                walk,
+                plan,
+                first,
+                second,
+                depth_facts,
+                roles,
             );
         Self::from_region_assembly(&assembly)
     }

@@ -1988,14 +1988,23 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                         nesting_depth: 0,
                     })
                     .collect::<Vec<_>>();
+                let roles = vec![BezierBooleanOutputLoopRole::Material; output.loops.len()];
                 format!(
-                    "{:?}",
+                    "{:?}{:?}",
                     BezierBooleanRegionAssemblyReport2::from_quadratic_graph_walk_depth_facts(
                         &walk,
                         &plan,
                         first,
                         second,
                         &depth_facts
+                    ),
+                    BezierBooleanRegionAssemblyReport2::from_quadratic_graph_walk_depth_role_facts(
+                        &walk,
+                        &plan,
+                        first,
+                        second,
+                        &depth_facts,
+                        &roles
                     )
                 )
             }
@@ -2054,14 +2063,23 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                         nesting_depth: 0,
                     })
                     .collect::<Vec<_>>();
+                let roles = vec![BezierBooleanOutputLoopRole::Material; output.loops.len()];
                 format!(
-                    "{:?}",
+                    "{:?}{:?}",
                     BezierBooleanResultReport2::from_quadratic_graph_walk_depth_facts(
                         &walk,
                         &plan,
                         first,
                         second,
                         &depth_facts
+                    ),
+                    BezierBooleanResultReport2::from_quadratic_graph_walk_depth_role_facts(
+                        &walk,
+                        &plan,
+                        first,
+                        second,
+                        &depth_facts,
+                        &roles
                     )
                 )
             }

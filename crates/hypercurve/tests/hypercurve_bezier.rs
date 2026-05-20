@@ -6919,6 +6919,101 @@ fn bezier_boolean_result_consumes_graph_walk_output_and_depth_facts() {
 }
 
 #[test]
+fn bezier_boolean_graph_walk_depth_role_facts_block_stale_roles() {
+    let plan = BezierBooleanLoopAssemblyPlanReport2 {
+        status: BezierBooleanLoopAssemblyPlanStatus::Ready,
+        assembly_status: BezierBooleanAssemblyReadinessStatus::Ready,
+        operation: BooleanOp::Union,
+        emitted_steps: vec![
+            hypercurve::BezierBooleanOwnedTraversalStep2 {
+                step: hypercurve::BezierBooleanTraversalStep2 {
+                    operand: BezierBooleanTraversalOperand::First,
+                    fragment_index: 0,
+                },
+                opposite_location: BezierBooleanFragmentOwnershipLocation::Outside,
+                action: BooleanFragmentAction::KeepSourceDirection,
+            },
+            hypercurve::BezierBooleanOwnedTraversalStep2 {
+                step: hypercurve::BezierBooleanTraversalStep2 {
+                    operand: BezierBooleanTraversalOperand::First,
+                    fragment_index: 1,
+                },
+                opposite_location: BezierBooleanFragmentOwnershipLocation::Outside,
+                action: BooleanFragmentAction::KeepSourceDirection,
+            },
+        ],
+        first_emitted_count: 2,
+        second_emitted_count: 0,
+        keep_source_count: 2,
+        keep_reversed_count: 0,
+        invalid_reference_count: 0,
+        blocker_count: 0,
+    };
+    let traversal = BezierBooleanLoopGraphTraversalReport2::from_plan_graph_facts(&plan, 0, 0);
+    let walk = BezierBooleanLoopGraphWalkReport2::from_traversal_order(&traversal, &plan, &[0, 1]);
+    let endpoints = [(point(0, 0), point(0, 0)), (point(1, 0), point(1, 0))];
+    let depth_facts = [
+        BezierBooleanLoopNestingDepthFact2 {
+            loop_index: 0,
+            nesting_depth: 0,
+        },
+        BezierBooleanLoopNestingDepthFact2 {
+            loop_index: 1,
+            nesting_depth: 1,
+        },
+    ];
+
+    let ready = BezierBooleanResultReport2::from_graph_walk_depth_role_facts(
+        &walk,
+        &plan,
+        &endpoints,
+        &[],
+        &depth_facts,
+        &[
+            BezierBooleanOutputLoopRole::Material,
+            BezierBooleanOutputLoopRole::Hole,
+        ],
+    );
+    assert_eq!(ready.status, BezierBooleanResultStatus::Ready);
+    assert_eq!(ready.material_loop_indices, vec![0]);
+    assert_eq!(ready.hole_loop_indices, vec![1]);
+
+    let stale_region = BezierBooleanRegionAssemblyReport2::from_graph_walk_depth_role_facts(
+        &walk,
+        &plan,
+        &endpoints,
+        &[],
+        &depth_facts,
+        &[
+            BezierBooleanOutputLoopRole::Hole,
+            BezierBooleanOutputLoopRole::Material,
+        ],
+    );
+    assert_eq!(
+        stale_region.status,
+        BezierBooleanRegionAssemblyStatus::RoleAssignmentBlocked
+    );
+    assert!(stale_region.has_blockers());
+
+    let stale_result = BezierBooleanResultReport2::from_graph_walk_depth_role_facts(
+        &walk,
+        &plan,
+        &endpoints,
+        &[],
+        &depth_facts,
+        &[
+            BezierBooleanOutputLoopRole::Hole,
+            BezierBooleanOutputLoopRole::Material,
+        ],
+    );
+    assert_eq!(
+        stale_result.status,
+        BezierBooleanResultStatus::RegionAssemblyBlocked
+    );
+    assert!(stale_result.has_blockers());
+}
+
+#[test]
 fn bezier_boolean_result_consumes_schedule_ownership_walk_and_depth_facts() {
     let schedule = BezierBooleanTraversalScheduleReport2 {
         status: BezierBooleanTraversalScheduleStatus::Ready,
