@@ -49,7 +49,7 @@ fn setup(
     .expect("Failed to load the second obj file");
 
     let mut mfs = vec![];
-    for m in vec![&m0[0].mesh, &m1[0].mesh] {
+    for m in [&m0[0].mesh, &m1[0].mesh] {
         mfs.push(
             Manifold::new(
                 &m.positions.iter().map(|&v| v as f64).collect::<Vec<_>>(),

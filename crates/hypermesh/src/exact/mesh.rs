@@ -8,14 +8,31 @@
 use hyperlattice::Vector3;
 use hyperlimit::Point3;
 
+use super::adapter::{
+    ExactI64MeshInputReport, LossyF64MeshInputReport, inspect_f64_mesh_input,
+    inspect_i64_mesh_input,
+};
+use super::audit::{ExactMeshAuditReport, audit_exact_mesh};
 use super::bounds::{BoundsValidationError, MeshBounds};
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
 use super::facts::{MeshFactsValidationError, MeshValidationFacts};
+use super::handoff::{
+    ExactSolidHandoffError, ExactSolidHandoffReport, ExactSurfaceHandoffError,
+    ExactSurfaceHandoffReport, exact_solid_handoff, exact_surface_handoff,
+};
+use super::package::{
+    ExactMeshHandoffPackage, ExactMeshHandoffPackageError, exact_mesh_handoff_package,
+};
 use super::provenance::{
     ConstructionProvenance, ConstructionProvenanceValidationError, PredicateUse, SourceProvenance,
 };
+use super::readiness::{
+    ExactMeshConsumerReadinessError, ExactMeshConsumerReadinessReport,
+    exact_mesh_consumer_readiness,
+};
 use super::scalar::{ExactReal, LossyF64Import};
 use super::validation::{ValidationPolicy, ValidationReport, validate_triangles_with_policy};
+use super::view::{ApproximateMeshF64View, ApproximateMeshF64ViewError, approximate_mesh_f64_view};
 
 /// Exact 3D point stored in hypermesh.
 #[derive(Clone, Debug, PartialEq)]
@@ -65,6 +82,7 @@ pub struct ExactMesh {
     triangles: Vec<Triangle>,
     bounds: MeshBounds,
     facts: MeshValidationFacts,
+    validation_policy: ValidationPolicy,
     provenance: ConstructionProvenance,
 }
 
@@ -143,6 +161,7 @@ impl ExactMesh {
             triangles,
             bounds,
             facts: report.facts,
+            validation_policy: policy,
             provenance,
         })
     }
@@ -194,6 +213,11 @@ impl ExactMesh {
             SourceProvenance::lossy_f64("flat f64 triangle mesh"),
             policy,
         )
+    }
+
+    /// Audit a flat primitive-float mesh input stream without constructing a mesh.
+    pub fn inspect_f64_triangles(pos: &[f64], idx: &[usize]) -> LossyF64MeshInputReport {
+        inspect_f64_mesh_input(pos, idx)
     }
 
     /// Construct an exact mesh from flat integer coordinates.
@@ -251,6 +275,11 @@ impl ExactMesh {
         )
     }
 
+    /// Audit a flat exact-integer mesh input stream without constructing a mesh.
+    pub fn inspect_i64_triangles(pos: &[i64], idx: &[usize]) -> ExactI64MeshInputReport {
+        inspect_i64_mesh_input(pos, idx)
+    }
+
     /// Return exact vertices.
     pub fn vertices(&self) -> &[ExactPoint3] {
         &self.vertices
@@ -273,6 +302,17 @@ impl ExactMesh {
     /// Return retained validation facts.
     pub const fn facts(&self) -> &MeshValidationFacts {
         &self.facts
+    }
+
+    /// Return the validation policy retained at construction.
+    ///
+    /// The policy is part of the exact artifact boundary: an open-surface mesh
+    /// constructed with [`ValidationPolicy::ALLOW_BOUNDARY`] must not later be
+    /// mistaken for closed-solid evidence merely because its structural facts
+    /// replay. Yap's exact-geometric-computation model keeps such
+    /// approximation and domain policies visible at API boundaries.
+    pub const fn validation_policy(&self) -> ValidationPolicy {
+        self.validation_policy
     }
 
     /// Return construction provenance.
@@ -319,7 +359,7 @@ impl ExactMesh {
             .validate_against_sources(&points, &triangles)
             .map_err(ExactMeshValidationError::Bounds)?;
         self.facts
-            .validate_against_sources(&points, &triangles)
+            .validate_against_sources_with_policy(&points, &triangles, self.validation_policy)
             .map_err(ExactMeshValidationError::Facts)?;
         self.provenance
             .validate()
@@ -335,6 +375,56 @@ impl ExactMesh {
             return Err(ExactMeshValidationError::PredicateRetentionMismatch);
         }
         Ok(())
+    }
+
+    /// Build a compact audit report for this mesh after retained-state replay.
+    pub fn audit(&self) -> Result<ExactMeshAuditReport, ExactMeshValidationError> {
+        audit_exact_mesh(self)
+    }
+
+    /// Build an exact closed-solid handoff report for downstream consumers.
+    pub fn solid_handoff(&self) -> Result<ExactSolidHandoffReport, ExactSolidHandoffError> {
+        exact_solid_handoff(self)
+    }
+
+    /// Build an exact surface handoff report for downstream consumers.
+    ///
+    /// Surface handoff accepts both closed shells and explicitly
+    /// boundary-allowed open surfaces. Callers that need volume semantics must
+    /// use [`ExactMesh::solid_handoff`] instead; this distinction keeps exact
+    /// surface evidence from being silently promoted to solid evidence.
+    pub fn surface_handoff(&self) -> Result<ExactSurfaceHandoffReport, ExactSurfaceHandoffError> {
+        exact_surface_handoff(self)
+    }
+
+    /// Build a compact readiness summary for common downstream consumers.
+    ///
+    /// This is a routing artifact over audited mesh state, exact surface
+    /// handoff, exact solid handoff, and lossy display/export availability.
+    /// It does not replace any domain-specific report; it tells callers which
+    /// report-bearing path is presently available without conflating surface,
+    /// solid, and approximate-view semantics.
+    pub fn consumer_readiness(
+        &self,
+    ) -> Result<ExactMeshConsumerReadinessReport, ExactMeshConsumerReadinessError> {
+        exact_mesh_consumer_readiness(self)
+    }
+
+    /// Build a bundled report-bearing handoff package for downstream consumers.
+    ///
+    /// The package is a cache-friendly envelope over the independently
+    /// validated audit, readiness, surface, solid, and lossy-view reports. It
+    /// keeps optional domain artifacts explicit, so open surfaces are not
+    /// promoted to solids and lossy views are not promoted to topology.
+    pub fn handoff_package(&self) -> Result<ExactMeshHandoffPackage, ExactMeshHandoffPackageError> {
+        exact_mesh_handoff_package(self)
+    }
+
+    /// Build a report-bearing primitive-float view for display/export adapters.
+    pub fn approximate_f64_view(
+        &self,
+    ) -> Result<ApproximateMeshF64View, ApproximateMeshF64ViewError> {
+        approximate_mesh_f64_view(self)
     }
 }
 

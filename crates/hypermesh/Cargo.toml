@@ -37,7 +37,7 @@ proptest = "1.7.0"
 [features]
 default = ["exact"]
 exact = ["dep:hyperlattice", "dep:hyperlimit", "dep:hyperreal"]
-exact-triangulation = ["exact", "dep:hypertri", "hypertri/earcut"]
+exact-triangulation = ["exact", "dep:hypertri", "hypertri/earcut", "hypertri/cdt"]
 legacy-boolean = ["dep:glam"]
 verbose = []
 rayon = ["legacy-boolean", "dep:rayon"]

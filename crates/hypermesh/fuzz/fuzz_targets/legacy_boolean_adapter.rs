@@ -28,6 +28,7 @@ fuzz_target!(|data: &[u8]| {
     for operation in [OpType::Add, OpType::Subtract, OpType::Intersect] {
         if let Ok(result) = compute_boolean_with_report(&left, &right, operation) {
             let _ = result.validate_against_inputs(&left, &right);
+            let _ = result.validate_operation_against_inputs(&left, &right, operation);
         }
     }
 });

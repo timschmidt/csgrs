@@ -108,21 +108,21 @@ pub fn menger_sponge(n: usize) -> Manifold {
             } else if (p.x + 0.5).abs() < 1e-4 {
                 -0.5
             } else {
-                p.x as f64
+                p.x
             });
             flat.push(if (p.y - 0.5).abs() < 1e-4 {
                 0.5
             } else if (p.y + 0.5).abs() < 1e-4 {
                 -0.5
             } else {
-                p.y as f64
+                p.y
             });
             flat.push(if (p.z - 0.5).abs() < 1e-4 {
                 0.5
             } else if (p.z + 0.5).abs() < 1e-4 {
                 -0.5
             } else {
-                p.z as f64
+                p.z
             });
         }
         Manifold::new(&flat, &ts).unwrap()
@@ -137,10 +137,9 @@ pub fn menger_sponge(n: usize) -> Manifold {
     let res = compute_boolean_with_report(&res, &holes_x, OpType::Subtract)
         .unwrap()
         .mesh;
-    let res = compute_boolean_with_report(&res, &holes_y, OpType::Subtract)
+    compute_boolean_with_report(&res, &holes_y, OpType::Subtract)
         .unwrap()
-        .mesh;
-    res
+        .mesh
 }
 
 const PS: [f64; 24] = [
@@ -162,9 +161,9 @@ pub fn compose(ms: &Vec<Manifold>) -> std::result::Result<Manifold, String> {
             ts.push(h.tail + offset);
         }
         for p in m.ps.iter() {
-            ps.push(p.x as f64);
-            ps.push(p.y as f64);
-            ps.push(p.z as f64);
+            ps.push(p.x);
+            ps.push(p.y);
+            ps.push(p.z);
         }
         offset += m.nv;
     }
@@ -184,8 +183,7 @@ pub fn fractal(
     let p = hole
         .ps
         .iter()
-        .map(|p| [p.x as f64 * w + x, p.y as f64 * w + y, p.z as f64])
-        .flatten()
+        .flat_map(|p| [p.x * w + x, p.y * w + y, p.z])
         .collect::<Vec<f64>>();
     holes.push(Manifold::new(&p, &TS).unwrap());
 

@@ -420,6 +420,27 @@ pub enum ExactRegionSelection {
     KeepRight,
 }
 
+/// Per-region retention decision for exact boolean assembly.
+///
+/// Named volumetric booleans sometimes need to keep a split source-face region
+/// with its original orientation and sometimes with reversed orientation. The
+/// difference operation is the canonical case: portions of the right operand
+/// that are inside the left operand become inner boundary with reversed normal.
+/// Keeping this as explicit assembly state follows Yap, "Towards Exact
+/// Geometric Computation," *Computational Geometry* 7.1-2 (1997): boolean
+/// semantics are certified combinatorial choices, not post-hoc triangle-soup
+/// rewrites.
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ExactRegionRetention {
+    /// Drop this triangulated split region.
+    Drop,
+    /// Keep this region preserving source-face orientation.
+    Keep,
+    /// Keep this region with source-face orientation reversed.
+    KeepReversed,
+}
+
 #[cfg(feature = "exact-triangulation")]
 impl ExactRegionSelection {
     const fn keeps(self, side: MeshSide) -> bool {
@@ -452,6 +473,28 @@ pub struct ExactOutputTriangle {
     pub source_side: MeshSide,
     /// Source face index.
     pub source_face: usize,
+    /// Whether the output preserves or reverses source-face orientation.
+    pub orientation: ExactOutputTriangleOrientation,
+}
+
+/// Orientation relation between an assembled output triangle and its source
+/// face.
+///
+/// The value is validated by exact projected orientation predicates during
+/// source-incidence replay. It exists so named booleans can represent
+/// orientation-changing semantics, especially right-hand shell reversal for
+/// exact difference, without losing the source-face provenance required by
+/// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
+/// 7.1-2 (1997).
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ExactOutputTriangleOrientation {
+    /// The output triangle has the same projected orientation as its source
+    /// face.
+    PreserveSource,
+    /// The output triangle has the opposite projected orientation from its
+    /// source face.
+    ReverseSource,
 }
 
 /// Non-mutating exact output mesh assembly plan.
@@ -480,9 +523,48 @@ impl ExactBooleanAssemblyPlan {
         triangulations: &[FaceRegionTriangulation],
         selection: ExactRegionSelection,
     ) -> hypertri::Result<Self> {
-        assemble_region_triangulations_with_selection(
+        let should_keep =
+            move |triangulation: &FaceRegionTriangulation| selection.keeps(triangulation.side);
+        assemble_region_triangulations_with_retention(triangulations, None, &mut |triangulation| {
+            if should_keep(triangulation) {
+                ExactRegionRetention::Keep
+            } else {
+                ExactRegionRetention::Drop
+            }
+        })
+    }
+
+    /// Assemble exact output triangles with source-face orientation replay.
+    ///
+    /// `hypertri` correctly triangulates the projected region, but the index
+    /// order it returns is a polygon-local convention. Boolean output topology
+    /// needs a stronger contract: each kept triangle must preserve or reverse
+    /// its original source-face orientation according to the operation policy.
+    /// This source-aware entry point compares exact projected orientation
+    /// predicates and flips individual emitted triangles as needed. That keeps
+    /// the materialization boundary in Yap's exact-geometric-computation
+    /// model: representation changes are allowed only when the predicate facts
+    /// needed to justify their combinatorics are retained and replayable. See
+    /// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
+    /// 7.1-2 (1997).
+    pub fn from_region_triangulations_with_sources(
+        triangulations: &[FaceRegionTriangulation],
+        selection: ExactRegionSelection,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> hypertri::Result<Self> {
+        let should_keep =
+            move |triangulation: &FaceRegionTriangulation| selection.keeps(triangulation.side);
+        assemble_region_triangulations_with_retention(
             triangulations,
-            move |triangulation| selection.keeps(triangulation.side),
+            Some((left, right)),
+            &mut |triangulation| {
+                if should_keep(triangulation) {
+                    ExactRegionRetention::Keep
+                } else {
+                    ExactRegionRetention::Drop
+                }
+            },
         )
     }
 
@@ -498,7 +580,76 @@ impl ExactBooleanAssemblyPlan {
         triangulations: &[FaceRegionTriangulation],
         mut should_keep: impl FnMut(&FaceRegionTriangulation) -> bool,
     ) -> hypertri::Result<Self> {
-        assemble_region_triangulations_with_selection(triangulations, &mut should_keep)
+        assemble_region_triangulations_with_retention(triangulations, None, &mut |triangulation| {
+            if should_keep(triangulation) {
+                ExactRegionRetention::Keep
+            } else {
+                ExactRegionRetention::Drop
+            }
+        })
+    }
+
+    /// Assemble exact output triangles from feature-gated region
+    /// triangulations with explicit per-region orientation policy.
+    ///
+    /// This is the assembly hook used by winding-backed named booleans. The
+    /// classifier decides whether each exact split region is inside or outside
+    /// the opposite closed mesh; this method then records that decision as
+    /// kept, dropped, or source-reversed output topology. The split geometry
+    /// and semantic retention policy remain separate auditable artifacts, as
+    /// required by Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7.1-2 (1997).
+    pub fn from_region_triangulations_with_retention(
+        triangulations: &[FaceRegionTriangulation],
+        mut retain: impl FnMut(&FaceRegionTriangulation) -> ExactRegionRetention,
+    ) -> hypertri::Result<Self> {
+        assemble_region_triangulations_with_retention(triangulations, None, &mut retain)
+    }
+
+    /// Assemble exact output triangles with explicit retention and source
+    /// orientation replay.
+    ///
+    /// This is the named-boolean materialization hook: winding classification
+    /// decides whether a split region is kept, dropped, or reversed, and this
+    /// method uses exact source-face orientation predicates to make the emitted
+    /// triangle order match that decision. The predicate replay follows Yap,
+    /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+    /// (1997), by treating output orientation as certified topology rather
+    /// than a convention inherited blindly from a triangulation index buffer.
+    pub fn from_region_triangulations_with_retention_and_sources(
+        triangulations: &[FaceRegionTriangulation],
+        left: &ExactMesh,
+        right: &ExactMesh,
+        mut retain: impl FnMut(&FaceRegionTriangulation) -> ExactRegionRetention,
+    ) -> hypertri::Result<Self> {
+        assemble_region_triangulations_with_retention(
+            triangulations,
+            Some((left, right)),
+            &mut retain,
+        )
+    }
+
+    /// Assemble exact output triangles with per-cell retention policy.
+    ///
+    /// Constrained planar-cell extraction can emit several independently
+    /// classified triangles for one source face. A face-wide keep/drop decision
+    /// would collapse those exact cells back into an approximation, so this
+    /// entry point exposes the local triangulation triangle to the caller's
+    /// winding policy. Orientation replay is still source-aware and exact, in
+    /// the Yap sense that every combinatorial output decision remains tied to
+    /// predicate-certified source geometry. See Yap, "Towards Exact Geometric
+    /// Computation," *Computational Geometry* 7.1-2 (1997).
+    pub fn from_region_triangulations_with_triangle_retention_and_sources(
+        triangulations: &[FaceRegionTriangulation],
+        left: &ExactMesh,
+        right: &ExactMesh,
+        mut retain: impl FnMut(&FaceRegionTriangulation, [usize; 3]) -> ExactRegionRetention,
+    ) -> hypertri::Result<Self> {
+        assemble_region_triangulations_with_triangle_retention(
+            triangulations,
+            Some((left, right)),
+            &mut retain,
+        )
     }
 
     /// Validate output topology, geometry, and retained source-point provenance.
@@ -679,8 +830,12 @@ impl ExactBooleanAssemblyPlan {
                     reason: "assembly source replay could not triangulate region plan",
                 },
             )?;
-        let replay =
-            ExactBooleanAssemblyPlan::from_region_triangulations(&triangulations, selection)?;
+        let replay = ExactBooleanAssemblyPlan::from_region_triangulations_with_sources(
+            &triangulations,
+            selection,
+            left,
+            right,
+        )?;
         if self == &replay {
             Ok(())
         } else {
@@ -826,10 +981,19 @@ fn validate_output_triangle_source_orientation(
             reason: "assembled output triangle has zero projected source orientation",
         });
     }
-    if source_sign != output_sign {
-        return Err(hypertri::Error::InvalidInput {
-            reason: "assembled output triangle reverses its source face orientation",
-        });
+    match triangle.orientation {
+        ExactOutputTriangleOrientation::PreserveSource if source_sign != output_sign => {
+            return Err(hypertri::Error::InvalidInput {
+                reason: "assembled output triangle reverses its source face orientation",
+            });
+        }
+        ExactOutputTriangleOrientation::ReverseSource if source_sign == output_sign => {
+            return Err(hypertri::Error::InvalidInput {
+                reason: "assembled output triangle failed to reverse source face orientation",
+            });
+        }
+        ExactOutputTriangleOrientation::PreserveSource
+        | ExactOutputTriangleOrientation::ReverseSource => {}
     }
     Ok(())
 }
@@ -986,42 +1150,81 @@ pub fn build_selected_region_mesh(
                 format!("exact region triangulation failed: {error}"),
             ))
         })?;
-    let assembly = ExactBooleanAssemblyPlan::from_region_triangulations(&triangulations, selection)
-        .map_err(|error| {
-            super::error::MeshError::one(super::error::MeshDiagnostic::new(
-                super::error::Severity::Error,
-                super::error::DiagnosticKind::IndexOutOfBounds,
-                format!("exact boolean assembly failed: {error}"),
-            ))
-        })?;
+    let assembly = ExactBooleanAssemblyPlan::from_region_triangulations_with_sources(
+        &triangulations,
+        selection,
+        left,
+        right,
+    )
+    .map_err(|error| {
+        super::error::MeshError::one(super::error::MeshDiagnostic::new(
+            super::error::Severity::Error,
+            super::error::DiagnosticKind::IndexOutOfBounds,
+            format!("exact boolean assembly failed: {error}"),
+        ))
+    })?;
     assembly.checked_to_exact_mesh_with_sources(left, right, policy)
 }
 
 #[cfg(feature = "exact-triangulation")]
-fn assemble_region_triangulations_with_selection(
+fn assemble_region_triangulations_with_retention(
     triangulations: &[FaceRegionTriangulation],
-    should_keep: &mut impl FnMut(&FaceRegionTriangulation) -> bool,
+    sources: Option<(&ExactMesh, &ExactMesh)>,
+    retain: &mut impl FnMut(&FaceRegionTriangulation) -> ExactRegionRetention,
+) -> hypertri::Result<ExactBooleanAssemblyPlan> {
+    assemble_region_triangulations_with_triangle_retention(
+        triangulations,
+        sources,
+        &mut |triangulation, _triangle| retain(triangulation),
+    )
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn assemble_region_triangulations_with_triangle_retention(
+    triangulations: &[FaceRegionTriangulation],
+    sources: Option<(&ExactMesh, &ExactMesh)>,
+    retain: &mut impl FnMut(&FaceRegionTriangulation, [usize; 3]) -> ExactRegionRetention,
 ) -> hypertri::Result<ExactBooleanAssemblyPlan> {
     let mut vertices = Vec::new();
     let mut triangles = Vec::new();
 
     for triangulation in triangulations {
         triangulation.validate()?;
-        if !should_keep(triangulation) {
-            continue;
-        }
-
         let mut remap = vec![None; triangulation.boundary.len()];
 
         for tri in triangulation.triangles.chunks_exact(3) {
+            let region_triangle = [tri[0], tri[1], tri[2]];
+            let retention = retain(triangulation, region_triangle);
+            if retention == ExactRegionRetention::Drop {
+                continue;
+            }
+            let orientation = match retention {
+                ExactRegionRetention::Drop => unreachable!("drop handled above"),
+                ExactRegionRetention::Keep => ExactOutputTriangleOrientation::PreserveSource,
+                ExactRegionRetention::KeepReversed => ExactOutputTriangleOrientation::ReverseSource,
+            };
+            let mut output_vertices = [
+                remap_region_vertex(triangulation, &mut remap, &mut vertices, tri[0])?,
+                remap_region_vertex(triangulation, &mut remap, &mut vertices, tri[1])?,
+                remap_region_vertex(triangulation, &mut remap, &mut vertices, tri[2])?,
+            ];
+            if let Some((left, right)) = sources {
+                orient_output_triangle_for_source(
+                    triangulation,
+                    &vertices,
+                    &mut output_vertices,
+                    orientation,
+                    left,
+                    right,
+                )?;
+            } else if retention == ExactRegionRetention::KeepReversed {
+                output_vertices.swap(1, 2);
+            }
             triangles.push(ExactOutputTriangle {
-                vertices: [
-                    remap_region_vertex(triangulation, &mut remap, &mut vertices, tri[0]),
-                    remap_region_vertex(triangulation, &mut remap, &mut vertices, tri[1]),
-                    remap_region_vertex(triangulation, &mut remap, &mut vertices, tri[2]),
-                ],
+                vertices: output_vertices,
                 source_side: triangulation.side,
                 source_face: triangulation.face,
+                orientation,
             });
         }
     }
@@ -1035,28 +1238,159 @@ fn assemble_region_triangulations_with_selection(
 }
 
 #[cfg(feature = "exact-triangulation")]
+/// Orient one emitted output triangle against its retained source face.
+///
+/// Ear clipping works in the projected polygon's coordinate convention, while
+/// boolean output topology is a 3D source-face contract. The exact
+/// `orient2d_report` checks here replay both signs in the same certified
+/// projection and swap the emitted triangle when its raw order disagrees with
+/// the requested source orientation. This follows Yap, "Towards Exact
+/// Geometric Computation," *Computational Geometry* 7.1-2 (1997): an
+/// algorithmic representation change cannot silently become a topological
+/// decision unless exact predicates certify it.
+fn orient_output_triangle_for_source(
+    triangulation: &FaceRegionTriangulation,
+    vertices: &[ExactOutputVertex],
+    output_vertices: &mut [usize; 3],
+    orientation: ExactOutputTriangleOrientation,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> hypertri::Result<()> {
+    let source_mesh = match triangulation.side {
+        MeshSide::Left => left,
+        MeshSide::Right => right,
+    };
+    let source_sign = source_face_projected_orientation(
+        source_mesh,
+        triangulation.face,
+        triangulation.projection,
+    )?;
+    let output_sign = output_triangle_projected_orientation(
+        vertices,
+        *output_vertices,
+        triangulation.projection,
+    )?;
+    if output_sign == Sign::Zero {
+        return Err(hypertri::Error::InvalidInput {
+            reason: "assembled output triangle has zero projected source orientation",
+        });
+    }
+
+    let preserves_source = output_sign == source_sign;
+    let should_preserve = orientation == ExactOutputTriangleOrientation::PreserveSource;
+    if preserves_source != should_preserve {
+        output_vertices.swap(1, 2);
+    }
+    Ok(())
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn source_face_projected_orientation(
+    mesh: &ExactMesh,
+    face: usize,
+    projection: CoplanarProjection,
+) -> hypertri::Result<Sign> {
+    let Some(triangle) = mesh.triangles().get(face).map(|triangle| triangle.0) else {
+        return Err(hypertri::Error::InvalidInput {
+            reason: "region triangulation references a missing source face",
+        });
+    };
+    let points = [
+        mesh.vertices()[triangle[0]].to_hyperlimit_point(),
+        mesh.vertices()[triangle[1]].to_hyperlimit_point(),
+        mesh.vertices()[triangle[2]].to_hyperlimit_point(),
+    ];
+    let sign = orient2d_report(
+        &project_for_predicate(&points[0], projection),
+        &project_for_predicate(&points[1], projection),
+        &project_for_predicate(&points[2], projection),
+    )
+    .value()
+    .ok_or(hypertri::Error::PredicateUndecided {
+        predicate: "assembly_source_orientation",
+    })?;
+    if sign == Sign::Zero {
+        return Err(hypertri::Error::InvalidInput {
+            reason: "source face has zero projected orientation",
+        });
+    }
+    Ok(sign)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn output_triangle_projected_orientation(
+    vertices: &[ExactOutputVertex],
+    output_vertices: [usize; 3],
+    projection: CoplanarProjection,
+) -> hypertri::Result<Sign> {
+    let [a, b, c] = output_vertices;
+    let Some(a) = vertices.get(a) else {
+        return Err(hypertri::Error::InvalidInput {
+            reason: "assembled output triangle references a missing vertex",
+        });
+    };
+    let Some(b) = vertices.get(b) else {
+        return Err(hypertri::Error::InvalidInput {
+            reason: "assembled output triangle references a missing vertex",
+        });
+    };
+    let Some(c) = vertices.get(c) else {
+        return Err(hypertri::Error::InvalidInput {
+            reason: "assembled output triangle references a missing vertex",
+        });
+    };
+    orient2d_report(
+        &project_for_predicate(&a.point, projection),
+        &project_for_predicate(&b.point, projection),
+        &project_for_predicate(&c.point, projection),
+    )
+    .value()
+    .ok_or(hypertri::Error::PredicateUndecided {
+        predicate: "assembly_output_orientation",
+    })
+}
+
+#[cfg(feature = "exact-triangulation")]
 /// Map a region-local boundary vertex into the compact output assembly.
 ///
 /// Region boundaries may carry split nodes that exact earcut does not consume in
-/// any emitted triangle after degeneracy handling. The selected-region output
-/// only exports vertices referenced by output topology, preserving each retained
-/// vertex's certified source node. That keeps the representation aligned with
-/// Yap's exact-geometric-computation discipline: downstream topology receives
-/// the exact object set it consumes, not a tolerance-expanded scratch buffer.
-/// See Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-/// 7.1-2 (1997).
+/// any emitted triangle after degeneracy handling, and adjacent source regions
+/// may describe the same exact 3D point through different boundary-node
+/// provenance. The assembly therefore welds exact-equal points globally while
+/// retaining one source witness for the vertex. This is a topological
+/// operation certified by exact equality predicates, following Yap, "Towards
+/// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997):
+/// downstream topology receives shared object identity only when exact
+/// predicate facts justify the merge.
 fn remap_region_vertex(
     triangulation: &FaceRegionTriangulation,
     remap: &mut [Option<usize>],
     vertices: &mut Vec<ExactOutputVertex>,
     region_vertex: usize,
-) -> usize {
-    *remap[region_vertex].get_or_insert_with(|| {
-        let source = triangulation.boundary[region_vertex].clone();
-        let point = boundary_node_point(&source).clone();
-        vertices.push(ExactOutputVertex { point, source });
-        vertices.len() - 1
-    })
+) -> hypertri::Result<usize> {
+    if let Some(vertex) = remap[region_vertex] {
+        return Ok(vertex);
+    }
+    let source = triangulation.boundary[region_vertex].clone();
+    let point = boundary_node_point(&source).clone();
+    for (index, vertex) in vertices.iter().enumerate() {
+        match points_equal(&vertex.point, &point) {
+            Some(true) => {
+                remap[region_vertex] = Some(index);
+                return Ok(index);
+            }
+            Some(false) => {}
+            None => {
+                return Err(hypertri::Error::PredicateUndecided {
+                    predicate: "assembly_vertex_weld_equality",
+                });
+            }
+        }
+    }
+    vertices.push(ExactOutputVertex { point, source });
+    let index = vertices.len() - 1;
+    remap[region_vertex] = Some(index);
+    Ok(index)
 }
 
 fn classify_region_against_face_plane(
@@ -1093,7 +1427,10 @@ fn classify_region_against_face_plane(
 }
 
 #[cfg(feature = "exact-triangulation")]
-fn choose_region_projection(mesh: &ExactMesh, face: usize) -> hypertri::Result<CoplanarProjection> {
+pub(crate) fn choose_region_projection(
+    mesh: &ExactMesh,
+    face: usize,
+) -> hypertri::Result<CoplanarProjection> {
     let triangle = mesh.triangles()[face].0;
     let a = mesh.vertices()[triangle[0]].to_hyperlimit_point();
     let b = mesh.vertices()[triangle[1]].to_hyperlimit_point();
@@ -1121,7 +1458,10 @@ fn choose_region_projection(mesh: &ExactMesh, face: usize) -> hypertri::Result<C
 }
 
 #[cfg(feature = "exact-triangulation")]
-fn project_for_predicate(point: &Point3, projection: CoplanarProjection) -> PredicatePoint2 {
+pub(crate) fn project_for_predicate(
+    point: &Point3,
+    projection: CoplanarProjection,
+) -> PredicatePoint2 {
     match projection {
         CoplanarProjection::Xy => PredicatePoint2::new(point.x.clone(), point.y.clone()),
         CoplanarProjection::Xz => PredicatePoint2::new(point.x.clone(), point.z.clone()),
@@ -1130,7 +1470,10 @@ fn project_for_predicate(point: &Point3, projection: CoplanarProjection) -> Pred
 }
 
 #[cfg(feature = "exact-triangulation")]
-fn project_for_hypertri(point: &Point3, projection: CoplanarProjection) -> hypertri::ExactPoint {
+pub(crate) fn project_for_hypertri(
+    point: &Point3,
+    projection: CoplanarProjection,
+) -> hypertri::ExactPoint {
     match projection {
         CoplanarProjection::Xy => hypertri::ExactPoint::new(point.x.clone(), point.y.clone()),
         CoplanarProjection::Xz => hypertri::ExactPoint::new(point.x.clone(), point.z.clone()),
@@ -1224,10 +1567,11 @@ fn relation_from_sides(sides: &[Option<PlaneSide>]) -> FaceRegionPlaneRelation {
     }
 }
 
-fn boundary_node_point(node: &FaceSplitBoundaryNode) -> &Point3 {
+pub(crate) fn boundary_node_point(node: &FaceSplitBoundaryNode) -> &Point3 {
     match node {
         FaceSplitBoundaryNode::OriginalVertex { point, .. }
-        | FaceSplitBoundaryNode::GraphVertex { point, .. } => point,
+        | FaceSplitBoundaryNode::GraphVertex { point, .. }
+        | FaceSplitBoundaryNode::FaceInterior { point } => point,
     }
 }
 

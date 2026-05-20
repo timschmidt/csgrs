@@ -1831,6 +1831,13 @@ fn require_graph_vertex(
 }
 
 /// Exact boundary node for a split face.
+///
+/// The variants distinguish original source vertices, retained intersection
+/// graph vertices, and later exact face-interior constructions. Keeping those
+/// witnesses typed follows Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997): downstream topology should consume
+/// explicit construction evidence instead of relabeling coordinates as if they
+/// came from an older source object.
 #[derive(Clone, Debug, PartialEq)]
 pub enum FaceSplitBoundaryNode {
     /// Original mesh vertex with its exact point.
@@ -1845,6 +1852,17 @@ pub enum FaceSplitBoundaryNode {
         /// Index in [`ExactSplitTopologyPlan::graph_vertices`].
         graph_vertex: usize,
         /// Exact constructed point.
+        point: Point3,
+    },
+    /// Exact point constructed in the interior of a source face.
+    ///
+    /// This is used when constrained planar cell subdivision appends a Steiner
+    /// vertex at an exact constraint crossing. The point is not an original
+    /// mesh vertex and not a global intersection-graph vertex; it is a local
+    /// source-face witness whose incidence must still replay against the
+    /// owning face before region assembly consumes it.
+    FaceInterior {
+        /// Exact constructed point on the source face.
         point: Point3,
     },
 }
@@ -3163,10 +3181,7 @@ fn validate_face_split_geometry_incidence(
         let c = mesh.vertices()[triangle[2]].to_hyperlimit_point();
         for chain in &face.boundary_chains {
             for node in &chain.nodes {
-                let point = match node {
-                    FaceSplitBoundaryNode::OriginalVertex { point, .. }
-                    | FaceSplitBoundaryNode::GraphVertex { point, .. } => point,
-                };
+                let point = boundary_node_point(node);
                 match orient3d_report(&a, &b, &c, point).value() {
                     Some(Sign::Zero) => {}
                     Some(Sign::Negative | Sign::Positive) => diagnostics.push(
@@ -3871,7 +3886,8 @@ fn push_boundary_node(boundary: &mut Vec<FaceSplitBoundaryNode>, node: FaceSplit
 fn boundary_node_point(node: &FaceSplitBoundaryNode) -> &Point3 {
     match node {
         FaceSplitBoundaryNode::OriginalVertex { point, .. }
-        | FaceSplitBoundaryNode::GraphVertex { point, .. } => point,
+        | FaceSplitBoundaryNode::GraphVertex { point, .. }
+        | FaceSplitBoundaryNode::FaceInterior { point } => point,
     }
 }
 

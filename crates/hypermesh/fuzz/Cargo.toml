@@ -9,10 +9,18 @@ cargo-fuzz = true
 
 [dependencies]
 hypermesh = { path = "..", default-features = false, features = ["exact"] }
+hyperlimit = { version = "0.3.0", optional = true }
+hypertri = { version = "0.2.0", default-features = false, optional = true }
 libfuzzer-sys = "0.4"
 
 [features]
-exact-triangulation = ["hypermesh/exact-triangulation"]
+exact-triangulation = [
+    "hypermesh/exact-triangulation",
+    "dep:hyperlimit",
+    "dep:hypertri",
+    "hypertri/cdt",
+    "hypertri/earcut",
+]
 legacy-boolean = ["hypermesh/legacy-boolean"]
 
 [[bin]]

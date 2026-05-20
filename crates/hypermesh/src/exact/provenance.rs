@@ -60,6 +60,31 @@ impl SourceProvenance {
             approximation: ApproximationPolicy::ExactOnly,
         }
     }
+
+    /// Build provenance for a retained legacy boolmesh-derived adapter edge.
+    ///
+    /// Legacy boolmesh topology is primitive-float and epsilon-bearing. It can
+    /// be retained for compatibility reports, but it must never enter the exact
+    /// mesh boundary as if it were exact or merely a display view. This mirrors
+    /// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
+    /// 7.1-2 (1997), by keeping approximate topology decisions outside exact
+    /// object identity.
+    pub fn legacy_boolmesh_adapter(label: impl Into<String>) -> Self {
+        Self {
+            source: MeshSource::LegacyBoolmeshAdapter,
+            label: label.into(),
+            approximation: ApproximationPolicy::ExplicitApproximateDecision,
+        }
+    }
+
+    /// Build provenance for an external edge adapter such as OBJ, glam, or Bevy.
+    pub fn external_adapter(label: impl Into<String>) -> Self {
+        Self {
+            source: MeshSource::ExternalAdapter,
+            label: label.into(),
+            approximation: ApproximationPolicy::EdgeOnly,
+        }
+    }
 }
 
 /// Compact record of a predicate used while deriving mesh facts.
@@ -94,6 +119,8 @@ impl PredicateUse {
 pub struct ConstructionProvenance {
     /// Source stream that created the mesh.
     pub source: SourceProvenance,
+    /// Monotonic construction version for retained facts derived from `source`.
+    pub construction_version: u64,
     /// Predicate reports consulted while deriving facts.
     pub predicates: Vec<PredicateUse>,
 }
@@ -116,11 +143,20 @@ pub enum ConstructionProvenanceValidationError {
     /// A lossy primitive-float source was not marked as an edge-only
     /// approximation boundary.
     LossySourcePolicyMismatch,
+    /// A legacy boolmesh adapter source was not marked as an explicit
+    /// approximate topology decision.
+    LegacyAdapterPolicyMismatch,
+    /// An external display/import adapter was not marked as an edge-only
+    /// approximation boundary.
+    ExternalAdapterPolicyMismatch,
     /// A retained predicate use did not produce an exact-preserving proof.
     NonProofProducingPredicate,
     /// The cached predicate stage or semantic label does not match the
     /// retained certificate.
     PredicateMetadataMismatch,
+    /// The construction version is zero, which cannot identify a live retained
+    /// artifact.
+    InvalidConstructionVersion,
 }
 
 impl SourceProvenance {
@@ -145,7 +181,17 @@ impl SourceProvenance {
             (MeshSource::LossyF64, _) => {
                 Err(ConstructionProvenanceValidationError::LossySourcePolicyMismatch)
             }
-            (MeshSource::LegacyBoolmeshAdapter | MeshSource::ExternalAdapter, _) => Ok(()),
+            (
+                MeshSource::LegacyBoolmeshAdapter,
+                ApproximationPolicy::ExplicitApproximateDecision,
+            ) => Ok(()),
+            (MeshSource::LegacyBoolmeshAdapter, _) => {
+                Err(ConstructionProvenanceValidationError::LegacyAdapterPolicyMismatch)
+            }
+            (MeshSource::ExternalAdapter, ApproximationPolicy::EdgeOnly) => Ok(()),
+            (MeshSource::ExternalAdapter, _) => {
+                Err(ConstructionProvenanceValidationError::ExternalAdapterPolicyMismatch)
+            }
         }
     }
 }
@@ -179,6 +225,16 @@ impl ConstructionProvenance {
     pub fn new(source: SourceProvenance) -> Self {
         Self {
             source,
+            construction_version: 1,
+            predicates: Vec::new(),
+        }
+    }
+
+    /// Create an empty construction provenance record with an explicit version.
+    pub fn with_version(source: SourceProvenance, construction_version: u64) -> Self {
+        Self {
+            source,
+            construction_version,
             predicates: Vec::new(),
         }
     }
@@ -196,6 +252,9 @@ impl ConstructionProvenance {
     /// approximate or adapter provenance remains explicit.
     pub fn validate(&self) -> Result<(), ConstructionProvenanceValidationError> {
         self.source.validate()?;
+        if self.construction_version == 0 {
+            return Err(ConstructionProvenanceValidationError::InvalidConstructionVersion);
+        }
         for predicate in &self.predicates {
             predicate.validate()?;
         }

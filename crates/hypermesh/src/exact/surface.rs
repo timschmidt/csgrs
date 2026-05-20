@@ -991,6 +991,7 @@ impl CoplanarConvexArrangement {
         let replay = match operation {
             CoplanarArrangementOperation::Union => {
                 arrange_coplanar_convex_surface_union(left, right)
+                    .or_else(|| arrange_coplanar_convex_surface_component_union(left, right))
             }
             CoplanarArrangementOperation::Intersection => {
                 arrange_coplanar_convex_surface_intersection(left, right)
@@ -1053,6 +1054,37 @@ impl CoplanarConvexMultiArrangement {
             &self.mesh,
             "coplanar convex multi-component arrangement",
         )
+    }
+
+    /// Validate this multi-component convex union against its source meshes.
+    ///
+    /// The union materializer accepts only disjoint clusters whose individual
+    /// convex components replay from exact source-face topology. Recomputing
+    /// the cluster union from `left` and `right` keeps the retained component
+    /// loops attached to the predicates and source components that produced
+    /// them. This follows Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7.1-2 (1997): a multi-loop surface is
+    /// certified only while its numerical/combinatorial history is replayable.
+    pub fn validate_union_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<(), MeshError> {
+        self.validate()?;
+        let replay = arrange_coplanar_convex_surface_multi_union(left, right).ok_or_else(|| {
+            surface_validation_error(
+                "coplanar convex multi-component arrangement",
+                "source replay did not reproduce a multi-component union",
+            )
+        })?;
+        if self == &replay {
+            Ok(())
+        } else {
+            Err(surface_validation_error(
+                "coplanar convex multi-component arrangement",
+                "retained union does not match source replay",
+            ))
+        }
     }
 
     /// Validate this multi-component convex difference against its sources.
@@ -2077,6 +2109,457 @@ fn single_face_mesh(mesh: &ExactMesh, face: usize) -> Option<ExactMesh> {
     .ok()
 }
 
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum MultiUnionSide {
+    Left,
+    Right,
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Debug)]
+struct ConvexUnionComponent {
+    side: MultiUnionSide,
+    mesh: ExactMesh,
+    projection: CoplanarProjection,
+    hull: Vec<Point3>,
+}
+
+#[cfg(feature = "exact-triangulation")]
+impl ConvexUnionComponent {
+    fn from_mesh(side: MultiUnionSide, mesh: ExactMesh) -> Option<Self> {
+        let (projection, mut hull) = convex_component_hull(&mesh)?;
+        orient_polygon_ccw(&mut hull, projection)?;
+        Some(Self {
+            side,
+            mesh,
+            projection,
+            hull,
+        })
+    }
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum ConvexUnionComponentRelation {
+    Disjoint,
+    BoundaryOnly,
+    PositiveArea,
+}
+
+/// Certify one source component as a convex coplanar sheet.
+///
+/// This helper intentionally accepts single-triangle components, unlike the
+/// public multi-face convex-surface shortcut. Multi-component union clustering
+/// needs to keep each exact source component as a Yap-style retained object
+/// before deciding whether it is an untouched output loop or participates in a
+/// two-component union. The hull certificate uses Andrew, "Another Efficient
+/// Algorithm for Convex Hulls in Two Dimensions," *Information Processing
+/// Letters* 9.5 (1979), with exact projected orientation predicates.
+#[cfg(feature = "exact-triangulation")]
+fn convex_component_hull(mesh: &ExactMesh) -> Option<(CoplanarProjection, Vec<Point3>)> {
+    if mesh.triangles().is_empty() {
+        return None;
+    }
+    for face in 0..mesh.triangles().len() {
+        let classification =
+            classify_mesh_triangle_against_retained_face_plane(mesh, 0, mesh, face).ok()?;
+        if classification.relation != TrianglePlaneRelation::Coplanar {
+            return None;
+        }
+    }
+    let projection = choose_mesh_projection(mesh)?;
+    let hull = convex_hull_3d(mesh_points(mesh), projection)?;
+    let hull_area = projected_area2_abs(&hull, projection)?;
+    let mesh_area = mesh_projected_area2(mesh, projection)?;
+    if compare_reals(&mesh_area, &hull_area).value() == Some(Ordering::Equal) {
+        Some((projection, hull))
+    } else {
+        None
+    }
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn convex_union_component_relation(
+    left: &[Point3],
+    right: &[Point3],
+    projection: CoplanarProjection,
+) -> Option<ConvexUnionComponentRelation> {
+    let intersection = convex_polygon_intersection_boundary(left, right, projection)?;
+    if intersection.is_empty() {
+        return Some(ConvexUnionComponentRelation::Disjoint);
+    }
+    if intersection.len() < 3 {
+        return Some(ConvexUnionComponentRelation::BoundaryOnly);
+    }
+    let area = projected_area2_abs(&intersection, projection)?;
+    match compare_reals(&area, &ExactReal::from(0)).value()? {
+        Ordering::Greater => Some(ConvexUnionComponentRelation::PositiveArea),
+        Ordering::Equal => Some(ConvexUnionComponentRelation::BoundaryOnly),
+        Ordering::Less => None,
+    }
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn materialize_two_component_union(
+    left: &ConvexUnionComponent,
+    right: &ConvexUnionComponent,
+) -> Option<Vec<Point3>> {
+    if left.projection != right.projection || left.side == right.side {
+        return None;
+    }
+    if polygons_equal(&left.hull, &right.hull)
+        || polygon_in_closed_convex_polygon(&right.hull, &left.hull, left.projection)?
+    {
+        return Some(left.hull.clone());
+    }
+    if polygon_in_closed_convex_polygon(&left.hull, &right.hull, left.projection)? {
+        return Some(right.hull.clone());
+    }
+    if let Some(hull) =
+        convex_union_hull_covered_by_components(&left.hull, &right.hull, left.projection)
+    {
+        return Some(hull);
+    }
+    if let Some(union) = arrange_coplanar_convex_surface_union(&left.mesh, &right.mesh) {
+        return Some(union.polygon);
+    }
+    if let Some(union) = union_single_triangle_coplanar_surfaces(&left.mesh, &right.mesh) {
+        return Some(union.polygon);
+    }
+    arrange_single_triangle_coplanar_union(&left.mesh, &right.mesh).map(|union| union.polygon)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn materialize_component_union_group(
+    components: &[ConvexUnionComponent],
+    members: &[usize],
+) -> Option<Vec<Point3>> {
+    match members {
+        [single] => Some(components[*single].hull.clone()),
+        [first, second] => {
+            materialize_two_component_union(&components[*first], &components[*second])
+        }
+        _ => materialize_rectangle_strip_union_cluster(components, members),
+    }
+}
+
+/// Materialize a many-component convex union cluster as one rectangle strip.
+///
+/// This is deliberately weaker than a general planar arrangement. It accepts
+/// only clusters whose exact projected component hulls are axis-aligned
+/// rectangles sharing one interval, while the other interval is connected by
+/// exact overlap/touch coverage. The output rectangle is therefore a retained
+/// consequence of exact source coordinates. That is the Yap-style contract
+/// from "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+/// (1997): promote topology only when the combinatorial structure is certified
+/// by exact data.
+#[cfg(feature = "exact-triangulation")]
+fn materialize_rectangle_strip_union_cluster(
+    components: &[ConvexUnionComponent],
+    members: &[usize],
+) -> Option<Vec<Point3>> {
+    let projection = components[*members.first()?].projection;
+    let rectangles = members
+        .iter()
+        .map(|&member| projected_axis_aligned_rectangle(&components[member].hull, projection))
+        .collect::<Option<Vec<_>>>()?;
+    rectangle_strip_union_polygon(&rectangles, projection, StripVariableAxis::U)
+        .or_else(|| rectangle_strip_union_polygon(&rectangles, projection, StripVariableAxis::V))
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum StripVariableAxis {
+    U,
+    V,
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Debug)]
+struct ProjectedRectangle {
+    min: Point2,
+    max: Point2,
+    dropped: ExactReal,
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn projected_axis_aligned_rectangle(
+    polygon: &[Point3],
+    projection: CoplanarProjection,
+) -> Option<ProjectedRectangle> {
+    if polygon.len() != 4 {
+        return None;
+    }
+    let dropped = dropped_coordinate(polygon.first()?, projection);
+    if !polygon
+        .iter()
+        .all(|point| real_equal(&dropped_coordinate(point, projection), &dropped))
+    {
+        return None;
+    }
+    let mut min = project_point(polygon.first()?, projection);
+    let mut max = min.clone();
+    for point in polygon
+        .iter()
+        .skip(1)
+        .map(|point| project_point(point, projection))
+    {
+        if real_order(&point.x, &min.x)? == Ordering::Less {
+            min.x = point.x.clone();
+        }
+        if real_order(&point.y, &min.y)? == Ordering::Less {
+            min.y = point.y.clone();
+        }
+        if real_order(&point.x, &max.x)? == Ordering::Greater {
+            max.x = point.x.clone();
+        }
+        if real_order(&point.y, &max.y)? == Ordering::Greater {
+            max.y = point.y.clone();
+        }
+    }
+    if real_order(&min.x, &max.x)? != Ordering::Less
+        || real_order(&min.y, &max.y)? != Ordering::Less
+    {
+        return None;
+    }
+    let corners = [
+        Point2::new(min.x.clone(), min.y.clone()),
+        Point2::new(max.x.clone(), min.y.clone()),
+        Point2::new(max.x.clone(), max.y.clone()),
+        Point2::new(min.x.clone(), max.y.clone()),
+    ];
+    if corners.iter().all(|corner| {
+        polygon
+            .iter()
+            .map(|point| project_point(point, projection))
+            .any(|point| point2_equal(&point, corner))
+    }) {
+        Some(ProjectedRectangle { min, max, dropped })
+    } else {
+        None
+    }
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn rectangle_strip_union_polygon(
+    rectangles: &[ProjectedRectangle],
+    projection: CoplanarProjection,
+    variable_axis: StripVariableAxis,
+) -> Option<Vec<Point3>> {
+    let first = rectangles.first()?;
+    if !rectangles
+        .iter()
+        .all(|rect| real_equal(&rect.dropped, &first.dropped))
+    {
+        return None;
+    }
+
+    let fixed_min = strip_fixed_min(first, variable_axis);
+    let fixed_max = strip_fixed_max(first, variable_axis);
+    if !rectangles.iter().all(|rect| {
+        real_equal(strip_fixed_min(rect, variable_axis), fixed_min)
+            && real_equal(strip_fixed_max(rect, variable_axis), fixed_max)
+    }) {
+        return None;
+    }
+
+    let mut intervals = rectangles
+        .iter()
+        .map(|rect| {
+            (
+                strip_variable_min(rect, variable_axis).clone(),
+                strip_variable_max(rect, variable_axis).clone(),
+            )
+        })
+        .collect::<Vec<_>>();
+    sort_intervals_by_min(&mut intervals)?;
+    let union_min = intervals.first()?.0.clone();
+    let mut union_max = intervals.first()?.1.clone();
+    for (min, max) in intervals.iter().skip(1) {
+        if real_order(min, &union_max)? == Ordering::Greater {
+            return None;
+        }
+        if real_order(max, &union_max)? == Ordering::Greater {
+            union_max = max.clone();
+        }
+    }
+    if real_order(&union_min, &union_max)? != Ordering::Less {
+        return None;
+    }
+
+    let (min, max) = match variable_axis {
+        StripVariableAxis::U => (
+            Point2::new(union_min, fixed_min.clone()),
+            Point2::new(union_max, fixed_max.clone()),
+        ),
+        StripVariableAxis::V => (
+            Point2::new(fixed_min.clone(), union_min),
+            Point2::new(fixed_max.clone(), union_max),
+        ),
+    };
+    Some(vec![
+        point_from_projection(&min.x, &min.y, &first.dropped, projection),
+        point_from_projection(&max.x, &min.y, &first.dropped, projection),
+        point_from_projection(&max.x, &max.y, &first.dropped, projection),
+        point_from_projection(&min.x, &max.y, &first.dropped, projection),
+    ])
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn sort_intervals_by_min(intervals: &mut [(ExactReal, ExactReal)]) -> Option<()> {
+    for index in 1..intervals.len() {
+        let mut cursor = index;
+        while cursor > 0
+            && real_order(&intervals[cursor].0, &intervals[cursor - 1].0)? == Ordering::Less
+        {
+            intervals.swap(cursor, cursor - 1);
+            cursor -= 1;
+        }
+    }
+    Some(())
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn strip_variable_min(rect: &ProjectedRectangle, axis: StripVariableAxis) -> &ExactReal {
+    match axis {
+        StripVariableAxis::U => &rect.min.x,
+        StripVariableAxis::V => &rect.min.y,
+    }
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn strip_variable_max(rect: &ProjectedRectangle, axis: StripVariableAxis) -> &ExactReal {
+    match axis {
+        StripVariableAxis::U => &rect.max.x,
+        StripVariableAxis::V => &rect.max.y,
+    }
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn strip_fixed_min(rect: &ProjectedRectangle, axis: StripVariableAxis) -> &ExactReal {
+    match axis {
+        StripVariableAxis::U => &rect.min.y,
+        StripVariableAxis::V => &rect.min.x,
+    }
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn strip_fixed_max(rect: &ProjectedRectangle, axis: StripVariableAxis) -> &ExactReal {
+    match axis {
+        StripVariableAxis::U => &rect.max.y,
+        StripVariableAxis::V => &rect.max.x,
+    }
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn dropped_coordinate(point: &Point3, projection: CoplanarProjection) -> ExactReal {
+    match projection {
+        CoplanarProjection::Xy => point.z.clone(),
+        CoplanarProjection::Xz => point.y.clone(),
+        CoplanarProjection::Yz => point.x.clone(),
+    }
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn point_from_projection(
+    u: &ExactReal,
+    v: &ExactReal,
+    dropped: &ExactReal,
+    projection: CoplanarProjection,
+) -> Point3 {
+    match projection {
+        CoplanarProjection::Xy => Point3::new(u.clone(), v.clone(), dropped.clone()),
+        CoplanarProjection::Xz => Point3::new(u.clone(), dropped.clone(), v.clone()),
+        CoplanarProjection::Yz => Point3::new(dropped.clone(), u.clone(), v.clone()),
+    }
+}
+
+/// Materialize a convex hull when two components exactly cover it.
+///
+/// This is the multi-component counterpart to the single-triangle convex union
+/// shortcut: build the Andrew monotone-chain hull of both component rings,
+/// then replay every fan triangle by exact clipping against both inputs. The
+/// coverage equality is a Yap-style certificate that the hull is not
+/// overclaiming a gap, and the clipping pass follows Sutherland and Hodgman,
+/// "Reentrant Polygon Clipping," *Communications of the ACM* 17.1 (1974).
+#[cfg(feature = "exact-triangulation")]
+fn convex_union_hull_covered_by_components(
+    left: &[Point3],
+    right: &[Point3],
+    projection: CoplanarProjection,
+) -> Option<Vec<Point3>> {
+    let points = left.iter().chain(right.iter()).cloned().collect::<Vec<_>>();
+    let hull = convex_hull_3d(points, projection)?;
+    if hull.len() < 3 {
+        return None;
+    }
+    for index in 1..hull.len() - 1 {
+        let fan = vec![
+            hull[0].clone(),
+            hull[index].clone(),
+            hull[index + 1].clone(),
+        ];
+        if !fan_triangle_covered_by_inputs(&fan, left, right, projection)? {
+            return None;
+        }
+    }
+    Some(hull)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn sort_polygons_for_replay(polygons: &mut [Vec<Point3>], projection: CoplanarProjection) {
+    polygons.sort_by(|left, right| {
+        compare_point2(
+            &polygon_min_projected_point(left, projection),
+            &polygon_min_projected_point(right, projection),
+        )
+        .unwrap_or(Ordering::Equal)
+    });
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn polygon_min_projected_point(polygon: &[Point3], projection: CoplanarProjection) -> Point2 {
+    polygon
+        .iter()
+        .map(|point| project_point(point, projection))
+        .min_by(|left, right| compare_point2(left, right).unwrap_or(Ordering::Equal))
+        .unwrap_or_else(|| Point2::new(ExactReal::from(0), ExactReal::from(0)))
+}
+
+#[cfg(feature = "exact-triangulation")]
+struct UnionFind {
+    parent: Vec<usize>,
+}
+
+#[cfg(feature = "exact-triangulation")]
+impl UnionFind {
+    fn new(len: usize) -> Self {
+        Self {
+            parent: (0..len).collect(),
+        }
+    }
+
+    fn find(&mut self, index: usize) -> usize {
+        let parent = self.parent[index];
+        if parent == index {
+            index
+        } else {
+            let root = self.find(parent);
+            self.parent[index] = root;
+            root
+        }
+    }
+
+    fn union(&mut self, left: usize, right: usize) {
+        let left_root = self.find(left);
+        let right_root = self.find(right);
+        if left_root != right_root {
+            self.parent[right_root] = left_root;
+        }
+    }
+}
+
 /// Certify and materialize a simple-loop union of convex coplanar surfaces.
 ///
 /// This is a bounded planar-arrangement port for multi-face sheets. Both
@@ -2084,9 +2567,11 @@ fn single_face_mesh(mesh: &ExactMesh, face: usize) -> Option<ExactMesh> {
 /// and area facts. The boundary is then formed from exact edge fragments whose
 /// midpoint lies outside the opposite convex hull, stitched into one loop, and
 /// accepted only when fan-triangle area coverage proves the loop equals the
-/// union. The traversal follows the Weiler-Atherton boundary-fragment idea,
-/// with exact `hyperlimit` orientation predicates providing Yap-style
-/// certified combinatorial decisions.
+/// union. Full-edge contacts can therefore materialize when the retained loop
+/// replay proves a positive-area sheet, while point-only contacts remain a
+/// boundary-policy case. The traversal follows the Weiler-Atherton
+/// boundary-fragment idea, with exact `hyperlimit` orientation predicates
+/// providing Yap-style certified combinatorial decisions.
 #[cfg(feature = "exact-triangulation")]
 pub fn arrange_coplanar_convex_surface_union(
     left: &ExactMesh,
@@ -2118,6 +2603,185 @@ pub fn arrange_coplanar_convex_surface_union(
     };
     arrangement.validate().ok()?;
     Some(arrangement)
+}
+
+/// Certify and materialize a single-loop union from several convex components.
+///
+/// This covers the bounded case where source topology is already
+/// multi-component, but exact component clustering proves the requested union
+/// has one simple boundary loop. The accepted many-component cluster is the
+/// same axis-aligned rectangle-strip certificate used by
+/// [`arrange_coplanar_convex_surface_multi_union`]. Following Yap, "Towards
+/// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997), the
+/// output loop is promoted only when exact source-coordinate intervals replay
+/// the complete covered strip; general planar subdivisions still remain
+/// explicit future arrangement work.
+#[cfg(feature = "exact-triangulation")]
+pub fn arrange_coplanar_convex_surface_component_union(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Option<CoplanarConvexArrangement> {
+    let (projection, mut polygons) = coplanar_convex_surface_component_union_polygons(left, right)?;
+    if polygons.len() != 1 {
+        return None;
+    }
+    let polygon = polygons.pop()?;
+    let mesh = polygon_to_earcut_open_mesh(&polygon, projection)?;
+    let arrangement = CoplanarConvexArrangement {
+        projection,
+        polygon,
+        mesh,
+    };
+    arrangement.validate().ok()?;
+    Some(arrangement)
+}
+
+/// Certify and materialize a multi-component convex coplanar union.
+///
+/// This bounded planar-arrangement path handles the case where exact source
+/// topology splits each operand into disjoint convex coplanar components. A
+/// cluster is materialized as an unchanged convex hull, a two-component convex
+/// union, or a many-component axis-aligned rectangle strip whose exact
+/// intervals form one covered rectangle. Boundary-only cross-source contacts
+/// are accepted only when that retained interval replay proves a full covered
+/// strip; point-only contacts, non-convex component loops, and cases requiring
+/// a general planar subdivision remain explicit arrangement work. The
+/// clustering is retained object structure in Yap's sense; see Yap, "Towards
+/// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997), and
+/// the convex hull certificate follows Andrew, "Another Efficient Algorithm
+/// for Convex Hulls in Two Dimensions," *Information Processing Letters* 9.5
+/// (1979).
+#[cfg(feature = "exact-triangulation")]
+pub fn arrange_coplanar_convex_surface_multi_union(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Option<CoplanarConvexMultiArrangement> {
+    let (projection, polygons) = coplanar_convex_surface_component_union_polygons(left, right)?;
+    if polygons.len() < 2 {
+        return None;
+    }
+    let mesh = polygons_to_earcut_open_mesh(&polygons, projection)?;
+    let arrangement = CoplanarConvexMultiArrangement {
+        projection,
+        polygons,
+        mesh,
+    };
+    arrangement.validate().ok()?;
+    Some(arrangement)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn coplanar_convex_surface_component_union_polygons(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Option<(CoplanarProjection, Vec<Vec<Point3>>)> {
+    if arrange_coplanar_convex_surface_union(left, right).is_some()
+        || certify_coplanar_convex_surface_equivalence(left, right).is_some()
+        || certify_coplanar_convex_surface_containment(left, right).is_some()
+    {
+        return None;
+    }
+
+    let left_components = connected_face_component_meshes(left)?;
+    let right_components = connected_face_component_meshes(right)?;
+    if left_components.len() + right_components.len() < 3 {
+        return None;
+    }
+
+    let mut components = Vec::new();
+    for mesh in left_components {
+        components.push(ConvexUnionComponent::from_mesh(MultiUnionSide::Left, mesh)?);
+    }
+    for mesh in right_components {
+        components.push(ConvexUnionComponent::from_mesh(
+            MultiUnionSide::Right,
+            mesh,
+        )?);
+    }
+    let projection = components.first()?.projection;
+    if components
+        .iter()
+        .any(|component| component.projection != projection)
+    {
+        return None;
+    }
+
+    let left_hulls = components
+        .iter()
+        .filter(|component| component.side == MultiUnionSide::Left)
+        .map(|component| component.hull.clone())
+        .collect::<Vec<_>>();
+    let right_hulls = components
+        .iter()
+        .filter(|component| component.side == MultiUnionSide::Right)
+        .map(|component| component.hull.clone())
+        .collect::<Vec<_>>();
+    validate_component_loops_disjoint(
+        &left_hulls,
+        projection,
+        "coplanar convex multi-component union",
+    )
+    .ok()?;
+    validate_component_loops_disjoint(
+        &right_hulls,
+        projection,
+        "coplanar convex multi-component union",
+    )
+    .ok()?;
+
+    let mut union_find = UnionFind::new(components.len());
+    for left_index in 0..components.len() {
+        for right_index in left_index + 1..components.len() {
+            let relation = convex_union_component_relation(
+                &components[left_index].hull,
+                &components[right_index].hull,
+                projection,
+            )?;
+            match relation {
+                ConvexUnionComponentRelation::Disjoint => {}
+                ConvexUnionComponentRelation::BoundaryOnly => {
+                    if components[left_index].side == components[right_index].side {
+                        return None;
+                    }
+                    // Full-edge cross-source contacts are not topology by
+                    // themselves. We only cluster them so the later
+                    // rectangle-strip replay can prove a covered interval
+                    // complex, preserving Yap's exact-object boundary.
+                    union_find.union(left_index, right_index);
+                }
+                ConvexUnionComponentRelation::PositiveArea => {
+                    if components[left_index].side == components[right_index].side {
+                        return None;
+                    }
+                    union_find.union(left_index, right_index);
+                }
+            }
+        }
+    }
+
+    let mut groups: Vec<(usize, Vec<usize>)> = Vec::new();
+    for index in 0..components.len() {
+        let root = union_find.find(index);
+        if let Some((_, members)) = groups.iter_mut().find(|(candidate, _)| *candidate == root) {
+            members.push(index);
+        } else {
+            groups.push((root, vec![index]));
+        }
+    }
+    let mut polygons = Vec::with_capacity(groups.len());
+    for (_, members) in groups {
+        let mut polygon = materialize_component_union_group(&components, &members)?;
+        orient_polygon_ccw(&mut polygon, projection)?;
+        polygons.push(polygon);
+    }
+    sort_polygons_for_replay(&mut polygons, projection);
+    validate_component_loops_disjoint(
+        &polygons,
+        projection,
+        "coplanar convex multi-component union",
+    )
+    .ok()?;
+    Some((projection, polygons))
 }
 
 /// Certify and materialize a simple-loop difference of convex coplanar surfaces.
@@ -2456,7 +3120,15 @@ fn clip_convex_polygon(
         let a = &clip[edge];
         let b = &clip[(edge + 1) % clip.len()];
         let a2 = &clip2[edge];
-        let b2 = &clip2[(edge + 1) % 3];
+        // Sutherland-Hodgman clipping traverses every edge of the clipping
+        // polygon, not just triangle edges. Yap's retained-state discipline
+        // requires the projected 2D edge used for the predicate to match the
+        // exact 3D edge used for the construction; modulo `clip.len()` keeps
+        // multi-face convex surface clips from replaying the wrong half-plane.
+        // See Sutherland and Hodgman, "Reentrant Polygon Clipping,"
+        // Communications of the ACM 17.1 (1974), and Yap, "Towards Exact
+        // Geometric Computation," Computational Geometry 7.1-2 (1997).
+        let b2 = &clip2[(edge + 1) % clip.len()];
         let input = output;
         output = Vec::new();
         let mut previous = input.last()?.clone();
@@ -4957,6 +5629,16 @@ fn compare_point2(left: &Point2, right: &Point2) -> Option<Ordering> {
         Ordering::Equal => compare_reals(&left.y, &right.y).value(),
         ordering => Some(ordering),
     }
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn real_order(left: &ExactReal, right: &ExactReal) -> Option<Ordering> {
+    compare_reals(left, right).value()
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn real_equal(left: &ExactReal, right: &ExactReal) -> bool {
+    real_order(left, right) == Some(Ordering::Equal)
 }
 
 fn point2_equal(left: &Point2, right: &Point2) -> bool {

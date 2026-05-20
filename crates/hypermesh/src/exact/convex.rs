@@ -188,6 +188,9 @@ pub fn intersect_closed_convex_solids(
         "exact closed-convex solid intersection",
         ValidationPolicy::CLOSED,
     )?;
+    if !mesh_has_nonzero_signed_volume(&mesh)? {
+        return None;
+    }
     let intersection = ConvexSolidIntersection {
         left_facts,
         right_facts,
@@ -195,6 +198,50 @@ pub fn intersect_closed_convex_solids(
     };
     intersection.validate().ok()?;
     Some(intersection)
+}
+
+/// Return whether the retained triangle shell encloses nonzero exact volume.
+///
+/// This guard is what keeps closed-convex intersection from promoting
+/// face-only or edge-only contact to a volumetric boolean result. Yap,
+/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+/// (1997), is the relevant discipline here: the topology shortcut is allowed
+/// only after an exact predicate, here the signed tetrahedral volume sum,
+/// proves the result is a solid instead of a lower-dimensional boundary.
+fn mesh_has_nonzero_signed_volume(mesh: &ExactMesh) -> Option<bool> {
+    let signed_volume = mesh
+        .triangles()
+        .iter()
+        .map(|triangle| {
+            let tri = triangle.0;
+            determinant_from_origin(
+                &mesh.vertices()[tri[0]].to_hyperlimit_point(),
+                &mesh.vertices()[tri[1]].to_hyperlimit_point(),
+                &mesh.vertices()[tri[2]].to_hyperlimit_point(),
+            )
+        })
+        .fold(ExactReal::from(0), |sum, det| &sum + &det);
+
+    Some(compare_reals(&signed_volume, &ExactReal::from(0)).value()? != Ordering::Equal)
+}
+
+fn determinant_from_origin(a: &Point3, b: &Point3, c: &Point3) -> ExactReal {
+    let by_cz = &b.y * &c.z;
+    let bz_cy = &b.z * &c.y;
+    let bx_cz = &b.x * &c.z;
+    let bz_cx = &b.z * &c.x;
+    let bx_cy = &b.x * &c.y;
+    let by_cx = &b.y * &c.x;
+
+    let x_minor = &by_cz - &bz_cy;
+    let y_minor = &bx_cz - &bz_cx;
+    let z_minor = &bx_cy - &by_cx;
+
+    let x_term = &a.x * &x_minor;
+    let y_term = &a.y * &y_minor;
+    let z_term = &a.z * &z_minor;
+
+    &(&x_term - &y_term) + &z_term
 }
 
 /// Certify and materialize `left - right` for one convex cap.

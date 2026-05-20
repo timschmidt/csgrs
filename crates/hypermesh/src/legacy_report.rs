@@ -55,6 +55,12 @@ pub enum LegacyBooleanReportError {
     MissingAdapterFlag,
     /// The selected epsilon or tolerance is not finite.
     NonFiniteTolerance,
+    /// The retained operation no longer matches the requested operation.
+    OperationMismatch,
+    /// Retained tolerance values no longer replay from the input manifolds.
+    ToleranceMismatch,
+    /// The report carries no input or output topology evidence.
+    EmptyAdapterEvidence,
     /// Retained input counts no longer match the supplied source manifolds.
     InputCountMismatch,
     /// Retained output counts no longer match the supplied output manifold.
@@ -86,6 +92,18 @@ impl LegacyBooleanReport {
         if !self.epsilon.is_finite() || !self.tolerance.is_finite() {
             return Err(LegacyBooleanReportError::NonFiniteTolerance);
         }
+        if self.epsilon != left.eps.max(right.eps) || self.tolerance != left.tol.max(right.tol) {
+            return Err(LegacyBooleanReportError::ToleranceMismatch);
+        }
+        if self.left_vertices == 0
+            || self.left_faces == 0
+            || self.right_vertices == 0
+            || self.right_faces == 0
+            || self.output_vertices == 0
+            || self.output_faces == 0
+        {
+            return Err(LegacyBooleanReportError::EmptyAdapterEvidence);
+        }
         if self.left_vertices != left.nv
             || self.left_faces != left.nf
             || self.right_vertices != right.nv
@@ -101,6 +119,30 @@ impl LegacyBooleanReport {
         }
         Ok(())
     }
+
+    /// Validate this report against source/output manifolds and the requested
+    /// operation.
+    ///
+    /// Count replay alone is not enough for an approximate compatibility path:
+    /// a copied report with the wrong operation would make a primitive-float
+    /// topology result look like evidence for a different boolean. Keeping the
+    /// requested operation in the replay contract follows Yap, "Towards Exact
+    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997), by
+    /// preventing adapter metadata from being treated as interchangeable exact
+    /// state.
+    pub fn validate_operation_against_manifolds(
+        &self,
+        left: &Manifold,
+        right: &Manifold,
+        output: &Manifold,
+        operation: OpType,
+    ) -> Result<(), LegacyBooleanReportError> {
+        self.validate_against_manifolds(left, right, output)?;
+        if self.operation != operation {
+            return Err(LegacyBooleanReportError::OperationMismatch);
+        }
+        Ok(())
+    }
 }
 
 impl LegacyBooleanResult {
@@ -112,5 +154,16 @@ impl LegacyBooleanResult {
     ) -> Result<(), LegacyBooleanReportError> {
         self.report
             .validate_against_manifolds(left, right, &self.mesh)
+    }
+
+    /// Validate the retained report against inputs and the requested operation.
+    pub fn validate_operation_against_inputs(
+        &self,
+        left: &Manifold,
+        right: &Manifold,
+        operation: OpType,
+    ) -> Result<(), LegacyBooleanReportError> {
+        self.report
+            .validate_operation_against_manifolds(left, right, &self.mesh, operation)
     }
 }

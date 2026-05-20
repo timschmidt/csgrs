@@ -12,30 +12,30 @@ mod test_intersection {
 
     pub fn gen_tet_a() -> Manifold {
         Manifold::new(
-            &vec![
+            &[
                 -0.866025, -1., 0.5, 0., -1., -1., 0.866025, -1., 0.5, 0., 1., 0.,
             ],
-            &vec![0, 3, 1, 1, 2, 0, 1, 3, 2, 2, 3, 0],
+            &[0, 3, 1, 1, 2, 0, 1, 3, 2, 2, 3, 0],
         )
         .unwrap()
     }
 
     pub fn gen_tet_b() -> Manifold {
         Manifold::new(
-            &vec![
+            &[
                 -1., -0.866025, 0.5, -1., 0., -1., -1., 0.866025, 0.5, 1., 0., 0.,
             ],
-            &vec![1, 3, 0, 1, 0, 2, 2, 3, 1, 0, 3, 2],
+            &[1, 3, 0, 1, 0, 2, 2, 3, 1, 0, 3, 2],
         )
         .unwrap()
     }
 
     pub fn gen_tet_c() -> Manifold {
         Manifold::new(
-            &vec![
+            &[
                 -2., -0.866025, 0.5, -2., -0., -1., -2., 0.866025, 0.5, 0., 0., 0.,
             ],
-            &vec![1, 3, 0, 1, 0, 2, 2, 3, 1, 0, 3, 2],
+            &[1, 3, 0, 1, 0, 2, 2, 3, 1, 0, 3, 2],
         )
         .unwrap()
     }
@@ -57,7 +57,7 @@ mod test_intersection {
         assert_eq!(x12.len(), 0);
         assert_eq!(v12.len(), 0);
         assert_eq!(x21, vec![-1, -1, -1]);
-        let v21_ = vec![
+        let v21_ = [
             Vec3::new(-0.224009, 0., -0.112005),
             Vec3::new(-0.294367, 0.127465, 0.0735918),
             Vec3::new(-0.395087, -0.171077, 0.0987716),
@@ -91,13 +91,13 @@ mod test_intersection {
         let w03 = winding03(&mfd_p, &mfd_q, expand, true);
         let w30 = winding03(&mfd_p, &mfd_q, expand, false);
 
-        let v12_ = vec![
+        let v12_ = [
             Vec3::new(-0.763707, -0.763707, 0.440927),
             Vec3::new(-0.242656, 0.439609, 0.140098),
             Vec3::new(0., 0., -0.5),
             Vec3::new(0., 0., -0.5),
         ];
-        let v21_ = vec![
+        let v21_ = [
             Vec3::new(0.302169, 0.302169, 0.174458),
             Vec3::new(0.439609, -0.242656, 0.140098),
             Vec3::new(0.302169, 0.302169, 0.174458),
@@ -133,6 +133,9 @@ mod test_intersection {
         let mfd_q = gen_tet_b();
         let result = compute_boolean_with_report(&mfd_p, &mfd_q, OpType::Subtract).unwrap();
         result.validate_against_inputs(&mfd_p, &mfd_q).unwrap();
+        result
+            .validate_operation_against_inputs(&mfd_p, &mfd_q, OpType::Subtract)
+            .unwrap();
         assert!(result.report.used_primitive_float_adapter);
         assert_eq!(result.report.operation, OpType::Subtract);
         assert_eq!(result.report.left_vertices, mfd_p.nv);
@@ -165,6 +168,29 @@ mod test_intersection {
         assert_eq!(
             result.validate_against_inputs(&mfd_p, &mfd_q).unwrap_err(),
             LegacyBooleanReportError::OutputCountMismatch
+        );
+        result.report.output_faces = result.mesh.nf;
+
+        result.report.operation = OpType::Add;
+        assert_eq!(
+            result
+                .validate_operation_against_inputs(&mfd_p, &mfd_q, OpType::Subtract)
+                .unwrap_err(),
+            LegacyBooleanReportError::OperationMismatch
+        );
+        result.report.operation = OpType::Subtract;
+
+        result.report.epsilon *= 2.0;
+        assert_eq!(
+            result.validate_against_inputs(&mfd_p, &mfd_q).unwrap_err(),
+            LegacyBooleanReportError::ToleranceMismatch
+        );
+        result.report.epsilon = mfd_p.eps.max(mfd_q.eps);
+
+        result.report.output_vertices = 0;
+        assert_eq!(
+            result.validate_against_inputs(&mfd_p, &mfd_q).unwrap_err(),
+            LegacyBooleanReportError::EmptyAdapterEvidence
         );
     }
 }
@@ -211,7 +237,7 @@ mod test_triangulation {
                 },
             ],
         ];
-        let res0 = vec![
+        let res0 = [
             Vec3u::new(2123, 2119, 2120),
             Vec3u::new(2123, 2120, 2124),
             Vec3u::new(2125, 2121, 2122),

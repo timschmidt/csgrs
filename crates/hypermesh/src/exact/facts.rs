@@ -9,7 +9,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use super::provenance::PredicateUse;
 use super::scalar::ExactReal;
-use super::validation::validate_triangles;
+use super::validation::{ValidationPolicy, validate_triangles, validate_triangles_with_policy};
 use hyperlimit::Point3;
 
 /// Facts known for one mesh vertex.
@@ -534,6 +534,30 @@ impl MeshValidationFacts {
     ) -> Result<(), MeshFactsValidationError> {
         self.validate()?;
         let replay = validate_triangles(points, triangles);
+        if self == &replay.facts {
+            Ok(())
+        } else {
+            Err(MeshFactsValidationError::SourceReplayMismatch)
+        }
+    }
+
+    /// Validate retained mesh facts against exact source geometry, topology,
+    /// and an explicit validation policy.
+    ///
+    /// Boundary policy is an API-level contract rather than a numeric fact.
+    /// Retaining it beside replay keeps open-surface artifacts from being
+    /// consumed as if they were produced by a closed-surface constructor. This
+    /// follows Yap, "Towards Exact Geometric Computation," *Computational
+    /// Geometry* 7.1-2 (1997), by keeping exact object state, policy, and
+    /// predicate evidence replayable as separate artifacts.
+    pub fn validate_against_sources_with_policy(
+        &self,
+        points: &[Point3],
+        triangles: &[[usize; 3]],
+        policy: ValidationPolicy,
+    ) -> Result<(), MeshFactsValidationError> {
+        self.validate()?;
+        let replay = validate_triangles_with_policy(points, triangles, policy);
         if self == &replay.facts {
             Ok(())
         } else {

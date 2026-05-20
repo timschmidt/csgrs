@@ -74,7 +74,7 @@ pub fn compute_boolean_with_report(
         mesh,
     };
     result
-        .validate_against_inputs(mp, mq)
+        .validate_operation_against_inputs(mp, mq, op)
         .map_err(|error| format!("legacy boolean adapter report validation failed: {error:?}"))?;
     Ok(result)
 }

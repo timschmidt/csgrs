@@ -36,10 +36,12 @@ use super::provenance::PredicateUse;
 #[cfg(feature = "exact-triangulation")]
 use super::region::{
     ExactBooleanAssemblyPlan, ExactRegionSelection, FaceRegionPlaneClassification,
-    FaceRegionPlaneValidationError, FaceRegionTriangulation,
+    FaceRegionPlaneValidationError, FaceRegionTriangulation, boundary_node_point,
 };
 #[cfg(feature = "exact-triangulation")]
 use super::validation::ValidationPolicy;
+#[cfg(feature = "exact-triangulation")]
+use super::volumetric::{ExactVolumetricRegionClassification, ExactVolumetricRegionError};
 
 /// Validation failure for an exact report object.
 ///
@@ -73,8 +75,9 @@ pub enum ExactReportValidationError {
     /// An assembled selected-region output triangle has no matching retained
     /// source-region triangulation.
     UntriangulatedAssemblyRegion,
-    /// An assembled selected-region output triangle uses a vertex source that
-    /// is absent from the retained triangulation for its source region.
+    /// An assembled selected-region output triangle uses a welded vertex whose
+    /// exact point is absent from the retained triangulation boundary for its
+    /// source region.
     AssemblyVertexOutsideTriangulation,
     /// A selected-region assembly retained an output vertex that no output
     /// triangle references.
@@ -97,6 +100,22 @@ pub enum ExactReportValidationError {
     InvalidTriangulation,
     /// A retained output assembly plan failed its own audit.
     InvalidAssembly,
+    /// A retained volumetric winding region classification failed its audit.
+    InvalidVolumetricClassification(ExactVolumetricRegionError),
+    /// A winding-materialized result did not retain volumetric region facts.
+    MissingVolumetricClassifications,
+    /// A result that was not winding-materialized retained volumetric region
+    /// facts.
+    UnexpectedVolumetricClassifications,
+    /// A volumetric classification has no matching retained source-region
+    /// triangulation.
+    OrphanedVolumetricClassification,
+    /// A retained source-region triangulation has no matching volumetric
+    /// classification.
+    UnclassifiedVolumetricTriangulation,
+    /// A winding-materialized result retained boundary, unknown, or nonclosed
+    /// region evidence.
+    VolumetricClassificationNotDecided,
     /// The materialized output mesh failed retained-state validation.
     InvalidOutputMesh,
     /// A selected-region result's assembly and materialized mesh disagree.
@@ -387,6 +406,8 @@ pub struct ExactBooleanResult {
     pub triangulations: Vec<FaceRegionTriangulation>,
     /// Non-mutating exact output assembly.
     pub assembly: ExactBooleanAssemblyPlan,
+    /// Exact winding classifications used by [`ExactBooleanResultKind::WindingMaterialized`].
+    pub volumetric_classifications: Vec<ExactVolumetricRegionClassification>,
     /// Materialized exact output mesh validated under the requested policy.
     pub mesh: ExactMesh,
 }
@@ -420,13 +441,13 @@ pub enum ExactBooleanResultKind {
         /// a triangle-mesh output.
         operation: ExactBooleanOperation,
     },
-    /// The result was produced by materializing split regions after an exact
-    /// inside/outside predicate decision against a certified convex opposite
+    /// The result was produced by materializing split regions after exact
+    /// closed-mesh winding classified each source region against the opposite
     /// operand.
     ///
     /// The exact geometry used for this path is the same region split evidence
     /// as selected-region policy, but the retention policy is the certified
-    /// winding/containment decision for closed-convex volumetric boolean.
+    /// inside/outside decision for a named volumetric boolean.
     /// This follows Yap, "Towards Exact Geometric Computation," *Computational
     /// Geometry* 7.1-2 (1997): semantic policy appears as an API boundary.
     WindingMaterialized {
@@ -461,6 +482,8 @@ pub enum ExactBooleanShortcutKind {
     CoplanarConvexSurfaceIntersection,
     /// Certified simple-loop union of convex coplanar surface meshes.
     CoplanarConvexSurfaceArrangementUnion,
+    /// Certified multi-component union of convex coplanar surface meshes.
+    CoplanarConvexSurfaceMultiUnion,
     /// Certified simple-loop difference of convex coplanar surface meshes.
     CoplanarConvexSurfaceArrangementDifference,
     /// Certified multi-component difference of convex coplanar surface meshes.
@@ -471,6 +494,27 @@ pub enum ExactBooleanShortcutKind {
     CoplanarConvexSurfaceHoledDifference,
     /// Certified multi-hole coplanar convex surface difference.
     CoplanarConvexSurfaceMultiHoledDifference,
+    /// Certified union of coplanar-volumetric axis-aligned boxes.
+    AxisAlignedBoxUnion,
+    /// Certified positive-volume intersection of coplanar-volumetric
+    /// axis-aligned boxes.
+    AxisAlignedBoxIntersection,
+    /// Certified slab difference of coplanar-volumetric axis-aligned boxes.
+    AxisAlignedBoxDifference,
+    /// Certified split difference of coplanar-volumetric axis-aligned boxes.
+    AxisAlignedBoxMultiDifference,
+    /// Certified nested-shell difference of coplanar-volumetric axis-aligned
+    /// boxes.
+    AxisAlignedBoxNestedDifference,
+    /// Certified empty difference because the left axis-aligned box is
+    /// contained by the right box.
+    AxisAlignedBoxEmptyDifference,
+    /// Certified orthogonal-cell union of coplanar-volumetric axis-aligned
+    /// boxes.
+    AxisAlignedBoxCellUnion,
+    /// Certified orthogonal-cell difference of coplanar-volumetric
+    /// axis-aligned boxes.
+    AxisAlignedBoxCellDifference,
     /// Certified graph absence for open surfaces.
     OpenSurfaceDisjoint,
     /// Certified closed-convex containment.
@@ -483,6 +527,12 @@ pub enum ExactBooleanShortcutKind {
     ConvexSingleCapDifference,
     /// Certified closed-convex separation.
     ConvexSeparated,
+    /// Certified exact ray-parity containment for closed nonconvex-capable
+    /// no-intersection meshes.
+    WindingContainment,
+    /// Certified exact ray-parity separation for closed nonconvex-capable
+    /// no-intersection meshes.
+    WindingSeparated,
     /// Certified single-triangle coplanar surface containment.
     CoplanarSurfaceContainment,
     /// Certified coplanar single-triangle intersection output.
@@ -530,16 +580,23 @@ impl ExactBooleanResult {
     /// triangulated source regions,
     /// preventing post-hoc provenance relabeling after materialization, and
     /// their vertex sources must be members of the retained triangulation
-    /// boundary for that source region. The retained assembly must also avoid
-    /// dead vertices so the topology handoff is the exact set consumed by mesh
-    /// materialization. That keeps the final boolean handoff aligned with Yap,
+    /// boundary for that source region; welded vertices may carry a different
+    /// source witness, but their exact point must still replay to the retained
+    /// boundary. The retained assembly must also avoid dead vertices so the
+    /// topology handoff is the exact set consumed by mesh materialization. That
+    /// keeps the final boolean handoff aligned with Yap,
     /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
     /// (1997): downstream topology receives a coherent chain of exact evidence
     /// rather than an opaque output mesh.
     pub fn validate(&self) -> Result<(), ExactReportValidationError> {
         let retains_region_artifacts = matches!(
             self.kind,
-            ExactBooleanResultKind::SelectedRegions { .. } | ExactBooleanResultKind::WindingMaterialized { .. }
+            ExactBooleanResultKind::SelectedRegions { .. }
+                | ExactBooleanResultKind::WindingMaterialized { .. }
+        );
+        let retains_volumetric_artifacts = matches!(
+            self.kind,
+            ExactBooleanResultKind::WindingMaterialized { .. }
         );
         if !retains_region_artifacts
             && (!self.region_classifications.is_empty()
@@ -549,14 +606,16 @@ impl ExactBooleanResult {
         {
             return Err(ExactReportValidationError::ShortcutResultHasAssemblyArtifacts);
         }
-        if !retains_region_artifacts
-            && self.graph_had_unknowns
-        {
+        if retains_volumetric_artifacts && self.volumetric_classifications.is_empty() {
+            return Err(ExactReportValidationError::MissingVolumetricClassifications);
+        }
+        if !retains_volumetric_artifacts && !self.volumetric_classifications.is_empty() {
+            return Err(ExactReportValidationError::UnexpectedVolumetricClassifications);
+        }
+        if !retains_region_artifacts && self.graph_had_unknowns {
             return Err(ExactReportValidationError::ShortcutResultHasUnknownGraph);
         }
-        if retains_region_artifacts
-            && self.graph_had_unknowns
-        {
+        if retains_region_artifacts && self.graph_had_unknowns {
             return Err(ExactReportValidationError::SelectedRegionResultHasUnknownGraph);
         }
         if retains_region_artifacts
@@ -585,9 +644,7 @@ impl ExactBooleanResult {
                 return Err(ExactReportValidationError::DuplicateRegionClassification);
             }
             unique_classifications.push(classification_key);
-            if retains_region_artifacts
-                && !classification.is_decided_and_proof_producing()
-            {
+            if retains_region_artifacts && !classification.is_decided_and_proof_producing() {
                 return Err(ExactReportValidationError::RegionClassificationNotProofProducing);
             }
         }
@@ -608,6 +665,25 @@ impl ExactBooleanResult {
             }
             unique_triangulations.push(triangulation_key);
         }
+        let mut unique_volumetric_classifications = Vec::new();
+        for classification in &self.volumetric_classifications {
+            classification
+                .validate()
+                .map_err(ExactReportValidationError::InvalidVolumetricClassification)?;
+            let classification_key = (
+                classification.region_side,
+                classification.region_face,
+                classification.triangle,
+            );
+            if unique_volumetric_classifications.contains(&classification_key) {
+                return Err(ExactReportValidationError::DuplicateRegionClassification);
+            }
+            unique_volumetric_classifications.push(classification_key);
+            if retains_volumetric_artifacts && !classification.relation.is_materialization_decided()
+            {
+                return Err(ExactReportValidationError::VolumetricClassificationNotDecided);
+            }
+        }
         if retains_region_artifacts
             && self.triangulations.iter().any(|triangulation| {
                 !self.region_classifications.iter().any(|classification| {
@@ -627,6 +703,39 @@ impl ExactBooleanResult {
             })
         {
             return Err(ExactReportValidationError::OrphanedRegionClassification);
+        }
+        if retains_volumetric_artifacts
+            && self.triangulations.iter().any(|triangulation| {
+                triangulation.triangles.chunks_exact(3).any(|triangle| {
+                    !self
+                        .volumetric_classifications
+                        .iter()
+                        .any(|classification| {
+                            classification.region_side == triangulation.side
+                                && classification.region_face == triangulation.face
+                                && classification.triangle
+                                    == [triangle[0], triangle[1], triangle[2]]
+                        })
+                })
+            })
+        {
+            return Err(ExactReportValidationError::UnclassifiedVolumetricTriangulation);
+        }
+        if retains_volumetric_artifacts
+            && self
+                .volumetric_classifications
+                .iter()
+                .any(|classification| {
+                    !self.triangulations.iter().any(|triangulation| {
+                        triangulation.side == classification.region_side
+                            && triangulation.face == classification.region_face
+                            && triangulation.triangles.chunks_exact(3).any(|triangle| {
+                                classification.triangle == [triangle[0], triangle[1], triangle[2]]
+                            })
+                    })
+                })
+        {
+            return Err(ExactReportValidationError::OrphanedVolumetricClassification);
         }
         if retains_region_artifacts
             && self.assembly.triangles.iter().any(|triangle| {
@@ -650,11 +759,10 @@ impl ExactBooleanResult {
                     let Some(assembly_vertex) = self.assembly.vertices.get(vertex) else {
                         return Err(ExactReportValidationError::InvalidAssembly);
                     };
-                    if !triangulation
-                        .boundary
-                        .iter()
-                        .any(|source| source == &assembly_vertex.source)
-                    {
+                    if !triangulation.boundary.iter().any(|source| {
+                        source == &assembly_vertex.source
+                            || points_equal(&assembly_vertex.point, boundary_node_point(source))
+                    }) {
                         return Err(ExactReportValidationError::AssemblyVertexOutsideTriangulation);
                     }
                 }
@@ -682,6 +790,10 @@ impl ExactBooleanResult {
             .validate_retained_state()
             .map_err(|_| ExactReportValidationError::InvalidOutputMesh)?;
 
+        if retains_region_artifacts {
+            validate_output_mesh_matches_assembly(&self.assembly, &self.mesh)?;
+        }
+
         let ExactBooleanResultKind::SelectedRegions { selection } = self.kind else {
             return Ok(());
         };
@@ -695,32 +807,6 @@ impl ExactBooleanResult {
             return Err(ExactReportValidationError::SelectedRegionAssemblyViolatesSelection);
         }
 
-        if self.assembly.vertices.len() != self.mesh.vertices().len()
-            || self.assembly.triangles.len() != self.mesh.triangles().len()
-        {
-            return Err(ExactReportValidationError::OutputMeshAssemblyMismatch);
-        }
-        // The materialized mesh is an edge artifact of the retained assembly,
-        // not a replacement for it. Yap, "Towards Exact Geometric
-        // Computation," Comput. Geom. 7.1-2 (1997), treats the retained
-        // numerical/combinatorial chain as part of the exact object state, so
-        // the triangle soup returned to callers must replay exactly from the
-        // audited assembly plan.
-        for (assembly_vertex, mesh_vertex) in
-            self.assembly.vertices.iter().zip(self.mesh.vertices())
-        {
-            let mesh_point = mesh_vertex.to_hyperlimit_point();
-            if !points_equal(&assembly_vertex.point, &mesh_point) {
-                return Err(ExactReportValidationError::OutputMeshAssemblyMismatch);
-            }
-        }
-        for (assembly_triangle, mesh_triangle) in
-            self.assembly.triangles.iter().zip(self.mesh.triangles())
-        {
-            if assembly_triangle.vertices != mesh_triangle.0 {
-                return Err(ExactReportValidationError::OutputMeshAssemblyMismatch);
-            }
-        }
         Ok(())
     }
 
@@ -748,6 +834,29 @@ impl ExactBooleanResult {
             self.assembly
                 .validate_source_face_incidence(left, right)
                 .map_err(|_| ExactReportValidationError::OutputSourceReplayMismatch)?;
+        }
+        if matches!(
+            self.kind,
+            ExactBooleanResultKind::WindingMaterialized { .. }
+        ) {
+            for classification in &self.volumetric_classifications {
+                let Some(triangulation) = self.triangulations.iter().find(|triangulation| {
+                    triangulation.side == classification.region_side
+                        && triangulation.face == classification.region_face
+                        && triangulation.triangles.chunks_exact(3).any(|triangle| {
+                            classification.triangle == [triangle[0], triangle[1], triangle[2]]
+                        })
+                }) else {
+                    return Err(ExactReportValidationError::OrphanedVolumetricClassification);
+                };
+                let target = match classification.region_side {
+                    MeshSide::Left => right,
+                    MeshSide::Right => left,
+                };
+                classification
+                    .validate_against_sources(triangulation, target)
+                    .map_err(ExactReportValidationError::InvalidVolumetricClassification)?;
+            }
         }
         Ok(())
     }
@@ -782,6 +891,36 @@ impl ExactBooleanResult {
             Err(ExactReportValidationError::SourceReplayMismatch)
         }
     }
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn validate_output_mesh_matches_assembly(
+    assembly: &ExactBooleanAssemblyPlan,
+    mesh: &ExactMesh,
+) -> Result<(), ExactReportValidationError> {
+    if assembly.vertices.len() != mesh.vertices().len()
+        || assembly.triangles.len() != mesh.triangles().len()
+    {
+        return Err(ExactReportValidationError::OutputMeshAssemblyMismatch);
+    }
+    // The materialized mesh is an edge artifact of the retained assembly, not
+    // a replacement for it. Yap, "Towards Exact Geometric Computation,"
+    // Comput. Geom. 7.1-2 (1997), treats the retained numerical/
+    // combinatorial chain as part of the exact object state, so the triangle
+    // soup returned to callers must replay exactly from the audited assembly
+    // plan for both selected-region and winding-materialized outputs.
+    for (assembly_vertex, mesh_vertex) in assembly.vertices.iter().zip(mesh.vertices()) {
+        let mesh_point = mesh_vertex.to_hyperlimit_point();
+        if !points_equal(&assembly_vertex.point, &mesh_point) {
+            return Err(ExactReportValidationError::OutputMeshAssemblyMismatch);
+        }
+    }
+    for (assembly_triangle, mesh_triangle) in assembly.triangles.iter().zip(mesh.triangles()) {
+        if assembly_triangle.vertices != mesh_triangle.0 {
+            return Err(ExactReportValidationError::OutputMeshAssemblyMismatch);
+        }
+    }
+    Ok(())
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -838,6 +977,9 @@ pub enum ExactBooleanSupport {
     /// Union was materialized by a simple-loop arrangement between convex
     /// coplanar surface meshes.
     CertifiedCoplanarConvexSurfaceArrangementUnion,
+    /// Union was materialized as multiple exact simple-loop components
+    /// between convex coplanar surface meshes.
+    CertifiedCoplanarConvexSurfaceMultiUnion,
     /// Difference was materialized by a simple-loop arrangement between
     /// convex coplanar surface meshes.
     CertifiedCoplanarConvexSurfaceArrangementDifference,
@@ -853,6 +995,30 @@ pub enum ExactBooleanSupport {
     /// Difference was materialized as multiple retained holes inside a
     /// convex coplanar surface mesh.
     CertifiedCoplanarConvexSurfaceMultiHoledDifference,
+    /// Union was materialized as one exact axis-aligned box from two
+    /// coplanar-volumetric slab-overlapping boxes.
+    CertifiedAxisAlignedBoxUnion,
+    /// Intersection was materialized as one exact axis-aligned box from two
+    /// positive-volume-overlapping axis-aligned boxes.
+    CertifiedAxisAlignedBoxIntersection,
+    /// Difference was materialized as one exact axis-aligned box after a
+    /// coplanar-volumetric slab cut.
+    CertifiedAxisAlignedBoxDifference,
+    /// Difference was materialized as two exact axis-aligned boxes after an
+    /// interior coplanar-volumetric slab cut.
+    CertifiedAxisAlignedBoxMultiDifference,
+    /// Difference was materialized as a closed outer box shell with a reversed
+    /// strictly nested inner box shell.
+    CertifiedAxisAlignedBoxNestedDifference,
+    /// Difference was materialized as empty because the left axis-aligned box
+    /// is contained by the right box.
+    CertifiedAxisAlignedBoxEmptyDifference,
+    /// Union was materialized as an exact orthogonal cell complex for two
+    /// coplanar-volumetric axis-aligned boxes.
+    CertifiedAxisAlignedBoxCellUnion,
+    /// Difference was materialized as an exact orthogonal cell complex for two
+    /// coplanar-volumetric axis-aligned boxes.
+    CertifiedAxisAlignedBoxCellDifference,
     /// A named operation was answered by exact no-intersection facts for open
     /// surface meshes.
     CertifiedOpenSurfaceDisjoint,
@@ -887,13 +1053,29 @@ pub enum ExactBooleanSupport {
     /// A named operation was answered by a certified no-intersection convex
     /// separated relation that was not caught by mesh-level AABBs.
     CertifiedConvexSeparated,
-    /// The retained graph contains only certified coplanar touching events.
-    /// A caller must choose a boundary/shared-feature policy before this can
-    /// become named boolean output.
+    /// A named operation was answered by exact ray-parity containment for
+    /// closed, possibly nonconvex meshes with no retained face intersections.
+    CertifiedWindingContainment,
+    /// A named operation was answered by exact ray-parity separation for
+    /// closed, possibly nonconvex meshes with no retained face intersections.
+    CertifiedWindingSeparated,
+    /// A named operation was materialized from exact split regions classified
+    /// by closed-mesh winding.
+    CertifiedWindingMaterialized,
+    /// The retained graph contains certified boundary contact events. This
+    /// includes coplanar touching and the closed-solid case where positive-area
+    /// coplanar overlaps plus adjacent contact-only candidates are proven
+    /// boundary-only by exact winding evidence. A caller must choose a
+    /// boundary/shared-feature policy before this can become named boolean
+    /// output.
     RequiresBoundaryPolicy,
     /// Coplanar positive-area overlap is certified, but the requested named
     /// output needs planar arrangement materialization.
     RequiresPlanarArrangement,
+    /// Closed-volumetric overlap includes coplanar source-face cells that are
+    /// not lower-dimensional boundary contact and not an open-surface planar
+    /// arrangement.
+    RequiresCoplanarVolumetricCells,
     /// Split-region facts were produced, but named winding semantics are not
     /// yet certified for this nontrivial overlap.
     RequiresCertifiedWinding,
@@ -987,11 +1169,18 @@ impl ExactBooleanPreflight {
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceEquivalence
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceIntersection
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceArrangementUnion
+            | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceMultiUnion
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceArrangementDifference
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceMultiDifference
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceContainment
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceHoledDifference
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceMultiHoledDifference
+            | ExactBooleanSupport::CertifiedAxisAlignedBoxUnion
+            | ExactBooleanSupport::CertifiedAxisAlignedBoxIntersection
+            | ExactBooleanSupport::CertifiedAxisAlignedBoxDifference
+            | ExactBooleanSupport::CertifiedAxisAlignedBoxMultiDifference
+            | ExactBooleanSupport::CertifiedAxisAlignedBoxNestedDifference
+            | ExactBooleanSupport::CertifiedAxisAlignedBoxEmptyDifference
             | ExactBooleanSupport::CertifiedOpenSurfaceDisjoint
             | ExactBooleanSupport::CertifiedConvexContainment
             | ExactBooleanSupport::CertifiedConvexIntersection
@@ -1003,7 +1192,9 @@ impl ExactBooleanPreflight {
             | ExactBooleanSupport::CertifiedCoplanarSurfaceCornerDifference
             | ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementDifference
             | ExactBooleanSupport::CertifiedCoplanarSurfaceHoledDifference
-            | ExactBooleanSupport::CertifiedConvexSeparated => {
+            | ExactBooleanSupport::CertifiedConvexSeparated
+            | ExactBooleanSupport::CertifiedWindingContainment
+            | ExactBooleanSupport::CertifiedWindingSeparated => {
                 if self.blocker.is_some() {
                     return Err(ExactReportValidationError::CertifiedReportHasBlocker);
                 }
@@ -1018,6 +1209,33 @@ impl ExactBooleanPreflight {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
                 }
                 no_region_facts(self.region_count, &self.region_classifications)
+            }
+            ExactBooleanSupport::CertifiedAxisAlignedBoxCellUnion
+            | ExactBooleanSupport::CertifiedAxisAlignedBoxCellDifference => {
+                if operation_is_selected_region(self.operation)
+                    || self.graph_had_unknowns
+                    || self.blocker.is_some()
+                    || self.retained_face_pairs == 0
+                {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+                if self.arrangement_readiness.is_some() {
+                    return Err(ExactReportValidationError::UnexpectedArrangementReadiness);
+                }
+                no_region_facts(self.region_count, &self.region_classifications)
+            }
+            ExactBooleanSupport::CertifiedWindingMaterialized => {
+                if operation_is_selected_region(self.operation)
+                    || self.graph_had_unknowns
+                    || self.blocker.is_some()
+                    || self.retained_face_pairs == 0
+                {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+                if self.arrangement_readiness.is_some() {
+                    return Err(ExactReportValidationError::UnexpectedArrangementReadiness);
+                }
+                checked_region_facts(self.region_count, &self.region_classifications)
             }
             ExactBooleanSupport::RequiresBoundaryPolicy => {
                 if operation_is_selected_region(self.operation) || self.graph_had_unknowns {
@@ -1076,6 +1294,28 @@ impl ExactBooleanPreflight {
                     || self.blocker.as_ref().unwrap().coplanar_touching_pairs != 0
                 {
                     return Err(ExactReportValidationError::ArrangementReadinessMismatch);
+                }
+                no_region_facts(self.region_count, &self.region_classifications)
+            }
+            ExactBooleanSupport::RequiresCoplanarVolumetricCells => {
+                if operation_is_selected_region(self.operation) || self.graph_had_unknowns {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+                blocker_kind(
+                    self.blocker.as_ref(),
+                    ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells,
+                )?;
+                self.blocker
+                    .as_ref()
+                    .unwrap()
+                    .validate_for_kind(ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells)?;
+                validate_blocker_count_bounds(
+                    self.blocker.as_ref().unwrap(),
+                    self.retained_face_pairs,
+                    self.retained_events,
+                )?;
+                if self.arrangement_readiness.is_some() {
+                    return Err(ExactReportValidationError::UnexpectedArrangementReadiness);
                 }
                 no_region_facts(self.region_count, &self.region_classifications)
             }
@@ -1196,18 +1436,23 @@ impl ExactBooleanBlocker {
                 self.unknown_pairs > 0 || self.construction_failed_events > 0
             }
             ExactBooleanBlockerKind::NeedsBoundaryPolicy => {
-                self.coplanar_touching_pairs > 0
+                self.candidate_pairs
+                    + self.coplanar_touching_pairs
+                    + self.coplanar_overlapping_pairs
+                    > 0
                     && self.unknown_pairs == 0
                     && self.construction_failed_events == 0
-                    && self.candidate_pairs == 0
-                    && self.coplanar_overlapping_pairs == 0
             }
             ExactBooleanBlockerKind::NeedsPlanarArrangement => {
                 self.coplanar_overlapping_pairs > 0
                     && self.unknown_pairs == 0
                     && self.construction_failed_events == 0
                     && self.candidate_pairs == 0
-                    && self.coplanar_touching_pairs == 0
+            }
+            ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells => {
+                self.coplanar_touching_pairs + self.coplanar_overlapping_pairs > 0
+                    && self.unknown_pairs == 0
+                    && self.construction_failed_events == 0
             }
             ExactBooleanBlockerKind::NeedsWinding => {
                 self.unknown_pairs == 0
@@ -1263,6 +1508,9 @@ pub enum ExactBooleanBlockerKind {
     NeedsBoundaryPolicy,
     /// A planar arrangement output model is required for coplanar surfaces.
     NeedsPlanarArrangement,
+    /// Coplanar source-face cells must be materialized before closed
+    /// volumetric winding can decide named output.
+    NeedsCoplanarVolumetricCells,
     /// Full winding/inside-outside classification is required.
     NeedsWinding,
 }
@@ -1700,9 +1948,13 @@ impl ExactOpenSurfaceDisjointReport {
 pub enum ExactBoundaryTouchingStatus {
     /// Exact graph extraction retained unresolved events.
     GraphUnknowns,
-    /// Retained graph pairs were not exclusively coplanar touching pairs.
+    /// Retained graph pairs were not exclusively certified boundary-only
+    /// contact pairs.
     NotBoundaryOnly,
-    /// The graph contains only certified coplanar touching pairs.
+    /// The graph contains certified boundary-only contact pairs. Closed-solid
+    /// contact may be positive-area coplanar overlap, edge touch, or vertex
+    /// touch; source replay must prove retained candidate pairs contain
+    /// contact-only events before this status is constructed.
     Certified,
 }
 
@@ -1745,7 +1997,10 @@ impl ExactBoundaryTouchingReport {
         // A boundary-only policy is meaningful only after the graph is
         // resolved. Unknown graph events remain refinement blockers, preserving
         // Yap's exact-state separation between undecided predicates and
-        // application-level topology policy.
+        // application-level topology policy. Positive-area coplanar overlaps
+        // can still be boundary-only for closed solids, but that certification
+        // is source-replayed by the report constructor; local validation only
+        // audits the retained relation-count shape.
         let expected_kind = if matches!(self.status, ExactBoundaryTouchingStatus::GraphUnknowns) {
             ExactBooleanBlockerKind::NeedsRefinement
         } else {
@@ -1771,6 +2026,8 @@ impl ExactBoundaryTouchingReport {
             ExactBoundaryTouchingStatus::GraphUnknowns => {}
             ExactBoundaryTouchingStatus::NotBoundaryOnly => {
                 if self.retained_face_pairs != 0
+                    && self.blocker.candidate_pairs == 0
+                    && self.blocker.coplanar_overlapping_pairs == 0
                     && self
                         .blocker
                         .validate_for_kind(ExactBooleanBlockerKind::NeedsBoundaryPolicy)
@@ -1781,7 +2038,12 @@ impl ExactBoundaryTouchingReport {
             }
             ExactBoundaryTouchingStatus::Certified => {}
         }
-        if self.is_certified() && self.blocker.coplanar_touching_pairs == 0 {
+        if self.is_certified()
+            && self.blocker.candidate_pairs
+                + self.blocker.coplanar_touching_pairs
+                + self.blocker.coplanar_overlapping_pairs
+                == 0
+        {
             return Err(ExactReportValidationError::MissingRelationCount);
         }
         if self.is_certified() {
@@ -1828,6 +2090,9 @@ pub enum ExactPlanarArrangementStatus {
     /// The exact graph does not consist solely of positive-area coplanar
     /// overlaps requiring planar arrangement output.
     NoPositiveOverlap,
+    /// Closed-solid coplanar contact was certified as a boundary-only policy
+    /// case before planar-cell output should be considered.
+    BoundaryPolicyRequired,
     /// Certified positive-area coplanar overlap requires a planar arrangement
     /// output model before this named operation can be materialized.
     Required,
@@ -1879,10 +2144,12 @@ impl ExactPlanarArrangementReport {
         // A graph-unknown arrangement report has not reached planar-cell
         // policy. It is still blocked on predicate/construction refinement, a
         // distinct exact-computation state in Yap's sense.
-        let expected_kind = if matches!(self.status, ExactPlanarArrangementStatus::GraphUnknowns) {
-            ExactBooleanBlockerKind::NeedsRefinement
-        } else {
-            ExactBooleanBlockerKind::NeedsPlanarArrangement
+        let expected_kind = match self.status {
+            ExactPlanarArrangementStatus::GraphUnknowns => ExactBooleanBlockerKind::NeedsRefinement,
+            ExactPlanarArrangementStatus::BoundaryPolicyRequired => {
+                ExactBooleanBlockerKind::NeedsBoundaryPolicy
+            }
+            _ => ExactBooleanBlockerKind::NeedsPlanarArrangement,
         };
         if self.blocker.kind != expected_kind {
             return Err(ExactReportValidationError::WrongBlockerKind);
@@ -1915,7 +2182,8 @@ impl ExactPlanarArrangementReport {
             }
             ExactPlanarArrangementStatus::GraphUnknowns => {}
             ExactPlanarArrangementStatus::AlreadyMaterialized
-            | ExactPlanarArrangementStatus::NoPositiveOverlap => {
+            | ExactPlanarArrangementStatus::NoPositiveOverlap
+            | ExactPlanarArrangementStatus::BoundaryPolicyRequired => {
                 if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_)) {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
                 }
@@ -1949,7 +2217,8 @@ impl ExactPlanarArrangementReport {
                 }
             }
             ExactPlanarArrangementStatus::AlreadyMaterialized
-            | ExactPlanarArrangementStatus::NoPositiveOverlap => {
+            | ExactPlanarArrangementStatus::NoPositiveOverlap
+            | ExactPlanarArrangementStatus::BoundaryPolicyRequired => {
                 if let Some(readiness) = &self.arrangement_readiness {
                     readiness
                         .validate()
@@ -1974,6 +2243,12 @@ impl ExactPlanarArrangementReport {
         if self.is_required() {
             self.blocker
                 .validate_for_kind(ExactBooleanBlockerKind::NeedsPlanarArrangement)?;
+        } else if matches!(
+            self.status,
+            ExactPlanarArrangementStatus::BoundaryPolicyRequired
+        ) {
+            self.blocker
+                .validate_for_kind(ExactBooleanBlockerKind::NeedsBoundaryPolicy)?;
         }
         Ok(())
     }
@@ -2018,6 +2293,9 @@ pub enum ExactWindingReadinessStatus {
     /// The positive-area coplanar overlap was already handled by a certified
     /// planar-arrangement shortcut, so no volumetric winding handoff is needed.
     PlanarArrangementAlreadyMaterialized,
+    /// Coplanar source-face cells are part of a closed-volumetric overlap and
+    /// must be materialized before winding can consume the split cells.
+    CoplanarVolumetricCellsRequired,
     /// The graph contains no retained face pairs requiring winding.
     NoNontrivialOverlap,
     /// Split regions and opposite-plane classifications were checked and are
@@ -2196,6 +2474,26 @@ impl ExactWindingReadinessReport {
                 }
                 no_region_facts(self.region_count, &self.region_classifications)
             }
+            ExactWindingReadinessStatus::CoplanarVolumetricCellsRequired => {
+                if self.arrangement_readiness.is_some() {
+                    return Err(ExactReportValidationError::UnexpectedArrangementReadiness);
+                }
+                if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_)) {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+                blocker_kind(
+                    Some(&self.blocker),
+                    ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells,
+                )?;
+                self.blocker
+                    .validate_for_kind(ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells)?;
+                validate_blocker_count_bounds(
+                    &self.blocker,
+                    self.retained_face_pairs,
+                    self.retained_events,
+                )?;
+                no_region_facts(self.region_count, &self.region_classifications)
+            }
             ExactWindingReadinessStatus::Ready => {
                 if self.arrangement_readiness.is_some() {
                     return Err(ExactReportValidationError::UnexpectedArrangementReadiness);
@@ -2205,9 +2503,14 @@ impl ExactWindingReadinessReport {
                 {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
                 }
-                blocker_kind(Some(&self.blocker), ExactBooleanBlockerKind::NeedsWinding)?;
-                self.blocker
-                    .validate_for_kind(ExactBooleanBlockerKind::NeedsWinding)?;
+                let expected = match self.blocker.kind {
+                    ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells => {
+                        ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells
+                    }
+                    _ => ExactBooleanBlockerKind::NeedsWinding,
+                };
+                blocker_kind(Some(&self.blocker), expected)?;
+                self.blocker.validate_for_kind(expected)?;
                 validate_blocker_count_bounds(
                     &self.blocker,
                     self.retained_face_pairs,

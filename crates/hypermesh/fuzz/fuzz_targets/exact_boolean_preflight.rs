@@ -7,10 +7,12 @@ use hypermesh::exact::{
     FaceRegionPlaneRelation, FaceSplitBoundaryNode, SourceProvenance, Triangle, ValidationPolicy,
     arrange_single_triangle_coplanar_difference, arrange_single_triangle_coplanar_holed_difference,
     arrange_single_triangle_coplanar_union, arrange_coplanar_convex_surface_difference,
+    arrange_coplanar_convex_surface_component_union,
     arrange_coplanar_convex_surface_holed_difference, arrange_coplanar_convex_surface_intersection,
     arrange_coplanar_convex_surface_multi_difference,
     arrange_coplanar_convex_surface_multi_holed_difference,
     arrange_coplanar_convex_surface_multi_intersection, arrange_coplanar_convex_surface_union,
+    arrange_coplanar_convex_surface_multi_union,
     boolean_exact_with_boundary_policy, boolean_selected_regions, certify_boundary_touching_report,
     certify_convex_solid, certify_open_surface_disjoint_report, certify_planar_arrangement_report,
     certify_refinement_report, certify_coplanar_convex_surface_containment,
@@ -26,10 +28,26 @@ use hypermesh::exact::{
     intersect_single_triangle_coplanar_surfaces, preflight_boolean_exact,
     subtract_closed_convex_solids_single_cap, union_single_triangle_coplanar_surfaces,
 };
+#[cfg(feature = "exact-triangulation")]
+use hypermesh::exact::{CoplanarProjection, ExactBooleanAssemblyPlan, FaceRegionTriangulation};
 use libfuzzer_sys::fuzz_target;
 
 fuzz_target!(|data: &[u8]| {
     exercise_partial_convex_union_boundary();
+    #[cfg(feature = "exact-triangulation")]
+    exercise_face_interior_steiner_boundary();
+    #[cfg(feature = "exact-triangulation")]
+    exercise_multi_component_coplanar_union();
+    #[cfg(feature = "exact-triangulation")]
+    exercise_boundary_centroid_volumetric_representative();
+    #[cfg(feature = "exact-triangulation")]
+    exercise_closed_coplanar_overlap_boundary_policy();
+    #[cfg(feature = "exact-triangulation")]
+    exercise_closed_vertex_touch_boundary_policy();
+    #[cfg(feature = "exact-triangulation")]
+    exercise_axis_aligned_coplanar_volumetric_boxes();
+    #[cfg(feature = "exact-triangulation")]
+    exercise_mixed_coplanar_volumetric_materialization();
 
     let mut values = Vec::new();
     let mut indices = Vec::new();
@@ -135,6 +153,41 @@ fuzz_target!(|data: &[u8]| {
     }
     let _ = right.provenance().validate();
 
+    if left.facts().mesh.closed_manifold && !right.vertices().is_empty() {
+        let point = right.vertices()[0].to_hyperlimit_point();
+        let point_winding =
+            hypermesh::exact::classify_point_against_closed_mesh_winding_report(&point, &left);
+        let _ = point_winding.validate_against_sources(&point, &left);
+        let mesh_winding =
+            hypermesh::exact::classify_mesh_vertices_against_closed_mesh_winding_report(
+                &right, &left,
+            );
+        let _ = mesh_winding.validate_against_sources(&right, &left);
+        let mut corrupted = mesh_winding;
+        if let Some(vertex) = corrupted.vertices.first_mut() {
+            vertex.tested_axes = usize::MAX;
+            assert!(corrupted.validate().is_err());
+        }
+    }
+    if right.facts().mesh.closed_manifold && !left.vertices().is_empty() {
+        let point = left.vertices()[0].to_hyperlimit_point();
+        let point_winding =
+            hypermesh::exact::classify_point_against_closed_mesh_winding_report(&point, &right);
+        let _ = point_winding.validate_against_sources(&point, &right);
+        let mesh_winding =
+            hypermesh::exact::classify_mesh_vertices_against_closed_mesh_winding_report(
+                &left, &right,
+            );
+        let _ = mesh_winding.validate_against_sources(&left, &right);
+        let mut corrupted = mesh_winding;
+        if let Some(vertex) = corrupted.vertices.first_mut() {
+            vertex.axis = None;
+            if vertex.is_decided() {
+                assert!(corrupted.validate().is_err());
+            }
+        }
+    }
+
     if let (Some(left_tri), Some(right_tri)) = (left.triangles().first(), right.triangles().first())
     {
         let _ = classify_mesh_face_pair(&left, 0, &right, 0)
@@ -213,6 +266,14 @@ fuzz_target!(|data: &[u8]| {
                 ValidationPolicy::ALLOW_BOUNDARY,
                 ExactBoundaryBooleanPolicy::PreserveSeparateShells,
             );
+            if matches!(
+                result.kind,
+                hypermesh::exact::ExactBooleanResultKind::WindingMaterialized { .. }
+            ) {
+                let mut missing_volumetric = result.clone();
+                missing_volumetric.volumetric_classifications.clear();
+                assert!(missing_volumetric.validate().is_err());
+            }
             let mut stale_result = result;
             stale_result.graph_had_unknowns = true;
             assert!(
@@ -1219,9 +1280,494 @@ fn exercise_partial_convex_union_boundary() {
     )
     .expect("deterministic convex right fixture must import");
     let preflight = preflight_boolean_exact(&left, &right, ExactBooleanOperation::Union)
-        .expect("partial convex union preflight should report a blocker");
+        .expect("partial convex union preflight should classify exact face cells");
     preflight.validate().expect("preflight report must validate");
-    assert_eq!(preflight.support, ExactBooleanSupport::RequiresCertifiedWinding);
+    assert_eq!(
+        preflight.support,
+        ExactBooleanSupport::CertifiedWindingMaterialized
+    );
+    let graph = build_intersection_graph(&left, &right).expect("fixture graph should build");
+    let (_regions, cells) =
+        hypermesh::exact::triangulate_all_face_cells_with_cdt(&graph, &left, &right)
+            .expect("fixture cell triangulation should not error")
+            .expect("fixture should produce exact planar cells");
+    assert!(cells.iter().any(|cell| {
+        cell.side == hypermesh::exact::MeshSide::Left
+            && cell.face == 2
+            && cell.triangles.len() / 3 == 7
+    }));
+    let result = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("partial convex union should materialize from exact winding cells");
+    result
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .expect("winding-materialized union should replay");
+    assert!(result.mesh.facts().mesh.closed_manifold);
+    let mut missing_volumetric = result;
+    missing_volumetric.volumetric_classifications.clear();
+    assert!(matches!(
+        missing_volumetric.validate(),
+        Err(hypermesh::exact::ExactReportValidationError::MissingVolumetricClassifications)
+    ));
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn exercise_multi_component_coplanar_union() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            0, 0, 0, 2, 0, 0, 2, 2, 0, 0, 2, 0, //
+            10, 0, 0, 12, 0, 0, 12, 2, 0, 10, 2, 0,
+        ],
+        &[0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("multi-component coplanar union left fixture must import");
+    let right = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            1, 0, 0, 3, 0, 0, 3, 2, 0, 1, 2, 0, //
+            11, 0, 0, 13, 0, 0, 13, 2, 0, 11, 2, 0,
+        ],
+        &[0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("multi-component coplanar union right fixture must import");
+
+    let union = arrange_coplanar_convex_surface_multi_union(&left, &right)
+        .expect("fixture should materialize as two retained union components");
+    union.validate().unwrap();
+    union.validate_union_against_sources(&left, &right).unwrap();
+    let mut invalid = union.clone();
+    invalid.polygons[0].reverse();
+    assert!(invalid.validate().is_err());
+
+    let preflight = preflight_boolean_exact(&left, &right, ExactBooleanOperation::Union)
+        .expect("multi-component coplanar union preflight should classify shortcut");
+    preflight.validate().unwrap();
+    preflight
+        .validate_against_sources(&left, &right)
+        .unwrap();
+    assert_eq!(
+        preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceMultiUnion
+    );
+
+    let result = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("multi-component coplanar union should materialize");
+    result
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+
+    let edge_touch_left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 2, 0, 0, 2, 2, 0, 0, 2, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("full-edge convex surface left fixture must import");
+    let edge_touch_right = ExactMesh::from_i64_triangles_with_policy(
+        &[2, 0, 0, 4, 0, 0, 4, 2, 0, 2, 2, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("full-edge convex surface right fixture must import");
+    let edge_touch_union =
+        arrange_coplanar_convex_surface_union(&edge_touch_left, &edge_touch_right)
+            .expect("full-edge convex surface union should materialize one loop");
+    edge_touch_union.validate().unwrap();
+    edge_touch_union
+        .validate_against_sources(
+            &edge_touch_left,
+            &edge_touch_right,
+            CoplanarArrangementOperation::Union,
+        )
+        .unwrap();
+    let edge_touch_result = hypermesh::exact::boolean_exact(
+        &edge_touch_left,
+        &edge_touch_right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("full-edge convex surface union should materialize");
+    edge_touch_result
+        .validate_operation_against_sources(
+            &edge_touch_left,
+            &edge_touch_right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+
+    let point_touch_right = ExactMesh::from_i64_triangles_with_policy(
+        &[2, 2, 0, 4, 2, 0, 4, 4, 0, 2, 4, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("point-touching convex surface fixture must import");
+    assert!(arrange_coplanar_convex_surface_union(&edge_touch_left, &point_touch_right).is_none());
+    let point_touch_preflight =
+        preflight_boolean_exact(&edge_touch_left, &point_touch_right, ExactBooleanOperation::Union)
+            .expect("point-touching convex surface preflight should classify policy gap");
+    point_touch_preflight.validate().unwrap();
+    assert_eq!(
+        point_touch_preflight.support,
+        ExactBooleanSupport::RequiresBoundaryPolicy
+    );
+
+    let bridge_left = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            0, 0, 0, 2, 0, 0, 2, 2, 0, 0, 2, 0, //
+            4, 0, 0, 6, 0, 0, 6, 2, 0, 4, 2, 0, //
+            10, 0, 0, 12, 0, 0, 12, 2, 0, 10, 2, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7, //
+            8, 9, 10, 8, 10, 11,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("bridged multi-component left fixture must import");
+    let bridge_right = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            1, 0, 0, 5, 0, 0, 5, 2, 0, 1, 2, 0, //
+            11, 0, 0, 13, 0, 0, 13, 2, 0, 11, 2, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("bridged multi-component right fixture must import");
+    let bridge_union = arrange_coplanar_convex_surface_multi_union(&bridge_left, &bridge_right)
+        .expect("bridge strip cluster should materialize with a far output component");
+    bridge_union.validate().unwrap();
+    bridge_union
+        .validate_union_against_sources(&bridge_left, &bridge_right)
+        .unwrap();
+    let bridge_preflight =
+        preflight_boolean_exact(&bridge_left, &bridge_right, ExactBooleanOperation::Union)
+            .expect("bridged multi-component coplanar union preflight should classify shortcut");
+    bridge_preflight.validate().unwrap();
+    assert_eq!(
+        bridge_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceMultiUnion
+    );
+    let bridge_result = hypermesh::exact::boolean_exact(
+        &bridge_left,
+        &bridge_right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("bridged multi-component coplanar union should materialize");
+    bridge_result
+        .validate_operation_against_sources(
+            &bridge_left,
+            &bridge_right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+
+    let single_bridge_left = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            0, 0, 0, 2, 0, 0, 2, 2, 0, 0, 2, 0, //
+            4, 0, 0, 6, 0, 0, 6, 2, 0, 4, 2, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("single bridged strip left fixture must import");
+    let single_bridge_right = ExactMesh::from_i64_triangles_with_policy(
+        &[1, 0, 0, 5, 0, 0, 5, 2, 0, 1, 2, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("single bridged strip right fixture must import");
+    let single_bridge_union =
+        arrange_coplanar_convex_surface_component_union(&single_bridge_left, &single_bridge_right)
+            .expect("single bridge strip cluster should materialize one output loop");
+    single_bridge_union.validate().unwrap();
+    single_bridge_union
+        .validate_against_sources(
+            &single_bridge_left,
+            &single_bridge_right,
+            CoplanarArrangementOperation::Union,
+        )
+        .unwrap();
+    let single_bridge_result = hypermesh::exact::boolean_exact(
+        &single_bridge_left,
+        &single_bridge_right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("single bridge strip union should materialize");
+    single_bridge_result
+        .validate_operation_against_sources(
+            &single_bridge_left,
+            &single_bridge_right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+
+    let edge_bridge_left = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            0, 0, 0, 2, 0, 0, 2, 2, 0, 0, 2, 0, //
+            4, 0, 0, 6, 0, 0, 6, 2, 0, 4, 2, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("edge-bridged strip left fixture must import");
+    let edge_bridge_right = ExactMesh::from_i64_triangles_with_policy(
+        &[2, 0, 0, 4, 0, 0, 4, 2, 0, 2, 2, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("edge-bridged strip right fixture must import");
+    let edge_bridge_union =
+        arrange_coplanar_convex_surface_component_union(&edge_bridge_left, &edge_bridge_right)
+            .expect("full-edge bridge strip cluster should materialize one output loop");
+    edge_bridge_union.validate().unwrap();
+    edge_bridge_union
+        .validate_against_sources(
+            &edge_bridge_left,
+            &edge_bridge_right,
+            CoplanarArrangementOperation::Union,
+        )
+        .unwrap();
+    let edge_bridge_result = hypermesh::exact::boolean_exact(
+        &edge_bridge_left,
+        &edge_bridge_right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("full-edge bridge strip union should materialize");
+    edge_bridge_result
+        .validate_operation_against_sources(
+            &edge_bridge_left,
+            &edge_bridge_right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+
+    let point_touching_bridge = ExactMesh::from_i64_triangles_with_policy(
+        &[2, 2, 0, 4, 2, 0, 4, 4, 0, 2, 4, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("point-touching bridge rejection fixture must import");
+    assert!(
+        arrange_coplanar_convex_surface_component_union(&edge_bridge_left, &point_touching_bridge)
+            .is_none()
+    );
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn exercise_face_interior_steiner_boundary() {
+    let mesh = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 4, 0, 0, 0, 4, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let triangulation = FaceRegionTriangulation {
+        side: hypermesh::exact::MeshSide::Left,
+        face: 0,
+        projection: CoplanarProjection::Xy,
+        boundary: vec![
+            FaceSplitBoundaryNode::OriginalVertex {
+                vertex: 0,
+                point: point3(0, 0, 0),
+            },
+            FaceSplitBoundaryNode::OriginalVertex {
+                vertex: 1,
+                point: point3(4, 0, 0),
+            },
+            FaceSplitBoundaryNode::OriginalVertex {
+                vertex: 2,
+                point: point3(0, 4, 0),
+            },
+            FaceSplitBoundaryNode::FaceInterior {
+                point: point3(1, 1, 0),
+            },
+        ],
+        vertices: vec![
+            point2(0, 0),
+            point2(4, 0),
+            point2(0, 4),
+            point2(1, 1),
+        ],
+        triangles: vec![0, 1, 3, 0, 3, 2],
+    };
+
+    triangulation.validate().unwrap();
+    let assembly = ExactBooleanAssemblyPlan::from_region_triangulations_with_sources(
+        std::slice::from_ref(&triangulation),
+        ExactRegionSelection::KeepAll,
+        &mesh,
+        &mesh,
+    )
+    .unwrap();
+    assembly.validate_source_face_incidence(&mesh, &mesh).unwrap();
+    assembly
+        .checked_to_exact_mesh_with_sources(&mesh, &mesh, ValidationPolicy::ALLOW_BOUNDARY)
+        .unwrap();
+
+    let mut off_plane = triangulation;
+    off_plane.boundary[3] = FaceSplitBoundaryNode::FaceInterior {
+        point: point3(1, 1, 1),
+    };
+    off_plane.validate().unwrap();
+    let bad = ExactBooleanAssemblyPlan::from_region_triangulations_with_sources(
+        std::slice::from_ref(&off_plane),
+        ExactRegionSelection::KeepAll,
+        &mesh,
+        &mesh,
+    )
+    .unwrap();
+    assert!(bad.validate_source_face_incidence(&mesh, &mesh).is_err());
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn exercise_boundary_centroid_volumetric_representative() {
+    let target = ExactMesh::from_i64_triangles(
+        &[0, 0, 0, 12, 0, 0, 0, 12, 0, 0, 0, 12],
+        &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+    )
+    .unwrap();
+    let triangulation = FaceRegionTriangulation {
+        side: hypermesh::exact::MeshSide::Left,
+        face: 0,
+        projection: CoplanarProjection::Xy,
+        boundary: vec![
+            FaceSplitBoundaryNode::OriginalVertex {
+                vertex: 0,
+                point: point3(2, 1, 1),
+            },
+            FaceSplitBoundaryNode::OriginalVertex {
+                vertex: 1,
+                point: point3(14, 1, 1),
+            },
+            FaceSplitBoundaryNode::OriginalVertex {
+                vertex: 2,
+                point: point3(1, 14, 1),
+            },
+        ],
+        vertices: vec![point2(2, 1), point2(14, 1), point2(1, 14)],
+        triangles: vec![0, 1, 2],
+    };
+    let centroid = hyperlimit::Point3::new(
+        rational(17, 3),
+        rational(16, 3),
+        hypermesh::exact::ExactReal::from(1),
+    );
+    let centroid_report =
+        hypermesh::exact::classify_point_against_closed_mesh_winding_report(&centroid, &target);
+    assert_eq!(
+        centroid_report.relation,
+        hypermesh::exact::ClosedMeshWindingRelation::Boundary
+    );
+    centroid_report
+        .validate_against_sources(&centroid, &target)
+        .unwrap();
+
+    let classification =
+        hypermesh::exact::classify_triangulated_region_triangle_against_closed_mesh(
+            &triangulation,
+            [0, 1, 2],
+            &target,
+        )
+        .unwrap();
+    assert_eq!(
+        classification.relation,
+        hypermesh::exact::ExactVolumetricRegionRelation::Inside
+    );
+    classification
+        .validate_against_sources(&triangulation, &target)
+        .unwrap();
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn exercise_closed_coplanar_overlap_boundary_policy() {
+    let left = axis_aligned_box_i64([0, 0, -2], [2, 2, 0]);
+    let right = top_subdivided_axis_aligned_box_i64([0, 0, 0], [2, 2, 2]);
+
+    let graph = build_intersection_graph(&left, &right)
+        .expect("closed coplanar-contact graph should build");
+    graph.validate().expect("graph should validate locally");
+    graph
+        .validate_against_meshes(&left, &right)
+        .expect("graph should replay against sources");
+    assert!(graph.face_pairs.iter().any(|pair| {
+        pair.relation == hypermesh::exact::MeshFacePairRelation::CoplanarOverlapping
+    }));
+
+    let boundary_report = certify_boundary_touching_report(&left, &right)
+        .expect("closed coplanar contact should certify boundary policy");
+    boundary_report.validate().unwrap();
+    boundary_report
+        .validate_against_sources(&left, &right)
+        .unwrap();
+    assert_eq!(
+        boundary_report.status,
+        hypermesh::exact::ExactBoundaryTouchingStatus::Certified
+    );
+    assert!(boundary_report.blocker.coplanar_overlapping_pairs > 0);
+
+    let planar_report =
+        certify_planar_arrangement_report(&left, &right, ExactBooleanOperation::Union).unwrap();
+    planar_report.validate().unwrap();
+    planar_report
+        .validate_against_sources(&left, &right)
+        .unwrap();
+    assert_eq!(
+        planar_report.status,
+        hypermesh::exact::ExactPlanarArrangementStatus::BoundaryPolicyRequired
+    );
+
+    let preflight = preflight_boolean_exact(&left, &right, ExactBooleanOperation::Union)
+        .expect("closed coplanar contact preflight should classify boundary policy");
+    preflight.validate().unwrap();
+    preflight
+        .validate_against_sources(&left, &right)
+        .unwrap();
+    assert_eq!(
+        preflight.support,
+        ExactBooleanSupport::RequiresBoundaryPolicy
+    );
     assert!(
         hypermesh::exact::boolean_exact(
             &left,
@@ -1231,6 +1777,540 @@ fn exercise_partial_convex_union_boundary() {
         )
         .is_err()
     );
+    let shortcut = boolean_exact_with_boundary_policy(
+        &left,
+        &right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+        ExactBoundaryBooleanPolicy::PreserveSeparateShells,
+    )
+    .unwrap();
+    shortcut.validate().unwrap();
+    shortcut
+        .validate_against_sources(&left, &right)
+        .unwrap();
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn exercise_closed_vertex_touch_boundary_policy() {
+    let left = ExactMesh::from_i64_triangles(
+        &[0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 2],
+        &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+    )
+    .expect("closed vertex-touch left fixture must import");
+    let right = ExactMesh::from_i64_triangles(
+        &[0, 0, 0, -2, 0, 0, 0, -2, 0, 0, 0, -2],
+        &[0, 1, 2, 0, 3, 1, 1, 3, 2, 2, 3, 0],
+    )
+    .expect("closed vertex-touch right fixture must import");
+
+    let graph =
+        build_intersection_graph(&left, &right).expect("closed vertex-touch graph should build");
+    graph.validate().expect("graph should validate locally");
+    graph
+        .validate_against_meshes(&left, &right)
+        .expect("graph should replay against sources");
+    assert!(graph.face_pairs.iter().any(|pair| {
+        pair.relation == hypermesh::exact::MeshFacePairRelation::Candidate
+    }));
+
+    let boundary_report = certify_boundary_touching_report(&left, &right)
+        .expect("closed vertex touch should certify boundary policy");
+    boundary_report.validate().unwrap();
+    boundary_report
+        .validate_against_sources(&left, &right)
+        .unwrap();
+    assert_eq!(
+        boundary_report.status,
+        hypermesh::exact::ExactBoundaryTouchingStatus::Certified
+    );
+    assert!(boundary_report.blocker.candidate_pairs > 0);
+
+    let preflight = preflight_boolean_exact(&left, &right, ExactBooleanOperation::Union)
+        .expect("closed vertex-touch preflight should classify boundary policy");
+    preflight.validate().unwrap();
+    preflight
+        .validate_against_sources(&left, &right)
+        .unwrap();
+    assert_eq!(
+        preflight.support,
+        ExactBooleanSupport::RequiresBoundaryPolicy
+    );
+
+    let shortcut = boolean_exact_with_boundary_policy(
+        &left,
+        &right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+        ExactBoundaryBooleanPolicy::PreserveSeparateShells,
+    )
+    .unwrap();
+    shortcut.validate().unwrap();
+    shortcut
+        .validate_against_sources(&left, &right)
+        .unwrap();
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn axis_aligned_box_i64(min: [i64; 3], max: [i64; 3]) -> ExactMesh {
+    ExactMesh::from_i64_triangles(
+        &[
+            min[0], min[1], min[2], max[0], min[1], min[2], max[0], max[1], min[2], min[0],
+            max[1], min[2], min[0], min[1], max[2], max[0], min[1], max[2], max[0], max[1],
+            max[2], min[0], max[1], max[2],
+        ],
+        &[
+            0, 2, 1, 0, 3, 2, 4, 5, 6, 4, 6, 7, 0, 1, 5, 0, 5, 4, 1, 2,
+            6, 1, 6, 5, 2, 3, 7, 2, 7, 6, 3, 0, 4, 3, 4, 7,
+        ],
+    )
+    .expect("axis-aligned box fixture must import")
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn top_subdivided_axis_aligned_box_i64(min: [i64; 3], max: [i64; 3]) -> ExactMesh {
+    let mid_x = (min[0] + max[0]) / 2;
+    let mid_y = (min[1] + max[1]) / 2;
+    ExactMesh::from_i64_triangles(
+        &[
+            min[0], min[1], min[2], max[0], min[1], min[2], max[0], max[1], min[2], min[0],
+            max[1], min[2], min[0], min[1], max[2], max[0], min[1], max[2], max[0], max[1],
+            max[2], min[0], max[1], max[2], mid_x, mid_y, max[2],
+        ],
+        &[
+            0, 2, 1, 0, 3, 2, 4, 5, 8, 5, 6, 8, 6, 7, 8, 7, 4, 8, 0, 1, 5, 0, 5, 4, 1, 2,
+            6, 1, 6, 5, 2, 3, 7, 2, 7, 6, 3, 0, 4, 3, 4, 7,
+        ],
+    )
+    .expect("top-subdivided axis-aligned box fixture must import")
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn exercise_axis_aligned_coplanar_volumetric_boxes() {
+    let left = axis_aligned_box_i64([0, 0, 0], [2, 2, 2]);
+    let right = axis_aligned_box_i64([1, 0, 0], [3, 2, 2]);
+
+    let union = preflight_boolean_exact(&left, &right, ExactBooleanOperation::Union)
+        .expect("axis-aligned box union preflight should classify shortcut");
+    union.validate().unwrap();
+    assert_eq!(
+        union.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedAxisAlignedBoxUnion
+    );
+    let union_result = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("axis-aligned box union should materialize");
+    union_result
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+
+    let face_left = axis_aligned_box_i64([0, 0, 0], [2, 2, 2]);
+    let face_right = axis_aligned_box_i64([2, 0, 0], [4, 2, 2]);
+    let face_union = preflight_boolean_exact(
+        &face_left,
+        &face_right,
+        ExactBooleanOperation::Union,
+    )
+    .expect("face-adjacent axis-aligned box union preflight should classify shortcut");
+    face_union.validate().unwrap();
+    assert_eq!(
+        face_union.support,
+        ExactBooleanSupport::CertifiedAxisAlignedBoxUnion
+    );
+    let face_union_result = hypermesh::exact::boolean_exact(
+        &face_left,
+        &face_right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("face-adjacent axis-aligned box union should materialize");
+    face_union_result
+        .validate_operation_against_sources(
+            &face_left,
+            &face_right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    let face_difference = preflight_boolean_exact(
+        &face_left,
+        &face_right,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("face-adjacent axis-aligned box difference should need boundary policy");
+    face_difference.validate().unwrap();
+    assert_eq!(
+        face_difference.support,
+        ExactBooleanSupport::RequiresBoundaryPolicy
+    );
+    assert!(intersect_closed_convex_solids(&face_left, &face_right).is_none());
+    assert!(
+        hypermesh::exact::boolean_exact(
+            &face_left,
+            &face_right,
+            ExactBooleanOperation::Difference,
+            ValidationPolicy::CLOSED,
+        )
+        .is_err()
+    );
+
+    let edge_right = axis_aligned_box_i64([2, 2, 0], [4, 4, 2]);
+    assert!(intersect_closed_convex_solids(&face_left, &edge_right).is_none());
+    let edge_union = preflight_boolean_exact(&face_left, &edge_right, ExactBooleanOperation::Union)
+        .expect("edge-adjacent axis-aligned box union should remain boundary policy");
+    edge_union.validate().unwrap();
+    assert_eq!(
+        edge_union.support,
+        ExactBooleanSupport::RequiresBoundaryPolicy
+    );
+
+    let difference = preflight_boolean_exact(&left, &right, ExactBooleanOperation::Difference)
+        .expect("axis-aligned box difference preflight should classify shortcut");
+    difference.validate().unwrap();
+    assert_eq!(
+        difference.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedAxisAlignedBoxDifference
+    );
+    let difference_result = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("axis-aligned box difference should materialize");
+    difference_result
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            ExactBooleanOperation::Difference,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+
+    let split_left = axis_aligned_box_i64([0, 0, 0], [4, 2, 2]);
+    let split_right = axis_aligned_box_i64([1, 0, 0], [3, 2, 2]);
+    let split_difference =
+        preflight_boolean_exact(&split_left, &split_right, ExactBooleanOperation::Difference)
+            .expect("axis-aligned box split difference preflight should classify shortcut");
+    split_difference.validate().unwrap();
+    assert_eq!(
+        split_difference.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedAxisAlignedBoxMultiDifference
+    );
+    let split_result = hypermesh::exact::boolean_exact(
+        &split_left,
+        &split_right,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("axis-aligned box split difference should materialize");
+    split_result
+        .validate_operation_against_sources(
+            &split_left,
+            &split_right,
+            ExactBooleanOperation::Difference,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+
+    let nested_left = axis_aligned_box_i64([0, 0, 0], [4, 4, 4]);
+    let nested_right = axis_aligned_box_i64([1, 1, 1], [3, 3, 3]);
+    let nested_difference =
+        preflight_boolean_exact(&nested_left, &nested_right, ExactBooleanOperation::Difference)
+            .expect("axis-aligned box nested difference preflight should classify shortcut");
+    nested_difference.validate().unwrap();
+    assert_eq!(
+        nested_difference.support,
+        ExactBooleanSupport::CertifiedAxisAlignedBoxNestedDifference
+    );
+    let nested_result = hypermesh::exact::boolean_exact(
+        &nested_left,
+        &nested_right,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("axis-aligned box nested difference should materialize");
+    nested_result
+        .validate_operation_against_sources(
+            &nested_left,
+            &nested_right,
+            ExactBooleanOperation::Difference,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+
+    let contained_outer = axis_aligned_box_i64([0, 0, 0], [4, 4, 4]);
+    let contained_inner = axis_aligned_box_i64([1, 1, 1], [3, 3, 3]);
+    let contained_union =
+        preflight_boolean_exact(&contained_outer, &contained_inner, ExactBooleanOperation::Union)
+            .expect("axis-aligned contained box union preflight should classify shortcut");
+    contained_union.validate().unwrap();
+    assert_eq!(
+        contained_union.support,
+        ExactBooleanSupport::CertifiedAxisAlignedBoxUnion
+    );
+    let contained_union_result = hypermesh::exact::boolean_exact(
+        &contained_outer,
+        &contained_inner,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("axis-aligned contained box union should materialize");
+    contained_union_result
+        .validate_operation_against_sources(
+            &contained_outer,
+            &contained_inner,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+
+    let empty_difference =
+        preflight_boolean_exact(&contained_inner, &contained_outer, ExactBooleanOperation::Difference)
+            .expect("axis-aligned contained-left difference preflight should classify shortcut");
+    empty_difference.validate().unwrap();
+    assert_eq!(
+        empty_difference.support,
+        ExactBooleanSupport::CertifiedAxisAlignedBoxEmptyDifference
+    );
+    let empty_difference_result = hypermesh::exact::boolean_exact(
+        &contained_inner,
+        &contained_outer,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("axis-aligned contained-left difference should materialize");
+    empty_difference_result
+        .validate_operation_against_sources(
+            &contained_inner,
+            &contained_outer,
+            ExactBooleanOperation::Difference,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+
+    let boundary_touching_inner = axis_aligned_box_i64([0, 1, 1], [2, 3, 3]);
+    let boundary_touching_difference = preflight_boolean_exact(
+        &boundary_touching_inner,
+        &contained_outer,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("axis-aligned boundary-touching containment preflight should classify exactly");
+    boundary_touching_difference.validate().unwrap();
+    assert_eq!(
+        boundary_touching_difference.support,
+        ExactBooleanSupport::CertifiedAxisAlignedBoxEmptyDifference
+    );
+    let boundary_touching_result = hypermesh::exact::boolean_exact(
+        &boundary_touching_inner,
+        &contained_outer,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("axis-aligned boundary-touching contained-left difference should materialize");
+    boundary_touching_result
+        .validate_operation_against_sources(
+            &boundary_touching_inner,
+            &contained_outer,
+            ExactBooleanOperation::Difference,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+
+    let protruding_overlap = axis_aligned_box_i64([-1, 1, 1], [2, 3, 3]);
+    let protruding_difference =
+        preflight_boolean_exact(&protruding_overlap, &contained_outer, ExactBooleanOperation::Difference)
+            .expect("axis-aligned protruding overlap preflight should classify exactly");
+    protruding_difference.validate().unwrap();
+    assert_ne!(
+        protruding_difference.support,
+        ExactBooleanSupport::CertifiedAxisAlignedBoxEmptyDifference
+    );
+
+    let cell_left = axis_aligned_box_i64([0, 0, 0], [2, 2, 2]);
+    let cell_right = axis_aligned_box_i64([1, 1, 0], [3, 3, 2]);
+    let cell_union = preflight_boolean_exact(&cell_left, &cell_right, ExactBooleanOperation::Union)
+        .expect("axis-aligned box cell union preflight should classify shortcut");
+    cell_union.validate().unwrap();
+    assert_eq!(
+        cell_union.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedAxisAlignedBoxCellUnion
+    );
+    let cell_union_result = hypermesh::exact::boolean_exact(
+        &cell_left,
+        &cell_right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("axis-aligned box cell union should materialize");
+    cell_union_result
+        .validate_operation_against_sources(
+            &cell_left,
+            &cell_right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+
+    let cell_intersection = preflight_boolean_exact(
+        &cell_left,
+        &cell_right,
+        ExactBooleanOperation::Intersection,
+    )
+    .expect("axis-aligned box intersection preflight should classify shortcut");
+    cell_intersection.validate().unwrap();
+    assert_eq!(
+        cell_intersection.support,
+        ExactBooleanSupport::CertifiedAxisAlignedBoxIntersection
+    );
+    let cell_intersection_result = hypermesh::exact::boolean_exact(
+        &cell_left,
+        &cell_right,
+        ExactBooleanOperation::Intersection,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("axis-aligned box intersection should materialize");
+    cell_intersection_result
+        .validate_operation_against_sources(
+            &cell_left,
+            &cell_right,
+            ExactBooleanOperation::Intersection,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+
+    let cell_difference =
+        preflight_boolean_exact(&cell_left, &cell_right, ExactBooleanOperation::Difference)
+            .expect("axis-aligned box cell difference preflight should classify shortcut");
+    cell_difference.validate().unwrap();
+    assert_eq!(
+        cell_difference.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedAxisAlignedBoxCellDifference
+    );
+    let cell_result = hypermesh::exact::boolean_exact(
+        &cell_left,
+        &cell_right,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("axis-aligned box cell difference should materialize");
+    cell_result
+        .validate_operation_against_sources(
+            &cell_left,
+            &cell_right,
+            ExactBooleanOperation::Difference,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn exercise_mixed_coplanar_volumetric_materialization() {
+    let left = ExactMesh::from_i64_triangles(
+        &[
+            0, 0, 0, 2, 0, 0, 2, 2, 0, 0, 2, 0, 0, 0, 2, 2, 0, 2, 2, 2,
+            2, 0, 2, 2,
+        ],
+        &[
+            0, 2, 1, 0, 3, 2, 4, 5, 6, 4, 6, 7, 0, 1, 5, 0, 5, 4, 1, 2,
+            6, 1, 6, 5, 2, 3, 7, 2, 7, 6, 3, 0, 4, 3, 4, 7,
+        ],
+    )
+    .expect("mixed coplanar-volumetric left fixture must import");
+    let right = top_subdivided_axis_aligned_box_i64([1, 1, 0], [3, 3, 2]);
+
+    let graph = build_intersection_graph(&left, &right)
+        .expect("mixed coplanar-volumetric graph should build");
+    graph.validate().expect("graph should validate locally");
+    graph
+        .validate_against_meshes(&left, &right)
+        .expect("graph should replay against sources");
+    assert!(graph.face_pairs.iter().any(|pair| {
+        pair.relation == hypermesh::exact::MeshFacePairRelation::CoplanarOverlapping
+    }));
+
+    let preflight = preflight_boolean_exact(&left, &right, ExactBooleanOperation::Union)
+        .expect("mixed coplanar-volumetric preflight should classify materialization");
+    preflight.validate().unwrap();
+    preflight
+        .validate_against_sources(&left, &right)
+        .unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedWindingMaterialized
+    );
+
+    let winding = certify_winding_readiness_report(&left, &right, ExactBooleanOperation::Union)
+        .expect("mixed coplanar-volumetric winding report should classify readiness");
+    winding.validate().unwrap();
+    winding
+        .validate_against_sources(&left, &right)
+        .unwrap();
+    assert_eq!(
+        winding.status,
+        hypermesh::exact::ExactWindingReadinessStatus::Ready
+    );
+
+    let result = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("mixed coplanar-volumetric union should materialize");
+    result
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn point2(x: i64, y: i64) -> hypertri::ExactPoint {
+    hypertri::ExactPoint::new(
+        hypermesh::exact::ExactReal::from(x),
+        hypermesh::exact::ExactReal::from(y),
+    )
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn point3(x: i64, y: i64, z: i64) -> hyperlimit::Point3 {
+    hyperlimit::Point3::new(
+        hypermesh::exact::ExactReal::from(x),
+        hypermesh::exact::ExactReal::from(y),
+        hypermesh::exact::ExactReal::from(z),
+    )
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn rational(numerator: i64, denominator: i64) -> hypermesh::exact::ExactReal {
+    (hypermesh::exact::ExactReal::from(numerator)
+        / hypermesh::exact::ExactReal::from(denominator))
+    .expect("nonzero denominator")
 }
 
 fn reversed_surface_mesh(mesh: &ExactMesh) -> Option<ExactMesh> {

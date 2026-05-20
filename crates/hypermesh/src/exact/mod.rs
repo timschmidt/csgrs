@@ -8,26 +8,48 @@
 //! caches and approximate views may improve performance, but combinatorial
 //! mesh decisions must be certified or explicitly reported as unknown.
 
+pub mod adapter;
+pub mod audit;
 pub mod boolean;
 pub mod bounds;
+#[cfg(feature = "exact-triangulation")]
+pub mod box_solid;
+#[cfg(feature = "exact-triangulation")]
+pub mod cells;
 pub mod construction;
 pub mod convex;
 pub mod coplanar;
 pub mod error;
 pub mod facts;
 pub mod graph;
+pub mod handoff;
 pub mod intersection;
 pub mod mesh;
 pub mod narrow;
+pub mod package;
 pub mod predicates;
 pub mod provenance;
+pub mod readiness;
 pub mod region;
 pub mod reports;
 pub mod scalar;
 pub mod solid;
+pub mod support;
 pub mod surface;
 pub mod validation;
+pub mod view;
+#[cfg(feature = "exact-triangulation")]
+pub mod volumetric;
+pub mod winding;
 
+pub use adapter::{
+    ExactI64MeshInputReadiness, ExactI64MeshInputReport, ExactI64MeshInputReportValidationError,
+    LossyF64MeshInputReadiness, LossyF64MeshInputReport, LossyF64MeshInputReportValidationError,
+    inspect_f64_mesh_input, inspect_i64_mesh_input,
+};
+pub use audit::{
+    ExactMeshAuditError, ExactMeshAuditFreshness, ExactMeshAuditReport, audit_exact_mesh,
+};
 #[cfg(feature = "exact-triangulation")]
 pub use boolean::{
     ExactBooleanOperation, ExactBooleanPolicy, ExactBoundaryBooleanPolicy, boolean_exact,
@@ -37,6 +59,8 @@ pub use boolean::{
     preflight_boolean_exact,
 };
 pub use bounds::{AabbIntersectionKind, BoundsValidationError, ExactAabb3, MeshBounds};
+#[cfg(feature = "exact-triangulation")]
+pub use cells::{ExactFaceCellTriangulationPlan, triangulate_all_face_cells_with_cdt};
 pub use construction::{
     SegmentPlaneConstructionFailure, SegmentPlaneIntersection, SegmentPlaneParameterRatio,
     SegmentPlaneRelation, SegmentPlaneValidationError, intersect_segment_with_face_plane,
@@ -69,6 +93,11 @@ pub use graph::{
     SplitPlanDiagnosticKind, SplitPlanReportValidationError, SplitPlanValidationReport,
     build_intersection_graph,
 };
+pub use handoff::{
+    ExactSolidHandoffError, ExactSolidHandoffFreshness, ExactSolidHandoffReport,
+    ExactSurfaceHandoffError, ExactSurfaceHandoffFreshness, ExactSurfaceHandoffReport,
+    exact_solid_handoff, exact_surface_handoff,
+};
 pub use intersection::{
     MeshFacePairClassification, MeshFacePairRelation, MeshFacePairValidationError,
     classify_mesh_face_pair, classify_mesh_face_pairs,
@@ -80,16 +109,25 @@ pub use narrow::{
     classify_mesh_triangle_against_retained_face_plane, classify_triangle_against_face_plane,
     classify_triangle_triangle,
 };
+pub use package::{
+    ExactMeshConsumerDomain, ExactMeshDomainReportRef, ExactMeshDomainSummary,
+    ExactMeshDomainSummaryError, ExactMeshDomainSummaryFreshness, ExactMeshHandoffPackage,
+    ExactMeshHandoffPackageError, ExactMeshHandoffPackageFreshness, exact_mesh_handoff_package,
+};
 pub use predicates::{TriangleDegeneracy, TrianglePredicateReport};
 pub use provenance::{
     ApproximationPolicy, ConstructionProvenance, ConstructionProvenanceValidationError, MeshSource,
     PredicateUse, SourceProvenance,
 };
+pub use readiness::{
+    ExactMeshConsumerReadinessError, ExactMeshConsumerReadinessFreshness,
+    ExactMeshConsumerReadinessReport, exact_mesh_consumer_readiness,
+};
 #[cfg(feature = "exact-triangulation")]
 pub use region::{
-    ExactBooleanAssemblyPlan, ExactOutputTriangle, ExactOutputVertex, ExactRegionSelection,
-    FaceRegionTriangulation, build_selected_region_mesh,
-    checked_classify_face_regions_against_opposite_planes,
+    ExactBooleanAssemblyPlan, ExactOutputTriangle, ExactOutputTriangleOrientation,
+    ExactOutputVertex, ExactRegionRetention, ExactRegionSelection, FaceRegionTriangulation,
+    build_selected_region_mesh, checked_classify_face_regions_against_opposite_planes,
     checked_triangulate_face_regions_with_earcut, triangulate_face_regions_with_earcut,
 };
 pub use region::{
@@ -115,6 +153,11 @@ pub use solid::{
     classify_mesh_vertices_against_convex_solid_report, classify_point_against_convex_solid,
     classify_point_against_convex_solid_report,
 };
+pub use support::{
+    SupportDop3, SupportDopAxis3, SupportDopExpansionKind, SupportDopExpansionReport,
+    SupportDopRefreshReport, SupportDopValidationError, SupportSlab3, SupportWitness3,
+    support_dop_for_mesh,
+};
 #[cfg(feature = "exact-triangulation")]
 pub use surface::{
     CoplanarArrangementOperation, CoplanarConvexArrangement, CoplanarConvexHoledArrangement,
@@ -123,10 +166,12 @@ pub use surface::{
     CoplanarConvexSurfaceEquivalence, CoplanarConvexSurfaceReport,
     CoplanarConvexSurfaceReportError, CoplanarConvexSurfaceReportStatus,
     CoplanarTriangleArrangement, CoplanarTriangleHoledArrangement,
-    arrange_coplanar_convex_surface_difference, arrange_coplanar_convex_surface_holed_difference,
-    arrange_coplanar_convex_surface_intersection, arrange_coplanar_convex_surface_multi_difference,
+    arrange_coplanar_convex_surface_component_union, arrange_coplanar_convex_surface_difference,
+    arrange_coplanar_convex_surface_holed_difference, arrange_coplanar_convex_surface_intersection,
+    arrange_coplanar_convex_surface_multi_difference,
     arrange_coplanar_convex_surface_multi_holed_difference,
-    arrange_coplanar_convex_surface_multi_intersection, arrange_coplanar_convex_surface_union,
+    arrange_coplanar_convex_surface_multi_intersection,
+    arrange_coplanar_convex_surface_multi_union, arrange_coplanar_convex_surface_union,
     arrange_single_triangle_coplanar_difference, arrange_single_triangle_coplanar_holed_difference,
     arrange_single_triangle_coplanar_union, certify_coplanar_convex_surface_containment,
     certify_coplanar_convex_surface_equivalence, certify_coplanar_convex_surface_report,
@@ -143,4 +188,22 @@ pub use surface::{
 pub use validation::{
     BoundaryPolicy, ValidationPolicy, ValidationReport, validate_triangles,
     validate_triangles_with_policy,
+};
+pub use view::{
+    ApproximateMeshF64View, ApproximateMeshF64ViewError, ApproximateMeshF64ViewFreshness,
+    approximate_mesh_f64_view,
+};
+#[cfg(feature = "exact-triangulation")]
+pub use volumetric::{
+    ExactVolumetricRegionClassification, ExactVolumetricRegionError, ExactVolumetricRegionRelation,
+    classify_triangulated_region_against_closed_mesh,
+    classify_triangulated_region_triangle_against_closed_mesh,
+    classify_triangulated_regions_against_opposite_meshes,
+};
+pub use winding::{
+    ClosedMeshWindingMeshRelation, ClosedMeshWindingMeshReport, ClosedMeshWindingRelation,
+    PointMeshWindingReport, WindingRayAxis, WindingReportError,
+    classify_mesh_vertices_against_closed_mesh_winding,
+    classify_mesh_vertices_against_closed_mesh_winding_report,
+    classify_point_against_closed_mesh_winding, classify_point_against_closed_mesh_winding_report,
 };
