@@ -3,7 +3,9 @@
 
 use crate::float_types::parry3d::bounding_volume::Aabb;
 use crate::float_types::{
-    Real, hscale_matrix, htranslation_matrix, hunit_vector3, hunit_vector3_and_magnitude,
+    Real, hangle_sin_cos, hdegrees_to_radians, hpoint_centroid, hreal_affine, hreal_div,
+    hreal_mul, hreal_sub, hscale_matrix, htranslation_matrix, hunit_vector3,
+    hunit_vector3_and_magnitude, hvector3_weighted_sum,
 };
 use crate::mesh::plane::Plane;
 use nalgebra::{Matrix4, Vector3};
@@ -25,33 +27,24 @@ fn finite_scale(sx: Real, sy: Real, sz: Real) -> Option<Matrix4<Real>> {
 }
 
 fn finite_rotation_x(angle: Real) -> Option<Matrix4<Real>> {
-    let sin = angle.sin();
-    let cos = angle.cos();
-    (sin.is_finite() && cos.is_finite()).then(|| {
-        Matrix4::new(
-            1.0, 0.0, 0.0, 0.0, 0.0, cos, -sin, 0.0, 0.0, sin, cos, 0.0, 0.0, 0.0, 0.0, 1.0,
-        )
-    })
+    let (sin, cos) = hangle_sin_cos(angle)?;
+    Some(Matrix4::new(
+        1.0, 0.0, 0.0, 0.0, 0.0, cos, -sin, 0.0, 0.0, sin, cos, 0.0, 0.0, 0.0, 0.0, 1.0,
+    ))
 }
 
 fn finite_rotation_y(angle: Real) -> Option<Matrix4<Real>> {
-    let sin = angle.sin();
-    let cos = angle.cos();
-    (sin.is_finite() && cos.is_finite()).then(|| {
-        Matrix4::new(
-            cos, 0.0, sin, 0.0, 0.0, 1.0, 0.0, 0.0, -sin, 0.0, cos, 0.0, 0.0, 0.0, 0.0, 1.0,
-        )
-    })
+    let (sin, cos) = hangle_sin_cos(angle)?;
+    Some(Matrix4::new(
+        cos, 0.0, sin, 0.0, 0.0, 1.0, 0.0, 0.0, -sin, 0.0, cos, 0.0, 0.0, 0.0, 0.0, 1.0,
+    ))
 }
 
 fn finite_rotation_z(angle: Real) -> Option<Matrix4<Real>> {
-    let sin = angle.sin();
-    let cos = angle.cos();
-    (sin.is_finite() && cos.is_finite()).then(|| {
-        Matrix4::new(
-            cos, -sin, 0.0, 0.0, sin, cos, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0,
-        )
-    })
+    let (sin, cos) = hangle_sin_cos(angle)?;
+    Some(Matrix4::new(
+        cos, -sin, 0.0, 0.0, sin, cos, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0,
+    ))
 }
 
 /// Boolean operations + transformations
@@ -88,13 +81,12 @@ pub trait CSG: Sized + Clone {
     fn center(&self) -> Self {
         let aabb = self.bounding_box();
 
-        // Compute the AABB center
-        let center_x = (aabb.mins.x + aabb.maxs.x) * 0.5;
-        let center_y = (aabb.mins.y + aabb.maxs.y) * 0.5;
-        let center_z = (aabb.mins.z + aabb.maxs.z) * 0.5;
+        let Some(center) = hpoint_centroid(&[aabb.mins, aabb.maxs]) else {
+            return self.clone();
+        };
 
         // Translate so that the bounding-box center goes to the origin
-        self.translate(-center_x, -center_y, -center_z)
+        self.translate(-center.x, -center.y, -center.z)
     }
 
     /// Translates Self so that its bottommost point(s) sit exactly at z=0.
@@ -117,25 +109,33 @@ pub trait CSG: Sized + Clone {
 
     /// Rotates Self by x_degrees, y_degrees, z_degrees
     ///
-    /// Non-finite primitive angles leave geometry unchanged rather than
-    /// constructing a matrix with non-finite entries at the CAD boundary.
-    /// Finite angles are lowered directly into homogeneous matrices so the
-    /// default CAD API does not depend on nalgebra's unit-axis rotation
-    /// constructors. This is the same trigonometric rotation formula underlying
-    /// Rodrigues' theorem; see Rodrigues, "Des lois géométriques qui régissent
-    /// les déplacements d'un système solide dans l'espace," *Journal de
-    /// Mathématiques Pures et Appliquées* 5, 1840.
+    /// Primitive degree inputs are promoted into `hyperreal::Real` for the
+    /// degree-to-radian conversion and trigonometric terms before returning to
+    /// the current homogeneous `Matrix4<f64>` boundary. This keeps non-finite
+    /// angles out of transform carriers and follows Yap, "Towards Exact
+    /// Geometric Computation," *Computational Geometry* 7(1-2), 1997
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>). The matrix formula is
+    /// the same trigonometric rotation formula underlying Rodrigues' theorem;
+    /// see Rodrigues, "Des lois géométriques qui régissent les déplacements
+    /// d'un système solide dans l'espace," *Journal de Mathématiques Pures et
+    /// Appliquées* 5, 1840.
     fn rotate(&self, x_deg: Real, y_deg: Real, z_deg: Real) -> Self {
-        if !x_deg.is_finite() || !y_deg.is_finite() || !z_deg.is_finite() {
-            return self.clone();
-        }
-        let Some(rx) = finite_rotation_x(x_deg.to_radians()) else {
+        let Some(x_rad) = hdegrees_to_radians(x_deg) else {
             return self.clone();
         };
-        let Some(ry) = finite_rotation_y(y_deg.to_radians()) else {
+        let Some(y_rad) = hdegrees_to_radians(y_deg) else {
             return self.clone();
         };
-        let Some(rz) = finite_rotation_z(z_deg.to_radians()) else {
+        let Some(z_rad) = hdegrees_to_radians(z_deg) else {
+            return self.clone();
+        };
+        let Some(rx) = finite_rotation_x(x_rad) else {
+            return self.clone();
+        };
+        let Some(ry) = finite_rotation_y(y_rad) else {
+            return self.clone();
+        };
+        let Some(rz) = finite_rotation_z(z_rad) else {
             return self.clone();
         };
 
@@ -213,10 +213,9 @@ pub trait CSG: Sized + Clone {
             return self.clone();
         };
         // Adjusted offset = w / ||n||
-        let w = plane.offset() / len;
-        if !w.is_finite() {
+        let Some(w) = hreal_div(plane.offset(), len) else {
             return self.clone();
-        }
+        };
 
         // Direct Householder reflection for `n . p == w`:
         // p' = (I - 2 n n^T) p + 2 w n.
@@ -262,19 +261,27 @@ pub trait CSG: Sized + Clone {
         if !radius.is_finite() || !start_angle_deg.is_finite() || !end_angle_deg.is_finite() {
             return self.clone();
         }
-        let start_rad = start_angle_deg.to_radians();
-        let end_rad = end_angle_deg.to_radians();
-        let sweep = end_rad - start_rad;
+        let Some(start_rad) = hdegrees_to_radians(start_angle_deg) else {
+            return self.clone();
+        };
+        let Some(end_rad) = hdegrees_to_radians(end_angle_deg) else {
+            return self.clone();
+        };
+        let Some(sweep) = hreal_sub(end_rad, start_rad) else {
+            return self.clone();
+        };
 
         (0..count)
             .map(|i| {
                 let t = if count == 1 {
                     0.5
                 } else {
-                    i as Real / ((count - 1) as Real)
+                    hreal_div(i as Real, (count - 1) as Real).unwrap_or(0.0)
                 };
 
-                let angle = start_rad + t * sweep;
+                let Some(angle) = hreal_affine(start_rad, t, sweep) else {
+                    return self.clone();
+                };
                 let Some(rot) = finite_rotation_z(angle) else {
                     return self.clone();
                 };
@@ -312,7 +319,12 @@ pub trait CSG: Sized + Clone {
 
         (0..count)
             .map(|i| {
-                let offset = step * (i as Real);
+                let Some(step_index) = hreal_mul(1.0, i as Real) else {
+                    return self.clone();
+                };
+                let Some(offset) = hvector3_weighted_sum(&[step], &[step_index]) else {
+                    return self.clone();
+                };
                 let Some(trans) = finite_translation(offset) else {
                     return self.clone();
                 };
@@ -339,7 +351,16 @@ pub trait CSG: Sized + Clone {
         (0..rows)
             .flat_map(|r| {
                 (0..cols).map(move |c| {
-                    let offset = step_x * (c as Real) + step_y * (r as Real);
+                    let Some(col) = hreal_mul(1.0, c as Real) else {
+                        return self.clone();
+                    };
+                    let Some(row) = hreal_mul(1.0, r as Real) else {
+                        return self.clone();
+                    };
+                    let Some(offset) = hvector3_weighted_sum(&[step_x, step_y], &[col, row])
+                    else {
+                        return self.clone();
+                    };
                     let Some(trans) = finite_translation(offset) else {
                         return self.clone();
                     };

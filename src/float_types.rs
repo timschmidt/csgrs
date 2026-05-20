@@ -261,11 +261,7 @@ pub(crate) fn hperpendicular_basis(
 
 fn hrotation_axis_angle(axis: &Vector3<Real>, angle: Real) -> Option<Matrix4<Real>> {
     let axis = hunit_vector3(axis)?;
-    let sin = angle.sin();
-    let cos = angle.cos();
-    if !sin.is_finite() || !cos.is_finite() {
-        return None;
-    }
+    let (sin, cos) = hangle_sin_cos(angle)?;
 
     let one_minus_cos = 1.0 - cos;
     let x = axis.x;
@@ -288,6 +284,24 @@ fn hrotation_axis_angle(axis: &Vector3<Real>, angle: Real) -> Option<Matrix4<Rea
         0.0,
         0.0,
         1.0,
+    ))
+}
+
+/// Return finite sine and cosine of a public angle in radians.
+///
+/// The trigonometric functions are evaluated on `hyperreal::Real`, then
+/// exported once to the transitional scalar boundary. This is the shared path
+/// for transform matrix construction, keeping Euler/Rodrigues rotation
+/// carriers from using local primitive trig. See Yap, "Towards Exact
+/// Geometric Computation," *Computational Geometry* 7(1-2), 1997
+/// (<https://doi.org/10.1016/0925-7721(95)00040-2>) and Rodrigues, "Des lois
+/// géométriques qui régissent les déplacements d'un système solide dans
+/// l'espace," *Journal de Mathématiques Pures et Appliquées* 5, 1840.
+pub(crate) fn hangle_sin_cos(angle_radians: Real) -> Option<(Real, Real)> {
+    let angle = hreal_from_f64(angle_radians).ok()?;
+    Some((
+        hreal_to_f64(&angle.clone().sin())?,
+        hreal_to_f64(&angle.cos())?,
     ))
 }
 
@@ -692,6 +706,35 @@ pub(crate) fn hreal_div(lhs: Real, rhs: Real) -> Option<Real> {
     hreal_to_f64(&(lhs / rhs).ok()?)
 }
 
+/// Subtract two finite public boundary scalars through hyperreal arithmetic.
+pub(crate) fn hreal_sub(lhs: Real, rhs: Real) -> Option<Real> {
+    let lhs = hreal_from_f64(lhs).ok()?;
+    let rhs = hreal_from_f64(rhs).ok()?;
+    hreal_to_f64(&(lhs - rhs))
+}
+
+/// Multiply two finite public boundary scalars through hyperreal arithmetic.
+pub(crate) fn hreal_mul(lhs: Real, rhs: Real) -> Option<Real> {
+    let lhs = hreal_from_f64(lhs).ok()?;
+    let rhs = hreal_from_f64(rhs).ok()?;
+    hreal_to_f64(&(lhs * rhs))
+}
+
+/// Evaluate `origin + t * delta` through hyperreal arithmetic.
+pub(crate) fn hreal_affine(origin: Real, t: Real, delta: Real) -> Option<Real> {
+    let origin = hreal_from_f64(origin).ok()?;
+    let t = hreal_from_f64(t).ok()?;
+    let delta = hreal_from_f64(delta).ok()?;
+    hreal_to_f64(&(origin + t * delta))
+}
+
+/// Convert finite public degrees to radians through hyperreal arithmetic.
+pub(crate) fn hdegrees_to_radians(degrees: Real) -> Option<Real> {
+    let degrees = hreal_from_f64(degrees).ok()?;
+    let factor = hreal_from_f64(std::f64::consts::PI / 180.0).ok()?;
+    hreal_to_f64(&(degrees * factor))
+}
+
 /// Return the finite arithmetic mean of public boundary scalars.
 ///
 /// This is a reporting-edge helper for aggregate metrics. The input scalars
@@ -1012,6 +1055,17 @@ mod tests {
         let values = [1.0, 2.0, 3.0];
         assert_eq!(hreal_sum(&values).unwrap(), 6.0);
         assert_eq!(hreal_div(6.0, 3.0).unwrap(), 2.0);
+        assert_eq!(hreal_sub(7.0, 4.0).unwrap(), 3.0);
+        assert_eq!(hreal_mul(2.0, 3.0).unwrap(), 6.0);
+        assert_eq!(hreal_affine(1.0, 0.25, 8.0).unwrap(), 3.0);
+        assert!(hreal_f64s_within_epsilon(
+            hdegrees_to_radians(180.0).unwrap(),
+            PI,
+            tolerance()
+        ));
+        let (sin, cos) = hangle_sin_cos(FRAC_PI_2).unwrap();
+        assert!(hreal_f64s_within_epsilon(sin, 1.0, tolerance()));
+        assert!(hreal_f64s_within_epsilon(cos, 0.0, tolerance()));
         assert_eq!(hreal_mean(&values).unwrap(), 2.0);
         assert!(hreal_sample_stddev(&values).unwrap() > 0.99);
         assert_eq!(
@@ -1035,6 +1089,8 @@ mod tests {
         assert!(hvector3_mean(&[Vector3::new(Real::NAN, 0.0, 0.0)]).is_none());
         assert!(hreal_mean(&[1.0, Real::NAN]).is_none());
         assert!(hreal_sample_stddev(&[1.0, Real::INFINITY]).is_none());
+        assert!(hangle_sin_cos(Real::INFINITY).is_none());
+        assert!(hdegrees_to_radians(Real::NAN).is_none());
     }
 
     #[test]

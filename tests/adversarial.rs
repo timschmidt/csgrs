@@ -2115,6 +2115,9 @@ fn adversarial_csg_transforms_fail_closed_on_hostile_vectors() {
     let hostile_arc = mesh.distribute_arc(4, Real::INFINITY, 0.0, 90.0);
     assert_eq!(hostile_arc.bounding_box(), original_bbox);
 
+    let hostile_arc_angle = mesh.distribute_arc(4, 1.0, Real::NAN, 90.0);
+    assert_eq!(hostile_arc_angle.bounding_box(), original_bbox);
+
     let hostile_grid = mesh.distribute_grid(2, 2, 1.0, Real::NAN);
     assert_eq!(hostile_grid.bounding_box(), original_bbox);
 
