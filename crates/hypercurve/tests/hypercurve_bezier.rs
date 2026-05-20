@@ -8980,6 +8980,104 @@ fn bezier_boolean_scheduled_laminar_materialization_replays_full_certificate_cha
 }
 
 #[test]
+fn bezier_boolean_typed_laminar_materialization_covers_cubic_and_rational_conic() {
+    let schedule = BezierBooleanTraversalScheduleReport2 {
+        status: BezierBooleanTraversalScheduleStatus::Ready,
+        precondition_status: BezierBooleanTraversalPreconditionStatus::Ready,
+        first_fragment_count: 2,
+        second_fragment_count: 0,
+        steps: (0..2)
+            .map(|fragment_index| hypercurve::BezierBooleanTraversalStep2 {
+                operand: BezierBooleanTraversalOperand::First,
+                fragment_index,
+            })
+            .collect(),
+        resolved_overlap_count: 0,
+        overlap_boundary_parameter_count: 0,
+        blocker_count: 0,
+    };
+    let ownership_facts = schedule
+        .steps
+        .iter()
+        .map(|step| BezierBooleanOwnershipFact2 {
+            step: step.clone(),
+            opposite_location: BezierBooleanFragmentOwnershipLocation::Outside,
+        })
+        .collect::<Vec<_>>();
+    let graph_facts = BezierBooleanLoopGraphFacts2 {
+        emitted_step_count: 2,
+        branch_vertex_count: 0,
+        resolved_overlap_count: 0,
+    };
+    let containment_facts = [BezierBooleanLoopContainmentFact2 {
+        container_loop_index: 0,
+        contained_loop_index: 1,
+    }];
+    let roles = [
+        BezierBooleanOutputLoopRole::Material,
+        BezierBooleanOutputLoopRole::Hole,
+    ];
+    let cubic = CubicBezier2::new(point(0, 0), point(1, 0), point(2, 0), point(3, 0));
+    let Classification::Decided(cubic_fragments) =
+        BezierBooleanCubicFragmentReport2::from_parameters(&cubic, &[half()], &policy())
+    else {
+        panic!("cubic split parameters should construct decided fragments");
+    };
+    let rational = RationalQuadraticBezier2::try_unit_end_weights(
+        point(0, 0),
+        point(1, 1),
+        point(2, 0),
+        Real::one(),
+    )
+    .expect("positive weights produce a valid rational quadratic");
+    let Classification::Decided(rational_fragments) =
+        BezierBooleanRationalQuadraticFragmentReport2::from_parameters(
+            &rational,
+            &[half()],
+            &policy(),
+        )
+    else {
+        panic!("rational split parameters should construct decided fragments");
+    };
+
+    let cubic_materialized =
+        BezierBooleanMaterializedRegionReport2::from_cubic_schedule_graph_fact_walk_laminar_containment_role_facts(
+            &schedule,
+            BooleanOp::Union,
+            &ownership_facts,
+            &cubic_fragments,
+            &cubic_fragments,
+            &graph_facts,
+            &[0, 1],
+            &containment_facts,
+            &roles,
+        );
+    assert_eq!(
+        cubic_materialized.status,
+        BezierBooleanMaterializedRegionStatus::AuditBlocked
+    );
+    assert!(cubic_materialized.has_blockers());
+
+    let rational_materialized =
+        BezierBooleanMaterializedRegionReport2::from_rational_quadratic_schedule_graph_fact_walk_laminar_containment_role_facts(
+            &schedule,
+            BooleanOp::Union,
+            &ownership_facts,
+            &rational_fragments,
+            &rational_fragments,
+            &graph_facts,
+            &[0, 1],
+            &containment_facts,
+            &roles,
+        );
+    assert_eq!(
+        rational_materialized.status,
+        BezierBooleanMaterializedRegionStatus::AuditBlocked
+    );
+    assert!(rational_materialized.has_blockers());
+}
+
+#[test]
 fn bezier_boolean_output_loop_report_preserves_closure_blockers() {
     let blocked_plan = BezierBooleanLoopAssemblyPlanReport2 {
         status: BezierBooleanLoopAssemblyPlanStatus::Ready,

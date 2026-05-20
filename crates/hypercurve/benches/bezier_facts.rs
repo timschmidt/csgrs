@@ -2390,14 +2390,56 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                         &containment_facts,
                         &containment_roles,
                     );
+                let cubic_scheduled_materialized = if let hypercurve::Classification::Decided(
+                    cubic_fragments,
+                ) = &boolean_cubic_fragments
+                {
+                    Some(
+                            BezierBooleanMaterializedRegionReport2::from_cubic_schedule_graph_fact_walk_laminar_containment_role_facts(
+                                &schedule,
+                                BooleanOp::Union,
+                                &ownership_facts,
+                                cubic_fragments,
+                                cubic_fragments,
+                                &graph_facts,
+                                &walk_indices,
+                                &containment_facts,
+                                &containment_roles,
+                            ),
+                        )
+                } else {
+                    None
+                };
+                let rational_scheduled_materialized = if let hypercurve::Classification::Decided(
+                    rational_fragments,
+                ) = &boolean_rational_quadratic_fragments
+                {
+                    Some(
+                            BezierBooleanMaterializedRegionReport2::from_rational_quadratic_schedule_graph_fact_walk_laminar_containment_role_facts(
+                                &schedule,
+                                BooleanOp::Union,
+                                &ownership_facts,
+                                rational_fragments,
+                                rational_fragments,
+                                &graph_facts,
+                                &walk_indices,
+                                &containment_facts,
+                                &containment_roles,
+                            ),
+                        )
+                } else {
+                    None
+                };
                 format!(
-                    "{:?}{:?}{:?}{:?}{:?}{:?}",
+                    "{:?}{:?}{:?}{:?}{:?}{:?}{:?}{:?}",
                     containment_result,
                     role_result,
                     audit,
                     materialized,
                     laminar_materialized,
-                    scheduled_materialized
+                    scheduled_materialized,
+                    cubic_scheduled_materialized,
+                    rational_scheduled_materialized
                 )
             }
             other => format!("{other:?}"),

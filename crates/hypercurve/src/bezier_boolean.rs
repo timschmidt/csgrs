@@ -9932,6 +9932,56 @@ impl BezierBooleanMaterializedRegionReport2 {
         )
     }
 
+    /// Materializes a cubic Bezier result with graph facts and containment-certified roles.
+    pub fn from_cubic_schedule_graph_fact_walk_laminar_containment_role_facts(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        ownership_facts: &[BezierBooleanOwnershipFact2],
+        first: &BezierBooleanCubicFragmentReport2,
+        second: &BezierBooleanCubicFragmentReport2,
+        graph_facts: &BezierBooleanLoopGraphFacts2,
+        walk_indices: &[usize],
+        containment_facts: &[BezierBooleanLoopContainmentFact2],
+        roles: &[BezierBooleanOutputLoopRole],
+    ) -> Self {
+        Self::from_schedule_graph_fact_walk_laminar_containment_role_facts(
+            schedule,
+            operation,
+            ownership_facts,
+            &cubic_fragment_endpoints(&first.fragments),
+            &cubic_fragment_endpoints(&second.fragments),
+            graph_facts,
+            walk_indices,
+            containment_facts,
+            roles,
+        )
+    }
+
+    /// Materializes a rational quadratic/conic result with graph facts and containment-certified roles.
+    pub fn from_rational_quadratic_schedule_graph_fact_walk_laminar_containment_role_facts(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        ownership_facts: &[BezierBooleanOwnershipFact2],
+        first: &BezierBooleanRationalQuadraticFragmentReport2,
+        second: &BezierBooleanRationalQuadraticFragmentReport2,
+        graph_facts: &BezierBooleanLoopGraphFacts2,
+        walk_indices: &[usize],
+        containment_facts: &[BezierBooleanLoopContainmentFact2],
+        roles: &[BezierBooleanOutputLoopRole],
+    ) -> Self {
+        Self::from_schedule_graph_fact_walk_laminar_containment_role_facts(
+            schedule,
+            operation,
+            ownership_facts,
+            &rational_quadratic_fragment_endpoints(&first.fragments),
+            &rational_quadratic_fragment_endpoints(&second.fragments),
+            graph_facts,
+            walk_indices,
+            containment_facts,
+            roles,
+        )
+    }
+
     /// Materializes a higher-order region carrier from a result and containment facts.
     ///
     /// A ready result is not enough to attach holes: each hole must have a
