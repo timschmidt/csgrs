@@ -1,14 +1,15 @@
 //! Create `Mesh`s by meshing signed distance fields ([sdf](https://en.wikipedia.org/wiki/Signed_distance_function)) within a bounding box.
 
 use crate::float_types::{
-    Real, hreal_from_f64, hreal_to_f64, htriangle_area2_exceeds_epsilon, hvector3_from_point3,
-    hvector3_from_vector3,
+    F32, HReal, Real, hreal_from_f32, hreal_from_f64, hreal_sign, hreal_to_f64,
+    htriangle_area2_exceeds_epsilon, hvector3_from_point3, hvector3_from_vector3,
 };
 use crate::mesh::Mesh;
 use crate::polygon::Polygon;
 use crate::vertex::Vertex;
 use fast_surface_nets::{SurfaceNetsBuffer, surface_nets};
 use hyperlimit::Point3 as HPoint3;
+use hyperreal::RealSign;
 use hypersdf::{
     PreparedSdf, SdfExpr, SdfMeshPreviewReport, SdfPreviewGrid, SdfSamplingPrecision,
 };
@@ -137,11 +138,11 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             return (Mesh::empty(metadata), diagnostics);
         };
 
-        if hreal_from_f64(iso_value).is_err() {
+        let Ok(iso_value) = hreal_from_f64(iso_value) else {
             diagnostics.non_finite_sample_count = diagnostics.sample_count;
             diagnostics.positive_sample_count = diagnostics.sample_count;
             return (Mesh::empty(metadata), diagnostics);
-        }
+        };
 
         let Ok(grid_report) = prepared.sample_grid_preview(grid, SdfSamplingPrecision::F64)
         else {
@@ -153,10 +154,11 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         diagnostics.hypersdf_preview = Some(SdfMeshPreviewReport::surface_nets_diagnostic(
             grid_report.clone(),
         ));
-        let mut field_values = Vec::with_capacity(grid_report.samples.samples.len());
+        let mut field_values =
+            SdfSampleField::with_capacity(grid_report.samples.samples.len());
         for sample in &grid_report.samples.samples {
-            let value = sample.value.filter(|value| value.is_finite());
-            push_sdf_sample(&mut diagnostics, &mut field_values, value, iso_value);
+            let value = sample.value.and_then(|value| hreal_from_f64(value).ok());
+            push_sdf_sample(&mut diagnostics, &mut field_values, value, &iso_value);
         }
 
         mesh_from_sampled_field(
@@ -213,14 +215,15 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             return (Mesh::empty(metadata), diagnostics);
         }
 
-        // Determine grid spacing based on bounding box and resolution
-        let dx = (max_pt.x - min_pt.x) / (nx as Real - 1.0);
-        let dy = (max_pt.y - min_pt.y) / (ny as Real - 1.0);
-        let dz = (max_pt.z - min_pt.z) / (nz as Real - 1.0);
-
         // Allocate storage for field values:
         let array_size = (nx * ny * nz) as usize;
-        let mut field_values = Vec::with_capacity(array_size);
+        let mut field_values = SdfSampleField::with_capacity(array_size);
+        let Some(grid) = SamplingGrid::from_bounds(min_pt, max_pt, nx, ny, nz, iso_value)
+        else {
+            diagnostics.non_finite_sample_count = diagnostics.sample_count;
+            diagnostics.positive_sample_count = diagnostics.sample_count;
+            return (Mesh::empty(metadata), diagnostics);
+        };
 
         // Sample the SDF at each grid cell with optimized iteration pattern:
         // **Mathematical Foundation**: For SDF f(p), we sample at regular intervals
@@ -233,18 +236,17 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             let iy = remainder / nx;
             let ix = remainder % nx;
 
-            let xf = min_pt.x + (ix as Real) * dx;
-            let yf = min_pt.y + (iy as Real) * dy;
-            let zf = min_pt.z + (iz as Real) * dz;
-
-            let p = Point3::new(xf, yf, zf);
+            let Some(p) = grid.point_at(ix, iy, iz) else {
+                push_sdf_sample(&mut diagnostics, &mut field_values, None, &grid.iso);
+                continue;
+            };
             let sdf_val = sdf(&p);
 
             push_sdf_sample(
                 &mut diagnostics,
                 &mut field_values,
-                hreal_from_f64(sdf_val).ok().and(Some(sdf_val)),
-                iso_value,
+                hreal_from_f64(sdf_val).ok(),
+                &grid.iso,
             );
         }
 
@@ -261,42 +263,135 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     }
 }
 
+#[derive(Clone, Debug)]
+struct SdfSampleField {
+    hyper_values: Vec<HReal>,
+    surface_nets_values: Vec<F32>,
+}
+
+impl SdfSampleField {
+    fn with_capacity(capacity: usize) -> Self {
+        Self {
+            hyper_values: Vec::with_capacity(capacity),
+            surface_nets_values: Vec::with_capacity(capacity),
+        }
+    }
+
+    fn push_hyper_sample(&mut self, shifted: HReal) -> bool {
+        let Some(surface_value) = surface_nets_scalar(&shifted) else {
+            self.push_nonfinite_sample();
+            return false;
+        };
+        self.hyper_values.push(shifted);
+        self.surface_nets_values.push(surface_value);
+        true
+    }
+
+    fn push_nonfinite_sample(&mut self) {
+        let sentinel = hreal_from_f64(1.0e10).expect("finite SDF sentinel");
+        self.hyper_values.push(sentinel);
+        self.surface_nets_values.push(1.0e10_f32);
+    }
+}
+
+#[derive(Clone, Debug)]
+struct SamplingGrid {
+    origin: HPoint3,
+    step: HPoint3,
+    iso: HReal,
+}
+
+impl SamplingGrid {
+    fn from_bounds(
+        min_pt: Point3<Real>,
+        max_pt: Point3<Real>,
+        nx: u32,
+        ny: u32,
+        nz: u32,
+        iso_value: Real,
+    ) -> Option<Self> {
+        let origin = hpoint3_from_point3(&min_pt)?;
+        let max = hpoint3_from_point3(&max_pt)?;
+        let step = HPoint3::new(
+            ((max.x - origin.x.clone()) / hreal_from_f64(nx as Real - 1.0).ok()?).ok()?,
+            ((max.y - origin.y.clone()) / hreal_from_f64(ny as Real - 1.0).ok()?).ok()?,
+            ((max.z - origin.z.clone()) / hreal_from_f64(nz as Real - 1.0).ok()?).ok()?,
+        );
+        Some(Self {
+            origin,
+            step,
+            iso: hreal_from_f64(iso_value).ok()?,
+        })
+    }
+
+    fn point_at(&self, ix: u32, iy: u32, iz: u32) -> Option<Point3<Real>> {
+        let x =
+            self.origin.x.clone() + self.step.x.clone() * hreal_from_f64(ix as Real).ok()?;
+        let y =
+            self.origin.y.clone() + self.step.y.clone() * hreal_from_f64(iy as Real).ok()?;
+        let z =
+            self.origin.z.clone() + self.step.z.clone() * hreal_from_f64(iz as Real).ok()?;
+        point3_from_hpoint3(&HPoint3::new(x, y, z))
+    }
+
+    fn point_from_surface_position(&self, position: [F32; 3]) -> Option<Point3<Real>> {
+        let x =
+            self.origin.x.clone() + self.step.x.clone() * hreal_from_f32(position[0]).ok()?;
+        let y =
+            self.origin.y.clone() + self.step.y.clone() * hreal_from_f32(position[1]).ok()?;
+        let z =
+            self.origin.z.clone() + self.step.z.clone() * hreal_from_f32(position[2]).ok()?;
+        point3_from_hpoint3(&HPoint3::new(x, y, z))
+    }
+}
+
 fn push_sdf_sample(
     diagnostics: &mut SdfDiagnostics,
-    field_values: &mut Vec<f32>,
-    value: Option<Real>,
-    iso_value: Real,
+    field_values: &mut SdfSampleField,
+    value: Option<HReal>,
+    iso_value: &HReal,
 ) {
     if let Some(sdf_val) = value {
+        let shifted = sdf_val.clone() - iso_value.clone();
+        if !field_values.push_hyper_sample(shifted.clone()) {
+            diagnostics.non_finite_sample_count += 1;
+            diagnostics.positive_sample_count += 1;
+            return;
+        }
+        let Some(sdf_val_f64) = hreal_to_f64(&sdf_val) else {
+            diagnostics.non_finite_sample_count += 1;
+            diagnostics.positive_sample_count += 1;
+            return;
+        };
         diagnostics.finite_sample_count += 1;
         diagnostics.min_finite_value = Some(
             diagnostics
                 .min_finite_value
-                .map_or(sdf_val, |current| current.min(sdf_val)),
+                .map_or(sdf_val_f64, |current| current.min(sdf_val_f64)),
         );
         diagnostics.max_finite_value = Some(
             diagnostics
                 .max_finite_value
-                .map_or(sdf_val, |current| current.max(sdf_val)),
+                .map_or(sdf_val_f64, |current| current.max(sdf_val_f64)),
         );
-        let shifted = sdf_val - iso_value;
-        if shifted < 0.0 {
-            diagnostics.negative_sample_count += 1;
-        } else if shifted > 0.0 {
-            diagnostics.positive_sample_count += 1;
-        } else {
-            diagnostics.zero_sample_count += 1;
+        match hreal_sign(&shifted) {
+            Some(RealSign::Negative) => diagnostics.negative_sample_count += 1,
+            Some(RealSign::Positive) => diagnostics.positive_sample_count += 1,
+            Some(RealSign::Zero) => diagnostics.zero_sample_count += 1,
+            None => {
+                diagnostics.non_finite_sample_count += 1;
+                diagnostics.positive_sample_count += 1;
+            },
         }
-        field_values.push(shifted as f32);
     } else {
         diagnostics.non_finite_sample_count += 1;
         diagnostics.positive_sample_count += 1;
-        field_values.push(1e10_f32);
+        field_values.push_nonfinite_sample();
     }
 }
 
 fn mesh_from_sampled_field<M: Clone + Debug + Send + Sync>(
-    field_values: Vec<f32>,
+    field_values: SdfSampleField,
     min_pt: Point3<Real>,
     max_pt: Point3<Real>,
     nx: u32,
@@ -305,9 +400,11 @@ fn mesh_from_sampled_field<M: Clone + Debug + Send + Sync>(
     metadata: M,
     mut diagnostics: SdfDiagnostics,
 ) -> (Mesh<M>, SdfDiagnostics) {
-    let dx = (max_pt.x - min_pt.x) / (nx as Real - 1.0);
-    let dy = (max_pt.y - min_pt.y) / (ny as Real - 1.0);
-    let dz = (max_pt.z - min_pt.z) / (nz as Real - 1.0);
+    let Some(grid) = SamplingGrid::from_bounds(min_pt, max_pt, nx, ny, nz, 0.0) else {
+        diagnostics.non_finite_sample_count = diagnostics.sample_count;
+        diagnostics.positive_sample_count = diagnostics.sample_count;
+        return (Mesh::empty(metadata), diagnostics);
+    };
 
     // The shape describing our discrete grid for Surface Nets:
     #[derive(Clone, Copy)]
@@ -348,7 +445,8 @@ fn mesh_from_sampled_field<M: Clone + Debug + Send + Sync>(
     }
 
     let shape = GridShape { nx, ny, nz };
-    diagnostics.crossing_cell_count = count_crossing_cells(&field_values, nx, ny, nz);
+    diagnostics.crossing_cell_count =
+        count_crossing_cells(&field_values.hyper_values, nx, ny, nz);
 
     // `SurfaceNetsBuffer` collects the positions, normals, and triangle indices
     let mut sn_buffer = SurfaceNetsBuffer::default();
@@ -360,7 +458,7 @@ fn mesh_from_sampled_field<M: Clone + Debug + Send + Sync>(
 
     // Run surface nets
     surface_nets(
-        &field_values,
+        &field_values.surface_nets_values,
         &shape,
         [0, 0, 0],
         [max_x, max_y, max_z],
@@ -381,32 +479,36 @@ fn mesh_from_sampled_field<M: Clone + Debug + Send + Sync>(
         let p1i = sn_buffer.positions[i1];
         let p2i = sn_buffer.positions[i2];
 
-        // Convert from [u32; 3] to real coordinates:
-        let p0 = Point3::new(
-            min_pt.x + p0i[0] as Real * dx,
-            min_pt.y + p0i[1] as Real * dy,
-            min_pt.z + p0i[2] as Real * dz,
-        );
-        let p1 = Point3::new(
-            min_pt.x + p1i[0] as Real * dx,
-            min_pt.y + p1i[1] as Real * dy,
-            min_pt.z + p1i[2] as Real * dz,
-        );
-        let p2 = Point3::new(
-            min_pt.x + p2i[0] as Real * dx,
-            min_pt.y + p2i[1] as Real * dy,
-            min_pt.z + p2i[2] as Real * dz,
-        );
+        let Some(p0) = grid.point_from_surface_position(p0i) else {
+            diagnostics.skipped_non_finite_triangle_count += 1;
+            continue;
+        };
+        let Some(p1) = grid.point_from_surface_position(p1i) else {
+            diagnostics.skipped_non_finite_triangle_count += 1;
+            continue;
+        };
+        let Some(p2) = grid.point_from_surface_position(p2i) else {
+            diagnostics.skipped_non_finite_triangle_count += 1;
+            continue;
+        };
 
         // Retrieve precomputed normal from Surface Nets:
         let n0 = sn_buffer.normals[i0];
         let n1 = sn_buffer.normals[i1];
         let n2 = sn_buffer.normals[i2];
 
-        // Normals come out as [f32;3] – promote to `Real`
-        let n0v = Vector3::new(n0[0] as Real, n0[1] as Real, n0[2] as Real);
-        let n1v = Vector3::new(n1[0] as Real, n1[1] as Real, n1[2] as Real);
-        let n2v = Vector3::new(n2[0] as Real, n2[1] as Real, n2[2] as Real);
+        let Some(n0v) = vector3_from_f32_boundary(n0) else {
+            diagnostics.skipped_non_finite_triangle_count += 1;
+            continue;
+        };
+        let Some(n1v) = vector3_from_f32_boundary(n1) else {
+            diagnostics.skipped_non_finite_triangle_count += 1;
+            continue;
+        };
+        let Some(n2v) = vector3_from_f32_boundary(n2) else {
+            diagnostics.skipped_non_finite_triangle_count += 1;
+            continue;
+        };
 
         if !(finite_point3(&p0)
             && finite_point3(&p1)
@@ -424,9 +526,9 @@ fn mesh_from_sampled_field<M: Clone + Debug + Send + Sync>(
             diagnostics.degenerate_triangle_count += 1;
         }
 
-        let v0 = Vertex::new(p0, Vector3::new(n0[0] as Real, n0[1] as Real, n0[2] as Real));
-        let v1 = Vertex::new(p1, Vector3::new(n1[0] as Real, n1[1] as Real, n1[2] as Real));
-        let v2 = Vertex::new(p2, Vector3::new(n2[0] as Real, n2[1] as Real, n2[2] as Real));
+        let v0 = Vertex::new(p0, n0v);
+        let v1 = Vertex::new(p1, n1v);
+        let v2 = Vertex::new(p2, n2v);
 
         // Note: reverse v1, v2 if you need to fix winding
         let poly = Polygon::new(vec![v0, v1, v2], metadata.clone());
@@ -445,18 +547,8 @@ fn hypersdf_grid(
     ny: u32,
     nz: u32,
 ) -> Option<SdfPreviewGrid> {
-    let dx = (max_pt.x - min_pt.x) / (nx as Real - 1.0);
-    let dy = (max_pt.y - min_pt.y) / (ny as Real - 1.0);
-    let dz = (max_pt.z - min_pt.z) / (nz as Real - 1.0);
-    Some(SdfPreviewGrid::new(
-        hpoint3_from_point3(&min_pt)?,
-        HPoint3::new(
-            hreal_from_f64(dx).ok()?,
-            hreal_from_f64(dy).ok()?,
-            hreal_from_f64(dz).ok()?,
-        ),
-        [nx, ny, nz],
-    ))
+    let grid = SamplingGrid::from_bounds(min_pt, max_pt, nx, ny, nz, 0.0)?;
+    Some(SdfPreviewGrid::new(grid.origin, grid.step, [nx, ny, nz]))
 }
 
 fn hpoint3_from_point3(point: &Point3<Real>) -> Option<HPoint3> {
@@ -486,7 +578,41 @@ fn finite_vector3(vector: &Vector3<Real>) -> bool {
     hvector3_from_vector3(vector).is_some()
 }
 
-fn count_crossing_cells(field_values: &[f32], nx: u32, ny: u32, nz: u32) -> usize {
+fn surface_nets_scalar(value: &HReal) -> Option<F32> {
+    let sign = hreal_sign(value)?;
+    let boundary = hreal_to_f64(value)?;
+    let value = boundary as F32;
+    let value = if value == 0.0 {
+        match sign {
+            RealSign::Negative => -F32::MIN_POSITIVE,
+            RealSign::Positive => F32::MIN_POSITIVE,
+            RealSign::Zero => 0.0,
+        }
+    } else if value.is_infinite() {
+        match sign {
+            RealSign::Negative => -F32::MAX,
+            RealSign::Positive => F32::MAX,
+            RealSign::Zero => 0.0,
+        }
+    } else {
+        value
+    };
+    hreal_from_f32(value).ok()?;
+    Some(value)
+}
+
+fn vector3_from_f32_boundary(vector: [F32; 3]) -> Option<Vector3<Real>> {
+    let x = hreal_from_f32(vector[0]).ok()?;
+    let y = hreal_from_f32(vector[1]).ok()?;
+    let z = hreal_from_f32(vector[2]).ok()?;
+    Some(Vector3::new(
+        hreal_to_f64(&x)?,
+        hreal_to_f64(&y)?,
+        hreal_to_f64(&z)?,
+    ))
+}
+
+fn count_crossing_cells(field_values: &[HReal], nx: u32, ny: u32, nz: u32) -> usize {
     if nx < 2 || ny < 2 || nz < 2 {
         return 0;
     }
@@ -498,18 +624,19 @@ fn count_crossing_cells(field_values: &[f32], nx: u32, ny: u32, nz: u32) -> usiz
         for y in 0..(ny - 1) {
             for x in 0..(nx - 1) {
                 let corners = [
-                    field_values[index(x, y, z)],
-                    field_values[index(x + 1, y, z)],
-                    field_values[index(x, y + 1, z)],
-                    field_values[index(x + 1, y + 1, z)],
-                    field_values[index(x, y, z + 1)],
-                    field_values[index(x + 1, y, z + 1)],
-                    field_values[index(x, y + 1, z + 1)],
-                    field_values[index(x + 1, y + 1, z + 1)],
+                    &field_values[index(x, y, z)],
+                    &field_values[index(x + 1, y, z)],
+                    &field_values[index(x, y + 1, z)],
+                    &field_values[index(x + 1, y + 1, z)],
+                    &field_values[index(x, y, z + 1)],
+                    &field_values[index(x + 1, y, z + 1)],
+                    &field_values[index(x, y + 1, z + 1)],
+                    &field_values[index(x + 1, y + 1, z + 1)],
                 ];
-                let has_negative = corners.iter().any(|value| *value < 0.0);
-                let has_positive = corners.iter().any(|value| *value > 0.0);
-                let has_zero = corners.contains(&0.0);
+                let signs = corners.map(hreal_sign);
+                let has_negative = signs.contains(&Some(RealSign::Negative));
+                let has_positive = signs.contains(&Some(RealSign::Positive));
+                let has_zero = signs.contains(&Some(RealSign::Zero));
                 if (has_negative && has_positive) || has_zero {
                     count += 1;
                 }
