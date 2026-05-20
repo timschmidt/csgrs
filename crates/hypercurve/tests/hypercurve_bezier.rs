@@ -8458,7 +8458,7 @@ fn bezier_boolean_loop_containment_facts_derive_transitive_depths() {
 }
 
 #[test]
-fn bezier_boolean_loop_containment_facts_block_stale_self_duplicate_and_cyclic_pairs() {
+fn bezier_boolean_loop_containment_facts_block_impossible_topology() {
     let output = ready_two_loop_output_report();
 
     let stale = BezierBooleanLoopContainmentFactReport2::from_output_loop_containment_facts(
@@ -8543,6 +8543,64 @@ fn bezier_boolean_loop_containment_facts_block_stale_self_duplicate_and_cyclic_p
         BezierBooleanResultStatus::RegionAssemblyBlocked
     );
     assert!(result.has_blockers());
+
+    let three_loop_output = BezierBooleanOutputLoopReport2 {
+        status: BezierBooleanOutputLoopStatus::Ready,
+        closure_status: BezierBooleanLoopClosureStatus::Closed,
+        operation: BooleanOp::Union,
+        directed_fragments: Vec::new(),
+        loops: (0..3)
+            .map(|loop_index| hypercurve::BezierBooleanOutputLoop2 {
+                first_directed_fragment_index: loop_index,
+                directed_fragment_count: 1,
+                anchor: point(loop_index as i32, 0),
+            })
+            .collect(),
+        closed_loop_count: 3,
+        directed_fragment_count: 3,
+        open_chain_count: 0,
+        adjacency_gap_count: 0,
+        invalid_reference_count: 0,
+        blocker_count: 0,
+    };
+    let non_laminar = BezierBooleanLoopContainmentFactReport2::from_output_loop_containment_facts(
+        &three_loop_output,
+        &[
+            BezierBooleanLoopContainmentFact2 {
+                container_loop_index: 0,
+                contained_loop_index: 2,
+            },
+            BezierBooleanLoopContainmentFact2 {
+                container_loop_index: 1,
+                contained_loop_index: 2,
+            },
+        ],
+    );
+    assert_eq!(
+        non_laminar.status,
+        BezierBooleanLoopContainmentFactStatus::NonLaminarContainmentFacts
+    );
+    assert!(non_laminar.has_blockers());
+    assert_eq!(non_laminar.non_laminar_fact_count, 1);
+
+    let non_laminar_result = BezierBooleanResultReport2::from_output_loop_containment_facts(
+        &three_loop_output,
+        &[
+            BezierBooleanLoopContainmentFact2 {
+                container_loop_index: 0,
+                contained_loop_index: 2,
+            },
+            BezierBooleanLoopContainmentFact2 {
+                container_loop_index: 1,
+                contained_loop_index: 2,
+            },
+        ],
+    );
+    assert_eq!(
+        non_laminar_result.status,
+        BezierBooleanResultStatus::RegionAssemblyBlocked
+    );
+    assert!(non_laminar_result.has_blockers());
 }
 
 #[test]
@@ -11387,6 +11445,52 @@ proptest! {
             BezierBooleanLoopContainmentFactStatus::CyclicContainmentFacts
         );
         prop_assert!(report.has_blockers());
+    }
+
+    #[test]
+    fn generated_bezier_boolean_loop_containment_facts_block_non_laminar_pairs(
+        loop_count in 3_usize..8,
+    ) {
+        let output = BezierBooleanOutputLoopReport2 {
+            status: BezierBooleanOutputLoopStatus::Ready,
+            closure_status: BezierBooleanLoopClosureStatus::Closed,
+            operation: BooleanOp::Union,
+            directed_fragments: Vec::new(),
+            loops: (0..loop_count)
+                .map(|loop_index| hypercurve::BezierBooleanOutputLoop2 {
+                    first_directed_fragment_index: loop_index,
+                    directed_fragment_count: 1,
+                    anchor: point(loop_index as i32, 0),
+                })
+                .collect(),
+            closed_loop_count: loop_count,
+            directed_fragment_count: loop_count,
+            open_chain_count: 0,
+            adjacency_gap_count: 0,
+            invalid_reference_count: 0,
+            blocker_count: 0,
+        };
+        let report =
+            BezierBooleanLoopContainmentFactReport2::from_output_loop_containment_facts(
+                &output,
+                &[
+                    BezierBooleanLoopContainmentFact2 {
+                        container_loop_index: 0,
+                        contained_loop_index: loop_count - 1,
+                    },
+                    BezierBooleanLoopContainmentFact2 {
+                        container_loop_index: 1,
+                        contained_loop_index: loop_count - 1,
+                    },
+                ],
+            );
+
+        prop_assert_eq!(
+            report.status,
+            BezierBooleanLoopContainmentFactStatus::NonLaminarContainmentFacts
+        );
+        prop_assert!(report.has_blockers());
+        prop_assert!(report.non_laminar_fact_count > 0);
     }
 
     #[test]

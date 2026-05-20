@@ -1129,6 +1129,8 @@ pub enum BezierBooleanLoopContainmentFactStatus {
     DuplicateContainmentFact,
     /// The supplied containment graph contains a directed cycle.
     CyclicContainmentFacts,
+    /// Two certified containers of the same loop are not nested with each other.
+    NonLaminarContainmentFacts,
 }
 
 /// Validated containment facts and derived nesting depths for output loops.
@@ -1136,10 +1138,14 @@ pub enum BezierBooleanLoopContainmentFactStatus {
 /// This is a certificate-validation layer, not a geometric containment solver.
 /// A future exact loop-containment predicate supplies pair facts; this report
 /// validates their loop indices, rejects self-containment, duplicate ordered
-/// pairs, and directed cycles, and derives one nesting-depth fact per output
-/// loop by counting transitive certified containers. A cycle would claim that
-/// distinct Jordan loops mutually contain each other, which is impossible for
-/// exact containment. Transitive depth derivation lets an exact locator provide
+/// pairs, directed cycles, and non-laminar shared containers, and derives one
+/// nesting-depth fact per output loop by counting transitive certified
+/// containers. A cycle would claim that distinct Jordan loops mutually contain
+/// each other, which is impossible for exact containment. If two loops both
+/// contain a third loop, exact Jordan containment requires those two containers
+/// to be nested with each other; otherwise the certificate is describing
+/// crossing/overlapping filled interiors that should have been resolved before
+/// nesting. Transitive depth derivation lets an exact locator provide
 /// immediate-parent facts without also enumerating every ancestor relation. The
 /// separation matches the nesting/fill phases of Vatti (1992),
 /// Greiner-Hormann (1998), and Martinez-Rueda-Feito (2009). Yap (1997) is the
@@ -1169,6 +1175,8 @@ pub struct BezierBooleanLoopContainmentFactReport2 {
     pub duplicate_fact_count: usize,
     /// Number of detected directed containment cycles.
     pub cyclic_fact_count: usize,
+    /// Number of non-laminar container-pair conflicts.
+    pub non_laminar_fact_count: usize,
     /// Number of blocking preconditions retained by this report.
     pub blocker_count: usize,
 }
@@ -4955,6 +4963,7 @@ impl BezierBooleanLoopContainmentFactReport2 {
                     0,
                     0,
                     0,
+                    0,
                 );
             }
             BezierBooleanOutputLoopStatus::NoInteriorSplits => {
@@ -4962,6 +4971,7 @@ impl BezierBooleanLoopContainmentFactReport2 {
                     BezierBooleanLoopContainmentFactStatus::NoInteriorSplits,
                     output,
                     facts.len(),
+                    0,
                     0,
                     0,
                     0,
@@ -4979,6 +4989,7 @@ impl BezierBooleanLoopContainmentFactReport2 {
                     0,
                     0,
                     0,
+                    0,
                     output.blocker_count.max(1),
                 );
             }
@@ -4987,6 +4998,7 @@ impl BezierBooleanLoopContainmentFactReport2 {
                     BezierBooleanLoopContainmentFactStatus::NoEmittedFragments,
                     output,
                     facts.len(),
+                    0,
                     0,
                     0,
                     0,
@@ -5013,6 +5025,7 @@ impl BezierBooleanLoopContainmentFactReport2 {
                 0,
                 0,
                 0,
+                0,
                 out_of_range_fact_count,
             );
         }
@@ -5028,6 +5041,7 @@ impl BezierBooleanLoopContainmentFactReport2 {
                 facts.len(),
                 0,
                 self_containment_count,
+                0,
                 0,
                 0,
                 self_containment_count,
@@ -5049,6 +5063,7 @@ impl BezierBooleanLoopContainmentFactReport2 {
                 0,
                 0,
                 duplicate_fact_count,
+                0,
                 0,
                 duplicate_fact_count,
             );
@@ -5075,7 +5090,61 @@ impl BezierBooleanLoopContainmentFactReport2 {
                 0,
                 0,
                 cyclic_fact_count,
+                0,
                 cyclic_fact_count,
+            );
+        }
+
+        let mut non_laminar_fact_count = 0_usize;
+        for contained_loop_index in 0..loop_count {
+            let containers = (0..loop_count)
+                .filter(|&candidate_container_index| {
+                    candidate_container_index != contained_loop_index && {
+                        let mut visited = vec![false; loop_count];
+                        containment_reaches_loop(
+                            candidate_container_index,
+                            contained_loop_index,
+                            &adjacency,
+                            &mut visited,
+                        )
+                    }
+                })
+                .collect::<Vec<_>>();
+            for first_container_position in 0..containers.len() {
+                for second_container_position in first_container_position + 1..containers.len() {
+                    let first_container_index = containers[first_container_position];
+                    let second_container_index = containers[second_container_position];
+                    let mut first_visited = vec![false; loop_count];
+                    let first_contains_second = containment_reaches_loop(
+                        first_container_index,
+                        second_container_index,
+                        &adjacency,
+                        &mut first_visited,
+                    );
+                    let mut second_visited = vec![false; loop_count];
+                    let second_contains_first = containment_reaches_loop(
+                        second_container_index,
+                        first_container_index,
+                        &adjacency,
+                        &mut second_visited,
+                    );
+                    if !first_contains_second && !second_contains_first {
+                        non_laminar_fact_count += 1;
+                    }
+                }
+            }
+        }
+        if non_laminar_fact_count > 0 {
+            return Self::empty_like(
+                BezierBooleanLoopContainmentFactStatus::NonLaminarContainmentFacts,
+                output,
+                facts.len(),
+                0,
+                0,
+                0,
+                0,
+                non_laminar_fact_count,
+                non_laminar_fact_count,
             );
         }
 
@@ -5119,6 +5188,7 @@ impl BezierBooleanLoopContainmentFactReport2 {
             self_containment_count: 0,
             duplicate_fact_count: 0,
             cyclic_fact_count: 0,
+            non_laminar_fact_count: 0,
             blocker_count: 0,
         }
     }
@@ -5131,6 +5201,7 @@ impl BezierBooleanLoopContainmentFactReport2 {
         self_containment_count: usize,
         duplicate_fact_count: usize,
         cyclic_fact_count: usize,
+        non_laminar_fact_count: usize,
         blocker_count: usize,
     ) -> Self {
         Self {
@@ -5145,6 +5216,7 @@ impl BezierBooleanLoopContainmentFactReport2 {
             self_containment_count,
             duplicate_fact_count,
             cyclic_fact_count,
+            non_laminar_fact_count,
             blocker_count,
         }
     }
@@ -5163,6 +5235,7 @@ impl BezierBooleanLoopContainmentFactReport2 {
                 | BezierBooleanLoopContainmentFactStatus::SelfContainment
                 | BezierBooleanLoopContainmentFactStatus::DuplicateContainmentFact
                 | BezierBooleanLoopContainmentFactStatus::CyclicContainmentFacts
+                | BezierBooleanLoopContainmentFactStatus::NonLaminarContainmentFacts
         )
     }
 }
