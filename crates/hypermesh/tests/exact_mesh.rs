@@ -8893,10 +8893,57 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
+    let multi_cutter = hypermesh::exact::arrange_coplanar_convex_surface_multi_difference(
+        &wide_left,
+        &two_cutters_one_component,
+    )
+    .expect("two full-span rectangular cutters should split one left component");
+    multi_cutter.validate().unwrap();
+    multi_cutter
+        .validate_against_sources(&wide_left, &two_cutters_one_component)
+        .unwrap();
+    assert_eq!(multi_cutter.polygons.len(), 4);
+    assert!(multi_cutter.polygons.iter().any(|polygon| {
+        polygon
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(0)))
+            && polygon
+                .iter()
+                .any(|point| real_eq(&point.x, &ExactReal::from(1)))
+    }));
+    assert!(multi_cutter.polygons.iter().any(|polygon| {
+        polygon
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(2)))
+            && polygon
+                .iter()
+                .any(|point| real_eq(&point.x, &ExactReal::from(4)))
+    }));
+    assert!(multi_cutter.polygons.iter().any(|polygon| {
+        polygon
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(5)))
+            && polygon
+                .iter()
+                .any(|point| real_eq(&point.x, &ExactReal::from(6)))
+    }));
+
+    let partial_height_cutters = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            1, 0, 0, 2, 0, 0, 2, 1, 0, 1, 1, 0, //
+            4, -1, 0, 5, -1, 0, 5, 3, 0, 4, 3, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
     assert!(
         hypermesh::exact::arrange_coplanar_convex_surface_multi_difference(
             &wide_left,
-            &two_cutters_one_component,
+            &partial_height_cutters,
         )
         .is_none()
     );

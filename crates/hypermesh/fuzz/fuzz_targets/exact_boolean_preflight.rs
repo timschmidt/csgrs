@@ -1770,12 +1770,32 @@ fn exercise_component_coplanar_difference() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .expect("same-left double-cutter right fixture must import");
+    let same_component_multi_cutter = arrange_coplanar_convex_surface_multi_difference(
+        &wide_left,
+        &two_cutters_one_component,
+    )
+    .expect("full-span double cutter should split one retained component exactly");
+    same_component_multi_cutter.validate().unwrap();
+    same_component_multi_cutter
+        .validate_against_sources(&wide_left, &two_cutters_one_component)
+        .unwrap();
+    assert_eq!(same_component_multi_cutter.polygons.len(), 4);
+
+    let partial_height_cutters = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            1, 0, 0, 2, 0, 0, 2, 1, 0, 1, 1, 0, //
+            4, -1, 0, 5, -1, 0, 5, 3, 0, 4, 3, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("partial-height double-cutter right fixture must import");
     assert!(
-        arrange_coplanar_convex_surface_multi_difference(
-            &wide_left,
-            &two_cutters_one_component,
-        )
-        .is_none()
+        arrange_coplanar_convex_surface_multi_difference(&wide_left, &partial_height_cutters)
+            .is_none()
     );
 
     let holed_left = ExactMesh::from_i64_triangles_with_policy(

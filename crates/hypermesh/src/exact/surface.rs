@@ -3163,12 +3163,13 @@ fn arrange_coplanar_convex_surface_multi_difference_convex(
 /// The left and right operands are decomposed by exact source topology into
 /// disjoint connected convex sheets, and each left component is subtracted
 /// independently. A left component is retained unchanged only after exact
-/// separation from every right component; a partially cut component must have
-/// exactly one effective right cutter and replay through the existing convex
-/// difference certificates. Boundary-only contacts, holes, nonconvex
-/// components, and several cutters hitting the same left component still
-/// return `None` so the general arrangement layer remains explicit. This
-/// follows Yap, "Towards Exact Geometric Computation,"
+/// separation from every right component. A partially cut component replays
+/// through the existing convex difference certificates when there is one
+/// cutter, or through the bounded rectangle-slab certificate when several
+/// disjoint cutters span the component on one projected axis. Boundary-only
+/// contacts, holes, nonconvex components, and non-rectangular multi-cutter
+/// interactions still return `None` so the general arrangement layer remains
+/// explicit. This follows Yap, "Towards Exact Geometric Computation,"
 /// *Computational Geometry* 7.1-2 (1997): the shortcut promotes output loops
 /// only from retained exact component, containment, intersection, and area
 /// evidence, never from sampled polygon surgery.
@@ -3184,9 +3185,6 @@ fn arrange_coplanar_convex_surface_component_difference(
     }
 
     let left_components = connected_face_component_meshes(left)?;
-    if left_components.len() < 2 {
-        return None;
-    }
     let right_components = connected_face_component_meshes(right)?;
     if right_components.is_empty() {
         return None;
@@ -3231,7 +3229,8 @@ fn arrange_coplanar_convex_surface_component_difference(
 
     let mut polygons = Vec::new();
     for component in &mut left_components {
-        let mut action = ComponentDifferenceAction::Retain;
+        let mut drop_component = false;
+        let mut cutter_indices = Vec::new();
         for (right_index, right_component) in right_components.iter().enumerate() {
             if polygons_equal(&component.hull, &right_component.hull)
                 || polygon_in_closed_convex_polygon(
@@ -3240,10 +3239,10 @@ fn arrange_coplanar_convex_surface_component_difference(
                     projection,
                 )?
             {
-                if action != ComponentDifferenceAction::Retain {
+                if drop_component || !cutter_indices.is_empty() {
                     return None;
                 }
-                action = ComponentDifferenceAction::Drop;
+                drop_component = true;
                 continue;
             }
             if polygon_in_closed_convex_polygon(&right_component.hull, &component.hull, projection)?
@@ -3259,18 +3258,20 @@ fn arrange_coplanar_convex_surface_component_difference(
                 ConvexUnionComponentRelation::Disjoint => {}
                 ConvexUnionComponentRelation::BoundaryOnly => return None,
                 ConvexUnionComponentRelation::PositiveArea => {
-                    if action != ComponentDifferenceAction::Retain {
+                    if drop_component {
                         return None;
                     }
-                    action = ComponentDifferenceAction::Cut(right_index);
+                    cutter_indices.push(right_index);
                 }
             }
         }
-        match action {
-            ComponentDifferenceAction::Retain => polygons.push(component.hull.clone()),
-            ComponentDifferenceAction::Drop => {}
-            ComponentDifferenceAction::Cut(right_index) => {
-                let right_component = &right_components[right_index];
+        if drop_component {
+            continue;
+        }
+        match cutter_indices.as_slice() {
+            [] => polygons.push(component.hull.clone()),
+            [right_index] => {
+                let right_component = &right_components[*right_index];
                 if let Some(difference) = arrange_coplanar_convex_surface_difference(
                     &component.mesh,
                     &right_component.mesh,
@@ -3286,6 +3287,18 @@ fn arrange_coplanar_convex_surface_component_difference(
                 } else {
                     return None;
                 }
+            }
+            _ => {
+                let cutters = cutter_indices
+                    .iter()
+                    .map(|&index| right_components[index].hull.clone())
+                    .collect::<Vec<_>>();
+                let mut remnants = materialize_rectangle_multi_cutter_difference(
+                    &component.hull,
+                    &cutters,
+                    projection,
+                )?;
+                polygons.append(&mut remnants);
             }
         }
     }
@@ -3312,12 +3325,165 @@ fn arrange_coplanar_convex_surface_component_difference(
     Some(arrangement)
 }
 
+/// Materialize a bounded multi-cutter rectangle difference.
+///
+/// This is a deliberately small substitute for general planar subdivision:
+/// the left component must be an exact projected axis-aligned rectangle, every
+/// cutter must be an exact rectangle on the same retained plane, and all
+/// cutters must span the left rectangle on one fixed projected axis. The
+/// output is then the exact interval difference along the other axis, emitted
+/// as independent rectangle loops. This follows Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997): topology is promoted
+/// only from exact retained interval facts. The rectangle-cell viewpoint is a
+/// bounded orthogonal subdivision; see de Berg, Cheong, van Kreveld, and
+/// Overmars, *Computational Geometry: Algorithms and Applications*, 3rd ed.
+/// (2008), Chapter 2.
 #[cfg(feature = "exact-triangulation")]
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-enum ComponentDifferenceAction {
-    Retain,
-    Drop,
-    Cut(usize),
+fn materialize_rectangle_multi_cutter_difference(
+    left: &[Point3],
+    cutters: &[Vec<Point3>],
+    projection: CoplanarProjection,
+) -> Option<Vec<Vec<Point3>>> {
+    if cutters.len() < 2 {
+        return None;
+    }
+    let left_rect = projected_axis_aligned_rectangle(left, projection)?;
+    let cutter_rects = cutters
+        .iter()
+        .map(|cutter| projected_axis_aligned_rectangle(cutter, projection))
+        .collect::<Option<Vec<_>>>()?;
+    if !cutter_rects
+        .iter()
+        .all(|rect| real_equal(&rect.dropped, &left_rect.dropped))
+    {
+        return None;
+    }
+
+    rectangle_multi_cutter_difference_polygons(
+        &left_rect,
+        &cutter_rects,
+        projection,
+        StripVariableAxis::U,
+    )
+    .or_else(|| {
+        rectangle_multi_cutter_difference_polygons(
+            &left_rect,
+            &cutter_rects,
+            projection,
+            StripVariableAxis::V,
+        )
+    })
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn rectangle_multi_cutter_difference_polygons(
+    left: &ProjectedRectangle,
+    cutters: &[ProjectedRectangle],
+    projection: CoplanarProjection,
+    variable_axis: StripVariableAxis,
+) -> Option<Vec<Vec<Point3>>> {
+    let left_fixed_min = strip_fixed_min(left, variable_axis);
+    let left_fixed_max = strip_fixed_max(left, variable_axis);
+    let left_variable_min = strip_variable_min(left, variable_axis);
+    let left_variable_max = strip_variable_max(left, variable_axis);
+    let mut cutter_intervals = Vec::with_capacity(cutters.len());
+    for cutter in cutters {
+        if real_order(strip_fixed_min(cutter, variable_axis), left_fixed_min)? == Ordering::Greater
+            || real_order(strip_fixed_max(cutter, variable_axis), left_fixed_max)? == Ordering::Less
+        {
+            return None;
+        }
+        let cut_min = exact_max_real(strip_variable_min(cutter, variable_axis), left_variable_min)?;
+        let cut_max = exact_min_real(strip_variable_max(cutter, variable_axis), left_variable_max)?;
+        if real_order(&cut_min, &cut_max)? != Ordering::Less {
+            return None;
+        }
+        cutter_intervals.push((cut_min, cut_max));
+    }
+    sort_intervals_by_min(&mut cutter_intervals)?;
+
+    let mut retained_intervals = Vec::new();
+    let mut cursor = left_variable_min.clone();
+    for (cut_min, cut_max) in cutter_intervals {
+        match real_order(&cut_min, &cursor)? {
+            Ordering::Less => return None,
+            Ordering::Equal => {}
+            Ordering::Greater => retained_intervals.push((cursor.clone(), cut_min)),
+        }
+        if real_order(&cut_max, &cursor)? == Ordering::Greater {
+            cursor = cut_max;
+        }
+    }
+    if real_order(&cursor, left_variable_max)? == Ordering::Less {
+        retained_intervals.push((cursor, left_variable_max.clone()));
+    }
+    if retained_intervals.is_empty() {
+        return None;
+    }
+
+    retained_intervals
+        .into_iter()
+        .map(|(min, max)| {
+            rectangle_interval_polygon(
+                left,
+                projection,
+                variable_axis,
+                left_fixed_min,
+                left_fixed_max,
+                &min,
+                &max,
+            )
+        })
+        .collect()
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn rectangle_interval_polygon(
+    left: &ProjectedRectangle,
+    projection: CoplanarProjection,
+    variable_axis: StripVariableAxis,
+    fixed_min: &ExactReal,
+    fixed_max: &ExactReal,
+    variable_min: &ExactReal,
+    variable_max: &ExactReal,
+) -> Option<Vec<Point3>> {
+    if real_order(variable_min, variable_max)? != Ordering::Less
+        || real_order(fixed_min, fixed_max)? != Ordering::Less
+    {
+        return None;
+    }
+    let (min, max) = match variable_axis {
+        StripVariableAxis::U => (
+            Point2::new(variable_min.clone(), fixed_min.clone()),
+            Point2::new(variable_max.clone(), fixed_max.clone()),
+        ),
+        StripVariableAxis::V => (
+            Point2::new(fixed_min.clone(), variable_min.clone()),
+            Point2::new(fixed_max.clone(), variable_max.clone()),
+        ),
+    };
+    Some(vec![
+        point_from_projection(&min.x, &min.y, &left.dropped, projection),
+        point_from_projection(&max.x, &min.y, &left.dropped, projection),
+        point_from_projection(&max.x, &max.y, &left.dropped, projection),
+        point_from_projection(&min.x, &max.y, &left.dropped, projection),
+    ])
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn exact_min_real(left: &ExactReal, right: &ExactReal) -> Option<ExactReal> {
+    match real_order(left, right)? {
+        Ordering::Less | Ordering::Equal => Some(left.clone()),
+        Ordering::Greater => Some(right.clone()),
+    }
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn exact_max_real(left: &ExactReal, right: &ExactReal) -> Option<ExactReal> {
+    match real_order(left, right)? {
+        Ordering::Greater | Ordering::Equal => Some(left.clone()),
+        Ordering::Less => Some(right.clone()),
+    }
 }
 
 /// Certify a mixed component/holed coplanar difference.
