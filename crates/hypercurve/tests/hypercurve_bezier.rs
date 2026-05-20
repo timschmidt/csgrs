@@ -7635,6 +7635,98 @@ fn bezier_boolean_operand_locations_depth_role_facts_block_stale_roles() {
 }
 
 #[test]
+fn bezier_boolean_quadratic_operand_location_depth_role_wrappers_block_stale_roles() {
+    let schedule = BezierBooleanTraversalScheduleReport2 {
+        status: BezierBooleanTraversalScheduleStatus::Ready,
+        precondition_status: BezierBooleanTraversalPreconditionStatus::Ready,
+        first_fragment_count: 2,
+        second_fragment_count: 0,
+        steps: vec![
+            hypercurve::BezierBooleanTraversalStep2 {
+                operand: BezierBooleanTraversalOperand::First,
+                fragment_index: 0,
+            },
+            hypercurve::BezierBooleanTraversalStep2 {
+                operand: BezierBooleanTraversalOperand::First,
+                fragment_index: 1,
+            },
+        ],
+        resolved_overlap_count: 0,
+        overlap_boundary_parameter_count: 0,
+        blocker_count: 0,
+    };
+    let first = BezierBooleanQuadraticFragmentReport2 {
+        status: BezierBooleanFragmentConstructionStatus::Ready,
+        readiness_status: BezierBooleanConstructionReadinessStatus::Ready,
+        source_parameter_count: 0,
+        endpoint_parameter_count: 0,
+        out_of_range_parameter_count: 0,
+        inserted_parameter_count: 0,
+        inserted_parameters: Vec::new(),
+        fragments: vec![
+            QuadraticBezier2::new(point(0, 0), point(1, 0), point(1, 0)),
+            QuadraticBezier2::new(point(1, 0), point(0, 0), point(0, 0)),
+        ],
+    };
+    let second = BezierBooleanQuadraticFragmentReport2 {
+        status: BezierBooleanFragmentConstructionStatus::Ready,
+        readiness_status: BezierBooleanConstructionReadinessStatus::Ready,
+        source_parameter_count: 0,
+        endpoint_parameter_count: 0,
+        out_of_range_parameter_count: 0,
+        inserted_parameter_count: 0,
+        inserted_parameters: Vec::new(),
+        fragments: Vec::new(),
+    };
+    let first_locations = [
+        BezierBooleanFragmentOwnershipLocation::Outside,
+        BezierBooleanFragmentOwnershipLocation::Outside,
+    ];
+    let second_locations = [];
+    let depth_facts = [BezierBooleanLoopNestingDepthFact2 {
+        loop_index: 0,
+        nesting_depth: 0,
+    }];
+    let graph_facts = BezierBooleanLoopGraphFacts2 {
+        emitted_step_count: 2,
+        branch_vertex_count: 0,
+        resolved_overlap_count: 0,
+    };
+
+    let ready =
+        BezierBooleanResultReport2::from_quadratic_schedule_operand_locations_linear_identity_depth_role_facts(
+            &schedule,
+            BooleanOp::Union,
+            &first_locations,
+            &second_locations,
+            &first,
+            &second,
+            &depth_facts,
+            &[BezierBooleanOutputLoopRole::Material],
+        );
+    assert_eq!(ready.status, BezierBooleanResultStatus::Ready);
+
+    let stale =
+        BezierBooleanResultReport2::from_quadratic_schedule_operand_locations_graph_fact_walk_depth_role_facts(
+            &schedule,
+            BooleanOp::Union,
+            &first_locations,
+            &second_locations,
+            &first,
+            &second,
+            &graph_facts,
+            &[0, 1],
+            &depth_facts,
+            &[BezierBooleanOutputLoopRole::Hole],
+        );
+    assert_eq!(
+        stale.status,
+        BezierBooleanResultStatus::RegionAssemblyBlocked
+    );
+    assert!(stale.has_blockers());
+}
+
+#[test]
 fn bezier_boolean_result_consumes_operand_locations_linear_identity_containment_facts() {
     let schedule = BezierBooleanTraversalScheduleReport2 {
         status: BezierBooleanTraversalScheduleStatus::Ready,
