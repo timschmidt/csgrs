@@ -81,6 +81,9 @@ fuzz_target!(|bytes: &[u8]| {
         let radius = decode_boundary_real(bytes, &mut idx);
         balls.push(MetaBall::new(center, radius));
     }
+    if bytes[idx % bytes.len()] & 1 == 1 {
+        balls.push(MetaBall::new(Point3::new(0.0, 0.0, 0.0), 1.0e-25));
+    }
 
     let iso_value = decode_boundary_real(bytes, &mut idx);
     let padding = decode_boundary_real(bytes, &mut idx);
