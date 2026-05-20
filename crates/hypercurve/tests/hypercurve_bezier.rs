@@ -30,6 +30,7 @@ use hypercurve::{
     BezierBooleanRationalQuadraticFragmentReport2, BezierBooleanRegionAssemblyReport2,
     BezierBooleanRegionAssemblyStatus, BezierBooleanResultReport2, BezierBooleanResultStatus,
     BezierBooleanRootIsolationHandoffReport2, BezierBooleanRootIsolationHandoffStatus,
+    BezierBooleanRootIsolationReplayReport2, BezierBooleanRootIsolationReplayStatus,
     BezierBooleanSplitInsertionStatus, BezierBooleanSplitPlanAuditStatus,
     BezierBooleanSplitPlanReport2, BezierBooleanSplitPlanStatus, BezierBooleanTraversalOperand,
     BezierBooleanTraversalPreconditionReport2, BezierBooleanTraversalPreconditionStatus,
@@ -4681,6 +4682,93 @@ fn bezier_boolean_root_isolation_handoff_accepts_path_scheduler_range_spans() {
         BezierBooleanRootIsolationHandoffStatus::BlockedByContactClassification
     );
     assert!(blocked_handoff.has_blockers());
+}
+
+#[test]
+fn bezier_boolean_root_isolation_replay_accepts_hypersolve_parameters() {
+    let range = BezierPathRangeOrderReport2::from_graph_order(
+        &BezierMonotoneGraphOrder::IntersectsOrTouches {
+            parameters: Vec::new(),
+            spans: vec![span(ratio(1, 4), ratio(1, 2))],
+        },
+    );
+    let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &[range]);
+
+    let replay = match BezierBooleanRootIsolationReplayReport2::from_hypersolve_roots(
+        &scheduler,
+        &[],
+        &[half()],
+        &policy(),
+    ) {
+        Classification::Decided(report) => report,
+        Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
+    };
+
+    assert_eq!(
+        replay.status,
+        BezierBooleanRootIsolationReplayStatus::ReadyForSplitEvents
+    );
+    assert!(replay.can_feed_split_events());
+    assert!(!replay.has_blockers());
+    assert_eq!(replay.required_isolation_count, 1);
+    assert_eq!(replay.supplied_isolation_count, 1);
+    assert_eq!(replay.missing_isolation_count, 0);
+    assert_eq!(replay.out_of_range_parameter_count, 0);
+    assert_eq!(
+        replay.split_plan.status,
+        BezierBooleanSplitPlanStatus::Ready
+    );
+    assert_eq!(replay.split_plan.shared_range_parameters, vec![half()]);
+
+    let insertion = match replay.split_plan.insertion_report(&policy()) {
+        Classification::Decided(report) => report,
+        Classification::Uncertain(reason) => panic!("unexpected insertion uncertainty: {reason:?}"),
+    };
+    assert_eq!(insertion.status, BezierBooleanSplitInsertionStatus::Ready);
+    assert_eq!(insertion.shared_range_interior_parameters, vec![half()]);
+}
+
+#[test]
+fn bezier_boolean_root_isolation_replay_blocks_missing_and_out_of_range_roots() {
+    let range = BezierPathRangeOrderReport2::from_graph_order(
+        &BezierMonotoneGraphOrder::IntersectsOrTouches {
+            parameters: Vec::new(),
+            spans: vec![span(ratio(1, 4), ratio(1, 2))],
+        },
+    );
+    let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &[range]);
+
+    let missing = match BezierBooleanRootIsolationReplayReport2::from_hypersolve_roots(
+        &scheduler,
+        &[],
+        &[],
+        &policy(),
+    ) {
+        Classification::Decided(report) => report,
+        Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
+    };
+    assert_eq!(
+        missing.status,
+        BezierBooleanRootIsolationReplayStatus::MissingIsolatedRoots
+    );
+    assert!(missing.has_blockers());
+    assert_eq!(missing.missing_isolation_count, 1);
+
+    let out_of_range = match BezierBooleanRootIsolationReplayReport2::from_hypersolve_roots(
+        &scheduler,
+        &[],
+        &[ratio(5, 4)],
+        &policy(),
+    ) {
+        Classification::Decided(report) => report,
+        Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
+    };
+    assert_eq!(
+        out_of_range.status,
+        BezierBooleanRootIsolationReplayStatus::InvalidParameterDomain
+    );
+    assert!(out_of_range.has_blockers());
+    assert_eq!(out_of_range.out_of_range_parameter_count, 1);
 }
 
 #[test]
@@ -10393,6 +10481,48 @@ proptest! {
         prop_assert_eq!(root_handoff.range_isolating_span_count, span_count);
         prop_assert!(root_handoff.can_feed_hypersolve());
         prop_assert!(!root_handoff.has_blockers());
+    }
+
+    #[test]
+    fn generated_bezier_boolean_root_isolation_replay_counts_range_roots(
+        span_count in 1_usize..8,
+    ) {
+        let reports = (0..span_count)
+            .map(|index| {
+                BezierPathRangeOrderReport2::from_graph_order(
+                    &BezierMonotoneGraphOrder::IntersectsOrTouches {
+                        parameters: Vec::new(),
+                        spans: vec![span(ratio(index as i32 + 1, 32), ratio(index as i32 + 2, 32))],
+                    },
+                )
+            })
+            .collect::<Vec<_>>();
+        let roots = (0..span_count)
+            .map(|index| ratio(index as i32 + 1, 16))
+            .collect::<Vec<_>>();
+        let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &reports);
+
+        let replay = match BezierBooleanRootIsolationReplayReport2::from_hypersolve_roots(
+            &scheduler,
+            &[],
+            &roots,
+            &policy(),
+        ) {
+            Classification::Decided(report) => report,
+            Classification::Uncertain(reason) => {
+                prop_assert!(false, "unexpected uncertainty: {reason:?}");
+                return Ok(());
+            }
+        };
+
+        prop_assert_eq!(
+            replay.status,
+            BezierBooleanRootIsolationReplayStatus::ReadyForSplitEvents
+        );
+        prop_assert_eq!(replay.required_isolation_count, span_count);
+        prop_assert_eq!(replay.supplied_isolation_count, span_count);
+        prop_assert_eq!(replay.split_plan.range_event_count, span_count);
+        prop_assert!(replay.can_feed_split_events());
     }
 
     #[test]

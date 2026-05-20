@@ -92,6 +92,7 @@ pub use bezier_boolean::{
     BezierBooleanRegionAssemblyReport2, BezierBooleanRegionAssemblyStatus,
     BezierBooleanResolvedOverlapEvent2, BezierBooleanResultReport2, BezierBooleanResultStatus,
     BezierBooleanRootIsolationHandoffReport2, BezierBooleanRootIsolationHandoffStatus,
+    BezierBooleanRootIsolationReplayReport2, BezierBooleanRootIsolationReplayStatus,
     BezierBooleanSplitInsertionReport2, BezierBooleanSplitInsertionStatus,
     BezierBooleanSplitParameterLocation, BezierBooleanSplitPlanAuditReport2,
     BezierBooleanSplitPlanAuditStatus, BezierBooleanSplitPlanReport2, BezierBooleanSplitPlanStatus,

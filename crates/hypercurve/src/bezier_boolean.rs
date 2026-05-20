@@ -1903,6 +1903,67 @@ pub struct BezierBooleanSplitPlanReport2 {
     pub uncertainty_reason: Option<UncertaintyReason>,
 }
 
+/// Replay status for exact roots returned by `hypersolve`.
+///
+/// Root isolation is only a proposal stage for boolean topology. `hypersolve`
+/// may certify that roots are isolated, but `hypercurve` still requires exact
+/// represented parameters before split insertion. This status follows Yap,
+/// "Towards Exact Geometric Computation" (1997): algebraic work may advance a
+/// construction only when its combinatorial preconditions become explicit
+/// object facts, not primitive-float samples.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum BezierBooleanRootIsolationReplayStatus {
+    /// No scheduler or isolation work exists.
+    Empty,
+    /// No root-isolation replay was needed.
+    NotNeeded,
+    /// The handoff still has an earlier blocker.
+    HandoffBlocked,
+    /// `hypersolve` did not supply enough represented roots for the frontier.
+    MissingIsolatedRoots,
+    /// At least one supplied represented root lies outside the Bezier unit domain.
+    InvalidParameterDomain,
+    /// Exact represented roots can now feed split insertion.
+    ReadyForSplitEvents,
+}
+
+/// Audit report for consuming exact roots returned by `hypersolve`.
+///
+/// This is the dependency-free replay seam between `hypersolve` root isolation
+/// and `hypercurve` boolean construction. The report consumes a
+/// [`BezierBooleanPathSchedulerReport2`] plus exact represented parameters
+/// recovered from isolation. It then builds a split plan only if every retained
+/// positive-width Bezier region and monotone-range isolating span has a
+/// represented root in `[0, 1]`. The algorithmic contract is the
+/// Sturm/Collins-Loos exact real-root isolation model: intervals or
+/// multiplicity certificates are solver evidence, but boolean split insertion
+/// receives exact parameters. This preserves Yap's predicate/construction
+/// boundary and keeps Greiner-Hormann/Martinez-Rueda-Feito traversal stages
+/// from seeing unrepresented algebraic intervals.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BezierBooleanRootIsolationReplayReport2 {
+    /// Coarse replay status.
+    pub status: BezierBooleanRootIsolationReplayStatus,
+    /// Handoff status that authorized or blocked the replay.
+    pub handoff_status: BezierBooleanRootIsolationHandoffStatus,
+    /// Scheduler status before replay.
+    pub scheduler_status: BezierBooleanPathSchedulerStatus,
+    /// Split plan assembled from existing represented events plus isolated roots.
+    pub split_plan: BezierBooleanSplitPlanReport2,
+    /// Number of root-isolation obligations retained by the handoff.
+    pub required_isolation_count: usize,
+    /// Number of represented roots supplied by the caller.
+    pub supplied_isolation_count: usize,
+    /// Number of still-missing represented roots.
+    pub missing_isolation_count: usize,
+    /// Number of supplied represented roots outside `[0, 1]`.
+    pub out_of_range_parameter_count: usize,
+    /// Number of blocking preconditions retained by this replay.
+    pub blocker_count: usize,
+    /// First explicit primitive uncertainty reason retained by the scheduler.
+    pub uncertainty_reason: Option<UncertaintyReason>,
+}
+
 /// Audit status for a Bezier boolean split plan.
 ///
 /// This audit is deliberately small: it certifies only the API-level invariant
@@ -12071,6 +12132,190 @@ impl BezierBooleanRootIsolationHandoffReport2 {
                 | BezierBooleanRootIsolationHandoffStatus::BlockedByUnresolved
                 | BezierBooleanRootIsolationHandoffStatus::BlockedByUncertainty
         )
+    }
+}
+
+impl BezierBooleanRootIsolationReplayReport2 {
+    /// Replays exact represented roots returned by `hypersolve`.
+    ///
+    /// The caller supplies exact relation point events and exact monotone-range
+    /// parameters after running root isolation. This method validates only the
+    /// boolean-facing obligations: every retained frontier has a represented
+    /// root, every represented parameter is inside the Bezier unit interval,
+    /// and earlier handoff blockers remain blockers. It intentionally does not
+    /// call `hypersolve` directly; `hypercurve` owns topology, while
+    /// `hypersolve` owns the Sturm/Collins-Loos-style isolation proof package.
+    pub fn from_hypersolve_roots(
+        scheduler: &BezierBooleanPathSchedulerReport2,
+        isolated_relation_events: &[BezierBooleanPointEvent2],
+        isolated_range_parameters: &[Real],
+        policy: &CurvePolicy,
+    ) -> Classification<Self> {
+        let handoff = BezierBooleanRootIsolationHandoffReport2::from_path_scheduler(scheduler);
+        let required_isolation_count =
+            handoff.terminal_region_count + handoff.range_isolating_span_count;
+        let supplied_isolation_count =
+            isolated_relation_events.len() + isolated_range_parameters.len();
+        let split_plan = Self::split_plan_from_replay(
+            scheduler,
+            isolated_relation_events,
+            isolated_range_parameters,
+            BezierBooleanSplitPlanStatus::Blocked,
+        );
+        let mut report = Self {
+            status: BezierBooleanRootIsolationReplayStatus::HandoffBlocked,
+            handoff_status: handoff.status,
+            scheduler_status: scheduler.status,
+            split_plan,
+            required_isolation_count,
+            supplied_isolation_count,
+            missing_isolation_count: required_isolation_count
+                .saturating_sub(supplied_isolation_count),
+            out_of_range_parameter_count: 0,
+            blocker_count: handoff.blocker_count,
+            uncertainty_reason: scheduler.uncertainty_reason,
+        };
+
+        match handoff.status {
+            BezierBooleanRootIsolationHandoffStatus::Empty => {
+                report.status = BezierBooleanRootIsolationReplayStatus::Empty;
+                report.split_plan = BezierBooleanSplitPlanReport2::from_scheduler(scheduler);
+                report.blocker_count = 0;
+                return Classification::Decided(report);
+            }
+            BezierBooleanRootIsolationHandoffStatus::NotNeeded => {
+                report.status = BezierBooleanRootIsolationReplayStatus::NotNeeded;
+                report.split_plan = BezierBooleanSplitPlanReport2::from_scheduler(scheduler);
+                report.blocker_count = 0;
+                return Classification::Decided(report);
+            }
+            BezierBooleanRootIsolationHandoffStatus::SplitEventsReady => {
+                report.status = BezierBooleanRootIsolationReplayStatus::ReadyForSplitEvents;
+                report.split_plan = BezierBooleanSplitPlanReport2::from_scheduler(scheduler);
+                report.blocker_count = 0;
+                return Classification::Decided(report);
+            }
+            BezierBooleanRootIsolationHandoffStatus::ReadyForHypersolve => {}
+            BezierBooleanRootIsolationHandoffStatus::BlockedByParameterRecovery
+            | BezierBooleanRootIsolationHandoffStatus::BlockedByOverlapResolver
+            | BezierBooleanRootIsolationHandoffStatus::BlockedByUnresolved
+            | BezierBooleanRootIsolationHandoffStatus::BlockedByContactClassification
+            | BezierBooleanRootIsolationHandoffStatus::BlockedByMonotoneDecomposition
+            | BezierBooleanRootIsolationHandoffStatus::BlockedByUncertainty => {
+                report.blocker_count = handoff.blocker_count.max(1);
+                return Classification::Decided(report);
+            }
+        }
+
+        if report.missing_isolation_count > 0 {
+            report.status = BezierBooleanRootIsolationReplayStatus::MissingIsolatedRoots;
+            report.blocker_count = report.missing_isolation_count;
+            return Classification::Decided(report);
+        }
+
+        let out_of_range = match Self::count_out_of_range_parameters(
+            isolated_relation_events,
+            isolated_range_parameters,
+            policy,
+        ) {
+            Classification::Decided(count) => count,
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        };
+        report.split_plan = Self::split_plan_from_replay(
+            scheduler,
+            isolated_relation_events,
+            isolated_range_parameters,
+            BezierBooleanSplitPlanStatus::Ready,
+        );
+        report.out_of_range_parameter_count = out_of_range;
+        if out_of_range > 0 {
+            report.status = BezierBooleanRootIsolationReplayStatus::InvalidParameterDomain;
+            report.blocker_count = out_of_range;
+        } else {
+            report.status = BezierBooleanRootIsolationReplayStatus::ReadyForSplitEvents;
+            report.blocker_count = 0;
+        }
+        Classification::Decided(report)
+    }
+
+    /// Returns true when replay produced a ready split plan.
+    pub fn can_feed_split_events(&self) -> bool {
+        self.status == BezierBooleanRootIsolationReplayStatus::ReadyForSplitEvents
+            && self.split_plan.is_ready()
+    }
+
+    /// Returns true when replay still needs an earlier exact stage.
+    pub fn has_blockers(&self) -> bool {
+        matches!(
+            self.status,
+            BezierBooleanRootIsolationReplayStatus::HandoffBlocked
+                | BezierBooleanRootIsolationReplayStatus::MissingIsolatedRoots
+                | BezierBooleanRootIsolationReplayStatus::InvalidParameterDomain
+        )
+    }
+
+    fn split_plan_from_replay(
+        scheduler: &BezierBooleanPathSchedulerReport2,
+        isolated_relation_events: &[BezierBooleanPointEvent2],
+        isolated_range_parameters: &[Real],
+        status: BezierBooleanSplitPlanStatus,
+    ) -> BezierBooleanSplitPlanReport2 {
+        let mut first_curve_parameters = scheduler
+            .relation_point_events
+            .iter()
+            .map(|event| event.first_param.clone())
+            .collect::<Vec<_>>();
+        let mut second_curve_parameters = scheduler
+            .relation_point_events
+            .iter()
+            .map(|event| event.second_param.clone())
+            .collect::<Vec<_>>();
+        let mut shared_range_parameters = scheduler.range_split_parameters.clone();
+
+        first_curve_parameters.extend(
+            isolated_relation_events
+                .iter()
+                .map(|event| event.first_param.clone()),
+        );
+        second_curve_parameters.extend(
+            isolated_relation_events
+                .iter()
+                .map(|event| event.second_param.clone()),
+        );
+        shared_range_parameters.extend(isolated_range_parameters.iter().cloned());
+
+        BezierBooleanSplitPlanReport2 {
+            status,
+            scheduler_status: scheduler.status,
+            first_curve_parameters,
+            second_curve_parameters,
+            shared_range_parameters,
+            relation_event_count: scheduler.relation_point_events.len()
+                + isolated_relation_events.len(),
+            range_event_count: scheduler.range_split_parameters.len()
+                + isolated_range_parameters.len(),
+            uncertainty_reason: scheduler.uncertainty_reason,
+        }
+    }
+
+    fn count_out_of_range_parameters(
+        isolated_relation_events: &[BezierBooleanPointEvent2],
+        isolated_range_parameters: &[Real],
+        policy: &CurvePolicy,
+    ) -> Classification<usize> {
+        let mut out_of_range = 0;
+        for parameter in isolated_relation_events
+            .iter()
+            .flat_map(|event| [&event.first_param, &event.second_param])
+            .chain(isolated_range_parameters.iter())
+        {
+            match parameter_in_unit_interval(parameter, policy) {
+                Some(true) => {}
+                Some(false) => out_of_range += 1,
+                None => return Classification::Uncertain(UncertaintyReason::Ordering),
+            }
+        }
+        Classification::Decided(out_of_range)
     }
 }
 
