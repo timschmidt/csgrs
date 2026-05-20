@@ -175,6 +175,26 @@ fn too_high_iso_value_reports_no_crossings_or_triangles() {
 }
 
 #[test]
+fn tiny_positive_metaball_samples_keep_hyperreal_sign_before_surface_nets() {
+    let balls = [MetaBall::new(Point3::new(0.0, 0.0, 0.0), 1.0e-25)];
+    let (mesh, diagnostics) = Mesh::<&'static str>::metaballs_with_diagnostics(
+        &balls,
+        (2, 2, 2),
+        -1.0e-50,
+        1.0,
+        "tiny_positive",
+    );
+    assert_metaball_diagnostics_consistent(&mesh, &diagnostics);
+    assert!(mesh.polygons.is_empty(), "{diagnostics:#?}");
+    assert_eq!(diagnostics.sample_count, 8);
+    assert_eq!(diagnostics.finite_sample_count, 8);
+    assert_eq!(diagnostics.positive_sample_count, 8);
+    assert_eq!(diagnostics.zero_sample_count, 0);
+    assert_eq!(diagnostics.negative_sample_count, 0);
+    assert_eq!(diagnostics.crossing_cell_count, 0);
+}
+
+#[test]
 fn separated_metaballs_have_more_triangles_than_one_ball() {
     let one = [MetaBall::new(Point3::new(0.0, 0.0, 0.0), 0.55)];
     let separated = [
