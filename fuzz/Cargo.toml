@@ -105,6 +105,13 @@ doc = false
 bench = false
 
 [[bin]]
+name = "fuzz_metaballs_boundary"
+path = "fuzz_targets/fuzz_metaballs_boundary.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
 name = "fuzz_vertex_arithmetic"
 path = "fuzz_targets/fuzz_vertex_arithmetic.rs"
 test = false

@@ -1,6 +1,9 @@
 //! Create `Mesh`s by meshing signed distance fields ([sdf](https://en.wikipedia.org/wiki/Signed_distance_function)) within a bounding box.
 
-use crate::float_types::{Real, htriangle_area2_exceeds_epsilon};
+use crate::float_types::{
+    Real, hreal_from_f64, htriangle_area2_exceeds_epsilon, hvector3_from_point3,
+    hvector3_from_vector3,
+};
 use crate::mesh::Mesh;
 use crate::polygon::Polygon;
 use crate::vertex::Vertex;
@@ -66,11 +69,14 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// describing the sampled field and generated triangle stream.
     ///
     /// Surface-net vertices still arrive from `fast_surface_nets` as primitive
-    /// floats, but degenerate-triangle classification is lifted through
-    /// `hyperlattice` before topology diagnostics are recorded. This preserves
-    /// csgrs as a CAD composition layer over hyper geometry types and follows
-    /// Yap's exact-geometric-computation boundary model
-    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+    /// floats, but bounding inputs, iso values, triangle coordinates, normals,
+    /// and degenerate-triangle classification are lifted through
+    /// `hyperlattice`/`hyperreal` before topology diagnostics are recorded.
+    /// This preserves csgrs as a CAD composition layer over hyper geometry
+    /// types and follows Yap's exact-geometric-computation boundary model
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>). The sampled contouring
+    /// method is Gibson's constrained elastic surface-net construction:
+    /// Gibson, "Constrained Elastic Surface Nets," MERL TR99-24, 1999.
     pub fn sdf_with_diagnostics<F>(
         sdf: F,
         resolution: (usize, usize, usize),
@@ -92,6 +98,15 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             ..SdfDiagnostics::default()
         };
 
+        if hvector3_from_point3(&min_pt).is_none()
+            || hvector3_from_point3(&max_pt).is_none()
+            || hreal_from_f64(iso_value).is_err()
+        {
+            diagnostics.non_finite_sample_count = diagnostics.sample_count;
+            diagnostics.positive_sample_count = diagnostics.sample_count;
+            return (Mesh::empty(metadata), diagnostics);
+        }
+
         // Determine grid spacing based on bounding box and resolution
         let dx = (max_pt.x - min_pt.x) / (nx as Real - 1.0);
         let dy = (max_pt.y - min_pt.y) / (ny as Real - 1.0);
@@ -100,18 +115,6 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         // Allocate storage for field values:
         let array_size = (nx * ny * nz) as usize;
         let mut field_values = vec![0.0_f32; array_size];
-
-        // Optimized finite value checking with iterator patterns
-        // **Mathematical Foundation**: Ensures all coordinates are finite real numbers
-        #[inline]
-        fn point_finite(p: &Point3<Real>) -> bool {
-            p.coords.iter().all(|&c| c.is_finite())
-        }
-
-        #[inline]
-        fn vec_finite(v: &Vector3<Real>) -> bool {
-            v.iter().all(|&c| c.is_finite())
-        }
 
         // Sample the SDF at each grid cell with optimized iteration pattern:
         // **Mathematical Foundation**: For SDF f(p), we sample at regular intervals
@@ -132,7 +135,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             let sdf_val = sdf(&p);
 
             // Robust finite value handling with mathematical correctness
-            field_values[i as usize] = if sdf_val.is_finite() {
+            field_values[i as usize] = if hreal_from_f64(sdf_val).is_ok() {
                 diagnostics.finite_sample_count += 1;
                 diagnostics.min_finite_value = Some(
                     diagnostics
@@ -261,13 +264,12 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             let n1v = Vector3::new(n1[0] as Real, n1[1] as Real, n1[2] as Real);
             let n2v = Vector3::new(n2[0] as Real, n2[1] as Real, n2[2] as Real);
 
-            // ── « gate » ────────────────────────────────────────────────
-            if !(point_finite(&p0)
-                && point_finite(&p1)
-                && point_finite(&p2)
-                && vec_finite(&n0v)
-                && vec_finite(&n1v)
-                && vec_finite(&n2v))
+            if !(finite_point3(&p0)
+                && finite_point3(&p1)
+                && finite_point3(&p2)
+                && finite_vector3(&n0v)
+                && finite_vector3(&n1v)
+                && finite_vector3(&n2v))
             {
                 // at least one coordinate was NaN/±∞ – ignore this triangle
                 diagnostics.skipped_non_finite_triangle_count += 1;
@@ -294,6 +296,16 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         // Return as a Mesh
         (Mesh::from_polygons(&triangles, metadata), diagnostics)
     }
+}
+
+#[inline]
+fn finite_point3(point: &Point3<Real>) -> bool {
+    hvector3_from_point3(point).is_some()
+}
+
+#[inline]
+fn finite_vector3(vector: &Vector3<Real>) -> bool {
+    hvector3_from_vector3(vector).is_some()
 }
 
 fn count_crossing_cells(field_values: &[f32], nx: u32, ny: u32, nz: u32) -> usize {
