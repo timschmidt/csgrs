@@ -488,6 +488,12 @@ pub enum ExactBooleanShortcutKind {
     CoplanarConvexSurfaceArrangementDifference,
     /// Certified multi-component difference of convex coplanar surface meshes.
     CoplanarConvexSurfaceMultiDifference,
+    /// Certified multi-component difference with at least one nonconvex
+    /// coplanar simple-loop component.
+    CoplanarSurfaceMultiDifference,
+    /// Certified nonconvex simple-loop difference where a side cutter opens a
+    /// contained coplanar hole to the component boundary.
+    CoplanarSurfaceCutterHoleContactDifference,
     /// Exact coplanar convex surface containment, modulo triangulation.
     CoplanarConvexSurfaceContainment,
     /// Certified one-hole coplanar convex surface difference.
@@ -989,6 +995,12 @@ pub enum ExactBooleanSupport {
     /// Difference was materialized as multiple exact simple-loop components
     /// between convex coplanar surface meshes.
     CertifiedCoplanarConvexSurfaceMultiDifference,
+    /// Difference was materialized as multiple exact simple-loop components
+    /// with at least one nonconvex retained coplanar loop.
+    CertifiedCoplanarSurfaceMultiDifference,
+    /// Difference was materialized as one nonconvex simple loop after exact
+    /// cutter/hole boundary contact opened a retained hole to the boundary.
+    CertifiedCoplanarSurfaceCutterHoleContactDifference,
     /// A named operation was answered by exact coplanar convex surface
     /// containment, ignoring triangulation.
     CertifiedCoplanarConvexSurfaceContainment,
@@ -1178,6 +1190,8 @@ impl ExactBooleanPreflight {
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceMultiUnion
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceArrangementDifference
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceMultiDifference
+            | ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
+            | ExactBooleanSupport::CertifiedCoplanarSurfaceCutterHoleContactDifference
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceContainment
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceHoledDifference
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceMultiHoledDifference

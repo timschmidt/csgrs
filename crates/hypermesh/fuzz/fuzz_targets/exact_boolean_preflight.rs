@@ -13,7 +13,9 @@ use hypermesh::exact::{
     arrange_coplanar_convex_surface_multi_holed_difference,
     arrange_coplanar_convex_surface_multi_intersection, arrange_coplanar_convex_surface_union,
     arrange_coplanar_convex_surface_multi_union,
-    boolean_exact_with_boundary_policy, boolean_selected_regions, certify_boundary_touching_report,
+    arrange_coplanar_surface_cutter_hole_contact_difference,
+    arrange_coplanar_surface_multi_difference, boolean_exact_with_boundary_policy,
+    boolean_selected_regions, certify_boundary_touching_report,
     certify_convex_solid, certify_open_surface_disjoint_report, certify_planar_arrangement_report,
     certify_refinement_report, certify_coplanar_convex_surface_containment,
     certify_coplanar_convex_surface_equivalence, certify_coplanar_convex_surface_report,
@@ -1825,6 +1827,51 @@ fn exercise_component_coplanar_difference() {
         ExactBooleanSupport::CertifiedCoplanarConvexSurfaceMultiDifference
     );
 
+    let nonconvex_multi_cutter_right = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            -1, -1, 0, 3, -1, 0, -1, 3, 0, //
+            8, 4, 0, 11, 4, 0, 11, 6, 0, 8, 6, 0,
+        ],
+        &[
+            0, 1, 2, //
+            3, 4, 5, 3, 5, 6,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("nonconvex multi-cutter right fixture must import");
+    assert!(
+        arrange_coplanar_convex_surface_multi_difference(
+            &corner_cutter_left,
+            &nonconvex_multi_cutter_right,
+        )
+        .is_none()
+    );
+    let nonconvex_multi_cutter = arrange_coplanar_surface_multi_difference(
+        &corner_cutter_left,
+        &nonconvex_multi_cutter_right,
+    )
+    .expect("nonconvex simple loop plus a far component should materialize");
+    nonconvex_multi_cutter.validate().unwrap();
+    nonconvex_multi_cutter
+        .validate_difference_against_sources(&corner_cutter_left, &nonconvex_multi_cutter_right)
+        .unwrap();
+    assert_eq!(nonconvex_multi_cutter.polygons.len(), 2);
+    assert!(nonconvex_multi_cutter
+        .polygons
+        .iter()
+        .any(|polygon| polygon.len() == 9));
+    let nonconvex_preflight = preflight_boolean_exact(
+        &corner_cutter_left,
+        &nonconvex_multi_cutter_right,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("nonconvex multi-cutter preflight should classify shortcut");
+    nonconvex_preflight.validate().unwrap();
+    assert_eq!(
+        nonconvex_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
+    );
+
     let partial_height_cutters = ExactMesh::from_i64_triangles_with_policy(
         &[
             1, 0, 0, 2, 0, 0, 2, 1, 0, 1, 1, 0, //
@@ -2018,6 +2065,43 @@ fn exercise_component_coplanar_difference() {
             &holed_partial_height_cutters_right,
         )
         .is_none()
+    );
+
+    let cutter_hole_contact_right = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            4, 4, 0, 6, 4, 0, 6, 6, 0, 4, 6, 0, //
+            -1, 5, 0, 4, 5, 0, 4, 6, 0, -1, 6, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("cutter-hole contact fixture must import");
+    let cutter_hole_contact = arrange_coplanar_surface_cutter_hole_contact_difference(
+        &single_holed_left,
+        &cutter_hole_contact_right,
+    )
+    .expect("cutter-hole contact should materialize one nonconvex loop");
+    cutter_hole_contact.validate().unwrap();
+    cutter_hole_contact
+        .validate_cutter_hole_contact_difference_against_sources(
+            &single_holed_left,
+            &cutter_hole_contact_right,
+        )
+        .unwrap();
+    assert_eq!(cutter_hole_contact.polygon.len(), 10);
+    let contact_preflight = preflight_boolean_exact(
+        &single_holed_left,
+        &cutter_hole_contact_right,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("cutter-hole contact preflight should classify shortcut");
+    contact_preflight.validate().unwrap();
+    assert_eq!(
+        contact_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfaceCutterHoleContactDifference
     );
 }
 

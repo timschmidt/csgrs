@@ -1128,6 +1128,54 @@ pub struct CoplanarConvexMultiArrangement {
     pub mesh: ExactMesh,
 }
 
+/// Exact multi-component arrangement output with nonconvex simple loops.
+///
+/// This artifact is the bounded continuation of
+/// [`CoplanarConvexMultiArrangement`] for component-wise differences whose
+/// output remains a set of disjoint simple loops but at least one loop is not
+/// strictly convex. It exists so the convex certificate does not silently
+/// weaken its invariant. Construction still follows exact Weiler-Atherton
+/// style boundary replay for each promoted loop, and triangulation is retained
+/// through `hypertri`'s FIST-style earcut handoff. See Weiler and Atherton,
+/// "Hidden Surface Removal Using Polygon Area Sorting," *SIGGRAPH Computer
+/// Graphics* 11.2 (1977), Held, "FIST: Fast Industrial-Strength
+/// Triangulation of Polygons," *Algorithmica* 30 (2001), and Yap, "Towards
+/// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Debug, PartialEq)]
+pub struct CoplanarSurfaceMultiArrangement {
+    /// Projection used by exact 2D arrangement predicates and triangulation.
+    pub projection: CoplanarProjection,
+    /// Exact 3D simple boundary loops, one per connected component.
+    pub polygons: Vec<Vec<Point3>>,
+    /// Exact triangulated open surface mesh containing all components.
+    pub mesh: ExactMesh,
+}
+
+/// Exact single-loop arrangement output for nonconvex coplanar surfaces.
+///
+/// This is the single-component counterpart to
+/// [`CoplanarSurfaceMultiArrangement`]. It covers bounded cases where the
+/// output is neither convex nor holed, but still has one retained simple loop
+/// that can be audited directly. The first producer is the cutter/hole-contact
+/// difference path: a side-attached cutter opens a strictly contained hole to
+/// the outer boundary, producing one nonconvex loop rather than a ring pair.
+/// The output keeps that loop as exact topology and triangulates it through
+/// `hypertri`'s FIST-style earcut handoff. See Held, "FIST: Fast
+/// Industrial-Strength Triangulation of Polygons," *Algorithmica* 30 (2001),
+/// and Yap, "Towards Exact Geometric Computation," *Computational Geometry*
+/// 7.1-2 (1997).
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Debug, PartialEq)]
+pub struct CoplanarSurfaceArrangement {
+    /// Projection used by exact 2D arrangement predicates and triangulation.
+    pub projection: CoplanarProjection,
+    /// Exact 3D simple boundary loop, retained counter-clockwise.
+    pub polygon: Vec<Point3>,
+    /// Exact triangulated open surface mesh for `polygon`.
+    pub mesh: ExactMesh,
+}
+
 #[cfg(feature = "exact-triangulation")]
 impl CoplanarConvexMultiArrangement {
     /// Validate component loops, projected area, and materialized mesh state.
@@ -1472,6 +1520,107 @@ impl CoplanarTriangleDifference {
             Err(surface_validation_error(
                 "coplanar one-corner difference",
                 "retained difference does not match source replay",
+            ))
+        }
+    }
+}
+
+#[cfg(feature = "exact-triangulation")]
+impl CoplanarSurfaceMultiArrangement {
+    /// Validate nonconvex component loops, projected area, and mesh state.
+    ///
+    /// The retained loops must be simple, counter-clockwise, disjoint, and
+    /// exactly matched by the materialized mesh boundary. Unlike
+    /// [`CoplanarConvexMultiArrangement`], strict convexity is not a
+    /// precondition: this artifact is the named exact boundary for simple
+    /// nonconvex component outputs. That separation follows Yap, "Towards
+    /// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997), by
+    /// making each topology contract explicit instead of hiding it in a
+    /// triangle soup.
+    pub fn validate(&self) -> Result<(), MeshError> {
+        validate_multi_simple_surface_output(
+            self.projection,
+            &self.polygons,
+            &self.mesh,
+            "coplanar nonconvex multi-component arrangement",
+        )
+    }
+
+    /// Validate this nonconvex multi-component difference against its sources.
+    ///
+    /// Recomputing the bounded difference from exact source components keeps
+    /// every retained simple loop attached to the source predicates that
+    /// produced it, matching Yap's retained-computation requirement from
+    /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+    /// (1997).
+    pub fn validate_difference_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<(), MeshError> {
+        self.validate()?;
+        let replay = arrange_coplanar_surface_multi_difference(left, right).ok_or_else(|| {
+            surface_validation_error(
+                "coplanar nonconvex multi-component arrangement",
+                "source replay did not reproduce a nonconvex multi-component difference",
+            )
+        })?;
+        if self == &replay {
+            Ok(())
+        } else {
+            Err(surface_validation_error(
+                "coplanar nonconvex multi-component arrangement",
+                "retained difference does not match source replay",
+            ))
+        }
+    }
+}
+
+#[cfg(feature = "exact-triangulation")]
+impl CoplanarSurfaceArrangement {
+    /// Validate the retained nonconvex simple loop and mesh.
+    ///
+    /// The artifact deliberately does not require convexity. It does require
+    /// one positive-area, counter-clockwise, self-disjoint loop whose
+    /// triangulated mesh has exactly the same boundary. This keeps the
+    /// nonconvex output inside Yap's exact-state discipline: callers receive a
+    /// replayable combinatorial object, not only a triangle soup.
+    pub fn validate(&self) -> Result<(), MeshError> {
+        validate_coplanar_surface_output(
+            self.projection,
+            &self.polygon,
+            &self.mesh,
+            "coplanar nonconvex simple-loop arrangement",
+        )
+    }
+
+    /// Validate this cutter/hole-contact difference against its sources.
+    ///
+    /// Source replay recomputes the bounded contact construction from the
+    /// supplied meshes and requires the retained loop and materialized mesh to
+    /// match. This follows Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7.1-2 (1997): a nonconvex shortcut remains
+    /// certified only while the exact source topology, contact, and area facts
+    /// that produced it are still present.
+    pub fn validate_cutter_hole_contact_difference_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<(), MeshError> {
+        self.validate()?;
+        let replay = arrange_coplanar_surface_cutter_hole_contact_difference(left, right)
+            .ok_or_else(|| {
+                surface_validation_error(
+                    "coplanar nonconvex simple-loop arrangement",
+                    "source replay did not reproduce a cutter-hole contact difference",
+                )
+            })?;
+        if self == &replay {
+            Ok(())
+        } else {
+            Err(surface_validation_error(
+                "coplanar nonconvex simple-loop arrangement",
+                "retained cutter-hole contact difference does not match source replay",
             ))
         }
     }
@@ -3325,6 +3474,298 @@ fn arrange_coplanar_convex_surface_component_difference(
     Some(arrangement)
 }
 
+/// Certify a nonconvex multi-component coplanar difference.
+///
+/// This is the bounded output-model step beyond the convex component
+/// difference certificate. Source topology is
+/// still decomposed into disjoint convex components, and every cutter/remnant
+/// step must replay through the existing exact convex difference certificates.
+/// The only new acceptance is at the retained-output boundary: when a valid
+/// result contains two or more disjoint simple loops and at least one loop is
+/// nonconvex, the loops are kept in [`CoplanarSurfaceMultiArrangement`] rather
+/// than rejected by the convex multi-component certificate. Hole-producing
+/// cuts, boundary-only contacts, overlapping loops, and self-intersections
+/// remain explicit planar-arrangement work. This follows Yap, "Towards Exact
+/// Geometric Computation," *Computational Geometry* 7.1-2 (1997): the system
+/// may broaden the object model only when the exact construction history and
+/// output topology are both retained.
+#[cfg(feature = "exact-triangulation")]
+pub fn arrange_coplanar_surface_multi_difference(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Option<CoplanarSurfaceMultiArrangement> {
+    let left_components = connected_face_component_meshes(left)?;
+    let right_components = connected_face_component_meshes(right)?;
+    if right_components.is_empty() {
+        return None;
+    }
+
+    let mut left_components = left_components
+        .into_iter()
+        .map(|mesh| ConvexUnionComponent::from_mesh(MultiUnionSide::Left, mesh))
+        .collect::<Option<Vec<_>>>()?;
+    let right_components = right_components
+        .into_iter()
+        .map(|mesh| ConvexUnionComponent::from_mesh(MultiUnionSide::Right, mesh))
+        .collect::<Option<Vec<_>>>()?;
+    let projection = left_components.first()?.projection;
+    if left_components
+        .iter()
+        .chain(right_components.iter())
+        .any(|component| component.projection != projection)
+    {
+        return None;
+    }
+    let left_hulls = left_components
+        .iter()
+        .map(|component| component.hull.clone())
+        .collect::<Vec<_>>();
+    validate_component_loops_disjoint(
+        &left_hulls,
+        projection,
+        "coplanar nonconvex multi-component difference",
+    )
+    .ok()?;
+    let right_hulls = right_components
+        .iter()
+        .map(|component| component.hull.clone())
+        .collect::<Vec<_>>();
+    validate_component_loops_disjoint(
+        &right_hulls,
+        projection,
+        "coplanar nonconvex multi-component difference",
+    )
+    .ok()?;
+
+    let mut polygons = Vec::new();
+    for component in &mut left_components {
+        let mut drop_component = false;
+        let mut cutter_indices = Vec::new();
+        for (right_index, right_component) in right_components.iter().enumerate() {
+            if polygons_equal(&component.hull, &right_component.hull)
+                || polygon_in_closed_convex_polygon(
+                    &component.hull,
+                    &right_component.hull,
+                    projection,
+                )?
+            {
+                if drop_component || !cutter_indices.is_empty() {
+                    return None;
+                }
+                drop_component = true;
+                continue;
+            }
+            if polygon_in_closed_convex_polygon(&right_component.hull, &component.hull, projection)?
+            {
+                return None;
+            }
+
+            match convex_union_component_relation(
+                &component.hull,
+                &right_component.hull,
+                projection,
+            )? {
+                ConvexUnionComponentRelation::Disjoint => {}
+                ConvexUnionComponentRelation::BoundaryOnly => return None,
+                ConvexUnionComponentRelation::PositiveArea => {
+                    if drop_component {
+                        return None;
+                    }
+                    cutter_indices.push(right_index);
+                }
+            }
+        }
+        if drop_component {
+            continue;
+        }
+        match cutter_indices.as_slice() {
+            [] => polygons.push(component.hull.clone()),
+            [right_index] => {
+                let right_component = &right_components[*right_index];
+                if let Some(difference) = arrange_coplanar_convex_surface_difference(
+                    &component.mesh,
+                    &right_component.mesh,
+                ) {
+                    polygons.push(difference.polygon);
+                } else if let Some(difference) =
+                    arrange_coplanar_convex_surface_multi_difference_convex(
+                        &component.mesh,
+                        &right_component.mesh,
+                    )
+                {
+                    polygons.extend(difference.polygons);
+                } else {
+                    return None;
+                }
+            }
+            _ => {
+                let mut remnants = materialize_component_multi_cutter_difference(
+                    component,
+                    &cutter_indices,
+                    &right_components,
+                    projection,
+                )?;
+                polygons.append(&mut remnants);
+            }
+        }
+    }
+    if polygons.len() < 2 {
+        return None;
+    }
+    for polygon in &mut polygons {
+        orient_polygon_ccw(polygon, projection)?;
+    }
+    sort_polygons_for_replay(&mut polygons, projection);
+    validate_component_loops_disjoint(
+        &polygons,
+        projection,
+        "coplanar nonconvex multi-component difference",
+    )
+    .ok()?;
+    if polygons.iter().all(|polygon| {
+        validate_projected_strictly_convex_loop(
+            polygon,
+            projection,
+            "coplanar nonconvex multi-component difference",
+        )
+        .is_ok()
+    }) {
+        return None;
+    }
+    let mesh = polygons_to_earcut_open_mesh_with_label(
+        &polygons,
+        projection,
+        "exact coplanar nonconvex multi-component arrangement",
+    )?;
+    let arrangement = CoplanarSurfaceMultiArrangement {
+        projection,
+        polygons,
+        mesh,
+    };
+    arrangement.validate().ok()?;
+    Some(arrangement)
+}
+
+/// Certify a bounded cutter/hole-contact coplanar difference.
+///
+/// This handles the narrow case that the strict component/holed arrangement
+/// must reject: a side-attached cutter touches a strictly contained hole along
+/// a positive-length boundary, so the result is no longer a holed component
+/// but one nonconvex simple loop. The accepted source shape is intentionally
+/// small and replayable: one exact axis-aligned rectangular left component,
+/// one contained rectangular right component, and one rectangular right cutter
+/// whose clipped material region touches the contained component and one
+/// outer side. The union of the clipped cutter and hole must itself certify as
+/// one rectangle attached to exactly one outer side, so output construction is
+/// exact interval topology rather than sampled polygon surgery. This follows
+/// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
+/// 7.1-2 (1997), with the orthogonal-cell reasoning matching the exact
+/// rectangle decomposition model in de Berg, Cheong, van Kreveld, and
+/// Overmars, *Computational Geometry: Algorithms and Applications*, 3rd ed.,
+/// Chapter 2.
+#[cfg(feature = "exact-triangulation")]
+pub fn arrange_coplanar_surface_cutter_hole_contact_difference(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Option<CoplanarSurfaceArrangement> {
+    let left_components = connected_face_component_meshes(left)?;
+    let right_components = connected_face_component_meshes(right)?;
+    if left_components.len() != 1 || right_components.len() != 2 {
+        return None;
+    }
+
+    let left_component =
+        ConvexUnionComponent::from_mesh(MultiUnionSide::Left, left_components.into_iter().next()?)?;
+    let right_components = right_components
+        .into_iter()
+        .map(|mesh| ConvexUnionComponent::from_mesh(MultiUnionSide::Right, mesh))
+        .collect::<Option<Vec<_>>>()?;
+    let projection = left_component.projection;
+    if right_components
+        .iter()
+        .any(|component| component.projection != projection)
+    {
+        return None;
+    }
+    let left_rect = projected_axis_aligned_rectangle(&left_component.hull, projection)?;
+
+    let mut hole_index = None;
+    let mut cutter_index = None;
+    for (index, component) in right_components.iter().enumerate() {
+        if polygon_strictly_inside_convex_polygon(
+            &component.hull,
+            &left_component.hull,
+            projection,
+        )? {
+            if hole_index.replace(index).is_some() {
+                return None;
+            }
+        } else if convex_union_component_relation(
+            &left_component.hull,
+            &component.hull,
+            projection,
+        )? == ConvexUnionComponentRelation::PositiveArea
+        {
+            if cutter_index.replace(index).is_some() {
+                return None;
+            }
+        } else {
+            return None;
+        }
+    }
+    let hole = &right_components[hole_index?];
+    let cutter = &right_components[cutter_index?];
+    let hole_rect = projected_axis_aligned_rectangle(&hole.hull, projection)?;
+    let cutter_rect = projected_axis_aligned_rectangle(&cutter.hull, projection)?;
+    if !rectangles_touch_on_positive_boundary(&hole_rect, &cutter_rect)? {
+        return None;
+    }
+
+    let mut clipped_cutter =
+        convex_polygon_intersection_boundary(&cutter.hull, &left_component.hull, projection)?;
+    if clipped_cutter.len() < 3 {
+        return None;
+    }
+    orient_polygon_ccw(&mut clipped_cutter, projection)?;
+    let clipped_cutter_rect = projected_axis_aligned_rectangle(&clipped_cutter, projection)?;
+    let mut removed_polygon =
+        axis_aligned_rectangle_union_polygon(&[clipped_cutter_rect, hole_rect], projection)?;
+    orient_polygon_ccw(&mut removed_polygon, projection)?;
+    let mut polygon = side_opened_difference_polygon(&left_rect, &removed_polygon, projection)?;
+    orient_polygon_ccw(&mut polygon, projection)?;
+    polygon = simplify_projected_polygon(polygon, projection);
+    if validate_projected_strictly_convex_loop(
+        &polygon,
+        projection,
+        "coplanar cutter-hole contact difference",
+    )
+    .is_ok()
+    {
+        return None;
+    }
+
+    let left_area = projected_area2_abs(&left_component.hull, projection)?;
+    let removed_area = projected_area2_abs(&removed_polygon, projection)?;
+    let output_area = projected_area2_abs(&polygon, projection)?;
+    if compare_reals(&add(&output_area, &removed_area), &left_area).value() != Some(Ordering::Equal)
+    {
+        return None;
+    }
+
+    let mesh = polygon_to_earcut_open_mesh_with_label(
+        &polygon,
+        projection,
+        "exact coplanar cutter-hole contact difference",
+    )?;
+    let arrangement = CoplanarSurfaceArrangement {
+        projection,
+        polygon,
+        mesh,
+    };
+    arrangement.validate().ok()?;
+    Some(arrangement)
+}
+
 /// Materialize a bounded multi-cutter difference for one convex component.
 ///
 /// The first accepted path is the exact rectangular strip certificate, because
@@ -3551,6 +3992,400 @@ fn rectangle_interval_polygon(
         point_from_projection(&max.x, &max.y, &left.dropped, projection),
         point_from_projection(&min.x, &max.y, &left.dropped, projection),
     ])
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn axis_aligned_rectangle_union_polygon(
+    rectangles: &[ProjectedRectangle],
+    projection: CoplanarProjection,
+) -> Option<Vec<Point3>> {
+    if rectangles.len() != 2
+        || !rectangles
+            .iter()
+            .all(|rect| real_equal(&rect.dropped, &rectangles[0].dropped))
+    {
+        return None;
+    }
+    let mut xs = Vec::new();
+    let mut ys = Vec::new();
+    for rect in rectangles {
+        xs.push(rect.min.x.clone());
+        xs.push(rect.max.x.clone());
+        ys.push(rect.min.y.clone());
+        ys.push(rect.max.y.clone());
+    }
+    sort_reals_and_dedup(&mut xs)?;
+    sort_reals_and_dedup(&mut ys)?;
+    if xs.len() < 2 || ys.len() < 2 {
+        return None;
+    }
+
+    let x_cells = xs.len() - 1;
+    let y_cells = ys.len() - 1;
+    let mut occupied = vec![false; x_cells * y_cells];
+    for x in 0..x_cells {
+        for y in 0..y_cells {
+            if real_order(&xs[x], &xs[x + 1])? != Ordering::Less
+                || real_order(&ys[y], &ys[y + 1])? != Ordering::Less
+            {
+                continue;
+            }
+            let midpoint = Point2::new(
+                midpoint_real(&xs[x], &xs[x + 1]),
+                midpoint_real(&ys[y], &ys[y + 1]),
+            );
+            occupied[x * y_cells + y] = rectangles
+                .iter()
+                .any(|rect| point_strictly_inside_projected_rectangle(&midpoint, rect));
+        }
+    }
+
+    let mut fragments = Vec::new();
+    for x in 0..x_cells {
+        for y in 0..y_cells {
+            if !occupied[x * y_cells + y] {
+                continue;
+            }
+            let x0 = &xs[x];
+            let x1 = &xs[x + 1];
+            let y0 = &ys[y];
+            let y1 = &ys[y + 1];
+            let bottom_empty = y == 0 || !occupied[x * y_cells + (y - 1)];
+            let top_empty = y + 1 == y_cells || !occupied[x * y_cells + (y + 1)];
+            let left_empty = x == 0 || !occupied[(x - 1) * y_cells + y];
+            let right_empty = x + 1 == x_cells || !occupied[(x + 1) * y_cells + y];
+            if bottom_empty {
+                fragments.push(DirectedFragment {
+                    start: point_from_projection(x0, y0, &rectangles[0].dropped, projection),
+                    end: point_from_projection(x1, y0, &rectangles[0].dropped, projection),
+                });
+            }
+            if right_empty {
+                fragments.push(DirectedFragment {
+                    start: point_from_projection(x1, y0, &rectangles[0].dropped, projection),
+                    end: point_from_projection(x1, y1, &rectangles[0].dropped, projection),
+                });
+            }
+            if top_empty {
+                fragments.push(DirectedFragment {
+                    start: point_from_projection(x1, y1, &rectangles[0].dropped, projection),
+                    end: point_from_projection(x0, y1, &rectangles[0].dropped, projection),
+                });
+            }
+            if left_empty {
+                fragments.push(DirectedFragment {
+                    start: point_from_projection(x0, y1, &rectangles[0].dropped, projection),
+                    end: point_from_projection(x0, y0, &rectangles[0].dropped, projection),
+                });
+            }
+        }
+    }
+    stitch_simple_loop(fragments, projection)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn sort_reals_and_dedup(values: &mut Vec<ExactReal>) -> Option<()> {
+    for index in 1..values.len() {
+        let mut cursor = index;
+        while cursor > 0 && real_order(&values[cursor], &values[cursor - 1])? == Ordering::Less {
+            values.swap(cursor, cursor - 1);
+            cursor -= 1;
+        }
+    }
+    values.dedup_by(|right, left| real_equal(left, right));
+    Some(())
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn midpoint_real(left: &ExactReal, right: &ExactReal) -> ExactReal {
+    let half = (ExactReal::from(1) / &ExactReal::from(2)).expect("2 is nonzero");
+    mul(&add(left, right), &half)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn point_strictly_inside_projected_rectangle(point: &Point2, rect: &ProjectedRectangle) -> bool {
+    real_order(&rect.min.x, &point.x) == Some(Ordering::Less)
+        && real_order(&point.x, &rect.max.x) == Some(Ordering::Less)
+        && real_order(&rect.min.y, &point.y) == Some(Ordering::Less)
+        && real_order(&point.y, &rect.max.y) == Some(Ordering::Less)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn rectangles_touch_on_positive_boundary(
+    left: &ProjectedRectangle,
+    right: &ProjectedRectangle,
+) -> Option<bool> {
+    if !real_equal(&left.dropped, &right.dropped) {
+        return Some(false);
+    }
+    let vertical_touch = (real_equal(&left.max.x, &right.min.x)
+        || real_equal(&right.max.x, &left.min.x))
+        && intervals_overlap_with_positive_length(
+            &left.min.y,
+            &left.max.y,
+            &right.min.y,
+            &right.max.y,
+        )?;
+    let horizontal_touch = (real_equal(&left.max.y, &right.min.y)
+        || real_equal(&right.max.y, &left.min.y))
+        && intervals_overlap_with_positive_length(
+            &left.min.x,
+            &left.max.x,
+            &right.min.x,
+            &right.max.x,
+        )?;
+    Some(vertical_touch || horizontal_touch)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn intervals_overlap_with_positive_length(
+    left_min: &ExactReal,
+    left_max: &ExactReal,
+    right_min: &ExactReal,
+    right_max: &ExactReal,
+) -> Option<bool> {
+    let overlap_min = exact_max_real(left_min, right_min)?;
+    let overlap_max = exact_min_real(left_max, right_max)?;
+    Some(real_order(&overlap_min, &overlap_max)? == Ordering::Less)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn side_opened_difference_polygon(
+    outer: &ProjectedRectangle,
+    removed: &[Point3],
+    projection: CoplanarProjection,
+) -> Option<Vec<Point3>> {
+    let ox0 = &outer.min.x;
+    let ox1 = &outer.max.x;
+    let oy0 = &outer.min.y;
+    let oy1 = &outer.max.y;
+    if removed.len() < 3
+        || removed
+            .iter()
+            .any(|point| !real_equal(&dropped_coordinate(point, projection), &outer.dropped))
+    {
+        return None;
+    }
+
+    let corners = [
+        point_from_projection(ox0, oy0, &outer.dropped, projection),
+        point_from_projection(ox1, oy0, &outer.dropped, projection),
+        point_from_projection(ox1, oy1, &outer.dropped, projection),
+        point_from_projection(ox0, oy1, &outer.dropped, projection),
+    ];
+    let side = opened_side_attachment(outer, removed, projection)?;
+    let mut polygon = match side {
+        OpenedSideAttachment::Left { low, high } => {
+            let mut path = removed_boundary_path_reverse(removed, &high, &low)?;
+            let mut out = vec![
+                corners[0].clone(),
+                corners[1].clone(),
+                corners[2].clone(),
+                corners[3].clone(),
+                high,
+            ];
+            out.append(&mut path);
+            out
+        }
+        OpenedSideAttachment::Right { low, high } => {
+            let mut path = removed_boundary_path_reverse(removed, &low, &high)?;
+            let mut out = vec![corners[0].clone(), corners[1].clone(), low];
+            out.append(&mut path);
+            out.push(high);
+            out.push(corners[2].clone());
+            out.push(corners[3].clone());
+            out
+        }
+        OpenedSideAttachment::Bottom { low, high } => {
+            let mut path = removed_boundary_path_reverse(removed, &low, &high)?;
+            let mut out = vec![corners[0].clone(), low];
+            out.append(&mut path);
+            out.push(high);
+            out.push(corners[1].clone());
+            out.push(corners[2].clone());
+            out.push(corners[3].clone());
+            out
+        }
+        OpenedSideAttachment::Top { low, high } => {
+            let mut path = removed_boundary_path_reverse(removed, &high, &low)?;
+            let mut out = vec![
+                corners[0].clone(),
+                corners[1].clone(),
+                corners[2].clone(),
+                high,
+            ];
+            out.append(&mut path);
+            out.push(low);
+            out.push(corners[3].clone());
+            out
+        }
+    };
+    remove_duplicate_neighbors(&mut polygon);
+    Some(polygon)
+}
+
+#[cfg(feature = "exact-triangulation")]
+enum OpenedSideAttachment {
+    Left { low: Point3, high: Point3 },
+    Right { low: Point3, high: Point3 },
+    Bottom { low: Point3, high: Point3 },
+    Top { low: Point3, high: Point3 },
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn opened_side_attachment(
+    outer: &ProjectedRectangle,
+    removed: &[Point3],
+    projection: CoplanarProjection,
+) -> Option<OpenedSideAttachment> {
+    let mut left = Vec::new();
+    let mut right = Vec::new();
+    let mut bottom = Vec::new();
+    let mut top = Vec::new();
+    for point in removed {
+        let projected = project_point(point, projection);
+        if real_order(&projected.x, &outer.min.x)? == Ordering::Less
+            || real_order(&outer.max.x, &projected.x)? == Ordering::Less
+            || real_order(&projected.y, &outer.min.y)? == Ordering::Less
+            || real_order(&outer.max.y, &projected.y)? == Ordering::Less
+        {
+            return None;
+        }
+        if real_equal(&projected.x, &outer.min.x) {
+            left.push(point.clone());
+        }
+        if real_equal(&projected.x, &outer.max.x) {
+            right.push(point.clone());
+        }
+        if real_equal(&projected.y, &outer.min.y) {
+            bottom.push(point.clone());
+        }
+        if real_equal(&projected.y, &outer.max.y) {
+            top.push(point.clone());
+        }
+    }
+
+    let mut attachments = Vec::new();
+    if let Some((low, high)) = vertical_attachment_points(&mut left, outer, projection, true)? {
+        attachments.push(OpenedSideAttachment::Left { low, high });
+    }
+    if let Some((low, high)) = vertical_attachment_points(&mut right, outer, projection, true)? {
+        attachments.push(OpenedSideAttachment::Right { low, high });
+    }
+    if let Some((low, high)) = horizontal_attachment_points(&mut bottom, outer, projection, true)? {
+        attachments.push(OpenedSideAttachment::Bottom { low, high });
+    }
+    if let Some((low, high)) = horizontal_attachment_points(&mut top, outer, projection, true)? {
+        attachments.push(OpenedSideAttachment::Top { low, high });
+    }
+    if attachments.len() == 1 {
+        attachments.pop()
+    } else {
+        None
+    }
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn vertical_attachment_points(
+    points: &mut Vec<Point3>,
+    outer: &ProjectedRectangle,
+    projection: CoplanarProjection,
+    require_interior: bool,
+) -> Option<Option<(Point3, Point3)>> {
+    dedup_points(points);
+    if points.is_empty() {
+        return Some(None);
+    }
+    if points.len() != 2 {
+        return None;
+    }
+    points.sort_by(|left, right| {
+        real_order(
+            &project_point(left, projection).y,
+            &project_point(right, projection).y,
+        )
+        .unwrap_or(Ordering::Equal)
+    });
+    let low = points[0].clone();
+    let high = points[1].clone();
+    let low_y = project_point(&low, projection).y;
+    let high_y = project_point(&high, projection).y;
+    if real_order(&low_y, &high_y)? != Ordering::Less {
+        return None;
+    }
+    if require_interior
+        && (real_order(&outer.min.y, &low_y)? != Ordering::Less
+            || real_order(&high_y, &outer.max.y)? != Ordering::Less)
+    {
+        return None;
+    }
+    Some(Some((low, high)))
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn horizontal_attachment_points(
+    points: &mut Vec<Point3>,
+    outer: &ProjectedRectangle,
+    projection: CoplanarProjection,
+    require_interior: bool,
+) -> Option<Option<(Point3, Point3)>> {
+    dedup_points(points);
+    if points.is_empty() {
+        return Some(None);
+    }
+    if points.len() != 2 {
+        return None;
+    }
+    points.sort_by(|left, right| {
+        real_order(
+            &project_point(left, projection).x,
+            &project_point(right, projection).x,
+        )
+        .unwrap_or(Ordering::Equal)
+    });
+    let low = points[0].clone();
+    let high = points[1].clone();
+    let low_x = project_point(&low, projection).x;
+    let high_x = project_point(&high, projection).x;
+    if real_order(&low_x, &high_x)? != Ordering::Less {
+        return None;
+    }
+    if require_interior
+        && (real_order(&outer.min.x, &low_x)? != Ordering::Less
+            || real_order(&high_x, &outer.max.x)? != Ordering::Less)
+    {
+        return None;
+    }
+    Some(Some((low, high)))
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn removed_boundary_path_reverse(
+    polygon: &[Point3],
+    start: &Point3,
+    end: &Point3,
+) -> Option<Vec<Point3>> {
+    let start_index = polygon
+        .iter()
+        .position(|point| points_equal(point, start))?;
+    let end_index = polygon.iter().position(|point| points_equal(point, end))?;
+    let mut path = Vec::new();
+    let mut index = start_index;
+    loop {
+        path.push(polygon[index].clone());
+        if index == end_index {
+            break;
+        }
+        index = if index == 0 {
+            polygon.len() - 1
+        } else {
+            index - 1
+        };
+        if index == start_index {
+            return None;
+        }
+    }
+    Some(path)
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -4150,6 +4985,19 @@ fn polygon_to_earcut_open_mesh(
     polygon: &[Point3],
     projection: CoplanarProjection,
 ) -> Option<ExactMesh> {
+    polygon_to_earcut_open_mesh_with_label(
+        polygon,
+        projection,
+        "exact coplanar triangle planar arrangement",
+    )
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn polygon_to_earcut_open_mesh_with_label(
+    polygon: &[Point3],
+    projection: CoplanarProjection,
+    label: &'static str,
+) -> Option<ExactMesh> {
     if polygon.len() < 3 {
         return None;
     }
@@ -4176,7 +5024,7 @@ fn polygon_to_earcut_open_mesh(
     ExactMesh::new_with_policy(
         vertices,
         triangles,
-        SourceProvenance::exact("exact coplanar triangle planar arrangement"),
+        SourceProvenance::exact(label),
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .ok()
@@ -4263,6 +5111,19 @@ fn polygons_to_earcut_open_mesh(
     polygons: &[Vec<Point3>],
     projection: CoplanarProjection,
 ) -> Option<ExactMesh> {
+    polygons_to_earcut_open_mesh_with_label(
+        polygons,
+        projection,
+        "exact coplanar convex multi-component arrangement",
+    )
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn polygons_to_earcut_open_mesh_with_label(
+    polygons: &[Vec<Point3>],
+    projection: CoplanarProjection,
+    label: &'static str,
+) -> Option<ExactMesh> {
     if polygons.is_empty() || polygons.iter().any(|polygon| polygon.len() < 3) {
         return None;
     }
@@ -4280,7 +5141,7 @@ fn polygons_to_earcut_open_mesh(
     ExactMesh::new_with_policy(
         vertices,
         triangles,
-        SourceProvenance::exact("exact coplanar convex multi-component arrangement"),
+        SourceProvenance::exact(label),
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .ok()
@@ -4471,6 +5332,27 @@ fn validate_multi_surface_output(
     mesh: &ExactMesh,
     label: &'static str,
 ) -> Result<(), MeshError> {
+    validate_multi_surface_output_with_loop_policy(projection, polygons, mesh, label, true)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn validate_multi_simple_surface_output(
+    projection: CoplanarProjection,
+    polygons: &[Vec<Point3>],
+    mesh: &ExactMesh,
+    label: &'static str,
+) -> Result<(), MeshError> {
+    validate_multi_surface_output_with_loop_policy(projection, polygons, mesh, label, false)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn validate_multi_surface_output_with_loop_policy(
+    projection: CoplanarProjection,
+    polygons: &[Vec<Point3>],
+    mesh: &ExactMesh,
+    label: &'static str,
+    require_strict_convex: bool,
+) -> Result<(), MeshError> {
     if polygons.len() < 2 {
         return Err(surface_validation_error(
             label,
@@ -4528,7 +5410,9 @@ fn validate_multi_surface_output(
             "component loop orientation must be counter-clockwise",
         )?;
         validate_projected_simple_loop(polygon, projection, label)?;
-        validate_projected_strictly_convex_loop(polygon, projection, label)?;
+        if require_strict_convex {
+            validate_projected_strictly_convex_loop(polygon, projection, label)?;
+        }
         retained_area = add(&retained_area, &area);
         for point in polygon {
             for other_polygon in polygons.iter().skip(component + 1) {

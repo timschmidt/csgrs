@@ -8994,6 +8994,74 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
         }
     );
 
+    let nonconvex_multi_cutter_right = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            -1, -1, 0, 3, -1, 0, -1, 3, 0, //
+            8, 4, 0, 11, 4, 0, 11, 6, 0, 8, 6, 0,
+        ],
+        &[
+            0, 1, 2, //
+            3, 4, 5, 3, 5, 6,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert!(
+        hypermesh::exact::arrange_coplanar_convex_surface_multi_difference(
+            &corner_cutter_left,
+            &nonconvex_multi_cutter_right,
+        )
+        .is_none()
+    );
+    let nonconvex_multi_cutter = hypermesh::exact::arrange_coplanar_surface_multi_difference(
+        &corner_cutter_left,
+        &nonconvex_multi_cutter_right,
+    )
+    .expect("nonconvex simple loop plus a far component should materialize");
+    nonconvex_multi_cutter.validate().unwrap();
+    nonconvex_multi_cutter
+        .validate_difference_against_sources(&corner_cutter_left, &nonconvex_multi_cutter_right)
+        .unwrap();
+    assert_eq!(nonconvex_multi_cutter.polygons.len(), 2);
+    assert!(
+        nonconvex_multi_cutter
+            .polygons
+            .iter()
+            .any(|polygon| polygon.len() == 9)
+    );
+    assert_eq!(nonconvex_multi_cutter.mesh.vertices().len(), 13);
+    let mut reversed_nonconvex = nonconvex_multi_cutter.clone();
+    reversed_nonconvex.polygons[0].reverse();
+    assert!(reversed_nonconvex.validate().is_err());
+    let nonconvex_preflight = hypermesh::exact::preflight_boolean_exact(
+        &corner_cutter_left,
+        &nonconvex_multi_cutter_right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    nonconvex_preflight.validate().unwrap();
+    nonconvex_preflight
+        .validate_against_sources(&corner_cutter_left, &nonconvex_multi_cutter_right)
+        .unwrap();
+    assert_eq!(
+        nonconvex_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
+    );
+    let nonconvex_result = hypermesh::exact::boolean_exact(
+        &corner_cutter_left,
+        &nonconvex_multi_cutter_right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    nonconvex_result.validate().unwrap();
+    assert_eq!(
+        nonconvex_result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfaceMultiDifference
+        }
+    );
+
     let partial_height_cutters = ExactMesh::from_i64_triangles_with_policy(
         &[
             1, 0, 0, 2, 0, 0, 2, 1, 0, 1, 1, 0, //
@@ -9413,6 +9481,93 @@ fn exact_coplanar_convex_surface_difference_materializes_component_holes() {
             &hole_and_partial_height_cuts,
         )
         .is_none()
+    );
+
+    let cutter_hole_contact = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            4, 4, 0, 6, 4, 0, 6, 6, 0, 4, 6, 0, //
+            -1, 5, 0, 4, 5, 0, 4, 6, 0, -1, 6, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert!(
+        hypermesh::exact::arrange_coplanar_convex_surface_component_holed_difference(
+            &single_left,
+            &cutter_hole_contact,
+        )
+        .is_none()
+    );
+    let contact_difference =
+        hypermesh::exact::arrange_coplanar_surface_cutter_hole_contact_difference(
+            &single_left,
+            &cutter_hole_contact,
+        )
+        .expect("side cutter touching a retained hole should open one exact nonconvex loop");
+    contact_difference.validate().unwrap();
+    contact_difference
+        .validate_cutter_hole_contact_difference_against_sources(&single_left, &cutter_hole_contact)
+        .unwrap();
+    assert_eq!(contact_difference.polygon.len(), 10);
+    assert!(
+        contact_difference
+            .polygon
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(6)))
+    );
+    let mut reversed_contact = contact_difference.clone();
+    reversed_contact.polygon.reverse();
+    assert!(reversed_contact.validate().is_err());
+    let mut convex_relabel = contact_difference.clone();
+    convex_relabel.polygon = vec![p3(0, 0, 0), p3(10, 0, 0), p3(10, 10, 0), p3(0, 10, 0)];
+    assert!(
+        convex_relabel
+            .validate_cutter_hole_contact_difference_against_sources(
+                &single_left,
+                &cutter_hole_contact,
+            )
+            .is_err()
+    );
+    let contact_preflight = hypermesh::exact::preflight_boolean_exact(
+        &single_left,
+        &cutter_hole_contact,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    contact_preflight.validate().unwrap();
+    contact_preflight
+        .validate_against_sources(&single_left, &cutter_hole_contact)
+        .unwrap();
+    assert_eq!(
+        contact_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceCutterHoleContactDifference
+    );
+    let contact_result = hypermesh::exact::boolean_exact(
+        &single_left,
+        &cutter_hole_contact,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    contact_result
+        .validate_operation_against_sources(
+            &single_left,
+            &cutter_hole_contact,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        contact_result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::
+                CoplanarSurfaceCutterHoleContactDifference
+        }
     );
 
     let preflight = hypermesh::exact::preflight_boolean_exact(
