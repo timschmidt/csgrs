@@ -1718,6 +1718,68 @@ pub struct BezierBooleanBatchHandoffReport2 {
     pub uncertainty_reason: Option<UncertaintyReason>,
 }
 
+/// Root-isolation handoff status for Bezier/conic boolean predicates.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum BezierBooleanRootIsolationHandoffStatus {
+    /// No relation reports were supplied.
+    Empty,
+    /// No root-isolation work is required.
+    NotNeeded,
+    /// The supplied frontier already has represented split events.
+    SplitEventsReady,
+    /// Retained algebraic regions are ready to be delegated to exact root isolation.
+    ReadyForHypersolve,
+    /// Exact curve parameters must be recovered before root isolation can run.
+    BlockedByParameterRecovery,
+    /// Same-image or overlap relations must be resolved before root isolation.
+    BlockedByOverlapResolver,
+    /// The relation is still unresolved and has no retained isolation frontier.
+    BlockedByUnresolved,
+    /// A lower predicate reported explicit uncertainty.
+    BlockedByUncertainty,
+}
+
+/// Report that hands retained Bezier/conic regions to exact root isolation.
+///
+/// This report is the seam between `hypercurve` path booleans and the exact
+/// root-isolation machinery now available in `hypersolve`. It does not call a
+/// solver and it never upgrades an isolating box into topology. Instead, it
+/// audits whether the current boolean handoff contains retained algebraic
+/// regions or an isolation certificate that can be delegated to a Sturm/
+/// Collins-Loos style exact real-root isolator. This preserves Yap's "Towards
+/// Exact Geometric Computation" (1997) predicate/construction boundary:
+/// isolation may propose certified roots, but split insertion is accepted only
+/// after represented split events or exact-point certificates are returned.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BezierBooleanRootIsolationHandoffReport2 {
+    /// Coarse root-isolation handoff status.
+    pub status: BezierBooleanRootIsolationHandoffStatus,
+    /// Number of relation handoff reports consumed.
+    pub relation_count: usize,
+    /// Number of relations already split-ready.
+    pub split_ready_relation_count: usize,
+    /// Number of relations with retained region-isolation obligations.
+    pub region_isolation_relation_count: usize,
+    /// Number of retained isolation certificates.
+    pub isolation_certificate_count: usize,
+    /// Number of retained certificates whose terminal cells are exact points.
+    pub exact_point_certificate_count: usize,
+    /// Number of terminal region cells that still need exact root isolation.
+    pub terminal_region_count: usize,
+    /// Number of point witnesses that still need parameter recovery.
+    pub point_witnesses_needing_parameters: usize,
+    /// Number of overlap relations that must be resolved first.
+    pub overlap_relations_needing_resolution: usize,
+    /// Number of unresolved relation blockers.
+    pub unresolved_relations: usize,
+    /// Number of uncertain relation blockers.
+    pub uncertain_relations: usize,
+    /// First explicit primitive uncertainty reason retained by the handoff.
+    pub uncertainty_reason: Option<UncertaintyReason>,
+    /// Number of blocking preconditions retained by this report.
+    pub blocker_count: usize,
+}
+
 /// Combined Bezier path-boolean scheduler status.
 ///
 /// Bezier path booleans need both relation-level intersection facts and
@@ -11778,6 +11840,192 @@ impl BezierPathRangeBatchReport2 {
         } else {
             BezierPathRangeBatchStatus::OrderedOnly
         }
+    }
+}
+
+impl BezierBooleanRootIsolationHandoffReport2 {
+    /// Builds a root-isolation handoff from one boolean relation report.
+    ///
+    /// A [`BezierBooleanHandoffReport2`] with retained positive-width regions
+    /// is now actionable because `hypersolve` can isolate roots. This method
+    /// marks such frontiers as [`BezierBooleanRootIsolationHandoffStatus::ReadyForHypersolve`]
+    /// while preserving parameter-recovery, overlap, unresolved, and
+    /// uncertainty blockers. A split-ready exact-point certificate stays
+    /// split-ready and does not need root isolation. This follows Yap (1997):
+    /// the handoff certifies what exact stage may run next, not the final
+    /// topology. The delegated isolation model is the Sturm/Collins-Loos
+    /// exact real-root isolation tradition now surfaced through `hypersolve`.
+    pub fn from_handoff_report(report: &BezierBooleanHandoffReport2) -> Self {
+        let mut handoff = Self::empty();
+        handoff.relation_count = 1;
+        handoff.apply_report(report);
+        handoff.finalize()
+    }
+
+    /// Builds a root-isolation handoff from many boolean relation reports.
+    pub fn from_handoff_reports(reports: &[BezierBooleanHandoffReport2]) -> Self {
+        let mut handoff = Self::empty();
+        handoff.relation_count = reports.len();
+        for report in reports {
+            handoff.apply_report(report);
+        }
+        handoff.finalize()
+    }
+
+    /// Builds a root-isolation handoff from an aggregate boolean batch report.
+    ///
+    /// Batch reports do not retain individual isolation certificates, so this
+    /// method preserves only aggregate blocker and region-isolation counts.
+    pub fn from_batch_handoff(batch: &BezierBooleanBatchHandoffReport2) -> Self {
+        let blocker_count = batch.point_witnesses_needing_parameters
+            + batch.overlap_relations_needing_resolution
+            + batch.unresolved_relations
+            + batch.uncertain_relations;
+        let status = match batch.status {
+            BezierBooleanBatchHandoffStatus::Empty => {
+                BezierBooleanRootIsolationHandoffStatus::Empty
+            }
+            BezierBooleanBatchHandoffStatus::NoEvents => {
+                BezierBooleanRootIsolationHandoffStatus::NotNeeded
+            }
+            BezierBooleanBatchHandoffStatus::SplitEventsReady => {
+                BezierBooleanRootIsolationHandoffStatus::SplitEventsReady
+            }
+            BezierBooleanBatchHandoffStatus::NeedsRegionIsolation => {
+                BezierBooleanRootIsolationHandoffStatus::ReadyForHypersolve
+            }
+            BezierBooleanBatchHandoffStatus::NeedsParameterRecovery => {
+                BezierBooleanRootIsolationHandoffStatus::BlockedByParameterRecovery
+            }
+            BezierBooleanBatchHandoffStatus::NeedsOverlapResolver => {
+                BezierBooleanRootIsolationHandoffStatus::BlockedByOverlapResolver
+            }
+            BezierBooleanBatchHandoffStatus::Unresolved => {
+                BezierBooleanRootIsolationHandoffStatus::BlockedByUnresolved
+            }
+            BezierBooleanBatchHandoffStatus::Uncertain => {
+                BezierBooleanRootIsolationHandoffStatus::BlockedByUncertainty
+            }
+        };
+        Self {
+            status,
+            relation_count: batch.relation_count,
+            split_ready_relation_count: batch.split_ready_relation_count,
+            region_isolation_relation_count: batch.region_isolation_relation_count,
+            isolation_certificate_count: 0,
+            exact_point_certificate_count: 0,
+            terminal_region_count: batch.region_isolation_relation_count,
+            point_witnesses_needing_parameters: batch.point_witnesses_needing_parameters,
+            overlap_relations_needing_resolution: batch.overlap_relations_needing_resolution,
+            unresolved_relations: batch.unresolved_relations,
+            uncertain_relations: batch.uncertain_relations,
+            uncertainty_reason: batch.uncertainty_reason,
+            blocker_count,
+        }
+    }
+
+    fn empty() -> Self {
+        Self {
+            status: BezierBooleanRootIsolationHandoffStatus::Empty,
+            relation_count: 0,
+            split_ready_relation_count: 0,
+            region_isolation_relation_count: 0,
+            isolation_certificate_count: 0,
+            exact_point_certificate_count: 0,
+            terminal_region_count: 0,
+            point_witnesses_needing_parameters: 0,
+            overlap_relations_needing_resolution: 0,
+            unresolved_relations: 0,
+            uncertain_relations: 0,
+            uncertainty_reason: None,
+            blocker_count: 0,
+        }
+    }
+
+    fn apply_report(&mut self, report: &BezierBooleanHandoffReport2) {
+        match report.status {
+            BezierBooleanHandoffStatus::NoEvents => {}
+            BezierBooleanHandoffStatus::SplitEventsReady => {
+                self.split_ready_relation_count += 1;
+            }
+            BezierBooleanHandoffStatus::NeedsRegionIsolation => {
+                self.region_isolation_relation_count += 1;
+                if let Some(certificate) = &report.isolation_certificate {
+                    self.isolation_certificate_count += 1;
+                    self.terminal_region_count += certificate.terminal_region_count;
+                    if certificate.terminal_region_count > 0
+                        && certificate.terminal_summary.exact_point_cells
+                            == certificate.terminal_region_count
+                        && certificate.terminal_summary.invalid_spans == 0
+                        && certificate.terminal_summary.unknown_regions == 0
+                    {
+                        self.exact_point_certificate_count += 1;
+                    }
+                } else if let Some(summary) = &report.region_summary {
+                    self.terminal_region_count += summary.region_count;
+                } else {
+                    self.terminal_region_count += 1;
+                }
+            }
+            BezierBooleanHandoffStatus::NeedsParameterRecovery => {
+                self.point_witnesses_needing_parameters +=
+                    report.point_witnesses_needing_parameters.max(1);
+            }
+            BezierBooleanHandoffStatus::NeedsOverlapResolver => {
+                self.overlap_relations_needing_resolution +=
+                    report.overlap_relations_needing_resolution.max(1);
+            }
+            BezierBooleanHandoffStatus::Unresolved => {
+                self.unresolved_relations += report.unresolved_relations.max(1);
+            }
+            BezierBooleanHandoffStatus::Uncertain => {
+                self.uncertain_relations += report.uncertain_relations.max(1);
+                if self.uncertainty_reason.is_none() {
+                    self.uncertainty_reason = report.uncertainty_reason;
+                }
+            }
+        }
+    }
+
+    fn finalize(mut self) -> Self {
+        self.blocker_count = self.point_witnesses_needing_parameters
+            + self.overlap_relations_needing_resolution
+            + self.unresolved_relations
+            + self.uncertain_relations;
+        self.status = if self.relation_count == 0 {
+            BezierBooleanRootIsolationHandoffStatus::Empty
+        } else if self.point_witnesses_needing_parameters > 0 {
+            BezierBooleanRootIsolationHandoffStatus::BlockedByParameterRecovery
+        } else if self.overlap_relations_needing_resolution > 0 {
+            BezierBooleanRootIsolationHandoffStatus::BlockedByOverlapResolver
+        } else if self.unresolved_relations > 0 {
+            BezierBooleanRootIsolationHandoffStatus::BlockedByUnresolved
+        } else if self.uncertain_relations > 0 {
+            BezierBooleanRootIsolationHandoffStatus::BlockedByUncertainty
+        } else if self.region_isolation_relation_count > 0 {
+            BezierBooleanRootIsolationHandoffStatus::ReadyForHypersolve
+        } else if self.split_ready_relation_count > 0 {
+            BezierBooleanRootIsolationHandoffStatus::SplitEventsReady
+        } else {
+            BezierBooleanRootIsolationHandoffStatus::NotNeeded
+        };
+        self
+    }
+
+    /// Returns true when exact root isolation can run next.
+    pub fn can_feed_hypersolve(&self) -> bool {
+        self.status == BezierBooleanRootIsolationHandoffStatus::ReadyForHypersolve
+    }
+
+    /// Returns true when an earlier exact stage must run first.
+    pub fn has_blockers(&self) -> bool {
+        matches!(
+            self.status,
+            BezierBooleanRootIsolationHandoffStatus::BlockedByParameterRecovery
+                | BezierBooleanRootIsolationHandoffStatus::BlockedByOverlapResolver
+                | BezierBooleanRootIsolationHandoffStatus::BlockedByUnresolved
+                | BezierBooleanRootIsolationHandoffStatus::BlockedByUncertainty
+        )
     }
 }
 

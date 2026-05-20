@@ -29,6 +29,7 @@ use hypercurve::{
     BezierBooleanPathSchedulerStatus, BezierBooleanQuadraticFragmentReport2,
     BezierBooleanRationalQuadraticFragmentReport2, BezierBooleanRegionAssemblyReport2,
     BezierBooleanRegionAssemblyStatus, BezierBooleanResultReport2, BezierBooleanResultStatus,
+    BezierBooleanRootIsolationHandoffReport2, BezierBooleanRootIsolationHandoffStatus,
     BezierBooleanSplitInsertionStatus, BezierBooleanSplitPlanAuditStatus,
     BezierBooleanSplitPlanReport2, BezierBooleanSplitPlanStatus, BezierBooleanTraversalOperand,
     BezierBooleanTraversalPreconditionReport2, BezierBooleanTraversalPreconditionStatus,
@@ -4594,6 +4595,57 @@ fn bezier_boolean_handoff_replays_isolation_certificate_readiness() {
         1
     );
     assert_eq!(handoff.isolation_certificate, Some(certificate));
+}
+
+#[test]
+fn bezier_boolean_root_isolation_handoff_marks_region_frontiers_for_hypersolve() {
+    let region = hypercurve::BezierCurveIntersectionRegion::new(
+        span(ratio(1, 4), ratio(1, 2)),
+        span(ratio(1, 4), ratio(1, 2)),
+    );
+    let relation = BezierCurveRelation::IntersectionRegions {
+        regions: vec![region],
+    };
+    let handoff = BezierBooleanHandoffReport2::from_relation(&relation);
+
+    let root_handoff = BezierBooleanRootIsolationHandoffReport2::from_handoff_report(&handoff);
+
+    assert_eq!(
+        root_handoff.status,
+        BezierBooleanRootIsolationHandoffStatus::ReadyForHypersolve
+    );
+    assert!(root_handoff.can_feed_hypersolve());
+    assert!(!root_handoff.has_blockers());
+    assert_eq!(root_handoff.region_isolation_relation_count, 1);
+    assert_eq!(root_handoff.terminal_region_count, 1);
+}
+
+#[test]
+fn bezier_boolean_root_isolation_handoff_preserves_earlier_blockers() {
+    let unresolved = BezierBooleanHandoffReport2::from_relation(&BezierCurveRelation::Unresolved);
+    let uncertain = BezierBooleanHandoffReport2::from_classified_relation(
+        &Classification::Uncertain(UncertaintyReason::Ordering),
+    );
+
+    let unresolved_handoff =
+        BezierBooleanRootIsolationHandoffReport2::from_handoff_report(&unresolved);
+    assert_eq!(
+        unresolved_handoff.status,
+        BezierBooleanRootIsolationHandoffStatus::BlockedByUnresolved
+    );
+    assert!(unresolved_handoff.has_blockers());
+
+    let uncertain_handoff =
+        BezierBooleanRootIsolationHandoffReport2::from_handoff_report(&uncertain);
+    assert_eq!(
+        uncertain_handoff.status,
+        BezierBooleanRootIsolationHandoffStatus::BlockedByUncertainty
+    );
+    assert_eq!(
+        uncertain_handoff.uncertainty_reason,
+        Some(UncertaintyReason::Ordering)
+    );
+    assert!(uncertain_handoff.has_blockers());
 }
 
 #[test]
@@ -10247,6 +10299,37 @@ proptest! {
             1
         );
         prop_assert!(report.point_events.is_empty());
+    }
+
+    #[test]
+    fn generated_bezier_boolean_root_isolation_handoff_counts_region_frontiers(
+        region_count in 1_usize..8,
+    ) {
+        let regions = (0..region_count)
+            .map(|index| {
+                let start = ratio(index as i32 + 1, 16);
+                let end = ratio(index as i32 + 2, 16);
+                hypercurve::BezierCurveIntersectionRegion::new(
+                    span(start.clone(), end.clone()),
+                    span(start, end),
+                )
+            })
+            .collect::<Vec<_>>();
+        let handoff = BezierBooleanHandoffReport2::from_relation(
+            &BezierCurveRelation::IntersectionRegions { regions },
+        );
+
+        let root_handoff =
+            BezierBooleanRootIsolationHandoffReport2::from_handoff_report(&handoff);
+
+        prop_assert_eq!(
+            root_handoff.status,
+            BezierBooleanRootIsolationHandoffStatus::ReadyForHypersolve
+        );
+        prop_assert_eq!(root_handoff.region_isolation_relation_count, 1);
+        prop_assert_eq!(root_handoff.terminal_region_count, region_count);
+        prop_assert!(root_handoff.can_feed_hypersolve());
+        prop_assert!(!root_handoff.has_blockers());
     }
 
     #[test]
