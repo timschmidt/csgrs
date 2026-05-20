@@ -1,12 +1,33 @@
 //! Mesh quality metrics for triangles, vertices, and aggregate mesh health.
 
-use crate::float_types::{PI, Real, tolerance};
+use crate::float_types::{
+    PI, Real, hreal_to_f64, htriangle_area, hvector3_from_point3, tolerance,
+};
 use crate::mesh::Mesh;
 use crate::vertex::Vertex;
+use nalgebra::Point3;
 use std::fmt::Debug;
 
 #[cfg(feature = "parallel")]
 use rayon::prelude::*;
+
+fn degenerate_triangle_quality() -> TriangleQuality {
+    TriangleQuality {
+        aspect_ratio: Real::INFINITY,
+        min_angle: 0.0,
+        max_angle: 0.0,
+        edge_ratio: Real::INFINITY,
+        area: 0.0,
+        quality_score: 0.0,
+    }
+}
+
+fn hyper_edge_length(a: &Point3<Real>, b: &Point3<Real>) -> Option<Real> {
+    let a = hvector3_from_point3(a)?;
+    let b = hvector3_from_point3(b)?;
+    let length = a.squared_distance(&b).sqrt().ok()?;
+    hreal_to_f64(&length)
+}
 
 /// **Mathematical Foundation: Triangle Quality Metrics**
 ///
@@ -97,6 +118,13 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// 5. **Inradius**: r = A/s, where s = (a+b+c)/2
     /// 6. **Quality score**: Weighted combination of all metrics
     ///
+    /// Edge lengths and areas are measured through `hyperlattice::Vector3` and
+    /// `hyperreal::Real`, then exported to finite scalars for this reporting
+    /// API. This keeps degeneracy decisions on the exact-aware side of the
+    /// boundary, following Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7(1-2), 1997
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+    ///
     /// Returns quality metrics for each triangle in the mesh.
     pub fn analyze_triangle_quality(&self) -> Vec<TriangleQuality> {
         let triangulated = self.triangulate();
@@ -121,43 +149,38 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// Compute comprehensive quality metrics for a single triangle
     fn compute_triangle_quality(vertices: &[Vertex]) -> TriangleQuality {
         if vertices.len() != 3 {
-            return TriangleQuality {
-                aspect_ratio: Real::INFINITY,
-                min_angle: 0.0,
-                max_angle: 0.0,
-                edge_ratio: Real::INFINITY,
-                area: 0.0,
-                quality_score: 0.0,
-            };
+            return degenerate_triangle_quality();
         }
 
         let a = vertices[0].position;
         let b = vertices[1].position;
         let c = vertices[2].position;
 
-        // Edge vectors and lengths
-        let ab = b - a;
-        let bc = c - b;
-        let ca = a - c;
-
-        let len_ab = ab.norm();
-        let len_bc = bc.norm();
-        let len_ca = ca.norm();
+        let Some(len_ab) = hyper_edge_length(&a, &b) else {
+            return degenerate_triangle_quality();
+        };
+        let Some(len_bc) = hyper_edge_length(&b, &c) else {
+            return degenerate_triangle_quality();
+        };
+        let Some(len_ca) = hyper_edge_length(&c, &a) else {
+            return degenerate_triangle_quality();
+        };
 
         // Handle degenerate cases
         if len_ab < tolerance() || len_bc < tolerance() || len_ca < tolerance() {
+            return degenerate_triangle_quality();
+        }
+
+        let Some(area) = htriangle_area(&a, &b, &c) else {
             return TriangleQuality {
                 aspect_ratio: Real::INFINITY,
                 min_angle: 0.0,
                 max_angle: 0.0,
-                edge_ratio: Real::INFINITY,
+                edge_ratio: len_ab.max(len_bc).max(len_ca) / len_ab.min(len_bc).min(len_ca),
                 area: 0.0,
                 quality_score: 0.0,
             };
-        }
-
-        // Triangle area using cross product
-        let area = 0.5 * ab.cross(&(-ca)).norm();
+        };
 
         if area < tolerance() {
             return TriangleQuality {
@@ -173,12 +196,15 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         // Interior angles using law of cosines
         let angle_a = ((len_bc.powi(2) + len_ca.powi(2) - len_ab.powi(2))
             / (2.0 * len_bc * len_ca))
+            .clamp(-1.0, 1.0)
             .acos();
         let angle_b = ((len_ca.powi(2) + len_ab.powi(2) - len_bc.powi(2))
             / (2.0 * len_ca * len_ab))
+            .clamp(-1.0, 1.0)
             .acos();
         let angle_c = ((len_ab.powi(2) + len_bc.powi(2) - len_ca.powi(2))
             / (2.0 * len_ab * len_bc))
+            .clamp(-1.0, 1.0)
             .acos();
 
         let min_angle = angle_a.min(angle_b).min(angle_c);
@@ -265,11 +291,15 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             .flat_map(|poly| {
                 poly.vertices
                     .windows(2)
-                    .map(|w| (w[1].position - w[0].position).norm())
-                    .chain(std::iter::once(
-                        (poly.vertices[0].position - poly.vertices.last().unwrap().position)
-                            .norm(),
-                    ))
+                    .filter_map(|w| hyper_edge_length(&w[0].position, &w[1].position))
+                    .chain(
+                        poly.vertices
+                            .last()
+                            .and_then(|last| {
+                                hyper_edge_length(&poly.vertices[0].position, &last.position)
+                            })
+                            .into_iter(),
+                    )
             })
             .collect();
 

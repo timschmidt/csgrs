@@ -46,7 +46,7 @@ fuzz_target!(|bytes: &[u8]| {
     }
     let faces = owned_faces.iter().map(Vec::as_slice).collect::<Vec<_>>();
 
-    if let Ok(mesh) = Mesh::<()>::polyhedron(&points, &faces, None) {
+    if let Ok(mesh) = Mesh::<()>::polyhedron(&points, &faces, ()) {
         for vertex in mesh.vertices() {
             assert!(vertex.position.x.is_finite());
             assert!(vertex.position.y.is_finite());

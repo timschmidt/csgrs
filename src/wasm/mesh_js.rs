@@ -1,16 +1,29 @@
 //! JavaScript wrapper for [`Mesh`].
 
 use crate::csg::CSG;
-use crate::float_types::{Real, hreal_from_f64};
+use crate::float_types::{
+    Real, hperpendicular_basis, hreal_from_f64, hunit_cross_vector3, hunit_quaternion,
+    hvector3_dot, hvector3_from_point3,
+};
 use crate::mesh::{Mesh, plane::Plane};
 use crate::wasm::{
-    js_metadata_to_string, matrix_js::Matrix4Js, plane_js::PlaneJs, point_js::Point3Js,
-    polygon_js::PolygonJs, sketch_js::SketchJs, vector_js::Vector3Js,
+    finite_matrix4, js_metadata_to_string, matrix_js::Matrix4Js, plane_js::PlaneJs,
+    point_js::Point3Js, polygon_js::PolygonJs, sketch_js::SketchJs, vector_js::Vector3Js,
 };
 use js_sys::{Float64Array, Object, Reflect, Uint32Array};
-use nalgebra::{Matrix4, Point3, Quaternion, UnitQuaternion, Vector3};
+use nalgebra::{Point3, Vector3};
 use serde_wasm_bindgen::from_value;
 use wasm_bindgen::prelude::*;
+
+fn wasm_projected_polygon_normal(points: &[Point3<Real>]) -> Option<Vector3<Real>> {
+    (1..points.len().saturating_sub(1)).find_map(|i| {
+        hunit_cross_vector3(&(points[i] - points[0]), &(points[i + 1] - points[0]))
+    })
+}
+
+fn wasm_point3_boundary(x: Real, y: Real, z: Real) -> Point3<Real> {
+    Point3Js::new(x, y, z).inner
+}
 
 #[wasm_bindgen]
 pub struct MeshJs {
@@ -40,7 +53,6 @@ impl MeshJs {
         hole_arrays: Vec<Float64Array>,
         metadata: JsValue,
     ) -> Result<MeshJs, JsValue> {
-        use crate::polygon::build_orthonormal_basis;
         use crate::vertex::Vertex;
 
         fn parse_points(data: &[f64], label: &str) -> Result<Vec<Point3<Real>>, JsValue> {
@@ -74,13 +86,18 @@ impl MeshJs {
             vertices: &mut Vec<Vertex>,
             flat_2d: &mut Vec<Real>,
             normal: Vector3<Real>,
-        ) {
+        ) -> Result<(), JsValue> {
             for point in ring {
                 let offset = point.coords - origin.coords;
-                flat_2d.push(offset.dot(&u));
-                flat_2d.push(offset.dot(&v));
+                flat_2d.push(hvector3_dot(&offset, &u).ok_or_else(|| {
+                    JsValue::from_str("projected point contains non-finite coordinates")
+                })?);
+                flat_2d.push(hvector3_dot(&offset, &v).ok_or_else(|| {
+                    JsValue::from_str("projected point contains non-finite coordinates")
+                })?);
                 vertices.push(Vertex::new(*point, normal));
             }
+            Ok(())
         }
 
         let outer = parse_points(&outer_points, "outer_points")?;
@@ -90,28 +107,19 @@ impl MeshJs {
             ));
         }
 
-        let normal = {
-            let mut normal = Vector3::zeros();
-            for i in 1..outer.len() - 1 {
-                normal = (outer[i] - outer[0]).cross(&(outer[i + 1] - outer[0]));
-                if normal.norm_squared() > Real::EPSILON {
-                    break;
-                }
-            }
-            let normal_len = normal.norm();
-            if normal_len <= Real::EPSILON || !normal_len.is_finite() {
-                return Err(JsValue::from_str("outer_points are degenerate"));
-            }
-            normal / normal_len
+        let Some(normal) = wasm_projected_polygon_normal(&outer) else {
+            return Err(JsValue::from_str("outer_points are degenerate"));
         };
 
         let origin = outer[0];
-        let (u, v) = build_orthonormal_basis(normal);
+        let Some((u, v)) = hperpendicular_basis(&normal) else {
+            return Err(JsValue::from_str("outer_points are degenerate"));
+        };
         let mut vertices = Vec::new();
         let mut flat_2d = Vec::new();
         let mut holes = Vec::with_capacity(hole_arrays.len());
 
-        push_ring(&outer, origin, u, v, &mut vertices, &mut flat_2d, normal);
+        push_ring(&outer, origin, u, v, &mut vertices, &mut flat_2d, normal)?;
 
         for (index, hole_array) in hole_arrays.into_iter().enumerate() {
             let hole = parse_points(&hole_array.to_vec(), &format!("hole_arrays[{index}]"))?;
@@ -121,7 +129,7 @@ impl MeshJs {
                 )));
             }
             holes.push(vertices.len());
-            push_ring(&hole, origin, u, v, &mut vertices, &mut flat_2d, normal);
+            push_ring(&hole, origin, u, v, &mut vertices, &mut flat_2d, normal)?;
         }
 
         use crate::polygon::Polygon;
@@ -154,10 +162,8 @@ impl MeshJs {
             let a = vertices[i0];
             let b = vertices[i1];
             let c = vertices[i2];
-            if (b.position - a.position)
-                .cross(&(c.position - a.position))
-                .norm_squared()
-                <= Real::EPSILON
+            if hunit_cross_vector3(&(b.position - a.position), &(c.position - a.position))
+                .is_none()
             {
                 continue;
             }
@@ -305,8 +311,8 @@ impl MeshJs {
 
     #[wasm_bindgen(js_name = containsVertexComponents)]
     pub fn contains_vertex_components(&self, x: Real, y: Real, z: Real) -> bool {
-        let point: Point3<Real> = Point3::new(x, y, z);
-        self.inner.contains_vertex(&point)
+        let point = Point3Js::new(x, y, z);
+        self.inner.contains_vertex(&point.inner)
     }
 
     // Boolean Operations
@@ -366,9 +372,13 @@ impl MeshJs {
         m32: Real,
         m33: Real,
     ) -> Self {
-        let matrix = Matrix4::new(
+        let Some(matrix) = finite_matrix4([
             m00, m01, m02, m03, m10, m11, m12, m13, m20, m21, m22, m23, m30, m31, m32, m33,
-        );
+        ]) else {
+            return Self {
+                inner: self.inner.clone(),
+            };
+        };
         Self {
             inner: self.inner.transform(&matrix),
         }
@@ -398,15 +408,12 @@ impl MeshJs {
 
     #[wasm_bindgen(js_name = rotateQuaternion)]
     pub fn rotate_quaternion(&self, w: Real, x: Real, y: Real, z: Real) -> Self {
-        let q = Quaternion::new(w, x, y, z);
-        let norm = q.norm();
-        if norm <= Real::EPSILON || !norm.is_finite() {
+        let Some(q) = hunit_quaternion(w, x, y, z) else {
             return Self {
                 inner: self.inner.clone(),
             };
-        }
+        };
 
-        let q = UnitQuaternion::new_unchecked(q / norm);
         Self {
             inner: self.inner.transform(&q.to_homogeneous()),
         }
@@ -488,8 +495,8 @@ impl MeshJs {
         normal_z: Real,
         offset: Real,
     ) -> SketchJs {
-        let plane = Plane::from_normal(Vector3::new(normal_x, normal_y, normal_z), offset);
-        let sketch = self.inner.slice(plane);
+        let plane = PlaneJs::from_normal_components(normal_x, normal_y, normal_z, offset);
+        let sketch = self.inner.slice(plane.inner);
         SketchJs { inner: sketch }
     }
 
@@ -600,9 +607,9 @@ impl MeshJs {
         dz: Real,
         spacing: Real,
     ) -> Self {
-        let direction = Vector3::new(dx, dy, dz);
+        let direction = Vector3Js::new(dx, dy, dz);
         Self {
-            inner: self.inner.distribute_linear(count, direction, spacing),
+            inner: self.inner.distribute_linear(count, direction.inner, spacing),
         }
     }
 
@@ -821,8 +828,8 @@ impl MeshJs {
         segments: usize,
         metadata: JsValue,
     ) -> Self {
-        let start: Point3<Real> = Point3::new(start_x, start_y, start_z);
-        let end: Point3<Real> = Point3::new(end_x, end_y, end_z);
+        let start: Point3<Real> = wasm_point3_boundary(start_x, start_y, start_z);
+        let end: Point3<Real> = wasm_point3_boundary(end_x, end_y, end_z);
         let meta = js_metadata_to_string(metadata).unwrap_or(None);
         Self {
             inner: Mesh::frustum_ptp(start, end, radius1, radius2, segments, meta),
@@ -856,8 +863,18 @@ impl MeshJs {
 
         let points_3d: Vec<[Real; 3]> = points_vec
             .into_iter()
-            .map(|[x, y, z]| [x as Real, y as Real, z as Real])
-            .collect();
+            .enumerate()
+            .map(|(index, [x, y, z])| {
+                let point = Point3::new(x as Real, y as Real, z as Real);
+                hvector3_from_point3(&point)
+                    .ok_or_else(|| {
+                        JsValue::from_str(&format!(
+                            "Polyhedron point {index} contains non-finite coordinates"
+                        ))
+                    })
+                    .map(|_| [point.x, point.y, point.z])
+            })
+            .collect::<Result<_, _>>()?;
 
         let faces_ref: Vec<&[usize]> = faces_vec.iter().map(|f| f.as_slice()).collect();
 
@@ -1057,4 +1074,129 @@ impl MeshJs {
     // let metaball_mesh = Mesh::metaballs(&meta_balls, resolution, iso_value, padding, None);
     // Self { inner: metaball_mesh }
     // }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::float_types::tolerance;
+
+    #[test]
+    fn mesh_js_transform_components_rejects_nonfinite_matrix() {
+        let mesh = MeshJs {
+            inner: Mesh::cube(1.0, None),
+        };
+        let original = mesh.inner.bounding_box();
+
+        let transformed = mesh.transform_components(
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            Real::NAN,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+        );
+
+        assert_eq!(transformed.inner.bounding_box(), original);
+    }
+
+    #[test]
+    fn mesh_js_component_vectors_reuse_hyper_boundary_wrappers() {
+        let mesh = MeshJs {
+            inner: Mesh::cube(1.0, None),
+        };
+        let original = mesh.inner.bounding_box();
+
+        assert!(!mesh.contains_vertex_components(Real::NAN, 0.0, 0.0));
+        let distributed =
+            mesh.distribute_linear_components(4, Real::NAN, Real::INFINITY, 0.0, 1.0);
+        assert_eq!(distributed.inner.bounding_box(), original);
+
+        let sliced = mesh.slice_components(Real::NAN, Real::INFINITY, 0.0, Real::NAN);
+        let bbox = sliced.inner.bounding_box();
+        assert!(bbox.mins.x.is_finite());
+        assert!(bbox.maxs.x.is_finite());
+    }
+
+    #[test]
+    fn mesh_js_frustum_ptp_components_reuse_hyperreal_point_boundary() {
+        let start = wasm_point3_boundary(Real::NAN, 0.0, Real::INFINITY);
+        let end = wasm_point3_boundary(0.0, 0.0, 1.0);
+        let mesh = Mesh::<()>::frustum_ptp(start, end, 0.25, 0.5, 8, ());
+        for vertex in mesh.vertices() {
+            assert!(vertex.position.x.is_finite());
+            assert!(vertex.position.y.is_finite());
+            assert!(vertex.position.z.is_finite());
+        }
+
+        let hostile_mesh = Mesh::<()>::frustum_ptp(
+            Point3::new(Real::NAN, 0.0, Real::INFINITY),
+            Point3::new(0.0, 0.0, 1.0),
+            0.25,
+            0.5,
+            8,
+            (),
+        );
+        assert!(hostile_mesh.polygons.is_empty());
+    }
+
+    #[test]
+    #[cfg(target_arch = "wasm32")]
+    fn mesh_js_frustum_ptp_components_exported_path_reuses_hyperreal_point_boundary() {
+        let mesh = MeshJs::frustum_ptp_components(
+            Real::NAN,
+            0.0,
+            Real::INFINITY,
+            0.0,
+            0.0,
+            1.0,
+            0.25,
+            0.5,
+            8,
+            JsValue::NULL,
+        );
+        for vertex in mesh.inner.vertices() {
+            assert!(vertex.position.x.is_finite());
+            assert!(vertex.position.y.is_finite());
+            assert!(vertex.position.z.is_finite());
+        }
+    }
+
+    #[test]
+    fn mesh_js_from_points_projection_uses_hyperlattice_normal_checks() {
+        let points = [
+            Point3::new(0.0, 0.0, 0.0),
+            Point3::new(tolerance() * 0.25, 0.0, 0.0),
+            Point3::new(tolerance() * 0.5, 0.0, 0.0),
+            Point3::new(0.0, 1.0, 0.0),
+        ];
+
+        let normal = wasm_projected_polygon_normal(&points).unwrap();
+        assert!(normal.iter().all(|value| value.is_finite()));
+        assert!(hvector3_dot(&normal, &Vector3::z()).unwrap() > 1.0 - tolerance());
+
+        let degenerate = [
+            Point3::new(0.0, 0.0, 0.0),
+            Point3::new(tolerance() * 0.25, 0.0, 0.0),
+            Point3::new(tolerance() * 0.5, 0.0, 0.0),
+        ];
+        assert!(wasm_projected_polygon_normal(&degenerate).is_none());
+
+        let hostile = [
+            Point3::new(0.0, 0.0, 0.0),
+            Point3::new(Real::NAN, 0.0, 0.0),
+            Point3::new(0.0, 1.0, 0.0),
+        ];
+        assert!(wasm_projected_polygon_normal(&hostile).is_none());
+    }
 }

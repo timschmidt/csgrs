@@ -11,17 +11,15 @@
 //! ```
 
 use csgrs::csg::CSG;
-use csgrs::float_types::Real;
+use csgrs::float_types::{Real, hreal_from_f64};
 use csgrs::mesh::Mesh;
 use csgrs::mesh::metaballs::MetaBall;
 use csgrs::polygon::Polygon;
 use csgrs::sketch::Sketch;
 use csgrs::vertex::Vertex;
-use geo::{
-    BoundingRect, Contains, CoordsIter, Geometry, GeometryCollection, Point as GeoPoint,
-};
+use hypercurve::Point2;
 use image::{GrayImage, Luma, Rgba, RgbaImage};
-use nalgebra::{Point2, Point3, Vector3};
+use nalgebra::{Point3, Vector3};
 use std::fs;
 use std::path::PathBuf;
 
@@ -128,9 +126,18 @@ fn render_readme_sketches() {
     render_sketch("from_image", &Sketch::<()>::from_image(&image, 128, true, ()));
 
     let metaballs = [
-        (Point2::new(-0.45, 0.0), 0.72),
-        (Point2::new(0.45, 0.0), 0.72),
-        (Point2::new(0.0, 0.55), 0.58),
+        (
+            Point2::new(hreal_from_f64(-0.45).unwrap(), hreal_from_f64(0.0).unwrap()),
+            0.72,
+        ),
+        (
+            Point2::new(hreal_from_f64(0.45).unwrap(), hreal_from_f64(0.0).unwrap()),
+            0.72,
+        ),
+        (
+            Point2::new(hreal_from_f64(0.0).unwrap(), hreal_from_f64(0.55).unwrap()),
+            0.58,
+        ),
     ];
     render_sketch(
         "metaballs_2d",
@@ -321,103 +328,130 @@ fn render_distribution_examples() {
 
 fn render_sketch(name: &str, sketch: &Sketch<()>) {
     let mut image = RgbaImage::from_pixel(SIZE, SIZE, BG);
-    let Some(bounds) = sketch.geometry.bounding_rect() else {
+    let profiles = sketch.region_profiles();
+    let wires = sketch.wire_polylines();
+    let Some((min_x, min_y, max_x, max_y)) = sketch_bounds(&profiles, &wires) else {
         save_image(name, &image);
         return;
     };
-    let map = Map2::new(bounds.min().x, bounds.min().y, bounds.max().x, bounds.max().y);
+    let map = Map2::new(min_x, min_y, max_x, max_y);
 
-    fill_geometry(&mut image, &map, &sketch.geometry);
-    stroke_geometry(&mut image, &map, &sketch.geometry);
+    for profile in &profiles {
+        fill_profile(&mut image, &map, profile.material().points(), profile.holes());
+        stroke_points(&mut image, &map, profile.material().points(), EDGE_2D);
+        for hole in profile.holes() {
+            stroke_points(&mut image, &map, hole.points(), EDGE_2D);
+        }
+    }
+    for wire in &wires {
+        stroke_points(&mut image, &map, wire, LINE_2D);
+    }
     save_image(name, &image);
 }
 
-fn fill_geometry(image: &mut RgbaImage, map: &Map2, geometry: &GeometryCollection<Real>) {
-    for geometry in geometry {
-        match geometry {
-            Geometry::Polygon(poly) => fill_polygon(image, map, poly),
-            Geometry::MultiPolygon(mp) => {
-                for poly in &mp.0 {
-                    fill_polygon(image, map, poly);
-                }
-            },
-            Geometry::GeometryCollection(gc) => fill_geometry(image, map, gc),
-            _ => {},
-        }
-    }
-}
-
-fn stroke_geometry(image: &mut RgbaImage, map: &Map2, geometry: &GeometryCollection<Real>) {
-    for geometry in geometry {
-        match geometry {
-            Geometry::Polygon(poly) => {
-                stroke_line_string(image, map, poly.exterior(), EDGE_2D);
-                for ring in poly.interiors() {
-                    stroke_line_string(image, map, ring, EDGE_2D);
-                }
-            },
-            Geometry::MultiPolygon(mp) => {
-                for poly in &mp.0 {
-                    stroke_line_string(image, map, poly.exterior(), EDGE_2D);
-                    for ring in poly.interiors() {
-                        stroke_line_string(image, map, ring, EDGE_2D);
-                    }
-                }
-            },
-            Geometry::Line(line) => {
-                draw_line(
-                    image,
-                    map.point(line.start.x, line.start.y),
-                    map.point(line.end.x, line.end.y),
-                    LINE_2D,
-                );
-            },
-            Geometry::LineString(line) => stroke_line_string(image, map, line, LINE_2D),
-            Geometry::MultiLineString(lines) => {
-                for line in lines {
-                    stroke_line_string(image, map, line, LINE_2D);
-                }
-            },
-            Geometry::GeometryCollection(gc) => stroke_geometry(image, map, gc),
-            _ => {},
-        }
-    }
-}
-
-fn fill_polygon(image: &mut RgbaImage, map: &Map2, poly: &geo::Polygon<Real>) {
-    let Some(bounds) = poly.bounding_rect() else {
+fn fill_profile(
+    image: &mut RgbaImage,
+    map: &Map2,
+    material: &[[Real; 2]],
+    holes: &[hypercurve::FinitePolyline2],
+) {
+    let Some((min_x, min_y, max_x, max_y)) = ring_bounds(material) else {
         return;
     };
-    let (min_x, max_y) = map.point(bounds.min().x, bounds.min().y);
-    let (max_x, min_y) = map.point(bounds.max().x, bounds.max().y);
-    let x0 = min_x.min(max_x).saturating_sub(1).min(SIZE - 1);
-    let x1 = min_x.max(max_x).saturating_add(1).min(SIZE - 1);
-    let y0 = min_y.min(max_y).saturating_sub(1).min(SIZE - 1);
-    let y1 = min_y.max(max_y).saturating_add(1).min(SIZE - 1);
+    let (px_min_x, px_max_y) = map.point(min_x, min_y);
+    let (px_max_x, px_min_y) = map.point(max_x, max_y);
+    let x0 = px_min_x.min(px_max_x).saturating_sub(1).min(SIZE - 1);
+    let x1 = px_min_x.max(px_max_x).saturating_add(1).min(SIZE - 1);
+    let y0 = px_min_y.min(px_max_y).saturating_sub(1).min(SIZE - 1);
+    let y1 = px_min_y.max(px_max_y).saturating_add(1).min(SIZE - 1);
 
     for y in y0..=y1 {
         for x in x0..=x1 {
             let (wx, wy) = map.world(x, y);
-            if poly.contains(&GeoPoint::new(wx, wy)) {
+            if point_in_ring([wx, wy], material)
+                && !holes
+                    .iter()
+                    .any(|hole| point_in_ring([wx, wy], hole.points()))
+            {
                 image.put_pixel(x, y, INK_2D);
             }
         }
     }
 }
 
-fn stroke_line_string(
-    image: &mut RgbaImage,
-    map: &Map2,
-    line: &geo::LineString<Real>,
-    color: Rgba<u8>,
-) {
-    let points = line
-        .coords_iter()
-        .map(|c| map.point(c.x, c.y))
+fn stroke_points(image: &mut RgbaImage, map: &Map2, points: &[[Real; 2]], color: Rgba<u8>) {
+    let pixels = points
+        .iter()
+        .map(|point| map.point(point[0], point[1]))
         .collect::<Vec<_>>();
-    for pair in points.windows(2) {
+    for pair in pixels.windows(2) {
         draw_line(image, pair[0], pair[1], color);
     }
+}
+
+fn sketch_bounds(
+    profiles: &[hypercurve::FiniteRegionProfile2],
+    wires: &[Vec<[Real; 2]>],
+) -> Option<(Real, Real, Real, Real)> {
+    let mut bounds = None;
+    for profile in profiles {
+        include_ring_bounds(&mut bounds, profile.material().points());
+        for hole in profile.holes() {
+            include_ring_bounds(&mut bounds, hole.points());
+        }
+    }
+    for wire in wires {
+        include_ring_bounds(&mut bounds, wire);
+    }
+    bounds
+}
+
+fn include_ring_bounds(bounds: &mut Option<(Real, Real, Real, Real)>, ring: &[[Real; 2]]) {
+    let Some((min_x, min_y, max_x, max_y)) = ring_bounds(ring) else {
+        return;
+    };
+    *bounds = Some(match *bounds {
+        Some((old_min_x, old_min_y, old_max_x, old_max_y)) => (
+            old_min_x.min(min_x),
+            old_min_y.min(min_y),
+            old_max_x.max(max_x),
+            old_max_y.max(max_y),
+        ),
+        None => (min_x, min_y, max_x, max_y),
+    });
+}
+
+fn ring_bounds(ring: &[[Real; 2]]) -> Option<(Real, Real, Real, Real)> {
+    let first = ring.first()?;
+    let (mut min_x, mut min_y, mut max_x, mut max_y) =
+        (first[0], first[1], first[0], first[1]);
+    for point in ring.iter().skip(1) {
+        min_x = min_x.min(point[0]);
+        min_y = min_y.min(point[1]);
+        max_x = max_x.max(point[0]);
+        max_y = max_y.max(point[1]);
+    }
+    Some((min_x, min_y, max_x, max_y))
+}
+
+fn point_in_ring(point: [Real; 2], ring: &[[Real; 2]]) -> bool {
+    let mut inside = false;
+    let Some(mut previous) = ring.last().copied() else {
+        return false;
+    };
+    for &current in ring {
+        let crosses = (current[1] > point[1]) != (previous[1] > point[1]);
+        if crosses {
+            let x_intersection = (previous[0] - current[0]) * (point[1] - current[1])
+                / (previous[1] - current[1])
+                + current[0];
+            if point[0] < x_intersection {
+                inside = !inside;
+            }
+        }
+        previous = current;
+    }
+    inside
 }
 
 fn render_mesh(name: &str, mesh: &Mesh<()>) {

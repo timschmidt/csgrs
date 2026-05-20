@@ -1,6 +1,6 @@
 //! JavaScript wrapper for mesh planes.
 
-use crate::float_types::Real;
+use crate::float_types::{Real, hunit_cross_vector3, hunit_vector3};
 use crate::mesh::plane::Plane;
 use crate::vertex::Vertex;
 use crate::wasm::{
@@ -10,6 +10,46 @@ use crate::wasm::{
 use nalgebra::{Point3, Vector3};
 use wasm_bindgen::prelude::*;
 
+fn wasm_plane_from_normal_or_default(normal: Vector3<Real>, offset: Real) -> Plane {
+    let normal = hunit_vector3(&normal).unwrap_or_else(Vector3::z);
+    let offset = if offset.is_finite() { offset } else { 0.0 };
+    Plane::from_normal(normal, offset)
+}
+
+fn wasm_plane_from_points_or_default(
+    point_a: Point3<Real>,
+    point_b: Point3<Real>,
+    point_c: Point3<Real>,
+) -> Plane {
+    let Some(normal) = hunit_cross_vector3(&(point_b - point_a), &(point_c - point_a)) else {
+        return Plane::from_normal(Vector3::z(), 0.0);
+    };
+    if !point_a.coords.iter().all(|value| value.is_finite())
+        || !point_b.coords.iter().all(|value| value.is_finite())
+        || !point_c.coords.iter().all(|value| value.is_finite())
+    {
+        return Plane::from_normal(Vector3::z(), 0.0);
+    }
+
+    // JS input remains finite boundary data; the support normal is constructed
+    // as a checked hyperlattice unit cross product before native plane topology
+    // is built, following Yap, "Towards Exact Geometric Computation,"
+    // Computational Geometry 7(1-2), 1997
+    // (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+    Plane::from_vertices(vec![
+        Vertex::new(point_a, normal),
+        Vertex::new(point_b, normal),
+        Vertex::new(point_c, normal),
+    ])
+}
+
+fn validate_plane_vertices(vertices: &[VertexJs]) -> Result<(), &'static str> {
+    if vertices.len() < 3 {
+        return Err("Plane.fromVertices requires at least 3 vertices");
+    }
+    Ok(())
+}
+
 #[wasm_bindgen]
 pub struct PlaneJs {
     pub(crate) inner: Plane,
@@ -18,22 +58,22 @@ pub struct PlaneJs {
 #[wasm_bindgen]
 impl PlaneJs {
     #[wasm_bindgen(constructor)]
-    pub fn new(vertices: Vec<VertexJs>) -> PlaneJs {
+    pub fn new(vertices: Vec<VertexJs>) -> Result<PlaneJs, JsValue> {
         PlaneJs::from_vertices(vertices)
     }
 
     #[wasm_bindgen(js_name = FromVertices)]
-    pub fn from_vertices(vertices: Vec<VertexJs>) -> PlaneJs {
-        // Require at least 3 vertices (Plane::from_vertices will index [0..2])
-        if vertices.len() < 3 {
-            panic!("Plane.fromVertices requires at least 3 vertices");
-        }
+    pub fn from_vertices(vertices: Vec<VertexJs>) -> Result<PlaneJs, JsValue> {
+        validate_plane_vertices(&vertices).map_err(JsValue::from_str)?;
 
-        // Strip the JS wrappers to get the underlying Vertex<Real> values
+        // JS vertices are already finite boundary wrappers. `Plane::from_vertices`
+        // selects support points with hyperlattice/hyperreal predicates, following
+        // Yap, "Towards Exact Geometric Computation," Computational Geometry
+        // 7(1-2), 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>).
         let verts: Vec<Vertex> = vertices.into_iter().map(|v| v.inner).collect();
 
         let plane = Plane::from_vertices(verts);
-        PlaneJs { inner: plane }
+        Ok(PlaneJs { inner: plane })
     }
 
     pub fn points(&self) -> Vec<Point3Js> {
@@ -61,14 +101,7 @@ impl PlaneJs {
         let point_b: Point3<Real> = Point3::new(bx as Real, by as Real, bz as Real);
         let point_c: Point3<Real> = Point3::new(cx as Real, cy as Real, cz as Real);
 
-        let normal = (point_b - point_a).cross(&(point_c - point_a)).normalize();
-
-        // Convert Points to Vertices with default normals
-        let vertex_a = Vertex::new(point_a, normal);
-        let vertex_b = Vertex::new(point_b, normal);
-        let vertex_c = Vertex::new(point_c, normal);
-
-        let plane = Plane::from_vertices(vec![vertex_a, vertex_b, vertex_c]);
+        let plane = wasm_plane_from_points_or_default(point_a, point_b, point_c);
         Self { inner: plane }
     }
 
@@ -78,13 +111,7 @@ impl PlaneJs {
         let point_b: Point3<Real> = b.into();
         let point_c: Point3<Real> = c.into();
 
-        let normal = (point_b - point_a).cross(&(point_c - point_a)).normalize();
-
-        let vertex_a = Vertex::new(point_a, normal);
-        let vertex_b = Vertex::new(point_b, normal);
-        let vertex_c = Vertex::new(point_c, normal);
-
-        let plane = Plane::from_vertices(vec![vertex_a, vertex_b, vertex_c]);
+        let plane = wasm_plane_from_points_or_default(point_a, point_b, point_c);
         Self { inner: plane }
     }
 
@@ -92,14 +119,14 @@ impl PlaneJs {
     #[wasm_bindgen(js_name = FromNormalComponents)]
     pub fn from_normal_components(nx: f64, ny: f64, nz: f64, offset: Real) -> Self {
         let normal: Vector3<Real> = Vector3::new(nx as Real, ny as Real, nz as Real);
-        let plane = Plane::from_normal(normal, offset);
+        let plane = wasm_plane_from_normal_or_default(normal, offset);
         Self { inner: plane }
     }
 
     #[wasm_bindgen(js_name = FromNormal)]
     pub fn from_normal(normal: &Vector3Js, offset: Real) -> Self {
         let n: Vector3<Real> = normal.into();
-        let plane = Plane::from_normal(n, offset);
+        let plane = wasm_plane_from_normal_or_default(n, offset);
         Self { inner: plane }
     }
 
@@ -177,5 +204,47 @@ impl From<Plane> for PlaneJs {
 impl From<&PlaneJs> for Plane {
     fn from(p: &PlaneJs) -> Self {
         p.inner.clone()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::float_types::{hvector3_dot, tolerance};
+
+    #[test]
+    fn plane_js_from_vertices_rejects_short_input_without_panic() {
+        let result = std::panic::catch_unwind(|| validate_plane_vertices(&[]));
+        assert!(result.is_ok());
+        assert!(result.unwrap().is_err());
+    }
+
+    #[test]
+    fn plane_js_from_points_uses_hyperlattice_checked_cross_product() {
+        let plane = wasm_plane_from_points_or_default(
+            Point3::new(0.0, 0.0, 0.0),
+            Point3::new(1.0, 0.0, 0.0),
+            Point3::new(0.0, 1.0, 0.0),
+        );
+        assert!(hvector3_dot(&plane.normal(), &Vector3::z()).unwrap() > 1.0 - tolerance());
+        assert!((plane.offset()).abs() <= tolerance());
+
+        let degenerate = wasm_plane_from_points_or_default(
+            Point3::new(0.0, 0.0, 0.0),
+            Point3::new(tolerance() * 0.25, 0.0, 0.0),
+            Point3::new(tolerance() * 0.5, 0.0, 0.0),
+        );
+        assert!(
+            hvector3_dot(&degenerate.normal(), &Vector3::z()).unwrap() > 1.0 - tolerance()
+        );
+        assert_eq!(degenerate.offset(), 0.0);
+
+        let hostile = wasm_plane_from_points_or_default(
+            Point3::new(0.0, 0.0, 0.0),
+            Point3::new(Real::NAN, 0.0, 0.0),
+            Point3::new(0.0, 1.0, 0.0),
+        );
+        assert!(hvector3_dot(&hostile.normal(), &Vector3::z()).unwrap() > 1.0 - tolerance());
+        assert_eq!(hostile.offset(), 0.0);
     }
 }

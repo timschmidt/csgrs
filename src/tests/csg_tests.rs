@@ -368,10 +368,7 @@ fn test_csg_extrude() {
 fn test_csg_revolve() {
     // Default square is from (0,0) to (1,1) in XY.
     // Shift it so it's from (1,0) to (2,1) — i.e. at least 1.0 unit away from the Z-axis.
-    // and rotate it 90 degrees so that it can be swept around Z
-    let square: Sketch<()> = Sketch::square(2.0, ())
-        .translate(1.0, 0.0, 0.0)
-        .rotate(90.0, 0.0, 0.0);
+    let square: Sketch<()> = Sketch::square(2.0, ()).translate(1.0, 0.0, 0.0);
 
     // Now revolve this translated square around the Z-axis, 360° in 16 segments.
     let revolve = square.revolve(360.0, 16).unwrap();
@@ -429,7 +426,7 @@ fn test_csg_text() {
     // and returns some polygons for normal ASCII letters.
     let font_data = include_bytes!("../../asar.ttf");
     let text_csg: Sketch<()> = Sketch::text("ABC", font_data, 10.0, ());
-    assert!(!text_csg.geometry().is_empty());
+    assert!(!text_csg.region_profiles().is_empty());
 }
 
 #[cfg(feature = "truetype-text")]

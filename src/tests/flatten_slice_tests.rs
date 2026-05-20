@@ -13,10 +13,7 @@ fn test_flatten_and_union_single_polygon() {
     let flat_csg = csg.flatten();
 
     // Expect the same bounding box
-    assert!(
-        !flat_csg.geometry().0[0].is_empty(),
-        "Result should not be empty"
-    );
+    assert!(!flat_csg.as_region().is_empty(), "Result should not be empty");
     let bb = flat_csg.bounding_box();
     assert_eq!(bb.mins.x, 0.0);
     assert_eq!(bb.mins.y, 0.0);
@@ -30,15 +27,14 @@ fn flatten_promotes_union_projection_to_hypercurve_region() {
         polygon_from_xy_points(&[[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]]);
     let csg = Mesh::from_polygons(&[square_poly], ());
 
-    let mut flat = csg.flatten();
+    let flat = csg.flatten();
 
     assert!(!flat.as_region().is_empty());
     assert_eq!(flat.material_contour_count(), 1);
     assert!(flat.contains_xy(0.5, 0.5).unwrap());
 
-    flat.geometry = geo::GeometryCollection::default();
     assert!(
-        !flat.geometry().is_empty(),
+        !flat.region_profiles().is_empty(),
         "flattened projection should regenerate finite output from native Region2"
     );
     assert!(
@@ -48,23 +44,23 @@ fn flatten_promotes_union_projection_to_hypercurve_region() {
 }
 
 #[test]
+#[cfg(feature = "mesh")]
 fn sketch_from_mesh_uses_same_hypercurve_flatten_path() {
     let square_poly =
         polygon_from_xy_points(&[[0.0, 0.0], [2.0, 0.0], [2.0, 1.0], [0.0, 1.0]]);
     let csg = Mesh::from_polygons(&[square_poly], ());
 
-    let mut sketch = Sketch::from(csg);
+    let sketch = Sketch::from(csg);
 
     assert!(!sketch.as_region().is_empty());
     assert_eq!(sketch.material_contour_count(), 1);
     assert!(sketch.contains_xy(1.0, 0.5).unwrap());
 
-    sketch.geometry = geo::GeometryCollection::default();
     let bbox = sketch.bounding_box();
     assert_eq!(bbox.mins.x, 0.0);
     assert_eq!(bbox.maxs.x, 2.0);
     assert!(
-        !sketch.geometry().is_empty(),
+        !sketch.region_profiles().is_empty(),
         "Sketch::from(mesh) should not depend on retained finite union geometry"
     );
 }
@@ -81,19 +77,15 @@ fn slice_open_intersection_chain_is_native_hypercurve_wire() {
     );
     let mesh = Mesh::from_polygons(&[polygon], ());
 
-    let mut section = mesh.slice(Plane::from_normal(Vector3::z(), 0.0));
+    let section = mesh.slice(Plane::from_normal(Vector3::z(), 0.0));
 
     assert!(section.as_region().is_empty());
     assert_eq!(section.wires().len(), 1);
     assert_eq!(section.wire_polylines()[0].len(), 2);
 
-    section.geometry = geo::GeometryCollection::default();
-    let geometry = section.geometry();
     assert!(
-        geometry
-            .0
-            .iter()
-            .all(|geometry| matches!(geometry, geo::Geometry::LineString(_))),
+        !section.wire_polylines().is_empty()
+            && section.wire_polylines().iter().all(|wire| wire.len() >= 2),
         "open slice should regenerate finite output from native CurveString2 wires"
     );
 }
@@ -109,10 +101,7 @@ fn test_flatten_and_union_two_overlapping_squares() {
     let csg = Mesh::from_polygons(&[square1, square2], ());
 
     let flat_csg = csg.flatten();
-    assert!(
-        !flat_csg.geometry().0[0].is_empty(),
-        "Union should not be empty"
-    );
+    assert!(!flat_csg.as_region().is_empty(), "Union should not be empty");
 
     // The bounding box should now span x=0..2, y=0..1
     let bb = flat_csg.bounding_box();
@@ -128,11 +117,10 @@ fn flatten_union_normalizes_opposite_projected_winding() {
     let cw = polygon_from_xy_points(&[[0.0, 0.0], [0.0, 2.0], [2.0, 2.0], [2.0, 0.0]]);
     let mesh = Mesh::from_polygons(&[ccw, cw], ());
 
-    let mut flat = mesh.flatten();
+    let flat = mesh.flatten();
 
     assert!(flat.contains_xy(1.0, 1.0).unwrap());
     assert_eq!(flat.material_contour_count(), 1);
-    flat.geometry = geo::GeometryCollection::default();
     let bounds = flat.bounding_box();
     assert_eq!(bounds.mins.x, 0.0);
     assert_eq!(bounds.mins.y, 0.0);
@@ -151,7 +139,7 @@ fn test_flatten_and_union_two_disjoint_squares() {
     let csg = Mesh::from_polygons(&[square_a, square_b], ());
 
     let flat_csg = csg.flatten();
-    assert!(!flat_csg.geometry().0[0].is_empty());
+    assert!(!flat_csg.as_region().is_empty());
 }
 
 /// Test `flatten_and_union` when polygons are not perfectly in the XY plane,
@@ -174,7 +162,7 @@ fn test_flatten_and_union_near_xy_plane() {
     let flat_csg = csg.flatten();
 
     assert!(
-        !flat_csg.geometry().0[0].is_empty(),
+        !flat_csg.as_region().is_empty(),
         "Should flatten to a valid polygon"
     );
     let bb = flat_csg.bounding_box();
@@ -201,7 +189,7 @@ fn test_flatten_and_union_collinear_edges() {
     let flat_csg = csg.flatten();
 
     // Expect 1 polygon from x=0..4, y=0..~1.0ish
-    assert!(!flat_csg.geometry().0[0].is_empty());
+    assert!(!flat_csg.as_region().is_empty());
     let bb = flat_csg.bounding_box();
     assert!((bb.maxs.x - 4.0).abs() < 1e-5, "Should span up to x=4.0");
     // Also check the y-range is ~1.001
@@ -216,10 +204,13 @@ fn test_flatten_and_union_debug() {
     let cube = Mesh::<()>::cube(2.0, ());
     let flattened = cube.flatten();
     assert!(
-        !flattened.geometry().0[0].is_empty(),
+        !flattened.as_region().is_empty(),
         "Flattened cube should not be empty"
     );
-    let geometry = flattened.geometry();
-    let area = geometry.0[0].signed_area();
+    let area = flattened
+        .region_profiles()
+        .iter()
+        .map(|profile| hypercurve::finite_ring_signed_area(profile.material().points()).abs())
+        .sum::<Real>();
     assert!(area > 3.9, "Flattened cube too small");
 }

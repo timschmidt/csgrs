@@ -1,6 +1,6 @@
 [package]
 name = "csgrs"
-version = "0.21.0"
+version = "0.22.0"
 edition = "2024"
 description = "Constructive solid geometry (CSG) on meshes using BSP trees in Rust"
 authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
@@ -17,7 +17,6 @@ categories = ["game-development", "graphics", "mathematics", "simulation", "wasm
 [package.metadata.docs.rs]
 no-default-features = true
 features = [
-  "bmesh",
   "mesh",
   "sketch",
   "stl-io",
@@ -56,17 +55,13 @@ opt-level = "z"
 # geometry
 nalgebra = { version = "0.34.1", features = ["serde-serialize"] }
 #alum = "0.6.1"
-geo = { version = "0.31.0", default-features = false, features = ["use-serde"] }
-geo-buffer = { version = "0.2.0", optional = true }
-#geo-booleanop = "0.3.2" # alternative boolean implementation has fewer dependencies
 chull = { version = "0.2.4", optional = true }
-boolmesh = { version = "0.1.5", optional = true }
-hypercurve = { version = "0.1.0", path = "../hypercurve" }
-hyperlattice = { version = "0.4.0", path = "../hyperlattice" }
-hyperphysics = { version = "0.1.0", path = "../hyperphysics" }
-hyperreal = { version = "0.11.1", path = "../hyperreal", default-features = false }
-hypertri = { version = "0.1.0", path = "../hypertri", default-features = false, features = ["earcut"] }
-
+hypercurve = { version = "0.2.0", features = ["triangulation"] }
+hyperlattice = { version = "0.5.0" }
+hypermesh = { version = "0.2.0", default-features = false, features = ["exact"] }
+hyperphysics = { version = "0.2.0" }
+hyperreal = { version = "0.12.0", default-features = false }
+hypertri = { version = "0.2.0", default-features = false, features = ["earcut"] }
 rapier3d-f64 = { version = "0.31.0" }
 parry3d-f64  = { version = "0.25.3" }
 
@@ -114,53 +109,58 @@ serde = { version = "1.0.228", optional = true }
 uuid = { version = "1.18", features = ["js"] }
 
 [features]
-default = ["bmesh", "mesh", "sketch", "stl-io", "dxf-io", "obj-io", "ply-io", "amf-io", "gltf-io", "gerber-io", "chull-io", "image-io", "metaballs", "sdf", "offset", "truetype-text", "hershey-text"]
+default = ["mesh", "sketch", "stl-io", "dxf-io", "obj-io", "ply-io", "amf-io", "gltf-io", "gerber-io", "chull-io", "image-io", "metaballs", "sdf", "truetype-text", "hershey-text"]
 parallel = [
   "rayon",
-  "geo/multithreading",
   "hashbrown/rayon",
   "parry3d-f64/parallel",
   "rapier3d-f64/parallel"
 ]
 mesh = [
   # BSP backed Mesh datatype
+  "sketch",
 ]
 mesh-bbopt = [
   # Enable bounding box optimization for Mesh BSP
 ]
 sketch = [
-  # geo backed Sketch datatype
-]
-bmesh = [
-  "boolmesh",
+  # hypercurve backed Sketch datatype
 ]
 # convex hull and minkowski sum
 chull-io = [
   "chull",
 ]
 stl-io = [
+  "sketch",
   "stl_io",
 ]
 svg-io = [
+  "sketch",
   "svg",
   "nom", # Parsing of things not covered by the `svg` crate
 ]
 dxf-io = [
+  "sketch",
   "dxf",
 ]
 obj-io = [
+  "sketch",
   # OBJ format support - no external dependencies needed
 ]
 ply-io = [
+  "sketch",
   # PLY format support - no external dependencies needed
 ]
 amf-io = [
+  "sketch",
   # AMF format support - no external dependencies needed
 ]
 gltf-io = [
+  "sketch",
   "base64",
 ]
 gerber-io = [
+  "sketch",
   "gerber-types",
   "gerber_parser",
 ]
@@ -183,7 +183,7 @@ sdf = [
   "fast-surface-nets",
 ]
 offset = [
-  "dep:geo-buffer",
+  "sketch",
 ]
 bevymesh = [
   "dep:bevy_mesh",

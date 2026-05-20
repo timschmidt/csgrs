@@ -8,7 +8,7 @@ use std::io::Cursor;
 
 fuzz_target!(|bytes: &[u8]| {
     let text = String::from_utf8_lossy(bytes);
-    if let Ok(mesh) = Mesh::<()>::from_obj(Cursor::new(text.as_bytes()), None) {
+    if let Ok(mesh) = Mesh::<()>::from_obj(Cursor::new(text.as_bytes()), ()) {
         for vertex in mesh.vertices() {
             assert!(vertex.position.x.is_finite());
             assert!(vertex.position.y.is_finite());

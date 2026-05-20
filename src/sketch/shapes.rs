@@ -2,8 +2,8 @@
 
 use crate::csg::CSG;
 use crate::float_types::{FRAC_PI_2, PI, Real, TAU, tolerance};
-use crate::sketch::{Sketch, wire_from_points};
-use hypercurve::Region2;
+use crate::sketch::Sketch;
+use hypercurve::{Contour2, CurveString2, LineSeg2, Point2, Segment2};
 use std::fmt::Debug;
 
 impl<M: Clone + Debug + Send + Sync> Sketch<M> {
@@ -15,10 +15,10 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     /// described by Yap, "Towards exact geometric computation",
     /// Computational Geometry 7(1-2), 1997, DOI: 10.1016/0925-7721(95)00040-2.
     fn polygonal_region(points: Vec<[Real; 2]>, metadata: M) -> Self {
-        let Some(contour) = Self::contour_from_points(&points) else {
+        let Ok(contour) = Contour2::from_finite_ring(&points) else {
             return Sketch::empty(metadata);
         };
-        Sketch::from_region(Region2::from_material_contours(vec![contour]), metadata)
+        Sketch::from_contour(contour, metadata)
     }
 
     /// Creates a 2D rectangle in the XY plane.
@@ -36,10 +36,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     /// ```
     pub fn rectangle(width: Real, length: Real, metadata: M) -> Self {
         let points = [[0.0, 0.0], [width, 0.0], [width, length], [0.0, length]];
-        let Some(contour) = Self::contour_from_points(&points) else {
-            return Sketch::empty(metadata);
-        };
-        Sketch::from_region(Region2::from_material_contours(vec![contour]), metadata)
+        Self::polygon(&points, metadata)
     }
 
     /// Creates a 2D square in the XY plane.
@@ -113,10 +110,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     /// Right triangle from (0,0) to (width,0) to (0,height).
     pub fn right_triangle(width: Real, height: Real, metadata: M) -> Self {
         let points = [[0.0, 0.0], [width, 0.0], [0.0, height]];
-        let Some(contour) = Self::contour_from_points(&points) else {
-            return Sketch::empty(metadata);
-        };
-        Sketch::from_region(Region2::from_material_contours(vec![contour]), metadata)
+        Self::polygon(&points, metadata)
     }
 
     /// Creates a 2D polygon in the XY plane from a list of `[x, y]` points.
@@ -128,12 +122,47 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     ///
     /// # Example
     /// let pts = vec![[0.0, 0.0], [2.0, 0.0], [1.0, 1.5]];
-    /// let poly2d = Sketch::polygon(&pts, metadata);
+    /// let poly2d = Sketch::polygon_points(&pts, metadata);
     pub fn polygon(points: &[[Real; 2]], metadata: M) -> Self {
-        let Some(contour) = Self::contour_from_points(points) else {
+        let Ok(contour) = Contour2::from_finite_ring(points) else {
             return Sketch::empty(metadata);
         };
-        Sketch::from_region(Region2::from_material_contours(vec![contour]), metadata)
+        Sketch::from_contour(contour, metadata)
+    }
+
+    /// Creates a 2D polygon from native hypercurve points.
+    ///
+    /// Unlike [`Sketch::polygon`], this constructor does not first pass through
+    /// finite `[f64; 2]` samples. The ring is converted directly to
+    /// `hypercurve::LineSeg2` segments and then to a `Contour2`, so exact
+    /// point topology stays with hypercurve from construction onward. This
+    /// follows Yap, "Towards Exact Geometric Computation," *Computational
+    /// Geometry* 7(1-2), 1997
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+    pub fn polygon_points(points: &[Point2], metadata: M) -> Self {
+        if points.len() < 3 {
+            return Sketch::empty(metadata);
+        }
+
+        let mut segments = Vec::with_capacity(points.len());
+        for adjacent in points.windows(2) {
+            let Ok(segment) = LineSeg2::try_new(adjacent[0].clone(), adjacent[1].clone())
+            else {
+                return Sketch::empty(metadata);
+            };
+            segments.push(Segment2::Line(segment));
+        }
+        let Ok(segment) =
+            LineSeg2::try_new(points[points.len() - 1].clone(), points[0].clone())
+        else {
+            return Sketch::empty(metadata);
+        };
+        segments.push(Segment2::Line(segment));
+
+        let Ok(contour) = Contour2::try_new(segments) else {
+            return Sketch::empty(metadata);
+        };
+        Sketch::from_contour(contour, metadata)
     }
 
     /// **Mathematical Foundation: Parametric Ellipse Generation**
@@ -309,7 +338,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
             [0.0, half_shaft_width],           // Back to top-left to close
         ];
 
-        Sketch::polygon(&points, metadata)
+        Self::polygonal_region(points, metadata)
     }
 
     /// Trapezoid from (0,0) -> (bottom_width,0) -> (top_width+top_offset,height) -> (top_offset,height)
@@ -762,9 +791,9 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
             return Self::polygonal_region(pts, metadata);
         }
 
-        wire_from_points(pts)
-            .map(|wire| Sketch::from_wires(vec![wire], metadata.clone()))
-            .unwrap_or_else(|| Sketch::empty(metadata))
+        CurveString2::from_finite_point_iter(pts)
+            .map(|wire| Sketch::from_wire(wire, metadata.clone()))
+            .unwrap_or_else(|_| Sketch::empty(metadata))
     }
 
     /// Sample an open-uniform B-spline of arbitrary degree (`p`) using the
@@ -857,9 +886,9 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         let closed = (first[0] - last[0]).abs() < tolerance()
             && (first[1] - last[1]).abs() < tolerance();
         if !closed {
-            return wire_from_points(pts)
-                .map(|wire| Sketch::from_wires(vec![wire], metadata.clone()))
-                .unwrap_or_else(|| Sketch::empty(metadata));
+            return CurveString2::from_finite_point_iter(pts)
+                .map(|wire| Sketch::from_wire(wire, metadata.clone()))
+                .unwrap_or_else(|_| Sketch::empty(metadata));
         }
 
         Self::polygonal_region(pts, metadata)
@@ -1035,7 +1064,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         }
         outline.push(outline[0]); // close
 
-        Sketch::polygon(&outline, metadata)
+        Self::polygonal_region(outline, metadata)
     }
 
     /// Generate an (epicyclic) cycloidal gear outline
@@ -1153,7 +1182,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         // Close the polygon
         outline.push(outline[0]);
 
-        Sketch::polygon(&outline, metadata)
+        Self::polygonal_region(outline, metadata)
     }
 
     /// Generate a linear involute rack profile (lying in the XY plane, pitch‑line on Y = 0).
@@ -1231,7 +1260,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         // Now close the polygon by going back to the start
         outline.push([first_x, root_y]);
 
-        Sketch::polygon(&outline, metadata)
+        Self::polygonal_region(outline, metadata)
     }
 
     /// Generate a linear cycloidal rack profile.
@@ -1301,7 +1330,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         }
         outline.push(outline[0]);
 
-        Sketch::polygon(&outline, metadata)
+        Self::polygonal_region(outline, metadata)
     }
 
     /// Generate a NACA 4-digit airfoil (e.g. "2412", "0015").
@@ -1395,7 +1424,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     ///   Returns a new `Sketch` containing only the inside segments as native wires.
     ///
     /// Bounds are taken from the native hypercurve region/wire topology rather
-    /// than from the temporary `geo` compatibility cache. That keeps Hilbert
+    /// than from any finite compatibility cache. That keeps Hilbert
     /// path construction on the same exact-object side of the API boundary as
     /// the containment tests it uses; see Yap, "Towards Exact Geometric
     /// Computation," *Computational Geometry* 7(1-2), 1997
@@ -1456,7 +1485,9 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         // Ann.* 38, 1891 (<https://doi.org/10.1007/BF01199431>).
         let wires = runs
             .into_iter()
-            .filter_map(|run| wire_from_points(run.into_iter().map(|(x, y)| [x, y])))
+            .filter_map(|run| {
+                CurveString2::from_finite_point_iter(run.into_iter().map(|(x, y)| [x, y])).ok()
+            })
             .collect::<Vec<_>>();
         Sketch::from_wires(wires, self.metadata.clone())
     }

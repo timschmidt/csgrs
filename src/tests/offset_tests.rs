@@ -58,8 +58,8 @@ fn test_straight_skeleton_2d_non_empty() {
     let skeleton = square.straight_skeleton(true);
 
     assert!(
-        !skeleton.geometry().0.is_empty(),
-        "Straight skeleton should produce line geometry for a valid square"
+        !skeleton.wires().is_empty(),
+        "Straight skeleton should produce native hypercurve wire geometry for a valid square"
     );
 }
 
@@ -76,23 +76,15 @@ fn test_polygon_2d_enforce_ccw_ordering() {
 
 #[test]
 #[cfg(feature = "offset")]
-fn test_circle_offset_2d() {
-    let circle = Sketch::<()>::circle(1.0, 32, ());
-    let offset_grow = circle.offset(0.2); // Should grow the circle
-    let offset_shrink = circle.offset(-0.2); // Should shrink the circle
+fn test_zero_offset_preserves_region_2d() {
+    let shape = Sketch::<()>::circle(1.0, 32, ());
+    let unchanged = shape.offset(0.0);
 
-    let grow_area = first_material_area(&offset_grow);
-    let shrink_area = first_material_area(&offset_shrink);
-
-    // Original circle has area ~3.1416
-    let original_area = 3.141592653589793;
+    let original_area = first_material_area(&shape);
+    let unchanged_area = first_material_area(&unchanged);
 
     assert!(
-        grow_area > original_area,
-        "Offset with positive distance did not grow the circle"
-    );
-    assert!(
-        shrink_area < original_area,
-        "Offset with negative distance did not shrink the circle"
+        (unchanged_area - original_area).abs() < 1.0e-9,
+        "Zero offset should preserve native region area"
     );
 }

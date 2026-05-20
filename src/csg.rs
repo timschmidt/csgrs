@@ -2,9 +2,57 @@
 //! representations.
 
 use crate::float_types::parry3d::bounding_volume::Aabb;
-use crate::float_types::{Real, tolerance};
+use crate::float_types::{
+    Real, hscale_matrix, htranslation_matrix, hunit_vector3, hunit_vector3_and_magnitude,
+};
 use crate::mesh::plane::Plane;
-use nalgebra::{Matrix3, Matrix4, Rotation3, Translation3, Vector3};
+use nalgebra::{Matrix4, Vector3};
+
+/// Build a finite homogeneous translation matrix from a public boundary vector.
+///
+/// The vector is first promoted through `hyperlattice` so non-finite primitive
+/// inputs cannot become CAD transforms. The returned `Matrix4<f64>` is still
+/// the transitional carrier, but csgrs no longer depends on nalgebra's
+/// translation constructor for this API boundary. This follows Yap, "Towards
+/// Exact Geometric Computation," *Computational Geometry* 7(1-2), 1997
+/// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+fn finite_translation(vector: Vector3<Real>) -> Option<Matrix4<Real>> {
+    htranslation_matrix(&vector)
+}
+
+fn finite_scale(sx: Real, sy: Real, sz: Real) -> Option<Matrix4<Real>> {
+    hscale_matrix(sx, sy, sz)
+}
+
+fn finite_rotation_x(angle: Real) -> Option<Matrix4<Real>> {
+    let sin = angle.sin();
+    let cos = angle.cos();
+    (sin.is_finite() && cos.is_finite()).then(|| {
+        Matrix4::new(
+            1.0, 0.0, 0.0, 0.0, 0.0, cos, -sin, 0.0, 0.0, sin, cos, 0.0, 0.0, 0.0, 0.0, 1.0,
+        )
+    })
+}
+
+fn finite_rotation_y(angle: Real) -> Option<Matrix4<Real>> {
+    let sin = angle.sin();
+    let cos = angle.cos();
+    (sin.is_finite() && cos.is_finite()).then(|| {
+        Matrix4::new(
+            cos, 0.0, sin, 0.0, 0.0, 1.0, 0.0, 0.0, -sin, 0.0, cos, 0.0, 0.0, 0.0, 0.0, 1.0,
+        )
+    })
+}
+
+fn finite_rotation_z(angle: Real) -> Option<Matrix4<Real>> {
+    let sin = angle.sin();
+    let cos = angle.cos();
+    (sin.is_finite() && cos.is_finite()).then(|| {
+        Matrix4::new(
+            cos, -sin, 0.0, 0.0, sin, cos, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0,
+        )
+    })
+}
 
 /// Boolean operations + transformations
 pub trait CSG: Sized + Clone {
@@ -18,8 +66,17 @@ pub trait CSG: Sized + Clone {
     fn invalidate_bounding_box(&mut self);
 
     /// Returns a new Self translated by vector.
+    ///
+    /// Non-finite primitive offsets are rejected before constructing a
+    /// transform matrix; finite boundary vectors are checked through
+    /// `hyperlattice` promotion, following Yap, "Towards Exact Geometric
+    /// Computation," *Computational Geometry* 7(1-2), 1997
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     fn translate_vector(&self, vector: Vector3<Real>) -> Self {
-        self.transform(&Translation3::from(vector).to_homogeneous())
+        let Some(mat) = finite_translation(vector) else {
+            return self.clone();
+        };
+        self.transform(&mat)
     }
 
     /// Returns a new Self translated by x, y, and z.
@@ -59,19 +116,40 @@ pub trait CSG: Sized + Clone {
     }
 
     /// Rotates Self by x_degrees, y_degrees, z_degrees
+    ///
+    /// Non-finite primitive angles leave geometry unchanged rather than
+    /// constructing a matrix with non-finite entries at the CAD boundary.
+    /// Finite angles are lowered directly into homogeneous matrices so the
+    /// default CAD API does not depend on nalgebra's unit-axis rotation
+    /// constructors. This is the same trigonometric rotation formula underlying
+    /// Rodrigues' theorem; see Rodrigues, "Des lois géométriques qui régissent
+    /// les déplacements d'un système solide dans l'espace," *Journal de
+    /// Mathématiques Pures et Appliquées* 5, 1840.
     fn rotate(&self, x_deg: Real, y_deg: Real, z_deg: Real) -> Self {
-        let rx = Rotation3::from_axis_angle(&Vector3::x_axis(), x_deg.to_radians());
-        let ry = Rotation3::from_axis_angle(&Vector3::y_axis(), y_deg.to_radians());
-        let rz = Rotation3::from_axis_angle(&Vector3::z_axis(), z_deg.to_radians());
+        if !x_deg.is_finite() || !y_deg.is_finite() || !z_deg.is_finite() {
+            return self.clone();
+        }
+        let Some(rx) = finite_rotation_x(x_deg.to_radians()) else {
+            return self.clone();
+        };
+        let Some(ry) = finite_rotation_y(y_deg.to_radians()) else {
+            return self.clone();
+        };
+        let Some(rz) = finite_rotation_z(z_deg.to_radians()) else {
+            return self.clone();
+        };
 
-        // Compose them in the desired order
-        let rot = rz * ry * rx;
-        self.transform(&rot.to_homogeneous())
+        self.transform(&(rz * ry * rx))
     }
 
     /// Scales Self by scale_x, scale_y, scale_z
+    ///
+    /// Non-finite primitive scale factors leave geometry unchanged; exact-aware
+    /// geometry should only receive finite transform carriers.
     fn scale(&self, sx: Real, sy: Real, sz: Real) -> Self {
-        let mat4 = Matrix4::new_nonuniform_scaling(&Vector3::new(sx, sy, sz));
+        let Some(mat4) = finite_scale(sx, sy, sz) else {
+            return self.clone();
+        };
         self.transform(&mat4)
     }
 
@@ -118,36 +196,48 @@ pub trait CSG: Sized + Clone {
     /// **Note**: The result is inverted (.inverse()) because reflection reverses
     /// the orientation of polygons, affecting inside/outside semantics in CSG.
     ///
+    /// The normal length and unit vector are computed through `hyperlattice`
+    /// rather than direct primitive normalization. Invalid or degenerate plane
+    /// normals leave the object unchanged, keeping finite boundary data outside
+    /// topology-sensitive CAD decisions. This follows Yap, "Towards Exact
+    /// Geometric Computation," *Computational Geometry* 7(1-2), 1997
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>). The reflection matrix
+    /// is the Householder form; see Householder, "Unitary Triangularization of a
+    /// Nonsymmetric Matrix," *Journal of the ACM* 5(4), 1958
+    /// (<https://doi.org/10.1145/320941.320947>).
+    ///
     /// Returns a new Self whose geometry is mirrored accordingly.
     fn mirror(&self, plane: Plane) -> Self {
-        // Normal might not be unit, so compute its length:
-        let len = plane.normal().norm();
-        if len.abs() < tolerance() {
-            // Degenerate plane? Just return clone (no transform)
+        let Some((n, len)) = hunit_vector3_and_magnitude(&plane.normal()) else {
+            // Degenerate or hostile plane: leave geometry unchanged.
+            return self.clone();
+        };
+        // Adjusted offset = w / ||n||
+        let w = plane.offset() / len;
+        if !w.is_finite() {
             return self.clone();
         }
 
-        // Unit normal:
-        let n = plane.normal() / len;
-        // Adjusted offset = w / ||n||
-        let w = plane.offset() / len;
-
-        // Translate so the plane crosses the origin
-        // The plane’s offset vector from origin is (w * n).
-        let offset = n * w;
-        let t1 = Translation3::from(-offset).to_homogeneous(); // push the plane to origin
-
-        // Build the reflection matrix about a plane normal n at the origin
-        // R = I - 2 n n^T
-        let mut reflect_4 = Matrix4::identity();
-        let reflect_3 = Matrix3::identity() - 2.0 * n * n.transpose();
-        reflect_4.fixed_view_mut::<3, 3>(0, 0).copy_from(&reflect_3);
-
-        // Translate back
-        let t2 = Translation3::from(offset).to_homogeneous(); // pull the plane back out
-
-        // Combine into a single 4×4
-        let mirror_mat = t2 * reflect_4 * t1;
+        // Direct Householder reflection for `n . p == w`:
+        // p' = (I - 2 n n^T) p + 2 w n.
+        let mirror_mat = Matrix4::new(
+            1.0 - 2.0 * n.x * n.x,
+            -2.0 * n.x * n.y,
+            -2.0 * n.x * n.z,
+            2.0 * w * n.x,
+            -2.0 * n.y * n.x,
+            1.0 - 2.0 * n.y * n.y,
+            -2.0 * n.y * n.z,
+            2.0 * w * n.y,
+            -2.0 * n.z * n.x,
+            -2.0 * n.z * n.y,
+            1.0 - 2.0 * n.z * n.z,
+            2.0 * w * n.z,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+        );
 
         // Apply to all polygons
         self.transform(&mirror_mat).inverse()
@@ -156,6 +246,9 @@ pub trait CSG: Sized + Clone {
     /// Distribute Self `count` times around an arc (in XY plane) of radius,
     /// from `start_angle_deg` to `end_angle_deg`.
     /// Returns a new shape with all copies
+    ///
+    /// Non-finite primitive radius or angle values fail closed before transform
+    /// construction.
     fn distribute_arc(
         &self,
         count: usize,
@@ -164,6 +257,9 @@ pub trait CSG: Sized + Clone {
         end_angle_deg: Real,
     ) -> Self {
         if count < 1 {
+            return self.clone();
+        }
+        if !radius.is_finite() || !start_angle_deg.is_finite() || !end_angle_deg.is_finite() {
             return self.clone();
         }
         let start_rad = start_angle_deg.to_radians();
@@ -179,12 +275,14 @@ pub trait CSG: Sized + Clone {
                 };
 
                 let angle = start_rad + t * sweep;
-                let rot =
-                    nalgebra::Rotation3::from_axis_angle(&nalgebra::Vector3::z_axis(), angle)
-                        .to_homogeneous();
+                let Some(rot) = finite_rotation_z(angle) else {
+                    return self.clone();
+                };
 
                 // translate out to radius in x
-                let trans = nalgebra::Translation3::new(radius, 0.0, 0.0).to_homogeneous();
+                let Some(trans) = finite_translation(Vector3::new(radius, 0.0, 0.0)) else {
+                    return self.clone();
+                };
                 let mat = rot * trans;
                 self.transform(&mat)
             })
@@ -196,21 +294,28 @@ pub trait CSG: Sized + Clone {
     /// each copy spaced by `spacing`.
     /// E.g. if `dir=(1.0,0.0,0.0)` and `spacing=2.0`, you get copies at
     /// x=0, x=2, x=4, ... etc.
-    fn distribute_linear(
-        &self,
-        count: usize,
-        dir: nalgebra::Vector3<Real>,
-        spacing: Real,
-    ) -> Self {
+    ///
+    /// Direction normalization is promoted to `hyperlattice::Vector3` and fails
+    /// closed for zero or non-finite inputs. This keeps the default CSG API's
+    /// primitive vector boundary aligned with Yap's exact-geometric-computation
+    /// discipline (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+    fn distribute_linear(&self, count: usize, dir: Vector3<Real>, spacing: Real) -> Self {
         if count < 1 {
             return self.clone();
         }
-        let step = dir.normalize() * spacing;
+        if !spacing.is_finite() {
+            return self.clone();
+        }
+        let Some(step) = hunit_vector3(&dir).map(|dir| dir * spacing) else {
+            return self.clone();
+        };
 
         (0..count)
             .map(|i| {
                 let offset = step * (i as Real);
-                let trans = nalgebra::Translation3::from(offset).to_homogeneous();
+                let Some(trans) = finite_translation(offset) else {
+                    return self.clone();
+                };
                 self.transform(&trans)
             })
             .reduce(|acc, csg| acc.union(&csg))
@@ -219,18 +324,25 @@ pub trait CSG: Sized + Clone {
 
     /// Distribute Self in a grid of `rows x cols`, with spacing dx, dy in XY plane.
     /// top-left or bottom-left depends on your usage of row/col iteration.
+    ///
+    /// Non-finite primitive spacings fail closed before transform construction.
     fn distribute_grid(&self, rows: usize, cols: usize, dx: Real, dy: Real) -> Self {
         if rows < 1 || cols < 1 {
             return self.clone();
         }
-        let step_x = nalgebra::Vector3::new(dx, 0.0, 0.0);
-        let step_y = nalgebra::Vector3::new(0.0, dy, 0.0);
+        if !dx.is_finite() || !dy.is_finite() {
+            return self.clone();
+        }
+        let step_x = Vector3::new(dx, 0.0, 0.0);
+        let step_y = Vector3::new(0.0, dy, 0.0);
 
         (0..rows)
             .flat_map(|r| {
                 (0..cols).map(move |c| {
                     let offset = step_x * (c as Real) + step_y * (r as Real);
-                    let trans = nalgebra::Translation3::from(offset).to_homogeneous();
+                    let Some(trans) = finite_translation(offset) else {
+                        return self.clone();
+                    };
                     self.transform(&trans)
                 })
             })

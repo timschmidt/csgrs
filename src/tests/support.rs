@@ -9,9 +9,8 @@ pub use crate::mesh::plane::Plane;
 pub use crate::polygon::Polygon;
 pub use crate::sketch::Sketch;
 pub use crate::vertex::{Vertex, VertexCluster};
-pub use geo::{Area, HasDimensions};
 pub use hashbrown::HashMap;
-pub use nalgebra::{Point3, Vector3};
+pub use nalgebra::{Matrix4, Point3, Vector3};
 
 /// A small, custom metadata type to demonstrate usage.
 /// We derive PartialEq so we can assert equality in tests.

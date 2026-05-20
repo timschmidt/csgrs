@@ -5,14 +5,22 @@ use crate::float_types::Real;
 use crate::io::svg::{FromSVG, ToSVG};
 use crate::sketch::Sketch;
 use crate::wasm::{
-    js_metadata_to_string, matrix_js::Matrix4Js, mesh_js::MeshJs, point_js::Point3Js,
-    vector_js::Vector3Js,
+    finite_matrix4, js_metadata_to_string, matrix_js::Matrix4Js, mesh_js::MeshJs,
+    point_js::Point3Js, vector_js::Vector3Js,
 };
-use geo::{Geometry, GeometryCollection};
+use hypercurve::{Contour2, CurveString2};
 use js_sys::{Float64Array, Object, Reflect, Uint32Array};
-use nalgebra::{Matrix4, Point3, Vector3};
-use serde_wasm_bindgen::from_value;
+use nalgebra::{Point3, Vector3};
+use serde::{Deserialize, Serialize};
+use serde_wasm_bindgen::{from_value, to_value};
 use wasm_bindgen::prelude::*;
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct RegionProfileJs {
+    material: Vec<[Real; 2]>,
+    holes: Vec<Vec<[Real; 2]>>,
+}
 
 #[wasm_bindgen]
 pub struct SketchJs {
@@ -30,7 +38,7 @@ impl SketchJs {
 
     #[wasm_bindgen(js_name = isEmpty)]
     pub fn is_empty(&self) -> bool {
-        self.inner.geometry().0.is_empty()
+        self.inner.is_empty()
     }
 
     #[wasm_bindgen(js_name = toArrays)]
@@ -84,6 +92,96 @@ impl SketchJs {
         obj.into()
     }
 
+    /// Project the native hypercurve filled region to JS polygon profiles.
+    ///
+    /// The result is `[{ material: [[x, y], ...], holes: [[[x, y], ...], ...] }]`.
+    /// It is the wasm-facing form of hypercurve's finite projection records, not
+    /// a compatibility-cache object. The split between exact internal topology and finite
+    /// boundary output follows Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7(1-2), 1997
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>), and the finite-output
+    /// discipline in Hobby, "Practical Segment Intersection with Finite Precision
+    /// Output," *Computational Geometry* 13(4), 1999
+    /// (<https://doi.org/10.1016/S0925-7721(99)00021-8>).
+    #[wasm_bindgen(js_name = regionProfiles)]
+    pub fn region_profiles(&self) -> Result<JsValue, JsValue> {
+        let profiles = self
+            .inner
+            .region_profiles()
+            .into_iter()
+            .map(|profile| RegionProfileJs {
+                material: profile.material().points().to_vec(),
+                holes: profile
+                    .holes()
+                    .iter()
+                    .map(|hole| hole.points().to_vec())
+                    .collect(),
+            })
+            .collect::<Vec<_>>();
+        to_value(&profiles).map_err(|e| {
+            JsValue::from_str(&format!("Failed to serialize region profiles: {e}"))
+        })
+    }
+
+    /// Project native hypercurve wires to JS polylines.
+    ///
+    /// The result is `[[[x, y], ...], ...]`, sampled from `CurveString2` via
+    /// hypercurve's finite projection machinery. Keeping path ownership in
+    /// hypercurve and projecting only at the wasm edge follows Yap, "Towards
+    /// Exact Geometric Computation," *Computational Geometry* 7(1-2), 1997
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+    #[wasm_bindgen(js_name = wirePolylines)]
+    pub fn wire_polylines(&self) -> Result<JsValue, JsValue> {
+        to_value(&self.inner.wire_polylines()).map_err(|e| {
+            JsValue::from_str(&format!("Failed to serialize wire polylines: {e}"))
+        })
+    }
+
+    /// Project native hypercurve wires to flat render arrays.
+    ///
+    /// The returned object is `{ positions, indices }`, where `positions` is a
+    /// flat `Float64Array` of XYZ points and `indices` is a `Uint32Array` of
+    /// line segment endpoints. It is a finite wasm/rendering boundary over
+    /// [`hypercurve::CurveString2`] ownership, not a compatibility geometry
+    /// cache. That keeps path topology in hyperreal-backed hypercurve objects
+    /// until the JS edge, following Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7(1-2), 1997
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>), and Hobby,
+    /// "Practical Segment Intersection with Finite Precision Output,"
+    /// *Computational Geometry* 13(4), 1999
+    /// (<https://doi.org/10.1016/S0925-7721(99)00021-8>).
+    #[wasm_bindgen(js_name = wireArrays)]
+    pub fn wire_arrays(&self) -> JsValue {
+        let mut positions = Vec::new();
+        let mut indices = Vec::new();
+        let mut next_index = 0_u32;
+
+        for polyline in self.inner.wire_polylines() {
+            if polyline.len() < 2 {
+                continue;
+            }
+            for point in &polyline {
+                positions.push(point[0]);
+                positions.push(point[1]);
+                positions.push(0.0);
+            }
+            for segment in 0..polyline.len().saturating_sub(1) {
+                let start = next_index + segment as u32;
+                indices.push(start);
+                indices.push(start + 1);
+            }
+            next_index += polyline.len() as u32;
+        }
+
+        let pos_array = Float64Array::from(positions.as_slice());
+        let idx_array = Uint32Array::from(indices.as_slice());
+
+        let obj = Object::new();
+        Reflect::set(&obj, &"positions".into(), &pos_array).unwrap();
+        Reflect::set(&obj, &"indices".into(), &idx_array).unwrap();
+        obj.into()
+    }
+
     #[wasm_bindgen(js_name = polygon)]
     pub fn polygon(points: JsValue, metadata: JsValue) -> Result<Self, JsValue> {
         let points_vec: Vec<[f64; 2]> = from_value(points)
@@ -95,25 +193,73 @@ impl SketchJs {
             .collect();
 
         let meta = js_metadata_to_string(metadata).unwrap_or(None);
+        let contour = Contour2::from_finite_ring(&points_2d)
+            .map_err(|_| JsValue::from_str("Invalid polygon ring"))?;
 
         Ok(Self {
-            inner: Sketch::polygon(&points_2d, meta),
+            inner: Sketch::from_contour(contour, meta),
         })
     }
 
-    // #[wasm_bindgen(js_name=triangulateWithHoles)]
-    // pub fn triangulate_with_holes(outer, holes) -> Vec<JsValue> {
-    // let tris = Sketch::<()>::triangulate_with_holes(outer, holes);
-    // tris.into_iter()
-    // .map(|tri| {
-    // let points: Vec<[f64; 3]> = tri
-    // .iter()
-    // .map(|v| [v.x, v.y, v.z])
-    // .collect();
-    // JsValue::from_serde(&points).unwrap_or(JsValue::NULL)
-    // })
-    // .collect()
-    // }
+    /// Build a Sketch directly from hypercurve-style finite region profiles.
+    ///
+    /// Input shape is `[{ material: [[x, y], ...], holes: [[[x, y], ...], ...] }]`.
+    /// Each finite ring is immediately promoted to a `hypercurve::Contour2`, and
+    /// the Sketch is backed by `hypercurve::Region2` rather than a GeoJSON cache.
+    /// This keeps ordinary `f64` values at the wasm boundary while internal CAD
+    /// topology is owned by hyper geometry, following Yap, "Towards Exact
+    /// Geometric Computation," *Computational Geometry* 7(1-2), 1997
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+    #[wasm_bindgen(js_name = fromRegionProfiles)]
+    pub fn from_region_profiles(
+        profiles: JsValue,
+        metadata: JsValue,
+    ) -> Result<Self, JsValue> {
+        let profiles: Vec<RegionProfileJs> = from_value(profiles).map_err(|e| {
+            JsValue::from_str(&format!("Failed to parse region profiles: {e}"))
+        })?;
+        let mut material = Vec::new();
+        let mut holes = Vec::new();
+        for profile in profiles {
+            let contour = Contour2::from_finite_ring(profile.material.as_slice())
+                .map_err(|_| JsValue::from_str("Invalid material ring"))?;
+            material.push(contour);
+            for hole in profile.holes {
+                let contour = Contour2::from_finite_ring(hole.as_slice())
+                    .map_err(|_| JsValue::from_str("Invalid hole ring"))?;
+                holes.push(contour);
+            }
+        }
+        let meta = js_metadata_to_string(metadata).unwrap_or(None);
+        Ok(Self {
+            inner: Sketch::from_region(hypercurve::Region2::new(material, holes), meta),
+        })
+    }
+
+    /// Build a wire-only Sketch directly from finite JS polylines.
+    ///
+    /// Input shape is `[[[x, y], ...], ...]`. Each finite polyline is immediately
+    /// promoted to `hypercurve::CurveString2`; unsupported or degenerate
+    /// polylines are rejected instead of being retained as hidden compatibility
+    /// compatibility state.
+    #[wasm_bindgen(js_name = fromWirePolylines)]
+    pub fn from_wire_polylines(
+        polylines: JsValue,
+        metadata: JsValue,
+    ) -> Result<Self, JsValue> {
+        let polylines: Vec<Vec<[Real; 2]>> = from_value(polylines)
+            .map_err(|e| JsValue::from_str(&format!("Failed to parse wire polylines: {e}")))?;
+        let mut wires = Vec::with_capacity(polylines.len());
+        for polyline in polylines {
+            let wire = CurveString2::from_finite_point_iter(polyline)
+                .map_err(|_| JsValue::from_str("Invalid wire polyline"))?;
+            wires.push(wire);
+        }
+        let meta = js_metadata_to_string(metadata).unwrap_or(None);
+        Ok(Self {
+            inner: Sketch::from_wires(wires, meta),
+        })
+    }
 
     // error[E0609]: no field `pos` on type `&OPoint<f64, Const<3>>`
     // --> src/lib.rs:159:33
@@ -150,21 +296,6 @@ impl SketchJs {
     #[wasm_bindgen(js_name = toSVG)]
     pub fn to_svg(&self) -> String {
         self.inner.to_svg()
-    }
-
-    #[wasm_bindgen(js_name=fromGeo)]
-    pub fn from_geo(geo_json: &str, metadata: JsValue) -> Result<SketchJs, JsValue> {
-        let geometry: Geometry<Real> = serde_json::from_str(geo_json)
-            .map_err(|e| JsValue::from_str(&format!("Failed to parse GeoJSON: {}", e)))?;
-        let meta = js_metadata_to_string(metadata).unwrap_or(None);
-        let sketch = Sketch::from_geo(GeometryCollection(vec![geometry]), meta);
-        Ok(SketchJs { inner: sketch })
-    }
-
-    #[wasm_bindgen(js_name=toMultiPolygon)]
-    pub fn to_multipolygon(&self) -> String {
-        let mp = self.inner.to_multipolygon();
-        serde_json::to_string(&mp).unwrap_or_else(|_| "null".to_string())
     }
 
     #[wasm_bindgen(js_name=fromMesh)]
@@ -230,9 +361,13 @@ impl SketchJs {
         m32: Real,
         m33: Real,
     ) -> SketchJs {
-        let matrix = Matrix4::new(
+        let Some(matrix) = finite_matrix4([
             m00, m01, m02, m03, m10, m11, m12, m13, m20, m21, m22, m23, m30, m31, m32, m33,
-        );
+        ]) else {
+            return SketchJs {
+                inner: self.inner.clone(),
+            };
+        };
         SketchJs {
             inner: self.inner.transform(&matrix),
         }
@@ -304,8 +439,8 @@ impl SketchJs {
 
     #[wasm_bindgen(js_name=extrudeVectorComponents)]
     pub fn extrude_vector_components(&self, dx: Real, dy: Real, dz: Real) -> MeshJs {
-        let direction = Vector3::new(dx, dy, dz);
-        let mesh = self.inner.extrude_vector(direction);
+        let direction = Vector3Js::new(dx, dy, dz);
+        let mesh = self.inner.extrude_vector(direction.inner);
         MeshJs { inner: mesh }
     }
 
@@ -330,7 +465,7 @@ impl SketchJs {
         let path_vec: Vec<[f64; 3]> = from_value(path).unwrap_or_else(|_| vec![]);
         let path_points: Vec<Point3<Real>> = path_vec
             .into_iter()
-            .map(|[x, y, z]| Point3::new(x as Real, y as Real, z as Real))
+            .map(|[x, y, z]| Point3Js::new(x, y, z).inner)
             .collect();
         let mesh = self.inner.sweep(&path_points);
         MeshJs { inner: mesh }
@@ -738,5 +873,49 @@ impl SketchJs {
         Self {
             inner: self.inner.hilbert_curve(order, padding),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn sketch_js_transform_components_rejects_nonfinite_matrix() {
+        let sketch = SketchJs {
+            inner: Sketch::square(1.0, None),
+        };
+        let original = sketch.inner.bounding_box();
+
+        let transformed = sketch.transform_components(
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            Real::INFINITY,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+        );
+
+        assert_eq!(transformed.inner.bounding_box(), original);
+    }
+
+    #[test]
+    fn sketch_js_component_paths_reuse_hyper_boundary_wrappers() {
+        let sketch = SketchJs {
+            inner: Sketch::square(1.0, None),
+        };
+
+        let mesh = sketch.extrude_vector_components(Real::NAN, Real::INFINITY, 0.0);
+        assert!(mesh.inner.polygons.is_empty());
     }
 }

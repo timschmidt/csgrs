@@ -7,9 +7,8 @@
 //! standard apertures by constructing the swept aperture area.
 
 use crate::csg::CSG;
-use crate::float_types::{PI, Real, TAU, hreal_to_f64, tolerance};
+use crate::float_types::{PI, Real, TAU, hreal_to_f64, hxy_orientation_sign, tolerance};
 use crate::sketch::Sketch;
-use geo::{Coord, Geometry, LineString, Polygon as GeoPolygon};
 use gerber_types::{
     Aperture, ApertureDefinition, AxisSelect, Circle, Command, CommentContent,
     CoordinateFormat, CoordinateMode, CoordinateNumber, CoordinateOffset, Coordinates, DCode,
@@ -18,8 +17,8 @@ use gerber_types::{
     Rectangular, Rotation, Scaling, StepAndRepeat, Unit, ZeroOmission,
 };
 use hypercurve::{
-    Classification, CurveString2, FiniteProjectionOptions, FiniteRegionProfile2, Point2,
-    Segment2,
+    Classification, Contour2, CurveString2, FiniteProjectionOptions, FiniteRegionProfile2,
+    Point2, Segment2,
 };
 use std::collections::HashMap;
 use std::convert::TryFrom;
@@ -28,6 +27,26 @@ use std::io::{BufReader, Cursor};
 use std::panic::{AssertUnwindSafe, catch_unwind};
 
 use super::IoError;
+
+/// Finite XY coordinate used only while reading or writing Gerber records.
+///
+/// This is deliberately a local file-format boundary type, not CAD topology.
+/// Imported coordinates are promoted into `hypercurve::Region2` and
+/// `CurveString2` as soon as enough structure is known; exported coordinates
+/// are lossy projections from hypercurve objects. Keeping primitive numbers at
+/// the format boundary follows Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7(1-2), 1997
+/// (<https://doi.org/10.1016/0925-7721(95)00040-2>), and Hobby, "Practical
+/// Segment Intersection with Finite Precision Output," *Computational
+/// Geometry* 13(4), 1999
+/// (<https://doi.org/10.1016/S0925-7721(99)00021-8>).
+#[derive(Clone, Copy, Debug, PartialEq)]
+struct GerberCoord<T> {
+    x: T,
+    y: T,
+}
+
+type Coord<T> = GerberCoord<T>;
 
 /// Options used when exporting a [`Sketch`] to Gerber.
 #[derive(Clone, Copy, Debug)]
@@ -146,11 +165,16 @@ where
             FunctionCode::GCode(GCode::InterpolationMode(InterpolationMode::Linear)).into(),
         ];
 
-        // Closed-region export can consume the native hypercurve boundary
-        // directly. The finite Gerber coordinates are serialization output,
-        // while geometric classification stays with Region2; that split follows
-        // Yap, "Towards Exact Geometric Computation," Computational Geometry
-        // 7(1-2), 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+        // Closed-region export consumes the native hypercurve boundary directly.
+        // Supported boundary input is promoted into Region2/CurveString2 when
+        // sketches are constructed. Gerber coordinates are serialization output,
+        // while geometric classification stays with hyper geometry; that split
+        // follows Yap, "Towards Exact Geometric Computation," Computational
+        // Geometry 7(1-2), 1997
+        // (<https://doi.org/10.1016/0925-7721(95)00040-2>), and the finite-output
+        // boundary described by Hobby, "Practical Segment Intersection with
+        // Finite Precision Output," Computational Geometry 13(4), 1999
+        // (<https://doi.org/10.1016/S0925-7721(99)00021-8>).
         let has_native_region =
             !self.as_region().is_empty() && Self::region_has_nonzero_area(self.as_region());
         let has_native_wires = !self.wires().is_empty();
@@ -168,11 +192,6 @@ where
                 emit_region_profiles(&region_profiles, &mut commands, options)?;
             }
             emit_native_wires(self.wires(), &mut commands, options)?;
-        } else {
-            let geometry = self.effective_geometry();
-            for geometry in geometry.iter() {
-                emit_geometry(geometry, &mut commands, options)?;
-            }
         }
 
         commands.push(FunctionCode::MCode(MCode::EndOfFile).into());
@@ -376,6 +395,23 @@ where
                     return Ok(());
                 };
 
+                if points.len() > 1 {
+                    let mut path = Vec::with_capacity(points.len() + 1);
+                    path.push(self.current);
+                    path.extend(points.iter().copied());
+                    if let Some(sketch) = trace_path_to_sketch(
+                        aperture,
+                        &path,
+                        self.metadata.clone(),
+                        self.unit_scale,
+                        self.aperture_transform,
+                    ) {
+                        self.apply_polarity(sketch);
+                        self.current = target;
+                        return Ok(());
+                    }
+                }
+
                 let mut start = self.current;
                 for point in points {
                     if let Some(sketch) = trace_to_sketch(
@@ -524,57 +560,16 @@ impl RegionBuilder {
             return None;
         }
 
-        let exterior = Sketch::<M>::contour_from_points(&rings.remove(0))?;
+        let exterior = Contour2::from_finite_ring(&rings.remove(0)).ok()?;
         let holes = rings
             .iter()
-            .filter_map(|ring| Sketch::<M>::contour_from_points(ring))
+            .filter_map(|ring| Contour2::from_finite_ring(ring).ok())
             .collect::<Vec<_>>();
         Some(Sketch::from_region(
             hypercurve::Region2::new(vec![exterior], holes),
             metadata,
         ))
     }
-}
-
-fn emit_geometry(
-    geometry: &Geometry<Real>,
-    commands: &mut Vec<Command>,
-    options: GerberExportOptions,
-) -> Result<(), IoError> {
-    match geometry {
-        Geometry::Polygon(polygon) => emit_polygon(polygon, commands, options)?,
-        Geometry::MultiPolygon(multi_polygon) => {
-            for polygon in multi_polygon {
-                emit_polygon(polygon, commands, options)?;
-            }
-        },
-        Geometry::Rect(rect) => emit_polygon(&rect.to_polygon(), commands, options)?,
-        Geometry::Triangle(triangle) => {
-            emit_polygon(&triangle.to_polygon(), commands, options)?
-        },
-        Geometry::GeometryCollection(collection) => {
-            for geometry in collection {
-                emit_geometry(geometry, commands, options)?;
-            }
-        },
-        _ => {},
-    }
-
-    Ok(())
-}
-
-fn emit_polygon(
-    polygon: &GeoPolygon<Real>,
-    commands: &mut Vec<Command>,
-    options: GerberExportOptions,
-) -> Result<(), IoError> {
-    commands.push(FunctionCode::GCode(GCode::RegionMode(true)).into());
-    emit_ring(polygon.exterior(), commands, options)?;
-    for interior in polygon.interiors() {
-        emit_ring(interior, commands, options)?;
-    }
-    commands.push(FunctionCode::GCode(GCode::RegionMode(false)).into());
-    Ok(())
 }
 
 /// Emit native hypercurve region profiles as Gerber regions grouped by
@@ -720,35 +715,6 @@ fn emit_native_wire(
                 );
             },
         }
-    }
-
-    Ok(())
-}
-
-fn emit_ring(
-    ring: &LineString<Real>,
-    commands: &mut Vec<Command>,
-    options: GerberExportOptions,
-) -> Result<(), IoError> {
-    let Some(first) = ring.0.first() else {
-        return Ok(());
-    };
-
-    commands.push(
-        FunctionCode::DCode(DCode::Operation(Operation::Move(Some(gerber_coordinates(
-            *first, options,
-        )?))))
-        .into(),
-    );
-
-    for coord in ring.0.iter().skip(1) {
-        commands.push(
-            FunctionCode::DCode(DCode::Operation(Operation::Interpolate(
-                Some(gerber_coordinates(*coord, options)?),
-                None,
-            )))
-            .into(),
-        );
     }
 
     Ok(())
@@ -1021,6 +987,65 @@ where
     }
 }
 
+fn trace_path_to_sketch<M>(
+    aperture: &Aperture,
+    path: &[Coord<Real>],
+    metadata: M,
+    unit_scale: Real,
+    aperture_transform: ApertureTransform,
+) -> Option<Sketch<M>>
+where
+    M: Clone + Debug + Send + Sync,
+{
+    if path.len() < 2 {
+        return None;
+    }
+
+    match aperture {
+        Aperture::Circle(circle) => {
+            let radius =
+                aperture_transform.scale_length((circle.diameter as Real) * unit_scale) * 0.5;
+            circular_swept_path_sketch(path, radius, metadata)
+        },
+        Aperture::Rectangle(_) | Aperture::Obround(_) | Aperture::Polygon(_) => None,
+        Aperture::Macro(..) => None,
+    }
+}
+
+/// Approximate an aperture stroke along an already-finite Gerber centerline as a
+/// single region before it reaches hypercurve boolean composition.
+///
+/// Gerber import is an API boundary with decimal coordinates, so this is a
+/// finite-output construction rather than internal topology. Building one
+/// conservative swept envelope avoids the numerically fragile cascade of chord
+/// capsule booleans while preserving the broad Gerber trace shape. The finite
+/// boundary discipline follows Hobby, "Practical Segment Intersection with
+/// Finite Precision Output," *Computational Geometry* 13(4), 1999
+/// (<https://doi.org/10.1016/S0925-7721(99)00021-8>).
+fn circular_swept_path_sketch<M>(
+    path: &[Coord<Real>],
+    radius: Real,
+    metadata: M,
+) -> Option<Sketch<M>>
+where
+    M: Clone + Debug + Send + Sync,
+{
+    if radius <= tolerance() {
+        return polygon_from_coords(path.to_vec(), metadata);
+    }
+
+    let points = path
+        .iter()
+        .flat_map(|center| {
+            circle_points(radius, 16).into_iter().map(|point| Coord {
+                x: center.x + point.x,
+                y: center.y + point.y,
+            })
+        })
+        .collect::<Vec<_>>();
+    polygon_from_coords(convex_hull(points), metadata)
+}
+
 fn aperture_outline_points(
     aperture: &Aperture,
     unit_scale: Real,
@@ -1242,7 +1267,9 @@ where
         .into_iter()
         .map(|coord| [coord.x, coord.y])
         .collect::<Vec<_>>();
-    Some(Sketch::polygon(&points, metadata))
+    Contour2::from_finite_ring(&points)
+        .ok()
+        .map(|contour| Sketch::from_contour(contour, metadata))
 }
 
 fn point_from_coord(coord: Coord<Real>) -> [Real; 2] {
@@ -1327,6 +1354,12 @@ fn image_rotation_degrees(rotation: ImageRotation) -> Real {
 }
 
 fn convex_hull(mut points: Vec<Coord<Real>>) -> Vec<Coord<Real>> {
+    // Andrew's monotone-chain hull keeps the finite Gerber aperture sweep
+    // bounded, while turn classification is delegated to the shared hyperreal
+    // orientation predicate. See Andrew, "Another Efficient Algorithm for
+    // Convex Hulls in Two Dimensions," Information Processing Letters 9(5),
+    // 1979, and Yap, "Towards Exact Geometric Computation," Computational
+    // Geometry 7(1-2), 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     points.sort_by(|a, b| a.x.total_cmp(&b.x).then_with(|| a.y.total_cmp(&b.y)));
     points.dedup_by(|a, b| nearly_same(*a, *b));
 
@@ -1337,7 +1370,7 @@ fn convex_hull(mut points: Vec<Coord<Real>>) -> Vec<Coord<Real>> {
     let mut lower = Vec::new();
     for point in &points {
         while lower.len() >= 2
-            && cross(lower[lower.len() - 2], lower[lower.len() - 1], *point) <= 0.0
+            && !is_left_turn(lower[lower.len() - 2], lower[lower.len() - 1], *point)
         {
             lower.pop();
         }
@@ -1347,7 +1380,7 @@ fn convex_hull(mut points: Vec<Coord<Real>>) -> Vec<Coord<Real>> {
     let mut upper = Vec::new();
     for point in points.iter().rev() {
         while upper.len() >= 2
-            && cross(upper[upper.len() - 2], upper[upper.len() - 1], *point) <= 0.0
+            && !is_left_turn(upper[upper.len() - 2], upper[upper.len() - 1], *point)
         {
             upper.pop();
         }
@@ -1360,8 +1393,11 @@ fn convex_hull(mut points: Vec<Coord<Real>>) -> Vec<Coord<Real>> {
     lower
 }
 
-fn cross(origin: Coord<Real>, a: Coord<Real>, b: Coord<Real>) -> Real {
-    (a.x - origin.x) * (b.y - origin.y) - (a.y - origin.y) * (b.x - origin.x)
+fn is_left_turn(origin: Coord<Real>, a: Coord<Real>, b: Coord<Real>) -> bool {
+    matches!(
+        hxy_orientation_sign((origin.x, origin.y), (a.x, a.y), (b.x, b.y)),
+        Some(hyperreal::RealSign::Positive)
+    )
 }
 
 fn nearly_same(a: Coord<Real>, b: Coord<Real>) -> bool {
@@ -1377,10 +1413,55 @@ fn unit_scale(unit: Unit) -> Real {
 
 #[cfg(test)]
 mod tests {
-    use super::{FromGerber, ToGerber};
-    use crate::float_types::PI;
+    use super::{Coord, FromGerber, ToGerber, convex_hull};
+    use crate::csg::CSG;
+    use crate::float_types::{PI, Real};
     use crate::sketch::Sketch;
-    use geo::{Area, BoundingRect, Geometry};
+
+    fn assert_bounds_close(
+        sketch: &Sketch<()>,
+        min_x: Real,
+        min_y: Real,
+        max_x: Real,
+        max_y: Real,
+        epsilon: Real,
+    ) {
+        let bounds = sketch.bounding_box();
+        assert!((bounds.mins.x - min_x).abs() < epsilon);
+        assert!((bounds.mins.y - min_y).abs() < epsilon);
+        assert!((bounds.maxs.x - max_x).abs() < epsilon);
+        assert!((bounds.maxs.y - max_y).abs() < epsilon);
+    }
+
+    fn native_region_area(sketch: &Sketch<()>) -> Real {
+        sketch
+            .region_profiles()
+            .iter()
+            .map(|profile| profile.projected_filled_area())
+            .sum()
+    }
+
+    #[test]
+    fn gerber_convex_hull_uses_hyperreal_orientation_predicate() {
+        let hull = convex_hull(vec![
+            Coord { x: 0.0, y: 0.0 },
+            Coord { x: 1.0e-12, y: 0.0 },
+            Coord { x: 1.0, y: 0.0 },
+            Coord { x: 1.0, y: 1.0 },
+            Coord { x: 0.0, y: 1.0 },
+            Coord { x: 0.5, y: 0.5 },
+        ]);
+
+        assert_eq!(hull.len(), 4);
+        assert!(
+            hull.iter()
+                .all(|point| point.x.is_finite() && point.y.is_finite())
+        );
+        assert!(hull.iter().any(|point| point.x == 0.0 && point.y == 0.0));
+        assert!(hull.iter().any(|point| point.x == 1.0 && point.y == 0.0));
+        assert!(hull.iter().any(|point| point.x == 1.0 && point.y == 1.0));
+        assert!(hull.iter().any(|point| point.x == 0.0 && point.y == 1.0));
+    }
 
     #[test]
     fn exports_and_imports_square_region() {
@@ -1393,27 +1474,18 @@ mod tests {
         assert!(gerber_text.contains("G37*"));
 
         let parsed = Sketch::<()>::from_gerber(&gerber, ()).unwrap();
-        let bounds = parsed.geometry().bounding_rect().unwrap();
-        assert_eq!(bounds.min().x, 0.0);
-        assert_eq!(bounds.min().y, 0.0);
-        assert_eq!(bounds.max().x, 5.0);
-        assert_eq!(bounds.max().y, 5.0);
+        assert_bounds_close(&parsed, 0.0, 0.0, 5.0, 5.0, 1.0e-9);
     }
 
     #[test]
     fn imports_region_as_native_hypercurve_region() {
         let gerber = b"G04 region*\n%MOMM*%\n%FSLAX46Y46*%\nG36*\nX0Y0D02*\nX4000000Y0D01*\nX4000000Y3000000D01*\nX0Y3000000D01*\nX0Y0D01*\nG37*\nM02*\n";
 
-        let mut parsed = Sketch::<()>::from_gerber(gerber, ()).unwrap();
+        let parsed = Sketch::<()>::from_gerber(gerber, ()).unwrap();
         assert_eq!(parsed.material_contour_count(), 1);
         assert!(!parsed.as_region().is_empty());
 
-        parsed.geometry = geo::GeometryCollection::default();
-        let bounds = parsed.geometry().bounding_rect().unwrap();
-        assert_eq!(bounds.min().x, 0.0);
-        assert_eq!(bounds.min().y, 0.0);
-        assert_eq!(bounds.max().x, 4.0);
-        assert_eq!(bounds.max().y, 3.0);
+        assert_bounds_close(&parsed, 0.0, 0.0, 4.0, 3.0, 1.0e-9);
     }
 
     #[test]
@@ -1421,11 +1493,7 @@ mod tests {
         let gerber = b"G04 flash*\n%MOMM*%\n%FSLAX46Y46*%\n%ADD10C,2*%\nD10*\nX3000000Y4000000D03*\nM02*\n";
 
         let parsed = Sketch::<()>::from_gerber(gerber, ()).unwrap();
-        let bounds = parsed.geometry().bounding_rect().unwrap();
-        assert!((bounds.min().x - 2.0).abs() < 1.0e-6);
-        assert!((bounds.max().x - 4.0).abs() < 1.0e-6);
-        assert!((bounds.min().y - 3.0).abs() < 1.0e-6);
-        assert!((bounds.max().y - 5.0).abs() < 1.0e-6);
+        assert_bounds_close(&parsed, 2.0, 3.0, 4.0, 5.0, 1.0e-6);
     }
 
     #[test]
@@ -1433,11 +1501,7 @@ mod tests {
         let gerber = b"G04 trace*\n%MOMM*%\n%FSLAX46Y46*%\n%ADD10C,1*%\nD10*\nX0Y0D02*\nX4000000Y0D01*\nM02*\n";
 
         let parsed = Sketch::<()>::from_gerber(gerber, ()).unwrap();
-        let bounds = parsed.geometry().bounding_rect().unwrap();
-        assert!((bounds.min().x + 0.5).abs() < 1.0e-6);
-        assert!((bounds.max().x - 4.5).abs() < 1.0e-6);
-        assert!((bounds.min().y + 0.5).abs() < 1.0e-6);
-        assert!((bounds.max().y - 0.5).abs() < 1.0e-6);
+        assert_bounds_close(&parsed, -0.5, -0.5, 4.5, 0.5, 1.0e-6);
     }
 
     #[test]
@@ -1445,11 +1509,7 @@ mod tests {
         let gerber = b"G04 trace*\n%MOMM*%\n%FSLAX46Y46*%\n%ADD10R,1X2*%\nD10*\nX0Y0D02*\nX4000000Y0D01*\nM02*\n";
 
         let parsed = Sketch::<()>::from_gerber(gerber, ()).unwrap();
-        let bounds = parsed.geometry().bounding_rect().unwrap();
-        assert!((bounds.min().x + 0.5).abs() < 1.0e-6);
-        assert!((bounds.max().x - 4.5).abs() < 1.0e-6);
-        assert!((bounds.min().y + 1.0).abs() < 1.0e-6);
-        assert!((bounds.max().y - 1.0).abs() < 1.0e-6);
+        assert_bounds_close(&parsed, -0.5, -1.0, 4.5, 1.0, 1.0e-6);
     }
 
     #[test]
@@ -1457,11 +1517,13 @@ mod tests {
         let gerber = b"G04 arc*\n%MOMM*%\n%FSLAX46Y46*%\n%ADD10C,0.2*%\nD10*\nX1000000Y0D02*\nG03X0Y1000000I-1000000J0D01*\nM02*\n";
 
         let parsed = Sketch::<()>::from_gerber(gerber, ()).unwrap();
-        let bounds = parsed.geometry().bounding_rect().unwrap();
-        assert!(bounds.min().x >= -0.11);
-        assert!(bounds.min().y >= -0.11);
-        assert!((bounds.max().x - 1.1).abs() < 0.02);
-        assert!((bounds.max().y - 1.1).abs() < 0.02);
+        let bounds = parsed.bounding_box();
+        let (min_x, min_y, max_x, max_y) =
+            (bounds.mins.x, bounds.mins.y, bounds.maxs.x, bounds.maxs.y);
+        assert!(min_x >= -0.11);
+        assert!(min_y >= -0.11);
+        assert!((max_x - 1.1).abs() < 0.02);
+        assert!((max_y - 1.1).abs() < 0.02);
     }
 
     #[test]
@@ -1469,11 +1531,7 @@ mod tests {
         let gerber = b"G04 step repeat*\n%MOMM*%\n%FSLAX46Y46*%\n%ADD10C,1*%\nD10*\n%SRX2Y2I2J3*%\nX0Y0D03*\n%SR*%\nM02*\n";
 
         let parsed = Sketch::<()>::from_gerber(gerber, ()).unwrap();
-        let bounds = parsed.geometry().bounding_rect().unwrap();
-        assert!((bounds.min().x + 0.5).abs() < 1.0e-6);
-        assert!((bounds.max().x - 2.5).abs() < 1.0e-6);
-        assert!((bounds.min().y + 0.5).abs() < 1.0e-6);
-        assert!((bounds.max().y - 3.5).abs() < 1.0e-6);
+        assert_bounds_close(&parsed, -0.5, -0.5, 2.5, 3.5, 1.0e-6);
     }
 
     #[test]
@@ -1481,11 +1539,7 @@ mod tests {
         let gerber = b"G04 rotated flash*\n%MOMM*%\n%FSLAX46Y46*%\n%ADD10R,1X2*%\nD10*\n%LR90*%\nX0Y0D03*\nM02*\n";
 
         let parsed = Sketch::<()>::from_gerber(gerber, ()).unwrap();
-        let bounds = parsed.geometry().bounding_rect().unwrap();
-        assert!((bounds.min().x + 1.0).abs() < 1.0e-6);
-        assert!((bounds.max().x - 1.0).abs() < 1.0e-6);
-        assert!((bounds.min().y + 0.5).abs() < 1.0e-6);
-        assert!((bounds.max().y - 0.5).abs() < 1.0e-6);
+        assert_bounds_close(&parsed, -1.0, -0.5, 1.0, 0.5, 1.0e-6);
     }
 
     #[test]
@@ -1493,7 +1547,7 @@ mod tests {
         let gerber = b"G04 aperture hole*\n%MOMM*%\n%FSLAX46Y46*%\n%ADD10C,4X2*%\nD10*\nX0Y0D03*\nM02*\n";
 
         let parsed = Sketch::<()>::from_gerber(gerber, ()).unwrap();
-        let area = parsed.to_multipolygon().unsigned_area();
+        let area = native_region_area(&parsed);
         assert!((area - (PI * 3.0)).abs() < 0.05);
     }
 
@@ -1502,16 +1556,13 @@ mod tests {
         let gerber = b"G04 clear polarity*\n%MOMM*%\n%FSLAX46Y46*%\n%LPD*%\nG36*\nX0Y0D02*\nX4000000Y0D01*\nX4000000Y4000000D01*\nX0Y4000000D01*\nX0Y0D01*\nG37*\n%ADD10R,2X2*%\nD10*\n%LPC*%\nX2000000Y2000000D03*\nM02*\n";
 
         let parsed = Sketch::<()>::from_gerber(gerber, ()).unwrap();
-        let area = parsed.to_multipolygon().unsigned_area();
+        let area = native_region_area(&parsed);
         assert!((area - 12.0).abs() < 1.0e-6);
     }
 
     #[test]
-    fn ignores_non_area_geometry_on_export() {
-        let sketch = Sketch::<()>::from_geo(
-            geo::GeometryCollection(vec![Geometry::Point(geo::Point::new(1.0, 2.0))]),
-            (),
-        );
+    fn exports_empty_sketch_without_area_commands() {
+        let sketch = Sketch::<()>::empty(());
 
         let gerber = String::from_utf8(sketch.to_gerber().unwrap()).unwrap();
         assert!(gerber.ends_with("M02*\n"));

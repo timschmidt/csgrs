@@ -42,18 +42,18 @@ fuzz_target!(|bytes: &[u8]| {
     let segments = (bytes[idx % bytes.len()] as usize % 24) + 1;
 
     let mesh = match tag {
-        0 => Mesh::cuboid(a, b, c, None),
-        1 => Mesh::cube(a.abs().max(tolerance()), None),
-        2 => Mesh::sphere(a.abs().max(tolerance()), segments, segments, None),
-        3 => Mesh::cylinder(a, b, segments, None),
-        4 => Mesh::frustum(a, b, c, segments, None),
-        5 => Mesh::frustum_ptp(Point3::origin(), Point3::new(a, b, c), a, b, segments, None),
-        6 => Mesh::ellipsoid(a, b, c, segments, segments, None),
-        7 => Mesh::arrow(Point3::origin(), Vector3::new(a, b, c), segments, false, None),
-        8 => Mesh::octahedron(a, None),
-        9 => Mesh::icosahedron(a, None),
-        10 => Mesh::torus(a, b, segments, segments, None),
-        _ => Mesh::teardrop_cylinder(a, b, c, segments, None),
+        0 => Mesh::cuboid(a, b, c, ()),
+        1 => Mesh::cube(a.abs().max(tolerance()), ()),
+        2 => Mesh::sphere(a.abs().max(tolerance()), segments, segments, ()),
+        3 => Mesh::cylinder(a, b, segments, ()),
+        4 => Mesh::frustum(a, b, c, segments, ()),
+        5 => Mesh::frustum_ptp(Point3::origin(), Point3::new(a, b, c), a, b, segments, ()),
+        6 => Mesh::ellipsoid(a, b, c, segments, segments, ()),
+        7 => Mesh::arrow(Point3::origin(), Vector3::new(a, b, c), segments, false, ()),
+        8 => Mesh::octahedron(a, ()),
+        9 => Mesh::icosahedron(a, ()),
+        10 => Mesh::torus(a, b, segments, segments, ()),
+        _ => Mesh::teardrop_cylinder(a, b, c, segments, ()),
     };
 
     assert_mesh_finite(&mesh);

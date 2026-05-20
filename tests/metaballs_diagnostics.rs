@@ -254,6 +254,28 @@ fn zero_negative_and_non_finite_radii_are_contained_by_diagnostics() {
 }
 
 #[test]
+fn influence_uses_hyperlattice_distance_and_fails_closed() {
+    let ball = MetaBall::new(Point3::new(0.0, 0.0, 0.0), 0.75);
+
+    let near = ball.influence(&Point3::new(0.25, 0.0, 0.0));
+    let far = ball.influence(&Point3::new(10_000.0, 0.0, 0.0));
+    assert!(near.is_finite() && near > 0.0);
+    assert_eq!(far, 0.0);
+
+    assert_eq!(ball.influence(&Point3::new(Real::NAN, 0.0, 0.0)), 0.0);
+    assert_eq!(
+        MetaBall::new(Point3::new(0.0, 0.0, 0.0), Real::INFINITY)
+            .influence(&Point3::new(0.0, 0.0, 0.0)),
+        0.0
+    );
+    assert_eq!(
+        MetaBall::new(Point3::new(0.0, 0.0, 0.0), -0.75)
+            .influence(&Point3::new(0.0, 0.0, 0.0)),
+        0.0
+    );
+}
+
+#[test]
 fn anisotropic_resolution_does_not_drop_all_triangles() {
     let balls = [
         MetaBall::new(Point3::new(-0.35, 0.0, 0.0), 0.65),

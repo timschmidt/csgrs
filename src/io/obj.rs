@@ -3,60 +3,30 @@
 #![doc = " This module provides import and export functionality for Wavefront OBJ files,"]
 #![doc = " a widely-supported 3D file format used by many modeling and rendering applications."]
 
-use crate::float_types::{Real, hpoints_within_epsilon, hvectors_within_epsilon, tolerance};
+use crate::float_types::{Real, hunit_vector3, hvector3_from_point3};
 use crate::mesh::Mesh;
 use crate::polygon::Polygon;
 use crate::sketch::Sketch;
-use crate::triangulated::Triangulated3D;
+use crate::triangulated::IndexedTriangulated3D;
 use crate::vertex::Vertex;
 use nalgebra::{Point3, Vector3};
 use std::fmt::Debug;
 use std::io::{BufRead, Write};
 
-fn add_unique_vertex(vertices: &mut Vec<Point3<Real>>, vertex: Point3<Real>) -> usize {
-    for (i, existing) in vertices.iter().enumerate() {
-        if hpoints_within_epsilon(existing, &vertex, tolerance()) {
-            return i;
-        }
-    }
-    vertices.push(vertex);
-    vertices.len() - 1
+fn invalid_obj_data(message: impl Into<String>) -> std::io::Error {
+    std::io::Error::new(std::io::ErrorKind::InvalidData, message.into())
 }
 
-fn add_unique_normal(normals: &mut Vec<Vector3<Real>>, normal: Vector3<Real>) -> usize {
-    for (i, existing) in normals.iter().enumerate() {
-        if hvectors_within_epsilon(existing, &normal, tolerance()) {
-            return i;
-        }
-    }
-    normals.push(normal);
-    normals.len() - 1
-}
-
-fn build_obj_buffers<T: Triangulated3D>(
+fn build_obj_buffers<T: IndexedTriangulated3D>(
     shape: &T,
 ) -> (
     Vec<Point3<Real>>,
     Vec<Vector3<Real>>,
     Vec<Vec<(usize, usize)>>,
 ) {
-    let mut vertices = Vec::<Point3<Real>>::new();
-    let mut normals = Vec::<Vector3<Real>>::new();
-    let mut faces = Vec::<Vec<(usize, usize)>>::new();
-
-    shape.visit_triangles(|tri| {
-        let mut face = Vec::with_capacity(3);
-        for v in tri {
-            let v_idx = add_unique_vertex(&mut vertices, v.position);
-            let n_idx = add_unique_normal(&mut normals, v.normal);
-            face.push((v_idx, n_idx));
-        }
-        if face.len() == 3 {
-            faces.push(face);
-        }
-    });
-
-    (vertices, normals, faces)
+    let indexed = shape.indexed_triangles();
+    let faces = indexed.faces.into_iter().map(Vec::from).collect();
+    (indexed.positions, indexed.normals, faces)
 }
 
 #[doc = " Export any `Triangulated3D` shape to OBJ format as a string"]
@@ -65,7 +35,7 @@ fn build_obj_buffers<T: Triangulated3D>(
 #[doc = ""]
 #[doc = " # Arguments"]
 #[doc = " * `object_name` - Name for the object in the OBJ file"]
-pub fn to_obj<T: Triangulated3D>(shape: &T, object_name: &str) -> String {
+pub fn to_obj<T: IndexedTriangulated3D>(shape: &T, object_name: &str) -> String {
     let (vertices, normals, faces) = build_obj_buffers(shape);
 
     let mut obj_content = String::new();
@@ -107,7 +77,7 @@ pub fn to_obj<T: Triangulated3D>(shape: &T, object_name: &str) -> String {
 #[doc = " # Arguments"]
 #[doc = " * `writer` - Where to write the OBJ data"]
 #[doc = " * `object_name` - Name for the object in the OBJ file"]
-pub fn write_obj<T: Triangulated3D, W: Write>(
+pub fn write_obj<T: IndexedTriangulated3D, W: Write>(
     shape: &T,
     writer: &mut W,
     object_name: &str,
@@ -136,6 +106,15 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     #[doc = " # Arguments"]
     #[doc = " * `reader` - Source of OBJ data"]
     #[doc = " * `metadata` - Optional metadata to attach to all polygons"]
+    ///
+    /// Primitive OBJ coordinates are accepted only after they promote through
+    /// the shared hyperlattice boundary adapters. Vertex normals are
+    /// checked-normalized before entering mesh state, so non-finite or zero
+    /// normals fail as malformed OBJ data rather than being silently sanitized
+    /// by [`Vertex::new`]. This keeps file import aligned with Yap, "Towards
+    /// Exact Geometric Computation," *Computational Geometry* 7(1-2), 1997
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>), while retaining the
+    /// Wavefront OBJ `v`/`vn` finite boundary format.
     pub fn from_obj<R: BufRead>(reader: R, metadata: M) -> std::io::Result<Mesh<M>> {
         let mut vertices = Vec::new();
         let mut normals = Vec::new();
@@ -172,7 +151,13 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                                 format!("Invalid vertex z coordinate: {e}"),
                             )
                         })?;
-                        vertices.push(Point3::new(x, y, z));
+                        let point = Point3::new(x, y, z);
+                        if hvector3_from_point3(&point).is_none() {
+                            return Err(invalid_obj_data(
+                                "Invalid vertex coordinate: OBJ vertices must be finite",
+                            ));
+                        }
+                        vertices.push(point);
                     }
                 },
                 "vn" => {
@@ -195,7 +180,12 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                                 format!("Invalid normal z coordinate: {e}"),
                             )
                         })?;
-                        normals.push(Vector3::new(x, y, z));
+                        let normal = hunit_vector3(&Vector3::new(x, y, z)).ok_or_else(|| {
+                            invalid_obj_data(
+                                "Invalid normal coordinate: OBJ normals must be finite and non-zero",
+                            )
+                        })?;
+                        normals.push(normal);
                     }
                 },
                 "f" => {
@@ -278,23 +268,6 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     }
 
     #[doc = " Export this Sketch to an OBJ file"]
-    pub fn write_obj<W: Write>(
-        &self,
-        writer: &mut W,
-        object_name: &str,
-    ) -> std::io::Result<()> {
-        self::write_obj(self, writer, object_name)
-    }
-}
-
-#[cfg(feature = "bmesh")]
-impl<M: Clone + Debug + Send + Sync> crate::bmesh::BMesh<M> {
-    #[doc = " Export this BMesh to OBJ format as a string"]
-    pub fn to_obj(&self, object_name: &str) -> String {
-        self::to_obj(self, object_name)
-    }
-
-    #[doc = " Export this BMesh to an OBJ file"]
     pub fn write_obj<W: Write>(
         &self,
         writer: &mut W,

@@ -9,7 +9,7 @@
 #![cfg_attr(doc, doc = doc_image_embed::embed_image!("Pre-ConvexHull demo image", "docs/convex_hull_before_nobackground.png"))]
 #![cfg_attr(doc, doc = doc_image_embed::embed_image!("ConvexHull demo image", "docs/convex_hull_nobackground.png"))]
 
-use crate::float_types::{Real, tolerance};
+use crate::float_types::{Real, hreal_gt_f64, hvector3_from_point3, tolerance};
 use crate::mesh::Mesh;
 use crate::polygon::Polygon;
 use crate::vertex::Vertex;
@@ -17,8 +17,33 @@ use chull::ConvexHullWrapper;
 use nalgebra::{Point3, Vector3};
 use std::fmt::Debug;
 
+fn hyper_triangle_unit_normal(
+    p0: &Point3<Real>,
+    p1: &Point3<Real>,
+    p2: &Point3<Real>,
+) -> Option<Vector3<Real>> {
+    let p0 = hvector3_from_point3(p0)?;
+    let p1 = hvector3_from_point3(p1)?;
+    let p2 = hvector3_from_point3(p2)?;
+    let normal = (&p1 - &p0).cross(&(&p2 - &p0));
+    if !hreal_gt_f64(&normal.dot(&normal), tolerance() * tolerance()) {
+        return None;
+    }
+    let unit = normal.normalize_checked().ok()?;
+    let [x, y, z] = unit.to_f64_array_lossy()?;
+    Some(Vector3::new(x, y, z))
+}
+
 impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// Compute the convex hull of all vertices in this Mesh.
+    ///
+    /// Hull vertices still enter through the `chull` primitive-float API, but
+    /// reconstructed triangle normals are checked in `hyperlattice` before
+    /// being exported back to the transitional mesh carrier. This keeps
+    /// degenerate-face rejection on the hyperreal side of the boundary,
+    /// following Yap, "Towards Exact Geometric Computation," *Computational
+    /// Geometry* 7.1-2 (1997),
+    /// <https://doi.org/10.1016/0925-7721(95)00040-2>.
     pub fn convex_hull(&self) -> Mesh<M> {
         // Gather all (x, y, z) coordinates from the polygons
         let points: Vec<Point3<Real>> = self
@@ -41,15 +66,23 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
 
         let (verts, indices) = hull.vertices_indices();
 
-        // Reconstruct polygons as triangles
+        // Reconstruct polygons with hyperreal-checked normals.
         let mut polygons = Vec::new();
-        for tri in indices.chunks(3) {
+        for tri in indices.chunks_exact(3) {
             let v0 = &verts[tri[0]];
             let v1 = &verts[tri[1]];
             let v2 = &verts[tri[2]];
-            let vv0 = Vertex::new(Point3::new(v0[0], v0[1], v0[2]), Vector3::zeros());
-            let vv1 = Vertex::new(Point3::new(v1[0], v1[1], v1[2]), Vector3::zeros());
-            let vv2 = Vertex::new(Point3::new(v2[0], v2[1], v2[2]), Vector3::zeros());
+
+            let p0 = Point3::new(v0[0], v0[1], v0[2]);
+            let p1 = Point3::new(v1[0], v1[1], v1[2]);
+            let p2 = Point3::new(v2[0], v2[1], v2[2]);
+            let Some(normal) = hyper_triangle_unit_normal(&p0, &p1, &p2) else {
+                continue;
+            };
+
+            let vv0 = Vertex::new(p0, normal);
+            let vv1 = Vertex::new(p1, normal);
+            let vv2 = Vertex::new(p2, normal);
             polygons.push(Polygon::new(vec![vv0, vv1, vv2], self.metadata.clone()));
         }
 
@@ -113,21 +146,11 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                 let p1 = Point3::new(v1[0], v1[1], v1[2]);
                 let p2 = Point3::new(v2[0], v2[1], v2[2]);
 
-                // Calculate proper normal vector using cross product
-                let edge1 = p1 - p0;
-                let edge2 = p2 - p0;
-                let normal = edge1.cross(&edge2);
-
-                // Filter out degenerate triangles
-                if normal.norm_squared() > tolerance() {
-                    let normalized_normal = normal.normalize();
-                    let vv0 = Vertex::new(p0, normalized_normal);
-                    let vv1 = Vertex::new(p1, normalized_normal);
-                    let vv2 = Vertex::new(p2, normalized_normal);
-                    Some(Polygon::new(vec![vv0, vv1, vv2], self.metadata.clone()))
-                } else {
-                    None
-                }
+                let normal = hyper_triangle_unit_normal(&p0, &p1, &p2)?;
+                let vv0 = Vertex::new(p0, normal);
+                let vv1 = Vertex::new(p1, normal);
+                let vv2 = Vertex::new(p2, normal);
+                Some(Polygon::new(vec![vv0, vv1, vv2], self.metadata.clone()))
             })
             .collect();
 

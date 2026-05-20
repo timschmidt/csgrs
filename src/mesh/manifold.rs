@@ -1,67 +1,33 @@
-//! Manifoldness checks for triangle meshes.
+//! Exact manifoldness checks for transitional triangle meshes.
 
-use crate::float_types::Real;
 use crate::mesh::Mesh;
-use nalgebra::Point3;
-use std::collections::HashMap;
 use std::fmt::Debug;
 
 impl<M: Clone + Debug + Send + Sync> Mesh<M> {
-    /// Checks if the Mesh object is manifold.
+    /// Return whether this mesh validates as a closed two-manifold in `hypermesh`.
     ///
-    /// This function defines a comparison function which takes tolerance into account
-    /// for Real coordinates, builds a hashmap key from the string representation of
-    /// the coordinates, triangulates the Mesh polygons, gathers each of their three edges,
-    /// counts how many times each edge appears across all triangles,
-    /// and returns true if every edge appears exactly 2 times, else false.
+    /// This method is intentionally routed through [`hypermesh::exact::ExactMesh`]
+    /// instead of the old `csgrs` tolerance hash. Edge incidence, duplicate
+    /// directed edges, vertex links, and triangle degeneracy are topology
+    /// facts owned by `hypermesh`; `csgrs` only supplies the current CAD mesh
+    /// stream through its audited adapter.
     ///
-    /// We should also check that all faces have consistent orientation and no neighbors
-    /// have flipped normals.
-    ///
-    /// We should also check for zero-area triangles
+    /// The local vertex-star manifoldness criterion mirrors Boissonnat,
+    /// Devillers, Pion, Teillaud, and Yvinec, "Triangulations in CGAL,"
+    /// *Computational Geometry* 22.1-3 (2002), while exact predicate routing
+    /// follows Yap, "Towards Exact Geometric Computation," *Computational
+    /// Geometry* 7.1-2 (1997),
+    /// <https://doi.org/10.1016/0925-7721(95)00040-2>.
     ///
     /// # Returns
     ///
-    /// - `true`: If the Mesh object is manifold.
-    /// - `false`: If the Mesh object is not manifold.
+    /// - `true`: if `hypermesh` accepts the object as a closed two-manifold.
+    /// - `false`: if construction, retained-state replay, or closed-manifold
+    ///   facts reject it.
     pub fn is_manifold(&self) -> bool {
-        const QUANTIZATION_FACTOR: Real = 1e6;
-
-        #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-        struct QuantizedPoint(i64, i64, i64);
-
-        fn quantize_point(p: &Point3<Real>) -> QuantizedPoint {
-            QuantizedPoint(
-                (p.x * QUANTIZATION_FACTOR).round() as i64,
-                (p.y * QUANTIZATION_FACTOR).round() as i64,
-                (p.z * QUANTIZATION_FACTOR).round() as i64,
-            )
-        }
-
-        // Triangulate the whole shape once
-        let tri_csg = self.triangulate();
-        let mut edge_counts: HashMap<(QuantizedPoint, QuantizedPoint), u32> = HashMap::new();
-
-        for poly in &tri_csg.polygons {
-            // Each tri is 3 vertices: [v0, v1, v2]
-            // We'll look at edges (0->1, 1->2, 2->0).
-            for &(i0, i1) in &[(0, 1), (1, 2), (2, 0)] {
-                let p0 = quantize_point(&poly.vertices[i0].position);
-                let p1 = quantize_point(&poly.vertices[i1].position);
-
-                // Order them so (p0, p1) and (p1, p0) become the same key
-                let (a_key, b_key) = if (p0.0, p0.1, p0.2) < (p1.0, p1.1, p1.2) {
-                    (p0, p1)
-                } else {
-                    (p1, p0)
-                };
-
-                *edge_counts.entry((a_key, b_key)).or_insert(0) += 1;
-            }
-        }
-
-        // For a perfectly closed manifold surface (with no boundary),
-        // each edge should appear exactly 2 times.
-        edge_counts.values().all(|&count| count == 2)
+        let Ok(mesh) = self.to_hypermesh_exact() else {
+            return false;
+        };
+        mesh.validate_retained_state().is_ok() && mesh.facts().mesh.closed_manifold
     }
 }

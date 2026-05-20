@@ -1,8 +1,9 @@
 //! Struct and functions for working with `Vertex`s.
 
 use crate::float_types::{
-    PI, Real, hpoints_within_epsilon, hreal_from_f64, hreal_gt_f64, hreal_lt_f64,
-    hreal_to_f64, hvector3_from_point3, tolerance,
+    PI, Real, hangle_between_vectors, hpoint_distance, hpoints_within_epsilon, hreal_from_f64,
+    hreal_gt_f64, hreal_lt_f64, hreal_to_f64, hunit_vector3, hvector3_distance, hvector3_dot,
+    hvector3_from_point3, tolerance,
 };
 use hashbrown::HashMap;
 use nalgebra::{Point3, Vector3};
@@ -115,21 +116,32 @@ impl Vertex {
     /// - **Unit Preservation**: Result is always unit length
     /// - **Orientation**: Shortest path between normals
     ///
-    /// This is preferred over linear interpolation for normal vectors in lighting
-    /// calculations and smooth shading applications.
+    /// This is preferred over linear interpolation for normal vectors in
+    /// lighting and smooth shading applications. Input normal normalization
+    /// and the dot-product angle decision are routed through
+    /// `hyperlattice::Vector3`/`hyperreal::Real`, while the final blended
+    /// vector is exported back to the finite [`Vertex`] boundary. This follows
+    /// Yap's exact-geometric-computation boundary discipline
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     pub fn slerp_interpolate(&self, other: &Vertex, t: Real) -> Vertex {
         // Linear interpolation for position
         let new_position = self.position + (other.position - self.position) * t;
 
-        // Spherical linear interpolation for normals
-        let n0 = self.normal.normalize();
-        let n1 = other.normal.normalize();
+        let Some(n0) = hunit_vector3(&self.normal) else {
+            return self.interpolate(other, t);
+        };
+        let Some(n1) = hunit_vector3(&other.normal) else {
+            return self.interpolate(other, t);
+        };
 
-        let dot = n0.dot(&n1).clamp(-1.0, 1.0);
+        let Some(dot) = hvector3_dot(&n0, &n1).map(|dot| dot.clamp(-1.0, 1.0)) else {
+            return self.interpolate(other, t);
+        };
 
         // If normals are nearly parallel, use linear interpolation
         if (dot.abs() - 1.0).abs() < tolerance() {
-            let new_normal = (self.normal + (other.normal - self.normal) * t).normalize();
+            let blended = self.normal + (other.normal - self.normal) * t;
+            let new_normal = hunit_vector3(&blended).unwrap_or_else(Vector3::z);
             return Vertex::new(new_position, new_normal);
         }
 
@@ -138,14 +150,16 @@ impl Vertex {
 
         if sin_omega.abs() < tolerance() {
             // Fallback to linear interpolation
-            let new_normal = (self.normal + (other.normal - self.normal) * t).normalize();
+            let blended = self.normal + (other.normal - self.normal) * t;
+            let new_normal = hunit_vector3(&blended).unwrap_or_else(Vector3::z);
             return Vertex::new(new_position, new_normal);
         }
 
         let a = ((1.0 - t) * omega).sin() / sin_omega;
         let b = (t * omega).sin() / sin_omega;
 
-        let new_normal = (a * n0 + b * n1).normalize();
+        let blended = a * n0 + b * n1;
+        let new_normal = hunit_vector3(&blended).unwrap_or_else(Vector3::z);
         Vertex::new(new_position, new_normal)
     }
 
@@ -155,8 +169,17 @@ impl Vertex {
     /// ```text
     /// d(v₁, v₂) = |p₁ - p₂| = √((x₁-x₂)² + (y₁-y₂)² + (z₁-z₂)²)
     /// ```
+    ///
+    /// The squared-distance expression is evaluated through
+    /// `hyperlattice::Vector3` and `hyperreal::Real`, then exported to the
+    /// finite `f64` mesh API. This keeps distance algebra in the hyper geometry
+    /// layer and follows Yap's exact-geometric-computation boundary discipline
+    /// for separating primitive coordinates from exact-aware objects:
+    /// <https://doi.org/10.1016/0925-7721(95)00040-2>.
     pub fn distance_to(&self, other: &Vertex) -> Real {
-        (self.position - other.position).norm()
+        hyper_vertex_distance_squared(self, other)
+            .and_then(|distance_squared| hreal_to_f64(&distance_squared.sqrt().ok()?))
+            .unwrap_or(Real::INFINITY)
     }
 
     /// **Mathematical Foundation: Squared Distance Optimization**
@@ -167,8 +190,13 @@ impl Vertex {
     /// ```
     ///
     /// Useful for distance comparisons without expensive square root operation.
+    /// The algebra lives in `hyperlattice::Vector3::squared_distance` so this
+    /// helper remains an API-boundary finite export rather than a local f64
+    /// predicate.
     pub fn distance_squared_to(&self, other: &Vertex) -> Real {
-        (self.position - other.position).norm_squared()
+        hyper_vertex_distance_squared(self, other)
+            .and_then(|distance_squared| hreal_to_f64(&distance_squared))
+            .unwrap_or(Real::INFINITY)
     }
 
     /// **Mathematical Foundation: Normal Vector Angular Difference**
@@ -179,15 +207,16 @@ impl Vertex {
     /// ```
     ///
     /// Returns angle in radians [0, π].
+    ///
+    /// Normalization, dot product, and inverse cosine are routed through
+    /// `hyperlattice`/`hyperreal`, with `f64` retained only as this legacy mesh
+    /// API's return type. The checked-normalization step rejects zero and
+    /// unknown-zero normals before the angle branch, following Yap's exact
+    /// geometric computation model for making geometric decisions on
+    /// exact-aware objects rather than primitive floats:
+    /// <https://doi.org/10.1016/0925-7721(95)00040-2>.
     pub fn normal_angle_to(&self, other: &Vertex) -> Real {
-        let Some(n1) = self.normal.try_normalize(tolerance()) else {
-            return 0.0;
-        };
-        let Some(n2) = other.normal.try_normalize(tolerance()) else {
-            return 0.0;
-        };
-        let cos_angle = n1.dot(&n2).clamp(-1.0, 1.0);
-        cos_angle.acos()
+        hangle_between_vectors(&self.normal, &other.normal).unwrap_or(0.0)
     }
 
     /// **Mathematical Foundation: Weighted Average for Mesh Smoothing**
@@ -205,8 +234,9 @@ impl Vertex {
     /// exact-geometric-computation separation between geometric decisions and
     /// primitive floating-point boundaries (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     /// The averaging itself is the local linear operation used by Laplacian
-    /// mesh smoothing; see Taubin, "A Signal Processing Approach to Fair
-    /// Surface Design," SIGGRAPH 1995
+    /// mesh smoothing, while final normal normalization is checked by
+    /// hyperlattice; see Taubin, "A Signal Processing Approach to Fair Surface
+    /// Design," SIGGRAPH 1995
     /// (<https://doi.org/10.1145/218380.218473>).
     pub fn weighted_average(vertices: &[(Vertex, Real)]) -> Option<Vertex> {
         if vertices.is_empty() {
@@ -227,12 +257,7 @@ impl Vertex {
             .zip(normalized_weights.iter().copied())
             .fold(Vector3::zeros(), |acc, ((v, _), w)| acc + v.normal * w);
 
-        let normalized_normal =
-            if let Some(normal) = weighted_normal.try_normalize(tolerance()) {
-                normal
-            } else {
-                Vector3::z() // Fallback normal
-            };
+        let normalized_normal = hunit_vector3(&weighted_normal).unwrap_or_else(Vector3::z);
 
         Some(Vertex::new(
             Point3::from(weighted_position),
@@ -278,11 +303,7 @@ impl Vertex {
         );
 
         let blended_normal = u * v1.normal + v * v2.normal + w * v3.normal;
-        let new_normal = if let Some(normal) = blended_normal.try_normalize(tolerance()) {
-            normal
-        } else {
-            Vector3::z()
-        };
+        let new_normal = hunit_vector3(&blended_normal).unwrap_or_else(Vector3::z);
 
         Vertex::new(new_position, new_normal)
     }
@@ -331,6 +352,12 @@ fn hyper_normalized_weights(weights: impl IntoIterator<Item = Real>) -> Option<V
         .into_iter()
         .map(|weight| hreal_to_f64(&(weight / total.clone()).ok()?))
         .collect()
+}
+
+fn hyper_vertex_distance_squared(lhs: &Vertex, rhs: &Vertex) -> Option<hyperreal::Real> {
+    let lhs = hvector3_from_point3(&lhs.position)?;
+    let rhs = hvector3_from_point3(&rhs.position)?;
+    Some(lhs.squared_distance(&rhs))
 }
 
 fn hyper_cotangent_at_opposite(
@@ -511,6 +538,14 @@ impl Vertex {
     /// Where θᵢ are angles around the vertex and A_mixed is the mixed area.
     ///
     /// This provides a discrete approximation to the mean curvature at a vertex.
+    /// Direction normalization and angle extraction are delegated to
+    /// `hyperlattice::Vector3`/`hyperreal::Real`, while the returned curvature
+    /// remains a finite analysis metric. This follows the exact-geometric-
+    /// computation boundary model of Yap, *Computational Geometry* 7(1-2),
+    /// 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>), and the
+    /// discrete differential-geometry context of Meyer et al.,
+    /// "Discrete Differential-Geometry Operators for Triangulated
+    /// 2-Manifolds" (<https://doi.org/10.1007/978-3-662-05105-4_2>).
     pub fn estimate_mean_curvature(&self, neighbors: &[Vertex], face_areas: &[Real]) -> Real {
         if neighbors.len() < 3 {
             return 0.0;
@@ -522,16 +557,21 @@ impl Vertex {
             let prev = &neighbors[(i + neighbors.len() - 1) % neighbors.len()];
             let next = &neighbors[(i + 1) % neighbors.len()];
 
-            let v1 = (prev.position - self.position).normalize();
-            let v2 = (next.position - self.position).normalize();
-
-            let dot = v1.dot(&v2).clamp(-1.0, 1.0);
-            angle_sum += dot.acos();
+            let v1 = prev.position - self.position;
+            let v2 = next.position - self.position;
+            if let Some(angle) = hangle_between_vectors(&v1, &v2) {
+                angle_sum += angle;
+            }
         }
 
         // Compute mixed area (average of face areas)
-        let mixed_area = if !face_areas.is_empty() {
-            face_areas.iter().sum::<Real>() / face_areas.len() as Real
+        let finite_face_areas: Vec<_> = face_areas
+            .iter()
+            .copied()
+            .filter(|area| area.is_finite() && *area > 0.0)
+            .collect();
+        let mixed_area = if !finite_face_areas.is_empty() {
+            finite_face_areas.iter().sum::<Real>() / finite_face_areas.len() as Real
         } else {
             1.0 // Fallback to avoid division by zero
         };
@@ -560,6 +600,12 @@ impl Vertex {
     /// - **Quality Scoring**: Overall mesh quality assessment
     /// - **Feature Detection**: Identify sharp features and boundaries
     ///
+    /// Incident edge distances, normal-angle variation, and normal deviation
+    /// are measured through `hyperlattice::Vector3` adapters before exporting
+    /// finite scores. Keeping these analysis predicates out of local f64
+    /// normalization follows Yap's exact-geometric-computation boundary
+    /// discipline (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+    ///
     /// Returns (regularity, curvature, edge_uniformity, normal_variation)
     pub fn comprehensive_quality_analysis(
         &self,
@@ -583,8 +629,10 @@ impl Vertex {
 
         for &neighbor_idx in neighbors {
             if let Some(&neighbor_position) = vertex_positions.get(&neighbor_idx) {
-                let edge_length = (self.position - neighbor_position).norm();
-                edge_lengths.push(edge_length);
+                if let Some(edge_length) = hpoint_distance(&self.position, &neighbor_position)
+                {
+                    edge_lengths.push(edge_length);
+                }
 
                 if let Some(&neighbor_normal) = vertex_normals.get(&neighbor_idx) {
                     neighbor_normals.push(neighbor_normal);
@@ -612,12 +660,9 @@ impl Vertex {
         let normal_variation = if neighbor_normals.len() > 1 {
             let mut max_angle: Real = 0.0;
             for &neighbor_normal in &neighbor_normals {
-                let angle = self
-                    .normal
-                    .normalize()
-                    .dot(&neighbor_normal.normalize())
-                    .acos();
-                max_angle = max_angle.max(angle);
+                if let Some(angle) = hangle_between_vectors(&self.normal, &neighbor_normal) {
+                    max_angle = max_angle.max(angle);
+                }
             }
 
             // Normalize to [0,1] where 1 = perfectly consistent
@@ -632,7 +677,9 @@ impl Vertex {
                 .iter()
                 .fold(Vector3::zeros(), |acc, &n| acc + n)
                 / neighbor_normals.len() as Real;
-            (self.normal - avg_normal).norm() // normal deviation
+            // Fail closed instead of re-entering primitive nalgebra norms when
+            // hostile public normals cannot be promoted to hyperlattice.
+            hvector3_distance(&self.normal, &avg_normal).unwrap_or(0.0)
         } else {
             0.0
         };
@@ -656,7 +703,14 @@ pub struct VertexCluster {
 }
 
 impl VertexCluster {
-    /// Create a new vertex cluster from a collection of vertices
+    /// Create a new vertex cluster from a collection of vertices.
+    ///
+    /// Normal normalization and radius distances are computed through
+    /// hyperlattice/hyperreal helpers before finite export. The cluster itself
+    /// is still a mesh-analysis boundary type, but the geometric predicates
+    /// follow Yap's exact-geometric-computation split between primitive
+    /// boundary coordinates and exact-aware objects
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     pub fn from_vertices(vertices: &[Vertex]) -> Option<Self> {
         if vertices.is_empty() {
             return None;
@@ -672,16 +726,12 @@ impl VertexCluster {
         let avg_normal = vertices
             .iter()
             .fold(Vector3::zeros(), |acc, v| acc + v.normal);
-        let normalized_normal = if avg_normal.norm() > tolerance() {
-            avg_normal.normalize()
-        } else {
-            Vector3::z()
-        };
+        let normalized_normal = hunit_vector3(&avg_normal).unwrap_or_else(Vector3::z);
 
         // Compute bounding radius
         let radius = vertices
             .iter()
-            .map(|v| (v.position - Point3::from(centroid)).norm())
+            .filter_map(|v| hpoint_distance(&v.position, &Point3::from(centroid)))
             .fold(0.0, |a: Real, b| a.max(b));
 
         Some(VertexCluster {

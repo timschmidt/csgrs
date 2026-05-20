@@ -1,6 +1,6 @@
 //! Mesh smoothing and refinement operations.
 
-use crate::float_types::{Real, tolerance};
+use crate::float_types::{Real, hpoint_distance, tolerance};
 use crate::mesh::Mesh;
 use crate::polygon::Polygon;
 use crate::vertex::Vertex;
@@ -333,7 +333,12 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         Mesh::from_polygons(&refined_polygons, self.metadata.clone())
     }
 
-    /// Calculate maximum edge length in a polygon
+    /// Calculate maximum edge length in a polygon.
+    ///
+    /// Edge distances are lifted through `hyperlattice` before returning to the
+    /// mesh boundary scalar, keeping refinement decisions aligned with the
+    /// exact-geometric-computation split described by Yap
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     fn max_edge_length(vertices: &[Vertex]) -> Real {
         if vertices.len() < 2 {
             return 0.0;
@@ -342,8 +347,11 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         let mut max_length: Real = 0.0;
         for i in 0..vertices.len() {
             let j = (i + 1) % vertices.len();
-            let edge_length = (vertices[j].position - vertices[i].position).norm();
-            max_length = max_length.max(edge_length);
+            if let Some(edge_length) =
+                hpoint_distance(&vertices[j].position, &vertices[i].position)
+            {
+                max_length = max_length.max(edge_length);
+            }
         }
         max_length
     }

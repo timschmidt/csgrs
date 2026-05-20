@@ -28,7 +28,7 @@ fuzz_target!(|bytes: &[u8]| {
         *value = decode_real(bytes, &mut idx);
     }
     let matrix = Matrix4::from_row_slice(&values);
-    let mesh: Mesh<()> = Mesh::cube(1.0, None);
+    let mesh: Mesh<()> = Mesh::cube(1.0, ());
     let transformed = mesh.transform(&matrix);
 
     for vertex in transformed.vertices() {

@@ -40,7 +40,7 @@ fuzz_target!(|bytes: &[u8]| {
     idx += 1;
     let period = decode_real(bytes, &mut idx).abs().max(0.001);
     let iso = decode_real(bytes, &mut idx);
-    let base = Mesh::cube(2.0, None);
+    let base = Mesh::cube(2.0, ());
 
     let mesh = match tag {
         0 => Mesh::sdf(
@@ -55,11 +55,11 @@ fuzz_target!(|bytes: &[u8]| {
             Point3::new(-1.0, -1.0, -1.0),
             Point3::new(1.0, 1.0, 1.0),
             iso,
-            None,
+            (),
         ),
-        1 => base.gyroid(res, period, iso, None),
-        2 => base.schwarz_p(res, period, iso, None),
-        _ => base.schwarz_d(res, period, iso, None),
+        1 => base.gyroid(res, period, iso, ()),
+        2 => base.schwarz_p(res, period, iso, ()),
+        _ => base.schwarz_d(res, period, iso, ()),
     };
 
     assert_mesh_finite(&mesh);

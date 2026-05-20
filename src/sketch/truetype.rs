@@ -1,8 +1,8 @@
 //! Create `Sketch`s using ttf fonts
 
 use crate::float_types::{Real, tolerance};
-use crate::sketch::{Sketch, wire_from_points};
-use hypercurve::{Region2, finite_ring_signed_area};
+use crate::sketch::Sketch;
+use hypercurve::{Contour2, CurveString2, Region2, finite_ring_signed_area};
 use std::fmt::Debug;
 use ttf_parser::{Face, GlyphId, OutlineBuilder};
 use ttf_utils::Outline;
@@ -107,8 +107,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
                             continue;
                         }
                         let area = finite_ring_signed_area(&closed_pts);
-                        let Some(contour) = Sketch::<M>::contour_from_points(&closed_pts)
-                        else {
+                        let Ok(contour) = Contour2::from_finite_ring(&closed_pts) else {
                             continue;
                         };
                         if area < 0.0 {
@@ -119,7 +118,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
                     }
 
                     for open_pts in collector.open_contours {
-                        if let Some(wire) = wire_from_points(open_pts) {
+                        if let Ok(wire) = CurveString2::from_finite_point_iter(open_pts) {
                             wires.push(wire);
                         }
                     }

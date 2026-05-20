@@ -1,6 +1,8 @@
 //! Provides a `MetaBall` struct and functions for creating a `Mesh` from [MetaBalls](https://en.wikipedia.org/wiki/Metaballs)
 
-use crate::float_types::{Real, tolerance};
+use crate::float_types::{
+    Real, hreal_to_f64, htriangle_area2_exceeds_epsilon, hvector3_from_point3, tolerance,
+};
 use crate::mesh::Mesh;
 use crate::polygon::Polygon;
 use crate::vertex::Vertex;
@@ -42,9 +44,20 @@ impl MetaBall {
 
     /// **Mathematical Foundation**: Metaball influence function I(p) = r²/(|p-c|² + ε)
     /// where ε prevents division by zero and maintains numerical stability.
-    /// **Optimization**: Early termination for distant points and vectorized computation.
+    ///
+    /// The distance predicate is evaluated through `hyperlattice` and exported
+    /// only after the hyperreal squared distance is finite. That keeps
+    /// non-finite API-boundary points out of local nalgebra arithmetic and
+    /// follows Yap's exact-geometric-computation boundary split
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     pub fn influence(&self, p: &Point3<Real>) -> Real {
-        let distance_squared = (p - self.center).norm_squared();
+        if !self.radius.is_finite() || self.radius <= 0.0 {
+            return 0.0;
+        }
+
+        let Some(distance_squared) = hyper_point_distance_squared(p, &self.center) else {
+            return 0.0;
+        };
 
         // Early termination optimization: if point is very far from metaball,
         // influence approaches zero - can skip expensive division
@@ -302,7 +315,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                 continue;
             }
 
-            if triangle_area2(p0_real, p1_real, p2_real) <= Real::EPSILON {
+            if !htriangle_area2_exceeds_epsilon(&p0_real, &p1_real, &p2_real, Real::EPSILON) {
                 diagnostics.degenerate_triangle_count += 1;
             }
 
@@ -330,6 +343,12 @@ fn point_finite(p: &Point3<Real>) -> bool {
 #[inline]
 fn vec_finite(v: &Vector3<Real>) -> bool {
     v.iter().all(|&c| c.is_finite())
+}
+
+fn hyper_point_distance_squared(lhs: &Point3<Real>, rhs: &Point3<Real>) -> Option<Real> {
+    let lhs = hvector3_from_point3(lhs)?;
+    let rhs = hvector3_from_point3(rhs)?;
+    hreal_to_f64(&lhs.squared_distance(&rhs))
 }
 
 fn count_crossing_cells(field_values: &[f32], nx: u32, ny: u32, nz: u32) -> usize {
@@ -364,8 +383,4 @@ fn count_crossing_cells(field_values: &[f32], nx: u32, ny: u32, nz: u32) -> usiz
     }
 
     count
-}
-
-fn triangle_area2(a: Point3<Real>, b: Point3<Real>, c: Point3<Real>) -> Real {
-    (b - a).cross(&(c - a)).norm()
 }

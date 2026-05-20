@@ -80,13 +80,16 @@
 //! `float_types::tolerance()`.
 
 use crate::float_types::{
-    HReal, Real, hreal_from_f64, hreal_sign, hreal_to_f64, hvector3_from_point3, tolerance,
+    HReal, Real, hperpendicular_basis, hreal_from_f64, hreal_gt_f64, hreal_sign, hreal_to_f64,
+    hrotation_between_vectors, htranslation_matrix, hunit_vector3, hvector3_dot,
+    hvector3_from_point3, hvector3_from_vector3, tolerance,
 };
 use crate::polygon::Polygon;
 use crate::vertex::Vertex;
 use hyperlattice::Vector3 as HVector3;
 use hyperreal::RealSign;
-use nalgebra::{Isometry3, Matrix4, Point3, Rotation3, Translation3, Vector3};
+use nalgebra::{Matrix4, Point3, Vector3};
+use std::cmp::Ordering;
 
 /// Classification of a polygon or point whose hyperreal orientation determinant
 /// is inside the current BSP tolerance band, or whose boundary coordinates
@@ -130,6 +133,21 @@ fn hreal_sign_with_tolerance(value: &HReal) -> Option<RealSign> {
     Some(RealSign::Zero)
 }
 
+fn hreal_cmp_or_equal(lhs: &HReal, rhs: &HReal) -> Ordering {
+    match hreal_sign(&(lhs.clone() - rhs.clone())) {
+        Some(RealSign::Positive) => Ordering::Greater,
+        Some(RealSign::Negative) => Ordering::Less,
+        Some(RealSign::Zero) | None => Ordering::Equal,
+    }
+}
+
+fn newell_hreal_normal(points: &[HVector3]) -> HVector3 {
+    points
+        .iter()
+        .zip(points.iter().cycle().skip(1))
+        .fold(HVector3::zero(), |acc, (curr, next)| acc + curr.cross(next))
+}
+
 impl PartialEq for Plane {
     fn eq(&self, other: &Self) -> bool {
         if self.point_a == other.point_a
@@ -151,6 +169,13 @@ impl Plane {
     /// (maximally well-spaced) and returns a plane defined by them.
     /// Care is taken to preserve the original winding of the vertices.
     ///
+    /// Candidate chord lengths and line-area metrics are evaluated as
+    /// `hyperlattice::Vector3<hyperreal::Real>` expressions, then the winning
+    /// support vertices are projected back to the current mesh boundary type.
+    /// This follows Yap's exact-geometric-computation separation between
+    /// primitive input coordinates and exact-aware topology predicates
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+    ///
     /// Cost: O(n^2)
     /// A lower cost option may be a grid sub-sampled farthest pair search
     pub fn from_vertices(vertices: Vec<Vertex>) -> Plane {
@@ -164,22 +189,31 @@ impl Plane {
             return reference_plane;
         } // Plane is already optimal
 
+        let Some(hpoints) = vertices
+            .iter()
+            .map(|vertex| hvector3_from_point3(&vertex.position))
+            .collect::<Option<Vec<_>>>()
+        else {
+            return reference_plane;
+        };
+
         // longest chord (i0,i1)
         let Some((i0, i1, _)) = (0..n)
             .flat_map(|i| (i + 1..n).map(move |j| (i, j)))
             .map(|(i, j)| {
-                let d2 = (vertices[i].position - vertices[j].position).norm_squared();
+                let d2 = hpoints[i].squared_distance(&hpoints[j]);
                 (i, j, d2)
             })
-            .max_by(|a, b| a.2.total_cmp(&b.2))
+            .max_by(|a, b| hreal_cmp_or_equal(&a.2, &b.2))
         else {
             return reference_plane;
         };
 
         let p0 = vertices[i0].position;
         let p1 = vertices[i1].position;
-        let dir = p1 - p0;
-        if dir.norm_squared() < tolerance() * tolerance() {
+        let hdir = &hpoints[i1] - &hpoints[i0];
+        let hdir2 = hdir.dot(&hdir);
+        if !hreal_gt_f64(&hdir2, tolerance() * tolerance()) {
             return reference_plane; // everything almost coincident
         }
 
@@ -188,16 +222,18 @@ impl Plane {
             .iter()
             .enumerate()
             .filter(|(idx, _)| *idx != i0 && *idx != i1)
-            .map(|(idx, v)| {
-                let a2 = (v.position - p0).cross(&dir).norm_squared(); // ∝ area²
+            .map(|(idx, _)| {
+                let offset = &hpoints[idx] - &hpoints[i0];
+                let area = offset.cross(&hdir);
+                let a2 = area.dot(&area); // ∝ area²
                 (idx, a2)
             })
-            .max_by(|a, b| a.1.total_cmp(&b.1))
+            .max_by(|a, b| hreal_cmp_or_equal(&a.1, &b.1))
         else {
             return reference_plane;
         };
 
-        let i2 = if max_area2 > tolerance() * tolerance() {
+        let i2 = if hreal_gt_f64(&max_area2, tolerance() * tolerance()) {
             i2
         } else {
             return reference_plane; // all vertices collinear
@@ -212,50 +248,73 @@ impl Plane {
         };
 
         // Construct the reference normal for the original polygon using Newell's Method.
-        let reference_normal = vertices.iter().zip(vertices.iter().cycle().skip(1)).fold(
-            Vector3::zeros(),
-            |acc, (curr, next)| {
-                acc + (curr.position - Point3::origin())
-                    .cross(&(next.position - Point3::origin()))
-            },
-        );
+        let reference_normal = newell_hreal_normal(&hpoints);
+        let should_flip = plane_hq
+            .unit_hreal_normal()
+            .map(|plane_normal| plane_normal.dot(&reference_normal))
+            .and_then(|dot| hreal_sign(&dot))
+            .is_some_and(|sign| matches!(sign, RealSign::Negative));
 
-        if plane_hq.normal().dot(&reference_normal) < 0.0 {
+        if should_flip {
             plane_hq.flip(); // flip in-place to agree with winding
         }
         plane_hq
     }
 
-    /// Build a new `Plane` from a (not‑necessarily‑unit) normal **n**
+    /// Build a new `Plane` from a (not-necessarily-unit) normal **n**
     /// and signed offset *o* (in the sense `n · p == o`).
     ///
-    /// If `normal` is close to zero the function fails
+    /// Invalid primitive inputs produce the canonical XY plane rather than a
+    /// panic. Call [`Plane::try_from_normal`] when the caller needs to
+    /// distinguish a rejected boundary normal from a real XY plane. The
+    /// normal-squared degeneracy check and point-on-plane scale `offset / (n · n)` are
+    /// evaluated in `hyperlattice::Vector3`/`hyperreal::Real`; the resulting
+    /// support point is exported to finite coordinates only because `Plane`
+    /// remains a mesh API-boundary type. This follows Yap, "Towards Exact
+    /// Geometric Computation," *Computational Geometry* 7(1-2), 1997
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>), while retaining the
+    /// ordinary implicit plane equation used by the Sutherland-Hodgman split
+    /// path (<https://doi.org/10.1145/360767.360802>).
     pub fn from_normal(normal: Vector3<Real>, offset: Real) -> Self {
-        let n2 = normal.norm_squared();
-        if n2 < tolerance() * tolerance() {
-            panic!(); // degenerate normal
+        Self::try_from_normal(normal, offset).unwrap_or_else(Self::xy)
+    }
+
+    /// Checked plane construction from a public finite normal and offset.
+    ///
+    /// This is the fallible form of [`Plane::from_normal`]. It keeps primitive
+    /// API data out of plane topology unless both the normal and support point
+    /// can be represented through hyperlattice/hyperreal.
+    pub fn try_from_normal(normal: Vector3<Real>, offset: Real) -> Option<Self> {
+        let hyper_normal = hvector3_from_vector3(&normal)?;
+        let n2 = hyper_normal.dot(&hyper_normal);
+        if !hreal_gt_f64(&n2, tolerance() * tolerance()) {
+            return None;
         }
 
-        // Point on the plane:  p0 = n * o / (n·n)
-        let p0 = Point3::from(normal * (offset / n2));
+        let scale = (hreal_from_f64(offset).ok()? / n2).ok()?;
+        let p0_h = hyper_normal * &scale;
+        let p0_coords = p0_h.to_f64_array_lossy()?;
 
-        // Build an orthonormal basis {u, v} that spans the plane.
-        // Pick the largest component of n to avoid numerical problems.
-        let mut u = if normal.z.abs() > normal.x.abs() || normal.z.abs() > normal.y.abs() {
-            // n is closer to ±Z ⇒ cross with X
-            Vector3::x().cross(&normal)
-        } else {
-            // otherwise cross with Z
-            Vector3::z().cross(&normal)
-        };
-        u.normalize_mut();
-        let v = normal.cross(&u).normalize();
+        // Point on the plane:  p0 = n * o / (n·n)
+        let p0 = Point3::new(p0_coords[0], p0_coords[1], p0_coords[2]);
+
+        // Build an orthonormal basis {u, v} in hyperlattice and export only
+        // the finite boundary vectors used to define the public plane carrier.
+        let (u, v) = hperpendicular_basis(&normal)?;
 
         // Use p0, p0+u, p0+v  as the three defining points.
-        Self {
+        Some(Self {
             point_a: p0,
             point_b: p0 + u,
             point_c: p0 + v,
+        })
+    }
+
+    fn xy() -> Self {
+        Self {
+            point_a: Point3::origin(),
+            point_b: Point3::new(1.0, 0.0, 0.0),
+            point_c: Point3::new(0.0, 1.0, 0.0),
         }
     }
 
@@ -278,23 +337,37 @@ impl Plane {
         }
     }
 
-    /// Return the (right‑handed) unit normal **n** of the plane
-    /// `((b‑a) × (c‑a)).normalize()`.
+    /// Return the (right‑handed) checked unit normal **n** of the plane
+    /// `checked_unit((b-a) x (c-a))`.
+    ///
+    /// The cross product and checked normalization are evaluated with
+    /// `hyperlattice::Vector3<hyperreal::Real>` and only exported to `f64` at
+    /// the mesh API boundary. This keeps the plane normal on the same exact
+    /// geometric-computation path as orientation and splitting predicates
+    /// (Yap, *Computational Geometry* 7(1-2), 1997,
+    /// <https://doi.org/10.1016/0925-7721(95)00040-2>). Degenerate or
+    /// non-promotable support points fail closed to the zero normal instead of
+    /// re-entering local primitive normalization.
     #[inline]
     pub fn normal(&self) -> Vector3<Real> {
-        let n = (self.point_b - self.point_a).cross(&(self.point_c - self.point_a));
-        let len = n.norm();
-        if len < tolerance() {
-            Vector3::zeros()
-        } else {
-            n / len
+        if let Some(normal) = self.unit_hreal_normal()
+            && let Some([x, y, z]) = normal.to_f64_array_lossy()
+        {
+            return Vector3::new(x, y, z);
         }
+
+        Vector3::zeros()
     }
 
     /// Signed offset of the plane from the origin: `d = n · a`.
+    ///
+    /// The dot product is evaluated through the shared hyperlattice boundary
+    /// adapter instead of local primitive vector arithmetic, following Yap's
+    /// exact-geometric-computation split between finite carriers and exact-aware
+    /// predicates (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     #[inline]
     pub fn offset(&self) -> Real {
-        self.normal().dot(&self.point_a.coords)
+        hvector3_dot(&self.normal(), &self.point_a.coords).unwrap_or(0.0)
     }
 
     pub const fn flip(&mut self) {
@@ -327,6 +400,10 @@ impl Plane {
         let b = hvector3_from_point3(&self.point_b)?;
         let c = hvector3_from_point3(&self.point_c)?;
         Some((&b - &a).cross(&(&c - &a)))
+    }
+
+    fn unit_hreal_normal(&self) -> Option<HVector3> {
+        self.unscaled_hreal_normal()?.normalize_checked().ok()
     }
 
     fn edge_intersection_parameter(
@@ -403,7 +480,7 @@ impl Plane {
         // -----------------------------------------------------------------
         match polygon_type {
             COPLANAR => {
-                if normal.dot(&polygon.plane.normal()) > 0.0 {
+                if hvector3_dot(&normal, &polygon.plane.normal()).unwrap_or(0.0) > 0.0 {
                     // >= ?
                     coplanar_front.push(polygon.clone());
                 } else {
@@ -471,7 +548,8 @@ impl Plane {
     /// - `T_inv` is the inverse transform, mapping back
     ///
     /// **Mathematical Foundation**: This implements an orthonormal transformation:
-    /// 1. **Rotation Matrix**: R = rotation_between(plane_normal, +Z)
+    /// 1. **Rotation Matrix**: R maps `plane_normal` to +Z with hyperlattice
+    ///    unit-vector, dot-product, and cross-product checks.
     /// 2. **Translation**: Translate so plane passes through origin
     /// 3. **Combined Transform**: T = T₂ · R · T₁
     ///
@@ -479,33 +557,30 @@ impl Plane {
     /// to be applied to 3D planar geometry.
     pub fn to_xy_transform(&self) -> (Matrix4<Real>, Matrix4<Real>) {
         // Normal
-        let n = self.normal();
-        let n_len = n.norm();
-        if n_len < tolerance() {
+        let Some(norm_dir) = hunit_vector3(&self.normal()) else {
             // Degenerate plane, return identity
             return (Matrix4::identity(), Matrix4::identity());
-        }
+        };
 
-        // Normalize
-        let norm_dir = n / n_len;
-
-        // Rotate plane.normal -> +Z
-        let rot = Rotation3::rotation_between(&norm_dir, &Vector3::z())
-            .unwrap_or_else(Rotation3::identity);
-        let iso_rot = Isometry3::from_parts(Translation3::identity(), rot.into());
+        // Rotate plane.normal -> +Z.
+        let Some(rot) = hrotation_between_vectors(&norm_dir, &Vector3::z()) else {
+            return (Matrix4::identity(), Matrix4::identity());
+        };
 
         // We want to translate so that the plane's reference point
         //    (some point p0 with n·p0 = w) lands at z=0 in the new coords.
-        // p0 = (plane.w / (n·n)) * n
-        let denom = n.dot(&n);
-        let p0_3d = norm_dir * (self.offset() / denom);
-        let p0_rot = iso_rot.transform_point(&Point3::from(p0_3d));
+        // `norm_dir` is already checked as a unit vector in hyperlattice.
+        let p0_3d = norm_dir * self.offset();
+        let p0_rot = Point3::from_homogeneous(rot * Point3::from(p0_3d).to_homogeneous())
+            .unwrap_or_else(Point3::origin);
 
         // We want p0_rot.z = 0, so we shift by -p0_rot.z
         let shift_z = -p0_rot.z;
-        let iso_trans = Translation3::new(0.0, 0.0, shift_z);
+        let Some(iso_trans) = htranslation_matrix(&Vector3::new(0.0, 0.0, shift_z)) else {
+            return (Matrix4::identity(), Matrix4::identity());
+        };
 
-        let transform_to_xy = iso_trans.to_homogeneous() * iso_rot.to_homogeneous();
+        let transform_to_xy = iso_trans * rot;
 
         // Inverse for going back
         let transform_from_xy = transform_to_xy

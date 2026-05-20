@@ -2,7 +2,7 @@
 //! signed‑distance mesher in `sdf.rs`.
 
 use crate::csg::CSG;
-use crate::float_types::Real;
+use crate::float_types::{Real, hreal_to_f64, hvector3_from_vector3};
 use crate::mesh::Mesh;
 use nalgebra::Point3;
 use std::fmt::Debug;
@@ -66,8 +66,10 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         let half_thickness = thickness * 0.5;
         let step = max_axis_step(&min_pt, &max_pt, resolution);
         let padding = step.max(thickness);
-        let sample_min = Point3::from(min_pt.coords - nalgebra::Vector3::repeat(padding));
-        let sample_max = Point3::from(max_pt.coords + nalgebra::Vector3::repeat(padding));
+        let sample_min =
+            Point3::new(min_pt.x - padding, min_pt.y - padding, min_pt.z - padding);
+        let sample_max =
+            Point3::new(max_pt.x + padding, max_pt.y + padding, max_pt.z + padding);
 
         Mesh::sdf(
             move |p: &Point3<Real>| {
@@ -280,10 +282,17 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
 }
 
 fn axis_aligned_box_sdf(p: &Point3<Real>, min: &Point3<Real>, max: &Point3<Real>) -> Real {
+    // The outside distance is a vector magnitude, so evaluate it in
+    // hyperlattice and export only the finite SDF boundary value. This keeps
+    // TPMS solid capping aligned with Yap's exact-geometric-computation
+    // boundary split (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     let center = Point3::from((min.coords + max.coords) * 0.5);
     let half = (max.coords - min.coords) * 0.5;
     let q = (p - center).abs() - half;
-    let outside = q.map(|component| component.max(0.0)).norm();
+    let outside_vec = q.map(|component| component.max(0.0));
+    let outside = hvector3_from_vector3(&outside_vec)
+        .and_then(|vector| hreal_to_f64(&vector.magnitude().ok()?))
+        .unwrap_or(Real::INFINITY);
     let inside = q.x.max(q.y).max(q.z).min(0.0);
     outside + inside
 }

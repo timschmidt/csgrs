@@ -1,15 +1,16 @@
 //! Provides functions for flattening a `Mesh` against the Z=0 `Plane`
 //! or slicing a `Mesh` with an arbitrary `Plane` into a `Sketch`
 
-use crate::float_types::{Real, hpoints_within_epsilon};
+use crate::float_types::{Real, hpoints_within_epsilon, tolerance};
 use crate::mesh::Mesh;
 use crate::mesh::bsp::Node;
 use crate::mesh::plane::Plane;
-use crate::sketch::{Sketch, wire_from_points};
+use crate::sketch::Sketch;
 use crate::vertex::Vertex;
 use hashbrown::HashMap;
 use hypercurve::{
-    BooleanOp, Classification, CurvePolicy, FillRule, Region2, finite_ring_signed_area,
+    BooleanOp, Classification, Contour2, CurvePolicy, CurveString2, FillRule, Region2,
+    finite_ring_signed_area,
 };
 use nalgebra::Point3;
 use std::fmt::Debug;
@@ -22,8 +23,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// - All `polygons` in the Mesh are tessellated, projected into XY, promoted
     ///   to hypercurve contours, and unioned as `Region2` topology.
     /// - The XY coordinates are still finite mesh-boundary samples, but the
-    ///   planar set operations now stay in hypercurve rather than routing
-    ///   through `geo`. This follows Yap, "Towards Exact Geometric
+    ///   planar set operations stay in hypercurve. This follows Yap, "Towards Exact Geometric
     ///   Computation," *Computational Geometry* 7(1-2), 1997
     ///   (<https://doi.org/10.1016/0925-7721(95)00040-2>), and the finite-output
     ///   discipline in Hobby, "Practical Segment Intersection with Finite
@@ -50,7 +50,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                     ring.swap(1, 2);
                     ring[3] = ring[0];
                 }
-                let Some(contour) = Sketch::<M>::contour_from_points(&ring) else {
+                let Ok(contour) = Contour2::from_finite_ring(&ring) else {
                     continue;
                 };
                 let triangle_region = Region2::from_material_contours(vec![contour.clone()]);
@@ -100,7 +100,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// Computation," *Computational Geometry* 7(1-2), 1997
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     /// Open intersection chains are promoted directly to native
-    /// `hypercurve::CurveString2` wires, so the finite `geo` projection is no
+    /// `hypercurve::CurveString2` wires, so finite projected points are no
     /// longer the source of slice path topology.
     ///
     /// # Example
@@ -170,10 +170,12 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                 });
 
             if closed {
-                if let Some(contour) = Sketch::<M>::contour_from_points(&points) {
+                if let Ok(contour) = Contour2::from_finite_ring(&points) {
                     material_contours.push(contour);
                 }
-            } else if let Some(wire) = wire_from_points(points.iter().copied()) {
+            } else if let Ok(wire) =
+                CurveString2::from_finite_point_iter(points.iter().copied())
+            {
                 open_wires.push(wire);
             }
         }
@@ -198,10 +200,17 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 struct EndKey(i64, i64, i64);
 
-/// Round a floating to a grid for hashing
+/// Round a floating coordinate to a tolerance-scaled grid for endpoint hashing.
+///
+/// The hash is only a candidate bucket: actual endpoint identity is still
+/// verified by [`hpoints_within_epsilon`], which promotes coordinates into
+/// `hyperlattice::Vector3`/`hyperreal::Real`. Using the crate tolerance for the
+/// coarse grid keeps this acceleration structure aligned with the exact-aware
+/// topology predicate, following Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7(1-2), 1997
+/// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
 fn quantize(x: Real) -> i64 {
-    // For example, scale by 1e8
-    (x * 1e8).round() as i64
+    (x / tolerance()).round() as i64
 }
 
 /// Convert a Vertex's position to an EndKey
@@ -211,6 +220,14 @@ fn make_key(position: &Point3<Real>) -> EndKey {
         quantize(position.y),
         quantize(position.z),
     )
+}
+
+fn neighboring_keys(key: EndKey) -> impl Iterator<Item = EndKey> {
+    (-1..=1).flat_map(move |dx| {
+        (-1..=1).flat_map(move |dy| {
+            (-1..=1).map(move |dz| EndKey(key.0 + dx, key.1 + dy, key.2 + dz))
+        })
+    })
 }
 
 /// Take a list of intersection edges `[Vertex;2]` and merge them into polylines.
@@ -282,30 +299,37 @@ fn extend_chain_forward(
         let last_v = chain.last().unwrap();
         let key = make_key(&last_v.position);
 
-        // Find candidate edges that share this endpoint
-        let Some(candidates) = adjacency.get(&key) else {
-            break;
-        };
-
         // Among these candidates, we want one whose "other endpoint" we can follow
         // and is not visited yet.
         let mut found_next = None;
-        for &(edge_idx, end_idx) in candidates {
-            if visited[edge_idx] {
+        'candidate_search: for candidate_key in neighboring_keys(key) {
+            let Some(candidates) = adjacency.get(&candidate_key) else {
                 continue;
+            };
+
+            for &(edge_idx, end_idx) in candidates {
+                if visited[edge_idx] {
+                    continue;
+                }
+                if !hpoints_within_epsilon(
+                    &last_v.position,
+                    &edges[edge_idx][end_idx].position,
+                    tolerance(),
+                ) {
+                    continue;
+                }
+
+                // If this is edges[edge_idx][end_idx], the "other" end is
+                // edges[edge_idx][1-end_idx]. We want that other end to
+                // continue the chain.
+                let other_end_idx = 1 - end_idx;
+                let next_vertex = &edges[edge_idx][other_end_idx];
+
+                // Mark visited
+                visited[edge_idx] = true;
+                found_next = Some(*next_vertex);
+                break 'candidate_search;
             }
-            // If this is edges[edge_idx][end_idx], the "other" end is edges[edge_idx][1-end_idx].
-            // We want that other end to continue the chain.
-            let other_end_idx = 1 - end_idx;
-            let next_vertex = &edges[edge_idx][other_end_idx];
-
-            // But we must also confirm that the last_v is indeed edges[edge_idx][end_idx]
-            // (within tolerance) which we have checked via the key, so likely yes.
-
-            // Mark visited
-            visited[edge_idx] = true;
-            found_next = Some(*next_vertex);
-            break;
         }
 
         match found_next {
@@ -316,5 +340,35 @@ fn extend_chain_forward(
                 break;
             },
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use nalgebra::Vector3;
+
+    #[test]
+    fn intersection_edge_knitting_uses_hyperreal_endpoint_predicate() {
+        let z = Vector3::z();
+        let edge_a = [
+            Vertex::new(Point3::new(0.0, 0.0, 0.0), z),
+            Vertex::new(Point3::new(1.0, 0.0, 0.0), z),
+        ];
+        let edge_b = [
+            Vertex::new(Point3::new(1.0 + tolerance() * 0.25, 0.0, 0.0), z),
+            Vertex::new(Point3::new(2.0, 0.0, 0.0), z),
+        ];
+
+        let chains = unify_intersection_edges(&[edge_a, edge_b]);
+
+        assert_eq!(chains.len(), 1);
+        assert_eq!(chains[0].len(), 3);
+        assert!(hpoints_within_epsilon(
+            &chains[0][1].position,
+            &edge_a[1].position,
+            tolerance()
+        ));
+        assert_eq!(chains[0][2].position, edge_b[1].position);
     }
 }

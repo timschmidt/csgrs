@@ -51,7 +51,7 @@ fuzz_target!(|bytes: &[u8]| {
         .into_iter()
         .map(|p| Vertex::new(p, normal))
         .collect::<Vec<_>>();
-    let polygon: Polygon<()> = Polygon::new(vertices, None);
+    let polygon: Polygon<()> = Polygon::new(vertices, ());
 
     let plane_normal = Vector3::new(
         decode_real(bytes, &mut idx),

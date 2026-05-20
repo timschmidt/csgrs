@@ -3,44 +3,34 @@
 #![doc = " This module provides export functionality for glTF 2.0 files,"]
 #![doc = " a modern, efficient, and widely supported 3D asset format."]
 
-use crate::float_types::{Real, hpoints_within_epsilon, hvectors_within_epsilon, tolerance};
-use crate::triangulated::Triangulated3D;
+use crate::triangulated::IndexedTriangulated3D;
 use crate::vertex::Vertex;
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD as BASE64_ENGINE;
-use nalgebra::{Point3, Vector3};
+use hashbrown::HashMap;
 use std::fmt::Debug;
 use std::io::Write;
 
-/// Add a vertex to the list, reusing an existing one if position and normal
-/// are within `tolerance()`.
-fn add_unique_vertex_gltf(
-    vertices: &mut Vec<Vertex>,
-    position: Point3<Real>,
-    normal: Vector3<Real>,
-) -> u32 {
-    for (i, existing) in vertices.iter().enumerate() {
-        if hpoints_within_epsilon(&existing.position, &position, tolerance())
-            && hvectors_within_epsilon(&existing.normal, &normal, tolerance())
-        {
-            return i as u32;
-        }
-    }
-    vertices.push(Vertex { position, normal });
-    (vertices.len() - 1) as u32
-}
-
-fn build_gltf_buffers<T: Triangulated3D>(shape: &T) -> (Vec<Vertex>, Vec<u32>) {
-    let mut vertices = Vec::<Vertex>::new();
-    let mut indices = Vec::<u32>::new();
-
-    shape.visit_triangles(|tri| {
-        for v in tri {
-            let idx = add_unique_vertex_gltf(&mut vertices, v.position, v.normal);
-            indices.push(idx);
-        }
-    });
-
+fn build_gltf_buffers<T: IndexedTriangulated3D>(shape: &T) -> (Vec<Vertex>, Vec<u32>) {
+    let indexed = shape.indexed_triangles();
+    let mut vertices = Vec::new();
+    let mut vertex_map = HashMap::<(usize, usize), u32>::new();
+    let indices = indexed
+        .faces
+        .into_iter()
+        .flat_map(|face| {
+            face.map(|key @ (position, normal)| {
+                *vertex_map.entry(key).or_insert_with(|| {
+                    let index = vertices.len() as u32;
+                    vertices.push(Vertex {
+                        position: indexed.positions[position],
+                        normal: indexed.normals[normal],
+                    });
+                    index
+                })
+            })
+        })
+        .collect();
     (vertices, indices)
 }
 
@@ -160,10 +150,25 @@ fn gltf_from_vertices(vertices: &[Vertex], indices: &[u32], object_name: &str) -
     json
 }
 
+#[doc = " Export any `Triangulated3D` shape to glTF 2.0 JSON as a string"]
+pub fn to_gltf<T: IndexedTriangulated3D>(shape: &T, object_name: &str) -> String {
+    let (vertices, indices) = build_gltf_buffers(shape);
+    gltf_from_vertices(&vertices, &indices, object_name)
+}
+
+#[doc = " Export any `Triangulated3D` shape to a glTF 2.0 JSON writer"]
+pub fn write_gltf<T: IndexedTriangulated3D, W: Write>(
+    shape: &T,
+    writer: &mut W,
+    object_name: &str,
+) -> std::io::Result<()> {
+    let gltf_content = to_gltf(shape, object_name);
+    writer.write_all(gltf_content.as_bytes())
+}
+
 impl<M: Clone + Debug + Send + Sync> crate::mesh::Mesh<M> {
     pub fn to_gltf(&self, object_name: &str) -> String {
-        let (vertices, indices) = build_gltf_buffers(self);
-        gltf_from_vertices(&vertices, &indices, object_name)
+        self::to_gltf(self, object_name)
     }
 
     pub fn write_gltf<W: Write>(
@@ -171,15 +176,13 @@ impl<M: Clone + Debug + Send + Sync> crate::mesh::Mesh<M> {
         writer: &mut W,
         object_name: &str,
     ) -> std::io::Result<()> {
-        let gltf_content = self.to_gltf(object_name);
-        writer.write_all(gltf_content.as_bytes())
+        self::write_gltf(self, writer, object_name)
     }
 }
 
 impl<M: Clone + Debug + Send + Sync> crate::sketch::Sketch<M> {
     pub fn to_gltf(&self, object_name: &str) -> String {
-        let (vertices, indices) = build_gltf_buffers(self);
-        gltf_from_vertices(&vertices, &indices, object_name)
+        self::to_gltf(self, object_name)
     }
 
     pub fn write_gltf<W: Write>(
@@ -187,24 +190,6 @@ impl<M: Clone + Debug + Send + Sync> crate::sketch::Sketch<M> {
         writer: &mut W,
         object_name: &str,
     ) -> std::io::Result<()> {
-        let gltf_content = self.to_gltf(object_name);
-        writer.write_all(gltf_content.as_bytes())
-    }
-}
-
-#[cfg(feature = "bmesh")]
-impl<M: Clone + Debug + Send + Sync> crate::bmesh::BMesh<M> {
-    pub fn to_gltf(&self, object_name: &str) -> String {
-        let (vertices, indices) = build_gltf_buffers(self);
-        gltf_from_vertices(&vertices, &indices, object_name)
-    }
-
-    pub fn write_gltf<W: Write>(
-        &self,
-        writer: &mut W,
-        object_name: &str,
-    ) -> std::io::Result<()> {
-        let gltf_content = self.to_gltf(object_name);
-        writer.write_all(gltf_content.as_bytes())
+        self::write_gltf(self, writer, object_name)
     }
 }
