@@ -885,6 +885,7 @@ version = "0.2.0"
 dependencies = [
  "hyperlimit",
  "hyperreal",
+ "hypersolve 0.2.0",
  "hypertri",
 ]
 
@@ -920,7 +921,7 @@ dependencies = [
  "hyperlimit",
  "hypermesh",
  "hyperreal",
- "hypersolve",
+ "hypersolve 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -938,6 +939,15 @@ name = "hypersdf"
 version = "0.1.0"
 dependencies = [
  "fast-surface-nets",
+ "hyperlattice",
+ "hyperlimit",
+ "hyperreal",
+]
+
+[[package]]
+name = "hypersolve"
+version = "0.2.0"
+dependencies = [
  "hyperlattice",
  "hyperlimit",
  "hyperreal",

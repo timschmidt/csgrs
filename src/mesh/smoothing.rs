@@ -1,14 +1,28 @@
 //! Mesh smoothing and refinement operations.
 
 use crate::float_types::{
-    Real, hpoint_centroid, hpoint_distance, hpoint_lerp, hreal_from_f64, tolerance,
+    Real, hdegrees_to_radians, hpoint_centroid, hpoint_distance, hpoint_lerp, hreal_cmp_f64,
+    hreal_from_f64, tolerance,
 };
 use crate::mesh::Mesh;
 use crate::polygon::Polygon;
 use crate::vertex::Vertex;
 use nalgebra::Point3;
+use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::fmt::Debug;
+
+fn hyper_scalar_ge(lhs: Real, rhs: Real) -> bool {
+    matches!(hreal_cmp_f64(lhs, rhs), Ordering::Greater | Ordering::Equal)
+}
+
+fn hyper_scalar_gt(lhs: Real, rhs: Real) -> bool {
+    matches!(hreal_cmp_f64(lhs, rhs), Ordering::Greater)
+}
+
+fn hyper_scalar_lt(lhs: Real, rhs: Real) -> bool {
+    matches!(hreal_cmp_f64(lhs, rhs), Ordering::Less)
+}
 
 impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// **Mathematical Foundation: True Laplacian Mesh Smoothing with Global Connectivity**
@@ -262,13 +276,32 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// 2. **Size-based**: Subdivide triangles larger than target size
     /// 3. **Curvature-based**: Subdivide where surface curves significantly
     ///
-    /// This provides better mesh quality compared to uniform subdivision.
+    /// The scalar thresholds are promoted through `hyperreal::Real` before
+    /// they participate in refinement predicates, and the curvature threshold
+    /// is converted to radians through the shared hyperreal degree adapter.
+    /// This keeps adaptive decisions aligned with Yap's exact-geometric-
+    /// computation boundary discipline
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>) while using the same
+    /// dihedral-angle criterion as standard mesh processing texts such as
+    /// Botsch et al., *Polygon Mesh Processing*, 2010
+    /// (<https://doi.org/10.1201/b10688>).
     pub fn adaptive_refine(
         &self,
         quality_threshold: Real,
         max_edge_length: Real,
         curvature_threshold_deg: Real,
     ) -> Mesh<M> {
+        if hreal_from_f64(quality_threshold).is_err()
+            || hreal_from_f64(max_edge_length).is_err()
+            || hreal_from_f64(curvature_threshold_deg).is_err()
+        {
+            return self.clone();
+        }
+        let Some(curvature_threshold_rad) = hdegrees_to_radians(curvature_threshold_deg)
+        else {
+            return self.clone();
+        };
+
         let qualities = self.analyze_triangle_quality();
         let (mut vertex_map, _adjacency) = self.build_connectivity();
         let mut refined_polygons = Vec::new();
@@ -287,8 +320,11 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             // Quality and edge length check
             if i < qualities.len() {
                 let quality = &qualities[i];
-                if quality.quality_score < quality_threshold
-                    || Self::max_edge_length(&polygon.vertices) > max_edge_length
+                if hyper_scalar_lt(quality.quality_score, quality_threshold)
+                    || hyper_scalar_gt(
+                        Self::max_edge_length(&polygon.vertices),
+                        max_edge_length,
+                    )
                 {
                     should_refine = true;
                 }
@@ -311,7 +347,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                                 if p1_idx == p2_idx {
                                     let other_poly = &self.polygons[p1_idx];
                                     let angle = Self::dihedral_angle(polygon, other_poly);
-                                    if angle > curvature_threshold_deg.to_radians() {
+                                    if hyper_scalar_gt(angle, curvature_threshold_rad) {
                                         should_refine = true;
                                         break 'edge_loop;
                                     }
@@ -374,18 +410,29 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// - **Boundaries**: Maintain mesh boundaries
     /// - **Topology**: Ensure mesh remains manifold
     ///
+    /// Quality, area, angle, and aspect-ratio predicates compare finite
+    /// reporting scalars through hyperreal comparison helpers. The fixed
+    /// five-degree sliver threshold is converted through the same hyperreal
+    /// degree adapter used by transforms and refinement.
+    ///
     /// Returns cleaned mesh with improved triangle quality.
     pub fn remove_poor_triangles(&self, min_quality: Real) -> Mesh<M> {
+        if hreal_from_f64(min_quality).is_err() {
+            return self.clone();
+        }
+        let Some(min_angle_rad) = hdegrees_to_radians(5.0) else {
+            return self.clone();
+        };
         let qualities = self.analyze_triangle_quality();
         let mut filtered_polygons = Vec::new();
 
         for (i, polygon) in self.polygons.iter().enumerate() {
             let keep_triangle = if i < qualities.len() {
                 let quality = &qualities[i];
-                quality.quality_score >= min_quality
-                    && quality.area > tolerance()
-                    && quality.min_angle > (5.0 as Real).to_radians()
-                    && quality.aspect_ratio < 20.0
+                hyper_scalar_ge(quality.quality_score, min_quality)
+                    && hyper_scalar_gt(quality.area, tolerance())
+                    && hyper_scalar_gt(quality.min_angle, min_angle_rad)
+                    && hyper_scalar_lt(quality.aspect_ratio, 20.0)
             } else {
                 true // Keep if we can't assess quality
             };

@@ -694,6 +694,27 @@ fn adversarial_smoothing_rejects_nonfinite_weights_at_hyperreal_lerp_boundary() 
 }
 
 #[test]
+fn adversarial_refinement_filters_reject_nonfinite_thresholds_at_hyperreal_boundary() {
+    let mesh: Mesh<()> = Mesh::cube(2.0, ()).triangulate();
+    let original_vertices = mesh.vertices();
+
+    for refined in [
+        mesh.adaptive_refine(Real::NAN, 2.0, 15.0),
+        mesh.adaptive_refine(0.3, Real::INFINITY, 15.0),
+        mesh.adaptive_refine(0.3, 2.0, Real::NEG_INFINITY),
+        mesh.remove_poor_triangles(Real::NAN),
+        mesh.remove_poor_triangles(Real::INFINITY),
+    ] {
+        assert_mesh_sane(&refined);
+        let refined_vertices = refined.vertices();
+        assert_eq!(original_vertices.len(), refined_vertices.len());
+        for (before, after) in original_vertices.iter().zip(refined_vertices.iter()) {
+            assert_eq!(before.position, after.position);
+        }
+    }
+}
+
+#[test]
 #[cfg(feature = "metaballs")]
 fn adversarial_metaballs_reject_invalid_sampling_boundary_at_hyperreal_boundary() {
     let valid = csgrs::mesh::metaballs::MetaBall::new(Point3::new(0.0, 0.0, 0.0), 1.0);
