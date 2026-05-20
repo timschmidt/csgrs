@@ -1137,13 +1137,14 @@ pub enum BezierBooleanLoopContainmentFactStatus {
 /// A future exact loop-containment predicate supplies pair facts; this report
 /// validates their loop indices, rejects self-containment, duplicate ordered
 /// pairs, and directed cycles, and derives one nesting-depth fact per output
-/// loop by counting certified containers. A cycle would claim that distinct
-/// Jordan loops mutually contain each other, which is impossible for exact
-/// containment. The separation matches the nesting/fill phases of Vatti
-/// (1992), Greiner-Hormann (1998), and Martinez-Rueda-Feito (2009). Yap
-/// (1997) is the exactness rule: invalid or stale containment facts block
-/// construction instead of being repaired with orientation or bounding-box
-/// guesses.
+/// loop by counting transitive certified containers. A cycle would claim that
+/// distinct Jordan loops mutually contain each other, which is impossible for
+/// exact containment. Transitive depth derivation lets an exact locator provide
+/// immediate-parent facts without also enumerating every ancestor relation. The
+/// separation matches the nesting/fill phases of Vatti (1992),
+/// Greiner-Hormann (1998), and Martinez-Rueda-Feito (2009). Yap (1997) is the
+/// exactness rule: invalid or stale containment facts block construction
+/// instead of being repaired with orientation or bounding-box guesses.
 #[derive(Clone, Debug, PartialEq)]
 pub struct BezierBooleanLoopContainmentFactReport2 {
     /// Coarse containment-fact validation status.
@@ -5079,8 +5080,21 @@ impl BezierBooleanLoopContainmentFactReport2 {
         }
 
         let mut depths = vec![0_usize; loop_count];
-        for fact in facts {
-            depths[fact.contained_loop_index] += 1;
+        for contained_loop_index in 0..loop_count {
+            for candidate_container_index in 0..loop_count {
+                if candidate_container_index == contained_loop_index {
+                    continue;
+                }
+                let mut visited = vec![false; loop_count];
+                if containment_reaches_loop(
+                    candidate_container_index,
+                    contained_loop_index,
+                    &adjacency,
+                    &mut visited,
+                ) {
+                    depths[contained_loop_index] += 1;
+                }
+            }
         }
         let depth_facts = depths
             .into_iter()
@@ -5167,6 +5181,26 @@ fn containment_has_cycle(loop_index: usize, adjacency: &[Vec<usize>], states: &m
     }
     states[loop_index] = 2;
     false
+}
+
+fn containment_reaches_loop(
+    current_loop_index: usize,
+    target_loop_index: usize,
+    adjacency: &[Vec<usize>],
+    visited: &mut [bool],
+) -> bool {
+    if current_loop_index == target_loop_index {
+        return true;
+    }
+    if visited[current_loop_index] {
+        return false;
+    }
+    visited[current_loop_index] = true;
+    adjacency[current_loop_index]
+        .iter()
+        .any(|&next_loop_index| {
+            containment_reaches_loop(next_loop_index, target_loop_index, adjacency, visited)
+        })
 }
 
 impl BezierBooleanLoopNestingDepthFactReport2 {

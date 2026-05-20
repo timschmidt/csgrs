@@ -1770,10 +1770,12 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     BezierBooleanLoopClosureReport2::from_quadratic_fragments(&plan, first, second);
                 let output = BezierBooleanOutputLoopReport2::from_loop_closure(&closure);
                 let containment_facts = if output.loops.len() > 1 {
-                    vec![BezierBooleanLoopContainmentFact2 {
-                        container_loop_index: 0,
-                        contained_loop_index: 1,
-                    }]
+                    (0..output.loops.len() - 1)
+                        .map(|container_loop_index| BezierBooleanLoopContainmentFact2 {
+                            container_loop_index,
+                            contained_loop_index: container_loop_index + 1,
+                        })
+                        .collect::<Vec<_>>()
                 } else {
                     Vec::new()
                 };

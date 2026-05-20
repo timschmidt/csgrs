@@ -8396,6 +8396,68 @@ fn bezier_boolean_loop_containment_facts_derive_keyed_depths() {
 }
 
 #[test]
+fn bezier_boolean_loop_containment_facts_derive_transitive_depths() {
+    let output = BezierBooleanOutputLoopReport2 {
+        status: BezierBooleanOutputLoopStatus::Ready,
+        closure_status: BezierBooleanLoopClosureStatus::Closed,
+        operation: BooleanOp::Union,
+        directed_fragments: Vec::new(),
+        loops: (0..3)
+            .map(|loop_index| hypercurve::BezierBooleanOutputLoop2 {
+                first_directed_fragment_index: loop_index,
+                directed_fragment_count: 1,
+                anchor: point(loop_index as i32, 0),
+            })
+            .collect(),
+        closed_loop_count: 3,
+        directed_fragment_count: 3,
+        open_chain_count: 0,
+        adjacency_gap_count: 0,
+        invalid_reference_count: 0,
+        blocker_count: 0,
+    };
+    let facts = vec![
+        BezierBooleanLoopContainmentFact2 {
+            container_loop_index: 0,
+            contained_loop_index: 1,
+        },
+        BezierBooleanLoopContainmentFact2 {
+            container_loop_index: 1,
+            contained_loop_index: 2,
+        },
+    ];
+
+    let report = BezierBooleanLoopContainmentFactReport2::from_output_loop_containment_facts(
+        &output, &facts,
+    );
+
+    assert_eq!(report.status, BezierBooleanLoopContainmentFactStatus::Ready);
+    assert!(report.is_ready());
+    assert_eq!(
+        report.depth_facts,
+        vec![
+            BezierBooleanLoopNestingDepthFact2 {
+                loop_index: 0,
+                nesting_depth: 0,
+            },
+            BezierBooleanLoopNestingDepthFact2 {
+                loop_index: 1,
+                nesting_depth: 1,
+            },
+            BezierBooleanLoopNestingDepthFact2 {
+                loop_index: 2,
+                nesting_depth: 2,
+            },
+        ]
+    );
+
+    let result = BezierBooleanResultReport2::from_output_loop_containment_facts(&output, &facts);
+    assert_eq!(result.status, BezierBooleanResultStatus::Ready);
+    assert_eq!(result.material_loop_indices, vec![0, 2]);
+    assert_eq!(result.hole_loop_indices, vec![1]);
+}
+
+#[test]
 fn bezier_boolean_loop_containment_facts_block_stale_self_duplicate_and_cyclic_pairs() {
     let output = ready_two_loop_output_report();
 
@@ -11234,6 +11296,51 @@ proptest! {
         prop_assert_eq!(report.depth_facts[0].nesting_depth, 0);
         for fact in report.depth_facts.iter().skip(1) {
             prop_assert_eq!(fact.nesting_depth, 1);
+        }
+    }
+
+    #[test]
+    fn generated_bezier_boolean_loop_containment_facts_derive_transitive_depths(
+        loop_count in 1_usize..8,
+    ) {
+        let output = BezierBooleanOutputLoopReport2 {
+            status: BezierBooleanOutputLoopStatus::Ready,
+            closure_status: BezierBooleanLoopClosureStatus::Closed,
+            operation: BooleanOp::Union,
+            directed_fragments: Vec::new(),
+            loops: (0..loop_count)
+                .map(|loop_index| hypercurve::BezierBooleanOutputLoop2 {
+                    first_directed_fragment_index: loop_index,
+                    directed_fragment_count: 1,
+                    anchor: point(loop_index as i32, 0),
+                })
+                .collect(),
+            closed_loop_count: loop_count,
+            directed_fragment_count: loop_count,
+            open_chain_count: 0,
+            adjacency_gap_count: 0,
+            invalid_reference_count: 0,
+            blocker_count: 0,
+        };
+        let containment_facts = (0..loop_count.saturating_sub(1))
+            .map(|container_loop_index| BezierBooleanLoopContainmentFact2 {
+                container_loop_index,
+                contained_loop_index: container_loop_index + 1,
+            })
+            .collect::<Vec<_>>();
+        let report =
+            BezierBooleanLoopContainmentFactReport2::from_output_loop_containment_facts(
+                &output,
+                &containment_facts,
+            );
+
+        prop_assert_eq!(
+            report.status,
+            BezierBooleanLoopContainmentFactStatus::Ready
+        );
+        prop_assert_eq!(report.depth_facts.len(), loop_count);
+        for fact in &report.depth_facts {
+            prop_assert_eq!(fact.nesting_depth, fact.loop_index);
         }
     }
 
