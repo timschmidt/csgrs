@@ -12,15 +12,15 @@ use hypersolve::{
     certify_affine_krawczyk_box, certify_candidate, certify_candidate_domains,
     certify_candidate_with_config, certify_candidate_with_residual_balls,
     certify_multivariate_quadratic_interval_candidate, certify_quadratic_interval_candidate,
-    certify_univariate_quadratic_alpha, constant_feed_time_equation, context_from_problem,
-    differential_pair_skew_equation, eliminate_affine_rows_with_substitution_classes,
-    evaluate_residuals, facts_depend_on_symbol, find_equality_substitutions, length_match_equation,
-    point_coincidence_equations, rectangular_difference_area_equation,
-    rectangular_region_area_equation, rectangular_region_containment_constraints,
-    report_lossy_adapter_only_candidate, solve_damped_least_squares,
-    solve_direct_affine_equalities, solve_direct_univariate_quadratic_equalities,
-    squared_distance_equation, tangent_parallel_equation, tangent_same_direction_constraint,
-    validate_equality_substitutions,
+    certify_univariate_quadratic_alpha, certify_univariate_quadratic_krawczyk_box,
+    constant_feed_time_equation, context_from_problem, differential_pair_skew_equation,
+    eliminate_affine_rows_with_substitution_classes, evaluate_residuals, facts_depend_on_symbol,
+    find_equality_substitutions, length_match_equation, point_coincidence_equations,
+    rectangular_difference_area_equation, rectangular_region_area_equation,
+    rectangular_region_containment_constraints, report_lossy_adapter_only_candidate,
+    solve_damped_least_squares, solve_direct_affine_equalities,
+    solve_direct_univariate_quadratic_equalities, squared_distance_equation,
+    tangent_parallel_equation, tangent_same_direction_constraint, validate_equality_substitutions,
 };
 
 fn real(value: i64) -> Real {
@@ -881,6 +881,77 @@ fn univariate_quadratic_alpha_reports_multiple_root_and_failed_bound() {
     assert_eq!(
         far_report.rows[0].status,
         hypersolve::UnivariateQuadraticAlphaStatus::BoundFailed
+    );
+}
+
+#[test]
+fn univariate_quadratic_krawczyk_certifies_unique_root_and_reports_failures() {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let mut problem = Problem::default();
+    problem.add_variable("x", real(2));
+    problem.add_constraint(Constraint::equality(
+        "quadratic root",
+        x.clone().powi(2) - Expr::int(4),
+    ));
+
+    let report = certify_univariate_quadratic_krawczyk_box(
+        &PreparedProblem::new(&problem),
+        &context_from_problem(&problem),
+        &[VariableBall {
+            symbol: SymbolId(0),
+            radius: real(1),
+        }],
+        hyperlimit::PredicatePolicy::default(),
+    );
+
+    assert_eq!(report.examined_rows, 1);
+    assert_eq!(report.certified_rows, 1);
+    assert_eq!(
+        report.rows[0].status,
+        hypersolve::QuadraticKrawczykStatus::CertifiedUniqueRoot
+    );
+    assert_eq!(report.rows[0].step, Some(Real::zero()));
+    assert_eq!(
+        report.rows[0].remainder_radius,
+        Some(Real::new(Rational::fraction(1, 2).unwrap()))
+    );
+    assert!(report.all_examined_rows_certified());
+
+    let mut singular = Problem::default();
+    singular.add_variable("x", real(0));
+    singular.add_constraint(Constraint::equality("singular center", x.clone().powi(2)));
+    let singular_report = certify_univariate_quadratic_krawczyk_box(
+        &PreparedProblem::new(&singular),
+        &context_from_problem(&singular),
+        &[VariableBall {
+            symbol: SymbolId(0),
+            radius: real(1),
+        }],
+        hyperlimit::PredicatePolicy::default(),
+    );
+    assert_eq!(
+        singular_report.rows[0].status,
+        hypersolve::QuadraticKrawczykStatus::SingularOrUnsupportedDerivative
+    );
+
+    let mut far = Problem::default();
+    far.add_variable("x", real(5));
+    far.add_constraint(Constraint::equality(
+        "far center",
+        x.clone().powi(2) - Expr::int(4),
+    ));
+    let far_report = certify_univariate_quadratic_krawczyk_box(
+        &PreparedProblem::new(&far),
+        &context_from_problem(&far),
+        &[VariableBall {
+            symbol: SymbolId(0),
+            radius: real(1),
+        }],
+        hyperlimit::PredicatePolicy::default(),
+    );
+    assert_eq!(
+        far_report.rows[0].status,
+        hypersolve::QuadraticKrawczykStatus::ImageOutsideBox
     );
 }
 

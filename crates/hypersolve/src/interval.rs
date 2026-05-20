@@ -171,6 +171,109 @@ pub struct AffineKrawczykReport {
     pub steps: Vec<AffineKrawczykVariableStep>,
 }
 
+/// Status for a one-variable quadratic Krawczyk certificate.
+///
+/// This is the first nonlinear Krawczyk proof surface in `hypersolve`. It is
+/// deliberately scoped to prepared rows `a*x^2 + b*x + c = 0`, where the
+/// interval derivative is exact and the Krawczyk image has a simple closed
+/// form. The criterion follows Krawczyk's interval operator
+/// (R. Krawczyk, "Newton-Algorithmen zur Bestimmung von Nullstellen mit
+/// Fehlerschranken", Computing 4, 1969) while preserving Yap's exact replay
+/// boundary: no primitive-float Newton step is accepted as proof.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum QuadraticKrawczykStatus {
+    /// The Krawczyk image is contained in the supplied variable ball and the
+    /// derivative interval is contractive, certifying a unique root in the box.
+    CertifiedUniqueRoot,
+    /// The active row is not an equality row.
+    NonEqualityRow {
+        /// Source constraint index.
+        constraint_index: usize,
+    },
+    /// The active equality row does not have a prepared univariate quadratic.
+    NonQuadraticRow {
+        /// Source constraint index.
+        constraint_index: usize,
+    },
+    /// The candidate context did not bind the prepared row's symbol.
+    UnboundCandidateSymbol {
+        /// Missing symbol.
+        symbol: SymbolId,
+    },
+    /// No radius was supplied for the prepared row's symbol.
+    MissingVariableRadius {
+        /// Missing symbol.
+        symbol: SymbolId,
+    },
+    /// A supplied radius was negative.
+    NegativeVariableRadius {
+        /// Symbol whose radius was invalid.
+        symbol: SymbolId,
+    },
+    /// A radius sign could not be certified.
+    UnknownVariableRadiusSign {
+        /// Symbol whose radius was undecided.
+        symbol: SymbolId,
+    },
+    /// The center derivative was zero or could not be inverted exactly.
+    SingularOrUnsupportedDerivative,
+    /// An exact magnitude needed by the Krawczyk bound was undecidable.
+    UnknownMagnitude,
+    /// The Krawczyk image was not proved inside the supplied box.
+    ImageOutsideBox,
+    /// The derivative interval was not proved contractive.
+    NonContractiveDerivative,
+    /// The exact containment or contraction comparison was undecided.
+    Undecided,
+}
+
+/// Exact payload for a one-variable quadratic Krawczyk row.
+#[derive(Clone, Debug, PartialEq)]
+pub struct QuadraticKrawczykRow {
+    /// Source constraint index.
+    pub constraint_index: usize,
+    /// Solver symbol.
+    pub symbol: SymbolId,
+    /// Candidate center.
+    pub candidate: Real,
+    /// Supplied exact variable-ball radius.
+    pub radius: Real,
+    /// Exact residual at the center.
+    pub residual: Real,
+    /// Exact derivative at the center.
+    pub derivative: Real,
+    /// Exact Newton displacement `-f(x0)/f'(x0)`.
+    pub step: Option<Real>,
+    /// Exact nonlinear Krawczyk remainder radius
+    /// `|2*a/f'(x0)| * radius^2`.
+    pub remainder_radius: Option<Real>,
+    /// Exact derivative contraction numerator `|2*a|*radius`.
+    pub contraction_numerator: Option<Real>,
+    /// Exact derivative contraction denominator `|f'(x0)|`.
+    pub contraction_denominator: Option<Real>,
+    /// Proof status.
+    pub status: QuadraticKrawczykStatus,
+}
+
+/// Report for one-variable quadratic Krawczyk proof attempts.
+#[derive(Clone, Debug, PartialEq)]
+pub struct QuadraticKrawczykReport {
+    /// Per-row proof attempts.
+    pub rows: Vec<QuadraticKrawczykRow>,
+    /// Number of active equality rows examined.
+    pub examined_rows: usize,
+    /// Number of rows certified.
+    pub certified_rows: usize,
+}
+
+impl QuadraticKrawczykReport {
+    /// Returns true when at least one row was examined and every examined row
+    /// certified a unique root.
+    pub fn all_examined_rows_certified(&self) -> bool {
+        self.examined_rows > 0 && self.certified_rows == self.examined_rows
+    }
+}
+
 /// Certify a candidate using affine variable-box residual enclosures.
 ///
 /// Rows without prepared affine residuals fall back to exact point replay. For
@@ -393,6 +496,137 @@ pub fn certify_affine_krawczyk_box(
     )
 }
 
+/// Certify prepared univariate quadratic rows with a Krawczyk box.
+///
+/// For `f(x) = a*x^2 + b*x + c` and candidate center `x0`, this uses
+/// `C = 1 / f'(x0)`. The one-dimensional Krawczyk image is bounded by
+///
+/// `| -f(x0)/f'(x0) | + |2*a/f'(x0)| * r^2`.
+///
+/// A row is certified only when that image lies inside the supplied radius
+/// `r` and the derivative interval is contractive:
+///
+/// `|2*a|*r < |f'(x0)|`.
+///
+/// All terms are exact `Real` values and every comparison is delegated to
+/// `hyperlimit`'s exact policy surface. This provides the first nonlinear
+/// interval-Newton/Krawczyk proof operator for retained solver structure.
+pub fn certify_univariate_quadratic_krawczyk_box(
+    prepared: &PreparedProblem<'_>,
+    context: &EvaluationContext,
+    variable_balls: &[VariableBall],
+    policy: PredicatePolicy,
+) -> QuadraticKrawczykReport {
+    let radius_by_symbol = match validate_quadratic_krawczyk_variable_balls(variable_balls, policy)
+    {
+        Ok(radii) => radii,
+        Err(status) => {
+            return QuadraticKrawczykReport {
+                rows: vec![QuadraticKrawczykRow {
+                    constraint_index: 0,
+                    symbol: SymbolId(0),
+                    candidate: Real::zero(),
+                    radius: Real::zero(),
+                    residual: Real::zero(),
+                    derivative: Real::zero(),
+                    step: None,
+                    remainder_radius: None,
+                    contraction_numerator: None,
+                    contraction_denominator: None,
+                    status,
+                }],
+                examined_rows: 1,
+                certified_rows: 0,
+            };
+        }
+    };
+    let mut rows = Vec::new();
+
+    for (constraint_index, constraint) in prepared.problem().constraints.iter().enumerate() {
+        if !constraint.active {
+            continue;
+        }
+        if constraint.kind != crate::ConstraintKind::Equality {
+            rows.push(quadratic_krawczyk_empty_row(
+                constraint_index,
+                SymbolId(0),
+                QuadraticKrawczykStatus::NonEqualityRow { constraint_index },
+            ));
+            continue;
+        }
+        let Some(quadratic) = &prepared.univariate_quadratic_residuals()[constraint_index] else {
+            rows.push(quadratic_krawczyk_empty_row(
+                constraint_index,
+                SymbolId(0),
+                QuadraticKrawczykStatus::NonQuadraticRow { constraint_index },
+            ));
+            continue;
+        };
+        let symbol = quadratic.symbol();
+        let Some(candidate) = context.bindings().get(&symbol) else {
+            rows.push(quadratic_krawczyk_empty_row(
+                constraint_index,
+                symbol,
+                QuadraticKrawczykStatus::UnboundCandidateSymbol { symbol },
+            ));
+            continue;
+        };
+        let Some(radius) = radius_by_symbol.get(&symbol) else {
+            rows.push(quadratic_krawczyk_row_with_values(
+                constraint_index,
+                symbol,
+                candidate.clone(),
+                Real::zero(),
+                Real::zero(),
+                Real::zero(),
+                QuadraticKrawczykStatus::MissingVariableRadius { symbol },
+            ));
+            continue;
+        };
+        let residual = match quadratic
+            .eval_real(prepared.problem().variables.as_slice(), context.bindings())
+        {
+            Ok(value) => value,
+            Err(_) => {
+                rows.push(quadratic_krawczyk_row_with_values(
+                    constraint_index,
+                    symbol,
+                    candidate.clone(),
+                    radius.clone(),
+                    Real::zero(),
+                    Real::zero(),
+                    QuadraticKrawczykStatus::UnboundCandidateSymbol { symbol },
+                ));
+                continue;
+            }
+        };
+        let derivative = quadratic.quadratic().clone() * Real::from(2) * candidate.clone()
+            + quadratic.linear().clone();
+        let row = classify_quadratic_krawczyk_row(
+            constraint_index,
+            symbol,
+            candidate.clone(),
+            radius.clone(),
+            residual,
+            derivative,
+            quadratic.quadratic(),
+            policy,
+        );
+        rows.push(row);
+    }
+
+    let certified_rows = rows
+        .iter()
+        .filter(|row| row.status == QuadraticKrawczykStatus::CertifiedUniqueRoot)
+        .count();
+    let examined_rows = rows.len();
+    QuadraticKrawczykReport {
+        rows,
+        examined_rows,
+        certified_rows,
+    }
+}
+
 /// Certify a candidate using prepared univariate quadratic interval enclosures.
 ///
 /// This is the first nonlinear interval proof stage in `hypersolve`. It does
@@ -580,6 +814,190 @@ fn validate_variable_balls(
         radii.insert(ball.symbol, ball.radius.clone());
     }
     Ok(radii)
+}
+
+fn validate_quadratic_krawczyk_variable_balls(
+    variable_balls: &[VariableBall],
+    policy: PredicatePolicy,
+) -> Result<HashMap<SymbolId, Real>, QuadraticKrawczykStatus> {
+    let mut radii = HashMap::new();
+    for ball in variable_balls {
+        match compare_reals_with_policy(&ball.radius, &Real::zero(), policy).value() {
+            Some(Ordering::Less) => {
+                return Err(QuadraticKrawczykStatus::NegativeVariableRadius {
+                    symbol: ball.symbol,
+                });
+            }
+            Some(Ordering::Equal | Ordering::Greater) => {
+                radii.insert(ball.symbol, ball.radius.clone());
+            }
+            None => {
+                return Err(QuadraticKrawczykStatus::UnknownVariableRadiusSign {
+                    symbol: ball.symbol,
+                });
+            }
+        }
+    }
+    Ok(radii)
+}
+
+fn classify_quadratic_krawczyk_row(
+    constraint_index: usize,
+    symbol: SymbolId,
+    candidate: Real,
+    radius: Real,
+    residual: Real,
+    derivative: Real,
+    quadratic_coefficient: &Real,
+    policy: PredicatePolicy,
+) -> QuadraticKrawczykRow {
+    let Some(derivative_abs) = abs_real(&derivative) else {
+        return quadratic_krawczyk_row_with_values(
+            constraint_index,
+            symbol,
+            candidate,
+            radius,
+            residual,
+            derivative,
+            QuadraticKrawczykStatus::UnknownMagnitude,
+        );
+    };
+    if compare_reals_with_policy(&derivative_abs, &Real::zero(), policy).value()
+        == Some(Ordering::Equal)
+    {
+        return quadratic_krawczyk_row_with_values(
+            constraint_index,
+            symbol,
+            candidate,
+            radius,
+            residual,
+            derivative,
+            QuadraticKrawczykStatus::SingularOrUnsupportedDerivative,
+        );
+    }
+
+    let step = match (-residual.clone() / derivative.clone()).ok() {
+        Some(value) => value,
+        None => {
+            return quadratic_krawczyk_row_with_values(
+                constraint_index,
+                symbol,
+                candidate,
+                radius,
+                residual,
+                derivative,
+                QuadraticKrawczykStatus::SingularOrUnsupportedDerivative,
+            );
+        }
+    };
+    let Some(step_abs) = abs_real(&step) else {
+        return quadratic_krawczyk_row_with_values(
+            constraint_index,
+            symbol,
+            candidate,
+            radius,
+            residual,
+            derivative,
+            QuadraticKrawczykStatus::UnknownMagnitude,
+        );
+    };
+    let Some(quadratic_abs) = abs_real(quadratic_coefficient) else {
+        return quadratic_krawczyk_row_with_values(
+            constraint_index,
+            symbol,
+            candidate,
+            radius,
+            residual,
+            derivative,
+            QuadraticKrawczykStatus::UnknownMagnitude,
+        );
+    };
+
+    let contraction_numerator = quadratic_abs.clone() * Real::from(2) * radius.clone();
+    let contraction_denominator = derivative_abs.clone();
+    let remainder_radius =
+        match (contraction_numerator.clone() * radius.clone() / derivative_abs.clone()).ok() {
+            Some(value) => value,
+            None => {
+                return quadratic_krawczyk_row_with_values(
+                    constraint_index,
+                    symbol,
+                    candidate,
+                    radius,
+                    residual,
+                    derivative,
+                    QuadraticKrawczykStatus::SingularOrUnsupportedDerivative,
+                );
+            }
+        };
+    let image_radius = step_abs + remainder_radius.clone();
+    let containment = compare_reals_with_policy(&image_radius, &radius, policy).value();
+    let contraction =
+        compare_reals_with_policy(&contraction_numerator, &contraction_denominator, policy).value();
+    let status = match (containment, contraction) {
+        (Some(Ordering::Less | Ordering::Equal), Some(Ordering::Less)) => {
+            QuadraticKrawczykStatus::CertifiedUniqueRoot
+        }
+        (Some(Ordering::Greater), _) => QuadraticKrawczykStatus::ImageOutsideBox,
+        (_, Some(Ordering::Equal | Ordering::Greater)) => {
+            QuadraticKrawczykStatus::NonContractiveDerivative
+        }
+        _ => QuadraticKrawczykStatus::Undecided,
+    };
+
+    QuadraticKrawczykRow {
+        constraint_index,
+        symbol,
+        candidate,
+        radius,
+        residual,
+        derivative,
+        step: Some(step),
+        remainder_radius: Some(remainder_radius),
+        contraction_numerator: Some(contraction_numerator),
+        contraction_denominator: Some(contraction_denominator),
+        status,
+    }
+}
+
+fn quadratic_krawczyk_empty_row(
+    constraint_index: usize,
+    symbol: SymbolId,
+    status: QuadraticKrawczykStatus,
+) -> QuadraticKrawczykRow {
+    quadratic_krawczyk_row_with_values(
+        constraint_index,
+        symbol,
+        Real::zero(),
+        Real::zero(),
+        Real::zero(),
+        Real::zero(),
+        status,
+    )
+}
+
+fn quadratic_krawczyk_row_with_values(
+    constraint_index: usize,
+    symbol: SymbolId,
+    candidate: Real,
+    radius: Real,
+    residual: Real,
+    derivative: Real,
+    status: QuadraticKrawczykStatus,
+) -> QuadraticKrawczykRow {
+    QuadraticKrawczykRow {
+        constraint_index,
+        symbol,
+        candidate,
+        radius,
+        residual,
+        derivative,
+        step: None,
+        remainder_radius: None,
+        contraction_numerator: None,
+        contraction_denominator: None,
+        status,
+    }
 }
 
 fn validate_krawczyk_variable_balls(

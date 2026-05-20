@@ -6,7 +6,8 @@ use hypersolve::{
     SolverBlockRowKind, SolverPoint2, SymbolId, VariableBall, center_clearance_squared_constraint,
     certify_affine_krawczyk_box, certify_candidate, certify_candidate_domains,
     certify_multivariate_quadratic_interval_candidate, certify_quadratic_interval_candidate,
-    certify_univariate_quadratic_alpha, context_from_problem, differential_pair_skew_equation,
+    certify_univariate_quadratic_alpha, certify_univariate_quadratic_krawczyk_box,
+    context_from_problem, differential_pair_skew_equation,
     eliminate_affine_rows_with_substitution_classes, rectangular_difference_area_equation,
     report_lossy_adapter_only_candidate, solve_direct_univariate_quadratic_equalities,
     squared_distance_equation, validate_equality_substitutions,
@@ -382,6 +383,43 @@ proptest! {
             &report.rows[0].status,
             &hypersolve::UnivariateQuadraticAlphaStatus::ExactSimpleRoot
         );
+        prop_assert!(report.all_examined_rows_certified());
+    }
+
+    #[test]
+    fn univariate_quadratic_krawczyk_generated_simple_integer_roots_certify(
+        root in -16_i16..=16,
+        other_root in -16_i16..=16,
+    ) {
+        prop_assume!(root != other_root);
+        let root = i64::from(root);
+        let other_root = i64::from(other_root);
+        let x = Expr::symbol(SymbolId(0), "x");
+        let mut problem = Problem::default();
+        problem.add_variable("x", Real::from(root));
+        problem.add_constraint(Constraint::equality(
+            "generated quadratic krawczyk root",
+            x.clone().powi(2)
+                - x.clone() * Expr::int(root + other_root)
+                + Expr::int(root * other_root),
+        ));
+        let report = certify_univariate_quadratic_krawczyk_box(
+            &PreparedProblem::new(&problem),
+            &context_from_problem(&problem),
+            &[VariableBall {
+                symbol: SymbolId(0),
+                radius: Real::zero(),
+            }],
+            hyperlimit::PredicatePolicy::default(),
+        );
+
+        prop_assert_eq!(report.examined_rows, 1);
+        prop_assert_eq!(report.certified_rows, 1);
+        prop_assert_eq!(
+            &report.rows[0].status,
+            &hypersolve::QuadraticKrawczykStatus::CertifiedUniqueRoot
+        );
+        prop_assert_eq!(report.rows[0].step.clone(), Some(Real::zero()));
         prop_assert!(report.all_examined_rows_certified());
     }
 
