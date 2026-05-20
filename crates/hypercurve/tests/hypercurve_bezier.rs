@@ -56,6 +56,7 @@ use hypercurve::{
     isolate_bezier_intersection_regions_until_width, refine_bezier_intersection_region,
     refine_bezier_intersection_regions, summarize_bezier_intersection_regions,
 };
+use hypersolve::{IsolatedRootInterval, RootIsolationStatus, UnivariateRootIsolationReport};
 use proptest::prelude::*;
 
 fn r(value: i32) -> Real {
@@ -4769,6 +4770,90 @@ fn bezier_boolean_root_isolation_replay_blocks_missing_and_out_of_range_roots() 
     );
     assert!(out_of_range.has_blockers());
     assert_eq!(out_of_range.out_of_range_parameter_count, 1);
+}
+
+#[test]
+fn bezier_boolean_root_isolation_replay_consumes_hypersolve_reports() {
+    let range = BezierPathRangeOrderReport2::from_graph_order(
+        &BezierMonotoneGraphOrder::IntersectsOrTouches {
+            parameters: Vec::new(),
+            spans: vec![span(ratio(1, 4), ratio(1, 2))],
+        },
+    );
+    let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &[range]);
+    let isolation = UnivariateRootIsolationReport {
+        constraint_index: 0,
+        symbol: None,
+        degree: Some(1),
+        status: RootIsolationStatus::Isolated,
+        multiplicity: None,
+        intervals: vec![IsolatedRootInterval {
+            lower: half(),
+            upper: half(),
+            exact_root: Some(half()),
+            distinct_root_count: 1,
+        }],
+        message: None,
+    };
+
+    let replay = match BezierBooleanRootIsolationReplayReport2::from_hypersolve_range_reports(
+        &scheduler,
+        &[],
+        &[isolation],
+        &policy(),
+    ) {
+        Classification::Decided(report) => report,
+        Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
+    };
+
+    assert_eq!(
+        replay.status,
+        BezierBooleanRootIsolationReplayStatus::ReadyForSplitEvents
+    );
+    assert!(replay.can_feed_split_events());
+    assert_eq!(replay.hypersolve_report_count, 1);
+    assert_eq!(replay.hypersolve_interval_count, 1);
+    assert_eq!(replay.hypersolve_exact_root_count, 1);
+    assert_eq!(replay.hypersolve_unusable_count, 0);
+    assert_eq!(replay.split_plan.shared_range_parameters, vec![half()]);
+}
+
+#[test]
+fn bezier_boolean_root_isolation_replay_blocks_unusable_hypersolve_reports() {
+    let range = BezierPathRangeOrderReport2::from_graph_order(
+        &BezierMonotoneGraphOrder::IntersectsOrTouches {
+            parameters: Vec::new(),
+            spans: vec![span(ratio(1, 4), ratio(1, 2))],
+        },
+    );
+    let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &[range]);
+    let undecided = UnivariateRootIsolationReport {
+        constraint_index: 0,
+        symbol: None,
+        degree: Some(2),
+        status: RootIsolationStatus::Undecided,
+        multiplicity: None,
+        intervals: Vec::new(),
+        message: Some("fixture undecided".to_owned()),
+    };
+
+    let replay = match BezierBooleanRootIsolationReplayReport2::from_hypersolve_range_reports(
+        &scheduler,
+        &[],
+        &[undecided],
+        &policy(),
+    ) {
+        Classification::Decided(report) => report,
+        Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
+    };
+
+    assert_eq!(
+        replay.status,
+        BezierBooleanRootIsolationReplayStatus::HypersolveBlocked
+    );
+    assert!(replay.has_blockers());
+    assert_eq!(replay.hypersolve_report_count, 1);
+    assert_eq!(replay.hypersolve_unusable_count, 1);
 }
 
 #[test]
@@ -10523,6 +10608,65 @@ proptest! {
         prop_assert_eq!(replay.supplied_isolation_count, span_count);
         prop_assert_eq!(replay.split_plan.range_event_count, span_count);
         prop_assert!(replay.can_feed_split_events());
+    }
+
+    #[test]
+    fn generated_bezier_boolean_root_isolation_replay_consumes_hypersolve_reports(
+        span_count in 1_usize..8,
+    ) {
+        let reports = (0..span_count)
+            .map(|index| {
+                BezierPathRangeOrderReport2::from_graph_order(
+                    &BezierMonotoneGraphOrder::IntersectsOrTouches {
+                        parameters: Vec::new(),
+                        spans: vec![span(ratio(index as i32 + 1, 32), ratio(index as i32 + 2, 32))],
+                    },
+                )
+            })
+            .collect::<Vec<_>>();
+        let solver_reports = (0..span_count)
+            .map(|index| {
+                let root = ratio(index as i32 + 1, 16);
+                UnivariateRootIsolationReport {
+                    constraint_index: index,
+                    symbol: None,
+                    degree: Some(1),
+                    status: RootIsolationStatus::Isolated,
+                    multiplicity: None,
+                    intervals: vec![IsolatedRootInterval {
+                        lower: root.clone(),
+                        upper: root.clone(),
+                        exact_root: Some(root),
+                        distinct_root_count: 1,
+                    }],
+                    message: None,
+                }
+            })
+            .collect::<Vec<_>>();
+        let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &reports);
+
+        let replay = match BezierBooleanRootIsolationReplayReport2::from_hypersolve_range_reports(
+            &scheduler,
+            &[],
+            &solver_reports,
+            &policy(),
+        ) {
+            Classification::Decided(report) => report,
+            Classification::Uncertain(reason) => {
+                prop_assert!(false, "unexpected uncertainty: {reason:?}");
+                return Ok(());
+            }
+        };
+
+        prop_assert_eq!(
+            replay.status,
+            BezierBooleanRootIsolationReplayStatus::ReadyForSplitEvents
+        );
+        prop_assert_eq!(replay.hypersolve_report_count, span_count);
+        prop_assert_eq!(replay.hypersolve_interval_count, span_count);
+        prop_assert_eq!(replay.hypersolve_exact_root_count, span_count);
+        prop_assert_eq!(replay.hypersolve_unusable_count, 0);
+        prop_assert_eq!(replay.split_plan.range_event_count, span_count);
     }
 
     #[test]

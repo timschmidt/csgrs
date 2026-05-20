@@ -1592,6 +1592,7 @@ version = "0.2.0"
 dependencies = [
  "hyperlimit",
  "hyperreal",
+ "hypersolve",
 ]
 
 [[package]]
@@ -1617,6 +1618,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "hyperlattice"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e20502f544216c7dced137cc4c878240a8b49caec09e0b641a4f6a5cb959f899"
+dependencies = [
+ "hyperreal",
+]
+
+[[package]]
 name = "hyperlimit"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1635,6 +1645,15 @@ dependencies = [
  "num",
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "hypersolve"
+version = "0.2.0"
+dependencies = [
+ "hyperlattice",
+ "hyperlimit",
+ "hyperreal",
 ]
 
 [[package]]

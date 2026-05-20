@@ -22,6 +22,7 @@ use crate::{
     QuadraticBezier2, RationalQuadraticBezier2, UncertaintyReason,
 };
 use hyperreal::Real;
+use hypersolve::{RootIsolationStatus, UnivariateRootIsolationReport};
 use std::{cmp::Ordering, collections::HashSet};
 
 /// Boolean-readiness state of a Bezier curve/curve relation.
@@ -1919,6 +1920,8 @@ pub enum BezierBooleanRootIsolationReplayStatus {
     NotNeeded,
     /// The handoff still has an earlier blocker.
     HandoffBlocked,
+    /// `hypersolve` returned unsupported or undecided root-isolation evidence.
+    HypersolveBlocked,
     /// `hypersolve` did not supply enough represented roots for the frontier.
     MissingIsolatedRoots,
     /// At least one supplied represented root lies outside the Bezier unit domain.
@@ -1954,6 +1957,14 @@ pub struct BezierBooleanRootIsolationReplayReport2 {
     pub required_isolation_count: usize,
     /// Number of represented roots supplied by the caller.
     pub supplied_isolation_count: usize,
+    /// Number of `hypersolve` root-isolation reports consumed.
+    pub hypersolve_report_count: usize,
+    /// Number of `hypersolve` isolating intervals inspected.
+    pub hypersolve_interval_count: usize,
+    /// Number of exact rational root witnesses recovered from `hypersolve`.
+    pub hypersolve_exact_root_count: usize,
+    /// Number of unsupported, undecided, or non-witness solver reports/intervals.
+    pub hypersolve_unusable_count: usize,
     /// Number of still-missing represented roots.
     pub missing_isolation_count: usize,
     /// Number of supplied represented roots outside `[0, 1]`.
@@ -12169,6 +12180,10 @@ impl BezierBooleanRootIsolationReplayReport2 {
             split_plan,
             required_isolation_count,
             supplied_isolation_count,
+            hypersolve_report_count: 0,
+            hypersolve_interval_count: 0,
+            hypersolve_exact_root_count: 0,
+            hypersolve_unusable_count: 0,
             missing_isolation_count: required_isolation_count
                 .saturating_sub(supplied_isolation_count),
             out_of_range_parameter_count: 0,
@@ -12238,6 +12253,76 @@ impl BezierBooleanRootIsolationReplayReport2 {
         Classification::Decided(report)
     }
 
+    /// Replays exact rational witnesses from `hypersolve` isolation reports.
+    ///
+    /// This is the direct `hypersolve` integration path for monotone-range
+    /// roots. `hypersolve::UnivariateRootIsolationReport` carries certified
+    /// Sturm/Collins-Loos isolating intervals; `hypercurve` accepts only the
+    /// intervals that also contain an exact rational witness. Non-rational
+    /// intervals, unsupported rows, undecided rows, and no-root rows stay
+    /// explicit blockers because Bezier split insertion needs represented
+    /// parameters, not interval approximations. Relation-region roots still
+    /// enter as [`BezierBooleanPointEvent2`] values because a univariate solver
+    /// report cannot encode both curve parameters and contact metadata.
+    pub fn from_hypersolve_range_reports(
+        scheduler: &BezierBooleanPathSchedulerReport2,
+        isolated_relation_events: &[BezierBooleanPointEvent2],
+        range_reports: &[UnivariateRootIsolationReport],
+        policy: &CurvePolicy,
+    ) -> Classification<Self> {
+        let mut range_parameters = Vec::new();
+        let mut interval_count = 0;
+        let mut exact_root_count = 0;
+        let mut unusable_count = 0;
+
+        for report in range_reports {
+            match report.status {
+                RootIsolationStatus::Isolated | RootIsolationStatus::MultipleRoot => {}
+                RootIsolationStatus::NoRealRoots
+                | RootIsolationStatus::UnsupportedCoefficient
+                | RootIsolationStatus::Undecided => {
+                    unusable_count += 1;
+                    continue;
+                }
+            }
+
+            for interval in &report.intervals {
+                interval_count += 1;
+                if interval.distinct_root_count != 1 {
+                    unusable_count += 1;
+                    continue;
+                }
+                if let Some(root) = &interval.exact_root {
+                    exact_root_count += 1;
+                    range_parameters.push(root.clone());
+                } else {
+                    unusable_count += 1;
+                }
+            }
+        }
+
+        let mut replay = match Self::from_hypersolve_roots(
+            scheduler,
+            isolated_relation_events,
+            &range_parameters,
+            policy,
+        ) {
+            Classification::Decided(report) => report,
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        };
+        replay.hypersolve_report_count = range_reports.len();
+        replay.hypersolve_interval_count = interval_count;
+        replay.hypersolve_exact_root_count = exact_root_count;
+        replay.hypersolve_unusable_count = unusable_count;
+
+        if unusable_count > 0 {
+            replay.status = BezierBooleanRootIsolationReplayStatus::HypersolveBlocked;
+            replay.blocker_count += unusable_count;
+        }
+
+        Classification::Decided(replay)
+    }
+
     /// Returns true when replay produced a ready split plan.
     pub fn can_feed_split_events(&self) -> bool {
         self.status == BezierBooleanRootIsolationReplayStatus::ReadyForSplitEvents
@@ -12249,6 +12334,7 @@ impl BezierBooleanRootIsolationReplayReport2 {
         matches!(
             self.status,
             BezierBooleanRootIsolationReplayStatus::HandoffBlocked
+                | BezierBooleanRootIsolationReplayStatus::HypersolveBlocked
                 | BezierBooleanRootIsolationReplayStatus::MissingIsolatedRoots
                 | BezierBooleanRootIsolationReplayStatus::InvalidParameterDomain
         )
