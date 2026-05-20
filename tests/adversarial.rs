@@ -1037,6 +1037,24 @@ fn adversarial_mesh_primitives_reject_nonfinite_boundary_scalars() {
 }
 
 #[test]
+fn adversarial_tpms_rejects_invalid_period_at_hyperreal_boundary() {
+    let cube = Mesh::<()>::cube(2.0, ());
+    let meshes = [
+        cube.gyroid(8, Real::NAN, 0.0, ()),
+        cube.schwarz_p(8, Real::INFINITY, 0.0, ()),
+        cube.schwarz_d(8, 0.0, 0.0, ()),
+        cube.gyroid_solid(8, Real::NEG_INFINITY, 0.0, 0.2, ()),
+        cube.schwarz_p_solid(8, -1.0, 0.0, 0.2, ()),
+        cube.schwarz_d_solid(8, 0.0, 0.0, 0.2, ()),
+    ];
+
+    for mesh in meshes {
+        assert!(mesh.polygons.is_empty());
+        assert_mesh_sane(&mesh);
+    }
+}
+
+#[test]
 fn adversarial_zero_normal_angle_regression_is_finite() {
     let a = Vertex::new(Point3::origin(), Vector3::zeros());
     let b = Vertex::new(Point3::new(1.0, -1.0, 2.0), Vector3::zeros());
