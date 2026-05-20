@@ -1,7 +1,10 @@
 //! Triangle classification predicates.
 
-use crate::classify::{TetrahedronLocation, Triangle3Location, TriangleLocation};
-use crate::geometry::{Point2, Point3, Triangle2Facts, triangle2_facts};
+use crate::classify::{
+    RayTriangleIntersection, SegmentTriangleIntersection, TetrahedronLocation, Triangle3Location,
+    TriangleLocation,
+};
+use crate::geometry::{HomogeneousLine3, Plane3, Point2, Point3, Triangle2Facts, triangle2_facts};
 use crate::predicate::{
     Certainty, Escalation, PredicateOutcome, PredicatePolicy, RefinementNeed, Sign,
 };
@@ -294,6 +297,238 @@ pub fn classify_point_triangle3_with_policy(
     let normal = triangle3_normal(a, b, c);
     let normal_signs = triangle3_normal_signs_outcome(&normal, policy);
     classify_point_triangle3_impl(a, b, c, point, policy, &normal, normal_signs)
+}
+
+/// Classify the intersection of a closed 3D segment `pq` with triangle `abc`.
+pub fn classify_segment_triangle3_intersection(
+    p: &Point3,
+    q: &Point3,
+    a: &Point3,
+    b: &Point3,
+    c: &Point3,
+) -> PredicateOutcome<SegmentTriangleIntersection> {
+    classify_segment_triangle3_intersection_with_policy(p, q, a, b, c, PredicatePolicy::default())
+}
+
+/// Classify the intersection of a closed 3D segment `pq` with triangle `abc`
+/// using an explicit predicate policy.
+///
+/// The classifier first uses exact orientation signs to locate the segment
+/// endpoints relative to the triangle's supporting plane. A strict crossing is
+/// lowered through a homogeneous line-plane construction and only then through
+/// the existing exact point/triangle classifier. Coplanar cases are reported as
+/// a first-class exact relation instead of being projected with a primitive
+/// tolerance; this follows Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997), and keeps planar arrangement
+/// ownership in higher crates.
+pub fn classify_segment_triangle3_intersection_with_policy(
+    p: &Point3,
+    q: &Point3,
+    a: &Point3,
+    b: &Point3,
+    c: &Point3,
+    policy: PredicatePolicy,
+) -> PredicateOutcome<SegmentTriangleIntersection> {
+    let mut certainty = Certainty::Exact;
+    let mut stage = Escalation::Structural;
+    let p_side = match segment_triangle_sign(
+        orient3d_with_policy(a, b, c, p, policy),
+        &mut certainty,
+        &mut stage,
+    ) {
+        Ok(sign) => sign,
+        Err(unknown) => return unknown,
+    };
+    let q_side = match segment_triangle_sign(
+        orient3d_with_policy(a, b, c, q, policy),
+        &mut certainty,
+        &mut stage,
+    ) {
+        Ok(sign) => sign,
+        Err(unknown) => return unknown,
+    };
+
+    if p_side == Sign::Zero && q_side == Sign::Zero {
+        return PredicateOutcome::decided(SegmentTriangleIntersection::Coplanar, certainty, stage);
+    }
+    if p_side != Sign::Zero && p_side == q_side {
+        return PredicateOutcome::decided(SegmentTriangleIntersection::Disjoint, certainty, stage);
+    }
+
+    if p_side == Sign::Zero {
+        return segment_endpoint_triangle_relation(p, a, b, c, policy, certainty, stage);
+    }
+    if q_side == Sign::Zero {
+        return segment_endpoint_triangle_relation(q, a, b, c, policy, certainty, stage);
+    }
+
+    let plane = triangle_support_plane(a, b, c);
+    let line = line_from_points(p, q);
+    let point = line.intersect_plane(&plane);
+    match point.to_affine_point() {
+        Ok(intersection) => {
+            match classify_point_triangle3_with_policy(a, b, c, &intersection, policy) {
+                PredicateOutcome::Decided {
+                    value,
+                    certainty: point_certainty,
+                    stage: point_stage,
+                } => {
+                    let relation = match value {
+                        Triangle3Location::Inside => SegmentTriangleIntersection::Proper,
+                        Triangle3Location::OnEdge | Triangle3Location::OnVertex => {
+                            SegmentTriangleIntersection::BoundaryTouch
+                        }
+                        Triangle3Location::Outside
+                        | Triangle3Location::OffPlane
+                        | Triangle3Location::Degenerate => SegmentTriangleIntersection::Disjoint,
+                    };
+                    PredicateOutcome::decided(
+                        relation,
+                        max_certainty(certainty, point_certainty),
+                        max_stage(stage, point_stage),
+                    )
+                }
+                PredicateOutcome::Unknown { needed, stage } => {
+                    PredicateOutcome::unknown(needed, stage)
+                }
+            }
+        }
+        Err(_) => PredicateOutcome::unknown(RefinementNeed::Unsupported, Escalation::Undecided),
+    }
+}
+
+/// Classify the intersection of a 3D ray with triangle `abc`.
+///
+/// `direction` is a direction vector, not a second point. A zero direction is
+/// treated as a degenerate ray whose only possible intersection is its origin.
+pub fn classify_ray_triangle3_intersection(
+    origin: &Point3,
+    direction: &Point3,
+    a: &Point3,
+    b: &Point3,
+    c: &Point3,
+) -> PredicateOutcome<RayTriangleIntersection> {
+    classify_ray_triangle3_intersection_with_policy(
+        origin,
+        direction,
+        a,
+        b,
+        c,
+        PredicatePolicy::default(),
+    )
+}
+
+/// Classify the intersection of a 3D ray with triangle `abc` using an explicit
+/// predicate policy.
+///
+/// The ray parameter is tested without division by comparing the signs of
+/// `-(plane(origin))` and `normal.direction`. The actual candidate point is
+/// constructed only after the parameter is certified nonnegative. This is the
+/// same exact-decision discipline advocated by Yap (1997); the final triangle
+/// containment reuses the existing exact edge-halfspace classifier.
+pub fn classify_ray_triangle3_intersection_with_policy(
+    origin: &Point3,
+    direction: &Point3,
+    a: &Point3,
+    b: &Point3,
+    c: &Point3,
+    policy: PredicatePolicy,
+) -> PredicateOutcome<RayTriangleIntersection> {
+    let plane = triangle_support_plane(a, b, c);
+    let origin_expression = plane_expression_at(&plane, origin);
+    let direction_expression = dot_point3(&plane.normal, direction);
+    let origin_sign = match sign_for_ray_triangle(&origin_expression, policy) {
+        PredicateOutcome::Decided { value, .. } => value,
+        PredicateOutcome::Unknown { needed, stage } => {
+            return PredicateOutcome::unknown(needed, stage);
+        }
+    };
+    let direction_sign = match sign_for_ray_triangle(&direction_expression, policy) {
+        PredicateOutcome::Decided { value, .. } => value,
+        PredicateOutcome::Unknown { needed, stage } => {
+            return PredicateOutcome::unknown(needed, stage);
+        }
+    };
+
+    if direction_sign == Sign::Zero {
+        if origin_sign == Sign::Zero {
+            return PredicateOutcome::decided(
+                RayTriangleIntersection::Coplanar,
+                Certainty::Exact,
+                Escalation::Exact,
+            );
+        }
+        return PredicateOutcome::decided(
+            RayTriangleIntersection::Disjoint,
+            Certainty::Exact,
+            Escalation::Exact,
+        );
+    }
+    if origin_sign != Sign::Zero && origin_sign == direction_sign {
+        return PredicateOutcome::decided(
+            RayTriangleIntersection::Disjoint,
+            Certainty::Exact,
+            Escalation::Exact,
+        );
+    }
+
+    if origin_sign == Sign::Zero {
+        return match classify_point_triangle3_with_policy(a, b, c, origin, policy) {
+            PredicateOutcome::Decided {
+                value,
+                certainty,
+                stage,
+            } => {
+                let relation = match value {
+                    Triangle3Location::Inside
+                    | Triangle3Location::OnEdge
+                    | Triangle3Location::OnVertex => RayTriangleIntersection::BoundaryTouch,
+                    Triangle3Location::Outside
+                    | Triangle3Location::OffPlane
+                    | Triangle3Location::Degenerate => RayTriangleIntersection::Disjoint,
+                };
+                PredicateOutcome::decided(relation, certainty, stage)
+            }
+            PredicateOutcome::Unknown { needed, stage } => PredicateOutcome::unknown(needed, stage),
+        };
+    }
+
+    let numerator = neg_real(&origin_expression);
+    let t = (&numerator / &direction_expression)
+        .map_err(|_| ())
+        .and_then(|parameter| {
+            Ok(Point3::new(
+                add_ref(&origin.x, &mul_ref(&direction.x, &parameter)),
+                add_ref(&origin.y, &mul_ref(&direction.y, &parameter)),
+                add_ref(&origin.z, &mul_ref(&direction.z, &parameter)),
+            ))
+        });
+    match t {
+        Ok(intersection) => {
+            match classify_point_triangle3_with_policy(a, b, c, &intersection, policy) {
+                PredicateOutcome::Decided {
+                    value,
+                    certainty,
+                    stage,
+                } => {
+                    let relation = match value {
+                        Triangle3Location::Inside => RayTriangleIntersection::Proper,
+                        Triangle3Location::OnEdge | Triangle3Location::OnVertex => {
+                            RayTriangleIntersection::BoundaryTouch
+                        }
+                        Triangle3Location::Outside
+                        | Triangle3Location::OffPlane
+                        | Triangle3Location::Degenerate => RayTriangleIntersection::Disjoint,
+                    };
+                    PredicateOutcome::decided(relation, certainty, stage)
+                }
+                PredicateOutcome::Unknown { needed, stage } => {
+                    PredicateOutcome::unknown(needed, stage)
+                }
+            }
+        }
+        Err(_) => PredicateOutcome::unknown(RefinementNeed::Unsupported, Escalation::Undecided),
+    }
 }
 
 fn classify_point_triangle3_impl(
@@ -633,6 +868,128 @@ fn triangle3_normal(a: &Point3, b: &Point3, c: &Point3) -> Triangle3Normal {
     }
 }
 
+fn triangle_support_plane(a: &Point3, b: &Point3, c: &Point3) -> Plane3 {
+    let normal = triangle3_normal(a, b, c);
+    let normal_point = Point3::new(normal.x, normal.y, normal.z);
+    let offset = neg_real(&dot_point3(&normal_point, a));
+    Plane3::new(normal_point, offset)
+}
+
+fn line_from_points(start: &Point3, end: &Point3) -> HomogeneousLine3 {
+    let direction = Point3::new(
+        sub_ref(&end.x, &start.x),
+        sub_ref(&end.y, &start.y),
+        sub_ref(&end.z, &start.z),
+    );
+    let moment = Point3::new(
+        sub_ref(
+            &mul_ref(&start.y, &direction.z),
+            &mul_ref(&start.z, &direction.y),
+        ),
+        sub_ref(
+            &mul_ref(&start.z, &direction.x),
+            &mul_ref(&start.x, &direction.z),
+        ),
+        sub_ref(
+            &mul_ref(&start.x, &direction.y),
+            &mul_ref(&start.y, &direction.x),
+        ),
+    );
+    HomogeneousLine3::new(direction, moment)
+}
+
+fn plane_expression_at(plane: &Plane3, point: &Point3) -> Real {
+    let one = Real::one();
+    Real::signed_product_sum(
+        [true; 4],
+        [
+            [&plane.normal.x, &point.x],
+            [&plane.normal.y, &point.y],
+            [&plane.normal.z, &point.z],
+            [&plane.offset, &one],
+        ],
+    )
+}
+
+fn dot_point3(left: &Point3, right: &Point3) -> Real {
+    Real::signed_product_sum(
+        [true; 3],
+        [
+            [&left.x, &right.x],
+            [&left.y, &right.y],
+            [&left.z, &right.z],
+        ],
+    )
+}
+
+fn neg_real(value: &Real) -> Real {
+    sub_ref(&Real::from(0), value)
+}
+
+fn segment_endpoint_triangle_relation(
+    endpoint: &Point3,
+    a: &Point3,
+    b: &Point3,
+    c: &Point3,
+    policy: PredicatePolicy,
+    certainty: Certainty,
+    stage: Escalation,
+) -> PredicateOutcome<SegmentTriangleIntersection> {
+    match classify_point_triangle3_with_policy(a, b, c, endpoint, policy) {
+        PredicateOutcome::Decided {
+            value,
+            certainty: endpoint_certainty,
+            stage: endpoint_stage,
+        } => {
+            let relation = match value {
+                Triangle3Location::Inside
+                | Triangle3Location::OnEdge
+                | Triangle3Location::OnVertex => SegmentTriangleIntersection::BoundaryTouch,
+                Triangle3Location::Outside
+                | Triangle3Location::OffPlane
+                | Triangle3Location::Degenerate => SegmentTriangleIntersection::Disjoint,
+            };
+            PredicateOutcome::decided(
+                relation,
+                max_certainty(certainty, endpoint_certainty),
+                max_stage(stage, endpoint_stage),
+            )
+        }
+        PredicateOutcome::Unknown { needed, stage } => PredicateOutcome::unknown(needed, stage),
+    }
+}
+
+fn segment_triangle_sign(
+    outcome: PredicateOutcome<Sign>,
+    certainty: &mut Certainty,
+    stage: &mut Escalation,
+) -> Result<Sign, PredicateOutcome<SegmentTriangleIntersection>> {
+    match outcome {
+        PredicateOutcome::Decided {
+            value,
+            certainty: value_certainty,
+            stage: value_stage,
+        } => {
+            *certainty = max_certainty(*certainty, value_certainty);
+            *stage = max_stage(*stage, value_stage);
+            Ok(value)
+        }
+        PredicateOutcome::Unknown { needed, stage } => {
+            Err(PredicateOutcome::unknown(needed, stage))
+        }
+    }
+}
+
+fn sign_for_ray_triangle(value: &Real, policy: PredicatePolicy) -> PredicateOutcome<Sign> {
+    resolve_real_sign(
+        value,
+        policy,
+        || None,
+        || None,
+        RefinementNeed::RealRefinement,
+    )
+}
+
 fn triangle3_normal_signs_outcome(
     normal: &Triangle3Normal,
     policy: PredicatePolicy,
@@ -920,6 +1277,110 @@ mod tests {
         assert_eq!(
             prepared.classify_point(&p3(0.25, 0.25, 0.0)).value(),
             Some(Triangle3Location::Inside)
+        );
+    }
+
+    #[test]
+    fn segment_triangle3_intersection_distinguishes_crossing_boundary_and_coplanar() {
+        let a = p3(0.0, 0.0, 0.0);
+        let b = p3(4.0, 0.0, 0.0);
+        let c = p3(0.0, 4.0, 0.0);
+
+        assert_eq!(
+            classify_segment_triangle3_intersection(
+                &p3(1.0, 1.0, -1.0),
+                &p3(1.0, 1.0, 1.0),
+                &a,
+                &b,
+                &c,
+            )
+            .value(),
+            Some(SegmentTriangleIntersection::Proper)
+        );
+        assert_eq!(
+            classify_segment_triangle3_intersection(
+                &p3(4.0, 0.0, -1.0),
+                &p3(4.0, 0.0, 1.0),
+                &a,
+                &b,
+                &c,
+            )
+            .value(),
+            Some(SegmentTriangleIntersection::BoundaryTouch)
+        );
+        assert_eq!(
+            classify_segment_triangle3_intersection(
+                &p3(5.0, 5.0, -1.0),
+                &p3(5.0, 5.0, 1.0),
+                &a,
+                &b,
+                &c,
+            )
+            .value(),
+            Some(SegmentTriangleIntersection::Disjoint)
+        );
+        assert_eq!(
+            classify_segment_triangle3_intersection(
+                &p3(1.0, 1.0, 0.0),
+                &p3(2.0, 1.0, 0.0),
+                &a,
+                &b,
+                &c,
+            )
+            .value(),
+            Some(SegmentTriangleIntersection::Coplanar)
+        );
+    }
+
+    #[test]
+    fn ray_triangle3_intersection_distinguishes_direction_and_origin_cases() {
+        let a = p3(0.0, 0.0, 0.0);
+        let b = p3(4.0, 0.0, 0.0);
+        let c = p3(0.0, 4.0, 0.0);
+
+        assert_eq!(
+            classify_ray_triangle3_intersection(
+                &p3(1.0, 1.0, -2.0),
+                &p3(0.0, 0.0, 1.0),
+                &a,
+                &b,
+                &c,
+            )
+            .value(),
+            Some(RayTriangleIntersection::Proper)
+        );
+        assert_eq!(
+            classify_ray_triangle3_intersection(
+                &p3(1.0, 1.0, -2.0),
+                &p3(0.0, 0.0, -1.0),
+                &a,
+                &b,
+                &c,
+            )
+            .value(),
+            Some(RayTriangleIntersection::Disjoint)
+        );
+        assert_eq!(
+            classify_ray_triangle3_intersection(
+                &p3(4.0, 0.0, -2.0),
+                &p3(0.0, 0.0, 1.0),
+                &a,
+                &b,
+                &c,
+            )
+            .value(),
+            Some(RayTriangleIntersection::BoundaryTouch)
+        );
+        assert_eq!(
+            classify_ray_triangle3_intersection(
+                &p3(1.0, 1.0, 0.0),
+                &p3(1.0, 0.0, 0.0),
+                &a,
+                &b,
+                &c,
+            )
+            .value(),
+            Some(RayTriangleIntersection::Coplanar)
         );
     }
 

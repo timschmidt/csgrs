@@ -12,12 +12,21 @@
 
 use arbitrary::Arbitrary;
 use hyperlimit::{
-    CachePayoff, ConstructionFreshness, ConstructionVersion, LineSide, Point2, Point3,
-    PredicateApiSemantics, PredicateOutcome, PredicatePolicy, Sign, certified_ball_sign,
-    certified_interval_sign, classify_point_line, classify_point_line_batch,
+    AabbSphereIntersection, CachePayoff, ConstructionFreshness, ConstructionVersion, LineSide,
+    Plane3, Point2, Point3, PredicateApiSemantics, PredicateOutcome, PredicatePolicy, Sign,
+    SphereIntersection, certified_ball_sign, certified_interval_sign,
+    classify_aabb3_sphere_intersection, classify_circle_line2, classify_circle_segment2,
+    classify_circle_line2_batch, classify_circle_segment2_batch,
+    classify_homogeneous_point_plane, classify_point_convex_planes3, classify_point_convex_polygon2,
+    classify_point_line, classify_point_line_batch, classify_ray_triangle3_intersection,
+    classify_ray_triangle3_intersection_batch,
+    classify_segment_triangle3_intersection, classify_segment3_intersection,
+    classify_segment_triangle3_intersection_batch, classify_segment3_intersection_batch,
+    classify_sphere3_intersection, compare_point_line3_distance_squared,
+    compare_point_plane_distance_squared, compare_point_segment3_distance_squared,
     compare_point2_lexicographic, compare_point2_lexicographic_report, compare_reals,
-    compare_reals_report, incircle2d, insphere3d, orient2d, orient2d_batch, point2_equal,
-    point2_equal_report,
+    compare_reals_report, incircle2d, insphere3d, intersect_three_planes, intersect_two_planes,
+    orient2d, orient2d_batch, point2_equal, point2_equal_report,
 };
 use hyperreal::{Rational, Real};
 use libfuzzer_sys::fuzz_target;
@@ -315,6 +324,160 @@ fn predicate_invariants(input: Input) {
         // tetrahedron orientation sign.
         assert_eq!(sign.reversed(), swapped);
     }
+
+    let x_plane = coordinate_plane(0, &p.x);
+    let y_plane = coordinate_plane(1, &p.y);
+    let z_plane = coordinate_plane(2, &p.z);
+    let homogeneous = intersect_three_planes(&x_plane, &y_plane, &z_plane);
+    assert_eq!(
+        homogeneous.to_affine_point().ok(),
+        Some(p.clone()),
+        "coordinate-plane triple should recover the generated rational point"
+    );
+    for plane in [&x_plane, &y_plane, &z_plane] {
+        assert_eq!(
+            classify_homogeneous_point_plane(&homogeneous, plane).value(),
+            Some(true),
+            "homogeneous intersection point must satisfy each source plane"
+        );
+    }
+    let line = intersect_two_planes(&x_plane, &y_plane);
+    assert_eq!(
+        line.intersect_plane(&z_plane),
+        homogeneous,
+        "two-plane line plus third-plane intersection should match direct plane triple"
+    );
+
+    let segment_relation = classify_segment3_intersection(&p, &q, &r, &s).value();
+    let segment_batch_cases = [(p.clone(), q.clone(), r.clone(), s.clone())];
+    assert_eq!(
+        classify_segment3_intersection_batch(&segment_batch_cases)[0].value(),
+        segment_relation,
+        "3D segment batch relation must match scalar relation"
+    );
+    assert_eq!(
+        segment_relation,
+        classify_segment3_intersection(&r, &s, &p, &q).value(),
+        "3D segment intersection classification must be symmetric under segment exchange"
+    );
+    assert_eq!(
+        segment_relation,
+        classify_segment3_intersection(&q, &p, &r, &s).value(),
+        "3D segment intersection classification must be invariant under endpoint reversal"
+    );
+
+    let zero = Real::from(0);
+    assert_eq!(
+        compare_point_line3_distance_squared(&p, &p, &q, &zero).value(),
+        Some(core::cmp::Ordering::Equal),
+        "a source endpoint has zero squared distance to its generated line"
+    );
+    assert_eq!(
+        compare_point_segment3_distance_squared(&p, &p, &q, &zero).value(),
+        Some(core::cmp::Ordering::Equal),
+        "a source endpoint has zero squared distance to its generated segment"
+    );
+    assert_eq!(
+        compare_point_plane_distance_squared(&p, &z_plane, &zero).value(),
+        Some(core::cmp::Ordering::Equal),
+        "a coordinate-plane source point has zero squared distance to its plane"
+    );
+    assert_eq!(
+        classify_sphere3_intersection(&p, &zero, &p, &zero).value(),
+        Some(SphereIntersection::Touching),
+        "equal zero-radius spheres touch exactly at their shared center"
+    );
+    assert_eq!(
+        classify_aabb3_sphere_intersection(&p, &p, &p, &zero).value(),
+        Some(AabbSphereIntersection::Touching),
+        "zero-volume AABB and zero-radius sphere touch exactly at their shared point"
+    );
+
+    let ray_direction = Point3::new(&q.x - &p.x, &q.y - &p.y, &q.z - &p.z);
+    let segment_triangle =
+        classify_segment_triangle3_intersection(&p, &q, &p, &r, &s).value();
+    let ray_triangle = classify_ray_triangle3_intersection(&p, &ray_direction, &p, &r, &s).value();
+    let segment_triangle_batch = [(
+        p.clone(),
+        q.clone(),
+        p.clone(),
+        r.clone(),
+        s.clone(),
+    )];
+    assert_eq!(
+        classify_segment_triangle3_intersection_batch(&segment_triangle_batch)[0].value(),
+        segment_triangle,
+        "segment/triangle batch relation must match scalar relation"
+    );
+    let ray_triangle_batch = [(
+        p.clone(),
+        ray_direction.clone(),
+        p.clone(),
+        r.clone(),
+        s.clone(),
+    )];
+    assert_eq!(
+        classify_ray_triangle3_intersection_batch(&ray_triangle_batch)[0].value(),
+        ray_triangle,
+        "ray/triangle batch relation must match scalar relation"
+    );
+    if let Some(segment_relation) = segment_triangle {
+        assert_eq!(
+            ray_triangle.map(|relation| relation.intersects()),
+            Some(segment_relation.intersects()),
+            "ray from the segment start toward the segment end must preserve endpoint-triangle incidence"
+        );
+    }
+
+    let unit_x_from_a = Point2::new(&a.x + &Real::from(1), a.y.clone());
+    assert_eq!(
+        classify_circle_line2(&a, &zero, &a, &unit_x_from_a).value(),
+        Some(hyperlimit::CircleLineRelation::Tangent),
+        "zero-radius circle centered on a nondegenerate line has one boundary contact"
+    );
+    let circle_line_batch = [(a.clone(), zero.clone(), a.clone(), unit_x_from_a.clone())];
+    assert_eq!(
+        classify_circle_line2_batch(&circle_line_batch)[0].value(),
+        classify_circle_line2(&a, &zero, &a, &unit_x_from_a).value(),
+        "circle/line batch relation must match scalar relation"
+    );
+    assert_eq!(
+        classify_circle_segment2(&a, &zero, &a, &a).value(),
+        Some(hyperlimit::CircleSegmentRelation::Tangent),
+        "zero-radius circle and degenerate segment at the center touch exactly once"
+    );
+    let circle_segment_batch = [(a.clone(), zero.clone(), a.clone(), a.clone())];
+    assert_eq!(
+        classify_circle_segment2_batch(&circle_segment_batch)[0].value(),
+        classify_circle_segment2(&a, &zero, &a, &a).value(),
+        "circle/segment batch relation must match scalar relation"
+    );
+
+    let unit_square = vec![
+        Point2::new(0.into(), 0.into()),
+        Point2::new(1.into(), 0.into()),
+        Point2::new(1.into(), 1.into()),
+        Point2::new(0.into(), 1.into()),
+    ];
+    assert_eq!(
+        classify_point_convex_polygon2(&unit_square, &Point2::new(0.into(), 0.into())).value(),
+        Some(hyperlimit::ConvexPointLocation::Boundary),
+        "convex polygon composition must retain exact boundary points"
+    );
+    let unit_cube_planes = vec![
+        Plane3::new(Point3::new((-1).into(), 0.into(), 0.into()), 0.into()),
+        Plane3::new(Point3::new(1.into(), 0.into(), 0.into()), (-1).into()),
+        Plane3::new(Point3::new(0.into(), (-1).into(), 0.into()), 0.into()),
+        Plane3::new(Point3::new(0.into(), 1.into(), 0.into()), (-1).into()),
+        Plane3::new(Point3::new(0.into(), 0.into(), (-1).into()), 0.into()),
+        Plane3::new(Point3::new(0.into(), 0.into(), 1.into()), (-1).into()),
+    ];
+    assert_eq!(
+        classify_point_convex_planes3(&unit_cube_planes, &Point3::new(0.into(), 0.into(), 0.into()))
+            .value(),
+        Some(hyperlimit::ConvexPointLocation::Boundary),
+        "convex plane composition must retain exact boundary points"
+    );
 }
 
 fn rational(numerator: i16, denominator_byte: u8) -> Real {
@@ -340,6 +503,16 @@ fn common_scale_point3(x: i16, y: i16, z: i16) -> Point3 {
             .expect("prime denominator")
             .into(),
     )
+}
+
+fn coordinate_plane(axis: usize, coordinate: &Real) -> Plane3 {
+    let normal = match axis {
+        0 => Point3::new(1.into(), 0.into(), 0.into()),
+        1 => Point3::new(0.into(), 1.into(), 0.into()),
+        2 => Point3::new(0.into(), 0.into(), 1.into()),
+        _ => unreachable!("fuzz helper only builds 3D coordinate planes"),
+    };
+    Plane3::new(normal, -coordinate)
 }
 
 fn assert_decided_zero(outcome: PredicateOutcome<Sign>) {

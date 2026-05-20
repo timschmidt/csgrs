@@ -1,13 +1,16 @@
 //! Plane classification helpers.
 
+use core::cmp::Ordering;
+
 use hyperreal::{Real, RealExactSetFacts, ZeroKnowledge};
 
 use crate::RealSymbolicDependencyMask;
-use crate::classify::{PlaneSegmentRelation, PlaneSide, PlaneTriangleRelation};
+use crate::classify::{PlaneAabbRelation, PlaneSegmentRelation, PlaneSide, PlaneTriangleRelation};
 use crate::geometry::Point3;
 use crate::predicate::{
     Certainty, Escalation, PredicateOutcome, PredicatePolicy, RefinementNeed, Sign,
 };
+use crate::predicates::order::compare_reals_with_policy;
 use crate::predicates::orient3d_with_policy;
 use crate::real::{add_ref, mul_ref, sub_ref};
 use crate::resolve::{map_outcome, resolve_real_sign, signed_term_filter};
@@ -212,6 +215,27 @@ impl<'a> PreparedPlane3<'a> {
         policy: PredicatePolicy,
     ) -> PredicateOutcome<PlaneTriangleRelation> {
         classify_plane_triangle_with_policy(self.plane, a, b, c, policy)
+    }
+
+    /// Classify a closed 3D AABB relative to this plane using the default
+    /// predicate policy.
+    pub fn classify_aabb3(
+        &self,
+        min: &Point3,
+        max: &Point3,
+    ) -> PredicateOutcome<PlaneAabbRelation> {
+        self.classify_aabb3_with_policy(min, max, PredicatePolicy::default())
+    }
+
+    /// Classify a closed 3D AABB relative to this plane using an explicit
+    /// predicate policy.
+    pub fn classify_aabb3_with_policy(
+        &self,
+        min: &Point3,
+        max: &Point3,
+        policy: PredicatePolicy,
+    ) -> PredicateOutcome<PlaneAabbRelation> {
+        classify_plane_aabb3_with_policy(self.plane, min, max, policy)
     }
 }
 
@@ -426,6 +450,124 @@ pub fn classify_plane_triangle_with_policy(
     PredicateOutcome::decided(relation, certainty, stage)
 }
 
+/// Classify a closed 3D AABB relative to a plane.
+pub fn classify_plane_aabb3(
+    plane: &Plane3,
+    min: &Point3,
+    max: &Point3,
+) -> PredicateOutcome<PlaneAabbRelation> {
+    classify_plane_aabb3_with_policy(plane, min, max, PredicatePolicy::default())
+}
+
+/// Classify a closed 3D AABB relative to a plane with an explicit escalation
+/// policy.
+///
+/// This is the Hyper-native counterpart to the mesh-kernel halfspace/bounds
+/// test: it finds the minimum and maximum plane expression over the box by
+/// selecting the lower/upper contribution for each source axis, then certifies
+/// only those two extrema. It preserves exact `Real` arithmetic while avoiding
+/// eight point-plane classifications.
+pub fn classify_plane_aabb3_with_policy(
+    plane: &Plane3,
+    min: &Point3,
+    max: &Point3,
+    policy: PredicatePolicy,
+) -> PredicateOutcome<PlaneAabbRelation> {
+    crate::trace_dispatch!("hyperlimit", "classify_plane_aabb3", "term-interval");
+    let axis_normals = [&plane.normal.x, &plane.normal.y, &plane.normal.z];
+    let box_min = [&min.x, &min.y, &min.z];
+    let box_max = [&max.x, &max.y, &max.z];
+    let mut lower_coords = box_min;
+    let mut upper_coords = box_max;
+    let mut certainty = Certainty::Exact;
+    let mut stage = Escalation::Structural;
+
+    for axis in 0..3 {
+        let min_term = mul(axis_normals[axis], box_min[axis]);
+        let max_term = mul(axis_normals[axis], box_max[axis]);
+        let ordering = match compare_reals_with_policy(&min_term, &max_term, policy) {
+            PredicateOutcome::Decided {
+                value,
+                certainty: value_certainty,
+                stage: value_stage,
+            } => {
+                absorb_trace(&mut certainty, &mut stage, value_certainty, value_stage);
+                value
+            }
+            PredicateOutcome::Unknown { needed, stage } => {
+                return PredicateOutcome::unknown(needed, stage);
+            }
+        };
+        if ordering == Ordering::Greater {
+            lower_coords[axis] = box_max[axis];
+            upper_coords[axis] = box_min[axis];
+        }
+    }
+
+    let facts = plane.structural_facts();
+    let upper_value = point_plane_expression_from_coords(
+        upper_coords,
+        plane,
+        Some(facts),
+        "classify_plane_aabb3",
+    );
+
+    let upper_sign = match resolve_real_sign(
+        &upper_value,
+        policy,
+        || None,
+        || None,
+        RefinementNeed::RealRefinement,
+    ) {
+        PredicateOutcome::Decided {
+            value,
+            certainty: value_certainty,
+            stage: value_stage,
+        } => {
+            absorb_trace(&mut certainty, &mut stage, value_certainty, value_stage);
+            value
+        }
+        PredicateOutcome::Unknown { needed, stage } => {
+            return PredicateOutcome::unknown(needed, stage);
+        }
+    };
+    if upper_sign == Sign::Negative {
+        return PredicateOutcome::decided(PlaneAabbRelation::Below, certainty, stage);
+    }
+
+    let lower_value = point_plane_expression_from_coords(
+        lower_coords,
+        plane,
+        Some(facts),
+        "classify_plane_aabb3",
+    );
+    let lower_sign = match resolve_real_sign(
+        &lower_value,
+        policy,
+        || None,
+        || None,
+        RefinementNeed::RealRefinement,
+    ) {
+        PredicateOutcome::Decided {
+            value,
+            certainty: value_certainty,
+            stage: value_stage,
+        } => {
+            absorb_trace(&mut certainty, &mut stage, value_certainty, value_stage);
+            value
+        }
+        PredicateOutcome::Unknown { needed, stage } => {
+            return PredicateOutcome::unknown(needed, stage);
+        }
+    };
+    let relation = if lower_sign == Sign::Positive {
+        PlaneAabbRelation::Above
+    } else {
+        PlaneAabbRelation::Intersecting
+    };
+    PredicateOutcome::decided(relation, certainty, stage)
+}
+
 fn classify_point_plane_real(
     point: &Point3,
     plane: &Plane3,
@@ -475,31 +617,38 @@ fn point_plane_expression(
     plane: &Plane3,
     plane_facts: Option<Plane3Facts>,
 ) -> Real {
+    point_plane_expression_from_coords(
+        [&point.x, &point.y, &point.z],
+        plane,
+        plane_facts,
+        "classify_point_plane",
+    )
+}
+
+fn point_plane_expression_from_coords(
+    coordinates: [&Real; 3],
+    plane: &Plane3,
+    plane_facts: Option<Plane3Facts>,
+    trace_operation: &'static str,
+) -> Real {
+    let _ = trace_operation;
     let one = Real::one();
     let terms = [
-        [&plane.normal.x, &point.x],
-        [&plane.normal.y, &point.y],
-        [&plane.normal.z, &point.z],
+        [&plane.normal.x, coordinates[0]],
+        [&plane.normal.y, coordinates[1]],
+        [&plane.normal.z, coordinates[2]],
         [&plane.offset, &one],
     ];
 
     if let Some(plane_facts) = plane_facts {
-        let point_exact = point.structural_facts().exact;
-        if plane_facts.coefficient_exact.all_exact_rational && point_exact.all_exact_rational {
-            crate::trace_dispatch!(
-                "hyperlimit",
-                "classify_point_plane",
-                "prepared-exact-product-sum"
-            );
+        let coordinate_exact = Real::exact_set_facts(coordinates);
+        if plane_facts.coefficient_exact.all_exact_rational && coordinate_exact.all_exact_rational {
+            crate::trace_dispatch!("hyperlimit", trace_operation, "prepared-exact-product-sum");
             return Real::exact_rational_signed_product_sum_known_exact([true; 4], terms);
         }
     }
 
-    crate::trace_dispatch!(
-        "hyperlimit",
-        "classify_point_plane",
-        "fixed-real-product-sum"
-    );
+    crate::trace_dispatch!("hyperlimit", trace_operation, "fixed-real-product-sum");
     Real::signed_product_sum([true; 4], terms)
 }
 
@@ -578,6 +727,16 @@ fn stage_rank(stage: Escalation) -> u8 {
         Escalation::Refined => 3,
         Escalation::Undecided => 4,
     }
+}
+
+fn absorb_trace(
+    certainty: &mut Certainty,
+    stage: &mut Escalation,
+    value_certainty: Certainty,
+    value_stage: Escalation,
+) {
+    *certainty = max_certainty(*certainty, value_certainty);
+    *stage = max_stage(*stage, value_stage);
 }
 
 /// Classify a point relative to the oriented plane through `a`, `b`, and `c`.
@@ -731,6 +890,31 @@ mod tests {
                 .classify_triangle(&p3(0.0, 0.0, 2.0), &p3(1.0, 0.0, 3.0), &p3(0.0, 1.0, 3.0))
                 .value(),
             Some(PlaneTriangleRelation::BoundaryTouch)
+        );
+    }
+
+    #[test]
+    fn classifies_plane_aabb3_relation_from_extreme_terms() {
+        let plane = Plane3::new(p3(1.0, -2.0, 1.0), real(-1.0));
+
+        assert_eq!(
+            classify_plane_aabb3(&plane, &p3(0.0, 2.0, 0.0), &p3(1.0, 3.0, 1.0)).value(),
+            Some(PlaneAabbRelation::Below)
+        );
+        assert_eq!(
+            classify_plane_aabb3(&plane, &p3(3.0, 0.0, 1.0), &p3(4.0, 0.0, 2.0)).value(),
+            Some(PlaneAabbRelation::Above)
+        );
+        assert_eq!(
+            classify_plane_aabb3(&plane, &p3(0.0, 0.0, 0.0), &p3(2.0, 2.0, 2.0)).value(),
+            Some(PlaneAabbRelation::Intersecting)
+        );
+        assert_eq!(
+            plane
+                .prepare()
+                .classify_aabb3(&p3(1.0, 3.0, 1.0), &p3(0.0, 2.0, 0.0))
+                .value(),
+            Some(PlaneAabbRelation::Below)
         );
     }
 

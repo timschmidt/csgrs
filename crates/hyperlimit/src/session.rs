@@ -8,19 +8,20 @@
 //! preparation.
 
 use crate::classify::{
-    Aabb2Intersection, Aabb2PointLocation, LineSide, PlaneSide, PointSegmentLocation,
-    SegmentIntersection, TriangleLocation,
+    Aabb2Intersection, Aabb2PointLocation, LineSide, PlaneAabbRelation, PlaneSide,
+    PointSegmentLocation, Segment3Intersection, SegmentIntersection, Triangle3Location,
+    TriangleLocation,
 };
 use crate::geometry::Point2;
 use crate::predicate::{
     PredicateApiSemantics, PredicateCertificate, PredicateOutcome, PredicatePolicy, PredicateReport,
 };
-use crate::predicates::aabb::PreparedAabb2;
-use crate::predicates::segment::PreparedSegment2;
-use crate::predicates::triangle::PreparedTriangle2;
+use crate::predicates::aabb::{PreparedAabb2, PreparedAabb3};
+use crate::predicates::segment::{PreparedSegment2, PreparedSegment3};
+use crate::predicates::triangle::{PreparedTriangle2, PreparedTriangle3};
 use crate::{
-    Plane3, Point3, PreparedIncircle2, PreparedInsphere3, PreparedLine2, PreparedOrientedPlane3,
-    PreparedPlane3, Sign,
+    Plane3, Point3, PreparedExplicitSphere3, PreparedIncircle2, PreparedInsphere3, PreparedLine2,
+    PreparedOrientedPlane3, PreparedPlane3, Sign,
 };
 
 /// Monotone construction version carried by an [`ExactGeometrySession`].
@@ -872,6 +873,18 @@ impl ExactGeometrySession {
         PreparedSegment2::new(start, end)
     }
 
+    /// Prepare a borrowed closed 3D segment predicate.
+    ///
+    /// This is the 3D companion to [`Self::prepare_segment2`]. It keeps segment
+    /// endpoint storage and topology ownership in higher crates while giving
+    /// construction graphs a session-versioned exact predicate object for
+    /// repeated point/segment and segment/segment queries, following Yap's
+    /// object-package boundary in "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7.1-2 (1997).
+    pub fn prepare_segment3<'a>(&self, start: &'a Point3, end: &'a Point3) -> PreparedSegment3<'a> {
+        PreparedSegment3::new(start, end)
+    }
+
     /// Prepare a borrowed triangle predicate using this session's policy.
     pub fn prepare_triangle2<'a>(
         &self,
@@ -882,9 +895,24 @@ impl ExactGeometrySession {
         PreparedTriangle2::with_policy(a, b, c, self.policy)
     }
 
+    /// Prepare a borrowed 3D triangle predicate using this session's policy.
+    pub fn prepare_triangle3<'a>(
+        &self,
+        a: &'a Point3,
+        b: &'a Point3,
+        c: &'a Point3,
+    ) -> PreparedTriangle3<'a> {
+        PreparedTriangle3::with_policy(a, b, c, self.policy)
+    }
+
     /// Prepare a borrowed axis-aligned box predicate.
     pub fn prepare_aabb2<'a>(&self, min: &'a Point2, max: &'a Point2) -> PreparedAabb2<'a> {
         PreparedAabb2::new(min, max)
+    }
+
+    /// Prepare a borrowed 3D axis-aligned box predicate.
+    pub fn prepare_aabb3<'a>(&self, min: &'a Point3, max: &'a Point3) -> PreparedAabb3<'a> {
+        PreparedAabb3::new(min, max)
     }
 
     /// Prepare a borrowed in-circle predicate.
@@ -915,6 +943,21 @@ impl ExactGeometrySession {
         d: &'a Point3,
     ) -> PreparedInsphere3<'a> {
         PreparedInsphere3::new(a, b, c, d)
+    }
+
+    /// Prepare an explicit sphere classifier from a center and squared radius.
+    ///
+    /// The squared-radius API keeps exact sphere predicates square-root-free
+    /// and documents that domain objects own radius validation. The prepared
+    /// object borrows the center and squared radius so construction graphs can
+    /// version the reusable predicate without forcing geometry ownership into
+    /// `hyperlimit`.
+    pub fn prepare_explicit_sphere3<'a>(
+        &self,
+        center: &'a Point3,
+        radius_squared: &'a crate::Real,
+    ) -> PreparedExplicitSphere3<'a> {
+        PreparedExplicitSphere3::new(center, radius_squared)
     }
 
     /// Prepare a borrowed explicit 3D plane predicate.
@@ -964,6 +1007,15 @@ impl ExactGeometrySession {
         segment.classify_point_with_policy(point, self.policy)
     }
 
+    /// Classify a point against a prepared 3D segment using this session's policy.
+    pub fn classify_prepared_segment3_point(
+        &self,
+        segment: &PreparedSegment3<'_>,
+        point: &Point3,
+    ) -> PredicateOutcome<PointSegmentLocation> {
+        segment.classify_point_with_policy(point, self.policy)
+    }
+
     /// Classify two prepared segments using this session's policy.
     pub fn classify_prepared_segment2_intersection(
         &self,
@@ -973,12 +1025,30 @@ impl ExactGeometrySession {
         first.classify_intersection_with_policy(second, self.policy)
     }
 
+    /// Classify two prepared 3D segments using this session's policy.
+    pub fn classify_prepared_segment3_intersection(
+        &self,
+        first: &PreparedSegment3<'_>,
+        second: &PreparedSegment3<'_>,
+    ) -> PredicateOutcome<Segment3Intersection> {
+        first.classify_intersection_with_policy(second, self.policy)
+    }
+
     /// Classify a point against a prepared triangle using this session's policy.
     pub fn classify_prepared_triangle2_point(
         &self,
         triangle: &PreparedTriangle2<'_>,
         point: &Point2,
     ) -> PredicateOutcome<TriangleLocation> {
+        triangle.classify_point_with_policy(point, self.policy)
+    }
+
+    /// Classify a point against a prepared 3D triangle using this session's policy.
+    pub fn classify_prepared_triangle3_point(
+        &self,
+        triangle: &PreparedTriangle3<'_>,
+        point: &Point3,
+    ) -> PredicateOutcome<Triangle3Location> {
         triangle.classify_point_with_policy(point, self.policy)
     }
 
@@ -999,12 +1069,30 @@ impl ExactGeometrySession {
         aabb.classify_point_with_policy(point, self.policy)
     }
 
+    /// Classify a point against a prepared 3D AABB using this session's policy.
+    pub fn classify_prepared_aabb3_point(
+        &self,
+        aabb: &PreparedAabb3<'_>,
+        point: &Point3,
+    ) -> PredicateOutcome<crate::classify::Aabb3PointLocation> {
+        aabb.classify_point_with_policy(point, self.policy)
+    }
+
     /// Classify two prepared AABBs using this session's policy.
     pub fn classify_prepared_aabb2_intersection(
         &self,
         first: &PreparedAabb2<'_>,
         second: &PreparedAabb2<'_>,
     ) -> PredicateOutcome<Aabb2Intersection> {
+        first.classify_intersection_with_policy(second, self.policy)
+    }
+
+    /// Classify two prepared 3D AABBs using this session's policy.
+    pub fn classify_prepared_aabb3_intersection(
+        &self,
+        first: &PreparedAabb3<'_>,
+        second: &PreparedAabb3<'_>,
+    ) -> PredicateOutcome<crate::classify::Aabb3Intersection> {
         first.classify_intersection_with_policy(second, self.policy)
     }
 
@@ -1026,6 +1114,15 @@ impl ExactGeometrySession {
         insphere.test_point_with_policy(point, self.policy)
     }
 
+    /// Classify a point against a prepared explicit sphere using this session's policy.
+    pub fn classify_prepared_explicit_sphere3_point(
+        &self,
+        sphere: &PreparedExplicitSphere3<'_>,
+        point: &Point3,
+    ) -> PredicateOutcome<crate::classify::SpherePointLocation> {
+        sphere.classify_point_with_policy(point, self.policy)
+    }
+
     /// Classify a point against a prepared explicit plane using this session's policy.
     pub fn classify_prepared_plane3_point(
         &self,
@@ -1033,6 +1130,24 @@ impl ExactGeometrySession {
         point: &Point3,
     ) -> PredicateOutcome<PlaneSide> {
         plane.classify_point_with_policy(point, self.policy)
+    }
+
+    /// Classify a closed 3D AABB against a prepared explicit plane using this
+    /// session's policy.
+    ///
+    /// This is the session-level entry point for the mesh-kernel-style
+    /// plane/AABB broad-phase predicate. The prepared plane owns only cached
+    /// coefficients and structural facts; the returned relation is still
+    /// certified by exact predicate evaluation, following Yap's separation
+    /// between reusable object facts and combinatorial truth in "Towards Exact
+    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+    pub fn classify_prepared_plane3_aabb3(
+        &self,
+        plane: &PreparedPlane3<'_>,
+        min: &Point3,
+        max: &Point3,
+    ) -> PredicateOutcome<PlaneAabbRelation> {
+        plane.classify_aabb3_with_policy(min, max, self.policy)
     }
 
     /// Classify a point against a prepared oriented plane using this session's policy.
@@ -1106,6 +1221,36 @@ mod tests {
                 .value(),
             Some(TriangleLocation::Inside)
         );
+
+        let p = p3(0, 0, 0);
+        let q = p3(4, 0, 0);
+        let r = p3(2, -1, 0);
+        let s = p3(2, 1, 0);
+        let segment3 = session.prepare_segment3(&p, &q);
+        let other_segment3 = session.prepare_segment3(&r, &s);
+        assert_eq!(
+            session
+                .classify_prepared_segment3_point(&segment3, &p3(2, 0, 0))
+                .value(),
+            Some(PointSegmentLocation::OnSegment)
+        );
+        assert_eq!(
+            session
+                .classify_prepared_segment3_intersection(&segment3, &other_segment3)
+                .value(),
+            Some(Segment3Intersection::Proper)
+        );
+
+        let tri3_a = p3(0, 0, 0);
+        let tri3_b = p3(4, 0, 0);
+        let tri3_c = p3(0, 4, 0);
+        let triangle3 = session.prepare_triangle3(&tri3_a, &tri3_b, &tri3_c);
+        assert_eq!(
+            session
+                .classify_prepared_triangle3_point(&triangle3, &p3(1, 1, 0))
+                .value(),
+            Some(Triangle3Location::Inside)
+        );
     }
 
     #[test]
@@ -1130,6 +1275,25 @@ mod tests {
                 .classify_prepared_aabb2_intersection(&point, &area)
                 .value(),
             Some(Aabb2Intersection::Touching)
+        );
+
+        let point3_min = p3(2, 2, 2);
+        let point3_max = p3(2, 2, 2);
+        let volume_min = p3(0, 0, 0);
+        let volume_max = p3(4, 4, 4);
+        let point3_box = session.prepare_aabb3(&point3_min, &point3_max);
+        let volume_box = session.prepare_aabb3(&volume_min, &volume_max);
+        assert_eq!(
+            session
+                .classify_prepared_aabb3_point(&volume_box, point3_box.min())
+                .value(),
+            Some(crate::classify::Aabb3PointLocation::Inside)
+        );
+        assert_eq!(
+            session
+                .classify_prepared_aabb3_intersection(&point3_box, &volume_box)
+                .value(),
+            Some(crate::classify::Aabb3Intersection::Touching)
         );
     }
 
@@ -1161,6 +1325,18 @@ mod tests {
                 .classify_prepared_plane3_point(&prepared, &p3(0, 0, 1))
                 .value(),
             Some(PlaneSide::Below)
+        );
+        assert_eq!(
+            session
+                .classify_prepared_plane3_aabb3(&prepared, &p3(0, 0, 0), &p3(1, 1, 1))
+                .value(),
+            Some(PlaneAabbRelation::Below)
+        );
+        assert_eq!(
+            session
+                .classify_prepared_plane3_aabb3(&prepared, &p3(0, 0, 1), &p3(1, 1, 3))
+                .value(),
+            Some(PlaneAabbRelation::Intersecting)
         );
     }
 
@@ -1213,6 +1389,17 @@ mod tests {
                 .test_prepared_insphere3(&insphere, &sphere_query)
                 .value(),
             crate::insphere3d(&p, &q, &r, &s, &sphere_query).value()
+        );
+
+        let explicit_radius_squared = hyperreal::Real::from(25);
+        let explicit = session.prepare_explicit_sphere3(&p, &explicit_radius_squared);
+        assert_eq!(explicit.center(), &p);
+        assert_eq!(explicit.radius_squared(), &explicit_radius_squared);
+        assert_eq!(
+            session
+                .classify_prepared_explicit_sphere3_point(&explicit, &p3(3, 4, 0))
+                .value(),
+            Some(crate::classify::SpherePointLocation::On)
         );
     }
 

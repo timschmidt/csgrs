@@ -1,6 +1,9 @@
 //! Batch predicate helpers for Real-backed geometry.
 
-use crate::classify::{LineSide, PlaneSide};
+use crate::classify::{
+    CircleLineRelation, CircleSegmentRelation, LineSide, PlaneSide, RayTriangleIntersection,
+    Segment3Intersection, SegmentTriangleIntersection,
+};
 use crate::orient::{
     Point2, Point3, classify_point_line_with_policy, incircle2d_with_policy,
     insphere3d_with_policy, orient2d_with_policy, orient3d_with_policy,
@@ -9,6 +12,15 @@ use crate::plane::{
     Plane3, classify_point_oriented_plane_with_policy, classify_point_plane_with_policy,
 };
 use crate::predicate::{PredicateOutcome, PredicatePolicy, Sign};
+use crate::predicates::distance::{
+    classify_circle_line2_with_policy, classify_circle_segment2_with_policy,
+};
+use crate::predicates::segment::classify_segment3_intersection_with_policy;
+use crate::predicates::triangle::{
+    classify_ray_triangle3_intersection_with_policy,
+    classify_segment_triangle3_intersection_with_policy,
+};
+use hyperreal::Real;
 
 /// Case tuple accepted by [`orient2d_batch`] and, with the `parallel` feature,
 /// `orient2d_batch_parallel`.
@@ -26,6 +38,16 @@ pub type Insphere3dCase = (Point3, Point3, Point3, Point3, Point3);
 /// `classify_point_plane_batch_parallel` when the `parallel` feature is
 /// enabled.
 pub type PointPlaneCase = (Point3, Plane3);
+/// Case tuple accepted by [`classify_segment3_intersection_batch`].
+pub type Segment3IntersectionCase = (Point3, Point3, Point3, Point3);
+/// Case tuple accepted by [`classify_segment_triangle3_intersection_batch`].
+pub type SegmentTriangle3IntersectionCase = (Point3, Point3, Point3, Point3, Point3);
+/// Case tuple accepted by [`classify_ray_triangle3_intersection_batch`].
+pub type RayTriangle3IntersectionCase = (Point3, Point3, Point3, Point3, Point3);
+/// Case tuple accepted by [`classify_circle_line2_batch`].
+pub type CircleLine2Case = (Point2, Real, Point2, Point2);
+/// Case tuple accepted by [`classify_circle_segment2_batch`].
+pub type CircleSegment2Case = (Point2, Real, Point2, Point2);
 
 /// Evaluate a batch of 2D orientation predicates.
 pub fn orient2d_batch(cases: &[Orient2dCase]) -> Vec<PredicateOutcome<Sign>> {
@@ -149,6 +171,127 @@ pub fn insphere3d_batch_with_policy(
     cases
         .iter()
         .map(|(a, b, c, d, e)| insphere3d_with_policy(a, b, c, d, e, policy))
+        .collect()
+}
+
+/// Evaluate a batch of closed 3D segment/segment relation predicates.
+pub fn classify_segment3_intersection_batch(
+    cases: &[Segment3IntersectionCase],
+) -> Vec<PredicateOutcome<Segment3Intersection>> {
+    classify_segment3_intersection_batch_with_policy(cases, PredicatePolicy::default())
+}
+
+/// Evaluate a batch of closed 3D segment/segment relation predicates with an
+/// explicit policy.
+///
+/// Batch APIs are scheduling helpers only: every item still returns its own
+/// exact predicate outcome and provenance. This keeps dense mesh and
+/// narrow-phase loops aligned with Yap's exact-geometric-computation boundary,
+/// where batching can reuse object structure but cannot turn unknown or lossy
+/// answers into topology.
+pub fn classify_segment3_intersection_batch_with_policy(
+    cases: &[Segment3IntersectionCase],
+    policy: PredicatePolicy,
+) -> Vec<PredicateOutcome<Segment3Intersection>> {
+    crate::trace_dispatch!("hyperlimit", "batch", "segment3-intersection-sequential");
+    cases
+        .iter()
+        .map(|(a, b, c, d)| classify_segment3_intersection_with_policy(a, b, c, d, policy))
+        .collect()
+}
+
+/// Evaluate a batch of closed segment/triangle relation predicates.
+pub fn classify_segment_triangle3_intersection_batch(
+    cases: &[SegmentTriangle3IntersectionCase],
+) -> Vec<PredicateOutcome<SegmentTriangleIntersection>> {
+    classify_segment_triangle3_intersection_batch_with_policy(cases, PredicatePolicy::default())
+}
+
+/// Evaluate a batch of closed segment/triangle relation predicates with an
+/// explicit policy.
+pub fn classify_segment_triangle3_intersection_batch_with_policy(
+    cases: &[SegmentTriangle3IntersectionCase],
+    policy: PredicatePolicy,
+) -> Vec<PredicateOutcome<SegmentTriangleIntersection>> {
+    crate::trace_dispatch!(
+        "hyperlimit",
+        "batch",
+        "segment-triangle3-intersection-sequential"
+    );
+    cases
+        .iter()
+        .map(|(p, q, a, b, c)| {
+            classify_segment_triangle3_intersection_with_policy(p, q, a, b, c, policy)
+        })
+        .collect()
+}
+
+/// Evaluate a batch of ray/triangle relation predicates.
+pub fn classify_ray_triangle3_intersection_batch(
+    cases: &[RayTriangle3IntersectionCase],
+) -> Vec<PredicateOutcome<RayTriangleIntersection>> {
+    classify_ray_triangle3_intersection_batch_with_policy(cases, PredicatePolicy::default())
+}
+
+/// Evaluate a batch of ray/triangle relation predicates with an explicit
+/// policy.
+pub fn classify_ray_triangle3_intersection_batch_with_policy(
+    cases: &[RayTriangle3IntersectionCase],
+    policy: PredicatePolicy,
+) -> Vec<PredicateOutcome<RayTriangleIntersection>> {
+    crate::trace_dispatch!(
+        "hyperlimit",
+        "batch",
+        "ray-triangle3-intersection-sequential"
+    );
+    cases
+        .iter()
+        .map(|(origin, direction, a, b, c)| {
+            classify_ray_triangle3_intersection_with_policy(origin, direction, a, b, c, policy)
+        })
+        .collect()
+}
+
+/// Evaluate a batch of circle/line relation predicates.
+pub fn classify_circle_line2_batch(
+    cases: &[CircleLine2Case],
+) -> Vec<PredicateOutcome<CircleLineRelation>> {
+    classify_circle_line2_batch_with_policy(cases, PredicatePolicy::default())
+}
+
+/// Evaluate a batch of circle/line relation predicates with an explicit policy.
+pub fn classify_circle_line2_batch_with_policy(
+    cases: &[CircleLine2Case],
+    policy: PredicatePolicy,
+) -> Vec<PredicateOutcome<CircleLineRelation>> {
+    crate::trace_dispatch!("hyperlimit", "batch", "circle-line2-sequential");
+    cases
+        .iter()
+        .map(|(center, radius_squared, a, b)| {
+            classify_circle_line2_with_policy(center, radius_squared, a, b, policy)
+        })
+        .collect()
+}
+
+/// Evaluate a batch of circle/segment relation predicates.
+pub fn classify_circle_segment2_batch(
+    cases: &[CircleSegment2Case],
+) -> Vec<PredicateOutcome<CircleSegmentRelation>> {
+    classify_circle_segment2_batch_with_policy(cases, PredicatePolicy::default())
+}
+
+/// Evaluate a batch of circle/segment relation predicates with an explicit
+/// policy.
+pub fn classify_circle_segment2_batch_with_policy(
+    cases: &[CircleSegment2Case],
+    policy: PredicatePolicy,
+) -> Vec<PredicateOutcome<CircleSegmentRelation>> {
+    crate::trace_dispatch!("hyperlimit", "batch", "circle-segment2-sequential");
+    cases
+        .iter()
+        .map(|(center, radius_squared, a, b)| {
+            classify_circle_segment2_with_policy(center, radius_squared, a, b, policy)
+        })
         .collect()
 }
 
@@ -284,6 +427,119 @@ mod parallel {
         cases
             .iter()
             .map(|(a, b, c, d, e)| insphere3d_with_policy(a, b, c, d, e, policy))
+            .collect()
+    }
+
+    /// Evaluate a batch of closed 3D segment/segment relation predicates in parallel.
+    pub fn classify_segment3_intersection_batch_parallel(
+        cases: &[Segment3IntersectionCase],
+    ) -> Vec<PredicateOutcome<Segment3Intersection>> {
+        classify_segment3_intersection_batch_parallel_with_policy(cases, PredicatePolicy::default())
+    }
+
+    /// Evaluate a batch of closed 3D segment/segment relation predicates in parallel with an explicit policy.
+    pub fn classify_segment3_intersection_batch_parallel_with_policy(
+        cases: &[Segment3IntersectionCase],
+        policy: PredicatePolicy,
+    ) -> Vec<PredicateOutcome<Segment3Intersection>> {
+        crate::trace_dispatch!("hyperlimit", "batch", "segment3-intersection-parallel");
+        cases
+            .iter()
+            .map(|(a, b, c, d)| classify_segment3_intersection_with_policy(a, b, c, d, policy))
+            .collect()
+    }
+
+    /// Evaluate a batch of closed segment/triangle relation predicates in parallel.
+    pub fn classify_segment_triangle3_intersection_batch_parallel(
+        cases: &[SegmentTriangle3IntersectionCase],
+    ) -> Vec<PredicateOutcome<SegmentTriangleIntersection>> {
+        classify_segment_triangle3_intersection_batch_parallel_with_policy(
+            cases,
+            PredicatePolicy::default(),
+        )
+    }
+
+    /// Evaluate a batch of closed segment/triangle relation predicates in parallel with an explicit policy.
+    pub fn classify_segment_triangle3_intersection_batch_parallel_with_policy(
+        cases: &[SegmentTriangle3IntersectionCase],
+        policy: PredicatePolicy,
+    ) -> Vec<PredicateOutcome<SegmentTriangleIntersection>> {
+        crate::trace_dispatch!(
+            "hyperlimit",
+            "batch",
+            "segment-triangle3-intersection-parallel"
+        );
+        cases
+            .iter()
+            .map(|(p, q, a, b, c)| {
+                classify_segment_triangle3_intersection_with_policy(p, q, a, b, c, policy)
+            })
+            .collect()
+    }
+
+    /// Evaluate a batch of ray/triangle relation predicates in parallel.
+    pub fn classify_ray_triangle3_intersection_batch_parallel(
+        cases: &[RayTriangle3IntersectionCase],
+    ) -> Vec<PredicateOutcome<RayTriangleIntersection>> {
+        classify_ray_triangle3_intersection_batch_parallel_with_policy(
+            cases,
+            PredicatePolicy::default(),
+        )
+    }
+
+    /// Evaluate a batch of ray/triangle relation predicates in parallel with an explicit policy.
+    pub fn classify_ray_triangle3_intersection_batch_parallel_with_policy(
+        cases: &[RayTriangle3IntersectionCase],
+        policy: PredicatePolicy,
+    ) -> Vec<PredicateOutcome<RayTriangleIntersection>> {
+        crate::trace_dispatch!("hyperlimit", "batch", "ray-triangle3-intersection-parallel");
+        cases
+            .iter()
+            .map(|(origin, direction, a, b, c)| {
+                classify_ray_triangle3_intersection_with_policy(origin, direction, a, b, c, policy)
+            })
+            .collect()
+    }
+
+    /// Evaluate a batch of circle/line relation predicates in parallel.
+    pub fn classify_circle_line2_batch_parallel(
+        cases: &[CircleLine2Case],
+    ) -> Vec<PredicateOutcome<CircleLineRelation>> {
+        classify_circle_line2_batch_parallel_with_policy(cases, PredicatePolicy::default())
+    }
+
+    /// Evaluate a batch of circle/line relation predicates in parallel with an explicit policy.
+    pub fn classify_circle_line2_batch_parallel_with_policy(
+        cases: &[CircleLine2Case],
+        policy: PredicatePolicy,
+    ) -> Vec<PredicateOutcome<CircleLineRelation>> {
+        crate::trace_dispatch!("hyperlimit", "batch", "circle-line2-parallel");
+        cases
+            .iter()
+            .map(|(center, radius_squared, a, b)| {
+                classify_circle_line2_with_policy(center, radius_squared, a, b, policy)
+            })
+            .collect()
+    }
+
+    /// Evaluate a batch of circle/segment relation predicates in parallel.
+    pub fn classify_circle_segment2_batch_parallel(
+        cases: &[CircleSegment2Case],
+    ) -> Vec<PredicateOutcome<CircleSegmentRelation>> {
+        classify_circle_segment2_batch_parallel_with_policy(cases, PredicatePolicy::default())
+    }
+
+    /// Evaluate a batch of circle/segment relation predicates in parallel with an explicit policy.
+    pub fn classify_circle_segment2_batch_parallel_with_policy(
+        cases: &[CircleSegment2Case],
+        policy: PredicatePolicy,
+    ) -> Vec<PredicateOutcome<CircleSegmentRelation>> {
+        crate::trace_dispatch!("hyperlimit", "batch", "circle-segment2-parallel");
+        cases
+            .iter()
+            .map(|(center, radius_squared, a, b)| {
+                classify_circle_segment2_with_policy(center, radius_squared, a, b, policy)
+            })
             .collect()
     }
 }

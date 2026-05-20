@@ -14,6 +14,8 @@ use crate::predicate::{Certainty, Escalation, PredicateOutcome, PredicatePolicy,
 use crate::predicates::interval::{
     classify_closed_interval_intersection_with_policy, classify_real_closed_interval_with_policy,
 };
+use crate::predicates::order::compare_reals_with_policy;
+use core::cmp::Ordering;
 
 /// Reusable exact predicates for one closed 2D axis-aligned box.
 ///
@@ -704,9 +706,16 @@ pub fn classify_aabb3_intersection_with_policy(
         );
     }
 
+    let zero_extent_input = match aabb3_has_zero_extent_axis(
+        first_min, first_max, second_min, second_max, policy, &mut trace,
+    ) {
+        Ok(value) => value,
+        Err(unknown) => return unknown.into_outcome(),
+    };
     let relation = if x == ClosedIntervalIntersection::Touching
         || y == ClosedIntervalIntersection::Touching
         || z == ClosedIntervalIntersection::Touching
+        || zero_extent_input
     {
         Aabb3Intersection::Touching
     } else {
@@ -757,6 +766,33 @@ fn is_interval_boundary(location: RealIntervalLocation) -> bool {
         location,
         RealIntervalLocation::AtLowerEndpoint | RealIntervalLocation::AtUpperEndpoint
     )
+}
+
+fn aabb3_has_zero_extent_axis(
+    first_min: &Point3,
+    first_max: &Point3,
+    second_min: &Point3,
+    second_max: &Point3,
+    policy: PredicatePolicy,
+    trace: &mut DecisionTrace,
+) -> Result<bool, UnknownDecision> {
+    Ok(
+        interval_has_zero_extent(&first_min.x, &first_max.x, policy, trace)?
+            || interval_has_zero_extent(&first_min.y, &first_max.y, policy, trace)?
+            || interval_has_zero_extent(&first_min.z, &first_max.z, policy, trace)?
+            || interval_has_zero_extent(&second_min.x, &second_max.x, policy, trace)?
+            || interval_has_zero_extent(&second_min.y, &second_max.y, policy, trace)?
+            || interval_has_zero_extent(&second_min.z, &second_max.z, policy, trace)?,
+    )
+}
+
+fn interval_has_zero_extent(
+    first: &hyperreal::Real,
+    second: &hyperreal::Real,
+    policy: PredicatePolicy,
+    trace: &mut DecisionTrace,
+) -> Result<bool, UnknownDecision> {
+    Ok(decided(compare_reals_with_policy(first, second, policy), trace)? == Ordering::Equal)
 }
 
 #[derive(Clone, Copy)]

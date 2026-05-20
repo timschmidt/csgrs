@@ -1,4 +1,5 @@
 pub mod aabb;
+pub mod convex;
 pub mod distance;
 mod exact;
 pub mod filters;
@@ -15,6 +16,7 @@ pub mod segment;
 pub mod triangle;
 
 pub use self::aabb::*;
+pub use self::convex::*;
 pub use self::distance::*;
 pub use self::filters::*;
 pub use self::interval::*;

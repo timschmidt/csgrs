@@ -7,9 +7,17 @@ use criterion::{BenchmarkId, Criterion, black_box};
 use dispatch_trace::{begin_dispatch_trace_run, trace_dispatch_cases, write_dispatch_trace_report};
 use hyperlimit::{
     ExactGeometrySession, LineSide, Plane3, PlaneSide, Point2, Point3, PredicateOutcome,
-    PreparedIncircle2, PreparedInsphere3, PreparedLine2, PreparedOrientedPlane3, Sign,
-    affine_independent_d, certified_ball_sign, classify_point_line, classify_point_oriented_plane,
-    classify_point_plane, incircle2d, insphere_d, insphere3d, orient_d, orient2d, orient3d,
+    PreparedIncircle2, PreparedInsphere3, PreparedLine2, PreparedOrientedPlane3,
+    Segment3Intersection, Sign, affine_independent_d, certified_ball_sign,
+    classify_aabb3_sphere_intersection, classify_circle_line2, classify_circle_segment2,
+    classify_homogeneous_point_plane, classify_point_convex_planes3,
+    classify_point_convex_polygon2, classify_point_line, classify_point_oriented_plane,
+    classify_point_plane, classify_ray_triangle3_intersection,
+    classify_segment_triangle3_intersection, classify_segment3_intersection,
+    classify_sphere3_intersection, compare_point_line3_distance_squared,
+    compare_point_plane_distance_squared, compare_point_segment3_distance_squared, incircle2d,
+    insphere_d, insphere3d, intersect_three_planes, intersect_two_planes, orient_d, orient2d,
+    orient3d,
 };
 
 const BATCH: usize = 512;
@@ -18,6 +26,8 @@ type Orient2Case = (Point2, Point2, Point2);
 type Orient3Case = (Point3, Point3, Point3, Point3);
 type Incircle2Case = (Point2, Point2, Point2, Point2);
 type Insphere3Case = (Point3, Point3, Point3, Point3, Point3);
+type Segment3Case = (Point3, Point3, Point3, Point3);
+type SegmentTriangle3Case = (Point3, Point3, Point3, Point3, Point3);
 
 #[derive(Clone, Copy)]
 enum Workload {
@@ -201,6 +211,194 @@ fn bench_exact_rational_kernels(c: &mut Criterion) {
                     black_box(d),
                     black_box(e),
                 )));
+            }
+            black_box(score)
+        });
+    });
+
+    let plane_triples = exact_rational_coordinate_plane_cases();
+    group.bench_function("homogeneous/three_plane_coordinate_triples", |b| {
+        b.iter(|| {
+            let mut score = 0_i64;
+            for (x_plane, y_plane, z_plane) in &plane_triples {
+                let point = black_box(intersect_three_planes(
+                    black_box(x_plane),
+                    black_box(y_plane),
+                    black_box(z_plane),
+                ));
+                score += i64::from(point.coordinate_facts().all_exact_rational);
+                score += bool_score(classify_homogeneous_point_plane(&point, x_plane));
+                score += bool_score(classify_homogeneous_point_plane(&point, y_plane));
+                score += bool_score(classify_homogeneous_point_plane(&point, z_plane));
+            }
+            black_box(score)
+        });
+    });
+    group.bench_function("homogeneous/two_plane_line_then_plane", |b| {
+        b.iter(|| {
+            let mut score = 0_i64;
+            for (x_plane, y_plane, z_plane) in &plane_triples {
+                let line = black_box(intersect_two_planes(black_box(x_plane), black_box(y_plane)));
+                let point = black_box(line.intersect_plane(black_box(z_plane)));
+                score += i64::from(line.coordinate_facts().all_exact_rational);
+                score += bool_score(classify_homogeneous_point_plane(&point, z_plane));
+            }
+            black_box(score)
+        });
+    });
+
+    // This mixed relation row keeps the exact 3D segment classifier visible for
+    // mesh-kernel-style edge/topology workloads. The implementation follows
+    // Yap's exact-decision contract and de Berg et al.'s orientation/interval
+    // decomposition without replacing skew or coplanar cases by primitive-float
+    // tolerances.
+    let segment3 = exact_rational_segment3_cases();
+    group.bench_function("segment3_intersection/mixed_exact_rational", |b| {
+        b.iter(|| {
+            let mut score = 0_i64;
+            for (a, b, c, d) in &segment3 {
+                score += segment3_intersection_score(black_box(classify_segment3_intersection(
+                    black_box(a),
+                    black_box(b),
+                    black_box(c),
+                    black_box(d),
+                )));
+            }
+            black_box(score)
+        });
+    });
+
+    let distance3 = exact_rational_point_feature_distance_cases();
+    let threshold = rational_real(25, 121);
+    group.bench_function("distance3/point_feature_scaled_thresholds", |b| {
+        b.iter(|| {
+            let mut score = 0_i64;
+            for (point, a, b, plane) in &distance3 {
+                score += ordering_score(black_box(compare_point_line3_distance_squared(
+                    black_box(point),
+                    black_box(a),
+                    black_box(b),
+                    black_box(&threshold),
+                )));
+                score += ordering_score(black_box(compare_point_segment3_distance_squared(
+                    black_box(point),
+                    black_box(a),
+                    black_box(b),
+                    black_box(&threshold),
+                )));
+                score += ordering_score(black_box(compare_point_plane_distance_squared(
+                    black_box(point),
+                    black_box(plane),
+                    black_box(&threshold),
+                )));
+                score += i64::from(
+                    black_box(classify_sphere3_intersection(
+                        black_box(a),
+                        black_box(&threshold),
+                        black_box(b),
+                        black_box(&threshold),
+                    ))
+                    .value()
+                    .is_some_and(|relation| relation.intersects()),
+                );
+                score += i64::from(
+                    black_box(classify_aabb3_sphere_intersection(
+                        black_box(a),
+                        black_box(b),
+                        black_box(point),
+                        black_box(&threshold),
+                    ))
+                    .value()
+                    .is_some_and(|relation| relation.intersects()),
+                );
+            }
+            black_box(score)
+        });
+    });
+
+    let triangle_hits = exact_rational_segment_triangle3_cases();
+    group.bench_function("triangle3/segment_and_ray_intersections", |b| {
+        b.iter(|| {
+            let mut score = 0_i64;
+            for (p, q, a, b, c) in &triangle_hits {
+                let direction = Point3::new(&q.x - &p.x, &q.y - &p.y, &q.z - &p.z);
+                score += i64::from(
+                    classify_segment_triangle3_intersection(
+                        black_box(p),
+                        black_box(q),
+                        black_box(a),
+                        black_box(b),
+                        black_box(c),
+                    )
+                    .value()
+                    .is_some_and(|relation| relation.intersects()),
+                );
+                score += i64::from(
+                    classify_ray_triangle3_intersection(
+                        black_box(p),
+                        black_box(&direction),
+                        black_box(a),
+                        black_box(b),
+                        black_box(c),
+                    )
+                    .value()
+                    .is_some_and(|relation| relation.intersects()),
+                );
+            }
+            black_box(score)
+        });
+    });
+
+    let circle2 = exact_rational_circle2_line_segment_cases();
+    group.bench_function("circle2/line_and_segment_relations", |b| {
+        b.iter(|| {
+            let mut score = 0_i64;
+            for (center, radius_squared, a, b) in &circle2 {
+                score += i64::from(
+                    classify_circle_line2(
+                        black_box(center),
+                        black_box(radius_squared),
+                        black_box(a),
+                        black_box(b),
+                    )
+                    .value()
+                    .is_some(),
+                );
+                score += i64::from(
+                    classify_circle_segment2(
+                        black_box(center),
+                        black_box(radius_squared),
+                        black_box(a),
+                        black_box(b),
+                    )
+                    .value()
+                    .is_some(),
+                );
+            }
+            black_box(score)
+        });
+    });
+
+    let polygon = exact_rational_convex_polygon2();
+    let planes = exact_rational_convex_box_planes3();
+    let orient2_points = exact_rational_orient2d_cases();
+    let orient3_points = exact_rational_orient3d_cases();
+    group.bench_function("convex/point_halfspace_composition", |b| {
+        b.iter(|| {
+            let mut score = 0_i64;
+            for (_, _, point) in &orient2_points {
+                score += i64::from(
+                    classify_point_convex_polygon2(black_box(&polygon), black_box(point))
+                        .value()
+                        .is_some_and(|location| location.is_inside_or_boundary()),
+                );
+            }
+            for (_, _, _, point) in &orient3_points {
+                score += i64::from(
+                    classify_point_convex_planes3(black_box(&planes), black_box(point))
+                        .value()
+                        .is_some_and(|location| location.is_inside_or_boundary()),
+                );
             }
             black_box(score)
         });
@@ -1035,6 +1233,146 @@ fn exact_rational_insphere3d_cases() -> Vec<Insphere3Case> {
     cases
 }
 
+fn exact_rational_coordinate_plane_cases() -> Vec<(Plane3, Plane3, Plane3)> {
+    let mut cases = Vec::with_capacity(BATCH);
+    for i in 0..BATCH {
+        let j = i as i64;
+        cases.push((
+            coordinate_plane(0, rational_real(j % 31 - 15, 17)),
+            coordinate_plane(1, rational_real(j % 37 - 18, 17)),
+            coordinate_plane(2, rational_real(j % 41 - 20, 17)),
+        ));
+    }
+    cases
+}
+
+fn exact_rational_segment3_cases() -> Vec<Segment3Case> {
+    let mut cases = Vec::with_capacity(BATCH);
+    for i in 0..BATCH {
+        let j = i as i64;
+        match i % 6 {
+            0 => cases.push((
+                rational_point3(0, 11, 0, 11, 0, 11),
+                rational_point3(8, 11, 0, 11, 0, 11),
+                rational_point3(4, 11, -2, 11, 0, 11),
+                rational_point3(4, 11, 2, 11, 0, 11),
+            )),
+            1 => cases.push((
+                rational_point3(0, 11, 0, 11, 0, 11),
+                rational_point3(8, 11, 0, 11, 0, 11),
+                rational_point3(9, 11, 1, 11, 0, 11),
+                rational_point3(12, 11, 1, 11, 0, 11),
+            )),
+            2 => cases.push((
+                rational_point3(0, 11, 0, 11, 0, 11),
+                rational_point3(8, 11, 0, 11, 0, 11),
+                rational_point3(4, 11, -2, 11, 1, 11),
+                rational_point3(4, 11, 2, 11, 1, 11),
+            )),
+            3 => cases.push((
+                rational_point3(0, 11, 0, 11, 0, 11),
+                rational_point3(8, 11, 8, 11, 8, 11),
+                rational_point3(4, 11, 4, 11, 4, 11),
+                rational_point3(10, 11, 10, 11, 10, 11),
+            )),
+            4 => cases.push((
+                rational_point3(j % 5, 11, 0, 11, 0, 11),
+                rational_point3(j % 5 + 8, 11, 0, 11, 0, 11),
+                rational_point3(j % 5 + 8, 11, 0, 11, 0, 11),
+                rational_point3(j % 5 + 8, 11, 2, 11, 0, 11),
+            )),
+            _ => cases.push((
+                rational_point3(1, 11, 1, 11, 1, 11),
+                rational_point3(7, 11, 7, 11, 7, 11),
+                rational_point3(7, 11, 7, 11, 7, 11),
+                rational_point3(1, 11, 1, 11, 1, 11),
+            )),
+        }
+    }
+    cases
+}
+
+fn exact_rational_point_feature_distance_cases() -> Vec<(Point3, Point3, Point3, Plane3)> {
+    let mut cases = Vec::with_capacity(BATCH);
+    for i in 0..BATCH {
+        let j = i as i64;
+        let point = rational_point3(j % 13 - 6, 11, j % 17 - 8, 11, j % 19 - 9, 11);
+        let a = rational_point3(-4, 11, j % 5 - 2, 11, 0, 11);
+        let b = rational_point3(8, 11, j % 7 - 3, 11, j % 3 + 1, 11);
+        let plane = Plane3::new(
+            rational_point3(1, 11, -2, 11, 3, 11),
+            rational_real(j % 23 - 11, 11),
+        );
+        cases.push((point, a, b, plane));
+    }
+    cases
+}
+
+fn exact_rational_segment_triangle3_cases() -> Vec<SegmentTriangle3Case> {
+    let a = rational_point3(0, 11, 0, 11, 0, 11);
+    let b = rational_point3(40, 11, 0, 11, 0, 11);
+    let c = rational_point3(0, 11, 40, 11, 0, 11);
+    let mut cases = Vec::with_capacity(BATCH);
+    for i in 0..BATCH {
+        let j = i as i64;
+        let x = j % 31;
+        let y = (j * 7) % 31;
+        cases.push((
+            rational_point3(x, 11, y, 11, -5, 11),
+            rational_point3(x, 11, y, 11, 5, 11),
+            a.clone(),
+            b.clone(),
+            c.clone(),
+        ));
+    }
+    cases
+}
+
+fn exact_rational_circle2_line_segment_cases() -> Vec<(Point2, hyperreal::Real, Point2, Point2)> {
+    let center = rational_point2(0, 11, 0, 11);
+    let radius_squared = rational_real(25, 121);
+    let mut cases = Vec::with_capacity(BATCH);
+    for i in 0..BATCH {
+        let j = i as i64;
+        cases.push((
+            center.clone(),
+            radius_squared.clone(),
+            rational_point2(-10, 11, j % 15 - 7, 11),
+            rational_point2(10, 11, j % 15 - 7, 11),
+        ));
+    }
+    cases
+}
+
+fn exact_rational_convex_polygon2() -> Vec<Point2> {
+    vec![
+        rational_point2(0, 11, 0, 11),
+        rational_point2(40, 11, 0, 11),
+        rational_point2(40, 11, 40, 11),
+        rational_point2(0, 11, 40, 11),
+    ]
+}
+
+fn exact_rational_convex_box_planes3() -> Vec<Plane3> {
+    vec![
+        Plane3::new(rational_point3(-1, 11, 0, 11, 0, 11), rational_real(0, 11)),
+        Plane3::new(
+            rational_point3(1, 11, 0, 11, 0, 11),
+            rational_real(-40, 121),
+        ),
+        Plane3::new(rational_point3(0, 11, -1, 11, 0, 11), rational_real(0, 11)),
+        Plane3::new(
+            rational_point3(0, 11, 1, 11, 0, 11),
+            rational_real(-40, 121),
+        ),
+        Plane3::new(rational_point3(0, 11, 0, 11, -1, 11), rational_real(0, 11)),
+        Plane3::new(
+            rational_point3(0, 11, 0, 11, 1, 11),
+            rational_real(-40, 121),
+        ),
+    ]
+}
+
 fn exact_rational_orient_d_cases() -> Vec<Vec<Vec<hyperreal::Real>>> {
     let mut cases = Vec::with_capacity(BATCH);
     for i in 0..BATCH {
@@ -1261,6 +1599,16 @@ fn rational_real(numerator: i64, denominator: u64) -> hyperreal::Real {
     hyperreal::Real::new(hyperreal::Rational::fraction(numerator, denominator).unwrap())
 }
 
+fn coordinate_plane(axis: usize, coordinate: hyperreal::Real) -> Plane3 {
+    let normal = match axis {
+        0 => Point3::new(1.into(), 0.into(), 0.into()),
+        1 => Point3::new(0.into(), 1.into(), 0.into()),
+        2 => Point3::new(0.into(), 0.into(), 1.into()),
+        _ => unreachable!("benchmark helper only builds 3D coordinate planes"),
+    };
+    Plane3::new(normal, -coordinate)
+}
+
 fn certified_ball_cases() -> Vec<(hyperreal::Real, hyperreal::Real)> {
     let mut cases = Vec::with_capacity(BATCH);
     for i in 0..BATCH {
@@ -1328,6 +1676,31 @@ fn plane_score(outcome: PredicateOutcome<PlaneSide>) -> i64 {
             PlaneSide::Below => -1,
             PlaneSide::On => 0,
             PlaneSide::Above => 1,
+        },
+        PredicateOutcome::Unknown { .. } => 7,
+    }
+}
+
+fn ordering_score(outcome: PredicateOutcome<std::cmp::Ordering>) -> i64 {
+    match outcome {
+        PredicateOutcome::Decided { value, .. } => match value {
+            std::cmp::Ordering::Less => -1,
+            std::cmp::Ordering::Equal => 0,
+            std::cmp::Ordering::Greater => 1,
+        },
+        PredicateOutcome::Unknown { .. } => 7,
+    }
+}
+
+fn segment3_intersection_score(outcome: PredicateOutcome<Segment3Intersection>) -> i64 {
+    match outcome {
+        PredicateOutcome::Decided { value, .. } => match value {
+            Segment3Intersection::SkewDisjoint => -3,
+            Segment3Intersection::CoplanarDisjoint => -2,
+            Segment3Intersection::Proper => 1,
+            Segment3Intersection::EndpointTouch => 2,
+            Segment3Intersection::CollinearOverlap => 3,
+            Segment3Intersection::Identical => 4,
         },
         PredicateOutcome::Unknown { .. } => 7,
     }

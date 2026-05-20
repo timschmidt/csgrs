@@ -16,6 +16,9 @@ arbitrary = { version = "1", features = ["derive"] }
 hyperlimit = { path = "..", default-features = false, features = ["std", "parallel"] }
 hyperreal = { path = "../../hyperreal" }
 
+[patch.crates-io]
+hyperreal = { path = "../../hyperreal" }
+
 [[bin]]
 name = "predicate_invariants"
 path = "fuzz_targets/predicate_invariants.rs"

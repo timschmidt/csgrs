@@ -5,7 +5,7 @@
 //! DCELs, rings, and sweep state to higher crates such as `hypercurve` and
 //! `hypertri`.
 
-use crate::classify::{PointSegmentLocation, SegmentIntersection};
+use crate::classify::{PointSegmentLocation, Segment3Intersection, SegmentIntersection};
 use crate::geometry::{Point2, Point3, Segment2Facts};
 use crate::predicate::{
     Certainty, Escalation, PredicateOutcome, PredicatePolicy, RefinementNeed, Sign,
@@ -175,6 +175,30 @@ impl<'a> PreparedSegment3<'a> {
         policy: PredicatePolicy,
     ) -> PredicateOutcome<bool> {
         point_on_segment3_with_policy(self.start, self.end, point, policy)
+    }
+
+    /// Classify this segment's intersection with another prepared 3D segment.
+    pub fn classify_intersection(
+        &self,
+        other: &PreparedSegment3,
+    ) -> PredicateOutcome<Segment3Intersection> {
+        self.classify_intersection_with_policy(other, PredicatePolicy::default())
+    }
+
+    /// Classify this segment's intersection with another prepared 3D segment
+    /// using an explicit predicate policy.
+    pub fn classify_intersection_with_policy(
+        &self,
+        other: &PreparedSegment3,
+        policy: PredicatePolicy,
+    ) -> PredicateOutcome<Segment3Intersection> {
+        classify_segment3_intersection_with_policy(
+            self.start,
+            self.end,
+            other.start,
+            other.end,
+            policy,
+        )
     }
 }
 
@@ -409,6 +433,154 @@ pub fn classify_segment_intersection(
     classify_segment_intersection_with_policy(a, b, c, d, PredicatePolicy::default())
 }
 
+/// Classify the intersection of closed 3D segments `ab` and `cd`.
+pub fn classify_segment3_intersection(
+    a: &Point3,
+    b: &Point3,
+    c: &Point3,
+    d: &Point3,
+) -> PredicateOutcome<Segment3Intersection> {
+    classify_segment3_intersection_with_policy(a, b, c, d, PredicatePolicy::default())
+}
+
+/// Classify the intersection of closed 3D segments `ab` and `cd` with an
+/// explicit predicate escalation policy.
+///
+/// The nonparallel branch uses the standard exact line-parameter identities
+/// `t = ((c-a) x (d-c))_k / ((b-a) x (d-c))_k` and
+/// `u = ((c-a) x (b-a))_k / ((b-a) x (d-c))_k` on a certified nonzero
+/// component `k`. It compares the rational parameters to `[0, 1]` without
+/// division. The parallel branch reduces to exact collinear point/segment
+/// tests. This follows Yap's exact-geometric-computation contract that the
+/// combinatorial relation is decided by exact signs, not primitive-float
+/// tolerances; see Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997). The geometric classification mirrors
+/// the segment-intersection treatment in de Berg, Cheong, van Kreveld, and
+/// Overmars, *Computational Geometry: Algorithms and Applications*, 3rd ed.,
+/// Springer, 2008, lifted to 3D with explicit skew/coplanar separation.
+pub fn classify_segment3_intersection_with_policy(
+    a: &Point3,
+    b: &Point3,
+    c: &Point3,
+    d: &Point3,
+    policy: PredicatePolicy,
+) -> PredicateOutcome<Segment3Intersection> {
+    let mut trace = DecisionTrace::default();
+
+    let first_degenerate = match points_equal3(a, b, policy, &mut trace) {
+        Ok(value) => value,
+        Err(unknown) => return unknown.into_outcome(),
+    };
+    let second_degenerate = match points_equal3(c, d, policy, &mut trace) {
+        Ok(value) => value,
+        Err(unknown) => return unknown.into_outcome(),
+    };
+
+    if first_degenerate && second_degenerate {
+        return match points_equal3(a, c, policy, &mut trace) {
+            Ok(true) => PredicateOutcome::decided(
+                Segment3Intersection::Identical,
+                trace.certainty,
+                trace.stage,
+            ),
+            Ok(false) => PredicateOutcome::decided(
+                Segment3Intersection::CoplanarDisjoint,
+                trace.certainty,
+                trace.stage,
+            ),
+            Err(unknown) => unknown.into_outcome(),
+        };
+    }
+    if first_degenerate {
+        return point_segment3_intersection_from_classifier(classify_point_segment3_with_policy(
+            c, d, a, policy,
+        ));
+    }
+    if second_degenerate {
+        return point_segment3_intersection_from_classifier(classify_point_segment3_with_policy(
+            a, b, c, policy,
+        ));
+    }
+
+    let ab = vector3_between(a, b);
+    let cd = vector3_between(c, d);
+    let ac = vector3_between(a, c);
+    let normal = cross3(&ab, &cd);
+    let normal_signs = match signs3(&normal, policy, &mut trace) {
+        Ok(signs) => signs,
+        Err(unknown) => return unknown.into_outcome(),
+    };
+
+    if normal_signs == [Sign::Zero, Sign::Zero, Sign::Zero] {
+        let collinearity = cross3(&ac, &ab);
+        return match signs3(&collinearity, policy, &mut trace) {
+            Ok([Sign::Zero, Sign::Zero, Sign::Zero]) => {
+                match classify_collinear_segments3(a, b, c, d, policy, &mut trace) {
+                    Ok(relation) => {
+                        PredicateOutcome::decided(relation, trace.certainty, trace.stage)
+                    }
+                    Err(unknown) => unknown.into_outcome(),
+                }
+            }
+            Ok(_) => PredicateOutcome::decided(
+                Segment3Intersection::CoplanarDisjoint,
+                trace.certainty,
+                trace.stage,
+            ),
+            Err(unknown) => unknown.into_outcome(),
+        };
+    }
+
+    let coplanarity = dot3(&ac, &normal);
+    match sign_of_real(&coplanarity, policy, &mut trace) {
+        Ok(Sign::Zero) => {}
+        Ok(_) => {
+            return PredicateOutcome::decided(
+                Segment3Intersection::SkewDisjoint,
+                trace.certainty,
+                trace.stage,
+            );
+        }
+        Err(unknown) => return unknown.into_outcome(),
+    }
+
+    let axis = nonzero_axis(normal_signs).expect("normal has a certified nonzero component");
+    let t_numerators = cross3(&ac, &cd);
+    let u_numerators = cross3(&ac, &ab);
+    let t = match classify_parameter_01(
+        coordinate(&t_numerators, axis),
+        coordinate(&normal, axis),
+        policy,
+        &mut trace,
+    ) {
+        Ok(location) => location,
+        Err(unknown) => return unknown.into_outcome(),
+    };
+    let u = match classify_parameter_01(
+        coordinate(&u_numerators, axis),
+        coordinate(&normal, axis),
+        policy,
+        &mut trace,
+    ) {
+        Ok(location) => location,
+        Err(unknown) => return unknown.into_outcome(),
+    };
+
+    if !t.on_segment || !u.on_segment {
+        return PredicateOutcome::decided(
+            Segment3Intersection::CoplanarDisjoint,
+            trace.certainty,
+            trace.stage,
+        );
+    }
+    let relation = if t.on_boundary || u.on_boundary {
+        Segment3Intersection::EndpointTouch
+    } else {
+        Segment3Intersection::Proper
+    };
+    PredicateOutcome::decided(relation, trace.certainty, trace.stage)
+}
+
 /// Classify the intersection of closed segments `ab` and `cd` with an explicit
 /// predicate escalation policy.
 pub fn classify_segment_intersection_with_policy(
@@ -615,6 +787,27 @@ fn point_segment_intersection_from_classifier(
     }
 }
 
+fn point_segment3_intersection_from_classifier(
+    outcome: PredicateOutcome<PointSegmentLocation>,
+) -> PredicateOutcome<Segment3Intersection> {
+    match outcome {
+        PredicateOutcome::Decided {
+            value,
+            certainty,
+            stage,
+        } => PredicateOutcome::decided(
+            if value.is_on_segment() {
+                Segment3Intersection::EndpointTouch
+            } else {
+                Segment3Intersection::CoplanarDisjoint
+            },
+            certainty,
+            stage,
+        ),
+        PredicateOutcome::Unknown { needed, stage } => PredicateOutcome::unknown(needed, stage),
+    }
+}
+
 fn classify_collinear_segments(
     a: &Point2,
     b: &Point2,
@@ -647,6 +840,41 @@ fn classify_collinear_segments(
         0 => SegmentIntersection::Disjoint,
         1 => SegmentIntersection::EndpointTouch,
         _ => SegmentIntersection::CollinearOverlap,
+    })
+}
+
+fn classify_collinear_segments3(
+    a: &Point3,
+    b: &Point3,
+    c: &Point3,
+    d: &Point3,
+    policy: PredicatePolicy,
+    trace: &mut DecisionTrace,
+) -> Result<Segment3Intersection, UnknownDecision> {
+    if (points_equal3(a, c, policy, trace)? && points_equal3(b, d, policy, trace)?)
+        || (points_equal3(a, d, policy, trace)? && points_equal3(b, c, policy, trace)?)
+    {
+        return Ok(Segment3Intersection::Identical);
+    }
+
+    let mut shared = Vec::new();
+    if classify_collinear_point_segment3(a, b, c, policy, trace)?.is_on_segment() {
+        push_unique_point3(&mut shared, c, policy, trace)?;
+    }
+    if classify_collinear_point_segment3(a, b, d, policy, trace)?.is_on_segment() {
+        push_unique_point3(&mut shared, d, policy, trace)?;
+    }
+    if classify_collinear_point_segment3(c, d, a, policy, trace)?.is_on_segment() {
+        push_unique_point3(&mut shared, a, policy, trace)?;
+    }
+    if classify_collinear_point_segment3(c, d, b, policy, trace)?.is_on_segment() {
+        push_unique_point3(&mut shared, b, policy, trace)?;
+    }
+
+    Ok(match shared.len() {
+        0 => Segment3Intersection::CoplanarDisjoint,
+        1 => Segment3Intersection::EndpointTouch,
+        _ => Segment3Intersection::CollinearOverlap,
     })
 }
 
@@ -742,6 +970,107 @@ fn point_segment3_cross_signs(
     ])
 }
 
+#[derive(Clone, Debug)]
+struct Vector3Real {
+    x: Real,
+    y: Real,
+    z: Real,
+}
+
+#[derive(Clone, Copy, Debug)]
+struct Parameter01 {
+    on_segment: bool,
+    on_boundary: bool,
+}
+
+fn vector3_between(start: &Point3, end: &Point3) -> Vector3Real {
+    Vector3Real {
+        x: sub_ref(&end.x, &start.x),
+        y: sub_ref(&end.y, &start.y),
+        z: sub_ref(&end.z, &start.z),
+    }
+}
+
+fn cross3(left: &Vector3Real, right: &Vector3Real) -> Vector3Real {
+    Vector3Real {
+        x: sub_ref(&mul_ref(&left.y, &right.z), &mul_ref(&left.z, &right.y)),
+        y: sub_ref(&mul_ref(&left.z, &right.x), &mul_ref(&left.x, &right.z)),
+        z: sub_ref(&mul_ref(&left.x, &right.y), &mul_ref(&left.y, &right.x)),
+    }
+}
+
+fn dot3(left: &Vector3Real, right: &Vector3Real) -> Real {
+    Real::signed_product_sum(
+        [true; 3],
+        [
+            [&left.x, &right.x],
+            [&left.y, &right.y],
+            [&left.z, &right.z],
+        ],
+    )
+}
+
+fn signs3(
+    value: &Vector3Real,
+    policy: PredicatePolicy,
+    trace: &mut DecisionTrace,
+) -> Result<[Sign; 3], UnknownDecision> {
+    Ok([
+        sign_of_real(&value.x, policy, trace)?,
+        sign_of_real(&value.y, policy, trace)?,
+        sign_of_real(&value.z, policy, trace)?,
+    ])
+}
+
+fn nonzero_axis(signs: [Sign; 3]) -> Option<usize> {
+    signs.into_iter().position(|sign| sign != Sign::Zero)
+}
+
+fn coordinate(vector: &Vector3Real, axis: usize) -> &Real {
+    match axis {
+        0 => &vector.x,
+        1 => &vector.y,
+        2 => &vector.z,
+        _ => unreachable!("3D vector axis is in 0..3"),
+    }
+}
+
+fn classify_parameter_01(
+    numerator: &Real,
+    denominator: &Real,
+    policy: PredicatePolicy,
+    trace: &mut DecisionTrace,
+) -> Result<Parameter01, UnknownDecision> {
+    let denominator_sign = sign_of_real(denominator, policy, trace)?;
+    let (normalized_numerator, normalized_denominator) = if denominator_sign == Sign::Negative {
+        (
+            sub_ref(&Real::from(0), numerator),
+            sub_ref(&Real::from(0), denominator),
+        )
+    } else {
+        (numerator.clone(), denominator.clone())
+    };
+    let numerator_sign = sign_of_real(&normalized_numerator, policy, trace)?;
+    if numerator_sign == Sign::Negative {
+        return Ok(Parameter01 {
+            on_segment: false,
+            on_boundary: false,
+        });
+    }
+    let upper_margin = sub_ref(&normalized_denominator, &normalized_numerator);
+    let upper_sign = sign_of_real(&upper_margin, policy, trace)?;
+    if upper_sign == Sign::Negative {
+        return Ok(Parameter01 {
+            on_segment: false,
+            on_boundary: false,
+        });
+    }
+    Ok(Parameter01 {
+        on_segment: true,
+        on_boundary: numerator_sign == Sign::Zero || upper_sign == Sign::Zero,
+    })
+}
+
 fn between_closed(
     a: &Real,
     b: &Real,
@@ -793,6 +1122,21 @@ fn push_unique_point<'a>(
 ) -> Result<(), UnknownDecision> {
     for existing in points.iter() {
         if points_equal(existing, point, policy, trace)? {
+            return Ok(());
+        }
+    }
+    points.push(point);
+    Ok(())
+}
+
+fn push_unique_point3<'a>(
+    points: &mut Vec<&'a Point3>,
+    point: &'a Point3,
+    policy: PredicatePolicy,
+    trace: &mut DecisionTrace,
+) -> Result<(), UnknownDecision> {
+    for existing in points.iter() {
+        if points_equal3(existing, point, policy, trace)? {
             return Ok(());
         }
     }
@@ -1116,5 +1460,63 @@ mod tests {
             Some(PointSegmentLocation::OnSegment)
         );
         assert_eq!(prepared.point_on_segment(&p3(0, 1, 2)).value(), Some(false));
+    }
+
+    #[test]
+    fn segment3_classifier_distinguishes_skew_coplanar_and_crossing_cases() {
+        assert_eq!(
+            classify_segment3_intersection(&p3(0, 0, 0), &p3(4, 0, 0), &p3(2, -1, 0), &p3(2, 1, 0))
+                .value(),
+            Some(Segment3Intersection::Proper)
+        );
+        assert_eq!(
+            classify_segment3_intersection(&p3(0, 0, 0), &p3(4, 0, 0), &p3(4, 0, 0), &p3(4, 2, 0))
+                .value(),
+            Some(Segment3Intersection::EndpointTouch)
+        );
+        assert_eq!(
+            classify_segment3_intersection(&p3(0, 0, 0), &p3(4, 0, 0), &p3(5, 1, 0), &p3(6, 1, 0))
+                .value(),
+            Some(Segment3Intersection::CoplanarDisjoint)
+        );
+        assert_eq!(
+            classify_segment3_intersection(&p3(0, 0, 0), &p3(4, 0, 0), &p3(2, -1, 1), &p3(2, 1, 1))
+                .value(),
+            Some(Segment3Intersection::SkewDisjoint)
+        );
+    }
+
+    #[test]
+    fn segment3_classifier_reports_collinear_overlap_and_identical() {
+        assert_eq!(
+            classify_segment3_intersection(&p3(0, 0, 0), &p3(4, 4, 4), &p3(2, 2, 2), &p3(6, 6, 6))
+                .value(),
+            Some(Segment3Intersection::CollinearOverlap)
+        );
+        assert_eq!(
+            classify_segment3_intersection(&p3(0, 0, 0), &p3(4, 4, 4), &p3(4, 4, 4), &p3(0, 0, 0))
+                .value(),
+            Some(Segment3Intersection::Identical)
+        );
+        assert_eq!(
+            classify_segment3_intersection(&p3(0, 0, 0), &p3(4, 4, 4), &p3(5, 5, 5), &p3(6, 6, 6))
+                .value(),
+            Some(Segment3Intersection::CoplanarDisjoint)
+        );
+    }
+
+    #[test]
+    fn prepared_segment3_classifies_intersection() {
+        let a = p3(0, 0, 0);
+        let b = p3(4, 0, 0);
+        let c = p3(2, -1, 0);
+        let d = p3(2, 1, 0);
+        let first = PreparedSegment3::new(&a, &b);
+        let second = PreparedSegment3::new(&c, &d);
+
+        assert_eq!(
+            first.classify_intersection(&second).value(),
+            Some(Segment3Intersection::Proper)
+        );
     }
 }

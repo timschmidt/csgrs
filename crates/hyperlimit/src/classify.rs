@@ -34,6 +34,17 @@ pub enum PlaneSide {
     Above,
 }
 
+/// Relation between a closed 3D AABB and an oriented plane.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum PlaneAabbRelation {
+    /// The entire box lies below the plane.
+    Below,
+    /// The entire box lies above the plane.
+    Above,
+    /// The box intersects or touches the plane.
+    Intersecting,
+}
+
 /// Relation between a closed 3D segment and an oriented plane.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum PlaneSegmentRelation {
@@ -135,6 +146,90 @@ pub enum SpherePointLocation {
     Inside,
 }
 
+/// Relation between a 2D circle boundary and an infinite line.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CircleLineRelation {
+    /// The line does not meet the circle boundary.
+    Disjoint,
+    /// The line touches the circle boundary at one point.
+    Tangent,
+    /// The line crosses the circle boundary at two points.
+    Secant,
+    /// The supplied line endpoints are identical, so the query degenerates to
+    /// point/circle classification.
+    DegenerateLine,
+}
+
+/// Relation between a 2D circle boundary and a closed segment.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CircleSegmentRelation {
+    /// The segment does not meet the circle boundary.
+    Disjoint,
+    /// The segment touches the circle boundary at exactly one point.
+    Tangent,
+    /// The segment crosses the circle boundary at two boundary points.
+    Secant,
+    /// The nondegenerate segment lies strictly inside the circle disk, so it
+    /// has no boundary intersection.
+    ContainedInside,
+}
+
+/// Location of a point relative to an oriented convex region.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ConvexPointLocation {
+    /// The input convex carrier is too small or structurally degenerate.
+    Degenerate,
+    /// The point lies outside at least one convex halfspace.
+    Outside,
+    /// The point lies on at least one boundary edge or face and outside none.
+    Boundary,
+    /// The point lies strictly inside every boundary halfspace.
+    Inside,
+}
+
+impl ConvexPointLocation {
+    /// Returns whether the point is inside the closed convex region.
+    pub const fn is_inside_or_boundary(self) -> bool {
+        matches!(self, Self::Inside | Self::Boundary)
+    }
+}
+
+/// Intersection relation between two explicit 3D spheres.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum SphereIntersection {
+    /// The closed spheres have no point in common.
+    Disjoint,
+    /// The closed spheres touch at one or more boundary points.
+    Touching,
+    /// The closed spheres have positive-volume or contained overlap.
+    Overlapping,
+}
+
+impl SphereIntersection {
+    /// Returns whether the closed spheres intersect inclusively.
+    pub const fn intersects(self) -> bool {
+        !matches!(self, Self::Disjoint)
+    }
+}
+
+/// Intersection relation between a closed 3D AABB and an explicit sphere.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum AabbSphereIntersection {
+    /// The box and sphere have no point in common.
+    Disjoint,
+    /// The box and sphere touch at a boundary point or boundary patch.
+    Touching,
+    /// The box and sphere overlap beyond boundary contact.
+    Overlapping,
+}
+
+impl AabbSphereIntersection {
+    /// Returns whether the closed box and closed sphere intersect inclusively.
+    pub const fn intersects(self) -> bool {
+        !matches!(self, Self::Disjoint)
+    }
+}
+
 /// Location of a point relative to a closed 2D segment.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum PointSegmentLocation {
@@ -170,6 +265,72 @@ pub enum SegmentIntersection {
     CollinearOverlap,
     /// The segments have the same two endpoints, in either order.
     Identical,
+}
+
+/// Classification of two closed 3D segments.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum Segment3Intersection {
+    /// The segments are not coplanar and therefore cannot intersect.
+    SkewDisjoint,
+    /// The segments are coplanar but have no points in common.
+    CoplanarDisjoint,
+    /// The segments cross at one point interior to both segments.
+    Proper,
+    /// The segments touch at a shared endpoint, or one endpoint lies on the
+    /// other segment.
+    EndpointTouch,
+    /// The segments are collinear and overlap over a positive-length interval,
+    /// but they are not identical as closed endpoint pairs.
+    CollinearOverlap,
+    /// The segments have the same two endpoints, in either order. Two equal
+    /// degenerate point-segments are also classified as identical.
+    Identical,
+}
+
+/// Intersection relation between a closed 3D segment and a triangle.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum SegmentTriangleIntersection {
+    /// The segment and triangle have no point in common.
+    Disjoint,
+    /// The segment crosses the relative interior of the triangle at an
+    /// interior point of the segment.
+    Proper,
+    /// The segment touches a triangle edge, vertex, or touches the triangle at
+    /// one of the segment endpoints.
+    BoundaryTouch,
+    /// The segment lies on the triangle's supporting plane. Coplanar
+    /// segment/triangle overlap needs a planar arrangement predicate owned by a
+    /// higher crate, so `hyperlimit` reports the exact coplanar relation
+    /// explicitly instead of using a tolerance projection.
+    Coplanar,
+}
+
+impl SegmentTriangleIntersection {
+    /// Returns whether the relation has at least one shared point.
+    pub const fn intersects(self) -> bool {
+        !matches!(self, Self::Disjoint)
+    }
+}
+
+/// Intersection relation between a 3D ray and a triangle.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum RayTriangleIntersection {
+    /// The ray and triangle have no point in common.
+    Disjoint,
+    /// The ray intersects the relative interior of the triangle at positive
+    /// ray parameter.
+    Proper,
+    /// The ray touches a triangle edge or vertex, or starts on the triangle.
+    BoundaryTouch,
+    /// The ray lies on the triangle's supporting plane.
+    Coplanar,
+}
+
+impl RayTriangleIntersection {
+    /// Returns whether the relation has at least one shared point.
+    pub const fn intersects(self) -> bool {
+        !matches!(self, Self::Disjoint)
+    }
 }
 
 /// Location of a point relative to a closed 2D polygon ring.

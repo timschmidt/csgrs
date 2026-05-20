@@ -2,7 +2,7 @@
 
 This file is generated from Criterion output under `target/criterion`.
 
-Generated at Unix timestamp `1778930716`.
+Generated at Unix timestamp `1779245034`.
 
 ## Commands
 

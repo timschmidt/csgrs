@@ -1,8 +1,12 @@
 use hyperlimit::{
-    Plane3, Point2, Point3, PredicatePolicy, classify_point_line, classify_point_line_batch,
-    classify_point_oriented_plane, classify_point_oriented_plane_batch, classify_point_plane,
-    classify_point_plane_batch, incircle2d, incircle2d_batch, insphere3d, insphere3d_batch,
-    orient2d, orient2d_batch, orient3d, orient3d_batch,
+    Plane3, Point2, Point3, PredicatePolicy, classify_circle_line2, classify_circle_line2_batch,
+    classify_circle_segment2, classify_circle_segment2_batch, classify_point_line,
+    classify_point_line_batch, classify_point_oriented_plane, classify_point_oriented_plane_batch,
+    classify_point_plane, classify_point_plane_batch, classify_ray_triangle3_intersection,
+    classify_ray_triangle3_intersection_batch, classify_segment_triangle3_intersection,
+    classify_segment_triangle3_intersection_batch, classify_segment3_intersection,
+    classify_segment3_intersection_batch, incircle2d, incircle2d_batch, insphere3d,
+    insphere3d_batch, orient2d, orient2d_batch, orient3d, orient3d_batch,
 };
 
 type Real = hyperreal::Real;
@@ -118,6 +122,72 @@ fn sequential_batches_match_scalar_predicates() {
         insphere_cases
             .iter()
             .map(|(a, b, c, d, e)| insphere3d(a, b, c, d, e))
+            .collect::<Vec<_>>()
+    );
+
+    let segment3_cases = vec![(
+        p3(0.0, 0.0, 0.0),
+        p3(4.0, 0.0, 0.0),
+        p3(2.0, -1.0, 0.0),
+        p3(2.0, 1.0, 0.0),
+    )];
+    assert_eq!(
+        classify_segment3_intersection_batch(&segment3_cases),
+        segment3_cases
+            .iter()
+            .map(|(a, b, c, d)| classify_segment3_intersection(a, b, c, d))
+            .collect::<Vec<_>>()
+    );
+
+    let segment_triangle_cases = vec![(
+        p3(1.0, 1.0, -1.0),
+        p3(1.0, 1.0, 1.0),
+        p3(0.0, 0.0, 0.0),
+        p3(4.0, 0.0, 0.0),
+        p3(0.0, 4.0, 0.0),
+    )];
+    assert_eq!(
+        classify_segment_triangle3_intersection_batch(&segment_triangle_cases),
+        segment_triangle_cases
+            .iter()
+            .map(|(p, q, a, b, c)| classify_segment_triangle3_intersection(p, q, a, b, c))
+            .collect::<Vec<_>>()
+    );
+
+    let ray_triangle_cases = vec![(
+        p3(1.0, 1.0, -1.0),
+        p3(0.0, 0.0, 1.0),
+        p3(0.0, 0.0, 0.0),
+        p3(4.0, 0.0, 0.0),
+        p3(0.0, 4.0, 0.0),
+    )];
+    assert_eq!(
+        classify_ray_triangle3_intersection_batch(&ray_triangle_cases),
+        ray_triangle_cases
+            .iter()
+            .map(|(origin, direction, a, b, c)| {
+                classify_ray_triangle3_intersection(origin, direction, a, b, c)
+            })
+            .collect::<Vec<_>>()
+    );
+
+    let circle_cases = vec![(p2(0.0, 0.0), real(25.0), p2(-10.0, 5.0), p2(10.0, 5.0))];
+    assert_eq!(
+        classify_circle_line2_batch(&circle_cases),
+        circle_cases
+            .iter()
+            .map(|(center, radius_squared, a, b)| {
+                classify_circle_line2(center, radius_squared, a, b)
+            })
+            .collect::<Vec<_>>()
+    );
+    assert_eq!(
+        classify_circle_segment2_batch(&circle_cases),
+        circle_cases
+            .iter()
+            .map(|(center, radius_squared, a, b)| {
+                classify_circle_segment2(center, radius_squared, a, b)
+            })
             .collect::<Vec<_>>()
     );
 }

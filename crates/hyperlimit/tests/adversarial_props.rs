@@ -1,6 +1,14 @@
 use hyperlimit::{
-    Plane3, PlaneSide, Point2, Point3, PredicateOutcome, Sign, classify_point_line,
-    classify_point_plane, incircle2d, orient2d, orient2d_batch, orient3d,
+    AabbSphereIntersection, CircleLineRelation, CircleSegmentRelation, ConvexPointLocation, Plane3,
+    PlaneSide, Point2, Point3, PredicateOutcome, Sign, SphereIntersection,
+    classify_aabb3_sphere_intersection, classify_circle_line2, classify_circle_segment2,
+    classify_homogeneous_point_plane, classify_point_convex_planes3,
+    classify_point_convex_polygon2, classify_point_line, classify_point_plane,
+    classify_ray_triangle3_intersection, classify_segment_triangle3_intersection,
+    classify_segment3_intersection, classify_sphere3_intersection,
+    compare_point_line3_distance_squared, compare_point_plane_distance_squared,
+    compare_point_segment3_distance_squared, incircle2d, intersect_three_planes,
+    intersect_two_planes, orient2d, orient2d_batch, orient3d,
 };
 use proptest::prelude::*;
 
@@ -135,6 +143,195 @@ proptest! {
         if let Some(sign) = value(orient3d(&a, &b, &c, &d)) {
             prop_assert_eq!(sign, Sign::Zero);
         }
+    }
+
+    #[test]
+    fn homogeneous_coordinate_plane_intersections_round_trip_without_scalar_division(
+        x in -1000_i32..=1000,
+        y in -1000_i32..=1000,
+        z in -1000_i32..=1000,
+    ) {
+        // Yap's Section 6.3 recommends common/homogeneous vector
+        // representations for rational geometric objects. This generated test
+        // keeps the oracle at the object level: three coordinate planes should
+        // produce one homogeneous point that satisfies all three planes before
+        // any affine division is requested.
+        let x_plane = Plane3::new(p3(1.0, 0.0, 0.0), Real::from(-x));
+        let y_plane = Plane3::new(p3(0.0, 1.0, 0.0), Real::from(-y));
+        let z_plane = Plane3::new(p3(0.0, 0.0, 1.0), Real::from(-z));
+
+        let point = intersect_three_planes(&x_plane, &y_plane, &z_plane);
+        prop_assert_eq!(&point.w, &Real::from(1));
+        prop_assert_eq!(point.to_affine_point().unwrap(), p3(x as f64, y as f64, z as f64));
+        for plane in [&x_plane, &y_plane, &z_plane] {
+            prop_assert_eq!(
+                classify_homogeneous_point_plane(&point, plane).value(),
+                Some(true)
+            );
+        }
+
+        let line = intersect_two_planes(&x_plane, &y_plane);
+        prop_assert_eq!(line.intersect_plane(&z_plane), point);
+    }
+
+    #[test]
+    fn segment3_intersection_is_symmetric_for_generated_integer_segments(
+        a in point3(),
+        b in point3(),
+        c in point3(),
+        d in point3(),
+    ) {
+        // Symmetry is the minimum metamorphic law for a segment/segment
+        // classifier. The oracle is the exact relation itself under operand
+        // exchange, not an approximate closest-point computation. This follows
+        // Yap's exact decision boundary in "Towards Exact Geometric
+        // Computation," Computational Geometry 7.1-2 (1997).
+        let relation = classify_segment3_intersection(&a, &b, &c, &d).value();
+        prop_assert_eq!(
+            relation,
+            classify_segment3_intersection(&c, &d, &a, &b).value()
+        );
+        prop_assert_eq!(
+            relation,
+            classify_segment3_intersection(&b, &a, &c, &d).value()
+        );
+    }
+
+    #[test]
+    fn zero_distance_feature_comparisons_remain_exact_on_incidence(
+        a in point3(),
+        b in point3(),
+    ) {
+        let zero = Real::from(0);
+        prop_assert_eq!(
+            compare_point_line3_distance_squared(&a, &a, &b, &zero).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        prop_assert_eq!(
+            compare_point_segment3_distance_squared(&a, &a, &b, &zero).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+
+        let plane = Plane3::new(p3(0.0, 0.0, 1.0), -a.z.clone());
+        prop_assert_eq!(
+            compare_point_plane_distance_squared(&a, &plane, &zero).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        prop_assert_eq!(
+            classify_sphere3_intersection(&a, &zero, &a, &zero).value(),
+            Some(SphereIntersection::Touching)
+        );
+        prop_assert_eq!(
+            classify_aabb3_sphere_intersection(&a, &a, &a, &zero).value(),
+            Some(AabbSphereIntersection::Touching)
+        );
+    }
+
+    #[test]
+    fn generated_vertical_segment_and_ray_hit_axis_triangle(
+        x in 0_i32..=20,
+        y in 0_i32..=20,
+    ) {
+        let a = p3(0.0, 0.0, 0.0);
+        let b = p3(40.0, 0.0, 0.0);
+        let c = p3(0.0, 40.0, 0.0);
+        let point = p3(x as f64, y as f64, 0.0);
+        let below = p3(x as f64, y as f64, -5.0);
+        let above = p3(x as f64, y as f64, 5.0);
+        let direction = p3(0.0, 0.0, 1.0);
+        let expected_segment_intersects = x + y <= 40;
+
+        prop_assert_eq!(
+            classify_segment_triangle3_intersection(&below, &above, &a, &b, &c)
+                .value()
+                .map(|relation| relation.intersects()),
+            Some(expected_segment_intersects)
+        );
+        prop_assert_eq!(
+            classify_ray_triangle3_intersection(&below, &direction, &a, &b, &c)
+                .value()
+                .map(|relation| relation.intersects()),
+            Some(expected_segment_intersects)
+        );
+        if expected_segment_intersects {
+            prop_assert_eq!(
+                compare_point_plane_distance_squared(
+                    &point,
+                    &Plane3::new(p3(0.0, 0.0, 1.0), Real::from(0)),
+                    &Real::from(0)
+                ).value(),
+                Some(std::cmp::Ordering::Equal)
+            );
+        }
+    }
+
+    #[test]
+    fn generated_horizontal_circle_lines_match_radius_squared(y in -10_i32..=10) {
+        let center = p2(0.0, 0.0);
+        let radius_squared = Real::from(25);
+        let line_relation = if y.abs() < 5 {
+            CircleLineRelation::Secant
+        } else if y.abs() == 5 {
+            CircleLineRelation::Tangent
+        } else {
+            CircleLineRelation::Disjoint
+        };
+        let segment_relation = if y.abs() < 5 {
+            CircleSegmentRelation::Secant
+        } else if y.abs() == 5 {
+            CircleSegmentRelation::Tangent
+        } else {
+            CircleSegmentRelation::Disjoint
+        };
+
+        prop_assert_eq!(
+            classify_circle_line2(&center, &radius_squared, &p2(-10.0, y as f64), &p2(10.0, y as f64)).value(),
+            Some(line_relation)
+        );
+        prop_assert_eq!(
+            classify_circle_segment2(&center, &radius_squared, &p2(-10.0, y as f64), &p2(10.0, y as f64)).value(),
+            Some(segment_relation)
+        );
+    }
+
+    #[test]
+    fn generated_axis_boxes_match_convex_classifiers(x in -2_i32..=6, y in -2_i32..=6, z in -2_i32..=6) {
+        let square = vec![p2(0.0, 0.0), p2(4.0, 0.0), p2(4.0, 4.0), p2(0.0, 4.0)];
+        let expected_2d = if (0..=4).contains(&x) && (0..=4).contains(&y) {
+            if x == 0 || x == 4 || y == 0 || y == 4 {
+                ConvexPointLocation::Boundary
+            } else {
+                ConvexPointLocation::Inside
+            }
+        } else {
+            ConvexPointLocation::Outside
+        };
+        prop_assert_eq!(
+            classify_point_convex_polygon2(&square, &p2(x as f64, y as f64)).value(),
+            Some(expected_2d)
+        );
+
+        let planes = vec![
+            Plane3::new(p3(-1.0, 0.0, 0.0), Real::from(0)),
+            Plane3::new(p3(1.0, 0.0, 0.0), Real::from(-4)),
+            Plane3::new(p3(0.0, -1.0, 0.0), Real::from(0)),
+            Plane3::new(p3(0.0, 1.0, 0.0), Real::from(-4)),
+            Plane3::new(p3(0.0, 0.0, -1.0), Real::from(0)),
+            Plane3::new(p3(0.0, 0.0, 1.0), Real::from(-4)),
+        ];
+        let expected_3d = if (0..=4).contains(&x) && (0..=4).contains(&y) && (0..=4).contains(&z) {
+            if x == 0 || x == 4 || y == 0 || y == 4 || z == 0 || z == 4 {
+                ConvexPointLocation::Boundary
+            } else {
+                ConvexPointLocation::Inside
+            }
+        } else {
+            ConvexPointLocation::Outside
+        };
+        prop_assert_eq!(
+            classify_point_convex_planes3(&planes, &p3(x as f64, y as f64, z as f64)).value(),
+            Some(expected_3d)
+        );
     }
 
     #[test]
