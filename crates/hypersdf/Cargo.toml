@@ -1,0 +1,22 @@
+[package]
+name = "hypersdf"
+version = "0.1.0"
+edition = "2024"
+description = "Exact-aware signed-distance and implicit-field carriers for the Hyper stack"
+license = "Apache-2.0"
+
+[dependencies]
+hyperlattice = { path = "../hyperlattice" }
+hyperlimit = { path = "../hyperlimit" }
+hyperreal = { path = "../hyperreal" }
+
+[dev-dependencies]
+criterion = "0.5"
+proptest = "1.7.0"
+
+[[bench]]
+name = "classification"
+harness = false
+
+[patch.crates-io]
+hyperreal = { path = "../hyperreal" }
