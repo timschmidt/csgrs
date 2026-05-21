@@ -493,6 +493,17 @@ fn adversarial_bezier_and_bspline_evaluate_control_points_through_hyperreal() {
 }
 
 #[test]
+fn adversarial_hilbert_curve_uses_finite_hyperreal_bounds() {
+    let base = Profile::rounded_rectangle(6.0, 4.0, 0.5, 4, ());
+    let hilbert = base.hilbert_curve(3, 0.25);
+    assert!(!hilbert.is_empty());
+    assert_profile_sane(&hilbert);
+
+    let collapsed = base.hilbert_curve(2, 1.0e6);
+    assert_profile_sane(&collapsed);
+}
+
+#[test]
 fn adversarial_invalid_polygon_catalog_is_contained() {
     let catalogs: &[&[[Real; 2]]] = &[
         &[],
