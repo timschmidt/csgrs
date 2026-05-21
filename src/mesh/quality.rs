@@ -1,8 +1,9 @@
 //! Mesh quality metrics for triangles, vertices, and aggregate mesh health.
 
 use crate::float_types::{
-    HReal, PI, Real, hreal_div, hreal_from_f64, hreal_gt_f64, hreal_mean, hreal_sample_stddev,
-    hreal_sign, hreal_to_f64, htriangle_area_hreal, hvector3_from_point3, tolerance,
+    HReal, PI, Real, hdegrees_to_radians, hreal_cmp_f64, hreal_div, hreal_from_f64,
+    hreal_gt_f64, hreal_mean, hreal_sample_stddev, hreal_sign, hreal_to_f64,
+    htriangle_area_hreal, hvector3_from_point3, tolerance,
 };
 use crate::mesh::Mesh;
 use crate::vertex::Vertex;
@@ -30,6 +31,28 @@ fn hyper_edge_length(a: &Point3<Real>, b: &Point3<Real>) -> Option<Real> {
     let b = hvector3_from_point3(b)?;
     let length = a.squared_distance(&b).sqrt().ok()?;
     hreal_to_f64(&length)
+}
+
+fn boundary_scalar_cmp(lhs: Real, rhs: Real) -> Ordering {
+    hreal_cmp_f64(lhs, rhs)
+}
+
+fn boundary_scalar_lt(lhs: Real, rhs: Real) -> bool {
+    matches!(boundary_scalar_cmp(lhs, rhs), Ordering::Less)
+}
+
+fn boundary_scalar_gt(lhs: Real, rhs: Real) -> bool {
+    matches!(boundary_scalar_cmp(lhs, rhs), Ordering::Greater)
+}
+
+fn boundary_scalar_min(values: impl IntoIterator<Item = Real>) -> Option<Real> {
+    values.into_iter().reduce(|acc, value| {
+        if boundary_scalar_lt(value, acc) {
+            value
+        } else {
+            acc
+        }
+    })
 }
 
 fn hreal_cmp(lhs: &HReal, rhs: &HReal) -> Option<Ordering> {
@@ -336,6 +359,16 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// - **Valence distribution**: Vertex connectivity regularity
     /// - **Aspect ratio bounds**: Shape quality bounds
     ///
+    /// Aggregate comparisons are evaluated through the same
+    /// `hyperreal::Real` boundary comparators used by per-triangle metrics;
+    /// the sliver threshold is converted through the shared degree adapter
+    /// rather than primitive `to_radians`. This keeps reporting decisions
+    /// aligned with Yap's exact-geometric-computation boundary discipline
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>) and the standard
+    /// angle-threshold quality criteria described in Shewchuk, "What Is a Good
+    /// Linear Element? Interpolation, Conditioning, and Quality Measures,"
+    /// 2002 (<https://people.eecs.berkeley.edu/~jrs/papers/elemj.pdf>).
+    ///
     /// Provides quantitative assessment for mesh optimization decisions.
     pub fn compute_mesh_quality(&self) -> MeshQualityMetrics {
         let qualities = self.analyze_triangle_quality();
@@ -354,18 +387,20 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         let quality_scores = qualities.iter().map(|q| q.quality_score).collect::<Vec<_>>();
         let avg_quality = hreal_mean(&quality_scores).unwrap_or(0.0);
 
-        let min_quality = qualities
-            .iter()
-            .map(|q| q.quality_score)
-            .fold(Real::INFINITY, |a, b| a.min(b));
+        let min_quality =
+            boundary_scalar_min(qualities.iter().map(|q| q.quality_score)).unwrap_or(0.0);
 
-        let high_quality_count = qualities.iter().filter(|q| q.quality_score > 0.7).count();
+        let high_quality_count = qualities
+            .iter()
+            .filter(|q| boundary_scalar_gt(q.quality_score, 0.7))
+            .count();
         let high_quality_ratio =
             hreal_div(high_quality_count as Real, qualities.len() as Real).unwrap_or(0.0);
 
+        let sliver_threshold = hdegrees_to_radians(10.0).unwrap_or(0.0);
         let sliver_count = qualities
             .iter()
-            .filter(|q| q.min_angle < (10.0 as Real).to_radians())
+            .filter(|q| boundary_scalar_lt(q.min_angle, sliver_threshold))
             .count();
 
         // Compute edge length statistics
