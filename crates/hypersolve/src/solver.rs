@@ -21,8 +21,8 @@ pub struct SolverConfig {
     /// Numerical engine used only to propose candidate coordinates.
     ///
     /// The current implementation supports dense damped least squares and the
-    /// named Levenberg-Marquardt route. Dogleg uses a dense lossy
-    /// trust-region proposal. These routes follow the least-squares damping family of
+    /// named Levenberg-Marquardt route. PowellHybrid and Dogleg use dense
+    /// lossy trust-region proposals. These routes follow the least-squares damping family of
     /// Levenberg, "A Method for the Solution of Certain Non-Linear Problems in
     /// Least Squares" (1944), and Marquardt, "An Algorithm for Least-Squares
     /// Estimation of Nonlinear Parameters" (1963), plus Powell's dogleg hybrid
@@ -127,16 +127,16 @@ pub fn solve_damped_least_squares(mut state: SolverState) -> SolveReport {
         // f64 is confined to this dense linear-solver edge. The surrounding
         // model, residuals, bounds, and tolerances remain hyperreal values.
         // DampedLeastSquares and LevenbergMarquardt use a damped normal step;
-        // Dogleg uses a trust-region step. Per Yap (1997), exact/certified
-        // replay, not this lossy proposal, decides acceptance.
+        // PowellHybrid and Dogleg use a trust-region step. Per Yap (1997),
+        // exact/certified replay, not this lossy proposal, decides acceptance.
         let step_result = match state.config.proposal_engine {
-            ProposalEngineKind::Dogleg => backend.solve_dogleg(&jacobian, &numeric, damping),
+            ProposalEngineKind::PowellHybrid | ProposalEngineKind::Dogleg => {
+                backend.solve_dogleg(&jacobian, &numeric, damping)
+            }
             ProposalEngineKind::DampedLeastSquares | ProposalEngineKind::LevenbergMarquardt => {
                 backend.solve_damped_normal(&jacobian, &numeric, damping)
             }
-            ProposalEngineKind::PowellHybrid
-            | ProposalEngineKind::Bfgs
-            | ProposalEngineKind::Sqp => {
+            ProposalEngineKind::Bfgs | ProposalEngineKind::Sqp => {
                 unreachable!("unsupported proposal engines return before iteration")
             }
         };

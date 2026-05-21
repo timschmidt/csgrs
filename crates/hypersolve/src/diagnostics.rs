@@ -23,6 +23,10 @@ pub enum ProposalEngineKind {
     /// Current dense damped least-squares implementation.
     DampedLeastSquares,
     /// MINPACK-style Powell hybrid proposal engine.
+    ///
+    /// The first implementation uses the same dense dogleg trust-region step
+    /// as [`Self::Dogleg`], surfaced under the Powell-hybrid name so callers
+    /// can audit the requested lossy proposal policy.
     PowellHybrid,
     /// Levenberg-Marquardt proposal route.
     ///
@@ -43,7 +47,7 @@ impl ProposalEngineKind {
     pub const fn is_implemented(self) -> bool {
         matches!(
             self,
-            Self::DampedLeastSquares | Self::LevenbergMarquardt | Self::Dogleg
+            Self::DampedLeastSquares | Self::PowellHybrid | Self::LevenbergMarquardt | Self::Dogleg
         )
     }
 }
@@ -88,10 +92,10 @@ pub struct SolveReport {
     ///
     /// This makes the construction/proof boundary explicit. The current dense
     /// step supports the default damped least-squares route, the named
-    /// Levenberg-Marquardt route, and a dense dogleg route; other common
-    /// geometric-constraint engines are represented as unsupported proposal
-    /// choices rather than silently falling back. Accepted coordinates still require exact candidate
-    /// certification; see Yap, "Towards Exact Geometric Computation,"
+    /// Levenberg-Marquardt route, and dense Powell-hybrid/dogleg routes; other
+    /// common geometric-constraint engines are represented as unsupported
+    /// proposal choices rather than silently falling back. Accepted coordinates
+    /// still require exact candidate certification; see Yap, "Towards Exact Geometric Computation,"
     /// *Computational Geometry* 7.1-2 (1997).
     pub proposal_engine: ProposalEngineReport,
     pub residuals: Vec<ResidualEvaluation>,

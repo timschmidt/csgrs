@@ -650,6 +650,19 @@ fn certification(c: &mut Criterion) {
             })
         })
     });
+    c.bench_function("solve_powell_hybrid_affine", |b| {
+        b.iter(|| {
+            solve_damped_least_squares(SolverState {
+                problem: affine_problem(4),
+                config: SolverConfig {
+                    max_iterations: 4,
+                    damping: r(1),
+                    proposal_engine: ProposalEngineKind::PowellHybrid,
+                    ..SolverConfig::default()
+                },
+            })
+        })
+    });
     let domain_problem = domain_problem(16);
     let domain_context = context_from_problem(&domain_problem);
     c.bench_function("certify_candidate_domains", |b| {
