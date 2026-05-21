@@ -1238,6 +1238,70 @@ pub struct BezierBooleanLoopLocatorInputReport2 {
     pub blocker_count: usize,
 }
 
+/// Status for generating exact loop-containment query work.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum BezierBooleanLoopContainmentQueryStatus {
+    /// No fragment or overlap work was supplied.
+    Empty,
+    /// The arrangement is a certified endpoint-only no-op.
+    NoInteriorSplits,
+    /// Every ordered loop pair has a keyed containment query.
+    Ready,
+    /// Locator-input generation was blocked.
+    LocatorInputBlocked,
+    /// Ownership was certified but no fragments are emitted.
+    NoEmittedFragments,
+    /// Fewer than two loops exist, so no pairwise containment queries are needed.
+    NotEnoughLoops,
+}
+
+/// One exact representative-point containment query between output loops.
+///
+/// `query_loop_index` names the loop whose representative point is being
+/// classified against `candidate_container_loop_index`. The point is copied
+/// from [`BezierBooleanLoopLocatorInput2`] and remains exact [`Real`]-backed
+/// geometry. This is a query object, not a result: a later exact loop locator
+/// must return [`BezierBooleanLoopContainmentFact2`] or an explicit blocker.
+/// Keeping the query separate from the predicate result follows Yap,
+/// "Towards Exact Geometric Computation" (1997).
+#[derive(Clone, Debug, PartialEq)]
+pub struct BezierBooleanLoopContainmentQuery2 {
+    /// Loop whose representative point is being located.
+    pub query_loop_index: usize,
+    /// Candidate loop that may contain `query_loop_index`.
+    pub candidate_container_loop_index: usize,
+    /// Exact representative point for the queried loop.
+    pub representative_point: Point2,
+}
+
+/// Pairwise exact locator-query worklist for Bezier/conic output loops.
+///
+/// This report consumes validated locator inputs and emits one ordered query
+/// for every distinct `(query_loop, candidate_container)` pair. It deliberately
+/// does not derive nesting or containment from representative points. A future
+/// point/loop locator must certify each query before
+/// [`BezierBooleanLoopContainmentFactReport2`] can derive depths. This staged
+/// arrangement/containment split follows Vatti (1992), Greiner-Hormann
+/// (1998), and Martinez-Rueda-Feito (2009); Yap (1997) is the exactness rule
+/// that query geometry and topological decisions remain separate data.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BezierBooleanLoopContainmentQueryReport2 {
+    /// Coarse containment-query status.
+    pub status: BezierBooleanLoopContainmentQueryStatus,
+    /// Locator-input status used to derive this report.
+    pub locator_status: BezierBooleanLoopLocatorInputStatus,
+    /// Requested boolean operation.
+    pub operation: BooleanOp,
+    /// Ordered exact query worklist for downstream locators.
+    pub queries: Vec<BezierBooleanLoopContainmentQuery2>,
+    /// Number of loops available for containment classification.
+    pub loop_count: usize,
+    /// Number of ordered loop-pair queries emitted.
+    pub query_count: usize,
+    /// Number of blocking preconditions retained by this report.
+    pub blocker_count: usize,
+}
+
 /// One externally certified nesting-depth fact for a Bezier/conic output loop.
 ///
 /// The fact is keyed by output-loop index so a future containment/nesting
@@ -5696,6 +5760,118 @@ impl BezierBooleanLoopLocatorInputReport2 {
             BezierBooleanLoopLocatorInputStatus::OutputLoopBlocked
                 | BezierBooleanLoopLocatorInputStatus::MalformedLoopRange
         )
+    }
+}
+
+impl BezierBooleanLoopContainmentQueryReport2 {
+    /// Builds ordered representative-point containment queries.
+    ///
+    /// A ready report has `n * (n - 1)` queries for `n` output loops. Loops
+    /// are never queried against themselves, and no containment fact is
+    /// synthesized here. This keeps the future point/loop locator as the only
+    /// stage allowed to decide containment, consistent with Yap's
+    /// predicate-before-construction discipline.
+    pub fn from_locator_inputs(locator: &BezierBooleanLoopLocatorInputReport2) -> Self {
+        match locator.status {
+            BezierBooleanLoopLocatorInputStatus::Empty => {
+                return Self::empty_like(
+                    BezierBooleanLoopContainmentQueryStatus::Empty,
+                    locator,
+                    0,
+                );
+            }
+            BezierBooleanLoopLocatorInputStatus::NoInteriorSplits => {
+                return Self::empty_like(
+                    BezierBooleanLoopContainmentQueryStatus::NoInteriorSplits,
+                    locator,
+                    0,
+                );
+            }
+            BezierBooleanLoopLocatorInputStatus::OutputLoopBlocked
+            | BezierBooleanLoopLocatorInputStatus::MalformedLoopRange => {
+                return Self::empty_like(
+                    BezierBooleanLoopContainmentQueryStatus::LocatorInputBlocked,
+                    locator,
+                    locator.blocker_count.max(1),
+                );
+            }
+            BezierBooleanLoopLocatorInputStatus::NoEmittedFragments => {
+                return Self::empty_like(
+                    BezierBooleanLoopContainmentQueryStatus::NoEmittedFragments,
+                    locator,
+                    0,
+                );
+            }
+            BezierBooleanLoopLocatorInputStatus::Ready => {}
+        }
+
+        if locator.inputs.len() < 2 {
+            return Self::empty_like(
+                BezierBooleanLoopContainmentQueryStatus::NotEnoughLoops,
+                locator,
+                0,
+            );
+        }
+
+        let mut queries = Vec::with_capacity(locator.inputs.len() * (locator.inputs.len() - 1));
+        for query in &locator.inputs {
+            for candidate in &locator.inputs {
+                if query.loop_index == candidate.loop_index {
+                    continue;
+                }
+                queries.push(BezierBooleanLoopContainmentQuery2 {
+                    query_loop_index: query.loop_index,
+                    candidate_container_loop_index: candidate.loop_index,
+                    representative_point: query.representative_point.clone(),
+                });
+            }
+        }
+
+        Self {
+            status: BezierBooleanLoopContainmentQueryStatus::Ready,
+            locator_status: locator.status,
+            operation: locator.operation,
+            query_count: queries.len(),
+            loop_count: locator.inputs.len(),
+            queries,
+            blocker_count: 0,
+        }
+    }
+
+    fn empty_like(
+        status: BezierBooleanLoopContainmentQueryStatus,
+        locator: &BezierBooleanLoopLocatorInputReport2,
+        blocker_count: usize,
+    ) -> Self {
+        Self {
+            status,
+            locator_status: locator.status,
+            operation: locator.operation,
+            queries: Vec::new(),
+            loop_count: locator.inputs.len(),
+            query_count: 0,
+            blocker_count,
+        }
+    }
+
+    /// Returns true when pairwise containment locator work was generated.
+    pub fn is_ready(&self) -> bool {
+        self.status == BezierBooleanLoopContainmentQueryStatus::Ready
+    }
+
+    /// Returns true when no pairwise query is necessary for nesting.
+    pub fn is_vacuously_complete(&self) -> bool {
+        matches!(
+            self.status,
+            BezierBooleanLoopContainmentQueryStatus::NoInteriorSplits
+                | BezierBooleanLoopContainmentQueryStatus::NoEmittedFragments
+                | BezierBooleanLoopContainmentQueryStatus::NotEnoughLoops
+        )
+    }
+
+    /// Returns true when locator-input generation blocked query construction.
+    pub fn has_blockers(&self) -> bool {
+        self.status == BezierBooleanLoopContainmentQueryStatus::LocatorInputBlocked
     }
 }
 

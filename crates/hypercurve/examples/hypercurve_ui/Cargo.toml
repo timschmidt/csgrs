@@ -5,7 +5,10 @@ edition = "2024"
 publish = false
 
 [dependencies]
+# Hyper sibling dependency switch: keep both local path and crates.io lines; do not remove either.
+# Development mode uses the local path line. For release, comment it and uncomment the crates.io line.
 hypercurve = { path = "../..", default-features = false, features = ["predicates"] }
+# hypercurve = { version = "0.3.0", default-features = false, features = ["predicates"] }
 eframe = { version = "0.33.0", default-features = false, features = [
     "accesskit",
     "default_fonts",
