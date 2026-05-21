@@ -1,7 +1,7 @@
 //! Mesh connectivity helpers for tolerance-aware vertex indexing and topology
 //! analysis.
 
-use crate::float_types::{Real, hpoints_within_epsilon, tolerance};
+use crate::float_types::{HReal, Real, hreal_sign, tolerance};
 use crate::mesh::Mesh;
 use hashbrown::HashMap;
 use nalgebra::Point3;
@@ -26,13 +26,28 @@ pub struct VertexIndexMap {
     pub position_to_index: Vec<(Point3<Real>, usize)>,
     /// Maps global indices to representative positions
     pub index_to_position: HashMap<usize, Point3<Real>>,
-    /// Spatial tolerance for vertex matching
-    pub epsilon: Real,
+    /// Spatial tolerance for vertex matching, owned as a hyperreal scalar.
+    pub epsilon: HReal,
 }
 
 impl VertexIndexMap {
-    /// Create a new vertex index map with specified tolerance
-    pub fn new(epsilon: Real) -> Self {
+    /// Create a new vertex index map with a hyperreal-promoted tolerance.
+    ///
+    /// The primary scalar surface is `hyperreal::Real`; primitive `f64` and
+    /// integer literals are accepted when `hyperreal` can promote them. Invalid
+    /// or non-positive tolerances fail closed by storing exact zero, so topology
+    /// matching cannot silently widen. This keeps connectivity equivalence on
+    /// the exact-aware side of Yap's exact geometric computation boundary model
+    /// (1997) while preserving ergonomic scalar promotion at API call sites.
+    pub fn new<E>(epsilon: E) -> Self
+    where
+        E: TryInto<HReal>,
+    {
+        let epsilon = epsilon
+            .try_into()
+            .ok()
+            .filter(hreal_positive)
+            .unwrap_or_else(HReal::zero);
         Self {
             position_to_index: Vec::new(),
             index_to_position: HashMap::new(),
@@ -45,7 +60,7 @@ impl VertexIndexMap {
         self.position_to_index
             .iter()
             .find_map(|(existing_position, existing_index)| {
-                hpoints_within_epsilon(position, existing_position, self.epsilon)
+                hpoints_within_hreal_epsilon(position, existing_position, &self.epsilon)
                     .then_some(*existing_index)
             })
     }
@@ -139,7 +154,62 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     }
 }
 
+fn hreal_positive(value: &HReal) -> bool {
+    matches!(hreal_sign(value), Some(hyperreal::RealSign::Positive))
+}
+
+fn hpoints_within_hreal_epsilon(
+    lhs: &Point3<Real>,
+    rhs: &Point3<Real>,
+    epsilon: &HReal,
+) -> bool {
+    if !hreal_positive(epsilon) {
+        return false;
+    }
+    let Some(lhs) = hyperlattice::Point3::try_from_f64_array([lhs.x, lhs.y, lhs.z]).ok()
+    else {
+        return false;
+    };
+    let Some(rhs) = hyperlattice::Point3::try_from_f64_array([rhs.x, rhs.y, rhs.z]).ok()
+    else {
+        return false;
+    };
+    let distance_squared = lhs.to_vector().squared_distance(&rhs.to_vector());
+    let epsilon_squared = epsilon.clone() * epsilon.clone();
+    matches!(
+        hreal_sign(&(distance_squared - epsilon_squared)),
+        Some(hyperreal::RealSign::Negative | hyperreal::RealSign::Zero)
+    )
+}
+
 fn add_adjacency_edge(adjacency: &mut HashMap<usize, Vec<usize>>, a: usize, b: usize) {
     adjacency.entry(a).or_default().push(b);
     adjacency.entry(b).or_default().push(a);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn vertex_index_map_promotes_public_epsilon_to_hyperreal() {
+        let mut map = VertexIndexMap::new(1);
+        let base = Point3::new(0.0, 0.0, 0.0);
+        let near = Point3::new(0.5, 0.0, 0.0);
+        let far = Point3::new(2.0, 0.0, 0.0);
+
+        let base_index = map.get_or_create_index(base);
+        assert_eq!(map.get_or_create_index(near), base_index);
+        assert_ne!(map.get_or_create_index(far), base_index);
+    }
+
+    #[test]
+    fn vertex_index_map_rejects_invalid_hyperreal_epsilon() {
+        let mut map = VertexIndexMap::new(Real::NAN);
+        let base = Point3::new(0.0, 0.0, 0.0);
+        let near = Point3::new(tolerance() * 0.25, 0.0, 0.0);
+
+        let base_index = map.get_or_create_index(base);
+        assert_ne!(map.get_or_create_index(near), base_index);
+    }
 }
