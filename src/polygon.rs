@@ -1,9 +1,9 @@
 //! Struct and functions for working with planar `Polygon`s without holes
 
 use crate::float_types::{
-    Real, hperpendicular_basis, hreal_from_f64, hreal_gt_f64, hreal_lt_f64, hunit_vector3,
-    hvector3_dot, hvector3_from_point3, hvector3_from_vector3, parry3d::bounding_volume::Aabb,
-    tolerance,
+    Real, hperpendicular_basis, hpoint3_bounds, hreal_from_f64, hreal_gt_f64, hreal_lt_f64,
+    hunit_vector3, hvector3_dot, hvector3_from_point3, hvector3_from_vector3,
+    parry3d::bounding_volume::Aabb, tolerance,
 };
 use crate::mesh::plane::Plane;
 use crate::vertex::Vertex;
@@ -85,16 +85,14 @@ impl<M: Clone + Send + Sync> Polygon<M> {
     /// Axis aligned bounding box of this Polygon (cached after first call)
     pub fn bounding_box(&self) -> Aabb {
         *self.bounding_box.get_or_init(|| {
-            let mut mins = Point3::new(Real::MAX, Real::MAX, Real::MAX);
-            let mut maxs = Point3::new(-Real::MAX, -Real::MAX, -Real::MAX);
-            for v in &self.vertices {
-                mins.x = mins.x.min(v.position.x);
-                mins.y = mins.y.min(v.position.y);
-                mins.z = mins.z.min(v.position.z);
-                maxs.x = maxs.x.max(v.position.x);
-                maxs.y = maxs.y.max(v.position.y);
-                maxs.z = maxs.z.max(v.position.z);
-            }
+            let points = self
+                .vertices
+                .iter()
+                .map(|vertex| vertex.position)
+                .collect::<Vec<_>>();
+            let Some((mins, maxs)) = hpoint3_bounds(&points) else {
+                return Aabb::new(Point3::origin(), Point3::origin());
+            };
             Aabb::new(mins, maxs)
         })
     }

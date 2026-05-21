@@ -567,6 +567,49 @@ pub(crate) fn hpoint_centroid(points: &[Point3<Real>]) -> Option<Point3<Real>> {
     Some(Point3::new(centroid[0], centroid[1], centroid[2]))
 }
 
+/// Return finite coordinate-wise bounds for public boundary points.
+///
+/// AABBs feed broad-phase CAD decisions, so even while mesh storage is still a
+/// primitive boundary type the extrema are promoted and compared in
+/// `hyperreal::Real`. Non-finite boundary coordinates fail closed instead of
+/// being ordered by primitive float corner cases. This follows Yap, "Towards
+/// Exact Geometric Computation," *Computational Geometry* 7(1-2), 1997
+/// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+pub(crate) fn hpoint3_bounds(points: &[Point3<Real>]) -> Option<(Point3<Real>, Point3<Real>)> {
+    let first = points.first()?;
+    let mut min_x = hreal_from_f64(first.x).ok()?;
+    let mut min_y = hreal_from_f64(first.y).ok()?;
+    let mut min_z = hreal_from_f64(first.z).ok()?;
+    let mut max_x = min_x.clone();
+    let mut max_y = min_y.clone();
+    let mut max_z = min_z.clone();
+
+    for point in &points[1..] {
+        let x = hreal_from_f64(point.x).ok()?;
+        let y = hreal_from_f64(point.y).ok()?;
+        let z = hreal_from_f64(point.z).ok()?;
+        min_x = hyperlimit::real_min(&min_x, &x).value()?.clone();
+        min_y = hyperlimit::real_min(&min_y, &y).value()?.clone();
+        min_z = hyperlimit::real_min(&min_z, &z).value()?.clone();
+        max_x = hyperlimit::real_max(&max_x, &x).value()?.clone();
+        max_y = hyperlimit::real_max(&max_y, &y).value()?.clone();
+        max_z = hyperlimit::real_max(&max_z, &z).value()?.clone();
+    }
+
+    Some((
+        Point3::new(
+            hreal_to_f64(&min_x)?,
+            hreal_to_f64(&min_y)?,
+            hreal_to_f64(&min_z)?,
+        ),
+        Point3::new(
+            hreal_to_f64(&max_x)?,
+            hreal_to_f64(&max_y)?,
+            hreal_to_f64(&max_z)?,
+        ),
+    ))
+}
+
 /// Interpolate two public boundary points through hyperreal arithmetic.
 ///
 /// This keeps smoothing stencils and other topology-sensitive movement steps
@@ -1166,8 +1209,12 @@ mod tests {
             Point3::new(4.0, 8.0, 12.0),
         ];
         assert_eq!(hpoint_centroid(&points).unwrap(), Point3::new(2.0, 4.0, 6.0));
+        let (mins, maxs) = hpoint3_bounds(&points).unwrap();
+        assert_eq!(mins, Point3::new(0.0, 0.0, 0.0));
+        assert_eq!(maxs, Point3::new(4.0, 8.0, 12.0));
         assert!(hpoint_centroid(&[]).is_none());
         assert!(hpoint_centroid(&[Point3::new(Real::NAN, 0.0, 0.0)]).is_none());
+        assert!(hpoint3_bounds(&[Point3::new(Real::NAN, 0.0, 0.0)]).is_none());
 
         let interpolated = hpoint_lerp(&points[0], &points[2], 0.25).unwrap();
         assert_eq!(interpolated, Point3::new(1.0, 2.0, 3.0));
