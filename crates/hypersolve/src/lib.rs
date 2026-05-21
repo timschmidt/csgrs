@@ -28,6 +28,7 @@ pub mod resultant;
 pub mod root_isolation;
 pub mod solver;
 pub mod solver_block;
+pub mod sparse_pattern;
 pub mod symbolic;
 
 pub use active_set::{
@@ -148,5 +149,10 @@ pub use root_isolation::{
 pub use solver::{SolverConfig, SolverState, solve_damped_least_squares};
 pub use solver_block::{
     PreparedSolverBlock, PreparedSolverBlockFacts, SolverBlockRow, SolverBlockRowKind,
+};
+pub use sparse_pattern::{
+    SparsePatternEntry, SparsePatternEntryStatus, SparsePatternError,
+    SymbolicSparseEliminationStep, SymbolicSparseFactorizationReport,
+    analyze_sparse_bareiss_elimination_pattern,
 };
 pub use symbolic::{Expr, ExprDegree, ExprEvalError, ExprFacts, SymbolId, SymbolRef};

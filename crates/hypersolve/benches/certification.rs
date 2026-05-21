@@ -6,14 +6,15 @@ use hypersolve::{
     Expr, IntervalBoxCertificationPackage, IsolatedRootInterval, PreparedProblem,
     PreparedSolverBlock, Problem, ProposalEngineKind, ProposalEnginePrecision,
     ProposalEngineReport, SolverConfig, SolverPoint2, SolverState, SparseResidualTerm, SymbolId,
-    UnivariateResultantPairInput, VariableBall, apply_equality_substitution_classes,
-    audit_active_set, build_equality_substitution_classes, certify_affine_krawczyk_box,
-    certify_candidate, certify_candidate_domains, certify_direct_univariate_quadratic_roots,
-    certify_interval_box_candidate, certify_multivariate_quadratic_interval_candidate,
-    certify_multivariate_quadratic_krawczyk_box, certify_quadratic_interval_candidate,
-    certify_univariate_quadratic_alpha, certify_univariate_quadratic_krawczyk_box,
-    compare_algebraic_root_representations, compare_algebraic_root_representations_with_refinement,
-    context_from_problem, count_bernstein_univariate_polynomial_interval_roots,
+    UnivariateResultantPairInput, VariableBall, analyze_sparse_bareiss_elimination_pattern,
+    apply_equality_substitution_classes, audit_active_set, build_equality_substitution_classes,
+    certify_affine_krawczyk_box, certify_candidate, certify_candidate_domains,
+    certify_direct_univariate_quadratic_roots, certify_interval_box_candidate,
+    certify_multivariate_quadratic_interval_candidate, certify_multivariate_quadratic_krawczyk_box,
+    certify_quadratic_interval_candidate, certify_univariate_quadratic_alpha,
+    certify_univariate_quadratic_krawczyk_box, compare_algebraic_root_representations,
+    compare_algebraic_root_representations_with_refinement, context_from_problem,
+    count_bernstein_univariate_polynomial_interval_roots,
     count_descartes_univariate_polynomial_roots, determinant_bareiss,
     eliminate_affine_rows_with_substitution_classes, isolate_univariate_polynomial_roots,
     replay_dense_linear_residuals, replay_sparse_linear_residuals,
@@ -229,6 +230,42 @@ fn certification(c: &mut Criterion) {
                     },
                 ],
                 &[r(5), r(1)],
+                -64,
+            )
+        })
+    });
+    c.bench_function("analyze_sparse_bareiss_elimination_pattern", |b| {
+        b.iter(|| {
+            analyze_sparse_bareiss_elimination_pattern(
+                3,
+                3,
+                &[
+                    SparseResidualTerm {
+                        row: 0,
+                        column: 0,
+                        coefficient: r(1),
+                    },
+                    SparseResidualTerm {
+                        row: 0,
+                        column: 2,
+                        coefficient: r(1),
+                    },
+                    SparseResidualTerm {
+                        row: 1,
+                        column: 0,
+                        coefficient: r(1),
+                    },
+                    SparseResidualTerm {
+                        row: 1,
+                        column: 1,
+                        coefficient: r(1),
+                    },
+                    SparseResidualTerm {
+                        row: 2,
+                        column: 2,
+                        coefficient: r(1),
+                    },
+                ],
                 -64,
             )
         })
