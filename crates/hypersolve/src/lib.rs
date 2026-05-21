@@ -36,11 +36,12 @@ pub use active_set::{
 pub use affine::PreparedAffineResidual;
 pub use algebraic::{
     AlgebraicRootComparisonReport, AlgebraicRootComparisonStatus, AlgebraicRootKind,
+    AlgebraicRootRefinementComparisonConfig, AlgebraicRootRefinementComparisonReport,
     AlgebraicRootRepresentation, AlgebraicRootRepresentationReport,
     AlgebraicRootRepresentationStatus, AlgebraicRootValidationReport,
     AlgebraicRootValidationStatus, compare_algebraic_root_representations,
-    represent_univariate_algebraic_roots, represent_univariate_algebraic_roots_from_reports,
-    validate_algebraic_root_representation,
+    compare_algebraic_root_representations_with_refinement, represent_univariate_algebraic_roots,
+    represent_univariate_algebraic_roots_from_reports, validate_algebraic_root_representation,
 };
 pub use alpha::{
     UnivariateQuadraticAlphaReport, UnivariateQuadraticAlphaRow, UnivariateQuadraticAlphaStatus,
@@ -131,7 +132,8 @@ pub use root_isolation::{
     AlgebraicRootCandidateReport, AlgebraicRootCandidateStatus, BernsteinRootCountReport,
     BernsteinRootCountStatus, BernsteinSubdivisionConfig, BernsteinSubdivisionInterval,
     BernsteinSubdivisionIntervalStatus, BernsteinSubdivisionReport, BernsteinSubdivisionStatus,
-    DescartesRootCountReport, DescartesRootCountStatus, IsolatedRootInterval, RootIsolationConfig,
+    DescartesRootCountReport, DescartesRootCountStatus, IsolatedRootInterval,
+    IsolatedRootRefinementReport, IsolatedRootRefinementStatus, RootIsolationConfig,
     RootIsolationStatus, RootMultiplicityStatus, UnivariateRootIsolationReport,
     certify_isolated_rational_root_witnesses, certify_isolated_rational_root_witnesses_with_config,
     count_bernstein_univariate_polynomial_interval_expr,
@@ -139,6 +141,7 @@ pub use root_isolation::{
     count_descartes_univariate_polynomial_expr, count_descartes_univariate_polynomial_roots,
     isolate_univariate_polynomial_expr, isolate_univariate_polynomial_expr_with_config,
     isolate_univariate_polynomial_roots, isolate_univariate_polynomial_roots_with_config,
+    refine_isolated_univariate_polynomial_interval,
     subdivide_bernstein_univariate_polynomial_interval_expr,
     subdivide_bernstein_univariate_polynomial_interval_roots,
 };

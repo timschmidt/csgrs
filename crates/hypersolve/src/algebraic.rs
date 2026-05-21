@@ -19,8 +19,10 @@ use hyperreal::Real;
 use crate::model::{ConstraintKind, Problem};
 use crate::prepared::PreparedProblem;
 use crate::root_isolation::{
-    IsolatedRootInterval, RootIsolationConfig, RootIsolationStatus, UnivariateRootIsolationReport,
+    IsolatedRootInterval, IsolatedRootRefinementReport, IsolatedRootRefinementStatus,
+    RootIsolationConfig, RootIsolationStatus, UnivariateRootIsolationReport,
     isolate_univariate_polynomial_roots_with_config,
+    refine_isolated_univariate_polynomial_interval,
 };
 use crate::symbolic::{Expr, SymbolId};
 
@@ -79,6 +81,44 @@ pub struct AlgebraicRootComparisonReport {
     pub ordering: Option<Ordering>,
     /// Compact diagnostic reason for invalid or unresolved comparisons.
     pub message: Option<String>,
+}
+
+/// Configuration for overlap-aware algebraic-root comparison.
+#[derive(Clone, Debug, PartialEq)]
+pub struct AlgebraicRootRefinementComparisonConfig {
+    /// Exact comparison/refinement policy used by `hyperlimit`.
+    pub policy: PredicatePolicy,
+    /// Maximum alternating refinement rounds when isolating intervals overlap.
+    pub max_refinement_rounds: usize,
+    /// Bisection steps attempted for each root in one refinement round.
+    pub steps_per_round: usize,
+}
+
+impl Default for AlgebraicRootRefinementComparisonConfig {
+    fn default() -> Self {
+        Self {
+            policy: PredicatePolicy::default(),
+            max_refinement_rounds: 16,
+            steps_per_round: 1,
+        }
+    }
+}
+
+/// Overlap-aware comparison report for represented algebraic roots.
+#[derive(Clone, Debug, PartialEq)]
+pub struct AlgebraicRootRefinementComparisonReport {
+    /// Final comparison after optional refinement.
+    pub comparison: AlgebraicRootComparisonReport,
+    /// Last left representation considered by the comparison.
+    pub refined_left: AlgebraicRootRepresentation,
+    /// Last right representation considered by the comparison.
+    pub refined_right: AlgebraicRootRepresentation,
+    /// Refinement reports applied to the left root.
+    pub left_refinements: Vec<IsolatedRootRefinementReport>,
+    /// Refinement reports applied to the right root.
+    pub right_refinements: Vec<IsolatedRootRefinementReport>,
+    /// Number of alternating refinement rounds used.
+    pub refinement_rounds: usize,
 }
 
 /// Validation report for a represented algebraic root.
@@ -310,6 +350,93 @@ pub fn compare_algebraic_root_representations(
         AlgebraicRootComparisonStatus::OverlappingIntervals,
         None,
         Some("isolating intervals overlap; refine before ordering".to_owned()),
+    )
+}
+
+/// Compare represented algebraic roots, refining overlapping intervals first.
+///
+/// This is still not a full algebraic-number field package: it performs only
+/// the exact predicate work needed for ordering. When ordinary comparison
+/// stops at overlapping isolating intervals, each root is refined with a
+/// Sturm sequence package (C. Sturm, "Mémoire sur la résolution des équations
+/// numériques", 1835) in the Collins-Loos real-root isolation style (G. E.
+/// Collins and R. Loos, "Real Zeros of Polynomials", 1982) until the
+/// intervals become disjoint, an exact rational witness appears, or the
+/// configured work budget is exhausted. The function follows Yap's EGC
+/// pattern (Chee K. Yap, "Towards Exact Geometric Computation", 1997):
+/// refinement is a proof-producing operation, and failure remains an explicit
+/// undecided report rather than a sampled approximation.
+pub fn compare_algebraic_root_representations_with_refinement(
+    left: &AlgebraicRootRepresentation,
+    right: &AlgebraicRootRepresentation,
+    config: AlgebraicRootRefinementComparisonConfig,
+) -> AlgebraicRootRefinementComparisonReport {
+    let mut refined_left = left.clone();
+    let mut refined_right = right.clone();
+    let mut comparison =
+        compare_algebraic_root_representations(&refined_left, &refined_right, config.policy);
+    let mut left_refinements = Vec::new();
+    let mut right_refinements = Vec::new();
+    let mut refinement_rounds = 0;
+    if comparison.status != AlgebraicRootComparisonStatus::OverlappingIntervals {
+        return algebraic_refinement_comparison_report(
+            comparison,
+            refined_left,
+            refined_right,
+            left_refinements,
+            right_refinements,
+            refinement_rounds,
+        );
+    }
+
+    for round in 0..config.max_refinement_rounds {
+        refinement_rounds = round + 1;
+        let root_config = RootIsolationConfig {
+            policy: config.policy,
+            max_interval_width: None,
+            max_refinement_steps: config.steps_per_round,
+        };
+        let left_refinement = refine_isolated_univariate_polynomial_interval(
+            &refined_left.polynomial_coefficients,
+            &refined_left.interval,
+            root_config.clone(),
+        );
+        let left_progress =
+            apply_refined_interval(&mut refined_left, &left_refinement, config.policy);
+        left_refinements.push(left_refinement);
+        let right_refinement = refine_isolated_univariate_polynomial_interval(
+            &refined_right.polynomial_coefficients,
+            &refined_right.interval,
+            root_config,
+        );
+        let right_progress =
+            apply_refined_interval(&mut refined_right, &right_refinement, config.policy);
+        right_refinements.push(right_refinement);
+
+        if !left_progress || !right_progress {
+            comparison = algebraic_comparison_report(
+                AlgebraicRootComparisonStatus::Undecided,
+                None,
+                Some(
+                    "algebraic root refinement did not produce valid interval evidence".to_owned(),
+                ),
+            );
+            break;
+        }
+        comparison =
+            compare_algebraic_root_representations(&refined_left, &refined_right, config.policy);
+        if comparison.status != AlgebraicRootComparisonStatus::OverlappingIntervals {
+            break;
+        }
+    }
+
+    algebraic_refinement_comparison_report(
+        comparison,
+        refined_left,
+        refined_right,
+        left_refinements,
+        right_refinements,
+        refinement_rounds,
     )
 }
 
@@ -671,6 +798,30 @@ fn same_represented_root(
         && left.interval == right.interval
 }
 
+fn apply_refined_interval(
+    root: &mut AlgebraicRootRepresentation,
+    refinement: &IsolatedRootRefinementReport,
+    policy: PredicatePolicy,
+) -> bool {
+    if !matches!(
+        refinement.status,
+        IsolatedRootRefinementStatus::Refined | IsolatedRootRefinementStatus::ExactRoot
+    ) {
+        return false;
+    }
+    let Some(interval) = &refinement.refined_interval else {
+        return false;
+    };
+    root.interval = interval.clone();
+    root.kind = if root.interval.exact_root.is_some() {
+        AlgebraicRootKind::ExactRationalWitness
+    } else {
+        AlgebraicRootKind::IsolatingInterval
+    };
+    root.validation = validate_algebraic_root_representation(root, policy);
+    root.is_valid()
+}
+
 fn algebraic_comparison_report(
     status: AlgebraicRootComparisonStatus,
     ordering: Option<Ordering>,
@@ -680,6 +831,24 @@ fn algebraic_comparison_report(
         status,
         ordering,
         message,
+    }
+}
+
+fn algebraic_refinement_comparison_report(
+    comparison: AlgebraicRootComparisonReport,
+    refined_left: AlgebraicRootRepresentation,
+    refined_right: AlgebraicRootRepresentation,
+    left_refinements: Vec<IsolatedRootRefinementReport>,
+    right_refinements: Vec<IsolatedRootRefinementReport>,
+    refinement_rounds: usize,
+) -> AlgebraicRootRefinementComparisonReport {
+    AlgebraicRootRefinementComparisonReport {
+        comparison,
+        refined_left,
+        refined_right,
+        left_refinements,
+        right_refinements,
+        refinement_rounds,
     }
 }
 
@@ -908,6 +1077,64 @@ mod tests {
         );
     }
 
+    #[test]
+    fn algebraic_root_refinement_comparison_orders_overlapping_intervals() {
+        let sqrt_two = AlgebraicRootRepresentation {
+            constraint_index: 0,
+            symbol: SymbolId(0),
+            interval_index: 0,
+            polynomial_coefficients: vec![real(-2), Real::zero(), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: real(1),
+                upper: real(2),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            kind: AlgebraicRootKind::IsolatingInterval,
+            validation: AlgebraicRootValidationReport::valid(),
+        };
+        let sqrt_three = AlgebraicRootRepresentation {
+            constraint_index: 1,
+            polynomial_coefficients: vec![real(-3), Real::zero(), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: real(1),
+                upper: real(2),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            ..sqrt_two.clone()
+        };
+
+        assert_eq!(
+            compare_algebraic_root_representations(
+                &sqrt_two,
+                &sqrt_three,
+                PredicatePolicy::default()
+            )
+            .status,
+            AlgebraicRootComparisonStatus::OverlappingIntervals
+        );
+
+        let refined = compare_algebraic_root_representations_with_refinement(
+            &sqrt_two,
+            &sqrt_three,
+            AlgebraicRootRefinementComparisonConfig {
+                max_refinement_rounds: 8,
+                steps_per_round: 1,
+                ..AlgebraicRootRefinementComparisonConfig::default()
+            },
+        );
+
+        assert_eq!(
+            refined.comparison.status,
+            AlgebraicRootComparisonStatus::Compared
+        );
+        assert_eq!(refined.comparison.ordering, Some(Ordering::Less));
+        assert!(!refined.left_refinements.is_empty());
+        assert!(!refined.right_refinements.is_empty());
+        assert!(refined.refined_left.interval.upper < refined.refined_right.interval.lower);
+    }
+
     proptest! {
         #[test]
         fn generated_linear_roots_become_valid_represented_intervals(root in -64_i16..=64) {
@@ -980,6 +1207,51 @@ mod tests {
 
             prop_assert_eq!(report.status, AlgebraicRootComparisonStatus::Compared);
             prop_assert_eq!(report.ordering, Some(left.cmp(&right)));
+        }
+
+        #[test]
+        fn generated_refinement_comparison_preserves_rational_witness_order(
+            left in -16_i16..=16,
+            right in -16_i16..=16,
+        ) {
+            let left = i64::from(left);
+            let right = i64::from(right);
+            let left_root = AlgebraicRootRepresentation {
+                constraint_index: 0,
+                symbol: SymbolId(0),
+                interval_index: 0,
+                polynomial_coefficients: vec![real(-left), Real::one()],
+                interval: IsolatedRootInterval {
+                    lower: real(left),
+                    upper: real(left),
+                    exact_root: Some(real(left)),
+                    distinct_root_count: 1,
+                },
+                kind: AlgebraicRootKind::ExactRationalWitness,
+                validation: AlgebraicRootValidationReport::valid(),
+            };
+            let right_root = AlgebraicRootRepresentation {
+                constraint_index: 1,
+                interval_index: 0,
+                polynomial_coefficients: vec![real(-right), Real::one()],
+                interval: IsolatedRootInterval {
+                    lower: real(right),
+                    upper: real(right),
+                    exact_root: Some(real(right)),
+                    distinct_root_count: 1,
+                },
+                ..left_root.clone()
+            };
+
+            let report = compare_algebraic_root_representations_with_refinement(
+                &left_root,
+                &right_root,
+                AlgebraicRootRefinementComparisonConfig::default(),
+            );
+
+            prop_assert_eq!(report.comparison.status, AlgebraicRootComparisonStatus::Compared);
+            prop_assert_eq!(report.comparison.ordering, Some(left.cmp(&right)));
+            prop_assert_eq!(report.refinement_rounds, 0);
         }
     }
 }

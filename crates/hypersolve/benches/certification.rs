@@ -1,7 +1,9 @@
 use criterion::{Criterion, criterion_group, criterion_main};
 use hyperreal::{Rational, Real};
 use hypersolve::{
-    Constraint, EqualitySubstitution, Expr, IntervalBoxCertificationPackage, PreparedProblem,
+    AlgebraicRootKind, AlgebraicRootRefinementComparisonConfig, AlgebraicRootRepresentation,
+    AlgebraicRootValidationReport, AlgebraicRootValidationStatus, Constraint, EqualitySubstitution,
+    Expr, IntervalBoxCertificationPackage, IsolatedRootInterval, PreparedProblem,
     PreparedSolverBlock, Problem, ProposalEngineKind, ProposalEnginePrecision,
     ProposalEngineReport, SolverConfig, SolverPoint2, SolverState, SparseResidualTerm, SymbolId,
     UnivariateResultantPairInput, VariableBall, apply_equality_substitution_classes,
@@ -10,8 +12,8 @@ use hypersolve::{
     certify_interval_box_candidate, certify_multivariate_quadratic_interval_candidate,
     certify_multivariate_quadratic_krawczyk_box, certify_quadratic_interval_candidate,
     certify_univariate_quadratic_alpha, certify_univariate_quadratic_krawczyk_box,
-    compare_algebraic_root_representations, context_from_problem,
-    count_bernstein_univariate_polynomial_interval_roots,
+    compare_algebraic_root_representations, compare_algebraic_root_representations_with_refinement,
+    context_from_problem, count_bernstein_univariate_polynomial_interval_roots,
     count_descartes_univariate_polynomial_roots, determinant_bareiss,
     eliminate_affine_rows_with_substitution_classes, isolate_univariate_polynomial_roots,
     replay_dense_linear_residuals, replay_sparse_linear_residuals,
@@ -382,6 +384,44 @@ fn certification(c: &mut Criterion) {
             )
         })
     });
+    let sqrt_two = AlgebraicRootRepresentation {
+        constraint_index: 0,
+        symbol: SymbolId(0),
+        interval_index: 0,
+        polynomial_coefficients: vec![r(-2), Real::zero(), Real::one()],
+        interval: IsolatedRootInterval {
+            lower: r(1),
+            upper: r(2),
+            exact_root: None,
+            distinct_root_count: 1,
+        },
+        kind: AlgebraicRootKind::IsolatingInterval,
+        validation: AlgebraicRootValidationReport {
+            status: AlgebraicRootValidationStatus::Valid,
+            message: None,
+        },
+    };
+    let sqrt_three = AlgebraicRootRepresentation {
+        constraint_index: 1,
+        polynomial_coefficients: vec![r(-3), Real::zero(), Real::one()],
+        ..sqrt_two.clone()
+    };
+    c.bench_function(
+        "compare_algebraic_root_representations_with_refinement",
+        |b| {
+            b.iter(|| {
+                compare_algebraic_root_representations_with_refinement(
+                    &sqrt_two,
+                    &sqrt_three,
+                    AlgebraicRootRefinementComparisonConfig {
+                        max_refinement_rounds: 8,
+                        steps_per_round: 1,
+                        ..AlgebraicRootRefinementComparisonConfig::default()
+                    },
+                )
+            })
+        },
+    );
     c.bench_function("count_descartes_univariate_polynomial_roots", |b| {
         b.iter(|| {
             count_descartes_univariate_polynomial_roots(

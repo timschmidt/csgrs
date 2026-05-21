@@ -113,6 +113,44 @@ impl Default for RootIsolationConfig {
     }
 }
 
+/// Status for refining one already-isolated algebraic root interval.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum IsolatedRootRefinementStatus {
+    /// The interval was refined while preserving exactly one distinct root.
+    Refined,
+    /// The interval already carries an exact rational root witness.
+    ExactRoot,
+    /// The coefficient vector is empty, constant, or not exact-rational.
+    InvalidPolynomial,
+    /// The interval endpoints are not ordered.
+    InvalidInterval,
+    /// The supplied interval did not certify exactly one distinct root.
+    NonUnitIsolation,
+    /// Exact comparisons, polynomial division, or Sturm counts did not decide.
+    Undecided,
+}
+
+/// Refinement report for one isolated algebraic root interval.
+///
+/// The input interval is treated as exact evidence, not as a floating estimate.
+/// The implementation recomputes the square-free Sturm count inside the
+/// interval, then bisects only into the subinterval that still contains exactly
+/// one distinct root. This follows Sturm's theorem (1835), the Collins-Loos
+/// isolation model (1982), and Yap's exact-object refinement boundary (1997).
+#[derive(Clone, Debug, PartialEq)]
+pub struct IsolatedRootRefinementReport {
+    /// Final refinement status.
+    pub status: IsolatedRootRefinementStatus,
+    /// Original interval supplied by the caller.
+    pub original_interval: IsolatedRootInterval,
+    /// Refined interval when refinement or exact-root replay succeeded.
+    pub refined_interval: Option<IsolatedRootInterval>,
+    /// Number of bisection steps accepted.
+    pub refinement_steps: usize,
+    /// Compact diagnostic reason for invalid or undecided reports.
+    pub message: Option<String>,
+}
+
 /// Replay status for an exact rational root witness found by isolation.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum AlgebraicRootCandidateStatus {
@@ -558,6 +596,222 @@ pub fn isolate_univariate_polynomial_expr_with_config(
         status,
         Some(multiplicity),
         intervals,
+        None,
+    )
+}
+
+/// Refine one exact isolating interval for a univariate polynomial.
+///
+/// This is the low-level refinement hook for represented algebraic numbers.
+/// It does not approximate a root. It validates an exact-rational polynomial,
+/// removes repeated factors with a polynomial gcd, verifies by Sturm counts
+/// that the supplied interval contains one distinct real root, and then
+/// repeatedly bisects toward the subinterval whose Sturm count remains one.
+/// The algorithm cites Sturm (1835), Collins and Loos (1982), and Yap (1997)
+/// because their exact root-isolation/refinement boundary is the design rule
+/// used here.
+pub fn refine_isolated_univariate_polynomial_interval(
+    polynomial: &[Real],
+    interval: &IsolatedRootInterval,
+    config: RootIsolationConfig,
+) -> IsolatedRootRefinementReport {
+    let policy = config.policy;
+    if interval.distinct_root_count != 1 {
+        return root_refinement_report(
+            IsolatedRootRefinementStatus::NonUnitIsolation,
+            interval.clone(),
+            None,
+            0,
+            Some("refinement requires an interval with exactly one distinct root".to_owned()),
+        );
+    }
+    if let Some(root) = &interval.exact_root {
+        return root_refinement_report(
+            IsolatedRootRefinementStatus::ExactRoot,
+            interval.clone(),
+            Some(IsolatedRootInterval {
+                lower: root.clone(),
+                upper: root.clone(),
+                exact_root: Some(root.clone()),
+                distinct_root_count: 1,
+            }),
+            0,
+            None,
+        );
+    }
+    match compare_reals_with_policy(&interval.lower, &interval.upper, policy).value() {
+        Some(Ordering::Less) => {}
+        Some(Ordering::Equal | Ordering::Greater) => {
+            return root_refinement_report(
+                IsolatedRootRefinementStatus::InvalidInterval,
+                interval.clone(),
+                None,
+                0,
+                Some(
+                    "refinement interval must have positive width unless it has a witness"
+                        .to_owned(),
+                ),
+            );
+        }
+        None => {
+            return root_refinement_report(
+                IsolatedRootRefinementStatus::Undecided,
+                interval.clone(),
+                None,
+                0,
+                Some("could not compare refinement interval endpoints".to_owned()),
+            );
+        }
+    }
+    let Some(trimmed) = trim_polynomial(polynomial.to_vec(), policy) else {
+        return root_refinement_report(
+            IsolatedRootRefinementStatus::Undecided,
+            interval.clone(),
+            None,
+            0,
+            Some("could not decide polynomial degree".to_owned()),
+        );
+    };
+    if trimmed.len() <= 1
+        || trimmed
+            .iter()
+            .any(|coefficient| coefficient.exact_rational_ref().is_none())
+    {
+        return root_refinement_report(
+            IsolatedRootRefinementStatus::InvalidPolynomial,
+            interval.clone(),
+            None,
+            0,
+            Some("refinement requires a nonconstant exact-rational polynomial".to_owned()),
+        );
+    }
+    let Some(square_free) = square_free_part(trimmed, policy) else {
+        return root_refinement_report(
+            IsolatedRootRefinementStatus::Undecided,
+            interval.clone(),
+            None,
+            0,
+            Some("could not compute square-free polynomial part".to_owned()),
+        );
+    };
+    let Some(sturm) = sturm_sequence(&square_free, policy) else {
+        return root_refinement_report(
+            IsolatedRootRefinementStatus::Undecided,
+            interval.clone(),
+            None,
+            0,
+            Some("could not build Sturm sequence for refinement".to_owned()),
+        );
+    };
+    let Some(root_count) = sturm_count(&sturm, &interval.lower, &interval.upper, policy) else {
+        return root_refinement_report(
+            IsolatedRootRefinementStatus::Undecided,
+            interval.clone(),
+            None,
+            0,
+            Some("could not count roots in refinement interval".to_owned()),
+        );
+    };
+    if root_count != 1 {
+        return root_refinement_report(
+            IsolatedRootRefinementStatus::NonUnitIsolation,
+            interval.clone(),
+            None,
+            0,
+            Some("Sturm count did not confirm exactly one root in interval".to_owned()),
+        );
+    }
+
+    let mut lower = interval.lower.clone();
+    let mut upper = interval.upper.clone();
+    let mut steps = 0;
+    for _ in 0..config.max_refinement_steps {
+        if let Some(max_width) = &config.max_interval_width {
+            let width = upper.clone() - lower.clone();
+            match compare_reals_with_policy(&width, max_width, policy).value() {
+                Some(Ordering::Less | Ordering::Equal) => break,
+                Some(Ordering::Greater) => {}
+                None => {
+                    return root_refinement_report(
+                        IsolatedRootRefinementStatus::Undecided,
+                        interval.clone(),
+                        None,
+                        steps,
+                        Some("could not compare refined interval width".to_owned()),
+                    );
+                }
+            }
+        }
+        let Some(midpoint) = ((lower.clone() + upper.clone()) / Real::from(2)).ok() else {
+            return root_refinement_report(
+                IsolatedRootRefinementStatus::Undecided,
+                interval.clone(),
+                None,
+                steps,
+                Some("could not bisect refinement interval".to_owned()),
+            );
+        };
+        match sign_at(&square_free, &midpoint, policy) {
+            Some(Ordering::Equal) => {
+                return root_refinement_report(
+                    IsolatedRootRefinementStatus::ExactRoot,
+                    interval.clone(),
+                    Some(IsolatedRootInterval {
+                        lower: midpoint.clone(),
+                        upper: midpoint.clone(),
+                        exact_root: Some(midpoint),
+                        distinct_root_count: 1,
+                    }),
+                    steps + 1,
+                    None,
+                );
+            }
+            Some(Ordering::Less | Ordering::Greater) => {}
+            None => {
+                return root_refinement_report(
+                    IsolatedRootRefinementStatus::Undecided,
+                    interval.clone(),
+                    None,
+                    steps,
+                    Some("could not evaluate polynomial at refinement midpoint".to_owned()),
+                );
+            }
+        }
+        let Some(left_count) = sturm_count(&sturm, &lower, &midpoint, policy) else {
+            return root_refinement_report(
+                IsolatedRootRefinementStatus::Undecided,
+                interval.clone(),
+                None,
+                steps,
+                Some("could not count roots in left refinement interval".to_owned()),
+            );
+        };
+        match left_count {
+            1 => upper = midpoint,
+            0 => lower = midpoint,
+            _ => {
+                return root_refinement_report(
+                    IsolatedRootRefinementStatus::NonUnitIsolation,
+                    interval.clone(),
+                    None,
+                    steps,
+                    Some("refinement split found multiple roots in a child interval".to_owned()),
+                );
+            }
+        }
+        steps += 1;
+    }
+
+    root_refinement_report(
+        IsolatedRootRefinementStatus::Refined,
+        interval.clone(),
+        Some(IsolatedRootInterval {
+            lower,
+            upper,
+            exact_root: None,
+            distinct_root_count: 1,
+        }),
+        steps,
         None,
     )
 }
@@ -1519,6 +1773,16 @@ fn polynomial_gcd(
     Some(gcd_monic_normalize(left, policy)?)
 }
 
+fn square_free_part(polynomial: Vec<Real>, policy: PredicatePolicy) -> Option<Vec<Real>> {
+    let polynomial = trim_polynomial(polynomial, policy)?;
+    let gcd = polynomial_gcd(polynomial.clone(), derivative(&polynomial), policy)?;
+    if gcd.len() <= 1 {
+        return Some(polynomial);
+    }
+    let (quotient, remainder) = polynomial_div_rem(polynomial, &gcd, policy)?;
+    is_zero_polynomial(&remainder, policy)?.then_some(quotient)
+}
+
 fn polynomial_div_rem(
     dividend: Vec<Real>,
     divisor: &[Real],
@@ -1547,6 +1811,22 @@ fn polynomial_div_rem(
         remainder = trim_polynomial(remainder, policy)?;
     }
     Some((trim_polynomial(quotient, policy)?, remainder))
+}
+
+fn root_refinement_report(
+    status: IsolatedRootRefinementStatus,
+    original_interval: IsolatedRootInterval,
+    refined_interval: Option<IsolatedRootInterval>,
+    refinement_steps: usize,
+    message: Option<String>,
+) -> IsolatedRootRefinementReport {
+    IsolatedRootRefinementReport {
+        status,
+        original_interval,
+        refined_interval,
+        refinement_steps,
+        message,
+    }
 }
 
 fn trim_polynomial(mut polynomial: Vec<Real>, policy: PredicatePolicy) -> Option<Vec<Real>> {
@@ -2007,6 +2287,63 @@ mod tests {
             candidate.exact_root == Some(real(-1))
                 && candidate.status == AlgebraicRootCandidateStatus::ReplayRejected
         }));
+    }
+
+    #[test]
+    fn isolated_interval_refinement_separates_nested_quadratic_roots() {
+        let report = refine_isolated_univariate_polynomial_interval(
+            &[real(-2), Real::zero(), Real::one()],
+            &IsolatedRootInterval {
+                lower: real(1),
+                upper: real(2),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            RootIsolationConfig {
+                max_refinement_steps: 4,
+                ..RootIsolationConfig::default()
+            },
+        );
+
+        assert_eq!(report.status, IsolatedRootRefinementStatus::Refined);
+        assert_eq!(report.refinement_steps, 4);
+        let refined = report.refined_interval.expect("refined interval");
+        assert_eq!(refined.distinct_root_count, 1);
+        assert!(refined.lower >= real(1));
+        assert!(refined.upper <= real(2));
+    }
+
+    #[test]
+    fn isolated_interval_refinement_rejects_bad_evidence_antagonistically() {
+        let bad_count = refine_isolated_univariate_polynomial_interval(
+            &[real(-1), Real::zero(), Real::one()],
+            &IsolatedRootInterval {
+                lower: real(-2),
+                upper: real(2),
+                exact_root: None,
+                distinct_root_count: 2,
+            },
+            RootIsolationConfig::default(),
+        );
+        assert_eq!(
+            bad_count.status,
+            IsolatedRootRefinementStatus::NonUnitIsolation
+        );
+
+        let bad_polynomial = refine_isolated_univariate_polynomial_interval(
+            &[real(0)],
+            &IsolatedRootInterval {
+                lower: real(0),
+                upper: real(1),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            RootIsolationConfig::default(),
+        );
+        assert_eq!(
+            bad_polynomial.status,
+            IsolatedRootRefinementStatus::InvalidPolynomial
+        );
     }
 
     #[test]
