@@ -1,9 +1,9 @@
 //! JavaScript wrapper for 3D vectors.
 
 use crate::float_types::{
-    Real, hangle_between_vectors, hunit_quaternion, hunit_vector3, hvector3_cross,
-    hvector3_dot, hvector3_from_vector3, hvector3_magnitude, hvectors_orthogonal_within,
-    tolerance,
+    Real, hangle_between_vectors, hangle_sin_cos, hreal_mul, hreal_sub, hunit_quaternion,
+    hunit_vector3, hvector3_cross, hvector3_dot, hvector3_from_vector3, hvector3_magnitude,
+    hvector3_weighted_sum, hvectors_orthogonal_within, tolerance,
 };
 use nalgebra::Vector3;
 use wasm_bindgen::prelude::*;
@@ -124,11 +124,9 @@ impl Vector3Js {
     }
 
     pub fn scale(&self, factor: f64) -> Vector3Js {
-        if !factor.is_finite() {
-            return Vector3Js { inner: self.inner };
-        }
         Vector3Js {
-            inner: self.inner * factor as Real,
+            inner: hvector3_weighted_sum(&[self.inner], &[factor as Real])
+                .unwrap_or(self.inner),
         }
     }
 
@@ -139,23 +137,37 @@ impl Vector3Js {
     }
 
     pub fn rotate(&self, axis: &Vector3Js, angle: f64) -> Vector3Js {
+        // Rodrigues' rotation formula is still the wasm/API boundary shape,
+        // but all scalar trig and vector blends are routed through
+        // hyperreal/hyperlattice helpers before returning finite components.
+        // See Yap, "Towards Exact Geometric Computation," Computational
+        // Geometry 7(1-2), 1997
+        // (<https://doi.org/10.1016/0925-7721(95)00040-2>) and Rodrigues,
+        // "Des lois géométriques qui régissent les déplacements d'un système
+        // solide dans l'espace," Journal de Mathématiques Pures et Appliquées
+        // 5, 1840.
         let Some(axis) = hunit_vector3(&axis.inner) else {
             return Vector3Js { inner: self.inner };
         };
-        if !angle.is_finite() {
+        let Some((sin, cos)) = hangle_sin_cos(angle as Real) else {
             return Vector3Js { inner: self.inner };
-        }
+        };
 
-        let sin = (angle as Real).sin();
-        let cos = (angle as Real).cos();
         let Some(cross) = hvector3_cross(&axis, &self.inner) else {
             return Vector3Js { inner: self.inner };
         };
         let Some(dot) = hvector3_dot(&axis, &self.inner) else {
             return Vector3Js { inner: self.inner };
         };
+        let Some(one_minus_cos) = hreal_sub(1.0, cos) else {
+            return Vector3Js { inner: self.inner };
+        };
+        let Some(axis_weight) = hreal_mul(dot, one_minus_cos) else {
+            return Vector3Js { inner: self.inner };
+        };
         Vector3Js {
-            inner: self.inner * cos + cross * sin + axis * (dot * (1.0 - cos)),
+            inner: hvector3_weighted_sum(&[self.inner, cross, axis], &[cos, sin, axis_weight])
+                .unwrap_or(self.inner),
         }
     }
 
@@ -265,6 +277,7 @@ mod tests {
             inner: Vector3::new(Real::NAN, 0.0, 1.0),
         };
         assert_eq!(vector.rotate(&hostile_axis, 1.0).inner, vector.inner);
+        assert_eq!(vector.rotate(&z_axis, Real::NAN).inner, vector.inner);
     }
 
     #[test]
