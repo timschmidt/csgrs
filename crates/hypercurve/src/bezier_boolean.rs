@@ -13757,6 +13757,153 @@ impl BezierBooleanResultReport2 {
         )
     }
 
+    /// Accepts a quadratic Bezier endpoint-successor result with keyed depths.
+    ///
+    /// This is the typed fragment-report counterpart to
+    /// [`Self::from_schedule_endpoint_successor_depth_facts`]. The quadratic
+    /// fragments supply retained exact endpoints; ownership facts choose the
+    /// emitted fragments; exact directed endpoint equality derives the
+    /// successor graph internally. This keeps Yap's "Towards Exact Geometric
+    /// Computation" (1997) rule local to the API boundary: only replayed exact
+    /// endpoint facts, not display polylines or tolerances, determine boolean
+    /// loop connectivity.
+    pub fn from_quadratic_schedule_endpoint_successor_depth_facts(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        ownership_facts: &[BezierBooleanOwnershipFact2],
+        first: &BezierBooleanQuadraticFragmentReport2,
+        second: &BezierBooleanQuadraticFragmentReport2,
+        branch_vertex_count: usize,
+        resolved_overlap_count: usize,
+        depth_facts: &[BezierBooleanLoopNestingDepthFact2],
+    ) -> Self {
+        Self::from_schedule_endpoint_successor_depth_facts(
+            schedule,
+            operation,
+            ownership_facts,
+            &quadratic_fragment_endpoints(&first.fragments),
+            &quadratic_fragment_endpoints(&second.fragments),
+            branch_vertex_count,
+            resolved_overlap_count,
+            depth_facts,
+        )
+    }
+
+    /// Accepts a quadratic Bezier endpoint-successor result with containment facts.
+    pub fn from_quadratic_schedule_endpoint_successor_containment_facts(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        ownership_facts: &[BezierBooleanOwnershipFact2],
+        first: &BezierBooleanQuadraticFragmentReport2,
+        second: &BezierBooleanQuadraticFragmentReport2,
+        branch_vertex_count: usize,
+        resolved_overlap_count: usize,
+        containment_facts: &[BezierBooleanLoopContainmentFact2],
+    ) -> Self {
+        Self::from_schedule_endpoint_successor_containment_facts(
+            schedule,
+            operation,
+            ownership_facts,
+            &quadratic_fragment_endpoints(&first.fragments),
+            &quadratic_fragment_endpoints(&second.fragments),
+            branch_vertex_count,
+            resolved_overlap_count,
+            containment_facts,
+        )
+    }
+
+    /// Accepts a cubic Bezier endpoint-successor result with keyed depths.
+    pub fn from_cubic_schedule_endpoint_successor_depth_facts(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        ownership_facts: &[BezierBooleanOwnershipFact2],
+        first: &BezierBooleanCubicFragmentReport2,
+        second: &BezierBooleanCubicFragmentReport2,
+        branch_vertex_count: usize,
+        resolved_overlap_count: usize,
+        depth_facts: &[BezierBooleanLoopNestingDepthFact2],
+    ) -> Self {
+        Self::from_schedule_endpoint_successor_depth_facts(
+            schedule,
+            operation,
+            ownership_facts,
+            &cubic_fragment_endpoints(&first.fragments),
+            &cubic_fragment_endpoints(&second.fragments),
+            branch_vertex_count,
+            resolved_overlap_count,
+            depth_facts,
+        )
+    }
+
+    /// Accepts a cubic Bezier endpoint-successor result with containment facts.
+    pub fn from_cubic_schedule_endpoint_successor_containment_facts(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        ownership_facts: &[BezierBooleanOwnershipFact2],
+        first: &BezierBooleanCubicFragmentReport2,
+        second: &BezierBooleanCubicFragmentReport2,
+        branch_vertex_count: usize,
+        resolved_overlap_count: usize,
+        containment_facts: &[BezierBooleanLoopContainmentFact2],
+    ) -> Self {
+        Self::from_schedule_endpoint_successor_containment_facts(
+            schedule,
+            operation,
+            ownership_facts,
+            &cubic_fragment_endpoints(&first.fragments),
+            &cubic_fragment_endpoints(&second.fragments),
+            branch_vertex_count,
+            resolved_overlap_count,
+            containment_facts,
+        )
+    }
+
+    /// Accepts a rational quadratic/conic endpoint-successor result with keyed depths.
+    pub fn from_rational_quadratic_schedule_endpoint_successor_depth_facts(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        ownership_facts: &[BezierBooleanOwnershipFact2],
+        first: &BezierBooleanRationalQuadraticFragmentReport2,
+        second: &BezierBooleanRationalQuadraticFragmentReport2,
+        branch_vertex_count: usize,
+        resolved_overlap_count: usize,
+        depth_facts: &[BezierBooleanLoopNestingDepthFact2],
+    ) -> Self {
+        Self::from_schedule_endpoint_successor_depth_facts(
+            schedule,
+            operation,
+            ownership_facts,
+            &rational_quadratic_fragment_endpoints(&first.fragments),
+            &rational_quadratic_fragment_endpoints(&second.fragments),
+            branch_vertex_count,
+            resolved_overlap_count,
+            depth_facts,
+        )
+    }
+
+    /// Accepts a rational quadratic/conic endpoint-successor result with containment facts.
+    pub fn from_rational_quadratic_schedule_endpoint_successor_containment_facts(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        ownership_facts: &[BezierBooleanOwnershipFact2],
+        first: &BezierBooleanRationalQuadraticFragmentReport2,
+        second: &BezierBooleanRationalQuadraticFragmentReport2,
+        branch_vertex_count: usize,
+        resolved_overlap_count: usize,
+        containment_facts: &[BezierBooleanLoopContainmentFact2],
+    ) -> Self {
+        Self::from_schedule_endpoint_successor_containment_facts(
+            schedule,
+            operation,
+            ownership_facts,
+            &rational_quadratic_fragment_endpoints(&first.fragments),
+            &rational_quadratic_fragment_endpoints(&second.fragments),
+            branch_vertex_count,
+            resolved_overlap_count,
+            containment_facts,
+        )
+    }
+
     /// Accepts a scheduled multi-cycle successor result with depth-certified roles.
     pub fn from_schedule_multi_cycle_successor_depth_role_facts(
         schedule: &BezierBooleanTraversalScheduleReport2,
@@ -14869,6 +15016,82 @@ impl BezierBooleanMaterializedRegionReport2 {
             containment_facts,
         );
         Self::from_result_laminar_containment_facts(&result, containment_facts)
+    }
+
+    /// Materializes a quadratic Bezier endpoint-successor result with laminar containment.
+    ///
+    /// This wrapper keeps quadratic endpoint extraction inside the typed
+    /// boolean API while using the same exact endpoint-successor replay as the
+    /// generic route. The staged result and laminar materialization replay
+    /// follows Yap (1997) for certified predicates and Vatti (1992),
+    /// Greiner-Hormann (1998), and Martinez-Rueda-Feito (2009) for the
+    /// boundary/nesting/fill decomposition.
+    pub fn from_quadratic_schedule_endpoint_successor_laminar_containment_facts(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        ownership_facts: &[BezierBooleanOwnershipFact2],
+        first: &BezierBooleanQuadraticFragmentReport2,
+        second: &BezierBooleanQuadraticFragmentReport2,
+        branch_vertex_count: usize,
+        resolved_overlap_count: usize,
+        containment_facts: &[BezierBooleanLoopContainmentFact2],
+    ) -> Self {
+        Self::from_schedule_endpoint_successor_laminar_containment_facts(
+            schedule,
+            operation,
+            ownership_facts,
+            &quadratic_fragment_endpoints(&first.fragments),
+            &quadratic_fragment_endpoints(&second.fragments),
+            branch_vertex_count,
+            resolved_overlap_count,
+            containment_facts,
+        )
+    }
+
+    /// Materializes a cubic Bezier endpoint-successor result with laminar containment.
+    pub fn from_cubic_schedule_endpoint_successor_laminar_containment_facts(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        ownership_facts: &[BezierBooleanOwnershipFact2],
+        first: &BezierBooleanCubicFragmentReport2,
+        second: &BezierBooleanCubicFragmentReport2,
+        branch_vertex_count: usize,
+        resolved_overlap_count: usize,
+        containment_facts: &[BezierBooleanLoopContainmentFact2],
+    ) -> Self {
+        Self::from_schedule_endpoint_successor_laminar_containment_facts(
+            schedule,
+            operation,
+            ownership_facts,
+            &cubic_fragment_endpoints(&first.fragments),
+            &cubic_fragment_endpoints(&second.fragments),
+            branch_vertex_count,
+            resolved_overlap_count,
+            containment_facts,
+        )
+    }
+
+    /// Materializes a rational quadratic/conic endpoint-successor result with laminar containment.
+    pub fn from_rational_quadratic_schedule_endpoint_successor_laminar_containment_facts(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        ownership_facts: &[BezierBooleanOwnershipFact2],
+        first: &BezierBooleanRationalQuadraticFragmentReport2,
+        second: &BezierBooleanRationalQuadraticFragmentReport2,
+        branch_vertex_count: usize,
+        resolved_overlap_count: usize,
+        containment_facts: &[BezierBooleanLoopContainmentFact2],
+    ) -> Self {
+        Self::from_schedule_endpoint_successor_laminar_containment_facts(
+            schedule,
+            operation,
+            ownership_facts,
+            &rational_quadratic_fragment_endpoints(&first.fragments),
+            &rational_quadratic_fragment_endpoints(&second.fragments),
+            branch_vertex_count,
+            resolved_overlap_count,
+            containment_facts,
+        )
     }
 
     /// Materializes a multi-cycle-successor result with laminar containment facts.
