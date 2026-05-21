@@ -5939,6 +5939,169 @@ fn exact_axis_aligned_coplanar_volumetric_box_intersection_materializes_box_shor
 
 #[cfg(feature = "exact-triangulation")]
 #[test]
+fn exact_axis_aligned_orthogonal_solid_cell_complex_reenters_boolean() {
+    let base = axis_aligned_box_i64([0, 0, 0], [2, 2, 2]);
+    let overlap = axis_aligned_box_i64([1, 1, 0], [3, 3, 2]);
+    let complex = hypermesh::exact::boolean_exact(
+        &base,
+        &overlap,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap()
+    .mesh;
+    assert!(complex.facts().mesh.closed_manifold);
+    assert!(complex.triangles().len() > base.triangles().len());
+
+    let cutter = axis_aligned_box_i64([2, 0, 0], [3, 2, 2]);
+    let union_preflight = hypermesh::exact::preflight_boolean_exact(
+        &complex,
+        &cutter,
+        hypermesh::exact::ExactBooleanOperation::Union,
+    )
+    .unwrap();
+    union_preflight.validate().unwrap();
+    union_preflight
+        .validate_against_sources(&complex, &cutter)
+        .unwrap();
+    assert_eq!(
+        union_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellUnion
+    );
+
+    let union = hypermesh::exact::boolean_exact(
+        &complex,
+        &cutter,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    union
+        .validate_operation_against_sources(
+            &complex,
+            &cutter,
+            hypermesh::exact::ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        union.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut:
+                hypermesh::exact::ExactBooleanShortcutKind::AxisAlignedOrthogonalSolidCellUnion
+        }
+    );
+    assert!(union.mesh.facts().mesh.closed_manifold);
+
+    let intersection_preflight = hypermesh::exact::preflight_boolean_exact(
+        &complex,
+        &cutter,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+    )
+    .unwrap();
+    intersection_preflight.validate().unwrap();
+    intersection_preflight
+        .validate_against_sources(&complex, &cutter)
+        .unwrap();
+    assert_eq!(
+        intersection_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellIntersection
+    );
+    let intersection = hypermesh::exact::boolean_exact(
+        &complex,
+        &cutter,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    intersection
+        .validate_operation_against_sources(
+            &complex,
+            &cutter,
+            hypermesh::exact::ExactBooleanOperation::Intersection,
+            ValidationPolicy::CLOSED,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        intersection.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::
+                AxisAlignedOrthogonalSolidCellIntersection
+        }
+    );
+    let intersection_bounds = intersection.mesh.bounds().mesh.as_ref().unwrap();
+    assert_real_eq(&intersection_bounds.min.x, &ExactReal::from(2));
+    assert_real_eq(&intersection_bounds.max.x, &ExactReal::from(3));
+    assert_real_eq(&intersection_bounds.min.y, &ExactReal::from(1));
+    assert_real_eq(&intersection_bounds.max.y, &ExactReal::from(2));
+
+    let difference_preflight = hypermesh::exact::preflight_boolean_exact(
+        &complex,
+        &cutter,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    difference_preflight.validate().unwrap();
+    difference_preflight
+        .validate_against_sources(&complex, &cutter)
+        .unwrap();
+    assert_eq!(
+        difference_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellDifference
+    );
+    let difference = hypermesh::exact::boolean_exact(
+        &complex,
+        &cutter,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    difference
+        .validate_operation_against_sources(
+            &complex,
+            &cutter,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::CLOSED,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        difference.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut:
+                hypermesh::exact::ExactBooleanShortcutKind::AxisAlignedOrthogonalSolidCellDifference
+        }
+    );
+    assert!(difference.mesh.facts().mesh.closed_manifold);
+
+    let mut stale = union_preflight.clone();
+    stale.support = hypermesh::exact::ExactBooleanSupport::CertifiedAxisAlignedBoxCellUnion;
+    assert!(stale.validate_against_sources(&complex, &cutter).is_err());
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
+fn exact_axis_aligned_orthogonal_solid_rejects_non_rectangular_face_split() {
+    let left = top_subdivided_axis_aligned_box_i64([0, 0, 0], [2, 2, 2]);
+    let right = axis_aligned_box_i64([1, 1, 0], [3, 3, 2]);
+
+    let preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+    )
+    .unwrap();
+    preflight.validate().unwrap();
+    assert_ne!(
+        preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellUnion
+    );
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
 fn exact_affine_coplanar_volumetric_boxes_materialize_cell_complexes() {
     let origin = [0, 0, 0];
     let basis_u = [2, 1, 0];

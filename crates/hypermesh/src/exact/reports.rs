@@ -536,6 +536,14 @@ pub enum ExactBooleanShortcutKind {
     /// Certified orthogonal-cell difference of coplanar-volumetric
     /// axis-aligned boxes.
     AxisAlignedBoxCellDifference,
+    /// Certified orthogonal-cell union of axis-aligned solid cell complexes.
+    AxisAlignedOrthogonalSolidCellUnion,
+    /// Certified orthogonal-cell intersection of axis-aligned solid cell
+    /// complexes.
+    AxisAlignedOrthogonalSolidCellIntersection,
+    /// Certified orthogonal-cell difference of axis-aligned solid cell
+    /// complexes.
+    AxisAlignedOrthogonalSolidCellDifference,
     /// Certified affine-frame union of coplanar-volumetric box solids.
     AffineBoxUnion,
     /// Certified affine-frame intersection of coplanar-volumetric box solids.
@@ -1072,6 +1080,15 @@ pub enum ExactBooleanSupport {
     /// Difference was materialized as an exact orthogonal cell complex for two
     /// coplanar-volumetric axis-aligned boxes.
     CertifiedAxisAlignedBoxCellDifference,
+    /// Union was materialized as an exact orthogonal cell complex from
+    /// certified axis-aligned solid cell-complex sources.
+    CertifiedAxisAlignedOrthogonalSolidCellUnion,
+    /// Intersection was materialized as an exact orthogonal cell complex from
+    /// certified axis-aligned solid cell-complex sources.
+    CertifiedAxisAlignedOrthogonalSolidCellIntersection,
+    /// Difference was materialized as an exact orthogonal cell complex from
+    /// certified axis-aligned solid cell-complex sources.
+    CertifiedAxisAlignedOrthogonalSolidCellDifference,
     /// Union was materialized by normalizing two affine-box solids into one
     /// exact box-cell frame.
     CertifiedAffineBoxUnion,
@@ -1290,6 +1307,20 @@ impl ExactBooleanPreflight {
                     || self.graph_had_unknowns
                     || self.blocker.is_some()
                     || self.retained_face_pairs == 0
+                {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+                if self.arrangement_readiness.is_some() {
+                    return Err(ExactReportValidationError::UnexpectedArrangementReadiness);
+                }
+                no_region_facts(self.region_count, &self.region_classifications)
+            }
+            ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellUnion
+            | ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellIntersection
+            | ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellDifference => {
+                if operation_is_selected_region(self.operation)
+                    || self.graph_had_unknowns
+                    || self.blocker.is_some()
                 {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
                 }

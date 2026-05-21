@@ -55,6 +55,11 @@ use super::intersection::MeshFacePairRelation;
 #[cfg(feature = "exact-triangulation")]
 use super::mesh::{ExactMesh, Triangle};
 #[cfg(feature = "exact-triangulation")]
+use super::orthogonal_solid::{
+    AxisAlignedOrthogonalSolidOperation, has_axis_aligned_orthogonal_solid_cells,
+    materialize_axis_aligned_orthogonal_solid_cells,
+};
+#[cfg(feature = "exact-triangulation")]
 use super::orthogonal_surface::{
     CoplanarOrthogonalSurfaceOperation, arrange_coplanar_orthogonal_surface_difference,
     arrange_coplanar_orthogonal_surface_intersection, arrange_coplanar_orthogonal_surface_union,
@@ -650,6 +655,21 @@ pub fn preflight_boolean_exact(
             arrangement_readiness: None,
         });
     }
+    if let Some(solid_operation) = axis_aligned_orthogonal_solid_operation(operation)
+        && has_axis_aligned_orthogonal_solid_cells(left, right, solid_operation)
+    {
+        return Ok(ExactBooleanPreflight {
+            operation,
+            support: axis_aligned_orthogonal_solid_support(solid_operation),
+            graph_had_unknowns,
+            retained_face_pairs,
+            retained_events,
+            region_count: 0,
+            region_classifications: Vec::new(),
+            blocker: None,
+            arrangement_readiness: None,
+        });
+    }
     if let Some((region_classifications, triangulations, _volumetric_classifications)) =
         volumetric_winding_region_plan_from_graph(&graph, left, right)?.filter(
             |(_, triangulations, volumetric_classifications)| {
@@ -1223,6 +1243,11 @@ pub fn boolean_exact_with_boundary_policy(
             ) && let Some(result) =
                 boolean_axis_aligned_box_cell_meshes(left, right, operation, validation)?
             {
+                return Ok(result);
+            }
+            if let Some(result) = boolean_axis_aligned_orthogonal_solid_cell_meshes(
+                left, right, operation, validation,
+            )? {
                 return Ok(result);
             }
             if let Some(result) =
@@ -1874,6 +1899,91 @@ fn boolean_axis_aligned_box_cell_meshes(
         }
     };
     Ok(Some(certified_shortcut_result(mesh, shortcut)))
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn boolean_axis_aligned_orthogonal_solid_cell_meshes(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    let Some(solid_operation) = axis_aligned_orthogonal_solid_operation(operation) else {
+        return Ok(None);
+    };
+    let label = match solid_operation {
+        AxisAlignedOrthogonalSolidOperation::Union => {
+            "exact axis-aligned orthogonal solid cell union"
+        }
+        AxisAlignedOrthogonalSolidOperation::Intersection => {
+            "exact axis-aligned orthogonal solid cell intersection"
+        }
+        AxisAlignedOrthogonalSolidOperation::Difference => {
+            "exact axis-aligned orthogonal solid cell difference"
+        }
+    };
+    let Some(mesh) = materialize_axis_aligned_orthogonal_solid_cells(
+        left,
+        right,
+        solid_operation,
+        label,
+        validation,
+    )?
+    else {
+        return Ok(None);
+    };
+    Ok(Some(certified_shortcut_result(
+        mesh,
+        axis_aligned_orthogonal_solid_shortcut(solid_operation),
+    )))
+}
+
+#[cfg(feature = "exact-triangulation")]
+const fn axis_aligned_orthogonal_solid_operation(
+    operation: ExactBooleanOperation,
+) -> Option<AxisAlignedOrthogonalSolidOperation> {
+    match operation {
+        ExactBooleanOperation::Union => Some(AxisAlignedOrthogonalSolidOperation::Union),
+        ExactBooleanOperation::Intersection => {
+            Some(AxisAlignedOrthogonalSolidOperation::Intersection)
+        }
+        ExactBooleanOperation::Difference => Some(AxisAlignedOrthogonalSolidOperation::Difference),
+        ExactBooleanOperation::SelectedRegions(_) => None,
+    }
+}
+
+#[cfg(feature = "exact-triangulation")]
+const fn axis_aligned_orthogonal_solid_support(
+    operation: AxisAlignedOrthogonalSolidOperation,
+) -> ExactBooleanSupport {
+    match operation {
+        AxisAlignedOrthogonalSolidOperation::Union => {
+            ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellUnion
+        }
+        AxisAlignedOrthogonalSolidOperation::Intersection => {
+            ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellIntersection
+        }
+        AxisAlignedOrthogonalSolidOperation::Difference => {
+            ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellDifference
+        }
+    }
+}
+
+#[cfg(feature = "exact-triangulation")]
+const fn axis_aligned_orthogonal_solid_shortcut(
+    operation: AxisAlignedOrthogonalSolidOperation,
+) -> ExactBooleanShortcutKind {
+    match operation {
+        AxisAlignedOrthogonalSolidOperation::Union => {
+            ExactBooleanShortcutKind::AxisAlignedOrthogonalSolidCellUnion
+        }
+        AxisAlignedOrthogonalSolidOperation::Intersection => {
+            ExactBooleanShortcutKind::AxisAlignedOrthogonalSolidCellIntersection
+        }
+        AxisAlignedOrthogonalSolidOperation::Difference => {
+            ExactBooleanShortcutKind::AxisAlignedOrthogonalSolidCellDifference
+        }
+    }
 }
 
 #[cfg(feature = "exact-triangulation")]

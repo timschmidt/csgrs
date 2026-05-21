@@ -63,6 +63,8 @@ fuzz_target!(|data: &[u8]| {
         #[cfg(feature = "exact-triangulation")]
         exercise_axis_aligned_coplanar_volumetric_boxes();
         #[cfg(feature = "exact-triangulation")]
+        exercise_axis_aligned_orthogonal_solid_cell_complexes();
+        #[cfg(feature = "exact-triangulation")]
         exercise_affine_coplanar_volumetric_boxes();
         #[cfg(feature = "exact-triangulation")]
         exercise_mixed_coplanar_volumetric_materialization();
@@ -3004,6 +3006,94 @@ fn exercise_axis_aligned_coplanar_volumetric_boxes() {
         .validate_operation_against_sources(
             &cell_left,
             &cell_right,
+            ExactBooleanOperation::Difference,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn exercise_axis_aligned_orthogonal_solid_cell_complexes() {
+    let left = axis_aligned_box_i64([0, 0, 0], [2, 2, 2]);
+    let right = axis_aligned_box_i64([1, 1, 0], [3, 3, 2]);
+    let complex = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("axis-aligned box cell union should materialize")
+    .mesh;
+    let cutter = axis_aligned_box_i64([2, 0, 0], [3, 2, 2]);
+
+    let union = preflight_boolean_exact(&complex, &cutter, ExactBooleanOperation::Union)
+        .expect("orthogonal solid cell union preflight should classify shortcut");
+    union.validate().unwrap();
+    assert_eq!(
+        union.support,
+        ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellUnion
+    );
+    let union_result = hypermesh::exact::boolean_exact(
+        &complex,
+        &cutter,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("orthogonal solid cell union should materialize");
+    union_result
+        .validate_operation_against_sources(
+            &complex,
+            &cutter,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+
+    let intersection =
+        preflight_boolean_exact(&complex, &cutter, ExactBooleanOperation::Intersection)
+            .expect("orthogonal solid cell intersection preflight should classify shortcut");
+    intersection.validate().unwrap();
+    assert_eq!(
+        intersection.support,
+        ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellIntersection
+    );
+    let intersection_result = hypermesh::exact::boolean_exact(
+        &complex,
+        &cutter,
+        ExactBooleanOperation::Intersection,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("orthogonal solid cell intersection should materialize");
+    intersection_result
+        .validate_operation_against_sources(
+            &complex,
+            &cutter,
+            ExactBooleanOperation::Intersection,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+
+    let difference = preflight_boolean_exact(&complex, &cutter, ExactBooleanOperation::Difference)
+        .expect("orthogonal solid cell difference preflight should classify shortcut");
+    difference.validate().unwrap();
+    assert_eq!(
+        difference.support,
+        ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellDifference
+    );
+    let difference_result = hypermesh::exact::boolean_exact(
+        &complex,
+        &cutter,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("orthogonal solid cell difference should materialize");
+    difference_result
+        .validate_operation_against_sources(
+            &complex,
+            &cutter,
             ExactBooleanOperation::Difference,
             ValidationPolicy::CLOSED,
             ExactBoundaryBooleanPolicy::Reject,

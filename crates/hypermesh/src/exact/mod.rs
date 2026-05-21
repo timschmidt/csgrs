@@ -31,6 +31,8 @@ pub mod intersection;
 pub mod mesh;
 pub mod narrow;
 #[cfg(feature = "exact-triangulation")]
+pub mod orthogonal_solid;
+#[cfg(feature = "exact-triangulation")]
 pub mod orthogonal_surface;
 pub mod package;
 pub mod predicates;
