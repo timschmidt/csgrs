@@ -346,9 +346,13 @@ fn signed_axis_transform_maps_bounds_without_float_matrices() {
 }
 
 #[test]
-fn exact_affine_transform_maps_bounds_by_certified_corner_enclosure() {
+fn exact_affine_transform_maps_bounds_by_certified_term_intervals() {
     let affine = ExactAffineTransform::new(
-        [[r(1), r(1), r(0)], [r(0), r(1), r(0)], [r(0), r(0), r(1)]],
+        [
+            [r(1), r(-2), r(0)],
+            [r(0), r(-1), r(1)],
+            [r(-3), r(0), r(2)],
+        ],
         [r(10), r(20), r(30)],
     );
     let bounds = VoxelAddress::new(3, [1, 2, 3])
@@ -357,8 +361,8 @@ fn exact_affine_transform_maps_bounds_by_certified_corner_enclosure() {
         .unwrap();
 
     let mapped = affine.map_bounds(&bounds).unwrap();
-    assert_eq!(mapped.min, [r(13), r(22), r(33)]);
-    assert_eq!(mapped.max, [r(15), r(23), r(34)]);
+    assert_eq!(mapped.min, [r(5), r(20), r(30)]);
+    assert_eq!(mapped.max, [r(8), r(22), r(35)]);
 }
 
 #[test]

@@ -28,6 +28,7 @@ mod candidate;
 mod cell;
 mod chunk;
 mod compression;
+mod continuous;
 mod coupling;
 mod differential;
 mod distance;
@@ -80,6 +81,11 @@ pub use chunk::{ChunkAddress, ChunkLocalAddress, ChunkPageSummary, ChunkShape};
 pub use compression::{
     CompressedStorageKind, CompressedStorageManifest, CompressedStorageReport, StorageReplayStatus,
     VoxelMemoryBudgetManifest, VoxelMemoryBudgetReport,
+};
+pub use continuous::{
+    ContinuousFieldVoxelCell, ContinuousFieldVoxelInterchangeManifest,
+    ContinuousFieldVoxelInterchangeReport, ContinuousFieldVoxelManifest,
+    ContinuousFieldVoxelReport, ContinuousFieldVoxelRowOrder, continuous_field_address,
 };
 pub use coupling::{VoxelFieldCouplingKind, VoxelFieldCouplingManifest, VoxelFieldCouplingReport};
 pub use differential::{SparseGridDiffReport, diff_sparse_grids};

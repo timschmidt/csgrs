@@ -4,21 +4,23 @@ use hypervoxel::{
     AdapterNumericContract, AdapterToleranceStatus, AddressRay, AggregateCertainty,
     AxisPermutationTransform, CertifiedFieldInterval, CertifiedVectorInterval, ChunkAddress,
     ChunkPageSummary, ChunkShape, CompressedStorageKind, CompressedStorageManifest,
-    DeterministicSnapshot, ExactAabb3, ExactAffineTransform, ExactBox, ExactConvexHalfSpaceSet,
-    ExactHalfSpace, FieldAggregateFacts, FieldEnvelopeFacts, FieldSampleId, FieldSampleRecord,
-    FreshnessStatus, GridAabbHandoff, GridBasis, GridCoordinateSystem, GridFrame,
-    GridFrameManifest, GridHandedness, GridSource, ImageStackContainer, ImageStackManifest,
-    LegacyAdapterKind, LegacyAdapterStatus, LengthUnit, MaterialDisplayPalette, MaterialRegionId,
-    MaterialRegionRecord, PreparedSparseVoxelGridExt, PreparedVoxelGrid, PreviewExportFormat,
-    PreviewExportManifest, PreviewScalarPolicy, ProcessGridArtifact, ProcessGridRole,
-    QuantizationPolicy, QueryRegion, SignedAxis, SparseVoxelGrid, SupportDirection, SvoVoxelGrid,
-    SweptVolumeProvenance, VoxelAddress, VoxelArtifactId, VoxelArtifactManifest, VoxelArtifactRole,
-    VoxelCandidateKind, VoxelCandidateManifest, VoxelCell, VoxelChannelMapping, VoxelEditBatch,
-    VoxelFieldCouplingKind, VoxelFieldCouplingManifest, VoxelHandoffDomain, VoxelHandoffManifest,
-    VoxelIndexConvention, VoxelIoCompression, VoxelIoMetadata, VoxelMemoryBudgetManifest,
-    VoxelSideTables, VoxelSliceNaming, VoxelSliceOrdering, VoxelSpatialAggregateFacts,
-    VoxelTraceDimension, VoxelTraceManifest, VoxelizationAudit, VoxelizationPolicy,
-    classify_support_mask, diff_sparse_grids, extract_exposed_faces,
+    ContinuousFieldVoxelCell, ContinuousFieldVoxelInterchangeManifest,
+    ContinuousFieldVoxelManifest, ContinuousFieldVoxelRowOrder, DeterministicSnapshot, ExactAabb3,
+    ExactAffineTransform, ExactBox, ExactConvexHalfSpaceSet, ExactHalfSpace, FieldAggregateFacts,
+    FieldEnvelopeFacts, FieldSampleId, FieldSampleRecord, FreshnessStatus, GridAabbHandoff,
+    GridBasis, GridCoordinateSystem, GridFrame, GridFrameManifest, GridHandedness, GridSource,
+    ImageStackContainer, ImageStackManifest, LegacyAdapterKind, LegacyAdapterStatus, LengthUnit,
+    MaterialDisplayPalette, MaterialRegionId, MaterialRegionRecord, PreparedSparseVoxelGridExt,
+    PreparedVoxelGrid, PreviewExportFormat, PreviewExportManifest, PreviewScalarPolicy,
+    ProcessGridArtifact, ProcessGridRole, QuantizationPolicy, QueryRegion, SignedAxis,
+    SparseVoxelGrid, SupportDirection, SvoVoxelGrid, SweptVolumeProvenance, VoxelAddress,
+    VoxelArtifactId, VoxelArtifactManifest, VoxelArtifactRole, VoxelCandidateKind,
+    VoxelCandidateManifest, VoxelCell, VoxelChannelMapping, VoxelEditBatch, VoxelFieldCouplingKind,
+    VoxelFieldCouplingManifest, VoxelHandoffDomain, VoxelHandoffManifest, VoxelIndexConvention,
+    VoxelIoCompression, VoxelIoMetadata, VoxelMemoryBudgetManifest, VoxelSideTables,
+    VoxelSliceNaming, VoxelSliceOrdering, VoxelSpatialAggregateFacts, VoxelTraceDimension,
+    VoxelTraceManifest, VoxelizationAudit, VoxelizationPolicy, classify_support_mask,
+    continuous_field_address, diff_sparse_grids, extract_exposed_faces,
     extract_exposed_faces_with_report, greedy_face_patch_plan, lookup_material_display_colors,
     lossy_obj_from_quad_mesh, lossy_quad_mesh_from_faces, query_field_samples,
     query_material_regions, report_material_region_metadata, sample_manhattan_distance_field,
@@ -828,6 +830,36 @@ fn bench_batches_field_facts_and_sweeps(c: &mut Criterion) {
             let report = handoff_manifest.report();
             (report.has_aggregate_evidence, report.exact_handoff_ready)
         })
+    });
+    let continuous_rows = (0..64)
+        .map(|i| {
+            ContinuousFieldVoxelCell::new(
+                continuous_field_address(&frame, [i, 0, 0]).unwrap(),
+                VoxelCell::material(MaterialRegionId(1)),
+            )
+        })
+        .collect::<Vec<_>>();
+    let continuous_manifest = ContinuousFieldVoxelManifest {
+        frame: frame.clone(),
+        source: frame.source().cloned(),
+        expected_source: frame.source().cloned(),
+        expected_cell_count: continuous_rows.len(),
+        cells: continuous_rows,
+    };
+    c.bench_function("continuous_field_voxel_intake_report", |b| {
+        b.iter(|| continuous_manifest.report())
+    });
+    let continuous_interchange = ContinuousFieldVoxelInterchangeManifest {
+        source: frame.source().cloned(),
+        expected_source: frame.source().cloned(),
+        coordinate_system: GridCoordinateSystem::HyperGrid,
+        row_order: ContinuousFieldVoxelRowOrder::ExplicitAddresses,
+        declared_depth: frame.depth(),
+        declared_dimensions: [64, 64, 64],
+        declared_cell_count: continuous_manifest.cells.len(),
+    };
+    c.bench_function("continuous_field_voxel_interchange_report", |b| {
+        b.iter(|| continuous_manifest.interchange_report(&continuous_interchange))
     });
     c.bench_function("lattice_aabb_handoff", |b| {
         b.iter(|| {

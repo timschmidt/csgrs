@@ -7,9 +7,8 @@
 //! "Towards Exact Geometric Computation," *Computational Geometry* 7(1-2),
 //! 1997, rather than importing triangle epsilon tests as truth.
 
-use std::cmp::Ordering;
-
-use hyperreal::{CertifiedRealOrdering, Real, RealSign};
+use hyperlimit::{PlaneSide, PredicateOutcome};
+use hyperreal::{Real, RealSign};
 
 use crate::{
     BoundaryPolicy, GridFrame, GridSource, HypervoxelError, HypervoxelResult, MaterialRegionId,
@@ -119,10 +118,12 @@ pub fn classify_cell_against_halfspace(
     let mut inside_count = 0_usize;
     let mut outside_count = 0_usize;
     for corner in bounds.corners() {
-        let value = dot(&halfspace.normal, &corner);
-        match certified_cmp(&value, &halfspace.offset)? {
-            Ordering::Less | Ordering::Equal => inside_count += 1,
-            Ordering::Greater => outside_count += 1,
+        match decide(hyperlimit::classify_point_plane(
+            &point3(&corner),
+            &halfspace.predicate_plane(),
+        ))? {
+            PlaneSide::Below | PlaneSide::On => inside_count += 1,
+            PlaneSide::Above => outside_count += 1,
         }
     }
     Ok(match (inside_count, outside_count) {
@@ -241,17 +242,20 @@ pub fn voxelize_exact_halfspace(
     Ok((grid, report))
 }
 
-fn dot(normal: &[Real; 3], point: &[Real; 3]) -> Real {
-    normal[0].clone() * point[0].clone()
-        + normal[1].clone() * point[1].clone()
-        + normal[2].clone() * point[2].clone()
+impl ExactHalfSpace {
+    fn predicate_plane(&self) -> hyperlimit::Plane3 {
+        hyperlimit::Plane3::new(point3(&self.normal), -self.offset.clone())
+    }
 }
 
-fn certified_cmp(left: &Real, right: &Real) -> HypervoxelResult<Ordering> {
-    match left.certified_cmp_until(right, -128) {
-        CertifiedRealOrdering::Known { ordering, .. } => Ok(ordering),
-        CertifiedRealOrdering::Unknown { .. } => Err(HypervoxelError::UnknownScalarOrdering {
+fn decide<T>(outcome: PredicateOutcome<T>) -> HypervoxelResult<T> {
+    outcome
+        .value()
+        .ok_or(HypervoxelError::UnknownScalarOrdering {
             field: "half-space",
-        }),
-    }
+        })
+}
+
+fn point3(values: &[Real; 3]) -> hyperlimit::Point3 {
+    hyperlimit::Point3::new(values[0].clone(), values[1].clone(), values[2].clone())
 }

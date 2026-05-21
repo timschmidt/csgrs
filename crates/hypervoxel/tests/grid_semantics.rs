@@ -1,18 +1,19 @@
 use hyperreal::{Rational, Real};
 use hypervoxel::{
     AdapterNumericContract, AdapterScalarPrecision, AdapterToleranceStatus, AggregateCertainty,
-    BoundaryPolicy, ChunkAddress, ChunkPageSummary, ChunkShape, FreshnessStatus, GridBasis,
-    GridCoordinateSystem, GridFrame, GridFrameManifest, GridHandedness, GridSource,
-    HypervoxelError, ImageStackContainer, ImageStackManifest, LegacyAdapterKind,
-    LegacyAdapterStatus, LengthUnit, MaterialRegionId, OccupancyState, PreparedSparseVoxelGridExt,
-    PreparedVoxelGrid, QuantizationPolicy, SideTableLinkStatus, SparseVoxelGrid,
-    StorageReplayStatus, VoxelAddress, VoxelAggregateFacts, VoxelArtifactId, VoxelArtifactManifest,
-    VoxelArtifactRole, VoxelCell, VoxelChannelMapping, VoxelHandoffDomain, VoxelIndexConvention,
-    VoxelInterchangeFormat, VoxelInterchangeManifest, VoxelIoCompression, VoxelIoMetadata,
-    VoxelIoMetadataStatus, VoxelIoPaletteStatus, VoxelIoPayloadStatus, VoxelPayload,
-    VoxelPredicateCertificateReport, VoxelSliceNaming, VoxelSliceOrdering,
-    VoxelSpatialAggregateFacts, VoxelTraceDimension, VoxelTraceManifest, VoxelizationPolicy,
-    VoxelizationReport,
+    BoundaryPolicy, ChunkAddress, ChunkPageSummary, ChunkShape, ContinuousFieldVoxelCell,
+    ContinuousFieldVoxelInterchangeManifest, ContinuousFieldVoxelManifest,
+    ContinuousFieldVoxelRowOrder, FreshnessStatus, GridBasis, GridCoordinateSystem, GridFrame,
+    GridFrameManifest, GridHandedness, GridSource, HypervoxelError, ImageStackContainer,
+    ImageStackManifest, LegacyAdapterKind, LegacyAdapterStatus, LengthUnit, MaterialRegionId,
+    OccupancyState, PreparedSparseVoxelGridExt, PreparedVoxelGrid, QuantizationPolicy,
+    SideTableLinkStatus, SparseVoxelGrid, StorageReplayStatus, VoxelAddress, VoxelAggregateFacts,
+    VoxelArtifactId, VoxelArtifactManifest, VoxelArtifactRole, VoxelCell, VoxelChannelMapping,
+    VoxelHandoffDomain, VoxelIndexConvention, VoxelInterchangeFormat, VoxelInterchangeManifest,
+    VoxelIoCompression, VoxelIoMetadata, VoxelIoMetadataStatus, VoxelIoPaletteStatus,
+    VoxelIoPayloadStatus, VoxelPayload, VoxelPredicateCertificateReport, VoxelSliceNaming,
+    VoxelSliceOrdering, VoxelSpatialAggregateFacts, VoxelTraceDimension, VoxelTraceManifest,
+    VoxelizationPolicy, VoxelizationReport, continuous_field_address,
 };
 
 use hypervoxel::SvoVoxelGrid;
@@ -160,6 +161,138 @@ fn grid_frame_manifest_reports_basis_handedness_coordinate_system_and_chunk_shap
     }
     .report();
     assert!(!incomplete.complete);
+}
+
+#[test]
+fn continuous_field_voxel_manifest_accepts_exact_sdf_cell_rows() {
+    let frame = frame(1);
+    let cells = vec![
+        ContinuousFieldVoxelCell::new(
+            continuous_field_address(&frame, [0, 0, 0]).unwrap(),
+            VoxelCell::material(MaterialRegionId(1)),
+        ),
+        ContinuousFieldVoxelCell::new(
+            continuous_field_address(&frame, [1, 0, 0]).unwrap(),
+            VoxelCell::boundary(VoxelPayload::MaterialRegion(MaterialRegionId(1))),
+        ),
+        ContinuousFieldVoxelCell::new(
+            continuous_field_address(&frame, [0, 1, 0]).unwrap(),
+            VoxelCell::empty(),
+        ),
+    ];
+    let manifest = ContinuousFieldVoxelManifest {
+        frame: frame.clone(),
+        source: frame.source().cloned(),
+        expected_source: frame.source().cloned(),
+        expected_cell_count: cells.len(),
+        cells,
+    };
+    let report = manifest.report();
+
+    assert_eq!(report.freshness, FreshnessStatus::Current);
+    assert_eq!(report.supplied_cell_count, 3);
+    assert_eq!(report.duplicate_address_count, 0);
+    assert_eq!(report.frame_validated_cell_count, 3);
+    assert!(report.finest_depth_only);
+    assert!(report.complete_expected_cover);
+    assert!(report.exact_cell_evidence_ready);
+    assert!(report.exact_materialization_ready);
+    assert_eq!(report.predicate_certificates.inside_cells, 1);
+    assert_eq!(report.predicate_certificates.outside_cells, 1);
+    assert_eq!(report.predicate_certificates.boundary_cells, 1);
+    assert_eq!(report.predicate_certificates.unknown_cells, 0);
+
+    let prepared = manifest.materialize_sparse_grid().unwrap();
+    assert_eq!(
+        prepared.report.as_ref().unwrap().predicate_certificates,
+        report.predicate_certificates
+    );
+    assert!(prepared.report.as_ref().unwrap().exact_topology_ready());
+    assert_eq!(prepared.storage.len(), 2);
+}
+
+#[test]
+fn continuous_field_voxel_manifest_blocks_stale_duplicate_unknown_or_incomplete_rows() {
+    let frame = frame(2);
+    let address = continuous_field_address(&frame, [0, 0, 0]).unwrap();
+    let stale_duplicate_unknown = ContinuousFieldVoxelManifest {
+        frame: frame.clone(),
+        source: Some(GridSource::new("mesh:gear", 6)),
+        expected_source: frame.source().cloned(),
+        expected_cell_count: 4,
+        cells: vec![
+            ContinuousFieldVoxelCell::new(address, VoxelCell::unknown()),
+            ContinuousFieldVoxelCell::new(address, VoxelCell::lossy_adapter_value(7)),
+        ],
+    };
+    let report = stale_duplicate_unknown.report();
+
+    assert_eq!(report.freshness, FreshnessStatus::Stale);
+    assert_eq!(report.duplicate_address_count, 1);
+    assert_eq!(report.frame_validated_cell_count, 2);
+    assert!(!report.complete_expected_cover);
+    assert!(!report.exact_cell_evidence_ready);
+    assert!(!report.exact_materialization_ready);
+    assert_eq!(report.predicate_certificates.unknown_cells, 2);
+    assert!(report.aggregate.has_unknown);
+    assert!(report.aggregate.has_lossy);
+
+    let prepared = stale_duplicate_unknown.materialize_sparse_grid().unwrap();
+    assert!(!prepared.report.as_ref().unwrap().exact_topology_ready());
+}
+
+#[test]
+fn continuous_field_interchange_report_validates_frame_and_row_contract() {
+    let frame = frame(1);
+    let rows = (0..2)
+        .flat_map(|z| {
+            let frame = frame.clone();
+            (0..2).flat_map(move |y| {
+                let frame = frame.clone();
+                (0..2).map(move |x| {
+                    ContinuousFieldVoxelCell::new(
+                        continuous_field_address(&frame, [x, y, z]).unwrap(),
+                        VoxelCell::material(MaterialRegionId(1)),
+                    )
+                })
+            })
+        })
+        .collect::<Vec<_>>();
+    let intake = ContinuousFieldVoxelManifest {
+        frame: frame.clone(),
+        source: frame.source().cloned(),
+        expected_source: frame.source().cloned(),
+        expected_cell_count: rows.len(),
+        cells: rows,
+    };
+    let manifest = ContinuousFieldVoxelInterchangeManifest {
+        source: frame.source().cloned(),
+        expected_source: frame.source().cloned(),
+        coordinate_system: GridCoordinateSystem::HyperGrid,
+        row_order: ContinuousFieldVoxelRowOrder::ZMajorYThenXFast,
+        declared_depth: frame.depth(),
+        declared_dimensions: [2, 2, 2],
+        declared_cell_count: 8,
+    };
+    let report = intake.interchange_report(&manifest);
+    assert!(report.exact_interchange_ready);
+
+    let bad_manifest = ContinuousFieldVoxelInterchangeManifest {
+        coordinate_system: GridCoordinateSystem::Unknown,
+        row_order: ContinuousFieldVoxelRowOrder::Unknown,
+        declared_depth: frame.depth() + 1,
+        declared_dimensions: [2, 2, 1],
+        declared_cell_count: 7,
+        ..manifest
+    };
+    let bad_report = intake.interchange_report(&bad_manifest);
+    assert_eq!(bad_report.freshness, FreshnessStatus::Current);
+    assert!(!bad_report.depth_matches_frame);
+    assert!(!bad_report.dimensions_match_frame);
+    assert!(!bad_report.cell_count_matches);
+    assert!(!bad_report.coordinate_system_declared);
+    assert!(!bad_report.row_order_declared);
+    assert!(!bad_report.exact_interchange_ready);
 }
 
 #[test]

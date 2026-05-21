@@ -1,5 +1,10 @@
 use hyperreal::{Rational, Real};
-use hypervoxel::{GridFrame, HypervoxelError, LengthUnit, VoxelAddress};
+use hypervoxel::{
+    ContinuousFieldVoxelCell, ContinuousFieldVoxelInterchangeManifest,
+    ContinuousFieldVoxelManifest, ContinuousFieldVoxelRowOrder, FreshnessStatus,
+    GridCoordinateSystem, GridFrame, GridSource, HypervoxelError, LengthUnit, VoxelAddress,
+    VoxelCell, continuous_field_address,
+};
 use proptest::prelude::*;
 
 fn real_fraction(n: i64, d: u64) -> Real {
@@ -79,5 +84,55 @@ proptest! {
         prop_assert_eq!(bounds.extent(0), Real::from(1));
         prop_assert_eq!(bounds.extent(1), Real::from(1));
         prop_assert_eq!(bounds.extent(2), Real::from(1));
+    }
+
+    #[test]
+    fn generated_continuous_field_intake_readiness_tracks_exact_rows(depth in 1_u8..5, n in 1_usize..32) {
+        let frame = GridFrame::builder()
+            .depth(depth)
+            .source(GridSource::new("sdf:generated", 1))
+            .build()
+            .unwrap();
+        let cells_per_axis = 1_u64 << depth;
+        let rows = (0..n)
+            .map(|i| {
+                let i = i as u64;
+                let address = continuous_field_address(
+                    &frame,
+                    [i % cells_per_axis, (i / cells_per_axis) % cells_per_axis, 0],
+                )
+                .unwrap();
+                ContinuousFieldVoxelCell::new(address, VoxelCell::material(hypervoxel::MaterialRegionId(1)))
+            })
+            .collect::<Vec<_>>();
+        let manifest = ContinuousFieldVoxelManifest {
+            frame: frame.clone(),
+            source: frame.source().cloned(),
+            expected_source: frame.source().cloned(),
+            expected_cell_count: rows.len(),
+            cells: rows,
+        };
+        let report = manifest.report();
+
+        prop_assert_eq!(report.freshness, FreshnessStatus::Current);
+        prop_assert!(report.finest_depth_only);
+        prop_assert!(report.exact_cell_evidence_ready);
+        prop_assert_eq!(report.exact_materialization_ready, report.duplicate_address_count == 0);
+
+        let cells_per_axis = 1_u64 << depth;
+        let interchange = ContinuousFieldVoxelInterchangeManifest {
+            source: frame.source().cloned(),
+            expected_source: frame.source().cloned(),
+            coordinate_system: GridCoordinateSystem::HyperGrid,
+            row_order: ContinuousFieldVoxelRowOrder::ExplicitAddresses,
+            declared_depth: depth,
+            declared_dimensions: [cells_per_axis, cells_per_axis, cells_per_axis],
+            declared_cell_count: n,
+        };
+        let interchange_report = manifest.interchange_report(&interchange);
+        prop_assert_eq!(
+            interchange_report.exact_interchange_ready,
+            n == (cells_per_axis * cells_per_axis * cells_per_axis) as usize
+        );
     }
 }

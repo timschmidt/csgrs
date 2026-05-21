@@ -23,12 +23,30 @@ before storage, meshing, simulation, or visualization layers consume them.
   values for frame, AABB, affine, and field reports.
 - [hyperlimit](https://github.com/timschmidt/hyperlimit): exact classification policy
   for boxes, half-spaces, and future solid predicates.
+- [hypertri](https://github.com/timschmidt/hypertri): planar triangulation support for
+  mesh and slice handoffs.
+- [hypercurve](https://github.com/timschmidt/hypercurve): exact curve evidence for
+  future sampled-field and contour adapters.
 - [hypermesh](https://github.com/timschmidt/hypermesh) and
   [hyperphysics](https://github.com/timschmidt/hyperphysics): mesh, mass, collision,
   support, field, and simulation handoff consumers.
 - [hyperpath](https://github.com/timschmidt/hyperpath) and
   [hyperdrc](https://github.com/timschmidt/hyperdrc): process, routing, and
   manufacturing contexts that can use sparse-grid evidence.
+- [hypersolve](https://github.com/timschmidt/hypersolve): residual replay and constraint
+  certification for future field, support, and process solvers.
+- [hypercircuit](https://github.com/timschmidt/hypercircuit): electrical context that can
+  consume field and clearance voxel evidence.
+- [hyperpack](https://github.com/timschmidt/hyperpack): package and panel metadata for
+  manufacturing-grid consumers.
+- [hyperparts](https://github.com/timschmidt/hyperparts): part and footprint records for
+  process-specific voxel evidence.
+- [hyperevolution](https://github.com/timschmidt/hyperevolution): optimization layer for
+  design and process candidates.
+- [hyperbrep](https://github.com/timschmidt/hyperbrep): exact boundary-representation
+  source geometry for future voxelization.
+- [hypersdf](https://github.com/timschmidt/hypersdf): signed-distance previews and
+  implicit-field evidence for voxel workflows.
 
 ## Typical Voxel Problems
 
@@ -57,8 +75,11 @@ zero-byte memory routes are absence reports rather than exact evidence.
   provide the current exact voxelization surfaces.
 - `VoxelSideTables`, material/field/process records, and query reports connect sparse
   cells to domain data.
-- Mesh, support, path trace, compression, IO, artifact, coupling, export, and handoff
-  report types preserve adapter status.
+- Mesh, support, path trace, distance-field preview, compression, IO, artifact,
+  coupling, export, and handoff report types preserve adapter status.
+- `VoxelizationPolicy`, `BoundaryPolicy`, `QuantizationPolicy`, legacy-adapter reports,
+  and deterministic snapshots keep exact evidence separate from sampled or display
+  artifacts.
 
 ## Precision Model
 
@@ -69,6 +90,12 @@ inverted or zero-extent boxes, zero or structurally unknown half-space normals, 
 empty convex predicate sets before topology can be promoted. Quantization, preview
 export, legacy storage, and lossy mesh output are report-bearing adapter surfaces, not
 silent replacements for exact occupancy evidence.
+
+Numerical explosion is controlled by retaining grid frames, integer addresses, material
+IDs, side-table links, and aggregate facts instead of expanding every cell into
+coordinate geometry. Exact classifiers work cell-by-cell against compact source objects;
+lossy previews and exports are marked as adapters so they do not become new exact
+source geometry by accident.
 
 ## Performance Model
 
@@ -127,15 +154,16 @@ Start with an exact frame, then classify or store cells with explicit reports:
 
 ```rust,ignore
 use hypervoxel::{
-    ExactBox, GridFrameBuilder, LengthUnit, SparseVoxelGrid, VoxelAddress, VoxelCell,
-    voxelize_exact_box,
+    ExactBox, GridFrame, LengthUnit, MaterialRegionId, SparseVoxelGrid, VoxelAddress,
+    VoxelCell, VoxelizationPolicy, voxelize_exact_box,
 };
 use hyperreal::Real;
 
-let frame = GridFrameBuilder::default()
-    .unit(LengthUnit::Millimeter)
+let frame = GridFrame::builder()
+    .units(LengthUnit::Millimeter)
     .origin([Real::from(0), Real::from(0), Real::from(0)])
-    .pitch(Real::from(1))
+    .pitch([Real::from(1), Real::from(1), Real::from(1)])
+    .depth(2)
     .build()?;
 
 let solid = ExactBox::new(
@@ -144,15 +172,66 @@ let solid = ExactBox::new(
     None,
 );
 
-let report = voxelize_exact_box(&frame, &solid, 2)?;
+let (_solid_grid, _report) = voxelize_exact_box(
+    frame.clone(),
+    &solid,
+    MaterialRegionId(1),
+    VoxelizationPolicy::conservative_cover(),
+)?;
+
 let mut grid = SparseVoxelGrid::new(frame);
-grid.insert(VoxelAddress::new(1, [0, 0, 0])?, VoxelCell::occupied());
+grid.set(
+    VoxelAddress::new(1, [0, 0, 0])?,
+    VoxelCell::material(MaterialRegionId(7)),
+)?;
+```
+
+Exact half-space sets use the same report-bearing boundary:
+
+```rust,ignore
+use hypervoxel::{
+    ExactConvexHalfSpaceSet, ExactHalfSpace, GridFrame, LengthUnit, MaterialRegionId,
+    VoxelizationPolicy, voxelize_exact_convex_halfspace_set,
+};
+use hyperreal::Real;
+
+let frame = GridFrame::builder()
+    .units(LengthUnit::Millimeter)
+    .pitch([Real::from(1), Real::from(1), Real::from(1)])
+    .depth(3)
+    .build()?;
+
+let halfspace = ExactHalfSpace::new(
+    [Real::from(1), Real::from(0), Real::from(0)],
+    Real::from(-2),
+    None,
+);
+let solid = ExactConvexHalfSpaceSet::new(vec![halfspace], None);
+
+let (_grid, _report) = voxelize_exact_convex_halfspace_set(
+    frame,
+    &solid,
+    MaterialRegionId(2),
+    VoxelizationPolicy::conservative_cover(),
+)?;
 ```
 
 Half-space and convex-set voxelizers, sparse-grid diffs, deterministic snapshots,
 distance previews, exposed-face extraction, greedy patch planning, compression reports,
 IO manifests, support masks, and legacy `voxelis` storage diffs follow the same rule:
 they are report-bearing handoffs, not silent replacements for exact grid evidence.
+
+## References
+
+- Yap, Chee K. "Towards Exact Geometric Computation." *Computational Geometry* 7.1-2
+  (1997): 3-23.
+- Lorensen, William E., and Harvey E. Cline. "Marching Cubes: A High Resolution 3D
+  Surface Construction Algorithm." *SIGGRAPH Computer Graphics* 21.4 (1987): 163-169.
+- Bresenham, Jack E. "Algorithm for Computer Control of a Digital Plotter." *IBM
+  Systems Journal* 4.1 (1965): 25-30.
+- Lysenko, Mikola. "Meshing in a Minecraft Game." 0fps.net, 2012.
+- `voxelis` sparse voxel octree/DAG storage code retained behind the
+  `legacy-voxelis` feature.
 
 ## Development
 
