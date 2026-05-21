@@ -368,7 +368,6 @@ fn hyper_triangle_orientation(
     let a = hvector3_from_point3(&tri_vertices[0].position)?;
     let b = hvector3_from_point3(&tri_vertices[1].position)?;
     let c = hvector3_from_point3(&tri_vertices[2].position)?;
-    let normal = hvector3_from_vector3(polygon_normal)?;
 
     let edge1 = b - &a;
     let edge2 = c - a;
@@ -380,7 +379,35 @@ fn hyper_triangle_orientation(
         return None;
     }
 
-    if hreal_lt_f64(&winding_normal.dot(&normal), 0.0) {
+    let a = hyperlimit::Point3::try_from_f64_array([
+        tri_vertices[0].position.x,
+        tri_vertices[0].position.y,
+        tri_vertices[0].position.z,
+    ])
+    .ok()?;
+    let b = hyperlimit::Point3::try_from_f64_array([
+        tri_vertices[1].position.x,
+        tri_vertices[1].position.y,
+        tri_vertices[1].position.z,
+    ])
+    .ok()?;
+    let c = hyperlimit::Point3::try_from_f64_array([
+        tri_vertices[2].position.x,
+        tri_vertices[2].position.y,
+        tri_vertices[2].position.z,
+    ])
+    .ok()?;
+    let normal = hyperlimit::Point3::try_from_f64_array([
+        polygon_normal.x,
+        polygon_normal.y,
+        polygon_normal.z,
+    ])
+    .ok()?;
+
+    if matches!(
+        hyperlimit::triangle3_winding_normal_sign(&a, &b, &c, &normal).value(),
+        Some(hyperlimit::Sign::Negative)
+    ) {
         Some(TriangleOrientation::Reversed)
     } else {
         Some(TriangleOrientation::Aligned)

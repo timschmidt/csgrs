@@ -1,6 +1,6 @@
 [package]
 name = "csgrs"
-version = "0.22.0"
+version = "0.23.0"
 edition = "2024"
 description = "Constructive solid geometry (CSG) on meshes using BSP trees in Rust"
 authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
@@ -56,14 +56,24 @@ opt-level = "z"
 nalgebra = { version = "0.34.1", features = ["serde-serialize"] }
 #alum = "0.6.1"
 chull = { version = "0.2.4", optional = true }
-hypercurve = { version = "0.2.0", features = ["triangulation"] }
-hyperlattice = { version = "0.5.0" }
-hyperlimit = { version = "0.3.0", optional = true }
-hypermesh = { version = "0.2.0", default-features = false, features = ["exact"] }
-hyperphysics = { version = "0.2.0" }
-hyperreal = { version = "0.12.0", default-features = false }
-hypersdf = { version = "0.1.0", optional = true }
-hypertri = { version = "0.2.0", default-features = false, features = ["earcut"] }
+# Hyper sibling dependency switch: keep both local path and crates.io lines; do not remove either.
+# Development mode uses the local path lines. For release, comment those and uncomment the crates.io lines.
+hypercurve = { path = "../hypercurve", features = ["triangulation"] }
+hyperlattice = { path = "../hyperlattice" }
+hyperlimit = { path = "../hyperlimit" }
+hypermesh = { path = "../hypermesh", default-features = false, features = ["exact"] }
+hyperphysics = { path = "../hyperphysics" }
+hyperreal = { path = "../hyperreal", default-features = false }
+hypersdf = { path = "../hypersdf", optional = true }
+hypertri = { path = "../hypertri", default-features = false, features = ["earcut"] }
+# hypercurve = { version = "0.3.0", features = ["triangulation"] }
+# hyperlattice = { version = "0.6.0" }
+# hyperlimit = { version = "0.4.0" }
+# hypermesh = { version = "0.3.0", default-features = false, features = ["exact"] }
+# hyperphysics = { version = "0.3.0" }
+# hyperreal = { version = "0.13.0", default-features = false }
+# hypersdf = { version = "0.2.0", optional = true }
+# hypertri = { version = "0.3.0", default-features = false, features = ["earcut"] }
 rapier3d-f64 = { version = "0.31.0" }
 parry3d-f64  = { version = "0.25.3" }
 
@@ -125,6 +135,9 @@ mesh = [
 mesh-bbopt = [
   # Enable bounding box optimization for Mesh BSP
 ]
+bmesh = [
+  # Compatibility feature for downstream crates that request the BMesh module.
+]
 sketch = [
   # hypercurve backed Profile datatype
 ]
@@ -183,7 +196,6 @@ metaballs = [
 ]
 sdf = [
   "fast-surface-nets",
-  "hyperlimit",
   "hypersdf",
 ]
 offset = [

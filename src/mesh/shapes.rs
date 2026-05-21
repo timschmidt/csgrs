@@ -3,10 +3,11 @@
 use crate::csg::CSG;
 use crate::errors::ValidationError;
 use crate::float_types::{
-    PI, Real, TAU, hangle_sin_cos, hperpendicular_basis, hreal_abs, hreal_affine,
-    hreal_cmp_f64, hreal_div, hreal_from_f64, hreal_mul, hreal_sqrt, hreal_sub, hreal_sum,
-    hrotation_between_vectors, hscale_matrix, htranslation_matrix, hunit_vector3,
-    hunit_vector3_and_magnitude, hvector3_from_point3, tolerance,
+    PI, Real, TAU, hangle_sin_cos, hdegrees_to_radians, hperpendicular_basis,
+    hradians_to_degrees, hreal_abs, hreal_affine, hreal_cmp_f64, hreal_div, hreal_from_f64,
+    hreal_mul, hreal_sqrt, hreal_sub, hreal_sum, hrotation_between_vectors, hscale_matrix,
+    htranslation_matrix, hunit_vector3, hunit_vector3_and_magnitude, hvector3_from_point3,
+    tolerance,
 };
 use crate::mesh::Mesh;
 use crate::polygon::Polygon;
@@ -1143,16 +1144,25 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         }
 
         let dz = thickness / (slices as Real);
-        let d_ψ = helix_angle_deg.to_radians() / (slices as Real);
-        if !finite_mesh_scalar(dz) || !finite_mesh_scalar(d_ψ) {
+        let Some(d_psi_rad) = hdegrees_to_radians(helix_angle_deg)
+            .and_then(|angle| hreal_div(angle, slices as Real))
+        else {
+            return Mesh::empty(metadata);
+        };
+        if !finite_mesh_scalar(dz) || !finite_mesh_scalar(d_psi_rad) {
             return Mesh::empty(metadata);
         }
 
         let mut acc = Mesh::empty(metadata.clone());
         let mut z_curr = 0.0;
         for i in 0..slices {
+            let Some(rotation_deg) =
+                hreal_mul(i as Real, d_psi_rad).and_then(hradians_to_degrees)
+            else {
+                return Mesh::empty(metadata);
+            };
             let slice = base_slice
-                .rotate(0.0, 0.0, (i as Real) * d_ψ.to_degrees())
+                .rotate(0.0, 0.0, rotation_deg)
                 .extrude(dz)
                 .translate(0.0, 0.0, z_curr);
             acc = if i == 0 { slice } else { acc.union(&slice) };

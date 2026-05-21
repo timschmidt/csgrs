@@ -3,11 +3,12 @@
 
 use crate::csg::CSG;
 use crate::float_types::{
-    HReal, Real, hreal_div, hreal_from_f64, hreal_gt_f64, hreal_to_f64, hvector3_from_vector3,
+    HReal, Real, TAU, hpoint_lerp, hreal_abs, hreal_div, hreal_from_f64, hreal_gt_f64,
+    hreal_max, hreal_min, hreal_sub, hreal_sum, hreal_to_f64, hvector3_from_vector3,
     tolerance,
 };
 use crate::mesh::Mesh;
-use nalgebra::Point3;
+use nalgebra::{Point3, Vector3};
 use std::fmt::Debug;
 
 impl<M: Clone + Debug + Send + Sync> Mesh<M> {
@@ -59,26 +60,44 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     where
         F: Fn(&Point3<Real>) -> Real + Send + Sync,
     {
-        if !thickness.is_finite() || thickness <= 0.0 {
+        let Some(thickness_h) = hreal_from_f64(thickness).ok() else {
+            return Mesh::empty(metadata);
+        };
+        if !hreal_gt_f64(&thickness_h, 0.0) {
             return Mesh::empty(metadata);
         }
 
         let aabb = self.bounding_box();
         let min_pt = aabb.mins;
         let max_pt = aabb.maxs;
-        let half_thickness = thickness * 0.5;
+        let Some(half) = hreal_from_f64(0.5).ok() else {
+            return Mesh::empty(metadata);
+        };
+        let Some(half_thickness) = hreal_to_f64(&(thickness_h.clone() * half)) else {
+            return Mesh::empty(metadata);
+        };
         let step = max_axis_step(&min_pt, &max_pt, resolution);
-        let padding = step.max(thickness);
-        let sample_min =
-            Point3::new(min_pt.x - padding, min_pt.y - padding, min_pt.z - padding);
-        let sample_max =
-            Point3::new(max_pt.x + padding, max_pt.y + padding, max_pt.z + padding);
+        let Some(padding) = hreal_max(&[step, thickness]) else {
+            return Mesh::empty(metadata);
+        };
+        let Some(negative_padding) = hreal_sub(0.0, padding) else {
+            return Mesh::empty(metadata);
+        };
+        let Some(sample_min) = hpoint_pad(&min_pt, negative_padding) else {
+            return Mesh::empty(metadata);
+        };
+        let Some(sample_max) = hpoint_pad(&max_pt, padding) else {
+            return Mesh::empty(metadata);
+        };
 
         Mesh::sdf(
             move |p: &Point3<Real>| {
-                let sheet = (sdf_fn(p) - iso_value).abs() - half_thickness;
+                let sheet = hreal_sub(sdf_fn(p), iso_value)
+                    .and_then(hreal_abs)
+                    .and_then(|distance| hreal_sub(distance, half_thickness))
+                    .unwrap_or(Real::INFINITY);
                 let bounds = axis_aligned_box_sdf(p, &min_pt, &max_pt);
-                sheet.max(bounds)
+                hreal_max(&[sheet, bounds]).unwrap_or(Real::INFINITY)
             },
             resolution,
             sample_min,
@@ -246,7 +265,7 @@ fn tpms_scale(period: Real) -> Option<Real> {
     if !hreal_gt_f64(&period, tolerance()) {
         return None;
     }
-    hreal_to_f64(&(hreal_from_f64(std::f64::consts::TAU).ok()? / period).ok()?)
+    hreal_to_f64(&(hreal_from_f64(TAU).ok()? / period).ok()?)
 }
 
 fn tpms_scaled_axes(point: &Point3<Real>, scale: Real) -> Option<(HReal, HReal, HReal)> {
@@ -298,15 +317,46 @@ fn axis_aligned_box_sdf(p: &Point3<Real>, min: &Point3<Real>, max: &Point3<Real>
     // hyperlattice and export only the finite SDF boundary value. This keeps
     // TPMS solid capping aligned with Yap's exact-geometric-computation
     // boundary split (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-    let center = Point3::from((min.coords + max.coords) * 0.5);
-    let half = (max.coords - min.coords) * 0.5;
-    let q = (p - center).abs() - half;
-    let outside_vec = q.map(|component| component.max(0.0));
+    let center = hpoint_lerp(min, max, 0.5).unwrap_or(*min);
+    let half = Vector3::new(
+        haxis_half_extent(min.x, max.x).unwrap_or(Real::INFINITY),
+        haxis_half_extent(min.y, max.y).unwrap_or(Real::INFINITY),
+        haxis_half_extent(min.z, max.z).unwrap_or(Real::INFINITY),
+    );
+    let q = Vector3::new(
+        haxis_abs_offset(p.x, center.x, half.x).unwrap_or(Real::INFINITY),
+        haxis_abs_offset(p.y, center.y, half.y).unwrap_or(Real::INFINITY),
+        haxis_abs_offset(p.z, center.z, half.z).unwrap_or(Real::INFINITY),
+    );
+    let outside_vec =
+        q.map(|component| hreal_max(&[component, 0.0]).unwrap_or(Real::INFINITY));
     let outside = hvector3_from_vector3(&outside_vec)
         .and_then(|vector| hreal_to_f64(&vector.magnitude().ok()?))
         .unwrap_or(Real::INFINITY);
-    let inside = q.x.max(q.y).max(q.z).min(0.0);
-    outside + inside
+    let inside = hreal_max(&[q.x, q.y, q.z])
+        .and_then(|max_component| hreal_min(&[max_component, 0.0]))
+        .unwrap_or(Real::INFINITY);
+    hreal_sum(&[outside, inside]).unwrap_or(Real::INFINITY)
+}
+
+fn hpoint_pad(point: &Point3<Real>, padding: Real) -> Option<Point3<Real>> {
+    Some(Point3::new(
+        hreal_sum(&[point.x, padding])?,
+        hreal_sum(&[point.y, padding])?,
+        hreal_sum(&[point.z, padding])?,
+    ))
+}
+
+fn haxis_half_extent(min: Real, max: Real) -> Option<Real> {
+    hreal_sub(max, min)
+        .and_then(hreal_abs)
+        .and_then(|span| hreal_div(span, 2.0))
+}
+
+fn haxis_abs_offset(value: Real, center: Real, half_extent: Real) -> Option<Real> {
+    hreal_sub(value, center)
+        .and_then(hreal_abs)
+        .and_then(|distance| hreal_sub(distance, half_extent))
 }
 
 fn max_axis_step(
@@ -314,9 +364,17 @@ fn max_axis_step(
     max: &Point3<Real>,
     resolution: (usize, usize, usize),
 ) -> Real {
-    let span = max - min;
-    let dx = hreal_div(span.x.abs(), resolution.0.max(2) as Real - 1.0).unwrap_or(0.0);
-    let dy = hreal_div(span.y.abs(), resolution.1.max(2) as Real - 1.0).unwrap_or(0.0);
-    let dz = hreal_div(span.z.abs(), resolution.2.max(2) as Real - 1.0).unwrap_or(0.0);
-    dx.max(dy).max(dz)
+    let dx = hreal_sub(max.x, min.x)
+        .and_then(hreal_abs)
+        .and_then(|span| hreal_div(span, resolution.0.max(2) as Real - 1.0))
+        .unwrap_or(0.0);
+    let dy = hreal_sub(max.y, min.y)
+        .and_then(hreal_abs)
+        .and_then(|span| hreal_div(span, resolution.1.max(2) as Real - 1.0))
+        .unwrap_or(0.0);
+    let dz = hreal_sub(max.z, min.z)
+        .and_then(hreal_abs)
+        .and_then(|span| hreal_div(span, resolution.2.max(2) as Real - 1.0))
+        .unwrap_or(0.0);
+    hreal_max(&[dx, dy, dz]).unwrap_or(0.0)
 }

@@ -45,7 +45,9 @@ pub fn hreal_to_f64(value: &HReal) -> Option<F64> {
 /// The checked primitive lift is owned by `hyperlattice`; `csgrs` only adapts
 /// nalgebra's current mesh boundary type into that hyper geometry API.
 pub(crate) fn hvector3_from_point3(point: &Point3<Real>) -> Option<hyperlattice::Vector3> {
-    hyperlattice::Vector3::try_from_f64_array([point.x, point.y, point.z]).ok()
+    hyperlattice::Point3::try_from_f64_array([point.x, point.y, point.z])
+        .ok()
+        .map(Into::into)
 }
 
 /// Promote a finite f64 boundary vector to a hyperreal lattice vector.
@@ -141,14 +143,11 @@ pub(crate) fn hxy_orientation_sign(
     b: (Real, Real),
     c: (Real, Real),
 ) -> Option<RealSign> {
-    let ax = hreal_from_f64(a.0).ok()?;
-    let ay = hreal_from_f64(a.1).ok()?;
-    let bx = hreal_from_f64(b.0).ok()?;
-    let by = hreal_from_f64(b.1).ok()?;
-    let cx = hreal_from_f64(c.0).ok()?;
-    let cy = hreal_from_f64(c.1).ok()?;
-    let det = (bx - ax.clone()) * (cy - ay.clone()) - (by - ay) * (cx - ax);
-    hreal_sign(&det)
+    match hyperlimit::orient2d_f64([a.0, a.1], [b.0, b.1], [c.0, c.1]).value()? {
+        hyperlimit::Sign::Positive => Some(RealSign::Positive),
+        hyperlimit::Sign::Negative => Some(RealSign::Negative),
+        hyperlimit::Sign::Zero => Some(RealSign::Zero),
+    }
 }
 
 /// Return the finite Euclidean distance between two XY boundary coordinates.
@@ -193,7 +192,7 @@ pub(crate) fn hxy_lerp(from: (Real, Real), to: (Real, Real), t: Real) -> Option<
     let from = hyperlattice::Vector2::try_from_f64_array([from.0, from.1]).ok()?;
     let to = hyperlattice::Vector2::try_from_f64_array([to.0, to.1]).ok()?;
     let t = hreal_from_f64(t).ok()?;
-    let result = from.clone() + (to - from) * t;
+    let result = from.lerp(&to, &t);
     let coords = result.to_f64_array_lossy()?;
     Some((coords[0], coords[1]))
 }
@@ -209,7 +208,7 @@ pub(crate) fn hxy_step(
     let direction =
         hyperlattice::Vector2::try_from_f64_array([direction.0, direction.1]).ok()?;
     let distance = hreal_from_f64(distance).ok()?;
-    let stepped = origin + direction * distance;
+    let stepped = origin.step(&direction, &distance);
     let coords = stepped.to_f64_array_lossy()?;
     Some((coords[0], coords[1]))
 }
@@ -225,7 +224,10 @@ pub(crate) fn hunit_cross_vector3(
     lhs: &Vector3<Real>,
     rhs: &Vector3<Real>,
 ) -> Option<Vector3<Real>> {
-    hunit_vector3(&hvector3_cross(lhs, rhs)?)
+    let lhs = hvector3_from_vector3(lhs)?;
+    let rhs = hvector3_from_vector3(rhs)?;
+    let unit = lhs.unit_cross_checked(&rhs).ok()?.to_f64_array_lossy()?;
+    Some(Vector3::new(unit[0], unit[1], unit[2]))
 }
 
 /// Return a finite homogeneous rotation matrix that maps `from` onto `to`.
@@ -311,15 +313,11 @@ pub(crate) fn hscale_matrix(sx: Real, sy: Real, sz: Real) -> Option<Matrix4<Real
 pub(crate) fn hperpendicular_basis(
     axis: &Vector3<Real>,
 ) -> Option<(Vector3<Real>, Vector3<Real>)> {
-    let axis = hunit_vector3(axis)?;
-    let seed = if axis.y.abs() > 0.5 {
-        Vector3::x()
-    } else {
-        Vector3::y()
-    };
-    let x = hunit_vector3(&hvector3_cross(&seed, &axis)?)?;
-    let y = hunit_vector3(&hvector3_cross(&axis, &x)?)?;
-    Some((x, y))
+    let axis = hvector3_from_vector3(axis)?;
+    let (x, y) = axis.orthonormal_basis_checked().ok()?;
+    let x = x.to_f64_array_lossy()?;
+    let y = y.to_f64_array_lossy()?;
+    Some((Vector3::new(x[0], x[1], x[2]), Vector3::new(y[0], y[1], y[2])))
 }
 
 fn hrotation_axis_angle(axis: &Vector3<Real>, angle: Real) -> Option<Matrix4<Real>> {
@@ -384,17 +382,11 @@ pub(crate) fn hvector3_distance(lhs: &Vector3<Real>, rhs: &Vector3<Real>) -> Opt
 /// Yap's exact-geometric-computation boundary split
 /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
 pub(crate) fn hvector3_mean(vectors: &[Vector3<Real>]) -> Option<Vector3<Real>> {
-    if vectors.is_empty() {
-        return None;
-    }
-    let sum = vectors
+    let vectors = vectors
         .iter()
         .map(hvector3_from_vector3)
-        .try_fold(hyperlattice::Vector3::zero(), |acc, vector| {
-            vector.map(|vector| acc + vector)
-        })?;
-    let count = hreal_from_f64(vectors.len() as Real).ok()?;
-    let mean = (sum / count).ok()?.to_f64_array_lossy()?;
+        .collect::<Option<Vec<_>>>()?;
+    let mean = hyperlattice::Vector3::mean(&vectors)?.to_f64_array_lossy()?;
     Some(Vector3::new(mean[0], mean[1], mean[2]))
 }
 
@@ -407,19 +399,20 @@ pub(crate) fn hpoint_weighted_sum(
     points: &[Point3<Real>],
     weights: &[Real],
 ) -> Option<Point3<Real>> {
-    if points.len() != weights.len() || points.is_empty() {
-        return None;
-    }
-    let sum = points
+    let points = points
         .iter()
-        .zip(weights.iter().copied())
-        .map(|(point, weight)| {
-            Some(hvector3_from_point3(point)? * hreal_from_f64(weight).ok()?)
+        .map(|point| {
+            hyperlattice::Point3::try_from_f64_array([point.x, point.y, point.z]).ok()
         })
-        .try_fold(hyperlattice::Vector3::zero(), |acc, point| {
-            point.map(|point| acc + point)
-        })?;
-    let coords = sum.to_f64_array_lossy()?;
+        .collect::<Option<Vec<_>>>()?;
+    let weights = weights
+        .iter()
+        .copied()
+        .map(hreal_from_f64)
+        .collect::<Result<Vec<_>, _>>()
+        .ok()?;
+    let coords =
+        hyperlattice::Point3::weighted_sum(&points, &weights)?.to_f64_array_lossy()?;
     Some(Point3::new(coords[0], coords[1], coords[2]))
 }
 
@@ -432,19 +425,18 @@ pub(crate) fn hvector3_weighted_sum(
     vectors: &[Vector3<Real>],
     weights: &[Real],
 ) -> Option<Vector3<Real>> {
-    if vectors.len() != weights.len() || vectors.is_empty() {
-        return None;
-    }
-    let sum = vectors
+    let vectors = vectors
         .iter()
-        .zip(weights.iter().copied())
-        .map(|(vector, weight)| {
-            Some(hvector3_from_vector3(vector)? * hreal_from_f64(weight).ok()?)
-        })
-        .try_fold(hyperlattice::Vector3::zero(), |acc, vector| {
-            vector.map(|vector| acc + vector)
-        })?;
-    let coords = sum.to_f64_array_lossy()?;
+        .map(hvector3_from_vector3)
+        .collect::<Option<Vec<_>>>()?;
+    let weights = weights
+        .iter()
+        .copied()
+        .map(hreal_from_f64)
+        .collect::<Result<Vec<_>, _>>()
+        .ok()?;
+    let coords =
+        hyperlattice::Vector3::weighted_sum(&vectors, &weights)?.to_f64_array_lossy()?;
     Some(Vector3::new(coords[0], coords[1], coords[2]))
 }
 
@@ -565,17 +557,13 @@ pub(crate) fn hpoint_distance(lhs: &Point3<Real>, rhs: &Point3<Real>) -> Option<
 /// "Towards Exact Geometric Computation," *Computational Geometry* 7(1-2),
 /// 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>).
 pub(crate) fn hpoint_centroid(points: &[Point3<Real>]) -> Option<Point3<Real>> {
-    if points.is_empty() {
-        return None;
-    }
-    let sum = points
+    let points = points
         .iter()
-        .map(hvector3_from_point3)
-        .try_fold(hyperlattice::Vector3::zero(), |acc, point| {
-            point.map(|point| acc + point)
-        })?;
-    let count = hreal_from_f64(points.len() as Real).ok()?;
-    let centroid = (sum / count).ok()?.to_f64_array_lossy()?;
+        .map(|point| {
+            hyperlattice::Point3::try_from_f64_array([point.x, point.y, point.z]).ok()
+        })
+        .collect::<Option<Vec<_>>>()?;
+    let centroid = hyperlattice::Point3::centroid(&points)?.to_f64_array_lossy()?;
     Some(Point3::new(centroid[0], centroid[1], centroid[2]))
 }
 
@@ -593,7 +581,7 @@ pub(crate) fn hpoint_lerp(
     let from = hvector3_from_point3(from)?;
     let to = hvector3_from_point3(to)?;
     let t = hreal_from_f64(t).ok()?;
-    let result = from.clone() + (to - from) * t;
+    let result = from.lerp(&to, &t);
     let coords = result.to_f64_array_lossy()?;
     Some(Point3::new(coords[0], coords[1], coords[2]))
 }
@@ -689,10 +677,14 @@ pub(crate) fn hreal_gt_f64(value: &HReal, threshold: F64) -> bool {
     let Ok(threshold) = hreal_from_f64(threshold) else {
         return false;
     };
-    matches!(
-        hreal_sign(&(value.clone() - threshold)),
-        Some(RealSign::Positive)
-    )
+    match hyperlimit::compare_reals(value, &threshold).value() {
+        Some(Ordering::Greater) => true,
+        Some(_) => false,
+        None => matches!(
+            hreal_sign(&(value.clone() - threshold)),
+            Some(RealSign::Positive)
+        ),
+    }
 }
 
 /// Returns true when `value` is strictly less than the finite f64 threshold.
@@ -700,10 +692,14 @@ pub(crate) fn hreal_lt_f64(value: &HReal, threshold: F64) -> bool {
     let Ok(threshold) = hreal_from_f64(threshold) else {
         return false;
     };
-    matches!(
-        hreal_sign(&(value.clone() - threshold)),
-        Some(RealSign::Negative)
-    )
+    match hyperlimit::compare_reals(value, &threshold).value() {
+        Some(Ordering::Less) => true,
+        Some(_) => false,
+        None => matches!(
+            hreal_sign(&(value.clone() - threshold)),
+            Some(RealSign::Negative)
+        ),
+    }
 }
 
 /// Compare two finite f64 API-boundary scalar values in hyperreal space.
@@ -718,11 +714,13 @@ pub(crate) fn hreal_cmp_f64(lhs: F64, rhs: F64) -> Ordering {
     let (Ok(lhs), Ok(rhs)) = (hreal_from_f64(lhs), hreal_from_f64(rhs)) else {
         return Ordering::Equal;
     };
-    match hreal_sign(&(lhs - rhs)) {
-        Some(RealSign::Positive) => Ordering::Greater,
-        Some(RealSign::Negative) => Ordering::Less,
-        Some(RealSign::Zero) | None => Ordering::Equal,
-    }
+    hyperlimit::compare_reals(&lhs, &rhs)
+        .value()
+        .unwrap_or_else(|| match hreal_sign(&(lhs - rhs)) {
+            Some(RealSign::Positive) => Ordering::Greater,
+            Some(RealSign::Negative) => Ordering::Less,
+            Some(RealSign::Zero) | None => Ordering::Equal,
+        })
 }
 
 /// Clamp a finite public boundary scalar in hyperreal comparison space.
@@ -735,17 +733,8 @@ pub(crate) fn hreal_cmp_f64(lhs: F64, rhs: F64) -> Ordering {
 pub(crate) fn hreal_clamp_f64(value: F64, min: F64, max: F64) -> Option<F64> {
     let value_h = hreal_from_f64(value).ok()?;
     let min_h = hreal_from_f64(min).ok()?;
-    let _max_h = hreal_from_f64(max).ok()?;
-    if hreal_gt_f64(&min_h, max) {
-        return None;
-    }
-    if hreal_lt_f64(&value_h, min) {
-        Some(min)
-    } else if hreal_gt_f64(&value_h, max) {
-        Some(max)
-    } else {
-        hreal_to_f64(&value_h)
-    }
+    let max_h = hreal_from_f64(max).ok()?;
+    hreal_to_f64(&hyperlimit::real_clamp(value_h, &min_h, &max_h).value()?)
 }
 
 /// Return true when two finite f64 API-boundary scalars are within `epsilon`.
@@ -771,19 +760,51 @@ pub(crate) fn hreal_f64s_within_epsilon(lhs: F64, rhs: F64, epsilon: F64) -> boo
 /// slices. Values are promoted to `hyperreal::Real`, accumulated there, and
 /// exported once at the boundary.
 pub(crate) fn hreal_sum(values: &[Real]) -> Option<Real> {
-    values
+    let values = values
         .iter()
         .copied()
         .map(hreal_from_f64)
         .collect::<Result<Vec<_>, _>>()
-        .ok()
-        .and_then(|values| {
-            hreal_to_f64(
-                &values
-                    .into_iter()
-                    .fold(HReal::zero(), |acc, value| acc + value),
-            )
-        })
+        .ok()?;
+    hreal_to_f64(&HReal::sum_refs(values.iter()))
+}
+
+/// Return the finite maximum of public boundary scalars in hyperreal order.
+///
+/// This keeps constructor clamping and sampling bounds in the exact-aware
+/// scalar layer while `f64` remains only the current public/IO boundary. The
+/// comparison discipline follows Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7(1-2), 1997
+/// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+pub(crate) fn hreal_max(values: &[Real]) -> Option<Real> {
+    let mut values = values
+        .iter()
+        .copied()
+        .map(hreal_from_f64)
+        .collect::<Result<Vec<_>, _>>()
+        .ok()?
+        .into_iter();
+    let first = values.next()?;
+    let max = values.try_fold(first, |acc, value| {
+        hyperlimit::real_max(&acc, &value).value().cloned()
+    })?;
+    hreal_to_f64(&max)
+}
+
+/// Return the finite minimum of public boundary scalars in hyperreal order.
+pub(crate) fn hreal_min(values: &[Real]) -> Option<Real> {
+    let mut values = values
+        .iter()
+        .copied()
+        .map(hreal_from_f64)
+        .collect::<Result<Vec<_>, _>>()
+        .ok()?
+        .into_iter();
+    let first = values.next()?;
+    let min = values.try_fold(first, |acc, value| {
+        hyperlimit::real_min(&acc, &value).value().cloned()
+    })?;
+    hreal_to_f64(&min)
 }
 
 /// Divide two finite public boundary scalars through hyperreal arithmetic.
@@ -810,10 +831,7 @@ pub(crate) fn hreal_mul(lhs: Real, rhs: Real) -> Option<Real> {
 /// Return the finite absolute value of a public boundary scalar.
 pub(crate) fn hreal_abs(value: Real) -> Option<Real> {
     let value = hreal_from_f64(value).ok()?;
-    match hreal_sign(&value)? {
-        RealSign::Negative => hreal_to_f64(&(HReal::zero() - value)),
-        RealSign::Positive | RealSign::Zero => hreal_to_f64(&value),
-    }
+    hreal_to_f64(&value.abs())
 }
 
 /// Return the finite square root of a public boundary scalar.
@@ -849,14 +867,19 @@ pub(crate) fn hreal_affine(origin: Real, t: Real, delta: Real) -> Option<Real> {
     let origin = hreal_from_f64(origin).ok()?;
     let t = hreal_from_f64(t).ok()?;
     let delta = hreal_from_f64(delta).ok()?;
-    hreal_to_f64(&(origin + t * delta))
+    hreal_to_f64(&HReal::affine(&origin, &t, &delta))
 }
 
 /// Convert finite public degrees to radians through hyperreal arithmetic.
 pub(crate) fn hdegrees_to_radians(degrees: Real) -> Option<Real> {
     let degrees = hreal_from_f64(degrees).ok()?;
-    let factor = hreal_from_f64(std::f64::consts::PI / 180.0).ok()?;
-    hreal_to_f64(&(degrees * factor))
+    hreal_to_f64(&degrees.to_radians())
+}
+
+/// Convert finite public radians to degrees through hyperreal arithmetic.
+pub(crate) fn hradians_to_degrees(radians: Real) -> Option<Real> {
+    let radians = hreal_from_f64(radians).ok()?;
+    hreal_to_f64(&radians.to_degrees())
 }
 
 /// Return the finite arithmetic mean of public boundary scalars.
@@ -865,20 +888,13 @@ pub(crate) fn hdegrees_to_radians(degrees: Real) -> Option<Real> {
 /// are promoted into `hyperreal::Real`, accumulated there, divided by an
 /// integer count promoted at the boundary, and only then exported to `f64`.
 pub(crate) fn hreal_mean(values: &[Real]) -> Option<Real> {
-    if values.is_empty() {
-        return None;
-    }
-    let sum = values
+    let values = values
         .iter()
         .copied()
         .map(hreal_from_f64)
         .collect::<Result<Vec<_>, _>>()
-        .ok()?
-        .into_iter()
-        .fold(HReal::zero(), |acc, value| acc + value);
-    let count_len = values.len();
-    let count = hreal_from_f64(count_len as Real).ok()?;
-    hreal_to_f64(&(sum / count).ok()?)
+        .ok()?;
+    hreal_to_f64(&HReal::mean(&values)?)
 }
 
 /// Return the finite sample standard deviation of public boundary scalars.
@@ -888,29 +904,13 @@ pub(crate) fn hreal_mean(values: &[Real]) -> Option<Real> {
 /// follows Yap's exact-geometric-computation boundary split used throughout the
 /// crate (<https://doi.org/10.1016/0925-7721(95)00040-2>).
 pub(crate) fn hreal_sample_stddev(values: &[Real]) -> Option<Real> {
-    if values.len() < 2 {
-        return None;
-    }
-    let count_len = values.len();
     let values = values
         .iter()
         .copied()
         .map(hreal_from_f64)
         .collect::<Result<Vec<_>, _>>()
         .ok()?;
-    let count = hreal_from_f64(values.len() as Real).ok()?;
-    let mean = (values
-        .iter()
-        .cloned()
-        .fold(HReal::zero(), |acc, value| acc + value)
-        / count)
-        .ok()?;
-    let sum_squared = values.into_iter().fold(HReal::zero(), |acc, value| {
-        let delta = value - mean.clone();
-        acc + delta.clone() * delta
-    });
-    let divisor = hreal_from_f64((count_len - 1) as Real).ok()?;
-    hreal_to_f64(&(sum_squared / divisor).ok()?.sqrt().ok()?)
+    hreal_to_f64(&HReal::sample_stddev(&values)?)
 }
 
 use std::sync::OnceLock;
@@ -1178,6 +1178,8 @@ mod tests {
     fn hreal_aggregate_helpers_use_hyperreal_boundaries() {
         let values = [1.0, 2.0, 3.0];
         assert_eq!(hreal_sum(&values).unwrap(), 6.0);
+        assert_eq!(hreal_max(&values).unwrap(), 3.0);
+        assert_eq!(hreal_min(&values).unwrap(), 1.0);
         assert_eq!(hreal_div(6.0, 3.0).unwrap(), 2.0);
         assert_eq!(hreal_sub(7.0, 4.0).unwrap(), 3.0);
         assert_eq!(hreal_mul(2.0, 3.0).unwrap(), 6.0);
@@ -1203,6 +1205,11 @@ mod tests {
         assert!(hreal_f64s_within_epsilon(
             hdegrees_to_radians(180.0).unwrap(),
             PI,
+            tolerance()
+        ));
+        assert!(hreal_f64s_within_epsilon(
+            hradians_to_degrees(PI).unwrap(),
+            180.0,
             tolerance()
         ));
         let (sin, cos) = hangle_sin_cos(FRAC_PI_2).unwrap();
@@ -1231,6 +1238,8 @@ mod tests {
         assert!(hvector3_mean(&[Vector3::new(Real::NAN, 0.0, 0.0)]).is_none());
         assert!(hreal_mean(&[1.0, Real::NAN]).is_none());
         assert!(hreal_sample_stddev(&[1.0, Real::INFINITY]).is_none());
+        assert!(hreal_max(&[1.0, Real::NAN]).is_none());
+        assert!(hreal_min(&[1.0, Real::INFINITY]).is_none());
         assert!(hangle_sin_cos(Real::INFINITY).is_none());
         assert!(hreal_abs(Real::NAN).is_none());
         assert!(hreal_sqrt(-1.0).is_none());
@@ -1241,6 +1250,7 @@ mod tests {
         assert!(hreal_clamp_f64(Real::NAN, -1.0, 1.0).is_none());
         assert!(hreal_clamp_f64(0.0, 1.0, -1.0).is_none());
         assert!(hdegrees_to_radians(Real::NAN).is_none());
+        assert!(hradians_to_degrees(Real::NAN).is_none());
     }
 
     #[test]

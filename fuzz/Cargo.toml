@@ -1,6 +1,6 @@
 [package]
 name = "csgrs-fuzz"
-version = "0.0.0"
+version = "0.1.0"
 publish = false
 edition = "2024"
 
@@ -8,9 +8,14 @@ edition = "2024"
 cargo-fuzz = true
 
 [dependencies]
+# Hyper sibling dependency switch: keep both local path and crates.io lines; do not remove either.
+# Development mode uses the local path lines. For release, comment those and uncomment the crates.io lines.
 csgrs = { path = "..", features = ["offset"] }
-hyperlimit = "0.3.0"
-hypersdf = "0.1.0"
+hyperlimit = { path = "../../hyperlimit" }
+hypersdf = { path = "../../hypersdf" }
+# csgrs = { version = "0.23.0", features = ["offset"] }
+# hyperlimit = "0.4.0"
+# hypersdf = "0.2.0"
 libfuzzer-sys = "0.4"
 nalgebra = "0.34.1"
 hashbrown = "0.15"

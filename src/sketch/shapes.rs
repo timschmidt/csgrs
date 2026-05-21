@@ -43,6 +43,14 @@ fn hpolar_point(radius: Real, theta: Real) -> Option<[Real; 2]> {
     hellipse_point(radius, radius, theta)
 }
 
+fn hrotate_xy(x: Real, y: Real, angle: Real) -> Option<(Real, Real)> {
+    let (sin_angle, cos_angle) = hangle_sin_cos(angle)?;
+    Some((
+        hreal_sub(hreal_mul(x, cos_angle)?, hreal_mul(y, sin_angle)?)?,
+        hreal_sum(&[hreal_mul(x, sin_angle)?, hreal_mul(y, cos_angle)?])?,
+    ))
+}
+
 fn hellipse_samples(
     samples: usize,
     rx: Real,
@@ -1366,19 +1374,57 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
 
         let m = module;
         let z = teeth as Real;
-        let pressure_angle = pressure_angle_deg.to_radians();
+        let Some(pressure_angle) = hdegrees_to_radians(pressure_angle_deg) else {
+            return Profile::empty(metadata);
+        };
 
-        // Standard gear dimensions
-        let pitch_radius = 0.5 * m * z;
+        // Standard gear dimensions. Involute sampling follows Litvin and Fuentes,
+        // Gear Geometry and Applied Theory, 2nd ed., Cambridge University Press,
+        // 2004, while scalar construction stays in hyperreal helpers.
+        let Some(pitch_radius) = hreal_mul(0.5, m).and_then(|half_m| hreal_mul(half_m, z))
+        else {
+            return Profile::empty(metadata);
+        };
         let addendum = m;
-        let dedendum = 1.25 * m + clearance;
-        let outer_radius = pitch_radius + addendum;
-        let base_radius = pitch_radius * pressure_angle.cos();
-        let _root_radius = (pitch_radius - dedendum).max(base_radius * 0.9); // avoid < base
+        let Some(dedendum) =
+            hreal_mul(1.25, m).and_then(|scaled| hreal_sum(&[scaled, clearance]))
+        else {
+            return Profile::empty(metadata);
+        };
+        let Some(outer_radius) = hreal_sum(&[pitch_radius, addendum]) else {
+            return Profile::empty(metadata);
+        };
+        let Some((_, pressure_cos)) = hangle_sin_cos(pressure_angle) else {
+            return Profile::empty(metadata);
+        };
+        let Some(base_radius) = hreal_mul(pitch_radius, pressure_cos) else {
+            return Profile::empty(metadata);
+        };
+        let Some(raw_root_radius) = hreal_sub(pitch_radius, dedendum) else {
+            return Profile::empty(metadata);
+        };
+        let Some(base_root_floor) = hreal_mul(base_radius, 0.9) else {
+            return Profile::empty(metadata);
+        };
+        let _root_radius = match hreal_cmp_f64(raw_root_radius, base_root_floor) {
+            Ordering::Greater => raw_root_radius,
+            _ => base_root_floor,
+        };
 
-        let angular_pitch = TAU / z;
-        let tooth_thickness_at_pitch = angular_pitch / 2.0 - backlash / pitch_radius;
-        let half_tooth_angle = tooth_thickness_at_pitch / 2.0;
+        let Some(angular_pitch) = hreal_div(TAU, z) else {
+            return Profile::empty(metadata);
+        };
+        let Some(backlash_angle) = hreal_div(backlash, pitch_radius) else {
+            return Profile::empty(metadata);
+        };
+        let Some(tooth_thickness_at_pitch) = hreal_div(angular_pitch, 2.0)
+            .and_then(|half_pitch| hreal_sub(half_pitch, backlash_angle))
+        else {
+            return Profile::empty(metadata);
+        };
+        let Some(half_tooth_angle) = hreal_div(tooth_thickness_at_pitch, 2.0) else {
+            return Profile::empty(metadata);
+        };
 
         if !finite_profile_scalars(&[
             pitch_radius,
@@ -1396,50 +1442,73 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
 
         // Helper: generate one involute flank from r1 to r2
         let generate_flank =
-            |r_start: Real, r_end: Real, reverse: bool| -> Vec<(Real, Real)> {
+            |r_start: Real, r_end: Real, reverse: bool| -> Option<Vec<(Real, Real)>> {
                 let mut pts = Vec::with_capacity(segments_per_flank + 1);
                 for i in 0..=segments_per_flank {
-                    let t = i as Real / segments_per_flank as Real;
-                    let r = r_start + t * (r_end - r_start);
-                    let phi = ((r / base_radius).powi(2) - 1.0).max(0.0).sqrt(); // involute angle
-                    let (x, y) = (
-                        base_radius * (phi.cos() + phi * phi.sin()),
-                        base_radius * (phi.sin() - phi * phi.cos()),
-                    );
-                    pts.push((x, y));
+                    let t = hreal_div(i as Real, segments_per_flank as Real)?;
+                    let delta_r = hreal_sub(r_end, r_start)?;
+                    let r = hreal_affine(r_start, t, delta_r)?;
+                    let radius_ratio = hreal_div(r, base_radius)?;
+                    let ratio2 = hreal_mul(radius_ratio, radius_ratio)?;
+                    let phi2 = match hreal_cmp_f64(ratio2, 1.0) {
+                        Ordering::Less => 0.0,
+                        _ => hreal_sub(ratio2, 1.0)?,
+                    };
+                    let phi = hreal_sqrt(phi2)?;
+                    let (sin_phi, cos_phi) = hangle_sin_cos(phi)?;
+                    let x_term = hreal_sum(&[cos_phi, hreal_mul(phi, sin_phi)?])?;
+                    let y_term = hreal_sub(sin_phi, hreal_mul(phi, cos_phi)?)?;
+                    pts.push((
+                        hreal_mul(base_radius, x_term)?,
+                        hreal_mul(base_radius, y_term)?,
+                    ));
                 }
                 if reverse {
                     pts.reverse();
                 }
-                pts
+                Some(pts)
             };
 
         // Build one full tooth (right flank + arc at tip + left flank + root arc)
         let mut tooth_profile = Vec::new();
 
         // Right flank: from base to outer
-        let right_flank = generate_flank(base_radius, outer_radius, false);
+        let Some(right_flank) = generate_flank(base_radius, outer_radius, false) else {
+            return Profile::empty(metadata);
+        };
         // Left flank: mirror and reverse
         let left_flank: Vec<_> = right_flank.iter().map(|&(x, y)| (x, -y)).rev().collect();
 
-        // Rotate flanks to align with tooth center
-        let rotate = |x: Real, y: Real, angle: Real| -> (Real, Real) {
-            let c = angle.cos();
-            let s = angle.sin();
-            (x * c - y * s, x * s + y * c)
-        };
-
         // Angular offset from tooth center to flank start at base circle
-        let phi_base = ((pitch_radius / base_radius).powi(2) - 1.0).sqrt();
-        let inv_phi_base = phi_base - pressure_angle; // involute function value
-        let offset_angle = inv_phi_base + half_tooth_angle;
+        let Some(phi_base) = hreal_div(pitch_radius, base_radius)
+            .and_then(|ratio| hreal_mul(ratio, ratio))
+            .and_then(|ratio2| hreal_sub(ratio2, 1.0))
+            .and_then(hreal_sqrt)
+        else {
+            return Profile::empty(metadata);
+        };
+        let Some(inv_phi_base) = hreal_sub(phi_base, pressure_angle) else {
+            return Profile::empty(metadata);
+        };
+        let Some(offset_angle) = hreal_sum(&[inv_phi_base, half_tooth_angle]) else {
+            return Profile::empty(metadata);
+        };
 
         // Apply rotation to flanks
         for &(x, y) in &right_flank {
-            tooth_profile.push(rotate(x, y, -offset_angle));
+            let Some(angle) = hreal_sub(0.0, offset_angle) else {
+                return Profile::empty(metadata);
+            };
+            let Some(rotated) = hrotate_xy(x, y, angle) else {
+                return Profile::empty(metadata);
+            };
+            tooth_profile.push(rotated);
         }
         for &(x, y) in &left_flank {
-            tooth_profile.push(rotate(x, y, offset_angle));
+            let Some(rotated) = hrotate_xy(x, y, offset_angle) else {
+                return Profile::empty(metadata);
+            };
+            tooth_profile.push(rotated);
         }
 
         // Close the tooth at the root with a small arc (optional but improves validity)
@@ -1450,11 +1519,14 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         // Now replicate around the gear
         let mut outline = Vec::with_capacity(tooth_profile.len() * teeth + 1);
         for i in 0..teeth {
-            let rot = i as Real * angular_pitch;
-            let c = rot.cos();
-            let s = rot.sin();
+            let Some(rot) = hreal_mul(i as Real, angular_pitch) else {
+                return Profile::empty(metadata);
+            };
             for &(x, y) in &tooth_profile {
-                outline.push([x * c - y * s, x * s + y * c]);
+                let Some((x, y)) = hrotate_xy(x, y, rot) else {
+                    return Profile::empty(metadata);
+                };
+                outline.push([x, y]);
             }
         }
         outline.push(outline[0]); // close
