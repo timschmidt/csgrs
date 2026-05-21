@@ -641,6 +641,21 @@ fn adversarial_transform_normals_use_hyperreal_checked_normalization() {
 }
 
 #[test]
+fn adversarial_profile_transform_uses_hyperreal_affine_projection() {
+    let profile = Profile::rounded_rectangle(3.0, 2.0, 0.25, 4, ());
+    let matrix = Matrix4::new(
+        1.5, 0.25, 0.0, 2.0, -0.5, 1.25, 0.0, -1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0,
+    );
+    let transformed = profile.transform(&matrix);
+    assert!(!transformed.is_empty());
+    assert_profile_sane(&transformed);
+
+    let singular = Matrix4::new_nonuniform_scaling(&Vector3::new(0.0, 1.0, 1.0));
+    let collapsed = profile.transform(&singular);
+    assert_profile_sane(&collapsed);
+}
+
+#[test]
 fn adversarial_mesh_triangulated_visit_uses_hyperreal_checked_normals() {
     let mesh: Mesh<()> = Mesh::cube(1.0, ());
     let mut count = 0usize;

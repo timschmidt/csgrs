@@ -2,8 +2,9 @@
 
 use crate::float_types::parry3d::bounding_volume::Aabb;
 use crate::float_types::{
-    Real, hreal_from_f64, hreal_gt_f64, hreal_lt_f64, hreal_sign, hreal_to_f64,
-    hrotation_between_vectors, hunit_vector3, tolerance,
+    Real, hreal_abs, hreal_cmp_f64, hreal_from_f64, hreal_gt_f64, hreal_lt_f64, hreal_mul,
+    hreal_sign, hreal_sub, hreal_sum, hreal_to_f64, hrotation_between_vectors, hunit_vector3,
+    tolerance,
 };
 
 #[cfg(feature = "mesh")]
@@ -17,6 +18,7 @@ use hypercurve::{
     Point2, Region2, RegionPointLocation, Similarity2,
 };
 use nalgebra::{Matrix4, Point3, Vector3};
+use std::cmp::Ordering;
 use std::fmt::Debug;
 use std::sync::OnceLock;
 
@@ -570,8 +572,13 @@ impl<M: Clone + Send + Sync + Debug> Profile<M> {
         if self.region.is_empty() || !Self::region_has_nonzero_area(&self.region) {
             return None;
         }
-        let determinant = mat[(0, 0)] * mat[(1, 1)] - mat[(0, 1)] * mat[(1, 0)];
-        if determinant.abs() <= tolerance() {
+        let determinant = hreal_mul(mat[(0, 0)], mat[(1, 1)]).and_then(|main| {
+            hreal_mul(mat[(0, 1)], mat[(1, 0)]).and_then(|cross| hreal_sub(main, cross))
+        })?;
+        if !matches!(
+            hreal_abs(determinant).map(|value| hreal_cmp_f64(value, tolerance())),
+            Some(Ordering::Greater)
+        ) {
             return None;
         }
 
@@ -581,11 +588,19 @@ impl<M: Clone + Send + Sync + Debug> Profile<M> {
             }
         }
 
-        let transform_point = |point: &[Real; 2]| -> [Real; 2] {
-            [
-                mat[(0, 0)] * point[0] + mat[(0, 1)] * point[1] + mat[(0, 3)],
-                mat[(1, 0)] * point[0] + mat[(1, 1)] * point[1] + mat[(1, 3)],
-            ]
+        let transform_point = |point: &[Real; 2]| -> Option<[Real; 2]> {
+            Some([
+                hreal_sum(&[
+                    hreal_mul(mat[(0, 0)], point[0])?,
+                    hreal_mul(mat[(0, 1)], point[1])?,
+                    mat[(0, 3)],
+                ])?,
+                hreal_sum(&[
+                    hreal_mul(mat[(1, 0)], point[0])?,
+                    hreal_mul(mat[(1, 1)], point[1])?,
+                    mat[(1, 3)],
+                ])?,
+            ])
         };
 
         let options = FiniteProjectionOptions::try_new(1e-3).ok()?;
@@ -601,9 +616,9 @@ impl<M: Clone + Send + Sync + Debug> Profile<M> {
                     .points()
                     .iter()
                     .map(transform_point)
-                    .collect::<Vec<[Real; 2]>>()
+                    .collect::<Option<Vec<[Real; 2]>>>()
             })
-            .filter_map(|ring| Contour2::from_finite_ring(&ring).ok())
+            .filter_map(|ring| ring.and_then(|ring| Contour2::from_finite_ring(&ring).ok()))
             .collect::<Vec<_>>();
         let holes = profiles
             .iter()
@@ -612,9 +627,9 @@ impl<M: Clone + Send + Sync + Debug> Profile<M> {
                 ring.points()
                     .iter()
                     .map(transform_point)
-                    .collect::<Vec<[Real; 2]>>()
+                    .collect::<Option<Vec<[Real; 2]>>>()
             })
-            .filter_map(|ring| Contour2::from_finite_ring(&ring).ok())
+            .filter_map(|ring| ring.and_then(|ring| Contour2::from_finite_ring(&ring).ok()))
             .collect::<Vec<_>>();
 
         (!material.is_empty()).then(|| Region2::new(material, holes))
@@ -632,19 +647,30 @@ impl<M: Clone + Send + Sync + Debug> Profile<M> {
             }
         }
 
-        let transform_point = |point: (Real, Real)| -> [Real; 2] {
-            [
-                mat[(0, 0)] * point.0 + mat[(0, 1)] * point.1 + mat[(0, 3)],
-                mat[(1, 0)] * point.0 + mat[(1, 1)] * point.1 + mat[(1, 3)],
-            ]
+        let transform_point = |point: (Real, Real)| -> Option<[Real; 2]> {
+            Some([
+                hreal_sum(&[
+                    hreal_mul(mat[(0, 0)], point.0)?,
+                    hreal_mul(mat[(0, 1)], point.1)?,
+                    mat[(0, 3)],
+                ])?,
+                hreal_sum(&[
+                    hreal_mul(mat[(1, 0)], point.0)?,
+                    hreal_mul(mat[(1, 1)], point.1)?,
+                    mat[(1, 3)],
+                ])?,
+            ])
         };
 
         self.wires
             .iter()
             .filter_map(curve_string_to_polyline)
             .filter_map(|points| {
-                CurveString2::from_finite_point_iter(points.into_iter().map(transform_point))
-                    .ok()
+                let transformed = points
+                    .into_iter()
+                    .map(transform_point)
+                    .collect::<Option<Vec<[Real; 2]>>>()?;
+                CurveString2::from_finite_point_iter(transformed).ok()
             })
             .collect()
     }
