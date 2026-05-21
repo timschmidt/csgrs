@@ -2385,6 +2385,11 @@ fn exercise_boundary_centroid_volumetric_representative() {
         classification.relation,
         hypermesh::exact::ExactVolumetricRegionRelation::Inside
     );
+    assert_eq!(
+        classification.representative_witness,
+        hypermesh::exact::ExactTriangleInteriorWitness::new([2, 1, 1])
+    );
+    classification.representative_witness.validate().unwrap();
     classification
         .validate_against_sources(&triangulation, &target)
         .unwrap();

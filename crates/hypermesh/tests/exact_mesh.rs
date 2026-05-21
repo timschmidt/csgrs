@@ -4360,6 +4360,10 @@ fn exact_volumetric_classification_retries_boundary_centroid_representative() {
         classification.relation,
         hypermesh::exact::ExactVolumetricRegionRelation::Inside
     );
+    assert_eq!(
+        classification.representative_witness,
+        hypermesh::exact::ExactTriangleInteriorWitness::new([2, 1, 1])
+    );
     assert_real_eq(&classification.representative.x, &rational(19, 4));
     assert_real_eq(&classification.representative.y, &rational(17, 4));
     assert_real_eq(&classification.representative.z, &ExactReal::from(1));
@@ -10907,6 +10911,18 @@ fn exact_named_booleans_materialize_partial_convex_intersection() {
             .unwrap_err(),
         hypermesh::exact::ExactReportValidationError::InvalidVolumetricClassification(
             hypermesh::exact::ExactVolumetricRegionError::SourceReplayMismatch
+        )
+    );
+    let mut invalid_witness = union.clone();
+    invalid_witness.volumetric_classifications[0]
+        .representative_witness
+        .denominator += 1;
+    assert_eq!(
+        invalid_witness.validate().unwrap_err(),
+        hypermesh::exact::ExactReportValidationError::InvalidVolumetricClassification(
+            hypermesh::exact::ExactVolumetricRegionError::InvalidRepresentativeWitness(
+                hypermesh::exact::ExactTriangleInteriorWitnessError::NotStrictInterior
+            )
         )
     );
 

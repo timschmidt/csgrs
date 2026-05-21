@@ -1393,6 +1393,62 @@ fn exact_face_interior_steiner_provenance(c: &mut Criterion) {
     }
 }
 
+fn exact_volumetric_witness_lattice(c: &mut Criterion) {
+    #[cfg(feature = "exact-triangulation")]
+    {
+        let point2 = |x: i64, y: i64| {
+            hypertri::ExactPoint::new(
+                hypermesh::exact::ExactReal::from(x),
+                hypermesh::exact::ExactReal::from(y),
+            )
+        };
+        let target = ExactMesh::from_i64_triangles(
+            &[0, 0, 0, 12, 0, 0, 0, 12, 0, 0, 0, 12],
+            &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+        )
+        .unwrap();
+        let triangulation = hypermesh::exact::FaceRegionTriangulation {
+            side: hypermesh::exact::MeshSide::Left,
+            face: 0,
+            projection: hypermesh::exact::CoplanarProjection::Xy,
+            boundary: vec![
+                hypermesh::exact::FaceSplitBoundaryNode::OriginalVertex {
+                    vertex: 0,
+                    point: p3(2, 1, 1),
+                },
+                hypermesh::exact::FaceSplitBoundaryNode::OriginalVertex {
+                    vertex: 1,
+                    point: p3(14, 1, 1),
+                },
+                hypermesh::exact::FaceSplitBoundaryNode::OriginalVertex {
+                    vertex: 2,
+                    point: p3(1, 14, 1),
+                },
+            ],
+            vertices: vec![point2(2, 1), point2(14, 1), point2(1, 14)],
+            triangles: vec![0, 1, 2],
+        };
+
+        c.bench_function("exact_volumetric_witness_lattice_boundary_retry", |b| {
+            b.iter(|| {
+                let classification =
+                    hypermesh::exact::classify_triangulated_region_triangle_against_closed_mesh(
+                        &triangulation,
+                        [0, 1, 2],
+                        &target,
+                    )
+                    .unwrap();
+                classification.representative_witness.validate().unwrap();
+                classification.validate_against_sources(&triangulation, &target)
+            })
+        });
+    }
+    #[cfg(not(feature = "exact-triangulation"))]
+    {
+        let _ = c;
+    }
+}
+
 fn exact_boolean_selected_regions(c: &mut Criterion) {
     #[cfg(feature = "exact-triangulation")]
     {
@@ -4694,6 +4750,7 @@ criterion_group!(
     exact_face_region_plan,
     exact_face_region_earcut,
     exact_face_interior_steiner_provenance,
+    exact_volumetric_witness_lattice,
     exact_boolean_selected_regions,
     exact_selected_region_undecided_validation,
     exact_selected_region_preflight,

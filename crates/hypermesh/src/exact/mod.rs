@@ -47,6 +47,8 @@ pub mod view;
 #[cfg(feature = "exact-triangulation")]
 pub mod volumetric;
 pub mod winding;
+#[cfg(feature = "exact-triangulation")]
+pub mod witness;
 
 pub use adapter::{
     ExactI64MeshInputReadiness, ExactI64MeshInputReport, ExactI64MeshInputReportValidationError,
@@ -235,4 +237,9 @@ pub use winding::{
     classify_mesh_vertices_against_closed_mesh_winding,
     classify_mesh_vertices_against_closed_mesh_winding_report,
     classify_point_against_closed_mesh_winding, classify_point_against_closed_mesh_winding_report,
+};
+#[cfg(feature = "exact-triangulation")]
+pub use witness::{
+    EXACT_TRIANGLE_INTERIOR_WITNESSES, ExactTriangleInteriorWitness,
+    ExactTriangleInteriorWitnessError,
 };

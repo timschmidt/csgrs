@@ -18,10 +18,13 @@ use hyperlimit::Point3;
 use super::graph::MeshSide;
 use super::mesh::ExactMesh;
 use super::region::{FaceRegionTriangulation, boundary_node_point};
-use super::scalar::ExactReal;
 use super::winding::{
     ClosedMeshWindingRelation, PointMeshWindingReport, WindingReportError,
     classify_point_against_closed_mesh_winding_report,
+};
+use super::witness::{
+    EXACT_TRIANGLE_INTERIOR_WITNESSES, ExactTriangleInteriorWitness,
+    ExactTriangleInteriorWitnessError,
 };
 
 /// Exact relation between one triangulated split cell and the opposite closed
@@ -88,6 +91,15 @@ pub struct ExactVolumetricRegionClassification {
     /// This avoids treating an unlucky centroid-on-boundary event as a
     /// semantic blocker while keeping the chosen point replayable.
     pub representative: Point3,
+    /// Exact barycentric witness that produced [`Self::representative`].
+    ///
+    /// Retaining the integer weights keeps the representative tied to the
+    /// source triangle rather than to an opaque coordinate. Replaying those
+    /// weights is the object-level evidence boundary described by Yap,
+    /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+    /// (1997): predicates consume exact objects, and the object construction is
+    /// itself auditable.
+    pub representative_witness: ExactTriangleInteriorWitness,
     /// Relation derived from [`Self::winding`].
     pub relation: ExactVolumetricRegionRelation,
     /// Exact closed-mesh ray-parity report for [`Self::representative`].
@@ -106,6 +118,9 @@ impl ExactVolumetricRegionClassification {
     /// *Computational Geometry* 7.1-2 (1997), makes this separation important:
     /// local certificate shape and source-object replay are both explicit.
     pub fn validate(&self) -> Result<(), ExactVolumetricRegionError> {
+        self.representative_witness
+            .validate()
+            .map_err(ExactVolumetricRegionError::InvalidRepresentativeWitness)?;
         self.winding
             .validate()
             .map_err(ExactVolumetricRegionError::Winding)?;
@@ -147,6 +162,8 @@ pub enum ExactVolumetricRegionError {
     EmptyTriangulation,
     /// The chosen triangulation triangle referenced a missing boundary node.
     InvalidTriangleIndex,
+    /// The retained exact barycentric witness was not a strict interior point.
+    InvalidRepresentativeWitness(ExactTriangleInteriorWitnessError),
     /// A retained winding report failed its local audit.
     Winding(WindingReportError),
     /// The retained relation did not match the retained winding report.
@@ -204,10 +221,14 @@ pub fn classify_triangulated_region_triangle_against_closed_mesh(
     {
         return Err(ExactVolumetricRegionError::InvalidTriangleIndex);
     }
+    let (a, b, c) = triangle_points(triangulation, triangle)?;
     let mut fallback = None;
-    for representative in representative_points(triangulation, triangle)? {
+    for witness in EXACT_TRIANGLE_INTERIOR_WITNESSES.iter().copied() {
+        let representative = witness
+            .point_for_triangle(a, b, c)
+            .map_err(ExactVolumetricRegionError::InvalidRepresentativeWitness)?;
         let classification =
-            classify_representative(triangulation, triangle, representative, target)?;
+            classify_representative(triangulation, triangle, witness, representative, target)?;
         if classification.relation.is_strictly_decided() {
             return Ok(classification);
         }
@@ -266,10 +287,10 @@ fn first_triangle(
 }
 
 #[cfg(feature = "exact-triangulation")]
-fn representative_points(
+fn triangle_points(
     triangulation: &FaceRegionTriangulation,
     triangle: [usize; 3],
-) -> Result<Vec<Point3>, ExactVolumetricRegionError> {
+) -> Result<(&Point3, &Point3, &Point3), ExactVolumetricRegionError> {
     let a = boundary_node_point(
         triangulation
             .boundary
@@ -288,18 +309,14 @@ fn representative_points(
             .get(triangle[2])
             .ok_or(ExactVolumetricRegionError::InvalidTriangleIndex)?,
     );
-    Ok(vec![
-        barycentric_point(a, b, c, [1, 1, 1], 3),
-        barycentric_point(a, b, c, [2, 1, 1], 4),
-        barycentric_point(a, b, c, [1, 2, 1], 4),
-        barycentric_point(a, b, c, [1, 1, 2], 4),
-    ])
+    Ok((a, b, c))
 }
 
 #[cfg(feature = "exact-triangulation")]
 fn classify_representative(
     triangulation: &FaceRegionTriangulation,
     triangle: [usize; 3],
+    representative_witness: ExactTriangleInteriorWitness,
     representative: Point3,
     target: &ExactMesh,
 ) -> Result<ExactVolumetricRegionClassification, ExactVolumetricRegionError> {
@@ -312,37 +329,8 @@ fn classify_representative(
         region_face: triangulation.face,
         triangle,
         representative,
+        representative_witness,
         relation: relation_from_winding(winding.relation),
         winding,
     })
-}
-
-#[cfg(feature = "exact-triangulation")]
-fn barycentric_point(
-    a: &Point3,
-    b: &Point3,
-    c: &Point3,
-    weights: [i64; 3],
-    denominator: i64,
-) -> Point3 {
-    let inv = (ExactReal::from(1) / &ExactReal::from(denominator)).expect("nonzero denominator");
-    Point3::new(
-        weighted_real(&a.x, &b.x, &c.x, weights, &inv),
-        weighted_real(&a.y, &b.y, &c.y, weights, &inv),
-        weighted_real(&a.z, &b.z, &c.z, weights, &inv),
-    )
-}
-
-#[cfg(feature = "exact-triangulation")]
-fn weighted_real(
-    a: &ExactReal,
-    b: &ExactReal,
-    c: &ExactReal,
-    weights: [i64; 3],
-    inv_denominator: &ExactReal,
-) -> ExactReal {
-    (a.clone() * ExactReal::from(weights[0])
-        + b.clone() * ExactReal::from(weights[1])
-        + c.clone() * ExactReal::from(weights[2]))
-        * inv_denominator
 }
