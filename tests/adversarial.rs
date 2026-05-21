@@ -715,6 +715,7 @@ fn adversarial_refinement_filters_reject_nonfinite_thresholds_at_hyperreal_bound
 }
 
 #[test]
+#[cfg(feature = "offset")]
 fn adversarial_toolpath_lengths_and_leads_reject_nonfinite_cam_scalars() {
     use csgrs::toolpath::gcode::Post;
     use csgrs::toolpath::{

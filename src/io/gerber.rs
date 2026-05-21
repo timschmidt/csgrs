@@ -7,7 +7,10 @@
 //! standard apertures by constructing the swept aperture area.
 
 use crate::csg::CSG;
-use crate::float_types::{PI, Real, TAU, hreal_to_f64, hxy_orientation_sign, tolerance};
+use crate::float_types::{
+    PI, Real, TAU, hangle_sin_cos, hdegrees_to_radians, hreal_affine, hreal_mul, hreal_sub,
+    hreal_to_f64, hxy_distance, hxy_orientation_sign, hxy_unit_direction, tolerance,
+};
 use crate::sketch::Profile;
 use gerber_types::{
     Aperture, ApertureDefinition, AxisSelect, Circle, Command, CommentContent,
@@ -47,6 +50,17 @@ struct GerberCoord<T> {
 }
 
 type Coord<T> = GerberCoord<T>;
+
+fn coord_on_circle(center: Coord<Real>, radius: Real, angle: Real) -> Option<Coord<Real>> {
+    let (sin, cos) = hangle_sin_cos(angle)?;
+    let x = hreal_affine(center.x, cos, radius)?;
+    let y = hreal_affine(center.y, sin, radius)?;
+    Some(Coord { x, y })
+}
+
+fn origin_circle_coord(radius: Real, angle: Real) -> Option<Coord<Real>> {
+    coord_on_circle(Coord { x: 0.0, y: 0.0 }, radius, angle)
+}
 
 /// Options used when exporting a [`Profile`] to Gerber.
 #[derive(Clone, Copy, Debug)]
@@ -1082,14 +1096,13 @@ fn aperture_outline_points(
             let radius =
                 aperture_transform.scale_length((polygon.diameter as Real) * unit_scale) * 0.5;
             let rotation = polygon.rotation.unwrap_or(0.0) as Real;
+            let Some(rotation) = hdegrees_to_radians(rotation) else {
+                return None;
+            };
             (0..polygon.vertices)
-                .map(|i| {
-                    let theta =
-                        TAU * (i as Real) / (polygon.vertices as Real) + rotation.to_radians();
-                    Coord {
-                        x: radius * theta.cos(),
-                        y: radius * theta.sin(),
-                    }
+                .filter_map(|i| {
+                    let theta = TAU * (i as Real) / (polygon.vertices as Real) + rotation;
+                    origin_circle_coord(radius, theta)
                 })
                 .collect()
         },
@@ -1113,15 +1126,16 @@ fn capsule_sketch<M>(
 where
     M: Clone + Debug + Send + Sync,
 {
-    let dx = end.x - start.x;
-    let dy = end.y - start.y;
-    let length = (dx * dx + dy * dy).sqrt();
+    let length = hxy_distance((start.x, start.y), (end.x, end.y)).unwrap_or(0.0);
     if length <= tolerance() {
         return Profile::circle(radius, 64, metadata).translate(start.x, start.y, 0.0);
     }
 
-    let nx = -dy / length;
-    let ny = dx / length;
+    let Some((ux, uy)) = hxy_unit_direction((start.x, start.y), (end.x, end.y)) else {
+        return Profile::circle(radius, 64, metadata).translate(start.x, start.y, 0.0);
+    };
+    let nx = -uy;
+    let ny = ux;
     let start_angle = ny.atan2(nx);
     let end_angle = (-ny).atan2(-nx);
     let mut points = vec![
@@ -1161,7 +1175,7 @@ fn approximate_arc(
         x: start.x + offset.x,
         y: start.y + offset.y,
     };
-    let radius = ((start.x - center.x).powi(2) + (start.y - center.y).powi(2)).sqrt();
+    let radius = hxy_distance((start.x, start.y), (center.x, center.y)).unwrap_or(0.0);
     if radius <= tolerance() {
         return vec![end];
     }
@@ -1201,10 +1215,7 @@ fn arc_points(
     (0..=segments)
         .map(|i| {
             let angle = start_angle + sweep * (i as Real) / (segments as Real);
-            Coord {
-                x: center.x + radius * angle.cos(),
-                y: center.y + radius * angle.sin(),
-            }
+            coord_on_circle(center, radius, angle).unwrap_or(center)
         })
         .collect()
 }
@@ -1213,10 +1224,7 @@ fn circle_points(radius: Real, segments: usize) -> Vec<Coord<Real>> {
     (0..segments)
         .map(|i| {
             let theta = TAU * (i as Real) / (segments as Real);
-            Coord {
-                x: radius * theta.cos(),
-                y: radius * theta.sin(),
-            }
+            origin_circle_coord(radius, theta).unwrap_or(Coord { x: 0.0, y: 0.0 })
         })
         .collect()
 }
@@ -1250,10 +1258,8 @@ fn rounded_rect_points(
         .flat_map(|(cx, cy, start)| {
             (0..=corner_segments).map(move |i| {
                 let theta = start + (PI * 0.5) * (i as Real) / (corner_segments as Real);
-                Coord {
-                    x: cx + radius * theta.cos(),
-                    y: cy + radius * theta.sin(),
-                }
+                coord_on_circle(Coord { x: cx, y: cy }, radius, theta)
+                    .unwrap_or(Coord { x: cx, y: cy })
             })
         })
         .collect()
@@ -1342,12 +1348,28 @@ fn apply_aperture_transform_to_coord(
 }
 
 fn rotate_coord(point: Coord<Real>, degrees: Real) -> Coord<Real> {
-    let radians = degrees.to_radians();
-    let (sin, cos) = radians.sin_cos();
-    Coord {
-        x: point.x * cos - point.y * sin,
-        y: point.x * sin + point.y * cos,
-    }
+    let Some(radians) = hdegrees_to_radians(degrees) else {
+        return point;
+    };
+    let Some((sin, cos)) = hangle_sin_cos(radians) else {
+        return point;
+    };
+    let Some(x_cos) = hreal_mul(point.x, cos) else {
+        return point;
+    };
+    let Some(y_sin) = hreal_mul(point.y, sin) else {
+        return point;
+    };
+    let Some(x) = hreal_sub(x_cos, y_sin) else {
+        return point;
+    };
+    let Some(x_sin) = hreal_mul(point.x, sin) else {
+        return point;
+    };
+    let Some(y) = hreal_affine(x_sin, cos, point.y) else {
+        return point;
+    };
+    Coord { x, y }
 }
 
 fn image_rotation_degrees(rotation: ImageRotation) -> Real {
