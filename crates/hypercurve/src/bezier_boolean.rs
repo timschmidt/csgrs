@@ -8543,6 +8543,59 @@ impl BezierBooleanRegionAssemblyReport2 {
         Self::from_output_loop_depth_facts(&output, depth_facts)
     }
 
+    /// Packages multi-cycle-successor-certified endpoints into a region artifact.
+    ///
+    /// This is the region-assembly counterpart to
+    /// [`BezierBooleanOutputLoopReport2::from_multi_cycle_successor_endpoints`].
+    /// The successor report supplies the graph-topology certificate, endpoint
+    /// closure supplies the exact boundary construction, and keyed depth facts
+    /// supply material/hole parity. Each stage is consumed as report-bearing
+    /// evidence rather than recomputed from samples or vector order, matching
+    /// Yap, "Towards Exact Geometric Computation" (1997). The traversal,
+    /// output-loop, and fill-role split follows Vatti (1992),
+    /// Greiner-Hormann (1998), and Martinez-Rueda-Feito (2009).
+    pub fn from_multi_cycle_successor_depth_facts(
+        multi_cycle: &BezierBooleanLoopGraphMultiCycleWalkReport2,
+        traversal: &BezierBooleanLoopGraphTraversalReport2,
+        plan: &BezierBooleanLoopAssemblyPlanReport2,
+        first_endpoints: &[(Point2, Point2)],
+        second_endpoints: &[(Point2, Point2)],
+        depth_facts: &[BezierBooleanLoopNestingDepthFact2],
+    ) -> Self {
+        let output = BezierBooleanOutputLoopReport2::from_multi_cycle_successor_endpoints(
+            multi_cycle,
+            traversal,
+            plan,
+            first_endpoints,
+            second_endpoints,
+        );
+        Self::from_output_loop_depth_facts(&output, depth_facts)
+    }
+
+    /// Packages multi-cycle-successor-certified endpoints with explicit roles.
+    ///
+    /// Explicit material/hole roles are accepted only after keyed depth facts
+    /// prove the same parity. This keeps fill interpretation auditable at the
+    /// exact graph/result boundary instead of deriving it from loop orientation.
+    pub fn from_multi_cycle_successor_depth_role_facts(
+        multi_cycle: &BezierBooleanLoopGraphMultiCycleWalkReport2,
+        traversal: &BezierBooleanLoopGraphTraversalReport2,
+        plan: &BezierBooleanLoopAssemblyPlanReport2,
+        first_endpoints: &[(Point2, Point2)],
+        second_endpoints: &[(Point2, Point2)],
+        depth_facts: &[BezierBooleanLoopNestingDepthFact2],
+        roles: &[BezierBooleanOutputLoopRole],
+    ) -> Self {
+        let output = BezierBooleanOutputLoopReport2::from_multi_cycle_successor_endpoints(
+            multi_cycle,
+            traversal,
+            plan,
+            first_endpoints,
+            second_endpoints,
+        );
+        Self::from_output_loop_depth_role_facts(&output, depth_facts, roles)
+    }
+
     /// Packages graph-walk-certified endpoints when roles agree with depths.
     ///
     /// This is the graph-walk counterpart to
@@ -11809,6 +11862,105 @@ impl BezierBooleanResultReport2 {
         )
     }
 
+    /// Accepts a full scheduled result from exact multi-cycle successor facts.
+    ///
+    /// This is the successor-fact counterpart to
+    /// [`Self::from_schedule_graph_walk_depth_facts`]. It validates keyed
+    /// ownership facts, emits the boolean action plan, checks graph-traversal
+    /// obligations, derives a deterministic multi-cycle walk from successor
+    /// edges, verifies endpoint closure without merging or splitting those
+    /// cycles, validates keyed depth facts, and only then accepts the final
+    /// result. The method deliberately composes certificates rather than
+    /// computing predicates. That follows Yap, "Towards Exact Geometric
+    /// Computation" (1997), while the boundary traversal/fill split follows
+    /// Vatti (1992), Greiner-Hormann (1998), and Martinez-Rueda-Feito (2009).
+    pub fn from_schedule_multi_cycle_successor_depth_facts(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        ownership_facts: &[BezierBooleanOwnershipFact2],
+        first_endpoints: &[(Point2, Point2)],
+        second_endpoints: &[(Point2, Point2)],
+        branch_vertex_count: usize,
+        resolved_overlap_count: usize,
+        successor_facts: &[BezierBooleanLoopGraphSuccessorFact2],
+        depth_facts: &[BezierBooleanLoopNestingDepthFact2],
+    ) -> Self {
+        let facts =
+            BezierBooleanOwnershipFactReport2::from_schedule_facts(schedule, ownership_facts);
+        let ownership = facts.classify(schedule, operation);
+        let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
+        let assembly = BezierBooleanAssemblyReadinessReport2::from_fragment_counts(
+            &emission,
+            first_endpoints.len(),
+            second_endpoints.len(),
+        );
+        let plan =
+            BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(&assembly, &emission);
+        let traversal = BezierBooleanLoopGraphTraversalReport2::from_certified_walk_graph_facts(
+            &plan,
+            branch_vertex_count,
+            resolved_overlap_count,
+        );
+        let multi_cycle = BezierBooleanLoopGraphMultiCycleWalkReport2::from_successor_facts(
+            &traversal,
+            &plan,
+            successor_facts,
+        );
+        Self::from_multi_cycle_successor_depth_facts(
+            &multi_cycle,
+            &traversal,
+            &plan,
+            first_endpoints,
+            second_endpoints,
+            depth_facts,
+        )
+    }
+
+    /// Accepts a scheduled multi-cycle successor result with depth-certified roles.
+    pub fn from_schedule_multi_cycle_successor_depth_role_facts(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        ownership_facts: &[BezierBooleanOwnershipFact2],
+        first_endpoints: &[(Point2, Point2)],
+        second_endpoints: &[(Point2, Point2)],
+        branch_vertex_count: usize,
+        resolved_overlap_count: usize,
+        successor_facts: &[BezierBooleanLoopGraphSuccessorFact2],
+        depth_facts: &[BezierBooleanLoopNestingDepthFact2],
+        roles: &[BezierBooleanOutputLoopRole],
+    ) -> Self {
+        let facts =
+            BezierBooleanOwnershipFactReport2::from_schedule_facts(schedule, ownership_facts);
+        let ownership = facts.classify(schedule, operation);
+        let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
+        let assembly = BezierBooleanAssemblyReadinessReport2::from_fragment_counts(
+            &emission,
+            first_endpoints.len(),
+            second_endpoints.len(),
+        );
+        let plan =
+            BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(&assembly, &emission);
+        let traversal = BezierBooleanLoopGraphTraversalReport2::from_certified_walk_graph_facts(
+            &plan,
+            branch_vertex_count,
+            resolved_overlap_count,
+        );
+        let multi_cycle = BezierBooleanLoopGraphMultiCycleWalkReport2::from_successor_facts(
+            &traversal,
+            &plan,
+            successor_facts,
+        );
+        Self::from_multi_cycle_successor_depth_role_facts(
+            &multi_cycle,
+            &traversal,
+            &plan,
+            first_endpoints,
+            second_endpoints,
+            depth_facts,
+            roles,
+        )
+    }
+
     /// Accepts a full generic endpoint result from keyed ownership and depth-certified roles.
     ///
     /// This is the raw graph-count counterpart to
@@ -12081,6 +12233,58 @@ impl BezierBooleanResultReport2 {
             second_endpoints,
             depth_facts,
         );
+        Self::from_region_assembly(&assembly)
+    }
+
+    /// Accepts a multi-cycle-successor-certified generic endpoint result with keyed depths.
+    ///
+    /// This composes the exact successor graph certificate directly into the
+    /// result boundary. The successor relation must be a validated
+    /// multi-cycle permutation, endpoint closure must preserve those cycle
+    /// ranges, and the supplied nesting depths must be keyed to the resulting
+    /// output loops. No orientation, tolerance, or sample-point inference is
+    /// used. That is the Yap (1997) EGC contract applied at the final boolean
+    /// result handoff; Vatti (1992), Greiner-Hormann (1998), and
+    /// Martinez-Rueda-Feito (2009) provide the staged traversal/fill model.
+    pub fn from_multi_cycle_successor_depth_facts(
+        multi_cycle: &BezierBooleanLoopGraphMultiCycleWalkReport2,
+        traversal: &BezierBooleanLoopGraphTraversalReport2,
+        plan: &BezierBooleanLoopAssemblyPlanReport2,
+        first_endpoints: &[(Point2, Point2)],
+        second_endpoints: &[(Point2, Point2)],
+        depth_facts: &[BezierBooleanLoopNestingDepthFact2],
+    ) -> Self {
+        let assembly = BezierBooleanRegionAssemblyReport2::from_multi_cycle_successor_depth_facts(
+            multi_cycle,
+            traversal,
+            plan,
+            first_endpoints,
+            second_endpoints,
+            depth_facts,
+        );
+        Self::from_region_assembly(&assembly)
+    }
+
+    /// Accepts a multi-cycle-successor-certified result with depth-certified roles.
+    pub fn from_multi_cycle_successor_depth_role_facts(
+        multi_cycle: &BezierBooleanLoopGraphMultiCycleWalkReport2,
+        traversal: &BezierBooleanLoopGraphTraversalReport2,
+        plan: &BezierBooleanLoopAssemblyPlanReport2,
+        first_endpoints: &[(Point2, Point2)],
+        second_endpoints: &[(Point2, Point2)],
+        depth_facts: &[BezierBooleanLoopNestingDepthFact2],
+        roles: &[BezierBooleanOutputLoopRole],
+    ) -> Self {
+        let assembly =
+            BezierBooleanRegionAssemblyReport2::from_multi_cycle_successor_depth_role_facts(
+                multi_cycle,
+                traversal,
+                plan,
+                first_endpoints,
+                second_endpoints,
+                depth_facts,
+                roles,
+            );
         Self::from_region_assembly(&assembly)
     }
 

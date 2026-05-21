@@ -1665,7 +1665,38 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     &first_endpoints,
                     &second_endpoints,
                 );
-                format!("{single:?}{multi:?}{output:?}")
+                let ownership_facts = schedule
+                    .steps
+                    .iter()
+                    .zip(&ownerships)
+                    .map(
+                        |(step, opposite_location)| hypercurve::BezierBooleanOwnershipFact2 {
+                            step: step.clone(),
+                            opposite_location: *opposite_location,
+                        },
+                    )
+                    .collect::<Vec<_>>();
+                let depth_facts = (0..output.loops.len())
+                    .map(
+                        |loop_index| hypercurve::BezierBooleanLoopNestingDepthFact2 {
+                            loop_index,
+                            nesting_depth: loop_index,
+                        },
+                    )
+                    .collect::<Vec<_>>();
+                let result =
+                    hypercurve::BezierBooleanResultReport2::from_schedule_multi_cycle_successor_depth_facts(
+                        &schedule,
+                        BooleanOp::Union,
+                        &ownership_facts,
+                        &first_endpoints,
+                        &second_endpoints,
+                        0,
+                        0,
+                        &successors,
+                        &depth_facts,
+                    );
+                format!("{single:?}{multi:?}{output:?}{result:?}")
             }
             other => format!("{other:?}"),
         };

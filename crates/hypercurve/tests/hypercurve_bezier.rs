@@ -8647,6 +8647,142 @@ fn bezier_boolean_result_consumes_schedule_ownership_walk_and_depth_facts() {
 }
 
 #[test]
+fn bezier_boolean_result_consumes_schedule_multi_cycle_successors_and_depth_facts() {
+    let schedule = BezierBooleanTraversalScheduleReport2 {
+        status: BezierBooleanTraversalScheduleStatus::Ready,
+        precondition_status: BezierBooleanTraversalPreconditionStatus::Ready,
+        first_fragment_count: 4,
+        second_fragment_count: 0,
+        steps: (0..4)
+            .map(|fragment_index| hypercurve::BezierBooleanTraversalStep2 {
+                operand: BezierBooleanTraversalOperand::First,
+                fragment_index,
+            })
+            .collect(),
+        resolved_overlap_count: 0,
+        overlap_boundary_parameter_count: 0,
+        blocker_count: 0,
+    };
+    let ownership_facts = schedule
+        .steps
+        .iter()
+        .map(|step| BezierBooleanOwnershipFact2 {
+            step: step.clone(),
+            opposite_location: BezierBooleanFragmentOwnershipLocation::Outside,
+        })
+        .collect::<Vec<_>>();
+    let endpoints = [
+        (point(0, 0), point(1, 0)),
+        (point(1, 0), point(0, 0)),
+        (point(10, 0), point(11, 0)),
+        (point(11, 0), point(10, 0)),
+    ];
+    let successors = [
+        BezierBooleanLoopGraphSuccessorFact2 {
+            from_step_index: 0,
+            to_step_index: 1,
+        },
+        BezierBooleanLoopGraphSuccessorFact2 {
+            from_step_index: 1,
+            to_step_index: 0,
+        },
+        BezierBooleanLoopGraphSuccessorFact2 {
+            from_step_index: 2,
+            to_step_index: 3,
+        },
+        BezierBooleanLoopGraphSuccessorFact2 {
+            from_step_index: 3,
+            to_step_index: 2,
+        },
+    ];
+    let depth_facts = [
+        BezierBooleanLoopNestingDepthFact2 {
+            loop_index: 0,
+            nesting_depth: 0,
+        },
+        BezierBooleanLoopNestingDepthFact2 {
+            loop_index: 1,
+            nesting_depth: 1,
+        },
+    ];
+
+    let result = BezierBooleanResultReport2::from_schedule_multi_cycle_successor_depth_facts(
+        &schedule,
+        BooleanOp::Union,
+        &ownership_facts,
+        &endpoints,
+        &[],
+        0,
+        0,
+        &successors,
+        &depth_facts,
+    );
+    assert_eq!(result.status, BezierBooleanResultStatus::Ready);
+    assert!(result.is_ready());
+    assert_eq!(result.directed_fragment_count, 4);
+    assert_eq!(result.assigned_loop_count, 2);
+    assert_eq!(result.material_loop_indices, vec![0]);
+    assert_eq!(result.hole_loop_indices, vec![1]);
+
+    let role_blocked =
+        BezierBooleanResultReport2::from_schedule_multi_cycle_successor_depth_role_facts(
+            &schedule,
+            BooleanOp::Union,
+            &ownership_facts,
+            &endpoints,
+            &[],
+            0,
+            0,
+            &successors,
+            &depth_facts,
+            &[
+                BezierBooleanOutputLoopRole::Hole,
+                BezierBooleanOutputLoopRole::Material,
+            ],
+        );
+    assert_eq!(
+        role_blocked.status,
+        BezierBooleanResultStatus::RegionAssemblyBlocked
+    );
+    assert!(role_blocked.has_blockers());
+
+    let duplicate_successor = [
+        BezierBooleanLoopGraphSuccessorFact2 {
+            from_step_index: 0,
+            to_step_index: 1,
+        },
+        BezierBooleanLoopGraphSuccessorFact2 {
+            from_step_index: 0,
+            to_step_index: 2,
+        },
+        BezierBooleanLoopGraphSuccessorFact2 {
+            from_step_index: 2,
+            to_step_index: 3,
+        },
+        BezierBooleanLoopGraphSuccessorFact2 {
+            from_step_index: 3,
+            to_step_index: 2,
+        },
+    ];
+    let blocked = BezierBooleanResultReport2::from_schedule_multi_cycle_successor_depth_facts(
+        &schedule,
+        BooleanOp::Union,
+        &ownership_facts,
+        &endpoints,
+        &[],
+        0,
+        0,
+        &duplicate_successor,
+        &depth_facts,
+    );
+    assert_eq!(
+        blocked.status,
+        BezierBooleanResultStatus::RegionAssemblyBlocked
+    );
+    assert!(blocked.has_blockers());
+}
+
+#[test]
 fn bezier_boolean_schedule_graph_walk_depth_role_facts_block_stale_roles() {
     let schedule = BezierBooleanTraversalScheduleReport2 {
         status: BezierBooleanTraversalScheduleStatus::Ready,
@@ -15037,6 +15173,49 @@ proptest! {
                     && output_loop.directed_fragment_count == *step_count
             });
         prop_assert!(ranges_match);
+
+        let ownership_facts = plan
+            .emitted_steps
+            .iter()
+            .map(|emitted| BezierBooleanOwnershipFact2 {
+                step: emitted.step.clone(),
+                opposite_location: BezierBooleanFragmentOwnershipLocation::Outside,
+            })
+            .collect::<Vec<_>>();
+        let schedule = BezierBooleanTraversalScheduleReport2 {
+            status: BezierBooleanTraversalScheduleStatus::Ready,
+            precondition_status: BezierBooleanTraversalPreconditionStatus::Ready,
+            first_fragment_count: step_count,
+            second_fragment_count: 0,
+            steps: plan
+                .emitted_steps
+                .iter()
+                .map(|emitted| emitted.step.clone())
+                .collect(),
+            resolved_overlap_count: 0,
+            overlap_boundary_parameter_count: 0,
+            blocker_count: 0,
+        };
+        let depth_facts = (0..cycle_count)
+            .map(|loop_index| BezierBooleanLoopNestingDepthFact2 {
+                loop_index,
+                nesting_depth: loop_index,
+            })
+            .collect::<Vec<_>>();
+        let result = BezierBooleanResultReport2::from_schedule_multi_cycle_successor_depth_facts(
+            &schedule,
+            BooleanOp::Union,
+            &ownership_facts,
+            &endpoints,
+            &[],
+            0,
+            0,
+            &successors,
+            &depth_facts,
+        );
+        prop_assert_eq!(result.status, BezierBooleanResultStatus::Ready);
+        prop_assert_eq!(result.assigned_loop_count, cycle_count);
+        prop_assert_eq!(result.directed_fragment_count, step_count);
     }
 
     #[test]
