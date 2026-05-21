@@ -35,16 +35,20 @@ pub struct SketchGroupHandle(pub u32);
 
 /// Editor/API metadata retained across sketch lowering.
 ///
-/// These fields are intentionally descriptive data, not solver tolerances.
-/// Source units and displayed labels may guide UI round-tripping or proposal
-/// engines, but exact residual replay remains the proof boundary, following
-/// Yap, "Towards Exact Geometric Computation" (1997). The metadata mirrors the
-/// SolveSpace-style need to round-trip reference dimensions, construction
-/// geometry, and comments without turning every annotation into an equation.
-#[derive(Clone, Debug, Default, Eq, PartialEq)]
+/// These fields are descriptive data and explicit proof inputs, not hidden
+/// solver tolerances. Source units, displayed labels, and declared tolerances
+/// may guide UI round-tripping or design-rule checks, but exact residual
+/// replay remains the proof boundary, following Yap, "Towards Exact Geometric
+/// Computation" (1997). The metadata mirrors the SolveSpace-style need to
+/// round-trip reference dimensions, construction geometry, and comments
+/// without turning every annotation into an equation.
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct SketchRoundTripMetadata {
     /// Source unit label such as `"mm"`, `"inch"`, or `"rad"`.
     pub source_unit: Option<String>,
+    /// Declared exact source tolerance, retained as data rather than a hidden
+    /// residual acceptance threshold.
+    pub declared_tolerance: Option<Real>,
     /// UI/display label supplied by an editor or importer.
     pub display_label: Option<String>,
     /// Human-readable comment that should not generate residual rows.
@@ -261,7 +265,7 @@ pub enum SketchEntityKind {
 }
 
 /// A retained source entity.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct SketchEntity {
     /// Stable source handle.
     pub handle: SketchEntityHandle,

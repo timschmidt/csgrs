@@ -6,9 +6,10 @@ use hypersolve::{
     PreparedSolverBlock, Problem, ProposalEngineKind, ProposalEnginePrecision,
     ProposalEngineReport, RootIsolationStatus, SketchConstructionCertificateStatus,
     SketchDegeneracyKind, SketchDegeneracyStatus, SketchGeneratedRowStatus, SketchParameterDomain,
-    SketchParameterDomainStatus, SketchResidualStrategy, SketchSolveProblem, SolverBlockRowKind,
-    SolverConfig, SolverPoint2, SolverState, SymbolId, VariableBall,
-    apply_equality_substitution_classes, certify_affine_krawczyk_box, certify_candidate,
+    SketchParameterDomainStatus, SketchResidualStrategy, SketchRoundTripMetadata,
+    SketchSolveProblem, SketchUnitToleranceStatus, SolverBlockRowKind, SolverConfig, SolverPoint2,
+    SolverState, SymbolId, VariableBall, apply_equality_substitution_classes,
+    audit_sketch_unit_tolerances, certify_affine_krawczyk_box, certify_candidate,
     certify_candidate_batch, certify_candidate_domains, certify_direct_univariate_quadratic_roots,
     certify_interval_box_candidate, certify_multivariate_quadratic_interval_candidate,
     certify_multivariate_quadratic_krawczyk_box, certify_quadratic_interval_candidate,
@@ -326,6 +327,39 @@ proptest! {
             report.checks[0].status == SketchParameterDomainStatus::CertifiedInvalid,
             !expected_valid
         );
+    }
+
+    #[test]
+    fn sketch_unit_tolerance_audit_generated_tolerances_follow_exact_sign(
+        tolerance in -32_i16..=32,
+        has_unit in any::<bool>(),
+    ) {
+        let tolerance = i64::from(tolerance);
+        let mut sketch = SketchSolveProblem::new();
+        let parameter = sketch.add_parameter("toleranced", Real::from(0));
+        let metadata = SketchRoundTripMetadata {
+            source_unit: has_unit.then(|| "mm".to_owned()),
+            declared_tolerance: Some(Real::from(tolerance)),
+            ..SketchRoundTripMetadata::default()
+        };
+        let metadata_set = sketch.set_parameter_metadata(parameter, metadata);
+        prop_assert!(metadata_set);
+
+        let report = audit_sketch_unit_tolerances(&sketch);
+        let row = report
+            .rows
+            .iter()
+            .find(|row| row.parameter == Some(parameter))
+            .expect("parameter unit/tolerance row should exist");
+        let expected = if tolerance < 0 {
+            SketchUnitToleranceStatus::CertifiedInvalidNegativeTolerance
+        } else if has_unit {
+            SketchUnitToleranceStatus::CertifiedDeclaredTolerance
+        } else {
+            SketchUnitToleranceStatus::ToleranceWithoutUnit
+        };
+
+        prop_assert_eq!(&row.status, &expected);
     }
 
     #[test]

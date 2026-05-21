@@ -8,7 +8,7 @@ use hypersolve::{
     ProposalEngineReport, SolverConfig, SolverPoint2, SolverState, SparseResidualTerm, SymbolId,
     UnivariateResultantPairInput, VariableBall, analyze_exact_affine_rank,
     analyze_sparse_bareiss_elimination_pattern, apply_equality_substitution_classes,
-    arithmetic_algebraic_root_representations, audit_active_set,
+    arithmetic_algebraic_root_representations, audit_active_set, audit_sketch_unit_tolerances,
     build_equality_substitution_classes, certify_affine_krawczyk_box, certify_candidate,
     certify_candidate_batch, certify_candidate_domains, certify_direct_univariate_quadratic_roots,
     certify_interval_box_candidate, certify_multivariate_quadratic_interval_candidate,
@@ -183,6 +183,7 @@ fn sketch_problem_with_metadata(row_count: usize) -> hypersolve::SketchSolveProb
             handle,
             hypersolve::SketchRoundTripMetadata {
                 source_unit: Some("mm".to_owned()),
+                declared_tolerance: Some(r(1)),
                 display_label: Some(format!("p{index}")),
                 ..hypersolve::SketchRoundTripMetadata::default()
             },
@@ -287,6 +288,9 @@ fn certification(c: &mut Criterion) {
     let metadata_sketch = sketch_problem_with_metadata(16);
     c.bench_function("sketch_round_trip_metadata_lowering", |b| {
         b.iter(|| metadata_sketch.lower_to_problem())
+    });
+    c.bench_function("sketch_unit_tolerance_audit", |b| {
+        b.iter(|| audit_sketch_unit_tolerances(&metadata_sketch))
     });
     let range_sketch = sketch_problem_with_ranges(16);
     c.bench_function("sketch_range_and_objective_lowering", |b| {

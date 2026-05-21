@@ -35,6 +35,7 @@ pub mod sketch_certificates;
 pub mod sketch_degeneracy;
 pub mod sketch_domains;
 pub mod sketch_fixtures;
+pub mod sketch_units;
 pub mod solver;
 pub mod solver_block;
 pub mod sparse_pattern;
@@ -201,6 +202,11 @@ pub use sketch_domains::{
 pub use sketch_fixtures::{
     SketchCompatibilityFixture, SketchCompatibilityFixtureKind, SketchCompatibilityReplayReport,
     replay_sketch_compatibility_fixture, sketch_compatibility_fixtures,
+};
+pub use sketch_units::{
+    SketchUnitToleranceObjectKind, SketchUnitToleranceReport, SketchUnitToleranceRow,
+    SketchUnitToleranceStatus, audit_sketch_unit_tolerances,
+    audit_sketch_unit_tolerances_with_policy,
 };
 pub use solver::{SolverConfig, SolverState, solve_damped_least_squares};
 pub use solver_block::{

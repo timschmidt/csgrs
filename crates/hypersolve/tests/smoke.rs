@@ -13,8 +13,9 @@ use hypersolve::{
     SketchParameterDomain, SketchParameterDomainKind, SketchParameterDomainStatus,
     SketchResidualFormKind, SketchResidualFormRole, SketchResidualFormsStatus,
     SketchResidualStrategy, SketchRoundTripMetadata, SketchRoundTripRole, SketchSolveProblem,
-    SolverBlockRowKind, SolverConfig, SolverPoint2, SolverState, SymbolId, VariableBall,
-    analyze_exact_affine_rank, apply_equality_substitution_classes, apply_equality_substitutions,
+    SketchUnitToleranceStatus, SolverBlockRowKind, SolverConfig, SolverPoint2, SolverState,
+    SymbolId, VariableBall, analyze_exact_affine_rank, apply_equality_substitution_classes,
+    apply_equality_substitutions, audit_sketch_unit_tolerances,
     build_equality_substitution_classes, certify_affine_interval_candidate,
     certify_affine_krawczyk_box, certify_candidate, certify_candidate_batch,
     certify_candidate_domains, certify_candidate_with_config,
@@ -373,6 +374,7 @@ fn sketch_round_trip_metadata_preserves_editor_fields_without_forcing_proof_rows
             comment: Some("display/reference dimension".to_owned()),
             role: SketchRoundTripRole::ReferenceDimension,
             lossy_adapter_label: Some("SolveSpace-compatible UI dimension".to_owned()),
+            ..SketchRoundTripMetadata::default()
         },
     ));
     assert!(!sketch.set_constraint_metadata(
@@ -404,6 +406,76 @@ fn sketch_round_trip_metadata_preserves_editor_fields_without_forcing_proof_rows
     assert_eq!(
         lowered.rows[0].status,
         SketchGeneratedRowStatus::ReferenceOnly
+    );
+}
+
+#[test]
+fn sketch_unit_tolerance_audit_keeps_tolerances_explicit_and_report_bearing() {
+    let mut sketch = SketchSolveProblem::new();
+    let parameter = sketch.add_parameter("width", real(10));
+    let point = sketch.add_point2d("p", real(0), real(0));
+    let distance = sketch.add_distance("d", real(5));
+    let constraint = sketch.add_point_point_distance("dimension", point, point, distance);
+
+    assert!(sketch.set_parameter_metadata(
+        parameter,
+        SketchRoundTripMetadata {
+            source_unit: Some("mm".to_owned()),
+            declared_tolerance: Some(real(1)),
+            display_label: Some("width".to_owned()),
+            ..SketchRoundTripMetadata::default()
+        },
+    ));
+    assert!(sketch.set_entity_metadata(
+        point,
+        SketchRoundTripMetadata {
+            source_unit: Some("mm".to_owned()),
+            ..SketchRoundTripMetadata::default()
+        },
+    ));
+    assert!(sketch.set_constraint_metadata(
+        constraint,
+        SketchRoundTripMetadata {
+            declared_tolerance: Some(real(0)),
+            display_label: Some("missing unit tolerance".to_owned()),
+            ..SketchRoundTripMetadata::default()
+        },
+    ));
+    assert!(sketch.set_parameter_metadata(
+        sketch.parameters()[1].handle,
+        SketchRoundTripMetadata {
+            source_unit: Some("mm".to_owned()),
+            declared_tolerance: Some(real(-1)),
+            ..SketchRoundTripMetadata::default()
+        },
+    ));
+
+    let report = audit_sketch_unit_tolerances(&sketch);
+
+    assert_eq!(
+        report.object_count,
+        sketch.parameters().len() + sketch.entities().len() + sketch.constraints().len()
+    );
+    assert_eq!(report.certified_declared_tolerances, 1);
+    assert_eq!(report.invalid_declarations, 2);
+    assert!(report.has_invalid_declaration());
+    assert!(report.rows.iter().any(|row| {
+        row.parameter == Some(parameter)
+            && row.source_unit.as_deref() == Some("mm")
+            && row.declared_tolerance == Some(real(1))
+            && row.status == SketchUnitToleranceStatus::CertifiedDeclaredTolerance
+    }));
+    assert!(report.rows.iter().any(|row| {
+        row.entity == Some(point) && row.status == SketchUnitToleranceStatus::UnitOnly
+    }));
+    assert!(report.rows.iter().any(|row| {
+        row.constraint == Some(constraint)
+            && row.status == SketchUnitToleranceStatus::ToleranceWithoutUnit
+    }));
+    assert!(
+        report.rows.iter().any(|row| {
+            row.status == SketchUnitToleranceStatus::CertifiedInvalidNegativeTolerance
+        })
     );
 }
 
