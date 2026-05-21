@@ -1452,13 +1452,13 @@ mod tests {
         min_y: Real,
         max_x: Real,
         max_y: Real,
-        epsilon: Real,
+        tolerance: Real,
     ) {
         let bounds = sketch.bounding_box();
-        assert!((bounds.mins.x - min_x).abs() < epsilon);
-        assert!((bounds.mins.y - min_y).abs() < epsilon);
-        assert!((bounds.maxs.x - max_x).abs() < epsilon);
-        assert!((bounds.maxs.y - max_y).abs() < epsilon);
+        assert!((bounds.mins.x - min_x).abs() < tolerance);
+        assert!((bounds.mins.y - min_y).abs() < tolerance);
+        assert!((bounds.maxs.x - max_x).abs() < tolerance);
+        assert!((bounds.maxs.y - max_y).abs() < tolerance);
     }
 
     fn native_region_area(sketch: &Profile<()>) -> Real {

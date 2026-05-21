@@ -2,7 +2,7 @@
 //! or slicing a `Mesh` with an arbitrary `Plane` into a `Profile`
 
 use crate::float_types::{
-    Real, hpoints_within_epsilon, hreal_from_f64, hreal_gt_f64, hxy_distance,
+    Real, hpoints_within_tolerance, hreal_from_f64, hreal_gt_f64, hxy_distance,
     hxy_orientation_sign, tolerance,
 };
 use crate::mesh::Mesh;
@@ -150,7 +150,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             }
 
             // Check loop closure with the shared hyperreal point predicate.
-            if hpoints_within_epsilon(
+            if hpoints_within_tolerance(
                 &chain[0].position,
                 &chain[n - 1].position,
                 crate::float_types::tolerance(),
@@ -229,7 +229,7 @@ struct EndKey(i64, i64, i64);
 /// Round a floating coordinate to a tolerance-scaled grid for endpoint hashing.
 ///
 /// The hash is only a candidate bucket: actual endpoint identity is still
-/// verified by [`hpoints_within_epsilon`], which promotes coordinates into
+/// verified by [`hpoints_within_tolerance`], which promotes coordinates into
 /// `hyperlattice::Vector3`/`hyperreal::Real`. Using the crate tolerance for the
 /// coarse grid keeps this acceleration structure aligned with the exact-aware
 /// topology predicate, following Yap, "Towards Exact Geometric Computation,"
@@ -337,7 +337,7 @@ fn extend_chain_forward(
                 if visited[edge_idx] {
                     continue;
                 }
-                if !hpoints_within_epsilon(
+                if !hpoints_within_tolerance(
                     &last_v.position,
                     &edges[edge_idx][end_idx].position,
                     tolerance(),
@@ -390,7 +390,7 @@ mod tests {
 
         assert_eq!(chains.len(), 1);
         assert_eq!(chains[0].len(), 3);
-        assert!(hpoints_within_epsilon(
+        assert!(hpoints_within_tolerance(
             &chains[0][1].position,
             &edge_a[1].position,
             tolerance()

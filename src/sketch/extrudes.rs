@@ -2,10 +2,10 @@
 
 use crate::errors::ValidationError;
 use crate::float_types::{
-    Real, hangle_sin_cos, hdegrees_to_radians, hpoints_within_epsilon, hreal_div,
-    hreal_f64s_within_epsilon, hreal_from_f64, hreal_gt_f64, hreal_lt_f64, hreal_mul,
+    Real, hangle_sin_cos, hdegrees_to_radians, hpoints_within_tolerance, hreal_div,
+    hreal_f64s_within_tolerance, hreal_from_f64, hreal_gt_f64, hreal_lt_f64, hreal_mul,
     hrotation_between_vectors, htranslation_matrix, hunit_cross_vector3, hunit_vector3,
-    hvector3_from_point3, hvector3_from_vector3, hvectors_within_epsilon,
+    hvector3_from_point3, hvector3_from_vector3, hvectors_within_tolerance,
     hxy_ring_orientation_sign, tolerance,
 };
 use crate::mesh::Mesh;
@@ -148,7 +148,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     pub fn extrude_vector(&self, direction: Vector3<Real>) -> Mesh<M> {
         let tol = tolerance();
         if hvector3_from_vector3(&direction).is_none()
-            || hvectors_within_epsilon(&direction, &Vector3::zeros(), tol)
+            || hvectors_within_tolerance(&direction, &Vector3::zeros(), tol)
         {
             return Mesh::empty(self.metadata.clone());
         }
@@ -779,7 +779,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
             // with an explicit duplicate endpoint.
             let last = pts_3d.last().unwrap();
             let first = pts_3d.first().unwrap();
-            if !hpoints_within_epsilon(last, first, tolerance()) {
+            if !hpoints_within_tolerance(last, first, tolerance()) {
                 pts_3d.push(*first);
             }
 
@@ -806,7 +806,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         // 2) Iterate over each hypercurve finite profile, revolve side walls,
         //    and possibly add caps when angle_degs < 360.
         //----------------------------------------------------------------------
-        let full_revolve = hreal_f64s_within_epsilon(angle_degs, 360.0, tolerance());
+        let full_revolve = hreal_f64s_within_tolerance(angle_degs, 360.0, tolerance());
         let angle_positive = hreal_from_f64(angle_degs)
             .ok()
             .is_some_and(|angle| hreal_gt_f64(&angle, 0.0));
@@ -911,7 +911,8 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
             return Mesh::empty(self.metadata.clone());
         }
         let n_path = path.len();
-        let path_is_closed = hpoints_within_epsilon(&path[0], &path[n_path - 1], tolerance());
+        let path_is_closed =
+            hpoints_within_tolerance(&path[0], &path[n_path - 1], tolerance());
 
         // pre-compute a transform for each path vertex
         let mut slice_xforms: Vec<Matrix4<Real>> = Vec::with_capacity(n_path);
@@ -1140,8 +1141,8 @@ fn close_region_ring(mut points: Vec<[Real; 2]>) -> Vec<[Real; 2]> {
 }
 
 fn same_xy(a: (Real, Real), b: (Real, Real)) -> bool {
-    hreal_f64s_within_epsilon(a.0, b.0, tolerance())
-        && hreal_f64s_within_epsilon(a.1, b.1, tolerance())
+    hreal_f64s_within_tolerance(a.0, b.0, tolerance())
+        && hreal_f64s_within_tolerance(a.1, b.1, tolerance())
 }
 
 #[cfg(test)]

@@ -2,7 +2,7 @@
 
 use crate::float_types::{
     F32, HReal, Real, hreal_from_f32, hreal_from_f64, hreal_max_report_value,
-    hreal_min_report_value, hreal_sign, hreal_to_f64, htriangle_area2_exceeds_epsilon,
+    hreal_min_report_value, hreal_sign, hreal_to_f64, htriangle_area2_exceeds_tolerance,
     hvector3_from_point3, hvector3_from_vector3, tolerance,
 };
 use crate::mesh::Mesh;
@@ -514,7 +514,7 @@ fn mesh_from_sampled_field<M: Clone + Debug + Send + Sync>(
             continue;
         }
 
-        if !htriangle_area2_exceeds_epsilon(&p0, &p1, &p2, tolerance()) {
+        if !htriangle_area2_exceeds_tolerance(&p0, &p1, &p2, tolerance()) {
             diagnostics.degenerate_triangle_count += 1;
         }
 

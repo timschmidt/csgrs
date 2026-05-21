@@ -8,7 +8,7 @@ use csgrs::float_types::Real;
 /// adjacency parameters were prefixed with underscores (indicating non-use).
 ///
 /// **Key Improvements Made:**
-/// 1. **Robust Vertex Indexing**: epsilon-based vertex matching for floating-point coordinates
+/// 1. **Robust Vertex Indexing**: tolerance-based vertex matching for floating-point coordinates
 /// 2. **Global Connectivity Graph**: actual mesh connectivity instead of local polygon edges
 /// 3. **True Laplacian Smoothing**: uses proper neighbor relationships from adjacency map
 /// 4. **Comprehensive Quality Analysis**: vertex valence, regularity, and mesh metrics

@@ -247,11 +247,11 @@ Polygons are triangulated when being exported or converted to query meshes.
 - <img src="docs/cylinder.png" width="128" alt="an angled view of a cylinder"/> **`Mesh::cylinder(radius: Real, height: Real, segments: usize, metadata: M)`**
 - <img src="docs/frustum.png" width="128"/> **`Mesh::frustum(radius1: Real, radius2: Real, height: Real, segments: usize, metadata: M)`** -
 Construct a frustum at origin with height and `radius1` and `radius2`.
-If either radius is within EPSILON of 0.0, a cone terminating at a point is constructed.
+If either radius is within `tolerance()` of 0.0, a cone terminating at a point is constructed.
 - <img src="docs/frustum_ptp.png" width="128"/> **`Mesh::frustum_ptp(start: Point3, end: Point3, radius1: Real, radius2: Real, segments:
 usize, metadata: M)`** -
 Construct a frustum from `start` to `end` with `radius1` and `radius2`.
-If either radius is within EPSILON of 0.0, a cone terminating at a point is constructed.
+If either radius is within `tolerance()` of 0.0, a cone terminating at a point is constructed.
 - <img src="docs/polyhedron.png" width="128"/> **`Mesh::polyhedron(points: &[[Real; 3]], faces: &[Vec<usize>], metadata: M)`**
 - <img src="docs/octahedron.png" width="128"/> **`Mesh::octahedron(radius: Real, metadata: M)`** -
 - <img src="docs/icosahedron.png" width="128"/> **`Mesh::icosahedron(radius: Real, metadata: M)`** -

@@ -2,8 +2,8 @@
 
 use crate::errors::ValidationError;
 use crate::float_types::{
-    hangle_between_vectors, hpoint_distance, hpoint3_bounds, hpoints_within_epsilon,
-    hreal_cmp_f64, hreal_f64s_within_epsilon, hreal_gt_f64, hreal_lt_f64, hreal_to_f64,
+    hangle_between_vectors, hpoint_distance, hpoint3_bounds, hpoints_within_tolerance,
+    hreal_cmp_f64, hreal_f64s_within_tolerance, hreal_gt_f64, hreal_lt_f64, hreal_to_f64,
     hunit_vector3, hvector3_from_point3, hvector3_from_vector3,
     parry3d::{bounding_volume::Aabb, query::RayCast, shape::Shape},
     rapier3d::prelude::{
@@ -93,7 +93,7 @@ fn hyper_edge_projection_parameter(
     point: &Point3<Real>,
     edge_start: &Point3<Real>,
     edge_end: &Point3<Real>,
-    epsilon: Real,
+    tolerance: Real,
 ) -> Option<Real> {
     let a = hvector3_from_point3(edge_start)?;
     let b = hvector3_from_point3(edge_end)?;
@@ -102,24 +102,26 @@ fn hyper_edge_projection_parameter(
     let av = &p - &a;
     let bv = &p - &b;
 
-    let eps2 = epsilon * epsilon;
+    let tolerance_squared = tolerance * tolerance;
     let ab_len_sq = ab.dot(&ab);
-    if !hreal_gt_f64(&ab_len_sq, eps2) {
+    if !hreal_gt_f64(&ab_len_sq, tolerance_squared) {
         return None;
     }
 
-    if !hreal_gt_f64(&av.dot(&av), eps2) || !hreal_gt_f64(&bv.dot(&bv), eps2) {
+    if !hreal_gt_f64(&av.dot(&av), tolerance_squared)
+        || !hreal_gt_f64(&bv.dot(&bv), tolerance_squared)
+    {
         return None;
     }
 
     let t_h = (ab.dot(&av) / ab_len_sq).ok()?;
-    if !hreal_gt_f64(&t_h, epsilon) || !hreal_lt_f64(&t_h, 1.0 - epsilon) {
+    if !hreal_gt_f64(&t_h, tolerance) || !hreal_lt_f64(&t_h, 1.0 - tolerance) {
         return None;
     }
 
     let projected = a + ab * &t_h;
     let delta = p - projected;
-    if hreal_gt_f64(&delta.dot(&delta), eps2) {
+    if hreal_gt_f64(&delta.dot(&delta), tolerance_squared) {
         return None;
     }
 
@@ -310,7 +312,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
                         let entry = edge_splits[j].entry(edge_start).or_default();
                         let already_present = entry.iter().any(|(existing_t, existing_v)| {
                             (existing_t - t).abs() < eps
-                                || hpoints_within_epsilon(
+                                || hpoints_within_tolerance(
                                     &existing_v.position,
                                     &new_vertex.position,
                                     eps,
@@ -620,8 +622,8 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         hits.sort_by(|a, b| hreal_cmp_f64(a.1, b.1));
         // 5) remove duplicate hits if they fall within tolerance
         hits.dedup_by(|a, b| {
-            hreal_f64s_within_epsilon(a.1, b.1, tolerance())
-                || hpoints_within_epsilon(&a.0, &b.0, tolerance())
+            hreal_f64s_within_tolerance(a.1, b.1, tolerance())
+                || hpoints_within_tolerance(&a.0, &b.0, tolerance())
         });
 
         hits
@@ -683,7 +685,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
 
             for (point, _) in seg_hits {
                 if let Some(last) = hits.last() {
-                    if hpoints_within_epsilon(&point, last, tol) {
+                    if hpoints_within_tolerance(&point, last, tol) {
                         continue;
                     }
                 }

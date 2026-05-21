@@ -2,8 +2,8 @@
 
 use crate::float_types::{
     PI, Real, hangle_between_vectors, hangle_sin_cos, hpoint_centroid, hpoint_distance,
-    hpoint_lerp, hpoint_weighted_sum, hpoints_within_epsilon, hreal_clamp_f64, hreal_div,
-    hreal_f64s_within_epsilon, hreal_from_f64, hreal_gt_f64, hreal_lt_f64,
+    hpoint_lerp, hpoint_weighted_sum, hpoints_within_tolerance, hreal_clamp_f64, hreal_div,
+    hreal_f64s_within_tolerance, hreal_from_f64, hreal_gt_f64, hreal_lt_f64,
     hreal_max_report_value, hreal_mean, hreal_mul, hreal_sample_stddev, hreal_sqrt_ref,
     hreal_sqrt_to_f64, hreal_sub, hreal_sum, hreal_to_f64, hunit_vector3, hvector3_distance,
     hvector3_dot, hvector3_from_point3, hvector3_mean, hvector3_weighted_sum, tolerance,
@@ -143,8 +143,8 @@ impl Vertex {
         };
 
         // If normals are nearly parallel, use linear interpolation
-        if hreal_f64s_within_epsilon(dot, 1.0, tolerance())
-            || hreal_f64s_within_epsilon(dot, -1.0, tolerance())
+        if hreal_f64s_within_tolerance(dot, 1.0, tolerance())
+            || hreal_f64s_within_tolerance(dot, -1.0, tolerance())
         {
             let new_normal = hvector3_weighted_sum(
                 &[self.normal, other.normal],
@@ -162,7 +162,7 @@ impl Vertex {
             return self.interpolate(other, t);
         };
 
-        if hreal_f64s_within_epsilon(sin_omega, 0.0, tolerance()) {
+        if hreal_f64s_within_tolerance(sin_omega, 0.0, tolerance()) {
             // Fallback to linear interpolation
             let new_normal = hvector3_weighted_sum(
                 &[self.normal, other.normal],
@@ -553,12 +553,12 @@ impl Vertex {
         &self,
         adjacency_map: &HashMap<usize, Vec<usize>>,
         vertex_positions: &HashMap<usize, Point3<Real>>,
-        epsilon: Real,
+        tolerance: Real,
     ) -> (usize, Real) {
         // Find the vertex index by position matching
         let mut vertex_index = None;
         for (&idx, &position) in vertex_positions {
-            if hpoints_within_epsilon(&self.position, &position, epsilon) {
+            if hpoints_within_tolerance(&self.position, &position, tolerance) {
                 vertex_index = Some(idx);
                 break;
             }
