@@ -8975,6 +8975,138 @@ fn bezier_boolean_result_consumes_schedule_multi_cycle_successors_and_depth_fact
         );
     assert_eq!(locator_materialized, certified_materialized);
 
+    let quadratic_fragments = BezierBooleanQuadraticFragmentReport2 {
+        status: BezierBooleanFragmentConstructionStatus::Ready,
+        readiness_status: BezierBooleanConstructionReadinessStatus::Ready,
+        source_parameter_count: 0,
+        endpoint_parameter_count: 0,
+        out_of_range_parameter_count: 0,
+        inserted_parameter_count: 0,
+        inserted_parameters: Vec::new(),
+        fragments: endpoints
+            .iter()
+            .map(|(start, end)| QuadraticBezier2::new(start.clone(), start.clone(), end.clone()))
+            .collect(),
+    };
+    let cubic_fragments = BezierBooleanCubicFragmentReport2 {
+        status: BezierBooleanFragmentConstructionStatus::Ready,
+        readiness_status: BezierBooleanConstructionReadinessStatus::Ready,
+        source_parameter_count: 0,
+        endpoint_parameter_count: 0,
+        out_of_range_parameter_count: 0,
+        inserted_parameter_count: 0,
+        inserted_parameters: Vec::new(),
+        fragments: endpoints
+            .iter()
+            .map(|(start, end)| {
+                CubicBezier2::new(start.clone(), start.clone(), end.clone(), end.clone())
+            })
+            .collect(),
+    };
+    let rational_fragments = BezierBooleanRationalQuadraticFragmentReport2 {
+        status: BezierBooleanFragmentConstructionStatus::Ready,
+        readiness_status: BezierBooleanConstructionReadinessStatus::Ready,
+        source_parameter_count: 0,
+        endpoint_parameter_count: 0,
+        out_of_range_parameter_count: 0,
+        inserted_parameter_count: 0,
+        inserted_parameters: Vec::new(),
+        fragments: endpoints
+            .iter()
+            .map(|(start, end)| {
+                RationalQuadraticBezier2::try_unit_end_weights(
+                    start.clone(),
+                    start.clone(),
+                    end.clone(),
+                    Real::one(),
+                )
+                .expect("unit endpoint weights and unit middle weight are valid")
+            })
+            .collect(),
+    };
+    let empty_quadratic = BezierBooleanQuadraticFragmentReport2 {
+        fragments: Vec::new(),
+        ..quadratic_fragments.clone()
+    };
+    let empty_cubic = BezierBooleanCubicFragmentReport2 {
+        fragments: Vec::new(),
+        ..cubic_fragments.clone()
+    };
+    let empty_rational = BezierBooleanRationalQuadraticFragmentReport2 {
+        fragments: Vec::new(),
+        ..rational_fragments.clone()
+    };
+
+    let quadratic_certification =
+        BezierBooleanLoopContainmentCertificationReport2::from_quadratic_schedule_multi_cycle_successor_query_results(
+            &schedule,
+            BooleanOp::Union,
+            &ownership_facts,
+            &quadratic_fragments,
+            &empty_quadratic,
+            0,
+            0,
+            &successors,
+            &ready_results,
+        );
+    assert_eq!(quadratic_certification, certification);
+    assert_eq!(
+        BezierBooleanResultReport2::from_quadratic_schedule_multi_cycle_successor_locator_results(
+            &schedule,
+            BooleanOp::Union,
+            &ownership_facts,
+            &quadratic_fragments,
+            &empty_quadratic,
+            0,
+            0,
+            &successors,
+            &ready_results,
+        ),
+        certified_result
+    );
+    assert_eq!(
+        BezierBooleanMaterializedRegionReport2::from_quadratic_schedule_multi_cycle_successor_laminar_locator_results(
+            &schedule,
+            BooleanOp::Union,
+            &ownership_facts,
+            &quadratic_fragments,
+            &empty_quadratic,
+            0,
+            0,
+            &successors,
+            &ready_results,
+        ),
+        certified_materialized
+    );
+    assert_eq!(
+        BezierBooleanResultReport2::from_cubic_schedule_multi_cycle_successor_locator_results(
+            &schedule,
+            BooleanOp::Union,
+            &ownership_facts,
+            &cubic_fragments,
+            &empty_cubic,
+            0,
+            0,
+            &successors,
+            &ready_results,
+        ),
+        certified_result
+    );
+    assert_eq!(
+        BezierBooleanMaterializedRegionReport2::from_rational_quadratic_schedule_multi_cycle_successor_laminar_locator_results(
+            &schedule,
+            BooleanOp::Union,
+            &ownership_facts,
+            &rational_fragments,
+            &empty_rational,
+            0,
+            0,
+            &successors,
+            &ready_results,
+        ),
+        certified_materialized
+    );
+
     let boundary_results = queries
         .queries
         .iter()
