@@ -397,6 +397,81 @@ pub struct BezierBooleanUniformOwnershipFactReport2 {
     pub blocker_count: usize,
 }
 
+/// Status for generating exact per-fragment locator inputs.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum BezierBooleanFragmentLocatorInputStatus {
+    /// No fragment or overlap work was supplied.
+    Empty,
+    /// The arrangement is a certified endpoint-only no-op.
+    NoInteriorSplits,
+    /// Every scheduled fragment has an exact representative point for a locator.
+    Ready,
+    /// Traversal scheduling is blocked.
+    ScheduleBlocked,
+    /// At least one scheduled first-operand index does not name a retained fragment.
+    MissingFirstFragment,
+    /// At least one scheduled second-operand index does not name a retained fragment.
+    MissingSecondFragment,
+    /// A rational/conic representative point could not be certified.
+    PointEvaluationBlocked,
+}
+
+/// One exact representative-point query for opposite-operand ownership.
+///
+/// The `step` key identifies the scheduled fragment being classified, while
+/// `representative_point` is an exact point on that fragment. The point is only
+/// input to a later exact point/region locator; it is not an ownership fact.
+/// This mirrors Yap, "Towards Exact Geometric Computation" (1997): exact
+/// construction objects may be prepared here, but topology-changing
+/// inside/outside decisions must return their own certificates or explicit
+/// blockers. The staged ownership handoff follows Vatti (1992),
+/// Greiner-Hormann (1998), and Martinez-Rueda-Feito (2009).
+#[derive(Clone, Debug, PartialEq)]
+pub struct BezierBooleanFragmentLocatorInput2 {
+    /// Scheduled fragment to classify.
+    pub step: BezierBooleanTraversalStep2,
+    /// Exact point on the scheduled fragment.
+    pub representative_point: Point2,
+}
+
+/// Exact representative-point handoff for non-uniform Bezier/conic ownership.
+///
+/// This report fills the gap between a traversal schedule and the caller's
+/// point/region locator. It validates that every scheduled step still names a
+/// retained fragment, then emits one exact representative point per step in
+/// schedule order. It deliberately does not classify the point as inside,
+/// outside, or boundary: callers must replay locator answers through
+/// [`BezierBooleanOperandOwnershipLocationReport2`] or
+/// [`BezierBooleanOwnershipFactReport2`] before boolean selection. This keeps
+/// the predicate/construction boundary explicit in the sense of Yap (1997).
+#[derive(Clone, Debug, PartialEq)]
+pub struct BezierBooleanFragmentLocatorInputReport2 {
+    /// Coarse locator-input status.
+    pub status: BezierBooleanFragmentLocatorInputStatus,
+    /// Traversal-schedule status used to derive this report.
+    pub schedule_status: BezierBooleanTraversalScheduleStatus,
+    /// Requested boolean operation.
+    pub operation: BooleanOp,
+    /// Keyed representative points in schedule order.
+    pub inputs: Vec<BezierBooleanFragmentLocatorInput2>,
+    /// Number of schedule steps inspected.
+    pub scheduled_step_count: usize,
+    /// Number of representative inputs emitted.
+    pub input_count: usize,
+    /// Number of first-operand fragment indices that were out of range.
+    pub missing_first_fragment_count: usize,
+    /// Number of second-operand fragment indices that were out of range.
+    pub missing_second_fragment_count: usize,
+    /// Number of representative points that could not be certified.
+    pub point_evaluation_blocker_count: usize,
+    /// Number of blocking preconditions retained by this report.
+    pub blocker_count: usize,
+}
+
+fn half_real() -> Real {
+    (Real::one() / Real::from(2_i8)).expect("2 is a nonzero exact rational denominator")
+}
+
 /// Status for expanding per-operand locator vectors into keyed ownership facts.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum BezierBooleanOperandOwnershipLocationStatus {
@@ -4015,6 +4090,276 @@ impl BezierBooleanOwnershipFactReport2 {
                 | BezierBooleanOwnershipFactStatus::ExtraOwnershipFacts
                 | BezierBooleanOwnershipFactStatus::StepMismatch
                 | BezierBooleanOwnershipFactStatus::BoundaryNeedsResolution
+        )
+    }
+}
+
+impl BezierBooleanFragmentLocatorInputReport2 {
+    /// Builds locator inputs from already computed exact representative points.
+    ///
+    /// The representative arrays are indexed by fragment index for each source
+    /// operand. This low-level constructor is useful for heterogeneous future
+    /// paths whose retained fragment type is not yet represented by one of the
+    /// typed Bezier/conic report structs. It validates only object identity and
+    /// availability; locator decisions still have to be replayed as certified
+    /// ownership facts before boolean selection.
+    pub fn from_representative_points(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        first_fragment_points: &[Point2],
+        second_fragment_points: &[Point2],
+    ) -> Self {
+        match schedule.status {
+            BezierBooleanTraversalScheduleStatus::Empty => {
+                return Self::empty_like(
+                    BezierBooleanFragmentLocatorInputStatus::Empty,
+                    schedule,
+                    operation,
+                    0,
+                );
+            }
+            BezierBooleanTraversalScheduleStatus::NoInteriorSplits => {
+                return Self::empty_like(
+                    BezierBooleanFragmentLocatorInputStatus::NoInteriorSplits,
+                    schedule,
+                    operation,
+                    0,
+                );
+            }
+            BezierBooleanTraversalScheduleStatus::PreconditionBlocked => {
+                return Self::empty_like(
+                    BezierBooleanFragmentLocatorInputStatus::ScheduleBlocked,
+                    schedule,
+                    operation,
+                    schedule.blocker_count.max(1),
+                );
+            }
+            BezierBooleanTraversalScheduleStatus::Ready => {}
+        }
+
+        let mut missing_first_fragment_count = 0;
+        let mut missing_second_fragment_count = 0;
+        let mut inputs = Vec::with_capacity(schedule.steps.len());
+        for step in &schedule.steps {
+            let representative_point = match step.operand {
+                BezierBooleanTraversalOperand::First => {
+                    match first_fragment_points.get(step.fragment_index) {
+                        Some(point) => point.clone(),
+                        None => {
+                            missing_first_fragment_count += 1;
+                            continue;
+                        }
+                    }
+                }
+                BezierBooleanTraversalOperand::Second => {
+                    match second_fragment_points.get(step.fragment_index) {
+                        Some(point) => point.clone(),
+                        None => {
+                            missing_second_fragment_count += 1;
+                            continue;
+                        }
+                    }
+                }
+            };
+            inputs.push(BezierBooleanFragmentLocatorInput2 {
+                step: step.clone(),
+                representative_point,
+            });
+        }
+
+        if missing_first_fragment_count > 0 {
+            return Self::blocked_like(
+                BezierBooleanFragmentLocatorInputStatus::MissingFirstFragment,
+                schedule,
+                operation,
+                missing_first_fragment_count,
+                missing_second_fragment_count,
+                0,
+            );
+        }
+        if missing_second_fragment_count > 0 {
+            return Self::blocked_like(
+                BezierBooleanFragmentLocatorInputStatus::MissingSecondFragment,
+                schedule,
+                operation,
+                missing_first_fragment_count,
+                missing_second_fragment_count,
+                0,
+            );
+        }
+
+        Self {
+            status: BezierBooleanFragmentLocatorInputStatus::Ready,
+            schedule_status: schedule.status,
+            operation,
+            input_count: inputs.len(),
+            scheduled_step_count: schedule.steps.len(),
+            inputs,
+            missing_first_fragment_count: 0,
+            missing_second_fragment_count: 0,
+            point_evaluation_blocker_count: 0,
+            blocker_count: 0,
+        }
+    }
+
+    /// Builds locator inputs from quadratic Bezier fragments at `t = 1/2`.
+    ///
+    /// The midpoint is evaluated by exact de Casteljau construction, preserving
+    /// the curve object until the representative point is needed. This is a
+    /// query-handoff object, not a fill-state decision.
+    pub fn from_quadratic_schedule_midpoints(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        first: &BezierBooleanQuadraticFragmentReport2,
+        second: &BezierBooleanQuadraticFragmentReport2,
+    ) -> Self {
+        let half = half_real();
+        let first_points: Vec<_> = first
+            .fragments
+            .iter()
+            .map(|fragment| fragment.point_at(half.clone()))
+            .collect();
+        let second_points: Vec<_> = second
+            .fragments
+            .iter()
+            .map(|fragment| fragment.point_at(half.clone()))
+            .collect();
+        Self::from_representative_points(schedule, operation, &first_points, &second_points)
+    }
+
+    /// Builds locator inputs from cubic Bezier fragments at `t = 1/2`.
+    ///
+    /// Cubic midpoint evaluation uses exact de Casteljau subdivision, matching
+    /// Farin's Bezier construction and Yap's object-preserving exact
+    /// computation boundary.
+    pub fn from_cubic_schedule_midpoints(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        first: &BezierBooleanCubicFragmentReport2,
+        second: &BezierBooleanCubicFragmentReport2,
+    ) -> Self {
+        let half = half_real();
+        let first_points: Vec<_> = first
+            .fragments
+            .iter()
+            .map(|fragment| fragment.point_at(half.clone()))
+            .collect();
+        let second_points: Vec<_> = second
+            .fragments
+            .iter()
+            .map(|fragment| fragment.point_at(half.clone()))
+            .collect();
+        Self::from_representative_points(schedule, operation, &first_points, &second_points)
+    }
+
+    /// Builds locator inputs from rational quadratic/conic fragments at `t = 1/2`.
+    ///
+    /// Rational midpoint evaluation is projective: the homogeneous denominator
+    /// must be certified before an affine point is emitted. If any midpoint is
+    /// uncertain, the report blocks instead of manufacturing a sampled locator
+    /// point. This follows Yap (1997) and Farin's rational Bezier model.
+    pub fn from_rational_quadratic_schedule_midpoints(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        first: &BezierBooleanRationalQuadraticFragmentReport2,
+        second: &BezierBooleanRationalQuadraticFragmentReport2,
+        policy: &CurvePolicy,
+    ) -> Self {
+        let half = half_real();
+        let mut point_evaluation_blocker_count = 0;
+        let mut first_points = Vec::with_capacity(first.fragments.len());
+        let mut second_points = Vec::with_capacity(second.fragments.len());
+        for fragment in &first.fragments {
+            match fragment.point_at(half.clone(), policy) {
+                Classification::Decided(point) => first_points.push(point),
+                Classification::Uncertain(_) => point_evaluation_blocker_count += 1,
+            }
+        }
+        for fragment in &second.fragments {
+            match fragment.point_at(half.clone(), policy) {
+                Classification::Decided(point) => second_points.push(point),
+                Classification::Uncertain(_) => point_evaluation_blocker_count += 1,
+            }
+        }
+        if point_evaluation_blocker_count > 0 {
+            return Self::blocked_like(
+                BezierBooleanFragmentLocatorInputStatus::PointEvaluationBlocked,
+                schedule,
+                operation,
+                0,
+                0,
+                point_evaluation_blocker_count,
+            );
+        }
+        Self::from_representative_points(schedule, operation, &first_points, &second_points)
+    }
+
+    fn empty_like(
+        status: BezierBooleanFragmentLocatorInputStatus,
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        blocker_count: usize,
+    ) -> Self {
+        Self {
+            status,
+            schedule_status: schedule.status,
+            operation,
+            inputs: Vec::new(),
+            scheduled_step_count: schedule.steps.len(),
+            input_count: 0,
+            missing_first_fragment_count: 0,
+            missing_second_fragment_count: 0,
+            point_evaluation_blocker_count: 0,
+            blocker_count,
+        }
+    }
+
+    fn blocked_like(
+        status: BezierBooleanFragmentLocatorInputStatus,
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        missing_first_fragment_count: usize,
+        missing_second_fragment_count: usize,
+        point_evaluation_blocker_count: usize,
+    ) -> Self {
+        Self {
+            status,
+            schedule_status: schedule.status,
+            operation,
+            inputs: Vec::new(),
+            scheduled_step_count: schedule.steps.len(),
+            input_count: 0,
+            missing_first_fragment_count,
+            missing_second_fragment_count,
+            point_evaluation_blocker_count,
+            blocker_count: missing_first_fragment_count
+                + missing_second_fragment_count
+                + point_evaluation_blocker_count,
+        }
+    }
+
+    /// Returns true when every scheduled fragment has a representative point.
+    pub fn is_ready(&self) -> bool {
+        self.status == BezierBooleanFragmentLocatorInputStatus::Ready
+    }
+
+    /// Returns true when no representative-point query is needed.
+    pub fn is_vacuously_complete(&self) -> bool {
+        matches!(
+            self.status,
+            BezierBooleanFragmentLocatorInputStatus::Empty
+                | BezierBooleanFragmentLocatorInputStatus::NoInteriorSplits
+        )
+    }
+
+    /// Returns true when schedule or representative-point generation blocked.
+    pub fn has_blockers(&self) -> bool {
+        matches!(
+            self.status,
+            BezierBooleanFragmentLocatorInputStatus::ScheduleBlocked
+                | BezierBooleanFragmentLocatorInputStatus::MissingFirstFragment
+                | BezierBooleanFragmentLocatorInputStatus::MissingSecondFragment
+                | BezierBooleanFragmentLocatorInputStatus::PointEvaluationBlocked
         )
     }
 }

@@ -9,6 +9,7 @@ use hypercurve::{
     BezierBooleanConstructionReadinessReport2, BezierBooleanConstructionReadinessStatus,
     BezierBooleanCubicFragmentReport2, BezierBooleanEmissionPlanReport2,
     BezierBooleanEmissionPlanStatus, BezierBooleanFragmentConstructionStatus,
+    BezierBooleanFragmentLocatorInputReport2, BezierBooleanFragmentLocatorInputStatus,
     BezierBooleanFragmentOwnershipLocation, BezierBooleanHandoffReport2,
     BezierBooleanHandoffStatus, BezierBooleanLoopAssemblyPlanReport2,
     BezierBooleanLoopAssemblyPlanStatus, BezierBooleanLoopClosureReport2,
@@ -9595,6 +9596,257 @@ fn bezier_boolean_result_consumes_uniform_identity_containment_facts() {
         BezierBooleanResultStatus::RegionAssemblyBlocked
     );
     assert!(blocked.has_blockers());
+}
+
+#[test]
+fn bezier_boolean_fragment_locator_inputs_generate_exact_midpoint_queries() {
+    let schedule = BezierBooleanTraversalScheduleReport2 {
+        status: BezierBooleanTraversalScheduleStatus::Ready,
+        precondition_status: BezierBooleanTraversalPreconditionStatus::Ready,
+        first_fragment_count: 2,
+        second_fragment_count: 1,
+        steps: vec![
+            hypercurve::BezierBooleanTraversalStep2 {
+                operand: BezierBooleanTraversalOperand::First,
+                fragment_index: 0,
+            },
+            hypercurve::BezierBooleanTraversalStep2 {
+                operand: BezierBooleanTraversalOperand::Second,
+                fragment_index: 0,
+            },
+            hypercurve::BezierBooleanTraversalStep2 {
+                operand: BezierBooleanTraversalOperand::First,
+                fragment_index: 1,
+            },
+        ],
+        resolved_overlap_count: 0,
+        overlap_boundary_parameter_count: 0,
+        blocker_count: 0,
+    };
+    let first_quadratic = QuadraticBezier2::new(point(0, 0), point(2, 2), point(4, 0));
+    let second_quadratic = QuadraticBezier2::new(point(4, 0), point(6, -2), point(8, 0));
+    let other_quadratic = QuadraticBezier2::new(point(10, 0), point(12, 4), point(14, 0));
+    let first = BezierBooleanQuadraticFragmentReport2 {
+        status: BezierBooleanFragmentConstructionStatus::Ready,
+        readiness_status: BezierBooleanConstructionReadinessStatus::Ready,
+        source_parameter_count: 1,
+        endpoint_parameter_count: 0,
+        out_of_range_parameter_count: 0,
+        inserted_parameter_count: 1,
+        inserted_parameters: vec![half()],
+        fragments: vec![first_quadratic.clone(), second_quadratic.clone()],
+    };
+    let second = BezierBooleanQuadraticFragmentReport2 {
+        status: BezierBooleanFragmentConstructionStatus::Ready,
+        readiness_status: BezierBooleanConstructionReadinessStatus::Ready,
+        source_parameter_count: 0,
+        endpoint_parameter_count: 0,
+        out_of_range_parameter_count: 0,
+        inserted_parameter_count: 0,
+        inserted_parameters: Vec::new(),
+        fragments: vec![other_quadratic.clone()],
+    };
+
+    let report = BezierBooleanFragmentLocatorInputReport2::from_quadratic_schedule_midpoints(
+        &schedule,
+        BooleanOp::Union,
+        &first,
+        &second,
+    );
+
+    assert_eq!(
+        report.status,
+        BezierBooleanFragmentLocatorInputStatus::Ready
+    );
+    assert!(report.is_ready());
+    assert_eq!(report.input_count, 3);
+    assert_eq!(
+        report.inputs[0].representative_point,
+        first_quadratic.point_at(half())
+    );
+    assert_eq!(
+        report.inputs[1].representative_point,
+        other_quadratic.point_at(half())
+    );
+    assert_eq!(
+        report.inputs[2].representative_point,
+        second_quadratic.point_at(half())
+    );
+
+    let cubic_first = BezierBooleanCubicFragmentReport2 {
+        status: BezierBooleanFragmentConstructionStatus::Ready,
+        readiness_status: BezierBooleanConstructionReadinessStatus::Ready,
+        source_parameter_count: 0,
+        endpoint_parameter_count: 0,
+        out_of_range_parameter_count: 0,
+        inserted_parameter_count: 0,
+        inserted_parameters: Vec::new(),
+        fragments: vec![
+            CubicBezier2::new(point(0, 0), point(1, 3), point(3, 3), point(4, 0)),
+            CubicBezier2::new(point(4, 0), point(5, -3), point(7, -3), point(8, 0)),
+        ],
+    };
+    let cubic_second = BezierBooleanCubicFragmentReport2 {
+        status: BezierBooleanFragmentConstructionStatus::Ready,
+        readiness_status: BezierBooleanConstructionReadinessStatus::Ready,
+        source_parameter_count: 0,
+        endpoint_parameter_count: 0,
+        out_of_range_parameter_count: 0,
+        inserted_parameter_count: 0,
+        inserted_parameters: Vec::new(),
+        fragments: vec![CubicBezier2::new(
+            point(10, 0),
+            point(11, 3),
+            point(13, 3),
+            point(14, 0),
+        )],
+    };
+    let cubic_report = BezierBooleanFragmentLocatorInputReport2::from_cubic_schedule_midpoints(
+        &schedule,
+        BooleanOp::Union,
+        &cubic_first,
+        &cubic_second,
+    );
+    assert_eq!(
+        cubic_report.status,
+        BezierBooleanFragmentLocatorInputStatus::Ready
+    );
+    assert_eq!(cubic_report.input_count, 3);
+
+    let rational_first = BezierBooleanRationalQuadraticFragmentReport2 {
+        status: BezierBooleanFragmentConstructionStatus::Ready,
+        readiness_status: BezierBooleanConstructionReadinessStatus::Ready,
+        source_parameter_count: 0,
+        endpoint_parameter_count: 0,
+        out_of_range_parameter_count: 0,
+        inserted_parameter_count: 0,
+        inserted_parameters: Vec::new(),
+        fragments: vec![
+            RationalQuadraticBezier2::try_unit_end_weights(
+                point(0, 0),
+                point(2, 2),
+                point(4, 0),
+                Real::from(2_i8),
+            )
+            .unwrap(),
+            RationalQuadraticBezier2::try_unit_end_weights(
+                point(4, 0),
+                point(6, -2),
+                point(8, 0),
+                Real::from(2_i8),
+            )
+            .unwrap(),
+        ],
+    };
+    let rational_second = BezierBooleanRationalQuadraticFragmentReport2 {
+        status: BezierBooleanFragmentConstructionStatus::Ready,
+        readiness_status: BezierBooleanConstructionReadinessStatus::Ready,
+        source_parameter_count: 0,
+        endpoint_parameter_count: 0,
+        out_of_range_parameter_count: 0,
+        inserted_parameter_count: 0,
+        inserted_parameters: Vec::new(),
+        fragments: vec![
+            RationalQuadraticBezier2::try_unit_end_weights(
+                point(10, 0),
+                point(12, 4),
+                point(14, 0),
+                Real::from(2_i8),
+            )
+            .unwrap(),
+        ],
+    };
+    let rational_report =
+        BezierBooleanFragmentLocatorInputReport2::from_rational_quadratic_schedule_midpoints(
+            &schedule,
+            BooleanOp::Union,
+            &rational_first,
+            &rational_second,
+            &policy(),
+        );
+    assert_eq!(
+        rational_report.status,
+        BezierBooleanFragmentLocatorInputStatus::Ready
+    );
+    assert_eq!(rational_report.input_count, 3);
+
+    let stale_schedule = BezierBooleanTraversalScheduleReport2 {
+        steps: vec![hypercurve::BezierBooleanTraversalStep2 {
+            operand: BezierBooleanTraversalOperand::First,
+            fragment_index: 9,
+        }],
+        ..schedule
+    };
+    let stale = BezierBooleanFragmentLocatorInputReport2::from_quadratic_schedule_midpoints(
+        &stale_schedule,
+        BooleanOp::Union,
+        &first,
+        &second,
+    );
+    assert_eq!(
+        stale.status,
+        BezierBooleanFragmentLocatorInputStatus::MissingFirstFragment
+    );
+    assert!(stale.has_blockers());
+}
+
+proptest! {
+    #[test]
+    fn generated_bezier_boolean_fragment_locator_inputs_preserve_schedule_keys(
+        first_count in 1_usize..8,
+        second_count in 1_usize..8,
+    ) {
+        let mut steps = Vec::with_capacity(first_count + second_count);
+        let mut first_points = Vec::with_capacity(first_count);
+        let mut second_points = Vec::with_capacity(second_count);
+        for index in 0..first_count {
+            steps.push(hypercurve::BezierBooleanTraversalStep2 {
+                operand: BezierBooleanTraversalOperand::First,
+                fragment_index: index,
+            });
+            first_points.push(point(index as i32, 0));
+        }
+        for index in 0..second_count {
+            steps.push(hypercurve::BezierBooleanTraversalStep2 {
+                operand: BezierBooleanTraversalOperand::Second,
+                fragment_index: index,
+            });
+            second_points.push(point(0, index as i32));
+        }
+        let schedule = BezierBooleanTraversalScheduleReport2 {
+            status: BezierBooleanTraversalScheduleStatus::Ready,
+            precondition_status: BezierBooleanTraversalPreconditionStatus::Ready,
+            first_fragment_count: first_count,
+            second_fragment_count: second_count,
+            steps,
+            resolved_overlap_count: 0,
+            overlap_boundary_parameter_count: 0,
+            blocker_count: 0,
+        };
+
+        let report = BezierBooleanFragmentLocatorInputReport2::from_representative_points(
+            &schedule,
+            BooleanOp::Union,
+            &first_points,
+            &second_points,
+        );
+
+        prop_assert_eq!(report.status, BezierBooleanFragmentLocatorInputStatus::Ready);
+        prop_assert_eq!(report.input_count, first_count + second_count);
+        prop_assert_eq!(report.inputs.len(), schedule.steps.len());
+        for (input, step) in report.inputs.iter().zip(schedule.steps.iter()) {
+            prop_assert_eq!(&input.step, step);
+        }
+
+        let stale = BezierBooleanFragmentLocatorInputReport2::from_representative_points(
+            &schedule,
+            BooleanOp::Union,
+            &first_points[..first_count - 1],
+            &second_points,
+        );
+        prop_assert_eq!(stale.status, BezierBooleanFragmentLocatorInputStatus::MissingFirstFragment);
+        prop_assert!(stale.has_blockers());
+    }
 }
 
 #[test]

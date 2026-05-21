@@ -12,6 +12,13 @@ use hypercurve::{
     ArcArcIntersectionPoint as HArcArcIntersectionPoint,
     Axis2 as HAxis2, BezierCurveRelation as HBezierCurveRelation,
     BezierFitBoundKind as HBezierFitBoundKind, BezierFitErrorMetric as HBezierFitErrorMetric,
+    BezierBooleanFragmentLocatorInputReport2 as HBezierBooleanFragmentLocatorInputReport2,
+    BezierBooleanFragmentLocatorInputStatus as HBezierBooleanFragmentLocatorInputStatus,
+    BezierBooleanTraversalOperand as HBezierBooleanTraversalOperand,
+    BezierBooleanTraversalPreconditionStatus as HBezierBooleanTraversalPreconditionStatus,
+    BezierBooleanTraversalScheduleReport2 as HBezierBooleanTraversalScheduleReport2,
+    BezierBooleanTraversalScheduleStatus as HBezierBooleanTraversalScheduleStatus,
+    BezierBooleanTraversalStep2 as HBezierBooleanTraversalStep2,
     BezierLineContactKind as HBezierLineContactKind,
     BezierLineContactRelation as HBezierLineContactRelation,
     BezierLineFitRelation as HBezierLineFitRelation,
@@ -468,20 +475,17 @@ fn h_assert_boundary_audit_is_valid(audit: &HBooleanBoundaryAuditStatus) {
         audit,
         HBooleanBoundaryAuditStatus::Empty
             | HBooleanBoundaryAuditStatus::Valid
-            | HBooleanBoundaryAuditStatus::SelfContact
-            | HBooleanBoundaryAuditStatus::InterContourContact
+            | HBooleanBoundaryAuditStatus::PointContact
     ));
 }
 
 /// Asserts an audited region report status in the expected "usable decision" set.
 fn h_assert_region_audit_is_valid(audit: &HBooleanRegionAuditStatus) {
-    assert!(audit.is_valid());
     assert!(matches!(
         audit,
         HBooleanRegionAuditStatus::Empty
             | HBooleanRegionAuditStatus::Valid
-            | HBooleanRegionAuditStatus::SelfContact
-            | HBooleanRegionAuditStatus::InterContourContact
+            | HBooleanRegionAuditStatus::PointContact
     ));
 }
 
@@ -1776,12 +1780,12 @@ pub fn h_assert_region_boolean_antagonistic_contract(reader: &mut ByteReader<'_>
             &boundary_contour_report.contours
         );
         assert_eq!(boundary_loop_report.loops.len(), boundary_contour_report.contours.len());
-        h_assert_boundary_audit_is_valid(&boundary_contour_report.audit);
-        h_assert_boundary_audit_is_valid(&boundary_loop_report.audit);
-        h_assert_region_audit_is_valid(&region_report.audit);
-        h_assert_boundary_audit_is_valid(&pipeline_report.boundary_audit);
+        h_assert_boundary_audit_is_valid(&boundary_contour_report.audit.status);
+        h_assert_boundary_audit_is_valid(&boundary_loop_report.audit.status);
+        h_assert_region_audit_is_valid(&region_report.audit.status);
+        h_assert_boundary_audit_is_valid(&pipeline_report.boundary_audit.status);
         assert!(pipeline_report.nesting_audit.is_valid());
-        h_assert_region_audit_is_valid(&pipeline_report.region_audit);
+        h_assert_region_audit_is_valid(&pipeline_report.region_audit.status);
         assert_eq!(
             pipeline_report.boundary_audit.contour_count,
             boundary_contour_report.contours.len()
@@ -3637,9 +3641,64 @@ fn h_assert_bezier_point_image_fits(reader: &mut ByteReader<'_>) {
     }
 }
 
+fn h_assert_bezier_boolean_fragment_locator_inputs(reader: &mut ByteReader<'_>) {
+    let first_count = reader.usize_range(1, 6);
+    let second_count = reader.usize_range(1, 6);
+    let mut steps = Vec::with_capacity(first_count + second_count);
+    let mut first_points = Vec::with_capacity(first_count);
+    let mut second_points = Vec::with_capacity(second_count);
+    for index in 0..first_count {
+        first_points.push(h_point_i32(index as i32, reader.i32_range(-8, 8)));
+        steps.push(HBezierBooleanTraversalStep2 {
+            operand: HBezierBooleanTraversalOperand::First,
+            fragment_index: index,
+        });
+    }
+    for index in 0..second_count {
+        second_points.push(h_point_i32(reader.i32_range(-8, 8), index as i32));
+        steps.push(HBezierBooleanTraversalStep2 {
+            operand: HBezierBooleanTraversalOperand::Second,
+            fragment_index: index,
+        });
+    }
+    let schedule = HBezierBooleanTraversalScheduleReport2 {
+        status: HBezierBooleanTraversalScheduleStatus::Ready,
+        precondition_status: HBezierBooleanTraversalPreconditionStatus::Ready,
+        first_fragment_count: first_count,
+        second_fragment_count: second_count,
+        steps,
+        resolved_overlap_count: 0,
+        overlap_boundary_parameter_count: 0,
+        blocker_count: 0,
+    };
+    let report = HBezierBooleanFragmentLocatorInputReport2::from_representative_points(
+        &schedule,
+        h_boolean_op(reader),
+        &first_points,
+        &second_points,
+    );
+    assert_eq!(report.status, HBezierBooleanFragmentLocatorInputStatus::Ready);
+    assert_eq!(report.input_count, schedule.steps.len());
+    for (input, step) in report.inputs.iter().zip(schedule.steps.iter()) {
+        assert_eq!(&input.step, step);
+    }
+
+    let stale = HBezierBooleanFragmentLocatorInputReport2::from_representative_points(
+        &schedule,
+        h_boolean_op(reader),
+        &first_points[..first_count - 1],
+        &second_points,
+    );
+    assert_eq!(
+        stale.status,
+        HBezierBooleanFragmentLocatorInputStatus::MissingFirstFragment
+    );
+    assert!(stale.has_blockers());
+}
+
 /// Aggregate hypercurve fuzz entrypoint covering public APIs and cross-path invariants.
 pub fn h_assert_full_api(reader: &mut ByteReader<'_>) {
-    match reader.byte() % 15 {
+    match reader.byte() % 16 {
         0 => h_assert_segment_intersections(reader),
         1 => h_assert_segment_containment_and_reversal(reader),
         2 => h_assert_contour_region_classification(reader),
@@ -3654,6 +3713,7 @@ pub fn h_assert_full_api(reader: &mut ByteReader<'_>) {
         11 => h_assert_bezier_conic_relations(reader),
         12 => h_assert_bezier_point_image_fits(reader),
         13 => h_assert_region_boolean_antagonistic_contract(reader),
+        14 => h_assert_bezier_boolean_fragment_locator_inputs(reader),
         _ => h_assert_adversarial_polygon_pipeline(reader),
     }
 }
