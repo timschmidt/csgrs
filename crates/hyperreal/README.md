@@ -34,8 +34,12 @@ Geometry and solver layers:
   regions, offsets, and boolean-boundary work.
 - [hypertri](https://github.com/timschmidt/hypertri): exact polygon triangulation,
   Delaunay, and constrained Delaunay topology.
-- [hypermesh](https://github.com/timschmidt/hypermesh/tree/hyperreal): 3D mesh validation, topology,
+- [hypermesh](https://github.com/timschmidt/hypermesh): 3D mesh validation, topology,
   and exact-aware boolean preflight.
+- [hyperbrep](https://github.com/timschmidt/hyperbrep): retained BREP topology,
+  planar surfaces, trim evidence, tessellation manifests, and mesh handoff reports.
+- [hypersdf](https://github.com/timschmidt/hypersdf): signed-distance and implicit-field
+  carriers with exact-aware sampling, classification, solver, mesh, and voxel handoffs.
 - [hypersolve](https://github.com/timschmidt/hypersolve): symbolic residuals,
   solver preparation, and candidate certification.
 - [csgrs](https://github.com/timschmidt/csgrs/tree/hyperreal): Multi-modal CAD kernel, owns CSG
@@ -54,7 +58,7 @@ Domain and proposal layers:
   interface, process, and compatibility facts.
 - [hyperpack](https://github.com/timschmidt/hyperpack): exact-aware packing models and
   feasibility replay.
-- [hypervoxel](https://github.com/timschmidt/hypervoxel/tree/hyperreal): exact-aware voxel grid
+- [hypervoxel](https://github.com/timschmidt/hypervoxel): exact-aware voxel grid
   frames, sparse-grid facts, and adapter manifests.
 - [hyperevolution](https://github.com/timschmidt/hyperevolution): exact-aware search,
   fitness, archive, and replay-policy carriers.
@@ -128,6 +132,14 @@ In Yap's exact geometric computation sense, exactness here means preserving enou
 certified structure to decide later predicates exactly or report uncertainty. It does
 not mean expanding every scalar expression to its largest possible canonical form.
 
+## Numerical Explosion
+
+`hyperreal` combats numerical explosion by preserving factored structure and asking for
+bounded refinement only at decision boundaries. Dyadic schedules, shared-denominator
+reducers, cached constants, computable approximation caches, exact-set facts, and
+lossy export labels keep large rationals and symbolic graphs from becoming the default
+representation for every operation.
+
 ## Performance Model
 
 Exact arithmetic is only useful in a systems stack if it is measured and kept under
@@ -155,7 +167,7 @@ control. `hyperreal` uses several small performance strategies together:
 
 ## Current Status
 
-Version `0.11.1` is active and benchmark-driven. Current implementation work includes:
+Version `0.12.0` is active and benchmark-driven. Current implementation work includes:
 
 - exact rational and dyadic fast paths;
 - dedicated constructors and cached constants for common zeros, ones, `pi`, `tau`, `e`,
