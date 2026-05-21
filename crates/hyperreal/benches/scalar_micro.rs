@@ -313,6 +313,18 @@ const SCALAR_MICRO_GROUPS: &[BenchGroupDoc] = &[
                 description: "Adds owned scaled transcendental `Real` values.",
             },
             BenchDoc {
+                name: "real_dot2_refs_dense_symbolic",
+                description: "Computes a borrowed two-lane symbolic dot product with no rational shortcut terms.",
+            },
+            BenchDoc {
+                name: "real_active_dot2_refs_dense_symbolic",
+                description: "Computes a borrowed two-lane symbolic dot product after the caller has already classified every lane active.",
+            },
+            BenchDoc {
+                name: "real_dot2_refs_mixed_structural",
+                description: "Computes a borrowed two-lane symbolic dot product with an exact zero lane and a rational scale lane.",
+            },
+            BenchDoc {
                 name: "real_dot3_refs_dense_symbolic",
                 description: "Computes a borrowed three-lane symbolic dot product with no rational shortcut terms.",
             },
@@ -799,6 +811,39 @@ fn bench_borrowed_op_overhead(c: &mut Criterion) {
             |(left, right)| black_box(left + right),
             BatchSize::SmallInput,
         )
+    });
+    group.bench_function("real_dot2_refs_dense_symbolic", |b| {
+        b.iter(|| {
+            black_box(Real::dot2_refs(
+                [black_box(&dense_dot_left[0]), black_box(&dense_dot_left[1])],
+                [
+                    black_box(&dense_dot_right[0]),
+                    black_box(&dense_dot_right[1]),
+                ],
+            ))
+        })
+    });
+    group.bench_function("real_active_dot2_refs_dense_symbolic", |b| {
+        b.iter(|| {
+            black_box(Real::active_dot2_refs(
+                [black_box(&dense_dot_left[0]), black_box(&dense_dot_left[1])],
+                [
+                    black_box(&dense_dot_right[0]),
+                    black_box(&dense_dot_right[1]),
+                ],
+            ))
+        })
+    });
+    group.bench_function("real_dot2_refs_mixed_structural", |b| {
+        b.iter(|| {
+            black_box(Real::dot2_refs(
+                [black_box(&mixed_dot_left[0]), black_box(&mixed_dot_left[1])],
+                [
+                    black_box(&mixed_dot_right[0]),
+                    black_box(&mixed_dot_right[1]),
+                ],
+            ))
+        })
     });
     group.bench_function("real_dot3_refs_dense_symbolic", |b| {
         b.iter(|| {

@@ -1511,5 +1511,74 @@ mod tests {
         assert!(
             (actual.to_f64_approx().unwrap() - expected.to_f64_approx().unwrap()).abs() < 1e-12
         );
+
+        let expected = &(&left[0] * &right[0]) + &(&left[1] * &right[1]);
+        let actual = Real::dot2_refs([&left[0], &left[1]], [&right[0], &right[1]]);
+        assert!(
+            (actual.to_f64_approx().unwrap() - expected.to_f64_approx().unwrap()).abs() < 1e-12
+        );
+    }
+
+    #[test]
+    fn dot2_refs_matches_pairwise_rational_arithmetic() {
+        let left = [
+            Real::new(Rational::fraction(6, 5).unwrap()),
+            Real::new(Rational::fraction(-7, 10).unwrap()),
+        ];
+        let right = [
+            Real::new(Rational::fraction(-4, 5).unwrap()),
+            Real::new(Rational::fraction(11, 10).unwrap()),
+        ];
+        let expected = &(&left[0] * &right[0]) + &(&left[1] * &right[1]);
+        assert_eq!(
+            Real::dot2_refs([&left[0], &left[1]], [&right[0], &right[1]]),
+            expected,
+        );
+    }
+
+    #[test]
+    fn dot2_refs_handles_symbolic_lanes() {
+        let left = [Real::pi(), Real::e()];
+        let right = [Real::e(), Real::pi()];
+        let expected = &(&left[0] * &right[0]) + &(&left[1] * &right[1]);
+        let actual = Real::dot2_refs([&left[0], &left[1]], [&right[0], &right[1]]);
+        assert!(
+            (actual.to_f64_approx().unwrap() - expected.to_f64_approx().unwrap()).abs() < 1e-12
+        );
+    }
+
+    #[test]
+    fn dot2_refs_zero_lane_shortcut() {
+        let left = [Real::zero(), Real::from(3_i32)];
+        let right = [Real::pi(), Real::e()];
+        let expected = &left[1] * &right[1];
+        let actual = Real::dot2_refs([&left[0], &left[1]], [&right[0], &right[1]]);
+        assert!(
+            (actual.to_f64_approx().unwrap() - expected.to_f64_approx().unwrap()).abs() < 1e-12
+        );
+    }
+
+    #[test]
+    fn dot2_refs_all_zero_returns_zero() {
+        let left = [Real::zero(), Real::zero()];
+        let right = [Real::pi(), Real::e()];
+        assert_eq!(
+            Real::dot2_refs([&left[0], &left[1]], [&right[0], &right[1]]),
+            Real::zero(),
+        );
+    }
+
+    #[test]
+    fn active_dot2_refs_matches_dot2_refs_when_all_lanes_active() {
+        let left = [Real::pi(), Real::e() * Real::new(Rational::fraction(3, 5).unwrap())];
+        let right = [
+            Real::e() * Real::new(Rational::fraction(2, 7).unwrap()),
+            Real::pi(),
+        ];
+        let expected = Real::dot2_refs([&left[0], &left[1]], [&right[0], &right[1]]);
+        let actual = Real::active_dot2_refs([&left[0], &left[1]], [&right[0], &right[1]]);
+        assert!(
+            (actual.to_f64_approx().unwrap() - expected.to_f64_approx().unwrap()).abs() < 1e-12
+        );
     }
 }

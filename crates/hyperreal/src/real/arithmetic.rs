@@ -1929,6 +1929,91 @@ impl Real {
         }
     }
 
+    /// Return the two-lane dot product of borrowed reals.
+    ///
+    /// Sibling of [`Self::dot3_refs`] / [`Self::dot4_refs`] for the
+    /// two-component case (2D coordinates, complex products, planar dot
+    /// products, etc.). Same exact-rational shared-denominator fast path;
+    /// same symbolic fallback policy.
+    pub fn dot2_refs(left: [&Real; 2], right: [&Real; 2]) -> Real {
+        if let (Some(l0), Some(l1), Some(r0), Some(r1)) = (
+            left[0].exact_rational_ref(),
+            left[1].exact_rational_ref(),
+            right[0].exact_rational_ref(),
+            right[1].exact_rational_ref(),
+        ) {
+            crate::trace_dispatch!("real", "dot_product", "dot2-exact-rational-shared-denom");
+            return Real::new(Rational::dot_products([l0, l1], [r0, r1]));
+        }
+
+        Self::dot2_refs_fallback(left, right)
+    }
+
+    /// Return a two-lane dot product whose lanes were already classified active.
+    ///
+    /// See [`Self::active_dot3_refs`].
+    pub fn active_dot2_refs(left: [&Real; 2], right: [&Real; 2]) -> Real {
+        if let (Some(l0), Some(l1), Some(r0), Some(r1)) = (
+            left[0].exact_rational_ref(),
+            left[1].exact_rational_ref(),
+            right[0].exact_rational_ref(),
+            right[1].exact_rational_ref(),
+        ) {
+            crate::trace_dispatch!("real", "dot_product", "active-dot2-exact-rational");
+            return Real::new(Rational::dot_products([l0, l1], [r0, r1]));
+        }
+
+        crate::trace_dispatch!("real", "dot_product", "active-dot2-real-tree");
+        Self::sum_dot2_terms(
+            Some(Self::dot_product_active_term(left[0], right[0])),
+            Some(Self::dot_product_active_term(left[1], right[1])),
+        )
+    }
+
+    #[inline(never)]
+    fn dot2_refs_fallback(left: [&Real; 2], right: [&Real; 2]) -> Real {
+        // See `dot3_refs_fallback` for the code-layout rationale.
+        if Self::dot_product_has_structural_term(left[0], right[0])
+            || Self::dot_product_has_structural_term(left[1], right[1])
+        {
+            crate::trace_dispatch!("real", "dot_product", "dot2-structural-real-tree");
+            return Self::sum_dot2_terms(
+                Self::dot_product_term(left[0], right[0]),
+                Self::dot_product_term(left[1], right[1]),
+            );
+        }
+
+        if left[0].rational.sign() == Sign::NoSign
+            || right[0].rational.sign() == Sign::NoSign
+            || left[1].rational.sign() == Sign::NoSign
+            || right[1].rational.sign() == Sign::NoSign
+        {
+            let p0 = Self::dot_product_term(left[0], right[0]);
+            let p1 = Self::dot_product_term(left[1], right[1]);
+            let active_terms = usize::from(p0.is_some()) + usize::from(p1.is_some());
+
+            match active_terms {
+                0 => {
+                    crate::trace_dispatch!("real", "dot_product", "dot2-all-zero-real-tree");
+                    return Real::zero();
+                }
+                1 => {
+                    crate::trace_dispatch!("real", "dot_product", "dot2-generic-real-tree-sparse");
+                    return Self::sum_dot2_terms(p0, p1);
+                }
+                _ => {
+                    crate::trace_dispatch!("real", "dot_product", "dot2-generic-real-tree");
+                    return Self::sum_dot2_terms(p0, p1);
+                }
+            }
+        }
+
+        let p0 = left[0] * right[0];
+        let p1 = left[1] * right[1];
+        crate::trace_dispatch!("real", "dot_product", "dot2-generic-real-tree");
+        &p0 + &p1
+    }
+
     /// Return the three-lane dot product of borrowed reals.
     ///
     /// Exact-rational lanes are accumulated with one shared denominator and a
@@ -2336,6 +2421,15 @@ impl Real {
         }
 
         product
+    }
+
+    #[inline]
+    fn sum_dot2_terms(p0: Option<Real>, p1: Option<Real>) -> Real {
+        match (p0, p1) {
+            (None, None) => Real::zero(),
+            (Some(p), None) | (None, Some(p)) => p,
+            (Some(a), Some(b)) => &a + &b,
+        }
     }
 
     #[inline]
