@@ -2,9 +2,10 @@
 
 use crate::errors::ValidationError;
 use crate::float_types::{
-    Real, hpoints_within_epsilon, hreal_lt_f64, hrotation_between_vectors,
-    htranslation_matrix, hunit_cross_vector3, hunit_vector3, hvector3_from_vector3,
-    hvectors_within_epsilon, tolerance,
+    Real, hangle_sin_cos, hdegrees_to_radians, hpoints_within_epsilon, hreal_div,
+    hreal_f64s_within_epsilon, hreal_from_f64, hreal_gt_f64, hreal_lt_f64, hreal_mul,
+    hrotation_between_vectors, htranslation_matrix, hunit_cross_vector3, hunit_vector3,
+    hvector3_from_vector3, hvectors_within_epsilon, tolerance,
 };
 use crate::mesh::Mesh;
 use crate::polygon::Polygon;
@@ -630,6 +631,12 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// in hyper geometry and treats mesh vertices as boundary output, following
     /// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
     /// 7(1-2), 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+    /// Degree conversion, angular step division, and sine/cosine evaluation
+    /// are promoted through `hyperreal::Real` before finite vertices are
+    /// emitted. The Y-axis sweep is the same trigonometric rotation formula
+    /// underlying Rodrigues' theorem; see Rodrigues, "Des lois géométriques
+    /// qui régissent les déplacements d'un système solide dans l'espace,"
+    /// *Journal de Mathématiques Pures et Appliquées* 5, 1840.
     ///
     /// # Parameters
     /// - `angle_degs`: Revolution angle in degrees (0-360)
@@ -647,20 +654,18 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
                 min: 2,
             });
         }
-        if !angle_degs.is_finite() {
+        let Some(angle_radians) = hdegrees_to_radians(angle_degs) else {
             return Err(ValidationError::InvalidArguments);
-        }
+        };
 
-        let angle_radians = angle_degs.to_radians();
         let mut new_polygons = Vec::new();
 
         // A small helper to revolve a point (x,y) in the XY plane around the Y-axis by theta.
         // The output is a 3D point (X, Y, Z).
-        fn revolve_around_y(x: Real, y: Real, theta: Real) -> Point3<Real> {
-            let cos_t = theta.cos();
-            let sin_t = theta.sin();
+        fn revolve_around_y(x: Real, y: Real, theta: Real) -> Option<Point3<Real>> {
+            let (sin_t, cos_t) = hangle_sin_cos(theta)?;
             // Map (x, y, 0) => ( x*cos θ, y, x*sin θ )
-            Point3::new(x * cos_t, y, x * sin_t)
+            Some(Point3::new(hreal_mul(x, cos_t)?, y, hreal_mul(x, sin_t)?))
         }
 
         fn is_ccw(ring: &[[Real; 2]]) -> bool {
@@ -690,7 +695,9 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
             // We'll iterate over each edge i..i+1, and revolve them around by segments slices.
 
             // The revolve step size in radians:
-            let step = angle_radians / (segments as Real);
+            let Some(step) = hreal_div(angle_radians, segments as Real) else {
+                return vec![];
+            };
 
             // For each edge in the ring:
             for i in 0..(ring_coords.len() - 1) {
@@ -706,15 +713,27 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
 
                 // For each revolve slice j..j+1
                 for s in 0..segments {
-                    let th0 = s as Real * step;
-                    let th1 = (s as Real + 1.0) * step;
+                    let Some(th0) = hreal_mul(s as Real, step) else {
+                        continue;
+                    };
+                    let Some(th1) = hreal_mul(s as Real + 1.0, step) else {
+                        continue;
+                    };
 
                     // revolve bottom edge endpoints at angle th0
-                    let b_i = revolve_around_y(c_i[0], c_i[1], th0);
-                    let b_j = revolve_around_y(c_j[0], c_j[1], th0);
+                    let Some(b_i) = revolve_around_y(c_i[0], c_i[1], th0) else {
+                        continue;
+                    };
+                    let Some(b_j) = revolve_around_y(c_j[0], c_j[1], th0) else {
+                        continue;
+                    };
                     // revolve top edge endpoints at angle th1
-                    let t_i = revolve_around_y(c_i[0], c_i[1], th1);
-                    let t_j = revolve_around_y(c_j[0], c_j[1], th1);
+                    let Some(t_i) = revolve_around_y(c_i[0], c_i[1], th1) else {
+                        continue;
+                    };
+                    let Some(t_j) = revolve_around_y(c_j[0], c_j[1], th1) else {
+                        continue;
+                    };
 
                     // Build a 4-vertex side polygon for the ring edge.
                     // The orientation depends on ring_is_ccw:
@@ -750,8 +769,11 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
             // revolve each coordinate at the given angle
             let mut pts_3d: Vec<_> = ring_coords
                 .iter()
-                .map(|c| revolve_around_y(c[0], c[1], angle))
+                .filter_map(|c| revolve_around_y(c[0], c[1], angle))
                 .collect();
+            if pts_3d.len() < 3 {
+                return None;
+            }
 
             // Ensure closed if the projected hypercurve ring was not emitted
             // with an explicit duplicate endpoint.
@@ -787,8 +809,11 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         // 2) Iterate over each hypercurve finite profile, revolve side walls,
         //    and possibly add caps when angle_degs < 360.
         //----------------------------------------------------------------------
-        let full_revolve = (angle_degs - 360.0).abs() < tolerance(); // or angle_degs >= 359.999..., etc.
-        let do_caps = !full_revolve && (angle_degs > 0.0);
+        let full_revolve = hreal_f64s_within_epsilon(angle_degs, 360.0, tolerance());
+        let angle_positive = hreal_from_f64(angle_degs)
+            .ok()
+            .is_some_and(|angle| hreal_gt_f64(&angle, 0.0));
+        let do_caps = !full_revolve && angle_positive;
 
         let mut emit_profile = |outer: &[[Real; 2]], holes: &[Vec<[Real; 2]>]| {
             let ext_ccw = is_ccw(outer);
