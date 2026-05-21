@@ -1844,6 +1844,17 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                         &successors,
                         &depth_facts,
                     );
+                let endpoint_result =
+                    hypercurve::BezierBooleanResultReport2::from_schedule_endpoint_successor_depth_facts(
+                        &schedule,
+                        BooleanOp::Union,
+                        &ownership_facts,
+                        &first_endpoints,
+                        &second_endpoints,
+                        0,
+                        0,
+                        &depth_facts,
+                    );
                 let containment_facts = (0..output.loops.len())
                     .flat_map(|contained_loop_index| {
                         (0..contained_loop_index).map(move |container_loop_index| {
@@ -1866,6 +1877,17 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                         &successors,
                         &containment_facts,
                     );
+                let endpoint_containment_result =
+                    hypercurve::BezierBooleanResultReport2::from_schedule_endpoint_successor_containment_facts(
+                        &schedule,
+                        BooleanOp::Union,
+                        &ownership_facts,
+                        &first_endpoints,
+                        &second_endpoints,
+                        0,
+                        0,
+                        &containment_facts,
+                    );
                 let materialized =
                     hypercurve::BezierBooleanMaterializedRegionReport2::from_schedule_multi_cycle_successor_laminar_containment_facts(
                         &schedule,
@@ -1876,6 +1898,17 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                         0,
                         0,
                         &successors,
+                        &containment_facts,
+                    );
+                let endpoint_materialized =
+                    hypercurve::BezierBooleanMaterializedRegionReport2::from_schedule_endpoint_successor_laminar_containment_facts(
+                        &schedule,
+                        BooleanOp::Union,
+                        &ownership_facts,
+                        &first_endpoints,
+                        &second_endpoints,
+                        0,
+                        0,
                         &containment_facts,
                     );
                 let locator =
@@ -2033,7 +2066,7 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                         &locator_results,
                     );
                 format!(
-                    "{single:?}{multi:?}{endpoint_single:?}{endpoint_multi:?}{output:?}{result:?}{containment_result:?}{materialized:?}{locator_certification:?}{replay_result:?}{locator_result:?}{replay_materialized:?}{locator_materialized:?}{typed_locator_certification:?}{typed_depth_result:?}{typed_containment_result:?}{typed_containment_materialized:?}{typed_locator_result:?}{typed_locator_materialized:?}"
+                    "{single:?}{multi:?}{endpoint_single:?}{endpoint_multi:?}{output:?}{result:?}{endpoint_result:?}{containment_result:?}{endpoint_containment_result:?}{materialized:?}{endpoint_materialized:?}{locator_certification:?}{replay_result:?}{locator_result:?}{replay_materialized:?}{locator_materialized:?}{typed_locator_certification:?}{typed_depth_result:?}{typed_containment_result:?}{typed_containment_materialized:?}{typed_locator_result:?}{typed_locator_materialized:?}"
                 )
             }
             other => format!("{other:?}"),

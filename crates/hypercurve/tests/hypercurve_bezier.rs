@@ -9244,6 +9244,80 @@ fn bezier_boolean_result_consumes_schedule_multi_cycle_successors_and_depth_fact
     assert_eq!(containment_result.status, BezierBooleanResultStatus::Ready);
     assert_eq!(containment_result.material_loop_indices, vec![0]);
     assert_eq!(containment_result.hole_loop_indices, vec![1]);
+
+    let endpoint_result = BezierBooleanResultReport2::from_schedule_endpoint_successor_depth_facts(
+        &schedule,
+        BooleanOp::Union,
+        &ownership_facts,
+        &endpoints,
+        &[],
+        1,
+        0,
+        &depth_facts,
+    );
+    assert_eq!(endpoint_result.status, BezierBooleanResultStatus::Ready);
+    assert_eq!(endpoint_result.assigned_loop_count, 2);
+    assert_eq!(endpoint_result.material_loop_indices, vec![0]);
+    assert_eq!(endpoint_result.hole_loop_indices, vec![1]);
+
+    let endpoint_containment =
+        BezierBooleanResultReport2::from_schedule_endpoint_successor_containment_facts(
+            &schedule,
+            BooleanOp::Union,
+            &ownership_facts,
+            &endpoints,
+            &[],
+            1,
+            0,
+            &containment_facts,
+        );
+    assert_eq!(
+        endpoint_containment.status,
+        BezierBooleanResultStatus::Ready
+    );
+
+    let endpoint_materialized =
+        BezierBooleanMaterializedRegionReport2::from_schedule_endpoint_successor_laminar_containment_facts(
+            &schedule,
+            BooleanOp::Union,
+            &ownership_facts,
+            &endpoints,
+            &[],
+            1,
+            0,
+            &containment_facts,
+        );
+    assert_eq!(
+        endpoint_materialized.status,
+        BezierBooleanMaterializedRegionStatus::Ready
+    );
+    assert_eq!(
+        endpoint_materialized.components[0].hole_loop_indices,
+        vec![1]
+    );
+
+    let ambiguous_endpoints = [
+        (point(0, 0), point(1, 0)),
+        (point(1, 0), point(0, 0)),
+        (point(1, 0), point(0, 0)),
+        (point(11, 0), point(10, 0)),
+    ];
+    let endpoint_blocked = BezierBooleanResultReport2::from_schedule_endpoint_successor_depth_facts(
+        &schedule,
+        BooleanOp::Union,
+        &ownership_facts,
+        &ambiguous_endpoints,
+        &[],
+        1,
+        0,
+        &depth_facts,
+    );
+    assert_eq!(
+        endpoint_blocked.status,
+        BezierBooleanResultStatus::RegionAssemblyBlocked
+    );
+    assert!(endpoint_blocked.has_blockers());
+
     let materialized =
         BezierBooleanMaterializedRegionReport2::from_schedule_multi_cycle_successor_laminar_containment_facts(
             &schedule,

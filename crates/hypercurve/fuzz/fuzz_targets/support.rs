@@ -14,6 +14,11 @@ use hypercurve::{
     BezierFitBoundKind as HBezierFitBoundKind, BezierFitErrorMetric as HBezierFitErrorMetric,
     BezierBooleanFragmentLocatorInputReport2 as HBezierBooleanFragmentLocatorInputReport2,
     BezierBooleanFragmentLocatorInputStatus as HBezierBooleanFragmentLocatorInputStatus,
+    BezierBooleanFragmentOwnershipLocation as HBezierBooleanFragmentOwnershipLocation,
+    BezierBooleanLoopNestingDepthFact2 as HBezierBooleanLoopNestingDepthFact2,
+    BezierBooleanOwnershipFact2 as HBezierBooleanOwnershipFact2,
+    BezierBooleanResultReport2 as HBezierBooleanResultReport2,
+    BezierBooleanResultStatus as HBezierBooleanResultStatus,
     BezierBooleanTraversalOperand as HBezierBooleanTraversalOperand,
     BezierBooleanTraversalPreconditionStatus as HBezierBooleanTraversalPreconditionStatus,
     BezierBooleanTraversalScheduleReport2 as HBezierBooleanTraversalScheduleReport2,
@@ -3696,9 +3701,78 @@ fn h_assert_bezier_boolean_fragment_locator_inputs(reader: &mut ByteReader<'_>) 
     assert!(stale.has_blockers());
 }
 
+fn h_assert_bezier_boolean_endpoint_successors(reader: &mut ByteReader<'_>) {
+    let cycle_count = reader.usize_range(1, 3);
+    let mut steps = Vec::with_capacity(cycle_count * 2);
+    let mut endpoints = Vec::with_capacity(cycle_count * 2);
+    for cycle in 0..cycle_count {
+        let base = (cycle as i32) * 10;
+        let first = steps.len();
+        steps.push(HBezierBooleanTraversalStep2 {
+            operand: HBezierBooleanTraversalOperand::First,
+            fragment_index: first,
+        });
+        endpoints.push((h_point_i32(base, 0), h_point_i32(base + 1, 0)));
+        let second = steps.len();
+        steps.push(HBezierBooleanTraversalStep2 {
+            operand: HBezierBooleanTraversalOperand::First,
+            fragment_index: second,
+        });
+        endpoints.push((h_point_i32(base + 1, 0), h_point_i32(base, 0)));
+    }
+    let schedule = HBezierBooleanTraversalScheduleReport2 {
+        status: HBezierBooleanTraversalScheduleStatus::Ready,
+        precondition_status: HBezierBooleanTraversalPreconditionStatus::Ready,
+        first_fragment_count: endpoints.len(),
+        second_fragment_count: 0,
+        steps,
+        resolved_overlap_count: 0,
+        overlap_boundary_parameter_count: 0,
+        blocker_count: 0,
+    };
+    let ownership_facts = schedule
+        .steps
+        .iter()
+        .map(|step| HBezierBooleanOwnershipFact2 {
+            step: step.clone(),
+            opposite_location: HBezierBooleanFragmentOwnershipLocation::Outside,
+        })
+        .collect::<Vec<_>>();
+    let depth_facts = (0..cycle_count)
+        .map(|loop_index| HBezierBooleanLoopNestingDepthFact2 {
+            loop_index,
+            nesting_depth: loop_index,
+        })
+        .collect::<Vec<_>>();
+    let result = HBezierBooleanResultReport2::from_schedule_endpoint_successor_depth_facts(
+        &schedule,
+        h_boolean_op(reader),
+        &ownership_facts,
+        &endpoints,
+        &[],
+        cycle_count,
+        0,
+        &depth_facts,
+    );
+    assert_eq!(result.status, HBezierBooleanResultStatus::Ready);
+    assert_eq!(result.assigned_loop_count, cycle_count);
+
+    let blocked = HBezierBooleanResultReport2::from_schedule_endpoint_successor_depth_facts(
+        &schedule,
+        h_boolean_op(reader),
+        &ownership_facts,
+        &endpoints[..endpoints.len() - 1],
+        &[],
+        cycle_count,
+        0,
+        &depth_facts,
+    );
+    assert!(blocked.has_blockers());
+}
+
 /// Aggregate hypercurve fuzz entrypoint covering public APIs and cross-path invariants.
 pub fn h_assert_full_api(reader: &mut ByteReader<'_>) {
-    match reader.byte() % 16 {
+    match reader.byte() % 17 {
         0 => h_assert_segment_intersections(reader),
         1 => h_assert_segment_containment_and_reversal(reader),
         2 => h_assert_contour_region_classification(reader),
@@ -3714,6 +3788,7 @@ pub fn h_assert_full_api(reader: &mut ByteReader<'_>) {
         12 => h_assert_bezier_point_image_fits(reader),
         13 => h_assert_region_boolean_antagonistic_contract(reader),
         14 => h_assert_bezier_boolean_fragment_locator_inputs(reader),
+        15 => h_assert_bezier_boolean_endpoint_successors(reader),
         _ => h_assert_adversarial_polygon_pipeline(reader),
     }
 }

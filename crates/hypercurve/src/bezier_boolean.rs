@@ -8198,6 +8198,40 @@ impl BezierBooleanOutputLoopReport2 {
         output
     }
 
+    /// Derives endpoint successors and packages the resulting closed output loops.
+    ///
+    /// This is the direct output-loop constructor for deterministic endpoint
+    /// graphs. It first derives a multi-cycle successor certificate from exact
+    /// directed fragment endpoints, then consumes that certificate through
+    /// [`Self::from_multi_cycle_successor_endpoints`]. Ambiguous endpoint
+    /// matches, open chains, stale references, and cycle-boundary mismatches
+    /// therefore remain report-bearing blockers. Yap, "Towards Exact
+    /// Geometric Computation" (1997), is the exactness rule: endpoint equality
+    /// can produce topology only when replayed as a complete combinatorial
+    /// certificate. The staged boundary traversal mirrors Vatti (1992),
+    /// Greiner-Hormann (1998), Martinez-Rueda-Feito (2009), and
+    /// Foster-Hormann-Popa (2019).
+    pub fn from_endpoint_successor_endpoints(
+        traversal: &BezierBooleanLoopGraphTraversalReport2,
+        plan: &BezierBooleanLoopAssemblyPlanReport2,
+        first_endpoints: &[(Point2, Point2)],
+        second_endpoints: &[(Point2, Point2)],
+    ) -> Self {
+        let multi_cycle = BezierBooleanLoopGraphMultiCycleWalkReport2::from_fragment_endpoints(
+            traversal,
+            plan,
+            first_endpoints,
+            second_endpoints,
+        );
+        Self::from_multi_cycle_successor_endpoints(
+            &multi_cycle,
+            traversal,
+            plan,
+            first_endpoints,
+            second_endpoints,
+        )
+    }
+
     /// Packages exactly closed directed fragments into output-loop records.
     pub fn from_loop_closure(closure: &BezierBooleanLoopClosureReport2) -> Self {
         match closure.status {
@@ -13641,6 +13675,88 @@ impl BezierBooleanResultReport2 {
         )
     }
 
+    /// Accepts a scheduled result whose successor graph is derived from exact endpoints.
+    ///
+    /// This is the compact built-in graph-walk route for deterministic endpoint
+    /// arrangements: keyed ownership facts still choose emitted fragments, but
+    /// the successor edges are derived from exact directed endpoint equality
+    /// rather than supplied by the caller. The derived endpoint graph is
+    /// replayed as a multi-cycle successor certificate before output loops or
+    /// keyed depths are accepted. Ambiguous branch vertices and open chains
+    /// therefore block exactly like malformed external successor facts. This
+    /// keeps Yap's (1997) predicate/construction boundary intact while moving
+    /// the non-ambiguous graph-walk case into `hypercurve`.
+    pub fn from_schedule_endpoint_successor_depth_facts(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        ownership_facts: &[BezierBooleanOwnershipFact2],
+        first_endpoints: &[(Point2, Point2)],
+        second_endpoints: &[(Point2, Point2)],
+        branch_vertex_count: usize,
+        resolved_overlap_count: usize,
+        depth_facts: &[BezierBooleanLoopNestingDepthFact2],
+    ) -> Self {
+        let facts =
+            BezierBooleanOwnershipFactReport2::from_schedule_facts(schedule, ownership_facts);
+        let ownership = facts.classify(schedule, operation);
+        let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
+        let assembly = BezierBooleanAssemblyReadinessReport2::from_fragment_counts(
+            &emission,
+            first_endpoints.len(),
+            second_endpoints.len(),
+        );
+        let plan =
+            BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(&assembly, &emission);
+        let traversal = BezierBooleanLoopGraphTraversalReport2::from_certified_walk_graph_facts(
+            &plan,
+            branch_vertex_count,
+            resolved_overlap_count,
+        );
+        Self::from_endpoint_successor_depth_facts(
+            &traversal,
+            &plan,
+            first_endpoints,
+            second_endpoints,
+            depth_facts,
+        )
+    }
+
+    /// Accepts a scheduled endpoint-successor result with containment facts.
+    pub fn from_schedule_endpoint_successor_containment_facts(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        ownership_facts: &[BezierBooleanOwnershipFact2],
+        first_endpoints: &[(Point2, Point2)],
+        second_endpoints: &[(Point2, Point2)],
+        branch_vertex_count: usize,
+        resolved_overlap_count: usize,
+        containment_facts: &[BezierBooleanLoopContainmentFact2],
+    ) -> Self {
+        let facts =
+            BezierBooleanOwnershipFactReport2::from_schedule_facts(schedule, ownership_facts);
+        let ownership = facts.classify(schedule, operation);
+        let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
+        let assembly = BezierBooleanAssemblyReadinessReport2::from_fragment_counts(
+            &emission,
+            first_endpoints.len(),
+            second_endpoints.len(),
+        );
+        let plan =
+            BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(&assembly, &emission);
+        let traversal = BezierBooleanLoopGraphTraversalReport2::from_certified_walk_graph_facts(
+            &plan,
+            branch_vertex_count,
+            resolved_overlap_count,
+        );
+        Self::from_endpoint_successor_containment_facts(
+            &traversal,
+            &plan,
+            first_endpoints,
+            second_endpoints,
+            containment_facts,
+        )
+    }
+
     /// Accepts a scheduled multi-cycle successor result with depth-certified roles.
     pub fn from_schedule_multi_cycle_successor_depth_role_facts(
         schedule: &BezierBooleanTraversalScheduleReport2,
@@ -14148,6 +14264,51 @@ impl BezierBooleanResultReport2 {
             depth_facts,
         );
         Self::from_region_assembly(&assembly)
+    }
+
+    /// Accepts an endpoint-successor-certified result with keyed depths.
+    ///
+    /// This is the result-level counterpart to
+    /// [`BezierBooleanOutputLoopReport2::from_endpoint_successor_endpoints`].
+    /// The endpoint graph is allowed to advance only when exact directed
+    /// endpoint matching yields a complete multi-cycle successor certificate;
+    /// then keyed nesting depths are replayed against the resulting output
+    /// loops. No vector-order, orientation, tolerance, or sample-point
+    /// inference is used. This follows Yap, "Towards Exact Geometric
+    /// Computation" (1997), with traversal/fill staging from Vatti (1992),
+    /// Greiner-Hormann (1998), Martinez-Rueda-Feito (2009), and
+    /// Foster-Hormann-Popa (2019).
+    pub fn from_endpoint_successor_depth_facts(
+        traversal: &BezierBooleanLoopGraphTraversalReport2,
+        plan: &BezierBooleanLoopAssemblyPlanReport2,
+        first_endpoints: &[(Point2, Point2)],
+        second_endpoints: &[(Point2, Point2)],
+        depth_facts: &[BezierBooleanLoopNestingDepthFact2],
+    ) -> Self {
+        let output = BezierBooleanOutputLoopReport2::from_endpoint_successor_endpoints(
+            traversal,
+            plan,
+            first_endpoints,
+            second_endpoints,
+        );
+        Self::from_output_loop_depth_facts(&output, depth_facts)
+    }
+
+    /// Accepts an endpoint-successor-certified result with containment facts.
+    pub fn from_endpoint_successor_containment_facts(
+        traversal: &BezierBooleanLoopGraphTraversalReport2,
+        plan: &BezierBooleanLoopAssemblyPlanReport2,
+        first_endpoints: &[(Point2, Point2)],
+        second_endpoints: &[(Point2, Point2)],
+        containment_facts: &[BezierBooleanLoopContainmentFact2],
+    ) -> Self {
+        let output = BezierBooleanOutputLoopReport2::from_endpoint_successor_endpoints(
+            traversal,
+            plan,
+            first_endpoints,
+            second_endpoints,
+        );
+        Self::from_output_loop_containment_facts(&output, containment_facts)
     }
 
     /// Accepts a multi-cycle-successor-certified result with depth-certified roles.
@@ -14676,6 +14837,38 @@ impl BezierBooleanMaterializedRegionReport2 {
             walk_indices,
             &certification,
         )
+    }
+
+    /// Materializes a scheduled endpoint-successor result with laminar containment facts.
+    ///
+    /// This is the materialization counterpart to
+    /// [`BezierBooleanResultReport2::from_schedule_endpoint_successor_containment_facts`].
+    /// Exact directed endpoints derive the successor graph, containment facts
+    /// derive nesting depths and roles, and laminar containment then attaches
+    /// holes to their nearest certified material ancestors. Ambiguous endpoint
+    /// branches or non-laminar containment remain blockers under Yap's (1997)
+    /// exact-geometric-computation contract.
+    pub fn from_schedule_endpoint_successor_laminar_containment_facts(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        ownership_facts: &[BezierBooleanOwnershipFact2],
+        first_endpoints: &[(Point2, Point2)],
+        second_endpoints: &[(Point2, Point2)],
+        branch_vertex_count: usize,
+        resolved_overlap_count: usize,
+        containment_facts: &[BezierBooleanLoopContainmentFact2],
+    ) -> Self {
+        let result = BezierBooleanResultReport2::from_schedule_endpoint_successor_containment_facts(
+            schedule,
+            operation,
+            ownership_facts,
+            first_endpoints,
+            second_endpoints,
+            branch_vertex_count,
+            resolved_overlap_count,
+            containment_facts,
+        );
+        Self::from_result_laminar_containment_facts(&result, containment_facts)
     }
 
     /// Materializes a multi-cycle-successor result with laminar containment facts.
