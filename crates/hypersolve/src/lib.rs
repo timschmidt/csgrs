@@ -142,9 +142,12 @@ pub use prepared::{
 };
 pub use rank::{ExactAffineRankReport, ExactAffineRankStatus, analyze_exact_affine_rank};
 pub use residual_replay::{
-    DenseResidualReplayError, DenseResidualReplayReport, SparseResidualReplayError,
-    SparseResidualReplayReport, SparseResidualReplayRow, SparseResidualTerm,
-    replay_dense_linear_residuals, replay_sparse_linear_residuals,
+    DenseResidualReplayError, DenseResidualReplayReport, PreparedSparseLinearSystem,
+    SparseResidualBatchReplay, SparseResidualBatchReport, SparseResidualBatchStatus,
+    SparseResidualReplayError, SparseResidualReplayReport, SparseResidualReplayRow,
+    SparseResidualTerm, prepare_sparse_linear_residual_system, replay_dense_linear_residuals,
+    replay_sparse_linear_residual_batch, replay_sparse_linear_residual_batch_prepared,
+    replay_sparse_linear_residuals,
 };
 pub use resultant::{
     ResultantInputSide, UnivariateResultantError, UnivariateResultantPairInput,

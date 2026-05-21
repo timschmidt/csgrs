@@ -10,6 +10,8 @@
 //! plain linear algebra; exact Gaussian/Bareiss solving belongs to
 //! [`crate::direct`], while these helpers are only replay boundaries.
 
+use std::collections::BTreeMap;
+
 use hyperreal::{CertifiedRealSign, Real, RealSign};
 
 /// Error returned by dense residual replay.
@@ -97,6 +99,114 @@ pub struct SparseResidualReplayReport {
     pub accepted: bool,
 }
 
+/// Prepared sparse linear residual system for repeated exact replay.
+///
+/// This object is the first sparse batch-assembly boundary for large-sketch and
+/// domain-stamp callers. It validates the declared sparse matrix shape once,
+/// accumulates duplicate `(row, column)` terms exactly, and then reuses that
+/// assembled row structure for one or more candidate vectors. Following Yap,
+/// "Towards Exact Geometric Computation" (1997), the prepared object is only a
+/// retained exact construction; each replay still certifies `A*x-b` before a
+/// candidate can be accepted.
+#[derive(Clone, Debug, PartialEq)]
+pub struct PreparedSparseLinearSystem {
+    row_count: usize,
+    column_count: usize,
+    row_terms: Vec<Vec<(usize, Real)>>,
+    rhs: Vec<Real>,
+}
+
+impl PreparedSparseLinearSystem {
+    /// Number of residual rows in the prepared sparse system.
+    pub const fn row_count(&self) -> usize {
+        self.row_count
+    }
+
+    /// Number of candidate coordinates consumed by the prepared sparse system.
+    pub const fn column_count(&self) -> usize {
+        self.column_count
+    }
+
+    /// Exact right-hand side vector retained with the prepared system.
+    pub fn rhs(&self) -> &[Real] {
+        &self.rhs
+    }
+
+    /// Row-wise exact sparse terms after duplicate accumulation.
+    pub fn row_terms(&self) -> &[Vec<(usize, Real)>] {
+        &self.row_terms
+    }
+
+    /// Replay one candidate vector through the prepared sparse system.
+    pub fn replay_candidate(
+        &self,
+        candidate: &[Real],
+        min_precision: i32,
+    ) -> Result<SparseResidualReplayReport, SparseResidualReplayError> {
+        if candidate.len() != self.column_count {
+            return Err(SparseResidualReplayError::DimensionMismatch);
+        }
+        replay_prepared_sparse_rows(self, candidate, min_precision)
+    }
+
+    /// Replay candidates in deterministic input order.
+    ///
+    /// The work is independent per candidate, so a future parallel backend can
+    /// split it. The report order and row probes are part of this API contract
+    /// and must remain deterministic.
+    pub fn replay_batch(
+        &self,
+        candidates: &[Vec<Real>],
+        min_precision: i32,
+    ) -> Result<SparseResidualBatchReport, SparseResidualReplayError> {
+        replay_sparse_linear_residual_batch_prepared(self, candidates, min_precision)
+    }
+}
+
+/// Batch-level status for one prepared sparse replay candidate.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum SparseResidualBatchStatus {
+    /// Every sparse residual row was certified zero.
+    Accepted,
+    /// At least one sparse residual row was certified nonzero.
+    Rejected,
+}
+
+/// Deterministic replay report for one sparse candidate vector.
+#[derive(Clone, Debug, PartialEq)]
+pub struct SparseResidualBatchReplay {
+    /// Candidate ordinal from the caller-supplied input order.
+    pub candidate_index: usize,
+    /// Exact sparse residual replay for this candidate.
+    pub replay: SparseResidualReplayReport,
+    /// Candidate-level status derived from the row signs.
+    pub status: SparseResidualBatchStatus,
+    /// First row that was certified nonzero, if any.
+    pub first_nonzero_row: Option<usize>,
+    /// All rows certified nonzero.
+    pub nonzero_rows: Vec<usize>,
+}
+
+/// Deterministic batch report for a prepared sparse linear system.
+#[derive(Clone, Debug, PartialEq)]
+pub struct SparseResidualBatchReport {
+    /// Per-candidate reports in input order.
+    pub candidates: Vec<SparseResidualBatchReplay>,
+    /// Number of candidate vectors examined.
+    pub candidate_count: usize,
+    /// Number of candidates certified as exact sparse solutions.
+    pub accepted_candidates: usize,
+    /// Number of candidates rejected by certified nonzero residual rows.
+    pub rejected_candidates: usize,
+}
+
+impl SparseResidualBatchReport {
+    /// Returns true when at least one candidate satisfies every sparse row.
+    pub fn has_accepted_candidate(&self) -> bool {
+        self.accepted_candidates > 0
+    }
+}
+
 /// Replays a candidate solution through dense exact residuals.
 ///
 /// The function validates matrix/vector dimensions, computes every residual
@@ -171,11 +281,28 @@ pub fn replay_sparse_linear_residuals(
     candidate: &[Real],
     min_precision: i32,
 ) -> Result<SparseResidualReplayReport, SparseResidualReplayError> {
-    if rhs.len() != row_count || candidate.len() != column_count {
+    let prepared = prepare_sparse_linear_residual_system(row_count, column_count, terms, rhs)?;
+    prepared.replay_candidate(candidate, min_precision)
+}
+
+/// Prepare a sparse linear residual system for repeated exact replay.
+///
+/// Terms are validated against the declared shape and duplicate entries are
+/// accumulated exactly into row-local sparse lists. This mirrors sparse matrix
+/// assembly in network and constraint systems while keeping the proof boundary
+/// at residual certification, as required by Yap's exact-geometric-computation
+/// model.
+pub fn prepare_sparse_linear_residual_system(
+    row_count: usize,
+    column_count: usize,
+    terms: &[SparseResidualTerm],
+    rhs: &[Real],
+) -> Result<PreparedSparseLinearSystem, SparseResidualReplayError> {
+    if rhs.len() != row_count {
         return Err(SparseResidualReplayError::DimensionMismatch);
     }
 
-    let mut residuals = vec![Real::zero(); row_count];
+    let mut assembled = BTreeMap::<(usize, usize), Real>::new();
     for term in terms {
         if term.row >= row_count || term.column >= column_count {
             return Err(SparseResidualReplayError::TermOutOfBounds {
@@ -183,10 +310,84 @@ pub fn replay_sparse_linear_residuals(
                 column: term.column,
             });
         }
-        residuals[term.row] =
-            residuals[term.row].clone() + (&term.coefficient * &candidate[term.column]);
+        let entry = assembled
+            .entry((term.row, term.column))
+            .or_insert_with(Real::zero);
+        *entry = entry.clone() + term.coefficient.clone();
     }
-    for (residual, rhs) in residuals.iter_mut().zip(rhs) {
+
+    let mut row_terms = vec![Vec::new(); row_count];
+    for ((row, column), coefficient) in assembled {
+        row_terms[row].push((column, coefficient));
+    }
+
+    Ok(PreparedSparseLinearSystem {
+        row_count,
+        column_count,
+        row_terms,
+        rhs: rhs.to_vec(),
+    })
+}
+
+/// Replay a sparse linear system for a batch of candidate vectors.
+///
+/// This prepares the sparse system once, then replays every candidate in stable
+/// input order. It is the public convenience wrapper for callers that do not
+/// need to keep the prepared sparse object.
+pub fn replay_sparse_linear_residual_batch(
+    row_count: usize,
+    column_count: usize,
+    terms: &[SparseResidualTerm],
+    rhs: &[Real],
+    candidates: &[Vec<Real>],
+    min_precision: i32,
+) -> Result<SparseResidualBatchReport, SparseResidualReplayError> {
+    let prepared = prepare_sparse_linear_residual_system(row_count, column_count, terms, rhs)?;
+    replay_sparse_linear_residual_batch_prepared(&prepared, candidates, min_precision)
+}
+
+/// Replay candidates through a preassembled sparse linear system.
+pub fn replay_sparse_linear_residual_batch_prepared(
+    prepared: &PreparedSparseLinearSystem,
+    candidates: &[Vec<Real>],
+    min_precision: i32,
+) -> Result<SparseResidualBatchReport, SparseResidualReplayError> {
+    let mut replays = Vec::with_capacity(candidates.len());
+    for (candidate_index, candidate) in candidates.iter().enumerate() {
+        let replay = prepared.replay_candidate(candidate, min_precision)?;
+        replays.push(sparse_batch_replay_from_report(candidate_index, replay));
+    }
+
+    let accepted_candidates = replays
+        .iter()
+        .filter(|candidate| candidate.status == SparseResidualBatchStatus::Accepted)
+        .count();
+    let rejected_candidates = replays
+        .iter()
+        .filter(|candidate| candidate.status == SparseResidualBatchStatus::Rejected)
+        .count();
+
+    Ok(SparseResidualBatchReport {
+        candidate_count: replays.len(),
+        candidates: replays,
+        accepted_candidates,
+        rejected_candidates,
+    })
+}
+
+fn replay_prepared_sparse_rows(
+    prepared: &PreparedSparseLinearSystem,
+    candidate: &[Real],
+    min_precision: i32,
+) -> Result<SparseResidualReplayReport, SparseResidualReplayError> {
+    let mut residuals = vec![Real::zero(); prepared.row_count];
+    for (row_index, row_terms) in prepared.row_terms.iter().enumerate() {
+        for (column, coefficient) in row_terms {
+            residuals[row_index] =
+                residuals[row_index].clone() + (coefficient * &candidate[*column]);
+        }
+    }
+    for (residual, rhs) in residuals.iter_mut().zip(&prepared.rhs) {
         *residual = residual.clone() - rhs;
     }
 
@@ -215,6 +416,32 @@ pub fn replay_sparse_linear_residuals(
         rows,
         accepted,
     })
+}
+
+fn sparse_batch_replay_from_report(
+    candidate_index: usize,
+    replay: SparseResidualReplayReport,
+) -> SparseResidualBatchReplay {
+    let nonzero_rows = replay
+        .rows
+        .iter()
+        .filter(|row| row.sign != RealSign::Zero)
+        .map(|row| row.row_index)
+        .collect::<Vec<_>>();
+    let first_nonzero_row = nonzero_rows.first().copied();
+    let status = if replay.accepted {
+        SparseResidualBatchStatus::Accepted
+    } else {
+        SparseResidualBatchStatus::Rejected
+    };
+
+    SparseResidualBatchReplay {
+        candidate_index,
+        replay,
+        status,
+        first_nonzero_row,
+        nonzero_rows,
+    }
 }
 
 #[cfg(test)]
@@ -377,6 +604,94 @@ mod tests {
         );
     }
 
+    #[test]
+    fn prepared_sparse_batch_replay_preserves_order_and_failed_row_probes() {
+        let prepared = prepare_sparse_linear_residual_system(
+            2,
+            2,
+            &[
+                SparseResidualTerm {
+                    row: 0,
+                    column: 0,
+                    coefficient: real(1),
+                },
+                SparseResidualTerm {
+                    row: 0,
+                    column: 0,
+                    coefficient: real(1),
+                },
+                SparseResidualTerm {
+                    row: 0,
+                    column: 1,
+                    coefficient: real(1),
+                },
+                SparseResidualTerm {
+                    row: 1,
+                    column: 0,
+                    coefficient: real(1),
+                },
+                SparseResidualTerm {
+                    row: 1,
+                    column: 1,
+                    coefficient: real(-1),
+                },
+            ],
+            &[real(5), real(1)],
+        )
+        .unwrap();
+
+        assert_eq!(prepared.row_count(), 2);
+        assert_eq!(prepared.column_count(), 2);
+        assert_eq!(prepared.row_terms()[0].len(), 2);
+        assert_eq!(prepared.row_terms()[0][0], (0, real(2)));
+        assert_eq!(prepared.rhs(), &[real(5), real(1)]);
+
+        let report = prepared
+            .replay_batch(
+                &[
+                    vec![real(2), real(1)],
+                    vec![real(1), real(1)],
+                    vec![real(3), real(0)],
+                ],
+                -64,
+            )
+            .unwrap();
+
+        assert_eq!(report.candidate_count, 3);
+        assert_eq!(report.accepted_candidates, 1);
+        assert_eq!(report.rejected_candidates, 2);
+        assert!(report.has_accepted_candidate());
+        assert_eq!(report.candidates[0].candidate_index, 0);
+        assert_eq!(
+            report.candidates[0].status,
+            SparseResidualBatchStatus::Accepted
+        );
+        assert_eq!(report.candidates[1].candidate_index, 1);
+        assert_eq!(report.candidates[1].first_nonzero_row, Some(0));
+        assert_eq!(report.candidates[1].nonzero_rows, vec![0, 1]);
+        assert_eq!(report.candidates[2].candidate_index, 2);
+        assert_eq!(
+            report.candidates[2].status,
+            SparseResidualBatchStatus::Rejected
+        );
+    }
+
+    #[test]
+    fn prepared_sparse_batch_rejects_bad_candidate_shapes() {
+        let prepared = prepare_sparse_linear_residual_system(1, 2, &[], &[real(0)]).unwrap();
+
+        assert_eq!(
+            prepared
+                .replay_batch(&[vec![real(0)], vec![real(0), real(0)]], -64)
+                .unwrap_err(),
+            SparseResidualReplayError::DimensionMismatch
+        );
+        assert_eq!(
+            prepare_sparse_linear_residual_system(1, 1, &[], &[real(0), real(1)]).unwrap_err(),
+            SparseResidualReplayError::DimensionMismatch
+        );
+    }
+
     proptest! {
         #[test]
         fn generated_diagonal_systems_replay_exactly(
@@ -427,6 +742,48 @@ mod tests {
             prop_assert!(report.accepted);
             prop_assert_eq!(report.rows.len(), 2);
             prop_assert!(report.rows.iter().all(|row| row.sign == RealSign::Zero));
+        }
+
+        #[test]
+        fn generated_prepared_sparse_batches_preserve_candidate_status(
+            a in 1_i16..=32,
+            b in 1_i16..=32,
+            x in -64_i16..=64,
+            y in -64_i16..=64,
+            dx in -3_i16..=3,
+            dy in -3_i16..=3,
+        ) {
+            let a = i64::from(a);
+            let b = i64::from(b);
+            let x = i64::from(x);
+            let y = i64::from(y);
+            let dx = i64::from(dx);
+            let dy = i64::from(dy);
+            let prepared = prepare_sparse_linear_residual_system(
+                2,
+                2,
+                &[
+                    SparseResidualTerm { row: 0, column: 0, coefficient: real(a) },
+                    SparseResidualTerm { row: 1, column: 1, coefficient: real(b) },
+                ],
+                &[real(a * x), real(b * y)],
+            ).unwrap();
+            let report = prepared.replay_batch(
+                &[
+                    vec![real(x), real(y)],
+                    vec![real(x + dx), real(y + dy)],
+                ],
+                -64,
+            ).unwrap();
+
+            prop_assert_eq!(report.candidate_count, 2);
+            prop_assert_eq!(report.candidates[0].status, SparseResidualBatchStatus::Accepted);
+            let second_accepted = dx == 0 && dy == 0;
+            prop_assert_eq!(
+                report.candidates[1].status == SparseResidualBatchStatus::Accepted,
+                second_accepted
+            );
+            prop_assert_eq!(report.accepted_candidates, if second_accepted { 2 } else { 1 });
         }
     }
 }

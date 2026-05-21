@@ -14,11 +14,11 @@ use hypersolve::{
     SketchResidualFormKind, SketchResidualFormRole, SketchResidualFormsStatus,
     SketchResidualStrategy, SketchRoundTripMetadata, SketchRoundTripRole, SketchSolveProblem,
     SketchUnitToleranceStatus, SolverBlockRowKind, SolverConfig, SolverPoint2, SolverState,
-    SymbolId, VariableBall, analyze_exact_affine_rank, apply_equality_substitution_classes,
-    apply_equality_substitutions, audit_sketch_unit_tolerances,
-    build_equality_substitution_classes, certify_affine_interval_candidate,
-    certify_affine_krawczyk_box, certify_candidate, certify_candidate_batch,
-    certify_candidate_domains, certify_candidate_with_config,
+    SparseResidualBatchStatus, SparseResidualTerm, SymbolId, VariableBall,
+    analyze_exact_affine_rank, apply_equality_substitution_classes, apply_equality_substitutions,
+    audit_sketch_unit_tolerances, build_equality_substitution_classes,
+    certify_affine_interval_candidate, certify_affine_krawczyk_box, certify_candidate,
+    certify_candidate_batch, certify_candidate_domains, certify_candidate_with_config,
     certify_candidate_with_residual_balls, certify_direct_univariate_quadratic_roots,
     certify_interval_box_candidate, certify_multivariate_quadratic_interval_candidate,
     certify_multivariate_quadratic_krawczyk_box, certify_quadratic_interval_candidate,
@@ -28,7 +28,8 @@ use hypersolve::{
     enumerate_direct_univariate_quadratic_branches, evaluate_residuals, facts_depend_on_symbol,
     find_equality_substitutions, isolate_univariate_polynomial_roots, point_coincidence_equations,
     preflight_sketch_degeneracies, preflight_sketch_parameter_domains,
-    replay_sketch_compatibility_fixture, report_lossy_adapter_only_candidate,
+    prepare_sparse_linear_residual_system, replay_sketch_compatibility_fixture,
+    replay_sparse_linear_residual_batch, report_lossy_adapter_only_candidate,
     sketch_compatibility_fixtures, sketch_distance_builders, sketch_incidence_builders,
     sketch_objective_builders, sketch_orientation_builders, sketch_range_builders,
     solve_damped_least_squares, solve_direct_affine_equalities, solve_direct_affine_system,
@@ -1338,6 +1339,57 @@ fn candidate_batch_certification_reports_deterministic_failed_row_probes() {
         BatchCandidateStatus::DomainFailure
     );
     assert_eq!(report.candidates[2].domain_failure_constraints, vec![0, 1]);
+}
+
+#[test]
+fn prepared_sparse_linear_batch_replay_is_public_and_deterministic() {
+    let terms = vec![
+        SparseResidualTerm {
+            row: 0,
+            column: 0,
+            coefficient: real(1),
+        },
+        SparseResidualTerm {
+            row: 0,
+            column: 0,
+            coefficient: real(1),
+        },
+        SparseResidualTerm {
+            row: 1,
+            column: 1,
+            coefficient: real(3),
+        },
+    ];
+    let rhs = vec![real(4), real(9)];
+    let prepared = prepare_sparse_linear_residual_system(2, 2, &terms, &rhs).unwrap();
+
+    assert_eq!(prepared.row_terms()[0], vec![(0, real(2))]);
+
+    let report = prepared
+        .replay_batch(&[vec![real(2), real(3)], vec![real(1), real(3)]], -64)
+        .unwrap();
+    let wrapper_report = replay_sparse_linear_residual_batch(
+        2,
+        2,
+        &terms,
+        &rhs,
+        &[vec![real(2), real(3)], vec![real(1), real(3)]],
+        -64,
+    )
+    .unwrap();
+
+    assert_eq!(report, wrapper_report);
+    assert_eq!(report.candidate_count, 2);
+    assert_eq!(report.accepted_candidates, 1);
+    assert_eq!(report.rejected_candidates, 1);
+    assert_eq!(report.candidates[0].candidate_index, 0);
+    assert_eq!(
+        report.candidates[0].status,
+        SparseResidualBatchStatus::Accepted
+    );
+    assert_eq!(report.candidates[1].candidate_index, 1);
+    assert_eq!(report.candidates[1].first_nonzero_row, Some(0));
+    assert_eq!(report.candidates[1].nonzero_rows, vec![0]);
 }
 
 #[test]
