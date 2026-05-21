@@ -354,6 +354,20 @@ pub enum SketchConstraintKind {
         /// Parameter that must be greater than or equal to `lower`.
         upper: SketchParameterHandle,
     },
+    /// Minimum exact separation between two ordered scalar parameters.
+    ///
+    /// Lowering emits `upper - lower - margin >= 0` after proving `margin` is
+    /// nonnegative. This is the generic sketch-level design-rule-margin
+    /// primitive; domain crates should still own fabrication-specific rule
+    /// names, units, and geometry.
+    ParameterMargin {
+        /// Lower-side parameter.
+        lower: SketchParameterHandle,
+        /// Upper-side parameter.
+        upper: SketchParameterHandle,
+        /// Required exact nonnegative margin.
+        margin: Real,
+    },
     /// Soft objective that keeps a parameter near a target value.
     StayNearParameter {
         /// Parameter to bias.
@@ -399,6 +413,8 @@ pub enum SketchResidualStrategy {
     ParameterRange,
     /// Scalar nondecreasing parameter relation.
     ParameterOrdering,
+    /// Scalar ordered relation with an exact nonnegative margin.
+    ParameterMargin,
     /// Soft stay-near objective.
     SoftObjective,
 }
@@ -899,6 +915,22 @@ impl SketchSolveProblem {
         ranges::parameter_ordering(self, name, lower, upper).handle
     }
 
+    /// Add a minimum exact margin between two ordered scalar parameters.
+    ///
+    /// Lowering emits `upper - lower - margin >= 0` after certifying that the
+    /// retained margin is nonnegative. Invalid or unresolved margins are
+    /// reported as lowering rows instead of being folded into a misleading
+    /// inequality.
+    pub fn add_parameter_margin(
+        &mut self,
+        name: impl Into<String>,
+        lower: SketchParameterHandle,
+        upper: SketchParameterHandle,
+        margin: Real,
+    ) -> SketchConstraintHandle {
+        ranges::parameter_margin(self, name, lower, upper, margin).handle
+    }
+
     /// Add a soft stay-near objective for one parameter.
     pub fn add_stay_near_parameter(
         &mut self,
@@ -1325,6 +1357,34 @@ impl SketchSolveProblem {
                     Real::one(),
                 );
             }
+            SketchConstraintKind::ParameterMargin {
+                lower,
+                upper,
+                ref margin,
+            } => {
+                // This is the scalar form of a design-rule margin. Following
+                // Yap (1997), the margin is retained as exact input and checked
+                // before it participates in the proof polynomial.
+                if !validate_parameter_margin(constraint, margin, rows) {
+                    return;
+                }
+                let (Some(lower_expr), Some(upper_expr)) = (
+                    self.parameter_expr(lower, constraint, rows),
+                    self.parameter_expr(upper, constraint, rows),
+                ) else {
+                    return;
+                };
+                self.push_residual_with_kind(
+                    problem,
+                    rows,
+                    constraint,
+                    constraint.name.clone(),
+                    upper_expr - lower_expr - Expr::real(margin.clone()),
+                    SketchResidualStrategy::ParameterMargin,
+                    ConstraintKind::GreaterOrEqual,
+                    Real::one(),
+                );
+            }
             SketchConstraintKind::StayNearParameter {
                 parameter,
                 ref target,
@@ -1593,6 +1653,43 @@ fn validate_distance_bounds(
         }
     }
     true
+}
+
+fn invalid_parameter_margin_row(
+    constraint: &SketchConstraint,
+    status: SketchGeneratedRowStatus,
+) -> SketchGeneratedRow {
+    SketchGeneratedRow {
+        constraint: constraint.handle,
+        residual_index: None,
+        name: constraint.name.clone(),
+        strategy: Some(SketchResidualStrategy::ParameterMargin),
+        status,
+    }
+}
+
+fn validate_parameter_margin(
+    constraint: &SketchConstraint,
+    margin: &Real,
+    rows: &mut Vec<SketchGeneratedRow>,
+) -> bool {
+    match margin.structural_facts().sign {
+        Some(RealSign::Negative) => {
+            rows.push(invalid_parameter_margin_row(
+                constraint,
+                SketchGeneratedRowStatus::InvalidExactBound,
+            ));
+            false
+        }
+        Some(RealSign::Zero | RealSign::Positive) => true,
+        None => {
+            rows.push(invalid_parameter_margin_row(
+                constraint,
+                SketchGeneratedRowStatus::UnresolvedExactBound,
+            ));
+            false
+        }
+    }
 }
 
 fn squared_distance(a: &[Expr], b: &[Expr]) -> Expr {

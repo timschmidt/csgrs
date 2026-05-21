@@ -585,6 +585,61 @@ fn sketch_parameter_ordering_reports_violations_and_stale_parameters_explicitly(
 }
 
 #[test]
+fn sketch_parameter_margins_validate_exact_inputs_and_replay_candidates() {
+    let mut sketch = SketchSolveProblem::new();
+    let low = sketch.add_parameter("low", real(1));
+    let high = sketch.add_parameter("high", real(5));
+    let valid = sketch_range_builders::parameter_margin(
+        &mut sketch,
+        "clearance margin",
+        low,
+        high,
+        real(3),
+    );
+    sketch.add_parameter_margin("violated margin", low, high, real(5));
+    sketch.add_parameter_margin("negative margin", low, high, real(-1));
+    sketch.add_parameter_margin(
+        "stale margin",
+        low,
+        hypersolve::SketchParameterHandle(999),
+        real(1),
+    );
+
+    assert_eq!(valid.strategy, SketchResidualStrategy::ParameterMargin);
+
+    let lowered = sketch.lower_to_problem();
+
+    assert_eq!(lowered.problem.constraints.len(), 2);
+    assert_eq!(lowered.rows.len(), 4);
+    assert_eq!(
+        lowered.rows[0].strategy,
+        Some(SketchResidualStrategy::ParameterMargin)
+    );
+    assert_eq!(
+        lowered.rows[2].status,
+        SketchGeneratedRowStatus::InvalidExactBound
+    );
+    assert_eq!(
+        lowered.rows[3].status,
+        SketchGeneratedRowStatus::MissingParameter(hypersolve::SketchParameterHandle(999))
+    );
+
+    let certification = certify_candidate(
+        &PreparedProblem::new(&lowered.problem),
+        &context_from_problem(&lowered.problem),
+    );
+
+    assert!(matches!(
+        certification.rows[0].status,
+        CertifiedCandidateStatus::CertifiedSatisfiedInequality { .. }
+    ));
+    assert!(matches!(
+        certification.rows[1].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
+}
+
+#[test]
 fn sketch_parameter_ranges_report_empty_ranges_and_stale_parameters_explicitly() {
     let mut sketch = SketchSolveProblem::new();
     let parameter = sketch.add_parameter("t", real(0));

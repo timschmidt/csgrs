@@ -232,6 +232,33 @@ pub mod ranges {
             kind,
         }
     }
+
+    /// Add an exact minimum margin between two ordered scalar parameters.
+    ///
+    /// The relation lowers to `upper - lower - margin >= 0` after exact
+    /// nonnegative-margin validation. This keeps generic design-rule margins
+    /// report-bearing without embedding fabrication or EDA semantics in
+    /// `hypersolve`.
+    pub fn parameter_margin(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        lower: SketchParameterHandle,
+        upper: SketchParameterHandle,
+        margin: Real,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::ParameterMargin {
+            lower,
+            upper,
+            margin,
+        };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Range,
+            strategy: SketchResidualStrategy::ParameterMargin,
+            kind,
+        }
+    }
 }
 
 /// Soft objective builders.

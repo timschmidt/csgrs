@@ -365,6 +365,39 @@ proptest! {
     }
 
     #[test]
+    fn sketch_generated_parameter_margins_match_integer_separation(
+        lower in -32_i16..=32,
+        gap in 0_i16..=32,
+        margin in 0_i16..=32,
+    ) {
+        let lower = i64::from(lower);
+        let upper = lower + i64::from(gap);
+        let margin = i64::from(margin);
+        let mut sketch = SketchSolveProblem::new();
+        let lower_parameter = sketch.add_parameter("lower", Real::from(lower));
+        let upper_parameter = sketch.add_parameter("upper", Real::from(upper));
+        sketch.add_parameter_margin(
+            "margin",
+            lower_parameter,
+            upper_parameter,
+            Real::from(margin),
+        );
+
+        let lowered = sketch.lower_to_problem();
+        let certification = certify_candidate(
+            &PreparedProblem::new(&lowered.problem),
+            &context_from_problem(&lowered.problem),
+        );
+
+        prop_assert_eq!(lowered.rows.len(), 1);
+        prop_assert_eq!(
+            lowered.rows[0].strategy,
+            Some(SketchResidualStrategy::ParameterMargin)
+        );
+        prop_assert_eq!(certification.all_satisfied(), i64::from(gap) >= margin);
+    }
+
+    #[test]
     fn sketch_parameter_domain_preflight_generated_closed_bounds_match_integer_order(
         value in -32_i16..=32,
         lower in -32_i16..=32,

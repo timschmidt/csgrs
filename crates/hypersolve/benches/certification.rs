@@ -258,6 +258,23 @@ fn sketch_problem_with_parameter_orderings(row_count: usize) -> hypersolve::Sket
     sketch
 }
 
+fn sketch_problem_with_parameter_margins(row_count: usize) -> hypersolve::SketchSolveProblem {
+    let mut sketch = hypersolve::SketchSolveProblem::new();
+    let mut previous = sketch.add_parameter("margin0", r(0));
+    for index in 1..=row_count {
+        let current = sketch.add_parameter(format!("margin{index}"), r(index as i64 * 2));
+        hypersolve::sketch_range_builders::parameter_margin(
+            &mut sketch,
+            format!("margin rule {index}"),
+            previous,
+            current,
+            r(1),
+        );
+        previous = current;
+    }
+    sketch
+}
+
 fn sketch_problem_with_parameter_domains(row_count: usize) -> hypersolve::SketchSolveProblem {
     let mut sketch = hypersolve::SketchSolveProblem::new();
     for index in 0..row_count {
@@ -336,6 +353,10 @@ fn certification(c: &mut Criterion) {
     let ordering_sketch = sketch_problem_with_parameter_orderings(16);
     c.bench_function("sketch_parameter_ordering_lowering", |b| {
         b.iter(|| ordering_sketch.lower_to_problem())
+    });
+    let margin_sketch = sketch_problem_with_parameter_margins(16);
+    c.bench_function("sketch_parameter_margin_lowering", |b| {
+        b.iter(|| margin_sketch.lower_to_problem())
     });
     let domain_sketch = sketch_problem_with_parameter_domains(16);
     c.bench_function("sketch_parameter_domain_preflight", |b| {
