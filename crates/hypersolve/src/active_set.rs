@@ -200,6 +200,63 @@ pub struct ActiveSetUpdateReport {
     pub domain_failure_rows: usize,
 }
 
+/// Final status for an exact active-set update loop.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum ActiveSetLoopStatus {
+    /// The loop reached a mask whose rows are all certified consistent.
+    Stable,
+    /// A row certified the candidate infeasible.
+    RejectedCandidate,
+    /// Exact replay left at least one row undecided.
+    Unknown,
+    /// Residual evaluation failed for at least one row.
+    DomainFailure,
+    /// The loop used the configured iteration budget before stabilizing.
+    IterationLimit,
+    /// The supplied initial mask did not match the constraint count.
+    InvalidInitialMask,
+}
+
+/// Configuration for exact active-set update loops.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ActiveSetLoopConfig {
+    /// Candidate-certification controls used by each exact replay.
+    pub certification: CandidateCertificationConfig,
+    /// Maximum number of exact audit/update iterations.
+    pub max_iterations: usize,
+}
+
+impl Default for ActiveSetLoopConfig {
+    fn default() -> Self {
+        Self {
+            certification: CandidateCertificationConfig::default(),
+            max_iterations: 8,
+        }
+    }
+}
+
+/// One exact active-set loop iteration.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ActiveSetLoopIteration {
+    /// Iteration index.
+    pub iteration: usize,
+    /// Mask audited at the beginning of this iteration.
+    pub input_mask: Vec<bool>,
+    /// Exact update proposal emitted for the input mask.
+    pub update: ActiveSetUpdateReport,
+}
+
+/// Exact active-set loop report.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ActiveSetLoopReport {
+    /// Final loop status.
+    pub status: ActiveSetLoopStatus,
+    /// Iteration reports, each backed by exact residual replay.
+    pub iterations: Vec<ActiveSetLoopIteration>,
+    /// Final stable or last proposed active mask, when available.
+    pub final_mask: Option<Vec<bool>>,
+}
+
 impl ActiveSetUpdateReport {
     /// Returns true when the policy produced a complete next active mask.
     pub fn has_complete_mask(&self) -> bool {
@@ -235,6 +292,213 @@ pub fn propose_active_set_update(
     config: CandidateCertificationConfig,
 ) -> ActiveSetUpdateReport {
     let audit = audit_active_set(prepared, context, config);
+    active_set_update_report_from_audit(audit)
+}
+
+/// Run an exact active-set update loop without mutating the source problem.
+///
+/// Each iteration audits a candidate active mask by exact residual replay, then
+/// applies the same update policy used by [`propose_active_set_update`].
+/// Certified missed bindings activate, certified superfluous inequalities
+/// deactivate, and certified violations stop the loop as infeasible evidence.
+/// This is the smallest solver-loop layer over the exact mask policy: it
+/// follows the active-set/KKT iteration idea described by Nocedal and Wright,
+/// *Numerical Optimization*, 2nd ed. (2006), while preserving Yap's "Towards
+/// Exact Geometric Computation" (1997) boundary that exact reports, not
+/// floating tolerances, drive every branch.
+pub fn run_active_set_update_loop(
+    prepared: &PreparedProblem<'_>,
+    context: &EvaluationContext,
+    initial_mask: &[bool],
+    config: ActiveSetLoopConfig,
+) -> ActiveSetLoopReport {
+    if initial_mask.len() != prepared.problem().constraints.len() {
+        return ActiveSetLoopReport {
+            status: ActiveSetLoopStatus::InvalidInitialMask,
+            iterations: Vec::new(),
+            final_mask: None,
+        };
+    }
+
+    let mut mask = initial_mask.to_vec();
+    let mut iterations = Vec::new();
+    for iteration in 0..config.max_iterations {
+        let update = propose_active_mask_update(prepared, context, &mask, config.certification);
+        let next_mask = update.proposed_active_mask.clone();
+        let status = if update.rejected_rows > 0 {
+            Some(ActiveSetLoopStatus::RejectedCandidate)
+        } else if update.domain_failure_rows > 0 {
+            Some(ActiveSetLoopStatus::DomainFailure)
+        } else if update.unknown_rows > 0 {
+            Some(ActiveSetLoopStatus::Unknown)
+        } else if update.audit.all_consistent() {
+            Some(ActiveSetLoopStatus::Stable)
+        } else {
+            None
+        };
+        iterations.push(ActiveSetLoopIteration {
+            iteration,
+            input_mask: mask.clone(),
+            update,
+        });
+        if let Some(status) = status {
+            let final_mask = if status == ActiveSetLoopStatus::Stable {
+                next_mask.or(Some(mask))
+            } else {
+                None
+            };
+            return ActiveSetLoopReport {
+                status,
+                iterations,
+                final_mask,
+            };
+        }
+        let Some(next_mask) = next_mask else {
+            return ActiveSetLoopReport {
+                status: ActiveSetLoopStatus::Unknown,
+                iterations,
+                final_mask: None,
+            };
+        };
+        if next_mask == mask {
+            return ActiveSetLoopReport {
+                status: ActiveSetLoopStatus::Stable,
+                iterations,
+                final_mask: Some(mask),
+            };
+        }
+        mask = next_mask;
+    }
+
+    ActiveSetLoopReport {
+        status: ActiveSetLoopStatus::IterationLimit,
+        iterations,
+        final_mask: Some(mask),
+    }
+}
+
+/// Audit every source constraint against its supplied active flag.
+///
+/// This does not choose a new active set and does not run an active-set solver.
+/// It is a proof-producing boundary for an active mask produced elsewhere:
+/// exact residual replay certifies whether the mask is consistent, mismatched,
+/// violated, or undecidable.
+pub fn audit_active_set(
+    prepared: &PreparedProblem<'_>,
+    context: &EvaluationContext,
+    config: CandidateCertificationConfig,
+) -> ActiveSetAuditReport {
+    let active_mask = prepared
+        .problem()
+        .constraints
+        .iter()
+        .map(|constraint| constraint.active)
+        .collect::<Vec<_>>();
+    audit_active_mask(prepared, context, &active_mask, config)
+}
+
+/// Audit every source constraint against an explicit active mask.
+///
+/// This is the non-mutating companion to [`audit_active_set`]. The supplied
+/// mask must have one entry per source constraint; otherwise every row is
+/// reported as a domain failure because no exact row-to-mask relationship can
+/// be established.
+pub fn audit_active_mask(
+    prepared: &PreparedProblem<'_>,
+    context: &EvaluationContext,
+    active_mask: &[bool],
+    config: CandidateCertificationConfig,
+) -> ActiveSetAuditReport {
+    if active_mask.len() != prepared.problem().constraints.len() {
+        return ActiveSetAuditReport {
+            rows: prepared
+                .problem()
+                .constraints
+                .iter()
+                .enumerate()
+                .map(|(constraint_index, constraint)| ActiveSetAuditRow {
+                    constraint_index,
+                    name: constraint.name.clone(),
+                    kind: constraint.kind,
+                    active: false,
+                    signed_residual: None,
+                    status: ActiveSetRowStatus::DomainFailure {
+                        message: "active mask length does not match constraint count".to_owned(),
+                    },
+                })
+                .collect(),
+            consistent_rows: 0,
+            mask_mismatch_rows: 0,
+            violation_rows: 0,
+            unknown_rows: 0,
+            domain_failure_rows: prepared.problem().constraints.len(),
+        };
+    }
+
+    let mut rows = Vec::with_capacity(prepared.problem().constraints.len());
+    for (constraint_index, constraint) in prepared.problem().constraints.iter().enumerate() {
+        let active = active_mask[constraint_index];
+        let row = match prepared.evaluate_constraint_residual(constraint_index, context) {
+            Ok(value) => {
+                let signed_residual = normalize_residual(value, constraint.kind);
+                let status =
+                    classify_active_set_row(constraint.kind, active, &signed_residual, config);
+                ActiveSetAuditRow {
+                    constraint_index,
+                    name: constraint.name.clone(),
+                    kind: constraint.kind,
+                    active,
+                    signed_residual: Some(signed_residual),
+                    status,
+                }
+            }
+            Err(error) => ActiveSetAuditRow {
+                constraint_index,
+                name: constraint.name.clone(),
+                kind: constraint.kind,
+                active,
+                signed_residual: None,
+                status: ActiveSetRowStatus::DomainFailure {
+                    message: format!("{error:?}"),
+                },
+            },
+        };
+        rows.push(row);
+    }
+
+    let consistent_rows = rows.iter().filter(|row| row.status.is_consistent()).count();
+    let mask_mismatch_rows = rows
+        .iter()
+        .filter(|row| row.status.is_mask_mismatch())
+        .count();
+    let violation_rows = rows.iter().filter(|row| row.status.is_violation()).count();
+    let unknown_rows = rows.iter().filter(|row| row.status.is_unknown()).count();
+    let domain_failure_rows = rows
+        .iter()
+        .filter(|row| matches!(row.status, ActiveSetRowStatus::DomainFailure { .. }))
+        .count();
+
+    ActiveSetAuditReport {
+        rows,
+        consistent_rows,
+        mask_mismatch_rows,
+        violation_rows,
+        unknown_rows,
+        domain_failure_rows,
+    }
+}
+
+fn propose_active_mask_update(
+    prepared: &PreparedProblem<'_>,
+    context: &EvaluationContext,
+    active_mask: &[bool],
+    config: CandidateCertificationConfig,
+) -> ActiveSetUpdateReport {
+    let audit = audit_active_mask(prepared, context, active_mask, config);
+    active_set_update_report_from_audit(audit)
+}
+
+fn active_set_update_report_from_audit(audit: ActiveSetAuditReport) -> ActiveSetUpdateReport {
     let rows = audit
         .rows
         .iter()
@@ -277,73 +541,6 @@ pub fn propose_active_set_update(
         deactivate_rows,
         keep_rows,
         rejected_rows,
-        unknown_rows,
-        domain_failure_rows,
-    }
-}
-
-/// Audit every source constraint against its supplied active flag.
-///
-/// This does not choose a new active set and does not run an active-set solver.
-/// It is a proof-producing boundary for an active mask produced elsewhere:
-/// exact residual replay certifies whether the mask is consistent, mismatched,
-/// violated, or undecidable.
-pub fn audit_active_set(
-    prepared: &PreparedProblem<'_>,
-    context: &EvaluationContext,
-    config: CandidateCertificationConfig,
-) -> ActiveSetAuditReport {
-    let mut rows = Vec::with_capacity(prepared.problem().constraints.len());
-    for (constraint_index, constraint) in prepared.problem().constraints.iter().enumerate() {
-        let row = match prepared.evaluate_constraint_residual(constraint_index, context) {
-            Ok(value) => {
-                let signed_residual = normalize_residual(value, constraint.kind);
-                let status = classify_active_set_row(
-                    constraint.kind,
-                    constraint.active,
-                    &signed_residual,
-                    config,
-                );
-                ActiveSetAuditRow {
-                    constraint_index,
-                    name: constraint.name.clone(),
-                    kind: constraint.kind,
-                    active: constraint.active,
-                    signed_residual: Some(signed_residual),
-                    status,
-                }
-            }
-            Err(error) => ActiveSetAuditRow {
-                constraint_index,
-                name: constraint.name.clone(),
-                kind: constraint.kind,
-                active: constraint.active,
-                signed_residual: None,
-                status: ActiveSetRowStatus::DomainFailure {
-                    message: format!("{error:?}"),
-                },
-            },
-        };
-        rows.push(row);
-    }
-
-    let consistent_rows = rows.iter().filter(|row| row.status.is_consistent()).count();
-    let mask_mismatch_rows = rows
-        .iter()
-        .filter(|row| row.status.is_mask_mismatch())
-        .count();
-    let violation_rows = rows.iter().filter(|row| row.status.is_violation()).count();
-    let unknown_rows = rows.iter().filter(|row| row.status.is_unknown()).count();
-    let domain_failure_rows = rows
-        .iter()
-        .filter(|row| matches!(row.status, ActiveSetRowStatus::DomainFailure { .. }))
-        .count();
-
-    ActiveSetAuditReport {
-        rows,
-        consistent_rows,
-        mask_mismatch_rows,
-        violation_rows,
         unknown_rows,
         domain_failure_rows,
     }
@@ -567,6 +764,61 @@ mod tests {
             report.rows[0].action,
             ActiveSetUpdateAction::RejectCandidate
         );
+    }
+
+    #[test]
+    fn active_set_loop_stabilizes_mask_without_mutating_problem() {
+        let x = Expr::symbol(SymbolId(0), "x");
+        let mut problem = Problem::default();
+        problem.add_variable("x", real(0));
+        let mut binding = Constraint::equality("binding", x.clone());
+        binding.kind = ConstraintKind::LessOrEqual;
+        binding.active = false;
+        problem.add_constraint(binding);
+        let mut strict = Constraint::equality("strict", x - Expr::int(1));
+        strict.kind = ConstraintKind::LessOrEqual;
+        strict.active = true;
+        problem.add_constraint(strict);
+
+        let report = run_active_set_update_loop(
+            &PreparedProblem::new(&problem),
+            &crate::eval::context_from_problem(&problem),
+            &[false, true],
+            ActiveSetLoopConfig::default(),
+        );
+
+        assert_eq!(report.status, ActiveSetLoopStatus::Stable);
+        assert_eq!(report.final_mask, Some(vec![true, false]));
+        assert_eq!(report.iterations.len(), 2);
+        assert_eq!(problem.constraints[0].active, false);
+        assert_eq!(problem.constraints[1].active, true);
+    }
+
+    #[test]
+    fn active_set_loop_rejects_bad_masks_and_violated_candidates() {
+        let x = Expr::symbol(SymbolId(0), "x");
+        let mut problem = Problem::default();
+        problem.add_variable("x", real(0));
+        let mut violated = Constraint::equality("violated lower bound", x - Expr::int(1));
+        violated.kind = ConstraintKind::GreaterOrEqual;
+        violated.active = true;
+        problem.add_constraint(violated);
+        let prepared = PreparedProblem::new(&problem);
+        let context = crate::eval::context_from_problem(&problem);
+
+        let invalid =
+            run_active_set_update_loop(&prepared, &context, &[], ActiveSetLoopConfig::default());
+        assert_eq!(invalid.status, ActiveSetLoopStatus::InvalidInitialMask);
+        assert_eq!(invalid.final_mask, None);
+
+        let rejected = run_active_set_update_loop(
+            &prepared,
+            &context,
+            &[true],
+            ActiveSetLoopConfig::default(),
+        );
+        assert_eq!(rejected.status, ActiveSetLoopStatus::RejectedCandidate);
+        assert_eq!(rejected.final_mask, None);
     }
 
     proptest::proptest! {
