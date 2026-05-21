@@ -763,6 +763,10 @@ fn adversarial_hypermesh_adapter_rejects_nonfinite_struct_literal_vertices() {
         metadata: (),
     };
 
+    let bbox = mesh.bounding_box();
+    assert_eq!(bbox.mins, Point3::origin());
+    assert_eq!(bbox.maxs, Point3::origin());
+
     let buffers = mesh.to_hypermesh_buffers();
     assert!(
         buffers

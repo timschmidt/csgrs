@@ -2,9 +2,9 @@
 
 use crate::errors::ValidationError;
 use crate::float_types::{
-    hangle_between_vectors, hpoint_distance, hpoints_within_epsilon, hreal_cmp_f64,
-    hreal_f64s_within_epsilon, hreal_gt_f64, hreal_lt_f64, hreal_to_f64, hunit_vector3,
-    hvector3_from_point3,
+    hangle_between_vectors, hpoint_distance, hpoint3_bounds, hpoints_within_epsilon,
+    hreal_cmp_f64, hreal_f64s_within_epsilon, hreal_gt_f64, hreal_lt_f64, hreal_to_f64,
+    hunit_vector3, hvector3_from_point3,
     parry3d::{bounding_volume::Aabb, query::RayCast, shape::Shape},
     rapier3d::prelude::{
         ColliderBuilder, ColliderSet, Ray, RigidBodyBuilder, RigidBodyHandle, RigidBodySet,
@@ -32,9 +32,7 @@ use hyperphysics::{
     MassPropertyReport3 as HyperMassPropertyReport3, Triangle3 as HyperTriangle3,
     Vector3 as HyperVector3,
 };
-use nalgebra::{
-    Isometry3, Matrix4, Point3, Quaternion, Unit, Vector3, partial_max, partial_min,
-};
+use nalgebra::{Isometry3, Matrix4, Point3, Quaternion, Unit, Vector3};
 use std::{cmp::PartialEq, fmt::Debug, num::NonZeroU32, sync::OnceLock};
 
 #[cfg(feature = "parallel")]
@@ -1190,35 +1188,14 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
     /// `polygons`.
     fn bounding_box(&self) -> Aabb {
         *self.bounding_box.get_or_init(|| {
-            // Track overall min/max in x, y, z among all 3D polygons
-            let mut min_x = Real::MAX;
-            let mut min_y = Real::MAX;
-            let mut min_z = Real::MAX;
-            let mut max_x = -Real::MAX;
-            let mut max_y = -Real::MAX;
-            let mut max_z = -Real::MAX;
-
-            // 1) Gather from the 3D polygons
-            for poly in &self.polygons {
-                for v in &poly.vertices {
-                    min_x = *partial_min(&min_x, &v.position.x).unwrap();
-                    min_y = *partial_min(&min_y, &v.position.y).unwrap();
-                    min_z = *partial_min(&min_z, &v.position.z).unwrap();
-
-                    max_x = *partial_max(&max_x, &v.position.x).unwrap();
-                    max_y = *partial_max(&max_y, &v.position.y).unwrap();
-                    max_z = *partial_max(&max_z, &v.position.z).unwrap();
-                }
-            }
-
-            // If still uninitialized (e.g., no polygons), return a trivial AABB at origin
-            if min_x > max_x {
+            let points = self
+                .polygons
+                .iter()
+                .flat_map(|polygon| polygon.vertices.iter().map(|vertex| vertex.position))
+                .collect::<Vec<_>>();
+            let Some((mins, maxs)) = hpoint3_bounds(&points) else {
                 return Aabb::new(Point3::origin(), Point3::origin());
-            }
-
-            // Build a parry3d Aabb from these min/max corners
-            let mins = Point3::new(min_x, min_y, min_z);
-            let maxs = Point3::new(max_x, max_y, max_z);
+            };
             Aabb::new(mins, maxs)
         })
     }
