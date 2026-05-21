@@ -546,6 +546,9 @@ impl Class {
             Log2(base) => {
                 Self::ln_computable(base).multiply(Self::ln_computable(&rationals::TWO).inverse())
             }
+            Log2(base) => {
+                Self::ln_computable(base).multiply(Self::ln_computable(&*rationals::TWO).inverse())
+            }
             SinPi(rational) => {
                 let argument =
                     Computable::multiply(Computable::pi(), Computable::rational(rational.clone()));
@@ -4060,6 +4063,74 @@ impl Real {
             crate::trace_dispatch!("real", "atan2", "quadrant-lower-left");
             base - Self::pi()
         }
+    }
+
+    /// The hyperbolic sine of this Real.
+    pub fn sinh(self) -> Result<Real, Problem> {
+        if self.definitely_zero() {
+            crate::trace_dispatch!("real", "sinh", "exact-zero");
+            return Ok(Self::zero());
+        }
+        if let Ln(base) = &self.class
+            && let Some(int) = self.rational.to_big_integer()
+        {
+            // sinh(k*ln(n)) = (n^k - n^-k)/2 folds to an exact rational
+            // whenever the symbolic ln scale is integral.
+            let positive = base.clone().powi(int.clone())?;
+            let negative = base.clone().powi(-int)?;
+            crate::trace_dispatch!("real", "sinh", "integer-log-collapse");
+            return Ok(Self::new((positive - negative) / Rational::new(2)));
+        }
+        crate::trace_dispatch!("real", "sinh", "generic-exp-identity");
+        let positive = self.clone().exp()?;
+        let negative = self.neg().exp()?;
+        (positive - negative) / Self::new(Rational::new(2))
+    }
+
+    /// The hyperbolic cosine of this Real.
+    pub fn cosh(self) -> Result<Real, Problem> {
+        if self.definitely_zero() {
+            crate::trace_dispatch!("real", "cosh", "exact-zero-one");
+            return Ok(Self::one());
+        }
+        if let Ln(base) = &self.class
+            && let Some(int) = self.rational.to_big_integer()
+        {
+            // cosh(k*ln(n)) = (n^k + n^-k)/2 folds to an exact rational
+            // whenever the symbolic ln scale is integral.
+            let positive = base.clone().powi(int.clone())?;
+            let negative = base.clone().powi(-int)?;
+            crate::trace_dispatch!("real", "cosh", "integer-log-collapse");
+            return Ok(Self::new((positive + negative) / Rational::new(2)));
+        }
+        crate::trace_dispatch!("real", "cosh", "generic-exp-identity");
+        let positive = self.clone().exp()?;
+        let negative = self.neg().exp()?;
+        (positive + negative) / Self::new(Rational::new(2))
+    }
+
+    /// The hyperbolic tangent of this Real.
+    pub fn tanh(self) -> Result<Real, Problem> {
+        if self.definitely_zero() {
+            crate::trace_dispatch!("real", "tanh", "exact-zero");
+            return Ok(Self::zero());
+        }
+        if let Ln(base) = &self.class
+            && let Some(int) = self.rational.to_big_integer()
+        {
+            // tanh(k*ln(n)) = (n^2k - 1) / (n^2k + 1) folds to an exact
+            // rational whenever the symbolic ln scale is integral.
+            let squared = base.clone().powi(int * BigInt::from(2_u8))?;
+            let one = Rational::one();
+            crate::trace_dispatch!("real", "tanh", "integer-log-collapse");
+            return Ok(Self::new(
+                (squared.clone() - one.clone()) / (squared + one),
+            ));
+        }
+        crate::trace_dispatch!("real", "tanh", "generic-exp-identity");
+        let positive = self.clone().exp()?;
+        let negative = self.neg().exp()?;
+        (positive.clone() - negative.clone()) / (positive + negative)
     }
 
     /// The inverse hyperbolic sine of this Real.

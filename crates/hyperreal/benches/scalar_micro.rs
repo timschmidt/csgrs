@@ -413,16 +413,30 @@ const SCALAR_MICRO_GROUPS: &[BenchGroupDoc] = &[
                 description: "Rejects atanh(sqrt(2)) through exact structural domain checks.",
             },
             BenchDoc {
-                name: "log2_power_of_two",
-                description: "Folds log2(1024) to the exact rational 10 via the integer-log-detection shortcut.",
+                name: "sinh_ln_two",
+                description: "Folds sinh(ln(2)) to the exact rational 3/4 via the integer-log-collapse shortcut.",
             },
             BenchDoc {
-                name: "log2_rational_three",
-                description: "Builds log2(3) as a lightweight Log2 symbolic certificate.",
+                name: "cosh_ln_two",
+                description: "Folds cosh(ln(2)) to the exact rational 5/4 via the integer-log-collapse shortcut.",
             },
             BenchDoc {
-                name: "log2_ln_quotient_fold",
-                description: "Folds ln(5) / ln(2) into a Log2 certificate via the divide-recognize shortcut.",
+                name: "tanh_ln_two",
+                description: "Folds tanh(ln(2)) to the exact rational 3/5 via the integer-log-collapse shortcut.",
+            },
+            BenchDoc {
+                name: "sinh_rational_one",
+                description: "Builds sinh(1) through the generic (exp(x) - exp(-x))/2 identity path.",
+            },
+            BenchDoc {
+                name: "cosh_rational_one",
+                description: "Builds cosh(1) through the generic (exp(x) + exp(-x))/2 identity path.",
+            },
+            BenchDoc {
+                name: "tanh_rational_one",
+                description: "Builds tanh(1) through the generic (exp(x) - exp(-x))/(exp(x) + exp(-x)) identity path.",
+            },
+            BenchDoc {
                 name: "atan2_origin",
                 description: "Hits the origin (0, 0) short-circuit returning exact zero.",
             },
@@ -445,6 +459,18 @@ const SCALAR_MICRO_GROUPS: &[BenchGroupDoc] = &[
             BenchDoc {
                 name: "atan2_quadrant_three_negative_pi",
                 description: "Quadrant III (-1, -2) exercises atan(small ratio) - pi correction.",
+            },
+            BenchDoc {
+                name: "log2_power_of_two",
+                description: "Folds log2(1024) to the exact rational 10 via the integer-log-detection shortcut.",
+            },
+            BenchDoc {
+                name: "log2_rational_three",
+                description: "Builds log2(3) as a lightweight Log2 symbolic certificate.",
+            },
+            BenchDoc {
+                name: "log2_ln_quotient_fold",
+                description: "Folds ln(5) / ln(2) into a Log2 certificate via the divide-recognize shortcut.",
             },
         ],
     },
@@ -1097,29 +1123,48 @@ fn bench_exact_transcendental_special_forms(c: &mut Criterion) {
         )
     });
 
-    let log2_power = Real::new(Rational::new(1024));
-    let log2_three = Real::new(Rational::new(3));
-    let ln_five = Real::new(Rational::new(5)).ln().unwrap();
-    let ln_two_for_quotient = Real::new(Rational::new(2)).ln().unwrap();
+    let ln_two = Real::new(Rational::new(2)).ln().unwrap();
+    let rational_one = Real::one();
 
-    group.bench_function("log2_power_of_two", |b| {
+    group.bench_function("sinh_ln_two", |b| {
         b.iter_batched(
-            || log2_power.clone(),
-            |value| black_box(value.log2().unwrap()),
+            || ln_two.clone(),
+            |value| black_box(value.sinh().unwrap()),
             BatchSize::SmallInput,
         )
     });
-    group.bench_function("log2_rational_three", |b| {
+    group.bench_function("cosh_ln_two", |b| {
         b.iter_batched(
-            || log2_three.clone(),
-            |value| black_box(value.log2().unwrap()),
+            || ln_two.clone(),
+            |value| black_box(value.cosh().unwrap()),
             BatchSize::SmallInput,
         )
     });
-    group.bench_function("log2_ln_quotient_fold", |b| {
+    group.bench_function("tanh_ln_two", |b| {
         b.iter_batched(
-            || (ln_five.clone(), ln_two_for_quotient.clone()),
-            |(num, den)| black_box((num / den).unwrap()),
+            || ln_two.clone(),
+            |value| black_box(value.tanh().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("sinh_rational_one", |b| {
+        b.iter_batched(
+            || rational_one.clone(),
+            |value| black_box(value.sinh().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("cosh_rational_one", |b| {
+        b.iter_batched(
+            || rational_one.clone(),
+            |value| black_box(value.cosh().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("tanh_rational_one", |b| {
+        b.iter_batched(
+            || rational_one.clone(),
+            |value| black_box(value.tanh().unwrap()),
             BatchSize::SmallInput,
         )
     });
@@ -1168,6 +1213,33 @@ fn bench_exact_transcendental_special_forms(c: &mut Criterion) {
         b.iter_batched(
             || (negative_one.clone(), negative_two.clone()),
             |(y, x)| black_box(y.atan2(x)),
+            BatchSize::SmallInput,
+        )
+    });
+
+    let log2_power = Real::new(Rational::new(1024));
+    let log2_three = Real::new(Rational::new(3));
+    let ln_five = Real::new(Rational::new(5)).ln().unwrap();
+    let ln_two_for_quotient = Real::new(Rational::new(2)).ln().unwrap();
+
+    group.bench_function("log2_power_of_two", |b| {
+        b.iter_batched(
+            || log2_power.clone(),
+            |value| black_box(value.log2().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("log2_rational_three", |b| {
+        b.iter_batched(
+            || log2_three.clone(),
+            |value| black_box(value.log2().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("log2_ln_quotient_fold", |b| {
+        b.iter_batched(
+            || (ln_five.clone(), ln_two_for_quotient.clone()),
+            |(num, den)| black_box((num / den).unwrap()),
             BatchSize::SmallInput,
         )
     });
