@@ -12,12 +12,14 @@ that owns the geometry.
 
 ## Hyper Ecosystem
 
-`hyperlimit` is the shared exact decision layer.
+`hyperlimit` is the shared exact decision layer. It owns predicate semantics, policy,
+classification enums, prepared predicate views, and construction-session provenance;
+object storage stays in the crate that owns the geometry.
 
 - [hyperreal](https://github.com/timschmidt/hyperreal): scalar values, structural facts,
   and bounded refinement.
 - [hyperlattice](https://github.com/timschmidt/hyperlattice): vector/matrix facts that
-  can help prepare predicates.
+  own vector, point, matrix, shared-scale, and homogeneous projective carriers.
 - [hypercurve](https://github.com/timschmidt/hypercurve),
   [hypertri](https://github.com/timschmidt/hypertri), and
   [hypermesh](https://github.com/timschmidt/hypermesh): geometry/topology crates that
@@ -27,6 +29,11 @@ that owns the geometry.
   [hyperdrc](https://github.com/timschmidt/hyperdrc), and
   [hyperphysics](https://github.com/timschmidt/hyperphysics): domain crates that need
   reusable exact decisions and auditable unknowns.
+- [hyperbrep](https://github.com/timschmidt/hyperbrep), [hypersdf](https://github.com/timschmidt/hypersdf),
+  [hypervoxel](https://github.com/timschmidt/hypervoxel), [hypercircuit](https://github.com/timschmidt/hypercircuit),
+  [hyperparts](https://github.com/timschmidt/hyperparts), [hyperpack](https://github.com/timschmidt/hyperpack),
+  and [hyperevolution](https://github.com/timschmidt/hyperevolution): sibling crates
+  that should keep exact decisions report-bearing instead of local tolerance-based.
 
 ## Typical Predicate Problems
 
@@ -43,8 +50,10 @@ than inventing a float decision.
 
 ## Main Types
 
-- `Point2`, `Point3`, `Plane3`, and geometry fact types provide small predicate-facing
-  objects.
+- `Point2`, `Point3`, point facts, shared-scale point views, `HomogeneousPoint3`, and
+  `HomogeneousLine3` are predicate-facing re-exports of lattice-owned object carriers.
+- `Plane3`, `Plane3Facts`, `PreparedPlane3`, and homogeneous plane-incidence helpers
+  keep 3D sidedness and projective incidence under predicate policy.
 - `PredicateOutcome<T>`, `PredicateReport<T>`, `PredicateCertificate`, `Certainty`,
   `Escalation`, `PredicatePrecisionStage`, and `PredicateApiSemantics` describe what was
   decided and how.
@@ -70,6 +79,13 @@ Higher crates should carry object facts such as sparse coordinates, ring structu
 plane facts, or prepared bounds, but the final topology-changing decision should remain
 exact or explicitly unknown.
 
+## Numerical Explosion
+
+`hyperlimit` combats numerical explosion by staging predicate work. Structural facts,
+prepared bounds, determinant schedules, certified filters, and bounded `Real`
+refinement are tried before generic exact expansion. When those stages cannot certify a
+sign or relation, the result stays `Unknown` rather than forcing unbounded arithmetic.
+
 ## Performance Model
 
 `hyperlimit` is designed to avoid expensive exact work in common cases. It uses
@@ -83,9 +99,12 @@ reducers, filters, bounded refinement, or fallback paths.
 
 ## Current Status
 
-Version `0.2.0` is an early but usable predicate crate. It currently includes:
+Version `0.3.0` is an early but usable predicate crate. It currently includes:
 
-- `Point2`, `Point3`, `Plane3`, and predicate-facing structural fact carriers;
+- predicate-facing re-exports of lattice-owned `Point2`, `Point3`, shared-scale point
+  facts, homogeneous points, and Pluecker lines;
+- `Plane3`, prepared plane facts, homogeneous point/plane incidence classification,
+  and exact two-plane/three-plane intersection wrappers;
 - exact real and point ordering, squared-distance comparison, interval, AABB, segment,
   ring, triangle, line, plane, orientation, in-circle, in-sphere, and
   D-dimensional orientation/in-sphere/affine-independence predicates;
@@ -116,7 +135,10 @@ Feature summary:
 ## Usage
 
 ```rust
-use hyperlimit::{Point2, Sign, orient2d};
+use hyperlimit::{
+    Plane3, Point2, Point3, Sign, classify_homogeneous_point_plane,
+    intersect_three_planes, orient2d,
+};
 use hyperreal::Real;
 
 let a = Point2::new(Real::from(0), Real::from(0));
@@ -124,6 +146,12 @@ let b = Point2::new(Real::from(1), Real::from(0));
 let c = Point2::new(Real::from(0), Real::from(1));
 
 assert_eq!(orient2d(&a, &b, &c).value(), Some(Sign::Positive));
+
+let px = Plane3::new(Point3::new(Real::from(1), Real::from(0), Real::from(0)), Real::from(-1));
+let py = Plane3::new(Point3::new(Real::from(0), Real::from(1), Real::from(0)), Real::from(-2));
+let pz = Plane3::new(Point3::new(Real::from(0), Real::from(0), Real::from(1)), Real::from(-3));
+let point = intersect_three_planes(&px, &py, &pz);
+assert_eq!(classify_homogeneous_point_plane(&point, &px).value(), Some(true));
 ```
 
 ## Development
