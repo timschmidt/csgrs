@@ -4,8 +4,8 @@ use crate::csg::CSG;
 use crate::float_types::{
     FRAC_PI_2, PI, Real, TAU, hangle_sin_cos, hdegrees_to_radians, hreal_abs, hreal_affine,
     hreal_atan, hreal_clamp_f64, hreal_cmp_f64, hreal_div, hreal_f64s_within_epsilon,
-    hreal_from_f64, hreal_mul, hreal_pow, hreal_sqrt, hreal_sub, hreal_sum, hxy_lerp,
-    tolerance,
+    hreal_from_f64, hreal_mul, hreal_pow, hreal_sqrt, hreal_sub, hreal_sum, hreal_tan,
+    hxy_lerp, tolerance,
 };
 use crate::sketch::Profile;
 use hypercurve::{Contour2, CurveString2, LineSeg2, Point2, Segment2};
@@ -1666,6 +1666,14 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// - `clearance`: additional clearance for dedendum
     /// - `backlash`: backlash allowance
     /// - `metadata`: optional metadata
+    ///
+    /// Rack dimensions and flank intersections are evaluated through
+    /// hyperreal helpers before the finite outline is exported to hypercurve,
+    /// following Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7(1-2), 1997
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>). For involute rack
+    /// geometry conventions see Litvin and Fuentes, *Gear Geometry and Applied
+    /// Theory*, 2nd ed., Cambridge University Press, 2004.
     pub fn involute_rack(
         module_: Real,
         num_teeth: usize,
@@ -1675,28 +1683,50 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         metadata: M,
     ) -> Profile<M> {
         if num_teeth < 1
-            || module_ <= tolerance()
             || !finite_profile_scalars(&[module_, pressure_angle_deg, clearance, backlash])
+            || !matches!(hreal_cmp_f64(module_, tolerance()), Ordering::Greater)
         {
             return Profile::empty(metadata);
         }
         let m = module_;
-        let p = PI * m; // linear pitch
+        let Some(p) = hreal_mul(PI, m) else {
+            return Profile::empty(metadata);
+        }; // linear pitch
         let addendum = m;
-        let dedendum = 1.25 * m + clearance;
+        let Some(scaled_module) = hreal_mul(1.25, m) else {
+            return Profile::empty(metadata);
+        };
+        let Some(dedendum) = hreal_sum(&[scaled_module, clearance]) else {
+            return Profile::empty(metadata);
+        };
         let tip_y = addendum;
-        let root_y = -dedendum;
+        let Some(root_y) = hreal_sub(0.0, dedendum) else {
+            return Profile::empty(metadata);
+        };
         // Tooth thickness at pitch‑line (centre) minus backlash.
-        let t = p / 2.0 - backlash;
-        let half_t = t / 2.0;
+        let Some(half_pitch) = hreal_div(p, 2.0) else {
+            return Profile::empty(metadata);
+        };
+        let Some(t) = hreal_sub(half_pitch, backlash) else {
+            return Profile::empty(metadata);
+        };
+        let Some(half_t) = hreal_div(t, 2.0) else {
+            return Profile::empty(metadata);
+        };
         // For a rack, the involute flank is a straight line at pressure angle
-        let alpha = pressure_angle_deg.to_radians();
-        let tan_alpha = alpha.tan();
+        let Some(alpha) = hdegrees_to_radians(pressure_angle_deg) else {
+            return Profile::empty(metadata);
+        };
+        let Some(tan_alpha) = hreal_tan(alpha) else {
+            return Profile::empty(metadata);
+        };
 
         if !finite_profile_scalars(&[
             p, addendum, dedendum, tip_y, root_y, t, half_t, tan_alpha,
-        ]) || tan_alpha.abs() <= tolerance()
-            || t <= tolerance()
+        ]) || !matches!(
+            hreal_abs(tan_alpha).map(|value| hreal_cmp_f64(value, tolerance())),
+            Some(Ordering::Greater)
+        ) || !matches!(hreal_cmp_f64(t, tolerance()), Ordering::Greater)
         {
             return Profile::empty(metadata);
         }
@@ -1705,16 +1735,40 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         let mut outline = Vec::<[Real; 2]>::new();
 
         // Start at the bottom left of the first tooth
-        let first_x = -half_t - (tip_y - root_y) / tan_alpha;
+        let Some(tooth_height) = hreal_sub(tip_y, root_y) else {
+            return Profile::empty(metadata);
+        };
+        let Some(root_slant) = hreal_div(tooth_height, tan_alpha) else {
+            return Profile::empty(metadata);
+        };
+        let Some(negative_half_t) = hreal_sub(0.0, half_t) else {
+            return Profile::empty(metadata);
+        };
+        let Some(first_x) = hreal_sub(negative_half_t, root_slant) else {
+            return Profile::empty(metadata);
+        };
         outline.push([first_x, root_y]);
 
         // Build each tooth
         for i in 0..num_teeth {
-            let tooth_center = (i as Real) * p;
-            let left_pitch = tooth_center - half_t;
-            let right_pitch = tooth_center + half_t;
-            let left_tip = left_pitch - (tip_y) / tan_alpha;
-            let right_tip = right_pitch + (tip_y) / tan_alpha;
+            let Some(tooth_center) = hreal_mul(i as Real, p) else {
+                return Profile::empty(metadata);
+            };
+            let Some(left_pitch) = hreal_sub(tooth_center, half_t) else {
+                return Profile::empty(metadata);
+            };
+            let Some(right_pitch) = hreal_sum(&[tooth_center, half_t]) else {
+                return Profile::empty(metadata);
+            };
+            let Some(tip_slant) = hreal_div(tip_y, tan_alpha) else {
+                return Profile::empty(metadata);
+            };
+            let Some(left_tip) = hreal_sub(left_pitch, tip_slant) else {
+                return Profile::empty(metadata);
+            };
+            let Some(right_tip) = hreal_sum(&[right_pitch, tip_slant]) else {
+                return Profile::empty(metadata);
+            };
 
             // Left flank (from root to tip)
             outline.push([left_pitch, 0.0]);
@@ -1728,17 +1782,30 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
 
             // Bottom right (root)
             if i < num_teeth - 1 {
-                let next_left_pitch = (i as Real + 1.0) * p - half_t;
-                let next_root_left = next_left_pitch - (tip_y - root_y) / tan_alpha;
+                let Some(next_center) = hreal_mul(i as Real + 1.0, p) else {
+                    return Profile::empty(metadata);
+                };
+                let Some(next_left_pitch) = hreal_sub(next_center, half_t) else {
+                    return Profile::empty(metadata);
+                };
+                let Some(next_root_left) = hreal_sub(next_left_pitch, root_slant) else {
+                    return Profile::empty(metadata);
+                };
                 outline.push([next_root_left, root_y]);
             }
         }
 
         // Close the polygon by connecting back to the start
         // Add the bottom right corner
-        let last_tooth_center = ((num_teeth - 1) as Real) * p;
-        let last_right_pitch = last_tooth_center + half_t;
-        let last_root_right = last_right_pitch + (tip_y - root_y) / tan_alpha;
+        let Some(last_tooth_center) = hreal_mul((num_teeth - 1) as Real, p) else {
+            return Profile::empty(metadata);
+        };
+        let Some(last_right_pitch) = hreal_sum(&[last_tooth_center, half_t]) else {
+            return Profile::empty(metadata);
+        };
+        let Some(last_root_right) = hreal_sum(&[last_right_pitch, root_slant]) else {
+            return Profile::empty(metadata);
+        };
         outline.push([last_root_right, root_y]);
 
         // Now close the polygon by going back to the start
