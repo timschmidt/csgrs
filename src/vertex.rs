@@ -3,10 +3,10 @@
 use crate::float_types::{
     PI, Real, hangle_between_vectors, hangle_sin_cos, hpoint_centroid, hpoint_distance,
     hpoint_lerp, hpoint_weighted_sum, hpoints_within_epsilon, hreal_clamp_f64, hreal_div,
-    hreal_f64s_within_epsilon, hreal_from_f64, hreal_gt_f64, hreal_lt_f64, hreal_mean,
-    hreal_mul, hreal_sample_stddev, hreal_sub, hreal_sum, hreal_to_f64, hunit_vector3,
-    hvector3_distance, hvector3_dot, hvector3_from_point3, hvector3_mean,
-    hvector3_weighted_sum, tolerance,
+    hreal_f64s_within_epsilon, hreal_from_f64, hreal_gt_f64, hreal_lt_f64,
+    hreal_max_report_value, hreal_mean, hreal_mul, hreal_sample_stddev, hreal_sub, hreal_sum,
+    hreal_to_f64, hunit_vector3, hvector3_distance, hvector3_dot, hvector3_from_point3,
+    hvector3_mean, hvector3_weighted_sum, tolerance,
 };
 use hashbrown::HashMap;
 use nalgebra::{Point3, Vector3};
@@ -524,7 +524,9 @@ impl Vertex {
                 target_valence as Real,
             )
             .unwrap_or(Real::INFINITY);
-            hreal_div(1.0, 1.0 + deviation).unwrap_or(0.0).max(0.0)
+            hreal_div(1.0, 1.0 + deviation)
+                .and_then(|regularity| hreal_clamp_f64(regularity, 0.0, 1.0))
+                .unwrap_or(0.0)
         } else {
             0.0
         };
@@ -610,17 +612,24 @@ impl Vertex {
         let finite_face_areas: Vec<_> = face_areas
             .iter()
             .copied()
-            .filter(|area| area.is_finite() && *area > 0.0)
+            .filter(|area| {
+                hreal_from_f64(*area)
+                    .ok()
+                    .is_some_and(|area| hreal_gt_f64(&area, 0.0))
+            })
             .collect();
         let mixed_area = hreal_mean(&finite_face_areas).unwrap_or(1.0);
 
         // Discrete mean curvature
-        let angle_deficit = 2.0 * PI - angle_sum;
-        if mixed_area > tolerance() {
-            hreal_div(angle_deficit, mixed_area).unwrap_or(0.0)
-        } else {
-            0.0
-        }
+        hreal_mul(2.0, PI)
+            .and_then(|full_turn| hreal_sub(full_turn, angle_sum))
+            .filter(|_| {
+                hreal_from_f64(mixed_area)
+                    .ok()
+                    .is_some_and(|area| hreal_gt_f64(&area, tolerance()))
+            })
+            .and_then(|angle_deficit| hreal_div(angle_deficit, mixed_area))
+            .unwrap_or(0.0)
     }
 
     /// **Mathematical Foundation: Advanced Mesh Quality Analysis**
@@ -684,26 +693,34 @@ impl Vertex {
             let std_dev = hreal_sample_stddev(&edge_lengths).unwrap_or(0.0);
 
             // Normalize to [0,1] where 1 = perfectly uniform
-            if mean_edge > tolerance() {
-                1.0 / (1.0 + std_dev / mean_edge)
-            } else {
-                0.0
-            }
+            hreal_from_f64(mean_edge)
+                .ok()
+                .filter(|mean| hreal_gt_f64(mean, tolerance()))
+                .and_then(|_| hreal_div(std_dev, mean_edge))
+                .and_then(|ratio| hreal_div(1.0, 1.0 + ratio))
+                .and_then(|uniformity| hreal_clamp_f64(uniformity, 0.0, 1.0))
+                .unwrap_or(0.0)
         } else {
             1.0
         };
 
         // Normal variation (lower = more consistent normals)
         let normal_variation = if neighbor_normals.len() > 1 {
-            let mut max_angle: Real = 0.0;
+            let mut max_angle: Option<Real> = None;
             for &neighbor_normal in &neighbor_normals {
                 if let Some(angle) = hangle_between_vectors(&self.normal, &neighbor_normal) {
-                    max_angle = max_angle.max(angle);
+                    if let Ok(angle_h) = hreal_from_f64(angle) {
+                        max_angle = hreal_max_report_value(max_angle, &angle_h);
+                    }
                 }
             }
 
             // Normalize to [0,1] where 1 = perfectly consistent
-            1.0 - (max_angle / PI).min(1.0)
+            max_angle
+                .and_then(|angle| hreal_div(angle, PI))
+                .and_then(|ratio| hreal_clamp_f64(ratio, 0.0, 1.0))
+                .and_then(|ratio| hreal_sub(1.0, ratio))
+                .unwrap_or(0.0)
         } else {
             1.0
         };
@@ -769,7 +786,12 @@ impl VertexCluster {
         let radius = vertices
             .iter()
             .filter_map(|v| hpoint_distance(&v.position, &centroid))
-            .fold(0.0, |a: Real, b| a.max(b));
+            .fold(None, |max_radius, radius| {
+                hreal_from_f64(radius)
+                    .ok()
+                    .and_then(|radius| hreal_max_report_value(max_radius, &radius))
+            })
+            .unwrap_or(0.0);
 
         Some(VertexCluster {
             position: centroid,

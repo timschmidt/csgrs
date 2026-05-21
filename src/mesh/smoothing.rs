@@ -2,7 +2,7 @@
 
 use crate::float_types::{
     Real, hdegrees_to_radians, hpoint_centroid, hpoint_distance, hpoint_lerp, hreal_cmp_f64,
-    hreal_from_f64, tolerance,
+    hreal_from_f64, hreal_max_report_value, tolerance,
 };
 use crate::mesh::Mesh;
 use crate::polygon::Polygon;
@@ -383,16 +383,18 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             return 0.0;
         }
 
-        let mut max_length: Real = 0.0;
+        let mut max_length: Option<Real> = None;
         for i in 0..vertices.len() {
             let j = (i + 1) % vertices.len();
             if let Some(edge_length) =
                 hpoint_distance(&vertices[j].position, &vertices[i].position)
             {
-                max_length = max_length.max(edge_length);
+                if let Ok(edge_length) = hreal_from_f64(edge_length) {
+                    max_length = hreal_max_report_value(max_length, &edge_length);
+                }
             }
         }
-        max_length
+        max_length.unwrap_or(0.0)
     }
 
     /// **Mathematical Foundation: Feature-Preserving Mesh Optimization**
