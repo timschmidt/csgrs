@@ -11,14 +11,16 @@ use hypermesh::exact::{
     AabbIntersectionKind, ApproximationPolicy, ConstructionProvenance, CoplanarTriangleRelation,
     DiagnosticKind, EdgeSplit, EdgeSplitPoint, ExactAabb3, ExactEdgeSplitPlan,
     ExactFaceSplitGeometryPlan, ExactFaceSplitPlan, ExactGraphVertex, ExactGraphVertexPlan,
-    ExactGraphVertexUse, ExactIntersectionGraph, ExactMesh, ExactReal, ExactSplitTopologyPlan,
-    FacePairEvents, FaceRegionBoundary, FaceSplitBoundaryChain, FaceSplitBoundaryNode,
-    FaceSplitEdge, FaceSplitGeometry, FaceSplitPlan, IntersectionEvent, MeshFacePairRelation,
-    MeshSide, MeshSource, SegmentPlaneRelation, Severity, SourceProvenance, SplitEdgeChain,
-    SplitEdgeNode, SplitPlanDiagnosticKind, TrianglePlaneRelation, TriangleTriangleRelation,
-    ValidationPolicy, VertexLinkKind, audit_exact_mesh, build_intersection_graph,
-    certify_convex_solid, classify_coplanar_triangles, classify_mesh_face_pair,
-    classify_mesh_face_pairs, classify_mesh_triangle_against_retained_face_plane,
+    ExactGraphVertexUse, ExactIntersectionGraph, ExactMesh, ExactMeshAuditError,
+    ExactMeshProposalAcceptance, ExactMeshProposalReportError, ExactMeshProposalSourceKind,
+    ExactPoint3, ExactReal, ExactSplitTopologyPlan, FacePairEvents, FaceRegionBoundary,
+    FaceSplitBoundaryChain, FaceSplitBoundaryNode, FaceSplitEdge, FaceSplitGeometry, FaceSplitPlan,
+    IntersectionEvent, MeshFacePairRelation, MeshSide, MeshSource, SegmentPlaneRelation, Severity,
+    SourceProvenance, SplitEdgeChain, SplitEdgeNode, SplitPlanDiagnosticKind, Triangle,
+    TrianglePlaneRelation, TriangleTriangleRelation, ValidationPolicy, VertexLinkKind,
+    audit_exact_mesh, build_intersection_graph, certify_convex_solid, certify_exact_mesh_proposal,
+    classify_coplanar_triangles, classify_mesh_face_pair, classify_mesh_face_pairs,
+    classify_mesh_triangle_against_retained_face_plane,
     classify_mesh_vertices_against_convex_solid,
     classify_mesh_vertices_against_convex_solid_report, classify_point_against_convex_solid,
     classify_point_against_convex_solid_report, classify_triangle_against_face_plane,
@@ -30,7 +32,7 @@ use hypermesh::exact::{
 #[cfg(feature = "exact-triangulation")]
 use hypermesh::exact::{
     CoplanarVolumetricCellEvidenceError, CoplanarVolumetricCellObstacle,
-    ExactPlanarArrangementEvidenceError, ExactPoint3, PlanarArrangementObstacle, Triangle,
+    ExactPlanarArrangementEvidenceError, PlanarArrangementObstacle,
     certify_coplanar_volumetric_cell_evidence, certify_planar_arrangement_evidence,
 };
 use hyperreal::Real;
@@ -372,6 +374,98 @@ fn exact_mesh_consumer_readiness_keeps_domains_separate() {
     assert_eq!(
         stale.freshness_against_mesh(&open),
         hypermesh::exact::ExactMeshConsumerReadinessFreshness::StaleReport
+    );
+}
+
+#[test]
+fn exact_mesh_proposal_report_requires_exact_replay_for_adapter_sources() {
+    let exact = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 1, 0, 0, 0, 1, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let exact_report = certify_exact_mesh_proposal(&exact).unwrap();
+    exact_report.validate().unwrap();
+    exact_report.validate_against_mesh(&exact).unwrap();
+    assert_eq!(
+        exact_report.source_kind,
+        ExactMeshProposalSourceKind::ExactConstruction
+    );
+    assert_eq!(
+        exact_report.acceptance,
+        ExactMeshProposalAcceptance::ExactInputReplayed
+    );
+    assert!(!exact_report.adapter_proposal);
+
+    let lossy = ExactMesh::from_f64_triangles_with_policy(
+        &[0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let lossy_report = certify_exact_mesh_proposal(&lossy).unwrap();
+    lossy_report.validate().unwrap();
+    lossy_report.validate_against_mesh(&lossy).unwrap();
+    assert_eq!(
+        lossy_report.source_kind,
+        ExactMeshProposalSourceKind::LossyPrimitiveFloatProposal
+    );
+    assert_eq!(
+        lossy_report.acceptance,
+        ExactMeshProposalAcceptance::ProposalAcceptedAfterExactReplay
+    );
+    assert!(lossy_report.adapter_proposal);
+
+    let external = ExactMesh::new_with_policy(
+        vec![
+            ExactPoint3::new(ExactReal::from(0), ExactReal::from(0), ExactReal::from(0)),
+            ExactPoint3::new(ExactReal::from(1), ExactReal::from(0), ExactReal::from(0)),
+            ExactPoint3::new(ExactReal::from(0), ExactReal::from(1), ExactReal::from(0)),
+        ],
+        vec![Triangle([0, 1, 2])],
+        SourceProvenance::external_adapter("obj proposal"),
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let external_report = certify_exact_mesh_proposal(&external).unwrap();
+    external_report.validate().unwrap();
+    external_report.validate_against_mesh(&external).unwrap();
+    assert_eq!(
+        external_report.source_kind,
+        ExactMeshProposalSourceKind::ExternalAdapterProposal
+    );
+    assert!(external_report.adapter_proposal);
+
+    let mut missing_replay = external_report.clone();
+    missing_replay.exact_replay_performed = false;
+    assert_eq!(
+        missing_replay.validate().unwrap_err(),
+        ExactMeshProposalReportError::MissingExactReplay
+    );
+
+    let mut unaccepted = external_report.clone();
+    unaccepted.accepted_topology = false;
+    assert_eq!(
+        unaccepted.validate().unwrap_err(),
+        ExactMeshProposalReportError::TopologyNotAccepted
+    );
+
+    let mut relabeled = external_report.clone();
+    relabeled.source_kind = ExactMeshProposalSourceKind::ExactConstruction;
+    relabeled.adapter_proposal = false;
+    relabeled.acceptance = ExactMeshProposalAcceptance::ExactInputReplayed;
+    assert_eq!(
+        relabeled.validate().unwrap_err(),
+        ExactMeshProposalReportError::SourcePolicyMismatch
+    );
+
+    assert_eq!(
+        external_report.validate_against_mesh(&lossy).unwrap_err(),
+        ExactMeshProposalReportError::AuditReplay(ExactMeshAuditError::SourceMismatch {
+            expected: MeshSource::LossyF64,
+            actual: MeshSource::ExternalAdapter,
+        })
     );
 }
 

@@ -40,6 +40,7 @@ pub mod package;
 #[cfg(feature = "exact-triangulation")]
 pub mod planar;
 pub mod predicates;
+pub mod proposal;
 pub mod provenance;
 pub mod readiness;
 pub mod region;
@@ -160,6 +161,10 @@ pub use planar::{
     PlanarArrangementObstacle, certify_planar_arrangement_evidence,
 };
 pub use predicates::{TriangleDegeneracy, TrianglePredicateReport};
+pub use proposal::{
+    ExactMeshProposalAcceptance, ExactMeshProposalReport, ExactMeshProposalReportError,
+    ExactMeshProposalSourceKind, certify_exact_mesh_proposal,
+};
 pub use provenance::{
     ApproximationPolicy, ConstructionProvenance, ConstructionProvenanceValidationError, MeshSource,
     PredicateUse, SourceProvenance,

@@ -20,8 +20,9 @@ use hypermesh::exact::{
     certify_boundary_touching_report, certify_convex_solid,
     certify_coplanar_convex_surface_containment, certify_coplanar_convex_surface_equivalence,
     certify_coplanar_convex_surface_report, certify_coplanar_volumetric_cell_evidence,
-    certify_open_surface_disjoint_report, certify_planar_arrangement_evidence,
-    certify_planar_arrangement_report, certify_refinement_report, certify_same_surface_report,
+    certify_exact_mesh_proposal, certify_open_surface_disjoint_report,
+    certify_planar_arrangement_evidence, certify_planar_arrangement_report,
+    certify_refinement_report, certify_same_surface_report,
     certify_single_triangle_coplanar_containment,
     certify_single_triangle_coplanar_containment_report, certify_winding_readiness_report,
     checked_classify_face_regions_against_opposite_planes, classify_coplanar_triangles,
@@ -403,6 +404,48 @@ fn exact_tetrahedron_validation(c: &mut Criterion) {
                 approximate_view,
                 approximate_view_validation,
                 approximate_view_freshness,
+            )
+        })
+    });
+}
+
+fn exact_mesh_proposal_acceptance(c: &mut Criterion) {
+    let exact = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 1, 0, 0, 0, 1, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let lossy = ExactMesh::from_f64_triangles_with_policy(
+        &[0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let external = ExactMesh::new_with_policy(
+        vec![
+            ExactPoint3::new(Real::from(0), Real::from(0), Real::from(0)),
+            ExactPoint3::new(Real::from(1), Real::from(0), Real::from(0)),
+            ExactPoint3::new(Real::from(0), Real::from(1), Real::from(0)),
+        ],
+        vec![Triangle([0, 1, 2])],
+        SourceProvenance::external_adapter("bench external proposal"),
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+
+    c.bench_function("exact_mesh_proposal_acceptance", |b| {
+        b.iter(|| {
+            let exact_report = certify_exact_mesh_proposal(&exact).unwrap();
+            let lossy_report = certify_exact_mesh_proposal(&lossy).unwrap();
+            let external_report = certify_exact_mesh_proposal(&external).unwrap();
+            (
+                exact_report.validate_against_mesh(&exact),
+                lossy_report.validate_against_mesh(&lossy),
+                external_report.validate_against_mesh(&external),
+                exact_report,
+                lossy_report,
+                external_report,
             )
         })
     });
@@ -5121,6 +5164,7 @@ fn legacy_boolean_adapter_report(c: &mut Criterion) {
 criterion_group!(
     benches,
     exact_tetrahedron_validation,
+    exact_mesh_proposal_acceptance,
     exact_face_plane_fact_retention,
     exact_bounds_candidate_generation,
     exact_support_dop_witness_refresh,
