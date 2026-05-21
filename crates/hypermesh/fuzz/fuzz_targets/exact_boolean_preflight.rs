@@ -55,6 +55,8 @@ fuzz_target!(|data: &[u8]| {
         #[cfg(feature = "exact-triangulation")]
         exercise_boundary_centroid_volumetric_representative();
         #[cfg(feature = "exact-triangulation")]
+        exercise_exhausted_boundary_volumetric_representatives();
+        #[cfg(feature = "exact-triangulation")]
         exercise_closed_coplanar_overlap_boundary_policy();
         #[cfg(feature = "exact-triangulation")]
         exercise_closed_vertex_touch_boundary_policy();
@@ -2389,7 +2391,57 @@ fn exercise_boundary_centroid_volumetric_representative() {
         classification.representative_witness,
         hypermesh::exact::ExactTriangleInteriorWitness::new([2, 1, 1])
     );
+    assert_eq!(classification.witness_attempts.len(), 2);
     classification.representative_witness.validate().unwrap();
+    classification
+        .validate_against_sources(&triangulation, &target)
+        .unwrap();
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn exercise_exhausted_boundary_volumetric_representatives() {
+    let target = ExactMesh::from_i64_triangles(
+        &[0, 0, 0, 12, 0, 0, 0, 12, 0, 0, 0, 12],
+        &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+    )
+    .unwrap();
+    let triangulation = FaceRegionTriangulation {
+        side: hypermesh::exact::MeshSide::Left,
+        face: 0,
+        projection: CoplanarProjection::Xy,
+        boundary: vec![
+            FaceSplitBoundaryNode::OriginalVertex {
+                vertex: 0,
+                point: point3(1, 1, 0),
+            },
+            FaceSplitBoundaryNode::OriginalVertex {
+                vertex: 1,
+                point: point3(5, 1, 0),
+            },
+            FaceSplitBoundaryNode::OriginalVertex {
+                vertex: 2,
+                point: point3(1, 5, 0),
+            },
+        ],
+        vertices: vec![point2(1, 1), point2(5, 1), point2(1, 5)],
+        triangles: vec![0, 1, 2],
+    };
+
+    let classification =
+        hypermesh::exact::classify_triangulated_region_triangle_against_closed_mesh(
+            &triangulation,
+            [0, 1, 2],
+            &target,
+        )
+        .unwrap();
+    assert_eq!(
+        classification.relation,
+        hypermesh::exact::ExactVolumetricRegionRelation::Boundary
+    );
+    assert_eq!(
+        classification.witness_attempts.len(),
+        hypermesh::exact::EXACT_TRIANGLE_INTERIOR_WITNESSES.len()
+    );
     classification
         .validate_against_sources(&triangulation, &target)
         .unwrap();

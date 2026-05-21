@@ -1428,6 +1428,27 @@ fn exact_volumetric_witness_lattice(c: &mut Criterion) {
             vertices: vec![point2(2, 1), point2(14, 1), point2(1, 14)],
             triangles: vec![0, 1, 2],
         };
+        let exhausted_boundary = hypermesh::exact::FaceRegionTriangulation {
+            side: hypermesh::exact::MeshSide::Left,
+            face: 0,
+            projection: hypermesh::exact::CoplanarProjection::Xy,
+            boundary: vec![
+                hypermesh::exact::FaceSplitBoundaryNode::OriginalVertex {
+                    vertex: 0,
+                    point: p3(1, 1, 0),
+                },
+                hypermesh::exact::FaceSplitBoundaryNode::OriginalVertex {
+                    vertex: 1,
+                    point: p3(5, 1, 0),
+                },
+                hypermesh::exact::FaceSplitBoundaryNode::OriginalVertex {
+                    vertex: 2,
+                    point: p3(1, 5, 0),
+                },
+            ],
+            vertices: vec![point2(1, 1), point2(5, 1), point2(1, 5)],
+            triangles: vec![0, 1, 2],
+        };
 
         c.bench_function("exact_volumetric_witness_lattice_boundary_retry", |b| {
             b.iter(|| {
@@ -1439,7 +1460,21 @@ fn exact_volumetric_witness_lattice(c: &mut Criterion) {
                     )
                     .unwrap();
                 classification.representative_witness.validate().unwrap();
-                classification.validate_against_sources(&triangulation, &target)
+                let exhausted =
+                    hypermesh::exact::classify_triangulated_region_triangle_against_closed_mesh(
+                        &exhausted_boundary,
+                        [0, 1, 2],
+                        &target,
+                    )
+                    .unwrap();
+                assert_eq!(
+                    exhausted.witness_attempts.len(),
+                    hypermesh::exact::EXACT_TRIANGLE_INTERIOR_WITNESSES.len()
+                );
+                (
+                    classification.validate_against_sources(&triangulation, &target),
+                    exhausted.validate_against_sources(&exhausted_boundary, &target),
+                )
             })
         });
     }

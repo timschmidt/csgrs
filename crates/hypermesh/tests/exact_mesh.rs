@@ -4364,12 +4364,97 @@ fn exact_volumetric_classification_retries_boundary_centroid_representative() {
         classification.representative_witness,
         hypermesh::exact::ExactTriangleInteriorWitness::new([2, 1, 1])
     );
+    assert_eq!(classification.witness_attempts.len(), 2);
+    assert_eq!(
+        classification.witness_attempts[0].witness,
+        hypermesh::exact::ExactTriangleInteriorWitness::new([1, 1, 1])
+    );
+    assert_eq!(
+        classification.witness_attempts[0].relation,
+        hypermesh::exact::ExactVolumetricRegionRelation::Boundary
+    );
+    assert_eq!(
+        classification.witness_attempts[1].witness,
+        classification.representative_witness
+    );
+    assert_eq!(
+        classification.witness_attempts[1].relation,
+        hypermesh::exact::ExactVolumetricRegionRelation::Inside
+    );
     assert_real_eq(&classification.representative.x, &rational(19, 4));
     assert_real_eq(&classification.representative.y, &rational(17, 4));
     assert_real_eq(&classification.representative.z, &ExactReal::from(1));
     classification
         .validate_against_sources(&triangulation, &target)
         .unwrap();
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
+fn exact_volumetric_classification_retains_exhausted_boundary_witnesses() {
+    let target = ExactMesh::from_i64_triangles(
+        &[0, 0, 0, 12, 0, 0, 0, 12, 0, 0, 0, 12],
+        &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+    )
+    .unwrap();
+    let triangulation = hypermesh::exact::FaceRegionTriangulation {
+        side: MeshSide::Left,
+        face: 0,
+        projection: CoplanarProjection::Xy,
+        boundary: vec![
+            FaceSplitBoundaryNode::OriginalVertex {
+                vertex: 0,
+                point: p3(1, 1, 0),
+            },
+            FaceSplitBoundaryNode::OriginalVertex {
+                vertex: 1,
+                point: p3(5, 1, 0),
+            },
+            FaceSplitBoundaryNode::OriginalVertex {
+                vertex: 2,
+                point: p3(1, 5, 0),
+            },
+        ],
+        vertices: vec![
+            hypertri::ExactPoint::new(Real::from(1), Real::from(1)),
+            hypertri::ExactPoint::new(Real::from(5), Real::from(1)),
+            hypertri::ExactPoint::new(Real::from(1), Real::from(5)),
+        ],
+        triangles: vec![0, 1, 2],
+    };
+
+    let classification =
+        hypermesh::exact::classify_triangulated_region_triangle_against_closed_mesh(
+            &triangulation,
+            [0, 1, 2],
+            &target,
+        )
+        .unwrap();
+    assert_eq!(
+        classification.relation,
+        hypermesh::exact::ExactVolumetricRegionRelation::Boundary
+    );
+    assert_eq!(
+        classification.representative_witness,
+        hypermesh::exact::EXACT_TRIANGLE_INTERIOR_WITNESSES[0]
+    );
+    assert_eq!(
+        classification.witness_attempts.len(),
+        hypermesh::exact::EXACT_TRIANGLE_INTERIOR_WITNESSES.len()
+    );
+    assert!(classification.witness_attempts.iter().all(|attempt| {
+        attempt.relation == hypermesh::exact::ExactVolumetricRegionRelation::Boundary
+    }));
+    classification
+        .validate_against_sources(&triangulation, &target)
+        .unwrap();
+
+    let mut truncated = classification.clone();
+    truncated.witness_attempts.pop();
+    assert_eq!(
+        truncated.validate().unwrap_err(),
+        hypermesh::exact::ExactVolumetricRegionError::RepresentativeAttemptNotExhausted
+    );
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -10910,7 +10995,7 @@ fn exact_named_booleans_materialize_partial_convex_intersection() {
             .validate_against_sources(&left, &right)
             .unwrap_err(),
         hypermesh::exact::ExactReportValidationError::InvalidVolumetricClassification(
-            hypermesh::exact::ExactVolumetricRegionError::SourceReplayMismatch
+            hypermesh::exact::ExactVolumetricRegionError::RepresentativeAttemptMismatch
         )
     );
     let mut invalid_witness = union.clone();

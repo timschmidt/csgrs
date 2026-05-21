@@ -227,7 +227,7 @@ pub use view::{
 #[cfg(feature = "exact-triangulation")]
 pub use volumetric::{
     ExactVolumetricRegionClassification, ExactVolumetricRegionError, ExactVolumetricRegionRelation,
-    classify_triangulated_region_against_closed_mesh,
+    ExactVolumetricWitnessAttempt, classify_triangulated_region_against_closed_mesh,
     classify_triangulated_region_triangle_against_closed_mesh,
     classify_triangulated_regions_against_opposite_meshes,
 };
