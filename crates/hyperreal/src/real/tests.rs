@@ -1570,7 +1570,10 @@ mod tests {
 
     #[test]
     fn active_dot2_refs_matches_dot2_refs_when_all_lanes_active() {
-        let left = [Real::pi(), Real::e() * Real::new(Rational::fraction(3, 5).unwrap())];
+        let left = [
+            Real::pi(),
+            Real::e() * Real::new(Rational::fraction(3, 5).unwrap()),
+        ];
         let right = [
             Real::e() * Real::new(Rational::fraction(2, 7).unwrap()),
             Real::pi(),
