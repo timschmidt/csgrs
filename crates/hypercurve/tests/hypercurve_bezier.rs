@@ -4816,6 +4816,27 @@ fn bezier_boolean_root_isolation_replay_consumes_hypersolve_reports() {
     assert_eq!(replay.hypersolve_exact_root_count, 1);
     assert_eq!(replay.hypersolve_unusable_count, 0);
     assert_eq!(replay.split_plan.shared_range_parameters, vec![half()]);
+
+    let readiness = match BezierBooleanConstructionReadinessReport2::from_root_isolation_replay(
+        scheduler.clone(),
+        &replay,
+        &policy(),
+    ) {
+        Classification::Decided(report) => report,
+        Classification::Uncertain(reason) => panic!("unexpected readiness uncertainty: {reason:?}"),
+    };
+    assert_eq!(
+        readiness.status,
+        BezierBooleanConstructionReadinessStatus::Ready
+    );
+    assert_eq!(
+        readiness.insertion.status,
+        BezierBooleanSplitInsertionStatus::Ready
+    );
+    assert_eq!(
+        readiness.insertion.shared_range_interior_parameters,
+        vec![half()]
+    );
 }
 
 #[test]
@@ -4854,6 +4875,20 @@ fn bezier_boolean_root_isolation_replay_blocks_unusable_hypersolve_reports() {
     assert!(replay.has_blockers());
     assert_eq!(replay.hypersolve_report_count, 1);
     assert_eq!(replay.hypersolve_unusable_count, 1);
+
+    let readiness = match BezierBooleanConstructionReadinessReport2::from_root_isolation_replay(
+        scheduler,
+        &replay,
+        &policy(),
+    ) {
+        Classification::Decided(report) => report,
+        Classification::Uncertain(reason) => panic!("unexpected readiness uncertainty: {reason:?}"),
+    };
+    assert_eq!(
+        readiness.status,
+        BezierBooleanConstructionReadinessStatus::Blocked
+    );
+    assert!(readiness.has_blockers());
 }
 
 #[test]
@@ -10667,6 +10702,23 @@ proptest! {
         prop_assert_eq!(replay.hypersolve_exact_root_count, span_count);
         prop_assert_eq!(replay.hypersolve_unusable_count, 0);
         prop_assert_eq!(replay.split_plan.range_event_count, span_count);
+
+        let readiness = match BezierBooleanConstructionReadinessReport2::from_root_isolation_replay(
+            scheduler,
+            &replay,
+            &policy(),
+        ) {
+            Classification::Decided(report) => report,
+            Classification::Uncertain(reason) => {
+                prop_assert!(false, "unexpected readiness uncertainty: {reason:?}");
+                return Ok(());
+            }
+        };
+        prop_assert_eq!(
+            readiness.status,
+            BezierBooleanConstructionReadinessStatus::Ready
+        );
+        prop_assert_eq!(readiness.insertion.interior_parameter_count, span_count);
     }
 
     #[test]

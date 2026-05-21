@@ -10684,6 +10684,61 @@ impl BezierBooleanConstructionReadinessReport2 {
         policy: &CurvePolicy,
     ) -> Classification<Self> {
         let split_plan = BezierBooleanSplitPlanReport2::from_scheduler(&scheduler);
+        Self::from_split_plan(scheduler, split_plan, policy)
+    }
+
+    /// Builds construction readiness from a root-isolation replay report.
+    ///
+    /// This is the boolean-facing continuation of `hypersolve` root isolation:
+    /// [`BezierBooleanRootIsolationReplayReport2`] may contribute exact
+    /// represented roots that were not present in the original scheduler, then
+    /// this constructor runs the same unit-domain audit and insertion
+    /// classification used by ordinary split-ready schedulers. The split plan
+    /// remains blocker-marked unless replay reached
+    /// [`BezierBooleanRootIsolationReplayStatus::ReadyForSplitEvents`].
+    /// That preserves Yap's exact-geometric-computation boundary and the
+    /// Greiner-Hormann/Martinez-Rueda-Feito split-before-traversal discipline:
+    /// solver intervals never become topology unless they are replayed as exact
+    /// Bezier parameters.
+    pub fn from_root_isolation_replay(
+        scheduler: BezierBooleanPathSchedulerReport2,
+        replay: &BezierBooleanRootIsolationReplayReport2,
+        policy: &CurvePolicy,
+    ) -> Classification<Self> {
+        let split_plan = if replay.can_feed_split_events() {
+            replay.split_plan.clone()
+        } else {
+            BezierBooleanSplitPlanReport2 {
+                status: BezierBooleanSplitPlanStatus::Blocked,
+                scheduler_status: scheduler.status,
+                first_curve_parameters: replay.split_plan.first_curve_parameters.clone(),
+                second_curve_parameters: replay.split_plan.second_curve_parameters.clone(),
+                shared_range_parameters: replay.split_plan.shared_range_parameters.clone(),
+                relation_event_count: replay.split_plan.relation_event_count,
+                range_event_count: replay.split_plan.range_event_count,
+                uncertainty_reason: replay.split_plan.uncertainty_reason,
+            }
+        };
+        Self::from_split_plan(scheduler, split_plan, policy)
+    }
+
+    /// Builds construction readiness directly from relation and range reports.
+    pub fn from_reports(
+        relation_reports: &[BezierBooleanHandoffReport2],
+        range_reports: &[BezierPathRangeOrderReport2],
+        policy: &CurvePolicy,
+    ) -> Classification<Self> {
+        Self::from_scheduler(
+            BezierBooleanPathSchedulerReport2::from_reports(relation_reports, range_reports),
+            policy,
+        )
+    }
+
+    fn from_split_plan(
+        scheduler: BezierBooleanPathSchedulerReport2,
+        split_plan: BezierBooleanSplitPlanReport2,
+        policy: &CurvePolicy,
+    ) -> Classification<Self> {
         let split_plan_audit = match split_plan.audit(policy) {
             Classification::Decided(audit) => audit,
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
@@ -10717,18 +10772,6 @@ impl BezierBooleanConstructionReadinessReport2 {
             split_plan_audit,
             insertion,
         })
-    }
-
-    /// Builds construction readiness directly from relation and range reports.
-    pub fn from_reports(
-        relation_reports: &[BezierBooleanHandoffReport2],
-        range_reports: &[BezierPathRangeOrderReport2],
-        policy: &CurvePolicy,
-    ) -> Classification<Self> {
-        Self::from_scheduler(
-            BezierBooleanPathSchedulerReport2::from_reports(relation_reports, range_reports),
-            policy,
-        )
     }
 
     /// Returns true when interior split parameters are ready for insertion.
