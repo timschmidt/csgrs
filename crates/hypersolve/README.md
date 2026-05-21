@@ -64,6 +64,9 @@ than internal truth.
 - `ProposalEngineKind`, `ProposalEngineReport`, `DenseLinearBackend`,
   `LinearSolveReport`, `SolverConfig`, `SolverState`, and `SolveReport` make
   lossy candidate generation explicit.
+- `DenseResidualReplayReport`, `DenseResidualReplayRow`,
+  `DenseResidualReplayError`, and `replay_dense_linear_residuals` provide exact
+  replay for externally assembled dense linear residuals.
 
 ## Precision Model
 
@@ -112,6 +115,8 @@ Implemented today:
   certification surfaces;
 - exact domain preflight for division, negative powers, square root, logarithm,
   inverse circular, and inverse hyperbolic residual nodes;
+- reusable exact dense linear residual replay for domain crates that build their
+  own small linear systems;
 - a dense damped least-squares prototype with proposal-engine and adapter diagnostics;
 - geometry, PCB, and toolpath constraint helper modules.
 

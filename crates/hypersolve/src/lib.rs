@@ -21,6 +21,7 @@ pub mod model;
 pub mod polynomial;
 pub mod predicates;
 pub mod prepared;
+pub mod residual_replay;
 pub mod root_isolation;
 pub mod solver;
 pub mod solver_block;
@@ -105,6 +106,10 @@ pub use polynomial::{
 pub use predicates::{Classification, PredicateBackend, PredicateReport};
 pub use prepared::{
     PreparedConstraintFacts, PreparedProblem, PreparedProblemFacts, facts_depend_on_symbol,
+};
+pub use residual_replay::{
+    DenseResidualReplayError, DenseResidualReplayReport, DenseResidualReplayRow,
+    replay_dense_linear_residuals,
 };
 pub use root_isolation::{
     AlgebraicRootCandidateReport, AlgebraicRootCandidateStatus, BernsteinRootCountReport,

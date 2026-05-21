@@ -13,8 +13,9 @@ use hypersolve::{
     context_from_problem, count_bernstein_univariate_polynomial_interval_roots,
     count_descartes_univariate_polynomial_roots, differential_pair_skew_equation,
     eliminate_affine_rows_with_substitution_classes, isolate_univariate_polynomial_roots,
-    rectangular_difference_area_equation, report_lossy_adapter_only_candidate,
-    represent_univariate_algebraic_roots, solve_damped_least_squares, solve_direct_affine_system,
+    rectangular_difference_area_equation, replay_dense_linear_residuals,
+    report_lossy_adapter_only_candidate, represent_univariate_algebraic_roots,
+    solve_damped_least_squares, solve_direct_affine_system,
     solve_direct_univariate_quadratic_equalities, squared_distance_equation,
     subdivide_bernstein_univariate_polynomial_interval_roots,
 };
@@ -189,6 +190,16 @@ fn certification(c: &mut Criterion) {
     });
     c.bench_function("solve_direct_affine_system", |b| {
         b.iter(|| solve_direct_affine_system(&krawczyk_prepared))
+    });
+    c.bench_function("replay_dense_linear_residuals", |b| {
+        b.iter(|| {
+            replay_dense_linear_residuals(
+                &[vec![r(2), r(1)], vec![r(1), r(-1)]],
+                &[r(5), r(1)],
+                &[r(2), r(1)],
+                -64,
+            )
+        })
     });
     let elimination_problem = substitution_elimination_problem(16);
     let elimination_prepared = PreparedProblem::new(&elimination_problem);
