@@ -780,6 +780,12 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// - `segments`: number of segments for approximating the cylinder and frustum
     /// - `orientation`: when false (default) the arrow points away from start (its base is at start); when true the arrow points toward start (its tip is at start).
     /// - `metadata`: optional metadata for the generated polygons.
+    ///
+    /// Arrow proportions are derived through hyperreal scalar helpers before
+    /// delegating shaft/head construction to [`Mesh::cylinder`] and
+    /// [`Mesh::frustum_ptp`], following Yap, "Towards Exact Geometric
+    /// Computation," *Computational Geometry* 7(1-2), 1997
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     pub fn arrow(
         start: Point3<Real>,
         direction: Vector3<Real>,
@@ -795,20 +801,33 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         let Some((unit_dir, arrow_length)) = hunit_vector3_and_magnitude(&direction) else {
             return Mesh::empty(metadata);
         };
-        if arrow_length < tolerance() {
+        if matches!(
+            hreal_cmp_f64(arrow_length, tolerance()),
+            Ordering::Less | Ordering::Equal
+        ) {
             return Mesh::empty(metadata);
         }
 
         // Define proportions:
         // - Arrow head occupies 20% of total length.
         // - Shaft occupies the remainder.
-        let head_length = arrow_length * 0.2;
-        let shaft_length = arrow_length - head_length;
+        let Some(head_length) = hreal_mul(arrow_length, 0.2) else {
+            return Mesh::empty(metadata);
+        };
+        let Some(shaft_length) = hreal_sub(arrow_length, head_length) else {
+            return Mesh::empty(metadata);
+        };
 
         // Define thickness parameters proportional to the arrow length.
-        let shaft_radius = arrow_length * 0.03; // shaft radius
-        let head_base_radius = arrow_length * 0.06; // head base radius (wider than shaft)
-        let tip_radius = arrow_length * 0.0; // tip radius (nearly a point)
+        let Some(shaft_radius) = hreal_mul(arrow_length, 0.03) else {
+            return Mesh::empty(metadata);
+        };
+        let Some(head_base_radius) = hreal_mul(arrow_length, 0.06) else {
+            return Mesh::empty(metadata);
+        };
+        let Some(tip_radius) = hreal_mul(arrow_length, 0.0) else {
+            return Mesh::empty(metadata);
+        };
 
         // Build the shaft as a vertical cylinder along Z from 0 to shaft_length.
         let shaft = Mesh::cylinder(shaft_radius, shaft_length, segments, metadata.clone());
@@ -816,7 +835,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         // Build the arrow head as a frustum from z = shaft_length to z = shaft_length + head_length.
         let head = Mesh::frustum_ptp(
             Point3::new(0.0, 0.0, shaft_length),
-            Point3::new(0.0, 0.0, shaft_length + head_length),
+            Point3::new(0.0, 0.0, arrow_length),
             head_base_radius,
             tip_radius,
             segments,
@@ -830,14 +849,21 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         // The mirror transform about the plane z = arrow_length/2 maps any point (0,0,z) to (0,0, arrow_length - z).
         if orientation {
             let l = arrow_length;
-            let Some(to_midpoint) = htranslation_matrix(&Vector3::new(0.0, 0.0, l / 2.0))
+            let Some(half_length) = hreal_div(l, 2.0) else {
+                return Mesh::empty(metadata);
+            };
+            let Some(negative_half_length) = hreal_sub(0.0, half_length) else {
+                return Mesh::empty(metadata);
+            };
+            let Some(to_midpoint) = htranslation_matrix(&Vector3::new(0.0, 0.0, half_length))
             else {
                 return Mesh::empty(metadata);
             };
             let Some(reflect_z) = hscale_matrix(1.0, 1.0, -1.0) else {
                 return Mesh::empty(metadata);
             };
-            let Some(from_midpoint) = htranslation_matrix(&Vector3::new(0.0, 0.0, -l / 2.0))
+            let Some(from_midpoint) =
+                htranslation_matrix(&Vector3::new(0.0, 0.0, negative_half_length))
             else {
                 return Mesh::empty(metadata);
             };
