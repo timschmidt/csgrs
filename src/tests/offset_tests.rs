@@ -91,6 +91,24 @@ fn test_zero_offset_preserves_region_2d() {
 
 #[test]
 #[cfg(feature = "offset")]
+fn test_offset_accepts_hyperreal_primary_scalar_and_integer_promotion() {
+    let shape = Profile::<()>::circle(1.0, 32, ());
+
+    let zero_hyper = shape.offset(hyperreal::Real::from(0));
+    assert!(
+        (first_material_area(&zero_hyper) - first_material_area(&shape)).abs() < 1.0e-9,
+        "Hyperreal zero offset should preserve native region area"
+    );
+
+    let integer_offset = shape.offset(0);
+    assert!(
+        (first_material_area(&integer_offset) - first_material_area(&shape)).abs() < 1.0e-9,
+        "Integer zero distance should promote through the hyperreal API surface"
+    );
+}
+
+#[test]
+#[cfg(feature = "offset")]
 fn test_non_finite_offsets_fail_closed() {
     let shape = Profile::<()>::circle(1.0, 32, ());
 

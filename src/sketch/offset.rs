@@ -28,7 +28,7 @@
 //! geometry model.
 
 use crate::float_types::{
-    Real, hreal_abs, hreal_cmp_f64, hreal_from_f64, hreal_sign, tolerance,
+    HReal, Real, hreal_abs, hreal_cmp_f64, hreal_from_f64, hreal_sign, hreal_to_f64, tolerance,
 };
 use crate::sketch::Profile;
 use hypercurve::{
@@ -165,7 +165,13 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// prove the result does not need global regularization. Unsupported cases
     /// return an empty native sketch instead of manufacturing CAD state through
     /// another geometry crate.
-    pub fn offset(&self, distance: Real) -> Profile<M> {
+    pub fn offset<D>(&self, distance: D) -> Profile<M>
+    where
+        D: TryInto<HReal>,
+    {
+        let Some(distance) = finite_offset_distance(distance) else {
+            return self.empty_offset_result();
+        };
         if let Some(sketch) = self.native_zero_offset(distance) {
             return sketch;
         }
@@ -184,7 +190,13 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// compatibility datatype. Until rounded regularized region offsets are
     /// native in hypercurve, filled regions use the same certified raw-contour
     /// path as [`Profile::offset`].
-    pub fn offset_rounded(&self, distance: Real) -> Profile<M> {
+    pub fn offset_rounded<D>(&self, distance: D) -> Profile<M>
+    where
+        D: TryInto<HReal>,
+    {
+        let Some(distance) = finite_offset_distance(distance) else {
+            return self.empty_offset_result();
+        };
         if let Some(sketch) = self.native_zero_offset(distance) {
             return sketch;
         }
@@ -224,16 +236,18 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     }
 }
 
-/// Admit primitive offset distances only after hyperreal promotion succeeds.
+/// Admit offset distances only after hyperreal promotion succeeds.
 ///
-/// Offset distance is still a public `f64` boundary value, but all
-/// topology-affecting branches in this module run after a `hyperreal::Real`
-/// lift has accepted the scalar. This follows Yap's exact geometric
-/// computation boundary split (1997) and avoids interpreting non-finite
-/// primitive values as exact zero offsets.
-fn finite_offset_distance(distance: Real) -> Option<Real> {
-    hreal_from_f64(distance).ok()?;
-    Some(distance)
+/// The public offset surface is `hyperreal::Real` first; primitive `f64` and
+/// integer values are accepted only through promotion. We export once to the
+/// current finite hypercurve distance boundary so topology-affecting branches
+/// never interpret rejected primitive values as exact zero offsets. This follows
+/// Yap's exact geometric computation boundary split (1997).
+fn finite_offset_distance<D>(distance: D) -> Option<Real>
+where
+    D: TryInto<HReal>,
+{
+    hreal_to_f64(&distance.try_into().ok()?)
 }
 
 fn native_role_offset_contour(
