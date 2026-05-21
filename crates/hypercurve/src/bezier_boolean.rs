@@ -7541,6 +7541,47 @@ impl BezierBooleanRegionAssemblyReport2 {
         Self::from_output_loop_depth_role_facts(output, &containment.depth_facts, roles)
     }
 
+    /// Packages output loops from replayed exact containment-query results.
+    ///
+    /// This is the query-result counterpart to
+    /// [`Self::from_output_loop_containment_facts`]. A point/loop locator first
+    /// answers the ordered worklist from
+    /// [`BezierBooleanLoopContainmentQueryReport2`], then
+    /// [`BezierBooleanLoopContainmentQueryResultReport2`] validates the
+    /// object keys and lowers only strict `Contains` answers to containment
+    /// facts. This constructor consumes that replay report directly so a
+    /// blocked boundary, unknown, stale, missing, or extra query result cannot
+    /// be accidentally treated as "no containment." This is Yap's "Towards
+    /// Exact Geometric Computation" (1997) predicate/construction boundary:
+    /// unresolved predicates remain explicit blockers. The loop nesting/fill
+    /// separation follows Vatti (1992), Greiner-Hormann (1998), and
+    /// Martinez-Rueda-Feito (2009).
+    pub fn from_output_loop_containment_query_results(
+        output: &BezierBooleanOutputLoopReport2,
+        query_results: &BezierBooleanLoopContainmentQueryResultReport2,
+    ) -> Self {
+        if query_results.has_blockers() || query_results.operation != output.operation {
+            return Self {
+                status: BezierBooleanRegionAssemblyStatus::RoleAssignmentBlocked,
+                role_status: BezierBooleanLoopRoleAssignmentStatus::NestingDepthFactBlocked,
+                operation: output.operation,
+                directed_fragments: Vec::new(),
+                assigned_loops: Vec::new(),
+                material_loop_indices: Vec::new(),
+                hole_loop_indices: Vec::new(),
+                assigned_loop_count: 0,
+                material_loop_count: 0,
+                hole_loop_count: 0,
+                blocker_count: query_results
+                    .blocker_count
+                    .max(usize::from(query_results.operation != output.operation))
+                    .max(1),
+            };
+        }
+
+        Self::from_output_loop_containment_facts(output, &query_results.containment_facts)
+    }
+
     /// Packages graph-walk-certified generic endpoints using containment facts.
     pub fn from_graph_walk_containment_facts(
         walk: &BezierBooleanLoopGraphWalkReport2,
@@ -7556,6 +7597,29 @@ impl BezierBooleanRegionAssemblyReport2 {
             second_endpoints,
         );
         Self::from_output_loop_containment_facts(&output, containment_facts)
+    }
+
+    /// Packages graph-walk-certified endpoints from replayed containment queries.
+    ///
+    /// The graph walk certifies boundary order and closure, while the query
+    /// replay certifies loop containment. Keeping those certificates separate
+    /// follows the staged boolean model of Vatti (1992), Greiner-Hormann
+    /// (1998), and Martinez-Rueda-Feito (2009); consuming the replay report as
+    /// an all-or-blocking input follows Yap (1997).
+    pub fn from_graph_walk_containment_query_results(
+        walk: &BezierBooleanLoopGraphWalkReport2,
+        plan: &BezierBooleanLoopAssemblyPlanReport2,
+        first_endpoints: &[(Point2, Point2)],
+        second_endpoints: &[(Point2, Point2)],
+        query_results: &BezierBooleanLoopContainmentQueryResultReport2,
+    ) -> Self {
+        let output = BezierBooleanOutputLoopReport2::from_graph_walk_endpoints(
+            walk,
+            plan,
+            first_endpoints,
+            second_endpoints,
+        );
+        Self::from_output_loop_containment_query_results(&output, query_results)
     }
 
     /// Packages graph-walk-certified endpoints using containment and role facts.
@@ -9602,6 +9666,84 @@ impl BezierBooleanResultReport2 {
         Self::from_region_assembly(&assembly)
     }
 
+    /// Accepts a graph-walk-certified endpoint result from replayed containment queries.
+    ///
+    /// This constructor closes the exact point/loop locator path for current
+    /// higher-order boolean output. The supplied
+    /// [`BezierBooleanLoopContainmentQueryResultReport2`] must be ready and
+    /// keyed to the same boolean operation; otherwise the result is blocked
+    /// before containment-derived depths can assign material/hole roles. This
+    /// directly implements Yap's (1997) rule that predicate uncertainty is not
+    /// construction evidence. The graph/containment/result split follows
+    /// Vatti (1992), Greiner-Hormann (1998), and Martinez-Rueda-Feito (2009).
+    pub fn from_graph_walk_containment_query_results(
+        walk: &BezierBooleanLoopGraphWalkReport2,
+        plan: &BezierBooleanLoopAssemblyPlanReport2,
+        first_endpoints: &[(Point2, Point2)],
+        second_endpoints: &[(Point2, Point2)],
+        query_results: &BezierBooleanLoopContainmentQueryResultReport2,
+    ) -> Self {
+        let assembly =
+            BezierBooleanRegionAssemblyReport2::from_graph_walk_containment_query_results(
+                walk,
+                plan,
+                first_endpoints,
+                second_endpoints,
+                query_results,
+            );
+        Self::from_region_assembly(&assembly)
+    }
+
+    /// Accepts a scheduled endpoint result from replayed containment queries.
+    ///
+    /// Ownership facts, graph obligations, graph-walk order, exact closure, and
+    /// point/loop containment-query replay are all validated before a result is
+    /// accepted. Boundary or unknown locator answers therefore block exactly
+    /// like stale graph or role certificates instead of collapsing into an
+    /// empty containment set. This is the Yap (1997) predicate replay contract
+    /// applied to the Vatti (1992), Greiner-Hormann (1998), and
+    /// Martinez-Rueda-Feito (2009) clipping/fill pipeline.
+    pub fn from_schedule_graph_walk_containment_query_results(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        ownership_facts: &[BezierBooleanOwnershipFact2],
+        first_endpoints: &[(Point2, Point2)],
+        second_endpoints: &[(Point2, Point2)],
+        branch_vertex_count: usize,
+        resolved_overlap_count: usize,
+        walk_indices: &[usize],
+        query_results: &BezierBooleanLoopContainmentQueryResultReport2,
+    ) -> Self {
+        let facts =
+            BezierBooleanOwnershipFactReport2::from_schedule_facts(schedule, ownership_facts);
+        let ownership = facts.classify(schedule, operation);
+        let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
+        let assembly = BezierBooleanAssemblyReadinessReport2::from_fragment_counts(
+            &emission,
+            first_endpoints.len(),
+            second_endpoints.len(),
+        );
+        let plan =
+            BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(&assembly, &emission);
+        let traversal = BezierBooleanLoopGraphTraversalReport2::from_certified_walk_graph_facts(
+            &plan,
+            branch_vertex_count,
+            resolved_overlap_count,
+        );
+        let walk = BezierBooleanLoopGraphWalkReport2::from_traversal_order(
+            &traversal,
+            &plan,
+            walk_indices,
+        );
+        Self::from_graph_walk_containment_query_results(
+            &walk,
+            &plan,
+            first_endpoints,
+            second_endpoints,
+            query_results,
+        )
+    }
+
     /// Accepts a graph-walk-certified endpoint result with containment-certified roles.
     pub fn from_graph_walk_containment_role_facts(
         walk: &BezierBooleanLoopGraphWalkReport2,
@@ -11383,6 +11525,41 @@ impl BezierBooleanMaterializedRegionReport2 {
         Self::from_result_laminar_containment_facts(&result, containment_facts)
     }
 
+    /// Materializes a scheduled endpoint result from replayed containment queries.
+    ///
+    /// This is the materialization endpoint for the current exact point/loop
+    /// locator path. Query replay must be ready before the result constructor
+    /// can derive loop roles, and the same replayed containment facts are then
+    /// used to attach holes to their nearest certified material ancestors.
+    /// Boundary, unknown, missing, extra, or stale query answers remain
+    /// blockers, preserving Yap's (1997) exact-geometric-computation contract
+    /// through the Vatti (1992), Greiner-Hormann (1998), and
+    /// Martinez-Rueda-Feito (2009) boundary/nesting/fill phases.
+    pub fn from_schedule_graph_walk_laminar_containment_query_results(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        ownership_facts: &[BezierBooleanOwnershipFact2],
+        first_endpoints: &[(Point2, Point2)],
+        second_endpoints: &[(Point2, Point2)],
+        branch_vertex_count: usize,
+        resolved_overlap_count: usize,
+        walk_indices: &[usize],
+        query_results: &BezierBooleanLoopContainmentQueryResultReport2,
+    ) -> Self {
+        let result = BezierBooleanResultReport2::from_schedule_graph_walk_containment_query_results(
+            schedule,
+            operation,
+            ownership_facts,
+            first_endpoints,
+            second_endpoints,
+            branch_vertex_count,
+            resolved_overlap_count,
+            walk_indices,
+            query_results,
+        );
+        Self::from_result_laminar_containment_query_results(&result, query_results)
+    }
+
     /// Materializes a scheduled endpoint result with graph facts and laminar containment.
     pub fn from_schedule_graph_fact_walk_laminar_containment_facts(
         schedule: &BezierBooleanTraversalScheduleReport2,
@@ -11860,6 +12037,37 @@ impl BezierBooleanMaterializedRegionReport2 {
             role_incompatible_containment_count: 0,
             blocker_count,
         }
+    }
+
+    /// Materializes a result from replayed containment-query facts.
+    ///
+    /// This wrapper deliberately consumes
+    /// [`BezierBooleanLoopContainmentQueryResultReport2`] rather than its raw
+    /// fact vector so unresolved point/loop locator outcomes cannot be dropped
+    /// at the materialization boundary. If replay is blocked, materialization
+    /// is blocked before hole attachment. If replay is ready, the contained
+    /// facts flow into [`Self::from_result_laminar_containment_facts`]. This
+    /// is the final Yap (1997) replay check for the current Bezier/conic
+    /// boolean containment path.
+    pub fn from_result_laminar_containment_query_results(
+        result: &BezierBooleanResultReport2,
+        query_results: &BezierBooleanLoopContainmentQueryResultReport2,
+    ) -> Self {
+        if query_results.has_blockers() || query_results.operation != result.operation {
+            let audit = BezierBooleanMaterializationAuditReport2::from_result(result);
+            return Self::empty_like(
+                BezierBooleanMaterializedRegionStatus::AuditBlocked,
+                result,
+                &audit,
+                query_results.containment_fact_count,
+                query_results
+                    .blocker_count
+                    .max(usize::from(query_results.operation != result.operation))
+                    .max(1),
+            );
+        }
+
+        Self::from_result_laminar_containment_facts(result, &query_results.containment_facts)
     }
 
     fn empty_like(

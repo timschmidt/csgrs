@@ -9952,6 +9952,148 @@ fn bezier_boolean_result_consumes_schedule_graph_walk_containment_facts() {
 }
 
 #[test]
+fn bezier_boolean_result_consumes_containment_query_results_without_dropping_blockers() {
+    let schedule = BezierBooleanTraversalScheduleReport2 {
+        status: BezierBooleanTraversalScheduleStatus::Ready,
+        precondition_status: BezierBooleanTraversalPreconditionStatus::Ready,
+        first_fragment_count: 2,
+        second_fragment_count: 0,
+        steps: vec![
+            hypercurve::BezierBooleanTraversalStep2 {
+                operand: BezierBooleanTraversalOperand::First,
+                fragment_index: 0,
+            },
+            hypercurve::BezierBooleanTraversalStep2 {
+                operand: BezierBooleanTraversalOperand::First,
+                fragment_index: 1,
+            },
+        ],
+        resolved_overlap_count: 0,
+        overlap_boundary_parameter_count: 0,
+        blocker_count: 0,
+    };
+    let ownership_facts = schedule
+        .steps
+        .iter()
+        .map(|step| BezierBooleanOwnershipFact2 {
+            step: step.clone(),
+            opposite_location: BezierBooleanFragmentOwnershipLocation::Outside,
+        })
+        .collect::<Vec<_>>();
+    let endpoints = [(point(0, 0), point(0, 0)), (point(1, 0), point(1, 0))];
+    let result_for_queries = BezierBooleanResultReport2::from_schedule_graph_walk_containment_facts(
+        &schedule,
+        BooleanOp::Union,
+        &ownership_facts,
+        &endpoints,
+        &[],
+        0,
+        0,
+        &[0, 1],
+        &[],
+    );
+    let output_for_queries = hypercurve::BezierBooleanOutputLoopReport2 {
+        status: BezierBooleanOutputLoopStatus::Ready,
+        closure_status: BezierBooleanLoopClosureStatus::Closed,
+        operation: BooleanOp::Union,
+        directed_fragments: result_for_queries.directed_fragments.clone(),
+        loops: result_for_queries
+            .assigned_loops
+            .iter()
+            .map(|assigned| assigned.output_loop.clone())
+            .collect(),
+        closed_loop_count: result_for_queries.assigned_loops.len(),
+        directed_fragment_count: result_for_queries.directed_fragments.len(),
+        open_chain_count: 0,
+        adjacency_gap_count: 0,
+        invalid_reference_count: 0,
+        blocker_count: 0,
+    };
+    let locator = BezierBooleanLoopLocatorInputReport2::from_output_loops(&output_for_queries);
+    let queries = BezierBooleanLoopContainmentQueryReport2::from_locator_inputs(&locator);
+    let ready_results = queries
+        .queries
+        .iter()
+        .map(|query| BezierBooleanLoopContainmentQueryResult2 {
+            query_loop_index: query.query_loop_index,
+            candidate_container_loop_index: query.candidate_container_loop_index,
+            result: if query.query_loop_index == 1 && query.candidate_container_loop_index == 0 {
+                BezierBooleanLoopContainmentQueryResult::Contains
+            } else {
+                BezierBooleanLoopContainmentQueryResult::Outside
+            },
+        })
+        .collect::<Vec<_>>();
+    let replay = BezierBooleanLoopContainmentQueryResultReport2::from_query_results(
+        &queries,
+        &ready_results,
+    );
+
+    let result = BezierBooleanResultReport2::from_schedule_graph_walk_containment_query_results(
+        &schedule,
+        BooleanOp::Union,
+        &ownership_facts,
+        &endpoints,
+        &[],
+        0,
+        0,
+        &[0, 1],
+        &replay,
+    );
+    assert_eq!(result.status, BezierBooleanResultStatus::Ready);
+    assert_eq!(result.material_loop_indices, vec![0]);
+    assert_eq!(result.hole_loop_indices, vec![1]);
+
+    let materialized =
+        BezierBooleanMaterializedRegionReport2::from_schedule_graph_walk_laminar_containment_query_results(
+            &schedule,
+            BooleanOp::Union,
+            &ownership_facts,
+            &endpoints,
+            &[],
+            0,
+            0,
+            &[0, 1],
+            &replay,
+        );
+    assert_eq!(
+        materialized.status,
+        BezierBooleanMaterializedRegionStatus::Ready
+    );
+    assert_eq!(materialized.components[0].hole_loop_indices, vec![1]);
+
+    let boundary_results = queries
+        .queries
+        .iter()
+        .map(|query| BezierBooleanLoopContainmentQueryResult2 {
+            query_loop_index: query.query_loop_index,
+            candidate_container_loop_index: query.candidate_container_loop_index,
+            result: BezierBooleanLoopContainmentQueryResult::Boundary,
+        })
+        .collect::<Vec<_>>();
+    let boundary_replay = BezierBooleanLoopContainmentQueryResultReport2::from_query_results(
+        &queries,
+        &boundary_results,
+    );
+    let blocked = BezierBooleanResultReport2::from_schedule_graph_walk_containment_query_results(
+        &schedule,
+        BooleanOp::Union,
+        &ownership_facts,
+        &endpoints,
+        &[],
+        0,
+        0,
+        &[0, 1],
+        &boundary_replay,
+    );
+    assert_eq!(
+        blocked.status,
+        BezierBooleanResultStatus::RegionAssemblyBlocked
+    );
+    assert!(blocked.has_blockers());
+}
+
+#[test]
 fn bezier_boolean_schedule_containment_role_facts_block_stale_roles() {
     let schedule = BezierBooleanTraversalScheduleReport2 {
         status: BezierBooleanTraversalScheduleStatus::Ready,
