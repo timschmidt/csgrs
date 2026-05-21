@@ -8801,6 +8801,111 @@ fn bezier_boolean_result_consumes_schedule_multi_cycle_successors_and_depth_fact
     assert_eq!(containment_result.material_loop_indices, vec![0]);
     assert_eq!(containment_result.hole_loop_indices, vec![1]);
 
+    let output_for_queries = hypercurve::BezierBooleanOutputLoopReport2 {
+        status: BezierBooleanOutputLoopStatus::Ready,
+        closure_status: BezierBooleanLoopClosureStatus::Closed,
+        operation: BooleanOp::Union,
+        directed_fragments: containment_result.directed_fragments.clone(),
+        loops: containment_result
+            .assigned_loops
+            .iter()
+            .map(|assigned| assigned.output_loop.clone())
+            .collect(),
+        closed_loop_count: containment_result.assigned_loops.len(),
+        directed_fragment_count: containment_result.directed_fragments.len(),
+        open_chain_count: 0,
+        adjacency_gap_count: 0,
+        invalid_reference_count: 0,
+        blocker_count: 0,
+    };
+    let locator = BezierBooleanLoopLocatorInputReport2::from_output_loops(&output_for_queries);
+    let queries = BezierBooleanLoopContainmentQueryReport2::from_locator_inputs(&locator);
+    let ready_results = queries
+        .queries
+        .iter()
+        .map(|query| BezierBooleanLoopContainmentQueryResult2 {
+            query_loop_index: query.query_loop_index,
+            candidate_container_loop_index: query.candidate_container_loop_index,
+            result: if query.query_loop_index == 1 && query.candidate_container_loop_index == 0 {
+                BezierBooleanLoopContainmentQueryResult::Contains
+            } else {
+                BezierBooleanLoopContainmentQueryResult::Outside
+            },
+        })
+        .collect::<Vec<_>>();
+    let replay = BezierBooleanLoopContainmentQueryResultReport2::from_query_results(
+        &queries,
+        &ready_results,
+    );
+    let certification =
+        BezierBooleanLoopContainmentCertificationReport2::from_output_loop_query_results(
+            &output_for_queries,
+            &ready_results,
+        );
+
+    let replay_result =
+        BezierBooleanResultReport2::from_schedule_multi_cycle_successor_containment_query_results(
+            &schedule,
+            BooleanOp::Union,
+            &ownership_facts,
+            &endpoints,
+            &[],
+            0,
+            0,
+            &successors,
+            &replay,
+        );
+    assert_eq!(replay_result.status, BezierBooleanResultStatus::Ready);
+    assert_eq!(replay_result.material_loop_indices, vec![0]);
+    assert_eq!(replay_result.hole_loop_indices, vec![1]);
+
+    let certified_result =
+        BezierBooleanResultReport2::from_schedule_multi_cycle_successor_containment_certification(
+            &schedule,
+            BooleanOp::Union,
+            &ownership_facts,
+            &endpoints,
+            &[],
+            0,
+            0,
+            &successors,
+            &certification,
+        );
+    assert_eq!(certified_result.status, BezierBooleanResultStatus::Ready);
+    assert_eq!(certified_result.material_loop_indices, vec![0]);
+    assert_eq!(certified_result.hole_loop_indices, vec![1]);
+
+    let boundary_results = queries
+        .queries
+        .iter()
+        .map(|query| BezierBooleanLoopContainmentQueryResult2 {
+            query_loop_index: query.query_loop_index,
+            candidate_container_loop_index: query.candidate_container_loop_index,
+            result: BezierBooleanLoopContainmentQueryResult::Boundary,
+        })
+        .collect::<Vec<_>>();
+    let boundary_replay = BezierBooleanLoopContainmentQueryResultReport2::from_query_results(
+        &queries,
+        &boundary_results,
+    );
+    let boundary_replay_result =
+        BezierBooleanResultReport2::from_schedule_multi_cycle_successor_containment_query_results(
+            &schedule,
+            BooleanOp::Union,
+            &ownership_facts,
+            &endpoints,
+            &[],
+            0,
+            0,
+            &successors,
+            &boundary_replay,
+        );
+    assert_eq!(
+        boundary_replay_result.status,
+        BezierBooleanResultStatus::RegionAssemblyBlocked
+    );
+    assert!(boundary_replay_result.has_blockers());
+
     let containment_role_blocked =
         BezierBooleanResultReport2::from_schedule_multi_cycle_successor_containment_role_facts(
             &schedule,

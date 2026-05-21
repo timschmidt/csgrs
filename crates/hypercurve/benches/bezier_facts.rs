@@ -1718,7 +1718,43 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                         &successors,
                         &containment_facts,
                     );
-                format!("{single:?}{multi:?}{output:?}{result:?}{containment_result:?}")
+                let locator =
+                    hypercurve::BezierBooleanLoopLocatorInputReport2::from_output_loops(&output);
+                let queries =
+                    hypercurve::BezierBooleanLoopContainmentQueryReport2::from_locator_inputs(
+                        &locator,
+                    );
+                let locator_results = queries
+                    .queries
+                    .iter()
+                    .map(
+                        |query| hypercurve::BezierBooleanLoopContainmentQueryResult2 {
+                            query_loop_index: query.query_loop_index,
+                            candidate_container_loop_index: query.candidate_container_loop_index,
+                            result: hypercurve::BezierBooleanLoopContainmentQueryResult::Outside,
+                        },
+                    )
+                    .collect::<Vec<_>>();
+                let replay =
+                    hypercurve::BezierBooleanLoopContainmentQueryResultReport2::from_query_results(
+                        &queries,
+                        &locator_results,
+                    );
+                let replay_result =
+                    hypercurve::BezierBooleanResultReport2::from_schedule_multi_cycle_successor_containment_query_results(
+                        &schedule,
+                        BooleanOp::Union,
+                        &ownership_facts,
+                        &first_endpoints,
+                        &second_endpoints,
+                        0,
+                        0,
+                        &successors,
+                        &replay,
+                    );
+                format!(
+                    "{single:?}{multi:?}{output:?}{result:?}{containment_result:?}{replay_result:?}"
+                )
             }
             other => format!("{other:?}"),
         };
