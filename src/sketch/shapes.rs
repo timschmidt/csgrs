@@ -1,7 +1,10 @@
 //! 2D Shapes as `Profile`s
 
 use crate::csg::CSG;
-use crate::float_types::{FRAC_PI_2, PI, Real, TAU, hreal_from_f64, tolerance};
+use crate::float_types::{
+    FRAC_PI_2, PI, Real, TAU, hangle_sin_cos, hdegrees_to_radians, hreal_affine, hreal_div,
+    hreal_from_f64, hreal_mul, hreal_sub, tolerance,
+};
 use crate::sketch::Profile;
 use hypercurve::{Contour2, CurveString2, LineSeg2, Point2, Segment2};
 use std::fmt::Debug;
@@ -12,6 +15,47 @@ fn finite_profile_scalar(value: Real) -> bool {
 
 fn finite_profile_scalars(values: &[Real]) -> bool {
     values.iter().all(|&value| finite_profile_scalar(value))
+}
+
+/// Sample `start + sweep * index / count` through hyperreal arithmetic.
+///
+/// Profile constructors still expose `f64` boundary coordinates, but all
+/// parametric sampling is promoted before the final finite points are handed to
+/// `hypercurve`. This follows Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7(1-2), 1997
+/// (<https://doi.org/10.1016/0925-7721(95)00040-2>), keeping predicate-adjacent
+/// construction algebra out of local primitive arithmetic.
+fn hsample_angle(index: usize, count: usize, start: Real, sweep: Real) -> Option<Real> {
+    let t = hreal_div(index as Real, count as Real)?;
+    hreal_affine(start, t, sweep)
+}
+
+/// Return a finite point on `x = rx*cos(theta), y = ry*sin(theta)`.
+fn hellipse_point(rx: Real, ry: Real, theta: Real) -> Option<[Real; 2]> {
+    let (sin_theta, cos_theta) = hangle_sin_cos(theta)?;
+    Some([hreal_mul(rx, cos_theta)?, hreal_mul(ry, sin_theta)?])
+}
+
+fn hellipse_samples(
+    samples: usize,
+    rx: Real,
+    ry: Real,
+    start: Real,
+    sweep: Real,
+) -> Option<Vec<[Real; 2]>> {
+    let mut points = Vec::with_capacity(samples);
+    for i in 0..samples {
+        points.push(hellipse_point(
+            rx,
+            ry,
+            hsample_angle(i, samples, start, sweep)?,
+        )?);
+    }
+    Some(points)
+}
+
+fn hcircle_samples(samples: usize, radius: Real) -> Option<Vec<[Real; 2]>> {
+    hellipse_samples(samples, radius, radius, 0.0, TAU)
 }
 
 impl<M: Clone + Debug + Send + Sync> Profile<M> {
@@ -103,15 +147,12 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// - `segments`: Number of polygon edges (minimum 3 for valid geometry)
     /// - `metadata`: Optional metadata attached to the shape
     pub fn circle(radius: Real, segments: usize, metadata: M) -> Self {
-        if segments < 3 {
+        if segments < 3 || !finite_profile_scalar(radius) {
             return Profile::empty(metadata);
         }
-        let points = (0..segments)
-            .map(|i| {
-                let theta = 2.0 * PI * (i as Real) / (segments as Real);
-                [radius * theta.cos(), radius * theta.sin()]
-            })
-            .collect();
+        let Some(points) = hcircle_samples(segments, radius) else {
+            return Profile::empty(metadata);
+        };
         Self::polygonal_region(points, metadata)
     }
 
@@ -221,17 +262,15 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// - `segments`: Number of polygon edges (minimum 3)
     /// - `metadata`: Optional metadata
     pub fn ellipse(width: Real, height: Real, segments: usize, metadata: M) -> Self {
-        if segments < 3 {
+        if segments < 3 || !finite_profile_scalars(&[width, height]) {
             return Profile::empty(metadata);
         }
-        let rx = 0.5 * width;
-        let ry = 0.5 * height;
-        let points = (0..segments)
-            .map(|i| {
-                let theta = TAU * (i as Real) / (segments as Real);
-                [rx * theta.cos(), ry * theta.sin()]
-            })
-            .collect();
+        let (Some(rx), Some(ry)) = (hreal_mul(0.5, width), hreal_mul(0.5, height)) else {
+            return Profile::empty(metadata);
+        };
+        let Some(points) = hellipse_samples(segments, rx, ry, 0.0, TAU) else {
+            return Profile::empty(metadata);
+        };
         Self::polygonal_region(points, metadata)
     }
 
@@ -288,15 +327,12 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// - `radius`: Circumscribed circle radius
     /// - `metadata`: Optional metadata
     pub fn regular_ngon(sides: usize, radius: Real, metadata: M) -> Self {
-        if sides < 3 {
+        if sides < 3 || !finite_profile_scalar(radius) {
             return Profile::empty(metadata);
         }
-        let points = (0..sides)
-            .map(|i| {
-                let theta = TAU * (i as Real) / (sides as Real);
-                [radius * theta.cos(), radius * theta.sin()]
-            })
-            .collect();
+        let Some(points) = hcircle_samples(sides, radius) else {
+            return Profile::empty(metadata);
+        };
         Self::polygonal_region(points, metadata)
     }
 
@@ -375,25 +411,28 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         inner_radius: Real,
         metadata: M,
     ) -> Self {
-        if num_points < 2 {
+        if num_points < 2 || !finite_profile_scalars(&[outer_radius, inner_radius]) {
             return Profile::empty(metadata);
         }
-        let step = TAU / (num_points as Real);
-        let points = (0..num_points)
-            .flat_map(|i| {
-                let theta_out = i as Real * step;
-                let outer_point = [
-                    outer_radius * theta_out.cos(),
-                    outer_radius * theta_out.sin(),
-                ];
-
-                let theta_in = theta_out + 0.5 * step;
-                let inner_point =
-                    [inner_radius * theta_in.cos(), inner_radius * theta_in.sin()];
-
-                [outer_point, inner_point]
-            })
-            .collect();
+        let mut points = Vec::with_capacity(num_points * 2);
+        for i in 0..num_points {
+            let Some(theta_out) = hsample_angle(i, num_points, 0.0, TAU) else {
+                return Profile::empty(metadata);
+            };
+            let Some(theta_in) = hsample_angle((i * 2) + 1, num_points * 2, 0.0, TAU) else {
+                return Profile::empty(metadata);
+            };
+            let Some(outer_point) = hellipse_point(outer_radius, outer_radius, theta_out)
+            else {
+                return Profile::empty(metadata);
+            };
+            let Some(inner_point) = hellipse_point(inner_radius, inner_radius, theta_in)
+            else {
+                return Profile::empty(metadata);
+            };
+            points.push(outer_point);
+            points.push(inner_point);
+        }
         Self::polygonal_region(points, metadata)
     }
 
@@ -453,26 +492,48 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         corner_segments: usize,
         metadata: M,
     ) -> Self {
-        let r = corner_radius.min(width * 0.5).min(height * 0.5);
-        if r <= tolerance() {
+        if !finite_profile_scalars(&[width, height, corner_radius]) {
+            return Profile::empty(metadata);
+        }
+        let (Some(half_width), Some(half_height)) =
+            (hreal_mul(width, 0.5), hreal_mul(height, 0.5))
+        else {
+            return Profile::empty(metadata);
+        };
+        let r = corner_radius.min(half_width).min(half_height);
+        if corner_segments == 0 || r <= tolerance() {
             return Profile::rectangle(width, height, metadata);
         }
         // We'll approximate each 90° corner with `corner_segments` arcs
-        let step = FRAC_PI_2 / corner_segments as Real;
-
-        let corner = |cx, cy, start_angle| {
-            (0..=corner_segments).map(move |i| {
-                let angle: Real = start_angle + (i as Real) * step;
-                (cx + r * angle.cos(), cy + r * angle.sin())
-            })
+        let mut points = Vec::with_capacity((corner_segments + 1) * 4);
+        let Some(right) = hreal_sub(width, r) else {
+            return Profile::empty(metadata);
         };
-
-        let points: Vec<[Real; 2]> = corner(r, r, PI) // Bottom-left
-            .chain(corner(width - r, r, 1.5 * PI)) // Bottom-right
-            .chain(corner(width - r, height - r, 0.0)) // Top-right
-            .chain(corner(r, height - r, 0.5 * PI)) // Top-left
-            .map(|(x, y)| [x, y])
-            .collect();
+        let Some(top) = hreal_sub(height, r) else {
+            return Profile::empty(metadata);
+        };
+        for (cx, cy, start_angle) in [
+            (r, r, PI),
+            (right, r, 1.5 * PI),
+            (right, top, 0.0),
+            (r, top, 0.5 * PI),
+        ] {
+            for i in 0..=corner_segments {
+                let Some(angle) = hsample_angle(i, corner_segments, start_angle, FRAC_PI_2)
+                else {
+                    return Profile::empty(metadata);
+                };
+                let Some([dx, dy]) = hellipse_point(r, r, angle) else {
+                    return Profile::empty(metadata);
+                };
+                let (Some(x), Some(y)) =
+                    (hreal_affine(cx, 1.0, dx), hreal_affine(cy, 1.0, dy))
+                else {
+                    return Profile::empty(metadata);
+                };
+                points.push([x, y]);
+            }
+        }
 
         Self::polygonal_region(points, metadata)
     }
@@ -601,23 +662,31 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         segments: usize,
         metadata: M,
     ) -> Profile<M> {
-        if segments < 1 {
+        if segments < 1 || !finite_profile_scalars(&[radius, start_angle_deg, end_angle_deg]) {
             return Profile::empty(metadata);
         }
 
-        let start_rad = start_angle_deg.to_radians();
-        let end_rad = end_angle_deg.to_radians();
-        let sweep = end_rad - start_rad;
+        let (Some(start_rad), Some(end_rad)) = (
+            hdegrees_to_radians(start_angle_deg),
+            hdegrees_to_radians(end_angle_deg),
+        ) else {
+            return Profile::empty(metadata);
+        };
+        let Some(sweep) = hreal_sub(end_rad, start_rad) else {
+            return Profile::empty(metadata);
+        };
 
         // Build a ring of coordinates starting at (0,0), going around the arc, and closing at (0,0).
         let mut points = Vec::with_capacity(segments + 2);
         points.push([0.0, 0.0]);
         for i in 0..=segments {
-            let t = i as Real / (segments as Real);
-            let angle = start_rad + t * sweep;
-            let x = radius * angle.cos();
-            let y = radius * angle.sin();
-            points.push([x, y]);
+            let Some(angle) = hsample_angle(i, segments, start_rad, sweep) else {
+                return Profile::empty(metadata);
+            };
+            let Some(point) = hellipse_point(radius, radius, angle) else {
+                return Profile::empty(metadata);
+            };
+            points.push(point);
         }
 
         Self::polygonal_region(points, metadata)
