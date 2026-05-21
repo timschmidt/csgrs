@@ -63,6 +63,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// (1997) while preserving the zero-radius offset identity discussed in
     /// Farouki and Neff (1990).
     fn native_zero_offset(&self, distance: Real) -> Option<Profile<M>> {
+        let distance = finite_offset_distance(distance)?;
         matches!(hreal_cmp_f64(distance, 0.0), std::cmp::Ordering::Equal).then(|| {
             Profile::from_region_and_wires_with_origin(
                 self.region.clone(),
@@ -85,6 +86,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         distance: Real,
         cap: OffsetCap,
     ) -> Option<Profile<M>> {
+        let distance = finite_offset_distance(distance)?;
         if !self.region.is_empty()
             || self.wires.is_empty()
             || !matches!(
@@ -129,10 +131,10 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// collapsed holes, splits, or merged components belongs in hypercurve
     /// rather than in a finite bridge.
     fn native_sharp_offset(&self, distance: Real) -> Option<Profile<M>> {
+        let distance = finite_offset_distance(distance)?;
         if self.region.is_empty()
             || !self.wires.is_empty()
             || !Self::region_has_nonzero_area(&self.region)
-            || !distance.is_finite()
         {
             return None;
         }
@@ -220,6 +222,18 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         self.preserve_offset_wires(&mut sketch);
         sketch
     }
+}
+
+/// Admit primitive offset distances only after hyperreal promotion succeeds.
+///
+/// Offset distance is still a public `f64` boundary value, but all
+/// topology-affecting branches in this module run after a `hyperreal::Real`
+/// lift has accepted the scalar. This follows Yap's exact geometric
+/// computation boundary split (1997) and avoids interpreting non-finite
+/// primitive values as exact zero offsets.
+fn finite_offset_distance(distance: Real) -> Option<Real> {
+    hreal_from_f64(distance).ok()?;
+    Some(distance)
 }
 
 fn native_role_offset_contour(

@@ -88,3 +88,17 @@ fn test_zero_offset_preserves_region_2d() {
         "Zero offset should preserve native region area"
     );
 }
+
+#[test]
+#[cfg(feature = "offset")]
+fn test_non_finite_offsets_fail_closed() {
+    let shape = Profile::<()>::circle(1.0, 32, ());
+
+    for distance in [Real::NAN, Real::INFINITY, Real::NEG_INFINITY] {
+        let offset = shape.offset(distance);
+        assert!(
+            offset.region_profiles().is_empty(),
+            "Non-finite offsets must not be treated as zero-distance identity"
+        );
+    }
+}
