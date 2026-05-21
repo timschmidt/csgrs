@@ -21,7 +21,8 @@ use hypersolve::{
     certify_univariate_quadratic_krawczyk_box, context_from_problem,
     eliminate_affine_rows_with_substitution_classes, evaluate_residuals, facts_depend_on_symbol,
     find_equality_substitutions, isolate_univariate_polynomial_roots, point_coincidence_equations,
-    report_lossy_adapter_only_candidate, sketch_distance_builders, sketch_incidence_builders,
+    replay_sketch_compatibility_fixture, report_lossy_adapter_only_candidate,
+    sketch_compatibility_fixtures, sketch_distance_builders, sketch_incidence_builders,
     sketch_orientation_builders, solve_damped_least_squares, solve_direct_affine_equalities,
     solve_direct_affine_system, solve_direct_univariate_quadratic_equalities,
     squared_distance_equation, tangent_parallel_equation, tangent_same_direction_constraint,
@@ -313,6 +314,24 @@ fn sketch_residual_form_reports_reject_unsupported_and_bad_inputs() {
             .status,
         SketchResidualFormsStatus::MissingConstraint(hypersolve::SketchConstraintHandle(999))
     );
+}
+
+#[test]
+fn sketch_compatibility_fixtures_are_license_clean_and_exactly_certified() {
+    let fixtures = sketch_compatibility_fixtures();
+
+    assert_eq!(fixtures.len(), 3);
+    assert!(fixtures.iter().all(|fixture| {
+        fixture.source.starts_with("Hyper-authored")
+            && !fixture.source.to_ascii_lowercase().contains("copied")
+    }));
+
+    for fixture in &fixtures {
+        let replay = replay_sketch_compatibility_fixture(fixture);
+        assert_eq!(replay.name, fixture.name);
+        assert_eq!(replay.kind, fixture.kind);
+        assert!(replay.is_certified_fixture(fixture.expected_generated_rows));
+    }
 }
 
 #[test]

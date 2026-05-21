@@ -18,11 +18,11 @@ use hypersolve::{
     context_from_problem, count_bernstein_univariate_polynomial_interval_roots,
     count_descartes_univariate_polynomial_roots, determinant_bareiss,
     eliminate_affine_rows_with_substitution_classes, isolate_univariate_polynomial_roots,
-    propose_active_set_update, replay_dense_linear_residuals, replay_sparse_linear_residuals,
-    report_lossy_adapter_only_candidate, represent_univariate_algebraic_roots,
-    resultant_univariate_polynomials, run_active_set_update_loop,
-    schedule_univariate_resultant_pairs, solve_damped_least_squares,
-    solve_dense_linear_system_bareiss, solve_direct_affine_system,
+    propose_active_set_update, replay_dense_linear_residuals, replay_sketch_compatibility_fixture,
+    replay_sparse_linear_residuals, report_lossy_adapter_only_candidate,
+    represent_univariate_algebraic_roots, resultant_univariate_polynomials,
+    run_active_set_update_loop, schedule_univariate_resultant_pairs, sketch_compatibility_fixtures,
+    solve_damped_least_squares, solve_dense_linear_system_bareiss, solve_direct_affine_system,
     solve_direct_univariate_quadratic_equalities, solve_sparse_linear_system_bareiss,
     squared_distance_equation, subdivide_bernstein_univariate_polynomial_interval_roots,
     subresultant_chain_univariate_polynomials,
@@ -216,6 +216,14 @@ fn certification(c: &mut Criterion) {
         b.iter(|| {
             for handle in &form_handles {
                 let _ = sketch.residual_forms_for_constraint(*handle);
+            }
+        })
+    });
+    let compatibility_fixtures = sketch_compatibility_fixtures();
+    c.bench_function("sketch_compatibility_fixture_replay", |b| {
+        b.iter(|| {
+            for fixture in &compatibility_fixtures {
+                let _ = replay_sketch_compatibility_fixture(fixture);
             }
         })
     });

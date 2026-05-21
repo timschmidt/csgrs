@@ -29,6 +29,7 @@ pub mod resultant;
 pub mod root_isolation;
 pub mod sketch;
 pub mod sketch_builders;
+pub mod sketch_fixtures;
 pub mod solver;
 pub mod solver_block;
 pub mod sparse_pattern;
@@ -167,6 +168,10 @@ pub use sketch::{
 pub use sketch_builders::{
     SketchConstraintBuildReport, SketchConstraintFamily, distance as sketch_distance_builders,
     incidence as sketch_incidence_builders, orientation as sketch_orientation_builders,
+};
+pub use sketch_fixtures::{
+    SketchCompatibilityFixture, SketchCompatibilityFixtureKind, SketchCompatibilityReplayReport,
+    replay_sketch_compatibility_fixture, sketch_compatibility_fixtures,
 };
 pub use solver::{SolverConfig, SolverState, solve_damped_least_squares};
 pub use solver_block::{
