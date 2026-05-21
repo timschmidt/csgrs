@@ -443,7 +443,7 @@ impl Plane {
 
         let numerator = normal.dot(&(&plane_point - &start_point));
         let parameter = (numerator / denom).ok()?;
-        hreal_to_f64(&parameter).filter(|parameter| parameter.is_finite())
+        hreal_to_f64(&parameter)
     }
 
     /// Intersect an edge with this plane using the same hyperreal point-normal
