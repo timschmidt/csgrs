@@ -1,8 +1,9 @@
 //! Create `Mesh`s by meshing signed distance fields ([sdf](https://en.wikipedia.org/wiki/Signed_distance_function)) within a bounding box.
 
 use crate::float_types::{
-    F32, HReal, Real, hreal_from_f32, hreal_from_f64, hreal_sign, hreal_to_f64,
-    htriangle_area2_exceeds_epsilon, hvector3_from_point3, hvector3_from_vector3,
+    F32, HReal, Real, hreal_from_f32, hreal_from_f64, hreal_max_report_value,
+    hreal_min_report_value, hreal_sign, hreal_to_f64, htriangle_area2_exceeds_epsilon,
+    hvector3_from_point3, hvector3_from_vector3, tolerance,
 };
 use crate::mesh::Mesh;
 use crate::polygon::Polygon;
@@ -358,22 +359,8 @@ fn push_sdf_sample(
             diagnostics.positive_sample_count += 1;
             return;
         }
-        let Some(sdf_val_f64) = hreal_to_f64(&sdf_val) else {
-            diagnostics.non_finite_sample_count += 1;
-            diagnostics.positive_sample_count += 1;
-            return;
-        };
         diagnostics.finite_sample_count += 1;
-        diagnostics.min_finite_value = Some(
-            diagnostics
-                .min_finite_value
-                .map_or(sdf_val_f64, |current| current.min(sdf_val_f64)),
-        );
-        diagnostics.max_finite_value = Some(
-            diagnostics
-                .max_finite_value
-                .map_or(sdf_val_f64, |current| current.max(sdf_val_f64)),
-        );
+        record_sdf_finite_sample(diagnostics, &sdf_val);
         match hreal_sign(&shifted) {
             Some(RealSign::Negative) => diagnostics.negative_sample_count += 1,
             Some(RealSign::Positive) => diagnostics.positive_sample_count += 1,
@@ -388,6 +375,11 @@ fn push_sdf_sample(
         diagnostics.positive_sample_count += 1;
         field_values.push_nonfinite_sample();
     }
+}
+
+fn record_sdf_finite_sample(diagnostics: &mut SdfDiagnostics, value: &HReal) {
+    diagnostics.min_finite_value = hreal_min_report_value(diagnostics.min_finite_value, value);
+    diagnostics.max_finite_value = hreal_max_report_value(diagnostics.max_finite_value, value);
 }
 
 fn mesh_from_sampled_field<M: Clone + Debug + Send + Sync>(
@@ -522,7 +514,7 @@ fn mesh_from_sampled_field<M: Clone + Debug + Send + Sync>(
             continue;
         }
 
-        if !htriangle_area2_exceeds_epsilon(&p0, &p1, &p2, Real::EPSILON) {
+        if !htriangle_area2_exceeds_epsilon(&p0, &p1, &p2, tolerance()) {
             diagnostics.degenerate_triangle_count += 1;
         }
 

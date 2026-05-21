@@ -1,7 +1,8 @@
 //! Provides a `MetaBall` struct and functions for creating a `Mesh` from [MetaBalls](https://en.wikipedia.org/wiki/Metaballs)
 
 use crate::float_types::{
-    F32, HReal, Real, hreal_from_f32, hreal_from_f64, hreal_sign, hreal_to_f64,
+    F32, HReal, Real, hreal_from_f32, hreal_from_f64, hreal_max_pair, hreal_max_report_value,
+    hreal_min_pair, hreal_min_report_value, hreal_sign, hreal_to_f64,
     htriangle_area2_exceeds_epsilon, hvector3_from_point3, hvector3_from_vector3, tolerance,
 };
 use crate::mesh::Mesh;
@@ -144,46 +145,42 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         let valid_balls = balls
             .iter()
             .filter(|ball| {
+                let Some(radius) = hreal_from_f64(ball.radius).ok() else {
+                    return false;
+                };
                 hvector3_from_point3(&ball.center).is_some()
-                    && hreal_from_f64(ball.radius).is_ok()
-                    && ball.radius > 0.0
+                    && matches!(hreal_sign(&radius), Some(RealSign::Positive))
             })
             .collect::<Vec<_>>();
+        let Some(padding_h) = hreal_from_f64(padding).ok() else {
+            diagnostics.non_finite_sample_count = diagnostics.sample_count;
+            diagnostics.positive_sample_count = diagnostics.sample_count;
+            return (Mesh::empty(metadata), diagnostics);
+        };
+        let padding_is_negative = matches!(hreal_sign(&padding_h), Some(RealSign::Negative));
+        let Some(iso_value_h) = hreal_from_f64(iso_value).ok() else {
+            diagnostics.non_finite_sample_count = diagnostics.sample_count;
+            diagnostics.positive_sample_count = diagnostics.sample_count;
+            return (Mesh::empty(metadata), diagnostics);
+        };
 
-        if valid_balls.is_empty()
-            || hreal_from_f64(padding).is_err()
-            || padding < 0.0
-            || hreal_from_f64(iso_value).is_err()
-        {
+        if valid_balls.is_empty() || padding_is_negative {
             diagnostics.non_finite_sample_count = diagnostics.sample_count;
             diagnostics.positive_sample_count = diagnostics.sample_count;
             return (Mesh::empty(metadata), diagnostics);
         }
 
-        // Determine bounding box of all metaballs (plus padding).
-        let (min_pt, max_pt) = valid_balls.iter().fold(
-            (
-                Point3::new(Real::MAX, Real::MAX, Real::MAX),
-                Point3::new(-Real::MAX, -Real::MAX, -Real::MAX),
-            ),
-            |(mut min_p, mut max_p), mb| {
-                let r = mb.radius + padding;
-                min_p.x = min_p.x.min(mb.center.x - r);
-                min_p.y = min_p.y.min(mb.center.y - r);
-                min_p.z = min_p.z.min(mb.center.z - r);
-                max_p.x = max_p.x.max(mb.center.x + r);
-                max_p.y = max_p.y.max(mb.center.y + r);
-                max_p.z = max_p.z.max(mb.center.z + r);
-                (min_p, max_p)
-            },
-        );
+        let Some((min_pt, max_pt)) = metaball_bounds_hreal(&valid_balls, &padding_h) else {
+            diagnostics.non_finite_sample_count = diagnostics.sample_count;
+            diagnostics.positive_sample_count = diagnostics.sample_count;
+            return (Mesh::empty(metadata), diagnostics);
+        };
 
         let Some(grid) = MetaballSamplingGrid::from_bounds(min_pt, max_pt, nx, ny, nz) else {
             diagnostics.non_finite_sample_count = diagnostics.sample_count;
             diagnostics.positive_sample_count = diagnostics.sample_count;
             return (Mesh::empty(metadata), diagnostics);
         };
-        let iso_value_h = hreal_from_f64(iso_value).expect("validated metaball iso");
 
         // Create and fill the scalar-field array with "field_value - iso_value"
         // so that the isosurface will be at 0.
@@ -211,25 +208,10 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                         continue;
                     };
                     let shifted = field_value_h.clone() - iso_value_h.clone();
-                    let Some(field_value) = hreal_to_f64(&field_value_h) else {
-                        diagnostics.non_finite_sample_count += 1;
-                        diagnostics.positive_sample_count += 1;
-                        field_values.push_nonfinite_sample();
-                        continue;
-                    };
 
                     if field_values.push_hyper_sample(shifted.clone()) {
                         diagnostics.finite_sample_count += 1;
-                        diagnostics.min_finite_value = Some(
-                            diagnostics
-                                .min_finite_value
-                                .map_or(field_value, |current| current.min(field_value)),
-                        );
-                        diagnostics.max_finite_value = Some(
-                            diagnostics
-                                .max_finite_value
-                                .map_or(field_value, |current| current.max(field_value)),
-                        );
+                        record_metaball_finite_sample(&mut diagnostics, &field_value_h);
                         match hreal_sign(&shifted) {
                             Some(RealSign::Negative) => diagnostics.negative_sample_count += 1,
                             Some(RealSign::Positive) => diagnostics.positive_sample_count += 1,
@@ -365,7 +347,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                 continue;
             }
 
-            if !htriangle_area2_exceeds_epsilon(&p0_real, &p1_real, &p2_real, Real::EPSILON) {
+            if !htriangle_area2_exceeds_epsilon(&p0_real, &p1_real, &p2_real, tolerance()) {
                 diagnostics.degenerate_triangle_count += 1;
             }
 
@@ -416,6 +398,46 @@ impl MetaballSampleField {
     }
 }
 
+fn record_metaball_finite_sample(diagnostics: &mut MetaballDiagnostics, value: &HReal) {
+    diagnostics.min_finite_value = hreal_min_report_value(diagnostics.min_finite_value, value);
+    diagnostics.max_finite_value = hreal_max_report_value(diagnostics.max_finite_value, value);
+}
+
+fn metaball_bounds_hreal(balls: &[&MetaBall], padding: &HReal) -> Option<(HPoint3, HPoint3)> {
+    let mut bounds = balls.iter().map(|ball| {
+        let center = hpoint3_from_point3(&ball.center)?;
+        let radius = hreal_from_f64(ball.radius).ok()?;
+        let extent = radius + padding.clone();
+        Some((
+            HPoint3::new(
+                center.x.clone() - extent.clone(),
+                center.y.clone() - extent.clone(),
+                center.z.clone() - extent.clone(),
+            ),
+            HPoint3::new(
+                center.x + extent.clone(),
+                center.y + extent.clone(),
+                center.z + extent,
+            ),
+        ))
+    });
+    let (mut min_pt, mut max_pt) = bounds.next()??;
+    for bounds in bounds {
+        let (next_min, next_max) = bounds?;
+        min_pt = HPoint3::new(
+            hreal_min_pair(&min_pt.x, &next_min.x)?,
+            hreal_min_pair(&min_pt.y, &next_min.y)?,
+            hreal_min_pair(&min_pt.z, &next_min.z)?,
+        );
+        max_pt = HPoint3::new(
+            hreal_max_pair(&max_pt.x, &next_max.x)?,
+            hreal_max_pair(&max_pt.y, &next_max.y)?,
+            hreal_max_pair(&max_pt.z, &next_max.z)?,
+        );
+    }
+    Some((min_pt, max_pt))
+}
+
 #[derive(Clone, Debug)]
 struct MetaballSamplingGrid {
     origin: HPoint3,
@@ -424,14 +446,14 @@ struct MetaballSamplingGrid {
 
 impl MetaballSamplingGrid {
     fn from_bounds(
-        min_pt: Point3<Real>,
-        max_pt: Point3<Real>,
+        min_pt: HPoint3,
+        max_pt: HPoint3,
         nx: u32,
         ny: u32,
         nz: u32,
     ) -> Option<Self> {
-        let origin = hpoint3_from_point3(&min_pt)?;
-        let max = hpoint3_from_point3(&max_pt)?;
+        let origin = min_pt;
+        let max = max_pt;
         Some(Self {
             step: HPoint3::new(
                 ((max.x - origin.x.clone()) / hreal_from_f64(nx as Real - 1.0).ok()?).ok()?,
