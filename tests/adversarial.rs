@@ -1345,6 +1345,14 @@ fn adversarial_vertex_interpolation_normalization_uses_hyperlattice() {
     assert_vertex_finite(&slerp);
     assert!((slerp.normal.norm() - 1.0).abs() < tolerance());
 
+    let antiparallel =
+        x.slerp_interpolate(&Vertex::new(Point3::new(1.0, 0.0, 0.0), -Vector3::x()), 0.5);
+    assert_vertex_finite(&antiparallel);
+    assert!((antiparallel.normal.norm() - 1.0).abs() < tolerance());
+
+    let hostile_t = x.slerp_interpolate(&y, Real::NAN);
+    assert_vertex_finite(&hostile_t);
+
     let averaged = Vertex::weighted_average(&[(x, 1.0), (y, 1.0)])
         .expect("positive weights should average");
     assert_vertex_finite(&averaged);
