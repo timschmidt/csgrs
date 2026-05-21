@@ -31,6 +31,22 @@ pub enum SdfPrimitive {
     },
     /// Closed axis-aligned box.
     Aabb { min: Point3, max: Point3 },
+    /// Rounded axis-aligned box represented as an AABB dilated by a radius.
+    ///
+    /// The retained field is sign-equivalent and square-root-free: points
+    /// outside the core AABB use squared distance to the AABB minus
+    /// `radius_squared`; points on or inside the core use the AABB support
+    /// value minus `radius_squared`. This preserves the boundary of the
+    /// Minkowski sum without introducing a square root into topology
+    /// predicates, following Yap (1997).
+    RoundedAabb {
+        /// Minimum corner of the core box.
+        min: Point3,
+        /// Maximum corner of the core box.
+        max: Point3,
+        /// Squared dilation radius.
+        radius_squared: Real,
+    },
     /// Finite axis-aligned cylinder.
     ///
     /// The retained sign-equivalent field is
@@ -110,6 +126,15 @@ impl SdfPrimitive {
         Self::Aabb { min, max }
     }
 
+    /// Construct a rounded axis-aligned box from a core box and squared radius.
+    pub const fn rounded_aabb(min: Point3, max: Point3, radius_squared: Real) -> Self {
+        Self::RoundedAabb {
+            min,
+            max,
+            radius_squared,
+        }
+    }
+
     /// Construct a finite axis-aligned cylinder.
     pub const fn cylinder(
         axis: SdfCoordinate,
@@ -166,6 +191,7 @@ impl SdfPrimitive {
             Self::Plane { .. } => SdfMetricStatus::SignEquivalent,
             Self::Sphere { .. } => SdfMetricStatus::SignEquivalent,
             Self::Aabb { .. } => SdfMetricStatus::SignEquivalent,
+            Self::RoundedAabb { .. } => SdfMetricStatus::SignEquivalent,
             Self::Cylinder { .. } => SdfMetricStatus::SignEquivalent,
             Self::Capsule { .. } => SdfMetricStatus::SignEquivalent,
             Self::Torus { .. } => SdfMetricStatus::SignEquivalent,
@@ -194,6 +220,11 @@ impl SdfPrimitive {
                 Some(&squared_distance3(center, point) - radius_squared)
             }
             Self::Aabb { min, max } => aabb_value(min, max, point),
+            Self::RoundedAabb {
+                min,
+                max,
+                radius_squared,
+            } => rounded_aabb_value(min, max, radius_squared, point),
             Self::Cylinder {
                 axis,
                 center,
@@ -241,6 +272,7 @@ impl SdfPrimitive {
                 }
             },
             Self::Aabb { min, max } => map_aabb_point(classify_point_aabb3(min, max, point)),
+            Self::RoundedAabb { .. } => classify_scalar_primitive_value(self.scalar_value(point)),
             Self::Cylinder { .. } => classify_scalar_primitive_value(self.scalar_value(point)),
             Self::Capsule { .. } => classify_scalar_primitive_value(self.scalar_value(point)),
             Self::Torus { .. } => classify_scalar_primitive_value(self.scalar_value(point)),
@@ -252,6 +284,11 @@ impl SdfPrimitive {
 /// Certify whether a squared radius is nonnegative.
 pub(crate) fn radius_squared_domain(radius_squared: &Real) -> PredicateOutcome<bool> {
     nonnegative_domain(radius_squared)
+}
+
+/// Certify whether a rounded-box squared radius is nonnegative.
+pub(crate) fn rounded_aabb_domain(radius_squared: &Real) -> PredicateOutcome<bool> {
+    radius_squared_domain(radius_squared)
 }
 
 /// Certify whether a slab half-width is nonnegative.
@@ -452,6 +489,29 @@ fn aabb_value(min: &Point3, max: &Point3, point: &Point3) -> Option<Real> {
     Some(value)
 }
 
+fn rounded_aabb_value(
+    min: &Point3,
+    max: &Point3,
+    radius_squared: &Real,
+    point: &Point3,
+) -> Option<Real> {
+    if !rounded_aabb_domain(radius_squared).value().unwrap_or(false) {
+        return None;
+    }
+
+    match classify_point_aabb3(min, max, point) {
+        PredicateOutcome::Decided {
+            value: Aabb3PointLocation::Inside | Aabb3PointLocation::Boundary,
+            ..
+        } => aabb_value(min, max, point).map(|value| &value - radius_squared),
+        PredicateOutcome::Decided {
+            value: Aabb3PointLocation::Outside,
+            ..
+        } => Some(&squared_distance_to_aabb(point, min, max)? - radius_squared),
+        PredicateOutcome::Unknown { .. } => None,
+    }
+}
+
 fn slab_value(plane: &Plane3, half_width: &Real, point: &Point3) -> Option<Real> {
     if !half_width_domain(half_width).value().unwrap_or(false) {
         return None;
@@ -594,4 +654,31 @@ pub(crate) fn squared_distance3(a: &Point3, b: &Point3) -> Real {
     let dy2 = &dy * &dy;
     let dz2 = &dz * &dz;
     &(&dx2 + &dy2) + &dz2
+}
+
+fn squared_distance_to_aabb(point: &Point3, min: &Point3, max: &Point3) -> Option<Real> {
+    let closest = Point3::new(
+        clamp_to_interval(&point.x, &min.x, &max.x)?,
+        clamp_to_interval(&point.y, &min.y, &max.y)?,
+        clamp_to_interval(&point.z, &min.z, &max.z)?,
+    );
+    Some(squared_distance3(point, &closest))
+}
+
+fn clamp_to_interval(value: &Real, min: &Real, max: &Real) -> Option<Real> {
+    match compare_reals(value, min) {
+        PredicateOutcome::Decided {
+            value: Ordering::Less,
+            ..
+        } => Some(min.clone()),
+        PredicateOutcome::Decided { .. } => match compare_reals(value, max) {
+            PredicateOutcome::Decided {
+                value: Ordering::Greater,
+                ..
+            } => Some(max.clone()),
+            PredicateOutcome::Decided { .. } => Some(value.clone()),
+            PredicateOutcome::Unknown { .. } => None,
+        },
+        PredicateOutcome::Unknown { .. } => None,
+    }
 }

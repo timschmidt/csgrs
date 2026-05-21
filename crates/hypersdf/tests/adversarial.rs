@@ -2,10 +2,12 @@ use hyperlattice::{Matrix4, Vector3};
 use hyperlimit::{Plane3, Point3};
 use hyperreal::Real;
 use hypersdf::{
-    SdfCellLocation, SdfCoordinate, SdfDomainStatus, SdfExpr, SdfGradientStatus,
+    SdfBatchDispatch, SdfCellLocation, SdfCoordinate, SdfDomainStatus, SdfExpr, SdfFreshness,
+    SdfGradientStatus, SdfHandoffBlocker, SdfHandoffDomain, SdfHandoffReadiness,
     SdfLipschitzStatus, SdfPointLocation, SdfPreviewGrid, SdfProjectionProposal,
     SdfProjectionProposalKind, SdfProjectionReplayStatus, SdfSampleTopologyStatus,
-    SdfSamplingPrecision, prepare,
+    SdfSamplingPrecision, SdfVoxelCellGrid, SdfVoxelCoordinateSystem, SdfVoxelGridSource,
+    SdfVoxelOccupancy, SdfVoxelRowOrder, prepare, prepare_versioned,
 };
 use proptest::prelude::*;
 
@@ -74,6 +76,14 @@ proptest! {
         prop_assert_eq!(
             report.scalar_value.as_ref().and_then(Real::to_f64_lossy),
             samples.samples[0].value
+        );
+        prop_assert_eq!(
+            samples.negative_count + samples.zero_count + samples.positive_count,
+            if report.location == SdfPointLocation::Unknown { 0 } else { 1 }
+        );
+        prop_assert_eq!(
+            samples.unknown_sign_count,
+            if report.location == SdfPointLocation::Unknown { 1 } else { 0 }
         );
     }
 
@@ -206,6 +216,201 @@ proptest! {
 
         prop_assert_eq!(torus.classify_point(&p(x, y, z)).location, expected);
     }
+
+    #[test]
+    fn generated_rounded_aabb_matches_squared_distance_threshold(x in -20_i32..=20, y in -20_i32..=20, z in -20_i32..=20, radius in 0_i32..=8) {
+        let rounded = prepare(SdfExpr::rounded_aabb(p(-5, -5, -5), p(5, 5, 5), r(radius * radius)));
+        let core_value = [
+            -5 - x,
+            x - 5,
+            -5 - y,
+            y - 5,
+            -5 - z,
+            z - 5,
+        ]
+        .into_iter()
+        .max()
+        .expect("nonempty core value candidates");
+        let value = if core_value <= 0 {
+            core_value - radius * radius
+        } else {
+            let dx = if x < -5 { -5 - x } else if x > 5 { x - 5 } else { 0 };
+            let dy = if y < -5 { -5 - y } else if y > 5 { y - 5 } else { 0 };
+            let dz = if z < -5 { -5 - z } else if z > 5 { z - 5 } else { 0 };
+            dx * dx + dy * dy + dz * dz - radius * radius
+        };
+        let expected = if value < 0 {
+            SdfPointLocation::Inside
+        } else if value == 0 {
+            SdfPointLocation::Boundary
+        } else {
+            SdfPointLocation::Outside
+        };
+
+        prop_assert_eq!(rounded.classify_point(&p(x, y, z)).location, expected);
+    }
+
+    #[test]
+    fn generated_sine_integer_pi_multiples_are_exact_boundaries(k in -20_i32..=20) {
+        let sdf = prepare(SdfExpr::constant(r(k) * Real::pi()).sin());
+
+        prop_assert_eq!(
+            sdf.classify_point(&p(0, 0, 0)).location,
+            SdfPointLocation::Boundary
+        );
+    }
+
+    #[test]
+    fn generated_gradient_batch_matches_scalar_reports(x in -20_i32..=20, y in -20_i32..=20, z in -20_i32..=20) {
+        let sdf = prepare(
+            SdfExpr::x()
+                .mul_expr(SdfExpr::y())
+                .add_expr(SdfExpr::z().mul_expr(SdfExpr::z())),
+        );
+        let points = [p(x, y, z), p(x + 1, y - 1, z + 2)];
+
+        prop_assert_eq!(
+            sdf.gradient_points(points.iter()),
+            points
+                .iter()
+                .map(|point| sdf.gradient_point(point))
+                .collect::<Vec<_>>()
+        );
+    }
+
+    #[test]
+    fn generated_normal_batch_matches_scalar_reports(x in -20_i32..=20, y in -20_i32..=20, z in -20_i32..=20) {
+        let sdf = prepare(SdfExpr::linear(
+            Vector3([r(2), r(-3), r(5)]),
+            r(11),
+        ));
+        let points = [p(x, y, z), p(x - 2, y + 3, z - 4)];
+
+        prop_assert_eq!(
+            sdf.normal_points(points.iter()),
+            points
+                .iter()
+                .map(|point| sdf.normal_point(point))
+                .collect::<Vec<_>>()
+        );
+    }
+
+    #[test]
+    fn generated_prepared_point_batch_report_matches_scalar_replay(xs in proptest::collection::vec(-20_i32..=20, 0..16)) {
+        let sdf = prepare(SdfExpr::x().sub_expr(SdfExpr::constant(r(3))).abs());
+        let points = xs.iter().map(|x| p(*x, *x - 1, -*x)).collect::<Vec<_>>();
+        let report = sdf.classify_points_report(points.iter());
+
+        prop_assert_eq!(report.dispatch, SdfBatchDispatch::ScalarReplay);
+        prop_assert_eq!(report.cache_payoff.query_count, points.len());
+        prop_assert_eq!(
+            report.cache_payoff.avoided_fact_rebuild_count,
+            points.len().saturating_sub(1)
+        );
+        prop_assert!(report.is_self_consistent());
+        prop_assert_eq!(report.reports, sdf.classify_points(points.iter()));
+    }
+
+    #[test]
+    fn generated_prepared_cell_batch_report_matches_scalar_replay(offsets in proptest::collection::vec(-20_i32..=20, 0..16)) {
+        let sdf = prepare(SdfExpr::aabb(p(-5, -5, -5), p(5, 5, 5)));
+        let cells = offsets
+            .iter()
+            .map(|offset| {
+                (
+                    p(*offset, *offset, *offset),
+                    p(*offset + 1, *offset + 1, *offset + 1),
+                )
+            })
+            .collect::<Vec<_>>();
+        let report = sdf.classify_cells_report(cells.iter().map(|(min, max)| (min, max)));
+
+        prop_assert_eq!(report.dispatch, SdfBatchDispatch::ScalarReplay);
+        prop_assert_eq!(report.cache_payoff.query_count, cells.len());
+        prop_assert_eq!(
+            report.cache_payoff.avoided_fact_rebuild_count,
+            cells.len().saturating_sub(1)
+        );
+        prop_assert!(report.is_self_consistent());
+        prop_assert_eq!(
+            report.reports,
+            sdf.classify_cells(cells.iter().map(|(min, max)| (min, max)))
+        );
+    }
+
+    #[test]
+    fn generated_handoff_package_grid_requirement_follows_sample_finiteness(x0 in -10_i32..=10, step in 1_i32..=4) {
+        let sdf = prepare(SdfExpr::x());
+        let grid = SdfPreviewGrid::new(p(x0, 0, 0), p(step, 1, 1), [3, 1, 1]);
+        let samples = sdf
+            .sample_grid_preview(grid, SdfSamplingPrecision::F32)
+            .expect("valid generated grid");
+        let package = sdf.handoff_package().with_grid_samples(samples);
+        let requirement = package.require_domain(SdfHandoffDomain::SampledGridPreview);
+
+        prop_assert_eq!(requirement.readiness, SdfHandoffReadiness::Ready);
+        prop_assert!(requirement.blockers.is_empty());
+        prop_assert!(package.is_self_consistent());
+    }
+
+    #[test]
+    fn generated_handoff_package_voxel_requirement_reports_unknown_cells(offset in -10_i32..=10) {
+        let sdf = prepare(SdfExpr::x().tan());
+        let cells = [(p(offset, 0, 0), p(offset + 1, 0, 0))];
+        let package = sdf
+            .handoff_package()
+            .with_voxel_cells(sdf.classify_cells_for_handoff(cells.iter().map(|(min, max)| (min, max))));
+        let requirement = package.require_domain(SdfHandoffDomain::VoxelCells);
+
+        prop_assert_eq!(requirement.readiness, SdfHandoffReadiness::Blocked);
+        prop_assert!(requirement.blockers.contains(&SdfHandoffBlocker::UnknownDomain));
+        prop_assert!(requirement.blockers.contains(&SdfHandoffBlocker::UnknownVoxelCells));
+    }
+
+    #[test]
+    fn generated_hypervoxel_grid_handoff_matches_cell_classification(extent in 1_i32..=4, ox in -4_i32..=4, oy in -4_i32..=4, oz in -4_i32..=4) {
+        let sdf = prepare(SdfExpr::aabb(p(ox, oy, oz), p(ox + extent, oy + extent, oz + extent)));
+        let grid = SdfVoxelCellGrid::new(p(ox, oy, oz), p(1, 1, 1), [4, 4, 4])
+            .with_source(SdfVoxelGridSource::new("generated:aabb", extent as u64));
+        let report = sdf
+            .classify_voxel_grid_for_handoff(grid)
+            .expect("positive generated grid");
+
+        prop_assert!(report.frame.hypervoxel_frame_ready);
+        prop_assert_eq!(report.frame.depth, Some(2));
+        prop_assert!(report.is_self_consistent());
+        for cell in &report.cells {
+            let expected = SdfVoxelOccupancy::from_cell_location(cell.classification.location);
+            prop_assert_eq!(cell.occupancy, expected);
+        }
+        prop_assert_eq!(
+            report.as_voxel_handoff_report().cells,
+            report
+                .cells
+                .iter()
+                .map(|cell| cell.classification.clone())
+                .collect::<Vec<_>>()
+        );
+        let manifest = report.interchange_manifest();
+        let interchange = report.interchange_report(&manifest);
+        prop_assert_eq!(manifest.coordinate_system, SdfVoxelCoordinateSystem::HyperGrid);
+        prop_assert_eq!(manifest.row_order, SdfVoxelRowOrder::ZMajorYThenXFast);
+        prop_assert_eq!(manifest.declared_depth, Some(2));
+        prop_assert_eq!(manifest.declared_dimensions, [4, 4, 4]);
+        prop_assert_eq!(manifest.declared_cell_count, report.cell_count);
+        prop_assert!(interchange.exact_interchange_ready);
+    }
+
+    #[test]
+    fn generated_coordinate_lipschitz_bound_is_one(a in -50_i32..=50, b in -50_i32..=50) {
+        let min_x = a.min(b);
+        let max_x = a.max(b);
+        let sdf = prepare(SdfExpr::x());
+        let report = sdf.lipschitz_cell(&p(min_x, -1, -1), &p(max_x, 1, 1));
+
+        prop_assert!(report.is_certified());
+        prop_assert_eq!(report.bound, Some(r(1)));
+    }
 }
 
 #[test]
@@ -298,6 +503,11 @@ fn invalid_sphere_domain_does_not_generate_certified_preview_values() {
     assert_eq!(sdf.facts().domain_status, SdfDomainStatus::Invalid);
     assert_eq!(report.sample_count, 2);
     assert_eq!(report.non_finite_count, 2);
+    assert_eq!(report.negative_count, 0);
+    assert_eq!(report.zero_count, 0);
+    assert_eq!(report.positive_count, 0);
+    assert_eq!(report.unknown_sign_count, 2);
+    assert!(report.is_self_consistent());
     assert!(report.samples.iter().all(|sample| sample.value.is_none()));
 }
 
@@ -388,6 +598,19 @@ fn projection_replay_preserves_rejected_candidates_for_audit() {
         SdfProjectionReplayStatus::RejectedByClassification
     );
     assert_eq!(report.candidate_report.location, SdfPointLocation::Outside);
+}
+
+#[test]
+fn stale_prepared_freshness_does_not_change_exact_classification() {
+    let current = prepare_versioned(SdfExpr::sphere(p(0, 0, 0), r(25)), 1);
+    let stale = current.clone().with_current_source_version(2);
+    let point = p(3, 4, 0);
+
+    assert_eq!(
+        current.classify_point(&point).location,
+        stale.classify_point(&point).location
+    );
+    assert_eq!(stale.classify_point(&point).freshness, SdfFreshness::Stale);
 }
 
 #[test]

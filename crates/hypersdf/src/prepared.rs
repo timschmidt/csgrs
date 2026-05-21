@@ -14,11 +14,20 @@ use hyperlimit::{
 };
 use std::cmp::Ordering;
 
+use crate::batch::{
+    SdfBatchDispatch, SdfCachePayoffReport, SdfCellBatchClassificationReport,
+    SdfPointBatchClassificationReport,
+};
 use crate::expr::SdfExpr;
 use crate::facts::SdfFacts;
+use crate::gradient::{
+    SdfGradientReport, SdfNormalReport, gradient_expr_point, normal_from_gradient_report,
+};
 use crate::handoff::SdfVoxelHandoffReport;
 use crate::interval::{SdfIntervalReport, interval_expr_cell};
+use crate::lipschitz::{SdfLipschitzReport, lipschitz_expr_cell};
 use crate::mesh::SdfMeshPreviewReport;
+use crate::package::SdfHandoffPackage;
 use crate::primitive::SdfPrimitive;
 use crate::primitive::radius_squared_domain;
 use crate::sampling::{
@@ -31,13 +40,17 @@ use crate::status::{
     SdfCellClassificationReport, SdfCellLocation, SdfEvidenceStatus, SdfFreshness, SdfMetricStatus,
     SdfPointClassificationReport, SdfPointLocation,
 };
+use crate::voxel::{
+    SdfHypervoxelHandoffReport, SdfVoxelCellGrid, SdfVoxelGridError, voxel_cell_bounds,
+};
 
 /// Prepared exact-aware SDF expression.
 #[derive(Clone, Debug, PartialEq)]
 pub struct PreparedSdf {
     expr: SdfExpr,
     facts: SdfFacts,
-    freshness: SdfFreshness,
+    prepared_source_version: Option<u64>,
+    current_source_version: Option<u64>,
 }
 
 impl PreparedSdf {
@@ -47,7 +60,24 @@ impl PreparedSdf {
         Self {
             expr,
             facts,
-            freshness: SdfFreshness::Unversioned,
+            prepared_source_version: None,
+            current_source_version: None,
+        }
+    }
+
+    /// Prepare an expression that belongs to a caller-owned construction version.
+    ///
+    /// The version is metadata, not predicate evidence. It lets reports expose
+    /// whether prepared facts are current relative to an external source object
+    /// without changing the exact classification route; this mirrors Yap's
+    /// separation between geometric-object packages and arithmetic decisions.
+    pub fn new_versioned(expr: SdfExpr, source_version: u64) -> Self {
+        let facts = SdfFacts::from_expr(&expr);
+        Self {
+            expr,
+            facts,
+            prepared_source_version: Some(source_version),
+            current_source_version: Some(source_version),
         }
     }
 
@@ -66,6 +96,36 @@ impl PreparedSdf {
         self.facts.metric_status
     }
 
+    /// Return the source construction version used when this handle was prepared.
+    pub const fn prepared_source_version(&self) -> Option<u64> {
+        self.prepared_source_version
+    }
+
+    /// Return the latest source construction version known to this handle.
+    pub const fn current_source_version(&self) -> Option<u64> {
+        self.current_source_version
+    }
+
+    /// Return freshness relative to the known source construction version.
+    pub const fn freshness(&self) -> SdfFreshness {
+        match (self.prepared_source_version, self.current_source_version) {
+            (None, _) => SdfFreshness::Unversioned,
+            (Some(prepared), Some(current)) if prepared == current => SdfFreshness::Current,
+            (Some(_), Some(_)) => SdfFreshness::Stale,
+            (Some(_), None) => SdfFreshness::Current,
+        }
+    }
+
+    /// Return a copy of this prepared handle with a refreshed source-version view.
+    ///
+    /// This is deliberately metadata-only: stale handles continue to answer
+    /// exact predicates over the retained expression, but their reports carry
+    /// `SdfFreshness::Stale` so downstream consumers can reject cached facts.
+    pub fn with_current_source_version(mut self, current_source_version: u64) -> Self {
+        self.current_source_version = Some(current_source_version);
+        self
+    }
+
     /// Classify a point and return a report rather than a bare boolean.
     pub fn classify_point(&self, point: &Point3) -> SdfPointClassificationReport {
         let outcome = classify_expr_point(&self.expr, point);
@@ -76,7 +136,7 @@ impl PreparedSdf {
             scalar_value,
             metric_status: self.metric_status(),
             evidence: SdfEvidenceStatus::from_outcome(&outcome),
-            freshness: self.freshness,
+            freshness: self.freshness(),
         }
     }
 
@@ -91,9 +151,78 @@ impl PreparedSdf {
     where
         I: IntoIterator<Item = &'a Point3>,
     {
-        points
+        self.classify_points_report(points).reports
+    }
+
+    /// Classify many points and include dispatch/cache-payoff metadata.
+    ///
+    /// The current dispatch is scalar replay over one prepared expression. The
+    /// metadata is deliberately non-certifying: per-point reports are the only
+    /// topology evidence, while dispatch labels and payoff counters explain how
+    /// work was scheduled and how much retained structure was reused.
+    pub fn classify_points_report<'a, I>(&self, points: I) -> SdfPointBatchClassificationReport
+    where
+        I: IntoIterator<Item = &'a Point3>,
+    {
+        let reports = points
             .into_iter()
             .map(|point| self.classify_point(point))
+            .collect::<Vec<_>>();
+        SdfPointBatchClassificationReport {
+            dispatch: SdfBatchDispatch::ScalarReplay,
+            cache_payoff: self.cache_payoff(reports.len()),
+            freshness: self.freshness(),
+            reports,
+        }
+    }
+
+    /// Return an exact symbolic gradient at a point when the active expression
+    /// branch is certified.
+    ///
+    /// The result is solver/adapter evidence, not a topology decision. CSG ties,
+    /// nonsmooth primitive branches, `sqrt` division domains, and affine
+    /// covector transforms that are not yet represented return explicit
+    /// unknown evidence instead of a tolerance-derived normal.
+    pub fn gradient_point(&self, point: &Point3) -> SdfGradientReport {
+        let outcome = gradient_expr_point(&self.expr, point);
+        SdfGradientReport {
+            point: point.clone(),
+            gradient: outcome.clone().value(),
+            gradient_status: self.facts.gradient_status,
+            evidence: SdfEvidenceStatus::from_outcome(&outcome),
+            freshness: self.freshness(),
+        }
+    }
+
+    /// Return exact symbolic gradients for many points through one prepared handle.
+    pub fn gradient_points<'a, I>(&self, points: I) -> Vec<SdfGradientReport>
+    where
+        I: IntoIterator<Item = &'a Point3>,
+    {
+        points
+            .into_iter()
+            .map(|point| self.gradient_point(point))
+            .collect()
+    }
+
+    /// Return an exact unnormalized normal direction when a certified nonzero
+    /// gradient is available at the query point.
+    ///
+    /// The report never normalizes through a square root or tolerance. A
+    /// certified zero gradient, CSG tie, nonsmooth branch, or unsupported
+    /// derivative route is reported explicitly.
+    pub fn normal_point(&self, point: &Point3) -> SdfNormalReport {
+        normal_from_gradient_report(self.gradient_point(point))
+    }
+
+    /// Return exact normal-direction reports for many points.
+    pub fn normal_points<'a, I>(&self, points: I) -> Vec<SdfNormalReport>
+    where
+        I: IntoIterator<Item = &'a Point3>,
+    {
+        points
+            .into_iter()
+            .map(|point| self.normal_point(point))
             .collect()
     }
 
@@ -106,7 +235,7 @@ impl PreparedSdf {
             location: outcome.value().unwrap_or(SdfCellLocation::Unknown),
             metric_status: self.metric_status(),
             evidence: SdfEvidenceStatus::from_outcome(&outcome),
-            freshness: self.freshness,
+            freshness: self.freshness(),
         }
     }
 
@@ -119,10 +248,24 @@ impl PreparedSdf {
     where
         I: IntoIterator<Item = (&'a Point3, &'a Point3)>,
     {
-        cells
+        self.classify_cells_report(cells).reports
+    }
+
+    /// Classify many closed AABB/cells and include dispatch/cache-payoff metadata.
+    pub fn classify_cells_report<'a, I>(&self, cells: I) -> SdfCellBatchClassificationReport
+    where
+        I: IntoIterator<Item = (&'a Point3, &'a Point3)>,
+    {
+        let reports = cells
             .into_iter()
             .map(|(min, max)| self.classify_cell(min, max))
-            .collect()
+            .collect::<Vec<_>>();
+        SdfCellBatchClassificationReport {
+            dispatch: SdfBatchDispatch::ScalarReplay,
+            cache_payoff: self.cache_payoff(reports.len()),
+            freshness: self.freshness(),
+            reports,
+        }
     }
 
     /// Compute a certified scalar interval over a closed AABB/cell when the
@@ -134,7 +277,23 @@ impl PreparedSdf {
             max: max.clone(),
             interval: outcome.clone().value(),
             evidence: SdfEvidenceStatus::from_outcome(&outcome),
-            freshness: self.freshness,
+            freshness: self.freshness(),
+        }
+    }
+
+    /// Compute a conservative exact local Lipschitz bound over a closed AABB/cell.
+    ///
+    /// Missing bounds are reported as explicit unknown evidence. They are not
+    /// replaced by sampled slopes or primitive-float finite differences.
+    pub fn lipschitz_cell(&self, min: &Point3, max: &Point3) -> SdfLipschitzReport {
+        let outcome = lipschitz_expr_cell(&self.expr, min, max);
+        SdfLipschitzReport {
+            min: min.clone(),
+            max: max.clone(),
+            bound: outcome.clone().value(),
+            lipschitz_status: self.facts.lipschitz_status,
+            evidence: SdfEvidenceStatus::from_outcome(&outcome),
+            freshness: self.freshness(),
         }
     }
 
@@ -156,7 +315,7 @@ impl PreparedSdf {
             points,
             precision,
             self.metric_status(),
-            self.freshness,
+            self.freshness(),
         )
     }
 
@@ -176,15 +335,16 @@ impl PreparedSdf {
             grid,
             precision,
             self.metric_status(),
-            self.freshness,
+            self.freshness(),
         )
     }
 
-    /// Build a preview-only mesh diagnostic report from a sampled exact grid.
+    /// Build a preview-only mesh report from a sampled exact grid.
     ///
-    /// The report currently records Surface Nets style crossing diagnostics but
-    /// emits no vertices or triangles. That keeps the API honest while the
-    /// exact SDF expression and sampling surfaces mature.
+    /// The report records Surface Nets style crossing diagnostics and may emit
+    /// primitive-float proposal vertices/triangles. The output is still
+    /// preview-only; topology consumers must replay exact predicates before
+    /// accepting mesh structure.
     pub fn mesh_preview_from_grid(
         &self,
         grid: SdfPreviewGrid,
@@ -209,7 +369,7 @@ impl PreparedSdf {
             function_name,
             precision,
             self.metric_status(),
-            self.freshness,
+            self.freshness(),
         )
     }
 
@@ -228,7 +388,7 @@ impl PreparedSdf {
             proposal,
             candidate_report,
             self.metric_status(),
-            self.freshness,
+            self.freshness(),
         )
     }
 
@@ -246,7 +406,50 @@ impl PreparedSdf {
         SdfVoxelHandoffReport::from_cells(
             self.classify_cells(cells),
             self.metric_status(),
-            self.freshness,
+            self.freshness(),
+        )
+    }
+
+    /// Classify an exact voxel-cell grid for a downstream `hypervoxel` owner.
+    ///
+    /// This method constructs exact cell AABBs from the requested frame and
+    /// replays conservative SDF cell predicates for every cell. It does not
+    /// allocate `hypervoxel` storage; it returns a report with frame readiness
+    /// and occupancy labels that a grid owner can materialize or reject.
+    pub fn classify_voxel_grid_for_handoff(
+        &self,
+        grid: SdfVoxelCellGrid,
+    ) -> Result<SdfHypervoxelHandoffReport, SdfVoxelGridError> {
+        grid.cell_count()?;
+        grid.validate_positive_step()?;
+        let classifications = voxel_cell_bounds(&grid)
+            .iter()
+            .map(|(min, max)| self.classify_cell(min, max))
+            .collect();
+        Ok(SdfHypervoxelHandoffReport::from_classifications(
+            grid,
+            classifications,
+            self.metric_status(),
+            self.freshness(),
+        ))
+    }
+
+    /// Start a typed downstream handoff package from this prepared expression.
+    ///
+    /// The package carries retained continuous-field facts immediately and can
+    /// be extended with optional adapter reports. Consumers must call
+    /// `require_domain` for the domain they need; optional payload presence is
+    /// never treated as topology evidence by itself.
+    pub fn handoff_package(&self) -> SdfHandoffPackage {
+        SdfHandoffPackage::new(self.facts.clone(), self.metric_status(), self.freshness())
+    }
+
+    fn cache_payoff(&self, query_count: usize) -> SdfCachePayoffReport {
+        SdfCachePayoffReport::new(
+            query_count,
+            self.facts.node_count,
+            self.facts.primitive_count,
+            self.facts.transform_count,
         )
     }
 }
@@ -260,7 +463,10 @@ fn classify_expr_point(expr: &SdfExpr, point: &Point3) -> PredicateOutcome<SdfPo
         | SdfExpr::Sub(_, _)
         | SdfExpr::Mul(_, _)
         | SdfExpr::Abs(_)
-        | SdfExpr::Sqrt(_) => classify_scalar_expr_point(expr, point),
+        | SdfExpr::Sqrt(_)
+        | SdfExpr::Sin(_)
+        | SdfExpr::Cos(_)
+        | SdfExpr::Tan(_) => classify_scalar_expr_point(expr, point),
         SdfExpr::Primitive(primitive) => primitive.classify_point(point),
         SdfExpr::Union(left, right) => combine_point_union(
             classify_expr_point(left, point),
@@ -291,7 +497,10 @@ fn classify_expr_cell(
         | SdfExpr::Sub(_, _)
         | SdfExpr::Mul(_, _)
         | SdfExpr::Abs(_)
-        | SdfExpr::Sqrt(_) => classify_interval_cell(expr, min, max),
+        | SdfExpr::Sqrt(_)
+        | SdfExpr::Sin(_)
+        | SdfExpr::Cos(_)
+        | SdfExpr::Tan(_) => classify_interval_cell(expr, min, max),
         SdfExpr::Primitive(primitive) => classify_primitive_cell(primitive, min, max),
         SdfExpr::Union(left, right) => combine_cell_union(
             classify_expr_cell(left, min, max),
@@ -423,6 +632,9 @@ fn classify_primitive_cell(
             min,
             max,
         ),
+        SdfPrimitive::RoundedAabb { .. } => {
+            classify_interval_cell(&SdfExpr::Primitive(primitive.clone()), min, max)
+        }
         SdfPrimitive::Cylinder { .. } => {
             classify_interval_cell(&SdfExpr::Primitive(primitive.clone()), min, max)
         }

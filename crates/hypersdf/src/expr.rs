@@ -48,6 +48,22 @@ pub enum SdfExpr {
     /// become unknown predicate evidence at query time, instead of being
     /// rounded or clamped into a preview value.
     Sqrt(Box<SdfExpr>),
+    /// Exact sine of a scalar child field.
+    ///
+    /// Scalar point evaluation delegates to `hyperreal::Real::sin`, preserving
+    /// exact pi-rational shortcuts and computable certificates. Cell intervals
+    /// remain explicit unknown until a certified trig range reducer is attached.
+    Sin(Box<SdfExpr>),
+    /// Exact cosine of a scalar child field.
+    ///
+    /// Point classification may use exact/computable `Real` signs, while cell
+    /// classification refuses to infer topology from primitive-float samples.
+    Cos(Box<SdfExpr>),
+    /// Exact tangent of a scalar child field.
+    ///
+    /// `hyperreal::Real::tan` rejects poles. Rejected point values become
+    /// explicit unknowns instead of silently clamped scalar evidence.
+    Tan(Box<SdfExpr>),
     /// CSG complement, represented by `-field`.
     Complement(Box<SdfExpr>),
     /// Exact scalar offset, represented by `field - amount`.
@@ -124,6 +140,18 @@ impl SdfExpr {
     /// Construct a closed AABB expression.
     pub fn aabb(min: hyperlimit::Point3, max: hyperlimit::Point3) -> Self {
         Self::Primitive(SdfPrimitive::aabb(min, max))
+    }
+
+    /// Construct a rounded AABB expression from a core box and squared radius.
+    ///
+    /// The squared radius keeps exact classification square-root-free; the
+    /// primitive remains sign-equivalent rather than a metric-distance field.
+    pub fn rounded_aabb(
+        min: hyperlimit::Point3,
+        max: hyperlimit::Point3,
+        radius_squared: hyperreal::Real,
+    ) -> Self {
+        Self::Primitive(SdfPrimitive::rounded_aabb(min, max, radius_squared))
     }
 
     /// Construct a finite axis-aligned cylinder.
@@ -211,6 +239,21 @@ impl SdfExpr {
         Self::Sqrt(Box::new(self))
     }
 
+    /// Construct an exact sine expression.
+    pub fn sin(self) -> Self {
+        Self::Sin(Box::new(self))
+    }
+
+    /// Construct an exact cosine expression.
+    pub fn cos(self) -> Self {
+        Self::Cos(Box::new(self))
+    }
+
+    /// Construct an exact tangent expression.
+    pub fn tan(self) -> Self {
+        Self::Tan(Box::new(self))
+    }
+
     /// Construct a CSG complement expression.
     pub fn complement(self) -> Self {
         Self::Complement(Box::new(self))
@@ -259,9 +302,14 @@ impl SdfExpr {
             Self::Union(left, right) | Self::Intersection(left, right) => {
                 left.metric_status().csg_pair(right.metric_status())
             }
-            Self::Add(_, _) | Self::Sub(_, _) | Self::Mul(_, _) | Self::Abs(_) | Self::Sqrt(_) => {
-                SdfMetricStatus::SignEquivalent
-            }
+            Self::Add(_, _)
+            | Self::Sub(_, _)
+            | Self::Mul(_, _)
+            | Self::Abs(_)
+            | Self::Sqrt(_)
+            | Self::Sin(_)
+            | Self::Cos(_)
+            | Self::Tan(_) => SdfMetricStatus::SignEquivalent,
             Self::Complement(inner) => inner.metric_status().complemented(),
             Self::Offset { child, .. } => child
                 .metric_status()

@@ -154,6 +154,9 @@ fn emit_expr(
         )),
         SdfExpr::Abs(inner) => Some(format!("abs({})", emit_expr(inner, point_name, context)?)),
         SdfExpr::Sqrt(inner) => Some(format!("sqrt({})", emit_expr(inner, point_name, context)?)),
+        SdfExpr::Sin(inner) => Some(format!("sin({})", emit_expr(inner, point_name, context)?)),
+        SdfExpr::Cos(inner) => Some(format!("cos({})", emit_expr(inner, point_name, context)?)),
+        SdfExpr::Tan(inner) => Some(format!("tan({})", emit_expr(inner, point_name, context)?)),
         SdfExpr::Complement(inner) => {
             Some(format!("-({})", emit_expr(inner, point_name, context)?))
         }
@@ -214,6 +217,23 @@ fn emit_primitive(
             max_y = emit_real(&max.y, context)?,
             max_z = emit_real(&max.z, context)?,
         )),
+        SdfPrimitive::RoundedAabb {
+            min,
+            max,
+            radius_squared,
+        } => {
+            let core = emit_aabb_core_value(point_name, min, max, context)?;
+            let outside = format!(
+                "dot(max(max({minv} - {p}, {p} - {maxv}), vec3(0.0)), max(max({minv} - {p}, {p} - {maxv}), vec3(0.0)))",
+                p = point_name,
+                minv = emit_vec3(min, context)?,
+                maxv = emit_vec3(max, context)?,
+            );
+            Some(format!(
+                "(({core}) <= 0.0 ? ({core}) - {r2} : ({outside}) - {r2})",
+                r2 = emit_real(radius_squared, context)?,
+            ))
+        }
         SdfPrimitive::Cylinder {
             axis,
             center,
@@ -285,6 +305,24 @@ fn emit_primitive(
             emit_real(half_width, context)?
         )),
     }
+}
+
+fn emit_aabb_core_value(
+    point_name: &str,
+    min: &hyperlimit::Point3,
+    max: &hyperlimit::Point3,
+    context: &mut ShaderExportContext,
+) -> Option<String> {
+    Some(format!(
+        "max(max(max({min_x} - {p}.x, {p}.x - {max_x}), max({min_y} - {p}.y, {p}.y - {max_y})), max({min_z} - {p}.z, {p}.z - {max_z}))",
+        p = point_name,
+        min_x = emit_real(&min.x, context)?,
+        min_y = emit_real(&min.y, context)?,
+        min_z = emit_real(&min.z, context)?,
+        max_x = emit_real(&max.x, context)?,
+        max_y = emit_real(&max.y, context)?,
+        max_z = emit_real(&max.z, context)?,
+    ))
 }
 
 fn emit_vec3(point: &hyperlimit::Point3, context: &mut ShaderExportContext) -> Option<String> {

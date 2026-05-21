@@ -19,7 +19,7 @@ use hyperreal::Real;
 use crate::expr::{SdfCoordinate, SdfExpr};
 use crate::primitive::{
     SdfPrimitive, capsule_domain, cylinder_domain, half_width_domain, radial_squared,
-    radius_squared_domain, squared_distance3, torus_domain,
+    radius_squared_domain, rounded_aabb_domain, squared_distance3, torus_domain,
 };
 use crate::status::{SdfEvidenceStatus, SdfFreshness, SdfMetricStatus};
 
@@ -96,6 +96,9 @@ pub(crate) fn interval_expr_cell(
         ),
         SdfExpr::Abs(inner) => map_interval_abs(interval_expr_cell(inner, min, max)),
         SdfExpr::Sqrt(inner) => map_interval_sqrt(interval_expr_cell(inner, min, max)),
+        SdfExpr::Sin(_) | SdfExpr::Cos(_) | SdfExpr::Tan(_) => {
+            PredicateOutcome::unknown(RefinementNeed::Unsupported, Escalation::Undecided)
+        }
         SdfExpr::Complement(inner) => map_interval_complement(interval_expr_cell(inner, min, max)),
         SdfExpr::Offset { child, amount } => {
             map_interval_offset(interval_expr_cell(child, min, max), amount)
@@ -200,6 +203,19 @@ fn interval_primitive_cell(
             min: shape_min,
             max: shape_max,
         } => aabb_interval(shape_min, shape_max, min, max),
+        SdfPrimitive::RoundedAabb {
+            min: shape_min,
+            max: shape_max,
+            radius_squared,
+        } => match rounded_aabb_domain(radius_squared) {
+            PredicateOutcome::Decided { value: true, .. } => {
+                rounded_aabb_interval(shape_min, shape_max, radius_squared, min, max)
+            }
+            PredicateOutcome::Decided { value: false, .. } => {
+                PredicateOutcome::unknown(RefinementNeed::Unsupported, Escalation::Undecided)
+            }
+            PredicateOutcome::Unknown { needed, stage } => PredicateOutcome::unknown(needed, stage),
+        },
         SdfPrimitive::Cylinder {
             axis,
             center,
@@ -357,6 +373,44 @@ fn aabb_interval(
         hyperlimit::Certainty::Exact,
         Escalation::Exact,
     )
+}
+
+fn rounded_aabb_interval(
+    shape_min: &Point3,
+    shape_max: &Point3,
+    radius_squared: &Real,
+    cell_min: &Point3,
+    cell_max: &Point3,
+) -> PredicateOutcome<SdfInterval> {
+    // Conservative union of the two retained branches used for point
+    // classification: core-AABB support inside the core, and squared distance
+    // outside the core. This follows Moore-style interval enclosure while
+    // keeping Yap's square-root-free predicate package intact.
+    let aabb = match aabb_interval(shape_min, shape_max, cell_min, cell_max) {
+        PredicateOutcome::Decided { value, .. } => SdfInterval {
+            lower: &value.lower - radius_squared,
+            upper: &value.upper - radius_squared,
+            metric_status: value.metric_status,
+        },
+        PredicateOutcome::Unknown { needed, stage } => {
+            return PredicateOutcome::unknown(needed, stage);
+        }
+    };
+    let distance = match squared_distance_to_aabb_interval(shape_min, shape_max, cell_min, cell_max)
+    {
+        Ok(value) => SdfInterval {
+            lower: &value.lower - radius_squared,
+            upper: &value.upper - radius_squared,
+            metric_status: value.metric_status,
+        },
+        Err(outcome) => return outcome,
+    };
+    match interval_hull(aabb, distance) {
+        Ok(interval) => {
+            PredicateOutcome::decided(interval, hyperlimit::Certainty::Exact, Escalation::Exact)
+        }
+        Err(outcome) => outcome,
+    }
 }
 
 fn slab_interval(
@@ -671,6 +725,17 @@ fn interval_max(
     })
 }
 
+fn interval_hull(
+    left: SdfInterval,
+    right: SdfInterval,
+) -> Result<SdfInterval, PredicateOutcome<SdfInterval>> {
+    Ok(SdfInterval {
+        lower: min_real(left.lower, right.lower)?,
+        upper: max_real(left.upper, right.upper)?,
+        metric_status: left.metric_status.csg_pair(right.metric_status),
+    })
+}
+
 fn interval_add(
     left: SdfInterval,
     right: SdfInterval,
@@ -857,6 +922,79 @@ fn closest_point_in_aabb(
         clamp_real(&point.y, &min.y, &max.y)?,
         clamp_real(&point.z, &min.z, &max.z)?,
     ))
+}
+
+fn squared_distance_to_aabb_interval(
+    shape_min: &Point3,
+    shape_max: &Point3,
+    cell_min: &Point3,
+    cell_max: &Point3,
+) -> Result<SdfInterval, PredicateOutcome<SdfInterval>> {
+    let lower = squared_aabb_gap(shape_min, shape_max, cell_min, cell_max)?;
+    let corners = corners(cell_min, cell_max);
+    let mut upper = squared_distance_to_aabb_point(&corners[0], shape_min, shape_max)?;
+    for corner in &corners[1..] {
+        upper = max_real(
+            upper,
+            squared_distance_to_aabb_point(corner, shape_min, shape_max)?,
+        )?;
+    }
+    Ok(SdfInterval {
+        lower,
+        upper,
+        metric_status: SdfMetricStatus::SignEquivalent,
+    })
+}
+
+fn squared_aabb_gap(
+    shape_min: &Point3,
+    shape_max: &Point3,
+    cell_min: &Point3,
+    cell_max: &Point3,
+) -> Result<Real, PredicateOutcome<SdfInterval>> {
+    let dx = interval_gap_squared(&cell_min.x, &cell_max.x, &shape_min.x, &shape_max.x)?;
+    let dy = interval_gap_squared(&cell_min.y, &cell_max.y, &shape_min.y, &shape_max.y)?;
+    let dz = interval_gap_squared(&cell_min.z, &cell_max.z, &shape_min.z, &shape_max.z)?;
+    Ok(&(&dx + &dy) + &dz)
+}
+
+fn interval_gap_squared(
+    a_min: &Real,
+    a_max: &Real,
+    b_min: &Real,
+    b_max: &Real,
+) -> Result<Real, PredicateOutcome<SdfInterval>> {
+    let (a_min, a_max) = ordered_pair(a_min, a_max)?;
+    let (b_min, b_max) = ordered_pair(b_min, b_max)?;
+    let gap = match compare_reals(&a_max, &b_min) {
+        PredicateOutcome::Decided {
+            value: Ordering::Less,
+            ..
+        } => &b_min - &a_max,
+        PredicateOutcome::Decided { .. } => match compare_reals(&b_max, &a_min) {
+            PredicateOutcome::Decided {
+                value: Ordering::Less,
+                ..
+            } => &a_min - &b_max,
+            PredicateOutcome::Decided { .. } => Real::zero(),
+            PredicateOutcome::Unknown { needed, stage } => {
+                return Err(PredicateOutcome::unknown(needed, stage));
+            }
+        },
+        PredicateOutcome::Unknown { needed, stage } => {
+            return Err(PredicateOutcome::unknown(needed, stage));
+        }
+    };
+    Ok(&gap * &gap)
+}
+
+fn squared_distance_to_aabb_point(
+    point: &Point3,
+    min: &Point3,
+    max: &Point3,
+) -> Result<Real, PredicateOutcome<SdfInterval>> {
+    let closest = closest_point_in_aabb(point, min, max)?;
+    Ok(squared_distance3(point, &closest))
 }
 
 fn closest_point_in_radial_aabb(

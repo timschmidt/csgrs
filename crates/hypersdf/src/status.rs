@@ -53,6 +53,24 @@ impl SdfGradientStatus {
     }
 }
 
+/// Validity of a normal direction derived from an exact gradient.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum SdfNormalStatus {
+    /// A certified nonzero gradient gives an exact unnormalized normal direction.
+    ExactDirection,
+    /// The gradient is certified zero, so no normal direction exists.
+    ZeroGradient,
+    /// A normal direction could not be certified.
+    Unknown,
+}
+
+impl SdfNormalStatus {
+    /// Returns whether the status carries a usable exact direction.
+    pub const fn has_direction(self) -> bool {
+        matches!(self, Self::ExactDirection)
+    }
+}
+
 /// Conservative Lipschitz evidence for a retained scalar field.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum SdfLipschitzStatus {
@@ -235,6 +253,22 @@ pub struct SdfPointClassificationReport {
     pub freshness: SdfFreshness,
 }
 
+impl SdfPointClassificationReport {
+    /// Validate report-field consistency without replaying the source expression.
+    ///
+    /// This is an audit helper for copied reports. It does not prove the
+    /// classification correct; it only rejects internally inconsistent status
+    /// combinations before downstream consumers rely on them.
+    pub const fn is_self_consistent(&self) -> bool {
+        match self.evidence {
+            SdfEvidenceStatus::Certified { .. } => {
+                !matches!(self.location, SdfPointLocation::Unknown)
+            }
+            SdfEvidenceStatus::Unknown { .. } => matches!(self.location, SdfPointLocation::Unknown),
+        }
+    }
+}
+
 /// Report returned by AABB/cell classification.
 #[derive(Clone, Debug, PartialEq)]
 pub struct SdfCellClassificationReport {
@@ -250,4 +284,16 @@ pub struct SdfCellClassificationReport {
     pub evidence: SdfEvidenceStatus,
     /// Prepared-source freshness.
     pub freshness: SdfFreshness,
+}
+
+impl SdfCellClassificationReport {
+    /// Validate report-field consistency without replaying the source expression.
+    pub const fn is_self_consistent(&self) -> bool {
+        match self.evidence {
+            SdfEvidenceStatus::Certified { .. } => {
+                !matches!(self.location, SdfCellLocation::Unknown)
+            }
+            SdfEvidenceStatus::Unknown { .. } => matches!(self.location, SdfCellLocation::Unknown),
+        }
+    }
 }

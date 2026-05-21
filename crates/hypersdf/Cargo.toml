@@ -6,9 +6,11 @@ description = "Exact-aware signed-distance and implicit-field carriers for the H
 license = "Apache-2.0"
 
 [dependencies]
+fast-surface-nets = "0.2.1"
 hyperlattice = { path = "../hyperlattice" }
 hyperlimit = { path = "../hyperlimit" }
 hyperreal = { path = "../hyperreal" }
+hypervoxel = { path = "../hypervoxel", optional = true }
 
 [dev-dependencies]
 criterion = "0.5"
@@ -20,3 +22,7 @@ harness = false
 
 [patch.crates-io]
 hyperreal = { path = "../hyperreal" }
+
+[features]
+default = []
+hypervoxel-adapter = ["dep:hypervoxel"]

@@ -64,4 +64,28 @@ impl SdfVoxelHandoffReport {
     pub const fn all_cells_classified(&self) -> bool {
         self.unknown_count == 0
     }
+
+    /// Validate summary counts against contained cell reports.
+    pub fn is_self_consistent(&self) -> bool {
+        let mut certified_inside_count = 0_usize;
+        let mut boundary_count = 0_usize;
+        let mut certified_outside_count = 0_usize;
+        let mut unknown_count = 0_usize;
+        for cell in &self.cells {
+            if !cell.is_self_consistent() {
+                return false;
+            }
+            match cell.location {
+                SdfCellLocation::ConservativeInside => certified_inside_count += 1,
+                SdfCellLocation::Boundary => boundary_count += 1,
+                SdfCellLocation::ConservativeOutside => certified_outside_count += 1,
+                SdfCellLocation::Unknown => unknown_count += 1,
+            }
+        }
+        self.cell_count == self.cells.len()
+            && self.certified_inside_count == certified_inside_count
+            && self.boundary_count == boundary_count
+            && self.certified_outside_count == certified_outside_count
+            && self.unknown_count == unknown_count
+    }
 }

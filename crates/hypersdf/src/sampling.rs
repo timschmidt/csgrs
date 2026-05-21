@@ -3,10 +3,11 @@
 //! Primitive-float samples are display and adapter data, not exact topology.
 //! This module makes that boundary explicit: values are lowered through
 //! `Real::to_f32_lossy`/`Real::to_f64_lossy`, reports count failed lowerings,
-//! and the topology status remains preview-only. This is the same EGC boundary
-//! described by Yap, "Towards Exact Geometric Computation," *Computational
-//! Geometry* 7.1-2 (1997): approximate values can be useful views, but they do
-//! not certify combinatorial decisions.
+//! records exact sign buckets before lowering, and keeps topology status
+//! preview-only. This is the same EGC boundary described by Yap, "Towards
+//! Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997):
+//! approximate values can be useful views, but they do not certify
+//! combinatorial decisions.
 
 use core::cmp::Ordering;
 
@@ -63,8 +64,35 @@ pub struct SdfSamplingReport {
     pub sample_count: usize,
     /// Number of samples that could not be lowered to a finite primitive float.
     pub non_finite_count: usize,
+    /// Number of retained scalar values certified negative before lowering.
+    pub negative_count: usize,
+    /// Number of retained scalar values certified zero before lowering.
+    pub zero_count: usize,
+    /// Number of retained scalar values certified positive before lowering.
+    pub positive_count: usize,
+    /// Number of retained scalar signs that could not be certified.
+    pub unknown_sign_count: usize,
     /// Lowered sample records.
     pub samples: Vec<SdfPreviewSample>,
+}
+
+impl SdfSamplingReport {
+    /// Validate sample counts and preview-topology labeling.
+    ///
+    /// This is a structural audit only. Preview samples remain lossy adapter
+    /// data even when the report is internally consistent.
+    pub fn is_self_consistent(&self) -> bool {
+        self.sample_count == self.samples.len()
+            && self.non_finite_count
+                == self
+                    .samples
+                    .iter()
+                    .filter(|sample| sample.value.is_none())
+                    .count()
+            && self.negative_count + self.zero_count + self.positive_count + self.unknown_sign_count
+                == self.sample_count
+            && matches!(self.topology_status, SdfSampleTopologyStatus::PreviewOnly)
+    }
 }
 
 /// Axis-aligned exact preview grid.
@@ -146,6 +174,14 @@ pub struct SdfGridSamplingReport {
     pub samples: SdfSamplingReport,
 }
 
+impl SdfGridSamplingReport {
+    /// Validate that the grid point count matches the contained sampling report.
+    pub fn is_self_consistent(&self) -> bool {
+        self.grid.point_count().ok() == Some(self.samples.sample_count)
+            && self.samples.is_self_consistent()
+    }
+}
+
 pub(crate) fn sample_expr_points_preview<'a, I>(
     expr: &SdfExpr,
     points: I,
@@ -158,8 +194,10 @@ where
 {
     let mut samples = Vec::new();
     let mut non_finite_count = 0_usize;
+    let mut sign_counts = SdfSampleSignCounts::default();
     for point in points {
         let exact_value = scalar_expr_point(expr, point);
+        sign_counts.add(exact_value.as_ref());
         let value = exact_value.as_ref().and_then(|value| match precision {
             SdfSamplingPrecision::F32 => value.to_f32_lossy().map(f64::from),
             SdfSamplingPrecision::F64 => value.to_f64_lossy(),
@@ -179,7 +217,43 @@ where
         freshness,
         sample_count: samples.len(),
         non_finite_count,
+        negative_count: sign_counts.negative,
+        zero_count: sign_counts.zero,
+        positive_count: sign_counts.positive,
+        unknown_sign_count: sign_counts.unknown,
         samples,
+    }
+}
+
+#[derive(Default)]
+struct SdfSampleSignCounts {
+    negative: usize,
+    zero: usize,
+    positive: usize,
+    unknown: usize,
+}
+
+impl SdfSampleSignCounts {
+    fn add(&mut self, value: Option<&Real>) {
+        let Some(value) = value else {
+            self.unknown += 1;
+            return;
+        };
+        match compare_reals(value, &Real::zero()) {
+            PredicateOutcome::Decided {
+                value: Ordering::Less,
+                ..
+            } => self.negative += 1,
+            PredicateOutcome::Decided {
+                value: Ordering::Equal,
+                ..
+            } => self.zero += 1,
+            PredicateOutcome::Decided {
+                value: Ordering::Greater,
+                ..
+            } => self.positive += 1,
+            PredicateOutcome::Unknown { .. } => self.unknown += 1,
+        }
     }
 }
 
@@ -245,6 +319,9 @@ pub(crate) fn scalar_expr_point(expr: &SdfExpr, point: &Point3) -> Option<Real> 
             }
         }
         SdfExpr::Sqrt(inner) => scalar_expr_point(inner, point)?.sqrt().ok(),
+        SdfExpr::Sin(inner) => Some(scalar_expr_point(inner, point)?.sin()),
+        SdfExpr::Cos(inner) => Some(scalar_expr_point(inner, point)?.cos()),
+        SdfExpr::Tan(inner) => scalar_expr_point(inner, point)?.tan().ok(),
         SdfExpr::Complement(inner) => scalar_expr_point(inner, point).map(|value| -&value),
         SdfExpr::Offset { child, amount } => {
             scalar_expr_point(child, point).map(|value| &value - amount)

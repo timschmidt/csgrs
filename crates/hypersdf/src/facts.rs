@@ -100,7 +100,11 @@ fn collect_expr<'a>(expr: &'a SdfExpr, params: &mut Vec<&'a Real>, counts: &mut 
             collect_expr(left, params, counts);
             collect_expr(right, params, counts);
         }
-        SdfExpr::Abs(inner) | SdfExpr::Sqrt(inner) => collect_expr(inner, params, counts),
+        SdfExpr::Abs(inner)
+        | SdfExpr::Sqrt(inner)
+        | SdfExpr::Sin(inner)
+        | SdfExpr::Cos(inner)
+        | SdfExpr::Tan(inner) => collect_expr(inner, params, counts),
         SdfExpr::Complement(inner) => collect_expr(inner, params, counts),
         SdfExpr::Offset { child, amount } => {
             params.push(amount);
@@ -132,6 +136,21 @@ fn collect_primitive<'a>(primitive: &'a SdfPrimitive, params: &mut Vec<&'a Real>
         }
         SdfPrimitive::Aabb { min, max } => {
             params.extend([&min.x, &min.y, &min.z, &max.x, &max.y, &max.z]);
+        }
+        SdfPrimitive::RoundedAabb {
+            min,
+            max,
+            radius_squared,
+        } => {
+            params.extend([
+                &min.x,
+                &min.y,
+                &min.z,
+                &max.x,
+                &max.y,
+                &max.z,
+                radius_squared,
+            ]);
         }
         SdfPrimitive::Cylinder {
             center,
@@ -189,7 +208,10 @@ fn domain_status_expr(expr: &SdfExpr) -> SdfDomainStatus {
         SdfExpr::Abs(inner) | SdfExpr::Complement(inner) | SdfExpr::Offset { child: inner, .. } => {
             domain_status_expr(inner)
         }
-        SdfExpr::Sqrt(inner) => domain_status_expr(inner).combine(SdfDomainStatus::Unknown),
+        SdfExpr::Sqrt(inner) | SdfExpr::Tan(inner) => {
+            domain_status_expr(inner).combine(SdfDomainStatus::Unknown)
+        }
+        SdfExpr::Sin(inner) | SdfExpr::Cos(inner) => domain_status_expr(inner),
         SdfExpr::Transform { child, .. } => domain_status_expr(child),
     }
 }
@@ -198,6 +220,15 @@ fn domain_status_primitive(primitive: &SdfPrimitive) -> SdfDomainStatus {
     match primitive {
         SdfPrimitive::Sphere { radius_squared, .. } => {
             match crate::primitive::radius_squared_domain(radius_squared) {
+                hyperlimit::PredicateOutcome::Decided { value: true, .. } => SdfDomainStatus::Valid,
+                hyperlimit::PredicateOutcome::Decided { value: false, .. } => {
+                    SdfDomainStatus::Invalid
+                }
+                hyperlimit::PredicateOutcome::Unknown { .. } => SdfDomainStatus::Unknown,
+            }
+        }
+        SdfPrimitive::RoundedAabb { radius_squared, .. } => {
+            match crate::primitive::rounded_aabb_domain(radius_squared) {
                 hyperlimit::PredicateOutcome::Decided { value: true, .. } => SdfDomainStatus::Valid,
                 hyperlimit::PredicateOutcome::Decided { value: false, .. } => {
                     SdfDomainStatus::Invalid
@@ -257,9 +288,12 @@ fn gradient_status_expr(expr: &SdfExpr) -> SdfGradientStatus {
         | SdfExpr::Sub(left, right) => {
             gradient_status_expr(left).csg_pair(gradient_status_expr(right))
         }
-        SdfExpr::Mul(_, _) | SdfExpr::Abs(_) | SdfExpr::Sqrt(_) => {
-            SdfGradientStatus::PiecewiseExact
-        }
+        SdfExpr::Mul(_, _)
+        | SdfExpr::Abs(_)
+        | SdfExpr::Sqrt(_)
+        | SdfExpr::Sin(_)
+        | SdfExpr::Cos(_)
+        | SdfExpr::Tan(_) => SdfGradientStatus::PiecewiseExact,
         SdfExpr::Complement(inner) | SdfExpr::Offset { child: inner, .. } => {
             gradient_status_expr(inner)
         }
@@ -275,6 +309,7 @@ fn gradient_status_primitive(primitive: &SdfPrimitive) -> SdfGradientStatus {
             SdfGradientStatus::ExactSymbolic
         }
         SdfPrimitive::Aabb { .. }
+        | SdfPrimitive::RoundedAabb { .. }
         | SdfPrimitive::Cylinder { .. }
         | SdfPrimitive::Capsule { .. }
         | SdfPrimitive::Torus { .. }
@@ -293,7 +328,12 @@ fn lipschitz_status_expr(expr: &SdfExpr) -> SdfLipschitzStatus {
         | SdfExpr::Sub(left, right) => {
             lipschitz_status_expr(left).csg_pair(lipschitz_status_expr(right))
         }
-        SdfExpr::Mul(_, _) | SdfExpr::Abs(_) | SdfExpr::Sqrt(_) => SdfLipschitzStatus::LocalOnly,
+        SdfExpr::Mul(_, _)
+        | SdfExpr::Abs(_)
+        | SdfExpr::Sqrt(_)
+        | SdfExpr::Sin(_)
+        | SdfExpr::Cos(_)
+        | SdfExpr::Tan(_) => SdfLipschitzStatus::LocalOnly,
         SdfExpr::Complement(inner) | SdfExpr::Offset { child: inner, .. } => {
             lipschitz_status_expr(inner)
         }
@@ -310,6 +350,7 @@ fn lipschitz_status_primitive(primitive: &SdfPrimitive) -> SdfLipschitzStatus {
         | SdfPrimitive::Capsule { .. }
         | SdfPrimitive::Torus { .. }
         | SdfPrimitive::Slab { .. } => SdfLipschitzStatus::GlobalExact,
+        SdfPrimitive::RoundedAabb { .. } => SdfLipschitzStatus::LocalOnly,
         SdfPrimitive::Sphere { .. } => SdfLipschitzStatus::LocalOnly,
         SdfPrimitive::Plane { .. } => SdfLipschitzStatus::Unknown,
     }

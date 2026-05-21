@@ -3,8 +3,8 @@ use hyperlattice::{Matrix4, Vector3};
 use hyperlimit::{Plane3, Point3};
 use hyperreal::Real;
 use hypersdf::{
-    SdfCoordinate, SdfExpr, SdfPreviewGrid, SdfProjectionProposal, SdfProjectionProposalKind,
-    SdfSamplingPrecision, prepare,
+    SdfCoordinate, SdfExpr, SdfHandoffDomain, SdfPreviewGrid, SdfProjectionProposal,
+    SdfProjectionProposalKind, SdfSamplingPrecision, SdfVoxelCellGrid, SdfVoxelGridSource, prepare,
 };
 
 fn r(value: i32) -> Real {
@@ -28,6 +28,11 @@ fn bench_point_classification(c: &mut Criterion) {
     let torus = prepare(SdfExpr::torus(SdfCoordinate::Z, p(0, 0, 0), r(25), r(4)));
     let sphere = prepare(SdfExpr::sphere(p(0, 0, 0), r(100)));
     let aabb = prepare(SdfExpr::aabb(p(-10, -10, -10), p(10, 10, 10)));
+    let rounded_aabb = prepare(SdfExpr::rounded_aabb(
+        p(-10, -10, -10),
+        p(10, 10, 10),
+        r(25),
+    ));
     let csg =
         prepare(SdfExpr::sphere(p(-4, 0, 0), r(25)).union(SdfExpr::sphere(p(4, 0, 0), r(25))));
     let translated = prepare(SdfExpr::sphere(p(0, 0, 0), r(100)).translate(p(10, 0, 0)));
@@ -51,6 +56,7 @@ fn bench_point_classification(c: &mut Criterion) {
             .mul_expr(SdfExpr::z().abs()),
     );
     let sqrt_expr = prepare(SdfExpr::x().mul_expr(SdfExpr::x()).sqrt());
+    let trig_expr = prepare(SdfExpr::x().sin().add_expr(SdfExpr::y().cos()));
     let point = p(3, 4, 5);
 
     c.bench_function("hypersdf plane point classification", |b| {
@@ -74,6 +80,9 @@ fn bench_point_classification(c: &mut Criterion) {
     c.bench_function("hypersdf aabb point classification", |b| {
         b.iter(|| aabb.classify_point(black_box(&point)))
     });
+    c.bench_function("hypersdf rounded aabb point classification", |b| {
+        b.iter(|| rounded_aabb.classify_point(black_box(&point)))
+    });
     c.bench_function("hypersdf csg union point classification", |b| {
         b.iter(|| csg.classify_point(black_box(&point)))
     });
@@ -88,6 +97,9 @@ fn bench_point_classification(c: &mut Criterion) {
     ];
     c.bench_function("hypersdf prepared point batch classification", |b| {
         b.iter(|| csg.classify_points(black_box(points.iter())))
+    });
+    c.bench_function("hypersdf prepared point batch report", |b| {
+        b.iter(|| csg.classify_points_report(black_box(points.iter())))
     });
     c.bench_function("hypersdf preview sample points f32", |b| {
         b.iter(|| csg.sample_points_preview(black_box(points.iter()), SdfSamplingPrecision::F32))
@@ -111,6 +123,21 @@ fn bench_point_classification(c: &mut Criterion) {
     c.bench_function("hypersdf projection replay", |b| {
         b.iter(|| sphere.replay_projection_proposal(black_box(proposal.clone())))
     });
+    let package = csg
+        .handoff_package()
+        .with_grid_samples(
+            csg.sample_grid_preview(grid.clone(), SdfSamplingPrecision::F32)
+                .expect("bench grid"),
+        )
+        .with_mesh_preview(
+            csg.mesh_preview_from_grid(grid.clone(), SdfSamplingPrecision::F32)
+                .expect("bench mesh preview"),
+        )
+        .with_shader_preview(csg.export_glsl_preview("field", SdfSamplingPrecision::F32))
+        .with_projection_replay(sphere.replay_projection_proposal(proposal.clone()));
+    c.bench_function("hypersdf handoff package mesh requirement", |b| {
+        b.iter(|| package.require_domain(black_box(SdfHandoffDomain::MeshPreview)))
+    });
     c.bench_function("hypersdf translated point classification", |b| {
         b.iter(|| translated.classify_point(black_box(&point)))
     });
@@ -129,8 +156,17 @@ fn bench_point_classification(c: &mut Criterion) {
     c.bench_function("hypersdf arithmetic point classification", |b| {
         b.iter(|| arithmetic.classify_point(black_box(&point)))
     });
+    c.bench_function("hypersdf arithmetic point gradient", |b| {
+        b.iter(|| arithmetic.gradient_point(black_box(&point)))
+    });
+    c.bench_function("hypersdf arithmetic point normal", |b| {
+        b.iter(|| arithmetic.normal_point(black_box(&point)))
+    });
     c.bench_function("hypersdf sqrt point classification", |b| {
         b.iter(|| sqrt_expr.classify_point(black_box(&point)))
+    });
+    c.bench_function("hypersdf trig point classification", |b| {
+        b.iter(|| trig_expr.classify_point(black_box(&point)))
     });
 }
 
@@ -156,6 +192,11 @@ fn bench_cell_classification(c: &mut Criterion) {
         r(100),
     ));
     let aabb = prepare(SdfExpr::aabb(p(-100, -100, -100), p(100, 100, 100)));
+    let rounded_aabb = prepare(SdfExpr::rounded_aabb(
+        p(-100, -100, -100),
+        p(100, 100, 100),
+        r(400),
+    ));
     let swap_xy = Matrix4([
         [r(0), r(1), r(0), r(0)],
         [r(1), r(0), r(0), r(0)],
@@ -190,8 +231,23 @@ fn bench_cell_classification(c: &mut Criterion) {
     c.bench_function("hypersdf prepared cell batch classification", |b| {
         b.iter(|| sphere.classify_cells(black_box(mins.iter().zip(maxs.iter()))))
     });
+    c.bench_function("hypersdf prepared cell batch report", |b| {
+        b.iter(|| sphere.classify_cells_report(black_box(mins.iter().zip(maxs.iter()))))
+    });
     c.bench_function("hypersdf conservative cell handoff", |b| {
         b.iter(|| sphere.classify_cells_for_handoff(black_box(mins.iter().zip(maxs.iter()))))
+    });
+    let voxel_grid = SdfVoxelCellGrid::new(p(-100, -100, -100), p(50, 50, 50), [4, 4, 4])
+        .with_source(SdfVoxelGridSource::new("bench:sphere", 1));
+    c.bench_function("hypersdf hypervoxel grid handoff", |b| {
+        b.iter(|| sphere.classify_voxel_grid_for_handoff(black_box(voxel_grid.clone())))
+    });
+    let voxel_report = sphere
+        .classify_voxel_grid_for_handoff(voxel_grid)
+        .expect("positive benchmark grid");
+    let voxel_interchange = voxel_report.interchange_manifest();
+    c.bench_function("hypersdf hypervoxel interchange manifest", |b| {
+        b.iter(|| voxel_report.interchange_report(black_box(&voxel_interchange)))
     });
     c.bench_function("hypersdf sphere cell interval", |b| {
         b.iter(|| sphere.interval_cell(black_box(&min), black_box(&max)))
@@ -211,6 +267,9 @@ fn bench_cell_classification(c: &mut Criterion) {
     c.bench_function("hypersdf aabb cell interval", |b| {
         b.iter(|| aabb.interval_cell(black_box(&min), black_box(&max)))
     });
+    c.bench_function("hypersdf rounded aabb cell interval", |b| {
+        b.iter(|| rounded_aabb.interval_cell(black_box(&min), black_box(&max)))
+    });
     c.bench_function("hypersdf affine cell interval", |b| {
         b.iter(|| affine.interval_cell(black_box(&min), black_box(&max)))
     });
@@ -219,6 +278,9 @@ fn bench_cell_classification(c: &mut Criterion) {
     });
     c.bench_function("hypersdf arithmetic cell interval", |b| {
         b.iter(|| arithmetic.interval_cell(black_box(&min), black_box(&max)))
+    });
+    c.bench_function("hypersdf arithmetic cell lipschitz", |b| {
+        b.iter(|| arithmetic.lipschitz_cell(black_box(&min), black_box(&max)))
     });
     c.bench_function("hypersdf sqrt cell interval", |b| {
         b.iter(|| sqrt_expr.interval_cell(black_box(&min), black_box(&max)))

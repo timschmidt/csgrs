@@ -114,6 +114,19 @@ impl SdfProjectionReplayReport {
             status,
         }
     }
+
+    /// Validate replay status against the contained candidate classification.
+    pub fn is_self_consistent(&self) -> bool {
+        self.candidate_report.is_self_consistent()
+            && self.status
+                == match self.candidate_report.location {
+                    SdfPointLocation::Boundary => SdfProjectionReplayStatus::BoundaryCertified,
+                    SdfPointLocation::Inside | SdfPointLocation::Outside => {
+                        SdfProjectionReplayStatus::RejectedByClassification
+                    }
+                    SdfPointLocation::Unknown => SdfProjectionReplayStatus::Unknown,
+                }
+    }
 }
 
 fn squared_distance3(a: &Point3, b: &Point3) -> Real {
