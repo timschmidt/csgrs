@@ -3,8 +3,9 @@
 use crate::csg::CSG;
 use crate::float_types::{
     FRAC_PI_2, PI, Real, TAU, hangle_sin_cos, hdegrees_to_radians, hreal_abs, hreal_affine,
-    hreal_clamp_f64, hreal_cmp_f64, hreal_div, hreal_f64s_within_epsilon, hreal_from_f64,
-    hreal_mul, hreal_pow, hreal_sqrt, hreal_sub, hreal_sum, hxy_lerp, tolerance,
+    hreal_atan, hreal_clamp_f64, hreal_cmp_f64, hreal_div, hreal_f64s_within_epsilon,
+    hreal_from_f64, hreal_mul, hreal_pow, hreal_sqrt, hreal_sub, hreal_sum, hxy_lerp,
+    tolerance,
 };
 use crate::sketch::Profile;
 use hypercurve::{Contour2, CurveString2, LineSeg2, Point2, Segment2};
@@ -1870,7 +1871,10 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// The 4-digit thickness and camber equations trace back to Jacobs, Ward,
     /// and Pinkerton, "The characteristics of 78 related airfoil sections from
     /// tests in the variable-density wind tunnel", NACA Report 460, 1933.
-    /// The sampled boundary is promoted directly into `hypercurve::Region2`.
+    /// The sampled boundary is evaluated through hyperreal helpers before
+    /// export to `hypercurve::Region2`, following Yap, "Towards Exact
+    /// Geometric Computation," *Computational Geometry* 7(1-2), 1997
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     pub fn airfoil_naca4(
         max_camber: Real,
         camber_position: Real,
@@ -1879,60 +1883,154 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         samples: usize,
         metadata: M,
     ) -> Profile<M> {
-        let max_camber_percentage = max_camber / 100.0;
-        let camber_pos = camber_position / 10.0;
+        if samples < 10
+            || !finite_profile_scalars(&[max_camber, camber_position, thickness, chord])
+            || !matches!(hreal_cmp_f64(chord, tolerance()), Ordering::Greater)
+            || !matches!(hreal_cmp_f64(thickness, 0.0), Ordering::Greater)
+        {
+            return Profile::empty(metadata);
+        }
+        let Some(max_camber_percentage) = hreal_div(max_camber, 100.0) else {
+            return Profile::empty(metadata);
+        };
+        let Some(camber_pos) = hreal_div(camber_position, 10.0) else {
+            return Profile::empty(metadata);
+        };
+        let cambered = !matches!(hreal_cmp_f64(max_camber_percentage, 0.0), Ordering::Equal);
+        if cambered
+            && (!matches!(hreal_cmp_f64(camber_pos, 0.0), Ordering::Greater)
+                || !matches!(hreal_cmp_f64(camber_pos, 1.0), Ordering::Less))
+        {
+            return Profile::empty(metadata);
+        }
 
         // thickness half-profile
-        let half_profile = |x: Real| -> Real {
-            5.0 * thickness / 100.0
-                * (0.2969 * x.sqrt() - 0.1260 * x - 0.3516 * x * x + 0.2843 * x * x * x
-                    - 0.1015 * x * x * x * x)
+        let half_profile = |x: Real| -> Option<Real> {
+            let x2 = hreal_mul(x, x)?;
+            let x3 = hreal_mul(x2, x)?;
+            let x4 = hreal_mul(x3, x)?;
+            let terms = [
+                hreal_mul(0.2969, hreal_sqrt(x)?)?,
+                hreal_mul(-0.1260, x)?,
+                hreal_mul(-0.3516, x2)?,
+                hreal_mul(0.2843, x3)?,
+                hreal_mul(-0.1015, x4)?,
+            ];
+            let thickness_scale = hreal_div(hreal_mul(5.0, thickness)?, 100.0)?;
+            hreal_mul(thickness_scale, hreal_sum(&terms)?)
         };
 
         // mean-camber line & slope
-        let camber = |x: Real| -> (Real, Real) {
-            if x < camber_pos {
-                let yc = max_camber_percentage / (camber_pos * camber_pos)
-                    * (2.0 * camber_pos * x - x * x);
-                let dy =
-                    2.0 * max_camber_percentage / (camber_pos * camber_pos) * (camber_pos - x);
-                (yc, dy)
+        let camber = |x: Real| -> Option<(Real, Real)> {
+            if !cambered {
+                return Some((0.0, 0.0));
+            }
+
+            if matches!(hreal_cmp_f64(x, camber_pos), Ordering::Less) {
+                let camber_pos2 = hreal_mul(camber_pos, camber_pos)?;
+                let scale = hreal_div(max_camber_percentage, camber_pos2)?;
+                let two_p_x = hreal_mul(hreal_mul(2.0, camber_pos)?, x)?;
+                let x2 = hreal_mul(x, x)?;
+                let yc = hreal_mul(scale, hreal_sub(two_p_x, x2)?)?;
+                let dy_scale = hreal_div(hreal_mul(2.0, max_camber_percentage)?, camber_pos2)?;
+                let dy = hreal_mul(dy_scale, hreal_sub(camber_pos, x)?)?;
+                Some((yc, dy))
             } else {
-                let yc = max_camber_percentage / ((1.0 - camber_pos).powi(2))
-                    * ((1.0 - 2.0 * camber_pos) + 2.0 * camber_pos * x - x * x);
-                let dy = 2.0 * max_camber_percentage / ((1.0 - camber_pos).powi(2))
-                    * (camber_pos - x);
-                (yc, dy)
+                let one_minus_p = hreal_sub(1.0, camber_pos)?;
+                let one_minus_p2 = hreal_mul(one_minus_p, one_minus_p)?;
+                let scale = hreal_div(max_camber_percentage, one_minus_p2)?;
+                let one_minus_2p = hreal_sub(1.0, hreal_mul(2.0, camber_pos)?)?;
+                let two_p_x = hreal_mul(hreal_mul(2.0, camber_pos)?, x)?;
+                let x2 = hreal_mul(x, x)?;
+                let yc = hreal_mul(
+                    scale,
+                    hreal_sum(&[one_minus_2p, two_p_x, hreal_sub(0.0, x2)?])?,
+                )?;
+                let dy_scale =
+                    hreal_div(hreal_mul(2.0, max_camber_percentage)?, one_minus_p2)?;
+                let dy = hreal_mul(dy_scale, hreal_sub(camber_pos, x)?)?;
+                Some((yc, dy))
             }
         };
 
         // sample upper & lower surfaces
-        let n = samples as Real;
         let mut points: Vec<[Real; 2]> = Vec::with_capacity(2 * samples);
 
         // leading-edge → trailing-edge (upper)
         for i in 0..=samples {
-            let xc = i as Real / n; // 0–1
-            let x = xc * chord; // physical
-            let t = half_profile(xc);
-            let (yc_val, dy) = camber(xc);
-            let theta = dy.atan();
+            let Some(xc) = hreal_div(i as Real, samples as Real) else {
+                return Profile::empty(metadata);
+            };
+            let Some(x) = hreal_mul(xc, chord) else {
+                return Profile::empty(metadata);
+            };
+            let Some(t) = half_profile(xc) else {
+                return Profile::empty(metadata);
+            };
+            let Some((yc_val, dy)) = camber(xc) else {
+                return Profile::empty(metadata);
+            };
+            let Some(theta) = hreal_atan(dy) else {
+                return Profile::empty(metadata);
+            };
+            let Some((sin_theta, cos_theta)) = hangle_sin_cos(theta) else {
+                return Profile::empty(metadata);
+            };
 
-            let xu = x - t * theta.sin();
-            let yu = chord * (yc_val + t * theta.cos());
+            let Some(t_sin) = hreal_mul(t, sin_theta) else {
+                return Profile::empty(metadata);
+            };
+            let Some(t_cos) = hreal_mul(t, cos_theta) else {
+                return Profile::empty(metadata);
+            };
+            let Some(xu) = hreal_sub(x, t_sin) else {
+                return Profile::empty(metadata);
+            };
+            let Some(upper_yc) = hreal_sum(&[yc_val, t_cos]) else {
+                return Profile::empty(metadata);
+            };
+            let Some(yu) = hreal_mul(chord, upper_yc) else {
+                return Profile::empty(metadata);
+            };
             points.push([xu, yu]);
         }
 
         // trailing-edge → leading-edge (lower)
         for i in (1..samples).rev() {
-            let xc = i as Real / n;
-            let x = xc * chord;
-            let t = half_profile(xc);
-            let (yc_val, dy) = camber(xc);
-            let theta = dy.atan();
+            let Some(xc) = hreal_div(i as Real, samples as Real) else {
+                return Profile::empty(metadata);
+            };
+            let Some(x) = hreal_mul(xc, chord) else {
+                return Profile::empty(metadata);
+            };
+            let Some(t) = half_profile(xc) else {
+                return Profile::empty(metadata);
+            };
+            let Some((yc_val, dy)) = camber(xc) else {
+                return Profile::empty(metadata);
+            };
+            let Some(theta) = hreal_atan(dy) else {
+                return Profile::empty(metadata);
+            };
+            let Some((sin_theta, cos_theta)) = hangle_sin_cos(theta) else {
+                return Profile::empty(metadata);
+            };
 
-            let xl = x + t * theta.sin();
-            let yl = chord * (yc_val - t * theta.cos());
+            let Some(t_sin) = hreal_mul(t, sin_theta) else {
+                return Profile::empty(metadata);
+            };
+            let Some(t_cos) = hreal_mul(t, cos_theta) else {
+                return Profile::empty(metadata);
+            };
+            let Some(xl) = hreal_sum(&[x, t_sin]) else {
+                return Profile::empty(metadata);
+            };
+            let Some(lower_yc) = hreal_sub(yc_val, t_cos) else {
+                return Profile::empty(metadata);
+            };
+            let Some(yl) = hreal_mul(chord, lower_yc) else {
+                return Profile::empty(metadata);
+            };
             points.push([xl, yl]);
         }
 
