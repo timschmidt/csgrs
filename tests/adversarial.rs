@@ -1118,6 +1118,21 @@ fn adversarial_mesh_primitives_reject_nonfinite_boundary_scalars() {
 }
 
 #[test]
+fn adversarial_icosahedron_hyperreal_normalization_emits_finite_mesh() {
+    let mesh = Mesh::<()>::icosahedron(2.0, ());
+    assert!(!mesh.polygons.is_empty());
+    assert_mesh_sane(&mesh);
+
+    let bbox = mesh.bounding_box();
+    assert!(bbox.mins.x < 0.0);
+    assert!(bbox.maxs.x > 0.0);
+    assert!(bbox.mins.y < 0.0);
+    assert!(bbox.maxs.y > 0.0);
+    assert!(bbox.mins.z < 0.0);
+    assert!(bbox.maxs.z > 0.0);
+}
+
+#[test]
 fn adversarial_tpms_rejects_invalid_period_at_hyperreal_boundary() {
     let cube = Mesh::<()>::cube(2.0, ());
     let meshes = [
