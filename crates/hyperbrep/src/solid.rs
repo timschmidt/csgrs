@@ -9,6 +9,7 @@ use crate::provenance::{BrepConstructionManifest, BrepConstructionProvenanceRepo
 use crate::report::BrepShellClosureReport;
 use crate::topology::BrepShell;
 use crate::validation::BrepFaceValidationReport;
+use crate::volume::BrepShellVolumeReport;
 
 /// Explicit blocker for solid-readiness handoff.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
@@ -38,6 +39,8 @@ pub struct BrepSolidReadinessReport {
     pub faces: Vec<BrepFaceValidationReport>,
     /// Optional construction freshness replay.
     pub construction: Option<BrepConstructionProvenanceReport>,
+    /// Exact signed-volume/orientation evidence.
+    pub volume: BrepShellVolumeReport,
     /// Number of exact-ready faces.
     pub ready_face_count: usize,
     /// Number of blocked faces.
@@ -51,7 +54,7 @@ pub struct BrepSolidReadinessReport {
     /// Whether optional construction evidence is fresh, or no construction
     /// evidence was requested.
     pub construction_fresh: bool,
-    /// Whether exact volume/orientation replay is currently available.
+    /// Whether exact volume/orientation replay is available.
     pub exact_volume_ready: bool,
     /// Explicit blockers.
     pub blockers: Vec<BrepSolidReadinessBlocker>,
@@ -67,9 +70,12 @@ impl BrepSolidReadinessReport {
     /// narrower than a full CAD kernel. It follows Yap, "Towards Exact
     /// Geometric Computation," *Computational Geometry* 7.1-2 (1997): solid
     /// consumers may use the shell only when closure, face evidence, bounds,
-    /// and source freshness replay as exact/certified facts. Exact volume and
-    /// inside/outside orientation proof are still reported as unavailable
-    /// rather than guessed from triangle winding or primitive-float volume.
+    /// source freshness, and exact signed volume replay as exact/certified
+    /// facts. The volume component uses the determinant-based algebraic
+    /// certificate described by Mirtich, "Fast and Accurate Computation of
+    /// Polyhedral Mass Properties," *Journal of Graphics Tools* 1.2 (1996),
+    /// but blocks instead of guessing whenever the retained BREP evidence is
+    /// not exact-ready.
     pub fn from_shell(shell: &BrepShell, construction: Option<&BrepConstructionManifest>) -> Self {
         let shell_closure = shell.audit_closure();
         let shell_bounds = shell.shell_bounds_report();
@@ -79,6 +85,7 @@ impl BrepSolidReadinessReport {
             .map(|face| shell.face_validation_report(face.id, None))
             .collect::<Vec<_>>();
         let construction = construction.map(|manifest| manifest.report(shell));
+        let volume = shell.shell_volume_report();
         let ready_face_count = faces.iter().filter(|face| face.exact_face_ready).count();
         let blocked_face_count = faces.len().saturating_sub(ready_face_count);
         let closed_shell_ready = shell_closure.exact_shell_ready;
@@ -87,7 +94,7 @@ impl BrepSolidReadinessReport {
         let construction_fresh = construction
             .as_ref()
             .is_none_or(|report| report.construction_fresh);
-        let exact_volume_ready = false;
+        let exact_volume_ready = volume.exact_volume_ready;
 
         let mut blockers = Vec::new();
         if shell.faces.is_empty() {
@@ -109,18 +116,18 @@ impl BrepSolidReadinessReport {
             blockers.push(BrepSolidReadinessBlocker::VolumeReplayUnavailable);
         }
 
-        let exact_solid_boundary_ready = blockers
-            .iter()
-            .all(|blocker| matches!(blocker, BrepSolidReadinessBlocker::VolumeReplayUnavailable))
+        let exact_solid_boundary_ready = blockers.is_empty()
             && closed_shell_ready
             && all_faces_ready
             && exact_bounds_ready
+            && exact_volume_ready
             && construction_fresh;
         Self {
             shell_closure,
             shell_bounds,
             faces,
             construction,
+            volume,
             ready_face_count,
             blocked_face_count,
             closed_shell_ready,

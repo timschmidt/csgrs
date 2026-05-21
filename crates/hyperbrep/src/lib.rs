@@ -8,6 +8,7 @@
 //! certified predicates, while uncertain or adapter-derived evidence stays
 //! explicit.
 
+mod area;
 mod bounds;
 mod export;
 mod import;
@@ -20,7 +21,9 @@ mod tessellation;
 mod topology;
 mod trim;
 mod validation;
+mod volume;
 
+pub use area::{BrepAreaProjectionAxis, BrepFaceAreaBlocker, BrepFaceAreaReport};
 pub use bounds::{
     BrepFaceAabbPreflightBlocker, BrepFaceAabbPreflightReport, BrepFaceBoundsBlocker,
     BrepFaceBoundsReport, BrepShellBoundsBlocker, BrepShellBoundsReport, PreparedBrepFaceBounds,
@@ -65,6 +68,7 @@ pub use validation::{
     BrepFaceValidationBlocker, BrepFaceValidationReport, BrepGeometryValidationBlocker,
     BrepGeometryValidationReport, BrepShellValidationBlocker, BrepShellValidationReport,
 };
+pub use volume::{BrepShellOrientation, BrepShellVolumeBlocker, BrepShellVolumeReport};
 
 #[cfg(test)]
 mod tests {
@@ -191,6 +195,22 @@ mod tests {
     }
 
     #[test]
+    fn planar_face_area_report_derives_exact_projected_twice_area() {
+        let shell = cube_shell();
+        let report = shell.face_area_report(BrepFaceId(0));
+
+        assert!(report.exact_area_ready);
+        assert_eq!(report.projection_axis, Some(BrepAreaProjectionAxis::Z));
+        assert_eq!(report.loop_count, 1);
+        assert_eq!(report.boundary_vertex_count, 4);
+        assert_eq!(report.signed_twice_projected_area, Some(r(2)));
+        assert!(!report.zero_area);
+        assert!(report.positive_area);
+        assert!(!report.negative_area);
+        assert!(report.blockers.is_empty());
+    }
+
+    #[test]
     fn shell_validation_aggregates_topology_closure_bounds_and_faces() {
         let shell = cube_shell();
         let report = shell.shell_validation_report();
@@ -293,6 +313,98 @@ mod tests {
             validation
                 .blockers
                 .contains(&BrepShellValidationBlocker::FaceValidationNotReady)
+        );
+
+        let area = shell.face_area_report(BrepFaceId(99));
+        assert!(!area.exact_area_ready);
+        assert!(area.blockers.contains(&BrepFaceAreaBlocker::MissingSurface));
+    }
+
+    #[test]
+    fn planar_face_area_report_blocks_broken_or_degenerate_loop_evidence() {
+        let mut shell = cube_shell();
+        shell.edges.push(edge(99, 0, 0));
+        shell.faces.push(face(
+            99,
+            0,
+            &[
+                (99, BrepEdgeOrientation::Forward),
+                (0, BrepEdgeOrientation::Forward),
+            ],
+        ));
+        let report = shell.face_area_report(BrepFaceId(99));
+
+        assert!(!report.exact_area_ready);
+        assert!(
+            report
+                .blockers
+                .contains(&BrepFaceAreaBlocker::DegenerateEdge)
+        );
+        assert!(
+            report
+                .blockers
+                .contains(&BrepFaceAreaBlocker::BrokenLoopChain)
+        );
+    }
+
+    #[test]
+    fn shell_volume_report_derives_exact_signed_volume_and_orientation() {
+        let shell = cube_shell();
+        let report = shell.shell_volume_report();
+
+        assert!(report.exact_volume_ready);
+        assert_eq!(report.face_count, 6);
+        assert_eq!(report.loop_count, 6);
+        assert_eq!(report.ready_face_count, 6);
+        assert_eq!(report.blocked_face_count, 0);
+        assert_eq!(report.signed_six_volume, Some(r(6)));
+        assert_eq!(report.orientation, Some(BrepShellOrientation::Positive));
+        assert!(report.positive_volume);
+        assert!(!report.negative_volume);
+        assert!(!report.zero_volume);
+        assert!(report.blockers.is_empty());
+
+        let mut reversed = shell.clone();
+        for face in &mut reversed.faces {
+            face.outer.coedges.reverse();
+            for coedge in &mut face.outer.coedges {
+                coedge.orientation = match coedge.orientation {
+                    BrepEdgeOrientation::Forward => BrepEdgeOrientation::Reversed,
+                    BrepEdgeOrientation::Reversed => BrepEdgeOrientation::Forward,
+                };
+            }
+        }
+        let reversed_report = reversed.shell_volume_report();
+        assert!(reversed_report.exact_volume_ready);
+        assert_eq!(reversed_report.signed_six_volume, Some(r(-6)));
+        assert_eq!(
+            reversed_report.orientation,
+            Some(BrepShellOrientation::Negative)
+        );
+    }
+
+    #[test]
+    fn shell_volume_report_blocks_open_or_degenerate_evidence() {
+        let mut shell = cube_shell();
+        shell.faces.pop();
+        shell.edges[0] = edge(0, 0, 0);
+        let report = shell.shell_volume_report();
+
+        assert!(!report.exact_volume_ready);
+        assert!(
+            report
+                .blockers
+                .contains(&BrepShellVolumeBlocker::ShellClosureNotReady)
+        );
+        assert!(
+            report
+                .blockers
+                .contains(&BrepShellVolumeBlocker::FaceValidationNotReady)
+        );
+        assert!(
+            report
+                .blockers
+                .contains(&BrepShellVolumeBlocker::DegenerateEdge)
         );
     }
 
@@ -553,18 +665,19 @@ mod tests {
         assert!(report.all_faces_ready);
         assert!(report.exact_bounds_ready);
         assert!(report.construction_fresh);
-        assert!(!report.exact_volume_ready);
+        assert!(report.exact_volume_ready);
         assert!(report.exact_solid_boundary_ready);
         assert_eq!(report.ready_face_count, 6);
         assert_eq!(report.blocked_face_count, 0);
         assert_eq!(report.shell_bounds.min, Some(p(0, 0, 0)));
         assert_eq!(report.shell_bounds.max, Some(p(1, 1, 1)));
         assert_eq!(report.faces.len(), 6);
-        assert!(
-            report
-                .blockers
-                .contains(&BrepSolidReadinessBlocker::VolumeReplayUnavailable)
+        assert_eq!(report.volume.signed_six_volume, Some(r(6)));
+        assert_eq!(
+            report.volume.orientation,
+            Some(BrepShellOrientation::Positive)
         );
+        assert!(report.blockers.is_empty());
     }
 
     #[test]
@@ -584,6 +697,7 @@ mod tests {
         assert!(!report.exact_solid_boundary_ready);
         assert!(!report.closed_shell_ready);
         assert!(!report.all_faces_ready);
+        assert!(!report.exact_volume_ready);
         assert!(!report.construction_fresh);
         assert!(
             report
@@ -599,6 +713,11 @@ mod tests {
             report
                 .blockers
                 .contains(&BrepSolidReadinessBlocker::ConstructionNotFresh)
+        );
+        assert!(
+            report
+                .blockers
+                .contains(&BrepSolidReadinessBlocker::VolumeReplayUnavailable)
         );
     }
 

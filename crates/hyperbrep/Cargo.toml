@@ -1,13 +1,17 @@
 [package]
 name = "hyperbrep"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 description = "Exact-aware boundary-representation evidence carriers for the Hyper ecosystem"
 license = "Apache-2.0"
 
 [dependencies]
+# Hyper sibling dependency switch: keep both local path and crates.io lines; do not remove either.
+# Development mode uses the local path lines. For release, comment those and uncomment the crates.io lines.
 hyperlimit = { path = "../hyperlimit" }
-hyperreal = { version = "0.12.0" }
+hyperreal = { path = "../hyperreal" }
+# hyperlimit = { version = "0.4.0" }
+# hyperreal = { version = "0.13.0" }
 
 [dev-dependencies]
 criterion = "0.5"

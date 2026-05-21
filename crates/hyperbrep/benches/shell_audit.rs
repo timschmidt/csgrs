@@ -113,6 +113,9 @@ fn bench_shell_audit(c: &mut Criterion) {
     c.bench_function("hyperbrep exact face bounds report", |b| {
         b.iter(|| trim_shell.face_bounds_report(BrepFaceId(0)))
     });
+    c.bench_function("hyperbrep exact planar face area report", |b| {
+        b.iter(|| trim_shell.face_area_report(BrepFaceId(0)))
+    });
     c.bench_function("hyperbrep face aabb preflight report", |b| {
         b.iter(|| trim_shell.face_aabb_preflight(BrepFaceId(0), BrepFaceId(0)))
     });
@@ -136,6 +139,9 @@ fn bench_shell_audit(c: &mut Criterion) {
     });
     c.bench_function("hyperbrep geometry validation report", |b| {
         b.iter(|| trim_shell.geometry_validation_report(BrepFaceId(0)))
+    });
+    c.bench_function("hyperbrep shell volume report", |b| {
+        b.iter(|| shell.shell_volume_report())
     });
     c.bench_function("hyperbrep solid readiness report", |b| {
         b.iter(|| trim_shell.solid_readiness_report(None))

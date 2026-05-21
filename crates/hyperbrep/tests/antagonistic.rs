@@ -1,12 +1,12 @@
 use hyperbrep::{
     BrepCoedge, BrepConstructionBlocker, BrepConstructionKind, BrepConstructionManifest, BrepEdge,
     BrepEdgeId, BrepEdgeOrientation, BrepExportBlocker, BrepExportFormat, BrepExportManifest,
-    BrepExportScalarPolicy, BrepFace, BrepFaceId, BrepFaceTessellationManifest, BrepFeatureId,
-    BrepImportedSurfaceFamily, BrepLoop, BrepLoopId, BrepLossyFloatImportReport,
-    BrepLossyImportBlocker, BrepMeshHandoffReport, BrepShell, BrepShellBlocker,
-    BrepShellTessellationReport, BrepSourceVersion, BrepSurface, BrepSurfaceId, BrepSurfaceSource,
-    BrepTessellationBlocker, BrepTopologyValidationBlocker, BrepTrimLoopBlocker, BrepVertex,
-    BrepVertexId,
+    BrepExportScalarPolicy, BrepFace, BrepFaceAreaBlocker, BrepFaceId,
+    BrepFaceTessellationManifest, BrepFeatureId, BrepImportedSurfaceFamily, BrepLoop, BrepLoopId,
+    BrepLossyFloatImportReport, BrepLossyImportBlocker, BrepMeshHandoffReport, BrepShell,
+    BrepShellBlocker, BrepShellTessellationReport, BrepShellVolumeBlocker, BrepSourceVersion,
+    BrepSurface, BrepSurfaceId, BrepSurfaceSource, BrepTessellationBlocker,
+    BrepTopologyValidationBlocker, BrepTrimLoopBlocker, BrepVertex, BrepVertexId,
 };
 use hyperlimit::{Plane3, PlaneSide, Point3, classify_point_plane};
 use hyperreal::Real;
@@ -119,6 +119,7 @@ proptest! {
         let report = shell.audit_closure();
         let topology = shell.validate_topology();
         let validation = shell.shell_validation_report();
+        let area = shell.face_area_report(BrepFaceId(0));
 
         prop_assert!(!report.closed);
         prop_assert!(!report.exact_shell_ready);
@@ -131,6 +132,8 @@ proptest! {
         prop_assert!(!validation.exact_closed_shell_ready);
         prop_assert!(!validation.exact_surface_boundary_ready);
         prop_assert_eq!(validation.blocked_face_count, 1);
+        prop_assert!(!area.exact_area_ready);
+        prop_assert!(area.blockers.contains(&BrepFaceAreaBlocker::BrokenLoopChain));
     }
 
     #[test]
@@ -430,6 +433,13 @@ proptest! {
         let solid = shell.solid_readiness_report(None);
         prop_assert!(!solid.exact_solid_boundary_ready);
         prop_assert!(!solid.closed_shell_ready);
+        prop_assert!(!solid.exact_volume_ready);
+        prop_assert!(
+            solid
+                .volume
+                .blockers
+                .contains(&BrepShellVolumeBlocker::ShellClosureNotReady)
+        );
         prop_assert_eq!(solid.ready_face_count, if reverse_one { 0 } else { 1 });
         let plane_preflight = shell.face_plane_preflight(
             BrepFaceId(0),
