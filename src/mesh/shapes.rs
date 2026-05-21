@@ -3,9 +3,10 @@
 use crate::csg::CSG;
 use crate::errors::ValidationError;
 use crate::float_types::{
-    PI, Real, TAU, hperpendicular_basis, hreal_affine, hreal_div, hreal_from_f64, hreal_mul,
-    hreal_sqrt, hrotation_between_vectors, hscale_matrix, htranslation_matrix, hunit_vector3,
-    hunit_vector3_and_magnitude, hvector3_from_point3, tolerance,
+    PI, Real, TAU, hangle_sin_cos, hperpendicular_basis, hreal_affine, hreal_div,
+    hreal_from_f64, hreal_mul, hreal_sqrt, hrotation_between_vectors, hscale_matrix,
+    htranslation_matrix, hunit_vector3, hunit_vector3_and_magnitude, hvector3_from_point3,
+    tolerance,
 };
 use crate::mesh::Mesh;
 use crate::polygon::Polygon;
@@ -226,6 +227,12 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// - `segments`: Longitude divisions (≥ 3, recommend ≥ 8)
     /// - `stacks`: Latitude divisions (≥ 2, recommend ≥ 6)
     /// - `metadata`: Optional metadata for all faces
+    ///
+    /// Longitude/latitude sampling is evaluated through hyperreal trigonometry
+    /// before the finite vertices are exported to hypermesh-compatible mesh
+    /// polygons, following Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7(1-2), 1997
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     pub fn sphere(radius: Real, segments: usize, stacks: usize, metadata: M) -> Mesh<M> {
         if !finite_mesh_scalar(radius) {
             return Mesh::empty(metadata);
@@ -238,36 +245,70 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             for j in 0..stacks {
                 let mut vertices = Vec::new();
 
-                let vertex = |theta: Real, phi: Real| {
+                let vertex = |theta: Real, phi: Real| -> Option<Vertex> {
+                    let (sin_theta, cos_theta) = hangle_sin_cos(theta)?;
+                    let (sin_phi, cos_phi) = hangle_sin_cos(phi)?;
                     let dir = Vector3::new(
-                        theta.cos() * phi.sin(),
-                        phi.cos(),
-                        theta.sin() * phi.sin(),
+                        hreal_mul(cos_theta, sin_phi)?,
+                        cos_phi,
+                        hreal_mul(sin_theta, sin_phi)?,
                     );
-                    Vertex::new(
-                        Point3::new(dir.x * radius, dir.y * radius, dir.z * radius),
+                    Some(Vertex::new(
+                        Point3::new(
+                            hreal_mul(dir.x, radius)?,
+                            hreal_mul(dir.y, radius)?,
+                            hreal_mul(dir.z, radius)?,
+                        ),
                         dir,
-                    )
+                    ))
                 };
 
-                let t0 = i as Real / segments as Real;
-                let t1 = (i + 1) as Real / segments as Real;
-                let p0 = j as Real / stacks as Real;
-                let p1 = (j + 1) as Real / stacks as Real;
+                let Some(t0) = hreal_div(i as Real, segments as Real) else {
+                    return Mesh::empty(metadata);
+                };
+                let Some(t1) = hreal_div((i + 1) as Real, segments as Real) else {
+                    return Mesh::empty(metadata);
+                };
+                let Some(p0) = hreal_div(j as Real, stacks as Real) else {
+                    return Mesh::empty(metadata);
+                };
+                let Some(p1) = hreal_div((j + 1) as Real, stacks as Real) else {
+                    return Mesh::empty(metadata);
+                };
 
-                let theta0 = t0 * TAU;
-                let theta1 = t1 * TAU;
-                let phi0 = p0 * PI;
-                let phi1 = p1 * PI;
+                let Some(theta0) = hreal_mul(t0, TAU) else {
+                    return Mesh::empty(metadata);
+                };
+                let Some(theta1) = hreal_mul(t1, TAU) else {
+                    return Mesh::empty(metadata);
+                };
+                let Some(phi0) = hreal_mul(p0, PI) else {
+                    return Mesh::empty(metadata);
+                };
+                let Some(phi1) = hreal_mul(p1, PI) else {
+                    return Mesh::empty(metadata);
+                };
 
-                vertices.push(vertex(theta0, phi0));
+                let Some(first) = vertex(theta0, phi0) else {
+                    return Mesh::empty(metadata);
+                };
+                vertices.push(first);
                 if j > 0 {
-                    vertices.push(vertex(theta1, phi0));
+                    let Some(v) = vertex(theta1, phi0) else {
+                        return Mesh::empty(metadata);
+                    };
+                    vertices.push(v);
                 }
                 if j < stacks - 1 {
-                    vertices.push(vertex(theta1, phi1));
+                    let Some(v) = vertex(theta1, phi1) else {
+                        return Mesh::empty(metadata);
+                    };
+                    vertices.push(v);
                 }
-                vertices.push(vertex(theta0, phi1));
+                let Some(last) = vertex(theta0, phi1) else {
+                    return Mesh::empty(metadata);
+                };
+                vertices.push(last);
 
                 polygons.push(Polygon::new(vertices, metadata.clone()));
             }
