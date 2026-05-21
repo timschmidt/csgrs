@@ -19,9 +19,9 @@ use hypermesh::exact::{
     arrange_single_triangle_coplanar_union, audit_exact_mesh, build_intersection_graph,
     certify_boundary_touching_report, certify_convex_solid,
     certify_coplanar_convex_surface_containment, certify_coplanar_convex_surface_equivalence,
-    certify_coplanar_convex_surface_report, certify_open_surface_disjoint_report,
-    certify_planar_arrangement_evidence, certify_planar_arrangement_report,
-    certify_refinement_report, certify_same_surface_report,
+    certify_coplanar_convex_surface_report, certify_coplanar_volumetric_cell_evidence,
+    certify_open_surface_disjoint_report, certify_planar_arrangement_evidence,
+    certify_planar_arrangement_report, certify_refinement_report, certify_same_surface_report,
     certify_single_triangle_coplanar_containment,
     certify_single_triangle_coplanar_containment_report, certify_winding_readiness_report,
     checked_classify_face_regions_against_opposite_planes, classify_coplanar_triangles,
@@ -1007,6 +1007,21 @@ fn exact_planar_arrangement_evidence(c: &mut Criterion) {
                 source_validation,
                 needs_general_arrangement,
             )
+        })
+    });
+}
+
+fn exact_coplanar_volumetric_cell_evidence(c: &mut Criterion) {
+    let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
+    let right = tetrahedron_i64([1, 1, 0], [5, 1, 0], [1, 5, 0], [1, 1, 4]);
+
+    c.bench_function("exact_coplanar_volumetric_cell_evidence", |b| {
+        b.iter(|| {
+            let report = certify_coplanar_volumetric_cell_evidence(&left, &right).unwrap();
+            let validation = report.validate();
+            let source_validation = report.validate_against_sources(&left, &right);
+            let requires_cells = report.obstacle.requires_coplanar_volumetric_cells();
+            (report, validation, source_validation, requires_cells)
         })
     });
 }
@@ -5120,6 +5135,7 @@ criterion_group!(
     exact_intersection_graph_events,
     exact_coplanar_overlap_graph_handoff,
     exact_planar_arrangement_evidence,
+    exact_coplanar_volumetric_cell_evidence,
     exact_graph_vertex_merge,
     exact_split_topology_plan,
     exact_face_split_plan,

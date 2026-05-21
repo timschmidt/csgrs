@@ -52,6 +52,8 @@ pub mod validation;
 pub mod view;
 #[cfg(feature = "exact-triangulation")]
 pub mod volumetric;
+#[cfg(feature = "exact-triangulation")]
+pub mod volumetric_cells;
 pub mod winding;
 #[cfg(feature = "exact-triangulation")]
 pub mod witness;
@@ -247,6 +249,11 @@ pub use volumetric::{
     ExactVolumetricWitnessAttempt, classify_triangulated_region_against_closed_mesh,
     classify_triangulated_region_triangle_against_closed_mesh,
     classify_triangulated_regions_against_opposite_meshes,
+};
+#[cfg(feature = "exact-triangulation")]
+pub use volumetric_cells::{
+    CoplanarVolumetricCellEvidenceError, CoplanarVolumetricCellEvidenceReport,
+    CoplanarVolumetricCellObstacle, certify_coplanar_volumetric_cell_evidence,
 };
 pub use winding::{
     ClosedMeshWindingMeshRelation, ClosedMeshWindingMeshReport, ClosedMeshWindingRelation,

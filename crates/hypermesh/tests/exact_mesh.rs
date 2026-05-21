@@ -29,8 +29,9 @@ use hypermesh::exact::{
 };
 #[cfg(feature = "exact-triangulation")]
 use hypermesh::exact::{
+    CoplanarVolumetricCellEvidenceError, CoplanarVolumetricCellObstacle,
     ExactPlanarArrangementEvidenceError, ExactPoint3, PlanarArrangementObstacle, Triangle,
-    certify_planar_arrangement_evidence,
+    certify_coplanar_volumetric_cell_evidence, certify_planar_arrangement_evidence,
 };
 use hyperreal::Real;
 use proptest::prelude::*;
@@ -6770,6 +6771,71 @@ fn exact_non_rectilinear_coplanar_volumetric_overlap_splits_source_faces() {
             .sum::<usize>();
         assert!(retained_cell_triangles > left.triangles().len() + right.triangles().len());
     }
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
+fn exact_coplanar_volumetric_cell_evidence_reports_mixed_and_boundary_cases() {
+    let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
+    let right = tetrahedron_i64([1, 1, 0], [5, 1, 0], [1, 5, 0], [1, 1, 4]);
+
+    let mixed = certify_coplanar_volumetric_cell_evidence(&left, &right).unwrap();
+    mixed.validate().unwrap();
+    mixed.validate_against_sources(&left, &right).unwrap();
+    assert!(mixed.left_closed_manifold);
+    assert!(mixed.right_closed_manifold);
+    assert!(mixed.coplanar_overlapping_pairs > 0);
+    assert!(mixed.proper_crossing_events > 0);
+    assert_eq!(
+        mixed.obstacle,
+        CoplanarVolumetricCellObstacle::MixedCoplanarAndCrossingCells
+    );
+    assert!(mixed.obstacle.requires_coplanar_volumetric_cells());
+
+    let boundary_left = axis_aligned_box_i64([0, 0, 0], [2, 2, 2]);
+    let boundary_right = axis_aligned_box_i64([2, 0, 0], [4, 2, 2]);
+    let boundary =
+        certify_coplanar_volumetric_cell_evidence(&boundary_left, &boundary_right).unwrap();
+    boundary.validate().unwrap();
+    boundary
+        .validate_against_sources(&boundary_left, &boundary_right)
+        .unwrap();
+    assert!(boundary.coplanar_face_pairs() > 0);
+    assert_eq!(
+        boundary.obstacle,
+        CoplanarVolumetricCellObstacle::BoundaryOnlyContact
+    );
+    assert!(!boundary.obstacle.requires_coplanar_volumetric_cells());
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
+fn exact_coplanar_volumetric_cell_evidence_validation_rejects_stale_counts() {
+    let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
+    let right = tetrahedron_i64([1, 1, 0], [5, 1, 0], [1, 5, 0], [1, 1, 4]);
+    let separated = tetrahedron_i64([10, 0, 0], [14, 0, 0], [10, 4, 0], [10, 0, 4]);
+
+    let report = certify_coplanar_volumetric_cell_evidence(&left, &right).unwrap();
+    let mut stale_events = report.clone();
+    stale_events.proper_crossing_events += 1;
+    assert_eq!(
+        stale_events.validate().unwrap_err(),
+        CoplanarVolumetricCellEvidenceError::SegmentPlaneEventCountMismatch
+    );
+
+    let mut stale_obstacle = report.clone();
+    stale_obstacle.obstacle = CoplanarVolumetricCellObstacle::NoRetainedOverlap;
+    assert_eq!(
+        stale_obstacle.validate().unwrap_err(),
+        CoplanarVolumetricCellEvidenceError::ObstacleMismatch
+    );
+
+    assert_eq!(
+        report
+            .validate_against_sources(&left, &separated)
+            .unwrap_err(),
+        CoplanarVolumetricCellEvidenceError::SourceReplayMismatch
+    );
 }
 
 #[cfg(feature = "exact-triangulation")]

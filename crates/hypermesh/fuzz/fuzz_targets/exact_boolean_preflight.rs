@@ -22,9 +22,9 @@ use hypermesh::exact::{
     boolean_exact_with_boundary_policy, boolean_selected_regions, build_intersection_graph,
     build_selected_region_mesh, certify_boundary_touching_report, certify_convex_solid,
     certify_coplanar_convex_surface_containment, certify_coplanar_convex_surface_equivalence,
-    certify_coplanar_convex_surface_report, certify_open_surface_disjoint_report,
-    certify_planar_arrangement_evidence, certify_planar_arrangement_report,
-    certify_refinement_report, certify_same_surface_report,
+    certify_coplanar_convex_surface_report, certify_coplanar_volumetric_cell_evidence,
+    certify_open_surface_disjoint_report, certify_planar_arrangement_evidence,
+    certify_planar_arrangement_report, certify_refinement_report, certify_same_surface_report,
     certify_single_triangle_coplanar_containment,
     certify_single_triangle_coplanar_containment_report, certify_winding_readiness_report,
     classify_coplanar_triangles, classify_mesh_face_pair, classify_mesh_face_pairs,
@@ -557,6 +557,13 @@ fuzz_target!(|data: &[u8]| {
         if stale_obstacle != report {
             assert!(stale_obstacle.validate().is_err());
         }
+    });
+    let _ = certify_coplanar_volumetric_cell_evidence(&left, &right).map(|report| {
+        let _ = report.validate();
+        let _ = report.validate_against_sources(&left, &right);
+        let mut stale_counts = report.clone();
+        stale_counts.retained_face_pair_count += 1;
+        assert!(stale_counts.validate().is_err());
     });
     let _ = certify_planar_arrangement_report(&left, &right, ExactBooleanOperation::Intersection)
         .map(|report| {
