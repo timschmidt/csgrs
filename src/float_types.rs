@@ -151,6 +151,52 @@ pub(crate) fn hxy_orientation_sign(
     hreal_sign(&det)
 }
 
+/// Return the finite Euclidean distance between two XY boundary coordinates.
+///
+/// Toolpath and 2D profile adapters receive primitive coordinates only after
+/// hypercurve has projected finite machine-output polylines. The length itself
+/// is still evaluated in `hyperlattice::Vector2`/`hyperreal::Real`, following
+/// Yap's exact-geometric-computation split between primitive boundary data and
+/// exact-aware predicates (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+#[cfg(any(test, feature = "offset"))]
+pub(crate) fn hxy_distance(lhs: (Real, Real), rhs: (Real, Real)) -> Option<Real> {
+    let lhs = hyperlattice::Vector2::try_from_f64_array([lhs.0, lhs.1]).ok()?;
+    let rhs = hyperlattice::Vector2::try_from_f64_array([rhs.0, rhs.1]).ok()?;
+    hreal_to_f64(&lhs.squared_distance(&rhs).sqrt().ok()?)
+}
+
+/// Return a finite unit direction from one XY boundary coordinate to another.
+///
+/// This is the shared 2D counterpart to [`hunit_vector3`], used by CAM lead-in
+/// construction so cutter vectors are normalized by hyperlattice instead of
+/// local primitive `sqrt`/division.
+#[cfg(any(test, feature = "offset"))]
+pub(crate) fn hxy_unit_direction(
+    from: (Real, Real),
+    to: (Real, Real),
+) -> Option<(Real, Real)> {
+    let from = hyperlattice::Vector2::try_from_f64_array([from.0, from.1]).ok()?;
+    let to = hyperlattice::Vector2::try_from_f64_array([to.0, to.1]).ok()?;
+    let unit = (to - from).normalize_checked().ok()?.to_f64_array_lossy()?;
+    Some((unit[0], unit[1]))
+}
+
+/// Step from an XY boundary coordinate along a finite unit direction.
+#[cfg(any(test, feature = "offset"))]
+pub(crate) fn hxy_step(
+    origin: (Real, Real),
+    direction: (Real, Real),
+    distance: Real,
+) -> Option<(Real, Real)> {
+    let origin = hyperlattice::Vector2::try_from_f64_array([origin.0, origin.1]).ok()?;
+    let direction =
+        hyperlattice::Vector2::try_from_f64_array([direction.0, direction.1]).ok()?;
+    let distance = hreal_from_f64(distance).ok()?;
+    let stepped = origin + direction * distance;
+    let coords = stepped.to_f64_array_lossy()?;
+    Some((coords[0], coords[1]))
+}
+
 /// Return a finite checked unit cross product for two public boundary vectors.
 ///
 /// This is the normal-construction path for ruled surfaces and other mesh
@@ -1110,6 +1156,27 @@ mod tests {
             Some(RealSign::Zero)
         ));
         assert!(hxy_orientation_sign((0.0, 0.0), (Real::NAN, 1.0), (2.0, 2.0)).is_none());
+    }
+
+    #[test]
+    fn hxy_distance_and_direction_use_hyperreal_boundaries() {
+        assert!(hreal_f64s_within_epsilon(
+            hxy_distance((0.0, 0.0), (3.0, 4.0)).unwrap(),
+            5.0,
+            tolerance()
+        ));
+
+        let direction = hxy_unit_direction((0.0, 0.0), (3.0, 4.0)).unwrap();
+        assert!(hreal_f64s_within_epsilon(direction.0, 0.6, tolerance()));
+        assert!(hreal_f64s_within_epsilon(direction.1, 0.8, tolerance()));
+
+        let stepped = hxy_step((1.0, 2.0), direction, -5.0).unwrap();
+        assert!(hreal_f64s_within_epsilon(stepped.0, -2.0, tolerance()));
+        assert!(hreal_f64s_within_epsilon(stepped.1, -2.0, tolerance()));
+
+        assert!(hxy_distance((0.0, 0.0), (Real::NAN, 0.0)).is_none());
+        assert!(hxy_unit_direction((0.0, 0.0), (0.0, 0.0)).is_none());
+        assert!(hxy_step((0.0, 0.0), (1.0, 0.0), Real::INFINITY).is_none());
     }
 
     #[test]
