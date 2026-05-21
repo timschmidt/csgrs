@@ -1,9 +1,9 @@
 //! Mesh quality metrics for triangles, vertices, and aggregate mesh health.
 
 use crate::float_types::{
-    HReal, PI, Real, hdegrees_to_radians, hreal_cmp_f64, hreal_div, hreal_from_f64,
-    hreal_gt_f64, hreal_mean, hreal_sample_stddev, hreal_to_f64, htriangle_area_hreal,
-    hvector3_from_point3, tolerance,
+    HReal, PI, Real, hdegrees_to_radians, hreal_clamp_hreal, hreal_cmp_f64, hreal_div,
+    hreal_from_f64, hreal_gt_f64, hreal_max_pair, hreal_mean, hreal_min, hreal_min_pair,
+    hreal_sample_stddev, hreal_to_f64, htriangle_area_hreal, hvector3_from_point3, tolerance,
 };
 use crate::mesh::Mesh;
 use crate::vertex::Vertex;
@@ -45,80 +45,24 @@ fn boundary_scalar_gt(lhs: Real, rhs: Real) -> bool {
 }
 
 fn boundary_scalar_min(values: impl IntoIterator<Item = Real>) -> Option<Real> {
-    values.into_iter().reduce(|acc, value| {
-        if boundary_scalar_lt(value, acc) {
-            value
-        } else {
-            acc
-        }
-    })
-}
-
-fn hreal_cmp(lhs: &HReal, rhs: &HReal) -> Option<Ordering> {
-    hyperlimit::compare_reals(lhs, rhs)
-        .value()
-        .or_else(|| hreal_to_f64(lhs)?.partial_cmp(&hreal_to_f64(rhs)?))
-}
-
-fn hreal_min<'a>(lhs: &'a HReal, rhs: &'a HReal) -> Option<&'a HReal> {
-    if let Some(value) = hyperlimit::real_min(lhs, rhs).value() {
-        return Some(value);
-    }
-    match hreal_cmp(lhs, rhs)? {
-        Ordering::Greater => Some(rhs),
-        Ordering::Less | Ordering::Equal => Some(lhs),
-    }
-}
-
-fn hreal_max<'a>(lhs: &'a HReal, rhs: &'a HReal) -> Option<&'a HReal> {
-    if let Some(value) = hyperlimit::real_max(lhs, rhs).value() {
-        return Some(value);
-    }
-    match hreal_cmp(lhs, rhs)? {
-        Ordering::Greater | Ordering::Equal => Some(lhs),
-        Ordering::Less => Some(rhs),
-    }
-}
-
-fn hreal_clamp_f64(value: HReal, min: Real, max: Real) -> Option<HReal> {
-    let min_h = hreal_from_f64(min).ok()?;
-    let max_h = hreal_from_f64(max).ok()?;
-    if let Some(clamped) = hyperlimit::real_clamp(value.clone(), &min_h, &max_h).value() {
-        return Some(clamped);
-    }
-    if matches!(hreal_cmp(&value, &min_h)?, Ordering::Less) {
-        hreal_from_f64(min).ok()
-    } else if matches!(hreal_cmp(&value, &max_h)?, Ordering::Greater) {
-        hreal_from_f64(max).ok()
-    } else {
-        Some(value)
-    }
+    let values = values.into_iter().collect::<Vec<_>>();
+    hreal_min(&values)
 }
 
 fn hreal_min3(a: &HReal, b: &HReal, c: &HReal) -> Option<HReal> {
-    Some(hreal_min(hreal_min(a, b)?, c)?.clone())
+    hreal_min_pair(&hreal_min_pair(a, b)?, c)
 }
 
 fn hreal_max3(a: &HReal, b: &HReal, c: &HReal) -> Option<HReal> {
-    Some(hreal_max(hreal_max(a, b)?, c)?.clone())
+    hreal_max_pair(&hreal_max_pair(a, b)?, c)
 }
 
 fn hreal_is_le(lhs: &HReal, rhs: &HReal) -> Option<bool> {
-    hyperlimit::real_le(lhs, rhs).value().or_else(|| {
-        Some(matches!(
-            hreal_cmp(lhs, rhs)?,
-            Ordering::Less | Ordering::Equal
-        ))
-    })
+    hyperlimit::real_le(lhs, rhs).value()
 }
 
 fn hreal_is_ge(lhs: &HReal, rhs: &HReal) -> Option<bool> {
-    hyperlimit::real_ge(lhs, rhs).value().or_else(|| {
-        Some(matches!(
-            hreal_cmp(lhs, rhs)?,
-            Ordering::Greater | Ordering::Equal
-        ))
-    })
+    hyperlimit::real_ge(lhs, rhs).value()
 }
 
 fn hyper_triangle_quality(vertices: &[Vertex]) -> Option<TriangleQuality> {
@@ -164,7 +108,7 @@ fn hyper_triangle_quality(vertices: &[Vertex]) -> Option<TriangleQuality> {
         let numerator = side_a.clone() * side_a.clone() + side_b.clone() * side_b.clone()
             - opposite.clone() * opposite.clone();
         let denominator = two.clone() * side_a.clone() * side_b.clone();
-        let cos_angle = hreal_clamp_f64((numerator / denominator).ok()?, -1.0, 1.0)?;
+        let cos_angle = hreal_clamp_hreal((numerator / denominator).ok()?, -1.0, 1.0)?;
         hyperlattice::acos(cos_angle).ok()
     };
 
@@ -195,23 +139,23 @@ fn hyper_triangle_quality(vertices: &[Vertex]) -> Option<TriangleQuality> {
     let inradius = (area.clone() / semiperimeter).ok()?;
     let aspect_ratio = (circumradius / inradius).ok()?;
 
-    let angle_quality = hreal_clamp_f64(
+    let angle_quality = hreal_clamp_hreal(
         (min_angle.clone() / hreal_from_f64(PI / 6.0).ok()?).ok()?,
         0.0,
         1.0,
     )?;
-    let shape_quality = hreal_clamp_f64(
+    let shape_quality = hreal_clamp_hreal(
         (hreal_from_f64(1.0).ok()? / aspect_ratio.clone()).ok()?,
         0.0,
         1.0,
     )?;
-    let edge_quality = hreal_clamp_f64(
+    let edge_quality = hreal_clamp_hreal(
         (hreal_from_f64(3.0).ok()? / edge_ratio.clone()).ok()?,
         0.0,
         1.0,
     )?;
 
-    let quality_score = hreal_clamp_f64(
+    let quality_score = hreal_clamp_hreal(
         hreal_from_f64(0.4).ok()? * angle_quality
             + hreal_from_f64(0.4).ok()? * shape_quality
             + hreal_from_f64(0.2).ok()? * edge_quality,

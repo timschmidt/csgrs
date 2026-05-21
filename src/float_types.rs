@@ -780,6 +780,20 @@ pub(crate) fn hreal_clamp_f64(value: F64, min: F64, max: F64) -> Option<F64> {
     hreal_to_f64(&hyperlimit::real_clamp(value_h, &min_h, &max_h).value()?)
 }
 
+/// Clamp an already-promoted hyperreal scalar against finite public bounds.
+///
+/// This is the internal counterpart to [`hreal_clamp_f64`]. It lets mesh
+/// quality and sampling code keep normalized scores in `hyperreal::Real`
+/// until the reporting boundary, while using Hyper's comparison/refinement
+/// layer for the branch decision. This follows Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7(1-2), 1997
+/// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+pub(crate) fn hreal_clamp_hreal(value: HReal, min: F64, max: F64) -> Option<HReal> {
+    let min_h = hreal_from_f64(min).ok()?;
+    let max_h = hreal_from_f64(max).ok()?;
+    hyperlimit::real_clamp(value, &min_h, &max_h).value()
+}
+
 /// Return true when two finite f64 API-boundary scalars are within `epsilon`.
 ///
 /// The squared difference is evaluated in `hyperreal::Real` so callers avoid
