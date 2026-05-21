@@ -496,8 +496,7 @@ impl Plane {
         // -----------------------------------------------------------------
         match polygon_type {
             COPLANAR => {
-                if hvector3_dot(&normal, &polygon.plane.normal()).unwrap_or(0.0) > 0.0 {
-                    // >= ?
+                if normals_same_direction(&normal, &polygon.plane.normal()) {
                     coplanar_front.push(polygon.clone());
                 } else {
                     coplanar_back.push(polygon.clone());
@@ -605,6 +604,16 @@ impl Plane {
 
         (transform_to_xy, transform_from_xy)
     }
+}
+
+fn normals_same_direction(lhs: &Vector3<Real>, rhs: &Vector3<Real>) -> bool {
+    let Some(lhs) = hvector3_from_vector3(lhs) else {
+        return false;
+    };
+    let Some(rhs) = hvector3_from_vector3(rhs) else {
+        return false;
+    };
+    hreal_gt_f64(&lhs.dot(&rhs), 0.0)
 }
 
 #[test]
