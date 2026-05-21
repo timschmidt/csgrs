@@ -749,12 +749,23 @@ pub(crate) fn hreal_sign(value: &HReal) -> Option<RealSign> {
     value.refine_sign_until(128)
 }
 
+/// Promote a public tolerance scalar and accept zero-or-positive values only.
+///
+/// This keeps API-boundary tolerance validation in the same hyperreal sign
+/// discipline as geometric predicates, following Yap's exact-geometric-
+/// computation split between primitive input and exact-aware decisions
+/// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
 #[cfg(feature = "wasm")]
 fn hnonnegative_boundary_scalar(value: Real) -> Option<HReal> {
     let value = hreal_from_f64(value).ok()?;
     (!hreal_lt_f64(&value, 0.0)).then_some(value)
 }
 
+/// Promote a public tolerance scalar and accept strictly positive values only.
+///
+/// Non-finite primitive inputs fail during promotion. The remaining sign
+/// decision is refined through hyperreal comparison rather than local f64
+/// predicates.
 fn hpositive_boundary_scalar(value: Real) -> Option<HReal> {
     let value = hreal_from_f64(value).ok()?;
     hreal_gt_f64(&value, 0.0).then_some(value)
