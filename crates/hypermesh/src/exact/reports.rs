@@ -550,6 +550,14 @@ pub enum ExactBooleanShortcutKind {
     AffineBoxIntersection,
     /// Certified affine-frame difference of coplanar-volumetric box solids.
     AffineBoxDifference,
+    /// Certified affine-frame orthogonal-cell union of solid cell complexes.
+    AffineOrthogonalSolidCellUnion,
+    /// Certified affine-frame orthogonal-cell intersection of solid cell
+    /// complexes.
+    AffineOrthogonalSolidCellIntersection,
+    /// Certified affine-frame orthogonal-cell difference of solid cell
+    /// complexes.
+    AffineOrthogonalSolidCellDifference,
     /// Certified graph absence for open surfaces.
     OpenSurfaceDisjoint,
     /// Certified closed-convex containment.
@@ -1098,6 +1106,15 @@ pub enum ExactBooleanSupport {
     /// Difference was materialized by normalizing two affine-box solids into
     /// one exact box-cell frame.
     CertifiedAffineBoxDifference,
+    /// Union was materialized by normalizing affine-frame orthogonal solid
+    /// cell complexes into one exact cell grid.
+    CertifiedAffineOrthogonalSolidCellUnion,
+    /// Intersection was materialized by normalizing affine-frame orthogonal
+    /// solid cell complexes into one exact cell grid.
+    CertifiedAffineOrthogonalSolidCellIntersection,
+    /// Difference was materialized by normalizing affine-frame orthogonal
+    /// solid cell complexes into one exact cell grid.
+    CertifiedAffineOrthogonalSolidCellDifference,
     /// A named operation was answered by exact no-intersection facts for open
     /// surface meshes.
     CertifiedOpenSurfaceDisjoint,
@@ -1272,6 +1289,9 @@ impl ExactBooleanPreflight {
             | ExactBooleanSupport::CertifiedAffineBoxUnion
             | ExactBooleanSupport::CertifiedAffineBoxIntersection
             | ExactBooleanSupport::CertifiedAffineBoxDifference
+            | ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellUnion
+            | ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellIntersection
+            | ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellDifference
             | ExactBooleanSupport::CertifiedOpenSurfaceDisjoint
             | ExactBooleanSupport::CertifiedConvexContainment
             | ExactBooleanSupport::CertifiedConvexIntersection

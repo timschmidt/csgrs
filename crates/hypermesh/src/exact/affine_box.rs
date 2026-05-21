@@ -250,8 +250,7 @@ fn materialize_normalized_boxes(
 }
 
 fn certify_affine_box_basis(left: &ExactMesh, right: &ExactMesh) -> Option<AffineBoxBasis> {
-    let left_points = mesh_points(left)?;
-    candidate_bases(&left_points).into_iter().find(|basis| {
+    candidate_affine_box_bases(left).into_iter().find(|basis| {
         mesh_to_uvw(left, basis, ValidationPolicy::CLOSED)
             .as_ref()
             .is_some_and(is_axis_aligned_box)
@@ -259,6 +258,20 @@ fn certify_affine_box_basis(left: &ExactMesh, right: &ExactMesh) -> Option<Affin
                 .as_ref()
                 .is_some_and(is_axis_aligned_box)
     })
+}
+
+/// Return candidate exact affine frames from a source parallelepiped mesh.
+///
+/// The candidates are intentionally derived only from an already retained box:
+/// the eight exact corners provide the object-level frame evidence. Affine
+/// cell-complex replay can then use those frames to normalize a larger
+/// rectangular grid without inventing axes from approximate edge clustering.
+/// This is the same object-first discipline described by Yap, "Towards Exact
+/// Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+pub(crate) fn candidate_affine_box_bases(mesh: &ExactMesh) -> Vec<AffineBoxBasis> {
+    mesh_points(mesh)
+        .map(|points| candidate_bases(&points))
+        .unwrap_or_default()
 }
 
 fn candidate_bases(points: &[Point3]) -> Vec<AffineBoxBasis> {
@@ -321,7 +334,7 @@ fn points_match_parallelepiped_corners(points: &[Point3], basis: &AffineBoxBasis
         .all(|expected| points.iter().any(|point| points_equal(point, expected)))
 }
 
-fn mesh_to_uvw(
+pub(crate) fn mesh_to_uvw(
     mesh: &ExactMesh,
     basis: &AffineBoxBasis,
     validation: ValidationPolicy,
@@ -344,7 +357,7 @@ fn mesh_to_uvw(
     .ok()
 }
 
-fn mesh_from_uvw(
+pub(crate) fn mesh_from_uvw(
     mesh: &ExactMesh,
     basis: &AffineBoxBasis,
     label: &'static str,
@@ -460,7 +473,7 @@ fn mesh_points(mesh: &ExactMesh) -> Option<Vec<Point3>> {
 }
 
 impl AffineBoxBasis {
-    fn determinant(&self) -> ExactReal {
+    pub(crate) fn determinant(&self) -> ExactReal {
         det3(&self.basis_u, &self.basis_v, &self.basis_w)
     }
 }

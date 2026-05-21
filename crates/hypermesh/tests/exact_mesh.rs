@@ -6258,6 +6258,204 @@ fn exact_affine_coplanar_volumetric_boxes_materialize_cell_complexes() {
 
 #[cfg(feature = "exact-triangulation")]
 #[test]
+fn exact_affine_orthogonal_solid_cell_complex_reenters_boolean() {
+    let origin = [0, 0, 0];
+    let basis_u = [2, 1, 0];
+    let basis_v = [-1, 2, 0];
+    let basis_w = [0, 1, 2];
+    let left = affine_box_i64([0, 0, 0], [2, 2, 2], origin, basis_u, basis_v, basis_w);
+    let right = affine_box_i64([1, 1, 0], [3, 3, 2], origin, basis_u, basis_v, basis_w);
+    let complex = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap()
+    .mesh;
+    assert!(complex.facts().mesh.closed_manifold);
+    assert!(complex.triangles().len() > left.triangles().len());
+
+    let cutter = affine_box_i64([2, 0, 0], [3, 2, 2], origin, basis_u, basis_v, basis_w);
+    let union_arrangement = hypermesh::exact::materialize_affine_orthogonal_solid_union(
+        &complex,
+        &cutter,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap()
+    .expect("affine orthogonal solid union should replay from retained cell output");
+    union_arrangement.validate().unwrap();
+    union_arrangement
+        .validate_against_sources(&complex, &cutter)
+        .unwrap();
+    assert_eq!(
+        union_arrangement.operation,
+        hypermesh::exact::AffineOrthogonalSolidOperation::Union
+    );
+
+    let union_preflight = hypermesh::exact::preflight_boolean_exact(
+        &complex,
+        &cutter,
+        hypermesh::exact::ExactBooleanOperation::Union,
+    )
+    .unwrap();
+    union_preflight.validate().unwrap();
+    union_preflight
+        .validate_against_sources(&complex, &cutter)
+        .unwrap();
+    assert_eq!(
+        union_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellUnion
+    );
+    let union = hypermesh::exact::boolean_exact(
+        &complex,
+        &cutter,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    union
+        .validate_operation_against_sources(
+            &complex,
+            &cutter,
+            hypermesh::exact::ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        union.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::AffineOrthogonalSolidCellUnion
+        }
+    );
+    assert!(union.mesh.facts().mesh.closed_manifold);
+
+    let intersection_preflight = hypermesh::exact::preflight_boolean_exact(
+        &complex,
+        &cutter,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+    )
+    .unwrap();
+    intersection_preflight.validate().unwrap();
+    intersection_preflight
+        .validate_against_sources(&complex, &cutter)
+        .unwrap();
+    assert_eq!(
+        intersection_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellIntersection
+    );
+    let intersection = hypermesh::exact::boolean_exact(
+        &complex,
+        &cutter,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    intersection
+        .validate_operation_against_sources(
+            &complex,
+            &cutter,
+            hypermesh::exact::ExactBooleanOperation::Intersection,
+            ValidationPolicy::CLOSED,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        intersection.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut:
+                hypermesh::exact::ExactBooleanShortcutKind::AffineOrthogonalSolidCellIntersection
+        }
+    );
+
+    let difference_preflight = hypermesh::exact::preflight_boolean_exact(
+        &complex,
+        &cutter,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    difference_preflight.validate().unwrap();
+    difference_preflight
+        .validate_against_sources(&complex, &cutter)
+        .unwrap();
+    assert_eq!(
+        difference_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellDifference
+    );
+    let difference = hypermesh::exact::boolean_exact(
+        &complex,
+        &cutter,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    difference
+        .validate_operation_against_sources(
+            &complex,
+            &cutter,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::CLOSED,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        difference.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut:
+                hypermesh::exact::ExactBooleanShortcutKind::AffineOrthogonalSolidCellDifference
+        }
+    );
+    assert!(difference.mesh.facts().mesh.closed_manifold);
+
+    let mut stale = union_arrangement.clone();
+    stale.operation = hypermesh::exact::AffineOrthogonalSolidOperation::Difference;
+    assert!(stale.validate_against_sources(&complex, &cutter).is_err());
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
+fn exact_affine_orthogonal_solid_rejects_unrelated_world_axis_cutter() {
+    let origin = [0, 0, 0];
+    let basis_u = [2, 1, 0];
+    let basis_v = [-1, 2, 0];
+    let basis_w = [0, 1, 2];
+    let left = affine_box_i64([0, 0, 0], [2, 2, 2], origin, basis_u, basis_v, basis_w);
+    let right = affine_box_i64([1, 1, 0], [3, 3, 2], origin, basis_u, basis_v, basis_w);
+    let complex = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap()
+    .mesh;
+    let unrelated = axis_aligned_box_i64([2, 0, 0], [3, 2, 2]);
+
+    assert!(
+        hypermesh::exact::materialize_affine_orthogonal_solid_union(
+            &complex,
+            &unrelated,
+            ValidationPolicy::CLOSED
+        )
+        .unwrap()
+        .is_none()
+    );
+    let preflight = hypermesh::exact::preflight_boolean_exact(
+        &complex,
+        &unrelated,
+        hypermesh::exact::ExactBooleanOperation::Union,
+    )
+    .unwrap();
+    preflight.validate().unwrap();
+    assert_ne!(
+        preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellUnion
+    );
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
 fn exact_affine_box_materialization_is_not_basis_orientation_dependent() {
     let origin = [0, 0, 0];
     let basis_u = [-1, 2, 0];

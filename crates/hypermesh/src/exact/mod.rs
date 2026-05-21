@@ -12,6 +12,8 @@ pub mod adapter;
 #[cfg(feature = "exact-triangulation")]
 pub mod affine_box;
 #[cfg(feature = "exact-triangulation")]
+pub mod affine_solid;
+#[cfg(feature = "exact-triangulation")]
 pub mod affine_surface;
 pub mod audit;
 pub mod boolean;
@@ -62,6 +64,12 @@ pub use affine_box::{
     AffineBoxArrangement, AffineBoxBasis, AffineBoxOperation, has_affine_box_difference,
     has_affine_box_intersection, has_affine_box_union, materialize_affine_box_difference,
     materialize_affine_box_intersection, materialize_affine_box_union,
+};
+#[cfg(feature = "exact-triangulation")]
+pub use affine_solid::{
+    AffineOrthogonalSolidArrangement, AffineOrthogonalSolidOperation,
+    materialize_affine_orthogonal_solid_difference,
+    materialize_affine_orthogonal_solid_intersection, materialize_affine_orthogonal_solid_union,
 };
 #[cfg(feature = "exact-triangulation")]
 pub use affine_surface::{

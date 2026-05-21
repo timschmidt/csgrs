@@ -23,6 +23,12 @@ use super::affine_box::{
     materialize_affine_box_union,
 };
 #[cfg(feature = "exact-triangulation")]
+use super::affine_solid::{
+    AffineOrthogonalSolidOperation, has_affine_orthogonal_solid_cells,
+    materialize_affine_orthogonal_solid_difference,
+    materialize_affine_orthogonal_solid_intersection, materialize_affine_orthogonal_solid_union,
+};
+#[cfg(feature = "exact-triangulation")]
 use super::affine_surface::{
     arrange_coplanar_affine_surface_difference, arrange_coplanar_affine_surface_intersection,
     arrange_coplanar_affine_surface_union,
@@ -436,6 +442,33 @@ pub fn preflight_boolean_exact(
             ExactBooleanSupport::CertifiedAffineBoxDifference
         }
         ExactBooleanOperation::Union
+            if has_affine_orthogonal_solid_cells(
+                left,
+                right,
+                AffineOrthogonalSolidOperation::Union,
+            ) =>
+        {
+            ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellUnion
+        }
+        ExactBooleanOperation::Intersection
+            if has_affine_orthogonal_solid_cells(
+                left,
+                right,
+                AffineOrthogonalSolidOperation::Intersection,
+            ) =>
+        {
+            ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellIntersection
+        }
+        ExactBooleanOperation::Difference
+            if has_affine_orthogonal_solid_cells(
+                left,
+                right,
+                AffineOrthogonalSolidOperation::Difference,
+            ) =>
+        {
+            ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellDifference
+        }
+        ExactBooleanOperation::Union
         | ExactBooleanOperation::Intersection
         | ExactBooleanOperation::Difference
             if certify_coplanar_convex_surface_containment(left, right).is_some() =>
@@ -528,6 +561,9 @@ pub fn preflight_boolean_exact(
             | ExactBooleanSupport::CertifiedAffineBoxUnion
             | ExactBooleanSupport::CertifiedAffineBoxIntersection
             | ExactBooleanSupport::CertifiedAffineBoxDifference
+            | ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellUnion
+            | ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellIntersection
+            | ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellDifference
             | ExactBooleanSupport::CertifiedOpenSurfaceDisjoint
             | ExactBooleanSupport::CertifiedCoplanarSurfaceContainment
             | ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
@@ -1146,6 +1182,48 @@ pub fn boolean_exact_with_boundary_policy(
         }
         ExactBooleanOperation::Difference if has_affine_box_difference(left, right) => {
             boolean_affine_box(left, right, AffineBoxOperation::Difference, validation)
+        }
+        ExactBooleanOperation::Union
+            if has_affine_orthogonal_solid_cells(
+                left,
+                right,
+                AffineOrthogonalSolidOperation::Union,
+            ) =>
+        {
+            boolean_affine_orthogonal_solid(
+                left,
+                right,
+                AffineOrthogonalSolidOperation::Union,
+                validation,
+            )
+        }
+        ExactBooleanOperation::Intersection
+            if has_affine_orthogonal_solid_cells(
+                left,
+                right,
+                AffineOrthogonalSolidOperation::Intersection,
+            ) =>
+        {
+            boolean_affine_orthogonal_solid(
+                left,
+                right,
+                AffineOrthogonalSolidOperation::Intersection,
+                validation,
+            )
+        }
+        ExactBooleanOperation::Difference
+            if has_affine_orthogonal_solid_cells(
+                left,
+                right,
+                AffineOrthogonalSolidOperation::Difference,
+            ) =>
+        {
+            boolean_affine_orthogonal_solid(
+                left,
+                right,
+                AffineOrthogonalSolidOperation::Difference,
+                validation,
+            )
         }
         ExactBooleanOperation::Union
         | ExactBooleanOperation::Intersection
@@ -2008,6 +2086,40 @@ fn boolean_affine_box(
         AffineBoxOperation::Union => ExactBooleanShortcutKind::AffineBoxUnion,
         AffineBoxOperation::Intersection => ExactBooleanShortcutKind::AffineBoxIntersection,
         AffineBoxOperation::Difference => ExactBooleanShortcutKind::AffineBoxDifference,
+    };
+    Ok(certified_shortcut_result(arrangement.mesh, shortcut))
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn boolean_affine_orthogonal_solid(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: AffineOrthogonalSolidOperation,
+    validation: ValidationPolicy,
+) -> Result<ExactBooleanResult, MeshError> {
+    let arrangement = match operation {
+        AffineOrthogonalSolidOperation::Union => {
+            materialize_affine_orthogonal_solid_union(left, right, validation)?
+        }
+        AffineOrthogonalSolidOperation::Intersection => {
+            materialize_affine_orthogonal_solid_intersection(left, right, validation)?
+        }
+        AffineOrthogonalSolidOperation::Difference => {
+            materialize_affine_orthogonal_solid_difference(left, right, validation)?
+        }
+    }
+    .expect("caller checked affine orthogonal solid materialization");
+    arrangement.validate_against_sources(left, right)?;
+    let shortcut = match operation {
+        AffineOrthogonalSolidOperation::Union => {
+            ExactBooleanShortcutKind::AffineOrthogonalSolidCellUnion
+        }
+        AffineOrthogonalSolidOperation::Intersection => {
+            ExactBooleanShortcutKind::AffineOrthogonalSolidCellIntersection
+        }
+        AffineOrthogonalSolidOperation::Difference => {
+            ExactBooleanShortcutKind::AffineOrthogonalSolidCellDifference
+        }
     };
     Ok(certified_shortcut_result(arrangement.mesh, shortcut))
 }

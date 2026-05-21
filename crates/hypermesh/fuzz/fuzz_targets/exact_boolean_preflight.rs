@@ -67,6 +67,8 @@ fuzz_target!(|data: &[u8]| {
         #[cfg(feature = "exact-triangulation")]
         exercise_affine_coplanar_volumetric_boxes();
         #[cfg(feature = "exact-triangulation")]
+        exercise_affine_orthogonal_solid_cell_complexes();
+        #[cfg(feature = "exact-triangulation")]
         exercise_mixed_coplanar_volumetric_materialization();
     });
 
@@ -3210,6 +3212,107 @@ fn exercise_affine_coplanar_volumetric_boxes() {
             .expect("left-handed affine box union should materialize");
     arrangement.validate().unwrap();
     arrangement.validate_against_sources(&left, &right).unwrap();
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn exercise_affine_orthogonal_solid_cell_complexes() {
+    let origin = [0, 0, 0];
+    let basis_u = [2, 1, 0];
+    let basis_v = [-1, 2, 0];
+    let basis_w = [0, 1, 2];
+    let left = affine_box_i64([0, 0, 0], [2, 2, 2], origin, basis_u, basis_v, basis_w);
+    let right = affine_box_i64([1, 1, 0], [3, 3, 2], origin, basis_u, basis_v, basis_w);
+    let complex = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("affine box cell union should materialize")
+    .mesh;
+    let cutter = affine_box_i64([2, 0, 0], [3, 2, 2], origin, basis_u, basis_v, basis_w);
+
+    let arrangement = hypermesh::exact::materialize_affine_orthogonal_solid_union(
+        &complex,
+        &cutter,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("affine orthogonal solid union fixture should not error")
+    .expect("affine orthogonal solid union should materialize");
+    arrangement.validate().unwrap();
+    arrangement
+        .validate_against_sources(&complex, &cutter)
+        .unwrap();
+
+    let union = preflight_boolean_exact(&complex, &cutter, ExactBooleanOperation::Union)
+        .expect("affine orthogonal solid union preflight should classify shortcut");
+    union.validate().unwrap();
+    assert_eq!(
+        union.support,
+        ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellUnion
+    );
+    hypermesh::exact::boolean_exact(
+        &complex,
+        &cutter,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("affine orthogonal solid union should materialize")
+    .validate_operation_against_sources(
+        &complex,
+        &cutter,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+
+    let intersection =
+        preflight_boolean_exact(&complex, &cutter, ExactBooleanOperation::Intersection)
+            .expect("affine orthogonal solid intersection preflight should classify shortcut");
+    intersection.validate().unwrap();
+    assert_eq!(
+        intersection.support,
+        ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellIntersection
+    );
+    hypermesh::exact::boolean_exact(
+        &complex,
+        &cutter,
+        ExactBooleanOperation::Intersection,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("affine orthogonal solid intersection should materialize")
+    .validate_operation_against_sources(
+        &complex,
+        &cutter,
+        ExactBooleanOperation::Intersection,
+        ValidationPolicy::CLOSED,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+
+    let difference = preflight_boolean_exact(&complex, &cutter, ExactBooleanOperation::Difference)
+        .expect("affine orthogonal solid difference preflight should classify shortcut");
+    difference.validate().unwrap();
+    assert_eq!(
+        difference.support,
+        ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellDifference
+    );
+    hypermesh::exact::boolean_exact(
+        &complex,
+        &cutter,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("affine orthogonal solid difference should materialize")
+    .validate_operation_against_sources(
+        &complex,
+        &cutter,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::CLOSED,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
 }
 
 #[cfg(feature = "exact-triangulation")]

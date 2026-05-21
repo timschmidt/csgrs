@@ -127,6 +127,11 @@ pub(crate) fn has_axis_aligned_orthogonal_solid_cells(
     orthogonal_cell_plan(left, right, operation).is_some()
 }
 
+/// Return whether one mesh certifies as an exact orthogonal solid cell complex.
+pub(crate) fn is_axis_aligned_orthogonal_solid(mesh: &ExactMesh) -> bool {
+    certify_axis_aligned_orthogonal_solid(mesh).is_some()
+}
+
 /// Materialize a named boolean over certified orthogonal solid cell complexes.
 ///
 /// The output grid is the exact coordinate merge of both source grids. A

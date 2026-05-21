@@ -3467,6 +3467,15 @@ fn exact_boolean_affine_box_cells(c: &mut Criterion) {
         let basis_w = [0, 1, 2];
         let left = affine_box_i64([0, 0, 0], [2, 2, 2], origin, basis_u, basis_v, basis_w);
         let right = affine_box_i64([1, 1, 0], [3, 3, 2], origin, basis_u, basis_v, basis_w);
+        let affine_complex = hypermesh::exact::boolean_exact(
+            &left,
+            &right,
+            hypermesh::exact::ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap()
+        .mesh;
+        let affine_cutter = affine_box_i64([2, 0, 0], [3, 2, 2], origin, basis_u, basis_v, basis_w);
 
         c.bench_function("exact_boolean_affine_box_cells", |b| {
             b.iter(|| {
@@ -3554,6 +3563,54 @@ fn exact_boolean_affine_box_cells(c: &mut Criterion) {
                     .validate_operation_against_sources(
                         &left,
                         &right,
+                        hypermesh::exact::ExactBooleanOperation::Difference,
+                        ValidationPolicy::CLOSED,
+                        hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+                    ),
+                )
+            })
+        });
+
+        c.bench_function("exact_boolean_affine_orthogonal_solid_cells", |b| {
+            b.iter(|| {
+                (
+                    hypermesh::exact::materialize_affine_orthogonal_solid_union(
+                        &affine_complex,
+                        &affine_cutter,
+                        ValidationPolicy::CLOSED,
+                    )
+                    .unwrap()
+                    .map(|output| output.validate_against_sources(&affine_complex, &affine_cutter)),
+                    hypermesh::exact::preflight_boolean_exact(
+                        &affine_complex,
+                        &affine_cutter,
+                        hypermesh::exact::ExactBooleanOperation::Intersection,
+                    )
+                    .map(|report| report.validate()),
+                    hypermesh::exact::boolean_exact(
+                        &affine_complex,
+                        &affine_cutter,
+                        hypermesh::exact::ExactBooleanOperation::Intersection,
+                        ValidationPolicy::CLOSED,
+                    )
+                    .unwrap()
+                    .validate_operation_against_sources(
+                        &affine_complex,
+                        &affine_cutter,
+                        hypermesh::exact::ExactBooleanOperation::Intersection,
+                        ValidationPolicy::CLOSED,
+                        hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+                    ),
+                    hypermesh::exact::boolean_exact(
+                        &affine_complex,
+                        &affine_cutter,
+                        hypermesh::exact::ExactBooleanOperation::Difference,
+                        ValidationPolicy::CLOSED,
+                    )
+                    .unwrap()
+                    .validate_operation_against_sources(
+                        &affine_complex,
+                        &affine_cutter,
                         hypermesh::exact::ExactBooleanOperation::Difference,
                         ValidationPolicy::CLOSED,
                         hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
