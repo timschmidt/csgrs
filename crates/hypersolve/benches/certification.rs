@@ -13,9 +13,10 @@ use hypersolve::{
     certify_candidate_domains, certify_direct_univariate_quadratic_roots,
     certify_interval_box_candidate, certify_multivariate_quadratic_interval_candidate,
     certify_multivariate_quadratic_krawczyk_box, certify_quadratic_interval_candidate,
-    certify_univariate_quadratic_alpha, certify_univariate_quadratic_krawczyk_box,
-    compare_algebraic_root_representations, compare_algebraic_root_representations_with_refinement,
-    context_from_problem, count_bernstein_univariate_polynomial_interval_roots,
+    certify_sketch_construction, certify_univariate_quadratic_alpha,
+    certify_univariate_quadratic_krawczyk_box, compare_algebraic_root_representations,
+    compare_algebraic_root_representations_with_refinement, context_from_problem,
+    count_bernstein_univariate_polynomial_interval_roots,
     count_descartes_univariate_polynomial_roots, determinant_bareiss,
     eliminate_affine_rows_with_substitution_classes,
     enumerate_direct_univariate_quadratic_branches, isolate_univariate_polynomial_roots,
@@ -298,6 +299,9 @@ fn certification(c: &mut Criterion) {
     let degeneracy_sketch = sketch_problem_with_degeneracy_checks(16);
     c.bench_function("sketch_degeneracy_preflight", |b| {
         b.iter(|| preflight_sketch_degeneracies(&degeneracy_sketch))
+    });
+    c.bench_function("sketch_construction_certificate", |b| {
+        b.iter(|| certify_sketch_construction(&sketch))
     });
     let form_handles = sketch
         .constraints()

@@ -7,21 +7,22 @@ use hypersolve::{
     IntervalBoxCertificationPackage, IntervalBoxCertificationStatus, LinearAdapterKind,
     LinearAdapterPrecision, LinearBackend, MultivariateQuadraticKrawczykStatus, PreparedProblem,
     PreparedSolverBlock, Problem, ProposalEngineKind, ProposalEnginePrecision, RootIsolationStatus,
-    RootMultiplicityStatus, SketchConstraintKind, SketchDegeneracyKind, SketchDegeneracyStatus,
-    SketchEntityHandle, SketchEntityKind, SketchGeneratedRowStatus, SketchParameterDomain,
-    SketchParameterDomainKind, SketchParameterDomainStatus, SketchResidualFormKind,
-    SketchResidualFormRole, SketchResidualFormsStatus, SketchResidualStrategy,
-    SketchRoundTripMetadata, SketchRoundTripRole, SketchSolveProblem, SolverBlockRowKind,
-    SolverConfig, SolverPoint2, SolverState, SymbolId, VariableBall, analyze_exact_affine_rank,
+    RootMultiplicityStatus, SketchConstraintKind, SketchConstructionCertificateStatus,
+    SketchDegeneracyKind, SketchDegeneracyStatus, SketchEntityHandle, SketchEntityKind,
+    SketchGeneratedRowStatus, SketchParameterDomain, SketchParameterDomainKind,
+    SketchParameterDomainStatus, SketchResidualFormKind, SketchResidualFormRole,
+    SketchResidualFormsStatus, SketchResidualStrategy, SketchRoundTripMetadata,
+    SketchRoundTripRole, SketchSolveProblem, SolverBlockRowKind, SolverConfig, SolverPoint2,
+    SolverState, SymbolId, VariableBall, analyze_exact_affine_rank,
     apply_equality_substitution_classes, apply_equality_substitutions,
     build_equality_substitution_classes, certify_affine_interval_candidate,
     certify_affine_krawczyk_box, certify_candidate, certify_candidate_domains,
     certify_candidate_with_config, certify_candidate_with_residual_balls,
     certify_direct_univariate_quadratic_roots, certify_interval_box_candidate,
     certify_multivariate_quadratic_interval_candidate, certify_multivariate_quadratic_krawczyk_box,
-    certify_quadratic_interval_candidate, certify_univariate_quadratic_alpha,
-    certify_univariate_quadratic_krawczyk_box, context_from_problem,
-    eliminate_affine_rows_with_substitution_classes,
+    certify_quadratic_interval_candidate, certify_sketch_construction,
+    certify_univariate_quadratic_alpha, certify_univariate_quadratic_krawczyk_box,
+    context_from_problem, eliminate_affine_rows_with_substitution_classes,
     enumerate_direct_univariate_quadratic_branches, evaluate_residuals, facts_depend_on_symbol,
     find_equality_substitutions, isolate_univariate_polynomial_roots, point_coincidence_equations,
     preflight_sketch_degeneracies, preflight_sketch_parameter_domains,
@@ -657,6 +658,93 @@ fn sketch_degeneracy_preflight_reports_stale_and_wrong_references() {
                 } if handle == distance
             )
     }));
+}
+
+#[test]
+fn sketch_construction_certificate_bundles_replay_preflight_and_provenance() {
+    let mut sketch = SketchSolveProblem::new();
+    let a = sketch.add_point2d("a", real(0), real(0));
+    let b = sketch.add_point2d("b", real(3), real(4));
+    let distance = sketch.add_distance("distance", real(5));
+    let constraint =
+        sketch_distance_builders::point_point_distance(&mut sketch, "five", a, b, distance);
+    assert!(sketch.set_constraint_metadata(
+        constraint.handle,
+        SketchRoundTripMetadata {
+            source_unit: Some("mm".to_owned()),
+            display_label: Some("five".to_owned()),
+            role: SketchRoundTripRole::Construction,
+            lossy_adapter_label: Some("importer".to_owned()),
+            ..SketchRoundTripMetadata::default()
+        },
+    ));
+
+    let certificate = certify_sketch_construction(&sketch);
+
+    assert!(certificate.is_certified());
+    assert_eq!(
+        certificate.status,
+        SketchConstructionCertificateStatus::Certified
+    );
+    assert!(certificate.lowering.all_generated());
+    assert!(certificate.parameter_domains.all_certified_valid());
+    assert!(!certificate.degeneracies.has_certified_degeneracy());
+    assert!(certificate.residual_replay.all_satisfied());
+    assert_eq!(certificate.traces.lossy_adapter_metadata_rows, 1);
+    assert_eq!(certificate.traces.predicate_replay_rows, 0);
+    assert_eq!(certificate.traces.interval_uniqueness_reports, 0);
+    assert_eq!(certificate.traces.algebraic_root_references, 0);
+    assert!(certificate.provenance.iter().any(|row| {
+        row.constraint == Some(constraint.handle)
+            && row.metadata.display_label.as_deref() == Some("five")
+            && row.metadata.source_unit.as_deref() == Some("mm")
+    }));
+}
+
+#[test]
+fn sketch_construction_certificate_reports_preflight_lowering_and_replay_failures() {
+    let mut invalid = SketchSolveProblem::new();
+    let p = invalid.add_point2d("p", real(0), real(0));
+    invalid.add_line_segment2("zero line", p, p);
+    let invalid_certificate = certify_sketch_construction(&invalid);
+    assert_eq!(
+        invalid_certificate.status,
+        SketchConstructionCertificateStatus::InvalidPreflight
+    );
+    assert!(invalid_certificate.degeneracies.has_certified_degeneracy());
+
+    let mut incomplete = SketchSolveProblem::new();
+    let q = incomplete.add_point2d("q", real(0), real(0));
+    let distance = incomplete.add_distance("d", real(1));
+    sketch_distance_builders::point_point_distance(
+        &mut incomplete,
+        "missing point",
+        q,
+        SketchEntityHandle(999),
+        distance,
+    );
+    let incomplete_certificate = certify_sketch_construction(&incomplete);
+    assert_eq!(
+        incomplete_certificate.status,
+        SketchConstructionCertificateStatus::LoweringIncomplete
+    );
+    assert!(!incomplete_certificate.lowering.all_generated());
+
+    let mut rejected = SketchSolveProblem::new();
+    let a = rejected.add_point2d("a", real(0), real(0));
+    let b = rejected.add_point2d("b", real(3), real(4));
+    let distance = rejected.add_distance("wrong distance", real(6));
+    sketch_distance_builders::point_point_distance(&mut rejected, "six", a, b, distance);
+    let rejected_certificate = certify_sketch_construction(&rejected);
+    assert_eq!(
+        rejected_certificate.status,
+        SketchConstructionCertificateStatus::ReplayRejected
+    );
+    assert!(
+        rejected_certificate
+            .residual_replay
+            .has_certified_violation()
+    );
 }
 
 #[test]

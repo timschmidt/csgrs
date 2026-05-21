@@ -4,14 +4,15 @@ use hypersolve::{
     EqualitySubstitutionProblem, Expr, IntervalBoxCertificationPackage,
     IntervalBoxCertificationStatus, MultivariateQuadraticKrawczykStatus, PreparedProblem,
     PreparedSolverBlock, Problem, ProposalEngineKind, ProposalEnginePrecision,
-    ProposalEngineReport, RootIsolationStatus, SketchDegeneracyKind, SketchDegeneracyStatus,
-    SketchGeneratedRowStatus, SketchParameterDomain, SketchParameterDomainStatus,
-    SketchResidualStrategy, SketchSolveProblem, SolverBlockRowKind, SolverConfig, SolverPoint2,
-    SolverState, SymbolId, VariableBall, apply_equality_substitution_classes,
-    certify_affine_krawczyk_box, certify_candidate, certify_candidate_domains,
-    certify_direct_univariate_quadratic_roots, certify_interval_box_candidate,
-    certify_multivariate_quadratic_interval_candidate, certify_multivariate_quadratic_krawczyk_box,
-    certify_quadratic_interval_candidate, certify_univariate_quadratic_alpha,
+    ProposalEngineReport, RootIsolationStatus, SketchConstructionCertificateStatus,
+    SketchDegeneracyKind, SketchDegeneracyStatus, SketchGeneratedRowStatus, SketchParameterDomain,
+    SketchParameterDomainStatus, SketchResidualStrategy, SketchSolveProblem, SolverBlockRowKind,
+    SolverConfig, SolverPoint2, SolverState, SymbolId, VariableBall,
+    apply_equality_substitution_classes, certify_affine_krawczyk_box, certify_candidate,
+    certify_candidate_domains, certify_direct_univariate_quadratic_roots,
+    certify_interval_box_candidate, certify_multivariate_quadratic_interval_candidate,
+    certify_multivariate_quadratic_krawczyk_box, certify_quadratic_interval_candidate,
+    certify_sketch_construction, certify_univariate_quadratic_alpha,
     certify_univariate_quadratic_krawczyk_box, context_from_problem, determinant_bareiss,
     eliminate_affine_rows_with_substitution_classes,
     enumerate_direct_univariate_quadratic_branches, isolate_univariate_polynomial_roots,
@@ -194,6 +195,31 @@ proptest! {
             CertifiedCandidateStatus::CertifiedZero { .. }
         );
         prop_assert!(certified_zero);
+    }
+
+    #[test]
+    fn sketch_construction_certificate_generated_integer_segments_match_distance(
+        ax in -12_i16..=12,
+        ay in -12_i16..=12,
+        dx in -8_i16..=8,
+    ) {
+        let ax = i64::from(ax);
+        let ay = i64::from(ay);
+        let dx = i64::from(dx);
+        let mut sketch = SketchSolveProblem::new();
+        let a = sketch.add_point2d("a", Real::from(ax), Real::from(ay));
+        let b = sketch.add_point2d("b", Real::from(ax + dx), Real::from(ay));
+        let d = sketch.add_distance("d", Real::from(dx.abs()));
+        sketch.add_point_point_distance("distance", a, b, d);
+
+        let certificate = certify_sketch_construction(&sketch);
+
+        prop_assert_eq!(
+            certificate.status,
+            SketchConstructionCertificateStatus::Certified
+        );
+        prop_assert!(certificate.is_certified());
+        prop_assert!(certificate.residual_replay.all_satisfied());
     }
 
     #[test]
