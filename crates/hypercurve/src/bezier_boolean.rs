@@ -6408,6 +6408,62 @@ impl BezierBooleanLoopContainmentCertificationReport2 {
         }
     }
 
+    /// Certifies scheduled graph-walk output loops from exact locator answers.
+    ///
+    /// This is the atomic scheduled counterpart to
+    /// [`Self::from_output_loop_query_results`]. It derives ownership,
+    /// emission, loop assembly, certified graph traversal, graph-walk order,
+    /// exact closure, output loops, locator inputs, ordered containment
+    /// queries, strict locator replay, and laminar containment depths in one
+    /// report-bearing chain. A caller supplies only the same exact locator
+    /// answers it would have returned for the derived query worklist. Missing,
+    /// extra, stale, boundary, and unknown answers stay blockers; malformed
+    /// graph walks and output loops also stay blockers. This follows Yap's
+    /// "Towards Exact Geometric Computation" (1997): predicate results are
+    /// replayed against the constructed object they classify before they can
+    /// affect topology. The staged boundary/nesting split follows Vatti
+    /// (1992), Greiner-Hormann (1998), and Martinez-Rueda-Feito (2009).
+    pub fn from_schedule_graph_walk_query_results(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        ownership_facts: &[BezierBooleanOwnershipFact2],
+        first_endpoints: &[(Point2, Point2)],
+        second_endpoints: &[(Point2, Point2)],
+        branch_vertex_count: usize,
+        resolved_overlap_count: usize,
+        walk_indices: &[usize],
+        results: &[BezierBooleanLoopContainmentQueryResult2],
+    ) -> Self {
+        let facts =
+            BezierBooleanOwnershipFactReport2::from_schedule_facts(schedule, ownership_facts);
+        let ownership = facts.classify(schedule, operation);
+        let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
+        let assembly = BezierBooleanAssemblyReadinessReport2::from_fragment_counts(
+            &emission,
+            first_endpoints.len(),
+            second_endpoints.len(),
+        );
+        let plan =
+            BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(&assembly, &emission);
+        let traversal = BezierBooleanLoopGraphTraversalReport2::from_certified_walk_graph_facts(
+            &plan,
+            branch_vertex_count,
+            resolved_overlap_count,
+        );
+        let walk = BezierBooleanLoopGraphWalkReport2::from_traversal_order(
+            &traversal,
+            &plan,
+            walk_indices,
+        );
+        let output = BezierBooleanOutputLoopReport2::from_graph_walk_endpoints(
+            &walk,
+            &plan,
+            first_endpoints,
+            second_endpoints,
+        );
+        Self::from_output_loop_query_results(&output, results)
+    }
+
     fn blocked_like(
         status: BezierBooleanLoopContainmentCertificationStatus,
         output: &BezierBooleanOutputLoopReport2,
@@ -10090,6 +10146,53 @@ impl BezierBooleanResultReport2 {
         )
     }
 
+    /// Accepts a scheduled endpoint result from exact locator answers.
+    ///
+    /// This constructor is the most direct current point/loop locator route to
+    /// an accepted Bezier/conic boolean artifact. It first builds
+    /// [`BezierBooleanLoopContainmentCertificationReport2`] from the scheduled
+    /// graph-walk output loops and supplied locator answers, then consumes that
+    /// certificate through the normal result path. The caller therefore cannot
+    /// pair a detached query report with a different output-loop package, and
+    /// unresolved locator answers remain blockers. This is Yap's (1997)
+    /// predicate replay rule applied to the Vatti (1992), Greiner-Hormann
+    /// (1998), and Martinez-Rueda-Feito (2009) clipping/fill pipeline.
+    pub fn from_schedule_graph_walk_locator_results(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        ownership_facts: &[BezierBooleanOwnershipFact2],
+        first_endpoints: &[(Point2, Point2)],
+        second_endpoints: &[(Point2, Point2)],
+        branch_vertex_count: usize,
+        resolved_overlap_count: usize,
+        walk_indices: &[usize],
+        results: &[BezierBooleanLoopContainmentQueryResult2],
+    ) -> Self {
+        let certification =
+            BezierBooleanLoopContainmentCertificationReport2::from_schedule_graph_walk_query_results(
+                schedule,
+                operation,
+                ownership_facts,
+                first_endpoints,
+                second_endpoints,
+                branch_vertex_count,
+                resolved_overlap_count,
+                walk_indices,
+                results,
+            );
+        Self::from_schedule_graph_walk_containment_certification(
+            schedule,
+            operation,
+            ownership_facts,
+            first_endpoints,
+            second_endpoints,
+            branch_vertex_count,
+            resolved_overlap_count,
+            walk_indices,
+            &certification,
+        )
+    }
+
     /// Accepts a graph-walk-certified endpoint result with containment-certified roles.
     pub fn from_graph_walk_containment_role_facts(
         walk: &BezierBooleanLoopGraphWalkReport2,
@@ -11939,6 +12042,53 @@ impl BezierBooleanMaterializedRegionReport2 {
             certification,
         );
         Self::from_result_laminar_containment_certification(&result, certification)
+    }
+
+    /// Materializes a scheduled endpoint result from exact locator answers.
+    ///
+    /// This is the direct materialization counterpart to
+    /// [`BezierBooleanResultReport2::from_schedule_graph_walk_locator_results`].
+    /// It derives the output-loop containment certificate internally and then
+    /// replays the same certificate for laminar hole attachment. The method is
+    /// still report-bearing: locator boundary/unknowns, stale keys, malformed
+    /// output-loop ranges, and non-laminar containment facts all block rather
+    /// than being normalized or guessed. This is the Yap (1997) exactness
+    /// boundary carried through the Vatti (1992), Greiner-Hormann (1998), and
+    /// Martinez-Rueda-Feito (2009) construction stages.
+    pub fn from_schedule_graph_walk_laminar_locator_results(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        ownership_facts: &[BezierBooleanOwnershipFact2],
+        first_endpoints: &[(Point2, Point2)],
+        second_endpoints: &[(Point2, Point2)],
+        branch_vertex_count: usize,
+        resolved_overlap_count: usize,
+        walk_indices: &[usize],
+        results: &[BezierBooleanLoopContainmentQueryResult2],
+    ) -> Self {
+        let certification =
+            BezierBooleanLoopContainmentCertificationReport2::from_schedule_graph_walk_query_results(
+                schedule,
+                operation,
+                ownership_facts,
+                first_endpoints,
+                second_endpoints,
+                branch_vertex_count,
+                resolved_overlap_count,
+                walk_indices,
+                results,
+            );
+        Self::from_schedule_graph_walk_laminar_containment_certification(
+            schedule,
+            operation,
+            ownership_facts,
+            first_endpoints,
+            second_endpoints,
+            branch_vertex_count,
+            resolved_overlap_count,
+            walk_indices,
+            &certification,
+        )
     }
 
     /// Materializes a scheduled endpoint result with graph facts and laminar containment.

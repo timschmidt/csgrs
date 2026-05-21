@@ -10034,10 +10034,23 @@ fn bezier_boolean_result_consumes_containment_query_results_without_dropping_blo
             &output_for_queries,
             &ready_results,
         );
+    let scheduled_certification =
+        BezierBooleanLoopContainmentCertificationReport2::from_schedule_graph_walk_query_results(
+            &schedule,
+            BooleanOp::Union,
+            &ownership_facts,
+            &endpoints,
+            &[],
+            0,
+            0,
+            &[0, 1],
+            &ready_results,
+        );
     assert_eq!(
         certification.status,
         BezierBooleanLoopContainmentCertificationStatus::Ready
     );
+    assert_eq!(scheduled_certification, certification);
     assert_eq!(certification.containment_fact_count, 1);
     assert_eq!(certification.depth_facts.len(), 2);
 
@@ -10071,6 +10084,19 @@ fn bezier_boolean_result_consumes_containment_query_results_without_dropping_blo
     assert_eq!(certified_result.status, BezierBooleanResultStatus::Ready);
     assert_eq!(certified_result.material_loop_indices, vec![0]);
     assert_eq!(certified_result.hole_loop_indices, vec![1]);
+
+    let locator_result = BezierBooleanResultReport2::from_schedule_graph_walk_locator_results(
+        &schedule,
+        BooleanOp::Union,
+        &ownership_facts,
+        &endpoints,
+        &[],
+        0,
+        0,
+        &[0, 1],
+        &ready_results,
+    );
+    assert_eq!(locator_result, certified_result);
 
     let materialized =
         BezierBooleanMaterializedRegionReport2::from_schedule_graph_walk_laminar_containment_query_results(
@@ -10111,6 +10137,20 @@ fn bezier_boolean_result_consumes_containment_query_results_without_dropping_blo
         vec![1]
     );
 
+    let locator_materialized =
+        BezierBooleanMaterializedRegionReport2::from_schedule_graph_walk_laminar_locator_results(
+            &schedule,
+            BooleanOp::Union,
+            &ownership_facts,
+            &endpoints,
+            &[],
+            0,
+            0,
+            &[0, 1],
+            &ready_results,
+        );
+    assert_eq!(locator_materialized, certified_materialized);
+
     let boundary_results = queries
         .queries
         .iter()
@@ -10134,6 +10174,19 @@ fn bezier_boolean_result_consumes_containment_query_results_without_dropping_blo
         BezierBooleanLoopContainmentCertificationStatus::QueryResultBlocked
     );
     assert!(boundary_certification.has_blockers());
+    let boundary_scheduled_certification =
+        BezierBooleanLoopContainmentCertificationReport2::from_schedule_graph_walk_query_results(
+            &schedule,
+            BooleanOp::Union,
+            &ownership_facts,
+            &endpoints,
+            &[],
+            0,
+            0,
+            &[0, 1],
+            &boundary_results,
+        );
+    assert_eq!(boundary_scheduled_certification, boundary_certification);
     let blocked = BezierBooleanResultReport2::from_schedule_graph_walk_containment_query_results(
         &schedule,
         BooleanOp::Union,
@@ -10168,6 +10221,19 @@ fn bezier_boolean_result_consumes_containment_query_results_without_dropping_blo
         BezierBooleanResultStatus::RegionAssemblyBlocked
     );
     assert!(certified_blocked.has_blockers());
+
+    let locator_blocked = BezierBooleanResultReport2::from_schedule_graph_walk_locator_results(
+        &schedule,
+        BooleanOp::Union,
+        &ownership_facts,
+        &endpoints,
+        &[],
+        0,
+        0,
+        &[0, 1],
+        &boundary_results,
+    );
+    assert_eq!(locator_blocked, certified_blocked);
 }
 
 #[test]
@@ -13642,10 +13708,41 @@ proptest! {
                 &output,
                 &results,
             );
+        let ownership_facts = plan
+            .emitted_steps
+            .iter()
+            .map(|step| BezierBooleanOwnershipFact2 {
+                step: step.step.clone(),
+                opposite_location: BezierBooleanFragmentOwnershipLocation::Outside,
+            })
+            .collect::<Vec<_>>();
+        let schedule = BezierBooleanTraversalScheduleReport2 {
+            status: BezierBooleanTraversalScheduleStatus::Ready,
+            precondition_status: BezierBooleanTraversalPreconditionStatus::Ready,
+            first_fragment_count: loop_count * 2,
+            second_fragment_count: 0,
+            steps: ownership_facts.iter().map(|fact| fact.step.clone()).collect(),
+            resolved_overlap_count: 0,
+            overlap_boundary_parameter_count: 0,
+            blocker_count: 0,
+        };
+        let scheduled_certification =
+            BezierBooleanLoopContainmentCertificationReport2::from_schedule_graph_walk_query_results(
+                &schedule,
+                BooleanOp::Union,
+                &ownership_facts,
+                &endpoints,
+                &[],
+                0,
+                0,
+                &(0..loop_count * 2).collect::<Vec<_>>(),
+                &results,
+            );
         prop_assert_eq!(
             certification.status,
             BezierBooleanLoopContainmentCertificationStatus::Ready
         );
+        prop_assert_eq!(scheduled_certification, certification.clone());
         prop_assert_eq!(certification.query_count, replay.query_count);
         prop_assert_eq!(certification.containment_fact_count, replay.containment_fact_count);
         prop_assert_eq!(certification.depth_fact_count, loop_count);

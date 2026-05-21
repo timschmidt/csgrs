@@ -3492,7 +3492,7 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     &output, &results,
                 );
             format!(
-                "{:?}{:?}",
+                "{:?}{:?}{:?}",
                 BezierBooleanResultReport2::from_schedule_graph_walk_containment_query_results(
                     &schedule,
                     BooleanOp::Union,
@@ -3514,6 +3514,17 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     0,
                     &[0, 1],
                     &certification,
+                ),
+                BezierBooleanResultReport2::from_schedule_graph_walk_locator_results(
+                    &schedule,
+                    BooleanOp::Union,
+                    &ownership_facts,
+                    &endpoints,
+                    &[],
+                    0,
+                    0,
+                    &[0, 1],
+                    &results,
                 )
             )
         };
