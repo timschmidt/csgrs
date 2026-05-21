@@ -3190,6 +3190,29 @@ impl BezierBooleanQuadraticFragmentReport2 {
         )
     }
 
+    /// Splits `curve` at shared monotone-range parameters from a readiness certificate.
+    ///
+    /// Shared-range parameters are produced when an exact monotone graph
+    /// contact belongs to both operands' local range coordinate. The current
+    /// fragment stage still consumes exact rational `Real` parameters only; a
+    /// caller that reached this constructor through
+    /// [`BezierBooleanAlgebraicSplitBridgeReport2`] has already proven that
+    /// each represented algebraic root has an exact rational witness. This
+    /// preserves Yap's exact-object boundary while letting Greiner-Hormann /
+    /// Martinez-Rueda-Feito split insertion proceed on the shared lane.
+    pub fn from_shared_range_readiness(
+        curve: &QuadraticBezier2,
+        readiness: &BezierBooleanConstructionReadinessReport2,
+        policy: &CurvePolicy,
+    ) -> Classification<Self> {
+        Self::from_readiness_parameters(
+            curve,
+            readiness,
+            &readiness.insertion.shared_range_interior_parameters,
+            policy,
+        )
+    }
+
     /// Splits `curve` at caller-supplied exact parameters.
     ///
     /// This lower-level entry point is useful for tests and for future
@@ -3338,6 +3361,26 @@ impl BezierBooleanRationalQuadraticFragmentReport2 {
             curve,
             readiness,
             &readiness.insertion.second_curve_interior_parameters,
+            policy,
+        )
+    }
+
+    /// Splits `curve` at shared monotone-range parameters from a readiness certificate.
+    ///
+    /// The homogeneous de Casteljau split remains exact only when the
+    /// parameter is represented as an exact `Real`. Algebraic roots without
+    /// rational witnesses must therefore stay blocked before this method is
+    /// called; see Yap (1997) on retaining exact algebraic objects until a
+    /// construction can consume them natively.
+    pub fn from_shared_range_readiness(
+        curve: &RationalQuadraticBezier2,
+        readiness: &BezierBooleanConstructionReadinessReport2,
+        policy: &CurvePolicy,
+    ) -> Classification<Self> {
+        Self::from_readiness_parameters(
+            curve,
+            readiness,
+            &readiness.insertion.shared_range_interior_parameters,
             policy,
         )
     }
@@ -15668,6 +15711,29 @@ impl BezierBooleanCubicFragmentReport2 {
         )
     }
 
+    /// Splits `curve` at shared monotone-range parameters from a readiness certificate.
+    ///
+    /// This is the fragment-construction continuation of the algebraic split
+    /// bridge. It intentionally accepts only the already-lowered exact
+    /// rational parameters retained by
+    /// [`BezierBooleanConstructionReadinessReport2`]; non-rational represented
+    /// roots remain report-bearing blockers until an algebraic de Casteljau
+    /// splitter exists. The split-before-traversal obligation follows
+    /// Greiner-Hormann (1998) and Martinez-Rueda-Feito (2009), while the
+    /// refusal to sample interval roots follows Yap (1997).
+    pub fn from_shared_range_readiness(
+        curve: &CubicBezier2,
+        readiness: &BezierBooleanConstructionReadinessReport2,
+        policy: &CurvePolicy,
+    ) -> Classification<Self> {
+        Self::from_readiness_parameters(
+            curve,
+            readiness,
+            &readiness.insertion.shared_range_interior_parameters,
+            policy,
+        )
+    }
+
     /// Splits `curve` at caller-supplied exact parameters.
     pub fn from_parameters(
         curve: &CubicBezier2,
@@ -15834,6 +15900,54 @@ impl BezierBooleanConstructionReadinessReport2 {
                 relation_event_count: replay.split_plan.relation_event_count,
                 range_event_count: replay.split_plan.range_event_count,
                 uncertainty_reason: replay.split_plan.uncertainty_reason,
+            }
+        };
+        Self::from_split_plan(scheduler, split_plan, policy)
+    }
+
+    /// Builds construction readiness from an algebraic split bridge.
+    ///
+    /// This is the exact-rational continuation of
+    /// [`BezierBooleanAlgebraicSplitBridgeReport2`]. The bridge has already
+    /// consumed a certified ordering over represented algebraic roots and
+    /// lowered only exact rational witnesses into a
+    /// [`BezierBooleanSplitPlanReport2`]. This constructor then runs the
+    /// ordinary unit-domain audit and insertion classification so typed
+    /// quadratic, cubic, and rational-conic fragment constructors can consume
+    /// the result through the same readiness API as scheduler and
+    /// root-isolation replay paths.
+    ///
+    /// If the bridge is blocked by ordering, unsupported roles, or
+    /// interval-only algebraic roots, readiness remains explicitly blocked.
+    /// This follows Yap, "Towards Exact Geometric Computation" (1997): exact
+    /// algebraic root objects are carried until a construction has certified
+    /// operands, and non-rational interval evidence is never converted to
+    /// primitive-float topology. The subsequent split-before-traversal stage is
+    /// the Bezier/conic form of Greiner-Hormann (1998) and
+    /// Martinez-Rueda-Feito (2009).
+    pub fn from_algebraic_split_bridge(
+        bridge: &BezierBooleanAlgebraicSplitBridgeReport2,
+        policy: &CurvePolicy,
+    ) -> Classification<Self> {
+        let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &[]);
+        let split_plan = if bridge.is_ready()
+            || matches!(
+                bridge.status,
+                BezierBooleanAlgebraicSplitBridgeStatus::Empty
+                    | BezierBooleanAlgebraicSplitBridgeStatus::NotNeeded
+                    | BezierBooleanAlgebraicSplitBridgeStatus::RationalSplitEventsReady
+            ) {
+            bridge.split_plan.clone()
+        } else {
+            BezierBooleanSplitPlanReport2 {
+                status: BezierBooleanSplitPlanStatus::Blocked,
+                scheduler_status: bridge.split_plan.scheduler_status,
+                first_curve_parameters: bridge.split_plan.first_curve_parameters.clone(),
+                second_curve_parameters: bridge.split_plan.second_curve_parameters.clone(),
+                shared_range_parameters: bridge.split_plan.shared_range_parameters.clone(),
+                relation_event_count: bridge.split_plan.relation_event_count,
+                range_event_count: bridge.split_plan.range_event_count,
+                uncertainty_reason: bridge.split_plan.uncertainty_reason,
             }
         };
         Self::from_split_plan(scheduler, split_plan, policy)

@@ -5609,6 +5609,41 @@ fn bezier_boolean_algebraic_split_bridge_lowers_exact_rational_ordered_roots() {
         bridge.insertion.shared_range_interior_parameters,
         vec![ratio(1, 4), ratio(3, 4)]
     );
+
+    let readiness = match BezierBooleanConstructionReadinessReport2::from_algebraic_split_bridge(
+        &bridge,
+        &policy(),
+    ) {
+        Classification::Decided(report) => report,
+        Classification::Uncertain(reason) => panic!("unexpected readiness uncertainty: {reason:?}"),
+    };
+    assert_eq!(
+        readiness.status,
+        BezierBooleanConstructionReadinessStatus::Ready
+    );
+    assert_eq!(
+        readiness.insertion.shared_range_interior_parameters,
+        vec![ratio(1, 4), ratio(3, 4)]
+    );
+
+    let curve = CubicBezier2::new(point(0, 0), point(1, 3), point(3, 3), point(4, 0));
+    let fragments = match BezierBooleanCubicFragmentReport2::from_shared_range_readiness(
+        &curve,
+        &readiness,
+        &policy(),
+    ) {
+        Classification::Decided(report) => report,
+        Classification::Uncertain(reason) => panic!("unexpected fragment uncertainty: {reason:?}"),
+    };
+    assert_eq!(
+        fragments.status,
+        BezierBooleanFragmentConstructionStatus::Ready
+    );
+    assert_eq!(
+        fragments.inserted_parameters,
+        vec![ratio(1, 4), ratio(3, 4)]
+    );
+    assert_eq!(fragments.fragments.len(), 3);
 }
 
 #[test]
@@ -13624,6 +13659,98 @@ proptest! {
             BezierBooleanRootIsolationConstructionStatus::Ready
         );
         prop_assert!(construction.is_ready());
+    }
+
+    #[test]
+    fn generated_bezier_boolean_algebraic_bridge_feeds_shared_range_fragments(
+        span_count in 1_usize..8,
+    ) {
+        let reports = (0..span_count)
+            .map(|index| {
+                BezierPathRangeOrderReport2::from_graph_order(
+                    &BezierMonotoneGraphOrder::IntersectsOrTouches {
+                        parameters: Vec::new(),
+                        spans: vec![span(ratio(index as i32 + 1, 32), ratio(index as i32 + 2, 32))],
+                    },
+                )
+            })
+            .collect::<Vec<_>>();
+        let solver_reports = (0..span_count)
+            .rev()
+            .map(|index| algebraic_root_report(ratio(index as i32 + 1, 16), true))
+            .collect::<Vec<_>>();
+        let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &reports);
+        let handoff =
+            match BezierBooleanAlgebraicParameterHandoffReport2::from_hypersolve_algebraic_root_reports(
+                &scheduler,
+                &solver_reports,
+                &policy(),
+            ) {
+                Classification::Decided(report) => report,
+                Classification::Uncertain(reason) => {
+                    prop_assert!(false, "unexpected handoff uncertainty: {reason:?}");
+                    return Ok(());
+                }
+            };
+        let readiness =
+            match BezierBooleanAlgebraicParameterReadinessReport2::from_handoff(&handoff, &policy())
+            {
+                Classification::Decided(report) => report,
+                Classification::Uncertain(reason) => {
+                    prop_assert!(false, "unexpected algebraic readiness uncertainty: {reason:?}");
+                    return Ok(());
+                }
+            };
+        let ordering = BezierBooleanAlgebraicParameterOrderingReport2::from_readiness(
+            &readiness,
+            AlgebraicRootRefinementComparisonConfig::default(),
+            &policy(),
+        );
+        let bridge = match BezierBooleanAlgebraicSplitBridgeReport2::from_ordering(
+            &ordering,
+            &policy(),
+        ) {
+            Classification::Decided(report) => report,
+            Classification::Uncertain(reason) => {
+                prop_assert!(false, "unexpected bridge uncertainty: {reason:?}");
+                return Ok(());
+            }
+        };
+        let construction =
+            match BezierBooleanConstructionReadinessReport2::from_algebraic_split_bridge(
+                &bridge,
+                &policy(),
+            ) {
+                Classification::Decided(report) => report,
+                Classification::Uncertain(reason) => {
+                    prop_assert!(false, "unexpected construction uncertainty: {reason:?}");
+                    return Ok(());
+                }
+            };
+        let curve = QuadraticBezier2::new(point(0, 0), point(2, 4), point(4, 0));
+        let fragments = match BezierBooleanQuadraticFragmentReport2::from_shared_range_readiness(
+            &curve,
+            &construction,
+            &policy(),
+        ) {
+            Classification::Decided(report) => report,
+            Classification::Uncertain(reason) => {
+                prop_assert!(false, "unexpected fragment uncertainty: {reason:?}");
+                return Ok(());
+            }
+        };
+
+        prop_assert_eq!(
+            construction.status,
+            BezierBooleanConstructionReadinessStatus::Ready
+        );
+        prop_assert_eq!(construction.insertion.interior_parameter_count, span_count);
+        prop_assert_eq!(
+            fragments.status,
+            BezierBooleanFragmentConstructionStatus::Ready
+        );
+        prop_assert_eq!(fragments.inserted_parameter_count, span_count);
+        prop_assert_eq!(fragments.fragments.len(), span_count + 1);
     }
 
     #[test]
