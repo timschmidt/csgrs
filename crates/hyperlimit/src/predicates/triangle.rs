@@ -299,6 +299,47 @@ pub fn classify_point_triangle3_with_policy(
     classify_point_triangle3_impl(a, b, c, point, policy, &normal, normal_signs)
 }
 
+/// Decide the sign of a triangle winding normal dotted with a reference normal.
+///
+/// The triangle normal is `(b - a) x (c - a)`. The returned sign is positive
+/// when that winding agrees with `reference_normal`, negative when it is
+/// reversed, and zero when the dot product is exactly zero.
+pub fn triangle3_winding_normal_sign(
+    a: &Point3,
+    b: &Point3,
+    c: &Point3,
+    reference_normal: &Point3,
+) -> PredicateOutcome<Sign> {
+    triangle3_winding_normal_sign_with_policy(a, b, c, reference_normal, PredicatePolicy::default())
+}
+
+/// Policy-controlled variant of [`triangle3_winding_normal_sign`].
+pub fn triangle3_winding_normal_sign_with_policy(
+    a: &Point3,
+    b: &Point3,
+    c: &Point3,
+    reference_normal: &Point3,
+    policy: PredicatePolicy,
+) -> PredicateOutcome<Sign> {
+    crate::trace_dispatch!("hyperlimit", "triangle3_winding_normal_sign", "normal-dot");
+    let normal = triangle3_normal(a, b, c);
+    let dot = Real::signed_product_sum(
+        [true; 3],
+        [
+            [&normal.x, &reference_normal.x],
+            [&normal.y, &reference_normal.y],
+            [&normal.z, &reference_normal.z],
+        ],
+    );
+    resolve_real_sign(
+        &dot,
+        policy,
+        || None,
+        || None,
+        RefinementNeed::RealRefinement,
+    )
+}
+
 /// Classify the intersection of a closed 3D segment `pq` with triangle `abc`.
 pub fn classify_segment_triangle3_intersection(
     p: &Point3,
@@ -1257,6 +1298,24 @@ mod tests {
         assert_eq!(
             classify_point_triangle3(&a, &b, &c, &p3(0.5, 0.5, 1.0)).value(),
             Some(Triangle3Location::OffPlane)
+        );
+    }
+
+    #[test]
+    fn triangle_winding_normal_sign_classifies_reference_direction() {
+        let a = p3(0.0, 0.0, 0.0);
+        let b = p3(1.0, 0.0, 0.0);
+        let c = p3(0.0, 1.0, 0.0);
+        let up = p3(0.0, 0.0, 1.0);
+        let down = p3(0.0, 0.0, -1.0);
+
+        assert_eq!(
+            triangle3_winding_normal_sign(&a, &b, &c, &up).value(),
+            Some(Sign::Positive)
+        );
+        assert_eq!(
+            triangle3_winding_normal_sign(&a, &b, &c, &down).value(),
+            Some(Sign::Negative)
         );
     }
 

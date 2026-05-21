@@ -76,9 +76,9 @@ pub use classify::{
     AabbSphereIntersection, CircleLineRelation, CircleSegmentRelation, ClosedIntervalIntersection,
     ConvexPointLocation, LineSide, PlaneAabbRelation, PlaneSegmentRelation, PlaneSide,
     PlaneTriangleRelation, PointSegmentLocation, RayTriangleIntersection, RealIntervalLocation,
-    RingPointLocation, Segment3Intersection, SegmentIntersection, SegmentTriangleIntersection,
-    SphereIntersection, SpherePointLocation, TetrahedronLocation, Triangle3Location,
-    TriangleLocation,
+    RingConvexity, RingPointLocation, Segment3Intersection, SegmentIntersection,
+    SegmentTriangleIntersection, SphereIntersection, SpherePointLocation, TetrahedronLocation,
+    Triangle3Location, TriangleLocation,
 };
 pub use geometry::{
     Aabb2Facts, CoordinateAxis2, HomogeneousLine3, HomogeneousPoint3, Plane3Facts,
@@ -94,6 +94,7 @@ pub use orient::{
     PreparedSphere3Polynomial, classify_point_line, classify_point_line_with_policy, incircle2d,
     incircle2d_report, incircle2d_report_with_policy, incircle2d_with_policy, insphere3d,
     insphere3d_report, insphere3d_report_with_policy, insphere3d_with_policy, orient2d,
+    orient2d_f64, orient2d_f64_report, orient2d_f64_report_with_policy, orient2d_f64_with_policy,
     orient2d_report, orient2d_report_with_policy, orient2d_with_policy, orient3d, orient3d_report,
     orient3d_report_with_policy, orient3d_with_policy,
 };
@@ -116,6 +117,7 @@ pub use predicates::aabb::{
     classify_aabb3_intersection_with_policy, classify_point_aabb2,
     classify_point_aabb2_with_policy, classify_point_aabb3, classify_point_aabb3_with_policy,
     point_in_aabb2, point_in_aabb2_with_policy, point_in_aabb3, point_in_aabb3_with_policy,
+    point_in_triangle2_aabb, point_in_triangle2_aabb_with_policy,
 };
 pub use predicates::convex::{
     classify_point_convex_planes3, classify_point_convex_planes3_with_policy,
@@ -154,11 +156,18 @@ pub use predicates::order::{
     compare_point2_lexicographic_report_with_policy, compare_point2_lexicographic_with_policy,
     compare_reals, compare_reals_report, compare_reals_report_with_policy,
     compare_reals_with_policy, point2_equal, point2_equal_report, point2_equal_report_with_policy,
-    point2_equal_with_policy,
+    point2_equal_with_policy, real_clamp, real_clamp_with_policy, real_ge, real_ge_with_policy,
+    real_le, real_le_with_policy, real_max, real_max_with_policy, real_min, real_min_with_policy,
 };
 pub use predicates::ring::{
-    classify_point_ring_even_odd, classify_point_ring_even_odd_with_policy, point_in_ring_even_odd,
-    point_in_ring_even_odd_with_policy, ring_area_sign, ring_area_sign_with_policy,
+    Ring2Facts, classify_point_indexed_ring_even_odd,
+    classify_point_indexed_ring_even_odd_with_policy, classify_point_ring_even_odd,
+    classify_point_ring_even_odd_with_policy, indexed_ring_area_sign,
+    indexed_ring_area_sign_with_policy, indexed_ring_convexity, indexed_ring_convexity_with_policy,
+    indexed_ring2_facts, indexed_ring2_facts_with_policy, point_in_indexed_ring_even_odd,
+    point_in_indexed_ring_even_odd_with_policy, point_in_ring_even_odd,
+    point_in_ring_even_odd_with_policy, ring_area_sign, ring_area_sign_with_policy, ring_convexity,
+    ring_convexity_with_policy, ring2_facts, ring2_facts_with_policy,
 };
 pub use predicates::segment::{
     PreparedSegment2, PreparedSegment3, classify_point_segment, classify_point_segment_with_facts,
@@ -168,7 +177,8 @@ pub use predicates::segment::{
     classify_segment_intersection_with_policy_and_facts, classify_segment3_intersection,
     classify_segment3_intersection_with_policy, point_on_segment, point_on_segment_with_facts,
     point_on_segment_with_policy, point_on_segment_with_policy_and_facts, point_on_segment3,
-    point_on_segment3_with_policy,
+    point_on_segment3_with_policy, proper_segment_intersection_point,
+    proper_segment_intersection_point_with_policy,
 };
 pub use predicates::triangle::{
     PreparedTriangle2, PreparedTriangle3, classify_point_tetrahedron,
@@ -177,7 +187,8 @@ pub use predicates::triangle::{
     classify_point_triangle_with_policy_and_facts, classify_point_triangle3,
     classify_point_triangle3_with_policy, classify_ray_triangle3_intersection,
     classify_ray_triangle3_intersection_with_policy, classify_segment_triangle3_intersection,
-    classify_segment_triangle3_intersection_with_policy,
+    classify_segment_triangle3_intersection_with_policy, triangle3_winding_normal_sign,
+    triangle3_winding_normal_sign_with_policy,
 };
 pub use real::{RealFacts, RealPredicateExt, RealZeroKnowledge};
 pub use session::{

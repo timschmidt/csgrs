@@ -1,6 +1,6 @@
 [package]
 name = "hyperlimit-fuzz"
-version = "0.0.0"
+version = "0.1.0"
 edition = "2024"
 publish = false
 
@@ -13,11 +13,12 @@ cargo-fuzz = true
 [dependencies]
 libfuzzer-sys = "0.4"
 arbitrary = { version = "1", features = ["derive"] }
+# Hyper sibling dependency switch: keep both local path and crates.io lines; do not remove either.
+# Development mode uses the local path lines. For release, comment those and uncomment the crates.io lines.
 hyperlimit = { path = "..", default-features = false, features = ["std", "parallel"] }
 hyperreal = { path = "../../hyperreal" }
-
-[patch.crates-io]
-hyperreal = { path = "../../hyperreal" }
+# hyperlimit = { version = "0.4.0", default-features = false, features = ["std", "parallel"] }
+# hyperreal = "0.13.0"
 
 [[bin]]
 name = "predicate_invariants"

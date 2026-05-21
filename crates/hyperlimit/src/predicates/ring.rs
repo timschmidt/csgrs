@@ -2,7 +2,7 @@
 
 use core::cmp::Ordering;
 
-use crate::classify::RingPointLocation;
+use crate::classify::{RingConvexity, RingPointLocation};
 use crate::geometry::Point2;
 use crate::predicate::{
     Certainty, Escalation, PredicateOutcome, PredicatePolicy, RefinementNeed, Sign,
@@ -12,7 +12,120 @@ use crate::predicates::orient::orient2d_with_policy;
 use crate::predicates::segment::classify_point_segment_with_policy;
 use crate::real::{add_ref, mul_ref, sub_ref};
 use crate::resolve::{resolve_real_sign, signed_term_filter};
-use hyperreal::Real;
+use hyperreal::{Real, ZeroKnowledge};
+
+/// Structural facts retained for one closed polygonal ring.
+///
+/// These facts are cheap summaries over exact `Real` coordinates. They are
+/// useful for algorithm selection, but they are not topology certificates:
+/// later containment, visibility, and intersection decisions must still call
+/// exact predicates. That mirrors Yap's object-fact layer from "Towards Exact
+/// Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct Ring2Facts {
+    /// Number of vertices in the caller-supplied ring.
+    pub vertex_count: usize,
+    /// Number of cyclic edges structurally known to collapse to a point.
+    pub known_degenerate_edges: usize,
+    /// Number of non-degenerate cyclic edges structurally known horizontal or vertical.
+    pub known_axis_aligned_edges: usize,
+    /// Number of cyclic edges with unknown coordinate-zero status.
+    pub unknown_edge_zero_status: usize,
+    /// Certified sign of twice the signed ring area, when available.
+    pub signed_area: Option<Sign>,
+    /// Certified local turn consistency for the ring.
+    pub convexity: RingConvexity,
+}
+
+/// Build structural facts for a closed polygonal ring.
+pub fn ring2_facts(points: &[Point2]) -> Ring2Facts {
+    ring2_facts_with_policy(points, PredicatePolicy::default())
+}
+
+/// Build structural facts for a closed polygonal ring with an explicit policy.
+pub fn ring2_facts_with_policy(points: &[Point2], policy: PredicatePolicy) -> Ring2Facts {
+    let refs: Vec<_> = points.iter().collect();
+    ring2_facts_refs(&refs, policy)
+}
+
+/// Build structural facts for a closed polygonal ring stored as indices.
+pub fn indexed_ring2_facts(points: &[Point2], ring: &[usize]) -> Option<Ring2Facts> {
+    indexed_ring2_facts_with_policy(points, ring, PredicatePolicy::default())
+}
+
+/// Build structural facts for an indexed closed polygonal ring with an explicit
+/// policy.
+pub fn indexed_ring2_facts_with_policy(
+    points: &[Point2],
+    ring: &[usize],
+    policy: PredicatePolicy,
+) -> Option<Ring2Facts> {
+    let refs = indexed_ring_refs(points, ring)?;
+    Some(ring2_facts_refs(&refs, policy))
+}
+
+fn ring2_facts_refs(points: &[&Point2], policy: PredicatePolicy) -> Ring2Facts {
+    let mut facts = Ring2Facts {
+        vertex_count: points.len(),
+        known_degenerate_edges: 0,
+        known_axis_aligned_edges: 0,
+        unknown_edge_zero_status: 0,
+        signed_area: ring_area_sign_refs(points, policy).value(),
+        convexity: ring_convexity_refs(points, policy),
+    };
+
+    if points.len() < 2 {
+        return facts;
+    }
+
+    for index in 0..points.len() {
+        let current = points[index];
+        let next = points[(index + 1) % points.len()];
+        let dx = sub_ref(&next.x, &current.x);
+        let dy = sub_ref(&next.y, &current.y);
+
+        match (dx.structural_facts().zero, dy.structural_facts().zero) {
+            (ZeroKnowledge::Zero, ZeroKnowledge::Zero) => facts.known_degenerate_edges += 1,
+            (ZeroKnowledge::Zero, ZeroKnowledge::NonZero)
+            | (ZeroKnowledge::NonZero, ZeroKnowledge::Zero) => {
+                facts.known_axis_aligned_edges += 1;
+            }
+            (ZeroKnowledge::Unknown, _) | (_, ZeroKnowledge::Unknown) => {
+                facts.unknown_edge_zero_status += 1;
+            }
+            (ZeroKnowledge::NonZero, ZeroKnowledge::NonZero) => {}
+        }
+    }
+
+    facts
+}
+
+/// Classify local turn consistency for a closed polygonal ring.
+pub fn ring_convexity(points: &[Point2]) -> RingConvexity {
+    ring_convexity_with_policy(points, PredicatePolicy::default())
+}
+
+/// Classify local turn consistency for a closed polygonal ring with a policy.
+pub fn ring_convexity_with_policy(points: &[Point2], policy: PredicatePolicy) -> RingConvexity {
+    let refs: Vec<_> = points.iter().collect();
+    ring_convexity_refs(&refs, policy)
+}
+
+/// Classify local turn consistency for an indexed closed polygonal ring.
+pub fn indexed_ring_convexity(points: &[Point2], ring: &[usize]) -> Option<RingConvexity> {
+    indexed_ring_convexity_with_policy(points, ring, PredicatePolicy::default())
+}
+
+/// Classify local turn consistency for an indexed closed polygonal ring with a
+/// policy.
+pub fn indexed_ring_convexity_with_policy(
+    points: &[Point2],
+    ring: &[usize],
+    policy: PredicatePolicy,
+) -> Option<RingConvexity> {
+    let refs = indexed_ring_refs(points, ring)?;
+    Some(ring_convexity_refs(&refs, policy))
+}
 
 /// Return the sign of twice the signed area of a closed polygonal ring.
 ///
@@ -34,6 +147,29 @@ pub fn ring_area_sign_with_policy(
     points: &[Point2],
     policy: PredicatePolicy,
 ) -> PredicateOutcome<Sign> {
+    let refs: Vec<_> = points.iter().collect();
+    ring_area_sign_refs(&refs, policy)
+}
+
+/// Return the sign of twice the signed area of an indexed closed polygonal ring.
+pub fn indexed_ring_area_sign(points: &[Point2], ring: &[usize]) -> PredicateOutcome<Sign> {
+    indexed_ring_area_sign_with_policy(points, ring, PredicatePolicy::default())
+}
+
+/// Return the sign of twice the signed area of an indexed closed polygonal ring
+/// with an explicit predicate escalation policy.
+pub fn indexed_ring_area_sign_with_policy(
+    points: &[Point2],
+    ring: &[usize],
+    policy: PredicatePolicy,
+) -> PredicateOutcome<Sign> {
+    let Some(refs) = indexed_ring_refs(points, ring) else {
+        return PredicateOutcome::unknown(RefinementNeed::Unsupported, Escalation::Undecided);
+    };
+    ring_area_sign_refs(&refs, policy)
+}
+
+fn ring_area_sign_refs(points: &[&Point2], policy: PredicatePolicy) -> PredicateOutcome<Sign> {
     if points.len() < 3 {
         return PredicateOutcome::decided(
             Sign::Zero,
@@ -92,6 +228,44 @@ pub fn classify_point_ring_even_odd(
 /// Computation," *Computational Geometry* 7.1-2 (1997).
 pub fn classify_point_ring_even_odd_with_policy(
     ring: &[Point2],
+    point: &Point2,
+    policy: PredicatePolicy,
+) -> PredicateOutcome<RingPointLocation> {
+    let refs: Vec<_> = ring.iter().collect();
+    classify_point_ring_even_odd_refs(&refs, point, policy)
+}
+
+/// Classify a point against an indexed closed polygonal ring by the even-odd
+/// rule.
+pub fn classify_point_indexed_ring_even_odd(
+    points: &[Point2],
+    ring: &[usize],
+    point: &Point2,
+) -> PredicateOutcome<RingPointLocation> {
+    classify_point_indexed_ring_even_odd_with_policy(
+        points,
+        ring,
+        point,
+        PredicatePolicy::default(),
+    )
+}
+
+/// Classify a point against an indexed closed polygonal ring by the even-odd
+/// rule with an explicit predicate escalation policy.
+pub fn classify_point_indexed_ring_even_odd_with_policy(
+    points: &[Point2],
+    ring: &[usize],
+    point: &Point2,
+    policy: PredicatePolicy,
+) -> PredicateOutcome<RingPointLocation> {
+    let Some(refs) = indexed_ring_refs(points, ring) else {
+        return PredicateOutcome::unknown(RefinementNeed::Unsupported, Escalation::Undecided);
+    };
+    classify_point_ring_even_odd_refs(&refs, point, policy)
+}
+
+fn classify_point_ring_even_odd_refs(
+    ring: &[&Point2],
     point: &Point2,
     policy: PredicatePolicy,
 ) -> PredicateOutcome<RingPointLocation> {
@@ -187,6 +361,80 @@ pub fn point_in_ring_even_odd_with_policy(
         } => PredicateOutcome::decided(value.is_inside_or_boundary(), certainty, stage),
         PredicateOutcome::Unknown { needed, stage } => PredicateOutcome::unknown(needed, stage),
     }
+}
+
+/// Return whether `point` is inside or on the boundary of an indexed ring by
+/// the even-odd rule.
+pub fn point_in_indexed_ring_even_odd(
+    points: &[Point2],
+    ring: &[usize],
+    point: &Point2,
+) -> PredicateOutcome<bool> {
+    point_in_indexed_ring_even_odd_with_policy(points, ring, point, PredicatePolicy::default())
+}
+
+/// Return whether `point` is inside or on the boundary of an indexed ring by
+/// the even-odd rule with an explicit predicate escalation policy.
+pub fn point_in_indexed_ring_even_odd_with_policy(
+    points: &[Point2],
+    ring: &[usize],
+    point: &Point2,
+    policy: PredicatePolicy,
+) -> PredicateOutcome<bool> {
+    match classify_point_indexed_ring_even_odd_with_policy(points, ring, point, policy) {
+        PredicateOutcome::Decided {
+            value,
+            certainty,
+            stage,
+        } => PredicateOutcome::decided(value.is_inside_or_boundary(), certainty, stage),
+        PredicateOutcome::Unknown { needed, stage } => PredicateOutcome::unknown(needed, stage),
+    }
+}
+
+fn indexed_ring_refs<'a>(points: &'a [Point2], ring: &[usize]) -> Option<Vec<&'a Point2>> {
+    ring.iter().map(|&index| points.get(index)).collect()
+}
+
+fn ring_convexity_refs(points: &[&Point2], policy: PredicatePolicy) -> RingConvexity {
+    let len = open_ring_len(points);
+    if len < 3 {
+        return RingConvexity::Degenerate;
+    }
+
+    let mut saw_positive = false;
+    let mut saw_negative = false;
+    for index in 0..len {
+        let previous = points[(index + len - 1) % len];
+        let current = points[index];
+        let next = points[(index + 1) % len];
+        let Some(sign) = orient2d_with_policy(previous, current, next, policy).value() else {
+            return RingConvexity::Unknown;
+        };
+
+        match sign {
+            Sign::Positive => saw_positive = true,
+            Sign::Negative => saw_negative = true,
+            Sign::Zero => {}
+        }
+
+        if saw_positive && saw_negative {
+            return RingConvexity::MixedTurns;
+        }
+    }
+
+    if saw_positive || saw_negative {
+        RingConvexity::LocallyConvex
+    } else {
+        RingConvexity::Degenerate
+    }
+}
+
+fn open_ring_len(points: &[&Point2]) -> usize {
+    let mut len = points.len();
+    if len > 1 && points[0] == points[len - 1] {
+        len -= 1;
+    }
+    len
 }
 
 fn compare_greater(
@@ -323,5 +571,38 @@ mod tests {
             classify_point_ring_even_odd(&ring, &p2(1, 1)).value(),
             Some(RingPointLocation::Inside)
         );
+    }
+
+    #[test]
+    fn ring_facts_count_raw_edges_but_classify_open_turns() {
+        let ring = [p2(0, 0), p2(4, 0), p2(4, 3), p2(0, 3), p2(0, 0)];
+        let facts = ring2_facts(&ring);
+
+        assert_eq!(facts.vertex_count, 5);
+        assert_eq!(facts.known_degenerate_edges, 1);
+        assert_eq!(facts.known_axis_aligned_edges, 4);
+        assert_eq!(facts.unknown_edge_zero_status, 0);
+        assert_eq!(facts.signed_area, Some(Sign::Positive));
+        assert_eq!(facts.convexity, RingConvexity::LocallyConvex);
+    }
+
+    #[test]
+    fn indexed_ring_predicates_reuse_caller_topology() {
+        let points = [p2(9, 9), p2(0, 0), p2(4, 0), p2(4, 4), p2(0, 4)];
+        let ring = [1, 2, 3, 4];
+
+        assert_eq!(
+            indexed_ring_area_sign(&points, &ring).value(),
+            Some(Sign::Positive)
+        );
+        assert_eq!(
+            classify_point_indexed_ring_even_odd(&points, &ring, &p2(2, 2)).value(),
+            Some(RingPointLocation::Inside)
+        );
+        assert_eq!(
+            indexed_ring_convexity(&points, &ring),
+            Some(RingConvexity::LocallyConvex)
+        );
+        assert!(indexed_ring2_facts(&points, &[1, 99]).is_none());
     }
 }

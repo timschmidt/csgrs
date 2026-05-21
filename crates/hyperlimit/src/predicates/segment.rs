@@ -11,7 +11,7 @@ use crate::predicate::{
     Certainty, Escalation, PredicateOutcome, PredicatePolicy, RefinementNeed, Sign,
 };
 use crate::predicates::orient::orient2d_with_policy;
-use crate::real::{mul_ref, sub_ref};
+use crate::real::{add_ref, mul_ref, sub_ref};
 use crate::resolve::resolve_real_sign;
 use hyperreal::Real;
 
@@ -431,6 +431,75 @@ pub fn classify_segment_intersection(
     d: &Point2,
 ) -> PredicateOutcome<SegmentIntersection> {
     classify_segment_intersection_with_policy(a, b, c, d, PredicatePolicy::default())
+}
+
+/// Construct the exact point where two closed 2D segments cross properly.
+pub fn proper_segment_intersection_point(
+    a: &Point2,
+    b: &Point2,
+    c: &Point2,
+    d: &Point2,
+) -> PredicateOutcome<Option<Point2>> {
+    proper_segment_intersection_point_with_policy(a, b, c, d, PredicatePolicy::default())
+}
+
+/// Construct the exact point where two closed 2D segments cross properly with
+/// an explicit predicate escalation policy.
+///
+/// The construction uses the standard line parameter
+/// `t = cross(c - a, d - c) / cross(b - a, d - c)` and returns
+/// `a + t (b - a)` only after the segment classifier certifies a proper
+/// crossing. The formula is the ordinary segment-intersection construction from
+/// computational geometry texts such as de Berg, Cheong, van Kreveld, and
+/// Overmars, *Computational Geometry: Algorithms and Applications*, 3rd ed.,
+/// Springer, 2008. The precondition is certified by exact predicates in the
+/// exact-geometric-computation style of Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997).
+pub fn proper_segment_intersection_point_with_policy(
+    a: &Point2,
+    b: &Point2,
+    c: &Point2,
+    d: &Point2,
+    policy: PredicatePolicy,
+) -> PredicateOutcome<Option<Point2>> {
+    let (certainty, stage) = match classify_segment_intersection_with_policy(a, b, c, d, policy) {
+        PredicateOutcome::Decided {
+            value,
+            certainty,
+            stage,
+        } if value.is_proper_crossing() => (certainty, stage),
+        PredicateOutcome::Decided {
+            certainty, stage, ..
+        } => return PredicateOutcome::decided(None, certainty, stage),
+        PredicateOutcome::Unknown { needed, stage } => {
+            return PredicateOutcome::unknown(needed, stage);
+        }
+    };
+
+    let ab_x = sub_ref(&b.x, &a.x);
+    let ab_y = sub_ref(&b.y, &a.y);
+    let cd_x = sub_ref(&d.x, &c.x);
+    let cd_y = sub_ref(&d.y, &c.y);
+    let ca_x = sub_ref(&c.x, &a.x);
+    let ca_y = sub_ref(&c.y, &a.y);
+
+    let denominator = cross2(&ab_x, &ab_y, &cd_x, &cd_y);
+    let numerator = cross2(&ca_x, &ca_y, &cd_x, &cd_y);
+    let t = match &numerator / &denominator {
+        Ok(value) => value,
+        Err(_) => {
+            return PredicateOutcome::unknown(RefinementNeed::Unsupported, Escalation::Undecided);
+        }
+    };
+
+    PredicateOutcome::decided(
+        Some(Point2::new(
+            add_ref(&a.x, &mul_ref(&t, &ab_x)),
+            add_ref(&a.y, &mul_ref(&t, &ab_y)),
+        )),
+        certainty,
+        stage,
+    )
 }
 
 /// Classify the intersection of closed 3D segments `ab` and `cd`.
@@ -991,6 +1060,10 @@ fn vector3_between(start: &Point3, end: &Point3) -> Vector3Real {
     }
 }
 
+fn cross2(left_x: &Real, left_y: &Real, right_x: &Real, right_y: &Real) -> Real {
+    sub_ref(&mul_ref(left_x, right_y), &mul_ref(left_y, right_x))
+}
+
 fn cross3(left: &Vector3Real, right: &Vector3Real) -> Vector3Real {
     Vector3Real {
         x: sub_ref(&mul_ref(&left.y, &right.z), &mul_ref(&left.z, &right.y)),
@@ -1345,6 +1418,18 @@ mod tests {
         assert_eq!(
             classify_segment_intersection(&p2(0, 0), &p2(4, 0), &p2(4, 0), &p2(0, 0)).value(),
             Some(SegmentIntersection::Identical)
+        );
+    }
+
+    #[test]
+    fn proper_segment_intersection_point_constructs_exact_crossing() {
+        assert_eq!(
+            proper_segment_intersection_point(&p2(0, 0), &p2(4, 4), &p2(0, 4), &p2(4, 0)).value(),
+            Some(Some(p2(2, 2)))
+        );
+        assert_eq!(
+            proper_segment_intersection_point(&p2(0, 0), &p2(4, 0), &p2(4, 0), &p2(6, 0)).value(),
+            Some(None)
         );
     }
 

@@ -1,6 +1,6 @@
 [package]
 name = "hyperlimit"
-version = "0.3.0"
+version = "0.4.0"
 edition = "2024"
 description = "Hyperreal-backed exact predicates with structural Real awareness."
 license = "MIT OR Apache-2.0"
@@ -11,12 +11,12 @@ keywords = ["exact", "geometric", "predicates", "boundary", "orientation"]
 categories = ["mathematics", "games", "simulation"]
 
 [dependencies]
-# Hyper ecosystem dependencies: keep the crate-official release references and
-# the commented workspace references below. Switch to the workspace form for
-# local development, then switch back to crates.io versions before publishing.
-hyperreal = { version = "0.12.0" }
+# Hyper sibling dependency switch: keep both local path and crates.io lines; do not remove either.
+# Development mode uses the local path lines. For release, comment those and uncomment the crates.io lines.
+hyperreal = { path = "../hyperreal" }
 hyperlattice = { path = "../hyperlattice" }
-# hyperreal = { path = "../hyperreal" }
+# hyperreal = { version = "0.13.0" }
+# hyperlattice = { version = "0.6.0" }
 rayon = { version = "1.10", optional = true }
 
 [dev-dependencies]

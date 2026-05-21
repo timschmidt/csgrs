@@ -267,6 +267,46 @@ pub enum SegmentIntersection {
     Identical,
 }
 
+impl SegmentIntersection {
+    /// Returns whether the closed segments have no point in common.
+    pub const fn is_disjoint(self) -> bool {
+        matches!(self, Self::Disjoint)
+    }
+
+    /// Returns whether the closed segments have at least one common point.
+    pub const fn intersects(self) -> bool {
+        !self.is_disjoint()
+    }
+
+    /// Returns whether the segments cross at one point interior to both
+    /// segments.
+    ///
+    /// This is the proper-crossing case in the standard four-orientation
+    /// segment classifier; see de Berg, Cheong, van Kreveld, and Overmars,
+    /// *Computational Geometry: Algorithms and Applications*, 3rd ed., 2008.
+    pub const fn is_proper_crossing(self) -> bool {
+        matches!(self, Self::Proper)
+    }
+
+    /// Returns whether the only certified contact is endpoint/boundary contact.
+    pub const fn is_endpoint_touch(self) -> bool {
+        matches!(self, Self::EndpointTouch)
+    }
+
+    /// Returns whether the common set contains a positive-length interval.
+    ///
+    /// Identical closed segments are included because they have the strongest
+    /// possible positive-length overlap. Keeping this policy on the
+    /// classification enum avoids each caller needing an exhaustive local match
+    /// when new exact topological distinctions are added, which follows Yap's
+    /// guidance to keep combinatorial decisions explicit at the predicate
+    /// object layer; see Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7.1-2 (1997).
+    pub const fn has_positive_length_overlap(self) -> bool {
+        matches!(self, Self::CollinearOverlap | Self::Identical)
+    }
+}
+
 /// Classification of two closed 3D segments.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Segment3Intersection {
@@ -349,6 +389,25 @@ impl RingPointLocation {
     pub const fn is_inside_or_boundary(self) -> bool {
         matches!(self, Self::Boundary | Self::Inside)
     }
+}
+
+/// Certified local turn consistency for a polygonal ring.
+///
+/// This is an object fact, not a polygon validity proof. It summarizes exact
+/// local orientation predicates so higher crates can choose algorithms without
+/// replacing later visibility, containment, or intersection predicates. That is
+/// the object/predicate split advocated by Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997).
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum RingConvexity {
+    /// Fewer than three useful vertices, or every certified local turn is zero.
+    Degenerate,
+    /// Every certified nonzero local turn has the same sign and no turn is unknown.
+    LocallyConvex,
+    /// Certified nonzero local turns contain both signs.
+    MixedTurns,
+    /// At least one local turn could not be certified under the requested policy.
+    Unknown,
 }
 
 /// Location of a [`hyperreal::Real`] value relative to a closed Real interval.
@@ -468,5 +527,21 @@ impl Aabb3Intersection {
     /// Returns whether a broad-phase user must keep this pair for narrow phase.
     pub const fn needs_narrow_phase(self) -> bool {
         self.intersects()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::SegmentIntersection;
+
+    #[test]
+    fn segment_intersection_policy_helpers_cover_identical_overlap() {
+        assert!(SegmentIntersection::Disjoint.is_disjoint());
+        assert!(!SegmentIntersection::Disjoint.intersects());
+        assert!(SegmentIntersection::Proper.is_proper_crossing());
+        assert!(SegmentIntersection::EndpointTouch.is_endpoint_touch());
+        assert!(SegmentIntersection::CollinearOverlap.has_positive_length_overlap());
+        assert!(SegmentIntersection::Identical.has_positive_length_overlap());
+        assert!(SegmentIntersection::Identical.intersects());
     }
 }

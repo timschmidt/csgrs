@@ -335,6 +335,64 @@ pub fn point_in_aabb2_with_policy(
     }
 }
 
+/// Return whether a point lies in the closed axis-aligned bounding box of a
+/// 2D triangle.
+pub fn point_in_triangle2_aabb(
+    a: &Point2,
+    b: &Point2,
+    c: &Point2,
+    point: &Point2,
+) -> PredicateOutcome<bool> {
+    point_in_triangle2_aabb_with_policy(a, b, c, point, PredicatePolicy::default())
+}
+
+/// Return whether a point lies in the closed axis-aligned bounding box of a
+/// 2D triangle with an explicit predicate escalation policy.
+///
+/// This is a rejection filter for downstream exact triangle predicates. The
+/// AABB idea is the standard broad-phase test described by Ericson,
+/// *Real-Time Collision Detection*, Morgan Kaufmann, 2005; here every min/max
+/// and interval decision is exact, preserving Yap's exact-geometric-computation
+/// boundary between filters and final topology.
+pub fn point_in_triangle2_aabb_with_policy(
+    a: &Point2,
+    b: &Point2,
+    c: &Point2,
+    point: &Point2,
+    policy: PredicatePolicy,
+) -> PredicateOutcome<bool> {
+    let mut trace = DecisionTrace::default();
+
+    let (min_x, max_x) = match min_max3(&a.x, &b.x, &c.x, policy, &mut trace) {
+        Ok(bounds) => bounds,
+        Err(unknown) => return unknown.into_outcome(),
+    };
+    let x = match decided(
+        classify_real_closed_interval_with_policy(&point.x, min_x, max_x, policy),
+        &mut trace,
+    ) {
+        Ok(location) => location,
+        Err(unknown) => return unknown.into_outcome(),
+    };
+    if !x.is_inside_or_boundary() {
+        return PredicateOutcome::decided(false, trace.certainty, trace.stage);
+    }
+
+    let (min_y, max_y) = match min_max3(&a.y, &b.y, &c.y, policy, &mut trace) {
+        Ok(bounds) => bounds,
+        Err(unknown) => return unknown.into_outcome(),
+    };
+    let y = match decided(
+        classify_real_closed_interval_with_policy(&point.y, min_y, max_y, policy),
+        &mut trace,
+    ) {
+        Ok(location) => location,
+        Err(unknown) => return unknown.into_outcome(),
+    };
+
+    PredicateOutcome::decided(y.is_inside_or_boundary(), trace.certainty, trace.stage)
+}
+
 /// Classify a point relative to a closed 3D axis-aligned box.
 pub fn classify_point_aabb3(
     min: &Point3,
@@ -795,6 +853,25 @@ fn interval_has_zero_extent(
     Ok(decided(compare_reals_with_policy(first, second, policy), trace)? == Ordering::Equal)
 }
 
+fn min_max3<'a>(
+    first: &'a hyperreal::Real,
+    second: &'a hyperreal::Real,
+    third: &'a hyperreal::Real,
+    policy: PredicatePolicy,
+    trace: &mut DecisionTrace,
+) -> Result<(&'a hyperreal::Real, &'a hyperreal::Real), UnknownDecision> {
+    let (mut min, mut max) = (first, first);
+    for value in [second, third] {
+        if decided(compare_reals_with_policy(value, min, policy), trace)? == Ordering::Less {
+            min = value;
+        }
+        if decided(compare_reals_with_policy(value, max, policy), trace)? == Ordering::Greater {
+            max = value;
+        }
+    }
+    Ok((min, max))
+}
+
 #[derive(Clone, Copy)]
 struct DecisionTrace {
     certainty: Certainty,
@@ -907,6 +984,22 @@ mod tests {
             Some(Aabb2PointLocation::Outside)
         );
         assert_eq!(point_in_aabb2(&min, &max, &p2(4, 1)).value(), Some(true));
+    }
+
+    #[test]
+    fn point_triangle_aabb_filter_uses_exact_coordinate_bounds() {
+        let a = p2(4, 1);
+        let b = p2(0, 3);
+        let c = p2(2, -1);
+
+        assert_eq!(
+            point_in_triangle2_aabb(&a, &b, &c, &p2(2, 1)).value(),
+            Some(true)
+        );
+        assert_eq!(
+            point_in_triangle2_aabb(&a, &b, &c, &p2(5, 1)).value(),
+            Some(false)
+        );
     }
 
     #[test]

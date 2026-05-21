@@ -71,6 +71,157 @@ pub fn compare_reals_report_with_policy(
     ))
 }
 
+/// Return whether `left <= right` under the exact Real ordering predicate.
+pub fn real_le(left: &Real, right: &Real) -> PredicateOutcome<bool> {
+    real_le_with_policy(left, right, PredicatePolicy::default())
+}
+
+/// Policy-controlled variant of [`real_le`].
+pub fn real_le_with_policy(
+    left: &Real,
+    right: &Real,
+    policy: PredicatePolicy,
+) -> PredicateOutcome<bool> {
+    map_outcome(compare_reals_with_policy(left, right, policy), |ordering| {
+        matches!(ordering, Ordering::Less | Ordering::Equal)
+    })
+}
+
+/// Return whether `left >= right` under the exact Real ordering predicate.
+pub fn real_ge(left: &Real, right: &Real) -> PredicateOutcome<bool> {
+    real_ge_with_policy(left, right, PredicatePolicy::default())
+}
+
+/// Policy-controlled variant of [`real_ge`].
+pub fn real_ge_with_policy(
+    left: &Real,
+    right: &Real,
+    policy: PredicatePolicy,
+) -> PredicateOutcome<bool> {
+    map_outcome(compare_reals_with_policy(left, right, policy), |ordering| {
+        matches!(ordering, Ordering::Greater | Ordering::Equal)
+    })
+}
+
+/// Return the smaller of two Real references using the exact ordering predicate.
+pub fn real_min<'a>(left: &'a Real, right: &'a Real) -> PredicateOutcome<&'a Real> {
+    real_min_with_policy(left, right, PredicatePolicy::default())
+}
+
+/// Policy-controlled variant of [`real_min`].
+pub fn real_min_with_policy<'a>(
+    left: &'a Real,
+    right: &'a Real,
+    policy: PredicatePolicy,
+) -> PredicateOutcome<&'a Real> {
+    map_outcome(compare_reals_with_policy(left, right, policy), |ordering| {
+        if ordering == Ordering::Greater {
+            right
+        } else {
+            left
+        }
+    })
+}
+
+/// Return the larger of two Real references using the exact ordering predicate.
+pub fn real_max<'a>(left: &'a Real, right: &'a Real) -> PredicateOutcome<&'a Real> {
+    real_max_with_policy(left, right, PredicatePolicy::default())
+}
+
+/// Policy-controlled variant of [`real_max`].
+pub fn real_max_with_policy<'a>(
+    left: &'a Real,
+    right: &'a Real,
+    policy: PredicatePolicy,
+) -> PredicateOutcome<&'a Real> {
+    map_outcome(compare_reals_with_policy(left, right, policy), |ordering| {
+        if ordering == Ordering::Less {
+            right
+        } else {
+            left
+        }
+    })
+}
+
+/// Clamp a Real value to an exact Real interval.
+pub fn real_clamp(value: Real, min: &Real, max: &Real) -> PredicateOutcome<Real> {
+    real_clamp_with_policy(value, min, max, PredicatePolicy::default())
+}
+
+/// Policy-controlled variant of [`real_clamp`].
+pub fn real_clamp_with_policy(
+    value: Real,
+    min: &Real,
+    max: &Real,
+    policy: PredicatePolicy,
+) -> PredicateOutcome<Real> {
+    let mut certainty = Certainty::Exact;
+    let mut stage = Escalation::Structural;
+
+    let min_max = match compare_reals_with_policy(min, max, policy) {
+        PredicateOutcome::Decided {
+            value,
+            certainty: value_certainty,
+            stage: value_stage,
+        } => {
+            certainty = max_certainty(certainty, value_certainty);
+            stage = max_stage(stage, value_stage);
+            value
+        }
+        PredicateOutcome::Unknown { needed, stage } => {
+            return PredicateOutcome::unknown(needed, stage);
+        }
+    };
+    if min_max == Ordering::Greater {
+        return PredicateOutcome::unknown(RefinementNeed::Unsupported, Escalation::Undecided);
+    }
+
+    match compare_reals_with_policy(&value, min, policy) {
+        PredicateOutcome::Decided {
+            value: Ordering::Less,
+            certainty: value_certainty,
+            stage: value_stage,
+        } => {
+            certainty = max_certainty(certainty, value_certainty);
+            stage = max_stage(stage, value_stage);
+            return PredicateOutcome::decided(min.clone(), certainty, stage);
+        }
+        PredicateOutcome::Decided {
+            certainty: value_certainty,
+            stage: value_stage,
+            ..
+        } => {
+            certainty = max_certainty(certainty, value_certainty);
+            stage = max_stage(stage, value_stage);
+        }
+        PredicateOutcome::Unknown { needed, stage } => {
+            return PredicateOutcome::unknown(needed, stage);
+        }
+    }
+
+    match compare_reals_with_policy(&value, max, policy) {
+        PredicateOutcome::Decided {
+            value: Ordering::Greater,
+            certainty: value_certainty,
+            stage: value_stage,
+        } => {
+            certainty = max_certainty(certainty, value_certainty);
+            stage = max_stage(stage, value_stage);
+            PredicateOutcome::decided(max.clone(), certainty, stage)
+        }
+        PredicateOutcome::Decided {
+            certainty: value_certainty,
+            stage: value_stage,
+            ..
+        } => {
+            certainty = max_certainty(certainty, value_certainty);
+            stage = max_stage(stage, value_stage);
+            PredicateOutcome::decided(value, certainty, stage)
+        }
+        PredicateOutcome::Unknown { needed, stage } => PredicateOutcome::unknown(needed, stage),
+    }
+}
+
 /// Compare two 2D points lexicographically by `(x, y)`.
 pub fn compare_point2_lexicographic(left: &Point2, right: &Point2) -> PredicateOutcome<Ordering> {
     compare_point2_lexicographic_with_policy(left, right, PredicatePolicy::default())
@@ -277,5 +428,20 @@ mod tests {
             point2_equal_report(&left, &right).value(),
             point2_equal(&left, &right).value()
         );
+    }
+
+    #[test]
+    fn real_min_max_clamp_and_bounds_use_order_predicates() {
+        let low = real(1);
+        let mid = real(2);
+        let high = real(3);
+
+        assert_eq!(real_le(&low, &mid).value(), Some(true));
+        assert_eq!(real_ge(&high, &mid).value(), Some(true));
+        assert_eq!(real_min(&high, &low).value(), Some(&low));
+        assert_eq!(real_max(&high, &low).value(), Some(&high));
+        assert_eq!(real_clamp(mid.clone(), &low, &high).value(), Some(mid));
+        assert_eq!(real_clamp(real(0), &low, &high).value(), Some(low.clone()));
+        assert_eq!(real_clamp(real(4), &low, &high).value(), Some(high));
     }
 }
