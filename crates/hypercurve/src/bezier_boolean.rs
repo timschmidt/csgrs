@@ -1172,6 +1172,72 @@ pub struct BezierBooleanOutputLoopReport2 {
     pub blocker_count: usize,
 }
 
+/// Status for generating exact loop-locator input points.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum BezierBooleanLoopLocatorInputStatus {
+    /// No fragment or overlap work was supplied.
+    Empty,
+    /// The arrangement is a certified endpoint-only no-op.
+    NoInteriorSplits,
+    /// Every output loop has a keyed exact representative point.
+    Ready,
+    /// Output-loop packaging was blocked.
+    OutputLoopBlocked,
+    /// Ownership was certified but no fragments are emitted.
+    NoEmittedFragments,
+    /// At least one output loop range does not reference retained fragments.
+    MalformedLoopRange,
+}
+
+/// One exact representative point for downstream loop-location predicates.
+///
+/// The point is keyed by output-loop index and copied from the exact anchor of
+/// [`BezierBooleanOutputLoop2`]. It is not a containment decision. A later
+/// exact point/loop locator may use the point as a query handle, then return
+/// certified containment or nesting facts. This preserves Yap's "Towards Exact
+/// Geometric Computation" (1997) boundary: constructing a representative
+/// object is separate from deciding topology with it.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BezierBooleanLoopLocatorInput2 {
+    /// Index into [`BezierBooleanOutputLoopReport2::loops`].
+    pub loop_index: usize,
+    /// First directed fragment used as the representative source.
+    pub directed_fragment_index: usize,
+    /// Exact representative point for locator queries.
+    pub representative_point: Point2,
+}
+
+/// Exact representative-point handoff for Bezier/conic loop locators.
+///
+/// This report prepares inputs for the remaining non-uniform arrangement
+/// locators without performing containment. It validates that every packaged
+/// output loop names a nonempty in-range directed-fragment span, then emits a
+/// keyed exact representative point. Point-in-loop and loop-in-loop decisions
+/// remain external certified predicates. The staging follows Vatti (1992),
+/// Greiner-Hormann (1998), and Martinez-Rueda-Feito (2009): closed boundary
+/// construction precedes containment classification. Yap (1997) is the
+/// exactness rule: malformed ranges stay blockers and representative points
+/// never become sampled topology evidence.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BezierBooleanLoopLocatorInputReport2 {
+    /// Coarse locator-input status.
+    pub status: BezierBooleanLoopLocatorInputStatus,
+    /// Output-loop packaging status used to derive this report.
+    pub output_status: BezierBooleanOutputLoopStatus,
+    /// Requested boolean operation.
+    pub operation: BooleanOp,
+    /// Keyed exact representative points, one per accepted output loop.
+    pub inputs: Vec<BezierBooleanLoopLocatorInput2>,
+    /// Number of output loops inspected.
+    pub output_loop_count: usize,
+    /// Number of representative inputs emitted.
+    pub input_count: usize,
+    /// Number of malformed loop ranges found.
+    pub malformed_loop_range_count: usize,
+    /// Number of blocking preconditions retained by this report.
+    pub blocker_count: usize,
+}
+
 /// One externally certified nesting-depth fact for a Bezier/conic output loop.
 ///
 /// The fact is keyed by output-loop index so a future containment/nesting
@@ -5508,6 +5574,127 @@ impl BezierBooleanLoopGraphSuccessorWalkReport2 {
                 | BezierBooleanLoopGraphSuccessorWalkStatus::DuplicateSuccessorSource
                 | BezierBooleanLoopGraphSuccessorWalkStatus::DuplicateSuccessorTarget
                 | BezierBooleanLoopGraphSuccessorWalkStatus::OpenOrDisconnectedSuccessorCycle
+        )
+    }
+}
+
+impl BezierBooleanLoopLocatorInputReport2 {
+    /// Generates exact representative points from packaged output loops.
+    ///
+    /// The generated inputs are only query handles for a later exact locator.
+    /// This method validates loop ranges against the retained directed-fragment
+    /// array and never derives containment from the representative points. That
+    /// separation is the Yap (1997) contract: a construction object can be
+    /// prepared here, but the predicate that classifies it must return its own
+    /// certificate or explicit blocker.
+    pub fn from_output_loops(output: &BezierBooleanOutputLoopReport2) -> Self {
+        match output.status {
+            BezierBooleanOutputLoopStatus::Empty => {
+                return Self::empty_like(BezierBooleanLoopLocatorInputStatus::Empty, output, 0, 0);
+            }
+            BezierBooleanOutputLoopStatus::NoInteriorSplits => {
+                return Self::empty_like(
+                    BezierBooleanLoopLocatorInputStatus::NoInteriorSplits,
+                    output,
+                    0,
+                    0,
+                );
+            }
+            BezierBooleanOutputLoopStatus::ClosureBlocked
+            | BezierBooleanOutputLoopStatus::MalformedClosedLoops => {
+                return Self::empty_like(
+                    BezierBooleanLoopLocatorInputStatus::OutputLoopBlocked,
+                    output,
+                    0,
+                    output.blocker_count.max(1),
+                );
+            }
+            BezierBooleanOutputLoopStatus::NoEmittedFragments => {
+                return Self::empty_like(
+                    BezierBooleanLoopLocatorInputStatus::NoEmittedFragments,
+                    output,
+                    0,
+                    0,
+                );
+            }
+            BezierBooleanOutputLoopStatus::Ready => {}
+        }
+
+        let mut malformed_loop_range_count = 0;
+        let mut inputs = Vec::with_capacity(output.loops.len());
+        for (loop_index, output_loop) in output.loops.iter().enumerate() {
+            let Some(end) = output_loop
+                .first_directed_fragment_index
+                .checked_add(output_loop.directed_fragment_count)
+            else {
+                malformed_loop_range_count += 1;
+                continue;
+            };
+            if output_loop.directed_fragment_count == 0 || end > output.directed_fragments.len() {
+                malformed_loop_range_count += 1;
+                continue;
+            }
+            inputs.push(BezierBooleanLoopLocatorInput2 {
+                loop_index,
+                directed_fragment_index: output_loop.first_directed_fragment_index,
+                representative_point: output_loop.anchor.clone(),
+            });
+        }
+
+        if malformed_loop_range_count > 0 {
+            return Self {
+                status: BezierBooleanLoopLocatorInputStatus::MalformedLoopRange,
+                output_status: output.status,
+                operation: output.operation,
+                inputs: Vec::new(),
+                output_loop_count: output.loops.len(),
+                input_count: 0,
+                malformed_loop_range_count,
+                blocker_count: malformed_loop_range_count,
+            };
+        }
+
+        Self {
+            status: BezierBooleanLoopLocatorInputStatus::Ready,
+            output_status: output.status,
+            operation: output.operation,
+            input_count: inputs.len(),
+            output_loop_count: output.loops.len(),
+            inputs,
+            malformed_loop_range_count: 0,
+            blocker_count: 0,
+        }
+    }
+
+    fn empty_like(
+        status: BezierBooleanLoopLocatorInputStatus,
+        output: &BezierBooleanOutputLoopReport2,
+        malformed_loop_range_count: usize,
+        blocker_count: usize,
+    ) -> Self {
+        Self {
+            status,
+            output_status: output.status,
+            operation: output.operation,
+            inputs: Vec::new(),
+            output_loop_count: output.loops.len(),
+            input_count: 0,
+            malformed_loop_range_count,
+            blocker_count,
+        }
+    }
+
+    /// Returns true when every output loop has a keyed representative point.
+    pub fn is_ready(&self) -> bool {
+        self.status == BezierBooleanLoopLocatorInputStatus::Ready
+    }
+
+    /// Returns true when output-loop packaging or range validation blocked the handoff.
+    pub fn has_blockers(&self) -> bool {
+        matches!(
+            self.status,
+            BezierBooleanLoopLocatorInputStatus::OutputLoopBlocked
+                | BezierBooleanLoopLocatorInputStatus::MalformedLoopRange
         )
     }
 }

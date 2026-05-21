@@ -1588,7 +1588,7 @@ dependencies = [
 
 [[package]]
 name = "hypercurve"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "hyperlimit",
  "hyperreal",
@@ -1597,7 +1597,7 @@ dependencies = [
 
 [[package]]
 name = "hypercurve_ui"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "base64",
  "eframe",
@@ -1649,7 +1649,7 @@ dependencies = [
 
 [[package]]
 name = "hypersolve"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "hyperlattice",
  "hyperlimit",

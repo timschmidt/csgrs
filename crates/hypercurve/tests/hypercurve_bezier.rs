@@ -19,6 +19,7 @@ use hypercurve::{
     BezierBooleanLoopGraphSuccessorWalkReport2, BezierBooleanLoopGraphSuccessorWalkStatus,
     BezierBooleanLoopGraphTraversalReport2, BezierBooleanLoopGraphTraversalStatus,
     BezierBooleanLoopGraphWalkReport2, BezierBooleanLoopGraphWalkStatus,
+    BezierBooleanLoopLocatorInputReport2, BezierBooleanLoopLocatorInputStatus,
     BezierBooleanLoopNestingDepthFact2, BezierBooleanLoopNestingDepthFactReport2,
     BezierBooleanLoopNestingDepthFactStatus, BezierBooleanLoopNestingRoleReport2,
     BezierBooleanLoopNestingRoleStatus, BezierBooleanLoopRoleAssignmentReport2,
@@ -7745,6 +7746,99 @@ fn bezier_boolean_output_loop_report_packages_closed_loop_ranges() {
 }
 
 #[test]
+fn bezier_boolean_loop_locator_inputs_package_exact_representatives() {
+    let plan = BezierBooleanLoopAssemblyPlanReport2 {
+        status: BezierBooleanLoopAssemblyPlanStatus::Ready,
+        assembly_status: BezierBooleanAssemblyReadinessStatus::Ready,
+        operation: BooleanOp::Union,
+        emitted_steps: vec![
+            hypercurve::BezierBooleanOwnedTraversalStep2 {
+                step: hypercurve::BezierBooleanTraversalStep2 {
+                    operand: BezierBooleanTraversalOperand::First,
+                    fragment_index: 0,
+                },
+                opposite_location: BezierBooleanFragmentOwnershipLocation::Outside,
+                action: BooleanFragmentAction::KeepSourceDirection,
+            },
+            hypercurve::BezierBooleanOwnedTraversalStep2 {
+                step: hypercurve::BezierBooleanTraversalStep2 {
+                    operand: BezierBooleanTraversalOperand::Second,
+                    fragment_index: 0,
+                },
+                opposite_location: BezierBooleanFragmentOwnershipLocation::Outside,
+                action: BooleanFragmentAction::KeepSourceDirection,
+            },
+        ],
+        first_emitted_count: 1,
+        second_emitted_count: 1,
+        keep_source_count: 2,
+        keep_reversed_count: 0,
+        invalid_reference_count: 0,
+        blocker_count: 0,
+    };
+    let closure = BezierBooleanLoopClosureReport2::from_fragment_endpoints(
+        &plan,
+        &[(point(0, 0), point(0, 0))],
+        &[(point(3, 0), point(3, 0))],
+    );
+    let output = BezierBooleanOutputLoopReport2::from_loop_closure(&closure);
+
+    let locator = BezierBooleanLoopLocatorInputReport2::from_output_loops(&output);
+
+    assert_eq!(locator.status, BezierBooleanLoopLocatorInputStatus::Ready);
+    assert!(locator.is_ready());
+    assert!(!locator.has_blockers());
+    assert_eq!(locator.output_loop_count, 2);
+    assert_eq!(locator.input_count, 2);
+    assert_eq!(locator.inputs[0].loop_index, 0);
+    assert_eq!(locator.inputs[0].directed_fragment_index, 0);
+    assert_eq!(locator.inputs[0].representative_point, point(0, 0));
+    assert_eq!(locator.inputs[1].loop_index, 1);
+    assert_eq!(locator.inputs[1].directed_fragment_index, 1);
+    assert_eq!(locator.inputs[1].representative_point, point(3, 0));
+}
+
+#[test]
+fn bezier_boolean_loop_locator_inputs_block_malformed_loop_ranges() {
+    let plan = BezierBooleanLoopAssemblyPlanReport2 {
+        status: BezierBooleanLoopAssemblyPlanStatus::Ready,
+        assembly_status: BezierBooleanAssemblyReadinessStatus::Ready,
+        operation: BooleanOp::Union,
+        emitted_steps: vec![hypercurve::BezierBooleanOwnedTraversalStep2 {
+            step: hypercurve::BezierBooleanTraversalStep2 {
+                operand: BezierBooleanTraversalOperand::First,
+                fragment_index: 0,
+            },
+            opposite_location: BezierBooleanFragmentOwnershipLocation::Outside,
+            action: BooleanFragmentAction::KeepSourceDirection,
+        }],
+        first_emitted_count: 1,
+        second_emitted_count: 0,
+        keep_source_count: 1,
+        keep_reversed_count: 0,
+        invalid_reference_count: 0,
+        blocker_count: 0,
+    };
+    let closure = BezierBooleanLoopClosureReport2::from_fragment_endpoints(
+        &plan,
+        &[(point(0, 0), point(0, 0))],
+        &[],
+    );
+    let mut output = BezierBooleanOutputLoopReport2::from_loop_closure(&closure);
+    output.loops[0].directed_fragment_count = 0;
+
+    let locator = BezierBooleanLoopLocatorInputReport2::from_output_loops(&output);
+
+    assert_eq!(
+        locator.status,
+        BezierBooleanLoopLocatorInputStatus::MalformedLoopRange
+    );
+    assert!(locator.has_blockers());
+    assert_eq!(locator.malformed_loop_range_count, 1);
+    assert!(locator.inputs.is_empty());
+}
+
+#[test]
 fn bezier_boolean_output_loop_report_consumes_graph_walk_closure() {
     let plan = BezierBooleanLoopAssemblyPlanReport2 {
         status: BezierBooleanLoopAssemblyPlanStatus::Ready,
@@ -12812,6 +12906,69 @@ proptest! {
             prop_assert_eq!(output.loops[index].first_directed_fragment_index, index * 2);
             prop_assert_eq!(output.loops[index].directed_fragment_count, 2);
             prop_assert_eq!(&output.loops[index].anchor, &point((index as i32) * 3, 0));
+        }
+    }
+
+    #[test]
+    fn generated_bezier_boolean_loop_locator_inputs_preserve_loop_anchors(
+        loop_count in 1_usize..6,
+    ) {
+        let mut emitted_steps = Vec::new();
+        let mut endpoints = Vec::new();
+        for index in 0..loop_count {
+            let x = (index as i32) * 5;
+            emitted_steps.push(hypercurve::BezierBooleanOwnedTraversalStep2 {
+                step: hypercurve::BezierBooleanTraversalStep2 {
+                    operand: BezierBooleanTraversalOperand::First,
+                    fragment_index: index * 2,
+                },
+                opposite_location: BezierBooleanFragmentOwnershipLocation::Outside,
+                action: BooleanFragmentAction::KeepSourceDirection,
+            });
+            endpoints.push((point(x, 0), point(x + 1, 0)));
+            emitted_steps.push(hypercurve::BezierBooleanOwnedTraversalStep2 {
+                step: hypercurve::BezierBooleanTraversalStep2 {
+                    operand: BezierBooleanTraversalOperand::First,
+                    fragment_index: index * 2 + 1,
+                },
+                opposite_location: BezierBooleanFragmentOwnershipLocation::Outside,
+                action: BooleanFragmentAction::KeepSourceDirection,
+            });
+            endpoints.push((point(x + 1, 0), point(x, 0)));
+        }
+        let plan = BezierBooleanLoopAssemblyPlanReport2 {
+            status: BezierBooleanLoopAssemblyPlanStatus::Ready,
+            assembly_status: BezierBooleanAssemblyReadinessStatus::Ready,
+            operation: BooleanOp::Union,
+            emitted_steps,
+            first_emitted_count: loop_count * 2,
+            second_emitted_count: 0,
+            keep_source_count: loop_count * 2,
+            keep_reversed_count: 0,
+            invalid_reference_count: 0,
+            blocker_count: 0,
+        };
+        let closure = BezierBooleanLoopClosureReport2::from_fragment_endpoints(
+            &plan,
+            &endpoints,
+            &[],
+        );
+        let output = BezierBooleanOutputLoopReport2::from_loop_closure(&closure);
+
+        let locator = BezierBooleanLoopLocatorInputReport2::from_output_loops(&output);
+
+        prop_assert_eq!(locator.status, BezierBooleanLoopLocatorInputStatus::Ready);
+        prop_assert_eq!(locator.output_loop_count, loop_count);
+        prop_assert_eq!(locator.input_count, loop_count);
+        prop_assert!(locator.is_ready());
+        prop_assert!(!locator.has_blockers());
+        for index in 0..loop_count {
+            prop_assert_eq!(locator.inputs[index].loop_index, index);
+            prop_assert_eq!(locator.inputs[index].directed_fragment_index, index * 2);
+            prop_assert_eq!(
+                &locator.inputs[index].representative_point,
+                &point((index as i32) * 5, 0)
+            );
         }
     }
 
