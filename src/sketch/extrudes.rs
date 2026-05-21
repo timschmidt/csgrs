@@ -5,7 +5,8 @@ use crate::float_types::{
     Real, hangle_sin_cos, hdegrees_to_radians, hpoints_within_epsilon, hreal_div,
     hreal_f64s_within_epsilon, hreal_from_f64, hreal_gt_f64, hreal_lt_f64, hreal_mul,
     hrotation_between_vectors, htranslation_matrix, hunit_cross_vector3, hunit_vector3,
-    hvector3_from_point3, hvector3_from_vector3, hvectors_within_epsilon, tolerance,
+    hvector3_from_point3, hvector3_from_vector3, hvectors_within_epsilon,
+    hxy_orientation_sign, tolerance,
 };
 use crate::mesh::Mesh;
 use crate::polygon::Polygon;
@@ -13,8 +14,9 @@ use crate::sketch::Profile;
 use crate::vertex::Vertex;
 use hypercurve::{
     Classification, FinitePolyline2, FiniteProjectionOptions, FiniteRegionProfile2,
-    FiniteTriangle2, finite_ring_signed_area, triangulate_finite_rings,
+    FiniteTriangle2, triangulate_finite_rings,
 };
+use hyperreal::RealSign;
 use nalgebra::{Matrix4, Point3, Vector3};
 use std::fmt::Debug;
 use std::sync::OnceLock;
@@ -35,6 +37,29 @@ fn finite_triangles_to_xy_points(triangles: Vec<FiniteTriangle2>) -> Vec<[Point3
             ]
         })
         .collect()
+}
+
+/// Return the first non-degenerate orientation sign in a finite projected ring.
+///
+/// Hypercurve owns the profile topology, but CAD mesh emission still needs a
+/// winding sign for side-wall and cap orientation. Scanning exact-aware turn
+/// predicates avoids using a primitive f64 area accumulator for that internal
+/// decision and keeps only finite mesh vertices at the boundary, following Yap,
+/// "Towards Exact Geometric Computation," *Computational Geometry* 7(1-2), 1997
+/// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+fn ring_orientation_sign(ring: &[[Real; 2]]) -> Option<RealSign> {
+    let origin = ring.first()?;
+    for pair in ring[1..].windows(2) {
+        let sign = hxy_orientation_sign(
+            (origin[0], origin[1]),
+            (pair[0][0], pair[0][1]),
+            (pair[1][0], pair[1][1]),
+        )?;
+        if !matches!(sign, RealSign::Zero) {
+            return Some(sign);
+        }
+    }
+    None
 }
 
 fn hyper_direction_points_down(direction: &Vector3<Real>) -> bool {
@@ -669,7 +694,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         }
 
         fn is_ccw(ring: &[[Real; 2]]) -> bool {
-            finite_ring_signed_area(ring) > 0.0
+            matches!(ring_orientation_sign(ring), Some(RealSign::Positive))
         }
 
         // A helper to extrude one ring of coordinates (including the last->first if needed),
@@ -1151,6 +1176,31 @@ mod tests {
         assert!(same_xy((0.0, 0.0), (tolerance() * 0.25, -tolerance() * 0.25)));
         assert!(!same_xy((0.0, 0.0), (tolerance() * 4.0, 0.0)));
         assert!(!same_xy((0.0, 0.0), (Real::NAN, 0.0)));
+    }
+
+    #[test]
+    fn ring_orientation_sign_skips_leading_collinear_points() {
+        let ccw = [
+            [0.0, 0.0],
+            [0.25, 0.0],
+            [1.0, 0.0],
+            [1.0, 1.0],
+            [0.0, 1.0],
+            [0.0, 0.0],
+        ];
+        let cw = [
+            [0.0, 0.0],
+            [0.0, 0.25],
+            [0.0, 1.0],
+            [1.0, 1.0],
+            [1.0, 0.0],
+            [0.0, 0.0],
+        ];
+        let collinear = [[0.0, 0.0], [0.25, 0.0], [1.0, 0.0]];
+
+        assert_eq!(ring_orientation_sign(&ccw), Some(RealSign::Positive));
+        assert_eq!(ring_orientation_sign(&cw), Some(RealSign::Negative));
+        assert_eq!(ring_orientation_sign(&collinear), None);
     }
 
     #[test]
