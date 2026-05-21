@@ -23,10 +23,12 @@ use crate::{
 };
 use hyperreal::Real;
 use hypersolve::{
-    AlgebraicRootRepresentation, AlgebraicRootRepresentationReport,
-    AlgebraicRootRepresentationStatus, BernsteinSubdivisionIntervalStatus,
-    BernsteinSubdivisionReport, BernsteinSubdivisionStatus, RootIsolationStatus,
-    UnivariateRootIsolationReport,
+    AlgebraicRootComparisonStatus, AlgebraicRootRefinementComparisonConfig,
+    AlgebraicRootRefinementComparisonReport, AlgebraicRootRepresentation,
+    AlgebraicRootRepresentationReport, AlgebraicRootRepresentationStatus,
+    BernsteinSubdivisionIntervalStatus, BernsteinSubdivisionReport, BernsteinSubdivisionStatus,
+    RootIsolationStatus, UnivariateRootIsolationReport,
+    compare_algebraic_root_representations_with_refinement,
 };
 use std::{cmp::Ordering, collections::HashSet};
 
@@ -2645,6 +2647,80 @@ pub struct BezierBooleanAlgebraicParameterReadinessReport2 {
     /// Number of interval-only algebraic events.
     pub interval_event_count: usize,
     /// Number of retained blockers.
+    pub blocker_count: usize,
+}
+
+/// Algebraic-parameter ordering status.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum BezierBooleanAlgebraicParameterOrderingStatus {
+    /// No scheduler or algebraic parameter work exists.
+    Empty,
+    /// The scheduler did not need algebraic parameter evidence.
+    NotNeeded,
+    /// Existing rational split events already satisfy the scheduler.
+    RationalSplitEventsReady,
+    /// All retained algebraic parameters were exactly ordered.
+    Ready,
+    /// Algebraic-parameter readiness blocked ordering.
+    ReadinessBlocked,
+    /// At least one represented-root comparison did not certify an order.
+    ComparisonBlocked,
+}
+
+/// One certified ordering comparison between algebraic parameter events.
+///
+/// The comparison is delegated to `hypersolve` represented-root comparison and
+/// optional interval refinement. It records only the event indices and the
+/// proof status; callers must continue to use the original event payloads for
+/// construction. This follows Yap, "Towards Exact Geometric Computation"
+/// (1997): ordering is a certified predicate over retained algebraic objects,
+/// not an approximation of their primitive-float values. The interval
+/// refinement model follows Sturm (1835) and Collins-Loos real-root isolation.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BezierBooleanAlgebraicParameterOrderingComparison2 {
+    /// Left event index in [`BezierBooleanAlgebraicParameterReadinessReport2::events`].
+    pub left_event_index: usize,
+    /// Right event index in [`BezierBooleanAlgebraicParameterReadinessReport2::events`].
+    pub right_event_index: usize,
+    /// Final `hypersolve` comparison status.
+    pub comparison_status: AlgebraicRootComparisonStatus,
+    /// Certified ordering when available.
+    pub ordering: Option<Ordering>,
+    /// Number of alternating refinement rounds used by `hypersolve`.
+    pub refinement_rounds: usize,
+}
+
+/// Certified order for retained algebraic Bezier/conic split parameters.
+///
+/// This report consumes algebraic parameter readiness and asks `hypersolve` to
+/// compare represented roots with exact rational witnesses, disjoint isolating
+/// intervals, or bounded Sturm-style interval refinement. It returns a stable
+/// permutation of event indices plus pairwise comparison evidence. If any
+/// comparison remains overlapping, undecided, or structurally invalid, ordering
+/// blocks explicitly; no sampled parameter values enter the topology layer.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BezierBooleanAlgebraicParameterOrderingReport2 {
+    /// Coarse ordering status.
+    pub status: BezierBooleanAlgebraicParameterOrderingStatus,
+    /// Readiness status used to derive ordering.
+    pub readiness_status: BezierBooleanAlgebraicParameterReadinessStatus,
+    /// Retained algebraic parameter events.
+    pub events: Vec<BezierBooleanAlgebraicParameterEvent2>,
+    /// Event indices sorted by certified parameter order.
+    pub sorted_event_indices: Vec<usize>,
+    /// Events sorted by certified parameter order.
+    pub sorted_events: Vec<BezierBooleanAlgebraicParameterEvent2>,
+    /// Pairwise comparisons used by the insertion sort.
+    pub comparisons: Vec<BezierBooleanAlgebraicParameterOrderingComparison2>,
+    /// Number of retained events.
+    pub event_count: usize,
+    /// Number of successful comparisons retained.
+    pub comparison_count: usize,
+    /// Number of comparisons that failed to certify an order.
+    pub blocked_comparison_count: usize,
+    /// Total `hypersolve` refinement rounds used.
+    pub refinement_round_count: usize,
+    /// Number of retained blocking preconditions.
     pub blocker_count: usize,
 }
 
@@ -16846,6 +16922,182 @@ impl BezierBooleanAlgebraicParameterReadinessReport2 {
             blocker_count,
         }
     }
+}
+
+impl BezierBooleanAlgebraicParameterOrderingReport2 {
+    /// Orders retained algebraic parameter events with `hypersolve` certificates.
+    ///
+    /// The implementation uses a stable insertion sort because the expected
+    /// algebraic frontier at this handoff is small and because each comparison
+    /// is itself proof-bearing. Equal roots keep their original relative order.
+    /// This is deliberately a report constructor, not a fragment mutator:
+    /// comparison failures remain explicit blockers until stronger isolation,
+    /// algebraic-number arithmetic, or curve-pair evidence is supplied.
+    pub fn from_readiness(
+        readiness: &BezierBooleanAlgebraicParameterReadinessReport2,
+        mut config: AlgebraicRootRefinementComparisonConfig,
+        policy: &CurvePolicy,
+    ) -> Self {
+        config.policy = policy.predicate_policy;
+        match readiness.status {
+            BezierBooleanAlgebraicParameterReadinessStatus::Empty => {
+                return Self::blocked_or_empty(
+                    BezierBooleanAlgebraicParameterOrderingStatus::Empty,
+                    readiness,
+                    0,
+                );
+            }
+            BezierBooleanAlgebraicParameterReadinessStatus::NotNeeded => {
+                return Self::blocked_or_empty(
+                    BezierBooleanAlgebraicParameterOrderingStatus::NotNeeded,
+                    readiness,
+                    0,
+                );
+            }
+            BezierBooleanAlgebraicParameterReadinessStatus::RationalSplitEventsReady => {
+                return Self::blocked_or_empty(
+                    BezierBooleanAlgebraicParameterOrderingStatus::RationalSplitEventsReady,
+                    readiness,
+                    0,
+                );
+            }
+            BezierBooleanAlgebraicParameterReadinessStatus::AuditBlocked => {
+                return Self::blocked_or_empty(
+                    BezierBooleanAlgebraicParameterOrderingStatus::ReadinessBlocked,
+                    readiness,
+                    readiness.blocker_count.max(1),
+                );
+            }
+            BezierBooleanAlgebraicParameterReadinessStatus::Ready => {}
+        }
+
+        let mut sorted_indices: Vec<usize> = Vec::with_capacity(readiness.events.len());
+        let mut comparisons = Vec::new();
+        let mut blocked_comparison_count = 0;
+        let mut refinement_round_count = 0;
+
+        'events: for event_index in 0..readiness.events.len() {
+            for insertion_index in 0..sorted_indices.len() {
+                let existing_index = sorted_indices[insertion_index];
+                let comparison = compare_algebraic_root_representations_with_refinement(
+                    &readiness.events[event_index].root,
+                    &readiness.events[existing_index].root,
+                    config.clone(),
+                );
+                refinement_round_count += comparison.refinement_rounds;
+                let comparison_record = algebraic_parameter_ordering_comparison(
+                    event_index,
+                    existing_index,
+                    &comparison,
+                );
+                let Some(ordering) = comparison_record.ordering else {
+                    blocked_comparison_count += 1;
+                    comparisons.push(comparison_record);
+                    continue;
+                };
+                let status = comparison_record.comparison_status.clone();
+                comparisons.push(comparison_record);
+                if !algebraic_comparison_status_is_ordered(status) {
+                    blocked_comparison_count += 1;
+                    continue;
+                }
+                if ordering == Ordering::Less {
+                    sorted_indices.insert(insertion_index, event_index);
+                    continue 'events;
+                }
+            }
+            sorted_indices.push(event_index);
+        }
+
+        if blocked_comparison_count > 0 {
+            return Self {
+                status: BezierBooleanAlgebraicParameterOrderingStatus::ComparisonBlocked,
+                readiness_status: readiness.status,
+                events: readiness.events.clone(),
+                sorted_event_indices: Vec::new(),
+                sorted_events: Vec::new(),
+                comparison_count: comparisons.len(),
+                event_count: readiness.events.len(),
+                comparisons,
+                blocked_comparison_count,
+                refinement_round_count,
+                blocker_count: blocked_comparison_count,
+            };
+        }
+
+        let sorted_events = sorted_indices
+            .iter()
+            .map(|index| readiness.events[*index].clone())
+            .collect::<Vec<_>>();
+        Self {
+            status: BezierBooleanAlgebraicParameterOrderingStatus::Ready,
+            readiness_status: readiness.status,
+            events: readiness.events.clone(),
+            sorted_event_indices: sorted_indices,
+            sorted_events,
+            comparison_count: comparisons.len(),
+            event_count: readiness.events.len(),
+            comparisons,
+            blocked_comparison_count: 0,
+            refinement_round_count,
+            blocker_count: 0,
+        }
+    }
+
+    fn blocked_or_empty(
+        status: BezierBooleanAlgebraicParameterOrderingStatus,
+        readiness: &BezierBooleanAlgebraicParameterReadinessReport2,
+        blocker_count: usize,
+    ) -> Self {
+        Self {
+            status,
+            readiness_status: readiness.status,
+            events: Vec::new(),
+            sorted_event_indices: Vec::new(),
+            sorted_events: Vec::new(),
+            comparisons: Vec::new(),
+            event_count: 0,
+            comparison_count: 0,
+            blocked_comparison_count: 0,
+            refinement_round_count: 0,
+            blocker_count,
+        }
+    }
+
+    /// Returns true when all retained algebraic parameters have certified order.
+    pub fn is_ready(&self) -> bool {
+        self.status == BezierBooleanAlgebraicParameterOrderingStatus::Ready
+    }
+
+    /// Returns true when readiness or comparison evidence blocked ordering.
+    pub fn has_blockers(&self) -> bool {
+        matches!(
+            self.status,
+            BezierBooleanAlgebraicParameterOrderingStatus::ReadinessBlocked
+                | BezierBooleanAlgebraicParameterOrderingStatus::ComparisonBlocked
+        )
+    }
+}
+
+fn algebraic_parameter_ordering_comparison(
+    left_event_index: usize,
+    right_event_index: usize,
+    comparison: &AlgebraicRootRefinementComparisonReport,
+) -> BezierBooleanAlgebraicParameterOrderingComparison2 {
+    BezierBooleanAlgebraicParameterOrderingComparison2 {
+        left_event_index,
+        right_event_index,
+        comparison_status: comparison.comparison.status.clone(),
+        ordering: comparison.comparison.ordering,
+        refinement_rounds: comparison.refinement_rounds,
+    }
+}
+
+fn algebraic_comparison_status_is_ordered(status: AlgebraicRootComparisonStatus) -> bool {
+    matches!(
+        status,
+        AlgebraicRootComparisonStatus::Compared | AlgebraicRootComparisonStatus::SameRepresentation
+    )
 }
 
 fn parameter_in_unit_interval(parameter: &Real, policy: &CurvePolicy) -> Option<bool> {

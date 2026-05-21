@@ -1,7 +1,8 @@
 use hypercurve::{
     Axis2, BezierAreaMomentPrefixSums2, BezierAreaPrefixSums2,
     BezierBooleanAlgebraicParameterAuditStatus, BezierBooleanAlgebraicParameterHandoffReport2,
-    BezierBooleanAlgebraicParameterHandoffStatus, BezierBooleanAlgebraicParameterReadinessReport2,
+    BezierBooleanAlgebraicParameterHandoffStatus, BezierBooleanAlgebraicParameterOrderingReport2,
+    BezierBooleanAlgebraicParameterOrderingStatus, BezierBooleanAlgebraicParameterReadinessReport2,
     BezierBooleanAlgebraicParameterReadinessStatus, BezierBooleanAlgebraicParameterRole,
     BezierBooleanArrangementReadinessReport2, BezierBooleanArrangementReadinessStatus,
     BezierBooleanAssemblyReadinessReport2, BezierBooleanAssemblyReadinessStatus,
@@ -70,9 +71,9 @@ use hypercurve::{
     refine_bezier_intersection_regions, summarize_bezier_intersection_regions,
 };
 use hypersolve::{
-    AlgebraicRootKind, AlgebraicRootRepresentation, AlgebraicRootRepresentationReport,
-    AlgebraicRootRepresentationStatus, AlgebraicRootValidationReport,
-    AlgebraicRootValidationStatus, BernsteinSubdivisionInterval,
+    AlgebraicRootKind, AlgebraicRootRefinementComparisonConfig, AlgebraicRootRepresentation,
+    AlgebraicRootRepresentationReport, AlgebraicRootRepresentationStatus,
+    AlgebraicRootValidationReport, AlgebraicRootValidationStatus, BernsteinSubdivisionInterval,
     BernsteinSubdivisionIntervalStatus, BernsteinSubdivisionReport, BernsteinSubdivisionStatus,
     IsolatedRootInterval, RootIsolationStatus, SymbolId, UnivariateRootIsolationReport,
 };
@@ -5433,6 +5434,116 @@ fn bezier_boolean_algebraic_parameter_readiness_packages_exact_and_interval_even
     assert_eq!(readiness.interval_event_count, 1);
     assert_eq!(readiness.exact_rational_events.len(), 1);
     assert_eq!(readiness.interval_events.len(), 1);
+}
+
+#[test]
+fn bezier_boolean_algebraic_parameter_ordering_sorts_represented_roots() {
+    let range_reports = vec![
+        BezierPathRangeOrderReport2::from_graph_order(
+            &BezierMonotoneGraphOrder::IntersectsOrTouches {
+                parameters: Vec::new(),
+                spans: vec![span(ratio(1, 4), ratio(1, 2))],
+            },
+        ),
+        BezierPathRangeOrderReport2::from_graph_order(
+            &BezierMonotoneGraphOrder::IntersectsOrTouches {
+                parameters: Vec::new(),
+                spans: vec![span(ratio(1, 8), ratio(1, 4))],
+            },
+        ),
+    ];
+    let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &range_reports);
+    let handoff =
+        match BezierBooleanAlgebraicParameterHandoffReport2::from_hypersolve_algebraic_root_reports(
+            &scheduler,
+            &[
+                algebraic_root_report(ratio(3, 4), true),
+                algebraic_root_report(ratio(1, 4), true),
+            ],
+            &policy(),
+        ) {
+            Classification::Decided(report) => report,
+            Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
+        };
+    let readiness =
+        match BezierBooleanAlgebraicParameterReadinessReport2::from_handoff(&handoff, &policy()) {
+            Classification::Decided(report) => report,
+            Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
+        };
+
+    let ordering = BezierBooleanAlgebraicParameterOrderingReport2::from_readiness(
+        &readiness,
+        AlgebraicRootRefinementComparisonConfig::default(),
+        &policy(),
+    );
+
+    assert_eq!(
+        ordering.status,
+        BezierBooleanAlgebraicParameterOrderingStatus::Ready
+    );
+    assert!(ordering.is_ready());
+    assert_eq!(ordering.sorted_event_indices, vec![1, 0]);
+    assert_eq!(ordering.event_count, 2);
+    assert_eq!(ordering.comparison_count, 1);
+    assert_eq!(ordering.blocked_comparison_count, 0);
+    assert_eq!(
+        ordering.sorted_events[0].root.exact_rational_witness(),
+        Some(&ratio(1, 4))
+    );
+}
+
+#[test]
+fn bezier_boolean_algebraic_parameter_ordering_blocks_unrefined_overlaps() {
+    let range_reports = vec![
+        BezierPathRangeOrderReport2::from_graph_order(
+            &BezierMonotoneGraphOrder::IntersectsOrTouches {
+                parameters: Vec::new(),
+                spans: vec![span(ratio(1, 4), ratio(1, 2))],
+            },
+        ),
+        BezierPathRangeOrderReport2::from_graph_order(
+            &BezierMonotoneGraphOrder::IntersectsOrTouches {
+                parameters: Vec::new(),
+                spans: vec![span(ratio(1, 4), ratio(1, 2))],
+            },
+        ),
+    ];
+    let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &range_reports);
+    let handoff =
+        match BezierBooleanAlgebraicParameterHandoffReport2::from_hypersolve_algebraic_root_reports(
+            &scheduler,
+            &[
+                algebraic_root_report(ratio(1, 3), false),
+                algebraic_root_report(ratio(2, 5), false),
+            ],
+            &policy(),
+        ) {
+            Classification::Decided(report) => report,
+            Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
+        };
+    let readiness =
+        match BezierBooleanAlgebraicParameterReadinessReport2::from_handoff(&handoff, &policy()) {
+            Classification::Decided(report) => report,
+            Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
+        };
+    let config = AlgebraicRootRefinementComparisonConfig {
+        max_refinement_rounds: 0,
+        ..AlgebraicRootRefinementComparisonConfig::default()
+    };
+
+    let ordering = BezierBooleanAlgebraicParameterOrderingReport2::from_readiness(
+        &readiness,
+        config,
+        &policy(),
+    );
+
+    assert_eq!(
+        ordering.status,
+        BezierBooleanAlgebraicParameterOrderingStatus::ComparisonBlocked
+    );
+    assert!(ordering.has_blockers());
+    assert_eq!(ordering.blocked_comparison_count, 1);
+    assert!(ordering.sorted_events.is_empty());
 }
 
 #[test]

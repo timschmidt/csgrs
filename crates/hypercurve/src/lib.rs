@@ -61,7 +61,10 @@ pub use bezier::{BezierEndpoint, CubicBezier2, EndpointTangent2, QuadraticBezier
 pub use bezier_boolean::{
     BezierBooleanAlgebraicParameterAuditReport2, BezierBooleanAlgebraicParameterAuditStatus,
     BezierBooleanAlgebraicParameterEvent2, BezierBooleanAlgebraicParameterHandoffReport2,
-    BezierBooleanAlgebraicParameterHandoffStatus, BezierBooleanAlgebraicParameterReadinessReport2,
+    BezierBooleanAlgebraicParameterHandoffStatus,
+    BezierBooleanAlgebraicParameterOrderingComparison2,
+    BezierBooleanAlgebraicParameterOrderingReport2, BezierBooleanAlgebraicParameterOrderingStatus,
+    BezierBooleanAlgebraicParameterReadinessReport2,
     BezierBooleanAlgebraicParameterReadinessStatus, BezierBooleanAlgebraicParameterRole,
     BezierBooleanArrangementReadinessReport2, BezierBooleanArrangementReadinessStatus,
     BezierBooleanAssemblyReadinessReport2, BezierBooleanAssemblyReadinessStatus,
