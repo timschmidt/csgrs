@@ -57,7 +57,11 @@ use hypercurve::{
     isolate_bezier_intersection_regions_until_width, refine_bezier_intersection_region,
     refine_bezier_intersection_regions, summarize_bezier_intersection_regions,
 };
-use hypersolve::{IsolatedRootInterval, RootIsolationStatus, UnivariateRootIsolationReport};
+use hypersolve::{
+    BernsteinSubdivisionInterval, BernsteinSubdivisionIntervalStatus, BernsteinSubdivisionReport,
+    BernsteinSubdivisionStatus, IsolatedRootInterval, RootIsolationStatus,
+    UnivariateRootIsolationReport,
+};
 use proptest::prelude::*;
 
 fn r(value: i32) -> Real {
@@ -4880,6 +4884,98 @@ fn bezier_boolean_root_isolation_replay_consumes_hypersolve_reports() {
 }
 
 #[test]
+fn bezier_boolean_root_isolation_replay_consumes_bernstein_subdivision_reports() {
+    let range = BezierPathRangeOrderReport2::from_graph_order(
+        &BezierMonotoneGraphOrder::IntersectsOrTouches {
+            parameters: Vec::new(),
+            spans: vec![span(ratio(1, 4), ratio(1, 2))],
+        },
+    );
+    let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &[range]);
+    let subdivision = BernsteinSubdivisionReport {
+        constraint_index: 0,
+        symbol: None,
+        degree: Some(2),
+        lower: Real::zero(),
+        upper: Real::one(),
+        status: BernsteinSubdivisionStatus::Completed,
+        intervals: vec![
+            BernsteinSubdivisionInterval {
+                lower: Real::zero(),
+                upper: ratio(1, 4),
+                exact_root: None,
+                variation_bound: Some(0),
+                status: BernsteinSubdivisionIntervalStatus::Empty,
+            },
+            BernsteinSubdivisionInterval {
+                lower: half(),
+                upper: half(),
+                exact_root: Some(half()),
+                variation_bound: Some(1),
+                status: BernsteinSubdivisionIntervalStatus::EndpointRoot,
+            },
+        ],
+        message: None,
+    };
+
+    let replay =
+        match BezierBooleanRootIsolationReplayReport2::from_hypersolve_bernstein_subdivision_reports(
+            &scheduler,
+            &[],
+            &[subdivision],
+            &policy(),
+        ) {
+            Classification::Decided(report) => report,
+            Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
+        };
+
+    assert_eq!(
+        replay.status,
+        BezierBooleanRootIsolationReplayStatus::ReadyForSplitEvents
+    );
+    assert!(replay.can_feed_split_events());
+    assert_eq!(replay.hypersolve_bernstein_report_count, 1);
+    assert_eq!(replay.hypersolve_bernstein_empty_interval_count, 1);
+    assert_eq!(replay.hypersolve_bernstein_endpoint_root_count, 1);
+    assert_eq!(replay.hypersolve_bernstein_isolating_interval_count, 0);
+    assert_eq!(replay.hypersolve_bernstein_unusable_count, 0);
+    assert_eq!(replay.split_plan.shared_range_parameters, vec![half()]);
+
+    let construction =
+        match BezierBooleanRootIsolationConstructionReport2::from_hypersolve_bernstein_subdivision_reports(
+            scheduler,
+            &[],
+            &[BernsteinSubdivisionReport {
+                constraint_index: 0,
+                symbol: None,
+                degree: Some(2),
+                lower: Real::zero(),
+                upper: Real::one(),
+                status: BernsteinSubdivisionStatus::Completed,
+                intervals: vec![BernsteinSubdivisionInterval {
+                    lower: half(),
+                    upper: half(),
+                    exact_root: Some(half()),
+                    variation_bound: Some(1),
+                    status: BernsteinSubdivisionIntervalStatus::EndpointRoot,
+                }],
+                message: None,
+            }],
+            &policy(),
+        ) {
+            Classification::Decided(report) => report,
+            Classification::Uncertain(reason) => {
+                panic!("unexpected construction uncertainty: {reason:?}")
+            }
+        };
+    assert_eq!(
+        construction.status,
+        BezierBooleanRootIsolationConstructionStatus::Ready
+    );
+    assert!(construction.is_ready());
+}
+
+#[test]
 fn bezier_boolean_root_isolation_replay_blocks_unusable_hypersolve_reports() {
     let range = BezierPathRangeOrderReport2::from_graph_order(
         &BezierMonotoneGraphOrder::IntersectsOrTouches {
@@ -4945,6 +5041,54 @@ fn bezier_boolean_root_isolation_replay_blocks_unusable_hypersolve_reports() {
         BezierBooleanRootIsolationConstructionStatus::ReplayBlocked
     );
     assert!(construction.has_blockers());
+}
+
+#[test]
+fn bezier_boolean_root_isolation_replay_blocks_bernstein_non_witnesses() {
+    let range = BezierPathRangeOrderReport2::from_graph_order(
+        &BezierMonotoneGraphOrder::IntersectsOrTouches {
+            parameters: Vec::new(),
+            spans: vec![span(ratio(1, 4), ratio(1, 2))],
+        },
+    );
+    let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &[range]);
+    let subdivision = BernsteinSubdivisionReport {
+        constraint_index: 0,
+        symbol: None,
+        degree: Some(3),
+        lower: Real::zero(),
+        upper: Real::one(),
+        status: BernsteinSubdivisionStatus::Completed,
+        intervals: vec![BernsteinSubdivisionInterval {
+            lower: ratio(1, 4),
+            upper: ratio(1, 2),
+            exact_root: None,
+            variation_bound: Some(1),
+            status: BernsteinSubdivisionIntervalStatus::Isolating,
+        }],
+        message: None,
+    };
+
+    let replay =
+        match BezierBooleanRootIsolationReplayReport2::from_hypersolve_bernstein_subdivision_reports(
+            &scheduler,
+            &[],
+            &[subdivision],
+            &policy(),
+        ) {
+            Classification::Decided(report) => report,
+            Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
+        };
+
+    assert_eq!(
+        replay.status,
+        BezierBooleanRootIsolationReplayStatus::HypersolveBlocked
+    );
+    assert!(replay.has_blockers());
+    assert_eq!(replay.hypersolve_bernstein_report_count, 1);
+    assert_eq!(replay.hypersolve_bernstein_isolating_interval_count, 1);
+    assert_eq!(replay.hypersolve_bernstein_unusable_count, 1);
+    assert_eq!(replay.missing_isolation_count, 1);
 }
 
 #[test]
@@ -10778,6 +10922,84 @@ proptest! {
 
         let construction = match BezierBooleanRootIsolationConstructionReport2::from_replay(
             readiness.scheduler.clone(),
+            replay,
+            &policy(),
+        ) {
+            Classification::Decided(report) => report,
+            Classification::Uncertain(reason) => {
+                prop_assert!(false, "unexpected construction uncertainty: {reason:?}");
+                return Ok(());
+            }
+        };
+        prop_assert_eq!(
+            construction.status,
+            BezierBooleanRootIsolationConstructionStatus::Ready
+        );
+        prop_assert!(construction.is_ready());
+    }
+
+    #[test]
+    fn generated_bezier_boolean_root_isolation_replay_consumes_bernstein_endpoint_roots(
+        span_count in 1_usize..8,
+    ) {
+        let reports = (0..span_count)
+            .map(|index| {
+                BezierPathRangeOrderReport2::from_graph_order(
+                    &BezierMonotoneGraphOrder::IntersectsOrTouches {
+                        parameters: Vec::new(),
+                        spans: vec![span(ratio(index as i32 + 1, 32), ratio(index as i32 + 2, 32))],
+                    },
+                )
+            })
+            .collect::<Vec<_>>();
+        let solver_reports = (0..span_count)
+            .map(|index| {
+                let root = ratio(index as i32 + 1, 16);
+                BernsteinSubdivisionReport {
+                    constraint_index: index,
+                    symbol: None,
+                    degree: Some(2),
+                    lower: Real::zero(),
+                    upper: Real::one(),
+                    status: BernsteinSubdivisionStatus::Completed,
+                    intervals: vec![BernsteinSubdivisionInterval {
+                        lower: root.clone(),
+                        upper: root.clone(),
+                        exact_root: Some(root),
+                        variation_bound: Some(1),
+                        status: BernsteinSubdivisionIntervalStatus::EndpointRoot,
+                    }],
+                    message: None,
+                }
+            })
+            .collect::<Vec<_>>();
+        let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &reports);
+
+        let replay =
+            match BezierBooleanRootIsolationReplayReport2::from_hypersolve_bernstein_subdivision_reports(
+                &scheduler,
+                &[],
+                &solver_reports,
+                &policy(),
+            ) {
+                Classification::Decided(report) => report,
+                Classification::Uncertain(reason) => {
+                    prop_assert!(false, "unexpected uncertainty: {reason:?}");
+                    return Ok(());
+                }
+            };
+
+        prop_assert_eq!(
+            replay.status,
+            BezierBooleanRootIsolationReplayStatus::ReadyForSplitEvents
+        );
+        prop_assert_eq!(replay.hypersolve_bernstein_report_count, span_count);
+        prop_assert_eq!(replay.hypersolve_bernstein_endpoint_root_count, span_count);
+        prop_assert_eq!(replay.hypersolve_bernstein_unusable_count, 0);
+        prop_assert_eq!(replay.split_plan.range_event_count, span_count);
+
+        let construction = match BezierBooleanRootIsolationConstructionReport2::from_replay(
+            scheduler,
             replay,
             &policy(),
         ) {

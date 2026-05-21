@@ -22,7 +22,10 @@ use crate::{
     QuadraticBezier2, RationalQuadraticBezier2, UncertaintyReason,
 };
 use hyperreal::Real;
-use hypersolve::{RootIsolationStatus, UnivariateRootIsolationReport};
+use hypersolve::{
+    BernsteinSubdivisionIntervalStatus, BernsteinSubdivisionReport, BernsteinSubdivisionStatus,
+    RootIsolationStatus, UnivariateRootIsolationReport,
+};
 use std::{cmp::Ordering, collections::HashSet};
 
 /// Boolean-readiness state of a Bezier curve/curve relation.
@@ -1965,6 +1968,16 @@ pub struct BezierBooleanRootIsolationReplayReport2 {
     pub hypersolve_exact_root_count: usize,
     /// Number of unsupported, undecided, or non-witness solver reports/intervals.
     pub hypersolve_unusable_count: usize,
+    /// Number of `hypersolve` Bernstein subdivision reports consumed.
+    pub hypersolve_bernstein_report_count: usize,
+    /// Number of terminal Bernstein intervals certified empty.
+    pub hypersolve_bernstein_empty_interval_count: usize,
+    /// Number of exact Bernstein endpoint-root witnesses recovered.
+    pub hypersolve_bernstein_endpoint_root_count: usize,
+    /// Number of non-rational Bernstein isolating intervals retained as blockers.
+    pub hypersolve_bernstein_isolating_interval_count: usize,
+    /// Number of unsupported, undecided, depth-limited, or non-witness Bernstein rows.
+    pub hypersolve_bernstein_unusable_count: usize,
     /// Number of still-missing represented roots.
     pub missing_isolation_count: usize,
     /// Number of supplied represented roots outside `[0, 1]`.
@@ -12273,6 +12286,11 @@ impl BezierBooleanRootIsolationReplayReport2 {
             hypersolve_interval_count: 0,
             hypersolve_exact_root_count: 0,
             hypersolve_unusable_count: 0,
+            hypersolve_bernstein_report_count: 0,
+            hypersolve_bernstein_empty_interval_count: 0,
+            hypersolve_bernstein_endpoint_root_count: 0,
+            hypersolve_bernstein_isolating_interval_count: 0,
+            hypersolve_bernstein_unusable_count: 0,
             missing_isolation_count: required_isolation_count
                 .saturating_sub(supplied_isolation_count),
             out_of_range_parameter_count: 0,
@@ -12412,6 +12430,89 @@ impl BezierBooleanRootIsolationReplayReport2 {
         Classification::Decided(replay)
     }
 
+    /// Replays exact endpoint roots from `hypersolve` Bernstein subdivisions.
+    ///
+    /// Bernstein subdivision is a finite-interval algebraic filter, not a
+    /// topology constructor. Empty terminal intervals are counted as certified
+    /// non-root evidence; endpoint-root intervals contribute represented
+    /// parameters only when `hypersolve` supplies the exact rational witness;
+    /// variation-one isolating intervals, depth limits, unsupported rows, and
+    /// undecided rows remain blockers. This mirrors Farouki and Rajan's
+    /// Bernstein-form subdivision filter ("Algorithms for Polynomials in
+    /// Bernstein Form," 1988) while preserving Yap's 1997 exact-geometric
+    /// computation boundary: Bezier boolean split insertion receives explicit
+    /// parameters, never interval samples.
+    pub fn from_hypersolve_bernstein_subdivision_reports(
+        scheduler: &BezierBooleanPathSchedulerReport2,
+        isolated_relation_events: &[BezierBooleanPointEvent2],
+        subdivision_reports: &[BernsteinSubdivisionReport],
+        policy: &CurvePolicy,
+    ) -> Classification<Self> {
+        let mut range_parameters = Vec::new();
+        let mut empty_interval_count = 0;
+        let mut endpoint_root_count = 0;
+        let mut isolating_interval_count = 0;
+        let mut unusable_count = 0;
+
+        for report in subdivision_reports {
+            match report.status {
+                BernsteinSubdivisionStatus::Completed => {}
+                BernsteinSubdivisionStatus::DepthLimit
+                | BernsteinSubdivisionStatus::InvalidInterval
+                | BernsteinSubdivisionStatus::UnsupportedCoefficient
+                | BernsteinSubdivisionStatus::Undecided => {
+                    unusable_count += 1;
+                    continue;
+                }
+            }
+
+            for interval in &report.intervals {
+                match interval.status {
+                    BernsteinSubdivisionIntervalStatus::Empty => {
+                        empty_interval_count += 1;
+                    }
+                    BernsteinSubdivisionIntervalStatus::EndpointRoot => {
+                        if let Some(root) = &interval.exact_root {
+                            endpoint_root_count += 1;
+                            range_parameters.push(root.clone());
+                        } else {
+                            unusable_count += 1;
+                        }
+                    }
+                    BernsteinSubdivisionIntervalStatus::Isolating => {
+                        isolating_interval_count += 1;
+                        unusable_count += 1;
+                    }
+                    BernsteinSubdivisionIntervalStatus::DepthLimit => {
+                        unusable_count += 1;
+                    }
+                }
+            }
+        }
+
+        let mut replay = match Self::from_hypersolve_roots(
+            scheduler,
+            isolated_relation_events,
+            &range_parameters,
+            policy,
+        ) {
+            Classification::Decided(report) => report,
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        };
+        replay.hypersolve_bernstein_report_count = subdivision_reports.len();
+        replay.hypersolve_bernstein_empty_interval_count = empty_interval_count;
+        replay.hypersolve_bernstein_endpoint_root_count = endpoint_root_count;
+        replay.hypersolve_bernstein_isolating_interval_count = isolating_interval_count;
+        replay.hypersolve_bernstein_unusable_count = unusable_count;
+
+        if unusable_count > 0 {
+            replay.status = BezierBooleanRootIsolationReplayStatus::HypersolveBlocked;
+            replay.blocker_count += unusable_count;
+        }
+
+        Classification::Decided(replay)
+    }
+
     /// Returns true when replay produced a ready split plan.
     pub fn can_feed_split_events(&self) -> bool {
         self.status == BezierBooleanRootIsolationReplayStatus::ReadyForSplitEvents
@@ -12516,6 +12617,33 @@ impl BezierBooleanRootIsolationConstructionReport2 {
             Classification::Decided(replay) => replay,
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         };
+        Self::from_replay(scheduler, replay, policy)
+    }
+
+    /// Runs the Bernstein-subdivision replay to construction-readiness chain.
+    ///
+    /// This is the subdivision-filter sibling of
+    /// [`Self::from_hypersolve_range_reports`]. It accepts only exact endpoint
+    /// roots as represented split parameters and keeps all non-rational
+    /// isolating intervals report-bearing, matching Yap's construction/proof
+    /// separation and the Bernstein subdivision evidence model of Farouki and
+    /// Rajan (1988).
+    pub fn from_hypersolve_bernstein_subdivision_reports(
+        scheduler: BezierBooleanPathSchedulerReport2,
+        isolated_relation_events: &[BezierBooleanPointEvent2],
+        subdivision_reports: &[BernsteinSubdivisionReport],
+        policy: &CurvePolicy,
+    ) -> Classification<Self> {
+        let replay =
+            match BezierBooleanRootIsolationReplayReport2::from_hypersolve_bernstein_subdivision_reports(
+                &scheduler,
+                isolated_relation_events,
+                subdivision_reports,
+                policy,
+            ) {
+                Classification::Decided(replay) => replay,
+                Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+            };
         Self::from_replay(scheduler, replay, policy)
     }
 
