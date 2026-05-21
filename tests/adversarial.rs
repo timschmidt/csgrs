@@ -1023,6 +1023,45 @@ fn adversarial_metaballs_accumulate_field_in_hyperreal_space() {
 }
 
 #[test]
+#[cfg(feature = "metaballs")]
+fn adversarial_profile_metaballs_sample_and_classify_in_hyperreal_space() {
+    let balls = [
+        (
+            HPoint2::new(hreal_from_f64(0.0).unwrap(), hreal_from_f64(0.0).unwrap()),
+            1.0,
+        ),
+        (
+            HPoint2::new(
+                hreal_from_f64(tolerance() * 0.5).unwrap(),
+                hreal_from_f64(0.0).unwrap(),
+            ),
+            1.0,
+        ),
+    ];
+
+    let profile = Profile::<()>::metaballs(&balls, (8, 8), 1.0, 0.25, ());
+
+    assert!(!profile.is_empty());
+    assert!(!profile.as_region().is_empty());
+}
+
+#[test]
+#[cfg(feature = "metaballs")]
+fn adversarial_profile_metaballs_reject_invalid_boundary_scalars_before_sampling() {
+    let valid_center =
+        HPoint2::new(hreal_from_f64(0.0).unwrap(), hreal_from_f64(0.0).unwrap());
+    let invalid_radius = [(valid_center.clone(), Real::NAN)];
+    let negative_padding = [(valid_center.clone(), 1.0)];
+
+    assert!(Profile::<()>::metaballs(&invalid_radius, (4, 4), 1.0, 0.25, ()).is_empty());
+    assert!(Profile::<()>::metaballs(&negative_padding, (4, 4), 1.0, -0.25, ()).is_empty());
+    assert!(
+        Profile::<()>::metaballs(&negative_padding, (4, 4), Real::INFINITY, 0.25, ())
+            .is_empty()
+    );
+}
+
+#[test]
 fn adversarial_is_manifold_uses_hypermesh_closed_manifold_facts() {
     let cube: Mesh<()> = Mesh::cube(2.0, ());
     assert!(cube.is_manifold());
