@@ -767,6 +767,12 @@ pub(crate) fn hreal_mul(lhs: Real, rhs: Real) -> Option<Real> {
     hreal_to_f64(&(lhs * rhs))
 }
 
+/// Return the finite square root of a public boundary scalar.
+pub(crate) fn hreal_sqrt(value: Real) -> Option<Real> {
+    let value = hreal_from_f64(value).ok()?;
+    hreal_to_f64(&value.sqrt().ok()?)
+}
+
 /// Evaluate `origin + t * delta` through hyperreal arithmetic.
 pub(crate) fn hreal_affine(origin: Real, t: Real, delta: Real) -> Option<Real> {
     let origin = hreal_from_f64(origin).ok()?;
@@ -1104,6 +1110,7 @@ mod tests {
         assert_eq!(hreal_div(6.0, 3.0).unwrap(), 2.0);
         assert_eq!(hreal_sub(7.0, 4.0).unwrap(), 3.0);
         assert_eq!(hreal_mul(2.0, 3.0).unwrap(), 6.0);
+        assert_eq!(hreal_sqrt(25.0).unwrap(), 5.0);
         assert_eq!(hreal_affine(1.0, 0.25, 8.0).unwrap(), 3.0);
         assert!(hreal_f64s_within_epsilon(
             hdegrees_to_radians(180.0).unwrap(),
@@ -1137,6 +1144,7 @@ mod tests {
         assert!(hreal_mean(&[1.0, Real::NAN]).is_none());
         assert!(hreal_sample_stddev(&[1.0, Real::INFINITY]).is_none());
         assert!(hangle_sin_cos(Real::INFINITY).is_none());
+        assert!(hreal_sqrt(-1.0).is_none());
         assert!(hdegrees_to_radians(Real::NAN).is_none());
     }
 

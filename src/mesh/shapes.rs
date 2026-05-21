@@ -3,9 +3,9 @@
 use crate::csg::CSG;
 use crate::errors::ValidationError;
 use crate::float_types::{
-    PI, Real, TAU, hperpendicular_basis, hreal_from_f64, hrotation_between_vectors,
-    hscale_matrix, htranslation_matrix, hunit_vector3, hunit_vector3_and_magnitude,
-    hvector3_from_point3, tolerance,
+    PI, Real, TAU, hperpendicular_basis, hreal_affine, hreal_div, hreal_from_f64, hreal_mul,
+    hreal_sqrt, hrotation_between_vectors, hscale_matrix, htranslation_matrix, hunit_vector3,
+    hunit_vector3_and_magnitude, hvector3_from_point3, tolerance,
 };
 use crate::mesh::Mesh;
 use crate::polygon::Polygon;
@@ -803,19 +803,45 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             .unwrap_or_else(|_| Mesh::empty(metadata))
     }
 
-    /// Regular icosahedron scaled by `radius`
+    /// Regular icosahedron scaled by `radius`.
+    ///
+    /// The golden-ratio normalization is evaluated through `hyperreal::Real`
+    /// before finite mesh vertices are emitted. This keeps even constant
+    /// shape-construction algebra on the exact-aware side of the boundary,
+    /// following Yap, "Towards Exact Geometric Computation," *Computational
+    /// Geometry* 7(1-2), 1997
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>). The construction is
+    /// the classical regular icosahedron coordinate model using the golden
+    /// ratio; see Coxeter, *Regular Polytopes*, 3rd ed., 1973.
     pub fn icosahedron(radius: Real, metadata: M) -> Self {
         if !finite_mesh_scalar(radius) {
             return Mesh::empty(metadata);
         }
         // radius scale factor
-        let factor = radius * 0.5878; // empirically determined todo: eliminate this
+        let Some(factor) = hreal_mul(radius, 0.5878) else {
+            return Mesh::empty(metadata);
+        };
         // golden ratio
-        let phi: Real = (1.0 + 5.0_f64.sqrt() as Real) * 0.5;
+        let Some(phi) = hreal_affine(0.5, 0.5, hreal_sqrt(5.0).unwrap_or(0.0)) else {
+            return Mesh::empty(metadata);
+        };
         // normalise so the circum-radius is 1
-        let inv_len = (1.0 + phi * phi).sqrt().recip();
+        let Some(phi_squared) = hreal_mul(phi, phi) else {
+            return Mesh::empty(metadata);
+        };
+        let Some(len_squared) = hreal_affine(1.0, 1.0, phi_squared) else {
+            return Mesh::empty(metadata);
+        };
+        let Some(len) = hreal_sqrt(len_squared) else {
+            return Mesh::empty(metadata);
+        };
+        let Some(inv_len) = hreal_div(1.0, len) else {
+            return Mesh::empty(metadata);
+        };
         let a = inv_len;
-        let b = phi * inv_len;
+        let Some(b) = hreal_mul(phi, inv_len) else {
+            return Mesh::empty(metadata);
+        };
 
         // 12 vertices ----------------------------------------------------
         let pts: [[Real; 3]; 12] = [
