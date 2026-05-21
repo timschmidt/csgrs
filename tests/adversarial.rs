@@ -443,6 +443,11 @@ fn adversarial_hyperreal_sampled_profile_constructors_emit_finite_regions() {
         Profile::egg(3.0, 5.0, 29, ()),
         Profile::rounded_rectangle(5.0, 3.0, 0.75, 5, ()),
         Profile::reuleaux(3, 2.0, 24, ()),
+        Profile::ring(2.0, 0.25, 24, ()),
+        Profile::keyhole(1.5, 0.5, 2.0, 24, ()),
+        Profile::circle_with_keyway(2.0, 24, 0.5, 0.75, ()),
+        Profile::circle_with_flat(2.0, 24, 0.5, ()),
+        Profile::circle_with_two_flats(2.0, 24, 0.5, ()),
         Profile::cycloidal_rack(1.25, 4, 0.5, 0.1, 8, ()),
         Profile::pie_slice(2.0, -45.0, 225.0, 17, ()),
     ];

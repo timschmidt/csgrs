@@ -697,12 +697,24 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
 
     /// Outer diameter = `id + 2*thickness`. This yields an annulus in the XY plane.
     /// `segments` controls how smooth the outer/inner circles are.
+    ///
+    /// Radius arithmetic is promoted before the annular profile is composed
+    /// from hypercurve-backed circle regions, following Yap's exact-geometric
+    /// computation boundary split (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     pub fn ring(id: Real, thickness: Real, segments: usize, metadata: M) -> Profile<M> {
-        if id <= 0.0 || thickness <= 0.0 || segments < 3 {
+        if id <= 0.0
+            || thickness <= 0.0
+            || segments < 3
+            || !finite_profile_scalars(&[id, thickness])
+        {
             return Profile::empty(metadata);
         }
-        let inner_radius = 0.5 * id;
-        let outer_radius = inner_radius + thickness;
+        let Some(inner_radius) = hreal_mul(0.5, id) else {
+            return Profile::empty(metadata);
+        };
+        let Some(outer_radius) = hreal_affine(inner_radius, 1.0, thickness) else {
+            return Profile::empty(metadata);
+        };
 
         let outer_circle = Profile::circle(outer_radius, segments, metadata.clone());
         let inner_circle = Profile::circle(inner_radius, segments, metadata);
@@ -806,6 +818,10 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     }
 
     /// Creates a 2D circle with a rectangular keyway slot cut out on the +X side.
+    ///
+    /// The boolean operands are hypercurve-backed profiles; the remaining
+    /// primitive offsets are evaluated through hyperreal helpers before
+    /// composition (Yap, EGC, <https://doi.org/10.1016/0925-7721(95)00040-2>).
     pub fn circle_with_keyway(
         radius: Real,
         segments: usize,
@@ -813,15 +829,21 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         key_depth: Real,
         metadata: M,
     ) -> Profile<M> {
+        if segments < 3 || !finite_profile_scalars(&[radius, key_width, key_depth]) {
+            return Profile::empty(metadata);
+        }
         // 1. Full circle
         let circle = Profile::circle(radius, segments, metadata.clone());
 
         // 2. Construct the keyway rectangle
-        let key_rect = Profile::rectangle(key_depth, key_width, metadata.clone()).translate(
-            radius - key_depth,
-            -key_width * 0.5,
-            0.0,
-        );
+        let Some(key_x) = hreal_sub(radius, key_depth) else {
+            return Profile::empty(metadata);
+        };
+        let Some(key_y) = hreal_mul(-0.5, key_width) else {
+            return Profile::empty(metadata);
+        };
+        let key_rect = Profile::rectangle(key_depth, key_width, metadata.clone())
+            .translate(key_x, key_y, 0.0);
 
         circle.difference(&key_rect)
     }
@@ -829,20 +851,34 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// Creates a 2D "D" shape (circle with one flat chord).
     /// `radius` is the circle radius,
     /// `flat_dist` is how far from the center the flat chord is placed.
+    ///
+    /// Cutter dimensions and offsets are evaluated in hyperreal arithmetic
+    /// before the result is composed from hypercurve regions.
     pub fn circle_with_flat(
         radius: Real,
         segments: usize,
         flat_dist: Real,
         metadata: M,
     ) -> Profile<M> {
+        if segments < 3 || !finite_profile_scalars(&[radius, flat_dist]) {
+            return Profile::empty(metadata);
+        }
         // 1. Full circle
         let circle = Profile::circle(radius, segments, metadata.clone());
 
         // 2. Build a large rectangle that cuts off everything below y = -flat_dist
         let cutter_height = 9999.0; // some large number
-        let rect_cutter = Profile::rectangle(2.0 * radius, cutter_height, metadata.clone())
-            .translate(-radius, -cutter_height, 0.0) // put its bottom near "negative infinity"
-            .translate(0.0, -flat_dist, 0.0); // now top edge is at y = -flat_dist
+        let (Some(width), Some(neg_radius), Some(neg_height), Some(neg_flat)) = (
+            hreal_mul(2.0, radius),
+            hreal_sub(0.0, radius),
+            hreal_sub(0.0, cutter_height),
+            hreal_sub(0.0, flat_dist),
+        ) else {
+            return Profile::empty(metadata);
+        };
+        let rect_cutter = Profile::rectangle(width, cutter_height, metadata.clone())
+            .translate(neg_radius, neg_height, 0.0) // put its bottom near "negative infinity"
+            .translate(0.0, neg_flat, 0.0); // now top edge is at y = -flat_dist
 
         // 3. Subtract to produce the flat chord
         circle.difference(&rect_cutter)
@@ -859,19 +895,32 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         flat_dist: Real,
         metadata: M,
     ) -> Profile<M> {
+        if segments < 3 || !finite_profile_scalars(&[radius, flat_dist]) {
+            return Profile::empty(metadata);
+        }
         // 1. Full circle
         let circle = Profile::circle(radius, segments, metadata.clone());
 
         // 2. Large rectangle to cut the TOP (above +flat_dist)
         let cutter_height = 9999.0;
-        let top_rect = Profile::rectangle(2.0 * radius, cutter_height, metadata.clone())
+        let (Some(width), Some(neg_radius), Some(neg_height)) = (
+            hreal_mul(2.0, radius),
+            hreal_sub(0.0, radius),
+            hreal_sub(0.0, cutter_height),
+        ) else {
+            return Profile::empty(metadata);
+        };
+        let top_rect = Profile::rectangle(width, cutter_height, metadata.clone())
             // place bottom at y=flat_dist
-            .translate(-radius, flat_dist, 0.0);
+            .translate(neg_radius, flat_dist, 0.0);
 
         // 3. Large rectangle to cut the BOTTOM (below -flat_dist)
-        let bottom_rect = Profile::rectangle(2.0 * radius, cutter_height, metadata.clone())
+        let Some(bottom_y) = hreal_sub(neg_height, flat_dist) else {
+            return Profile::empty(metadata);
+        };
+        let bottom_rect = Profile::rectangle(width, cutter_height, metadata.clone())
             // place top at y=-flat_dist => bottom extends downward
-            .translate(-radius, -cutter_height - flat_dist, 0.0);
+            .translate(neg_radius, bottom_y, 0.0);
 
         // 4. Subtract both
         let with_top_flat = circle.difference(&top_rect);
