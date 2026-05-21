@@ -5,7 +5,7 @@ use crate::float_types::{
     Real, hangle_sin_cos, hdegrees_to_radians, hpoints_within_epsilon, hreal_div,
     hreal_f64s_within_epsilon, hreal_from_f64, hreal_gt_f64, hreal_lt_f64, hreal_mul,
     hrotation_between_vectors, htranslation_matrix, hunit_cross_vector3, hunit_vector3,
-    hvector3_from_vector3, hvectors_within_epsilon, tolerance,
+    hvector3_from_point3, hvector3_from_vector3, hvectors_within_epsilon, tolerance,
 };
 use crate::mesh::Mesh;
 use crate::polygon::Polygon;
@@ -705,9 +705,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
                 let c_j = ring_coords[i + 1];
 
                 // If these two points are the same, skip degenerate edge
-                if (c_i[0] - c_j[0]).abs() < tolerance()
-                    && (c_i[1] - c_j[1]).abs() < tolerance()
-                {
+                if same_xy((c_i[0], c_i[1]), (c_j[0], c_j[1])) {
                     continue;
                 }
 
@@ -779,10 +777,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
             // with an explicit duplicate endpoint.
             let last = pts_3d.last().unwrap();
             let first = pts_3d.first().unwrap();
-            if (last.x - first.x).abs() > tolerance()
-                || (last.y - first.y).abs() > tolerance()
-                || (last.z - first.z).abs() > tolerance()
-            {
+            if !hpoints_within_epsilon(last, first, tolerance()) {
                 pts_3d.push(*first);
             }
 
@@ -910,10 +905,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         if path.len() < 2 {
             return Mesh::empty(self.metadata.clone());
         }
-        if path
-            .iter()
-            .any(|p| !p.x.is_finite() || !p.y.is_finite() || !p.z.is_finite())
-        {
+        if path.iter().any(|p| hvector3_from_point3(p).is_none()) {
             return Mesh::empty(self.metadata.clone());
         }
         let n_path = path.len();
@@ -1146,5 +1138,25 @@ fn close_region_ring(mut points: Vec<[Real; 2]>) -> Vec<[Real; 2]> {
 }
 
 fn same_xy(a: (Real, Real), b: (Real, Real)) -> bool {
-    (a.0 - b.0).abs() <= tolerance() && (a.1 - b.1).abs() <= tolerance()
+    hreal_f64s_within_epsilon(a.0, b.0, tolerance())
+        && hreal_f64s_within_epsilon(a.1, b.1, tolerance())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn same_xy_uses_hyperreal_tolerance_boundary() {
+        assert!(same_xy((0.0, 0.0), (tolerance() * 0.25, -tolerance() * 0.25)));
+        assert!(!same_xy((0.0, 0.0), (tolerance() * 4.0, 0.0)));
+        assert!(!same_xy((0.0, 0.0), (Real::NAN, 0.0)));
+    }
+
+    #[test]
+    fn close_region_ring_rejects_nonfinite_duplicate_endpoint() {
+        let points = close_region_ring(vec![[0.0, 0.0], [1.0, 0.0], [Real::NAN, 0.0]]);
+        assert_eq!(points.len(), 4);
+        assert_eq!(points[3], [0.0, 0.0]);
+    }
 }
