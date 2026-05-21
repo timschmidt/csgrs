@@ -560,6 +560,11 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
 
     /// Rounded rectangle in XY plane, from (0,0) to (width,height) with radius for corners.
     /// `corner_segments` controls the smoothness of each rounded corner.
+    ///
+    /// Corner-radius clamping and arc sampling are evaluated through hyperreal
+    /// helpers before exporting the finite boundary to hypercurve, following
+    /// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
+    /// 7(1-2), 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     pub fn rounded_rectangle(
         width: Real,
         height: Real,
@@ -575,8 +580,16 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         else {
             return Profile::empty(metadata);
         };
-        let r = corner_radius.min(half_width).min(half_height);
-        if corner_segments == 0 || r <= tolerance() {
+        let radius = match hreal_cmp_f64(corner_radius, half_width) {
+            Ordering::Greater => half_width,
+            Ordering::Less | Ordering::Equal => corner_radius,
+        };
+        let r = match hreal_cmp_f64(radius, half_height) {
+            Ordering::Greater => half_height,
+            Ordering::Less | Ordering::Equal => radius,
+        };
+        if corner_segments == 0 || !matches!(hreal_cmp_f64(r, tolerance()), Ordering::Greater)
+        {
             return Profile::rectangle(width, height, metadata);
         }
         // We'll approximate each 90° corner with `corner_segments` arcs
