@@ -22,14 +22,17 @@ pub struct SolverConfig {
     ///
     /// The current implementation supports dense damped least squares and the
     /// named Levenberg-Marquardt route. PowellHybrid and Dogleg use dense
-    /// lossy trust-region proposals. These routes follow the least-squares damping family of
+    /// lossy trust-region proposals, BFGS uses a retained dense inverse-Hessian
+    /// approximation, and SQP uses the current equality least-squares QP
+    /// relaxation. These routes follow the least-squares damping family of
     /// Levenberg, "A Method for the Solution of Certain Non-Linear Problems in
     /// Least Squares" (1944), and Marquardt, "An Algorithm for Least-Squares
     /// Estimation of Nonlinear Parameters" (1963), plus Powell's dogleg hybrid
     /// method (M. J. D. Powell, "A Hybrid Method for Nonlinear Equations",
-    /// 1970). Other named engines are exposed so callers and tests can
-    /// distinguish unsupported proposal requests from exact certification
-    /// failures.
+    /// 1970), and the BFGS quasi-Newton family of Broyden/Fletcher/Goldfarb/
+    /// Shanno (1970). SQP here means the local equality-constrained quadratic
+    /// least-squares proposal described in Nocedal and Wright, *Numerical
+    /// Optimization*, 2nd ed. (2006), not a proof of constrained optimality.
     pub proposal_engine: ProposalEngineKind,
 }
 
@@ -72,6 +75,9 @@ pub fn solve_damped_least_squares(mut state: SolverState) -> SolveReport {
         .unwrap_or(0.0);
     let step_tolerance = state.config.step_tolerance.to_f64_lossy().unwrap_or(0.0);
     let damping = state.config.damping.to_f64_lossy().unwrap_or(1.0e-6);
+    let mut inverse_hessian = identity_matrix(state.problem.variables.len());
+    let mut previous_point: Option<Vec<f64>> = None;
+    let mut previous_gradient: Option<Vec<f64>> = None;
 
     for iteration in 0..state.config.max_iterations {
         let prepared = PreparedProblem::new(&state.problem);
@@ -126,19 +132,42 @@ pub fn solve_damped_least_squares(mut state: SolverState) -> SolveReport {
         };
         // f64 is confined to this dense linear-solver edge. The surrounding
         // model, residuals, bounds, and tolerances remain hyperreal values.
-        // DampedLeastSquares and LevenbergMarquardt use a damped normal step;
-        // PowellHybrid and Dogleg use a trust-region step. Per Yap (1997),
-        // exact/certified replay, not this lossy proposal, decides acceptance.
+        let gradient = dense_gradient(&jacobian, &numeric);
+        if state.config.proposal_engine == ProposalEngineKind::Bfgs
+            && let (Some(previous_point), Some(previous_gradient)) =
+                (&previous_point, &previous_gradient)
+        {
+            let current_point = dense_point(&state.problem);
+            let s = current_point
+                .iter()
+                .zip(previous_point)
+                .map(|(current, previous)| current - previous)
+                .collect::<Vec<_>>();
+            let y = gradient
+                .iter()
+                .zip(previous_gradient)
+                .map(|(current, previous)| current - previous)
+                .collect::<Vec<_>>();
+            update_inverse_hessian_bfgs(&mut inverse_hessian, &s, &y);
+        }
+        previous_point = Some(dense_point(&state.problem));
+        previous_gradient = Some(gradient.clone());
+
+        // DampedLeastSquares, LevenbergMarquardt, and the equality-SQP
+        // relaxation use a damped normal step; PowellHybrid and Dogleg use a
+        // trust-region step; BFGS uses the retained inverse-Hessian direction.
+        // Per Yap (1997), exact/certified replay, not this lossy proposal,
+        // decides acceptance.
         let step_result = match state.config.proposal_engine {
             ProposalEngineKind::PowellHybrid | ProposalEngineKind::Dogleg => {
                 backend.solve_dogleg(&jacobian, &numeric, damping)
             }
-            ProposalEngineKind::DampedLeastSquares | ProposalEngineKind::LevenbergMarquardt => {
-                backend.solve_damped_normal(&jacobian, &numeric, damping)
+            ProposalEngineKind::Bfgs => {
+                backend.solve_bfgs_direction(&inverse_hessian, &gradient, damping)
             }
-            ProposalEngineKind::Bfgs | ProposalEngineKind::Sqp => {
-                unreachable!("unsupported proposal engines return before iteration")
-            }
+            ProposalEngineKind::DampedLeastSquares
+            | ProposalEngineKind::LevenbergMarquardt
+            | ProposalEngineKind::Sqp => backend.solve_damped_normal(&jacobian, &numeric, damping),
         };
         let Ok((step, linear_report)) = step_result else {
             return SolveReport {
@@ -201,6 +230,69 @@ fn proposal_engine_report(requested: ProposalEngineKind) -> ProposalEngineReport
             supported: false,
         }
     }
+}
+
+fn dense_point(problem: &Problem) -> Vec<f64> {
+    problem
+        .variables
+        .iter()
+        .map(|variable| variable.value.to_f64_lossy().unwrap_or(0.0))
+        .collect()
+}
+
+fn dense_gradient(jacobian: &[Vec<f64>], residuals: &[f64]) -> Vec<f64> {
+    let width = jacobian.first().map(Vec::len).unwrap_or(0);
+    let mut gradient = vec![0.0; width];
+    for (row, residual) in jacobian.iter().zip(residuals) {
+        for column in 0..width {
+            gradient[column] += row[column] * residual;
+        }
+    }
+    gradient
+}
+
+fn identity_matrix(width: usize) -> Vec<Vec<f64>> {
+    let mut matrix = vec![vec![0.0; width]; width];
+    for (index, row) in matrix.iter_mut().enumerate() {
+        row[index] = 1.0;
+    }
+    matrix
+}
+
+fn update_inverse_hessian_bfgs(inverse_hessian: &mut Vec<Vec<f64>>, s: &[f64], y: &[f64]) {
+    let ys = dot(y, s);
+    if ys <= f64::EPSILON {
+        return;
+    }
+    let hy = mat_vec(inverse_hessian, y);
+    let yhy = dot(y, &hy);
+    if yhy.abs() <= f64::EPSILON {
+        return;
+    }
+    for row in 0..inverse_hessian.len() {
+        for column in 0..inverse_hessian.len() {
+            inverse_hessian[row][column] += s[row] * s[column] / ys - hy[row] * hy[column] / yhy;
+        }
+    }
+}
+
+fn mat_vec(matrix: &[Vec<f64>], vector: &[f64]) -> Vec<f64> {
+    matrix
+        .iter()
+        .map(|row| {
+            row.iter()
+                .zip(vector)
+                .map(|(left, right)| left * right)
+                .sum()
+        })
+        .collect()
+}
+
+fn dot(left: &[f64], right: &[f64]) -> f64 {
+    left.iter()
+        .zip(right)
+        .map(|(left, right)| left * right)
+        .sum()
 }
 
 fn real_from_dense_solver_f64(value: f64) -> Real {

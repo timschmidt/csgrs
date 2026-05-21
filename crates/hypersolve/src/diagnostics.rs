@@ -17,7 +17,8 @@ use crate::linalg::LinearSolveReport;
 /// Marquardt, "An Algorithm for Least-Squares Estimation of Nonlinear
 /// Parameters" (1963), for the damped least-squares proposal family; and
 /// Powell, "A Hybrid Method for Nonlinear Equations" (1970), for dogleg-style
-/// trust-region proposals.
+/// trust-region proposals; Broyden/Fletcher/Goldfarb/Shanno (1970) for BFGS;
+/// and Nocedal and Wright, *Numerical Optimization*, 2nd ed. (2006), for SQP.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ProposalEngineKind {
     /// Current dense damped least-squares implementation.
@@ -37,8 +38,15 @@ pub enum ProposalEngineKind {
     /// Trust-region dogleg proposal engine.
     Dogleg,
     /// Quasi-Newton BFGS proposal engine.
+    ///
+    /// This route retains a dense inverse-Hessian approximation across
+    /// iterations. It remains a lossy proposal engine, not an exact Hessian
+    /// certificate.
     Bfgs,
     /// Sequential quadratic programming proposal engine.
+    ///
+    /// The first implementation uses the equality least-squares QP relaxation
+    /// already exposed by the dense damped normal-equation adapter.
     Sqp,
 }
 
@@ -47,7 +55,12 @@ impl ProposalEngineKind {
     pub const fn is_implemented(self) -> bool {
         matches!(
             self,
-            Self::DampedLeastSquares | Self::PowellHybrid | Self::LevenbergMarquardt | Self::Dogleg
+            Self::DampedLeastSquares
+                | Self::PowellHybrid
+                | Self::LevenbergMarquardt
+                | Self::Dogleg
+                | Self::Bfgs
+                | Self::Sqp
         )
     }
 }
@@ -92,10 +105,9 @@ pub struct SolveReport {
     ///
     /// This makes the construction/proof boundary explicit. The current dense
     /// step supports the default damped least-squares route, the named
-    /// Levenberg-Marquardt route, and dense Powell-hybrid/dogleg routes; other
-    /// common geometric-constraint engines are represented as unsupported
-    /// proposal choices rather than silently falling back. Accepted coordinates
-    /// still require exact candidate certification; see Yap, "Towards Exact Geometric Computation,"
+    /// Levenberg-Marquardt route, dense Powell-hybrid/dogleg routes, BFGS, and
+    /// an equality-SQP relaxation. Accepted coordinates still require exact
+    /// candidate certification; see Yap, "Towards Exact Geometric Computation,"
     /// *Computational Geometry* 7.1-2 (1997).
     pub proposal_engine: ProposalEngineReport,
     pub residuals: Vec<ResidualEvaluation>,

@@ -95,30 +95,6 @@ fn symbolic_derivative_solves_one_variable_linear_equation() {
 }
 
 #[test]
-fn unsupported_proposal_engine_is_reported_without_dense_fallback() {
-    let x = Expr::symbol(SymbolId(0), "x");
-    let mut problem = Problem::default();
-    problem.add_variable("x", real(0));
-    problem.add_constraint(Constraint::equality("x minus two", x - Expr::int(2)));
-    let config = SolverConfig {
-        proposal_engine: ProposalEngineKind::Sqp,
-        ..SolverConfig::default()
-    };
-
-    let report = solve_damped_least_squares(SolverState { problem, config });
-
-    assert_eq!(report.reason, ConvergenceReason::UnsupportedProposalEngine);
-    assert_eq!(report.iterations, 0);
-    assert_eq!(report.proposal_engine.requested, ProposalEngineKind::Sqp);
-    assert_eq!(report.proposal_engine.used, None);
-    assert_eq!(
-        report.proposal_engine.precision,
-        ProposalEnginePrecision::Unsupported
-    );
-    assert!(report.linear_reports.is_empty());
-}
-
-#[test]
 fn dogleg_proposal_route_reports_named_lossy_adapter() {
     let x = Expr::symbol(SymbolId(0), "x");
     let mut problem = Problem::default();
@@ -170,6 +146,57 @@ fn powell_hybrid_proposal_route_reports_named_lossy_adapter() {
         report.proposal_engine.used,
         Some(ProposalEngineKind::PowellHybrid)
     );
+    assert_eq!(
+        report.proposal_engine.precision,
+        ProposalEnginePrecision::LossyF64
+    );
+    assert!(!report.linear_reports.is_empty());
+}
+
+#[test]
+fn bfgs_proposal_route_reports_named_lossy_adapter() {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let mut problem = Problem::default();
+    problem.add_variable("x", real(0));
+    problem.add_constraint(Constraint::equality("x minus two", x - Expr::int(2)));
+    let config = SolverConfig {
+        proposal_engine: ProposalEngineKind::Bfgs,
+        damping: real(1),
+        max_iterations: 4,
+        ..SolverConfig::default()
+    };
+
+    let report = solve_damped_least_squares(SolverState { problem, config });
+
+    assert_ne!(report.reason, ConvergenceReason::UnsupportedProposalEngine);
+    assert_eq!(report.proposal_engine.requested, ProposalEngineKind::Bfgs);
+    assert_eq!(report.proposal_engine.used, Some(ProposalEngineKind::Bfgs));
+    assert_eq!(
+        report.proposal_engine.precision,
+        ProposalEnginePrecision::LossyF64
+    );
+    assert!(!report.linear_reports.is_empty());
+    assert!(report.linear_reports.iter().all(|row| row.is_lossy()));
+}
+
+#[test]
+fn sqp_proposal_route_reports_named_lossy_adapter() {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let mut problem = Problem::default();
+    problem.add_variable("x", real(0));
+    problem.add_constraint(Constraint::equality("x minus two", x - Expr::int(2)));
+    let config = SolverConfig {
+        proposal_engine: ProposalEngineKind::Sqp,
+        damping: real(1),
+        max_iterations: 4,
+        ..SolverConfig::default()
+    };
+
+    let report = solve_damped_least_squares(SolverState { problem, config });
+
+    assert_ne!(report.reason, ConvergenceReason::UnsupportedProposalEngine);
+    assert_eq!(report.proposal_engine.requested, ProposalEngineKind::Sqp);
+    assert_eq!(report.proposal_engine.used, Some(ProposalEngineKind::Sqp));
     assert_eq!(
         report.proposal_engine.precision,
         ProposalEnginePrecision::LossyF64

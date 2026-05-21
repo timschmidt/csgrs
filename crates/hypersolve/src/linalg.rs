@@ -23,6 +23,11 @@ pub enum LinearAdapterKind {
     /// This is a lossy numerical edge. It is suitable for iteration steps and
     /// diagnostics, not for exact topology or symbolic rank decisions.
     DenseF64NormalEquations,
+    /// Dense primitive-float BFGS direction adapter.
+    ///
+    /// This is a lossy quasi-Newton proposal edge, not an exact Hessian or
+    /// convexity certificate.
+    DenseF64BfgsDirection,
 }
 
 /// Precision boundary crossed by a linear-solver adapter.
@@ -43,7 +48,9 @@ impl LinearAdapterKind {
     /// Return the precision boundary implied by this adapter.
     pub const fn precision(self) -> LinearAdapterPrecision {
         match self {
-            Self::DenseF64NormalEquations => LinearAdapterPrecision::LossyF64,
+            Self::DenseF64NormalEquations | Self::DenseF64BfgsDirection => {
+                LinearAdapterPrecision::LossyF64
+            }
         }
     }
 
@@ -123,6 +130,19 @@ pub trait LinearBackend {
         jacobian: &[Vec<f64>],
         residuals: &[f64],
         trust_radius: f64,
+    ) -> Result<(Vec<f64>, LinearSolveReport), LinearSolveError>;
+
+    /// Compute one dense BFGS proposal direction through `f64`.
+    ///
+    /// The inverse-Hessian approximation is supplied by the nonlinear solver
+    /// loop. This follows the quasi-Newton BFGS update family of Broyden,
+    /// Fletcher, Goldfarb, and Shanno (1970), but remains only a lossy
+    /// candidate-generation route; exact replay still decides acceptance.
+    fn solve_bfgs_direction(
+        &self,
+        inverse_hessian: &[Vec<f64>],
+        gradient: &[f64],
+        step_limit: f64,
     ) -> Result<(Vec<f64>, LinearSolveReport), LinearSolveError>;
 }
 
@@ -232,6 +252,43 @@ impl LinearBackend for DenseLinearBackend {
                 row_swaps: diagnostics.row_swaps,
                 min_abs_pivot: diagnostics.min_abs_pivot,
                 max_abs_pivot: diagnostics.max_abs_pivot,
+            },
+        ))
+    }
+
+    fn solve_bfgs_direction(
+        &self,
+        inverse_hessian: &[Vec<f64>],
+        gradient: &[f64],
+        step_limit: f64,
+    ) -> Result<(Vec<f64>, LinearSolveReport), LinearSolveError> {
+        if inverse_hessian.len() != gradient.len()
+            || inverse_hessian
+                .iter()
+                .any(|row| row.len() != gradient.len())
+        {
+            return Err(LinearSolveError::DimensionMismatch);
+        }
+        let mut step = mat_vec(inverse_hessian, gradient)
+            .into_iter()
+            .map(|value| -value)
+            .collect::<Vec<_>>();
+        let step_norm = norm2(&step);
+        let limit = step_limit.max(f64::EPSILON);
+        if step_norm > limit {
+            step = scaled(&step, limit / step_norm);
+        }
+        Ok((
+            step,
+            LinearSolveReport {
+                adapter: LinearAdapterKind::DenseF64BfgsDirection,
+                lossy: true,
+                rank_hint: Some(gradient.len()),
+                damping: step_limit,
+                pivot_count: 0,
+                row_swaps: 0,
+                min_abs_pivot: None,
+                max_abs_pivot: None,
             },
         ))
     }
