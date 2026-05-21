@@ -1075,6 +1075,10 @@ pub struct BezierBooleanLoopGraphMultiCycleWalkReport2 {
     pub supplied_successor_count: usize,
     /// Canonical start index of each accepted cycle in concatenated order.
     pub cycle_start_indices: Vec<usize>,
+    /// Start offset of each accepted cycle in [`Self::walk_indices`].
+    pub cycle_walk_start_offsets: Vec<usize>,
+    /// Number of emitted fragments in each accepted cycle.
+    pub cycle_step_counts: Vec<usize>,
     /// Number of accepted closed cycles.
     pub cycle_count: usize,
     /// Certified emitted-fragment indices in concatenated cycle order.
@@ -6089,16 +6093,21 @@ impl BezierBooleanLoopGraphMultiCycleWalkReport2 {
 
         let mut visited = vec![false; emitted_step_count];
         let mut cycle_start_indices = Vec::new();
+        let mut cycle_walk_start_offsets = Vec::new();
+        let mut cycle_step_counts = Vec::new();
         let mut walk_indices = Vec::with_capacity(emitted_step_count);
         for start_step_index in 0..emitted_step_count {
             if visited[start_step_index] {
                 continue;
             }
             cycle_start_indices.push(start_step_index);
+            let cycle_walk_start_offset = walk_indices.len();
+            cycle_walk_start_offsets.push(cycle_walk_start_offset);
             let mut current = start_step_index;
             loop {
                 if visited[current] {
                     if current == start_step_index {
+                        cycle_step_counts.push(walk_indices.len() - cycle_walk_start_offset);
                         break;
                     }
                     return Self::empty_like(
@@ -6144,6 +6153,8 @@ impl BezierBooleanLoopGraphMultiCycleWalkReport2 {
             emitted_step_count,
             supplied_successor_count: successor_facts.len(),
             cycle_start_indices,
+            cycle_walk_start_offsets,
+            cycle_step_counts,
             cycle_count,
             ordered_steps: walk_indices
                 .iter()
@@ -6180,6 +6191,8 @@ impl BezierBooleanLoopGraphMultiCycleWalkReport2 {
             emitted_step_count: plan.emitted_steps.len(),
             supplied_successor_count,
             cycle_start_indices: Vec::new(),
+            cycle_walk_start_offsets: Vec::new(),
+            cycle_step_counts: Vec::new(),
             cycle_count: 0,
             walk_indices: Vec::new(),
             ordered_steps: Vec::new(),
@@ -7020,6 +7033,27 @@ impl BezierBooleanLoopClosureReport2 {
         Self::from_fragment_endpoints(&ordered_plan, first_endpoints, second_endpoints)
     }
 
+    /// Audits closure after applying a certified multi-cycle successor walk.
+    ///
+    /// This is the closure-stage counterpart to
+    /// [`BezierBooleanLoopGraphMultiCycleWalkReport2`]. The successor report
+    /// remains the only source of traversal topology: this method simply
+    /// replays its exact emitted-step order through the graph-walk closure
+    /// path, preserving blockers when the successor certificate is not ready.
+    /// Yap, "Towards Exact Geometric Computation" (1997), is the contract: no
+    /// endpoint tolerance or vector-order guess may substitute for the keyed
+    /// successor certificate.
+    pub fn from_multi_cycle_successor_endpoints(
+        multi_cycle: &BezierBooleanLoopGraphMultiCycleWalkReport2,
+        traversal: &BezierBooleanLoopGraphTraversalReport2,
+        plan: &BezierBooleanLoopAssemblyPlanReport2,
+        first_endpoints: &[(Point2, Point2)],
+        second_endpoints: &[(Point2, Point2)],
+    ) -> Self {
+        let walk = multi_cycle.to_graph_walk_report(traversal, plan);
+        Self::from_graph_walk_endpoints(&walk, plan, first_endpoints, second_endpoints)
+    }
+
     /// Audits loop closure against quadratic Bezier fragments.
     pub fn from_quadratic_fragments(
         plan: &BezierBooleanLoopAssemblyPlanReport2,
@@ -7266,6 +7300,39 @@ impl BezierBooleanOutputLoopReport2 {
             second_endpoints,
         );
         Self::from_loop_closure(&closure)
+    }
+
+    /// Packages output loops from a certified multi-cycle successor walk.
+    ///
+    /// The multi-cycle successor report supplies both the exact emitted-step
+    /// order and the cycle boundaries. After endpoint closure succeeds, this
+    /// constructor checks that packaged output-loop ranges match those
+    /// certified cycle boundaries. A mismatch is reported as malformed closed
+    /// loops rather than silently accepting endpoint evidence that merged or
+    /// split graph cycles. This follows Yap (1997): every construction must be
+    /// justified by the certificate at the boundary where it is consumed.
+    pub fn from_multi_cycle_successor_endpoints(
+        multi_cycle: &BezierBooleanLoopGraphMultiCycleWalkReport2,
+        traversal: &BezierBooleanLoopGraphTraversalReport2,
+        plan: &BezierBooleanLoopAssemblyPlanReport2,
+        first_endpoints: &[(Point2, Point2)],
+        second_endpoints: &[(Point2, Point2)],
+    ) -> Self {
+        let closure = BezierBooleanLoopClosureReport2::from_multi_cycle_successor_endpoints(
+            multi_cycle,
+            traversal,
+            plan,
+            first_endpoints,
+            second_endpoints,
+        );
+        let mut output = Self::from_loop_closure(&closure);
+        if output.status == BezierBooleanOutputLoopStatus::Ready
+            && !output_loop_ranges_match_multi_cycle_walk(&output, multi_cycle)
+        {
+            output.status = BezierBooleanOutputLoopStatus::MalformedClosedLoops;
+            output.blocker_count = output.blocker_count.max(1);
+        }
+        output
     }
 
     /// Packages exactly closed directed fragments into output-loop records.
@@ -13651,6 +13718,35 @@ fn collect_output_loop_ranges(
     }
 
     loops
+}
+
+fn output_loop_ranges_match_multi_cycle_walk(
+    output: &BezierBooleanOutputLoopReport2,
+    multi_cycle: &BezierBooleanLoopGraphMultiCycleWalkReport2,
+) -> bool {
+    if multi_cycle.status != BezierBooleanLoopGraphMultiCycleWalkStatus::Ready {
+        return false;
+    }
+    if output.loops.len() != multi_cycle.cycle_count
+        || multi_cycle.cycle_walk_start_offsets.len() != multi_cycle.cycle_count
+        || multi_cycle.cycle_step_counts.len() != multi_cycle.cycle_count
+    {
+        return false;
+    }
+
+    output
+        .loops
+        .iter()
+        .zip(
+            multi_cycle
+                .cycle_walk_start_offsets
+                .iter()
+                .zip(&multi_cycle.cycle_step_counts),
+        )
+        .all(|(output_loop, (start_offset, step_count))| {
+            output_loop.first_directed_fragment_index == *start_offset
+                && output_loop.directed_fragment_count == *step_count
+        })
 }
 
 fn split_quadratic_at_sorted_parameters(

@@ -1648,7 +1648,24 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     &plan,
                     &successors,
                 );
-                format!("{single:?}{multi:?}")
+                let first_endpoints = first
+                    .fragments
+                    .iter()
+                    .map(|fragment| (fragment.start().clone(), fragment.end().clone()))
+                    .collect::<Vec<_>>();
+                let second_endpoints = second
+                    .fragments
+                    .iter()
+                    .map(|fragment| (fragment.start().clone(), fragment.end().clone()))
+                    .collect::<Vec<_>>();
+                let output = BezierBooleanOutputLoopReport2::from_multi_cycle_successor_endpoints(
+                    &multi,
+                    &traversal,
+                    &plan,
+                    &first_endpoints,
+                    &second_endpoints,
+                );
+                format!("{single:?}{multi:?}{output:?}")
             }
             other => format!("{other:?}"),
         };

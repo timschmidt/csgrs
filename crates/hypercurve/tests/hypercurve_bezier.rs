@@ -7541,6 +7541,8 @@ fn bezier_boolean_loop_graph_multi_cycle_successor_facts_accept_disjoint_cycles(
     assert!(multi.is_ready());
     assert!(!multi.has_blockers());
     assert_eq!(multi.cycle_start_indices, vec![0, 2]);
+    assert_eq!(multi.cycle_walk_start_offsets, vec![0, 2]);
+    assert_eq!(multi.cycle_step_counts, vec![2, 2]);
     assert_eq!(multi.cycle_count, 2);
     assert_eq!(multi.walk_indices, vec![0, 1, 2, 3]);
     assert_eq!(multi.ordered_steps[2].step.fragment_index, 2);
@@ -7548,6 +7550,44 @@ fn bezier_boolean_loop_graph_multi_cycle_successor_facts_accept_disjoint_cycles(
     let walk = multi.to_graph_walk_report(&traversal, &plan);
     assert_eq!(walk.status, BezierBooleanLoopGraphWalkStatus::Ready);
     assert_eq!(walk.walk_indices, vec![0, 1, 2, 3]);
+
+    let output = BezierBooleanOutputLoopReport2::from_multi_cycle_successor_endpoints(
+        &multi,
+        &traversal,
+        &plan,
+        &[
+            (point(0, 0), point(1, 0)),
+            (point(1, 0), point(0, 0)),
+            (point(10, 0), point(11, 0)),
+            (point(11, 0), point(10, 0)),
+        ],
+        &[],
+    );
+    assert_eq!(output.status, BezierBooleanOutputLoopStatus::Ready);
+    assert_eq!(output.loops.len(), 2);
+    assert_eq!(output.loops[0].first_directed_fragment_index, 0);
+    assert_eq!(output.loops[0].directed_fragment_count, 2);
+    assert_eq!(output.loops[1].first_directed_fragment_index, 2);
+    assert_eq!(output.loops[1].directed_fragment_count, 2);
+
+    let merged_endpoint_evidence =
+        BezierBooleanOutputLoopReport2::from_multi_cycle_successor_endpoints(
+            &multi,
+            &traversal,
+            &plan,
+            &[
+                (point(0, 0), point(1, 0)),
+                (point(1, 0), point(2, 0)),
+                (point(2, 0), point(3, 0)),
+                (point(3, 0), point(0, 0)),
+            ],
+            &[],
+        );
+    assert_eq!(
+        merged_endpoint_evidence.status,
+        BezierBooleanOutputLoopStatus::MalformedClosedLoops
+    );
+    assert!(merged_endpoint_evidence.has_blockers());
 }
 
 #[test]
@@ -14950,6 +14990,13 @@ proptest! {
                 .map(|cycle_index| cycle_index * cycle_len)
                 .collect::<Vec<_>>()
         );
+        prop_assert_eq!(
+            &report.cycle_walk_start_offsets,
+            &(0..cycle_count)
+                .map(|cycle_index| cycle_index * cycle_len)
+                .collect::<Vec<_>>()
+        );
+        prop_assert_eq!(&report.cycle_step_counts, &vec![cycle_len; cycle_count]);
         prop_assert_eq!(&report.walk_indices, &(0..step_count).collect::<Vec<_>>());
         prop_assert!(report.is_ready());
         prop_assert!(!report.has_blockers());
@@ -14957,6 +15004,39 @@ proptest! {
         let walk = report.to_graph_walk_report(&traversal, &plan);
         prop_assert_eq!(walk.status, BezierBooleanLoopGraphWalkStatus::Ready);
         prop_assert_eq!(walk.ordered_steps.len(), step_count);
+
+        let endpoints = (0..cycle_count)
+            .flat_map(|cycle_index| {
+                let x = (cycle_index as i32) * 10;
+                (0..cycle_len).map(move |offset| {
+                    let start = point(x + offset as i32, 0);
+                    let end = if offset + 1 == cycle_len {
+                        point(x, 0)
+                    } else {
+                        point(x + offset as i32 + 1, 0)
+                    };
+                    (start, end)
+                })
+            })
+            .collect::<Vec<_>>();
+        let output = BezierBooleanOutputLoopReport2::from_multi_cycle_successor_endpoints(
+            &report,
+            &traversal,
+            &plan,
+            &endpoints,
+            &[],
+        );
+        prop_assert_eq!(output.status, BezierBooleanOutputLoopStatus::Ready);
+        prop_assert_eq!(output.loops.len(), cycle_count);
+        let ranges_match = output
+            .loops
+            .iter()
+            .zip(report.cycle_walk_start_offsets.iter().zip(&report.cycle_step_counts))
+            .all(|(output_loop, (start_offset, step_count))| {
+                output_loop.first_directed_fragment_index == *start_offset
+                    && output_loop.directed_fragment_count == *step_count
+            });
+        prop_assert!(ranges_match);
     }
 
     #[test]
