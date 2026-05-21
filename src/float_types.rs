@@ -988,7 +988,7 @@ pub(crate) fn hreal_abs(value: Real) -> Option<Real> {
 /// Return the finite square root of a public boundary scalar.
 pub(crate) fn hreal_sqrt(value: Real) -> Option<Real> {
     let value = hreal_from_f64(value).ok()?;
-    hreal_to_f64(&value.sqrt().ok()?)
+    hreal_sqrt_to_f64(&value)
 }
 
 /// Return the finite square root of an already-promoted hyperreal value.
