@@ -1,3 +1,3 @@
 fn main() {
-    println!("Hello, world!");
+    println!("hyperbrep: exact BREP evidence carriers live in the library API");
 }
