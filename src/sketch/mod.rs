@@ -253,13 +253,25 @@ impl<M: Clone + Send + Sync + Debug> Profile<M> {
             .flat_map(|ring| ring.iter())
             .chain(wire_polylines.iter().flat_map(|wire| wire.points()));
         let first = iter.next()?;
+        hreal_from_f64(first[0]).ok()?;
+        hreal_from_f64(first[1]).ok()?;
         let (mut min_x, mut min_y, mut max_x, mut max_y) =
             (first[0], first[1], first[0], first[1]);
         for point in iter {
-            min_x = min_x.min(point[0]);
-            min_y = min_y.min(point[1]);
-            max_x = max_x.max(point[0]);
-            max_y = max_y.max(point[1]);
+            hreal_from_f64(point[0]).ok()?;
+            hreal_from_f64(point[1]).ok()?;
+            if matches!(hreal_cmp_f64(point[0], min_x), Ordering::Less) {
+                min_x = point[0];
+            }
+            if matches!(hreal_cmp_f64(point[1], min_y), Ordering::Less) {
+                min_y = point[1];
+            }
+            if matches!(hreal_cmp_f64(point[0], max_x), Ordering::Greater) {
+                max_x = point[0];
+            }
+            if matches!(hreal_cmp_f64(point[1], max_y), Ordering::Greater) {
+                max_y = point[1];
+            }
         }
         Some((min_x, min_y, max_x, max_y))
     }
@@ -290,9 +302,11 @@ impl<M: Clone + Send + Sync + Debug> Profile<M> {
         let options = FiniteProjectionOptions::try_new(1e-3)
             .expect("positive finite projection tolerance");
         match region.project_to_finite_profiles(&options, &CurvePolicy::certified()) {
-            Ok(Classification::Decided(profiles)) => profiles
-                .iter()
-                .any(|profile| profile.projected_filled_area().abs() > tolerance()),
+            Ok(Classification::Decided(profiles)) => profiles.iter().any(|profile| {
+                hreal_abs(profile.projected_filled_area())
+                    .map(|area| matches!(hreal_cmp_f64(area, tolerance()), Ordering::Greater))
+                    .unwrap_or(false)
+            }),
             Ok(Classification::Uncertain(_)) | Err(_) => false,
         }
     }
