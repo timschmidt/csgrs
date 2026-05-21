@@ -807,6 +807,16 @@ pub(crate) fn hreal_mul(lhs: Real, rhs: Real) -> Option<Real> {
     hreal_to_f64(&(lhs * rhs))
 }
 
+/// Return the finite absolute value of a public boundary scalar.
+#[cfg(any(test, feature = "sketch"))]
+pub(crate) fn hreal_abs(value: Real) -> Option<Real> {
+    let value = hreal_from_f64(value).ok()?;
+    match hreal_sign(&value)? {
+        RealSign::Negative => hreal_to_f64(&(HReal::zero() - value)),
+        RealSign::Positive | RealSign::Zero => hreal_to_f64(&value),
+    }
+}
+
 /// Return the finite square root of a public boundary scalar.
 pub(crate) fn hreal_sqrt(value: Real) -> Option<Real> {
     let value = hreal_from_f64(value).ok()?;
@@ -1150,6 +1160,8 @@ mod tests {
         assert_eq!(hreal_div(6.0, 3.0).unwrap(), 2.0);
         assert_eq!(hreal_sub(7.0, 4.0).unwrap(), 3.0);
         assert_eq!(hreal_mul(2.0, 3.0).unwrap(), 6.0);
+        assert_eq!(hreal_abs(-3.0).unwrap(), 3.0);
+        assert_eq!(hreal_abs(0.0).unwrap(), 0.0);
         assert_eq!(hreal_sqrt(25.0).unwrap(), 5.0);
         assert_eq!(hreal_clamp_f64(2.0, -1.0, 1.0).unwrap(), 1.0);
         assert_eq!(hreal_clamp_f64(-2.0, -1.0, 1.0).unwrap(), -1.0);
@@ -1187,6 +1199,7 @@ mod tests {
         assert!(hreal_mean(&[1.0, Real::NAN]).is_none());
         assert!(hreal_sample_stddev(&[1.0, Real::INFINITY]).is_none());
         assert!(hangle_sin_cos(Real::INFINITY).is_none());
+        assert!(hreal_abs(Real::NAN).is_none());
         assert!(hreal_sqrt(-1.0).is_none());
         assert!(hreal_clamp_f64(Real::NAN, -1.0, 1.0).is_none());
         assert!(hreal_clamp_f64(0.0, 1.0, -1.0).is_none());

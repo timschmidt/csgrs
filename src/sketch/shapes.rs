@@ -2,9 +2,9 @@
 
 use crate::csg::CSG;
 use crate::float_types::{
-    FRAC_PI_2, PI, Real, TAU, hangle_sin_cos, hdegrees_to_radians, hreal_affine,
-    hreal_cmp_f64, hreal_div, hreal_f64s_within_epsilon, hreal_from_f64, hreal_mul, hreal_sub,
-    hreal_sum, hxy_lerp, tolerance,
+    FRAC_PI_2, PI, Real, TAU, hangle_sin_cos, hdegrees_to_radians, hreal_abs, hreal_affine,
+    hreal_cmp_f64, hreal_div, hreal_f64s_within_epsilon, hreal_from_f64, hreal_mul,
+    hreal_sqrt, hreal_sub, hreal_sum, hxy_lerp, tolerance,
 };
 use crate::sketch::Profile;
 use hypercurve::{Contour2, CurveString2, LineSeg2, Point2, Segment2};
@@ -76,6 +76,14 @@ fn hfinite_min_max(values: impl IntoIterator<Item = Real>) -> Option<(Real, Real
         }
     }
     Some((min, max))
+}
+
+fn hsigned_sqrt_abs(value: Real) -> Option<Real> {
+    let magnitude = hreal_sqrt(hreal_abs(value)?)?;
+    match hreal_cmp_f64(value, 0.0) {
+        Ordering::Less => hreal_sub(0.0, magnitude),
+        Ordering::Equal | Ordering::Greater => Some(magnitude),
+    }
 }
 
 impl<M: Clone + Debug + Send + Sync> Profile<M> {
@@ -598,21 +606,38 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
 
     /// Squircle (superellipse) centered at (0,0) with bounding box width×height.
     /// We use an exponent = 4.0 for "classic" squircle shape. `segments` controls the resolution.
+    ///
+    /// This is Lamé's superellipse specialized to exponent 4. The sampled
+    /// signed square-root form is evaluated through hyperreal helpers before
+    /// the finite ring is exported to hypercurve, following Yap, "Towards
+    /// Exact Geometric Computation," *Computational Geometry* 7(1-2), 1997
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>). See also Lamé,
+    /// *Examen des différentes méthodes employées pour résoudre les problèmes
+    /// de géométrie*, 1818.
     pub fn squircle(width: Real, height: Real, segments: usize, metadata: M) -> Profile<M> {
-        if segments < 3 {
+        if segments < 3 || !finite_profile_scalars(&[width, height]) {
             return Profile::empty(metadata);
         }
-        let rx = 0.5 * width;
-        let ry = 0.5 * height;
-        let m = 4.0;
-        let points = (0..segments)
-            .map(|i| {
-                let t = TAU * (i as Real) / (segments as Real);
-                let ct = t.cos().abs().powf(2.0 / m) * t.cos().signum();
-                let st = t.sin().abs().powf(2.0 / m) * t.sin().signum();
-                [rx * ct, ry * st]
-            })
-            .collect();
+        let (Some(rx), Some(ry)) = (hreal_mul(0.5, width), hreal_mul(0.5, height)) else {
+            return Profile::empty(metadata);
+        };
+        let mut points = Vec::with_capacity(segments);
+        for i in 0..segments {
+            let Some(t) = hsample_angle(i, segments, 0.0, TAU) else {
+                return Profile::empty(metadata);
+            };
+            let Some((sin_t, cos_t)) = hangle_sin_cos(t) else {
+                return Profile::empty(metadata);
+            };
+            let (Some(ct), Some(st)) = (hsigned_sqrt_abs(cos_t), hsigned_sqrt_abs(sin_t))
+            else {
+                return Profile::empty(metadata);
+            };
+            let (Some(x), Some(y)) = (hreal_mul(rx, ct), hreal_mul(ry, st)) else {
+                return Profile::empty(metadata);
+            };
+            points.push([x, y]);
+        }
 
         Self::polygonal_region(points, metadata)
     }
