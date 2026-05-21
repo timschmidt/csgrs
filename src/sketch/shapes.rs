@@ -3,7 +3,7 @@
 use crate::csg::CSG;
 use crate::float_types::{
     FRAC_PI_2, PI, Real, TAU, hangle_sin_cos, hdegrees_to_radians, hreal_abs, hreal_affine,
-    hreal_cmp_f64, hreal_div, hreal_f64s_within_epsilon, hreal_from_f64, hreal_mul,
+    hreal_cmp_f64, hreal_div, hreal_f64s_within_epsilon, hreal_from_f64, hreal_mul, hreal_pow,
     hreal_sqrt, hreal_sub, hreal_sum, hxy_lerp, tolerance,
 };
 use crate::sketch::Profile;
@@ -84,6 +84,10 @@ fn hsigned_sqrt_abs(value: Real) -> Option<Real> {
         Ordering::Less => hreal_sub(0.0, magnitude),
         Ordering::Equal | Ordering::Greater => Some(magnitude),
     }
+}
+
+fn hfinite_nonzero(value: Real) -> bool {
+    hreal_from_f64(value).is_ok() && !matches!(hreal_cmp_f64(value, 0.0), Ordering::Equal)
 }
 
 impl<M: Clone + Debug + Send + Sync> Profile<M> {
@@ -813,6 +817,14 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// The superformula parameters are typically:
     ///   r(θ) = [ (|cos(mθ/4)/a|^n2 + |sin(mθ/4)/b|^n3) ^ (-1/n1) ]
     /// Adjust as needed for your use-case.
+    ///
+    /// Radius sampling follows Gielis' superformula, introduced in "A generic
+    /// geometric transformation that unifies a wide range of natural and
+    /// abstract shapes," *American Journal of Botany* 90(3), 2003
+    /// (<https://doi.org/10.3732/ajb.90.3.333>). The scalar path is promoted to
+    /// hyperreal arithmetic before the finite ring is exported to hypercurve,
+    /// following Yap's exact-geometric-computation boundary discipline
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     #[allow(clippy::too_many_arguments)]
     pub fn supershape(
         a: Real,
@@ -824,11 +836,15 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         segments: usize,
         metadata: M,
     ) -> Profile<M> {
-        if segments < 3 {
+        if segments < 3
+            || !finite_profile_scalars(&[a, b, m, n1, n2, n3])
+            || !hfinite_nonzero(a)
+            || !hfinite_nonzero(b)
+            || !hfinite_nonzero(n1)
+        {
             return Profile::empty(metadata);
         }
 
-        // The typical superformula radius function
         fn supershape_r(
             theta: Real,
             a: Real,
@@ -837,24 +853,34 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
             n1: Real,
             n2: Real,
             n3: Real,
-        ) -> Real {
+        ) -> Option<Real> {
             // r(θ) = [ |cos(mθ/4)/a|^n2 + |sin(mθ/4)/b|^n3 ]^(-1/n1)
-            let t = m * theta * 0.25;
-            let cos_t = t.cos().abs();
-            let sin_t = t.sin().abs();
-            let term1 = (cos_t / a).powf(n2);
-            let term2 = (sin_t / b).powf(n3);
-            (term1 + term2).powf(-1.0 / n1)
+            let t = hreal_mul(hreal_mul(m, theta)?, 0.25)?;
+            let (sin_t, cos_t) = hangle_sin_cos(t)?;
+            let cos_term = hreal_abs(hreal_div(cos_t, a)?)?;
+            let sin_term = hreal_abs(hreal_div(sin_t, b)?)?;
+            let term1 = hreal_pow(cos_term, n2)?;
+            let term2 = hreal_pow(sin_term, n3)?;
+            let sum = hreal_sum(&[term1, term2])?;
+            let exponent = hreal_div(-1.0, n1)?;
+            hreal_pow(sum, exponent)
         }
 
         let mut points = Vec::with_capacity(segments);
         for i in 0..segments {
-            let frac = i as Real / (segments as Real);
-            let theta = TAU * frac;
-            let r = supershape_r(theta, a, b, m, n1, n2, n3);
+            let Some(theta) = hsample_angle(i, segments, 0.0, TAU) else {
+                return Profile::empty(metadata);
+            };
+            let Some(r) = supershape_r(theta, a, b, m, n1, n2, n3) else {
+                return Profile::empty(metadata);
+            };
 
-            let x = r * theta.cos();
-            let y = r * theta.sin();
+            let Some((sin_theta, cos_theta)) = hangle_sin_cos(theta) else {
+                return Profile::empty(metadata);
+            };
+            let (Some(x), Some(y)) = (hreal_mul(r, cos_theta), hreal_mul(r, sin_theta)) else {
+                return Profile::empty(metadata);
+            };
             points.push([x, y]);
         }
 
