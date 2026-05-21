@@ -27,7 +27,9 @@
 //! simple finite profile projections rather than importing a separate skeleton
 //! geometry model.
 
-use crate::float_types::{Real, hreal_from_f64, hreal_sign};
+use crate::float_types::{
+    Real, hreal_abs, hreal_cmp_f64, hreal_from_f64, hreal_sign, tolerance,
+};
 use crate::sketch::Profile;
 use hypercurve::{
     Classification, Contour2, CurvePolicy, CurveString2, FiniteRegionProfile2, OffsetCap,
@@ -61,7 +63,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// (1997) while preserving the zero-radius offset identity discussed in
     /// Farouki and Neff (1990).
     fn native_zero_offset(&self, distance: Real) -> Option<Profile<M>> {
-        (distance == 0.0).then(|| {
+        matches!(hreal_cmp_f64(distance, 0.0), std::cmp::Ordering::Equal).then(|| {
             Profile::from_region_and_wires_with_origin(
                 self.region.clone(),
                 self.wires.clone(),
@@ -85,14 +87,16 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     ) -> Option<Profile<M>> {
         if !self.region.is_empty()
             || self.wires.is_empty()
-            || !distance.is_finite()
-            || distance <= crate::float_types::tolerance()
+            || !matches!(
+                hreal_cmp_f64(distance, tolerance()),
+                std::cmp::Ordering::Greater
+            )
         {
             return None;
         }
 
         let policy = CurvePolicy::certified();
-        let half_width = hreal_from_f64(distance.abs()).ok()?;
+        let half_width = hreal_from_f64(hreal_abs(distance)?).ok()?;
         let mut contours = Vec::with_capacity(self.wires.len());
         for wire in &self.wires {
             let contour = match wire.offset_outline(half_width.clone(), cap, &policy).ok()? {
