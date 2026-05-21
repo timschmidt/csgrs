@@ -163,7 +163,8 @@ pub use sketch::{
     SketchLineSegment2, SketchLoweringReport, SketchNormal2, SketchNormal3, SketchParameter,
     SketchParameterHandle, SketchPoint2, SketchPoint3, SketchResidualForm, SketchResidualFormKind,
     SketchResidualFormRole, SketchResidualFormsReport, SketchResidualFormsStatus,
-    SketchResidualStrategy, SketchSolveProblem, SketchWorkplane,
+    SketchResidualStrategy, SketchRoundTripMetadata, SketchRoundTripRole, SketchSolveProblem,
+    SketchWorkplane,
 };
 pub use sketch_builders::{
     SketchConstraintBuildReport, SketchConstraintFamily, distance as sketch_distance_builders,

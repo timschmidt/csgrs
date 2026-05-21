@@ -172,6 +172,33 @@ fn sketch_problem(row_count: usize) -> hypersolve::SketchSolveProblem {
     sketch
 }
 
+fn sketch_problem_with_metadata(row_count: usize) -> hypersolve::SketchSolveProblem {
+    let mut sketch = sketch_problem(row_count);
+    for index in 0..sketch.parameters().len() {
+        let handle = sketch.parameters()[index].handle;
+        sketch.set_parameter_metadata(
+            handle,
+            hypersolve::SketchRoundTripMetadata {
+                source_unit: Some("mm".to_owned()),
+                display_label: Some(format!("p{index}")),
+                ..hypersolve::SketchRoundTripMetadata::default()
+            },
+        );
+    }
+    for index in 0..sketch.constraints().len() {
+        let handle = sketch.constraints()[index].handle;
+        sketch.set_constraint_metadata(
+            handle,
+            hypersolve::SketchRoundTripMetadata {
+                display_label: Some(format!("constraint {index}")),
+                lossy_adapter_label: Some("bench adapter".to_owned()),
+                ..hypersolve::SketchRoundTripMetadata::default()
+            },
+        );
+    }
+    sketch
+}
+
 fn unary_endpoint_expression(row_count: usize) -> Expr {
     let mut expression = Expr::zero();
     for index in 1..=row_count {
@@ -200,6 +227,10 @@ fn certification(c: &mut Criterion) {
     let sketch = sketch_problem(16);
     c.bench_function("sketch_lower_to_problem", |b| {
         b.iter(|| sketch.lower_to_problem())
+    });
+    let metadata_sketch = sketch_problem_with_metadata(16);
+    c.bench_function("sketch_round_trip_metadata_lowering", |b| {
+        b.iter(|| metadata_sketch.lower_to_problem())
     });
     let form_handles = sketch
         .constraints()

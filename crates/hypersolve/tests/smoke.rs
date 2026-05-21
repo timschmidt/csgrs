@@ -9,8 +9,9 @@ use hypersolve::{
     PreparedSolverBlock, Problem, ProposalEngineKind, ProposalEnginePrecision, RootIsolationStatus,
     RootMultiplicityStatus, SketchConstraintKind, SketchEntityHandle, SketchEntityKind,
     SketchGeneratedRowStatus, SketchResidualFormKind, SketchResidualFormRole,
-    SketchResidualFormsStatus, SketchResidualStrategy, SketchSolveProblem, SolverBlockRowKind,
-    SolverConfig, SolverPoint2, SolverState, SymbolId, VariableBall, analyze_exact_affine_rank,
+    SketchResidualFormsStatus, SketchResidualStrategy, SketchRoundTripMetadata,
+    SketchRoundTripRole, SketchSolveProblem, SolverBlockRowKind, SolverConfig, SolverPoint2,
+    SolverState, SymbolId, VariableBall, analyze_exact_affine_rank,
     apply_equality_substitution_classes, apply_equality_substitutions,
     build_equality_substitution_classes, certify_affine_interval_candidate,
     certify_affine_krawczyk_box, certify_candidate, certify_candidate_domains,
@@ -332,6 +333,73 @@ fn sketch_compatibility_fixtures_are_license_clean_and_exactly_certified() {
         assert_eq!(replay.kind, fixture.kind);
         assert!(replay.is_certified_fixture(fixture.expected_generated_rows));
     }
+}
+
+#[test]
+fn sketch_round_trip_metadata_preserves_editor_fields_without_forcing_proof_rows() {
+    let mut sketch = SketchSolveProblem::new();
+    let a = sketch.add_point2d("a", real(0), real(0));
+    let b = sketch.add_point2d("b", real(5), real(0));
+    let distance = sketch.add_distance("displayed distance", real(5));
+    let constraint = sketch.add_point_point_distance("reference length", a, b, distance);
+
+    assert!(sketch.set_entity_metadata(
+        a,
+        SketchRoundTripMetadata {
+            display_label: Some("construction origin".to_owned()),
+            comment: Some("imported construction point".to_owned()),
+            role: SketchRoundTripRole::Construction,
+            ..SketchRoundTripMetadata::default()
+        },
+    ));
+    assert!(sketch.set_parameter_metadata(
+        sketch.parameters()[0].handle,
+        SketchRoundTripMetadata {
+            source_unit: Some("mm".to_owned()),
+            display_label: Some("a.x".to_owned()),
+            ..SketchRoundTripMetadata::default()
+        },
+    ));
+    assert!(sketch.set_constraint_metadata(
+        constraint,
+        SketchRoundTripMetadata {
+            source_unit: Some("mm".to_owned()),
+            display_label: Some("5.000 mm".to_owned()),
+            comment: Some("display/reference dimension".to_owned()),
+            role: SketchRoundTripRole::ReferenceDimension,
+            lossy_adapter_label: Some("SolveSpace-compatible UI dimension".to_owned()),
+        },
+    ));
+    assert!(!sketch.set_constraint_metadata(
+        hypersolve::SketchConstraintHandle(999),
+        SketchRoundTripMetadata::default(),
+    ));
+
+    assert_eq!(
+        sketch.entities()[a.0 as usize].metadata.role,
+        SketchRoundTripRole::Construction
+    );
+    assert_eq!(
+        sketch.parameters()[0].metadata.source_unit.as_deref(),
+        Some("mm")
+    );
+    assert!(sketch.constraints()[constraint.0 as usize].reference);
+    assert_eq!(
+        sketch.constraints()[constraint.0 as usize]
+            .metadata
+            .lossy_adapter_label
+            .as_deref(),
+        Some("SolveSpace-compatible UI dimension")
+    );
+
+    let lowered = sketch.lower_to_problem();
+
+    assert_eq!(lowered.problem.constraints.len(), 0);
+    assert_eq!(lowered.rows.len(), 1);
+    assert_eq!(
+        lowered.rows[0].status,
+        SketchGeneratedRowStatus::ReferenceOnly
+    );
 }
 
 #[test]

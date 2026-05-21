@@ -33,6 +33,44 @@ pub struct SketchConstraintHandle(pub u32);
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct SketchGroupHandle(pub u32);
 
+/// Editor/API metadata retained across sketch lowering.
+///
+/// These fields are intentionally descriptive data, not solver tolerances.
+/// Source units and displayed labels may guide UI round-tripping or proposal
+/// engines, but exact residual replay remains the proof boundary, following
+/// Yap, "Towards Exact Geometric Computation" (1997). The metadata mirrors the
+/// SolveSpace-style need to round-trip reference dimensions, construction
+/// geometry, and comments without turning every annotation into an equation.
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
+pub struct SketchRoundTripMetadata {
+    /// Source unit label such as `"mm"`, `"inch"`, or `"rad"`.
+    pub source_unit: Option<String>,
+    /// UI/display label supplied by an editor or importer.
+    pub display_label: Option<String>,
+    /// Human-readable comment that should not generate residual rows.
+    pub comment: Option<String>,
+    /// Whether this object is normal geometry, construction-only geometry, a
+    /// reference dimension, or a diagnostic/comment object.
+    pub role: SketchRoundTripRole,
+    /// Optional lossy proposal adapter label for diagnostics.
+    pub lossy_adapter_label: Option<String>,
+}
+
+/// Round-trip role for sketch objects.
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub enum SketchRoundTripRole {
+    /// Ordinary solving geometry or constraint data.
+    #[default]
+    Normal,
+    /// Construction geometry retained for editing but not necessarily exported
+    /// as manufacturing geometry.
+    Construction,
+    /// Reference/display dimension that should not create proof obligations.
+    ReferenceDimension,
+    /// Diagnostic/comment-only object.
+    DiagnosticOnly,
+}
+
 /// A retained scalar parameter before lowering to a solver variable.
 #[derive(Clone, Debug, PartialEq)]
 pub struct SketchParameter {
@@ -46,6 +84,8 @@ pub struct SketchParameter {
     pub value: Real,
     /// Whether proposal engines should treat this parameter as fixed.
     pub fixed: bool,
+    /// Editor/API round-trip metadata.
+    pub metadata: SketchRoundTripMetadata,
 }
 
 /// Point entity in a two-dimensional workplane.
@@ -191,6 +231,8 @@ pub struct SketchEntity {
     pub name: String,
     /// Entity payload.
     pub kind: SketchEntityKind,
+    /// Editor/API round-trip metadata.
+    pub metadata: SketchRoundTripMetadata,
 }
 
 /// Retained high-level sketch constraint families.
@@ -246,6 +288,8 @@ pub struct SketchConstraint {
     pub active: bool,
     /// High-level constraint payload.
     pub kind: SketchConstraintKind,
+    /// Editor/API round-trip metadata.
+    pub metadata: SketchRoundTripMetadata,
 }
 
 /// Residual proof strategy selected while lowering a semantic constraint.
@@ -420,8 +464,26 @@ impl SketchSolveProblem {
             name: name.into(),
             value,
             fixed: false,
+            metadata: SketchRoundTripMetadata::default(),
         });
         handle
+    }
+
+    /// Attach round-trip metadata to a retained parameter.
+    ///
+    /// Returns `false` when the handle is stale. Metadata is deliberately kept
+    /// on the semantic sketch layer and is not interpreted as proof data during
+    /// lowering.
+    pub fn set_parameter_metadata(
+        &mut self,
+        handle: SketchParameterHandle,
+        metadata: SketchRoundTripMetadata,
+    ) -> bool {
+        let Some(parameter) = self.parameters.get_mut(handle.0 as usize) else {
+            return false;
+        };
+        parameter.metadata = metadata;
+        true
     }
 
     /// Add a retained 2D point and its coordinate parameters.
@@ -578,8 +640,26 @@ impl SketchSolveProblem {
             group: None,
             name: name.into(),
             kind,
+            metadata: SketchRoundTripMetadata::default(),
         });
         handle
+    }
+
+    /// Attach round-trip metadata to a retained entity.
+    ///
+    /// Returns `false` when the handle is stale. Construction/reference roles
+    /// remain descriptive until a typed constraint chooses to generate proof
+    /// rows.
+    pub fn set_entity_metadata(
+        &mut self,
+        handle: SketchEntityHandle,
+        metadata: SketchRoundTripMetadata,
+    ) -> bool {
+        let Some(entity) = self.entities.get_mut(handle.0 as usize) else {
+            return false;
+        };
+        entity.metadata = metadata;
+        true
     }
 
     /// Add a point coincidence constraint.
@@ -653,8 +733,30 @@ impl SketchSolveProblem {
             reference,
             active,
             kind,
+            metadata: SketchRoundTripMetadata::default(),
         });
         handle
+    }
+
+    /// Attach round-trip metadata to a retained high-level constraint.
+    ///
+    /// A [`SketchRoundTripRole::ReferenceDimension`] role also marks the
+    /// constraint as reference-only so lowering records a diagnostic row rather
+    /// than an equation. This keeps displayed dimensions round-trippable
+    /// without smuggling UI annotations into Yap-style proof obligations.
+    pub fn set_constraint_metadata(
+        &mut self,
+        handle: SketchConstraintHandle,
+        metadata: SketchRoundTripMetadata,
+    ) -> bool {
+        let Some(constraint) = self.constraints.get_mut(handle.0 as usize) else {
+            return false;
+        };
+        if metadata.role == SketchRoundTripRole::ReferenceDimension {
+            constraint.reference = true;
+        }
+        constraint.metadata = metadata;
+        true
     }
 
     /// Lower the semantic sketch layer into a generic residual [`Problem`].
