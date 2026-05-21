@@ -141,6 +141,21 @@ fn domain_problem(row_count: usize) -> Problem {
     problem
 }
 
+fn sketch_problem(row_count: usize) -> hypersolve::SketchSolveProblem {
+    let mut sketch = hypersolve::SketchSolveProblem::new();
+    for index in 0..row_count {
+        let a = sketch.add_point2d(format!("a{index}"), r(index as i64), r(0));
+        let b = sketch.add_point2d(format!("b{index}"), r(index as i64 + 3), r(4));
+        let distance = sketch.add_distance(format!("d{index}"), r(5));
+        let line = sketch.add_line_segment2(format!("line{index}"), a, b);
+        let circle = sketch.add_circle2(format!("circle{index}"), a, distance);
+        sketch.add_point_point_distance(format!("distance {index}"), a, b, distance);
+        sketch.add_point_on_circle(format!("circle incidence {index}"), b, circle);
+        sketch.add_horizontal(format!("horizontal proposal {index}"), line);
+    }
+    sketch
+}
+
 fn unary_endpoint_expression(row_count: usize) -> Expr {
     let mut expression = Expr::zero();
     for index in 1..=row_count {
@@ -165,6 +180,10 @@ fn certification(c: &mut Criterion) {
 
     c.bench_function("prepared_solver_block_affine_rows", |b| {
         b.iter(|| PreparedSolverBlock::new(&prepared))
+    });
+    let sketch = sketch_problem(16);
+    c.bench_function("sketch_lower_to_problem", |b| {
+        b.iter(|| sketch.lower_to_problem())
     });
     let krawczyk_problem = affine_krawczyk_problem();
     let krawczyk_prepared = PreparedProblem::new(&krawczyk_problem);

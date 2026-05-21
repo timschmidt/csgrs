@@ -26,6 +26,7 @@ pub mod prepared;
 pub mod residual_replay;
 pub mod resultant;
 pub mod root_isolation;
+pub mod sketch;
 pub mod solver;
 pub mod solver_block;
 pub mod sparse_pattern;
@@ -150,6 +151,13 @@ pub use root_isolation::{
     refine_isolated_univariate_polynomial_interval,
     subdivide_bernstein_univariate_polynomial_interval_expr,
     subdivide_bernstein_univariate_polynomial_interval_roots,
+};
+pub use sketch::{
+    SketchCircle2, SketchConstraint, SketchConstraintHandle, SketchConstraintKind, SketchDistance,
+    SketchEntity, SketchEntityHandle, SketchEntityKind, SketchGeneratedRow,
+    SketchGeneratedRowStatus, SketchGroupHandle, SketchLineSegment2, SketchLoweringReport,
+    SketchParameter, SketchParameterHandle, SketchPoint2, SketchPoint3, SketchResidualStrategy,
+    SketchSolveProblem, SketchWorkplane,
 };
 pub use solver::{SolverConfig, SolverState, solve_damped_least_squares};
 pub use solver_block::{

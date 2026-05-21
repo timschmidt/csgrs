@@ -4,16 +4,17 @@ use hypersolve::{
     EqualitySubstitutionProblem, Expr, IntervalBoxCertificationPackage,
     IntervalBoxCertificationStatus, MultivariateQuadraticKrawczykStatus, PreparedProblem,
     PreparedSolverBlock, Problem, ProposalEngineKind, ProposalEnginePrecision,
-    ProposalEngineReport, RootIsolationStatus, SolverBlockRowKind, SolverConfig, SolverPoint2,
-    SolverState, SymbolId, VariableBall, apply_equality_substitution_classes,
-    certify_affine_krawczyk_box, certify_candidate, certify_candidate_domains,
-    certify_direct_univariate_quadratic_roots, certify_interval_box_candidate,
-    certify_multivariate_quadratic_interval_candidate, certify_multivariate_quadratic_krawczyk_box,
-    certify_quadratic_interval_candidate, certify_univariate_quadratic_alpha,
-    certify_univariate_quadratic_krawczyk_box, context_from_problem, determinant_bareiss,
-    eliminate_affine_rows_with_substitution_classes, isolate_univariate_polynomial_roots,
-    report_lossy_adapter_only_candidate, resultant_univariate_polynomials,
-    solve_damped_least_squares, solve_dense_linear_system_bareiss, solve_direct_affine_system,
+    ProposalEngineReport, RootIsolationStatus, SketchGeneratedRowStatus, SketchResidualStrategy,
+    SketchSolveProblem, SolverBlockRowKind, SolverConfig, SolverPoint2, SolverState, SymbolId,
+    VariableBall, apply_equality_substitution_classes, certify_affine_krawczyk_box,
+    certify_candidate, certify_candidate_domains, certify_direct_univariate_quadratic_roots,
+    certify_interval_box_candidate, certify_multivariate_quadratic_interval_candidate,
+    certify_multivariate_quadratic_krawczyk_box, certify_quadratic_interval_candidate,
+    certify_univariate_quadratic_alpha, certify_univariate_quadratic_krawczyk_box,
+    context_from_problem, determinant_bareiss, eliminate_affine_rows_with_substitution_classes,
+    isolate_univariate_polynomial_roots, report_lossy_adapter_only_candidate,
+    resultant_univariate_polynomials, solve_damped_least_squares,
+    solve_dense_linear_system_bareiss, solve_direct_affine_system,
     solve_direct_univariate_quadratic_equalities, squared_distance_equation,
     subresultant_chain_univariate_polynomials, validate_equality_substitutions,
 };
@@ -152,6 +153,44 @@ proptest! {
             CertifiedCandidateStatus::CertifiedZero { .. }
         ), true);
         prop_assert!(report.all_satisfied());
+    }
+
+    #[test]
+    fn sketch_point_distance_rows_replay_generated_integer_triangles(
+        ax in -16_i16..=16,
+        ay in -16_i16..=16,
+        dx in -8_i16..=8,
+    ) {
+        let ax = i64::from(ax);
+        let ay = i64::from(ay);
+        let dx = i64::from(dx);
+        let mut sketch = SketchSolveProblem::new();
+        let a = sketch.add_point2d("a", hyperreal::Real::from(ax), hyperreal::Real::from(ay));
+        let b = sketch.add_point2d(
+            "b",
+            hyperreal::Real::from(ax + dx),
+            hyperreal::Real::from(ay),
+        );
+        let d = sketch.add_distance("d", hyperreal::Real::from(dx.abs()));
+        sketch.add_point_point_distance("distance", a, b, d);
+
+        let lowered = sketch.lower_to_problem();
+
+        prop_assert_eq!(lowered.rows.len(), 1);
+        prop_assert_eq!(
+            &lowered.rows[0].status,
+            &SketchGeneratedRowStatus::Generated
+        );
+        prop_assert_eq!(lowered.rows[0].strategy, Some(SketchResidualStrategy::SquaredDistance));
+        let certification = certify_candidate(
+            &PreparedProblem::new(&lowered.problem),
+            &context_from_problem(&lowered.problem),
+        );
+        let certified_zero = matches!(
+            certification.rows[0].status,
+            CertifiedCandidateStatus::CertifiedZero { .. }
+        );
+        prop_assert!(certified_zero);
     }
 
     #[test]

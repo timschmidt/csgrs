@@ -7,8 +7,9 @@ use hypersolve::{
     IntervalBoxCertificationStatus, LinearAdapterKind, LinearAdapterPrecision, LinearBackend,
     MultivariateQuadraticKrawczykStatus, PreparedProblem, PreparedSolverBlock, Problem,
     ProposalEngineKind, ProposalEnginePrecision, RootIsolationStatus, RootMultiplicityStatus,
-    SolverBlockRowKind, SolverConfig, SolverPoint2, SolverState, SymbolId, VariableBall,
-    apply_equality_substitution_classes, apply_equality_substitutions,
+    SketchConstraintKind, SketchEntityHandle, SketchGeneratedRowStatus, SketchResidualStrategy,
+    SketchSolveProblem, SolverBlockRowKind, SolverConfig, SolverPoint2, SolverState, SymbolId,
+    VariableBall, apply_equality_substitution_classes, apply_equality_substitutions,
     build_equality_substitution_classes, certify_affine_interval_candidate,
     certify_affine_krawczyk_box, certify_candidate, certify_candidate_domains,
     certify_candidate_with_config, certify_candidate_with_residual_balls,
@@ -30,6 +31,108 @@ fn real(value: i64) -> Real {
 
 fn edge_real(value: f64) -> Real {
     Real::try_from(value).unwrap()
+}
+
+#[test]
+fn sketch_problem_lowers_semantic_constraints_to_exact_replay_rows() {
+    let mut sketch = SketchSolveProblem::new();
+    let a = sketch.add_point2d("a", real(0), real(0));
+    let b = sketch.add_point2d("b", real(3), real(4));
+    let c = sketch.add_point2d("c", real(3), real(0));
+    let distance = sketch.add_distance("five", real(5));
+    let line = sketch.add_line_segment2("base", a, c);
+    let circle = sketch.add_circle2("circle", a, distance);
+
+    let coincidence = sketch.add_points_coincident("c equals b", c, b);
+    let length = sketch.add_point_point_distance("a b length", a, b, distance);
+    let horizontal = sketch.add_horizontal("base horizontal", line);
+    let incidence = sketch.add_point_on_circle("b on circle", b, circle);
+
+    let report = sketch.lower_to_problem();
+
+    assert!(report.all_generated());
+    assert_eq!(report.problem.variables.len(), 7);
+    assert_eq!(report.problem.constraints.len(), 5);
+    assert_eq!(
+        report
+            .rows
+            .iter()
+            .map(|row| row.constraint)
+            .collect::<Vec<_>>(),
+        vec![coincidence, coincidence, length, horizontal, incidence]
+    );
+    assert_eq!(
+        report.rows[2].strategy,
+        Some(SketchResidualStrategy::SquaredDistance)
+    );
+    assert_eq!(
+        report.rows[4].strategy,
+        Some(SketchResidualStrategy::SquaredIncidence)
+    );
+
+    let certification = certify_candidate(
+        &PreparedProblem::new(&report.problem),
+        &context_from_problem(&report.problem),
+    );
+    assert!(matches!(
+        certification.rows[0].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[1].status,
+        CertifiedCandidateStatus::CertifiedViolation {
+            sign: hyperreal::RealSign::Negative,
+            ..
+        }
+    ));
+    assert!(matches!(
+        certification.rows[2].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[3].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[4].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+}
+
+#[test]
+fn sketch_lowering_reports_bad_handles_and_reference_rows() {
+    let mut sketch = SketchSolveProblem::new();
+    let point = sketch.add_point2d("p", real(0), real(0));
+    let distance = sketch.add_distance("d", real(1));
+    sketch.add_constraint(
+        "reference distance",
+        SketchConstraintKind::PointPointDistance {
+            a: point,
+            b: point,
+            distance,
+        },
+        true,
+        true,
+    );
+    sketch.add_points_coincident("missing point", point, SketchEntityHandle(999));
+    sketch.add_horizontal("wrong entity", distance);
+
+    let report = sketch.lower_to_problem();
+
+    assert_eq!(report.problem.constraints.len(), 0);
+    assert_eq!(report.rows.len(), 3);
+    assert_eq!(
+        report.rows[0].status,
+        SketchGeneratedRowStatus::ReferenceOnly
+    );
+    assert_eq!(
+        report.rows[1].status,
+        SketchGeneratedRowStatus::MissingEntity(SketchEntityHandle(999))
+    );
+    assert!(matches!(
+        report.rows[2].status,
+        SketchGeneratedRowStatus::WrongEntityKind { .. }
+    ));
 }
 
 #[test]
