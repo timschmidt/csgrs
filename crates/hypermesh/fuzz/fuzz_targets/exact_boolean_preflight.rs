@@ -2376,6 +2376,64 @@ fn exercise_component_coplanar_difference() {
         nonrect_contact_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarSurfaceCutterHoleContactDifference
     );
+    let nonrect_contact_chain_right = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            8, 8, 0, 12, 10, 0, 8, 12, 0, //
+            6, 8, 0, 8, 9, 0, 8, 11, 0, 6, 12, 0, //
+            0, 9, 0, 6, 8, 0, 6, 12, 0, 0, 11, 0,
+        ],
+        &[
+            0, 1, 2, //
+            3, 4, 5, 3, 5, 6, //
+            7, 8, 9, 7, 9, 10,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("nonrectangular cutter-hole contact chain fixture must import");
+    let nonrect_contact_chain = arrange_coplanar_surface_cutter_hole_contact_difference(
+        &nonrect_contact_left,
+        &nonrect_contact_chain_right,
+    )
+    .expect("nonrectangular cutter-hole contact chain should materialize one nonconvex loop");
+    nonrect_contact_chain.validate().unwrap();
+    nonrect_contact_chain
+        .validate_cutter_hole_contact_difference_against_sources(
+            &nonrect_contact_left,
+            &nonrect_contact_chain_right,
+        )
+        .unwrap();
+    let nonrect_contact_chain_preflight = preflight_boolean_exact(
+        &nonrect_contact_left,
+        &nonrect_contact_chain_right,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("nonrectangular cutter-hole contact chain preflight should classify shortcut");
+    nonrect_contact_chain_preflight.validate().unwrap();
+    assert_eq!(
+        nonrect_contact_chain_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfaceCutterHoleContactDifference
+    );
+    let point_only_chain_right = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            8, 8, 0, 12, 10, 0, 8, 12, 0, //
+            6, 8, 0, 8, 10, 0, 6, 12, 0, //
+            0, 9, 0, 6, 8, 0, 6, 12, 0, 0, 11, 0,
+        ],
+        &[
+            0, 1, 2, //
+            3, 4, 5, //
+            6, 7, 8, 6, 8, 9,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("point-only cutter-hole contact chain fixture must import");
+    assert!(
+        arrange_coplanar_surface_cutter_hole_contact_difference(
+            &nonrect_contact_left,
+            &point_only_chain_right,
+        )
+        .is_none()
+    );
     let point_only_contact_right = ExactMesh::from_i64_triangles_with_policy(
         &[
             8, 10, 0, 10, 8, 0, 10, 12, 0, //

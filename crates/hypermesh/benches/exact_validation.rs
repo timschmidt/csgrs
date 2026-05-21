@@ -3096,6 +3096,20 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
             ValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
+        let nonrect_contact_chain_right = ExactMesh::from_i64_triangles_with_policy(
+            &[
+                8, 8, 0, 12, 10, 0, 8, 12, 0, //
+                6, 8, 0, 8, 9, 0, 8, 11, 0, 6, 12, 0, //
+                0, 9, 0, 6, 8, 0, 6, 12, 0, 0, 11, 0,
+            ],
+            &[
+                0, 1, 2, //
+                3, 4, 5, 3, 5, 6, //
+                7, 8, 9, 7, 9, 10,
+            ],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
         let nonconvex_holed_left = ExactMesh::from_i64_triangles_with_policy(
             &[0, 0, 0, 20, 0, 0, 20, 20, 0, 0, 20, 0],
             &[0, 1, 2, 0, 2, 3],
@@ -3422,6 +3436,29 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
                         hypermesh::exact::boolean_exact(
                             &nonrect_contact_left,
                             &nonrect_contact_right,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                            ValidationPolicy::ALLOW_BOUNDARY,
+                        )
+                        .unwrap(),
+                        arrange_coplanar_surface_cutter_hole_contact_difference(
+                            &nonrect_contact_left,
+                            &nonrect_contact_chain_right,
+                        )
+                        .map(|output| {
+                            output.validate_cutter_hole_contact_difference_against_sources(
+                                &nonrect_contact_left,
+                                &nonrect_contact_chain_right,
+                            )
+                        }),
+                        hypermesh::exact::preflight_boolean_exact(
+                            &nonrect_contact_left,
+                            &nonrect_contact_chain_right,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                        )
+                        .map(|report| report.validate()),
+                        hypermesh::exact::boolean_exact(
+                            &nonrect_contact_left,
+                            &nonrect_contact_chain_right,
                             hypermesh::exact::ExactBooleanOperation::Difference,
                             ValidationPolicy::ALLOW_BOUNDARY,
                         )

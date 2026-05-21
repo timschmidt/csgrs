@@ -3732,20 +3732,20 @@ pub fn arrange_coplanar_surface_multi_difference(
 ///
 /// This handles the narrow case that the strict component/holed arrangement
 /// must reject: a side-attached cutter touches a strictly contained hole along
-/// a positive-length boundary, so the result is no longer a holed component
-/// but one nonconvex simple loop. The accepted source shape is intentionally
-/// small and replayable: one exact axis-aligned rectangular left component,
-/// one strictly contained convex right component, and one convex right cutter
-/// whose clipped material region touches the contained component along a
-/// positive-length boundary and one outer side. Rectangular pairs use exact
-/// interval-cell replay; non-rectangular pairs must stitch one exact simple
-/// union loop from retained convex boundary fragments before the left side is
-/// opened. This follows Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997), with the fragment traversal matching
-/// the retained boundary idea from Weiler and Atherton, "Hidden Surface
-/// Removal Using Polygon Area Sorting," *SIGGRAPH Computer Graphics* 11.2
-/// (1977). Orthogonal-cell rectangular replay follows de Berg, Cheong, van
-/// Kreveld, and Overmars, *Computational Geometry: Algorithms and
+/// a positive-length boundary, so the result is no longer a holed component but
+/// one nonconvex simple loop. The accepted source shape is intentionally
+/// replayable: one exact axis-aligned rectangular left component, one or more
+/// strictly contained convex right holes, and one or more convex right cutters
+/// whose clipped material regions form a connected positive-length contact
+/// chain from the holes to one outer side. The two-component rectangular case
+/// uses exact interval-cell replay; non-rectangular contact pairs and chains
+/// stitch one exact simple union loop from retained convex boundary fragments
+/// before the left side is opened. This follows Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997), with the fragment
+/// traversal matching the retained boundary idea from Weiler and Atherton,
+/// "Hidden Surface Removal Using Polygon Area Sorting," *SIGGRAPH Computer
+/// Graphics* 11.2 (1977). Orthogonal-cell rectangular replay follows de Berg,
+/// Cheong, van Kreveld, and Overmars, *Computational Geometry: Algorithms and
 /// Applications*, 3rd ed., Chapter 2.
 #[cfg(feature = "exact-triangulation")]
 pub fn arrange_coplanar_surface_cutter_hole_contact_difference(
@@ -3754,7 +3754,7 @@ pub fn arrange_coplanar_surface_cutter_hole_contact_difference(
 ) -> Option<CoplanarSurfaceArrangement> {
     let left_components = connected_face_component_meshes(left)?;
     let right_components = connected_face_component_meshes(right)?;
-    if left_components.len() != 1 || right_components.len() != 2 {
+    if left_components.len() != 1 || right_components.len() < 2 {
         return None;
     }
 
@@ -3773,52 +3773,68 @@ pub fn arrange_coplanar_surface_cutter_hole_contact_difference(
     }
     let left_rect = projected_axis_aligned_rectangle(&left_component.hull, projection)?;
 
-    let mut hole_index = None;
-    let mut cutter_index = None;
-    for (index, component) in right_components.iter().enumerate() {
+    let mut holes = Vec::new();
+    let mut clipped_cutters = Vec::new();
+    for component in &right_components {
         if polygon_strictly_inside_convex_polygon(
             &component.hull,
             &left_component.hull,
             projection,
         )? {
-            if hole_index.replace(index).is_some() {
-                return None;
-            }
+            let mut hole = component.hull.clone();
+            orient_polygon_ccw(&mut hole, projection)?;
+            holes.push(hole);
         } else if convex_union_component_relation(
             &left_component.hull,
             &component.hull,
             projection,
         )? == ConvexUnionComponentRelation::PositiveArea
         {
-            if cutter_index.replace(index).is_some() {
+            let mut clipped_cutter = convex_polygon_intersection_boundary(
+                &component.hull,
+                &left_component.hull,
+                projection,
+            )?;
+            if clipped_cutter.len() < 3 {
                 return None;
             }
+            orient_polygon_ccw(&mut clipped_cutter, projection)?;
+            clipped_cutters.push(clipped_cutter);
         } else {
             return None;
         }
     }
-    let hole = &right_components[hole_index?];
-    let cutter = &right_components[cutter_index?];
-    let mut clipped_cutter =
-        convex_polygon_intersection_boundary(&cutter.hull, &left_component.hull, projection)?;
-    if clipped_cutter.len() < 3 {
+    if holes.is_empty() || clipped_cutters.is_empty() {
         return None;
     }
-    orient_polygon_ccw(&mut clipped_cutter, projection)?;
-    let mut removed_polygon = match (
-        projected_axis_aligned_rectangle(&hole.hull, projection),
-        projected_axis_aligned_rectangle(&clipped_cutter, projection),
-    ) {
-        (Some(hole_rect), Some(clipped_cutter_rect))
-            if rectangles_touch_on_positive_boundary(&hole_rect, &clipped_cutter_rect)? =>
-        {
-            axis_aligned_rectangle_union_polygon(&[clipped_cutter_rect, hole_rect], projection)?
+
+    let mut removed_regions = Vec::with_capacity(holes.len() + clipped_cutters.len());
+    removed_regions.extend(holes.iter().cloned());
+    removed_regions.extend(clipped_cutters.iter().cloned());
+    let mut removed_polygon = if holes.len() == 1 && clipped_cutters.len() == 1 {
+        let hole = &holes[0];
+        let clipped_cutter = &clipped_cutters[0];
+        match (
+            projected_axis_aligned_rectangle(hole, projection),
+            projected_axis_aligned_rectangle(clipped_cutter, projection),
+        ) {
+            (Some(hole_rect), Some(clipped_cutter_rect))
+                if rectangles_touch_on_positive_boundary(&hole_rect, &clipped_cutter_rect)? =>
+            {
+                axis_aligned_rectangle_union_polygon(&[clipped_cutter_rect, hole_rect], projection)?
+            }
+            _ => {
+                side_attached_convex_cutter_hole_removed_polygon(hole, clipped_cutter, projection)?
+            }
         }
-        _ => side_attached_convex_cutter_hole_removed_polygon(
-            &hole.hull,
-            &clipped_cutter,
-            projection,
-        )?,
+    } else {
+        if removed_regions
+            .iter()
+            .all(|region| projected_axis_aligned_rectangle(region, projection).is_some())
+        {
+            return None;
+        }
+        connected_convex_contact_union_polygon(&removed_regions, projection)?
     };
     orient_polygon_ccw(&mut removed_polygon, projection)?;
     let mut polygon = side_opened_difference_polygon(&left_rect, &removed_polygon, projection)?;
@@ -4222,6 +4238,158 @@ fn side_attached_convex_cutter_hole_removed_polygon(
         return None;
     }
     Some(polygon)
+}
+
+/// Stitch one connected convex contact chain into a removed-region loop.
+///
+/// This is the multi-component sibling of
+/// [`side_attached_convex_cutter_hole_removed_polygon`]. It accepts only a
+/// connected contact graph whose convex regions are pairwise interior-disjoint
+/// and touch through positive-length boundary intervals. Point-only contact,
+/// overlap, disconnected holes, and branch structures that do not stitch into
+/// exactly one simple loop remain unsupported. The acceptance rule is the same
+/// exact-state rule Yap gives in "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997): the shortcut promotes topology only
+/// from retained predicates and exact area replay. Boundary fragments follow
+/// Weiler and Atherton, "Hidden Surface Removal Using Polygon Area Sorting,"
+/// *SIGGRAPH Computer Graphics* 11.2 (1977), and segment contact decisions
+/// use Guigue and Devillers, "Fast and Robust Triangle-Triangle Overlap Test
+/// Using Orientation Predicates," *Journal of Graphics Tools* 8.1 (2003).
+#[cfg(feature = "exact-triangulation")]
+fn connected_convex_contact_union_polygon(
+    regions: &[Vec<Point3>],
+    projection: CoplanarProjection,
+) -> Option<Vec<Point3>> {
+    if regions.len() < 2 {
+        return None;
+    }
+    let mut regions = regions.to_vec();
+    for region in &mut regions {
+        orient_polygon_ccw(region, projection)?;
+        validate_projected_strictly_convex_loop(
+            region,
+            projection,
+            "coplanar cutter-hole removed contact chain",
+        )
+        .ok()?;
+    }
+
+    let mut contact_graph = UnionFind::new(regions.len());
+    for left in 0..regions.len() {
+        for right in left + 1..regions.len() {
+            match convex_union_component_relation(&regions[left], &regions[right], projection)? {
+                ConvexUnionComponentRelation::Disjoint => {}
+                ConvexUnionComponentRelation::BoundaryOnly => {
+                    if !convex_polygons_touch_on_positive_boundary(
+                        &regions[left],
+                        &regions[right],
+                        projection,
+                    )? {
+                        return None;
+                    }
+                    contact_graph.union(left, right);
+                }
+                ConvexUnionComponentRelation::PositiveArea => return None,
+            }
+        }
+    }
+    let root = contact_graph.find(0);
+    for index in 1..regions.len() {
+        if contact_graph.find(index) != root {
+            return None;
+        }
+    }
+
+    let mut fragments = Vec::new();
+    for index in 0..regions.len() {
+        collect_multi_convex_union_boundary_fragments(index, &regions, projection, &mut fragments)?;
+    }
+    let mut polygon = stitch_simple_loop(fragments, projection)?;
+    orient_polygon_ccw(&mut polygon, projection)?;
+    polygon = simplify_projected_polygon(polygon, projection);
+    validate_projected_simple_loop(
+        &polygon,
+        projection,
+        "coplanar cutter-hole removed contact chain",
+    )
+    .ok()?;
+    if !multi_convex_contact_union_area_matches_inputs(&polygon, &regions, projection)? {
+        return None;
+    }
+    Some(polygon)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn collect_multi_convex_union_boundary_fragments(
+    region_index: usize,
+    regions: &[Vec<Point3>],
+    projection: CoplanarProjection,
+    fragments: &mut Vec<DirectedFragment>,
+) -> Option<()> {
+    let polygon = regions.get(region_index)?;
+    for edge in 0..polygon.len() {
+        let start = &polygon[edge];
+        let end = &polygon[(edge + 1) % polygon.len()];
+        let mut splits = vec![start.clone(), end.clone()];
+        for (other_index, other) in regions.iter().enumerate() {
+            if other_index == region_index {
+                continue;
+            }
+            for other_edge in 0..other.len() {
+                add_projected_edge_intersections(
+                    start,
+                    end,
+                    &other[other_edge],
+                    &other[(other_edge + 1) % other.len()],
+                    projection,
+                    &mut splits,
+                )?;
+            }
+        }
+        sort_points_along_segment(&mut splits, start, end, projection)?;
+        dedup_points(&mut splits);
+        for pair in splits.windows(2) {
+            let a = &pair[0];
+            let b = &pair[1];
+            if points_equal(a, b) {
+                continue;
+            }
+            let midpoint = midpoint3(a, b);
+            let mut exposed = true;
+            for (other_index, other) in regions.iter().enumerate() {
+                if other_index == region_index {
+                    continue;
+                }
+                if convex_polygon_location(&midpoint, other, projection)?
+                    != ConvexPolygonLocation::Outside
+                {
+                    exposed = false;
+                    break;
+                }
+            }
+            if exposed {
+                fragments.push(DirectedFragment {
+                    start: a.clone(),
+                    end: b.clone(),
+                });
+            }
+        }
+    }
+    Some(())
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn multi_convex_contact_union_area_matches_inputs(
+    polygon: &[Point3],
+    regions: &[Vec<Point3>],
+    projection: CoplanarProjection,
+) -> Option<bool> {
+    let union_area = projected_area2_abs(polygon, projection)?;
+    let mut expected = ExactReal::from(0);
+    for region in regions {
+        expected = add(&expected, &projected_area2_abs(region, projection)?);
+    }
+    Some(compare_reals(&union_area, &expected).value() == Some(Ordering::Equal))
 }
 
 #[cfg(feature = "exact-triangulation")]
