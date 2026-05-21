@@ -15,7 +15,7 @@ use hypersolve::{
     report_lossy_adapter_only_candidate, resultant_univariate_polynomials,
     solve_damped_least_squares, solve_dense_linear_system_bareiss, solve_direct_affine_system,
     solve_direct_univariate_quadratic_equalities, squared_distance_equation,
-    validate_equality_substitutions,
+    subresultant_chain_univariate_polynomials, validate_equality_substitutions,
 };
 use proptest::prelude::*;
 
@@ -1302,6 +1302,27 @@ proptest! {
         ).unwrap();
 
         prop_assert_eq!(report.resultant, Real::zero());
+    }
+
+    #[test]
+    fn subresultant_generated_common_factor_chain_is_nonconstant(
+        shared_root in -32_i16..=32,
+        other_root in -32_i16..=32,
+    ) {
+        let shared_root = i64::from(shared_root);
+        let other_root = i64::from(other_root);
+        let report = subresultant_chain_univariate_polynomials(
+            &[
+                Real::from(shared_root * other_root),
+                Real::from(-(shared_root + other_root)),
+                Real::one(),
+            ],
+            &[Real::from(-shared_root), Real::one()],
+            -64,
+        ).unwrap();
+
+        prop_assert!(report.has_nonconstant_common_factor);
+        prop_assert_eq!(report.last_nonzero_degree, 1);
     }
 
 }

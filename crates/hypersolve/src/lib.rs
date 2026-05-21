@@ -114,7 +114,9 @@ pub use residual_replay::{
 };
 pub use resultant::{
     ResultantInputSide, UnivariateResultantError, UnivariateResultantReport,
-    resultant_univariate_polynomials,
+    UnivariateSubresultantChainError, UnivariateSubresultantChainReport,
+    UnivariateSubresultantChainStep, resultant_univariate_polynomials,
+    subresultant_chain_univariate_polynomials,
 };
 pub use root_isolation::{
     AlgebraicRootCandidateReport, AlgebraicRootCandidateStatus, BernsteinRootCountReport,
