@@ -4,7 +4,7 @@ use crate::errors::ValidationError;
 use crate::float_types::{
     hangle_between_vectors, hpoint_distance, hpoint3_bounds, hpoints_within_epsilon,
     hreal_cmp_f64, hreal_f64s_within_epsilon, hreal_gt_f64, hreal_lt_f64, hreal_to_f64,
-    hunit_vector3, hvector3_from_point3,
+    hunit_vector3, hvector3_from_point3, hvector3_from_vector3,
     parry3d::{bounding_volume::Aabb, query::RayCast, shape::Shape},
     rapier3d::prelude::{
         ColliderBuilder, ColliderSet, Ray, RigidBodyBuilder, RigidBodyHandle, RigidBodySet,
@@ -1163,10 +1163,10 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
 
                 // Transform normal using inverse transpose rule
                 let transformed_normal = mat_inv_transpose.transform_vector(&vert.normal);
-                if transformed_normal.iter().all(|coord| coord.is_finite()) {
-                    if let Some(normal) = hunit_vector3(&transformed_normal) {
-                        vert.normal = normal;
-                    }
+                if hvector3_from_vector3(&transformed_normal).is_some()
+                    && let Some(normal) = hunit_vector3(&transformed_normal)
+                {
+                    vert.normal = normal;
                 }
             }
 
