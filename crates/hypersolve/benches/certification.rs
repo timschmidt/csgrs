@@ -16,6 +16,7 @@ use hypersolve::{
     rectangular_difference_area_equation, report_lossy_adapter_only_candidate,
     solve_damped_least_squares, solve_direct_affine_system,
     solve_direct_univariate_quadratic_equalities, squared_distance_equation,
+    subdivide_bernstein_univariate_polynomial_interval_roots,
 };
 
 fn r(value: i64) -> Real {
@@ -266,6 +267,22 @@ fn certification(c: &mut Criterion) {
                     r(0),
                     r(4),
                     hyperlimit::PredicatePolicy::default(),
+                )
+            })
+        },
+    );
+    c.bench_function(
+        "subdivide_bernstein_univariate_polynomial_interval_roots",
+        |b| {
+            b.iter(|| {
+                subdivide_bernstein_univariate_polynomial_interval_roots(
+                    &prepared_quadratic,
+                    r(0),
+                    r(4),
+                    hypersolve::BernsteinSubdivisionConfig {
+                        policy: hyperlimit::PredicatePolicy::default(),
+                        max_depth: 8,
+                    },
                 )
             })
         },

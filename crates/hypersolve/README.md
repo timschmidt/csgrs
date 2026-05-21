@@ -104,8 +104,9 @@ Implemented today:
   exact substitution-class construction, class-based candidate propagation, and
   non-mutating affine row elimination reports;
 - exact-rational univariate polynomial root isolation by Descartes and Bernstein
-  count bounds, square-free reduction, Sturm intervals, bounded interval
-  refinement, and exact rational witness replay;
+  count bounds, recursive Bernstein subdivision reports, square-free reduction,
+  Sturm intervals, bounded interval refinement, and exact rational witness
+  replay;
 - candidate, lossy-adapter-only, candidate-domain, interval, affine Krawczyk,
   univariate and multivariate quadratic Krawczyk, and univariate quadratic alpha
   certification surfaces;

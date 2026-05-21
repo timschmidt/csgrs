@@ -237,6 +237,98 @@ pub struct BernsteinRootCountReport {
     pub message: Option<String>,
 }
 
+/// Terminal status for one interval in recursive Bernstein subdivision.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum BernsteinSubdivisionIntervalStatus {
+    /// The interval has no certified root evidence.
+    Empty,
+    /// A root was certified exactly at an interval endpoint.
+    EndpointRoot,
+    /// The interval has Bernstein variation one and therefore isolates at most
+    /// one root. Endpoint roots are reported separately.
+    Isolating,
+    /// The interval still has variation greater than one at the configured
+    /// subdivision depth.
+    DepthLimit,
+}
+
+/// One terminal interval from recursive Bernstein subdivision.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BernsteinSubdivisionInterval {
+    /// Lower endpoint.
+    pub lower: Real,
+    /// Upper endpoint.
+    pub upper: Real,
+    /// Exact root witness for endpoint roots.
+    pub exact_root: Option<Real>,
+    /// Bernstein variation bound for this terminal interval.
+    pub variation_bound: Option<usize>,
+    /// Terminal interval status.
+    pub status: BernsteinSubdivisionIntervalStatus,
+}
+
+/// Status for recursive Bernstein subdivision of one row.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum BernsteinSubdivisionStatus {
+    /// Subdivision completed within the configured depth.
+    Completed,
+    /// At least one interval still had multiple possible roots at the depth
+    /// limit.
+    DepthLimit,
+    /// The input interval was invalid.
+    InvalidInterval,
+    /// The expression is outside the exact-rational univariate package.
+    UnsupportedCoefficient,
+    /// Exact signs, endpoint comparisons, or coefficient conversion did not decide.
+    Undecided,
+}
+
+/// Configuration for recursive Bernstein subdivision.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct BernsteinSubdivisionConfig {
+    /// Exact comparison policy used by `hyperlimit`.
+    pub policy: PredicatePolicy,
+    /// Maximum recursive bisection depth.
+    pub max_depth: usize,
+}
+
+impl Default for BernsteinSubdivisionConfig {
+    fn default() -> Self {
+        Self {
+            policy: PredicatePolicy::default(),
+            max_depth: 32,
+        }
+    }
+}
+
+/// Recursive Bernstein subdivision report for one univariate row.
+///
+/// This report is the subdivision-facing companion to
+/// [`BernsteinRootCountReport`]. It repeatedly bisects intervals whose
+/// Bernstein sign variation is greater than one and stops only when intervals
+/// are empty, have an exact endpoint root, have variation one, or reach the
+/// configured depth limit. It follows the Bernstein subdivision literature of
+/// Farouki and Rajan (1988) while preserving Yap's exact proof boundary.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BernsteinSubdivisionReport {
+    /// Source constraint index.
+    pub constraint_index: usize,
+    /// Solver symbol used by the univariate polynomial, when supported.
+    pub symbol: Option<SymbolId>,
+    /// Degree after exact trimming.
+    pub degree: Option<usize>,
+    /// Initial lower endpoint.
+    pub lower: Real,
+    /// Initial upper endpoint.
+    pub upper: Real,
+    /// Final subdivision status.
+    pub status: BernsteinSubdivisionStatus,
+    /// Terminal intervals and exact endpoint roots.
+    pub intervals: Vec<BernsteinSubdivisionInterval>,
+    /// Compact unsupported/undecided reason.
+    pub message: Option<String>,
+}
+
 /// Isolate distinct real roots for active univariate equality residuals.
 ///
 /// The first implementation accepts exact-rational univariate polynomial rows
@@ -969,6 +1061,107 @@ pub fn count_bernstein_univariate_polynomial_interval_expr(
     )
 }
 
+/// Recursively subdivide active equality rows with Bernstein root-count bounds.
+///
+/// This produces terminal interval evidence over a caller-supplied exact
+/// interval. It is useful as a finite-interval algebraic filter before a
+/// stronger Sturm proof or future algebraic-number construction.
+pub fn subdivide_bernstein_univariate_polynomial_interval_roots(
+    prepared: &PreparedProblem<'_>,
+    lower: Real,
+    upper: Real,
+    config: BernsteinSubdivisionConfig,
+) -> Vec<BernsteinSubdivisionReport> {
+    let mut reports = Vec::new();
+    for (constraint_index, constraint) in prepared.problem().constraints.iter().enumerate() {
+        if !constraint.active || constraint.kind != ConstraintKind::Equality {
+            continue;
+        }
+        reports.push(subdivide_bernstein_univariate_polynomial_interval_expr(
+            constraint_index,
+            &constraint.residual,
+            prepared.problem(),
+            lower.clone(),
+            upper.clone(),
+            config,
+        ));
+    }
+    reports
+}
+
+/// Recursively subdivide one expression with Bernstein root-count bounds.
+pub fn subdivide_bernstein_univariate_polynomial_interval_expr(
+    constraint_index: usize,
+    expression: &Expr,
+    problem: &Problem,
+    lower: Real,
+    upper: Real,
+    config: BernsteinSubdivisionConfig,
+) -> BernsteinSubdivisionReport {
+    let first = count_bernstein_univariate_polynomial_interval_expr(
+        constraint_index,
+        expression,
+        problem,
+        lower.clone(),
+        upper.clone(),
+        config.policy,
+    );
+    if first.status != BernsteinRootCountStatus::Counted {
+        return bernstein_subdivision_report(
+            constraint_index,
+            first.symbol,
+            first.degree,
+            lower,
+            upper,
+            match first.status {
+                BernsteinRootCountStatus::InvalidInterval => {
+                    BernsteinSubdivisionStatus::InvalidInterval
+                }
+                BernsteinRootCountStatus::UnsupportedCoefficient => {
+                    BernsteinSubdivisionStatus::UnsupportedCoefficient
+                }
+                BernsteinRootCountStatus::Undecided => BernsteinSubdivisionStatus::Undecided,
+                BernsteinRootCountStatus::Counted => unreachable!(),
+            },
+            Vec::new(),
+            first.message,
+        );
+    }
+
+    let mut intervals = Vec::new();
+    let mut hit_depth_limit = false;
+    let mut undecided = None;
+    subdivide_bernstein_interval(
+        constraint_index,
+        expression,
+        problem,
+        lower.clone(),
+        upper.clone(),
+        config,
+        0,
+        &mut intervals,
+        &mut hit_depth_limit,
+        &mut undecided,
+    );
+    let status = if undecided.is_some() {
+        BernsteinSubdivisionStatus::Undecided
+    } else if hit_depth_limit {
+        BernsteinSubdivisionStatus::DepthLimit
+    } else {
+        BernsteinSubdivisionStatus::Completed
+    };
+    bernstein_subdivision_report(
+        constraint_index,
+        first.symbol,
+        first.degree,
+        lower,
+        upper,
+        status,
+        intervals,
+        undecided,
+    )
+}
+
 #[derive(Clone, Debug)]
 struct ExtractedPolynomial {
     symbol: Option<SymbolId>,
@@ -1461,6 +1654,129 @@ fn power_to_bernstein_on_interval(
     Some(bernstein)
 }
 
+#[allow(clippy::too_many_arguments)]
+fn subdivide_bernstein_interval(
+    constraint_index: usize,
+    expression: &Expr,
+    problem: &Problem,
+    lower: Real,
+    upper: Real,
+    config: BernsteinSubdivisionConfig,
+    depth: usize,
+    intervals: &mut Vec<BernsteinSubdivisionInterval>,
+    hit_depth_limit: &mut bool,
+    undecided: &mut Option<String>,
+) {
+    if undecided.is_some() {
+        return;
+    }
+    let report = count_bernstein_univariate_polynomial_interval_expr(
+        constraint_index,
+        expression,
+        problem,
+        lower.clone(),
+        upper.clone(),
+        config.policy,
+    );
+    if report.status != BernsteinRootCountStatus::Counted {
+        *undecided = report
+            .message
+            .or_else(|| Some("Bernstein subdivision encountered an undecided interval".to_owned()));
+        return;
+    }
+
+    if report.root_at_lower == Some(true) {
+        push_unique_bernstein_endpoint(intervals, lower.clone());
+    }
+    if report.root_at_upper == Some(true) {
+        push_unique_bernstein_endpoint(intervals, upper.clone());
+    }
+
+    match report.variation_bound {
+        Some(0) => {
+            intervals.push(BernsteinSubdivisionInterval {
+                lower,
+                upper,
+                exact_root: None,
+                variation_bound: Some(0),
+                status: BernsteinSubdivisionIntervalStatus::Empty,
+            });
+        }
+        Some(1) => {
+            if report.root_at_lower == Some(true) || report.root_at_upper == Some(true) {
+                return;
+            }
+            intervals.push(BernsteinSubdivisionInterval {
+                lower,
+                upper,
+                exact_root: None,
+                variation_bound: Some(1),
+                status: BernsteinSubdivisionIntervalStatus::Isolating,
+            });
+        }
+        Some(variation) => {
+            if depth >= config.max_depth {
+                *hit_depth_limit = true;
+                intervals.push(BernsteinSubdivisionInterval {
+                    lower,
+                    upper,
+                    exact_root: None,
+                    variation_bound: Some(variation),
+                    status: BernsteinSubdivisionIntervalStatus::DepthLimit,
+                });
+                return;
+            }
+            let Some(midpoint) = ((lower.clone() + upper.clone()) / Real::from(2)).ok() else {
+                *undecided = Some("could not bisect Bernstein interval".to_owned());
+                return;
+            };
+            subdivide_bernstein_interval(
+                constraint_index,
+                expression,
+                problem,
+                lower,
+                midpoint.clone(),
+                config,
+                depth + 1,
+                intervals,
+                hit_depth_limit,
+                undecided,
+            );
+            subdivide_bernstein_interval(
+                constraint_index,
+                expression,
+                problem,
+                midpoint,
+                upper,
+                config,
+                depth + 1,
+                intervals,
+                hit_depth_limit,
+                undecided,
+            );
+        }
+        None => {
+            *undecided = Some("Bernstein variation bound was unavailable".to_owned());
+        }
+    }
+}
+
+fn push_unique_bernstein_endpoint(intervals: &mut Vec<BernsteinSubdivisionInterval>, root: Real) {
+    if intervals
+        .iter()
+        .any(|interval| interval.exact_root.as_ref() == Some(&root))
+    {
+        return;
+    }
+    intervals.push(BernsteinSubdivisionInterval {
+        lower: root.clone(),
+        upper: root.clone(),
+        exact_root: Some(root),
+        variation_bound: Some(0),
+        status: BernsteinSubdivisionIntervalStatus::EndpointRoot,
+    });
+}
+
 fn pow_real_nonnegative(value: &Real, exponent: usize) -> Real {
     (0..exponent).fold(Real::one(), |product, _| product * value.clone())
 }
@@ -1524,6 +1840,29 @@ fn bernstein_report(
         variation_bound,
         root_at_lower,
         root_at_upper,
+        message,
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn bernstein_subdivision_report(
+    constraint_index: usize,
+    symbol: Option<SymbolId>,
+    degree: Option<usize>,
+    lower: Real,
+    upper: Real,
+    status: BernsteinSubdivisionStatus,
+    intervals: Vec<BernsteinSubdivisionInterval>,
+    message: Option<String>,
+) -> BernsteinSubdivisionReport {
+    BernsteinSubdivisionReport {
+        constraint_index,
+        symbol,
+        degree,
+        lower,
+        upper,
+        status,
+        intervals,
         message,
     }
 }
@@ -1754,6 +2093,69 @@ mod tests {
             reports[2].status,
             BernsteinRootCountStatus::UnsupportedCoefficient
         );
+    }
+
+    #[test]
+    fn bernstein_subdivision_partitions_empty_endpoint_isolating_and_depth_limit() {
+        let x = Expr::symbol(SymbolId(0), "x");
+        let mut problem = Problem::default();
+        problem.add_variable("x", real(0));
+        problem.add_constraint(Constraint::equality(
+            "three roots",
+            x.clone().powi(3) - Expr::int(6) * x.clone().powi(2) + Expr::int(11) * x.clone()
+                - Expr::int(6),
+        ));
+        problem.add_constraint(Constraint::equality(
+            "empty interval",
+            x.clone().powi(2) + Expr::int(1),
+        ));
+        let prepared = PreparedProblem::new(&problem);
+        let complete = subdivide_bernstein_univariate_polynomial_interval_roots(
+            &prepared,
+            real(0),
+            real(4),
+            BernsteinSubdivisionConfig {
+                policy: PredicatePolicy::default(),
+                max_depth: 8,
+            },
+        );
+
+        assert_eq!(complete.len(), 2);
+        assert_eq!(complete[0].status, BernsteinSubdivisionStatus::Completed);
+        assert!(complete[0].intervals.iter().any(|interval| {
+            interval.status == BernsteinSubdivisionIntervalStatus::EndpointRoot
+                && interval.exact_root == Some(real(2))
+        }));
+        let endpoint_roots = complete[0]
+            .intervals
+            .iter()
+            .filter(|interval| interval.status == BernsteinSubdivisionIntervalStatus::EndpointRoot)
+            .count();
+        assert_eq!(endpoint_roots, 1);
+        assert!(
+            complete[1]
+                .intervals
+                .iter()
+                .any(|interval| interval.status == BernsteinSubdivisionIntervalStatus::Empty)
+        );
+
+        let depth_limited = subdivide_bernstein_univariate_polynomial_interval_roots(
+            &prepared,
+            real(0),
+            real(4),
+            BernsteinSubdivisionConfig {
+                policy: PredicatePolicy::default(),
+                max_depth: 0,
+            },
+        );
+        assert_eq!(
+            depth_limited[0].status,
+            BernsteinSubdivisionStatus::DepthLimit
+        );
+        assert!(depth_limited[0].intervals.iter().any(|interval| {
+            interval.status == BernsteinSubdivisionIntervalStatus::DepthLimit
+                && interval.variation_bound.unwrap_or(0) > 1
+        }));
     }
 
     proptest! {
