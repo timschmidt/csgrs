@@ -13,21 +13,41 @@ matrix objects that geometry, predicates, solvers, and domain crates repeatedly 
 ## Hyper Ecosystem
 
 `hyperlattice` is the object-algebra layer between scalar facts and topology/domain
-crates.
+crates. It owns the fixed-size vector, matrix, point, shared-scale, and homogeneous
+projective carriers that predicate and geometry crates reuse.
 
-- [hyperreal](https://github.com/timschmidt/hyperreal): exact scalar values and
-  structural facts.
-- [hyperlimit](https://github.com/timschmidt/hyperlimit): predicate layer that consumes
-  point, vector, determinant, and shared-scale facts.
-- [hypercurve](https://github.com/timschmidt/hypercurve),
-  [hypertri](https://github.com/timschmidt/hypertri), and
-  [hypermesh](https://github.com/timschmidt/hypermesh): geometry crates that reuse
-  exact small-vector and transform structure.
-- [hypersolve](https://github.com/timschmidt/hypersolve): residual and linear-algebra
-  preparation over exact scalars.
-- [hyperphysics](https://github.com/timschmidt/hyperphysics) and
-  [hypervoxel](https://github.com/timschmidt/hypervoxel): domain crates that need exact
-  vectors, transforms, and object-level facts.
+- [hyperreal](https://github.com/timschmidt/hyperreal): exact rational, symbolic, and
+  computable scalar arithmetic.
+- [hyperlimit](https://github.com/timschmidt/hyperlimit): exact predicates, escalation
+  policy, and predicate provenance over lattice-owned objects.
+- [hypercurve](https://github.com/timschmidt/hypercurve): planar curves, contours,
+  regions, offsets, and boolean-boundary work.
+- [hypertri](https://github.com/timschmidt/hypertri): polygon triangulation, Delaunay,
+  constrained Delaunay, and D-dimensional topology.
+- [hypermesh](https://github.com/timschmidt/hypermesh): 3D mesh validation, topology,
+  and exact-aware boolean preflight.
+- [hyperbrep](https://github.com/timschmidt/hyperbrep): retained BREP topology,
+  planar surfaces, trim evidence, tessellation manifests, and mesh handoff reports.
+- [hypersdf](https://github.com/timschmidt/hypersdf): signed-distance and implicit-field
+  carriers with exact-aware sampling, classification, mesh, and voxel handoffs.
+- [hypersolve](https://github.com/timschmidt/hypersolve): symbolic residuals,
+  solver preparation, interval/root certification, and candidate replay.
+- [hyperpath](https://github.com/timschmidt/hyperpath): routing, CAM, PCB path,
+  provenance, and path-domain residual builders.
+- [hypervoxel](https://github.com/timschmidt/hypervoxel): exact-aware voxel frames,
+  sparse-grid facts, and storage/adapter manifests.
+- [hyperphysics](https://github.com/timschmidt/hyperphysics): exact-aware materials,
+  shapes, mass properties, contact, fields, and simulation handoff reports.
+- [hypercircuit](https://github.com/timschmidt/hypercircuit): circuit MNA carriers,
+  exact residual replay, nonlinear-device reports, and electrothermal coupling.
+- [hyperparts](https://github.com/timschmidt/hyperparts): source-attributed part,
+  interface, process, and compatibility facts.
+- [hyperpack](https://github.com/timschmidt/hyperpack): exact-aware packing models,
+  proposal reports, and feasibility replay.
+- [hyperevolution](https://github.com/timschmidt/hyperevolution): exact-aware search,
+  fitness, archive, and replay-policy carriers.
+- [hyperdrc](https://github.com/timschmidt/hyperdrc): PCB design-readiness checks and
+  manufacturing package evidence.
 
 ## Typical Linear-Algebra Problems
 
@@ -46,6 +66,13 @@ reducers, and delay scalar canonicalization until a result is needed.
 - `Complex` provides exact complex arithmetic and integer powers.
 - `Vector2`, `Vector3`, `Vector4`, homogeneous vector facts, shared-scale views, and
   signed-axis helpers describe small exact vectors.
+- `Point2`, `Point3`, `Point2Facts`, `Point3Facts`, `PointSharedScaleView`, and
+  `PointSharedScaleFacts` keep point coordinates separate from vectors while preserving
+  sparse support, shared-denominator schedules, known-zero masks, and one-hot facts.
+- `ProjectivePlane3`, `Plane3Coefficients`, `HomogeneousPoint3`, `HomogeneousLine3`,
+  `intersect_two_planes`, `intersect_three_planes`, and
+  `intersect_homogeneous_line_plane` keep exact 3D plane intersections in homogeneous
+  form so affine division is delayed until a caller proves the point is finite.
 - `Matrix3`, `Matrix4`, transform handles, transformed-vector/matrix views, prepared
   matrix handles, and prepared right-divisor handles describe small exact matrices.
 - `Matrix3StructuralFacts`, `Matrix4StructuralFacts`, transform-kind enums, determinant
@@ -65,6 +92,16 @@ rounding through a singular path.
 `hyperlattice` preserves object facts that `hyperreal` cannot know by itself: coordinate
 zero masks, homogeneous shape, shared scale, affine/translation/diagonal/projective
 transform kind, determinant schedule, and prepared cache availability.
+Point and projective carriers live here rather than in `hyperlimit` so predicate
+policy can classify them without becoming the storage owner.
+
+## Numerical Explosion
+
+`hyperlattice` combats numerical explosion by keeping object-level facts beside exact
+scalars. Zero masks, one-hot coordinates, determinant schedules, shared scales,
+homogeneous facts, and prepared matrix caches let callers avoid expanding matrix,
+projective, and transform expressions until an exact predicate or solve actually needs
+the scalar terms.
 
 ## Performance Model
 
@@ -87,6 +124,10 @@ Implemented today:
 - `Complex` arithmetic and integer powers;
 - `Vector2`, `Vector3`, `Vector4`, shared-scale views, homogeneous facts, dot products,
   normalization, and checked/abort-aware operations;
+- `Point2`, `Point3`, point fact packets, shared-scale point views, sparse point facts,
+  and point/vector conversions;
+- homogeneous 3D points, Pluecker lines, projective plane coefficients, exact
+  two-plane and three-plane intersections, and line/plane homogeneous intersections;
 - exact 2D algebra helpers and facts for displacement, wedge/dot, product sums, and
   orientation expressions;
 - `Matrix3`, `Matrix4`, determinant, inverse, transpose, multiplication, powers, checked
@@ -119,7 +160,7 @@ Feature summary:
 ## Usage
 
 ```rust
-use hyperlattice::{Matrix3, Real, Vector3};
+use hyperlattice::{intersect_three_planes, Matrix3, Point3, ProjectivePlane3, Real, Vector3};
 
 fn r(value: i32) -> Real { value.into() }
 
@@ -128,6 +169,12 @@ assert_eq!(v.dot(&v), r(25));
 
 let m = Matrix3::identity();
 assert_eq!(m.clone() * m.inverse().unwrap(), Matrix3::identity());
+
+let x = ProjectivePlane3::new(Point3::new(r(1), r(0), r(0)), r(-2));
+let y = ProjectivePlane3::new(Point3::new(r(0), r(1), r(0)), r(-3));
+let z = ProjectivePlane3::new(Point3::new(r(0), r(0), r(1)), r(-4));
+let p = intersect_three_planes(&x, &y, &z);
+assert_eq!(p.to_affine_point().unwrap(), Point3::new(r(2), r(3), r(4)));
 ```
 
 ## Development
@@ -155,5 +202,7 @@ vol. 7, nos. 1-2, 1997, pp. 3-23.
 - `src/complex.rs`: `Complex`
 - `src/algebra2.rs`: exact 2D expressions and displacement facts
 - `src/vector.rs`: `Vector2`, `Vector2Facts`, `Vector3`, and `Vector4`
+- `src/point.rs`: `Point2`, `Point3`, point facts, and shared-scale point views
+- `src/projective.rs`: homogeneous points, Pluecker lines, and plane intersections
 - `src/matrix`: `Matrix3`, `Matrix4`, and transform handles
 - `src/kernels.rs`: crate-private `Real` product-sum and structural helpers
