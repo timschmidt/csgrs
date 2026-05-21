@@ -1043,6 +1043,96 @@ impl Real {
         Self::exact_rational_unchecked(rational)
     }
 
+    /// Returns the exact sum of owned Real values.
+    pub fn sum_owned(values: impl IntoIterator<Item = Real>) -> Real {
+        crate::trace_dispatch!("real", "aggregate", "sum-owned");
+        values
+            .into_iter()
+            .fold(Self::zero(), |sum, value| sum + value)
+    }
+
+    /// Returns the exact sum of borrowed Real values.
+    pub fn sum_refs<'a>(values: impl IntoIterator<Item = &'a Real>) -> Real {
+        crate::trace_dispatch!("real", "aggregate", "sum-refs");
+        values
+            .into_iter()
+            .fold(Self::zero(), |sum, value| sum + value)
+    }
+
+    /// Evaluates `origin + t * delta` without crossing a primitive-float boundary.
+    pub fn affine(origin: &Real, t: &Real, delta: &Real) -> Real {
+        crate::trace_dispatch!("real", "aggregate", "affine");
+        origin + &(t * delta)
+    }
+
+    /// Returns the absolute value of this Real.
+    ///
+    /// Known signs are handled structurally. If the sign cannot be certified at
+    /// a cheap bounded precision, the result is represented as `sqrt(x^2)` in
+    /// the computable-real graph so the operation remains exact without making
+    /// a discontinuous sign decision.
+    pub fn abs(&self) -> Real {
+        match self.certified_sign_until(0).sign() {
+            Some(RealSign::Negative) => {
+                crate::trace_dispatch!("real", "abs", "known-negative");
+                -self
+            }
+            Some(RealSign::Positive) => {
+                crate::trace_dispatch!("real", "abs", "known-positive");
+                self.clone()
+            }
+            Some(RealSign::Zero) => {
+                crate::trace_dispatch!("real", "abs", "known-zero");
+                Self::zero()
+            }
+            None => {
+                crate::trace_dispatch!("real", "abs", "sqrt-square-fallback");
+                Self::irrational_from_computable(self.fold_ref().square().sqrt())
+            }
+        }
+    }
+
+    /// Converts degrees to radians exactly as `degrees * pi / 180`.
+    pub fn to_radians(&self) -> Real {
+        crate::trace_dispatch!("real", "angle-conversion", "to-radians");
+        let factor =
+            (&Self::pi() / &Self::from(180_u32)).expect("180 is a nonzero exact degree scale");
+        self * &factor
+    }
+
+    /// Converts radians to degrees exactly as `radians * 180 / pi`.
+    pub fn to_degrees(&self) -> Real {
+        crate::trace_dispatch!("real", "angle-conversion", "to-degrees");
+        let factor =
+            (&Self::from(180_u32) / &Self::pi()).expect("pi is a nonzero exact radian scale");
+        self * &factor
+    }
+
+    /// Returns the exact arithmetic mean of a non-empty Real slice.
+    pub fn mean(values: &[Real]) -> Option<Real> {
+        crate::trace_dispatch!("real", "aggregate", "mean");
+        if values.is_empty() {
+            return None;
+        }
+        let count = Real::from(u64::try_from(values.len()).ok()?);
+        (Self::sum_refs(values.iter()) / count).ok()
+    }
+
+    /// Returns the exact sample standard deviation of a Real slice.
+    pub fn sample_stddev(values: &[Real]) -> Option<Real> {
+        crate::trace_dispatch!("real", "aggregate", "sample-stddev");
+        if values.len() < 2 {
+            return None;
+        }
+        let mean = Self::mean(values)?;
+        let sum_squared = values.iter().fold(Self::zero(), |sum, value| {
+            let delta = value - &mean;
+            sum + delta.clone() * delta
+        });
+        let divisor = Real::from(u64::try_from(values.len() - 1).ok()?);
+        (sum_squared / divisor).ok()?.sqrt().ok()
+    }
+
     /// π, the ratio of a circle's circumference to its diameter.
     pub fn pi() -> Real {
         crate::trace_dispatch!("real", "constructor", "cached-pi");
@@ -5762,5 +5852,34 @@ mod tests {
         assert_eq!(&c - &a, Real::new(Rational::new(4)));
         assert_eq!(-&c, Real::new(Rational::new(-6)));
         assert_eq!(&a + &b, Real::new(Rational::new(5)));
+    }
+
+    #[test]
+    fn aggregate_helpers_keep_values_in_real_space() {
+        let values = [Real::from(1_i32), Real::from(3_i32), Real::from(5_i32)];
+
+        assert_eq!(Real::sum_refs(values.iter()), Real::from(9_i32));
+        assert_eq!(Real::mean(&values), Some(Real::from(3_i32)));
+        assert_eq!(
+            Real::affine(&Real::from(1_i32), &Real::from(2_i32), &Real::from(3_i32)),
+            Real::from(7_i32)
+        );
+
+        let stddev = Real::sample_stddev(&values).unwrap();
+        assert_eq!(stddev, Real::from(4_i32).sqrt().unwrap());
+    }
+
+    #[test]
+    fn abs_and_angle_conversions_preserve_exact_real_structure() {
+        assert_eq!(Real::from(-7_i32).abs(), Real::from(7_i32));
+        assert_eq!((-Real::pi()).abs(), Real::pi());
+        assert_eq!(Real::zero().abs(), Real::zero());
+
+        assert_eq!(Real::from(180_i32).to_radians(), Real::pi());
+        assert_eq!(Real::pi().to_degrees(), Real::from(180_i32));
+        assert_eq!(
+            Real::from(45_i32).to_radians().to_degrees(),
+            Real::from(45_i32)
+        );
     }
 }
