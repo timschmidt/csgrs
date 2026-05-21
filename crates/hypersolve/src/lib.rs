@@ -120,9 +120,11 @@ pub use residual_replay::{
     replay_dense_linear_residuals, replay_sparse_linear_residuals,
 };
 pub use resultant::{
-    ResultantInputSide, UnivariateResultantError, UnivariateResultantReport,
-    UnivariateSubresultantChainError, UnivariateSubresultantChainReport,
-    UnivariateSubresultantChainStep, resultant_univariate_polynomials,
+    ResultantInputSide, UnivariateResultantError, UnivariateResultantPairInput,
+    UnivariateResultantPairReport, UnivariateResultantPairStatus, UnivariateResultantReport,
+    UnivariateResultantScheduleReport, UnivariateSubresultantChainError,
+    UnivariateSubresultantChainReport, UnivariateSubresultantChainStep,
+    resultant_univariate_polynomials, schedule_univariate_resultant_pairs,
     subresultant_chain_univariate_polynomials,
 };
 pub use root_isolation::{

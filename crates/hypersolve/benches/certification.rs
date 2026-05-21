@@ -4,9 +4,9 @@ use hypersolve::{
     Constraint, EqualitySubstitution, Expr, IntervalBoxCertificationPackage, PreparedProblem,
     PreparedSolverBlock, Problem, ProposalEngineKind, ProposalEnginePrecision,
     ProposalEngineReport, SolverConfig, SolverPoint2, SolverState, SparseResidualTerm, SymbolId,
-    VariableBall, apply_equality_substitution_classes, audit_active_set,
-    build_equality_substitution_classes, certify_affine_krawczyk_box, certify_candidate,
-    certify_candidate_domains, certify_direct_univariate_quadratic_roots,
+    UnivariateResultantPairInput, VariableBall, apply_equality_substitution_classes,
+    audit_active_set, build_equality_substitution_classes, certify_affine_krawczyk_box,
+    certify_candidate, certify_candidate_domains, certify_direct_univariate_quadratic_roots,
     certify_interval_box_candidate, certify_multivariate_quadratic_interval_candidate,
     certify_multivariate_quadratic_krawczyk_box, certify_quadratic_interval_candidate,
     certify_univariate_quadratic_alpha, certify_univariate_quadratic_krawczyk_box,
@@ -16,8 +16,8 @@ use hypersolve::{
     eliminate_affine_rows_with_substitution_classes, isolate_univariate_polynomial_roots,
     replay_dense_linear_residuals, replay_sparse_linear_residuals,
     report_lossy_adapter_only_candidate, represent_univariate_algebraic_roots,
-    resultant_univariate_polynomials, solve_damped_least_squares,
-    solve_dense_linear_system_bareiss, solve_direct_affine_system,
+    resultant_univariate_polynomials, schedule_univariate_resultant_pairs,
+    solve_damped_least_squares, solve_dense_linear_system_bareiss, solve_direct_affine_system,
     solve_direct_univariate_quadratic_equalities, solve_sparse_linear_system_bareiss,
     squared_distance_equation, subdivide_bernstein_univariate_polynomial_interval_roots,
     subresultant_chain_univariate_polynomials,
@@ -237,6 +237,25 @@ fn certification(c: &mut Criterion) {
     c.bench_function("subresultant_chain_univariate_polynomials", |b| {
         b.iter(|| {
             subresultant_chain_univariate_polynomials(&[r(2), r(-3), r(1)], &[r(-1), r(1)], -64)
+        })
+    });
+    c.bench_function("schedule_univariate_resultant_pairs", |b| {
+        b.iter(|| {
+            schedule_univariate_resultant_pairs(
+                &[
+                    UnivariateResultantPairInput {
+                        pair_index: 0,
+                        left_coefficients: vec![r(-1), r(1)],
+                        right_coefficients: vec![r(-2), r(1)],
+                    },
+                    UnivariateResultantPairInput {
+                        pair_index: 1,
+                        left_coefficients: vec![r(-1), r(1)],
+                        right_coefficients: vec![r(-1), r(0), r(1)],
+                    },
+                ],
+                -64,
+            )
         })
     });
     c.bench_function("replay_dense_linear_residuals", |b| {

@@ -113,6 +113,75 @@ pub struct UnivariateSubresultantChainReport {
     pub has_nonconstant_common_factor: bool,
 }
 
+/// Input pair for batch resultant scheduling.
+#[derive(Clone, Debug, PartialEq)]
+pub struct UnivariateResultantPairInput {
+    /// Caller-supplied pair id preserved in reports.
+    pub pair_index: usize,
+    /// Left polynomial coefficients in ascending power order.
+    pub left_coefficients: Vec<Real>,
+    /// Right polynomial coefficients in ascending power order.
+    pub right_coefficients: Vec<Real>,
+}
+
+/// Classification for one resultant-scheduled polynomial pair.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum UnivariateResultantPairStatus {
+    /// The resultant was certified nonzero, so the two univariate polynomials
+    /// are coprime over exact arithmetic.
+    CertifiedCoprime,
+    /// The resultant was zero and the pseudo-remainder chain ended with a
+    /// nonconstant common factor.
+    CertifiedCommonFactor,
+    /// The resultant was zero but the chain did not expose a nonconstant
+    /// common factor under this narrow report surface.
+    ResultantZeroWithoutCommonFactorReport,
+    /// Resultant construction failed.
+    ResultantError,
+    /// Subresultant-chain construction failed after a zero resultant.
+    SubresultantChainError,
+    /// Resultant sign could not be certified.
+    UndecidedResultantSign,
+}
+
+/// Batch resultant scheduling report for one polynomial pair.
+#[derive(Clone, Debug, PartialEq)]
+pub struct UnivariateResultantPairReport {
+    /// Caller-supplied pair id.
+    pub pair_index: usize,
+    /// Pair classification.
+    pub status: UnivariateResultantPairStatus,
+    /// Resultant report when construction succeeded.
+    pub resultant: Option<UnivariateResultantReport>,
+    /// Subresultant-chain report when a zero resultant triggered it.
+    pub subresultant_chain: Option<UnivariateSubresultantChainReport>,
+    /// Resultant construction error, if any.
+    pub resultant_error: Option<UnivariateResultantError>,
+    /// Subresultant construction error, if any.
+    pub subresultant_error: Option<UnivariateSubresultantChainError>,
+}
+
+/// Batch resultant scheduling report.
+#[derive(Clone, Debug, PartialEq)]
+pub struct UnivariateResultantScheduleReport {
+    /// One report per input pair.
+    pub pairs: Vec<UnivariateResultantPairReport>,
+    /// Number of pairs certified coprime by a nonzero resultant.
+    pub certified_coprime_pairs: usize,
+    /// Number of pairs certified to have a nonconstant common factor.
+    pub certified_common_factor_pairs: usize,
+    /// Number of pairs that ended in explicit error or uncertainty.
+    pub unresolved_pairs: usize,
+}
+
+impl UnivariateResultantScheduleReport {
+    /// Returns true when every pair has a certified resultant classification.
+    pub fn all_classified(&self) -> bool {
+        self.unresolved_pairs == 0
+            && self.pairs.len() == self.certified_coprime_pairs + self.certified_common_factor_pairs
+    }
+}
+
 /// Computes the exact Sylvester resultant of two univariate polynomials.
 ///
 /// Coefficients are supplied in ascending power order. Constant inputs use the
@@ -242,6 +311,45 @@ pub fn subresultant_chain_univariate_polynomials(
     })
 }
 
+/// Schedule exact univariate resultant checks for many polynomial pairs.
+///
+/// This is the generic hypersolve side of curve-pair elimination scheduling:
+/// curve crates own span construction and topology, then pass univariate
+/// coefficient pairs here for exact algebraic filtering. Each pair first runs
+/// the Sylvester resultant; zero resultants then run the fraction-free
+/// pseudo-remainder chain. The staged filter follows Sylvester's determinant
+/// resultant (J. J. Sylvester, "On a Theory of the Syzygetic Relations of Two
+/// Rational Integral Functions", 1853) and Collins' subresultant PRS
+/// construction (G. E. Collins, "Subresultants and Reduced Polynomial Remainder
+/// Sequences", 1967), while preserving Yap's Exact Geometric Computation rule
+/// that exact reports, not sampled approximations, drive branching decisions
+/// (Chee K. Yap, "Towards Exact Geometric Computation", 1997).
+pub fn schedule_univariate_resultant_pairs(
+    pairs: &[UnivariateResultantPairInput],
+    min_precision: i32,
+) -> UnivariateResultantScheduleReport {
+    let reports = pairs
+        .iter()
+        .map(|pair| schedule_one_resultant_pair(pair, min_precision))
+        .collect::<Vec<_>>();
+    let certified_coprime_pairs = reports
+        .iter()
+        .filter(|pair| pair.status == UnivariateResultantPairStatus::CertifiedCoprime)
+        .count();
+    let certified_common_factor_pairs = reports
+        .iter()
+        .filter(|pair| pair.status == UnivariateResultantPairStatus::CertifiedCommonFactor)
+        .count();
+    let unresolved_pairs = reports.len() - certified_coprime_pairs - certified_common_factor_pairs;
+
+    UnivariateResultantScheduleReport {
+        pairs: reports,
+        certified_coprime_pairs,
+        certified_common_factor_pairs,
+        unresolved_pairs,
+    }
+}
+
 fn resultant_report(
     left_coefficients: Vec<Real>,
     right_coefficients: Vec<Real>,
@@ -258,6 +366,85 @@ fn resultant_report(
         sylvester_dimension: left_degree + right_degree,
         resultant,
         determinant,
+    }
+}
+
+fn schedule_one_resultant_pair(
+    pair: &UnivariateResultantPairInput,
+    min_precision: i32,
+) -> UnivariateResultantPairReport {
+    let resultant = match resultant_univariate_polynomials(
+        &pair.left_coefficients,
+        &pair.right_coefficients,
+        min_precision,
+    ) {
+        Ok(resultant) => resultant,
+        Err(error) => {
+            return UnivariateResultantPairReport {
+                pair_index: pair.pair_index,
+                status: UnivariateResultantPairStatus::ResultantError,
+                resultant: None,
+                subresultant_chain: None,
+                resultant_error: Some(error),
+                subresultant_error: None,
+            };
+        }
+    };
+
+    let resultant_sign = match resultant.resultant.certified_sign_until(min_precision) {
+        CertifiedRealSign::Known { sign, .. } => sign,
+        CertifiedRealSign::Unknown { .. } => {
+            return UnivariateResultantPairReport {
+                pair_index: pair.pair_index,
+                status: UnivariateResultantPairStatus::UndecidedResultantSign,
+                resultant: Some(resultant),
+                subresultant_chain: None,
+                resultant_error: None,
+                subresultant_error: None,
+            };
+        }
+    };
+    if !matches!(resultant_sign, RealSign::Zero) {
+        return UnivariateResultantPairReport {
+            pair_index: pair.pair_index,
+            status: UnivariateResultantPairStatus::CertifiedCoprime,
+            resultant: Some(resultant),
+            subresultant_chain: None,
+            resultant_error: None,
+            subresultant_error: None,
+        };
+    }
+
+    let chain = match subresultant_chain_univariate_polynomials(
+        &pair.left_coefficients,
+        &pair.right_coefficients,
+        min_precision,
+    ) {
+        Ok(chain) => chain,
+        Err(error) => {
+            return UnivariateResultantPairReport {
+                pair_index: pair.pair_index,
+                status: UnivariateResultantPairStatus::SubresultantChainError,
+                resultant: Some(resultant),
+                subresultant_chain: None,
+                resultant_error: None,
+                subresultant_error: Some(error),
+            };
+        }
+    };
+    let status = if chain.has_nonconstant_common_factor {
+        UnivariateResultantPairStatus::CertifiedCommonFactor
+    } else {
+        UnivariateResultantPairStatus::ResultantZeroWithoutCommonFactorReport
+    };
+
+    UnivariateResultantPairReport {
+        pair_index: pair.pair_index,
+        status,
+        resultant: Some(resultant),
+        subresultant_chain: Some(chain),
+        resultant_error: None,
+        subresultant_error: None,
     }
 }
 
@@ -462,6 +649,50 @@ mod tests {
         assert_eq!(report.last_nonzero, vec![real(-3)]);
     }
 
+    #[test]
+    fn resultant_schedule_classifies_coprime_common_and_bad_pairs() {
+        let report = schedule_univariate_resultant_pairs(
+            &[
+                UnivariateResultantPairInput {
+                    pair_index: 10,
+                    left_coefficients: vec![real(-1), real(1)],
+                    right_coefficients: vec![real(-2), real(1)],
+                },
+                UnivariateResultantPairInput {
+                    pair_index: 11,
+                    left_coefficients: vec![real(-1), real(1)],
+                    right_coefficients: vec![real(-1), Real::zero(), Real::one()],
+                },
+                UnivariateResultantPairInput {
+                    pair_index: 12,
+                    left_coefficients: Vec::new(),
+                    right_coefficients: vec![real(1)],
+                },
+            ],
+            -64,
+        );
+
+        assert_eq!(report.pairs.len(), 3);
+        assert_eq!(report.certified_coprime_pairs, 1);
+        assert_eq!(report.certified_common_factor_pairs, 1);
+        assert_eq!(report.unresolved_pairs, 1);
+        assert_eq!(report.pairs[0].pair_index, 10);
+        assert_eq!(
+            report.pairs[0].status,
+            UnivariateResultantPairStatus::CertifiedCoprime
+        );
+        assert_eq!(
+            report.pairs[1].status,
+            UnivariateResultantPairStatus::CertifiedCommonFactor
+        );
+        assert_eq!(
+            report.pairs[2].status,
+            UnivariateResultantPairStatus::ResultantError
+        );
+        assert!(report.pairs[1].subresultant_chain.is_some());
+        assert!(report.pairs[2].resultant_error.is_some());
+    }
+
     proptest! {
         #[test]
         fn generated_linear_resultants_match_root_difference(
@@ -520,6 +751,38 @@ mod tests {
 
             prop_assert!(report.has_nonconstant_common_factor);
             prop_assert_eq!(report.last_nonzero_degree, 1);
+        }
+
+        #[test]
+        fn generated_resultant_schedule_classifies_linear_pairs(
+            left_root in -32_i16..=32,
+            right_root in -32_i16..=32,
+        ) {
+            let left_root = i64::from(left_root);
+            let right_root = i64::from(right_root);
+            let report = schedule_univariate_resultant_pairs(
+                &[UnivariateResultantPairInput {
+                    pair_index: 0,
+                    left_coefficients: vec![real(-left_root), real(1)],
+                    right_coefficients: vec![real(-right_root), real(1)],
+                }],
+                -64,
+            );
+
+            if left_root == right_root {
+                prop_assert_eq!(
+                    &report.pairs[0].status,
+                    &UnivariateResultantPairStatus::CertifiedCommonFactor
+                );
+                prop_assert_eq!(report.certified_common_factor_pairs, 1);
+            } else {
+                prop_assert_eq!(
+                    &report.pairs[0].status,
+                    &UnivariateResultantPairStatus::CertifiedCoprime
+                );
+                prop_assert_eq!(report.certified_coprime_pairs, 1);
+            }
+            prop_assert!(report.all_classified());
         }
     }
 }
