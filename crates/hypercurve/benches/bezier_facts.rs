@@ -1792,6 +1792,20 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     .iter()
                     .map(|fragment| (fragment.start().clone(), fragment.end().clone()))
                     .collect::<Vec<_>>();
+                let endpoint_single =
+                    BezierBooleanLoopGraphSuccessorWalkReport2::from_fragment_endpoints(
+                        &traversal,
+                        &plan,
+                        &first_endpoints,
+                        &second_endpoints,
+                    );
+                let endpoint_multi =
+                    BezierBooleanLoopGraphMultiCycleWalkReport2::from_fragment_endpoints(
+                        &traversal,
+                        &plan,
+                        &first_endpoints,
+                        &second_endpoints,
+                    );
                 let output = BezierBooleanOutputLoopReport2::from_multi_cycle_successor_endpoints(
                     &multi,
                     &traversal,
@@ -2019,7 +2033,7 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                         &locator_results,
                     );
                 format!(
-                    "{single:?}{multi:?}{output:?}{result:?}{containment_result:?}{materialized:?}{locator_certification:?}{replay_result:?}{locator_result:?}{replay_materialized:?}{locator_materialized:?}{typed_locator_certification:?}{typed_depth_result:?}{typed_containment_result:?}{typed_containment_materialized:?}{typed_locator_result:?}{typed_locator_materialized:?}"
+                    "{single:?}{multi:?}{endpoint_single:?}{endpoint_multi:?}{output:?}{result:?}{containment_result:?}{materialized:?}{locator_certification:?}{replay_result:?}{locator_result:?}{replay_materialized:?}{locator_materialized:?}{typed_locator_certification:?}{typed_depth_result:?}{typed_containment_result:?}{typed_containment_materialized:?}{typed_locator_result:?}{typed_locator_materialized:?}"
                 )
             }
             other => format!("{other:?}"),

@@ -6108,6 +6108,78 @@ impl BezierBooleanLoopGraphWalkReport2 {
 }
 
 impl BezierBooleanLoopGraphSuccessorWalkReport2 {
+    /// Derives one closed graph walk by matching exact directed endpoints.
+    ///
+    /// This is the built-in successor producer for arrangements whose emitted
+    /// fragments already carry exact endpoints. Each emitted fragment is
+    /// directed according to its boolean action, then its end point is matched
+    /// against every directed start point to derive successor edges. The
+    /// derived edges are still replayed through [`Self::from_successor_facts`],
+    /// so missing references, open chains, duplicate predecessors, and branch
+    /// ambiguities remain blockers instead of being sorted, snapped, or
+    /// heuristically repaired. This directly applies Yap, "Towards Exact
+    /// Geometric Computation" (1997): exact combinatorial topology may advance
+    /// construction only as replayable evidence. The endpoint-successor walk
+    /// follows the traversal/fill split used by Vatti (1992),
+    /// Greiner-Hormann (1998), and Martinez-Rueda-Feito (2009), with
+    /// degenerate overlap policy left to certified graph evidence as in
+    /// Foster-Hormann-Popa (2019).
+    pub fn from_fragment_endpoints(
+        traversal: &BezierBooleanLoopGraphTraversalReport2,
+        plan: &BezierBooleanLoopAssemblyPlanReport2,
+        first_endpoints: &[(Point2, Point2)],
+        second_endpoints: &[(Point2, Point2)],
+    ) -> Self {
+        let directed = directed_emitted_step_endpoints(plan, first_endpoints, second_endpoints);
+        let successors = endpoint_successor_facts(&directed);
+        Self::from_successor_facts(traversal, plan, &successors)
+    }
+
+    /// Derives one closed graph walk from quadratic Bezier fragment endpoints.
+    pub fn from_quadratic_fragments(
+        traversal: &BezierBooleanLoopGraphTraversalReport2,
+        plan: &BezierBooleanLoopAssemblyPlanReport2,
+        first: &BezierBooleanQuadraticFragmentReport2,
+        second: &BezierBooleanQuadraticFragmentReport2,
+    ) -> Self {
+        Self::from_fragment_endpoints(
+            traversal,
+            plan,
+            &quadratic_fragment_endpoints(&first.fragments),
+            &quadratic_fragment_endpoints(&second.fragments),
+        )
+    }
+
+    /// Derives one closed graph walk from cubic Bezier fragment endpoints.
+    pub fn from_cubic_fragments(
+        traversal: &BezierBooleanLoopGraphTraversalReport2,
+        plan: &BezierBooleanLoopAssemblyPlanReport2,
+        first: &BezierBooleanCubicFragmentReport2,
+        second: &BezierBooleanCubicFragmentReport2,
+    ) -> Self {
+        Self::from_fragment_endpoints(
+            traversal,
+            plan,
+            &cubic_fragment_endpoints(&first.fragments),
+            &cubic_fragment_endpoints(&second.fragments),
+        )
+    }
+
+    /// Derives one closed graph walk from rational quadratic/conic fragment endpoints.
+    pub fn from_rational_quadratic_fragments(
+        traversal: &BezierBooleanLoopGraphTraversalReport2,
+        plan: &BezierBooleanLoopAssemblyPlanReport2,
+        first: &BezierBooleanRationalQuadraticFragmentReport2,
+        second: &BezierBooleanRationalQuadraticFragmentReport2,
+    ) -> Self {
+        Self::from_fragment_endpoints(
+            traversal,
+            plan,
+            &rational_quadratic_fragment_endpoints(&first.fragments),
+            &rational_quadratic_fragment_endpoints(&second.fragments),
+        )
+    }
+
     /// Derives a certified walk order from exact successor facts.
     ///
     /// A ready report requires exactly one successor and one predecessor for
@@ -6452,6 +6524,74 @@ impl BezierBooleanLoopGraphSuccessorWalkReport2 {
 }
 
 impl BezierBooleanLoopGraphMultiCycleWalkReport2 {
+    /// Derives one or more closed graph walks by matching exact directed endpoints.
+    ///
+    /// This is the multi-loop endpoint counterpart to
+    /// [`BezierBooleanLoopGraphSuccessorWalkReport2::from_fragment_endpoints`].
+    /// It accepts several disjoint closed cycles only after each directed
+    /// endpoint has exactly one successor and one predecessor. Ambiguous branch
+    /// vertices, stale endpoint references, and open chains remain explicit
+    /// blockers through [`Self::from_successor_facts`]. Yap (1997) is the
+    /// governing exact-computation contract; Vatti (1992),
+    /// Greiner-Hormann (1998), Martinez-Rueda-Feito (2009), and
+    /// Foster-Hormann-Popa (2019) motivate the explicit traversal and
+    /// degeneracy boundaries.
+    pub fn from_fragment_endpoints(
+        traversal: &BezierBooleanLoopGraphTraversalReport2,
+        plan: &BezierBooleanLoopAssemblyPlanReport2,
+        first_endpoints: &[(Point2, Point2)],
+        second_endpoints: &[(Point2, Point2)],
+    ) -> Self {
+        let directed = directed_emitted_step_endpoints(plan, first_endpoints, second_endpoints);
+        let successors = endpoint_successor_facts(&directed);
+        Self::from_successor_facts(traversal, plan, &successors)
+    }
+
+    /// Derives closed graph-walk cycles from quadratic Bezier fragment endpoints.
+    pub fn from_quadratic_fragments(
+        traversal: &BezierBooleanLoopGraphTraversalReport2,
+        plan: &BezierBooleanLoopAssemblyPlanReport2,
+        first: &BezierBooleanQuadraticFragmentReport2,
+        second: &BezierBooleanQuadraticFragmentReport2,
+    ) -> Self {
+        Self::from_fragment_endpoints(
+            traversal,
+            plan,
+            &quadratic_fragment_endpoints(&first.fragments),
+            &quadratic_fragment_endpoints(&second.fragments),
+        )
+    }
+
+    /// Derives closed graph-walk cycles from cubic Bezier fragment endpoints.
+    pub fn from_cubic_fragments(
+        traversal: &BezierBooleanLoopGraphTraversalReport2,
+        plan: &BezierBooleanLoopAssemblyPlanReport2,
+        first: &BezierBooleanCubicFragmentReport2,
+        second: &BezierBooleanCubicFragmentReport2,
+    ) -> Self {
+        Self::from_fragment_endpoints(
+            traversal,
+            plan,
+            &cubic_fragment_endpoints(&first.fragments),
+            &cubic_fragment_endpoints(&second.fragments),
+        )
+    }
+
+    /// Derives closed graph-walk cycles from rational quadratic/conic fragment endpoints.
+    pub fn from_rational_quadratic_fragments(
+        traversal: &BezierBooleanLoopGraphTraversalReport2,
+        plan: &BezierBooleanLoopAssemblyPlanReport2,
+        first: &BezierBooleanRationalQuadraticFragmentReport2,
+        second: &BezierBooleanRationalQuadraticFragmentReport2,
+    ) -> Self {
+        Self::from_fragment_endpoints(
+            traversal,
+            plan,
+            &rational_quadratic_fragment_endpoints(&first.fragments),
+            &rational_quadratic_fragment_endpoints(&second.fragments),
+        )
+    }
+
     /// Derives deterministic closed cycles from exact successor facts.
     ///
     /// This accepts disjoint closed cycles, unlike
@@ -16265,6 +16405,61 @@ fn rational_quadratic_fragment_endpoints(
         .iter()
         .map(|fragment| (fragment.start().clone(), fragment.end().clone()))
         .collect()
+}
+
+fn directed_emitted_step_endpoints(
+    plan: &BezierBooleanLoopAssemblyPlanReport2,
+    first_endpoints: &[(Point2, Point2)],
+    second_endpoints: &[(Point2, Point2)],
+) -> Vec<Option<(Point2, Point2)>> {
+    plan.emitted_steps
+        .iter()
+        .map(|emitted| {
+            let endpoints = match emitted.step.operand {
+                BezierBooleanTraversalOperand::First => {
+                    first_endpoints.get(emitted.step.fragment_index)
+                }
+                BezierBooleanTraversalOperand::Second => {
+                    second_endpoints.get(emitted.step.fragment_index)
+                }
+            }?;
+
+            match emitted.action {
+                BooleanFragmentAction::KeepSourceDirection => {
+                    Some((endpoints.0.clone(), endpoints.1.clone()))
+                }
+                BooleanFragmentAction::KeepReversed => {
+                    Some((endpoints.1.clone(), endpoints.0.clone()))
+                }
+                BooleanFragmentAction::Discard | BooleanFragmentAction::BoundaryNeedsResolution => {
+                    None
+                }
+            }
+        })
+        .collect()
+}
+
+fn endpoint_successor_facts(
+    directed_endpoints: &[Option<(Point2, Point2)>],
+) -> Vec<BezierBooleanLoopGraphSuccessorFact2> {
+    let mut facts = Vec::new();
+    for (from_step_index, directed) in directed_endpoints.iter().enumerate() {
+        let Some((_, end)) = directed else {
+            continue;
+        };
+        for (to_step_index, candidate) in directed_endpoints.iter().enumerate() {
+            let Some((start, _)) = candidate else {
+                continue;
+            };
+            if start == end {
+                facts.push(BezierBooleanLoopGraphSuccessorFact2 {
+                    from_step_index,
+                    to_step_index,
+                });
+            }
+        }
+    }
+    facts
 }
 
 fn fragment_chain_gap_count(endpoints: &[(Point2, Point2)]) -> usize {
