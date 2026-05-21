@@ -158,7 +158,7 @@ pub(crate) fn hxy_orientation_sign(
 /// is still evaluated in `hyperlattice::Vector2`/`hyperreal::Real`, following
 /// Yap's exact-geometric-computation split between primitive boundary data and
 /// exact-aware predicates (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-#[cfg(any(test, feature = "offset"))]
+#[cfg(any(test, feature = "gerber-io", feature = "offset"))]
 pub(crate) fn hxy_distance(lhs: (Real, Real), rhs: (Real, Real)) -> Option<Real> {
     let lhs = hyperlattice::Vector2::try_from_f64_array([lhs.0, lhs.1]).ok()?;
     let rhs = hyperlattice::Vector2::try_from_f64_array([rhs.0, rhs.1]).ok()?;
@@ -170,7 +170,7 @@ pub(crate) fn hxy_distance(lhs: (Real, Real), rhs: (Real, Real)) -> Option<Real>
 /// This is the shared 2D counterpart to [`hunit_vector3`], used by CAM lead-in
 /// construction so cutter vectors are normalized by hyperlattice instead of
 /// local primitive `sqrt`/division.
-#[cfg(any(test, feature = "offset"))]
+#[cfg(any(test, feature = "gerber-io", feature = "offset"))]
 pub(crate) fn hxy_unit_direction(
     from: (Real, Real),
     to: (Real, Real),
