@@ -450,6 +450,7 @@ fn adversarial_hyperreal_sampled_profile_constructors_emit_finite_regions() {
         Profile::circle_with_keyway(2.0, 24, 0.5, 0.75, ()),
         Profile::circle_with_flat(2.0, 24, 0.5, ()),
         Profile::circle_with_two_flats(2.0, 24, 0.5, ()),
+        Profile::involute_rack(1.0, 4, 20.0, 0.05, 0.0, ()),
         Profile::cycloidal_rack(1.25, 4, 0.5, 0.1, 8, ()),
         Profile::cycloidal_gear(1.0, 12, 13, 0.05, 4, ()),
         Profile::airfoil_naca4(2.0, 4.0, 12.0, 1.0, 32, ()),
