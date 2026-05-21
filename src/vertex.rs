@@ -1,10 +1,12 @@
 //! Struct and functions for working with `Vertex`s.
 
 use crate::float_types::{
-    PI, Real, hangle_between_vectors, hpoint_centroid, hpoint_distance, hpoint_weighted_sum,
-    hpoints_within_epsilon, hreal_div, hreal_from_f64, hreal_gt_f64, hreal_lt_f64, hreal_mean,
-    hreal_sample_stddev, hreal_sum, hreal_to_f64, hunit_vector3, hvector3_distance,
-    hvector3_dot, hvector3_from_point3, hvector3_mean, hvector3_weighted_sum, tolerance,
+    PI, Real, hangle_between_vectors, hangle_sin_cos, hpoint_centroid, hpoint_distance,
+    hpoint_lerp, hpoint_weighted_sum, hpoints_within_epsilon, hreal_clamp_f64, hreal_div,
+    hreal_f64s_within_epsilon, hreal_from_f64, hreal_gt_f64, hreal_lt_f64, hreal_mean,
+    hreal_mul, hreal_sample_stddev, hreal_sub, hreal_sum, hreal_to_f64, hunit_vector3,
+    hvector3_distance, hvector3_dot, hvector3_from_point3, hvector3_mean,
+    hvector3_weighted_sum, tolerance,
 };
 use hashbrown::HashMap;
 use nalgebra::{Point3, Vector3};
@@ -125,8 +127,8 @@ impl Vertex {
     /// Yap's exact-geometric-computation boundary discipline
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     pub fn slerp_interpolate(&self, other: &Vertex, t: Real) -> Vertex {
-        // Linear interpolation for position
-        let new_position = self.position + (other.position - self.position) * t;
+        let new_position = hpoint_lerp(&self.position, &other.position, t)
+            .unwrap_or_else(|| self.interpolate(other, t).position);
 
         let Some(n0) = hunit_vector3(&self.normal) else {
             return self.interpolate(other, t);
@@ -135,31 +137,67 @@ impl Vertex {
             return self.interpolate(other, t);
         };
 
-        let Some(dot) = hvector3_dot(&n0, &n1).map(|dot| dot.clamp(-1.0, 1.0)) else {
+        let Some(dot) = hvector3_dot(&n0, &n1).and_then(|dot| hreal_clamp_f64(dot, -1.0, 1.0))
+        else {
             return self.interpolate(other, t);
         };
 
         // If normals are nearly parallel, use linear interpolation
-        if (dot.abs() - 1.0).abs() < tolerance() {
-            let blended = self.normal + (other.normal - self.normal) * t;
-            let new_normal = hunit_vector3(&blended).unwrap_or_else(Vector3::z);
+        if hreal_f64s_within_epsilon(dot, 1.0, tolerance())
+            || hreal_f64s_within_epsilon(dot, -1.0, tolerance())
+        {
+            let new_normal = hvector3_weighted_sum(
+                &[self.normal, other.normal],
+                &[hreal_sub(1.0, t).unwrap_or(0.0), t],
+            )
+            .and_then(|normal| hunit_vector3(&normal))
+            .unwrap_or_else(Vector3::z);
             return Vertex::new(new_position, new_normal);
         }
 
-        let omega = dot.acos();
-        let sin_omega = omega.sin();
+        let Some(omega) = hangle_between_vectors(&n0, &n1) else {
+            return self.interpolate(other, t);
+        };
+        let Some((sin_omega, _)) = hangle_sin_cos(omega) else {
+            return self.interpolate(other, t);
+        };
 
-        if sin_omega.abs() < tolerance() {
+        if hreal_f64s_within_epsilon(sin_omega, 0.0, tolerance()) {
             // Fallback to linear interpolation
-            let blended = self.normal + (other.normal - self.normal) * t;
-            let new_normal = hunit_vector3(&blended).unwrap_or_else(Vector3::z);
+            let new_normal = hvector3_weighted_sum(
+                &[self.normal, other.normal],
+                &[hreal_sub(1.0, t).unwrap_or(0.0), t],
+            )
+            .and_then(|normal| hunit_vector3(&normal))
+            .unwrap_or_else(Vector3::z);
             return Vertex::new(new_position, new_normal);
         }
 
-        let a = ((1.0 - t) * omega).sin() / sin_omega;
-        let b = (t * omega).sin() / sin_omega;
+        let Some(one_minus_t) = hreal_sub(1.0, t) else {
+            return self.interpolate(other, t);
+        };
+        let Some(a_angle) = hreal_mul(one_minus_t, omega) else {
+            return self.interpolate(other, t);
+        };
+        let Some(b_angle) = hreal_mul(t, omega) else {
+            return self.interpolate(other, t);
+        };
+        let Some((a_sin, _)) = hangle_sin_cos(a_angle) else {
+            return self.interpolate(other, t);
+        };
+        let Some((b_sin, _)) = hangle_sin_cos(b_angle) else {
+            return self.interpolate(other, t);
+        };
+        let Some(a) = hreal_div(a_sin, sin_omega) else {
+            return self.interpolate(other, t);
+        };
+        let Some(b) = hreal_div(b_sin, sin_omega) else {
+            return self.interpolate(other, t);
+        };
 
-        let blended = a * n0 + b * n1;
+        let Some(blended) = hvector3_weighted_sum(&[n0, n1], &[a, b]) else {
+            return self.interpolate(other, t);
+        };
         let new_normal = hunit_vector3(&blended).unwrap_or_else(Vector3::z);
         Vertex::new(new_position, new_normal)
     }

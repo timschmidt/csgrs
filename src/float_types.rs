@@ -725,6 +725,29 @@ pub(crate) fn hreal_cmp_f64(lhs: F64, rhs: F64) -> Ordering {
     }
 }
 
+/// Clamp a finite public boundary scalar in hyperreal comparison space.
+///
+/// This is for transitional APIs that still receive and return `f64` scalars
+/// but need branch decisions to use the same exact-aware sign refinement as
+/// geometric predicates. It follows Yap's exact-geometric-computation split
+/// between primitive boundaries and exact-aware decisions
+/// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+pub(crate) fn hreal_clamp_f64(value: F64, min: F64, max: F64) -> Option<F64> {
+    let value_h = hreal_from_f64(value).ok()?;
+    let min_h = hreal_from_f64(min).ok()?;
+    let _max_h = hreal_from_f64(max).ok()?;
+    if hreal_gt_f64(&min_h, max) {
+        return None;
+    }
+    if hreal_lt_f64(&value_h, min) {
+        Some(min)
+    } else if hreal_gt_f64(&value_h, max) {
+        Some(max)
+    } else {
+        hreal_to_f64(&value_h)
+    }
+}
+
 /// Return true when two finite f64 API-boundary scalars are within `epsilon`.
 ///
 /// The squared difference is evaluated in `hyperreal::Real` so callers avoid
@@ -1128,6 +1151,9 @@ mod tests {
         assert_eq!(hreal_sub(7.0, 4.0).unwrap(), 3.0);
         assert_eq!(hreal_mul(2.0, 3.0).unwrap(), 6.0);
         assert_eq!(hreal_sqrt(25.0).unwrap(), 5.0);
+        assert_eq!(hreal_clamp_f64(2.0, -1.0, 1.0).unwrap(), 1.0);
+        assert_eq!(hreal_clamp_f64(-2.0, -1.0, 1.0).unwrap(), -1.0);
+        assert_eq!(hreal_clamp_f64(0.5, -1.0, 1.0).unwrap(), 0.5);
         assert_eq!(hreal_affine(1.0, 0.25, 8.0).unwrap(), 3.0);
         assert!(hreal_f64s_within_epsilon(
             hdegrees_to_radians(180.0).unwrap(),
@@ -1162,6 +1188,8 @@ mod tests {
         assert!(hreal_sample_stddev(&[1.0, Real::INFINITY]).is_none());
         assert!(hangle_sin_cos(Real::INFINITY).is_none());
         assert!(hreal_sqrt(-1.0).is_none());
+        assert!(hreal_clamp_f64(Real::NAN, -1.0, 1.0).is_none());
+        assert!(hreal_clamp_f64(0.0, 1.0, -1.0).is_none());
         assert!(hdegrees_to_radians(Real::NAN).is_none());
     }
 
