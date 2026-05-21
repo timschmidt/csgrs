@@ -10,6 +10,7 @@ pub mod affine;
 pub mod algebraic;
 pub mod alpha;
 pub mod bareiss;
+pub mod batch;
 pub mod branches;
 pub mod certification;
 pub mod diagnostics;
@@ -65,6 +66,10 @@ pub use bareiss::{
     BareissDeterminantReport, BareissError, BareissPivot, BareissSolveReport, SparseBareissError,
     SparseBareissSolveReport, determinant_bareiss, solve_dense_linear_system_bareiss,
     solve_sparse_linear_system_bareiss,
+};
+pub use batch::{
+    BatchCandidateCertificationReport, BatchCandidateReplay, BatchCandidateStatus,
+    certify_candidate_batch, certify_candidate_batch_with_config,
 };
 pub use branches::{
     ExactBranchEnumerationReport, ExactBranchStatus, ExactSolutionBranch,

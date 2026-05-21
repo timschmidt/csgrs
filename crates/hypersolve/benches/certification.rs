@@ -10,7 +10,7 @@ use hypersolve::{
     analyze_sparse_bareiss_elimination_pattern, apply_equality_substitution_classes,
     arithmetic_algebraic_root_representations, audit_active_set,
     build_equality_substitution_classes, certify_affine_krawczyk_box, certify_candidate,
-    certify_candidate_domains, certify_direct_univariate_quadratic_roots,
+    certify_candidate_batch, certify_candidate_domains, certify_direct_univariate_quadratic_roots,
     certify_interval_box_candidate, certify_multivariate_quadratic_interval_candidate,
     certify_multivariate_quadratic_krawczyk_box, certify_quadratic_interval_candidate,
     certify_sketch_construction, certify_univariate_quadratic_alpha,
@@ -802,6 +802,10 @@ fn certification(c: &mut Criterion) {
     });
     c.bench_function("certify_affine_candidate_exact", |b| {
         b.iter(|| certify_candidate(&prepared, &context))
+    });
+    let batch_contexts = (0..16).map(|_| context.clone()).collect::<Vec<_>>();
+    c.bench_function("certify_candidate_batch_affine", |b| {
+        b.iter(|| certify_candidate_batch(&prepared, &batch_contexts))
     });
     c.bench_function("audit_active_set", |b| {
         b.iter(|| {

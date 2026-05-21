@@ -1,7 +1,7 @@
 use hyperreal::{Real, RealSign};
 use hypersolve::{
-    CertifiedCandidateStatus, Constraint, DomainCheckKind, DomainCheckStatus, EqualitySubstitution,
-    EqualitySubstitutionProblem, Expr, IntervalBoxCertificationPackage,
+    BatchCandidateStatus, CertifiedCandidateStatus, Constraint, DomainCheckKind, DomainCheckStatus,
+    EqualitySubstitution, EqualitySubstitutionProblem, Expr, IntervalBoxCertificationPackage,
     IntervalBoxCertificationStatus, MultivariateQuadraticKrawczykStatus, PreparedProblem,
     PreparedSolverBlock, Problem, ProposalEngineKind, ProposalEnginePrecision,
     ProposalEngineReport, RootIsolationStatus, SketchConstructionCertificateStatus,
@@ -9,7 +9,7 @@ use hypersolve::{
     SketchParameterDomainStatus, SketchResidualStrategy, SketchSolveProblem, SolverBlockRowKind,
     SolverConfig, SolverPoint2, SolverState, SymbolId, VariableBall,
     apply_equality_substitution_classes, certify_affine_krawczyk_box, certify_candidate,
-    certify_candidate_domains, certify_direct_univariate_quadratic_roots,
+    certify_candidate_batch, certify_candidate_domains, certify_direct_univariate_quadratic_roots,
     certify_interval_box_candidate, certify_multivariate_quadratic_interval_candidate,
     certify_multivariate_quadratic_krawczyk_box, certify_quadratic_interval_candidate,
     certify_sketch_construction, certify_univariate_quadratic_alpha,
@@ -157,6 +157,44 @@ proptest! {
             CertifiedCandidateStatus::CertifiedZero { .. }
         ), true);
         prop_assert!(report.all_satisfied());
+    }
+
+    #[test]
+    fn candidate_batch_generated_affine_targets_preserve_input_order_and_status(
+        target in -16_i16..=16,
+        values in prop::collection::vec(-16_i16..=16, 1..16),
+    ) {
+        let target = i64::from(target);
+        let x = Expr::symbol(SymbolId(0), "x");
+        let mut problem = Problem::default();
+        problem.add_variable("x", Real::from(0));
+        problem.add_constraint(Constraint::equality("generated batch target", x - Expr::int(target)));
+        let prepared = PreparedProblem::new(&problem);
+        let candidates = values
+            .iter()
+            .map(|value| {
+                let mut context = context_from_problem(&problem);
+                context.bind(SymbolId(0), Real::from(i64::from(*value)));
+                context
+            })
+            .collect::<Vec<_>>();
+
+        let report = certify_candidate_batch(&prepared, &candidates);
+
+        prop_assert_eq!(report.candidate_count, values.len());
+        prop_assert_eq!(
+            report.certified_candidates,
+            values.iter().filter(|value| i64::from(**value) == target).count()
+        );
+        for (index, replay) in report.candidates.iter().enumerate() {
+            prop_assert_eq!(replay.candidate_index, index);
+            let expected = if i64::from(values[index]) == target {
+                BatchCandidateStatus::Certified
+            } else {
+                BatchCandidateStatus::Rejected
+            };
+            prop_assert_eq!(replay.status, expected);
+        }
     }
 
     #[test]

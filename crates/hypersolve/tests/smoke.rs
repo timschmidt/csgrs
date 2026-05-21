@@ -1,28 +1,29 @@
 use hyperreal::{Rational, Real, SymbolicDependencyMask};
 use hypersolve::jacobian::{symbolic_jacobian, symbolic_jacobian_prepared};
 use hypersolve::{
-    CandidateCertificationConfig, CandidateResidualBall, CertifiedCandidateStatus, Constraint,
-    ConstraintKind, ConvergenceReason, DenseLinearBackend, DirectAffineSystemStatus,
-    DomainCheckKind, DomainCheckStatus, ExactAffineRankStatus, ExactBranchStatus, Expr, ExprDegree,
-    IntervalBoxCertificationPackage, IntervalBoxCertificationStatus, LinearAdapterKind,
-    LinearAdapterPrecision, LinearBackend, MultivariateQuadraticKrawczykStatus, PreparedProblem,
-    PreparedSolverBlock, Problem, ProposalEngineKind, ProposalEnginePrecision, RootIsolationStatus,
-    RootMultiplicityStatus, SketchConstraintKind, SketchConstructionCertificateStatus,
-    SketchDegeneracyKind, SketchDegeneracyStatus, SketchEntityHandle, SketchEntityKind,
-    SketchGeneratedRowStatus, SketchParameterDomain, SketchParameterDomainKind,
-    SketchParameterDomainStatus, SketchResidualFormKind, SketchResidualFormRole,
-    SketchResidualFormsStatus, SketchResidualStrategy, SketchRoundTripMetadata,
-    SketchRoundTripRole, SketchSolveProblem, SolverBlockRowKind, SolverConfig, SolverPoint2,
-    SolverState, SymbolId, VariableBall, analyze_exact_affine_rank,
-    apply_equality_substitution_classes, apply_equality_substitutions,
+    BatchCandidateStatus, CandidateCertificationConfig, CandidateResidualBall,
+    CertifiedCandidateStatus, Constraint, ConstraintKind, ConvergenceReason, DenseLinearBackend,
+    DirectAffineSystemStatus, DomainCheckKind, DomainCheckStatus, ExactAffineRankStatus,
+    ExactBranchStatus, Expr, ExprDegree, IntervalBoxCertificationPackage,
+    IntervalBoxCertificationStatus, LinearAdapterKind, LinearAdapterPrecision, LinearBackend,
+    MultivariateQuadraticKrawczykStatus, PreparedProblem, PreparedSolverBlock, Problem,
+    ProposalEngineKind, ProposalEnginePrecision, RootIsolationStatus, RootMultiplicityStatus,
+    SketchConstraintKind, SketchConstructionCertificateStatus, SketchDegeneracyKind,
+    SketchDegeneracyStatus, SketchEntityHandle, SketchEntityKind, SketchGeneratedRowStatus,
+    SketchParameterDomain, SketchParameterDomainKind, SketchParameterDomainStatus,
+    SketchResidualFormKind, SketchResidualFormRole, SketchResidualFormsStatus,
+    SketchResidualStrategy, SketchRoundTripMetadata, SketchRoundTripRole, SketchSolveProblem,
+    SolverBlockRowKind, SolverConfig, SolverPoint2, SolverState, SymbolId, VariableBall,
+    analyze_exact_affine_rank, apply_equality_substitution_classes, apply_equality_substitutions,
     build_equality_substitution_classes, certify_affine_interval_candidate,
-    certify_affine_krawczyk_box, certify_candidate, certify_candidate_domains,
-    certify_candidate_with_config, certify_candidate_with_residual_balls,
-    certify_direct_univariate_quadratic_roots, certify_interval_box_candidate,
-    certify_multivariate_quadratic_interval_candidate, certify_multivariate_quadratic_krawczyk_box,
-    certify_quadratic_interval_candidate, certify_sketch_construction,
-    certify_univariate_quadratic_alpha, certify_univariate_quadratic_krawczyk_box,
-    context_from_problem, eliminate_affine_rows_with_substitution_classes,
+    certify_affine_krawczyk_box, certify_candidate, certify_candidate_batch,
+    certify_candidate_domains, certify_candidate_with_config,
+    certify_candidate_with_residual_balls, certify_direct_univariate_quadratic_roots,
+    certify_interval_box_candidate, certify_multivariate_quadratic_interval_candidate,
+    certify_multivariate_quadratic_krawczyk_box, certify_quadratic_interval_candidate,
+    certify_sketch_construction, certify_univariate_quadratic_alpha,
+    certify_univariate_quadratic_krawczyk_box, context_from_problem,
+    eliminate_affine_rows_with_substitution_classes,
     enumerate_direct_univariate_quadratic_branches, evaluate_residuals, facts_depend_on_symbol,
     find_equality_substitutions, isolate_univariate_polynomial_roots, point_coincidence_equations,
     preflight_sketch_degeneracies, preflight_sketch_parameter_domains,
@@ -1025,6 +1026,51 @@ fn lossy_adapter_only_report_preserves_proposal_boundary_without_exact_replay() 
             precision: ProposalEnginePrecision::LossyF64,
         }
     ));
+}
+
+#[test]
+fn candidate_batch_certification_reports_deterministic_failed_row_probes() {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let mut problem = Problem::default();
+    problem.add_variable("x", real(0));
+    problem.add_constraint(Constraint::equality(
+        "x equals two",
+        x.clone() - Expr::int(2),
+    ));
+    problem.add_constraint(Constraint {
+        name: "x at most three".to_owned(),
+        kind: ConstraintKind::LessOrEqual,
+        residual: x - Expr::int(3),
+        weight: real(1),
+        active: true,
+    });
+    let prepared = PreparedProblem::new(&problem);
+    let mut certified = context_from_problem(&problem);
+    certified.bind(SymbolId(0), real(2));
+    let mut rejected = context_from_problem(&problem);
+    rejected.bind(SymbolId(0), real(4));
+    let missing = hypersolve::EvaluationContext::default();
+
+    let report = certify_candidate_batch(&prepared, &[rejected, certified, missing]);
+
+    assert_eq!(report.candidate_count, 3);
+    assert_eq!(report.certified_candidates, 1);
+    assert_eq!(report.rejected_candidates, 1);
+    assert_eq!(report.domain_failure_candidates, 1);
+    assert!(report.has_certified_candidate());
+    assert_eq!(report.candidates[0].candidate_index, 0);
+    assert_eq!(report.candidates[0].status, BatchCandidateStatus::Rejected);
+    assert_eq!(report.candidates[0].first_failed_constraint, Some(0));
+    assert_eq!(report.candidates[0].violated_constraints, vec![0, 1]);
+    assert_eq!(report.candidates[1].candidate_index, 1);
+    assert_eq!(report.candidates[1].status, BatchCandidateStatus::Certified);
+    assert!(report.candidates[1].certification.all_satisfied());
+    assert_eq!(report.candidates[2].candidate_index, 2);
+    assert_eq!(
+        report.candidates[2].status,
+        BatchCandidateStatus::DomainFailure
+    );
+    assert_eq!(report.candidates[2].domain_failure_constraints, vec![0, 1]);
 }
 
 #[test]
