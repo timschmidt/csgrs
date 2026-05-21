@@ -842,6 +842,35 @@ fn adversarial_sdf_tiny_nonzero_samples_keep_hyperreal_sign_before_surface_nets(
 }
 
 #[test]
+#[cfg(feature = "sdf")]
+fn adversarial_sdf_subnormal_extrema_are_reported_after_hyperreal_ordering() {
+    let (_mesh, diagnostics) = Mesh::<()>::sdf_with_diagnostics(
+        |p| {
+            if p.x < 0.0 { -1.0e-50 } else { 1.0e-50 }
+        },
+        (2, 2, 2),
+        Point3::new(-1.0, -1.0, -1.0),
+        Point3::new(1.0, 1.0, 1.0),
+        0.0,
+        (),
+    );
+
+    assert_eq!(diagnostics.sample_count, 8);
+    assert_eq!(diagnostics.non_finite_sample_count, 0);
+    assert_eq!(diagnostics.finite_sample_count, 8);
+    assert_eq!(diagnostics.negative_sample_count, 4);
+    assert_eq!(diagnostics.positive_sample_count, 4);
+    assert!(
+        diagnostics.min_finite_value.is_some_and(|value| value < 0.0),
+        "{diagnostics:#?}"
+    );
+    assert!(
+        diagnostics.max_finite_value.is_some_and(|value| value > 0.0),
+        "{diagnostics:#?}"
+    );
+}
+
+#[test]
 fn adversarial_smoothing_rejects_nonfinite_weights_at_hyperreal_lerp_boundary() {
     let mesh: Mesh<()> = Mesh::cube(2.0, ()).triangulate();
     let original_vertices = mesh.vertices();

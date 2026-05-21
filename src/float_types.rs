@@ -834,6 +834,17 @@ pub(crate) fn hreal_max(values: &[Real]) -> Option<Real> {
     hreal_to_f64(&max)
 }
 
+/// Return the maximum of two already-promoted hyperreal values.
+///
+/// Sampling pipelines should not round scalar fields back to `f64` just to
+/// maintain diagnostics. Keeping this comparison in `hyperlimit` preserves the
+/// same exact-aware ordering discipline used by constructor bounds, following
+/// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
+/// 7(1-2), 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+pub(crate) fn hreal_max_pair(lhs: &HReal, rhs: &HReal) -> Option<HReal> {
+    hyperlimit::real_max(lhs, rhs).value().cloned()
+}
+
 /// Return the finite minimum of public boundary scalars in hyperreal order.
 pub(crate) fn hreal_min(values: &[Real]) -> Option<Real> {
     let mut values = values
@@ -847,6 +858,31 @@ pub(crate) fn hreal_min(values: &[Real]) -> Option<Real> {
     let min = values.try_fold(first, |acc, value| {
         hyperlimit::real_min(&acc, &value).value().cloned()
     })?;
+    hreal_to_f64(&min)
+}
+
+/// Return the minimum of two already-promoted hyperreal values.
+pub(crate) fn hreal_min_pair(lhs: &HReal, rhs: &HReal) -> Option<HReal> {
+    hyperlimit::real_min(lhs, rhs).value().cloned()
+}
+
+/// Fold an optional f64 reporting boundary maximum with a hyperreal sample.
+pub(crate) fn hreal_max_report_value(current: Option<Real>, sample: &HReal) -> Option<Real> {
+    let current = current.map(hreal_from_f64).transpose().ok()?;
+    let max = match current {
+        Some(current) => hreal_max_pair(&current, sample)?,
+        None => sample.clone(),
+    };
+    hreal_to_f64(&max)
+}
+
+/// Fold an optional f64 reporting boundary minimum with a hyperreal sample.
+pub(crate) fn hreal_min_report_value(current: Option<Real>, sample: &HReal) -> Option<Real> {
+    let current = current.map(hreal_from_f64).transpose().ok()?;
+    let min = match current {
+        Some(current) => hreal_min_pair(&current, sample)?,
+        None => sample.clone(),
+    };
     hreal_to_f64(&min)
 }
 
