@@ -9,51 +9,59 @@
 
 use hypercurve::{
     Aabb2 as HAabb2, ArcArcIntersection as HArcArcIntersection,
-    ArcArcIntersectionPoint as HArcArcIntersectionPoint,
-    Axis2 as HAxis2, BezierCurveRelation as HBezierCurveRelation,
-    BezierFitBoundKind as HBezierFitBoundKind, BezierFitErrorMetric as HBezierFitErrorMetric,
+    ArcArcIntersectionPoint as HArcArcIntersectionPoint, Axis2 as HAxis2,
+    BezierBooleanAssemblyReadinessStatus as HBezierBooleanAssemblyReadinessStatus,
+    BezierBooleanFragmentEndpointTangents2 as HBezierBooleanFragmentEndpointTangents2,
     BezierBooleanFragmentLocatorInputReport2 as HBezierBooleanFragmentLocatorInputReport2,
     BezierBooleanFragmentLocatorInputStatus as HBezierBooleanFragmentLocatorInputStatus,
     BezierBooleanFragmentOwnershipLocation as HBezierBooleanFragmentOwnershipLocation,
+    BezierBooleanLoopAssemblyPlanReport2 as HBezierBooleanLoopAssemblyPlanReport2,
+    BezierBooleanLoopAssemblyPlanStatus as HBezierBooleanLoopAssemblyPlanStatus,
+    BezierBooleanLoopGraphMultiCycleWalkReport2 as HBezierBooleanLoopGraphMultiCycleWalkReport2,
+    BezierBooleanLoopGraphMultiCycleWalkStatus as HBezierBooleanLoopGraphMultiCycleWalkStatus,
+    BezierBooleanLoopGraphTraversalReport2 as HBezierBooleanLoopGraphTraversalReport2,
     BezierBooleanLoopNestingDepthFact2 as HBezierBooleanLoopNestingDepthFact2,
+    BezierBooleanOwnedTraversalStep2 as HBezierBooleanOwnedTraversalStep2,
     BezierBooleanOwnershipFact2 as HBezierBooleanOwnershipFact2,
     BezierBooleanResultReport2 as HBezierBooleanResultReport2,
     BezierBooleanResultStatus as HBezierBooleanResultStatus,
+    BezierBooleanTangentTurnPolicy as HBezierBooleanTangentTurnPolicy,
     BezierBooleanTraversalOperand as HBezierBooleanTraversalOperand,
     BezierBooleanTraversalPreconditionStatus as HBezierBooleanTraversalPreconditionStatus,
     BezierBooleanTraversalScheduleReport2 as HBezierBooleanTraversalScheduleReport2,
     BezierBooleanTraversalScheduleStatus as HBezierBooleanTraversalScheduleStatus,
     BezierBooleanTraversalStep2 as HBezierBooleanTraversalStep2,
-    BezierLineContactKind as HBezierLineContactKind,
+    BezierCurveRelation as HBezierCurveRelation, BezierFitBoundKind as HBezierFitBoundKind,
+    BezierFitErrorMetric as HBezierFitErrorMetric, BezierLineContactKind as HBezierLineContactKind,
     BezierLineContactRelation as HBezierLineContactRelation,
     BezierLineFitRelation as HBezierLineFitRelation,
     BezierLineImageFitRelation as HBezierLineImageFitRelation,
     BezierMonotoneGraphOrder as HBezierMonotoneGraphOrder,
-    BezierOffsetCandidate2 as HBezierOffsetCandidate2,
-    BezierOffsetRisk as HBezierOffsetRisk,
+    BezierOffsetCandidate2 as HBezierOffsetCandidate2, BezierOffsetRisk as HBezierOffsetRisk,
     BezierPointFitRelation as HBezierPointFitRelation,
     BezierPointImageFitRelation as HBezierPointImageFitRelation,
     BezierSimplificationBoundKind as HBezierSimplificationBoundKind,
-    BezierSimplificationErrorMetric as HBezierSimplificationErrorMetric, BooleanOp as HBooleanOp,
+    BezierSimplificationErrorMetric as HBezierSimplificationErrorMetric,
     BooleanBoundaryAuditStatus as HBooleanBoundaryAuditStatus,
     BooleanBoundaryTraversalReport2 as HBooleanBoundaryTraversalReport2,
     BooleanBoundaryTraversalStatus as HBooleanBoundaryTraversalStatus,
+    BooleanFragmentAction as HBooleanFragmentAction, BooleanOp as HBooleanOp,
     BooleanRegionAuditStatus as HBooleanRegionAuditStatus,
     BoundaryContourNestingStatus as HBoundaryContourNestingStatus, BulgeVertex2 as HBulgeVertex2,
     CircularArc2 as HCircularArc2, Classification as HClassification, Contour2 as HContour2,
     ContourOperand as HContourOperand, ContourPointLocation as HContourPointLocation,
-    ContourSplitMap as HContourSplitMap, CurvePolicy as HCurvePolicy,
-    CurveString2 as HCurveString2,
+    ContourSplitMap as HContourSplitMap, CubicBezier2 as HCubicBezier2,
+    CurvePolicy as HCurvePolicy, CurveString2 as HCurveString2,
     CurveStringIntersection as HCurveStringIntersection, FillRule as HFillRule,
     LineArcIntersection as HLineArcIntersection,
     LineArcIntersectionPoint as HLineArcIntersectionPoint,
     LineLineIntersection as HLineLineIntersection, LineSeg2 as HLineSeg2, OffsetCap as HOffsetCap,
     ParamRange as HParamRange, Point2 as HPoint2,
     PolylineReconstructionOptions as HPolylineReconstructionOptions,
-    CubicBezier2 as HCubicBezier2, QuadraticBezier2 as HQuadraticBezier2,
-    RationalQuadraticBezier2 as HRationalQuadraticBezier2, Real as HReal, Region2 as HRegion2,
-    RegionPointLocation as HRegionPointLocation, Segment2 as HSegment2, UncertaintyReason as HUncertaintyReason,
-    SegmentIntersection as HSegmentIntersection, Tolerance as HTolerance,
+    QuadraticBezier2 as HQuadraticBezier2, RationalQuadraticBezier2 as HRationalQuadraticBezier2,
+    Real as HReal, Region2 as HRegion2, RegionPointLocation as HRegionPointLocation,
+    Segment2 as HSegment2, SegmentIntersection as HSegmentIntersection, Tolerance as HTolerance,
+    UncertaintyReason as HUncertaintyReason,
 };
 use std::f64::consts::PI;
 
@@ -1161,14 +1169,16 @@ pub fn h_assert_region_boolean(reader: &mut ByteReader<'_>) {
     };
     assert_eq!(shared_edge_prepared_traversal, shared_edge_traversal);
     let shared_edge_prepared_against_plain_traversal = match shared_edge_prepared_a
-        .boolean_boundary_traversal_report_against_region(&shared_edge_b.as_view(), HBooleanOp::Union, &policy)
+        .boolean_boundary_traversal_report_against_region(
+            &shared_edge_b.as_view(),
+            HBooleanOp::Union,
+            &policy,
+        )
         .unwrap()
     {
         HClassification::Decided(report) => report,
         HClassification::Uncertain(reason) => {
-            panic!(
-                "shared-edge prepared-vs-plain traversal report should be decided: {reason:?}"
-            )
+            panic!("shared-edge prepared-vs-plain traversal report should be decided: {reason:?}")
         }
     };
     let shared_edge_plain_against_prepared_traversal = match shared_edge_a
@@ -1182,9 +1192,7 @@ pub fn h_assert_region_boolean(reader: &mut ByteReader<'_>) {
     {
         HClassification::Decided(report) => report,
         HClassification::Uncertain(reason) => {
-            panic!(
-                "shared-edge plain-vs-prepared traversal report should be decided: {reason:?}"
-            )
+            panic!("shared-edge plain-vs-prepared traversal report should be decided: {reason:?}")
         }
     };
 
@@ -1228,9 +1236,7 @@ pub fn h_assert_region_boolean(reader: &mut ByteReader<'_>) {
     {
         HClassification::Decided(report) => report,
         HClassification::Uncertain(reason) => {
-            panic!(
-                "point-touch prepared-vs-plain traversal report should be decided: {reason:?}"
-            )
+            panic!("point-touch prepared-vs-plain traversal report should be decided: {reason:?}")
         }
     };
     let point_touch_plain_against_prepared = match point_touch_a
@@ -1244,18 +1250,22 @@ pub fn h_assert_region_boolean(reader: &mut ByteReader<'_>) {
     {
         HClassification::Decided(report) => report,
         HClassification::Uncertain(reason) => {
-            panic!(
-                "point-touch plain-vs-prepared traversal report should be decided: {reason:?}"
-            )
+            panic!("point-touch plain-vs-prepared traversal report should be decided: {reason:?}")
         }
     };
 
-    assert_eq!(shared_edge_prepared_traversal, shared_edge_prepared_against_plain_traversal);
+    assert_eq!(
+        shared_edge_prepared_traversal,
+        shared_edge_prepared_against_plain_traversal
+    );
     assert_eq!(
         shared_edge_plain_against_prepared_traversal,
         shared_edge_prepared_traversal
     );
-    assert_eq!(point_touch_prepared_traversal, point_touch_prepared_against_plain);
+    assert_eq!(
+        point_touch_prepared_traversal,
+        point_touch_prepared_against_plain
+    );
     assert_eq!(
         point_touch_plain_against_prepared,
         point_touch_prepared_traversal
@@ -1324,12 +1334,7 @@ pub fn h_assert_region_boolean(reader: &mut ByteReader<'_>) {
         HClassification::Decided(hole_strip_loops.clone())
     );
     let HClassification::Decided(hole_strip_contours) = hole_with_cavity
-        .boolean_boundary_contours(
-            &hole_strip,
-            HBooleanOp::Union,
-            HFillRule::NonZero,
-            &policy,
-        )
+        .boolean_boundary_contours(&hole_strip, HBooleanOp::Union, HFillRule::NonZero, &policy)
         .unwrap()
     else {
         panic!("hole-boundary touching strip union contours should be decided");
@@ -1397,10 +1402,7 @@ pub fn h_assert_region_boolean(reader: &mut ByteReader<'_>) {
     }
 
     if let HClassification::Decided(result) = &plain {
-        let report = match a
-            .boolean_region_report(&b, op, fill_rule, &policy)
-            .unwrap()
-        {
+        let report = match a.boolean_region_report(&b, op, fill_rule, &policy).unwrap() {
             HClassification::Decided(report) => report,
             HClassification::Uncertain(reason) => {
                 panic!("plain boolean report should match decided boolean result: {reason:?}")
@@ -1420,12 +1422,7 @@ pub fn h_assert_region_boolean(reader: &mut ByteReader<'_>) {
         );
         assert_eq!(
             a.as_view()
-                .boolean_region_report_against_prepared_region(
-                    &prepared_b,
-                    op,
-                    fill_rule,
-                    &policy,
-                )
+                .boolean_region_report_against_prepared_region(&prepared_b, op, fill_rule, &policy,)
                 .unwrap(),
             HClassification::Decided(report.clone())
         );
@@ -1573,12 +1570,7 @@ pub fn h_assert_region_boolean(reader: &mut ByteReader<'_>) {
         );
         assert_eq!(
             prepared_a
-                .boolean_boundary_loop_report_against_region(
-                    &b.as_view(),
-                    op,
-                    fill_rule,
-                    &policy,
-                )
+                .boolean_boundary_loop_report_against_region(&b.as_view(), op, fill_rule, &policy,)
                 .unwrap(),
             HClassification::Decided(report.clone())
         );
@@ -1730,7 +1722,10 @@ pub fn h_assert_region_boolean_antagonistic_contract(reader: &mut ByteReader<'_>
             HClassification::Decided(traversal)
         );
 
-        let region = match left.boolean_region(&right, HBooleanOp::Union, fill_rule, &policy).unwrap() {
+        let region = match left
+            .boolean_region(&right, HBooleanOp::Union, fill_rule, &policy)
+            .unwrap()
+        {
             HClassification::Decided(region) => region,
             HClassification::Uncertain(reason) => {
                 panic!("antagonistic contract plain region boolean should be decided: {reason:?}")
@@ -1742,7 +1737,9 @@ pub fn h_assert_region_boolean_antagonistic_contract(reader: &mut ByteReader<'_>
         {
             HClassification::Decided(report) => report,
             HClassification::Uncertain(reason) => {
-                panic!("antagonistic contract boundary contour report should be decided: {reason:?}")
+                panic!(
+                    "antagonistic contract boundary contour report should be decided: {reason:?}"
+                )
             }
         };
         let boundary_loop_report = match left
@@ -1784,7 +1781,10 @@ pub fn h_assert_region_boolean_antagonistic_contract(reader: &mut ByteReader<'_>
             &pipeline_report.boundary_contours,
             &boundary_contour_report.contours
         );
-        assert_eq!(boundary_loop_report.loops.len(), boundary_contour_report.contours.len());
+        assert_eq!(
+            boundary_loop_report.loops.len(),
+            boundary_contour_report.contours.len()
+        );
         h_assert_boundary_audit_is_valid(&boundary_contour_report.audit.status);
         h_assert_boundary_audit_is_valid(&boundary_loop_report.audit.status);
         h_assert_region_audit_is_valid(&region_report.audit.status);
@@ -1803,7 +1803,12 @@ pub fn h_assert_region_boolean_antagonistic_contract(reader: &mut ByteReader<'_>
 
         assert_eq!(
             left_prepared
-                .boolean_boundary_contour_report(&right_prepared, HBooleanOp::Union, fill_rule, &policy)
+                .boolean_boundary_contour_report(
+                    &right_prepared,
+                    HBooleanOp::Union,
+                    fill_rule,
+                    &policy
+                )
                 .unwrap(),
             HClassification::Decided(boundary_contour_report.clone())
         );
@@ -1819,8 +1824,7 @@ pub fn h_assert_region_boolean_antagonistic_contract(reader: &mut ByteReader<'_>
             HClassification::Decided(boundary_contour_report.clone())
         );
         assert_eq!(
-            left
-                .as_view()
+            left.as_view()
                 .boolean_boundary_contour_report_against_prepared_region(
                     &right_prepared,
                     HBooleanOp::Union,
@@ -1832,7 +1836,12 @@ pub fn h_assert_region_boolean_antagonistic_contract(reader: &mut ByteReader<'_>
         );
         assert_eq!(
             left_prepared
-                .boolean_boundary_loop_report(&right_prepared, HBooleanOp::Union, fill_rule, &policy)
+                .boolean_boundary_loop_report(
+                    &right_prepared,
+                    HBooleanOp::Union,
+                    fill_rule,
+                    &policy
+                )
                 .unwrap(),
             HClassification::Decided(boundary_loop_report.clone())
         );
@@ -1848,8 +1857,7 @@ pub fn h_assert_region_boolean_antagonistic_contract(reader: &mut ByteReader<'_>
             HClassification::Decided(boundary_loop_report.clone())
         );
         assert_eq!(
-            left
-                .as_view()
+            left.as_view()
                 .boolean_boundary_loop_report_against_prepared_region(
                     &right_prepared,
                     HBooleanOp::Union,
@@ -1868,13 +1876,17 @@ pub fn h_assert_region_boolean_antagonistic_contract(reader: &mut ByteReader<'_>
         );
         assert_eq!(
             left_prepared
-                .boolean_region_report_against_region(&right.as_view(), HBooleanOp::Union, fill_rule, &policy)
+                .boolean_region_report_against_region(
+                    &right.as_view(),
+                    HBooleanOp::Union,
+                    fill_rule,
+                    &policy
+                )
                 .unwrap(),
             HClassification::Decided(region_report.clone())
         );
         assert_eq!(
-            left
-                .as_view()
+            left.as_view()
                 .boolean_region_report_against_prepared_region(
                     &right_prepared,
                     HBooleanOp::Union,
@@ -1886,7 +1898,12 @@ pub fn h_assert_region_boolean_antagonistic_contract(reader: &mut ByteReader<'_>
         );
         assert_eq!(
             left_prepared
-                .boolean_region_pipeline_report(&right_prepared, HBooleanOp::Union, fill_rule, &policy)
+                .boolean_region_pipeline_report(
+                    &right_prepared,
+                    HBooleanOp::Union,
+                    fill_rule,
+                    &policy
+                )
                 .unwrap(),
             HClassification::Decided(pipeline_report.clone())
         );
@@ -1902,8 +1919,7 @@ pub fn h_assert_region_boolean_antagonistic_contract(reader: &mut ByteReader<'_>
             HClassification::Decided(pipeline_report.clone())
         );
         assert_eq!(
-            left
-                .as_view()
+            left.as_view()
                 .boolean_region_pipeline_report_against_prepared_region(
                     &right_prepared,
                     HBooleanOp::Union,
@@ -2436,12 +2452,7 @@ pub fn h_assert_boolean_boundary_pipeline(reader: &mut ByteReader<'_>) {
         );
         assert_eq!(
             prepared_a
-                .boolean_boundary_loop_report_against_region(
-                    &b.as_view(),
-                    op,
-                    fill_rule,
-                    &policy,
-                )
+                .boolean_boundary_loop_report_against_region(&b.as_view(), op, fill_rule, &policy,)
                 .unwrap(),
             HClassification::Decided(report.clone())
         );
@@ -2524,14 +2535,13 @@ pub fn h_assert_boolean_boundary_pipeline(reader: &mut ByteReader<'_>) {
             HRegion2::from_boundary_contours(contours.clone(), &policy).unwrap()
         {
             assert_eq!(rebuilt, *region);
-            let report = match HRegion2::from_boundary_contours_report(contours.clone(), &policy)
-                .unwrap()
-            {
-                HClassification::Decided(report) => report,
-                HClassification::Uncertain(reason) => {
-                    panic!("decided contour nesting should also have a report: {reason:?}")
-                }
-            };
+            let report =
+                match HRegion2::from_boundary_contours_report(contours.clone(), &policy).unwrap() {
+                    HClassification::Decided(report) => report,
+                    HClassification::Uncertain(reason) => {
+                        panic!("decided contour nesting should also have a report: {reason:?}")
+                    }
+                };
             assert_eq!(&report.result, region);
             assert_eq!(
                 report.audit.status,
@@ -2912,10 +2922,8 @@ fn h_cubic_through_point_at(
         target.x() + &HReal::from(third_offset.0),
         target.y() + &HReal::from(third_offset.1),
     );
-    let numerator_x =
-        target.x() - &(&b0 * p0.x()) - &(&b1 * p1.x()) - &(&b2 * p2.x());
-    let numerator_y =
-        target.y() - &(&b0 * p0.y()) - &(&b1 * p1.y()) - &(&b2 * p2.y());
+    let numerator_x = target.x() - &(&b0 * p0.x()) - &(&b1 * p1.x()) - &(&b2 * p2.x());
+    let numerator_y = target.y() - &(&b0 * p0.y()) - &(&b1 * p1.y()) - &(&b2 * p2.y());
     let p3_x = (numerator_x / &b3)
         .expect("nonzero parameter gives nonzero cubic Bernstein endpoint weight");
     let p3_y = (numerator_y / &b3)
@@ -2979,7 +2987,11 @@ fn h_assert_bezier_conic_relations(reader: &mut ByteReader<'_>) {
     let midpoint = HPoint2::new(HReal::one(), HReal::from(lift));
     match shared_endpoint_first.relation_to_quadratic(&shared_endpoint_second, &policy) {
         HClassification::Decided(HBezierCurveRelation::IntersectionPoints { points }) => {
-            assert!(points.iter().any(|point| point.point() == &h_point_i32(0, 0)));
+            assert!(
+                points
+                    .iter()
+                    .any(|point| point.point() == &h_point_i32(0, 0))
+            );
             assert!(points.iter().any(|point| point.point() == &midpoint));
             for point in points {
                 h_assert_point_finite(point.point());
@@ -3012,10 +3024,16 @@ fn h_assert_bezier_conic_relations(reader: &mut ByteReader<'_>) {
         .relation_to_rational_quadratic(&rational_shared_endpoint_second, &policy)
     {
         HClassification::Decided(HBezierCurveRelation::IntersectionPoints { points }) => {
-            assert!(points.iter().any(|point| point.point() == &h_point_i32(0, 0)));
-            assert!(points
-                .iter()
-                .any(|point| point.point() == &rational_midpoint));
+            assert!(
+                points
+                    .iter()
+                    .any(|point| point.point() == &h_point_i32(0, 0))
+            );
+            assert!(
+                points
+                    .iter()
+                    .any(|point| point.point() == &rational_midpoint)
+            );
             for point in points {
                 h_assert_point_finite(point.point());
             }
@@ -3043,7 +3061,9 @@ fn h_assert_bezier_conic_relations(reader: &mut ByteReader<'_>) {
     match rational.graph_order_to_rational_quadratic_over_axis(&graph_gap, HAxis2::X, &policy) {
         HClassification::Decided(HBezierMonotoneGraphOrder::FirstLess) => {}
         relation => {
-            panic!("matching-weight rational graph order did not certify the generated gap: {relation:?}");
+            panic!(
+                "matching-weight rational graph order did not certify the generated gap: {relation:?}"
+            );
         }
     }
     let equal_weight_rational = HRationalQuadraticBezier2::try_new(
@@ -3067,7 +3087,9 @@ fn h_assert_bezier_conic_relations(reader: &mut ByteReader<'_>) {
     ) {
         HClassification::Decided(HBezierMonotoneGraphOrder::FirstLess) => {}
         relation => {
-            panic!("equal-weight rational/polynomial graph order did not certify the generated gap: {relation:?}");
+            panic!(
+                "equal-weight rational/polynomial graph order did not certify the generated gap: {relation:?}"
+            );
         }
     }
     match polynomial_graph_gap.graph_order_to_rational_quadratic_over_axis(
@@ -3077,7 +3099,9 @@ fn h_assert_bezier_conic_relations(reader: &mut ByteReader<'_>) {
     ) {
         HClassification::Decided(HBezierMonotoneGraphOrder::FirstGreater) => {}
         relation => {
-            panic!("polynomial/equal-weight rational graph order did not certify the generated gap: {relation:?}");
+            panic!(
+                "polynomial/equal-weight rational graph order did not certify the generated gap: {relation:?}"
+            );
         }
     }
     let non_equal_rational_graph = HRationalQuadraticBezier2::try_new(
@@ -3101,7 +3125,9 @@ fn h_assert_bezier_conic_relations(reader: &mut ByteReader<'_>) {
     ) {
         HClassification::Decided(HBezierMonotoneGraphOrder::FirstGreater) => {}
         relation => {
-            panic!("non-equal rational/polynomial strict graph order did not certify the generated gap: {relation:?}");
+            panic!(
+                "non-equal rational/polynomial strict graph order did not certify the generated gap: {relation:?}"
+            );
         }
     }
     match non_equal_polynomial_baseline.graph_order_to_rational_quadratic_over_axis(
@@ -3111,13 +3137,17 @@ fn h_assert_bezier_conic_relations(reader: &mut ByteReader<'_>) {
     ) {
         HClassification::Decided(HBezierMonotoneGraphOrder::FirstLess) => {}
         relation => {
-            panic!("polynomial/non-equal rational strict graph order did not certify the generated gap: {relation:?}");
+            panic!(
+                "polynomial/non-equal rational strict graph order did not certify the generated gap: {relation:?}"
+            );
         }
     }
     match non_equal_rational_graph.relation_to_quadratic(&non_equal_polynomial_baseline, &policy) {
         HClassification::Decided(HBezierCurveRelation::NoIntersection) => {}
         relation => {
-            panic!("non-equal rational/polynomial strict graph relation did not certify no-hit: {relation:?}");
+            panic!(
+                "non-equal rational/polynomial strict graph relation did not certify no-hit: {relation:?}"
+            );
         }
     }
     let non_equal_polynomial_crossing = HQuadraticBezier2::new(
@@ -3125,22 +3155,28 @@ fn h_assert_bezier_conic_relations(reader: &mut ByteReader<'_>) {
         HPoint2::new(h_ratio(1, 2), HReal::zero()),
         HPoint2::new(HReal::one(), HReal::from(2_i8)),
     );
-    match non_equal_rational_graph
-        .graph_order_to_quadratic_over_axis(&non_equal_polynomial_crossing, HAxis2::X, &policy)
-    {
+    match non_equal_rational_graph.graph_order_to_quadratic_over_axis(
+        &non_equal_polynomial_crossing,
+        HAxis2::X,
+        &policy,
+    ) {
         HClassification::Decided(HBezierMonotoneGraphOrder::IntersectsOrTouches {
             parameters,
             spans,
         }) if !parameters.is_empty() || !spans.is_empty() => {}
         relation => {
-            panic!("non-equal rational/polynomial quartic graph roots were not retained: {relation:?}");
+            panic!(
+                "non-equal rational/polynomial quartic graph roots were not retained: {relation:?}"
+            );
         }
     }
     match non_equal_rational_graph.relation_to_quadratic(&non_equal_polynomial_crossing, &policy) {
         HClassification::Decided(HBezierCurveRelation::IntersectionPoints { .. })
         | HClassification::Decided(HBezierCurveRelation::IntersectionRegions { .. }) => {}
         relation => {
-            panic!("non-equal rational/polynomial quartic graph roots did not reach relation dispatch: {relation:?}");
+            panic!(
+                "non-equal rational/polynomial quartic graph roots did not reach relation dispatch: {relation:?}"
+            );
         }
     }
     let non_equal_cubic_baseline = HCubicBezier2::new(
@@ -3156,7 +3192,9 @@ fn h_assert_bezier_conic_relations(reader: &mut ByteReader<'_>) {
     ) {
         HClassification::Decided(HBezierMonotoneGraphOrder::FirstGreater) => {}
         relation => {
-            panic!("non-equal rational/cubic strict graph order did not certify the generated gap: {relation:?}");
+            panic!(
+                "non-equal rational/cubic strict graph order did not certify the generated gap: {relation:?}"
+            );
         }
     }
     match non_equal_cubic_baseline.graph_order_to_rational_quadratic_over_axis(
@@ -3166,13 +3204,17 @@ fn h_assert_bezier_conic_relations(reader: &mut ByteReader<'_>) {
     ) {
         HClassification::Decided(HBezierMonotoneGraphOrder::FirstLess) => {}
         relation => {
-            panic!("cubic/non-equal rational strict graph order did not certify the generated gap: {relation:?}");
+            panic!(
+                "cubic/non-equal rational strict graph order did not certify the generated gap: {relation:?}"
+            );
         }
     }
     match non_equal_rational_graph.relation_to_cubic(&non_equal_cubic_baseline, &policy) {
         HClassification::Decided(HBezierCurveRelation::NoIntersection) => {}
         relation => {
-            panic!("non-equal rational/cubic strict graph relation did not certify no-hit: {relation:?}");
+            panic!(
+                "non-equal rational/cubic strict graph relation did not certify no-hit: {relation:?}"
+            );
         }
     }
     let non_equal_cubic_crossing = HCubicBezier2::new(
@@ -3181,9 +3223,11 @@ fn h_assert_bezier_conic_relations(reader: &mut ByteReader<'_>) {
         HPoint2::new(h_ratio(2, 3), HReal::zero()),
         HPoint2::new(HReal::one(), HReal::from(2_i8)),
     );
-    match non_equal_rational_graph
-        .graph_order_to_cubic_over_axis(&non_equal_cubic_crossing, HAxis2::X, &policy)
-    {
+    match non_equal_rational_graph.graph_order_to_cubic_over_axis(
+        &non_equal_cubic_crossing,
+        HAxis2::X,
+        &policy,
+    ) {
         HClassification::Decided(HBezierMonotoneGraphOrder::IntersectsOrTouches {
             parameters,
             spans,
@@ -3196,7 +3240,9 @@ fn h_assert_bezier_conic_relations(reader: &mut ByteReader<'_>) {
         HClassification::Decided(HBezierCurveRelation::IntersectionPoints { .. })
         | HClassification::Decided(HBezierCurveRelation::IntersectionRegions { .. }) => {}
         relation => {
-            panic!("non-equal rational/cubic quintic graph roots did not reach relation dispatch: {relation:?}");
+            panic!(
+                "non-equal rational/cubic quintic graph roots did not reach relation dispatch: {relation:?}"
+            );
         }
     }
     let equal_weight_rational_cubic = HRationalQuadraticBezier2::try_new(
@@ -3221,7 +3267,9 @@ fn h_assert_bezier_conic_relations(reader: &mut ByteReader<'_>) {
     ) {
         HClassification::Decided(HBezierMonotoneGraphOrder::FirstLess) => {}
         relation => {
-            panic!("equal-weight rational/cubic graph order did not certify the generated gap: {relation:?}");
+            panic!(
+                "equal-weight rational/cubic graph order did not certify the generated gap: {relation:?}"
+            );
         }
     }
     match cubic_graph_gap.graph_order_to_rational_quadratic_over_axis(
@@ -3231,7 +3279,9 @@ fn h_assert_bezier_conic_relations(reader: &mut ByteReader<'_>) {
     ) {
         HClassification::Decided(HBezierMonotoneGraphOrder::FirstGreater) => {}
         relation => {
-            panic!("cubic/equal-weight rational graph order did not certify the generated gap: {relation:?}");
+            panic!(
+                "cubic/equal-weight rational graph order did not certify the generated gap: {relation:?}"
+            );
         }
     }
 
@@ -3272,15 +3322,14 @@ fn h_assert_bezier_conic_relations(reader: &mut ByteReader<'_>) {
     match negative_line.relation_to_rational_quadratic(&negative_cross_line, &policy) {
         HClassification::Decided(HBezierCurveRelation::LineSegmentIntersection { .. }) => {}
         relation => {
-            panic!("same-sign negative rational line images did not dispatch exactly: {relation:?}");
+            panic!(
+                "same-sign negative rational line images did not dispatch exactly: {relation:?}"
+            );
         }
     }
 
-    let polynomial_line = HQuadraticBezier2::new(
-        h_point_i32(-1, 0),
-        h_point_i32(128, 0),
-        h_point_i32(512, 0),
-    );
+    let polynomial_line =
+        HQuadraticBezier2::new(h_point_i32(-1, 0), h_point_i32(128, 0), h_point_i32(512, 0));
     let isolated_cubic = HCubicBezier2::new(
         h_point_i32(0, -1),
         h_point_i32(170, 1),
@@ -3308,7 +3357,9 @@ fn h_assert_bezier_conic_relations(reader: &mut ByteReader<'_>) {
     );
     match graph_lower.graph_order_to_cubic_over_axis(&graph_upper, HAxis2::X, &policy) {
         HClassification::Decided(HBezierMonotoneGraphOrder::FirstLess) => {}
-        relation => panic!("shared-axis graph order did not certify the generated gap: {relation:?}"),
+        relation => {
+            panic!("shared-axis graph order did not certify the generated gap: {relation:?}")
+        }
     }
 
     let tangent_y = (HReal::from(3 * lift) / HReal::from(2_i8)).unwrap();
@@ -3338,7 +3389,9 @@ fn h_assert_bezier_conic_relations(reader: &mut ByteReader<'_>) {
                 contact.kind() == HBezierLineContactKind::Tangent
                     && contact.parameter() == &h_ratio(1, 2)
             }) => {}
-        relation => panic!("generated rational conic tangent was not classified exactly: {relation:?}"),
+        relation => {
+            panic!("generated rational conic tangent was not classified exactly: {relation:?}")
+        }
     }
 }
 
@@ -3388,9 +3441,11 @@ fn h_assert_bezier_point_image_fits(reader: &mut ByteReader<'_>) {
     let HClassification::Decided(preflight) = cubic.offset_preflight(&policy) else {
         panic!("collapsed cubic offset preflight should be decided");
     };
-    assert!(preflight
-        .risks()
-        .contains(&HBezierOffsetRisk::DegeneratePoint));
+    assert!(
+        preflight
+            .risks()
+            .contains(&HBezierOffsetRisk::DegeneratePoint)
+    );
     assert_eq!(preflight.construction_policy(), &policy);
 
     match quadratic.relation_to_rational_quadratic(&rational, &policy) {
@@ -3418,11 +3473,8 @@ fn h_assert_bezier_point_image_fits(reader: &mut ByteReader<'_>) {
         relation => panic!("collapsed certified polyline did not fit one point: {relation:?}"),
     }
 
-    let line_curve = HQuadraticBezier2::new(
-        h_point_i32(-2, 0),
-        h_point_i32(0, 0),
-        h_point_i32(2, 0),
-    );
+    let line_curve =
+        HQuadraticBezier2::new(h_point_i32(-2, 0), h_point_i32(0, 0), h_point_i32(2, 0));
     let HClassification::Decided(preflight) = line_curve.offset_preflight(&policy) else {
         panic!("line-like quadratic offset preflight should be decided");
     };
@@ -3514,9 +3566,11 @@ fn h_assert_bezier_point_image_fits(reader: &mut ByteReader<'_>) {
     let HClassification::Decided(preflight) = mixed_rational.offset_preflight(&policy) else {
         panic!("mixed-sign rational conic offset preflight should be decided");
     };
-    assert!(preflight
-        .risks()
-        .contains(&HBezierOffsetRisk::ProjectiveDenominatorBoundary));
+    assert!(
+        preflight
+            .risks()
+            .contains(&HBezierOffsetRisk::ProjectiveDenominatorBoundary)
+    );
     let collapsed_rational = HRationalQuadraticBezier2::try_unit_end_weights(
         h_point_i32(3, 4),
         h_point_i32(3, 4),
@@ -3532,9 +3586,11 @@ fn h_assert_bezier_point_image_fits(reader: &mut ByteReader<'_>) {
             preflight,
             distance,
         }) => {
-            assert!(preflight
-                .risks()
-                .contains(&HBezierOffsetRisk::DegeneratePoint));
+            assert!(
+                preflight
+                    .risks()
+                    .contains(&HBezierOffsetRisk::DegeneratePoint)
+            );
             assert_eq!(distance, HReal::one());
         }
         relation => panic!("collapsed rational staged offset lost preflight: {relation:?}"),
@@ -3567,7 +3623,10 @@ fn h_assert_bezier_point_image_fits(reader: &mut ByteReader<'_>) {
         simplification.source_flattening_error(),
         line_polyline.certificate().max_error()
     );
-    assert_eq!(simplification.source_flattening_max_depth(), options.max_depth());
+    assert_eq!(
+        simplification.source_flattening_max_depth(),
+        options.max_depth()
+    );
     assert_eq!(simplification.construction_policy(), &policy);
     assert_eq!(
         simplification.metric(),
@@ -3593,7 +3652,10 @@ fn h_assert_bezier_point_image_fits(reader: &mut ByteReader<'_>) {
         right_preview.segments().len(),
         simplified_line.points().len() - 1
     );
-    assert_eq!(right_preview.source_certificate(), simplified_line.certificate());
+    assert_eq!(
+        right_preview.source_certificate(),
+        simplified_line.certificate()
+    );
     assert_eq!(right_preview.distance(), &HReal::from(-1_i8));
     match simplified_line
         .checked_offset_right(HReal::one(), &policy)
@@ -3639,8 +3701,14 @@ fn h_assert_bezier_point_image_fits(reader: &mut ByteReader<'_>) {
         HClassification::Decided(region) => {
             assert_eq!(region.parameter_span().start(), &one_third);
             assert_eq!(region.parameter_span().end(), &one_third);
-            assert_eq!(region.prefix_bounds_at_span_end().lower(), &HReal::from(3_i8));
-            assert_eq!(region.prefix_bounds_at_span_end().upper(), &HReal::from(3_i8));
+            assert_eq!(
+                region.prefix_bounds_at_span_end().lower(),
+                &HReal::from(3_i8)
+            );
+            assert_eq!(
+                region.prefix_bounds_at_span_end().upper(),
+                &HReal::from(3_i8)
+            );
         }
         relation => panic!("linear cubic inverse length did not certify exactly: {relation:?}"),
     }
@@ -3682,7 +3750,10 @@ fn h_assert_bezier_boolean_fragment_locator_inputs(reader: &mut ByteReader<'_>) 
         &first_points,
         &second_points,
     );
-    assert_eq!(report.status, HBezierBooleanFragmentLocatorInputStatus::Ready);
+    assert_eq!(
+        report.status,
+        HBezierBooleanFragmentLocatorInputStatus::Ready
+    );
     assert_eq!(report.input_count, schedule.steps.len());
     for (input, step) in report.inputs.iter().zip(schedule.steps.iter()) {
         assert_eq!(&input.step, step);
@@ -3770,9 +3841,71 @@ fn h_assert_bezier_boolean_endpoint_successors(reader: &mut ByteReader<'_>) {
     assert!(blocked.has_blockers());
 }
 
+fn h_endpoint_tangents(start: HPoint2, end: HPoint2) -> HBezierBooleanFragmentEndpointTangents2 {
+    let tangent = HPoint2::new(end.x() - start.x(), end.y() - start.y());
+    HBezierBooleanFragmentEndpointTangents2 {
+        start,
+        end,
+        start_tangent: tangent.clone(),
+        end_tangent: tangent,
+    }
+}
+
+fn h_assert_bezier_boolean_tangent_branch_successors(_reader: &mut ByteReader<'_>) {
+    let endpoints = [
+        (h_point_i32(-1, 0), h_point_i32(0, 0)),
+        (h_point_i32(0, 0), h_point_i32(0, -1)),
+        (h_point_i32(0, -1), h_point_i32(-1, 0)),
+        (h_point_i32(1, 0), h_point_i32(0, 0)),
+        (h_point_i32(0, 0), h_point_i32(0, 1)),
+        (h_point_i32(0, 1), h_point_i32(1, 0)),
+    ];
+    let tangents = endpoints
+        .iter()
+        .cloned()
+        .map(|(start, end)| h_endpoint_tangents(start, end))
+        .collect::<Vec<_>>();
+    let plan = HBezierBooleanLoopAssemblyPlanReport2 {
+        status: HBezierBooleanLoopAssemblyPlanStatus::Ready,
+        assembly_status: HBezierBooleanAssemblyReadinessStatus::Ready,
+        operation: HBooleanOp::Union,
+        emitted_steps: (0..endpoints.len())
+            .map(|fragment_index| HBezierBooleanOwnedTraversalStep2 {
+                step: HBezierBooleanTraversalStep2 {
+                    operand: HBezierBooleanTraversalOperand::First,
+                    fragment_index,
+                },
+                opposite_location: HBezierBooleanFragmentOwnershipLocation::Outside,
+                action: HBooleanFragmentAction::KeepSourceDirection,
+            })
+            .collect(),
+        first_emitted_count: endpoints.len(),
+        second_emitted_count: 0,
+        keep_source_count: endpoints.len(),
+        keep_reversed_count: 0,
+        invalid_reference_count: 0,
+        blocker_count: 0,
+    };
+    let traversal =
+        HBezierBooleanLoopGraphTraversalReport2::from_certified_walk_graph_facts(&plan, 1, 0);
+    let branch_walk = HBezierBooleanLoopGraphMultiCycleWalkReport2::from_fragment_endpoint_tangents(
+        &traversal,
+        &plan,
+        &tangents,
+        &[],
+        HBezierBooleanTangentTurnPolicy::CounterClockwise,
+        &HCurvePolicy::certified(),
+    );
+    assert_eq!(
+        branch_walk.status,
+        HBezierBooleanLoopGraphMultiCycleWalkStatus::Ready
+    );
+    assert_eq!(branch_walk.cycle_step_counts, vec![3, 3]);
+}
+
 /// Aggregate hypercurve fuzz entrypoint covering public APIs and cross-path invariants.
 pub fn h_assert_full_api(reader: &mut ByteReader<'_>) {
-    match reader.byte() % 17 {
+    match reader.byte() % 18 {
         0 => h_assert_segment_intersections(reader),
         1 => h_assert_segment_containment_and_reversal(reader),
         2 => h_assert_contour_region_classification(reader),
@@ -3789,6 +3922,7 @@ pub fn h_assert_full_api(reader: &mut ByteReader<'_>) {
         13 => h_assert_region_boolean_antagonistic_contract(reader),
         14 => h_assert_bezier_boolean_fragment_locator_inputs(reader),
         15 => h_assert_bezier_boolean_endpoint_successors(reader),
+        16 => h_assert_bezier_boolean_tangent_branch_successors(reader),
         _ => h_assert_adversarial_polygon_pipeline(reader),
     }
 }

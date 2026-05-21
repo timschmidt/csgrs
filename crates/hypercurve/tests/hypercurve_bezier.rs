@@ -11,9 +11,9 @@ use hypercurve::{
     BezierBooleanConstructionReadinessReport2, BezierBooleanConstructionReadinessStatus,
     BezierBooleanCubicFragmentReport2, BezierBooleanEmissionPlanReport2,
     BezierBooleanEmissionPlanStatus, BezierBooleanFragmentConstructionStatus,
-    BezierBooleanFragmentLocatorInputReport2, BezierBooleanFragmentLocatorInputStatus,
-    BezierBooleanFragmentOwnershipLocation, BezierBooleanHandoffReport2,
-    BezierBooleanHandoffStatus, BezierBooleanLoopAssemblyPlanReport2,
+    BezierBooleanFragmentEndpointTangents2, BezierBooleanFragmentLocatorInputReport2,
+    BezierBooleanFragmentLocatorInputStatus, BezierBooleanFragmentOwnershipLocation,
+    BezierBooleanHandoffReport2, BezierBooleanHandoffStatus, BezierBooleanLoopAssemblyPlanReport2,
     BezierBooleanLoopAssemblyPlanStatus, BezierBooleanLoopClosureReport2,
     BezierBooleanLoopClosureStatus, BezierBooleanLoopContainmentCertificationReport2,
     BezierBooleanLoopContainmentCertificationStatus, BezierBooleanLoopContainmentFact2,
@@ -47,19 +47,19 @@ use hypercurve::{
     BezierBooleanRootIsolationHandoffReport2, BezierBooleanRootIsolationHandoffStatus,
     BezierBooleanRootIsolationReplayReport2, BezierBooleanRootIsolationReplayStatus,
     BezierBooleanSplitInsertionStatus, BezierBooleanSplitPlanAuditStatus,
-    BezierBooleanSplitPlanReport2, BezierBooleanSplitPlanStatus, BezierBooleanTraversalOperand,
-    BezierBooleanTraversalPreconditionReport2, BezierBooleanTraversalPreconditionStatus,
-    BezierBooleanTraversalScheduleReport2, BezierBooleanTraversalScheduleStatus,
-    BezierBooleanUniformOwnershipFactReport2, BezierBooleanUniformOwnershipFactStatus,
-    BezierCurveRelation, BezierCuspClassification, BezierDegree, BezierEndpoint,
-    BezierFitBoundKind, BezierFitErrorMetric, BezierFitReadinessStatus,
-    BezierFitSourceBatchReport2, BezierFitSourcePrefixSums2, BezierFlatteningOptions,
-    BezierGraphContact, BezierInflectionClassification, BezierIntersectionRegionIsolationBudget,
-    BezierIntersectionRegionIsolationStopReason, BezierIntersectionRegionRefinementAction,
-    BezierIntersectionRegionShape, BezierLineContactKind, BezierLineContactRelation,
-    BezierLineFitRelation, BezierLineImageFitRelation, BezierLineRelation,
-    BezierMonotoneGraphContactOrder, BezierMonotoneGraphOrder, BezierMonotoneSpan,
-    BezierOffsetAdapterStatus, BezierOffsetCandidate2, BezierOffsetRisk,
+    BezierBooleanSplitPlanReport2, BezierBooleanSplitPlanStatus, BezierBooleanTangentTurnPolicy,
+    BezierBooleanTraversalOperand, BezierBooleanTraversalPreconditionReport2,
+    BezierBooleanTraversalPreconditionStatus, BezierBooleanTraversalScheduleReport2,
+    BezierBooleanTraversalScheduleStatus, BezierBooleanUniformOwnershipFactReport2,
+    BezierBooleanUniformOwnershipFactStatus, BezierCurveRelation, BezierCuspClassification,
+    BezierDegree, BezierEndpoint, BezierFitBoundKind, BezierFitErrorMetric,
+    BezierFitReadinessStatus, BezierFitSourceBatchReport2, BezierFitSourcePrefixSums2,
+    BezierFlatteningOptions, BezierGraphContact, BezierInflectionClassification,
+    BezierIntersectionRegionIsolationBudget, BezierIntersectionRegionIsolationStopReason,
+    BezierIntersectionRegionRefinementAction, BezierIntersectionRegionShape, BezierLineContactKind,
+    BezierLineContactRelation, BezierLineFitRelation, BezierLineImageFitRelation,
+    BezierLineRelation, BezierMonotoneGraphContactOrder, BezierMonotoneGraphOrder,
+    BezierMonotoneSpan, BezierOffsetAdapterStatus, BezierOffsetCandidate2, BezierOffsetRisk,
     BezierPathRangeBatchReport2, BezierPathRangeBatchStatus, BezierPathRangeOrderReport2,
     BezierPathRangeOrderStatus, BezierPointFitRelation, BezierPointImageFitRelation,
     BezierRegionWidthStatus, BezierSimplificationBoundKind, BezierSimplificationErrorMetric,
@@ -92,6 +92,16 @@ fn ratio(numerator: i32, denominator: i32) -> Real {
 
 fn point(x: i32, y: i32) -> Point2 {
     Point2::new(r(x), r(y))
+}
+
+fn endpoint_tangents(start: Point2, end: Point2) -> BezierBooleanFragmentEndpointTangents2 {
+    let tangent = Point2::new(end.x() - start.x(), end.y() - start.y());
+    BezierBooleanFragmentEndpointTangents2 {
+        start,
+        end,
+        start_tangent: tangent.clone(),
+        end_tangent: tangent,
+    }
 }
 
 fn half() -> Real {
@@ -7807,6 +7817,141 @@ fn bezier_boolean_endpoint_successors_block_ambiguous_branch_matches() {
         BezierBooleanLoopGraphSuccessorWalkStatus::ExtraSuccessorFacts
     );
     assert!(ambiguous.supplied_successor_count > ambiguous.emitted_step_count);
+}
+
+#[test]
+fn bezier_boolean_tangent_successors_resolve_branch_vertex_order() {
+    let plan = BezierBooleanLoopAssemblyPlanReport2 {
+        status: BezierBooleanLoopAssemblyPlanStatus::Ready,
+        assembly_status: BezierBooleanAssemblyReadinessStatus::Ready,
+        operation: BooleanOp::Union,
+        emitted_steps: (0..6)
+            .map(
+                |fragment_index| hypercurve::BezierBooleanOwnedTraversalStep2 {
+                    step: hypercurve::BezierBooleanTraversalStep2 {
+                        operand: BezierBooleanTraversalOperand::First,
+                        fragment_index,
+                    },
+                    opposite_location: BezierBooleanFragmentOwnershipLocation::Outside,
+                    action: BooleanFragmentAction::KeepSourceDirection,
+                },
+            )
+            .collect(),
+        first_emitted_count: 6,
+        second_emitted_count: 0,
+        keep_source_count: 6,
+        keep_reversed_count: 0,
+        invalid_reference_count: 0,
+        blocker_count: 0,
+    };
+    let traversal =
+        BezierBooleanLoopGraphTraversalReport2::from_certified_walk_graph_facts(&plan, 1, 0);
+    let endpoints = [
+        (point(-1, 0), point(0, 0)),
+        (point(0, 0), point(0, -1)),
+        (point(0, -1), point(-1, 0)),
+        (point(1, 0), point(0, 0)),
+        (point(0, 0), point(0, 1)),
+        (point(0, 1), point(1, 0)),
+    ];
+    let tangents = endpoints
+        .iter()
+        .cloned()
+        .map(|(start, end)| endpoint_tangents(start, end))
+        .collect::<Vec<_>>();
+
+    let endpoint_only = BezierBooleanLoopGraphMultiCycleWalkReport2::from_fragment_endpoints(
+        &traversal,
+        &plan,
+        &endpoints,
+        &[],
+    );
+    assert_eq!(
+        endpoint_only.status,
+        BezierBooleanLoopGraphMultiCycleWalkStatus::ExtraSuccessorFacts
+    );
+    assert!(endpoint_only.has_blockers());
+
+    let tangent_ordered =
+        BezierBooleanLoopGraphMultiCycleWalkReport2::from_fragment_endpoint_tangents(
+            &traversal,
+            &plan,
+            &tangents,
+            &[],
+            BezierBooleanTangentTurnPolicy::CounterClockwise,
+            &policy(),
+        );
+    assert_eq!(
+        tangent_ordered.status,
+        BezierBooleanLoopGraphMultiCycleWalkStatus::Ready
+    );
+    assert!(tangent_ordered.is_ready());
+    assert_eq!(tangent_ordered.cycle_start_indices, vec![0, 3]);
+    assert_eq!(tangent_ordered.cycle_step_counts, vec![3, 3]);
+    assert_eq!(tangent_ordered.walk_indices, vec![0, 1, 2, 3, 4, 5]);
+
+    let single = BezierBooleanLoopGraphSuccessorWalkReport2::from_fragment_endpoint_tangents(
+        &traversal,
+        &plan,
+        &tangents,
+        &[],
+        BezierBooleanTangentTurnPolicy::CounterClockwise,
+        &policy(),
+    );
+    assert_eq!(
+        single.status,
+        BezierBooleanLoopGraphSuccessorWalkStatus::OpenOrDisconnectedSuccessorCycle
+    );
+}
+
+#[test]
+fn bezier_boolean_tangent_successors_block_collinear_branch_ties() {
+    let plan = BezierBooleanLoopAssemblyPlanReport2 {
+        status: BezierBooleanLoopAssemblyPlanStatus::Ready,
+        assembly_status: BezierBooleanAssemblyReadinessStatus::Ready,
+        operation: BooleanOp::Union,
+        emitted_steps: (0..4)
+            .map(
+                |fragment_index| hypercurve::BezierBooleanOwnedTraversalStep2 {
+                    step: hypercurve::BezierBooleanTraversalStep2 {
+                        operand: BezierBooleanTraversalOperand::First,
+                        fragment_index,
+                    },
+                    opposite_location: BezierBooleanFragmentOwnershipLocation::Outside,
+                    action: BooleanFragmentAction::KeepSourceDirection,
+                },
+            )
+            .collect(),
+        first_emitted_count: 4,
+        second_emitted_count: 0,
+        keep_source_count: 4,
+        keep_reversed_count: 0,
+        invalid_reference_count: 0,
+        blocker_count: 0,
+    };
+    let traversal =
+        BezierBooleanLoopGraphTraversalReport2::from_certified_walk_graph_facts(&plan, 1, 0);
+    let tangents = vec![
+        endpoint_tangents(point(-1, 0), point(0, 0)),
+        endpoint_tangents(point(0, 0), point(1, 0)),
+        endpoint_tangents(point(0, 0), point(2, 0)),
+        endpoint_tangents(point(1, 0), point(-1, 0)),
+    ];
+
+    let blocked = BezierBooleanLoopGraphMultiCycleWalkReport2::from_fragment_endpoint_tangents(
+        &traversal,
+        &plan,
+        &tangents,
+        &[],
+        BezierBooleanTangentTurnPolicy::CounterClockwise,
+        &policy(),
+    );
+    assert_eq!(
+        blocked.status,
+        BezierBooleanLoopGraphMultiCycleWalkStatus::DuplicateSuccessorSource
+    );
+    assert!(blocked.has_blockers());
+    assert_eq!(blocked.duplicate_source_count, 1);
 }
 
 #[test]

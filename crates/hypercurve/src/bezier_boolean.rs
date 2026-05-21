@@ -21,7 +21,7 @@ use crate::{
     CubicBezier2, CurvePolicy, IntersectionKind, LineLineIntersection, ParamRange, Point2,
     QuadraticBezier2, RationalQuadraticBezier2, UncertaintyReason,
 };
-use hyperreal::Real;
+use hyperreal::{Real, RealSign};
 use hypersolve::{
     AlgebraicRootComparisonStatus, AlgebraicRootRefinementComparisonConfig,
     AlgebraicRootRefinementComparisonReport, AlgebraicRootRepresentation,
@@ -1124,6 +1124,49 @@ pub enum BezierBooleanLoopGraphMultiCycleWalkStatus {
     DuplicateSuccessorTarget,
     /// Successor facts do not form closed walks covering all emitted fragments.
     OpenSuccessorCycle,
+}
+
+/// Direction used when selecting a tangent-ordered branch successor.
+///
+/// At a branch vertex, exact endpoint equality can identify every outgoing
+/// candidate but not the topological successor. This policy chooses the next
+/// outgoing half-edge by angular order around the vertex. The comparison is
+/// performed with exact orientation signs; if the signs are zero or undecided,
+/// the caller retains duplicate successor evidence so validation blocks rather
+/// than guessing. That follows Yap, "Towards Exact Geometric Computation"
+/// (1997): a construction step may advance only after the predicate boundary
+/// has produced certified combinatorial data. The angular half-edge walk is the
+/// same planar-subdivision idea used by polygon boolean traversals such as
+/// Vatti (1992), Greiner-Hormann (1998), and Martinez-Rueda-Feito (2009).
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum BezierBooleanTangentTurnPolicy {
+    /// Choose the smallest positive counter-clockwise turn from the incoming
+    /// reverse tangent to an outgoing start tangent.
+    CounterClockwise,
+    /// Choose the smallest positive clockwise turn from the incoming reverse
+    /// tangent to an outgoing start tangent.
+    Clockwise,
+}
+
+/// Exact endpoint and endpoint-tangent evidence for one Bezier/conic fragment.
+///
+/// The tangent fields are vectors rooted at the corresponding endpoint. They
+/// are intentionally stored as [`Point2`] values because the public hypercurve
+/// surface has exact points but no separate exact vector type. Callers should
+/// provide source-parameter derivatives or other certified tangent vectors, not
+/// sampled chord directions unless a chord is the actual exact segment. Yap
+/// (1997) is the governing contract: these values are evidence for exact
+/// orientation predicates, not display approximations.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BezierBooleanFragmentEndpointTangents2 {
+    /// Exact fragment start point.
+    pub start: Point2,
+    /// Exact fragment end point.
+    pub end: Point2,
+    /// Tangent vector leaving [`Self::start`] in source direction.
+    pub start_tangent: Point2,
+    /// Tangent vector arriving at [`Self::end`] in source direction.
+    pub end_tangent: Point2,
 }
 
 /// Certified multi-cycle graph walk derived from keyed successor facts.
@@ -6135,6 +6178,34 @@ impl BezierBooleanLoopGraphSuccessorWalkReport2 {
         Self::from_successor_facts(traversal, plan, &successors)
     }
 
+    /// Derives one closed graph walk from exact endpoint and tangent evidence.
+    ///
+    /// This is the first built-in branch-vertex successor producer. Exact
+    /// endpoint equality still determines the candidate outgoing half-edges.
+    /// When a vertex has one candidate, the ordinary endpoint successor is
+    /// retained. When a vertex has multiple candidates, the successor is the
+    /// outgoing start tangent with the smallest positive turn from the incoming
+    /// reverse end tangent under `turn_policy`. The required decisions are
+    /// exact orientation signs; zero tangents, collinear candidates, tied
+    /// angular order, or undecided signs deliberately replay all endpoint
+    /// candidates so [`Self::from_successor_facts`] rejects the graph as
+    /// duplicate evidence instead of hiding a tolerance choice. That is the
+    /// Yap (1997) exact-computation boundary, applied to the DCEL-style angular
+    /// face walk used by Vatti (1992), Greiner-Hormann (1998), and
+    /// Martinez-Rueda-Feito (2009) polygon boolean traversals.
+    pub fn from_fragment_endpoint_tangents(
+        traversal: &BezierBooleanLoopGraphTraversalReport2,
+        plan: &BezierBooleanLoopAssemblyPlanReport2,
+        first_tangents: &[BezierBooleanFragmentEndpointTangents2],
+        second_tangents: &[BezierBooleanFragmentEndpointTangents2],
+        turn_policy: BezierBooleanTangentTurnPolicy,
+        policy: &CurvePolicy,
+    ) -> Self {
+        let directed = directed_emitted_step_tangents(plan, first_tangents, second_tangents);
+        let successors = tangent_successor_facts(&directed, turn_policy, policy);
+        Self::from_successor_facts(traversal, plan, &successors)
+    }
+
     /// Derives one closed graph walk from quadratic Bezier fragment endpoints.
     pub fn from_quadratic_fragments(
         traversal: &BezierBooleanLoopGraphTraversalReport2,
@@ -6544,6 +6615,31 @@ impl BezierBooleanLoopGraphMultiCycleWalkReport2 {
     ) -> Self {
         let directed = directed_emitted_step_endpoints(plan, first_endpoints, second_endpoints);
         let successors = endpoint_successor_facts(&directed);
+        Self::from_successor_facts(traversal, plan, &successors)
+    }
+
+    /// Derives closed graph-walk cycles from exact endpoint and tangent evidence.
+    ///
+    /// This is the multi-cycle counterpart to
+    /// [`BezierBooleanLoopGraphSuccessorWalkReport2::from_fragment_endpoint_tangents`].
+    /// It uses exact endpoint matches for candidate discovery and exact
+    /// tangent orientation signs for branch successor selection. Ambiguous
+    /// angular predicates are retained as duplicate successor facts, so the
+    /// existing multi-cycle certificate still enforces one successor and one
+    /// predecessor per emitted fragment. This keeps Yap's (1997) exact
+    /// predicate/construction split intact while supporting the angular
+    /// half-edge traversal needed by Vatti (1992), Greiner-Hormann (1998), and
+    /// Martinez-Rueda-Feito (2009) style boolean graph walks.
+    pub fn from_fragment_endpoint_tangents(
+        traversal: &BezierBooleanLoopGraphTraversalReport2,
+        plan: &BezierBooleanLoopAssemblyPlanReport2,
+        first_tangents: &[BezierBooleanFragmentEndpointTangents2],
+        second_tangents: &[BezierBooleanFragmentEndpointTangents2],
+        turn_policy: BezierBooleanTangentTurnPolicy,
+        policy: &CurvePolicy,
+    ) -> Self {
+        let directed = directed_emitted_step_tangents(plan, first_tangents, second_tangents);
+        let successors = tangent_successor_facts(&directed, turn_policy, policy);
         Self::from_successor_facts(traversal, plan, &successors)
     }
 
@@ -15692,6 +15788,41 @@ fn directed_emitted_step_endpoints(
         .collect()
 }
 
+fn directed_emitted_step_tangents(
+    plan: &BezierBooleanLoopAssemblyPlanReport2,
+    first_tangents: &[BezierBooleanFragmentEndpointTangents2],
+    second_tangents: &[BezierBooleanFragmentEndpointTangents2],
+) -> Vec<Option<BezierBooleanFragmentEndpointTangents2>> {
+    plan.emitted_steps
+        .iter()
+        .map(|emitted| {
+            let tangents = match emitted.step.operand {
+                BezierBooleanTraversalOperand::First => {
+                    first_tangents.get(emitted.step.fragment_index)
+                }
+                BezierBooleanTraversalOperand::Second => {
+                    second_tangents.get(emitted.step.fragment_index)
+                }
+            }?;
+
+            match emitted.action {
+                BooleanFragmentAction::KeepSourceDirection => Some(tangents.clone()),
+                BooleanFragmentAction::KeepReversed => {
+                    Some(BezierBooleanFragmentEndpointTangents2 {
+                        start: tangents.end.clone(),
+                        end: tangents.start.clone(),
+                        start_tangent: negate_tangent_vector(&tangents.end_tangent),
+                        end_tangent: negate_tangent_vector(&tangents.start_tangent),
+                    })
+                }
+                BooleanFragmentAction::Discard | BooleanFragmentAction::BoundaryNeedsResolution => {
+                    None
+                }
+            }
+        })
+        .collect()
+}
+
 fn endpoint_successor_facts(
     directed_endpoints: &[Option<(Point2, Point2)>],
 ) -> Vec<BezierBooleanLoopGraphSuccessorFact2> {
@@ -15713,6 +15844,182 @@ fn endpoint_successor_facts(
         }
     }
     facts
+}
+
+fn tangent_successor_facts(
+    directed_tangents: &[Option<BezierBooleanFragmentEndpointTangents2>],
+    turn_policy: BezierBooleanTangentTurnPolicy,
+    policy: &CurvePolicy,
+) -> Vec<BezierBooleanLoopGraphSuccessorFact2> {
+    let mut facts = Vec::new();
+    for (from_step_index, directed) in directed_tangents.iter().enumerate() {
+        let Some(directed) = directed else {
+            continue;
+        };
+        let candidates = directed_tangents
+            .iter()
+            .enumerate()
+            .filter_map(|(to_step_index, candidate)| {
+                let candidate = candidate.as_ref()?;
+                (candidate.start == directed.end).then_some(to_step_index)
+            })
+            .collect::<Vec<_>>();
+
+        match candidates.as_slice() {
+            [] => {}
+            [to_step_index] => facts.push(BezierBooleanLoopGraphSuccessorFact2 {
+                from_step_index,
+                to_step_index: *to_step_index,
+            }),
+            _ => match select_tangent_successor(
+                &negate_tangent_vector(&directed.end_tangent),
+                &candidates,
+                directed_tangents,
+                turn_policy,
+                policy,
+            ) {
+                Some(to_step_index) => facts.push(BezierBooleanLoopGraphSuccessorFact2 {
+                    from_step_index,
+                    to_step_index,
+                }),
+                None => facts.extend(candidates.into_iter().map(|to_step_index| {
+                    BezierBooleanLoopGraphSuccessorFact2 {
+                        from_step_index,
+                        to_step_index,
+                    }
+                })),
+            },
+        }
+    }
+    facts
+}
+
+fn select_tangent_successor(
+    incoming_reverse_tangent: &Point2,
+    candidates: &[usize],
+    directed_tangents: &[Option<BezierBooleanFragmentEndpointTangents2>],
+    turn_policy: BezierBooleanTangentTurnPolicy,
+    policy: &CurvePolicy,
+) -> Option<usize> {
+    if is_zero_tangent_vector(incoming_reverse_tangent, policy)? {
+        return None;
+    }
+
+    let mut selected = *candidates.first()?;
+    let selected_tangent = &directed_tangents[selected].as_ref()?.start_tangent;
+    if is_zero_tangent_vector(selected_tangent, policy)? {
+        return None;
+    }
+    if tangent_turn_side(
+        incoming_reverse_tangent,
+        selected_tangent,
+        turn_policy,
+        policy,
+    )? == RealSign::Zero
+    {
+        return None;
+    }
+
+    for candidate_index in candidates.iter().copied().skip(1) {
+        let candidate_tangent = &directed_tangents[candidate_index].as_ref()?.start_tangent;
+        if is_zero_tangent_vector(candidate_tangent, policy)? {
+            return None;
+        }
+        if tangent_turn_side(
+            incoming_reverse_tangent,
+            candidate_tangent,
+            turn_policy,
+            policy,
+        )? == RealSign::Zero
+        {
+            return None;
+        }
+
+        let selected_tangent = &directed_tangents[selected].as_ref()?.start_tangent;
+        match compare_tangent_turns(
+            incoming_reverse_tangent,
+            candidate_tangent,
+            selected_tangent,
+            turn_policy,
+            policy,
+        )? {
+            Ordering::Less => selected = candidate_index,
+            Ordering::Equal => return None,
+            Ordering::Greater => {}
+        }
+    }
+
+    Some(selected)
+}
+
+fn compare_tangent_turns(
+    incoming_reverse_tangent: &Point2,
+    candidate: &Point2,
+    selected: &Point2,
+    turn_policy: BezierBooleanTangentTurnPolicy,
+    policy: &CurvePolicy,
+) -> Option<Ordering> {
+    let candidate_side =
+        tangent_turn_side(incoming_reverse_tangent, candidate, turn_policy, policy)?;
+    let selected_side = tangent_turn_side(incoming_reverse_tangent, selected, turn_policy, policy)?;
+    if candidate_side == RealSign::Zero || selected_side == RealSign::Zero {
+        return None;
+    }
+    if candidate_side != selected_side {
+        return Some(if candidate_side == RealSign::Positive {
+            Ordering::Less
+        } else {
+            Ordering::Greater
+        });
+    }
+
+    let between = tangent_cross_sign(candidate, selected, policy)?;
+    match (turn_policy, between) {
+        (_, RealSign::Zero) => None,
+        (BezierBooleanTangentTurnPolicy::CounterClockwise, RealSign::Positive) => {
+            Some(Ordering::Less)
+        }
+        (BezierBooleanTangentTurnPolicy::CounterClockwise, RealSign::Negative) => {
+            Some(Ordering::Greater)
+        }
+        (BezierBooleanTangentTurnPolicy::Clockwise, RealSign::Negative) => Some(Ordering::Less),
+        (BezierBooleanTangentTurnPolicy::Clockwise, RealSign::Positive) => Some(Ordering::Greater),
+    }
+}
+
+fn tangent_turn_side(
+    incoming_reverse_tangent: &Point2,
+    candidate: &Point2,
+    turn_policy: BezierBooleanTangentTurnPolicy,
+    policy: &CurvePolicy,
+) -> Option<RealSign> {
+    match turn_policy {
+        BezierBooleanTangentTurnPolicy::CounterClockwise => {
+            tangent_cross_sign(incoming_reverse_tangent, candidate, policy)
+        }
+        BezierBooleanTangentTurnPolicy::Clockwise => {
+            tangent_cross_sign(candidate, incoming_reverse_tangent, policy)
+        }
+    }
+}
+
+fn tangent_cross_sign(first: &Point2, second: &Point2, policy: &CurvePolicy) -> Option<RealSign> {
+    let cross = (first.x() * second.y()) - &(first.y() * second.x());
+    crate::classify::real_sign(&cross, policy)
+}
+
+fn is_zero_tangent_vector(vector: &Point2, policy: &CurvePolicy) -> Option<bool> {
+    match (
+        crate::classify::real_sign(vector.x(), policy)?,
+        crate::classify::real_sign(vector.y(), policy)?,
+    ) {
+        (RealSign::Zero, RealSign::Zero) => Some(true),
+        _ => Some(false),
+    }
+}
+
+fn negate_tangent_vector(vector: &Point2) -> Point2 {
+    Point2::new(Real::zero() - vector.x(), Real::zero() - vector.y())
 }
 
 fn fragment_chain_gap_count(endpoints: &[(Point2, Point2)]) -> usize {

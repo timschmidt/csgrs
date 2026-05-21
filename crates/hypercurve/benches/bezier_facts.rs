@@ -9,27 +9,28 @@ use hypercurve::{
     BezierBooleanArrangementReadinessReport2, BezierBooleanAssemblyReadinessReport2,
     BezierBooleanBatchHandoffReport2, BezierBooleanConstructionReadinessReport2,
     BezierBooleanCubicFragmentReport2, BezierBooleanEmissionPlanReport2,
-    BezierBooleanFragmentLocatorInputReport2, BezierBooleanFragmentOwnershipLocation,
-    BezierBooleanHandoffReport2, BezierBooleanLoopAssemblyPlanReport2,
-    BezierBooleanLoopClosureReport2, BezierBooleanLoopContainmentCertificationReport2,
-    BezierBooleanLoopContainmentFact2, BezierBooleanLoopContainmentFactReport2,
-    BezierBooleanLoopContainmentQueryReport2, BezierBooleanLoopContainmentQueryResult,
-    BezierBooleanLoopContainmentQueryResult2, BezierBooleanLoopContainmentQueryResultReport2,
-    BezierBooleanLoopGraphFactReport2, BezierBooleanLoopGraphFacts2,
-    BezierBooleanLoopGraphMultiCycleWalkReport2, BezierBooleanLoopGraphSuccessorFact2,
-    BezierBooleanLoopGraphSuccessorWalkReport2, BezierBooleanLoopGraphTraversalReport2,
-    BezierBooleanLoopGraphWalkReport2, BezierBooleanLoopLocatorInputReport2,
-    BezierBooleanLoopNestingDepthFact2, BezierBooleanLoopNestingDepthFactReport2,
-    BezierBooleanLoopNestingRoleReport2, BezierBooleanLoopRoleAssignmentReport2,
-    BezierBooleanMaterializationAuditReport2, BezierBooleanMaterializedRegionReport2,
-    BezierBooleanOutputLoopReport2, BezierBooleanOutputLoopRole,
-    BezierBooleanOverlapResolutionReport2, BezierBooleanOwnershipClassificationReport2,
-    BezierBooleanOwnershipFact2, BezierBooleanOwnershipFactReport2,
-    BezierBooleanPathSchedulerReport2, BezierBooleanQuadraticFragmentReport2,
-    BezierBooleanRationalQuadraticFragmentReport2, BezierBooleanRegionAssemblyReport2,
-    BezierBooleanResultReport2, BezierBooleanRootCountPrefilterReport2,
-    BezierBooleanRootIsolationHandoffReport2, BezierBooleanRootIsolationReplayReport2,
-    BezierBooleanSplitPlanReport2, BezierBooleanTraversalPreconditionReport2,
+    BezierBooleanFragmentEndpointTangents2, BezierBooleanFragmentLocatorInputReport2,
+    BezierBooleanFragmentOwnershipLocation, BezierBooleanHandoffReport2,
+    BezierBooleanLoopAssemblyPlanReport2, BezierBooleanLoopClosureReport2,
+    BezierBooleanLoopContainmentCertificationReport2, BezierBooleanLoopContainmentFact2,
+    BezierBooleanLoopContainmentFactReport2, BezierBooleanLoopContainmentQueryReport2,
+    BezierBooleanLoopContainmentQueryResult, BezierBooleanLoopContainmentQueryResult2,
+    BezierBooleanLoopContainmentQueryResultReport2, BezierBooleanLoopGraphFactReport2,
+    BezierBooleanLoopGraphFacts2, BezierBooleanLoopGraphMultiCycleWalkReport2,
+    BezierBooleanLoopGraphSuccessorFact2, BezierBooleanLoopGraphSuccessorWalkReport2,
+    BezierBooleanLoopGraphTraversalReport2, BezierBooleanLoopGraphWalkReport2,
+    BezierBooleanLoopLocatorInputReport2, BezierBooleanLoopNestingDepthFact2,
+    BezierBooleanLoopNestingDepthFactReport2, BezierBooleanLoopNestingRoleReport2,
+    BezierBooleanLoopRoleAssignmentReport2, BezierBooleanMaterializationAuditReport2,
+    BezierBooleanMaterializedRegionReport2, BezierBooleanOutputLoopReport2,
+    BezierBooleanOutputLoopRole, BezierBooleanOverlapResolutionReport2,
+    BezierBooleanOwnershipClassificationReport2, BezierBooleanOwnershipFact2,
+    BezierBooleanOwnershipFactReport2, BezierBooleanPathSchedulerReport2,
+    BezierBooleanQuadraticFragmentReport2, BezierBooleanRationalQuadraticFragmentReport2,
+    BezierBooleanRegionAssemblyReport2, BezierBooleanResultReport2,
+    BezierBooleanRootCountPrefilterReport2, BezierBooleanRootIsolationHandoffReport2,
+    BezierBooleanRootIsolationReplayReport2, BezierBooleanSplitPlanReport2,
+    BezierBooleanTangentTurnPolicy, BezierBooleanTraversalPreconditionReport2,
     BezierBooleanTraversalScheduleReport2, BezierBooleanUniformOwnershipFactReport2,
     BezierFlatteningOptions, BezierIntersectionRegionIsolationBudget, BezierMonotoneSpan,
     BezierPathRangeBatchReport2, BezierPathRangeOrderReport2, BooleanOp, CubicBezier2, CurvePolicy,
@@ -49,6 +50,16 @@ use hypersolve::{
 
 fn p(x: i32, y: i32) -> Point2 {
     Point2::new(Real::from(x), Real::from(y))
+}
+
+fn endpoint_tangents(start: Point2, end: Point2) -> BezierBooleanFragmentEndpointTangents2 {
+    let tangent = Point2::new(end.x() - start.x(), end.y() - start.y());
+    BezierBooleanFragmentEndpointTangents2 {
+        start,
+        end,
+        start_tangent: tangent.clone(),
+        end_tangent: tangent,
+    }
 }
 
 fn half() -> Real {
@@ -1806,6 +1817,57 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                         &first_endpoints,
                         &second_endpoints,
                     );
+                let branch_endpoints = [
+                    (p(-1, 0), p(0, 0)),
+                    (p(0, 0), p(0, -1)),
+                    (p(0, -1), p(-1, 0)),
+                    (p(1, 0), p(0, 0)),
+                    (p(0, 0), p(0, 1)),
+                    (p(0, 1), p(1, 0)),
+                ];
+                let branch_tangents = branch_endpoints
+                    .iter()
+                    .cloned()
+                    .map(|(start, end)| endpoint_tangents(start, end))
+                    .collect::<Vec<_>>();
+                let branch_plan = BezierBooleanLoopAssemblyPlanReport2 {
+                    status: hypercurve::BezierBooleanLoopAssemblyPlanStatus::Ready,
+                    assembly_status: hypercurve::BezierBooleanAssemblyReadinessStatus::Ready,
+                    operation: BooleanOp::Union,
+                    emitted_steps: (0..branch_tangents.len())
+                        .map(
+                            |fragment_index| hypercurve::BezierBooleanOwnedTraversalStep2 {
+                                step: hypercurve::BezierBooleanTraversalStep2 {
+                                    operand: hypercurve::BezierBooleanTraversalOperand::First,
+                                    fragment_index,
+                                },
+                                opposite_location: BezierBooleanFragmentOwnershipLocation::Outside,
+                                action: hypercurve::BooleanFragmentAction::KeepSourceDirection,
+                            },
+                        )
+                        .collect(),
+                    first_emitted_count: branch_tangents.len(),
+                    second_emitted_count: 0,
+                    keep_source_count: branch_tangents.len(),
+                    keep_reversed_count: 0,
+                    invalid_reference_count: 0,
+                    blocker_count: 0,
+                };
+                let branch_traversal =
+                    BezierBooleanLoopGraphTraversalReport2::from_certified_walk_graph_facts(
+                        &branch_plan,
+                        1,
+                        0,
+                    );
+                let tangent_branch_multi =
+                    BezierBooleanLoopGraphMultiCycleWalkReport2::from_fragment_endpoint_tangents(
+                        &branch_traversal,
+                        &branch_plan,
+                        &branch_tangents,
+                        &[],
+                        BezierBooleanTangentTurnPolicy::CounterClockwise,
+                        &CurvePolicy::certified(),
+                    );
                 let output = BezierBooleanOutputLoopReport2::from_multi_cycle_successor_endpoints(
                     &multi,
                     &traversal,
@@ -1994,7 +2056,7 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                         &locator_results,
                     );
                 format!(
-                    "{single:?}{multi:?}{endpoint_single:?}{endpoint_multi:?}{output:?}{result:?}{endpoint_result:?}{containment_result:?}{endpoint_containment_result:?}{materialized:?}{endpoint_materialized:?}{locator_certification:?}{replay_result:?}{locator_result:?}{replay_materialized:?}{locator_materialized:?}"
+                    "{single:?}{multi:?}{endpoint_single:?}{endpoint_multi:?}{tangent_branch_multi:?}{output:?}{result:?}{endpoint_result:?}{containment_result:?}{endpoint_containment_result:?}{materialized:?}{endpoint_materialized:?}{locator_certification:?}{replay_result:?}{locator_result:?}{replay_materialized:?}{locator_materialized:?}"
                 )
             }
             other => format!("{other:?}"),
