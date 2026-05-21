@@ -7,19 +7,19 @@ use hypersolve::{
     IntervalBoxCertificationStatus, LinearAdapterKind, LinearAdapterPrecision, LinearBackend,
     MultivariateQuadraticKrawczykStatus, PreparedProblem, PreparedSolverBlock, Problem,
     ProposalEngineKind, ProposalEnginePrecision, RootIsolationStatus, RootMultiplicityStatus,
-    SketchConstraintKind, SketchEntityHandle, SketchGeneratedRowStatus, SketchResidualStrategy,
-    SketchSolveProblem, SolverBlockRowKind, SolverConfig, SolverPoint2, SolverState, SymbolId,
-    VariableBall, apply_equality_substitution_classes, apply_equality_substitutions,
-    build_equality_substitution_classes, certify_affine_interval_candidate,
-    certify_affine_krawczyk_box, certify_candidate, certify_candidate_domains,
-    certify_candidate_with_config, certify_candidate_with_residual_balls,
-    certify_direct_univariate_quadratic_roots, certify_interval_box_candidate,
-    certify_multivariate_quadratic_interval_candidate, certify_multivariate_quadratic_krawczyk_box,
-    certify_quadratic_interval_candidate, certify_univariate_quadratic_alpha,
-    certify_univariate_quadratic_krawczyk_box, context_from_problem,
-    eliminate_affine_rows_with_substitution_classes, evaluate_residuals, facts_depend_on_symbol,
-    find_equality_substitutions, isolate_univariate_polynomial_roots, point_coincidence_equations,
-    report_lossy_adapter_only_candidate, solve_damped_least_squares,
+    SketchConstraintKind, SketchEntityHandle, SketchEntityKind, SketchGeneratedRowStatus,
+    SketchResidualStrategy, SketchSolveProblem, SolverBlockRowKind, SolverConfig, SolverPoint2,
+    SolverState, SymbolId, VariableBall, apply_equality_substitution_classes,
+    apply_equality_substitutions, build_equality_substitution_classes,
+    certify_affine_interval_candidate, certify_affine_krawczyk_box, certify_candidate,
+    certify_candidate_domains, certify_candidate_with_config,
+    certify_candidate_with_residual_balls, certify_direct_univariate_quadratic_roots,
+    certify_interval_box_candidate, certify_multivariate_quadratic_interval_candidate,
+    certify_multivariate_quadratic_krawczyk_box, certify_quadratic_interval_candidate,
+    certify_univariate_quadratic_alpha, certify_univariate_quadratic_krawczyk_box,
+    context_from_problem, eliminate_affine_rows_with_substitution_classes, evaluate_residuals,
+    facts_depend_on_symbol, find_equality_substitutions, isolate_univariate_polynomial_roots,
+    point_coincidence_equations, report_lossy_adapter_only_candidate, solve_damped_least_squares,
     solve_direct_affine_equalities, solve_direct_affine_system,
     solve_direct_univariate_quadratic_equalities, squared_distance_equation,
     tangent_parallel_equation, tangent_same_direction_constraint, validate_equality_substitutions,
@@ -133,6 +133,45 @@ fn sketch_lowering_reports_bad_handles_and_reference_rows() {
         report.rows[2].status,
         SketchGeneratedRowStatus::WrongEntityKind { .. }
     ));
+}
+
+#[test]
+fn sketch_retains_extended_solvespace_entity_carriers_without_forcing_rows() {
+    let mut sketch = SketchSolveProblem::new();
+    let origin = sketch.add_point3d("origin", real(0), real(0), real(0));
+    let normal = sketch.add_normal3d("normal", real(1), real(0), real(0), real(0));
+    let workplane = sketch.add_workplane("workplane", origin, normal);
+    let p0 = sketch.add_point2d("p0", real(0), real(0));
+    let p1 = sketch.add_point2d("p1", real(1), real(0));
+    let p2 = sketch.add_point2d("p2", real(2), real(1));
+    let p3 = sketch.add_point2d("p3", real(3), real(1));
+    let radius = sketch.add_distance("radius", real(1));
+    let cubic = sketch.add_cubic2("cubic", p0, p1, p2, p3);
+    let arc = sketch.add_arc_of_circle2("arc", p0, p1, p2, radius);
+    let normal2 = sketch.add_normal2d("direction", real(1), real(0));
+
+    assert!(matches!(
+        &sketch.entities()[workplane.0 as usize].kind,
+        SketchEntityKind::Workplane(_)
+    ));
+    assert!(matches!(
+        &sketch.entities()[cubic.0 as usize].kind,
+        SketchEntityKind::Cubic2(_)
+    ));
+    assert!(matches!(
+        &sketch.entities()[arc.0 as usize].kind,
+        SketchEntityKind::ArcOfCircle2(_)
+    ));
+    assert!(matches!(
+        &sketch.entities()[normal2.0 as usize].kind,
+        SketchEntityKind::Normal2D(_)
+    ));
+
+    let lowered = sketch.lower_to_problem();
+
+    assert_eq!(lowered.problem.variables.len(), sketch.parameters().len());
+    assert_eq!(lowered.problem.constraints.len(), 0);
+    assert!(lowered.rows.is_empty());
 }
 
 #[test]

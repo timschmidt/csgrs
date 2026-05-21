@@ -74,6 +74,33 @@ pub struct SketchDistance {
     pub value: SketchParameterHandle,
 }
 
+/// Retained two-dimensional normal/direction carrier.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct SketchNormal2 {
+    /// X component parameter.
+    pub x: SketchParameterHandle,
+    /// Y component parameter.
+    pub y: SketchParameterHandle,
+}
+
+/// Retained three-dimensional normal/quaternion carrier.
+///
+/// SolveSpace represents normals with quaternion-like parameters and derives
+/// frame directions from that retained object. Hyper keeps the components as
+/// exact parameters and leaves unit-length/frame certification to explicit
+/// residual or predicate reports, matching Yap's construction/proof split.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct SketchNormal3 {
+    /// Scalar component.
+    pub w: SketchParameterHandle,
+    /// X component.
+    pub x: SketchParameterHandle,
+    /// Y component.
+    pub y: SketchParameterHandle,
+    /// Z component.
+    pub z: SketchParameterHandle,
+}
+
 /// Retained 2D line segment carrier.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SketchLineSegment2 {
@@ -90,6 +117,32 @@ pub struct SketchCircle2 {
     pub center: SketchEntityHandle,
     /// Radius parameter or distance entity.
     pub radius: SketchEntityHandle,
+}
+
+/// Retained 2D circular-arc carrier.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct SketchArcOfCircle2 {
+    /// Center point entity.
+    pub center: SketchEntityHandle,
+    /// Start point entity.
+    pub start: SketchEntityHandle,
+    /// End point entity.
+    pub end: SketchEntityHandle,
+    /// Radius parameter or distance entity.
+    pub radius: SketchEntityHandle,
+}
+
+/// Retained 2D cubic Bezier carrier.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct SketchCubic2 {
+    /// First control point.
+    pub p0: SketchEntityHandle,
+    /// Second control point.
+    pub p1: SketchEntityHandle,
+    /// Third control point.
+    pub p2: SketchEntityHandle,
+    /// Fourth control point.
+    pub p3: SketchEntityHandle,
 }
 
 /// Retained workplane carrier.
@@ -110,10 +163,18 @@ pub enum SketchEntityKind {
     Point3D(SketchPoint3),
     /// SolveSpace-style scalar `DISTANCE`.
     Distance(SketchDistance),
+    /// SolveSpace-style `NORMAL_IN_2D`.
+    Normal2D(SketchNormal2),
+    /// SolveSpace-style `NORMAL_IN_3D`.
+    Normal3D(SketchNormal3),
     /// SolveSpace-style `LINE_SEGMENT`.
     LineSegment2(SketchLineSegment2),
+    /// SolveSpace-style `CUBIC`.
+    Cubic2(SketchCubic2),
     /// SolveSpace-style `CIRCLE`.
     Circle2(SketchCircle2),
+    /// SolveSpace-style `ARC_OF_CIRCLE`.
+    ArcOfCircle2(SketchArcOfCircle2),
     /// SolveSpace-style `WORKPLANE`.
     Workplane(SketchWorkplane),
 }
@@ -333,6 +394,44 @@ impl SketchSolveProblem {
         self.add_entity(name, SketchEntityKind::Distance(SketchDistance { value }))
     }
 
+    /// Add a retained 2D normal/direction and its component parameters.
+    pub fn add_normal2d(
+        &mut self,
+        name: impl Into<String>,
+        x: Real,
+        y: Real,
+    ) -> SketchEntityHandle {
+        let name = name.into();
+        let x = self.add_parameter(format!("{name}.x"), x);
+        let y = self.add_parameter(format!("{name}.y"), y);
+        self.add_entity(name, SketchEntityKind::Normal2D(SketchNormal2 { x, y }))
+    }
+
+    /// Add a retained 3D normal/quaternion and its component parameters.
+    ///
+    /// The values are retained exactly as caller data. Unit-normal,
+    /// right-handed-frame, or quaternion normalization checks should be added
+    /// as explicit residuals/certificates by callers instead of hidden epsilon
+    /// tests.
+    pub fn add_normal3d(
+        &mut self,
+        name: impl Into<String>,
+        w: Real,
+        x: Real,
+        y: Real,
+        z: Real,
+    ) -> SketchEntityHandle {
+        let name = name.into();
+        let w = self.add_parameter(format!("{name}.w"), w);
+        let x = self.add_parameter(format!("{name}.x"), x);
+        let y = self.add_parameter(format!("{name}.y"), y);
+        let z = self.add_parameter(format!("{name}.z"), z);
+        self.add_entity(
+            name,
+            SketchEntityKind::Normal3D(SketchNormal3 { w, x, y, z }),
+        )
+    }
+
     /// Add a retained 2D line segment between two point entities.
     pub fn add_line_segment2(
         &mut self,
@@ -346,6 +445,21 @@ impl SketchSolveProblem {
         )
     }
 
+    /// Add a retained 2D cubic Bezier carrier.
+    pub fn add_cubic2(
+        &mut self,
+        name: impl Into<String>,
+        p0: SketchEntityHandle,
+        p1: SketchEntityHandle,
+        p2: SketchEntityHandle,
+        p3: SketchEntityHandle,
+    ) -> SketchEntityHandle {
+        self.add_entity(
+            name,
+            SketchEntityKind::Cubic2(SketchCubic2 { p0, p1, p2, p3 }),
+        )
+    }
+
     /// Add a retained 2D circle with a point center and distance radius.
     pub fn add_circle2(
         &mut self,
@@ -356,6 +470,39 @@ impl SketchSolveProblem {
         self.add_entity(
             name,
             SketchEntityKind::Circle2(SketchCircle2 { center, radius }),
+        )
+    }
+
+    /// Add a retained 2D circular arc.
+    pub fn add_arc_of_circle2(
+        &mut self,
+        name: impl Into<String>,
+        center: SketchEntityHandle,
+        start: SketchEntityHandle,
+        end: SketchEntityHandle,
+        radius: SketchEntityHandle,
+    ) -> SketchEntityHandle {
+        self.add_entity(
+            name,
+            SketchEntityKind::ArcOfCircle2(SketchArcOfCircle2 {
+                center,
+                start,
+                end,
+                radius,
+            }),
+        )
+    }
+
+    /// Add a retained workplane from an origin point and normal entity.
+    pub fn add_workplane(
+        &mut self,
+        name: impl Into<String>,
+        origin: SketchEntityHandle,
+        normal: SketchEntityHandle,
+    ) -> SketchEntityHandle {
+        self.add_entity(
+            name,
+            SketchEntityKind::Workplane(SketchWorkplane { origin, normal }),
         )
     }
 
