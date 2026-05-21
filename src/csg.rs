@@ -3,9 +3,9 @@
 
 use crate::float_types::parry3d::bounding_volume::Aabb;
 use crate::float_types::{
-    Real, hangle_sin_cos, hdegrees_to_radians, hpoint_centroid, hreal_affine, hreal_div,
-    hreal_from_f64, hreal_mul, hreal_sub, hscale_matrix, htranslation_matrix, hunit_vector3,
-    hunit_vector3_and_magnitude, hvector3_weighted_sum,
+    HReal, Real, hangle_sin_cos, hdegrees_to_radians, hpoint_centroid, hreal_affine,
+    hreal_div, hreal_mul, hreal_sub, hreal_to_f64, hscale_matrix, htranslation_matrix,
+    hunit_vector3, hunit_vector3_and_magnitude, hvector3_weighted_sum,
 };
 use crate::mesh::plane::Plane;
 use nalgebra::{Matrix4, Vector3};
@@ -22,16 +22,19 @@ fn finite_translation(vector: Vector3<Real>) -> Option<Matrix4<Real>> {
     htranslation_matrix(&vector)
 }
 
-/// Validate a primitive scalar by promoting it through the hyperreal boundary.
+/// Promote a public CSG scalar to the current finite matrix boundary.
 ///
-/// CSG distribution APIs still accept `f64` scalar arguments, but those values
-/// feed transform generation and topology duplication. Rejecting values that
-/// cannot become `hyperreal::Real` keeps invalid primitive inputs at the API
-/// edge, following Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7(1-2), 1997
+/// The public transform surface is `hyperreal::Real` first: primitive `f64`
+/// and integer literals remain accepted only because `hyperreal` can promote
+/// them. We export once to the transitional `Matrix4<f64>` carrier at the
+/// transform boundary. This follows Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7(1-2), 1997
 /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-fn finite_csg_scalar(value: Real) -> bool {
-    hreal_from_f64(value).is_ok()
+fn finite_csg_scalar<S>(value: S) -> Option<Real>
+where
+    S: TryInto<HReal>,
+{
+    hreal_to_f64(&value.try_into().ok()?)
 }
 
 fn finite_scale(sx: Real, sy: Real, sz: Real) -> Option<Matrix4<Real>> {
@@ -85,7 +88,19 @@ pub trait CSG: Sized + Clone {
     }
 
     /// Returns a new Self translated by x, y, and z.
-    fn translate(&self, x: Real, y: Real, z: Real) -> Self {
+    fn translate<X, Y, Z>(&self, x: X, y: Y, z: Z) -> Self
+    where
+        X: TryInto<HReal>,
+        Y: TryInto<HReal>,
+        Z: TryInto<HReal>,
+    {
+        let (Some(x), Some(y), Some(z)) = (
+            finite_csg_scalar(x),
+            finite_csg_scalar(y),
+            finite_csg_scalar(z),
+        ) else {
+            return self.clone();
+        };
         self.translate_vector(Vector3::new(x, y, z))
     }
 
@@ -131,7 +146,19 @@ pub trait CSG: Sized + Clone {
     /// see Rodrigues, "Des lois géométriques qui régissent les déplacements
     /// d'un système solide dans l'espace," *Journal de Mathématiques Pures et
     /// Appliquées* 5, 1840.
-    fn rotate(&self, x_deg: Real, y_deg: Real, z_deg: Real) -> Self {
+    fn rotate<X, Y, Z>(&self, x_deg: X, y_deg: Y, z_deg: Z) -> Self
+    where
+        X: TryInto<HReal>,
+        Y: TryInto<HReal>,
+        Z: TryInto<HReal>,
+    {
+        let (Some(x_deg), Some(y_deg), Some(z_deg)) = (
+            finite_csg_scalar(x_deg),
+            finite_csg_scalar(y_deg),
+            finite_csg_scalar(z_deg),
+        ) else {
+            return self.clone();
+        };
         let Some(x_rad) = hdegrees_to_radians(x_deg) else {
             return self.clone();
         };
@@ -158,7 +185,19 @@ pub trait CSG: Sized + Clone {
     ///
     /// Non-finite primitive scale factors leave geometry unchanged; exact-aware
     /// geometry should only receive finite transform carriers.
-    fn scale(&self, sx: Real, sy: Real, sz: Real) -> Self {
+    fn scale<X, Y, Z>(&self, sx: X, sy: Y, sz: Z) -> Self
+    where
+        X: TryInto<HReal>,
+        Y: TryInto<HReal>,
+        Z: TryInto<HReal>,
+    {
+        let (Some(sx), Some(sy), Some(sz)) = (
+            finite_csg_scalar(sx),
+            finite_csg_scalar(sy),
+            finite_csg_scalar(sz),
+        ) else {
+            return self.clone();
+        };
         let Some(mat4) = finite_scale(sx, sy, sz) else {
             return self.clone();
         };
@@ -258,22 +297,28 @@ pub trait CSG: Sized + Clone {
     /// from `start_angle_deg` to `end_angle_deg`.
     /// Returns a new shape with all copies
     ///
-    /// Non-finite primitive radius or angle values fail closed before transform
-    /// construction.
-    fn distribute_arc(
+    /// Radius and angle values are accepted through the hyperreal scalar
+    /// surface. Primitive numbers are boundary conveniences only.
+    fn distribute_arc<R, A, B>(
         &self,
         count: usize,
-        radius: Real,
-        start_angle_deg: Real,
-        end_angle_deg: Real,
-    ) -> Self {
-        if count < 1 {
+        radius: R,
+        start_angle_deg: A,
+        end_angle_deg: B,
+    ) -> Self
+    where
+        R: TryInto<HReal>,
+        A: TryInto<HReal>,
+        B: TryInto<HReal>,
+    {
+        let (Some(radius), Some(start_angle_deg), Some(end_angle_deg)) = (
+            finite_csg_scalar(radius),
+            finite_csg_scalar(start_angle_deg),
+            finite_csg_scalar(end_angle_deg),
+        ) else {
             return self.clone();
-        }
-        if !finite_csg_scalar(radius)
-            || !finite_csg_scalar(start_angle_deg)
-            || !finite_csg_scalar(end_angle_deg)
-        {
+        };
+        if count < 1 {
             return self.clone();
         }
         let Some(start_rad) = hdegrees_to_radians(start_angle_deg) else {
@@ -321,11 +366,14 @@ pub trait CSG: Sized + Clone {
     /// closed for zero or non-finite inputs. This keeps the default CSG API's
     /// primitive vector boundary aligned with Yap's exact-geometric-computation
     /// discipline (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-    fn distribute_linear(&self, count: usize, dir: Vector3<Real>, spacing: Real) -> Self {
-        if count < 1 {
+    fn distribute_linear<S>(&self, count: usize, dir: Vector3<Real>, spacing: S) -> Self
+    where
+        S: TryInto<HReal>,
+    {
+        let Some(spacing) = finite_csg_scalar(spacing) else {
             return self.clone();
-        }
-        if !finite_csg_scalar(spacing) {
+        };
+        if count < 1 {
             return self.clone();
         }
         let Some(step) = hunit_vector3(&dir).map(|dir| dir * spacing) else {
@@ -353,11 +401,15 @@ pub trait CSG: Sized + Clone {
     /// top-left or bottom-left depends on your usage of row/col iteration.
     ///
     /// Non-finite primitive spacings fail closed before transform construction.
-    fn distribute_grid(&self, rows: usize, cols: usize, dx: Real, dy: Real) -> Self {
-        if rows < 1 || cols < 1 {
+    fn distribute_grid<X, Y>(&self, rows: usize, cols: usize, dx: X, dy: Y) -> Self
+    where
+        X: TryInto<HReal>,
+        Y: TryInto<HReal>,
+    {
+        let (Some(dx), Some(dy)) = (finite_csg_scalar(dx), finite_csg_scalar(dy)) else {
             return self.clone();
-        }
-        if !finite_csg_scalar(dx) || !finite_csg_scalar(dy) {
+        };
+        if rows < 1 || cols < 1 {
             return self.clone();
         }
         let step_x = Vector3::new(dx, 0.0, 0.0);
@@ -405,5 +457,26 @@ mod tests {
 
         let grid = cube.distribute_grid(2, 2, 1.0, Real::NEG_INFINITY);
         assert_eq!(grid.polygons.len(), original_polygons);
+    }
+
+    #[test]
+    fn transforms_accept_hyperreal_primary_scalars_and_integer_promotion() {
+        let cube = Mesh::cube(1.0, ());
+        let cube_bb = cube.bounding_box();
+
+        let translated = cube.translate(HReal::from(1), 2, HReal::from(3));
+        let translated_bb = translated.bounding_box();
+        assert_eq!(translated_bb.mins.x - cube_bb.mins.x, 1.0);
+        assert_eq!(translated_bb.mins.y - cube_bb.mins.y, 2.0);
+        assert_eq!(translated_bb.mins.z - cube_bb.mins.z, 3.0);
+
+        let scaled = cube.scale(HReal::from(2), 1, HReal::from(3));
+        let scaled_bb = scaled.bounding_box();
+        assert_eq!(scaled_bb.maxs.x - scaled_bb.mins.x, 2.0);
+        assert_eq!(scaled_bb.maxs.y - scaled_bb.mins.y, 1.0);
+        assert_eq!(scaled_bb.maxs.z - scaled_bb.mins.z, 3.0);
+
+        let rotated = cube.rotate(HReal::from(0), 0, HReal::from(90));
+        assert_eq!(rotated.polygons.len(), cube.polygons.len());
     }
 }
