@@ -110,6 +110,35 @@ fn assert_mesh_sane<M: Clone + Send + Sync + std::fmt::Debug>(mesh: &Mesh<M>) {
     }
 }
 
+fn assert_profile_sane(profile: &Profile<()>) {
+    if profile.is_empty() {
+        return;
+    }
+
+    let bbox = profile.bounding_box();
+    assert!(
+        bbox.mins.x.is_finite() && bbox.maxs.x.is_finite(),
+        "bad profile bbox x: {bbox:?}"
+    );
+    assert!(
+        bbox.mins.y.is_finite() && bbox.maxs.y.is_finite(),
+        "bad profile bbox y: {bbox:?}"
+    );
+
+    for profile_region in profile.region_profiles() {
+        for point in profile_region.material().points() {
+            assert!(point[0].is_finite(), "non-finite profile x: {point:?}");
+            assert!(point[1].is_finite(), "non-finite profile y: {point:?}");
+        }
+        for hole in profile_region.holes() {
+            for point in hole.points() {
+                assert!(point[0].is_finite(), "non-finite hole x: {point:?}");
+                assert!(point[1].is_finite(), "non-finite hole y: {point:?}");
+            }
+        }
+    }
+}
+
 fn assert_triangles_finite(triangles: &[[Point3<Real>; 3]]) {
     for triangle in triangles {
         for point in triangle {
@@ -349,8 +378,54 @@ fn adversarial_sketch_constructor_sweep_does_not_corrupt_successes() {
                     let _ = sketch.wire_polylines();
                     let _ = catch_unwind(AssertUnwindSafe(|| sketch.triangulate()));
                 }
+                if let Ok(sketch) =
+                    catch_unwind(AssertUnwindSafe(|| Profile::regular_ngon(segments, a, ())))
+                {
+                    let _ = sketch.region_profiles();
+                    let _ = sketch.wire_polylines();
+                    let _ = catch_unwind(AssertUnwindSafe(|| sketch.triangulate()));
+                }
+                if let Ok(sketch) =
+                    catch_unwind(AssertUnwindSafe(|| Profile::star(segments, a, b, ())))
+                {
+                    let _ = sketch.region_profiles();
+                    let _ = sketch.wire_polylines();
+                    let _ = catch_unwind(AssertUnwindSafe(|| sketch.triangulate()));
+                }
+                if let Ok(sketch) = catch_unwind(AssertUnwindSafe(|| {
+                    Profile::rounded_rectangle(a, b, tolerance(), segments, ())
+                })) {
+                    let _ = sketch.region_profiles();
+                    let _ = sketch.wire_polylines();
+                    let _ = catch_unwind(AssertUnwindSafe(|| sketch.triangulate()));
+                }
+                if let Ok(sketch) = catch_unwind(AssertUnwindSafe(|| {
+                    Profile::pie_slice(a, b, -b, segments, ())
+                })) {
+                    let _ = sketch.region_profiles();
+                    let _ = sketch.wire_polylines();
+                    let _ = catch_unwind(AssertUnwindSafe(|| sketch.triangulate()));
+                }
             }
         }
+    }
+}
+
+#[test]
+fn adversarial_hyperreal_sampled_profile_constructors_emit_finite_regions() {
+    let profiles = [
+        Profile::circle(2.0, 31, ()),
+        Profile::ellipse(4.0, 1.5, 29, ()),
+        Profile::regular_ngon(7, 3.0, ()),
+        Profile::star(5, 3.0, 1.1, ()),
+        Profile::rounded_rectangle(5.0, 3.0, 0.75, 5, ()),
+        Profile::pie_slice(2.0, -45.0, 225.0, 17, ()),
+    ];
+
+    for profile in profiles {
+        assert!(!profile.is_empty());
+        assert_profile_sane(&profile);
+        assert_triangles_finite(&profile.triangulate());
     }
 }
 
