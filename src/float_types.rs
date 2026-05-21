@@ -823,6 +823,13 @@ pub(crate) fn hreal_sqrt(value: Real) -> Option<Real> {
     hreal_to_f64(&value.sqrt().ok()?)
 }
 
+/// Return the finite arctangent of a public boundary scalar.
+#[cfg(any(test, feature = "sketch"))]
+pub(crate) fn hreal_atan(value: Real) -> Option<Real> {
+    let value = hreal_from_f64(value).ok()?;
+    hreal_to_f64(&value.atan().ok()?)
+}
+
 /// Raise a finite public boundary scalar to a finite public boundary exponent.
 #[cfg(any(test, feature = "sketch"))]
 pub(crate) fn hreal_pow(base: Real, exponent: Real) -> Option<Real> {
@@ -1171,6 +1178,11 @@ mod tests {
         assert_eq!(hreal_abs(-3.0).unwrap(), 3.0);
         assert_eq!(hreal_abs(0.0).unwrap(), 0.0);
         assert_eq!(hreal_sqrt(25.0).unwrap(), 5.0);
+        assert!(hreal_f64s_within_epsilon(
+            hreal_atan(1.0).unwrap(),
+            std::f64::consts::FRAC_PI_4,
+            tolerance()
+        ));
         assert_eq!(hreal_pow(4.0, 0.5).unwrap(), 2.0);
         assert_eq!(hreal_pow(2.0, 3.0).unwrap(), 8.0);
         assert_eq!(hreal_clamp_f64(2.0, -1.0, 1.0).unwrap(), 1.0);
@@ -1211,6 +1223,7 @@ mod tests {
         assert!(hangle_sin_cos(Real::INFINITY).is_none());
         assert!(hreal_abs(Real::NAN).is_none());
         assert!(hreal_sqrt(-1.0).is_none());
+        assert!(hreal_atan(Real::INFINITY).is_none());
         assert!(hreal_pow(-1.0, 0.5).is_none());
         assert!(hreal_pow(Real::NAN, 2.0).is_none());
         assert!(hreal_clamp_f64(Real::NAN, -1.0, 1.0).is_none());
