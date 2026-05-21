@@ -18,15 +18,31 @@ checks that decide whether a placement is usable.
 
 - [hyperreal](https://github.com/timschmidt/hyperreal): exact dimensions, positions,
   volumes, and lower-bound values.
+- [hyperlattice](https://github.com/timschmidt/hyperlattice): vector and transform
+  carriers used by geometry and physics consumers.
+- [hyperlimit](https://github.com/timschmidt/hyperlimit): exact predicate policy for
+  geometry-heavy sibling crates.
+- [hypertri](https://github.com/timschmidt/hypertri), [hypercurve](https://github.com/timschmidt/hypercurve),
+  [hypermesh](https://github.com/timschmidt/hypermesh), and
+  [hypervoxel](https://github.com/timschmidt/hypervoxel): geometric and sampled
+  evidence that can become packable envelopes, keepouts, or process fixtures.
 - [hyperparts](https://github.com/timschmidt/hyperparts): part, package, and process
   facts that can generate packable items.
 - [hyperphysics](https://github.com/timschmidt/hyperphysics): mass, material, support,
   and center-of-mass constraints.
+- [hypercircuit](https://github.com/timschmidt/hypercircuit): electrical constraints and
+  electromechanical package context.
 - [hyperpath](https://github.com/timschmidt/hyperpath) and
   [hyperdrc](https://github.com/timschmidt/hyperdrc): routing or manufacturing checks
   that can become domain handoff constraints.
 - [hypersolve](https://github.com/timschmidt/hypersolve): future exact/solver backend
   for small optimality and feasibility fixtures.
+- [hyperevolution](https://github.com/timschmidt/hyperevolution): proposal-search layer
+  for packing order, mutation, and portfolio exploration.
+- [hyperbrep](https://github.com/timschmidt/hyperbrep): exact boundary-representation
+  evidence for future enclosure and fixture envelopes.
+- [hypersdf](https://github.com/timschmidt/hypersdf): signed-distance and implicit-field
+  evidence for future clearance and fit previews.
 
 ## Typical Packing Problems
 
@@ -56,6 +72,9 @@ has a certified handoff for them.
 - `PreparedPacking3`, snapshot helpers, no-overlap model exports, exact search reports,
   and domain handoff reports preserve performance caches, fixtures, solver-adapter
   boundaries, and ecosystem provenance without becoming proof by themselves.
+- `FeasibilityStatus`, `SheetVerification2`, `PackingVerification3`,
+  `ExactSearchReport3`, portfolio reports, and local/tabu/multistart reports keep the
+  difference between proposal, replay, infeasibility, and unknown explicit.
 
 ## Precision Model
 
@@ -87,6 +106,11 @@ bins are infeasible even when each individual bin is geometrically valid.
 Future support, load, route, center-of-mass, and process checks should keep the same
 pattern: exact inputs where possible, explicit adapter reports where not, and unknown
 when the constraint has not been certified.
+
+Numerical explosion is controlled by using specialized interval, rectangle, cuboid,
+orientation, support, and clearance replays before reaching for general solvers. Lower
+bounds, prepared demand classes, candidate points, free-space summaries, snapshots, and
+model-export reports preserve reusable structure without claiming proof.
 
 Fixture snapshots use line-oriented text with escaped ids or binary length-prefixed
 UTF-8 fields with raw ids. Rational `Real` values are emitted as rational text;
@@ -145,7 +169,8 @@ Replay first, then trust the layout:
 
 ```rust,ignore
 use hyperpack::{
-    ItemId, Rect2, SheetBin2, SheetItem2, SheetPlacement2, verify_packing_2d,
+    FeasibilityStatus, ItemId, Rect2, SheetBin2, SheetItem2, SheetPlacement2,
+    verify_packing_2d,
     maxrects_best_short_side_fit_2d,
 };
 use hyperreal::Real;
@@ -157,14 +182,35 @@ let items = vec![
 ];
 
 let proposal = maxrects_best_short_side_fit_2d(&bin, &items);
-let replay = verify_packing_2d(&bin, &items, &proposal.placements);
-assert!(replay.status.is_feasible());
+let replay = verify_packing_2d(&bin, &items, &proposal.placements)?;
+assert_eq!(replay.status, FeasibilityStatus::Feasible);
 ```
 
 Use the same shape for 3D: run a corner-point, maximal-space, guillotine, LAFF, exact
 search, local-search, or portfolio proposal; replay it with `verify_packing_3d`; then
 layer in orientation, support, load, clearance, multi-bin, objective, and domain-handoff
 reports as needed.
+
+## References
+
+- Yap, Chee K. "Towards Exact Geometric Computation." *Computational Geometry* 7.1-2
+  (1997): 3-23.
+- Jylanki, Jukka. "A Thousand Ways to Pack the Bin: A Practical Approach to
+  Two-Dimensional Rectangle Bin Packing." 2010.
+- Martello, Silvano, and Paolo Toth. *Knapsack Problems: Algorithms and Computer
+  Implementations*. Wiley, 1990.
+- Martello, Silvano, David Pisinger, and Daniele Vigo. "The Three-Dimensional Bin
+  Packing Problem." *Operations Research* 48.2 (2000): 256-267.
+- Lodi, Andrea, Silvano Martello, and Daniele Vigo. "Heuristic Algorithms for the
+  Three-Dimensional Bin Packing Problem." *European Journal of Operational Research*
+  141.2 (2002): 410-420.
+- Iori, Manuel, Silvano Martello, and Michele Monaci. "Exact Solution Techniques for
+  Two-dimensional Cutting and Packing." *European Journal of Operational Research*
+  179.3 (2007): 910-931.
+- Wolpert, David H., and William G. Macready. "No Free Lunch Theorems for Optimization."
+  *IEEE Transactions on Evolutionary Computation* 1.1 (1997): 67-82.
+- Hoos, Holger H., and Thomas Stutzle. *Stochastic Local Search: Foundations and
+  Applications*. Morgan Kaufmann, 2004.
 
 ## Development
 
