@@ -14,6 +14,7 @@ categories = ["science", "simulation", "mathematics"]
 # the commented workspace references below. Switch to the workspace form for
 # local development, then switch back to crates.io versions before publishing.
 hyperreal = { version = "0.12.0" }
+hypersolve = { path = "../hypersolve" }
 # hyperreal = { path = "../hyperreal" }
 [dev-dependencies]
 proptest = "1.7.0"

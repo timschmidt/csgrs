@@ -18,6 +18,7 @@
 //! a full field solver.
 
 use hyperreal::{Real, RealSign};
+use hypersolve::{Constraint, Expr, Problem};
 
 use crate::{CircuitError, CircuitResult, ComponentId, NetId};
 
@@ -63,6 +64,26 @@ pub struct CoupledResidualBlock {
     pub residuals: Vec<Real>,
     /// Human-readable provenance/equation labels.
     pub evidence: Vec<String>,
+}
+
+impl CoupledResidualBlock {
+    /// Lowers replayed residual values into a `hypersolve` problem fragment.
+    ///
+    /// Circuit and physics crates keep domain ownership of ports and evidence;
+    /// the generic residual rows are handed to `hypersolve` so candidate
+    /// acceptance semantics stay centralized.
+    pub fn to_hypersolve_problem(&self) -> Problem {
+        let mut problem = Problem::default();
+        for (index, residual) in self.residuals.iter().enumerate() {
+            let name = self
+                .evidence
+                .get(index)
+                .cloned()
+                .unwrap_or_else(|| format!("{} residual {index}", self.handle));
+            problem.add_constraint(Constraint::equality(name, Expr::real(residual.clone())));
+        }
+        problem
+    }
 }
 
 /// Exact electrothermal RC coupling report.

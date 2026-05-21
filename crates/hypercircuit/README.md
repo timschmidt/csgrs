@@ -17,6 +17,14 @@ becoming the only record of whether a candidate state satisfies the model.
 
 - [hyperreal](https://github.com/timschmidt/hyperreal): exact scalar values for
   stamps, parameters, and residual replay.
+- [hyperlattice](https://github.com/timschmidt/hyperlattice): vector and tensor carriers
+  used by sibling physical and field crates.
+- [hyperlimit](https://github.com/timschmidt/hyperlimit): exact predicate and policy
+  layer used by geometry/physics consumers.
+- [hypertri](https://github.com/timschmidt/hypertri), [hypercurve](https://github.com/timschmidt/hypercurve),
+  [hypermesh](https://github.com/timschmidt/hypermesh), and
+  [hypervoxel](https://github.com/timschmidt/hypervoxel): geometry and sampled-field
+  evidence for package, field, and fixture coupling.
 - [hypersolve](https://github.com/timschmidt/hypersolve): future nonlinear residual,
   DAE, and candidate-certification surface.
 - [hyperparts](https://github.com/timschmidt/hyperparts): part, terminal, package, and
@@ -26,6 +34,14 @@ becoming the only record of whether a candidate state satisfies the model.
   package evidence used by coupled fixtures.
 - [hyperphysics](https://github.com/timschmidt/hyperphysics): materials, thermal
   carriers, and physical coupling reports.
+- [hyperpack](https://github.com/timschmidt/hyperpack): package and placement evidence
+  for electromechanical assemblies.
+- [hyperevolution](https://github.com/timschmidt/hyperevolution): proposal-search layer
+  for circuit and coupled-design candidates.
+- [hyperbrep](https://github.com/timschmidt/hyperbrep): exact boundary-representation
+  geometry for future electromechanical fixtures.
+- [hypersdf](https://github.com/timschmidt/hypersdf): implicit-field and clearance
+  evidence for future electrical/physical coupling.
 
 ## Typical Circuit Problems
 
@@ -53,6 +69,8 @@ numeric adapter was the source of truth.
   `ElectrothermalRcReport` describe circuit/physics coupling payloads.
 - `CircuitAdapterReport` and `ElectrothermalTraceFixture` keep adapter kind, tolerance,
   and exact replay status explicit.
+- `AdapterKind`, `CircuitCertificationReport`, `MnaProblem`, `CircuitParameter`, and
+  `CircuitState` keep solver policy, provenance, and state separate from stamps.
 
 ## Precision Model
 
@@ -66,6 +84,12 @@ solver is approximate.
 Unknown replay is a valid result. It is preferable to accepting a candidate whose
 precision boundary was not certified.
 
+Numerical explosion is controlled by preserving topology, stamps, unknown ordering,
+device-domain facts, and coupled residual blocks as structured records. The crate does
+not eagerly expand every nonlinear device into a global expression tree or every
+transient policy into a dense time system; adapters and future solvers must report the
+boundary they cross.
+
 ## Performance Model
 
 The present implementation favors clear carriers and exact replay over high-performance
@@ -77,6 +101,8 @@ sparse solving. Performance work is expected to come from:
 - carrying model and event facts so future solvers can avoid unnecessary nonlinear work;
 - using dense exact systems only for small fixtures and certification paths;
 - making large sparse, transient, DAE, and field solvers explicit adapters with reports.
+- lowering coupled residual blocks into `hypersolve` only at the replay boundary, so
+  circuit ownership of ports and device evidence remains intact.
 
 ## Current Status
 
@@ -124,7 +150,7 @@ let out = NetId::new("out")?;
 let circuit = Circuit::new(
     CircuitId::new("divider")?,
     TransientPolicy::Static,
-    AdapterKind::ExactDenseMna,
+    AdapterKind::Dc,
 )
 .with_net(Net { id: ground.clone(), is_ground: true })
 .with_net(Net { id: out.clone(), is_ground: false })
@@ -137,7 +163,7 @@ let circuit = Circuit::new(
 });
 
 let system = circuit.linear_mna_system()?;
-let replay = system.replay_residuals(&[Real::zero()])?;
+let replay = system.replay_candidate(&[Real::zero()])?;
 assert!(replay.accepted);
 ```
 
@@ -145,6 +171,50 @@ Other major surfaces follow the same pattern: `NonlinearDeviceReport` records de
 law and event policy before Newton-style proposal engines exist, while
 `ElectrothermalRcReport` and `CircuitAdapterReport` keep coupled physics and numeric
 adapter status separate from circuit truth.
+
+```rust,ignore
+use hypercircuit::{
+    CircuitParameter, ComponentId, ElectrothermalRcReport, NonlinearDeviceReport,
+};
+use hyperreal::Real;
+
+let diode = NonlinearDeviceReport::diode(
+    ComponentId::new("d1")?,
+    vec![CircuitParameter {
+        name: "is".into(),
+        value: Real::from(1),
+        unit: "A".into(),
+        source: "fixture".into(),
+    }],
+);
+assert_eq!(diode.domains.len(), 1);
+
+let thermal = ElectrothermalRcReport::replay(
+    ComponentId::new("r1")?,
+    Real::from(100),
+    Real::from(0),
+    Real::from(25),
+    Real::from(25),
+    Real::from(2),
+    "thermal-node-0",
+)?;
+assert_eq!(thermal.joule_heating, Real::from(400));
+```
+
+## References
+
+- Yap, Chee K. "Towards Exact Geometric Computation." *Computational Geometry* 7.1-2
+  (1997): 3-23.
+- Ho, Chung-Wen, Albert E. Ruehli, and Pierce A. Brennan. "The Modified Nodal Approach
+  to Network Analysis." *IEEE Transactions on Circuits and Systems* 22.6 (1975):
+  504-509.
+- Nagel, Laurence W. *SPICE2: A Computer Program to Simulate Semiconductor Circuits*.
+  University of California, Berkeley, 1975.
+- Gear, C. William. *Numerical Initial Value Problems in Ordinary Differential
+  Equations*. Prentice-Hall, 1971.
+- Cortes Garcia, Isabel, Herbert De Gersem, and Sebastian Schoeps. "A Structural
+  Analysis of Field/Circuit Coupled Problems Based on a Generalised Circuit Element."
+  *Numerical Algorithms* 79 (2018): 373-394.
 
 ## Development
 

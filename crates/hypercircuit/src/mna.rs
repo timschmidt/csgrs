@@ -2,7 +2,8 @@
 
 use std::collections::BTreeMap;
 
-use hyperreal::{Real, RealSign};
+use hyperreal::Real;
+use hypersolve::{DenseResidualReplayError, replay_dense_linear_residuals};
 
 use crate::{BranchId, CircuitError, CircuitResult, ComponentId, NetId, PartRef};
 
@@ -185,31 +186,17 @@ impl LinearMnaSystem {
             return Err(CircuitError::CandidateLengthMismatch);
         }
 
-        let residuals = self
-            .matrix
-            .iter()
-            .zip(&self.rhs)
-            .map(|(row, rhs)| {
-                let mut sum = Real::zero();
-                for (coefficient, value) in row.iter().zip(candidate) {
-                    sum = sum + (coefficient * value);
+        let report = replay_dense_linear_residuals(&self.matrix, &self.rhs, candidate, -64)
+            .map_err(|error| match error {
+                DenseResidualReplayError::DimensionMismatch => {
+                    CircuitError::CandidateLengthMismatch
                 }
-                sum - rhs
-            })
-            .collect::<Vec<_>>();
-
-        let mut accepted = true;
-        for residual in &residuals {
-            match residual.refine_sign_until(-64) {
-                Some(RealSign::Zero) => {}
-                Some(RealSign::Negative | RealSign::Positive) => accepted = false,
-                None => return Err(CircuitError::UnknownResidual),
-            }
-        }
+                DenseResidualReplayError::UnknownResidual => CircuitError::UnknownResidual,
+            })?;
 
         Ok(ResidualReplayReport {
-            residuals,
-            accepted,
+            residuals: report.residuals,
+            accepted: report.accepted,
         })
     }
 }
