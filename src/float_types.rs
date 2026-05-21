@@ -486,7 +486,7 @@ pub(crate) fn hvectors_orthogonal_within(
     rhs: &Vector3<Real>,
     epsilon: Real,
 ) -> bool {
-    if !epsilon.is_finite() || epsilon < 0.0 {
+    if hnonnegative_boundary_scalar(epsilon).is_none() {
         return false;
     }
     let Some(lhs) = hvector3_from_vector3(lhs) else {
@@ -555,7 +555,7 @@ pub(crate) fn hpoints_within_epsilon(
     rhs: &Point3<Real>,
     epsilon: Real,
 ) -> bool {
-    if !epsilon.is_finite() || epsilon <= 0.0 {
+    if hpositive_boundary_scalar(epsilon).is_none() {
         return false;
     }
 
@@ -703,7 +703,7 @@ pub(crate) fn htriangle_area2_exceeds_epsilon(
     c: &Point3<Real>,
     epsilon: Real,
 ) -> bool {
-    if !epsilon.is_finite() || epsilon <= 0.0 {
+    if hpositive_boundary_scalar(epsilon).is_none() {
         return false;
     }
     let Some(a) = hvector3_from_point3(a) else {
@@ -730,7 +730,7 @@ pub(crate) fn hvectors_within_epsilon(
     rhs: &Vector3<Real>,
     epsilon: Real,
 ) -> bool {
-    if !epsilon.is_finite() || epsilon <= 0.0 {
+    if hpositive_boundary_scalar(epsilon).is_none() {
         return false;
     }
 
@@ -747,6 +747,17 @@ pub(crate) fn hvectors_within_epsilon(
 /// Refine the sign of a hyperreal expression for topology decisions.
 pub(crate) fn hreal_sign(value: &HReal) -> Option<RealSign> {
     value.refine_sign_until(128)
+}
+
+#[cfg(feature = "wasm")]
+fn hnonnegative_boundary_scalar(value: Real) -> Option<HReal> {
+    let value = hreal_from_f64(value).ok()?;
+    (!hreal_lt_f64(&value, 0.0)).then_some(value)
+}
+
+fn hpositive_boundary_scalar(value: Real) -> Option<HReal> {
+    let value = hreal_from_f64(value).ok()?;
+    hreal_gt_f64(&value, 0.0).then_some(value)
 }
 
 /// Returns true when `value` is strictly greater than the finite f64 threshold.
@@ -835,7 +846,7 @@ pub(crate) fn hreal_clamp_hreal(value: HReal, min: F64, max: F64) -> Option<HRea
 /// code. This follows the same Yap exact-computation boundary model cited in
 /// [`hreal_cmp_f64`].
 pub(crate) fn hreal_f64s_within_epsilon(lhs: F64, rhs: F64, epsilon: F64) -> bool {
-    if !epsilon.is_finite() || epsilon <= 0.0 {
+    if hpositive_boundary_scalar(epsilon).is_none() {
         return false;
     }
     let (Ok(lhs), Ok(rhs)) = (hreal_from_f64(lhs), hreal_from_f64(rhs)) else {
