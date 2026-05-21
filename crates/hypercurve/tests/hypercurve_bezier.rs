@@ -17,6 +17,8 @@ use hypercurve::{
     BezierBooleanLoopGraphWalkStatus, BezierBooleanLoopNestingDepthFact2,
     BezierBooleanLoopNestingDepthFactReport2, BezierBooleanLoopNestingDepthFactStatus,
     BezierBooleanLoopNestingRoleReport2, BezierBooleanLoopNestingRoleStatus,
+    BezierBooleanAlgebraicParameterHandoffReport2,
+    BezierBooleanAlgebraicParameterHandoffStatus, BezierBooleanAlgebraicParameterRole,
     BezierBooleanLoopRoleAssignmentReport2, BezierBooleanLoopRoleAssignmentStatus,
     BezierBooleanMaterializationAuditReport2, BezierBooleanMaterializationAuditStatus,
     BezierBooleanMaterializedRegionReport2, BezierBooleanMaterializedRegionStatus,
@@ -5208,6 +5210,89 @@ fn bezier_boolean_root_isolation_replay_blocks_non_rational_algebraic_roots() {
     assert_eq!(replay.hypersolve_algebraic_interval_root_count, 1);
     assert_eq!(replay.hypersolve_algebraic_unusable_count, 1);
     assert_eq!(replay.missing_isolation_count, 1);
+}
+
+#[test]
+fn bezier_boolean_algebraic_parameter_handoff_accepts_interval_roots() {
+    let range = BezierPathRangeOrderReport2::from_graph_order(
+        &BezierMonotoneGraphOrder::IntersectsOrTouches {
+            parameters: Vec::new(),
+            spans: vec![span(ratio(1, 4), ratio(1, 2))],
+        },
+    );
+    let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &[range]);
+    let algebraic = algebraic_root_report(half(), false);
+
+    let handoff =
+        match BezierBooleanAlgebraicParameterHandoffReport2::from_hypersolve_algebraic_root_reports(
+            &scheduler,
+            &[algebraic],
+            &policy(),
+        ) {
+            Classification::Decided(report) => report,
+            Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
+        };
+
+    assert_eq!(
+        handoff.status,
+        BezierBooleanAlgebraicParameterHandoffStatus::Ready
+    );
+    assert!(handoff.is_ready());
+    assert!(!handoff.has_blockers());
+    assert_eq!(handoff.required_algebraic_parameter_count, 1);
+    assert_eq!(handoff.supplied_algebraic_parameter_count, 1);
+    assert_eq!(handoff.exact_rational_parameter_count, 0);
+    assert_eq!(handoff.interval_parameter_count, 1);
+    assert_eq!(handoff.events.len(), 1);
+    assert_eq!(
+        handoff.events[0].role,
+        BezierBooleanAlgebraicParameterRole::SharedRange
+    );
+    assert_eq!(handoff.events[0].report_index, 0);
+    assert_eq!(handoff.events[0].root_index, 0);
+}
+
+#[test]
+fn bezier_boolean_algebraic_parameter_handoff_blocks_missing_and_out_of_range_roots() {
+    let range = BezierPathRangeOrderReport2::from_graph_order(
+        &BezierMonotoneGraphOrder::IntersectsOrTouches {
+            parameters: Vec::new(),
+            spans: vec![span(ratio(1, 4), ratio(1, 2))],
+        },
+    );
+    let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &[range]);
+
+    let missing =
+        match BezierBooleanAlgebraicParameterHandoffReport2::from_hypersolve_algebraic_root_reports(
+            &scheduler,
+            &[],
+            &policy(),
+        ) {
+            Classification::Decided(report) => report,
+            Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
+        };
+    assert_eq!(
+        missing.status,
+        BezierBooleanAlgebraicParameterHandoffStatus::MissingAlgebraicRoots
+    );
+    assert!(missing.has_blockers());
+    assert_eq!(missing.missing_algebraic_parameter_count, 1);
+
+    let out_of_range =
+        match BezierBooleanAlgebraicParameterHandoffReport2::from_hypersolve_algebraic_root_reports(
+            &scheduler,
+            &[algebraic_root_report(ratio(5, 4), true)],
+            &policy(),
+        ) {
+            Classification::Decided(report) => report,
+            Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
+        };
+    assert_eq!(
+        out_of_range.status,
+        BezierBooleanAlgebraicParameterHandoffStatus::InvalidParameterDomain
+    );
+    assert!(out_of_range.has_blockers());
+    assert_eq!(out_of_range.out_of_range_parameter_count, 1);
 }
 
 #[test]
@@ -11194,6 +11279,54 @@ proptest! {
             BezierBooleanRootIsolationConstructionStatus::Ready
         );
         prop_assert!(construction.is_ready());
+    }
+
+    #[test]
+    fn generated_bezier_boolean_algebraic_parameter_handoff_accepts_interval_roots(
+        span_count in 1_usize..8,
+    ) {
+        let reports = (0..span_count)
+            .map(|index| {
+                BezierPathRangeOrderReport2::from_graph_order(
+                    &BezierMonotoneGraphOrder::IntersectsOrTouches {
+                        parameters: Vec::new(),
+                        spans: vec![span(ratio(index as i32 + 1, 32), ratio(index as i32 + 2, 32))],
+                    },
+                )
+            })
+            .collect::<Vec<_>>();
+        let solver_reports = (0..span_count)
+            .map(|_| algebraic_root_report(half(), false))
+            .collect::<Vec<_>>();
+        let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &reports);
+
+        let handoff =
+            match BezierBooleanAlgebraicParameterHandoffReport2::from_hypersolve_algebraic_root_reports(
+                &scheduler,
+                &solver_reports,
+                &policy(),
+            ) {
+                Classification::Decided(report) => report,
+                Classification::Uncertain(reason) => {
+                    prop_assert!(false, "unexpected uncertainty: {reason:?}");
+                    return Ok(());
+                }
+            };
+
+        prop_assert_eq!(
+            handoff.status,
+            BezierBooleanAlgebraicParameterHandoffStatus::Ready
+        );
+        prop_assert_eq!(handoff.required_algebraic_parameter_count, span_count);
+        prop_assert_eq!(handoff.supplied_algebraic_parameter_count, span_count);
+        prop_assert_eq!(handoff.interval_parameter_count, span_count);
+        prop_assert_eq!(handoff.events.len(), span_count);
+        let all_shared_range = handoff
+            .events
+            .iter()
+            .all(|event| event.role == BezierBooleanAlgebraicParameterRole::SharedRange);
+        prop_assert!(all_shared_range);
+        prop_assert!(handoff.is_ready());
     }
 
     #[test]

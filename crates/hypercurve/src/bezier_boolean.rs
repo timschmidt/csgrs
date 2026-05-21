@@ -23,7 +23,8 @@ use crate::{
 };
 use hyperreal::Real;
 use hypersolve::{
-    AlgebraicRootRepresentationReport, AlgebraicRootRepresentationStatus,
+    AlgebraicRootRepresentation, AlgebraicRootRepresentationReport,
+    AlgebraicRootRepresentationStatus,
     BernsteinSubdivisionIntervalStatus, BernsteinSubdivisionReport, BernsteinSubdivisionStatus,
     RootIsolationStatus, UnivariateRootIsolationReport,
 };
@@ -1904,6 +1905,99 @@ pub struct BezierBooleanSplitPlanReport2 {
     pub relation_event_count: usize,
     /// Number of shared-range split parameters represented in the plan.
     pub range_event_count: usize,
+    /// First explicit primitive uncertainty reason retained by the scheduler.
+    pub uncertainty_reason: Option<UncertaintyReason>,
+}
+
+/// Curve-side role for a represented algebraic split parameter.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum BezierBooleanAlgebraicParameterRole {
+    /// Parameter belongs to the first relation operand.
+    FirstCurve,
+    /// Parameter belongs to the second relation operand.
+    SecondCurve,
+    /// Parameter belongs to a shared monotone range.
+    SharedRange,
+}
+
+/// Exact algebraic parameter evidence for future Bezier/conic split insertion.
+///
+/// This carrier is the first persistent non-rational parameter handoff for the
+/// boolean pipeline. It stores the complete `hypersolve` represented root
+/// object, including the defining polynomial and certified isolating interval,
+/// instead of forcing the root through a primitive approximation. The current
+/// fragment mutators still accept only exact rational `Real` parameters, but
+/// later ordering, overlap, containment, and loop assembly reports can consume
+/// this object directly. This follows Yap, "Towards Exact Geometric
+/// Computation" (1997), and the Collins-Loos real-root representation model.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BezierBooleanAlgebraicParameterEvent2 {
+    /// Which split-parameter lane this root belongs to.
+    pub role: BezierBooleanAlgebraicParameterRole,
+    /// Source algebraic-root report ordinal.
+    pub report_index: usize,
+    /// Source root ordinal inside the algebraic-root report.
+    pub root_index: usize,
+    /// Persistent exact algebraic-root evidence from `hypersolve`.
+    pub root: AlgebraicRootRepresentation,
+}
+
+/// Algebraic-parameter handoff status for Bezier/conic boolean construction.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum BezierBooleanAlgebraicParameterHandoffStatus {
+    /// No scheduler or algebraic parameter work exists.
+    Empty,
+    /// The scheduler does not require algebraic root parameters.
+    NotNeeded,
+    /// The scheduler already has exact rational split events.
+    RationalSplitEventsReady,
+    /// Algebraic parameter objects are available for future split/order stages.
+    Ready,
+    /// An earlier scheduler or root-isolation handoff blocker remains.
+    HandoffBlocked,
+    /// Not enough represented roots were supplied for the retained frontier.
+    MissingAlgebraicRoots,
+    /// A represented root failed validation or came from an unsupported row.
+    InvalidAlgebraicEvidence,
+    /// At least one represented root is outside the Bezier unit domain.
+    InvalidParameterDomain,
+}
+
+/// Report that promotes represented algebraic roots into curve-parameter evidence.
+///
+/// Unlike [`BezierBooleanRootIsolationReplayReport2`], this report does not
+/// require exact rational witnesses. It accepts valid non-rational isolating
+/// intervals as first-class parameter evidence, provided the entire isolating
+/// interval is certified inside the Bezier unit domain. It deliberately does
+/// not feed today's rational-only fragment splitters. The point is to create
+/// the missing exact object required by Yap's EGC contract before future
+/// algebraic ordering and splitting layers are allowed to construct topology.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BezierBooleanAlgebraicParameterHandoffReport2 {
+    /// Coarse algebraic-parameter handoff status.
+    pub status: BezierBooleanAlgebraicParameterHandoffStatus,
+    /// Root-isolation handoff status that authorized or blocked this handoff.
+    pub handoff_status: BezierBooleanRootIsolationHandoffStatus,
+    /// Scheduler status before algebraic-parameter replay.
+    pub scheduler_status: BezierBooleanPathSchedulerStatus,
+    /// Algebraic parameter events retained for future exact split/order stages.
+    pub events: Vec<BezierBooleanAlgebraicParameterEvent2>,
+    /// Number of algebraic root obligations retained by the handoff.
+    pub required_algebraic_parameter_count: usize,
+    /// Number of represented algebraic roots supplied.
+    pub supplied_algebraic_parameter_count: usize,
+    /// Number of exact rational roots among retained events.
+    pub exact_rational_parameter_count: usize,
+    /// Number of non-rational interval roots among retained events.
+    pub interval_parameter_count: usize,
+    /// Number of still-missing represented algebraic roots.
+    pub missing_algebraic_parameter_count: usize,
+    /// Number of invalid/unsupported algebraic reports or roots.
+    pub invalid_algebraic_evidence_count: usize,
+    /// Number of represented roots outside `[0, 1]`.
+    pub out_of_range_parameter_count: usize,
+    /// Number of retained blocking preconditions.
+    pub blocker_count: usize,
     /// First explicit primitive uncertainty reason retained by the scheduler.
     pub uncertainty_reason: Option<UncertaintyReason>,
 }
@@ -11537,12 +11631,170 @@ impl BezierBooleanSplitPlanReport2 {
     }
 }
 
+impl BezierBooleanAlgebraicParameterHandoffReport2 {
+    /// Builds algebraic parameter events from represented `hypersolve` roots.
+    ///
+    /// The current implementation maps univariate represented roots to the
+    /// shared monotone-range lane because relation-region roots still require
+    /// two curve parameters plus contact metadata. That is intentional: this
+    /// report introduces the exact algebraic parameter object without
+    /// pretending that a one-variable solver row is already a full curve/curve
+    /// event. Sederberg and Nishita's Bezier clipping cells ("Curve
+    /// intersection using Bezier clipping," 1990) and future
+    /// resultant/Krawczyk pair isolation can add first/second-curve roles once
+    /// both parameters are represented.
+    pub fn from_hypersolve_algebraic_root_reports(
+        scheduler: &BezierBooleanPathSchedulerReport2,
+        algebraic_reports: &[AlgebraicRootRepresentationReport],
+        policy: &CurvePolicy,
+    ) -> Classification<Self> {
+        let handoff = BezierBooleanRootIsolationHandoffReport2::from_path_scheduler(scheduler);
+        let required = handoff.range_isolating_span_count;
+        let mut report = Self {
+            status: BezierBooleanAlgebraicParameterHandoffStatus::HandoffBlocked,
+            handoff_status: handoff.status,
+            scheduler_status: scheduler.status,
+            events: Vec::new(),
+            required_algebraic_parameter_count: required,
+            supplied_algebraic_parameter_count: 0,
+            exact_rational_parameter_count: 0,
+            interval_parameter_count: 0,
+            missing_algebraic_parameter_count: 0,
+            invalid_algebraic_evidence_count: 0,
+            out_of_range_parameter_count: 0,
+            blocker_count: handoff.blocker_count,
+            uncertainty_reason: scheduler.uncertainty_reason,
+        };
+
+        match handoff.status {
+            BezierBooleanRootIsolationHandoffStatus::Empty => {
+                report.status = BezierBooleanAlgebraicParameterHandoffStatus::Empty;
+                report.blocker_count = 0;
+                return Classification::Decided(report);
+            }
+            BezierBooleanRootIsolationHandoffStatus::NotNeeded => {
+                report.status = BezierBooleanAlgebraicParameterHandoffStatus::NotNeeded;
+                report.blocker_count = 0;
+                return Classification::Decided(report);
+            }
+            BezierBooleanRootIsolationHandoffStatus::SplitEventsReady => {
+                report.status =
+                    BezierBooleanAlgebraicParameterHandoffStatus::RationalSplitEventsReady;
+                report.blocker_count = 0;
+                return Classification::Decided(report);
+            }
+            BezierBooleanRootIsolationHandoffStatus::ReadyForHypersolve => {}
+            BezierBooleanRootIsolationHandoffStatus::BlockedByParameterRecovery
+            | BezierBooleanRootIsolationHandoffStatus::BlockedByOverlapResolver
+            | BezierBooleanRootIsolationHandoffStatus::BlockedByUnresolved
+            | BezierBooleanRootIsolationHandoffStatus::BlockedByContactClassification
+            | BezierBooleanRootIsolationHandoffStatus::BlockedByMonotoneDecomposition
+            | BezierBooleanRootIsolationHandoffStatus::BlockedByUncertainty => {
+                report.blocker_count = handoff.blocker_count.max(1);
+                return Classification::Decided(report);
+            }
+        }
+
+        for (report_index, algebraic_report) in algebraic_reports.iter().enumerate() {
+            match algebraic_report.status {
+                AlgebraicRootRepresentationStatus::Represented => {}
+                AlgebraicRootRepresentationStatus::NoRealRoots => continue,
+                AlgebraicRootRepresentationStatus::UnsupportedIsolationStatus
+                | AlgebraicRootRepresentationStatus::MissingSymbol
+                | AlgebraicRootRepresentationStatus::MissingPolynomial
+                | AlgebraicRootRepresentationStatus::InvalidEvidence => {
+                    report.invalid_algebraic_evidence_count += 1;
+                    continue;
+                }
+            }
+
+            for (root_index, root) in algebraic_report.roots.iter().enumerate() {
+                report.supplied_algebraic_parameter_count += 1;
+                if !root.is_valid() {
+                    report.invalid_algebraic_evidence_count += 1;
+                    continue;
+                }
+                match algebraic_root_interval_in_unit_domain(root, policy) {
+                    Classification::Decided(true) => {}
+                    Classification::Decided(false) => {
+                        report.out_of_range_parameter_count += 1;
+                        continue;
+                    }
+                    Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+                }
+                if root.exact_rational_witness().is_some() {
+                    report.exact_rational_parameter_count += 1;
+                } else {
+                    report.interval_parameter_count += 1;
+                }
+                report.events.push(BezierBooleanAlgebraicParameterEvent2 {
+                    role: BezierBooleanAlgebraicParameterRole::SharedRange,
+                    report_index,
+                    root_index,
+                    root: root.clone(),
+                });
+            }
+        }
+
+        report.missing_algebraic_parameter_count =
+            required.saturating_sub(report.events.len());
+        report.blocker_count = report.missing_algebraic_parameter_count
+            + report.invalid_algebraic_evidence_count
+            + report.out_of_range_parameter_count;
+        report.status = if report.invalid_algebraic_evidence_count > 0 {
+            BezierBooleanAlgebraicParameterHandoffStatus::InvalidAlgebraicEvidence
+        } else if report.out_of_range_parameter_count > 0 {
+            BezierBooleanAlgebraicParameterHandoffStatus::InvalidParameterDomain
+        } else if report.missing_algebraic_parameter_count > 0 {
+            BezierBooleanAlgebraicParameterHandoffStatus::MissingAlgebraicRoots
+        } else {
+            BezierBooleanAlgebraicParameterHandoffStatus::Ready
+        };
+        Classification::Decided(report)
+    }
+
+    /// Returns true when represented algebraic parameters can feed a future
+    /// algebraic split/order layer.
+    pub fn is_ready(&self) -> bool {
+        self.status == BezierBooleanAlgebraicParameterHandoffStatus::Ready
+    }
+
+    /// Returns true when algebraic-parameter handoff retained blockers.
+    pub fn has_blockers(&self) -> bool {
+        matches!(
+            self.status,
+            BezierBooleanAlgebraicParameterHandoffStatus::HandoffBlocked
+                | BezierBooleanAlgebraicParameterHandoffStatus::MissingAlgebraicRoots
+                | BezierBooleanAlgebraicParameterHandoffStatus::InvalidAlgebraicEvidence
+                | BezierBooleanAlgebraicParameterHandoffStatus::InvalidParameterDomain
+        )
+    }
+}
+
 fn parameter_in_unit_interval(parameter: &Real, policy: &CurvePolicy) -> Option<bool> {
     let zero = Real::zero();
     let one = Real::one();
     let lower = crate::classify::compare_reals(parameter, &zero, policy)?;
     let upper = crate::classify::compare_reals(parameter, &one, policy)?;
     Some(
+        matches!(lower, Ordering::Greater | Ordering::Equal)
+            && matches!(upper, Ordering::Less | Ordering::Equal),
+    )
+}
+
+fn algebraic_root_interval_in_unit_domain(
+    root: &AlgebraicRootRepresentation,
+    policy: &CurvePolicy,
+) -> Classification<bool> {
+    let zero = Real::zero();
+    let one = Real::one();
+    let Some(lower) = crate::classify::compare_reals(&root.interval.lower, &zero, policy) else {
+        return Classification::Uncertain(UncertaintyReason::Ordering);
+    };
+    let Some(upper) = crate::classify::compare_reals(&root.interval.upper, &one, policy) else {
+        return Classification::Uncertain(UncertaintyReason::Ordering);
+    };
+    Classification::Decided(
         matches!(lower, Ordering::Greater | Ordering::Equal)
             && matches!(upper, Ordering::Less | Ordering::Equal),
     )
