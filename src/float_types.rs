@@ -137,7 +137,12 @@ pub(crate) fn hvector3_cross(
 /// shared 2D turn predicate instead of local f64 cross products, in line with
 /// Yap's exact-geometric-computation split between primitive boundary data and
 /// exact-aware predicates (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-#[cfg(any(feature = "gerber-io", feature = "mesh"))]
+#[cfg(any(
+    test,
+    feature = "gerber-io",
+    feature = "mesh",
+    feature = "truetype-text"
+))]
 pub(crate) fn hxy_orientation_sign(
     a: (Real, Real),
     b: (Real, Real),
@@ -150,6 +155,29 @@ pub(crate) fn hxy_orientation_sign(
     }
 }
 
+/// Return the first non-degenerate exact-aware orientation sign in a finite XY ring.
+///
+/// This is the ring-level companion to [`hxy_orientation_sign`]. It scans
+/// consecutive triangles anchored at the first point and returns the first
+/// non-collinear turn, which keeps winding classification in hyperreal
+/// predicates without introducing a separate primitive f64 area accumulator.
+/// Degenerate or non-finite rings return `None`.
+#[cfg(any(test, feature = "mesh", feature = "truetype-text"))]
+pub(crate) fn hxy_ring_orientation_sign(ring: &[[Real; 2]]) -> Option<RealSign> {
+    let origin = ring.first()?;
+    for pair in ring[1..].windows(2) {
+        let sign = hxy_orientation_sign(
+            (origin[0], origin[1]),
+            (pair[0][0], pair[0][1]),
+            (pair[1][0], pair[1][1]),
+        )?;
+        if !matches!(sign, RealSign::Zero) {
+            return Some(sign);
+        }
+    }
+    None
+}
+
 /// Return the finite Euclidean distance between two XY boundary coordinates.
 ///
 /// Toolpath and 2D profile adapters receive primitive coordinates only after
@@ -157,7 +185,13 @@ pub(crate) fn hxy_orientation_sign(
 /// is still evaluated in `hyperlattice::Vector2`/`hyperreal::Real`, following
 /// Yap's exact-geometric-computation split between primitive boundary data and
 /// exact-aware predicates (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-#[cfg(any(test, feature = "gerber-io", feature = "mesh", feature = "offset"))]
+#[cfg(any(
+    test,
+    feature = "gerber-io",
+    feature = "mesh",
+    feature = "offset",
+    feature = "sketch"
+))]
 pub(crate) fn hxy_distance(lhs: (Real, Real), rhs: (Real, Real)) -> Option<Real> {
     let lhs = hyperlattice::Vector2::try_from_f64_array([lhs.0, lhs.1]).ok()?;
     let rhs = hyperlattice::Vector2::try_from_f64_array([rhs.0, rhs.1]).ok()?;
@@ -833,6 +867,7 @@ pub(crate) fn hreal_sum(values: &[Real]) -> Option<Real> {
 /// comparison discipline follows Yap, "Towards Exact Geometric Computation,"
 /// *Computational Geometry* 7(1-2), 1997
 /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+#[cfg(any(test, feature = "sdf"))]
 pub(crate) fn hreal_max(values: &[Real]) -> Option<Real> {
     let mut values = values
         .iter()
@@ -891,6 +926,7 @@ pub(crate) fn hreal_max_report_value(current: Option<Real>, sample: &HReal) -> O
 }
 
 /// Fold an optional f64 reporting boundary minimum with a hyperreal sample.
+#[cfg(any(test, feature = "metaballs", feature = "sdf"))]
 pub(crate) fn hreal_min_report_value(current: Option<Real>, sample: &HReal) -> Option<Real> {
     let current = current.map(hreal_from_f64).transpose().ok()?;
     let min = match current {

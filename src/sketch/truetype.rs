@@ -1,8 +1,9 @@
 //! Create `Profile`s using ttf fonts
 
-use crate::float_types::{Real, tolerance};
+use crate::float_types::{Real, hxy_ring_orientation_sign, tolerance};
 use crate::sketch::Profile;
-use hypercurve::{Contour2, CurveString2, Region2, finite_ring_signed_area};
+use hypercurve::{Contour2, CurveString2, Region2};
+use hyperreal::RealSign;
 use std::fmt::Debug;
 use ttf_parser::{Face, GlyphId, OutlineBuilder};
 use ttf_utils::Outline;
@@ -100,17 +101,21 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
                     collector.finish_open_subpath();
 
                     // TrueType stores outer loops clockwise and holes
-                    // counter-clockwise. We classify with signed area before
-                    // promoting rings into native hypercurve contours.
+                    // counter-clockwise. We classify with the shared hyperreal
+                    // ring predicate before promoting rings into native
+                    // hypercurve contours, keeping primitive font samples at
+                    // the import boundary. See Yap, "Towards Exact Geometric
+                    // Computation," *Computational Geometry* 7(1-2), 1997
+                    // (<https://doi.org/10.1016/0925-7721(95)00040-2>).
                     for closed_pts in collector.contours {
                         if closed_pts.len() < 3 {
                             continue;
                         }
-                        let area = finite_ring_signed_area(&closed_pts);
+                        let orientation = hxy_ring_orientation_sign(&closed_pts);
                         let Ok(contour) = Contour2::from_finite_ring(&closed_pts) else {
                             continue;
                         };
-                        if area < 0.0 {
+                        if matches!(orientation, Some(RealSign::Negative)) {
                             material_contours.push(contour);
                         } else {
                             hole_contours.push(contour);
