@@ -1486,6 +1486,15 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// rack's pitch‑line. The flanks become a trochoid; for practical purposes we
     /// approximate with the classic curtate cycloid equations.
     ///
+    /// The cycloidal cap samples are evaluated through `hyperreal::Real`
+    /// before the finite outline is composed as a `hypercurve` region. This
+    /// keeps the tooth-pitch and trigonometric construction on the
+    /// exact-aware side of the boundary, following Yap, "Towards Exact
+    /// Geometric Computation," *Computational Geometry* 7(1-2), 1997
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>). For the gear-geometry
+    /// background see Litvin and Fuentes, *Gear Geometry and Applied Theory*,
+    /// 2nd ed., Cambridge University Press, 2004.
+    ///
     /// # Parameters
     /// - `module_`: gear module
     /// - `num_teeth`: number of teeth along the rack
@@ -1509,12 +1518,17 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         {
             return Profile::empty(metadata);
         }
-        let m = module_;
-        let p = PI * m;
-        let addendum = m;
-        let dedendum = 1.25 * m + clearance;
+        let Some(p) = hreal_mul(PI, module_) else {
+            return Profile::empty(metadata);
+        };
+        let addendum = module_;
+        let Some(dedendum) = hreal_affine(clearance, 1.25, module_) else {
+            return Profile::empty(metadata);
+        };
         let _tip_y = addendum;
-        let root_y = -dedendum;
+        let Some(root_y) = hreal_sub(0.0, dedendum) else {
+            return Profile::empty(metadata);
+        };
 
         if !finite_profile_scalars(&[p, addendum, dedendum, root_y]) {
             return Profile::empty(metadata);
@@ -1524,19 +1538,42 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         // tooth island. The sampled cycloidal cap is intentionally composed
         // into a single hypercurve region, avoiding self-intersections at
         // tooth joins while preserving Profile as the 2-D shape carrier.
-        let left_edge = -0.5 * p;
-        let right_edge = (num_teeth as Real - 0.5) * p;
+        let Some(left_edge) = hreal_mul(-0.5, p) else {
+            return Profile::empty(metadata);
+        };
+        let Some(right_edge) = hreal_mul(num_teeth as Real - 0.5, p) else {
+            return Profile::empty(metadata);
+        };
+        let Some(half_addendum) = hreal_mul(addendum, 0.5) else {
+            return Profile::empty(metadata);
+        };
         let mut top = Vec::<[Real; 2]>::with_capacity(num_teeth * segments_per_flank + 1);
         for k in 0..num_teeth {
-            let tooth_left = (k as Real - 0.5) * p;
+            let Some(tooth_left) = hreal_mul(k as Real - 0.5, p) else {
+                return Profile::empty(metadata);
+            };
             for j in 0..=segments_per_flank {
                 if k > 0 && j == 0 {
                     continue;
                 }
-                let u = j as Real / segments_per_flank as Real;
-                let theta = TAU * u;
-                let x = tooth_left + p * u;
-                let y = addendum * 0.5 * (1.0 - theta.cos());
+                let Some(u) = hreal_div(j as Real, segments_per_flank as Real) else {
+                    return Profile::empty(metadata);
+                };
+                let Some(theta) = hreal_mul(TAU, u) else {
+                    return Profile::empty(metadata);
+                };
+                let Some(x) = hreal_affine(tooth_left, u, p) else {
+                    return Profile::empty(metadata);
+                };
+                let Some((_, cos_theta)) = hangle_sin_cos(theta) else {
+                    return Profile::empty(metadata);
+                };
+                let Some(one_minus_cos) = hreal_sub(1.0, cos_theta) else {
+                    return Profile::empty(metadata);
+                };
+                let Some(y) = hreal_mul(half_addendum, one_minus_cos) else {
+                    return Profile::empty(metadata);
+                };
                 top.push([x, y]);
             }
         }
