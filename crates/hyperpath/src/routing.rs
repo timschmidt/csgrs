@@ -14,12 +14,12 @@ use hyperlimit::{Point2, PredicatePolicy, compare_reals_with_policy};
 use hyperreal::Real;
 use hypersolve::{
     CandidateCertificationReport, Constraint, Expr, PreparedProblem, Problem, SymbolId,
-    certify_candidate, constant_feed_time_equation, context_from_problem,
-    differential_pair_skew_equation,
+    certify_candidate, context_from_problem,
 };
 
 use crate::offset::{LineOffsetError, OffsetSide, offset_axis_aligned_segment};
 use crate::segment::{Axis, LinePathSegment};
+use crate::solve::{constant_feed_time_equation, differential_pair_skew_equation};
 
 /// Exact length-match solve model for one continuous extension parameter.
 #[derive(Clone, Debug)]

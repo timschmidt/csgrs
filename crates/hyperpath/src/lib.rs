@@ -15,6 +15,7 @@ pub mod pcb;
 pub mod provenance;
 pub mod routing;
 pub mod segment;
+pub mod solve;
 pub mod specctra;
 pub mod swept;
 pub mod tangent;
@@ -76,6 +77,12 @@ pub use routing::{
     certify_length_extension, classify_meander_candidate_slots, classify_meander_placement_slots,
 };
 pub use segment::{Axis, LinePathSegment, LinePathSegmentFacts, SegmentParameterOrder};
+pub use solve::{
+    PcbConstraintSet, RectangularRegion, ToolpathConstraintSet, bezier_offset_sample_constraints,
+    center_clearance_squared_constraint, constant_feed_time_equation,
+    differential_pair_skew_equation, length_match_equation, rectangular_difference_area_equation,
+    rectangular_region_area_equation, rectangular_region_containment_constraints,
+};
 pub use specctra::{
     SpecctraGridRouteRecords, SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraImportError,
     SpecctraLayerAlias, SpecctraNetAlias, SpecctraParseError, SpecctraRoute, SpecctraTraceRecord,

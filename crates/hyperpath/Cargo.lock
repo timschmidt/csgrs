@@ -323,9 +323,24 @@ checksum = "fc0fef456e4baa96da950455cd02c081ca953b141298e41db3fc7e36b1da849c"
 [[package]]
 name = "hyperlattice"
 version = "0.5.0"
+dependencies = [
+ "hyperreal",
+]
+
+[[package]]
+name = "hyperlattice"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e20502f544216c7dced137cc4c878240a8b49caec09e0b641a4f6a5cb959f899"
 dependencies = [
+ "hyperreal",
+]
+
+[[package]]
+name = "hyperlimit"
+version = "0.3.0"
+dependencies = [
+ "hyperlattice 0.5.0",
  "hyperreal",
 ]
 
@@ -343,7 +358,7 @@ name = "hyperpath"
 version = "0.2.1"
 dependencies = [
  "criterion",
- "hyperlimit",
+ "hyperlimit 0.3.0",
  "hyperreal",
  "hypersolve",
  "proptest",
@@ -364,11 +379,9 @@ dependencies = [
 [[package]]
 name = "hypersolve"
 version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c9aa1d63db5569780eae44c0a92bfaf38a8236481b103444c2f6cfe6d0c6d91a"
 dependencies = [
- "hyperlattice",
- "hyperlimit",
+ "hyperlattice 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "hyperlimit 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "hyperreal",
 ]
 
