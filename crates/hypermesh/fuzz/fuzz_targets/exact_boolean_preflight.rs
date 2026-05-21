@@ -72,6 +72,8 @@ fuzz_target!(|data: &[u8]| {
         exercise_affine_orthogonal_solid_cell_complex_frame_discovery();
         #[cfg(feature = "exact-triangulation")]
         exercise_mixed_coplanar_volumetric_materialization();
+        #[cfg(feature = "exact-triangulation")]
+        exercise_non_rectilinear_coplanar_volumetric_materialization();
     });
 
     let mut values = Vec::new();
@@ -2601,6 +2603,17 @@ fn axis_aligned_box_i64(min: [i64; 3], max: [i64; 3]) -> ExactMesh {
 }
 
 #[cfg(feature = "exact-triangulation")]
+fn tetrahedron_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3], d: [i64; 3]) -> ExactMesh {
+    ExactMesh::from_i64_triangles(
+        &[
+            a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2], d[0], d[1], d[2],
+        ],
+        &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+    )
+    .expect("tetrahedron fixture should import")
+}
+
+#[cfg(feature = "exact-triangulation")]
 fn affine_box_i64(
     min: [i64; 3],
     max: [i64; 3],
@@ -3492,6 +3505,55 @@ fn exercise_mixed_coplanar_volumetric_materialization() {
         hypermesh::exact::ExactBooleanResultKind::WindingMaterialized { .. }
     ));
     assert!(result.mesh.facts().mesh.closed_manifold);
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn exercise_non_rectilinear_coplanar_volumetric_materialization() {
+    let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
+    let right = tetrahedron_i64([1, 1, 0], [5, 1, 0], [1, 5, 0], [1, 1, 4]);
+
+    let graph = build_intersection_graph(&left, &right)
+        .expect("non-rectilinear coplanar-volumetric graph should build");
+    graph.validate().expect("graph should validate locally");
+    graph
+        .validate_against_meshes(&left, &right)
+        .expect("graph should replay against sources");
+    assert!(graph.face_pairs.iter().any(|pair| {
+        pair.relation == hypermesh::exact::MeshFacePairRelation::CoplanarOverlapping
+    }));
+
+    for operation in [
+        ExactBooleanOperation::Union,
+        ExactBooleanOperation::Intersection,
+        ExactBooleanOperation::Difference,
+    ] {
+        let preflight = preflight_boolean_exact(&left, &right, operation)
+            .expect("non-rectilinear coplanar-volumetric preflight should classify materialization");
+        preflight.validate().unwrap();
+        preflight.validate_against_sources(&left, &right).unwrap();
+        assert_eq!(
+            preflight.support,
+            ExactBooleanSupport::CertifiedWindingMaterialized
+        );
+
+        let result = hypermesh::exact::boolean_exact(
+            &left,
+            &right,
+            operation,
+            ValidationPolicy::CLOSED,
+        )
+        .expect("non-rectilinear coplanar-volumetric boolean should materialize");
+        result
+            .validate_operation_against_sources(
+                &left,
+                &right,
+                operation,
+                ValidationPolicy::CLOSED,
+                ExactBoundaryBooleanPolicy::Reject,
+            )
+            .unwrap();
+        assert!(result.mesh.facts().mesh.closed_manifold);
+    }
 }
 
 #[cfg(feature = "exact-triangulation")]

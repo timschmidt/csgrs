@@ -46,6 +46,17 @@ fn tetrahedron() -> (Vec<f64>, Vec<usize>) {
 }
 
 #[cfg(feature = "exact-triangulation")]
+fn tetrahedron_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3], d: [i64; 3]) -> ExactMesh {
+    ExactMesh::from_i64_triangles(
+        &[
+            a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2], d[0], d[1], d[2],
+        ],
+        &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+    )
+    .unwrap()
+}
+
+#[cfg(feature = "exact-triangulation")]
 fn axis_aligned_box_i64(min: [i64; 3], max: [i64; 3]) -> ExactMesh {
     ExactMesh::from_i64_triangles(
         &[
@@ -6688,6 +6699,74 @@ fn exact_mixed_coplanar_volumetric_overlap_materializes_from_face_cells() {
         }
     );
     assert!(result.mesh.facts().mesh.closed_manifold);
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
+fn exact_non_rectilinear_coplanar_volumetric_overlap_splits_source_faces() {
+    let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
+    let right = tetrahedron_i64([1, 1, 0], [5, 1, 0], [1, 5, 0], [1, 1, 4]);
+
+    let graph = build_intersection_graph(&left, &right).unwrap();
+    graph.validate().unwrap();
+    graph.validate_against_meshes(&left, &right).unwrap();
+    assert!(graph.face_pairs.iter().any(|pair| {
+        pair.relation == hypermesh::exact::MeshFacePairRelation::CoplanarOverlapping
+    }));
+    assert!(graph.face_pairs.iter().any(|pair| {
+        pair.relation == hypermesh::exact::MeshFacePairRelation::Candidate
+            && pair.events.iter().any(|event| {
+                matches!(
+                    event,
+                    IntersectionEvent::SegmentPlane {
+                        relation: SegmentPlaneRelation::ProperCrossing,
+                        ..
+                    }
+                )
+            })
+    }));
+
+    for operation in [
+        hypermesh::exact::ExactBooleanOperation::Union,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    ] {
+        let preflight =
+            hypermesh::exact::preflight_boolean_exact(&left, &right, operation).unwrap();
+        preflight.validate().unwrap();
+        preflight.validate_against_sources(&left, &right).unwrap();
+        assert_eq!(
+            preflight.support,
+            hypermesh::exact::ExactBooleanSupport::CertifiedWindingMaterialized
+        );
+        assert!(preflight.blocker.is_none());
+        assert!(preflight.region_count > 0);
+
+        let result =
+            hypermesh::exact::boolean_exact(&left, &right, operation, ValidationPolicy::CLOSED)
+                .unwrap();
+        result.validate().unwrap();
+        result
+            .validate_operation_against_sources(
+                &left,
+                &right,
+                operation,
+                ValidationPolicy::CLOSED,
+                hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+            )
+            .unwrap();
+        assert_eq!(
+            result.kind,
+            hypermesh::exact::ExactBooleanResultKind::WindingMaterialized { operation }
+        );
+        assert!(result.mesh.facts().mesh.closed_manifold);
+        let retained_cell_triangles = result
+            .triangulations
+            .iter()
+            .map(|triangulation| triangulation.triangles.len() / 3)
+            .sum::<usize>();
+        assert!(retained_cell_triangles > left.triangles().len() + right.triangles().len());
+    }
 }
 
 #[cfg(feature = "exact-triangulation")]

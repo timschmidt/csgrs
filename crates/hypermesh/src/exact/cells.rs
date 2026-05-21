@@ -30,8 +30,8 @@ use super::construction::SegmentPlaneRelation;
 use super::coplanar::CoplanarProjection;
 #[cfg(feature = "exact-triangulation")]
 use super::graph::{
-    ExactFaceRegionPlan, ExactIntersectionGraph, ExactSplitTopologyPlan, FacePairEvents,
-    FaceRegionBoundary, FaceSplitBoundaryNode, IntersectionEvent, MeshSide,
+    CoplanarOverlapSplitPlan, ExactFaceRegionPlan, ExactIntersectionGraph, ExactSplitTopologyPlan,
+    FacePairEvents, FaceRegionBoundary, FaceSplitBoundaryNode, IntersectionEvent, MeshSide,
 };
 #[cfg(feature = "exact-triangulation")]
 use super::intersection::MeshFacePairRelation;
@@ -44,6 +44,26 @@ use super::region::{
 };
 #[cfg(feature = "exact-triangulation")]
 use super::scalar::ExactReal;
+
+#[cfg(feature = "exact-triangulation")]
+/// Candidate constraint edge from the opposite coplanar triangle boundary.
+///
+/// These records are local to one source face. They gather exact split points
+/// and contained opposite vertices along an opposite-face edge before that edge
+/// is emitted as CDT constraints.
+#[derive(Clone, Debug)]
+struct CoplanarCellEdge {
+    edge: [usize; 2],
+    points: Vec<CoplanarCellEdgePoint>,
+}
+
+#[cfg(feature = "exact-triangulation")]
+/// Exact point on a [`CoplanarCellEdge`] with its edge parameter.
+#[derive(Clone, Debug)]
+struct CoplanarCellEdgePoint {
+    parameter: ExactReal,
+    point: Point3,
+}
 
 /// Full-face cell plan used by winding-materialized booleans.
 #[cfg(feature = "exact-triangulation")]
@@ -73,13 +93,26 @@ pub fn triangulate_all_face_cells_with_cdt(
     {
         return Ok(None);
     }
+    let coplanar_splits = graph
+        .coplanar_overlap_split_plan(left, right)
+        .map_err(|_| hypertri::Error::InvalidInput {
+            reason: "face-cell coplanar overlap split construction failed",
+        })?;
 
     let mut regions = Vec::with_capacity(left.triangles().len() + right.triangles().len());
     let mut triangulations = Vec::with_capacity(left.triangles().len() + right.triangles().len());
     for (side, mesh) in [(MeshSide::Left, left), (MeshSide::Right, right)] {
         for face in 0..mesh.triangles().len() {
-            let Some((region, triangulation)) =
-                triangulate_one_face_cell_graph(graph, &topology, side, face, mesh, left, right)?
+            let Some((region, triangulation)) = triangulate_one_face_cell_graph(
+                graph,
+                &topology,
+                &coplanar_splits,
+                side,
+                face,
+                mesh,
+                left,
+                right,
+            )?
             else {
                 return Ok(None);
             };
@@ -95,6 +128,7 @@ pub fn triangulate_all_face_cells_with_cdt(
 fn triangulate_one_face_cell_graph(
     graph: &ExactIntersectionGraph,
     topology: &ExactSplitTopologyPlan,
+    coplanar_splits: &CoplanarOverlapSplitPlan,
     side: MeshSide,
     face: usize,
     mesh: &ExactMesh,
@@ -167,6 +201,16 @@ fn triangulate_one_face_cell_graph(
             }
         }
     }
+    append_coplanar_face_cell_constraints(
+        coplanar_splits,
+        side,
+        face,
+        left,
+        right,
+        &mut boundary,
+        &mut interior_constraints,
+        &mut unique_interior_constraints,
+    )?;
 
     let mut vertices = boundary
         .iter()
@@ -246,6 +290,288 @@ fn triangulate_one_face_cell_graph(
         },
         triangulation,
     )))
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[allow(clippy::too_many_arguments)]
+/// Append exact constraints induced by coplanar source-face overlaps.
+///
+/// A non-coplanar face-cell graph only needs proper segment/plane crossings.
+/// Coplanar volumetric overlaps also need the opposite coplanar triangle's
+/// boundary clipped into the current source face; otherwise assembly can see
+/// two unsplit copies of a partial shared patch. The input facts come from
+/// [`ExactIntersectionGraph::coplanar_overlap_split_plan`], whose edge
+/// crossings, collinear intervals, and vertex-containment facts follow the
+/// coplanar decomposition of Guigue and Devillers, "Fast and Robust
+/// Triangle-Triangle Overlap Test Using Orientation Predicates," *Journal of
+/// Graphics Tools* 8.1 (2003). As in Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997), those facts become
+/// topology only after exact parameters are sorted and replayed as local CDT
+/// constraints on the source face.
+fn append_coplanar_face_cell_constraints(
+    split_plan: &CoplanarOverlapSplitPlan,
+    side: MeshSide,
+    face: usize,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    boundary: &mut Vec<FaceSplitBoundaryNode>,
+    constraints: &mut Vec<Constraint>,
+    unique_constraints: &mut BTreeSet<(usize, usize)>,
+) -> hypertri::Result<()> {
+    for graph in &split_plan.graphs {
+        if !coplanar_split_graph_involves_face(graph.left_face, graph.right_face, side, face) {
+            continue;
+        }
+        let mut edges =
+            coplanar_opposite_edges(graph.left_face, graph.right_face, side, left, right)?;
+        for split in &graph.edge_splits {
+            match side {
+                MeshSide::Left => {
+                    let edge = split.overlap.right_edge;
+                    for point in &split.points {
+                        push_coplanar_cell_edge_point(
+                            &mut edges,
+                            edge,
+                            point.right_parameter.clone(),
+                            point.point.clone(),
+                        )?;
+                    }
+                    if let Some(interval) = &split.interval {
+                        for point in &interval.endpoints {
+                            push_coplanar_cell_edge_point(
+                                &mut edges,
+                                edge,
+                                point.right_parameter.clone(),
+                                point.point.clone(),
+                            )?;
+                        }
+                    }
+                }
+                MeshSide::Right => {
+                    let edge = split.overlap.left_edge;
+                    for point in &split.points {
+                        push_coplanar_cell_edge_point(
+                            &mut edges,
+                            edge,
+                            point.left_parameter.clone(),
+                            point.point.clone(),
+                        )?;
+                    }
+                    if let Some(interval) = &split.interval {
+                        for point in &interval.endpoints {
+                            push_coplanar_cell_edge_point(
+                                &mut edges,
+                                edge,
+                                point.left_parameter.clone(),
+                                point.point.clone(),
+                            )?;
+                        }
+                    }
+                }
+            }
+        }
+        for vertex_overlap in &graph.vertex_overlaps {
+            if vertex_overlap.triangle_side != side || vertex_overlap.triangle_face != face {
+                continue;
+            }
+            let point = vertex_point_for_side(
+                vertex_overlap.vertex_side,
+                vertex_overlap.vertex,
+                left,
+                right,
+            )?;
+            for edge in coplanar_edges_incident_to_vertex(&edges, vertex_overlap.vertex) {
+                let parameter = if edge[0] == vertex_overlap.vertex {
+                    ExactReal::from(0)
+                } else {
+                    ExactReal::from(1)
+                };
+                push_coplanar_cell_edge_point(&mut edges, edge, parameter, point.clone())?;
+            }
+        }
+
+        for mut edge in edges {
+            sort_coplanar_cell_edge_points(&mut edge.points)?;
+            dedup_coplanar_cell_edge_points(&mut edge.points)?;
+            for pair in edge.points.windows(2) {
+                if compare_ordering(
+                    &pair[0].parameter,
+                    &pair[1].parameter,
+                    "face-cell coplanar edge parameter order",
+                )? != Ordering::Less
+                {
+                    continue;
+                }
+                if points_equal(&pair[0].point, &pair[1].point) != Some(false) {
+                    continue;
+                }
+                let from = push_cell_node(
+                    boundary,
+                    FaceSplitBoundaryNode::FaceInterior {
+                        point: pair[0].point.clone(),
+                    },
+                )?;
+                let to = push_cell_node(
+                    boundary,
+                    FaceSplitBoundaryNode::FaceInterior {
+                        point: pair[1].point.clone(),
+                    },
+                )?;
+                push_constraint(constraints, unique_constraints, from, to);
+            }
+        }
+    }
+    Ok(())
+}
+
+#[cfg(feature = "exact-triangulation")]
+/// Return whether a coplanar split graph touches the requested source face.
+fn coplanar_split_graph_involves_face(
+    left_face: usize,
+    right_face: usize,
+    side: MeshSide,
+    face: usize,
+) -> bool {
+    match side {
+        MeshSide::Left => left_face == face,
+        MeshSide::Right => right_face == face,
+    }
+}
+
+#[cfg(feature = "exact-triangulation")]
+/// Return the opposite triangle's directed edges for one source-face graph.
+fn coplanar_opposite_edges(
+    left_face: usize,
+    right_face: usize,
+    side: MeshSide,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> hypertri::Result<Vec<CoplanarCellEdge>> {
+    let (mesh, face) = match side {
+        MeshSide::Left => (right, right_face),
+        MeshSide::Right => (left, left_face),
+    };
+    let triangle = mesh
+        .triangles()
+        .get(face)
+        .ok_or(hypertri::Error::InvalidInput {
+            reason: "face-cell coplanar split graph references a missing opposite face",
+        })?;
+    Ok(triangle_edges(triangle.0)
+        .into_iter()
+        .map(|edge| CoplanarCellEdge {
+            edge,
+            points: Vec::new(),
+        })
+        .collect())
+}
+
+#[cfg(feature = "exact-triangulation")]
+/// Return exact directed triangle edges incident to a retained vertex.
+fn triangle_edges(triangle: [usize; 3]) -> [[usize; 2]; 3] {
+    [
+        [triangle[0], triangle[1]],
+        [triangle[1], triangle[2]],
+        [triangle[2], triangle[0]],
+    ]
+}
+
+#[cfg(feature = "exact-triangulation")]
+/// Return opposite-face edges that use `vertex` as an endpoint.
+fn coplanar_edges_incident_to_vertex(edges: &[CoplanarCellEdge], vertex: usize) -> Vec<[usize; 2]> {
+    edges
+        .iter()
+        .map(|edge| edge.edge)
+        .filter(|edge| edge[0] == vertex || edge[1] == vertex)
+        .collect()
+}
+
+#[cfg(feature = "exact-triangulation")]
+/// Fetch a retained exact vertex point from the requested source mesh.
+fn vertex_point_for_side(
+    side: MeshSide,
+    vertex: usize,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> hypertri::Result<Point3> {
+    let mesh = match side {
+        MeshSide::Left => left,
+        MeshSide::Right => right,
+    };
+    mesh.vertices()
+        .get(vertex)
+        .map(|point| point.to_hyperlimit_point())
+        .ok_or(hypertri::Error::InvalidInput {
+            reason: "face-cell coplanar vertex overlap references a missing vertex",
+        })
+}
+
+#[cfg(feature = "exact-triangulation")]
+/// Insert one exact point on one opposite-face edge, deduplicating by point.
+fn push_coplanar_cell_edge_point(
+    edges: &mut [CoplanarCellEdge],
+    edge: [usize; 2],
+    parameter: ExactReal,
+    point: Point3,
+) -> hypertri::Result<()> {
+    let Some(entry) = edges.iter_mut().find(|entry| entry.edge == edge) else {
+        return Err(hypertri::Error::InvalidInput {
+            reason: "face-cell coplanar edge constraint references a non-triangle edge",
+        });
+    };
+    if entry
+        .points
+        .iter()
+        .any(|seen| points_equal(&seen.point, &point) == Some(true))
+    {
+        return Ok(());
+    }
+    entry
+        .points
+        .push(CoplanarCellEdgePoint { parameter, point });
+    Ok(())
+}
+
+#[cfg(feature = "exact-triangulation")]
+/// Sort edge points by their exact edge parameter.
+fn sort_coplanar_cell_edge_points(points: &mut Vec<CoplanarCellEdgePoint>) -> hypertri::Result<()> {
+    let mut ordered = Vec::<CoplanarCellEdgePoint>::with_capacity(points.len());
+    for point in points.drain(..) {
+        let mut insert_at = ordered.len();
+        for (index, existing) in ordered.iter().enumerate() {
+            if compare_ordering(
+                &point.parameter,
+                &existing.parameter,
+                "face-cell coplanar edge point ordering",
+            )? == Ordering::Less
+            {
+                insert_at = index;
+                break;
+            }
+        }
+        ordered.insert(insert_at, point);
+    }
+    *points = ordered;
+    Ok(())
+}
+
+#[cfg(feature = "exact-triangulation")]
+/// Drop repeated exact points after sorting.
+fn dedup_coplanar_cell_edge_points(
+    points: &mut Vec<CoplanarCellEdgePoint>,
+) -> hypertri::Result<()> {
+    let mut deduped = Vec::<CoplanarCellEdgePoint>::with_capacity(points.len());
+    for point in points.drain(..) {
+        if deduped
+            .iter()
+            .any(|seen| points_equal(&seen.point, &point.point) == Some(true))
+        {
+            continue;
+        }
+        deduped.push(point);
+    }
+    *points = deduped;
+    Ok(())
 }
 
 #[cfg(feature = "exact-triangulation")]

@@ -105,6 +105,17 @@ fn axis_aligned_box_i64(min: [i64; 3], max: [i64; 3]) -> ExactMesh {
 }
 
 #[cfg(feature = "exact-triangulation")]
+fn tetrahedron_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3], d: [i64; 3]) -> ExactMesh {
+    ExactMesh::from_i64_triangles(
+        &[
+            a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2], d[0], d[1], d[2],
+        ],
+        &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+    )
+    .unwrap()
+}
+
+#[cfg(feature = "exact-triangulation")]
 fn affine_box_i64(
     min: [i64; 3],
     max: [i64; 3],
@@ -4493,6 +4504,10 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
         )
         .unwrap();
         let coplanar_right = top_subdivided_axis_aligned_box_i64([1, 1, 0], [3, 3, 2]);
+        let non_rectilinear_coplanar_left =
+            tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
+        let non_rectilinear_coplanar_right =
+            tetrahedron_i64([1, 1, 0], [5, 1, 0], [1, 5, 0], [1, 1, 4]);
 
         let slab_right = ExactMesh::from_i64_triangles(
             &[
@@ -4802,6 +4817,43 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
                             &coplanar_left,
                             &coplanar_right,
                             hypermesh::exact::ExactBooleanOperation::Union,
+                            ValidationPolicy::CLOSED,
+                        )
+                        .unwrap(),
+                    )
+                })
+            },
+        );
+
+        c.bench_function(
+            "exact_boolean_non_rectilinear_coplanar_volumetric_cells",
+            |b| {
+                b.iter(|| {
+                    (
+                        hypermesh::exact::preflight_boolean_exact(
+                            &non_rectilinear_coplanar_left,
+                            &non_rectilinear_coplanar_right,
+                            hypermesh::exact::ExactBooleanOperation::Union,
+                        )
+                        .unwrap(),
+                        hypermesh::exact::boolean_exact(
+                            &non_rectilinear_coplanar_left,
+                            &non_rectilinear_coplanar_right,
+                            hypermesh::exact::ExactBooleanOperation::Union,
+                            ValidationPolicy::CLOSED,
+                        )
+                        .unwrap(),
+                        hypermesh::exact::boolean_exact(
+                            &non_rectilinear_coplanar_left,
+                            &non_rectilinear_coplanar_right,
+                            hypermesh::exact::ExactBooleanOperation::Intersection,
+                            ValidationPolicy::CLOSED,
+                        )
+                        .unwrap(),
+                        hypermesh::exact::boolean_exact(
+                            &non_rectilinear_coplanar_left,
+                            &non_rectilinear_coplanar_right,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
                             ValidationPolicy::CLOSED,
                         )
                         .unwrap(),
