@@ -2945,6 +2945,21 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
             ValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
+        let nonconvex_holed_left = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 0, 20, 0, 0, 20, 20, 0, 0, 20, 0],
+            &[0, 1, 2, 0, 2, 3],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let nonconvex_holed_right = ExactMesh::from_i64_triangles_with_policy(
+            &[
+                2, 2, 0, 4, 2, 0, 3, 4, 0, //
+                8, 8, 0, 24, 4, 0, 24, 12, 0,
+            ],
+            &[0, 1, 2, 3, 4, 5],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
 
         c.bench_function(
             "exact_boolean_coplanar_convex_surface_multi_difference",
@@ -3191,6 +3206,29 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
                             hypermesh::exact::ExactBooleanOperation::Difference,
                         )
                         .map(|report| report.validate()),
+                        arrange_coplanar_convex_surface_component_holed_difference(
+                            &nonconvex_holed_left,
+                            &nonconvex_holed_right,
+                        )
+                        .map(|output| {
+                            output.validate_against_sources(
+                                &nonconvex_holed_left,
+                                &nonconvex_holed_right,
+                            )
+                        }),
+                        hypermesh::exact::preflight_boolean_exact(
+                            &nonconvex_holed_left,
+                            &nonconvex_holed_right,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                        )
+                        .map(|report| report.validate()),
+                        hypermesh::exact::boolean_exact(
+                            &nonconvex_holed_left,
+                            &nonconvex_holed_right,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                            ValidationPolicy::ALLOW_BOUNDARY,
+                        )
+                        .unwrap(),
                         arrange_coplanar_surface_cutter_hole_contact_difference(
                             &single_component_holed_left,
                             &component_holed_contact_right,

@@ -855,6 +855,10 @@ pub struct CoplanarConvexMultiHoledArrangement {
 #[derive(Clone, Debug, PartialEq)]
 pub struct CoplanarConvexHoledComponent {
     /// Exact 3D outer ring, retained counter-clockwise.
+    ///
+    /// The source component that produced this ring is convex, but a certified
+    /// cutter may leave a simple nonconvex remnant. The ring itself is the
+    /// retained topology certificate.
     pub outer: Vec<Point3>,
     /// Exact 3D hole rings, retained clockwise and strictly inside `outer`.
     pub holes: Vec<Vec<Point3>>,
@@ -863,15 +867,16 @@ pub struct CoplanarConvexHoledComponent {
 /// Exact mixed component/holed coplanar difference output.
 ///
 /// This artifact covers the bounded case where a source difference contains
-/// one or more disjoint convex components and at least one component carries
-/// exact holes. A component may also have bounded convex cutters when the
-/// emitted remnants are still convex loops and every retained hole is assigned
-/// strictly inside exactly one remnant. More tangled cut/hole interactions
-/// still require a full planar subdivision. Each retained component must
-/// replay from exact component decomposition, containment, disjointness, and
-/// convex difference certificates before the materialized mesh is accepted,
-/// matching the retained-object contract in Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997).
+/// one or more disjoint components and at least one component carries exact
+/// holes. Source decomposition remains convex, but a bounded cutter may leave
+/// either a convex remnant or a simple nonconvex remnant when every retained
+/// hole is assigned strictly inside exactly one output loop. More tangled
+/// cut/hole interactions still require a full planar subdivision. Each
+/// retained component must replay from exact component decomposition,
+/// containment, disjointness, and convex difference certificates before the
+/// materialized mesh is accepted, matching the retained-object contract in
+/// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
+/// 7.1-2 (1997).
 #[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, PartialEq)]
 pub struct CoplanarConvexComponentHoledArrangement {
@@ -4677,11 +4682,16 @@ pub fn arrange_coplanar_convex_surface_component_holed_difference(
 ///
 /// A component that mixes holes with one partial cutter is still a bounded
 /// arrangement: the cut itself is certified by the convex difference helper,
-/// then each hole must be strictly inside exactly one emitted remnant. This
-/// check is the local substitute for a full planar subdivision. Following Yap,
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997), ambiguous boundary contact or partial hole/remnant overlap returns
-/// `None` rather than inventing topology from an approximate sample point.
+/// then each hole must be strictly inside exactly one emitted remnant. Remnant
+/// loops may be nonconvex simple loops, so containment is checked by exact
+/// retained-edge rejection plus exact earcut coverage rather than by convex
+/// half-space signs. This check is the local substitute for a full planar
+/// subdivision. Following Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997), ambiguous boundary contact or
+/// partial hole/remnant overlap returns `None` rather than inventing topology
+/// from an approximate sample point. The triangulated containment probe uses
+/// Held, "FIST: Fast Industrial-Strength Triangulation of Polygons,"
+/// *Algorithmica* 30 (2001), through `hypertri`'s exact earcut adapter.
 #[cfg(feature = "exact-triangulation")]
 fn assign_holes_to_cut_component_outputs(
     holes: &[Vec<Point3>],
@@ -4692,7 +4702,7 @@ fn assign_holes_to_cut_component_outputs(
     for hole in holes {
         let mut owner = None;
         for (index, polygon) in cut_polygons.iter().enumerate() {
-            if polygon_strictly_inside_convex_polygon(hole, polygon, projection)? {
+            if polygon_strictly_inside_simple_polygon(hole, polygon, projection)? {
                 if owner.is_some() {
                     return None;
                 }
@@ -4719,6 +4729,104 @@ fn polygon_strictly_inside_convex_polygon(
         }
     }
     Some(true)
+}
+
+/// Certify strict containment of one simple ring inside another simple ring.
+///
+/// This is the nonconvex counterpart to
+/// [`polygon_strictly_inside_convex_polygon`]. It first rejects any retained
+/// edge contact using the exact orientation-predicate segment classifier of
+/// Guigue and Devillers, "Fast and Robust Triangle-Triangle Overlap Test Using
+/// Orientation Predicates," *Journal of Graphics Tools* 8.1 (2003). It then
+/// classifies every inner vertex against an exact earcut triangulation of the
+/// outer ring, using Held, "FIST: Fast Industrial-Strength Triangulation of
+/// Polygons," *Algorithmica* 30 (2001). Yap's "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997), is the reason the
+/// routine returns `None` on undecided topology instead of accepting a sampled
+/// representative point.
+#[cfg(feature = "exact-triangulation")]
+fn polygon_strictly_inside_simple_polygon(
+    inner: &[Point3],
+    outer: &[Point3],
+    projection: CoplanarProjection,
+) -> Option<bool> {
+    if inner.len() < 3 || outer.len() < 3 {
+        return Some(false);
+    }
+    if rings_have_any_edge_contact(inner, outer, projection)? {
+        return Some(false);
+    }
+    inner
+        .iter()
+        .map(|point| simple_polygon_location(point, outer, projection))
+        .try_fold(true, |all_inside, location| {
+            Some(all_inside && location? == ConvexPolygonLocation::Inside)
+        })
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn rings_have_any_edge_contact(
+    left: &[Point3],
+    right: &[Point3],
+    projection: CoplanarProjection,
+) -> Option<bool> {
+    for left_edge in 0..left.len() {
+        let left_start = project_point(&left[left_edge], projection);
+        let left_end = project_point(&left[(left_edge + 1) % left.len()], projection);
+        for right_edge in 0..right.len() {
+            let right_start = project_point(&right[right_edge], projection);
+            let right_end = project_point(&right[(right_edge + 1) % right.len()], projection);
+            match classify_segment_intersection(&left_start, &left_end, &right_start, &right_end)
+                .value()?
+            {
+                SegmentIntersection::Disjoint => {}
+                SegmentIntersection::EndpointTouch
+                | SegmentIntersection::Proper
+                | SegmentIntersection::CollinearOverlap
+                | SegmentIntersection::Identical => return Some(true),
+            }
+        }
+    }
+    Some(false)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn simple_polygon_location(
+    point: &Point3,
+    polygon: &[Point3],
+    projection: CoplanarProjection,
+) -> Option<ConvexPolygonLocation> {
+    if polygon.len() < 3 {
+        return None;
+    }
+    let query = project_point(point, projection);
+    for edge in 0..polygon.len() {
+        let start = project_point(&polygon[edge], projection);
+        let end = project_point(&polygon[(edge + 1) % polygon.len()], projection);
+        if point_on_segment(&start, &end, &query).value() == Some(true) {
+            return Some(ConvexPolygonLocation::Boundary);
+        }
+    }
+
+    let vertices2 = polygon
+        .iter()
+        .map(|point| project_for_hypertri(point, projection))
+        .collect::<Vec<_>>();
+    let indices = hypertri::earcut(&vertices2, &[]).ok()?;
+    for triangle in indices.chunks_exact(3) {
+        let cell = vec![
+            polygon[triangle[0]].clone(),
+            polygon[triangle[1]].clone(),
+            polygon[triangle[2]].clone(),
+        ];
+        match point_in_projected_triangle(point, &cell, projection)? {
+            TriangleLocation::Inside | TriangleLocation::OnEdge | TriangleLocation::OnVertex => {
+                return Some(ConvexPolygonLocation::Inside);
+            }
+            TriangleLocation::Outside | TriangleLocation::Degenerate => {}
+        }
+    }
+    Some(ConvexPolygonLocation::Outside)
 }
 
 /// Certify and materialize a one-corner coplanar triangle difference.
@@ -5659,7 +5767,6 @@ fn validate_component_holed_surface_output(
             "component outer ring repeats an exact point",
         )?;
         validate_projected_simple_loop(&component.outer, projection, label)?;
-        validate_projected_strictly_convex_loop(&component.outer, projection, label)?;
         validate_projected_ring_orientation(
             &component.outer,
             projection,
@@ -5714,22 +5821,18 @@ fn validate_component_holed_surface_output(
                     "component hole has zero projected area",
                 ));
             }
-            for point in hole {
-                match convex_polygon_location(point, &component.outer, projection) {
-                    Some(ConvexPolygonLocation::Inside) => {}
-                    Some(ConvexPolygonLocation::Boundary | ConvexPolygonLocation::Outside) => {
-                        return Err(surface_validation_error(
-                            label,
-                            "component hole must lie strictly inside its outer ring",
-                        ));
-                    }
-                    None => {
-                        return Err(surface_validation_error(
-                            label,
-                            "component hole containment predicate was undecided",
-                        ));
-                    }
-                }
+            if !polygon_strictly_inside_simple_polygon(hole, &component.outer, projection)
+                .ok_or_else(|| {
+                    surface_validation_error(
+                        label,
+                        "component hole containment predicate was undecided",
+                    )
+                })?
+            {
+                return Err(surface_validation_error(
+                    label,
+                    "component hole must lie strictly inside its outer ring",
+                ));
             }
             hole_area_sum = add(&hole_area_sum, &hole_area);
             component_signed_area = add(&component_signed_area, &hole_signed);
@@ -5748,7 +5851,7 @@ fn validate_component_holed_surface_output(
         component_ranges.push(component_start..expected_vertices);
         outers.push(component.outer.clone());
     }
-    validate_component_loops_disjoint(&outers, projection, label)?;
+    validate_simple_component_loops_disjoint(&outers, projection, label)?;
 
     if mesh.vertices().len() != expected_vertices {
         return Err(surface_validation_error(
@@ -6313,6 +6416,77 @@ fn validate_component_loops_disjoint(
                                 "component loop segment-intersection predicate was undecided",
                             ));
                         }
+                    }
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+/// Validate that retained simple component loops are pairwise disjoint.
+///
+/// Component-holed outputs may now retain nonconvex outer loops produced by
+/// exact convex-cutter replay. Pairwise disjointness therefore cannot use
+/// convex half-space signs. The check keeps Yap's retained topology boundary:
+/// exact segment contact rejects shared or crossing edges, then exact
+/// triangulated point-in-polygon checks reject nesting. Segment relations use
+/// Guigue and Devillers, "Fast and Robust Triangle-Triangle Overlap Test Using
+/// Orientation Predicates," *Journal of Graphics Tools* 8.1 (2003), and the
+/// simple-polygon interior probe uses Held, "FIST: Fast Industrial-Strength
+/// Triangulation of Polygons," *Algorithmica* 30 (2001).
+#[cfg(feature = "exact-triangulation")]
+fn validate_simple_component_loops_disjoint(
+    polygons: &[Vec<Point3>],
+    projection: CoplanarProjection,
+    label: &'static str,
+) -> Result<(), MeshError> {
+    for left_index in 0..polygons.len() {
+        for right_index in left_index + 1..polygons.len() {
+            let left = &polygons[left_index];
+            let right = &polygons[right_index];
+            if rings_have_any_edge_contact(left, right, projection).ok_or_else(|| {
+                surface_validation_error(
+                    label,
+                    "component loop segment-intersection predicate was undecided",
+                )
+            })? {
+                return Err(surface_validation_error(
+                    label,
+                    "component loop edges intersect or touch",
+                ));
+            }
+            for point in left {
+                match simple_polygon_location(point, right, projection) {
+                    Some(ConvexPolygonLocation::Outside) => {}
+                    Some(ConvexPolygonLocation::Boundary | ConvexPolygonLocation::Inside) => {
+                        return Err(surface_validation_error(
+                            label,
+                            "component loops overlap, touch, or nest",
+                        ));
+                    }
+                    None => {
+                        return Err(surface_validation_error(
+                            label,
+                            "component loop containment predicate was undecided",
+                        ));
+                    }
+                }
+            }
+            for point in right {
+                match simple_polygon_location(point, left, projection) {
+                    Some(ConvexPolygonLocation::Outside) => {}
+                    Some(ConvexPolygonLocation::Boundary | ConvexPolygonLocation::Inside) => {
+                        return Err(surface_validation_error(
+                            label,
+                            "component loops overlap, touch, or nest",
+                        ));
+                    }
+                    None => {
+                        return Err(surface_validation_error(
+                            label,
+                            "component loop containment predicate was undecided",
+                        ));
                     }
                 }
             }

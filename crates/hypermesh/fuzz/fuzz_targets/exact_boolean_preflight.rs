@@ -2066,6 +2066,46 @@ fn exercise_component_coplanar_difference() {
         .iter()
         .any(|component| component.outer.len() == 6 && component.holes.len() == 1));
 
+    let nonconvex_holed_left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 20, 0, 0, 20, 20, 0, 0, 20, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("nonconvex component-holed left fixture must import");
+    let nonconvex_holed_right = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            2, 2, 0, 4, 2, 0, 3, 4, 0, //
+            8, 8, 0, 24, 4, 0, 24, 12, 0,
+        ],
+        &[0, 1, 2, 3, 4, 5],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("nonconvex component-holed right fixture must import");
+    let nonconvex_component_holed =
+        arrange_coplanar_convex_surface_component_holed_difference(
+            &nonconvex_holed_left,
+            &nonconvex_holed_right,
+        )
+        .expect("component-holed nonconvex outer should retain a strict hole");
+    nonconvex_component_holed.validate().unwrap();
+    nonconvex_component_holed
+        .validate_against_sources(&nonconvex_holed_left, &nonconvex_holed_right)
+        .unwrap();
+    assert_eq!(nonconvex_component_holed.components.len(), 1);
+    assert_eq!(nonconvex_component_holed.components[0].holes.len(), 1);
+    assert!(nonconvex_component_holed.components[0].outer.len() > 4);
+    let nonconvex_holed_preflight = preflight_boolean_exact(
+        &nonconvex_holed_left,
+        &nonconvex_holed_right,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("component-holed nonconvex outer preflight should classify shortcut");
+    nonconvex_holed_preflight.validate().unwrap();
+    assert_eq!(
+        nonconvex_holed_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+    );
+
     let holed_partial_height_cutters_right = ExactMesh::from_i64_triangles_with_policy(
         &[
             1, 1, 0, 3, 1, 0, 3, 3, 0, 1, 3, 0, //
