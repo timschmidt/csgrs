@@ -17,7 +17,9 @@
 use core::fmt::Debug;
 use nalgebra::Point3;
 
-use crate::float_types::{Real, tolerance};
+use crate::float_types::{
+    Real, hreal_mul, hxy_distance, hxy_step, hxy_unit_direction, tolerance,
+};
 use crate::sketch::Profile;
 use hypercurve::{
     Classification, FinitePolyline2, FiniteProjectionOptions, FiniteRegionProfile2,
@@ -177,6 +179,14 @@ fn rings_of<M: Clone + Send + Sync + Debug>(sk: &Profile<M>) -> Vec<Vec<(Real, R
         .collect()
 }
 
+fn extrusion_for_xy_segment(
+    e_per_mm: Real,
+    from: (Real, Real),
+    to: (Real, Real),
+) -> Option<Real> {
+    hxy_distance(from, to).and_then(|seg_len| hreal_mul(e_per_mm, seg_len))
+}
+
 // ================================
 // FDM (Additive) — per‑layer paths
 // ================================
@@ -247,11 +257,10 @@ pub fn fdm_layer_from_sketch<M: Clone + Send + Sync + Debug>(
             // cut around
             let mut last = (x0, y0);
             for &(x, y) in ring.iter().skip(1) {
-                let seg_len = ((x - last.0).powi(2) + (y - last.1).powi(2)).sqrt();
                 tp.cut_to(
                     Point3::new(x, y, z),
                     Some(feeds.xy),
-                    Some(cfg.e_per_mm * seg_len),
+                    extrusion_for_xy_segment(cfg.e_per_mm, last, (x, y)),
                 );
                 last = (x, y);
             }
@@ -284,11 +293,10 @@ pub fn fdm_layer_from_sketch<M: Clone + Send + Sync + Debug>(
             if i % keep_every != 0 {
                 continue;
             }
-            let seg_len = ((x - last.0).powi(2) + (y - last.1).powi(2)).sqrt();
             tp.cut_to(
                 Point3::new(x, y, z),
                 Some(feeds.xy),
-                Some(cfg.e_per_mm * seg_len),
+                extrusion_for_xy_segment(cfg.e_per_mm, last, (x, y)),
             );
             last = (x, y);
         }
@@ -353,12 +361,8 @@ pub fn cut2d_contours<M: Clone + Send + Sync + Debug>(
         // Optional short tangential lead‑in
         let (x0, y0) = ring[0];
         let (x1, y1) = ring[1];
-        let dir = ((x1 - x0), (y1 - y0));
-        let len = (dir.0 * dir.0 + dir.1 * dir.1).sqrt();
-        let ux = if len > tolerance() { dir.0 / len } else { 1.0 };
-        let uy = if len > tolerance() { dir.1 / len } else { 0.0 };
-        let lx = x0 - ux * ld.length;
-        let ly = y0 - uy * ld.length;
+        let (ux, uy) = hxy_unit_direction((x0, y0), (x1, y1)).unwrap_or((1.0, 0.0));
+        let (lx, ly) = hxy_step((x0, y0), (ux, uy), -ld.length).unwrap_or((x0, y0));
 
         tp.travel_to(Point3::new(lx, ly, z));
         if let Some(ms) = feeds.pierce_ms {
@@ -374,8 +378,7 @@ pub fn cut2d_contours<M: Clone + Send + Sync + Debug>(
             last = (x, y);
         }
         // Lead‑out
-        let ox = last.0 + ux * ld.length;
-        let oy = last.1 + uy * ld.length;
+        let (ox, oy) = hxy_step(last, (ux, uy), ld.length).unwrap_or(last);
         tp.cut_to(Point3::new(ox, oy, z), Some(feeds.xy), feeds.power);
     }
 

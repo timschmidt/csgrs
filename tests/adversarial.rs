@@ -715,6 +715,65 @@ fn adversarial_refinement_filters_reject_nonfinite_thresholds_at_hyperreal_bound
 }
 
 #[test]
+fn adversarial_toolpath_lengths_and_leads_reject_nonfinite_cam_scalars() {
+    use csgrs::toolpath::gcode::Post;
+    use csgrs::toolpath::{
+        FdmLayerCfg, Feeds, KerfSide, LeadInOut, MachineKind, cut2d_contours,
+        fdm_layer_from_sketch,
+    };
+
+    let sketch: Profile<()> = Profile::rectangle(5.0, 3.0, ());
+    let feeds = Feeds {
+        travel: 3000.0,
+        xy: 1200.0,
+        plunge: 300.0,
+        rpm: None,
+        power: Some(0.5),
+        pierce_ms: None,
+    };
+
+    let fdm = fdm_layer_from_sketch(
+        &sketch,
+        0.2,
+        &FdmLayerCfg {
+            e_per_mm: Real::NAN,
+            ..FdmLayerCfg::default()
+        },
+        &feeds,
+    );
+    let cut = cut2d_contours(
+        &sketch,
+        0.0,
+        0.1,
+        KerfSide::Outside,
+        Some(LeadInOut {
+            length: Real::INFINITY,
+            radius: 0.0,
+        }),
+        &feeds,
+        MachineKind::Laser,
+    );
+
+    let post = Post {
+        absolute_e: false,
+        units_mm: true,
+        z_safe: 5.0,
+    };
+    for toolpath in [&fdm, &cut] {
+        for mv in &toolpath.moves {
+            assert!(mv.position.x.is_finite());
+            assert!(mv.position.y.is_finite());
+            assert!(mv.position.z.is_finite());
+            assert!(mv.scalar.is_none_or(Real::is_finite));
+            assert!(mv.feed.is_none_or(Real::is_finite));
+        }
+        let gcode = post.write(toolpath);
+        assert!(!gcode.contains("NaN"));
+        assert!(!gcode.contains("inf"));
+    }
+}
+
+#[test]
 #[cfg(feature = "metaballs")]
 fn adversarial_metaballs_reject_invalid_sampling_boundary_at_hyperreal_boundary() {
     let valid = csgrs::mesh::metaballs::MetaBall::new(Point3::new(0.0, 0.0, 0.0), 1.0);
