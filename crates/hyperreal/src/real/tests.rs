@@ -1120,6 +1120,91 @@ mod tests {
         assert!((actual - 14.508657738524219).abs() < 1e-12);
     }
 
+    #[test]
+    fn log2_of_powers_of_two_is_exact_integer() {
+        for k in 0_i64..=20 {
+            let n = Real::new(Rational::new(1_i64 << k));
+            let answer = n.log2().unwrap();
+            assert_eq!(answer, Rational::new(k));
+        }
+    }
+
+    #[test]
+    fn log2_of_one_is_zero() {
+        assert_eq!(Real::one().log2().unwrap(), Real::zero());
+    }
+
+    #[test]
+    fn log2_of_one_half_is_negative_one() {
+        let half = Real::new(Rational::fraction(1, 2).unwrap());
+        assert_eq!(half.log2().unwrap(), Rational::new(-1));
+    }
+
+    #[test]
+    fn log2_of_inverse_power_of_two_is_negative_integer() {
+        for k in 1_i64..=12 {
+            let n = Real::new(Rational::fraction(1, 1_u64 << k).unwrap());
+            let answer = n.log2().unwrap();
+            assert_eq!(answer, Rational::new(-k));
+        }
+    }
+
+    #[test]
+    fn log2_of_rational_matches_f64() {
+        for &n in &[3_i64, 5, 7, 9, 11, 13, 17] {
+            let value: f64 = Real::new(Rational::new(n)).log2().unwrap().into();
+            let expected = (n as f64).log2();
+            assert!(
+                (value - expected).abs() < 1e-12,
+                "log2({n}) = {value}, expected {expected}"
+            );
+        }
+    }
+
+    #[test]
+    fn log2_of_negative_errors() {
+        let negative = Real::new(Rational::new(-3));
+        assert_eq!(negative.log2(), Err(Problem::NotANumber));
+    }
+
+    #[test]
+    fn log2_of_zero_errors() {
+        assert_eq!(Real::zero().log2(), Err(Problem::NotANumber));
+    }
+
+    #[test]
+    fn log2_matches_ln_div_ln2() {
+        let x = Real::new(Rational::new(7));
+        let direct = x.clone().log2().unwrap();
+        let via_quotient = (x.ln().unwrap() / Real::new(Rational::new(2)).ln().unwrap()).unwrap();
+        let difference: f64 = (direct - via_quotient).into();
+        assert!(difference.abs() < 1e-14);
+    }
+
+    #[test]
+    fn log2_of_sqrt_two_is_half() {
+        let sqrt_two = Real::from(2_i32).sqrt().unwrap();
+        let value: f64 = sqrt_two.log2().unwrap().into();
+        assert!((value - 0.5).abs() < 1e-12);
+    }
+
+    #[test]
+    fn log2_of_irrational_argument_matches_f64() {
+        let value = Real::from(2_i32) + Real::from(3_i32).sqrt().unwrap();
+        let actual: f64 = value.log2().unwrap().into();
+        let expected = (2.0_f64 + 3.0_f64.sqrt()).log2();
+        assert!((actual - expected).abs() < 1e-12);
+    }
+
+    #[test]
+    fn log2_ln_quotient_folds_to_log2_class() {
+        let numerator = Real::new(Rational::new(5)).ln().unwrap();
+        let denominator = Real::new(Rational::new(2)).ln().unwrap();
+        let quotient = (numerator / denominator).unwrap();
+        let expected = Real::new(Rational::new(5)).log2().unwrap();
+        assert_eq!(quotient, expected);
+    }
+
     fn assert_close(value: Real, expected: f64, tolerance: f64) {
         let actual: f64 = value.into();
         let scale = expected.abs().max(1.0);

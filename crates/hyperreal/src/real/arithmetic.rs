@@ -81,6 +81,7 @@ pub(crate) enum Class {
     // representation small while still preserving a lightweight symbolic form.
     LnProduct(Box<LnProductClass>), // Product of two logarithms, ordered by base
     Log10(Rational),                // Rational > 1 and never a multiple of ten
+    Log2(Rational),                 // Rational > 1 and never a power of two
     SinPi(Rational),                // 0 < Rational < 1/2 also never 1/6 or 1/4 or 1/3
     TanPi(Rational),                // 0 < Rational < 1/2 also never 1/6 or 1/4 or 1/3
     Irrational,
@@ -135,6 +136,7 @@ impl PartialEq for Class {
                 left.left == right.left && left.right == right.right
             }
             (Log10(r), Log10(s)) => r == s,
+            (Log2(r), Log2(s)) => r == s,
             (SinPi(r), SinPi(s)) => r == s,
             (TanPi(r), TanPi(s)) => r == s,
             (_, _) => false,
@@ -540,6 +542,9 @@ impl Class {
             }
             Log10(base) => {
                 Self::ln_computable(base).multiply(Self::ln_computable(&*rationals::TEN).inverse())
+            }
+            Log2(base) => {
+                Self::ln_computable(base).multiply(Self::ln_computable(&*rationals::TWO).inverse())
             }
             SinPi(rational) => {
                 let argument =
@@ -1496,7 +1501,7 @@ impl Real {
                 Irrational => "scaled-computable",
                 Pi | PiPow(_) | PiInv | PiExp(_) | PiInvExp(_) | PiSqrt(_) | ConstProduct(_)
                 | ConstOffset(_) | ConstProductSqrt(_) | Sqrt(_) | Exp(_) | Ln(_) | LnAffine(_)
-                | LnProduct(_) | Log10(_) | SinPi(_) | TanPi(_) => "symbolic-nonzero-scale",
+                | LnProduct(_) | Log10(_) | Log2(_) | SinPi(_) | TanPi(_) => "symbolic-nonzero-scale",
             }
         );
 
@@ -1505,7 +1510,7 @@ impl Real {
             One => Some(real_sign_from_num(rational_sign)),
             Pi | PiPow(_) | PiInv | PiExp(_) | PiInvExp(_) | PiSqrt(_) | ConstProduct(_)
             | ConstOffset(_) | ConstProductSqrt(_) | Sqrt(_) | Exp(_) | Ln(_) | LnAffine(_)
-            | LnProduct(_) | Log10(_) | SinPi(_) | TanPi(_) => {
+            | LnProduct(_) | Log10(_) | Log2(_) | SinPi(_) | TanPi(_) => {
                 // Exact symbolic classes are positive by construction, so the
                 // outer rational scale alone determines sign. Additive classes
                 // such as ConstOffset/LnAffine are admitted only when this
@@ -3263,6 +3268,61 @@ impl Real {
         })
     }
 
+    /// The base 2 logarithm of this Real or Problem::NotANumber if this Real is not positive.
+    pub fn log2(self) -> Result<Real, Problem> {
+        // Domain check uses structural sign first. Refinement-forced sign
+        // (`best_sign`) is reserved for the case where cheap inspection cannot
+        // decide; rejecting structurally known nonpositive inputs avoids
+        // ~2µs of computable work on the typical hot path.
+        match self.structural_facts().sign {
+            Some(RealSign::Positive) => {}
+            Some(RealSign::Zero | RealSign::Negative) => {
+                crate::trace_dispatch!("real", "log2", "domain-not-positive");
+                return Err(Problem::NotANumber);
+            }
+            None => {
+                if self.best_sign() != Sign::Plus {
+                    crate::trace_dispatch!("real", "log2", "domain-not-positive");
+                    return Err(Problem::NotANumber);
+                }
+            }
+        }
+        if let One = &self.class {
+            return Self::log2_rational(self.rational);
+        }
+        crate::trace_dispatch!("real", "log2", "ln-div-cached-ln2");
+        self.ln()? / constants::scaled_ln(2, 1).unwrap()
+    }
+
+    fn log2_rational(r: Rational) -> Result<Real, Problem> {
+        match r.cmp_one_structural() {
+            std::cmp::Ordering::Less => {
+                let inv = r.inverse()?;
+                return Ok(-Self::log2_rational(inv)?);
+            }
+            std::cmp::Ordering::Equal => return Ok(Self::zero()),
+            std::cmp::Ordering::Greater => {}
+        }
+
+        if let Some(n) = r.integer_magnitude()
+            && let Some(log) = Self::integer_log(n, 2)
+        {
+            crate::trace_dispatch!("real", "log2", "rational-power-of-two");
+            return Ok(Self::new(Rational::new(log as i64)));
+        }
+
+        crate::trace_dispatch!("real", "log2", "rational-log2-special-form");
+        let computable =
+            Class::ln_computable(&r).multiply(Class::ln_computable(&*rationals::TWO).inverse());
+        Ok(Self {
+            rational: Rational::one(),
+            class: Log2(r),
+            computable: Some(computable),
+            signal: None,
+            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+        })
+    }
+
     // Find Some(m) integral log with respect to this base or else None
     // n should be positive (not zero) and base should be >= 2
     fn integer_log(n: &BigUint, base: u32) -> Option<u64> {
@@ -4619,7 +4679,7 @@ fn structural_kind_for_class(class: &Class) -> StructuralKind {
         Pi | PiPow(_) | PiInv => StructuralKind::PiLike,
         Exp(_) | PiExp(_) | PiInvExp(_) => StructuralKind::ExpLike,
         Sqrt(_) | PiSqrt(_) => StructuralKind::SqrtLike,
-        Ln(_) | LnAffine(_) | LnProduct(_) | Log10(_) => StructuralKind::LogLike,
+        Ln(_) | LnAffine(_) | LnProduct(_) | Log10(_) | Log2(_) => StructuralKind::LogLike,
         SinPi(_) | TanPi(_) => StructuralKind::TrigExact,
         ConstProduct(_) | ConstOffset(_) | ConstProductSqrt(_) => StructuralKind::ProductConstant,
         Irrational => StructuralKind::ComputableOpaque,
@@ -4631,7 +4691,7 @@ fn symbolic_degree_for_class(class: &Class) -> ExpressionDegree {
         Irrational => ExpressionDegree::Unknown,
         One | Pi | PiPow(_) | PiInv | PiExp(_) | PiInvExp(_) | PiSqrt(_) | ConstProduct(_)
         | ConstOffset(_) | ConstProductSqrt(_) | Sqrt(_) | Exp(_) | Ln(_) | LnAffine(_)
-        | LnProduct(_) | Log10(_) | SinPi(_) | TanPi(_) => ExpressionDegree::Constant,
+        | LnProduct(_) | Log10(_) | Log2(_) | SinPi(_) | TanPi(_) => ExpressionDegree::Constant,
     }
 }
 
@@ -4647,7 +4707,7 @@ fn symbolic_dependencies_for_class(class: &Class) -> SymbolicDependencyMask {
         ConstProductSqrt(product) => pi_exp_dependency_mask(product.pi_power, &product.exp_power)
             .union(SymbolicDependencyMask::SQRT),
         Sqrt(_) => SymbolicDependencyMask::SQRT,
-        Ln(_) | LnAffine(_) | LnProduct(_) | Log10(_) => SymbolicDependencyMask::LOG,
+        Ln(_) | LnAffine(_) | LnProduct(_) | Log10(_) | Log2(_) => SymbolicDependencyMask::LOG,
         SinPi(_) | TanPi(_) => SymbolicDependencyMask::TRIG.union(SymbolicDependencyMask::PI),
         Irrational => SymbolicDependencyMask::OPAQUE,
     }
@@ -4747,6 +4807,7 @@ impl fmt::Display for Real {
                     write!(f, " x ln({}) x ln({})", product.left, product.right)
                 }
                 Log10(n) => write!(f, " x log10({})", &n),
+                Log2(n) => write!(f, " x log2({})", &n),
                 Sqrt(n) => write!(f, " √({})", &n),
                 SinPi(n) => write!(f, " x sin({} x Pi)", &n),
                 TanPi(n) => write!(f, " x tan({} x Pi)", &n),
@@ -5880,6 +5941,24 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                     return Ok(Real {
                         rational,
                         class: Log10(r.clone()),
+                        computable: Some(computable),
+                        ..self.clone()
+                    });
+                }
+                if s == *rationals::TWO {
+                    // Same rationale as the log10 fold: keep two-log quotients
+                    // anchored on a single Log2 certificate.
+                    let Ln(r) = &self.class else {
+                        unreachable!();
+                    };
+                    let rational = &self.rational / &other.rational;
+                    let ln2 = constants::scaled_ln(2, 1).unwrap();
+                    let computable = self
+                        .computable_clone()
+                        .multiply(ln2.computable_clone().inverse());
+                    return Ok(Real {
+                        rational,
+                        class: Log2(r.clone()),
                         computable: Some(computable),
                         ..self.clone()
                     });

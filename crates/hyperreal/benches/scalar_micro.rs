@@ -412,6 +412,18 @@ const SCALAR_MICRO_GROUPS: &[BenchGroupDoc] = &[
                 name: "atanh_sqrt_two_error",
                 description: "Rejects atanh(sqrt(2)) through exact structural domain checks.",
             },
+            BenchDoc {
+                name: "log2_power_of_two",
+                description: "Folds log2(1024) to the exact rational 10 via the integer-log-detection shortcut.",
+            },
+            BenchDoc {
+                name: "log2_rational_three",
+                description: "Builds log2(3) as a lightweight Log2 symbolic certificate.",
+            },
+            BenchDoc {
+                name: "log2_ln_quotient_fold",
+                description: "Folds ln(5) / ln(2) into a Log2 certificate via the divide-recognize shortcut.",
+            },
         ],
     },
     BenchGroupDoc {
@@ -1059,6 +1071,33 @@ fn bench_exact_transcendental_special_forms(c: &mut Criterion) {
         b.iter_batched(
             || atanh_sqrt_two_error.clone(),
             |value| black_box(value.atanh().unwrap_err()),
+            BatchSize::SmallInput,
+        )
+    });
+
+    let log2_power = Real::new(Rational::new(1024));
+    let log2_three = Real::new(Rational::new(3));
+    let ln_five = Real::new(Rational::new(5)).ln().unwrap();
+    let ln_two_for_quotient = Real::new(Rational::new(2)).ln().unwrap();
+
+    group.bench_function("log2_power_of_two", |b| {
+        b.iter_batched(
+            || log2_power.clone(),
+            |value| black_box(value.log2().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("log2_rational_three", |b| {
+        b.iter_batched(
+            || log2_three.clone(),
+            |value| black_box(value.log2().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("log2_ln_quotient_fold", |b| {
+        b.iter_batched(
+            || (ln_five.clone(), ln_two_for_quotient.clone()),
+            |(num, den)| black_box((num / den).unwrap()),
             BatchSize::SmallInput,
         )
     });
