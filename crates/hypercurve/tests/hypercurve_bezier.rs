@@ -12,7 +12,8 @@ use hypercurve::{
     BezierBooleanFragmentOwnershipLocation, BezierBooleanHandoffReport2,
     BezierBooleanHandoffStatus, BezierBooleanLoopAssemblyPlanReport2,
     BezierBooleanLoopAssemblyPlanStatus, BezierBooleanLoopClosureReport2,
-    BezierBooleanLoopClosureStatus, BezierBooleanLoopContainmentFact2,
+    BezierBooleanLoopClosureStatus, BezierBooleanLoopContainmentCertificationReport2,
+    BezierBooleanLoopContainmentCertificationStatus, BezierBooleanLoopContainmentFact2,
     BezierBooleanLoopContainmentFactReport2, BezierBooleanLoopContainmentFactStatus,
     BezierBooleanLoopContainmentQueryReport2, BezierBooleanLoopContainmentQueryResult,
     BezierBooleanLoopContainmentQueryResult2, BezierBooleanLoopContainmentQueryResultReport2,
@@ -10028,6 +10029,17 @@ fn bezier_boolean_result_consumes_containment_query_results_without_dropping_blo
         &queries,
         &ready_results,
     );
+    let certification =
+        BezierBooleanLoopContainmentCertificationReport2::from_output_loop_query_results(
+            &output_for_queries,
+            &ready_results,
+        );
+    assert_eq!(
+        certification.status,
+        BezierBooleanLoopContainmentCertificationStatus::Ready
+    );
+    assert_eq!(certification.containment_fact_count, 1);
+    assert_eq!(certification.depth_facts.len(), 2);
 
     let result = BezierBooleanResultReport2::from_schedule_graph_walk_containment_query_results(
         &schedule,
@@ -10043,6 +10055,22 @@ fn bezier_boolean_result_consumes_containment_query_results_without_dropping_blo
     assert_eq!(result.status, BezierBooleanResultStatus::Ready);
     assert_eq!(result.material_loop_indices, vec![0]);
     assert_eq!(result.hole_loop_indices, vec![1]);
+
+    let certified_result =
+        BezierBooleanResultReport2::from_schedule_graph_walk_containment_certification(
+            &schedule,
+            BooleanOp::Union,
+            &ownership_facts,
+            &endpoints,
+            &[],
+            0,
+            0,
+            &[0, 1],
+            &certification,
+        );
+    assert_eq!(certified_result.status, BezierBooleanResultStatus::Ready);
+    assert_eq!(certified_result.material_loop_indices, vec![0]);
+    assert_eq!(certified_result.hole_loop_indices, vec![1]);
 
     let materialized =
         BezierBooleanMaterializedRegionReport2::from_schedule_graph_walk_laminar_containment_query_results(
@@ -10062,6 +10090,27 @@ fn bezier_boolean_result_consumes_containment_query_results_without_dropping_blo
     );
     assert_eq!(materialized.components[0].hole_loop_indices, vec![1]);
 
+    let certified_materialized =
+        BezierBooleanMaterializedRegionReport2::from_schedule_graph_walk_laminar_containment_certification(
+            &schedule,
+            BooleanOp::Union,
+            &ownership_facts,
+            &endpoints,
+            &[],
+            0,
+            0,
+            &[0, 1],
+            &certification,
+        );
+    assert_eq!(
+        certified_materialized.status,
+        BezierBooleanMaterializedRegionStatus::Ready
+    );
+    assert_eq!(
+        certified_materialized.components[0].hole_loop_indices,
+        vec![1]
+    );
+
     let boundary_results = queries
         .queries
         .iter()
@@ -10075,6 +10124,16 @@ fn bezier_boolean_result_consumes_containment_query_results_without_dropping_blo
         &queries,
         &boundary_results,
     );
+    let boundary_certification =
+        BezierBooleanLoopContainmentCertificationReport2::from_output_loop_query_results(
+            &output_for_queries,
+            &boundary_results,
+        );
+    assert_eq!(
+        boundary_certification.status,
+        BezierBooleanLoopContainmentCertificationStatus::QueryResultBlocked
+    );
+    assert!(boundary_certification.has_blockers());
     let blocked = BezierBooleanResultReport2::from_schedule_graph_walk_containment_query_results(
         &schedule,
         BooleanOp::Union,
@@ -10091,6 +10150,24 @@ fn bezier_boolean_result_consumes_containment_query_results_without_dropping_blo
         BezierBooleanResultStatus::RegionAssemblyBlocked
     );
     assert!(blocked.has_blockers());
+
+    let certified_blocked =
+        BezierBooleanResultReport2::from_schedule_graph_walk_containment_certification(
+            &schedule,
+            BooleanOp::Union,
+            &ownership_facts,
+            &endpoints,
+            &[],
+            0,
+            0,
+            &[0, 1],
+            &boundary_certification,
+        );
+    assert_eq!(
+        certified_blocked.status,
+        BezierBooleanResultStatus::RegionAssemblyBlocked
+    );
+    assert!(certified_blocked.has_blockers());
 }
 
 #[test]
@@ -13559,6 +13636,22 @@ proptest! {
             .containment_facts
             .iter()
             .all(|fact| fact.container_loop_index < fact.contained_loop_index));
+
+        let certification =
+            BezierBooleanLoopContainmentCertificationReport2::from_output_loop_query_results(
+                &output,
+                &results,
+            );
+        prop_assert_eq!(
+            certification.status,
+            BezierBooleanLoopContainmentCertificationStatus::Ready
+        );
+        prop_assert_eq!(certification.query_count, replay.query_count);
+        prop_assert_eq!(certification.containment_fact_count, replay.containment_fact_count);
+        prop_assert_eq!(certification.depth_fact_count, loop_count);
+        for fact in &certification.depth_facts {
+            prop_assert_eq!(fact.nesting_depth, fact.loop_index);
+        }
     }
 
     #[test]
