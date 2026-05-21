@@ -11143,6 +11143,116 @@ fn exact_coplanar_surface_cutter_hole_contact_accepts_straddling_overlap_pair() 
 
 #[cfg(feature = "exact-triangulation")]
 #[test]
+fn exact_coplanar_surface_cutter_hole_contact_accepts_pairwise_overlap_graph() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 20, 0, 0, 20, 20, 0, 0, 20, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let pairwise_graph = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            8, 4, 0, 11, 7, 0, 8, 8, 0, //
+            12, 10, 0, 11, 12, 0, 14, 12, 0, //
+            0, 6, 0, 10, 6, 0, 12, 10, 0, 10, 14, 0, 0, 14, 0,
+        ],
+        &[
+            0, 1, 2, //
+            3, 4, 5, //
+            6, 7, 8, 6, 8, 9, 6, 9, 10,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+
+    let graph_difference =
+        hypermesh::exact::arrange_coplanar_surface_cutter_hole_contact_difference(
+            &left,
+            &pairwise_graph,
+        )
+        .expect("pairwise overlapping cutter/hole graph should open one exact loop");
+    graph_difference.validate().unwrap();
+    graph_difference
+        .validate_cutter_hole_contact_difference_against_sources(&left, &pairwise_graph)
+        .unwrap();
+    assert!(graph_difference.polygon.len() > 12);
+    assert!(
+        graph_difference
+            .polygon
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(11))
+                && real_eq(&point.y, &ExactReal::from(7)))
+    );
+    assert!(
+        graph_difference
+            .polygon
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(14))
+                && real_eq(&point.y, &ExactReal::from(12)))
+    );
+    let preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &pairwise_graph,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    preflight.validate().unwrap();
+    preflight
+        .validate_against_sources(&left, &pairwise_graph)
+        .unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceCutterHoleContactDifference
+    );
+    let result = hypermesh::exact::boolean_exact(
+        &left,
+        &pairwise_graph,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    result
+        .validate_operation_against_sources(
+            &left,
+            &pairwise_graph,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::
+                CoplanarSurfaceCutterHoleContactDifference
+        }
+    );
+
+    let triple_overlap_graph = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            8, 8, 0, 12, 10, 0, 8, 12, 0, //
+            8, 9, 0, 12, 9, 0, 8, 13, 0, //
+            0, 8, 0, 10, 8, 0, 12, 10, 0, 10, 12, 0, 0, 12, 0,
+        ],
+        &[
+            0, 1, 2, //
+            3, 4, 5, //
+            6, 7, 8, 6, 8, 9, 6, 9, 10,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_cutter_hole_contact_difference(
+            &left,
+            &triple_overlap_graph,
+        )
+        .is_none()
+    );
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
 fn exact_coplanar_surface_cutter_hole_contact_accepts_nonrectangular_contact_chain() {
     let left = ExactMesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 20, 0, 0, 20, 20, 0, 0, 20, 0],

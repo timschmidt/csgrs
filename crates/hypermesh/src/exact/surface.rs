@@ -4251,17 +4251,20 @@ fn two_convex_cutter_hole_removed_polygon(
 ///
 /// This is the multi-component sibling of
 /// [`two_convex_cutter_hole_removed_polygon`]. It accepts only a
-/// connected contact graph whose convex regions are pairwise interior-disjoint
-/// and touch through positive-length boundary intervals. Point-only contact,
-/// overlap, disconnected holes, and branch structures that do not stitch into
-/// exactly one simple loop remain unsupported. The acceptance rule is the same
-/// exact-state rule Yap gives in "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997): the shortcut promotes topology only
-/// from retained predicates and exact area replay. Boundary fragments follow
-/// Weiler and Atherton, "Hidden Surface Removal Using Polygon Area Sorting,"
-/// *SIGGRAPH Computer Graphics* 11.2 (1977), and segment contact decisions
-/// use Guigue and Devillers, "Fast and Robust Triangle-Triangle Overlap Test
-/// Using Orientation Predicates," *Journal of Graphics Tools* 8.1 (2003).
+/// connected interaction graph whose convex regions either touch through
+/// positive-length boundary intervals or overlap in positive area. Positive
+/// triple-overlap, point-only contact, disconnected holes, and branch
+/// structures that do not stitch into exactly one simple loop remain
+/// unsupported. The acceptance rule is the same exact-state rule Yap gives in
+/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+/// (1997): the shortcut promotes topology only from retained predicates and
+/// exact area replay. Boundary fragments follow Weiler and Atherton, "Hidden
+/// Surface Removal Using Polygon Area Sorting," *SIGGRAPH Computer Graphics*
+/// 11.2 (1977), segment contact decisions use Guigue and Devillers, "Fast and
+/// Robust Triangle-Triangle Overlap Test Using Orientation Predicates,"
+/// *Journal of Graphics Tools* 8.1 (2003), and the bounded pairwise-overlap
+/// area replay is the finite inclusion-exclusion certificate described by
+/// Yap's exact-computation model.
 #[cfg(feature = "exact-triangulation")]
 fn connected_convex_contact_union_polygon(
     regions: &[Vec<Point3>],
@@ -4296,7 +4299,7 @@ fn connected_convex_contact_union_polygon(
                     }
                     contact_graph.union(left, right);
                 }
-                ConvexUnionComponentRelation::PositiveArea => return None,
+                ConvexUnionComponentRelation::PositiveArea => contact_graph.union(left, right),
             }
         }
     }
@@ -4396,7 +4399,71 @@ fn multi_convex_contact_union_area_matches_inputs(
     for region in regions {
         expected = add(&expected, &projected_area2_abs(region, projection)?);
     }
+    for left in 0..regions.len() {
+        for right in left + 1..regions.len() {
+            let intersection =
+                convex_polygon_intersection_boundary(&regions[left], &regions[right], projection)?;
+            if intersection.len() >= 3 {
+                let intersection_area = projected_area2_abs(&intersection, projection)?;
+                if compare_reals(&intersection_area, &ExactReal::from(0)).value()
+                    == Some(Ordering::Greater)
+                {
+                    expected = sub(&expected, &intersection_area);
+                }
+            }
+        }
+    }
+    if convex_regions_have_positive_triple_overlap(regions, projection)? {
+        return Some(false);
+    }
     Some(compare_reals(&union_area, &expected).value() == Some(Ordering::Equal))
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn convex_regions_have_positive_triple_overlap(
+    regions: &[Vec<Point3>],
+    projection: CoplanarProjection,
+) -> Option<bool> {
+    for first in 0..regions.len() {
+        for second in first + 1..regions.len() {
+            let first_second = simplify_projected_polygon(
+                convex_polygon_intersection_boundary(
+                    &regions[first],
+                    &regions[second],
+                    projection,
+                )?,
+                projection,
+            );
+            if first_second.len() < 3
+                || compare_reals(
+                    &projected_area2_abs(&first_second, projection)?,
+                    &ExactReal::from(0),
+                )
+                .value()
+                    != Some(Ordering::Greater)
+            {
+                continue;
+            }
+            for third_region in regions.iter().skip(second + 1) {
+                let triple = simplify_projected_polygon(
+                    clip_convex_polygon(&first_second, third_region, projection)
+                        .unwrap_or_default(),
+                    projection,
+                );
+                if triple.len() >= 3
+                    && compare_reals(
+                        &projected_area2_abs(&triple, projection)?,
+                        &ExactReal::from(0),
+                    )
+                    .value()
+                        == Some(Ordering::Greater)
+                {
+                    return Some(true);
+                }
+            }
+        }
+    }
+    Some(false)
 }
 
 #[cfg(feature = "exact-triangulation")]

@@ -3108,6 +3108,20 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
             ValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
+        let pairwise_overlap_graph_right = ExactMesh::from_i64_triangles_with_policy(
+            &[
+                8, 4, 0, 11, 7, 0, 8, 8, 0, //
+                12, 10, 0, 11, 12, 0, 14, 12, 0, //
+                0, 6, 0, 10, 6, 0, 12, 10, 0, 10, 14, 0, 0, 14, 0,
+            ],
+            &[
+                0, 1, 2, //
+                3, 4, 5, //
+                6, 7, 8, 6, 8, 9, 6, 9, 10,
+            ],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
         let nonrect_contact_chain_right = ExactMesh::from_i64_triangles_with_policy(
             &[
                 8, 8, 0, 12, 10, 0, 8, 12, 0, //
@@ -3471,6 +3485,29 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
                         hypermesh::exact::boolean_exact(
                             &nonrect_contact_left,
                             &straddling_contact_right,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                            ValidationPolicy::ALLOW_BOUNDARY,
+                        )
+                        .unwrap(),
+                        arrange_coplanar_surface_cutter_hole_contact_difference(
+                            &nonrect_contact_left,
+                            &pairwise_overlap_graph_right,
+                        )
+                        .map(|output| {
+                            output.validate_cutter_hole_contact_difference_against_sources(
+                                &nonrect_contact_left,
+                                &pairwise_overlap_graph_right,
+                            )
+                        }),
+                        hypermesh::exact::preflight_boolean_exact(
+                            &nonrect_contact_left,
+                            &pairwise_overlap_graph_right,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                        )
+                        .map(|report| report.validate()),
+                        hypermesh::exact::boolean_exact(
+                            &nonrect_contact_left,
+                            &pairwise_overlap_graph_right,
                             hypermesh::exact::ExactBooleanOperation::Difference,
                             ValidationPolicy::ALLOW_BOUNDARY,
                         )
