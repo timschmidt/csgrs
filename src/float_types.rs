@@ -137,7 +137,7 @@ pub(crate) fn hvector3_cross(
 /// shared 2D turn predicate instead of local f64 cross products, in line with
 /// Yap's exact-geometric-computation split between primitive boundary data and
 /// exact-aware predicates (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-#[cfg(feature = "gerber-io")]
+#[cfg(any(feature = "gerber-io", feature = "mesh"))]
 pub(crate) fn hxy_orientation_sign(
     a: (Real, Real),
     b: (Real, Real),
@@ -157,7 +157,7 @@ pub(crate) fn hxy_orientation_sign(
 /// is still evaluated in `hyperlattice::Vector2`/`hyperreal::Real`, following
 /// Yap's exact-geometric-computation split between primitive boundary data and
 /// exact-aware predicates (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-#[cfg(any(test, feature = "gerber-io", feature = "offset"))]
+#[cfg(any(test, feature = "gerber-io", feature = "mesh", feature = "offset"))]
 pub(crate) fn hxy_distance(lhs: (Real, Real), rhs: (Real, Real)) -> Option<Real> {
     let lhs = hyperlattice::Vector2::try_from_f64_array([lhs.0, lhs.1]).ok()?;
     let rhs = hyperlattice::Vector2::try_from_f64_array([rhs.0, rhs.1]).ok()?;
