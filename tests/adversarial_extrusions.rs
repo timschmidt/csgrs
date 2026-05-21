@@ -447,6 +447,10 @@ fn adversarial_profile_and_mesh_shape_delegates_reject_invalid_parameters_withou
         assert_profile_finite(&profile);
     }
 
+    let valid_torus = Mesh::<&str>::torus(1.5, 0.25, 8, 6, "torus");
+    assert!(!valid_torus.polygons.is_empty(), "{valid_torus:?}");
+    assert_mesh_finite(&valid_torus);
+
     let invalid_meshes = [
         catch_unwind(AssertUnwindSafe(|| {
             Mesh::<&str>::torus(Real::NAN, 1.0, 0, 0, "torus")

@@ -1013,6 +1013,13 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// * `minor_r` – tube radius ( r )  
     /// * `segments_major` – number of segments around the donut  
     /// * `segments_minor` – segments of the tube cross-section
+    ///
+    /// The torus is composed from a hypercurve-backed circular profile and
+    /// revolved into mesh geometry. Radius validation is evaluated through
+    /// hyperreal comparisons before crossing back to finite boundary scalars,
+    /// following Yap, "Towards Exact Geometric Computation," *Computational
+    /// Geometry* 7(1-2), 1997
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     #[cfg(feature = "sketch")]
     pub fn torus(
         major_r: Real,
@@ -1023,18 +1030,30 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     ) -> Self {
         if !finite_mesh_scalar(major_r)
             || !finite_mesh_scalar(minor_r)
-            || major_r.abs() <= tolerance()
-            || minor_r.abs() <= tolerance()
+            || !matches!(
+                hreal_abs(major_r).map(|value| hreal_cmp_f64(value, tolerance())),
+                Some(Ordering::Greater)
+            )
+            || !matches!(
+                hreal_abs(minor_r).map(|value| hreal_cmp_f64(value, tolerance())),
+                Some(Ordering::Greater)
+            )
             || segments_major < 3
             || segments_minor < 3
         {
             return Mesh::empty(metadata);
         }
 
-        let circle = Profile::circle(minor_r, segments_minor.max(3), metadata.clone())
-            .translate(major_r, 0.0, 0.0);
+        let Some(profile_offset) = hreal_mul(major_r, 1.0) else {
+            return Mesh::empty(metadata);
+        };
+        let circle = Profile::circle(minor_r, segments_minor, metadata.clone()).translate(
+            profile_offset,
+            0.0,
+            0.0,
+        );
         circle
-            .revolve(360.0, segments_major.max(3))
+            .revolve(360.0, segments_major)
             .unwrap_or_else(|_| Mesh::empty(metadata))
     }
 
