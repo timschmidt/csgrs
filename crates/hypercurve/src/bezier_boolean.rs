@@ -2056,6 +2056,53 @@ pub struct BezierBooleanAlgebraicParameterAuditReport2 {
     pub blocker_count: usize,
 }
 
+/// Readiness status for consuming audited algebraic parameter events.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum BezierBooleanAlgebraicParameterReadinessStatus {
+    /// No scheduler or algebraic parameter work exists.
+    Empty,
+    /// The scheduler did not need algebraic parameter evidence.
+    NotNeeded,
+    /// Existing rational split events already satisfy the scheduler.
+    RationalSplitEventsReady,
+    /// Audited algebraic parameter events are packaged for later exact stages.
+    Ready,
+    /// Algebraic-parameter audit blocked consumption.
+    AuditBlocked,
+}
+
+/// Readiness package for future algebraic ordering and splitting.
+///
+/// This report is deliberately still non-mutating. It consumes an audited
+/// [`BezierBooleanAlgebraicParameterHandoffReport2`] and separates exact
+/// rational witnesses from represented interval roots while preserving the
+/// original event objects. Exact rational witnesses may be bridged into the
+/// existing rational split path by callers, but interval roots require a later
+/// algebraic ordering/splitting certificate. This is the object-level staging
+/// required by Yap (1997): exact evidence becomes explicit combinatorial data
+/// before construction, and non-rational roots are never approximated.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BezierBooleanAlgebraicParameterReadinessReport2 {
+    /// Coarse readiness status.
+    pub status: BezierBooleanAlgebraicParameterReadinessStatus,
+    /// Audit status used to derive readiness.
+    pub audit_status: BezierBooleanAlgebraicParameterAuditStatus,
+    /// Retained exact algebraic parameter events.
+    pub events: Vec<BezierBooleanAlgebraicParameterEvent2>,
+    /// Events with exact rational witnesses.
+    pub exact_rational_events: Vec<BezierBooleanAlgebraicParameterEvent2>,
+    /// Events represented only by isolating intervals.
+    pub interval_events: Vec<BezierBooleanAlgebraicParameterEvent2>,
+    /// Number of retained events.
+    pub event_count: usize,
+    /// Number of exact rational witness events.
+    pub exact_rational_event_count: usize,
+    /// Number of interval-only algebraic events.
+    pub interval_event_count: usize,
+    /// Number of retained blockers.
+    pub blocker_count: usize,
+}
+
 /// Replay status for exact roots returned by `hypersolve`.
 ///
 /// Root isolation is only a proposal stage for boolean topology. `hypersolve`
@@ -11942,6 +11989,112 @@ impl BezierBooleanAlgebraicParameterAuditReport2 {
                 | BezierBooleanAlgebraicParameterAuditStatus::InvalidAlgebraicEvidence
                 | BezierBooleanAlgebraicParameterAuditStatus::InvalidParameterDomain
         )
+    }
+}
+
+impl BezierBooleanAlgebraicParameterReadinessReport2 {
+    /// Packages an audited algebraic-parameter handoff for future exact consumers.
+    pub fn from_handoff(
+        handoff: &BezierBooleanAlgebraicParameterHandoffReport2,
+        policy: &CurvePolicy,
+    ) -> Classification<Self> {
+        let audit = match handoff.audit(policy) {
+            Classification::Decided(audit) => audit,
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        };
+
+        match audit.status {
+            BezierBooleanAlgebraicParameterAuditStatus::Empty => {
+                return Classification::Decided(Self::blocked_or_empty(
+                    BezierBooleanAlgebraicParameterReadinessStatus::Empty,
+                    audit.status,
+                    Vec::new(),
+                    0,
+                ));
+            }
+            BezierBooleanAlgebraicParameterAuditStatus::NotNeeded => {
+                return Classification::Decided(Self::blocked_or_empty(
+                    BezierBooleanAlgebraicParameterReadinessStatus::NotNeeded,
+                    audit.status,
+                    Vec::new(),
+                    0,
+                ));
+            }
+            BezierBooleanAlgebraicParameterAuditStatus::RationalSplitEventsReady => {
+                return Classification::Decided(Self::blocked_or_empty(
+                    BezierBooleanAlgebraicParameterReadinessStatus::RationalSplitEventsReady,
+                    audit.status,
+                    Vec::new(),
+                    0,
+                ));
+            }
+            BezierBooleanAlgebraicParameterAuditStatus::Valid => {}
+            BezierBooleanAlgebraicParameterAuditStatus::HandoffBlocked
+            | BezierBooleanAlgebraicParameterAuditStatus::CountMismatch
+            | BezierBooleanAlgebraicParameterAuditStatus::UnsupportedRole
+            | BezierBooleanAlgebraicParameterAuditStatus::InvalidAlgebraicEvidence
+            | BezierBooleanAlgebraicParameterAuditStatus::InvalidParameterDomain => {
+                return Classification::Decided(Self::blocked_or_empty(
+                    BezierBooleanAlgebraicParameterReadinessStatus::AuditBlocked,
+                    audit.status,
+                    Vec::new(),
+                    audit.blocker_count.max(1),
+                ));
+            }
+        }
+
+        let exact_rational_events = handoff
+            .events
+            .iter()
+            .filter(|event| event.root.exact_rational_witness().is_some())
+            .cloned()
+            .collect::<Vec<_>>();
+        let interval_events = handoff
+            .events
+            .iter()
+            .filter(|event| event.root.exact_rational_witness().is_none())
+            .cloned()
+            .collect::<Vec<_>>();
+        Classification::Decided(Self {
+            status: BezierBooleanAlgebraicParameterReadinessStatus::Ready,
+            audit_status: audit.status,
+            events: handoff.events.clone(),
+            event_count: handoff.events.len(),
+            exact_rational_event_count: exact_rational_events.len(),
+            interval_event_count: interval_events.len(),
+            exact_rational_events,
+            interval_events,
+            blocker_count: 0,
+        })
+    }
+
+    /// Returns true when algebraic parameter events are ready for future exact consumers.
+    pub fn is_ready(&self) -> bool {
+        self.status == BezierBooleanAlgebraicParameterReadinessStatus::Ready
+    }
+
+    /// Returns true when readiness retained audit blockers.
+    pub fn has_blockers(&self) -> bool {
+        self.status == BezierBooleanAlgebraicParameterReadinessStatus::AuditBlocked
+    }
+
+    fn blocked_or_empty(
+        status: BezierBooleanAlgebraicParameterReadinessStatus,
+        audit_status: BezierBooleanAlgebraicParameterAuditStatus,
+        events: Vec<BezierBooleanAlgebraicParameterEvent2>,
+        blocker_count: usize,
+    ) -> Self {
+        Self {
+            status,
+            audit_status,
+            events,
+            exact_rational_events: Vec::new(),
+            interval_events: Vec::new(),
+            event_count: 0,
+            exact_rational_event_count: 0,
+            interval_event_count: 0,
+            blocker_count,
+        }
     }
 }
 
