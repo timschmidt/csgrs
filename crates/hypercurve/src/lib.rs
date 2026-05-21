@@ -76,6 +76,7 @@ pub use bezier_boolean::{
     BezierBooleanLoopGraphWalkStatus, BezierBooleanLoopNestingDepthFact2,
     BezierBooleanLoopNestingDepthFactReport2, BezierBooleanLoopNestingDepthFactStatus,
     BezierBooleanLoopNestingRoleReport2, BezierBooleanLoopNestingRoleStatus,
+    BezierBooleanAlgebraicParameterAuditReport2, BezierBooleanAlgebraicParameterAuditStatus,
     BezierBooleanAlgebraicParameterEvent2, BezierBooleanAlgebraicParameterHandoffReport2,
     BezierBooleanAlgebraicParameterHandoffStatus, BezierBooleanAlgebraicParameterRole,
     BezierBooleanLoopRoleAssignmentReport2, BezierBooleanLoopRoleAssignmentStatus,

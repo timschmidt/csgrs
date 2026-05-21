@@ -2002,6 +2002,60 @@ pub struct BezierBooleanAlgebraicParameterHandoffReport2 {
     pub uncertainty_reason: Option<UncertaintyReason>,
 }
 
+/// Audit status for represented algebraic Bezier parameters.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum BezierBooleanAlgebraicParameterAuditStatus {
+    /// No scheduler or algebraic parameter work exists.
+    Empty,
+    /// The scheduler did not need algebraic parameter evidence.
+    NotNeeded,
+    /// Existing rational split events already satisfy the scheduler.
+    RationalSplitEventsReady,
+    /// Every retained algebraic event is structurally valid for later exact stages.
+    Valid,
+    /// The handoff was blocked before algebraic parameter auditing.
+    HandoffBlocked,
+    /// The handoff's public counts disagree with retained events.
+    CountMismatch,
+    /// An event role is not supported by the current univariate handoff.
+    UnsupportedRole,
+    /// An event carries invalid algebraic-root evidence.
+    InvalidAlgebraicEvidence,
+    /// An event's isolating interval is outside the Bezier unit domain.
+    InvalidParameterDomain,
+}
+
+/// Structural audit for algebraic parameter events.
+///
+/// This report is the algebraic counterpart to
+/// [`BezierBooleanSplitPlanAuditReport2`]. It validates that a ready
+/// [`BezierBooleanAlgebraicParameterHandoffReport2`] has internally consistent
+/// counts and only unit-domain, validated represented roots before later
+/// ordering, overlap, containment, or split layers consume those events. It
+/// does not compare algebraic roots to each other; algebraic ordering remains
+/// a later `hypersolve`/`hyperlimit` certificate. Yap (1997) is the governing
+/// rule: exact algebraic evidence is preserved as an object and audited before
+/// construction, not sampled into primitive floats.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct BezierBooleanAlgebraicParameterAuditReport2 {
+    /// Final audit status.
+    pub status: BezierBooleanAlgebraicParameterAuditStatus,
+    /// Handoff status used to derive this audit.
+    pub handoff_status: BezierBooleanAlgebraicParameterHandoffStatus,
+    /// Number of retained algebraic parameter events checked.
+    pub checked_event_count: usize,
+    /// Number of public count mismatches found.
+    pub count_mismatch_count: usize,
+    /// Number of event roles unsupported by the current univariate handoff.
+    pub unsupported_role_count: usize,
+    /// Number of invalid represented-root payloads.
+    pub invalid_algebraic_evidence_count: usize,
+    /// Number of represented-root intervals outside `[0, 1]`.
+    pub out_of_range_parameter_count: usize,
+    /// Number of retained blocking preconditions.
+    pub blocker_count: usize,
+}
+
 /// Replay status for exact roots returned by `hypersolve`.
 ///
 /// Root isolation is only a proposal stage for boolean topology. `hypersolve`
@@ -11767,6 +11821,126 @@ impl BezierBooleanAlgebraicParameterHandoffReport2 {
                 | BezierBooleanAlgebraicParameterHandoffStatus::MissingAlgebraicRoots
                 | BezierBooleanAlgebraicParameterHandoffStatus::InvalidAlgebraicEvidence
                 | BezierBooleanAlgebraicParameterHandoffStatus::InvalidParameterDomain
+        )
+    }
+
+    /// Audits retained algebraic parameter events before future exact consumers.
+    ///
+    /// The current univariate algebraic-root handoff can only certify shared
+    /// monotone-range parameters. First/second curve roles require paired
+    /// curve-curve event evidence and therefore remain unsupported here. This
+    /// check also validates count fields and replays the represented-root
+    /// validation/unit-domain obligations so later layers do not trust stale or
+    /// forged algebraic events.
+    pub fn audit(
+        &self,
+        policy: &CurvePolicy,
+    ) -> Classification<BezierBooleanAlgebraicParameterAuditReport2> {
+        let mut audit = BezierBooleanAlgebraicParameterAuditReport2 {
+            status: BezierBooleanAlgebraicParameterAuditStatus::HandoffBlocked,
+            handoff_status: self.status,
+            checked_event_count: 0,
+            count_mismatch_count: 0,
+            unsupported_role_count: 0,
+            invalid_algebraic_evidence_count: 0,
+            out_of_range_parameter_count: 0,
+            blocker_count: 0,
+        };
+
+        match self.status {
+            BezierBooleanAlgebraicParameterHandoffStatus::Empty => {
+                audit.status = BezierBooleanAlgebraicParameterAuditStatus::Empty;
+                return Classification::Decided(audit);
+            }
+            BezierBooleanAlgebraicParameterHandoffStatus::NotNeeded => {
+                audit.status = BezierBooleanAlgebraicParameterAuditStatus::NotNeeded;
+                return Classification::Decided(audit);
+            }
+            BezierBooleanAlgebraicParameterHandoffStatus::RationalSplitEventsReady => {
+                audit.status =
+                    BezierBooleanAlgebraicParameterAuditStatus::RationalSplitEventsReady;
+                return Classification::Decided(audit);
+            }
+            BezierBooleanAlgebraicParameterHandoffStatus::Ready => {}
+            BezierBooleanAlgebraicParameterHandoffStatus::HandoffBlocked
+            | BezierBooleanAlgebraicParameterHandoffStatus::MissingAlgebraicRoots
+            | BezierBooleanAlgebraicParameterHandoffStatus::InvalidAlgebraicEvidence
+            | BezierBooleanAlgebraicParameterHandoffStatus::InvalidParameterDomain => {
+                audit.blocker_count = self.blocker_count.max(1);
+                return Classification::Decided(audit);
+            }
+        }
+
+        audit.checked_event_count = self.events.len();
+        if self.required_algebraic_parameter_count != self.events.len() {
+            audit.count_mismatch_count += 1;
+        }
+        if self.supplied_algebraic_parameter_count < self.events.len() {
+            audit.count_mismatch_count += 1;
+        }
+        let exact_count = self
+            .events
+            .iter()
+            .filter(|event| event.root.exact_rational_witness().is_some())
+            .count();
+        let interval_count = self.events.len().saturating_sub(exact_count);
+        if self.exact_rational_parameter_count != exact_count {
+            audit.count_mismatch_count += 1;
+        }
+        if self.interval_parameter_count != interval_count {
+            audit.count_mismatch_count += 1;
+        }
+
+        for event in &self.events {
+            if event.role != BezierBooleanAlgebraicParameterRole::SharedRange {
+                audit.unsupported_role_count += 1;
+            }
+            if !event.root.is_valid() {
+                audit.invalid_algebraic_evidence_count += 1;
+                continue;
+            }
+            match algebraic_root_interval_in_unit_domain(&event.root, policy) {
+                Classification::Decided(true) => {}
+                Classification::Decided(false) => audit.out_of_range_parameter_count += 1,
+                Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+            }
+        }
+
+        audit.blocker_count = audit.count_mismatch_count
+            + audit.unsupported_role_count
+            + audit.invalid_algebraic_evidence_count
+            + audit.out_of_range_parameter_count;
+        audit.status = if audit.count_mismatch_count > 0 {
+            BezierBooleanAlgebraicParameterAuditStatus::CountMismatch
+        } else if audit.unsupported_role_count > 0 {
+            BezierBooleanAlgebraicParameterAuditStatus::UnsupportedRole
+        } else if audit.invalid_algebraic_evidence_count > 0 {
+            BezierBooleanAlgebraicParameterAuditStatus::InvalidAlgebraicEvidence
+        } else if audit.out_of_range_parameter_count > 0 {
+            BezierBooleanAlgebraicParameterAuditStatus::InvalidParameterDomain
+        } else {
+            BezierBooleanAlgebraicParameterAuditStatus::Valid
+        };
+
+        Classification::Decided(audit)
+    }
+}
+
+impl BezierBooleanAlgebraicParameterAuditReport2 {
+    /// Returns true when retained algebraic parameter events passed audit.
+    pub fn is_valid(&self) -> bool {
+        self.status == BezierBooleanAlgebraicParameterAuditStatus::Valid
+    }
+
+    /// Returns true when the audit retained blockers or stale evidence.
+    pub fn has_blockers(&self) -> bool {
+        matches!(
+            self.status,
+            BezierBooleanAlgebraicParameterAuditStatus::HandoffBlocked
+                | BezierBooleanAlgebraicParameterAuditStatus::CountMismatch
+                | BezierBooleanAlgebraicParameterAuditStatus::UnsupportedRole
+                | BezierBooleanAlgebraicParameterAuditStatus::InvalidAlgebraicEvidence
+                | BezierBooleanAlgebraicParameterAuditStatus::InvalidParameterDomain
         )
     }
 }
