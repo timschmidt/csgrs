@@ -4,13 +4,14 @@ use hypersolve::{
     Constraint, EqualitySubstitution, Expr, IntervalBoxCertificationPackage, PreparedProblem,
     PreparedSolverBlock, Problem, ProposalEngineKind, ProposalEnginePrecision,
     ProposalEngineReport, SolverConfig, SolverPoint2, SolverState, SparseResidualTerm, SymbolId,
-    VariableBall, apply_equality_substitution_classes, build_equality_substitution_classes,
-    certify_affine_krawczyk_box, certify_candidate, certify_candidate_domains,
-    certify_direct_univariate_quadratic_roots, certify_interval_box_candidate,
-    certify_multivariate_quadratic_interval_candidate, certify_multivariate_quadratic_krawczyk_box,
-    certify_quadratic_interval_candidate, certify_univariate_quadratic_alpha,
-    certify_univariate_quadratic_krawczyk_box, compare_algebraic_root_representations,
-    context_from_problem, count_bernstein_univariate_polynomial_interval_roots,
+    VariableBall, apply_equality_substitution_classes, audit_active_set,
+    build_equality_substitution_classes, certify_affine_krawczyk_box, certify_candidate,
+    certify_candidate_domains, certify_direct_univariate_quadratic_roots,
+    certify_interval_box_candidate, certify_multivariate_quadratic_interval_candidate,
+    certify_multivariate_quadratic_krawczyk_box, certify_quadratic_interval_candidate,
+    certify_univariate_quadratic_alpha, certify_univariate_quadratic_krawczyk_box,
+    compare_algebraic_root_representations, context_from_problem,
+    count_bernstein_univariate_polynomial_interval_roots,
     count_descartes_univariate_polynomial_roots, determinant_bareiss,
     eliminate_affine_rows_with_substitution_classes, isolate_univariate_polynomial_roots,
     replay_dense_linear_residuals, replay_sparse_linear_residuals,
@@ -464,6 +465,15 @@ fn certification(c: &mut Criterion) {
     });
     c.bench_function("certify_affine_candidate_exact", |b| {
         b.iter(|| certify_candidate(&prepared, &context))
+    });
+    c.bench_function("audit_active_set", |b| {
+        b.iter(|| {
+            audit_active_set(
+                &prepared,
+                &context,
+                hypersolve::CandidateCertificationConfig::default(),
+            )
+        })
     });
     c.bench_function("report_lossy_adapter_only_candidate", |b| {
         b.iter(|| {

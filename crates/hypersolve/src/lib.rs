@@ -5,6 +5,7 @@
 //! facade, a predicate/classification facade, and a small iterative solver
 //! skeleton.
 
+pub mod active_set;
 pub mod affine;
 pub mod algebraic;
 pub mod alpha;
@@ -29,6 +30,9 @@ pub mod solver;
 pub mod solver_block;
 pub mod symbolic;
 
+pub use active_set::{
+    ActiveSetAuditReport, ActiveSetAuditRow, ActiveSetRowStatus, audit_active_set,
+};
 pub use affine::PreparedAffineResidual;
 pub use algebraic::{
     AlgebraicRootComparisonReport, AlgebraicRootComparisonStatus, AlgebraicRootKind,
