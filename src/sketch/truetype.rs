@@ -1,9 +1,13 @@
 //! Create `Profile`s using ttf fonts
 
-use crate::float_types::{Real, hxy_ring_orientation_sign, tolerance};
+use crate::float_types::{
+    Real, hreal_cmp_f64, hreal_div, hreal_from_f64, hreal_gt_f64, hreal_mul, hreal_sum,
+    hxy_ring_orientation_sign, tolerance,
+};
 use crate::sketch::Profile;
 use hypercurve::{Contour2, CurveString2, Region2};
 use hyperreal::RealSign;
+use std::cmp::Ordering;
 use std::fmt::Debug;
 use ttf_parser::{Face, GlyphId, OutlineBuilder};
 use ttf_utils::Outline;
@@ -44,13 +48,22 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
 
         // Treat `scale` as points-per-em and convert points to millimeters.
         let units_per_em = face.units_per_em() as Real;
-        if units_per_em <= 0.0 || !scale.is_finite() {
+        let Ok(scale_h) = hreal_from_f64(scale) else {
+            return Profile::empty(metadata);
+        };
+        if !hreal_gt_f64(&scale_h, 0.0)
+            || hreal_cmp_f64(units_per_em, 0.0) != Ordering::Greater
+        {
             return Profile::empty(metadata);
         }
-        let font_scale = scale * 0.3527777 / units_per_em;
+        let Some(font_scale) =
+            hreal_mul(scale, 0.3527777).and_then(|scaled| hreal_div(scaled, units_per_em))
+        else {
+            return Profile::empty(metadata);
+        };
         let default_advance = default_advance(&face, font_scale);
         let line_advance = line_advance(&face, font_scale);
-        let tab_advance = default_advance * 4.0;
+        let tab_advance = hreal_mul(default_advance, 4.0).unwrap_or(default_advance);
 
         let mut material_contours = Vec::new();
         let mut hole_contours = Vec::new();
@@ -89,7 +102,11 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
             // Find glyph index in the font
             if let Some(gid) = face.glyph_index(ch) {
                 if let Some(previous) = previous_glyph {
-                    cursor_x += glyph_pair_kerning(&face, previous, gid) * font_scale;
+                    if let Some(kerning) =
+                        hreal_mul(glyph_pair_kerning(&face, previous, gid), font_scale)
+                    {
+                        cursor_x += kerning;
+                    }
                 }
 
                 // Extract the glyph outline (if any)
@@ -155,28 +172,36 @@ fn glyph_advance(
     default_advance: Real,
 ) -> Real {
     face.glyph_hor_advance(glyph_id)
-        .map(|advance| advance as Real * font_scale)
-        .filter(|advance| advance.is_finite() && *advance >= 0.0)
+        .and_then(|advance| hreal_mul(advance as Real, font_scale))
+        .filter(|advance| hreal_cmp_f64(*advance, 0.0) != Ordering::Less)
         .unwrap_or(default_advance)
 }
 
 fn default_advance(face: &Face<'_>, font_scale: Real) -> Real {
     face.glyph_index(' ')
         .and_then(|glyph_id| face.glyph_hor_advance(glyph_id))
-        .map(|advance| advance as Real * font_scale)
-        .filter(|advance| advance.is_finite() && *advance > 0.0)
-        .unwrap_or_else(|| face.units_per_em() as Real * font_scale * 0.5)
+        .and_then(|advance| hreal_mul(advance as Real, font_scale))
+        .filter(|advance| hreal_cmp_f64(*advance, 0.0) == Ordering::Greater)
+        .unwrap_or_else(|| {
+            hreal_mul(face.units_per_em() as Real, font_scale)
+                .and_then(|advance| hreal_mul(advance, 0.5))
+                .unwrap_or(0.0)
+        })
 }
 
 fn line_advance(face: &Face<'_>, font_scale: Real) -> Real {
     let height = face.height() as Real;
     let line_gap = face.line_gap() as Real;
-    let advance = (height + line_gap).max(face.units_per_em() as Real) * font_scale;
-    if advance.is_finite() && advance > 0.0 {
-        advance
+    let nominal = hreal_sum(&[height, line_gap]).unwrap_or(face.units_per_em() as Real);
+    let em = face.units_per_em() as Real;
+    let line_units = if hreal_cmp_f64(nominal, em) == Ordering::Less {
+        em
     } else {
-        face.units_per_em() as Real * font_scale
-    }
+        nominal
+    };
+    hreal_mul(line_units, font_scale)
+        .filter(|advance| hreal_cmp_f64(*advance, 0.0) == Ordering::Greater)
+        .unwrap_or_else(|| hreal_mul(em, font_scale).unwrap_or(0.0))
 }
 
 fn glyph_pair_kerning(face: &Face<'_>, left: GlyphId, right: GlyphId) -> Real {
