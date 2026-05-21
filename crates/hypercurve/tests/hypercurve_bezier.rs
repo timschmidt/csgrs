@@ -43,6 +43,7 @@ use hypercurve::{
     BezierBooleanPathSchedulerStatus, BezierBooleanQuadraticFragmentReport2,
     BezierBooleanRationalQuadraticFragmentReport2, BezierBooleanRegionAssemblyReport2,
     BezierBooleanRegionAssemblyStatus, BezierBooleanResultReport2, BezierBooleanResultStatus,
+    BezierBooleanRootCountPrefilterReport2, BezierBooleanRootCountPrefilterStatus,
     BezierBooleanRootIsolationConstructionReport2, BezierBooleanRootIsolationConstructionStatus,
     BezierBooleanRootIsolationHandoffReport2, BezierBooleanRootIsolationHandoffStatus,
     BezierBooleanRootIsolationReplayReport2, BezierBooleanRootIsolationReplayStatus,
@@ -74,9 +75,11 @@ use hypercurve::{
 use hypersolve::{
     AlgebraicRootKind, AlgebraicRootRefinementComparisonConfig, AlgebraicRootRepresentation,
     AlgebraicRootRepresentationReport, AlgebraicRootRepresentationStatus,
-    AlgebraicRootValidationReport, AlgebraicRootValidationStatus, BernsteinSubdivisionInterval,
-    BernsteinSubdivisionIntervalStatus, BernsteinSubdivisionReport, BernsteinSubdivisionStatus,
-    IsolatedRootInterval, RootIsolationStatus, SymbolId, UnivariateRootIsolationReport,
+    AlgebraicRootValidationReport, AlgebraicRootValidationStatus, BernsteinRootCountReport,
+    BernsteinRootCountStatus, BernsteinSubdivisionInterval, BernsteinSubdivisionIntervalStatus,
+    BernsteinSubdivisionReport, BernsteinSubdivisionStatus, DescartesRootCountReport,
+    DescartesRootCountStatus, IsolatedRootInterval, RootIsolationStatus, SymbolId,
+    UnivariateRootIsolationReport,
 };
 use proptest::prelude::*;
 
@@ -5188,6 +5191,153 @@ fn bezier_boolean_root_isolation_replay_blocks_bernstein_non_witnesses() {
     assert_eq!(replay.hypersolve_bernstein_isolating_interval_count, 1);
     assert_eq!(replay.hypersolve_bernstein_unusable_count, 1);
     assert_eq!(replay.missing_isolation_count, 1);
+}
+
+#[test]
+fn bezier_boolean_root_count_prefilter_discharges_empty_bernstein_spans() {
+    let range = BezierPathRangeOrderReport2::from_graph_order(
+        &BezierMonotoneGraphOrder::IntersectsOrTouches {
+            parameters: Vec::new(),
+            spans: vec![span(ratio(1, 4), ratio(1, 2))],
+        },
+    );
+    let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &[range]);
+    let count = BernsteinRootCountReport {
+        constraint_index: 0,
+        symbol: None,
+        degree: Some(3),
+        lower: ratio(1, 4),
+        upper: ratio(1, 2),
+        status: BernsteinRootCountStatus::Counted,
+        bernstein_coefficients: vec![Real::one(), Real::one(), Real::one()],
+        variation_bound: Some(0),
+        root_count_parity: Some(0),
+        root_at_lower: Some(false),
+        root_at_upper: Some(false),
+        message: None,
+    };
+
+    let prefilter =
+        BezierBooleanRootCountPrefilterReport2::from_hypersolve_bernstein_root_count_reports(
+            &scheduler,
+            &[count],
+        );
+
+    assert_eq!(
+        prefilter.status,
+        BezierBooleanRootCountPrefilterStatus::NoRootsProven
+    );
+    assert!(prefilter.can_discharge_isolation());
+    assert!(!prefilter.has_blockers());
+    assert_eq!(prefilter.required_isolation_count, 1);
+    assert_eq!(prefilter.hypersolve_bernstein_empty_interval_count, 1);
+    assert_eq!(
+        prefilter.hypersolve_bernstein_possible_root_interval_count,
+        0
+    );
+
+    let readiness = match BezierBooleanConstructionReadinessReport2::from_root_count_prefilter(
+        &prefilter,
+        &policy(),
+    ) {
+        Classification::Decided(report) => report,
+        Classification::Uncertain(reason) => panic!("unexpected readiness uncertainty: {reason:?}"),
+    };
+    assert_eq!(
+        readiness.status,
+        BezierBooleanConstructionReadinessStatus::Empty
+    );
+}
+
+#[test]
+fn bezier_boolean_root_count_prefilter_blocks_possible_bernstein_roots() {
+    let range = BezierPathRangeOrderReport2::from_graph_order(
+        &BezierMonotoneGraphOrder::IntersectsOrTouches {
+            parameters: Vec::new(),
+            spans: vec![span(ratio(1, 4), ratio(1, 2))],
+        },
+    );
+    let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &[range]);
+    let count = BernsteinRootCountReport {
+        constraint_index: 0,
+        symbol: None,
+        degree: Some(3),
+        lower: ratio(1, 4),
+        upper: ratio(1, 2),
+        status: BernsteinRootCountStatus::Counted,
+        bernstein_coefficients: vec![Real::one(), -Real::one(), Real::one()],
+        variation_bound: Some(2),
+        root_count_parity: Some(0),
+        root_at_lower: Some(false),
+        root_at_upper: Some(false),
+        message: None,
+    };
+
+    let prefilter =
+        BezierBooleanRootCountPrefilterReport2::from_hypersolve_bernstein_root_count_reports(
+            &scheduler,
+            &[count],
+        );
+
+    assert_eq!(
+        prefilter.status,
+        BezierBooleanRootCountPrefilterStatus::NeedsRootIsolation
+    );
+    assert!(prefilter.has_blockers());
+    assert_eq!(
+        prefilter.hypersolve_bernstein_possible_root_interval_count,
+        1
+    );
+
+    let readiness = match BezierBooleanConstructionReadinessReport2::from_root_count_prefilter(
+        &prefilter,
+        &policy(),
+    ) {
+        Classification::Decided(report) => report,
+        Classification::Uncertain(reason) => panic!("unexpected readiness uncertainty: {reason:?}"),
+    };
+    assert_eq!(
+        readiness.status,
+        BezierBooleanConstructionReadinessStatus::Blocked
+    );
+}
+
+#[test]
+fn bezier_boolean_root_count_prefilter_accepts_descartes_zero_root_proof() {
+    let range = BezierPathRangeOrderReport2::from_graph_order(
+        &BezierMonotoneGraphOrder::IntersectsOrTouches {
+            parameters: Vec::new(),
+            spans: vec![span(ratio(1, 4), ratio(1, 2))],
+        },
+    );
+    let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &[range]);
+    let count = DescartesRootCountReport {
+        constraint_index: 0,
+        symbol: None,
+        degree: Some(2),
+        status: DescartesRootCountStatus::Counted,
+        zero_root_multiplicity: Some(0),
+        positive_variations: Some(0),
+        negative_variations: Some(0),
+        positive_root_count_parity: Some(0),
+        negative_root_count_parity: Some(0),
+        message: None,
+    };
+
+    let prefilter =
+        BezierBooleanRootCountPrefilterReport2::from_hypersolve_descartes_root_count_reports(
+            &scheduler,
+            &[count],
+        );
+
+    assert_eq!(
+        prefilter.status,
+        BezierBooleanRootCountPrefilterStatus::NoRootsProven
+    );
+    assert_eq!(prefilter.hypersolve_descartes_report_count, 1);
+    assert_eq!(prefilter.hypersolve_descartes_positive_variation_count, 0);
+    assert_eq!(prefilter.hypersolve_descartes_negative_variation_count, 0);
+    assert!(prefilter.can_discharge_isolation());
 }
 
 #[test]
@@ -13751,6 +13901,72 @@ proptest! {
         );
         prop_assert_eq!(fragments.inserted_parameter_count, span_count);
         prop_assert_eq!(fragments.fragments.len(), span_count + 1);
+    }
+
+    #[test]
+    fn generated_bezier_boolean_root_count_prefilter_discharges_empty_spans(
+        span_count in 1_usize..8,
+    ) {
+        let reports = (0..span_count)
+            .map(|index| {
+                BezierPathRangeOrderReport2::from_graph_order(
+                    &BezierMonotoneGraphOrder::IntersectsOrTouches {
+                        parameters: Vec::new(),
+                        spans: vec![span(ratio(index as i32 + 1, 32), ratio(index as i32 + 2, 32))],
+                    },
+                )
+            })
+            .collect::<Vec<_>>();
+        let count_reports = (0..span_count)
+            .map(|index| BernsteinRootCountReport {
+                constraint_index: index,
+                symbol: None,
+                degree: Some(3),
+                lower: ratio(index as i32 + 1, 32),
+                upper: ratio(index as i32 + 2, 32),
+                status: BernsteinRootCountStatus::Counted,
+                bernstein_coefficients: vec![Real::one(), Real::one()],
+                variation_bound: Some(0),
+                root_count_parity: Some(0),
+                root_at_lower: Some(false),
+                root_at_upper: Some(false),
+                message: None,
+            })
+            .collect::<Vec<_>>();
+        let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &reports);
+
+        let prefilter =
+            BezierBooleanRootCountPrefilterReport2::from_hypersolve_bernstein_root_count_reports(
+                &scheduler,
+                &count_reports,
+            );
+
+        prop_assert_eq!(
+            prefilter.status,
+            BezierBooleanRootCountPrefilterStatus::NoRootsProven
+        );
+        prop_assert_eq!(prefilter.required_isolation_count, span_count);
+        prop_assert_eq!(prefilter.hypersolve_bernstein_count_report_count, span_count);
+        prop_assert_eq!(prefilter.hypersolve_bernstein_empty_interval_count, span_count);
+        prop_assert_eq!(prefilter.blocker_count, 0);
+        prop_assert!(prefilter.can_discharge_isolation());
+
+        let construction =
+            match BezierBooleanConstructionReadinessReport2::from_root_count_prefilter(
+                &prefilter,
+                &policy(),
+            ) {
+                Classification::Decided(report) => report,
+                Classification::Uncertain(reason) => {
+                    prop_assert!(false, "unexpected construction uncertainty: {reason:?}");
+                    return Ok(());
+                }
+            };
+        prop_assert_eq!(
+            construction.status,
+            BezierBooleanConstructionReadinessStatus::Empty
+        );
+        prop_assert!(!construction.has_blockers());
     }
 
     #[test]

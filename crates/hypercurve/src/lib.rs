@@ -108,6 +108,7 @@ pub use bezier_boolean::{
     BezierBooleanQuadraticFragmentReport2, BezierBooleanRationalQuadraticFragmentReport2,
     BezierBooleanRegionAssemblyReport2, BezierBooleanRegionAssemblyStatus,
     BezierBooleanResolvedOverlapEvent2, BezierBooleanResultReport2, BezierBooleanResultStatus,
+    BezierBooleanRootCountPrefilterReport2, BezierBooleanRootCountPrefilterStatus,
     BezierBooleanRootIsolationConstructionReport2, BezierBooleanRootIsolationConstructionStatus,
     BezierBooleanRootIsolationHandoffReport2, BezierBooleanRootIsolationHandoffStatus,
     BezierBooleanRootIsolationReplayReport2, BezierBooleanRootIsolationReplayStatus,

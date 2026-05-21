@@ -25,8 +25,9 @@ use hyperreal::Real;
 use hypersolve::{
     AlgebraicRootComparisonStatus, AlgebraicRootRefinementComparisonConfig,
     AlgebraicRootRefinementComparisonReport, AlgebraicRootRepresentation,
-    AlgebraicRootRepresentationReport, AlgebraicRootRepresentationStatus,
-    BernsteinSubdivisionIntervalStatus, BernsteinSubdivisionReport, BernsteinSubdivisionStatus,
+    AlgebraicRootRepresentationReport, AlgebraicRootRepresentationStatus, BernsteinRootCountReport,
+    BernsteinRootCountStatus, BernsteinSubdivisionIntervalStatus, BernsteinSubdivisionReport,
+    BernsteinSubdivisionStatus, DescartesRootCountReport, DescartesRootCountStatus,
     RootIsolationStatus, UnivariateRootIsolationReport,
     compare_algebraic_root_representations_with_refinement,
 };
@@ -2863,6 +2864,88 @@ pub struct BezierBooleanRootIsolationReplayReport2 {
     /// Number of supplied represented roots outside `[0, 1]`.
     pub out_of_range_parameter_count: usize,
     /// Number of blocking preconditions retained by this replay.
+    pub blocker_count: usize,
+    /// First explicit primitive uncertainty reason retained by the scheduler.
+    pub uncertainty_reason: Option<UncertaintyReason>,
+}
+
+/// Status for replaying `hypersolve` root-count filters into boolean scheduling.
+///
+/// Descartes and Bernstein counts are not split parameters. They are exact
+/// algebraic filters that can either prove an isolation obligation has no root
+/// or prove that root isolation must continue. Yap (1997) requires preserving
+/// that distinction: a zero-root count may discharge a topology obligation,
+/// but a positive variation bound is still evidence to isolate, not a sampled
+/// construction coordinate. Descartes' rule of signs supplies the global
+/// count bound; Bernstein interval variation follows Farouki and Rajan (1988)
+/// and Collins-Loos real-root isolation practice.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum BezierBooleanRootCountPrefilterStatus {
+    /// No scheduler or root-count work exists.
+    Empty,
+    /// The scheduler did not need root-count evidence.
+    NotNeeded,
+    /// Existing rational split events already satisfy the scheduler.
+    SplitEventsReady,
+    /// Every required isolation obligation was certified root-free.
+    NoRootsProven,
+    /// Root-count evidence is valid but still reports possible roots.
+    NeedsRootIsolation,
+    /// An earlier exact stage blocked root-count consumption.
+    HandoffBlocked,
+    /// Fewer count reports were supplied than the scheduler requires.
+    MissingRootCountReports,
+    /// At least one root-count report was unsupported, undecided, or malformed.
+    InvalidRootCountEvidence,
+}
+
+/// Report-bearing prefilter for Descartes/Bernstein root-count evidence.
+///
+/// This report consumes exact root-count summaries from `hypersolve` before
+/// full root representation. It can prove that retained Bezier/conic
+/// isolation spans contain no split root, or it can keep the obligation
+/// explicitly blocked for later Sturm/Bernstein subdivision and algebraic-root
+/// representation. It deliberately does not manufacture split parameters from
+/// positive variation bounds or endpoint flags.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BezierBooleanRootCountPrefilterReport2 {
+    /// Coarse prefilter status.
+    pub status: BezierBooleanRootCountPrefilterStatus,
+    /// Scheduler retained with the prefilter so construction readiness can be replayed.
+    pub scheduler: BezierBooleanPathSchedulerReport2,
+    /// Handoff status that authorized or blocked root-count consumption.
+    pub handoff_status: BezierBooleanRootIsolationHandoffStatus,
+    /// Scheduler status before root-count replay.
+    pub scheduler_status: BezierBooleanPathSchedulerStatus,
+    /// Split plan retained after root-count replay.
+    pub split_plan: BezierBooleanSplitPlanReport2,
+    /// Number of isolation obligations retained by the handoff.
+    pub required_isolation_count: usize,
+    /// Number of root-count reports supplied by the caller.
+    pub supplied_count_report_count: usize,
+    /// Number of Descartes reports consumed.
+    pub hypersolve_descartes_report_count: usize,
+    /// Sum of Descartes zero-root multiplicities reported for counted rows.
+    pub hypersolve_descartes_zero_root_multiplicity: usize,
+    /// Sum of positive-side Descartes variation bounds.
+    pub hypersolve_descartes_positive_variation_count: usize,
+    /// Sum of negative-side Descartes variation bounds.
+    pub hypersolve_descartes_negative_variation_count: usize,
+    /// Number of unsupported or undecided Descartes rows.
+    pub hypersolve_descartes_unusable_count: usize,
+    /// Number of Bernstein root-count reports consumed.
+    pub hypersolve_bernstein_count_report_count: usize,
+    /// Number of Bernstein intervals certified root-free.
+    pub hypersolve_bernstein_empty_interval_count: usize,
+    /// Number of Bernstein intervals that still may contain roots.
+    pub hypersolve_bernstein_possible_root_interval_count: usize,
+    /// Number of Bernstein count reports whose endpoint flags show endpoint roots.
+    pub hypersolve_bernstein_endpoint_root_count: usize,
+    /// Number of unsupported, undecided, invalid, or malformed Bernstein reports.
+    pub hypersolve_bernstein_unusable_count: usize,
+    /// Number of required count reports not supplied.
+    pub missing_count_report_count: usize,
+    /// Number of blocking preconditions retained by the prefilter.
     pub blocker_count: usize,
     /// First explicit primitive uncertainty reason retained by the scheduler.
     pub uncertainty_reason: Option<UncertaintyReason>,
@@ -15905,6 +15988,43 @@ impl BezierBooleanConstructionReadinessReport2 {
         Self::from_split_plan(scheduler, split_plan, policy)
     }
 
+    /// Builds construction readiness from a Descartes/Bernstein root-count prefilter.
+    ///
+    /// A root-count prefilter can only feed construction when it proves that
+    /// every retained root-isolation obligation is empty, or when the original
+    /// scheduler already had represented split events. Positive variation
+    /// bounds, endpoint-root flags without represented parameters, missing
+    /// reports, and unsupported rows remain blockers for the later
+    /// `hypersolve` isolation/replay path. This keeps Descartes/Farouki-Rajan
+    /// algebraic filters as proof stages rather than construction stages, in
+    /// Yap's exact-geometric-computation sense.
+    pub fn from_root_count_prefilter(
+        prefilter: &BezierBooleanRootCountPrefilterReport2,
+        policy: &CurvePolicy,
+    ) -> Classification<Self> {
+        let split_plan = if prefilter.can_discharge_isolation()
+            || matches!(
+                prefilter.status,
+                BezierBooleanRootCountPrefilterStatus::Empty
+                    | BezierBooleanRootCountPrefilterStatus::NotNeeded
+                    | BezierBooleanRootCountPrefilterStatus::SplitEventsReady
+            ) {
+            prefilter.split_plan.clone()
+        } else {
+            BezierBooleanSplitPlanReport2 {
+                status: BezierBooleanSplitPlanStatus::Blocked,
+                scheduler_status: prefilter.scheduler_status,
+                first_curve_parameters: prefilter.split_plan.first_curve_parameters.clone(),
+                second_curve_parameters: prefilter.split_plan.second_curve_parameters.clone(),
+                shared_range_parameters: prefilter.split_plan.shared_range_parameters.clone(),
+                relation_event_count: prefilter.split_plan.relation_event_count,
+                range_event_count: prefilter.split_plan.range_event_count,
+                uncertainty_reason: prefilter.split_plan.uncertainty_reason,
+            }
+        };
+        Self::from_split_plan(prefilter.scheduler.clone(), split_plan, policy)
+    }
+
     /// Builds construction readiness from an algebraic split bridge.
     ///
     /// This is the exact-rational continuation of
@@ -18626,6 +18746,230 @@ impl BezierBooleanRootIsolationReplayReport2 {
             }
         }
         Classification::Decided(out_of_range)
+    }
+}
+
+impl BezierBooleanRootCountPrefilterReport2 {
+    /// Replays Bernstein interval root-count reports against a path scheduler.
+    ///
+    /// A counted interval with zero variation and certified non-root endpoints
+    /// proves that the corresponding isolation obligation has no root. Counted
+    /// intervals with positive variation or endpoint roots still require root
+    /// representation before split insertion. Unsupported, undecided, invalid,
+    /// or endpoint-unknown reports block explicitly. This is the
+    /// Farouki-Rajan Bernstein filter side of the Yap/Collins-Loos exact-root
+    /// pipeline.
+    pub fn from_hypersolve_bernstein_root_count_reports(
+        scheduler: &BezierBooleanPathSchedulerReport2,
+        count_reports: &[BernsteinRootCountReport],
+    ) -> Self {
+        let mut report = Self::from_scheduler(scheduler, count_reports.len());
+        report.hypersolve_bernstein_count_report_count = count_reports.len();
+        report.missing_count_report_count = report
+            .required_isolation_count
+            .saturating_sub(count_reports.len());
+
+        if !report.can_consume_counts() {
+            return report;
+        }
+        if report.missing_count_report_count > 0 {
+            report.status = BezierBooleanRootCountPrefilterStatus::MissingRootCountReports;
+            report.blocker_count = report.missing_count_report_count;
+            return report;
+        }
+
+        for count in count_reports {
+            if count.status != BernsteinRootCountStatus::Counted {
+                report.hypersolve_bernstein_unusable_count += 1;
+                continue;
+            }
+            let endpoints_certified_empty =
+                count.root_at_lower == Some(false) && count.root_at_upper == Some(false);
+            let endpoint_root =
+                count.root_at_lower == Some(true) || count.root_at_upper == Some(true);
+            if endpoint_root {
+                report.hypersolve_bernstein_endpoint_root_count += 1;
+            }
+            match count.variation_bound {
+                Some(0) if endpoints_certified_empty => {
+                    report.hypersolve_bernstein_empty_interval_count += 1;
+                }
+                Some(_) if count.root_at_lower.is_some() && count.root_at_upper.is_some() => {
+                    report.hypersolve_bernstein_possible_root_interval_count += 1;
+                }
+                _ => {
+                    report.hypersolve_bernstein_unusable_count += 1;
+                }
+            }
+        }
+        report.finalize_count_status()
+    }
+
+    /// Replays global Descartes root-count reports against a path scheduler.
+    ///
+    /// Descartes' rule of signs is only accepted as a discharge proof when it
+    /// proves zero roots at zero, on the positive side, and on the negative
+    /// side. Any positive variation bound still requires later interval
+    /// isolation; unsupported or undecided rows remain explicit blockers.
+    pub fn from_hypersolve_descartes_root_count_reports(
+        scheduler: &BezierBooleanPathSchedulerReport2,
+        count_reports: &[DescartesRootCountReport],
+    ) -> Self {
+        let mut report = Self::from_scheduler(scheduler, count_reports.len());
+        report.hypersolve_descartes_report_count = count_reports.len();
+        report.missing_count_report_count = report
+            .required_isolation_count
+            .saturating_sub(count_reports.len());
+
+        if !report.can_consume_counts() {
+            return report;
+        }
+        if report.missing_count_report_count > 0 {
+            report.status = BezierBooleanRootCountPrefilterStatus::MissingRootCountReports;
+            report.blocker_count = report.missing_count_report_count;
+            return report;
+        }
+
+        for count in count_reports {
+            if count.status != DescartesRootCountStatus::Counted {
+                report.hypersolve_descartes_unusable_count += 1;
+                continue;
+            }
+            let Some(zero) = count.zero_root_multiplicity else {
+                report.hypersolve_descartes_unusable_count += 1;
+                continue;
+            };
+            let Some(positive) = count.positive_variations else {
+                report.hypersolve_descartes_unusable_count += 1;
+                continue;
+            };
+            let Some(negative) = count.negative_variations else {
+                report.hypersolve_descartes_unusable_count += 1;
+                continue;
+            };
+            report.hypersolve_descartes_zero_root_multiplicity += zero;
+            report.hypersolve_descartes_positive_variation_count += positive;
+            report.hypersolve_descartes_negative_variation_count += negative;
+            if zero > 0 || positive > 0 || negative > 0 {
+                report.hypersolve_bernstein_possible_root_interval_count += 1;
+            } else {
+                report.hypersolve_bernstein_empty_interval_count += 1;
+            }
+        }
+        report.finalize_count_status()
+    }
+
+    fn from_scheduler(
+        scheduler: &BezierBooleanPathSchedulerReport2,
+        supplied_count_report_count: usize,
+    ) -> Self {
+        let handoff = BezierBooleanRootIsolationHandoffReport2::from_path_scheduler(scheduler);
+        let required_isolation_count =
+            handoff.terminal_region_count + handoff.range_isolating_span_count;
+        let mut report = Self {
+            status: BezierBooleanRootCountPrefilterStatus::HandoffBlocked,
+            scheduler: scheduler.clone(),
+            handoff_status: handoff.status,
+            scheduler_status: scheduler.status,
+            split_plan: BezierBooleanRootIsolationReplayReport2::split_plan_from_replay(
+                scheduler,
+                &[],
+                &[],
+                BezierBooleanSplitPlanStatus::Blocked,
+            ),
+            required_isolation_count,
+            supplied_count_report_count,
+            hypersolve_descartes_report_count: 0,
+            hypersolve_descartes_zero_root_multiplicity: 0,
+            hypersolve_descartes_positive_variation_count: 0,
+            hypersolve_descartes_negative_variation_count: 0,
+            hypersolve_descartes_unusable_count: 0,
+            hypersolve_bernstein_count_report_count: 0,
+            hypersolve_bernstein_empty_interval_count: 0,
+            hypersolve_bernstein_possible_root_interval_count: 0,
+            hypersolve_bernstein_endpoint_root_count: 0,
+            hypersolve_bernstein_unusable_count: 0,
+            missing_count_report_count: required_isolation_count
+                .saturating_sub(supplied_count_report_count),
+            blocker_count: handoff.blocker_count,
+            uncertainty_reason: scheduler.uncertainty_reason,
+        };
+
+        match handoff.status {
+            BezierBooleanRootIsolationHandoffStatus::Empty => {
+                report.status = BezierBooleanRootCountPrefilterStatus::Empty;
+                report.split_plan = BezierBooleanSplitPlanReport2::from_scheduler(scheduler);
+                report.blocker_count = 0;
+            }
+            BezierBooleanRootIsolationHandoffStatus::NotNeeded => {
+                report.status = BezierBooleanRootCountPrefilterStatus::NotNeeded;
+                report.split_plan = BezierBooleanSplitPlanReport2::from_scheduler(scheduler);
+                report.blocker_count = 0;
+            }
+            BezierBooleanRootIsolationHandoffStatus::SplitEventsReady => {
+                report.status = BezierBooleanRootCountPrefilterStatus::SplitEventsReady;
+                report.split_plan = BezierBooleanSplitPlanReport2::from_scheduler(scheduler);
+                report.blocker_count = 0;
+            }
+            BezierBooleanRootIsolationHandoffStatus::ReadyForHypersolve => {}
+            BezierBooleanRootIsolationHandoffStatus::BlockedByParameterRecovery
+            | BezierBooleanRootIsolationHandoffStatus::BlockedByOverlapResolver
+            | BezierBooleanRootIsolationHandoffStatus::BlockedByContactClassification
+            | BezierBooleanRootIsolationHandoffStatus::BlockedByMonotoneDecomposition
+            | BezierBooleanRootIsolationHandoffStatus::BlockedByUnresolved
+            | BezierBooleanRootIsolationHandoffStatus::BlockedByUncertainty => {
+                report.status = BezierBooleanRootCountPrefilterStatus::HandoffBlocked;
+                report.blocker_count = handoff.blocker_count.max(1);
+            }
+        }
+        report
+    }
+
+    fn can_consume_counts(&self) -> bool {
+        self.handoff_status == BezierBooleanRootIsolationHandoffStatus::ReadyForHypersolve
+    }
+
+    fn finalize_count_status(mut self) -> Self {
+        if self.hypersolve_bernstein_unusable_count > 0
+            || self.hypersolve_descartes_unusable_count > 0
+        {
+            self.status = BezierBooleanRootCountPrefilterStatus::InvalidRootCountEvidence;
+            self.blocker_count =
+                self.hypersolve_bernstein_unusable_count + self.hypersolve_descartes_unusable_count;
+        } else if self.hypersolve_bernstein_possible_root_interval_count > 0 {
+            self.status = BezierBooleanRootCountPrefilterStatus::NeedsRootIsolation;
+            self.blocker_count = self.hypersolve_bernstein_possible_root_interval_count;
+        } else {
+            self.status = BezierBooleanRootCountPrefilterStatus::NoRootsProven;
+            self.blocker_count = 0;
+            self.split_plan = BezierBooleanRootIsolationReplayReport2::split_plan_from_replay(
+                &self.scheduler,
+                &[],
+                &[],
+                if self.scheduler.represented_split_event_count > 0 {
+                    BezierBooleanSplitPlanStatus::Ready
+                } else {
+                    BezierBooleanSplitPlanStatus::Empty
+                },
+            );
+        }
+        self
+    }
+
+    /// Returns true when root-count evidence discharged all isolation obligations.
+    pub fn can_discharge_isolation(&self) -> bool {
+        self.status == BezierBooleanRootCountPrefilterStatus::NoRootsProven
+    }
+
+    /// Returns true when root-count evidence or an earlier stage blocks construction.
+    pub fn has_blockers(&self) -> bool {
+        matches!(
+            self.status,
+            BezierBooleanRootCountPrefilterStatus::NeedsRootIsolation
+                | BezierBooleanRootCountPrefilterStatus::HandoffBlocked
+                | BezierBooleanRootCountPrefilterStatus::MissingRootCountReports
+                | BezierBooleanRootCountPrefilterStatus::InvalidRootCountEvidence
+        )
     }
 }
 
