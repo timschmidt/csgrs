@@ -1,9 +1,13 @@
 //! Provides a `MetaBall` struct and functions for creating a `Profile` from [MetaBalls](https://en.wikipedia.org/wiki/Metaballs)
 
-use crate::float_types::{Real, hreal_from_f64, hreal_to_f64, tolerance};
+use crate::float_types::{
+    HReal, Real, hreal_from_f64, hreal_gt_f64, hreal_max_pair, hreal_min_pair, hreal_sign,
+    hreal_to_f64, tolerance,
+};
 use crate::sketch::Profile;
 use hashbrown::HashMap;
 use hypercurve::{Contour2, Point2, Region2};
+use hyperreal::RealSign;
 use std::fmt::Debug;
 
 type SamplePoint = [Real; 2];
@@ -43,77 +47,85 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
             return Profile::empty(metadata);
         }
 
-        // 1) Compute bounding box around all metaballs
-        let mut min_x = Real::MAX;
-        let mut min_y = Real::MAX;
-        let mut max_x = -Real::MAX;
-        let mut max_y = -Real::MAX;
-        for (center, r) in balls {
-            if !r.is_finite() || *r <= 0.0 {
-                continue;
-            }
-            let Some([cx, cy]) = finite_point2_coords(center) else {
-                continue;
-            };
-            let rr = *r + padding;
-            if cx - rr < min_x {
-                min_x = cx - rr;
-            }
-            if cx + rr > max_x {
-                max_x = cx + rr;
-            }
-            if cy - rr < min_y {
-                min_y = cy - rr;
-            }
-            if cy + rr > max_y {
-                max_y = cy + rr;
-            }
+        let Some(padding_h) = hreal_from_f64(padding).ok() else {
+            return Profile::empty(metadata);
+        };
+        if matches!(hreal_sign(&padding_h), Some(RealSign::Negative)) {
+            return Profile::empty(metadata);
         }
-        if !(min_x.is_finite() && min_y.is_finite() && max_x.is_finite() && max_y.is_finite())
-        {
+        let Some(iso_value_h) = hreal_from_f64(iso_value).ok() else {
+            return Profile::empty(metadata);
+        };
+
+        let valid_balls = balls
+            .iter()
+            .filter_map(|(center, radius)| {
+                let radius = hreal_from_f64(*radius).ok()?;
+                matches!(hreal_sign(&radius), Some(RealSign::Positive))
+                    .then_some((center, radius))
+            })
+            .collect::<Vec<_>>();
+        if valid_balls.is_empty() {
             return Profile::empty(metadata);
         }
 
-        let dx = (max_x - min_x) / (nx as Real - 1.0);
-        let dy = (max_y - min_y) / (ny as Real - 1.0);
+        // 1) Compute bounding box around all metaballs in hyperreal space.
+        let Some((min_x, min_y, max_x, max_y)) =
+            metaball_bounds_hreal(&valid_balls, &padding_h)
+        else {
+            return Profile::empty(metadata);
+        };
+
+        let Some(nx_step_count) = hreal_from_f64(nx as Real - 1.0).ok() else {
+            return Profile::empty(metadata);
+        };
+        let Some(ny_step_count) = hreal_from_f64(ny as Real - 1.0).ok() else {
+            return Profile::empty(metadata);
+        };
+        let Some(dx) = ((max_x.clone() - min_x.clone()) / nx_step_count).ok() else {
+            return Profile::empty(metadata);
+        };
+        let Some(dy) = ((max_y.clone() - min_y.clone()) / ny_step_count).ok() else {
+            return Profile::empty(metadata);
+        };
+        let Some(x_coords) = grid_axis_coords(&min_x, &dx, nx) else {
+            return Profile::empty(metadata);
+        };
+        let Some(y_coords) = grid_axis_coords(&min_y, &dy, ny) else {
+            return Profile::empty(metadata);
+        };
 
         // 2) Fill a grid with the summed "influence" minus iso_value
         /// **Mathematical Foundation**: 2D metaball influence I(p) = r²/(|p-c|² + ε)
         /// **Optimization**: Iterator-based computation with early termination for distant points.
-        fn scalar_field(balls: &[(Point2, Real)], x: Real, y: Real) -> Real {
-            let Some(sample) = finite_point2(x, y) else {
-                return 0.0;
-            };
-            balls
-                .iter()
-                .map(|(center, radius)| {
-                    if !radius.is_finite() || *radius <= 0.0 {
-                        return 0.0;
-                    }
-                    let Some(distance_sq) = hreal_to_f64(&sample.distance_squared(center))
-                    else {
-                        return 0.0;
-                    };
+        fn scalar_field(balls: &[(&Point2, HReal)], sample: &Point2) -> Option<HReal> {
+            let mut sum = HReal::zero();
+            for (center, radius) in balls {
+                let radius_squared = radius.clone() * radius.clone();
+                let distance_sq = sample.distance_squared(center);
 
-                    // Early termination for very distant points
-                    let threshold_distance_sq = radius * radius * 1000.0;
-                    if distance_sq > threshold_distance_sq {
-                        0.0
-                    } else {
-                        let denominator = distance_sq + tolerance();
-                        (radius * radius) / denominator
-                    }
-                })
-                .sum()
+                // Early termination for very distant points.
+                let threshold_distance_sq =
+                    radius_squared.clone() * hreal_from_f64(1000.0).ok()?;
+                if hreal_gt_f64(&(distance_sq.clone() - threshold_distance_sq), 0.0) {
+                    continue;
+                }
+
+                let denominator = distance_sq + hreal_from_f64(tolerance()).ok()?;
+                sum = sum + (radius_squared / denominator).ok()?;
+            }
+            Some(sum)
         }
 
-        let mut grid = vec![0.0; nx * ny];
+        let mut grid = vec![HReal::zero(); nx * ny];
         let index = |ix: usize, iy: usize| -> usize { iy * nx + ix };
         for iy in 0..ny {
-            let yv = min_y + (iy as Real) * dy;
+            let yv = &y_coords[iy];
             for ix in 0..nx {
-                let xv = min_x + (ix as Real) * dx;
-                let val = scalar_field(balls, xv, yv) - iso_value;
+                let xv = &x_coords[ix];
+                let sample = Point2::new(xv.clone(), yv.clone());
+                let val = scalar_field(&valid_balls, &sample).unwrap_or_else(HReal::zero)
+                    - iso_value_h.clone();
                 grid[index(ix, iy)] = val;
             }
         }
@@ -126,43 +138,46 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         let mut contours = Vec::<Segment>::new();
 
         // Interpolator:
-        let interpolate = |(x1, y1, v1): (Real, Real, Real),
-                           (x2, y2, v2): (Real, Real, Real)|
-         -> (Real, Real) {
-            let denom = (v2 - v1).abs();
-            if denom < tolerance() {
-                (x1, y1)
+        let interpolate = |(x1, y1, v1): (&HReal, &HReal, &HReal),
+                           (x2, y2, v2): (&HReal, &HReal, &HReal)|
+         -> Option<(Real, Real)> {
+            let delta = v2.clone() - v1.clone();
+            if !hreal_gt_f64(&delta.abs(), tolerance()) {
+                Some((hreal_to_f64(x1)?, hreal_to_f64(y1)?))
             } else {
-                let t = -v1 / (v2 - v1); // crossing at 0
-                (x1 + t * (x2 - x1), y1 + t * (y2 - y1))
+                let t = (HReal::zero() - v1.clone()) / delta; // crossing at 0
+                let t = t.ok()?;
+                let x = x1.clone() + t.clone() * (x2.clone() - x1.clone());
+                let y = y1.clone() + t * (y2.clone() - y1.clone());
+                Some((hreal_to_f64(&x)?, hreal_to_f64(&y)?))
             }
         };
 
         for iy in 0..(ny - 1) {
-            let y0 = min_y + (iy as Real) * dy;
-            let y1 = min_y + ((iy + 1) as Real) * dy;
+            let y0 = &y_coords[iy];
+            let y1 = &y_coords[iy + 1];
 
             for ix in 0..(nx - 1) {
-                let x0 = min_x + (ix as Real) * dx;
-                let x1 = min_x + ((ix + 1) as Real) * dx;
+                let x0 = &x_coords[ix];
+                let x1 = &x_coords[ix + 1];
 
-                let v0 = grid[index(ix, iy)];
-                let v1 = grid[index(ix + 1, iy)];
-                let v2 = grid[index(ix + 1, iy + 1)];
-                let v3 = grid[index(ix, iy + 1)];
+                let v0 = &grid[index(ix, iy)];
+                let v1 = &grid[index(ix + 1, iy)];
+                let v2 = &grid[index(ix + 1, iy + 1)];
+                let v3 = &grid[index(ix, iy + 1)];
 
                 // classification
                 let mut c = 0u8;
-                if v0 >= 0.0 {
+                if !matches!(hreal_sign(v0), Some(RealSign::Negative) | None) {
                     c |= 1;
                 }
-                if v1 >= 0.0 {
+                if !matches!(hreal_sign(v1), Some(RealSign::Negative) | None) {
                     c |= 2;
                 }
-                if v2 >= 0.0 {
+                if !matches!(hreal_sign(v2), Some(RealSign::Negative) | None) {
                     c |= 4;
                 }
-                if v3 >= 0.0 {
+                if !matches!(hreal_sign(v3), Some(RealSign::Negative) | None) {
                     c |= 8;
                 }
                 if c == 0 || c == 15 {
@@ -177,8 +192,9 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
                     let inside_a = (c & mask_a) != 0;
                     let inside_b = (c & mask_b) != 0;
                     if inside_a != inside_b {
-                        let (px, py) = interpolate(corners[a], corners[b]);
-                        pts.push((px, py));
+                        if let Some((px, py)) = interpolate(corners[a], corners[b]) {
+                            pts.push((px, py));
+                        }
                     }
                 };
 
@@ -212,12 +228,37 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     }
 }
 
-fn finite_point2(x: Real, y: Real) -> Option<Point2> {
-    Some(Point2::new(hreal_from_f64(x).ok()?, hreal_from_f64(y).ok()?))
+fn metaball_bounds_hreal(
+    balls: &[(&Point2, HReal)],
+    padding: &HReal,
+) -> Option<(HReal, HReal, HReal, HReal)> {
+    let mut bounds = balls.iter().map(|(center, radius)| {
+        let extent = radius.clone() + padding.clone();
+        Some((
+            center.x().clone() - extent.clone(),
+            center.y().clone() - extent.clone(),
+            center.x().clone() + extent.clone(),
+            center.y().clone() + extent,
+        ))
+    });
+    let (mut min_x, mut min_y, mut max_x, mut max_y) = bounds.next()??;
+    for bounds in bounds {
+        let (next_min_x, next_min_y, next_max_x, next_max_y) = bounds?;
+        min_x = hreal_min_pair(&min_x, &next_min_x)?;
+        min_y = hreal_min_pair(&min_y, &next_min_y)?;
+        max_x = hreal_max_pair(&max_x, &next_max_x)?;
+        max_y = hreal_max_pair(&max_y, &next_max_y)?;
+    }
+    Some((min_x, min_y, max_x, max_y))
 }
 
-fn finite_point2_coords(point: &Point2) -> Option<[Real; 2]> {
-    Some([hreal_to_f64(point.x())?, hreal_to_f64(point.y())?])
+fn grid_axis_coords(origin: &HReal, step: &HReal, count: usize) -> Option<Vec<HReal>> {
+    (0..count)
+        .map(|index| {
+            let index = hreal_from_f64(index as Real).ok()?;
+            Some(origin.clone() + step.clone() * index)
+        })
+        .collect()
 }
 
 // helper – quantise to avoid FP noise
