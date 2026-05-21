@@ -1,11 +1,12 @@
 use criterion::{Criterion, criterion_group, criterion_main};
 use hyperreal::{Rational, Real};
 use hypersolve::{
-    Constraint, EqualitySubstitution, Expr, PreparedProblem, PreparedSolverBlock, Problem,
-    ProposalEngineKind, ProposalEnginePrecision, ProposalEngineReport, SolverConfig, SolverPoint2,
-    SolverState, SymbolId, VariableBall, apply_equality_substitution_classes,
-    build_equality_substitution_classes, certify_affine_krawczyk_box, certify_candidate,
-    certify_candidate_domains, certify_direct_univariate_quadratic_roots,
+    Constraint, EqualitySubstitution, Expr, IntervalBoxCertificationPackage, PreparedProblem,
+    PreparedSolverBlock, Problem, ProposalEngineKind, ProposalEnginePrecision,
+    ProposalEngineReport, SolverConfig, SolverPoint2, SolverState, SymbolId, VariableBall,
+    apply_equality_substitution_classes, build_equality_substitution_classes,
+    certify_affine_krawczyk_box, certify_candidate, certify_candidate_domains,
+    certify_direct_univariate_quadratic_roots, certify_interval_box_candidate,
     certify_multivariate_quadratic_interval_candidate, certify_multivariate_quadratic_krawczyk_box,
     certify_quadratic_interval_candidate, certify_univariate_quadratic_alpha,
     certify_univariate_quadratic_krawczyk_box, context_from_problem,
@@ -306,6 +307,20 @@ fn certification(c: &mut Criterion) {
                     symbol: SymbolId(0),
                     radius: r(1),
                 }],
+                hyperlimit::PredicatePolicy::default(),
+            )
+        })
+    });
+    c.bench_function("certify_interval_box_candidate_report", |b| {
+        b.iter(|| {
+            certify_interval_box_candidate(
+                &prepared_quadratic,
+                &quadratic_context,
+                &[VariableBall {
+                    symbol: SymbolId(0),
+                    radius: r(1),
+                }],
+                IntervalBoxCertificationPackage::UnivariateQuadratic,
                 hyperlimit::PredicatePolicy::default(),
             )
         })

@@ -58,9 +58,9 @@ than internal truth.
   direct equality helpers, and univariate root-isolation reports expose reusable
   exact subproblems.
 - `CandidateCertificationReport`, lossy-adapter-only reports, candidate-domain
-  reports, residual balls, interval certification helpers, affine Krawczyk reports,
-  univariate quadratic alpha reports, and predicate reports describe proof or
-  uncertainty.
+  reports, residual balls, retained interval-box reports, affine Krawczyk
+  reports, univariate quadratic alpha reports, and predicate reports describe
+  proof or uncertainty.
 - `ProposalEngineKind`, `ProposalEngineReport`, `DenseLinearBackend`,
   `LinearSolveReport`, `SolverConfig`, `SolverState`, and `SolveReport` make
   lossy candidate generation explicit.
@@ -110,9 +110,9 @@ Implemented today:
   count bounds, recursive Bernstein subdivision reports, represented algebraic
   root wrappers, square-free reduction, Sturm intervals, bounded interval
   refinement, and exact rational witness replay;
-- candidate, lossy-adapter-only, candidate-domain, interval, affine Krawczyk,
-  univariate and multivariate quadratic Krawczyk, and univariate quadratic alpha
-  certification surfaces;
+- candidate, lossy-adapter-only, candidate-domain, retained interval-box,
+  affine Krawczyk, univariate and multivariate quadratic Krawczyk, and
+  univariate quadratic alpha certification surfaces;
 - exact domain preflight for division, negative powers, square root, logarithm,
   inverse circular, and inverse hyperbolic residual nodes;
 - reusable exact dense linear residual replay for domain crates that build their

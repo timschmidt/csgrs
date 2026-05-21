@@ -36,6 +36,57 @@ pub struct VariableBall {
     pub radius: Real,
 }
 
+/// Retained polynomial package used for interval-box certification.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum IntervalBoxCertificationPackage {
+    /// Use prepared affine residual enclosures only.
+    Affine,
+    /// Use prepared univariate quadratic Taylor enclosures.
+    UnivariateQuadratic,
+    /// Use prepared multivariate quadratic Taylor enclosures.
+    MultivariateQuadratic,
+}
+
+/// Status for an interval-box certification report.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum IntervalBoxCertificationStatus {
+    /// The interval-box replay completed and every active row was certified
+    /// satisfied.
+    Certified,
+    /// The interval-box replay completed and at least one active row was
+    /// certified violated.
+    Violation,
+    /// The interval-box replay completed but at least one active row remained
+    /// explicitly unknown.
+    Unknown,
+    /// The supplied variable balls or retained residual package were invalid
+    /// for this proof stage.
+    InvalidInput,
+}
+
+/// Report-bearing interval-box certification payload.
+///
+/// This wrapper retains the exact variable-ball inputs alongside the ordinary
+/// candidate-certification report. It exists for cross-crate replay surfaces:
+/// physics, circuit, path, and packing crates can pass local candidate boxes
+/// through `hypersolve` without losing the proof payload that bounded the
+/// candidate. The interval shape follows Moore's interval arithmetic
+/// formulation, while the retained report/evidence boundary follows Yap's
+/// exact-object model; see Moore, *Interval Analysis* (1966), and Yap (1997).
+#[derive(Clone, Debug, PartialEq)]
+pub struct IntervalBoxCertificationReport {
+    /// Retained residual package used for the proof attempt.
+    pub package: IntervalBoxCertificationPackage,
+    /// Exact variable balls supplied by the caller.
+    pub variable_balls: Vec<VariableBall>,
+    /// Candidate certification report, when replay reached row certification.
+    pub certification: Option<crate::CandidateCertificationReport>,
+    /// Final report status.
+    pub status: IntervalBoxCertificationStatus,
+    /// Compact invalid-input or uncertainty reason.
+    pub message: Option<String>,
+}
+
 /// Errors that make affine interval certification invalid.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum AffineIntervalError {
@@ -454,6 +505,65 @@ pub fn certify_affine_interval_candidate(
         &residual_balls,
         policy,
     ))
+}
+
+/// Certify a candidate interval box and retain the proof payload.
+///
+/// This is a report-oriented facade over the existing affine and quadratic
+/// interval certifiers. It is intentionally conservative: invalid variable
+/// radii, missing candidate bindings, and undecided magnitudes become explicit
+/// `InvalidInput` reports rather than panics or primitive-float fallbacks.
+pub fn certify_interval_box_candidate(
+    prepared: &PreparedProblem<'_>,
+    context: &EvaluationContext,
+    variable_balls: &[VariableBall],
+    package: IntervalBoxCertificationPackage,
+    policy: PredicatePolicy,
+) -> IntervalBoxCertificationReport {
+    let result = match package {
+        IntervalBoxCertificationPackage::Affine => {
+            certify_affine_interval_candidate(prepared, context, variable_balls, policy)
+                .map_err(interval_box_affine_error_message)
+        }
+        IntervalBoxCertificationPackage::UnivariateQuadratic => {
+            certify_quadratic_interval_candidate(prepared, context, variable_balls, policy)
+                .map_err(interval_box_quadratic_error_message)
+        }
+        IntervalBoxCertificationPackage::MultivariateQuadratic => {
+            certify_multivariate_quadratic_interval_candidate(
+                prepared,
+                context,
+                variable_balls,
+                policy,
+            )
+            .map_err(interval_box_quadratic_error_message)
+        }
+    };
+    match result {
+        Ok(certification) => {
+            let status = if certification.all_satisfied() {
+                IntervalBoxCertificationStatus::Certified
+            } else if certification.has_certified_violation() {
+                IntervalBoxCertificationStatus::Violation
+            } else {
+                IntervalBoxCertificationStatus::Unknown
+            };
+            IntervalBoxCertificationReport {
+                package,
+                variable_balls: variable_balls.to_vec(),
+                certification: Some(certification),
+                status,
+                message: None,
+            }
+        }
+        Err(message) => IntervalBoxCertificationReport {
+            package,
+            variable_balls: variable_balls.to_vec(),
+            certification: None,
+            status: IntervalBoxCertificationStatus::InvalidInput,
+            message: Some(message),
+        },
+    }
 }
 
 /// Certify a square affine equality system with an exact Krawczyk box.
@@ -1251,6 +1361,34 @@ fn validate_variable_balls(
         radii.insert(ball.symbol, ball.radius.clone());
     }
     Ok(radii)
+}
+
+fn interval_box_affine_error_message(error: AffineIntervalError) -> String {
+    match error {
+        AffineIntervalError::NegativeVariableRadius { symbol } => {
+            format!("negative variable radius for symbol {:?}", symbol)
+        }
+        AffineIntervalError::UnknownCoefficientSign {
+            constraint_index,
+            variable_column,
+        } => format!(
+            "unknown affine coefficient sign at constraint {constraint_index}, variable column {variable_column}"
+        ),
+    }
+}
+
+fn interval_box_quadratic_error_message(error: QuadraticIntervalError) -> String {
+    match error {
+        QuadraticIntervalError::NegativeVariableRadius { symbol } => {
+            format!("negative variable radius for symbol {:?}", symbol)
+        }
+        QuadraticIntervalError::UnboundCandidateSymbol { symbol } => {
+            format!("unbound candidate symbol {:?}", symbol)
+        }
+        QuadraticIntervalError::UnknownMagnitudeSign { constraint_index } => {
+            format!("unknown interval magnitude sign at constraint {constraint_index}")
+        }
+    }
 }
 
 fn validate_quadratic_krawczyk_variable_balls(

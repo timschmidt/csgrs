@@ -1,17 +1,18 @@
 use hyperreal::{Real, RealSign};
 use hypersolve::{
     CertifiedCandidateStatus, Constraint, DomainCheckKind, DomainCheckStatus, EqualitySubstitution,
-    EqualitySubstitutionProblem, Expr, MultivariateQuadraticKrawczykStatus, PreparedProblem,
+    EqualitySubstitutionProblem, Expr, IntervalBoxCertificationPackage,
+    IntervalBoxCertificationStatus, MultivariateQuadraticKrawczykStatus, PreparedProblem,
     PreparedSolverBlock, Problem, ProposalEngineKind, ProposalEnginePrecision,
     ProposalEngineReport, RootIsolationStatus, SolverBlockRowKind, SolverConfig, SolverPoint2,
     SolverState, SymbolId, VariableBall, apply_equality_substitution_classes,
     certify_affine_krawczyk_box, certify_candidate, certify_candidate_domains,
-    certify_direct_univariate_quadratic_roots, certify_multivariate_quadratic_interval_candidate,
-    certify_multivariate_quadratic_krawczyk_box, certify_quadratic_interval_candidate,
-    certify_univariate_quadratic_alpha, certify_univariate_quadratic_krawczyk_box,
-    context_from_problem, eliminate_affine_rows_with_substitution_classes,
-    isolate_univariate_polynomial_roots, report_lossy_adapter_only_candidate,
-    solve_damped_least_squares, solve_direct_affine_system,
+    certify_direct_univariate_quadratic_roots, certify_interval_box_candidate,
+    certify_multivariate_quadratic_interval_candidate, certify_multivariate_quadratic_krawczyk_box,
+    certify_quadratic_interval_candidate, certify_univariate_quadratic_alpha,
+    certify_univariate_quadratic_krawczyk_box, context_from_problem,
+    eliminate_affine_rows_with_substitution_classes, isolate_univariate_polynomial_roots,
+    report_lossy_adapter_only_candidate, solve_damped_least_squares, solve_direct_affine_system,
     solve_direct_univariate_quadratic_equalities, squared_distance_equation,
     validate_equality_substitutions,
 };
@@ -870,6 +871,45 @@ proptest! {
             }
         );
         prop_assert_eq!(ball_certified_positive, true);
+    }
+
+    #[test]
+    fn interval_box_reports_generated_affine_status(
+        center in -64_i16..=64,
+        target in -64_i16..=64,
+        radius in 0_i16..=8,
+    ) {
+        let center = i64::from(center);
+        let target = i64::from(target);
+        let radius = i64::from(radius);
+        let x = Expr::symbol(SymbolId(0), "x");
+        let mut problem = Problem::default();
+        problem.add_variable("x", Real::from(center));
+        problem.add_constraint(Constraint::equality("generated affine box", x - Expr::int(target)));
+        let report = certify_interval_box_candidate(
+            &PreparedProblem::new(&problem),
+            &context_from_problem(&problem),
+            &[VariableBall {
+                symbol: SymbolId(0),
+                radius: Real::from(radius),
+            }],
+            IntervalBoxCertificationPackage::Affine,
+            hyperlimit::PredicatePolicy::default(),
+        );
+        let delta = (center - target).abs();
+
+        prop_assert_eq!(
+            report.status,
+            if delta == 0 && radius == 0 {
+                IntervalBoxCertificationStatus::Certified
+            } else if delta > radius {
+                IntervalBoxCertificationStatus::Violation
+            } else {
+                IntervalBoxCertificationStatus::Unknown
+            }
+        );
+        prop_assert_eq!(report.variable_balls.len(), 1);
+        prop_assert!(report.certification.is_some());
     }
 
     #[test]

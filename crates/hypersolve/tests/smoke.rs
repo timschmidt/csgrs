@@ -3,20 +3,22 @@ use hypersolve::jacobian::{symbolic_jacobian, symbolic_jacobian_prepared};
 use hypersolve::{
     CandidateCertificationConfig, CandidateResidualBall, CertifiedCandidateStatus, Constraint,
     ConstraintKind, ConvergenceReason, DenseLinearBackend, DirectAffineSystemStatus,
-    DomainCheckKind, DomainCheckStatus, Expr, ExprDegree, LinearAdapterKind,
-    LinearAdapterPrecision, LinearBackend, MultivariateQuadraticKrawczykStatus, PreparedProblem,
-    PreparedSolverBlock, Problem, ProposalEngineKind, ProposalEnginePrecision, RootIsolationStatus,
-    RootMultiplicityStatus, SolverBlockRowKind, SolverConfig, SolverPoint2, SolverState, SymbolId,
-    VariableBall, apply_equality_substitution_classes, apply_equality_substitutions,
+    DomainCheckKind, DomainCheckStatus, Expr, ExprDegree, IntervalBoxCertificationPackage,
+    IntervalBoxCertificationStatus, LinearAdapterKind, LinearAdapterPrecision, LinearBackend,
+    MultivariateQuadraticKrawczykStatus, PreparedProblem, PreparedSolverBlock, Problem,
+    ProposalEngineKind, ProposalEnginePrecision, RootIsolationStatus, RootMultiplicityStatus,
+    SolverBlockRowKind, SolverConfig, SolverPoint2, SolverState, SymbolId, VariableBall,
+    apply_equality_substitution_classes, apply_equality_substitutions,
     build_equality_substitution_classes, certify_affine_interval_candidate,
     certify_affine_krawczyk_box, certify_candidate, certify_candidate_domains,
     certify_candidate_with_config, certify_candidate_with_residual_balls,
-    certify_direct_univariate_quadratic_roots, certify_multivariate_quadratic_interval_candidate,
-    certify_multivariate_quadratic_krawczyk_box, certify_quadratic_interval_candidate,
-    certify_univariate_quadratic_alpha, certify_univariate_quadratic_krawczyk_box,
-    context_from_problem, eliminate_affine_rows_with_substitution_classes, evaluate_residuals,
-    facts_depend_on_symbol, find_equality_substitutions, isolate_univariate_polynomial_roots,
-    point_coincidence_equations, report_lossy_adapter_only_candidate, solve_damped_least_squares,
+    certify_direct_univariate_quadratic_roots, certify_interval_box_candidate,
+    certify_multivariate_quadratic_interval_candidate, certify_multivariate_quadratic_krawczyk_box,
+    certify_quadratic_interval_candidate, certify_univariate_quadratic_alpha,
+    certify_univariate_quadratic_krawczyk_box, context_from_problem,
+    eliminate_affine_rows_with_substitution_classes, evaluate_residuals, facts_depend_on_symbol,
+    find_equality_substitutions, isolate_univariate_polynomial_roots, point_coincidence_equations,
+    report_lossy_adapter_only_candidate, solve_damped_least_squares,
     solve_direct_affine_equalities, solve_direct_affine_system,
     solve_direct_univariate_quadratic_equalities, squared_distance_equation,
     tangent_parallel_equation, tangent_same_direction_constraint, validate_equality_substitutions,
@@ -1505,6 +1507,45 @@ fn direct_affine_solver_isolates_one_variable_exactly() {
     assert_eq!(solutions[0].constraint_index, 0);
     assert_eq!(solutions[0].symbol, SymbolId(0));
     assert_eq!(solutions[0].value, real(5));
+}
+
+#[test]
+fn interval_box_report_retains_payload_and_status() {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let mut problem = Problem::default();
+    problem.add_variable("x", real(10));
+    problem.add_constraint(Constraint::equality("x minus seven", x - Expr::int(7)));
+    let prepared = PreparedProblem::new(&problem);
+    let context = context_from_problem(&problem);
+
+    let report = certify_interval_box_candidate(
+        &prepared,
+        &context,
+        &[VariableBall {
+            symbol: SymbolId(0),
+            radius: real(1),
+        }],
+        IntervalBoxCertificationPackage::Affine,
+        hyperlimit::PredicatePolicy::default(),
+    );
+
+    assert_eq!(report.status, IntervalBoxCertificationStatus::Violation);
+    assert_eq!(report.variable_balls.len(), 1);
+    assert!(report.certification.unwrap().has_certified_violation());
+
+    let invalid = certify_interval_box_candidate(
+        &prepared,
+        &context,
+        &[VariableBall {
+            symbol: SymbolId(0),
+            radius: real(-1),
+        }],
+        IntervalBoxCertificationPackage::Affine,
+        hyperlimit::PredicatePolicy::default(),
+    );
+    assert_eq!(invalid.status, IntervalBoxCertificationStatus::InvalidInput);
+    assert!(invalid.certification.is_none());
+    assert!(invalid.message.is_some());
 }
 
 #[test]
