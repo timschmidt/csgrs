@@ -31,10 +31,12 @@ pub mod symbolic;
 
 pub use affine::PreparedAffineResidual;
 pub use algebraic::{
-    AlgebraicRootKind, AlgebraicRootRepresentation, AlgebraicRootRepresentationReport,
+    AlgebraicRootComparisonReport, AlgebraicRootComparisonStatus, AlgebraicRootKind,
+    AlgebraicRootRepresentation, AlgebraicRootRepresentationReport,
     AlgebraicRootRepresentationStatus, AlgebraicRootValidationReport,
-    AlgebraicRootValidationStatus, represent_univariate_algebraic_roots,
-    represent_univariate_algebraic_roots_from_reports, validate_algebraic_root_representation,
+    AlgebraicRootValidationStatus, compare_algebraic_root_representations,
+    represent_univariate_algebraic_roots, represent_univariate_algebraic_roots_from_reports,
+    validate_algebraic_root_representation,
 };
 pub use alpha::{
     UnivariateQuadraticAlphaReport, UnivariateQuadraticAlphaRow, UnivariateQuadraticAlphaStatus,

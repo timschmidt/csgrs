@@ -9,8 +9,8 @@ use hypersolve::{
     certify_direct_univariate_quadratic_roots, certify_interval_box_candidate,
     certify_multivariate_quadratic_interval_candidate, certify_multivariate_quadratic_krawczyk_box,
     certify_quadratic_interval_candidate, certify_univariate_quadratic_alpha,
-    certify_univariate_quadratic_krawczyk_box, context_from_problem,
-    count_bernstein_univariate_polynomial_interval_roots,
+    certify_univariate_quadratic_krawczyk_box, compare_algebraic_root_representations,
+    context_from_problem, count_bernstein_univariate_polynomial_interval_roots,
     count_descartes_univariate_polynomial_roots, determinant_bareiss,
     eliminate_affine_rows_with_substitution_classes, isolate_univariate_polynomial_roots,
     replay_dense_linear_residuals, replay_sparse_linear_residuals,
@@ -314,6 +314,19 @@ fn certification(c: &mut Criterion) {
             represent_univariate_algebraic_roots(
                 &prepared_quadratic,
                 hypersolve::RootIsolationConfig::default(),
+            )
+        })
+    });
+    let represented_roots = represent_univariate_algebraic_roots(
+        &prepared_quadratic,
+        hypersolve::RootIsolationConfig::default(),
+    );
+    c.bench_function("compare_algebraic_root_representations", |b| {
+        b.iter(|| {
+            compare_algebraic_root_representations(
+                &represented_roots[0].roots[0],
+                &represented_roots[0].roots[1],
+                hyperlimit::PredicatePolicy::default(),
             )
         })
     });
