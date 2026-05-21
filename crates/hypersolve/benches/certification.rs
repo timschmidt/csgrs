@@ -6,10 +6,11 @@ use hypersolve::{
     Constraint, EqualitySubstitution, Expr, IntervalBoxCertificationPackage, IsolatedRootInterval,
     PreparedProblem, PreparedSolverBlock, Problem, ProposalEngineKind, ProposalEnginePrecision,
     ProposalEngineReport, SolverConfig, SolverPoint2, SolverState, SparseResidualTerm, SymbolId,
-    UnivariateResultantPairInput, VariableBall, analyze_sparse_bareiss_elimination_pattern,
-    apply_equality_substitution_classes, arithmetic_algebraic_root_representations,
-    audit_active_set, build_equality_substitution_classes, certify_affine_krawczyk_box,
-    certify_candidate, certify_candidate_domains, certify_direct_univariate_quadratic_roots,
+    UnivariateResultantPairInput, VariableBall, analyze_exact_affine_rank,
+    analyze_sparse_bareiss_elimination_pattern, apply_equality_substitution_classes,
+    arithmetic_algebraic_root_representations, audit_active_set,
+    build_equality_substitution_classes, certify_affine_krawczyk_box, certify_candidate,
+    certify_candidate_domains, certify_direct_univariate_quadratic_roots,
     certify_interval_box_candidate, certify_multivariate_quadratic_interval_candidate,
     certify_multivariate_quadratic_krawczyk_box, certify_quadratic_interval_candidate,
     certify_univariate_quadratic_alpha, certify_univariate_quadratic_krawczyk_box,
@@ -242,6 +243,9 @@ fn certification(c: &mut Criterion) {
     });
     c.bench_function("solve_direct_affine_system", |b| {
         b.iter(|| solve_direct_affine_system(&krawczyk_prepared))
+    });
+    c.bench_function("analyze_exact_affine_rank", |b| {
+        b.iter(|| analyze_exact_affine_rank(&krawczyk_prepared, -64))
     });
     c.bench_function("determinant_bareiss", |b| {
         b.iter(|| determinant_bareiss(&[vec![r(2), r(1)], vec![r(1), r(-1)]], -64))

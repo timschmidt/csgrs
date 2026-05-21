@@ -3,28 +3,29 @@ use hypersolve::jacobian::{symbolic_jacobian, symbolic_jacobian_prepared};
 use hypersolve::{
     CandidateCertificationConfig, CandidateResidualBall, CertifiedCandidateStatus, Constraint,
     ConstraintKind, ConvergenceReason, DenseLinearBackend, DirectAffineSystemStatus,
-    DomainCheckKind, DomainCheckStatus, Expr, ExprDegree, IntervalBoxCertificationPackage,
-    IntervalBoxCertificationStatus, LinearAdapterKind, LinearAdapterPrecision, LinearBackend,
-    MultivariateQuadraticKrawczykStatus, PreparedProblem, PreparedSolverBlock, Problem,
-    ProposalEngineKind, ProposalEnginePrecision, RootIsolationStatus, RootMultiplicityStatus,
-    SketchConstraintKind, SketchEntityHandle, SketchEntityKind, SketchGeneratedRowStatus,
-    SketchResidualFormKind, SketchResidualFormRole, SketchResidualFormsStatus,
-    SketchResidualStrategy, SketchSolveProblem, SolverBlockRowKind, SolverConfig, SolverPoint2,
-    SolverState, SymbolId, VariableBall, apply_equality_substitution_classes,
-    apply_equality_substitutions, build_equality_substitution_classes,
-    certify_affine_interval_candidate, certify_affine_krawczyk_box, certify_candidate,
-    certify_candidate_domains, certify_candidate_with_config,
-    certify_candidate_with_residual_balls, certify_direct_univariate_quadratic_roots,
-    certify_interval_box_candidate, certify_multivariate_quadratic_interval_candidate,
-    certify_multivariate_quadratic_krawczyk_box, certify_quadratic_interval_candidate,
-    certify_univariate_quadratic_alpha, certify_univariate_quadratic_krawczyk_box,
-    context_from_problem, eliminate_affine_rows_with_substitution_classes, evaluate_residuals,
-    facts_depend_on_symbol, find_equality_substitutions, isolate_univariate_polynomial_roots,
-    point_coincidence_equations, report_lossy_adapter_only_candidate, sketch_distance_builders,
-    sketch_incidence_builders, sketch_orientation_builders, solve_damped_least_squares,
-    solve_direct_affine_equalities, solve_direct_affine_system,
-    solve_direct_univariate_quadratic_equalities, squared_distance_equation,
-    tangent_parallel_equation, tangent_same_direction_constraint, validate_equality_substitutions,
+    DomainCheckKind, DomainCheckStatus, ExactAffineRankStatus, Expr, ExprDegree,
+    IntervalBoxCertificationPackage, IntervalBoxCertificationStatus, LinearAdapterKind,
+    LinearAdapterPrecision, LinearBackend, MultivariateQuadraticKrawczykStatus, PreparedProblem,
+    PreparedSolverBlock, Problem, ProposalEngineKind, ProposalEnginePrecision, RootIsolationStatus,
+    RootMultiplicityStatus, SketchConstraintKind, SketchEntityHandle, SketchEntityKind,
+    SketchGeneratedRowStatus, SketchResidualFormKind, SketchResidualFormRole,
+    SketchResidualFormsStatus, SketchResidualStrategy, SketchSolveProblem, SolverBlockRowKind,
+    SolverConfig, SolverPoint2, SolverState, SymbolId, VariableBall, analyze_exact_affine_rank,
+    apply_equality_substitution_classes, apply_equality_substitutions,
+    build_equality_substitution_classes, certify_affine_interval_candidate,
+    certify_affine_krawczyk_box, certify_candidate, certify_candidate_domains,
+    certify_candidate_with_config, certify_candidate_with_residual_balls,
+    certify_direct_univariate_quadratic_roots, certify_interval_box_candidate,
+    certify_multivariate_quadratic_interval_candidate, certify_multivariate_quadratic_krawczyk_box,
+    certify_quadratic_interval_candidate, certify_univariate_quadratic_alpha,
+    certify_univariate_quadratic_krawczyk_box, context_from_problem,
+    eliminate_affine_rows_with_substitution_classes, evaluate_residuals, facts_depend_on_symbol,
+    find_equality_substitutions, isolate_univariate_polynomial_roots, point_coincidence_equations,
+    report_lossy_adapter_only_candidate, sketch_distance_builders, sketch_incidence_builders,
+    sketch_orientation_builders, solve_damped_least_squares, solve_direct_affine_equalities,
+    solve_direct_affine_system, solve_direct_univariate_quadratic_equalities,
+    squared_distance_equation, tangent_parallel_equation, tangent_same_direction_constraint,
+    validate_equality_substitutions,
 };
 
 fn real(value: i64) -> Real {
@@ -2010,6 +2011,61 @@ fn direct_affine_system_solves_square_rows_and_replays_exactly() {
         singular_report.status,
         DirectAffineSystemStatus::SingularOrUnsupportedPivot { pivot: 1 }
     );
+}
+
+#[test]
+fn exact_affine_rank_reports_dof_and_inconsistency_without_lossy_rank_hints() {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let y = Expr::symbol(SymbolId(1), "y");
+    let mut underconstrained = Problem::default();
+    underconstrained.add_variable("x", real(0));
+    underconstrained.add_variable("y", real(0));
+    underconstrained.add_constraint(Constraint::equality("x", x.clone()));
+    let rank = analyze_exact_affine_rank(&PreparedProblem::new(&underconstrained), -64);
+    assert_eq!(rank.status, ExactAffineRankStatus::Certified);
+    assert_eq!(rank.coefficient_rank, Some(1));
+    assert_eq!(rank.augmented_rank, Some(1));
+    assert_eq!(rank.degrees_of_freedom, Some(1));
+
+    let mut inconsistent = Problem::default();
+    inconsistent.add_variable("x", real(0));
+    inconsistent.add_variable("y", real(0));
+    inconsistent.add_constraint(Constraint::equality("x", x.clone()));
+    inconsistent.add_constraint(Constraint::equality("x plus one", x.clone() + Expr::int(1)));
+    let rank = analyze_exact_affine_rank(&PreparedProblem::new(&inconsistent), -64);
+    assert_eq!(rank.status, ExactAffineRankStatus::Inconsistent);
+    assert_eq!(rank.coefficient_rank, Some(1));
+    assert_eq!(rank.augmented_rank, Some(2));
+    assert_eq!(rank.degrees_of_freedom, Some(1));
+
+    let mut square = Problem::default();
+    square.add_variable("x", real(0));
+    square.add_variable("y", real(0));
+    square.add_constraint(Constraint::equality("x", x));
+    square.add_constraint(Constraint::equality("y", y));
+    let rank = analyze_exact_affine_rank(&PreparedProblem::new(&square), -64);
+    assert_eq!(rank.status, ExactAffineRankStatus::Certified);
+    assert_eq!(rank.coefficient_rank, Some(2));
+    assert_eq!(rank.augmented_rank, Some(2));
+    assert_eq!(rank.degrees_of_freedom, Some(0));
+}
+
+#[test]
+fn exact_affine_rank_reports_unsupported_nonlinear_rows_and_skips_inequalities() {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let mut problem = Problem::default();
+    problem.add_variable("x", real(0));
+    problem.add_constraint(Constraint::equality("nonlinear", x.clone() * x.clone()));
+    let mut inequality = Constraint::equality("bound", x - Expr::int(1));
+    inequality.kind = ConstraintKind::LessOrEqual;
+    problem.add_constraint(inequality);
+
+    let rank = analyze_exact_affine_rank(&PreparedProblem::new(&problem), -64);
+
+    assert_eq!(rank.status, ExactAffineRankStatus::UnsupportedNonAffineRows);
+    assert_eq!(rank.unsupported_rows, vec![0]);
+    assert_eq!(rank.skipped_non_equality_rows, 1);
+    assert_eq!(rank.coefficient_rank, None);
 }
 
 #[test]

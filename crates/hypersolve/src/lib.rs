@@ -23,6 +23,7 @@ pub mod model;
 pub mod polynomial;
 pub mod predicates;
 pub mod prepared;
+pub mod rank;
 pub mod residual_replay;
 pub mod resultant;
 pub mod root_isolation;
@@ -123,6 +124,7 @@ pub use predicates::{Classification, PredicateBackend, PredicateReport};
 pub use prepared::{
     PreparedConstraintFacts, PreparedProblem, PreparedProblemFacts, facts_depend_on_symbol,
 };
+pub use rank::{ExactAffineRankReport, ExactAffineRankStatus, analyze_exact_affine_rank};
 pub use residual_replay::{
     DenseResidualReplayError, DenseResidualReplayReport, SparseResidualReplayError,
     SparseResidualReplayReport, SparseResidualReplayRow, SparseResidualTerm,
