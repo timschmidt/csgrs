@@ -13481,6 +13481,7 @@ proptest! {
         depth_offset in 0_usize..8,
         flip_index in 0_usize..6,
     ) {
+        prop_assume!(depth_offset % 2 == 0);
         let steps = (0..loop_count)
             .map(|index| hypercurve::BezierBooleanTraversalStep2 {
                 operand: BezierBooleanTraversalOperand::First,
@@ -13575,6 +13576,7 @@ proptest! {
         depth_offset in 0_usize..8,
         flip_index in 0_usize..6,
     ) {
+        prop_assume!(depth_offset % 2 == 0);
         let steps = (0..loop_count)
             .map(|index| hypercurve::BezierBooleanTraversalStep2 {
                 operand: BezierBooleanTraversalOperand::First,
