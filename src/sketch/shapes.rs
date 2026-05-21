@@ -442,44 +442,82 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// - it tapers down to a cusp at bottom.
     ///
     /// This is just one of many possible "teardrop" definitions.
+    ///
+    /// The semicircular cap is sampled through hyperreal trigonometry before
+    /// the finite ring is handed to `hypercurve`, following Yap, "Towards
+    /// Exact Geometric Computation," *Computational Geometry* 7(1-2), 1997
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     // todo: center on focus of the arc
     pub fn teardrop(width: Real, length: Real, segments: usize, metadata: M) -> Profile<M> {
-        if segments < 2 || width < tolerance() || length < tolerance() {
+        if segments < 2
+            || width < tolerance()
+            || length < tolerance()
+            || !finite_profile_scalars(&[width, length])
+        {
             return Profile::empty(metadata);
         }
-        let r = 0.5 * width;
-        let center_y = length - r;
+        let Some(r) = hreal_mul(0.5, width) else {
+            return Profile::empty(metadata);
+        };
+        let Some(center_y) = hreal_sub(length, r) else {
+            return Profile::empty(metadata);
+        };
         let half_seg = segments / 2;
 
         let mut points = vec![[0.0, 0.0]]; // Start at the tip
-        points.extend((0..=half_seg).map(|i| {
-            let t = PI * (i as Real / half_seg as Real); // Corrected angle for semi-circle
-            let x = -r * t.cos();
-            let y = center_y + r * t.sin();
-            [x, y]
-        }));
+        for i in 0..=half_seg {
+            let Some(t) = hsample_angle(i, half_seg, 0.0, PI) else {
+                return Profile::empty(metadata);
+            };
+            let Some([dx, dy]) = hellipse_point(r, r, t) else {
+                return Profile::empty(metadata);
+            };
+            let (Some(x), Some(y)) = (hreal_sub(0.0, dx), hreal_affine(center_y, 1.0, dy))
+            else {
+                return Profile::empty(metadata);
+            };
+            points.push([x, y]);
+        }
 
         Self::polygonal_region(points, metadata)
     }
 
     /// Egg outline.  Approximate an egg shape using a parametric approach.
     /// This is only a toy approximation.  It creates a closed "egg-ish" outline around the origin.
+    ///
+    /// The trigonometric sampling is evaluated on `hyperreal::Real` before
+    /// exporting the finite polygonal boundary. That keeps this parametric
+    /// constructor aligned with Yap's exact-geometric-computation boundary
+    /// model (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     pub fn egg(width: Real, length: Real, segments: usize, metadata: M) -> Profile<M> {
-        if segments < 3 {
+        if segments < 3 || !finite_profile_scalars(&[width, length]) {
             return Profile::empty(metadata);
         }
-        let rx = 0.5 * width;
-        let ry = 0.5 * length;
-        let points = (0..segments)
-            .map(|i| {
-                let theta = TAU * (i as Real) / (segments as Real);
-                // toy distortion approach
-                let distort = 1.0 + 0.2 * theta.cos();
-                let x = rx * theta.sin();
-                let y = ry * theta.cos() * distort * 0.8;
-                [-x, y] // mirrored
-            })
-            .collect();
+        let (Some(rx), Some(ry)) = (hreal_mul(0.5, width), hreal_mul(0.5, length)) else {
+            return Profile::empty(metadata);
+        };
+        let mut points = Vec::with_capacity(segments);
+        for i in 0..segments {
+            let Some(theta) = hsample_angle(i, segments, 0.0, TAU) else {
+                return Profile::empty(metadata);
+            };
+            let Some((sin_theta, cos_theta)) = hangle_sin_cos(theta) else {
+                return Profile::empty(metadata);
+            };
+            let Some(distort) = hreal_affine(1.0, 0.2, cos_theta) else {
+                return Profile::empty(metadata);
+            };
+            let Some(x) = hreal_mul(rx, sin_theta).and_then(|x| hreal_sub(0.0, x)) else {
+                return Profile::empty(metadata);
+            };
+            let Some(y) = hreal_mul(ry, cos_theta)
+                .and_then(|y| hreal_mul(y, distort))
+                .and_then(|y| hreal_mul(y, 0.8))
+            else {
+                return Profile::empty(metadata);
+            };
+            points.push([x, y]);
+        }
 
         Self::polygonal_region(points, metadata)
     }
@@ -598,13 +636,20 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// For `sides == 3` this gives the canonical Reuleaux triangle; for any
     /// larger `sides` it yields the natural generalisation (odd-sided shapes
     /// retain constant width, even-sided ones do not but are still smooth).
+    /// Vertex-center sampling uses hyperreal sine/cosine before composing the
+    /// shape from `Profile::circle` disks, following Yap's EGC boundary split
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     pub fn reuleaux(
         sides: usize,
         diameter: Real,
         circle_segments: usize,
         metadata: M,
     ) -> Profile<M> {
-        if sides < 3 || circle_segments < 6 || diameter <= tolerance() {
+        if sides < 3
+            || circle_segments < 6
+            || diameter <= tolerance()
+            || !finite_profile_scalar(diameter)
+        {
             return Profile::empty(metadata);
         }
 
@@ -612,15 +657,30 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         //            s
         //   R = -------------
         //        2 sin(π/n)
-        let r_circ = diameter / (2.0 * (PI / sides as Real).sin());
+        let Some(angle) = hreal_div(PI, sides as Real) else {
+            return Profile::empty(metadata);
+        };
+        let Some((sin_angle, _)) = hangle_sin_cos(angle) else {
+            return Profile::empty(metadata);
+        };
+        let Some(denom) = hreal_mul(2.0, sin_angle) else {
+            return Profile::empty(metadata);
+        };
+        let Some(r_circ) = hreal_div(diameter, denom) else {
+            return Profile::empty(metadata);
+        };
 
         // Pre-compute vertex positions of the regular n-gon
-        let verts: Vec<(Real, Real)> = (0..sides)
-            .map(|i| {
-                let theta = TAU * (i as Real) / (sides as Real);
-                (r_circ * theta.cos(), r_circ * theta.sin())
-            })
-            .collect();
+        let mut verts = Vec::with_capacity(sides);
+        for i in 0..sides {
+            let Some(theta) = hsample_angle(i, sides, 0.0, TAU) else {
+                return Profile::empty(metadata);
+            };
+            let Some([x, y]) = hellipse_point(r_circ, r_circ, theta) else {
+                return Profile::empty(metadata);
+            };
+            verts.push((x, y));
+        }
 
         // Build the first disk and use it as the running intersection
         let base = Profile::circle(diameter, circle_segments, metadata.clone())

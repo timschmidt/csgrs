@@ -413,6 +413,20 @@ fn adversarial_sketch_constructor_sweep_does_not_corrupt_successes() {
                     let _ = sketch.wire_polylines();
                     let _ = catch_unwind(AssertUnwindSafe(|| sketch.triangulate()));
                 }
+                if let Ok(sketch) =
+                    catch_unwind(AssertUnwindSafe(|| Profile::teardrop(a, b, segments, ())))
+                {
+                    let _ = sketch.region_profiles();
+                    let _ = sketch.wire_polylines();
+                    let _ = catch_unwind(AssertUnwindSafe(|| sketch.triangulate()));
+                }
+                if let Ok(sketch) =
+                    catch_unwind(AssertUnwindSafe(|| Profile::egg(a, b, segments, ())))
+                {
+                    let _ = sketch.region_profiles();
+                    let _ = sketch.wire_polylines();
+                    let _ = catch_unwind(AssertUnwindSafe(|| sketch.triangulate()));
+                }
             }
         }
     }
@@ -425,7 +439,10 @@ fn adversarial_hyperreal_sampled_profile_constructors_emit_finite_regions() {
         Profile::ellipse(4.0, 1.5, 29, ()),
         Profile::regular_ngon(7, 3.0, ()),
         Profile::star(5, 3.0, 1.1, ()),
+        Profile::teardrop(3.0, 5.0, 18, ()),
+        Profile::egg(3.0, 5.0, 29, ()),
         Profile::rounded_rectangle(5.0, 3.0, 0.75, 5, ()),
+        Profile::reuleaux(3, 2.0, 24, ()),
         Profile::pie_slice(2.0, -45.0, 225.0, 17, ()),
     ];
 
