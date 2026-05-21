@@ -25,7 +25,7 @@ serde = ["dep:serde"]
 # the commented workspace references below. Switch to the workspace form for
 # local development, then switch back to crates.io versions before publishing.
 hyperreal = { version = "0.12.0" }
-hyperlimit = { version = "0.3.0", default-features = false, features = ["std"] }
+hyperlimit = { path = "../hyperlimit", default-features = false, features = ["std"] }
 # hyperreal = { path = "../hyperreal" }
 # hyperlimit = { path = "../hyperlimit", default-features = false, features = ["std"] }
 serde = { version = "1.0.228", features = ["derive"], optional = true }
@@ -34,7 +34,7 @@ serde = { version = "1.0.228", features = ["derive"], optional = true }
 criterion = { version = "0.5", features = ["html_reports"] }
 # Dev-only differential oracle for ordinary polygon cases. Production code owns
 # its exact ear-clipping port and must not build or link `earcutr`.
-earcutr = { path = "../earcutr" }
+earcutr = "0.5.0"
 proptest = "1.7.0"
 serde_json = "1.0.149"
 

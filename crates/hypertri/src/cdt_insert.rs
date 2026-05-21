@@ -100,7 +100,7 @@ where
                 &planar_points[a.to],
                 &planar_points[b.from],
                 &planar_points[b.to],
-            )? == SegmentIntersection::ProperCrossing
+            )? == SegmentIntersection::Proper
             {
                 let point = segment_intersection_point::<K>(&planar_points, a, b)?;
                 push_unique_point(&mut planar_points, point);
@@ -305,7 +305,7 @@ where
             &points[edge.from],
             &points[edge.to],
         )?;
-        if intersection == SegmentIntersection::ProperCrossing {
+        if intersection == SegmentIntersection::Proper {
             if constrained_edges.contains(&edge) {
                 return Err(Error::InvalidInput {
                     reason: "constraint crosses an existing constrained edge",
@@ -493,7 +493,7 @@ where
             SegmentIntersection::Disjoint => {}
             SegmentIntersection::EndpointTouch if new_edge.shares_endpoint(constraint) => {}
             SegmentIntersection::EndpointTouch
-            | SegmentIntersection::ProperCrossing
+            | SegmentIntersection::Proper
             | SegmentIntersection::CollinearOverlap => return Ok(false),
         }
     }

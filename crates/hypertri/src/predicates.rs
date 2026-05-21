@@ -13,18 +13,7 @@ use crate::kernel::Kernel;
 use crate::types::{Point2, Real};
 use crate::types::{Sign, TriangleLocation};
 
-/// Segment intersection classification used by earcut bridges and CDT edges.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum SegmentIntersection {
-    /// The segments are disjoint.
-    Disjoint,
-    /// The segments meet at an endpoint.
-    EndpointTouch,
-    /// The segments cross at an interior point of both segments.
-    ProperCrossing,
-    /// Collinear segments overlap in more than one point.
-    CollinearOverlap,
-}
+pub use hyperlimit::SegmentIntersection;
 
 /// Decide the orientation of three points.
 pub(crate) fn orient2d<K>(a: &Point2, b: &Point2, c: &Point2) -> Result<Sign>
@@ -133,7 +122,7 @@ where
     }
 
     if signs_strictly_differ(ab_c, ab_d) && signs_strictly_differ(cd_a, cd_b) {
-        return Ok(SegmentIntersection::ProperCrossing);
+        return Ok(SegmentIntersection::Proper);
     }
 
     if (ab_c == Sign::Zero && point_on_segment::<K>(a, b, c)?)

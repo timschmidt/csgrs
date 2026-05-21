@@ -303,9 +303,9 @@ where
                     return Ok(false);
                 }
             }
-            SegmentIntersection::ProperCrossing | SegmentIntersection::CollinearOverlap => {
-                return Ok(false);
-            }
+            SegmentIntersection::Proper
+            | SegmentIntersection::CollinearOverlap
+            | SegmentIntersection::Identical => return Ok(false),
         }
     }
 
@@ -661,7 +661,7 @@ where
         &vertices[p],
         &vertices[q],
         &vertices[b],
-    )? != SegmentIntersection::ProperCrossing
+    )? != SegmentIntersection::Proper
     {
         return Ok(false);
     }
@@ -707,8 +707,9 @@ where
         )? {
             SegmentIntersection::Disjoint => {}
             SegmentIntersection::EndpointTouch
-            | SegmentIntersection::ProperCrossing
-            | SegmentIntersection::CollinearOverlap => return Ok(false),
+            | SegmentIntersection::Proper
+            | SegmentIntersection::CollinearOverlap
+            | SegmentIntersection::Identical => return Ok(false),
         }
     }
 

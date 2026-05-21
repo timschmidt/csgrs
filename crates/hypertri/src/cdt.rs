@@ -707,7 +707,7 @@ where
                 &points[b.to],
             )? {
                 SegmentIntersection::Disjoint | SegmentIntersection::EndpointTouch => {}
-                SegmentIntersection::ProperCrossing => {
+                SegmentIntersection::Proper => {
                     return Err(Error::InvalidInput {
                         reason: "properly crossing constraints are not supported",
                     });
