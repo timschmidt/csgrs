@@ -12,8 +12,8 @@ use hypersolve::{
     certify_quadratic_interval_candidate, certify_univariate_quadratic_alpha,
     certify_univariate_quadratic_krawczyk_box, context_from_problem, determinant_bareiss,
     eliminate_affine_rows_with_substitution_classes, isolate_univariate_polynomial_roots,
-    report_lossy_adapter_only_candidate, solve_damped_least_squares,
-    solve_dense_linear_system_bareiss, solve_direct_affine_system,
+    report_lossy_adapter_only_candidate, resultant_univariate_polynomials,
+    solve_damped_least_squares, solve_dense_linear_system_bareiss, solve_direct_affine_system,
     solve_direct_univariate_quadratic_equalities, squared_distance_equation,
     validate_equality_substitutions,
 };
@@ -1266,6 +1266,42 @@ proptest! {
 
         prop_assert_eq!(report.solution, vec![Real::from(x), Real::from(y)]);
         prop_assert!(report.residual_replay.accepted);
+    }
+
+    #[test]
+    fn resultant_generated_linear_roots_match_exact_difference(
+        left_root in -64_i16..=64,
+        right_root in -64_i16..=64,
+    ) {
+        let left_root = i64::from(left_root);
+        let right_root = i64::from(right_root);
+        let report = resultant_univariate_polynomials(
+            &[Real::from(-left_root), Real::one()],
+            &[Real::from(-right_root), Real::one()],
+            -64,
+        ).unwrap();
+
+        prop_assert_eq!(report.resultant, Real::from(left_root - right_root));
+    }
+
+    #[test]
+    fn resultant_generated_common_factor_is_zero(
+        shared_root in -32_i16..=32,
+        other_root in -32_i16..=32,
+    ) {
+        let shared_root = i64::from(shared_root);
+        let other_root = i64::from(other_root);
+        let report = resultant_univariate_polynomials(
+            &[Real::from(-shared_root), Real::one()],
+            &[
+                Real::from(shared_root * other_root),
+                Real::from(-(shared_root + other_root)),
+                Real::one(),
+            ],
+            -64,
+        ).unwrap();
+
+        prop_assert_eq!(report.resultant, Real::zero());
     }
 
 }

@@ -15,7 +15,8 @@ use hypersolve::{
     eliminate_affine_rows_with_substitution_classes, isolate_univariate_polynomial_roots,
     replay_dense_linear_residuals, replay_sparse_linear_residuals,
     report_lossy_adapter_only_candidate, represent_univariate_algebraic_roots,
-    solve_damped_least_squares, solve_dense_linear_system_bareiss, solve_direct_affine_system,
+    resultant_univariate_polynomials, solve_damped_least_squares,
+    solve_dense_linear_system_bareiss, solve_direct_affine_system,
     solve_direct_univariate_quadratic_equalities, squared_distance_equation,
     subdivide_bernstein_univariate_polynomial_interval_roots,
 };
@@ -195,6 +196,9 @@ fn certification(c: &mut Criterion) {
                 -64,
             )
         })
+    });
+    c.bench_function("resultant_univariate_polynomials", |b| {
+        b.iter(|| resultant_univariate_polynomials(&[r(-1), r(0), r(1)], &[r(-2), r(1)], -64))
     });
     c.bench_function("replay_dense_linear_residuals", |b| {
         b.iter(|| {

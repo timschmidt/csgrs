@@ -23,6 +23,7 @@ pub mod polynomial;
 pub mod predicates;
 pub mod prepared;
 pub mod residual_replay;
+pub mod resultant;
 pub mod root_isolation;
 pub mod solver;
 pub mod solver_block;
@@ -110,6 +111,10 @@ pub use residual_replay::{
     DenseResidualReplayError, DenseResidualReplayReport, DenseResidualReplayRow,
     SparseResidualReplayError, SparseResidualReplayReport, SparseResidualReplayRow,
     SparseResidualTerm, replay_dense_linear_residuals, replay_sparse_linear_residuals,
+};
+pub use resultant::{
+    ResultantInputSide, UnivariateResultantError, UnivariateResultantReport,
+    resultant_univariate_polynomials,
 };
 pub use root_isolation::{
     AlgebraicRootCandidateReport, AlgebraicRootCandidateStatus, BernsteinRootCountReport,
