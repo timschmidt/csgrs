@@ -140,6 +140,73 @@ pub struct ActiveSetAuditReport {
     pub domain_failure_rows: usize,
 }
 
+/// Exact active-set update action for one row.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum ActiveSetUpdateAction {
+    /// The current active flag is certified appropriate.
+    Keep,
+    /// The next proposal should mark this row active.
+    Activate,
+    /// The next proposal should mark this inequality row inactive.
+    Deactivate,
+    /// The candidate is infeasible for this row, so active-set mutation is not
+    /// a proof-producing fix.
+    RejectCandidate,
+    /// Exact replay could not decide the row.
+    Unknown,
+    /// Residual evaluation failed before update classification.
+    DomainFailure,
+}
+
+/// Proposed active-state update for one constraint row.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ActiveSetUpdateRow {
+    /// Source constraint index.
+    pub constraint_index: usize,
+    /// Constraint name copied for diagnostics.
+    pub name: String,
+    /// Constraint kind used by the audit.
+    pub kind: ConstraintKind,
+    /// Active flag supplied by the current model.
+    pub current_active: bool,
+    /// Proposed active flag when the policy can safely choose one.
+    pub proposed_active: Option<bool>,
+    /// Exact update action.
+    pub action: ActiveSetUpdateAction,
+    /// Source audit status that justified the action.
+    pub audit_status: ActiveSetRowStatus,
+}
+
+/// Exact active-set update proposal.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ActiveSetUpdateReport {
+    /// Full audit that the proposal consumed.
+    pub audit: ActiveSetAuditReport,
+    /// One proposed update per source constraint.
+    pub rows: Vec<ActiveSetUpdateRow>,
+    /// Complete proposed mask when no row rejected or remained unknown.
+    pub proposed_active_mask: Option<Vec<bool>>,
+    /// Number of rows proposed for activation.
+    pub activate_rows: usize,
+    /// Number of rows proposed for deactivation.
+    pub deactivate_rows: usize,
+    /// Number of rows whose current flag is retained.
+    pub keep_rows: usize,
+    /// Number of rows proving candidate infeasibility.
+    pub rejected_rows: usize,
+    /// Number of rows with undecided sign evidence.
+    pub unknown_rows: usize,
+    /// Number of rows with domain/evaluation failures.
+    pub domain_failure_rows: usize,
+}
+
+impl ActiveSetUpdateReport {
+    /// Returns true when the policy produced a complete next active mask.
+    pub fn has_complete_mask(&self) -> bool {
+        self.proposed_active_mask.is_some()
+    }
+}
+
 impl ActiveSetAuditReport {
     /// Returns true when every row has a certified consistent active-set state.
     pub fn all_consistent(&self) -> bool {
@@ -149,6 +216,69 @@ impl ActiveSetAuditReport {
     /// Returns true when any mask mismatch or violation was proved.
     pub fn has_certified_problem(&self) -> bool {
         self.mask_mismatch_rows > 0 || self.violation_rows > 0 || self.domain_failure_rows > 0
+    }
+}
+
+/// Propose an exact active-set mask update from candidate replay.
+///
+/// This is still not an active-set solver. It is the policy layer that turns
+/// exact audit rows into a next-mask proposal: inactive required rows and
+/// missed binding inequalities activate, superfluous active inequalities
+/// deactivate, consistent rows keep their current flag, and certified
+/// violations reject the candidate. That mirrors the active-set/KKT
+/// terminology in Nocedal and Wright, *Numerical Optimization*, 2nd ed.
+/// (2006), while following Yap's "Towards Exact Geometric Computation" (1997)
+/// rule that only certified residual signs may drive branching.
+pub fn propose_active_set_update(
+    prepared: &PreparedProblem<'_>,
+    context: &EvaluationContext,
+    config: CandidateCertificationConfig,
+) -> ActiveSetUpdateReport {
+    let audit = audit_active_set(prepared, context, config);
+    let rows = audit
+        .rows
+        .iter()
+        .map(active_set_update_row)
+        .collect::<Vec<_>>();
+    let activate_rows = rows
+        .iter()
+        .filter(|row| row.action == ActiveSetUpdateAction::Activate)
+        .count();
+    let deactivate_rows = rows
+        .iter()
+        .filter(|row| row.action == ActiveSetUpdateAction::Deactivate)
+        .count();
+    let keep_rows = rows
+        .iter()
+        .filter(|row| row.action == ActiveSetUpdateAction::Keep)
+        .count();
+    let rejected_rows = rows
+        .iter()
+        .filter(|row| row.action == ActiveSetUpdateAction::RejectCandidate)
+        .count();
+    let unknown_rows = rows
+        .iter()
+        .filter(|row| row.action == ActiveSetUpdateAction::Unknown)
+        .count();
+    let domain_failure_rows = rows
+        .iter()
+        .filter(|row| row.action == ActiveSetUpdateAction::DomainFailure)
+        .count();
+    let proposed_active_mask = rows
+        .iter()
+        .map(|row| row.proposed_active)
+        .collect::<Option<Vec<_>>>();
+
+    ActiveSetUpdateReport {
+        audit,
+        rows,
+        proposed_active_mask,
+        activate_rows,
+        deactivate_rows,
+        keep_rows,
+        rejected_rows,
+        unknown_rows,
+        domain_failure_rows,
     }
 }
 
@@ -216,6 +346,38 @@ pub fn audit_active_set(
         violation_rows,
         unknown_rows,
         domain_failure_rows,
+    }
+}
+
+fn active_set_update_row(row: &ActiveSetAuditRow) -> ActiveSetUpdateRow {
+    let (action, proposed_active) = match &row.status {
+        ActiveSetRowStatus::RequiredActiveSatisfied { .. }
+        | ActiveSetRowStatus::ActiveBinding { .. }
+        | ActiveSetRowStatus::InactiveStrictlySatisfied { .. } => {
+            (ActiveSetUpdateAction::Keep, Some(row.active))
+        }
+        ActiveSetRowStatus::RequiredActiveMissing { .. }
+        | ActiveSetRowStatus::MissedBindingInequality { .. } => {
+            (ActiveSetUpdateAction::Activate, Some(true))
+        }
+        ActiveSetRowStatus::SuperfluousActiveInequality { .. } => {
+            (ActiveSetUpdateAction::Deactivate, Some(false))
+        }
+        ActiveSetRowStatus::CertifiedViolation { .. } => {
+            (ActiveSetUpdateAction::RejectCandidate, None)
+        }
+        ActiveSetRowStatus::BoundedUnknown { .. } => (ActiveSetUpdateAction::Unknown, None),
+        ActiveSetRowStatus::DomainFailure { .. } => (ActiveSetUpdateAction::DomainFailure, None),
+    };
+
+    ActiveSetUpdateRow {
+        constraint_index: row.constraint_index,
+        name: row.name.clone(),
+        kind: row.kind,
+        current_active: row.active,
+        proposed_active,
+        action,
+        audit_status: row.status.clone(),
     }
 }
 
@@ -350,6 +512,61 @@ mod tests {
             report.rows[3].status,
             ActiveSetRowStatus::CertifiedViolation { .. }
         ));
+    }
+
+    #[test]
+    fn active_set_update_proposes_exact_mask_repairs_without_mutation() {
+        let x = Expr::symbol(SymbolId(0), "x");
+        let mut problem = Problem::default();
+        problem.add_variable("x", real(0));
+        let mut missed_binding = Constraint::equality("missed binding", x.clone());
+        missed_binding.kind = ConstraintKind::LessOrEqual;
+        missed_binding.active = false;
+        problem.add_constraint(missed_binding);
+        let mut superfluous = Constraint::equality("superfluous active", x.clone() - Expr::int(1));
+        superfluous.kind = ConstraintKind::LessOrEqual;
+        superfluous.active = true;
+        problem.add_constraint(superfluous);
+        let mut keep = Constraint::equality("kept equality", x);
+        keep.active = true;
+        problem.add_constraint(keep);
+
+        let report = propose_active_set_update(
+            &PreparedProblem::new(&problem),
+            &crate::eval::context_from_problem(&problem),
+            CandidateCertificationConfig::default(),
+        );
+
+        assert_eq!(report.activate_rows, 1);
+        assert_eq!(report.deactivate_rows, 1);
+        assert_eq!(report.keep_rows, 1);
+        assert_eq!(report.proposed_active_mask, Some(vec![true, false, true]));
+        assert_eq!(problem.constraints[0].active, false);
+        assert_eq!(problem.constraints[1].active, true);
+    }
+
+    #[test]
+    fn active_set_update_rejects_violated_candidate_instead_of_repairing() {
+        let x = Expr::symbol(SymbolId(0), "x");
+        let mut problem = Problem::default();
+        problem.add_variable("x", real(0));
+        let mut violated = Constraint::equality("violated lower bound", x - Expr::int(1));
+        violated.kind = ConstraintKind::GreaterOrEqual;
+        violated.active = true;
+        problem.add_constraint(violated);
+
+        let report = propose_active_set_update(
+            &PreparedProblem::new(&problem),
+            &crate::eval::context_from_problem(&problem),
+            CandidateCertificationConfig::default(),
+        );
+
+        assert_eq!(report.rejected_rows, 1);
+        assert_eq!(report.proposed_active_mask, None);
+        assert_eq!(
+            report.rows[0].action,
+            ActiveSetUpdateAction::RejectCandidate
+        );
     }
 
     proptest::proptest! {

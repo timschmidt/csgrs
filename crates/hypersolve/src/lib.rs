@@ -32,7 +32,8 @@ pub mod sparse_pattern;
 pub mod symbolic;
 
 pub use active_set::{
-    ActiveSetAuditReport, ActiveSetAuditRow, ActiveSetRowStatus, audit_active_set,
+    ActiveSetAuditReport, ActiveSetAuditRow, ActiveSetRowStatus, ActiveSetUpdateAction,
+    ActiveSetUpdateReport, ActiveSetUpdateRow, audit_active_set, propose_active_set_update,
 };
 pub use affine::PreparedAffineResidual;
 pub use algebraic::{
