@@ -1,20 +1,20 @@
 use criterion::{Criterion, criterion_group, criterion_main};
 use hyperreal::{Rational, Real};
 use hypersolve::{
-    AlgebraicRootKind, AlgebraicRootRefinementComparisonConfig, AlgebraicRootRepresentation,
-    AlgebraicRootValidationReport, AlgebraicRootValidationStatus, Constraint, EqualitySubstitution,
-    Expr, IntervalBoxCertificationPackage, IsolatedRootInterval, PreparedProblem,
-    PreparedSolverBlock, Problem, ProposalEngineKind, ProposalEnginePrecision,
+    AlgebraicRootArithmeticOp, AlgebraicRootKind, AlgebraicRootRefinementComparisonConfig,
+    AlgebraicRootRepresentation, AlgebraicRootValidationReport, AlgebraicRootValidationStatus,
+    Constraint, EqualitySubstitution, Expr, IntervalBoxCertificationPackage, IsolatedRootInterval,
+    PreparedProblem, PreparedSolverBlock, Problem, ProposalEngineKind, ProposalEnginePrecision,
     ProposalEngineReport, SolverConfig, SolverPoint2, SolverState, SparseResidualTerm, SymbolId,
     UnivariateResultantPairInput, VariableBall, analyze_sparse_bareiss_elimination_pattern,
-    apply_equality_substitution_classes, audit_active_set, build_equality_substitution_classes,
-    certify_affine_krawczyk_box, certify_candidate, certify_candidate_domains,
-    certify_direct_univariate_quadratic_roots, certify_interval_box_candidate,
-    certify_multivariate_quadratic_interval_candidate, certify_multivariate_quadratic_krawczyk_box,
-    certify_quadratic_interval_candidate, certify_univariate_quadratic_alpha,
-    certify_univariate_quadratic_krawczyk_box, compare_algebraic_root_representations,
-    compare_algebraic_root_representations_with_refinement, context_from_problem,
-    count_bernstein_univariate_polynomial_interval_roots,
+    apply_equality_substitution_classes, arithmetic_algebraic_root_representations,
+    audit_active_set, build_equality_substitution_classes, certify_affine_krawczyk_box,
+    certify_candidate, certify_candidate_domains, certify_direct_univariate_quadratic_roots,
+    certify_interval_box_candidate, certify_multivariate_quadratic_interval_candidate,
+    certify_multivariate_quadratic_krawczyk_box, certify_quadratic_interval_candidate,
+    certify_univariate_quadratic_alpha, certify_univariate_quadratic_krawczyk_box,
+    compare_algebraic_root_representations, compare_algebraic_root_representations_with_refinement,
+    context_from_problem, count_bernstein_univariate_polynomial_interval_roots,
     count_descartes_univariate_polynomial_roots, determinant_bareiss,
     eliminate_affine_rows_with_substitution_classes, isolate_univariate_polynomial_roots,
     propose_active_set_update, replay_dense_linear_residuals, replay_sparse_linear_residuals,
@@ -459,6 +459,43 @@ fn certification(c: &mut Criterion) {
             })
         },
     );
+    let rational_two = AlgebraicRootRepresentation {
+        constraint_index: 2,
+        symbol: SymbolId(0),
+        interval_index: 0,
+        polynomial_coefficients: vec![r(-2), Real::one()],
+        interval: IsolatedRootInterval {
+            lower: r(2),
+            upper: r(2),
+            exact_root: Some(r(2)),
+            distinct_root_count: 1,
+        },
+        kind: AlgebraicRootKind::ExactRationalWitness,
+        validation: AlgebraicRootValidationReport {
+            status: AlgebraicRootValidationStatus::Valid,
+            message: None,
+        },
+    };
+    let rational_three = AlgebraicRootRepresentation {
+        constraint_index: 3,
+        polynomial_coefficients: vec![r(-3), Real::one()],
+        interval: IsolatedRootInterval {
+            lower: r(3),
+            upper: r(3),
+            exact_root: Some(r(3)),
+            distinct_root_count: 1,
+        },
+        ..rational_two.clone()
+    };
+    c.bench_function("arithmetic_algebraic_root_representations", |b| {
+        b.iter(|| {
+            arithmetic_algebraic_root_representations(
+                &rational_two,
+                Some(&rational_three),
+                AlgebraicRootArithmeticOp::Multiply,
+            )
+        })
+    });
     c.bench_function("count_descartes_univariate_polynomial_roots", |b| {
         b.iter(|| {
             count_descartes_univariate_polynomial_roots(
