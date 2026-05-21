@@ -8862,6 +8862,23 @@ fn bezier_boolean_result_consumes_schedule_multi_cycle_successors_and_depth_fact
             &output_for_queries,
             &ready_results,
         );
+    let scheduled_certification =
+        BezierBooleanLoopContainmentCertificationReport2::from_schedule_multi_cycle_successor_query_results(
+            &schedule,
+            BooleanOp::Union,
+            &ownership_facts,
+            &endpoints,
+            &[],
+            0,
+            0,
+            &successors,
+            &ready_results,
+        );
+    assert_eq!(
+        scheduled_certification.status,
+        BezierBooleanLoopContainmentCertificationStatus::Ready
+    );
+    assert_eq!(scheduled_certification, certification);
 
     let replay_result =
         BezierBooleanResultReport2::from_schedule_multi_cycle_successor_containment_query_results(
@@ -8911,6 +8928,19 @@ fn bezier_boolean_result_consumes_schedule_multi_cycle_successors_and_depth_fact
     assert_eq!(certified_result.status, BezierBooleanResultStatus::Ready);
     assert_eq!(certified_result.material_loop_indices, vec![0]);
     assert_eq!(certified_result.hole_loop_indices, vec![1]);
+    let locator_result =
+        BezierBooleanResultReport2::from_schedule_multi_cycle_successor_locator_results(
+            &schedule,
+            BooleanOp::Union,
+            &ownership_facts,
+            &endpoints,
+            &[],
+            0,
+            0,
+            &successors,
+            &ready_results,
+        );
+    assert_eq!(locator_result, certified_result);
     let certified_materialized =
         BezierBooleanMaterializedRegionReport2::from_schedule_multi_cycle_successor_laminar_containment_certification(
             &schedule,
@@ -8931,6 +8961,19 @@ fn bezier_boolean_result_consumes_schedule_multi_cycle_successors_and_depth_fact
         certified_materialized.components[0].hole_loop_indices,
         vec![1]
     );
+    let locator_materialized =
+        BezierBooleanMaterializedRegionReport2::from_schedule_multi_cycle_successor_laminar_locator_results(
+            &schedule,
+            BooleanOp::Union,
+            &ownership_facts,
+            &endpoints,
+            &[],
+            0,
+            0,
+            &successors,
+            &ready_results,
+        );
+    assert_eq!(locator_materialized, certified_materialized);
 
     let boundary_results = queries
         .queries
@@ -8945,6 +8988,23 @@ fn bezier_boolean_result_consumes_schedule_multi_cycle_successors_and_depth_fact
         &queries,
         &boundary_results,
     );
+    let boundary_certification =
+        BezierBooleanLoopContainmentCertificationReport2::from_schedule_multi_cycle_successor_query_results(
+            &schedule,
+            BooleanOp::Union,
+            &ownership_facts,
+            &endpoints,
+            &[],
+            0,
+            0,
+            &successors,
+            &boundary_results,
+        );
+    assert_eq!(
+        boundary_certification.status,
+        BezierBooleanLoopContainmentCertificationStatus::QueryResultBlocked
+    );
+    assert!(boundary_certification.has_blockers());
     let boundary_replay_result =
         BezierBooleanResultReport2::from_schedule_multi_cycle_successor_containment_query_results(
             &schedule,
@@ -8962,6 +9022,23 @@ fn bezier_boolean_result_consumes_schedule_multi_cycle_successors_and_depth_fact
         BezierBooleanResultStatus::RegionAssemblyBlocked
     );
     assert!(boundary_replay_result.has_blockers());
+    let boundary_locator_result =
+        BezierBooleanResultReport2::from_schedule_multi_cycle_successor_locator_results(
+            &schedule,
+            BooleanOp::Union,
+            &ownership_facts,
+            &endpoints,
+            &[],
+            0,
+            0,
+            &successors,
+            &boundary_results,
+        );
+    assert_eq!(
+        boundary_locator_result.status,
+        BezierBooleanResultStatus::RegionAssemblyBlocked
+    );
+    assert!(boundary_locator_result.has_blockers());
     let boundary_materialized =
         BezierBooleanMaterializedRegionReport2::from_schedule_multi_cycle_successor_laminar_containment_query_results(
             &schedule,
@@ -15503,6 +15580,69 @@ proptest! {
         );
         prop_assert_eq!(materialized.component_count, (cycle_count + 1) / 2);
         prop_assert_eq!(materialized.assigned_loops.len(), cycle_count);
+
+        let locator = BezierBooleanLoopLocatorInputReport2::from_output_loops(&output);
+        let queries = BezierBooleanLoopContainmentQueryReport2::from_locator_inputs(&locator);
+        let locator_results = queries
+            .queries
+            .iter()
+            .map(|query| BezierBooleanLoopContainmentQueryResult2 {
+                query_loop_index: query.query_loop_index,
+                candidate_container_loop_index: query.candidate_container_loop_index,
+                result: if query.candidate_container_loop_index < query.query_loop_index {
+                    BezierBooleanLoopContainmentQueryResult::Contains
+                } else {
+                    BezierBooleanLoopContainmentQueryResult::Outside
+                },
+            })
+            .collect::<Vec<_>>();
+        let locator_certification =
+            BezierBooleanLoopContainmentCertificationReport2::from_schedule_multi_cycle_successor_query_results(
+                &schedule,
+                BooleanOp::Union,
+                &ownership_facts,
+                &endpoints,
+                &[],
+                0,
+                0,
+                &successors,
+                &locator_results,
+            );
+        prop_assert_eq!(
+            locator_certification.status,
+            BezierBooleanLoopContainmentCertificationStatus::Ready
+        );
+        let locator_result =
+            BezierBooleanResultReport2::from_schedule_multi_cycle_successor_locator_results(
+                &schedule,
+                BooleanOp::Union,
+                &ownership_facts,
+                &endpoints,
+                &[],
+                0,
+                0,
+                &successors,
+                &locator_results,
+            );
+        prop_assert_eq!(locator_result.status, BezierBooleanResultStatus::Ready);
+        prop_assert_eq!(locator_result.assigned_loop_count, cycle_count);
+        let locator_materialized =
+            BezierBooleanMaterializedRegionReport2::from_schedule_multi_cycle_successor_laminar_locator_results(
+                &schedule,
+                BooleanOp::Union,
+                &ownership_facts,
+                &endpoints,
+                &[],
+                0,
+                0,
+                &successors,
+                &locator_results,
+            );
+        prop_assert_eq!(
+            locator_materialized.status,
+            BezierBooleanMaterializedRegionStatus::Ready
+        );
+        prop_assert_eq!(locator_materialized.component_count, (cycle_count + 1) / 2);
     }
 
     #[test]

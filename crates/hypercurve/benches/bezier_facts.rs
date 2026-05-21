@@ -1752,6 +1752,18 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                         &queries,
                         &locator_results,
                     );
+                let locator_certification =
+                    hypercurve::BezierBooleanLoopContainmentCertificationReport2::from_schedule_multi_cycle_successor_query_results(
+                        &schedule,
+                        BooleanOp::Union,
+                        &ownership_facts,
+                        &first_endpoints,
+                        &second_endpoints,
+                        0,
+                        0,
+                        &successors,
+                        &locator_results,
+                    );
                 let replay_result =
                     hypercurve::BezierBooleanResultReport2::from_schedule_multi_cycle_successor_containment_query_results(
                         &schedule,
@@ -1763,6 +1775,18 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                         0,
                         &successors,
                         &replay,
+                    );
+                let locator_result =
+                    hypercurve::BezierBooleanResultReport2::from_schedule_multi_cycle_successor_locator_results(
+                        &schedule,
+                        BooleanOp::Union,
+                        &ownership_facts,
+                        &first_endpoints,
+                        &second_endpoints,
+                        0,
+                        0,
+                        &successors,
+                        &locator_results,
                     );
                 let replay_materialized =
                     hypercurve::BezierBooleanMaterializedRegionReport2::from_schedule_multi_cycle_successor_laminar_containment_query_results(
@@ -1776,8 +1800,20 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                         &successors,
                         &replay,
                     );
+                let locator_materialized =
+                    hypercurve::BezierBooleanMaterializedRegionReport2::from_schedule_multi_cycle_successor_laminar_locator_results(
+                        &schedule,
+                        BooleanOp::Union,
+                        &ownership_facts,
+                        &first_endpoints,
+                        &second_endpoints,
+                        0,
+                        0,
+                        &successors,
+                        &locator_results,
+                    );
                 format!(
-                    "{single:?}{multi:?}{output:?}{result:?}{containment_result:?}{materialized:?}{replay_result:?}{replay_materialized:?}"
+                    "{single:?}{multi:?}{output:?}{result:?}{containment_result:?}{materialized:?}{locator_certification:?}{replay_result:?}{locator_result:?}{replay_materialized:?}{locator_materialized:?}"
                 )
             }
             other => format!("{other:?}"),
