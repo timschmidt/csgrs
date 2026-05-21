@@ -823,6 +823,14 @@ pub(crate) fn hreal_sqrt(value: Real) -> Option<Real> {
     hreal_to_f64(&value.sqrt().ok()?)
 }
 
+/// Raise a finite public boundary scalar to a finite public boundary exponent.
+#[cfg(any(test, feature = "sketch"))]
+pub(crate) fn hreal_pow(base: Real, exponent: Real) -> Option<Real> {
+    let base = hreal_from_f64(base).ok()?;
+    let exponent = hreal_from_f64(exponent).ok()?;
+    hreal_to_f64(&base.pow(exponent).ok()?)
+}
+
 /// Evaluate `origin + t * delta` through hyperreal arithmetic.
 pub(crate) fn hreal_affine(origin: Real, t: Real, delta: Real) -> Option<Real> {
     let origin = hreal_from_f64(origin).ok()?;
@@ -1163,6 +1171,8 @@ mod tests {
         assert_eq!(hreal_abs(-3.0).unwrap(), 3.0);
         assert_eq!(hreal_abs(0.0).unwrap(), 0.0);
         assert_eq!(hreal_sqrt(25.0).unwrap(), 5.0);
+        assert_eq!(hreal_pow(4.0, 0.5).unwrap(), 2.0);
+        assert_eq!(hreal_pow(2.0, 3.0).unwrap(), 8.0);
         assert_eq!(hreal_clamp_f64(2.0, -1.0, 1.0).unwrap(), 1.0);
         assert_eq!(hreal_clamp_f64(-2.0, -1.0, 1.0).unwrap(), -1.0);
         assert_eq!(hreal_clamp_f64(0.5, -1.0, 1.0).unwrap(), 0.5);
@@ -1201,6 +1211,8 @@ mod tests {
         assert!(hangle_sin_cos(Real::INFINITY).is_none());
         assert!(hreal_abs(Real::NAN).is_none());
         assert!(hreal_sqrt(-1.0).is_none());
+        assert!(hreal_pow(-1.0, 0.5).is_none());
+        assert!(hreal_pow(Real::NAN, 2.0).is_none());
         assert!(hreal_clamp_f64(Real::NAN, -1.0, 1.0).is_none());
         assert!(hreal_clamp_f64(0.0, 1.0, -1.0).is_none());
         assert!(hdegrees_to_radians(Real::NAN).is_none());

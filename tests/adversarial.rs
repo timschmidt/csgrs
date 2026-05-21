@@ -442,6 +442,7 @@ fn adversarial_hyperreal_sampled_profile_constructors_emit_finite_regions() {
         Profile::teardrop(3.0, 5.0, 18, ()),
         Profile::egg(3.0, 5.0, 29, ()),
         Profile::squircle(4.0, 3.0, 32, ()),
+        Profile::supershape(1.0, 1.0, 5.0, 0.3, 1.7, 1.7, 48, ()),
         Profile::rounded_rectangle(5.0, 3.0, 0.75, 5, ()),
         Profile::reuleaux(3, 2.0, 24, ()),
         Profile::ring(2.0, 0.25, 24, ()),
