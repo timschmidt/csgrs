@@ -1,24 +1,25 @@
 use hyperreal::{Rational, Real, SymbolicDependencyMask};
 use hypersolve::jacobian::{symbolic_jacobian, symbolic_jacobian_prepared};
 use hypersolve::{
-    BatchCandidateStatus, CandidateCertificationConfig, CandidateResidualBall,
-    CertifiedCandidateStatus, Constraint, ConstraintKind, ConvergenceReason, DenseLinearBackend,
-    DirectAffineSystemStatus, DomainCheckKind, DomainCheckStatus, ExactAffineRankStatus,
-    ExactBranchStatus, Expr, ExprDegree, IntervalBoxCertificationPackage,
-    IntervalBoxCertificationStatus, LinearAdapterKind, LinearAdapterPrecision, LinearBackend,
-    MultivariateQuadraticKrawczykStatus, PreparedProblem, PreparedSolverBlock, Problem,
-    ProposalEngineKind, ProposalEnginePrecision, RootIsolationStatus, RootMultiplicityStatus,
-    SketchConstraintKind, SketchConstructionCertificateStatus, SketchDegeneracyKind,
-    SketchDegeneracyStatus, SketchEntityHandle, SketchEntityKind, SketchGeneratedRowStatus,
-    SketchParameterDomain, SketchParameterDomainKind, SketchParameterDomainStatus,
-    SketchResidualFormKind, SketchResidualFormRole, SketchResidualFormsStatus,
-    SketchResidualStrategy, SketchRoundTripMetadata, SketchRoundTripRole, SketchSolveProblem,
-    SketchUnitToleranceStatus, SolverBlockRowKind, SolverConfig, SolverPoint2, SolverState,
-    SparseResidualBatchStatus, SparseResidualTerm, SymbolId, VariableBall,
-    analyze_exact_affine_rank, apply_equality_substitution_classes, apply_equality_substitutions,
-    audit_sketch_unit_tolerances, build_equality_substitution_classes,
-    certify_affine_interval_candidate, certify_affine_krawczyk_box, certify_candidate,
-    certify_candidate_batch, certify_candidate_domains, certify_candidate_with_config,
+    BatchCandidateStatus, BatchPredicateScheduleConfig, BatchPredicateScheduleError,
+    CandidateCertificationConfig, CandidateResidualBall, CertifiedCandidateStatus, Constraint,
+    ConstraintKind, ConvergenceReason, DenseLinearBackend, DirectAffineSystemStatus,
+    DomainCheckKind, DomainCheckStatus, ExactAffineRankStatus, ExactBranchStatus, Expr, ExprDegree,
+    IntervalBoxCertificationPackage, IntervalBoxCertificationStatus, LinearAdapterKind,
+    LinearAdapterPrecision, LinearBackend, MultivariateQuadraticKrawczykStatus, PreparedProblem,
+    PreparedSolverBlock, Problem, ProposalEngineKind, ProposalEnginePrecision, RootIsolationStatus,
+    RootMultiplicityStatus, SketchConstraintKind, SketchConstructionCertificateStatus,
+    SketchDegeneracyKind, SketchDegeneracyStatus, SketchEntityHandle, SketchEntityKind,
+    SketchGeneratedRowStatus, SketchParameterDomain, SketchParameterDomainKind,
+    SketchParameterDomainStatus, SketchResidualFormKind, SketchResidualFormRole,
+    SketchResidualFormsStatus, SketchResidualStrategy, SketchRoundTripMetadata,
+    SketchRoundTripRole, SketchSolveProblem, SketchUnitToleranceStatus, SolverBlockRowKind,
+    SolverConfig, SolverPoint2, SolverState, SparseResidualBatchStatus, SparseResidualTerm,
+    SymbolId, VariableBall, analyze_exact_affine_rank, apply_equality_substitution_classes,
+    apply_equality_substitutions, audit_sketch_unit_tolerances,
+    build_equality_substitution_classes, certify_affine_interval_candidate,
+    certify_affine_krawczyk_box, certify_candidate, certify_candidate_batch,
+    certify_candidate_domains, certify_candidate_with_config,
     certify_candidate_with_residual_balls, certify_direct_univariate_quadratic_roots,
     certify_interval_box_candidate, certify_multivariate_quadratic_interval_candidate,
     certify_multivariate_quadratic_krawczyk_box, certify_quadratic_interval_candidate,
@@ -30,11 +31,12 @@ use hypersolve::{
     preflight_sketch_degeneracies, preflight_sketch_parameter_domains,
     prepare_sparse_linear_residual_system, replay_sketch_compatibility_fixture,
     replay_sparse_linear_residual_batch, report_lossy_adapter_only_candidate,
-    sketch_compatibility_fixtures, sketch_distance_builders, sketch_incidence_builders,
-    sketch_objective_builders, sketch_orientation_builders, sketch_range_builders,
-    solve_damped_least_squares, solve_direct_affine_equalities, solve_direct_affine_system,
-    solve_direct_univariate_quadratic_equalities, squared_distance_equation,
-    tangent_parallel_equation, tangent_same_direction_constraint, validate_equality_substitutions,
+    schedule_candidate_batch_predicates, sketch_compatibility_fixtures, sketch_distance_builders,
+    sketch_incidence_builders, sketch_objective_builders, sketch_orientation_builders,
+    sketch_range_builders, solve_damped_least_squares, solve_direct_affine_equalities,
+    solve_direct_affine_system, solve_direct_univariate_quadratic_equalities,
+    squared_distance_equation, tangent_parallel_equation, tangent_same_direction_constraint,
+    validate_equality_substitutions,
 };
 
 fn real(value: i64) -> Real {
@@ -1339,6 +1341,48 @@ fn candidate_batch_certification_reports_deterministic_failed_row_probes() {
         BatchCandidateStatus::DomainFailure
     );
     assert_eq!(report.candidates[2].domain_failure_constraints, vec![0, 1]);
+}
+
+#[test]
+fn candidate_batch_predicate_schedule_chunks_active_rows_deterministically() {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let mut problem = Problem::default();
+    problem.add_variable("x", real(0));
+    problem.add_constraint(Constraint::equality("active 0", x.clone()));
+    let mut inactive = Constraint::equality("inactive", x.clone());
+    inactive.active = false;
+    problem.add_constraint(inactive);
+    problem.add_constraint(Constraint::equality("active 2", x.clone()));
+    problem.add_constraint(Constraint::equality("active 3", x));
+    let prepared = PreparedProblem::new(&problem);
+
+    let schedule = schedule_candidate_batch_predicates(
+        &prepared,
+        2,
+        BatchPredicateScheduleConfig {
+            max_rows_per_work_item: 2,
+        },
+    )
+    .unwrap();
+
+    assert_eq!(schedule.candidate_count, 2);
+    assert_eq!(schedule.active_row_count, 3);
+    assert_eq!(schedule.work_item_count(), 4);
+    assert_eq!(schedule.work_items[0].source_constraints, vec![0, 2]);
+    assert_eq!(schedule.work_items[1].source_constraints, vec![3]);
+    assert_eq!(schedule.work_items[2].candidate_index, 1);
+    assert_eq!(schedule.work_items[2].source_constraints, vec![0, 2]);
+    assert_eq!(
+        schedule_candidate_batch_predicates(
+            &prepared,
+            1,
+            BatchPredicateScheduleConfig {
+                max_rows_per_work_item: 0,
+            },
+        )
+        .unwrap_err(),
+        BatchPredicateScheduleError::ZeroRowsPerWorkItem
+    );
 }
 
 #[test]

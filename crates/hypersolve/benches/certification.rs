@@ -3,14 +3,15 @@ use hyperreal::{Rational, Real};
 use hypersolve::{
     AlgebraicRootArithmeticOp, AlgebraicRootKind, AlgebraicRootRefinementComparisonConfig,
     AlgebraicRootRepresentation, AlgebraicRootValidationReport, AlgebraicRootValidationStatus,
-    Constraint, EqualitySubstitution, Expr, IntervalBoxCertificationPackage, IsolatedRootInterval,
-    PreparedProblem, PreparedSolverBlock, Problem, ProposalEngineKind, ProposalEnginePrecision,
-    ProposalEngineReport, SolverConfig, SolverPoint2, SolverState, SparseResidualTerm, SymbolId,
-    UnivariateResultantPairInput, VariableBall, analyze_exact_affine_rank,
-    analyze_sparse_bareiss_elimination_pattern, apply_equality_substitution_classes,
-    arithmetic_algebraic_root_representations, audit_active_set, audit_sketch_unit_tolerances,
-    build_equality_substitution_classes, certify_affine_krawczyk_box, certify_candidate,
-    certify_candidate_batch, certify_candidate_domains, certify_direct_univariate_quadratic_roots,
+    BatchPredicateScheduleConfig, Constraint, EqualitySubstitution, Expr,
+    IntervalBoxCertificationPackage, IsolatedRootInterval, PreparedProblem, PreparedSolverBlock,
+    Problem, ProposalEngineKind, ProposalEnginePrecision, ProposalEngineReport, SolverConfig,
+    SolverPoint2, SolverState, SparseResidualTerm, SymbolId, UnivariateResultantPairInput,
+    VariableBall, analyze_exact_affine_rank, analyze_sparse_bareiss_elimination_pattern,
+    apply_equality_substitution_classes, arithmetic_algebraic_root_representations,
+    audit_active_set, audit_sketch_unit_tolerances, build_equality_substitution_classes,
+    certify_affine_krawczyk_box, certify_candidate, certify_candidate_batch,
+    certify_candidate_domains, certify_direct_univariate_quadratic_roots,
     certify_interval_box_candidate, certify_multivariate_quadratic_interval_candidate,
     certify_multivariate_quadratic_krawczyk_box, certify_quadratic_interval_candidate,
     certify_sketch_construction, certify_univariate_quadratic_alpha,
@@ -25,8 +26,9 @@ use hypersolve::{
     replay_dense_linear_residuals, replay_sketch_compatibility_fixture,
     replay_sparse_linear_residuals, report_lossy_adapter_only_candidate,
     represent_univariate_algebraic_roots, resultant_univariate_polynomials,
-    run_active_set_update_loop, schedule_univariate_resultant_pairs, sketch_compatibility_fixtures,
-    solve_damped_least_squares, solve_dense_linear_system_bareiss, solve_direct_affine_system,
+    run_active_set_update_loop, schedule_candidate_batch_predicates,
+    schedule_univariate_resultant_pairs, sketch_compatibility_fixtures, solve_damped_least_squares,
+    solve_dense_linear_system_bareiss, solve_direct_affine_system,
     solve_direct_univariate_quadratic_equalities, solve_sparse_linear_system_bareiss,
     squared_distance_equation, subdivide_bernstein_univariate_polynomial_interval_roots,
     subresultant_chain_univariate_polynomials,
@@ -901,6 +903,17 @@ fn certification(c: &mut Criterion) {
     let batch_contexts = (0..16).map(|_| context.clone()).collect::<Vec<_>>();
     c.bench_function("certify_candidate_batch_affine", |b| {
         b.iter(|| certify_candidate_batch(&prepared, &batch_contexts))
+    });
+    c.bench_function("schedule_candidate_batch_predicates", |b| {
+        b.iter(|| {
+            schedule_candidate_batch_predicates(
+                &prepared,
+                16,
+                BatchPredicateScheduleConfig {
+                    max_rows_per_work_item: 4,
+                },
+            )
+        })
     });
     c.bench_function("audit_active_set", |b| {
         b.iter(|| {

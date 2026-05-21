@@ -70,7 +70,9 @@ pub use bareiss::{
 };
 pub use batch::{
     BatchCandidateCertificationReport, BatchCandidateReplay, BatchCandidateStatus,
-    certify_candidate_batch, certify_candidate_batch_with_config,
+    BatchPredicateScheduleConfig, BatchPredicateScheduleError, BatchPredicateScheduleReport,
+    BatchPredicateWorkItem, certify_candidate_batch, certify_candidate_batch_with_config,
+    schedule_candidate_batch_predicates,
 };
 pub use branches::{
     ExactBranchEnumerationReport, ExactBranchStatus, ExactSolutionBranch,
