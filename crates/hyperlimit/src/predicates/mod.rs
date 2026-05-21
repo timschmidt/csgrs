@@ -1,5 +1,6 @@
 pub mod aabb;
 pub mod convex;
+pub mod coplanar;
 pub mod distance;
 mod exact;
 pub mod filters;
@@ -13,10 +14,12 @@ pub mod point_line;
 pub mod point_plane;
 pub mod ring;
 pub mod segment;
+pub mod segment_plane;
 pub mod triangle;
 
 pub use self::aabb::*;
 pub use self::convex::*;
+pub use self::coplanar::*;
 pub use self::distance::*;
 pub use self::filters::*;
 pub use self::interval::*;
@@ -25,4 +28,5 @@ pub use self::order::*;
 pub use self::orient::*;
 pub use self::ring::*;
 pub use self::segment::*;
+pub use self::segment_plane::*;
 pub use self::triangle::*;

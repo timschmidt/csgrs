@@ -140,16 +140,24 @@ dependencies = [
 ]
 
 [[package]]
-name = "hyperlimit"
-version = "0.3.0"
+name = "hyperlattice"
+version = "0.6.0"
 dependencies = [
+ "hyperreal",
+]
+
+[[package]]
+name = "hyperlimit"
+version = "0.4.0"
+dependencies = [
+ "hyperlattice",
  "hyperreal",
  "rayon",
 ]
 
 [[package]]
 name = "hyperlimit-fuzz"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "arbitrary",
  "hyperlimit",
@@ -159,7 +167,7 @@ dependencies = [
 
 [[package]]
 name = "hyperreal"
-version = "0.12.0"
+version = "0.13.0"
 dependencies = [
  "ciborium",
  "num",

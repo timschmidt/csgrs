@@ -537,12 +537,12 @@ pub fn classify_ray_triangle3_intersection_with_policy(
     let numerator = neg_real(&origin_expression);
     let t = (&numerator / &direction_expression)
         .map_err(|_| ())
-        .and_then(|parameter| {
-            Ok(Point3::new(
+        .map(|parameter| {
+            Point3::new(
                 add_ref(&origin.x, &mul_ref(&direction.x, &parameter)),
                 add_ref(&origin.y, &mul_ref(&direction.y, &parameter)),
                 add_ref(&origin.z, &mul_ref(&direction.z, &parameter)),
-            ))
+            )
         });
     match t {
         Ok(intersection) => {
@@ -614,9 +614,9 @@ fn classify_point_triangle3_impl(
         return PredicateOutcome::decided(Triangle3Location::OffPlane, certainty, stage);
     }
 
-    let edge_ab = edge_halfspace3_sign(&normal, a, b, point, policy, &mut certainty, &mut stage);
-    let edge_bc = edge_halfspace3_sign(&normal, b, c, point, policy, &mut certainty, &mut stage);
-    let edge_ca = edge_halfspace3_sign(&normal, c, a, point, policy, &mut certainty, &mut stage);
+    let edge_ab = edge_halfspace3_sign(normal, a, b, point, policy, &mut certainty, &mut stage);
+    let edge_bc = edge_halfspace3_sign(normal, b, c, point, policy, &mut certainty, &mut stage);
+    let edge_ca = edge_halfspace3_sign(normal, c, a, point, policy, &mut certainty, &mut stage);
     let edge_signs = match (edge_ab, edge_bc, edge_ca) {
         (Ok(ab), Ok(bc), Ok(ca)) => [ab, bc, ca],
         (Err(unknown), _, _) | (_, Err(unknown), _) | (_, _, Err(unknown)) => return unknown,

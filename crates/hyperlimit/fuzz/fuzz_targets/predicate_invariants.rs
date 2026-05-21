@@ -14,7 +14,8 @@ use arbitrary::Arbitrary;
 use hyperlimit::{
     AabbSphereIntersection, CachePayoff, ConstructionFreshness, ConstructionVersion, LineSide,
     Plane3, Point2, Point3, PredicateApiSemantics, PredicateOutcome, PredicatePolicy, Sign,
-    SphereIntersection, certified_ball_sign, certified_interval_sign,
+    SphereIntersection, certified_ball_sign, certified_interval_sign, classify_coplanar_triangles,
+    classify_triangle3_degeneracy,
     classify_aabb3_sphere_intersection, classify_circle_line2, classify_circle_segment2,
     classify_circle_line2_batch, classify_circle_segment2_batch,
     classify_homogeneous_point_plane, classify_point_convex_planes3, classify_point_convex_polygon2,
@@ -25,8 +26,10 @@ use hyperlimit::{
     classify_sphere3_intersection, compare_point_line3_distance_squared,
     compare_point_plane_distance_squared, compare_point_segment3_distance_squared,
     compare_point2_lexicographic, compare_point2_lexicographic_report, compare_reals,
-    compare_reals_report, incircle2d, insphere3d, intersect_three_planes, intersect_two_planes,
-    orient2d, orient2d_batch, point2_equal, point2_equal_report,
+    compare_reals_report, incircle2d, insphere3d, intersect_segment_with_oriented_plane,
+    intersect_three_planes, intersect_two_planes, orient2d, orient2d_batch, point2_equal,
+    point2_equal_report, projected_line_parameter3, projected_segment_parameter3,
+    CoplanarProjection, SegmentPlaneRelation, TriangleDegeneracy,
 };
 use hyperreal::{Rational, Real};
 use libfuzzer_sys::fuzz_target;
@@ -428,6 +431,67 @@ fn predicate_invariants(input: Input) {
             "ray from the segment start toward the segment end must preserve endpoint-triangle incidence"
         );
     }
+
+    let triangle_degeneracy = classify_triangle3_degeneracy(&p, &q, &r);
+    assert_ne!(
+        triangle_degeneracy.degeneracy,
+        TriangleDegeneracy::Unknown,
+        "rational 3D triangle degeneracy should be exactly decided"
+    );
+    assert!(
+        triangle_degeneracy.all_proof_producing(),
+        "triangle degeneracy should retain proof-producing predicate routes"
+    );
+
+    let segment_plane = intersect_segment_with_oriented_plane(&p, &q, &r, &s, &t);
+    segment_plane
+        .validate()
+        .expect("segment/plane event must be internally coherent");
+    segment_plane
+        .validate_against_sources(&p, &q, &r, &s, &t)
+        .expect("segment/plane event must replay against its source points");
+    if segment_plane.relation == SegmentPlaneRelation::ProperCrossing {
+        assert!(
+            segment_plane.point.is_some() && segment_plane.parameter_ratio.is_some(),
+            "proper segment/plane crossings must retain exact construction data"
+        );
+    }
+
+    let lifted = [
+        Point3::new(a.x.clone(), a.y.clone(), 0.into()),
+        Point3::new(b.x.clone(), b.y.clone(), 0.into()),
+        Point3::new(c.x.clone(), c.y.clone(), 0.into()),
+        Point3::new(d.x.clone(), d.y.clone(), 0.into()),
+        Point3::new(&a.x + &Real::from(1), a.y.clone(), 0.into()),
+        Point3::new(a.x.clone(), &a.y + &Real::from(1), 0.into()),
+    ];
+    let coplanar = classify_coplanar_triangles(&lifted, [0, 1, 2], [3, 4, 5]);
+    coplanar
+        .validate_against_sources(&lifted, [0, 1, 2], [3, 4, 5])
+        .expect("coplanar classifier must validate and replay");
+
+    let exact_half = (Real::from(1) / &Real::from(2)).expect("half is rational");
+    assert_eq!(
+        projected_segment_parameter3(
+            &Point3::new(2.into(), 0.into(), 0.into()),
+            &Point3::new(0.into(), 0.into(), 0.into()),
+            &Point3::new(4.into(), 0.into(), 0.into()),
+            CoplanarProjection::Xy,
+        ),
+        Some(exact_half.clone()),
+        "projected segment parameter should preserve exact affine ratios"
+    );
+    assert_eq!(
+        projected_line_parameter3(
+            &Point3::new(0.into(), (-2).into(), 0.into()),
+            &Point3::new(0.into(), 2.into(), 0.into()),
+            &Point3::new((-1).into(), 0.into(), 0.into()),
+            &Point3::new(1.into(), 0.into(), 0.into()),
+            CoplanarProjection::Xy,
+        ),
+        Some(exact_half),
+        "projected line crossing parameter should preserve determinant ratios"
+    );
 
     let unit_x_from_a = Point2::new(&a.x + &Real::from(1), a.y.clone());
     assert_eq!(

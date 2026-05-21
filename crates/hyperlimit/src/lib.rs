@@ -24,6 +24,7 @@ pub mod orient;
 pub mod plane;
 pub mod predicate;
 pub mod predicates;
+pub mod provenance;
 pub mod real;
 mod resolve;
 pub mod session;
@@ -107,7 +108,7 @@ pub use plane::{
 pub use predicate::{
     Certainty, DeterminantScheduleHint, Escalation, ExactPredicateKernel, PredicateApiSemantics,
     PredicateCertificate, PredicateOutcome, PredicatePolicy, PredicatePrecisionStage,
-    PredicateReport, RefinementNeed, Sign, SignKnowledge,
+    PredicateReport, PredicateUse, RefinementNeed, Sign, SignKnowledge,
 };
 pub use predicates::aabb::{
     PreparedAabb2, PreparedAabb3, aabb2s_intersect, aabb2s_intersect_with_policy, aabb3s_intersect,
@@ -122,6 +123,14 @@ pub use predicates::aabb::{
 pub use predicates::convex::{
     classify_point_convex_planes3, classify_point_convex_planes3_with_policy,
     classify_point_convex_polygon2, classify_point_convex_polygon2_with_policy,
+};
+pub use predicates::coplanar::{
+    CoplanarProjection, CoplanarTriangleClassification, CoplanarTriangleRelation,
+    CoplanarTriangleValidationError, TriangleDegeneracy, TrianglePredicateReport,
+    choose_coplanar_projection, classify_coplanar_triangle_points, classify_coplanar_triangles,
+    classify_triangle3_degeneracy, derive_coplanar_triangle_relation, orient2d_value,
+    project_point3, project_triangle3, projected_line_parameter3, projected_polygon_area2_sign,
+    projected_polygon_area2_value, projected_segment_parameter3,
 };
 pub use predicates::distance::{
     PreparedExplicitSphere3, classify_aabb3_sphere_intersection,
@@ -180,6 +189,13 @@ pub use predicates::segment::{
     point_on_segment3_with_policy, proper_segment_intersection_point,
     proper_segment_intersection_point_with_policy,
 };
+pub use predicates::segment_plane::{
+    SegmentPlaneConstructionFailure, SegmentPlaneIntersection, SegmentPlaneParameterRatio,
+    SegmentPlaneRelation, SegmentPlaneValidationError,
+    construct_segment_plane_crossing_from_values, interpolate_point3,
+    intersect_segment_with_oriented_plane, intersect_segment_with_plane,
+    intersect_segment_with_plane_values, point_plane_value, segment_parameter_from_axis,
+};
 pub use predicates::triangle::{
     PreparedTriangle2, PreparedTriangle3, classify_point_tetrahedron,
     classify_point_tetrahedron_with_policy, classify_point_triangle,
@@ -189,6 +205,10 @@ pub use predicates::triangle::{
     classify_ray_triangle3_intersection_with_policy, classify_segment_triangle3_intersection,
     classify_segment_triangle3_intersection_with_policy, triangle3_winding_normal_sign,
     triangle3_winding_normal_sign_with_policy,
+};
+pub use provenance::{
+    ApproximationPolicy, ConstructionProvenance, ConstructionProvenanceValidationError, MeshSource,
+    SourceProvenance,
 };
 pub use real::{RealFacts, RealPredicateExt, RealZeroKnowledge};
 pub use session::{

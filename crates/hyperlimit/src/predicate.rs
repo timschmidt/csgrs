@@ -329,6 +329,42 @@ impl PredicateCertificate {
     }
 }
 
+/// Compact record of a predicate route used while deriving a higher-level fact.
+///
+/// This is the application-facing sibling of [`PredicateCertificate`]. It keeps
+/// the proof-bearing certificate together with stable diagnostic labels so
+/// downstream crates can retain predicate evidence without depending on the
+/// internal predicate pipeline. The separation follows Yap's exact geometric
+/// computation model: exact predicates certify topology, while provenance
+/// records are object-layer evidence that can be replayed and audited. See Yap,
+/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+/// (1997).
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct PredicateUse {
+    /// Certificate returned by `hyperlimit`.
+    pub certificate: PredicateCertificate,
+    /// Coarse precision stage for diagnostics and benchmarks.
+    pub stage: PredicatePrecisionStage,
+    /// API semantic class implied by the certificate.
+    pub semantics: PredicateApiSemantics,
+}
+
+impl PredicateUse {
+    /// Record one predicate certificate.
+    pub fn from_certificate(certificate: PredicateCertificate) -> Self {
+        Self {
+            certificate,
+            stage: certificate.precision_stage(),
+            semantics: certificate.api_semantics(),
+        }
+    }
+
+    /// Return whether this predicate route produced an exact-preserving proof.
+    pub const fn is_proof_producing(self) -> bool {
+        self.certificate.is_proof_producing()
+    }
+}
+
 /// A predicate result with provenance.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum PredicateOutcome<T> {
@@ -463,7 +499,7 @@ impl Default for PredicatePolicy {
 mod tests {
     use super::{
         ExactPredicateKernel, PredicateApiSemantics, PredicateCertificate, PredicateOutcome,
-        PredicatePolicy, PredicatePrecisionStage, PredicateReport, Sign,
+        PredicatePolicy, PredicatePrecisionStage, PredicateReport, PredicateUse, Sign,
     };
 
     #[test]
@@ -557,6 +593,22 @@ mod tests {
             PredicateCertificate::from_outcome(&outcome).precision_stage(),
             PredicatePrecisionStage::CertifiedFilter
         );
+    }
+
+    #[test]
+    fn predicate_use_replays_certificate_metadata() {
+        let predicate = PredicateUse::from_certificate(PredicateCertificate::ExactRealFact);
+        assert_eq!(predicate.stage, PredicatePrecisionStage::ExactReducer);
+        assert_eq!(predicate.semantics, PredicateApiSemantics::ExactPreserving);
+        assert!(predicate.is_proof_producing());
+
+        let unknown = PredicateUse::from_certificate(PredicateCertificate::Unknown);
+        assert_eq!(unknown.stage, PredicatePrecisionStage::Unknown);
+        assert_eq!(
+            unknown.semantics,
+            PredicateApiSemantics::ApproximationDeferring
+        );
+        assert!(!unknown.is_proof_producing());
     }
 
     #[test]

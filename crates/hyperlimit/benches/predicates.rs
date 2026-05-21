@@ -6,18 +6,20 @@ mod dispatch_trace;
 use criterion::{BenchmarkId, Criterion, black_box};
 use dispatch_trace::{begin_dispatch_trace_run, trace_dispatch_cases, write_dispatch_trace_report};
 use hyperlimit::{
-    ExactGeometrySession, LineSide, Plane3, PlaneSide, Point2, Point3, PredicateOutcome,
-    PreparedIncircle2, PreparedInsphere3, PreparedLine2, PreparedOrientedPlane3,
-    Segment3Intersection, Sign, affine_independent_d, certified_ball_sign,
+    CoplanarProjection, CoplanarTriangleRelation, ExactGeometrySession, LineSide, Plane3,
+    PlaneSide, Point2, Point3, PredicateOutcome, PreparedIncircle2, PreparedInsphere3,
+    PreparedLine2, PreparedOrientedPlane3, Segment3Intersection, SegmentPlaneRelation, Sign,
+    TriangleDegeneracy, affine_independent_d, certified_ball_sign,
     classify_aabb3_sphere_intersection, classify_circle_line2, classify_circle_segment2,
-    classify_homogeneous_point_plane, classify_point_convex_planes3,
+    classify_coplanar_triangles, classify_homogeneous_point_plane, classify_point_convex_planes3,
     classify_point_convex_polygon2, classify_point_line, classify_point_oriented_plane,
     classify_point_plane, classify_ray_triangle3_intersection,
     classify_segment_triangle3_intersection, classify_segment3_intersection,
-    classify_sphere3_intersection, compare_point_line3_distance_squared,
-    compare_point_plane_distance_squared, compare_point_segment3_distance_squared, incircle2d,
-    insphere_d, insphere3d, intersect_three_planes, intersect_two_planes, orient_d, orient2d,
-    orient3d,
+    classify_sphere3_intersection, classify_triangle3_degeneracy,
+    compare_point_line3_distance_squared, compare_point_plane_distance_squared,
+    compare_point_segment3_distance_squared, incircle2d, insphere_d, insphere3d,
+    intersect_segment_with_oriented_plane, intersect_three_planes, intersect_two_planes, orient_d,
+    orient2d, orient3d, projected_line_parameter3, projected_segment_parameter3,
 };
 
 const BATCH: usize = 512;
@@ -53,11 +55,97 @@ fn bench_predicates(c: &mut Criterion) {
     bench_shared_scale_views(c);
     bench_transformed_predicates(c);
     bench_versioned_prepared(c);
+    bench_hypermesh_port_helpers(c);
 
     // Parallel batch APIs require `Sync` real storage. `hyperreal::Real`
     // currently keeps local refinement caches behind `RefCell`, so exact
     // hyperreal benchmark rows stay sequential until the real layer exposes a
     // thread-safe sharing mode.
+}
+
+fn bench_hypermesh_port_helpers(c: &mut Criterion) {
+    let mut group = c.benchmark_group("hypermesh_port_helpers");
+    let points = vec![
+        rational_point3(0, 1, 0, 1, 0, 1),
+        rational_point3(4, 1, 0, 1, 0, 1),
+        rational_point3(0, 1, 4, 1, 0, 1),
+        rational_point3(1, 1, 1, 1, 0, 1),
+        rational_point3(5, 1, 1, 1, 0, 1),
+        rational_point3(1, 1, 5, 1, 0, 1),
+    ];
+    let segment_start = rational_point3(0, 1, 0, 1, -1, 1);
+    let segment_end = rational_point3(0, 1, 0, 1, 1, 1);
+
+    // These rows track the construction and coplanar helpers lifted from
+    // hypermesh into hyperlimit. The benchmark keeps Yap's exact object model
+    // visible at the reusable predicate layer: topology is classified by
+    // retained exact predicates, and split parameters remain exact
+    // determinant-ratio constructions.
+    group.bench_function("triangle3_degeneracy/projected_orientations", |bench| {
+        bench.iter(|| {
+            let report = classify_triangle3_degeneracy(
+                black_box(&points[0]),
+                black_box(&points[1]),
+                black_box(&points[2]),
+            );
+            black_box(match report.degeneracy {
+                TriangleDegeneracy::NonDegenerate => 1_i64,
+                TriangleDegeneracy::Degenerate => 0,
+                TriangleDegeneracy::Unknown => -1,
+            })
+        });
+    });
+    group.bench_function("segment_plane/determinant_ratio", |bench| {
+        bench.iter(|| {
+            let event = intersect_segment_with_oriented_plane(
+                black_box(&points[0]),
+                black_box(&points[1]),
+                black_box(&points[2]),
+                black_box(&segment_start),
+                black_box(&segment_end),
+            );
+            black_box(match event.relation {
+                SegmentPlaneRelation::ProperCrossing => 3_i64,
+                SegmentPlaneRelation::EndpointOnPlane => 2,
+                SegmentPlaneRelation::Coplanar => 1,
+                SegmentPlaneRelation::Disjoint => 0,
+                SegmentPlaneRelation::Unknown => -1,
+                SegmentPlaneRelation::ConstructionFailed => -2,
+            })
+        });
+    });
+    group.bench_function("coplanar_triangles/projected_overlap", |bench| {
+        bench.iter(|| {
+            let classification =
+                classify_coplanar_triangles(black_box(&points), [0, 1, 2], [3, 4, 5]);
+            black_box(match classification.relation {
+                CoplanarTriangleRelation::Disjoint => 0_i64,
+                CoplanarTriangleRelation::Touching => 1,
+                CoplanarTriangleRelation::Overlapping => 2,
+                CoplanarTriangleRelation::Unknown => -1,
+            })
+        });
+    });
+    group.bench_function("projected_parameters/exact_ratio", |bench| {
+        let midpoint = rational_point3(2, 1, 0, 1, 0, 1);
+        bench.iter(|| {
+            let segment_t = projected_segment_parameter3(
+                black_box(&midpoint),
+                black_box(&points[0]),
+                black_box(&points[1]),
+                CoplanarProjection::Xy,
+            );
+            let line_t = projected_line_parameter3(
+                black_box(&segment_start),
+                black_box(&segment_end),
+                black_box(&points[0]),
+                black_box(&points[1]),
+                CoplanarProjection::Xy,
+            );
+            black_box((segment_t, line_t))
+        });
+    });
+    group.finish();
 }
 
 fn bench_certified_filters(c: &mut Criterion) {
