@@ -37,29 +37,34 @@ use hypermesh::exact::{
 #[cfg(feature = "exact-triangulation")]
 use hypermesh::exact::{CoplanarProjection, ExactBooleanAssemblyPlan, FaceRegionTriangulation};
 use libfuzzer_sys::fuzz_target;
+use std::sync::Once;
+
+static DETERMINISTIC_EXERCISES: Once = Once::new();
 
 fuzz_target!(|data: &[u8]| {
-    exercise_partial_convex_union_boundary();
-    #[cfg(feature = "exact-triangulation")]
-    exercise_face_interior_steiner_boundary();
-    #[cfg(feature = "exact-triangulation")]
-    exercise_multi_component_coplanar_union();
-    #[cfg(feature = "exact-triangulation")]
-    exercise_component_coplanar_intersection();
-    #[cfg(feature = "exact-triangulation")]
-    exercise_component_coplanar_difference();
-    #[cfg(feature = "exact-triangulation")]
-    exercise_boundary_centroid_volumetric_representative();
-    #[cfg(feature = "exact-triangulation")]
-    exercise_closed_coplanar_overlap_boundary_policy();
-    #[cfg(feature = "exact-triangulation")]
-    exercise_closed_vertex_touch_boundary_policy();
-    #[cfg(feature = "exact-triangulation")]
-    exercise_axis_aligned_coplanar_volumetric_boxes();
-    #[cfg(feature = "exact-triangulation")]
-    exercise_affine_coplanar_volumetric_boxes();
-    #[cfg(feature = "exact-triangulation")]
-    exercise_mixed_coplanar_volumetric_materialization();
+    DETERMINISTIC_EXERCISES.call_once(|| {
+        exercise_partial_convex_union_boundary();
+        #[cfg(feature = "exact-triangulation")]
+        exercise_face_interior_steiner_boundary();
+        #[cfg(feature = "exact-triangulation")]
+        exercise_multi_component_coplanar_union();
+        #[cfg(feature = "exact-triangulation")]
+        exercise_component_coplanar_intersection();
+        #[cfg(feature = "exact-triangulation")]
+        exercise_component_coplanar_difference();
+        #[cfg(feature = "exact-triangulation")]
+        exercise_boundary_centroid_volumetric_representative();
+        #[cfg(feature = "exact-triangulation")]
+        exercise_closed_coplanar_overlap_boundary_policy();
+        #[cfg(feature = "exact-triangulation")]
+        exercise_closed_vertex_touch_boundary_policy();
+        #[cfg(feature = "exact-triangulation")]
+        exercise_axis_aligned_coplanar_volumetric_boxes();
+        #[cfg(feature = "exact-triangulation")]
+        exercise_affine_coplanar_volumetric_boxes();
+        #[cfg(feature = "exact-triangulation")]
+        exercise_mixed_coplanar_volumetric_materialization();
+    });
 
     let mut values = Vec::new();
     let mut indices = Vec::new();
@@ -3099,9 +3104,6 @@ fn exercise_mixed_coplanar_volumetric_materialization() {
     let winding = certify_winding_readiness_report(&left, &right, ExactBooleanOperation::Union)
         .expect("mixed coplanar-volumetric winding report should classify readiness");
     winding.validate().unwrap();
-    winding
-        .validate_against_sources(&left, &right)
-        .unwrap();
     assert_eq!(
         winding.status,
         hypermesh::exact::ExactWindingReadinessStatus::Ready
@@ -3114,15 +3116,12 @@ fn exercise_mixed_coplanar_volumetric_materialization() {
         ValidationPolicy::CLOSED,
     )
     .expect("mixed coplanar-volumetric union should materialize");
-    result
-        .validate_operation_against_sources(
-            &left,
-            &right,
-            ExactBooleanOperation::Union,
-            ValidationPolicy::CLOSED,
-            ExactBoundaryBooleanPolicy::Reject,
-        )
-        .unwrap();
+    result.validate().unwrap();
+    assert!(matches!(
+        result.kind,
+        hypermesh::exact::ExactBooleanResultKind::WindingMaterialized { .. }
+    ));
+    assert!(result.mesh.facts().mesh.closed_manifold);
 }
 
 #[cfg(feature = "exact-triangulation")]

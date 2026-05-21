@@ -549,6 +549,37 @@ fn exact_mesh_handoff_package_replays_optional_domains() {
     closed_package.validate_against_mesh(&closed).unwrap();
     closed.handoff_package().unwrap();
 
+    let empty = ExactMesh::from_f64_triangles(&[], &[]).unwrap();
+    let empty_package = empty.handoff_package().unwrap();
+    assert!(!empty_package.has_domain(hypermesh::exact::ExactMeshConsumerDomain::Surface));
+    assert!(!empty_package.has_domain(hypermesh::exact::ExactMeshConsumerDomain::Solid));
+    assert!(
+        empty_package.has_domain(hypermesh::exact::ExactMeshConsumerDomain::ApproximateF64View)
+    );
+    assert_eq!(
+        empty_package.available_domains(),
+        vec![hypermesh::exact::ExactMeshConsumerDomain::ApproximateF64View]
+    );
+    let empty_summary = empty_package.domain_summary();
+    assert!(!empty_summary.has_exact_geometry());
+    assert!(empty_summary.has_lossy_adapter());
+    assert_eq!(
+        empty_summary.require_exact_geometry().unwrap_err(),
+        hypermesh::exact::ExactMeshDomainSummaryError::MissingExactGeometry
+    );
+    assert_eq!(
+        empty_package
+            .require_preferred_exact_geometry_domain()
+            .unwrap_err(),
+        hypermesh::exact::ExactMeshHandoffPackageError::MissingDomain {
+            domain: hypermesh::exact::ExactMeshConsumerDomain::Surface,
+        }
+    );
+    empty_summary
+        .validate_against_mesh(&empty_package, &empty)
+        .unwrap();
+    empty_package.validate_against_mesh(&empty).unwrap();
+
     let open = ExactMesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 1, 0, 0, 0, 1, 0],
         &[0, 1, 2],

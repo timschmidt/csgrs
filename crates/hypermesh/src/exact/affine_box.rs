@@ -287,7 +287,7 @@ fn candidate_bases(points: &[Point3]) -> Vec<AffineBoxBasis> {
                     {
                         continue;
                     }
-                    if points_replay_as_box_corners(points, &basis) {
+                    if points_match_parallelepiped_corners(points, &basis) {
                         bases.push(basis);
                     }
                 }
@@ -297,38 +297,28 @@ fn candidate_bases(points: &[Point3]) -> Vec<AffineBoxBasis> {
     bases
 }
 
-fn points_replay_as_box_corners(points: &[Point3], basis: &AffineBoxBasis) -> bool {
-    let Some(coords) = points
+fn points_match_parallelepiped_corners(points: &[Point3], basis: &AffineBoxBasis) -> bool {
+    // Yap's exact-object boundary lets us reject most candidate frames with
+    // pure structural equality before using determinant ratios. For the source
+    // box that supplies the basis, the eight corners must be exactly the subset
+    // sums of the three basis vectors from one retained corner.
+    let uv = add3(&basis.basis_u, &basis.basis_v);
+    let uw = add3(&basis.basis_u, &basis.basis_w);
+    let vw = add3(&basis.basis_v, &basis.basis_w);
+    let uvw = add3(&uv, &basis.basis_w);
+    let expected = [
+        basis.origin.clone(),
+        add3(&basis.origin, &basis.basis_u),
+        add3(&basis.origin, &basis.basis_v),
+        add3(&basis.origin, &basis.basis_w),
+        add3(&basis.origin, &uv),
+        add3(&basis.origin, &uw),
+        add3(&basis.origin, &vw),
+        add3(&basis.origin, &uvw),
+    ];
+    expected
         .iter()
-        .map(|point| point_to_uvw_checked(point, basis))
-        .collect::<Option<Vec<_>>>()
-    else {
-        return false;
-    };
-    let Some(us) = sorted_unique_coords(coords.iter().map(|point| point.x.clone())) else {
-        return false;
-    };
-    let Some(vs) = sorted_unique_coords(coords.iter().map(|point| point.y.clone())) else {
-        return false;
-    };
-    let Some(ws) = sorted_unique_coords(coords.iter().map(|point| point.z.clone())) else {
-        return false;
-    };
-    if us.len() != 2 || vs.len() != 2 || ws.len() != 2 {
-        return false;
-    }
-    for u in &us {
-        for v in &vs {
-            for w in &ws {
-                if !coords.iter().any(|point| {
-                    real_eq(&point.x, u) && real_eq(&point.y, v) && real_eq(&point.z, w)
-                }) {
-                    return false;
-                }
-            }
-        }
-    }
-    true
+        .all(|expected| points.iter().any(|point| points_equal(point, expected)))
 }
 
 fn mesh_to_uvw(
@@ -469,29 +459,6 @@ fn mesh_points(mesh: &ExactMesh) -> Option<Vec<Point3>> {
     Some(points)
 }
 
-fn sorted_unique_coords(values: impl Iterator<Item = ExactReal>) -> Option<Vec<ExactReal>> {
-    let mut values = values.collect::<Vec<_>>();
-    for index in 1..values.len() {
-        let mut cursor = index;
-        while cursor > 0
-            && compare_reals(&values[cursor], &values[cursor - 1]).value()? == Ordering::Less
-        {
-            values.swap(cursor, cursor - 1);
-            cursor -= 1;
-        }
-    }
-    let mut unique = Vec::new();
-    for value in values {
-        if unique
-            .last()
-            .is_none_or(|previous| !real_eq(previous, &value))
-        {
-            unique.push(value);
-        }
-    }
-    Some(unique)
-}
-
 impl AffineBoxBasis {
     fn determinant(&self) -> ExactReal {
         det3(&self.basis_u, &self.basis_v, &self.basis_w)
@@ -523,6 +490,14 @@ fn sub3(left: &Point3, right: &Point3) -> Point3 {
         sub(&left.x, &right.x),
         sub(&left.y, &right.y),
         sub(&left.z, &right.z),
+    )
+}
+
+fn add3(left: &Point3, right: &Point3) -> Point3 {
+    Point3::new(
+        add(&left.x, &right.x),
+        add(&left.y, &right.y),
+        add(&left.z, &right.z),
     )
 }
 

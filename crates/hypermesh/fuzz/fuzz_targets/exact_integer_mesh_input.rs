@@ -47,50 +47,101 @@ fuzz_target!(|data: &[u8]| {
         );
         package.validate_internal().unwrap();
         package.validate_against_mesh(&mesh).unwrap();
-        assert!(package.has_domain(hypermesh::exact::ExactMeshConsumerDomain::Surface));
-        assert!(
-            package
-                .available_domains()
-                .contains(&hypermesh::exact::ExactMeshConsumerDomain::Surface)
+        let surface_domain = hypermesh::exact::ExactMeshConsumerDomain::Surface;
+        let solid_domain = hypermesh::exact::ExactMeshConsumerDomain::Solid;
+        let approximate_domain = hypermesh::exact::ExactMeshConsumerDomain::ApproximateF64View;
+        assert_eq!(package.has_domain(surface_domain), package.surface.is_some());
+        assert_eq!(package.has_domain(solid_domain), package.solid.is_some());
+        assert_eq!(
+            package.has_domain(approximate_domain),
+            package.approximate_f64_view.is_some()
         );
-        assert!(
-            package
-                .exact_geometry_domains()
-                .contains(&hypermesh::exact::ExactMeshConsumerDomain::Surface)
+        assert_eq!(
+            package.available_domains(),
+            [
+                (surface_domain, package.surface.is_some()),
+                (solid_domain, package.solid.is_some()),
+                (approximate_domain, package.approximate_f64_view.is_some()),
+            ]
+            .into_iter()
+            .filter_map(|(domain, present)| present.then_some(domain))
+            .collect::<Vec<_>>()
         );
-        assert!(
-            package
-                .lossy_adapter_domains()
-                .contains(&hypermesh::exact::ExactMeshConsumerDomain::ApproximateF64View)
-        );
+        assert!(package
+            .exact_geometry_domains()
+            .iter()
+            .all(|domain| domain.is_exact_geometry()));
+        assert!(package
+            .lossy_adapter_domains()
+            .iter()
+            .all(|domain| domain.is_lossy_adapter()));
         let domain_summary = package.domain_summary();
-        assert!(domain_summary.has_exact_geometry());
-        assert!(domain_summary.has_lossy_adapter());
-        assert!(domain_summary.has_domain(hypermesh::exact::ExactMeshConsumerDomain::Surface));
-        assert!(
-            domain_summary
-                .preferred_exact_geometry_domain()
-                .is_some()
+        assert_eq!(
+            domain_summary.has_exact_geometry(),
+            !package.exact_geometry_domains().is_empty()
         );
-        domain_summary
-            .require_preferred_exact_geometry_domain()
-            .unwrap();
-        domain_summary
-            .require_preferred_exact_geometry_domain_against_package(&package)
-            .unwrap();
-        domain_summary
-            .require_preferred_exact_geometry_domain_against_mesh(&package, &mesh)
-            .unwrap();
-        let preferred_summary_report = domain_summary
-            .preferred_exact_geometry_report_against_mesh(&package, &mesh)
-            .unwrap();
-        assert!(preferred_summary_report.domain().is_exact_geometry());
-        assert_eq!(preferred_summary_report.audit(), &package.audit);
-        domain_summary
-            .require_domain(hypermesh::exact::ExactMeshConsumerDomain::Surface)
-            .unwrap();
-        domain_summary.require_exact_geometry().unwrap();
-        domain_summary.require_lossy_adapter().unwrap();
+        assert_eq!(
+            domain_summary.has_lossy_adapter(),
+            !package.lossy_adapter_domains().is_empty()
+        );
+        assert_eq!(
+            domain_summary.has_domain(surface_domain),
+            package.has_domain(surface_domain)
+        );
+        if let Some(preferred_domain) = domain_summary.preferred_exact_geometry_domain() {
+            assert!(preferred_domain.is_exact_geometry());
+            assert_eq!(
+                domain_summary
+                    .require_preferred_exact_geometry_domain()
+                    .unwrap(),
+                preferred_domain
+            );
+            assert_eq!(
+                domain_summary
+                    .require_preferred_exact_geometry_domain_against_package(&package)
+                    .unwrap(),
+                preferred_domain
+            );
+            assert_eq!(
+                domain_summary
+                    .require_preferred_exact_geometry_domain_against_mesh(&package, &mesh)
+                    .unwrap(),
+                preferred_domain
+            );
+            let preferred_summary_report = domain_summary
+                .preferred_exact_geometry_report_against_mesh(&package, &mesh)
+                .unwrap();
+            assert_eq!(preferred_summary_report.domain(), preferred_domain);
+            assert_eq!(preferred_summary_report.audit(), &package.audit);
+            domain_summary.require_exact_geometry().unwrap();
+        } else {
+            assert!(domain_summary
+                .require_preferred_exact_geometry_domain()
+                .is_err());
+            assert!(domain_summary.require_exact_geometry().is_err());
+        }
+        if package.has_domain(surface_domain) {
+            domain_summary.require_domain(surface_domain).unwrap();
+            domain_summary
+                .require_domain_against_package(&package, surface_domain)
+                .unwrap();
+            domain_summary
+                .require_domain_against_mesh(&package, &mesh, surface_domain)
+                .unwrap();
+        } else {
+            assert!(domain_summary.require_domain(surface_domain).is_err());
+            assert!(domain_summary
+                .require_domain_against_package(&package, surface_domain)
+                .is_err());
+            assert!(domain_summary
+                .require_domain_against_mesh(&package, &mesh, surface_domain)
+                .is_err());
+        }
+        if package.has_domain(approximate_domain) {
+            domain_summary.require_lossy_adapter().unwrap();
+        } else {
+            assert!(domain_summary.require_lossy_adapter().is_err());
+        }
         assert_eq!(domain_summary.available_domains, package.available_domains());
         assert_eq!(
             domain_summary.exact_geometry_domains,
@@ -100,19 +151,6 @@ fuzz_target!(|data: &[u8]| {
         domain_summary
             .validate_against_mesh(&package, &mesh)
             .unwrap();
-        domain_summary
-            .require_domain_against_package(
-                &package,
-                hypermesh::exact::ExactMeshConsumerDomain::Surface,
-            )
-            .unwrap();
-        domain_summary
-            .require_domain_against_mesh(
-                &package,
-                &mesh,
-                hypermesh::exact::ExactMeshConsumerDomain::Surface,
-            )
-            .unwrap();
         assert_eq!(
             domain_summary.freshness_against_package(&package),
             hypermesh::exact::ExactMeshDomainSummaryFreshness::Current
@@ -121,38 +159,54 @@ fuzz_target!(|data: &[u8]| {
             domain_summary.freshness_against_mesh(&package, &mesh),
             hypermesh::exact::ExactMeshDomainSummaryFreshness::Current
         );
-        package
-            .require_domain(hypermesh::exact::ExactMeshConsumerDomain::Surface)
-            .unwrap();
-        package
-            .require_domain(hypermesh::exact::ExactMeshConsumerDomain::ApproximateF64View)
-            .unwrap();
-        package
-            .require_domain_against_mesh(&mesh, hypermesh::exact::ExactMeshConsumerDomain::Surface)
-            .unwrap();
-        package
-            .require_preferred_exact_geometry_domain()
-            .unwrap();
-        package
-            .require_preferred_exact_geometry_domain_against_mesh(&mesh)
-            .unwrap();
-        let preferred_package_report = package
-            .preferred_exact_geometry_report_against_mesh(&mesh)
-            .unwrap();
-        assert!(preferred_package_report.domain().is_exact_geometry());
-        assert_eq!(preferred_package_report.audit(), &package.audit);
-        let _ = package
-            .domain_report_against_mesh(&mesh, hypermesh::exact::ExactMeshConsumerDomain::Surface)
-            .map(|report| {
-                assert_eq!(
-                    report.domain(),
-                    hypermesh::exact::ExactMeshConsumerDomain::Surface
-                );
-                assert!(report.domain().is_exact_geometry());
-                assert!(!report.domain().is_closed_volume());
-                assert_eq!(report.audit(), &package.audit);
-            })
-            .unwrap();
+        if package.has_domain(approximate_domain) {
+            package.require_domain(approximate_domain).unwrap();
+        } else {
+            assert!(package.require_domain(approximate_domain).is_err());
+        }
+        if let Some(preferred_domain) = package.preferred_exact_geometry_domain() {
+            assert_eq!(
+                package.require_preferred_exact_geometry_domain().unwrap(),
+                preferred_domain
+            );
+            assert_eq!(
+                package
+                    .require_preferred_exact_geometry_domain_against_mesh(&mesh)
+                    .unwrap(),
+                preferred_domain
+            );
+            let preferred_package_report = package
+                .preferred_exact_geometry_report_against_mesh(&mesh)
+                .unwrap();
+            assert_eq!(preferred_package_report.domain(), preferred_domain);
+            assert_eq!(preferred_package_report.audit(), &package.audit);
+        } else {
+            assert!(package.require_preferred_exact_geometry_domain().is_err());
+            assert!(package
+                .require_preferred_exact_geometry_domain_against_mesh(&mesh)
+                .is_err());
+        }
+        if package.has_domain(surface_domain) {
+            package.require_domain(surface_domain).unwrap();
+            package
+                .require_domain_against_mesh(&mesh, surface_domain)
+                .unwrap();
+            let report = package
+                .domain_report_against_mesh(&mesh, surface_domain)
+                .unwrap();
+            assert_eq!(report.domain(), surface_domain);
+            assert!(report.domain().is_exact_geometry());
+            assert!(!report.domain().is_closed_volume());
+            assert_eq!(report.audit(), &package.audit);
+        } else {
+            assert!(package.require_domain(surface_domain).is_err());
+            assert!(package
+                .require_domain_against_mesh(&mesh, surface_domain)
+                .is_err());
+            assert!(package
+                .domain_report_against_mesh(&mesh, surface_domain)
+                .is_err());
+        }
         let _ = mesh
             .solid_handoff()
             .map(|handoff| {
@@ -190,14 +244,20 @@ fuzz_target!(|data: &[u8]| {
             .validate(mesh.vertices().len(), mesh.triangles().len());
         let _ = mesh.bounds().candidate_face_pairs(mesh.bounds());
         let axes = hypermesh::exact::SupportDopAxis3::kdop26_axes();
-        let support = hypermesh::exact::support_dop_for_mesh(&mesh, &axes).unwrap();
-        support.validate_against_mesh(&mesh).unwrap();
-        assert_eq!(
-            support.expansion.kind,
-            hypermesh::exact::SupportDopExpansionKind::None
-        );
-        if mesh.facts().mesh.closed_manifold && !mesh.vertices().is_empty() {
-            let boundary_point = mesh.vertices()[0].to_hyperlimit_point();
+        let support = hypermesh::exact::support_dop_for_mesh(&mesh, &axes);
+        if mesh.vertices().is_empty() {
+            assert!(support.is_err());
+        } else {
+            let support = support.unwrap();
+            support.validate_against_mesh(&mesh).unwrap();
+            assert_eq!(
+                support.expansion.kind,
+                hypermesh::exact::SupportDopExpansionKind::None
+            );
+        }
+        if mesh.facts().mesh.closed_manifold && !mesh.triangles().is_empty() {
+            let boundary_vertex = mesh.triangles()[0].0[0];
+            let boundary_point = mesh.vertices()[boundary_vertex].to_hyperlimit_point();
             let point_winding =
                 hypermesh::exact::classify_point_against_closed_mesh_winding_report(
                     &boundary_point,
