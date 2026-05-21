@@ -12,9 +12,9 @@ use hypersolve::{
     certify_multivariate_quadratic_krawczyk_box, certify_quadratic_interval_candidate,
     certify_univariate_quadratic_alpha, certify_univariate_quadratic_krawczyk_box,
     context_from_problem, determinant_bareiss, eliminate_affine_rows_with_substitution_classes,
-    isolate_univariate_polynomial_roots, report_lossy_adapter_only_candidate,
-    resultant_univariate_polynomials, sketch_range_builders, solve_damped_least_squares,
-    solve_dense_linear_system_bareiss, solve_direct_affine_system,
+    enumerate_direct_univariate_quadratic_branches, isolate_univariate_polynomial_roots,
+    report_lossy_adapter_only_candidate, resultant_univariate_polynomials, sketch_range_builders,
+    solve_damped_least_squares, solve_dense_linear_system_bareiss, solve_direct_affine_system,
     solve_direct_univariate_quadratic_equalities, squared_distance_equation,
     subresultant_chain_univariate_polynomials, validate_equality_substitutions,
 };
@@ -598,6 +598,39 @@ proptest! {
             });
             prop_assert!(containing);
         }
+    }
+
+    #[test]
+    fn exact_quadratic_branch_enumeration_generated_roots_count_certified_branches(
+        first in -12_i16..=12,
+        second in -12_i16..=12,
+    ) {
+        let first = i64::from(first);
+        let second = i64::from(second);
+        let x = Expr::symbol(SymbolId(0), "x");
+        let mut problem = Problem::default();
+        problem.add_variable("x", Real::from(0));
+        problem.add_constraint(Constraint::equality(
+            "generated branch roots",
+            x.clone().powi(2)
+                - x.clone() * Expr::int(first + second)
+                + Expr::int(first * second),
+        ));
+        let prepared = PreparedProblem::new(&problem);
+        let report =
+            enumerate_direct_univariate_quadratic_branches(&prepared, &context_from_problem(&problem));
+
+        let expected_branch_count = if first == second { 1 } else { 2 };
+        prop_assert_eq!(report.certified_branches, expected_branch_count);
+        prop_assert_eq!(report.rejected_branches, 0);
+        prop_assert_eq!(report.unsupported_rows, 0);
+        prop_assert_eq!(report.no_real_root_rows, 0);
+        prop_assert_eq!(report.branches.len(), expected_branch_count);
+        let all_certified = report.branches.iter().all(|branch| {
+            branch.status == hypersolve::ExactBranchStatus::ReplayCertified
+                && branch.certification.as_ref().unwrap().all_satisfied()
+        });
+        prop_assert!(all_certified);
     }
 
     #[test]

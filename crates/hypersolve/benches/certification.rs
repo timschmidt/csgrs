@@ -17,7 +17,8 @@ use hypersolve::{
     compare_algebraic_root_representations, compare_algebraic_root_representations_with_refinement,
     context_from_problem, count_bernstein_univariate_polynomial_interval_roots,
     count_descartes_univariate_polynomial_roots, determinant_bareiss,
-    eliminate_affine_rows_with_substitution_classes, isolate_univariate_polynomial_roots,
+    eliminate_affine_rows_with_substitution_classes,
+    enumerate_direct_univariate_quadratic_branches, isolate_univariate_polynomial_roots,
     propose_active_set_update, replay_dense_linear_residuals, replay_sketch_compatibility_fixture,
     replay_sparse_linear_residuals, report_lossy_adapter_only_candidate,
     represent_univariate_algebraic_roots, resultant_univariate_polynomials,
@@ -512,6 +513,11 @@ fn certification(c: &mut Criterion) {
     c.bench_function("certify_direct_univariate_quadratic_roots", |b| {
         b.iter(|| {
             certify_direct_univariate_quadratic_roots(&prepared_quadratic, &quadratic_context)
+        })
+    });
+    c.bench_function("enumerate_direct_univariate_quadratic_branches", |b| {
+        b.iter(|| {
+            enumerate_direct_univariate_quadratic_branches(&prepared_quadratic, &quadratic_context)
         })
     });
     c.bench_function("isolate_univariate_polynomial_roots_sturm", |b| {

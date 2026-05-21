@@ -3,7 +3,7 @@ use hypersolve::jacobian::{symbolic_jacobian, symbolic_jacobian_prepared};
 use hypersolve::{
     CandidateCertificationConfig, CandidateResidualBall, CertifiedCandidateStatus, Constraint,
     ConstraintKind, ConvergenceReason, DenseLinearBackend, DirectAffineSystemStatus,
-    DomainCheckKind, DomainCheckStatus, ExactAffineRankStatus, Expr, ExprDegree,
+    DomainCheckKind, DomainCheckStatus, ExactAffineRankStatus, ExactBranchStatus, Expr, ExprDegree,
     IntervalBoxCertificationPackage, IntervalBoxCertificationStatus, LinearAdapterKind,
     LinearAdapterPrecision, LinearBackend, MultivariateQuadraticKrawczykStatus, PreparedProblem,
     PreparedSolverBlock, Problem, ProposalEngineKind, ProposalEnginePrecision, RootIsolationStatus,
@@ -20,7 +20,8 @@ use hypersolve::{
     certify_multivariate_quadratic_interval_candidate, certify_multivariate_quadratic_krawczyk_box,
     certify_quadratic_interval_candidate, certify_univariate_quadratic_alpha,
     certify_univariate_quadratic_krawczyk_box, context_from_problem,
-    eliminate_affine_rows_with_substitution_classes, evaluate_residuals, facts_depend_on_symbol,
+    eliminate_affine_rows_with_substitution_classes,
+    enumerate_direct_univariate_quadratic_branches, evaluate_residuals, facts_depend_on_symbol,
     find_equality_substitutions, isolate_univariate_polynomial_roots, point_coincidence_equations,
     replay_sketch_compatibility_fixture, report_lossy_adapter_only_candidate,
     sketch_compatibility_fixtures, sketch_distance_builders, sketch_incidence_builders,
@@ -1523,6 +1524,78 @@ fn direct_quadratic_root_candidates_replay_full_problem_exactly() {
         hypersolve::DirectQuadraticCandidateStatus::ReplayCertified
     );
     assert!(reports[1].certification.as_ref().unwrap().all_satisfied());
+}
+
+#[test]
+fn exact_quadratic_branch_enumeration_reports_rejected_empty_and_unsupported_branches() {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let y = Expr::symbol(SymbolId(1), "y");
+    let mut problem = Problem::default();
+    problem.add_variable("x", real(0));
+    problem.add_variable("y", real(0));
+    problem.add_constraint(Constraint::equality(
+        "two branches",
+        x.clone().powi(2) - Expr::int(1),
+    ));
+    problem.add_constraint(Constraint::equality(
+        "select positive branch",
+        x.clone() - Expr::int(1),
+    ));
+    problem.add_constraint(Constraint::equality(
+        "empty branch",
+        y.clone().powi(2) + Expr::int(1),
+    ));
+    problem.add_constraint(Constraint::equality(
+        "unsupported affine row",
+        y - Expr::int(2),
+    ));
+    let prepared = PreparedProblem::new(&problem);
+    let report =
+        enumerate_direct_univariate_quadratic_branches(&prepared, &context_from_problem(&problem));
+
+    assert_eq!(report.certified_branches, 0);
+    assert_eq!(report.rejected_branches, 2);
+    assert_eq!(report.no_real_root_rows, 1);
+    assert_eq!(report.unsupported_rows, 2);
+    assert!(!report.has_certified_branch());
+    assert_eq!(report.branches[0].status, ExactBranchStatus::ReplayRejected);
+    assert_eq!(report.branches[0].root, Some(real(1)));
+    assert!(
+        report.branches[0]
+            .certification
+            .as_ref()
+            .unwrap()
+            .has_certified_violation()
+    );
+    assert_eq!(report.branches[1].status, ExactBranchStatus::ReplayRejected);
+    assert_eq!(report.branches[1].root, Some(real(-1)));
+    assert_eq!(report.branches[2].status, ExactBranchStatus::UnsupportedRow);
+    assert_eq!(report.branches[3].status, ExactBranchStatus::NoRealRoots);
+    assert_eq!(report.branches[4].status, ExactBranchStatus::UnsupportedRow);
+}
+
+#[test]
+fn exact_quadratic_branch_enumeration_keeps_double_roots_as_one_branch() {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let mut problem = Problem::default();
+    problem.add_variable("x", real(7));
+    problem.add_constraint(Constraint::equality(
+        "double branch",
+        x.clone().powi(2) - Expr::int(4) * x + Expr::int(4),
+    ));
+    let prepared = PreparedProblem::new(&problem);
+    let report =
+        enumerate_direct_univariate_quadratic_branches(&prepared, &context_from_problem(&problem));
+
+    assert_eq!(report.branches.len(), 1);
+    assert_eq!(report.certified_branches, 1);
+    assert_eq!(report.rejected_branches, 0);
+    assert_eq!(report.branches[0].root, Some(real(2)));
+    assert_eq!(report.branches[0].root_index, Some(0));
+    assert_eq!(
+        report.branches[0].status,
+        ExactBranchStatus::ReplayCertified
+    );
 }
 
 #[test]
