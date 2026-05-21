@@ -24,10 +24,10 @@ use hypersolve::{
     find_equality_substitutions, isolate_univariate_polynomial_roots, point_coincidence_equations,
     replay_sketch_compatibility_fixture, report_lossy_adapter_only_candidate,
     sketch_compatibility_fixtures, sketch_distance_builders, sketch_incidence_builders,
-    sketch_orientation_builders, solve_damped_least_squares, solve_direct_affine_equalities,
-    solve_direct_affine_system, solve_direct_univariate_quadratic_equalities,
-    squared_distance_equation, tangent_parallel_equation, tangent_same_direction_constraint,
-    validate_equality_substitutions,
+    sketch_objective_builders, sketch_orientation_builders, sketch_range_builders,
+    solve_damped_least_squares, solve_direct_affine_equalities, solve_direct_affine_system,
+    solve_direct_univariate_quadratic_equalities, squared_distance_equation,
+    tangent_parallel_equation, tangent_same_direction_constraint, validate_equality_substitutions,
 };
 
 fn real(value: i64) -> Real {
@@ -399,6 +399,88 @@ fn sketch_round_trip_metadata_preserves_editor_fields_without_forcing_proof_rows
     assert_eq!(
         lowered.rows[0].status,
         SketchGeneratedRowStatus::ReferenceOnly
+    );
+}
+
+#[test]
+fn sketch_range_and_soft_objective_builders_lower_to_exact_row_kinds() {
+    let mut sketch = SketchSolveProblem::new();
+    let parameter = sketch.add_parameter("t", real(3));
+    let range = sketch_range_builders::parameter_range(
+        &mut sketch,
+        "bounded t",
+        parameter,
+        Some(real(1)),
+        Some(real(5)),
+    );
+    let objective = sketch_objective_builders::stay_near_parameter(
+        &mut sketch,
+        "stay near",
+        parameter,
+        real(3),
+        real(7),
+    );
+
+    assert_eq!(range.family, hypersolve::SketchConstraintFamily::Range);
+    assert_eq!(
+        objective.family,
+        hypersolve::SketchConstraintFamily::Objective
+    );
+
+    let lowered = sketch.lower_to_problem();
+
+    assert_eq!(lowered.problem.constraints.len(), 3);
+    assert_eq!(lowered.rows.len(), 3);
+    assert_eq!(
+        lowered.problem.constraints[0].kind,
+        ConstraintKind::GreaterOrEqual
+    );
+    assert_eq!(
+        lowered.problem.constraints[1].kind,
+        ConstraintKind::LessOrEqual
+    );
+    assert_eq!(lowered.problem.constraints[2].kind, ConstraintKind::Soft);
+    assert_eq!(lowered.problem.constraints[2].weight, real(7));
+    assert_eq!(
+        lowered.rows[0].strategy,
+        Some(SketchResidualStrategy::ParameterRange)
+    );
+    assert_eq!(
+        lowered.rows[2].strategy,
+        Some(SketchResidualStrategy::SoftObjective)
+    );
+
+    let certification = certify_candidate(
+        &PreparedProblem::new(&lowered.problem),
+        &context_from_problem(&lowered.problem),
+    );
+
+    assert!(certification.all_satisfied());
+}
+
+#[test]
+fn sketch_parameter_ranges_report_empty_ranges_and_stale_parameters_explicitly() {
+    let mut sketch = SketchSolveProblem::new();
+    let parameter = sketch.add_parameter("t", real(0));
+    sketch.add_parameter_range("empty", parameter, None, None);
+    sketch.add_parameter_range(
+        "stale",
+        hypersolve::SketchParameterHandle(999),
+        Some(real(0)),
+        None,
+    );
+
+    let lowered = sketch.lower_to_problem();
+
+    assert_eq!(lowered.problem.constraints.len(), 0);
+    assert_eq!(lowered.rows.len(), 2);
+    assert_eq!(
+        lowered.rows[0].status,
+        SketchGeneratedRowStatus::ReferenceOnly
+    );
+    assert_eq!(
+        lowered.rows[1].status,
+        SketchGeneratedRowStatus::MissingParameter(hypersolve::SketchParameterHandle(999))
     );
 }
 

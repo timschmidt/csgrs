@@ -13,7 +13,7 @@ use hypersolve::{
     certify_univariate_quadratic_alpha, certify_univariate_quadratic_krawczyk_box,
     context_from_problem, determinant_bareiss, eliminate_affine_rows_with_substitution_classes,
     isolate_univariate_polynomial_roots, report_lossy_adapter_only_candidate,
-    resultant_univariate_polynomials, solve_damped_least_squares,
+    resultant_univariate_polynomials, sketch_range_builders, solve_damped_least_squares,
     solve_dense_linear_system_bareiss, solve_direct_affine_system,
     solve_direct_univariate_quadratic_equalities, squared_distance_equation,
     subresultant_chain_univariate_polynomials, validate_equality_substitutions,
@@ -191,6 +191,40 @@ proptest! {
             CertifiedCandidateStatus::CertifiedZero { .. }
         );
         prop_assert!(certified_zero);
+    }
+
+    #[test]
+    fn sketch_generated_parameter_ranges_match_integer_bounds(
+        value in -32_i16..=32,
+        lower_offset in 0_i16..=16,
+        upper_offset in 0_i16..=16,
+    ) {
+        let value = i64::from(value);
+        let lower = value - i64::from(lower_offset);
+        let upper = value + i64::from(upper_offset);
+        let mut sketch = SketchSolveProblem::new();
+        let parameter = sketch.add_parameter("t", hyperreal::Real::from(value));
+        sketch_range_builders::parameter_range(
+            &mut sketch,
+            "range",
+            parameter,
+            Some(hyperreal::Real::from(lower)),
+            Some(hyperreal::Real::from(upper)),
+        );
+
+        let lowered = sketch.lower_to_problem();
+        let certification = certify_candidate(
+            &PreparedProblem::new(&lowered.problem),
+            &context_from_problem(&lowered.problem),
+        );
+
+        prop_assert_eq!(lowered.rows.len(), 2);
+        let all_range_rows = lowered.rows.iter().all(|row| {
+            row.strategy == Some(SketchResidualStrategy::ParameterRange)
+                && row.status == SketchGeneratedRowStatus::Generated
+        });
+        prop_assert!(all_range_rows);
+        prop_assert!(certification.all_satisfied());
     }
 
     #[test]

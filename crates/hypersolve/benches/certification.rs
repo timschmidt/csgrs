@@ -199,6 +199,28 @@ fn sketch_problem_with_metadata(row_count: usize) -> hypersolve::SketchSolveProb
     sketch
 }
 
+fn sketch_problem_with_ranges(row_count: usize) -> hypersolve::SketchSolveProblem {
+    let mut sketch = hypersolve::SketchSolveProblem::new();
+    for index in 0..row_count {
+        let parameter = sketch.add_parameter(format!("t{index}"), r(index as i64));
+        hypersolve::sketch_range_builders::parameter_range(
+            &mut sketch,
+            format!("range {index}"),
+            parameter,
+            Some(r(-1)),
+            Some(r(row_count as i64 + 1)),
+        );
+        hypersolve::sketch_objective_builders::stay_near_parameter(
+            &mut sketch,
+            format!("stay near {index}"),
+            parameter,
+            r(index as i64),
+            r(1),
+        );
+    }
+    sketch
+}
+
 fn unary_endpoint_expression(row_count: usize) -> Expr {
     let mut expression = Expr::zero();
     for index in 1..=row_count {
@@ -231,6 +253,10 @@ fn certification(c: &mut Criterion) {
     let metadata_sketch = sketch_problem_with_metadata(16);
     c.bench_function("sketch_round_trip_metadata_lowering", |b| {
         b.iter(|| metadata_sketch.lower_to_problem())
+    });
+    let range_sketch = sketch_problem_with_ranges(16);
+    c.bench_function("sketch_range_and_objective_lowering", |b| {
+        b.iter(|| range_sketch.lower_to_problem())
     });
     let form_handles = sketch
         .constraints()

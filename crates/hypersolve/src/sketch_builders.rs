@@ -9,9 +9,11 @@
 //! surveyed by Bouma et al., "Geometric Constraint Solver" (1995), while the
 //! public entity names are SolveSpaceLib-compatible reference vocabulary.
 
+use hyperreal::Real;
+
 use crate::sketch::{
-    SketchConstraintHandle, SketchConstraintKind, SketchEntityHandle, SketchResidualStrategy,
-    SketchSolveProblem,
+    SketchConstraintHandle, SketchConstraintKind, SketchEntityHandle, SketchParameterHandle,
+    SketchResidualStrategy, SketchSolveProblem,
 };
 
 /// High-level constraint family retained before residual lowering.
@@ -23,10 +25,14 @@ pub enum SketchConstraintFamily {
     Distance,
     /// Orientation relation, such as horizontal or vertical.
     Orientation,
+    /// Inequality/domain range relation.
+    Range,
+    /// Soft objective relation.
+    Objective,
 }
 
 /// Report emitted when a typed sketch constraint builder records a relation.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct SketchConstraintBuildReport {
     /// Handle assigned to the retained high-level constraint.
     pub handle: SketchConstraintHandle,
@@ -145,6 +151,70 @@ pub mod orientation {
             handle,
             family: SketchConstraintFamily::Orientation,
             strategy: SketchResidualStrategy::CoordinateEquality,
+            kind,
+        }
+    }
+}
+
+/// Inequality and parameter-domain builders.
+pub mod ranges {
+    use super::*;
+
+    /// Add an exact scalar parameter range.
+    ///
+    /// The lower bound lowers to `parameter - lower >= 0`; the upper bound
+    /// lowers to `parameter - upper <= 0`. Bounds are exact `Real` values, not
+    /// solver-private tolerances, preserving Yap's report-bearing decision
+    /// boundary.
+    pub fn parameter_range(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        parameter: SketchParameterHandle,
+        lower: Option<Real>,
+        upper: Option<Real>,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::ParameterRange {
+            parameter,
+            lower,
+            upper,
+        };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Range,
+            strategy: SketchResidualStrategy::ParameterRange,
+            kind,
+        }
+    }
+}
+
+/// Soft objective builders.
+pub mod objective {
+    use super::*;
+
+    /// Add a soft stay-near objective for one parameter.
+    ///
+    /// Soft rows remain ordinary residual rows with [`crate::ConstraintKind::Soft`].
+    /// They can guide proposal engines, but exact certification still reports
+    /// whether the active candidate satisfies the row exactly, is uncertain, or
+    /// only carries proposal evidence.
+    pub fn stay_near_parameter(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        parameter: SketchParameterHandle,
+        target: Real,
+        weight: Real,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::StayNearParameter {
+            parameter,
+            target,
+            weight,
+        };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Objective,
+            strategy: SketchResidualStrategy::SoftObjective,
             kind,
         }
     }

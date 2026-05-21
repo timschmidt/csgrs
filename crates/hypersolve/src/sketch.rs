@@ -14,7 +14,7 @@
 use hyperreal::Real;
 
 use crate::model::{Constraint, ConstraintKind, Problem, VariableId};
-use crate::sketch_builders::{distance, incidence, orientation};
+use crate::sketch_builders::{distance, incidence, objective, orientation, ranges};
 use crate::symbolic::{Expr, SymbolId};
 
 /// Stable caller-facing handle for a sketch parameter.
@@ -236,7 +236,7 @@ pub struct SketchEntity {
 }
 
 /// Retained high-level sketch constraint families.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum SketchConstraintKind {
     /// Coincident 2D or 3D points.
     PointsCoincident {
@@ -271,10 +271,28 @@ pub enum SketchConstraintKind {
         /// Circle entity.
         circle: SketchEntityHandle,
     },
+    /// Scalar parameter range constraint.
+    ParameterRange {
+        /// Parameter constrained by the range.
+        parameter: SketchParameterHandle,
+        /// Optional exact lower bound.
+        lower: Option<Real>,
+        /// Optional exact upper bound.
+        upper: Option<Real>,
+    },
+    /// Soft objective that keeps a parameter near a target value.
+    StayNearParameter {
+        /// Parameter to bias.
+        parameter: SketchParameterHandle,
+        /// Exact target value.
+        target: Real,
+        /// Exact objective row weight.
+        weight: Real,
+    },
 }
 
 /// A retained high-level sketch constraint.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct SketchConstraint {
     /// Stable source handle.
     pub handle: SketchConstraintHandle,
@@ -301,6 +319,10 @@ pub enum SketchResidualStrategy {
     SquaredDistance,
     /// Incidence represented as a squared-distance polynomial.
     SquaredIncidence,
+    /// Scalar parameter bound.
+    ParameterRange,
+    /// Soft stay-near objective.
+    SoftObjective,
 }
 
 /// Status for one generated residual row.
@@ -717,6 +739,28 @@ impl SketchSolveProblem {
         incidence::point_on_circle(self, name, point, circle).handle
     }
 
+    /// Add a scalar parameter range constraint.
+    pub fn add_parameter_range(
+        &mut self,
+        name: impl Into<String>,
+        parameter: SketchParameterHandle,
+        lower: Option<Real>,
+        upper: Option<Real>,
+    ) -> SketchConstraintHandle {
+        ranges::parameter_range(self, name, parameter, lower, upper).handle
+    }
+
+    /// Add a soft stay-near objective for one parameter.
+    pub fn add_stay_near_parameter(
+        &mut self,
+        name: impl Into<String>,
+        parameter: SketchParameterHandle,
+        target: Real,
+        weight: Real,
+    ) -> SketchConstraintHandle {
+        objective::stay_near_parameter(self, name, parameter, target, weight).handle
+    }
+
     /// Add a retained high-level sketch constraint.
     pub fn add_constraint(
         &mut self,
@@ -1006,6 +1050,67 @@ impl SketchSolveProblem {
                     SketchResidualStrategy::SquaredIncidence,
                 );
             }
+            SketchConstraintKind::ParameterRange {
+                parameter,
+                ref lower,
+                ref upper,
+            } => {
+                let Some(parameter_expr) = self.parameter_expr(parameter, constraint, rows) else {
+                    return;
+                };
+                if let Some(lower) = lower {
+                    self.push_residual_with_kind(
+                        problem,
+                        rows,
+                        constraint,
+                        format!("{} lower", constraint.name),
+                        parameter_expr.clone() - Expr::real(lower.clone()),
+                        SketchResidualStrategy::ParameterRange,
+                        ConstraintKind::GreaterOrEqual,
+                        Real::one(),
+                    );
+                }
+                if let Some(upper) = upper {
+                    self.push_residual_with_kind(
+                        problem,
+                        rows,
+                        constraint,
+                        format!("{} upper", constraint.name),
+                        parameter_expr - Expr::real(upper.clone()),
+                        SketchResidualStrategy::ParameterRange,
+                        ConstraintKind::LessOrEqual,
+                        Real::one(),
+                    );
+                }
+                if lower.is_none() && upper.is_none() {
+                    rows.push(SketchGeneratedRow {
+                        constraint: constraint.handle,
+                        residual_index: None,
+                        name: constraint.name.clone(),
+                        strategy: Some(SketchResidualStrategy::ParameterRange),
+                        status: SketchGeneratedRowStatus::ReferenceOnly,
+                    });
+                }
+            }
+            SketchConstraintKind::StayNearParameter {
+                parameter,
+                ref target,
+                ref weight,
+            } => {
+                let Some(parameter_expr) = self.parameter_expr(parameter, constraint, rows) else {
+                    return;
+                };
+                self.push_residual_with_kind(
+                    problem,
+                    rows,
+                    constraint,
+                    constraint.name.clone(),
+                    parameter_expr - Expr::real(target.clone()),
+                    SketchResidualStrategy::SoftObjective,
+                    ConstraintKind::Soft,
+                    weight.clone(),
+                );
+            }
         }
     }
 
@@ -1018,10 +1123,34 @@ impl SketchSolveProblem {
         residual: Expr,
         strategy: SketchResidualStrategy,
     ) {
+        self.push_residual_with_kind(
+            problem,
+            rows,
+            constraint,
+            name,
+            residual,
+            strategy,
+            ConstraintKind::Equality,
+            Real::one(),
+        );
+    }
+
+    fn push_residual_with_kind(
+        &self,
+        problem: &mut Problem,
+        rows: &mut Vec<SketchGeneratedRow>,
+        constraint: &SketchConstraint,
+        name: String,
+        residual: Expr,
+        strategy: SketchResidualStrategy,
+        kind: ConstraintKind,
+        weight: Real,
+    ) {
         let residual_index = problem.constraints.len();
         let mut lowered = Constraint::equality(name.clone(), residual);
-        lowered.kind = ConstraintKind::Equality;
+        lowered.kind = kind;
         lowered.active = constraint.active;
+        lowered.weight = weight;
         problem.add_constraint(lowered);
         rows.push(SketchGeneratedRow {
             constraint: constraint.handle,
