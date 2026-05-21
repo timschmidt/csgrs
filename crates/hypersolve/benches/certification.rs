@@ -19,12 +19,12 @@ use hypersolve::{
     count_descartes_univariate_polynomial_roots, determinant_bareiss,
     eliminate_affine_rows_with_substitution_classes,
     enumerate_direct_univariate_quadratic_branches, isolate_univariate_polynomial_roots,
-    preflight_sketch_parameter_domains, propose_active_set_update, replay_dense_linear_residuals,
-    replay_sketch_compatibility_fixture, replay_sparse_linear_residuals,
-    report_lossy_adapter_only_candidate, represent_univariate_algebraic_roots,
-    resultant_univariate_polynomials, run_active_set_update_loop,
-    schedule_univariate_resultant_pairs, sketch_compatibility_fixtures, solve_damped_least_squares,
-    solve_dense_linear_system_bareiss, solve_direct_affine_system,
+    preflight_sketch_degeneracies, preflight_sketch_parameter_domains, propose_active_set_update,
+    replay_dense_linear_residuals, replay_sketch_compatibility_fixture,
+    replay_sparse_linear_residuals, report_lossy_adapter_only_candidate,
+    represent_univariate_algebraic_roots, resultant_univariate_polynomials,
+    run_active_set_update_loop, schedule_univariate_resultant_pairs, sketch_compatibility_fixtures,
+    solve_damped_least_squares, solve_dense_linear_system_bareiss, solve_direct_affine_system,
     solve_direct_univariate_quadratic_equalities, solve_sparse_linear_system_bareiss,
     squared_distance_equation, subdivide_bernstein_univariate_polynomial_interval_roots,
     subresultant_chain_univariate_polynomials,
@@ -239,6 +239,21 @@ fn sketch_problem_with_parameter_domains(row_count: usize) -> hypersolve::Sketch
     sketch
 }
 
+fn sketch_problem_with_degeneracy_checks(row_count: usize) -> hypersolve::SketchSolveProblem {
+    let mut sketch = hypersolve::SketchSolveProblem::new();
+    for index in 0..row_count {
+        let a = sketch.add_point2d(format!("p{index}.a"), r(index as i64), r(0));
+        let b = sketch.add_point2d(format!("p{index}.b"), r(index as i64 + 1), r(0));
+        let radius = sketch.add_distance(format!("r{index}"), r(index as i64 + 1));
+        let normal = sketch.add_normal2d(format!("n{index}"), r(1), r(0));
+        sketch.add_line_segment2(format!("line{index}"), a, b);
+        sketch.add_circle2(format!("circle{index}"), a, radius);
+        sketch.add_arc_of_circle2(format!("arc{index}"), a, a, b, radius);
+        sketch.add_workplane(format!("wp{index}"), a, normal);
+    }
+    sketch
+}
+
 fn unary_endpoint_expression(row_count: usize) -> Expr {
     let mut expression = Expr::zero();
     for index in 1..=row_count {
@@ -279,6 +294,10 @@ fn certification(c: &mut Criterion) {
     let domain_sketch = sketch_problem_with_parameter_domains(16);
     c.bench_function("sketch_parameter_domain_preflight", |b| {
         b.iter(|| preflight_sketch_parameter_domains(&domain_sketch))
+    });
+    let degeneracy_sketch = sketch_problem_with_degeneracy_checks(16);
+    c.bench_function("sketch_degeneracy_preflight", |b| {
+        b.iter(|| preflight_sketch_degeneracies(&degeneracy_sketch))
     });
     let form_handles = sketch
         .constraints()

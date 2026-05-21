@@ -4,19 +4,20 @@ use hypersolve::{
     EqualitySubstitutionProblem, Expr, IntervalBoxCertificationPackage,
     IntervalBoxCertificationStatus, MultivariateQuadraticKrawczykStatus, PreparedProblem,
     PreparedSolverBlock, Problem, ProposalEngineKind, ProposalEnginePrecision,
-    ProposalEngineReport, RootIsolationStatus, SketchGeneratedRowStatus, SketchParameterDomain,
-    SketchParameterDomainStatus, SketchResidualStrategy, SketchSolveProblem, SolverBlockRowKind,
-    SolverConfig, SolverPoint2, SolverState, SymbolId, VariableBall,
-    apply_equality_substitution_classes, certify_affine_krawczyk_box, certify_candidate,
-    certify_candidate_domains, certify_direct_univariate_quadratic_roots,
-    certify_interval_box_candidate, certify_multivariate_quadratic_interval_candidate,
-    certify_multivariate_quadratic_krawczyk_box, certify_quadratic_interval_candidate,
-    certify_univariate_quadratic_alpha, certify_univariate_quadratic_krawczyk_box,
-    context_from_problem, determinant_bareiss, eliminate_affine_rows_with_substitution_classes,
+    ProposalEngineReport, RootIsolationStatus, SketchDegeneracyKind, SketchDegeneracyStatus,
+    SketchGeneratedRowStatus, SketchParameterDomain, SketchParameterDomainStatus,
+    SketchResidualStrategy, SketchSolveProblem, SolverBlockRowKind, SolverConfig, SolverPoint2,
+    SolverState, SymbolId, VariableBall, apply_equality_substitution_classes,
+    certify_affine_krawczyk_box, certify_candidate, certify_candidate_domains,
+    certify_direct_univariate_quadratic_roots, certify_interval_box_candidate,
+    certify_multivariate_quadratic_interval_candidate, certify_multivariate_quadratic_krawczyk_box,
+    certify_quadratic_interval_candidate, certify_univariate_quadratic_alpha,
+    certify_univariate_quadratic_krawczyk_box, context_from_problem, determinant_bareiss,
+    eliminate_affine_rows_with_substitution_classes,
     enumerate_direct_univariate_quadratic_branches, isolate_univariate_polynomial_roots,
-    preflight_sketch_parameter_domains, report_lossy_adapter_only_candidate,
-    resultant_univariate_polynomials, sketch_range_builders, solve_damped_least_squares,
-    solve_dense_linear_system_bareiss, solve_direct_affine_system,
+    preflight_sketch_degeneracies, preflight_sketch_parameter_domains,
+    report_lossy_adapter_only_candidate, resultant_univariate_polynomials, sketch_range_builders,
+    solve_damped_least_squares, solve_dense_linear_system_bareiss, solve_direct_affine_system,
     solve_direct_univariate_quadratic_equalities, squared_distance_equation,
     subresultant_chain_univariate_polynomials, validate_equality_substitutions,
 };
@@ -260,6 +261,40 @@ proptest! {
         prop_assert_eq!(
             report.checks[0].status == SketchParameterDomainStatus::CertifiedInvalid,
             !expected_valid
+        );
+    }
+
+    #[test]
+    fn sketch_degeneracy_preflight_generated_line_lengths_match_integer_points(
+        ax in -16_i16..=16,
+        ay in -16_i16..=16,
+        bx in -16_i16..=16,
+        by in -16_i16..=16,
+    ) {
+        let ax = i64::from(ax);
+        let ay = i64::from(ay);
+        let bx = i64::from(bx);
+        let by = i64::from(by);
+        let mut sketch = SketchSolveProblem::new();
+        let a = sketch.add_point2d("a", Real::from(ax), Real::from(ay));
+        let b = sketch.add_point2d("b", Real::from(bx), Real::from(by));
+        let line = sketch.add_line_segment2("line", a, b);
+
+        let report = preflight_sketch_degeneracies(&sketch);
+        let row = report
+            .checks
+            .iter()
+            .find(|check| check.entity == line && check.kind == SketchDegeneracyKind::ZeroLengthLineSegment2)
+            .expect("line degeneracy row should be emitted");
+        let expected_degenerate = ax == bx && ay == by;
+
+        prop_assert_eq!(
+            row.status == SketchDegeneracyStatus::CertifiedDegenerate,
+            expected_degenerate
+        );
+        prop_assert_eq!(
+            row.status == SketchDegeneracyStatus::CertifiedNondegenerate,
+            !expected_degenerate
         );
     }
 

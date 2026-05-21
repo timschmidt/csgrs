@@ -30,6 +30,7 @@ pub mod resultant;
 pub mod root_isolation;
 pub mod sketch;
 pub mod sketch_builders;
+pub mod sketch_degeneracy;
 pub mod sketch_domains;
 pub mod sketch_fixtures;
 pub mod solver;
@@ -177,6 +178,10 @@ pub use sketch_builders::{
     SketchConstraintBuildReport, SketchConstraintFamily, distance as sketch_distance_builders,
     incidence as sketch_incidence_builders, objective as sketch_objective_builders,
     orientation as sketch_orientation_builders, ranges as sketch_range_builders,
+};
+pub use sketch_degeneracy::{
+    SketchDegeneracyCheck, SketchDegeneracyKind, SketchDegeneracyReport, SketchDegeneracyStatus,
+    preflight_sketch_degeneracies, preflight_sketch_degeneracies_with_policy,
 };
 pub use sketch_domains::{
     SketchParameterDomainCheck, SketchParameterDomainKind, SketchParameterDomainReport,

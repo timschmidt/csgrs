@@ -7,12 +7,12 @@ use hypersolve::{
     IntervalBoxCertificationPackage, IntervalBoxCertificationStatus, LinearAdapterKind,
     LinearAdapterPrecision, LinearBackend, MultivariateQuadraticKrawczykStatus, PreparedProblem,
     PreparedSolverBlock, Problem, ProposalEngineKind, ProposalEnginePrecision, RootIsolationStatus,
-    RootMultiplicityStatus, SketchConstraintKind, SketchEntityHandle, SketchEntityKind,
-    SketchGeneratedRowStatus, SketchParameterDomain, SketchParameterDomainKind,
-    SketchParameterDomainStatus, SketchResidualFormKind, SketchResidualFormRole,
-    SketchResidualFormsStatus, SketchResidualStrategy, SketchRoundTripMetadata,
-    SketchRoundTripRole, SketchSolveProblem, SolverBlockRowKind, SolverConfig, SolverPoint2,
-    SolverState, SymbolId, VariableBall, analyze_exact_affine_rank,
+    RootMultiplicityStatus, SketchConstraintKind, SketchDegeneracyKind, SketchDegeneracyStatus,
+    SketchEntityHandle, SketchEntityKind, SketchGeneratedRowStatus, SketchParameterDomain,
+    SketchParameterDomainKind, SketchParameterDomainStatus, SketchResidualFormKind,
+    SketchResidualFormRole, SketchResidualFormsStatus, SketchResidualStrategy,
+    SketchRoundTripMetadata, SketchRoundTripRole, SketchSolveProblem, SolverBlockRowKind,
+    SolverConfig, SolverPoint2, SolverState, SymbolId, VariableBall, analyze_exact_affine_rank,
     apply_equality_substitution_classes, apply_equality_substitutions,
     build_equality_substitution_classes, certify_affine_interval_candidate,
     certify_affine_krawczyk_box, certify_candidate, certify_candidate_domains,
@@ -24,13 +24,13 @@ use hypersolve::{
     eliminate_affine_rows_with_substitution_classes,
     enumerate_direct_univariate_quadratic_branches, evaluate_residuals, facts_depend_on_symbol,
     find_equality_substitutions, isolate_univariate_polynomial_roots, point_coincidence_equations,
-    preflight_sketch_parameter_domains, replay_sketch_compatibility_fixture,
-    report_lossy_adapter_only_candidate, sketch_compatibility_fixtures, sketch_distance_builders,
-    sketch_incidence_builders, sketch_objective_builders, sketch_orientation_builders,
-    sketch_range_builders, solve_damped_least_squares, solve_direct_affine_equalities,
-    solve_direct_affine_system, solve_direct_univariate_quadratic_equalities,
-    squared_distance_equation, tangent_parallel_equation, tangent_same_direction_constraint,
-    validate_equality_substitutions,
+    preflight_sketch_degeneracies, preflight_sketch_parameter_domains,
+    replay_sketch_compatibility_fixture, report_lossy_adapter_only_candidate,
+    sketch_compatibility_fixtures, sketch_distance_builders, sketch_incidence_builders,
+    sketch_objective_builders, sketch_orientation_builders, sketch_range_builders,
+    solve_damped_least_squares, solve_direct_affine_equalities, solve_direct_affine_system,
+    solve_direct_univariate_quadratic_equalities, squared_distance_equation,
+    tangent_parallel_equation, tangent_same_direction_constraint, validate_equality_substitutions,
 };
 
 fn real(value: i64) -> Real {
@@ -555,6 +555,108 @@ fn sketch_parameter_domain_lock_marks_lowered_variable_fixed() {
         SketchParameterDomainStatus::CertifiedValid
     );
     assert!(lowered.problem.variables[0].fixed);
+}
+
+#[test]
+fn sketch_degeneracy_preflight_explains_entity_level_degeneracies() {
+    let mut sketch = SketchSolveProblem::new();
+    let origin = sketch.add_point2d("origin", real(0), real(0));
+    let same = sketch.add_point2d("same", real(0), real(0));
+    let unit_x = sketch.add_point2d("unit x", real(1), real(0));
+    let zero_distance = sketch.add_distance("zero radius", real(0));
+    let unit_normal = sketch.add_normal2d("unit normal", real(1), real(0));
+    let nonunit_normal = sketch.add_normal3d("bad normal", real(2), real(0), real(0), real(0));
+    let zero_line = sketch.add_line_segment2("zero line", origin, same);
+    let good_line = sketch.add_line_segment2("good line", origin, unit_x);
+    let zero_circle = sketch.add_circle2("zero circle", origin, zero_distance);
+    let full_arc = sketch.add_arc_of_circle2("full arc", origin, same, same, zero_distance);
+    let singular_workplane = sketch.add_workplane("singular wp", origin, nonunit_normal);
+    let good_workplane = sketch.add_workplane("good wp", origin, unit_normal);
+
+    let report = preflight_sketch_degeneracies(&sketch);
+
+    assert_eq!(report.entity_count, sketch.entities().len());
+    assert_eq!(report.certified_degenerate_checks, 5);
+    assert_eq!(report.invalid_reference_checks, 0);
+    assert!(report.has_certified_degeneracy());
+    assert!(report.checks.iter().any(|check| {
+        check.entity == zero_line
+            && check.kind == SketchDegeneracyKind::ZeroLengthLineSegment2
+            && check.status == SketchDegeneracyStatus::CertifiedDegenerate
+    }));
+    assert!(report.checks.iter().any(|check| {
+        check.entity == good_line
+            && check.kind == SketchDegeneracyKind::ZeroLengthLineSegment2
+            && check.status == SketchDegeneracyStatus::CertifiedNondegenerate
+    }));
+    assert!(report.checks.iter().any(|check| {
+        check.entity == zero_circle
+            && check.kind == SketchDegeneracyKind::ZeroRadiusCircle2
+            && check.status == SketchDegeneracyStatus::CertifiedDegenerate
+    }));
+    assert!(report.checks.iter().any(|check| {
+        check.entity == full_arc
+            && check.kind == SketchDegeneracyKind::FullCircleArc2
+            && check.status == SketchDegeneracyStatus::CertifiedDegenerate
+    }));
+    assert!(report.checks.iter().any(|check| {
+        check.entity == nonunit_normal
+            && check.kind == SketchDegeneracyKind::NonunitNormal3
+            && check.status == SketchDegeneracyStatus::CertifiedDegenerate
+    }));
+    assert!(report.checks.iter().any(|check| {
+        check.entity == singular_workplane
+            && check.kind == SketchDegeneracyKind::SingularWorkplane
+            && check.status == SketchDegeneracyStatus::CertifiedDegenerate
+    }));
+    assert!(report.checks.iter().any(|check| {
+        check.entity == good_workplane
+            && check.kind == SketchDegeneracyKind::SingularWorkplane
+            && check.status == SketchDegeneracyStatus::CertifiedNondegenerate
+    }));
+}
+
+#[test]
+fn sketch_degeneracy_preflight_reports_stale_and_wrong_references() {
+    let mut sketch = SketchSolveProblem::new();
+    let point = sketch.add_point2d("p", real(0), real(0));
+    let distance = sketch.add_distance("d", real(1));
+    let stale_line = sketch.add_line_segment2("stale line", point, SketchEntityHandle(999));
+    let wrong_circle = sketch.add_circle2("wrong circle", point, point);
+    let wrong_workplane = sketch.add_workplane("wrong wp", point, distance);
+
+    let report = preflight_sketch_degeneracies(&sketch);
+
+    assert_eq!(report.invalid_reference_checks, 3);
+    assert!(report.checks.iter().any(|check| {
+        check.entity == stale_line
+            && matches!(
+                check.status,
+                SketchDegeneracyStatus::MissingEntity {
+                    handle: SketchEntityHandle(999)
+                }
+            )
+    }));
+    assert!(report.checks.iter().any(|check| {
+        check.entity == wrong_circle
+            && matches!(
+                check.status,
+                SketchDegeneracyStatus::WrongEntityKind {
+                    handle,
+                    expected: "distance"
+                } if handle == point
+            )
+    }));
+    assert!(report.checks.iter().any(|check| {
+        check.entity == wrong_workplane
+            && matches!(
+                check.status,
+                SketchDegeneracyStatus::WrongEntityKind {
+                    handle,
+                    expected: "normal"
+                } if handle == distance
+            )
+    }));
 }
 
 #[test]
