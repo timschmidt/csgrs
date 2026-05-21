@@ -57,6 +57,8 @@ fuzz_target!(|data: &[u8]| {
     #[cfg(feature = "exact-triangulation")]
     exercise_axis_aligned_coplanar_volumetric_boxes();
     #[cfg(feature = "exact-triangulation")]
+    exercise_affine_coplanar_volumetric_boxes();
+    #[cfg(feature = "exact-triangulation")]
     exercise_mixed_coplanar_volumetric_materialization();
 
     let mut values = Vec::new();
@@ -2531,6 +2533,45 @@ fn axis_aligned_box_i64(min: [i64; 3], max: [i64; 3]) -> ExactMesh {
 }
 
 #[cfg(feature = "exact-triangulation")]
+fn affine_box_i64(
+    min: [i64; 3],
+    max: [i64; 3],
+    origin: [i64; 3],
+    basis_u: [i64; 3],
+    basis_v: [i64; 3],
+    basis_w: [i64; 3],
+) -> ExactMesh {
+    let corners = [
+        [min[0], min[1], min[2]],
+        [max[0], min[1], min[2]],
+        [max[0], max[1], min[2]],
+        [min[0], max[1], min[2]],
+        [min[0], min[1], max[2]],
+        [max[0], min[1], max[2]],
+        [max[0], max[1], max[2]],
+        [min[0], max[1], max[2]],
+    ];
+    let mut coordinates = Vec::with_capacity(24);
+    for [u, v, w] in corners {
+        coordinates.extend_from_slice(&[
+            origin[0] + u * basis_u[0] + v * basis_v[0] + w * basis_w[0],
+            origin[1] + u * basis_u[1] + v * basis_v[1] + w * basis_w[1],
+            origin[2] + u * basis_u[2] + v * basis_v[2] + w * basis_w[2],
+        ]);
+    }
+    let mut indices = vec![
+        0, 2, 1, 0, 3, 2, 4, 5, 6, 4, 6, 7, 0, 1, 5, 0, 5, 4, 1, 2, 6, 1, 6,
+        5, 2, 3, 7, 2, 7, 6, 3, 0, 4, 3, 4, 7,
+    ];
+    if determinant_i128(basis_u, basis_v, basis_w) < 0 {
+        for triangle in indices.chunks_exact_mut(3) {
+            triangle.swap(1, 2);
+        }
+    }
+    ExactMesh::from_i64_triangles(&coordinates, &indices).expect("affine box fixture must import")
+}
+
+#[cfg(feature = "exact-triangulation")]
 fn top_subdivided_axis_aligned_box_i64(min: [i64; 3], max: [i64; 3]) -> ExactMesh {
     let mid_x = (min[0] + max[0]) / 2;
     let mid_y = (min[1] + max[1]) / 2;
@@ -2546,6 +2587,15 @@ fn top_subdivided_axis_aligned_box_i64(min: [i64; 3], max: [i64; 3]) -> ExactMes
         ],
     )
     .expect("top-subdivided axis-aligned box fixture must import")
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn determinant_i128(a: [i64; 3], b: [i64; 3], c: [i64; 3]) -> i128 {
+    let a = a.map(i128::from);
+    let b = b.map(i128::from);
+    let c = c.map(i128::from);
+    a[0] * (b[1] * c[2] - b[2] * c[1]) - a[1] * (b[0] * c[2] - b[2] * c[0])
+        + a[2] * (b[0] * c[1] - b[1] * c[0])
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -2897,6 +2947,117 @@ fn exercise_axis_aligned_coplanar_volumetric_boxes() {
             ExactBoundaryBooleanPolicy::Reject,
         )
         .unwrap();
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn exercise_affine_coplanar_volumetric_boxes() {
+    let origin = [0, 0, 0];
+    let basis_u = [2, 1, 0];
+    let basis_v = [-1, 2, 0];
+    let basis_w = [0, 1, 2];
+    let left = affine_box_i64([0, 0, 0], [2, 2, 2], origin, basis_u, basis_v, basis_w);
+    let right = affine_box_i64([1, 1, 0], [3, 3, 2], origin, basis_u, basis_v, basis_w);
+
+    let arrangement =
+        hypermesh::exact::materialize_affine_box_union(&left, &right, ValidationPolicy::CLOSED)
+            .expect("affine box union fixture should not error")
+            .expect("affine box union should materialize");
+    arrangement.validate().unwrap();
+    arrangement.validate_against_sources(&left, &right).unwrap();
+
+    let union = preflight_boolean_exact(&left, &right, ExactBooleanOperation::Union)
+        .expect("affine box union preflight should classify shortcut");
+    union.validate().unwrap();
+    union.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(union.support, ExactBooleanSupport::CertifiedAffineBoxUnion);
+    let union_result = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("affine box union should materialize");
+    union_result
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+
+    let intersection = preflight_boolean_exact(&left, &right, ExactBooleanOperation::Intersection)
+        .expect("affine box intersection preflight should classify shortcut");
+    intersection.validate().unwrap();
+    assert_eq!(
+        intersection.support,
+        ExactBooleanSupport::CertifiedAffineBoxIntersection
+    );
+    let intersection_result = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        ExactBooleanOperation::Intersection,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("affine box intersection should materialize");
+    intersection_result
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            ExactBooleanOperation::Intersection,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+
+    let difference = preflight_boolean_exact(&left, &right, ExactBooleanOperation::Difference)
+        .expect("affine box difference preflight should classify shortcut");
+    difference.validate().unwrap();
+    assert_eq!(
+        difference.support,
+        ExactBooleanSupport::CertifiedAffineBoxDifference
+    );
+    let difference_result = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("affine box difference should materialize");
+    difference_result
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            ExactBooleanOperation::Difference,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+
+    let point_touch = affine_box_i64([2, 2, 2], [3, 3, 3], origin, basis_u, basis_v, basis_w);
+    assert!(
+        hypermesh::exact::materialize_affine_box_union(
+            &left,
+            &point_touch,
+            ValidationPolicy::CLOSED
+        )
+        .expect("affine point contact should not error")
+        .is_none()
+    );
+
+    let basis_u = [-1, 2, 0];
+    let basis_v = [2, 1, 0];
+    let basis_w = [0, 1, 2];
+    assert!(determinant_i128(basis_u, basis_v, basis_w) < 0);
+    let left = affine_box_i64([0, 0, 0], [2, 2, 2], origin, basis_u, basis_v, basis_w);
+    let right = affine_box_i64([1, 1, 0], [3, 3, 2], origin, basis_u, basis_v, basis_w);
+    let arrangement =
+        hypermesh::exact::materialize_affine_box_union(&left, &right, ValidationPolicy::CLOSED)
+            .expect("left-handed affine box union fixture should not error")
+            .expect("left-handed affine box union should materialize");
+    arrangement.validate().unwrap();
+    arrangement.validate_against_sources(&left, &right).unwrap();
 }
 
 #[cfg(feature = "exact-triangulation")]

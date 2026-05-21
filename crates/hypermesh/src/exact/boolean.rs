@@ -17,6 +17,12 @@
 //! as policy choices/unknowns.
 
 #[cfg(feature = "exact-triangulation")]
+use super::affine_box::{
+    AffineBoxOperation, has_affine_box_difference, has_affine_box_intersection,
+    has_affine_box_union, materialize_affine_box_difference, materialize_affine_box_intersection,
+    materialize_affine_box_union,
+};
+#[cfg(feature = "exact-triangulation")]
 use super::affine_surface::{
     arrange_coplanar_affine_surface_difference, arrange_coplanar_affine_surface_intersection,
     arrange_coplanar_affine_surface_union,
@@ -415,6 +421,15 @@ pub fn preflight_boolean_exact(
         ExactBooleanOperation::Difference if has_axis_aligned_box_empty_difference(left, right) => {
             ExactBooleanSupport::CertifiedAxisAlignedBoxEmptyDifference
         }
+        ExactBooleanOperation::Union if has_affine_box_union(left, right) => {
+            ExactBooleanSupport::CertifiedAffineBoxUnion
+        }
+        ExactBooleanOperation::Intersection if has_affine_box_intersection(left, right) => {
+            ExactBooleanSupport::CertifiedAffineBoxIntersection
+        }
+        ExactBooleanOperation::Difference if has_affine_box_difference(left, right) => {
+            ExactBooleanSupport::CertifiedAffineBoxDifference
+        }
         ExactBooleanOperation::Union
         | ExactBooleanOperation::Intersection
         | ExactBooleanOperation::Difference
@@ -505,6 +520,9 @@ pub fn preflight_boolean_exact(
             | ExactBooleanSupport::CertifiedAxisAlignedBoxMultiDifference
             | ExactBooleanSupport::CertifiedAxisAlignedBoxNestedDifference
             | ExactBooleanSupport::CertifiedAxisAlignedBoxEmptyDifference
+            | ExactBooleanSupport::CertifiedAffineBoxUnion
+            | ExactBooleanSupport::CertifiedAffineBoxIntersection
+            | ExactBooleanSupport::CertifiedAffineBoxDifference
             | ExactBooleanSupport::CertifiedOpenSurfaceDisjoint
             | ExactBooleanSupport::CertifiedCoplanarSurfaceContainment
             | ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
@@ -1099,6 +1117,15 @@ pub fn boolean_exact_with_boundary_policy(
         }
         ExactBooleanOperation::Difference if has_axis_aligned_box_empty_difference(left, right) => {
             boolean_axis_aligned_box_empty_difference(left, right, validation)
+        }
+        ExactBooleanOperation::Union if has_affine_box_union(left, right) => {
+            boolean_affine_box(left, right, AffineBoxOperation::Union, validation)
+        }
+        ExactBooleanOperation::Intersection if has_affine_box_intersection(left, right) => {
+            boolean_affine_box(left, right, AffineBoxOperation::Intersection, validation)
+        }
+        ExactBooleanOperation::Difference if has_affine_box_difference(left, right) => {
+            boolean_affine_box(left, right, AffineBoxOperation::Difference, validation)
         }
         ExactBooleanOperation::Union
         | ExactBooleanOperation::Intersection
@@ -1847,6 +1874,32 @@ fn boolean_axis_aligned_box_cell_meshes(
         }
     };
     Ok(Some(certified_shortcut_result(mesh, shortcut)))
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn boolean_affine_box(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: AffineBoxOperation,
+    validation: ValidationPolicy,
+) -> Result<ExactBooleanResult, MeshError> {
+    let arrangement = match operation {
+        AffineBoxOperation::Union => materialize_affine_box_union(left, right, validation)?,
+        AffineBoxOperation::Intersection => {
+            materialize_affine_box_intersection(left, right, validation)?
+        }
+        AffineBoxOperation::Difference => {
+            materialize_affine_box_difference(left, right, validation)?
+        }
+    }
+    .expect("caller checked affine box materialization");
+    arrangement.validate_against_sources(left, right)?;
+    let shortcut = match operation {
+        AffineBoxOperation::Union => ExactBooleanShortcutKind::AffineBoxUnion,
+        AffineBoxOperation::Intersection => ExactBooleanShortcutKind::AffineBoxIntersection,
+        AffineBoxOperation::Difference => ExactBooleanShortcutKind::AffineBoxDifference,
+    };
+    Ok(certified_shortcut_result(arrangement.mesh, shortcut))
 }
 
 #[cfg(feature = "exact-triangulation")]

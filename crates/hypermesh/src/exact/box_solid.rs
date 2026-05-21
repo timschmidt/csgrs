@@ -293,6 +293,18 @@ pub(crate) fn has_axis_aligned_box_cell_difference(left: &ExactMesh, right: &Exa
     axis_aligned_box_cell_plan(left, right, BoxCellOperation::Difference).is_some()
 }
 
+/// Return whether one mesh certifies as a retained exact axis-aligned box.
+///
+/// Affine-normalized solid shortcuts use this as their local replay boundary:
+/// a transformed mesh may enter the existing orthogonal cell materializer only
+/// after its exact vertices, closed topology, and convexity certify as one
+/// AABB box. That keeps Yap's "Towards Exact Geometric Computation" object
+/// structure rule intact across the affine adapter instead of trusting a
+/// coordinate transform alone.
+pub(crate) fn is_axis_aligned_box(mesh: &ExactMesh) -> bool {
+    certify_axis_aligned_box(mesh).is_some()
+}
+
 /// Certify the exact bounds of a box-union result.
 ///
 /// Two boxes merge into one box either when exact interval containment proves

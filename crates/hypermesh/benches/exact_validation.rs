@@ -105,6 +105,43 @@ fn axis_aligned_box_i64(min: [i64; 3], max: [i64; 3]) -> ExactMesh {
 }
 
 #[cfg(feature = "exact-triangulation")]
+fn affine_box_i64(
+    min: [i64; 3],
+    max: [i64; 3],
+    origin: [i64; 3],
+    basis_u: [i64; 3],
+    basis_v: [i64; 3],
+    basis_w: [i64; 3],
+) -> ExactMesh {
+    let corners = [
+        [min[0], min[1], min[2]],
+        [max[0], min[1], min[2]],
+        [max[0], max[1], min[2]],
+        [min[0], max[1], min[2]],
+        [min[0], min[1], max[2]],
+        [max[0], min[1], max[2]],
+        [max[0], max[1], max[2]],
+        [min[0], max[1], max[2]],
+    ];
+    let mut coordinates = Vec::with_capacity(24);
+    for [u, v, w] in corners {
+        coordinates.extend_from_slice(&[
+            origin[0] + u * basis_u[0] + v * basis_v[0] + w * basis_w[0],
+            origin[1] + u * basis_u[1] + v * basis_v[1] + w * basis_w[1],
+            origin[2] + u * basis_u[2] + v * basis_v[2] + w * basis_w[2],
+        ]);
+    }
+    ExactMesh::from_i64_triangles(
+        &coordinates,
+        &[
+            0, 2, 1, 0, 3, 2, 4, 5, 6, 4, 6, 7, 0, 1, 5, 0, 5, 4, 1, 2, 6, 1, 6, 5, 2, 3, 7, 2, 7,
+            6, 3, 0, 4, 3, 4, 7,
+        ],
+    )
+    .unwrap()
+}
+
+#[cfg(feature = "exact-triangulation")]
 fn top_subdivided_axis_aligned_box_i64(min: [i64; 3], max: [i64; 3]) -> ExactMesh {
     let mid_x = (min[0] + max[0]) / 2;
     let mid_y = (min[1] + max[1]) / 2;
@@ -3330,6 +3367,116 @@ fn exact_boolean_coplanar_affine_surface_cells(c: &mut Criterion) {
     }
 }
 
+fn exact_boolean_affine_box_cells(c: &mut Criterion) {
+    #[cfg(feature = "exact-triangulation")]
+    {
+        let origin = [0, 0, 0];
+        let basis_u = [2, 1, 0];
+        let basis_v = [-1, 2, 0];
+        let basis_w = [0, 1, 2];
+        let left = affine_box_i64([0, 0, 0], [2, 2, 2], origin, basis_u, basis_v, basis_w);
+        let right = affine_box_i64([1, 1, 0], [3, 3, 2], origin, basis_u, basis_v, basis_w);
+
+        c.bench_function("exact_boolean_affine_box_cells", |b| {
+            b.iter(|| {
+                let union = hypermesh::exact::materialize_affine_box_union(
+                    &left,
+                    &right,
+                    ValidationPolicy::CLOSED,
+                )
+                .unwrap();
+                let intersection = hypermesh::exact::materialize_affine_box_intersection(
+                    &left,
+                    &right,
+                    ValidationPolicy::CLOSED,
+                )
+                .unwrap();
+                let difference = hypermesh::exact::materialize_affine_box_difference(
+                    &left,
+                    &right,
+                    ValidationPolicy::CLOSED,
+                )
+                .unwrap();
+                (
+                    union
+                        .as_ref()
+                        .map(|output| output.validate_against_sources(&left, &right)),
+                    intersection
+                        .as_ref()
+                        .map(|output| output.validate_against_sources(&left, &right)),
+                    difference
+                        .as_ref()
+                        .map(|output| output.validate_against_sources(&left, &right)),
+                    hypermesh::exact::preflight_boolean_exact(
+                        &left,
+                        &right,
+                        hypermesh::exact::ExactBooleanOperation::Union,
+                    )
+                    .map(|report| report.validate()),
+                    hypermesh::exact::preflight_boolean_exact(
+                        &left,
+                        &right,
+                        hypermesh::exact::ExactBooleanOperation::Intersection,
+                    )
+                    .map(|report| report.validate()),
+                    hypermesh::exact::preflight_boolean_exact(
+                        &left,
+                        &right,
+                        hypermesh::exact::ExactBooleanOperation::Difference,
+                    )
+                    .map(|report| report.validate()),
+                    hypermesh::exact::boolean_exact(
+                        &left,
+                        &right,
+                        hypermesh::exact::ExactBooleanOperation::Union,
+                        ValidationPolicy::CLOSED,
+                    )
+                    .unwrap()
+                    .validate_operation_against_sources(
+                        &left,
+                        &right,
+                        hypermesh::exact::ExactBooleanOperation::Union,
+                        ValidationPolicy::CLOSED,
+                        hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+                    ),
+                    hypermesh::exact::boolean_exact(
+                        &left,
+                        &right,
+                        hypermesh::exact::ExactBooleanOperation::Intersection,
+                        ValidationPolicy::CLOSED,
+                    )
+                    .unwrap()
+                    .validate_operation_against_sources(
+                        &left,
+                        &right,
+                        hypermesh::exact::ExactBooleanOperation::Intersection,
+                        ValidationPolicy::CLOSED,
+                        hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+                    ),
+                    hypermesh::exact::boolean_exact(
+                        &left,
+                        &right,
+                        hypermesh::exact::ExactBooleanOperation::Difference,
+                        ValidationPolicy::CLOSED,
+                    )
+                    .unwrap()
+                    .validate_operation_against_sources(
+                        &left,
+                        &right,
+                        hypermesh::exact::ExactBooleanOperation::Difference,
+                        ValidationPolicy::CLOSED,
+                        hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+                    ),
+                )
+            })
+        });
+    }
+    #[cfg(not(feature = "exact-triangulation"))]
+    {
+        let _ = c;
+    }
+}
+
 fn exact_convex_solid_classification(c: &mut Criterion) {
     let outer = ExactMesh::from_i64_triangles(
         &[
@@ -4566,6 +4713,7 @@ criterion_group!(
     exact_boolean_coplanar_convex_surface_multi_holed_difference,
     exact_boolean_coplanar_orthogonal_surface_cells,
     exact_boolean_coplanar_affine_surface_cells,
+    exact_boolean_affine_box_cells,
     exact_convex_solid_classification,
     exact_boolean_coplanar_surface_containment,
     exact_boolean_open_surface_disjoint,

@@ -536,6 +536,12 @@ pub enum ExactBooleanShortcutKind {
     /// Certified orthogonal-cell difference of coplanar-volumetric
     /// axis-aligned boxes.
     AxisAlignedBoxCellDifference,
+    /// Certified affine-frame union of coplanar-volumetric box solids.
+    AffineBoxUnion,
+    /// Certified affine-frame intersection of coplanar-volumetric box solids.
+    AffineBoxIntersection,
+    /// Certified affine-frame difference of coplanar-volumetric box solids.
+    AffineBoxDifference,
     /// Certified graph absence for open surfaces.
     OpenSurfaceDisjoint,
     /// Certified closed-convex containment.
@@ -1066,6 +1072,15 @@ pub enum ExactBooleanSupport {
     /// Difference was materialized as an exact orthogonal cell complex for two
     /// coplanar-volumetric axis-aligned boxes.
     CertifiedAxisAlignedBoxCellDifference,
+    /// Union was materialized by normalizing two affine-box solids into one
+    /// exact box-cell frame.
+    CertifiedAffineBoxUnion,
+    /// Intersection was materialized by normalizing two affine-box solids into
+    /// one exact box-cell frame.
+    CertifiedAffineBoxIntersection,
+    /// Difference was materialized by normalizing two affine-box solids into
+    /// one exact box-cell frame.
+    CertifiedAffineBoxDifference,
     /// A named operation was answered by exact no-intersection facts for open
     /// surface meshes.
     CertifiedOpenSurfaceDisjoint,
@@ -1237,6 +1252,9 @@ impl ExactBooleanPreflight {
             | ExactBooleanSupport::CertifiedAxisAlignedBoxMultiDifference
             | ExactBooleanSupport::CertifiedAxisAlignedBoxNestedDifference
             | ExactBooleanSupport::CertifiedAxisAlignedBoxEmptyDifference
+            | ExactBooleanSupport::CertifiedAffineBoxUnion
+            | ExactBooleanSupport::CertifiedAffineBoxIntersection
+            | ExactBooleanSupport::CertifiedAffineBoxDifference
             | ExactBooleanSupport::CertifiedOpenSurfaceDisjoint
             | ExactBooleanSupport::CertifiedConvexContainment
             | ExactBooleanSupport::CertifiedConvexIntersection
