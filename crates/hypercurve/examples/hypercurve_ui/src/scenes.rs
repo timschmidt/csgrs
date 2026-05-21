@@ -132,6 +132,7 @@ impl DemoScenes {
         Ok(scenes)
     }
 
+    #[cfg(any(target_arch = "wasm32", test))]
     fn state(&self) -> DemoScenesState {
         DemoScenesState {
             version: 1,
@@ -228,6 +229,7 @@ impl Default for PlineBooleanScene {
 }
 
 impl PlineBooleanScene {
+    #[cfg(any(target_arch = "wasm32", test))]
     fn state(&self) -> PlineBooleanSceneState {
         PlineBooleanSceneState {
             polylines: self.polylines.clone(),
@@ -423,6 +425,7 @@ impl Default for PlineOffsetScene {
 }
 
 impl PlineOffsetScene {
+    #[cfg(any(target_arch = "wasm32", test))]
     fn state(&self) -> PlineOffsetSceneState {
         PlineOffsetSceneState {
             polylines: self.polylines.clone(),
@@ -580,6 +583,7 @@ impl Default for MultiPlineBooleanScene {
 }
 
 impl MultiPlineBooleanScene {
+    #[cfg(any(target_arch = "wasm32", test))]
     fn state(&self) -> MultiPlineBooleanSceneState {
         MultiPlineBooleanSceneState {
             first: self.first.clone(),
@@ -706,6 +710,7 @@ impl Default for MultiPlineOffsetScene {
 }
 
 impl MultiPlineOffsetScene {
+    #[cfg(any(target_arch = "wasm32", test))]
     fn state(&self) -> MultiPlineOffsetSceneState {
         MultiPlineOffsetSceneState {
             polylines: self.polylines.clone(),

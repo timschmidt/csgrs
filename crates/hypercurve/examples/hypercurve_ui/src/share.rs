@@ -1,13 +1,23 @@
-use std::io::{Read, Write};
+use std::io::Read;
+#[cfg(any(target_arch = "wasm32", test))]
+use std::io::Write;
 
 use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
-use lzma_rust2::{EncodeMode, LzmaOptions, MfType, XzOptions, XzReader, XzWriter};
-use serde::{Serialize, de::DeserializeOwned};
+use lzma_rust2::XzReader;
+#[cfg(any(target_arch = "wasm32", test))]
+use lzma_rust2::{EncodeMode, LzmaOptions, MfType, XzOptions, XzWriter};
+#[cfg(any(target_arch = "wasm32", test))]
+use serde::Serialize;
+use serde::de::DeserializeOwned;
 
+#[cfg(any(target_arch = "wasm32", test))]
 const STATE_PARAM: &str = "state";
+#[cfg(any(target_arch = "wasm32", test))]
 const LZMA_COMPRESSION_LEVEL: u32 = 11;
+#[cfg(any(target_arch = "wasm32", test))]
 const LZMA_BASE_PRESET: u32 = 9;
+#[cfg(any(target_arch = "wasm32", test))]
 const LZMA_ULTRA_DEPTH_LIMIT: i32 = 4096;
 const MAX_ENCODED_STATE_CHARS: usize = 1_048_576;
 const MAX_DECOMPRESSED_STATE_BYTES: u64 = 2 * 1024 * 1024;
@@ -18,6 +28,7 @@ const MAX_DECOMPRESSED_STATE_BYTES: u64 = 2 * 1024 * 1024;
 /// URL-safe base64 alphabet without padding. The state remains structured JSON
 /// before compression, while repeated field names and coordinate arrays shrink
 /// aggressively for share links.
+#[cfg(any(target_arch = "wasm32", test))]
 pub fn encode_state<T: Serialize>(state: &T) -> Result<String, String> {
     let json = serde_json::to_string(state)
         .map_err(|error| format!("failed to serialize state: {error}"))?;
@@ -64,6 +75,7 @@ fn current_href() -> Option<String> {
     web_sys::window()?.location().href().ok()
 }
 
+#[cfg(any(target_arch = "wasm32", test))]
 fn extract_state_param(href: &str) -> Option<&str> {
     let before_hash = href.split_once('#').map_or(href, |(before, _)| before);
     let query = before_hash.split_once('?')?.1;
@@ -73,6 +85,7 @@ fn extract_state_param(href: &str) -> Option<&str> {
     })
 }
 
+#[cfg(any(target_arch = "wasm32", test))]
 fn set_state_param(href: &str, encoded_state: &str) -> String {
     let (before_hash, hash) = href
         .split_once('#')
@@ -103,6 +116,7 @@ fn set_state_param(href: &str, encoded_state: &str) -> String {
     url
 }
 
+#[cfg(any(target_arch = "wasm32", test))]
 fn compress_json(json: &[u8]) -> Result<Vec<u8>, String> {
     let mut writer = XzWriter::new(Vec::new(), xz_options())
         .map_err(|error| format!("failed to start LZMA compressor: {error}"))?;
@@ -129,6 +143,7 @@ fn decompress_json(compressed: &[u8]) -> Result<Vec<u8>, String> {
     Ok(decompressed)
 }
 
+#[cfg(any(target_arch = "wasm32", test))]
 fn xz_options() -> XzOptions {
     let mut options = XzOptions::with_preset(LZMA_BASE_PRESET);
     if LZMA_COMPRESSION_LEVEL >= 11 {
