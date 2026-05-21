@@ -75,6 +75,8 @@ pub use bezier_boolean::{
     BezierBooleanLoopClosureStatus, BezierBooleanLoopContainmentFact2,
     BezierBooleanLoopContainmentFactReport2, BezierBooleanLoopContainmentFactStatus,
     BezierBooleanLoopContainmentQuery2, BezierBooleanLoopContainmentQueryReport2,
+    BezierBooleanLoopContainmentQueryResult, BezierBooleanLoopContainmentQueryResult2,
+    BezierBooleanLoopContainmentQueryResultReport2, BezierBooleanLoopContainmentQueryResultStatus,
     BezierBooleanLoopContainmentQueryStatus, BezierBooleanLoopGraphFactReport2,
     BezierBooleanLoopGraphFactStatus, BezierBooleanLoopGraphFacts2,
     BezierBooleanLoopGraphSuccessorFact2, BezierBooleanLoopGraphSuccessorWalkReport2,

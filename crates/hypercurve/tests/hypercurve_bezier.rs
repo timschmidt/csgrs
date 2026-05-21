@@ -14,7 +14,9 @@ use hypercurve::{
     BezierBooleanLoopAssemblyPlanStatus, BezierBooleanLoopClosureReport2,
     BezierBooleanLoopClosureStatus, BezierBooleanLoopContainmentFact2,
     BezierBooleanLoopContainmentFactReport2, BezierBooleanLoopContainmentFactStatus,
-    BezierBooleanLoopContainmentQueryReport2, BezierBooleanLoopContainmentQueryStatus,
+    BezierBooleanLoopContainmentQueryReport2, BezierBooleanLoopContainmentQueryResult,
+    BezierBooleanLoopContainmentQueryResult2, BezierBooleanLoopContainmentQueryResultReport2,
+    BezierBooleanLoopContainmentQueryResultStatus, BezierBooleanLoopContainmentQueryStatus,
     BezierBooleanLoopGraphFactReport2, BezierBooleanLoopGraphFactStatus,
     BezierBooleanLoopGraphFacts2, BezierBooleanLoopGraphSuccessorFact2,
     BezierBooleanLoopGraphSuccessorWalkReport2, BezierBooleanLoopGraphSuccessorWalkStatus,
@@ -7958,6 +7960,186 @@ fn bezier_boolean_loop_containment_queries_preserve_locator_blockers_and_singlet
 }
 
 #[test]
+fn bezier_boolean_loop_containment_query_results_lower_contains_to_facts() {
+    let plan = BezierBooleanLoopAssemblyPlanReport2 {
+        status: BezierBooleanLoopAssemblyPlanStatus::Ready,
+        assembly_status: BezierBooleanAssemblyReadinessStatus::Ready,
+        operation: BooleanOp::Union,
+        emitted_steps: vec![
+            hypercurve::BezierBooleanOwnedTraversalStep2 {
+                step: hypercurve::BezierBooleanTraversalStep2 {
+                    operand: BezierBooleanTraversalOperand::First,
+                    fragment_index: 0,
+                },
+                opposite_location: BezierBooleanFragmentOwnershipLocation::Outside,
+                action: BooleanFragmentAction::KeepSourceDirection,
+            },
+            hypercurve::BezierBooleanOwnedTraversalStep2 {
+                step: hypercurve::BezierBooleanTraversalStep2 {
+                    operand: BezierBooleanTraversalOperand::First,
+                    fragment_index: 1,
+                },
+                opposite_location: BezierBooleanFragmentOwnershipLocation::Outside,
+                action: BooleanFragmentAction::KeepSourceDirection,
+            },
+        ],
+        first_emitted_count: 2,
+        second_emitted_count: 0,
+        keep_source_count: 2,
+        keep_reversed_count: 0,
+        invalid_reference_count: 0,
+        blocker_count: 0,
+    };
+    let closure = BezierBooleanLoopClosureReport2::from_fragment_endpoints(
+        &plan,
+        &[(point(0, 0), point(0, 0)), (point(4, 0), point(4, 0))],
+        &[],
+    );
+    let output = BezierBooleanOutputLoopReport2::from_loop_closure(&closure);
+    let locator = BezierBooleanLoopLocatorInputReport2::from_output_loops(&output);
+    let queries = BezierBooleanLoopContainmentQueryReport2::from_locator_inputs(&locator);
+
+    let replay = BezierBooleanLoopContainmentQueryResultReport2::from_query_results(
+        &queries,
+        &[
+            BezierBooleanLoopContainmentQueryResult2 {
+                query_loop_index: 0,
+                candidate_container_loop_index: 1,
+                result: BezierBooleanLoopContainmentQueryResult::Contains,
+            },
+            BezierBooleanLoopContainmentQueryResult2 {
+                query_loop_index: 1,
+                candidate_container_loop_index: 0,
+                result: BezierBooleanLoopContainmentQueryResult::Outside,
+            },
+        ],
+    );
+
+    assert_eq!(
+        replay.status,
+        BezierBooleanLoopContainmentQueryResultStatus::Ready
+    );
+    assert!(replay.is_ready());
+    assert!(!replay.has_blockers());
+    assert_eq!(replay.query_count, 2);
+    assert_eq!(replay.contains_count, 1);
+    assert_eq!(replay.outside_count, 1);
+    assert_eq!(replay.containment_fact_count, 1);
+    assert_eq!(
+        replay.containment_facts[0],
+        BezierBooleanLoopContainmentFact2 {
+            container_loop_index: 1,
+            contained_loop_index: 0,
+        }
+    );
+}
+
+#[test]
+fn bezier_boolean_loop_containment_query_results_block_stale_boundary_and_unknown_results() {
+    let plan = BezierBooleanLoopAssemblyPlanReport2 {
+        status: BezierBooleanLoopAssemblyPlanStatus::Ready,
+        assembly_status: BezierBooleanAssemblyReadinessStatus::Ready,
+        operation: BooleanOp::Union,
+        emitted_steps: vec![
+            hypercurve::BezierBooleanOwnedTraversalStep2 {
+                step: hypercurve::BezierBooleanTraversalStep2 {
+                    operand: BezierBooleanTraversalOperand::First,
+                    fragment_index: 0,
+                },
+                opposite_location: BezierBooleanFragmentOwnershipLocation::Outside,
+                action: BooleanFragmentAction::KeepSourceDirection,
+            },
+            hypercurve::BezierBooleanOwnedTraversalStep2 {
+                step: hypercurve::BezierBooleanTraversalStep2 {
+                    operand: BezierBooleanTraversalOperand::First,
+                    fragment_index: 1,
+                },
+                opposite_location: BezierBooleanFragmentOwnershipLocation::Outside,
+                action: BooleanFragmentAction::KeepSourceDirection,
+            },
+        ],
+        first_emitted_count: 2,
+        second_emitted_count: 0,
+        keep_source_count: 2,
+        keep_reversed_count: 0,
+        invalid_reference_count: 0,
+        blocker_count: 0,
+    };
+    let closure = BezierBooleanLoopClosureReport2::from_fragment_endpoints(
+        &plan,
+        &[(point(0, 0), point(0, 0)), (point(4, 0), point(4, 0))],
+        &[],
+    );
+    let output = BezierBooleanOutputLoopReport2::from_loop_closure(&closure);
+    let locator = BezierBooleanLoopLocatorInputReport2::from_output_loops(&output);
+    let queries = BezierBooleanLoopContainmentQueryReport2::from_locator_inputs(&locator);
+
+    let stale = BezierBooleanLoopContainmentQueryResultReport2::from_query_results(
+        &queries,
+        &[
+            BezierBooleanLoopContainmentQueryResult2 {
+                query_loop_index: 1,
+                candidate_container_loop_index: 0,
+                result: BezierBooleanLoopContainmentQueryResult::Outside,
+            },
+            BezierBooleanLoopContainmentQueryResult2 {
+                query_loop_index: 0,
+                candidate_container_loop_index: 1,
+                result: BezierBooleanLoopContainmentQueryResult::Outside,
+            },
+        ],
+    );
+    assert_eq!(
+        stale.status,
+        BezierBooleanLoopContainmentQueryResultStatus::QueryKeyMismatch
+    );
+    assert!(stale.has_blockers());
+    assert_eq!(stale.key_mismatch_count, 2);
+
+    let boundary = BezierBooleanLoopContainmentQueryResultReport2::from_query_results(
+        &queries,
+        &[
+            BezierBooleanLoopContainmentQueryResult2 {
+                query_loop_index: 0,
+                candidate_container_loop_index: 1,
+                result: BezierBooleanLoopContainmentQueryResult::Boundary,
+            },
+            BezierBooleanLoopContainmentQueryResult2 {
+                query_loop_index: 1,
+                candidate_container_loop_index: 0,
+                result: BezierBooleanLoopContainmentQueryResult::Outside,
+            },
+        ],
+    );
+    assert_eq!(
+        boundary.status,
+        BezierBooleanLoopContainmentQueryResultStatus::BoundaryNeedsResolution
+    );
+    assert_eq!(boundary.boundary_count, 1);
+
+    let unknown = BezierBooleanLoopContainmentQueryResultReport2::from_query_results(
+        &queries,
+        &[
+            BezierBooleanLoopContainmentQueryResult2 {
+                query_loop_index: 0,
+                candidate_container_loop_index: 1,
+                result: BezierBooleanLoopContainmentQueryResult::Unknown,
+            },
+            BezierBooleanLoopContainmentQueryResult2 {
+                query_loop_index: 1,
+                candidate_container_loop_index: 0,
+                result: BezierBooleanLoopContainmentQueryResult::Outside,
+            },
+        ],
+    );
+    assert_eq!(
+        unknown.status,
+        BezierBooleanLoopContainmentQueryResultStatus::UnknownNeedsResolution
+    );
+    assert_eq!(unknown.unknown_count, 1);
+}
+
+#[test]
 fn bezier_boolean_output_loop_report_consumes_graph_walk_closure() {
     let plan = BezierBooleanLoopAssemblyPlanReport2 {
         status: BezierBooleanLoopAssemblyPlanStatus::Ready,
@@ -13157,6 +13339,84 @@ proptest! {
                 &point((query.query_loop_index as i32) * 7, 0)
             );
         }
+    }
+
+    #[test]
+    fn generated_bezier_boolean_loop_containment_query_results_replay_strict_contains(
+        loop_count in 2_usize..7,
+    ) {
+        let mut emitted_steps = Vec::new();
+        let mut endpoints = Vec::new();
+        for index in 0..loop_count {
+            let x = (index as i32) * 9;
+            emitted_steps.push(hypercurve::BezierBooleanOwnedTraversalStep2 {
+                step: hypercurve::BezierBooleanTraversalStep2 {
+                    operand: BezierBooleanTraversalOperand::First,
+                    fragment_index: index * 2,
+                },
+                opposite_location: BezierBooleanFragmentOwnershipLocation::Outside,
+                action: BooleanFragmentAction::KeepSourceDirection,
+            });
+            endpoints.push((point(x, 0), point(x + 1, 0)));
+            emitted_steps.push(hypercurve::BezierBooleanOwnedTraversalStep2 {
+                step: hypercurve::BezierBooleanTraversalStep2 {
+                    operand: BezierBooleanTraversalOperand::First,
+                    fragment_index: index * 2 + 1,
+                },
+                opposite_location: BezierBooleanFragmentOwnershipLocation::Outside,
+                action: BooleanFragmentAction::KeepSourceDirection,
+            });
+            endpoints.push((point(x + 1, 0), point(x, 0)));
+        }
+        let plan = BezierBooleanLoopAssemblyPlanReport2 {
+            status: BezierBooleanLoopAssemblyPlanStatus::Ready,
+            assembly_status: BezierBooleanAssemblyReadinessStatus::Ready,
+            operation: BooleanOp::Union,
+            emitted_steps,
+            first_emitted_count: loop_count * 2,
+            second_emitted_count: 0,
+            keep_source_count: loop_count * 2,
+            keep_reversed_count: 0,
+            invalid_reference_count: 0,
+            blocker_count: 0,
+        };
+        let closure = BezierBooleanLoopClosureReport2::from_fragment_endpoints(
+            &plan,
+            &endpoints,
+            &[],
+        );
+        let output = BezierBooleanOutputLoopReport2::from_loop_closure(&closure);
+        let locator = BezierBooleanLoopLocatorInputReport2::from_output_loops(&output);
+        let queries = BezierBooleanLoopContainmentQueryReport2::from_locator_inputs(&locator);
+        let results = queries
+            .queries
+            .iter()
+            .map(|query| BezierBooleanLoopContainmentQueryResult2 {
+                query_loop_index: query.query_loop_index,
+                candidate_container_loop_index: query.candidate_container_loop_index,
+                result: if query.candidate_container_loop_index < query.query_loop_index {
+                    BezierBooleanLoopContainmentQueryResult::Contains
+                } else {
+                    BezierBooleanLoopContainmentQueryResult::Outside
+                },
+            })
+            .collect::<Vec<_>>();
+
+        let replay =
+            BezierBooleanLoopContainmentQueryResultReport2::from_query_results(&queries, &results);
+
+        prop_assert_eq!(
+            replay.status,
+            BezierBooleanLoopContainmentQueryResultStatus::Ready
+        );
+        prop_assert_eq!(replay.query_count, loop_count * (loop_count - 1));
+        prop_assert_eq!(replay.contains_count, loop_count * (loop_count - 1) / 2);
+        prop_assert_eq!(replay.outside_count, loop_count * (loop_count - 1) / 2);
+        prop_assert_eq!(replay.containment_fact_count, replay.contains_count);
+        prop_assert!(replay
+            .containment_facts
+            .iter()
+            .all(|fact| fact.container_loop_index < fact.contained_loop_index));
     }
 
     #[test]
