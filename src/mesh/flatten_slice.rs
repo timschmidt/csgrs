@@ -1,7 +1,10 @@
 //! Provides functions for flattening a `Mesh` against the Z=0 `Plane`
 //! or slicing a `Mesh` with an arbitrary `Plane` into a `Profile`
 
-use crate::float_types::{Real, hpoints_within_epsilon, tolerance};
+use crate::float_types::{
+    Real, hpoints_within_epsilon, hreal_from_f64, hreal_gt_f64, hxy_distance,
+    hxy_orientation_sign, tolerance,
+};
 use crate::mesh::Mesh;
 use crate::mesh::bsp::Node;
 use crate::mesh::plane::Plane;
@@ -10,8 +13,8 @@ use crate::vertex::Vertex;
 use hashbrown::HashMap;
 use hypercurve::{
     BooleanOp, Classification, Contour2, CurvePolicy, CurveString2, FillRule, Region2,
-    finite_ring_signed_area,
 };
+use hyperreal::RealSign;
 use nalgebra::Point3;
 use std::fmt::Debug;
 
@@ -46,7 +49,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                     [tri[2].position.x, tri[2].position.y],
                     [tri[0].position.x, tri[0].position.y],
                 ];
-                if finite_ring_signed_area(&ring) < 0.0 {
+                if matches!(ring_orientation_sign(&ring), Some(RealSign::Negative)) {
                     ring.swap(1, 2);
                     ring[3] = ring[0];
                 }
@@ -164,10 +167,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             let closed = points
                 .first()
                 .zip(points.last())
-                .is_some_and(|(first, last)| {
-                    (first[0] - last[0]).abs() <= crate::float_types::tolerance()
-                        && (first[1] - last[1]).abs() <= crate::float_types::tolerance()
-                });
+                .is_some_and(|(first, last)| xy_points_within_tolerance(*first, *last));
 
             if closed {
                 if let Ok(contour) = Contour2::from_finite_ring(&points) {
@@ -194,6 +194,32 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             Profile::<M>::prepare_origin_transform(Vertex::default()),
         )
     }
+}
+
+/// Return projected ring orientation through the shared hyperreal 2D predicate.
+///
+/// Flattening still projects mesh vertices to finite XY boundary samples, but
+/// winding correction should not use local primitive area accumulation. The
+/// orientation predicate is delegated to `hyperlimit`, matching Yap's
+/// exact-geometric-computation split cited in [`Mesh::flatten`].
+fn ring_orientation_sign(ring: &[[Real; 2]]) -> Option<RealSign> {
+    if ring.len() < 3 {
+        return None;
+    }
+    hxy_orientation_sign(
+        (ring[0][0], ring[0][1]),
+        (ring[1][0], ring[1][1]),
+        (ring[2][0], ring[2][1]),
+    )
+}
+
+/// Test projected XY loop closure with hyperlattice distance.
+fn xy_points_within_tolerance(first: [Real; 2], last: [Real; 2]) -> bool {
+    hxy_distance((first[0], first[1]), (last[0], last[1])).is_some_and(|distance| {
+        hreal_from_f64(distance)
+            .ok()
+            .is_some_and(|distance| !hreal_gt_f64(&distance, tolerance()))
+    })
 }
 
 // Build a small helper for hashing endpoints:
