@@ -1021,6 +1021,82 @@ pub struct BezierBooleanLoopGraphSuccessorWalkReport2 {
     pub blocker_count: usize,
 }
 
+/// Status for deriving one or more Bezier/conic graph-walk cycles from successor facts.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum BezierBooleanLoopGraphMultiCycleWalkStatus {
+    /// No fragment or overlap work was supplied.
+    Empty,
+    /// The arrangement is a certified endpoint-only no-op.
+    NoInteriorSplits,
+    /// Successor facts define one or more closed walks over every emitted fragment.
+    Ready,
+    /// Graph traversal readiness is blocked.
+    TraversalBlocked,
+    /// Ownership was certified but no fragments are emitted.
+    NoEmittedFragments,
+    /// Fewer successor facts than emitted fragments were supplied.
+    MissingSuccessorFacts,
+    /// More successor facts than emitted fragments were supplied.
+    ExtraSuccessorFacts,
+    /// At least one successor fact names an emitted-fragment index outside the plan.
+    OutOfRangeSuccessorStep,
+    /// At least one emitted fragment has more than one supplied successor.
+    DuplicateSuccessorSource,
+    /// At least one emitted fragment has more than one supplied predecessor.
+    DuplicateSuccessorTarget,
+    /// Successor facts do not form closed walks covering all emitted fragments.
+    OpenSuccessorCycle,
+}
+
+/// Certified multi-cycle graph walk derived from keyed successor facts.
+///
+/// [`BezierBooleanLoopGraphSuccessorWalkReport2`] is deliberately strict: it
+/// accepts only one closed successor cycle. This report is the explicit
+/// multi-loop counterpart for arrangements whose graph traversal produces
+/// several disjoint closed output loops. It still validates exactly one
+/// successor and one predecessor per emitted fragment and then concatenates
+/// cycles in deterministic smallest-unvisited-index order. The resulting walk
+/// can feed the existing closure/output-loop reports because each cycle is
+/// already closed before the next begins. This keeps traversal evidence
+/// replayable under Yap, "Towards Exact Geometric Computation" (1997), while
+/// preserving the Vatti (1992), Greiner-Hormann (1998), and
+/// Martinez-Rueda-Feito (2009) separation between graph traversal and fill.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BezierBooleanLoopGraphMultiCycleWalkReport2 {
+    /// Coarse multi-cycle successor-walk status.
+    pub status: BezierBooleanLoopGraphMultiCycleWalkStatus,
+    /// Graph-traversal readiness status used to derive this report.
+    pub traversal_status: BezierBooleanLoopGraphTraversalStatus,
+    /// Requested boolean operation.
+    pub operation: BooleanOp,
+    /// Number of emitted references in the loop-assembly plan.
+    pub emitted_step_count: usize,
+    /// Number of successor facts supplied by the graph traversal stage.
+    pub supplied_successor_count: usize,
+    /// Canonical start index of each accepted cycle in concatenated order.
+    pub cycle_start_indices: Vec<usize>,
+    /// Number of accepted closed cycles.
+    pub cycle_count: usize,
+    /// Certified emitted-fragment indices in concatenated cycle order.
+    pub walk_indices: Vec<usize>,
+    /// Emitted references reordered into concatenated cycle order.
+    pub ordered_steps: Vec<BezierBooleanOwnedTraversalStep2>,
+    /// Number of missing successor facts.
+    pub missing_successor_count: usize,
+    /// Number of extra successor facts.
+    pub extra_successor_count: usize,
+    /// Number of out-of-range source or target indices.
+    pub out_of_range_successor_count: usize,
+    /// Number of duplicate successor sources.
+    pub duplicate_source_count: usize,
+    /// Number of duplicate successor targets.
+    pub duplicate_target_count: usize,
+    /// Number of graph-cycle closure/connectivity blockers.
+    pub cycle_blocker_count: usize,
+    /// Number of blocking preconditions retained by this report.
+    pub blocker_count: usize,
+}
+
 /// Loop-closure status for emitted Bezier/conic boolean fragments.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum BezierBooleanLoopClosureStatus {
@@ -5808,6 +5884,361 @@ impl BezierBooleanLoopGraphSuccessorWalkReport2 {
                 | BezierBooleanLoopGraphSuccessorWalkStatus::DuplicateSuccessorSource
                 | BezierBooleanLoopGraphSuccessorWalkStatus::DuplicateSuccessorTarget
                 | BezierBooleanLoopGraphSuccessorWalkStatus::OpenOrDisconnectedSuccessorCycle
+        )
+    }
+}
+
+impl BezierBooleanLoopGraphMultiCycleWalkReport2 {
+    /// Derives deterministic closed cycles from exact successor facts.
+    ///
+    /// This accepts disjoint closed cycles, unlike
+    /// [`BezierBooleanLoopGraphSuccessorWalkReport2::from_successor_facts`],
+    /// but it does not relax the exact graph certificate: every emitted step
+    /// must have exactly one successor and one predecessor. Cycles are emitted
+    /// in smallest-unvisited-start order so the report is deterministic and
+    /// replayable. Yap (1997) is the governing exactness rule; Vatti (1992),
+    /// Greiner-Hormann (1998), and Martinez-Rueda-Feito (2009) provide the
+    /// staged traversal/fill model.
+    pub fn from_successor_facts(
+        traversal: &BezierBooleanLoopGraphTraversalReport2,
+        plan: &BezierBooleanLoopAssemblyPlanReport2,
+        successor_facts: &[BezierBooleanLoopGraphSuccessorFact2],
+    ) -> Self {
+        match traversal.status {
+            BezierBooleanLoopGraphTraversalStatus::Empty => {
+                return Self::empty_like(
+                    BezierBooleanLoopGraphMultiCycleWalkStatus::Empty,
+                    traversal,
+                    plan,
+                    successor_facts.len(),
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                );
+            }
+            BezierBooleanLoopGraphTraversalStatus::NoInteriorSplits => {
+                return Self::empty_like(
+                    BezierBooleanLoopGraphMultiCycleWalkStatus::NoInteriorSplits,
+                    traversal,
+                    plan,
+                    successor_facts.len(),
+                    0,
+                    successor_facts.len(),
+                    0,
+                    0,
+                    0,
+                    0,
+                    successor_facts.len(),
+                );
+            }
+            BezierBooleanLoopGraphTraversalStatus::PlanBlocked
+            | BezierBooleanLoopGraphTraversalStatus::BranchPointsNeedTraversal
+            | BezierBooleanLoopGraphTraversalStatus::ResolvedOverlapsNeedTraversal => {
+                return Self::empty_like(
+                    BezierBooleanLoopGraphMultiCycleWalkStatus::TraversalBlocked,
+                    traversal,
+                    plan,
+                    successor_facts.len(),
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    traversal.blocker_count.max(1),
+                );
+            }
+            BezierBooleanLoopGraphTraversalStatus::NoEmittedFragments => {
+                return Self::empty_like(
+                    BezierBooleanLoopGraphMultiCycleWalkStatus::NoEmittedFragments,
+                    traversal,
+                    plan,
+                    successor_facts.len(),
+                    0,
+                    successor_facts.len(),
+                    0,
+                    0,
+                    0,
+                    0,
+                    successor_facts.len(),
+                );
+            }
+            BezierBooleanLoopGraphTraversalStatus::Ready => {}
+        }
+
+        let emitted_step_count = plan.emitted_steps.len();
+        if emitted_step_count == 0 {
+            return Self::empty_like(
+                BezierBooleanLoopGraphMultiCycleWalkStatus::NoEmittedFragments,
+                traversal,
+                plan,
+                successor_facts.len(),
+                0,
+                successor_facts.len(),
+                0,
+                0,
+                0,
+                0,
+                successor_facts.len(),
+            );
+        }
+        if successor_facts.len() < emitted_step_count {
+            let missing = emitted_step_count - successor_facts.len();
+            return Self::empty_like(
+                BezierBooleanLoopGraphMultiCycleWalkStatus::MissingSuccessorFacts,
+                traversal,
+                plan,
+                successor_facts.len(),
+                missing,
+                0,
+                0,
+                0,
+                0,
+                0,
+                missing.max(1),
+            );
+        }
+        if successor_facts.len() > emitted_step_count {
+            let extra = successor_facts.len() - emitted_step_count;
+            return Self::empty_like(
+                BezierBooleanLoopGraphMultiCycleWalkStatus::ExtraSuccessorFacts,
+                traversal,
+                plan,
+                successor_facts.len(),
+                0,
+                extra,
+                0,
+                0,
+                0,
+                0,
+                extra.max(1),
+            );
+        }
+
+        let out_of_range_successor_count: usize = successor_facts
+            .iter()
+            .map(|fact| {
+                usize::from(fact.from_step_index >= emitted_step_count)
+                    + usize::from(fact.to_step_index >= emitted_step_count)
+            })
+            .sum();
+        if out_of_range_successor_count > 0 {
+            return Self::empty_like(
+                BezierBooleanLoopGraphMultiCycleWalkStatus::OutOfRangeSuccessorStep,
+                traversal,
+                plan,
+                successor_facts.len(),
+                0,
+                0,
+                out_of_range_successor_count,
+                0,
+                0,
+                0,
+                out_of_range_successor_count,
+            );
+        }
+
+        let mut successor_by_source = vec![None; emitted_step_count];
+        let mut predecessor_seen = vec![false; emitted_step_count];
+        let mut duplicate_source_count = 0;
+        let mut duplicate_target_count = 0;
+        for fact in successor_facts {
+            if successor_by_source[fact.from_step_index].is_some() {
+                duplicate_source_count += 1;
+            }
+            successor_by_source[fact.from_step_index] = Some(fact.to_step_index);
+            if predecessor_seen[fact.to_step_index] {
+                duplicate_target_count += 1;
+            }
+            predecessor_seen[fact.to_step_index] = true;
+        }
+        if duplicate_source_count > 0 {
+            return Self::empty_like(
+                BezierBooleanLoopGraphMultiCycleWalkStatus::DuplicateSuccessorSource,
+                traversal,
+                plan,
+                successor_facts.len(),
+                0,
+                0,
+                0,
+                duplicate_source_count,
+                0,
+                0,
+                duplicate_source_count,
+            );
+        }
+        if duplicate_target_count > 0 {
+            return Self::empty_like(
+                BezierBooleanLoopGraphMultiCycleWalkStatus::DuplicateSuccessorTarget,
+                traversal,
+                plan,
+                successor_facts.len(),
+                0,
+                0,
+                0,
+                0,
+                duplicate_target_count,
+                0,
+                duplicate_target_count,
+            );
+        }
+
+        let mut visited = vec![false; emitted_step_count];
+        let mut cycle_start_indices = Vec::new();
+        let mut walk_indices = Vec::with_capacity(emitted_step_count);
+        for start_step_index in 0..emitted_step_count {
+            if visited[start_step_index] {
+                continue;
+            }
+            cycle_start_indices.push(start_step_index);
+            let mut current = start_step_index;
+            loop {
+                if visited[current] {
+                    if current == start_step_index {
+                        break;
+                    }
+                    return Self::empty_like(
+                        BezierBooleanLoopGraphMultiCycleWalkStatus::OpenSuccessorCycle,
+                        traversal,
+                        plan,
+                        successor_facts.len(),
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        1,
+                        1,
+                    );
+                }
+                visited[current] = true;
+                walk_indices.push(current);
+                let Some(next) = successor_by_source[current] else {
+                    return Self::empty_like(
+                        BezierBooleanLoopGraphMultiCycleWalkStatus::OpenSuccessorCycle,
+                        traversal,
+                        plan,
+                        successor_facts.len(),
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        1,
+                        1,
+                    );
+                };
+                current = next;
+            }
+        }
+
+        let cycle_count = cycle_start_indices.len();
+        Self {
+            status: BezierBooleanLoopGraphMultiCycleWalkStatus::Ready,
+            traversal_status: traversal.status,
+            operation: traversal.operation,
+            emitted_step_count,
+            supplied_successor_count: successor_facts.len(),
+            cycle_start_indices,
+            cycle_count,
+            ordered_steps: walk_indices
+                .iter()
+                .map(|index| plan.emitted_steps[*index].clone())
+                .collect(),
+            walk_indices,
+            missing_successor_count: 0,
+            extra_successor_count: 0,
+            out_of_range_successor_count: 0,
+            duplicate_source_count: 0,
+            duplicate_target_count: 0,
+            cycle_blocker_count: 0,
+            blocker_count: 0,
+        }
+    }
+
+    fn empty_like(
+        status: BezierBooleanLoopGraphMultiCycleWalkStatus,
+        traversal: &BezierBooleanLoopGraphTraversalReport2,
+        plan: &BezierBooleanLoopAssemblyPlanReport2,
+        supplied_successor_count: usize,
+        missing_successor_count: usize,
+        extra_successor_count: usize,
+        out_of_range_successor_count: usize,
+        duplicate_source_count: usize,
+        duplicate_target_count: usize,
+        cycle_blocker_count: usize,
+        blocker_count: usize,
+    ) -> Self {
+        Self {
+            status,
+            traversal_status: traversal.status,
+            operation: traversal.operation,
+            emitted_step_count: plan.emitted_steps.len(),
+            supplied_successor_count,
+            cycle_start_indices: Vec::new(),
+            cycle_count: 0,
+            walk_indices: Vec::new(),
+            ordered_steps: Vec::new(),
+            missing_successor_count,
+            extra_successor_count,
+            out_of_range_successor_count,
+            duplicate_source_count,
+            duplicate_target_count,
+            cycle_blocker_count,
+            blocker_count,
+        }
+    }
+
+    /// Converts a ready multi-cycle report into the existing walk report.
+    pub fn to_graph_walk_report(
+        &self,
+        traversal: &BezierBooleanLoopGraphTraversalReport2,
+        plan: &BezierBooleanLoopAssemblyPlanReport2,
+    ) -> BezierBooleanLoopGraphWalkReport2 {
+        if self.status == BezierBooleanLoopGraphMultiCycleWalkStatus::Ready {
+            BezierBooleanLoopGraphWalkReport2::from_traversal_order(
+                traversal,
+                plan,
+                &self.walk_indices,
+            )
+        } else {
+            BezierBooleanLoopGraphWalkReport2 {
+                status: BezierBooleanLoopGraphWalkStatus::TraversalBlocked,
+                traversal_status: traversal.status,
+                operation: self.operation,
+                emitted_step_count: plan.emitted_steps.len(),
+                supplied_walk_step_count: 0,
+                walk_indices: Vec::new(),
+                ordered_steps: Vec::new(),
+                missing_walk_step_count: 0,
+                extra_walk_step_count: 0,
+                out_of_range_walk_step_count: 0,
+                duplicate_walk_step_count: 0,
+                blocker_count: self.blocker_count.max(1),
+            }
+        }
+    }
+
+    /// Returns true when successor facts define closed cycles over all emitted steps.
+    pub fn is_ready(&self) -> bool {
+        self.status == BezierBooleanLoopGraphMultiCycleWalkStatus::Ready
+    }
+
+    /// Returns true when successor evidence is missing, stale, or open.
+    pub fn has_blockers(&self) -> bool {
+        matches!(
+            self.status,
+            BezierBooleanLoopGraphMultiCycleWalkStatus::TraversalBlocked
+                | BezierBooleanLoopGraphMultiCycleWalkStatus::MissingSuccessorFacts
+                | BezierBooleanLoopGraphMultiCycleWalkStatus::ExtraSuccessorFacts
+                | BezierBooleanLoopGraphMultiCycleWalkStatus::OutOfRangeSuccessorStep
+                | BezierBooleanLoopGraphMultiCycleWalkStatus::DuplicateSuccessorSource
+                | BezierBooleanLoopGraphMultiCycleWalkStatus::DuplicateSuccessorTarget
+                | BezierBooleanLoopGraphMultiCycleWalkStatus::OpenSuccessorCycle
         )
     }
 }

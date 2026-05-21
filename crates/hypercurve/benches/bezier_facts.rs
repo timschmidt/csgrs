@@ -14,26 +14,27 @@ use hypercurve::{
     BezierBooleanLoopContainmentQueryReport2, BezierBooleanLoopContainmentQueryResult,
     BezierBooleanLoopContainmentQueryResult2, BezierBooleanLoopContainmentQueryResultReport2,
     BezierBooleanLoopGraphFactReport2, BezierBooleanLoopGraphFacts2,
-    BezierBooleanLoopGraphSuccessorFact2, BezierBooleanLoopGraphSuccessorWalkReport2,
-    BezierBooleanLoopGraphTraversalReport2, BezierBooleanLoopGraphWalkReport2,
-    BezierBooleanLoopLocatorInputReport2, BezierBooleanLoopNestingDepthFact2,
-    BezierBooleanLoopNestingDepthFactReport2, BezierBooleanLoopNestingRoleReport2,
-    BezierBooleanLoopRoleAssignmentReport2, BezierBooleanMaterializationAuditReport2,
-    BezierBooleanMaterializedRegionReport2, BezierBooleanOutputLoopReport2,
-    BezierBooleanOutputLoopRole, BezierBooleanOverlapResolutionReport2,
-    BezierBooleanOwnershipClassificationReport2, BezierBooleanOwnershipFact2,
-    BezierBooleanOwnershipFactReport2, BezierBooleanPathSchedulerReport2,
-    BezierBooleanQuadraticFragmentReport2, BezierBooleanRationalQuadraticFragmentReport2,
-    BezierBooleanRegionAssemblyReport2, BezierBooleanResultReport2,
-    BezierBooleanRootIsolationConstructionReport2, BezierBooleanRootIsolationHandoffReport2,
-    BezierBooleanRootIsolationReplayReport2, BezierBooleanSplitPlanReport2,
-    BezierBooleanTraversalPreconditionReport2, BezierBooleanTraversalScheduleReport2,
-    BezierBooleanUniformOwnershipFactReport2, BezierFlatteningOptions,
-    BezierIntersectionRegionIsolationBudget, BezierMonotoneSpan, BezierPathRangeBatchReport2,
-    BezierPathRangeOrderReport2, BooleanOp, CubicBezier2, CurvePolicy, LineSeg2, Point2,
-    QuadraticBezier2, RationalQuadraticBezier2, Real, certify_bezier_intersection_region_isolation,
-    isolate_bezier_intersection_regions, isolate_bezier_intersection_regions_until_width,
-    refine_bezier_intersection_regions, summarize_bezier_intersection_regions,
+    BezierBooleanLoopGraphMultiCycleWalkReport2, BezierBooleanLoopGraphSuccessorFact2,
+    BezierBooleanLoopGraphSuccessorWalkReport2, BezierBooleanLoopGraphTraversalReport2,
+    BezierBooleanLoopGraphWalkReport2, BezierBooleanLoopLocatorInputReport2,
+    BezierBooleanLoopNestingDepthFact2, BezierBooleanLoopNestingDepthFactReport2,
+    BezierBooleanLoopNestingRoleReport2, BezierBooleanLoopRoleAssignmentReport2,
+    BezierBooleanMaterializationAuditReport2, BezierBooleanMaterializedRegionReport2,
+    BezierBooleanOutputLoopReport2, BezierBooleanOutputLoopRole,
+    BezierBooleanOverlapResolutionReport2, BezierBooleanOwnershipClassificationReport2,
+    BezierBooleanOwnershipFact2, BezierBooleanOwnershipFactReport2,
+    BezierBooleanPathSchedulerReport2, BezierBooleanQuadraticFragmentReport2,
+    BezierBooleanRationalQuadraticFragmentReport2, BezierBooleanRegionAssemblyReport2,
+    BezierBooleanResultReport2, BezierBooleanRootIsolationConstructionReport2,
+    BezierBooleanRootIsolationHandoffReport2, BezierBooleanRootIsolationReplayReport2,
+    BezierBooleanSplitPlanReport2, BezierBooleanTraversalPreconditionReport2,
+    BezierBooleanTraversalScheduleReport2, BezierBooleanUniformOwnershipFactReport2,
+    BezierFlatteningOptions, BezierIntersectionRegionIsolationBudget, BezierMonotoneSpan,
+    BezierPathRangeBatchReport2, BezierPathRangeOrderReport2, BooleanOp, CubicBezier2, CurvePolicy,
+    LineSeg2, Point2, QuadraticBezier2, RationalQuadraticBezier2, Real,
+    certify_bezier_intersection_region_isolation, isolate_bezier_intersection_regions,
+    isolate_bezier_intersection_regions_until_width, refine_bezier_intersection_regions,
+    summarize_bezier_intersection_regions,
 };
 use hypersolve::{
     AlgebraicRootKind, AlgebraicRootRepresentation, AlgebraicRootRepresentationReport,
@@ -1637,14 +1638,17 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                         to_step_index: (index + 1) % plan.emitted_steps.len().max(1),
                     })
                     .collect::<Vec<_>>();
-                format!(
-                    "{:?}",
-                    BezierBooleanLoopGraphSuccessorWalkReport2::from_successor_facts(
-                        &traversal,
-                        &plan,
-                        &successors
-                    )
-                )
+                let single = BezierBooleanLoopGraphSuccessorWalkReport2::from_successor_facts(
+                    &traversal,
+                    &plan,
+                    &successors,
+                );
+                let multi = BezierBooleanLoopGraphMultiCycleWalkReport2::from_successor_facts(
+                    &traversal,
+                    &plan,
+                    &successors,
+                );
+                format!("{single:?}{multi:?}")
             }
             other => format!("{other:?}"),
         };

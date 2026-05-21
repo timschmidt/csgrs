@@ -19,7 +19,8 @@ use hypercurve::{
     BezierBooleanLoopContainmentQueryResult2, BezierBooleanLoopContainmentQueryResultReport2,
     BezierBooleanLoopContainmentQueryResultStatus, BezierBooleanLoopContainmentQueryStatus,
     BezierBooleanLoopGraphFactReport2, BezierBooleanLoopGraphFactStatus,
-    BezierBooleanLoopGraphFacts2, BezierBooleanLoopGraphSuccessorFact2,
+    BezierBooleanLoopGraphFacts2, BezierBooleanLoopGraphMultiCycleWalkReport2,
+    BezierBooleanLoopGraphMultiCycleWalkStatus, BezierBooleanLoopGraphSuccessorFact2,
     BezierBooleanLoopGraphSuccessorWalkReport2, BezierBooleanLoopGraphSuccessorWalkStatus,
     BezierBooleanLoopGraphTraversalReport2, BezierBooleanLoopGraphTraversalStatus,
     BezierBooleanLoopGraphWalkReport2, BezierBooleanLoopGraphWalkStatus,
@@ -7473,6 +7474,83 @@ fn bezier_boolean_loop_graph_successor_facts_reject_stale_and_disconnected_cycle
 }
 
 #[test]
+fn bezier_boolean_loop_graph_multi_cycle_successor_facts_accept_disjoint_cycles() {
+    let plan = BezierBooleanLoopAssemblyPlanReport2 {
+        status: BezierBooleanLoopAssemblyPlanStatus::Ready,
+        assembly_status: BezierBooleanAssemblyReadinessStatus::Ready,
+        operation: BooleanOp::Union,
+        emitted_steps: (0..4)
+            .map(
+                |fragment_index| hypercurve::BezierBooleanOwnedTraversalStep2 {
+                    step: hypercurve::BezierBooleanTraversalStep2 {
+                        operand: BezierBooleanTraversalOperand::First,
+                        fragment_index,
+                    },
+                    opposite_location: BezierBooleanFragmentOwnershipLocation::Outside,
+                    action: BooleanFragmentAction::KeepSourceDirection,
+                },
+            )
+            .collect(),
+        first_emitted_count: 4,
+        second_emitted_count: 0,
+        keep_source_count: 4,
+        keep_reversed_count: 0,
+        invalid_reference_count: 0,
+        blocker_count: 0,
+    };
+    let traversal =
+        BezierBooleanLoopGraphTraversalReport2::from_certified_walk_graph_facts(&plan, 0, 0);
+    let successors = [
+        BezierBooleanLoopGraphSuccessorFact2 {
+            from_step_index: 0,
+            to_step_index: 1,
+        },
+        BezierBooleanLoopGraphSuccessorFact2 {
+            from_step_index: 1,
+            to_step_index: 0,
+        },
+        BezierBooleanLoopGraphSuccessorFact2 {
+            from_step_index: 2,
+            to_step_index: 3,
+        },
+        BezierBooleanLoopGraphSuccessorFact2 {
+            from_step_index: 3,
+            to_step_index: 2,
+        },
+    ];
+
+    let single = BezierBooleanLoopGraphSuccessorWalkReport2::from_successor_facts(
+        &traversal,
+        &plan,
+        &successors,
+    );
+    assert_eq!(
+        single.status,
+        BezierBooleanLoopGraphSuccessorWalkStatus::OpenOrDisconnectedSuccessorCycle
+    );
+
+    let multi = BezierBooleanLoopGraphMultiCycleWalkReport2::from_successor_facts(
+        &traversal,
+        &plan,
+        &successors,
+    );
+    assert_eq!(
+        multi.status,
+        BezierBooleanLoopGraphMultiCycleWalkStatus::Ready
+    );
+    assert!(multi.is_ready());
+    assert!(!multi.has_blockers());
+    assert_eq!(multi.cycle_start_indices, vec![0, 2]);
+    assert_eq!(multi.cycle_count, 2);
+    assert_eq!(multi.walk_indices, vec![0, 1, 2, 3]);
+    assert_eq!(multi.ordered_steps[2].step.fragment_index, 2);
+
+    let walk = multi.to_graph_walk_report(&traversal, &plan);
+    assert_eq!(walk.status, BezierBooleanLoopGraphWalkStatus::Ready);
+    assert_eq!(walk.walk_indices, vec![0, 1, 2, 3]);
+}
+
+#[test]
 fn bezier_boolean_loop_graph_traversal_allows_certified_raw_walks() {
     let plan = BezierBooleanLoopAssemblyPlanReport2 {
         status: BezierBooleanLoopAssemblyPlanStatus::Ready,
@@ -14805,6 +14883,73 @@ proptest! {
             BezierBooleanLoopGraphSuccessorWalkStatus::Ready
         );
         prop_assert_eq!(report.supplied_successor_count, step_count);
+        prop_assert_eq!(&report.walk_indices, &(0..step_count).collect::<Vec<_>>());
+        prop_assert!(report.is_ready());
+        prop_assert!(!report.has_blockers());
+
+        let walk = report.to_graph_walk_report(&traversal, &plan);
+        prop_assert_eq!(walk.status, BezierBooleanLoopGraphWalkStatus::Ready);
+        prop_assert_eq!(walk.ordered_steps.len(), step_count);
+    }
+
+    #[test]
+    fn generated_bezier_boolean_multi_cycle_successor_graph_walks_accept_disjoint_cycles(
+        cycle_count in 1_usize..5,
+        cycle_len in 1_usize..5,
+    ) {
+        let step_count = cycle_count * cycle_len;
+        let emitted_steps = (0..step_count)
+            .map(|fragment_index| hypercurve::BezierBooleanOwnedTraversalStep2 {
+                step: hypercurve::BezierBooleanTraversalStep2 {
+                    operand: BezierBooleanTraversalOperand::First,
+                    fragment_index,
+                },
+                opposite_location: BezierBooleanFragmentOwnershipLocation::Outside,
+                action: BooleanFragmentAction::KeepSourceDirection,
+            })
+            .collect::<Vec<_>>();
+        let plan = BezierBooleanLoopAssemblyPlanReport2 {
+            status: BezierBooleanLoopAssemblyPlanStatus::Ready,
+            assembly_status: BezierBooleanAssemblyReadinessStatus::Ready,
+            operation: BooleanOp::Union,
+            emitted_steps,
+            first_emitted_count: step_count,
+            second_emitted_count: 0,
+            keep_source_count: step_count,
+            keep_reversed_count: 0,
+            invalid_reference_count: 0,
+            blocker_count: 0,
+        };
+        let traversal =
+            BezierBooleanLoopGraphTraversalReport2::from_certified_walk_graph_facts(&plan, 0, 0);
+        let successors = (0..cycle_count)
+            .flat_map(|cycle_index| {
+                let start = cycle_index * cycle_len;
+                (0..cycle_len).map(move |offset| BezierBooleanLoopGraphSuccessorFact2 {
+                    from_step_index: start + offset,
+                    to_step_index: start + ((offset + 1) % cycle_len),
+                })
+            })
+            .collect::<Vec<_>>();
+
+        let report = BezierBooleanLoopGraphMultiCycleWalkReport2::from_successor_facts(
+            &traversal,
+            &plan,
+            &successors,
+        );
+
+        prop_assert_eq!(
+            report.status,
+            BezierBooleanLoopGraphMultiCycleWalkStatus::Ready
+        );
+        prop_assert_eq!(report.supplied_successor_count, step_count);
+        prop_assert_eq!(report.cycle_count, cycle_count);
+        prop_assert_eq!(
+            &report.cycle_start_indices,
+            &(0..cycle_count)
+                .map(|cycle_index| cycle_index * cycle_len)
+                .collect::<Vec<_>>()
+        );
         prop_assert_eq!(&report.walk_indices, &(0..step_count).collect::<Vec<_>>());
         prop_assert!(report.is_ready());
         prop_assert!(!report.has_blockers());

@@ -80,6 +80,7 @@ pub use bezier_boolean::{
     BezierBooleanLoopContainmentQueryResultReport2, BezierBooleanLoopContainmentQueryResultStatus,
     BezierBooleanLoopContainmentQueryStatus, BezierBooleanLoopGraphFactReport2,
     BezierBooleanLoopGraphFactStatus, BezierBooleanLoopGraphFacts2,
+    BezierBooleanLoopGraphMultiCycleWalkReport2, BezierBooleanLoopGraphMultiCycleWalkStatus,
     BezierBooleanLoopGraphSuccessorFact2, BezierBooleanLoopGraphSuccessorWalkReport2,
     BezierBooleanLoopGraphSuccessorWalkStatus, BezierBooleanLoopGraphTraversalReport2,
     BezierBooleanLoopGraphTraversalStatus, BezierBooleanLoopGraphWalkReport2,
