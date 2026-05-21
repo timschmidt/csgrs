@@ -10,9 +10,10 @@ use hypersolve::{
     certify_direct_univariate_quadratic_roots, certify_interval_box_candidate,
     certify_multivariate_quadratic_interval_candidate, certify_multivariate_quadratic_krawczyk_box,
     certify_quadratic_interval_candidate, certify_univariate_quadratic_alpha,
-    certify_univariate_quadratic_krawczyk_box, context_from_problem,
+    certify_univariate_quadratic_krawczyk_box, context_from_problem, determinant_bareiss,
     eliminate_affine_rows_with_substitution_classes, isolate_univariate_polynomial_roots,
-    report_lossy_adapter_only_candidate, solve_damped_least_squares, solve_direct_affine_system,
+    report_lossy_adapter_only_candidate, solve_damped_least_squares,
+    solve_dense_linear_system_bareiss, solve_direct_affine_system,
     solve_direct_univariate_quadratic_equalities, squared_distance_equation,
     validate_equality_substitutions,
 };
@@ -1221,6 +1222,50 @@ proptest! {
             certify_candidate(&PreparedProblem::new(&problem), &context_from_problem(&problem))
                 .all_satisfied()
         );
+    }
+
+    #[test]
+    fn bareiss_generated_triangular_determinants_are_exact(
+        a in 1_i16..=32,
+        b in 1_i16..=32,
+        c in -32_i16..=32,
+    ) {
+        let a = i64::from(a);
+        let b = i64::from(b);
+        let c = i64::from(c);
+        let report = determinant_bareiss(
+            &[
+                vec![Real::from(a), Real::from(c)],
+                vec![Real::zero(), Real::from(b)],
+            ],
+            -64,
+        ).unwrap();
+
+        prop_assert_eq!(report.determinant, Real::from(a * b));
+    }
+
+    #[test]
+    fn bareiss_generated_diagonal_systems_replay_exactly(
+        a in 1_i16..=32,
+        b in 1_i16..=32,
+        x in -64_i16..=64,
+        y in -64_i16..=64,
+    ) {
+        let a = i64::from(a);
+        let b = i64::from(b);
+        let x = i64::from(x);
+        let y = i64::from(y);
+        let report = solve_dense_linear_system_bareiss(
+            &[
+                vec![Real::from(a), Real::zero()],
+                vec![Real::zero(), Real::from(b)],
+            ],
+            &[Real::from(a * x), Real::from(b * y)],
+            -64,
+        ).unwrap();
+
+        prop_assert_eq!(report.solution, vec![Real::from(x), Real::from(y)]);
+        prop_assert!(report.residual_replay.accepted);
     }
 
 }

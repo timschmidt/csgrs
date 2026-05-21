@@ -8,6 +8,7 @@
 pub mod affine;
 pub mod algebraic;
 pub mod alpha;
+pub mod bareiss;
 pub mod certification;
 pub mod diagnostics;
 pub mod direct;
@@ -37,6 +38,10 @@ pub use algebraic::{
 pub use alpha::{
     UnivariateQuadraticAlphaReport, UnivariateQuadraticAlphaRow, UnivariateQuadraticAlphaStatus,
     certify_univariate_quadratic_alpha,
+};
+pub use bareiss::{
+    BareissDeterminantReport, BareissError, BareissPivot, BareissSolveReport, determinant_bareiss,
+    solve_dense_linear_system_bareiss,
 };
 pub use certification::{
     CandidateCertificationConfig, CandidateCertificationReport, CandidateResidualBall,

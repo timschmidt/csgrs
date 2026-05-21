@@ -11,10 +11,11 @@ use hypersolve::{
     certify_quadratic_interval_candidate, certify_univariate_quadratic_alpha,
     certify_univariate_quadratic_krawczyk_box, context_from_problem,
     count_bernstein_univariate_polynomial_interval_roots,
-    count_descartes_univariate_polynomial_roots, eliminate_affine_rows_with_substitution_classes,
-    isolate_univariate_polynomial_roots, replay_dense_linear_residuals,
-    replay_sparse_linear_residuals, report_lossy_adapter_only_candidate,
-    represent_univariate_algebraic_roots, solve_damped_least_squares, solve_direct_affine_system,
+    count_descartes_univariate_polynomial_roots, determinant_bareiss,
+    eliminate_affine_rows_with_substitution_classes, isolate_univariate_polynomial_roots,
+    replay_dense_linear_residuals, replay_sparse_linear_residuals,
+    report_lossy_adapter_only_candidate, represent_univariate_algebraic_roots,
+    solve_damped_least_squares, solve_dense_linear_system_bareiss, solve_direct_affine_system,
     solve_direct_univariate_quadratic_equalities, squared_distance_equation,
     subdivide_bernstein_univariate_polynomial_interval_roots,
 };
@@ -182,6 +183,18 @@ fn certification(c: &mut Criterion) {
     });
     c.bench_function("solve_direct_affine_system", |b| {
         b.iter(|| solve_direct_affine_system(&krawczyk_prepared))
+    });
+    c.bench_function("determinant_bareiss", |b| {
+        b.iter(|| determinant_bareiss(&[vec![r(2), r(1)], vec![r(1), r(-1)]], -64))
+    });
+    c.bench_function("solve_dense_linear_system_bareiss", |b| {
+        b.iter(|| {
+            solve_dense_linear_system_bareiss(
+                &[vec![r(2), r(1)], vec![r(1), r(-1)]],
+                &[r(5), r(1)],
+                -64,
+            )
+        })
     });
     c.bench_function("replay_dense_linear_residuals", |b| {
         b.iter(|| {
