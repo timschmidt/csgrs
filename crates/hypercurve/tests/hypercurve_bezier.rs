@@ -42,24 +42,26 @@ use hypercurve::{
     BezierBooleanOwnershipFactStatus, BezierBooleanPathSchedulerReport2,
     BezierBooleanPathSchedulerStatus, BezierBooleanQuadraticFragmentReport2,
     BezierBooleanRationalQuadraticFragmentReport2, BezierBooleanRegionAssemblyReport2,
-    BezierBooleanRegionAssemblyStatus, BezierBooleanResultReport2, BezierBooleanResultStatus,
-    BezierBooleanRootCountPrefilterReport2, BezierBooleanRootCountPrefilterStatus,
-    BezierBooleanRootIsolationHandoffReport2, BezierBooleanRootIsolationHandoffStatus,
-    BezierBooleanRootIsolationReplayReport2, BezierBooleanRootIsolationReplayStatus,
-    BezierBooleanSplitInsertionStatus, BezierBooleanSplitPlanAuditStatus,
-    BezierBooleanSplitPlanReport2, BezierBooleanSplitPlanStatus, BezierBooleanTangentTurnPolicy,
-    BezierBooleanTraversalOperand, BezierBooleanTraversalPreconditionReport2,
-    BezierBooleanTraversalPreconditionStatus, BezierBooleanTraversalScheduleReport2,
-    BezierBooleanTraversalScheduleStatus, BezierBooleanUniformOwnershipFactReport2,
-    BezierBooleanUniformOwnershipFactStatus, BezierCurveRelation, BezierCuspClassification,
-    BezierDegree, BezierEndpoint, BezierFitBoundKind, BezierFitErrorMetric,
-    BezierFitReadinessStatus, BezierFitSourceBatchReport2, BezierFitSourcePrefixSums2,
-    BezierFlatteningOptions, BezierGraphContact, BezierInflectionClassification,
-    BezierIntersectionRegionIsolationBudget, BezierIntersectionRegionIsolationStopReason,
-    BezierIntersectionRegionRefinementAction, BezierIntersectionRegionShape, BezierLineContactKind,
-    BezierLineContactRelation, BezierLineFitRelation, BezierLineImageFitRelation,
-    BezierLineRelation, BezierMonotoneGraphContactOrder, BezierMonotoneGraphOrder,
-    BezierMonotoneSpan, BezierOffsetAdapterStatus, BezierOffsetCandidate2, BezierOffsetRisk,
+    BezierBooleanRegionAssemblyStatus, BezierBooleanResolvedOverlapSuccessor2,
+    BezierBooleanResolvedOverlapSuccessorReport2, BezierBooleanResolvedOverlapSuccessorStatus,
+    BezierBooleanResultReport2, BezierBooleanResultStatus, BezierBooleanRootCountPrefilterReport2,
+    BezierBooleanRootCountPrefilterStatus, BezierBooleanRootIsolationHandoffReport2,
+    BezierBooleanRootIsolationHandoffStatus, BezierBooleanRootIsolationReplayReport2,
+    BezierBooleanRootIsolationReplayStatus, BezierBooleanSplitInsertionStatus,
+    BezierBooleanSplitPlanAuditStatus, BezierBooleanSplitPlanReport2, BezierBooleanSplitPlanStatus,
+    BezierBooleanTangentTurnPolicy, BezierBooleanTraversalOperand,
+    BezierBooleanTraversalPreconditionReport2, BezierBooleanTraversalPreconditionStatus,
+    BezierBooleanTraversalScheduleReport2, BezierBooleanTraversalScheduleStatus,
+    BezierBooleanUniformOwnershipFactReport2, BezierBooleanUniformOwnershipFactStatus,
+    BezierCurveRelation, BezierCuspClassification, BezierDegree, BezierEndpoint,
+    BezierFitBoundKind, BezierFitErrorMetric, BezierFitReadinessStatus,
+    BezierFitSourceBatchReport2, BezierFitSourcePrefixSums2, BezierFlatteningOptions,
+    BezierGraphContact, BezierInflectionClassification, BezierIntersectionRegionIsolationBudget,
+    BezierIntersectionRegionIsolationStopReason, BezierIntersectionRegionRefinementAction,
+    BezierIntersectionRegionShape, BezierLineContactKind, BezierLineContactRelation,
+    BezierLineFitRelation, BezierLineImageFitRelation, BezierLineRelation,
+    BezierMonotoneGraphContactOrder, BezierMonotoneGraphOrder, BezierMonotoneSpan,
+    BezierOffsetAdapterStatus, BezierOffsetCandidate2, BezierOffsetRisk,
     BezierPathRangeBatchReport2, BezierPathRangeBatchStatus, BezierPathRangeOrderReport2,
     BezierPathRangeOrderStatus, BezierPointFitRelation, BezierPointImageFitRelation,
     BezierRegionWidthStatus, BezierSimplificationBoundKind, BezierSimplificationErrorMetric,
@@ -7952,6 +7954,205 @@ fn bezier_boolean_tangent_successors_block_collinear_branch_ties() {
     );
     assert!(blocked.has_blockers());
     assert_eq!(blocked.duplicate_source_count, 1);
+}
+
+#[test]
+fn bezier_boolean_resolved_overlap_successors_override_coincident_tangent_ties() {
+    let plan = BezierBooleanLoopAssemblyPlanReport2 {
+        status: BezierBooleanLoopAssemblyPlanStatus::Ready,
+        assembly_status: BezierBooleanAssemblyReadinessStatus::Ready,
+        operation: BooleanOp::Union,
+        emitted_steps: (0..4)
+            .map(
+                |fragment_index| hypercurve::BezierBooleanOwnedTraversalStep2 {
+                    step: hypercurve::BezierBooleanTraversalStep2 {
+                        operand: BezierBooleanTraversalOperand::First,
+                        fragment_index,
+                    },
+                    opposite_location: BezierBooleanFragmentOwnershipLocation::Outside,
+                    action: BooleanFragmentAction::KeepSourceDirection,
+                },
+            )
+            .collect(),
+        first_emitted_count: 4,
+        second_emitted_count: 0,
+        keep_source_count: 4,
+        keep_reversed_count: 0,
+        invalid_reference_count: 0,
+        blocker_count: 0,
+    };
+    let traversal =
+        BezierBooleanLoopGraphTraversalReport2::from_certified_walk_graph_facts(&plan, 0, 1);
+    let tangents = vec![
+        endpoint_tangents(point(0, 0), point(1, 0)),
+        endpoint_tangents(point(1, 0), point(0, 0)),
+        endpoint_tangents(point(0, 0), point(1, 0)),
+        endpoint_tangents(point(1, 0), point(0, 0)),
+    ];
+    let overlaps = BezierBooleanOverlapResolutionReport2::from_overlap_events(
+        &[hypercurve::BezierBooleanOverlapEvent2 {
+            first_range: ParamRange::new(Real::zero(), Real::one()),
+            second_range: ParamRange::new(Real::zero(), Real::one()),
+        }],
+        &policy(),
+    )
+    .unwrap_decided_for_test();
+
+    let tangent_only = BezierBooleanLoopGraphMultiCycleWalkReport2::from_fragment_endpoint_tangents(
+        &traversal,
+        &plan,
+        &tangents,
+        &[],
+        BezierBooleanTangentTurnPolicy::CounterClockwise,
+        &policy(),
+    );
+    assert_eq!(
+        tangent_only.status,
+        BezierBooleanLoopGraphMultiCycleWalkStatus::ExtraSuccessorFacts
+    );
+
+    let bridges = [
+        BezierBooleanResolvedOverlapSuccessor2 {
+            overlap_event_index: 0,
+            from_step_index: 0,
+            to_step_index: 3,
+        },
+        BezierBooleanResolvedOverlapSuccessor2 {
+            overlap_event_index: 0,
+            from_step_index: 3,
+            to_step_index: 0,
+        },
+        BezierBooleanResolvedOverlapSuccessor2 {
+            overlap_event_index: 0,
+            from_step_index: 1,
+            to_step_index: 2,
+        },
+        BezierBooleanResolvedOverlapSuccessor2 {
+            overlap_event_index: 0,
+            from_step_index: 2,
+            to_step_index: 1,
+        },
+    ];
+    let bridge_report =
+        BezierBooleanResolvedOverlapSuccessorReport2::from_fragment_endpoint_tangents(
+            &overlaps,
+            &plan,
+            &tangents,
+            &[],
+            &bridges,
+            BezierBooleanTangentTurnPolicy::CounterClockwise,
+            &policy(),
+        );
+    assert_eq!(
+        bridge_report.status,
+        BezierBooleanResolvedOverlapSuccessorStatus::Ready
+    );
+    assert_eq!(bridge_report.resolved_overlap_count, 1);
+    assert_eq!(bridge_report.supplied_successor_count, 4);
+    assert_eq!(bridge_report.successor_facts.len(), 4);
+
+    let bridged =
+        BezierBooleanLoopGraphMultiCycleWalkReport2::from_fragment_endpoint_tangents_and_resolved_overlap_successors(
+            &traversal,
+            &plan,
+            &overlaps,
+            &tangents,
+            &[],
+            &bridges,
+            BezierBooleanTangentTurnPolicy::CounterClockwise,
+            &policy(),
+        );
+    assert_eq!(
+        bridged.status,
+        BezierBooleanLoopGraphMultiCycleWalkStatus::Ready
+    );
+    assert_eq!(bridged.cycle_start_indices, vec![0, 1]);
+    assert_eq!(bridged.cycle_step_counts, vec![2, 2]);
+    assert_eq!(bridged.walk_indices, vec![0, 3, 1, 2]);
+}
+
+#[test]
+fn bezier_boolean_resolved_overlap_successors_block_stale_and_discontinuous_bridges() {
+    let plan = BezierBooleanLoopAssemblyPlanReport2 {
+        status: BezierBooleanLoopAssemblyPlanStatus::Ready,
+        assembly_status: BezierBooleanAssemblyReadinessStatus::Ready,
+        operation: BooleanOp::Union,
+        emitted_steps: (0..3)
+            .map(
+                |fragment_index| hypercurve::BezierBooleanOwnedTraversalStep2 {
+                    step: hypercurve::BezierBooleanTraversalStep2 {
+                        operand: BezierBooleanTraversalOperand::First,
+                        fragment_index,
+                    },
+                    opposite_location: BezierBooleanFragmentOwnershipLocation::Outside,
+                    action: BooleanFragmentAction::KeepSourceDirection,
+                },
+            )
+            .collect(),
+        first_emitted_count: 3,
+        second_emitted_count: 0,
+        keep_source_count: 3,
+        keep_reversed_count: 0,
+        invalid_reference_count: 0,
+        blocker_count: 0,
+    };
+    let traversal =
+        BezierBooleanLoopGraphTraversalReport2::from_certified_walk_graph_facts(&plan, 0, 1);
+    let tangents = vec![
+        endpoint_tangents(point(0, 0), point(1, 0)),
+        endpoint_tangents(point(2, 0), point(3, 0)),
+        endpoint_tangents(point(1, 0), point(0, 0)),
+    ];
+    let overlaps = BezierBooleanOverlapResolutionReport2::from_overlap_events(
+        &[hypercurve::BezierBooleanOverlapEvent2 {
+            first_range: ParamRange::new(Real::zero(), Real::one()),
+            second_range: ParamRange::new(Real::zero(), Real::one()),
+        }],
+        &policy(),
+    )
+    .unwrap_decided_for_test();
+
+    let discontinuous =
+        BezierBooleanResolvedOverlapSuccessorReport2::from_fragment_endpoint_tangents(
+            &overlaps,
+            &plan,
+            &tangents,
+            &[],
+            &[BezierBooleanResolvedOverlapSuccessor2 {
+                overlap_event_index: 0,
+                from_step_index: 0,
+                to_step_index: 1,
+            }],
+            BezierBooleanTangentTurnPolicy::CounterClockwise,
+            &policy(),
+        );
+    assert_eq!(
+        discontinuous.status,
+        BezierBooleanResolvedOverlapSuccessorStatus::EndpointMismatch
+    );
+    assert!(discontinuous.has_blockers());
+    assert_eq!(discontinuous.endpoint_mismatch_count, 1);
+
+    let bridged =
+        BezierBooleanLoopGraphMultiCycleWalkReport2::from_fragment_endpoint_tangents_and_resolved_overlap_successors(
+            &traversal,
+            &plan,
+            &overlaps,
+            &tangents,
+            &[],
+            &[BezierBooleanResolvedOverlapSuccessor2 {
+                overlap_event_index: 0,
+                from_step_index: 0,
+                to_step_index: 1,
+            }],
+            BezierBooleanTangentTurnPolicy::CounterClockwise,
+            &policy(),
+        );
+    assert_eq!(
+        bridged.status,
+        BezierBooleanLoopGraphMultiCycleWalkStatus::TraversalBlocked
+    );
+    assert!(bridged.has_blockers());
 }
 
 #[test]

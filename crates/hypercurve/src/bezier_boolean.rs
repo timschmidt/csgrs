@@ -862,6 +862,91 @@ pub struct BezierBooleanLoopGraphSuccessorFact2 {
     pub to_step_index: usize,
 }
 
+/// One successor edge certified by resolved finite-overlap traversal policy.
+///
+/// Endpoint and tangent order cannot decide every coincident-boundary case:
+/// two directed overlap fragments may have identical endpoint and tangent
+/// evidence. This bridge names the resolved overlap event whose degenerate
+/// traversal policy authorizes a specific successor edge. The bridge is still
+/// checked against exact directed endpoints before it can override a derived
+/// endpoint/tangent successor. That matches Yap, "Towards Exact Geometric
+/// Computation" (1997): overlap traversal is accepted only as keyed,
+/// replayable combinatorial evidence. The need for a separate degenerate
+/// overlap policy follows Foster-Hormann-Popa (2019), while the successor edge
+/// itself is the boundary-walk primitive used by Vatti (1992),
+/// Greiner-Hormann (1998), and Martinez-Rueda-Feito (2009).
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct BezierBooleanResolvedOverlapSuccessor2 {
+    /// Index into [`BezierBooleanOverlapResolutionReport2::resolved_events`].
+    pub overlap_event_index: usize,
+    /// Emitted-step index whose successor is certified by the overlap policy.
+    pub from_step_index: usize,
+    /// Emitted-step index reached next in the certified boundary walk.
+    pub to_step_index: usize,
+}
+
+/// Validation status for resolved-overlap successor bridges.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum BezierBooleanResolvedOverlapSuccessorStatus {
+    /// No resolved overlaps and no overlap bridges were supplied.
+    Empty,
+    /// Endpoint/tangent successors plus overlap bridges form replayable facts.
+    Ready,
+    /// The overlap-resolution report is blocked or contains invalid ranges.
+    OverlapResolutionBlocked,
+    /// At least one resolved overlap event has no supplied bridge.
+    MissingOverlapSuccessors,
+    /// At least one bridge names a non-existent overlap event.
+    OutOfRangeOverlapEvent,
+    /// At least one bridge names a non-existent emitted step.
+    OutOfRangeStep,
+    /// At least one bridge names a discarded or otherwise unavailable directed step.
+    MissingDirectedStep,
+    /// At least one bridge does not preserve exact directed endpoint continuity.
+    EndpointMismatch,
+    /// At least one emitted step has more than one overlap-certified successor.
+    DuplicateOverlapSuccessorSource,
+}
+
+/// Resolved-overlap successor bridge validation report.
+///
+/// This report composes two exact successor producers:
+/// endpoint/tangent successor derivation for ordinary vertices, and tagged
+/// overlap bridges for coincident finite-overlap transitions. A bridge can
+/// replace the derived successor for its `from_step_index` only after it names
+/// a valid resolved overlap event, names live emitted steps, and proves exact
+/// continuity from the directed `from` endpoint to the directed `to` start.
+/// Ambiguous or stale bridges stay explicit blockers rather than fallback
+/// guesses, following Yap (1997). Foster-Hormann-Popa (2019) motivates keeping
+/// degenerate overlap traversal policy separate from ordinary angular order.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BezierBooleanResolvedOverlapSuccessorReport2 {
+    /// Coarse bridge-validation status.
+    pub status: BezierBooleanResolvedOverlapSuccessorStatus,
+    /// Overlap-resolution status used to authorize bridge replay.
+    pub overlap_status: BezierBooleanOverlapResolutionStatus,
+    /// Number of resolved overlap events that require bridge coverage.
+    pub resolved_overlap_count: usize,
+    /// Number of overlap successor bridges supplied.
+    pub supplied_successor_count: usize,
+    /// Successor facts after endpoint/tangent derivation and bridge overrides.
+    pub successor_facts: Vec<BezierBooleanLoopGraphSuccessorFact2>,
+    /// Number of resolved overlap events with no bridge.
+    pub missing_overlap_event_count: usize,
+    /// Number of bridges with an out-of-range overlap-event key.
+    pub out_of_range_overlap_event_count: usize,
+    /// Number of bridges with an out-of-range emitted-step key.
+    pub out_of_range_step_count: usize,
+    /// Number of bridges naming unavailable directed steps.
+    pub missing_directed_step_count: usize,
+    /// Number of bridges whose directed endpoints do not meet exactly.
+    pub endpoint_mismatch_count: usize,
+    /// Number of duplicate overlap bridge sources.
+    pub duplicate_source_count: usize,
+    /// Number of blocking preconditions retained by this report.
+    pub blocker_count: usize,
+}
+
 /// Validation status for keyed Bezier/conic loop-graph facts.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum BezierBooleanLoopGraphFactStatus {
@@ -5886,6 +5971,217 @@ impl BezierBooleanLoopGraphTraversalReport2 {
     }
 }
 
+impl BezierBooleanResolvedOverlapSuccessorReport2 {
+    /// Validates overlap bridges and composes them with tangent successors.
+    ///
+    /// The base successor relation is produced exactly as in
+    /// [`BezierBooleanLoopGraphMultiCycleWalkReport2::from_fragment_endpoint_tangents`].
+    /// Each validated overlap bridge then replaces the derived successor for
+    /// its source step. Replacement is intentional: coincident overlap
+    /// fragments often have identical endpoint and tangent evidence, so angular
+    /// order cannot distinguish the degenerate transition. The bridge is
+    /// accepted only if it names a resolved overlap event and preserves exact
+    /// endpoint continuity. Yap (1997) is the exactness contract; Foster,
+    /// Hormann, and Popa (2019) motivate the separate degenerate-overlap
+    /// traversal certificate.
+    pub fn from_fragment_endpoint_tangents(
+        overlaps: &BezierBooleanOverlapResolutionReport2,
+        plan: &BezierBooleanLoopAssemblyPlanReport2,
+        first_tangents: &[BezierBooleanFragmentEndpointTangents2],
+        second_tangents: &[BezierBooleanFragmentEndpointTangents2],
+        overlap_successors: &[BezierBooleanResolvedOverlapSuccessor2],
+        turn_policy: BezierBooleanTangentTurnPolicy,
+        policy: &CurvePolicy,
+    ) -> Self {
+        let directed = directed_emitted_step_tangents(plan, first_tangents, second_tangents);
+        let base_successors = tangent_successor_facts(&directed, turn_policy, policy);
+
+        if matches!(
+            overlaps.status,
+            BezierBooleanOverlapResolutionStatus::Blocked
+                | BezierBooleanOverlapResolutionStatus::InvalidParameterDomain
+        ) {
+            return Self::empty_like(
+                BezierBooleanResolvedOverlapSuccessorStatus::OverlapResolutionBlocked,
+                overlaps,
+                overlap_successors.len(),
+                base_successors,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                overlaps
+                    .blocker_count
+                    .max(overlaps.invalid_range_count)
+                    .max(1),
+            );
+        }
+
+        let resolved_overlap_count = overlaps.resolved_events.len();
+        if resolved_overlap_count == 0 && overlap_successors.is_empty() {
+            return Self {
+                status: BezierBooleanResolvedOverlapSuccessorStatus::Empty,
+                overlap_status: overlaps.status,
+                resolved_overlap_count,
+                supplied_successor_count: 0,
+                successor_facts: base_successors,
+                missing_overlap_event_count: 0,
+                out_of_range_overlap_event_count: 0,
+                out_of_range_step_count: 0,
+                missing_directed_step_count: 0,
+                endpoint_mismatch_count: 0,
+                duplicate_source_count: 0,
+                blocker_count: 0,
+            };
+        }
+
+        let mut covered_events = vec![false; resolved_overlap_count];
+        let mut bridge_sources = HashSet::new();
+        let mut bridge_facts = Vec::with_capacity(overlap_successors.len());
+        let mut out_of_range_overlap_event_count = 0;
+        let mut out_of_range_step_count = 0;
+        let mut missing_directed_step_count = 0;
+        let mut endpoint_mismatch_count = 0;
+        let mut duplicate_source_count = 0;
+
+        for bridge in overlap_successors {
+            if bridge.overlap_event_index >= resolved_overlap_count {
+                out_of_range_overlap_event_count += 1;
+                continue;
+            }
+            covered_events[bridge.overlap_event_index] = true;
+
+            if bridge.from_step_index >= directed.len() || bridge.to_step_index >= directed.len() {
+                out_of_range_step_count += 1;
+                continue;
+            }
+            let (Some(from), Some(to)) = (
+                directed[bridge.from_step_index].as_ref(),
+                directed[bridge.to_step_index].as_ref(),
+            ) else {
+                missing_directed_step_count += 1;
+                continue;
+            };
+            if from.end != to.start {
+                endpoint_mismatch_count += 1;
+                continue;
+            }
+            if !bridge_sources.insert(bridge.from_step_index) {
+                duplicate_source_count += 1;
+                continue;
+            }
+            bridge_facts.push(BezierBooleanLoopGraphSuccessorFact2 {
+                from_step_index: bridge.from_step_index,
+                to_step_index: bridge.to_step_index,
+            });
+        }
+
+        let missing_overlap_event_count =
+            covered_events.iter().filter(|covered| !**covered).count();
+        let blocker_count = missing_overlap_event_count
+            + out_of_range_overlap_event_count
+            + out_of_range_step_count
+            + missing_directed_step_count
+            + endpoint_mismatch_count
+            + duplicate_source_count;
+        if blocker_count > 0 {
+            let status = if missing_overlap_event_count > 0 {
+                BezierBooleanResolvedOverlapSuccessorStatus::MissingOverlapSuccessors
+            } else if out_of_range_overlap_event_count > 0 {
+                BezierBooleanResolvedOverlapSuccessorStatus::OutOfRangeOverlapEvent
+            } else if out_of_range_step_count > 0 {
+                BezierBooleanResolvedOverlapSuccessorStatus::OutOfRangeStep
+            } else if missing_directed_step_count > 0 {
+                BezierBooleanResolvedOverlapSuccessorStatus::MissingDirectedStep
+            } else if endpoint_mismatch_count > 0 {
+                BezierBooleanResolvedOverlapSuccessorStatus::EndpointMismatch
+            } else {
+                BezierBooleanResolvedOverlapSuccessorStatus::DuplicateOverlapSuccessorSource
+            };
+            return Self::empty_like(
+                status,
+                overlaps,
+                overlap_successors.len(),
+                base_successors,
+                missing_overlap_event_count,
+                out_of_range_overlap_event_count,
+                out_of_range_step_count,
+                missing_directed_step_count,
+                endpoint_mismatch_count,
+                duplicate_source_count,
+                blocker_count,
+            );
+        }
+
+        let mut successor_facts = base_successors
+            .into_iter()
+            .filter(|fact| !bridge_sources.contains(&fact.from_step_index))
+            .collect::<Vec<_>>();
+        successor_facts.extend(bridge_facts);
+        successor_facts.sort_by_key(|fact| (fact.from_step_index, fact.to_step_index));
+
+        Self {
+            status: BezierBooleanResolvedOverlapSuccessorStatus::Ready,
+            overlap_status: overlaps.status,
+            resolved_overlap_count,
+            supplied_successor_count: overlap_successors.len(),
+            successor_facts,
+            missing_overlap_event_count: 0,
+            out_of_range_overlap_event_count: 0,
+            out_of_range_step_count: 0,
+            missing_directed_step_count: 0,
+            endpoint_mismatch_count: 0,
+            duplicate_source_count: 0,
+            blocker_count: 0,
+        }
+    }
+
+    fn empty_like(
+        status: BezierBooleanResolvedOverlapSuccessorStatus,
+        overlaps: &BezierBooleanOverlapResolutionReport2,
+        supplied_successor_count: usize,
+        successor_facts: Vec<BezierBooleanLoopGraphSuccessorFact2>,
+        missing_overlap_event_count: usize,
+        out_of_range_overlap_event_count: usize,
+        out_of_range_step_count: usize,
+        missing_directed_step_count: usize,
+        endpoint_mismatch_count: usize,
+        duplicate_source_count: usize,
+        blocker_count: usize,
+    ) -> Self {
+        Self {
+            status,
+            overlap_status: overlaps.status,
+            resolved_overlap_count: overlaps.resolved_events.len(),
+            supplied_successor_count,
+            successor_facts,
+            missing_overlap_event_count,
+            out_of_range_overlap_event_count,
+            out_of_range_step_count,
+            missing_directed_step_count,
+            endpoint_mismatch_count,
+            duplicate_source_count,
+            blocker_count,
+        }
+    }
+
+    /// Returns true when overlap bridges have been validated.
+    pub fn is_ready(&self) -> bool {
+        matches!(
+            self.status,
+            BezierBooleanResolvedOverlapSuccessorStatus::Ready
+                | BezierBooleanResolvedOverlapSuccessorStatus::Empty
+        )
+    }
+
+    /// Returns true when overlap bridge evidence is missing, stale, or discontinuous.
+    pub fn has_blockers(&self) -> bool {
+        !self.is_ready()
+    }
+}
+
 impl BezierBooleanLoopGraphWalkReport2 {
     /// Builds the certified identity walk for a ready linear traversal.
     ///
@@ -6204,6 +6500,57 @@ impl BezierBooleanLoopGraphSuccessorWalkReport2 {
         let directed = directed_emitted_step_tangents(plan, first_tangents, second_tangents);
         let successors = tangent_successor_facts(&directed, turn_policy, policy);
         Self::from_successor_facts(traversal, plan, &successors)
+    }
+
+    /// Derives one closed graph walk from tangents plus resolved-overlap bridges.
+    ///
+    /// Ordinary vertices are resolved with exact endpoint/tangent order.
+    /// Coincident finite-overlap transitions may override those derived
+    /// successors only through [`BezierBooleanResolvedOverlapSuccessor2`]
+    /// bridges validated by
+    /// [`BezierBooleanResolvedOverlapSuccessorReport2::from_fragment_endpoint_tangents`].
+    /// This is the overlap counterpart to angular branch traversal: Foster,
+    /// Hormann, and Popa (2019) motivate a separate degenerate-overlap policy,
+    /// while Yap (1997) requires that policy to enter as exact, replayable
+    /// graph evidence rather than tolerance-level tie breaking.
+    pub fn from_fragment_endpoint_tangents_and_resolved_overlap_successors(
+        traversal: &BezierBooleanLoopGraphTraversalReport2,
+        plan: &BezierBooleanLoopAssemblyPlanReport2,
+        overlaps: &BezierBooleanOverlapResolutionReport2,
+        first_tangents: &[BezierBooleanFragmentEndpointTangents2],
+        second_tangents: &[BezierBooleanFragmentEndpointTangents2],
+        overlap_successors: &[BezierBooleanResolvedOverlapSuccessor2],
+        turn_policy: BezierBooleanTangentTurnPolicy,
+        policy: &CurvePolicy,
+    ) -> Self {
+        let report = BezierBooleanResolvedOverlapSuccessorReport2::from_fragment_endpoint_tangents(
+            overlaps,
+            plan,
+            first_tangents,
+            second_tangents,
+            overlap_successors,
+            turn_policy,
+            policy,
+        );
+        if report.status == BezierBooleanResolvedOverlapSuccessorStatus::Ready
+            || report.status == BezierBooleanResolvedOverlapSuccessorStatus::Empty
+        {
+            Self::from_successor_facts(traversal, plan, &report.successor_facts)
+        } else {
+            Self::empty_like(
+                BezierBooleanLoopGraphSuccessorWalkStatus::TraversalBlocked,
+                traversal,
+                plan,
+                report.successor_facts.len(),
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                report.blocker_count.max(1),
+            )
+        }
     }
 
     /// Derives one closed graph walk from quadratic Bezier fragment endpoints.
@@ -6641,6 +6988,55 @@ impl BezierBooleanLoopGraphMultiCycleWalkReport2 {
         let directed = directed_emitted_step_tangents(plan, first_tangents, second_tangents);
         let successors = tangent_successor_facts(&directed, turn_policy, policy);
         Self::from_successor_facts(traversal, plan, &successors)
+    }
+
+    /// Derives closed graph-walk cycles from tangents plus overlap bridges.
+    ///
+    /// The method composes exact angular successor derivation with explicit
+    /// resolved-overlap bridge evidence. Stale bridge keys, missing event
+    /// coverage, missing directed fragments, duplicate bridge sources, and
+    /// endpoint discontinuities block before the multi-cycle certificate is
+    /// asked to validate one-successor/one-predecessor topology. This keeps the
+    /// degenerate-overlap policy boundary described by Foster-Hormann-Popa
+    /// (2019) compatible with Yap's (1997) exact replay model.
+    pub fn from_fragment_endpoint_tangents_and_resolved_overlap_successors(
+        traversal: &BezierBooleanLoopGraphTraversalReport2,
+        plan: &BezierBooleanLoopAssemblyPlanReport2,
+        overlaps: &BezierBooleanOverlapResolutionReport2,
+        first_tangents: &[BezierBooleanFragmentEndpointTangents2],
+        second_tangents: &[BezierBooleanFragmentEndpointTangents2],
+        overlap_successors: &[BezierBooleanResolvedOverlapSuccessor2],
+        turn_policy: BezierBooleanTangentTurnPolicy,
+        policy: &CurvePolicy,
+    ) -> Self {
+        let report = BezierBooleanResolvedOverlapSuccessorReport2::from_fragment_endpoint_tangents(
+            overlaps,
+            plan,
+            first_tangents,
+            second_tangents,
+            overlap_successors,
+            turn_policy,
+            policy,
+        );
+        if report.status == BezierBooleanResolvedOverlapSuccessorStatus::Ready
+            || report.status == BezierBooleanResolvedOverlapSuccessorStatus::Empty
+        {
+            Self::from_successor_facts(traversal, plan, &report.successor_facts)
+        } else {
+            Self::empty_like(
+                BezierBooleanLoopGraphMultiCycleWalkStatus::TraversalBlocked,
+                traversal,
+                plan,
+                report.successor_facts.len(),
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                report.blocker_count.max(1),
+            )
+        }
     }
 
     /// Derives closed graph-walk cycles from quadratic Bezier fragment endpoints.
