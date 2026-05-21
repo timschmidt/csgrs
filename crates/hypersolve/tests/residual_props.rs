@@ -3,16 +3,15 @@ use hypersolve::{
     CertifiedCandidateStatus, Constraint, DomainCheckKind, DomainCheckStatus, EqualitySubstitution,
     EqualitySubstitutionProblem, Expr, MultivariateQuadraticKrawczykStatus, PreparedProblem,
     PreparedSolverBlock, Problem, ProposalEngineKind, ProposalEnginePrecision,
-    ProposalEngineReport, RectangularRegion, RootIsolationStatus, SolverBlockRowKind, SolverConfig,
-    SolverPoint2, SolverState, SymbolId, VariableBall, apply_equality_substitution_classes,
-    center_clearance_squared_constraint, certify_affine_krawczyk_box, certify_candidate,
-    certify_candidate_domains, certify_direct_univariate_quadratic_roots,
-    certify_multivariate_quadratic_interval_candidate, certify_multivariate_quadratic_krawczyk_box,
-    certify_quadratic_interval_candidate, certify_univariate_quadratic_alpha,
-    certify_univariate_quadratic_krawczyk_box, context_from_problem,
-    differential_pair_skew_equation, eliminate_affine_rows_with_substitution_classes,
-    isolate_univariate_polynomial_roots, rectangular_difference_area_equation,
-    report_lossy_adapter_only_candidate, solve_damped_least_squares, solve_direct_affine_system,
+    ProposalEngineReport, RootIsolationStatus, SolverBlockRowKind, SolverConfig, SolverPoint2,
+    SolverState, SymbolId, VariableBall, apply_equality_substitution_classes,
+    certify_affine_krawczyk_box, certify_candidate, certify_candidate_domains,
+    certify_direct_univariate_quadratic_roots, certify_multivariate_quadratic_interval_candidate,
+    certify_multivariate_quadratic_krawczyk_box, certify_quadratic_interval_candidate,
+    certify_univariate_quadratic_alpha, certify_univariate_quadratic_krawczyk_box,
+    context_from_problem, eliminate_affine_rows_with_substitution_classes,
+    isolate_univariate_polynomial_roots, report_lossy_adapter_only_candidate,
+    solve_damped_least_squares, solve_direct_affine_system,
     solve_direct_univariate_quadratic_equalities, squared_distance_equation,
     validate_equality_substitutions,
 };
@@ -24,14 +23,6 @@ fn expected_sign(value: i64) -> RealSign {
         std::cmp::Ordering::Equal => RealSign::Zero,
         std::cmp::Ordering::Greater => RealSign::Positive,
     }
-}
-
-fn point(x: i64, y: i64) -> hyperlimit::Point2 {
-    hyperlimit::Point2::new(Real::from(x), Real::from(y))
-}
-
-fn rect(min_x: i64, min_y: i64, max_x: i64, max_y: i64) -> RectangularRegion {
-    RectangularRegion::new(point(min_x, min_y), point(max_x, max_y))
 }
 
 proptest! {
@@ -1192,84 +1183,4 @@ proptest! {
         );
     }
 
-    #[test]
-    fn pcb_domain_generated_clearance_threshold_matches_squared_distance(
-        ax in -16_i16..=16,
-        ay in -16_i16..=16,
-        bx in -16_i16..=16,
-        by in -16_i16..=16,
-        required in 0_i16..=8,
-    ) {
-        let mut problem = Problem::default();
-        let ax_id = problem.add_variable("ax", Real::from(i64::from(ax)));
-        let ay_id = problem.add_variable("ay", Real::from(i64::from(ay)));
-        let bx_id = problem.add_variable("bx", Real::from(i64::from(bx)));
-        let by_id = problem.add_variable("by", Real::from(i64::from(by)));
-        problem.add_constraint(center_clearance_squared_constraint(
-            "generated center clearance",
-            SolverPoint2::new(ax_id, ay_id),
-            SolverPoint2::new(bx_id, by_id),
-            Real::from(i64::from(required)),
-        ));
-        let dx = i64::from(ax) - i64::from(bx);
-        let dy = i64::from(ay) - i64::from(by);
-        let expected_satisfied = dx * dx + dy * dy >= i64::from(required) * i64::from(required);
-        let report = certify_candidate(&PreparedProblem::new(&problem), &context_from_problem(&problem));
-
-        prop_assert_eq!(report.all_satisfied(), expected_satisfied);
-        prop_assert_eq!(report.has_certified_violation(), !expected_satisfied);
-    }
-
-    #[test]
-    fn pcb_domain_generated_differential_pair_skew_matches_lengths(
-        first in 0_i16..=512,
-        second in 0_i16..=512,
-        target in -64_i16..=64,
-    ) {
-        let mut problem = Problem::default();
-        let first_id = problem.add_variable("first_length", Real::from(i64::from(first)));
-        let second_id = problem.add_variable("second_length", Real::from(i64::from(second)));
-        problem.add_constraint(differential_pair_skew_equation(
-            "generated differential pair skew",
-            Expr::symbol(SymbolId(first_id.0), "first_length"),
-            Expr::symbol(SymbolId(second_id.0), "second_length"),
-            Real::from(i64::from(target)),
-        ));
-        let report = certify_candidate(&PreparedProblem::new(&problem), &context_from_problem(&problem));
-        let expected_satisfied = i64::from(first) - i64::from(second) == i64::from(target);
-
-        prop_assert_eq!(report.all_satisfied(), expected_satisfied);
-        prop_assert_eq!(report.has_certified_violation(), !expected_satisfied);
-    }
-
-    #[test]
-    fn toolpath_domain_generated_rectangular_difference_area_certifies_exactly(
-        width in 1_i16..=32,
-        height in 1_i16..=32,
-        cut_width in 1_i16..=32,
-        cut_height in 1_i16..=32,
-    ) {
-        let width = i64::from(width);
-        let height = i64::from(height);
-        let cut_width = cut_width.min(width as i16) as i64;
-        let cut_height = cut_height.min(height as i16) as i64;
-        let subject = rect(0, 0, width, height);
-        let removed = rect(0, 0, cut_width, cut_height);
-        let remainder = vec![
-            rect(cut_width, 0, width, height),
-            rect(0, cut_height, cut_width, height),
-        ];
-        let mut problem = Problem::default();
-        problem.add_constraint(rectangular_difference_area_equation(
-            "generated rectangular difference area",
-            subject,
-            Some(removed),
-            remainder,
-        ));
-
-        prop_assert!(
-            certify_candidate(&PreparedProblem::new(&problem), &context_from_problem(&problem))
-                .all_satisfied()
-        );
-    }
 }

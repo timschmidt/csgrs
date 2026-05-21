@@ -2,18 +2,16 @@ use criterion::{Criterion, criterion_group, criterion_main};
 use hyperreal::{Rational, Real};
 use hypersolve::{
     Constraint, EqualitySubstitution, Expr, PreparedProblem, PreparedSolverBlock, Problem,
-    ProposalEngineKind, ProposalEnginePrecision, ProposalEngineReport, RectangularRegion,
-    SolverConfig, SolverPoint2, SolverState, SymbolId, VariableBall,
-    apply_equality_substitution_classes, bezier_offset_sample_constraints,
-    build_equality_substitution_classes, center_clearance_squared_constraint,
-    certify_affine_krawczyk_box, certify_candidate, certify_candidate_domains,
-    certify_direct_univariate_quadratic_roots, certify_multivariate_quadratic_interval_candidate,
-    certify_multivariate_quadratic_krawczyk_box, certify_quadratic_interval_candidate,
-    certify_univariate_quadratic_alpha, certify_univariate_quadratic_krawczyk_box,
-    context_from_problem, count_bernstein_univariate_polynomial_interval_roots,
-    count_descartes_univariate_polynomial_roots, differential_pair_skew_equation,
-    eliminate_affine_rows_with_substitution_classes, isolate_univariate_polynomial_roots,
-    rectangular_difference_area_equation, replay_dense_linear_residuals,
+    ProposalEngineKind, ProposalEnginePrecision, ProposalEngineReport, SolverConfig, SolverPoint2,
+    SolverState, SymbolId, VariableBall, apply_equality_substitution_classes,
+    build_equality_substitution_classes, certify_affine_krawczyk_box, certify_candidate,
+    certify_candidate_domains, certify_direct_univariate_quadratic_roots,
+    certify_multivariate_quadratic_interval_candidate, certify_multivariate_quadratic_krawczyk_box,
+    certify_quadratic_interval_candidate, certify_univariate_quadratic_alpha,
+    certify_univariate_quadratic_krawczyk_box, context_from_problem,
+    count_bernstein_univariate_polynomial_interval_roots,
+    count_descartes_univariate_polynomial_roots, eliminate_affine_rows_with_substitution_classes,
+    isolate_univariate_polynomial_roots, replay_dense_linear_residuals,
     report_lossy_adapter_only_candidate, represent_univariate_algebraic_roots,
     solve_damped_least_squares, solve_direct_affine_system,
     solve_direct_univariate_quadratic_equalities, squared_distance_equation,
@@ -22,13 +20,6 @@ use hypersolve::{
 
 fn r(value: i64) -> Real {
     Real::new(Rational::new(value))
-}
-
-fn rect(min_x: i64, min_y: i64, max_x: i64, max_y: i64) -> RectangularRegion {
-    RectangularRegion::new(
-        hyperlimit::Point2::new(r(min_x), r(min_y)),
-        hyperlimit::Point2::new(r(max_x), r(max_y)),
-    )
 }
 
 fn affine_problem(row_count: usize) -> Problem {
@@ -459,76 +450,6 @@ fn certification(c: &mut Criterion) {
             problem
         })
     });
-    c.bench_function("domain_pcb_clearance_certification", |b| {
-        let mut problem = Problem::default();
-        let ax = problem.add_variable("ax", r(0));
-        let ay = problem.add_variable("ay", r(0));
-        let bx = problem.add_variable("bx", r(6));
-        let by = problem.add_variable("by", r(8));
-        problem.add_constraint(center_clearance_squared_constraint(
-            "center clearance",
-            SolverPoint2::new(ax, ay),
-            SolverPoint2::new(bx, by),
-            r(10),
-        ));
-        let prepared = PreparedProblem::new(&problem);
-        let context = context_from_problem(&problem);
-        b.iter(|| certify_candidate(&prepared, &context))
-    });
-    c.bench_function("domain_toolpath_bezier_offset_sample_certification", |b| {
-        let mut problem = Problem::default();
-        let x = problem.add_variable("offset_x", r(5));
-        let y = problem.add_variable("offset_y", r(3));
-        for constraint in bezier_offset_sample_constraints(
-            "bezier offset",
-            SolverPoint2::new(x, y),
-            hyperlimit::Point2::new(r(5), r(0)),
-            hyperlimit::Point2::new(r(10), r(0)),
-            hyperlimit::Point2::new(r(0), r(10)),
-            r(9),
-        )
-        .constraints
-        {
-            problem.add_constraint(constraint);
-        }
-        let prepared = PreparedProblem::new(&problem);
-        let context = context_from_problem(&problem);
-        b.iter(|| certify_candidate(&prepared, &context))
-    });
-    c.bench_function("domain_pcb_differential_pair_skew_certification", |b| {
-        let mut problem = Problem::default();
-        let first = problem.add_variable("first_length", r(1050));
-        let second = problem.add_variable("second_length", r(1000));
-        problem.add_constraint(differential_pair_skew_equation(
-            "differential pair skew",
-            Expr::symbol(SymbolId(first.0), "first_length"),
-            Expr::symbol(SymbolId(second.0), "second_length"),
-            r(50),
-        ));
-        let prepared = PreparedProblem::new(&problem);
-        let context = context_from_problem(&problem);
-        b.iter(|| certify_candidate(&prepared, &context))
-    });
-    c.bench_function(
-        "domain_toolpath_rectangular_difference_certification",
-        |b| {
-            let mut problem = Problem::default();
-            problem.add_constraint(rectangular_difference_area_equation(
-                "rectangular difference area",
-                rect(0, 0, 10, 10),
-                Some(rect(3, 4, 7, 8)),
-                vec![
-                    rect(0, 0, 3, 10),
-                    rect(7, 0, 10, 10),
-                    rect(3, 0, 7, 4),
-                    rect(3, 8, 7, 10),
-                ],
-            ));
-            let prepared = PreparedProblem::new(&problem);
-            let context = context_from_problem(&problem);
-            b.iter(|| certify_candidate(&prepared, &context))
-        },
-    );
 }
 
 criterion_group!(benches, certification);

@@ -4,24 +4,19 @@ use hypersolve::{
     CandidateCertificationConfig, CandidateResidualBall, CertifiedCandidateStatus, Constraint,
     ConstraintKind, ConvergenceReason, DenseLinearBackend, DirectAffineSystemStatus,
     DomainCheckKind, DomainCheckStatus, Expr, ExprDegree, LinearAdapterKind,
-    LinearAdapterPrecision, LinearBackend, MultivariateQuadraticKrawczykStatus, PcbConstraintSet,
-    PreparedProblem, PreparedSolverBlock, Problem, ProposalEngineKind, ProposalEnginePrecision,
-    RectangularRegion, RootIsolationStatus, RootMultiplicityStatus, SolverBlockRowKind,
-    SolverConfig, SolverPoint2, SolverState, SymbolId, ToolpathConstraintSet, VariableBall,
-    apply_equality_substitution_classes, apply_equality_substitutions,
-    bezier_offset_sample_constraints, build_equality_substitution_classes,
-    center_clearance_squared_constraint, certify_affine_interval_candidate,
+    LinearAdapterPrecision, LinearBackend, MultivariateQuadraticKrawczykStatus, PreparedProblem,
+    PreparedSolverBlock, Problem, ProposalEngineKind, ProposalEnginePrecision, RootIsolationStatus,
+    RootMultiplicityStatus, SolverBlockRowKind, SolverConfig, SolverPoint2, SolverState, SymbolId,
+    VariableBall, apply_equality_substitution_classes, apply_equality_substitutions,
+    build_equality_substitution_classes, certify_affine_interval_candidate,
     certify_affine_krawczyk_box, certify_candidate, certify_candidate_domains,
     certify_candidate_with_config, certify_candidate_with_residual_balls,
     certify_direct_univariate_quadratic_roots, certify_multivariate_quadratic_interval_candidate,
     certify_multivariate_quadratic_krawczyk_box, certify_quadratic_interval_candidate,
     certify_univariate_quadratic_alpha, certify_univariate_quadratic_krawczyk_box,
-    constant_feed_time_equation, context_from_problem, differential_pair_skew_equation,
-    eliminate_affine_rows_with_substitution_classes, evaluate_residuals, facts_depend_on_symbol,
-    find_equality_substitutions, isolate_univariate_polynomial_roots, length_match_equation,
-    point_coincidence_equations, rectangular_difference_area_equation,
-    rectangular_region_area_equation, rectangular_region_containment_constraints,
-    report_lossy_adapter_only_candidate, solve_damped_least_squares,
+    context_from_problem, eliminate_affine_rows_with_substitution_classes, evaluate_residuals,
+    facts_depend_on_symbol, find_equality_substitutions, isolate_univariate_polynomial_roots,
+    point_coincidence_equations, report_lossy_adapter_only_candidate, solve_damped_least_squares,
     solve_direct_affine_equalities, solve_direct_affine_system,
     solve_direct_univariate_quadratic_equalities, squared_distance_equation,
     tangent_parallel_equation, tangent_same_direction_constraint, validate_equality_substitutions,
@@ -33,14 +28,6 @@ fn real(value: i64) -> Real {
 
 fn edge_real(value: f64) -> Real {
     Real::try_from(value).unwrap()
-}
-
-fn point(x: i64, y: i64) -> hyperlimit::Point2 {
-    hyperlimit::Point2::new(real(x), real(y))
-}
-
-fn rect(min_x: i64, min_y: i64, max_x: i64, max_y: i64) -> RectangularRegion {
-    RectangularRegion::new(point(min_x, min_y), point(max_x, max_y))
 }
 
 #[test]
@@ -456,243 +443,6 @@ fn geometry_domain_keeps_point_coincidence_affine_rows_split() {
     assert_eq!(prepared.affine_residuals().len(), 2);
     assert!(prepared.affine_residuals().iter().all(Option::is_some));
     assert!(certify_candidate(&prepared, &context_from_problem(&problem)).all_satisfied());
-}
-
-#[test]
-fn toolpath_domain_builds_length_and_feed_residuals() {
-    let mut problem = Problem::default();
-    let extra = problem.add_variable("extra", real(25));
-    let time = problem.add_variable("time", real(5));
-    let mut constraints = ToolpathConstraintSet::default();
-    assert!(constraints.is_empty());
-    constraints.push(length_match_equation(
-        "length match",
-        real(100),
-        extra,
-        real(125),
-    ));
-    constraints.push(constant_feed_time_equation(
-        "constant feed",
-        real(50),
-        real(10),
-        time,
-    ));
-    for constraint in constraints.constraints {
-        problem.add_constraint(constraint);
-    }
-
-    let prepared = PreparedProblem::new(&problem);
-    assert_eq!(prepared.facts().affine_active_rows, 2);
-    assert!(certify_candidate(&prepared, &context_from_problem(&problem)).all_satisfied());
-}
-
-#[test]
-fn toolpath_domain_replays_bezier_offset_sample_constraints_exactly() {
-    let mut problem = Problem::default();
-    let x = problem.add_variable("offset_x", real(5));
-    let y = problem.add_variable("offset_y", real(3));
-    let constraints = bezier_offset_sample_constraints(
-        "quadratic offset",
-        SolverPoint2::new(x, y),
-        hyperlimit::Point2::new(real(5), real(0)),
-        hyperlimit::Point2::new(real(10), real(0)),
-        hyperlimit::Point2::new(real(0), real(10)),
-        real(9),
-    );
-    assert_eq!(constraints.constraints.len(), 3);
-    for constraint in constraints.constraints {
-        problem.add_constraint(constraint);
-    }
-
-    let prepared = PreparedProblem::new(&problem);
-    assert_eq!(prepared.facts().polynomial_active_rows, 3);
-    assert!(certify_candidate(&prepared, &context_from_problem(&problem)).all_satisfied());
-
-    let mut wrong_side = Problem::default();
-    let wx = wrong_side.add_variable("offset_x", real(5));
-    let wy = wrong_side.add_variable("offset_y", real(-3));
-    for constraint in bezier_offset_sample_constraints(
-        "wrong side offset",
-        SolverPoint2::new(wx, wy),
-        hyperlimit::Point2::new(real(5), real(0)),
-        hyperlimit::Point2::new(real(10), real(0)),
-        hyperlimit::Point2::new(real(0), real(10)),
-        real(9),
-    )
-    .constraints
-    {
-        wrong_side.add_constraint(constraint);
-    }
-    assert!(
-        certify_candidate(
-            &PreparedProblem::new(&wrong_side),
-            &context_from_problem(&wrong_side)
-        )
-        .has_certified_violation()
-    );
-}
-
-#[test]
-fn toolpath_domain_replays_rectangular_region_area_and_containment_exactly() {
-    let region = rect(0, 0, 10, 6);
-    let mut problem = Problem::default();
-    problem.add_constraint(rectangular_region_area_equation(
-        "rectangular support area",
-        region.clone(),
-        real(60),
-    ));
-    for constraint in rectangular_region_containment_constraints(
-        "support inside base",
-        region,
-        rect(-1, -1, 12, 8),
-    )
-    .constraints
-    {
-        problem.add_constraint(constraint);
-    }
-
-    let prepared = PreparedProblem::new(&problem);
-    assert_eq!(prepared.facts().active_constraint_count, 5);
-    assert_eq!(prepared.facts().prepared_affine_active_rows, 5);
-    assert!(certify_candidate(&prepared, &context_from_problem(&problem)).all_satisfied());
-
-    let mut outside = Problem::default();
-    for constraint in rectangular_region_containment_constraints(
-        "support outside base",
-        rect(0, 0, 10, 6),
-        rect(1, 1, 12, 8),
-    )
-    .constraints
-    {
-        outside.add_constraint(constraint);
-    }
-    assert!(
-        certify_candidate(
-            &PreparedProblem::new(&outside),
-            &context_from_problem(&outside)
-        )
-        .has_certified_violation()
-    );
-}
-
-#[test]
-fn toolpath_domain_replays_rectangular_difference_area_conservation() {
-    let mut problem = Problem::default();
-    problem.add_constraint(rectangular_difference_area_equation(
-        "rectangular subtraction area",
-        rect(0, 0, 10, 10),
-        Some(rect(3, 4, 7, 8)),
-        vec![
-            rect(0, 0, 3, 10),
-            rect(7, 0, 10, 10),
-            rect(3, 0, 7, 4),
-            rect(3, 8, 7, 10),
-        ],
-    ));
-
-    assert!(
-        certify_candidate(
-            &PreparedProblem::new(&problem),
-            &context_from_problem(&problem)
-        )
-        .all_satisfied()
-    );
-
-    let mut wrong = Problem::default();
-    wrong.add_constraint(rectangular_difference_area_equation(
-        "missing one remainder strip",
-        rect(0, 0, 10, 10),
-        Some(rect(3, 4, 7, 8)),
-        vec![rect(0, 0, 3, 10)],
-    ));
-    assert!(
-        certify_candidate(&PreparedProblem::new(&wrong), &context_from_problem(&wrong))
-            .has_certified_violation()
-    );
-}
-
-#[test]
-fn pcb_domain_builds_squared_clearance_inequality() {
-    let mut clear = Problem::default();
-    let ax = clear.add_variable("ax", real(0));
-    let ay = clear.add_variable("ay", real(0));
-    let bx = clear.add_variable("bx", real(6));
-    let by = clear.add_variable("by", real(8));
-    let mut constraints = PcbConstraintSet::default();
-    assert!(constraints.is_empty());
-    constraints.push(center_clearance_squared_constraint(
-        "center clearance",
-        SolverPoint2::new(ax, ay),
-        SolverPoint2::new(bx, by),
-        real(10),
-    ));
-    for constraint in constraints.constraints {
-        clear.add_constraint(constraint);
-    }
-    assert!(
-        certify_candidate(&PreparedProblem::new(&clear), &context_from_problem(&clear))
-            .all_satisfied()
-    );
-
-    let mut blocked = Problem::default();
-    let ax = blocked.add_variable("ax", real(0));
-    let ay = blocked.add_variable("ay", real(0));
-    let bx = blocked.add_variable("bx", real(6));
-    let by = blocked.add_variable("by", real(8));
-    blocked.add_constraint(center_clearance_squared_constraint(
-        "center clearance violation",
-        SolverPoint2::new(ax, ay),
-        SolverPoint2::new(bx, by),
-        real(11),
-    ));
-    assert!(
-        certify_candidate(
-            &PreparedProblem::new(&blocked),
-            &context_from_problem(&blocked)
-        )
-        .has_certified_violation()
-    );
-}
-
-#[test]
-fn pcb_domain_builds_differential_pair_skew_residual() {
-    let mut matched = Problem::default();
-    let positive = matched.add_variable("positive_length", real(105));
-    let negative = matched.add_variable("negative_length", real(100));
-    let mut constraints = PcbConstraintSet::default();
-    constraints.push(differential_pair_skew_equation(
-        "pair skew",
-        Expr::symbol(SymbolId(positive.0), "positive_length"),
-        Expr::symbol(SymbolId(negative.0), "negative_length"),
-        real(5),
-    ));
-    for constraint in constraints.constraints {
-        matched.add_constraint(constraint);
-    }
-    assert!(
-        certify_candidate(
-            &PreparedProblem::new(&matched),
-            &context_from_problem(&matched)
-        )
-        .all_satisfied()
-    );
-
-    let mut mismatched = Problem::default();
-    let positive = mismatched.add_variable("positive_length", real(105));
-    let negative = mismatched.add_variable("negative_length", real(100));
-    mismatched.add_constraint(differential_pair_skew_equation(
-        "pair skew violation",
-        Expr::symbol(SymbolId(positive.0), "positive_length"),
-        Expr::symbol(SymbolId(negative.0), "negative_length"),
-        real(4),
-    ));
-    assert!(
-        certify_candidate(
-            &PreparedProblem::new(&mismatched),
-            &context_from_problem(&mismatched)
-        )
-        .has_certified_violation()
-    );
 }
 
 #[test]

@@ -69,14 +69,6 @@ pub use domain::geometry::{
     squared_distance_expr, tangent_cross_expr, tangent_dot_expr, tangent_parallel_equation,
     tangent_same_direction_constraint,
 };
-pub use domain::pcb::{
-    PcbConstraintSet, center_clearance_squared_constraint, differential_pair_skew_equation,
-};
-pub use domain::toolpath::{
-    RectangularRegion, ToolpathConstraintSet, bezier_offset_sample_constraints,
-    constant_feed_time_equation, length_match_equation, rectangular_difference_area_equation,
-    rectangular_region_area_equation, rectangular_region_containment_constraints,
-};
 pub use domain_certification::{
     CandidateDomainReport, DomainCheck, DomainCheckKind, DomainCheckStatus,
     certify_candidate_domains,

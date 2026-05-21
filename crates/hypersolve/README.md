@@ -118,7 +118,8 @@ Implemented today:
 - reusable exact dense linear residual replay for domain crates that build their
   own small linear systems;
 - a dense damped least-squares prototype with proposal-engine and adapter diagnostics;
-- geometry, PCB, and toolpath constraint helper modules.
+- geometry residual helper modules. PCB, routing, and toolpath residual builders now
+  live in domain crates where their semantics are owned.
 
 Known limits: nonlinear solve policy is still experimental, dense linear solving is
 intentionally approximate, and domain topology remains delegated to sibling crates.
