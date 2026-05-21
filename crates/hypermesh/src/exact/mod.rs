@@ -37,6 +37,8 @@ pub mod orthogonal_solid;
 #[cfg(feature = "exact-triangulation")]
 pub mod orthogonal_surface;
 pub mod package;
+#[cfg(feature = "exact-triangulation")]
+pub mod planar;
 pub mod predicates;
 pub mod provenance;
 pub mod readiness;
@@ -149,6 +151,11 @@ pub use package::{
     ExactMeshConsumerDomain, ExactMeshDomainReportRef, ExactMeshDomainSummary,
     ExactMeshDomainSummaryError, ExactMeshDomainSummaryFreshness, ExactMeshHandoffPackage,
     ExactMeshHandoffPackageError, ExactMeshHandoffPackageFreshness, exact_mesh_handoff_package,
+};
+#[cfg(feature = "exact-triangulation")]
+pub use planar::{
+    ExactPlanarArrangementEvidenceError, ExactPlanarArrangementEvidenceReport,
+    PlanarArrangementObstacle, certify_planar_arrangement_evidence,
 };
 pub use predicates::{TriangleDegeneracy, TrianglePredicateReport};
 pub use provenance::{

@@ -23,7 +23,8 @@ use core::cmp::Ordering;
 use hyperlimit::classify_point_triangle;
 use hyperlimit::{
     Point2, Point3, SegmentIntersection, Sign, TriangleLocation, classify_segment_intersection,
-    compare_reals, orient2d_report, point_on_segment,
+    compare_reals, interpolate_point3 as interpolate3, orient2d_report, orient2d_value,
+    point_on_segment, project_point3 as project_point,
 };
 
 use super::coplanar::CoplanarTriangleClassification;
@@ -7866,14 +7867,6 @@ fn fan_triangle_covered_by_inputs(
     Some(compare_reals(&covered, &fan_area).value() == Some(Ordering::Equal))
 }
 
-fn project_point(point: &Point3, projection: CoplanarProjection) -> Point2 {
-    match projection {
-        CoplanarProjection::Xy => Point2::new(point.x.clone(), point.y.clone()),
-        CoplanarProjection::Xz => Point2::new(point.x.clone(), point.z.clone()),
-        CoplanarProjection::Yz => Point2::new(point.y.clone(), point.z.clone()),
-    }
-}
-
 fn point_on_projected_segment(
     start: &Point3,
     end: &Point3,
@@ -7966,22 +7959,6 @@ fn real_equal(left: &ExactReal, right: &ExactReal) -> bool {
 fn point2_equal(left: &Point2, right: &Point2) -> bool {
     compare_reals(&left.x, &right.x).value() == Some(Ordering::Equal)
         && compare_reals(&left.y, &right.y).value() == Some(Ordering::Equal)
-}
-
-fn orient2d_value(a: &Point2, b: &Point2, c: &Point2) -> ExactReal {
-    let bax = sub(&b.x, &a.x);
-    let bay = sub(&b.y, &a.y);
-    let cax = sub(&c.x, &a.x);
-    let cay = sub(&c.y, &a.y);
-    sub(&mul(&bax, &cay), &mul(&bay, &cax))
-}
-
-fn interpolate3(p0: &Point3, p1: &Point3, t: &ExactReal) -> Point3 {
-    Point3::new(
-        add(&p0.x, &mul(t, &sub(&p1.x, &p0.x))),
-        add(&p0.y, &mul(t, &sub(&p1.y, &p0.y))),
-        add(&p0.z, &mul(t, &sub(&p1.z, &p0.z))),
-    )
 }
 
 fn points_equal(left: &Point3, right: &Point3) -> bool {

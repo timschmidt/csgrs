@@ -1,6 +1,6 @@
 [package]
 name = "hypermesh-fuzz"
-version = "0.0.0"
+version = "0.1.0"
 publish = false
 edition = "2024"
 
@@ -8,9 +8,14 @@ edition = "2024"
 cargo-fuzz = true
 
 [dependencies]
+# Hyper sibling dependency switch: keep both local path and crates.io lines; do not remove either.
+# Development mode uses the local path lines. For release, comment those and uncomment the crates.io lines.
 hypermesh = { path = "..", default-features = false, features = ["exact"] }
-hyperlimit = { version = "0.3.0", optional = true }
-hypertri = { version = "0.2.0", default-features = false, optional = true }
+hyperlimit = { path = "../../hyperlimit", optional = true }
+hypertri = { path = "../../hypertri", default-features = false, optional = true }
+# hypermesh = { version = "0.3.0", default-features = false, features = ["exact"] }
+# hyperlimit = { version = "0.4.0", optional = true }
+# hypertri = { version = "0.3.0", default-features = false, optional = true }
 libfuzzer-sys = "0.4"
 
 [features]

@@ -28,7 +28,10 @@ use hypermesh::exact::{
     validate_triangles, validate_triangles_with_policy,
 };
 #[cfg(feature = "exact-triangulation")]
-use hypermesh::exact::{ExactPoint3, Triangle};
+use hypermesh::exact::{
+    ExactPlanarArrangementEvidenceError, ExactPoint3, PlanarArrangementObstacle, Triangle,
+    certify_planar_arrangement_evidence,
+};
 use hyperreal::Real;
 use proptest::prelude::*;
 use std::cmp::Ordering;
@@ -12343,6 +12346,115 @@ fn exact_intersection_graph_records_coplanar_edge_and_vertex_events() {
                 .is_err()
         );
     }
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
+fn exact_planar_arrangement_evidence_reports_retained_obstacles() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 2, 0, 0, 0, 2, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let overlapping = ExactMesh::from_i64_triangles_with_policy(
+        &[1, 0, 0, 3, 0, 0, 1, 2, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let point_touching = ExactMesh::from_i64_triangles_with_policy(
+        &[2, 0, 0, 4, 0, 0, 2, 2, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let separated = ExactMesh::from_i64_triangles_with_policy(
+        &[5, 0, 0, 7, 0, 0, 5, 2, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+
+    let overlap_report = certify_planar_arrangement_evidence(&left, &overlapping).unwrap();
+    overlap_report.validate().unwrap();
+    overlap_report
+        .validate_against_sources(&left, &overlapping)
+        .unwrap();
+    assert!(overlap_report.readiness.needs_planar_cells());
+    assert!(overlap_report.obstacle.requires_general_arrangement());
+    assert_eq!(overlap_report.split_graph_count, 1);
+    assert!(overlap_report.split_edge_count > 0);
+
+    let touching_report = certify_planar_arrangement_evidence(&left, &point_touching).unwrap();
+    touching_report.validate().unwrap();
+    touching_report
+        .validate_against_sources(&left, &point_touching)
+        .unwrap();
+    assert_eq!(
+        touching_report.readiness.status,
+        hypermesh::exact::CoplanarArrangementReadinessStatus::BoundaryOnly
+    );
+    assert!(touching_report.point_only_contact_count > 0);
+    assert!(matches!(
+        touching_report.obstacle,
+        PlanarArrangementObstacle::PointOnlyContact | PlanarArrangementObstacle::BranchPoint
+    ));
+
+    let no_overlap_report = certify_planar_arrangement_evidence(&left, &separated).unwrap();
+    no_overlap_report.validate().unwrap();
+    no_overlap_report
+        .validate_against_sources(&left, &separated)
+        .unwrap();
+    assert_eq!(
+        no_overlap_report.obstacle,
+        PlanarArrangementObstacle::NoCoplanarOverlap
+    );
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
+fn exact_planar_arrangement_evidence_validation_rejects_stale_counts() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 2, 0, 0, 0, 2, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let right = ExactMesh::from_i64_triangles_with_policy(
+        &[1, 0, 0, 3, 0, 0, 1, 2, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let separated = ExactMesh::from_i64_triangles_with_policy(
+        &[5, 0, 0, 7, 0, 0, 5, 2, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+
+    let report = certify_planar_arrangement_evidence(&left, &right).unwrap();
+    let mut stale_vertex_count = report.clone();
+    stale_vertex_count.vertex_overlap_count += 1;
+    assert_eq!(
+        stale_vertex_count.validate().unwrap_err(),
+        ExactPlanarArrangementEvidenceError::VertexOverlapCountMismatch
+    );
+
+    let mut stale_obstacle = report.clone();
+    stale_obstacle.obstacle = PlanarArrangementObstacle::NoCoplanarOverlap;
+    assert_eq!(
+        stale_obstacle.validate().unwrap_err(),
+        ExactPlanarArrangementEvidenceError::ObstacleMismatch
+    );
+
+    assert_eq!(
+        report
+            .validate_against_sources(&left, &separated)
+            .unwrap_err(),
+        ExactPlanarArrangementEvidenceError::SourceReplayMismatch
+    );
 }
 
 #[test]

@@ -20,7 +20,9 @@
 use std::{cmp::Ordering, collections::BTreeSet};
 
 #[cfg(feature = "exact-triangulation")]
-use hyperlimit::{Point3, TriangleLocation, classify_point_triangle, compare_reals};
+use hyperlimit::{
+    Point2, Point3, TriangleLocation, classify_point_triangle, compare_reals, point_on_segment,
+};
 #[cfg(feature = "exact-triangulation")]
 use hypertri::Constraint;
 
@@ -807,35 +809,14 @@ fn point_on_closed_segment(
     start: &hypertri::ExactPoint,
     end: &hypertri::ExactPoint,
 ) -> hypertri::Result<bool> {
-    if compare_ordering(
-        &orient2d_value(start, end, point),
-        &ExactReal::from(0),
-        "face-cell constraint collinearity",
-    )? != Ordering::Equal
-    {
-        return Ok(false);
-    }
-    Ok(
-        real_between_closed(&point.x, &start.x, &end.x, "face-cell constraint x range")?
-            && real_between_closed(&point.y, &start.y, &end.y, "face-cell constraint y range")?,
+    point_on_segment(
+        &predicate_point2(start),
+        &predicate_point2(end),
+        &predicate_point2(point),
     )
-}
-
-#[cfg(feature = "exact-triangulation")]
-fn real_between_closed(
-    value: &ExactReal,
-    a: &ExactReal,
-    b: &ExactReal,
-    predicate: &'static str,
-) -> hypertri::Result<bool> {
-    let value_vs_a = compare_ordering(value, a, predicate)?;
-    let value_vs_b = compare_ordering(value, b, predicate)?;
-    let a_vs_b = compare_ordering(a, b, predicate)?;
-    Ok(match a_vs_b {
-        Ordering::Less | Ordering::Equal => {
-            value_vs_a != Ordering::Less && value_vs_b != Ordering::Greater
-        }
-        Ordering::Greater => value_vs_b != Ordering::Less && value_vs_a != Ordering::Greater,
+    .value()
+    .ok_or(hypertri::Error::PredicateUndecided {
+        predicate: "face-cell constraint point-on-segment",
     })
 }
 
@@ -861,16 +842,8 @@ fn compare_ordering(
 }
 
 #[cfg(feature = "exact-triangulation")]
-fn orient2d_value(
-    a: &hypertri::ExactPoint,
-    b: &hypertri::ExactPoint,
-    c: &hypertri::ExactPoint,
-) -> ExactReal {
-    let bax = sub_real(&b.x, &a.x);
-    let bay = sub_real(&b.y, &a.y);
-    let cax = sub_real(&c.x, &a.x);
-    let cay = sub_real(&c.y, &a.y);
-    sub_real(&mul_real(&bax, &cay), &mul_real(&bay, &cax))
+fn predicate_point2(point: &hypertri::ExactPoint) -> Point2 {
+    Point2::new(point.x.clone(), point.y.clone())
 }
 
 #[cfg(feature = "exact-triangulation")]

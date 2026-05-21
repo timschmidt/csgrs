@@ -20,7 +20,7 @@ use std::cmp::Ordering;
 
 use hyperlimit::{PlaneSide, Point3, orient3d_report};
 #[cfg(feature = "exact-triangulation")]
-use hyperlimit::{Point2 as PredicatePoint2, Sign, compare_reals, orient2d_report};
+use hyperlimit::{Point2 as PredicatePoint2, Sign, compare_reals, orient2d_report, project_point3};
 
 #[cfg(feature = "exact-triangulation")]
 use super::coplanar::CoplanarProjection;
@@ -1462,11 +1462,7 @@ pub(crate) fn project_for_predicate(
     point: &Point3,
     projection: CoplanarProjection,
 ) -> PredicatePoint2 {
-    match projection {
-        CoplanarProjection::Xy => PredicatePoint2::new(point.x.clone(), point.y.clone()),
-        CoplanarProjection::Xz => PredicatePoint2::new(point.x.clone(), point.z.clone()),
-        CoplanarProjection::Yz => PredicatePoint2::new(point.y.clone(), point.z.clone()),
-    }
+    project_point3(point, projection)
 }
 
 #[cfg(feature = "exact-triangulation")]

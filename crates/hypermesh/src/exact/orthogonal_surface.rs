@@ -19,7 +19,7 @@ use core::cmp::Ordering;
 
 use hyperlimit::{
     Point2, Point3, SegmentIntersection, Sign, classify_segment_intersection, compare_reals,
-    orient2d_report,
+    orient2d_report, project_point3 as project_point,
 };
 
 use super::coplanar::CoplanarProjection;
@@ -1041,14 +1041,6 @@ fn project_for_hypertri(point: &Point3, projection: CoplanarProjection) -> hyper
 #[cfg(feature = "exact-triangulation")]
 fn cell_index(x: usize, y: usize, y_cells: usize) -> usize {
     x * y_cells + y
-}
-
-fn project_point(point: &Point3, projection: CoplanarProjection) -> Point2 {
-    match projection {
-        CoplanarProjection::Xy => Point2::new(point.x.clone(), point.y.clone()),
-        CoplanarProjection::Xz => Point2::new(point.x.clone(), point.z.clone()),
-        CoplanarProjection::Yz => Point2::new(point.y.clone(), point.z.clone()),
-    }
 }
 
 fn point_from_projection(

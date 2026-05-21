@@ -6,7 +6,8 @@
 `hypermesh` is the experimental 3D mesh-topology crate in the Hyper workspace. It
 contains a legacy float-oriented closed-mesh boolean engine and a newer exact-stack
 boundary for mesh validation, provenance, face-pair classification, coplanar
-arrangements, split plans, and exact-aware boolean preflight.
+arrangements, split plans, exact-aware boolean preflight, and feature-gated exact
+boolean assembly.
 
 The crate is in transition: the legacy path is useful for current mesh boolean
 experiments, while the exact path is where Hyper-native topology decisions are being
@@ -24,9 +25,29 @@ made auditable.
   orientation, incidence, and sidedness decisions.
 - [hypertri](https://github.com/timschmidt/hypertri): planar triangulation support for
   exact face-region assembly.
+- [hypercurve](https://github.com/timschmidt/hypercurve): curve and Bezier evidence for
+  future curved-surface and intersection boundaries.
+- [hyperpath](https://github.com/timschmidt/hyperpath): routing and swept-path consumers
+  of exact obstacle and fixture mesh evidence.
+- [hypersolve](https://github.com/timschmidt/hypersolve): residual replay and constraint
+  certification for future reconstruction and fitting passes.
 - [hyperphysics](https://github.com/timschmidt/hyperphysics) and
   [hypervoxel](https://github.com/timschmidt/hypervoxel): downstream consumers of mesh
   validation, mass, collision, and voxelization facts.
+- [hyperdrc](https://github.com/timschmidt/hyperdrc): manufacturability checks that can
+  consume exact board, package, and mesh keepout evidence.
+- [hypercircuit](https://github.com/timschmidt/hypercircuit): electrical context for
+  electromechanical mesh and package consumers.
+- [hyperpack](https://github.com/timschmidt/hyperpack): package and enclosure metadata
+  that can anchor mesh handoffs.
+- [hyperparts](https://github.com/timschmidt/hyperparts): part records and footprints
+  that can reference mesh, package, and placement geometry.
+- [hyperevolution](https://github.com/timschmidt/hyperevolution): optimization layer for
+  exact topology and geometry candidates.
+- [hyperbrep](https://github.com/timschmidt/hyperbrep): boundary-representation source
+  geometry for future mesh conversion and validation.
+- [hypersdf](https://github.com/timschmidt/hypersdf): signed-distance evidence and
+  implicit previews for mesh and voxel workflows.
 
 ## Typical Mesh Boolean Problems
 
@@ -44,35 +65,46 @@ without globally canonicalizing every coordinate.
 
 ## Main Types
 
-- `Manifold`, `OpType`, and `compute_boolean` are the legacy closed-mesh boolean API.
+- `Manifold`, `OpType`, `LegacyBooleanReport`, `LegacyBooleanResult`, and
+  `compute_boolean_with_report` are the legacy closed-mesh boolean API.
 - `exact::ExactMesh`, `ExactPoint3`, `Triangle`, `MeshFacts`, and `ValidationReport`
   describe exact-aware mesh inputs and diagnostics.
+- `ValidationPolicy`, `BoundaryPolicy`, `MeshValidationFacts`, `VertexFacts`,
+  `EdgeFacts`, `FaceFacts`, and `FacePlaneFacts` retain topology and determinant-form
+  face-plane evidence.
 - `SourceProvenance`, `ApproximationPolicy`, `PredicateUse`, and construction
   provenance records preserve import and decision history.
 - `MeshFacePairClassification`, triangle-plane/triangle-triangle reports, coplanar
   reports, and intersection graphs describe local topology evidence.
 - `ExactEdgeSplitPlan`, `ExactFaceSplitPlan`, `ExactBooleanPreflight`, and
   `ExactBooleanResult` describe readiness and assembly state.
-- Surface, region, convex-solid, and boundary-touching reports capture certified fast
-  paths before the general boolean path is complete.
+- Surface, region, convex-solid, boundary-touching, winding, handoff-package, and
+  consumer-readiness reports capture certified fast paths and downstream contracts.
 
 ## Precision Model
 
 The legacy boolean engine remains float operationally. The exact path imports finite
 `f64` coordinates by dyadic lifting into `hyperreal::Real` and records lossy import
-policy explicitly. Exact predicates and validation reports should be the source of
-topology decisions as kernels are ported.
+policy explicitly. Integer-grid input is lifted directly into exact `Real` values, and
+retained face planes keep unnormalized determinant coefficients instead of unit normals.
+Exact predicates and validation reports should be the source of topology decisions as
+kernels are ported.
 
 Unresolved coplanar, boundary, or winding readiness is reported as a blocker rather than
 patched with a tolerance.
 
+Numerical explosion is controlled by preserving source rows, bounds, face planes,
+predicate uses, split graphs, and readiness reports as structured artifacts. The crate
+does not globally canonicalize every coordinate or expand every possible intersection
+unless a downstream topology stage needs that evidence.
+
 ## Performance Model
 
 The performance direction is to combine broad-phase pruning with exact local decisions.
-Morton broad-phase, retained bounds, face-pair classification, split plans, and
-coplanar arrangement reports are intended to narrow work before expensive predicates or
-topology rebuilds. Feature flags keep legacy boolean, exact validation, triangulation,
-Rayon, and Bevy/demo surfaces separable.
+Morton broad-phase, retained bounds, face-pair classification, split plans, support
+DOPs, coplanar arrangement reports, and handoff packages are intended to narrow work
+before expensive predicates or topology rebuilds. Feature flags keep legacy boolean,
+exact validation, exact triangulation, Rayon, and Bevy/demo surfaces separable.
 
 Future benchmarks should separate broad phase, narrow classification, split planning,
 region assembly, and simplification so exactness work can be optimized without hiding
@@ -83,12 +115,13 @@ where time is spent.
 Implemented today:
 
 - feature-gated `exact`, `exact-triangulation`, and `legacy-boolean` paths;
-- legacy `Manifold::new` and `compute_boolean` for union, subtraction, and intersection
-  over closed manifold triangle meshes;
+- legacy `Manifold::new` and `compute_boolean_with_report` for union, subtraction, and
+  intersection over closed manifold triangle meshes;
 - Morton broad phase, triangle intersection kernels, topology simplification, and
   ear-clipping support in the legacy engine;
-- exact mesh, bounds, facts, provenance, validation, face-pair, coplanar, construction,
-  split-plan, surface, convex-solid, and preflight APIs;
+- exact mesh, bounds, facts, provenance, validation, audit, face-pair, coplanar,
+  construction, split-plan, support, surface, winding, convex-solid, consumer-readiness,
+  handoff-package, preflight, and exact-boolean APIs;
 - tests, proptests, fuzz targets, examples, and exact-validation benchmarks.
 
 Known limits: inputs must already be closed and manifold for the legacy path, and the
@@ -115,19 +148,29 @@ The exact-facing path is the default feature set and is the preferred boundary f
 code:
 
 ```rust,ignore
-use hypermesh::prelude::*;
+use hypermesh::exact::{ExactMesh, ValidationPolicy};
 
-let mesh = ExactMesh::from_triangles(vec![
-    Triangle::new(0, 1, 2),
-], vec![
-    ExactPoint3::from_i64(0, 0, 0),
-    ExactPoint3::from_i64(1, 0, 0),
-    ExactPoint3::from_i64(0, 1, 0),
-])?;
+let input = ExactMesh::inspect_i64_triangles(&[
+    0, 0, 0,
+    1, 0, 0,
+    0, 1, 0,
+], &[0, 1, 2]);
+assert!(input.edge_ready());
+
+let mesh = ExactMesh::from_i64_triangles_with_policy(
+    &[
+        0, 0, 0,
+        1, 0, 0,
+        0, 1, 0,
+    ],
+    &[0, 1, 2],
+    ValidationPolicy::ALLOW_BOUNDARY,
+)?;
 
 let facts = mesh.facts();
-let validation = mesh.validate();
-assert!(validation.is_manifold_boundary_reported());
+assert_eq!(facts.mesh.face_count, 1);
+assert_eq!(facts.mesh.boundary_edges, 3);
+mesh.validate_retained_state()?;
 ```
 
 The legacy boolean adapter is opt-in and should be treated as an approximate runtime
@@ -138,11 +181,40 @@ use hypermesh::prelude::*;
 
 let left = Manifold::new(&positions_a, &indices_a)?;
 let right = Manifold::new(&positions_b, &indices_b)?;
-let result = compute_boolean(&left, &right, OpType::Subtract)?;
+let result = compute_boolean_with_report(&left, &right, OpType::Subtract)?;
+assert!(result.report.used_primitive_float_adapter);
 ```
 
-Use exact validation, face-pair classification, split-plan, and preflight reports to
-audit topology before relying on boolean output.
+Use exact validation, audit, face-pair classification, split-plan, preflight,
+consumer-readiness, and handoff-package reports to audit topology before relying on
+boolean output.
+
+## References
+
+- Yap, Chee K. "Towards Exact Geometric Computation." *Computational Geometry* 7.1-2
+  (1997): 3-23.
+- Shewchuk, Jonathan Richard. "Adaptive Precision Floating-Point Arithmetic and Fast
+  Robust Geometric Predicates." *Discrete & Computational Geometry* 18.3 (1997):
+  305-363.
+- Moller, Tomas. "A Fast Triangle-Triangle Intersection Test." *Journal of Graphics
+  Tools* 2.2 (1997): 25-30.
+- Guigue, Philippe, and Olivier Devillers. "Fast and Robust Triangle-Triangle Overlap
+  Test Using Orientation Predicates." *Journal of Graphics Tools* 8.1 (2003): 25-42.
+- Boissonnat, Jean-Daniel, Olivier Devillers, Sylvain Pion, Monique Teillaud, and
+  Mariette Yvinec. "Triangulations in CGAL." *Computational Geometry* 22.1-3 (2002):
+  5-19.
+- de Berg, Mark, Otfried Cheong, Marc van Kreveld, and Mark Overmars. *Computational
+  Geometry: Algorithms and Applications*. Springer.
+- Preparata, Franco P., and Michael Ian Shamos. *Computational Geometry: An
+  Introduction*. Springer, 1985.
+- Sutherland, Ivan E., and Gary W. Hodgman. "Reentrant Polygon Clipping."
+  *Communications of the ACM* 17.1 (1974): 32-42.
+- Weiler, Kevin, and Peter Atherton. "Hidden Surface Removal Using Polygon Area
+  Sorting." *SIGGRAPH Computer Graphics* 11.2 (1977): 214-222.
+- Requicha, Aristides A. G. "Representations for Rigid Solids: Theory, Methods, and
+  Systems." *ACM Computing Surveys* 12.4 (1980): 437-464.
+- Lee, D. T., and Arthur K. Lin. "Generalized Delaunay Triangulation for Planar
+  Graphs." *Discrete & Computational Geometry*.
 
 ## Development
 

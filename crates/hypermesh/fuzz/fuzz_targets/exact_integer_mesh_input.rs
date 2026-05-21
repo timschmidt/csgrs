@@ -50,7 +50,10 @@ fuzz_target!(|data: &[u8]| {
         let surface_domain = hypermesh::exact::ExactMeshConsumerDomain::Surface;
         let solid_domain = hypermesh::exact::ExactMeshConsumerDomain::Solid;
         let approximate_domain = hypermesh::exact::ExactMeshConsumerDomain::ApproximateF64View;
-        assert_eq!(package.has_domain(surface_domain), package.surface.is_some());
+        assert_eq!(
+            package.has_domain(surface_domain),
+            package.surface.is_some()
+        );
         assert_eq!(package.has_domain(solid_domain), package.solid.is_some());
         assert_eq!(
             package.has_domain(approximate_domain),
@@ -67,14 +70,18 @@ fuzz_target!(|data: &[u8]| {
             .filter_map(|(domain, present)| present.then_some(domain))
             .collect::<Vec<_>>()
         );
-        assert!(package
-            .exact_geometry_domains()
-            .iter()
-            .all(|domain| domain.is_exact_geometry()));
-        assert!(package
-            .lossy_adapter_domains()
-            .iter()
-            .all(|domain| domain.is_lossy_adapter()));
+        assert!(
+            package
+                .exact_geometry_domains()
+                .iter()
+                .all(|domain| domain.is_exact_geometry())
+        );
+        assert!(
+            package
+                .lossy_adapter_domains()
+                .iter()
+                .all(|domain| domain.is_lossy_adapter())
+        );
         let domain_summary = package.domain_summary();
         assert_eq!(
             domain_summary.has_exact_geometry(),
@@ -115,9 +122,11 @@ fuzz_target!(|data: &[u8]| {
             assert_eq!(preferred_summary_report.audit(), &package.audit);
             domain_summary.require_exact_geometry().unwrap();
         } else {
-            assert!(domain_summary
-                .require_preferred_exact_geometry_domain()
-                .is_err());
+            assert!(
+                domain_summary
+                    .require_preferred_exact_geometry_domain()
+                    .is_err()
+            );
             assert!(domain_summary.require_exact_geometry().is_err());
         }
         if package.has_domain(surface_domain) {
@@ -130,19 +139,26 @@ fuzz_target!(|data: &[u8]| {
                 .unwrap();
         } else {
             assert!(domain_summary.require_domain(surface_domain).is_err());
-            assert!(domain_summary
-                .require_domain_against_package(&package, surface_domain)
-                .is_err());
-            assert!(domain_summary
-                .require_domain_against_mesh(&package, &mesh, surface_domain)
-                .is_err());
+            assert!(
+                domain_summary
+                    .require_domain_against_package(&package, surface_domain)
+                    .is_err()
+            );
+            assert!(
+                domain_summary
+                    .require_domain_against_mesh(&package, &mesh, surface_domain)
+                    .is_err()
+            );
         }
         if package.has_domain(approximate_domain) {
             domain_summary.require_lossy_adapter().unwrap();
         } else {
             assert!(domain_summary.require_lossy_adapter().is_err());
         }
-        assert_eq!(domain_summary.available_domains, package.available_domains());
+        assert_eq!(
+            domain_summary.available_domains,
+            package.available_domains()
+        );
         assert_eq!(
             domain_summary.exact_geometry_domains,
             package.exact_geometry_domains()
@@ -182,9 +198,11 @@ fuzz_target!(|data: &[u8]| {
             assert_eq!(preferred_package_report.audit(), &package.audit);
         } else {
             assert!(package.require_preferred_exact_geometry_domain().is_err());
-            assert!(package
-                .require_preferred_exact_geometry_domain_against_mesh(&mesh)
-                .is_err());
+            assert!(
+                package
+                    .require_preferred_exact_geometry_domain_against_mesh(&mesh)
+                    .is_err()
+            );
         }
         if package.has_domain(surface_domain) {
             package.require_domain(surface_domain).unwrap();
@@ -200,40 +218,38 @@ fuzz_target!(|data: &[u8]| {
             assert_eq!(report.audit(), &package.audit);
         } else {
             assert!(package.require_domain(surface_domain).is_err());
-            assert!(package
-                .require_domain_against_mesh(&mesh, surface_domain)
-                .is_err());
-            assert!(package
-                .domain_report_against_mesh(&mesh, surface_domain)
-                .is_err());
+            assert!(
+                package
+                    .require_domain_against_mesh(&mesh, surface_domain)
+                    .is_err()
+            );
+            assert!(
+                package
+                    .domain_report_against_mesh(&mesh, surface_domain)
+                    .is_err()
+            );
         }
-        let _ = mesh
-            .solid_handoff()
-            .map(|handoff| {
-                assert_eq!(
-                    handoff.freshness_against_mesh(&mesh),
-                    hypermesh::exact::ExactSolidHandoffFreshness::Current
-                );
-                handoff.validate_against_mesh(&mesh)
-            });
-        let _ = mesh
-            .surface_handoff()
-            .map(|handoff| {
-                assert_eq!(
-                    handoff.freshness_against_mesh(&mesh),
-                    hypermesh::exact::ExactSurfaceHandoffFreshness::Current
-                );
-                handoff.validate_against_mesh(&mesh)
-            });
-        let _ = mesh
-            .approximate_f64_view()
-            .map(|view| {
-                assert_eq!(
-                    view.freshness_against_mesh(&mesh),
-                    hypermesh::exact::ApproximateMeshF64ViewFreshness::Current
-                );
-                view.validate_against_mesh(&mesh)
-            });
+        let _ = mesh.solid_handoff().map(|handoff| {
+            assert_eq!(
+                handoff.freshness_against_mesh(&mesh),
+                hypermesh::exact::ExactSolidHandoffFreshness::Current
+            );
+            handoff.validate_against_mesh(&mesh)
+        });
+        let _ = mesh.surface_handoff().map(|handoff| {
+            assert_eq!(
+                handoff.freshness_against_mesh(&mesh),
+                hypermesh::exact::ExactSurfaceHandoffFreshness::Current
+            );
+            handoff.validate_against_mesh(&mesh)
+        });
+        let _ = mesh.approximate_f64_view().map(|view| {
+            assert_eq!(
+                view.freshness_against_mesh(&mesh),
+                hypermesh::exact::ApproximateMeshF64ViewFreshness::Current
+            );
+            view.validate_against_mesh(&mesh)
+        });
         assert_eq!(mesh.facts().faces.len(), mesh.triangles().len());
         mesh.facts().validate().unwrap();
         for face in &mesh.facts().faces {
@@ -258,11 +274,10 @@ fuzz_target!(|data: &[u8]| {
         if mesh.facts().mesh.closed_manifold && !mesh.triangles().is_empty() {
             let boundary_vertex = mesh.triangles()[0].0[0];
             let boundary_point = mesh.vertices()[boundary_vertex].to_hyperlimit_point();
-            let point_winding =
-                hypermesh::exact::classify_point_against_closed_mesh_winding_report(
-                    &boundary_point,
-                    &mesh,
-                );
+            let point_winding = hypermesh::exact::classify_point_against_closed_mesh_winding_report(
+                &boundary_point,
+                &mesh,
+            );
             point_winding
                 .validate_against_sources(&boundary_point, &mesh)
                 .unwrap();
@@ -310,15 +325,13 @@ fuzz_target!(|data: &[u8]| {
                     let _ = overlap.validate();
                     let _ = overlap.validate_against_sources(&mesh, &mesh);
                 }
-                let _ = graph
-                    .coplanar_overlap_split_plan(&mesh, &mesh)
-                    .map(|plan| {
-                        let _ = plan.validate();
-                        let _ = plan.validate_against_sources(&mesh, &mesh);
-                        for graph in &plan.graphs {
-                            let _ = graph.validate_against_sources(&mesh, &mesh);
-                        }
-                    });
+                let _ = graph.coplanar_overlap_split_plan(&mesh, &mesh).map(|plan| {
+                    let _ = plan.validate();
+                    let _ = plan.validate_against_sources(&mesh, &mesh);
+                    for graph in &plan.graphs {
+                        let _ = graph.validate_against_sources(&mesh, &mesh);
+                    }
+                });
                 let _ = graph
                     .coplanar_arrangement_readiness_report(&mesh, &mesh)
                     .map(|report| report.validate());
@@ -342,9 +355,7 @@ fuzz_target!(|data: &[u8]| {
                 let _ = face_plan
                     .validate_against_topology(&topology_plan)
                     .validate();
-                let _ = face_plan
-                    .validate_against_sources(&mesh, &mesh)
-                    .validate();
+                let _ = face_plan.validate_against_sources(&mesh, &mesh).validate();
                 if let Ok(geometry_plan) = graph.face_split_geometry_plan(&mesh, &mesh) {
                     let _ = geometry_plan
                         .validate_boundary_incidence(&mesh, &mesh)
@@ -363,16 +374,17 @@ fuzz_target!(|data: &[u8]| {
                         let _ = classification.validate();
                     }
                     #[cfg(feature = "exact-triangulation")]
-                    let _ = hypermesh::exact::checked_classify_face_regions_against_opposite_planes(
-                        &region_plan,
-                        &mesh,
-                        &mesh,
-                    )
-                    .map(|classifications| {
-                        for classification in classifications {
-                            let _ = classification.validate();
-                        }
-                    });
+                    let _ =
+                        hypermesh::exact::checked_classify_face_regions_against_opposite_planes(
+                            &region_plan,
+                            &mesh,
+                            &mesh,
+                        )
+                        .map(|classifications| {
+                            for classification in classifications {
+                                let _ = classification.validate();
+                            }
+                        });
                     #[cfg(feature = "exact-triangulation")]
                     {
                         if let Ok(triangulations) =

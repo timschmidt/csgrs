@@ -19,8 +19,9 @@ use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
 
 use hyperlimit::{
-    PlaneSide, Point2, Point3, SegmentIntersection, Sign, TriangleLocation, compare_reals,
-    orient3d_report, point_on_segment,
+    PlaneSide, Point3, SegmentIntersection, Sign, TriangleLocation, compare_reals,
+    interpolate_point3, orient3d_report, point_on_segment, project_point3,
+    projected_line_parameter3, projected_segment_parameter3,
 };
 
 use super::construction::{
@@ -3808,22 +3809,7 @@ fn endpoint_parameter_on_segment(
     end: &Point3,
     projection: CoplanarProjection,
 ) -> Option<ExactReal> {
-    let point = project_point3(point, projection);
-    let start = project_point3(start, projection);
-    let end = project_point3(end, projection);
-    parameter_from_axis(&point.x, &start.x, &end.x)
-        .or_else(|| parameter_from_axis(&point.y, &start.y, &end.y))
-}
-
-fn parameter_from_axis(point: &ExactReal, start: &ExactReal, end: &ExactReal) -> Option<ExactReal> {
-    let denominator = sub_real(end, start);
-    if matches!(
-        compare_reals(&denominator, &ExactReal::from(0)).value(),
-        Some(Ordering::Equal) | None
-    ) {
-        return None;
-    }
-    (sub_real(point, start) / &denominator).ok()
+    projected_segment_parameter3(point, start, end, projection)
 }
 
 fn proper_coplanar_edge_split_point(
@@ -3832,38 +3818,15 @@ fn proper_coplanar_edge_split_point(
     projection: CoplanarProjection,
 ) -> Option<CoplanarEdgeSplitPoint> {
     let left_parameter =
-        projected_line_parameter(&left[0], &left[1], &right[0], &right[1], projection)?;
+        projected_line_parameter3(&left[0], &left[1], &right[0], &right[1], projection)?;
     let right_parameter =
-        projected_line_parameter(&right[0], &right[1], &left[0], &left[1], projection)?;
+        projected_line_parameter3(&right[0], &right[1], &left[0], &left[1], projection)?;
     let point = interpolate_point3(&left[0], &left[1], &left_parameter);
     Some(CoplanarEdgeSplitPoint {
         point,
         left_parameter,
         right_parameter,
     })
-}
-
-fn projected_line_parameter(
-    segment_start: &Point3,
-    segment_end: &Point3,
-    line_start: &Point3,
-    line_end: &Point3,
-    projection: CoplanarProjection,
-) -> Option<ExactReal> {
-    let a = project_point3(line_start, projection);
-    let b = project_point3(line_end, projection);
-    let p0 = project_point3(segment_start, projection);
-    let p1 = project_point3(segment_end, projection);
-    let d0 = orient2d_value(&a, &b, &p0);
-    let d1 = orient2d_value(&a, &b, &p1);
-    let denominator = sub_real(&d0, &d1);
-    if matches!(
-        compare_reals(&denominator, &ExactReal::from(0)).value(),
-        Some(Ordering::Equal) | None
-    ) {
-        return None;
-    }
-    (d0 / &denominator).ok()
 }
 
 fn original_boundary_node(mesh: &ExactMesh, vertex: usize) -> FaceSplitBoundaryNode {
@@ -4046,40 +4009,4 @@ fn projected_points_equal(
     let x = compare_reals(&left.x, &right.x).value()?;
     let y = compare_reals(&left.y, &right.y).value()?;
     Some(x == Ordering::Equal && y == Ordering::Equal)
-}
-
-fn project_point3(point: &Point3, projection: CoplanarProjection) -> Point2 {
-    match projection {
-        CoplanarProjection::Xy => Point2::new(point.x.clone(), point.y.clone()),
-        CoplanarProjection::Xz => Point2::new(point.x.clone(), point.z.clone()),
-        CoplanarProjection::Yz => Point2::new(point.y.clone(), point.z.clone()),
-    }
-}
-
-fn orient2d_value(a: &Point2, b: &Point2, c: &Point2) -> ExactReal {
-    let bax = sub_real(&b.x, &a.x);
-    let bay = sub_real(&b.y, &a.y);
-    let cax = sub_real(&c.x, &a.x);
-    let cay = sub_real(&c.y, &a.y);
-    sub_real(&mul_real(&bax, &cay), &mul_real(&bay, &cax))
-}
-
-fn interpolate_point3(start: &Point3, end: &Point3, t: &ExactReal) -> Point3 {
-    Point3::new(
-        add_real(&start.x, &mul_real(t, &sub_real(&end.x, &start.x))),
-        add_real(&start.y, &mul_real(t, &sub_real(&end.y, &start.y))),
-        add_real(&start.z, &mul_real(t, &sub_real(&end.z, &start.z))),
-    )
-}
-
-fn add_real(left: &ExactReal, right: &ExactReal) -> ExactReal {
-    left.clone() + right
-}
-
-fn sub_real(left: &ExactReal, right: &ExactReal) -> ExactReal {
-    left.clone() - right
-}
-
-fn mul_real(left: &ExactReal, right: &ExactReal) -> ExactReal {
-    left.clone() * right
 }

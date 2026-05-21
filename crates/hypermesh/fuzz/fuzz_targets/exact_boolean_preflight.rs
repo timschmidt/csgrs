@@ -1,80 +1,49 @@
 #![no_main]
 
 use hypermesh::exact::{
+    CoplanarArrangementOperation, CoplanarSurfaceContainment, CoplanarSurfaceContainmentStatus,
+    CoplanarTriangleRelation, ExactBooleanOperation, ExactBooleanPolicy, ExactBooleanSupport,
+    ExactBoundaryBooleanPolicy, ExactMesh, ExactRegionSelection, FaceRegionPlaneRelation,
+    FaceSplitBoundaryNode, SourceProvenance, Triangle, ValidationPolicy,
     arrange_coplanar_affine_surface_difference, arrange_coplanar_affine_surface_intersection,
     arrange_coplanar_affine_surface_union,
-    CoplanarArrangementOperation, CoplanarSurfaceContainment, CoplanarSurfaceContainmentStatus,
-    CoplanarTriangleRelation, ExactBooleanOperation, ExactBooleanPolicy,
-    ExactBooleanSupport, ExactBoundaryBooleanPolicy, ExactMesh, ExactRegionSelection,
-    FaceRegionPlaneRelation, FaceSplitBoundaryNode, SourceProvenance, Triangle, ValidationPolicy,
-    arrange_single_triangle_coplanar_difference, arrange_single_triangle_coplanar_holed_difference,
-    arrange_single_triangle_coplanar_union, arrange_coplanar_convex_surface_component_holed_difference,
-    arrange_coplanar_convex_surface_difference, arrange_coplanar_convex_surface_component_union,
+    arrange_coplanar_convex_surface_component_holed_difference,
+    arrange_coplanar_convex_surface_component_union, arrange_coplanar_convex_surface_difference,
     arrange_coplanar_convex_surface_holed_difference, arrange_coplanar_convex_surface_intersection,
     arrange_coplanar_convex_surface_multi_difference,
     arrange_coplanar_convex_surface_multi_holed_difference,
-    arrange_coplanar_convex_surface_multi_intersection, arrange_coplanar_convex_surface_union,
-    arrange_coplanar_convex_surface_multi_union,
+    arrange_coplanar_convex_surface_multi_intersection,
+    arrange_coplanar_convex_surface_multi_union, arrange_coplanar_convex_surface_union,
     arrange_coplanar_orthogonal_surface_difference,
     arrange_coplanar_orthogonal_surface_intersection, arrange_coplanar_orthogonal_surface_union,
     arrange_coplanar_surface_cutter_hole_contact_difference,
-    arrange_coplanar_surface_multi_difference, boolean_exact_with_boundary_policy,
-    boolean_selected_regions, certify_boundary_touching_report,
-    certify_convex_solid, certify_open_surface_disjoint_report, certify_planar_arrangement_report,
-    certify_refinement_report, certify_coplanar_convex_surface_containment,
-    certify_coplanar_convex_surface_equivalence, certify_coplanar_convex_surface_report,
-    certify_same_surface_report,
-    certify_single_triangle_coplanar_containment, certify_single_triangle_coplanar_containment_report,
-    certify_winding_readiness_report, classify_coplanar_triangles, classify_triangle_against_face_plane,
-    classify_triangle_triangle, classify_mesh_vertices_against_convex_solid,
-    classify_mesh_face_pair, classify_mesh_face_pairs,
+    arrange_coplanar_surface_multi_difference, arrange_single_triangle_coplanar_difference,
+    arrange_single_triangle_coplanar_holed_difference, arrange_single_triangle_coplanar_union,
+    boolean_exact_with_boundary_policy, boolean_selected_regions, build_intersection_graph,
+    build_selected_region_mesh, certify_boundary_touching_report, certify_convex_solid,
+    certify_coplanar_convex_surface_containment, certify_coplanar_convex_surface_equivalence,
+    certify_coplanar_convex_surface_report, certify_open_surface_disjoint_report,
+    certify_planar_arrangement_evidence, certify_planar_arrangement_report,
+    certify_refinement_report, certify_same_surface_report,
+    certify_single_triangle_coplanar_containment,
+    certify_single_triangle_coplanar_containment_report, certify_winding_readiness_report,
+    classify_coplanar_triangles, classify_mesh_face_pair, classify_mesh_face_pairs,
+    classify_mesh_vertices_against_convex_solid,
     classify_mesh_vertices_against_convex_solid_report, classify_point_against_convex_solid_report,
-    difference_single_triangle_coplanar_surfaces, build_intersection_graph,
-    build_selected_region_mesh, intersect_closed_convex_solids,
+    classify_triangle_against_face_plane, classify_triangle_triangle,
+    difference_single_triangle_coplanar_surfaces, intersect_closed_convex_solids,
     intersect_single_triangle_coplanar_surfaces, preflight_boolean_exact,
     subtract_closed_convex_solids_single_cap, union_single_triangle_coplanar_surfaces,
 };
 #[cfg(feature = "exact-triangulation")]
 use hypermesh::exact::{CoplanarProjection, ExactBooleanAssemblyPlan, FaceRegionTriangulation};
 use libfuzzer_sys::fuzz_target;
-use std::sync::Once;
-
-static DETERMINISTIC_EXERCISES: Once = Once::new();
 
 fuzz_target!(|data: &[u8]| {
-    DETERMINISTIC_EXERCISES.call_once(|| {
-        exercise_partial_convex_union_boundary();
-        #[cfg(feature = "exact-triangulation")]
-        exercise_face_interior_steiner_boundary();
-        #[cfg(feature = "exact-triangulation")]
-        exercise_multi_component_coplanar_union();
-        #[cfg(feature = "exact-triangulation")]
-        exercise_component_coplanar_intersection();
-        #[cfg(feature = "exact-triangulation")]
-        exercise_component_coplanar_difference();
-        #[cfg(feature = "exact-triangulation")]
-        exercise_boundary_centroid_volumetric_representative();
-        #[cfg(feature = "exact-triangulation")]
-        exercise_exhausted_boundary_volumetric_representatives();
-        #[cfg(feature = "exact-triangulation")]
-        exercise_closed_coplanar_overlap_boundary_policy();
-        #[cfg(feature = "exact-triangulation")]
-        exercise_closed_vertex_touch_boundary_policy();
-        #[cfg(feature = "exact-triangulation")]
-        exercise_axis_aligned_coplanar_volumetric_boxes();
-        #[cfg(feature = "exact-triangulation")]
-        exercise_axis_aligned_orthogonal_solid_cell_complexes();
-        #[cfg(feature = "exact-triangulation")]
-        exercise_affine_coplanar_volumetric_boxes();
-        #[cfg(feature = "exact-triangulation")]
-        exercise_affine_orthogonal_solid_cell_complexes();
-        #[cfg(feature = "exact-triangulation")]
-        exercise_affine_orthogonal_solid_cell_complex_frame_discovery();
-        #[cfg(feature = "exact-triangulation")]
-        exercise_mixed_coplanar_volumetric_materialization();
-        #[cfg(feature = "exact-triangulation")]
-        exercise_non_rectilinear_coplanar_volumetric_materialization();
-    });
+    if let [b'C', b'A', b'S', b'E', selector] = data {
+        exercise_deterministic_case(*selector);
+        return;
+    }
 
     let mut values = Vec::new();
     let mut indices = Vec::new();
@@ -418,12 +387,20 @@ fuzz_target!(|data: &[u8]| {
         let mut stale_report = report.clone();
         if let Some(equivalence) = stale_report.equivalence.as_mut() {
             equivalence.polygon.reverse();
-            assert!(stale_report.validate_against_sources(&left, &right).is_err());
+            assert!(
+                stale_report
+                    .validate_against_sources(&left, &right)
+                    .is_err()
+            );
         }
         let mut stale_report = report.clone();
         if let Some(containment) = stale_report.containment.as_mut() {
             containment.left_hull.reverse();
-            assert!(stale_report.validate_against_sources(&left, &right).is_err());
+            assert!(
+                stale_report
+                    .validate_against_sources(&left, &right)
+                    .is_err()
+            );
         }
     }
     if let Some(certificate) = certify_coplanar_convex_surface_containment(&left, &right) {
@@ -572,6 +549,15 @@ fuzz_target!(|data: &[u8]| {
             }
         },
     );
+    let _ = certify_planar_arrangement_evidence(&left, &right).map(|report| {
+        let _ = report.validate();
+        let _ = report.validate_against_sources(&left, &right);
+        let mut stale_obstacle = report.clone();
+        stale_obstacle.obstacle = hypermesh::exact::PlanarArrangementObstacle::NoCoplanarOverlap;
+        if stale_obstacle != report {
+            assert!(stale_obstacle.validate().is_err());
+        }
+    });
     let _ = certify_planar_arrangement_report(&left, &right, ExactBooleanOperation::Intersection)
         .map(|report| {
             let _ = report.validate();
@@ -653,7 +639,11 @@ fuzz_target!(|data: &[u8]| {
         let mut relabeled_graph = graph.clone();
         if let Some(pair) = relabeled_graph.face_pairs.first_mut() {
             pair.left_face = usize::MAX;
-            assert!(relabeled_graph.validate_against_meshes(&left, &right).is_err());
+            assert!(
+                relabeled_graph
+                    .validate_against_meshes(&left, &right)
+                    .is_err()
+            );
             assert!(
                 relabeled_graph
                     .coplanar_arrangement_readiness_report(&left, &right)
@@ -692,18 +682,20 @@ fuzz_target!(|data: &[u8]| {
         let mut stale_report = report.clone();
         if stale_report.triangle.is_some() {
             stale_report.triangle = None;
-            assert!(stale_report.validate_against_sources(&left, &right).is_err());
+            assert!(
+                stale_report
+                    .validate_against_sources(&left, &right)
+                    .is_err()
+            );
         }
         if let Some(coplanar) = &report.coplanar {
             report.status = match coplanar.relation {
                 CoplanarTriangleRelation::Disjoint | CoplanarTriangleRelation::Unknown => {
                     CoplanarSurfaceContainmentStatus::AmbiguousOrIdentical
                 }
-                CoplanarTriangleRelation::Touching => {
-                    CoplanarSurfaceContainmentStatus::Certified(
-                        CoplanarSurfaceContainment::LeftInsideRight,
-                    )
-                }
+                CoplanarTriangleRelation::Touching => CoplanarSurfaceContainmentStatus::Certified(
+                    CoplanarSurfaceContainment::LeftInsideRight,
+                ),
                 CoplanarTriangleRelation::Overlapping => {
                     CoplanarSurfaceContainmentStatus::DisjointOrUnknown
                 }
@@ -780,12 +772,18 @@ fuzz_target!(|data: &[u8]| {
         }
     }
     if let Some(output) = arrange_single_triangle_coplanar_difference(&left, &right) {
-        let _ =
-            output.validate_against_sources(&left, &right, CoplanarArrangementOperation::Difference);
+        let _ = output.validate_against_sources(
+            &left,
+            &right,
+            CoplanarArrangementOperation::Difference,
+        );
     }
     if let Some(output) = arrange_single_triangle_coplanar_difference(&right, &left) {
-        let _ =
-            output.validate_against_sources(&right, &left, CoplanarArrangementOperation::Difference);
+        let _ = output.validate_against_sources(
+            &right,
+            &left,
+            CoplanarArrangementOperation::Difference,
+        );
     }
     if let Some(output) = arrange_single_triangle_coplanar_holed_difference(&left, &right) {
         let _ = output.validate_against_sources(&left, &right);
@@ -976,12 +974,18 @@ fuzz_target!(|data: &[u8]| {
         }
     }
     if let Some(output) = arrange_coplanar_convex_surface_intersection(&left, &right) {
-        let _ =
-            output.validate_against_sources(&left, &right, CoplanarArrangementOperation::Intersection);
+        let _ = output.validate_against_sources(
+            &left,
+            &right,
+            CoplanarArrangementOperation::Intersection,
+        );
     }
     if let Some(output) = arrange_coplanar_convex_surface_intersection(&right, &left) {
-        let _ =
-            output.validate_against_sources(&right, &left, CoplanarArrangementOperation::Intersection);
+        let _ = output.validate_against_sources(
+            &right,
+            &left,
+            CoplanarArrangementOperation::Intersection,
+        );
     }
     if let Some(output) = arrange_coplanar_convex_surface_multi_intersection(&left, &right) {
         let _ = output.validate_intersection_against_sources(&left, &right);
@@ -990,7 +994,8 @@ fuzz_target!(|data: &[u8]| {
             component.reverse();
             assert!(reversed_component.validate().is_err());
         }
-        if let Some(mesh) = cross_component_surface_mesh(&output.mesh, output.polygons.first().map(Vec::len))
+        if let Some(mesh) =
+            cross_component_surface_mesh(&output.mesh, output.polygons.first().map(Vec::len))
         {
             let mut cross_component = output.clone();
             cross_component.mesh = mesh;
@@ -1012,12 +1017,18 @@ fuzz_target!(|data: &[u8]| {
         let _ = output.validate_against_sources(&right, &left, CoplanarArrangementOperation::Union);
     }
     if let Some(output) = arrange_coplanar_convex_surface_difference(&left, &right) {
-        let _ =
-            output.validate_against_sources(&left, &right, CoplanarArrangementOperation::Difference);
+        let _ = output.validate_against_sources(
+            &left,
+            &right,
+            CoplanarArrangementOperation::Difference,
+        );
     }
     if let Some(output) = arrange_coplanar_convex_surface_difference(&right, &left) {
-        let _ =
-            output.validate_against_sources(&right, &left, CoplanarArrangementOperation::Difference);
+        let _ = output.validate_against_sources(
+            &right,
+            &left,
+            CoplanarArrangementOperation::Difference,
+        );
     }
     if let Some(output) = arrange_coplanar_convex_surface_multi_difference(&left, &right) {
         let _ = output.validate_against_sources(&left, &right);
@@ -1129,171 +1140,206 @@ fuzz_target!(|data: &[u8]| {
             ValidationPolicy::ALLOW_BOUNDARY,
         )
         .map(|mesh| mesh.validate_retained_state());
-        let _ =
-            boolean_selected_regions(&left, &right, ExactBooleanPolicy::KEEP_ALL_BOUNDARY).map(
-                |result| {
-                    let _ = result.validate();
-                    let _ = result.validate_against_sources(&left, &right);
-                    let _ = result.assembly.validate_against_sources(
-                        &left,
-                        &right,
-                        ExactRegionSelection::KeepAll,
-                    );
-                    for classification in &result.region_classifications {
-                        let _ = classification.validate_against_sources(&left, &right);
-                    }
-                    for triangulation in &result.triangulations {
-                        let _ = triangulation.validate_against_sources(&left, &right);
-                    }
-                    let mut unknown_graph = result;
-                    unknown_graph.graph_had_unknowns = true;
-                    assert!(unknown_graph.validate().is_err());
-                    let mut missing_classifications = unknown_graph.clone();
-                    missing_classifications.graph_had_unknowns = false;
-                    missing_classifications.region_classifications.clear();
-                    assert!(missing_classifications.validate().is_err());
-                    let mut missing_triangulations = missing_classifications;
-                    missing_triangulations.region_classifications =
-                        unknown_graph.region_classifications.clone();
-                    missing_triangulations.triangulations.clear();
-                    assert!(missing_triangulations.validate().is_err());
-                    let mut duplicated_triangulation = unknown_graph.clone();
-                    if let Some(triangulation) =
-                        duplicated_triangulation.triangulations.first().cloned()
-                    {
-                        duplicated_triangulation.triangulations.push(triangulation);
-                        assert!(duplicated_triangulation.validate().is_err());
-                    }
-                    let mut unclassified_triangulation = unknown_graph;
-                    let mut same_side_classification = unclassified_triangulation.clone();
-                    if let Some(classification) =
-                        same_side_classification.region_classifications.first_mut()
-                    {
-                        classification.plane_side = classification.region_side;
-                        assert!(same_side_classification.validate().is_err());
-                    }
-                    let mut undecided_classification = unclassified_triangulation.clone();
-                    if let Some(classification) =
-                        undecided_classification.region_classifications.first_mut()
-                    {
-                        classification.relation = FaceRegionPlaneRelation::Unknown;
-                        classification.node_sides.fill(None);
-                        assert!(undecided_classification.validate().is_err());
-                    }
-                    let mut duplicated_classification = unclassified_triangulation.clone();
-                    if let Some(classification) = duplicated_classification
+        let _ = boolean_selected_regions(&left, &right, ExactBooleanPolicy::KEEP_ALL_BOUNDARY).map(
+            |result| {
+                let _ = result.validate();
+                let _ = result.validate_against_sources(&left, &right);
+                let _ = result.assembly.validate_against_sources(
+                    &left,
+                    &right,
+                    ExactRegionSelection::KeepAll,
+                );
+                for classification in &result.region_classifications {
+                    let _ = classification.validate_against_sources(&left, &right);
+                }
+                for triangulation in &result.triangulations {
+                    let _ = triangulation.validate_against_sources(&left, &right);
+                }
+                let mut unknown_graph = result;
+                unknown_graph.graph_had_unknowns = true;
+                assert!(unknown_graph.validate().is_err());
+                let mut missing_classifications = unknown_graph.clone();
+                missing_classifications.graph_had_unknowns = false;
+                missing_classifications.region_classifications.clear();
+                assert!(missing_classifications.validate().is_err());
+                let mut missing_triangulations = missing_classifications;
+                missing_triangulations.region_classifications =
+                    unknown_graph.region_classifications.clone();
+                missing_triangulations.triangulations.clear();
+                assert!(missing_triangulations.validate().is_err());
+                let mut duplicated_triangulation = unknown_graph.clone();
+                if let Some(triangulation) =
+                    duplicated_triangulation.triangulations.first().cloned()
+                {
+                    duplicated_triangulation.triangulations.push(triangulation);
+                    assert!(duplicated_triangulation.validate().is_err());
+                }
+                let mut unclassified_triangulation = unknown_graph;
+                let mut same_side_classification = unclassified_triangulation.clone();
+                if let Some(classification) =
+                    same_side_classification.region_classifications.first_mut()
+                {
+                    classification.plane_side = classification.region_side;
+                    assert!(same_side_classification.validate().is_err());
+                }
+                let mut undecided_classification = unclassified_triangulation.clone();
+                if let Some(classification) =
+                    undecided_classification.region_classifications.first_mut()
+                {
+                    classification.relation = FaceRegionPlaneRelation::Unknown;
+                    classification.node_sides.fill(None);
+                    assert!(undecided_classification.validate().is_err());
+                }
+                let mut duplicated_classification = unclassified_triangulation.clone();
+                if let Some(classification) = duplicated_classification
+                    .region_classifications
+                    .first()
+                    .cloned()
+                {
+                    duplicated_classification
                         .region_classifications
-                        .first()
-                        .cloned()
-                    {
-                        duplicated_classification
-                            .region_classifications
-                            .push(classification);
-                        assert!(duplicated_classification.validate().is_err());
-                    }
-                    let mut orphaned_classification = unclassified_triangulation.clone();
-                    if let Some(mut classification) = orphaned_classification
+                        .push(classification);
+                    assert!(duplicated_classification.validate().is_err());
+                }
+                let mut orphaned_classification = unclassified_triangulation.clone();
+                if let Some(mut classification) = orphaned_classification
+                    .region_classifications
+                    .first()
+                    .cloned()
+                {
+                    classification.region_face = usize::MAX;
+                    orphaned_classification
                         .region_classifications
-                        .first()
-                        .cloned()
-                    {
-                        classification.region_face = usize::MAX;
-                        orphaned_classification
-                            .region_classifications
-                            .push(classification);
-                        assert!(orphaned_classification.validate().is_err());
-                    }
-                    let mut untriangulated_assembly = unclassified_triangulation.clone();
-                    if let Some(triangle) = untriangulated_assembly.assembly.triangles.first_mut() {
-                        triangle.source_face = usize::MAX;
-                        assert!(untriangulated_assembly.validate().is_err());
-                    }
-                    let mut outside_triangulation = unclassified_triangulation.clone();
-                    if let Some(&vertex) = outside_triangulation
-                        .assembly
-                        .triangles
-                        .first()
-                        .and_then(|triangle| triangle.vertices.first())
-                    {
-                        let point = outside_triangulation.assembly.vertices[vertex].point.clone();
-                        outside_triangulation.assembly.vertices[vertex].source =
-                            FaceSplitBoundaryNode::OriginalVertex {
-                                vertex: usize::MAX,
-                                point,
-                            };
-                        assert!(outside_triangulation.validate().is_err());
-                    }
-                    let mut reversed_orientation = unclassified_triangulation.clone();
-                    if let Some(triangle) = reversed_orientation.assembly.triangles.first_mut() {
-                        triangle.vertices.swap(1, 2);
-                        assert!(reversed_orientation.assembly.validate().is_ok());
-                        assert!(reversed_orientation
+                        .push(classification);
+                    assert!(orphaned_classification.validate().is_err());
+                }
+                let mut untriangulated_assembly = unclassified_triangulation.clone();
+                if let Some(triangle) = untriangulated_assembly.assembly.triangles.first_mut() {
+                    triangle.source_face = usize::MAX;
+                    assert!(untriangulated_assembly.validate().is_err());
+                }
+                let mut outside_triangulation = unclassified_triangulation.clone();
+                if let Some(&vertex) = outside_triangulation
+                    .assembly
+                    .triangles
+                    .first()
+                    .and_then(|triangle| triangle.vertices.first())
+                {
+                    let point = outside_triangulation.assembly.vertices[vertex]
+                        .point
+                        .clone();
+                    outside_triangulation.assembly.vertices[vertex].source =
+                        FaceSplitBoundaryNode::OriginalVertex {
+                            vertex: usize::MAX,
+                            point,
+                        };
+                    assert!(outside_triangulation.validate().is_err());
+                }
+                let mut reversed_orientation = unclassified_triangulation.clone();
+                if let Some(triangle) = reversed_orientation.assembly.triangles.first_mut() {
+                    triangle.vertices.swap(1, 2);
+                    assert!(reversed_orientation.assembly.validate().is_ok());
+                    assert!(
+                        reversed_orientation
                             .assembly
                             .validate_source_face_incidence(&left, &right)
-                            .is_err());
-                        assert!(reversed_orientation
+                            .is_err()
+                    );
+                    assert!(
+                        reversed_orientation
                             .validate_against_sources(&left, &right)
-                            .is_err());
-                        assert!(reversed_orientation
+                            .is_err()
+                    );
+                    assert!(
+                        reversed_orientation
                             .assembly
                             .checked_to_exact_mesh_with_sources(
                                 &left,
                                 &right,
                                 ValidationPolicy::ALLOW_BOUNDARY,
                             )
-                            .is_err());
-                    }
-                    let mut unreferenced_vertex = unclassified_triangulation.clone();
-                    if let Some(vertex) = unreferenced_vertex.assembly.vertices.first().cloned() {
-                        unreferenced_vertex.assembly.vertices.push(vertex);
-                        assert!(unreferenced_vertex.assembly.validate().is_err());
-                        assert!(unreferenced_vertex
+                            .is_err()
+                    );
+                }
+                let mut unreferenced_vertex = unclassified_triangulation.clone();
+                if let Some(vertex) = unreferenced_vertex.assembly.vertices.first().cloned() {
+                    unreferenced_vertex.assembly.vertices.push(vertex);
+                    assert!(unreferenced_vertex.assembly.validate().is_err());
+                    assert!(
+                        unreferenced_vertex
                             .assembly
                             .to_exact_mesh(ValidationPolicy::ALLOW_BOUNDARY)
-                            .is_err());
-                        assert!(unreferenced_vertex.validate().is_err());
+                            .is_err()
+                    );
+                    assert!(unreferenced_vertex.validate().is_err());
+                }
+                let mut mismatched_mesh = unclassified_triangulation.clone();
+                let mut mesh_vertices = mismatched_mesh.mesh.vertices().to_vec();
+                if let Some(vertex) = mesh_vertices.first_mut() {
+                    *vertex = hypermesh::exact::ExactPoint3::new(
+                        hypermesh::exact::ExactReal::from(99),
+                        hypermesh::exact::ExactReal::from(0),
+                        hypermesh::exact::ExactReal::from(0),
+                    );
+                    if let Ok(mesh) = ExactMesh::new_with_policy(
+                        mesh_vertices,
+                        mismatched_mesh.mesh.triangles().to_vec(),
+                        SourceProvenance::exact("fuzz selected-region mesh vertex payload"),
+                        ValidationPolicy::ALLOW_BOUNDARY,
+                    ) {
+                        mismatched_mesh.mesh = mesh;
+                        assert!(mismatched_mesh.validate().is_err());
                     }
-                    let mut mismatched_mesh = unclassified_triangulation.clone();
-                    let mut mesh_vertices = mismatched_mesh.mesh.vertices().to_vec();
-                    if let Some(vertex) = mesh_vertices.first_mut() {
-                        *vertex = hypermesh::exact::ExactPoint3::new(
-                            hypermesh::exact::ExactReal::from(99),
-                            hypermesh::exact::ExactReal::from(0),
-                            hypermesh::exact::ExactReal::from(0),
-                        );
-                        if let Ok(mesh) = ExactMesh::new_with_policy(
-                            mesh_vertices,
-                            mismatched_mesh.mesh.triangles().to_vec(),
-                            SourceProvenance::exact("fuzz selected-region mesh vertex payload"),
-                            ValidationPolicy::ALLOW_BOUNDARY,
-                        ) {
-                            mismatched_mesh.mesh = mesh;
-                            assert!(mismatched_mesh.validate().is_err());
-                        }
+                }
+                let mut mismatched_mesh = unclassified_triangulation.clone();
+                let mut mesh_triangles = mismatched_mesh.mesh.triangles().to_vec();
+                if let Some(triangle) = mesh_triangles.first_mut() {
+                    triangle.0.swap(1, 2);
+                    if let Ok(mesh) = ExactMesh::new_with_policy(
+                        mismatched_mesh.mesh.vertices().to_vec(),
+                        mesh_triangles,
+                        SourceProvenance::exact("fuzz selected-region mesh payload"),
+                        ValidationPolicy::ALLOW_BOUNDARY,
+                    ) {
+                        mismatched_mesh.mesh = mesh;
+                        assert!(mismatched_mesh.validate().is_err());
                     }
-                    let mut mismatched_mesh = unclassified_triangulation.clone();
-                    let mut mesh_triangles = mismatched_mesh.mesh.triangles().to_vec();
-                    if let Some(triangle) = mesh_triangles.first_mut() {
-                        triangle.0.swap(1, 2);
-                        if let Ok(mesh) = ExactMesh::new_with_policy(
-                            mismatched_mesh.mesh.vertices().to_vec(),
-                            mesh_triangles,
-                            SourceProvenance::exact("fuzz selected-region mesh payload"),
-                            ValidationPolicy::ALLOW_BOUNDARY,
-                        ) {
-                            mismatched_mesh.mesh = mesh;
-                            assert!(mismatched_mesh.validate().is_err());
-                        }
-                    }
-                    if let Some(triangulation) = unclassified_triangulation.triangulations.first_mut()
-                    {
-                        triangulation.face = usize::MAX;
-                        assert!(unclassified_triangulation.validate().is_err());
-                    }
-                },
-            );
+                }
+                if let Some(triangulation) = unclassified_triangulation.triangulations.first_mut() {
+                    triangulation.face = usize::MAX;
+                    assert!(unclassified_triangulation.validate().is_err());
+                }
+            },
+        );
     }
 });
+
+#[cfg(feature = "exact-triangulation")]
+fn exercise_deterministic_case(selector: u8) {
+    match selector % 16 {
+        0 => exercise_partial_convex_union_boundary(),
+        1 => exercise_face_interior_steiner_boundary(),
+        2 => exercise_multi_component_coplanar_union(),
+        3 => exercise_component_coplanar_intersection(),
+        4 => exercise_component_coplanar_difference(),
+        5 => exercise_boundary_centroid_volumetric_representative(),
+        6 => exercise_exhausted_boundary_volumetric_representatives(),
+        7 => exercise_closed_coplanar_overlap_boundary_policy(),
+        8 => exercise_closed_vertex_touch_boundary_policy(),
+        9 => exercise_axis_aligned_coplanar_volumetric_boxes(),
+        10 => exercise_axis_aligned_orthogonal_solid_cell_complexes(),
+        11 => exercise_affine_coplanar_volumetric_boxes(),
+        12 => exercise_affine_orthogonal_solid_cell_complexes(),
+        13 => exercise_affine_orthogonal_solid_cell_complex_frame_discovery(),
+        14 => exercise_mixed_coplanar_volumetric_materialization(),
+        _ => exercise_non_rectilinear_coplanar_volumetric_materialization(),
+    }
+}
+
+#[cfg(not(feature = "exact-triangulation"))]
+fn exercise_deterministic_case(_: u8) {
+    exercise_partial_convex_union_boundary();
+}
 
 fn exercise_partial_convex_union_boundary() {
     let left = ExactMesh::from_i64_triangles(
@@ -1308,7 +1354,9 @@ fn exercise_partial_convex_union_boundary() {
     .expect("deterministic convex right fixture must import");
     let preflight = preflight_boolean_exact(&left, &right, ExactBooleanOperation::Union)
         .expect("partial convex union preflight should classify exact face cells");
-    preflight.validate().expect("preflight report must validate");
+    preflight
+        .validate()
+        .expect("preflight report must validate");
     assert_eq!(
         preflight.support,
         ExactBooleanSupport::CertifiedWindingMaterialized
@@ -1380,9 +1428,7 @@ fn exercise_multi_component_coplanar_union() {
     let preflight = preflight_boolean_exact(&left, &right, ExactBooleanOperation::Union)
         .expect("multi-component coplanar union preflight should classify shortcut");
     preflight.validate().unwrap();
-    preflight
-        .validate_against_sources(&left, &right)
-        .unwrap();
+    preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
         ExactBooleanSupport::CertifiedCoplanarConvexSurfaceMultiUnion
@@ -1452,9 +1498,12 @@ fn exercise_multi_component_coplanar_union() {
     )
     .expect("point-touching convex surface fixture must import");
     assert!(arrange_coplanar_convex_surface_union(&edge_touch_left, &point_touch_right).is_none());
-    let point_touch_preflight =
-        preflight_boolean_exact(&edge_touch_left, &point_touch_right, ExactBooleanOperation::Union)
-            .expect("point-touching convex surface preflight should classify policy gap");
+    let point_touch_preflight = preflight_boolean_exact(
+        &edge_touch_left,
+        &point_touch_right,
+        ExactBooleanOperation::Union,
+    )
+    .expect("point-touching convex surface preflight should classify policy gap");
     point_touch_preflight.validate().unwrap();
     assert_eq!(
         point_touch_preflight.support,
@@ -1753,8 +1802,9 @@ fn exercise_component_coplanar_difference() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .expect("multi-cutter component difference right fixture must import");
-    let multi_difference = arrange_coplanar_convex_surface_multi_difference(&multi_left, &multi_right)
-        .expect("independent right cutters should retain three exact output loops");
+    let multi_difference =
+        arrange_coplanar_convex_surface_multi_difference(&multi_left, &multi_right)
+            .expect("independent right cutters should retain three exact output loops");
     multi_difference.validate().unwrap();
     multi_difference
         .validate_against_sources(&multi_left, &multi_right)
@@ -1793,11 +1843,9 @@ fn exercise_component_coplanar_difference() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .expect("same-left double-cutter right fixture must import");
-    let same_component_multi_cutter = arrange_coplanar_convex_surface_multi_difference(
-        &wide_left,
-        &two_cutters_one_component,
-    )
-    .expect("full-span double cutter should split one retained component exactly");
+    let same_component_multi_cutter =
+        arrange_coplanar_convex_surface_multi_difference(&wide_left, &two_cutters_one_component)
+            .expect("full-span double cutter should split one retained component exactly");
     same_component_multi_cutter.validate().unwrap();
     same_component_multi_cutter
         .validate_against_sources(&wide_left, &two_cutters_one_component)
@@ -1832,10 +1880,12 @@ fn exercise_component_coplanar_difference() {
         .validate_against_sources(&corner_cutter_left, &nonrectangular_corner_cutters)
         .unwrap();
     assert_eq!(nonrectangular_multi_cutter.polygons.len(), 2);
-    assert!(nonrectangular_multi_cutter
-        .polygons
-        .iter()
-        .any(|polygon| polygon.len() == 6));
+    assert!(
+        nonrectangular_multi_cutter
+            .polygons
+            .iter()
+            .any(|polygon| polygon.len() == 6)
+    );
     let nonrectangular_preflight = preflight_boolean_exact(
         &corner_cutter_left,
         &nonrectangular_corner_cutters,
@@ -1877,10 +1927,12 @@ fn exercise_component_coplanar_difference() {
         .validate_difference_against_sources(&corner_cutter_left, &nonconvex_multi_cutter_right)
         .unwrap();
     assert_eq!(nonconvex_multi_cutter.polygons.len(), 2);
-    assert!(nonconvex_multi_cutter
-        .polygons
-        .iter()
-        .any(|polygon| polygon.len() == 9));
+    assert!(
+        nonconvex_multi_cutter
+            .polygons
+            .iter()
+            .any(|polygon| polygon.len() == 9)
+    );
     let nonconvex_preflight = preflight_boolean_exact(
         &corner_cutter_left,
         &nonconvex_multi_cutter_right,
@@ -1939,10 +1991,12 @@ fn exercise_component_coplanar_difference() {
         .validate_against_sources(&holed_left, &holed_right)
         .unwrap();
     assert_eq!(component_holed.components.len(), 2);
-    assert!(component_holed
-        .components
-        .iter()
-        .any(|component| !component.holes.is_empty()));
+    assert!(
+        component_holed
+            .components
+            .iter()
+            .any(|component| !component.holes.is_empty())
+    );
     let holed_preflight =
         preflight_boolean_exact(&holed_left, &holed_right, ExactBooleanOperation::Difference)
             .expect("component-holed difference preflight should classify shortcut");
@@ -1961,33 +2015,33 @@ fn exercise_component_coplanar_difference() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .expect("component-holed cut right fixture must import");
-    let component_holed_cut =
-        arrange_coplanar_convex_surface_component_holed_difference(
-            &holed_left,
-            &holed_and_cut_right,
-        )
-        .expect("component-holed difference should assign strict holes to cut remnants");
+    let component_holed_cut = arrange_coplanar_convex_surface_component_holed_difference(
+        &holed_left,
+        &holed_and_cut_right,
+    )
+    .expect("component-holed difference should assign strict holes to cut remnants");
     component_holed_cut.validate().unwrap();
     component_holed_cut
         .validate_against_sources(&holed_left, &holed_and_cut_right)
         .unwrap();
     assert_eq!(component_holed_cut.components.len(), 2);
-    assert!(component_holed_cut
-        .components
-        .iter()
-        .any(|component| component.holes.len() == 1));
+    assert!(
+        component_holed_cut
+            .components
+            .iter()
+            .any(|component| component.holes.len() == 1)
+    );
     let single_holed_left = ExactMesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 10, 0, 0, 10, 10, 0, 0, 10, 0],
         &[0, 1, 2, 0, 2, 3],
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .expect("single component-holed left fixture must import");
-    let single_component_holed_cut =
-        arrange_coplanar_convex_surface_component_holed_difference(
-            &single_holed_left,
-            &holed_and_cut_right,
-        )
-        .expect("single component-holed cut should materialize a retained holed remnant");
+    let single_component_holed_cut = arrange_coplanar_convex_surface_component_holed_difference(
+        &single_holed_left,
+        &holed_and_cut_right,
+    )
+    .expect("single component-holed cut should materialize a retained holed remnant");
     single_component_holed_cut.validate().unwrap();
     single_component_holed_cut
         .validate_against_sources(&single_holed_left, &holed_and_cut_right)
@@ -2009,21 +2063,22 @@ fn exercise_component_coplanar_difference() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .expect("component-holed double-cutter fixture must import");
-    let component_holed_multi_cut =
-        arrange_coplanar_convex_surface_component_holed_difference(
-            &holed_left,
-            &holed_two_cutters_right,
-        )
-        .expect("component-holed full-span double-cutter should materialize");
+    let component_holed_multi_cut = arrange_coplanar_convex_surface_component_holed_difference(
+        &holed_left,
+        &holed_two_cutters_right,
+    )
+    .expect("component-holed full-span double-cutter should materialize");
     component_holed_multi_cut.validate().unwrap();
     component_holed_multi_cut
         .validate_against_sources(&holed_left, &holed_two_cutters_right)
         .unwrap();
     assert_eq!(component_holed_multi_cut.components.len(), 3);
-    assert!(component_holed_multi_cut
-        .components
-        .iter()
-        .any(|component| component.holes.len() == 1));
+    assert!(
+        component_holed_multi_cut
+            .components
+            .iter()
+            .any(|component| component.holes.len() == 1)
+    );
     let holed_multi_cut_preflight = preflight_boolean_exact(
         &holed_left,
         &holed_two_cutters_right,
@@ -2050,21 +2105,22 @@ fn exercise_component_coplanar_difference() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .expect("component-holed corner-cutter fixture must import");
-    let component_holed_corner_cut =
-        arrange_coplanar_convex_surface_component_holed_difference(
-            &holed_left,
-            &holed_corner_cutters_right,
-        )
-        .expect("component-holed corner cutters should retain a holed convex remnant");
+    let component_holed_corner_cut = arrange_coplanar_convex_surface_component_holed_difference(
+        &holed_left,
+        &holed_corner_cutters_right,
+    )
+    .expect("component-holed corner cutters should retain a holed convex remnant");
     component_holed_corner_cut.validate().unwrap();
     component_holed_corner_cut
         .validate_against_sources(&holed_left, &holed_corner_cutters_right)
         .unwrap();
     assert_eq!(component_holed_corner_cut.components.len(), 2);
-    assert!(component_holed_corner_cut
-        .components
-        .iter()
-        .any(|component| component.outer.len() == 6 && component.holes.len() == 1));
+    assert!(
+        component_holed_corner_cut
+            .components
+            .iter()
+            .any(|component| component.outer.len() == 6 && component.holes.len() == 1)
+    );
 
     let nonconvex_holed_left = ExactMesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 20, 0, 0, 20, 20, 0, 0, 20, 0],
@@ -2081,12 +2137,11 @@ fn exercise_component_coplanar_difference() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .expect("nonconvex component-holed right fixture must import");
-    let nonconvex_component_holed =
-        arrange_coplanar_convex_surface_component_holed_difference(
-            &nonconvex_holed_left,
-            &nonconvex_holed_right,
-        )
-        .expect("component-holed nonconvex outer should retain a strict hole");
+    let nonconvex_component_holed = arrange_coplanar_convex_surface_component_holed_difference(
+        &nonconvex_holed_left,
+        &nonconvex_holed_right,
+    )
+    .expect("component-holed nonconvex outer should retain a strict hole");
     nonconvex_component_holed.validate().unwrap();
     nonconvex_component_holed
         .validate_against_sources(&nonconvex_holed_left, &nonconvex_holed_right)
@@ -2230,12 +2285,8 @@ fn exercise_component_coplanar_difference() {
     l_union.validate_against_sources(&l_left, &l_right).unwrap();
     assert_eq!(l_union.components.len(), 1);
     assert_eq!(l_union.components[0].holes.len(), 0);
-    let union_preflight = preflight_boolean_exact(
-        &l_left,
-        &l_right,
-        ExactBooleanOperation::Union,
-    )
-    .expect("orthogonal union preflight should classify shortcut");
+    let union_preflight = preflight_boolean_exact(&l_left, &l_right, ExactBooleanOperation::Union)
+        .expect("orthogonal union preflight should classify shortcut");
     union_preflight.validate().unwrap();
     union_preflight
         .validate_against_sources(&l_left, &l_right)
@@ -2293,12 +2344,9 @@ fn exercise_component_coplanar_difference() {
         .unwrap();
     assert_eq!(holed_difference.components.len(), 1);
     assert_eq!(holed_difference.components[0].holes.len(), 1);
-    let holed_preflight = preflight_boolean_exact(
-        &holed_left,
-        &holed_right,
-        ExactBooleanOperation::Difference,
-    )
-    .expect("orthogonal holed difference preflight should classify shortcut");
+    let holed_preflight =
+        preflight_boolean_exact(&holed_left, &holed_right, ExactBooleanOperation::Difference)
+            .expect("orthogonal holed difference preflight should classify shortcut");
     holed_preflight.validate().unwrap();
     assert_eq!(
         holed_preflight.support,
@@ -2306,8 +2354,7 @@ fn exercise_component_coplanar_difference() {
     );
 
     let graph_left = rect_surface_i64(&[(0, 0, 12, 10)]);
-    let graph_right =
-        rect_surface_i64(&[(3, 3, 5, 5), (7, 3, 9, 5), (5, 4, 7, 5), (-1, 4, 3, 5)]);
+    let graph_right = rect_surface_i64(&[(3, 3, 5, 5), (7, 3, 9, 5), (5, 4, 7, 5), (-1, 4, 3, 5)]);
     assert!(
         arrange_coplanar_surface_cutter_hole_contact_difference(&graph_left, &graph_right)
             .is_none()
@@ -2400,12 +2447,7 @@ fn exercise_face_interior_steiner_boundary() {
                 point: point3(1, 1, 0),
             },
         ],
-        vertices: vec![
-            point2(0, 0),
-            point2(4, 0),
-            point2(0, 4),
-            point2(1, 1),
-        ],
+        vertices: vec![point2(0, 0), point2(4, 0), point2(0, 4), point2(1, 1)],
         triangles: vec![0, 1, 3, 0, 3, 2],
     };
 
@@ -2417,7 +2459,9 @@ fn exercise_face_interior_steiner_boundary() {
         &mesh,
     )
     .unwrap();
-    assembly.validate_source_face_incidence(&mesh, &mesh).unwrap();
+    assembly
+        .validate_source_face_incidence(&mesh, &mesh)
+        .unwrap();
     assembly
         .checked_to_exact_mesh_with_sources(&mesh, &mesh, ValidationPolicy::ALLOW_BOUNDARY)
         .unwrap();
@@ -2592,9 +2636,7 @@ fn exercise_closed_coplanar_overlap_boundary_policy() {
     let preflight = preflight_boolean_exact(&left, &right, ExactBooleanOperation::Union)
         .expect("closed coplanar contact preflight should classify boundary policy");
     preflight.validate().unwrap();
-    preflight
-        .validate_against_sources(&left, &right)
-        .unwrap();
+    preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
         ExactBooleanSupport::RequiresBoundaryPolicy
@@ -2617,9 +2659,7 @@ fn exercise_closed_coplanar_overlap_boundary_policy() {
     )
     .unwrap();
     shortcut.validate().unwrap();
-    shortcut
-        .validate_against_sources(&left, &right)
-        .unwrap();
+    shortcut.validate_against_sources(&left, &right).unwrap();
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -2641,9 +2681,12 @@ fn exercise_closed_vertex_touch_boundary_policy() {
     graph
         .validate_against_meshes(&left, &right)
         .expect("graph should replay against sources");
-    assert!(graph.face_pairs.iter().any(|pair| {
-        pair.relation == hypermesh::exact::MeshFacePairRelation::Candidate
-    }));
+    assert!(
+        graph
+            .face_pairs
+            .iter()
+            .any(|pair| { pair.relation == hypermesh::exact::MeshFacePairRelation::Candidate })
+    );
 
     let boundary_report = certify_boundary_touching_report(&left, &right)
         .expect("closed vertex touch should certify boundary policy");
@@ -2660,9 +2703,7 @@ fn exercise_closed_vertex_touch_boundary_policy() {
     let preflight = preflight_boolean_exact(&left, &right, ExactBooleanOperation::Union)
         .expect("closed vertex-touch preflight should classify boundary policy");
     preflight.validate().unwrap();
-    preflight
-        .validate_against_sources(&left, &right)
-        .unwrap();
+    preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
         ExactBooleanSupport::RequiresBoundaryPolicy
@@ -2677,22 +2718,20 @@ fn exercise_closed_vertex_touch_boundary_policy() {
     )
     .unwrap();
     shortcut.validate().unwrap();
-    shortcut
-        .validate_against_sources(&left, &right)
-        .unwrap();
+    shortcut.validate_against_sources(&left, &right).unwrap();
 }
 
 #[cfg(feature = "exact-triangulation")]
 fn axis_aligned_box_i64(min: [i64; 3], max: [i64; 3]) -> ExactMesh {
     ExactMesh::from_i64_triangles(
         &[
-            min[0], min[1], min[2], max[0], min[1], min[2], max[0], max[1], min[2], min[0],
-            max[1], min[2], min[0], min[1], max[2], max[0], min[1], max[2], max[0], max[1],
-            max[2], min[0], max[1], max[2],
+            min[0], min[1], min[2], max[0], min[1], min[2], max[0], max[1], min[2], min[0], max[1],
+            min[2], min[0], min[1], max[2], max[0], min[1], max[2], max[0], max[1], max[2], min[0],
+            max[1], max[2],
         ],
         &[
-            0, 2, 1, 0, 3, 2, 4, 5, 6, 4, 6, 7, 0, 1, 5, 0, 5, 4, 1, 2,
-            6, 1, 6, 5, 2, 3, 7, 2, 7, 6, 3, 0, 4, 3, 4, 7,
+            0, 2, 1, 0, 3, 2, 4, 5, 6, 4, 6, 7, 0, 1, 5, 0, 5, 4, 1, 2, 6, 1, 6, 5, 2, 3, 7, 2, 7,
+            6, 3, 0, 4, 3, 4, 7,
         ],
     )
     .expect("axis-aligned box fixture must import")
@@ -2737,8 +2776,8 @@ fn affine_box_i64(
         ]);
     }
     let mut indices = vec![
-        0, 2, 1, 0, 3, 2, 4, 5, 6, 4, 6, 7, 0, 1, 5, 0, 5, 4, 1, 2, 6, 1, 6,
-        5, 2, 3, 7, 2, 7, 6, 3, 0, 4, 3, 4, 7,
+        0, 2, 1, 0, 3, 2, 4, 5, 6, 4, 6, 7, 0, 1, 5, 0, 5, 4, 1, 2, 6, 1, 6, 5, 2, 3, 7, 2, 7, 6,
+        3, 0, 4, 3, 4, 7,
     ];
     if determinant_i128(basis_u, basis_v, basis_w) < 0 {
         for triangle in indices.chunks_exact_mut(3) {
@@ -2754,13 +2793,13 @@ fn top_subdivided_axis_aligned_box_i64(min: [i64; 3], max: [i64; 3]) -> ExactMes
     let mid_y = (min[1] + max[1]) / 2;
     ExactMesh::from_i64_triangles(
         &[
-            min[0], min[1], min[2], max[0], min[1], min[2], max[0], max[1], min[2], min[0],
-            max[1], min[2], min[0], min[1], max[2], max[0], min[1], max[2], max[0], max[1],
-            max[2], min[0], max[1], max[2], mid_x, mid_y, max[2],
+            min[0], min[1], min[2], max[0], min[1], min[2], max[0], max[1], min[2], min[0], max[1],
+            min[2], min[0], min[1], max[2], max[0], min[1], max[2], max[0], max[1], max[2], min[0],
+            max[1], max[2], mid_x, mid_y, max[2],
         ],
         &[
-            0, 2, 1, 0, 3, 2, 4, 5, 8, 5, 6, 8, 6, 7, 8, 7, 4, 8, 0, 1, 5, 0, 5, 4, 1, 2,
-            6, 1, 6, 5, 2, 3, 7, 2, 7, 6, 3, 0, 4, 3, 4, 7,
+            0, 2, 1, 0, 3, 2, 4, 5, 8, 5, 6, 8, 6, 7, 8, 7, 4, 8, 0, 1, 5, 0, 5, 4, 1, 2, 6, 1, 6,
+            5, 2, 3, 7, 2, 7, 6, 3, 0, 4, 3, 4, 7,
         ],
     )
     .expect("top-subdivided axis-aligned box fixture must import")
@@ -2806,12 +2845,8 @@ fn exercise_axis_aligned_coplanar_volumetric_boxes() {
 
     let face_left = axis_aligned_box_i64([0, 0, 0], [2, 2, 2]);
     let face_right = axis_aligned_box_i64([2, 0, 0], [4, 2, 2]);
-    let face_union = preflight_boolean_exact(
-        &face_left,
-        &face_right,
-        ExactBooleanOperation::Union,
-    )
-    .expect("face-adjacent axis-aligned box union preflight should classify shortcut");
+    let face_union = preflight_boolean_exact(&face_left, &face_right, ExactBooleanOperation::Union)
+        .expect("face-adjacent axis-aligned box union preflight should classify shortcut");
     face_union.validate().unwrap();
     assert_eq!(
         face_union.support,
@@ -2833,12 +2868,9 @@ fn exercise_axis_aligned_coplanar_volumetric_boxes() {
             ExactBoundaryBooleanPolicy::Reject,
         )
         .unwrap();
-    let face_difference = preflight_boolean_exact(
-        &face_left,
-        &face_right,
-        ExactBooleanOperation::Difference,
-    )
-    .expect("face-adjacent axis-aligned box difference should classify shortcut");
+    let face_difference =
+        preflight_boolean_exact(&face_left, &face_right, ExactBooleanOperation::Difference)
+            .expect("face-adjacent axis-aligned box difference should classify shortcut");
     face_difference.validate().unwrap();
     assert_eq!(
         face_difference.support,
@@ -2930,9 +2962,12 @@ fn exercise_axis_aligned_coplanar_volumetric_boxes() {
 
     let nested_left = axis_aligned_box_i64([0, 0, 0], [4, 4, 4]);
     let nested_right = axis_aligned_box_i64([1, 1, 1], [3, 3, 3]);
-    let nested_difference =
-        preflight_boolean_exact(&nested_left, &nested_right, ExactBooleanOperation::Difference)
-            .expect("axis-aligned box nested difference preflight should classify shortcut");
+    let nested_difference = preflight_boolean_exact(
+        &nested_left,
+        &nested_right,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("axis-aligned box nested difference preflight should classify shortcut");
     nested_difference.validate().unwrap();
     assert_eq!(
         nested_difference.support,
@@ -2957,9 +2992,12 @@ fn exercise_axis_aligned_coplanar_volumetric_boxes() {
 
     let contained_outer = axis_aligned_box_i64([0, 0, 0], [4, 4, 4]);
     let contained_inner = axis_aligned_box_i64([1, 1, 1], [3, 3, 3]);
-    let contained_union =
-        preflight_boolean_exact(&contained_outer, &contained_inner, ExactBooleanOperation::Union)
-            .expect("axis-aligned contained box union preflight should classify shortcut");
+    let contained_union = preflight_boolean_exact(
+        &contained_outer,
+        &contained_inner,
+        ExactBooleanOperation::Union,
+    )
+    .expect("axis-aligned contained box union preflight should classify shortcut");
     contained_union.validate().unwrap();
     assert_eq!(
         contained_union.support,
@@ -2982,9 +3020,12 @@ fn exercise_axis_aligned_coplanar_volumetric_boxes() {
         )
         .unwrap();
 
-    let empty_difference =
-        preflight_boolean_exact(&contained_inner, &contained_outer, ExactBooleanOperation::Difference)
-            .expect("axis-aligned contained-left difference preflight should classify shortcut");
+    let empty_difference = preflight_boolean_exact(
+        &contained_inner,
+        &contained_outer,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("axis-aligned contained-left difference preflight should classify shortcut");
     empty_difference.validate().unwrap();
     assert_eq!(
         empty_difference.support,
@@ -3037,9 +3078,12 @@ fn exercise_axis_aligned_coplanar_volumetric_boxes() {
         .unwrap();
 
     let protruding_overlap = axis_aligned_box_i64([-1, 1, 1], [2, 3, 3]);
-    let protruding_difference =
-        preflight_boolean_exact(&protruding_overlap, &contained_outer, ExactBooleanOperation::Difference)
-            .expect("axis-aligned protruding overlap preflight should classify exactly");
+    let protruding_difference = preflight_boolean_exact(
+        &protruding_overlap,
+        &contained_outer,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("axis-aligned protruding overlap preflight should classify exactly");
     protruding_difference.validate().unwrap();
     assert_ne!(
         protruding_difference.support,
@@ -3072,12 +3116,9 @@ fn exercise_axis_aligned_coplanar_volumetric_boxes() {
         )
         .unwrap();
 
-    let cell_intersection = preflight_boolean_exact(
-        &cell_left,
-        &cell_right,
-        ExactBooleanOperation::Intersection,
-    )
-    .expect("axis-aligned box intersection preflight should classify shortcut");
+    let cell_intersection =
+        preflight_boolean_exact(&cell_left, &cell_right, ExactBooleanOperation::Intersection)
+            .expect("axis-aligned box intersection preflight should classify shortcut");
     cell_intersection.validate().unwrap();
     assert_eq!(
         cell_intersection.support,
@@ -3453,12 +3494,9 @@ fn exercise_affine_orthogonal_solid_cell_complex_frame_discovery() {
     .expect("right affine complex should materialize")
     .mesh;
 
-    let union = preflight_boolean_exact(
-        &left_complex,
-        &right_complex,
-        ExactBooleanOperation::Union,
-    )
-    .expect("affine complex frame-discovery union preflight should classify shortcut");
+    let union =
+        preflight_boolean_exact(&left_complex, &right_complex, ExactBooleanOperation::Union)
+            .expect("affine complex frame-discovery union preflight should classify shortcut");
     union.validate().unwrap();
     union
         .validate_against_sources(&left_complex, &right_complex)
@@ -3548,12 +3586,11 @@ fn exercise_affine_orthogonal_solid_cell_complex_frame_discovery() {
 fn exercise_mixed_coplanar_volumetric_materialization() {
     let left = ExactMesh::from_i64_triangles(
         &[
-            0, 0, 0, 2, 0, 0, 2, 2, 0, 0, 2, 0, 0, 0, 2, 2, 0, 2, 2, 2,
-            2, 0, 2, 2,
+            0, 0, 0, 2, 0, 0, 2, 2, 0, 0, 2, 0, 0, 0, 2, 2, 0, 2, 2, 2, 2, 0, 2, 2,
         ],
         &[
-            0, 2, 1, 0, 3, 2, 4, 5, 6, 4, 6, 7, 0, 1, 5, 0, 5, 4, 1, 2,
-            6, 1, 6, 5, 2, 3, 7, 2, 7, 6, 3, 0, 4, 3, 4, 7,
+            0, 2, 1, 0, 3, 2, 4, 5, 6, 4, 6, 7, 0, 1, 5, 0, 5, 4, 1, 2, 6, 1, 6, 5, 2, 3, 7, 2, 7,
+            6, 3, 0, 4, 3, 4, 7,
         ],
     )
     .expect("mixed coplanar-volumetric left fixture must import");
@@ -3572,9 +3609,7 @@ fn exercise_mixed_coplanar_volumetric_materialization() {
     let preflight = preflight_boolean_exact(&left, &right, ExactBooleanOperation::Union)
         .expect("mixed coplanar-volumetric preflight should classify materialization");
     preflight.validate().unwrap();
-    preflight
-        .validate_against_sources(&left, &right)
-        .unwrap();
+    preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
         hypermesh::exact::ExactBooleanSupport::CertifiedWindingMaterialized
@@ -3623,8 +3658,9 @@ fn exercise_non_rectilinear_coplanar_volumetric_materialization() {
         ExactBooleanOperation::Intersection,
         ExactBooleanOperation::Difference,
     ] {
-        let preflight = preflight_boolean_exact(&left, &right, operation)
-            .expect("non-rectilinear coplanar-volumetric preflight should classify materialization");
+        let preflight = preflight_boolean_exact(&left, &right, operation).expect(
+            "non-rectilinear coplanar-volumetric preflight should classify materialization",
+        );
         preflight.validate().unwrap();
         preflight.validate_against_sources(&left, &right).unwrap();
         assert_eq!(
@@ -3632,13 +3668,9 @@ fn exercise_non_rectilinear_coplanar_volumetric_materialization() {
             ExactBooleanSupport::CertifiedWindingMaterialized
         );
 
-        let result = hypermesh::exact::boolean_exact(
-            &left,
-            &right,
-            operation,
-            ValidationPolicy::CLOSED,
-        )
-        .expect("non-rectilinear coplanar-volumetric boolean should materialize");
+        let result =
+            hypermesh::exact::boolean_exact(&left, &right, operation, ValidationPolicy::CLOSED)
+                .expect("non-rectilinear coplanar-volumetric boolean should materialize");
         result
             .validate_operation_against_sources(
                 &left,
@@ -3724,9 +3756,8 @@ fn point3(x: i64, y: i64, z: i64) -> hyperlimit::Point3 {
 
 #[cfg(feature = "exact-triangulation")]
 fn rational(numerator: i64, denominator: i64) -> hypermesh::exact::ExactReal {
-    (hypermesh::exact::ExactReal::from(numerator)
-        / hypermesh::exact::ExactReal::from(denominator))
-    .expect("nonzero denominator")
+    (hypermesh::exact::ExactReal::from(numerator) / hypermesh::exact::ExactReal::from(denominator))
+        .expect("nonzero denominator")
 }
 
 fn reversed_surface_mesh(mesh: &ExactMesh) -> Option<ExactMesh> {

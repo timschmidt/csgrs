@@ -20,7 +20,8 @@ use hypermesh::exact::{
     certify_boundary_touching_report, certify_convex_solid,
     certify_coplanar_convex_surface_containment, certify_coplanar_convex_surface_equivalence,
     certify_coplanar_convex_surface_report, certify_open_surface_disjoint_report,
-    certify_planar_arrangement_report, certify_refinement_report, certify_same_surface_report,
+    certify_planar_arrangement_evidence, certify_planar_arrangement_report,
+    certify_refinement_report, certify_same_surface_report,
     certify_single_triangle_coplanar_containment,
     certify_single_triangle_coplanar_containment_report, certify_winding_readiness_report,
     checked_classify_face_regions_against_opposite_planes, classify_coplanar_triangles,
@@ -969,6 +970,42 @@ fn exact_coplanar_overlap_graph_handoff(c: &mut Criterion) {
                     .unwrap_err(),
                 split_plan,
                 readiness,
+            )
+        })
+    });
+}
+
+fn exact_planar_arrangement_evidence(c: &mut Criterion) {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            0, 0, 0, 4, 0, 0, 0, 4, 0, //
+            8, 0, 0, 12, 0, 0, 8, 4, 0,
+        ],
+        &[0, 1, 2, 3, 4, 5],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let right = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            1, 0, 0, 5, 0, 0, 1, 4, 0, //
+            8, 4, 0, 12, 4, 0, 8, 8, 0,
+        ],
+        &[0, 1, 2, 3, 4, 5],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+
+    c.bench_function("exact_planar_arrangement_evidence", |b| {
+        b.iter(|| {
+            let report = certify_planar_arrangement_evidence(&left, &right).unwrap();
+            let validation = report.validate();
+            let source_validation = report.validate_against_sources(&left, &right);
+            let needs_general_arrangement = report.obstacle.requires_general_arrangement();
+            (
+                report,
+                validation,
+                source_validation,
+                needs_general_arrangement,
             )
         })
     });
@@ -5082,6 +5119,7 @@ criterion_group!(
     exact_mesh_face_pair_batch,
     exact_intersection_graph_events,
     exact_coplanar_overlap_graph_handoff,
+    exact_planar_arrangement_evidence,
     exact_graph_vertex_merge,
     exact_split_topology_plan,
     exact_face_split_plan,

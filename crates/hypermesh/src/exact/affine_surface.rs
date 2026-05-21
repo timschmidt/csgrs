@@ -19,7 +19,9 @@
 
 use core::cmp::Ordering;
 
-use hyperlimit::{Point2, Point3, Sign, compare_reals, orient2d_report};
+use hyperlimit::{
+    Point2, Point3, Sign, compare_reals, orient2d_report, project_point3 as project_point,
+};
 
 use super::coplanar::CoplanarProjection;
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
@@ -593,14 +595,6 @@ fn projected_area2_signed(points: &[Point3], projection: CoplanarProjection) -> 
         );
     }
     sum
-}
-
-fn project_point(point: &Point3, projection: CoplanarProjection) -> Point2 {
-    match projection {
-        CoplanarProjection::Xy => Point2::new(point.x.clone(), point.y.clone()),
-        CoplanarProjection::Xz => Point2::new(point.x.clone(), point.z.clone()),
-        CoplanarProjection::Yz => Point2::new(point.y.clone(), point.z.clone()),
-    }
 }
 
 fn project_vector(vector: &Point3, projection: CoplanarProjection) -> Point2 {

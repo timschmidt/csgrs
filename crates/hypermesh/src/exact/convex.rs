@@ -15,7 +15,9 @@
 
 use std::cmp::Ordering;
 
-use hyperlimit::{PlaneSide, Point3, compare_reals, orient3d_report};
+use hyperlimit::{
+    PlaneSide, Point3, compare_reals, interpolate_point3 as interpolate3, orient3d_report,
+};
 
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
 use super::mesh::{ExactMesh, ExactPoint3, Triangle};
@@ -706,14 +708,6 @@ fn side_is_outside(orientation: ClosedMeshOrientation, side: PlaneSide) -> bool 
         (orientation, side),
         (ClosedMeshOrientation::Positive, PlaneSide::Below)
             | (ClosedMeshOrientation::Negative, PlaneSide::Above)
-    )
-}
-
-fn interpolate3(p0: &Point3, p1: &Point3, t: &ExactReal) -> Point3 {
-    Point3::new(
-        add(&p0.x, &mul(t, &sub(&p1.x, &p0.x))),
-        add(&p0.y, &mul(t, &sub(&p1.y, &p0.y))),
-        add(&p0.z, &mul(t, &sub(&p1.z, &p0.z))),
     )
 }
 
