@@ -139,6 +139,8 @@ pub enum AlgebraicRootArithmeticOp {
 pub enum AlgebraicRootArithmeticStatus {
     /// The operation was computed exactly from rational witnesses.
     ComputedExactRationalWitness,
+    /// The operation produced a new exact represented algebraic root.
+    ComputedRepresentation,
     /// One or both inputs were invalid.
     InvalidEvidence,
     /// The operation needs non-rational algebraic-number arithmetic that this
@@ -157,6 +159,9 @@ pub struct AlgebraicRootArithmeticReport {
     pub status: AlgebraicRootArithmeticStatus,
     /// Exact result when the operation is supported.
     pub exact_result: Option<Real>,
+    /// Exact represented result when the operation preserves algebraic-root
+    /// evidence but does not collapse to a rational witness.
+    pub result_representation: Option<AlgebraicRootRepresentation>,
     /// Compact diagnostic reason.
     pub message: Option<String>,
 }
@@ -484,12 +489,15 @@ pub fn compare_algebraic_root_representations_with_refinement(
 ///
 /// This is deliberately a witness arithmetic package, not a full algebraic
 /// number field. When both required inputs carry exact rational witnesses, the
-/// result is computed exactly in [`Real`]. When either input is represented
-/// only by an isolating interval, the report returns
-/// [`AlgebraicRootArithmeticStatus::NonRationalInput`] instead of sampling the
-/// interval. This follows Yap's exact-object rule from "Towards Exact
-/// Geometric Computation" (1997): unsupported algebraic arithmetic remains
-/// explicit until a true algebraic-number package exists.
+/// result is computed exactly in [`Real`]. For unary negation, an interval-only
+/// represented root can also be transformed exactly by replacing `p(x)` with
+/// `p(-x)` and reflecting its isolating interval. That small operation is a
+/// structural algebraic-number operation, not approximation; broader binary
+/// non-rational arithmetic remains explicit
+/// [`AlgebraicRootArithmeticStatus::NonRationalInput`]. This follows Yap's
+/// exact-object rule from "Towards Exact Geometric Computation" (1997):
+/// unsupported algebraic arithmetic remains explicit until a true
+/// algebraic-number package exists.
 pub fn arithmetic_algebraic_root_representations(
     left: &AlgebraicRootRepresentation,
     right: Option<&AlgebraicRootRepresentation>,
@@ -500,13 +508,32 @@ pub fn arithmetic_algebraic_root_representations(
             operation,
             AlgebraicRootArithmeticStatus::InvalidEvidence,
             None,
+            None,
             Some("algebraic root arithmetic requires valid represented inputs".to_owned()),
         );
     }
     let Some(left_value) = left.exact_rational_witness() else {
+        if operation == AlgebraicRootArithmeticOp::Negate {
+            let representation = negate_algebraic_root_representation(left);
+            let status = if representation.is_valid() {
+                AlgebraicRootArithmeticStatus::ComputedRepresentation
+            } else {
+                AlgebraicRootArithmeticStatus::Undecided
+            };
+            let message = (!representation.is_valid())
+                .then(|| "negated algebraic root representation did not validate".to_owned());
+            return algebraic_arithmetic_report(
+                operation,
+                status,
+                None,
+                Some(representation),
+                message,
+            );
+        }
         return algebraic_arithmetic_report(
             operation,
             AlgebraicRootArithmeticStatus::NonRationalInput,
+            None,
             None,
             Some("left algebraic root has no exact rational witness".to_owned()),
         );
@@ -521,6 +548,7 @@ pub fn arithmetic_algebraic_root_representations(
                     operation,
                     AlgebraicRootArithmeticStatus::InvalidEvidence,
                     None,
+                    None,
                     Some("binary algebraic root arithmetic requires a right input".to_owned()),
                 );
             };
@@ -528,6 +556,7 @@ pub fn arithmetic_algebraic_root_representations(
                 return algebraic_arithmetic_report(
                     operation,
                     AlgebraicRootArithmeticStatus::NonRationalInput,
+                    None,
                     None,
                     Some("right algebraic root has no exact rational witness".to_owned()),
                 );
@@ -545,7 +574,55 @@ pub fn arithmetic_algebraic_root_representations(
         AlgebraicRootArithmeticStatus::ComputedExactRationalWitness,
         Some(result),
         None,
+        None,
     )
+}
+
+fn negate_algebraic_root_representation(
+    root: &AlgebraicRootRepresentation,
+) -> AlgebraicRootRepresentation {
+    // If p(r)=0, then q(x)=p(-x) has root -r. Reflecting the isolating
+    // interval avoids a numeric midpoint estimate and preserves the exact
+    // evidence object that Yap's EGC model requires.
+    let polynomial_coefficients = root
+        .polynomial_coefficients
+        .iter()
+        .enumerate()
+        .map(|(degree, coefficient)| {
+            if degree % 2 == 0 {
+                coefficient.clone()
+            } else {
+                -coefficient.clone()
+            }
+        })
+        .collect::<Vec<_>>();
+    let interval = IsolatedRootInterval {
+        lower: -root.interval.upper.clone(),
+        upper: -root.interval.lower.clone(),
+        exact_root: root
+            .interval
+            .exact_root
+            .as_ref()
+            .map(|value| -value.clone()),
+        distinct_root_count: root.interval.distinct_root_count,
+    };
+    let kind = if interval.exact_root.is_some() {
+        AlgebraicRootKind::ExactRationalWitness
+    } else {
+        AlgebraicRootKind::IsolatingInterval
+    };
+    let mut representation = AlgebraicRootRepresentation {
+        constraint_index: root.constraint_index,
+        symbol: root.symbol,
+        interval_index: root.interval_index,
+        polynomial_coefficients,
+        interval,
+        kind,
+        validation: AlgebraicRootValidationReport::valid(),
+    };
+    representation.validation =
+        validate_algebraic_root_representation(&representation, PredicatePolicy::default());
+    representation
 }
 
 fn represent_one_report(
@@ -964,12 +1041,14 @@ fn algebraic_arithmetic_report(
     operation: AlgebraicRootArithmeticOp,
     status: AlgebraicRootArithmeticStatus,
     exact_result: Option<Real>,
+    result_representation: Option<AlgebraicRootRepresentation>,
     message: Option<String>,
 ) -> AlgebraicRootArithmeticReport {
     AlgebraicRootArithmeticReport {
         operation,
         status,
         exact_result,
+        result_representation,
         message,
     }
 }
@@ -1334,8 +1413,16 @@ mod tests {
         );
         assert_eq!(
             report.status,
-            AlgebraicRootArithmeticStatus::NonRationalInput
+            AlgebraicRootArithmeticStatus::ComputedRepresentation
         );
+        let negated = report.result_representation.as_ref().unwrap();
+        assert_eq!(
+            negated.polynomial_coefficients,
+            vec![real(-2), Real::zero(), Real::one()]
+        );
+        assert_eq!(negated.interval.lower, real(-2));
+        assert_eq!(negated.interval.upper, real(-1));
+        assert_eq!(negated.kind, AlgebraicRootKind::IsolatingInterval);
 
         let mut invalid = interval_only;
         invalid.validation = AlgebraicRootValidationReport::invalid(
@@ -1519,6 +1606,54 @@ mod tests {
 
             prop_assert_eq!(sum.exact_result, Some(real(left + right)));
             prop_assert_eq!(difference.exact_result, Some(real(left - right)));
+        }
+
+        #[test]
+        fn generated_interval_only_negation_reflects_polynomial_and_interval(
+            lower in -32_i16..=31,
+            width in 1_i16..=32,
+            constant in -16_i16..=16,
+            linear in -16_i16..=16,
+            quadratic in 1_i16..=16,
+        ) {
+            let lower = i64::from(lower);
+            let upper = lower + i64::from(width);
+            let constant = i64::from(constant);
+            let linear = i64::from(linear);
+            let quadratic = i64::from(quadratic);
+            let root = AlgebraicRootRepresentation {
+                constraint_index: 0,
+                symbol: SymbolId(0),
+                interval_index: 0,
+                polynomial_coefficients: vec![real(constant), real(linear), real(quadratic)],
+                interval: IsolatedRootInterval {
+                    lower: real(lower),
+                    upper: real(upper),
+                    exact_root: None,
+                    distinct_root_count: 1,
+                },
+                kind: AlgebraicRootKind::IsolatingInterval,
+                validation: AlgebraicRootValidationReport::valid(),
+            };
+
+            let report = arithmetic_algebraic_root_representations(
+                &root,
+                None,
+                AlgebraicRootArithmeticOp::Negate,
+            );
+
+            prop_assert_eq!(
+                report.status,
+                AlgebraicRootArithmeticStatus::ComputedRepresentation
+            );
+            let representation = report.result_representation.as_ref().unwrap();
+            prop_assert_eq!(
+                &representation.polynomial_coefficients,
+                &vec![real(constant), real(-linear), real(quadratic)]
+            );
+            prop_assert_eq!(&representation.interval.lower, &real(-upper));
+            prop_assert_eq!(&representation.interval.upper, &real(-lower));
+            prop_assert_eq!(&representation.kind, &AlgebraicRootKind::IsolatingInterval);
         }
     }
 }
