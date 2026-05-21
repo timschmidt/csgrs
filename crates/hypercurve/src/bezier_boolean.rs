@@ -23,6 +23,7 @@ use crate::{
 };
 use hyperreal::Real;
 use hypersolve::{
+    AlgebraicRootRepresentationReport, AlgebraicRootRepresentationStatus,
     BernsteinSubdivisionIntervalStatus, BernsteinSubdivisionReport, BernsteinSubdivisionStatus,
     RootIsolationStatus, UnivariateRootIsolationReport,
 };
@@ -1978,6 +1979,16 @@ pub struct BezierBooleanRootIsolationReplayReport2 {
     pub hypersolve_bernstein_isolating_interval_count: usize,
     /// Number of unsupported, undecided, depth-limited, or non-witness Bernstein rows.
     pub hypersolve_bernstein_unusable_count: usize,
+    /// Number of `hypersolve` algebraic-root representation reports consumed.
+    pub hypersolve_algebraic_report_count: usize,
+    /// Number of represented algebraic roots inspected.
+    pub hypersolve_algebraic_root_count: usize,
+    /// Number of exact rational represented roots recovered.
+    pub hypersolve_algebraic_exact_root_count: usize,
+    /// Number of non-rational represented roots retained as interval blockers.
+    pub hypersolve_algebraic_interval_root_count: usize,
+    /// Number of invalid, unsupported, or non-witness algebraic-root rows.
+    pub hypersolve_algebraic_unusable_count: usize,
     /// Number of still-missing represented roots.
     pub missing_isolation_count: usize,
     /// Number of supplied represented roots outside `[0, 1]`.
@@ -12291,6 +12302,11 @@ impl BezierBooleanRootIsolationReplayReport2 {
             hypersolve_bernstein_endpoint_root_count: 0,
             hypersolve_bernstein_isolating_interval_count: 0,
             hypersolve_bernstein_unusable_count: 0,
+            hypersolve_algebraic_report_count: 0,
+            hypersolve_algebraic_root_count: 0,
+            hypersolve_algebraic_exact_root_count: 0,
+            hypersolve_algebraic_interval_root_count: 0,
+            hypersolve_algebraic_unusable_count: 0,
             missing_isolation_count: required_isolation_count
                 .saturating_sub(supplied_isolation_count),
             out_of_range_parameter_count: 0,
@@ -12513,6 +12529,84 @@ impl BezierBooleanRootIsolationReplayReport2 {
         Classification::Decided(replay)
     }
 
+    /// Replays exact witnesses from `hypersolve` algebraic-root representations.
+    ///
+    /// `hypersolve::AlgebraicRootRepresentationReport` keeps the exact
+    /// polynomial row together with each certified isolating interval. That is
+    /// stronger evidence than a bare interval, but Bezier boolean split
+    /// insertion still needs represented parameters in the current API.
+    /// Therefore exact rational represented roots are accepted as split
+    /// parameters, while valid non-rational algebraic interval roots are
+    /// counted and retained as explicit blockers for a future algebraic
+    /// parameter carrier. This follows Yap's exact-computation boundary and
+    /// the Collins-Loos real-root representation model: algebraic objects are
+    /// proof evidence, not primitive-float topology.
+    pub fn from_hypersolve_algebraic_root_reports(
+        scheduler: &BezierBooleanPathSchedulerReport2,
+        isolated_relation_events: &[BezierBooleanPointEvent2],
+        algebraic_reports: &[AlgebraicRootRepresentationReport],
+        policy: &CurvePolicy,
+    ) -> Classification<Self> {
+        let mut range_parameters = Vec::new();
+        let mut algebraic_root_count = 0;
+        let mut exact_root_count = 0;
+        let mut interval_root_count = 0;
+        let mut unusable_count = 0;
+
+        for report in algebraic_reports {
+            match report.status {
+                AlgebraicRootRepresentationStatus::Represented => {}
+                AlgebraicRootRepresentationStatus::NoRealRoots => {
+                    continue;
+                }
+                AlgebraicRootRepresentationStatus::UnsupportedIsolationStatus
+                | AlgebraicRootRepresentationStatus::MissingSymbol
+                | AlgebraicRootRepresentationStatus::MissingPolynomial
+                | AlgebraicRootRepresentationStatus::InvalidEvidence => {
+                    unusable_count += 1;
+                    continue;
+                }
+            }
+
+            for root in &report.roots {
+                algebraic_root_count += 1;
+                if !root.is_valid() {
+                    unusable_count += 1;
+                    continue;
+                }
+                if let Some(witness) = root.exact_rational_witness() {
+                    exact_root_count += 1;
+                    range_parameters.push(witness.clone());
+                } else {
+                    interval_root_count += 1;
+                    unusable_count += 1;
+                }
+            }
+        }
+
+        let mut replay = match Self::from_hypersolve_roots(
+            scheduler,
+            isolated_relation_events,
+            &range_parameters,
+            policy,
+        ) {
+            Classification::Decided(report) => report,
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        };
+        replay.hypersolve_algebraic_report_count = algebraic_reports.len();
+        replay.hypersolve_algebraic_root_count = algebraic_root_count;
+        replay.hypersolve_algebraic_exact_root_count = exact_root_count;
+        replay.hypersolve_algebraic_interval_root_count = interval_root_count;
+        replay.hypersolve_algebraic_unusable_count = unusable_count;
+
+        if unusable_count > 0 {
+            replay.status = BezierBooleanRootIsolationReplayStatus::HypersolveBlocked;
+            replay.blocker_count += unusable_count;
+        }
+
+        Classification::Decided(replay)
+    }
+
     /// Returns true when replay produced a ready split plan.
     pub fn can_feed_split_events(&self) -> bool {
         self.status == BezierBooleanRootIsolationReplayStatus::ReadyForSplitEvents
@@ -12643,7 +12737,33 @@ impl BezierBooleanRootIsolationConstructionReport2 {
             ) {
                 Classification::Decided(replay) => replay,
                 Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-            };
+        };
+        Self::from_replay(scheduler, replay, policy)
+    }
+
+    /// Runs the algebraic-root representation replay to construction readiness.
+    ///
+    /// This consumes persistent exact root objects from `hypersolve`, accepts
+    /// only exact rational witnesses as current split parameters, and preserves
+    /// non-rational algebraic interval roots as blockers for future algebraic
+    /// Bezier parameter carriers. That keeps the Yap/Collins-Loos distinction
+    /// between represented algebraic evidence and topology construction
+    /// explicit in the compact boolean handoff report.
+    pub fn from_hypersolve_algebraic_root_reports(
+        scheduler: BezierBooleanPathSchedulerReport2,
+        isolated_relation_events: &[BezierBooleanPointEvent2],
+        algebraic_reports: &[AlgebraicRootRepresentationReport],
+        policy: &CurvePolicy,
+    ) -> Classification<Self> {
+        let replay = match BezierBooleanRootIsolationReplayReport2::from_hypersolve_algebraic_root_reports(
+            &scheduler,
+            isolated_relation_events,
+            algebraic_reports,
+            policy,
+        ) {
+            Classification::Decided(replay) => replay,
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        };
         Self::from_replay(scheduler, replay, policy)
     }
 

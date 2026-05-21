@@ -29,9 +29,29 @@ The deployed WASM app is available at <https://timschmidt.github.io/hypercurve/>
   facts used by higher geometry and domain crates.
 - [hypertri](https://github.com/timschmidt/hypertri): line-only triangulation target for
   polygonalized or straight-edge regions.
-- [hyperdrc](https://github.com/timschmidt/hyperdrc),
-  [hyperpath](https://github.com/timschmidt/hyperpath), and
-  [hyperparts](https://github.com/timschmidt/hyperparts): domain crates that should
+- [hypermesh](https://github.com/timschmidt/hypermesh): 3D mesh topology that consumes
+  planar arrangements and triangulated face regions.
+- [hyperbrep](https://github.com/timschmidt/hyperbrep): BREP trims and planar face
+  boundaries that should preserve curve evidence before tessellation.
+- [hypersdf](https://github.com/timschmidt/hypersdf): implicit-field handoffs and
+  preview extraction boundaries.
+- [hypersolve](https://github.com/timschmidt/hypersolve): Bernstein, interval, and root
+  isolation reports used by Bezier boolean and fitting readiness paths.
+- [hyperpath](https://github.com/timschmidt/hyperpath): routing, CAM, offset, tangent,
+  and swept-path carriers.
+- [hypervoxel](https://github.com/timschmidt/hypervoxel): voxel/process handoffs that
+  may consume flattened or certified region evidence.
+- [hyperphysics](https://github.com/timschmidt/hyperphysics): physical shape and
+  support handoffs.
+- [hypercircuit](https://github.com/timschmidt/hypercircuit): circuit context for PCB
+  paths and geometry-derived fixtures.
+- [hyperparts](https://github.com/timschmidt/hyperparts): part, package, and footprint
+  geometry handles.
+- [hyperpack](https://github.com/timschmidt/hyperpack): exact packing and clearance
+  consumers.
+- [hyperevolution](https://github.com/timschmidt/hyperevolution): proposal/search layer
+  for curve or layout candidates that still require exact replay.
+- [hyperdrc](https://github.com/timschmidt/hyperdrc): PCB readiness checks that should
   hand curve, contour, and region evidence here instead of resolving topology with local
   float tolerances.
 
@@ -79,6 +99,10 @@ cases are reported explicitly instead of hidden behind display polylines.
   boolean-topology readiness report: split-ready parameterized events, point witnesses
   that still need parameter recovery, overlap obligations, retained-region isolation
   blockers, unresolved cases, or primitive predicate uncertainty.
+- `BezierBooleanRootIsolationReplayReport2`,
+  `BezierBooleanRootIsolationConstructionReport2`, and split-plan reports consume
+  `hypersolve` isolating interval or Bernstein subdivision evidence without turning
+  algebraic parameters into approximate topology.
 - `Aabb2`, prepared line/arc/curve-string/contour/region views, and segment/region fact
   types preserve repeated-query structure.
 - Boolean, event, fragment, split, and boundary-loop types describe staged region
@@ -135,6 +159,9 @@ Implemented today:
   display/certified polyline offset adapters;
 - primitive line/arc offsets, checked offsets, cap styles, region event/fragment
   extraction, boolean-boundary assembly, and conservative unresolved states.
+- Bezier boolean handoff, root-isolation replay, Bernstein-subdivision replay,
+  split-plan audit, and materialization-readiness reports that keep algebraic events
+  separate from constructed topology.
 
 Known limits: shared-boundary overlap beyond certified fast paths, full Bezier/rational
 root isolation, NURBS, and offset self-intersection trimming remain future work.
@@ -181,6 +208,31 @@ fn main() -> hypercurve::CurveResult<()> {
 }
 ```
 
+Use native curve objects for Bezier facts, contours, regions, fitting, and later
+handoffs:
+
+```rust,ignore
+use hypercurve::{
+    Contour2, CurvePolicy, LineSeg2, Point2, QuadraticBezier2, Region2, Segment2,
+};
+use hyperreal::Real;
+
+let p = |x, y| Point2::new(Real::from(x), Real::from(y));
+let bezier = QuadraticBezier2::new(p(0, 0), p(1, 2), p(2, 0));
+let facts = bezier.structural_facts();
+assert_eq!(facts.degree, hypercurve::BezierDegree::Quadratic);
+
+let bottom = Segment2::Line(LineSeg2::try_new(p(0, 0), p(2, 0))?);
+let right = Segment2::Line(LineSeg2::try_new(p(2, 0), p(2, 2))?);
+let top = Segment2::Line(LineSeg2::try_new(p(2, 2), p(0, 2))?);
+let left = Segment2::Line(LineSeg2::try_new(p(0, 2), p(0, 0))?);
+let contour = Contour2::try_new(vec![bottom, right, top, left])?;
+let region = Region2::from_material_contours(vec![contour]);
+
+let location = region.classify_point(&p(1, 1), &CurvePolicy::certified())?;
+assert!(matches!(location, hypercurve::Classification::Decided(_)));
+```
+
 ## Development
 
 Useful local checks:
@@ -211,6 +263,9 @@ ed., Springer, 2008. https://doi.org/10.1007/978-3-540-77974-2.
 
 Farouki, Rida T., and C. Andrew Neff. "Analytic Properties of Plane Offset
 Curves." *Computer Aided Geometric Design*, vol. 7, nos. 1-4, 1990, pp. 83-99.
+
+Farouki, Rida T., and V. T. Rajan. "Algorithms for Polynomials in Bernstein
+Form." *Computer Aided Geometric Design*, vol. 5, no. 1, 1988, pp. 1-26.
 
 Farin, Gerald. *Curves and Surfaces for Computer-Aided Geometric Design: A
 Practical Guide*. 5th ed., Morgan Kaufmann, 2002.
@@ -245,6 +300,9 @@ vol. 100, 1928, pp. 75-163. http://eudml.org/doc/159284.
 
 Schneider, Philip J., and David H. Eberly. *Geometric Tools for Computer
 Graphics*. Morgan Kaufmann, 2002.
+
+Sederberg, Thomas W., and Tomoyuki Nishita. "Curve Intersection Using Bezier
+Clipping." *Computer-Aided Design*, vol. 22, no. 9, 1990, pp. 538-549.
 
 Shewchuk, Jonathan Richard. "Adaptive Precision Floating-Point Arithmetic and
 Fast Robust Geometric Predicates." *Discrete & Computational Geometry*, vol.

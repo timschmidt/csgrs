@@ -58,9 +58,12 @@ use hypercurve::{
     refine_bezier_intersection_regions, summarize_bezier_intersection_regions,
 };
 use hypersolve::{
+    AlgebraicRootKind, AlgebraicRootRepresentation, AlgebraicRootRepresentationReport,
+    AlgebraicRootRepresentationStatus, AlgebraicRootValidationReport,
+    AlgebraicRootValidationStatus,
     BernsteinSubdivisionInterval, BernsteinSubdivisionIntervalStatus, BernsteinSubdivisionReport,
     BernsteinSubdivisionStatus, IsolatedRootInterval, RootIsolationStatus,
-    UnivariateRootIsolationReport,
+    SymbolId, UnivariateRootIsolationReport,
 };
 use proptest::prelude::*;
 
@@ -4975,6 +4978,88 @@ fn bezier_boolean_root_isolation_replay_consumes_bernstein_subdivision_reports()
     assert!(construction.is_ready());
 }
 
+fn algebraic_root_report(root: Real, exact: bool) -> AlgebraicRootRepresentationReport {
+    AlgebraicRootRepresentationReport {
+        constraint_index: 0,
+        symbol: Some(SymbolId(0)),
+        status: AlgebraicRootRepresentationStatus::Represented,
+        roots: vec![AlgebraicRootRepresentation {
+            constraint_index: 0,
+            symbol: SymbolId(0),
+            interval_index: 0,
+            polynomial_coefficients: vec![-root.clone(), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: if exact { root.clone() } else { ratio(1, 4) },
+                upper: if exact { root.clone() } else { ratio(1, 2) },
+                exact_root: exact.then_some(root),
+                distinct_root_count: 1,
+            },
+            kind: if exact {
+                AlgebraicRootKind::ExactRationalWitness
+            } else {
+                AlgebraicRootKind::IsolatingInterval
+            },
+            validation: AlgebraicRootValidationReport {
+                status: AlgebraicRootValidationStatus::Valid,
+                message: None,
+            },
+        }],
+        message: None,
+    }
+}
+
+#[test]
+fn bezier_boolean_root_isolation_replay_consumes_algebraic_root_reports() {
+    let range = BezierPathRangeOrderReport2::from_graph_order(
+        &BezierMonotoneGraphOrder::IntersectsOrTouches {
+            parameters: Vec::new(),
+            spans: vec![span(ratio(1, 4), ratio(1, 2))],
+        },
+    );
+    let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &[range]);
+    let algebraic = algebraic_root_report(half(), true);
+
+    let replay = match BezierBooleanRootIsolationReplayReport2::from_hypersolve_algebraic_root_reports(
+        &scheduler,
+        &[],
+        &[algebraic],
+        &policy(),
+    ) {
+        Classification::Decided(report) => report,
+        Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
+    };
+
+    assert_eq!(
+        replay.status,
+        BezierBooleanRootIsolationReplayStatus::ReadyForSplitEvents
+    );
+    assert!(replay.can_feed_split_events());
+    assert_eq!(replay.hypersolve_algebraic_report_count, 1);
+    assert_eq!(replay.hypersolve_algebraic_root_count, 1);
+    assert_eq!(replay.hypersolve_algebraic_exact_root_count, 1);
+    assert_eq!(replay.hypersolve_algebraic_interval_root_count, 0);
+    assert_eq!(replay.hypersolve_algebraic_unusable_count, 0);
+    assert_eq!(replay.split_plan.shared_range_parameters, vec![half()]);
+
+    let construction =
+        match BezierBooleanRootIsolationConstructionReport2::from_hypersolve_algebraic_root_reports(
+            scheduler,
+            &[],
+            &[algebraic_root_report(half(), true)],
+            &policy(),
+        ) {
+            Classification::Decided(report) => report,
+            Classification::Uncertain(reason) => {
+                panic!("unexpected construction uncertainty: {reason:?}")
+            }
+        };
+    assert_eq!(
+        construction.status,
+        BezierBooleanRootIsolationConstructionStatus::Ready
+    );
+    assert!(construction.is_ready());
+}
+
 #[test]
 fn bezier_boolean_root_isolation_replay_blocks_unusable_hypersolve_reports() {
     let range = BezierPathRangeOrderReport2::from_graph_order(
@@ -5088,6 +5173,40 @@ fn bezier_boolean_root_isolation_replay_blocks_bernstein_non_witnesses() {
     assert_eq!(replay.hypersolve_bernstein_report_count, 1);
     assert_eq!(replay.hypersolve_bernstein_isolating_interval_count, 1);
     assert_eq!(replay.hypersolve_bernstein_unusable_count, 1);
+    assert_eq!(replay.missing_isolation_count, 1);
+}
+
+#[test]
+fn bezier_boolean_root_isolation_replay_blocks_non_rational_algebraic_roots() {
+    let range = BezierPathRangeOrderReport2::from_graph_order(
+        &BezierMonotoneGraphOrder::IntersectsOrTouches {
+            parameters: Vec::new(),
+            spans: vec![span(ratio(1, 4), ratio(1, 2))],
+        },
+    );
+    let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &[range]);
+    let algebraic = algebraic_root_report(half(), false);
+
+    let replay = match BezierBooleanRootIsolationReplayReport2::from_hypersolve_algebraic_root_reports(
+        &scheduler,
+        &[],
+        &[algebraic],
+        &policy(),
+    ) {
+        Classification::Decided(report) => report,
+        Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
+    };
+
+    assert_eq!(
+        replay.status,
+        BezierBooleanRootIsolationReplayStatus::HypersolveBlocked
+    );
+    assert!(replay.has_blockers());
+    assert_eq!(replay.hypersolve_algebraic_report_count, 1);
+    assert_eq!(replay.hypersolve_algebraic_root_count, 1);
+    assert_eq!(replay.hypersolve_algebraic_exact_root_count, 0);
+    assert_eq!(replay.hypersolve_algebraic_interval_root_count, 1);
+    assert_eq!(replay.hypersolve_algebraic_unusable_count, 1);
     assert_eq!(replay.missing_isolation_count, 1);
 }
 
@@ -10996,6 +11115,67 @@ proptest! {
         prop_assert_eq!(replay.hypersolve_bernstein_report_count, span_count);
         prop_assert_eq!(replay.hypersolve_bernstein_endpoint_root_count, span_count);
         prop_assert_eq!(replay.hypersolve_bernstein_unusable_count, 0);
+        prop_assert_eq!(replay.split_plan.range_event_count, span_count);
+
+        let construction = match BezierBooleanRootIsolationConstructionReport2::from_replay(
+            scheduler,
+            replay,
+            &policy(),
+        ) {
+            Classification::Decided(report) => report,
+            Classification::Uncertain(reason) => {
+                prop_assert!(false, "unexpected construction uncertainty: {reason:?}");
+                return Ok(());
+            }
+        };
+        prop_assert_eq!(
+            construction.status,
+            BezierBooleanRootIsolationConstructionStatus::Ready
+        );
+        prop_assert!(construction.is_ready());
+    }
+
+    #[test]
+    fn generated_bezier_boolean_root_isolation_replay_consumes_algebraic_exact_roots(
+        span_count in 1_usize..8,
+    ) {
+        let reports = (0..span_count)
+            .map(|index| {
+                BezierPathRangeOrderReport2::from_graph_order(
+                    &BezierMonotoneGraphOrder::IntersectsOrTouches {
+                        parameters: Vec::new(),
+                        spans: vec![span(ratio(index as i32 + 1, 32), ratio(index as i32 + 2, 32))],
+                    },
+                )
+            })
+            .collect::<Vec<_>>();
+        let solver_reports = (0..span_count)
+            .map(|index| algebraic_root_report(ratio(index as i32 + 1, 16), true))
+            .collect::<Vec<_>>();
+        let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &reports);
+
+        let replay =
+            match BezierBooleanRootIsolationReplayReport2::from_hypersolve_algebraic_root_reports(
+                &scheduler,
+                &[],
+                &solver_reports,
+                &policy(),
+            ) {
+                Classification::Decided(report) => report,
+                Classification::Uncertain(reason) => {
+                    prop_assert!(false, "unexpected uncertainty: {reason:?}");
+                    return Ok(());
+                }
+            };
+
+        prop_assert_eq!(
+            replay.status,
+            BezierBooleanRootIsolationReplayStatus::ReadyForSplitEvents
+        );
+        prop_assert_eq!(replay.hypersolve_algebraic_report_count, span_count);
+        prop_assert_eq!(replay.hypersolve_algebraic_root_count, span_count);
+        prop_assert_eq!(replay.hypersolve_algebraic_exact_root_count, span_count);
+        prop_assert_eq!(replay.hypersolve_algebraic_unusable_count, 0);
         prop_assert_eq!(replay.split_plan.range_event_count, span_count);
 
         let construction = match BezierBooleanRootIsolationConstructionReport2::from_replay(
