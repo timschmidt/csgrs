@@ -290,14 +290,14 @@ Core scalar algorithms that do not require high-precision transcendental approxi
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
 | `pure_scalar_algorithm_speed/rational_add` | not run | not run | Adds two nontrivial rational values. |
-| `pure_scalar_algorithm_speed/rational_mul` | 155.42 ns | 146.03 ns - 165.44 ns | Multiplies two nontrivial rational values. |
-| `pure_scalar_algorithm_speed/rational_div` | 33.98 ns | 33.84 ns - 34.18 ns | Divides two nontrivial rational values. |
-| `pure_scalar_algorithm_speed/real_exact_add` | 444.53 ns | 441.90 ns - 447.46 ns | Adds exact rational-backed `Real` values. |
-| `pure_scalar_algorithm_speed/real_exact_mul` | 185.83 ns | 184.71 ns - 187.12 ns | Multiplies exact rational-backed `Real` values. |
-| `pure_scalar_algorithm_speed/real_exact_div` | 106.72 ns | 106.55 ns - 106.90 ns | Divides exact rational-backed `Real` values. |
+| `pure_scalar_algorithm_speed/rational_mul` | not run | not run | Multiplies two nontrivial rational values. |
+| `pure_scalar_algorithm_speed/rational_div` | not run | not run | Divides two nontrivial rational values. |
+| `pure_scalar_algorithm_speed/real_exact_add` | not run | not run | Adds exact rational-backed `Real` values. |
+| `pure_scalar_algorithm_speed/real_exact_mul` | not run | not run | Multiplies exact rational-backed `Real` values. |
+| `pure_scalar_algorithm_speed/real_exact_div` | not run | not run | Divides exact rational-backed `Real` values. |
 | `pure_scalar_algorithm_speed/real_exact_sqrt_reduce` | not run | not run | Reduces an exact square-root expression. |
 | `pure_scalar_algorithm_speed/real_exact_ln_reduce` | not run | not run | Reduces an exact logarithm of a power of two. |
-| `pure_scalar_algorithm_speed/real_pow_small_integer_exponent` | 308.44 ns | 307.37 ns - 309.61 ns | Dispatches `Real::pow` with an exact small-integer exponent. |
+| `pure_scalar_algorithm_speed/real_pow_small_integer_exponent` | not run | not run | Dispatches `Real::pow` with an exact small-integer exponent. |
 
 ### `borrowed_op_overhead`
 
@@ -309,9 +309,9 @@ Borrowed versus owned operation overhead for rational and real operands.
 | `borrowed_op_overhead/rational_add_refs` | not run | not run | Adds rational references. |
 | `borrowed_op_overhead/rational_add_owned` | not run | not run | Adds owned rational values. |
 | `borrowed_op_overhead/real_clone_pair` | not run | not run | Clones two scaled transcendental `Real` values. |
-| `borrowed_op_overhead/real_unscaled_add_refs` | 170.20 ns | 169.70 ns - 170.74 ns | Adds borrowed unscaled transcendental `Real` values. |
+| `borrowed_op_overhead/real_unscaled_add_refs` | not run | not run | Adds borrowed unscaled transcendental `Real` values. |
 | `borrowed_op_overhead/real_unscaled_add_owned` | not run | not run | Adds owned unscaled transcendental `Real` values. |
-| `borrowed_op_overhead/real_add_refs` | 584.69 ns | 561.82 ns - 606.92 ns | Adds borrowed scaled transcendental `Real` values. |
+| `borrowed_op_overhead/real_add_refs` | not run | not run | Adds borrowed scaled transcendental `Real` values. |
 | `borrowed_op_overhead/real_add_owned` | not run | not run | Adds owned scaled transcendental `Real` values. |
 | `borrowed_op_overhead/real_dot3_refs_dense_symbolic` | 3.069 us | 3.060 us - 3.079 us | Computes a borrowed three-lane symbolic dot product with no rational shortcut terms. |
 | `borrowed_op_overhead/real_active_dot3_refs_dense_symbolic` | 3.284 us | 3.278 us - 3.291 us | Computes a borrowed three-lane symbolic dot product after the caller has already classified every lane active. |
@@ -352,6 +352,12 @@ Construction-time shortcuts for exact rational multiples of pi and inverse compo
 | `exact_transcendental_special_forms/log2_power_of_two` | 173.46 ns | 171.28 ns - 175.58 ns | Folds log2(1024) to the exact rational 10 via the integer-log-detection shortcut. |
 | `exact_transcendental_special_forms/log2_rational_three` | 289.47 ns | 284.87 ns - 294.52 ns | Builds log2(3) as a lightweight Log2 symbolic certificate. |
 | `exact_transcendental_special_forms/log2_ln_quotient_fold` | 1.283 us | 1.228 us - 1.371 us | Folds ln(5) / ln(2) into a Log2 certificate via the divide-recognize shortcut. |
+| `exact_transcendental_special_forms/atan2_origin` | not run | not run | Hits the origin (0, 0) short-circuit returning exact zero. |
+| `exact_transcendental_special_forms/atan2_axis_positive_y` | not run | not run | Hits the positive-y axis short-circuit returning exact pi/2. |
+| `exact_transcendental_special_forms/atan2_axis_negative_x` | not run | not run | Hits the negative-x axis short-circuit returning exact pi. |
+| `exact_transcendental_special_forms/atan2_quadrant_one_unit_diagonal` | not run | not run | Quadrant I unit diagonal reduces to atan(1) = pi/4 exact special form. |
+| `exact_transcendental_special_forms/atan2_quadrant_two_pi_correction` | not run | not run | Quadrant II (1, -2) exercises atan(small ratio) + pi correction. |
+| `exact_transcendental_special_forms/atan2_quadrant_three_negative_pi` | not run | not run | Quadrant III (-1, -2) exercises atan(small ratio) - pi correction. |
 
 ### `symbolic_reductions`
 
@@ -359,25 +365,37 @@ Existing symbolic constant algebra cases considered for additional reductions.
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `symbolic_reductions/sqrt_pi_square` | 137.90 ns | 134.60 ns - 141.59 ns | Reduces sqrt(pi^2). |
-| `symbolic_reductions/sqrt_pi_e_square` | 174.66 ns | 173.75 ns - 175.54 ns | Reduces sqrt((pi * e)^2). |
-| `symbolic_reductions/ln_scaled_e` | 1.394 us | 1.382 us - 1.408 us | Reduces ln(2 * e). |
-| `symbolic_reductions/sub_pi_three` | 248.16 ns | 244.62 ns - 252.32 ns | Builds the certified pi - 3 constant-offset form. |
-| `symbolic_reductions/pi_minus_three_facts` | 36.67 ns | 36.34 ns - 37.03 ns | Reads structural facts for the cached pi - 3 offset form. |
-| `symbolic_reductions/div_exp_exp` | 566.66 ns | 562.95 ns - 570.95 ns | Reduces e^3 / e. |
-| `symbolic_reductions/div_pi_square_e` | 464.50 ns | 463.12 ns - 465.90 ns | Reduces pi^2 / e. |
-| `symbolic_reductions/div_const_products` | 855.78 ns | 852.01 ns - 860.32 ns | Reduces (pi^3 * e^5) / (pi * e^2). |
-| `symbolic_reductions/inverse_pi` | 89.50 ns | 89.20 ns - 89.85 ns | Builds the reciprocal of pi. |
-| `symbolic_reductions/div_one_pi` | 141.50 ns | 140.79 ns - 142.37 ns | Reduces 1 / pi. |
-| `symbolic_reductions/div_rational_exp` | 292.12 ns | 289.84 ns - 294.69 ns | Reduces 2 / e. |
-| `symbolic_reductions/div_e_pi` | 269.92 ns | 261.15 ns - 279.59 ns | Reduces e / pi. |
-| `symbolic_reductions/mul_pi_inverse_pi` | 247.62 ns | 246.97 ns - 248.30 ns | Multiplies pi by its reciprocal. |
-| `symbolic_reductions/mul_pi_e_sqrt_two` | 438.83 ns | 437.88 ns - 439.69 ns | Builds the factored pi * e * sqrt(2) form. |
-| `symbolic_reductions/mul_const_product_sqrt_sqrt` | 685.04 ns | 676.75 ns - 693.88 ns | Cancels sqrt(2) from (pi * e * sqrt(2)) * sqrt(2). |
-| `symbolic_reductions/div_const_product_sqrt_e` | 728.58 ns | 725.63 ns - 731.29 ns | Reduces (pi * e * sqrt(2)) / e. |
-| `symbolic_reductions/inverse_const_product_sqrt` | 478.56 ns | 475.73 ns - 482.08 ns | Builds a rationalized reciprocal of pi * e * sqrt(2). |
-| `symbolic_reductions/inverse_sqrt_two` | 101.33 ns | 100.92 ns - 101.81 ns | Builds the rationalized reciprocal of unit-scaled sqrt(2). |
-| `symbolic_reductions/div_sqrt_two_sqrt_three` | 842.52 ns | 838.35 ns - 847.63 ns | Rationalizes a quotient of two unit-scaled square roots. |
+| `symbolic_reductions/sqrt_pi_square` | not run | not run | Reduces sqrt(pi^2). |
+| `symbolic_reductions/sqrt_pi_e_square` | not run | not run | Reduces sqrt((pi * e)^2). |
+| `symbolic_reductions/ln_scaled_e` | not run | not run | Reduces ln(2 * e). |
+| `symbolic_reductions/sub_pi_three` | not run | not run | Builds the certified pi - 3 constant-offset form. |
+| `symbolic_reductions/pi_minus_three_facts` | not run | not run | Reads structural facts for the cached pi - 3 offset form. |
+| `symbolic_reductions/div_exp_exp` | not run | not run | Reduces e^3 / e. |
+| `symbolic_reductions/div_pi_square_e` | not run | not run | Reduces pi^2 / e. |
+| `symbolic_reductions/div_const_products` | not run | not run | Reduces (pi^3 * e^5) / (pi * e^2). |
+| `symbolic_reductions/inverse_pi` | not run | not run | Builds the reciprocal of pi. |
+| `symbolic_reductions/div_one_pi` | not run | not run | Reduces 1 / pi. |
+| `symbolic_reductions/div_rational_exp` | not run | not run | Reduces 2 / e. |
+| `symbolic_reductions/div_e_pi` | not run | not run | Reduces e / pi. |
+| `symbolic_reductions/mul_pi_inverse_pi` | not run | not run | Multiplies pi by its reciprocal. |
+| `symbolic_reductions/mul_pi_e_sqrt_two` | not run | not run | Builds the factored pi * e * sqrt(2) form. |
+| `symbolic_reductions/mul_const_product_sqrt_sqrt` | not run | not run | Cancels sqrt(2) from (pi * e * sqrt(2)) * sqrt(2). |
+| `symbolic_reductions/div_const_product_sqrt_e` | not run | not run | Reduces (pi * e * sqrt(2)) / e. |
+| `symbolic_reductions/inverse_const_product_sqrt` | not run | not run | Builds a rationalized reciprocal of pi * e * sqrt(2). |
+| `symbolic_reductions/inverse_sqrt_two` | not run | not run | Builds the rationalized reciprocal of unit-scaled sqrt(2). |
+| `symbolic_reductions/div_sqrt_two_sqrt_three` | not run | not run | Rationalizes a quotient of two unit-scaled square roots. |
+
+### `exact_product_sums`
+
+Fixed product-sum reducers used by determinant and cofactor kernels.
+
+| Benchmark output | Mean | 95% CI | What it measures |
+| --- | ---: | ---: | --- |
+| `exact_product_sums/signed_product_sum_lcm_6x2` | not run | not run | Computes an exact rational six-term signed product sum with mixed denominators. |
+| `exact_product_sums/signed_product_sum_common_scale_6x2` | not run | not run | Computes an exact rational six-term signed product sum through the carried common-scale reducer. |
+| `exact_product_sums/signed_product_sum_sparse_single_6x2` | not run | not run | Computes a sparse exact rational six-term signed product sum with one active product. |
+| `exact_product_sums/real_signed_product_sum_rational_det3` | not run | not run | Computes a 3x3 determinant-shaped signed product sum through the public `Real` builder. |
+| `exact_product_sums/real_signed_product_sum_mixed_symbolic_det3` | not run | not run | Computes the same determinant-shaped builder with symbolic factors and rational scales. |
 
 <!-- END scalar_micro -->
 

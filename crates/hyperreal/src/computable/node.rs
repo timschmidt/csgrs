@@ -3203,6 +3203,54 @@ impl Computable {
             .add(self.inverse().atan().negate())
     }
 
+    /// Two-argument arctangent of `(self, x)`, returning the angle of the
+    /// point `(x, self)` measured counterclockwise from the positive `x`
+    /// axis in the principal range `(-pi, pi]`.
+    ///
+    /// `self` is the `y` coordinate and `x` is the `x` coordinate, matching
+    /// the IEEE 754 `atan2(y, x)` convention. The implementation reduces to
+    /// the single-argument [`Computable::atan`] kernel after a quadrant
+    /// correction:
+    /// - `x > 0`: returns `atan(self / x)`.
+    /// - `x < 0` and `self >= 0`: returns `atan(self / x) + pi`.
+    /// - `x < 0` and `self < 0`: returns `atan(self / x) - pi`.
+    /// - axes return exact constants: `pi/2`, `-pi/2`, `pi`, or zero.
+    /// - the origin `(0, 0)` returns zero, matching `f64::atan2`.
+    pub fn atan2(self, x: Computable) -> Computable {
+        let y_sign = self.sign();
+        let x_sign = x.sign();
+        match (y_sign, x_sign) {
+            (Sign::NoSign, Sign::NoSign) | (Sign::NoSign, Sign::Plus) => {
+                crate::trace_dispatch!("computable", "atan2", "axis-zero-y");
+                return Self::zero();
+            }
+            (Sign::NoSign, Sign::Minus) => {
+                crate::trace_dispatch!("computable", "atan2", "axis-negative-x");
+                return Self::pi();
+            }
+            (Sign::Plus, Sign::NoSign) => {
+                crate::trace_dispatch!("computable", "atan2", "axis-positive-y");
+                return Self::pi().shift_right(1);
+            }
+            (Sign::Minus, Sign::NoSign) => {
+                crate::trace_dispatch!("computable", "atan2", "axis-negative-y");
+                return Self::pi().shift_right(1).negate();
+            }
+            _ => {}
+        }
+        let base = self.multiply(x.clone().inverse()).atan();
+        if x_sign == Sign::Plus {
+            crate::trace_dispatch!("computable", "atan2", "quadrant-right");
+            base
+        } else if y_sign == Sign::Plus {
+            crate::trace_dispatch!("computable", "atan2", "quadrant-upper-left");
+            base.add(Self::pi())
+        } else {
+            crate::trace_dispatch!("computable", "atan2", "quadrant-lower-left");
+            base.add(Self::pi().negate())
+        }
+    }
+
     /// Inverse sine of this number.
     pub fn asin(self) -> Computable {
         if let Some(rational) = self.exact_rational() {

@@ -3996,6 +3996,72 @@ impl Real {
         Ok(self.make_computable(Computable::atan))
     }
 
+    /// Two-argument arctangent of `(self, x)`, returning the angle of the
+    /// point `(x, self)` measured counterclockwise from the positive `x`
+    /// axis in the principal range `(-pi, pi]`.
+    ///
+    /// `self` is the `y` coordinate and `x` is the `x` coordinate, matching
+    /// the IEEE 754 `atan2(y, x)` convention. The implementation reduces to
+    /// the single-argument [`Real::atan`] kernel after a signed-pi quadrant
+    /// correction, so existing `atan` exact special forms (such as
+    /// `atan(1) = pi/4` or `atan(sqrt(3)) = pi/3`) flow through unchanged
+    /// when the ratio `self / x` lands on one of them. Axes return exact
+    /// pi multiples; the origin `(0, 0)` returns zero, matching the
+    /// `f64::atan2` convention.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use hyperreal::Real;
+    /// // atan2(1, 1) == pi / 4
+    /// assert_eq!(
+    ///     Real::one().atan2(Real::one()),
+    ///     (Real::pi() / Real::from(4_i32)).unwrap(),
+    /// );
+    /// // atan2(0, -1) == pi
+    /// assert_eq!(Real::zero().atan2(-Real::one()), Real::pi());
+    /// // atan2(1, 0) == pi / 2
+    /// assert_eq!(
+    ///     Real::one().atan2(Real::zero()),
+    ///     (Real::pi() / Real::from(2_i32)).unwrap(),
+    /// );
+    /// ```
+    pub fn atan2(self, x: Real) -> Real {
+        let y_sign = self.best_sign();
+        let x_sign = x.best_sign();
+        match (y_sign, x_sign) {
+            (Sign::NoSign, Sign::NoSign) | (Sign::NoSign, Sign::Plus) => {
+                crate::trace_dispatch!("real", "atan2", "axis-zero-y");
+                return Self::zero();
+            }
+            (Sign::NoSign, Sign::Minus) => {
+                crate::trace_dispatch!("real", "atan2", "axis-negative-x");
+                return Self::pi();
+            }
+            (Sign::Plus, Sign::NoSign) => {
+                crate::trace_dispatch!("real", "atan2", "axis-positive-y");
+                return Self::pi_fraction(1, 2);
+            }
+            (Sign::Minus, Sign::NoSign) => {
+                crate::trace_dispatch!("real", "atan2", "axis-negative-y");
+                return Self::pi_fraction(-1, 2);
+            }
+            _ => {}
+        }
+        let ratio = (self / &x).expect("nonzero x rules out divide-by-zero");
+        let base = ratio.atan().expect("Real::atan is total");
+        if x_sign == Sign::Plus {
+            crate::trace_dispatch!("real", "atan2", "quadrant-right");
+            base
+        } else if y_sign == Sign::Plus {
+            crate::trace_dispatch!("real", "atan2", "quadrant-upper-left");
+            base + Self::pi()
+        } else {
+            crate::trace_dispatch!("real", "atan2", "quadrant-lower-left");
+            base - Self::pi()
+        }
+    }
+
     /// The inverse hyperbolic sine of this Real.
     pub fn asinh(self) -> Result<Real, Problem> {
         if self.definitely_zero() {
