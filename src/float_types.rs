@@ -969,6 +969,22 @@ pub(crate) fn hreal_sqrt(value: Real) -> Option<Real> {
     hreal_to_f64(&value.sqrt().ok()?)
 }
 
+/// Return the finite square root of an already-promoted hyperreal value.
+///
+/// Geometry kernels should keep squared distances, squared lengths, and area
+/// magnitudes in `hyperreal::Real` as long as possible. This helper is the
+/// narrow reporting boundary for the rare APIs that still return primitive
+/// lengths, following Yap's exact-geometric-computation split between exact
+/// predicates and finite output values (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+pub(crate) fn hreal_sqrt_ref(value: &HReal) -> Option<HReal> {
+    value.clone().sqrt().ok()
+}
+
+/// Export the finite square root of an already-promoted hyperreal value.
+pub(crate) fn hreal_sqrt_to_f64(value: &HReal) -> Option<Real> {
+    hreal_to_f64(&hreal_sqrt_ref(value)?)
+}
+
 /// Return the finite arctangent of a public boundary scalar.
 #[cfg(any(test, feature = "sketch"))]
 pub(crate) fn hreal_atan(value: Real) -> Option<Real> {

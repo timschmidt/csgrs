@@ -4,9 +4,9 @@ use crate::float_types::{
     PI, Real, hangle_between_vectors, hangle_sin_cos, hpoint_centroid, hpoint_distance,
     hpoint_lerp, hpoint_weighted_sum, hpoints_within_epsilon, hreal_clamp_f64, hreal_div,
     hreal_f64s_within_epsilon, hreal_from_f64, hreal_gt_f64, hreal_lt_f64,
-    hreal_max_report_value, hreal_mean, hreal_mul, hreal_sample_stddev, hreal_sub, hreal_sum,
-    hreal_to_f64, hunit_vector3, hvector3_distance, hvector3_dot, hvector3_from_point3,
-    hvector3_mean, hvector3_weighted_sum, tolerance,
+    hreal_max_report_value, hreal_mean, hreal_mul, hreal_sample_stddev, hreal_sqrt_ref,
+    hreal_sqrt_to_f64, hreal_sub, hreal_sum, hreal_to_f64, hunit_vector3, hvector3_distance,
+    hvector3_dot, hvector3_from_point3, hvector3_mean, hvector3_weighted_sum, tolerance,
 };
 use hashbrown::HashMap;
 use nalgebra::{Point3, Vector3};
@@ -217,7 +217,7 @@ impl Vertex {
     /// <https://doi.org/10.1016/0925-7721(95)00040-2>.
     pub fn distance_to(&self, other: &Vertex) -> Real {
         hyper_vertex_distance_squared(self, other)
-            .and_then(|distance_squared| hreal_to_f64(&distance_squared.sqrt().ok()?))
+            .and_then(|distance_squared| hreal_sqrt_to_f64(&distance_squared))
             .unwrap_or(Real::INFINITY)
     }
 
@@ -409,7 +409,7 @@ fn hyper_cotangent_at_opposite(
     let edge1 = center - &opposite;
     let edge2 = neighbor - opposite;
     let cross = edge1.cross(&edge2);
-    let cross_len = cross.dot(&cross).sqrt().ok()?;
+    let cross_len = hreal_sqrt_ref(&cross.dot(&cross))?;
     if !hreal_gt_f64(&cross_len, tolerance()) {
         return None;
     }
