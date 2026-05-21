@@ -242,6 +242,22 @@ fn sketch_problem_with_distance_ranges(row_count: usize) -> hypersolve::SketchSo
     sketch
 }
 
+fn sketch_problem_with_parameter_orderings(row_count: usize) -> hypersolve::SketchSolveProblem {
+    let mut sketch = hypersolve::SketchSolveProblem::new();
+    let mut previous = sketch.add_parameter("order0", r(0));
+    for index in 1..=row_count {
+        let current = sketch.add_parameter(format!("order{index}"), r(index as i64));
+        hypersolve::sketch_range_builders::parameter_ordering(
+            &mut sketch,
+            format!("nondecreasing {index}"),
+            previous,
+            current,
+        );
+        previous = current;
+    }
+    sketch
+}
+
 fn sketch_problem_with_parameter_domains(row_count: usize) -> hypersolve::SketchSolveProblem {
     let mut sketch = hypersolve::SketchSolveProblem::new();
     for index in 0..row_count {
@@ -316,6 +332,10 @@ fn certification(c: &mut Criterion) {
     let distance_range_sketch = sketch_problem_with_distance_ranges(16);
     c.bench_function("sketch_distance_range_lowering", |b| {
         b.iter(|| distance_range_sketch.lower_to_problem())
+    });
+    let ordering_sketch = sketch_problem_with_parameter_orderings(16);
+    c.bench_function("sketch_parameter_ordering_lowering", |b| {
+        b.iter(|| ordering_sketch.lower_to_problem())
     });
     let domain_sketch = sketch_problem_with_parameter_domains(16);
     c.bench_function("sketch_parameter_domain_preflight", |b| {

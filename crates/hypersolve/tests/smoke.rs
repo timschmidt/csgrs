@@ -483,12 +483,19 @@ fn sketch_unit_tolerance_audit_keeps_tolerances_explicit_and_report_bearing() {
 fn sketch_range_and_soft_objective_builders_lower_to_exact_row_kinds() {
     let mut sketch = SketchSolveProblem::new();
     let parameter = sketch.add_parameter("t", real(3));
+    let lower_parameter = sketch.add_parameter("lower", real(1));
     let range = sketch_range_builders::parameter_range(
         &mut sketch,
         "bounded t",
         parameter,
         Some(real(1)),
         Some(real(5)),
+    );
+    let ordering = sketch_range_builders::parameter_ordering(
+        &mut sketch,
+        "nondecreasing",
+        lower_parameter,
+        parameter,
     );
     let objective = sketch_objective_builders::stay_near_parameter(
         &mut sketch,
@@ -499,6 +506,8 @@ fn sketch_range_and_soft_objective_builders_lower_to_exact_row_kinds() {
     );
 
     assert_eq!(range.family, hypersolve::SketchConstraintFamily::Range);
+    assert_eq!(ordering.family, hypersolve::SketchConstraintFamily::Range);
+    assert_eq!(ordering.strategy, SketchResidualStrategy::ParameterOrdering);
     assert_eq!(
         objective.family,
         hypersolve::SketchConstraintFamily::Objective
@@ -506,8 +515,8 @@ fn sketch_range_and_soft_objective_builders_lower_to_exact_row_kinds() {
 
     let lowered = sketch.lower_to_problem();
 
-    assert_eq!(lowered.problem.constraints.len(), 3);
-    assert_eq!(lowered.rows.len(), 3);
+    assert_eq!(lowered.problem.constraints.len(), 4);
+    assert_eq!(lowered.rows.len(), 4);
     assert_eq!(
         lowered.problem.constraints[0].kind,
         ConstraintKind::GreaterOrEqual
@@ -516,14 +525,22 @@ fn sketch_range_and_soft_objective_builders_lower_to_exact_row_kinds() {
         lowered.problem.constraints[1].kind,
         ConstraintKind::LessOrEqual
     );
-    assert_eq!(lowered.problem.constraints[2].kind, ConstraintKind::Soft);
-    assert_eq!(lowered.problem.constraints[2].weight, real(7));
+    assert_eq!(
+        lowered.problem.constraints[2].kind,
+        ConstraintKind::GreaterOrEqual
+    );
+    assert_eq!(lowered.problem.constraints[3].kind, ConstraintKind::Soft);
+    assert_eq!(lowered.problem.constraints[3].weight, real(7));
     assert_eq!(
         lowered.rows[0].strategy,
         Some(SketchResidualStrategy::ParameterRange)
     );
     assert_eq!(
         lowered.rows[2].strategy,
+        Some(SketchResidualStrategy::ParameterOrdering)
+    );
+    assert_eq!(
+        lowered.rows[3].strategy,
         Some(SketchResidualStrategy::SoftObjective)
     );
 
@@ -533,6 +550,38 @@ fn sketch_range_and_soft_objective_builders_lower_to_exact_row_kinds() {
     );
 
     assert!(certification.all_satisfied());
+}
+
+#[test]
+fn sketch_parameter_ordering_reports_violations_and_stale_parameters_explicitly() {
+    let mut sketch = SketchSolveProblem::new();
+    let high = sketch.add_parameter("high", real(5));
+    let low = sketch.add_parameter("low", real(1));
+    sketch.add_parameter_ordering("violated", high, low);
+    sketch.add_parameter_ordering("stale", high, hypersolve::SketchParameterHandle(999));
+
+    let lowered = sketch.lower_to_problem();
+
+    assert_eq!(lowered.problem.constraints.len(), 1);
+    assert_eq!(lowered.rows.len(), 2);
+    assert_eq!(
+        lowered.rows[0].strategy,
+        Some(SketchResidualStrategy::ParameterOrdering)
+    );
+    assert_eq!(
+        lowered.rows[1].status,
+        SketchGeneratedRowStatus::MissingParameter(hypersolve::SketchParameterHandle(999))
+    );
+
+    let certification = certify_candidate(
+        &PreparedProblem::new(&lowered.problem),
+        &context_from_problem(&lowered.problem),
+    );
+
+    assert!(matches!(
+        certification.rows[0].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
 }
 
 #[test]

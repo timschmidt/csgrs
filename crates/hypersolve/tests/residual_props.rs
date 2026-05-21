@@ -336,6 +336,35 @@ proptest! {
     }
 
     #[test]
+    fn sketch_generated_parameter_ordering_matches_integer_order(
+        lower in -32_i16..=32,
+        upper in -32_i16..=32,
+    ) {
+        let lower = i64::from(lower);
+        let upper = i64::from(upper);
+        let mut sketch = SketchSolveProblem::new();
+        let lower_parameter = sketch.add_parameter("lower", Real::from(lower));
+        let upper_parameter = sketch.add_parameter("upper", Real::from(upper));
+        sketch.add_parameter_ordering("nondecreasing", lower_parameter, upper_parameter);
+
+        let lowered = sketch.lower_to_problem();
+        let certification = certify_candidate(
+            &PreparedProblem::new(&lowered.problem),
+            &context_from_problem(&lowered.problem),
+        );
+
+        prop_assert_eq!(lowered.rows.len(), 1);
+        prop_assert_eq!(
+            lowered.rows[0].strategy,
+            Some(SketchResidualStrategy::ParameterOrdering)
+        );
+        prop_assert_eq!(
+            certification.all_satisfied(),
+            upper >= lower
+        );
+    }
+
+    #[test]
     fn sketch_parameter_domain_preflight_generated_closed_bounds_match_integer_order(
         value in -32_i16..=32,
         lower in -32_i16..=32,

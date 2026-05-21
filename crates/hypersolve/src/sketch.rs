@@ -342,6 +342,18 @@ pub enum SketchConstraintKind {
         /// Optional exact upper bound.
         upper: Option<Real>,
     },
+    /// Nondecreasing relation between two scalar parameters.
+    ///
+    /// Lowering emits `upper - lower >= 0` as an exact inequality row. This is
+    /// the generic monotonicity primitive for sketch parameters; domain-specific
+    /// clearance or manufacturing interpretations should retain their own
+    /// source objects and feed this only as a scalar proof obligation.
+    ParameterOrdering {
+        /// Parameter that must not exceed `upper`.
+        lower: SketchParameterHandle,
+        /// Parameter that must be greater than or equal to `lower`.
+        upper: SketchParameterHandle,
+    },
     /// Soft objective that keeps a parameter near a target value.
     StayNearParameter {
         /// Parameter to bias.
@@ -385,6 +397,8 @@ pub enum SketchResidualStrategy {
     SquaredIncidence,
     /// Scalar parameter bound.
     ParameterRange,
+    /// Scalar nondecreasing parameter relation.
+    ParameterOrdering,
     /// Soft stay-near objective.
     SoftObjective,
 }
@@ -870,6 +884,21 @@ impl SketchSolveProblem {
         ranges::parameter_range(self, name, parameter, lower, upper).handle
     }
 
+    /// Add a nondecreasing scalar parameter relation.
+    ///
+    /// Lowering emits the exact inequality `upper - lower >= 0`, matching Yap's
+    /// construction/proof split: the retained relation records intent, while
+    /// ordinary exact candidate certification decides whether a candidate
+    /// satisfies it.
+    pub fn add_parameter_ordering(
+        &mut self,
+        name: impl Into<String>,
+        lower: SketchParameterHandle,
+        upper: SketchParameterHandle,
+    ) -> SketchConstraintHandle {
+        ranges::parameter_ordering(self, name, lower, upper).handle
+    }
+
     /// Add a soft stay-near objective for one parameter.
     pub fn add_stay_near_parameter(
         &mut self,
@@ -1273,6 +1302,28 @@ impl SketchSolveProblem {
                         status: SketchGeneratedRowStatus::ReferenceOnly,
                     });
                 }
+            }
+            SketchConstraintKind::ParameterOrdering { lower, upper } => {
+                // Yap, "Towards Exact Geometric Computation" (1997), keeps
+                // the semantic relation separate from the exact predicate
+                // that certifies it. Monotonicity lowers to one scalar
+                // inequality and lets candidate replay prove the sign.
+                let (Some(lower_expr), Some(upper_expr)) = (
+                    self.parameter_expr(lower, constraint, rows),
+                    self.parameter_expr(upper, constraint, rows),
+                ) else {
+                    return;
+                };
+                self.push_residual_with_kind(
+                    problem,
+                    rows,
+                    constraint,
+                    constraint.name.clone(),
+                    upper_expr - lower_expr,
+                    SketchResidualStrategy::ParameterOrdering,
+                    ConstraintKind::GreaterOrEqual,
+                    Real::one(),
+                );
             }
             SketchConstraintKind::StayNearParameter {
                 parameter,

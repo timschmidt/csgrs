@@ -211,6 +211,27 @@ pub mod ranges {
             kind,
         }
     }
+
+    /// Add an exact nondecreasing relation between two scalar parameters.
+    ///
+    /// The relation lowers to `upper - lower >= 0`, giving generic
+    /// monotonicity checks a retained sketch object while preserving the
+    /// Yap-style exact replay boundary for the actual sign decision.
+    pub fn parameter_ordering(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        lower: SketchParameterHandle,
+        upper: SketchParameterHandle,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::ParameterOrdering { lower, upper };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Range,
+            strategy: SketchResidualStrategy::ParameterOrdering,
+            kind,
+        }
+    }
 }
 
 /// Soft objective builders.
