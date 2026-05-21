@@ -2621,7 +2621,83 @@ fn materialize_component_union_group(
         [first, second] => {
             materialize_two_component_union(&components[*first], &components[*second])
         }
-        _ => materialize_rectangle_strip_union_cluster(components, members),
+        _ => materialize_component_union_convex_hull_by_area(components, members)
+            .or_else(|| materialize_rectangle_strip_union_cluster(components, members)),
+    }
+}
+
+/// Materialize a many-component union when exact area proves convex coverage.
+///
+/// This is the non-rectangular sibling of the rectangle-strip certificate
+/// below. Every component is already a certified convex coplanar sheet. For a
+/// cluster with three or more members, we accept the convex hull only when
+/// exact pairwise component relations prove there is no positive-area overlap
+/// and the sum of retained component areas equals the exact hull area. Because
+/// all components are subsets of that hull, area equality proves there is no
+/// gap. The argument is the same retained-object discipline Yap requires in
+/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+/// (1997): topology is promoted from exact structural facts, not from a
+/// primitive-float polygon repair pass. The hull itself uses Andrew,
+/// "Another Efficient Algorithm for Convex Hulls in Two Dimensions,"
+/// *Information Processing Letters* 9.5 (1979).
+#[cfg(feature = "exact-triangulation")]
+fn materialize_component_union_convex_hull_by_area(
+    components: &[ConvexUnionComponent],
+    members: &[usize],
+) -> Option<Vec<Point3>> {
+    if members.len() < 3 {
+        return None;
+    }
+    let projection = components[*members.first()?].projection;
+    if members
+        .iter()
+        .any(|&member| components[member].projection != projection)
+    {
+        return None;
+    }
+
+    let mut boundary_contacts = 0;
+    for left in 0..members.len() {
+        for right in left + 1..members.len() {
+            match convex_union_component_relation(
+                &components[members[left]].hull,
+                &components[members[right]].hull,
+                projection,
+            )? {
+                ConvexUnionComponentRelation::Disjoint => {}
+                ConvexUnionComponentRelation::BoundaryOnly => boundary_contacts += 1,
+                ConvexUnionComponentRelation::PositiveArea => return None,
+            }
+        }
+    }
+    if boundary_contacts == 0 {
+        return None;
+    }
+
+    let points = members
+        .iter()
+        .flat_map(|&member| components[member].hull.iter().cloned())
+        .collect::<Vec<_>>();
+    let mut hull = convex_hull_3d(points, projection)?;
+    orient_polygon_ccw(&mut hull, projection)?;
+    validate_retained_convex_hull(
+        "coplanar convex component-union hull coverage",
+        &hull,
+        projection,
+    )
+    .ok()?;
+    let hull_area = projected_area2_abs(&hull, projection)?;
+    let mut component_area = ExactReal::from(0);
+    for &member in members {
+        component_area = add(
+            &component_area,
+            &projected_area2_abs(&components[member].hull, projection)?,
+        );
+    }
+    if compare_reals(&component_area, &hull_area).value() == Some(Ordering::Equal) {
+        Some(hull)
+    } else {
+        None
     }
 }
 

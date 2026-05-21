@@ -9492,6 +9492,133 @@ fn exact_coplanar_convex_surface_union_materializes_single_bridged_strip_cluster
 
 #[cfg(feature = "exact-triangulation")]
 #[test]
+fn exact_coplanar_convex_surface_union_materializes_nonrectangular_hull_cluster() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            0, 0, 0, 2, 0, 0, 2, 2, 0, 1, 2, 0, //
+            4, 0, 0, 6, 0, 0, 5, 2, 0, 4, 2, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let right = ExactMesh::from_i64_triangles_with_policy(
+        &[2, 0, 0, 4, 0, 0, 4, 2, 0, 2, 2, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+
+    assert!(hypermesh::exact::arrange_coplanar_convex_surface_union(&left, &right).is_none());
+    assert!(hypermesh::exact::arrange_coplanar_convex_surface_multi_union(&left, &right).is_none());
+    let union = hypermesh::exact::arrange_coplanar_convex_surface_component_union(&left, &right)
+        .expect("non-rectangular exact component tiling should replay as one convex hull");
+    union.validate().unwrap();
+    union
+        .validate_against_sources(
+            &left,
+            &right,
+            hypermesh::exact::CoplanarArrangementOperation::Union,
+        )
+        .unwrap();
+    assert_eq!(union.polygon.len(), 4);
+    assert!(
+        union
+            .polygon
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(0)))
+    );
+    assert!(
+        union
+            .polygon
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(6)))
+    );
+    assert!(
+        union
+            .polygon
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(1))
+                && real_eq(&point.y, &ExactReal::from(2)))
+    );
+    assert!(
+        union
+            .polygon
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(5))
+                && real_eq(&point.y, &ExactReal::from(2)))
+    );
+
+    let mut stale = union.clone();
+    stale.polygon[0] = p3(99, 0, 0);
+    assert!(
+        stale
+            .validate_against_sources(
+                &left,
+                &right,
+                hypermesh::exact::CoplanarArrangementOperation::Union,
+            )
+            .is_err()
+    );
+
+    let arrangement_report = hypermesh::exact::certify_planar_arrangement_report(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+    )
+    .unwrap();
+    arrangement_report.validate().unwrap();
+    arrangement_report
+        .validate_against_sources(&left, &right)
+        .unwrap();
+    assert_eq!(
+        arrangement_report.status,
+        hypermesh::exact::ExactPlanarArrangementStatus::AlreadyMaterialized
+    );
+
+    let preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+    )
+    .unwrap();
+    preflight.validate().unwrap();
+    preflight.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarConvexSurfaceArrangementUnion
+    );
+
+    let result = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    result
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            hypermesh::exact::ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut:
+                hypermesh::exact::ExactBooleanShortcutKind::CoplanarConvexSurfaceArrangementUnion
+        }
+    );
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
 fn exact_coplanar_convex_surface_union_materializes_edge_touching_strip_cluster() {
     let left = ExactMesh::from_i64_triangles_with_policy(
         &[

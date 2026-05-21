@@ -1338,7 +1338,7 @@ fuzz_target!(|data: &[u8]| {
 
 #[cfg(feature = "exact-triangulation")]
 fn exercise_deterministic_case(selector: u8) {
-    match selector % 16 {
+    match selector % 17 {
         0 => exercise_partial_convex_union_boundary(),
         1 => exercise_face_interior_steiner_boundary(),
         2 => exercise_multi_component_coplanar_union(),
@@ -1354,7 +1354,8 @@ fn exercise_deterministic_case(selector: u8) {
         12 => exercise_affine_orthogonal_solid_cell_complexes(),
         13 => exercise_affine_orthogonal_solid_cell_complex_frame_discovery(),
         14 => exercise_mixed_coplanar_volumetric_materialization(),
-        _ => exercise_non_rectilinear_coplanar_volumetric_materialization(),
+        15 => exercise_non_rectilinear_coplanar_volumetric_materialization(),
+        _ => exercise_nonrectangular_component_union_hull_coverage(),
     }
 }
 
@@ -1691,6 +1692,64 @@ fn exercise_multi_component_coplanar_union() {
         arrange_coplanar_convex_surface_component_union(&edge_bridge_left, &point_touching_bridge)
             .is_none()
     );
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn exercise_nonrectangular_component_union_hull_coverage() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            0, 0, 0, 2, 0, 0, 2, 2, 0, 1, 2, 0, //
+            4, 0, 0, 6, 0, 0, 5, 2, 0, 4, 2, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("non-rectangular component union left fixture must import");
+    let right = ExactMesh::from_i64_triangles_with_policy(
+        &[2, 0, 0, 4, 0, 0, 4, 2, 0, 2, 2, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("non-rectangular component union right fixture must import");
+
+    let union = arrange_coplanar_convex_surface_component_union(&left, &right)
+        .expect("non-rectangular component tiling should materialize one convex hull");
+    union.validate().unwrap();
+    union
+        .validate_against_sources(&left, &right, CoplanarArrangementOperation::Union)
+        .unwrap();
+    let mut stale = union.clone();
+    stale.polygon.reverse();
+    assert!(stale.validate().is_err());
+
+    let preflight = preflight_boolean_exact(&left, &right, ExactBooleanOperation::Union)
+        .expect("non-rectangular component union preflight should classify shortcut");
+    preflight.validate().unwrap();
+    preflight.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceArrangementUnion
+    );
+
+    let result = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("non-rectangular component union should materialize");
+    result
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
 }
 
 #[cfg(feature = "exact-triangulation")]
