@@ -195,7 +195,7 @@ pub(crate) fn hxy_ring_orientation_sign(ring: &[[Real; 2]]) -> Option<RealSign> 
 pub(crate) fn hxy_distance(lhs: (Real, Real), rhs: (Real, Real)) -> Option<Real> {
     let lhs = hyperlattice::Vector2::try_from_f64_array([lhs.0, lhs.1]).ok()?;
     let rhs = hyperlattice::Vector2::try_from_f64_array([rhs.0, rhs.1]).ok()?;
-    hreal_to_f64(&lhs.squared_distance(&rhs).sqrt().ok()?)
+    hreal_sqrt_to_f64(&lhs.squared_distance(&rhs))
 }
 
 /// Return a finite unit direction from one XY boundary coordinate to another.
@@ -404,7 +404,7 @@ pub(crate) fn hangle_sin_cos(angle_radians: Real) -> Option<(Real, Real)> {
 pub(crate) fn hvector3_distance(lhs: &Vector3<Real>, rhs: &Vector3<Real>) -> Option<Real> {
     let lhs = hvector3_from_vector3(lhs)?;
     let rhs = hvector3_from_vector3(rhs)?;
-    hreal_to_f64(&lhs.squared_distance(&rhs).sqrt().ok()?)
+    hreal_sqrt_to_f64(&lhs.squared_distance(&rhs))
 }
 
 /// Return the finite arithmetic mean of public boundary vectors.
@@ -579,7 +579,7 @@ pub(crate) fn hpoints_within_epsilon(
 pub(crate) fn hpoint_distance(lhs: &Point3<Real>, rhs: &Point3<Real>) -> Option<Real> {
     let lhs = hvector3_from_point3(lhs)?;
     let rhs = hvector3_from_point3(rhs)?;
-    hreal_to_f64(&lhs.squared_distance(&rhs).sqrt().ok()?)
+    hreal_sqrt_to_f64(&lhs.squared_distance(&rhs))
 }
 
 /// Return the finite centroid of public boundary points using hyperlattice.
@@ -685,7 +685,7 @@ pub(crate) fn htriangle_area_hreal(
     if !hreal_gt_f64(&magnitude_squared, tolerance() * tolerance()) {
         return None;
     }
-    let twice_area = magnitude_squared.sqrt().ok()?;
+    let twice_area = hreal_sqrt_ref(&magnitude_squared)?;
     Some(twice_area * hreal_from_f64(0.5).ok()?)
 }
 
