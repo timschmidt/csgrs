@@ -108,9 +108,9 @@ pub use prepared::{
     PreparedConstraintFacts, PreparedProblem, PreparedProblemFacts, facts_depend_on_symbol,
 };
 pub use residual_replay::{
-    DenseResidualReplayError, DenseResidualReplayReport, DenseResidualReplayRow,
-    SparseResidualReplayError, SparseResidualReplayReport, SparseResidualReplayRow,
-    SparseResidualTerm, replay_dense_linear_residuals, replay_sparse_linear_residuals,
+    DenseResidualReplayError, DenseResidualReplayReport, SparseResidualReplayError,
+    SparseResidualReplayReport, SparseResidualReplayRow, SparseResidualTerm,
+    replay_dense_linear_residuals, replay_sparse_linear_residuals,
 };
 pub use resultant::{
     ResultantInputSide, UnivariateResultantError, UnivariateResultantReport,

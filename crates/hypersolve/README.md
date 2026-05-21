@@ -31,6 +31,10 @@ auditable before future high-performance backends are introduced.
   [hypercircuit](https://github.com/timschmidt/hypercircuit), and
   [hyperphysics](https://github.com/timschmidt/hyperphysics): domain crates that can
   generate residuals and replay accepted candidates.
+- [hyperpack](https://github.com/timschmidt/hyperpack), [hyperevolution](https://github.com/timschmidt/hyperevolution),
+  [hyperparts](https://github.com/timschmidt/hyperparts), [hypervoxel](https://github.com/timschmidt/hypervoxel),
+  [hypersdf](https://github.com/timschmidt/hypersdf), and [hyperbrep](https://github.com/timschmidt/hyperbrep):
+  sibling crates that should keep optimization proposals separate from exact replay.
 
 ## Typical Solver Problems
 
@@ -58,15 +62,15 @@ than internal truth.
   direct equality helpers, and univariate root-isolation reports expose reusable
   exact subproblems.
 - `CandidateCertificationReport`, lossy-adapter-only reports, candidate-domain
-  reports, residual balls, retained interval-box reports, affine Krawczyk
-  reports, univariate quadratic alpha reports, and predicate reports describe
-  proof or uncertainty.
+  reports, residual balls, interval certification helpers, affine Krawczyk reports,
+  univariate quadratic alpha reports, and predicate reports describe proof or
+  uncertainty.
 - `ProposalEngineKind`, `ProposalEngineReport`, `DenseLinearBackend`,
   `LinearSolveReport`, `SolverConfig`, `SolverState`, and `SolveReport` make
   lossy candidate generation explicit.
-- `DenseResidualReplayReport`, `DenseResidualReplayRow`,
-  `DenseResidualReplayError`, and `replay_dense_linear_residuals` provide exact
-  replay for externally assembled dense linear residuals.
+- `DenseResidualReplayReport`, `DenseResidualReplayError`, and
+  `replay_dense_linear_residuals` provide the shared exact dense residual replay helper
+  used by crates such as `hypercircuit`.
 
 ## Precision Model
 
@@ -78,6 +82,13 @@ convergence outcome. Geometry or topology predicates should be delegated to
 Unknown certification is a first-class result. The crate should not turn unresolved
 interval, predicate, or residual evidence into a float decision just to make a solve
 look complete.
+
+## Numerical Explosion
+
+`hypersolve` combats numerical explosion by separating symbolic residual structure from
+candidate generation. Degree facts, dependency masks, affine rows, substitution classes,
+Sturm intervals, and replay reports keep exact cases small and push generic nonlinear
+work into named proposal adapters whose outputs must be certified before acceptance.
 
 ## Performance Model
 
@@ -110,16 +121,16 @@ Implemented today:
   count bounds, recursive Bernstein subdivision reports, represented algebraic
   root wrappers, square-free reduction, Sturm intervals, bounded interval
   refinement, and exact rational witness replay;
-- candidate, lossy-adapter-only, candidate-domain, retained interval-box,
-  affine Krawczyk, univariate and multivariate quadratic Krawczyk, and
-  univariate quadratic alpha certification surfaces;
+- candidate, lossy-adapter-only, candidate-domain, interval, affine Krawczyk,
+  univariate and multivariate quadratic Krawczyk, and univariate quadratic alpha
+  certification surfaces;
 - exact domain preflight for division, negative powers, square root, logarithm,
   inverse circular, and inverse hyperbolic residual nodes;
-- reusable exact dense linear residual replay for domain crates that build their
-  own small linear systems;
+- reusable exact dense linear residual replay for domain crates that build their own
+  small linear systems;
 - a dense damped least-squares prototype with proposal-engine and adapter diagnostics;
 - geometry residual helper modules. PCB, routing, and toolpath residual builders now
-  live in domain crates where their semantics are owned.
+  live in `hyperpath::solve`, where their domain semantics are owned.
 
 Known limits: nonlinear solve policy is still experimental, dense linear solving is
 intentionally approximate, and domain topology remains delegated to sibling crates.
@@ -146,7 +157,7 @@ trusting a proposal loop by itself:
 ```rust,ignore
 use hypersolve::{
     Constraint, ConstraintKind, Expr, Problem, SolverConfig, SolverState, Variable, VariableId,
-    certify_candidate, solve_damped_least_squares,
+    certify_candidate, replay_dense_linear_residuals, solve_damped_least_squares,
 };
 use hyperreal::Real;
 
@@ -167,6 +178,14 @@ let proposal = solve_damped_least_squares(SolverState {
 
 let certification = certify_candidate(&problem, &proposal.values);
 assert!(!certification.rows.is_empty());
+
+let replay = replay_dense_linear_residuals(
+    &[vec![Real::from(2)]],
+    &[Real::from(4)],
+    &[Real::from(2)],
+    -64,
+)?;
+assert!(replay.accepted);
 ```
 
 Prepared affine/quadratic residuals, direct equality substitution, domain preflight,
@@ -182,3 +201,33 @@ Useful local checks:
 cargo test
 cargo bench --bench certification
 ```
+
+## References
+
+Bareiss, Erwin H. "Sylvester's Identity and Multistep Integer-Preserving
+Gaussian Elimination." *Mathematics of Computation*, vol. 22, no. 103, 1968,
+pp. 565-578.
+
+Collins, George E., and Rüdiger Loos. "Real Zeros of Polynomials." *Computer
+Algebra: Symbolic and Algebraic Computation*, edited by Bruno Buchberger,
+George E. Collins, and Rüdiger Loos, Springer, 1982, pp. 83-94.
+
+Descartes, René. *La Géométrie*. 1637.
+
+Farouki, Rida T., and V. T. Rajan. "Algorithms for Polynomials in Bernstein
+Form." *Computer Aided Geometric Design*, vol. 5, no. 1, 1988, pp. 1-26.
+
+Krawczyk, Rudolf. "Newton-Algorithmen zur Bestimmung von Nullstellen mit
+Fehlerschranken." *Computing*, vol. 4, 1969, pp. 187-201.
+
+Moore, Ramon E. *Interval Analysis*. Prentice-Hall, 1966.
+
+Smale, Steve. "Newton's Method Estimates from Data at One Point." *The Merging
+of Disciplines: New Directions in Pure, Applied, and Computational Mathematics*,
+Springer, 1986.
+
+Sturm, Charles François. "Mémoire sur la résolution des équations numériques."
+*Bulletin des Sciences de Férussac*, vol. 11, 1835, pp. 419-425.
+
+Yap, Chee K. "Towards Exact Geometric Computation." *Computational Geometry*,
+vol. 7, nos. 1-2, 1997, pp. 3-23.
