@@ -181,6 +181,23 @@ pub(crate) fn hxy_unit_direction(
     Some((unit[0], unit[1]))
 }
 
+/// Interpolate two XY boundary coordinates through hyperreal arithmetic.
+///
+/// This is the 2-D counterpart to [`hpoint_lerp`]. Profile constructors still
+/// receive finite `f64` control points at the API edge, but curve evaluation
+/// should happen after promotion to `hyperlattice::Vector2`, following Yap's
+/// exact-geometric-computation boundary discipline
+/// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+#[cfg(any(test, feature = "sketch"))]
+pub(crate) fn hxy_lerp(from: (Real, Real), to: (Real, Real), t: Real) -> Option<(Real, Real)> {
+    let from = hyperlattice::Vector2::try_from_f64_array([from.0, from.1]).ok()?;
+    let to = hyperlattice::Vector2::try_from_f64_array([to.0, to.1]).ok()?;
+    let t = hreal_from_f64(t).ok()?;
+    let result = from.clone() + (to - from) * t;
+    let coords = result.to_f64_array_lossy()?;
+    Some((coords[0], coords[1]))
+}
+
 /// Step from an XY boundary coordinate along a finite unit direction.
 #[cfg(any(test, feature = "offset"))]
 pub(crate) fn hxy_step(
@@ -1178,12 +1195,17 @@ mod tests {
         assert!(hreal_f64s_within_epsilon(direction.0, 0.6, tolerance()));
         assert!(hreal_f64s_within_epsilon(direction.1, 0.8, tolerance()));
 
+        let midpoint = hxy_lerp((0.0, 2.0), (4.0, 6.0), 0.5).unwrap();
+        assert!(hreal_f64s_within_epsilon(midpoint.0, 2.0, tolerance()));
+        assert!(hreal_f64s_within_epsilon(midpoint.1, 4.0, tolerance()));
+
         let stepped = hxy_step((1.0, 2.0), direction, -5.0).unwrap();
         assert!(hreal_f64s_within_epsilon(stepped.0, -2.0, tolerance()));
         assert!(hreal_f64s_within_epsilon(stepped.1, -2.0, tolerance()));
 
         assert!(hxy_distance((0.0, 0.0), (Real::NAN, 0.0)).is_none());
         assert!(hxy_unit_direction((0.0, 0.0), (0.0, 0.0)).is_none());
+        assert!(hxy_lerp((0.0, f64::NAN), (1.0, 1.0), 0.5).is_none());
         assert!(hxy_step((0.0, 0.0), (1.0, 0.0), Real::INFINITY).is_none());
     }
 

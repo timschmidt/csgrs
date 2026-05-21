@@ -3,7 +3,8 @@
 use crate::csg::CSG;
 use crate::float_types::{
     FRAC_PI_2, PI, Real, TAU, hangle_sin_cos, hdegrees_to_radians, hreal_affine, hreal_div,
-    hreal_from_f64, hreal_mul, hreal_sub, tolerance,
+    hreal_f64s_within_epsilon, hreal_from_f64, hreal_mul, hreal_sub, hreal_sum, hxy_lerp,
+    tolerance,
 };
 use crate::sketch::Profile;
 use hypercurve::{Contour2, CurveString2, LineSeg2, Point2, Segment2};
@@ -831,37 +832,47 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// * `control`: list of 2-D control points
     /// * `segments`: number of straight-line segments used for the tessellation
     pub fn bezier(control: &[[Real; 2]], segments: usize, metadata: M) -> Self {
-        if control.len() < 2 || segments < 1 {
+        if control.len() < 2
+            || segments < 1
+            || control.iter().any(|point| !finite_profile_scalars(point))
+        {
             return Profile::empty(metadata);
         }
 
-        /// Evaluates a Bézier curve at a given parameter `t` using de Casteljau's algorithm.
-        fn de_casteljau(control: &[[Real; 2]], t: Real) -> (Real, Real) {
+        /// Evaluates a Bézier curve using de Casteljau interpolation in hyperreal space.
+        fn de_casteljau(control: &[[Real; 2]], t: Real) -> Option<(Real, Real)> {
             let mut points = control.to_vec();
             let n = points.len();
 
             for k in 1..n {
                 for i in 0..(n - k) {
-                    points[i][0] = (1.0 - t) * points[i][0] + t * points[i + 1][0];
-                    points[i][1] = (1.0 - t) * points[i][1] + t * points[i + 1][1];
+                    let next = hxy_lerp(
+                        (points[i][0], points[i][1]),
+                        (points[i + 1][0], points[i + 1][1]),
+                        t,
+                    )?;
+                    points[i] = [next.0, next.1];
                 }
             }
-            (points[0][0], points[0][1])
+            Some((points[0][0], points[0][1]))
         }
 
-        let pts: Vec<[Real; 2]> = (0..=segments)
-            .map(|i| {
-                let t = i as Real / segments as Real;
-                let (x, y) = de_casteljau(control, t);
-                [x, y]
-            })
-            .collect();
+        let mut pts = Vec::with_capacity(segments + 1);
+        for i in 0..=segments {
+            let Some(t) = hreal_div(i as Real, segments as Real) else {
+                return Profile::empty(metadata);
+            };
+            let Some((x, y)) = de_casteljau(control, t) else {
+                return Profile::empty(metadata);
+            };
+            pts.push([x, y]);
+        }
 
         let is_closed = {
             let first = pts[0];
             let last = pts[segments];
-            (first[0] - last[0]).abs() < tolerance()
-                && (first[1] - last[1]).abs() < tolerance()
+            hreal_f64s_within_epsilon(first[0], last[0], tolerance())
+                && hreal_f64s_within_epsilon(first[1], last[1], tolerance())
         };
 
         if is_closed {
@@ -893,7 +904,10 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         segments_per_span: usize,
         metadata: M,
     ) -> Self {
-        if control.len() < p + 1 || segments_per_span < 1 {
+        if control.len() < p + 1
+            || segments_per_span < 1
+            || control.iter().any(|point| !finite_profile_scalars(point))
+        {
             return Profile::empty(metadata);
         }
 
@@ -911,57 +925,74 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
             }
         }
 
-        // Cox-de Boor basis evaluation
-        fn basis(i: usize, p: usize, u: Real, knot: &[Real]) -> Real {
+        // Cox-de Boor basis evaluation with hyperreal scalar operations.
+        fn basis(i: usize, p: usize, u: Real, knot: &[Real]) -> Option<Real> {
             if p == 0 {
-                return if u >= knot[i] && u < knot[i + 1] {
+                return Some(if u >= knot[i] && u < knot[i + 1] {
                     1.0
                 } else {
                     0.0
-                };
+                });
             }
-            let denom1 = knot[i + p] - knot[i];
-            let denom2 = knot[i + p + 1] - knot[i + 1];
-            let term1 = if denom1.abs() < tolerance() {
+            let denom1 = hreal_sub(knot[i + p], knot[i])?;
+            let denom2 = hreal_sub(knot[i + p + 1], knot[i + 1])?;
+            let term1 = if hreal_f64s_within_epsilon(denom1, 0.0, tolerance()) {
                 0.0
             } else {
-                (u - knot[i]) / denom1 * basis(i, p - 1, u, knot)
+                let numerator = hreal_sub(u, knot[i])?;
+                hreal_mul(hreal_div(numerator, denom1)?, basis(i, p - 1, u, knot)?)?
             };
-            let term2 = if denom2.abs() < tolerance() {
+            let term2 = if hreal_f64s_within_epsilon(denom2, 0.0, tolerance()) {
                 0.0
             } else {
-                (knot[i + p + 1] - u) / denom2 * basis(i + 1, p - 1, u, knot)
+                let numerator = hreal_sub(knot[i + p + 1], u)?;
+                hreal_mul(hreal_div(numerator, denom2)?, basis(i + 1, p - 1, u, knot)?)?
             };
-            term1 + term2
+            hreal_affine(term1, 1.0, term2)
         }
 
         let span_count = n - p; // #inner knot spans
         let _max_u = span_count as Real; // parametric upper bound
-        let dt = 1.0 / segments_per_span as Real; // step in local span coords
+        let Some(dt) = hreal_div(1.0, segments_per_span as Real) else {
+            return Profile::empty(metadata);
+        };
 
         let mut pts = Vec::<[Real; 2]>::new();
-        for span in 0..=span_count {
+        for span in 0..span_count {
             for s in 0..=segments_per_span {
-                if span == span_count && s == segments_per_span {
+                if span + 1 == span_count && s == segments_per_span {
                     // avoid duplicating final knot value
                     continue;
                 }
-                let u = span as Real + s as Real * dt; // global param
-                let mut x = 0.0;
-                let mut y = 0.0;
+                let Some(u) = hreal_affine(span as Real, s as Real, dt) else {
+                    return Profile::empty(metadata);
+                };
+                let mut xs = Vec::with_capacity(control.len());
+                let mut ys = Vec::with_capacity(control.len());
                 for (idx, &[px, py]) in control.iter().enumerate() {
-                    let b = basis(idx, p, u, &knot);
-                    x += b * px;
-                    y += b * py;
+                    let Some(b) = basis(idx, p, u, &knot) else {
+                        return Profile::empty(metadata);
+                    };
+                    let (Some(x), Some(y)) = (hreal_mul(b, px), hreal_mul(b, py)) else {
+                        return Profile::empty(metadata);
+                    };
+                    xs.push(x);
+                    ys.push(y);
                 }
+                let (Some(x), Some(y)) = (hreal_sum(&xs), hreal_sum(&ys)) else {
+                    return Profile::empty(metadata);
+                };
                 pts.push([x, y]);
             }
+        }
+        if let Some(&last) = control.last() {
+            pts.push(last);
         }
 
         let first = *pts.first().unwrap();
         let last = *pts.last().unwrap();
-        let closed = (first[0] - last[0]).abs() < tolerance()
-            && (first[1] - last[1]).abs() < tolerance();
+        let closed = hreal_f64s_within_epsilon(first[0], last[0], tolerance())
+            && hreal_f64s_within_epsilon(first[1], last[1], tolerance());
         if !closed {
             return CurveString2::from_finite_point_iter(pts)
                 .map(|wire| Profile::from_wire(wire, metadata.clone()))
