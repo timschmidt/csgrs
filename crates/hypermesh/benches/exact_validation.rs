@@ -1991,6 +1991,7 @@ fn exact_boolean_preflight(c: &mut Criterion) {
                     refinement.validate(),
                     refinement,
                     winding.validate_against_sources(&left, &right),
+                    winding.freshness_against_sources(&left, &right),
                     winding.blocker.validate_against_sources(&left, &right),
                     winding.validate(),
                     winding,
@@ -4076,6 +4077,18 @@ fn exact_boolean_open_surface_disjoint(c: &mut Criterion) {
 fn exact_policy_report_refinement_blocker_validation(c: &mut Criterion) {
     #[cfg(feature = "exact-triangulation")]
     {
+        let freshness_left = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 0, 1, 0, 0, 0, 1, 0],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let freshness_right = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 0, 1, 0, 0, 0, 1, 0],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
         c.bench_function("exact_policy_report_refinement_blocker_validation", |b| {
             b.iter(|| {
                 let open = hypermesh::exact::ExactOpenSurfaceDisjointReport {
@@ -4125,7 +4138,9 @@ fn exact_policy_report_refinement_blocker_validation(c: &mut Criterion) {
                     open.validate(),
                     boundary.validate(),
                     planar.validate(),
+                    planar.freshness_against_sources(&freshness_left, &freshness_right),
                     winding.validate(),
+                    winding.freshness_against_sources(&freshness_left, &freshness_right),
                 );
                 boundary.blocker.kind =
                     hypermesh::exact::ExactBooleanBlockerKind::NeedsBoundaryPolicy;
@@ -4227,12 +4242,16 @@ fn exact_boolean_coplanar_surface_intersection(c: &mut Criterion) {
                         hypermesh::exact::ExactBooleanOperation::Union,
                     )
                     .unwrap(),
-                    certify_planar_arrangement_report(
-                        &left,
-                        &right,
-                        hypermesh::exact::ExactBooleanOperation::Union,
-                    )
-                    .unwrap(),
+                    {
+                        let report = certify_planar_arrangement_report(
+                            &left,
+                            &right,
+                            hypermesh::exact::ExactBooleanOperation::Union,
+                        )
+                        .unwrap();
+                        let freshness = report.freshness_against_sources(&left, &right);
+                        (report, freshness)
+                    },
                 )
             })
         });
@@ -4261,7 +4280,8 @@ fn exact_boolean_coplanar_surface_intersection(c: &mut Criterion) {
                     readiness.touching_graphs += 1;
                 }
                 let invalid = invalid_report.validate().unwrap_err();
-                (valid, invalid)
+                let freshness = invalid_report.freshness_against_sources(&left, &right);
+                (valid, invalid, freshness)
             })
         });
         c.bench_function("exact_multi_component_intersection_validation", |b| {

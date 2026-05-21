@@ -7778,6 +7778,107 @@ fn exact_graph_shortcut_reports_retain_rejection_state() {
 
 #[cfg(feature = "exact-triangulation")]
 #[test]
+fn exact_boolean_blocker_reports_classify_freshness() {
+    let planar_left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 4, 0, 0, 0, 4, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let planar_right = ExactMesh::from_i64_triangles_with_policy(
+        &[1, 1, 0, 5, 1, 0, 1, 5, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let planar_separated = ExactMesh::from_i64_triangles_with_policy(
+        &[20, 0, 0, 24, 0, 0, 20, 4, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+
+    let planar_report = hypermesh::exact::certify_planar_arrangement_report(
+        &planar_left,
+        &planar_right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+    )
+    .unwrap();
+    assert_eq!(
+        planar_report.freshness_against_sources(&planar_left, &planar_right),
+        hypermesh::exact::ExactPlanarArrangementReportFreshness::Current
+    );
+    let mut stale_unknown_status = planar_report.clone();
+    stale_unknown_status.graph_had_unknowns = !stale_unknown_status.graph_had_unknowns;
+    assert_eq!(
+        stale_unknown_status.freshness_against_sources(&planar_left, &planar_right),
+        hypermesh::exact::ExactPlanarArrangementReportFreshness::StaleGraphUnknownStatus
+    );
+    let mut stale_readiness = planar_report.clone();
+    let readiness = stale_readiness
+        .arrangement_readiness
+        .as_mut()
+        .expect("overlapping coplanar fixture should retain readiness");
+    readiness.graph_count += 1;
+    readiness.touching_graphs += 1;
+    assert_eq!(
+        stale_readiness.freshness_against_sources(&planar_left, &planar_right),
+        hypermesh::exact::ExactPlanarArrangementReportFreshness::StaleArrangementReadiness
+    );
+    assert_eq!(
+        planar_report.freshness_against_sources(&planar_left, &planar_separated),
+        hypermesh::exact::ExactPlanarArrangementReportFreshness::SourceReplayMismatch
+    );
+
+    let winding_left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 2, 0, 0, 0, 2, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let winding_right = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, -1, 2, 0, 1, 0, 2, 1],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let winding_separated = ExactMesh::from_i64_triangles_with_policy(
+        &[10, 0, -1, 12, 0, 1, 10, 2, 1],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+
+    let winding_report = hypermesh::exact::certify_winding_readiness_report(
+        &winding_left,
+        &winding_right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+    )
+    .unwrap();
+    assert_eq!(
+        winding_report.freshness_against_sources(&winding_left, &winding_right),
+        hypermesh::exact::ExactWindingReadinessFreshness::Current
+    );
+    let mut stale_region_count = winding_report.clone();
+    stale_region_count.region_count += 1;
+    assert_eq!(
+        stale_region_count.freshness_against_sources(&winding_left, &winding_right),
+        hypermesh::exact::ExactWindingReadinessFreshness::StaleRegionFacts
+    );
+    let mut stale_blocker = winding_report.clone();
+    stale_blocker.blocker.candidate_pairs += 1;
+    assert_eq!(
+        stale_blocker.freshness_against_sources(&winding_left, &winding_right),
+        hypermesh::exact::ExactWindingReadinessFreshness::StaleBlockerEvidence
+    );
+    assert_eq!(
+        winding_report.freshness_against_sources(&winding_left, &winding_separated),
+        hypermesh::exact::ExactWindingReadinessFreshness::SourceReplayMismatch
+    );
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
 fn exact_named_booleans_intersect_partially_overlapping_coplanar_triangles() {
     let left = ExactMesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 4, 0, 0, 0, 4, 0],

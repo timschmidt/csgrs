@@ -526,6 +526,7 @@ fuzz_target!(|data: &[u8]| {
         |report| {
             let _ = report.validate();
             let _ = report.validate_against_sources(&left, &right);
+            let _ = report.freshness_against_sources(&left, &right);
             let _ = report.blocker.validate_against_sources(&left, &right);
             if matches!(
                 report.status,
@@ -535,10 +536,18 @@ fuzz_target!(|data: &[u8]| {
                 wrong_kind.blocker.kind =
                     hypermesh::exact::ExactBooleanBlockerKind::NeedsPlanarArrangement;
                 assert!(wrong_kind.validate().is_err());
+                assert_ne!(
+                    wrong_kind.freshness_against_sources(&left, &right),
+                    hypermesh::exact::ExactPlanarArrangementReportFreshness::Current
+                );
             } else {
                 let mut unresolved = report.clone();
                 unresolved.blocker.construction_failed_events += 1;
                 assert!(unresolved.validate().is_err());
+                assert_ne!(
+                    unresolved.freshness_against_sources(&left, &right),
+                    hypermesh::exact::ExactPlanarArrangementReportFreshness::Current
+                );
             }
             if report.arrangement_readiness.is_some() {
                 let mut mismatched_readiness = report.clone();
@@ -547,6 +556,10 @@ fuzz_target!(|data: &[u8]| {
                     readiness.touching_graphs += 1;
                 }
                 assert!(mismatched_readiness.validate().is_err());
+                assert_ne!(
+                    mismatched_readiness.freshness_against_sources(&left, &right),
+                    hypermesh::exact::ExactPlanarArrangementReportFreshness::Current
+                );
             }
         },
     );
@@ -628,6 +641,7 @@ fuzz_target!(|data: &[u8]| {
         |report| {
             let _ = report.validate();
             let _ = report.validate_against_sources(&left, &right);
+            let _ = report.freshness_against_sources(&left, &right);
             if !matches!(
                 report.status,
                 hypermesh::exact::ExactWindingReadinessStatus::GraphUnknowns
@@ -635,6 +649,10 @@ fuzz_target!(|data: &[u8]| {
                 let mut unresolved = report.clone();
                 unresolved.blocker.construction_failed_events += 1;
                 assert!(unresolved.validate().is_err());
+                assert_ne!(
+                    unresolved.freshness_against_sources(&left, &right),
+                    hypermesh::exact::ExactWindingReadinessFreshness::Current
+                );
             }
             if report.arrangement_readiness.is_some() {
                 let mut mismatched_readiness = report.clone();
@@ -643,12 +661,20 @@ fuzz_target!(|data: &[u8]| {
                     readiness.touching_graphs += 1;
                 }
                 assert!(mismatched_readiness.validate().is_err());
+                assert_ne!(
+                    mismatched_readiness.freshness_against_sources(&left, &right),
+                    hypermesh::exact::ExactWindingReadinessFreshness::Current
+                );
             }
             let mut undecided_region = report;
             if let Some(classification) = undecided_region.region_classifications.first_mut() {
                 classification.relation = FaceRegionPlaneRelation::Unknown;
                 classification.node_sides.fill(None);
                 assert!(undecided_region.validate().is_err());
+                assert_ne!(
+                    undecided_region.freshness_against_sources(&left, &right),
+                    hypermesh::exact::ExactWindingReadinessFreshness::Current
+                );
             }
         },
     );

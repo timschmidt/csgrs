@@ -2223,6 +2223,66 @@ pub enum ExactPlanarArrangementStatus {
     Required,
 }
 
+/// Freshness status for a retained planar-arrangement blocker report.
+///
+/// This is the scheduler-facing counterpart to the lower-level planar evidence
+/// freshness report. Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997), requires retained combinatorial
+/// state to remain attached to the exact predicates and objects that produced
+/// it; these variants separate local report drift from source replay drift.
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ExactPlanarArrangementReportFreshness {
+    /// The report validates locally and replays exactly from the source meshes.
+    Current,
+    /// The unknown-graph flag no longer matches the reported status.
+    StaleGraphUnknownStatus,
+    /// Blocker kind, relation counts, or required relation evidence drifted.
+    StaleBlockerEvidence,
+    /// Status, operation, or precondition evidence no longer agree.
+    StaleStatusEvidence,
+    /// Required coplanar-readiness evidence is absent.
+    MissingArrangementReadiness,
+    /// Coplanar-readiness evidence is present for a status that cannot use it.
+    UnexpectedArrangementReadiness,
+    /// The retained coplanar-readiness summary failed its own validation.
+    InvalidArrangementReadiness,
+    /// Readiness counts no longer agree with retained blocker counts.
+    StaleArrangementReadiness,
+    /// A validation error outside the planar-report surface was retained.
+    InvalidReportShape,
+    /// The report is locally valid but no longer replays from the sources.
+    SourceReplayMismatch,
+}
+
+#[cfg(feature = "exact-triangulation")]
+impl From<ExactReportValidationError> for ExactPlanarArrangementReportFreshness {
+    fn from(error: ExactReportValidationError) -> Self {
+        match error {
+            ExactReportValidationError::GraphUnknownStatusMismatch => Self::StaleGraphUnknownStatus,
+            ExactReportValidationError::MissingBlocker
+            | ExactReportValidationError::WrongBlockerKind
+            | ExactReportValidationError::InvalidBlockerCounts
+            | ExactReportValidationError::MissingRelationCount => Self::StaleBlockerEvidence,
+            ExactReportValidationError::StatusEvidenceMismatch => Self::StaleStatusEvidence,
+            ExactReportValidationError::MissingArrangementReadiness => {
+                Self::MissingArrangementReadiness
+            }
+            ExactReportValidationError::UnexpectedArrangementReadiness => {
+                Self::UnexpectedArrangementReadiness
+            }
+            ExactReportValidationError::InvalidArrangementReadiness => {
+                Self::InvalidArrangementReadiness
+            }
+            ExactReportValidationError::ArrangementReadinessMismatch => {
+                Self::StaleArrangementReadiness
+            }
+            ExactReportValidationError::SourceReplayMismatch => Self::SourceReplayMismatch,
+            _ => Self::InvalidReportShape,
+        }
+    }
+}
+
 /// Auditable report for planar-arrangement work left at the exact boundary.
 ///
 /// Coplanar positive-area overlaps are real topology, not numerical noise.
@@ -2399,6 +2459,27 @@ impl ExactPlanarArrangementReport {
             Err(ExactReportValidationError::SourceReplayMismatch)
         }
     }
+
+    /// Classify whether this retained blocker report is fresh for `left` and `right`.
+    ///
+    /// The method first checks local report integrity and then recomputes the
+    /// operation-specific blocker from the source meshes. That mirrors Yap's
+    /// retained-object discipline from "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7.1-2 (1997): stale counts, stale readiness,
+    /// and source-drift are distinct facts a scheduler can react to.
+    pub fn freshness_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> ExactPlanarArrangementReportFreshness {
+        if let Err(error) = self.validate() {
+            return error.into();
+        }
+        match certify_planar_arrangement_report(left, right, self.operation) {
+            Ok(replay) if self == &replay => ExactPlanarArrangementReportFreshness::Current,
+            Ok(_) | Err(_) => ExactPlanarArrangementReportFreshness::SourceReplayMismatch,
+        }
+    }
 }
 
 /// Certification status for the remaining exact winding handoff.
@@ -2426,6 +2507,76 @@ pub enum ExactWindingReadinessStatus {
     /// Split regions and opposite-plane classifications were checked and are
     /// ready for the future exact winding/inside-outside policy.
     Ready,
+}
+
+/// Freshness status for a retained winding-readiness handoff report.
+///
+/// Winding readiness is a copied handoff between exact face-cell extraction
+/// and later operation-specific inside/outside policy. Following Yap, "Towards
+/// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997), this
+/// enum keeps local blocker/region/readiness drift separate from a coherent
+/// report that no longer replays from the source meshes.
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ExactWindingReadinessFreshness {
+    /// The report validates locally and replays exactly from the source meshes.
+    Current,
+    /// The unknown-graph flag no longer matches the reported status.
+    StaleGraphUnknownStatus,
+    /// Blocker kind, relation counts, or required relation evidence drifted.
+    StaleBlockerEvidence,
+    /// Status, operation, or precondition evidence no longer agree.
+    StaleStatusEvidence,
+    /// Retained region classifications are missing, duplicated, invalid, or stale.
+    StaleRegionFacts,
+    /// Coplanar-readiness evidence is present for a status that cannot use it.
+    UnexpectedArrangementReadiness,
+    /// Required coplanar-readiness evidence is absent.
+    MissingArrangementReadiness,
+    /// The retained coplanar-readiness summary failed its own validation.
+    InvalidArrangementReadiness,
+    /// Readiness counts no longer agree with retained blocker counts.
+    StaleArrangementReadiness,
+    /// A validation error outside the winding-readiness surface was retained.
+    InvalidReportShape,
+    /// The report is locally valid but no longer replays from the sources.
+    SourceReplayMismatch,
+}
+
+#[cfg(feature = "exact-triangulation")]
+impl From<ExactReportValidationError> for ExactWindingReadinessFreshness {
+    fn from(error: ExactReportValidationError) -> Self {
+        match error {
+            ExactReportValidationError::GraphUnknownStatusMismatch => Self::StaleGraphUnknownStatus,
+            ExactReportValidationError::MissingBlocker
+            | ExactReportValidationError::WrongBlockerKind
+            | ExactReportValidationError::InvalidBlockerCounts
+            | ExactReportValidationError::MissingRelationCount => Self::StaleBlockerEvidence,
+            ExactReportValidationError::StatusEvidenceMismatch => Self::StaleStatusEvidence,
+            ExactReportValidationError::UnexpectedRegionFacts
+            | ExactReportValidationError::MissingRegionFacts
+            | ExactReportValidationError::UnclassifiedRegionTriangulation
+            | ExactReportValidationError::OrphanedRegionClassification
+            | ExactReportValidationError::InvalidRegionClassification(_)
+            | ExactReportValidationError::RegionClassificationNotProofProducing
+            | ExactReportValidationError::RegionCountMismatch
+            | ExactReportValidationError::DuplicateRegionClassification => Self::StaleRegionFacts,
+            ExactReportValidationError::UnexpectedArrangementReadiness => {
+                Self::UnexpectedArrangementReadiness
+            }
+            ExactReportValidationError::MissingArrangementReadiness => {
+                Self::MissingArrangementReadiness
+            }
+            ExactReportValidationError::InvalidArrangementReadiness => {
+                Self::InvalidArrangementReadiness
+            }
+            ExactReportValidationError::ArrangementReadinessMismatch => {
+                Self::StaleArrangementReadiness
+            }
+            ExactReportValidationError::SourceReplayMismatch => Self::SourceReplayMismatch,
+            _ => Self::InvalidReportShape,
+        }
+    }
 }
 
 /// Auditable report for the nontrivial overlap winding handoff.
@@ -2489,6 +2640,27 @@ impl ExactWindingReadinessReport {
             Ok(())
         } else {
             Err(ExactReportValidationError::SourceReplayMismatch)
+        }
+    }
+
+    /// Classify whether this retained winding handoff is fresh for the source meshes.
+    ///
+    /// Local integrity is checked before source replay so copied reports can
+    /// distinguish stale region classifications from source-geometry drift.
+    /// This directly applies Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7.1-2 (1997): retained predicate and topology
+    /// summaries must replay before later winding policy consumes them.
+    pub fn freshness_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> ExactWindingReadinessFreshness {
+        if let Err(error) = self.validate() {
+            return error.into();
+        }
+        match certify_winding_readiness_report(left, right, self.operation) {
+            Ok(replay) if self == &replay => ExactWindingReadinessFreshness::Current,
+            Ok(_) | Err(_) => ExactWindingReadinessFreshness::SourceReplayMismatch,
         }
     }
 
