@@ -137,6 +137,13 @@ fn assert_profile_sane(profile: &Profile<()>) {
             }
         }
     }
+
+    for wire in profile.wire_polylines() {
+        for point in wire {
+            assert!(point[0].is_finite(), "non-finite wire x: {point:?}");
+            assert!(point[1].is_finite(), "non-finite wire y: {point:?}");
+        }
+    }
 }
 
 fn assert_triangles_finite(triangles: &[[Point3<Real>; 3]]) {
@@ -427,6 +434,33 @@ fn adversarial_hyperreal_sampled_profile_constructors_emit_finite_regions() {
         assert_profile_sane(&profile);
         assert_triangles_finite(&profile.triangulate());
     }
+}
+
+#[test]
+fn adversarial_bezier_and_bspline_evaluate_control_points_through_hyperreal() {
+    let open_bezier = Profile::bezier(&[[0.0, 0.0], [1.0, 3.0], [4.0, 1.0]], 17, ());
+    assert!(!open_bezier.is_empty());
+    assert_profile_sane(&open_bezier);
+
+    let closed_bezier =
+        Profile::bezier(&[[0.0, 0.0], [2.0, 3.0], [4.0, 0.0], [0.0, 0.0]], 24, ());
+    assert!(!closed_bezier.is_empty());
+    assert_profile_sane(&closed_bezier);
+    assert_triangles_finite(&closed_bezier.triangulate());
+
+    let bspline =
+        Profile::bspline(&[[0.0, 0.0], [1.0, 2.0], [3.0, 2.0], [4.0, 0.0]], 1, 8, ());
+    assert!(!bspline.is_empty());
+    assert_profile_sane(&bspline);
+
+    let hostile = [
+        [0.0, 0.0],
+        [Real::NAN, 1.0],
+        [2.0, Real::INFINITY],
+        [0.0, 0.0],
+    ];
+    assert!(Profile::bezier(&hostile, 12, ()).is_empty());
+    assert!(Profile::bspline(&hostile, 3, 4, ()).is_empty());
 }
 
 #[test]
