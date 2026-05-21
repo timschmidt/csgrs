@@ -19,11 +19,12 @@ use hypersolve::{
     count_descartes_univariate_polynomial_roots, determinant_bareiss,
     eliminate_affine_rows_with_substitution_classes,
     enumerate_direct_univariate_quadratic_branches, isolate_univariate_polynomial_roots,
-    propose_active_set_update, replay_dense_linear_residuals, replay_sketch_compatibility_fixture,
-    replay_sparse_linear_residuals, report_lossy_adapter_only_candidate,
-    represent_univariate_algebraic_roots, resultant_univariate_polynomials,
-    run_active_set_update_loop, schedule_univariate_resultant_pairs, sketch_compatibility_fixtures,
-    solve_damped_least_squares, solve_dense_linear_system_bareiss, solve_direct_affine_system,
+    preflight_sketch_parameter_domains, propose_active_set_update, replay_dense_linear_residuals,
+    replay_sketch_compatibility_fixture, replay_sparse_linear_residuals,
+    report_lossy_adapter_only_candidate, represent_univariate_algebraic_roots,
+    resultant_univariate_polynomials, run_active_set_update_loop,
+    schedule_univariate_resultant_pairs, sketch_compatibility_fixtures, solve_damped_least_squares,
+    solve_dense_linear_system_bareiss, solve_direct_affine_system,
     solve_direct_univariate_quadratic_equalities, solve_sparse_linear_system_bareiss,
     squared_distance_equation, subdivide_bernstein_univariate_polynomial_interval_roots,
     subresultant_chain_univariate_polynomials,
@@ -222,6 +223,22 @@ fn sketch_problem_with_ranges(row_count: usize) -> hypersolve::SketchSolveProble
     sketch
 }
 
+fn sketch_problem_with_parameter_domains(row_count: usize) -> hypersolve::SketchSolveProblem {
+    let mut sketch = hypersolve::SketchSolveProblem::new();
+    for index in 0..row_count {
+        let parameter = sketch.add_parameter(format!("domain{index}"), r(index as i64 + 1));
+        sketch.add_parameter_domain(parameter, hypersolve::SketchParameterDomain::Positive);
+        sketch.add_parameter_domain(
+            parameter,
+            hypersolve::SketchParameterDomain::Bounded {
+                lower: Some(r(0)),
+                upper: Some(r(row_count as i64 + 1)),
+            },
+        );
+    }
+    sketch
+}
+
 fn unary_endpoint_expression(row_count: usize) -> Expr {
     let mut expression = Expr::zero();
     for index in 1..=row_count {
@@ -258,6 +275,10 @@ fn certification(c: &mut Criterion) {
     let range_sketch = sketch_problem_with_ranges(16);
     c.bench_function("sketch_range_and_objective_lowering", |b| {
         b.iter(|| range_sketch.lower_to_problem())
+    });
+    let domain_sketch = sketch_problem_with_parameter_domains(16);
+    c.bench_function("sketch_parameter_domain_preflight", |b| {
+        b.iter(|| preflight_sketch_parameter_domains(&domain_sketch))
     });
     let form_handles = sketch
         .constraints()

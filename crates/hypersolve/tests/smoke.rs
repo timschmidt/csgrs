@@ -8,7 +8,8 @@ use hypersolve::{
     LinearAdapterPrecision, LinearBackend, MultivariateQuadraticKrawczykStatus, PreparedProblem,
     PreparedSolverBlock, Problem, ProposalEngineKind, ProposalEnginePrecision, RootIsolationStatus,
     RootMultiplicityStatus, SketchConstraintKind, SketchEntityHandle, SketchEntityKind,
-    SketchGeneratedRowStatus, SketchResidualFormKind, SketchResidualFormRole,
+    SketchGeneratedRowStatus, SketchParameterDomain, SketchParameterDomainKind,
+    SketchParameterDomainStatus, SketchResidualFormKind, SketchResidualFormRole,
     SketchResidualFormsStatus, SketchResidualStrategy, SketchRoundTripMetadata,
     SketchRoundTripRole, SketchSolveProblem, SolverBlockRowKind, SolverConfig, SolverPoint2,
     SolverState, SymbolId, VariableBall, analyze_exact_affine_rank,
@@ -23,12 +24,13 @@ use hypersolve::{
     eliminate_affine_rows_with_substitution_classes,
     enumerate_direct_univariate_quadratic_branches, evaluate_residuals, facts_depend_on_symbol,
     find_equality_substitutions, isolate_univariate_polynomial_roots, point_coincidence_equations,
-    replay_sketch_compatibility_fixture, report_lossy_adapter_only_candidate,
-    sketch_compatibility_fixtures, sketch_distance_builders, sketch_incidence_builders,
-    sketch_objective_builders, sketch_orientation_builders, sketch_range_builders,
-    solve_damped_least_squares, solve_direct_affine_equalities, solve_direct_affine_system,
-    solve_direct_univariate_quadratic_equalities, squared_distance_equation,
-    tangent_parallel_equation, tangent_same_direction_constraint, validate_equality_substitutions,
+    preflight_sketch_parameter_domains, replay_sketch_compatibility_fixture,
+    report_lossy_adapter_only_candidate, sketch_compatibility_fixtures, sketch_distance_builders,
+    sketch_incidence_builders, sketch_objective_builders, sketch_orientation_builders,
+    sketch_range_builders, solve_damped_least_squares, solve_direct_affine_equalities,
+    solve_direct_affine_system, solve_direct_univariate_quadratic_equalities,
+    squared_distance_equation, tangent_parallel_equation, tangent_same_direction_constraint,
+    validate_equality_substitutions,
 };
 
 fn real(value: i64) -> Real {
@@ -483,6 +485,76 @@ fn sketch_parameter_ranges_report_empty_ranges_and_stale_parameters_explicitly()
         lowered.rows[1].status,
         SketchGeneratedRowStatus::MissingParameter(hypersolve::SketchParameterHandle(999))
     );
+}
+
+#[test]
+fn sketch_parameter_domain_preflight_certifies_valid_invalid_and_empty_bounds() {
+    let mut sketch = SketchSolveProblem::new();
+    let positive = sketch.add_parameter("positive radius", real(3));
+    let negative = sketch.add_parameter("negative distance", real(-1));
+    let zero = sketch.add_parameter("zero length", real(0));
+    let angle = sketch.add_parameter("angle", real(5));
+    let periodic = sketch.add_parameter("periodic", real(17));
+
+    assert!(sketch.add_parameter_domain(positive, SketchParameterDomain::Positive));
+    assert!(sketch.add_parameter_domain(negative, SketchParameterDomain::Nonnegative));
+    assert!(sketch.add_parameter_domain(zero, SketchParameterDomain::Nonzero));
+    assert!(sketch.add_parameter_domain(
+        angle,
+        SketchParameterDomain::AngularRange {
+            lower: real(0),
+            upper: real(4),
+        },
+    ));
+    assert!(sketch.add_parameter_domain(
+        periodic,
+        SketchParameterDomain::Periodic { period: real(0) },
+    ));
+    assert!(sketch.add_parameter_domain(
+        positive,
+        SketchParameterDomain::Bounded {
+            lower: Some(real(5)),
+            upper: Some(real(4)),
+        },
+    ));
+
+    let report = preflight_sketch_parameter_domains(&sketch);
+
+    assert_eq!(report.parameter_count, 5);
+    assert_eq!(report.checks.len(), 6);
+    assert_eq!(report.certified_valid_checks, 1);
+    assert_eq!(report.certified_invalid_checks, 5);
+    assert_eq!(report.unknown_checks, 0);
+    assert!(report.has_certified_invalid_domain());
+    assert!(!report.all_certified_valid());
+    assert_eq!(report.checks[0].kind, SketchParameterDomainKind::Positive);
+    assert_eq!(
+        report.checks[0].status,
+        SketchParameterDomainStatus::CertifiedValid
+    );
+    assert_eq!(
+        report.checks[1].status,
+        SketchParameterDomainStatus::CertifiedInvalid
+    );
+}
+
+#[test]
+fn sketch_parameter_domain_lock_marks_lowered_variable_fixed() {
+    let mut sketch = SketchSolveProblem::new();
+    let parameter = sketch.add_parameter("locked", real(11));
+
+    assert!(sketch.lock_parameter(parameter));
+    assert!(!sketch.lock_parameter(hypersolve::SketchParameterHandle(999)));
+    let report = preflight_sketch_parameter_domains(&sketch);
+    let lowered = sketch.lower_to_problem();
+
+    assert_eq!(report.checks.len(), 1);
+    assert_eq!(report.checks[0].kind, SketchParameterDomainKind::Locked);
+    assert_eq!(
+        report.checks[0].status,
+        SketchParameterDomainStatus::CertifiedValid
+    );
+    assert!(lowered.problem.variables[0].fixed);
 }
 
 #[test]

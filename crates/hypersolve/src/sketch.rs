@@ -84,8 +84,48 @@ pub struct SketchParameter {
     pub value: Real,
     /// Whether proposal engines should treat this parameter as fixed.
     pub fixed: bool,
+    /// Exact parameter-domain obligations checked before numerical iteration.
+    pub domains: Vec<SketchParameterDomain>,
     /// Editor/API round-trip metadata.
     pub metadata: SketchRoundTripMetadata,
+}
+
+/// First-class exact domain obligation for a scalar sketch parameter.
+///
+/// Domains are preflight checks, not solver tolerances. They let callers reject
+/// invalid retained sketch state before numerical iteration while keeping
+/// Yap's proof boundary explicit: each check must be certified exactly or
+/// reported as unresolved. See Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997).
+#[derive(Clone, Debug, PartialEq)]
+pub enum SketchParameterDomain {
+    /// The parameter is intentionally locked to this exact value.
+    Locked { value: Real },
+    /// The parameter must stay within optional exact closed bounds.
+    Bounded {
+        /// Inclusive lower bound.
+        lower: Option<Real>,
+        /// Inclusive upper bound.
+        upper: Option<Real>,
+    },
+    /// The parameter must be greater than or equal to zero.
+    Nonnegative,
+    /// The parameter must be strictly greater than zero.
+    Positive,
+    /// The parameter must be nonzero.
+    Nonzero,
+    /// Angular parameter constrained to an exact closed interval.
+    AngularRange {
+        /// Inclusive lower angle bound.
+        lower: Real,
+        /// Inclusive upper angle bound.
+        upper: Real,
+    },
+    /// Periodic parameter with a strictly positive exact period.
+    Periodic {
+        /// Exact period that must be positive.
+        period: Real,
+    },
 }
 
 /// Point entity in a two-dimensional workplane.
@@ -486,9 +526,44 @@ impl SketchSolveProblem {
             name: name.into(),
             value,
             fixed: false,
+            domains: Vec::new(),
             metadata: SketchRoundTripMetadata::default(),
         });
         handle
+    }
+
+    /// Attach an exact preflight domain obligation to a retained parameter.
+    ///
+    /// Returns `false` for stale handles. The domain is stored at the sketch
+    /// layer and does not generate a residual row by itself; callers can run
+    /// [`crate::preflight_sketch_parameter_domains`] before lowering or
+    /// numerical iteration.
+    pub fn add_parameter_domain(
+        &mut self,
+        handle: SketchParameterHandle,
+        domain: SketchParameterDomain,
+    ) -> bool {
+        let Some(parameter) = self.parameters.get_mut(handle.0 as usize) else {
+            return false;
+        };
+        parameter.domains.push(domain);
+        true
+    }
+
+    /// Lock a retained parameter to its current exact value.
+    ///
+    /// This marks the lowered solver variable as fixed and records a
+    /// [`SketchParameterDomain::Locked`] preflight obligation using the current
+    /// value.
+    pub fn lock_parameter(&mut self, handle: SketchParameterHandle) -> bool {
+        let Some(parameter) = self.parameters.get_mut(handle.0 as usize) else {
+            return false;
+        };
+        parameter.fixed = true;
+        parameter.domains.push(SketchParameterDomain::Locked {
+            value: parameter.value.clone(),
+        });
+        true
     }
 
     /// Attach round-trip metadata to a retained parameter.

@@ -30,6 +30,7 @@ pub mod resultant;
 pub mod root_isolation;
 pub mod sketch;
 pub mod sketch_builders;
+pub mod sketch_domains;
 pub mod sketch_fixtures;
 pub mod solver;
 pub mod solver_block;
@@ -167,15 +168,20 @@ pub use sketch::{
     SketchConstraintKind, SketchCubic2, SketchDistance, SketchEntity, SketchEntityHandle,
     SketchEntityKind, SketchGeneratedRow, SketchGeneratedRowStatus, SketchGroupHandle,
     SketchLineSegment2, SketchLoweringReport, SketchNormal2, SketchNormal3, SketchParameter,
-    SketchParameterHandle, SketchPoint2, SketchPoint3, SketchResidualForm, SketchResidualFormKind,
-    SketchResidualFormRole, SketchResidualFormsReport, SketchResidualFormsStatus,
-    SketchResidualStrategy, SketchRoundTripMetadata, SketchRoundTripRole, SketchSolveProblem,
-    SketchWorkplane,
+    SketchParameterDomain, SketchParameterHandle, SketchPoint2, SketchPoint3, SketchResidualForm,
+    SketchResidualFormKind, SketchResidualFormRole, SketchResidualFormsReport,
+    SketchResidualFormsStatus, SketchResidualStrategy, SketchRoundTripMetadata,
+    SketchRoundTripRole, SketchSolveProblem, SketchWorkplane,
 };
 pub use sketch_builders::{
     SketchConstraintBuildReport, SketchConstraintFamily, distance as sketch_distance_builders,
     incidence as sketch_incidence_builders, objective as sketch_objective_builders,
     orientation as sketch_orientation_builders, ranges as sketch_range_builders,
+};
+pub use sketch_domains::{
+    SketchParameterDomainCheck, SketchParameterDomainKind, SketchParameterDomainReport,
+    SketchParameterDomainStatus, preflight_sketch_parameter_domains,
+    preflight_sketch_parameter_domains_with_policy,
 };
 pub use sketch_fixtures::{
     SketchCompatibilityFixture, SketchCompatibilityFixtureKind, SketchCompatibilityReplayReport,

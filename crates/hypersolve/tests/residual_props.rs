@@ -4,17 +4,19 @@ use hypersolve::{
     EqualitySubstitutionProblem, Expr, IntervalBoxCertificationPackage,
     IntervalBoxCertificationStatus, MultivariateQuadraticKrawczykStatus, PreparedProblem,
     PreparedSolverBlock, Problem, ProposalEngineKind, ProposalEnginePrecision,
-    ProposalEngineReport, RootIsolationStatus, SketchGeneratedRowStatus, SketchResidualStrategy,
-    SketchSolveProblem, SolverBlockRowKind, SolverConfig, SolverPoint2, SolverState, SymbolId,
-    VariableBall, apply_equality_substitution_classes, certify_affine_krawczyk_box,
-    certify_candidate, certify_candidate_domains, certify_direct_univariate_quadratic_roots,
+    ProposalEngineReport, RootIsolationStatus, SketchGeneratedRowStatus, SketchParameterDomain,
+    SketchParameterDomainStatus, SketchResidualStrategy, SketchSolveProblem, SolverBlockRowKind,
+    SolverConfig, SolverPoint2, SolverState, SymbolId, VariableBall,
+    apply_equality_substitution_classes, certify_affine_krawczyk_box, certify_candidate,
+    certify_candidate_domains, certify_direct_univariate_quadratic_roots,
     certify_interval_box_candidate, certify_multivariate_quadratic_interval_candidate,
     certify_multivariate_quadratic_krawczyk_box, certify_quadratic_interval_candidate,
     certify_univariate_quadratic_alpha, certify_univariate_quadratic_krawczyk_box,
     context_from_problem, determinant_bareiss, eliminate_affine_rows_with_substitution_classes,
     enumerate_direct_univariate_quadratic_branches, isolate_univariate_polynomial_roots,
-    report_lossy_adapter_only_candidate, resultant_univariate_polynomials, sketch_range_builders,
-    solve_damped_least_squares, solve_dense_linear_system_bareiss, solve_direct_affine_system,
+    preflight_sketch_parameter_domains, report_lossy_adapter_only_candidate,
+    resultant_univariate_polynomials, sketch_range_builders, solve_damped_least_squares,
+    solve_dense_linear_system_bareiss, solve_direct_affine_system,
     solve_direct_univariate_quadratic_equalities, squared_distance_equation,
     subresultant_chain_univariate_polynomials, validate_equality_substitutions,
 };
@@ -225,6 +227,40 @@ proptest! {
         });
         prop_assert!(all_range_rows);
         prop_assert!(certification.all_satisfied());
+    }
+
+    #[test]
+    fn sketch_parameter_domain_preflight_generated_closed_bounds_match_integer_order(
+        value in -32_i16..=32,
+        lower in -32_i16..=32,
+        upper in -32_i16..=32,
+    ) {
+        let value = i64::from(value);
+        let lower = i64::from(lower);
+        let upper = i64::from(upper);
+        let mut sketch = SketchSolveProblem::new();
+        let parameter = sketch.add_parameter("bounded", Real::from(value));
+        let domain_added = sketch.add_parameter_domain(
+            parameter,
+            SketchParameterDomain::Bounded {
+                lower: Some(Real::from(lower)),
+                upper: Some(Real::from(upper)),
+            },
+        );
+        prop_assert!(domain_added);
+
+        let report = preflight_sketch_parameter_domains(&sketch);
+        let expected_valid = lower <= upper && lower <= value && value <= upper;
+
+        prop_assert_eq!(report.checks.len(), 1);
+        prop_assert_eq!(
+            report.checks[0].status == SketchParameterDomainStatus::CertifiedValid,
+            expected_valid
+        );
+        prop_assert_eq!(
+            report.checks[0].status == SketchParameterDomainStatus::CertifiedInvalid,
+            !expected_valid
+        );
     }
 
     #[test]
