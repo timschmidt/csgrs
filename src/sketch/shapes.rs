@@ -3,8 +3,8 @@
 use crate::csg::CSG;
 use crate::float_types::{
     FRAC_PI_2, PI, Real, TAU, hangle_sin_cos, hdegrees_to_radians, hreal_abs, hreal_affine,
-    hreal_cmp_f64, hreal_div, hreal_f64s_within_epsilon, hreal_from_f64, hreal_mul, hreal_pow,
-    hreal_sqrt, hreal_sub, hreal_sum, hxy_lerp, tolerance,
+    hreal_clamp_f64, hreal_cmp_f64, hreal_div, hreal_f64s_within_epsilon, hreal_from_f64,
+    hreal_mul, hreal_pow, hreal_sqrt, hreal_sub, hreal_sum, hxy_lerp, tolerance,
 };
 use crate::sketch::Profile;
 use hypercurve::{Contour2, CurveString2, LineSeg2, Point2, Segment2};
@@ -36,6 +36,10 @@ fn hsample_angle(index: usize, count: usize, start: Real, sweep: Real) -> Option
 fn hellipse_point(rx: Real, ry: Real, theta: Real) -> Option<[Real; 2]> {
     let (sin_theta, cos_theta) = hangle_sin_cos(theta)?;
     Some([hreal_mul(rx, cos_theta)?, hreal_mul(ry, sin_theta)?])
+}
+
+fn hpolar_point(radius: Real, theta: Real) -> Option<[Real; 2]> {
+    hellipse_point(radius, radius, theta)
 }
 
 fn hellipse_samples(
@@ -1463,6 +1467,13 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// (like Sparks/Daniels), but produces a clean, non-self-intersecting,
     /// cycloidal-looking gear that meshes reasonably with the matching
     /// cycloidal rack.
+    ///
+    /// Scalar construction is routed through hyperreal arithmetic before the
+    /// finite outline is exported to hypercurve, following Yap, "Towards Exact
+    /// Geometric Computation," *Computational Geometry* 7(1-2), 1997
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>). Gear-shape semantics
+    /// remain the existing approximate cycloidal profile rather than an exact
+    /// epicycloid/hypocycloid solver.
     pub fn cycloidal_gear(
         module: Real,
         teeth: usize,
@@ -1473,8 +1484,8 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     ) -> Profile<M> {
         if teeth < 3
             || segments_per_flank < 2
-            || module <= tolerance()
             || !finite_profile_scalars(&[module, clearance])
+            || !matches!(hreal_cmp_f64(module, tolerance()), Ordering::Greater)
         {
             return Profile::empty(metadata);
         }
@@ -1483,18 +1494,40 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         let m = module;
 
         // Basic radii (same conventions as involute_gear).
-        let pitch_radius = 0.5 * m * z;
+        let Some(half_module) = hreal_mul(0.5, m) else {
+            return Profile::empty(metadata);
+        };
+        let Some(pitch_radius) = hreal_mul(half_module, z) else {
+            return Profile::empty(metadata);
+        };
         let addendum = m;
-        let dedendum = 1.25 * m + clearance;
-        let outer_radius = pitch_radius + addendum;
-        let root_radius = (pitch_radius - dedendum).max(tolerance());
+        let Some(scaled_module) = hreal_mul(1.25, m) else {
+            return Profile::empty(metadata);
+        };
+        let Some(dedendum) = hreal_sum(&[scaled_module, clearance]) else {
+            return Profile::empty(metadata);
+        };
+        let Some(outer_radius) = hreal_sum(&[pitch_radius, addendum]) else {
+            return Profile::empty(metadata);
+        };
+        let Some(raw_root_radius) = hreal_sub(pitch_radius, dedendum) else {
+            return Profile::empty(metadata);
+        };
+        let root_radius = match hreal_cmp_f64(raw_root_radius, tolerance()) {
+            Ordering::Less | Ordering::Equal => tolerance(),
+            Ordering::Greater => raw_root_radius,
+        };
 
         // Angular pitch between tooth centres.
-        let ang_pitch = TAU / z;
+        let Some(ang_pitch) = hreal_div(TAU, z) else {
+            return Profile::empty(metadata);
+        };
 
         // We give each tooth half the pitch for material, half for space.
         // So tooth half-angle at the pitch circle is:
-        let half_tooth_angle = ang_pitch * 0.25;
+        let Some(half_tooth_angle) = hreal_mul(ang_pitch, 0.25) else {
+            return Profile::empty(metadata);
+        };
 
         if !finite_profile_scalars(&[
             pitch_radius,
@@ -1510,7 +1543,9 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         }
 
         // Total angular span per tooth profile (from left gap to right gap):
-        let _span_per_tooth = 2.0 * half_tooth_angle;
+        let Some(_span_per_tooth) = hreal_mul(2.0, half_tooth_angle) else {
+            return Profile::empty(metadata);
+        };
 
         // Helper: "cycloidal-ish" bump shape for the addendum.
         //
@@ -1522,16 +1557,19 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
             outer_radius: Real,
             half_tooth_angle: Real,
             phi_offset: Real,
-        ) -> Real {
+        ) -> Option<Real> {
             // Normalised offset from tooth centre: u ∈ [-1, 1]
-            let u = (phi_offset / half_tooth_angle).clamp(-1.0, 1.0);
+            let u = hreal_clamp_f64(hreal_div(phi_offset, half_tooth_angle)?, -1.0, 1.0)?;
 
             // Strictly convex bump: 0 at |u| = 1, 1 at u = 0
             // p controls how “fat” the tip is; p = 2 is a good starting point.
             let p = 2.0;
-            let bump = 1.0 - u.abs().powf(p);
+            let bump = hreal_sub(1.0, hreal_pow(hreal_abs(u)?, p)?)?;
 
-            pitch_radius + bump * (outer_radius - pitch_radius)
+            hreal_sum(&[
+                pitch_radius,
+                hreal_mul(bump, hreal_sub(outer_radius, pitch_radius)?)?,
+            ])
         }
 
         // Precompute how many angular samples per tooth we want.
@@ -1541,36 +1579,73 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         let mut outline: Vec<[Real; 2]> = Vec::with_capacity(samples_per_tooth * teeth + 1);
 
         for i in 0..teeth {
-            let tooth_center_angle = (i as Real) * ang_pitch;
+            let Some(tooth_center_angle) = hreal_mul(i as Real, ang_pitch) else {
+                return Profile::empty(metadata);
+            };
 
             // 1. ADDENDUM (tip region) – go CCW from left flank to right flank.
             //
             // We sample φ over the tooth-material region:
             //   φ ∈ [φ_c - half_tooth_angle, φ_c + half_tooth_angle]
             for j in 0..=segments_per_flank {
-                let t = j as Real / (segments_per_flank as Real);
-                let phi = tooth_center_angle - half_tooth_angle + t * (2.0 * half_tooth_angle);
-                let phi_offset = phi - tooth_center_angle;
+                let Some(left_tooth_angle) = hreal_sub(tooth_center_angle, half_tooth_angle)
+                else {
+                    return Profile::empty(metadata);
+                };
+                let Some(addendum_sweep) = hreal_mul(2.0, half_tooth_angle) else {
+                    return Profile::empty(metadata);
+                };
+                let Some(phi) =
+                    hsample_angle(j, segments_per_flank, left_tooth_angle, addendum_sweep)
+                else {
+                    return Profile::empty(metadata);
+                };
+                let Some(phi_offset) = hreal_sub(phi, tooth_center_angle) else {
+                    return Profile::empty(metadata);
+                };
 
-                let r =
-                    addendum_profile(pitch_radius, outer_radius, half_tooth_angle, phi_offset);
+                let Some(r) =
+                    addendum_profile(pitch_radius, outer_radius, half_tooth_angle, phi_offset)
+                else {
+                    return Profile::empty(metadata);
+                };
 
-                outline.push([r * phi.cos(), r * phi.sin()]);
+                let Some(point) = hpolar_point(r, phi) else {
+                    return Profile::empty(metadata);
+                };
+                outline.push(point);
             }
 
             // 2. ROOT REGION – simple circular arc on root_radius between
             //    this tooth's right gap and the next tooth's left gap.
             //
             // Right gap angle for this tooth:
-            let right_gap_angle = tooth_center_angle + half_tooth_angle;
+            let Some(right_gap_angle) = hreal_sum(&[tooth_center_angle, half_tooth_angle])
+            else {
+                return Profile::empty(metadata);
+            };
             // Left gap angle for next tooth (wrap around at 2π):
-            let next_center_angle = tooth_center_angle + ang_pitch;
-            let next_left_gap_angle = next_center_angle - half_tooth_angle;
+            let Some(next_center_angle) = hreal_sum(&[tooth_center_angle, ang_pitch]) else {
+                return Profile::empty(metadata);
+            };
+            let Some(next_left_gap_angle) = hreal_sub(next_center_angle, half_tooth_angle)
+            else {
+                return Profile::empty(metadata);
+            };
 
             for j in 0..=segments_per_flank {
-                let t = j as Real / (segments_per_flank as Real);
-                let phi = right_gap_angle + t * (next_left_gap_angle - right_gap_angle);
-                outline.push([root_radius * phi.cos(), root_radius * phi.sin()]);
+                let Some(root_sweep) = hreal_sub(next_left_gap_angle, right_gap_angle) else {
+                    return Profile::empty(metadata);
+                };
+                let Some(phi) =
+                    hsample_angle(j, segments_per_flank, right_gap_angle, root_sweep)
+                else {
+                    return Profile::empty(metadata);
+                };
+                let Some(point) = hpolar_point(root_radius, phi) else {
+                    return Profile::empty(metadata);
+                };
+                outline.push(point);
             }
         }
 
