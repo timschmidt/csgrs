@@ -18,7 +18,8 @@ use core::fmt::Debug;
 use nalgebra::Point3;
 
 use crate::float_types::{
-    Real, hreal_mul, hxy_distance, hxy_step, hxy_unit_direction, tolerance,
+    Real, hreal_abs, hreal_cmp_f64, hreal_div, hreal_f64s_within_epsilon, hreal_mul,
+    hreal_sub, hxy_distance, hxy_step, hxy_unit_direction, tolerance,
 };
 use crate::sketch::Profile;
 use hypercurve::{
@@ -564,7 +565,16 @@ pub fn lathe_rough_from_profile<M: Clone + Send + Sync + Debug>(
     };
     let exterior = profile.material().points();
 
-    let dz = ((z_max - z_min).abs() / 200.0).max(0.25); // ~200 steps or 0.25mm
+    let Some(span) = hreal_sub(z_max, z_min).and_then(hreal_abs) else {
+        return tp;
+    };
+    let Some(raw_dz) = hreal_div(span, 200.0) else {
+        return tp;
+    };
+    let dz = match hreal_cmp_f64(raw_dz, 0.25) {
+        core::cmp::Ordering::Less => 0.25,
+        core::cmp::Ordering::Equal | core::cmp::Ordering::Greater => raw_dz,
+    }; // ~200 steps or 0.25mm
     let mut samples: Vec<(Real, Real)> = Vec::new(); // (z, r)
     let mut z = z_min.min(z_max);
     let z_end = z_min.max(z_max);
@@ -577,7 +587,7 @@ pub fn lathe_rough_from_profile<M: Clone + Send + Sync + Debug>(
             // Does segment cross the horizontal line?
             if (y1 <= z && y2 >= z) || (y2 <= z && y1 >= z) {
                 let dy = y2 - y1;
-                if dy.abs() < tolerance() {
+                if hreal_f64s_within_epsilon(dy, 0.0, tolerance()) {
                     xs.push(x1.max(x2));
                 } else {
                     let t = (z - y1) / dy; // 0..1
@@ -601,8 +611,14 @@ pub fn lathe_rough_from_profile<M: Clone + Send + Sync + Debug>(
     if samples.is_empty() {
         return tp;
     }
+    if !matches!(
+        hreal_cmp_f64(cfg.doc_radial, tolerance()),
+        core::cmp::Ordering::Greater
+    ) {
+        return tp;
+    }
     let mut current_r = stock_radius;
-    while current_r > 0.0 {
+    while matches!(hreal_cmp_f64(current_r, 0.0), core::cmp::Ordering::Greater) {
         // One roughing sweep along Z at constant max(current_r, r(z))
         let mut first = true;
         for &(zz, r_target) in &samples {
@@ -626,7 +642,7 @@ pub fn lathe_rough_from_profile<M: Clone + Send + Sync + Debug>(
             .iter()
             .map(|&(_, r)| (current_r - r).max(0.0))
             .fold(0.0, Real::max);
-        if worst_gap < 0.05 {
+        if matches!(hreal_cmp_f64(worst_gap, 0.05), core::cmp::Ordering::Less) {
             break;
         }
     }
@@ -726,6 +742,28 @@ pub mod gcode {
                 last_feed = f;
             }
             out
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn lathe_rough_rejects_nonpositive_doc_radial() {
+        let profile = Profile::rectangle(2.0, 2.0, ());
+
+        for doc_radial in [0.0, -0.1, Real::NAN] {
+            let cfg = LatheCfg {
+                doc_radial,
+                feed: 100.0,
+            };
+            let toolpath = lathe_rough_from_profile(&profile, -1.0, 1.0, 1.5, &cfg);
+            assert!(
+                toolpath.moves.is_empty(),
+                "invalid radial depth of cut must fail before controlling lathe pass iteration"
+            );
         }
     }
 }
