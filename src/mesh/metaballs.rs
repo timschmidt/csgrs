@@ -3,7 +3,7 @@
 use crate::float_types::{
     F32, HReal, Real, hreal_from_f32, hreal_from_f64, hreal_max_pair, hreal_max_report_value,
     hreal_min_pair, hreal_min_report_value, hreal_sign, hreal_to_f64,
-    htriangle_area2_exceeds_epsilon, hvector3_from_point3, hvector3_from_vector3, tolerance,
+    htriangle_area2_exceeds_tolerance, hvector3_from_point3, hvector3_from_vector3, tolerance,
 };
 use crate::mesh::Mesh;
 use crate::polygon::Polygon;
@@ -347,7 +347,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                 continue;
             }
 
-            if !htriangle_area2_exceeds_epsilon(&p0_real, &p1_real, &p2_real, tolerance()) {
+            if !htriangle_area2_exceeds_tolerance(&p0_real, &p1_real, &p2_real, tolerance()) {
                 diagnostics.degenerate_triangle_count += 1;
             }
 

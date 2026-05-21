@@ -27,7 +27,7 @@ pub struct VertexIndexMap {
     /// Maps global indices to representative positions
     pub index_to_position: HashMap<usize, Point3<Real>>,
     /// Spatial tolerance for vertex matching, owned as a hyperreal scalar.
-    pub epsilon: HReal,
+    pub tolerance: HReal,
 }
 
 impl VertexIndexMap {
@@ -39,11 +39,11 @@ impl VertexIndexMap {
     /// matching cannot silently widen. This keeps connectivity equivalence on
     /// the exact-aware side of Yap's exact geometric computation boundary model
     /// (1997) while preserving ergonomic scalar promotion at API call sites.
-    pub fn new<E>(epsilon: E) -> Self
+    pub fn new<E>(tolerance: E) -> Self
     where
         E: TryInto<HReal>,
     {
-        let epsilon = epsilon
+        let tolerance = tolerance
             .try_into()
             .ok()
             .filter(hreal_positive)
@@ -51,7 +51,7 @@ impl VertexIndexMap {
         Self {
             position_to_index: Vec::new(),
             index_to_position: HashMap::new(),
-            epsilon,
+            tolerance,
         }
     }
 
@@ -60,7 +60,7 @@ impl VertexIndexMap {
         self.position_to_index
             .iter()
             .find_map(|(existing_position, existing_index)| {
-                hpoints_within_hreal_epsilon(position, existing_position, &self.epsilon)
+                hpoints_within_hreal_tolerance(position, existing_position, &self.tolerance)
                     .then_some(*existing_index)
             })
     }
@@ -158,12 +158,12 @@ fn hreal_positive(value: &HReal) -> bool {
     matches!(hreal_sign(value), Some(hyperreal::RealSign::Positive))
 }
 
-fn hpoints_within_hreal_epsilon(
+fn hpoints_within_hreal_tolerance(
     lhs: &Point3<Real>,
     rhs: &Point3<Real>,
-    epsilon: &HReal,
+    tolerance: &HReal,
 ) -> bool {
-    if !hreal_positive(epsilon) {
+    if !hreal_positive(tolerance) {
         return false;
     }
     let Some(lhs) = hyperlattice::Point3::try_from_f64_array([lhs.x, lhs.y, lhs.z]).ok()
@@ -175,9 +175,9 @@ fn hpoints_within_hreal_epsilon(
         return false;
     };
     let distance_squared = lhs.to_vector().squared_distance(&rhs.to_vector());
-    let epsilon_squared = epsilon.clone() * epsilon.clone();
+    let tolerance_squared = tolerance.clone() * tolerance.clone();
     matches!(
-        hreal_sign(&(distance_squared - epsilon_squared)),
+        hreal_sign(&(distance_squared - tolerance_squared)),
         Some(hyperreal::RealSign::Negative | hyperreal::RealSign::Zero)
     )
 }
@@ -192,7 +192,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn vertex_index_map_promotes_public_epsilon_to_hyperreal() {
+    fn vertex_index_map_promotes_public_tolerance_to_hyperreal() {
         let mut map = VertexIndexMap::new(1);
         let base = Point3::new(0.0, 0.0, 0.0);
         let near = Point3::new(0.5, 0.0, 0.0);
@@ -204,7 +204,7 @@ mod tests {
     }
 
     #[test]
-    fn vertex_index_map_rejects_invalid_hyperreal_epsilon() {
+    fn vertex_index_map_rejects_invalid_hyperreal_tolerance() {
         let mut map = VertexIndexMap::new(Real::NAN);
         let base = Point3::new(0.0, 0.0, 0.0);
         let near = Point3::new(tolerance() * 0.25, 0.0, 0.0);

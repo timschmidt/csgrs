@@ -1,7 +1,7 @@
 #![cfg(feature = "sdf")]
 
 use csgrs::csg::CSG;
-use csgrs::float_types::{Real, hreal_from_f64};
+use csgrs::float_types::{Real, hreal_from_f64, tolerance};
 use csgrs::mesh::{Mesh, sdf::SdfDiagnostics};
 use hyperlimit::Point3 as HPoint3;
 use hypersdf::{SdfExpr, SdfSampleTopologyStatus};
@@ -389,7 +389,7 @@ fn closed_sdf_sphere_has_no_boundary_edges_or_degenerate_triangles() {
     assert!(
         mesh.polygons
             .iter()
-            .all(|poly| triangle_area2(poly) > Real::EPSILON),
+            .all(|poly| triangle_area2(poly) > tolerance()),
         "sphere SDF emitted degenerate triangles: {diagnostics:#?}"
     );
 }
@@ -473,7 +473,7 @@ fn tpms_solid_helpers_emit_closed_capped_meshes() {
         assert!(
             mesh.polygons
                 .iter()
-                .all(|poly| triangle_area2(poly) > Real::EPSILON),
+                .all(|poly| triangle_area2(poly) > tolerance()),
             "{name} solid emitted degenerate triangles"
         );
     }

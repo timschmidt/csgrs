@@ -2071,10 +2071,10 @@ proptest! {
         point in point3_strategy(),
         offset in -2.0f64..2.0f64,
     ) {
-        let epsilon = tolerance() * 16.0;
-        let mut map = VertexIndexMap::new(epsilon);
+        let tolerance = tolerance() * 16.0;
+        let mut map = VertexIndexMap::new(tolerance);
         let base_idx = map.get_or_create_index(point);
-        let candidate = Point3::new(point.x + offset as Real * epsilon, point.y, point.z);
+        let candidate = Point3::new(point.x + offset as Real * tolerance, point.y, point.z);
         let candidate_idx = map.get_or_create_index(candidate);
 
         if offset.abs() < 0.5 {

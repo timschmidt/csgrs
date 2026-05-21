@@ -3,7 +3,7 @@
 use crate::csg::CSG;
 use crate::float_types::{
     FRAC_PI_2, PI, Real, TAU, hangle_sin_cos, hdegrees_to_radians, hreal_abs, hreal_affine,
-    hreal_atan, hreal_clamp_f64, hreal_cmp_f64, hreal_div, hreal_f64s_within_epsilon,
+    hreal_atan, hreal_clamp_f64, hreal_cmp_f64, hreal_div, hreal_f64s_within_tolerance,
     hreal_from_f64, hreal_mul, hreal_pow, hreal_sqrt, hreal_sub, hreal_sum, hreal_tan,
     hxy_lerp, tolerance,
 };
@@ -1076,8 +1076,8 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         let is_closed = {
             let first = pts[0];
             let last = pts[segments];
-            hreal_f64s_within_epsilon(first[0], last[0], tolerance())
-                && hreal_f64s_within_epsilon(first[1], last[1], tolerance())
+            hreal_f64s_within_tolerance(first[0], last[0], tolerance())
+                && hreal_f64s_within_tolerance(first[1], last[1], tolerance())
         };
 
         if is_closed {
@@ -1141,13 +1141,13 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
             }
             let denom1 = hreal_sub(knot[i + p], knot[i])?;
             let denom2 = hreal_sub(knot[i + p + 1], knot[i + 1])?;
-            let term1 = if hreal_f64s_within_epsilon(denom1, 0.0, tolerance()) {
+            let term1 = if hreal_f64s_within_tolerance(denom1, 0.0, tolerance()) {
                 0.0
             } else {
                 let numerator = hreal_sub(u, knot[i])?;
                 hreal_mul(hreal_div(numerator, denom1)?, basis(i, p - 1, u, knot)?)?
             };
-            let term2 = if hreal_f64s_within_epsilon(denom2, 0.0, tolerance()) {
+            let term2 = if hreal_f64s_within_tolerance(denom2, 0.0, tolerance()) {
                 0.0
             } else {
                 let numerator = hreal_sub(knot[i + p + 1], u)?;
@@ -1196,8 +1196,8 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
 
         let first = *pts.first().unwrap();
         let last = *pts.last().unwrap();
-        let closed = hreal_f64s_within_epsilon(first[0], last[0], tolerance())
-            && hreal_f64s_within_epsilon(first[1], last[1], tolerance());
+        let closed = hreal_f64s_within_tolerance(first[0], last[0], tolerance())
+            && hreal_f64s_within_tolerance(first[1], last[1], tolerance());
         if !closed {
             return CurveString2::from_finite_point_iter(pts)
                 .map(|wire| Profile::from_wire(wire, metadata.clone()))

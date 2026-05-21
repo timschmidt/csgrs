@@ -1,6 +1,6 @@
 #![cfg(feature = "metaballs")]
 
-use csgrs::float_types::Real;
+use csgrs::float_types::{Real, tolerance};
 use csgrs::mesh::{
     Mesh,
     metaballs::{MetaBall, MetaballDiagnostics},
@@ -153,7 +153,7 @@ fn single_metaball_with_padding_is_closed_and_non_degenerate() {
     assert!(
         mesh.polygons
             .iter()
-            .all(|poly| triangle_area2(poly) > Real::EPSILON),
+            .all(|poly| triangle_area2(poly) > tolerance()),
         "metaballs emitted degenerate triangles: {diagnostics:#?}"
     );
 }

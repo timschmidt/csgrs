@@ -1,5 +1,7 @@
 /// Traits for shapes which can be represented by triangles.
-use crate::float_types::{Real, hpoints_within_epsilon, hvectors_within_epsilon, tolerance};
+use crate::float_types::{
+    Real, hpoints_within_tolerance, hvectors_within_tolerance, tolerance,
+};
 use crate::vertex::Vertex;
 use nalgebra::{Point3, Vector3};
 
@@ -64,7 +66,7 @@ pub trait IndexedTriangulated3D: Triangulated3D {
 
 fn add_unique_position(positions: &mut Vec<Point3<Real>>, position: Point3<Real>) -> usize {
     for (index, existing) in positions.iter().enumerate() {
-        if hpoints_within_epsilon(existing, &position, tolerance()) {
+        if hpoints_within_tolerance(existing, &position, tolerance()) {
             return index;
         }
     }
@@ -74,7 +76,7 @@ fn add_unique_position(positions: &mut Vec<Point3<Real>>, position: Point3<Real>
 
 fn add_unique_normal(normals: &mut Vec<Vector3<Real>>, normal: Vector3<Real>) -> usize {
     for (index, existing) in normals.iter().enumerate() {
-        if hvectors_within_epsilon(existing, &normal, tolerance()) {
+        if hvectors_within_tolerance(existing, &normal, tolerance()) {
             return index;
         }
     }

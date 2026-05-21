@@ -18,7 +18,7 @@ use core::fmt::Debug;
 use nalgebra::Point3;
 
 use crate::float_types::{
-    Real, hreal_abs, hreal_cmp_f64, hreal_div, hreal_f64s_within_epsilon, hreal_mul,
+    Real, hreal_abs, hreal_cmp_f64, hreal_div, hreal_f64s_within_tolerance, hreal_mul,
     hreal_sub, hxy_distance, hxy_step, hxy_unit_direction, tolerance,
 };
 use crate::sketch::Profile;
@@ -587,7 +587,7 @@ pub fn lathe_rough_from_profile<M: Clone + Send + Sync + Debug>(
             // Does segment cross the horizontal line?
             if (y1 <= z && y2 >= z) || (y2 <= z && y1 >= z) {
                 let dy = y2 - y1;
-                if hreal_f64s_within_epsilon(dy, 0.0, tolerance()) {
+                if hreal_f64s_within_tolerance(dy, 0.0, tolerance()) {
                     xs.push(x1.max(x2));
                 } else {
                     let t = (z - y1) / dy; // 0..1

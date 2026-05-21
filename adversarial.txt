@@ -148,8 +148,8 @@ Finite scalars:
 - -2
 - 0.5
 - -0.5
-- Real::EPSILON
-- -Real::EPSILON
+- tolerance() / 2048
+- -tolerance() / 2048
 - tolerance() / 1024
 - tolerance() / 16
 - tolerance() / 2
@@ -297,7 +297,7 @@ checks.
 - polygon with all vertices coplanar but unsorted
 - polygon with self-crossing projection
 - polygon whose best projection axis is ambiguous
-- polygon with duplicate vertices separated by tiny epsilon
+- polygon with duplicate vertices separated by tiny tolerance
 - polygon with duplicate vertices separated by exactly tolerance
 - polygon with overlapping edges
 - polygon with holes represented as repeated winding if possible
@@ -653,7 +653,7 @@ Target `Vertex::new`, `flip`, `interpolate`, `slerp_interpolate`,
 - Barycentric interpolation with valid weights, negative weights, weights not
   summing to one, and NaN weights.
 - Cotangent weight for right, acute, obtuse, collinear, and coincident points.
-- Connectivity with duplicate vertices under epsilon.
+- Connectivity with duplicate vertices under tolerance.
 - Curvature with no neighbors, duplicate neighbors, missing face areas,
   negative face areas, and NaN areas.
 - VertexCluster from empty vertices, one vertex, duplicates, and mixed normals.

@@ -474,7 +474,7 @@ pub(crate) fn hvector3_weighted_sum(
     Some(Vector3::new(coords[0], coords[1], coords[2]))
 }
 
-/// Return whether two public boundary vectors are orthogonal within epsilon.
+/// Return whether two public boundary vectors are orthogonal within tolerance.
 ///
 /// The dot product is evaluated in hyperreal space and only the tolerance is a
 /// primitive API-boundary scalar. This follows Yap's exact-geometric-
@@ -484,9 +484,9 @@ pub(crate) fn hvector3_weighted_sum(
 pub(crate) fn hvectors_orthogonal_within(
     lhs: &Vector3<Real>,
     rhs: &Vector3<Real>,
-    epsilon: Real,
+    tolerance: Real,
 ) -> bool {
-    if hnonnegative_boundary_scalar(epsilon).is_none() {
+    if hnonnegative_boundary_scalar(tolerance).is_none() {
         return false;
     }
     let Some(lhs) = hvector3_from_vector3(lhs) else {
@@ -496,7 +496,7 @@ pub(crate) fn hvectors_orthogonal_within(
         return false;
     };
     let dot = lhs.dot(&rhs);
-    !hreal_gt_f64(&dot, epsilon) && !hreal_lt_f64(&dot, -epsilon)
+    !hreal_gt_f64(&dot, tolerance) && !hreal_lt_f64(&dot, -tolerance)
 }
 
 /// Return the finite angle between two public boundary vectors in radians.
@@ -550,12 +550,12 @@ pub(crate) fn hunit_quaternion(
 /// a `hyperlattice::Vector3` predicate that fails closed for non-finite inputs.
 /// That mirrors Yap's exact-geometric-computation boundary discipline
 /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-pub(crate) fn hpoints_within_epsilon(
+pub(crate) fn hpoints_within_tolerance(
     lhs: &Point3<Real>,
     rhs: &Point3<Real>,
-    epsilon: Real,
+    tolerance: Real,
 ) -> bool {
-    if hpositive_boundary_scalar(epsilon).is_none() {
+    if hpositive_boundary_scalar(tolerance).is_none() {
         return false;
     }
 
@@ -566,7 +566,7 @@ pub(crate) fn hpoints_within_epsilon(
         return false;
     };
 
-    hreal_lt_f64(&lhs.squared_distance(&rhs), epsilon * epsilon)
+    hreal_lt_f64(&lhs.squared_distance(&rhs), tolerance * tolerance)
 }
 
 /// Return the finite Euclidean distance between two public boundary points.
@@ -689,7 +689,7 @@ pub(crate) fn htriangle_area_hreal(
     Some(twice_area * hreal_from_f64(0.5).ok()?)
 }
 
-/// Return true when a triangle's doubled area exceeds `epsilon`.
+/// Return true when a triangle's doubled area exceeds `tolerance`.
 ///
 /// The public mesh carrier still stores nalgebra points during the transition,
 /// but degenerate-triangle predicates should be evaluated after promotion to
@@ -697,13 +697,13 @@ pub(crate) fn htriangle_area_hreal(
 /// exact-aware geometry layer, following Yap's exact-geometric-computation
 /// boundary model (<https://doi.org/10.1016/0925-7721(95)00040-2>).
 #[cfg(any(feature = "sdf", feature = "metaballs"))]
-pub(crate) fn htriangle_area2_exceeds_epsilon(
+pub(crate) fn htriangle_area2_exceeds_tolerance(
     a: &Point3<Real>,
     b: &Point3<Real>,
     c: &Point3<Real>,
-    epsilon: Real,
+    tolerance: Real,
 ) -> bool {
-    if hpositive_boundary_scalar(epsilon).is_none() {
+    if hpositive_boundary_scalar(tolerance).is_none() {
         return false;
     }
     let Some(a) = hvector3_from_point3(a) else {
@@ -716,21 +716,21 @@ pub(crate) fn htriangle_area2_exceeds_epsilon(
         return false;
     };
     let area2 = (&b - &a).cross(&(&c - &a));
-    hreal_gt_f64(&area2.dot(&area2), epsilon * epsilon)
+    hreal_gt_f64(&area2.dot(&area2), tolerance * tolerance)
 }
 
 /// Compare finite f64 boundary vectors by squared distance in hyperreal space.
 ///
-/// This is the vector analogue of [`hpoints_within_epsilon`], used for normals
+/// This is the vector analogue of [`hpoints_within_tolerance`], used for normals
 /// and directions that still cross public API or file-format boundaries as
 /// primitive floats while topology-sensitive equality is evaluated with
 /// `hyperreal::Real`.
-pub(crate) fn hvectors_within_epsilon(
+pub(crate) fn hvectors_within_tolerance(
     lhs: &Vector3<Real>,
     rhs: &Vector3<Real>,
-    epsilon: Real,
+    tolerance: Real,
 ) -> bool {
-    if hpositive_boundary_scalar(epsilon).is_none() {
+    if hpositive_boundary_scalar(tolerance).is_none() {
         return false;
     }
 
@@ -741,7 +741,7 @@ pub(crate) fn hvectors_within_epsilon(
         return false;
     };
 
-    hreal_lt_f64(&lhs.squared_distance(&rhs), epsilon * epsilon)
+    hreal_lt_f64(&lhs.squared_distance(&rhs), tolerance * tolerance)
 }
 
 /// Refine the sign of a hyperreal expression for topology decisions.
@@ -850,21 +850,21 @@ pub(crate) fn hreal_clamp_hreal(value: HReal, min: F64, max: F64) -> Option<HRea
     hyperlimit::real_clamp(value, &min_h, &max_h).value()
 }
 
-/// Return true when two finite f64 API-boundary scalars are within `epsilon`.
+/// Return true when two finite f64 API-boundary scalars are within `tolerance`.
 ///
 /// The squared difference is evaluated in `hyperreal::Real` so callers avoid
 /// mixing f64 subtraction, absolute value, and tolerance logic in local CAD
 /// code. This follows the same Yap exact-computation boundary model cited in
 /// [`hreal_cmp_f64`].
-pub(crate) fn hreal_f64s_within_epsilon(lhs: F64, rhs: F64, epsilon: F64) -> bool {
-    if hpositive_boundary_scalar(epsilon).is_none() {
+pub(crate) fn hreal_f64s_within_tolerance(lhs: F64, rhs: F64, tolerance: F64) -> bool {
+    if hpositive_boundary_scalar(tolerance).is_none() {
         return false;
     }
     let (Ok(lhs), Ok(rhs)) = (hreal_from_f64(lhs), hreal_from_f64(rhs)) else {
         return false;
     };
     let delta = lhs - rhs;
-    hreal_lt_f64(&(delta.clone() * delta), epsilon * epsilon)
+    hreal_lt_f64(&(delta.clone() * delta), tolerance * tolerance)
 }
 
 /// Return the finite sum of public boundary scalars.
@@ -1097,34 +1097,29 @@ const fn default_tolerance() -> Real {
     1e-6
 }
 
-/// Returns the current epsilon value.
+/// Returns the current tolerance value.
 /// If no runtime override was installed, this returns the crate default.
 pub fn tolerance() -> Real {
     *TOLERANCE_CELL.get_or_init(default_tolerance)
 }
 
-/// Sanitize a public tolerance override through hyperreal sign and max checks.
+/// Sanitize a public tolerance override through hyperreal sign checks.
 ///
 /// Runtime tolerance is API-boundary configuration, but accepting it still
 /// affects topology predicates throughout the crate. Promotion and comparison
 /// therefore follow the same exact-geometric-computation boundary discipline as
-/// geometric epsilons: primitive input is admitted at the edge, while sign and
-/// lower-bound decisions use hyperreal predicates. See Yap, "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7(1-2), 1997
+/// geometric predicates: primitive input is admitted at the edge, while sign
+/// decisions use hyperreal predicates. See Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7(1-2), 1997
 /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
 fn hconfigured_tolerance(value: Real) -> Real {
     let Some(value) = hpositive_boundary_scalar(value) else {
         return default_tolerance();
     };
-    let Some(epsilon) = hreal_from_f64(Real::EPSILON).ok() else {
-        return default_tolerance();
-    };
-    hreal_max_pair(&value, &epsilon)
-        .and_then(|value| hreal_to_f64(&value))
-        .unwrap_or_else(default_tolerance)
+    hreal_to_f64(&value).unwrap_or_else(default_tolerance)
 }
 
-/// Set epsilon programmatically once (subsequent calls are ignored).
+/// Set tolerance programmatically once (subsequent calls are ignored).
 ///
 /// Call near program start: `csgrs::float_types::set_tolerance(1e-6);`.
 /// Non-finite values are rejected back to the default because only finite
@@ -1158,45 +1153,45 @@ mod tests {
     use nalgebra::Point3;
 
     #[test]
-    fn hpoints_within_epsilon_accepts_nearby_finite_points() {
-        let epsilon = 1e-6;
+    fn hpoints_within_tolerance_accepts_nearby_finite_points() {
+        let tolerance = 1e-6;
         let lhs = Point3::new(1.0, 2.0, 3.0);
-        let rhs = Point3::new(1.0 + epsilon * 0.25, 2.0, 3.0);
+        let rhs = Point3::new(1.0 + tolerance * 0.25, 2.0, 3.0);
 
-        assert!(hpoints_within_epsilon(&lhs, &rhs, epsilon));
+        assert!(hpoints_within_tolerance(&lhs, &rhs, tolerance));
     }
 
     #[test]
-    fn hpoints_within_epsilon_rejects_distant_or_nonfinite_points() {
-        let epsilon = 1e-6;
+    fn hpoints_within_tolerance_rejects_distant_or_nonfinite_points() {
+        let tolerance = 1e-6;
         let lhs = Point3::new(1.0, 2.0, 3.0);
-        let distant = Point3::new(1.0 + epsilon * 2.0, 2.0, 3.0);
+        let distant = Point3::new(1.0 + tolerance * 2.0, 2.0, 3.0);
         let nonfinite = Point3::new(f64::NAN, 2.0, 3.0);
 
-        assert!(!hpoints_within_epsilon(&lhs, &distant, epsilon));
-        assert!(!hpoints_within_epsilon(&lhs, &nonfinite, epsilon));
-        assert!(!hpoints_within_epsilon(&lhs, &lhs, 0.0));
+        assert!(!hpoints_within_tolerance(&lhs, &distant, tolerance));
+        assert!(!hpoints_within_tolerance(&lhs, &nonfinite, tolerance));
+        assert!(!hpoints_within_tolerance(&lhs, &lhs, 0.0));
     }
 
     #[test]
-    fn hvectors_within_epsilon_uses_hyperreal_distance() {
-        let epsilon = 1e-6;
+    fn hvectors_within_tolerance_uses_hyperreal_distance() {
+        let tolerance = 1e-6;
         let lhs = Vector3::new(0.0, 1.0, 0.0);
-        let near = Vector3::new(0.0, 1.0 + epsilon * 0.25, 0.0);
-        let distant = Vector3::new(0.0, 1.0 + epsilon * 2.0, 0.0);
+        let near = Vector3::new(0.0, 1.0 + tolerance * 0.25, 0.0);
+        let distant = Vector3::new(0.0, 1.0 + tolerance * 2.0, 0.0);
         let nonfinite = Vector3::new(0.0, f64::INFINITY, 0.0);
 
-        assert!(hvectors_within_epsilon(&lhs, &near, epsilon));
-        assert!(!hvectors_within_epsilon(&lhs, &distant, epsilon));
-        assert!(!hvectors_within_epsilon(&lhs, &nonfinite, epsilon));
+        assert!(hvectors_within_tolerance(&lhs, &near, tolerance));
+        assert!(!hvectors_within_tolerance(&lhs, &distant, tolerance));
+        assert!(!hvectors_within_tolerance(&lhs, &nonfinite, tolerance));
     }
 
     #[test]
     fn hunit_vector3_rejects_degenerate_and_nonfinite_inputs() {
         let unit = hunit_vector3(&Vector3::new(3.0, 4.0, 0.0)).unwrap();
-        assert!(hreal_f64s_within_epsilon(unit.x, 0.6, tolerance()));
-        assert!(hreal_f64s_within_epsilon(unit.y, 0.8, tolerance()));
-        assert!(hreal_f64s_within_epsilon(unit.z, 0.0, tolerance()));
+        assert!(hreal_f64s_within_tolerance(unit.x, 0.6, tolerance()));
+        assert!(hreal_f64s_within_tolerance(unit.y, 0.8, tolerance()));
+        assert!(hreal_f64s_within_tolerance(unit.z, 0.0, tolerance()));
 
         assert!(hunit_vector3(&Vector3::zeros()).is_none());
         assert!(hunit_vector3(&Vector3::new(1.0, f64::NAN, 0.0)).is_none());
@@ -1206,10 +1201,10 @@ mod tests {
     fn hunit_vector3_and_magnitude_exports_finite_length() {
         let (unit, magnitude) =
             hunit_vector3_and_magnitude(&Vector3::new(0.0, 0.0, -2.5)).unwrap();
-        assert!(hreal_f64s_within_epsilon(unit.x, 0.0, tolerance()));
-        assert!(hreal_f64s_within_epsilon(unit.y, 0.0, tolerance()));
-        assert!(hreal_f64s_within_epsilon(unit.z, -1.0, tolerance()));
-        assert!(hreal_f64s_within_epsilon(magnitude, 2.5, tolerance()));
+        assert!(hreal_f64s_within_tolerance(unit.x, 0.0, tolerance()));
+        assert!(hreal_f64s_within_tolerance(unit.y, 0.0, tolerance()));
+        assert!(hreal_f64s_within_tolerance(unit.z, -1.0, tolerance()));
+        assert!(hreal_f64s_within_tolerance(magnitude, 2.5, tolerance()));
 
         assert!(hunit_vector3_and_magnitude(&Vector3::zeros()).is_none());
         assert!(
@@ -1223,17 +1218,17 @@ mod tests {
         let rotated =
             Point3::from_homogeneous(x_to_y * Point3::new(1.0, 0.0, 0.0).to_homogeneous())
                 .unwrap();
-        assert!(hreal_f64s_within_epsilon(rotated.x, 0.0, tolerance()));
-        assert!(hreal_f64s_within_epsilon(rotated.y, 1.0, tolerance()));
-        assert!(hreal_f64s_within_epsilon(rotated.z, 0.0, tolerance()));
+        assert!(hreal_f64s_within_tolerance(rotated.x, 0.0, tolerance()));
+        assert!(hreal_f64s_within_tolerance(rotated.y, 1.0, tolerance()));
+        assert!(hreal_f64s_within_tolerance(rotated.z, 0.0, tolerance()));
 
         let opposite = hrotation_between_vectors(&Vector3::x(), &-Vector3::x()).unwrap();
         let rotated =
             Point3::from_homogeneous(opposite * Point3::new(1.0, 0.0, 0.0).to_homogeneous())
                 .unwrap();
-        assert!(hreal_f64s_within_epsilon(rotated.x, -1.0, tolerance()));
-        assert!(hreal_f64s_within_epsilon(rotated.y, 0.0, tolerance()));
-        assert!(hreal_f64s_within_epsilon(rotated.z, 0.0, tolerance()));
+        assert!(hreal_f64s_within_tolerance(rotated.x, -1.0, tolerance()));
+        assert!(hreal_f64s_within_tolerance(rotated.y, 0.0, tolerance()));
+        assert!(hreal_f64s_within_tolerance(rotated.z, 0.0, tolerance()));
 
         assert!(
             hrotation_between_vectors(&Vector3::new(Real::NAN, 0.0, 0.0), &Vector3::z())
@@ -1248,9 +1243,9 @@ mod tests {
         let moved =
             Point3::from_homogeneous(matrix * Point3::new(4.0, 5.0, 6.0).to_homogeneous())
                 .unwrap();
-        assert!(hreal_f64s_within_epsilon(moved.x, 5.0, tolerance()));
-        assert!(hreal_f64s_within_epsilon(moved.y, 3.0, tolerance()));
-        assert!(hreal_f64s_within_epsilon(moved.z, 9.0, tolerance()));
+        assert!(hreal_f64s_within_tolerance(moved.x, 5.0, tolerance()));
+        assert!(hreal_f64s_within_tolerance(moved.y, 3.0, tolerance()));
+        assert!(hreal_f64s_within_tolerance(moved.z, 9.0, tolerance()));
 
         assert!(htranslation_matrix(&Vector3::new(0.0, Real::NAN, 0.0)).is_none());
     }
@@ -1261,9 +1256,9 @@ mod tests {
         let scaled =
             Point3::from_homogeneous(matrix * Point3::new(1.0, 2.0, -3.0).to_homogeneous())
                 .unwrap();
-        assert!(hreal_f64s_within_epsilon(scaled.x, 2.0, tolerance()));
-        assert!(hreal_f64s_within_epsilon(scaled.y, 6.0, tolerance()));
-        assert!(hreal_f64s_within_epsilon(scaled.z, 12.0, tolerance()));
+        assert!(hreal_f64s_within_tolerance(scaled.x, 2.0, tolerance()));
+        assert!(hreal_f64s_within_tolerance(scaled.y, 6.0, tolerance()));
+        assert!(hreal_f64s_within_tolerance(scaled.z, 12.0, tolerance()));
 
         assert!(hscale_matrix(1.0, Real::INFINITY, 1.0).is_none());
     }
@@ -1274,33 +1269,33 @@ mod tests {
         let axis_unit = hunit_vector3(&axis).unwrap();
         let (x, y) = hperpendicular_basis(&axis).unwrap();
 
-        assert!(hreal_f64s_within_epsilon(
+        assert!(hreal_f64s_within_tolerance(
             hvector3_dot(&x, &axis_unit).unwrap(),
             0.0,
             tolerance()
         ));
-        assert!(hreal_f64s_within_epsilon(
+        assert!(hreal_f64s_within_tolerance(
             hvector3_dot(&y, &axis_unit).unwrap(),
             0.0,
             tolerance()
         ));
-        assert!(hreal_f64s_within_epsilon(
+        assert!(hreal_f64s_within_tolerance(
             hvector3_dot(&x, &y).unwrap(),
             0.0,
             tolerance()
         ));
-        assert!(hreal_f64s_within_epsilon(
+        assert!(hreal_f64s_within_tolerance(
             hvector3_dot(&x, &x).unwrap(),
             1.0,
             tolerance()
         ));
-        assert!(hreal_f64s_within_epsilon(
+        assert!(hreal_f64s_within_tolerance(
             hvector3_dot(&y, &y).unwrap(),
             1.0,
             tolerance()
         ));
         let handed_normal = hunit_vector3(&hvector3_cross(&x, &y).unwrap()).unwrap();
-        assert!(hreal_f64s_within_epsilon(
+        assert!(hreal_f64s_within_tolerance(
             hvector3_dot(&handed_normal, &axis_unit).unwrap(),
             1.0,
             tolerance()
@@ -1313,7 +1308,7 @@ mod tests {
     #[test]
     fn hunit_cross_vector3_rejects_degenerate_and_nonfinite_inputs() {
         let normal = hunit_cross_vector3(&Vector3::x(), &Vector3::y()).unwrap();
-        assert!(hreal_f64s_within_epsilon(
+        assert!(hreal_f64s_within_tolerance(
             hvector3_dot(&normal, &Vector3::z()).unwrap(),
             1.0,
             tolerance()
@@ -1332,7 +1327,7 @@ mod tests {
         let b = Point3::new(2.0, 0.0, 0.0);
         let c = Point3::new(0.0, 3.0, 0.0);
 
-        assert!(hreal_f64s_within_epsilon(
+        assert!(hreal_f64s_within_tolerance(
             hreal_to_f64(&htriangle_area_hreal(&a, &b, &c).unwrap()).unwrap(),
             3.0,
             tolerance()
@@ -1373,12 +1368,12 @@ mod tests {
         assert_eq!(hreal_abs(-3.0).unwrap(), 3.0);
         assert_eq!(hreal_abs(0.0).unwrap(), 0.0);
         assert_eq!(hreal_sqrt(25.0).unwrap(), 5.0);
-        assert!(hreal_f64s_within_epsilon(
+        assert!(hreal_f64s_within_tolerance(
             hreal_atan(1.0).unwrap(),
             std::f64::consts::FRAC_PI_4,
             tolerance()
         ));
-        assert!(hreal_f64s_within_epsilon(
+        assert!(hreal_f64s_within_tolerance(
             hreal_tan(std::f64::consts::FRAC_PI_4).unwrap(),
             1.0,
             tolerance()
@@ -1389,19 +1384,19 @@ mod tests {
         assert_eq!(hreal_clamp_f64(-2.0, -1.0, 1.0).unwrap(), -1.0);
         assert_eq!(hreal_clamp_f64(0.5, -1.0, 1.0).unwrap(), 0.5);
         assert_eq!(hreal_affine(1.0, 0.25, 8.0).unwrap(), 3.0);
-        assert!(hreal_f64s_within_epsilon(
+        assert!(hreal_f64s_within_tolerance(
             hdegrees_to_radians(180.0).unwrap(),
             PI,
             tolerance()
         ));
-        assert!(hreal_f64s_within_epsilon(
+        assert!(hreal_f64s_within_tolerance(
             hradians_to_degrees(PI).unwrap(),
             180.0,
             tolerance()
         ));
         let (sin, cos) = hangle_sin_cos(FRAC_PI_2).unwrap();
-        assert!(hreal_f64s_within_epsilon(sin, 1.0, tolerance()));
-        assert!(hreal_f64s_within_epsilon(cos, 0.0, tolerance()));
+        assert!(hreal_f64s_within_tolerance(sin, 1.0, tolerance()));
+        assert!(hreal_f64s_within_tolerance(cos, 0.0, tolerance()));
         assert_eq!(hreal_mean(&values).unwrap(), 2.0);
         assert!(hreal_sample_stddev(&values).unwrap() > 0.99);
         assert_eq!(
@@ -1460,23 +1455,23 @@ mod tests {
 
     #[test]
     fn hxy_distance_and_direction_use_hyperreal_boundaries() {
-        assert!(hreal_f64s_within_epsilon(
+        assert!(hreal_f64s_within_tolerance(
             hxy_distance((0.0, 0.0), (3.0, 4.0)).unwrap(),
             5.0,
             tolerance()
         ));
 
         let direction = hxy_unit_direction((0.0, 0.0), (3.0, 4.0)).unwrap();
-        assert!(hreal_f64s_within_epsilon(direction.0, 0.6, tolerance()));
-        assert!(hreal_f64s_within_epsilon(direction.1, 0.8, tolerance()));
+        assert!(hreal_f64s_within_tolerance(direction.0, 0.6, tolerance()));
+        assert!(hreal_f64s_within_tolerance(direction.1, 0.8, tolerance()));
 
         let midpoint = hxy_lerp((0.0, 2.0), (4.0, 6.0), 0.5).unwrap();
-        assert!(hreal_f64s_within_epsilon(midpoint.0, 2.0, tolerance()));
-        assert!(hreal_f64s_within_epsilon(midpoint.1, 4.0, tolerance()));
+        assert!(hreal_f64s_within_tolerance(midpoint.0, 2.0, tolerance()));
+        assert!(hreal_f64s_within_tolerance(midpoint.1, 4.0, tolerance()));
 
         let stepped = hxy_step((1.0, 2.0), direction, -5.0).unwrap();
-        assert!(hreal_f64s_within_epsilon(stepped.0, -2.0, tolerance()));
-        assert!(hreal_f64s_within_epsilon(stepped.1, -2.0, tolerance()));
+        assert!(hreal_f64s_within_tolerance(stepped.0, -2.0, tolerance()));
+        assert!(hreal_f64s_within_tolerance(stepped.1, -2.0, tolerance()));
 
         assert!(hxy_distance((0.0, 0.0), (Real::NAN, 0.0)).is_none());
         assert!(hxy_unit_direction((0.0, 0.0), (0.0, 0.0)).is_none());
@@ -1490,18 +1485,18 @@ mod tests {
         let x = Vector3::x();
         let y = Vector3::y();
 
-        assert!(hreal_f64s_within_epsilon(
+        assert!(hreal_f64s_within_tolerance(
             hvector3_magnitude(&Vector3::new(0.0, 3.0, 4.0)).unwrap(),
             5.0,
             tolerance()
         ));
-        assert!(hreal_f64s_within_epsilon(
+        assert!(hreal_f64s_within_tolerance(
             hvector3_dot(&x, &y).unwrap(),
             0.0,
             tolerance()
         ));
         assert!(hvectors_orthogonal_within(&x, &y, tolerance()));
-        assert!(hreal_f64s_within_epsilon(
+        assert!(hreal_f64s_within_tolerance(
             hangle_between_vectors(&x, &y).unwrap(),
             FRAC_PI_2,
             tolerance()
@@ -1518,8 +1513,8 @@ mod tests {
     #[cfg(feature = "wasm")]
     fn hunit_quaternion_rejects_degenerate_and_nonfinite_components() {
         let q = hunit_quaternion(2.0, 0.0, 0.0, 0.0).unwrap();
-        assert!(hreal_f64s_within_epsilon(q.scalar(), 1.0, tolerance()));
-        assert!(hreal_f64s_within_epsilon(q.vector().x, 0.0, tolerance()));
+        assert!(hreal_f64s_within_tolerance(q.scalar(), 1.0, tolerance()));
+        assert!(hreal_f64s_within_tolerance(q.vector().x, 0.0, tolerance()));
 
         assert!(hunit_quaternion(0.0, 0.0, 0.0, 0.0).is_none());
         assert!(hunit_quaternion(1.0, Real::NAN, 0.0, Real::INFINITY).is_none());
@@ -1527,17 +1522,25 @@ mod tests {
 
     #[test]
     fn hreal_scalar_boundary_comparison_rejects_nonfinite_values() {
-        let epsilon = 1e-6;
+        let tolerance = 1e-6;
 
         assert_eq!(hreal_cmp_f64(1.0, 2.0), Ordering::Less);
         assert_eq!(hreal_cmp_f64(2.0, 1.0), Ordering::Greater);
         assert_eq!(hreal_cmp_f64(1.0, 1.0), Ordering::Equal);
         assert_eq!(hreal_cmp_f64(f64::NAN, 1.0), Ordering::Equal);
 
-        assert!(hreal_f64s_within_epsilon(1.0, 1.0 + epsilon * 0.25, epsilon));
-        assert!(!hreal_f64s_within_epsilon(1.0, 1.0 + epsilon * 2.0, epsilon));
-        assert!(!hreal_f64s_within_epsilon(1.0, f64::INFINITY, epsilon));
-        assert!(!hreal_f64s_within_epsilon(1.0, 1.0, 0.0));
+        assert!(hreal_f64s_within_tolerance(
+            1.0,
+            1.0 + tolerance * 0.25,
+            tolerance
+        ));
+        assert!(!hreal_f64s_within_tolerance(
+            1.0,
+            1.0 + tolerance * 2.0,
+            tolerance
+        ));
+        assert!(!hreal_f64s_within_tolerance(1.0, f64::INFINITY, tolerance));
+        assert!(!hreal_f64s_within_tolerance(1.0, 1.0, 0.0));
     }
 
     #[test]
@@ -1546,7 +1549,10 @@ mod tests {
         assert_eq!(hconfigured_tolerance(Real::INFINITY), default_tolerance());
         assert_eq!(hconfigured_tolerance(0.0), default_tolerance());
         assert_eq!(hconfigured_tolerance(-1.0), default_tolerance());
-        assert_eq!(hconfigured_tolerance(Real::EPSILON * 0.25), Real::EPSILON);
+        assert_eq!(
+            hconfigured_tolerance(default_tolerance() * 0.25),
+            default_tolerance() * 0.25
+        );
         assert_eq!(hconfigured_tolerance(0.125), 0.125);
     }
 }
