@@ -2138,19 +2138,56 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         };
 
         // Bounding box and usable region (with padding).
-        let w = (max_x - min_x).max(tolerance());
-        let h = (max_y - min_y).max(tolerance());
-        let ox = min_x + padding;
-        let oy = min_y + padding;
-        let sx = (w - 2.0 * padding).max(tolerance());
-        let sy = (h - 2.0 * padding).max(tolerance());
+        let Some(raw_w) = hreal_sub(max_x, min_x) else {
+            return Profile::empty(self.metadata.clone());
+        };
+        let Some(raw_h) = hreal_sub(max_y, min_y) else {
+            return Profile::empty(self.metadata.clone());
+        };
+        let w = match hreal_cmp_f64(raw_w, tolerance()) {
+            Ordering::Less | Ordering::Equal => tolerance(),
+            Ordering::Greater => raw_w,
+        };
+        let h = match hreal_cmp_f64(raw_h, tolerance()) {
+            Ordering::Less | Ordering::Equal => tolerance(),
+            Ordering::Greater => raw_h,
+        };
+        let Some(ox) = hreal_sum(&[min_x, padding]) else {
+            return Profile::empty(self.metadata.clone());
+        };
+        let Some(oy) = hreal_sum(&[min_y, padding]) else {
+            return Profile::empty(self.metadata.clone());
+        };
+        let Some(double_padding) = hreal_mul(2.0, padding) else {
+            return Profile::empty(self.metadata.clone());
+        };
+        let Some(raw_sx) = hreal_sub(w, double_padding) else {
+            return Profile::empty(self.metadata.clone());
+        };
+        let Some(raw_sy) = hreal_sub(h, double_padding) else {
+            return Profile::empty(self.metadata.clone());
+        };
+        let sx = match hreal_cmp_f64(raw_sx, tolerance()) {
+            Ordering::Less | Ordering::Equal => tolerance(),
+            Ordering::Greater => raw_sx,
+        };
+        let sy = match hreal_cmp_f64(raw_sy, tolerance()) {
+            Ordering::Less | Ordering::Equal => tolerance(),
+            Ordering::Greater => raw_sy,
+        };
 
         // Generate normalized Hilbert points in [0,1]^2, then scale/translate.
         let pts_norm = hilbert_points(order);
-        let pts: Vec<(Real, Real)> = pts_norm
-            .into_iter()
-            .map(|(u, v)| (ox + u * sx, oy + v * sy))
-            .collect();
+        let mut pts: Vec<(Real, Real)> = Vec::with_capacity(pts_norm.len());
+        for (u, v) in pts_norm {
+            let Some(x) = hreal_affine(ox, u, sx) else {
+                return Profile::empty(self.metadata.clone());
+            };
+            let Some(y) = hreal_affine(oy, v, sy) else {
+                return Profile::empty(self.metadata.clone());
+            };
+            pts.push((x, y));
+        }
 
         let mut runs: Vec<Vec<(Real, Real)>> = Vec::new();
         let mut run: Vec<(Real, Real)> = Vec::new();
@@ -2158,8 +2195,18 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         for w in pts.windows(2) {
             let a = w[0];
             let b = w[1];
-            let mid_x = (a.0 + b.0) * 0.5;
-            let mid_y = (a.1 + b.1) * 0.5;
+            let Some(sum_x) = hreal_sum(&[a.0, b.0]) else {
+                continue;
+            };
+            let Some(sum_y) = hreal_sum(&[a.1, b.1]) else {
+                continue;
+            };
+            let Some(mid_x) = hreal_mul(sum_x, 0.5) else {
+                continue;
+            };
+            let Some(mid_y) = hreal_mul(sum_y, 0.5) else {
+                continue;
+            };
             let keep = self.contains_xy(mid_x, mid_y).unwrap_or(true);
 
             if keep {
