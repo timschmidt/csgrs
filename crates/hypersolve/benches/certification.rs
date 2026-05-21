@@ -10,10 +10,11 @@ use hypersolve::{
     certify_direct_univariate_quadratic_roots, certify_multivariate_quadratic_interval_candidate,
     certify_multivariate_quadratic_krawczyk_box, certify_quadratic_interval_candidate,
     certify_univariate_quadratic_alpha, certify_univariate_quadratic_krawczyk_box,
-    context_from_problem, count_descartes_univariate_polynomial_roots,
-    differential_pair_skew_equation, eliminate_affine_rows_with_substitution_classes,
-    isolate_univariate_polynomial_roots, rectangular_difference_area_equation,
-    report_lossy_adapter_only_candidate, solve_damped_least_squares, solve_direct_affine_system,
+    context_from_problem, count_bernstein_univariate_polynomial_interval_roots,
+    count_descartes_univariate_polynomial_roots, differential_pair_skew_equation,
+    eliminate_affine_rows_with_substitution_classes, isolate_univariate_polynomial_roots,
+    rectangular_difference_area_equation, report_lossy_adapter_only_candidate,
+    solve_damped_least_squares, solve_direct_affine_system,
     solve_direct_univariate_quadratic_equalities, squared_distance_equation,
 };
 
@@ -256,6 +257,19 @@ fn certification(c: &mut Criterion) {
             )
         })
     });
+    c.bench_function(
+        "count_bernstein_univariate_polynomial_interval_roots",
+        |b| {
+            b.iter(|| {
+                count_bernstein_univariate_polynomial_interval_roots(
+                    &prepared_quadratic,
+                    r(0),
+                    r(4),
+                    hyperlimit::PredicatePolicy::default(),
+                )
+            })
+        },
+    );
     c.bench_function("certify_quadratic_interval_rows", |b| {
         b.iter(|| {
             certify_quadratic_interval_candidate(

@@ -187,6 +187,56 @@ pub struct DescartesRootCountReport {
     pub message: Option<String>,
 }
 
+/// Status for Bernstein interval root-count bounds.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum BernsteinRootCountStatus {
+    /// Bernstein variation bounds were computed exactly.
+    Counted,
+    /// The interval is invalid, usually because `lower >= upper`.
+    InvalidInterval,
+    /// The expression is outside the exact-rational univariate package.
+    UnsupportedCoefficient,
+    /// Exact signs, endpoint comparisons, or coefficient conversion did not decide.
+    Undecided,
+}
+
+/// Bernstein sign-variation bounds over one exact interval.
+///
+/// The polynomial is transformed from the power basis on `[lower, upper]` into
+/// Bernstein form and Descartes sign variation is applied to the Bernstein
+/// control coefficients. This gives a proof-producing bound for roots inside a
+/// finite interval and is the standard subdivision-facing sibling of the
+/// global Descartes count. See Farouki and Rajan, "Algorithms for Polynomials
+/// in Bernstein Form," *Computer Aided Geometric Design* 5.1 (1988), Collins
+/// and Loos (1982), and Yap (1997).
+#[derive(Clone, Debug, PartialEq)]
+pub struct BernsteinRootCountReport {
+    /// Source constraint index.
+    pub constraint_index: usize,
+    /// Solver symbol used by the univariate polynomial, when supported.
+    pub symbol: Option<SymbolId>,
+    /// Degree after exact trimming.
+    pub degree: Option<usize>,
+    /// Interval lower endpoint.
+    pub lower: Real,
+    /// Interval upper endpoint.
+    pub upper: Real,
+    /// Count status.
+    pub status: BernsteinRootCountStatus,
+    /// Exact Bernstein coefficients over `[lower, upper]`, when supported.
+    pub bernstein_coefficients: Vec<Real>,
+    /// Bernstein sign-variation upper bound for roots in the interval.
+    pub variation_bound: Option<usize>,
+    /// True interval-root count has the same parity as this value.
+    pub root_count_parity: Option<usize>,
+    /// Whether `p(lower) == 0` was certified.
+    pub root_at_lower: Option<bool>,
+    /// Whether `p(upper) == 0` was certified.
+    pub root_at_upper: Option<bool>,
+    /// Compact unsupported/undecided reason.
+    pub message: Option<String>,
+}
+
 /// Isolate distinct real roots for active univariate equality residuals.
 ///
 /// The first implementation accepts exact-rational univariate polynomial rows
@@ -662,6 +712,263 @@ pub fn count_descartes_univariate_polynomial_expr(
     )
 }
 
+/// Compute Bernstein interval root-count bounds for active equality rows.
+///
+/// Each supported row is converted exactly to Bernstein form over the supplied
+/// interval. The sign variation of the Bernstein coefficients is an exact upper
+/// bound on the number of roots in the interval, with the same parity as the
+/// true count. Endpoint roots are reported separately so callers can keep open
+/// and closed interval policy outside this algebraic filter.
+pub fn count_bernstein_univariate_polynomial_interval_roots(
+    prepared: &PreparedProblem<'_>,
+    lower: Real,
+    upper: Real,
+    policy: PredicatePolicy,
+) -> Vec<BernsteinRootCountReport> {
+    let mut reports = Vec::new();
+    for (constraint_index, constraint) in prepared.problem().constraints.iter().enumerate() {
+        if !constraint.active || constraint.kind != ConstraintKind::Equality {
+            continue;
+        }
+        reports.push(count_bernstein_univariate_polynomial_interval_expr(
+            constraint_index,
+            &constraint.residual,
+            prepared.problem(),
+            lower.clone(),
+            upper.clone(),
+            policy,
+        ));
+    }
+    reports
+}
+
+/// Compute a Bernstein interval root-count bound for one expression.
+pub fn count_bernstein_univariate_polynomial_interval_expr(
+    constraint_index: usize,
+    expression: &Expr,
+    problem: &Problem,
+    lower: Real,
+    upper: Real,
+    policy: PredicatePolicy,
+) -> BernsteinRootCountReport {
+    match compare_reals_with_policy(&lower, &upper, policy).value() {
+        Some(Ordering::Less) => {}
+        Some(Ordering::Equal | Ordering::Greater) => {
+            return bernstein_report(
+                constraint_index,
+                None,
+                None,
+                lower,
+                upper,
+                BernsteinRootCountStatus::InvalidInterval,
+                Vec::new(),
+                None,
+                None,
+                None,
+                Some("Bernstein interval requires lower < upper".to_owned()),
+            );
+        }
+        None => {
+            return bernstein_report(
+                constraint_index,
+                None,
+                None,
+                lower,
+                upper,
+                BernsteinRootCountStatus::Undecided,
+                Vec::new(),
+                None,
+                None,
+                None,
+                Some("could not compare Bernstein interval endpoints".to_owned()),
+            );
+        }
+    }
+
+    let extracted = match collect_univariate_polynomial(expression) {
+        Some(extracted) => extracted,
+        None => {
+            return bernstein_report(
+                constraint_index,
+                None,
+                None,
+                lower,
+                upper,
+                BernsteinRootCountStatus::UnsupportedCoefficient,
+                Vec::new(),
+                None,
+                None,
+                None,
+                Some("expression is not a supported univariate polynomial".to_owned()),
+            );
+        }
+    };
+    let Some(symbol) = extracted.symbol else {
+        return bernstein_report(
+            constraint_index,
+            None,
+            Some(0),
+            lower,
+            upper,
+            BernsteinRootCountStatus::Counted,
+            vec![
+                extracted
+                    .coefficients
+                    .first()
+                    .cloned()
+                    .unwrap_or_else(Real::zero),
+            ],
+            Some(false),
+            Some(false),
+            Some(0),
+            Some("constant polynomial row has no variable roots".to_owned()),
+        );
+    };
+    if !problem
+        .variables
+        .iter()
+        .any(|variable| variable.symbol == symbol)
+    {
+        return bernstein_report(
+            constraint_index,
+            Some(symbol),
+            None,
+            lower,
+            upper,
+            BernsteinRootCountStatus::UnsupportedCoefficient,
+            Vec::new(),
+            None,
+            None,
+            None,
+            Some("polynomial symbol is not present in the problem".to_owned()),
+        );
+    }
+    let Some(poly) = trim_polynomial(extracted.coefficients, policy) else {
+        return bernstein_report(
+            constraint_index,
+            Some(symbol),
+            None,
+            lower,
+            upper,
+            BernsteinRootCountStatus::Undecided,
+            Vec::new(),
+            None,
+            None,
+            None,
+            Some("could not decide polynomial degree".to_owned()),
+        );
+    };
+    if poly
+        .iter()
+        .any(|coefficient| coefficient.exact_rational_ref().is_none())
+    {
+        return bernstein_report(
+            constraint_index,
+            Some(symbol),
+            Some(poly.len().saturating_sub(1)),
+            lower,
+            upper,
+            BernsteinRootCountStatus::UnsupportedCoefficient,
+            Vec::new(),
+            None,
+            None,
+            None,
+            Some("all Bernstein coefficients must start from exact rationals".to_owned()),
+        );
+    }
+    let endpoint_lower =
+        match compare_reals_with_policy(&evaluate_polynomial(&poly, &lower), &Real::zero(), policy)
+            .value()
+        {
+            Some(ordering) => ordering == Ordering::Equal,
+            None => {
+                return bernstein_report(
+                    constraint_index,
+                    Some(symbol),
+                    Some(poly.len().saturating_sub(1)),
+                    lower,
+                    upper,
+                    BernsteinRootCountStatus::Undecided,
+                    Vec::new(),
+                    None,
+                    None,
+                    None,
+                    Some("could not decide lower endpoint sign".to_owned()),
+                );
+            }
+        };
+    let endpoint_upper =
+        match compare_reals_with_policy(&evaluate_polynomial(&poly, &upper), &Real::zero(), policy)
+            .value()
+        {
+            Some(ordering) => ordering == Ordering::Equal,
+            None => {
+                return bernstein_report(
+                    constraint_index,
+                    Some(symbol),
+                    Some(poly.len().saturating_sub(1)),
+                    lower,
+                    upper,
+                    BernsteinRootCountStatus::Undecided,
+                    Vec::new(),
+                    Some(endpoint_lower),
+                    None,
+                    None,
+                    Some("could not decide upper endpoint sign".to_owned()),
+                );
+            }
+        };
+    let bernstein = match power_to_bernstein_on_interval(&poly, &lower, &upper) {
+        Some(coefficients) => coefficients,
+        None => {
+            return bernstein_report(
+                constraint_index,
+                Some(symbol),
+                Some(poly.len().saturating_sub(1)),
+                lower,
+                upper,
+                BernsteinRootCountStatus::Undecided,
+                Vec::new(),
+                Some(endpoint_lower),
+                Some(endpoint_upper),
+                None,
+                Some("could not convert polynomial to Bernstein form".to_owned()),
+            );
+        }
+    };
+    let variations = match sign_variations_for_coefficients(&bernstein, policy) {
+        Some(variations) => variations,
+        None => {
+            return bernstein_report(
+                constraint_index,
+                Some(symbol),
+                Some(poly.len().saturating_sub(1)),
+                lower,
+                upper,
+                BernsteinRootCountStatus::Undecided,
+                bernstein,
+                Some(endpoint_lower),
+                Some(endpoint_upper),
+                None,
+                Some("could not decide Bernstein coefficient signs".to_owned()),
+            );
+        }
+    };
+    bernstein_report(
+        constraint_index,
+        Some(symbol),
+        Some(poly.len().saturating_sub(1)),
+        lower,
+        upper,
+        BernsteinRootCountStatus::Counted,
+        bernstein,
+        Some(endpoint_lower),
+        Some(endpoint_upper),
+        Some(variations),
+        None,
+    )
+}
+
 #[derive(Clone, Debug)]
 struct ExtractedPolynomial {
     symbol: Option<SymbolId>,
@@ -1123,6 +1430,54 @@ fn sign_variations_for_coefficients(
     Some(variations)
 }
 
+fn power_to_bernstein_on_interval(
+    polynomial: &[Real],
+    lower: &Real,
+    upper: &Real,
+) -> Option<Vec<Real>> {
+    let degree = polynomial.len().saturating_sub(1);
+    let width = upper.clone() - lower.clone();
+    let mut shifted_power = vec![Real::zero(); degree + 1];
+    for (power, coefficient) in polynomial.iter().enumerate() {
+        for target_power in 0..=power {
+            let binomial = Real::from(binomial(power, target_power)? as i64);
+            let lower_power = pow_real_nonnegative(lower, power - target_power);
+            let width_power = pow_real_nonnegative(&width, target_power);
+            shifted_power[target_power] = shifted_power[target_power].clone()
+                + coefficient.clone() * binomial * lower_power * width_power;
+        }
+    }
+
+    let mut bernstein = vec![Real::zero(); degree + 1];
+    for i in 0..=degree {
+        let mut value = Real::zero();
+        for (j, coefficient) in shifted_power.iter().enumerate().take(i + 1) {
+            let numerator = Real::from(binomial(i, j)? as i64);
+            let denominator = Real::from(binomial(degree, j)? as i64);
+            value = value + ((coefficient.clone() * numerator) / denominator).ok()?;
+        }
+        bernstein[i] = value;
+    }
+    Some(bernstein)
+}
+
+fn pow_real_nonnegative(value: &Real, exponent: usize) -> Real {
+    (0..exponent).fold(Real::one(), |product, _| product * value.clone())
+}
+
+fn binomial(n: usize, k: usize) -> Option<u64> {
+    if k > n {
+        return Some(0);
+    }
+    let k = k.min(n - k);
+    let mut result = 1_u128;
+    for i in 1..=k {
+        result = result.checked_mul((n - k + i) as u128)?;
+        result /= i as u128;
+    }
+    u64::try_from(result).ok()
+}
+
 fn root_isolation_report(
     constraint_index: usize,
     symbol: Option<SymbolId>,
@@ -1139,6 +1494,36 @@ fn root_isolation_report(
         status,
         multiplicity,
         intervals,
+        message,
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn bernstein_report(
+    constraint_index: usize,
+    symbol: Option<SymbolId>,
+    degree: Option<usize>,
+    lower: Real,
+    upper: Real,
+    status: BernsteinRootCountStatus,
+    bernstein_coefficients: Vec<Real>,
+    root_at_lower: Option<bool>,
+    root_at_upper: Option<bool>,
+    variation_bound: Option<usize>,
+    message: Option<String>,
+) -> BernsteinRootCountReport {
+    BernsteinRootCountReport {
+        constraint_index,
+        symbol,
+        degree,
+        lower,
+        upper,
+        status,
+        bernstein_coefficients,
+        root_count_parity: variation_bound.map(|count| count % 2),
+        variation_bound,
+        root_at_lower,
+        root_at_upper,
         message,
     }
 }
@@ -1173,6 +1558,7 @@ mod tests {
     use super::*;
     use crate::eval::context_from_problem;
     use crate::model::Constraint;
+    use proptest::prelude::*;
 
     fn real(value: i64) -> Real {
         Real::from(value)
@@ -1324,5 +1710,82 @@ mod tests {
             reports[2].status,
             DescartesRootCountStatus::UnsupportedCoefficient
         );
+    }
+
+    #[test]
+    fn bernstein_counts_interval_roots_and_endpoint_witnesses() {
+        let x = Expr::symbol(SymbolId(0), "x");
+        let y = Expr::symbol(SymbolId(1), "y");
+        let mut problem = Problem::default();
+        problem.add_variable("x", real(0));
+        problem.add_variable("y", real(0));
+        problem.add_constraint(Constraint::equality(
+            "three roots",
+            x.clone().powi(3) - Expr::int(6) * x.clone().powi(2) + Expr::int(11) * x.clone()
+                - Expr::int(6),
+        ));
+        problem.add_constraint(Constraint::equality(
+            "endpoint root",
+            x.clone() - Expr::int(2),
+        ));
+        problem.add_constraint(Constraint::equality("multivariate unsupported", x * y));
+
+        let reports = count_bernstein_univariate_polynomial_interval_roots(
+            &PreparedProblem::new(&problem),
+            real(0),
+            real(2),
+            PredicatePolicy::default(),
+        );
+
+        assert_eq!(reports.len(), 3);
+        assert_eq!(reports[0].status, BernsteinRootCountStatus::Counted);
+        assert_eq!(reports[0].variation_bound, Some(1));
+        assert_eq!(reports[0].root_count_parity, Some(1));
+        assert_eq!(reports[0].root_at_lower, Some(false));
+        assert_eq!(reports[0].root_at_upper, Some(true));
+        assert_eq!(reports[0].bernstein_coefficients.len(), 4);
+
+        assert_eq!(reports[1].status, BernsteinRootCountStatus::Counted);
+        assert_eq!(reports[1].root_at_lower, Some(false));
+        assert_eq!(reports[1].root_at_upper, Some(true));
+        assert_eq!(reports[1].variation_bound, Some(0));
+
+        assert_eq!(
+            reports[2].status,
+            BernsteinRootCountStatus::UnsupportedCoefficient
+        );
+    }
+
+    proptest! {
+        #[test]
+        fn bernstein_generated_quadratic_interval_counts_one_interior_root(
+            root in -16_i16..=16,
+            other in -32_i16..=32,
+        ) {
+            let root = i64::from(root);
+            let other = i64::from(other);
+            prop_assume!(other < root - 1 || other > root + 1);
+            let x = Expr::symbol(SymbolId(0), "x");
+            let mut problem = Problem::default();
+            problem.add_variable("x", real(0));
+            problem.add_constraint(Constraint::equality(
+                "generated one interval root",
+                (x.clone() - Expr::int(root)) * (x - Expr::int(other)),
+            ));
+
+            let reports = count_bernstein_univariate_polynomial_interval_roots(
+                &PreparedProblem::new(&problem),
+                real(root - 1),
+                real(root + 1),
+                PredicatePolicy::default(),
+            );
+
+            prop_assert_eq!(reports.len(), 1);
+            prop_assert_eq!(&reports[0].status, &BernsteinRootCountStatus::Counted);
+            prop_assert_eq!(reports[0].root_at_lower, Some(false));
+            prop_assert_eq!(reports[0].root_at_upper, Some(false));
+            prop_assert_eq!(reports[0].variation_bound, Some(1));
+            prop_assert_eq!(reports[0].root_count_parity, Some(1));
+        }
     }
 }
