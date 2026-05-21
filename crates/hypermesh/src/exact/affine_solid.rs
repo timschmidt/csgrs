@@ -3,9 +3,10 @@
 //! [`crate::exact::affine_box`] normalizes two parallelepiped boxes into one
 //! exact `(u, v, w)` frame before reusing orthogonal box materializers. This
 //! module extends that retained-object route to the bounded cell-complex case:
-//! if one operand supplies an exact affine box frame and both operands replay
-//! as axis-aligned orthogonal solid cell complexes in that frame, a named
-//! boolean is materialized on the normalized grid and lifted back exactly.
+//! if a shared frame is recovered from a retained affine box or exact
+//! cell-complex edge structure, and both operands replay as axis-aligned
+//! orthogonal solid cell complexes in that frame, a named boolean is
+//! materialized on the normalized grid and lifted back exactly.
 //!
 //! The key policy is Yap's model from "Towards Exact Geometric Computation,"
 //! *Computational Geometry* 7.1-2 (1997): the affine basis, normalized source
@@ -15,7 +16,7 @@
 //! Overmars, *Computational Geometry: Algorithms and Applications*, 3rd ed.
 //! (2008), Chapter 2, but every coordinate replay here is exact.
 
-use hyperlimit::compare_reals;
+use hyperlimit::{Point3, compare_reals};
 
 use super::affine_box::{AffineBoxBasis, candidate_affine_box_bases, mesh_from_uvw, mesh_to_uvw};
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
@@ -27,6 +28,21 @@ use super::orthogonal_solid::{
 use super::scalar::ExactReal;
 use super::validation::ValidationPolicy;
 use core::cmp::Ordering;
+
+/// Maximum origin vertices sampled when recovering an affine cell frame.
+///
+/// The limit keeps basis discovery bounded. Soundness does not depend on
+/// exhaustiveness because every candidate is accepted only after exact replay
+/// proves the complete mesh is an axis-aligned orthogonal solid.
+const MAX_CELL_BASIS_ORIGINS: usize = 8;
+
+/// Maximum incident directions sampled per origin during frame discovery.
+///
+/// Directions are ranked by exact mesh-edge frequency so repeated grid axes
+/// are tried before triangulation diagonals. Yap's exact-object discipline is
+/// enforced after sampling by [`mesh_to_uvw`] plus orthogonal-solid replay, not
+/// by this heuristic ordering.
+const MAX_CELL_BASIS_DIRECTIONS: usize = 8;
 
 /// Named operation retained by an affine orthogonal-solid materialization.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -42,9 +58,10 @@ pub enum AffineOrthogonalSolidOperation {
 /// Exact affine orthogonal-solid boolean output.
 ///
 /// This artifact is deliberately narrower than a general affine volumetric
-/// arrangement. It requires an exact box-derived basis, exact replay of both
-/// source meshes into axis-aligned orthogonal cell complexes, and exact replay
-/// of the lifted output back through the same basis.
+/// arrangement. It requires an exact basis derived from retained box or
+/// cell-complex structure, exact replay of both source meshes into
+/// axis-aligned orthogonal cell complexes, and exact replay of the lifted
+/// output back through the same basis.
 #[derive(Clone, Debug, PartialEq)]
 pub struct AffineOrthogonalSolidArrangement {
     /// Shared affine frame used to normalize source and output cell complexes.
@@ -204,16 +221,198 @@ fn materialize_affine_orthogonal_solids(
     Ok(None)
 }
 
+/// Return exact affine bases that are plausible for both source meshes.
+///
+/// Retained box evidence is tried first because it is already a construction
+/// artifact. Cell-complex evidence is secondary and must be rediscovered from
+/// exact edge structure before the pair replay below can certify it.
 fn candidate_shared_bases(left: &ExactMesh, right: &ExactMesh) -> Vec<AffineBoxBasis> {
     let mut bases = candidate_affine_box_bases(left);
     bases.extend(candidate_affine_box_bases(right));
+    bases.extend(candidate_affine_cell_bases(left));
+    bases.extend(candidate_affine_cell_bases(right));
+    let mut unique = Vec::new();
+    for basis in bases {
+        if compare_reals(&basis.determinant(), &ExactReal::from(0)).value() == Some(Ordering::Equal)
+            || unique.contains(&basis)
+        {
+            continue;
+        }
+        unique.push(basis);
+    }
+    unique
+}
+
+/// Recover exact affine bases from a single orthogonal-solid cell complex.
+///
+/// The search uses the mesh's retained triangle-edge graph to propose three
+/// independent directions at likely grid vertices. Per Yap, "Towards Exact
+/// Geometric Computation," *Computational Geometry* 7.1-2 (1997), the sampled
+/// frame is not trusted as a numeric fit: it becomes evidence only if exact
+/// determinant-ratio normalization and orthogonal-solid replay accept the full
+/// source mesh.
+fn candidate_affine_cell_bases(mesh: &ExactMesh) -> Vec<AffineBoxBasis> {
+    let mut bases = Vec::new();
+    if mesh.vertices().len() < 8 || mesh.triangles().len() < 12 {
+        return bases;
+    }
+    let adjacency = vertex_adjacency(mesh);
+    let direction_counts = mesh_direction_counts(mesh);
+    let mut origins = (0..adjacency.len()).collect::<Vec<_>>();
+    origins.sort_by_key(|&origin| adjacency[origin].len());
+    for origin in origins.into_iter().take(MAX_CELL_BASIS_ORIGINS) {
+        let neighbors = &adjacency[origin];
+        let origin_point = mesh.vertices()[origin].to_hyperlimit_point();
+        let mut directions = unique_edge_directions(mesh, origin, neighbors);
+        directions.sort_by_key(|direction| {
+            core::cmp::Reverse(direction_weight(direction, &direction_counts))
+        });
+        directions.truncate(MAX_CELL_BASIS_DIRECTIONS);
+        for u in 0..directions.len() {
+            for v in u + 1..directions.len() {
+                for w in v + 1..directions.len() {
+                    let basis = AffineBoxBasis {
+                        origin: origin_point.clone(),
+                        basis_u: directions[u].clone(),
+                        basis_v: directions[v].clone(),
+                        basis_w: directions[w].clone(),
+                    };
+                    if compare_reals(&basis.determinant(), &ExactReal::from(0)).value()
+                        == Some(Ordering::Equal)
+                        || bases.contains(&basis)
+                    {
+                        continue;
+                    }
+                    // This is the Yap 1997 exact-object filter in miniature:
+                    // infer from retained combinatorial edges, then accept
+                    // only through exact replay, never through angle
+                    // tolerances or floating-point least-squares fitting.
+                    if mesh_to_uvw(mesh, &basis, ValidationPolicy::CLOSED)
+                        .as_ref()
+                        .is_some_and(is_axis_aligned_orthogonal_solid)
+                    {
+                        bases.push(basis);
+                    }
+                }
+            }
+        }
+    }
     bases
-        .into_iter()
-        .filter(|basis| {
-            compare_reals(&basis.determinant(), &ExactReal::from(0)).value()
-                != Some(Ordering::Equal)
-        })
-        .collect()
+}
+
+/// Count undirected exact triangle-edge directions in mesh space.
+fn mesh_direction_counts(mesh: &ExactMesh) -> Vec<(Point3, usize)> {
+    let mut counts = Vec::<(Point3, usize)>::new();
+    for triangle in mesh.triangles() {
+        let [a, b, c] = triangle.0;
+        count_edge_direction(mesh, a, b, &mut counts);
+        count_edge_direction(mesh, b, c, &mut counts);
+        count_edge_direction(mesh, c, a, &mut counts);
+    }
+    counts
+}
+
+/// Add one exact undirected edge direction to the frequency table.
+fn count_edge_direction(mesh: &ExactMesh, a: usize, b: usize, counts: &mut Vec<(Point3, usize)>) {
+    let (Some(a), Some(b)) = (mesh.vertices().get(a), mesh.vertices().get(b)) else {
+        return;
+    };
+    let direction = sub3(&b.to_hyperlimit_point(), &a.to_hyperlimit_point());
+    if point_is_zero(&direction) {
+        return;
+    }
+    if let Some((_, count)) = counts
+        .iter_mut()
+        .find(|(seen, _)| points_equal_or_opposite(seen, &direction))
+    {
+        *count += 1;
+    } else {
+        counts.push((direction, 1));
+    }
+}
+
+/// Return the frequency assigned to an exact direction, ignoring sign.
+fn direction_weight(direction: &Point3, counts: &[(Point3, usize)]) -> usize {
+    counts
+        .iter()
+        .find(|(seen, _)| points_equal_or_opposite(seen, direction))
+        .map(|(_, count)| *count)
+        .unwrap_or(0)
+}
+
+/// Build a unique undirected vertex adjacency list from retained triangles.
+fn vertex_adjacency(mesh: &ExactMesh) -> Vec<Vec<usize>> {
+    let mut adjacency = vec![Vec::new(); mesh.vertices().len()];
+    for triangle in mesh.triangles() {
+        let [a, b, c] = triangle.0;
+        push_edge(&mut adjacency, a, b);
+        push_edge(&mut adjacency, b, c);
+        push_edge(&mut adjacency, c, a);
+    }
+    adjacency
+}
+
+/// Insert one undirected adjacency edge if both endpoint rows exist.
+fn push_edge(adjacency: &mut [Vec<usize>], a: usize, b: usize) {
+    if let Some(neighbors) = adjacency.get_mut(a)
+        && !neighbors.contains(&b)
+    {
+        neighbors.push(b);
+    }
+    if let Some(neighbors) = adjacency.get_mut(b)
+        && !neighbors.contains(&a)
+    {
+        neighbors.push(a);
+    }
+}
+
+/// Return unique outgoing exact edge directions at one origin vertex.
+fn unique_edge_directions(mesh: &ExactMesh, origin: usize, neighbors: &[usize]) -> Vec<Point3> {
+    let origin_point = mesh.vertices()[origin].to_hyperlimit_point();
+    let mut directions = Vec::new();
+    for &neighbor in neighbors {
+        let Some(neighbor) = mesh.vertices().get(neighbor) else {
+            continue;
+        };
+        let direction = sub3(&neighbor.to_hyperlimit_point(), &origin_point);
+        if point_is_zero(&direction) || directions.iter().any(|seen| points_equal(seen, &direction))
+        {
+            continue;
+        }
+        directions.push(direction);
+    }
+    directions
+}
+
+/// Subtract exact 3D points componentwise.
+fn sub3(left: &Point3, right: &Point3) -> Point3 {
+    Point3::new(
+        left.x.clone() - &right.x,
+        left.y.clone() - &right.y,
+        left.z.clone() - &right.z,
+    )
+}
+
+/// Return whether an exact point/vector is exactly zero.
+fn point_is_zero(point: &Point3) -> bool {
+    compare_reals(&point.x, &ExactReal::from(0)).value() == Some(Ordering::Equal)
+        && compare_reals(&point.y, &ExactReal::from(0)).value() == Some(Ordering::Equal)
+        && compare_reals(&point.z, &ExactReal::from(0)).value() == Some(Ordering::Equal)
+}
+
+/// Compare exact points componentwise.
+fn points_equal(left: &Point3, right: &Point3) -> bool {
+    compare_reals(&left.x, &right.x).value() == Some(Ordering::Equal)
+        && compare_reals(&left.y, &right.y).value() == Some(Ordering::Equal)
+        && compare_reals(&left.z, &right.z).value() == Some(Ordering::Equal)
+}
+
+/// Compare exact directions up to sign.
+fn points_equal_or_opposite(left: &Point3, right: &Point3) -> bool {
+    points_equal(left, right)
+        || (compare_reals(&left.x, &(-right.x.clone())).value() == Some(Ordering::Equal)
+            && compare_reals(&left.y, &(-right.y.clone())).value() == Some(Ordering::Equal)
+            && compare_reals(&left.z, &(-right.z.clone())).value() == Some(Ordering::Equal))
 }
 
 impl AffineOrthogonalSolidOperation {

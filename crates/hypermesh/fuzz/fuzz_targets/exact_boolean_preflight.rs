@@ -69,6 +69,8 @@ fuzz_target!(|data: &[u8]| {
         #[cfg(feature = "exact-triangulation")]
         exercise_affine_orthogonal_solid_cell_complexes();
         #[cfg(feature = "exact-triangulation")]
+        exercise_affine_orthogonal_solid_cell_complex_frame_discovery();
+        #[cfg(feature = "exact-triangulation")]
         exercise_mixed_coplanar_volumetric_materialization();
     });
 
@@ -3308,6 +3310,124 @@ fn exercise_affine_orthogonal_solid_cell_complexes() {
     .validate_operation_against_sources(
         &complex,
         &cutter,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::CLOSED,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn exercise_affine_orthogonal_solid_cell_complex_frame_discovery() {
+    let origin = [0, 0, 0];
+    let basis_u = [2, 1, 0];
+    let basis_v = [-1, 2, 0];
+    let basis_w = [0, 1, 2];
+    let left_a = affine_box_i64([0, 0, 0], [2, 2, 2], origin, basis_u, basis_v, basis_w);
+    let left_b = affine_box_i64([1, 1, 0], [3, 3, 2], origin, basis_u, basis_v, basis_w);
+    let right_a = affine_box_i64([2, 0, 0], [4, 2, 2], origin, basis_u, basis_v, basis_w);
+    let right_b = affine_box_i64([3, 1, 0], [5, 3, 2], origin, basis_u, basis_v, basis_w);
+    let left_complex = hypermesh::exact::boolean_exact(
+        &left_a,
+        &left_b,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("left affine complex should materialize")
+    .mesh;
+    let right_complex = hypermesh::exact::boolean_exact(
+        &right_a,
+        &right_b,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("right affine complex should materialize")
+    .mesh;
+
+    let union = preflight_boolean_exact(
+        &left_complex,
+        &right_complex,
+        ExactBooleanOperation::Union,
+    )
+    .expect("affine complex frame-discovery union preflight should classify shortcut");
+    union.validate().unwrap();
+    union
+        .validate_against_sources(&left_complex, &right_complex)
+        .unwrap();
+    assert_eq!(
+        union.support,
+        ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellUnion
+    );
+    hypermesh::exact::boolean_exact(
+        &left_complex,
+        &right_complex,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("affine complex frame-discovery union should materialize")
+    .validate_operation_against_sources(
+        &left_complex,
+        &right_complex,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+
+    let intersection = preflight_boolean_exact(
+        &left_complex,
+        &right_complex,
+        ExactBooleanOperation::Intersection,
+    )
+    .expect("affine complex frame-discovery intersection preflight should classify shortcut");
+    intersection.validate().unwrap();
+    intersection
+        .validate_against_sources(&left_complex, &right_complex)
+        .unwrap();
+    assert_eq!(
+        intersection.support,
+        ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellIntersection
+    );
+    hypermesh::exact::boolean_exact(
+        &left_complex,
+        &right_complex,
+        ExactBooleanOperation::Intersection,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("affine complex frame-discovery intersection should materialize")
+    .validate_operation_against_sources(
+        &left_complex,
+        &right_complex,
+        ExactBooleanOperation::Intersection,
+        ValidationPolicy::CLOSED,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+
+    let difference = preflight_boolean_exact(
+        &left_complex,
+        &right_complex,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("affine complex frame-discovery difference preflight should classify shortcut");
+    difference.validate().unwrap();
+    difference
+        .validate_against_sources(&left_complex, &right_complex)
+        .unwrap();
+    assert_eq!(
+        difference.support,
+        ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellDifference
+    );
+    hypermesh::exact::boolean_exact(
+        &left_complex,
+        &right_complex,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("affine complex frame-discovery difference should materialize")
+    .validate_operation_against_sources(
+        &left_complex,
+        &right_complex,
         ExactBooleanOperation::Difference,
         ValidationPolicy::CLOSED,
         ExactBoundaryBooleanPolicy::Reject,

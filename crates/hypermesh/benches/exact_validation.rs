@@ -3476,6 +3476,19 @@ fn exact_boolean_affine_box_cells(c: &mut Criterion) {
         .unwrap()
         .mesh;
         let affine_cutter = affine_box_i64([2, 0, 0], [3, 2, 2], origin, basis_u, basis_v, basis_w);
+        let discovered_left = affine_complex.clone();
+        let discovered_right_a =
+            affine_box_i64([2, 0, 0], [4, 2, 2], origin, basis_u, basis_v, basis_w);
+        let discovered_right_b =
+            affine_box_i64([3, 1, 0], [5, 3, 2], origin, basis_u, basis_v, basis_w);
+        let discovered_right = hypermesh::exact::boolean_exact(
+            &discovered_right_a,
+            &discovered_right_b,
+            hypermesh::exact::ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap()
+        .mesh;
 
         c.bench_function("exact_boolean_affine_box_cells", |b| {
             b.iter(|| {
@@ -3618,6 +3631,59 @@ fn exact_boolean_affine_box_cells(c: &mut Criterion) {
                 )
             })
         });
+
+        c.bench_function(
+            "exact_boolean_affine_orthogonal_solid_frame_discovery",
+            |b| {
+                b.iter(|| {
+                    (
+                        hypermesh::exact::materialize_affine_orthogonal_solid_union(
+                            &discovered_left,
+                            &discovered_right,
+                            ValidationPolicy::CLOSED,
+                        )
+                        .unwrap()
+                        .map(|output| {
+                            output.validate_against_sources(&discovered_left, &discovered_right)
+                        }),
+                        hypermesh::exact::preflight_boolean_exact(
+                            &discovered_left,
+                            &discovered_right,
+                            hypermesh::exact::ExactBooleanOperation::Union,
+                        )
+                        .map(|report| report.validate()),
+                        hypermesh::exact::boolean_exact(
+                            &discovered_left,
+                            &discovered_right,
+                            hypermesh::exact::ExactBooleanOperation::Intersection,
+                            ValidationPolicy::CLOSED,
+                        )
+                        .unwrap()
+                        .validate_operation_against_sources(
+                            &discovered_left,
+                            &discovered_right,
+                            hypermesh::exact::ExactBooleanOperation::Intersection,
+                            ValidationPolicy::CLOSED,
+                            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+                        ),
+                        hypermesh::exact::boolean_exact(
+                            &discovered_left,
+                            &discovered_right,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                            ValidationPolicy::CLOSED,
+                        )
+                        .unwrap()
+                        .validate_operation_against_sources(
+                            &discovered_left,
+                            &discovered_right,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                            ValidationPolicy::CLOSED,
+                            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+                        ),
+                    )
+                })
+            },
+        );
     }
     #[cfg(not(feature = "exact-triangulation"))]
     {
