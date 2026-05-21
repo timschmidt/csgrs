@@ -3,7 +3,8 @@
 use crate::float_types::{
     HReal, PI, Real, hdegrees_to_radians, hreal_clamp_hreal, hreal_cmp_f64, hreal_div,
     hreal_from_f64, hreal_gt_f64, hreal_max_pair, hreal_mean, hreal_min, hreal_min_pair,
-    hreal_sample_stddev, hreal_to_f64, htriangle_area_hreal, hvector3_from_point3, tolerance,
+    hreal_sample_stddev, hreal_sqrt_ref, hreal_sqrt_to_f64, hreal_to_f64,
+    htriangle_area_hreal, hvector3_from_point3, tolerance,
 };
 use crate::mesh::Mesh;
 use crate::vertex::Vertex;
@@ -28,8 +29,7 @@ fn degenerate_triangle_quality() -> TriangleQuality {
 fn hyper_edge_length(a: &Point3<Real>, b: &Point3<Real>) -> Option<Real> {
     let a = hvector3_from_point3(a)?;
     let b = hvector3_from_point3(b)?;
-    let length = a.squared_distance(&b).sqrt().ok()?;
-    hreal_to_f64(&length)
+    hreal_sqrt_to_f64(&a.squared_distance(&b))
 }
 
 fn boundary_scalar_cmp(lhs: Real, rhs: Real) -> Ordering {
@@ -74,9 +74,9 @@ fn hyper_triangle_quality(vertices: &[Vertex]) -> Option<TriangleQuality> {
     let b = hvector3_from_point3(&vertices[1].position)?;
     let c = hvector3_from_point3(&vertices[2].position)?;
 
-    let len_ab = a.squared_distance(&b).sqrt().ok()?;
-    let len_bc = b.squared_distance(&c).sqrt().ok()?;
-    let len_ca = c.squared_distance(&a).sqrt().ok()?;
+    let len_ab = hreal_sqrt_ref(&a.squared_distance(&b))?;
+    let len_bc = hreal_sqrt_ref(&b.squared_distance(&c))?;
+    let len_ca = hreal_sqrt_ref(&c.squared_distance(&a))?;
 
     if !hreal_gt_f64(&len_ab, tolerance())
         || !hreal_gt_f64(&len_bc, tolerance())
