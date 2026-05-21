@@ -15,6 +15,7 @@ categories = ["mathematics", "games", "simulation"]
 # the commented workspace references below. Switch to the workspace form for
 # local development, then switch back to crates.io versions before publishing.
 hyperreal = { version = "0.12.0" }
+hyperlattice = { path = "../hyperlattice" }
 # hyperreal = { path = "../hyperreal" }
 rayon = { version = "1.10", optional = true }
 
