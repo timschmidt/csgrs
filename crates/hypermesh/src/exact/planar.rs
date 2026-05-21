@@ -104,6 +104,65 @@ pub enum ExactPlanarArrangementEvidenceError {
     SourceReplayMismatch,
 }
 
+/// Freshness status for retained planar-arrangement evidence.
+///
+/// This enum is intentionally more specific than a boolean cache-valid flag.
+/// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
+/// 7.1-2 (1997), treats exact predicates, constructions, and retained
+/// combinatorial state as separate artifacts that must replay together. A
+/// copied planar-arrangement handoff can therefore be locally malformed,
+/// locally stale with respect to one family of counters, or locally coherent
+/// but no longer produced by the source meshes it names.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ExactPlanarArrangementEvidenceFreshness {
+    /// The report validates locally and replays exactly from the source meshes.
+    Current,
+    /// The embedded coplanar-readiness summary is no longer coherent.
+    InvalidReadiness,
+    /// The split-plan replay that produced the report was malformed.
+    InvalidSplitPlan,
+    /// Retained split graph, edge, point, interval, or vertex counts drifted.
+    StaleSplitCounts,
+    /// Point-only contact counts no longer match the readiness status.
+    StalePointOnlyContacts,
+    /// Branch-point counters no longer match retained projected incidence.
+    StaleBranchPoints,
+    /// The named obstacle no longer matches retained exact evidence.
+    StaleObstacle,
+    /// Exact projected equality could not be certified during replay.
+    UnresolvedProjectedEquality,
+    /// The report is locally valid but no longer replays from the sources.
+    SourceReplayMismatch,
+}
+
+impl From<ExactPlanarArrangementEvidenceError> for ExactPlanarArrangementEvidenceFreshness {
+    fn from(error: ExactPlanarArrangementEvidenceError) -> Self {
+        match error {
+            ExactPlanarArrangementEvidenceError::InvalidReadiness => Self::InvalidReadiness,
+            ExactPlanarArrangementEvidenceError::InvalidSplitPlan => Self::InvalidSplitPlan,
+            ExactPlanarArrangementEvidenceError::SplitGraphCountMismatch
+            | ExactPlanarArrangementEvidenceError::SplitEdgeCountMismatch
+            | ExactPlanarArrangementEvidenceError::PointSplitCountMismatch
+            | ExactPlanarArrangementEvidenceError::IntervalOverlapCountMismatch
+            | ExactPlanarArrangementEvidenceError::IntervalEndpointCountMismatch
+            | ExactPlanarArrangementEvidenceError::VertexOverlapCountMismatch => {
+                Self::StaleSplitCounts
+            }
+            ExactPlanarArrangementEvidenceError::PointOnlyContactCountMismatch => {
+                Self::StalePointOnlyContacts
+            }
+            ExactPlanarArrangementEvidenceError::BranchPointCountMismatch => {
+                Self::StaleBranchPoints
+            }
+            ExactPlanarArrangementEvidenceError::ObstacleMismatch => Self::StaleObstacle,
+            ExactPlanarArrangementEvidenceError::UnresolvedProjectedEquality => {
+                Self::UnresolvedProjectedEquality
+            }
+            ExactPlanarArrangementEvidenceError::SourceReplayMismatch => Self::SourceReplayMismatch,
+        }
+    }
+}
+
 /// Replayable evidence summary for the missing general planar arrangement.
 ///
 /// The report carries only stable counts and the validated readiness summary,
@@ -320,6 +379,28 @@ impl ExactPlanarArrangementEvidenceReport {
             Ok(())
         } else {
             Err(ExactPlanarArrangementEvidenceError::SourceReplayMismatch)
+        }
+    }
+
+    /// Classify whether this retained report is fresh for the source meshes.
+    ///
+    /// The check first validates local report integrity and only then replays
+    /// the report from `left` and `right`. This preserves the object/predicate
+    /// boundary advocated by Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7.1-2 (1997): callers can distinguish a copied
+    /// report whose internal counters were mutated from a coherent report that
+    /// simply belongs to an older source configuration.
+    pub fn freshness_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> ExactPlanarArrangementEvidenceFreshness {
+        if let Err(error) = self.validate() {
+            return error.into();
+        }
+        match certify_planar_arrangement_evidence(left, right) {
+            Ok(replay) if self == &replay => ExactPlanarArrangementEvidenceFreshness::Current,
+            Ok(_) | Err(_) => ExactPlanarArrangementEvidenceFreshness::SourceReplayMismatch,
         }
     }
 }

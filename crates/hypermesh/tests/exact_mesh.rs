@@ -31,8 +31,9 @@ use hypermesh::exact::{
 };
 #[cfg(feature = "exact-triangulation")]
 use hypermesh::exact::{
-    CoplanarVolumetricCellEvidenceError, CoplanarVolumetricCellObstacle,
-    ExactPlanarArrangementEvidenceError, PlanarArrangementObstacle,
+    CoplanarVolumetricCellEvidenceError, CoplanarVolumetricCellEvidenceFreshness,
+    CoplanarVolumetricCellObstacle, ExactPlanarArrangementEvidenceError,
+    ExactPlanarArrangementEvidenceFreshness, PlanarArrangementObstacle,
     certify_coplanar_volumetric_cell_evidence, certify_planar_arrangement_evidence,
 };
 use hyperreal::Real;
@@ -6910,11 +6911,19 @@ fn exact_coplanar_volumetric_cell_evidence_validation_rejects_stale_counts() {
     let separated = tetrahedron_i64([10, 0, 0], [14, 0, 0], [10, 4, 0], [10, 0, 4]);
 
     let report = certify_coplanar_volumetric_cell_evidence(&left, &right).unwrap();
+    assert_eq!(
+        report.freshness_against_sources(&left, &right),
+        CoplanarVolumetricCellEvidenceFreshness::Current
+    );
     let mut stale_events = report.clone();
     stale_events.proper_crossing_events += 1;
     assert_eq!(
         stale_events.validate().unwrap_err(),
         CoplanarVolumetricCellEvidenceError::SegmentPlaneEventCountMismatch
+    );
+    assert_eq!(
+        stale_events.freshness_against_sources(&left, &right),
+        CoplanarVolumetricCellEvidenceFreshness::StaleSegmentPlaneEventCounts
     );
 
     let mut stale_obstacle = report.clone();
@@ -6923,12 +6932,20 @@ fn exact_coplanar_volumetric_cell_evidence_validation_rejects_stale_counts() {
         stale_obstacle.validate().unwrap_err(),
         CoplanarVolumetricCellEvidenceError::ObstacleMismatch
     );
+    assert_eq!(
+        stale_obstacle.freshness_against_sources(&left, &right),
+        CoplanarVolumetricCellEvidenceFreshness::StaleObstacle
+    );
 
     assert_eq!(
         report
             .validate_against_sources(&left, &separated)
             .unwrap_err(),
         CoplanarVolumetricCellEvidenceError::SourceReplayMismatch
+    );
+    assert_eq!(
+        report.freshness_against_sources(&left, &separated),
+        CoplanarVolumetricCellEvidenceFreshness::SourceReplayMismatch
     );
 }
 
@@ -12722,11 +12739,19 @@ fn exact_planar_arrangement_evidence_validation_rejects_stale_counts() {
     .unwrap();
 
     let report = certify_planar_arrangement_evidence(&left, &right).unwrap();
+    assert_eq!(
+        report.freshness_against_sources(&left, &right),
+        ExactPlanarArrangementEvidenceFreshness::Current
+    );
     let mut stale_vertex_count = report.clone();
     stale_vertex_count.vertex_overlap_count += 1;
     assert_eq!(
         stale_vertex_count.validate().unwrap_err(),
         ExactPlanarArrangementEvidenceError::VertexOverlapCountMismatch
+    );
+    assert_eq!(
+        stale_vertex_count.freshness_against_sources(&left, &right),
+        ExactPlanarArrangementEvidenceFreshness::StaleSplitCounts
     );
 
     let mut stale_obstacle = report.clone();
@@ -12735,12 +12760,20 @@ fn exact_planar_arrangement_evidence_validation_rejects_stale_counts() {
         stale_obstacle.validate().unwrap_err(),
         ExactPlanarArrangementEvidenceError::ObstacleMismatch
     );
+    assert_eq!(
+        stale_obstacle.freshness_against_sources(&left, &right),
+        ExactPlanarArrangementEvidenceFreshness::StaleObstacle
+    );
 
     assert_eq!(
         report
             .validate_against_sources(&left, &separated)
             .unwrap_err(),
         ExactPlanarArrangementEvidenceError::SourceReplayMismatch
+    );
+    assert_eq!(
+        report.freshness_against_sources(&left, &separated),
+        ExactPlanarArrangementEvidenceFreshness::SourceReplayMismatch
     );
 }
 

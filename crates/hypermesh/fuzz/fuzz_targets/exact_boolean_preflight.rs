@@ -553,18 +553,28 @@ fuzz_target!(|data: &[u8]| {
     let _ = certify_planar_arrangement_evidence(&left, &right).map(|report| {
         let _ = report.validate();
         let _ = report.validate_against_sources(&left, &right);
+        let _ = report.freshness_against_sources(&left, &right);
         let mut stale_obstacle = report.clone();
         stale_obstacle.obstacle = hypermesh::exact::PlanarArrangementObstacle::NoCoplanarOverlap;
         if stale_obstacle != report {
             assert!(stale_obstacle.validate().is_err());
+            assert_ne!(
+                stale_obstacle.freshness_against_sources(&left, &right),
+                hypermesh::exact::ExactPlanarArrangementEvidenceFreshness::Current
+            );
         }
     });
     let _ = certify_coplanar_volumetric_cell_evidence(&left, &right).map(|report| {
         let _ = report.validate();
         let _ = report.validate_against_sources(&left, &right);
+        let _ = report.freshness_against_sources(&left, &right);
         let mut stale_counts = report.clone();
         stale_counts.retained_face_pair_count += 1;
         assert!(stale_counts.validate().is_err());
+        assert_ne!(
+            stale_counts.freshness_against_sources(&left, &right),
+            hypermesh::exact::CoplanarVolumetricCellEvidenceFreshness::Current
+        );
     });
     let _ = certify_exact_mesh_proposal(&left).map(|report| {
         let _ = report.validate();

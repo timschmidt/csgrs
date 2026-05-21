@@ -77,6 +77,50 @@ pub enum CoplanarVolumetricCellEvidenceError {
     SourceReplayMismatch,
 }
 
+/// Freshness status for retained coplanar volumetric-cell evidence.
+///
+/// The variants separate local report drift from source-replay drift. That
+/// split follows Yap, "Towards Exact Geometric Computation," *Computational
+/// Geometry* 7.1-2 (1997): exact geometric systems should expose retained
+/// predicate/construction state as auditable objects, then require those
+/// objects to replay from their source operands before topology consumes them.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CoplanarVolumetricCellEvidenceFreshness {
+    /// The report validates locally and replays exactly from the source meshes.
+    Current,
+    /// Face-pair relation counters no longer sum to retained graph evidence.
+    StaleFacePairCounts,
+    /// Candidate-pair counters no longer match retained candidate evidence.
+    StaleCandidatePairCounts,
+    /// Segment/plane event counters no longer match retained event evidence.
+    StaleSegmentPlaneEventCounts,
+    /// Coplanar face-pair and coplanar event counters disagree.
+    StaleCoplanarEvidence,
+    /// The named obstacle no longer matches retained exact evidence.
+    StaleObstacle,
+    /// The report is locally valid but no longer replays from the sources.
+    SourceReplayMismatch,
+}
+
+impl From<CoplanarVolumetricCellEvidenceError> for CoplanarVolumetricCellEvidenceFreshness {
+    fn from(error: CoplanarVolumetricCellEvidenceError) -> Self {
+        match error {
+            CoplanarVolumetricCellEvidenceError::FacePairCountMismatch => Self::StaleFacePairCounts,
+            CoplanarVolumetricCellEvidenceError::CandidatePairCountMismatch => {
+                Self::StaleCandidatePairCounts
+            }
+            CoplanarVolumetricCellEvidenceError::SegmentPlaneEventCountMismatch => {
+                Self::StaleSegmentPlaneEventCounts
+            }
+            CoplanarVolumetricCellEvidenceError::CoplanarEvidenceMismatch => {
+                Self::StaleCoplanarEvidence
+            }
+            CoplanarVolumetricCellEvidenceError::ObstacleMismatch => Self::StaleObstacle,
+            CoplanarVolumetricCellEvidenceError::SourceReplayMismatch => Self::SourceReplayMismatch,
+        }
+    }
+}
+
 /// Replayable summary of retained volumetric coplanar-cell evidence.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct CoplanarVolumetricCellEvidenceReport {
@@ -257,6 +301,28 @@ impl CoplanarVolumetricCellEvidenceReport {
             Ok(())
         } else {
             Err(CoplanarVolumetricCellEvidenceError::SourceReplayMismatch)
+        }
+    }
+
+    /// Classify whether this retained report is fresh for the source meshes.
+    ///
+    /// Local validation runs before source replay so a scheduler can report
+    /// whether copied volumetric-cell evidence has mutated internally or has
+    /// merely gone stale because the operands changed. That mirrors Yap's
+    /// retained-state discipline from "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7.1-2 (1997), and keeps missing coplanar cell
+    /// extraction explicit instead of collapsing it to a tolerance decision.
+    pub fn freshness_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> CoplanarVolumetricCellEvidenceFreshness {
+        if let Err(error) = self.validate() {
+            return error.into();
+        }
+        match certify_coplanar_volumetric_cell_evidence(left, right) {
+            Ok(replay) if self == &replay => CoplanarVolumetricCellEvidenceFreshness::Current,
+            Ok(_) | Err(_) => CoplanarVolumetricCellEvidenceFreshness::SourceReplayMismatch,
         }
     }
 }

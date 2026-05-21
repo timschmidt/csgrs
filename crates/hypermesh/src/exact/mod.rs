@@ -157,8 +157,9 @@ pub use package::{
 };
 #[cfg(feature = "exact-triangulation")]
 pub use planar::{
-    ExactPlanarArrangementEvidenceError, ExactPlanarArrangementEvidenceReport,
-    PlanarArrangementObstacle, certify_planar_arrangement_evidence,
+    ExactPlanarArrangementEvidenceError, ExactPlanarArrangementEvidenceFreshness,
+    ExactPlanarArrangementEvidenceReport, PlanarArrangementObstacle,
+    certify_planar_arrangement_evidence,
 };
 pub use predicates::{TriangleDegeneracy, TrianglePredicateReport};
 pub use proposal::{
@@ -257,8 +258,9 @@ pub use volumetric::{
 };
 #[cfg(feature = "exact-triangulation")]
 pub use volumetric_cells::{
-    CoplanarVolumetricCellEvidenceError, CoplanarVolumetricCellEvidenceReport,
-    CoplanarVolumetricCellObstacle, certify_coplanar_volumetric_cell_evidence,
+    CoplanarVolumetricCellEvidenceError, CoplanarVolumetricCellEvidenceFreshness,
+    CoplanarVolumetricCellEvidenceReport, CoplanarVolumetricCellObstacle,
+    certify_coplanar_volumetric_cell_evidence,
 };
 pub use winding::{
     ClosedMeshWindingMeshRelation, ClosedMeshWindingMeshReport, ClosedMeshWindingRelation,

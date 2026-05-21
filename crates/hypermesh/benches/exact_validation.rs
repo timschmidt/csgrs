@@ -1043,11 +1043,13 @@ fn exact_planar_arrangement_evidence(c: &mut Criterion) {
             let report = certify_planar_arrangement_evidence(&left, &right).unwrap();
             let validation = report.validate();
             let source_validation = report.validate_against_sources(&left, &right);
+            let freshness = report.freshness_against_sources(&left, &right);
             let needs_general_arrangement = report.obstacle.requires_general_arrangement();
             (
                 report,
                 validation,
                 source_validation,
+                freshness,
                 needs_general_arrangement,
             )
         })
@@ -1063,8 +1065,15 @@ fn exact_coplanar_volumetric_cell_evidence(c: &mut Criterion) {
             let report = certify_coplanar_volumetric_cell_evidence(&left, &right).unwrap();
             let validation = report.validate();
             let source_validation = report.validate_against_sources(&left, &right);
+            let freshness = report.freshness_against_sources(&left, &right);
             let requires_cells = report.obstacle.requires_coplanar_volumetric_cells();
-            (report, validation, source_validation, requires_cells)
+            (
+                report,
+                validation,
+                source_validation,
+                freshness,
+                requires_cells,
+            )
         })
     });
 }
