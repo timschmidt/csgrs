@@ -7806,13 +7806,13 @@ fn exact_boolean_blocker_reports_classify_freshness() {
     .unwrap();
     assert_eq!(
         planar_report.freshness_against_sources(&planar_left, &planar_right),
-        hypermesh::exact::ExactPlanarArrangementReportFreshness::Current
+        hypermesh::exact::ExactReportFreshness::Current
     );
     let mut stale_unknown_status = planar_report.clone();
     stale_unknown_status.graph_had_unknowns = !stale_unknown_status.graph_had_unknowns;
     assert_eq!(
         stale_unknown_status.freshness_against_sources(&planar_left, &planar_right),
-        hypermesh::exact::ExactPlanarArrangementReportFreshness::StaleGraphUnknownStatus
+        hypermesh::exact::ExactReportFreshness::StaleGraphUnknownStatus
     );
     let mut stale_readiness = planar_report.clone();
     let readiness = stale_readiness
@@ -7823,11 +7823,11 @@ fn exact_boolean_blocker_reports_classify_freshness() {
     readiness.touching_graphs += 1;
     assert_eq!(
         stale_readiness.freshness_against_sources(&planar_left, &planar_right),
-        hypermesh::exact::ExactPlanarArrangementReportFreshness::StaleArrangementReadiness
+        hypermesh::exact::ExactReportFreshness::StaleArrangementReadiness
     );
     assert_eq!(
         planar_report.freshness_against_sources(&planar_left, &planar_separated),
-        hypermesh::exact::ExactPlanarArrangementReportFreshness::SourceReplayMismatch
+        hypermesh::exact::ExactReportFreshness::SourceReplayMismatch
     );
 
     let winding_left = ExactMesh::from_i64_triangles_with_policy(
@@ -7857,23 +7857,23 @@ fn exact_boolean_blocker_reports_classify_freshness() {
     .unwrap();
     assert_eq!(
         winding_report.freshness_against_sources(&winding_left, &winding_right),
-        hypermesh::exact::ExactWindingReadinessFreshness::Current
+        hypermesh::exact::ExactReportFreshness::Current
     );
     let mut stale_region_count = winding_report.clone();
     stale_region_count.region_count += 1;
     assert_eq!(
         stale_region_count.freshness_against_sources(&winding_left, &winding_right),
-        hypermesh::exact::ExactWindingReadinessFreshness::StaleRegionFacts
+        hypermesh::exact::ExactReportFreshness::StaleRegionFacts
     );
     let mut stale_blocker = winding_report.clone();
     stale_blocker.blocker.candidate_pairs += 1;
     assert_eq!(
         stale_blocker.freshness_against_sources(&winding_left, &winding_right),
-        hypermesh::exact::ExactWindingReadinessFreshness::StaleBlockerEvidence
+        hypermesh::exact::ExactReportFreshness::StaleBlockerEvidence
     );
     assert_eq!(
         winding_report.freshness_against_sources(&winding_left, &winding_separated),
-        hypermesh::exact::ExactWindingReadinessFreshness::SourceReplayMismatch
+        hypermesh::exact::ExactReportFreshness::SourceReplayMismatch
     );
 }
 

@@ -538,7 +538,7 @@ fuzz_target!(|data: &[u8]| {
                 assert!(wrong_kind.validate().is_err());
                 assert_ne!(
                     wrong_kind.freshness_against_sources(&left, &right),
-                    hypermesh::exact::ExactPlanarArrangementReportFreshness::Current
+                    hypermesh::exact::ExactReportFreshness::Current
                 );
             } else {
                 let mut unresolved = report.clone();
@@ -546,7 +546,7 @@ fuzz_target!(|data: &[u8]| {
                 assert!(unresolved.validate().is_err());
                 assert_ne!(
                     unresolved.freshness_against_sources(&left, &right),
-                    hypermesh::exact::ExactPlanarArrangementReportFreshness::Current
+                    hypermesh::exact::ExactReportFreshness::Current
                 );
             }
             if report.arrangement_readiness.is_some() {
@@ -558,7 +558,7 @@ fuzz_target!(|data: &[u8]| {
                 assert!(mismatched_readiness.validate().is_err());
                 assert_ne!(
                     mismatched_readiness.freshness_against_sources(&left, &right),
-                    hypermesh::exact::ExactPlanarArrangementReportFreshness::Current
+                    hypermesh::exact::ExactReportFreshness::Current
                 );
             }
         },
@@ -651,7 +651,7 @@ fuzz_target!(|data: &[u8]| {
                 assert!(unresolved.validate().is_err());
                 assert_ne!(
                     unresolved.freshness_against_sources(&left, &right),
-                    hypermesh::exact::ExactWindingReadinessFreshness::Current
+                    hypermesh::exact::ExactReportFreshness::Current
                 );
             }
             if report.arrangement_readiness.is_some() {
@@ -663,7 +663,7 @@ fuzz_target!(|data: &[u8]| {
                 assert!(mismatched_readiness.validate().is_err());
                 assert_ne!(
                     mismatched_readiness.freshness_against_sources(&left, &right),
-                    hypermesh::exact::ExactWindingReadinessFreshness::Current
+                    hypermesh::exact::ExactReportFreshness::Current
                 );
             }
             let mut undecided_region = report;
@@ -673,7 +673,7 @@ fuzz_target!(|data: &[u8]| {
                 assert!(undecided_region.validate().is_err());
                 assert_ne!(
                     undecided_region.freshness_against_sources(&left, &right),
-                    hypermesh::exact::ExactWindingReadinessFreshness::Current
+                    hypermesh::exact::ExactReportFreshness::Current
                 );
             }
         },

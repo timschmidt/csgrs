@@ -190,10 +190,9 @@ pub use reports::{
     ExactBooleanBlocker, ExactBooleanBlockerKind, ExactBooleanPreflight, ExactBooleanResult,
     ExactBooleanResultKind, ExactBooleanShortcutKind, ExactBooleanSupport,
     ExactBoundaryTouchingReport, ExactBoundaryTouchingStatus, ExactOpenSurfaceDisjointReport,
-    ExactOpenSurfaceDisjointStatus, ExactPlanarArrangementReport,
-    ExactPlanarArrangementReportFreshness, ExactPlanarArrangementStatus, ExactRefinementReport,
-    ExactRefinementStatus, ExactReportValidationError, ExactSameSurfaceReport,
-    ExactSameSurfaceStatus, ExactWindingReadinessFreshness, ExactWindingReadinessReport,
+    ExactOpenSurfaceDisjointStatus, ExactPlanarArrangementReport, ExactPlanarArrangementStatus,
+    ExactRefinementReport, ExactRefinementStatus, ExactReportFreshness, ExactReportValidationError,
+    ExactSameSurfaceReport, ExactSameSurfaceStatus, ExactWindingReadinessReport,
     ExactWindingReadinessStatus,
 };
 pub use scalar::{ExactReal, LossyF64Import};
