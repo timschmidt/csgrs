@@ -2724,6 +2724,59 @@ pub struct BezierBooleanAlgebraicParameterOrderingReport2 {
     pub blocker_count: usize,
 }
 
+/// Status for bridging ordered algebraic parameters into today's split plan.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum BezierBooleanAlgebraicSplitBridgeStatus {
+    /// No scheduler or algebraic parameter work exists.
+    Empty,
+    /// The scheduler did not need algebraic parameter evidence.
+    NotNeeded,
+    /// Existing rational split events already satisfy the scheduler.
+    RationalSplitEventsReady,
+    /// Exact rational algebraic witnesses were converted into a split plan.
+    Ready,
+    /// Algebraic ordering blocked the bridge.
+    OrderingBlocked,
+    /// A retained algebraic event used an unsupported split lane.
+    UnsupportedRole,
+    /// At least one ordered algebraic event has no exact rational witness.
+    NonRationalParameter,
+}
+
+/// Bridge from ordered represented roots to the rational split-insertion path.
+///
+/// Current Bezier/conic fragment splitters accept exact [`Real`] parameters.
+/// This report consumes a certified algebraic ordering and lowers only exact
+/// rational witnesses into [`BezierBooleanSplitPlanReport2`]. Interval-only
+/// roots remain blockers until a future algebraic fragment splitter can carry
+/// represented algebraic parameters directly. This is exactly the
+/// predicate/construction separation Yap requires: represented roots are not
+/// approximated just because a downstream construction currently accepts
+/// rationals. Greiner-Hormann (1998) and Martinez-Rueda-Feito (2009) still
+/// require split insertion before traversal; this bridge states when today's
+/// insertion API can be used safely.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BezierBooleanAlgebraicSplitBridgeReport2 {
+    /// Coarse bridge status.
+    pub status: BezierBooleanAlgebraicSplitBridgeStatus,
+    /// Algebraic ordering status used to derive this bridge.
+    pub ordering_status: BezierBooleanAlgebraicParameterOrderingStatus,
+    /// Split plan built from exact rational algebraic witnesses.
+    pub split_plan: BezierBooleanSplitPlanReport2,
+    /// Split insertion report derived from `split_plan`.
+    pub insertion: BezierBooleanSplitInsertionReport2,
+    /// Number of ordered algebraic events consumed.
+    pub ordered_event_count: usize,
+    /// Number of exact rational witnesses lowered to `Real` parameters.
+    pub exact_rational_parameter_count: usize,
+    /// Number of interval-only algebraic roots that blocked lowering.
+    pub non_rational_parameter_count: usize,
+    /// Number of unsupported event roles.
+    pub unsupported_role_count: usize,
+    /// Number of retained blocking preconditions.
+    pub blocker_count: usize,
+}
+
 /// Replay status for exact roots returned by `hypersolve`.
 ///
 /// Root isolation is only a proposal stage for boolean topology. `hypersolve`
@@ -17076,6 +17129,198 @@ impl BezierBooleanAlgebraicParameterOrderingReport2 {
             BezierBooleanAlgebraicParameterOrderingStatus::ReadinessBlocked
                 | BezierBooleanAlgebraicParameterOrderingStatus::ComparisonBlocked
         )
+    }
+}
+
+impl BezierBooleanAlgebraicSplitBridgeReport2 {
+    /// Lowers ordered exact rational algebraic roots into a split plan.
+    ///
+    /// The method preserves the order certified by
+    /// [`BezierBooleanAlgebraicParameterOrderingReport2`] and rejects
+    /// interval-only roots rather than choosing a sample from their isolating
+    /// intervals. At present, algebraic root handoff events only support the
+    /// shared monotone-range lane; first/second curve roles remain blockers
+    /// until paired curve-curve algebraic parameter evidence exists.
+    pub fn from_ordering(
+        ordering: &BezierBooleanAlgebraicParameterOrderingReport2,
+        policy: &CurvePolicy,
+    ) -> Classification<Self> {
+        match ordering.status {
+            BezierBooleanAlgebraicParameterOrderingStatus::Empty => {
+                return Classification::Decided(Self::blocked_or_empty(
+                    BezierBooleanAlgebraicSplitBridgeStatus::Empty,
+                    ordering,
+                    0,
+                ));
+            }
+            BezierBooleanAlgebraicParameterOrderingStatus::NotNeeded => {
+                return Classification::Decided(Self::blocked_or_empty(
+                    BezierBooleanAlgebraicSplitBridgeStatus::NotNeeded,
+                    ordering,
+                    0,
+                ));
+            }
+            BezierBooleanAlgebraicParameterOrderingStatus::RationalSplitEventsReady => {
+                return Classification::Decided(Self::blocked_or_empty(
+                    BezierBooleanAlgebraicSplitBridgeStatus::RationalSplitEventsReady,
+                    ordering,
+                    0,
+                ));
+            }
+            BezierBooleanAlgebraicParameterOrderingStatus::ReadinessBlocked
+            | BezierBooleanAlgebraicParameterOrderingStatus::ComparisonBlocked => {
+                return Classification::Decided(Self::blocked_or_empty(
+                    BezierBooleanAlgebraicSplitBridgeStatus::OrderingBlocked,
+                    ordering,
+                    ordering.blocker_count.max(1),
+                ));
+            }
+            BezierBooleanAlgebraicParameterOrderingStatus::Ready => {}
+        }
+
+        let mut shared_range_parameters = Vec::with_capacity(ordering.sorted_events.len());
+        let mut exact_rational_parameter_count = 0;
+        let mut non_rational_parameter_count = 0;
+        let mut unsupported_role_count = 0;
+        for event in &ordering.sorted_events {
+            if event.role != BezierBooleanAlgebraicParameterRole::SharedRange {
+                unsupported_role_count += 1;
+                continue;
+            }
+            let Some(parameter) = event.root.exact_rational_witness() else {
+                non_rational_parameter_count += 1;
+                continue;
+            };
+            shared_range_parameters.push(parameter.clone());
+            exact_rational_parameter_count += 1;
+        }
+
+        if unsupported_role_count > 0 {
+            return Classification::Decided(Self::blocked(
+                BezierBooleanAlgebraicSplitBridgeStatus::UnsupportedRole,
+                ordering,
+                exact_rational_parameter_count,
+                non_rational_parameter_count,
+                unsupported_role_count,
+            ));
+        }
+        if non_rational_parameter_count > 0 {
+            return Classification::Decided(Self::blocked(
+                BezierBooleanAlgebraicSplitBridgeStatus::NonRationalParameter,
+                ordering,
+                exact_rational_parameter_count,
+                non_rational_parameter_count,
+                unsupported_role_count,
+            ));
+        }
+
+        let split_plan = BezierBooleanSplitPlanReport2 {
+            status: if shared_range_parameters.is_empty() {
+                BezierBooleanSplitPlanStatus::Empty
+            } else {
+                BezierBooleanSplitPlanStatus::Ready
+            },
+            scheduler_status: BezierBooleanPathSchedulerStatus::NeedsRegionIsolation,
+            first_curve_parameters: Vec::new(),
+            second_curve_parameters: Vec::new(),
+            relation_event_count: 0,
+            range_event_count: shared_range_parameters.len(),
+            shared_range_parameters,
+            uncertainty_reason: None,
+        };
+        let insertion = match split_plan.insertion_report(policy) {
+            Classification::Decided(report) => report,
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        };
+        Classification::Decided(Self {
+            status: BezierBooleanAlgebraicSplitBridgeStatus::Ready,
+            ordering_status: ordering.status,
+            ordered_event_count: ordering.sorted_events.len(),
+            exact_rational_parameter_count,
+            non_rational_parameter_count: 0,
+            unsupported_role_count: 0,
+            blocker_count: 0,
+            split_plan,
+            insertion,
+        })
+    }
+
+    fn blocked_or_empty(
+        status: BezierBooleanAlgebraicSplitBridgeStatus,
+        ordering: &BezierBooleanAlgebraicParameterOrderingReport2,
+        blocker_count: usize,
+    ) -> Self {
+        Self {
+            status,
+            ordering_status: ordering.status,
+            split_plan: algebraic_bridge_empty_split_plan(),
+            insertion: algebraic_bridge_empty_insertion(),
+            ordered_event_count: 0,
+            exact_rational_parameter_count: 0,
+            non_rational_parameter_count: 0,
+            unsupported_role_count: 0,
+            blocker_count,
+        }
+    }
+
+    fn blocked(
+        status: BezierBooleanAlgebraicSplitBridgeStatus,
+        ordering: &BezierBooleanAlgebraicParameterOrderingReport2,
+        exact_rational_parameter_count: usize,
+        non_rational_parameter_count: usize,
+        unsupported_role_count: usize,
+    ) -> Self {
+        Self {
+            status,
+            ordering_status: ordering.status,
+            split_plan: algebraic_bridge_empty_split_plan(),
+            insertion: algebraic_bridge_empty_insertion(),
+            ordered_event_count: ordering.sorted_events.len(),
+            exact_rational_parameter_count,
+            non_rational_parameter_count,
+            unsupported_role_count,
+            blocker_count: non_rational_parameter_count + unsupported_role_count,
+        }
+    }
+
+    /// Returns true when exact rational algebraic parameters entered split insertion.
+    pub fn is_ready(&self) -> bool {
+        self.status == BezierBooleanAlgebraicSplitBridgeStatus::Ready
+    }
+
+    /// Returns true when ordering, role, or interval-only evidence blocked lowering.
+    pub fn has_blockers(&self) -> bool {
+        matches!(
+            self.status,
+            BezierBooleanAlgebraicSplitBridgeStatus::OrderingBlocked
+                | BezierBooleanAlgebraicSplitBridgeStatus::UnsupportedRole
+                | BezierBooleanAlgebraicSplitBridgeStatus::NonRationalParameter
+        )
+    }
+}
+
+fn algebraic_bridge_empty_split_plan() -> BezierBooleanSplitPlanReport2 {
+    BezierBooleanSplitPlanReport2 {
+        status: BezierBooleanSplitPlanStatus::Empty,
+        scheduler_status: BezierBooleanPathSchedulerStatus::Empty,
+        first_curve_parameters: Vec::new(),
+        second_curve_parameters: Vec::new(),
+        shared_range_parameters: Vec::new(),
+        relation_event_count: 0,
+        range_event_count: 0,
+        uncertainty_reason: None,
+    }
+}
+
+fn algebraic_bridge_empty_insertion() -> BezierBooleanSplitInsertionReport2 {
+    BezierBooleanSplitInsertionReport2 {
+        status: BezierBooleanSplitInsertionStatus::Empty,
+        first_curve_interior_parameters: Vec::new(),
+        second_curve_interior_parameters: Vec::new(),
+        shared_range_interior_parameters: Vec::new(),
+        endpoint_parameter_count: 0,
+        interior_parameter_count: 0,
+        out_of_range_parameter_count: 0,
     }
 }
 

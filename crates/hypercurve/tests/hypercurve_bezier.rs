@@ -4,6 +4,7 @@ use hypercurve::{
     BezierBooleanAlgebraicParameterHandoffStatus, BezierBooleanAlgebraicParameterOrderingReport2,
     BezierBooleanAlgebraicParameterOrderingStatus, BezierBooleanAlgebraicParameterReadinessReport2,
     BezierBooleanAlgebraicParameterReadinessStatus, BezierBooleanAlgebraicParameterRole,
+    BezierBooleanAlgebraicSplitBridgeReport2, BezierBooleanAlgebraicSplitBridgeStatus,
     BezierBooleanArrangementReadinessReport2, BezierBooleanArrangementReadinessStatus,
     BezierBooleanAssemblyReadinessReport2, BezierBooleanAssemblyReadinessStatus,
     BezierBooleanBatchHandoffReport2, BezierBooleanBatchHandoffStatus,
@@ -5544,6 +5545,114 @@ fn bezier_boolean_algebraic_parameter_ordering_blocks_unrefined_overlaps() {
     assert!(ordering.has_blockers());
     assert_eq!(ordering.blocked_comparison_count, 1);
     assert!(ordering.sorted_events.is_empty());
+}
+
+#[test]
+fn bezier_boolean_algebraic_split_bridge_lowers_exact_rational_ordered_roots() {
+    let range_reports = vec![
+        BezierPathRangeOrderReport2::from_graph_order(
+            &BezierMonotoneGraphOrder::IntersectsOrTouches {
+                parameters: Vec::new(),
+                spans: vec![span(ratio(1, 4), ratio(1, 2))],
+            },
+        ),
+        BezierPathRangeOrderReport2::from_graph_order(
+            &BezierMonotoneGraphOrder::IntersectsOrTouches {
+                parameters: Vec::new(),
+                spans: vec![span(ratio(1, 8), ratio(1, 4))],
+            },
+        ),
+    ];
+    let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &range_reports);
+    let handoff =
+        match BezierBooleanAlgebraicParameterHandoffReport2::from_hypersolve_algebraic_root_reports(
+            &scheduler,
+            &[
+                algebraic_root_report(ratio(3, 4), true),
+                algebraic_root_report(ratio(1, 4), true),
+            ],
+            &policy(),
+        ) {
+            Classification::Decided(report) => report,
+            Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
+        };
+    let readiness =
+        match BezierBooleanAlgebraicParameterReadinessReport2::from_handoff(&handoff, &policy()) {
+            Classification::Decided(report) => report,
+            Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
+        };
+    let ordering = BezierBooleanAlgebraicParameterOrderingReport2::from_readiness(
+        &readiness,
+        AlgebraicRootRefinementComparisonConfig::default(),
+        &policy(),
+    );
+
+    let bridge = match BezierBooleanAlgebraicSplitBridgeReport2::from_ordering(&ordering, &policy())
+    {
+        Classification::Decided(report) => report,
+        Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
+    };
+
+    assert_eq!(
+        bridge.status,
+        BezierBooleanAlgebraicSplitBridgeStatus::Ready
+    );
+    assert!(bridge.is_ready());
+    assert_eq!(bridge.ordered_event_count, 2);
+    assert_eq!(bridge.exact_rational_parameter_count, 2);
+    assert_eq!(
+        bridge.split_plan.shared_range_parameters,
+        vec![ratio(1, 4), ratio(3, 4)]
+    );
+    assert_eq!(bridge.insertion.interior_parameter_count, 2);
+    assert_eq!(
+        bridge.insertion.shared_range_interior_parameters,
+        vec![ratio(1, 4), ratio(3, 4)]
+    );
+}
+
+#[test]
+fn bezier_boolean_algebraic_split_bridge_blocks_interval_only_roots() {
+    let range = BezierPathRangeOrderReport2::from_graph_order(
+        &BezierMonotoneGraphOrder::IntersectsOrTouches {
+            parameters: Vec::new(),
+            spans: vec![span(ratio(1, 4), ratio(1, 2))],
+        },
+    );
+    let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &[range]);
+    let handoff =
+        match BezierBooleanAlgebraicParameterHandoffReport2::from_hypersolve_algebraic_root_reports(
+            &scheduler,
+            &[algebraic_root_report(half(), false)],
+            &policy(),
+        ) {
+            Classification::Decided(report) => report,
+            Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
+        };
+    let readiness =
+        match BezierBooleanAlgebraicParameterReadinessReport2::from_handoff(&handoff, &policy()) {
+            Classification::Decided(report) => report,
+            Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
+        };
+    let ordering = BezierBooleanAlgebraicParameterOrderingReport2::from_readiness(
+        &readiness,
+        AlgebraicRootRefinementComparisonConfig::default(),
+        &policy(),
+    );
+
+    let bridge = match BezierBooleanAlgebraicSplitBridgeReport2::from_ordering(&ordering, &policy())
+    {
+        Classification::Decided(report) => report,
+        Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
+    };
+
+    assert_eq!(
+        bridge.status,
+        BezierBooleanAlgebraicSplitBridgeStatus::NonRationalParameter
+    );
+    assert!(bridge.has_blockers());
+    assert_eq!(bridge.non_rational_parameter_count, 1);
+    assert!(bridge.split_plan.shared_range_parameters.is_empty());
 }
 
 #[test]

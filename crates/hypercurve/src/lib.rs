@@ -66,6 +66,7 @@ pub use bezier_boolean::{
     BezierBooleanAlgebraicParameterOrderingReport2, BezierBooleanAlgebraicParameterOrderingStatus,
     BezierBooleanAlgebraicParameterReadinessReport2,
     BezierBooleanAlgebraicParameterReadinessStatus, BezierBooleanAlgebraicParameterRole,
+    BezierBooleanAlgebraicSplitBridgeReport2, BezierBooleanAlgebraicSplitBridgeStatus,
     BezierBooleanArrangementReadinessReport2, BezierBooleanArrangementReadinessStatus,
     BezierBooleanAssemblyReadinessReport2, BezierBooleanAssemblyReadinessStatus,
     BezierBooleanBatchHandoffReport2, BezierBooleanBatchHandoffStatus,
