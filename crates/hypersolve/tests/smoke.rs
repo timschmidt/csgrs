@@ -8,6 +8,7 @@ use hypersolve::{
     MultivariateQuadraticKrawczykStatus, PreparedProblem, PreparedSolverBlock, Problem,
     ProposalEngineKind, ProposalEnginePrecision, RootIsolationStatus, RootMultiplicityStatus,
     SketchConstraintKind, SketchEntityHandle, SketchEntityKind, SketchGeneratedRowStatus,
+    SketchResidualFormKind, SketchResidualFormRole, SketchResidualFormsStatus,
     SketchResidualStrategy, SketchSolveProblem, SolverBlockRowKind, SolverConfig, SolverPoint2,
     SolverState, SymbolId, VariableBall, apply_equality_substitution_classes,
     apply_equality_substitutions, build_equality_substitution_classes,
@@ -233,6 +234,84 @@ fn sketch_family_builders_report_strategy_and_lower_to_matching_rows() {
     );
 
     assert!(certification.all_satisfied());
+}
+
+#[test]
+fn sketch_distance_constraints_retain_exact_and_proposal_residual_forms() {
+    let mut sketch = SketchSolveProblem::new();
+    let a = sketch.add_point2d("a", real(0), real(0));
+    let b = sketch.add_point2d("b", real(3), real(4));
+    let distance = sketch.add_distance("five", real(5));
+    let length =
+        sketch_distance_builders::point_point_distance(&mut sketch, "length", a, b, distance);
+
+    let forms = sketch.residual_forms_for_constraint(length.handle);
+
+    assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+    assert!(forms.diagnostics.is_empty());
+    assert_eq!(forms.forms.len(), 2);
+    assert_eq!(
+        forms.forms[0].kind,
+        SketchResidualFormKind::SquaredDistancePolynomial
+    );
+    assert_eq!(forms.forms[0].role, SketchResidualFormRole::ExactProof);
+    assert_eq!(
+        forms.forms[0].strategy,
+        Some(SketchResidualStrategy::SquaredDistance)
+    );
+    assert_eq!(
+        forms.forms[1].kind,
+        SketchResidualFormKind::TrueDistanceProposal
+    );
+    assert_eq!(forms.forms[1].role, SketchResidualFormRole::ProposalOnly);
+    assert_eq!(forms.forms[1].strategy, None);
+
+    let context = context_from_problem(&sketch.lower_to_problem().problem);
+    assert_eq!(
+        forms.forms[0]
+            .residual
+            .eval_real(context.bindings())
+            .unwrap(),
+        Real::zero()
+    );
+    assert_eq!(
+        forms.forms[1]
+            .residual
+            .eval_real(context.bindings())
+            .unwrap(),
+        Real::zero()
+    );
+}
+
+#[test]
+fn sketch_residual_form_reports_reject_unsupported_and_bad_inputs() {
+    let mut sketch = SketchSolveProblem::new();
+    let point = sketch.add_point2d("point", real(0), real(0));
+    let distance = sketch.add_distance("distance", real(1));
+    let horizontal = sketch.add_horizontal("not multi-form", distance);
+    let bad = sketch_distance_builders::point_point_distance(
+        &mut sketch,
+        "bad",
+        point,
+        distance,
+        distance,
+    );
+
+    assert_eq!(
+        sketch.residual_forms_for_constraint(horizontal).status,
+        SketchResidualFormsStatus::UnsupportedConstraint
+    );
+
+    let bad_forms = sketch.residual_forms_for_constraint(bad.handle);
+    assert_eq!(bad_forms.status, SketchResidualFormsStatus::InvalidInputs);
+    assert!(bad_forms.forms.is_empty());
+    assert!(!bad_forms.diagnostics.is_empty());
+    assert_eq!(
+        sketch
+            .residual_forms_for_constraint(hypersolve::SketchConstraintHandle(999))
+            .status,
+        SketchResidualFormsStatus::MissingConstraint(hypersolve::SketchConstraintHandle(999))
+    );
 }
 
 #[test]

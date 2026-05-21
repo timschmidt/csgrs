@@ -200,6 +200,24 @@ fn certification(c: &mut Criterion) {
     c.bench_function("sketch_lower_to_problem", |b| {
         b.iter(|| sketch.lower_to_problem())
     });
+    let form_handles = sketch
+        .constraints()
+        .iter()
+        .filter(|constraint| {
+            matches!(
+                constraint.kind,
+                hypersolve::SketchConstraintKind::PointPointDistance { .. }
+            )
+        })
+        .map(|constraint| constraint.handle)
+        .collect::<Vec<_>>();
+    c.bench_function("sketch_distance_residual_forms", |b| {
+        b.iter(|| {
+            for handle in &form_handles {
+                let _ = sketch.residual_forms_for_constraint(*handle);
+            }
+        })
+    });
     let krawczyk_problem = affine_krawczyk_problem();
     let krawczyk_prepared = PreparedProblem::new(&krawczyk_problem);
     let krawczyk_context = context_from_problem(&krawczyk_problem);

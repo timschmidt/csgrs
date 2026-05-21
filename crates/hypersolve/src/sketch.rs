@@ -295,6 +295,65 @@ pub struct SketchGeneratedRow {
     pub status: SketchGeneratedRowStatus,
 }
 
+/// Residual form retained for one high-level sketch relation.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum SketchResidualFormKind {
+    /// `|a-b|^2 - d^2`, retained as a polynomial exact-replay form.
+    SquaredDistancePolynomial,
+    /// `sqrt(|a-b|^2) - d`, retained for proposal compatibility.
+    TrueDistanceProposal,
+}
+
+/// Proof role for a retained residual form.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum SketchResidualFormRole {
+    /// Exact replay may use this form as a proof obligation.
+    ExactProof,
+    /// The form is retained for proposal or UI compatibility only.
+    ProposalOnly,
+}
+
+/// One retained residual form for a high-level sketch constraint.
+#[derive(Clone, Debug, PartialEq)]
+pub struct SketchResidualForm {
+    /// Residual form kind.
+    pub kind: SketchResidualFormKind,
+    /// Trust role of this form.
+    pub role: SketchResidualFormRole,
+    /// Lowering strategy when this form is accepted as a proof row.
+    pub strategy: Option<SketchResidualStrategy>,
+    /// Symbolic residual expression.
+    pub residual: Expr,
+}
+
+/// Status for retained residual-form extraction.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum SketchResidualFormsStatus {
+    /// Forms were produced successfully.
+    Generated,
+    /// No constraint exists for the requested handle.
+    MissingConstraint(SketchConstraintHandle),
+    /// The constraint is reference-only and intentionally has no proof row.
+    ReferenceOnly,
+    /// This constraint family has no retained multi-form package yet.
+    UnsupportedConstraint,
+    /// Entity or parameter validation failed while building forms.
+    InvalidInputs,
+}
+
+/// Report containing retained residual forms for one source constraint.
+#[derive(Clone, Debug, PartialEq)]
+pub struct SketchResidualFormsReport {
+    /// Requested constraint handle.
+    pub constraint: SketchConstraintHandle,
+    /// Extraction status.
+    pub status: SketchResidualFormsStatus,
+    /// Retained residual forms.
+    pub forms: Vec<SketchResidualForm>,
+    /// Validation diagnostics, when form construction could not proceed.
+    pub diagnostics: Vec<SketchGeneratedRow>,
+}
+
 /// Result of lowering a semantic sketch into generic residual rows.
 #[derive(Clone, Debug)]
 pub struct SketchLoweringReport {
@@ -620,6 +679,96 @@ impl SketchSolveProblem {
             self.lower_constraint(constraint, &mut problem, &mut rows);
         }
         SketchLoweringReport { problem, rows }
+    }
+
+    /// Return retained residual forms for a high-level sketch constraint.
+    ///
+    /// This is the first multiple-form package requested by the SolveSpace
+    /// coverage plan. For point-to-point distance it keeps both
+    /// `|a-b|^2 - d^2`, which is the polynomial exact-replay form, and
+    /// `sqrt(|a-b|^2) - d`, which is useful for proposal engines and UI
+    /// parity. Yap (1997) is the controlling rule here: proposal-compatible
+    /// forms are retained as data, but only exact replay/certification turns a
+    /// residual into evidence.
+    pub fn residual_forms_for_constraint(
+        &self,
+        handle: SketchConstraintHandle,
+    ) -> SketchResidualFormsReport {
+        let Some(constraint) = self.constraints.get(handle.0 as usize) else {
+            return SketchResidualFormsReport {
+                constraint: handle,
+                status: SketchResidualFormsStatus::MissingConstraint(handle),
+                forms: Vec::new(),
+                diagnostics: Vec::new(),
+            };
+        };
+        if constraint.reference {
+            return SketchResidualFormsReport {
+                constraint: handle,
+                status: SketchResidualFormsStatus::ReferenceOnly,
+                forms: Vec::new(),
+                diagnostics: Vec::new(),
+            };
+        }
+
+        match constraint.kind {
+            SketchConstraintKind::PointPointDistance { a, b, distance } => {
+                let mut diagnostics = Vec::new();
+                let (Some(a), Some(b), Some(distance)) = (
+                    self.point_coordinates(a, constraint, &mut diagnostics),
+                    self.point_coordinates(b, constraint, &mut diagnostics),
+                    self.distance_expr(distance, constraint, &mut diagnostics),
+                ) else {
+                    return SketchResidualFormsReport {
+                        constraint: handle,
+                        status: SketchResidualFormsStatus::InvalidInputs,
+                        forms: Vec::new(),
+                        diagnostics,
+                    };
+                };
+                if a.len() != b.len() {
+                    diagnostics.push(wrong_entity_row(
+                        constraint,
+                        b.handle,
+                        "matching point dimension",
+                    ));
+                    return SketchResidualFormsReport {
+                        constraint: handle,
+                        status: SketchResidualFormsStatus::InvalidInputs,
+                        forms: Vec::new(),
+                        diagnostics,
+                    };
+                }
+                let distance_squared = squared_distance(&a.exprs, &b.exprs);
+                let squared = distance_squared.clone() - distance.clone() * distance.clone();
+                let true_distance = distance_squared.sqrt() - distance;
+                SketchResidualFormsReport {
+                    constraint: handle,
+                    status: SketchResidualFormsStatus::Generated,
+                    forms: vec![
+                        SketchResidualForm {
+                            kind: SketchResidualFormKind::SquaredDistancePolynomial,
+                            role: SketchResidualFormRole::ExactProof,
+                            strategy: Some(SketchResidualStrategy::SquaredDistance),
+                            residual: squared,
+                        },
+                        SketchResidualForm {
+                            kind: SketchResidualFormKind::TrueDistanceProposal,
+                            role: SketchResidualFormRole::ProposalOnly,
+                            strategy: None,
+                            residual: true_distance,
+                        },
+                    ],
+                    diagnostics,
+                }
+            }
+            _ => SketchResidualFormsReport {
+                constraint: handle,
+                status: SketchResidualFormsStatus::UnsupportedConstraint,
+                forms: Vec::new(),
+                diagnostics: Vec::new(),
+            },
+        }
     }
 
     fn lower_constraint(
