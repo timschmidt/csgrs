@@ -18,8 +18,8 @@ use hypersolve::{
     report_lossy_adapter_only_candidate, represent_univariate_algebraic_roots,
     resultant_univariate_polynomials, solve_damped_least_squares,
     solve_dense_linear_system_bareiss, solve_direct_affine_system,
-    solve_direct_univariate_quadratic_equalities, squared_distance_equation,
-    subdivide_bernstein_univariate_polynomial_interval_roots,
+    solve_direct_univariate_quadratic_equalities, solve_sparse_linear_system_bareiss,
+    squared_distance_equation, subdivide_bernstein_univariate_polynomial_interval_roots,
     subresultant_chain_univariate_polynomials,
 };
 
@@ -194,6 +194,38 @@ fn certification(c: &mut Criterion) {
         b.iter(|| {
             solve_dense_linear_system_bareiss(
                 &[vec![r(2), r(1)], vec![r(1), r(-1)]],
+                &[r(5), r(1)],
+                -64,
+            )
+        })
+    });
+    c.bench_function("solve_sparse_linear_system_bareiss", |b| {
+        b.iter(|| {
+            solve_sparse_linear_system_bareiss(
+                2,
+                2,
+                &[
+                    SparseResidualTerm {
+                        row: 0,
+                        column: 0,
+                        coefficient: r(2),
+                    },
+                    SparseResidualTerm {
+                        row: 0,
+                        column: 1,
+                        coefficient: r(1),
+                    },
+                    SparseResidualTerm {
+                        row: 1,
+                        column: 0,
+                        coefficient: r(1),
+                    },
+                    SparseResidualTerm {
+                        row: 1,
+                        column: 1,
+                        coefficient: r(-1),
+                    },
+                ],
                 &[r(5), r(1)],
                 -64,
             )

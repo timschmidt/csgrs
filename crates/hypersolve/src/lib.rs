@@ -47,8 +47,9 @@ pub use alpha::{
     certify_univariate_quadratic_alpha,
 };
 pub use bareiss::{
-    BareissDeterminantReport, BareissError, BareissPivot, BareissSolveReport, determinant_bareiss,
-    solve_dense_linear_system_bareiss,
+    BareissDeterminantReport, BareissError, BareissPivot, BareissSolveReport, SparseBareissError,
+    SparseBareissSolveReport, determinant_bareiss, solve_dense_linear_system_bareiss,
+    solve_sparse_linear_system_bareiss,
 };
 pub use certification::{
     CandidateCertificationConfig, CandidateCertificationReport, CandidateResidualBall,

@@ -13,7 +13,10 @@
 
 use hyperreal::{CertifiedRealSign, Real, RealSign};
 
-use crate::residual_replay::{DenseResidualReplayReport, replay_dense_linear_residuals};
+use crate::residual_replay::{
+    DenseResidualReplayReport, SparseResidualReplayError, SparseResidualReplayReport,
+    SparseResidualTerm, replay_dense_linear_residuals, replay_sparse_linear_residuals,
+};
 
 /// Failure mode for exact Bareiss-style dense linear algebra.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -43,6 +46,25 @@ pub enum BareissError {
     },
     /// Exact residual replay of the solved candidate could not decide a row.
     UnknownResidual,
+}
+
+/// Failure mode for exact sparse-input Bareiss solving.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum SparseBareissError {
+    /// The declared sparse matrix was not square or did not match the right
+    /// hand side.
+    DimensionMismatch,
+    /// A sparse term addressed a row or column outside the declared shape.
+    TermOutOfBounds {
+        /// Offending term row.
+        row: usize,
+        /// Offending term column.
+        column: usize,
+    },
+    /// The materialized exact dense Bareiss solve failed.
+    DenseSolve(BareissError),
+    /// Exact sparse residual replay of the solved candidate failed.
+    SparseReplay(SparseResidualReplayError),
 }
 
 /// One certified pivot selected during Bareiss elimination.
@@ -78,6 +100,30 @@ pub struct BareissSolveReport {
     pub numerators: Vec<Real>,
     /// Exact replay of `A*x-b` for the returned solution.
     pub residual_replay: DenseResidualReplayReport,
+}
+
+/// Exact sparse-input linear solve report.
+///
+/// This is the first production solve surface for sparse caller input. It does
+/// not claim to be a pattern-preserving sparse LU: the sparse terms are
+/// validated and accumulated exactly into a dense matrix, solved through
+/// Bareiss fraction-free determinants, then replayed against the original
+/// sparse terms. The report keeps that materialization visible so callers can
+/// audit the proof boundary instead of mistaking this for a hidden numeric
+/// sparse adapter.
+#[derive(Clone, Debug, PartialEq)]
+pub struct SparseBareissSolveReport {
+    /// Declared row count.
+    pub row_count: usize,
+    /// Declared column count.
+    pub column_count: usize,
+    /// Exact materialized dense matrix after accumulating duplicate sparse
+    /// terms.
+    pub dense_matrix: Vec<Vec<Real>>,
+    /// Exact dense Bareiss solve report.
+    pub dense_solve: BareissSolveReport,
+    /// Exact replay against the original sparse representation.
+    pub sparse_residual_replay: SparseResidualReplayReport,
 }
 
 /// Computes an exact determinant with Bareiss fraction-free elimination.
@@ -222,6 +268,59 @@ pub fn solve_dense_linear_system_bareiss(
     })
 }
 
+/// Solves a square sparse linear system with exact Bareiss materialization.
+///
+/// Sparse terms encode `A[row, column] += coefficient`, with repeated entries
+/// accumulated exactly. After shape validation, this function materializes the
+/// square matrix and delegates construction to
+/// [`solve_dense_linear_system_bareiss`]. The returned solution is then replayed
+/// through [`crate::replay_sparse_linear_residuals`] against the original sparse
+/// terms. This is a Yap-aligned proof surface for sparse caller input; a true
+/// pattern-preserving exact sparse factorization remains a separate backend.
+pub fn solve_sparse_linear_system_bareiss(
+    row_count: usize,
+    column_count: usize,
+    terms: &[SparseResidualTerm],
+    rhs: &[Real],
+    min_precision: i32,
+) -> Result<SparseBareissSolveReport, SparseBareissError> {
+    if row_count != column_count || rhs.len() != row_count {
+        return Err(SparseBareissError::DimensionMismatch);
+    }
+
+    let mut dense_matrix = vec![vec![Real::zero(); column_count]; row_count];
+    for term in terms {
+        if term.row >= row_count || term.column >= column_count {
+            return Err(SparseBareissError::TermOutOfBounds {
+                row: term.row,
+                column: term.column,
+            });
+        }
+        dense_matrix[term.row][term.column] =
+            dense_matrix[term.row][term.column].clone() + term.coefficient.clone();
+    }
+
+    let dense_solve = solve_dense_linear_system_bareiss(&dense_matrix, rhs, min_precision)
+        .map_err(SparseBareissError::DenseSolve)?;
+    let sparse_residual_replay = replay_sparse_linear_residuals(
+        row_count,
+        column_count,
+        terms,
+        rhs,
+        &dense_solve.solution,
+        min_precision,
+    )
+    .map_err(SparseBareissError::SparseReplay)?;
+
+    Ok(SparseBareissSolveReport {
+        row_count,
+        column_count,
+        dense_matrix,
+        dense_solve,
+        sparse_residual_replay,
+    })
+}
+
 fn select_pivot_row(
     matrix: &[Vec<Real>],
     pivot: usize,
@@ -317,6 +416,96 @@ mod tests {
         );
     }
 
+    #[test]
+    fn sparse_bareiss_solve_accumulates_terms_and_replays_sparse_input() {
+        let report = solve_sparse_linear_system_bareiss(
+            2,
+            2,
+            &[
+                SparseResidualTerm {
+                    row: 0,
+                    column: 0,
+                    coefficient: real(1),
+                },
+                SparseResidualTerm {
+                    row: 0,
+                    column: 0,
+                    coefficient: real(1),
+                },
+                SparseResidualTerm {
+                    row: 0,
+                    column: 1,
+                    coefficient: real(1),
+                },
+                SparseResidualTerm {
+                    row: 1,
+                    column: 0,
+                    coefficient: real(1),
+                },
+                SparseResidualTerm {
+                    row: 1,
+                    column: 1,
+                    coefficient: real(-1),
+                },
+            ],
+            &[real(5), real(1)],
+            -64,
+        )
+        .unwrap();
+
+        assert_eq!(report.dense_solve.solution, vec![real(2), real(1)]);
+        assert_eq!(
+            report.dense_matrix,
+            vec![vec![real(2), real(1)], vec![real(1), real(-1)]]
+        );
+        assert!(report.sparse_residual_replay.accepted);
+    }
+
+    #[test]
+    fn sparse_bareiss_rejects_bad_shapes_bounds_and_singular_systems() {
+        assert_eq!(
+            solve_sparse_linear_system_bareiss(1, 2, &[], &[real(0)], -64).unwrap_err(),
+            SparseBareissError::DimensionMismatch
+        );
+        assert_eq!(
+            solve_sparse_linear_system_bareiss(
+                1,
+                1,
+                &[SparseResidualTerm {
+                    row: 0,
+                    column: 1,
+                    coefficient: real(1),
+                }],
+                &[real(0)],
+                -64,
+            )
+            .unwrap_err(),
+            SparseBareissError::TermOutOfBounds { row: 0, column: 1 }
+        );
+        assert_eq!(
+            solve_sparse_linear_system_bareiss(
+                2,
+                2,
+                &[
+                    SparseResidualTerm {
+                        row: 0,
+                        column: 0,
+                        coefficient: real(1),
+                    },
+                    SparseResidualTerm {
+                        row: 1,
+                        column: 0,
+                        coefficient: real(2),
+                    },
+                ],
+                &[real(1), real(2)],
+                -64,
+            )
+            .unwrap_err(),
+            SparseBareissError::DenseSolve(BareissError::Singular { pivot: 1 })
+        );
+    }
+
     proptest! {
         #[test]
         fn generated_triangular_determinants_match_diagonal_product(
@@ -354,6 +543,32 @@ mod tests {
 
             prop_assert_eq!(report.solution, vec![real(x), real(y)]);
             prop_assert!(report.residual_replay.accepted);
+        }
+
+        #[test]
+        fn generated_sparse_diagonal_systems_solve_and_replay_exactly(
+            a in 1_i16..=16,
+            b in 1_i16..=16,
+            x in -32_i16..=32,
+            y in -32_i16..=32,
+        ) {
+            let a = i64::from(a);
+            let b = i64::from(b);
+            let x = i64::from(x);
+            let y = i64::from(y);
+            let report = solve_sparse_linear_system_bareiss(
+                2,
+                2,
+                &[
+                    SparseResidualTerm { row: 0, column: 0, coefficient: real(a) },
+                    SparseResidualTerm { row: 1, column: 1, coefficient: real(b) },
+                ],
+                &[real(a * x), real(b * y)],
+                -64,
+            ).unwrap();
+
+            prop_assert_eq!(report.dense_solve.solution, vec![real(x), real(y)]);
+            prop_assert!(report.sparse_residual_replay.accepted);
         }
     }
 }
