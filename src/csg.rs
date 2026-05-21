@@ -4,7 +4,7 @@
 use crate::float_types::parry3d::bounding_volume::Aabb;
 use crate::float_types::{
     Real, hangle_sin_cos, hdegrees_to_radians, hpoint_centroid, hreal_affine, hreal_div,
-    hreal_mul, hreal_sub, hscale_matrix, htranslation_matrix, hunit_vector3,
+    hreal_from_f64, hreal_mul, hreal_sub, hscale_matrix, htranslation_matrix, hunit_vector3,
     hunit_vector3_and_magnitude, hvector3_weighted_sum,
 };
 use crate::mesh::plane::Plane;
@@ -20,6 +20,18 @@ use nalgebra::{Matrix4, Vector3};
 /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
 fn finite_translation(vector: Vector3<Real>) -> Option<Matrix4<Real>> {
     htranslation_matrix(&vector)
+}
+
+/// Validate a primitive scalar by promoting it through the hyperreal boundary.
+///
+/// CSG distribution APIs still accept `f64` scalar arguments, but those values
+/// feed transform generation and topology duplication. Rejecting values that
+/// cannot become `hyperreal::Real` keeps invalid primitive inputs at the API
+/// edge, following Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7(1-2), 1997
+/// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+fn finite_csg_scalar(value: Real) -> bool {
+    hreal_from_f64(value).is_ok()
 }
 
 fn finite_scale(sx: Real, sy: Real, sz: Real) -> Option<Matrix4<Real>> {
@@ -258,7 +270,10 @@ pub trait CSG: Sized + Clone {
         if count < 1 {
             return self.clone();
         }
-        if !radius.is_finite() || !start_angle_deg.is_finite() || !end_angle_deg.is_finite() {
+        if !finite_csg_scalar(radius)
+            || !finite_csg_scalar(start_angle_deg)
+            || !finite_csg_scalar(end_angle_deg)
+        {
             return self.clone();
         }
         let Some(start_rad) = hdegrees_to_radians(start_angle_deg) else {
@@ -310,7 +325,7 @@ pub trait CSG: Sized + Clone {
         if count < 1 {
             return self.clone();
         }
-        if !spacing.is_finite() {
+        if !finite_csg_scalar(spacing) {
             return self.clone();
         }
         let Some(step) = hunit_vector3(&dir).map(|dir| dir * spacing) else {
@@ -342,7 +357,7 @@ pub trait CSG: Sized + Clone {
         if rows < 1 || cols < 1 {
             return self.clone();
         }
-        if !dx.is_finite() || !dy.is_finite() {
+        if !finite_csg_scalar(dx) || !finite_csg_scalar(dy) {
             return self.clone();
         }
         let step_x = Vector3::new(dx, 0.0, 0.0);
@@ -369,5 +384,26 @@ pub trait CSG: Sized + Clone {
             })
             .reduce(|acc, csg| acc.union(&csg))
             .unwrap()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::mesh::Mesh;
+
+    #[test]
+    fn distribution_rejects_nonfinite_boundary_scalars() {
+        let cube = Mesh::cube(1.0, ());
+        let original_polygons = cube.polygons.len();
+
+        let linear = cube.distribute_linear(3, Vector3::x(), Real::NAN);
+        assert_eq!(linear.polygons.len(), original_polygons);
+
+        let arc = cube.distribute_arc(3, Real::INFINITY, 0.0, 90.0);
+        assert_eq!(arc.polygons.len(), original_polygons);
+
+        let grid = cube.distribute_grid(2, 2, 1.0, Real::NEG_INFINITY);
+        assert_eq!(grid.polygons.len(), original_polygons);
     }
 }
