@@ -2,12 +2,13 @@
 
 use crate::csg::CSG;
 use crate::float_types::{
-    FRAC_PI_2, PI, Real, TAU, hangle_sin_cos, hdegrees_to_radians, hreal_affine, hreal_div,
-    hreal_f64s_within_epsilon, hreal_from_f64, hreal_mul, hreal_sub, hreal_sum, hxy_lerp,
-    tolerance,
+    FRAC_PI_2, PI, Real, TAU, hangle_sin_cos, hdegrees_to_radians, hreal_affine,
+    hreal_cmp_f64, hreal_div, hreal_f64s_within_epsilon, hreal_from_f64, hreal_mul, hreal_sub,
+    hreal_sum, hxy_lerp, tolerance,
 };
 use crate::sketch::Profile;
 use hypercurve::{Contour2, CurveString2, LineSeg2, Point2, Segment2};
+use std::cmp::Ordering;
 use std::fmt::Debug;
 
 fn finite_profile_scalar(value: Real) -> bool {
@@ -57,6 +58,24 @@ fn hellipse_samples(
 
 fn hcircle_samples(samples: usize, radius: Real) -> Option<Vec<[Real; 2]>> {
     hellipse_samples(samples, radius, radius, 0.0, TAU)
+}
+
+fn hfinite_min_max(values: impl IntoIterator<Item = Real>) -> Option<(Real, Real)> {
+    let mut iter = values.into_iter();
+    let first = iter.next()?;
+    hreal_from_f64(first).ok()?;
+    let mut min = first;
+    let mut max = first;
+    for value in iter {
+        hreal_from_f64(value).ok()?;
+        if matches!(hreal_cmp_f64(value, min), Ordering::Less) {
+            min = value;
+        }
+        if matches!(hreal_cmp_f64(value, max), Ordering::Greater) {
+            max = value;
+        }
+    }
+    Some((min, max))
 }
 
 impl<M: Clone + Debug + Send + Sync> Profile<M> {
@@ -1114,40 +1133,111 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// 2-D heart outline (closed polygon) sized to `width` × `height`.
     ///
     /// `segments` controls smoothness (≥ 8 recommended).
+    ///
+    /// The classic analytic heart curve is sampled and normalized through
+    /// `hyperreal::Real` before finite coordinates are exported to hypercurve.
+    /// This follows Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7(1-2), 1997
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>), keeping constructor
+    /// algebra out of local primitive arithmetic.
     pub fn heart(width: Real, height: Real, segments: usize, metadata: M) -> Self {
-        if segments < 8 {
+        if segments < 8 || !finite_profile_scalars(&[width, height]) {
             return Profile::empty(metadata);
         }
 
-        let step = TAU / segments as Real;
-
         // classic analytic “cardioid-style” heart
-        let pts: Vec<(Real, Real)> = (0..segments)
-            .map(|i| {
-                let t = i as Real * step;
-                let x = 16.0 * (t.sin().powi(3));
-                let y = 13.0 * t.cos()
-                    - 5.0 * (2.0 * t).cos()
-                    - 2.0 * (3.0 * t).cos()
-                    - (4.0 * t).cos();
-                (x, y)
-            })
-            .collect();
+        let mut pts = Vec::with_capacity(segments);
+        for i in 0..segments {
+            let Some(t) = hsample_angle(i, segments, 0.0, TAU) else {
+                return Profile::empty(metadata);
+            };
+            let Some((sin_t, cos_t)) = hangle_sin_cos(t) else {
+                return Profile::empty(metadata);
+            };
+            let Some(sin2) = hreal_mul(sin_t, sin_t) else {
+                return Profile::empty(metadata);
+            };
+            let Some(sin3) = hreal_mul(sin2, sin_t) else {
+                return Profile::empty(metadata);
+            };
+            let Some(x) = hreal_mul(16.0, sin3) else {
+                return Profile::empty(metadata);
+            };
+
+            let Some(t2) = hreal_mul(2.0, t) else {
+                return Profile::empty(metadata);
+            };
+            let Some(t3) = hreal_mul(3.0, t) else {
+                return Profile::empty(metadata);
+            };
+            let Some(t4) = hreal_mul(4.0, t) else {
+                return Profile::empty(metadata);
+            };
+            let Some((_, cos_2t)) = hangle_sin_cos(t2) else {
+                return Profile::empty(metadata);
+            };
+            let Some((_, cos_3t)) = hangle_sin_cos(t3) else {
+                return Profile::empty(metadata);
+            };
+            let Some((_, cos_4t)) = hangle_sin_cos(t4) else {
+                return Profile::empty(metadata);
+            };
+            let Some(mut y) = hreal_mul(13.0, cos_t) else {
+                return Profile::empty(metadata);
+            };
+            let Some(term) = hreal_mul(5.0, cos_2t) else {
+                return Profile::empty(metadata);
+            };
+            let Some(next_y) = hreal_sub(y, term) else {
+                return Profile::empty(metadata);
+            };
+            y = next_y;
+            let Some(term) = hreal_mul(2.0, cos_3t) else {
+                return Profile::empty(metadata);
+            };
+            let Some(next_y) = hreal_sub(y, term) else {
+                return Profile::empty(metadata);
+            };
+            y = next_y;
+            let Some(next_y) = hreal_sub(y, cos_4t) else {
+                return Profile::empty(metadata);
+            };
+            pts.push((x, next_y));
+        }
 
         // normalise & scale to desired bounding box ---------------------
-        let (min_x, max_x) = pts.iter().fold((Real::MAX, -Real::MAX), |(lo, hi), &(x, _)| {
-            (lo.min(x), hi.max(x))
-        });
-        let (min_y, max_y) = pts.iter().fold((Real::MAX, -Real::MAX), |(lo, hi), &(_, y)| {
-            (lo.min(y), hi.max(y))
-        });
-        let s_x = width / (max_x - min_x);
-        let s_y = height / (max_y - min_y);
+        let Some((min_x, max_x)) = hfinite_min_max(pts.iter().map(|&(x, _)| x)) else {
+            return Profile::empty(metadata);
+        };
+        let Some((min_y, max_y)) = hfinite_min_max(pts.iter().map(|&(_, y)| y)) else {
+            return Profile::empty(metadata);
+        };
+        let Some(w) = hreal_sub(max_x, min_x) else {
+            return Profile::empty(metadata);
+        };
+        let Some(h) = hreal_sub(max_y, min_y) else {
+            return Profile::empty(metadata);
+        };
+        let Some(s_x) = hreal_div(width, w) else {
+            return Profile::empty(metadata);
+        };
+        let Some(s_y) = hreal_div(height, h) else {
+            return Profile::empty(metadata);
+        };
 
-        let points = pts
-            .into_iter()
-            .map(|(x, y)| [(x - min_x) * s_x, (y - min_y) * s_y])
-            .collect();
+        let mut points = Vec::with_capacity(pts.len());
+        for (x, y) in pts {
+            let Some(dx) = hreal_sub(x, min_x) else {
+                return Profile::empty(metadata);
+            };
+            let Some(dy) = hreal_sub(y, min_y) else {
+                return Profile::empty(metadata);
+            };
+            let (Some(x), Some(y)) = (hreal_mul(dx, s_x), hreal_mul(dy, s_y)) else {
+                return Profile::empty(metadata);
+            };
+            points.push([x, y]);
+        }
 
         Self::polygonal_region(points, metadata)
     }
