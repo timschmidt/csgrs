@@ -10512,6 +10512,108 @@ fn exact_coplanar_convex_surface_difference_materializes_component_holes() {
 
 #[cfg(feature = "exact-triangulation")]
 #[test]
+fn exact_coplanar_surface_cutter_hole_contact_accepts_nonrectangular_convex_pair() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 20, 0, 0, 20, 20, 0, 0, 20, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let cutter_hole_contact = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            4, 9, 0, 8, 10, 0, 6, 8, 0, //
+            0, 8, 0, 8, 10, 0, 0, 12, 0,
+        ],
+        &[0, 2, 1, 3, 4, 5],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+
+    assert!(
+        hypermesh::exact::arrange_coplanar_convex_surface_component_holed_difference(
+            &left,
+            &cutter_hole_contact,
+        )
+        .is_none()
+    );
+    let contact_difference =
+        hypermesh::exact::arrange_coplanar_surface_cutter_hole_contact_difference(
+            &left,
+            &cutter_hole_contact,
+        )
+        .expect("non-rectangular convex cutter/hole contact should open one exact loop");
+    contact_difference.validate().unwrap();
+    contact_difference
+        .validate_cutter_hole_contact_difference_against_sources(&left, &cutter_hole_contact)
+        .unwrap();
+    assert_eq!(contact_difference.polygon.len(), 9);
+    assert!(
+        contact_difference
+            .polygon
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(6))
+                && real_eq(&point.y, &ExactReal::from(8)))
+    );
+
+    let point_only_contact = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            8, 10, 0, 10, 8, 0, 10, 12, 0, //
+            0, 8, 0, 8, 10, 0, 0, 12, 0,
+        ],
+        &[0, 1, 2, 3, 4, 5],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_cutter_hole_contact_difference(
+            &left,
+            &point_only_contact,
+        )
+        .is_none()
+    );
+
+    let preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &cutter_hole_contact,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    preflight.validate().unwrap();
+    preflight
+        .validate_against_sources(&left, &cutter_hole_contact)
+        .unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceCutterHoleContactDifference
+    );
+
+    let result = hypermesh::exact::boolean_exact(
+        &left,
+        &cutter_hole_contact,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    result
+        .validate_operation_against_sources(
+            &left,
+            &cutter_hole_contact,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::
+                CoplanarSurfaceCutterHoleContactDifference
+        }
+    );
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
 fn exact_coplanar_orthogonal_surface_cells_materialize_nonconvex_outputs() {
     let l_left = rect_surface_i64(&[(0, 0, 2, 6), (2, 0, 6, 2)]);
     let l_right = rect_surface_i64(&[(2, 2, 4, 4)]);

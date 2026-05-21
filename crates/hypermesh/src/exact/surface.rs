@@ -3653,16 +3653,18 @@ pub fn arrange_coplanar_surface_multi_difference(
 /// a positive-length boundary, so the result is no longer a holed component
 /// but one nonconvex simple loop. The accepted source shape is intentionally
 /// small and replayable: one exact axis-aligned rectangular left component,
-/// one contained rectangular right component, and one rectangular right cutter
-/// whose clipped material region touches the contained component and one
-/// outer side. The union of the clipped cutter and hole must itself certify as
-/// one rectangle attached to exactly one outer side, so output construction is
-/// exact interval topology rather than sampled polygon surgery. This follows
-/// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-/// 7.1-2 (1997), with the orthogonal-cell reasoning matching the exact
-/// rectangle decomposition model in de Berg, Cheong, van Kreveld, and
-/// Overmars, *Computational Geometry: Algorithms and Applications*, 3rd ed.,
-/// Chapter 2.
+/// one strictly contained convex right component, and one convex right cutter
+/// whose clipped material region touches the contained component along a
+/// positive-length boundary and one outer side. Rectangular pairs use exact
+/// interval-cell replay; non-rectangular pairs must stitch one exact simple
+/// union loop from retained convex boundary fragments before the left side is
+/// opened. This follows Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997), with the fragment traversal matching
+/// the retained boundary idea from Weiler and Atherton, "Hidden Surface
+/// Removal Using Polygon Area Sorting," *SIGGRAPH Computer Graphics* 11.2
+/// (1977). Orthogonal-cell rectangular replay follows de Berg, Cheong, van
+/// Kreveld, and Overmars, *Computational Geometry: Algorithms and
+/// Applications*, 3rd ed., Chapter 2.
 #[cfg(feature = "exact-triangulation")]
 pub fn arrange_coplanar_surface_cutter_hole_contact_difference(
     left: &ExactMesh,
@@ -3715,21 +3717,27 @@ pub fn arrange_coplanar_surface_cutter_hole_contact_difference(
     }
     let hole = &right_components[hole_index?];
     let cutter = &right_components[cutter_index?];
-    let hole_rect = projected_axis_aligned_rectangle(&hole.hull, projection)?;
-    let cutter_rect = projected_axis_aligned_rectangle(&cutter.hull, projection)?;
-    if !rectangles_touch_on_positive_boundary(&hole_rect, &cutter_rect)? {
-        return None;
-    }
-
     let mut clipped_cutter =
         convex_polygon_intersection_boundary(&cutter.hull, &left_component.hull, projection)?;
     if clipped_cutter.len() < 3 {
         return None;
     }
     orient_polygon_ccw(&mut clipped_cutter, projection)?;
-    let clipped_cutter_rect = projected_axis_aligned_rectangle(&clipped_cutter, projection)?;
-    let mut removed_polygon =
-        axis_aligned_rectangle_union_polygon(&[clipped_cutter_rect, hole_rect], projection)?;
+    let mut removed_polygon = match (
+        projected_axis_aligned_rectangle(&hole.hull, projection),
+        projected_axis_aligned_rectangle(&clipped_cutter, projection),
+    ) {
+        (Some(hole_rect), Some(clipped_cutter_rect))
+            if rectangles_touch_on_positive_boundary(&hole_rect, &clipped_cutter_rect)? =>
+        {
+            axis_aligned_rectangle_union_polygon(&[clipped_cutter_rect, hole_rect], projection)?
+        }
+        _ => side_attached_convex_cutter_hole_removed_polygon(
+            &hole.hull,
+            &clipped_cutter,
+            projection,
+        )?,
+    };
     orient_polygon_ccw(&mut removed_polygon, projection)?;
     let mut polygon = side_opened_difference_polygon(&left_rect, &removed_polygon, projection)?;
     orient_polygon_ccw(&mut polygon, projection)?;
@@ -4081,6 +4089,84 @@ fn axis_aligned_rectangle_union_polygon(
         }
     }
     stitch_simple_loop(fragments, projection)
+}
+
+/// Stitch the exact removed region for a side-attached convex cutter/hole pair.
+///
+/// This is the non-rectangular counterpart to
+/// [`axis_aligned_rectangle_union_polygon`]. The two convex components must
+/// have boundary-only contact, and at least one source edge pair must overlap
+/// with positive length. The union boundary is then assembled from exact
+/// fragments whose midpoints lie outside the opposite convex component, in the
+/// Weiler-Atherton boundary-traversal sense, while every predicate decision is
+/// exact as required by Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997). Segment contact is classified with
+/// the orientation-predicate model of Guigue and Devillers, "Fast and Robust
+/// Triangle-Triangle Overlap Test Using Orientation Predicates," *Journal of
+/// Graphics Tools* 8.1 (2003).
+#[cfg(feature = "exact-triangulation")]
+fn side_attached_convex_cutter_hole_removed_polygon(
+    hole: &[Point3],
+    clipped_cutter: &[Point3],
+    projection: CoplanarProjection,
+) -> Option<Vec<Point3>> {
+    if convex_union_component_relation(hole, clipped_cutter, projection)?
+        != ConvexUnionComponentRelation::BoundaryOnly
+    {
+        return None;
+    }
+    if !convex_polygons_touch_on_positive_boundary(hole, clipped_cutter, projection)? {
+        return None;
+    }
+
+    let mut hole = hole.to_vec();
+    let mut clipped_cutter = clipped_cutter.to_vec();
+    orient_polygon_ccw(&mut hole, projection)?;
+    orient_polygon_ccw(&mut clipped_cutter, projection)?;
+
+    let mut fragments = Vec::new();
+    collect_convex_union_boundary_fragments(&hole, &clipped_cutter, projection, &mut fragments)?;
+    collect_convex_union_boundary_fragments(&clipped_cutter, &hole, projection, &mut fragments)?;
+    let mut polygon = stitch_simple_loop(fragments, projection)?;
+    orient_polygon_ccw(&mut polygon, projection)?;
+    polygon = simplify_projected_polygon(polygon, projection);
+    validate_projected_simple_loop(
+        &polygon,
+        projection,
+        "coplanar cutter-hole removed convex union",
+    )
+    .ok()?;
+    if !convex_union_boundary_area_matches_inputs(&polygon, &hole, &clipped_cutter, projection)? {
+        return None;
+    }
+    Some(polygon)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn convex_polygons_touch_on_positive_boundary(
+    left: &[Point3],
+    right: &[Point3],
+    projection: CoplanarProjection,
+) -> Option<bool> {
+    for left_edge in 0..left.len() {
+        let left_start = project_point(&left[left_edge], projection);
+        let left_end = project_point(&left[(left_edge + 1) % left.len()], projection);
+        for right_edge in 0..right.len() {
+            let right_start = project_point(&right[right_edge], projection);
+            let right_end = project_point(&right[(right_edge + 1) % right.len()], projection);
+            match classify_segment_intersection(&left_start, &left_end, &right_start, &right_end)
+                .value()?
+            {
+                SegmentIntersection::CollinearOverlap | SegmentIntersection::Identical => {
+                    return Some(true);
+                }
+                SegmentIntersection::Disjoint
+                | SegmentIntersection::EndpointTouch
+                | SegmentIntersection::Proper => {}
+            }
+        }
+    }
+    Some(false)
 }
 
 #[cfg(feature = "exact-triangulation")]

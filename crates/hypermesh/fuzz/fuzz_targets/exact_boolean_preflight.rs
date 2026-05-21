@@ -2125,6 +2125,62 @@ fn exercise_component_coplanar_difference() {
         ExactBooleanSupport::CertifiedCoplanarSurfaceCutterHoleContactDifference
     );
 
+    let nonrect_contact_left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 20, 0, 0, 20, 20, 0, 0, 20, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("nonrectangular cutter-hole left fixture must import");
+    let nonrect_contact_right = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            4, 9, 0, 8, 10, 0, 6, 8, 0, //
+            0, 8, 0, 8, 10, 0, 0, 12, 0,
+        ],
+        &[0, 2, 1, 3, 4, 5],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("nonrectangular cutter-hole right fixture must import");
+    let nonrect_contact = arrange_coplanar_surface_cutter_hole_contact_difference(
+        &nonrect_contact_left,
+        &nonrect_contact_right,
+    )
+    .expect("nonrectangular cutter-hole contact should materialize one nonconvex loop");
+    nonrect_contact.validate().unwrap();
+    nonrect_contact
+        .validate_cutter_hole_contact_difference_against_sources(
+            &nonrect_contact_left,
+            &nonrect_contact_right,
+        )
+        .unwrap();
+    assert_eq!(nonrect_contact.polygon.len(), 9);
+    let nonrect_contact_preflight = preflight_boolean_exact(
+        &nonrect_contact_left,
+        &nonrect_contact_right,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("nonrectangular cutter-hole contact preflight should classify shortcut");
+    nonrect_contact_preflight.validate().unwrap();
+    assert_eq!(
+        nonrect_contact_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfaceCutterHoleContactDifference
+    );
+    let point_only_contact_right = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            8, 10, 0, 10, 8, 0, 10, 12, 0, //
+            0, 8, 0, 8, 10, 0, 0, 12, 0,
+        ],
+        &[0, 1, 2, 3, 4, 5],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("point-only cutter-hole fixture must import");
+    assert!(
+        arrange_coplanar_surface_cutter_hole_contact_difference(
+            &nonrect_contact_left,
+            &point_only_contact_right,
+        )
+        .is_none()
+    );
+
     let l_left = rect_surface_i64(&[(0, 0, 2, 6), (2, 0, 6, 2)]);
     let l_right = rect_surface_i64(&[(2, 2, 4, 4)]);
     assert!(arrange_coplanar_convex_surface_union(&l_left, &l_right).is_none());
