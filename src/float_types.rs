@@ -1103,18 +1103,34 @@ pub fn tolerance() -> Real {
     *TOLERANCE_CELL.get_or_init(default_tolerance)
 }
 
+/// Sanitize a public tolerance override through hyperreal sign and max checks.
+///
+/// Runtime tolerance is API-boundary configuration, but accepting it still
+/// affects topology predicates throughout the crate. Promotion and comparison
+/// therefore follow the same exact-geometric-computation boundary discipline as
+/// geometric epsilons: primitive input is admitted at the edge, while sign and
+/// lower-bound decisions use hyperreal predicates. See Yap, "Towards Exact
+/// Geometric Computation," *Computational Geometry* 7(1-2), 1997
+/// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+fn hconfigured_tolerance(value: Real) -> Real {
+    let Some(value) = hpositive_boundary_scalar(value) else {
+        return default_tolerance();
+    };
+    let Some(epsilon) = hreal_from_f64(Real::EPSILON).ok() else {
+        return default_tolerance();
+    };
+    hreal_max_pair(&value, &epsilon)
+        .and_then(|value| hreal_to_f64(&value))
+        .unwrap_or_else(default_tolerance)
+}
+
 /// Set epsilon programmatically once (subsequent calls are ignored).
 ///
 /// Call near program start: `csgrs::float_types::set_tolerance(1e-6);`.
 /// Non-finite values are rejected back to the default because only finite
 /// primitive floats are accepted at csgrs API boundaries.
 pub fn set_tolerance(value: Real) {
-    let value = if value.is_finite() {
-        value.max(Real::EPSILON)
-    } else {
-        default_tolerance()
-    };
-    let _ = TOLERANCE_CELL.set(value);
+    let _ = TOLERANCE_CELL.set(hconfigured_tolerance(value));
 }
 
 /// Archimedes' constant (π)
@@ -1522,5 +1538,15 @@ mod tests {
         assert!(!hreal_f64s_within_epsilon(1.0, 1.0 + epsilon * 2.0, epsilon));
         assert!(!hreal_f64s_within_epsilon(1.0, f64::INFINITY, epsilon));
         assert!(!hreal_f64s_within_epsilon(1.0, 1.0, 0.0));
+    }
+
+    #[test]
+    fn configured_tolerance_uses_hyperreal_boundary_checks() {
+        assert_eq!(hconfigured_tolerance(Real::NAN), default_tolerance());
+        assert_eq!(hconfigured_tolerance(Real::INFINITY), default_tolerance());
+        assert_eq!(hconfigured_tolerance(0.0), default_tolerance());
+        assert_eq!(hconfigured_tolerance(-1.0), default_tolerance());
+        assert_eq!(hconfigured_tolerance(Real::EPSILON * 0.25), Real::EPSILON);
+        assert_eq!(hconfigured_tolerance(0.125), 0.125);
     }
 }
