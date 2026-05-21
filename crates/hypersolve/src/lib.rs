@@ -78,12 +78,12 @@ pub use eval::{
 };
 pub use interval::{
     AffineIntervalError, AffineKrawczykReport, AffineKrawczykStatus, AffineKrawczykVariableStep,
-    IntervalBoxCertificationPackage, IntervalBoxCertificationReport, IntervalBoxCertificationStatus,
-    MultivariateQuadraticKrawczykReport, MultivariateQuadraticKrawczykResidual,
-    MultivariateQuadraticKrawczykStatus, MultivariateQuadraticKrawczykVariable,
-    QuadraticIntervalError, QuadraticKrawczykReport, QuadraticKrawczykRow, QuadraticKrawczykStatus,
-    VariableBall, certify_affine_interval_candidate, certify_affine_krawczyk_box,
-    certify_interval_box_candidate,
+    IntervalBoxCertificationPackage, IntervalBoxCertificationReport,
+    IntervalBoxCertificationStatus, MultivariateQuadraticKrawczykReport,
+    MultivariateQuadraticKrawczykResidual, MultivariateQuadraticKrawczykStatus,
+    MultivariateQuadraticKrawczykVariable, QuadraticIntervalError, QuadraticKrawczykReport,
+    QuadraticKrawczykRow, QuadraticKrawczykStatus, VariableBall, certify_affine_interval_candidate,
+    certify_affine_krawczyk_box, certify_interval_box_candidate,
     certify_multivariate_quadratic_interval_candidate, certify_multivariate_quadratic_krawczyk_box,
     certify_quadratic_interval_candidate, certify_univariate_quadratic_krawczyk_box,
 };
@@ -103,7 +103,8 @@ pub use prepared::{
 };
 pub use residual_replay::{
     DenseResidualReplayError, DenseResidualReplayReport, DenseResidualReplayRow,
-    replay_dense_linear_residuals,
+    SparseResidualReplayError, SparseResidualReplayReport, SparseResidualReplayRow,
+    SparseResidualTerm, replay_dense_linear_residuals, replay_sparse_linear_residuals,
 };
 pub use root_isolation::{
     AlgebraicRootCandidateReport, AlgebraicRootCandidateStatus, BernsteinRootCountReport,

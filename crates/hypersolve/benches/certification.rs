@@ -3,8 +3,8 @@ use hyperreal::{Rational, Real};
 use hypersolve::{
     Constraint, EqualitySubstitution, Expr, IntervalBoxCertificationPackage, PreparedProblem,
     PreparedSolverBlock, Problem, ProposalEngineKind, ProposalEnginePrecision,
-    ProposalEngineReport, SolverConfig, SolverPoint2, SolverState, SymbolId, VariableBall,
-    apply_equality_substitution_classes, build_equality_substitution_classes,
+    ProposalEngineReport, SolverConfig, SolverPoint2, SolverState, SparseResidualTerm, SymbolId,
+    VariableBall, apply_equality_substitution_classes, build_equality_substitution_classes,
     certify_affine_krawczyk_box, certify_candidate, certify_candidate_domains,
     certify_direct_univariate_quadratic_roots, certify_interval_box_candidate,
     certify_multivariate_quadratic_interval_candidate, certify_multivariate_quadratic_krawczyk_box,
@@ -13,8 +13,8 @@ use hypersolve::{
     count_bernstein_univariate_polynomial_interval_roots,
     count_descartes_univariate_polynomial_roots, eliminate_affine_rows_with_substitution_classes,
     isolate_univariate_polynomial_roots, replay_dense_linear_residuals,
-    report_lossy_adapter_only_candidate, represent_univariate_algebraic_roots,
-    solve_damped_least_squares, solve_direct_affine_system,
+    replay_sparse_linear_residuals, report_lossy_adapter_only_candidate,
+    represent_univariate_algebraic_roots, solve_damped_least_squares, solve_direct_affine_system,
     solve_direct_univariate_quadratic_equalities, squared_distance_equation,
     subdivide_bernstein_univariate_polynomial_interval_roots,
 };
@@ -187,6 +187,39 @@ fn certification(c: &mut Criterion) {
         b.iter(|| {
             replay_dense_linear_residuals(
                 &[vec![r(2), r(1)], vec![r(1), r(-1)]],
+                &[r(5), r(1)],
+                &[r(2), r(1)],
+                -64,
+            )
+        })
+    });
+    c.bench_function("replay_sparse_linear_residuals", |b| {
+        b.iter(|| {
+            replay_sparse_linear_residuals(
+                2,
+                2,
+                &[
+                    SparseResidualTerm {
+                        row: 0,
+                        column: 0,
+                        coefficient: r(2),
+                    },
+                    SparseResidualTerm {
+                        row: 0,
+                        column: 1,
+                        coefficient: r(1),
+                    },
+                    SparseResidualTerm {
+                        row: 1,
+                        column: 0,
+                        coefficient: r(1),
+                    },
+                    SparseResidualTerm {
+                        row: 1,
+                        column: 1,
+                        coefficient: r(-1),
+                    },
+                ],
                 &[r(5), r(1)],
                 &[r(2), r(1)],
                 -64,
