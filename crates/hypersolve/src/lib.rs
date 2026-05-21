@@ -27,6 +27,7 @@ pub mod residual_replay;
 pub mod resultant;
 pub mod root_isolation;
 pub mod sketch;
+pub mod sketch_builders;
 pub mod solver;
 pub mod solver_block;
 pub mod sparse_pattern;
@@ -159,6 +160,10 @@ pub use sketch::{
     SketchLineSegment2, SketchLoweringReport, SketchNormal2, SketchNormal3, SketchParameter,
     SketchParameterHandle, SketchPoint2, SketchPoint3, SketchResidualStrategy, SketchSolveProblem,
     SketchWorkplane,
+};
+pub use sketch_builders::{
+    SketchConstraintBuildReport, SketchConstraintFamily, distance as sketch_distance_builders,
+    incidence as sketch_incidence_builders, orientation as sketch_orientation_builders,
 };
 pub use solver::{SolverConfig, SolverState, solve_damped_least_squares};
 pub use solver_block::{

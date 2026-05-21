@@ -14,6 +14,7 @@
 use hyperreal::Real;
 
 use crate::model::{Constraint, ConstraintKind, Problem, VariableId};
+use crate::sketch_builders::{distance, incidence, orientation};
 use crate::symbolic::{Expr, SymbolId};
 
 /// Stable caller-facing handle for a sketch parameter.
@@ -529,12 +530,7 @@ impl SketchSolveProblem {
         a: SketchEntityHandle,
         b: SketchEntityHandle,
     ) -> SketchConstraintHandle {
-        self.add_constraint(
-            name,
-            SketchConstraintKind::PointsCoincident { a, b },
-            false,
-            true,
-        )
+        incidence::points_coincident(self, name, a, b).handle
     }
 
     /// Add a point-to-point distance constraint.
@@ -551,12 +547,7 @@ impl SketchSolveProblem {
         b: SketchEntityHandle,
         distance: SketchEntityHandle,
     ) -> SketchConstraintHandle {
-        self.add_constraint(
-            name,
-            SketchConstraintKind::PointPointDistance { a, b, distance },
-            false,
-            true,
-        )
+        distance::point_point_distance(self, name, a, b, distance).handle
     }
 
     /// Add a horizontal 2D line constraint.
@@ -565,7 +556,7 @@ impl SketchSolveProblem {
         name: impl Into<String>,
         line: SketchEntityHandle,
     ) -> SketchConstraintHandle {
-        self.add_constraint(name, SketchConstraintKind::Horizontal { line }, false, true)
+        orientation::horizontal(self, name, line).handle
     }
 
     /// Add a vertical 2D line constraint.
@@ -574,7 +565,7 @@ impl SketchSolveProblem {
         name: impl Into<String>,
         line: SketchEntityHandle,
     ) -> SketchConstraintHandle {
-        self.add_constraint(name, SketchConstraintKind::Vertical { line }, false, true)
+        orientation::vertical(self, name, line).handle
     }
 
     /// Add a point-on-circle incidence constraint.
@@ -584,12 +575,7 @@ impl SketchSolveProblem {
         point: SketchEntityHandle,
         circle: SketchEntityHandle,
     ) -> SketchConstraintHandle {
-        self.add_constraint(
-            name,
-            SketchConstraintKind::PointOnCircle { point, circle },
-            false,
-            true,
-        )
+        incidence::point_on_circle(self, name, point, circle).handle
     }
 
     /// Add a retained high-level sketch constraint.

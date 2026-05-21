@@ -19,7 +19,8 @@ use hypersolve::{
     certify_univariate_quadratic_alpha, certify_univariate_quadratic_krawczyk_box,
     context_from_problem, eliminate_affine_rows_with_substitution_classes, evaluate_residuals,
     facts_depend_on_symbol, find_equality_substitutions, isolate_univariate_polynomial_roots,
-    point_coincidence_equations, report_lossy_adapter_only_candidate, solve_damped_least_squares,
+    point_coincidence_equations, report_lossy_adapter_only_candidate, sketch_distance_builders,
+    sketch_incidence_builders, sketch_orientation_builders, solve_damped_least_squares,
     solve_direct_affine_equalities, solve_direct_affine_system,
     solve_direct_univariate_quadratic_equalities, squared_distance_equation,
     tangent_parallel_equation, tangent_same_direction_constraint, validate_equality_substitutions,
@@ -172,6 +173,66 @@ fn sketch_retains_extended_solvespace_entity_carriers_without_forcing_rows() {
     assert_eq!(lowered.problem.variables.len(), sketch.parameters().len());
     assert_eq!(lowered.problem.constraints.len(), 0);
     assert!(lowered.rows.is_empty());
+}
+
+#[test]
+fn sketch_family_builders_report_strategy_and_lower_to_matching_rows() {
+    let mut sketch = SketchSolveProblem::new();
+    let a = sketch.add_point2d("a", real(0), real(0));
+    let b = sketch.add_point2d("b", real(5), real(0));
+    let distance = sketch.add_distance("five", real(5));
+    let line = sketch.add_line_segment2("line", a, b);
+    let circle = sketch.add_circle2("circle", a, distance);
+
+    let coincident = sketch_incidence_builders::points_coincident(&mut sketch, "same", a, a);
+    let length =
+        sketch_distance_builders::point_point_distance(&mut sketch, "length", a, b, distance);
+    let horizontal = sketch_orientation_builders::horizontal(&mut sketch, "horizontal", line);
+    let incidence = sketch_incidence_builders::point_on_circle(&mut sketch, "on circle", b, circle);
+
+    assert_eq!(
+        coincident.family,
+        hypersolve::SketchConstraintFamily::Incidence
+    );
+    assert_eq!(length.family, hypersolve::SketchConstraintFamily::Distance);
+    assert_eq!(
+        horizontal.family,
+        hypersolve::SketchConstraintFamily::Orientation
+    );
+    assert_eq!(incidence.strategy, SketchResidualStrategy::SquaredIncidence);
+
+    let lowered = sketch.lower_to_problem();
+
+    assert!(lowered.all_generated());
+    assert_eq!(
+        lowered
+            .rows
+            .iter()
+            .map(|row| row.constraint)
+            .collect::<Vec<_>>(),
+        vec![
+            coincident.handle,
+            coincident.handle,
+            length.handle,
+            horizontal.handle,
+            incidence.handle,
+        ]
+    );
+    assert_eq!(
+        lowered.rows[2].strategy,
+        Some(SketchResidualStrategy::SquaredDistance)
+    );
+    assert_eq!(
+        lowered.rows[3].strategy,
+        Some(SketchResidualStrategy::CoordinateEquality)
+    );
+
+    let certification = certify_candidate(
+        &PreparedProblem::new(&lowered.problem),
+        &context_from_problem(&lowered.problem),
+    );
+
+    assert!(certification.all_satisfied());
 }
 
 #[test]

@@ -149,9 +149,24 @@ fn sketch_problem(row_count: usize) -> hypersolve::SketchSolveProblem {
         let distance = sketch.add_distance(format!("d{index}"), r(5));
         let line = sketch.add_line_segment2(format!("line{index}"), a, b);
         let circle = sketch.add_circle2(format!("circle{index}"), a, distance);
-        sketch.add_point_point_distance(format!("distance {index}"), a, b, distance);
-        sketch.add_point_on_circle(format!("circle incidence {index}"), b, circle);
-        sketch.add_horizontal(format!("horizontal proposal {index}"), line);
+        hypersolve::sketch_distance_builders::point_point_distance(
+            &mut sketch,
+            format!("distance {index}"),
+            a,
+            b,
+            distance,
+        );
+        hypersolve::sketch_incidence_builders::point_on_circle(
+            &mut sketch,
+            format!("circle incidence {index}"),
+            b,
+            circle,
+        );
+        hypersolve::sketch_orientation_builders::horizontal(
+            &mut sketch,
+            format!("horizontal proposal {index}"),
+            line,
+        );
     }
     sketch
 }
