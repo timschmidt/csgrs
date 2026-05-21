@@ -6,6 +6,7 @@
 //! skeleton.
 
 pub mod affine;
+pub mod algebraic;
 pub mod alpha;
 pub mod certification;
 pub mod diagnostics;
@@ -26,6 +27,12 @@ pub mod solver_block;
 pub mod symbolic;
 
 pub use affine::PreparedAffineResidual;
+pub use algebraic::{
+    AlgebraicRootKind, AlgebraicRootRepresentation, AlgebraicRootRepresentationReport,
+    AlgebraicRootRepresentationStatus, AlgebraicRootValidationReport,
+    AlgebraicRootValidationStatus, represent_univariate_algebraic_roots,
+    represent_univariate_algebraic_roots_from_reports, validate_algebraic_root_representation,
+};
 pub use alpha::{
     UnivariateQuadraticAlphaReport, UnivariateQuadraticAlphaRow, UnivariateQuadraticAlphaStatus,
     certify_univariate_quadratic_alpha,

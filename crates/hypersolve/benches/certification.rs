@@ -14,7 +14,7 @@ use hypersolve::{
     count_descartes_univariate_polynomial_roots, differential_pair_skew_equation,
     eliminate_affine_rows_with_substitution_classes, isolate_univariate_polynomial_roots,
     rectangular_difference_area_equation, report_lossy_adapter_only_candidate,
-    solve_damped_least_squares, solve_direct_affine_system,
+    represent_univariate_algebraic_roots, solve_damped_least_squares, solve_direct_affine_system,
     solve_direct_univariate_quadratic_equalities, squared_distance_equation,
     subdivide_bernstein_univariate_polynomial_interval_roots,
 };
@@ -247,6 +247,14 @@ fn certification(c: &mut Criterion) {
             isolate_univariate_polynomial_roots(
                 &prepared_quadratic,
                 hyperlimit::PredicatePolicy::default(),
+            )
+        })
+    });
+    c.bench_function("represent_univariate_algebraic_roots", |b| {
+        b.iter(|| {
+            represent_univariate_algebraic_roots(
+                &prepared_quadratic,
+                hypersolve::RootIsolationConfig::default(),
             )
         })
     });

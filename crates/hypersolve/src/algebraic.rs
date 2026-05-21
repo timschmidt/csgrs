@@ -1,0 +1,711 @@
+//! Exact represented algebraic roots for solver residuals.
+//!
+//! This module is intentionally a representation layer, not a floating-point
+//! approximation layer and not a complete algebraic-number field package. A
+//! represented root carries the exact univariate polynomial row and the
+//! certified isolating interval produced by [`crate::root_isolation`]. This is
+//! the Yap boundary in a small form: construction keeps exact object evidence,
+//! while later predicates or candidate replay decide how that evidence may be
+//! consumed. See Yap, "Towards Exact Geometric Computation," *Computational
+//! Geometry* 7.1-2 (1997), and Collins and Loos, "Real Zeros of Polynomials,"
+//! in *Computer Algebra: Symbolic and Algebraic Computation* (1982).
+
+use std::cmp::Ordering;
+use std::collections::HashMap;
+
+use hyperlimit::{PredicatePolicy, compare_reals_with_policy};
+use hyperreal::Real;
+
+use crate::model::{ConstraintKind, Problem};
+use crate::prepared::PreparedProblem;
+use crate::root_isolation::{
+    IsolatedRootInterval, RootIsolationConfig, RootIsolationStatus, UnivariateRootIsolationReport,
+    isolate_univariate_polynomial_roots_with_config,
+};
+use crate::symbolic::{Expr, SymbolId};
+
+/// Representation kind for one isolated algebraic root.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum AlgebraicRootKind {
+    /// The isolator found an exact rational root value.
+    ExactRationalWitness,
+    /// The root is represented only by its exact polynomial and isolating
+    /// interval.
+    IsolatingInterval,
+}
+
+/// Validation status for represented algebraic-root evidence.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum AlgebraicRootValidationStatus {
+    /// The representation is structurally valid.
+    Valid,
+    /// The coefficient vector is empty, constant, or not exact-rational.
+    InvalidPolynomial,
+    /// The interval endpoints are ordered incorrectly.
+    InvalidInterval,
+    /// The interval does not claim exactly one distinct root.
+    NonUnitIsolation,
+    /// The exact rational witness is outside the interval.
+    WitnessOutsideInterval,
+    /// The exact rational witness does not satisfy the polynomial.
+    WitnessDoesNotSatisfyPolynomial,
+    /// Exact comparisons did not decide.
+    Undecided,
+}
+
+/// Validation report for a represented algebraic root.
+#[derive(Clone, Debug, PartialEq)]
+pub struct AlgebraicRootValidationReport {
+    /// Validation status.
+    pub status: AlgebraicRootValidationStatus,
+    /// Compact diagnostic reason.
+    pub message: Option<String>,
+}
+
+impl AlgebraicRootValidationReport {
+    fn valid() -> Self {
+        Self {
+            status: AlgebraicRootValidationStatus::Valid,
+            message: None,
+        }
+    }
+
+    fn invalid(status: AlgebraicRootValidationStatus, message: impl Into<String>) -> Self {
+        Self {
+            status,
+            message: Some(message.into()),
+        }
+    }
+}
+
+/// Exact representation of one real algebraic root.
+///
+/// The polynomial is stored in ascending power order. The isolating interval
+/// is trusted only after validation confirms the local shape of the evidence;
+/// uniqueness itself comes from the upstream Sturm/Collins-Loos isolation
+/// report, not from primitive-float sampling.
+#[derive(Clone, Debug, PartialEq)]
+pub struct AlgebraicRootRepresentation {
+    /// Source constraint index.
+    pub constraint_index: usize,
+    /// Solver symbol represented by the polynomial variable.
+    pub symbol: SymbolId,
+    /// Root interval ordinal within the source isolation report.
+    pub interval_index: usize,
+    /// Exact coefficients in ascending power order.
+    pub polynomial_coefficients: Vec<Real>,
+    /// Certified unit isolating interval or exact point interval.
+    pub interval: IsolatedRootInterval,
+    /// Whether this is an exact rational witness or a non-rational interval
+    /// representation.
+    pub kind: AlgebraicRootKind,
+    /// Validation evidence for the representation.
+    pub validation: AlgebraicRootValidationReport,
+}
+
+impl AlgebraicRootRepresentation {
+    /// Returns the exact rational witness, when the root is represented by a
+    /// point value.
+    pub fn exact_rational_witness(&self) -> Option<&Real> {
+        self.interval.exact_root.as_ref()
+    }
+
+    /// Returns whether this representation passed structural validation.
+    pub fn is_valid(&self) -> bool {
+        self.validation.status == AlgebraicRootValidationStatus::Valid
+    }
+}
+
+/// Row-level status for algebraic-root representation.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum AlgebraicRootRepresentationStatus {
+    /// Every isolated interval in the row was converted to a valid
+    /// representation.
+    Represented,
+    /// The row was supported and certified to have no real roots.
+    NoRealRoots,
+    /// The upstream isolation row was unsupported or undecided.
+    UnsupportedIsolationStatus,
+    /// The isolation report did not identify a solver symbol.
+    MissingSymbol,
+    /// The row could not be extracted as an exact-rational univariate
+    /// polynomial.
+    MissingPolynomial,
+    /// At least one interval failed representation validation.
+    InvalidEvidence,
+}
+
+/// Algebraic-root representation report for one active equality row.
+#[derive(Clone, Debug, PartialEq)]
+pub struct AlgebraicRootRepresentationReport {
+    /// Source constraint index.
+    pub constraint_index: usize,
+    /// Solver symbol represented by the polynomial variable, when available.
+    pub symbol: Option<SymbolId>,
+    /// Row status.
+    pub status: AlgebraicRootRepresentationStatus,
+    /// Represented roots for supported rows.
+    pub roots: Vec<AlgebraicRootRepresentation>,
+    /// Compact diagnostic reason.
+    pub message: Option<String>,
+}
+
+/// Build represented algebraic roots for active univariate equality rows.
+///
+/// This function runs the existing exact root isolator, then wraps each
+/// unit-root interval with the exact polynomial coefficients that define the
+/// root. The result is suitable for downstream APIs that need a persistent
+/// algebraic object but are not yet implementing arithmetic on algebraic
+/// numbers.
+pub fn represent_univariate_algebraic_roots(
+    prepared: &PreparedProblem<'_>,
+    config: RootIsolationConfig,
+) -> Vec<AlgebraicRootRepresentationReport> {
+    let reports = isolate_univariate_polynomial_roots_with_config(prepared, config.clone());
+    represent_univariate_algebraic_roots_from_reports(prepared, &reports, config.policy)
+}
+
+/// Build represented algebraic roots from existing isolation reports.
+///
+/// The caller supplies the isolation reports so path/curve code can preserve a
+/// previous isolation pass and still obtain persistent algebraic-root objects.
+/// Reports are matched by `constraint_index`; inactive and non-equality rows
+/// are rejected by construction rather than guessed from residual text.
+pub fn represent_univariate_algebraic_roots_from_reports(
+    prepared: &PreparedProblem<'_>,
+    reports: &[UnivariateRootIsolationReport],
+    policy: PredicatePolicy,
+) -> Vec<AlgebraicRootRepresentationReport> {
+    reports
+        .iter()
+        .map(|report| represent_one_report(prepared.problem(), report, policy))
+        .collect()
+}
+
+/// Validate one represented algebraic root.
+///
+/// This checks the representation payload itself: nonconstant exact-rational
+/// coefficients, an ordered interval, a unit distinct-root claim, and, when a
+/// rational witness is present, exact polynomial replay at that witness. It
+/// does not re-run Sturm isolation; the upstream isolation report remains the
+/// proof of uniqueness.
+pub fn validate_algebraic_root_representation(
+    root: &AlgebraicRootRepresentation,
+    policy: PredicatePolicy,
+) -> AlgebraicRootValidationReport {
+    validate_root_payload(&root.polynomial_coefficients, &root.interval, policy)
+}
+
+fn represent_one_report(
+    problem: &Problem,
+    report: &UnivariateRootIsolationReport,
+    policy: PredicatePolicy,
+) -> AlgebraicRootRepresentationReport {
+    if report.status == RootIsolationStatus::NoRealRoots {
+        return representation_report(
+            report.constraint_index,
+            report.symbol,
+            AlgebraicRootRepresentationStatus::NoRealRoots,
+            Vec::new(),
+            None,
+        );
+    }
+    if !matches!(
+        report.status,
+        RootIsolationStatus::Isolated | RootIsolationStatus::MultipleRoot
+    ) {
+        return representation_report(
+            report.constraint_index,
+            report.symbol,
+            AlgebraicRootRepresentationStatus::UnsupportedIsolationStatus,
+            Vec::new(),
+            report
+                .message
+                .clone()
+                .or_else(|| Some("isolation report did not contain represented roots".to_owned())),
+        );
+    }
+    let Some(symbol) = report.symbol else {
+        return representation_report(
+            report.constraint_index,
+            None,
+            AlgebraicRootRepresentationStatus::MissingSymbol,
+            Vec::new(),
+            Some("isolation report did not carry a polynomial symbol".to_owned()),
+        );
+    };
+    let Some(constraint) = problem.constraints.get(report.constraint_index) else {
+        return representation_report(
+            report.constraint_index,
+            Some(symbol),
+            AlgebraicRootRepresentationStatus::MissingPolynomial,
+            Vec::new(),
+            Some("constraint index is outside the prepared problem".to_owned()),
+        );
+    };
+    if !constraint.active || constraint.kind != ConstraintKind::Equality {
+        return representation_report(
+            report.constraint_index,
+            Some(symbol),
+            AlgebraicRootRepresentationStatus::MissingPolynomial,
+            Vec::new(),
+            Some("algebraic root representation requires an active equality row".to_owned()),
+        );
+    }
+    let Some(extracted) = collect_univariate_polynomial(&constraint.residual) else {
+        return representation_report(
+            report.constraint_index,
+            Some(symbol),
+            AlgebraicRootRepresentationStatus::MissingPolynomial,
+            Vec::new(),
+            Some("constraint residual is not a supported univariate polynomial".to_owned()),
+        );
+    };
+    if extracted.symbol != Some(symbol) {
+        return representation_report(
+            report.constraint_index,
+            Some(symbol),
+            AlgebraicRootRepresentationStatus::MissingPolynomial,
+            Vec::new(),
+            Some("isolation symbol does not match extracted polynomial symbol".to_owned()),
+        );
+    }
+    let Some(polynomial) = trim_polynomial(extracted.coefficients, policy) else {
+        return representation_report(
+            report.constraint_index,
+            Some(symbol),
+            AlgebraicRootRepresentationStatus::MissingPolynomial,
+            Vec::new(),
+            Some("could not trim polynomial coefficients exactly".to_owned()),
+        );
+    };
+
+    let mut saw_invalid = false;
+    let roots = report
+        .intervals
+        .iter()
+        .enumerate()
+        .map(|(interval_index, interval)| {
+            let validation = validate_root_payload(&polynomial, interval, policy);
+            if validation.status != AlgebraicRootValidationStatus::Valid {
+                saw_invalid = true;
+            }
+            AlgebraicRootRepresentation {
+                constraint_index: report.constraint_index,
+                symbol,
+                interval_index,
+                polynomial_coefficients: polynomial.clone(),
+                interval: interval.clone(),
+                kind: if interval.exact_root.is_some() {
+                    AlgebraicRootKind::ExactRationalWitness
+                } else {
+                    AlgebraicRootKind::IsolatingInterval
+                },
+                validation,
+            }
+        })
+        .collect::<Vec<_>>();
+    representation_report(
+        report.constraint_index,
+        Some(symbol),
+        if saw_invalid {
+            AlgebraicRootRepresentationStatus::InvalidEvidence
+        } else {
+            AlgebraicRootRepresentationStatus::Represented
+        },
+        roots,
+        saw_invalid.then(|| "one or more isolated roots failed validation".to_owned()),
+    )
+}
+
+fn validate_root_payload(
+    polynomial: &[Real],
+    interval: &IsolatedRootInterval,
+    policy: PredicatePolicy,
+) -> AlgebraicRootValidationReport {
+    if polynomial.len() <= 1
+        || polynomial
+            .iter()
+            .any(|value| value.exact_rational_ref().is_none())
+    {
+        return AlgebraicRootValidationReport::invalid(
+            AlgebraicRootValidationStatus::InvalidPolynomial,
+            "represented algebraic roots require nonconstant exact-rational polynomials",
+        );
+    }
+    match compare_reals_with_policy(&interval.lower, &interval.upper, policy).value() {
+        Some(Ordering::Greater) => {
+            return AlgebraicRootValidationReport::invalid(
+                AlgebraicRootValidationStatus::InvalidInterval,
+                "isolating interval lower endpoint is greater than upper endpoint",
+            );
+        }
+        Some(Ordering::Less | Ordering::Equal) => {}
+        None => {
+            return AlgebraicRootValidationReport::invalid(
+                AlgebraicRootValidationStatus::Undecided,
+                "could not compare isolating interval endpoints",
+            );
+        }
+    }
+    if interval.distinct_root_count != 1 {
+        return AlgebraicRootValidationReport::invalid(
+            AlgebraicRootValidationStatus::NonUnitIsolation,
+            "represented algebraic roots require exactly one distinct root",
+        );
+    }
+    let Some(root) = &interval.exact_root else {
+        return AlgebraicRootValidationReport::valid();
+    };
+    if !point_lies_in_interval(root, &interval.lower, &interval.upper, policy) {
+        return AlgebraicRootValidationReport::invalid(
+            AlgebraicRootValidationStatus::WitnessOutsideInterval,
+            "exact rational witness is outside its isolating interval",
+        );
+    }
+    match compare_reals_with_policy(
+        &evaluate_polynomial(polynomial, root),
+        &Real::zero(),
+        policy,
+    )
+    .value()
+    {
+        Some(Ordering::Equal) => AlgebraicRootValidationReport::valid(),
+        Some(Ordering::Less | Ordering::Greater) => AlgebraicRootValidationReport::invalid(
+            AlgebraicRootValidationStatus::WitnessDoesNotSatisfyPolynomial,
+            "exact rational witness does not satisfy the represented polynomial",
+        ),
+        None => AlgebraicRootValidationReport::invalid(
+            AlgebraicRootValidationStatus::Undecided,
+            "could not replay exact rational witness",
+        ),
+    }
+}
+
+fn point_lies_in_interval(
+    point: &Real,
+    lower: &Real,
+    upper: &Real,
+    policy: PredicatePolicy,
+) -> bool {
+    let Some(lower_cmp) = compare_reals_with_policy(point, lower, policy).value() else {
+        return false;
+    };
+    let Some(upper_cmp) = compare_reals_with_policy(point, upper, policy).value() else {
+        return false;
+    };
+    lower_cmp != Ordering::Less && upper_cmp != Ordering::Greater
+}
+
+#[derive(Clone, Debug)]
+struct ExtractedPolynomial {
+    symbol: Option<SymbolId>,
+    coefficients: Vec<Real>,
+}
+
+impl ExtractedPolynomial {
+    fn constant(value: Real) -> Self {
+        Self {
+            symbol: None,
+            coefficients: vec![value],
+        }
+    }
+
+    fn symbol(symbol: SymbolId) -> Self {
+        Self {
+            symbol: Some(symbol),
+            coefficients: vec![Real::zero(), Real::one()],
+        }
+    }
+
+    fn scale(mut self, scale: Real) -> Self {
+        for coefficient in &mut self.coefficients {
+            *coefficient = coefficient.clone() * scale.clone();
+        }
+        self
+    }
+
+    fn add(self, other: Self) -> Option<Self> {
+        let symbol = merge_symbol(self.symbol, other.symbol)?;
+        let len = self.coefficients.len().max(other.coefficients.len());
+        let mut coefficients = vec![Real::zero(); len];
+        for (index, coefficient) in self.coefficients.into_iter().enumerate() {
+            coefficients[index] = coefficients[index].clone() + coefficient;
+        }
+        for (index, coefficient) in other.coefficients.into_iter().enumerate() {
+            coefficients[index] = coefficients[index].clone() + coefficient;
+        }
+        Some(Self {
+            symbol,
+            coefficients,
+        })
+    }
+
+    fn multiply(self, other: Self) -> Option<Self> {
+        let symbol = merge_symbol(self.symbol, other.symbol)?;
+        let mut coefficients =
+            vec![Real::zero(); self.coefficients.len() + other.coefficients.len() - 1];
+        for (left_index, left) in self.coefficients.into_iter().enumerate() {
+            for (right_index, right) in other.coefficients.iter().enumerate() {
+                let index = left_index + right_index;
+                coefficients[index] = coefficients[index].clone() + left.clone() * right.clone();
+            }
+        }
+        Some(Self {
+            symbol,
+            coefficients,
+        })
+    }
+
+    fn powi(self, exponent: i64) -> Option<Self> {
+        if exponent < 0 {
+            return None;
+        }
+        let mut result = Self::constant(Real::one());
+        for _ in 0..exponent {
+            result = result.multiply(self.clone())?;
+        }
+        Some(result)
+    }
+}
+
+fn collect_univariate_polynomial(expression: &Expr) -> Option<ExtractedPolynomial> {
+    match expression {
+        Expr::Constant(value) => Some(ExtractedPolynomial::constant(value.clone())),
+        Expr::Symbol(symbol) => Some(ExtractedPolynomial::symbol(symbol.id)),
+        Expr::Add(left, right) => {
+            collect_univariate_polynomial(left)?.add(collect_univariate_polynomial(right)?)
+        }
+        Expr::Sub(left, right) => collect_univariate_polynomial(left)?
+            .add(collect_univariate_polynomial(right)?.scale(-Real::one())),
+        Expr::Neg(value) => Some(collect_univariate_polynomial(value)?.scale(-Real::one())),
+        Expr::Mul(left, right) => {
+            collect_univariate_polynomial(left)?.multiply(collect_univariate_polynomial(right)?)
+        }
+        Expr::Div(left, right) => {
+            let denominator = constant_value(right)?;
+            let reciprocal = (Real::one() / denominator).ok()?;
+            Some(collect_univariate_polynomial(left)?.scale(reciprocal))
+        }
+        Expr::PowI(value, exponent) => collect_univariate_polynomial(value)?.powi(*exponent),
+        Expr::Sqrt(_)
+        | Expr::Sin(_)
+        | Expr::Cos(_)
+        | Expr::Ln(_)
+        | Expr::Log10(_)
+        | Expr::Asin(_)
+        | Expr::Acos(_)
+        | Expr::Acosh(_)
+        | Expr::Atanh(_) => None,
+    }
+}
+
+fn merge_symbol(left: Option<SymbolId>, right: Option<SymbolId>) -> Option<Option<SymbolId>> {
+    match (left, right) {
+        (None, None) => Some(None),
+        (Some(symbol), None) | (None, Some(symbol)) => Some(Some(symbol)),
+        (Some(left), Some(right)) if left == right => Some(Some(left)),
+        (Some(_), Some(_)) => None,
+    }
+}
+
+fn constant_value(expression: &Expr) -> Option<Real> {
+    let facts = expression.structural_facts();
+    if !facts.dependencies.is_empty() {
+        return None;
+    }
+    expression.eval_real(&HashMap::new()).ok()
+}
+
+fn trim_polynomial(mut polynomial: Vec<Real>, policy: PredicatePolicy) -> Option<Vec<Real>> {
+    while polynomial.len() > 1 {
+        let trailing = polynomial.last()?;
+        match compare_reals_with_policy(trailing, &Real::zero(), policy).value()? {
+            Ordering::Equal => {
+                polynomial.pop();
+            }
+            Ordering::Less | Ordering::Greater => break,
+        }
+    }
+    if polynomial.is_empty() {
+        polynomial.push(Real::zero());
+    }
+    Some(polynomial)
+}
+
+fn evaluate_polynomial(polynomial: &[Real], point: &Real) -> Real {
+    polynomial
+        .iter()
+        .rev()
+        .cloned()
+        .fold(Real::zero(), |value, coefficient| {
+            value * point.clone() + coefficient
+        })
+}
+
+fn representation_report(
+    constraint_index: usize,
+    symbol: Option<SymbolId>,
+    status: AlgebraicRootRepresentationStatus,
+    roots: Vec<AlgebraicRootRepresentation>,
+    message: Option<String>,
+) -> AlgebraicRootRepresentationReport {
+    AlgebraicRootRepresentationReport {
+        constraint_index,
+        symbol,
+        status,
+        roots,
+        message,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use proptest::prelude::*;
+
+    use super::*;
+    use crate::model::Constraint;
+
+    fn real(value: i64) -> Real {
+        Real::from(value)
+    }
+
+    #[test]
+    fn represented_roots_preserve_polynomial_and_interval_evidence() {
+        let x = Expr::symbol(SymbolId(0), "x");
+        let mut problem = Problem::default();
+        problem.add_variable("x", real(0));
+        problem.add_constraint(Constraint::equality(
+            "sqrt two roots",
+            x.clone().powi(2) - Expr::int(2),
+        ));
+        let reports = represent_univariate_algebraic_roots(
+            &PreparedProblem::new(&problem),
+            RootIsolationConfig::default(),
+        );
+
+        assert_eq!(reports.len(), 1);
+        assert_eq!(
+            reports[0].status,
+            AlgebraicRootRepresentationStatus::Represented
+        );
+        assert_eq!(reports[0].roots.len(), 2);
+        assert!(
+            reports[0]
+                .roots
+                .iter()
+                .all(AlgebraicRootRepresentation::is_valid)
+        );
+        assert!(
+            reports[0]
+                .roots
+                .iter()
+                .all(|root| root.kind == AlgebraicRootKind::IsolatingInterval)
+        );
+        assert_eq!(
+            reports[0].roots[0].polynomial_coefficients,
+            vec![real(-2), Real::zero(), Real::one()]
+        );
+    }
+
+    #[test]
+    fn exact_rational_witnesses_replay_against_polynomial() {
+        let x = Expr::symbol(SymbolId(0), "x");
+        let mut problem = Problem::default();
+        problem.add_variable("x", real(0));
+        problem.add_constraint(Constraint::equality(
+            "two rational roots",
+            x.clone().powi(2) - Expr::int(1),
+        ));
+        let reports = represent_univariate_algebraic_roots(
+            &PreparedProblem::new(&problem),
+            RootIsolationConfig {
+                max_interval_width: Some(Real::one()),
+                max_refinement_steps: 8,
+                ..RootIsolationConfig::default()
+            },
+        );
+
+        assert_eq!(
+            reports[0].status,
+            AlgebraicRootRepresentationStatus::Represented
+        );
+        assert!(reports[0].roots.iter().any(|root| {
+            root.kind == AlgebraicRootKind::ExactRationalWitness
+                && root.exact_rational_witness() == Some(&real(1))
+        }));
+        assert!(reports[0].roots.iter().all(|root| {
+            validate_algebraic_root_representation(root, PredicatePolicy::default()).status
+                == AlgebraicRootValidationStatus::Valid
+        }));
+    }
+
+    #[test]
+    fn invalid_representations_are_rejected_antagonistically() {
+        let invalid_count = AlgebraicRootRepresentation {
+            constraint_index: 0,
+            symbol: SymbolId(0),
+            interval_index: 0,
+            polynomial_coefficients: vec![real(-1), Real::zero(), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: real(-2),
+                upper: real(2),
+                exact_root: None,
+                distinct_root_count: 2,
+            },
+            kind: AlgebraicRootKind::IsolatingInterval,
+            validation: AlgebraicRootValidationReport::valid(),
+        };
+        assert_eq!(
+            validate_algebraic_root_representation(&invalid_count, PredicatePolicy::default())
+                .status,
+            AlgebraicRootValidationStatus::NonUnitIsolation
+        );
+
+        let bad_witness = AlgebraicRootRepresentation {
+            interval: IsolatedRootInterval {
+                lower: real(0),
+                upper: real(2),
+                exact_root: Some(real(2)),
+                distinct_root_count: 1,
+            },
+            kind: AlgebraicRootKind::ExactRationalWitness,
+            ..invalid_count
+        };
+        assert_eq!(
+            validate_algebraic_root_representation(&bad_witness, PredicatePolicy::default()).status,
+            AlgebraicRootValidationStatus::WitnessDoesNotSatisfyPolynomial
+        );
+    }
+
+    proptest! {
+        #[test]
+        fn generated_linear_roots_become_valid_represented_intervals(root in -64_i16..=64) {
+            let root = i64::from(root);
+            let x = Expr::symbol(SymbolId(0), "x");
+            let mut problem = Problem::default();
+            problem.add_variable("x", real(0));
+            problem.add_constraint(Constraint::equality(
+                "generated linear root",
+                x - Expr::int(root),
+            ));
+
+            let reports = represent_univariate_algebraic_roots(
+                &PreparedProblem::new(&problem),
+                RootIsolationConfig::default(),
+            );
+
+            prop_assert_eq!(reports.len(), 1);
+            prop_assert_eq!(
+                &reports[0].status,
+                &AlgebraicRootRepresentationStatus::Represented
+            );
+            prop_assert_eq!(reports[0].roots.len(), 1);
+            prop_assert!(reports[0].roots[0].is_valid());
+            prop_assert_eq!(
+                &reports[0].roots[0].polynomial_coefficients,
+                &vec![real(-root), Real::one()]
+            );
+        }
+    }
+}
