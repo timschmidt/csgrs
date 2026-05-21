@@ -14,7 +14,9 @@ categories = ["science", "simulation", "mathematics"]
 # Hyper ecosystem dependencies: keep the crate-official release references and
 # the commented workspace references below. Switch to the workspace form for
 # local development, then switch back to crates.io versions before publishing.
-hyperlattice = { version = "0.5.0" }
+hyperlattice = { path = "../hyperlattice" }
+hyperlimit = { path = "../hyperlimit" }
+hypermesh = { path = "../hypermesh", default-features = false, features = ["exact"] }
 hyperreal = { version = "0.12.0" }
 hypersolve = { version = "0.2.0" }
 # hyperlattice = { path = "../hyperlattice" }

@@ -27,6 +27,10 @@
 //! primitive floats.
 
 use hyperlattice::Vector3;
+use hyperlimit::{
+    Aabb3Intersection, Aabb3PointLocation, PlaneSegmentRelation, PlaneSide, PredicateOutcome,
+    Triangle3Location,
+};
 use hyperreal::{Real, RealSign};
 
 use crate::{PhysicsError, PhysicsResult};
@@ -242,43 +246,37 @@ impl Triangle3 {
         let ab = b - a;
         let ac = c - a;
         let normal = ab.cross(&ac);
-        let normal_norm = normal.dot(&normal);
-        if sign(&normal_norm)? == RealSign::Zero {
-            return Ok(TrianglePointReport3 {
-                plane_signed_distance: Real::zero(),
-                edge_signs: None,
-                classification: TrianglePointClassification::DegenerateTriangle,
-            });
-        }
-
         let plane_signed_distance = (point - a).dot(&normal);
-        if sign(&plane_signed_distance)? != RealSign::Zero {
-            return Ok(TrianglePointReport3 {
-                plane_signed_distance,
-                edge_signs: None,
-                classification: TrianglePointClassification::OffPlane,
-            });
-        }
 
-        let edge_signs = [
-            sign(&(b - a).cross(&(point - a)).dot(&normal))?,
-            sign(&(c - b).cross(&(point - b)).dot(&normal))?,
-            sign(&(a - c).cross(&(point - c)).dot(&normal))?,
-        ];
-        let has_negative = edge_signs
-            .iter()
-            .any(|sign| matches!(sign, RealSign::Negative));
-        let has_zero = edge_signs.iter().any(|sign| matches!(sign, RealSign::Zero));
-        let classification = if has_negative {
-            TrianglePointClassification::Outside
-        } else if has_zero {
-            TrianglePointClassification::Boundary
-        } else {
+        let location = decide(hyperlimit::classify_point_triangle3(
+            &point3_from_vector(a),
+            &point3_from_vector(b),
+            &point3_from_vector(c),
+            &point3_from_vector(point),
+        ))?;
+        let classification = match location {
+            Triangle3Location::Degenerate => TrianglePointClassification::DegenerateTriangle,
+            Triangle3Location::OffPlane => TrianglePointClassification::OffPlane,
+            Triangle3Location::Outside => TrianglePointClassification::Outside,
+            Triangle3Location::Inside => TrianglePointClassification::Inside,
+            Triangle3Location::OnEdge | Triangle3Location::OnVertex => {
+                TrianglePointClassification::Boundary
+            }
+        };
+        let edge_signs = match classification {
             TrianglePointClassification::Inside
+            | TrianglePointClassification::Boundary
+            | TrianglePointClassification::Outside => Some([
+                sign(&(b - a).cross(&(point - a)).dot(&normal))?,
+                sign(&(c - b).cross(&(point - b)).dot(&normal))?,
+                sign(&(a - c).cross(&(point - c)).dot(&normal))?,
+            ]),
+            TrianglePointClassification::OffPlane
+            | TrianglePointClassification::DegenerateTriangle => None,
         };
         Ok(TrianglePointReport3 {
             plane_signed_distance,
-            edge_signs: Some(edge_signs),
+            edge_signs,
             classification,
         })
     }
@@ -306,6 +304,32 @@ impl ClosedTriangleMesh3 {
     pub fn triangle_count(&self) -> usize {
         self.triangles.len()
     }
+
+    /// Lowers this physics mesh carrier into `hypermesh` exact topology storage.
+    ///
+    /// Physics keeps material and mass-property interpretation. Mesh
+    /// validation and topology facts are delegated to `hypermesh` at this
+    /// boundary.
+    pub fn to_hypermesh_exact_with_policy(
+        &self,
+        source: hypermesh::exact::SourceProvenance,
+        policy: hypermesh::exact::ValidationPolicy,
+    ) -> Result<hypermesh::exact::ExactMesh, hypermesh::exact::MeshError> {
+        let mut vertices = Vec::with_capacity(self.triangles.len() * 3);
+        let mut triangles = Vec::with_capacity(self.triangles.len());
+        for triangle in &self.triangles {
+            let base = vertices.len();
+            for vertex in triangle.vertices() {
+                vertices.push(hypermesh::exact::ExactPoint3::new(
+                    vertex[0].clone(),
+                    vertex[1].clone(),
+                    vertex[2].clone(),
+                ));
+            }
+            triangles.push(hypermesh::exact::Triangle([base, base + 1, base + 2]));
+        }
+        hypermesh::exact::ExactMesh::new_with_policy(vertices, triangles, source, policy)
+    }
 }
 
 impl AxisAlignedBox3 {
@@ -321,34 +345,28 @@ impl AxisAlignedBox3 {
 
     /// Classifies a point against the inclusive box.
     pub fn classify_point(&self, point: &Vector3) -> PhysicsResult<BoxPointClassification> {
-        let mut boundary = false;
-        for axis in 0..3 {
-            let lower = sign(&(point[axis].clone() - self.min[axis].clone()))?;
-            let upper = sign(&(self.max[axis].clone() - point[axis].clone()))?;
-            match (lower, upper) {
-                (RealSign::Negative, _) | (_, RealSign::Negative) => {
-                    return Ok(BoxPointClassification::Outside);
-                }
-                (RealSign::Zero, _) | (_, RealSign::Zero) => boundary = true,
-                (RealSign::Positive, RealSign::Positive) => {}
-            }
+        match decide(hyperlimit::classify_point_aabb3(
+            &point3_from_vector(&self.min),
+            &point3_from_vector(&self.max),
+            &point3_from_vector(point),
+        ))? {
+            Aabb3PointLocation::Outside => Ok(BoxPointClassification::Outside),
+            Aabb3PointLocation::Boundary => Ok(BoxPointClassification::Boundary),
+            Aabb3PointLocation::Inside => Ok(BoxPointClassification::Inside),
         }
-        Ok(if boundary {
-            BoxPointClassification::Boundary
-        } else {
-            BoxPointClassification::Inside
-        })
     }
 
     /// Returns true when two inclusive AABBs are certified disjoint.
     pub fn certified_disjoint(&self, other: &Self) -> PhysicsResult<bool> {
-        for axis in 0..3 {
-            if less(&self.max[axis], &other.min[axis])? || less(&other.max[axis], &self.min[axis])?
-            {
-                return Ok(true);
-            }
-        }
-        Ok(false)
+        Ok(matches!(
+            decide(hyperlimit::classify_aabb3_intersection(
+                &point3_from_vector(&self.min),
+                &point3_from_vector(&self.max),
+                &point3_from_vector(&other.min),
+                &point3_from_vector(&other.max),
+            ))?,
+            Aabb3Intersection::Disjoint
+        ))
     }
 
     /// Returns an exact support point in the requested direction.
@@ -409,10 +427,14 @@ impl Plane3 {
     /// Computes exact signed point distance numerator and classification.
     pub fn classify_point(&self, point: &Vector3) -> PhysicsResult<PlanePointReport3> {
         let signed_distance = (point - &self.point).dot(&self.normal);
-        let classification = match sign(&signed_distance)? {
-            RealSign::Positive => PlanePointClassification::Positive,
-            RealSign::Negative => PlanePointClassification::Negative,
-            RealSign::Zero => PlanePointClassification::OnPlane,
+        let predicate_plane = self.predicate_plane();
+        let classification = match decide(hyperlimit::classify_point_plane(
+            &point3_from_vector(point),
+            &predicate_plane,
+        ))? {
+            PlaneSide::Above => PlanePointClassification::Positive,
+            PlaneSide::Below => PlanePointClassification::Negative,
+            PlaneSide::On => PlanePointClassification::OnPlane,
         };
         Ok(PlanePointReport3 {
             signed_distance,
@@ -454,23 +476,37 @@ impl Plane3 {
     pub fn classify_segment(&self, segment: &Segment3) -> PhysicsResult<SegmentPlaneReport3> {
         let start_signed_distance = (&segment.start - &self.point).dot(&self.normal);
         let end_signed_distance = (&segment.end - &self.point).dot(&self.normal);
-        let start_sign = sign(&start_signed_distance)?;
-        let end_sign = sign(&end_signed_distance)?;
-        let classification = match (start_sign, end_sign) {
-            (RealSign::Zero, RealSign::Zero) => SegmentPlaneClassification::Coplanar,
-            (RealSign::Zero, _) => SegmentPlaneClassification::StartOnPlane,
-            (_, RealSign::Zero) => SegmentPlaneClassification::EndOnPlane,
-            (RealSign::Positive, RealSign::Negative) | (RealSign::Negative, RealSign::Positive) => {
-                SegmentPlaneClassification::Crosses
+        let predicate_plane = self.predicate_plane();
+        let classification = match decide(hyperlimit::classify_plane_segment(
+            &predicate_plane,
+            &point3_from_vector(&segment.start),
+            &point3_from_vector(&segment.end),
+        ))? {
+            PlaneSegmentRelation::Coplanar => SegmentPlaneClassification::Coplanar,
+            PlaneSegmentRelation::Crossing => SegmentPlaneClassification::Crosses,
+            PlaneSegmentRelation::Above => SegmentPlaneClassification::PositiveSide,
+            PlaneSegmentRelation::Below => SegmentPlaneClassification::NegativeSide,
+            PlaneSegmentRelation::EndpointTouch => {
+                let start_sign = sign(&start_signed_distance)?;
+                if start_sign == RealSign::Zero {
+                    SegmentPlaneClassification::StartOnPlane
+                } else {
+                    SegmentPlaneClassification::EndOnPlane
+                }
             }
-            (RealSign::Positive, RealSign::Positive) => SegmentPlaneClassification::PositiveSide,
-            (RealSign::Negative, RealSign::Negative) => SegmentPlaneClassification::NegativeSide,
         };
         Ok(SegmentPlaneReport3 {
             start_signed_distance,
             end_signed_distance,
             classification,
         })
+    }
+
+    fn predicate_plane(&self) -> hyperlimit::Plane3 {
+        hyperlimit::Plane3::new(
+            point3_from_vector(&self.normal),
+            -self.point.dot(&self.normal),
+        )
     }
 }
 
@@ -524,9 +560,12 @@ fn choose_support_axis(
 }
 
 fn sign(value: &Real) -> PhysicsResult<RealSign> {
-    value
-        .refine_sign_until(-64)
-        .ok_or(PhysicsError::UnknownShapeQuery)
+    match hyperlimit::compare_reals(value, &Real::zero()).value() {
+        Some(core::cmp::Ordering::Less) => Ok(RealSign::Negative),
+        Some(core::cmp::Ordering::Equal) => Ok(RealSign::Zero),
+        Some(core::cmp::Ordering::Greater) => Ok(RealSign::Positive),
+        None => Err(PhysicsError::UnknownShapeQuery),
+    }
 }
 
 fn leq(left: &Real, right: &Real) -> PhysicsResult<bool> {
@@ -536,9 +575,10 @@ fn leq(left: &Real, right: &Real) -> PhysicsResult<bool> {
     ))
 }
 
-fn less(left: &Real, right: &Real) -> PhysicsResult<bool> {
-    Ok(matches!(
-        sign(&(left.clone() - right.clone()))?,
-        RealSign::Negative
-    ))
+fn decide<T>(outcome: PredicateOutcome<T>) -> PhysicsResult<T> {
+    outcome.value().ok_or(PhysicsError::UnknownShapeQuery)
+}
+
+fn point3_from_vector(vector: &Vector3) -> hyperlimit::Point3 {
+    hyperlimit::Point3::new(vector[0].clone(), vector[1].clone(), vector[2].clone())
 }

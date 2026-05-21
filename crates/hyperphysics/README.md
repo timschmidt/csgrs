@@ -25,12 +25,24 @@ simulation, field, or engine exports are trusted.
   [hypertri](https://github.com/timschmidt/hypertri), and
   [hypermesh](https://github.com/timschmidt/hypermesh): geometry/topology owners for
   shapes and mesh facts.
+- [hypervoxel](https://github.com/timschmidt/hypervoxel): sparse-grid, support, field,
+  and process evidence for sampled physical handoffs.
 - [hypersolve](https://github.com/timschmidt/hypersolve): residual replay and future
   coupled solver certification.
 - [hypercircuit](https://github.com/timschmidt/hypercircuit),
   [hyperpath](https://github.com/timschmidt/hyperpath), and
   [hyperdrc](https://github.com/timschmidt/hyperdrc): circuit, routing, and
   manufacturing context for coupled physical fixtures.
+- [hyperpack](https://github.com/timschmidt/hyperpack): placement, load, support, and
+  mass-property consumers.
+- [hyperparts](https://github.com/timschmidt/hyperparts): source-attributed material,
+  package, and lifecycle evidence.
+- [hyperevolution](https://github.com/timschmidt/hyperevolution): proposal-search layer
+  for physical design candidates.
+- [hyperbrep](https://github.com/timschmidt/hyperbrep): exact boundary-representation
+  evidence for future physical shape adapters.
+- [hypersdf](https://github.com/timschmidt/hypersdf): implicit fields and signed-distance
+  evidence for future collision and clearance previews.
 
 ## Typical Physics Problems
 
@@ -60,6 +72,8 @@ diagnostic replay where possible.
   `HypersolveResidualReplayReport` record replay and diagnostics.
 - Thermal, optical, electromagnetic, photochemical, reaction-diffusion, and fluid
   modules define exact-aware handoff/report carriers for future solvers.
+- `SourceSpec`, `PropertyValue`, `ExternalReplacementStatus`, and certification reports
+  make material-property provenance, conflicts, unknowns, and external proposals visible.
 
 ## Precision Model
 
@@ -71,6 +85,11 @@ over tolerance inflation.
 
 Primitive floats belong at rendering, external simulation-engine, file IO, diagnostics,
 or adapter boundaries. They are not physical truth inside the crate.
+
+Numerical explosion is controlled by retaining physical facts as compact source objects:
+materials, fixtures, support maps, AABBs, oriented mesh integrals, property graphs, and
+residual rows. The crate does not turn every physical carrier into a dense sampled field;
+field, fluid, thermal, EM, and process adapters must report what they approximate.
 
 ## Performance Model
 
@@ -107,7 +126,7 @@ adapter work.
 
 ```toml
 [dependencies]
-hyperphysics = "0.2.0"
+hyperphysics = "0.2.1"
 ```
 
 For sibling checkouts:
@@ -125,7 +144,7 @@ Create exact setup facts, then hand simulation or field work to explicit adapter
 use hyperlattice::Vector3;
 use hyperphysics::{
     AxisAlignedBox3, BodyId, BodyKind, ExactBody3, ExactFixture3, ExactMaterial,
-    MaterialId, PhysicsShape3,
+    FixtureId, MaterialId, PhysicsShape3,
 };
 use hyperreal::Real;
 
@@ -140,13 +159,71 @@ let shape = PhysicsShape3::AxisAlignedBox(AxisAlignedBox3::new(
     Vector3::new([Real::from(1), Real::from(1), Real::from(1)]),
 )?);
 
-let fixture = ExactFixture3::new("fixture-0")?.with_shape(shape);
-let body = ExactBody3::new(BodyId::new("body-0")?, BodyKind::Rigid, vec![fixture]);
+let fixture = ExactFixture3::new(FixtureId::new("fixture-0")?, shape, material.clone());
+let body = ExactBody3::new(BodyId::new("body-0")?, BodyKind::Dynamic, vec![fixture]);
+assert_eq!(body.fixtures().len(), 1);
 ```
 
-Mass properties, contact reports, thermal/optical/electromagnetic/fluid carriers, force
-accumulators, and `hypersolve` residual replay rows all keep authored physical facts
-separate from runtime engine proposals.
+Exact contact and replay reports keep runtime proposals auditable:
+
+```rust,ignore
+use hyperlattice::Vector3;
+use hyperphysics::{
+    AabbContactReport3, AxisAlignedBox3, ContactClassification, ForceAccumulator3,
+    ForceContribution3, StepReplayReport3,
+};
+use hyperreal::Real;
+
+let left = AxisAlignedBox3::new(
+    Vector3::new([Real::from(0), Real::from(0), Real::from(0)]),
+    Vector3::new([Real::from(1), Real::from(1), Real::from(1)]),
+)?;
+let right = AxisAlignedBox3::new(
+    Vector3::new([Real::from(1), Real::from(0), Real::from(0)]),
+    Vector3::new([Real::from(2), Real::from(1), Real::from(1)]),
+)?;
+let contact = AabbContactReport3::classify(&left, &right)?;
+assert_eq!(contact.classification, ContactClassification::Touching);
+
+let mut forces = ForceAccumulator3::default();
+forces.push(ForceContribution3 {
+    source: "test force".into(),
+    force: Vector3::new([Real::from(1), Real::from(0), Real::from(0)]),
+});
+let step = StepReplayReport3::explicit_euler_replay(
+    Real::from(2),
+    Real::from(1),
+    Vector3::zero(),
+    Vector3::zero(),
+    &forces,
+)?;
+assert!(step.exact_replay);
+```
+
+Mass properties, contact reports, thermal/optical/electromagnetic/photochemical/fluid
+carriers, force accumulators, and `hypersolve` residual replay rows all keep authored
+physical facts separate from runtime engine proposals.
+
+## References
+
+- Yap, Chee K. "Towards Exact Geometric Computation." *Computational Geometry* 7.1-2
+  (1997): 3-23.
+- Mirtich, Brian. "Fast and Accurate Computation of Polyhedral Mass Properties."
+  *Journal of Graphics Tools* 1.2 (1996): 31-50.
+- Landau, L. D., and E. M. Lifshitz. *Theory of Elasticity*. 3rd ed., 1986.
+- Marsden, Jerrold E., and Matthew West. "Discrete Mechanics and Variational
+  Integrators." *Acta Numerica* 10 (2001): 357-514.
+- Stewart, David E., and Jeffrey C. Trinkle. "An Implicit Time-Stepping Scheme for Rigid
+  Body Dynamics with Inelastic Collisions and Coulomb Friction." *International Journal
+  for Numerical Methods in Engineering* 39.15 (1996): 2673-2691.
+- Maxwell, James Clerk. "A Dynamical Theory of the Electromagnetic Field." 1865.
+- Stratton, Julius Adams. *Electromagnetic Theory*. McGraw-Hill, 1941.
+- Beer, August. "Bestimmung der Absorption des rothen Lichts in farbigen Flussigkeiten."
+  1852.
+- Lambert, Johann Heinrich. *Photometria*. 1760.
+- Jacobs, Paul F. *Rapid Prototyping & Manufacturing: Fundamentals of
+  Stereolithography*. 1992.
+- Fick, Adolf. "Ueber Diffusion." *Annalen der Physik* 94 (1855).
 
 ## Development
 

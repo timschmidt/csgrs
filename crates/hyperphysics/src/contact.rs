@@ -15,6 +15,8 @@
 //! (1996), while this module only provides the exact geometric/material facts
 //! those solvers would consume.
 
+use hyperlattice::Vector3;
+use hyperlimit::{Aabb3Intersection, PredicateOutcome};
 use hyperreal::{Real, RealSign};
 
 use crate::{AxisAlignedBox3, PhysicsError, PhysicsResult};
@@ -75,34 +77,27 @@ impl AabbContactReport3 {
     /// Classifies exact AABB/AABB contact without tolerance inflation.
     pub fn classify(left: &AxisAlignedBox3, right: &AxisAlignedBox3) -> PhysicsResult<Self> {
         let mut overlaps = [Real::zero(), Real::zero(), Real::zero()];
-        let mut touching = false;
+        let relation = decide(hyperlimit::classify_aabb3_intersection(
+            &point3_from_vector(&left.min),
+            &point3_from_vector(&left.max),
+            &point3_from_vector(&right.min),
+            &point3_from_vector(&right.max),
+        ))?;
 
+        if relation == Aabb3Intersection::Disjoint {
+            return Ok(Self {
+                classification: ContactClassification::Separated,
+                overlaps,
+                minimum_overlap_axis: None,
+            });
+        }
         for axis in 0..3 {
             let left_before_right = left.max[axis].clone() - right.min[axis].clone();
-            if sign(&left_before_right)? == RealSign::Negative {
-                return Ok(Self {
-                    classification: ContactClassification::Separated,
-                    overlaps,
-                    minimum_overlap_axis: None,
-                });
-            }
             let right_before_left = right.max[axis].clone() - left.min[axis].clone();
-            if sign(&right_before_left)? == RealSign::Negative {
-                return Ok(Self {
-                    classification: ContactClassification::Separated,
-                    overlaps,
-                    minimum_overlap_axis: None,
-                });
-            }
-
-            let overlap = min_real(left_before_right, right_before_left)?;
-            if sign(&overlap)? == RealSign::Zero {
-                touching = true;
-            }
-            overlaps[axis] = overlap;
+            overlaps[axis] = min_real(left_before_right, right_before_left)?;
         }
 
-        if touching {
+        if relation == Aabb3Intersection::Touching {
             Ok(Self {
                 classification: ContactClassification::Touching,
                 overlaps,
@@ -157,7 +152,18 @@ fn less(left: &Real, right: &Real) -> PhysicsResult<bool> {
 }
 
 fn sign(value: &Real) -> PhysicsResult<RealSign> {
-    value
-        .refine_sign_until(-64)
-        .ok_or(PhysicsError::UnknownShapeQuery)
+    match hyperlimit::compare_reals(value, &Real::zero()).value() {
+        Some(core::cmp::Ordering::Less) => Ok(RealSign::Negative),
+        Some(core::cmp::Ordering::Equal) => Ok(RealSign::Zero),
+        Some(core::cmp::Ordering::Greater) => Ok(RealSign::Positive),
+        None => Err(PhysicsError::UnknownShapeQuery),
+    }
+}
+
+fn decide<T>(outcome: PredicateOutcome<T>) -> PhysicsResult<T> {
+    outcome.value().ok_or(PhysicsError::UnknownShapeQuery)
+}
+
+fn point3_from_vector(vector: &Vector3) -> hyperlimit::Point3 {
+    hyperlimit::Point3::new(vector[0].clone(), vector[1].clone(), vector[2].clone())
 }
