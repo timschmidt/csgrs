@@ -8780,6 +8780,70 @@ fn bezier_boolean_result_consumes_schedule_multi_cycle_successors_and_depth_fact
         BezierBooleanResultStatus::RegionAssemblyBlocked
     );
     assert!(blocked.has_blockers());
+
+    let containment_facts = [BezierBooleanLoopContainmentFact2 {
+        container_loop_index: 0,
+        contained_loop_index: 1,
+    }];
+    let containment_result =
+        BezierBooleanResultReport2::from_schedule_multi_cycle_successor_containment_facts(
+            &schedule,
+            BooleanOp::Union,
+            &ownership_facts,
+            &endpoints,
+            &[],
+            0,
+            0,
+            &successors,
+            &containment_facts,
+        );
+    assert_eq!(containment_result.status, BezierBooleanResultStatus::Ready);
+    assert_eq!(containment_result.material_loop_indices, vec![0]);
+    assert_eq!(containment_result.hole_loop_indices, vec![1]);
+
+    let containment_role_blocked =
+        BezierBooleanResultReport2::from_schedule_multi_cycle_successor_containment_role_facts(
+            &schedule,
+            BooleanOp::Union,
+            &ownership_facts,
+            &endpoints,
+            &[],
+            0,
+            0,
+            &successors,
+            &containment_facts,
+            &[
+                BezierBooleanOutputLoopRole::Hole,
+                BezierBooleanOutputLoopRole::Material,
+            ],
+        );
+    assert_eq!(
+        containment_role_blocked.status,
+        BezierBooleanResultStatus::RegionAssemblyBlocked
+    );
+    assert!(containment_role_blocked.has_blockers());
+
+    let stale_containment = [BezierBooleanLoopContainmentFact2 {
+        container_loop_index: 9,
+        contained_loop_index: 1,
+    }];
+    let stale_containment_result =
+        BezierBooleanResultReport2::from_schedule_multi_cycle_successor_containment_facts(
+            &schedule,
+            BooleanOp::Union,
+            &ownership_facts,
+            &endpoints,
+            &[],
+            0,
+            0,
+            &successors,
+            &stale_containment,
+        );
+    assert_eq!(
+        stale_containment_result.status,
+        BezierBooleanResultStatus::RegionAssemblyBlocked
+    );
+    assert!(stale_containment_result.has_blockers());
 }
 
 #[test]
@@ -15216,6 +15280,32 @@ proptest! {
         prop_assert_eq!(result.status, BezierBooleanResultStatus::Ready);
         prop_assert_eq!(result.assigned_loop_count, cycle_count);
         prop_assert_eq!(result.directed_fragment_count, step_count);
+
+        let containment_facts = (0..cycle_count)
+            .flat_map(|contained_loop_index| {
+                (0..contained_loop_index).map(move |container_loop_index| {
+                    BezierBooleanLoopContainmentFact2 {
+                        container_loop_index,
+                        contained_loop_index,
+                    }
+                })
+            })
+            .collect::<Vec<_>>();
+        let containment_result =
+            BezierBooleanResultReport2::from_schedule_multi_cycle_successor_containment_facts(
+                &schedule,
+                BooleanOp::Union,
+                &ownership_facts,
+                &endpoints,
+                &[],
+                0,
+                0,
+                &successors,
+                &containment_facts,
+            );
+        prop_assert_eq!(containment_result.status, BezierBooleanResultStatus::Ready);
+        prop_assert_eq!(containment_result.assigned_loop_count, cycle_count);
+        prop_assert_eq!(containment_result.directed_fragment_count, step_count);
     }
 
     #[test]

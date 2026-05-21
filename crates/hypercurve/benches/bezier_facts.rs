@@ -1696,7 +1696,29 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                         &successors,
                         &depth_facts,
                     );
-                format!("{single:?}{multi:?}{output:?}{result:?}")
+                let containment_facts = (0..output.loops.len())
+                    .flat_map(|contained_loop_index| {
+                        (0..contained_loop_index).map(move |container_loop_index| {
+                            hypercurve::BezierBooleanLoopContainmentFact2 {
+                                container_loop_index,
+                                contained_loop_index,
+                            }
+                        })
+                    })
+                    .collect::<Vec<_>>();
+                let containment_result =
+                    hypercurve::BezierBooleanResultReport2::from_schedule_multi_cycle_successor_containment_facts(
+                        &schedule,
+                        BooleanOp::Union,
+                        &ownership_facts,
+                        &first_endpoints,
+                        &second_endpoints,
+                        0,
+                        0,
+                        &successors,
+                        &containment_facts,
+                    );
+                format!("{single:?}{multi:?}{output:?}{result:?}{containment_result:?}")
             }
             other => format!("{other:?}"),
         };

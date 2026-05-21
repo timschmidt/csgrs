@@ -8477,6 +8477,59 @@ impl BezierBooleanRegionAssemblyReport2 {
         Self::from_output_loop_containment_role_facts(&output, containment_facts, roles)
     }
 
+    /// Packages multi-cycle-successor-certified endpoints using containment facts.
+    ///
+    /// This constructor is the containment counterpart to
+    /// [`Self::from_multi_cycle_successor_depth_facts`]. The successor
+    /// certificate fixes the exact output-cycle topology, endpoint closure
+    /// proves the directed boundary ranges, and containment facts are lowered
+    /// into keyed nesting-depth facts only after those output loops exist.
+    /// That preserves Yap's "Towards Exact Geometric Computation" (1997)
+    /// predicate/construction boundary while following the traversal/fill
+    /// separation of Vatti (1992), Greiner-Hormann (1998), and
+    /// Martinez-Rueda-Feito (2009).
+    pub fn from_multi_cycle_successor_containment_facts(
+        multi_cycle: &BezierBooleanLoopGraphMultiCycleWalkReport2,
+        traversal: &BezierBooleanLoopGraphTraversalReport2,
+        plan: &BezierBooleanLoopAssemblyPlanReport2,
+        first_endpoints: &[(Point2, Point2)],
+        second_endpoints: &[(Point2, Point2)],
+        containment_facts: &[BezierBooleanLoopContainmentFact2],
+    ) -> Self {
+        let output = BezierBooleanOutputLoopReport2::from_multi_cycle_successor_endpoints(
+            multi_cycle,
+            traversal,
+            plan,
+            first_endpoints,
+            second_endpoints,
+        );
+        Self::from_output_loop_containment_facts(&output, containment_facts)
+    }
+
+    /// Packages multi-cycle-successor-certified endpoints using containment and roles.
+    ///
+    /// Explicit material/hole roles are accepted only when the containment
+    /// pairs derive matching nesting-depth parity. This prevents orientation or
+    /// caller ordering from overriding exact containment evidence.
+    pub fn from_multi_cycle_successor_containment_role_facts(
+        multi_cycle: &BezierBooleanLoopGraphMultiCycleWalkReport2,
+        traversal: &BezierBooleanLoopGraphTraversalReport2,
+        plan: &BezierBooleanLoopAssemblyPlanReport2,
+        first_endpoints: &[(Point2, Point2)],
+        second_endpoints: &[(Point2, Point2)],
+        containment_facts: &[BezierBooleanLoopContainmentFact2],
+        roles: &[BezierBooleanOutputLoopRole],
+    ) -> Self {
+        let output = BezierBooleanOutputLoopReport2::from_multi_cycle_successor_endpoints(
+            multi_cycle,
+            traversal,
+            plan,
+            first_endpoints,
+            second_endpoints,
+        );
+        Self::from_output_loop_containment_role_facts(&output, containment_facts, roles)
+    }
+
     /// Packages output loops into a higher-order region artifact using keyed depths.
     ///
     /// This constructor composes the certified post-closure stages:
@@ -10089,6 +10142,104 @@ impl BezierBooleanResultReport2 {
         )
     }
 
+    /// Accepts a scheduled endpoint result from exact multi-cycle successors and containment facts.
+    ///
+    /// This is the containment-fact counterpart to
+    /// [`Self::from_schedule_multi_cycle_successor_depth_facts`]. It validates
+    /// keyed ownership facts, emits the boolean action plan, checks graph
+    /// traversal obligations, validates successor edges as one or more exact
+    /// cycles, preserves those cycle ranges through endpoint closure, lowers
+    /// containment facts into nesting depths, and accepts the final result only
+    /// if every certificate remains valid. Yap (1997) is the exactness rule;
+    /// Vatti (1992), Greiner-Hormann (1998), and Martinez-Rueda-Feito (2009)
+    /// justify the staged traversal/fill composition.
+    pub fn from_schedule_multi_cycle_successor_containment_facts(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        ownership_facts: &[BezierBooleanOwnershipFact2],
+        first_endpoints: &[(Point2, Point2)],
+        second_endpoints: &[(Point2, Point2)],
+        branch_vertex_count: usize,
+        resolved_overlap_count: usize,
+        successor_facts: &[BezierBooleanLoopGraphSuccessorFact2],
+        containment_facts: &[BezierBooleanLoopContainmentFact2],
+    ) -> Self {
+        let facts =
+            BezierBooleanOwnershipFactReport2::from_schedule_facts(schedule, ownership_facts);
+        let ownership = facts.classify(schedule, operation);
+        let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
+        let assembly = BezierBooleanAssemblyReadinessReport2::from_fragment_counts(
+            &emission,
+            first_endpoints.len(),
+            second_endpoints.len(),
+        );
+        let plan =
+            BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(&assembly, &emission);
+        let traversal = BezierBooleanLoopGraphTraversalReport2::from_certified_walk_graph_facts(
+            &plan,
+            branch_vertex_count,
+            resolved_overlap_count,
+        );
+        let multi_cycle = BezierBooleanLoopGraphMultiCycleWalkReport2::from_successor_facts(
+            &traversal,
+            &plan,
+            successor_facts,
+        );
+        Self::from_multi_cycle_successor_containment_facts(
+            &multi_cycle,
+            &traversal,
+            &plan,
+            first_endpoints,
+            second_endpoints,
+            containment_facts,
+        )
+    }
+
+    /// Accepts a scheduled multi-cycle successor result using containment-certified roles.
+    pub fn from_schedule_multi_cycle_successor_containment_role_facts(
+        schedule: &BezierBooleanTraversalScheduleReport2,
+        operation: BooleanOp,
+        ownership_facts: &[BezierBooleanOwnershipFact2],
+        first_endpoints: &[(Point2, Point2)],
+        second_endpoints: &[(Point2, Point2)],
+        branch_vertex_count: usize,
+        resolved_overlap_count: usize,
+        successor_facts: &[BezierBooleanLoopGraphSuccessorFact2],
+        containment_facts: &[BezierBooleanLoopContainmentFact2],
+        roles: &[BezierBooleanOutputLoopRole],
+    ) -> Self {
+        let facts =
+            BezierBooleanOwnershipFactReport2::from_schedule_facts(schedule, ownership_facts);
+        let ownership = facts.classify(schedule, operation);
+        let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
+        let assembly = BezierBooleanAssemblyReadinessReport2::from_fragment_counts(
+            &emission,
+            first_endpoints.len(),
+            second_endpoints.len(),
+        );
+        let plan =
+            BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(&assembly, &emission);
+        let traversal = BezierBooleanLoopGraphTraversalReport2::from_certified_walk_graph_facts(
+            &plan,
+            branch_vertex_count,
+            resolved_overlap_count,
+        );
+        let multi_cycle = BezierBooleanLoopGraphMultiCycleWalkReport2::from_successor_facts(
+            &traversal,
+            &plan,
+            successor_facts,
+        );
+        Self::from_multi_cycle_successor_containment_role_facts(
+            &multi_cycle,
+            &traversal,
+            &plan,
+            first_endpoints,
+            second_endpoints,
+            containment_facts,
+            roles,
+        )
+    }
+
     /// Accepts a full generic endpoint result using keyed graph and containment facts.
     ///
     /// This is the strict containment counterpart to
@@ -10761,6 +10912,56 @@ impl BezierBooleanResultReport2 {
             containment_facts,
             roles,
         );
+        Self::from_region_assembly(&assembly)
+    }
+
+    /// Accepts a multi-cycle-successor-certified result using containment facts.
+    ///
+    /// This is the result-level counterpart to
+    /// [`BezierBooleanRegionAssemblyReport2::from_multi_cycle_successor_containment_facts`].
+    /// The exact successor certificate, endpoint closure, containment
+    /// certificates, role derivation, and final result acceptance are composed
+    /// without flattening cycle topology into an unkeyed walk vector.
+    pub fn from_multi_cycle_successor_containment_facts(
+        multi_cycle: &BezierBooleanLoopGraphMultiCycleWalkReport2,
+        traversal: &BezierBooleanLoopGraphTraversalReport2,
+        plan: &BezierBooleanLoopAssemblyPlanReport2,
+        first_endpoints: &[(Point2, Point2)],
+        second_endpoints: &[(Point2, Point2)],
+        containment_facts: &[BezierBooleanLoopContainmentFact2],
+    ) -> Self {
+        let assembly =
+            BezierBooleanRegionAssemblyReport2::from_multi_cycle_successor_containment_facts(
+                multi_cycle,
+                traversal,
+                plan,
+                first_endpoints,
+                second_endpoints,
+                containment_facts,
+            );
+        Self::from_region_assembly(&assembly)
+    }
+
+    /// Accepts a multi-cycle-successor-certified result using containment-certified roles.
+    pub fn from_multi_cycle_successor_containment_role_facts(
+        multi_cycle: &BezierBooleanLoopGraphMultiCycleWalkReport2,
+        traversal: &BezierBooleanLoopGraphTraversalReport2,
+        plan: &BezierBooleanLoopAssemblyPlanReport2,
+        first_endpoints: &[(Point2, Point2)],
+        second_endpoints: &[(Point2, Point2)],
+        containment_facts: &[BezierBooleanLoopContainmentFact2],
+        roles: &[BezierBooleanOutputLoopRole],
+    ) -> Self {
+        let assembly =
+            BezierBooleanRegionAssemblyReport2::from_multi_cycle_successor_containment_role_facts(
+                multi_cycle,
+                traversal,
+                plan,
+                first_endpoints,
+                second_endpoints,
+                containment_facts,
+                roles,
+            );
         Self::from_region_assembly(&assembly)
     }
 
