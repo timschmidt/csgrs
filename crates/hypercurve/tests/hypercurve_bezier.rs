@@ -1,5 +1,8 @@
 use hypercurve::{
     Axis2, BezierAreaMomentPrefixSums2, BezierAreaPrefixSums2,
+    BezierBooleanAlgebraicParameterAuditStatus, BezierBooleanAlgebraicParameterHandoffReport2,
+    BezierBooleanAlgebraicParameterHandoffStatus, BezierBooleanAlgebraicParameterReadinessReport2,
+    BezierBooleanAlgebraicParameterReadinessStatus, BezierBooleanAlgebraicParameterRole,
     BezierBooleanArrangementReadinessReport2, BezierBooleanArrangementReadinessStatus,
     BezierBooleanAssemblyReadinessReport2, BezierBooleanAssemblyReadinessStatus,
     BezierBooleanBatchHandoffReport2, BezierBooleanBatchHandoffStatus,
@@ -12,19 +15,18 @@ use hypercurve::{
     BezierBooleanLoopClosureStatus, BezierBooleanLoopContainmentFact2,
     BezierBooleanLoopContainmentFactReport2, BezierBooleanLoopContainmentFactStatus,
     BezierBooleanLoopGraphFactReport2, BezierBooleanLoopGraphFactStatus,
-    BezierBooleanLoopGraphFacts2, BezierBooleanLoopGraphTraversalReport2,
-    BezierBooleanLoopGraphTraversalStatus, BezierBooleanLoopGraphWalkReport2,
-    BezierBooleanLoopGraphWalkStatus, BezierBooleanLoopNestingDepthFact2,
-    BezierBooleanLoopNestingDepthFactReport2, BezierBooleanLoopNestingDepthFactStatus,
-    BezierBooleanLoopNestingRoleReport2, BezierBooleanLoopNestingRoleStatus,
-    BezierBooleanAlgebraicParameterAuditStatus, BezierBooleanAlgebraicParameterHandoffReport2,
-    BezierBooleanAlgebraicParameterHandoffStatus, BezierBooleanAlgebraicParameterReadinessReport2,
-    BezierBooleanAlgebraicParameterReadinessStatus, BezierBooleanAlgebraicParameterRole,
-    BezierBooleanLoopRoleAssignmentReport2, BezierBooleanLoopRoleAssignmentStatus,
-    BezierBooleanMaterializationAuditReport2, BezierBooleanMaterializationAuditStatus,
-    BezierBooleanMaterializedRegionReport2, BezierBooleanMaterializedRegionStatus,
-    BezierBooleanOperandOwnershipLocationReport2, BezierBooleanOperandOwnershipLocationStatus,
-    BezierBooleanOutputLoopReport2, BezierBooleanOutputLoopRole, BezierBooleanOutputLoopStatus,
+    BezierBooleanLoopGraphFacts2, BezierBooleanLoopGraphSuccessorFact2,
+    BezierBooleanLoopGraphSuccessorWalkReport2, BezierBooleanLoopGraphSuccessorWalkStatus,
+    BezierBooleanLoopGraphTraversalReport2, BezierBooleanLoopGraphTraversalStatus,
+    BezierBooleanLoopGraphWalkReport2, BezierBooleanLoopGraphWalkStatus,
+    BezierBooleanLoopNestingDepthFact2, BezierBooleanLoopNestingDepthFactReport2,
+    BezierBooleanLoopNestingDepthFactStatus, BezierBooleanLoopNestingRoleReport2,
+    BezierBooleanLoopNestingRoleStatus, BezierBooleanLoopRoleAssignmentReport2,
+    BezierBooleanLoopRoleAssignmentStatus, BezierBooleanMaterializationAuditReport2,
+    BezierBooleanMaterializationAuditStatus, BezierBooleanMaterializedRegionReport2,
+    BezierBooleanMaterializedRegionStatus, BezierBooleanOperandOwnershipLocationReport2,
+    BezierBooleanOperandOwnershipLocationStatus, BezierBooleanOutputLoopReport2,
+    BezierBooleanOutputLoopRole, BezierBooleanOutputLoopStatus,
     BezierBooleanOverlapResolutionReport2, BezierBooleanOverlapResolutionStatus,
     BezierBooleanOwnershipClassificationReport2, BezierBooleanOwnershipClassificationStatus,
     BezierBooleanOwnershipFact2, BezierBooleanOwnershipFactReport2,
@@ -63,10 +65,9 @@ use hypercurve::{
 use hypersolve::{
     AlgebraicRootKind, AlgebraicRootRepresentation, AlgebraicRootRepresentationReport,
     AlgebraicRootRepresentationStatus, AlgebraicRootValidationReport,
-    AlgebraicRootValidationStatus,
-    BernsteinSubdivisionInterval, BernsteinSubdivisionIntervalStatus, BernsteinSubdivisionReport,
-    BernsteinSubdivisionStatus, IsolatedRootInterval, RootIsolationStatus,
-    SymbolId, UnivariateRootIsolationReport,
+    AlgebraicRootValidationStatus, BernsteinSubdivisionInterval,
+    BernsteinSubdivisionIntervalStatus, BernsteinSubdivisionReport, BernsteinSubdivisionStatus,
+    IsolatedRootInterval, RootIsolationStatus, SymbolId, UnivariateRootIsolationReport,
 };
 use proptest::prelude::*;
 
@@ -5022,15 +5023,16 @@ fn bezier_boolean_root_isolation_replay_consumes_algebraic_root_reports() {
     let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &[range]);
     let algebraic = algebraic_root_report(half(), true);
 
-    let replay = match BezierBooleanRootIsolationReplayReport2::from_hypersolve_algebraic_root_reports(
-        &scheduler,
-        &[],
-        &[algebraic],
-        &policy(),
-    ) {
-        Classification::Decided(report) => report,
-        Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
-    };
+    let replay =
+        match BezierBooleanRootIsolationReplayReport2::from_hypersolve_algebraic_root_reports(
+            &scheduler,
+            &[],
+            &[algebraic],
+            &policy(),
+        ) {
+            Classification::Decided(report) => report,
+            Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
+        };
 
     assert_eq!(
         replay.status,
@@ -5190,15 +5192,16 @@ fn bezier_boolean_root_isolation_replay_blocks_non_rational_algebraic_roots() {
     let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &[range]);
     let algebraic = algebraic_root_report(half(), false);
 
-    let replay = match BezierBooleanRootIsolationReplayReport2::from_hypersolve_algebraic_root_reports(
-        &scheduler,
-        &[],
-        &[algebraic],
-        &policy(),
-    ) {
-        Classification::Decided(report) => report,
-        Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
-    };
+    let replay =
+        match BezierBooleanRootIsolationReplayReport2::from_hypersolve_algebraic_root_reports(
+            &scheduler,
+            &[],
+            &[algebraic],
+            &policy(),
+        ) {
+            Classification::Decided(report) => report,
+            Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
+        };
 
     assert_eq!(
         replay.status,
@@ -5406,13 +5409,11 @@ fn bezier_boolean_algebraic_parameter_readiness_packages_exact_and_interval_even
             Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
         };
 
-    let readiness = match BezierBooleanAlgebraicParameterReadinessReport2::from_handoff(
-        &handoff,
-        &policy(),
-    ) {
-        Classification::Decided(report) => report,
-        Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
-    };
+    let readiness =
+        match BezierBooleanAlgebraicParameterReadinessReport2::from_handoff(&handoff, &policy()) {
+            Classification::Decided(report) => report,
+            Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
+        };
 
     assert_eq!(
         readiness.status,
@@ -5447,13 +5448,11 @@ fn bezier_boolean_algebraic_parameter_readiness_blocks_failed_audits() {
         };
     handoff.required_algebraic_parameter_count = 2;
 
-    let readiness = match BezierBooleanAlgebraicParameterReadinessReport2::from_handoff(
-        &handoff,
-        &policy(),
-    ) {
-        Classification::Decided(report) => report,
-        Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
-    };
+    let readiness =
+        match BezierBooleanAlgebraicParameterReadinessReport2::from_handoff(&handoff, &policy()) {
+            Classification::Decided(report) => report,
+            Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
+        };
     assert_eq!(
         readiness.status,
         BezierBooleanAlgebraicParameterReadinessStatus::AuditBlocked
@@ -7300,6 +7299,172 @@ fn bezier_boolean_loop_graph_facts_allow_certified_explicit_walks() {
     let walk = BezierBooleanLoopGraphWalkReport2::from_traversal_order(&certified, &plan, &[1, 0]);
     assert_eq!(walk.status, BezierBooleanLoopGraphWalkStatus::Ready);
     assert_eq!(walk.ordered_steps[0].step.fragment_index, 1);
+}
+
+#[test]
+fn bezier_boolean_loop_graph_successor_facts_derive_certified_reordered_walk() {
+    let plan = BezierBooleanLoopAssemblyPlanReport2 {
+        status: BezierBooleanLoopAssemblyPlanStatus::Ready,
+        assembly_status: BezierBooleanAssemblyReadinessStatus::Ready,
+        operation: BooleanOp::Union,
+        emitted_steps: vec![
+            hypercurve::BezierBooleanOwnedTraversalStep2 {
+                step: hypercurve::BezierBooleanTraversalStep2 {
+                    operand: BezierBooleanTraversalOperand::First,
+                    fragment_index: 0,
+                },
+                opposite_location: BezierBooleanFragmentOwnershipLocation::Outside,
+                action: BooleanFragmentAction::KeepSourceDirection,
+            },
+            hypercurve::BezierBooleanOwnedTraversalStep2 {
+                step: hypercurve::BezierBooleanTraversalStep2 {
+                    operand: BezierBooleanTraversalOperand::Second,
+                    fragment_index: 0,
+                },
+                opposite_location: BezierBooleanFragmentOwnershipLocation::Inside,
+                action: BooleanFragmentAction::KeepReversed,
+            },
+            hypercurve::BezierBooleanOwnedTraversalStep2 {
+                step: hypercurve::BezierBooleanTraversalStep2 {
+                    operand: BezierBooleanTraversalOperand::First,
+                    fragment_index: 1,
+                },
+                opposite_location: BezierBooleanFragmentOwnershipLocation::Outside,
+                action: BooleanFragmentAction::KeepSourceDirection,
+            },
+        ],
+        first_emitted_count: 2,
+        second_emitted_count: 1,
+        keep_source_count: 2,
+        keep_reversed_count: 1,
+        invalid_reference_count: 0,
+        blocker_count: 0,
+    };
+    let traversal =
+        BezierBooleanLoopGraphTraversalReport2::from_certified_walk_graph_facts(&plan, 1, 1);
+
+    let successor = BezierBooleanLoopGraphSuccessorWalkReport2::from_successor_facts(
+        &traversal,
+        &plan,
+        &[
+            BezierBooleanLoopGraphSuccessorFact2 {
+                from_step_index: 0,
+                to_step_index: 2,
+            },
+            BezierBooleanLoopGraphSuccessorFact2 {
+                from_step_index: 2,
+                to_step_index: 1,
+            },
+            BezierBooleanLoopGraphSuccessorFact2 {
+                from_step_index: 1,
+                to_step_index: 0,
+            },
+        ],
+    );
+
+    assert_eq!(
+        successor.status,
+        BezierBooleanLoopGraphSuccessorWalkStatus::Ready
+    );
+    assert!(successor.is_ready());
+    assert!(!successor.has_blockers());
+    assert_eq!(successor.walk_indices, vec![0, 2, 1]);
+    assert_eq!(successor.ordered_steps[1].step.fragment_index, 1);
+
+    let walk = successor.to_graph_walk_report(&traversal, &plan);
+    assert_eq!(walk.status, BezierBooleanLoopGraphWalkStatus::Ready);
+    assert_eq!(walk.walk_indices, vec![0, 2, 1]);
+}
+
+#[test]
+fn bezier_boolean_loop_graph_successor_facts_reject_stale_and_disconnected_cycles() {
+    let plan = BezierBooleanLoopAssemblyPlanReport2 {
+        status: BezierBooleanLoopAssemblyPlanStatus::Ready,
+        assembly_status: BezierBooleanAssemblyReadinessStatus::Ready,
+        operation: BooleanOp::Union,
+        emitted_steps: vec![
+            hypercurve::BezierBooleanOwnedTraversalStep2 {
+                step: hypercurve::BezierBooleanTraversalStep2 {
+                    operand: BezierBooleanTraversalOperand::First,
+                    fragment_index: 0,
+                },
+                opposite_location: BezierBooleanFragmentOwnershipLocation::Outside,
+                action: BooleanFragmentAction::KeepSourceDirection,
+            },
+            hypercurve::BezierBooleanOwnedTraversalStep2 {
+                step: hypercurve::BezierBooleanTraversalStep2 {
+                    operand: BezierBooleanTraversalOperand::First,
+                    fragment_index: 1,
+                },
+                opposite_location: BezierBooleanFragmentOwnershipLocation::Outside,
+                action: BooleanFragmentAction::KeepSourceDirection,
+            },
+            hypercurve::BezierBooleanOwnedTraversalStep2 {
+                step: hypercurve::BezierBooleanTraversalStep2 {
+                    operand: BezierBooleanTraversalOperand::Second,
+                    fragment_index: 0,
+                },
+                opposite_location: BezierBooleanFragmentOwnershipLocation::Inside,
+                action: BooleanFragmentAction::KeepReversed,
+            },
+        ],
+        first_emitted_count: 2,
+        second_emitted_count: 1,
+        keep_source_count: 2,
+        keep_reversed_count: 1,
+        invalid_reference_count: 0,
+        blocker_count: 0,
+    };
+    let traversal =
+        BezierBooleanLoopGraphTraversalReport2::from_certified_walk_graph_facts(&plan, 0, 0);
+
+    let duplicate_source = BezierBooleanLoopGraphSuccessorWalkReport2::from_successor_facts(
+        &traversal,
+        &plan,
+        &[
+            BezierBooleanLoopGraphSuccessorFact2 {
+                from_step_index: 0,
+                to_step_index: 1,
+            },
+            BezierBooleanLoopGraphSuccessorFact2 {
+                from_step_index: 0,
+                to_step_index: 2,
+            },
+            BezierBooleanLoopGraphSuccessorFact2 {
+                from_step_index: 2,
+                to_step_index: 0,
+            },
+        ],
+    );
+    assert_eq!(
+        duplicate_source.status,
+        BezierBooleanLoopGraphSuccessorWalkStatus::DuplicateSuccessorSource
+    );
+    assert!(duplicate_source.has_blockers());
+
+    let disconnected = BezierBooleanLoopGraphSuccessorWalkReport2::from_successor_facts(
+        &traversal,
+        &plan,
+        &[
+            BezierBooleanLoopGraphSuccessorFact2 {
+                from_step_index: 0,
+                to_step_index: 0,
+            },
+            BezierBooleanLoopGraphSuccessorFact2 {
+                from_step_index: 1,
+                to_step_index: 2,
+            },
+            BezierBooleanLoopGraphSuccessorFact2 {
+                from_step_index: 2,
+                to_step_index: 1,
+            },
+        ],
+    );
+    assert_eq!(
+        disconnected.status,
+        BezierBooleanLoopGraphSuccessorWalkStatus::OpenOrDisconnectedSuccessorCycle
+    );
+    assert_eq!(disconnected.cycle_blocker_count, 1);
 }
 
 #[test]
@@ -13658,6 +13823,59 @@ proptest! {
             BezierBooleanLoopGraphFactStatus::EmittedStepCountMismatch
         );
         prop_assert!(stale.has_blockers());
+    }
+
+    #[test]
+    fn generated_bezier_boolean_successor_graph_walks_accept_single_cycles(step_count in 1_usize..12) {
+        let emitted_steps = (0..step_count)
+            .map(|fragment_index| hypercurve::BezierBooleanOwnedTraversalStep2 {
+                step: hypercurve::BezierBooleanTraversalStep2 {
+                    operand: BezierBooleanTraversalOperand::First,
+                    fragment_index,
+                },
+                opposite_location: BezierBooleanFragmentOwnershipLocation::Outside,
+                action: BooleanFragmentAction::KeepSourceDirection,
+            })
+            .collect::<Vec<_>>();
+        let plan = BezierBooleanLoopAssemblyPlanReport2 {
+            status: BezierBooleanLoopAssemblyPlanStatus::Ready,
+            assembly_status: BezierBooleanAssemblyReadinessStatus::Ready,
+            operation: BooleanOp::Union,
+            emitted_steps,
+            first_emitted_count: step_count,
+            second_emitted_count: 0,
+            keep_source_count: step_count,
+            keep_reversed_count: 0,
+            invalid_reference_count: 0,
+            blocker_count: 0,
+        };
+        let traversal =
+            BezierBooleanLoopGraphTraversalReport2::from_certified_walk_graph_facts(&plan, 1, 1);
+        let successors = (0..step_count)
+            .map(|index| BezierBooleanLoopGraphSuccessorFact2 {
+                from_step_index: index,
+                to_step_index: (index + 1) % step_count,
+            })
+            .collect::<Vec<_>>();
+
+        let report = BezierBooleanLoopGraphSuccessorWalkReport2::from_successor_facts(
+            &traversal,
+            &plan,
+            &successors,
+        );
+
+        prop_assert_eq!(
+            report.status,
+            BezierBooleanLoopGraphSuccessorWalkStatus::Ready
+        );
+        prop_assert_eq!(report.supplied_successor_count, step_count);
+        prop_assert_eq!(&report.walk_indices, &(0..step_count).collect::<Vec<_>>());
+        prop_assert!(report.is_ready());
+        prop_assert!(!report.has_blockers());
+
+        let walk = report.to_graph_walk_report(&traversal, &plan);
+        prop_assert_eq!(walk.status, BezierBooleanLoopGraphWalkStatus::Ready);
+        prop_assert_eq!(walk.ordered_steps.len(), step_count);
     }
 
     #[test]
