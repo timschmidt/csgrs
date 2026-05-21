@@ -1,6 +1,6 @@
 [package]
 name = "hyperlattice"
-version = "0.5.0"
+version = "0.6.0"
 edition = "2024"
 description = "A small Rust linear algebra library with hyperreal-backed scalar, vector, and matrix types."
 authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
@@ -14,8 +14,10 @@ categories = ["mathematics"]
 # Hyper ecosystem dependencies: keep the crate-official release references and
 # the commented workspace references below. Switch to the workspace form for
 # local development, then switch back to crates.io versions before publishing.
-hyperreal = { version = "0.12.0" }
-# hyperreal = { path = "../hyperreal" }
+# Hyper sibling dependency switch: keep both local path and crates.io lines; do not remove either.
+# Development mode uses the local path line. For release, comment it and uncomment the crates.io line.
+hyperreal = { path = "../hyperreal" }
+# hyperreal = { version = "0.13.0" }
 arbitrary = { version = "1", features = ["derive"], optional = true }
 
 [dev-dependencies]

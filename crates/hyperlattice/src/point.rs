@@ -5,7 +5,9 @@
 //! coordinate views and one-hot support. Those facts are algebraic scheduling
 //! metadata for downstream predicates, not topology decisions.
 
-use crate::{ExactRealSetFacts, Real, RealSymbolicDependencyMask, Vector2, Vector3, ZeroStatus};
+use crate::{
+    BlasResult, ExactRealSetFacts, Real, RealSymbolicDependencyMask, Vector2, Vector3, ZeroStatus,
+};
 
 /// Borrowed view of point coordinates that share one exact rational scale.
 #[derive(Clone, Copy, Debug)]
@@ -256,6 +258,42 @@ impl Point2 {
         Self { x, y }
     }
 
+    /// Lifts a finite `f64` coordinate array into a hyperreal-backed point.
+    pub fn try_from_f64_array(values: [f64; 2]) -> BlasResult<Self> {
+        crate::trace_dispatch!("hyperlattice_point", "constructor", "point2-from-f64-array");
+        Ok(Self::new(
+            Real::try_from(values[0])?,
+            Real::try_from(values[1])?,
+        ))
+    }
+
+    /// Lifts a finite `f32` coordinate array into a hyperreal-backed point.
+    pub fn try_from_f32_array(values: [f32; 2]) -> BlasResult<Self> {
+        crate::trace_dispatch!("hyperlattice_point", "constructor", "point2-from-f32-array");
+        Ok(Self::new(
+            Real::try_from(values[0])?,
+            Real::try_from(values[1])?,
+        ))
+    }
+
+    /// Lossily exports this point to finite `f64` coordinates.
+    pub fn to_f64_array_lossy(&self) -> Option<[f64; 2]> {
+        crate::trace_dispatch!("hyperlattice_point", "export", "point2-to-f64-array-lossy");
+        Some([
+            self.x.to_f64_lossy().filter(|value| value.is_finite())?,
+            self.y.to_f64_lossy().filter(|value| value.is_finite())?,
+        ])
+    }
+
+    /// Lossily exports this point to finite `f32` coordinates.
+    pub fn to_f32_array_lossy(&self) -> Option<[f32; 2]> {
+        crate::trace_dispatch!("hyperlattice_point", "export", "point2-to-f32-array-lossy");
+        Some([
+            self.x.to_f32_lossy().filter(|value| value.is_finite())?,
+            self.y.to_f32_lossy().filter(|value| value.is_finite())?,
+        ])
+    }
+
     /// Returns this point as a vector with the same coordinate values.
     pub fn to_vector(&self) -> Vector2 {
         Vector2::new([self.x.clone(), self.y.clone()])
@@ -264,6 +302,38 @@ impl Point2 {
     /// Consumes this point into a vector with the same coordinate values.
     pub fn into_vector(self) -> Vector2 {
         Vector2::new([self.x, self.y])
+    }
+
+    /// Interpolates between two points as `self + t * (to - self)`.
+    pub fn lerp(&self, to: &Self, t: &Real) -> Self {
+        crate::trace_dispatch!("hyperlattice_point", "method", "point2-lerp");
+        Vector2::from(self.clone())
+            .lerp(&Vector2::from(to.clone()), t)
+            .into()
+    }
+
+    /// Returns the centroid of a non-empty point slice.
+    pub fn centroid(points: &[Self]) -> Option<Self> {
+        crate::trace_dispatch!("hyperlattice_point", "method", "point2-centroid");
+        let vectors = points
+            .iter()
+            .cloned()
+            .map(Vector2::from)
+            .collect::<Vec<_>>();
+        Vector2::mean(&vectors).map(Self::from)
+    }
+
+    /// Returns a weighted point sum.
+    ///
+    /// Weight normalization belongs to the caller.
+    pub fn weighted_sum(points: &[Self], weights: &[Real]) -> Option<Self> {
+        crate::trace_dispatch!("hyperlattice_point", "method", "point2-weighted-sum");
+        let vectors = points
+            .iter()
+            .cloned()
+            .map(Vector2::from)
+            .collect::<Vec<_>>();
+        Vector2::weighted_sum(&vectors, weights).map(Self::from)
     }
 
     /// Returns a borrowed shared-scale view of the point coordinates.
@@ -326,6 +396,46 @@ impl Point3 {
         Self { x, y, z }
     }
 
+    /// Lifts a finite `f64` coordinate array into a hyperreal-backed point.
+    pub fn try_from_f64_array(values: [f64; 3]) -> BlasResult<Self> {
+        crate::trace_dispatch!("hyperlattice_point", "constructor", "point3-from-f64-array");
+        Ok(Self::new(
+            Real::try_from(values[0])?,
+            Real::try_from(values[1])?,
+            Real::try_from(values[2])?,
+        ))
+    }
+
+    /// Lifts a finite `f32` coordinate array into a hyperreal-backed point.
+    pub fn try_from_f32_array(values: [f32; 3]) -> BlasResult<Self> {
+        crate::trace_dispatch!("hyperlattice_point", "constructor", "point3-from-f32-array");
+        Ok(Self::new(
+            Real::try_from(values[0])?,
+            Real::try_from(values[1])?,
+            Real::try_from(values[2])?,
+        ))
+    }
+
+    /// Lossily exports this point to finite `f64` coordinates.
+    pub fn to_f64_array_lossy(&self) -> Option<[f64; 3]> {
+        crate::trace_dispatch!("hyperlattice_point", "export", "point3-to-f64-array-lossy");
+        Some([
+            self.x.to_f64_lossy().filter(|value| value.is_finite())?,
+            self.y.to_f64_lossy().filter(|value| value.is_finite())?,
+            self.z.to_f64_lossy().filter(|value| value.is_finite())?,
+        ])
+    }
+
+    /// Lossily exports this point to finite `f32` coordinates.
+    pub fn to_f32_array_lossy(&self) -> Option<[f32; 3]> {
+        crate::trace_dispatch!("hyperlattice_point", "export", "point3-to-f32-array-lossy");
+        Some([
+            self.x.to_f32_lossy().filter(|value| value.is_finite())?,
+            self.y.to_f32_lossy().filter(|value| value.is_finite())?,
+            self.z.to_f32_lossy().filter(|value| value.is_finite())?,
+        ])
+    }
+
     /// Returns this point as a vector with the same coordinate values.
     pub fn to_vector(&self) -> Vector3 {
         Vector3::new([self.x.clone(), self.y.clone(), self.z.clone()])
@@ -334,6 +444,38 @@ impl Point3 {
     /// Consumes this point into a vector with the same coordinate values.
     pub fn into_vector(self) -> Vector3 {
         Vector3::new([self.x, self.y, self.z])
+    }
+
+    /// Interpolates between two points as `self + t * (to - self)`.
+    pub fn lerp(&self, to: &Self, t: &Real) -> Self {
+        crate::trace_dispatch!("hyperlattice_point", "method", "point3-lerp");
+        Vector3::from(self.clone())
+            .lerp(&Vector3::from(to.clone()), t)
+            .into()
+    }
+
+    /// Returns the centroid of a non-empty point slice.
+    pub fn centroid(points: &[Self]) -> Option<Self> {
+        crate::trace_dispatch!("hyperlattice_point", "method", "point3-centroid");
+        let vectors = points
+            .iter()
+            .cloned()
+            .map(Vector3::from)
+            .collect::<Vec<_>>();
+        Vector3::mean(&vectors).map(Self::from)
+    }
+
+    /// Returns a weighted point sum.
+    ///
+    /// Weight normalization belongs to the caller.
+    pub fn weighted_sum(points: &[Self], weights: &[Real]) -> Option<Self> {
+        crate::trace_dispatch!("hyperlattice_point", "method", "point3-weighted-sum");
+        let vectors = points
+            .iter()
+            .cloned()
+            .map(Vector3::from)
+            .collect::<Vec<_>>();
+        Vector3::weighted_sum(&vectors, weights).map(Self::from)
     }
 
     /// Returns a borrowed shared-scale view of the point coordinates.
@@ -433,5 +575,46 @@ fn single_bit_index(mask: u128) -> Option<usize> {
         Some(mask.trailing_zeros() as usize)
     } else {
         None
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn real(value: i32) -> Real {
+        Real::from(value)
+    }
+
+    #[test]
+    fn point_boundary_arrays_reject_nonfinite_values() {
+        let point = Point3::try_from_f64_array([1.0, 2.0, 3.0]).unwrap();
+        assert_eq!(point.to_f64_array_lossy(), Some([1.0, 2.0, 3.0]));
+        assert!(Point3::try_from_f64_array([1.0, f64::NAN, 3.0]).is_err());
+
+        let point = Point2::try_from_f32_array([1.5, 2.5]).unwrap();
+        assert_eq!(point.to_f32_array_lossy(), Some([1.5, 2.5]));
+    }
+
+    #[test]
+    fn point_centroid_weighted_sum_and_lerp_stay_in_real_coordinates() {
+        let a = Point3::new(real(0), real(0), real(0));
+        let b = Point3::new(real(4), real(8), real(12));
+        let half = (Real::from(1_u32) / Real::from(2_u32)).unwrap();
+        let mid = a.lerp(&b, &half);
+
+        assert_eq!(mid.to_f64_array_lossy(), Some([2.0, 4.0, 6.0]));
+        assert_eq!(
+            Point3::centroid(&[a.clone(), b.clone()])
+                .unwrap()
+                .to_f64_array_lossy(),
+            Some([2.0, 4.0, 6.0])
+        );
+        assert_eq!(
+            Point3::weighted_sum(&[a, b], &[Real::from(1_u32), Real::from(2_u32)])
+                .unwrap()
+                .to_f64_array_lossy(),
+            Some([8.0, 16.0, 24.0])
+        );
     }
 }

@@ -526,6 +526,63 @@ fn finite_f64_array_boundary_is_checked_and_lossy_export_is_explicit() {
     assert_eq!(vector.to_f64_array_lossy(), Some([3.0, 4.0, 12.0]));
     assert!(Vector3::try_from_f64_array([1.0, f64::NAN, 2.0]).is_err());
     assert!(Vector4::try_from_f64_array([1.0, 2.0, f64::INFINITY, 4.0]).is_err());
+
+    let vector = Vector2::try_from_f32_array([1.5, -2.25])
+        .expect("finite f32 primitive boundary values should lift");
+    assert_eq!(vector.to_f32_array_lossy(), Some([1.5, -2.25]));
+    assert!(Vector2::try_from_f32_array([1.0, f32::NAN]).is_err());
+}
+
+#[test]
+fn vector_affine_aggregate_helpers_keep_components_in_hyperreal_space() {
+    let origin = Vector3::zero();
+    let target = Vector3::new([r(4), r(8), r(12)]);
+    let half = frac(1, 2);
+
+    assert_eq!(
+        origin.lerp(&target, &half).to_f64_array_lossy(),
+        Some([2.0, 4.0, 6.0])
+    );
+    assert_eq!(
+        origin.step(&target, &half).to_f64_array_lossy(),
+        Some([2.0, 4.0, 6.0])
+    );
+    assert_eq!(
+        Vector3::mean(&[origin.clone(), target.clone()])
+            .unwrap()
+            .to_f64_array_lossy(),
+        Some([2.0, 4.0, 6.0])
+    );
+    assert_eq!(
+        Vector3::weighted_sum(&[origin, target], &[one(), r(2)])
+            .unwrap()
+            .to_f64_array_lossy(),
+        Some([8.0, 16.0, 24.0])
+    );
+    assert!(Vector3::mean(&[]).is_none());
+    assert!(Vector3::weighted_sum(&[Vector3::zero()], &[]).is_none());
+}
+
+#[test]
+fn vector3_checked_basis_and_unit_cross_are_owned_lattice_helpers() {
+    let x = Vector3::new([one(), zero(), zero()]);
+    let y = Vector3::new([zero(), one(), zero()]);
+    let z = Vector3::new([zero(), zero(), one()]);
+
+    assert_eq!(x.unit_cross_checked(&y).unwrap(), z);
+    assert_eq!(x.unit_cross_checked(&x), Err(Problem::DivideByZero));
+
+    let (u, v) = x.orthonormal_basis_checked().unwrap();
+    assert_eq!(u.dot(&x), zero());
+    assert_eq!(v.dot(&x), zero());
+    assert_eq!(u.dot(&v), zero());
+    assert_eq!(u.dot(&u), one());
+    assert_eq!(v.dot(&v), one());
+    assert_eq!(u.cross(&v), x);
+    assert_eq!(
+        Vector3::zero().orthonormal_basis_checked(),
+        Err(Problem::DivideByZero)
+    );
 }
 
 #[test]

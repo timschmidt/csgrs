@@ -1035,6 +1035,19 @@ macro_rules! impl_vector {
                 ))
             }
 
+            /// Lifts a finite `f32` component array into a hyperreal-backed vector.
+            pub fn try_from_f32_array(values: [f32; $n]) -> BlasResult<Self> {
+                crate::trace_dispatch!("hyperlattice_vector", "constructor", "from-f32-array");
+                Ok(Self(
+                    values
+                        .map(Real::try_from)
+                        .into_iter()
+                        .collect::<Result<Vec<_>, _>>()?
+                        .try_into()
+                        .expect("mapped array length is fixed"),
+                ))
+            }
+
             /// Lossily exports this vector to finite `f64` components.
             ///
             /// Returns `None` if any component cannot be represented as a
@@ -1046,6 +1059,16 @@ macro_rules! impl_vector {
                 let mut out = [0.0_f64; $n];
                 for i in 0..$n {
                     out[i] = self.0[i].to_f64_lossy().filter(|value| value.is_finite())?;
+                }
+                Some(out)
+            }
+
+            /// Lossily exports this vector to finite `f32` components.
+            pub fn to_f32_array_lossy(&self) -> Option<[f32; $n]> {
+                crate::trace_dispatch!("hyperlattice_vector", "export", "to-f32-array-lossy");
+                let mut out = [0.0_f32; $n];
+                for i in 0..$n {
+                    out[i] = self.0[i].to_f32_lossy().filter(|value| value.is_finite())?;
                 }
                 Some(out)
             }
@@ -1127,6 +1150,51 @@ macro_rules! impl_vector {
                 // See `normalize`: direct borrowed multiply keeps this vector
                 // path faster after abort-aware magnitude construction.
                 Ok(Self(from_fn(|i| &self.0[i] * &inv_mag)))
+            }
+
+            /// Interpolates between two vectors as `self + t * (to - self)`.
+            pub fn lerp(&self, to: &Self, t: &Real) -> Self {
+                crate::trace_dispatch!("hyperlattice_vector", "method", "lerp");
+                self.clone() + ((to - self) * t)
+            }
+
+            /// Steps from this vector by `distance * direction`.
+            pub fn step(&self, direction: &Self, distance: &Real) -> Self {
+                crate::trace_dispatch!("hyperlattice_vector", "method", "step");
+                self.clone() + direction.clone() * distance
+            }
+
+            /// Returns the arithmetic mean of a non-empty vector slice.
+            pub fn mean(values: &[Self]) -> Option<Self> {
+                crate::trace_dispatch!("hyperlattice_vector", "method", "mean");
+                if values.is_empty() {
+                    return None;
+                }
+                let sum = values
+                    .iter()
+                    .cloned()
+                    .fold(Self::zero(), |acc, value| acc + value);
+                let count = Real::from(u64::try_from(values.len()).ok()?);
+                (sum / count).ok()
+            }
+
+            /// Returns a weighted vector sum.
+            ///
+            /// Weight normalization belongs to the caller. This helper only keeps
+            /// component multiplication and accumulation inside the Real vector
+            /// carrier.
+            pub fn weighted_sum(values: &[Self], weights: &[Real]) -> Option<Self> {
+                crate::trace_dispatch!("hyperlattice_vector", "method", "weighted-sum");
+                if values.len() != weights.len() || values.is_empty() {
+                    return None;
+                }
+                Some(
+                    values
+                        .iter()
+                        .cloned()
+                        .zip(weights.iter())
+                        .fold(Self::zero(), |acc, (value, weight)| acc + value * weight),
+                )
             }
 
             /// Divides every component by `rhs` after rejecting unknown-zero divisors.
@@ -1674,6 +1742,28 @@ impl Vector3 {
         ])
     }
 
+    /// Returns a checked unit cross product.
+    pub fn unit_cross_checked(&self, rhs: &Self) -> CheckedBlasResult<Self> {
+        crate::trace_dispatch!("hyperlattice_vector", "method", "unit-cross-checked");
+        self.cross(rhs).normalize_checked()
+    }
+
+    /// Returns two checked unit vectors perpendicular to this vector.
+    ///
+    /// The input vector is normalized first. Candidate coordinate axes are tried
+    /// in a fixed order and the first checked non-parallel cross product is used.
+    pub fn orthonormal_basis_checked(&self) -> CheckedBlasResult<(Self, Self)> {
+        crate::trace_dispatch!("hyperlattice_vector", "method", "orthonormal-basis-checked");
+        let axis = self.normalize_checked()?;
+        for seed in unit_axes3() {
+            if let Ok(first) = seed.cross(&axis).normalize_checked() {
+                let second = axis.cross(&first).normalize_checked()?;
+                return Ok((first, second));
+            }
+        }
+        Err(Problem::UnknownZero)
+    }
+
     /// Returns the dot product with `rhs`.
     pub fn dot(&self, rhs: &Self) -> Real {
         crate::trace_dispatch!("hyperlattice_vector", "method", "dot3");
@@ -1789,6 +1879,14 @@ impl Vector3 {
             &self.0[0], &rhs.0[0], &self.0[1], &rhs.0[1], &self.0[2], &rhs.0[2], signal,
         )
     }
+}
+
+fn unit_axes3() -> [Vector3; 3] {
+    [
+        Vector3::new([Real::one(), Real::zero(), Real::zero()]),
+        Vector3::new([Real::zero(), Real::one(), Real::zero()]),
+        Vector3::new([Real::zero(), Real::zero(), Real::one()]),
+    ]
 }
 
 impl Vector4 {
