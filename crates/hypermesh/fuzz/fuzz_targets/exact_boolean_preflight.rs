@@ -2376,6 +2376,60 @@ fn exercise_component_coplanar_difference() {
         nonrect_contact_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarSurfaceCutterHoleContactDifference
     );
+    let straddling_contact_right = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            8, 8, 0, 12, 10, 0, 8, 12, 0, //
+            0, 9, 0, 10, 8, 0, 10, 12, 0, 0, 11, 0,
+        ],
+        &[
+            0, 1, 2, //
+            3, 4, 5, 3, 5, 6,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("straddling cutter-hole fixture must import");
+    let straddling_contact = arrange_coplanar_surface_cutter_hole_contact_difference(
+        &nonrect_contact_left,
+        &straddling_contact_right,
+    )
+    .expect("overlapping cutter-hole pair should materialize one nonconvex loop");
+    straddling_contact.validate().unwrap();
+    straddling_contact
+        .validate_cutter_hole_contact_difference_against_sources(
+            &nonrect_contact_left,
+            &straddling_contact_right,
+        )
+        .unwrap();
+    let straddling_contact_preflight = preflight_boolean_exact(
+        &nonrect_contact_left,
+        &straddling_contact_right,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("straddling cutter-hole preflight should classify shortcut");
+    straddling_contact_preflight.validate().unwrap();
+    assert_eq!(
+        straddling_contact_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfaceCutterHoleContactDifference
+    );
+    let rectangular_overlap_right = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            8, 8, 0, 12, 8, 0, 12, 12, 0, 8, 12, 0, //
+            0, 9, 0, 10, 9, 0, 10, 11, 0, 0, 11, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("rectangular cutter-hole overlap fixture must import");
+    assert!(
+        arrange_coplanar_surface_cutter_hole_contact_difference(
+            &nonrect_contact_left,
+            &rectangular_overlap_right,
+        )
+        .is_none()
+    );
     let nonrect_contact_chain_right = ExactMesh::from_i64_triangles_with_policy(
         &[
             8, 8, 0, 12, 10, 0, 8, 12, 0, //

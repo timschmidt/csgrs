@@ -3731,14 +3731,15 @@ pub fn arrange_coplanar_surface_multi_difference(
 /// Certify a bounded cutter/hole-contact coplanar difference.
 ///
 /// This handles the narrow case that the strict component/holed arrangement
-/// must reject: a side-attached cutter touches a strictly contained hole along
-/// a positive-length boundary, so the result is no longer a holed component but
-/// one nonconvex simple loop. The accepted source shape is intentionally
-/// replayable: one exact axis-aligned rectangular left component, one or more
-/// strictly contained convex right holes, and one or more convex right cutters
-/// whose clipped material regions form a connected positive-length contact
-/// chain from the holes to one outer side. The two-component rectangular case
-/// uses exact interval-cell replay; non-rectangular contact pairs and chains
+/// must reject: a side-attached cutter either touches a strictly contained
+/// hole along a positive-length boundary or overlaps it in positive area, so
+/// the result is no longer a holed component but one nonconvex simple loop.
+/// The accepted source shape is intentionally replayable: one exact
+/// axis-aligned rectangular left component, one or more strictly contained
+/// convex right holes, and one or more convex right cutters whose clipped
+/// material regions form a connected contact/overlap chain from the holes to
+/// one outer side. The two-component rectangular contact case uses exact
+/// interval-cell replay; non-rectangular contact, overlap, and chain cases
 /// stitch one exact simple union loop from retained convex boundary fragments
 /// before the left side is opened. This follows Yap, "Towards Exact Geometric
 /// Computation," *Computational Geometry* 7.1-2 (1997), with the fragment
@@ -3814,18 +3815,20 @@ pub fn arrange_coplanar_surface_cutter_hole_contact_difference(
     let mut removed_polygon = if holes.len() == 1 && clipped_cutters.len() == 1 {
         let hole = &holes[0];
         let clipped_cutter = &clipped_cutters[0];
-        match (
-            projected_axis_aligned_rectangle(hole, projection),
-            projected_axis_aligned_rectangle(clipped_cutter, projection),
-        ) {
-            (Some(hole_rect), Some(clipped_cutter_rect))
-                if rectangles_touch_on_positive_boundary(&hole_rect, &clipped_cutter_rect)? =>
-            {
-                axis_aligned_rectangle_union_polygon(&[clipped_cutter_rect, hole_rect], projection)?
+        let hole_rect = projected_axis_aligned_rectangle(hole, projection);
+        let clipped_cutter_rect = projected_axis_aligned_rectangle(clipped_cutter, projection);
+        match (hole_rect, clipped_cutter_rect) {
+            (Some(hole_rect), Some(clipped_cutter_rect)) => {
+                if rectangles_touch_on_positive_boundary(&hole_rect, &clipped_cutter_rect)? {
+                    axis_aligned_rectangle_union_polygon(
+                        &[clipped_cutter_rect, hole_rect],
+                        projection,
+                    )?
+                } else {
+                    return None;
+                }
             }
-            _ => {
-                side_attached_convex_cutter_hole_removed_polygon(hole, clipped_cutter, projection)?
-            }
+            _ => two_convex_cutter_hole_removed_polygon(hole, clipped_cutter, projection)?,
         }
     } else {
         if removed_regions
@@ -4189,32 +4192,36 @@ fn axis_aligned_rectangle_union_polygon(
     stitch_simple_loop(fragments, projection)
 }
 
-/// Stitch the exact removed region for a side-attached convex cutter/hole pair.
+/// Stitch the exact removed region for one convex cutter/hole pair.
 ///
 /// This is the non-rectangular counterpart to
 /// [`axis_aligned_rectangle_union_polygon`]. The two convex components must
-/// have boundary-only contact, and at least one source edge pair must overlap
-/// with positive length. The union boundary is then assembled from exact
-/// fragments whose midpoints lie outside the opposite convex component, in the
-/// Weiler-Atherton boundary-traversal sense, while every predicate decision is
-/// exact as required by Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997). Segment contact is classified with
-/// the orientation-predicate model of Guigue and Devillers, "Fast and Robust
+/// either have positive-length boundary contact or positive-area overlap. The
+/// overlap case is the bounded straddling-hole promotion: the retained hole is
+/// not preserved as a hole because the side cutter removes part of it, but the
+/// exact union of the two removed convex regions can still be replayed as one
+/// simple boundary. The union boundary is assembled from exact fragments whose
+/// midpoints lie outside the opposite convex component, in the Weiler-Atherton
+/// boundary-traversal sense, while every predicate decision is exact as
+/// required by Yap, "Towards Exact Geometric Computation," *Computational
+/// Geometry* 7.1-2 (1997). Segment contact is classified with the
+/// orientation-predicate model of Guigue and Devillers, "Fast and Robust
 /// Triangle-Triangle Overlap Test Using Orientation Predicates," *Journal of
 /// Graphics Tools* 8.1 (2003).
 #[cfg(feature = "exact-triangulation")]
-fn side_attached_convex_cutter_hole_removed_polygon(
+fn two_convex_cutter_hole_removed_polygon(
     hole: &[Point3],
     clipped_cutter: &[Point3],
     projection: CoplanarProjection,
 ) -> Option<Vec<Point3>> {
-    if convex_union_component_relation(hole, clipped_cutter, projection)?
-        != ConvexUnionComponentRelation::BoundaryOnly
-    {
-        return None;
-    }
-    if !convex_polygons_touch_on_positive_boundary(hole, clipped_cutter, projection)? {
-        return None;
+    match convex_union_component_relation(hole, clipped_cutter, projection)? {
+        ConvexUnionComponentRelation::BoundaryOnly => {
+            if !convex_polygons_touch_on_positive_boundary(hole, clipped_cutter, projection)? {
+                return None;
+            }
+        }
+        ConvexUnionComponentRelation::PositiveArea => {}
+        ConvexUnionComponentRelation::Disjoint => return None,
     }
 
     let mut hole = hole.to_vec();
@@ -4243,7 +4250,7 @@ fn side_attached_convex_cutter_hole_removed_polygon(
 /// Stitch one connected convex contact chain into a removed-region loop.
 ///
 /// This is the multi-component sibling of
-/// [`side_attached_convex_cutter_hole_removed_polygon`]. It accepts only a
+/// [`two_convex_cutter_hole_removed_polygon`]. It accepts only a
 /// connected contact graph whose convex regions are pairwise interior-disjoint
 /// and touch through positive-length boundary intervals. Point-only contact,
 /// overlap, disconnected holes, and branch structures that do not stitch into

@@ -11022,6 +11022,127 @@ fn exact_coplanar_surface_cutter_hole_contact_accepts_nonrectangular_convex_pair
 
 #[cfg(feature = "exact-triangulation")]
 #[test]
+fn exact_coplanar_surface_cutter_hole_contact_accepts_straddling_overlap_pair() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 20, 0, 0, 20, 20, 0, 0, 20, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let straddling_pair = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            8, 8, 0, 12, 10, 0, 8, 12, 0, //
+            0, 9, 0, 10, 8, 0, 10, 12, 0, 0, 11, 0,
+        ],
+        &[
+            0, 1, 2, //
+            3, 4, 5, 3, 5, 6,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+
+    assert!(
+        hypermesh::exact::arrange_coplanar_convex_surface_component_holed_difference(
+            &left,
+            &straddling_pair,
+        )
+        .is_none()
+    );
+    let overlap_difference =
+        hypermesh::exact::arrange_coplanar_surface_cutter_hole_contact_difference(
+            &left,
+            &straddling_pair,
+        )
+        .expect("overlapping non-rectangular cutter/hole pair should open one exact loop");
+    overlap_difference.validate().unwrap();
+    overlap_difference
+        .validate_cutter_hole_contact_difference_against_sources(&left, &straddling_pair)
+        .unwrap();
+    assert!(overlap_difference.polygon.len() > 8);
+    assert!(
+        overlap_difference
+            .polygon
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(10))
+                && real_eq(&point.y, &ExactReal::from(8)))
+    );
+    assert!(
+        overlap_difference
+            .polygon
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(10))
+                && real_eq(&point.y, &ExactReal::from(12)))
+    );
+
+    let mut convex_relabel = overlap_difference.clone();
+    convex_relabel.polygon = vec![p3(0, 0, 0), p3(20, 0, 0), p3(20, 20, 0), p3(0, 20, 0)];
+    assert!(
+        convex_relabel
+            .validate_cutter_hole_contact_difference_against_sources(&left, &straddling_pair)
+            .is_err()
+    );
+    let preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &straddling_pair,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    preflight.validate().unwrap();
+    preflight
+        .validate_against_sources(&left, &straddling_pair)
+        .unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceCutterHoleContactDifference
+    );
+    let result = hypermesh::exact::boolean_exact(
+        &left,
+        &straddling_pair,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    result
+        .validate_operation_against_sources(
+            &left,
+            &straddling_pair,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::
+                CoplanarSurfaceCutterHoleContactDifference
+        }
+    );
+
+    let rectangular_overlap = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            8, 8, 0, 12, 8, 0, 12, 12, 0, 8, 12, 0, //
+            0, 9, 0, 10, 9, 0, 10, 11, 0, 0, 11, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_cutter_hole_contact_difference(
+            &left,
+            &rectangular_overlap,
+        )
+        .is_none()
+    );
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
 fn exact_coplanar_surface_cutter_hole_contact_accepts_nonrectangular_contact_chain() {
     let left = ExactMesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 20, 0, 0, 20, 20, 0, 0, 20, 0],
