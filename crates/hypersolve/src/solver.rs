@@ -21,13 +21,15 @@ pub struct SolverConfig {
     /// Numerical engine used only to propose candidate coordinates.
     ///
     /// The current implementation supports dense damped least squares and the
-    /// named Levenberg-Marquardt route. Both execute the same dense damped
-    /// normal-equation step, following the least-squares damping family of
+    /// named Levenberg-Marquardt route. Dogleg uses a dense lossy
+    /// trust-region proposal. These routes follow the least-squares damping family of
     /// Levenberg, "A Method for the Solution of Certain Non-Linear Problems in
     /// Least Squares" (1944), and Marquardt, "An Algorithm for Least-Squares
-    /// Estimation of Nonlinear Parameters" (1963). Other named engines are
-    /// exposed so callers and tests can distinguish unsupported proposal
-    /// requests from exact certification failures.
+    /// Estimation of Nonlinear Parameters" (1963), plus Powell's dogleg hybrid
+    /// method (M. J. D. Powell, "A Hybrid Method for Nonlinear Equations",
+    /// 1970). Other named engines are exposed so callers and tests can
+    /// distinguish unsupported proposal requests from exact certification
+    /// failures.
     pub proposal_engine: ProposalEngineKind,
 }
 
@@ -124,12 +126,21 @@ pub fn solve_damped_least_squares(mut state: SolverState) -> SolveReport {
         };
         // f64 is confined to this dense linear-solver edge. The surrounding
         // model, residuals, bounds, and tolerances remain hyperreal values.
-        // This is the shared damped normal-equation proposal step for the
-        // default DampedLeastSquares and named LevenbergMarquardt routes; per
-        // Yap (1997), exact/certified replay, not this lossy step, decides
-        // acceptance.
-        let Ok((step, linear_report)) = backend.solve_damped_normal(&jacobian, &numeric, damping)
-        else {
+        // DampedLeastSquares and LevenbergMarquardt use a damped normal step;
+        // Dogleg uses a trust-region step. Per Yap (1997), exact/certified
+        // replay, not this lossy proposal, decides acceptance.
+        let step_result = match state.config.proposal_engine {
+            ProposalEngineKind::Dogleg => backend.solve_dogleg(&jacobian, &numeric, damping),
+            ProposalEngineKind::DampedLeastSquares | ProposalEngineKind::LevenbergMarquardt => {
+                backend.solve_damped_normal(&jacobian, &numeric, damping)
+            }
+            ProposalEngineKind::PowellHybrid
+            | ProposalEngineKind::Bfgs
+            | ProposalEngineKind::Sqp => {
+                unreachable!("unsupported proposal engines return before iteration")
+            }
+        };
+        let Ok((step, linear_report)) = step_result else {
             return SolveReport {
                 reason: ConvergenceReason::LinearSolveFailed,
                 iterations: iteration,

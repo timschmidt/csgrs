@@ -110,6 +110,20 @@ pub trait LinearBackend {
         residuals: &[f64],
         damping: f64,
     ) -> Result<(Vec<f64>, LinearSolveReport), LinearSolveError>;
+
+    /// Solve one dense trust-region dogleg proposal step through `f64`.
+    ///
+    /// This is a proposal adapter following Powell's dogleg trust-region
+    /// construction; see M. J. D. Powell, "A Hybrid Method for Nonlinear
+    /// Equations" (1970), and Nocedal and Wright, *Numerical Optimization*,
+    /// 2nd ed. (2006). The returned step is not a proof: exact candidate
+    /// replay must still certify any accepted coordinates.
+    fn solve_dogleg(
+        &self,
+        jacobian: &[Vec<f64>],
+        residuals: &[f64],
+        trust_radius: f64,
+    ) -> Result<(Vec<f64>, LinearSolveReport), LinearSolveError>;
 }
 
 #[derive(Clone, Debug, Default)]
@@ -173,6 +187,138 @@ impl LinearBackend for DenseLinearBackend {
             },
         ))
     }
+
+    fn solve_dogleg(
+        &self,
+        jacobian: &[Vec<f64>],
+        residuals: &[f64],
+        trust_radius: f64,
+    ) -> Result<(Vec<f64>, LinearSolveReport), LinearSolveError> {
+        if jacobian.len() != residuals.len() {
+            return Err(LinearSolveError::DimensionMismatch);
+        }
+        let Some(width) = jacobian.first().map(Vec::len) else {
+            return Ok((
+                Vec::new(),
+                LinearSolveReport {
+                    adapter: LinearAdapterKind::DenseF64NormalEquations,
+                    lossy: true,
+                    rank_hint: Some(0),
+                    damping: trust_radius,
+                    pivot_count: 0,
+                    row_swaps: 0,
+                    min_abs_pivot: None,
+                    max_abs_pivot: None,
+                },
+            ));
+        };
+        if jacobian.iter().any(|row| row.len() != width) {
+            return Err(LinearSolveError::DimensionMismatch);
+        }
+
+        let (normal, gradient) = normal_matrix_and_gradient(jacobian, residuals);
+        let rhs = gradient.iter().map(|value| -*value).collect::<Vec<_>>();
+        let (gauss_newton, diagnostics) = solve_dense(normal.clone(), rhs)?;
+        let radius = trust_radius.max(f64::EPSILON);
+        let step = dogleg_step(&normal, &gradient, &gauss_newton, radius)?;
+        Ok((
+            step,
+            LinearSolveReport {
+                adapter: LinearAdapterKind::DenseF64NormalEquations,
+                lossy: true,
+                rank_hint: Some(width),
+                damping: trust_radius,
+                pivot_count: diagnostics.pivot_count,
+                row_swaps: diagnostics.row_swaps,
+                min_abs_pivot: diagnostics.min_abs_pivot,
+                max_abs_pivot: diagnostics.max_abs_pivot,
+            },
+        ))
+    }
+}
+
+fn normal_matrix_and_gradient(
+    jacobian: &[Vec<f64>],
+    residuals: &[f64],
+) -> (Vec<Vec<f64>>, Vec<f64>) {
+    let width = jacobian.first().map(Vec::len).unwrap_or(0);
+    let mut normal = vec![vec![0.0; width]; width];
+    let mut gradient = vec![0.0; width];
+    for (row, residual) in jacobian.iter().zip(residuals) {
+        for i in 0..width {
+            gradient[i] += row[i] * residual;
+            for j in 0..width {
+                normal[i][j] += row[i] * row[j];
+            }
+        }
+    }
+    (normal, gradient)
+}
+
+fn dogleg_step(
+    normal: &[Vec<f64>],
+    gradient: &[f64],
+    gauss_newton: &[f64],
+    trust_radius: f64,
+) -> Result<Vec<f64>, LinearSolveError> {
+    if norm2(gauss_newton) <= trust_radius {
+        return Ok(gauss_newton.to_vec());
+    }
+    let gradient_norm_sq = dot(gradient, gradient);
+    if gradient_norm_sq <= f64::EPSILON {
+        return Ok(vec![0.0; gradient.len()]);
+    }
+    let normal_gradient = mat_vec(normal, gradient);
+    let curvature = dot(gradient, &normal_gradient);
+    if curvature <= f64::EPSILON {
+        return Ok(scaled(gradient, -trust_radius / gradient_norm_sq.sqrt()));
+    }
+    let alpha = gradient_norm_sq / curvature;
+    let cauchy = scaled(gradient, -alpha);
+    let cauchy_norm = norm2(&cauchy);
+    if cauchy_norm >= trust_radius {
+        return Ok(scaled(&cauchy, trust_radius / cauchy_norm));
+    }
+    let segment = gauss_newton
+        .iter()
+        .zip(&cauchy)
+        .map(|(gn, sd)| gn - sd)
+        .collect::<Vec<_>>();
+    let a = dot(&segment, &segment);
+    let b = 2.0 * dot(&cauchy, &segment);
+    let c = dot(&cauchy, &cauchy) - trust_radius * trust_radius;
+    let discriminant = b * b - 4.0 * a * c;
+    if a <= f64::EPSILON || discriminant < 0.0 {
+        return Err(LinearSolveError::Singular);
+    }
+    let tau = (-b + discriminant.sqrt()) / (2.0 * a);
+    Ok(cauchy
+        .iter()
+        .zip(segment)
+        .map(|(sd, direction)| sd + tau * direction)
+        .collect())
+}
+
+fn mat_vec(matrix: &[Vec<f64>], vector: &[f64]) -> Vec<f64> {
+    matrix
+        .iter()
+        .map(|row| row.iter().zip(vector).map(|(a, x)| a * x).sum())
+        .collect()
+}
+
+fn dot(left: &[f64], right: &[f64]) -> f64 {
+    left.iter()
+        .zip(right)
+        .map(|(left, right)| left * right)
+        .sum()
+}
+
+fn norm2(vector: &[f64]) -> f64 {
+    dot(vector, vector).sqrt()
+}
+
+fn scaled(vector: &[f64], scale: f64) -> Vec<f64> {
+    vector.iter().map(|value| value * scale).collect()
 }
 
 #[derive(Clone, Debug, Default, PartialEq)]

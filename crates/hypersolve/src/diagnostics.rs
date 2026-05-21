@@ -15,7 +15,9 @@ use crate::linalg::LinearSolveReport;
 /// 7.1-2 (1997), for the exact/approximate boundary; Levenberg, "A Method for
 /// the Solution of Certain Non-Linear Problems in Least Squares" (1944), and
 /// Marquardt, "An Algorithm for Least-Squares Estimation of Nonlinear
-/// Parameters" (1963), for the damped least-squares proposal family.
+/// Parameters" (1963), for the damped least-squares proposal family; and
+/// Powell, "A Hybrid Method for Nonlinear Equations" (1970), for dogleg-style
+/// trust-region proposals.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ProposalEngineKind {
     /// Current dense damped least-squares implementation.
@@ -39,7 +41,10 @@ pub enum ProposalEngineKind {
 impl ProposalEngineKind {
     /// Returns whether this engine is implemented in this crate today.
     pub const fn is_implemented(self) -> bool {
-        matches!(self, Self::DampedLeastSquares | Self::LevenbergMarquardt)
+        matches!(
+            self,
+            Self::DampedLeastSquares | Self::LevenbergMarquardt | Self::Dogleg
+        )
     }
 }
 
@@ -82,10 +87,10 @@ pub struct SolveReport {
     /// Proposal engine selected for candidate generation.
     ///
     /// This makes the construction/proof boundary explicit. The current dense
-    /// step supports the default damped least-squares route and the named
-    /// Levenberg-Marquardt route; other common geometric-constraint engines
-    /// are represented as unsupported proposal choices rather than silently
-    /// falling back. Accepted coordinates still require exact candidate
+    /// step supports the default damped least-squares route, the named
+    /// Levenberg-Marquardt route, and a dense dogleg route; other common
+    /// geometric-constraint engines are represented as unsupported proposal
+    /// choices rather than silently falling back. Accepted coordinates still require exact candidate
     /// certification; see Yap, "Towards Exact Geometric Computation,"
     /// *Computational Geometry* 7.1-2 (1997).
     pub proposal_engine: ProposalEngineReport,
