@@ -3,10 +3,10 @@
 use crate::csg::CSG;
 use crate::errors::ValidationError;
 use crate::float_types::{
-    PI, Real, TAU, hangle_sin_cos, hperpendicular_basis, hreal_affine, hreal_div,
-    hreal_from_f64, hreal_mul, hreal_sqrt, hrotation_between_vectors, hscale_matrix,
-    htranslation_matrix, hunit_vector3, hunit_vector3_and_magnitude, hvector3_from_point3,
-    tolerance,
+    PI, Real, TAU, hangle_sin_cos, hperpendicular_basis, hreal_abs, hreal_affine,
+    hreal_cmp_f64, hreal_div, hreal_from_f64, hreal_mul, hreal_sqrt, hreal_sub, hreal_sum,
+    hrotation_between_vectors, hscale_matrix, htranslation_matrix, hunit_vector3,
+    hunit_vector3_and_magnitude, hvector3_from_point3, tolerance,
 };
 use crate::mesh::Mesh;
 use crate::polygon::Polygon;
@@ -14,6 +14,7 @@ use crate::polygon::Polygon;
 use crate::sketch::Profile;
 use crate::vertex::Vertex;
 use nalgebra::{Matrix4, Point3, Vector3};
+use std::cmp::Ordering;
 use std::fmt::Debug;
 
 fn finite_mesh_scalar(value: Real) -> bool {
@@ -367,7 +368,10 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         let Some((axis_z, axis_length)) = hunit_vector3_and_magnitude(&ray) else {
             return Mesh::empty(metadata);
         };
-        if axis_length < tolerance() {
+        if matches!(
+            hreal_cmp_f64(axis_length, tolerance()),
+            Ordering::Less | Ordering::Equal
+        ) {
             return Mesh::empty(metadata);
         }
 
@@ -384,24 +388,63 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         // A closure that returns a vertex on the lateral surface.
         // For a given stack (0.0 for bottom, 1.0 for top), slice (fraction along the circle),
         // and a normal blend factor (used for cap smoothing), compute the vertex.
-        let point = |stack: Real, slice: Real, normal_blend: Real| {
+        let point = |stack: Real, slice: Real, normal_blend: Real| -> Option<Vertex> {
             // Linear interpolation of radius.
-            let r = radius1 * (1.0 - stack) + radius2 * stack;
-            let angle = slice * TAU;
-            let radial_dir = axis_x * angle.cos() + axis_y * angle.sin();
-            let position = s + ray * stack + radial_dir * r;
-            let normal = radial_dir * (1.0 - normal_blend.abs()) + axis_z * normal_blend;
-            Vertex::new(
+            let radius_delta = hreal_sub(radius2, radius1)?;
+            let r = hreal_affine(radius1, stack, radius_delta)?;
+            let angle = hreal_mul(slice, TAU)?;
+            let (sin_angle, cos_angle) = hangle_sin_cos(angle)?;
+            let radial_dir = Vector3::new(
+                hreal_sum(&[
+                    hreal_mul(axis_x.x, cos_angle)?,
+                    hreal_mul(axis_y.x, sin_angle)?,
+                ])?,
+                hreal_sum(&[
+                    hreal_mul(axis_x.y, cos_angle)?,
+                    hreal_mul(axis_y.y, sin_angle)?,
+                ])?,
+                hreal_sum(&[
+                    hreal_mul(axis_x.z, cos_angle)?,
+                    hreal_mul(axis_y.z, sin_angle)?,
+                ])?,
+            );
+            let position = Vector3::new(
+                hreal_sum(&[s.x, hreal_mul(ray.x, stack)?, hreal_mul(radial_dir.x, r)?])?,
+                hreal_sum(&[s.y, hreal_mul(ray.y, stack)?, hreal_mul(radial_dir.y, r)?])?,
+                hreal_sum(&[s.z, hreal_mul(ray.z, stack)?, hreal_mul(radial_dir.z, r)?])?,
+            );
+            let radial_normal_scale = hreal_sub(1.0, hreal_abs(normal_blend)?)?;
+            let normal = Vector3::new(
+                hreal_sum(&[
+                    hreal_mul(radial_dir.x, radial_normal_scale)?,
+                    hreal_mul(axis_z.x, normal_blend)?,
+                ])?,
+                hreal_sum(&[
+                    hreal_mul(radial_dir.y, radial_normal_scale)?,
+                    hreal_mul(axis_z.y, normal_blend)?,
+                ])?,
+                hreal_sum(&[
+                    hreal_mul(radial_dir.z, radial_normal_scale)?,
+                    hreal_mul(axis_z.z, normal_blend)?,
+                ])?,
+            );
+            Some(Vertex::new(
                 Point3::from(position),
                 hunit_vector3(&normal).unwrap_or(axis_z),
-            )
+            ))
         };
 
         let mut polygons = Vec::new();
 
         // Special-case flags for degenerate faces.
-        let bottom_degenerate = radius1.abs() < tolerance();
-        let top_degenerate = radius2.abs() < tolerance();
+        let bottom_degenerate = matches!(
+            hreal_abs(radius1).map(|value| hreal_cmp_f64(value, tolerance())),
+            Some(Ordering::Less)
+        );
+        let top_degenerate = matches!(
+            hreal_abs(radius2).map(|value| hreal_cmp_f64(value, tolerance())),
+            Some(Ordering::Less)
+        );
 
         // If both faces are degenerate, we cannot build a meaningful volume.
         if bottom_degenerate && top_degenerate {
@@ -410,24 +453,31 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
 
         // For each slice of the circle (0..segments)
         for i in 0..segments {
-            let slice0 = i as Real / segments as Real;
-            let slice1 = (i + 1) as Real / segments as Real;
+            let Some(slice0) = hreal_div(i as Real, segments as Real) else {
+                return Mesh::empty(metadata);
+            };
+            let Some(slice1) = hreal_div((i + 1) as Real, segments as Real) else {
+                return Mesh::empty(metadata);
+            };
 
             // In the normal frustum_ptp, we always add a bottom cap triangle (fan) and a top cap triangle.
             // Here, we only add the cap triangle if the corresponding radius is not degenerate.
             if !bottom_degenerate {
                 // Bottom cap: a triangle fan from the bottom center to two consecutive points on the bottom ring.
-                polygons.push(Polygon::new(
-                    vec![start_v, point(0.0, slice0, -1.0), point(0.0, slice1, -1.0)],
-                    metadata.clone(),
-                ));
+                let (Some(p0), Some(p1)) =
+                    (point(0.0, slice0, -1.0), point(0.0, slice1, -1.0))
+                else {
+                    return Mesh::empty(metadata);
+                };
+                polygons.push(Polygon::new(vec![start_v, p0, p1], metadata.clone()));
             }
             if !top_degenerate {
                 // Top cap: a triangle fan from the top center to two consecutive points on the top ring.
-                polygons.push(Polygon::new(
-                    vec![end_v, point(1.0, slice1, 1.0), point(1.0, slice0, 1.0)],
-                    metadata.clone(),
-                ));
+                let (Some(p0), Some(p1)) = (point(1.0, slice1, 1.0), point(1.0, slice0, 1.0))
+                else {
+                    return Mesh::empty(metadata);
+                };
+                polygons.push(Polygon::new(vec![end_v, p0, p1], metadata.clone()));
             }
 
             // For the side wall, we normally build a quad spanning from the bottom ring (stack=0)
@@ -435,27 +485,29 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             // In that case, we output a triangle.
             if bottom_degenerate {
                 // Bottom is a point (start_v); create a triangle from start_v to two consecutive points on the top ring.
-                polygons.push(Polygon::new(
-                    vec![start_v, point(1.0, slice0, 0.0), point(1.0, slice1, 0.0)],
-                    metadata.clone(),
-                ));
+                let (Some(p0), Some(p1)) = (point(1.0, slice0, 0.0), point(1.0, slice1, 0.0))
+                else {
+                    return Mesh::empty(metadata);
+                };
+                polygons.push(Polygon::new(vec![start_v, p0, p1], metadata.clone()));
             } else if top_degenerate {
                 // Top is a point (end_v); create a triangle from two consecutive points on the bottom ring to end_v.
-                polygons.push(Polygon::new(
-                    vec![point(0.0, slice1, 0.0), point(0.0, slice0, 0.0), end_v],
-                    metadata.clone(),
-                ));
+                let (Some(p0), Some(p1)) = (point(0.0, slice1, 0.0), point(0.0, slice0, 0.0))
+                else {
+                    return Mesh::empty(metadata);
+                };
+                polygons.push(Polygon::new(vec![p0, p1, end_v], metadata.clone()));
             } else {
                 // Normal case: both rings are non-degenerate. Use a quad for the side wall.
-                polygons.push(Polygon::new(
-                    vec![
-                        point(0.0, slice1, 0.0),
-                        point(0.0, slice0, 0.0),
-                        point(1.0, slice0, 0.0),
-                        point(1.0, slice1, 0.0),
-                    ],
-                    metadata.clone(),
-                ));
+                let (Some(p0), Some(p1), Some(p2), Some(p3)) = (
+                    point(0.0, slice1, 0.0),
+                    point(0.0, slice0, 0.0),
+                    point(1.0, slice0, 0.0),
+                    point(1.0, slice1, 0.0),
+                ) else {
+                    return Mesh::empty(metadata);
+                };
+                polygons.push(Polygon::new(vec![p0, p1, p2, p3], metadata.clone()));
             }
         }
 

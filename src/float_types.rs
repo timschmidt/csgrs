@@ -808,7 +808,6 @@ pub(crate) fn hreal_mul(lhs: Real, rhs: Real) -> Option<Real> {
 }
 
 /// Return the finite absolute value of a public boundary scalar.
-#[cfg(any(test, feature = "sketch"))]
 pub(crate) fn hreal_abs(value: Real) -> Option<Real> {
     let value = hreal_from_f64(value).ok()?;
     match hreal_sign(&value)? {
