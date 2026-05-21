@@ -225,6 +225,23 @@ fn sketch_problem_with_ranges(row_count: usize) -> hypersolve::SketchSolveProble
     sketch
 }
 
+fn sketch_problem_with_distance_ranges(row_count: usize) -> hypersolve::SketchSolveProblem {
+    let mut sketch = hypersolve::SketchSolveProblem::new();
+    for index in 0..row_count {
+        let a = sketch.add_point2d(format!("clearance{index}.a"), r(index as i64), r(0));
+        let b = sketch.add_point2d(format!("clearance{index}.b"), r(index as i64 + 3), r(4));
+        hypersolve::sketch_distance_builders::point_point_distance_range(
+            &mut sketch,
+            format!("clearance window {index}"),
+            a,
+            b,
+            Some(r(4)),
+            Some(r(6)),
+        );
+    }
+    sketch
+}
+
 fn sketch_problem_with_parameter_domains(row_count: usize) -> hypersolve::SketchSolveProblem {
     let mut sketch = hypersolve::SketchSolveProblem::new();
     for index in 0..row_count {
@@ -295,6 +312,10 @@ fn certification(c: &mut Criterion) {
     let range_sketch = sketch_problem_with_ranges(16);
     c.bench_function("sketch_range_and_objective_lowering", |b| {
         b.iter(|| range_sketch.lower_to_problem())
+    });
+    let distance_range_sketch = sketch_problem_with_distance_ranges(16);
+    c.bench_function("sketch_distance_range_lowering", |b| {
+        b.iter(|| distance_range_sketch.lower_to_problem())
     });
     let domain_sketch = sketch_problem_with_parameter_domains(16);
     c.bench_function("sketch_parameter_domain_preflight", |b| {

@@ -11,7 +11,7 @@
 //! SolveSpace's public `slvs.h` API and SolveSpace technology notes for the
 //! behavioral reference.
 
-use hyperreal::Real;
+use hyperreal::{Real, RealSign};
 
 use crate::model::{Constraint, ConstraintKind, Problem, VariableId};
 use crate::sketch_builders::{distance, incidence, objective, orientation, ranges};
@@ -298,6 +298,24 @@ pub enum SketchConstraintKind {
         /// Distance entity.
         distance: SketchEntityHandle,
     },
+    /// Point-to-point bounded-distance relation.
+    ///
+    /// Bounds are exact distance values. Lowering uses squared-distance
+    /// inequalities only after proving that the bounds are nonnegative, so a
+    /// negative upper bound cannot be accidentally accepted by squaring. This
+    /// follows the exact-geometric-computation boundary advocated by Yap,
+    /// "Towards Exact Geometric Computation" (1997): retain the semantic
+    /// object, then lower only to certified exact predicates.
+    PointPointDistanceRange {
+        /// First point entity.
+        a: SketchEntityHandle,
+        /// Second point entity.
+        b: SketchEntityHandle,
+        /// Optional exact lower distance bound.
+        lower: Option<Real>,
+        /// Optional exact upper distance bound.
+        upper: Option<Real>,
+    },
     /// 2D horizontal line constraint.
     Horizontal {
         /// Line entity.
@@ -361,6 +379,8 @@ pub enum SketchResidualStrategy {
     CoordinateEquality,
     /// Squared Euclidean distance polynomial.
     SquaredDistance,
+    /// Squared Euclidean distance inequality for bounded-distance constraints.
+    BoundedSquaredDistance,
     /// Incidence represented as a squared-distance polynomial.
     SquaredIncidence,
     /// Scalar parameter bound.
@@ -387,6 +407,10 @@ pub enum SketchGeneratedRowStatus {
     },
     /// The source constraint is diagnostic/reference-only and emitted no row.
     ReferenceOnly,
+    /// The source exact bound is invalid for this relation.
+    InvalidExactBound,
+    /// The source exact bound could not be certified enough for safe lowering.
+    UnresolvedExactBound,
 }
 
 /// Provenance for one residual row produced from a high-level sketch
@@ -790,6 +814,23 @@ impl SketchSolveProblem {
         distance::point_point_distance(self, name, a, b, distance).handle
     }
 
+    /// Add a bounded point-to-point distance constraint.
+    ///
+    /// Lowering emits `|a-b|^2 - lower^2 >= 0` and/or
+    /// `|a-b|^2 - upper^2 <= 0` after exact bound validation. The validation is
+    /// report-bearing because squaring an invalid negative bound would hide a
+    /// modeling error.
+    pub fn add_point_point_distance_range(
+        &mut self,
+        name: impl Into<String>,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+        lower: Option<Real>,
+        upper: Option<Real>,
+    ) -> SketchConstraintHandle {
+        distance::point_point_distance_range(self, name, a, b, lower, upper).handle
+    }
+
     /// Add a horizontal 2D line constraint.
     pub fn add_horizontal(
         &mut self,
@@ -1065,6 +1106,68 @@ impl SketchSolveProblem {
                     residual,
                     SketchResidualStrategy::SquaredDistance,
                 );
+            }
+            SketchConstraintKind::PointPointDistanceRange {
+                a,
+                b,
+                ref lower,
+                ref upper,
+            } => {
+                // Yap, "Towards Exact Geometric Computation" (1997), treats
+                // exact predicates as the correctness boundary. For distance
+                // ranges that means validating the retained distance bounds
+                // before lowering to polynomial squared-distance inequalities.
+                if !validate_distance_bounds(constraint, lower.as_ref(), upper.as_ref(), rows) {
+                    return;
+                }
+                let (Some(a), Some(b)) = (
+                    self.point_coordinates(a, constraint, rows),
+                    self.point_coordinates(b, constraint, rows),
+                ) else {
+                    return;
+                };
+                if a.len() != b.len() {
+                    rows.push(wrong_entity_row(
+                        constraint,
+                        b.handle,
+                        "matching point dimension",
+                    ));
+                    return;
+                }
+                let squared_distance = squared_distance(&a.exprs, &b.exprs);
+                if let Some(lower) = lower {
+                    self.push_residual_with_kind(
+                        problem,
+                        rows,
+                        constraint,
+                        format!("{} lower distance", constraint.name),
+                        squared_distance.clone() - Expr::real(lower.clone() * lower.clone()),
+                        SketchResidualStrategy::BoundedSquaredDistance,
+                        ConstraintKind::GreaterOrEqual,
+                        Real::one(),
+                    );
+                }
+                if let Some(upper) = upper {
+                    self.push_residual_with_kind(
+                        problem,
+                        rows,
+                        constraint,
+                        format!("{} upper distance", constraint.name),
+                        squared_distance - Expr::real(upper.clone() * upper.clone()),
+                        SketchResidualStrategy::BoundedSquaredDistance,
+                        ConstraintKind::LessOrEqual,
+                        Real::one(),
+                    );
+                }
+                if lower.is_none() && upper.is_none() {
+                    rows.push(SketchGeneratedRow {
+                        constraint: constraint.handle,
+                        residual_index: None,
+                        name: constraint.name.clone(),
+                        strategy: Some(SketchResidualStrategy::BoundedSquaredDistance),
+                        status: SketchGeneratedRowStatus::ReferenceOnly,
+                    });
+                }
             }
             SketchConstraintKind::Horizontal { line } => {
                 let Some((start, end)) = self.line2_points(line, constraint, rows) else {
@@ -1372,6 +1475,73 @@ fn wrong_entity_row(
         strategy: None,
         status: SketchGeneratedRowStatus::WrongEntityKind { handle, expected },
     }
+}
+
+fn invalid_bound_row(
+    constraint: &SketchConstraint,
+    name: impl Into<String>,
+    status: SketchGeneratedRowStatus,
+) -> SketchGeneratedRow {
+    SketchGeneratedRow {
+        constraint: constraint.handle,
+        residual_index: None,
+        name: name.into(),
+        strategy: Some(SketchResidualStrategy::BoundedSquaredDistance),
+        status,
+    }
+}
+
+fn validate_distance_bounds(
+    constraint: &SketchConstraint,
+    lower: Option<&Real>,
+    upper: Option<&Real>,
+    rows: &mut Vec<SketchGeneratedRow>,
+) -> bool {
+    for (label, bound) in [("lower", lower), ("upper", upper)] {
+        if let Some(bound) = bound {
+            match bound.structural_facts().sign {
+                Some(RealSign::Negative) => {
+                    rows.push(invalid_bound_row(
+                        constraint,
+                        format!("{} {label} distance", constraint.name),
+                        SketchGeneratedRowStatus::InvalidExactBound,
+                    ));
+                    return false;
+                }
+                Some(RealSign::Zero | RealSign::Positive) => {}
+                None => {
+                    rows.push(invalid_bound_row(
+                        constraint,
+                        format!("{} {label} distance", constraint.name),
+                        SketchGeneratedRowStatus::UnresolvedExactBound,
+                    ));
+                    return false;
+                }
+            }
+        }
+    }
+    if let (Some(lower), Some(upper)) = (lower, upper) {
+        match (upper.clone() - lower.clone()).structural_facts().sign {
+            Some(RealSign::Negative) => {
+                rows.push(invalid_bound_row(
+                    constraint,
+                    constraint.name.clone(),
+                    SketchGeneratedRowStatus::InvalidExactBound,
+                ));
+                return false;
+            }
+            Some(RealSign::Zero | RealSign::Positive) => {}
+            None => {
+                rows.push(invalid_bound_row(
+                    constraint,
+                    constraint.name.clone(),
+                    SketchGeneratedRowStatus::UnresolvedExactBound,
+                ));
+                return false;
+            }
+        }
+    }
+    true
 }
 
 fn squared_distance(a: &[Expr], b: &[Expr]) -> Expr {

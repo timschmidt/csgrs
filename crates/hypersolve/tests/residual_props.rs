@@ -237,6 +237,46 @@ proptest! {
     }
 
     #[test]
+    fn sketch_point_distance_range_rows_replay_generated_integer_segments(
+        ax in -16_i16..=16,
+        ay in -16_i16..=16,
+        dx in -8_i16..=8,
+        lower_slack in 0_i16..=8,
+        upper_slack in 0_i16..=8,
+    ) {
+        let ax = i64::from(ax);
+        let ay = i64::from(ay);
+        let dx = i64::from(dx);
+        let distance = dx.abs();
+        let lower = (distance - i64::from(lower_slack)).max(0);
+        let upper = distance + i64::from(upper_slack);
+        let mut sketch = SketchSolveProblem::new();
+        let a = sketch.add_point2d("a", Real::from(ax), Real::from(ay));
+        let b = sketch.add_point2d("b", Real::from(ax + dx), Real::from(ay));
+        sketch.add_point_point_distance_range(
+            "clearance window",
+            a,
+            b,
+            Some(Real::from(lower)),
+            Some(Real::from(upper)),
+        );
+
+        let lowered = sketch.lower_to_problem();
+        let certification = certify_candidate(
+            &PreparedProblem::new(&lowered.problem),
+            &context_from_problem(&lowered.problem),
+        );
+
+        prop_assert_eq!(lowered.rows.len(), 2);
+        let all_distance_rows = lowered.rows.iter().all(|row| {
+            row.strategy == Some(SketchResidualStrategy::BoundedSquaredDistance)
+                && row.status == SketchGeneratedRowStatus::Generated
+        });
+        prop_assert!(all_distance_rows);
+        prop_assert!(certification.all_satisfied());
+    }
+
+    #[test]
     fn sketch_construction_certificate_generated_integer_segments_match_distance(
         ax in -12_i16..=12,
         ay in -12_i16..=12,

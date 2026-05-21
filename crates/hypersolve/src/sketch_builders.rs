@@ -117,6 +117,31 @@ pub mod distance {
             kind,
         }
     }
+
+    /// Add an exact bounded point-to-point distance relation.
+    ///
+    /// Bounds lower to squared-distance inequalities only after exact
+    /// nonnegative-bound validation. This covers clearance and bounded-distance
+    /// use cases while avoiding the classic error of squaring an invalid
+    /// negative distance. The proof boundary remains exact residual replay; see
+    /// Yap, "Towards Exact Geometric Computation" (1997).
+    pub fn point_point_distance_range(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+        lower: Option<Real>,
+        upper: Option<Real>,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::PointPointDistanceRange { a, b, lower, upper };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Distance,
+            strategy: SketchResidualStrategy::BoundedSquaredDistance,
+            kind,
+        }
+    }
 }
 
 /// Orientation relation builders.

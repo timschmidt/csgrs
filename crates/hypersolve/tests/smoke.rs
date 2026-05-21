@@ -562,6 +562,97 @@ fn sketch_parameter_ranges_report_empty_ranges_and_stale_parameters_explicitly()
 }
 
 #[test]
+fn sketch_point_distance_ranges_lower_to_exact_squared_inequalities() {
+    let mut sketch = SketchSolveProblem::new();
+    let a = sketch.add_point2d("a", real(0), real(0));
+    let b = sketch.add_point2d("b", real(3), real(4));
+    let range = sketch_distance_builders::point_point_distance_range(
+        &mut sketch,
+        "clearance window",
+        a,
+        b,
+        Some(real(4)),
+        Some(real(6)),
+    );
+
+    assert_eq!(range.family, hypersolve::SketchConstraintFamily::Distance);
+    assert_eq!(
+        range.strategy,
+        SketchResidualStrategy::BoundedSquaredDistance
+    );
+
+    let lowered = sketch.lower_to_problem();
+
+    assert_eq!(lowered.problem.constraints.len(), 2);
+    assert_eq!(lowered.rows.len(), 2);
+    assert_eq!(
+        lowered.problem.constraints[0].kind,
+        ConstraintKind::GreaterOrEqual
+    );
+    assert_eq!(
+        lowered.problem.constraints[1].kind,
+        ConstraintKind::LessOrEqual
+    );
+    assert!(lowered.rows.iter().all(|row| {
+        row.status == SketchGeneratedRowStatus::Generated
+            && row.strategy == Some(SketchResidualStrategy::BoundedSquaredDistance)
+    }));
+
+    let certification = certify_candidate(
+        &PreparedProblem::new(&lowered.problem),
+        &context_from_problem(&lowered.problem),
+    );
+
+    assert!(certification.all_satisfied());
+    assert!(matches!(
+        certification.rows[0].status,
+        CertifiedCandidateStatus::CertifiedSatisfiedInequality { .. }
+    ));
+    assert!(matches!(
+        certification.rows[1].status,
+        CertifiedCandidateStatus::CertifiedSatisfiedInequality { .. }
+    ));
+}
+
+#[test]
+fn sketch_point_distance_ranges_report_invalid_empty_and_stale_inputs() {
+    let mut sketch = SketchSolveProblem::new();
+    let a = sketch.add_point2d("a", real(0), real(0));
+    let b = sketch.add_point2d("b", real(1), real(0));
+    sketch.add_point_point_distance_range("negative lower", a, b, Some(real(-1)), None);
+    sketch.add_point_point_distance_range("inverted", a, b, Some(real(6)), Some(real(4)));
+    sketch.add_point_point_distance_range("empty", a, b, None, None);
+    sketch.add_point_point_distance_range(
+        "stale",
+        a,
+        SketchEntityHandle(999),
+        Some(real(0)),
+        Some(real(2)),
+    );
+
+    let lowered = sketch.lower_to_problem();
+
+    assert_eq!(lowered.problem.constraints.len(), 0);
+    assert_eq!(lowered.rows.len(), 4);
+    assert_eq!(
+        lowered.rows[0].status,
+        SketchGeneratedRowStatus::InvalidExactBound
+    );
+    assert_eq!(
+        lowered.rows[1].status,
+        SketchGeneratedRowStatus::InvalidExactBound
+    );
+    assert_eq!(
+        lowered.rows[2].status,
+        SketchGeneratedRowStatus::ReferenceOnly
+    );
+    assert_eq!(
+        lowered.rows[3].status,
+        SketchGeneratedRowStatus::MissingEntity(SketchEntityHandle(999))
+    );
+}
+
+#[test]
 fn sketch_parameter_domain_preflight_certifies_valid_invalid_and_empty_bounds() {
     let mut sketch = SketchSolveProblem::new();
     let positive = sketch.add_parameter("positive radius", real(3));
