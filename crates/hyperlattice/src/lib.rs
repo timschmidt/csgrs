@@ -83,6 +83,18 @@ pub use vector::{
     Vector4Facts, Vector4HomogeneousKind, VectorSharedScaleFacts, VectorSharedScaleView,
 };
 
+mod point;
+pub use point::{
+    Point2, Point2Facts, Point3, Point3Facts, PointSharedScaleFacts, PointSharedScaleView,
+};
+
+mod projective;
+pub use projective::{
+    HomogeneousLine3, HomogeneousPoint3, Plane3Coefficients, ProjectivePlane3,
+    homogeneous_point_plane_expression, intersect_homogeneous_line_plane, intersect_three_planes,
+    intersect_two_planes,
+};
+
 mod matrix;
 pub use matrix::{
     Matrix3, Matrix3StructuralFacts, Matrix3TransformKind, Matrix4, Matrix4StructuralFacts,

@@ -1,4 +1,9 @@
-//! [`Real`](crate::Real) constants, elementary functions, and zero-classification helpers.
+//! Compatibility scalar facades and lattice-specific zero guards.
+//!
+//! Canonical scalar semantics live on [`Real`](crate::Real). This module keeps
+//! existing free-function facades for callers, while the lattice-specific
+//! ownership is limited to zero classification, checked reciprocal guards, and
+//! abort-aware helpers used by vector and matrix code.
 
 use crate::complex::Complex;
 use crate::{
