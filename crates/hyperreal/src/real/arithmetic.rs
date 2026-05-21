@@ -4030,8 +4030,23 @@ impl Real {
     /// );
     /// ```
     pub fn atan2(self, x: Real) -> Real {
-        let y_sign = self.best_sign();
-        let x_sign = x.best_sign();
+        // Structural sign first. `best_sign` for Irrational class refines the
+        // computable graph until the sign is decided, which is dramatically
+        // more expensive than reading already-derivable structural facts. Only
+        // descend to the refinement path when structural inspection cannot
+        // decide for one of the inputs.
+        let y_sign = match self.structural_facts().sign {
+            Some(RealSign::Zero) => Sign::NoSign,
+            Some(RealSign::Positive) => Sign::Plus,
+            Some(RealSign::Negative) => Sign::Minus,
+            None => self.best_sign(),
+        };
+        let x_sign = match x.structural_facts().sign {
+            Some(RealSign::Zero) => Sign::NoSign,
+            Some(RealSign::Positive) => Sign::Plus,
+            Some(RealSign::Negative) => Sign::Minus,
+            None => x.best_sign(),
+        };
         match (y_sign, x_sign) {
             (Sign::NoSign, Sign::NoSign) | (Sign::NoSign, Sign::Plus) => {
                 crate::trace_dispatch!("real", "atan2", "axis-zero-y");
