@@ -526,6 +526,36 @@ fn levenberg_marquardt_proposal_route_reports_named_lossy_adapter() {
 }
 
 #[test]
+fn modified_newton_least_squares_route_reports_named_lossy_adapter() {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let mut problem = Problem::default();
+    problem.add_variable("x", real(0));
+    problem.add_constraint(Constraint::equality("x minus two", x - Expr::int(2)));
+    let config = SolverConfig {
+        proposal_engine: ProposalEngineKind::ModifiedNewtonLeastSquares,
+        max_iterations: 4,
+        ..SolverConfig::default()
+    };
+
+    let report = solve_damped_least_squares(SolverState { problem, config });
+
+    assert_ne!(report.reason, ConvergenceReason::UnsupportedProposalEngine);
+    assert_eq!(
+        report.proposal_engine.requested,
+        ProposalEngineKind::ModifiedNewtonLeastSquares
+    );
+    assert_eq!(
+        report.proposal_engine.used,
+        Some(ProposalEngineKind::ModifiedNewtonLeastSquares)
+    );
+    assert_eq!(
+        report.proposal_engine.precision,
+        ProposalEnginePrecision::LossyF64
+    );
+    assert!(!report.linear_reports.is_empty());
+}
+
+#[test]
 fn lossy_adapter_only_report_preserves_proposal_boundary_without_exact_replay() {
     let x = Expr::symbol(SymbolId(0), "x");
     let mut problem = Problem::default();

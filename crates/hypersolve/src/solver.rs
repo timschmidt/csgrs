@@ -21,10 +21,12 @@ pub struct SolverConfig {
     /// Numerical engine used only to propose candidate coordinates.
     ///
     /// The current implementation supports dense damped least squares and the
-    /// named Levenberg-Marquardt route. PowellHybrid and Dogleg use dense
-    /// lossy trust-region proposals, BFGS uses a retained dense inverse-Hessian
-    /// approximation, and SQP uses the current equality least-squares QP
-    /// relaxation. These routes follow the least-squares damping family of
+    /// named Levenberg-Marquardt route. ModifiedNewtonLeastSquares names the
+    /// SolveSpace-style symbolic-Jacobian/damped-Newton proposal shape.
+    /// PowellHybrid and Dogleg use dense lossy trust-region proposals, BFGS
+    /// uses a retained dense inverse-Hessian approximation, and SQP uses the
+    /// current equality least-squares QP relaxation. These routes follow the
+    /// least-squares damping family of
     /// Levenberg, "A Method for the Solution of Certain Non-Linear Problems in
     /// Least Squares" (1944), and Marquardt, "An Algorithm for Least-Squares
     /// Estimation of Nonlinear Parameters" (1963), plus Powell's dogleg hybrid
@@ -153,9 +155,10 @@ pub fn solve_damped_least_squares(mut state: SolverState) -> SolveReport {
         previous_point = Some(dense_point(&state.problem));
         previous_gradient = Some(gradient.clone());
 
-        // DampedLeastSquares, LevenbergMarquardt, and the equality-SQP
-        // relaxation use a damped normal step; PowellHybrid and Dogleg use a
-        // trust-region step; BFGS uses the retained inverse-Hessian direction.
+        // DampedLeastSquares, LevenbergMarquardt, ModifiedNewtonLeastSquares,
+        // and the equality-SQP relaxation use a damped normal step;
+        // PowellHybrid and Dogleg use a trust-region step; BFGS uses the
+        // retained inverse-Hessian direction.
         // Per Yap (1997), exact/certified replay, not this lossy proposal,
         // decides acceptance.
         let step_result = match state.config.proposal_engine {
@@ -167,6 +170,7 @@ pub fn solve_damped_least_squares(mut state: SolverState) -> SolveReport {
             }
             ProposalEngineKind::DampedLeastSquares
             | ProposalEngineKind::LevenbergMarquardt
+            | ProposalEngineKind::ModifiedNewtonLeastSquares
             | ProposalEngineKind::Sqp => backend.solve_damped_normal(&jacobian, &numeric, damping),
         };
         let Ok((step, linear_report)) = step_result else {

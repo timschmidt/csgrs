@@ -7,7 +7,8 @@ use crate::linalg::LinearSolveReport;
 /// that must be replayed through exact residual and predicate certificates
 /// before acceptance. The list follows the practical geometric-constraint
 /// solver families exposed by SolveSpace/PlaneGCS and MINPACK: damped
-/// least-squares/Levenberg-Marquardt, Powell hybrid, dogleg, BFGS, and SQP.
+/// least-squares/Levenberg-Marquardt, SolveSpace-style modified Newton least
+/// squares, Powell hybrid, dogleg, BFGS, and SQP.
 /// Yap's exact-geometric-computation boundary still applies: numerical
 /// engines propose, exact/certified replay decides.
 ///
@@ -35,6 +36,13 @@ pub enum ProposalEngineKind {
     /// [`Self::DampedLeastSquares`], surfaced under the Levenberg-Marquardt
     /// name so callers can audit which lossy proposal policy they requested.
     LevenbergMarquardt,
+    /// SolveSpace-style modified Newton least-squares proposal route.
+    ///
+    /// The first route uses hypersolve's existing symbolic Jacobian,
+    /// soluble-alone preprocessing surfaces, fixed-parameter masking, and
+    /// damped normal-equation least-squares step under a named report. It is a
+    /// compatibility proposal engine, not a convergence or proof certificate.
+    ModifiedNewtonLeastSquares,
     /// Trust-region dogleg proposal engine.
     Dogleg,
     /// Quasi-Newton BFGS proposal engine.
@@ -58,6 +66,7 @@ impl ProposalEngineKind {
             Self::DampedLeastSquares
                 | Self::PowellHybrid
                 | Self::LevenbergMarquardt
+                | Self::ModifiedNewtonLeastSquares
                 | Self::Dogleg
                 | Self::Bfgs
                 | Self::Sqp
@@ -104,11 +113,12 @@ pub struct SolveReport {
     /// Proposal engine selected for candidate generation.
     ///
     /// This makes the construction/proof boundary explicit. The current dense
-    /// step supports the default damped least-squares route, the named
-    /// Levenberg-Marquardt route, dense Powell-hybrid/dogleg routes, BFGS, and
-    /// an equality-SQP relaxation. Accepted coordinates still require exact
-    /// candidate certification; see Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997).
+    /// step supports the default damped least-squares route, named
+    /// Levenberg-Marquardt and modified-Newton least-squares routes, dense
+    /// Powell-hybrid/dogleg routes, BFGS, and an equality-SQP relaxation.
+    /// Accepted coordinates still require exact candidate certification; see
+    /// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
+    /// 7.1-2 (1997).
     pub proposal_engine: ProposalEngineReport,
     pub residuals: Vec<ResidualEvaluation>,
     /// Linear-solver adapter reports collected during iteration.

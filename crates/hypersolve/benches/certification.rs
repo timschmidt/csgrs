@@ -743,6 +743,18 @@ fn certification(c: &mut Criterion) {
             })
         })
     });
+    c.bench_function("solve_modified_newton_least_squares_affine", |b| {
+        b.iter(|| {
+            solve_damped_least_squares(SolverState {
+                problem: affine_problem(4),
+                config: SolverConfig {
+                    max_iterations: 4,
+                    proposal_engine: ProposalEngineKind::ModifiedNewtonLeastSquares,
+                    ..SolverConfig::default()
+                },
+            })
+        })
+    });
     c.bench_function("solve_dogleg_affine", |b| {
         b.iter(|| {
             solve_damped_least_squares(SolverState {
