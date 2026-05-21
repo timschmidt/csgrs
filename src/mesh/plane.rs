@@ -141,6 +141,10 @@ fn hreal_cmp_or_equal(lhs: &HReal, rhs: &HReal) -> Ordering {
     }
 }
 
+fn hlimit_point3_from_point3(point: &Point3<Real>) -> Option<hyperlimit::Point3> {
+    hyperlimit::Point3::try_from_f64_array([point.x, point.y, point.z]).ok()
+}
+
 fn newell_hreal_normal(points: &[HVector3]) -> HVector3 {
     points
         .iter()
@@ -331,8 +335,8 @@ impl Plane {
             return COPLANAR;
         };
         match hreal_sign_with_tolerance(&det) {
-            Some(RealSign::Positive) => FRONT,
-            Some(RealSign::Negative) => BACK,
+            Some(RealSign::Positive) => self.orient_point_hyperlimit(point).unwrap_or(FRONT),
+            Some(RealSign::Negative) => self.orient_point_hyperlimit(point).unwrap_or(BACK),
             Some(RealSign::Zero) | None => COPLANAR,
         }
     }
@@ -393,6 +397,18 @@ impl Plane {
         let ac = &c - &a;
         let ad = &d - &a;
         Some(ab.cross(&ac).dot(&ad))
+    }
+
+    fn orient_point_hyperlimit(&self, point: &Point3<Real>) -> Option<i8> {
+        let a = hlimit_point3_from_point3(&self.point_a)?;
+        let b = hlimit_point3_from_point3(&self.point_b)?;
+        let c = hlimit_point3_from_point3(&self.point_c)?;
+        let d = hlimit_point3_from_point3(point)?;
+        match hyperlimit::orient3d(&a, &b, &c, &d).value()? {
+            hyperlimit::Sign::Positive => Some(BACK),
+            hyperlimit::Sign::Negative => Some(FRONT),
+            hyperlimit::Sign::Zero => Some(COPLANAR),
+        }
     }
 
     fn unscaled_hreal_normal(&self) -> Option<HVector3> {

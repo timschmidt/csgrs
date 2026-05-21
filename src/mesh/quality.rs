@@ -2,12 +2,11 @@
 
 use crate::float_types::{
     HReal, PI, Real, hdegrees_to_radians, hreal_cmp_f64, hreal_div, hreal_from_f64,
-    hreal_gt_f64, hreal_mean, hreal_sample_stddev, hreal_sign, hreal_to_f64,
-    htriangle_area_hreal, hvector3_from_point3, tolerance,
+    hreal_gt_f64, hreal_mean, hreal_sample_stddev, hreal_to_f64, htriangle_area_hreal,
+    hvector3_from_point3, tolerance,
 };
 use crate::mesh::Mesh;
 use crate::vertex::Vertex;
-use hyperreal::RealSign;
 use nalgebra::Point3;
 use std::cmp::Ordering;
 use std::fmt::Debug;
@@ -56,15 +55,15 @@ fn boundary_scalar_min(values: impl IntoIterator<Item = Real>) -> Option<Real> {
 }
 
 fn hreal_cmp(lhs: &HReal, rhs: &HReal) -> Option<Ordering> {
-    match hreal_sign(&(lhs.clone() - rhs.clone())) {
-        Some(RealSign::Positive) => Some(Ordering::Greater),
-        Some(RealSign::Negative) => Some(Ordering::Less),
-        Some(RealSign::Zero) => Some(Ordering::Equal),
-        None => hreal_to_f64(lhs)?.partial_cmp(&hreal_to_f64(rhs)?),
-    }
+    hyperlimit::compare_reals(lhs, rhs)
+        .value()
+        .or_else(|| hreal_to_f64(lhs)?.partial_cmp(&hreal_to_f64(rhs)?))
 }
 
 fn hreal_min<'a>(lhs: &'a HReal, rhs: &'a HReal) -> Option<&'a HReal> {
+    if let Some(value) = hyperlimit::real_min(lhs, rhs).value() {
+        return Some(value);
+    }
     match hreal_cmp(lhs, rhs)? {
         Ordering::Greater => Some(rhs),
         Ordering::Less | Ordering::Equal => Some(lhs),
@@ -72,6 +71,9 @@ fn hreal_min<'a>(lhs: &'a HReal, rhs: &'a HReal) -> Option<&'a HReal> {
 }
 
 fn hreal_max<'a>(lhs: &'a HReal, rhs: &'a HReal) -> Option<&'a HReal> {
+    if let Some(value) = hyperlimit::real_max(lhs, rhs).value() {
+        return Some(value);
+    }
     match hreal_cmp(lhs, rhs)? {
         Ordering::Greater | Ordering::Equal => Some(lhs),
         Ordering::Less => Some(rhs),
@@ -81,6 +83,9 @@ fn hreal_max<'a>(lhs: &'a HReal, rhs: &'a HReal) -> Option<&'a HReal> {
 fn hreal_clamp_f64(value: HReal, min: Real, max: Real) -> Option<HReal> {
     let min_h = hreal_from_f64(min).ok()?;
     let max_h = hreal_from_f64(max).ok()?;
+    if let Some(clamped) = hyperlimit::real_clamp(value.clone(), &min_h, &max_h).value() {
+        return Some(clamped);
+    }
     if matches!(hreal_cmp(&value, &min_h)?, Ordering::Less) {
         hreal_from_f64(min).ok()
     } else if matches!(hreal_cmp(&value, &max_h)?, Ordering::Greater) {
@@ -99,17 +104,21 @@ fn hreal_max3(a: &HReal, b: &HReal, c: &HReal) -> Option<HReal> {
 }
 
 fn hreal_is_le(lhs: &HReal, rhs: &HReal) -> Option<bool> {
-    Some(matches!(
-        hreal_cmp(lhs, rhs)?,
-        Ordering::Less | Ordering::Equal
-    ))
+    hyperlimit::real_le(lhs, rhs).value().or_else(|| {
+        Some(matches!(
+            hreal_cmp(lhs, rhs)?,
+            Ordering::Less | Ordering::Equal
+        ))
+    })
 }
 
 fn hreal_is_ge(lhs: &HReal, rhs: &HReal) -> Option<bool> {
-    Some(matches!(
-        hreal_cmp(lhs, rhs)?,
-        Ordering::Greater | Ordering::Equal
-    ))
+    hyperlimit::real_ge(lhs, rhs).value().or_else(|| {
+        Some(matches!(
+            hreal_cmp(lhs, rhs)?,
+            Ordering::Greater | Ordering::Equal
+        ))
+    })
 }
 
 fn hyper_triangle_quality(vertices: &[Vertex]) -> Option<TriangleQuality> {

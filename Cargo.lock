@@ -1027,7 +1027,7 @@ checksum = "460fbee9c2c2f33933d720630a6a0bac33ba7053db5344fac858d4b8952d77d5"
 
 [[package]]
 name = "csgrs"
-version = "0.22.0"
+version = "0.23.0"
 dependencies = [
  "base64",
  "bevy_asset",
@@ -1754,24 +1754,24 @@ dependencies = [
 
 [[package]]
 name = "hypercurve"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "hyperlimit",
  "hyperreal",
- "hypersolve 0.2.0",
+ "hypersolve",
  "hypertri",
 ]
 
 [[package]]
 name = "hyperlattice"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "hyperreal",
 ]
 
 [[package]]
 name = "hyperlimit"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "hyperlattice",
  "hyperreal",
@@ -1779,7 +1779,7 @@ dependencies = [
 
 [[package]]
 name = "hypermesh"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "hyperlattice",
  "hyperlimit",
@@ -1788,18 +1788,18 @@ dependencies = [
 
 [[package]]
 name = "hyperphysics"
-version = "0.2.1"
+version = "0.3.0"
 dependencies = [
  "hyperlattice",
  "hyperlimit",
  "hypermesh",
  "hyperreal",
- "hypersolve 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "hypersolve",
 ]
 
 [[package]]
 name = "hyperreal"
-version = "0.12.0"
+version = "0.13.0"
 dependencies = [
  "ciborium",
  "num",
@@ -1809,7 +1809,7 @@ dependencies = [
 
 [[package]]
 name = "hypersdf"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "fast-surface-nets",
  "hyperlattice",
@@ -1819,18 +1819,7 @@ dependencies = [
 
 [[package]]
 name = "hypersolve"
-version = "0.2.0"
-dependencies = [
- "hyperlattice",
- "hyperlimit",
- "hyperreal",
-]
-
-[[package]]
-name = "hypersolve"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c9aa1d63db5569780eae44c0a92bfaf38a8236481b103444c2f6cfe6d0c6d91a"
+version = "0.3.0"
 dependencies = [
  "hyperlattice",
  "hyperlimit",
@@ -1839,7 +1828,7 @@ dependencies = [
 
 [[package]]
 name = "hypertri"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "hyperlimit",
  "hyperreal",

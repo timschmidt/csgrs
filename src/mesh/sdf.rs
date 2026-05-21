@@ -552,20 +552,13 @@ fn hypersdf_grid(
 }
 
 fn hpoint3_from_point3(point: &Point3<Real>) -> Option<HPoint3> {
-    Some(HPoint3::new(
-        hreal_from_f64(point.x).ok()?,
-        hreal_from_f64(point.y).ok()?,
-        hreal_from_f64(point.z).ok()?,
-    ))
+    HPoint3::try_from_f64_array([point.x, point.y, point.z]).ok()
 }
 
 #[allow(dead_code)]
 fn point3_from_hpoint3(point: &HPoint3) -> Option<Point3<Real>> {
-    Some(Point3::new(
-        hreal_to_f64(&point.x)?,
-        hreal_to_f64(&point.y)?,
-        hreal_to_f64(&point.z)?,
-    ))
+    let [x, y, z] = point.to_f64_array_lossy()?;
+    Some(Point3::new(x, y, z))
 }
 
 #[inline]
@@ -602,14 +595,10 @@ fn surface_nets_scalar(value: &HReal) -> Option<F32> {
 }
 
 fn vector3_from_f32_boundary(vector: [F32; 3]) -> Option<Vector3<Real>> {
-    let x = hreal_from_f32(vector[0]).ok()?;
-    let y = hreal_from_f32(vector[1]).ok()?;
-    let z = hreal_from_f32(vector[2]).ok()?;
-    Some(Vector3::new(
-        hreal_to_f64(&x)?,
-        hreal_to_f64(&y)?,
-        hreal_to_f64(&z)?,
-    ))
+    let [x, y, z] = hyperlattice::Vector3::try_from_f32_array(vector)
+        .ok()?
+        .to_f64_array_lossy()?;
+    Some(Vector3::new(x, y, z))
 }
 
 fn count_crossing_cells(field_values: &[HReal], nx: u32, ny: u32, nz: u32) -> usize {
