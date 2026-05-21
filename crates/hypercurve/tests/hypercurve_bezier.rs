@@ -29,6 +29,7 @@ use hypercurve::{
     BezierBooleanPathSchedulerStatus, BezierBooleanQuadraticFragmentReport2,
     BezierBooleanRationalQuadraticFragmentReport2, BezierBooleanRegionAssemblyReport2,
     BezierBooleanRegionAssemblyStatus, BezierBooleanResultReport2, BezierBooleanResultStatus,
+    BezierBooleanRootIsolationConstructionReport2, BezierBooleanRootIsolationConstructionStatus,
     BezierBooleanRootIsolationHandoffReport2, BezierBooleanRootIsolationHandoffStatus,
     BezierBooleanRootIsolationReplayReport2, BezierBooleanRootIsolationReplayStatus,
     BezierBooleanSplitInsertionStatus, BezierBooleanSplitPlanAuditStatus,
@@ -4837,6 +4838,45 @@ fn bezier_boolean_root_isolation_replay_consumes_hypersolve_reports() {
         readiness.insertion.shared_range_interior_parameters,
         vec![half()]
     );
+
+    let construction =
+        match BezierBooleanRootIsolationConstructionReport2::from_hypersolve_range_reports(
+            scheduler,
+            &[],
+            &[UnivariateRootIsolationReport {
+                constraint_index: 0,
+                symbol: None,
+                degree: Some(1),
+                status: RootIsolationStatus::Isolated,
+                multiplicity: None,
+                intervals: vec![IsolatedRootInterval {
+                    lower: half(),
+                    upper: half(),
+                    exact_root: Some(half()),
+                    distinct_root_count: 1,
+                }],
+                message: None,
+            }],
+            &policy(),
+        ) {
+            Classification::Decided(report) => report,
+            Classification::Uncertain(reason) => {
+                panic!("unexpected construction uncertainty: {reason:?}")
+            }
+        };
+    assert_eq!(
+        construction.status,
+        BezierBooleanRootIsolationConstructionStatus::Ready
+    );
+    assert!(construction.is_ready());
+    assert!(!construction.has_blockers());
+    assert_eq!(
+        construction
+            .readiness
+            .insertion
+            .shared_range_interior_parameters,
+        vec![half()]
+    );
 }
 
 #[test]
@@ -4889,6 +4929,22 @@ fn bezier_boolean_root_isolation_replay_blocks_unusable_hypersolve_reports() {
         BezierBooleanConstructionReadinessStatus::Blocked
     );
     assert!(readiness.has_blockers());
+
+    let construction = match BezierBooleanRootIsolationConstructionReport2::from_replay(
+        readiness.scheduler.clone(),
+        replay,
+        &policy(),
+    ) {
+        Classification::Decided(report) => report,
+        Classification::Uncertain(reason) => {
+            panic!("unexpected construction uncertainty: {reason:?}")
+        }
+    };
+    assert_eq!(
+        construction.status,
+        BezierBooleanRootIsolationConstructionStatus::ReplayBlocked
+    );
+    assert!(construction.has_blockers());
 }
 
 #[test]
@@ -10719,6 +10775,23 @@ proptest! {
             BezierBooleanConstructionReadinessStatus::Ready
         );
         prop_assert_eq!(readiness.insertion.interior_parameter_count, span_count);
+
+        let construction = match BezierBooleanRootIsolationConstructionReport2::from_replay(
+            readiness.scheduler.clone(),
+            replay,
+            &policy(),
+        ) {
+            Classification::Decided(report) => report,
+            Classification::Uncertain(reason) => {
+                prop_assert!(false, "unexpected construction uncertainty: {reason:?}");
+                return Ok(());
+            }
+        };
+        prop_assert_eq!(
+            construction.status,
+            BezierBooleanRootIsolationConstructionStatus::Ready
+        );
+        prop_assert!(construction.is_ready());
     }
 
     #[test]
