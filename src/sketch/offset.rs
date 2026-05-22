@@ -28,7 +28,7 @@
 //! geometry model.
 
 use crate::float_types::{
-    HReal, Real, hreal_abs, hreal_cmp_f64, hreal_from_f64, hreal_sign, hreal_to_f64,
+    Real, hreal_abs, hreal_cmp_f64, hreal_from_f64, hreal_sign, hreal_to_f64,
 };
 use crate::sketch::Profile;
 use hypercurve::{
@@ -164,7 +164,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// another geometry crate.
     pub fn offset<D>(&self, distance: D) -> Profile<M>
     where
-        D: TryInto<HReal>,
+        D: TryInto<hyperreal::Real>,
     {
         let Some(distance) = finite_offset_distance(distance) else {
             return self.empty_offset_result();
@@ -189,7 +189,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// path as [`Profile::offset`].
     pub fn offset_rounded<D>(&self, distance: D) -> Profile<M>
     where
-        D: TryInto<HReal>,
+        D: TryInto<hyperreal::Real>,
     {
         let Some(distance) = finite_offset_distance(distance) else {
             return self.empty_offset_result();
@@ -242,7 +242,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
 /// Yap's exact geometric computation boundary split (1997).
 fn finite_offset_distance<D>(distance: D) -> Option<Real>
 where
-    D: TryInto<HReal>,
+    D: TryInto<hyperreal::Real>,
 {
     hreal_to_f64(&distance.try_into().ok()?)
 }

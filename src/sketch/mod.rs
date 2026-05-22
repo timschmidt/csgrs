@@ -2,7 +2,7 @@
 
 use crate::float_types::parry3d::bounding_volume::Aabb;
 use crate::float_types::{
-    HReal, Real, hreal_cmp_f64, hreal_from_f64, hreal_mul, hreal_sign, hreal_sub, hreal_sum,
+    Real, hreal_cmp_f64, hreal_from_f64, hreal_mul, hreal_sign, hreal_sub, hreal_sum,
     hreal_to_f64, hrotation_between_vectors, hunit_vector3,
 };
 
@@ -184,8 +184,8 @@ impl<M: Clone + Send + Sync + Debug> Profile<M> {
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     pub fn contains_xy<X, Y>(&self, x: X, y: Y) -> Option<bool>
     where
-        X: TryInto<HReal>,
-        Y: TryInto<HReal>,
+        X: TryInto<hyperreal::Real>,
+        Y: TryInto<hyperreal::Real>,
     {
         if self.region.is_empty() {
             return None;

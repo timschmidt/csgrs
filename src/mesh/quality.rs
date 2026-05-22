@@ -1,7 +1,7 @@
 //! Mesh quality metrics for triangles, vertices, and aggregate mesh health.
 
 use crate::float_types::{
-    HReal, PI, Real, hdegrees_to_radians, hreal_clamp_hreal, hreal_cmp_f64, hreal_div,
+    PI, Real, hdegrees_to_radians, hreal_clamp_hreal, hreal_cmp_f64, hreal_div,
     hreal_from_f64, hreal_gt_f64, hreal_max_pair, hreal_mean, hreal_min, hreal_min_pair,
     hreal_sample_stddev, hreal_sqrt_ref, hreal_sqrt_to_f64, hreal_to_f64,
     htriangle_area_hreal, hvector3_from_point3,
@@ -49,19 +49,27 @@ fn boundary_scalar_min(values: impl IntoIterator<Item = Real>) -> Option<Real> {
     hreal_min(&values)
 }
 
-fn hreal_min3(a: &HReal, b: &HReal, c: &HReal) -> Option<HReal> {
+fn hreal_min3(
+    a: &hyperreal::Real,
+    b: &hyperreal::Real,
+    c: &hyperreal::Real,
+) -> Option<hyperreal::Real> {
     hreal_min_pair(&hreal_min_pair(a, b)?, c)
 }
 
-fn hreal_max3(a: &HReal, b: &HReal, c: &HReal) -> Option<HReal> {
+fn hreal_max3(
+    a: &hyperreal::Real,
+    b: &hyperreal::Real,
+    c: &hyperreal::Real,
+) -> Option<hyperreal::Real> {
     hreal_max_pair(&hreal_max_pair(a, b)?, c)
 }
 
-fn hreal_is_le(lhs: &HReal, rhs: &HReal) -> Option<bool> {
+fn hreal_is_le(lhs: &hyperreal::Real, rhs: &hyperreal::Real) -> Option<bool> {
     hyperlimit::real_le(lhs, rhs).value()
 }
 
-fn hreal_is_ge(lhs: &HReal, rhs: &HReal) -> Option<bool> {
+fn hreal_is_ge(lhs: &hyperreal::Real, rhs: &hyperreal::Real) -> Option<bool> {
     hyperlimit::real_ge(lhs, rhs).value()
 }
 
@@ -104,13 +112,14 @@ fn hyper_triangle_quality(vertices: &[Vertex]) -> Option<TriangleQuality> {
     };
 
     let two = hreal_from_f64(2.0).ok()?;
-    let angle = |opposite: &HReal, side_a: &HReal, side_b: &HReal| {
-        let numerator = side_a.clone() * side_a.clone() + side_b.clone() * side_b.clone()
-            - opposite.clone() * opposite.clone();
-        let denominator = two.clone() * side_a.clone() * side_b.clone();
-        let cos_angle = hreal_clamp_hreal((numerator / denominator).ok()?, -1.0, 1.0)?;
-        hyperlattice::acos(cos_angle).ok()
-    };
+    let angle =
+        |opposite: &hyperreal::Real, side_a: &hyperreal::Real, side_b: &hyperreal::Real| {
+            let numerator = side_a.clone() * side_a.clone() + side_b.clone() * side_b.clone()
+                - opposite.clone() * opposite.clone();
+            let denominator = two.clone() * side_a.clone() * side_b.clone();
+            let cos_angle = hreal_clamp_hreal((numerator / denominator).ok()?, -1.0, 1.0)?;
+            hyperlattice::acos(cos_angle).ok()
+        };
 
     let min_edge = hreal_min3(&len_ab, &len_bc, &len_ca)?;
     let max_edge = hreal_max3(&len_ab, &len_bc, &len_ca)?;

@@ -1,7 +1,7 @@
 //! Provides a `MetaBall` struct and functions for creating a `Mesh` from [MetaBalls](https://en.wikipedia.org/wiki/Metaballs)
 
 use crate::float_types::{
-    F32, HReal, Real, hreal_from_f32, hreal_from_f64, hreal_max_pair, hreal_max_report_value,
+    F32, Real, hreal_from_f32, hreal_from_f64, hreal_max_pair, hreal_max_report_value,
     hreal_min_pair, hreal_min_report_value, hreal_sign, hreal_to_f64,
     htriangle_area2_is_nonzero, hvector3_from_point3, hvector3_from_vector3,
 };
@@ -68,7 +68,7 @@ impl MetaBall {
     /// lossy boundary scalars. Exact center singularities are represented by a
     /// large finite sampling sentinel at that extraction boundary rather than by
     /// perturbing every denominator with a tolerance.
-    fn influence_hreal(&self, p: &Point3<Real>) -> Option<HReal> {
+    fn influence_hreal(&self, p: &Point3<Real>) -> Option<hyperreal::Real> {
         let radius = hreal_from_f64(self.radius).ok()?;
         if !matches!(hreal_sign(&radius), Some(RealSign::Positive)) {
             return None;
@@ -84,7 +84,7 @@ impl MetaBall {
             hreal_sign(&(distance_squared.clone() - threshold_distance_sq)),
             Some(RealSign::Positive)
         ) {
-            return Some(HReal::zero());
+            return Some(hyperreal::Real::zero());
         }
 
         if matches!(hreal_sign(&distance_squared), Some(RealSign::Zero)) {
@@ -95,7 +95,7 @@ impl MetaBall {
     }
 }
 
-fn singular_metaball_influence() -> Option<HReal> {
+fn singular_metaball_influence() -> Option<hyperreal::Real> {
     hreal_from_f64(1.0e10).ok()
 }
 
@@ -205,8 +205,9 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                         continue;
                     };
 
-                    let Some(field_value_h) =
-                        valid_balls.iter().try_fold(HReal::zero(), |acc, ball| {
+                    let Some(field_value_h) = valid_balls
+                        .iter()
+                        .try_fold(hyperreal::Real::zero(), |acc, ball| {
                             ball.influence_hreal(&p).map(|value| acc + value)
                         })
                     else {
@@ -377,7 +378,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
 
 #[derive(Clone, Debug)]
 struct MetaballSampleField {
-    hyper_values: Vec<HReal>,
+    hyper_values: Vec<hyperreal::Real>,
     surface_nets_values: Vec<F32>,
 }
 
@@ -389,7 +390,7 @@ impl MetaballSampleField {
         }
     }
 
-    fn push_hyper_sample(&mut self, shifted: HReal) -> bool {
+    fn push_hyper_sample(&mut self, shifted: hyperreal::Real) -> bool {
         let Some(surface_value) = surface_nets_scalar(&shifted) else {
             self.push_nonfinite_sample();
             return false;
@@ -406,12 +407,18 @@ impl MetaballSampleField {
     }
 }
 
-fn record_metaball_finite_sample(diagnostics: &mut MetaballDiagnostics, value: &HReal) {
+fn record_metaball_finite_sample(
+    diagnostics: &mut MetaballDiagnostics,
+    value: &hyperreal::Real,
+) {
     diagnostics.min_finite_value = hreal_min_report_value(diagnostics.min_finite_value, value);
     diagnostics.max_finite_value = hreal_max_report_value(diagnostics.max_finite_value, value);
 }
 
-fn metaball_bounds_hreal(balls: &[&MetaBall], padding: &HReal) -> Option<(HPoint3, HPoint3)> {
+fn metaball_bounds_hreal(
+    balls: &[&MetaBall],
+    padding: &hyperreal::Real,
+) -> Option<(HPoint3, HPoint3)> {
     let mut bounds = balls.iter().map(|ball| {
         let center = hpoint3_from_point3(&ball.center)?;
         let radius = hreal_from_f64(ball.radius).ok()?;
@@ -493,7 +500,10 @@ impl MetaballSamplingGrid {
     }
 }
 
-fn hyper_point_distance_squared(lhs: &Point3<Real>, rhs: &Point3<Real>) -> Option<HReal> {
+fn hyper_point_distance_squared(
+    lhs: &Point3<Real>,
+    rhs: &Point3<Real>,
+) -> Option<hyperreal::Real> {
     let lhs = hvector3_from_point3(lhs)?;
     let rhs = hvector3_from_point3(rhs)?;
     Some(lhs.squared_distance(&rhs))
@@ -542,7 +552,7 @@ mod tests {
     }
 }
 
-fn surface_nets_scalar(value: &HReal) -> Option<F32> {
+fn surface_nets_scalar(value: &hyperreal::Real) -> Option<F32> {
     let sign = hreal_sign(value)?;
     let boundary = hreal_to_f64(value)?;
     let value = boundary as F32;
@@ -572,7 +582,7 @@ fn vector3_from_f32_boundary(vector: [F32; 3]) -> Option<Vector3<Real>> {
     Some(Vector3::new(x, y, z))
 }
 
-fn count_crossing_cells(field_values: &[HReal], nx: u32, ny: u32, nz: u32) -> usize {
+fn count_crossing_cells(field_values: &[hyperreal::Real], nx: u32, ny: u32, nz: u32) -> usize {
     if nx < 2 || ny < 2 || nz < 2 {
         return 0;
     }

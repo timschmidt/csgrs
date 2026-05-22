@@ -2,10 +2,10 @@
 
 use crate::csg::CSG;
 use crate::float_types::{
-    FRAC_PI_2, HReal, PI, Real, TAU, hangle_sin_cos, hdegrees_to_radians, hreal_abs,
-    hreal_affine, hreal_atan, hreal_clamp_f64, hreal_cmp_f64, hreal_div,
-    hreal_f64s_exactly_equal, hreal_from_f64, hreal_mul, hreal_pow, hreal_sqrt, hreal_sub,
-    hreal_sum, hreal_tan, hreal_to_f64, hxy_lerp,
+    FRAC_PI_2, PI, Real, TAU, hangle_sin_cos, hdegrees_to_radians, hreal_abs, hreal_affine,
+    hreal_atan, hreal_clamp_f64, hreal_cmp_f64, hreal_div, hreal_f64s_exactly_equal,
+    hreal_from_f64, hreal_mul, hreal_pow, hreal_sqrt, hreal_sub, hreal_sum, hreal_tan,
+    hreal_to_f64, hxy_lerp,
 };
 use crate::sketch::Profile;
 use hypercurve::{Contour2, CurveString2, LineSeg2, Point2, Segment2};
@@ -30,7 +30,7 @@ fn finite_profile_scalars(values: &[Real]) -> bool {
 /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
 fn finite_promoted_profile_scalar<S>(value: S) -> Option<Real>
 where
-    S: TryInto<HReal>,
+    S: TryInto<hyperreal::Real>,
 {
     hreal_to_f64(&value.try_into().ok()?)
 }
@@ -169,8 +169,8 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// ```
     pub fn rectangle<W, L>(width: W, length: L, metadata: M) -> Self
     where
-        W: TryInto<HReal>,
-        L: TryInto<HReal>,
+        W: TryInto<hyperreal::Real>,
+        L: TryInto<hyperreal::Real>,
     {
         let (Some(width), Some(length)) = (
             finite_promoted_profile_scalar(width),
@@ -193,7 +193,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// let sq2 = Profile::square(2.0, None);
     pub fn square<W>(width: W, metadata: M) -> Self
     where
-        W: TryInto<HReal> + Clone,
+        W: TryInto<hyperreal::Real> + Clone,
     {
         Self::rectangle(width.clone(), width, metadata)
     }
@@ -242,7 +242,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// - `metadata`: Optional metadata attached to the shape
     pub fn circle<R>(radius: R, segments: usize, metadata: M) -> Self
     where
-        R: TryInto<HReal>,
+        R: TryInto<hyperreal::Real>,
     {
         let Some(radius) = finite_promoted_profile_scalar(radius) else {
             return Profile::empty(metadata);
@@ -259,8 +259,8 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// Right triangle from (0,0) to (width,0) to (0,height).
     pub fn right_triangle<W, H>(width: W, height: H, metadata: M) -> Self
     where
-        W: TryInto<HReal>,
-        H: TryInto<HReal>,
+        W: TryInto<hyperreal::Real>,
+        H: TryInto<hyperreal::Real>,
     {
         let (Some(width), Some(height)) = (
             finite_promoted_profile_scalar(width),
@@ -373,8 +373,8 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// - `metadata`: Optional metadata
     pub fn ellipse<W, H>(width: W, height: H, segments: usize, metadata: M) -> Self
     where
-        W: TryInto<HReal>,
-        H: TryInto<HReal>,
+        W: TryInto<hyperreal::Real>,
+        H: TryInto<hyperreal::Real>,
     {
         let (Some(width), Some(height)) = (
             finite_promoted_profile_scalar(width),
@@ -448,7 +448,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// - `metadata`: Optional metadata
     pub fn regular_ngon<R>(sides: usize, radius: R, metadata: M) -> Self
     where
-        R: TryInto<HReal>,
+        R: TryInto<hyperreal::Real>,
     {
         let Some(radius) = finite_promoted_profile_scalar(radius) else {
             return Profile::empty(metadata);

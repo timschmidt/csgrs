@@ -3,8 +3,8 @@
 
 use crate::csg::CSG;
 use crate::float_types::{
-    HReal, Real, TAU, hpoint_lerp, hreal_abs, hreal_div, hreal_from_f64, hreal_gt_f64,
-    hreal_max, hreal_min, hreal_sub, hreal_sum, hreal_to_f64, hvector3_from_vector3,
+    Real, TAU, hpoint_lerp, hreal_abs, hreal_div, hreal_from_f64, hreal_gt_f64, hreal_max,
+    hreal_min, hreal_sub, hreal_sum, hreal_to_f64, hvector3_from_vector3,
 };
 use crate::mesh::Mesh;
 use nalgebra::{Point3, Vector3};
@@ -267,7 +267,10 @@ fn tpms_scale(period: Real) -> Option<Real> {
     hreal_to_f64(&(hreal_from_f64(TAU).ok()? / period).ok()?)
 }
 
-fn tpms_scaled_axes(point: &Point3<Real>, scale: Real) -> Option<(HReal, HReal, HReal)> {
+fn tpms_scaled_axes(
+    point: &Point3<Real>,
+    scale: Real,
+) -> Option<(hyperreal::Real, hyperreal::Real, hyperreal::Real)> {
     let scale = hreal_from_f64(scale).ok()?;
     Some((
         hreal_from_f64(point.x).ok()? * scale.clone(),

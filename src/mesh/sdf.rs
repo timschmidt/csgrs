@@ -1,9 +1,9 @@
 //! Create `Mesh`s by meshing signed distance fields ([sdf](https://en.wikipedia.org/wiki/Signed_distance_function)) within a bounding box.
 
 use crate::float_types::{
-    F32, HReal, Real, hreal_from_f32, hreal_from_f64, hreal_max_report_value,
-    hreal_min_report_value, hreal_sign, hreal_to_f64, htriangle_area2_is_nonzero,
-    hvector3_from_point3, hvector3_from_vector3,
+    F32, Real, hreal_from_f32, hreal_from_f64, hreal_max_report_value, hreal_min_report_value,
+    hreal_sign, hreal_to_f64, htriangle_area2_is_nonzero, hvector3_from_point3,
+    hvector3_from_vector3,
 };
 use crate::mesh::Mesh;
 use crate::polygon::Polygon;
@@ -266,7 +266,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
 
 #[derive(Clone, Debug)]
 struct SdfSampleField {
-    hyper_values: Vec<HReal>,
+    hyper_values: Vec<hyperreal::Real>,
     surface_nets_values: Vec<F32>,
 }
 
@@ -278,7 +278,7 @@ impl SdfSampleField {
         }
     }
 
-    fn push_hyper_sample(&mut self, shifted: HReal) -> bool {
+    fn push_hyper_sample(&mut self, shifted: hyperreal::Real) -> bool {
         let Some(surface_value) = surface_nets_scalar(&shifted) else {
             self.push_nonfinite_sample();
             return false;
@@ -299,7 +299,7 @@ impl SdfSampleField {
 struct SamplingGrid {
     origin: HPoint3,
     step: HPoint3,
-    iso: HReal,
+    iso: hyperreal::Real,
 }
 
 impl SamplingGrid {
@@ -349,8 +349,8 @@ impl SamplingGrid {
 fn push_sdf_sample(
     diagnostics: &mut SdfDiagnostics,
     field_values: &mut SdfSampleField,
-    value: Option<HReal>,
-    iso_value: &HReal,
+    value: Option<hyperreal::Real>,
+    iso_value: &hyperreal::Real,
 ) {
     if let Some(sdf_val) = value {
         let shifted = sdf_val.clone() - iso_value.clone();
@@ -377,7 +377,7 @@ fn push_sdf_sample(
     }
 }
 
-fn record_sdf_finite_sample(diagnostics: &mut SdfDiagnostics, value: &HReal) {
+fn record_sdf_finite_sample(diagnostics: &mut SdfDiagnostics, value: &hyperreal::Real) {
     diagnostics.min_finite_value = hreal_min_report_value(diagnostics.min_finite_value, value);
     diagnostics.max_finite_value = hreal_max_report_value(diagnostics.max_finite_value, value);
 }
@@ -563,7 +563,7 @@ fn finite_vector3(vector: &Vector3<Real>) -> bool {
     hvector3_from_vector3(vector).is_some()
 }
 
-fn surface_nets_scalar(value: &HReal) -> Option<F32> {
+fn surface_nets_scalar(value: &hyperreal::Real) -> Option<F32> {
     let sign = hreal_sign(value)?;
     let boundary = hreal_to_f64(value)?;
     let value = boundary as F32;
@@ -593,7 +593,7 @@ fn vector3_from_f32_boundary(vector: [F32; 3]) -> Option<Vector3<Real>> {
     Some(Vector3::new(x, y, z))
 }
 
-fn count_crossing_cells(field_values: &[HReal], nx: u32, ny: u32, nz: u32) -> usize {
+fn count_crossing_cells(field_values: &[hyperreal::Real], nx: u32, ny: u32, nz: u32) -> usize {
     if nx < 2 || ny < 2 || nz < 2 {
         return 0;
     }
