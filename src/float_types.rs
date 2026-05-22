@@ -1,4 +1,4 @@
-//! Public scalar type, tolerance configuration, and physics backend re-exports.
+//! Public scalar type, hyperreal adapters, and physics backend re-exports.
 
 use hyperreal::RealSign;
 use nalgebra::{Matrix4, Point3, Vector3};
@@ -478,21 +478,14 @@ pub(crate) fn hvector3_weighted_sum(
     Some(Vector3::new(coords[0], coords[1], coords[2]))
 }
 
-/// Return whether two public boundary vectors are orthogonal within tolerance.
+/// Return whether two public boundary vectors are exactly orthogonal.
 ///
-/// The dot product is evaluated in hyperreal space and only the tolerance is a
-/// primitive API-boundary scalar. This follows Yap's exact-geometric-
-/// computation boundary discipline
-/// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+/// The dot product is evaluated in hyperreal space and classified by exact sign,
+/// so no tolerance band is part of the production API. This follows Yap,
+/// "Towards Exact Geometric Computation," *Computational Geometry* 7(1-2),
+/// 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>).
 #[cfg(feature = "wasm")]
-pub(crate) fn hvectors_orthogonal_within(
-    lhs: &Vector3<Real>,
-    rhs: &Vector3<Real>,
-    tolerance: Real,
-) -> bool {
-    let Some(tolerance) = hnonnegative_boundary_scalar(tolerance) else {
-        return false;
-    };
+pub(crate) fn hvectors_orthogonal_exact(lhs: &Vector3<Real>, rhs: &Vector3<Real>) -> bool {
     let Some(lhs) = hvector3_from_vector3(lhs) else {
         return false;
     };
@@ -500,8 +493,7 @@ pub(crate) fn hvectors_orthogonal_within(
         return false;
     };
     let dot = lhs.dot(&rhs);
-    let negative_tolerance = -tolerance.clone();
-    !hreal_gt_hreal(&dot, &tolerance) && !hreal_lt_hreal(&dot, &negative_tolerance)
+    matches!(hreal_sign(&dot), Some(RealSign::Zero))
 }
 
 /// Return the finite angle between two public boundary vectors in radians.
@@ -754,35 +746,24 @@ pub(crate) fn hreal_sign(value: &HReal) -> Option<RealSign> {
     value.refine_sign_until(128)
 }
 
-/// Promote a public tolerance scalar and accept zero-or-positive values only.
-///
-/// This keeps API-boundary tolerance validation in the same hyperreal sign
-/// discipline as geometric predicates, following Yap's exact-geometric-
-/// computation split between primitive input and exact-aware decisions
-/// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-#[cfg(feature = "wasm")]
-fn hnonnegative_boundary_scalar(value: Real) -> Option<HReal> {
-    let value = hreal_from_f64(value).ok()?;
-    (!hreal_lt_f64(&value, 0.0)).then_some(value)
-}
-
-/// Promote a public tolerance scalar and accept strictly positive values only.
+/// Promote a test assertion tolerance scalar and accept strictly positive
+/// values only.
 ///
 /// Non-finite primitive inputs fail during promotion. The remaining sign
 /// decision is refined through hyperreal comparison rather than local f64
 /// predicates.
+#[cfg(test)]
 fn hpositive_boundary_scalar(value: Real) -> Option<HReal> {
     let value = hreal_from_f64(value).ok()?;
     hreal_gt_f64(&value, 0.0).then_some(value)
 }
 
-/// Promote a positive finite public scalar and square it in hyperreal space.
+/// Promote a positive finite test scalar and square it in hyperreal space.
 ///
-/// Runtime tolerances still enter through public `f64` configuration and file
-/// format boundaries, but squared-distance predicates should not multiply
-/// primitive thresholds after promotion. This keeps tolerance predicates in the
-/// exact-aware layer described by Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7(1-2), 1997
+/// Legacy assertions still compare finite exports, but production geometry no
+/// longer has tolerance configuration. This keeps any remaining test-only
+/// tolerance predicates in the exact-aware layer described by Yap, "Towards
+/// Exact Geometric Computation," *Computational Geometry* 7(1-2), 1997
 /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
 #[cfg(test)]
 pub(crate) fn hpositive_boundary_scalar_squared(value: Real) -> Option<HReal> {
@@ -791,7 +772,7 @@ pub(crate) fn hpositive_boundary_scalar_squared(value: Real) -> Option<HReal> {
 }
 
 /// Returns true when `value` is strictly greater than a hyperreal threshold.
-#[cfg(any(test, feature = "wasm"))]
+#[cfg(test)]
 pub(crate) fn hreal_gt_hreal(value: &HReal, threshold: &HReal) -> bool {
     match hyperlimit::compare_reals(value, threshold).value() {
         Some(Ordering::Greater) => true,
@@ -804,7 +785,7 @@ pub(crate) fn hreal_gt_hreal(value: &HReal, threshold: &HReal) -> bool {
 }
 
 /// Returns true when `value` is strictly less than a hyperreal threshold.
-#[cfg(any(test, feature = "wasm"))]
+#[cfg(test)]
 pub(crate) fn hreal_lt_hreal(value: &HReal, threshold: &HReal) -> bool {
     match hyperlimit::compare_reals(value, threshold).value() {
         Some(Ordering::Less) => true,
@@ -1154,38 +1135,28 @@ pub(crate) fn hreal_sample_stddev(values: &[Real]) -> Option<Real> {
     hreal_to_f64(&HReal::sample_stddev(&values)?)
 }
 
+#[cfg(test)]
 use std::sync::OnceLock;
 
-/// Lazily-initialized tolerance used across the crate.
-///
-/// Defaults to `1e-6` and may be overridden once at runtime with
-/// [`set_tolerance`]. Tolerance is deliberately not a Cargo/build-time knob:
-/// primitive `f32`/`f64` values are API-boundary data, while internal geometry
-/// promotes predicates into hyperreal space. Keeping that split explicit follows
-/// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-/// 7(1-2), 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+/// Test-only legacy tolerance used by assertions that still compare finite
+/// exported boundary values.
+#[cfg(test)]
 static TOLERANCE_CELL: OnceLock<Real> = OnceLock::new();
 
 #[inline]
+#[cfg(test)]
 const fn default_tolerance() -> Real {
     1e-6
 }
 
-/// Returns the current tolerance value.
-/// If no runtime override was installed, this returns the crate default.
+/// Returns the current test assertion tolerance.
+#[cfg(test)]
 pub fn tolerance() -> Real {
     *TOLERANCE_CELL.get_or_init(default_tolerance)
 }
 
-/// Sanitize a public tolerance override through hyperreal sign checks.
-///
-/// Runtime tolerance is API-boundary configuration, but accepting it still
-/// affects topology predicates throughout the crate. Promotion and comparison
-/// therefore follow the same exact-geometric-computation boundary discipline as
-/// geometric predicates: primitive input is admitted at the edge, while sign
-/// decisions use hyperreal predicates. See Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7(1-2), 1997
-/// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+/// Sanitize a test tolerance override through hyperreal sign checks.
+#[cfg(test)]
 fn hconfigured_tolerance(value: Real) -> Real {
     let Some(value) = hpositive_boundary_scalar(value) else {
         return default_tolerance();
@@ -1193,11 +1164,9 @@ fn hconfigured_tolerance(value: Real) -> Real {
     hreal_to_f64(&value).unwrap_or_else(default_tolerance)
 }
 
-/// Set tolerance programmatically once (subsequent calls are ignored).
-///
-/// Call near program start: `csgrs::float_types::set_tolerance(1e-6);`.
-/// Non-finite values are rejected back to the default because only finite
-/// primitive floats are accepted at csgrs API boundaries.
+/// Set the test assertion tolerance once; production geometry has no tolerance
+/// configuration.
+#[cfg(test)]
 pub fn set_tolerance(value: Real) {
     let _ = TOLERANCE_CELL.set(hconfigured_tolerance(value));
 }
@@ -1601,7 +1570,7 @@ mod tests {
             0.0,
             tolerance()
         ));
-        assert!(hvectors_orthogonal_within(&x, &y, tolerance()));
+        assert!(hvectors_orthogonal_exact(&x, &y));
         assert!(hreal_f64s_within_tolerance(
             hangle_between_vectors(&x, &y).unwrap(),
             FRAC_PI_2,
@@ -1611,7 +1580,7 @@ mod tests {
         let hostile = Vector3::new(Real::NAN, Real::INFINITY, 0.0);
         assert!(hvector3_magnitude(&hostile).is_none());
         assert!(hvector3_dot(&x, &hostile).is_none());
-        assert!(!hvectors_orthogonal_within(&x, &hostile, tolerance()));
+        assert!(!hvectors_orthogonal_exact(&x, &hostile));
         assert!(hangle_between_vectors(&x, &hostile).is_none());
     }
 

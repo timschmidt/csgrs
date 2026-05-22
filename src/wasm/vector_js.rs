@@ -6,7 +6,7 @@ use crate::float_types::{
     Real, hangle_between_vectors, hangle_sin_cos, hreal_f64s_exactly_equal, hreal_mul,
     hreal_sub, hunit_quaternion, hunit_vector3, hvector3_cross, hvector3_dot,
     hvector3_from_vector3, hvector3_magnitude, hvector3_weighted_sum,
-    hvectors_orthogonal_within,
+    hvectors_orthogonal_exact,
 };
 use nalgebra::Vector3;
 use wasm_bindgen::prelude::*;
@@ -88,8 +88,8 @@ impl Vector3Js {
     }
 
     #[wasm_bindgen(js_name = isOrthogonal)]
-    pub fn is_orthogonal(&self, other: &Vector3Js, tolerance: f64) -> bool {
-        hvectors_orthogonal_within(&self.inner, &other.inner, tolerance as Real)
+    pub fn is_orthogonal(&self, other: &Vector3Js) -> bool {
+        hvectors_orthogonal_exact(&self.inner, &other.inner)
     }
 
     pub fn abs(&self) -> Vector3Js {
@@ -249,8 +249,8 @@ mod tests {
         let y = Vector3Js::new(0.0, 1.0, 0.0);
         let diagonal = Vector3Js::new(1.0, 1.0, 0.0);
 
-        assert!(x.is_orthogonal(&y, crate::float_types::tolerance()));
-        assert!(!x.is_orthogonal(&diagonal, crate::float_types::tolerance()));
+        assert!(x.is_orthogonal(&y));
+        assert!(!x.is_orthogonal(&diagonal));
     }
 
     #[test]
