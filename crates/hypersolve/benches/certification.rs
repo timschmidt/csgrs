@@ -246,6 +246,37 @@ fn sketch_problem_with_distance_ranges(row_count: usize) -> hypersolve::SketchSo
     sketch
 }
 
+fn sketch_problem_with_line_orientation_relations(
+    row_count: usize,
+) -> hypersolve::SketchSolveProblem {
+    let mut sketch = hypersolve::SketchSolveProblem::new();
+    for index in 0..row_count {
+        let y = index as i64;
+        let a0 = sketch.add_point2d(format!("orient{index}.a0"), r(0), r(y));
+        let a1 = sketch.add_point2d(format!("orient{index}.a1"), r(3), r(y));
+        let b0 = sketch.add_point2d(format!("orient{index}.b0"), r(1), r(y + 2));
+        let b1 = sketch.add_point2d(format!("orient{index}.b1"), r(5), r(y + 2));
+        let c0 = sketch.add_point2d(format!("orient{index}.c0"), r(2), r(y));
+        let c1 = sketch.add_point2d(format!("orient{index}.c1"), r(2), r(y + 4));
+        let horizontal = sketch.add_line_segment2(format!("orient{index}.h"), a0, a1);
+        let parallel = sketch.add_line_segment2(format!("orient{index}.p"), b0, b1);
+        let vertical = sketch.add_line_segment2(format!("orient{index}.v"), c0, c1);
+        hypersolve::sketch_orientation_builders::parallel_lines2(
+            &mut sketch,
+            format!("parallel {index}"),
+            horizontal,
+            parallel,
+        );
+        hypersolve::sketch_orientation_builders::perpendicular_lines2(
+            &mut sketch,
+            format!("perpendicular {index}"),
+            horizontal,
+            vertical,
+        );
+    }
+    sketch
+}
+
 fn sketch_problem_with_parameter_orderings(row_count: usize) -> hypersolve::SketchSolveProblem {
     let mut sketch = hypersolve::SketchSolveProblem::new();
     let mut previous = sketch.add_parameter("order0", r(0));
@@ -375,6 +406,10 @@ fn certification(c: &mut Criterion) {
     let distance_range_sketch = sketch_problem_with_distance_ranges(16);
     c.bench_function("sketch_distance_range_lowering", |b| {
         b.iter(|| distance_range_sketch.lower_to_problem())
+    });
+    let line_orientation_sketch = sketch_problem_with_line_orientation_relations(16);
+    c.bench_function("sketch_line_orientation_lowering", |b| {
+        b.iter(|| line_orientation_sketch.lower_to_problem())
     });
     let ordering_sketch = sketch_problem_with_parameter_orderings(16);
     c.bench_function("sketch_parameter_ordering_lowering", |b| {

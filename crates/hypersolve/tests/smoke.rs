@@ -672,6 +672,102 @@ fn sketch_parameter_ranges_report_empty_ranges_and_stale_parameters_explicitly()
 }
 
 #[test]
+fn sketch_line_orientation_relations_lower_to_exact_dot_and_cross_rows() {
+    let mut sketch = SketchSolveProblem::new();
+    let origin = sketch.add_point2d("origin", real(0), real(0));
+    let x_axis = sketch.add_point2d("x axis", real(3), real(0));
+    let x_parallel_start = sketch.add_point2d("parallel start", real(0), real(2));
+    let x_parallel_end = sketch.add_point2d("parallel end", real(5), real(2));
+    let y_axis = sketch.add_point2d("y axis", real(0), real(4));
+    let diagonal = sketch.add_point2d("diagonal", real(1), real(1));
+    let horizontal = sketch.add_line_segment2("horizontal", origin, x_axis);
+    let parallel = sketch.add_line_segment2("parallel", x_parallel_start, x_parallel_end);
+    let vertical = sketch.add_line_segment2("vertical", origin, y_axis);
+    let slanted = sketch.add_line_segment2("slanted", origin, diagonal);
+    let parallel_report = sketch_orientation_builders::parallel_lines2(
+        &mut sketch,
+        "parallel lines",
+        horizontal,
+        parallel,
+    );
+    let perpendicular_report = sketch_orientation_builders::perpendicular_lines2(
+        &mut sketch,
+        "perpendicular lines",
+        horizontal,
+        vertical,
+    );
+    sketch.add_parallel_lines2("violated parallel", horizontal, slanted);
+
+    assert_eq!(
+        parallel_report.family,
+        hypersolve::SketchConstraintFamily::Orientation
+    );
+    assert_eq!(
+        parallel_report.strategy,
+        SketchResidualStrategy::DirectionCrossProduct
+    );
+    assert_eq!(
+        perpendicular_report.strategy,
+        SketchResidualStrategy::DirectionDotProduct
+    );
+
+    let lowered = sketch.lower_to_problem();
+    let certification = certify_candidate(
+        &PreparedProblem::new(&lowered.problem),
+        &context_from_problem(&lowered.problem),
+    );
+
+    assert_eq!(lowered.problem.constraints.len(), 3);
+    assert_eq!(lowered.rows.len(), 3);
+    assert_eq!(
+        lowered.rows[0].strategy,
+        Some(SketchResidualStrategy::DirectionCrossProduct)
+    );
+    assert_eq!(
+        lowered.rows[1].strategy,
+        Some(SketchResidualStrategy::DirectionDotProduct)
+    );
+    assert!(matches!(
+        certification.rows[0].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[1].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[2].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
+}
+
+#[test]
+fn sketch_line_orientation_relations_report_stale_and_wrong_inputs() {
+    let mut sketch = SketchSolveProblem::new();
+    let p = sketch.add_point2d("p", real(0), real(0));
+    let q = sketch.add_point2d("q", real(1), real(0));
+    let line = sketch.add_line_segment2("line", p, q);
+    sketch.add_parallel_lines2("missing line", line, SketchEntityHandle(999));
+    sketch.add_perpendicular_lines2("wrong family", line, p);
+
+    let lowered = sketch.lower_to_problem();
+
+    assert_eq!(lowered.problem.constraints.len(), 0);
+    assert_eq!(lowered.rows.len(), 2);
+    assert_eq!(
+        lowered.rows[0].status,
+        SketchGeneratedRowStatus::MissingEntity(SketchEntityHandle(999))
+    );
+    assert_eq!(
+        lowered.rows[1].status,
+        SketchGeneratedRowStatus::WrongEntityKind {
+            handle: p,
+            expected: "2D line segment"
+        }
+    );
+}
+
+#[test]
 fn sketch_point_distance_ranges_lower_to_exact_squared_inequalities() {
     let mut sketch = SketchSolveProblem::new();
     let a = sketch.add_point2d("a", real(0), real(0));

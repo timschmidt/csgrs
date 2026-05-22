@@ -179,6 +179,49 @@ pub mod orientation {
             kind,
         }
     }
+
+    /// Add a 2D line parallelism relation.
+    ///
+    /// The lowered row is the exact direction cross product. This is the same
+    /// algebraic predicate package used for G1 tangent parallelism; see Yap,
+    /// "Towards Exact Geometric Computation" (1997), for the separation
+    /// between constructing this proof obligation and certifying a candidate.
+    pub fn parallel_lines2(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::ParallelLines2 { a, b };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Orientation,
+            strategy: SketchResidualStrategy::DirectionCrossProduct,
+            kind,
+        }
+    }
+
+    /// Add a 2D line perpendicularity relation.
+    ///
+    /// The lowered row is the exact direction dot product. Degenerate line
+    /// carriers should be reported by retained-entity preflight rather than by
+    /// an epsilon-based normalization step.
+    pub fn perpendicular_lines2(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::PerpendicularLines2 { a, b };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Orientation,
+            strategy: SketchResidualStrategy::DirectionDotProduct,
+            kind,
+        }
+    }
 }
 
 /// Inequality and parameter-domain builders.

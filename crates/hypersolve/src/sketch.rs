@@ -353,6 +353,29 @@ pub enum SketchConstraintKind {
         /// Line entity.
         line: SketchEntityHandle,
     },
+    /// 2D line parallelism constraint.
+    ///
+    /// Lowering emits the exact 2D direction cross product. The retained
+    /// source relation stays visible for failed-constraint diagnostics, while
+    /// ordinary exact replay remains the trust boundary; see Yap, "Towards
+    /// Exact Geometric Computation" (1997).
+    ParallelLines2 {
+        /// First line entity.
+        a: SketchEntityHandle,
+        /// Second line entity.
+        b: SketchEntityHandle,
+    },
+    /// 2D line perpendicularity constraint.
+    ///
+    /// Lowering emits the exact 2D direction dot product. Degenerate line
+    /// carriers are represented by explicit entity-domain/degen preflight
+    /// reports rather than hidden normalization tolerances.
+    PerpendicularLines2 {
+        /// First line entity.
+        a: SketchEntityHandle,
+        /// Second line entity.
+        b: SketchEntityHandle,
+    },
     /// Point-on-circle incidence using squared radius residual.
     PointOnCircle {
         /// Point entity.
@@ -442,6 +465,10 @@ pub enum SketchResidualStrategy {
     ParameterOrdering,
     /// Scalar ordered relation with an exact nonnegative margin.
     ParameterMargin,
+    /// 2D direction cross-product equality.
+    DirectionCrossProduct,
+    /// 2D direction dot-product equality.
+    DirectionDotProduct,
     /// Soft stay-near objective.
     SoftObjective,
 }
@@ -925,6 +952,30 @@ impl SketchSolveProblem {
         orientation::vertical(self, name, line).handle
     }
 
+    /// Add a retained 2D line parallelism constraint.
+    ///
+    /// Lowering emits `dir(a) x dir(b) == 0` as an exact polynomial row.
+    pub fn add_parallel_lines2(
+        &mut self,
+        name: impl Into<String>,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+    ) -> SketchConstraintHandle {
+        orientation::parallel_lines2(self, name, a, b).handle
+    }
+
+    /// Add a retained 2D line perpendicularity constraint.
+    ///
+    /// Lowering emits `dir(a) . dir(b) == 0` without normalizing either vector.
+    pub fn add_perpendicular_lines2(
+        &mut self,
+        name: impl Into<String>,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+    ) -> SketchConstraintHandle {
+        orientation::perpendicular_lines2(self, name, a, b).handle
+    }
+
     /// Add a point-on-circle incidence constraint.
     pub fn add_point_on_circle(
         &mut self,
@@ -1302,6 +1353,38 @@ impl SketchSolveProblem {
                     SketchResidualStrategy::CoordinateEquality,
                 );
             }
+            SketchConstraintKind::ParallelLines2 { a, b } => {
+                let (Some(a), Some(b)) = (
+                    self.line2_direction(a, constraint, rows),
+                    self.line2_direction(b, constraint, rows),
+                ) else {
+                    return;
+                };
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    constraint.name.clone(),
+                    direction_cross2(&a, &b),
+                    SketchResidualStrategy::DirectionCrossProduct,
+                );
+            }
+            SketchConstraintKind::PerpendicularLines2 { a, b } => {
+                let (Some(a), Some(b)) = (
+                    self.line2_direction(a, constraint, rows),
+                    self.line2_direction(b, constraint, rows),
+                ) else {
+                    return;
+                };
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    constraint.name.clone(),
+                    direction_dot2(&a, &b),
+                    SketchResidualStrategy::DirectionDotProduct,
+                );
+            }
             SketchConstraintKind::PointOnCircle { point, circle } => {
                 let Some(point) = self.point_coordinates(point, constraint, rows) else {
                     return;
@@ -1593,6 +1676,19 @@ impl SketchSolveProblem {
         }
         Some((start, end))
     }
+
+    fn line2_direction(
+        &self,
+        handle: SketchEntityHandle,
+        constraint: &SketchConstraint,
+        rows: &mut Vec<SketchGeneratedRow>,
+    ) -> Option<[Expr; 2]> {
+        let (start, end) = self.line2_points(handle, constraint, rows)?;
+        Some([
+            end.exprs[0].clone() - start.exprs[0].clone(),
+            end.exprs[1].clone() - start.exprs[1].clone(),
+        ])
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -1745,4 +1841,12 @@ fn squared_distance(a: &[Expr], b: &[Expr]) -> Expr {
             let delta = a_coord.clone() - b_coord.clone();
             sum + delta.clone() * delta
         })
+}
+
+fn direction_cross2(a: &[Expr; 2], b: &[Expr; 2]) -> Expr {
+    a[0].clone() * b[1].clone() - a[1].clone() * b[0].clone()
+}
+
+fn direction_dot2(a: &[Expr; 2], b: &[Expr; 2]) -> Expr {
+    a[0].clone() * b[0].clone() + a[1].clone() * b[1].clone()
 }

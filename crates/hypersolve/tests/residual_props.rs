@@ -280,6 +280,90 @@ proptest! {
     }
 
     #[test]
+    fn sketch_line_parallel_rows_match_generated_integer_directions(
+        ax in -8_i16..=8,
+        ay in -8_i16..=8,
+        dx in -8_i16..=8,
+        dy in -8_i16..=8,
+        scale in -4_i16..=4,
+    ) {
+        prop_assume!(dx != 0 || dy != 0);
+        let ax = i64::from(ax);
+        let ay = i64::from(ay);
+        let dx = i64::from(dx);
+        let dy = i64::from(dy);
+        let scale = i64::from(scale);
+        let mut sketch = SketchSolveProblem::new();
+        let a0 = sketch.add_point2d("a0", Real::from(ax), Real::from(ay));
+        let a1 = sketch.add_point2d("a1", Real::from(ax + dx), Real::from(ay + dy));
+        let b0 = sketch.add_point2d("b0", Real::from(3), Real::from(-2));
+        let b1 = sketch.add_point2d(
+            "b1",
+            Real::from(3 + scale * dx),
+            Real::from(-2 + scale * dy),
+        );
+        let line_a = sketch.add_line_segment2("a", a0, a1);
+        let line_b = sketch.add_line_segment2("b", b0, b1);
+        sketch.add_parallel_lines2("parallel", line_a, line_b);
+
+        let lowered = sketch.lower_to_problem();
+        let certification = certify_candidate(
+            &PreparedProblem::new(&lowered.problem),
+            &context_from_problem(&lowered.problem),
+        );
+
+        prop_assert_eq!(lowered.rows.len(), 1);
+        prop_assert_eq!(
+            lowered.rows[0].strategy,
+            Some(SketchResidualStrategy::DirectionCrossProduct)
+        );
+        let certified_parallel = matches!(
+            certification.rows[0].status,
+            CertifiedCandidateStatus::CertifiedZero { .. }
+        );
+        prop_assert!(certified_parallel);
+    }
+
+    #[test]
+    fn sketch_line_perpendicular_rows_match_generated_integer_directions(
+        ax in -8_i16..=8,
+        ay in -8_i16..=8,
+        dx in -8_i16..=8,
+        dy in -8_i16..=8,
+    ) {
+        prop_assume!(dx != 0 || dy != 0);
+        let ax = i64::from(ax);
+        let ay = i64::from(ay);
+        let dx = i64::from(dx);
+        let dy = i64::from(dy);
+        let mut sketch = SketchSolveProblem::new();
+        let a0 = sketch.add_point2d("a0", Real::from(ax), Real::from(ay));
+        let a1 = sketch.add_point2d("a1", Real::from(ax + dx), Real::from(ay + dy));
+        let b0 = sketch.add_point2d("b0", Real::from(1), Real::from(1));
+        let b1 = sketch.add_point2d("b1", Real::from(1 - dy), Real::from(1 + dx));
+        let line_a = sketch.add_line_segment2("a", a0, a1);
+        let line_b = sketch.add_line_segment2("b", b0, b1);
+        sketch.add_perpendicular_lines2("perpendicular", line_a, line_b);
+
+        let lowered = sketch.lower_to_problem();
+        let certification = certify_candidate(
+            &PreparedProblem::new(&lowered.problem),
+            &context_from_problem(&lowered.problem),
+        );
+
+        prop_assert_eq!(lowered.rows.len(), 1);
+        prop_assert_eq!(
+            lowered.rows[0].strategy,
+            Some(SketchResidualStrategy::DirectionDotProduct)
+        );
+        let certified_perpendicular = matches!(
+            certification.rows[0].status,
+            CertifiedCandidateStatus::CertifiedZero { .. }
+        );
+        prop_assert!(certified_perpendicular);
+    }
+
+    #[test]
     fn sketch_construction_certificate_generated_integer_segments_match_distance(
         ax in -12_i16..=12,
         ay in -12_i16..=12,
