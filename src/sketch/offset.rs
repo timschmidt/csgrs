@@ -28,7 +28,7 @@
 //! geometry model.
 
 use crate::float_types::{
-    HReal, Real, hreal_abs, hreal_cmp_f64, hreal_from_f64, hreal_sign, hreal_to_f64, tolerance,
+    HReal, Real, hreal_abs, hreal_cmp_f64, hreal_from_f64, hreal_sign, hreal_to_f64,
 };
 use crate::sketch::Profile;
 use hypercurve::{
@@ -89,10 +89,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         let distance = finite_offset_distance(distance)?;
         if !self.region.is_empty()
             || self.wires.is_empty()
-            || !matches!(
-                hreal_cmp_f64(distance, tolerance()),
-                std::cmp::Ordering::Greater
-            )
+            || !matches!(hreal_cmp_f64(distance, 0.0), std::cmp::Ordering::Greater)
         {
             return None;
         }
