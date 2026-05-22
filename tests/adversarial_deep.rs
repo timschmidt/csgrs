@@ -628,11 +628,8 @@ fn adversarial_deep_vertex_quality_and_cluster_catalog() {
         let (_valence, regularity) = Vertex::analyze_connectivity_with_index(idx, &adjacency);
         assert!(regularity.is_finite());
     }
-    let (_valence, regularity) = vertices[0].analyze_connectivity_by_position(
-        &adjacency,
-        &positions,
-        tolerance() * 16.0,
-    );
+    let (_valence, regularity) =
+        vertices[0].analyze_connectivity_by_position(&adjacency, &positions);
     assert!(regularity.is_finite());
     let quality =
         vertices[0].comprehensive_quality_analysis(0, &adjacency, &positions, &normals);

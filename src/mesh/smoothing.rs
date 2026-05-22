@@ -42,12 +42,12 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// - **Volume Preservation**: Better volume preservation than local smoothing
     ///
     /// ## **Algorithm Improvements**
-    /// - **Tolerance-based Vertex Matching**: Robust boundary-coordinate handling
+    /// - **Exact Vertex Matching**: Hyperreal-backed boundary-coordinate identity
     /// - **Manifold Preservation**: Ensures mesh topology is maintained
     /// - **Feature Detection**: Can preserve sharp features based on neighbor count
     ///
     /// Vertex lookup reuses [`VertexIndexMap`](crate::mesh::connectivity::VertexIndexMap),
-    /// whose matching predicate compares squared distance through
+    /// whose matching predicate requires exact equality after promotion through
     /// `hyperlattice::Vector3` and `hyperreal::Real`. This keeps the discrete
     /// Laplacian's adjacency relation stable before applying the uniform
     /// smoothing stencil described in Botsch et al., *Polygon Mesh Processing*,

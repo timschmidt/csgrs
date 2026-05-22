@@ -1489,23 +1489,23 @@ fn adversarial_cotangent_weight_degenerate_triangle_falls_back() {
 }
 
 #[test]
-fn adversarial_connectivity_lookup_uses_hyperreal_distance() {
+fn adversarial_connectivity_lookup_uses_exact_hyperreal_identity() {
     let vertex = Vertex::new(Point3::new(1.0, 2.0, 3.0), Vector3::z());
     let mut adjacency = HashMap::new();
     adjacency.insert(7usize, vec![1, 2, 3]);
     let mut positions = HashMap::new();
-    positions.insert(7usize, Point3::new(1.0 + tolerance() * 0.25, 2.0, 3.0));
+    positions.insert(7usize, Point3::new(1.0, 2.0, 3.0));
     positions.insert(9usize, Point3::new(10.0, 10.0, 10.0));
 
     let (valence, regularity) =
-        vertex.analyze_connectivity_by_position(&adjacency, &positions, tolerance());
+        vertex.analyze_connectivity_by_position(&adjacency, &positions);
 
     assert_eq!(valence, 3);
     assert!(regularity.is_finite());
 
-    let outside = Vertex::new(Point3::new(1.0 + tolerance() * 4.0, 2.0, 3.0), Vector3::z());
+    let outside = Vertex::new(Point3::new(1.0 + 1.0e-12, 2.0, 3.0), Vector3::z());
     let (valence, regularity) =
-        outside.analyze_connectivity_by_position(&adjacency, &positions, tolerance());
+        outside.analyze_connectivity_by_position(&adjacency, &positions);
     assert_eq!((valence, regularity), (0, 0.0));
 }
 
@@ -1671,19 +1671,19 @@ fn adversarial_polygon_basis_rejects_hostile_normals_without_nalgebra_fallback()
 }
 
 #[test]
-fn adversarial_vertex_index_map_uses_hyperreal_distance() {
-    let mut map = VertexIndexMap::new(tolerance());
+fn adversarial_vertex_index_map_uses_exact_hyperreal_identity() {
+    let mut map = VertexIndexMap::new();
     let base = Point3::new(4.0, -2.0, 9.0);
-    let near = Point3::new(4.0 + tolerance() * 0.25, -2.0, 9.0);
-    let far = Point3::new(4.0 + tolerance() * 4.0, -2.0, 9.0);
+    let exact = Point3::new(4.0, -2.0, 9.0);
+    let near = Point3::new(4.0 + 1.0e-12, -2.0, 9.0);
     let nonfinite = Point3::new(Real::NAN, -2.0, 9.0);
 
     let base_idx = map.get_or_create_index(base);
-    assert_eq!(map.find_index(&near), Some(base_idx));
-    assert_eq!(map.get_or_create_index(near), base_idx);
+    assert_eq!(map.find_index(&exact), Some(base_idx));
+    assert_eq!(map.get_or_create_index(exact), base_idx);
 
-    let far_idx = map.get_or_create_index(far);
-    assert_ne!(far_idx, base_idx);
+    let near_idx = map.get_or_create_index(near);
+    assert_ne!(near_idx, base_idx);
     assert_eq!(map.find_index(&nonfinite), None);
 }
 
@@ -2049,27 +2049,24 @@ proptest! {
         positions.insert(0usize, Point3::new(point.x + dx as Real, point.y + dy as Real, point.z + dz as Real));
 
         let (_valence, regularity) =
-            vertex.analyze_connectivity_by_position(&adjacency, &positions, tolerance() * 32.0);
+            vertex.analyze_connectivity_by_position(&adjacency, &positions);
         prop_assert!(regularity.is_finite());
     }
 
     #[test]
-    fn proptest_vertex_index_map_coalesces_only_within_tolerance(
+    fn proptest_vertex_index_map_coalesces_only_exact_positions(
         point in point3_strategy(),
-        offset in -2.0f64..2.0f64,
+        offset in 1.0e-6f64..1.0e-3f64,
     ) {
-        let tolerance = tolerance() * 16.0;
-        let mut map = VertexIndexMap::new(tolerance);
+        let mut map = VertexIndexMap::new();
         let base_idx = map.get_or_create_index(point);
-        let candidate = Point3::new(point.x + offset as Real * tolerance, point.y, point.z);
+        prop_assert_eq!(map.get_or_create_index(point), base_idx);
+
+        let candidate = Point3::new(point.x + offset as Real, point.y, point.z);
         let candidate_idx = map.get_or_create_index(candidate);
 
-        if offset.abs() < 0.5 {
-            prop_assert_eq!(candidate_idx, base_idx);
-        } else if offset.abs() > 1.25 {
-            prop_assert_ne!(candidate_idx, base_idx);
-        }
-        prop_assert!(map.vertex_count() >= 1);
+        prop_assert_ne!(candidate_idx, base_idx);
+        prop_assert!(map.vertex_count() >= 2);
     }
 
     #[test]
