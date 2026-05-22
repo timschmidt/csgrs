@@ -2187,8 +2187,11 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     BezierBooleanLoopGraphWalkReport2::from_identity_traversal(&traversal, &plan);
                 format!(
                     "{:?}",
-                    BezierBooleanLoopClosureReport2::from_quadratic_graph_walk(
-                        &walk, &plan, first, second
+                    BezierBooleanLoopClosureReport2::from_graph_walk_endpoints(
+                        &walk,
+                        &plan,
+                        &quadratic_report_endpoints(first),
+                        &quadratic_report_endpoints(second),
                     )
                 )
             }
@@ -2481,8 +2484,11 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 );
                 format!(
                     "{:?}",
-                    BezierBooleanOutputLoopReport2::from_quadratic_graph_walk(
-                        &walk, &plan, first, second
+                    BezierBooleanOutputLoopReport2::from_graph_walk_endpoints(
+                        &walk,
+                        &plan,
+                        &quadratic_report_endpoints(first),
+                        &quadratic_report_endpoints(second),
                     )
                 )
             }
@@ -2852,8 +2858,11 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     &plan,
                     &walk_indices,
                 );
-                let output = BezierBooleanOutputLoopReport2::from_quadratic_graph_walk(
-                    &walk, &plan, first, second,
+                let output = BezierBooleanOutputLoopReport2::from_graph_walk_endpoints(
+                    &walk,
+                    &plan,
+                    &quadratic_report_endpoints(first),
+                    &quadratic_report_endpoints(second),
                 );
                 let depth_facts = (0..output.loops.len())
                     .map(|loop_index| BezierBooleanLoopNestingDepthFact2 {
@@ -2929,8 +2938,11 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     &plan,
                     &walk_indices,
                 );
-                let output = BezierBooleanOutputLoopReport2::from_quadratic_graph_walk(
-                    &walk, &plan, first, second,
+                let output = BezierBooleanOutputLoopReport2::from_graph_walk_endpoints(
+                    &walk,
+                    &plan,
+                    &quadratic_report_endpoints(first),
+                    &quadratic_report_endpoints(second),
                 );
                 let depth_facts = (0..output.loops.len())
                     .map(|loop_index| BezierBooleanLoopNestingDepthFact2 {
@@ -3012,8 +3024,11 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     &plan,
                     &walk_indices,
                 );
-                let output = BezierBooleanOutputLoopReport2::from_quadratic_graph_walk(
-                    &walk, &plan, first, second,
+                let output = BezierBooleanOutputLoopReport2::from_graph_walk_endpoints(
+                    &walk,
+                    &plan,
+                    &quadratic_report_endpoints(first),
+                    &quadratic_report_endpoints(second),
                 );
                 let depth_facts = (0..output.loops.len())
                     .map(|loop_index| BezierBooleanLoopNestingDepthFact2 {
@@ -3103,8 +3118,11 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     &plan,
                     &walk_indices,
                 );
-                let output = BezierBooleanOutputLoopReport2::from_quadratic_graph_walk(
-                    &walk, &plan, first, second,
+                let output = BezierBooleanOutputLoopReport2::from_graph_walk_endpoints(
+                    &walk,
+                    &plan,
+                    &quadratic_report_endpoints(first),
+                    &quadratic_report_endpoints(second),
                 );
                 let graph_facts = BezierBooleanLoopGraphFacts2 {
                     emitted_step_count: plan.emitted_steps.len(),
@@ -3185,8 +3203,11 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     &plan,
                     &walk_indices,
                 );
-                let output = BezierBooleanOutputLoopReport2::from_quadratic_graph_walk(
-                    &walk, &plan, first, second,
+                let output = BezierBooleanOutputLoopReport2::from_graph_walk_endpoints(
+                    &walk,
+                    &plan,
+                    &quadratic_report_endpoints(first),
+                    &quadratic_report_endpoints(second),
                 );
                 let containment_facts = if output.loops.len() > 1 {
                     vec![BezierBooleanLoopContainmentFact2 {

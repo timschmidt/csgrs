@@ -8679,60 +8679,6 @@ impl BezierBooleanLoopContainmentCertificationReport2 {
 }
 
 impl BezierBooleanLoopClosureReport2 {
-    /// Audits closure after a certified graph walk over quadratic fragments.
-    ///
-    /// This constructor makes graph-walk validation part of the closure
-    /// precondition instead of asking callers to manually repackage a walk
-    /// order. A malformed [`BezierBooleanLoopGraphWalkReport2`] is preserved as
-    /// a plan blocker; a ready walk is converted into the certified emitted
-    /// order before exact endpoint closure is checked. This follows Yap's
-    /// "Towards Exact Geometric Computation" (1997): a graph traversal result
-    /// is consumed only as certified combinatorial data, never inferred from
-    /// vector order or tolerance snapping.
-    pub fn from_quadratic_graph_walk(
-        walk: &BezierBooleanLoopGraphWalkReport2,
-        plan: &BezierBooleanLoopAssemblyPlanReport2,
-        first: &BezierBooleanQuadraticFragmentReport2,
-        second: &BezierBooleanQuadraticFragmentReport2,
-    ) -> Self {
-        Self::from_graph_walk_endpoints(
-            walk,
-            plan,
-            &quadratic_fragment_endpoints(&first.fragments),
-            &quadratic_fragment_endpoints(&second.fragments),
-        )
-    }
-
-    /// Audits closure after a certified graph walk over cubic fragments.
-    pub fn from_cubic_graph_walk(
-        walk: &BezierBooleanLoopGraphWalkReport2,
-        plan: &BezierBooleanLoopAssemblyPlanReport2,
-        first: &BezierBooleanCubicFragmentReport2,
-        second: &BezierBooleanCubicFragmentReport2,
-    ) -> Self {
-        Self::from_graph_walk_endpoints(
-            walk,
-            plan,
-            &cubic_fragment_endpoints(&first.fragments),
-            &cubic_fragment_endpoints(&second.fragments),
-        )
-    }
-
-    /// Audits closure after a certified graph walk over rational quadratic fragments.
-    pub fn from_rational_quadratic_graph_walk(
-        walk: &BezierBooleanLoopGraphWalkReport2,
-        plan: &BezierBooleanLoopAssemblyPlanReport2,
-        first: &BezierBooleanRationalQuadraticFragmentReport2,
-        second: &BezierBooleanRationalQuadraticFragmentReport2,
-    ) -> Self {
-        Self::from_graph_walk_endpoints(
-            walk,
-            plan,
-            &rational_quadratic_fragment_endpoints(&first.fragments),
-            &rational_quadratic_fragment_endpoints(&second.fragments),
-        )
-    }
-
     /// Audits closure after applying a certified graph walk to generic endpoints.
     ///
     /// Ready graph walks are converted into an ordered loop-assembly plan before
@@ -8953,51 +8899,6 @@ impl BezierBooleanLoopClosureReport2 {
 }
 
 impl BezierBooleanOutputLoopReport2 {
-    /// Packages output loops after graph-walk-aware quadratic closure.
-    ///
-    /// This constructor threads the certified graph walk through
-    /// [`BezierBooleanLoopClosureReport2::from_quadratic_graph_walk`] before
-    /// packaging loops. It exists to make the graph-walk certificate a visible
-    /// output-loop precondition. Following Yap, "Towards Exact Geometric
-    /// Computation" (1997), malformed graph walks remain blockers; following
-    /// Vatti (1992), Greiner-Hormann (1998), and Martinez-Rueda-Feito (2009),
-    /// only a certified traversal order can become output boundary topology.
-    pub fn from_quadratic_graph_walk(
-        walk: &BezierBooleanLoopGraphWalkReport2,
-        plan: &BezierBooleanLoopAssemblyPlanReport2,
-        first: &BezierBooleanQuadraticFragmentReport2,
-        second: &BezierBooleanQuadraticFragmentReport2,
-    ) -> Self {
-        let closure =
-            BezierBooleanLoopClosureReport2::from_quadratic_graph_walk(walk, plan, first, second);
-        Self::from_loop_closure(&closure)
-    }
-
-    /// Packages output loops after graph-walk-aware cubic closure.
-    pub fn from_cubic_graph_walk(
-        walk: &BezierBooleanLoopGraphWalkReport2,
-        plan: &BezierBooleanLoopAssemblyPlanReport2,
-        first: &BezierBooleanCubicFragmentReport2,
-        second: &BezierBooleanCubicFragmentReport2,
-    ) -> Self {
-        let closure =
-            BezierBooleanLoopClosureReport2::from_cubic_graph_walk(walk, plan, first, second);
-        Self::from_loop_closure(&closure)
-    }
-
-    /// Packages output loops after graph-walk-aware rational quadratic closure.
-    pub fn from_rational_quadratic_graph_walk(
-        walk: &BezierBooleanLoopGraphWalkReport2,
-        plan: &BezierBooleanLoopAssemblyPlanReport2,
-        first: &BezierBooleanRationalQuadraticFragmentReport2,
-        second: &BezierBooleanRationalQuadraticFragmentReport2,
-    ) -> Self {
-        let closure = BezierBooleanLoopClosureReport2::from_rational_quadratic_graph_walk(
-            walk, plan, first, second,
-        );
-        Self::from_loop_closure(&closure)
-    }
-
     /// Packages output loops from a certified graph walk and generic endpoints.
     ///
     /// Ready graph walks are converted into exact directed fragments by the
