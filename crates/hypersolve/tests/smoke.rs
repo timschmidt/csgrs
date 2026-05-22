@@ -368,6 +368,54 @@ fn sketch_point_line_distance_constraints_retain_signed_distance_forms() {
 }
 
 #[test]
+fn sketch_point_on_circle_constraints_retain_exact_and_radial_forms() {
+    let mut sketch = SketchSolveProblem::new();
+    let center = sketch.add_point2d("center", real(0), real(0));
+    let point = sketch.add_point2d("point", real(3), real(4));
+    let radius = sketch.add_distance("radius", real(5));
+    let circle = sketch.add_circle2("circle", center, radius);
+    let relation =
+        sketch_incidence_builders::point_on_circle(&mut sketch, "point on circle", point, circle);
+
+    let forms = sketch.residual_forms_for_constraint(relation.handle);
+
+    assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+    assert!(forms.diagnostics.is_empty());
+    assert_eq!(forms.forms.len(), 2);
+    assert_eq!(
+        forms.forms[0].kind,
+        SketchResidualFormKind::SquaredCircleIncidencePolynomial
+    );
+    assert_eq!(forms.forms[0].role, SketchResidualFormRole::ExactProof);
+    assert_eq!(
+        forms.forms[0].strategy,
+        Some(SketchResidualStrategy::SquaredIncidence)
+    );
+    assert_eq!(
+        forms.forms[1].kind,
+        SketchResidualFormKind::CircleRadialDistanceProposal
+    );
+    assert_eq!(forms.forms[1].role, SketchResidualFormRole::ProposalOnly);
+    assert_eq!(forms.forms[1].strategy, None);
+
+    let context = context_from_problem(&sketch.lower_to_problem().problem);
+    assert_eq!(
+        forms.forms[0]
+            .residual
+            .eval_real(context.bindings())
+            .unwrap(),
+        Real::zero()
+    );
+    assert_eq!(
+        forms.forms[1]
+            .residual
+            .eval_real(context.bindings())
+            .unwrap(),
+        Real::zero()
+    );
+}
+
+#[test]
 fn sketch_equal_angle_constraints_retain_exact_and_proposal_residual_forms() {
     let mut sketch = SketchSolveProblem::new();
     let origin = sketch.add_point2d("origin", real(0), real(0));
@@ -526,6 +574,14 @@ fn sketch_residual_form_reports_reject_unsupported_and_bad_inputs() {
     );
     assert!(bad_point_line_forms.forms.is_empty());
     assert!(!bad_point_line_forms.diagnostics.is_empty());
+    let bad_circle = sketch.add_point_on_circle("bad circle", point, distance);
+    let bad_circle_forms = sketch.residual_forms_for_constraint(bad_circle);
+    assert_eq!(
+        bad_circle_forms.status,
+        SketchResidualFormsStatus::InvalidInputs
+    );
+    assert!(bad_circle_forms.forms.is_empty());
+    assert!(!bad_circle_forms.diagnostics.is_empty());
     let bad_angle_forms = sketch.residual_forms_for_constraint(bad_angle.handle);
     assert_eq!(
         bad_angle_forms.status,

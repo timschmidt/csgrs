@@ -785,6 +785,24 @@ fn certification(c: &mut Criterion) {
             }
         })
     });
+    let circle_form_handles = sketch
+        .constraints()
+        .iter()
+        .filter(|constraint| {
+            matches!(
+                constraint.kind,
+                hypersolve::SketchConstraintKind::PointOnCircle { .. }
+            )
+        })
+        .map(|constraint| constraint.handle)
+        .collect::<Vec<_>>();
+    c.bench_function("sketch_circle_incidence_residual_forms", |b| {
+        b.iter(|| {
+            for handle in &circle_form_handles {
+                let _ = sketch.residual_forms_for_constraint(*handle);
+            }
+        })
+    });
     let point_line_form_handles = length_ratio_point_line_sketch
         .constraints()
         .iter()

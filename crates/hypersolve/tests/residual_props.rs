@@ -820,6 +820,54 @@ proptest! {
     }
 
     #[test]
+    fn sketch_point_on_circle_residual_forms_replay_generated_integer_triangles(
+        cx in -8_i16..=8,
+        cy in -8_i16..=8,
+        sx in prop_oneof![Just(-1_i16), Just(1_i16)],
+        sy in prop_oneof![Just(-1_i16), Just(1_i16)],
+        scale in 1_i16..=4,
+    ) {
+        let cx = i64::from(cx);
+        let cy = i64::from(cy);
+        let sx = i64::from(sx);
+        let sy = i64::from(sy);
+        let scale = i64::from(scale);
+        let dx = 3 * scale * sx;
+        let dy = 4 * scale * sy;
+        let radius = 5 * scale;
+        let mut sketch = SketchSolveProblem::new();
+        let center = sketch.add_point2d("center", Real::from(cx), Real::from(cy));
+        let point = sketch.add_point2d("point", Real::from(cx + dx), Real::from(cy + dy));
+        let radius = sketch.add_distance("radius", Real::from(radius));
+        let circle = sketch.add_circle2("circle", center, radius);
+        let handle = sketch.add_point_on_circle("point on circle", point, circle);
+
+        let forms = sketch.residual_forms_for_constraint(handle);
+        let context = context_from_problem(&sketch.lower_to_problem().problem);
+
+        prop_assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+        prop_assert_eq!(forms.forms.len(), 2);
+        prop_assert_eq!(
+            forms.forms[0].kind,
+            SketchResidualFormKind::SquaredCircleIncidencePolynomial
+        );
+        prop_assert_eq!(forms.forms[0].role, SketchResidualFormRole::ExactProof);
+        prop_assert_eq!(
+            forms.forms[0].residual.eval_real(context.bindings()).unwrap(),
+            Real::zero()
+        );
+        prop_assert_eq!(
+            forms.forms[1].kind,
+            SketchResidualFormKind::CircleRadialDistanceProposal
+        );
+        prop_assert_eq!(forms.forms[1].role, SketchResidualFormRole::ProposalOnly);
+        prop_assert_eq!(
+            forms.forms[1].residual.eval_real(context.bindings()).unwrap(),
+            Real::zero()
+        );
+    }
+
+    #[test]
     fn sketch_equal_angle_rows_match_generated_scaled_line_pairs(
         ux in -6_i16..=6,
         uy in -6_i16..=6,

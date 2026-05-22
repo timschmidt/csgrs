@@ -758,6 +758,10 @@ pub enum SketchResidualFormKind {
     PointLineSignedDistancePositiveProposal,
     /// Negative signed point-line distance proposal branch.
     PointLineSignedDistanceNegativeProposal,
+    /// Squared circle-incidence polynomial proof row.
+    SquaredCircleIncidencePolynomial,
+    /// True radial circle-incidence proposal form.
+    CircleRadialDistanceProposal,
     /// Squared-cosine equality for an unsigned angle proof row.
     SquaredCosineAnglePolynomial,
     /// `acos(cos(first)) - acos(cos(second))`, retained for proposal/UI parity.
@@ -1544,7 +1548,9 @@ impl SketchSolveProblem {
     /// parity. For point-line distance it keeps the exact squared polynomial
     /// proof form plus both oriented signed-distance proposal branches; the
     /// branch is data until an orientation-aware constraint or predicate
-    /// package certifies it. For equal unsigned line angles it similarly keeps
+    /// package certifies it. For point-on-circle incidence it keeps squared
+    /// radius equality as proof and the true radial residual only as a
+    /// proposal/UI form. For equal unsigned line angles it similarly keeps
     /// a squared-cosine polynomial proof form and an `acos` proposal form.
     /// Tangency keeps exact cross/dot predicate forms because the orientation
     /// branch is itself proof data, not a proposal residual. Yap (1997) is the
@@ -1673,6 +1679,81 @@ impl SketchSolveProblem {
                             role: SketchResidualFormRole::ProposalOnly,
                             strategy: None,
                             residual: cross + scaled_distance,
+                        },
+                    ],
+                    diagnostics,
+                }
+            }
+            SketchConstraintKind::PointOnCircle { point, circle } => {
+                let mut diagnostics = Vec::new();
+                let Some(point) = self.point_coordinates(point, constraint, &mut diagnostics)
+                else {
+                    return SketchResidualFormsReport {
+                        constraint: handle,
+                        status: SketchResidualFormsStatus::InvalidInputs,
+                        forms: Vec::new(),
+                        diagnostics,
+                    };
+                };
+                let Some(circle_entity) = self.entity(circle) else {
+                    diagnostics.push(missing_entity_row(constraint, circle));
+                    return SketchResidualFormsReport {
+                        constraint: handle,
+                        status: SketchResidualFormsStatus::InvalidInputs,
+                        forms: Vec::new(),
+                        diagnostics,
+                    };
+                };
+                let SketchEntityKind::Circle2(circle) = &circle_entity.kind else {
+                    diagnostics.push(wrong_entity_row(constraint, circle_entity.handle, "circle"));
+                    return SketchResidualFormsReport {
+                        constraint: handle,
+                        status: SketchResidualFormsStatus::InvalidInputs,
+                        forms: Vec::new(),
+                        diagnostics,
+                    };
+                };
+                let (Some(center), Some(radius)) = (
+                    self.point_coordinates(circle.center, constraint, &mut diagnostics),
+                    self.distance_expr(circle.radius, constraint, &mut diagnostics),
+                ) else {
+                    return SketchResidualFormsReport {
+                        constraint: handle,
+                        status: SketchResidualFormsStatus::InvalidInputs,
+                        forms: Vec::new(),
+                        diagnostics,
+                    };
+                };
+                if point.len() != 2 || center.len() != 2 {
+                    diagnostics.push(wrong_entity_row(
+                        constraint,
+                        point.handle,
+                        "2D point compatible with circle",
+                    ));
+                    return SketchResidualFormsReport {
+                        constraint: handle,
+                        status: SketchResidualFormsStatus::InvalidInputs,
+                        forms: Vec::new(),
+                        diagnostics,
+                    };
+                }
+                let radius_squared = radius.clone() * radius.clone();
+                let point_center_squared = squared_distance(&point.exprs, &center.exprs);
+                SketchResidualFormsReport {
+                    constraint: handle,
+                    status: SketchResidualFormsStatus::Generated,
+                    forms: vec![
+                        SketchResidualForm {
+                            kind: SketchResidualFormKind::SquaredCircleIncidencePolynomial,
+                            role: SketchResidualFormRole::ExactProof,
+                            strategy: Some(SketchResidualStrategy::SquaredIncidence),
+                            residual: point_center_squared.clone() - radius_squared,
+                        },
+                        SketchResidualForm {
+                            kind: SketchResidualFormKind::CircleRadialDistanceProposal,
+                            role: SketchResidualFormRole::ProposalOnly,
+                            strategy: None,
+                            residual: point_center_squared.sqrt() - radius,
                         },
                     ],
                     diagnostics,
