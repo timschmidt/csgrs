@@ -837,6 +837,31 @@ pub(crate) fn hreal_cmp_f64(lhs: F64, rhs: F64) -> Ordering {
         })
 }
 
+/// Return whether a finite public boundary scalar is strictly greater.
+///
+/// File-format and FFI adapters still receive primitive floats, but ordering
+/// decisions that admit or reject geometry should use the same hyperreal
+/// comparison/refinement path as internal predicates. This is the boolean
+/// convenience wrapper around [`hreal_cmp_f64`], following Yap's exact
+/// geometric computation boundary model
+/// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+pub(crate) fn hreal_f64_gt(lhs: F64, rhs: F64) -> bool {
+    matches!(hreal_cmp_f64(lhs, rhs), Ordering::Greater)
+}
+
+/// Return whether a finite public boundary scalar is within an inclusive bound.
+///
+/// This keeps boundary closeness checks out of local `f64::abs` arithmetic
+/// where the caller only needs a tolerance predicate.
+pub(crate) fn hreal_f64s_within_or_equal_tolerance(
+    lhs: F64,
+    rhs: F64,
+    tolerance: F64,
+) -> bool {
+    hreal_f64s_within_tolerance(lhs, rhs, tolerance)
+        || hreal_cmp_f64(lhs, rhs) == Ordering::Equal
+}
+
 /// Clamp a finite public boundary scalar in hyperreal comparison space.
 ///
 /// This is for transitional APIs that still receive and return `f64` scalars
@@ -1543,6 +1568,21 @@ mod tests {
         assert_eq!(hreal_cmp_f64(2.0, 1.0), Ordering::Greater);
         assert_eq!(hreal_cmp_f64(1.0, 1.0), Ordering::Equal);
         assert_eq!(hreal_cmp_f64(f64::NAN, 1.0), Ordering::Equal);
+
+        assert!(hreal_f64_gt(2.0, 1.0));
+        assert!(!hreal_f64_gt(1.0, 1.0));
+        assert!(!hreal_f64_gt(f64::NAN, 1.0));
+        assert!(hreal_f64s_within_or_equal_tolerance(1.0, 1.0, tolerance));
+        assert!(hreal_f64s_within_or_equal_tolerance(
+            1.0,
+            1.0 + tolerance * 0.25,
+            tolerance
+        ));
+        assert!(!hreal_f64s_within_or_equal_tolerance(
+            1.0,
+            1.0 + tolerance * 2.0,
+            tolerance
+        ));
 
         assert!(hreal_f64s_within_tolerance(
             1.0,

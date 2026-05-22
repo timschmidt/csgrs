@@ -1,7 +1,7 @@
 //! SVG input and output.
 
 use crate::csg::CSG;
-use crate::float_types::{Real, hreal_from_f64, hreal_to_f64, tolerance};
+use crate::float_types::{Real, hreal_f64_gt, hreal_from_f64, hreal_to_f64, tolerance};
 use crate::sketch::Profile;
 use hypercurve::{
     Classification, Contour2, CurvePolicy, CurveString2, FiniteProjectionOptions,
@@ -44,7 +44,7 @@ fn finite_svg_scalar(value: Real, label: &str) -> Result<Real, IoError> {
 
 fn positive_svg_scalar(value: Real, label: &str) -> Result<Real, IoError> {
     finite_svg_scalar(value, label)?;
-    if value <= tolerance() {
+    if !hreal_f64_gt(value, tolerance()) {
         return Err(IoError::MalformedInput(format!(
             "SVG {label} must be positive"
         )));
@@ -54,7 +54,7 @@ fn positive_svg_scalar(value: Real, label: &str) -> Result<Real, IoError> {
 
 fn nonnegative_svg_scalar(value: Real, label: &str) -> Result<Real, IoError> {
     finite_svg_scalar(value, label)?;
-    if value < 0.0 {
+    if hreal_f64_gt(0.0, value) {
         return Err(IoError::MalformedInput(format!(
             "SVG {label} must be non-negative"
         )));
@@ -854,7 +854,7 @@ fn native_wire_path_data(wire: &CurveString2) -> Option<path::Data> {
             },
             Segment2::Arc(arc) => {
                 let radius = hreal_to_f64(arc.radius_squared_ref())?.sqrt();
-                if radius <= tolerance() || !radius.is_finite() {
+                if !hreal_f64_gt(radius, tolerance()) {
                     return None;
                 }
                 let end = finite_svg_point(arc.end())?;
