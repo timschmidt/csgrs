@@ -11961,7 +11961,7 @@ impl BezierBooleanResultReport2 {
 
     /// Accepts a full generic endpoint result from keyed ownership and depth facts.
     ///
-    /// This constructor is a convenience composition for the certified Bezier
+    /// This constructor is a staged composition for the certified Bezier
     /// boolean stack. It validates keyed opposite-operand ownership facts,
     /// applies the boolean operation action table, audits emitted references,
     /// validates graph-traversal preconditions, validates the supplied graph
@@ -17936,11 +17936,12 @@ impl BezierBooleanHandoffReport2 {
 
     /// Builds a boolean handoff from a classified Bezier relation.
     ///
-    /// This is the convenience entry point for predicate APIs that return
-    /// [`Classification`]. A classified uncertainty is retained as a boolean
-    /// blocker instead of being collapsed into [`BezierCurveRelation::Unresolved`],
-    /// preserving the difference between "the predicate could not decide" and
-    /// "the relation was decided to need more algebra."
+    /// Builds a handoff from a classification-preserving predicate result.
+    ///
+    /// A classified uncertainty is retained as a boolean blocker instead of
+    /// being collapsed into [`BezierCurveRelation::Unresolved`], preserving the
+    /// difference between "the predicate could not decide" and "the relation
+    /// was decided to need more algebra."
     pub fn from_classified_relation(relation: &Classification<BezierCurveRelation>) -> Self {
         match relation {
             Classification::Decided(relation) => Self::from_relation(relation),

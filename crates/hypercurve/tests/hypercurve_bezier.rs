@@ -7186,13 +7186,13 @@ fn bezier_boolean_uniform_ownership_expands_operand_locations_to_keyed_facts() {
     let validated = uniform.validate(&schedule);
     assert_eq!(validated.status, BezierBooleanOwnershipFactStatus::Ready);
 
-    let shortcut_report = BezierBooleanUniformOwnershipFactReport2::from_schedule_locations(
+    let location_report = BezierBooleanUniformOwnershipFactReport2::from_schedule_locations(
         &schedule,
         BezierBooleanFragmentOwnershipLocation::Outside,
         BezierBooleanFragmentOwnershipLocation::Inside,
     );
-    let shortcut = shortcut_report.validate(&schedule);
-    assert_eq!(shortcut, validated);
+    let location_validated = location_report.validate(&schedule);
+    assert_eq!(location_validated, validated);
 }
 
 #[test]
@@ -7294,7 +7294,7 @@ fn bezier_boolean_operand_locations_expand_non_uniform_locator_outputs() {
         BezierBooleanOwnershipFactStatus::Ready
     );
 
-    let shortcut_report = BezierBooleanOperandOwnershipLocationReport2::from_schedule_locations(
+    let location_report = BezierBooleanOperandOwnershipLocationReport2::from_schedule_locations(
         &schedule,
         &[
             BezierBooleanFragmentOwnershipLocation::Outside,
@@ -7302,8 +7302,8 @@ fn bezier_boolean_operand_locations_expand_non_uniform_locator_outputs() {
         ],
         &[BezierBooleanFragmentOwnershipLocation::Outside],
     );
-    let shortcut = shortcut_report.validate(&schedule);
-    assert_eq!(shortcut, report.validate(&schedule));
+    let location_validated = location_report.validate(&schedule);
+    assert_eq!(location_validated, report.validate(&schedule));
 
     let missing = BezierBooleanOperandOwnershipLocationReport2::from_schedule_locations(
         &schedule,
@@ -16145,12 +16145,12 @@ proptest! {
             prop_assert_eq!(fact.opposite_location, expected);
         }
         prop_assert!(report.validate(&schedule).is_ready());
-        let shortcut_report = BezierBooleanOperandOwnershipLocationReport2::from_schedule_locations(
+        let location_report = BezierBooleanOperandOwnershipLocationReport2::from_schedule_locations(
             &schedule,
             &first_locations,
             &second_locations,
         );
-        prop_assert!(shortcut_report.validate(&schedule).is_ready());
+        prop_assert!(location_report.validate(&schedule).is_ready());
     }
 
     #[test]
