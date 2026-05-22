@@ -62,6 +62,17 @@ fn region_profiles_are_hypercurve_projection_products() {
 }
 
 #[test]
+fn region_area_rejects_only_exact_zero_area() {
+    let tiny = Profile::<()>::rectangle(tolerance() * 0.25, tolerance() * 0.25, ());
+    assert!(Profile::<()>::region_has_nonzero_area(tiny.as_region()));
+
+    let degenerate = Profile::<()>::polygon(&[[0.0, 0.0], [1.0, 0.0], [2.0, 0.0]], ());
+    assert!(!Profile::<()>::region_has_nonzero_area(
+        degenerate.as_region()
+    ));
+}
+
+#[test]
 fn closed_rings_become_region_topology_not_sidecar_wires() {
     let contour = Contour2::from_finite_ring(&[
         [0.0, 0.0],
