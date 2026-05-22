@@ -4156,33 +4156,6 @@ impl BezierBooleanTraversalPreconditionReport2 {
 }
 
 impl BezierBooleanTraversalScheduleReport2 {
-    /// Builds a traversal schedule from quadratic Bezier fragment reports.
-    pub fn from_quadratic_fragments(
-        preconditions: &BezierBooleanTraversalPreconditionReport2,
-        _first: &BezierBooleanQuadraticFragmentReport2,
-        _second: &BezierBooleanQuadraticFragmentReport2,
-    ) -> Self {
-        Self::from_preconditions(preconditions)
-    }
-
-    /// Builds a traversal schedule from cubic Bezier fragment reports.
-    pub fn from_cubic_fragments(
-        preconditions: &BezierBooleanTraversalPreconditionReport2,
-        _first: &BezierBooleanCubicFragmentReport2,
-        _second: &BezierBooleanCubicFragmentReport2,
-    ) -> Self {
-        Self::from_preconditions(preconditions)
-    }
-
-    /// Builds a traversal schedule from rational quadratic/conic fragment reports.
-    pub fn from_rational_quadratic_fragments(
-        preconditions: &BezierBooleanTraversalPreconditionReport2,
-        _first: &BezierBooleanRationalQuadraticFragmentReport2,
-        _second: &BezierBooleanRationalQuadraticFragmentReport2,
-    ) -> Self {
-        Self::from_preconditions(preconditions)
-    }
-
     /// Builds a deterministic traversal worklist from audited preconditions.
     ///
     /// Ready preconditions produce first-operand visits followed by

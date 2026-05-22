@@ -1348,11 +1348,7 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     );
                 format!(
                     "{:?}",
-                    BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
-                        &preconditions,
-                        first,
-                        second
-                    )
+                    BezierBooleanTraversalScheduleReport2::from_preconditions(&preconditions)
                 )
             }
             other => format!("{other:?}"),
@@ -1374,11 +1370,8 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
                         &readiness, first, second,
                     );
-                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
-                    &preconditions,
-                    first,
-                    second,
-                );
+                let schedule =
+                    BezierBooleanTraversalScheduleReport2::from_preconditions(&preconditions);
                 let ownerships =
                     vec![BezierBooleanFragmentOwnershipLocation::Outside; schedule.steps.len()];
                 format!(
@@ -1409,11 +1402,8 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
                         &readiness, first, second,
                     );
-                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
-                    &preconditions,
-                    first,
-                    second,
-                );
+                let schedule =
+                    BezierBooleanTraversalScheduleReport2::from_preconditions(&preconditions);
                 let facts = schedule
                     .steps
                     .iter()
@@ -1446,11 +1436,8 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
                         &readiness, first, second,
                     );
-                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
-                    &preconditions,
-                    first,
-                    second,
-                );
+                let schedule =
+                    BezierBooleanTraversalScheduleReport2::from_preconditions(&preconditions);
                 format!(
                     "{:?}",
                     BezierBooleanFragmentLocatorInputReport2::from_quadratic_schedule_midpoints(
@@ -1480,11 +1467,8 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
                         &readiness, first, second,
                     );
-                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
-                    &preconditions,
-                    first,
-                    second,
-                );
+                let schedule =
+                    BezierBooleanTraversalScheduleReport2::from_preconditions(&preconditions);
                 format!(
                     "{:?}",
                     BezierBooleanUniformOwnershipFactReport2::from_schedule_locations(
@@ -1513,11 +1497,8 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
                         &readiness, first, second,
                     );
-                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
-                    &preconditions,
-                    first,
-                    second,
-                );
+                let schedule =
+                    BezierBooleanTraversalScheduleReport2::from_preconditions(&preconditions);
                 let ownerships =
                     vec![BezierBooleanFragmentOwnershipLocation::Outside; schedule.steps.len()];
                 let ownership = BezierBooleanOwnershipClassificationReport2::from_schedule(
@@ -1549,11 +1530,8 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
                         &readiness, first, second,
                     );
-                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
-                    &preconditions,
-                    first,
-                    second,
-                );
+                let schedule =
+                    BezierBooleanTraversalScheduleReport2::from_preconditions(&preconditions);
                 let ownerships =
                     vec![BezierBooleanFragmentOwnershipLocation::Outside; schedule.steps.len()];
                 let ownership = BezierBooleanOwnershipClassificationReport2::from_schedule(
@@ -1588,11 +1566,8 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
                         &readiness, first, second,
                     );
-                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
-                    &preconditions,
-                    first,
-                    second,
-                );
+                let schedule =
+                    BezierBooleanTraversalScheduleReport2::from_preconditions(&preconditions);
                 let ownerships =
                     vec![BezierBooleanFragmentOwnershipLocation::Outside; schedule.steps.len()];
                 let ownership = BezierBooleanOwnershipClassificationReport2::from_schedule(
@@ -1630,11 +1605,8 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
                         &readiness, first, second,
                     );
-                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
-                    &preconditions,
-                    first,
-                    second,
-                );
+                let schedule =
+                    BezierBooleanTraversalScheduleReport2::from_preconditions(&preconditions);
                 let ownerships =
                     vec![BezierBooleanFragmentOwnershipLocation::Outside; schedule.steps.len()];
                 let ownership = BezierBooleanOwnershipClassificationReport2::from_schedule(
@@ -1677,11 +1649,8 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
                         &readiness, first, second,
                     );
-                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
-                    &preconditions,
-                    first,
-                    second,
-                );
+                let schedule =
+                    BezierBooleanTraversalScheduleReport2::from_preconditions(&preconditions);
                 let ownerships =
                     vec![BezierBooleanFragmentOwnershipLocation::Outside; schedule.steps.len()];
                 let ownership = BezierBooleanOwnershipClassificationReport2::from_schedule(
@@ -1725,11 +1694,8 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
                         &readiness, first, second,
                     );
-                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
-                    &preconditions,
-                    first,
-                    second,
-                );
+                let schedule =
+                    BezierBooleanTraversalScheduleReport2::from_preconditions(&preconditions);
                 let ownerships =
                     vec![BezierBooleanFragmentOwnershipLocation::Outside; schedule.steps.len()];
                 let ownership = BezierBooleanOwnershipClassificationReport2::from_schedule(
@@ -1770,11 +1736,8 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
                         &readiness, first, second,
                     );
-                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
-                    &preconditions,
-                    first,
-                    second,
-                );
+                let schedule =
+                    BezierBooleanTraversalScheduleReport2::from_preconditions(&preconditions);
                 let ownerships =
                     vec![BezierBooleanFragmentOwnershipLocation::Outside; schedule.steps.len()];
                 let ownership = BezierBooleanOwnershipClassificationReport2::from_schedule(
@@ -2162,11 +2125,8 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
                         &readiness, first, second,
                     );
-                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
-                    &preconditions,
-                    first,
-                    second,
-                );
+                let schedule =
+                    BezierBooleanTraversalScheduleReport2::from_preconditions(&preconditions);
                 let ownerships =
                     vec![BezierBooleanFragmentOwnershipLocation::Outside; schedule.steps.len()];
                 let ownership = BezierBooleanOwnershipClassificationReport2::from_schedule(
@@ -2214,11 +2174,8 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
                         &readiness, first, second,
                     );
-                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
-                    &preconditions,
-                    first,
-                    second,
-                );
+                let schedule =
+                    BezierBooleanTraversalScheduleReport2::from_preconditions(&preconditions);
                 let ownerships =
                     vec![BezierBooleanFragmentOwnershipLocation::Outside; schedule.steps.len()];
                 let ownership = BezierBooleanOwnershipClassificationReport2::from_schedule(
@@ -2261,11 +2218,8 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
                         &readiness, first, second,
                     );
-                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
-                    &preconditions,
-                    first,
-                    second,
-                );
+                let schedule =
+                    BezierBooleanTraversalScheduleReport2::from_preconditions(&preconditions);
                 let ownerships =
                     vec![BezierBooleanFragmentOwnershipLocation::Outside; schedule.steps.len()];
                 let ownership = BezierBooleanOwnershipClassificationReport2::from_schedule(
@@ -2309,11 +2263,8 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
                         &readiness, first, second,
                     );
-                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
-                    &preconditions,
-                    first,
-                    second,
-                );
+                let schedule =
+                    BezierBooleanTraversalScheduleReport2::from_preconditions(&preconditions);
                 let ownerships =
                     vec![BezierBooleanFragmentOwnershipLocation::Outside; schedule.steps.len()];
                 let ownership = BezierBooleanOwnershipClassificationReport2::from_schedule(
@@ -2358,11 +2309,8 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
                         &readiness, first, second,
                     );
-                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
-                    &preconditions,
-                    first,
-                    second,
-                );
+                let schedule =
+                    BezierBooleanTraversalScheduleReport2::from_preconditions(&preconditions);
                 let ownerships =
                     vec![BezierBooleanFragmentOwnershipLocation::Outside; schedule.steps.len()];
                 let ownership = BezierBooleanOwnershipClassificationReport2::from_schedule(
@@ -2408,11 +2356,8 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
                         &readiness, first, second,
                     );
-                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
-                    &preconditions,
-                    first,
-                    second,
-                );
+                let schedule =
+                    BezierBooleanTraversalScheduleReport2::from_preconditions(&preconditions);
                 let ownerships =
                     vec![BezierBooleanFragmentOwnershipLocation::Outside; schedule.steps.len()];
                 let ownership = BezierBooleanOwnershipClassificationReport2::from_schedule(
@@ -2471,11 +2416,8 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
                         &readiness, first, second,
                     );
-                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
-                    &preconditions,
-                    first,
-                    second,
-                );
+                let schedule =
+                    BezierBooleanTraversalScheduleReport2::from_preconditions(&preconditions);
                 let ownerships =
                     vec![BezierBooleanFragmentOwnershipLocation::Outside; schedule.steps.len()];
                 let ownership = BezierBooleanOwnershipClassificationReport2::from_schedule(
@@ -2527,11 +2469,8 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
                         &readiness, first, second,
                     );
-                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
-                    &preconditions,
-                    first,
-                    second,
-                );
+                let schedule =
+                    BezierBooleanTraversalScheduleReport2::from_preconditions(&preconditions);
                 let ownerships =
                     vec![BezierBooleanFragmentOwnershipLocation::Outside; schedule.steps.len()];
                 let ownership = BezierBooleanOwnershipClassificationReport2::from_schedule(
@@ -2577,11 +2516,8 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
                         &readiness, first, second,
                     );
-                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
-                    &preconditions,
-                    first,
-                    second,
-                );
+                let schedule =
+                    BezierBooleanTraversalScheduleReport2::from_preconditions(&preconditions);
                 let ownerships =
                     vec![BezierBooleanFragmentOwnershipLocation::Outside; schedule.steps.len()];
                 let ownership = BezierBooleanOwnershipClassificationReport2::from_schedule(
@@ -2634,11 +2570,8 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
                         &readiness, first, second,
                     );
-                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
-                    &preconditions,
-                    first,
-                    second,
-                );
+                let schedule =
+                    BezierBooleanTraversalScheduleReport2::from_preconditions(&preconditions);
                 let ownerships =
                     vec![BezierBooleanFragmentOwnershipLocation::Outside; schedule.steps.len()];
                 let ownership = BezierBooleanOwnershipClassificationReport2::from_schedule(
@@ -2746,11 +2679,8 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
                         &readiness, first, second,
                     );
-                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
-                    &preconditions,
-                    first,
-                    second,
-                );
+                let schedule =
+                    BezierBooleanTraversalScheduleReport2::from_preconditions(&preconditions);
                 let ownerships =
                     vec![BezierBooleanFragmentOwnershipLocation::Outside; schedule.steps.len()];
                 let ownership = BezierBooleanOwnershipClassificationReport2::from_schedule(
@@ -2810,11 +2740,8 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
                         &readiness, first, second,
                     );
-                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
-                    &preconditions,
-                    first,
-                    second,
-                );
+                let schedule =
+                    BezierBooleanTraversalScheduleReport2::from_preconditions(&preconditions);
                 let ownerships =
                     vec![BezierBooleanFragmentOwnershipLocation::Outside; schedule.steps.len()];
                 let ownership = BezierBooleanOwnershipClassificationReport2::from_schedule(
@@ -2862,11 +2789,8 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
                         &readiness, first, second,
                     );
-                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
-                    &preconditions,
-                    first,
-                    second,
-                );
+                let schedule =
+                    BezierBooleanTraversalScheduleReport2::from_preconditions(&preconditions);
                 let ownerships =
                     vec![BezierBooleanFragmentOwnershipLocation::Outside; schedule.steps.len()];
                 let ownership = BezierBooleanOwnershipClassificationReport2::from_schedule(
@@ -2942,11 +2866,8 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
                         &readiness, first, second,
                     );
-                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
-                    &preconditions,
-                    first,
-                    second,
-                );
+                let schedule =
+                    BezierBooleanTraversalScheduleReport2::from_preconditions(&preconditions);
                 let ownerships =
                     vec![BezierBooleanFragmentOwnershipLocation::Outside; schedule.steps.len()];
                 let ownership = BezierBooleanOwnershipClassificationReport2::from_schedule(
@@ -3022,11 +2943,8 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
                         &readiness, first, second,
                     );
-                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
-                    &preconditions,
-                    first,
-                    second,
-                );
+                let schedule =
+                    BezierBooleanTraversalScheduleReport2::from_preconditions(&preconditions);
                 let ownership_facts = schedule
                     .steps
                     .iter()
@@ -3116,11 +3034,8 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
                         &readiness, first, second,
                     );
-                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
-                    &preconditions,
-                    first,
-                    second,
-                );
+                let schedule =
+                    BezierBooleanTraversalScheduleReport2::from_preconditions(&preconditions);
                 let ownership_facts = schedule
                     .steps
                     .iter()
@@ -3201,11 +3116,8 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
                         &readiness, first, second,
                     );
-                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
-                    &preconditions,
-                    first,
-                    second,
-                );
+                let schedule =
+                    BezierBooleanTraversalScheduleReport2::from_preconditions(&preconditions);
                 let ownership_facts = schedule
                     .steps
                     .iter()
@@ -3401,11 +3313,8 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
                         &readiness, first, second,
                     );
-                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
-                    &preconditions,
-                    first,
-                    second,
-                );
+                let schedule =
+                    BezierBooleanTraversalScheduleReport2::from_preconditions(&preconditions);
                 let graph_facts = BezierBooleanLoopGraphFacts2 {
                     emitted_step_count: schedule.steps.len(),
                     branch_vertex_count: 0,
@@ -3446,11 +3355,8 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
                         &readiness, first, second,
                     );
-                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
-                    &preconditions,
-                    first,
-                    second,
-                );
+                let schedule =
+                    BezierBooleanTraversalScheduleReport2::from_preconditions(&preconditions);
                 let graph_facts = BezierBooleanLoopGraphFacts2 {
                     emitted_step_count: schedule.steps.len(),
                     branch_vertex_count: 0,
@@ -3495,11 +3401,8 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
                         &readiness, first, second,
                     );
-                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
-                    &preconditions,
-                    first,
-                    second,
-                );
+                let schedule =
+                    BezierBooleanTraversalScheduleReport2::from_preconditions(&preconditions);
                 let first_locations = vec![
                     BezierBooleanFragmentOwnershipLocation::Outside;
                     schedule.first_fragment_count
@@ -3564,11 +3467,8 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
                         &readiness, first, second,
                     );
-                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
-                    &preconditions,
-                    first,
-                    second,
-                );
+                let schedule =
+                    BezierBooleanTraversalScheduleReport2::from_preconditions(&preconditions);
                 let first_locations = vec![
                     BezierBooleanFragmentOwnershipLocation::Outside;
                     schedule.first_fragment_count
@@ -3626,11 +3526,8 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
                         &readiness, first, second,
                     );
-                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
-                    &preconditions,
-                    first,
-                    second,
-                );
+                let schedule =
+                    BezierBooleanTraversalScheduleReport2::from_preconditions(&preconditions);
                 let first_locations = vec![
                     BezierBooleanFragmentOwnershipLocation::Outside;
                     schedule.first_fragment_count
@@ -3673,11 +3570,8 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
                         &readiness, first, second,
                     );
-                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
-                    &preconditions,
-                    first,
-                    second,
-                );
+                let schedule =
+                    BezierBooleanTraversalScheduleReport2::from_preconditions(&preconditions);
                 let first_locations = vec![
                     BezierBooleanFragmentOwnershipLocation::Outside;
                     schedule.first_fragment_count
@@ -3732,11 +3626,8 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
                         &readiness, first, second,
                     );
-                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
-                    &preconditions,
-                    first,
-                    second,
-                );
+                let schedule =
+                    BezierBooleanTraversalScheduleReport2::from_preconditions(&preconditions);
                 let first_locations = vec![
                     BezierBooleanFragmentOwnershipLocation::Outside;
                     schedule.first_fragment_count
@@ -3787,11 +3678,8 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
                         &readiness, first, second,
                     );
-                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
-                    &preconditions,
-                    first,
-                    second,
-                );
+                let schedule =
+                    BezierBooleanTraversalScheduleReport2::from_preconditions(&preconditions);
                 let first_locations = vec![
                     BezierBooleanFragmentOwnershipLocation::Outside;
                     schedule.first_fragment_count
@@ -3840,11 +3728,8 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
                         &readiness, first, second,
                     );
-                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
-                    &preconditions,
-                    first,
-                    second,
-                );
+                let schedule =
+                    BezierBooleanTraversalScheduleReport2::from_preconditions(&preconditions);
                 let first_locations = vec![
                     BezierBooleanFragmentOwnershipLocation::Outside;
                     schedule.first_fragment_count
@@ -3895,11 +3780,8 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
                         &readiness, first, second,
                     );
-                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
-                    &preconditions,
-                    first,
-                    second,
-                );
+                let schedule =
+                    BezierBooleanTraversalScheduleReport2::from_preconditions(&preconditions);
                 let first_endpoints = quadratic_report_endpoints(first);
                 let second_endpoints = quadratic_report_endpoints(second);
                 format!(
@@ -3934,11 +3816,8 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
                         &readiness, first, second,
                     );
-                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
-                    &preconditions,
-                    first,
-                    second,
-                );
+                let schedule =
+                    BezierBooleanTraversalScheduleReport2::from_preconditions(&preconditions);
                 let depth_facts = [hypercurve::BezierBooleanLoopNestingDepthFact2 {
                     loop_index: 0,
                     nesting_depth: 0,
@@ -3977,11 +3856,8 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
                         &readiness, first, second,
                     );
-                let schedule = BezierBooleanTraversalScheduleReport2::from_quadratic_fragments(
-                    &preconditions,
-                    first,
-                    second,
-                );
+                let schedule =
+                    BezierBooleanTraversalScheduleReport2::from_preconditions(&preconditions);
                 let ownerships =
                     vec![BezierBooleanFragmentOwnershipLocation::Outside; schedule.steps.len()];
                 let ownership = BezierBooleanOwnershipClassificationReport2::from_schedule(
