@@ -690,6 +690,30 @@ fn predicate_invariants(input: Input) {
         Some(SupportDopRelation::BoundaryTouch),
         "AABB sharing a support plane must be a boundary touch, not separated"
     );
+    if let Some(report) = unit_dop
+        .classify_aabb3_report(
+            &Point3::new(1.into(), 0.into(), 0.into()),
+            &Point3::new(2.into(), 1.into(), 1.into()),
+        )
+        .value()
+    {
+        assert_eq!(
+            report.relation,
+            SupportDopRelation::BoundaryTouch,
+            "report relation must match the coarse support-DOP/AABB classifier"
+        );
+        assert!(
+            report
+                .validate_against_sources(
+                    &unit_dop,
+                    &Point3::new(1.into(), 0.into(), 0.into()),
+                    &Point3::new(2.into(), 1.into(), 1.into()),
+                    PredicatePolicy::default()
+                )
+                .is_ok(),
+            "support-DOP/AABB report evidence must replay from exact sources"
+        );
+    }
     assert_eq!(
         unit_dop
             .classify_aabb3(
@@ -700,6 +724,26 @@ fn predicate_invariants(input: Input) {
         Some(SupportDopRelation::Separated),
         "a separating support axis must produce an exact separated relation"
     );
+    if let Some(report) = unit_dop
+        .classify_aabb3_report(
+            &Point3::new(2.into(), 0.into(), 0.into()),
+            &Point3::new(3.into(), 1.into(), 1.into()),
+        )
+        .value()
+    {
+        assert_eq!(report.terminal_slab, Some(0));
+        assert!(
+            report
+                .validate_against_sources(
+                    &unit_dop,
+                    &Point3::new(2.into(), 0.into(), 0.into()),
+                    &Point3::new(3.into(), 1.into(), 1.into()),
+                    PredicatePolicy::default()
+                )
+                .is_ok(),
+            "separating support-DOP/AABB report must replay its terminal slab"
+        );
+    }
 
     let fixed_point_halfspaces = vec![
         Plane3::new(Point3::new(1.into(), 0.into(), 0.into()), -&p.x),

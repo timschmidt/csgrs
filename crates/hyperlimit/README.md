@@ -66,7 +66,8 @@ than inventing a float decision.
 - Prepared segment, triangle, AABB, line, circle/sphere, plane, and halfspace-system
   helpers retain facts for repeated decisions.
 - `SupportDop3` and `SupportSlab3` retain exact support-axis bounds and source
-  witnesses for reusable k-DOP/bounding-volume slab predicates.
+  witnesses for reusable k-DOP/bounding-volume slab predicates; report-bearing
+  AABB projection classifiers preserve per-slab exact interval evidence.
 - `HalfspaceFeasibilityReport` records exact 3D halfspace feasibility witnesses,
   active plane sets, and Farkas-style infeasibility certificates for replayable
   convex-kernel prechecks; `PreparedHalfspaceSystem3` adds the borrowed

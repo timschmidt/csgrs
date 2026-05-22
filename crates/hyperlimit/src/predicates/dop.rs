@@ -64,6 +64,211 @@ impl SupportSlab3 {
     }
 }
 
+/// Structural inconsistency in a retained support-DOP/AABB report.
+///
+/// The report validates the exact support-interval broad-phase reduction
+/// instead of treating it as a lossy bounding-volume hint. Yap's exact
+/// geometric computation model keeps object evidence available for replay
+/// across the geometric system; see Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997). The slab family is the
+/// k-DOP support-function model of Klosowski, Held, Mitchell, Sowizral, and
+/// Zikan, "Efficient Collision Detection Using Bounding Volume Hierarchies of
+/// k-DOPs," *IEEE Transactions on Visualization and Computer Graphics* 4.1
+/// (1998).
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum SupportDopAabb3ValidationError {
+    /// An empty retained DOP did not report the structural degenerate relation.
+    EmptyDopRelationMismatch,
+    /// A report item is not the next prefix slab tested by the classifier.
+    SlabIndexMismatch,
+    /// A retained slab has `min > max` but is not reported as degenerate.
+    SlabBoundsInvalid,
+    /// A valid retained slab is missing its exact query projection interval.
+    MissingQueryInterval,
+    /// A degenerate retained slab unexpectedly carries a query projection.
+    DegenerateSlabHasQueryInterval,
+    /// A retained query interval has `query_min > query_max`.
+    QueryIntervalInvalid,
+    /// A retained per-slab relation does not replay from retained intervals.
+    SlabRelationMismatch,
+    /// The first separating or degenerate slab does not match the terminal id.
+    TerminalSlabMismatch,
+    /// A non-terminal report does not cover every retained slab.
+    MissingSlabEvidence,
+    /// The retained slab relations derive a different coarse relation.
+    RelationMismatch,
+    /// Recomputing from source geometry did not reproduce this report.
+    SourceReplayMismatch,
+}
+
+/// Per-slab exact interval evidence for [`SupportDopAabb3Report`].
+#[derive(Clone, Debug, PartialEq)]
+pub struct SupportDopAabb3SlabReport {
+    /// Index of the retained slab tested by this report item.
+    pub slab_index: usize,
+    /// Exact retained slab copied into the report for standalone replay.
+    pub slab: SupportSlab3,
+    /// Minimum exact AABB projection on [`Self::slab`]'s axis.
+    ///
+    /// Degenerate slabs omit the query interval because invalid retained
+    /// bounds decide the structural result before the query is needed.
+    pub query_min: Option<Real>,
+    /// Maximum exact AABB projection on [`Self::slab`]'s axis.
+    pub query_max: Option<Real>,
+    /// Relation derived from this slab alone.
+    pub relation: SupportDopRelation,
+}
+
+/// Report-bearing exact support-DOP/AABB classification.
+///
+/// The coarse [`SupportDopRelation`] is retained for existing callers. This
+/// report stores the visited slab prefix, each exact AABB support interval,
+/// and the first terminal slab when a separating axis or invalid retained slab
+/// is found. Non-separated reports contain every retained slab so downstream
+/// broad-phase, voxel, and packing code can replay the conservative
+/// support-interval predicate without reintroducing primitive-float tolerance.
+#[derive(Clone, Debug, PartialEq)]
+pub struct SupportDopAabb3Report {
+    /// Coarse relation derived from the retained slab evidence.
+    pub relation: SupportDopRelation,
+    /// Number of slabs retained by the source DOP.
+    pub slab_count: usize,
+    /// First slab that decided [`SupportDopRelation::Separated`] or
+    /// [`SupportDopRelation::Degenerate`], when classification stopped early.
+    pub terminal_slab: Option<usize>,
+    /// Prefix of visited slab reports.
+    pub slab_reports: Vec<SupportDopAabb3SlabReport>,
+}
+
+impl SupportDopAabb3Report {
+    /// Validate retained slab evidence and the derived coarse relation.
+    pub fn validate(&self) -> Result<(), SupportDopAabb3ValidationError> {
+        if self.slab_count == 0 {
+            return if self.relation == SupportDopRelation::Degenerate
+                && self.terminal_slab.is_none()
+                && self.slab_reports.is_empty()
+            {
+                Ok(())
+            } else {
+                Err(SupportDopAabb3ValidationError::EmptyDopRelationMismatch)
+            };
+        }
+
+        let mut boundary = false;
+        let mut derived_relation = None;
+        for (position, slab_report) in self.slab_reports.iter().enumerate() {
+            if slab_report.slab_index != position || position >= self.slab_count {
+                return Err(SupportDopAabb3ValidationError::SlabIndexMismatch);
+            }
+
+            let slab_bounds_valid = decided_bool(validate_slab_bounds(
+                &slab_report.slab,
+                PredicatePolicy::default(),
+            ))
+            .ok_or(SupportDopAabb3ValidationError::SlabBoundsInvalid)?;
+
+            if !slab_bounds_valid {
+                if slab_report.relation != SupportDopRelation::Degenerate {
+                    return Err(SupportDopAabb3ValidationError::SlabBoundsInvalid);
+                }
+                if slab_report.query_min.is_some() || slab_report.query_max.is_some() {
+                    return Err(SupportDopAabb3ValidationError::DegenerateSlabHasQueryInterval);
+                }
+                if self.terminal_slab != Some(position) || position + 1 != self.slab_reports.len() {
+                    return Err(SupportDopAabb3ValidationError::TerminalSlabMismatch);
+                }
+                derived_relation = Some(SupportDopRelation::Degenerate);
+                break;
+            }
+
+            let query_min = slab_report
+                .query_min
+                .as_ref()
+                .ok_or(SupportDopAabb3ValidationError::MissingQueryInterval)?;
+            let query_max = slab_report
+                .query_max
+                .as_ref()
+                .ok_or(SupportDopAabb3ValidationError::MissingQueryInterval)?;
+            let query_interval_valid =
+                match compare_reals_with_policy(query_min, query_max, PredicatePolicy::default()) {
+                    PredicateOutcome::Decided { value, .. } => value != Ordering::Greater,
+                    PredicateOutcome::Unknown { .. } => false,
+                };
+            if !query_interval_valid {
+                return Err(SupportDopAabb3ValidationError::QueryIntervalInvalid);
+            }
+
+            let replayed = match classify_interval_overlap(
+                query_min,
+                query_max,
+                &slab_report.slab.min,
+                &slab_report.slab.max,
+                PredicatePolicy::default(),
+            ) {
+                PredicateOutcome::Decided { value, .. } => value,
+                PredicateOutcome::Unknown { .. } => {
+                    return Err(SupportDopAabb3ValidationError::SlabRelationMismatch);
+                }
+            };
+            if replayed != slab_report.relation {
+                return Err(SupportDopAabb3ValidationError::SlabRelationMismatch);
+            }
+
+            match slab_report.relation {
+                SupportDopRelation::Separated | SupportDopRelation::Degenerate => {
+                    if self.terminal_slab != Some(position)
+                        || position + 1 != self.slab_reports.len()
+                    {
+                        return Err(SupportDopAabb3ValidationError::TerminalSlabMismatch);
+                    }
+                    derived_relation = Some(slab_report.relation);
+                    break;
+                }
+                SupportDopRelation::BoundaryTouch => boundary = true,
+                SupportDopRelation::ConservativeOverlap => {}
+            }
+        }
+
+        let derived_relation = match derived_relation {
+            Some(relation) => relation,
+            None => {
+                if self.terminal_slab.is_some() {
+                    return Err(SupportDopAabb3ValidationError::TerminalSlabMismatch);
+                }
+                if self.slab_reports.len() != self.slab_count {
+                    return Err(SupportDopAabb3ValidationError::MissingSlabEvidence);
+                }
+                if boundary {
+                    SupportDopRelation::BoundaryTouch
+                } else {
+                    SupportDopRelation::ConservativeOverlap
+                }
+            }
+        };
+
+        if derived_relation == self.relation {
+            Ok(())
+        } else {
+            Err(SupportDopAabb3ValidationError::RelationMismatch)
+        }
+    }
+
+    /// Replay this report against a source DOP and AABB bounds.
+    pub fn validate_against_sources(
+        &self,
+        dop: &SupportDop3,
+        min: &Point3,
+        max: &Point3,
+        policy: PredicatePolicy,
+    ) -> Result<(), SupportDopAabb3ValidationError> {
+        self.validate()?;
+        match dop.classify_aabb3_report_with_policy(min, max, policy) {
+            PredicateOutcome::Decided { value, .. } if &value == self => Ok(()),
+            _ => Err(SupportDopAabb3ValidationError::SourceReplayMismatch),
+        }
+    }
+}
+
 /// Retained exact support k-DOP in 3D.
 #[derive(Clone, Debug, PartialEq)]
 pub struct SupportDop3 {
@@ -258,9 +463,46 @@ impl SupportDop3 {
         max: &Point3,
         policy: PredicatePolicy,
     ) -> PredicateOutcome<SupportDopRelation> {
+        match self.classify_aabb3_report_with_policy(min, max, policy) {
+            PredicateOutcome::Decided {
+                value,
+                certainty,
+                stage,
+            } => PredicateOutcome::decided(value.relation, certainty, stage),
+            PredicateOutcome::Unknown { needed, stage } => PredicateOutcome::unknown(needed, stage),
+        }
+    }
+
+    /// Classify an AABB and retain exact per-slab projection evidence.
+    pub fn classify_aabb3_report(
+        &self,
+        min: &Point3,
+        max: &Point3,
+    ) -> PredicateOutcome<SupportDopAabb3Report> {
+        self.classify_aabb3_report_with_policy(min, max, PredicatePolicy::default())
+    }
+
+    /// Classify an AABB with an explicit policy and retain replayable evidence.
+    ///
+    /// This is the report-bearing form of [`Self::classify_aabb3_with_policy`].
+    /// It records the exact support interval of the query box on each visited
+    /// k-DOP axis and stops at the first terminal slab, matching the coarse
+    /// classifier's scheduling while preserving the object-level evidence that
+    /// Yap's exact geometric computation model requires.
+    pub fn classify_aabb3_report_with_policy(
+        &self,
+        min: &Point3,
+        max: &Point3,
+        policy: PredicatePolicy,
+    ) -> PredicateOutcome<SupportDopAabb3Report> {
         if self.slabs.is_empty() {
             return PredicateOutcome::decided(
-                SupportDopRelation::Degenerate,
+                SupportDopAabb3Report {
+                    relation: SupportDopRelation::Degenerate,
+                    slab_count: 0,
+                    terminal_slab: None,
+                    slab_reports: Vec::new(),
+                },
                 Certainty::Exact,
                 Escalation::Structural,
             );
@@ -269,7 +511,8 @@ impl SupportDop3 {
         let mut certainty = Certainty::Exact;
         let mut stage = Escalation::Structural;
         let mut boundary = false;
-        for slab in &self.slabs {
+        let mut slab_reports = Vec::with_capacity(self.slabs.len());
+        for (slab_index, slab) in self.slabs.iter().enumerate() {
             match validate_slab_bounds(slab, policy) {
                 PredicateOutcome::Decided {
                     value: true,
@@ -282,8 +525,20 @@ impl SupportDop3 {
                     stage: value_stage,
                 } => {
                     absorb_trace(&mut certainty, &mut stage, value_certainty, value_stage);
+                    slab_reports.push(SupportDopAabb3SlabReport {
+                        slab_index,
+                        slab: slab.clone(),
+                        query_min: None,
+                        query_max: None,
+                        relation: SupportDopRelation::Degenerate,
+                    });
                     return PredicateOutcome::decided(
-                        SupportDopRelation::Degenerate,
+                        SupportDopAabb3Report {
+                            relation: SupportDopRelation::Degenerate,
+                            slab_count: self.slabs.len(),
+                            terminal_slab: Some(slab_index),
+                            slab_reports,
+                        },
                         certainty,
                         stage,
                     );
@@ -317,12 +572,37 @@ impl SupportDop3 {
                     stage: value_stage,
                 } => {
                     absorb_trace(&mut certainty, &mut stage, value_certainty, value_stage);
+                    slab_reports.push(SupportDopAabb3SlabReport {
+                        slab_index,
+                        slab: slab.clone(),
+                        query_min: Some(query_min),
+                        query_max: Some(query_max),
+                        relation: value,
+                    });
                     match value {
                         SupportDopRelation::Separated => {
-                            return PredicateOutcome::decided(value, certainty, stage);
+                            return PredicateOutcome::decided(
+                                SupportDopAabb3Report {
+                                    relation: value,
+                                    slab_count: self.slabs.len(),
+                                    terminal_slab: Some(slab_index),
+                                    slab_reports,
+                                },
+                                certainty,
+                                stage,
+                            );
                         }
                         SupportDopRelation::Degenerate => {
-                            return PredicateOutcome::decided(value, certainty, stage);
+                            return PredicateOutcome::decided(
+                                SupportDopAabb3Report {
+                                    relation: value,
+                                    slab_count: self.slabs.len(),
+                                    terminal_slab: Some(slab_index),
+                                    slab_reports,
+                                },
+                                certainty,
+                                stage,
+                            );
                         }
                         SupportDopRelation::BoundaryTouch => boundary = true,
                         SupportDopRelation::ConservativeOverlap => {}
@@ -335,10 +615,15 @@ impl SupportDop3 {
         }
 
         PredicateOutcome::decided(
-            if boundary {
-                SupportDopRelation::BoundaryTouch
-            } else {
-                SupportDopRelation::ConservativeOverlap
+            SupportDopAabb3Report {
+                relation: if boundary {
+                    SupportDopRelation::BoundaryTouch
+                } else {
+                    SupportDopRelation::ConservativeOverlap
+                },
+                slab_count: self.slabs.len(),
+                terminal_slab: None,
+                slab_reports,
             },
             certainty,
             stage,
@@ -371,6 +656,13 @@ fn validate_slab_bounds(slab: &SupportSlab3, policy: PredicatePolicy) -> Predica
             stage,
         } => PredicateOutcome::decided(value != Ordering::Greater, certainty, stage),
         PredicateOutcome::Unknown { needed, stage } => PredicateOutcome::unknown(needed, stage),
+    }
+}
+
+fn decided_bool(outcome: PredicateOutcome<bool>) -> Option<bool> {
+    match outcome {
+        PredicateOutcome::Decided { value, .. } => Some(value),
+        PredicateOutcome::Unknown { .. } => None,
     }
 }
 

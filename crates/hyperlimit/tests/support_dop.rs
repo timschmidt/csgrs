@@ -1,6 +1,6 @@
 use hyperlimit::{
-    ConvexPointLocation, Point3, PredicateOutcome, SupportDop3, SupportDopRelation, SupportSlab3,
-    support_dop3_from_points,
+    ConvexPointLocation, Point3, PredicateOutcome, PredicatePolicy, SupportDop3,
+    SupportDopAabb3ValidationError, SupportDopRelation, SupportSlab3, support_dop3_from_points,
 };
 use hyperreal::{Rational, Real};
 
@@ -82,6 +82,112 @@ fn support_dop_aabb_relation_uses_exact_projection_intervals() {
     assert_eq!(
         dop.classify_aabb3(&pi(5, 1, 0), &pi(6, 2, 1)).value(),
         Some(SupportDopRelation::Separated)
+    );
+}
+
+#[test]
+fn support_dop_aabb_report_retains_boundary_projection_evidence() {
+    let dop = SupportDop3::from_slabs(vec![
+        SupportSlab3::new(pi(1, 0, 0), r(0), r(4)),
+        SupportSlab3::new(pi(0, 1, 0), r(0), r(4)),
+        SupportSlab3::new(pi(1, 1, 0), r(0), r(6)),
+    ]);
+    let min = pi(4, 1, 0);
+    let max = pi(5, 2, 1);
+
+    let report = decided(dop.classify_aabb3_report(&min, &max));
+
+    assert_eq!(report.relation, SupportDopRelation::BoundaryTouch);
+    assert_eq!(report.terminal_slab, None);
+    assert_eq!(report.slab_reports.len(), 3);
+    assert_eq!(report.slab_reports[0].query_min, Some(r(4)));
+    assert_eq!(report.slab_reports[0].query_max, Some(r(5)));
+    assert_eq!(
+        report.slab_reports[0].relation,
+        SupportDopRelation::BoundaryTouch
+    );
+    assert_eq!(report.slab_reports[2].query_min, Some(r(5)));
+    assert_eq!(report.slab_reports[2].query_max, Some(r(7)));
+    assert_eq!(
+        report.validate_against_sources(&dop, &min, &max, PredicatePolicy::default()),
+        Ok(())
+    );
+    assert_eq!(
+        dop.classify_aabb3(&min, &max).value(),
+        Some(report.relation)
+    );
+}
+
+#[test]
+fn support_dop_aabb_report_stops_at_first_separating_slab() {
+    let dop = SupportDop3::from_slabs(vec![
+        SupportSlab3::new(pi(1, 0, 0), r(0), r(4)),
+        SupportSlab3::new(pi(0, 1, 0), r(0), r(4)),
+    ]);
+    let min = pi(5, 1, 0);
+    let max = pi(6, 2, 1);
+
+    let report = decided(dop.classify_aabb3_report(&min, &max));
+
+    assert_eq!(report.relation, SupportDopRelation::Separated);
+    assert_eq!(report.terminal_slab, Some(0));
+    assert_eq!(report.slab_reports.len(), 1);
+    assert_eq!(report.slab_reports[0].query_min, Some(r(5)));
+    assert_eq!(report.slab_reports[0].query_max, Some(r(6)));
+    assert_eq!(
+        report.slab_reports[0].relation,
+        SupportDopRelation::Separated
+    );
+    assert_eq!(
+        report.validate_against_sources(&dop, &min, &max, PredicatePolicy::default()),
+        Ok(())
+    );
+}
+
+#[test]
+fn support_dop_aabb_report_records_invalid_retained_slab_as_degenerate() {
+    let dop = SupportDop3::from_slabs(vec![
+        SupportSlab3::new(pi(1, 0, 0), r(4), r(0)),
+        SupportSlab3::new(pi(0, 1, 0), r(0), r(4)),
+    ]);
+    let min = pi(1, 1, 0);
+    let max = pi(2, 2, 1);
+
+    let report = decided(dop.classify_aabb3_report(&min, &max));
+
+    assert_eq!(report.relation, SupportDopRelation::Degenerate);
+    assert_eq!(report.terminal_slab, Some(0));
+    assert_eq!(report.slab_reports.len(), 1);
+    assert_eq!(report.slab_reports[0].query_min, None);
+    assert_eq!(report.slab_reports[0].query_max, None);
+    assert_eq!(
+        report.validate_against_sources(&dop, &min, &max, PredicatePolicy::default()),
+        Ok(())
+    );
+}
+
+#[test]
+fn support_dop_aabb_report_rejects_forged_relations_and_missing_evidence() {
+    let dop = SupportDop3::from_slabs(vec![
+        SupportSlab3::new(pi(1, 0, 0), r(0), r(4)),
+        SupportSlab3::new(pi(0, 1, 0), r(0), r(4)),
+    ]);
+    let min = pi(1, 1, 0);
+    let max = pi(2, 2, 1);
+    let report = decided(dop.classify_aabb3_report(&min, &max));
+
+    let mut forged = report.clone();
+    forged.relation = SupportDopRelation::Separated;
+    assert_eq!(
+        forged.validate(),
+        Err(SupportDopAabb3ValidationError::RelationMismatch)
+    );
+
+    let mut truncated = report;
+    truncated.slab_reports.pop();
+    assert_eq!(
+        truncated.validate(),
+        Err(SupportDopAabb3ValidationError::MissingSlabEvidence)
     );
 }
 

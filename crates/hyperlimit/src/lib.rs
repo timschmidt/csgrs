@@ -148,7 +148,8 @@ pub use predicates::distance::{
     compare_point3_distance_squared_with_policy,
 };
 pub use predicates::dop::{
-    SupportDop3, SupportSlab3, support_dop3_from_points, support_dop3_from_points_with_policy,
+    SupportDop3, SupportDopAabb3Report, SupportDopAabb3SlabReport, SupportDopAabb3ValidationError,
+    SupportSlab3, support_dop3_from_points, support_dop3_from_points_with_policy,
 };
 pub use predicates::filters::{
     certified_ball_sign, certified_ball_sign_report, certified_ball_sign_report_with_policy,
