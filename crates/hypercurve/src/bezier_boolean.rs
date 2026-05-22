@@ -8716,45 +8716,6 @@ impl BezierBooleanLoopClosureReport2 {
         Self::from_graph_walk_endpoints(&walk, plan, first_endpoints, second_endpoints)
     }
 
-    /// Audits loop closure against quadratic Bezier fragments.
-    pub fn from_quadratic_fragments(
-        plan: &BezierBooleanLoopAssemblyPlanReport2,
-        first: &BezierBooleanQuadraticFragmentReport2,
-        second: &BezierBooleanQuadraticFragmentReport2,
-    ) -> Self {
-        Self::from_fragment_endpoints(
-            plan,
-            &quadratic_fragment_endpoints(&first.fragments),
-            &quadratic_fragment_endpoints(&second.fragments),
-        )
-    }
-
-    /// Audits loop closure against cubic Bezier fragments.
-    pub fn from_cubic_fragments(
-        plan: &BezierBooleanLoopAssemblyPlanReport2,
-        first: &BezierBooleanCubicFragmentReport2,
-        second: &BezierBooleanCubicFragmentReport2,
-    ) -> Self {
-        Self::from_fragment_endpoints(
-            plan,
-            &cubic_fragment_endpoints(&first.fragments),
-            &cubic_fragment_endpoints(&second.fragments),
-        )
-    }
-
-    /// Audits loop closure against rational quadratic/conic fragments.
-    pub fn from_rational_quadratic_fragments(
-        plan: &BezierBooleanLoopAssemblyPlanReport2,
-        first: &BezierBooleanRationalQuadraticFragmentReport2,
-        second: &BezierBooleanRationalQuadraticFragmentReport2,
-    ) -> Self {
-        Self::from_fragment_endpoints(
-            plan,
-            &rational_quadratic_fragment_endpoints(&first.fragments),
-            &rational_quadratic_fragment_endpoints(&second.fragments),
-        )
-    }
-
     /// Audits loop closure from generic operand fragment endpoints.
     ///
     /// Each endpoint pair is `(fragment_start, fragment_end)` in source

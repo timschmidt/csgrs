@@ -2235,7 +2235,11 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 );
                 format!(
                     "{:?}",
-                    BezierBooleanLoopClosureReport2::from_quadratic_fragments(&plan, first, second)
+                    BezierBooleanLoopClosureReport2::from_fragment_endpoints(
+                        &plan,
+                        &quadratic_report_endpoints(first),
+                        &quadratic_report_endpoints(second),
+                    )
                 )
             }
             other => format!("{other:?}"),
@@ -2276,8 +2280,11 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 let plan = BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(
                     &assembly, &emission,
                 );
-                let closure =
-                    BezierBooleanLoopClosureReport2::from_quadratic_fragments(&plan, first, second);
+                let closure = BezierBooleanLoopClosureReport2::from_fragment_endpoints(
+                    &plan,
+                    &quadratic_report_endpoints(first),
+                    &quadratic_report_endpoints(second),
+                );
                 format!(
                     "{:?}",
                     BezierBooleanOutputLoopReport2::from_loop_closure(&closure)
@@ -2321,8 +2328,11 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 let plan = BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(
                     &assembly, &emission,
                 );
-                let closure =
-                    BezierBooleanLoopClosureReport2::from_quadratic_fragments(&plan, first, second);
+                let closure = BezierBooleanLoopClosureReport2::from_fragment_endpoints(
+                    &plan,
+                    &quadratic_report_endpoints(first),
+                    &quadratic_report_endpoints(second),
+                );
                 let output = BezierBooleanOutputLoopReport2::from_loop_closure(&closure);
                 format!(
                     "{:?}",
@@ -2367,8 +2377,11 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 let plan = BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(
                     &assembly, &emission,
                 );
-                let closure =
-                    BezierBooleanLoopClosureReport2::from_quadratic_fragments(&plan, first, second);
+                let closure = BezierBooleanLoopClosureReport2::from_fragment_endpoints(
+                    &plan,
+                    &quadratic_report_endpoints(first),
+                    &quadratic_report_endpoints(second),
+                );
                 let output = BezierBooleanOutputLoopReport2::from_loop_closure(&closure);
                 let locator = BezierBooleanLoopLocatorInputReport2::from_output_loops(&output);
                 format!(
@@ -2414,8 +2427,11 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 let plan = BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(
                     &assembly, &emission,
                 );
-                let closure =
-                    BezierBooleanLoopClosureReport2::from_quadratic_fragments(&plan, first, second);
+                let closure = BezierBooleanLoopClosureReport2::from_fragment_endpoints(
+                    &plan,
+                    &quadratic_report_endpoints(first),
+                    &quadratic_report_endpoints(second),
+                );
                 let output = BezierBooleanOutputLoopReport2::from_loop_closure(&closure);
                 let locator = BezierBooleanLoopLocatorInputReport2::from_output_loops(&output);
                 let queries =
@@ -2530,8 +2546,11 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 let plan = BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(
                     &assembly, &emission,
                 );
-                let closure =
-                    BezierBooleanLoopClosureReport2::from_quadratic_fragments(&plan, first, second);
+                let closure = BezierBooleanLoopClosureReport2::from_fragment_endpoints(
+                    &plan,
+                    &quadratic_report_endpoints(first),
+                    &quadratic_report_endpoints(second),
+                );
                 let output = BezierBooleanOutputLoopReport2::from_loop_closure(&closure);
                 let depths = vec![0_usize; output.loops.len()];
                 format!(
@@ -2577,8 +2596,11 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 let plan = BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(
                     &assembly, &emission,
                 );
-                let closure =
-                    BezierBooleanLoopClosureReport2::from_quadratic_fragments(&plan, first, second);
+                let closure = BezierBooleanLoopClosureReport2::from_fragment_endpoints(
+                    &plan,
+                    &quadratic_report_endpoints(first),
+                    &quadratic_report_endpoints(second),
+                );
                 let output = BezierBooleanOutputLoopReport2::from_loop_closure(&closure);
                 let facts = (0..output.loops.len())
                     .map(|loop_index| BezierBooleanLoopNestingDepthFact2 {
@@ -2631,8 +2653,11 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 let plan = BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(
                     &assembly, &emission,
                 );
-                let closure =
-                    BezierBooleanLoopClosureReport2::from_quadratic_fragments(&plan, first, second);
+                let closure = BezierBooleanLoopClosureReport2::from_fragment_endpoints(
+                    &plan,
+                    &quadratic_report_endpoints(first),
+                    &quadratic_report_endpoints(second),
+                );
                 let output = BezierBooleanOutputLoopReport2::from_loop_closure(&closure);
                 let containment_facts = if output.loops.len() > 1 {
                     (0..output.loops.len() - 1)
@@ -2740,8 +2765,11 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 let plan = BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(
                     &assembly, &emission,
                 );
-                let closure =
-                    BezierBooleanLoopClosureReport2::from_quadratic_fragments(&plan, first, second);
+                let closure = BezierBooleanLoopClosureReport2::from_fragment_endpoints(
+                    &plan,
+                    &quadratic_report_endpoints(first),
+                    &quadratic_report_endpoints(second),
+                );
                 let output = BezierBooleanOutputLoopReport2::from_loop_closure(&closure);
                 let roles = vec![BezierBooleanOutputLoopRole::Material; output.loops.len()];
                 let depth_facts = output
@@ -2801,8 +2829,11 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 let plan = BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(
                     &assembly, &emission,
                 );
-                let closure =
-                    BezierBooleanLoopClosureReport2::from_quadratic_fragments(&plan, first, second);
+                let closure = BezierBooleanLoopClosureReport2::from_fragment_endpoints(
+                    &plan,
+                    &quadratic_report_endpoints(first),
+                    &quadratic_report_endpoints(second),
+                );
                 let output = BezierBooleanOutputLoopReport2::from_loop_closure(&closure);
                 let roles = vec![BezierBooleanOutputLoopRole::Material; output.loops.len()];
                 let assigned =
@@ -3965,8 +3996,11 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 let plan = BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(
                     &assembly, &emission,
                 );
-                let closure =
-                    BezierBooleanLoopClosureReport2::from_quadratic_fragments(&plan, first, second);
+                let closure = BezierBooleanLoopClosureReport2::from_fragment_endpoints(
+                    &plan,
+                    &quadratic_report_endpoints(first),
+                    &quadratic_report_endpoints(second),
+                );
                 let output = BezierBooleanOutputLoopReport2::from_loop_closure(&closure);
                 let roles = vec![BezierBooleanOutputLoopRole::Material; output.loops.len()];
                 let assigned =
