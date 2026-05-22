@@ -5,7 +5,6 @@ use crate::csg::CSG;
 use crate::float_types::{
     HReal, Real, TAU, hpoint_lerp, hreal_abs, hreal_div, hreal_from_f64, hreal_gt_f64,
     hreal_max, hreal_min, hreal_sub, hreal_sum, hreal_to_f64, hvector3_from_vector3,
-    tolerance,
 };
 use crate::mesh::Mesh;
 use nalgebra::{Point3, Vector3};
@@ -262,7 +261,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
 /// Intersections," NASA Technical Note D-5541, 1970.
 fn tpms_scale(period: Real) -> Option<Real> {
     let period = hreal_from_f64(period).ok()?;
-    if !hreal_gt_f64(&period, tolerance()) {
+    if !hreal_gt_f64(&period, 0.0) {
         return None;
     }
     hreal_to_f64(&(hreal_from_f64(TAU).ok()? / period).ok()?)
@@ -310,6 +309,27 @@ fn tpms_schwarz_d_value(point: &Point3<Real>, scale: Real) -> Option<Real> {
             + cos_x.clone() * sin_y * cos_z
             + cos_x * cos_y * sin_z),
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::float_types::tolerance;
+
+    #[test]
+    fn tpms_scale_accepts_any_exact_positive_period() {
+        assert!(tpms_scale(tolerance() * 0.25).is_some());
+        assert!(tpms_scale(tolerance()).is_some());
+        assert!(tpms_scale(1.0).is_some());
+    }
+
+    #[test]
+    fn tpms_scale_rejects_zero_negative_and_nonfinite_periods() {
+        assert!(tpms_scale(0.0).is_none());
+        assert!(tpms_scale(-tolerance()).is_none());
+        assert!(tpms_scale(Real::NAN).is_none());
+        assert!(tpms_scale(Real::INFINITY).is_none());
+    }
 }
 
 fn axis_aligned_box_sdf(p: &Point3<Real>, min: &Point3<Real>, max: &Point3<Real>) -> Real {
