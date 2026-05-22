@@ -21,7 +21,7 @@ use hyperlimit::{
     classify_halfspace_feasibility3, classify_homogeneous_point_plane,
     classify_point_convex_planes3, classify_point_convex_polygon2, classify_point_line,
     classify_point_line_batch, classify_ray_triangle3_intersection,
-    classify_ray_triangle3_intersection_batch,
+    classify_ray_triangle3_intersection_batch, classify_ray_triangle3_intersection_report,
     classify_segment_triangle3_intersection, classify_segment3_intersection,
     classify_segment_triangle3_intersection_batch, classify_segment3_intersection_batch,
     classify_segment_triangle3_intersection_report, classify_sphere3_intersection,
@@ -443,10 +443,32 @@ fn predicate_invariants(input: Input) {
         report
             .validate_against_sources(&p, &q, &p, &r, &s, PredicatePolicy::default())
             .expect("segment/triangle report must replay against exact sources");
-        if report.relation.intersects() && report.relation != hyperlimit::SegmentTriangleIntersection::Coplanar {
+        if report.relation.intersects()
+            && report.relation != hyperlimit::SegmentTriangleIntersection::Coplanar
+        {
             assert!(
                 report.has_candidate_point(),
                 "non-coplanar segment/triangle contacts must retain a candidate point"
+            );
+        }
+    }
+    if let Some(report) =
+        classify_ray_triangle3_intersection_report(&p, &ray_direction, &p, &r, &s).value()
+    {
+        assert_eq!(
+            Some(report.relation),
+            ray_triangle,
+            "ray/triangle report relation must match scalar classifier"
+        );
+        report
+            .validate_against_sources(&p, &ray_direction, &p, &r, &s, PredicatePolicy::default())
+            .expect("ray/triangle report must replay against exact sources");
+        if report.relation.intersects()
+            && report.relation != hyperlimit::RayTriangleIntersection::Coplanar
+        {
+            assert!(
+                report.has_candidate_point(),
+                "non-coplanar ray/triangle contacts must retain a candidate point"
             );
         }
     }

@@ -15,13 +15,14 @@ use hyperlimit::{
     classify_homogeneous_point_plane, classify_point_convex_planes3,
     classify_point_convex_polygon2, classify_point_line, classify_point_oriented_plane,
     classify_point_plane, classify_ray_triangle3_intersection,
-    classify_segment_triangle3_intersection, classify_segment_triangle3_intersection_report,
-    classify_segment3_intersection, classify_sphere3_intersection, classify_triangle_triangle3,
-    classify_triangle3_degeneracy, compare_point_line3_distance_squared,
-    compare_point_plane_distance_squared, compare_point_segment3_distance_squared, incircle2d,
-    insphere_d, insphere3d, intersect_segment_with_oriented_plane, intersect_three_planes,
-    intersect_two_planes, orient_d, orient2d, orient3d, projected_line_parameter3,
-    projected_segment_parameter3, support_dop3_from_points,
+    classify_ray_triangle3_intersection_report, classify_segment_triangle3_intersection,
+    classify_segment_triangle3_intersection_report, classify_segment3_intersection,
+    classify_sphere3_intersection, classify_triangle_triangle3, classify_triangle3_degeneracy,
+    compare_point_line3_distance_squared, compare_point_plane_distance_squared,
+    compare_point_segment3_distance_squared, incircle2d, insphere_d, insphere3d,
+    intersect_segment_with_oriented_plane, intersect_three_planes, intersect_two_planes, orient_d,
+    orient2d, orient3d, projected_line_parameter3, projected_segment_parameter3,
+    support_dop3_from_points,
 };
 
 const BATCH: usize = 512;
@@ -505,6 +506,28 @@ fn bench_exact_rational_kernels(c: &mut Criterion) {
                     classify_segment_triangle3_intersection_report(
                         black_box(p),
                         black_box(q),
+                        black_box(a),
+                        black_box(b),
+                        black_box(c),
+                    )
+                    .value()
+                    .is_some_and(|report| {
+                        report.relation.intersects() && report.validate().is_ok()
+                    }),
+                );
+            }
+            black_box(score)
+        });
+    });
+    group.bench_function("triangle3/ray_intersection_reports", |b| {
+        b.iter(|| {
+            let mut score = 0_i64;
+            for (p, q, a, b, c) in &triangle_hits {
+                let direction = Point3::new(&q.x - &p.x, &q.y - &p.y, &q.z - &p.z);
+                score += i64::from(
+                    classify_ray_triangle3_intersection_report(
+                        black_box(p),
+                        black_box(&direction),
                         black_box(a),
                         black_box(b),
                         black_box(c),

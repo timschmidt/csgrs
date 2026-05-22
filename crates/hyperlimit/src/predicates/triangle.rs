@@ -1,5 +1,7 @@
 //! Triangle classification predicates.
 
+use core::cmp::Ordering;
+
 use crate::classify::{
     PlaneSide, RayTriangleIntersection, SegmentTriangleIntersection, TetrahedronLocation,
     Triangle3Location, TriangleLocation,
@@ -8,6 +10,7 @@ use crate::geometry::{HomogeneousLine3, Plane3, Point2, Point3, Triangle2Facts, 
 use crate::predicate::{
     Certainty, Escalation, PredicateOutcome, PredicatePolicy, PredicateUse, RefinementNeed, Sign,
 };
+use crate::predicates::order::compare_reals_with_policy;
 use crate::predicates::orient::{
     orient2d_with_policy, orient3d_report_with_policy, orient3d_with_policy,
 };
@@ -337,6 +340,150 @@ impl SegmentTriangleIntersectionReport {
     }
 }
 
+/// Structural inconsistency in a retained ray/triangle report.
+///
+/// The ray report validates the exact ray/support-plane construction before
+/// trusting the coarse triangle relation. This mirrors the constructive
+/// predicate discipline in Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997): topology-facing callers receive a
+/// replayable certificate-shaped object instead of an untestable floating
+/// intersection.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum RayTriangleValidationError {
+    /// A relation that should not construct a candidate retained one.
+    UnexpectedCandidate,
+    /// An intersecting relation did not retain the constructed candidate point.
+    MissingCandidate,
+    /// A relation that should not retain a triangle location retained one.
+    UnexpectedTriangleLocation,
+    /// A constructed candidate did not retain its point/triangle location.
+    MissingTriangleLocation,
+    /// The ray parameter ratio was missing or present for the wrong event.
+    InvalidParameterRatio,
+    /// The retained parameter was negative or could not be ordered.
+    InvalidParameter,
+    /// Retained construction facts derive a different coarse relation.
+    RelationMismatch,
+    /// Recomputing from source geometry did not reproduce this report.
+    SourceReplayMismatch,
+}
+
+/// Exact numerator and denominator for a ray/support-plane crossing.
+///
+/// For ray `r(t) = origin + t * direction` and supporting plane expression
+/// `E(x) = normal . x + offset`, the strict crossing parameter is
+/// `t = -E(origin) / (normal . direction)`. Retaining the ratio keeps the
+/// division auditable and follows Yap's exact-geometric-computation separation
+/// between certified predicates and constructed geometry.
+#[derive(Clone, Debug, PartialEq)]
+pub struct RayTriangleParameterRatio {
+    /// Numerator `-E(origin)`.
+    pub numerator: Real,
+    /// Denominator `normal . direction`.
+    pub denominator: Real,
+}
+
+/// Report-bearing ray/triangle intersection classification.
+///
+/// The coarse [`RayTriangleIntersection`] relation remains available for cheap
+/// callers. This report retains the exact ray/plane parameter, constructed
+/// candidate point, and point/triangle replay location when a single candidate
+/// exists. The decomposition is the ray analogue of the Moller (1997) and
+/// Guigue-Devillers (2003) triangle-intersection style: first certify the
+/// supporting-plane event, then replay containment with exact predicates.
+#[derive(Clone, Debug, PartialEq)]
+pub struct RayTriangleIntersectionReport {
+    /// Coarse ray/triangle relation.
+    pub relation: RayTriangleIntersection,
+    /// Certified side of the ray origin relative to the triangle's supporting
+    /// plane.
+    pub origin_side: Option<PlaneSide>,
+    /// Certified sign of `normal . direction`.
+    pub direction_sign: Option<Sign>,
+    /// Exact ray parameter for retained candidate-point events.
+    pub parameter: Option<Real>,
+    /// Exact numerator/denominator for strict support-plane crossings.
+    pub parameter_ratio: Option<RayTriangleParameterRatio>,
+    /// Exact candidate point for origin-on-plane or strict crossing events.
+    pub point: Option<Point3>,
+    /// Location of [`Self::point`] relative to the closed triangle.
+    pub triangle_location: Option<Triangle3Location>,
+    /// Predicate certificates used to classify the ray origin against the
+    /// supporting plane.
+    pub predicates: Vec<PredicateUse>,
+}
+
+impl RayTriangleIntersectionReport {
+    /// Validate retained construction and classification facts.
+    pub fn validate(&self) -> Result<(), RayTriangleValidationError> {
+        match (self.point.is_some(), self.parameter.is_some()) {
+            (true, false) => return Err(RayTriangleValidationError::InvalidParameter),
+            (false, true) => return Err(RayTriangleValidationError::UnexpectedCandidate),
+            _ => {}
+        }
+
+        if let Some(parameter) = self.parameter.as_ref() {
+            assert_ray_parameter_nonnegative(parameter)?;
+        }
+
+        match (self.parameter_ratio.as_ref(), self.parameter.as_ref()) {
+            (Some(ratio), Some(parameter)) => {
+                validate_ray_parameter_ratio(ratio, parameter)?;
+                if self.origin_side == Some(PlaneSide::On)
+                    || self.direction_sign == Some(Sign::Zero)
+                {
+                    return Err(RayTriangleValidationError::InvalidParameterRatio);
+                }
+            }
+            (Some(_), None) => return Err(RayTriangleValidationError::InvalidParameterRatio),
+            (None, Some(parameter)) => {
+                validate_ray_origin_parameter(self.origin_side, parameter)?;
+            }
+            (None, None) => {}
+        }
+
+        let expected = relation_from_ray_report_facts(self)?;
+        if expected == self.relation {
+            Ok(())
+        } else {
+            Err(RayTriangleValidationError::RelationMismatch)
+        }
+    }
+
+    /// Replay this report against source ray and triangle geometry.
+    pub fn validate_against_sources(
+        &self,
+        origin: &Point3,
+        direction: &Point3,
+        a: &Point3,
+        b: &Point3,
+        c: &Point3,
+        policy: PredicatePolicy,
+    ) -> Result<(), RayTriangleValidationError> {
+        self.validate()?;
+        match classify_ray_triangle3_intersection_report_with_policy(
+            origin, direction, a, b, c, policy,
+        ) {
+            PredicateOutcome::Decided { value, .. } if &value == self => Ok(()),
+            _ => Err(RayTriangleValidationError::SourceReplayMismatch),
+        }
+    }
+
+    /// Return whether this report retained a constructed candidate point.
+    pub fn has_candidate_point(&self) -> bool {
+        self.point.is_some()
+    }
+
+    /// Return whether every retained predicate route produced an
+    /// exact-preserving proof.
+    pub fn all_proof_producing(&self) -> bool {
+        self.predicates
+            .iter()
+            .copied()
+            .all(PredicateUse::is_proof_producing)
+    }
+}
+
 /// Classify `point` relative to triangle `abc`.
 pub fn classify_point_triangle(
     a: &Point2,
@@ -660,6 +807,159 @@ pub fn classify_ray_triangle3_intersection(
     )
 }
 
+/// Classify a 3D ray against a triangle and retain exact construction
+/// evidence.
+pub fn classify_ray_triangle3_intersection_report(
+    origin: &Point3,
+    direction: &Point3,
+    a: &Point3,
+    b: &Point3,
+    c: &Point3,
+) -> PredicateOutcome<RayTriangleIntersectionReport> {
+    classify_ray_triangle3_intersection_report_with_policy(
+        origin,
+        direction,
+        a,
+        b,
+        c,
+        PredicatePolicy::default(),
+    )
+}
+
+/// Policy-controlled report-bearing variant of
+/// [`classify_ray_triangle3_intersection`].
+///
+/// The ray first certifies the origin side and the sign of
+/// `normal . direction` against the triangle's supporting plane. A candidate is
+/// retained only when the origin lies on the plane or the ray parameter
+/// `-E(origin) / (normal . direction)` is certified by sign logic to be
+/// nonnegative. The retained ratio and point/triangle replay embody Yap's
+/// report-before-topology rule, while keeping the classic
+/// ray-plane-then-triangle-containment decomposition explicit.
+pub fn classify_ray_triangle3_intersection_report_with_policy(
+    origin: &Point3,
+    direction: &Point3,
+    a: &Point3,
+    b: &Point3,
+    c: &Point3,
+    policy: PredicatePolicy,
+) -> PredicateOutcome<RayTriangleIntersectionReport> {
+    crate::trace_dispatch!("hyperlimit", "ray_triangle3_report", "ray-plane-replay");
+    let plane = triangle_support_plane(a, b, c);
+    let origin_report = orient3d_report_with_policy(a, b, c, origin, policy);
+    if let PredicateOutcome::Unknown { needed, stage } = origin_report.outcome {
+        return PredicateOutcome::unknown(needed, stage);
+    }
+    let origin_expression = plane_expression_at(&plane, origin);
+    let origin_sign = match sign_for_ray_triangle(&origin_expression, policy) {
+        PredicateOutcome::Decided { value, .. } => value,
+        PredicateOutcome::Unknown { needed, stage } => {
+            return PredicateOutcome::unknown(needed, stage);
+        }
+    };
+    let direction_expression = dot_point3(&plane.normal, direction);
+    let direction_sign = match sign_for_ray_triangle(&direction_expression, policy) {
+        PredicateOutcome::Decided { value, .. } => value,
+        PredicateOutcome::Unknown { needed, stage } => {
+            return PredicateOutcome::unknown(needed, stage);
+        }
+    };
+    let origin_side = Some(PlaneSide::from(origin_sign));
+    let predicates = vec![PredicateUse::from_certificate(origin_report.certificate)];
+
+    if direction_sign == Sign::Zero {
+        let relation = if origin_sign == Sign::Zero {
+            RayTriangleIntersection::Coplanar
+        } else {
+            RayTriangleIntersection::Disjoint
+        };
+        return PredicateOutcome::decided(
+            RayTriangleIntersectionReport {
+                relation,
+                origin_side,
+                direction_sign: Some(direction_sign),
+                parameter: None,
+                parameter_ratio: None,
+                point: None,
+                triangle_location: None,
+                predicates,
+            },
+            Certainty::Exact,
+            Escalation::Exact,
+        );
+    }
+
+    if origin_sign != Sign::Zero && origin_sign == direction_sign {
+        return PredicateOutcome::decided(
+            RayTriangleIntersectionReport {
+                relation: RayTriangleIntersection::Disjoint,
+                origin_side,
+                direction_sign: Some(direction_sign),
+                parameter: None,
+                parameter_ratio: None,
+                point: None,
+                triangle_location: None,
+                predicates,
+            },
+            Certainty::Exact,
+            Escalation::Exact,
+        );
+    }
+
+    if origin_sign == Sign::Zero {
+        return match classify_point_triangle3_with_policy(a, b, c, origin, policy) {
+            PredicateOutcome::Decided { value, .. } => {
+                let relation = relation_from_ray_origin_triangle_point(value);
+                PredicateOutcome::decided(
+                    RayTriangleIntersectionReport {
+                        relation,
+                        origin_side,
+                        direction_sign: Some(direction_sign),
+                        parameter: Some(Real::from(0)),
+                        parameter_ratio: None,
+                        point: Some(origin.clone()),
+                        triangle_location: Some(value),
+                        predicates,
+                    },
+                    Certainty::Exact,
+                    Escalation::Exact,
+                )
+            }
+            PredicateOutcome::Unknown { needed, stage } => PredicateOutcome::unknown(needed, stage),
+        };
+    }
+
+    let numerator = neg_real(&origin_expression);
+    let parameter = match &numerator / &direction_expression {
+        Ok(parameter) => parameter,
+        Err(_) => return PredicateOutcome::unknown(RefinementNeed::Unsupported, Escalation::Exact),
+    };
+    let intersection = ray_point_at(origin, direction, &parameter);
+    match classify_point_triangle3_with_policy(a, b, c, &intersection, policy) {
+        PredicateOutcome::Decided { value, .. } => {
+            let relation = relation_from_constructed_ray_triangle_point(value);
+            PredicateOutcome::decided(
+                RayTriangleIntersectionReport {
+                    relation,
+                    origin_side,
+                    direction_sign: Some(direction_sign),
+                    parameter: Some(parameter),
+                    parameter_ratio: Some(RayTriangleParameterRatio {
+                        numerator,
+                        denominator: direction_expression,
+                    }),
+                    point: Some(intersection),
+                    triangle_location: Some(value),
+                    predicates,
+                },
+                Certainty::Exact,
+                Escalation::Exact,
+            )
+        }
+        PredicateOutcome::Unknown { needed, stage } => PredicateOutcome::unknown(needed, stage),
+    }
+}
+
 /// Classify the intersection of a 3D ray with triangle `abc` using an explicit
 /// predicate policy.
 ///
@@ -676,100 +976,14 @@ pub fn classify_ray_triangle3_intersection_with_policy(
     c: &Point3,
     policy: PredicatePolicy,
 ) -> PredicateOutcome<RayTriangleIntersection> {
-    let plane = triangle_support_plane(a, b, c);
-    let origin_expression = plane_expression_at(&plane, origin);
-    let direction_expression = dot_point3(&plane.normal, direction);
-    let origin_sign = match sign_for_ray_triangle(&origin_expression, policy) {
-        PredicateOutcome::Decided { value, .. } => value,
-        PredicateOutcome::Unknown { needed, stage } => {
-            return PredicateOutcome::unknown(needed, stage);
-        }
-    };
-    let direction_sign = match sign_for_ray_triangle(&direction_expression, policy) {
-        PredicateOutcome::Decided { value, .. } => value,
-        PredicateOutcome::Unknown { needed, stage } => {
-            return PredicateOutcome::unknown(needed, stage);
-        }
-    };
-
-    if direction_sign == Sign::Zero {
-        if origin_sign == Sign::Zero {
-            return PredicateOutcome::decided(
-                RayTriangleIntersection::Coplanar,
-                Certainty::Exact,
-                Escalation::Exact,
-            );
-        }
-        return PredicateOutcome::decided(
-            RayTriangleIntersection::Disjoint,
-            Certainty::Exact,
-            Escalation::Exact,
-        );
-    }
-    if origin_sign != Sign::Zero && origin_sign == direction_sign {
-        return PredicateOutcome::decided(
-            RayTriangleIntersection::Disjoint,
-            Certainty::Exact,
-            Escalation::Exact,
-        );
-    }
-
-    if origin_sign == Sign::Zero {
-        return match classify_point_triangle3_with_policy(a, b, c, origin, policy) {
-            PredicateOutcome::Decided {
-                value,
-                certainty,
-                stage,
-            } => {
-                let relation = match value {
-                    Triangle3Location::Inside
-                    | Triangle3Location::OnEdge
-                    | Triangle3Location::OnVertex => RayTriangleIntersection::BoundaryTouch,
-                    Triangle3Location::Outside
-                    | Triangle3Location::OffPlane
-                    | Triangle3Location::Degenerate => RayTriangleIntersection::Disjoint,
-                };
-                PredicateOutcome::decided(relation, certainty, stage)
-            }
-            PredicateOutcome::Unknown { needed, stage } => PredicateOutcome::unknown(needed, stage),
-        };
-    }
-
-    let numerator = neg_real(&origin_expression);
-    let t = (&numerator / &direction_expression)
-        .map_err(|_| ())
-        .map(|parameter| {
-            Point3::new(
-                add_ref(&origin.x, &mul_ref(&direction.x, &parameter)),
-                add_ref(&origin.y, &mul_ref(&direction.y, &parameter)),
-                add_ref(&origin.z, &mul_ref(&direction.z, &parameter)),
-            )
-        });
-    match t {
-        Ok(intersection) => {
-            match classify_point_triangle3_with_policy(a, b, c, &intersection, policy) {
-                PredicateOutcome::Decided {
-                    value,
-                    certainty,
-                    stage,
-                } => {
-                    let relation = match value {
-                        Triangle3Location::Inside => RayTriangleIntersection::Proper,
-                        Triangle3Location::OnEdge | Triangle3Location::OnVertex => {
-                            RayTriangleIntersection::BoundaryTouch
-                        }
-                        Triangle3Location::Outside
-                        | Triangle3Location::OffPlane
-                        | Triangle3Location::Degenerate => RayTriangleIntersection::Disjoint,
-                    };
-                    PredicateOutcome::decided(relation, certainty, stage)
-                }
-                PredicateOutcome::Unknown { needed, stage } => {
-                    PredicateOutcome::unknown(needed, stage)
-                }
-            }
-        }
-        Err(_) => PredicateOutcome::unknown(RefinementNeed::Unsupported, Escalation::Undecided),
+    match classify_ray_triangle3_intersection_report_with_policy(origin, direction, a, b, c, policy)
+    {
+        PredicateOutcome::Decided {
+            value,
+            certainty,
+            stage,
+        } => PredicateOutcome::decided(value.relation, certainty, stage),
+        PredicateOutcome::Unknown { needed, stage } => PredicateOutcome::unknown(needed, stage),
     }
 }
 
@@ -1253,6 +1467,142 @@ fn relation_from_constructed_segment_triangle_point(
         ) => SegmentTriangleIntersection::BoundaryTouch,
         _ => SegmentTriangleIntersection::Disjoint,
     }
+}
+
+fn relation_from_ray_report_facts(
+    report: &RayTriangleIntersectionReport,
+) -> Result<RayTriangleIntersection, RayTriangleValidationError> {
+    match report.relation {
+        RayTriangleIntersection::Coplanar => {
+            if report.point.is_some()
+                || report.parameter.is_some()
+                || report.parameter_ratio.is_some()
+            {
+                return Err(RayTriangleValidationError::UnexpectedCandidate);
+            }
+            if report.triangle_location.is_some() {
+                return Err(RayTriangleValidationError::UnexpectedTriangleLocation);
+            }
+            if report.origin_side != Some(PlaneSide::On)
+                || report.direction_sign != Some(Sign::Zero)
+            {
+                return Err(RayTriangleValidationError::RelationMismatch);
+            }
+            Ok(RayTriangleIntersection::Coplanar)
+        }
+        RayTriangleIntersection::Proper | RayTriangleIntersection::BoundaryTouch => {
+            if report.point.is_none() || report.parameter.is_none() {
+                return Err(RayTriangleValidationError::MissingCandidate);
+            }
+            let Some(location) = report.triangle_location else {
+                return Err(RayTriangleValidationError::MissingTriangleLocation);
+            };
+            Ok(if report.parameter_ratio.is_some() {
+                relation_from_constructed_ray_triangle_point(location)
+            } else {
+                relation_from_ray_origin_triangle_point(location)
+            })
+        }
+        RayTriangleIntersection::Disjoint => {
+            if report.point.is_none() {
+                if report.parameter.is_some() || report.parameter_ratio.is_some() {
+                    return Err(RayTriangleValidationError::UnexpectedCandidate);
+                }
+                if report.triangle_location.is_some() {
+                    return Err(RayTriangleValidationError::UnexpectedTriangleLocation);
+                }
+                return Ok(RayTriangleIntersection::Disjoint);
+            }
+            if report.parameter.is_none() {
+                return Err(RayTriangleValidationError::MissingCandidate);
+            }
+            let Some(location) = report.triangle_location else {
+                return Err(RayTriangleValidationError::MissingTriangleLocation);
+            };
+            Ok(if report.parameter_ratio.is_some() {
+                relation_from_constructed_ray_triangle_point(location)
+            } else {
+                relation_from_ray_origin_triangle_point(location)
+            })
+        }
+    }
+}
+
+fn relation_from_ray_origin_triangle_point(location: Triangle3Location) -> RayTriangleIntersection {
+    match location {
+        Triangle3Location::Inside | Triangle3Location::OnEdge | Triangle3Location::OnVertex => {
+            RayTriangleIntersection::BoundaryTouch
+        }
+        Triangle3Location::Outside
+        | Triangle3Location::OffPlane
+        | Triangle3Location::Degenerate => RayTriangleIntersection::Disjoint,
+    }
+}
+
+fn relation_from_constructed_ray_triangle_point(
+    location: Triangle3Location,
+) -> RayTriangleIntersection {
+    match location {
+        Triangle3Location::Inside => RayTriangleIntersection::Proper,
+        Triangle3Location::OnEdge | Triangle3Location::OnVertex => {
+            RayTriangleIntersection::BoundaryTouch
+        }
+        Triangle3Location::Outside
+        | Triangle3Location::OffPlane
+        | Triangle3Location::Degenerate => RayTriangleIntersection::Disjoint,
+    }
+}
+
+fn assert_ray_parameter_nonnegative(parameter: &Real) -> Result<(), RayTriangleValidationError> {
+    match compare_reals_with_policy(parameter, &Real::from(0), PredicatePolicy::default()) {
+        PredicateOutcome::Decided {
+            value: Ordering::Less,
+            ..
+        } => Err(RayTriangleValidationError::InvalidParameter),
+        PredicateOutcome::Decided { .. } => Ok(()),
+        PredicateOutcome::Unknown { .. } => Err(RayTriangleValidationError::InvalidParameter),
+    }
+}
+
+fn validate_ray_parameter_ratio(
+    ratio: &RayTriangleParameterRatio,
+    parameter: &Real,
+) -> Result<(), RayTriangleValidationError> {
+    let quotient = (&ratio.numerator / &ratio.denominator)
+        .map_err(|_| RayTriangleValidationError::InvalidParameterRatio)?;
+    match compare_reals_with_policy(&quotient, parameter, PredicatePolicy::default()) {
+        PredicateOutcome::Decided {
+            value: Ordering::Equal,
+            ..
+        } => Ok(()),
+        PredicateOutcome::Decided { .. } => Err(RayTriangleValidationError::InvalidParameterRatio),
+        PredicateOutcome::Unknown { .. } => Err(RayTriangleValidationError::InvalidParameterRatio),
+    }
+}
+
+fn validate_ray_origin_parameter(
+    origin_side: Option<PlaneSide>,
+    parameter: &Real,
+) -> Result<(), RayTriangleValidationError> {
+    if origin_side != Some(PlaneSide::On) {
+        return Err(RayTriangleValidationError::InvalidParameter);
+    }
+    match compare_reals_with_policy(parameter, &Real::from(0), PredicatePolicy::default()) {
+        PredicateOutcome::Decided {
+            value: Ordering::Equal,
+            ..
+        } => Ok(()),
+        PredicateOutcome::Decided { .. } => Err(RayTriangleValidationError::InvalidParameter),
+        PredicateOutcome::Unknown { .. } => Err(RayTriangleValidationError::InvalidParameter),
+    }
+}
+
+fn ray_point_at(origin: &Point3, direction: &Point3, parameter: &Real) -> Point3 {
+    Point3::new(
+        add_ref(&origin.x, &mul_ref(&direction.x, parameter)),
+        add_ref(&origin.y, &mul_ref(&direction.y, parameter)),
+        add_ref(&origin.z, &mul_ref(&direction.z, parameter)),
+    )
 }
 
 fn segment_triangle_sign(
@@ -1768,6 +2118,141 @@ mod tests {
             .value(),
             Some(RayTriangleIntersection::Coplanar)
         );
+    }
+
+    #[test]
+    fn ray_triangle3_report_retains_crossing_construction() {
+        let a = p3(0.0, 0.0, 0.0);
+        let b = p3(4.0, 0.0, 0.0);
+        let c = p3(0.0, 4.0, 0.0);
+        let origin = p3(1.0, 1.0, -2.0);
+        let direction = p3(0.0, 0.0, 1.0);
+        let report = classify_ray_triangle3_intersection_report(&origin, &direction, &a, &b, &c)
+            .value()
+            .expect("exact ray crossing should decide");
+
+        assert_eq!(report.relation, RayTriangleIntersection::Proper);
+        assert_eq!(report.origin_side, Some(PlaneSide::Below));
+        assert_eq!(report.direction_sign, Some(Sign::Positive));
+        assert_eq!(report.parameter, Some(Real::from(2)));
+        assert!(report.parameter_ratio.is_some());
+        assert_eq!(report.point, Some(p3(1.0, 1.0, 0.0)));
+        assert_eq!(report.triangle_location, Some(Triangle3Location::Inside));
+        assert!(report.has_candidate_point());
+        assert_eq!(report.validate(), Ok(()));
+        assert_eq!(
+            report.validate_against_sources(
+                &origin,
+                &direction,
+                &a,
+                &b,
+                &c,
+                PredicatePolicy::default()
+            ),
+            Ok(())
+        );
+    }
+
+    #[test]
+    fn ray_triangle3_report_keeps_origin_touch_and_coplanar_cases_distinct() {
+        let a = p3(0.0, 0.0, 0.0);
+        let b = p3(4.0, 0.0, 0.0);
+        let c = p3(0.0, 4.0, 0.0);
+        let origin_touch = classify_ray_triangle3_intersection_report(
+            &p3(1.0, 1.0, 0.0),
+            &p3(0.0, 0.0, 1.0),
+            &a,
+            &b,
+            &c,
+        )
+        .value()
+        .expect("origin touch should decide");
+        let coplanar = classify_ray_triangle3_intersection_report(
+            &p3(1.0, 1.0, 0.0),
+            &p3(1.0, 0.0, 0.0),
+            &a,
+            &b,
+            &c,
+        )
+        .value()
+        .expect("coplanar ray should decide");
+
+        assert_eq!(
+            origin_touch.relation,
+            RayTriangleIntersection::BoundaryTouch
+        );
+        assert_eq!(origin_touch.parameter, Some(Real::from(0)));
+        assert_eq!(origin_touch.parameter_ratio, None);
+        assert_eq!(
+            origin_touch.triangle_location,
+            Some(Triangle3Location::Inside)
+        );
+        assert_eq!(origin_touch.validate(), Ok(()));
+        assert_eq!(coplanar.relation, RayTriangleIntersection::Coplanar);
+        assert!(!coplanar.has_candidate_point());
+        assert_eq!(coplanar.triangle_location, None);
+        assert_eq!(coplanar.validate(), Ok(()));
+
+        let mut forged_origin_touch = origin_touch.clone();
+        forged_origin_touch.parameter = Some(Real::from(1));
+        assert_eq!(
+            forged_origin_touch.validate(),
+            Err(RayTriangleValidationError::InvalidParameter)
+        );
+    }
+
+    #[test]
+    fn ray_triangle3_report_validates_parallel_away_and_outside_candidates() {
+        let a = p3(0.0, 0.0, 0.0);
+        let b = p3(4.0, 0.0, 0.0);
+        let c = p3(0.0, 4.0, 0.0);
+        let wrong_direction = classify_ray_triangle3_intersection_report(
+            &p3(1.0, 1.0, 1.0),
+            &p3(0.0, 0.0, 1.0),
+            &a,
+            &b,
+            &c,
+        )
+        .value()
+        .expect("wrong-direction ray should decide");
+        let parallel_disjoint = classify_ray_triangle3_intersection_report(
+            &p3(1.0, 1.0, 1.0),
+            &p3(1.0, 0.0, 0.0),
+            &a,
+            &b,
+            &c,
+        )
+        .value()
+        .expect("parallel disjoint ray should decide");
+        let outside_candidate = classify_ray_triangle3_intersection_report(
+            &p3(5.0, 5.0, -1.0),
+            &p3(0.0, 0.0, 1.0),
+            &a,
+            &b,
+            &c,
+        )
+        .value()
+        .expect("outside crossing candidate should decide");
+
+        assert_eq!(wrong_direction.relation, RayTriangleIntersection::Disjoint);
+        assert!(!wrong_direction.has_candidate_point());
+        assert_eq!(wrong_direction.validate(), Ok(()));
+        assert_eq!(
+            parallel_disjoint.relation,
+            RayTriangleIntersection::Disjoint
+        );
+        assert!(!parallel_disjoint.has_candidate_point());
+        assert_eq!(parallel_disjoint.validate(), Ok(()));
+        assert_eq!(
+            outside_candidate.relation,
+            RayTriangleIntersection::Disjoint
+        );
+        assert!(outside_candidate.has_candidate_point());
+        assert_eq!(
+            outside_candidate.triangle_location,
+            Some(Triangle3Location::Outside)
+        );
+        assert_eq!(outside_candidate.validate(), Ok(()));
     }
 
     #[test]
