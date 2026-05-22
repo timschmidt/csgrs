@@ -4320,12 +4320,15 @@ pub fn arrange_coplanar_surface_side_cutter_difference(
 /// The accepted source shape is intentionally replayable: one exact
 /// axis-aligned rectangular left component, one or more strictly contained
 /// convex right holes, and one or more convex right cutters whose clipped
-/// material regions form a connected contact/overlap chain from the holes to
-/// one outer side. The two-component rectangular contact case uses exact
-/// interval-cell replay; non-rectangular contact, overlap, and chain cases
-/// stitch one exact simple union loop from retained convex boundary fragments
-/// before the left side is opened. This follows Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997), with the fragment
+/// material regions form one or more contact/overlap chains from holes to
+/// outer sides. When independent cutter-only side openings coexist with a
+/// cutter/hole chain, each connected removed-region group is replayed first
+/// and then the common outer boundary is opened by all groups together. The
+/// two-component rectangular contact case uses exact interval-cell replay;
+/// non-rectangular contact, overlap, and chain cases stitch exact simple union
+/// loops from retained convex boundary fragments before the left side is
+/// opened. This follows Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997), with the fragment
 /// traversal matching the retained boundary idea from Weiler and Atherton,
 /// "Hidden Surface Removal Using Polygon Area Sorting," *SIGGRAPH Computer
 /// Graphics* 11.2 (1977). Orthogonal-cell rectangular replay follows de Berg,
@@ -4418,6 +4421,13 @@ pub fn arrange_coplanar_surface_cutter_hole_contact_difference(
             &removed_candidates,
             projection,
         )
+        .or_else(|| {
+            materialize_mixed_cutter_hole_and_side_opening_difference(
+                &left_component.hull,
+                &removed_candidates,
+                projection,
+            )
+        })
     };
     let mut replay_removed_area = None;
     let mut polygon = if let Some(polygon) = multi_opening_polygon {
@@ -5087,6 +5097,71 @@ fn materialize_multi_cutter_hole_opening_difference(
         &removed_openings,
         projection,
         "coplanar multi-opening cutter-hole difference",
+    )
+}
+
+/// Materialize mixed cutter/hole and cutter-only side openings as one loop.
+///
+/// This is the no-retained-hole counterpart to
+/// [`materialize_cutter_hole_contact_component_holed_difference`]. At least
+/// one connected removed-region group must contain both a side cutter and a
+/// strict hole, so a straddling hole is consumed by exact contact topology;
+/// additional connected groups may be cutter-only side openings. Hole-only
+/// groups are rejected because they would be real holes, not side openings.
+///
+/// The promotion is intentionally narrow. Each connected group is first
+/// replayed as a simple removed loop, each removed loop must have one
+/// positive-length attachment to the convex outer boundary, and
+/// [`multi_side_opened_difference_polygon`] checks the final exact area
+/// equation. This follows Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997): the hole is omitted only when the
+/// exact retained contact graph names the removed owner, not when a sampled
+/// point happens to lie in a bay. The boundary stitching is the same retained
+/// fragment construction as Weiler and Atherton, "Hidden Surface Removal Using
+/// Polygon Area Sorting," *SIGGRAPH Computer Graphics* 11.2 (1977).
+#[cfg(feature = "exact-triangulation")]
+fn materialize_mixed_cutter_hole_and_side_opening_difference(
+    outer: &[Point3],
+    removed_regions: &[RemovedRegionCandidate],
+    projection: CoplanarProjection,
+) -> Option<Vec<Point3>> {
+    let groups = removed_region_contact_groups(removed_regions, projection)?;
+    if groups.len() < 2 {
+        return None;
+    }
+
+    let mut saw_mixed_group = false;
+    let mut removed_openings = Vec::with_capacity(groups.len());
+    for group in &groups {
+        let has_cutter = group.iter().any(|&index| removed_regions[index].is_cutter);
+        let has_hole = group.iter().any(|&index| !removed_regions[index].is_cutter);
+        if !has_cutter {
+            return None;
+        }
+        if has_hole {
+            saw_mixed_group = true;
+            removed_openings.push(materialize_removed_region_group_polygon(
+                removed_regions,
+                group,
+                projection,
+            )?);
+        } else {
+            removed_openings.push(materialize_removed_region_group_or_single_polygon(
+                removed_regions,
+                group,
+                projection,
+            )?);
+        }
+    }
+    if !saw_mixed_group {
+        return None;
+    }
+
+    multi_side_opened_difference_polygon(
+        outer,
+        &removed_openings,
+        projection,
+        "coplanar mixed cutter-hole and side-opening difference",
     )
 }
 

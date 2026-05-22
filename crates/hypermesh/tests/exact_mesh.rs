@@ -13785,6 +13785,125 @@ fn exact_coplanar_component_holed_difference_omits_holes_consumed_by_side_cutter
 
 #[cfg(feature = "exact-triangulation")]
 #[test]
+fn exact_coplanar_cutter_hole_contact_accepts_mixed_side_openings_without_retained_holes() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 20, 0, 0, 20, 20, 0, 0, 20, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let contact_chain_and_independent_opening = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            8, 8, 0, 12, 10, 0, 8, 12, 0, //
+            6, 8, 0, 8, 9, 0, 8, 11, 0, 6, 12, 0, //
+            0, 9, 0, 6, 8, 0, 6, 12, 0, 0, 11, 0, //
+            11, 3, 0, 22, 3, 0, 22, 11, 0, 13, 11, 0,
+        ],
+        &[
+            0, 1, 2, //
+            3, 4, 5, 3, 5, 6, //
+            7, 8, 9, 7, 9, 10, //
+            11, 12, 13, 11, 13, 14,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_side_cutter_difference(
+            &left,
+            &contact_chain_and_independent_opening,
+        )
+        .is_none()
+    );
+    assert!(
+        hypermesh::exact::arrange_coplanar_convex_surface_component_holed_difference(
+            &left,
+            &contact_chain_and_independent_opening,
+        )
+        .is_none()
+    );
+    let opened = hypermesh::exact::arrange_coplanar_surface_cutter_hole_contact_difference(
+        &left,
+        &contact_chain_and_independent_opening,
+    )
+    .expect("mixed consumed-hole and independent side openings should replay as one loop");
+    opened.validate().unwrap();
+    opened
+        .validate_cutter_hole_contact_difference_against_sources(
+            &left,
+            &contact_chain_and_independent_opening,
+        )
+        .unwrap();
+    assert!(
+        opened
+            .polygon
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(6))
+                && real_eq(&point.y, &ExactReal::from(8)))
+    );
+    assert!(
+        opened
+            .polygon
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(13))
+                && real_eq(&point.y, &ExactReal::from(11)))
+    );
+
+    let mut reversed = opened.clone();
+    reversed.polygon.reverse();
+    assert!(reversed.validate().is_err());
+    assert!(
+        reversed
+            .validate_cutter_hole_contact_difference_against_sources(
+                &left,
+                &contact_chain_and_independent_opening,
+            )
+            .is_err()
+    );
+
+    let preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &contact_chain_and_independent_opening,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    preflight.validate().unwrap();
+    preflight
+        .validate_against_sources(&left, &contact_chain_and_independent_opening)
+        .unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceCutterHoleContactDifference
+    );
+
+    let result = hypermesh::exact::boolean_exact(
+        &left,
+        &contact_chain_and_independent_opening,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    result
+        .validate_operation_against_sources(
+            &left,
+            &contact_chain_and_independent_opening,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::
+                CoplanarSurfaceCutterHoleContactDifference
+        }
+    );
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
 fn exact_coplanar_orthogonal_surface_cells_materialize_nonconvex_outputs() {
     let l_left = rect_surface_i64(&[(0, 0, 2, 6), (2, 0, 6, 2)]);
     let l_right = rect_surface_i64(&[(2, 2, 4, 4)]);

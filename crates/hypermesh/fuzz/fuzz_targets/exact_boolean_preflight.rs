@@ -1389,7 +1389,7 @@ fuzz_target!(|data: &[u8]| {
 
 #[cfg(feature = "exact-triangulation")]
 fn exercise_deterministic_case(selector: u8) {
-    match selector % 27 {
+    match selector % 28 {
         0 => exercise_partial_convex_union_boundary(),
         1 => exercise_face_interior_steiner_boundary(),
         2 => exercise_multi_component_coplanar_union(),
@@ -1416,6 +1416,7 @@ fn exercise_deterministic_case(selector: u8) {
         23 => exercise_multiple_side_cutter_openings_with_retained_hole(),
         24 => exercise_consumed_hole_side_cutter_openings(),
         25 => exercise_side_cutter_opening_without_holes(),
+        26 => exercise_mixed_consumed_hole_and_side_openings_without_retained_holes(),
         _ => exercise_nonrectangular_component_union_hull_coverage(),
     }
 }
@@ -2446,6 +2447,62 @@ fn exercise_consumed_hole_side_cutter_openings() {
     assert_eq!(
         straddling_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+    );
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn exercise_mixed_consumed_hole_and_side_openings_without_retained_holes() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 20, 0, 0, 20, 20, 0, 0, 20, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("mixed consumed-hole left fixture must import");
+    let right = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            8, 8, 0, 12, 10, 0, 8, 12, 0, //
+            6, 8, 0, 8, 9, 0, 8, 11, 0, 6, 12, 0, //
+            0, 9, 0, 6, 8, 0, 6, 12, 0, 0, 11, 0, //
+            11, 3, 0, 22, 3, 0, 22, 11, 0, 13, 11, 0,
+        ],
+        &[
+            0, 1, 2, //
+            3, 4, 5, 3, 5, 6, //
+            7, 8, 9, 7, 9, 10, //
+            11, 12, 13, 11, 13, 14,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("mixed consumed-hole right fixture must import");
+
+    assert!(arrange_coplanar_surface_side_cutter_difference(&left, &right).is_none());
+    assert!(arrange_coplanar_convex_surface_component_holed_difference(&left, &right).is_none());
+    let opened = arrange_coplanar_surface_cutter_hole_contact_difference(&left, &right)
+        .expect("mixed consumed-hole and side openings should replay as one loop");
+    opened.validate().unwrap();
+    opened
+        .validate_cutter_hole_contact_difference_against_sources(&left, &right)
+        .unwrap();
+    assert!(opened.polygon.iter().any(|point| {
+        point.x == hypermesh::exact::ExactReal::from(6)
+            && point.y == hypermesh::exact::ExactReal::from(8)
+    }));
+    let mut stale = opened.clone();
+    stale.polygon.reverse();
+    assert!(stale.validate().is_err());
+    assert!(
+        stale
+            .validate_cutter_hole_contact_difference_against_sources(&left, &right)
+            .is_err()
+    );
+
+    let preflight = preflight_boolean_exact(&left, &right, ExactBooleanOperation::Difference)
+        .expect("mixed consumed-hole preflight should classify cutter-hole shortcut");
+    preflight.validate().unwrap();
+    preflight.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfaceCutterHoleContactDifference
     );
 }
 
