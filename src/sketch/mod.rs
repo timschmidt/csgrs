@@ -3,7 +3,7 @@
 use crate::float_types::parry3d::bounding_volume::Aabb;
 use crate::float_types::{
     Real, hreal_cmp_f64, hreal_from_f64, hreal_mul, hreal_sign, hreal_sub, hreal_sum,
-    hreal_to_f64, hrotation_between_vectors, hunit_vector3, tolerance,
+    hreal_to_f64, hrotation_between_vectors, hunit_vector3,
 };
 
 #[cfg(feature = "mesh")]
@@ -14,7 +14,7 @@ use crate::vertex::Vertex;
 use hypercurve::{
     Aabb2 as HyperAabb2, BooleanOp, Classification, Contour2, CurvePolicy, CurveResult,
     CurveString2, FillRule, FinitePolyline2, FiniteProjectionOptions, FiniteRegionProfile2,
-    Point2, Region2, RegionPointLocation, Similarity2,
+    Point2, Region2, RegionPointLocation,
 };
 use nalgebra::{Matrix4, Point3, Vector3};
 use std::cmp::Ordering;
@@ -595,12 +595,6 @@ impl<M: Clone + Send + Sync + Debug> Profile<M> {
             return None;
         }
 
-        if let Some(similarity) = similarity_from_matrix(mat) {
-            if let Ok(region) = self.region.transform_similarity(&similarity) {
-                return Some(region);
-            }
-        }
-
         let transform_point = |point: &[Real; 2]| -> Option<[Real; 2]> {
             Some([
                 hreal_sum(&[
@@ -649,17 +643,6 @@ impl<M: Clone + Send + Sync + Debug> Profile<M> {
     }
 
     fn transformed_wires_with_matrix(&self, mat: &Matrix4<Real>) -> Vec<CurveString2> {
-        if let Some(similarity) = similarity_from_matrix(mat) {
-            let wires = self
-                .wires
-                .iter()
-                .filter_map(|wire| wire.transform_similarity(&similarity).ok())
-                .collect::<Vec<_>>();
-            if wires.len() == self.wires.len() {
-                return wires;
-            }
-        }
-
         let transform_point = |point: (Real, Real)| -> Option<[Real; 2]> {
             Some([
                 hreal_sum(&[
@@ -947,23 +930,6 @@ fn hyper_aabb_to_finite_xy_bounds(bbox: &HyperAabb2) -> Option<(Real, Real, Real
         hreal_to_f64(bbox.max_x())?,
         hreal_to_f64(bbox.max_y())?,
     ))
-}
-
-/// Build a hypercurve similarity transform from Profile's 4x4 matrix boundary.
-///
-/// `Similarity2` owns validation and native line/arc preserving transforms; the
-/// Profile layer only extracts the XY affine entries from nalgebra.
-fn similarity_from_matrix(mat: &Matrix4<Real>) -> Option<Similarity2> {
-    Similarity2::try_from_f64_affine(
-        mat[(0, 0)],
-        mat[(0, 1)],
-        mat[(1, 0)],
-        mat[(1, 1)],
-        mat[(0, 3)],
-        mat[(1, 3)],
-        tolerance(),
-    )
-    .ok()
 }
 
 fn curve_string_to_polyline(wire: &CurveString2) -> Option<Vec<(Real, Real)>> {

@@ -214,6 +214,20 @@ fn wire_offsets_build_filled_hypercurve_outlines() {
 
 #[test]
 #[cfg(feature = "offset")]
+fn wire_offsets_admit_any_exactly_positive_width() {
+    let wire = CurveString2::from_finite_point_iter([[0.0, 0.0], [4.0, 0.0]]).unwrap();
+    let sketch = Profile::from_wires(vec![wire], ());
+    let outline = sketch.offset(1.0e-12);
+
+    assert!(
+        !outline.as_region().is_empty(),
+        "Any exactly positive offset width should reach hypercurve"
+    );
+    assert!(outline.wires().is_empty());
+}
+
+#[test]
+#[cfg(feature = "offset")]
 fn straight_skeleton_result_is_native_wire_topology() {
     let skeleton = Profile::<()>::square(2.0, ()).straight_skeleton(true);
 

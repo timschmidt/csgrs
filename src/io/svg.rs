@@ -1,7 +1,7 @@
 //! SVG input and output.
 
 use crate::csg::CSG;
-use crate::float_types::{Real, hreal_f64_gt, hreal_from_f64, hreal_to_f64, tolerance};
+use crate::float_types::{Real, hreal_f64_gt, hreal_from_f64, hreal_to_f64};
 use crate::sketch::Profile;
 use hypercurve::{
     Classification, Contour2, CurvePolicy, CurveString2, FiniteProjectionOptions,
@@ -44,7 +44,7 @@ fn finite_svg_scalar(value: Real, label: &str) -> Result<Real, IoError> {
 
 fn positive_svg_scalar(value: Real, label: &str) -> Result<Real, IoError> {
     finite_svg_scalar(value, label)?;
-    if !hreal_f64_gt(value, tolerance()) {
+    if !hreal_f64_gt(value, 0.0) {
         return Err(IoError::MalformedInput(format!(
             "SVG {label} must be positive"
         )));
@@ -854,7 +854,7 @@ fn native_wire_path_data(wire: &CurveString2) -> Option<path::Data> {
             },
             Segment2::Arc(arc) => {
                 let radius = hreal_to_f64(arc.radius_squared_ref())?.sqrt();
-                if !hreal_f64_gt(radius, tolerance()) {
+                if !hreal_f64_gt(radius, 0.0) {
                     return None;
                 }
                 let end = finite_svg_point(arc.end())?;

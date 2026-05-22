@@ -18,8 +18,8 @@ use core::fmt::Debug;
 use nalgebra::Point3;
 
 use crate::float_types::{
-    Real, hreal_abs, hreal_cmp_f64, hreal_div, hreal_f64s_within_tolerance, hreal_mul,
-    hreal_sub, hxy_distance, hxy_step, hxy_unit_direction, tolerance,
+    Real, hreal_abs, hreal_cmp_f64, hreal_div, hreal_f64s_exactly_equal, hreal_mul, hreal_sub,
+    hxy_distance, hxy_step, hxy_unit_direction,
 };
 use crate::sketch::Profile;
 use hypercurve::{
@@ -429,6 +429,16 @@ pub fn pocket2d<M: Clone + Send + Sync + Debug>(
         MachineKind::Mill
     });
 
+    if !matches!(
+        hreal_cmp_f64(cfg.tool.diameter, 0.0),
+        core::cmp::Ordering::Greater
+    ) || !matches!(hreal_cmp_f64(cfg.stepdown, 0.0), core::cmp::Ordering::Greater)
+        || !matches!(hreal_cmp_f64(cfg.depth, 0.0), core::cmp::Ordering::Greater)
+        || !matches!(hreal_cmp_f64(cfg.stepover, 0.0), core::cmp::Ordering::Greater)
+    {
+        return tp;
+    }
+
     let tool_r = 0.5 * cfg.tool.diameter;
 
     #[cfg(feature = "offset")]
@@ -440,7 +450,7 @@ pub fn pocket2d<M: Clone + Send + Sync + Debug>(
     let mut z_levels: Vec<Real> = Vec::new();
     let mut z = base_z - cfg.stepdown;
     let z_bottom = base_z - cfg.depth;
-    while z > z_bottom + tolerance() {
+    while z > z_bottom {
         z_levels.push(z);
         z -= cfg.stepdown;
     }
@@ -448,7 +458,7 @@ pub fn pocket2d<M: Clone + Send + Sync + Debug>(
 
     // Concentric offsets inward with stepover until empty
     #[cfg(feature = "offset")]
-    let radial_step = cfg.stepover.max(tolerance()) * cfg.tool.diameter; // fraction * D
+    let radial_step = cfg.stepover * cfg.tool.diameter; // fraction * D
     #[cfg(not(feature = "offset"))]
     let radial_step = cfg.tool.diameter * cfg.stepover;
 
@@ -578,7 +588,7 @@ pub fn lathe_rough_from_profile<M: Clone + Send + Sync + Debug>(
     let mut samples: Vec<(Real, Real)> = Vec::new(); // (z, r)
     let mut z = z_min.min(z_max);
     let z_end = z_min.max(z_max);
-    while z <= z_end + tolerance() {
+    while z <= z_end {
         // Walk edges, find intersections with y = z, choose max x (outer radius)
         let mut xs: Vec<Real> = Vec::new();
         for w in exterior.windows(2) {
@@ -587,11 +597,11 @@ pub fn lathe_rough_from_profile<M: Clone + Send + Sync + Debug>(
             // Does segment cross the horizontal line?
             if (y1 <= z && y2 >= z) || (y2 <= z && y1 >= z) {
                 let dy = y2 - y1;
-                if hreal_f64s_within_tolerance(dy, 0.0, tolerance()) {
+                if hreal_f64s_exactly_equal(dy, 0.0) {
                     xs.push(x1.max(x2));
                 } else {
                     let t = (z - y1) / dy; // 0..1
-                    if (-1e-6..=1.0 + 1e-6).contains(&t) {
+                    if (0.0..=1.0).contains(&t) {
                         let x = x1 + t * (x2 - x1);
                         xs.push(x);
                     }
@@ -612,7 +622,7 @@ pub fn lathe_rough_from_profile<M: Clone + Send + Sync + Debug>(
         return tp;
     }
     if !matches!(
-        hreal_cmp_f64(cfg.doc_radial, tolerance()),
+        hreal_cmp_f64(cfg.doc_radial, 0.0),
         core::cmp::Ordering::Greater
     ) {
         return tp;
@@ -763,6 +773,32 @@ mod tests {
             assert!(
                 toolpath.moves.is_empty(),
                 "invalid radial depth of cut must fail before controlling lathe pass iteration"
+            );
+        }
+    }
+
+    #[test]
+    fn pocket2d_rejects_nonpositive_step_controls() {
+        let profile = Profile::rectangle(4.0, 4.0, ());
+        let feeds = Feeds::default();
+        let mut cfg = PocketCfg::default();
+
+        for (stepover, stepdown, depth, diameter) in [
+            (0.0, cfg.stepdown, cfg.depth, cfg.tool.diameter),
+            (-0.1, cfg.stepdown, cfg.depth, cfg.tool.diameter),
+            (cfg.stepover, 0.0, cfg.depth, cfg.tool.diameter),
+            (cfg.stepover, cfg.stepdown, 0.0, cfg.tool.diameter),
+            (cfg.stepover, cfg.stepdown, cfg.depth, 0.0),
+        ] {
+            cfg.stepover = stepover;
+            cfg.stepdown = stepdown;
+            cfg.depth = depth;
+            cfg.tool.diameter = diameter;
+
+            let toolpath = pocket2d(&profile, 5.0, 0.0, &cfg, &feeds, false);
+            assert!(
+                toolpath.moves.is_empty(),
+                "invalid pocket controls should fail without tolerance-sized substitution"
             );
         }
     }
