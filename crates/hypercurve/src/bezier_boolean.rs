@@ -16702,15 +16702,6 @@ impl BezierBooleanBatchHandoffReport2 {
         batch
     }
 
-    /// Builds a batch report directly from classified Bezier relations.
-    pub fn from_classified_relations(relations: &[Classification<BezierCurveRelation>]) -> Self {
-        let reports = relations
-            .iter()
-            .map(BezierBooleanHandoffReport2::from_classified_relation)
-            .collect::<Vec<_>>();
-        Self::from_handoff_reports(&reports)
-    }
-
     /// Returns true when every required point event is represented and no
     /// relation-level blocker remains.
     pub fn can_feed_split_events(&self) -> bool {

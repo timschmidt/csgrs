@@ -6179,7 +6179,11 @@ fn bezier_boolean_batch_handoff_collects_split_events_and_no_events() {
         Classification::Decided(BezierCurveRelation::LineSegmentIntersection { intersection }),
     ];
 
-    let batch = BezierBooleanBatchHandoffReport2::from_classified_relations(&relations);
+    let handoff_reports = relations
+        .iter()
+        .map(BezierBooleanHandoffReport2::from_classified_relation)
+        .collect::<Vec<_>>();
+    let batch = BezierBooleanBatchHandoffReport2::from_handoff_reports(&handoff_reports);
 
     assert_eq!(
         batch.status,
@@ -15498,7 +15502,11 @@ proptest! {
             }),
         ];
 
-        let batch = BezierBooleanBatchHandoffReport2::from_classified_relations(&relations);
+        let handoff_reports = relations
+            .iter()
+            .map(BezierBooleanHandoffReport2::from_classified_relation)
+            .collect::<Vec<_>>();
+        let batch = BezierBooleanBatchHandoffReport2::from_handoff_reports(&handoff_reports);
 
         prop_assert_eq!(batch.status, BezierBooleanBatchHandoffStatus::SplitEventsReady);
         prop_assert!(batch.can_feed_split_events());
