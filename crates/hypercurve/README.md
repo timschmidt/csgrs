@@ -96,11 +96,13 @@ graph ordering, exact area and moment contributions, length intervals, zero-erro
 line/arc and Bezier/conic primitive-fit evidence, exact Bezier area/moment
 prefix sums for repeated path-range queries, exact-parameter Bezier/conic
 split materialization, and retained branch-free Bezier/conic arrangement
-traversal. Algebraic split boundaries are carried as certified unresolved
+traversal with exact tangent-ordered successor selection for simple branch
+vertices. Algebraic split boundaries are carried as certified unresolved
 fragments until the scalar layer can materialize true algebraic root endpoints.
-Cases that need branch/overlap traversal, a more complete root solver, bounded
-higher-order fit, or offset trimming return unresolved regions, exact bisection
-or target-width isolation results, or explicit uncertainty.
+Cases that need overlap or same-tangent degeneracy traversal, a more complete
+root solver, bounded higher-order fit, or offset trimming return unresolved
+regions, exact bisection or target-width isolation results, or explicit
+uncertainty.
 
 ## Performance Model
 

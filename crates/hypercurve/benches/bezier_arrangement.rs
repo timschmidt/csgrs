@@ -43,12 +43,12 @@ fn main() -> CurveResult<()> {
     let started = Instant::now();
     let mut total = 0_usize;
     for _ in 0..iterations {
-        let traversal = decided(graph.traverse_branch_free(&policy));
+        let traversal = decided(graph.traverse_with_tangent_order(&policy));
         total += black_box(traversal.len());
     }
     let elapsed = started.elapsed();
     println!(
-        "bezier_arrangement_branch_free: {iterations} iterations in {elapsed:?} ({:?}/iter), total={total}",
+        "bezier_arrangement_tangent_order: {iterations} iterations in {elapsed:?} ({:?}/iter), total={total}",
         elapsed / iterations
     );
 

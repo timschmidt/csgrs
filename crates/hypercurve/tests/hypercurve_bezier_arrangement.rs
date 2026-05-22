@@ -96,6 +96,64 @@ fn branch_vertex_is_explicit_uncertainty_not_arbitrary_successor() {
 }
 
 #[test]
+fn tangent_ordered_traversal_resolves_simple_branch_vertex() {
+    let first = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 1), p(2, 0))),
+    };
+    let upward = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Cubic(CubicBezier2::new(p(2, 0), p(3, 1), p(4, 1), p(5, 0))),
+    };
+    let straightest = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(2, 0), p(3, -1), p(4, 0))),
+    };
+    let graph = BezierArrangementGraph2::new(vec![
+        hypercurve::BezierArrangementFragment2::new(0, 0, first),
+        hypercurve::BezierArrangementFragment2::new(1, 0, upward),
+        hypercurve::BezierArrangementFragment2::new(2, 0, straightest),
+    ]);
+    let traversal = decided(graph.traverse_with_tangent_order(&policy()));
+
+    assert_eq!(traversal.len(), 2);
+    assert_eq!(traversal.chains()[0].fragment_indices(), &[0, 2]);
+    assert_eq!(traversal.chains()[1].fragment_indices(), &[1]);
+}
+
+#[test]
+fn tangent_ordered_traversal_rejects_equal_outgoing_tangents() {
+    let first = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0))),
+    };
+    let first_out = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(2, 0), p(3, 1), p(4, 0))),
+    };
+    let second_out = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(2, 0), p(4, 2), p(5, 0))),
+    };
+    let graph = BezierArrangementGraph2::new(vec![
+        hypercurve::BezierArrangementFragment2::new(0, 0, first),
+        hypercurve::BezierArrangementFragment2::new(1, 0, first_out),
+        hypercurve::BezierArrangementFragment2::new(2, 0, second_out),
+    ]);
+
+    assert_eq!(
+        graph.traverse_with_tangent_order(&policy()),
+        Classification::Uncertain(UncertaintyReason::Boundary)
+    );
+}
+
+#[test]
 fn algebraic_split_boundary_blocks_graph_traversal() {
     let curve = QuadraticBezier2::new(p(0, 0), p(2, 4), p(4, 0));
     let split = decided(
