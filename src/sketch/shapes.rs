@@ -3,9 +3,9 @@
 use crate::csg::CSG;
 use crate::float_types::{
     FRAC_PI_2, PI, Real, TAU, hangle_sin_cos, hdegrees_to_radians, hreal_abs, hreal_affine,
-    hreal_atan, hreal_clamp_f64, hreal_cmp_f64, hreal_div, hreal_f64s_within_tolerance,
+    hreal_atan, hreal_clamp_f64, hreal_cmp_f64, hreal_div, hreal_f64s_exactly_equal,
     hreal_from_f64, hreal_mul, hreal_pow, hreal_sqrt, hreal_sub, hreal_sum, hreal_tan,
-    hxy_lerp, tolerance,
+    hxy_lerp,
 };
 use crate::sketch::Profile;
 use hypercurve::{Contour2, CurveString2, LineSeg2, Point2, Segment2};
@@ -114,8 +114,14 @@ fn hprofile_scalar_gt(lhs: Real, rhs: Real) -> bool {
     matches!(hreal_cmp_f64(lhs, rhs), Ordering::Greater)
 }
 
-fn hprofile_scalar_gt_tolerance(value: Real) -> bool {
-    hprofile_scalar_gt(value, tolerance())
+/// Accept any finite, strictly positive profile scalar exactly.
+///
+/// Hyperreal-backed geometry no longer treats small nonzero dimensions as
+/// degenerate. Keeping admission predicates exact follows Yap's exact
+/// geometric computation model (<https://doi.org/10.1016/0925-7721(95)00040-2>)
+/// and avoids reintroducing a floating tolerance into `Profile` construction.
+fn hprofile_scalar_positive(value: Real) -> bool {
+    hprofile_scalar_gt(value, 0.0)
 }
 
 impl<M: Clone + Debug + Send + Sync> Profile<M> {
@@ -509,8 +515,8 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     // todo: center on focus of the arc
     pub fn teardrop(width: Real, length: Real, segments: usize, metadata: M) -> Profile<M> {
         if segments < 2
-            || !hprofile_scalar_gt_tolerance(width)
-            || !hprofile_scalar_gt_tolerance(length)
+            || !hprofile_scalar_positive(width)
+            || !hprofile_scalar_positive(length)
             || !finite_profile_scalars(&[width, length])
         {
             return Profile::empty(metadata);
@@ -611,8 +617,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
             Ordering::Greater => half_height,
             Ordering::Less | Ordering::Equal => radius,
         };
-        if corner_segments == 0 || !matches!(hreal_cmp_f64(r, tolerance()), Ordering::Greater)
-        {
+        if corner_segments == 0 || !hprofile_scalar_positive(r) {
             return Profile::rectangle(width, height, metadata);
         }
         // We'll approximate each 90° corner with `corner_segments` arcs
@@ -736,7 +741,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     ) -> Profile<M> {
         if sides < 3
             || circle_segments < 6
-            || !hprofile_scalar_gt_tolerance(diameter)
+            || !hprofile_scalar_positive(diameter)
             || !finite_profile_scalar(diameter)
         {
             return Profile::empty(metadata);
@@ -1091,8 +1096,8 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         let is_closed = {
             let first = pts[0];
             let last = pts[segments];
-            hreal_f64s_within_tolerance(first[0], last[0], tolerance())
-                && hreal_f64s_within_tolerance(first[1], last[1], tolerance())
+            hreal_f64s_exactly_equal(first[0], last[0])
+                && hreal_f64s_exactly_equal(first[1], last[1])
         };
 
         if is_closed {
@@ -1156,13 +1161,13 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
             }
             let denom1 = hreal_sub(knot[i + p], knot[i])?;
             let denom2 = hreal_sub(knot[i + p + 1], knot[i + 1])?;
-            let term1 = if hreal_f64s_within_tolerance(denom1, 0.0, tolerance()) {
+            let term1 = if hreal_f64s_exactly_equal(denom1, 0.0) {
                 0.0
             } else {
                 let numerator = hreal_sub(u, knot[i])?;
                 hreal_mul(hreal_div(numerator, denom1)?, basis(i, p - 1, u, knot)?)?
             };
-            let term2 = if hreal_f64s_within_tolerance(denom2, 0.0, tolerance()) {
+            let term2 = if hreal_f64s_exactly_equal(denom2, 0.0) {
                 0.0
             } else {
                 let numerator = hreal_sub(knot[i + p + 1], u)?;
@@ -1211,8 +1216,8 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
 
         let first = *pts.first().unwrap();
         let last = *pts.last().unwrap();
-        let closed = hreal_f64s_within_tolerance(first[0], last[0], tolerance())
-            && hreal_f64s_within_tolerance(first[1], last[1], tolerance());
+        let closed = hreal_f64s_exactly_equal(first[0], last[0])
+            && hreal_f64s_exactly_equal(first[1], last[1]);
         if !closed {
             return CurveString2::from_finite_point_iter(pts)
                 .map(|wire| Profile::from_wire(wire, metadata.clone()))
@@ -1349,7 +1354,11 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         segments: usize,
         metadata: M,
     ) -> Self {
-        if outer_r <= inner_r + tolerance() || segments < 6 {
+        if segments < 6
+            || !finite_profile_scalars(&[outer_r, inner_r, offset])
+            || !hprofile_scalar_gt(outer_r, inner_r)
+            || !hprofile_scalar_positive(inner_r)
+        {
             return Profile::empty(metadata);
         }
 
@@ -1381,7 +1390,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     ) -> Profile<M> {
         if teeth < 4
             || segments_per_flank < 2
-            || !hprofile_scalar_gt_tolerance(module)
+            || !hprofile_scalar_positive(module)
             || !finite_profile_scalars(&[module, pressure_angle_deg, clearance, backlash])
         {
             return Profile::empty(metadata);
@@ -1447,10 +1456,10 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
             base_radius,
             tooth_thickness_at_pitch,
             half_tooth_angle,
-        ]) || !hprofile_scalar_gt_tolerance(pitch_radius)
-            || !hprofile_scalar_gt_tolerance(base_radius)
+        ]) || !hprofile_scalar_positive(pitch_radius)
+            || !hprofile_scalar_positive(base_radius)
             || !hprofile_scalar_gt(outer_radius, base_radius)
-            || !hprofile_scalar_gt_tolerance(tooth_thickness_at_pitch)
+            || !hprofile_scalar_positive(tooth_thickness_at_pitch)
         {
             return Profile::empty(metadata);
         }
@@ -1586,7 +1595,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         if teeth < 3
             || segments_per_flank < 2
             || !finite_profile_scalars(&[module, clearance])
-            || !matches!(hreal_cmp_f64(module, tolerance()), Ordering::Greater)
+            || !hprofile_scalar_positive(module)
         {
             return Profile::empty(metadata);
         }
@@ -1614,10 +1623,10 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         let Some(raw_root_radius) = hreal_sub(pitch_radius, dedendum) else {
             return Profile::empty(metadata);
         };
-        let root_radius = match hreal_cmp_f64(raw_root_radius, tolerance()) {
-            Ordering::Less | Ordering::Equal => tolerance(),
-            Ordering::Greater => raw_root_radius,
-        };
+        if !hprofile_scalar_positive(raw_root_radius) {
+            return Profile::empty(metadata);
+        }
+        let root_radius = raw_root_radius;
 
         // Angular pitch between tooth centres.
         let Some(ang_pitch) = hreal_div(TAU, z) else {
@@ -1636,9 +1645,9 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
             root_radius,
             ang_pitch,
             half_tooth_angle,
-        ]) || !hprofile_scalar_gt_tolerance(pitch_radius)
+        ]) || !hprofile_scalar_positive(pitch_radius)
             || !hprofile_scalar_gt(outer_radius, pitch_radius)
-            || !hprofile_scalar_gt_tolerance(half_tooth_angle)
+            || !hprofile_scalar_positive(half_tooth_angle)
         {
             return Profile::empty(metadata);
         }
@@ -1784,7 +1793,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     ) -> Profile<M> {
         if num_teeth < 1
             || !finite_profile_scalars(&[module_, pressure_angle_deg, clearance, backlash])
-            || !matches!(hreal_cmp_f64(module_, tolerance()), Ordering::Greater)
+            || !hprofile_scalar_positive(module_)
         {
             return Profile::empty(metadata);
         }
@@ -1823,10 +1832,8 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
 
         if !finite_profile_scalars(&[
             p, addendum, dedendum, tip_y, root_y, t, half_t, tan_alpha,
-        ]) || !matches!(
-            hreal_abs(tan_alpha).map(|value| hreal_cmp_f64(value, tolerance())),
-            Some(Ordering::Greater)
-        ) || !matches!(hreal_cmp_f64(t, tolerance()), Ordering::Greater)
+        ]) || !hreal_abs(tan_alpha).is_some_and(|value| hfinite_nonzero(value))
+            || !hprofile_scalar_positive(t)
         {
             return Profile::empty(metadata);
         }
@@ -1945,8 +1952,8 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     ) -> Profile<M> {
         if num_teeth < 1
             || segments_per_flank < 4
-            || !hprofile_scalar_gt_tolerance(module_)
-            || !hprofile_scalar_gt_tolerance(generating_radius)
+            || !hprofile_scalar_positive(module_)
+            || !hprofile_scalar_positive(generating_radius)
             || !finite_profile_scalars(&[module_, generating_radius, clearance])
         {
             return Profile::empty(metadata);
@@ -2052,7 +2059,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     ) -> Profile<M> {
         if samples < 10
             || !finite_profile_scalars(&[max_camber, camber_position, thickness, chord])
-            || !matches!(hreal_cmp_f64(chord, tolerance()), Ordering::Greater)
+            || !hprofile_scalar_positive(chord)
             || !matches!(hreal_cmp_f64(thickness, 0.0), Ordering::Greater)
         {
             return Profile::empty(metadata);
@@ -2231,14 +2238,11 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         let Some(raw_h) = hreal_sub(max_y, min_y) else {
             return Profile::empty(self.metadata.clone());
         };
-        let w = match hreal_cmp_f64(raw_w, tolerance()) {
-            Ordering::Less | Ordering::Equal => tolerance(),
-            Ordering::Greater => raw_w,
-        };
-        let h = match hreal_cmp_f64(raw_h, tolerance()) {
-            Ordering::Less | Ordering::Equal => tolerance(),
-            Ordering::Greater => raw_h,
-        };
+        if !hprofile_scalar_positive(raw_w) || !hprofile_scalar_positive(raw_h) {
+            return Profile::empty(self.metadata.clone());
+        }
+        let w = raw_w;
+        let h = raw_h;
         let Some(ox) = hreal_sum(&[min_x, padding]) else {
             return Profile::empty(self.metadata.clone());
         };
@@ -2254,14 +2258,11 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         let Some(raw_sy) = hreal_sub(h, double_padding) else {
             return Profile::empty(self.metadata.clone());
         };
-        let sx = match hreal_cmp_f64(raw_sx, tolerance()) {
-            Ordering::Less | Ordering::Equal => tolerance(),
-            Ordering::Greater => raw_sx,
-        };
-        let sy = match hreal_cmp_f64(raw_sy, tolerance()) {
-            Ordering::Less | Ordering::Equal => tolerance(),
-            Ordering::Greater => raw_sy,
-        };
+        if !hprofile_scalar_positive(raw_sx) || !hprofile_scalar_positive(raw_sy) {
+            return Profile::empty(self.metadata.clone());
+        }
+        let sx = raw_sx;
+        let sy = raw_sy;
 
         // Generate normalized Hilbert points in [0,1]^2, then scale/translate.
         let pts_norm = hilbert_points(order);
@@ -2372,13 +2373,37 @@ fn hilbert_points(order: usize) -> Vec<(Real, Real)> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::float_types::tolerance;
 
     #[test]
-    fn profile_scalar_admission_uses_hyperreal_ordering() {
-        assert!(hprofile_scalar_gt_tolerance(tolerance() * 2.0));
-        assert!(!hprofile_scalar_gt_tolerance(tolerance()));
-        assert!(!hprofile_scalar_gt_tolerance(0.0));
-        assert!(!hprofile_scalar_gt_tolerance(Real::NAN));
+    fn profile_scalar_admission_uses_exact_hyperreal_positivity() {
+        assert!(hprofile_scalar_positive(tolerance() * 0.25));
+        assert!(hprofile_scalar_positive(tolerance()));
+        assert!(hprofile_scalar_positive(tolerance() * 2.0));
+        assert!(!hprofile_scalar_positive(0.0));
+        assert!(!hprofile_scalar_positive(-tolerance()));
+        assert!(!hprofile_scalar_positive(Real::NAN));
         assert!(!hprofile_scalar_gt(1.0, Real::NAN));
+    }
+
+    #[test]
+    fn bezier_closure_uses_exact_hyperreal_endpoint_identity() {
+        let nearly_closed = Profile::<()>::bezier(
+            &[
+                [0.0, 0.0],
+                [0.25, 1.0],
+                [0.75, 1.0],
+                [tolerance() * 0.25, 0.0],
+            ],
+            8,
+            (),
+        );
+        assert_eq!(nearly_closed.material_contour_count(), 0);
+        assert_eq!(nearly_closed.wires().len(), 1);
+
+        let exactly_closed =
+            Profile::<()>::bezier(&[[0.0, 0.0], [0.25, 1.0], [0.75, 1.0], [0.0, 0.0]], 8, ());
+        assert_eq!(exactly_closed.material_contour_count(), 1);
+        assert!(exactly_closed.wires().is_empty());
     }
 }

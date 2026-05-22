@@ -785,7 +785,12 @@ fn hpositive_boundary_scalar(value: Real) -> Option<HReal> {
 /// exact-aware layer described by Yap, "Towards Exact Geometric Computation,"
 /// *Computational Geometry* 7(1-2), 1997
 /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-#[cfg(any(test, feature = "sketch", feature = "gerber-io", feature = "offset"))]
+#[cfg(any(
+    test,
+    feature = "offset",
+    feature = "gerber-io",
+    all(feature = "sketch", feature = "truetype-text")
+))]
 pub(crate) fn hpositive_boundary_scalar_squared(value: Real) -> Option<HReal> {
     let value = hpositive_boundary_scalar(value)?;
     Some(value.clone() * value)
@@ -808,9 +813,9 @@ pub(crate) fn hreal_gt_hreal(value: &HReal, threshold: &HReal) -> bool {
 #[cfg(any(
     test,
     feature = "wasm",
-    feature = "sketch",
+    feature = "offset",
     feature = "gerber-io",
-    feature = "offset"
+    all(feature = "sketch", feature = "truetype-text")
 ))]
 pub(crate) fn hreal_lt_hreal(value: &HReal, threshold: &HReal) -> bool {
     match hyperlimit::compare_reals(value, threshold).value() {
@@ -939,7 +944,12 @@ pub(crate) fn hreal_clamp_hreal(value: HReal, min: F64, max: F64) -> Option<HRea
 /// mixing f64 subtraction, absolute value, and tolerance logic in local CAD
 /// code. This follows the same Yap exact-computation boundary model cited in
 /// [`hreal_cmp_f64`].
-#[cfg(any(test, feature = "sketch", feature = "gerber-io", feature = "offset"))]
+#[cfg(any(
+    test,
+    feature = "offset",
+    feature = "gerber-io",
+    all(feature = "sketch", feature = "truetype-text")
+))]
 pub(crate) fn hreal_f64s_within_tolerance(lhs: F64, rhs: F64, tolerance: F64) -> bool {
     let Some(tolerance_squared) = hpositive_boundary_scalar_squared(tolerance) else {
         return false;
