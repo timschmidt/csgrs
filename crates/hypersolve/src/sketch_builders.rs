@@ -25,6 +25,8 @@ pub enum SketchConstraintFamily {
     Distance,
     /// Orientation relation, such as horizontal or vertical.
     Orientation,
+    /// Angle relation, such as equal unsigned angle between line pairs.
+    Angle,
     /// Symmetry relation, such as a point constrained to a midpoint.
     Symmetry,
     /// Inequality/domain range relation.
@@ -44,6 +46,38 @@ pub struct SketchConstraintBuildReport {
     pub strategy: SketchResidualStrategy,
     /// Retained high-level constraint payload.
     pub kind: SketchConstraintKind,
+}
+
+/// Angle relation builders.
+pub mod angle {
+    use super::*;
+
+    /// Add an unsigned 2D equal-angle relation between two line pairs.
+    ///
+    /// Lowering compares squared cosines:
+    /// `dot(a,b)^2*|c|^2*|d|^2 - dot(c,d)^2*|a|^2*|b|^2 == 0`.
+    /// This is the algebraic proof package for equal unsigned angles; any
+    /// oriented-angle or trigonometric proposal form should be retained
+    /// separately. The split follows Yap's "Towards Exact Geometric
+    /// Computation" (1997): exact replay, not a floating angle computation,
+    /// decides acceptance.
+    pub fn equal_angle_lines2(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+        c: SketchEntityHandle,
+        d: SketchEntityHandle,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::EqualAngleLines2 { a, b, c, d };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Angle,
+            strategy: SketchResidualStrategy::SquaredCosineAngleEquality,
+            kind,
+        }
+    }
 }
 
 /// Incidence and positional relation builders.

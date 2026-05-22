@@ -14,7 +14,9 @@
 use hyperreal::{Real, RealSign};
 
 use crate::model::{Constraint, ConstraintKind, Problem, VariableId};
-use crate::sketch_builders::{distance, incidence, objective, orientation, ranges, symmetry};
+use crate::sketch_builders::{
+    angle, distance, incidence, objective, orientation, ranges, symmetry,
+};
 use crate::symbolic::{Expr, SymbolId};
 
 /// Stable caller-facing handle for a sketch parameter.
@@ -493,6 +495,21 @@ pub enum SketchConstraintKind {
         /// Second line entity.
         b: SketchEntityHandle,
     },
+    /// Unsigned equal-angle relation between two 2D line pairs.
+    ///
+    /// Lowering compares squared cosines, which certifies ordinary equal
+    /// unsigned angles without evaluating `acos` or any primitive-float angle.
+    /// Oriented-angle branch choices remain future explicit predicate packages.
+    EqualAngleLines2 {
+        /// First line in the first angle.
+        a: SketchEntityHandle,
+        /// Second line in the first angle.
+        b: SketchEntityHandle,
+        /// First line in the second angle.
+        c: SketchEntityHandle,
+        /// Second line in the second angle.
+        d: SketchEntityHandle,
+    },
     /// 2D point-at-midpoint relation.
     ///
     /// Lowering emits exact linear coordinate equations without averaging in
@@ -644,6 +661,8 @@ pub enum SketchResidualStrategy {
     DirectionDotProduct,
     /// Exact same-orientation relation for two retained 2D directions.
     DirectionSameOrientation,
+    /// Squared-cosine equality for unsigned 2D line angles.
+    SquaredCosineAngleEquality,
     /// Linear coordinate equality for a retained midpoint relation.
     MidpointCoordinateEquality,
     /// Linear coordinate equality for retained axis symmetry.
@@ -1256,6 +1275,21 @@ impl SketchSolveProblem {
         b: SketchEntityHandle,
     ) -> SketchConstraintHandle {
         orientation::same_direction_lines2(self, name, a, b).handle
+    }
+
+    /// Add a retained unsigned 2D equal-angle relation between two line pairs.
+    ///
+    /// The lowered proof row compares squared cosines exactly, preserving the
+    /// source angle relation for diagnostics while avoiding trig in replay.
+    pub fn add_equal_angle_lines2(
+        &mut self,
+        name: impl Into<String>,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+        c: SketchEntityHandle,
+        d: SketchEntityHandle,
+    ) -> SketchConstraintHandle {
+        angle::equal_angle_lines2(self, name, a, b, c, d).handle
     }
 
     /// Add a retained 2D point-at-midpoint relation.
@@ -1924,6 +1958,31 @@ impl SketchSolveProblem {
                     SketchResidualStrategy::DirectionSameOrientation,
                     ConstraintKind::GreaterOrEqual,
                     Real::one(),
+                );
+            }
+            SketchConstraintKind::EqualAngleLines2 { a, b, c, d } => {
+                // Equal unsigned angle is certified by squared cosine equality
+                // rather than by evaluating an inverse trig function. This is
+                // Yap's exact-geometric-computation boundary applied to angle
+                // constraints; oriented branches remain explicit future work.
+                let (Some(a), Some(b), Some(c), Some(d)) = (
+                    self.line2_direction(a, constraint, rows),
+                    self.line2_direction(b, constraint, rows),
+                    self.line2_direction(c, constraint, rows),
+                    self.line2_direction(d, constraint, rows),
+                ) else {
+                    return;
+                };
+                let first_dot = direction_dot2(&a, &b);
+                let second_dot = direction_dot2(&c, &d);
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    constraint.name.clone(),
+                    first_dot.clone() * first_dot * squared_norm2(&c) * squared_norm2(&d)
+                        - second_dot.clone() * second_dot * squared_norm2(&a) * squared_norm2(&b),
+                    SketchResidualStrategy::SquaredCosineAngleEquality,
                 );
             }
             SketchConstraintKind::AtMidpoint2 { point, a, b } => {

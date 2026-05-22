@@ -689,6 +689,60 @@ proptest! {
     }
 
     #[test]
+    fn sketch_equal_angle_rows_match_generated_scaled_line_pairs(
+        ux in -6_i16..=6,
+        uy in -6_i16..=6,
+        vx in -6_i16..=6,
+        vy in -6_i16..=6,
+        u_scale in 1_i16..=4,
+        v_scale in 1_i16..=4,
+    ) {
+        prop_assume!(ux != 0 || uy != 0);
+        prop_assume!(vx != 0 || vy != 0);
+        let ux = i64::from(ux);
+        let uy = i64::from(uy);
+        let vx = i64::from(vx);
+        let vy = i64::from(vy);
+        let u_scale = i64::from(u_scale);
+        let v_scale = i64::from(v_scale);
+        let mut sketch = SketchSolveProblem::new();
+        let a0 = sketch.add_point2d("a0", Real::from(0), Real::from(0));
+        let a1 = sketch.add_point2d("a1", Real::from(ux), Real::from(uy));
+        let b0 = sketch.add_point2d("b0", Real::from(0), Real::from(0));
+        let b1 = sketch.add_point2d("b1", Real::from(vx), Real::from(vy));
+        let c0 = sketch.add_point2d("c0", Real::from(3), Real::from(-2));
+        let c1 = sketch.add_point2d(
+            "c1",
+            Real::from(3 + u_scale * ux),
+            Real::from(-2 + u_scale * uy),
+        );
+        let d0 = sketch.add_point2d("d0", Real::from(-5), Real::from(4));
+        let d1 = sketch.add_point2d(
+            "d1",
+            Real::from(-5 + v_scale * vx),
+            Real::from(4 + v_scale * vy),
+        );
+        let a = sketch.add_line_segment2("a", a0, a1);
+        let b = sketch.add_line_segment2("b", b0, b1);
+        let c = sketch.add_line_segment2("c", c0, c1);
+        let d = sketch.add_line_segment2("d", d0, d1);
+        sketch.add_equal_angle_lines2("equal angle", a, b, c, d);
+
+        let lowered = sketch.lower_to_problem();
+        let certification = certify_candidate(
+            &PreparedProblem::new(&lowered.problem),
+            &context_from_problem(&lowered.problem),
+        );
+
+        prop_assert_eq!(lowered.rows.len(), 1);
+        prop_assert_eq!(
+            lowered.rows[0].strategy,
+            Some(SketchResidualStrategy::SquaredCosineAngleEquality)
+        );
+        prop_assert!(certification.all_satisfied());
+    }
+
+    #[test]
     fn sketch_midpoint_rows_match_generated_integer_points(
         mx in -12_i16..=12,
         my in -12_i16..=12,

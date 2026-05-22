@@ -400,6 +400,34 @@ fn sketch_problem_with_line_orientation_relations(
     sketch
 }
 
+fn sketch_problem_with_equal_angle_relations(row_count: usize) -> hypersolve::SketchSolveProblem {
+    let mut sketch = hypersolve::SketchSolveProblem::new();
+    for index in 0..row_count {
+        let y = index as i64;
+        let a0 = sketch.add_point2d(format!("angle{index}.a0"), r(0), r(y));
+        let a1 = sketch.add_point2d(format!("angle{index}.a1"), r(3), r(y));
+        let b0 = sketch.add_point2d(format!("angle{index}.b0"), r(0), r(y));
+        let b1 = sketch.add_point2d(format!("angle{index}.b1"), r(3), r(y + 4));
+        let c0 = sketch.add_point2d(format!("angle{index}.c0"), r(10), r(y + 1));
+        let c1 = sketch.add_point2d(format!("angle{index}.c1"), r(16), r(y + 1));
+        let d0 = sketch.add_point2d(format!("angle{index}.d0"), r(10), r(y + 1));
+        let d1 = sketch.add_point2d(format!("angle{index}.d1"), r(16), r(y + 9));
+        let a = sketch.add_line_segment2(format!("angle{index}.a"), a0, a1);
+        let b = sketch.add_line_segment2(format!("angle{index}.b"), b0, b1);
+        let c = sketch.add_line_segment2(format!("angle{index}.c"), c0, c1);
+        let d = sketch.add_line_segment2(format!("angle{index}.d"), d0, d1);
+        hypersolve::sketch_angle_builders::equal_angle_lines2(
+            &mut sketch,
+            format!("equal angle {index}"),
+            a,
+            b,
+            c,
+            d,
+        );
+    }
+    sketch
+}
+
 fn sketch_problem_with_midpoint_relations(row_count: usize) -> hypersolve::SketchSolveProblem {
     let mut sketch = hypersolve::SketchSolveProblem::new();
     for index in 0..row_count {
@@ -615,6 +643,10 @@ fn certification(c: &mut Criterion) {
     let line_orientation_sketch = sketch_problem_with_line_orientation_relations(16);
     c.bench_function("sketch_line_orientation_lowering", |b| {
         b.iter(|| line_orientation_sketch.lower_to_problem())
+    });
+    let equal_angle_sketch = sketch_problem_with_equal_angle_relations(16);
+    c.bench_function("sketch_equal_angle_lowering", |b| {
+        b.iter(|| equal_angle_sketch.lower_to_problem())
     });
     let midpoint_sketch = sketch_problem_with_midpoint_relations(16);
     c.bench_function("sketch_midpoint_lowering", |b| {

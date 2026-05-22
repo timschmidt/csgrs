@@ -34,10 +34,10 @@ use hypersolve::{
     preflight_sketch_parameter_domains, prepare_sparse_linear_residual_system,
     regenerate_active_set_affine_candidate, replay_sketch_compatibility_fixture,
     replay_sparse_linear_residual_batch, report_lossy_adapter_only_candidate,
-    schedule_candidate_batch_predicates, sketch_compatibility_fixtures, sketch_distance_builders,
-    sketch_incidence_builders, sketch_objective_builders, sketch_orientation_builders,
-    sketch_range_builders, sketch_symmetry_builders, solve_damped_least_squares,
-    solve_direct_affine_equalities, solve_direct_affine_system,
+    schedule_candidate_batch_predicates, sketch_angle_builders, sketch_compatibility_fixtures,
+    sketch_distance_builders, sketch_incidence_builders, sketch_objective_builders,
+    sketch_orientation_builders, sketch_range_builders, sketch_symmetry_builders,
+    solve_damped_least_squares, solve_direct_affine_equalities, solve_direct_affine_system,
     solve_direct_univariate_quadratic_equalities, squared_distance_equation,
     tangent_parallel_equation, tangent_same_direction_constraint, validate_equality_substitutions,
 };
@@ -846,6 +846,100 @@ fn sketch_same_direction_relations_report_stale_and_wrong_inputs() {
         lowered.rows[1].status,
         SketchGeneratedRowStatus::WrongEntityKind {
             handle: p,
+            expected: "2D line segment"
+        }
+    );
+}
+
+#[test]
+fn sketch_equal_angle_relations_lower_to_exact_squared_cosine_rows() {
+    let mut sketch = SketchSolveProblem::new();
+    let origin = sketch.add_point2d("origin", real(0), real(0));
+    let x = sketch.add_point2d("x", real(5), real(0));
+    let diag = sketch.add_point2d("diag", real(3), real(4));
+    let other_origin = sketch.add_point2d("other origin", real(10), real(2));
+    let other_x = sketch.add_point2d("other x", real(20), real(2));
+    let other_diag = sketch.add_point2d("other diag", real(16), real(10));
+    let y = sketch.add_point2d("y", real(0), real(5));
+    let line_x = sketch.add_line_segment2("x axis", origin, x);
+    let line_diag = sketch.add_line_segment2("diag", origin, diag);
+    let line_other_x = sketch.add_line_segment2("other x", other_origin, other_x);
+    let line_other_diag = sketch.add_line_segment2("other diag", other_origin, other_diag);
+    let line_y = sketch.add_line_segment2("y", origin, y);
+    let equal_angle = sketch_angle_builders::equal_angle_lines2(
+        &mut sketch,
+        "equal angle",
+        line_x,
+        line_diag,
+        line_other_x,
+        line_other_diag,
+    );
+    sketch.add_equal_angle_lines2("violated angle", line_x, line_diag, line_x, line_y);
+
+    assert_eq!(
+        equal_angle.family,
+        hypersolve::SketchConstraintFamily::Angle
+    );
+    assert_eq!(
+        equal_angle.strategy,
+        SketchResidualStrategy::SquaredCosineAngleEquality
+    );
+
+    let lowered = sketch.lower_to_problem();
+    let certification = certify_candidate(
+        &PreparedProblem::new(&lowered.problem),
+        &context_from_problem(&lowered.problem),
+    );
+
+    assert_eq!(lowered.problem.constraints.len(), 2);
+    assert_eq!(lowered.rows.len(), 2);
+    assert!(lowered.rows.iter().all(|row| {
+        row.strategy == Some(SketchResidualStrategy::SquaredCosineAngleEquality)
+            && row.status == SketchGeneratedRowStatus::Generated
+    }));
+    assert!(matches!(
+        certification.rows[0].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[1].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
+}
+
+#[test]
+fn sketch_equal_angle_relations_report_stale_wrong_and_non_2d_inputs() {
+    let mut sketch = SketchSolveProblem::new();
+    let p = sketch.add_point2d("p", real(0), real(0));
+    let q = sketch.add_point2d("q", real(1), real(0));
+    let r = sketch.add_point2d("r", real(0), real(1));
+    let point3 = sketch.add_point3d("point3", real(0), real(0), real(1));
+    let line = sketch.add_line_segment2("line", p, q);
+    let other = sketch.add_line_segment2("other", p, r);
+    let not_2d = sketch.add_line_segment2("not 2d", p, point3);
+    sketch.add_equal_angle_lines2("missing", line, other, line, SketchEntityHandle(999));
+    sketch.add_equal_angle_lines2("wrong family", line, other, line, p);
+    sketch.add_equal_angle_lines2("not 2d", line, other, line, not_2d);
+
+    let lowered = sketch.lower_to_problem();
+
+    assert_eq!(lowered.problem.constraints.len(), 0);
+    assert_eq!(lowered.rows.len(), 3);
+    assert_eq!(
+        lowered.rows[0].status,
+        SketchGeneratedRowStatus::MissingEntity(SketchEntityHandle(999))
+    );
+    assert_eq!(
+        lowered.rows[1].status,
+        SketchGeneratedRowStatus::WrongEntityKind {
+            handle: p,
+            expected: "2D line segment"
+        }
+    );
+    assert_eq!(
+        lowered.rows[2].status,
+        SketchGeneratedRowStatus::WrongEntityKind {
+            handle: not_2d,
             expected: "2D line segment"
         }
     );
