@@ -166,6 +166,42 @@ pub struct AlgebraicRootArithmeticReport {
     pub message: Option<String>,
 }
 
+/// Status for constructing an affine image of a represented algebraic root.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum AlgebraicRootAffineTransformStatus {
+    /// The affine image was represented exactly.
+    Transformed,
+    /// The input representation failed structural validation.
+    InvalidEvidence,
+    /// The scale was exactly zero, so the image is not an invertible algebraic
+    /// coordinate transform.
+    ZeroScale,
+    /// The transformed polynomial or interval could not be validated exactly.
+    InvalidTransformedEvidence,
+    /// Exact comparisons or coefficient arithmetic did not decide.
+    Undecided,
+}
+
+/// Report for `beta = scale * alpha + offset`.
+///
+/// This is the first constructed represented-value operation for
+/// non-rational algebraic roots. It is deliberately limited to invertible
+/// affine transforms, where the defining polynomial can be changed exactly by
+/// substitution and interval reflection without a full algebraic-number field.
+#[derive(Clone, Debug, PartialEq)]
+pub struct AlgebraicRootAffineTransformReport {
+    /// Final transform status.
+    pub status: AlgebraicRootAffineTransformStatus,
+    /// Exact scale supplied by the caller.
+    pub scale: Real,
+    /// Exact offset supplied by the caller.
+    pub offset: Real,
+    /// Resulting represented root when construction succeeds.
+    pub representation: Option<AlgebraicRootRepresentation>,
+    /// Compact diagnostic reason.
+    pub message: Option<String>,
+}
+
 /// Status for evaluating a polynomial at a represented algebraic root.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum AlgebraicRootPolynomialEvaluationStatus {
@@ -669,6 +705,119 @@ pub fn arithmetic_algebraic_root_representations(
         AlgebraicRootArithmeticStatus::ComputedExactRationalWitness,
         Some(result),
         None,
+        None,
+    )
+}
+
+/// Construct the exact affine image `beta = scale * alpha + offset`.
+///
+/// If `alpha` is represented by `P(x)` of degree `n` and `scale != 0`, then
+/// `beta` is represented by `scale^n * P((y - offset) / scale)`. This keeps
+/// all coefficients exact and preserves the isolating interval by transforming
+/// endpoints, rather than sampling a midpoint. The operation follows Yap's
+/// exact-object boundary from "Towards Exact Geometric Computation" (1997):
+/// construction returns retained algebraic evidence, and later callers still
+/// use comparison/evaluation reports for certified decisions.
+pub fn transform_algebraic_root_affine(
+    root: &AlgebraicRootRepresentation,
+    scale: Real,
+    offset: Real,
+    policy: PredicatePolicy,
+) -> AlgebraicRootAffineTransformReport {
+    if !root.is_valid() {
+        return algebraic_affine_transform_report(
+            AlgebraicRootAffineTransformStatus::InvalidEvidence,
+            scale,
+            offset,
+            None,
+            Some("algebraic root representation must be valid before transformation".to_owned()),
+        );
+    }
+    let Some(scale_sign) = compare_reals_with_policy(&scale, &Real::zero(), policy).value() else {
+        return algebraic_affine_transform_report(
+            AlgebraicRootAffineTransformStatus::Undecided,
+            scale,
+            offset,
+            None,
+            Some("could not certify affine transform scale sign".to_owned()),
+        );
+    };
+    if scale_sign == Ordering::Equal {
+        return algebraic_affine_transform_report(
+            AlgebraicRootAffineTransformStatus::ZeroScale,
+            scale,
+            offset,
+            None,
+            Some("affine algebraic-root construction requires nonzero scale".to_owned()),
+        );
+    }
+    if root.polynomial_coefficients.len() <= 1
+        || root
+            .polynomial_coefficients
+            .iter()
+            .any(|coefficient| coefficient.exact_rational_ref().is_none())
+    {
+        return algebraic_affine_transform_report(
+            AlgebraicRootAffineTransformStatus::InvalidEvidence,
+            scale,
+            offset,
+            None,
+            Some(
+                "affine algebraic-root construction requires exact-rational polynomial evidence"
+                    .to_owned(),
+            ),
+        );
+    }
+    let Some(polynomial_coefficients) =
+        affine_transformed_polynomial(&root.polynomial_coefficients, &scale, &offset, policy)
+    else {
+        return algebraic_affine_transform_report(
+            AlgebraicRootAffineTransformStatus::Undecided,
+            scale,
+            offset,
+            None,
+            Some("could not construct transformed polynomial exactly".to_owned()),
+        );
+    };
+    let Some(interval) = affine_transformed_interval(&root.interval, &scale, &offset, policy)
+    else {
+        return algebraic_affine_transform_report(
+            AlgebraicRootAffineTransformStatus::Undecided,
+            scale,
+            offset,
+            None,
+            Some("could not construct transformed isolating interval exactly".to_owned()),
+        );
+    };
+    let kind = if interval.exact_root.is_some() {
+        AlgebraicRootKind::ExactRationalWitness
+    } else {
+        AlgebraicRootKind::IsolatingInterval
+    };
+    let mut representation = AlgebraicRootRepresentation {
+        constraint_index: root.constraint_index,
+        symbol: root.symbol,
+        interval_index: root.interval_index,
+        polynomial_coefficients,
+        interval,
+        kind,
+        validation: AlgebraicRootValidationReport::valid(),
+    };
+    representation.validation = validate_algebraic_root_representation(&representation, policy);
+    if !representation.is_valid() {
+        return algebraic_affine_transform_report(
+            AlgebraicRootAffineTransformStatus::InvalidTransformedEvidence,
+            scale,
+            offset,
+            Some(representation),
+            Some("transformed algebraic-root evidence did not validate".to_owned()),
+        );
+    }
+    algebraic_affine_transform_report(
+        AlgebraicRootAffineTransformStatus::Transformed,
+        scale,
+        offset,
+        Some(representation),
         None,
     )
 }
@@ -1380,6 +1529,66 @@ fn evaluate_polynomial(polynomial: &[Real], point: &Real) -> Real {
         })
 }
 
+fn affine_transformed_polynomial(
+    polynomial: &[Real],
+    scale: &Real,
+    offset: &Real,
+    policy: PredicatePolicy,
+) -> Option<Vec<Real>> {
+    let degree = polynomial.len().checked_sub(1)?;
+    let mut transformed = vec![Real::zero(); degree + 1];
+    for (power, coefficient) in polynomial.iter().enumerate() {
+        let scale_factor = real_pow_nonnegative(scale, degree - power);
+        let term_scale = coefficient.clone() * scale_factor;
+        for binomial_power in 0..=power {
+            let coefficient_index = binomial_power;
+            let binomial = Real::from(binomial_coefficient(power, binomial_power) as i64);
+            let offset_power = real_pow_nonnegative(&(-offset.clone()), power - binomial_power);
+            transformed[coefficient_index] = transformed[coefficient_index].clone()
+                + term_scale.clone() * binomial * offset_power;
+        }
+    }
+    trim_polynomial(transformed, policy)
+}
+
+fn affine_transformed_interval(
+    interval: &IsolatedRootInterval,
+    scale: &Real,
+    offset: &Real,
+    policy: PredicatePolicy,
+) -> Option<IsolatedRootInterval> {
+    let first = scale.clone() * interval.lower.clone() + offset.clone();
+    let second = scale.clone() * interval.upper.clone() + offset.clone();
+    let mut endpoints = [first, second];
+    sort_reals_exact(&mut endpoints, policy)?;
+    Some(IsolatedRootInterval {
+        lower: endpoints[0].clone(),
+        upper: endpoints[1].clone(),
+        exact_root: interval
+            .exact_root
+            .as_ref()
+            .map(|root| scale.clone() * root.clone() + offset.clone()),
+        distinct_root_count: interval.distinct_root_count,
+    })
+}
+
+fn real_pow_nonnegative(value: &Real, exponent: usize) -> Real {
+    let mut result = Real::one();
+    for _ in 0..exponent {
+        result = result * value.clone();
+    }
+    result
+}
+
+fn binomial_coefficient(n: usize, k: usize) -> u64 {
+    let k = k.min(n - k);
+    let mut result = 1_u64;
+    for i in 0..k {
+        result = result * (n - i) as u64 / (i + 1) as u64;
+    }
+    result
+}
+
 fn evaluate_polynomial_interval(
     polynomial: &[Real],
     point: &AlgebraicPolynomialValueInterval,
@@ -1565,6 +1774,22 @@ fn algebraic_arithmetic_report(
         status,
         exact_result,
         result_representation,
+        message,
+    }
+}
+
+fn algebraic_affine_transform_report(
+    status: AlgebraicRootAffineTransformStatus,
+    scale: Real,
+    offset: Real,
+    representation: Option<AlgebraicRootRepresentation>,
+    message: Option<String>,
+) -> AlgebraicRootAffineTransformReport {
+    AlgebraicRootAffineTransformReport {
+        status,
+        scale,
+        offset,
+        representation,
         message,
     }
 }
@@ -2136,6 +2361,68 @@ mod tests {
         );
     }
 
+    #[test]
+    fn algebraic_root_affine_transform_constructs_represented_values() {
+        let sqrt_two = AlgebraicRootRepresentation {
+            constraint_index: 0,
+            symbol: SymbolId(0),
+            interval_index: 0,
+            polynomial_coefficients: vec![real(-2), Real::zero(), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: real(1),
+                upper: real(2),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            kind: AlgebraicRootKind::IsolatingInterval,
+            validation: AlgebraicRootValidationReport::valid(),
+        };
+        let transformed = transform_algebraic_root_affine(
+            &sqrt_two,
+            real(2),
+            real(3),
+            PredicatePolicy::default(),
+        );
+        assert_eq!(
+            transformed.status,
+            AlgebraicRootAffineTransformStatus::Transformed
+        );
+        let representation = transformed.representation.as_ref().unwrap();
+        assert_eq!(
+            representation.polynomial_coefficients,
+            vec![Real::one(), real(-6), Real::one()]
+        );
+        assert_eq!(representation.interval.lower, real(5));
+        assert_eq!(representation.interval.upper, real(7));
+        assert_eq!(representation.kind, AlgebraicRootKind::IsolatingInterval);
+        assert!(representation.is_valid());
+
+        let reflected = transform_algebraic_root_affine(
+            &sqrt_two,
+            real(-1),
+            Real::zero(),
+            PredicatePolicy::default(),
+        );
+        assert_eq!(
+            reflected.status,
+            AlgebraicRootAffineTransformStatus::Transformed
+        );
+        let reflected = reflected.representation.as_ref().unwrap();
+        assert_eq!(reflected.interval.lower, real(-2));
+        assert_eq!(reflected.interval.upper, real(-1));
+
+        let zero_scale = transform_algebraic_root_affine(
+            &sqrt_two,
+            Real::zero(),
+            real(4),
+            PredicatePolicy::default(),
+        );
+        assert_eq!(
+            zero_scale.status,
+            AlgebraicRootAffineTransformStatus::ZeroScale
+        );
+    }
+
     proptest! {
         #[test]
         fn generated_linear_roots_become_valid_represented_intervals(root in -64_i16..=64) {
@@ -2439,6 +2726,44 @@ mod tests {
                 report.exact_value,
                 Some((real(numerator_constant + numerator_linear * root) / real(denominator)).unwrap())
             );
+        }
+
+        #[test]
+        fn generated_rational_witness_affine_transform_preserves_exact_root(
+            root in -32_i16..=32,
+            scale in (-12_i16..=12).prop_filter("nonzero affine scale", |value| *value != 0),
+            offset in -32_i16..=32,
+        ) {
+            let root = i64::from(root);
+            let scale = i64::from(scale);
+            let offset = i64::from(offset);
+            let represented = AlgebraicRootRepresentation {
+                constraint_index: 0,
+                symbol: SymbolId(0),
+                interval_index: 0,
+                polynomial_coefficients: vec![real(-root), Real::one()],
+                interval: IsolatedRootInterval {
+                    lower: real(root),
+                    upper: real(root),
+                    exact_root: Some(real(root)),
+                    distinct_root_count: 1,
+                },
+                kind: AlgebraicRootKind::ExactRationalWitness,
+                validation: AlgebraicRootValidationReport::valid(),
+            };
+
+            let report = transform_algebraic_root_affine(
+                &represented,
+                real(scale),
+                real(offset),
+                PredicatePolicy::default(),
+            );
+
+            prop_assert_eq!(report.status, AlgebraicRootAffineTransformStatus::Transformed);
+            let transformed = report.representation.as_ref().unwrap();
+            let expected = scale * root + offset;
+            prop_assert_eq!(transformed.exact_rational_witness(), Some(&real(expected)));
+            prop_assert!(transformed.is_valid());
         }
     }
 }

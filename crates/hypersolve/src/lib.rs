@@ -53,7 +53,8 @@ pub use active_set::{
 };
 pub use affine::PreparedAffineResidual;
 pub use algebraic::{
-    AlgebraicPolynomialValueInterval, AlgebraicRootArithmeticOp, AlgebraicRootArithmeticReport,
+    AlgebraicPolynomialValueInterval, AlgebraicRootAffineTransformReport,
+    AlgebraicRootAffineTransformStatus, AlgebraicRootArithmeticOp, AlgebraicRootArithmeticReport,
     AlgebraicRootArithmeticStatus, AlgebraicRootComparisonReport, AlgebraicRootComparisonStatus,
     AlgebraicRootKind, AlgebraicRootPolynomialEvaluationReport,
     AlgebraicRootPolynomialEvaluationStatus, AlgebraicRootRationalEvaluationReport,
@@ -64,7 +65,8 @@ pub use algebraic::{
     arithmetic_algebraic_root_representations, compare_algebraic_root_representations,
     compare_algebraic_root_representations_with_refinement, evaluate_polynomial_at_algebraic_root,
     evaluate_rational_expression_at_algebraic_root, represent_univariate_algebraic_roots,
-    represent_univariate_algebraic_roots_from_reports, validate_algebraic_root_representation,
+    represent_univariate_algebraic_roots_from_reports, transform_algebraic_root_affine,
+    validate_algebraic_root_representation,
 };
 pub use alpha::{
     UnivariateQuadraticAlphaReport, UnivariateQuadraticAlphaRow, UnivariateQuadraticAlphaStatus,
