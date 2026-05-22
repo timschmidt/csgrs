@@ -1,26 +1,19 @@
-//! Certified preflight checks for Bezier offset adapters.
+//! Minimal staged offset support for Bezier and rational-conic curves.
 //!
-//! Offset construction is staged deliberately: first expose exact hazards in
-//! the source curve, then let later approximation adapters decide whether they
-//! can produce a certified parallel curve, a display-only preview, or explicit
-//! unresolved topology. This follows Yap's exact-geometric-computation
-//! boundary; see Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7.1-2 (1997). The staged treatment of cusps,
-//! inflections, and trimming hazards follows Tiller and Hanson, "Offsets of
-//! Two-Dimensional Profiles" (1984), Farouki and Neff, "Analytic Properties of
-//! Plane Offset Curves" (1990), and Raph Levien, "Parallel curves of cubic
-//! Beziers" (2022).
+//! The only constructed offset primitive here is the proven line-image case.
+//! Free-form Bezier and conic offsets remain explicit unresolved candidates
+//! until analytic/fitted offset machinery can provide its own error and
+//! trimming proof.
 
 use hyperreal::{RealSign, ZeroKnowledge as ZeroStatus};
 
+use crate::classify::real_sign;
 use crate::{
     BezierCuspClassification, BezierDegree, BezierEndpoint, BezierInflectionClassification,
     BezierLineImageFitRelation, CertifiedBezierLineImageOffset2, Classification, CubicBezier2,
     CurveError, CurvePolicy, CurveResult, Point2, QuadraticBezier2, RationalQuadraticBezier2, Real,
     UncertaintyReason,
 };
-
-use crate::classify::real_sign;
 
 /// Exact source-curve hazard that must be resolved before a Bezier offset is
 /// treated as a topology product.
@@ -44,20 +37,13 @@ pub enum BezierOffsetRisk {
         /// Endpoint whose first derivative status is unknown.
         endpoint: BezierEndpoint,
     },
-    /// The source endpoints are structurally coincident, so a local offset can
-    /// require loop/contact analysis before it is used topologically.
+    /// The source endpoints are structurally coincident.
     CoincidentEndpoints,
-    /// A rational Bezier denominator can cross or touch zero on the affine
-    /// parameter interval.
+    /// A rational Bezier denominator can cross or touch zero on the affine interval.
     ProjectiveDenominatorBoundary,
 }
 
-/// Certificate emitted by Bezier offset preflight.
-///
-/// This is not an offset curve and makes no approximation claim. It is the
-/// exact source-analysis stage requested by the offset pipeline: cusp status,
-/// inflection status, endpoint-normal status, endpoint closure, and the policy
-/// used to prove those facts are retained before any candidate offset is built.
+/// Exact source analysis retained before a staged Bezier offset candidate is built.
 #[derive(Clone, Debug, PartialEq)]
 pub struct BezierOffsetPreflight2 {
     degree: BezierDegree,
@@ -70,101 +56,38 @@ pub struct BezierOffsetPreflight2 {
     construction_policy: CurvePolicy,
 }
 
-/// Result of a staged polynomial Bezier offset adapter.
-///
-/// The only certified offset primitive currently emitted is the exact
-/// line-image case. All free-form quadratic/cubic cases are reported as
-/// unresolved with their preflight certificate, so callers cannot accidentally
-/// treat a sampled parallel curve as topology. This follows Yap's explicit
-/// branch-boundary requirement and the offset pipeline staging of
-/// Tiller-Hanson (1984), Farouki-Neff (1990), and Levien (2022).
+/// Result of a staged Bezier/conic offset attempt.
 #[derive(Clone, Debug, PartialEq)]
 #[allow(clippy::large_enum_variant)]
 pub enum BezierOffsetCandidate2 {
-    /// The source Bezier was certified to be one endpoint line segment and was
-    /// offset exactly as a line primitive.
+    /// The source was certified to be one endpoint line image and offset exactly.
     ExactLineImage {
         /// Exact primitive offset of the certified endpoint line image.
         offset: CertifiedBezierLineImageOffset2,
-        /// Exact source-analysis certificate retained from the staged preflight.
+        /// Exact source analysis retained from the staged preflight.
         preflight: BezierOffsetPreflight2,
     },
     /// The source is not yet supported by a certified analytic/fitted offset.
-    ///
-    /// The payload records the exact hazards known before the unresolved
-    /// decision. A clear preflight with this variant means the curve passed the
-    /// implemented source-risk checks, but no certified non-line Bezier offset
-    /// approximant has been implemented yet.
     Unresolved {
-        /// Exact source-analysis certificate for the unresolved curve.
+        /// Exact source analysis for the unresolved curve.
         preflight: BezierOffsetPreflight2,
         /// Signed distance along the curve's left normal.
-        ///
-        /// A positive value is a left offset and a negative value is a right
-        /// offset. Keeping the sign in the certificate mirrors the primitive
-        /// line-offset representation and prevents a later adapter from
-        /// confusing a right offset with a topologically equivalent left one.
         distance: Real,
     },
 }
 
-/// Certified readiness state for a staged Bezier offset candidate.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum BezierOffsetAdapterStatus {
-    /// A true primitive offset was produced from a certified endpoint line image.
-    ExactPrimitiveLineImage,
-    /// A zero-distance request can be represented by the source curve identity.
-    ZeroDistanceIdentity,
-    /// No source-risk was detected, but a certified analytic/fitted offset
-    /// adapter is still needed before topology may consume the result.
-    ReadyForCertifiedAdapter,
-    /// Exact source preflight found risks that a later adapter must resolve.
-    BlockedByPreflightRisks,
-    /// The signed offset distance could not be classified by the current exact budget.
-    UnknownDistance,
-}
-
-/// Report describing what a staged Bezier offset candidate can safely do next.
-///
-/// This report is deliberately separate from [`BezierOffsetCandidate2`]. A
-/// candidate is the constructed output available today; this report states
-/// whether the output is already an exact primitive, is an exact zero-distance
-/// identity request, or must wait for a certified analytic/fitted adapter. The
-/// separation follows Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997): exact objects and unresolved
-/// branches are reported instead of quietly replacing topology with samples.
-/// The need to keep free-form offset fitting and trimming explicit follows
-/// Tiller and Hanson (1984), Farouki and Neff (1990), and Levien (2022).
-#[derive(Clone, Debug, PartialEq)]
-pub struct BezierOffsetAdapterReport2 {
-    /// Readiness status for this staged candidate.
-    pub status: BezierOffsetAdapterStatus,
-    /// Preflight certificate retained from source-curve analysis.
-    pub preflight: BezierOffsetPreflight2,
-    /// Signed distance along the curve's left normal.
-    pub distance: Real,
-    /// Structural zero knowledge for `distance`.
-    pub distance_status: ZeroStatus,
-    /// Exact preflight risks copied for adapter scheduling.
-    pub risks: Vec<BezierOffsetRisk>,
-    /// Whether this staged result already contains a true primitive offset.
-    pub has_exact_primitive: bool,
-    /// Whether a later non-line analytic/fitted adapter may attempt the case.
-    pub may_attempt_certified_adapter: bool,
-}
-
 impl BezierOffsetPreflight2 {
-    /// Returns the polynomial Bezier degree covered by this preflight report.
+    /// Returns the Bezier degree covered by this preflight.
     pub const fn degree(&self) -> BezierDegree {
         self.degree
     }
 
-    /// Returns the exact cusp classification used by the offset preflight.
+    /// Returns the exact cusp classification used by offset preflight.
     pub const fn cusp_classification(&self) -> &BezierCuspClassification {
         &self.cusp_classification
     }
 
-    /// Returns the exact inflection classification used by the offset preflight.
+    /// Returns the exact inflection classification used by offset preflight.
     pub const fn inflection_classification(&self) -> &BezierInflectionClassification {
         &self.inflection_classification
     }
@@ -194,23 +117,14 @@ impl BezierOffsetPreflight2 {
         self.risks.is_empty()
     }
 
-    /// Returns the policy snapshot used to prove this preflight report.
+    /// Returns the policy used to prove this preflight.
     pub const fn construction_policy(&self) -> &CurvePolicy {
         &self.construction_policy
     }
 }
 
 impl BezierOffsetCandidate2 {
-    /// Returns the unresolved preflight payload, when this candidate is not a
-    /// certified primitive offset.
-    pub const fn unresolved_preflight(&self) -> Option<&BezierOffsetPreflight2> {
-        match self {
-            Self::ExactLineImage { .. } => None,
-            Self::Unresolved { preflight, .. } => Some(preflight),
-        }
-    }
-
-    /// Returns the preflight certificate retained by any staged candidate.
+    /// Returns the preflight retained by this staged candidate.
     pub const fn preflight(&self) -> &BezierOffsetPreflight2 {
         match self {
             Self::ExactLineImage { preflight, .. } | Self::Unresolved { preflight, .. } => {
@@ -219,12 +133,19 @@ impl BezierOffsetCandidate2 {
         }
     }
 
-    /// Returns the exact primitive offset, when this staged candidate resolved
-    /// to a certified endpoint line image.
+    /// Returns the exact primitive offset, if one was constructed.
     pub const fn exact_line_image_offset(&self) -> Option<&CertifiedBezierLineImageOffset2> {
         match self {
             Self::ExactLineImage { offset, .. } => Some(offset),
             Self::Unresolved { .. } => None,
+        }
+    }
+
+    /// Returns the unresolved preflight when no primitive offset was constructed.
+    pub const fn unresolved_preflight(&self) -> Option<&BezierOffsetPreflight2> {
+        match self {
+            Self::ExactLineImage { .. } => None,
+            Self::Unresolved { preflight, .. } => Some(preflight),
         }
     }
 
@@ -235,56 +156,10 @@ impl BezierOffsetCandidate2 {
             Self::Unresolved { distance, .. } => distance,
         }
     }
-
-    /// Builds a machine-readable report for the next offset adapter stage.
-    ///
-    /// The report does not manufacture an offset curve. It only classifies the
-    /// staged candidate as an exact primitive, zero-distance identity request,
-    /// clear-but-unimplemented free-form case, risk-blocked case, or unknown
-    /// distance-sign case. This keeps the offset API aligned with Yap's
-    /// exact/unresolved boundary and avoids treating Tiller-Hanson or
-    /// Levien-style approximation proposals as topology until a later adapter
-    /// supplies certified error and trimming contracts.
-    pub fn adapter_report(&self) -> BezierOffsetAdapterReport2 {
-        let preflight = self.preflight().clone();
-        let distance = self.distance().clone();
-        let distance_status = distance.zero_status();
-        let risks = preflight.risks().to_vec();
-        let has_exact_primitive = self.exact_line_image_offset().is_some();
-        let status = match self {
-            Self::ExactLineImage { .. } => BezierOffsetAdapterStatus::ExactPrimitiveLineImage,
-            Self::Unresolved { preflight, .. } => match distance_status {
-                ZeroStatus::Zero => BezierOffsetAdapterStatus::ZeroDistanceIdentity,
-                ZeroStatus::Unknown => BezierOffsetAdapterStatus::UnknownDistance,
-                ZeroStatus::NonZero if preflight.is_clear() => {
-                    BezierOffsetAdapterStatus::ReadyForCertifiedAdapter
-                }
-                ZeroStatus::NonZero => BezierOffsetAdapterStatus::BlockedByPreflightRisks,
-            },
-        };
-        let may_attempt_certified_adapter = matches!(
-            status,
-            BezierOffsetAdapterStatus::ZeroDistanceIdentity
-                | BezierOffsetAdapterStatus::ReadyForCertifiedAdapter
-        );
-        BezierOffsetAdapterReport2 {
-            status,
-            preflight,
-            distance,
-            distance_status,
-            risks,
-            has_exact_primitive,
-            may_attempt_certified_adapter,
-        }
-    }
 }
 
 impl QuadraticBezier2 {
-    /// Runs the exact source-analysis stage for later offset adapters.
-    ///
-    /// Quadratics do not have proper inflections, but they can be degenerate,
-    /// cusped, closed at the endpoints, or have endpoint derivatives whose
-    /// normal direction is undefined. No offset approximation is produced here.
+    /// Runs exact source analysis for later offset adapters.
     pub fn offset_preflight(&self, policy: &CurvePolicy) -> Classification<BezierOffsetPreflight2> {
         let cusp_classification = match self.cusp_classification(policy) {
             Classification::Decided(classification) => classification,
@@ -306,11 +181,6 @@ impl QuadraticBezier2 {
     }
 
     /// Attempts a staged certified left offset of this quadratic Bezier.
-    ///
-    /// Exact endpoint line images are returned as true line-primitive offsets.
-    /// All other quadratic images return [`BezierOffsetCandidate2::Unresolved`]
-    /// with the preflight certificate instead of manufacturing a sampled
-    /// topology result.
     pub fn offset_left_staged(
         &self,
         distance: Real,
@@ -320,12 +190,6 @@ impl QuadraticBezier2 {
     }
 
     /// Attempts a staged certified right offset of this quadratic Bezier.
-    ///
-    /// The certificate payload stores right offsets as negative signed
-    /// left-normal distances. This keeps the exact primitive representation
-    /// aligned with [`LineSeg2`](crate::LineSeg2) offsets and preserves the
-    /// staged topology boundary described by Yap (1997), Tiller-Hanson (1984),
-    /// Farouki-Neff (1990), and Levien (2022).
     pub fn offset_right_staged(
         &self,
         distance: Real,
@@ -336,12 +200,7 @@ impl QuadraticBezier2 {
 }
 
 impl CubicBezier2 {
-    /// Runs the exact source-analysis stage for later offset adapters.
-    ///
-    /// Cubics add inflection and all-curvature-zero checks to the quadratic
-    /// hazards. Those are normal-field and trimming risks for parallel-curve
-    /// fitting, so they are reported before any Tiller-Hanson or Levien-style
-    /// offset candidate is allowed to make a topology claim.
+    /// Runs exact source analysis for later offset adapters.
     pub fn offset_preflight(&self, policy: &CurvePolicy) -> Classification<BezierOffsetPreflight2> {
         let cusp_classification = match self.cusp_classification(policy) {
             Classification::Decided(classification) => classification,
@@ -366,10 +225,6 @@ impl CubicBezier2 {
     }
 
     /// Attempts a staged certified left offset of this cubic Bezier.
-    ///
-    /// The certified exact primitive subset is identical to the quadratic
-    /// entry point: endpoint line images offset as lines, while free-form cubic
-    /// offsets remain unresolved with an exact preflight payload.
     pub fn offset_left_staged(
         &self,
         distance: Real,
@@ -379,11 +234,6 @@ impl CubicBezier2 {
     }
 
     /// Attempts a staged certified right offset of this cubic Bezier.
-    ///
-    /// Right offsets are represented as negative signed left-normal distances
-    /// in the retained certificate. Free-form cubics remain unresolved until a
-    /// later analytic/fitted offset adapter can supply a certified error and
-    /// trimming contract.
     pub fn offset_right_staged(
         &self,
         distance: Real,
@@ -394,14 +244,7 @@ impl CubicBezier2 {
 }
 
 impl RationalQuadraticBezier2 {
-    /// Runs the exact source-analysis stage for later rational-conic offset adapters.
-    ///
-    /// Same-sign nonzero homogeneous weights certify that the affine conic
-    /// denominator cannot vanish on `[0, 1]`; mixed signs are retained as an
-    /// explicit projective-boundary risk. The homogeneous denominator guard is
-    /// the rational counterpart of the polynomial cusp/inflection preflight and
-    /// follows Yap's structure-preserving EGC boundary plus Farin's rational
-    /// Bezier numerator/denominator model.
+    /// Runs exact source analysis for later rational-conic offset adapters.
     pub fn offset_preflight(&self, policy: &CurvePolicy) -> Classification<BezierOffsetPreflight2> {
         let denominator_risk =
             match weights_known_same_nonzero_sign(self.weights().as_slice(), policy) {
@@ -435,11 +278,6 @@ impl RationalQuadraticBezier2 {
     }
 
     /// Attempts a staged certified left offset of this rational quadratic conic.
-    ///
-    /// Certified endpoint line images are offset exactly as line primitives.
-    /// Free-form conics remain explicitly unresolved with their preflight
-    /// certificate until a later analytic conic-offset adapter supplies a
-    /// certified error and trimming contract.
     pub fn offset_left_staged(
         &self,
         distance: Real,
@@ -449,9 +287,6 @@ impl RationalQuadraticBezier2 {
     }
 
     /// Attempts a staged certified right offset of this rational quadratic conic.
-    ///
-    /// Right offsets use the same negative signed left-normal distance
-    /// convention as polynomial Beziers and certified flattened chord offsets.
     pub fn offset_right_staged(
         &self,
         distance: Real,

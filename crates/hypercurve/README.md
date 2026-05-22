@@ -22,7 +22,7 @@ The deployed WASM app is available at <https://timschmidt.github.io/hypercurve/>
 `hypercurve` is the 2D curved-geometry layer.
 
 - [hyperreal](https://github.com/timschmidt/hyperreal): exact scalar values for curve
-  coordinates, parameters, and certificates.
+  coordinates and parameters.
 - [hyperlimit](https://github.com/timschmidt/hyperlimit): exact predicate policy for
   sidedness, incidence, and sign decisions.
 - [hyperlattice](https://github.com/timschmidt/hyperlattice): vector and transform
@@ -33,16 +33,16 @@ The deployed WASM app is available at <https://timschmidt.github.io/hypercurve/>
   planar arrangements and triangulated face regions.
 - [hyperbrep](https://github.com/timschmidt/hyperbrep): BREP trims and planar face
   boundaries that should preserve curve evidence before tessellation.
-- [hypersdf](https://github.com/timschmidt/hypersdf): implicit-field handoffs and
+- [hypersdf](https://github.com/timschmidt/hypersdf): implicit-field consumers and
   preview extraction boundaries.
 - [hypersolve](https://github.com/timschmidt/hypersolve): Bernstein, interval, and root
-  isolation reports used by Bezier boolean and fitting readiness paths.
+  isolation support for algebraic subproblems.
 - [hyperpath](https://github.com/timschmidt/hyperpath): routing, CAM, offset, tangent,
   and swept-path carriers.
-- [hypervoxel](https://github.com/timschmidt/hypervoxel): voxel/process handoffs that
-  may consume flattened or certified region evidence.
+- [hypervoxel](https://github.com/timschmidt/hypervoxel): voxel/process consumers for
+  flattened or certified region evidence.
 - [hyperphysics](https://github.com/timschmidt/hyperphysics): physical shape and
-  support handoffs.
+  support consumers.
 - [hypercircuit](https://github.com/timschmidt/hypercircuit): circuit context for PCB
   paths and geometry-derived fixtures.
 - [hyperparts](https://github.com/timschmidt/hyperparts): part, package, and footprint
@@ -50,10 +50,9 @@ The deployed WASM app is available at <https://timschmidt.github.io/hypercurve/>
 - [hyperpack](https://github.com/timschmidt/hyperpack): exact packing and clearance
   consumers.
 - [hyperevolution](https://github.com/timschmidt/hyperevolution): proposal/search layer
-  for curve or layout candidates that still require exact replay.
-- [hyperdrc](https://github.com/timschmidt/hyperdrc): PCB readiness checks that should
-  hand curve, contour, and region evidence here instead of resolving topology with local
-  float tolerances.
+  for curve or layout candidates that still require exact validation.
+- [hyperdrc](https://github.com/timschmidt/hyperdrc): PCB checks that use native curve,
+  contour, and region objects instead of resolving topology with local float tolerances.
 
 ## Typical Curve Problems
 
@@ -64,45 +63,17 @@ the next fail; eager exact algebra can also expand before broad-phase filters el
 obvious misses.
 
 `hypercurve` stages the work. Native curve objects keep exact control structure,
-prepared views and boxes reduce candidate sets, low-degree certificates are promoted
+prepared views and boxes reduce candidate sets, low-degree exact cases are promoted
 when available, and unresolved tangent, overlap, root-isolation, trimming, or topology
-cases are reported explicitly instead of hidden behind display polylines.
+cases remain explicit uncertainty instead of being hidden behind display polylines.
 
 ## Main Types
 
 - `Point2`, `LineSeg2`, `CircularArc2`, `Segment2`, `CurveString2`, `Contour2`,
   `Region2`, and `RegionView2` are the main planar geometry objects.
 - `QuadraticBezier2`, `CubicBezier2`, `RationalQuadraticBezier2`, and their fact,
-  relation, metric, fitting, flattening, and offset reports represent polynomial and
+  relation, metric, zero-error fitting, staged offset, and flattening APIs represent polynomial and
   rational curve work.
-- `BezierOffsetAdapterReport2` classifies staged offset outputs as exact primitive,
-  zero-distance identity, ready for a certified adapter, or blocked by preflight risks.
-- `BezierFitReadinessReport2` classifies certified flattened polylines as exact point
-  fits, exact line fits, or future higher-order fitting candidates while retaining
-  flattening and simplification certificates.
-- `BezierFitSourceReport2` gathers exact polynomial Bezier source facts for future
-  higher-order fitting: control facts, monotone spans, cusp/inflection status,
-  endpoint tangents, moments, length bounds, and primitive-image fit attempts.
-- `BezierFitSourceBatchReport2` aggregates those source reports over path ranges so
-  future simplifiers can inspect exact primitive counts, higher-order-fit counts,
-  length intervals, and moment totals without resampling.
-- `BezierFitSourcePrefixSums2` stores prefix aggregates for those source reports so
-  half-open path ranges can be queried by exact subtraction instead of rewalking
-  sources.
-- `BezierIntersectionRegionFacts`, `BezierIntersectionRegionSummary`,
-  `BezierIntersectionRegionRefinement`, and
-  `BezierIntersectionRegionIsolationReport` classify retained Bezier curve/curve
-  parameter regions and run bounded or target-width exact bisection with explicit stop
-  reasons. `BezierIntersectionRegionIsolationCertificate` compacts a retained frontier
-  into auditable shape counts and certified maximum parameter widths for later solvers.
-- `BezierBooleanHandoffReport2` converts Bezier curve/curve relation results into a
-  boolean-topology readiness report: split-ready parameterized events, point witnesses
-  that still need parameter recovery, overlap obligations, retained-region isolation
-  blockers, unresolved cases, or primitive predicate uncertainty.
-- `BezierBooleanRootIsolationReplayReport2`,
-  `BezierBooleanRootIsolationConstructionReport2`, and split-plan reports consume
-  `hypersolve` isolating interval or Bernstein subdivision evidence without turning
-  algebraic parameters into approximate topology.
 - `Aabb2`, prepared line/arc/curve-string/contour/region views, and segment/region fact
   types preserve repeated-query structure.
 - Boolean, event, fragment, split, and boundary-loop types describe staged region
@@ -116,19 +87,17 @@ cases are reported explicitly instead of hidden behind display polylines.
 
 Native geometry uses `Real` coordinates. Primitive floats appear only in named finite
 projection, reconstruction, test, benchmark, rendering, or IO helpers. Bulge imports,
-flattened polylines, display offsets, and finite projections carry certificates or
-adapter status so callers can tell whether they are using topology evidence or display
-geometry.
+flattened polylines, display offsets, and finite projections use explicit types so
+callers can tell whether they are using topology evidence or display geometry.
 
-The crate promotes exact low-degree certificates where it can: line/arc relations,
-selected Bezier roots, retained intersection-region shape/refinement/isolation facts and
-frontier certificates, Bezier boolean handoff reports, monotone graph ordering, exact
-area and moment contributions, length intervals, zero-error simplification, zero-error line/point fitting,
-fitting-readiness reports, exact source-fact, source-batch, and source-prefix reports
-for higher-order fitting, and exact staged-offset readiness reports. Cases that need a
-more complete root solver, bounded higher-order fit, or offset trimmer return unresolved
-regions, exact bisection or target-width isolation reports, boolean handoff blockers,
-adapter-readiness reports, or explicit uncertainty.
+The crate promotes exact low-degree evidence where it can: line/arc relations, selected
+Bezier roots, retained intersection-region shape/refinement/isolation facts, monotone
+graph ordering, exact area and moment contributions, length intervals, zero-error
+line/arc and Bezier/conic primitive-fit evidence, and exact Bezier area/moment
+prefix sums for repeated path-range queries. Cases that
+need a more complete root solver, bounded higher-order fit, or offset trimmer return
+unresolved regions, exact bisection or target-width isolation results, or explicit
+uncertainty.
 
 ## Performance Model
 
@@ -151,17 +120,16 @@ Implemented today:
   bounding-box APIs;
 - polynomial quadratic/cubic Bezier and rational quadratic/conic objects with structural
   facts, evaluation, subdivision, certified bounds, monotone spans, graph-order
-  predicates, retained intersection-region summaries/refinement/isolation reports, and
-  exact low-degree relation fast paths;
+  predicates, retained intersection-region refinement/isolation helpers, and exact
+  low-degree relation fast paths;
 - intersection surfaces for line/line, line/arc, arc/arc, Bezier contact cases, curve
   strings, contours, regions, and prepared repeated-query views;
-- signed area, area moment, length interval, flattening, simplification, fitting, and
-  display/certified polyline offset adapters;
+- signed area, area moment, length interval, flattening, and zero-error primitive
+  fitting for Bezier/conic line and point images;
+- staged Bezier/conic offset candidates that construct exact line-image offsets and
+  leave free-form offsets unresolved until certified trimming/fitting exists;
 - primitive line/arc offsets, checked offsets, cap styles, region event/fragment
   extraction, boolean-boundary assembly, and conservative unresolved states.
-- Bezier boolean handoff, root-isolation replay, Bernstein-subdivision replay,
-  split-plan audit, and materialization-readiness reports that keep algebraic events
-  separate from constructed topology.
 
 Known limits: shared-boundary overlap beyond certified fast paths, full Bezier/rational
 root isolation, NURBS, and offset self-intersection trimming remain future work.
@@ -208,8 +176,8 @@ fn main() -> hypercurve::CurveResult<()> {
 }
 ```
 
-Use native curve objects for Bezier facts, contours, regions, fitting, and later
-handoffs:
+Use native curve objects for Bezier facts, contours, regions, and downstream
+geometry work:
 
 ```rust,ignore
 use hypercurve::{
@@ -241,12 +209,10 @@ Useful local checks:
 RUSTDOCFLAGS=-Dwarnings cargo doc --no-deps
 cargo run --manifest-path examples/hypercurve_ui/Cargo.toml
 cargo check --manifest-path examples/hypercurve_ui/Cargo.toml --target wasm32-unknown-unknown
-cargo bench --bench boolean_pipeline
 cargo bench --bench containment
 cargo bench --bench intersection
 cargo bench --bench offset
 cargo bench --bench reconstruction
-cargo bench --bench bezier_facts
 ```
 
 ## References

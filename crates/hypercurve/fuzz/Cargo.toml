@@ -1,6 +1,6 @@
 [package]
 name = "hypercurve-fuzz"
-version = "0.1.0"
+version = "0.0.0"
 publish = false
 edition = "2024"
 
@@ -8,66 +8,12 @@ edition = "2024"
 cargo-fuzz = true
 
 [dependencies]
-# Hyper sibling dependency switch: keep both local path and crates.io lines; do not remove either.
-# Development mode uses the local path line. For release, comment it and uncomment the crates.io line.
-hypercurve = { path = ".." }
-# hypercurve = "0.3.0"
-hypersolve = { path = "../../hypersolve", default-features = false }
-# hypersolve = "0.3.0"
 libfuzzer-sys = "0.4"
+hypercurve = { path = ".." }
 
 [[bin]]
-name = "hypercurve_segment_intersections"
-path = "fuzz_targets/hypercurve_segment_intersections.rs"
-test = false
-doc = false
-bench = false
-
-[[bin]]
-name = "hypercurve_contour_region"
-path = "fuzz_targets/hypercurve_contour_region.rs"
-test = false
-doc = false
-bench = false
-
-[[bin]]
-name = "hypercurve_region_boolean"
-path = "fuzz_targets/hypercurve_region_boolean.rs"
-test = false
-doc = false
-bench = false
-
-[[bin]]
-name = "hypercurve_events_fragments"
-path = "fuzz_targets/hypercurve_events_fragments.rs"
-test = false
-doc = false
-bench = false
-
-[[bin]]
-name = "hypercurve_bboxes_curve_strings_splits"
-path = "fuzz_targets/hypercurve_bboxes_curve_strings_splits.rs"
-test = false
-doc = false
-bench = false
-
-[[bin]]
-name = "hypercurve_offsets"
-path = "fuzz_targets/hypercurve_offsets.rs"
-test = false
-doc = false
-bench = false
-
-[[bin]]
-name = "hypercurve_adversarial_polygons"
-path = "fuzz_targets/hypercurve_adversarial_polygons.rs"
-test = false
-doc = false
-bench = false
-
-[[bin]]
-name = "hypercurve_full_api"
-path = "fuzz_targets/hypercurve_full_api.rs"
+name = "bezier_algebraic_parameter"
+path = "fuzz_targets/bezier_algebraic_parameter.rs"
 test = false
 doc = false
 bench = false

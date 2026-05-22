@@ -7,22 +7,17 @@
 //! Geometric Predicates" (*Discrete & Computational Geometry* 18(3), 305-363,
 //! 1997).
 
-mod area;
 mod bbox;
 mod bezier;
-mod bezier_boolean;
 mod bezier_fit;
-mod bezier_fit_source;
 mod bezier_flatten;
 mod bezier_metric;
 mod bezier_moment;
 mod bezier_offset;
-mod bezier_region;
+mod bezier_parameter;
 mod bezier_topology;
 mod boolean;
 mod boolean_boundary;
-mod boolean_report;
-mod boolean_traversal_report;
 mod bulge;
 mod classify;
 mod contour;
@@ -52,111 +47,22 @@ mod transform;
 #[cfg(feature = "triangulation")]
 mod triangulation;
 
-pub use area::{
-    ContourAreaUnsupportedReason, ContourAreaUnsupportedSegment2, ContourSignedAreaReport2,
-    RegionAreaContourRole, RegionAreaUnsupportedContour2, RegionFilledAreaReport2,
-};
 pub use bbox::Aabb2;
 pub use bezier::{BezierEndpoint, CubicBezier2, EndpointTangent2, QuadraticBezier2};
-pub use bezier_boolean::{
-    BezierBooleanAlgebraicParameterAuditReport2, BezierBooleanAlgebraicParameterAuditStatus,
-    BezierBooleanAlgebraicParameterCarrierReport2, BezierBooleanAlgebraicParameterCarrierStatus,
-    BezierBooleanAlgebraicParameterEvent2, BezierBooleanAlgebraicParameterHandoffReport2,
-    BezierBooleanAlgebraicParameterHandoffStatus,
-    BezierBooleanAlgebraicParameterOrderingComparison2,
-    BezierBooleanAlgebraicParameterOrderingReport2, BezierBooleanAlgebraicParameterOrderingStatus,
-    BezierBooleanAlgebraicParameterReadinessReport2,
-    BezierBooleanAlgebraicParameterReadinessStatus, BezierBooleanAlgebraicParameterRole,
-    BezierBooleanAlgebraicSplitBridgeReport2, BezierBooleanAlgebraicSplitBridgeStatus,
-    BezierBooleanAlgebraicSplitSpan2, BezierBooleanAlgebraicSplitSpanBoundary2,
-    BezierBooleanAlgebraicSplitSpanReport2, BezierBooleanAlgebraicSplitSpanStatus,
-    BezierBooleanArrangementReadinessReport2, BezierBooleanArrangementReadinessStatus,
-    BezierBooleanAssemblyReadinessReport2, BezierBooleanAssemblyReadinessStatus,
-    BezierBooleanBatchHandoffReport2, BezierBooleanBatchHandoffStatus,
-    BezierBooleanConstructionReadinessReport2, BezierBooleanConstructionReadinessStatus,
-    BezierBooleanCubicFragmentReport2, BezierBooleanEmissionPlanReport2,
-    BezierBooleanEmissionPlanStatus, BezierBooleanFragmentConstructionStatus,
-    BezierBooleanFragmentEndpointTangents2, BezierBooleanFragmentLocatorInput2,
-    BezierBooleanFragmentLocatorInputReport2, BezierBooleanFragmentLocatorInputStatus,
-    BezierBooleanFragmentOwnershipLocation, BezierBooleanHandoffReport2,
-    BezierBooleanHandoffStatus, BezierBooleanLoopAssemblyPlanReport2,
-    BezierBooleanLoopAssemblyPlanStatus, BezierBooleanLoopClosureReport2,
-    BezierBooleanLoopClosureStatus, BezierBooleanLoopContainmentCertificationReport2,
-    BezierBooleanLoopContainmentCertificationStatus, BezierBooleanLoopContainmentFact2,
-    BezierBooleanLoopContainmentFactReport2, BezierBooleanLoopContainmentFactStatus,
-    BezierBooleanLoopContainmentQuery2, BezierBooleanLoopContainmentQueryReport2,
-    BezierBooleanLoopContainmentQueryResult, BezierBooleanLoopContainmentQueryResult2,
-    BezierBooleanLoopContainmentQueryResultReport2, BezierBooleanLoopContainmentQueryResultStatus,
-    BezierBooleanLoopContainmentQueryStatus, BezierBooleanLoopGraphFactReport2,
-    BezierBooleanLoopGraphFactStatus, BezierBooleanLoopGraphFacts2,
-    BezierBooleanLoopGraphMultiCycleWalkReport2, BezierBooleanLoopGraphMultiCycleWalkStatus,
-    BezierBooleanLoopGraphSuccessorFact2, BezierBooleanLoopGraphSuccessorWalkReport2,
-    BezierBooleanLoopGraphSuccessorWalkStatus, BezierBooleanLoopGraphTraversalReport2,
-    BezierBooleanLoopGraphTraversalStatus, BezierBooleanLoopGraphWalkReport2,
-    BezierBooleanLoopGraphWalkStatus, BezierBooleanLoopLocatorInput2,
-    BezierBooleanLoopLocatorInputReport2, BezierBooleanLoopLocatorInputStatus,
-    BezierBooleanLoopNestingDepthFact2, BezierBooleanLoopNestingDepthFactReport2,
-    BezierBooleanLoopNestingDepthFactStatus, BezierBooleanLoopNestingRoleReport2,
-    BezierBooleanLoopNestingRoleStatus, BezierBooleanLoopRoleAssignmentReport2,
-    BezierBooleanLoopRoleAssignmentStatus, BezierBooleanMaterializationAuditReport2,
-    BezierBooleanMaterializationAuditStatus, BezierBooleanMaterializedComponent2,
-    BezierBooleanMaterializedRegionReport2, BezierBooleanMaterializedRegionStatus,
-    BezierBooleanOperandOwnershipLocationReport2, BezierBooleanOperandOwnershipLocationStatus,
-    BezierBooleanOutputLoop2, BezierBooleanOutputLoopReport2, BezierBooleanOutputLoopRole,
-    BezierBooleanOutputLoopStatus, BezierBooleanOverlapBridgeFact2,
-    BezierBooleanOverlapBridgeReport2, BezierBooleanOverlapBridgeStatus,
-    BezierBooleanOverlapEvent2, BezierBooleanOverlapResolutionReport2,
-    BezierBooleanOverlapResolutionStatus, BezierBooleanOwnedTraversalStep2,
-    BezierBooleanOwnershipClassificationReport2, BezierBooleanOwnershipClassificationStatus,
-    BezierBooleanOwnershipFact2, BezierBooleanOwnershipFactReport2,
-    BezierBooleanOwnershipFactStatus, BezierBooleanPathSchedulerReport2,
-    BezierBooleanPathSchedulerStatus, BezierBooleanPointEvent2,
-    BezierBooleanQuadraticFragmentReport2, BezierBooleanRationalQuadraticFragmentReport2,
-    BezierBooleanRegionAssemblyReport2, BezierBooleanRegionAssemblyStatus,
-    BezierBooleanResolvedOverlapEvent2, BezierBooleanResultReport2, BezierBooleanResultStatus,
-    BezierBooleanRootCountPrefilterReport2, BezierBooleanRootCountPrefilterStatus,
-    BezierBooleanRootIsolationHandoffReport2, BezierBooleanRootIsolationHandoffStatus,
-    BezierBooleanRootIsolationReplayReport2, BezierBooleanRootIsolationReplayStatus,
-    BezierBooleanSplitInsertionReport2, BezierBooleanSplitInsertionStatus,
-    BezierBooleanSplitParameterLocation, BezierBooleanSplitPlanAuditReport2,
-    BezierBooleanSplitPlanAuditStatus, BezierBooleanSplitPlanReport2, BezierBooleanSplitPlanStatus,
-    BezierBooleanTangentTurnPolicy, BezierBooleanTraversalOperand,
-    BezierBooleanTraversalPreconditionReport2, BezierBooleanTraversalPreconditionStatus,
-    BezierBooleanTraversalScheduleReport2, BezierBooleanTraversalScheduleStatus,
-    BezierBooleanTraversalStep2, BezierBooleanUniformOwnershipFactReport2,
-    BezierBooleanUniformOwnershipFactStatus, BezierPathRangeBatchReport2,
-    BezierPathRangeBatchStatus, BezierPathRangeOrderReport2, BezierPathRangeOrderStatus,
-};
 pub use bezier_fit::{
-    BezierFitBoundKind, BezierFitCertificate, BezierFitErrorMetric, BezierFitReadinessReport2,
-    BezierFitReadinessStatus, BezierLineFitRelation, BezierLineImageFitRelation,
-    BezierPointFitRelation, BezierPointImageFitRelation, CertifiedBezierLineFit2,
-    CertifiedBezierLineImage2, CertifiedBezierLineImageOffset2, CertifiedBezierLineOffset2,
-    CertifiedBezierPointFit2, CertifiedBezierPointImage2,
-};
-pub use bezier_fit_source::{
-    BezierFitSourceBatchReport2, BezierFitSourcePrefixSums2, BezierFitSourceReport2,
+    BezierFitBoundKind, BezierFitCertificate, BezierFitErrorMetric, BezierLineFitRelation,
+    BezierLineImageFitRelation, BezierPointFitRelation, BezierPointImageFitRelation,
+    CertifiedBezierLineFit2, CertifiedBezierLineImage2, CertifiedBezierLineImageOffset2,
+    CertifiedBezierLineOffset2, CertifiedBezierPointFit2, CertifiedBezierPointImage2,
 };
 pub use bezier_flatten::{
-    BezierFlatteningCertificate, BezierFlatteningOptions, BezierSimplificationBoundKind,
-    BezierSimplificationCertificate, BezierSimplificationErrorMetric, CertifiedBezierPolyline2,
-    CertifiedBezierPolylineOffset2, DisplayBezierOffsetPolyline2,
+    BezierFlatteningCertificate, BezierFlatteningOptions, CertifiedBezierPolyline2,
 };
 pub use bezier_metric::{BezierArcLengthParameterRegion2, BezierLengthBounds2};
 pub use bezier_moment::{BezierAreaMomentPrefixSums2, BezierAreaMoments2, BezierAreaPrefixSums2};
-pub use bezier_offset::{
-    BezierOffsetAdapterReport2, BezierOffsetAdapterStatus, BezierOffsetCandidate2,
-    BezierOffsetPreflight2, BezierOffsetRisk,
-};
-pub use bezier_region::{
-    BezierIntersectionRegionFacts, BezierIntersectionRegionIsolationBudget,
-    BezierIntersectionRegionIsolationCertificate, BezierIntersectionRegionIsolationReport,
-    BezierIntersectionRegionIsolationStopReason, BezierIntersectionRegionRefinement,
-    BezierIntersectionRegionRefinementAction, BezierIntersectionRegionShape,
-    BezierIntersectionRegionSummary, BezierRegionWidthStatus, bezier_intersection_region_facts,
-    certify_bezier_intersection_region_isolation, isolate_bezier_intersection_regions,
-    isolate_bezier_intersection_regions_until_width, refine_bezier_intersection_region,
-    refine_bezier_intersection_regions, summarize_bezier_intersection_regions,
+pub use bezier_offset::{BezierOffsetCandidate2, BezierOffsetPreflight2, BezierOffsetRisk};
+pub use bezier_parameter::{
+    BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval, BezierParameterPolynomial,
 };
 pub use bezier_topology::{
     Axis2, BezierCurveIntersectionPoint, BezierCurveIntersectionRegion, BezierCurveRelation,
@@ -170,14 +76,6 @@ pub use boolean::{
 pub use boolean_boundary::{
     BooleanBoundaryChain, BooleanBoundaryChainSet, BooleanBoundaryFragmentSet, BooleanBoundaryLoop,
     BooleanBoundaryLoopSet, DirectedBooleanFragment,
-};
-pub use boolean_report::{
-    BooleanBoundaryAuditStatus, BooleanBoundaryContourAuditReport2, BooleanBoundaryContourReport2,
-    BooleanBoundaryLoopAuditReport2, BooleanBoundaryLoopReport2, BooleanRegionAuditReport2,
-    BooleanRegionAuditStatus, BooleanRegionPipelineReport2, BooleanRegionReport2,
-};
-pub use boolean_traversal_report::{
-    BooleanBoundaryTraversalReport2, BooleanBoundaryTraversalStatus,
 };
 pub use bulge::BulgeVertex2;
 pub use classify::{Classification, LineSide, UncertaintyReason};
@@ -193,9 +91,8 @@ pub use facts::{
     RationalQuadraticBezier2Facts, RegionFacts, Segment2Facts, SegmentKind, SegmentKindCounts,
 };
 pub use finite_projection::{
-    FinitePolyline2, FiniteProjectionCertificate, FiniteProjectionOptions, FiniteRegionProfile2,
-    FiniteRegionProjection2, FiniteRegionProjectionCertificate, finite_polyline_vertex_centroid,
-    finite_ring_signed_area,
+    FinitePolyline2, FiniteProjectionOptions, FiniteRegionProfile2, FiniteRegionProjection2,
+    finite_polyline_vertex_centroid, finite_ring_signed_area,
 };
 pub use fragment::{ContourFragment, ContourFragmentSet};
 pub use intersect::{
@@ -212,8 +109,7 @@ pub use prepared::{
 };
 pub use rational_bezier::{RationalQuadraticBezier2, RationalQuadraticConicKind};
 pub use reconstruct::{
-    FiniteContourImport2, FiniteCurveStringImport2, FiniteImportCertificate,
-    PolylineReconstructionOptions,
+    FiniteContourImport2, FiniteCurveStringImport2, PolylineReconstructionOptions,
 };
 pub use region::{Region2, RegionContourProfile, RegionPointLocation, RegionView2};
 pub use region_events::{
@@ -221,9 +117,6 @@ pub use region_events::{
     RegionSide,
 };
 pub use region_fragments::{RegionContourFragments, RegionFragmentSet};
-pub use region_nesting::{
-    BoundaryContourNestingAuditReport2, BoundaryContourNestingReport2, BoundaryContourNestingStatus,
-};
 pub use segment::{CircularArc2, LineSeg2, Segment2};
 pub use split::{ContourSplitMap, ContourSplitMarkers, SegmentSplitMarker, SegmentSplitPoint};
 pub use transform::Similarity2;

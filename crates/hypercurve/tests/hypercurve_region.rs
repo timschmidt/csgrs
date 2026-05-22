@@ -1,7 +1,7 @@
 use hypercurve::{
-    BulgeVertex2, CircularArc2, Classification, Contour2, ContourAreaUnsupportedReason, CurveError,
-    CurvePolicy, CurveString2, FiniteProjectionOptions, Real, Region2, RegionAreaContourRole,
-    RegionPointLocation, RegionView2, Segment2, UncertaintyReason, finite_ring_signed_area,
+    BulgeVertex2, CircularArc2, Classification, Contour2, CurveError, CurvePolicy, CurveString2,
+    FiniteProjectionOptions, Real, Region2, RegionPointLocation, RegionView2, Segment2,
+    UncertaintyReason, finite_ring_signed_area,
 };
 use proptest::prelude::*;
 
@@ -225,16 +225,6 @@ fn contour_projection_closes_finite_ring_without_owning_topology() {
 
     assert!(ring.is_closed());
     assert_eq!(ring.arc_chord_error(), 0.01);
-    assert_eq!(ring.certificate().source_segment_count(), 4);
-    assert_eq!(ring.certificate().line_segment_count(), 4);
-    assert_eq!(ring.certificate().arc_segment_count(), 0);
-    assert_eq!(
-        ring.certificate().emitted_point_count(),
-        ring.points().len()
-    );
-    assert_eq!(ring.certificate().emitted_arc_sample_count(), 0);
-    assert_eq!(ring.certificate().arc_chord_error(), 0.01);
-    assert!(ring.certificate().is_closed());
     assert_eq!(ring.points().first(), ring.points().last());
     assert_eq!(ring.points().len(), 5);
     assert_eq!(ring.signed_ring_area(), 100.0);
@@ -259,15 +249,7 @@ fn curve_string_projection_subdivides_arc_and_keeps_exact_endpoints() {
 
     assert!(!polyline.is_closed());
     assert!(polyline.points().len() > 3);
-    assert_eq!(polyline.certificate().source_segment_count(), 2);
-    assert_eq!(polyline.certificate().line_segment_count(), 1);
-    assert_eq!(polyline.certificate().arc_segment_count(), 1);
-    assert_eq!(
-        polyline.certificate().emitted_point_count(),
-        polyline.points().len()
-    );
-    assert!(polyline.certificate().emitted_arc_sample_count() >= 2);
-    assert!(!polyline.certificate().is_closed());
+    assert_eq!(polyline.arc_chord_error(), 0.05);
     assert_eq!(polyline.points().first(), Some(&[1.0, 0.0]));
     assert_eq!(polyline.points().last(), Some(&[-2.0, 0.0]));
 }
@@ -278,18 +260,12 @@ fn finite_line_string_import_promotes_boundary_f64_to_native_lines() {
         CurveString2::from_finite_line_string(&[[0.0, 0.0], [2.0, 0.0], [2.0, 1.0]]).unwrap();
     let iter_curve =
         CurveString2::from_finite_point_iter([[0.0, 0.0], [2.0, 0.0], [2.0, 1.0]]).unwrap();
-    let report =
+    let import =
         CurveString2::import_finite_line_string(&[[0.0, 0.0], [2.0, 0.0], [2.0, 1.0]]).unwrap();
 
     assert_eq!(iter_curve, curve);
     assert_eq!(curve.len(), 2);
-    assert_eq!(report.curve_string(), &curve);
-    assert_eq!(report.certificate().input_point_count(), 3);
-    assert_eq!(report.certificate().retained_point_count(), 3);
-    assert_eq!(report.certificate().skipped_duplicate_edge_count(), 0);
-    assert_eq!(report.certificate().output_segment_count(), 2);
-    assert!(!report.certificate().repeated_closing_point());
-    assert!(!report.certificate().is_closed());
+    assert_eq!(import.curve_string(), &curve);
     assert!(
         curve
             .segments()
@@ -303,15 +279,11 @@ fn finite_line_string_import_promotes_boundary_f64_to_native_lines() {
 }
 
 #[test]
-fn finite_line_string_import_reports_skipped_duplicate_edges() {
-    let report =
+fn finite_line_string_import_skips_duplicate_edges() {
+    let import =
         CurveString2::import_finite_line_string(&[[0.0, 0.0], [0.0, 0.0], [2.0, 0.0]]).unwrap();
 
-    assert_eq!(report.curve_string().len(), 1);
-    assert_eq!(report.certificate().input_point_count(), 3);
-    assert_eq!(report.certificate().retained_point_count(), 3);
-    assert_eq!(report.certificate().skipped_duplicate_edge_count(), 1);
-    assert_eq!(report.certificate().output_segment_count(), 1);
+    assert_eq!(import.curve_string().len(), 1);
 }
 
 #[test]
@@ -319,18 +291,12 @@ fn finite_ring_import_accepts_repeated_closing_point_without_sample_ownership() 
     let contour =
         Contour2::from_finite_ring(&[[0.0, 0.0], [4.0, 0.0], [4.0, 3.0], [0.0, 3.0], [0.0, 0.0]])
             .unwrap();
-    let report =
+    let import =
         Contour2::import_finite_ring(&[[0.0, 0.0], [4.0, 0.0], [4.0, 3.0], [0.0, 3.0], [0.0, 0.0]])
             .unwrap();
 
     assert_eq!(contour.len(), 4);
-    assert_eq!(report.contour(), &contour);
-    assert_eq!(report.certificate().input_point_count(), 5);
-    assert_eq!(report.certificate().retained_point_count(), 4);
-    assert_eq!(report.certificate().skipped_duplicate_edge_count(), 0);
-    assert_eq!(report.certificate().output_segment_count(), 4);
-    assert!(report.certificate().repeated_closing_point());
-    assert!(report.certificate().is_closed());
+    assert_eq!(import.contour(), &contour);
     assert_eq!(
         contour.classify_point(&p(2, 1), &policy()),
         Classification::Decided(hypercurve::ContourPointLocation::Inside)
@@ -338,7 +304,7 @@ fn finite_ring_import_accepts_repeated_closing_point_without_sample_ownership() 
 }
 
 #[test]
-fn region_projection_preserves_material_hole_bins_and_aggregates_certificate() {
+fn region_projection_preserves_material_hole_bins() {
     let outer = rectangle(0, 0, 10, 10);
     let island = rectangle(4, 4, 6, 6);
     let hole = rectangle(2, 2, 8, 8);
@@ -356,20 +322,12 @@ fn region_projection_preserves_material_hole_bins_and_aggregates_certificate() {
             .chain(projection.hole_rings())
             .all(|ring| ring.is_closed())
     );
-    assert_eq!(projection.certificate().material_ring_count(), 2);
-    assert_eq!(projection.certificate().hole_ring_count(), 1);
-    assert_eq!(projection.certificate().source_segment_count(), 12);
-    assert_eq!(projection.certificate().line_segment_count(), 12);
-    assert_eq!(projection.certificate().arc_segment_count(), 0);
-    assert_eq!(projection.certificate().emitted_point_count(), 15);
-    assert_eq!(projection.certificate().emitted_arc_sample_count(), 0);
-    assert_eq!(projection.certificate().arc_chord_error(), 0.01);
 
     let material = [outer, island];
     let holes = [hole];
     let view = RegionView2::new(&material, &holes);
     let view_projection = view.project_to_finite_region(&options).unwrap();
-    assert_eq!(view_projection.certificate(), projection.certificate());
+    assert_eq!(view_projection, projection);
 }
 
 #[test]
@@ -472,17 +430,6 @@ fn region_filled_area_uses_roles_instead_of_contour_orientation() {
         Classification::Decided(Some(Real::from(84_i8)))
     );
 
-    let Classification::Decided(report) = region.filled_area_report(&policy()).unwrap() else {
-        panic!("exact rectangle region should produce a decided filled-area report");
-    };
-    assert!(report.is_complete());
-    assert_eq!(report.filled_area, Some(Real::from(84_i8)));
-    assert_eq!(report.material_area, Real::from(100_i16));
-    assert_eq!(report.hole_area, Real::from(16_i8));
-    assert_eq!(report.material_contour_count, 1);
-    assert_eq!(report.hole_contour_count, 1);
-    assert_eq!(report.construction_policy, policy());
-
     let material = [outer];
     let holes = [hole];
     let view = RegionView2::new(&material, &holes);
@@ -506,21 +453,7 @@ fn region_filled_area_counts_nested_material_back_into_holes() {
 }
 
 #[test]
-fn contour_signed_area_report_records_supported_segment_classes() {
-    let contour = rectangle(0, 0, 4, 3);
-
-    let report = contour.signed_area_report().unwrap();
-
-    assert!(report.is_complete());
-    assert_eq!(report.signed_area, Some(Real::from(12_i8)));
-    assert_eq!(report.segment_count, 4);
-    assert_eq!(report.line_segment_count, 4);
-    assert_eq!(report.bulge_arc_segment_count, 0);
-    assert!(report.unsupported_segments.is_empty());
-}
-
-#[test]
-fn region_filled_area_reports_unsupported_center_only_arc_area() {
+fn region_filled_area_returns_none_for_unsupported_center_only_arc_area() {
     let top = CircularArc2::try_from_center(p(1, 0), p(-1, 0), p(0, 0), false).unwrap();
     let bottom = CircularArc2::try_from_center(p(-1, 0), p(1, 0), p(0, 0), false).unwrap();
     let contour = Contour2::try_new(vec![Segment2::Arc(top), Segment2::Arc(bottom)]).unwrap();
@@ -529,31 +462,6 @@ fn region_filled_area_reports_unsupported_center_only_arc_area() {
     assert_eq!(
         region.filled_area(&policy()).unwrap(),
         Classification::Decided(None)
-    );
-
-    let Classification::Decided(report) = region.filled_area_report(&policy()).unwrap() else {
-        panic!("unsupported sweep should still produce a decided report");
-    };
-    assert!(!report.is_complete());
-    assert_eq!(report.filled_area, None);
-    assert_eq!(report.material_area, Real::zero());
-    assert_eq!(report.hole_area, Real::zero());
-    assert_eq!(report.unsupported_contours.len(), 1);
-    assert_eq!(
-        report.unsupported_contours[0].role,
-        RegionAreaContourRole::Material
-    );
-    assert_eq!(report.unsupported_contours[0].contour_index, 0);
-    assert_eq!(
-        report.unsupported_contours[0].contour_report.signed_area,
-        None
-    );
-    assert_eq!(
-        report.unsupported_contours[0]
-            .contour_report
-            .unsupported_segments[0]
-            .reason,
-        ContourAreaUnsupportedReason::CenterOnlyArcSweepAngle
     );
 }
 
@@ -602,17 +510,6 @@ proptest! {
             Classification::Decided(Some(expected.clone()))
         );
 
-        let report = match region.filled_area_report(&policy()).unwrap() {
-            Classification::Decided(report) => report,
-            Classification::Uncertain(reason) => {
-                prop_assert!(false, "rectangle generated region report was uncertain: {reason:?}");
-                unreachable!();
-            }
-        };
-        prop_assert!(report.is_complete());
-        prop_assert_eq!(report.filled_area, Some(expected));
-        prop_assert_eq!(report.material_contour_count, 1);
-        prop_assert_eq!(report.hole_contour_count, 1);
     }
 }
 

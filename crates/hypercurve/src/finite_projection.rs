@@ -25,53 +25,12 @@ pub struct FiniteProjectionOptions {
     arc_chord_error: f64,
 }
 
-/// Certificate for a finite polyline projection.
-///
-/// This report records how exact native line/arc topology crossed the finite
-/// output boundary. It deliberately certifies only the projection process:
-/// source segment counts, emitted finite vertices, closure, and the requested
-/// arc chord-error budget. It is not a topology certificate for the projected
-/// `f64` polyline. That boundary follows Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7(1-2), 1997
-/// (<https://doi.org/10.1016/0925-7721(95)00040-2>): exact curve objects own
-/// predicates, while finite output carries explicit approximation metadata.
-#[derive(Clone, Debug, PartialEq)]
-pub struct FiniteProjectionCertificate {
-    source_segment_count: usize,
-    line_segment_count: usize,
-    arc_segment_count: usize,
-    emitted_point_count: usize,
-    emitted_arc_sample_count: usize,
-    arc_chord_error: f64,
-    closed: bool,
-}
-
 /// Finite `f64` polyline emitted from a native curve object.
 #[derive(Clone, Debug, PartialEq)]
 pub struct FinitePolyline2 {
     points: Vec<[f64; 2]>,
-    certificate: FiniteProjectionCertificate,
-}
-
-/// Aggregate certificate for projecting a region to finite material/hole rings.
-///
-/// The certificate preserves region roles at the export boundary and aggregates
-/// the per-contour projection facts. It certifies only that every exact contour
-/// crossed to finite `f64` vertices under the requested chord-error budget; it
-/// does not license downstream code to infer topology from those finite rings.
-/// This is the same exact-object/lossy-adapter split advocated by Yap,
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7(1-2),
-/// 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-#[derive(Clone, Debug, PartialEq)]
-pub struct FiniteRegionProjectionCertificate {
-    material_ring_count: usize,
-    hole_ring_count: usize,
-    source_segment_count: usize,
-    line_segment_count: usize,
-    arc_segment_count: usize,
-    emitted_point_count: usize,
-    emitted_arc_sample_count: usize,
     arc_chord_error: f64,
+    closed: bool,
 }
 
 /// Finite `f64` projection of a region with material and hole roles retained.
@@ -82,7 +41,6 @@ pub struct FiniteRegionProjectionCertificate {
 pub struct FiniteRegionProjection2 {
     material_rings: Vec<FinitePolyline2>,
     hole_rings: Vec<FinitePolyline2>,
-    certificate: FiniteRegionProjectionCertificate,
 }
 
 /// A finite material ring and the finite hole rings owned by it.
@@ -112,51 +70,12 @@ impl FiniteProjectionOptions {
     }
 }
 
-impl FiniteProjectionCertificate {
-    /// Returns the number of exact source segments traversed.
-    pub const fn source_segment_count(&self) -> usize {
-        self.source_segment_count
-    }
-
-    /// Returns the number of exact source line segments traversed.
-    pub const fn line_segment_count(&self) -> usize {
-        self.line_segment_count
-    }
-
-    /// Returns the number of exact source circular arcs traversed.
-    pub const fn arc_segment_count(&self) -> usize {
-        self.arc_segment_count
-    }
-
-    /// Returns the number of finite vertices emitted.
-    pub const fn emitted_point_count(&self) -> usize {
-        self.emitted_point_count
-    }
-
-    /// Returns the number of finite vertices emitted while sampling arcs.
-    ///
-    /// This count includes each sampled arc endpoint as emitted by the
-    /// projection adapter after duplicate suppression.
-    pub const fn emitted_arc_sample_count(&self) -> usize {
-        self.emitted_arc_sample_count
-    }
-
-    /// Returns the maximum requested circular-arc chord error.
-    pub const fn arc_chord_error(&self) -> f64 {
-        self.arc_chord_error
-    }
-
-    /// Returns true when the projection was explicitly closed as a contour ring.
-    pub const fn is_closed(&self) -> bool {
-        self.closed
-    }
-}
-
 impl FinitePolyline2 {
-    fn new(points: Vec<[f64; 2]>, certificate: FiniteProjectionCertificate) -> Self {
+    fn new(points: Vec<[f64; 2]>, arc_chord_error: f64, closed: bool) -> Self {
         Self {
             points,
-            certificate,
+            arc_chord_error,
+            closed,
         }
     }
 
@@ -170,19 +89,14 @@ impl FinitePolyline2 {
         self.points
     }
 
-    /// Returns the projection certificate for this finite boundary product.
-    pub const fn certificate(&self) -> &FiniteProjectionCertificate {
-        &self.certificate
-    }
-
     /// Returns the arc chord-error budget requested for this projection.
     pub const fn arc_chord_error(&self) -> f64 {
-        self.certificate.arc_chord_error()
+        self.arc_chord_error
     }
 
     /// Returns true when this polyline was explicitly closed for a contour.
     pub const fn is_closed(&self) -> bool {
-        self.certificate.is_closed()
+        self.closed
     }
 
     /// Returns the finite signed shoelace area when this polyline is treated as
@@ -209,58 +123,11 @@ impl FinitePolyline2 {
     }
 }
 
-impl FiniteRegionProjectionCertificate {
-    /// Returns the number of material rings projected.
-    pub const fn material_ring_count(&self) -> usize {
-        self.material_ring_count
-    }
-
-    /// Returns the number of hole rings projected.
-    pub const fn hole_ring_count(&self) -> usize {
-        self.hole_ring_count
-    }
-
-    /// Returns the total number of exact source segments traversed.
-    pub const fn source_segment_count(&self) -> usize {
-        self.source_segment_count
-    }
-
-    /// Returns the total number of exact source line segments traversed.
-    pub const fn line_segment_count(&self) -> usize {
-        self.line_segment_count
-    }
-
-    /// Returns the total number of exact source circular arcs traversed.
-    pub const fn arc_segment_count(&self) -> usize {
-        self.arc_segment_count
-    }
-
-    /// Returns the total number of finite vertices emitted across all rings.
-    pub const fn emitted_point_count(&self) -> usize {
-        self.emitted_point_count
-    }
-
-    /// Returns the total number of finite vertices emitted while sampling arcs.
-    pub const fn emitted_arc_sample_count(&self) -> usize {
-        self.emitted_arc_sample_count
-    }
-
-    /// Returns the requested circular-arc chord-error budget.
-    pub const fn arc_chord_error(&self) -> f64 {
-        self.arc_chord_error
-    }
-}
-
 impl FiniteRegionProjection2 {
-    fn new(
-        material_rings: Vec<FinitePolyline2>,
-        hole_rings: Vec<FinitePolyline2>,
-        certificate: FiniteRegionProjectionCertificate,
-    ) -> Self {
+    fn new(material_rings: Vec<FinitePolyline2>, hole_rings: Vec<FinitePolyline2>) -> Self {
         Self {
             material_rings,
             hole_rings,
-            certificate,
         }
     }
 
@@ -272,11 +139,6 @@ impl FiniteRegionProjection2 {
     /// Returns projected hole rings.
     pub fn hole_rings(&self) -> &[FinitePolyline2] {
         &self.hole_rings
-    }
-
-    /// Returns the aggregate projection certificate.
-    pub const fn certificate(&self) -> &FiniteRegionProjectionCertificate {
-        &self.certificate
     }
 }
 
@@ -392,7 +254,7 @@ impl Region2 {
     ///
     /// Region roles are preserved, but the returned rings are boundary
     /// products only. Exact point classification and area should continue to
-    /// use [`Region2::classify_point`] and [`Region2::filled_area_report`].
+    /// use [`Region2::classify_point`] and [`Region2::filled_area`].
     pub fn project_to_finite_region(
         &self,
         options: &FiniteProjectionOptions,
@@ -429,12 +291,7 @@ impl<'a> RegionView2<'a> {
     ) -> CurveResult<FiniteRegionProjection2> {
         let material_rings = project_contour_slice(self.material_contours(), options)?;
         let hole_rings = project_contour_slice(self.hole_contours(), options)?;
-        let certificate = finite_region_certificate(&material_rings, &hole_rings, options);
-        Ok(FiniteRegionProjection2::new(
-            material_rings,
-            hole_rings,
-            certificate,
-        ))
+        Ok(FiniteRegionProjection2::new(material_rings, hole_rings))
     }
 
     /// Projects exact material/hole ownership profiles to finite rings.
@@ -477,32 +334,6 @@ fn project_contour_slice(
         .collect()
 }
 
-fn finite_region_certificate(
-    material_rings: &[FinitePolyline2],
-    hole_rings: &[FinitePolyline2],
-    options: &FiniteProjectionOptions,
-) -> FiniteRegionProjectionCertificate {
-    let mut certificate = FiniteRegionProjectionCertificate {
-        material_ring_count: material_rings.len(),
-        hole_ring_count: hole_rings.len(),
-        source_segment_count: 0,
-        line_segment_count: 0,
-        arc_segment_count: 0,
-        emitted_point_count: 0,
-        emitted_arc_sample_count: 0,
-        arc_chord_error: options.arc_chord_error,
-    };
-    for ring in material_rings.iter().chain(hole_rings) {
-        let ring_certificate = ring.certificate();
-        certificate.source_segment_count += ring_certificate.source_segment_count();
-        certificate.line_segment_count += ring_certificate.line_segment_count();
-        certificate.arc_segment_count += ring_certificate.arc_segment_count();
-        certificate.emitted_point_count += ring_certificate.emitted_point_count();
-        certificate.emitted_arc_sample_count += ring_certificate.emitted_arc_sample_count();
-    }
-    certificate
-}
-
 fn project_curve_string(
     curve: &CurveString2,
     options: &FiniteProjectionOptions,
@@ -511,20 +342,14 @@ fn project_curve_string(
     let first = curve.start().ok_or(CurveError::EmptyCurveString)?;
     let mut points = Vec::with_capacity(curve.len() + 1);
     push_if_new(&mut points, finite_point(first)?);
-    let mut line_segment_count = 0;
-    let mut arc_segment_count = 0;
-    let mut emitted_arc_sample_count = 0;
 
     for segment in curve.segments() {
         match segment {
             Segment2::Line(line) => {
-                line_segment_count += 1;
                 push_if_new(&mut points, finite_point(line.end())?);
             }
             Segment2::Arc(arc) => {
-                arc_segment_count += 1;
-                emitted_arc_sample_count +=
-                    append_arc_samples(&mut points, arc, options.arc_chord_error)?;
+                append_arc_samples(&mut points, arc, options.arc_chord_error)?;
             }
         }
     }
@@ -533,18 +358,7 @@ fn project_curve_string(
         close_ring(&mut points);
     }
 
-    let emitted_point_count = points.len();
-    let certificate = FiniteProjectionCertificate {
-        source_segment_count: curve.len(),
-        line_segment_count,
-        arc_segment_count,
-        emitted_point_count,
-        emitted_arc_sample_count,
-        arc_chord_error: options.arc_chord_error,
-        closed: close,
-    };
-
-    Ok(FinitePolyline2::new(points, certificate))
+    Ok(FinitePolyline2::new(points, options.arc_chord_error, close))
 }
 
 fn finite_point(point: &Point2) -> CurveResult<[f64; 2]> {

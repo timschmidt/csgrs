@@ -6,7 +6,6 @@ use crate::bbox::{Aabb2, aabb_decided_misses_point, decided_contour_aabb};
 use crate::classify::compare_reals;
 use crate::{
     Classification, Contour2, ContourPointLocation, CurvePolicy, CurveResult, Point2, Real,
-    RegionAreaContourRole, RegionAreaUnsupportedContour2, RegionFilledAreaReport2,
     UncertaintyReason,
 };
 
@@ -121,18 +120,6 @@ impl Region2 {
     /// area contribution is not implemented by the current object model.
     pub fn filled_area(&self, policy: &CurvePolicy) -> CurveResult<Classification<Option<Real>>> {
         self.as_view().filled_area(policy)
-    }
-
-    /// Returns an auditable filled-area report for this region.
-    ///
-    /// The report carries role-normalized material and hole totals, the policy
-    /// used for exact sign certification, and unsupported contour details.
-    /// This is the certificate-bearing counterpart to [`Region2::filled_area`].
-    pub fn filled_area_report(
-        &self,
-        policy: &CurvePolicy,
-    ) -> CurveResult<Classification<RegionFilledAreaReport2>> {
-        self.as_view().filled_area_report(policy)
     }
 
     /// Groups material contours with the hole contours they contain.
@@ -284,62 +271,25 @@ impl<'a> RegionView2<'a> {
     /// subtract theirs. This mirrors [`Region2::filled_area`] for borrowed
     /// region data without cloning contour bins.
     pub fn filled_area(&self, policy: &CurvePolicy) -> CurveResult<Classification<Option<Real>>> {
-        Ok(self
-            .filled_area_report(policy)?
-            .map(|report| report.filled_area))
-    }
+        let mut material_area = Real::zero();
+        let mut hole_area = Real::zero();
 
-    /// Returns an auditable filled-area report for this borrowed region view.
-    ///
-    /// Green's-theorem contour areas are normalized by region role, not by
-    /// winding orientation. Each contour's sign is used only after exact
-    /// ordering has been certified by the active policy, matching Yap's
-    /// "Towards Exact Geometric Computation" (1997) rule that geometric
-    /// branching depends on certified predicates.
-    pub fn filled_area_report(
-        &self,
-        policy: &CurvePolicy,
-    ) -> CurveResult<Classification<RegionFilledAreaReport2>> {
-        let mut report = RegionFilledAreaReport2 {
-            filled_area: Some(Real::zero()),
-            material_area: Real::zero(),
-            hole_area: Real::zero(),
-            material_contour_count: self.material_contours.len(),
-            hole_contour_count: self.hole_contours.len(),
-            unsupported_contours: Vec::new(),
-            construction_policy: policy.clone(),
-        };
-
-        for (index, contour) in self.material_contours.iter().enumerate() {
-            if let Classification::Uncertain(reason) = accumulate_contour_role_area(
-                &mut report,
-                RegionAreaContourRole::Material,
-                index,
-                contour,
-                policy,
-            )? {
-                return Ok(Classification::Uncertain(reason));
+        for contour in &self.material_contours {
+            match contour_role_area(contour, policy)? {
+                Classification::Decided(Some(area)) => material_area = &material_area + &area,
+                Classification::Decided(None) => return Ok(Classification::Decided(None)),
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
             }
         }
-        for (index, contour) in self.hole_contours.iter().enumerate() {
-            if let Classification::Uncertain(reason) = accumulate_contour_role_area(
-                &mut report,
-                RegionAreaContourRole::Hole,
-                index,
-                contour,
-                policy,
-            )? {
-                return Ok(Classification::Uncertain(reason));
+        for contour in &self.hole_contours {
+            match contour_role_area(contour, policy)? {
+                Classification::Decided(Some(area)) => hole_area = &hole_area + &area,
+                Classification::Decided(None) => return Ok(Classification::Decided(None)),
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
             }
         }
 
-        report.filled_area = if report.unsupported_contours.is_empty() {
-            Some(&report.material_area - &report.hole_area)
-        } else {
-            None
-        };
-
-        Ok(Classification::Decided(report))
+        Ok(Classification::Decided(Some(&material_area - &hole_area)))
     }
 
     /// Groups material contours with the hole contours they contain.
@@ -426,36 +376,18 @@ fn contour_profiles_from_iter<'a>(
     Classification::Decided(profiles)
 }
 
-fn accumulate_contour_role_area(
-    report: &mut RegionFilledAreaReport2,
-    role: RegionAreaContourRole,
-    contour_index: usize,
+fn contour_role_area(
     contour: &Contour2,
     policy: &CurvePolicy,
-) -> CurveResult<Classification<()>> {
-    let contour_report = contour.signed_area_report()?;
-    let Some(area) = contour_report.signed_area.clone() else {
-        report
-            .unsupported_contours
-            .push(RegionAreaUnsupportedContour2 {
-                role,
-                contour_index,
-                contour_report,
-            });
-        return Ok(Classification::Decided(()));
+) -> CurveResult<Classification<Option<Real>>> {
+    let Some(area) = contour.signed_area()? else {
+        return Ok(Classification::Decided(None));
     };
 
-    let area = match certified_absolute_area(area, policy)? {
-        Classification::Decided(area) => area,
+    match certified_absolute_area(area, policy)? {
+        Classification::Decided(area) => Ok(Classification::Decided(Some(area))),
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-
-    match role {
-        RegionAreaContourRole::Material => report.material_area = &report.material_area + &area,
-        RegionAreaContourRole::Hole => report.hole_area = &report.hole_area + &area,
     }
-
-    Ok(Classification::Decided(()))
 }
 
 fn certified_absolute_area(area: Real, policy: &CurvePolicy) -> CurveResult<Classification<Real>> {

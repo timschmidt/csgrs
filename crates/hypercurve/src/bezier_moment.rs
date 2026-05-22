@@ -85,12 +85,72 @@ impl BezierAreaMoments2 {
     }
 }
 
-/// Exact prefix sums of Bezier area and first-moment contributions.
-///
-/// This table extends [`BezierAreaPrefixSums2`] with first moments so future
-/// fitting and simplification passes can query exact moment ranges without
-/// repeated integration. The stored facts are still boundary integrals, not
-/// sampled mass properties.
+/// Exact prefix sums of Bezier signed-area boundary contributions.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BezierAreaPrefixSums2 {
+    prefixes: Vec<Real>,
+}
+
+impl BezierAreaPrefixSums2 {
+    /// Builds prefix sums from exact per-segment signed-area contributions.
+    pub fn from_contributions(contributions: impl IntoIterator<Item = Real>) -> Self {
+        let mut prefixes = vec![Real::zero()];
+        for contribution in contributions {
+            let next = prefixes.last().expect("prefix list always contains zero") + &contribution;
+            prefixes.push(next);
+        }
+        Self { prefixes }
+    }
+
+    /// Builds prefix sums from polynomial quadratic Bezier segments.
+    pub fn from_quadratics<'a>(
+        curves: impl IntoIterator<Item = &'a QuadraticBezier2>,
+    ) -> CurveResult<Self> {
+        curves
+            .into_iter()
+            .map(QuadraticBezier2::signed_area_contribution)
+            .collect::<CurveResult<Vec<_>>>()
+            .map(Self::from_contributions)
+    }
+
+    /// Builds prefix sums from polynomial cubic Bezier segments.
+    pub fn from_cubics<'a>(
+        curves: impl IntoIterator<Item = &'a CubicBezier2>,
+    ) -> CurveResult<Self> {
+        curves
+            .into_iter()
+            .map(CubicBezier2::signed_area_contribution)
+            .collect::<CurveResult<Vec<_>>>()
+            .map(Self::from_contributions)
+    }
+
+    /// Returns the number of segment contributions represented by this table.
+    pub fn segment_count(&self) -> usize {
+        self.prefixes.len().saturating_sub(1)
+    }
+
+    /// Returns the total signed-area contribution of all stored segments.
+    pub fn total(&self) -> &Real {
+        self.prefixes
+            .last()
+            .expect("prefix list always contains zero")
+    }
+
+    /// Returns all exact prefix sums, including the initial zero.
+    pub fn prefixes(&self) -> &[Real] {
+        &self.prefixes
+    }
+
+    /// Returns the exact signed-area contribution over a segment range.
+    pub fn range_contribution(&self, range: Range<usize>) -> CurveResult<Real> {
+        if range.start > range.end || range.end > self.segment_count() {
+            return Err(CurveError::InvalidBezierRange);
+        }
+        Ok(&self.prefixes[range.end] - &self.prefixes[range.start])
+    }
+}
+
+/// Exact prefix sums of Bezier area and first-moment boundary contributions.
 #[derive(Clone, Debug, PartialEq)]
 pub struct BezierAreaMomentPrefixSums2 {
     prefixes: Vec<BezierAreaMoments2>,
@@ -155,79 +215,6 @@ impl BezierAreaMomentPrefixSums2 {
             return Err(CurveError::InvalidBezierRange);
         }
         Ok(self.prefixes[range.end].minus(&self.prefixes[range.start]))
-    }
-}
-
-/// Exact prefix sums of Bezier signed-area boundary contributions.
-///
-/// This is the prepared path fact requested by the fitting/simplification
-/// layer: each segment contributes an exact Green's-theorem boundary integral,
-/// and range queries are answered by subtracting stored exact prefix sums
-/// instead of re-integrating every segment. This follows Yap's representation
-/// discipline for exact geometric computation, and directly supports the
-/// area/moment bookkeeping discussed by Raph Levien, "Simplifying Bezier
-/// paths" (2021).
-#[derive(Clone, Debug, PartialEq)]
-pub struct BezierAreaPrefixSums2 {
-    prefixes: Vec<Real>,
-}
-
-impl BezierAreaPrefixSums2 {
-    /// Builds prefix sums from exact per-segment signed-area contributions.
-    pub fn from_contributions(contributions: impl IntoIterator<Item = Real>) -> Self {
-        let mut prefixes = vec![Real::zero()];
-        for contribution in contributions {
-            let next = prefixes.last().expect("prefix list always contains zero") + &contribution;
-            prefixes.push(next);
-        }
-        Self { prefixes }
-    }
-
-    /// Builds prefix sums from polynomial quadratic Bezier segments.
-    pub fn from_quadratics<'a>(
-        curves: impl IntoIterator<Item = &'a QuadraticBezier2>,
-    ) -> CurveResult<Self> {
-        curves
-            .into_iter()
-            .map(QuadraticBezier2::signed_area_contribution)
-            .collect::<CurveResult<Vec<_>>>()
-            .map(Self::from_contributions)
-    }
-
-    /// Builds prefix sums from polynomial cubic Bezier segments.
-    pub fn from_cubics<'a>(
-        curves: impl IntoIterator<Item = &'a CubicBezier2>,
-    ) -> CurveResult<Self> {
-        curves
-            .into_iter()
-            .map(CubicBezier2::signed_area_contribution)
-            .collect::<CurveResult<Vec<_>>>()
-            .map(Self::from_contributions)
-    }
-
-    /// Returns the number of segment contributions represented by this table.
-    pub fn segment_count(&self) -> usize {
-        self.prefixes.len().saturating_sub(1)
-    }
-
-    /// Returns the total signed-area contribution of all stored segments.
-    pub fn total(&self) -> &Real {
-        self.prefixes
-            .last()
-            .expect("prefix list always contains zero")
-    }
-
-    /// Returns all exact prefix sums, including the initial zero.
-    pub fn prefixes(&self) -> &[Real] {
-        &self.prefixes
-    }
-
-    /// Returns the exact signed-area contribution over a segment range.
-    pub fn range_contribution(&self, range: Range<usize>) -> CurveResult<Real> {
-        if range.start > range.end || range.end > self.segment_count() {
-            return Err(CurveError::InvalidBezierRange);
-        }
-        Ok(&self.prefixes[range.end] - &self.prefixes[range.start])
     }
 }
 

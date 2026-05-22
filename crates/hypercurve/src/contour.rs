@@ -7,9 +7,8 @@ use hyperreal::{Real, ZeroKnowledge as ZeroStatus};
 use crate::bbox::{Aabb2, aabb_decided_misses_point, decided_contour_aabb, decided_segment_aabb};
 use crate::classify::{classify_oriented_line, compare_reals};
 use crate::{
-    BulgeVertex2, Classification, ContourAreaUnsupportedReason, ContourAreaUnsupportedSegment2,
-    ContourSignedAreaReport2, CurveError, CurvePolicy, CurveResult, CurveString2, LineSide, Point2,
-    Segment2, UncertaintyReason,
+    BulgeVertex2, Classification, CurveError, CurvePolicy, CurveResult, CurveString2, LineSide,
+    Point2, Segment2, UncertaintyReason,
 };
 
 /// Fill rule used when classifying contour interiors.
@@ -126,54 +125,21 @@ impl Contour2 {
     /// *Computational Geometry* 7(1-2), 1997
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     pub fn signed_area(&self) -> CurveResult<Option<Real>> {
-        Ok(self.signed_area_report()?.signed_area)
-    }
-
-    /// Returns a signed-area report with exact contribution and unsupported
-    /// segment details.
-    ///
-    /// The report is complete only when every segment has an exact
-    /// Green's-theorem contribution. Lines contribute the standard shoelace
-    /// term; bulge arcs contribute the exact circular segment expression used
-    /// by CAD polyarc formats. Center-only arcs are reported explicitly because
-    /// the current scalar surface does not yet expose an exact `atan2` sweep
-    /// object. Exposing that gap follows Yap's "Towards Exact Geometric
-    /// Computation" (1997) requirement that exact pipelines fail visibly at
-    /// unsupported constructions rather than hiding a floating estimate.
-    pub fn signed_area_report(&self) -> CurveResult<ContourSignedAreaReport2> {
-        let mut report = ContourSignedAreaReport2::empty();
         let mut area = Real::zero();
 
-        for (index, segment) in self.segments().iter().enumerate() {
-            report.segment_count += 1;
+        for segment in self.segments() {
             match segment {
                 Segment2::Line(line) => {
-                    report.line_segment_count += 1;
                     area = &area + &line_signed_area_contribution(line.start(), line.end())?;
                 }
                 Segment2::Arc(arc) => match arc_signed_area_contribution(arc)? {
-                    Some(contribution) => {
-                        report.bulge_arc_segment_count += 1;
-                        area = &area + &contribution;
-                    }
-                    None => {
-                        report
-                            .unsupported_segments
-                            .push(ContourAreaUnsupportedSegment2 {
-                                segment_index: index,
-                                reason: ContourAreaUnsupportedReason::CenterOnlyArcSweepAngle,
-                            });
-                    }
+                    Some(contribution) => area = &area + &contribution,
+                    None => return Ok(None),
                 },
             }
         }
 
-        report.signed_area = if report.unsupported_segments.is_empty() {
-            Some(area)
-        } else {
-            None
-        };
-        Ok(report)
+        Ok(Some(area))
     }
 
     /// Returns the segment count.
