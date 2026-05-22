@@ -14,7 +14,7 @@
 use hyperreal::{Real, RealSign};
 
 use crate::model::{Constraint, ConstraintKind, Problem, VariableId};
-use crate::sketch_builders::{distance, incidence, objective, orientation, ranges};
+use crate::sketch_builders::{distance, incidence, objective, orientation, ranges, symmetry};
 use crate::symbolic::{Expr, SymbolId};
 
 /// Stable caller-facing handle for a sketch parameter.
@@ -376,6 +376,21 @@ pub enum SketchConstraintKind {
         /// Second line entity.
         b: SketchEntityHandle,
     },
+    /// 2D point-at-midpoint relation.
+    ///
+    /// Lowering emits exact linear coordinate equations without averaging in
+    /// floating point: `2*point - a - b == 0` per axis. The retained midpoint
+    /// object keeps SolveSpace-style provenance visible while ordinary exact
+    /// residual replay remains the proof boundary, following Yap, "Towards
+    /// Exact Geometric Computation" (1997).
+    AtMidpoint2 {
+        /// Point constrained to the midpoint.
+        point: SketchEntityHandle,
+        /// First endpoint entity.
+        a: SketchEntityHandle,
+        /// Second endpoint entity.
+        b: SketchEntityHandle,
+    },
     /// Point-on-circle incidence using squared radius residual.
     PointOnCircle {
         /// Point entity.
@@ -469,6 +484,8 @@ pub enum SketchResidualStrategy {
     DirectionCrossProduct,
     /// 2D direction dot-product equality.
     DirectionDotProduct,
+    /// Linear coordinate equality for a retained midpoint relation.
+    MidpointCoordinateEquality,
     /// Soft stay-near objective.
     SoftObjective,
 }
@@ -976,6 +993,21 @@ impl SketchSolveProblem {
         orientation::perpendicular_lines2(self, name, a, b).handle
     }
 
+    /// Add a retained 2D point-at-midpoint relation.
+    ///
+    /// Lowering emits one exact linear equality per coordinate. This mirrors
+    /// SolveSpace's midpoint relation at the semantic layer while keeping
+    /// candidate acceptance in Yap-style exact residual replay.
+    pub fn add_at_midpoint2(
+        &mut self,
+        name: impl Into<String>,
+        point: SketchEntityHandle,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+    ) -> SketchConstraintHandle {
+        symmetry::at_midpoint2(self, name, point, a, b).handle
+    }
+
     /// Add a point-on-circle incidence constraint.
     pub fn add_point_on_circle(
         &mut self,
@@ -1385,6 +1417,31 @@ impl SketchSolveProblem {
                     SketchResidualStrategy::DirectionDotProduct,
                 );
             }
+            SketchConstraintKind::AtMidpoint2 { point, a, b } => {
+                // Yap, "Towards Exact Geometric Computation" (1997), makes
+                // exact predicates the decision boundary. The midpoint
+                // relation therefore lowers to integer-coefficient linear
+                // equations instead of computing a rounded midpoint.
+                let (Some(point), Some(a), Some(b)) = (
+                    self.point2_coordinates(point, constraint, rows),
+                    self.point2_coordinates(a, constraint, rows),
+                    self.point2_coordinates(b, constraint, rows),
+                ) else {
+                    return;
+                };
+                for axis in 0..2 {
+                    self.push_residual(
+                        problem,
+                        rows,
+                        constraint,
+                        format!("{} coordinate {axis}", constraint.name),
+                        Expr::int(2) * point.exprs[axis].clone()
+                            - a.exprs[axis].clone()
+                            - b.exprs[axis].clone(),
+                        SketchResidualStrategy::MidpointCoordinateEquality,
+                    );
+                }
+            }
             SketchConstraintKind::PointOnCircle { point, circle } => {
                 let Some(point) = self.point_coordinates(point, constraint, rows) else {
                     return;
@@ -1652,6 +1709,20 @@ impl SketchSolveProblem {
             return None;
         };
         self.parameter_expr(distance.value, constraint, rows)
+    }
+
+    fn point2_coordinates(
+        &self,
+        handle: SketchEntityHandle,
+        constraint: &SketchConstraint,
+        rows: &mut Vec<SketchGeneratedRow>,
+    ) -> Option<CoordinateExprs> {
+        let point = self.point_coordinates(handle, constraint, rows)?;
+        if point.len() != 2 {
+            rows.push(wrong_entity_row(constraint, handle, "2D point"));
+            return None;
+        }
+        Some(point)
     }
 
     fn line2_points(

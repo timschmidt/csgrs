@@ -36,10 +36,10 @@ use hypersolve::{
     replay_sparse_linear_residual_batch, report_lossy_adapter_only_candidate,
     schedule_candidate_batch_predicates, sketch_compatibility_fixtures, sketch_distance_builders,
     sketch_incidence_builders, sketch_objective_builders, sketch_orientation_builders,
-    sketch_range_builders, solve_damped_least_squares, solve_direct_affine_equalities,
-    solve_direct_affine_system, solve_direct_univariate_quadratic_equalities,
-    squared_distance_equation, tangent_parallel_equation, tangent_same_direction_constraint,
-    validate_equality_substitutions,
+    sketch_range_builders, sketch_symmetry_builders, solve_damped_least_squares,
+    solve_direct_affine_equalities, solve_direct_affine_system,
+    solve_direct_univariate_quadratic_equalities, squared_distance_equation,
+    tangent_parallel_equation, tangent_same_direction_constraint, validate_equality_substitutions,
 };
 
 fn real(value: i64) -> Real {
@@ -763,6 +763,91 @@ fn sketch_line_orientation_relations_report_stale_and_wrong_inputs() {
         SketchGeneratedRowStatus::WrongEntityKind {
             handle: p,
             expected: "2D line segment"
+        }
+    );
+}
+
+#[test]
+fn sketch_midpoint_relations_lower_to_exact_linear_rows() {
+    let mut sketch = SketchSolveProblem::new();
+    let a = sketch.add_point2d("a", real(0), real(0));
+    let b = sketch.add_point2d("b", real(4), real(6));
+    let midpoint = sketch.add_point2d("midpoint", real(2), real(3));
+    let wrong = sketch.add_point2d("wrong", real(2), real(4));
+    let midpoint_report =
+        sketch_symmetry_builders::at_midpoint2(&mut sketch, "midpoint", midpoint, a, b);
+    sketch.add_at_midpoint2("violated midpoint", wrong, a, b);
+
+    assert_eq!(
+        midpoint_report.family,
+        hypersolve::SketchConstraintFamily::Symmetry
+    );
+    assert_eq!(
+        midpoint_report.strategy,
+        SketchResidualStrategy::MidpointCoordinateEquality
+    );
+
+    let lowered = sketch.lower_to_problem();
+    let certification = certify_candidate(
+        &PreparedProblem::new(&lowered.problem),
+        &context_from_problem(&lowered.problem),
+    );
+
+    assert_eq!(lowered.problem.constraints.len(), 4);
+    assert_eq!(lowered.rows.len(), 4);
+    assert!(lowered.rows.iter().all(|row| {
+        row.strategy == Some(SketchResidualStrategy::MidpointCoordinateEquality)
+            && row.status == SketchGeneratedRowStatus::Generated
+    }));
+    assert!(matches!(
+        certification.rows[0].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[1].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[2].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[3].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
+}
+
+#[test]
+fn sketch_midpoint_relations_report_stale_wrong_and_non_2d_inputs() {
+    let mut sketch = SketchSolveProblem::new();
+    let p = sketch.add_point2d("p", real(0), real(0));
+    let q = sketch.add_point2d("q", real(2), real(2));
+    let point3 = sketch.add_point3d("point3", real(1), real(1), real(1));
+    let distance = sketch.add_distance("distance", real(1));
+    sketch.add_at_midpoint2("missing endpoint", p, q, SketchEntityHandle(999));
+    sketch.add_at_midpoint2("wrong family", p, q, distance);
+    sketch.add_at_midpoint2("not 2d", p, q, point3);
+
+    let lowered = sketch.lower_to_problem();
+
+    assert_eq!(lowered.problem.constraints.len(), 0);
+    assert_eq!(lowered.rows.len(), 3);
+    assert_eq!(
+        lowered.rows[0].status,
+        SketchGeneratedRowStatus::MissingEntity(SketchEntityHandle(999))
+    );
+    assert_eq!(
+        lowered.rows[1].status,
+        SketchGeneratedRowStatus::WrongEntityKind {
+            handle: distance,
+            expected: "point"
+        }
+    );
+    assert_eq!(
+        lowered.rows[2].status,
+        SketchGeneratedRowStatus::WrongEntityKind {
+            handle: point3,
+            expected: "2D point"
         }
     );
 }

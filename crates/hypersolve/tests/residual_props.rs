@@ -364,6 +364,38 @@ proptest! {
     }
 
     #[test]
+    fn sketch_midpoint_rows_match_generated_integer_points(
+        mx in -12_i16..=12,
+        my in -12_i16..=12,
+        dx in -8_i16..=8,
+        dy in -8_i16..=8,
+    ) {
+        let mx = i64::from(mx);
+        let my = i64::from(my);
+        let dx = i64::from(dx);
+        let dy = i64::from(dy);
+        let mut sketch = SketchSolveProblem::new();
+        let midpoint = sketch.add_point2d("midpoint", Real::from(mx), Real::from(my));
+        let a = sketch.add_point2d("a", Real::from(mx - dx), Real::from(my - dy));
+        let b = sketch.add_point2d("b", Real::from(mx + dx), Real::from(my + dy));
+        sketch.add_at_midpoint2("midpoint relation", midpoint, a, b);
+
+        let lowered = sketch.lower_to_problem();
+        let certification = certify_candidate(
+            &PreparedProblem::new(&lowered.problem),
+            &context_from_problem(&lowered.problem),
+        );
+
+        prop_assert_eq!(lowered.rows.len(), 2);
+        let all_midpoint_rows = lowered.rows.iter().all(|row| {
+            row.strategy == Some(SketchResidualStrategy::MidpointCoordinateEquality)
+                && row.status == SketchGeneratedRowStatus::Generated
+        });
+        prop_assert!(all_midpoint_rows);
+        prop_assert!(certification.all_satisfied());
+    }
+
+    #[test]
     fn sketch_construction_certificate_generated_integer_segments_match_distance(
         ax in -12_i16..=12,
         ay in -12_i16..=12,

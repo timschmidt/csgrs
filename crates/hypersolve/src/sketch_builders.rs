@@ -25,6 +25,8 @@ pub enum SketchConstraintFamily {
     Distance,
     /// Orientation relation, such as horizontal or vertical.
     Orientation,
+    /// Symmetry relation, such as a point constrained to a midpoint.
+    Symmetry,
     /// Inequality/domain range relation.
     Range,
     /// Soft objective relation.
@@ -219,6 +221,36 @@ pub mod orientation {
             handle,
             family: SketchConstraintFamily::Orientation,
             strategy: SketchResidualStrategy::DirectionDotProduct,
+            kind,
+        }
+    }
+}
+
+/// Symmetry and midpoint relation builders.
+pub mod symmetry {
+    use super::*;
+
+    /// Add a 2D point-at-midpoint relation.
+    ///
+    /// Lowering emits the two exact linear rows `2*point.x - a.x - b.x == 0`
+    /// and `2*point.y - a.y - b.y == 0`. Keeping midpoint as a retained
+    /// semantic object, rather than only as anonymous coordinate equations,
+    /// follows Yap's construction/proof split in "Towards Exact Geometric
+    /// Computation" (1997) and preserves SolveSpace-style constraint
+    /// provenance for diagnostics.
+    pub fn at_midpoint2(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        point: SketchEntityHandle,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::AtMidpoint2 { point, a, b };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Symmetry,
+            strategy: SketchResidualStrategy::MidpointCoordinateEquality,
             kind,
         }
     }
