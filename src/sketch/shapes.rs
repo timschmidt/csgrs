@@ -2,10 +2,10 @@
 
 use crate::csg::CSG;
 use crate::float_types::{
-    FRAC_PI_2, PI, Real, TAU, hangle_sin_cos, hdegrees_to_radians, hreal_abs, hreal_affine,
-    hreal_atan, hreal_clamp_f64, hreal_cmp_f64, hreal_div, hreal_f64s_exactly_equal,
-    hreal_from_f64, hreal_mul, hreal_pow, hreal_sqrt, hreal_sub, hreal_sum, hreal_tan,
-    hxy_lerp,
+    FRAC_PI_2, HReal, PI, Real, TAU, hangle_sin_cos, hdegrees_to_radians, hreal_abs,
+    hreal_affine, hreal_atan, hreal_clamp_f64, hreal_cmp_f64, hreal_div,
+    hreal_f64s_exactly_equal, hreal_from_f64, hreal_mul, hreal_pow, hreal_sqrt, hreal_sub,
+    hreal_sum, hreal_tan, hreal_to_f64, hxy_lerp,
 };
 use crate::sketch::Profile;
 use hypercurve::{Contour2, CurveString2, LineSeg2, Point2, Segment2};
@@ -18,6 +18,21 @@ fn finite_profile_scalar(value: Real) -> bool {
 
 fn finite_profile_scalars(values: &[Real]) -> bool {
     values.iter().all(|&value| finite_profile_scalar(value))
+}
+
+/// Promote a public profile scalar through hyperreal and export it only at the
+/// current finite hypercurve construction boundary.
+///
+/// This makes `hyperreal::Real` the primary shape-constructor surface while
+/// still accepting ordinary integers and floats that implement promotion. The
+/// edge split follows Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7(1-2), 1997
+/// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+fn finite_promoted_profile_scalar<S>(value: S) -> Option<Real>
+where
+    S: TryInto<HReal>,
+{
+    hreal_to_f64(&value.try_into().ok()?)
 }
 
 /// Sample `start + sweep * index / count` through hyperreal arithmetic.
@@ -152,7 +167,17 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// use csgrs::sketch::Profile;
     /// let sq2 = Profile::<()>::rectangle(2.0, 3.0, ());
     /// ```
-    pub fn rectangle(width: Real, length: Real, metadata: M) -> Self {
+    pub fn rectangle<W, L>(width: W, length: L, metadata: M) -> Self
+    where
+        W: TryInto<HReal>,
+        L: TryInto<HReal>,
+    {
+        let (Some(width), Some(length)) = (
+            finite_promoted_profile_scalar(width),
+            finite_promoted_profile_scalar(length),
+        ) else {
+            return Profile::empty(metadata);
+        };
         let points = [[0.0, 0.0], [width, 0.0], [width, length], [0.0, length]];
         Self::polygon(&points, metadata)
     }
@@ -166,8 +191,11 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     ///
     /// # Example
     /// let sq2 = Profile::square(2.0, None);
-    pub fn square(width: Real, metadata: M) -> Self {
-        Self::rectangle(width, width, metadata)
+    pub fn square<W>(width: W, metadata: M) -> Self
+    where
+        W: TryInto<HReal> + Clone,
+    {
+        Self::rectangle(width.clone(), width, metadata)
     }
 
     /// **Mathematical Foundation: Parametric Circle Discretization**
@@ -212,7 +240,13 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// - `radius`: Circle radius (must be > 0)
     /// - `segments`: Number of polygon edges (minimum 3 for valid geometry)
     /// - `metadata`: Optional metadata attached to the shape
-    pub fn circle(radius: Real, segments: usize, metadata: M) -> Self {
+    pub fn circle<R>(radius: R, segments: usize, metadata: M) -> Self
+    where
+        R: TryInto<HReal>,
+    {
+        let Some(radius) = finite_promoted_profile_scalar(radius) else {
+            return Profile::empty(metadata);
+        };
         if segments < 3 || !finite_profile_scalar(radius) {
             return Profile::empty(metadata);
         }
@@ -223,7 +257,17 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     }
 
     /// Right triangle from (0,0) to (width,0) to (0,height).
-    pub fn right_triangle(width: Real, height: Real, metadata: M) -> Self {
+    pub fn right_triangle<W, H>(width: W, height: H, metadata: M) -> Self
+    where
+        W: TryInto<HReal>,
+        H: TryInto<HReal>,
+    {
+        let (Some(width), Some(height)) = (
+            finite_promoted_profile_scalar(width),
+            finite_promoted_profile_scalar(height),
+        ) else {
+            return Profile::empty(metadata);
+        };
         let points = [[0.0, 0.0], [width, 0.0], [0.0, height]];
         Self::polygon(&points, metadata)
     }
@@ -327,7 +371,17 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// - `height`: Full height (diameter) along y-axis  
     /// - `segments`: Number of polygon edges (minimum 3)
     /// - `metadata`: Optional metadata
-    pub fn ellipse(width: Real, height: Real, segments: usize, metadata: M) -> Self {
+    pub fn ellipse<W, H>(width: W, height: H, segments: usize, metadata: M) -> Self
+    where
+        W: TryInto<HReal>,
+        H: TryInto<HReal>,
+    {
+        let (Some(width), Some(height)) = (
+            finite_promoted_profile_scalar(width),
+            finite_promoted_profile_scalar(height),
+        ) else {
+            return Profile::empty(metadata);
+        };
         if segments < 3 || !finite_profile_scalars(&[width, height]) {
             return Profile::empty(metadata);
         }
@@ -392,7 +446,13 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// - `sides`: Number of polygon edges (≥ 3)
     /// - `radius`: Circumscribed circle radius
     /// - `metadata`: Optional metadata
-    pub fn regular_ngon(sides: usize, radius: Real, metadata: M) -> Self {
+    pub fn regular_ngon<R>(sides: usize, radius: R, metadata: M) -> Self
+    where
+        R: TryInto<HReal>,
+    {
+        let Some(radius) = finite_promoted_profile_scalar(radius) else {
+            return Profile::empty(metadata);
+        };
         if sides < 3 || !finite_profile_scalar(radius) {
             return Profile::empty(metadata);
         }
