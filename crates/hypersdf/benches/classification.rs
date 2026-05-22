@@ -111,6 +111,26 @@ fn bench_point_classification(c: &mut Criterion) {
     c.bench_function("hypersdf mesh preview diagnostic", |b| {
         b.iter(|| csg.mesh_preview_from_grid(black_box(grid.clone()), SdfSamplingPrecision::F32))
     });
+    let dual_affine = prepare(SdfExpr::x());
+    let dual_grid = SdfPreviewGrid::new(p(-1, -1, -1), p(2, 2, 2), [2, 2, 2]);
+    c.bench_function("hypersdf dual contouring exact affine report", |b| {
+        b.iter(|| {
+            dual_affine.dual_contouring_report_from_grid(
+                black_box(dual_grid.clone()),
+                SdfSamplingPrecision::F64,
+            )
+        })
+    });
+    let signed_grid_samples = dual_affine
+        .sample_grid_preview(dual_grid.clone(), SdfSamplingPrecision::F64)
+        .expect("bench signed grid");
+    c.bench_function("hypersdf dual contouring signed-grid proposal", |b| {
+        b.iter(|| {
+            hypersdf::SdfDualContouringReport::from_signed_grid_samples(black_box(
+                signed_grid_samples.clone(),
+            ))
+        })
+    });
     c.bench_function("hypersdf glsl preview export", |b| {
         b.iter(|| csg.export_glsl_preview(black_box("field"), SdfSamplingPrecision::F32))
     });

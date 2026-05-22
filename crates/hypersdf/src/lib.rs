@@ -9,6 +9,7 @@
 //! geometric system and its decisions, not only of individual scalar values.
 
 mod batch;
+mod dual_contour;
 mod expr;
 mod facts;
 mod gradient;
@@ -31,6 +32,13 @@ mod voxel;
 pub use batch::{
     SdfBatchDispatch, SdfCachePayoffReport, SdfCellBatchClassificationReport,
     SdfPointBatchClassificationReport,
+};
+pub use dual_contour::{
+    SdfDualCellReport, SdfDualCellTopologyStatus, SdfDualContouringBlocker,
+    SdfDualContouringReport, SdfDualContouringSource, SdfDualEdgeCrossingKind,
+    SdfDualEdgeCrossingRecord, SdfDualEdgeRootEvidence, SdfDualGridEdgeAxis,
+    SdfDualGridSampleRecord, SdfDualNormalEvidence, SdfDualQefTerm, SdfDualVertexPlacementStatus,
+    SdfGridSampleSign,
 };
 pub use expr::{SdfCoordinate, SdfExpr};
 pub use facts::SdfFacts;

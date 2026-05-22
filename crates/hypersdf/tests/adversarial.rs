@@ -2,12 +2,15 @@ use hyperlattice::{Matrix4, Vector3};
 use hyperlimit::{Plane3, Point3};
 use hyperreal::Real;
 use hypersdf::{
-    SdfBatchDispatch, SdfCellLocation, SdfCoordinate, SdfDomainStatus, SdfExpr, SdfFreshness,
-    SdfGradientStatus, SdfHandoffBlocker, SdfHandoffDomain, SdfHandoffReadiness,
-    SdfLipschitzStatus, SdfPointLocation, SdfPreviewGrid, SdfProjectionProposal,
-    SdfProjectionProposalKind, SdfProjectionReplayStatus, SdfSampleTopologyStatus,
-    SdfSamplingPrecision, SdfVoxelCellGrid, SdfVoxelCoordinateSystem, SdfVoxelGridSource,
-    SdfVoxelOccupancy, SdfVoxelRowOrder, prepare, prepare_versioned,
+    SdfBatchDispatch, SdfCellLocation, SdfCoordinate, SdfDomainStatus, SdfDualCellTopologyStatus,
+    SdfDualContouringBlocker, SdfDualContouringReport, SdfDualContouringSource,
+    SdfDualEdgeRootEvidence, SdfDualVertexPlacementStatus, SdfExpr, SdfFreshness,
+    SdfGradientStatus, SdfGridSamplingReport, SdfHandoffBlocker, SdfHandoffDomain,
+    SdfHandoffReadiness, SdfLipschitzStatus, SdfMetricStatus, SdfPointLocation, SdfPreviewGrid,
+    SdfPreviewSample, SdfProjectionProposal, SdfProjectionProposalKind, SdfProjectionReplayStatus,
+    SdfSampleTopologyStatus, SdfSamplingPrecision, SdfSamplingReport, SdfVoxelCellGrid,
+    SdfVoxelCoordinateSystem, SdfVoxelGridSource, SdfVoxelOccupancy, SdfVoxelRowOrder, prepare,
+    prepare_versioned,
 };
 use proptest::prelude::*;
 
@@ -402,6 +405,39 @@ proptest! {
     }
 
     #[test]
+    fn generated_affine_dual_contouring_cells_are_exact_handoffs(offset in -12_i32..=12, span in 1_i32..=6) {
+        let sdf = prepare(SdfExpr::x().sub_expr(SdfExpr::constant(r(offset))));
+        let grid = SdfPreviewGrid::new(p(offset - span, -1, -1), p(span * 2, 2, 2), [2, 2, 2]);
+        let report = sdf
+            .dual_contouring_report_from_grid(grid, SdfSamplingPrecision::F64)
+            .expect("valid generated dual-contouring grid");
+
+        prop_assert!(report.is_self_consistent());
+        prop_assert!(report.validation_handoff_ready);
+        prop_assert_eq!(report.crossing_edge_count, 4);
+        prop_assert_eq!(report.exact_edge_root_count, 4);
+        prop_assert_eq!(report.active_cell_count, 1);
+        prop_assert_eq!(
+            report.cells[0].placement_status,
+            SdfDualVertexPlacementStatus::ExactAffineQefCandidate
+        );
+    }
+
+    #[test]
+    fn generated_dual_contouring_zero_endpoint_is_not_handoff(offset in -12_i32..=12, span in 1_i32..=6) {
+        let sdf = prepare(SdfExpr::x().sub_expr(SdfExpr::constant(r(offset))));
+        let grid = SdfPreviewGrid::new(p(offset, -1, -1), p(span, 2, 2), [2, 2, 2]);
+        let report = sdf
+            .dual_contouring_report_from_grid(grid, SdfSamplingPrecision::F64)
+            .expect("valid generated zero-touch grid");
+
+        prop_assert!(report.is_self_consistent());
+        prop_assert!(!report.validation_handoff_ready);
+        prop_assert!(report.zero_touch_edge_count > 0);
+        prop_assert!(report.blockers.contains(&SdfDualContouringBlocker::DegenerateZeroTouch));
+    }
+
+    #[test]
     fn generated_coordinate_lipschitz_bound_is_one(a in -50_i32..=50, b in -50_i32..=50) {
         let min_x = a.min(b);
         let max_x = a.max(b);
@@ -569,6 +605,146 @@ fn mesh_preview_report_reuses_grid_sample_report() {
         mesh_report.topology_status,
         SdfSampleTopologyStatus::PreviewOnly
     );
+}
+
+#[test]
+fn dual_contouring_affine_plane_builds_exact_qef_handoff() {
+    let sdf = prepare(SdfExpr::x());
+    let grid = SdfPreviewGrid::new(p(-1, -1, -1), p(2, 2, 2), [2, 2, 2]);
+    let report = sdf
+        .dual_contouring_report_from_grid(grid, SdfSamplingPrecision::F64)
+        .expect("valid dual-contouring grid");
+
+    assert!(report.is_self_consistent());
+    assert_eq!(report.source, SdfDualContouringSource::ExactSdfReplay);
+    assert!(report.validation_handoff_ready);
+    assert!(report.blockers.is_empty());
+    assert_eq!(report.crossing_edge_count, 4);
+    assert_eq!(report.exact_edge_root_count, 4);
+    assert_eq!(report.sampled_edge_root_count, 0);
+    assert_eq!(report.active_cell_count, 1);
+    assert!(report.crossings.iter().all(|crossing| {
+        crossing.root_evidence == SdfDualEdgeRootEvidence::ExactAffineEdgeRoot
+            && crossing.exact_hermite_ready()
+    }));
+
+    let cell = &report.cells[0];
+    assert_eq!(cell.topology_status, SdfDualCellTopologyStatus::Active);
+    assert_eq!(
+        cell.placement_status,
+        SdfDualVertexPlacementStatus::ExactAffineQefCandidate
+    );
+    assert_eq!(cell.qef_terms.len(), 4);
+    assert_eq!(
+        cell.proposal_vertex.as_ref().map(|point| &point.x),
+        Some(&r(0))
+    );
+}
+
+#[test]
+fn dual_contouring_signed_samples_stay_lossy_proposals() {
+    let sdf = prepare(SdfExpr::x());
+    let grid = SdfPreviewGrid::new(p(-1, -1, -1), p(2, 2, 2), [2, 2, 2]);
+    let samples = sdf
+        .sample_grid_preview(grid, SdfSamplingPrecision::F64)
+        .expect("valid sampled grid");
+    let report = SdfDualContouringReport::from_signed_grid_samples(samples);
+
+    assert!(report.is_self_consistent());
+    assert_eq!(report.source, SdfDualContouringSource::SignedGridSamples);
+    assert!(!report.validation_handoff_ready);
+    assert!(
+        report
+            .blockers
+            .contains(&SdfDualContouringBlocker::LossyPrimitiveSamples)
+    );
+    assert_eq!(report.crossing_edge_count, 4);
+    assert_eq!(report.exact_edge_root_count, 0);
+    assert_eq!(report.sampled_edge_root_count, 4);
+    assert_eq!(
+        report.cells[0].placement_status,
+        SdfDualVertexPlacementStatus::ProposalOnly
+    );
+}
+
+#[test]
+fn dual_contouring_zero_endpoint_reports_degenerate_topology() {
+    let sdf = prepare(SdfExpr::x());
+    let grid = SdfPreviewGrid::new(p(0, -1, -1), p(1, 2, 2), [2, 2, 2]);
+    let report = sdf
+        .dual_contouring_report_from_grid(grid, SdfSamplingPrecision::F64)
+        .expect("valid zero-touch grid");
+
+    assert!(report.is_self_consistent());
+    assert!(!report.validation_handoff_ready);
+    assert_eq!(report.zero_touch_edge_count, 8);
+    assert!(
+        report
+            .blockers
+            .contains(&SdfDualContouringBlocker::DegenerateZeroTouch)
+    );
+    assert_eq!(
+        report.cells[0].topology_status,
+        SdfDualCellTopologyStatus::DegenerateZeroTouch
+    );
+}
+
+#[test]
+fn dual_contouring_nonlinear_edge_crossing_requires_root_replay() {
+    let sdf = prepare(
+        SdfExpr::x()
+            .mul_expr(SdfExpr::x())
+            .sub_expr(SdfExpr::constant(r(1))),
+    );
+    let grid = SdfPreviewGrid::new(p(0, -1, -1), p(2, 2, 2), [2, 2, 2]);
+    let report = sdf
+        .dual_contouring_report_from_grid(grid, SdfSamplingPrecision::F64)
+        .expect("valid nonlinear grid");
+
+    assert!(report.is_self_consistent());
+    assert!(!report.validation_handoff_ready);
+    assert_eq!(report.crossing_edge_count, 4);
+    assert_eq!(report.exact_edge_root_count, 0);
+    assert!(
+        report
+            .blockers
+            .contains(&SdfDualContouringBlocker::UnsupportedEdgeRoot)
+    );
+    assert_eq!(
+        report.cells[0].placement_status,
+        SdfDualVertexPlacementStatus::Blocked
+    );
+}
+
+#[test]
+fn dual_contouring_malformed_signed_grid_does_not_panic_or_claim_handoff() {
+    let grid = SdfPreviewGrid::new(p(-1, -1, -1), p(2, 2, 2), [2, 2, 2]);
+    let samples = SdfSamplingReport {
+        precision: SdfSamplingPrecision::F64,
+        metric_status: SdfMetricStatus::SampledApproximation,
+        topology_status: SdfSampleTopologyStatus::PreviewOnly,
+        freshness: SdfFreshness::Unversioned,
+        sample_count: 1,
+        non_finite_count: 0,
+        negative_count: 1,
+        zero_count: 0,
+        positive_count: 0,
+        unknown_sign_count: 0,
+        samples: vec![SdfPreviewSample {
+            point: p(-1, -1, -1),
+            value: Some(-1.0),
+        }],
+    };
+    let report =
+        SdfDualContouringReport::from_signed_grid_samples(SdfGridSamplingReport { grid, samples });
+
+    assert!(!report.validation_handoff_ready);
+    assert!(
+        report
+            .blockers
+            .contains(&SdfDualContouringBlocker::InvalidSampleCount)
+    );
+    assert!(!report.is_self_consistent());
 }
 
 #[test]

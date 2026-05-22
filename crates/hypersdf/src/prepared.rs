@@ -18,6 +18,7 @@ use crate::batch::{
     SdfBatchDispatch, SdfCachePayoffReport, SdfCellBatchClassificationReport,
     SdfPointBatchClassificationReport,
 };
+use crate::dual_contour::{SdfDualContouringReport, dual_contouring_report_from_exact_sdf};
 use crate::expr::SdfExpr;
 use crate::facts::SdfFacts;
 use crate::gradient::{
@@ -352,6 +353,23 @@ impl PreparedSdf {
     ) -> Result<SdfMeshPreviewReport, SdfGridSamplingError> {
         self.sample_grid_preview(grid, precision)
             .map(SdfMeshPreviewReport::surface_nets_diagnostic)
+    }
+
+    /// Build a dual-contouring proposal report from a regular exact grid.
+    ///
+    /// The report follows Ju, Losasso, Schaefer, and Warren's Dual Contouring
+    /// Hermite/QEF shape, but keeps Yap's exact-computation boundary explicit:
+    /// sampled scalar values are retained as adapter data, while endpoint
+    /// signs, affine edge roots, and normals replay through the retained SDF
+    /// where the current expression can certify them. The output is a mesh
+    /// validation handoff candidate, not an accepted mesh.
+    pub fn dual_contouring_report_from_grid(
+        &self,
+        grid: SdfPreviewGrid,
+        precision: SdfSamplingPrecision,
+    ) -> Result<SdfDualContouringReport, SdfGridSamplingError> {
+        self.sample_grid_preview(grid, precision)
+            .map(|samples| dual_contouring_report_from_exact_sdf(&self.expr, samples))
     }
 
     /// Export a preview-only GLSL scalar function.

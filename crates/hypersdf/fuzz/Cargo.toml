@@ -1,0 +1,22 @@
+[package]
+name = "hypersdf-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2024"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+hyperlattice = { path = "../../hyperlattice", default-features = false }
+hyperlimit = { path = "../../hyperlimit", default-features = false }
+hyperreal = { path = "../../hyperreal", default-features = false }
+hypersdf = { path = "..", default-features = false }
+
+[[bin]]
+name = "dual_contouring"
+path = "fuzz_targets/dual_contouring.rs"
+test = false
+doc = false
+bench = false
