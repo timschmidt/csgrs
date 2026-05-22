@@ -248,7 +248,10 @@ fn adjacency_contact_pair(
     certificate: &FullFaceAdjacencyCertificate,
 ) -> bool {
     if shared_face_pair(certificate, pair) {
-        return pair.relation == MeshFacePairRelation::CoplanarOverlapping;
+        return matches!(
+            pair.relation,
+            MeshFacePairRelation::CoplanarOverlapping | MeshFacePairRelation::CoplanarTouching
+        );
     }
 
     match pair.relation {
@@ -408,6 +411,28 @@ fn full_face_adjacency_certificate(
                 right_faces: vec![right_face],
             });
         }
+    }
+
+    for (left_faces, right_faces) in dual_fan_patch_pairs(left, &left_seen, right, &right_seen)? {
+        if left_faces.iter().any(|face| left_seen.contains(face))
+            || right_faces.iter().any(|face| right_seen.contains(face))
+        {
+            return None;
+        }
+        for &left_face in &left_faces {
+            if !left_seen.insert(left_face) {
+                return None;
+            }
+        }
+        for &right_face in &right_faces {
+            if !right_seen.insert(right_face) {
+                return None;
+            }
+        }
+        certificate.shared_patches.push(FullFaceAdjacentPatch {
+            left_faces,
+            right_faces,
+        });
     }
 
     Some(certificate)
@@ -712,6 +737,204 @@ fn fan_triangle_in_whole_triangle(
         interior_point: interior?,
         area_abs,
     }))
+}
+
+/// Discover bounded cross-triangulated full-face adjacency patches.
+///
+/// This is the two-sided counterpart to [`fan_faces_cover_triangle`]: each
+/// source contributes a three-triangle fan over the same exact boundary
+/// triangle, but the interior fan vertex may differ. The proof follows Yap's
+/// object/predicate split from "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997): boundary equality is certified by
+/// exact vertex identity plus exact projected signed-area cancellation, while
+/// each fan point is independently proven to lie strictly inside the boundary
+/// triangle. The routine intentionally remains a bounded certificate for a
+/// common closed-solid adjacency topology, not a replacement for the general
+/// planar arrangement materializer.
+fn dual_fan_patch_pairs(
+    left: &ExactMesh,
+    consumed_left_faces: &BTreeSet<usize>,
+    right: &ExactMesh,
+    consumed_right_faces: &BTreeSet<usize>,
+) -> Option<Vec<(Vec<usize>, Vec<usize>)>> {
+    let left_candidates = fan_patch_candidates(left, consumed_left_faces)?;
+    let right_candidates = fan_patch_candidates(right, consumed_right_faces)?;
+    let mut pairs = Vec::new();
+    let mut used_left = BTreeSet::new();
+    let mut used_right = BTreeSet::new();
+
+    for left_candidate in &left_candidates {
+        if left_candidate
+            .faces
+            .iter()
+            .any(|face| used_left.contains(face))
+        {
+            continue;
+        }
+        let Some((right_index, right_candidate)) =
+            right_candidates
+                .iter()
+                .enumerate()
+                .find(|(right_index, candidate)| {
+                    !used_right.contains(right_index)
+                        && fan_patch_candidates_match(left_candidate, candidate)
+                })
+        else {
+            continue;
+        };
+        used_left.extend(left_candidate.faces.iter().copied());
+        used_right.insert(right_index);
+        pairs.push((left_candidate.faces.clone(), right_candidate.faces.clone()));
+    }
+
+    Some(pairs)
+}
+
+#[derive(Clone, Debug, PartialEq)]
+struct FanPatchCandidate {
+    faces: Vec<usize>,
+    boundary_points: [Point3; 3],
+    signed_area2: ExactReal,
+    area_abs: ExactReal,
+}
+
+fn fan_patch_candidates(
+    mesh: &ExactMesh,
+    consumed_faces: &BTreeSet<usize>,
+) -> Option<Vec<FanPatchCandidate>> {
+    let mut candidates = Vec::new();
+    let face_count = mesh.triangles().len();
+    for first in 0..face_count {
+        if consumed_faces.contains(&first) {
+            continue;
+        }
+        for second in first + 1..face_count {
+            if consumed_faces.contains(&second) {
+                continue;
+            }
+            for third in second + 1..face_count {
+                if consumed_faces.contains(&third) {
+                    continue;
+                }
+                if let Some(candidate) = fan_patch_candidate(mesh, [first, second, third])? {
+                    candidates.push(candidate);
+                }
+            }
+        }
+    }
+    Some(candidates)
+}
+
+fn fan_patch_candidate(mesh: &ExactMesh, faces: [usize; 3]) -> Option<Option<FanPatchCandidate>> {
+    let mut vertex_counts = BTreeMap::<usize, usize>::new();
+    for face in faces {
+        for vertex in mesh.triangles().get(face)?.0 {
+            *vertex_counts.entry(vertex).or_default() += 1;
+        }
+    }
+    if vertex_counts.len() != 4 {
+        return Some(None);
+    }
+
+    let mut interior_vertex = None;
+    let mut boundary_vertices = Vec::new();
+    for (vertex, count) in vertex_counts {
+        match count {
+            3 if interior_vertex.is_none() => interior_vertex = Some(vertex),
+            2 => boundary_vertices.push(vertex),
+            _ => return Some(None),
+        }
+    }
+    let interior_vertex = interior_vertex?;
+    if boundary_vertices.len() != 3 {
+        return Some(None);
+    }
+
+    let boundary_points = [
+        mesh.vertices()
+            .get(boundary_vertices[0])?
+            .to_hyperlimit_point(),
+        mesh.vertices()
+            .get(boundary_vertices[1])?
+            .to_hyperlimit_point(),
+        mesh.vertices()
+            .get(boundary_vertices[2])?
+            .to_hyperlimit_point(),
+    ];
+    let projection = choose_triangle_projection(&boundary_points)?;
+    let interior_point = mesh.vertices().get(interior_vertex)?.to_hyperlimit_point();
+    if point_on_triangle_plane(&boundary_points, &interior_point) != Some(true) {
+        return Some(None);
+    }
+    let interior_location = classify_point_triangle(
+        &project_point3(&boundary_points[0], projection),
+        &project_point3(&boundary_points[1], projection),
+        &project_point3(&boundary_points[2], projection),
+        &project_point3(&interior_point, projection),
+    )
+    .value()?;
+    if interior_location != TriangleLocation::Inside {
+        return Some(None);
+    }
+
+    let mut signed_area2 = ExactReal::from(0);
+    for face in faces {
+        let triangle = mesh.triangles().get(face)?.0;
+        if !triangle.contains(&interior_vertex) {
+            return Some(None);
+        }
+        let points = triangle_points(mesh, triangle)?;
+        if !points
+            .iter()
+            .all(|point| point_on_triangle_plane(&boundary_points, point) == Some(true))
+        {
+            return Some(None);
+        }
+        let area = projected_polygon_area2_value(&points, projection);
+        if real_sign(&area)? == Sign::Zero {
+            return Some(None);
+        }
+        signed_area2 = signed_area2 + area;
+    }
+
+    let area_abs = real_abs(&signed_area2)?;
+    if compare_reals(&area_abs, &ExactReal::from(0)).value() != Some(Ordering::Greater) {
+        return Some(None);
+    }
+    let boundary_area_abs = real_abs(&projected_polygon_area2_value(&boundary_points, projection))?;
+    if compare_reals(&area_abs, &boundary_area_abs).value() != Some(Ordering::Equal) {
+        return Some(None);
+    }
+
+    Some(Some(FanPatchCandidate {
+        faces: faces.into(),
+        boundary_points,
+        signed_area2,
+        area_abs,
+    }))
+}
+
+fn fan_patch_candidates_match(left: &FanPatchCandidate, right: &FanPatchCandidate) -> bool {
+    boundary_point_sets_equal(&left.boundary_points, &right.boundary_points) == Some(true)
+        && compare_reals(&left.area_abs, &right.area_abs).value() == Some(Ordering::Equal)
+        && compare_reals(
+            &(left.signed_area2.clone() + right.signed_area2.clone()),
+            &ExactReal::from(0),
+        )
+        .value()
+            == Some(Ordering::Equal)
+}
+
+fn boundary_point_sets_equal(left: &[Point3; 3], right: &[Point3; 3]) -> Option<bool> {
+    for right_point in right {
+        if !left
+            .iter()
+            .any(|left_point| points_equal(left_point, right_point) == Some(true))
+        {
+            return Some(false);
+        }
+    }
+    Some(true)
 }
 
 fn point_on_triangle_plane(triangle: &[Point3; 3], point: &Point3) -> Option<bool> {

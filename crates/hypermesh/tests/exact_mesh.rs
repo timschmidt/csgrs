@@ -85,6 +85,24 @@ fn base_fan_tetrahedron_i64(
 }
 
 #[cfg(feature = "exact-triangulation")]
+fn upper_base_fan_tetrahedron_i64(
+    a: [i64; 3],
+    b: [i64; 3],
+    c: [i64; 3],
+    center: [i64; 3],
+    d: [i64; 3],
+) -> ExactMesh {
+    ExactMesh::from_i64_triangles(
+        &[
+            a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2], center[0], center[1], center[2],
+            d[0], d[1], d[2],
+        ],
+        &[0, 3, 1, 1, 3, 2, 2, 3, 0, 0, 1, 4, 1, 2, 4, 2, 0, 4],
+    )
+    .unwrap()
+}
+
+#[cfg(feature = "exact-triangulation")]
 fn axis_aligned_box_i64(min: [i64; 3], max: [i64; 3]) -> ExactMesh {
     ExactMesh::from_i64_triangles(
         &[
@@ -7549,6 +7567,115 @@ fn exact_full_face_adjacent_fan_patch_union_deletes_nonconforming_internal_faces
 
     let same_side_overlap =
         base_fan_tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [1, 1, 0], [0, 0, 2]);
+    assert!(
+        hypermesh::exact::materialize_full_face_adjacent_union(
+            &left,
+            &same_side_overlap,
+            ValidationPolicy::CLOSED,
+        )
+        .is_none()
+    );
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
+fn exact_full_face_adjacent_dual_fan_patch_union_deletes_cross_triangulated_internal_faces() {
+    let left =
+        upper_base_fan_tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [1, 1, 0], [0, 0, 4]);
+    let right = base_fan_tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [2, 1, 0], [0, 0, -4]);
+
+    let graph = build_intersection_graph(&left, &right).unwrap();
+    graph.validate_against_meshes(&left, &right).unwrap();
+    assert!(
+        graph
+            .face_pairs
+            .iter()
+            .filter(|pair| {
+                pair.left_face < 3
+                    && pair.right_face < 3
+                    && pair.relation == hypermesh::exact::MeshFacePairRelation::CoplanarOverlapping
+            })
+            .count()
+            >= 3
+    );
+
+    let union = hypermesh::exact::materialize_full_face_adjacent_union(
+        &left,
+        &right,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("opposite-oriented cross-triangulated fan patches should merge");
+    union.validate().unwrap();
+    union.validate_against_sources(&left, &right).unwrap();
+    assert!(union.shared_faces.is_empty());
+    assert_eq!(
+        union.shared_patches,
+        vec![hypermesh::exact::FullFaceAdjacentPatch {
+            left_faces: vec![0, 1, 2],
+            right_faces: vec![0, 1, 2],
+        }]
+    );
+    assert_eq!(union.mesh.vertices().len(), 5);
+    assert_eq!(union.mesh.triangles().len(), 6);
+    assert!(union.mesh.facts().mesh.closed_manifold);
+
+    let preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+    )
+    .unwrap();
+    preflight.validate().unwrap();
+    preflight.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedFullFaceAdjacentUnion
+    );
+
+    let result = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    result
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            hypermesh::exact::ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::FullFaceAdjacentUnion
+        }
+    );
+    assert_eq!(result.mesh, union.mesh);
+
+    let intersection = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    intersection
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            hypermesh::exact::ExactBooleanOperation::Intersection,
+            ValidationPolicy::CLOSED,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert!(intersection.mesh.triangles().is_empty());
+
+    let same_side_overlap =
+        base_fan_tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [2, 1, 0], [0, 0, 2]);
     assert!(
         hypermesh::exact::materialize_full_face_adjacent_union(
             &left,

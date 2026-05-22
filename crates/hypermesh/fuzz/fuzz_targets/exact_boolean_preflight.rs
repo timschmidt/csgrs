@@ -4550,6 +4550,26 @@ fn base_fan_tetrahedron_i64(
 }
 
 #[cfg(feature = "exact-triangulation")]
+fn upper_base_fan_tetrahedron_i64(
+    a: [i64; 3],
+    b: [i64; 3],
+    c: [i64; 3],
+    center: [i64; 3],
+    d: [i64; 3],
+) -> ExactMesh {
+    ExactMesh::from_i64_triangles(
+        &[
+            a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2], center[0], center[1],
+            center[2], d[0], d[1], d[2],
+        ],
+        &[
+            0, 3, 1, 1, 3, 2, 2, 3, 0, 0, 1, 4, 1, 2, 4, 2, 0, 4,
+        ],
+    )
+    .expect("upper base fan tetrahedron fixture should import")
+}
+
+#[cfg(feature = "exact-triangulation")]
 fn affine_box_i64(
     min: [i64; 3],
     max: [i64; 3],
@@ -4853,6 +4873,44 @@ fn exercise_full_face_adjacent_union() {
         )
         .is_none()
     );
+
+    let dual_fan_left =
+        upper_base_fan_tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [1, 1, 0], [0, 0, 4]);
+    let dual_fan_right =
+        base_fan_tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [2, 1, 0], [0, 0, -4]);
+    let dual_fan_union = hypermesh::exact::materialize_full_face_adjacent_union(
+        &dual_fan_left,
+        &dual_fan_right,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("dual fan-patch adjacent fuzz fixture should materialize");
+    dual_fan_union.validate().unwrap();
+    dual_fan_union
+        .validate_against_sources(&dual_fan_left, &dual_fan_right)
+        .unwrap();
+    assert!(dual_fan_union.shared_faces.is_empty());
+    assert_eq!(dual_fan_union.shared_patches.len(), 1);
+    assert_eq!(dual_fan_union.mesh.vertices().len(), 5);
+    assert_eq!(dual_fan_union.mesh.triangles().len(), 6);
+
+    let dual_fan_result = boolean_exact_with_boundary_policy(
+        &dual_fan_left,
+        &dual_fan_right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+    dual_fan_result
+        .validate_operation_against_sources(
+            &dual_fan_left,
+            &dual_fan_right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(dual_fan_result.mesh, dual_fan_union.mesh);
 }
 
 #[cfg(feature = "exact-triangulation")]
