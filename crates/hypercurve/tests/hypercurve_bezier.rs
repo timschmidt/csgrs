@@ -4655,7 +4655,7 @@ fn bezier_boolean_root_isolation_handoff_marks_region_frontiers_for_hypersolve()
     };
     let handoff = BezierBooleanHandoffReport2::from_relation(&relation);
 
-    let root_handoff = BezierBooleanRootIsolationHandoffReport2::from_handoff_report(&handoff);
+    let root_handoff = BezierBooleanRootIsolationHandoffReport2::from_handoff_reports(&[handoff]);
 
     assert_eq!(
         root_handoff.status,
@@ -4675,7 +4675,7 @@ fn bezier_boolean_root_isolation_handoff_preserves_earlier_blockers() {
     );
 
     let unresolved_handoff =
-        BezierBooleanRootIsolationHandoffReport2::from_handoff_report(&unresolved);
+        BezierBooleanRootIsolationHandoffReport2::from_handoff_reports(&[unresolved]);
     assert_eq!(
         unresolved_handoff.status,
         BezierBooleanRootIsolationHandoffStatus::BlockedByUnresolved
@@ -4683,7 +4683,7 @@ fn bezier_boolean_root_isolation_handoff_preserves_earlier_blockers() {
     assert!(unresolved_handoff.has_blockers());
 
     let uncertain_handoff =
-        BezierBooleanRootIsolationHandoffReport2::from_handoff_report(&uncertain);
+        BezierBooleanRootIsolationHandoffReport2::from_handoff_reports(&[uncertain]);
     assert_eq!(
         uncertain_handoff.status,
         BezierBooleanRootIsolationHandoffStatus::BlockedByUncertainty
@@ -14927,7 +14927,7 @@ proptest! {
         );
 
         let root_handoff =
-            BezierBooleanRootIsolationHandoffReport2::from_handoff_report(&handoff);
+            BezierBooleanRootIsolationHandoffReport2::from_handoff_reports(&[handoff]);
 
         prop_assert_eq!(
             root_handoff.status,

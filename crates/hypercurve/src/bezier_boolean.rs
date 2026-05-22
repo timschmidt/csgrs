@@ -16892,7 +16892,7 @@ impl BezierPathRangeBatchReport2 {
 }
 
 impl BezierBooleanRootIsolationHandoffReport2 {
-    /// Builds a root-isolation handoff from one boolean relation report.
+    /// Builds a root-isolation handoff from many boolean relation reports.
     ///
     /// A [`BezierBooleanHandoffReport2`] with retained positive-width regions
     /// is now actionable because `hypersolve` can isolate roots. This method
@@ -16903,14 +16903,6 @@ impl BezierBooleanRootIsolationHandoffReport2 {
     /// the handoff certifies what exact stage may run next, not the final
     /// topology. The delegated isolation model is the Sturm/Collins-Loos
     /// exact real-root isolation tradition now surfaced through `hypersolve`.
-    pub fn from_handoff_report(report: &BezierBooleanHandoffReport2) -> Self {
-        let mut handoff = Self::empty();
-        handoff.relation_count = 1;
-        handoff.apply_report(report);
-        handoff.finalize()
-    }
-
-    /// Builds a root-isolation handoff from many boolean relation reports.
     pub fn from_handoff_reports(reports: &[BezierBooleanHandoffReport2]) -> Self {
         let mut handoff = Self::empty();
         handoff.relation_count = reports.len();
