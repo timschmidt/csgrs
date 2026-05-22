@@ -1,6 +1,7 @@
 use hypercurve::{
     Axis2, BezierAreaMomentPrefixSums2, BezierAreaPrefixSums2,
-    BezierBooleanAlgebraicParameterAuditStatus, BezierBooleanAlgebraicParameterHandoffReport2,
+    BezierBooleanAlgebraicParameterAuditStatus, BezierBooleanAlgebraicParameterCarrierReport2,
+    BezierBooleanAlgebraicParameterCarrierStatus, BezierBooleanAlgebraicParameterHandoffReport2,
     BezierBooleanAlgebraicParameterHandoffStatus, BezierBooleanAlgebraicParameterOrderingReport2,
     BezierBooleanAlgebraicParameterOrderingStatus, BezierBooleanAlgebraicParameterReadinessReport2,
     BezierBooleanAlgebraicParameterReadinessStatus, BezierBooleanAlgebraicParameterRole,
@@ -5630,6 +5631,190 @@ fn bezier_boolean_algebraic_parameter_ordering_blocks_unrefined_overlaps() {
     assert!(ordering.has_blockers());
     assert_eq!(ordering.blocked_comparison_count, 1);
     assert!(ordering.sorted_events.is_empty());
+}
+
+#[test]
+fn bezier_boolean_algebraic_parameter_carrier_preserves_interval_only_roots() {
+    let range = BezierPathRangeOrderReport2::from_graph_order(
+        &BezierMonotoneGraphOrder::IntersectsOrTouches {
+            parameters: Vec::new(),
+            spans: vec![span(ratio(1, 4), ratio(1, 2))],
+        },
+    );
+    let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &[range]);
+    let handoff =
+        match BezierBooleanAlgebraicParameterHandoffReport2::from_hypersolve_algebraic_root_reports(
+            &scheduler,
+            &[algebraic_root_report(half(), false)],
+            &policy(),
+        ) {
+            Classification::Decided(report) => report,
+            Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
+        };
+    let readiness =
+        match BezierBooleanAlgebraicParameterReadinessReport2::from_handoff(&handoff, &policy()) {
+            Classification::Decided(report) => report,
+            Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
+        };
+    let ordering = BezierBooleanAlgebraicParameterOrderingReport2::from_readiness(
+        &readiness,
+        AlgebraicRootRefinementComparisonConfig::default(),
+        &policy(),
+    );
+
+    let carrier = BezierBooleanAlgebraicParameterCarrierReport2::from_ordering(&ordering);
+
+    assert_eq!(
+        carrier.status,
+        BezierBooleanAlgebraicParameterCarrierStatus::Ready
+    );
+    assert!(carrier.is_ready());
+    assert!(!carrier.has_blockers());
+    assert!(!carrier.can_feed_rational_split_bridge());
+    assert_eq!(carrier.ordered_event_count, 1);
+    assert_eq!(carrier.exact_rational_event_count, 0);
+    assert_eq!(carrier.interval_event_count, 1);
+    assert_eq!(carrier.shared_range_events.len(), 1);
+    assert_eq!(carrier.blocker_count, 0);
+
+    let bridge = match BezierBooleanAlgebraicSplitBridgeReport2::from_ordering(&ordering, &policy())
+    {
+        Classification::Decided(report) => report,
+        Classification::Uncertain(reason) => panic!("unexpected bridge uncertainty: {reason:?}"),
+    };
+    assert_eq!(
+        bridge.status,
+        BezierBooleanAlgebraicSplitBridgeStatus::NonRationalParameter
+    );
+}
+
+#[test]
+fn bezier_boolean_algebraic_parameter_carrier_partitions_ordered_roles() {
+    let range_reports = vec![
+        BezierPathRangeOrderReport2::from_graph_order(
+            &BezierMonotoneGraphOrder::IntersectsOrTouches {
+                parameters: Vec::new(),
+                spans: vec![span(ratio(1, 8), ratio(1, 4))],
+            },
+        ),
+        BezierPathRangeOrderReport2::from_graph_order(
+            &BezierMonotoneGraphOrder::IntersectsOrTouches {
+                parameters: Vec::new(),
+                spans: vec![span(ratio(1, 4), ratio(1, 2))],
+            },
+        ),
+        BezierPathRangeOrderReport2::from_graph_order(
+            &BezierMonotoneGraphOrder::IntersectsOrTouches {
+                parameters: Vec::new(),
+                spans: vec![span(ratio(1, 2), ratio(3, 4))],
+            },
+        ),
+    ];
+    let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &range_reports);
+    let handoff =
+        match BezierBooleanAlgebraicParameterHandoffReport2::from_hypersolve_algebraic_root_reports(
+            &scheduler,
+            &[
+                algebraic_root_report(ratio(3, 4), true),
+                algebraic_root_report(ratio(1, 4), true),
+                algebraic_root_report(ratio(1, 2), true),
+            ],
+            &policy(),
+        ) {
+            Classification::Decided(report) => report,
+            Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
+        };
+    let readiness =
+        match BezierBooleanAlgebraicParameterReadinessReport2::from_handoff(&handoff, &policy()) {
+            Classification::Decided(report) => report,
+            Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
+        };
+    let mut ordering = BezierBooleanAlgebraicParameterOrderingReport2::from_readiness(
+        &readiness,
+        AlgebraicRootRefinementComparisonConfig::default(),
+        &policy(),
+    );
+    ordering.sorted_events[0].role = BezierBooleanAlgebraicParameterRole::FirstCurve;
+    ordering.sorted_events[1].role = BezierBooleanAlgebraicParameterRole::SharedRange;
+    ordering.sorted_events[2].role = BezierBooleanAlgebraicParameterRole::SecondCurve;
+
+    let carrier = BezierBooleanAlgebraicParameterCarrierReport2::from_ordering(&ordering);
+
+    assert_eq!(
+        carrier.status,
+        BezierBooleanAlgebraicParameterCarrierStatus::Ready
+    );
+    assert_eq!(carrier.ordered_event_count, 3);
+    assert_eq!(carrier.exact_rational_event_count, 3);
+    assert_eq!(carrier.interval_event_count, 0);
+    assert_eq!(carrier.first_curve_events.len(), 1);
+    assert_eq!(carrier.second_curve_events.len(), 1);
+    assert_eq!(carrier.shared_range_events.len(), 1);
+    assert_eq!(carrier.rational_split_lowerable_event_count, 1);
+    assert!(!carrier.can_feed_rational_split_bridge());
+    assert_eq!(
+        carrier.ordered_events[0].role,
+        BezierBooleanAlgebraicParameterRole::FirstCurve
+    );
+    assert_eq!(
+        carrier.ordered_events[2].role,
+        BezierBooleanAlgebraicParameterRole::SecondCurve
+    );
+}
+
+#[test]
+fn bezier_boolean_algebraic_parameter_carrier_blocks_failed_ordering() {
+    let range_reports = vec![
+        BezierPathRangeOrderReport2::from_graph_order(
+            &BezierMonotoneGraphOrder::IntersectsOrTouches {
+                parameters: Vec::new(),
+                spans: vec![span(ratio(1, 4), ratio(1, 2))],
+            },
+        ),
+        BezierPathRangeOrderReport2::from_graph_order(
+            &BezierMonotoneGraphOrder::IntersectsOrTouches {
+                parameters: Vec::new(),
+                spans: vec![span(ratio(1, 4), ratio(1, 2))],
+            },
+        ),
+    ];
+    let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &range_reports);
+    let handoff =
+        match BezierBooleanAlgebraicParameterHandoffReport2::from_hypersolve_algebraic_root_reports(
+            &scheduler,
+            &[
+                algebraic_root_report(ratio(1, 3), false),
+                algebraic_root_report(ratio(2, 5), false),
+            ],
+            &policy(),
+        ) {
+            Classification::Decided(report) => report,
+            Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
+        };
+    let readiness =
+        match BezierBooleanAlgebraicParameterReadinessReport2::from_handoff(&handoff, &policy()) {
+            Classification::Decided(report) => report,
+            Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
+        };
+    let config = AlgebraicRootRefinementComparisonConfig {
+        max_refinement_rounds: 0,
+        ..AlgebraicRootRefinementComparisonConfig::default()
+    };
+    let ordering = BezierBooleanAlgebraicParameterOrderingReport2::from_readiness(
+        &readiness,
+        config,
+        &policy(),
+    );
+
+    let carrier = BezierBooleanAlgebraicParameterCarrierReport2::from_ordering(&ordering);
+
+    assert_eq!(
+        carrier.status,
+        BezierBooleanAlgebraicParameterCarrierStatus::OrderingBlocked
+    );
+    assert!(carrier.has_blockers());
+    assert_eq!(carrier.blocker_count, 1);
+    assert!(carrier.ordered_events.is_empty());
 }
 
 #[test]

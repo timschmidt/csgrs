@@ -2852,6 +2852,57 @@ pub struct BezierBooleanAlgebraicParameterOrderingReport2 {
     pub blocker_count: usize,
 }
 
+/// Status for carrying ordered algebraic parameters as native boolean evidence.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum BezierBooleanAlgebraicParameterCarrierStatus {
+    /// No scheduler or algebraic parameter work exists.
+    Empty,
+    /// The scheduler did not need algebraic parameter evidence.
+    NotNeeded,
+    /// Existing rational split events already satisfy the scheduler.
+    RationalSplitEventsReady,
+    /// Ordered represented parameters are available to exact downstream stages.
+    Ready,
+    /// Algebraic ordering blocked carrier construction.
+    OrderingBlocked,
+}
+
+/// Native carrier for ordered represented Bezier/conic split parameters.
+///
+/// This report is the non-mutating algebraic handoff that sits after certified
+/// ordering and before any split-construction backend. It deliberately keeps
+/// [`AlgebraicRootRepresentation`] payloads intact, including interval-only
+/// roots, instead of lowering them to today's rational-only split insertion
+/// API. That is the EGC boundary Yap describes in "Towards Exact Geometric
+/// Computation" (1997): exact algebraic objects and certified predicates are
+/// promoted to explicit combinatorial data before construction, while
+/// unsupported construction backends block separately.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BezierBooleanAlgebraicParameterCarrierReport2 {
+    /// Coarse carrier status.
+    pub status: BezierBooleanAlgebraicParameterCarrierStatus,
+    /// Algebraic ordering status used to derive this carrier.
+    pub ordering_status: BezierBooleanAlgebraicParameterOrderingStatus,
+    /// Ordered represented algebraic events retained for exact consumers.
+    pub ordered_events: Vec<BezierBooleanAlgebraicParameterEvent2>,
+    /// Ordered first-curve parameter events.
+    pub first_curve_events: Vec<BezierBooleanAlgebraicParameterEvent2>,
+    /// Ordered second-curve parameter events.
+    pub second_curve_events: Vec<BezierBooleanAlgebraicParameterEvent2>,
+    /// Ordered shared monotone-range parameter events.
+    pub shared_range_events: Vec<BezierBooleanAlgebraicParameterEvent2>,
+    /// Number of ordered events retained.
+    pub ordered_event_count: usize,
+    /// Number of exact rational witnesses retained.
+    pub exact_rational_event_count: usize,
+    /// Number of interval-only represented roots retained.
+    pub interval_event_count: usize,
+    /// Number of ordered events that today's rational split bridge can lower.
+    pub rational_split_lowerable_event_count: usize,
+    /// Number of retained blocking preconditions.
+    pub blocker_count: usize,
+}
+
 /// Status for bridging ordered algebraic parameters into today's split plan.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum BezierBooleanAlgebraicSplitBridgeStatus {
@@ -18522,6 +18573,138 @@ impl BezierBooleanAlgebraicParameterOrderingReport2 {
             BezierBooleanAlgebraicParameterOrderingStatus::ReadinessBlocked
                 | BezierBooleanAlgebraicParameterOrderingStatus::ComparisonBlocked
         )
+    }
+}
+
+impl BezierBooleanAlgebraicParameterCarrierReport2 {
+    /// Carries certified ordered algebraic parameters without forcing lowering.
+    ///
+    /// Unlike [`BezierBooleanAlgebraicSplitBridgeReport2`], this constructor
+    /// accepts interval-only roots as valid payloads. It only requires the
+    /// upstream ordering certificate to be ready. The carrier therefore records
+    /// the exact algebraic evidence needed by future algebraic fragment
+    /// splitters while still exposing how much of the frontier can be lowered
+    /// by the existing rational bridge. This separation follows Yap's TEGC
+    /// model: predicates certify object relationships first; construction
+    /// backends consume only the exact object type they can represent.
+    pub fn from_ordering(ordering: &BezierBooleanAlgebraicParameterOrderingReport2) -> Self {
+        match ordering.status {
+            BezierBooleanAlgebraicParameterOrderingStatus::Empty => {
+                return Self::blocked_or_empty(
+                    BezierBooleanAlgebraicParameterCarrierStatus::Empty,
+                    ordering,
+                    0,
+                );
+            }
+            BezierBooleanAlgebraicParameterOrderingStatus::NotNeeded => {
+                return Self::blocked_or_empty(
+                    BezierBooleanAlgebraicParameterCarrierStatus::NotNeeded,
+                    ordering,
+                    0,
+                );
+            }
+            BezierBooleanAlgebraicParameterOrderingStatus::RationalSplitEventsReady => {
+                return Self::blocked_or_empty(
+                    BezierBooleanAlgebraicParameterCarrierStatus::RationalSplitEventsReady,
+                    ordering,
+                    0,
+                );
+            }
+            BezierBooleanAlgebraicParameterOrderingStatus::ReadinessBlocked
+            | BezierBooleanAlgebraicParameterOrderingStatus::ComparisonBlocked => {
+                return Self::blocked_or_empty(
+                    BezierBooleanAlgebraicParameterCarrierStatus::OrderingBlocked,
+                    ordering,
+                    ordering.blocker_count.max(1),
+                );
+            }
+            BezierBooleanAlgebraicParameterOrderingStatus::Ready => {}
+        }
+
+        let mut first_curve_events = Vec::new();
+        let mut second_curve_events = Vec::new();
+        let mut shared_range_events = Vec::new();
+        let mut exact_rational_event_count = 0;
+        let mut interval_event_count = 0;
+        let mut rational_split_lowerable_event_count = 0;
+
+        for event in &ordering.sorted_events {
+            if event.root.exact_rational_witness().is_some() {
+                exact_rational_event_count += 1;
+                if event.role == BezierBooleanAlgebraicParameterRole::SharedRange {
+                    rational_split_lowerable_event_count += 1;
+                }
+            } else {
+                interval_event_count += 1;
+            }
+
+            match event.role {
+                BezierBooleanAlgebraicParameterRole::FirstCurve => {
+                    first_curve_events.push(event.clone());
+                }
+                BezierBooleanAlgebraicParameterRole::SecondCurve => {
+                    second_curve_events.push(event.clone());
+                }
+                BezierBooleanAlgebraicParameterRole::SharedRange => {
+                    shared_range_events.push(event.clone());
+                }
+            }
+        }
+
+        Self {
+            status: BezierBooleanAlgebraicParameterCarrierStatus::Ready,
+            ordering_status: ordering.status,
+            ordered_events: ordering.sorted_events.clone(),
+            first_curve_events,
+            second_curve_events,
+            shared_range_events,
+            ordered_event_count: ordering.sorted_events.len(),
+            exact_rational_event_count,
+            interval_event_count,
+            rational_split_lowerable_event_count,
+            blocker_count: 0,
+        }
+    }
+
+    fn blocked_or_empty(
+        status: BezierBooleanAlgebraicParameterCarrierStatus,
+        ordering: &BezierBooleanAlgebraicParameterOrderingReport2,
+        blocker_count: usize,
+    ) -> Self {
+        Self {
+            status,
+            ordering_status: ordering.status,
+            ordered_events: Vec::new(),
+            first_curve_events: Vec::new(),
+            second_curve_events: Vec::new(),
+            shared_range_events: Vec::new(),
+            ordered_event_count: 0,
+            exact_rational_event_count: 0,
+            interval_event_count: 0,
+            rational_split_lowerable_event_count: 0,
+            blocker_count,
+        }
+    }
+
+    /// Returns true when ordered algebraic parameter evidence is available.
+    pub fn is_ready(&self) -> bool {
+        self.status == BezierBooleanAlgebraicParameterCarrierStatus::Ready
+    }
+
+    /// Returns true when carrier construction retained ordering blockers.
+    pub fn has_blockers(&self) -> bool {
+        self.status == BezierBooleanAlgebraicParameterCarrierStatus::OrderingBlocked
+    }
+
+    /// Returns true when the carrier can be lowered by the current rational bridge.
+    ///
+    /// This helper is intentionally stricter than [`Self::is_ready`]: a carrier
+    /// with interval-only roots is valid exact evidence, but it cannot feed the
+    /// rational split insertion backend without an algebraic splitter.
+    pub fn can_feed_rational_split_bridge(&self) -> bool {
+        self.is_ready()
+            && self.interval_event_count == 0
+            && self.rational_split_lowerable_event_count == self.ordered_event_count
     }
 }
 

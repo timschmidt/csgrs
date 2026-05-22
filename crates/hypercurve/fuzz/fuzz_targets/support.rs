@@ -10,6 +10,12 @@
 use hypercurve::{
     Aabb2 as HAabb2, ArcArcIntersection as HArcArcIntersection,
     ArcArcIntersectionPoint as HArcArcIntersectionPoint, Axis2 as HAxis2,
+    BezierBooleanAlgebraicParameterCarrierReport2 as HBezierBooleanAlgebraicParameterCarrierReport2,
+    BezierBooleanAlgebraicParameterCarrierStatus as HBezierBooleanAlgebraicParameterCarrierStatus,
+    BezierBooleanAlgebraicParameterHandoffReport2 as HBezierBooleanAlgebraicParameterHandoffReport2,
+    BezierBooleanAlgebraicParameterOrderingReport2 as HBezierBooleanAlgebraicParameterOrderingReport2,
+    BezierBooleanAlgebraicParameterOrderingStatus as HBezierBooleanAlgebraicParameterOrderingStatus,
+    BezierBooleanAlgebraicParameterReadinessReport2 as HBezierBooleanAlgebraicParameterReadinessReport2,
     BezierBooleanAssemblyReadinessStatus as HBezierBooleanAssemblyReadinessStatus,
     BezierBooleanConstructionReadinessStatus as HBezierBooleanConstructionReadinessStatus,
     BezierBooleanCubicFragmentReport2 as HBezierBooleanCubicFragmentReport2,
@@ -36,6 +42,7 @@ use hypercurve::{
     BezierBooleanOverlapResolutionReport2 as HBezierBooleanOverlapResolutionReport2,
     BezierBooleanOwnedTraversalStep2 as HBezierBooleanOwnedTraversalStep2,
     BezierBooleanOwnershipFact2 as HBezierBooleanOwnershipFact2,
+    BezierBooleanPathSchedulerReport2 as HBezierBooleanPathSchedulerReport2,
     BezierBooleanQuadraticFragmentReport2 as HBezierBooleanQuadraticFragmentReport2,
     BezierBooleanRationalQuadraticFragmentReport2 as HBezierBooleanRationalQuadraticFragmentReport2,
     BezierBooleanResultReport2 as HBezierBooleanResultReport2,
@@ -52,7 +59,9 @@ use hypercurve::{
     BezierLineFitRelation as HBezierLineFitRelation,
     BezierLineImageFitRelation as HBezierLineImageFitRelation,
     BezierMonotoneGraphOrder as HBezierMonotoneGraphOrder,
-    BezierOffsetCandidate2 as HBezierOffsetCandidate2, BezierOffsetRisk as HBezierOffsetRisk,
+    BezierMonotoneSpan as HBezierMonotoneSpan, BezierOffsetCandidate2 as HBezierOffsetCandidate2,
+    BezierOffsetRisk as HBezierOffsetRisk,
+    BezierPathRangeOrderReport2 as HBezierPathRangeOrderReport2,
     BezierPointFitRelation as HBezierPointFitRelation,
     BezierPointImageFitRelation as HBezierPointImageFitRelation,
     BezierSimplificationBoundKind as HBezierSimplificationBoundKind,
@@ -77,6 +86,16 @@ use hypercurve::{
     Real as HReal, Region2 as HRegion2, RegionPointLocation as HRegionPointLocation,
     Segment2 as HSegment2, SegmentIntersection as HSegmentIntersection, Tolerance as HTolerance,
     UncertaintyReason as HUncertaintyReason,
+};
+use hypersolve::{
+    AlgebraicRootKind as HAlgebraicRootKind,
+    AlgebraicRootRefinementComparisonConfig as HAlgebraicRootRefinementComparisonConfig,
+    AlgebraicRootRepresentation as HAlgebraicRootRepresentation,
+    AlgebraicRootRepresentationReport as HAlgebraicRootRepresentationReport,
+    AlgebraicRootRepresentationStatus as HAlgebraicRootRepresentationStatus,
+    AlgebraicRootValidationReport as HAlgebraicRootValidationReport,
+    AlgebraicRootValidationStatus as HAlgebraicRootValidationStatus,
+    IsolatedRootInterval as HIsolatedRootInterval, SymbolId as HSymbolId,
 };
 use std::f64::consts::PI;
 
@@ -4375,8 +4394,95 @@ fn h_assert_bezier_boolean_rational_quadratic_loop_locator(_reader: &mut ByteRea
 }
 
 /// Aggregate hypercurve fuzz entrypoint covering public APIs and cross-path invariants.
+fn h_algebraic_root_report(parameter: HReal, exact: bool) -> HAlgebraicRootRepresentationReport {
+    let lower = parameter.clone() - h_ratio(1, 128);
+    let upper = parameter.clone() + h_ratio(1, 128);
+    HAlgebraicRootRepresentationReport {
+        constraint_index: 0,
+        symbol: Some(HSymbolId(0)),
+        status: HAlgebraicRootRepresentationStatus::Represented,
+        roots: vec![HAlgebraicRootRepresentation {
+            constraint_index: 0,
+            symbol: HSymbolId(0),
+            interval_index: 0,
+            polynomial_coefficients: vec![-parameter.clone(), HReal::one()],
+            interval: HIsolatedRootInterval {
+                lower,
+                upper,
+                exact_root: exact.then_some(parameter),
+                distinct_root_count: 1,
+            },
+            kind: if exact {
+                HAlgebraicRootKind::ExactRationalWitness
+            } else {
+                HAlgebraicRootKind::IsolatingInterval
+            },
+            validation: HAlgebraicRootValidationReport {
+                status: HAlgebraicRootValidationStatus::Valid,
+                message: None,
+            },
+        }],
+        message: None,
+    }
+}
+
+/// Fuzzes the algebraic carrier boundary without running the heavy libFuzzer target here.
+///
+/// The invariant is Yap-style: ordered interval-only roots are valid carrier
+/// evidence, but they must not be advertised as lowerable by the rational split
+/// bridge until an algebraic splitter exists.
+pub fn h_assert_bezier_boolean_algebraic_parameter_carrier(reader: &mut ByteReader<'_>) {
+    let exact = reader.bool();
+    let numerator = reader.i32_range(1, 7);
+    let denominator = reader.i32_range(8, 16);
+    let parameter = h_ratio(numerator, denominator);
+    let range = HBezierPathRangeOrderReport2::from_graph_order(
+        &HBezierMonotoneGraphOrder::IntersectsOrTouches {
+            parameters: Vec::new(),
+            spans: vec![HBezierMonotoneSpan::new(h_ratio(1, 8), h_ratio(7, 8))],
+        },
+    );
+    let scheduler = HBezierBooleanPathSchedulerReport2::from_reports(&[], &[range]);
+    let handoff =
+        match HBezierBooleanAlgebraicParameterHandoffReport2::from_hypersolve_algebraic_root_reports(
+            &scheduler,
+            &[h_algebraic_root_report(parameter, exact)],
+            &h_policy(),
+        ) {
+            HClassification::Decided(report) => report,
+            HClassification::Uncertain(_) => return,
+        };
+    let readiness =
+        match HBezierBooleanAlgebraicParameterReadinessReport2::from_handoff(&handoff, &h_policy())
+        {
+            HClassification::Decided(report) => report,
+            HClassification::Uncertain(_) => return,
+        };
+    let ordering = HBezierBooleanAlgebraicParameterOrderingReport2::from_readiness(
+        &readiness,
+        HAlgebraicRootRefinementComparisonConfig::default(),
+        &h_policy(),
+    );
+    let carrier = HBezierBooleanAlgebraicParameterCarrierReport2::from_ordering(&ordering);
+
+    assert_eq!(carrier.ordering_status, ordering.status);
+    if ordering.status == HBezierBooleanAlgebraicParameterOrderingStatus::Ready {
+        assert_eq!(
+            carrier.status,
+            HBezierBooleanAlgebraicParameterCarrierStatus::Ready
+        );
+        assert_eq!(carrier.ordered_event_count, 1);
+        assert_eq!(carrier.exact_rational_event_count, usize::from(exact));
+        assert_eq!(carrier.interval_event_count, usize::from(!exact));
+        assert_eq!(carrier.shared_range_events.len(), 1);
+        assert_eq!(carrier.can_feed_rational_split_bridge(), exact);
+    } else {
+        assert!(carrier.has_blockers() || carrier.ordered_event_count == 0);
+    }
+}
+
 pub fn h_assert_full_api(reader: &mut ByteReader<'_>) {
-    match reader.byte() % 23 {
+    match reader.byte() % 24 {
         0 => h_assert_segment_intersections(reader),
         1 => h_assert_segment_containment_and_reversal(reader),
         2 => h_assert_contour_region_classification(reader),
@@ -4399,6 +4505,7 @@ pub fn h_assert_full_api(reader: &mut ByteReader<'_>) {
         19 => h_assert_bezier_boolean_quadratic_loop_locator(reader),
         20 => h_assert_bezier_boolean_rational_quadratic_loop_locator(reader),
         21 => h_assert_bezier_boolean_cubic_loop_locator(reader),
+        22 => h_assert_bezier_boolean_algebraic_parameter_carrier(reader),
         _ => h_assert_adversarial_polygon_pipeline(reader),
     }
 }

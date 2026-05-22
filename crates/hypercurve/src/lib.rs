@@ -60,6 +60,7 @@ pub use bbox::Aabb2;
 pub use bezier::{BezierEndpoint, CubicBezier2, EndpointTangent2, QuadraticBezier2};
 pub use bezier_boolean::{
     BezierBooleanAlgebraicParameterAuditReport2, BezierBooleanAlgebraicParameterAuditStatus,
+    BezierBooleanAlgebraicParameterCarrierReport2, BezierBooleanAlgebraicParameterCarrierStatus,
     BezierBooleanAlgebraicParameterEvent2, BezierBooleanAlgebraicParameterHandoffReport2,
     BezierBooleanAlgebraicParameterHandoffStatus,
     BezierBooleanAlgebraicParameterOrderingComparison2,

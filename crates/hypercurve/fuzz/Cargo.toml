@@ -12,6 +12,8 @@ cargo-fuzz = true
 # Development mode uses the local path line. For release, comment it and uncomment the crates.io line.
 hypercurve = { path = ".." }
 # hypercurve = "0.3.0"
+hypersolve = { path = "../../hypersolve", default-features = false }
+# hypersolve = "0.3.0"
 libfuzzer-sys = "0.4"
 
 [[bin]]
