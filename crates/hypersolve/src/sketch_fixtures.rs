@@ -14,9 +14,10 @@ use crate::certification::{CandidateCertificationReport, certify_candidate};
 use crate::eval::context_from_problem;
 use crate::prepared::PreparedProblem;
 use crate::sketch::{
-    SketchEntityKind, SketchGeneratedRowStatus, SketchLoweringReport, SketchSolveProblem,
+    SketchArcEndpoint, SketchEntityKind, SketchGeneratedRowStatus, SketchLineEndpoint,
+    SketchLoweringReport, SketchSolveProblem, SketchTangentOrientation,
 };
-use crate::sketch_builders::{distance, incidence, orientation, symmetry};
+use crate::sketch_builders::{distance, incidence, orientation, symmetry, tangency};
 
 /// Compatibility fixture family.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -30,6 +31,8 @@ pub enum SketchCompatibilityFixtureKind {
     Free3DPointCoincidence,
     /// Covers retained 3D workplane symmetry lowering and exact replay.
     WorkplaneSymmetry3D,
+    /// Covers retained 2D arc-line tangent endpoint/orientation lowering.
+    ArcLineTangent2D,
 }
 
 /// One license-clean sketch compatibility fixture.
@@ -85,6 +88,7 @@ pub fn sketch_compatibility_fixtures() -> Vec<SketchCompatibilityFixture> {
         constraint_coverage_2d_fixture(),
         free_3d_point_coincidence_fixture(),
         workplane_symmetry_3d_fixture(),
+        arc_line_tangent_2d_fixture(),
     ]
 }
 
@@ -209,6 +213,34 @@ fn workplane_symmetry_3d_fixture() -> SketchCompatibilityFixture {
         name: "workplane_symmetry_3d",
         kind: SketchCompatibilityFixtureKind::WorkplaneSymmetry3D,
         source: "Hyper-authored 3D workplane symmetry fixture",
+        sketch,
+        expected_generated_rows: 5,
+    }
+}
+
+fn arc_line_tangent_2d_fixture() -> SketchCompatibilityFixture {
+    let mut sketch = SketchSolveProblem::new();
+    let center = sketch.add_point2d("center", 0.into(), 0.into());
+    let start = sketch.add_point2d("start", 5.into(), 0.into());
+    let end = sketch.add_point2d("end", 0.into(), 5.into());
+    let radius = sketch.add_distance("radius", 5.into());
+    let arc = sketch.add_arc_of_circle2("arc", center, start, end, radius);
+    let tangent_end = sketch.add_point2d("tangent_end", 5.into(), 3.into());
+    let tangent = sketch.add_line_segment2("tangent", start, tangent_end);
+    tangency::arc_line_tangent2(
+        &mut sketch,
+        "arc line tangent",
+        arc,
+        SketchArcEndpoint::Start,
+        tangent,
+        SketchLineEndpoint::Start,
+        SketchTangentOrientation::CounterClockwise,
+    );
+
+    SketchCompatibilityFixture {
+        name: "arc_line_tangent_2d",
+        kind: SketchCompatibilityFixtureKind::ArcLineTangent2D,
+        source: "Hyper-authored 2D arc-line tangent fixture",
         sketch,
         expected_generated_rows: 5,
     }

@@ -5,11 +5,12 @@ use hypersolve::{
     Expr, FailedConstraintRemovalStatus, FailedConstraintStatus, IntervalBoxCertificationPackage,
     IntervalBoxCertificationStatus, MultivariateQuadraticKrawczykStatus, PreparedProblem,
     PreparedSolverBlock, Problem, ProposalEngineKind, ProposalEnginePrecision,
-    ProposalEngineReport, RootIsolationStatus, SketchConstructionCertificateStatus,
-    SketchDegeneracyKind, SketchDegeneracyStatus, SketchEntityDomain, SketchEntityDomainKind,
-    SketchEntityDomainStatus, SketchGeneratedRowStatus, SketchParameterDomain,
-    SketchParameterDomainStatus, SketchResidualFormKind, SketchResidualFormRole,
-    SketchResidualFormsStatus, SketchResidualStrategy, SketchRoundTripMetadata, SketchSolveProblem,
+    ProposalEngineReport, RootIsolationStatus, SketchArcEndpoint,
+    SketchConstructionCertificateStatus, SketchDegeneracyKind, SketchDegeneracyStatus,
+    SketchEntityDomain, SketchEntityDomainKind, SketchEntityDomainStatus, SketchGeneratedRowStatus,
+    SketchLineEndpoint, SketchParameterDomain, SketchParameterDomainStatus, SketchResidualFormKind,
+    SketchResidualFormRole, SketchResidualFormsStatus, SketchResidualStrategy,
+    SketchRoundTripMetadata, SketchSolveProblem, SketchTangentOrientation,
     SketchUnitToleranceStatus, SketchWorkplaneFrameStatus, SolverBlockRowKind, SolverConfig,
     SolverPoint2, SolverState, SymbolId, VariableBall, apply_equality_substitution_classes,
     audit_sketch_unit_tolerances, certify_affine_krawczyk_box, certify_candidate,
@@ -771,6 +772,61 @@ proptest! {
         );
         let dot = forms.forms[1].residual.eval_real(context.bindings()).unwrap();
         prop_assert_eq!(dot.structural_facts().sign, Some(RealSign::Positive));
+    }
+
+    #[test]
+    fn sketch_arc_line_tangent_rows_match_generated_integer_circle_tangents(
+        cx in -8_i16..=8,
+        cy in -8_i16..=8,
+        radius in 1_i16..=12,
+        tangent_length in 1_i16..=12,
+    ) {
+        let cx = i64::from(cx);
+        let cy = i64::from(cy);
+        let radius = i64::from(radius);
+        let tangent_length = i64::from(tangent_length);
+        let mut sketch = SketchSolveProblem::new();
+        let center = sketch.add_point2d("center", Real::from(cx), Real::from(cy));
+        let start = sketch.add_point2d("start", Real::from(cx + radius), Real::from(cy));
+        let end = sketch.add_point2d("end", Real::from(cx), Real::from(cy + radius));
+        let radius_entity = sketch.add_distance("radius", Real::from(radius));
+        let arc = sketch.add_arc_of_circle2("arc", center, start, end, radius_entity);
+        let line_end = sketch.add_point2d(
+            "line end",
+            Real::from(cx + radius),
+            Real::from(cy + tangent_length),
+        );
+        let line = sketch.add_line_segment2("line", start, line_end);
+        let handle = sketch.add_arc_line_tangent2(
+            "arc line tangent",
+            arc,
+            SketchArcEndpoint::Start,
+            line,
+            SketchLineEndpoint::Start,
+            SketchTangentOrientation::CounterClockwise,
+        );
+
+        let lowered = sketch.lower_to_problem();
+        let context = context_from_problem(&lowered.problem);
+        let certification = certify_candidate(&PreparedProblem::new(&lowered.problem), &context);
+        let forms = sketch.residual_forms_for_constraint(handle);
+
+        prop_assert_eq!(lowered.rows.len(), 5);
+        let all_rows_generated = lowered.rows.iter().all(|row| {
+            row.strategy == Some(SketchResidualStrategy::ArcLineTangent)
+                && row.status == SketchGeneratedRowStatus::Generated
+        });
+        prop_assert!(all_rows_generated);
+        prop_assert!(certification.all_satisfied());
+        prop_assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+        prop_assert_eq!(forms.forms.len(), 5);
+        for form in &forms.forms[..4] {
+            prop_assert_eq!(form.role, SketchResidualFormRole::ExactProof);
+            prop_assert_eq!(form.residual.eval_real(context.bindings()).unwrap(), Real::zero());
+        }
+        prop_assert_eq!(forms.forms[4].role, SketchResidualFormRole::ExactProof);
+        let orientation = forms.forms[4].residual.eval_real(context.bindings()).unwrap();
+        prop_assert_eq!(orientation.structural_facts().sign, Some(RealSign::Positive));
     }
 
     #[test]

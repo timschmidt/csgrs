@@ -540,6 +540,33 @@ fn sketch_problem_with_tangent_same_direction_relations(
     sketch
 }
 
+fn sketch_problem_with_arc_line_tangent_relations(
+    row_count: usize,
+) -> hypersolve::SketchSolveProblem {
+    let mut sketch = hypersolve::SketchSolveProblem::new();
+    for index in 0..row_count {
+        let x = index as i64;
+        let center = sketch.add_point2d(format!("arctan{index}.center"), r(x), r(0));
+        let start = sketch.add_point2d(format!("arctan{index}.start"), r(x + 5), r(0));
+        let end = sketch.add_point2d(format!("arctan{index}.end"), r(x), r(5));
+        let radius = sketch.add_distance(format!("arctan{index}.radius"), r(5));
+        let arc =
+            sketch.add_arc_of_circle2(format!("arctan{index}.arc"), center, start, end, radius);
+        let tangent_end = sketch.add_point2d(format!("arctan{index}.tangent_end"), r(x + 5), r(3));
+        let tangent = sketch.add_line_segment2(format!("arctan{index}.line"), start, tangent_end);
+        hypersolve::sketch_tangency_builders::arc_line_tangent2(
+            &mut sketch,
+            format!("arc line tangent {index}"),
+            arc,
+            hypersolve::SketchArcEndpoint::Start,
+            tangent,
+            hypersolve::SketchLineEndpoint::Start,
+            hypersolve::SketchTangentOrientation::CounterClockwise,
+        );
+    }
+    sketch
+}
+
 fn sketch_problem_with_parameter_orderings(row_count: usize) -> hypersolve::SketchSolveProblem {
     let mut sketch = hypersolve::SketchSolveProblem::new();
     let mut previous = sketch.add_parameter("order0", r(0));
@@ -780,6 +807,10 @@ fn certification(c: &mut Criterion) {
     c.bench_function("sketch_tangent_same_direction_lowering", |b| {
         b.iter(|| tangent_same_direction_sketch.lower_to_problem())
     });
+    let arc_line_tangent_sketch = sketch_problem_with_arc_line_tangent_relations(16);
+    c.bench_function("sketch_arc_line_tangent_lowering", |b| {
+        b.iter(|| arc_line_tangent_sketch.lower_to_problem())
+    });
     let ordering_sketch = sketch_problem_with_parameter_orderings(16);
     c.bench_function("sketch_parameter_ordering_lowering", |b| {
         b.iter(|| ordering_sketch.lower_to_problem())
@@ -906,6 +937,24 @@ fn certification(c: &mut Criterion) {
         b.iter(|| {
             for handle in &tangent_form_handles {
                 let _ = tangent_same_direction_sketch.residual_forms_for_constraint(*handle);
+            }
+        })
+    });
+    let arc_line_tangent_form_handles = arc_line_tangent_sketch
+        .constraints()
+        .iter()
+        .filter(|constraint| {
+            matches!(
+                constraint.kind,
+                hypersolve::SketchConstraintKind::ArcLineTangent2 { .. }
+            )
+        })
+        .map(|constraint| constraint.handle)
+        .collect::<Vec<_>>();
+    c.bench_function("sketch_arc_line_tangent_residual_forms", |b| {
+        b.iter(|| {
+            for handle in &arc_line_tangent_form_handles {
+                let _ = arc_line_tangent_sketch.residual_forms_for_constraint(*handle);
             }
         })
     });

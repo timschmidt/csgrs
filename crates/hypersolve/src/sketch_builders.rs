@@ -12,8 +12,9 @@
 use hyperreal::Real;
 
 use crate::sketch::{
-    SketchConstraintHandle, SketchConstraintKind, SketchEntityHandle, SketchParameterHandle,
-    SketchResidualStrategy, SketchSolveProblem,
+    SketchArcEndpoint, SketchConstraintHandle, SketchConstraintKind, SketchEntityHandle,
+    SketchLineEndpoint, SketchParameterHandle, SketchResidualStrategy, SketchSolveProblem,
+    SketchTangentOrientation,
 };
 
 /// High-level constraint family retained before residual lowering.
@@ -106,6 +107,40 @@ pub mod tangency {
             handle,
             family: SketchConstraintFamily::Tangency,
             strategy: SketchResidualStrategy::TangentSameDirection,
+            kind,
+        }
+    }
+
+    /// Add a retained 2D circular-arc/line tangent relation.
+    ///
+    /// The caller selects both endpoints and the signed orientation branch.
+    /// Lowering emits exact endpoint incidence, arc endpoint-on-radius,
+    /// radius/tangent perpendicularity, and signed cross-product rows. This
+    /// covers the first `ARC_LINE_TANGENT` slice while keeping curve ownership
+    /// and degeneracy decisions report-bearing, matching Yap's "Towards Exact
+    /// Geometric Computation" (1997) and the endpoint-aware constraint
+    /// vocabulary in Bouma et al., "A Geometric Constraint Solver" (1995).
+    pub fn arc_line_tangent2(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        arc: SketchEntityHandle,
+        arc_endpoint: SketchArcEndpoint,
+        line: SketchEntityHandle,
+        line_endpoint: SketchLineEndpoint,
+        orientation: SketchTangentOrientation,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::ArcLineTangent2 {
+            arc,
+            arc_endpoint,
+            line,
+            line_endpoint,
+            orientation,
+        };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Tangency,
+            strategy: SketchResidualStrategy::ArcLineTangent,
             kind,
         }
     }

@@ -14,6 +14,7 @@
 use hyperreal::{Real, RealSign};
 
 use crate::model::{Constraint, ConstraintKind, Problem, VariableId};
+use crate::sketch_arc_tangent::{ArcLineTangentExprs, arc_line_tangent_exprs};
 use crate::sketch_builders::{
     angle, distance, incidence, objective, orientation, ranges, symmetry, tangency,
 };
@@ -293,6 +294,37 @@ pub enum SketchEntityKind {
     Workplane(SketchWorkplane),
 }
 
+/// Endpoint selector for retained circular-arc constraints.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum SketchArcEndpoint {
+    /// Use the arc's retained start point.
+    Start,
+    /// Use the arc's retained end point.
+    End,
+}
+
+/// Endpoint selector for retained line-segment constraints.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum SketchLineEndpoint {
+    /// Use the line's retained start point and orient the tangent toward the
+    /// line's end point.
+    Start,
+    /// Use the line's retained end point and orient the tangent toward the
+    /// line's start point.
+    End,
+}
+
+/// Orientation branch for retained 2D tangent constraints.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum SketchTangentOrientation {
+    /// The outgoing line tangent is counterclockwise from the radius vector,
+    /// certified by `radius x tangent >= 0`.
+    CounterClockwise,
+    /// The outgoing line tangent is clockwise from the radius vector,
+    /// certified by `radius x tangent <= 0`.
+    Clockwise,
+}
+
 /// A retained source entity.
 #[derive(Clone, Debug, PartialEq)]
 pub struct SketchEntity {
@@ -533,6 +565,29 @@ pub enum SketchConstraintKind {
         /// Target tangent-carrier line entity.
         target: SketchEntityHandle,
     },
+    /// 2D circular-arc endpoint tangent to a line endpoint.
+    ///
+    /// This is the first retained `ARC_LINE_TANGENT` package. The caller
+    /// explicitly selects the arc endpoint, line endpoint, and orientation
+    /// branch. Lowering emits endpoint incidence, an arc endpoint-on-radius
+    /// row, radius/tangent perpendicularity, and a signed orientation
+    /// inequality without normalizing the radius or tangent. Degenerate arc
+    /// and line objects remain explicit entity-domain obligations, following
+    /// Yap, "Towards Exact Geometric Computation" (1997), and the retained
+    /// endpoint/orientation vocabulary follows Bouma et al., "A Geometric
+    /// Constraint Solver" (1995).
+    ArcLineTangent2 {
+        /// Circular arc entity.
+        arc: SketchEntityHandle,
+        /// Endpoint of the arc where tangency is enforced.
+        arc_endpoint: SketchArcEndpoint,
+        /// Line segment entity.
+        line: SketchEntityHandle,
+        /// Endpoint of the line that must coincide with the arc endpoint.
+        line_endpoint: SketchLineEndpoint,
+        /// Signed orientation branch for the outgoing line tangent.
+        orientation: SketchTangentOrientation,
+    },
     /// Unsigned equal-angle relation between two 2D line pairs.
     ///
     /// Lowering compares squared cosines, which certifies ordinary equal
@@ -739,6 +794,8 @@ pub enum SketchResidualStrategy {
     DirectionSameOrientation,
     /// Exact same-direction predicate package for retained G1 tangent carriers.
     TangentSameDirection,
+    /// Exact endpoint/radius/tangent predicate package for retained arc-line tangency.
+    ArcLineTangent,
     /// Squared-cosine equality for unsigned 2D line angles.
     SquaredCosineAngleEquality,
     /// Linear coordinate equality for a retained midpoint relation.
@@ -824,6 +881,14 @@ pub enum SketchResidualFormKind {
     TangentCrossProductPredicate,
     /// Exact dot-product inequality for a same-direction tangent proof row.
     TangentDotProductPredicate,
+    /// Exact selected arc endpoint-on-radius proof row for arc-line tangency.
+    ArcLineTangentEndpointRadiusPolynomial,
+    /// Exact selected endpoint coordinate-incidence proof row for arc-line tangency.
+    ArcLineTangentEndpointIncidencePolynomial,
+    /// Exact radius/tangent perpendicularity proof row for arc-line tangency.
+    ArcLineTangentRadiusPerpendicularPolynomial,
+    /// Exact signed orientation predicate for arc-line tangency.
+    ArcLineTangentOrientationPredicate,
     /// Exact midpoint-on-workplane proof row for 3D workplane symmetry.
     WorkplaneSymmetryMidpointPlanePolynomial,
     /// Exact normal-offset cross-product proof row for 3D workplane symmetry.
@@ -1415,6 +1480,34 @@ impl SketchSolveProblem {
         target: SketchEntityHandle,
     ) -> SketchConstraintHandle {
         tangency::tangent_same_direction_lines2(self, name, candidate, target).handle
+    }
+
+    /// Add a retained 2D arc-line tangent relation with explicit endpoint and
+    /// orientation flags.
+    ///
+    /// The selected line endpoint is constrained to the selected arc endpoint,
+    /// the arc endpoint is checked against the retained radius, and the
+    /// outgoing line tangent is certified perpendicular to the radius with the
+    /// requested signed branch.
+    pub fn add_arc_line_tangent2(
+        &mut self,
+        name: impl Into<String>,
+        arc: SketchEntityHandle,
+        arc_endpoint: SketchArcEndpoint,
+        line: SketchEntityHandle,
+        line_endpoint: SketchLineEndpoint,
+        orientation: SketchTangentOrientation,
+    ) -> SketchConstraintHandle {
+        tangency::arc_line_tangent2(
+            self,
+            name,
+            arc,
+            arc_endpoint,
+            line,
+            line_endpoint,
+            orientation,
+        )
+        .handle
     }
 
     /// Add a retained unsigned 2D equal-angle relation between two line pairs.
@@ -2017,6 +2110,69 @@ impl SketchSolveProblem {
                     diagnostics,
                 }
             }
+            SketchConstraintKind::ArcLineTangent2 {
+                arc,
+                arc_endpoint,
+                line,
+                line_endpoint,
+                orientation,
+            } => {
+                let mut diagnostics = Vec::new();
+                let Some(parts) = self.arc_line_tangent_exprs(
+                    arc,
+                    arc_endpoint,
+                    line,
+                    line_endpoint,
+                    orientation,
+                    constraint,
+                    &mut diagnostics,
+                ) else {
+                    return SketchResidualFormsReport {
+                        constraint: handle,
+                        status: SketchResidualFormsStatus::InvalidInputs,
+                        forms: Vec::new(),
+                        diagnostics,
+                    };
+                };
+                let mut forms = vec![
+                    SketchResidualForm {
+                        kind: SketchResidualFormKind::ArcLineTangentEndpointRadiusPolynomial,
+                        role: SketchResidualFormRole::ExactProof,
+                        strategy: Some(SketchResidualStrategy::ArcLineTangent),
+                        residual: parts.arc_endpoint_radius,
+                    },
+                    SketchResidualForm {
+                        kind: SketchResidualFormKind::ArcLineTangentEndpointIncidencePolynomial,
+                        role: SketchResidualFormRole::ExactProof,
+                        strategy: Some(SketchResidualStrategy::ArcLineTangent),
+                        residual: parts.endpoint_incidence[0].clone(),
+                    },
+                    SketchResidualForm {
+                        kind: SketchResidualFormKind::ArcLineTangentEndpointIncidencePolynomial,
+                        role: SketchResidualFormRole::ExactProof,
+                        strategy: Some(SketchResidualStrategy::ArcLineTangent),
+                        residual: parts.endpoint_incidence[1].clone(),
+                    },
+                    SketchResidualForm {
+                        kind: SketchResidualFormKind::ArcLineTangentRadiusPerpendicularPolynomial,
+                        role: SketchResidualFormRole::ExactProof,
+                        strategy: Some(SketchResidualStrategy::ArcLineTangent),
+                        residual: parts.radius_perpendicular,
+                    },
+                ];
+                forms.push(SketchResidualForm {
+                    kind: SketchResidualFormKind::ArcLineTangentOrientationPredicate,
+                    role: SketchResidualFormRole::ExactProof,
+                    strategy: Some(SketchResidualStrategy::ArcLineTangent),
+                    residual: parts.orientation,
+                });
+                SketchResidualFormsReport {
+                    constraint: handle,
+                    status: SketchResidualFormsStatus::Generated,
+                    forms,
+                    diagnostics,
+                }
+            }
             _ => SketchResidualFormsReport {
                 constraint: handle,
                 status: SketchResidualFormsStatus::UnsupportedConstraint,
@@ -2499,6 +2655,67 @@ impl SketchSolveProblem {
                     format!("{} tangent orientation", constraint.name),
                     direction_dot2(&candidate, &target),
                     SketchResidualStrategy::TangentSameDirection,
+                    ConstraintKind::GreaterOrEqual,
+                    Real::one(),
+                );
+            }
+            SketchConstraintKind::ArcLineTangent2 {
+                arc,
+                arc_endpoint,
+                line,
+                line_endpoint,
+                orientation,
+            } => {
+                // This is the retained arc-line tangent package. Yap (1997)
+                // is the reason endpoint incidence, endpoint-on-radius,
+                // perpendicularity, and signed orientation are separate exact
+                // rows rather than a normalized floating tangent test. The
+                // endpoint/orientation flags mirror the public constraint
+                // vocabulary discussed by Bouma et al. (1995).
+                let Some(parts) = self.arc_line_tangent_exprs(
+                    arc,
+                    arc_endpoint,
+                    line,
+                    line_endpoint,
+                    orientation,
+                    constraint,
+                    rows,
+                ) else {
+                    return;
+                };
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} arc endpoint radius", constraint.name),
+                    parts.arc_endpoint_radius,
+                    SketchResidualStrategy::ArcLineTangent,
+                );
+                for (axis, residual) in parts.endpoint_incidence.into_iter().enumerate() {
+                    self.push_residual(
+                        problem,
+                        rows,
+                        constraint,
+                        format!("{} endpoint coordinate {axis}", constraint.name),
+                        residual,
+                        SketchResidualStrategy::ArcLineTangent,
+                    );
+                }
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} radius perpendicular", constraint.name),
+                    parts.radius_perpendicular,
+                    SketchResidualStrategy::ArcLineTangent,
+                );
+                self.push_residual_with_kind(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} tangent orientation", constraint.name),
+                    parts.orientation,
+                    SketchResidualStrategy::ArcLineTangent,
                     ConstraintKind::GreaterOrEqual,
                     Real::one(),
                 );
@@ -3107,6 +3324,28 @@ impl SketchSolveProblem {
         ))
     }
 
+    fn arc_line_tangent_exprs(
+        &self,
+        arc: SketchEntityHandle,
+        arc_endpoint: SketchArcEndpoint,
+        line: SketchEntityHandle,
+        line_endpoint: SketchLineEndpoint,
+        orientation: SketchTangentOrientation,
+        constraint: &SketchConstraint,
+        rows: &mut Vec<SketchGeneratedRow>,
+    ) -> Option<ArcLineTangentExprs> {
+        let arc = self.arc2_endpoint_parts(arc, arc_endpoint, constraint, rows)?;
+        let line = self.line2_endpoint_tangent(line, line_endpoint, constraint, rows)?;
+        Some(arc_line_tangent_exprs(
+            &coordinate_exprs2(&arc.center),
+            &coordinate_exprs2(&arc.endpoint),
+            arc.radius,
+            &coordinate_exprs2(&line.endpoint),
+            &line.tangent,
+            tangent_orientation_sign(orientation),
+        ))
+    }
+
     fn line2_points(
         &self,
         handle: SketchEntityHandle,
@@ -3130,6 +3369,31 @@ impl SketchSolveProblem {
         Some((start, end))
     }
 
+    fn line2_endpoint_tangent(
+        &self,
+        handle: SketchEntityHandle,
+        endpoint: SketchLineEndpoint,
+        constraint: &SketchConstraint,
+        rows: &mut Vec<SketchGeneratedRow>,
+    ) -> Option<LineEndpointTangentExprs> {
+        let (start, end) = self.line2_points(handle, constraint, rows)?;
+        let tangent = match endpoint {
+            SketchLineEndpoint::Start => [
+                end.exprs[0].clone() - start.exprs[0].clone(),
+                end.exprs[1].clone() - start.exprs[1].clone(),
+            ],
+            SketchLineEndpoint::End => [
+                start.exprs[0].clone() - end.exprs[0].clone(),
+                start.exprs[1].clone() - end.exprs[1].clone(),
+            ],
+        };
+        let endpoint = match endpoint {
+            SketchLineEndpoint::Start => start,
+            SketchLineEndpoint::End => end,
+        };
+        Some(LineEndpointTangentExprs { endpoint, tangent })
+    }
+
     fn line2_direction(
         &self,
         handle: SketchEntityHandle,
@@ -3141,6 +3405,34 @@ impl SketchSolveProblem {
             end.exprs[0].clone() - start.exprs[0].clone(),
             end.exprs[1].clone() - start.exprs[1].clone(),
         ])
+    }
+
+    fn arc2_endpoint_parts(
+        &self,
+        handle: SketchEntityHandle,
+        endpoint: SketchArcEndpoint,
+        constraint: &SketchConstraint,
+        rows: &mut Vec<SketchGeneratedRow>,
+    ) -> Option<ArcEndpointExprs> {
+        let Some(entity) = self.entity(handle) else {
+            rows.push(missing_entity_row(constraint, handle));
+            return None;
+        };
+        let SketchEntityKind::ArcOfCircle2(arc) = &entity.kind else {
+            rows.push(wrong_entity_row(constraint, handle, "2D circular arc"));
+            return None;
+        };
+        let center = self.point2_coordinates(arc.center, constraint, rows)?;
+        let endpoint = match endpoint {
+            SketchArcEndpoint::Start => self.point2_coordinates(arc.start, constraint, rows)?,
+            SketchArcEndpoint::End => self.point2_coordinates(arc.end, constraint, rows)?,
+        };
+        let radius = self.distance_expr(arc.radius, constraint, rows)?;
+        Some(ArcEndpointExprs {
+            center,
+            endpoint,
+            radius,
+        })
     }
 
     fn point_line_distance_squared_parts(
@@ -3177,6 +3469,24 @@ impl CoordinateExprs {
     }
 }
 
+#[derive(Clone, Debug)]
+struct ArcEndpointExprs {
+    center: CoordinateExprs,
+    endpoint: CoordinateExprs,
+    radius: Expr,
+}
+
+#[derive(Clone, Debug)]
+struct LineEndpointTangentExprs {
+    endpoint: CoordinateExprs,
+    tangent: [Expr; 2],
+}
+
+fn coordinate_exprs2(coordinates: &CoordinateExprs) -> [Expr; 2] {
+    debug_assert_eq!(coordinates.len(), 2);
+    [coordinates.exprs[0].clone(), coordinates.exprs[1].clone()]
+}
+
 fn coordinate_exprs3(coordinates: &CoordinateExprs) -> [Expr; 3] {
     debug_assert_eq!(coordinates.len(), 3);
     [
@@ -3184,6 +3494,13 @@ fn coordinate_exprs3(coordinates: &CoordinateExprs) -> [Expr; 3] {
         coordinates.exprs[1].clone(),
         coordinates.exprs[2].clone(),
     ]
+}
+
+fn tangent_orientation_sign(orientation: SketchTangentOrientation) -> i8 {
+    match orientation {
+        SketchTangentOrientation::CounterClockwise => 1,
+        SketchTangentOrientation::Clockwise => -1,
+    }
 }
 
 #[derive(Clone, Debug)]

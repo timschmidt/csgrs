@@ -9,25 +9,25 @@ use hypersolve::{
     FailedConstraintStatus, IntervalBoxCertificationPackage, IntervalBoxCertificationStatus,
     LinearAdapterKind, LinearAdapterPrecision, LinearBackend, MultivariateQuadraticKrawczykStatus,
     PreparedProblem, PreparedSolverBlock, Problem, ProposalEngineKind, ProposalEnginePrecision,
-    RootIsolationStatus, RootMultiplicityStatus, SketchConstraintKind,
+    RootIsolationStatus, RootMultiplicityStatus, SketchArcEndpoint, SketchConstraintKind,
     SketchConstructionCertificateStatus, SketchDegeneracyKind, SketchDegeneracyStatus,
     SketchEntityDomain, SketchEntityDomainKind, SketchEntityDomainStatus, SketchEntityHandle,
-    SketchEntityKind, SketchGeneratedRowStatus, SketchParameterDomain, SketchParameterDomainKind,
-    SketchParameterDomainStatus, SketchResidualFormKind, SketchResidualFormRole,
-    SketchResidualFormsStatus, SketchResidualStrategy, SketchRoundTripMetadata,
-    SketchRoundTripRole, SketchSolveProblem, SketchUnitToleranceStatus, SketchWorkplaneFrameStatus,
-    SolverBlockRowKind, SolverConfig, SolverPoint2, SolverState, SparseResidualBatchStatus,
-    SparseResidualTerm, SymbolId, VariableBall, analyze_exact_affine_rank,
-    apply_equality_substitution_classes, apply_equality_substitutions,
-    audit_sketch_unit_tolerances, build_equality_substitution_classes,
-    build_sketch_workplane_frame, certify_affine_interval_candidate, certify_affine_krawczyk_box,
-    certify_candidate, certify_candidate_batch, certify_candidate_domains,
-    certify_candidate_with_config, certify_candidate_with_residual_balls,
-    certify_direct_univariate_quadratic_roots, certify_interval_box_candidate,
-    certify_multivariate_quadratic_interval_candidate, certify_multivariate_quadratic_krawczyk_box,
-    certify_quadratic_interval_candidate, certify_sketch_construction,
-    certify_univariate_quadratic_alpha, certify_univariate_quadratic_krawczyk_box,
-    context_from_problem, diagnose_failed_constraints,
+    SketchEntityKind, SketchGeneratedRowStatus, SketchLineEndpoint, SketchParameterDomain,
+    SketchParameterDomainKind, SketchParameterDomainStatus, SketchResidualFormKind,
+    SketchResidualFormRole, SketchResidualFormsStatus, SketchResidualStrategy,
+    SketchRoundTripMetadata, SketchRoundTripRole, SketchSolveProblem, SketchTangentOrientation,
+    SketchUnitToleranceStatus, SketchWorkplaneFrameStatus, SolverBlockRowKind, SolverConfig,
+    SolverPoint2, SolverState, SparseResidualBatchStatus, SparseResidualTerm, SymbolId,
+    VariableBall, analyze_exact_affine_rank, apply_equality_substitution_classes,
+    apply_equality_substitutions, audit_sketch_unit_tolerances,
+    build_equality_substitution_classes, build_sketch_workplane_frame,
+    certify_affine_interval_candidate, certify_affine_krawczyk_box, certify_candidate,
+    certify_candidate_batch, certify_candidate_domains, certify_candidate_with_config,
+    certify_candidate_with_residual_balls, certify_direct_univariate_quadratic_roots,
+    certify_interval_box_candidate, certify_multivariate_quadratic_interval_candidate,
+    certify_multivariate_quadratic_krawczyk_box, certify_quadratic_interval_candidate,
+    certify_sketch_construction, certify_univariate_quadratic_alpha,
+    certify_univariate_quadratic_krawczyk_box, context_from_problem, diagnose_failed_constraints,
     diagnose_failed_constraints_from_certification,
     eliminate_affine_rows_with_substitution_classes,
     enumerate_direct_univariate_quadratic_branches, evaluate_residuals, facts_depend_on_symbol,
@@ -609,7 +609,7 @@ fn sketch_residual_form_reports_reject_unsupported_and_bad_inputs() {
 fn sketch_compatibility_fixtures_are_license_clean_and_exactly_certified() {
     let fixtures = sketch_compatibility_fixtures();
 
-    assert_eq!(fixtures.len(), 4);
+    assert_eq!(fixtures.len(), 5);
     assert!(fixtures.iter().all(|fixture| {
         fixture.source.starts_with("Hyper-authored")
             && !fixture.source.to_ascii_lowercase().contains("copied")
@@ -1220,6 +1220,283 @@ fn sketch_tangent_same_direction_relations_report_stale_wrong_and_non_2d_inputs(
     );
     assert_eq!(lowered.rows[3].status, SketchGeneratedRowStatus::Generated);
     assert_eq!(lowered.rows[4].status, SketchGeneratedRowStatus::Generated);
+}
+
+#[test]
+fn sketch_arc_line_tangent_relations_lower_endpoint_radius_and_orientation_rows() {
+    let mut sketch = SketchSolveProblem::new();
+    let center = sketch.add_point2d("center", real(0), real(0));
+    let start = sketch.add_point2d("start", real(5), real(0));
+    let end = sketch.add_point2d("end", real(0), real(5));
+    let radius = sketch.add_distance("radius", real(5));
+    let arc = sketch.add_arc_of_circle2("arc", center, start, end, radius);
+    let tangent_end = sketch.add_point2d("tangent end", real(5), real(3));
+    let tangent = sketch.add_line_segment2("tangent", start, tangent_end);
+    let radial_end = sketch.add_point2d("radial end", real(8), real(0));
+    let radial = sketch.add_line_segment2("radial", start, radial_end);
+    let clockwise_end = sketch.add_point2d("clockwise end", real(5), real(-3));
+    let clockwise = sketch.add_line_segment2("clockwise", start, clockwise_end);
+    let valid = sketch_tangency_builders::arc_line_tangent2(
+        &mut sketch,
+        "arc line tangent",
+        arc,
+        SketchArcEndpoint::Start,
+        tangent,
+        SketchLineEndpoint::Start,
+        SketchTangentOrientation::CounterClockwise,
+    );
+    sketch.add_arc_line_tangent2(
+        "bad radial tangent",
+        arc,
+        SketchArcEndpoint::Start,
+        radial,
+        SketchLineEndpoint::Start,
+        SketchTangentOrientation::CounterClockwise,
+    );
+    sketch.add_arc_line_tangent2(
+        "bad orientation tangent",
+        arc,
+        SketchArcEndpoint::Start,
+        clockwise,
+        SketchLineEndpoint::Start,
+        SketchTangentOrientation::CounterClockwise,
+    );
+    sketch.add_arc_line_tangent2(
+        "clockwise tangent",
+        arc,
+        SketchArcEndpoint::Start,
+        clockwise,
+        SketchLineEndpoint::Start,
+        SketchTangentOrientation::Clockwise,
+    );
+
+    assert_eq!(valid.family, hypersolve::SketchConstraintFamily::Tangency);
+    assert_eq!(valid.strategy, SketchResidualStrategy::ArcLineTangent);
+
+    let lowered = sketch.lower_to_problem();
+    let certification = certify_candidate(
+        &PreparedProblem::new(&lowered.problem),
+        &context_from_problem(&lowered.problem),
+    );
+
+    assert_eq!(lowered.problem.constraints.len(), 20);
+    assert_eq!(lowered.rows.len(), 20);
+    assert!(lowered.rows.iter().all(|row| {
+        row.strategy == Some(SketchResidualStrategy::ArcLineTangent)
+            && row.status == SketchGeneratedRowStatus::Generated
+    }));
+    assert!(matches!(
+        certification.rows[0].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[1].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[3].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[4].status,
+        CertifiedCandidateStatus::CertifiedSatisfiedInequality { .. }
+    ));
+    assert!(matches!(
+        certification.rows[8].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
+    assert!(matches!(
+        certification.rows[14].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
+    assert!(matches!(
+        certification.rows[19].status,
+        CertifiedCandidateStatus::CertifiedSatisfiedInequality { .. }
+    ));
+
+    let forms = sketch.residual_forms_for_constraint(valid.handle);
+    assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+    assert_eq!(forms.forms.len(), 5);
+    assert_eq!(
+        forms.forms[0].kind,
+        SketchResidualFormKind::ArcLineTangentEndpointRadiusPolynomial
+    );
+    assert_eq!(
+        forms.forms[1].kind,
+        SketchResidualFormKind::ArcLineTangentEndpointIncidencePolynomial
+    );
+    assert_eq!(
+        forms.forms[3].kind,
+        SketchResidualFormKind::ArcLineTangentRadiusPerpendicularPolynomial
+    );
+    assert_eq!(
+        forms.forms[4].kind,
+        SketchResidualFormKind::ArcLineTangentOrientationPredicate
+    );
+    assert!(forms.forms.iter().all(|form| {
+        form.role == SketchResidualFormRole::ExactProof
+            && form.strategy == Some(SketchResidualStrategy::ArcLineTangent)
+    }));
+}
+
+#[test]
+fn sketch_arc_line_tangent_supports_end_endpoint_and_line_end_orientation() {
+    let mut sketch = SketchSolveProblem::new();
+    let center = sketch.add_point2d("center", real(0), real(0));
+    let start = sketch.add_point2d("start", real(5), real(0));
+    let end = sketch.add_point2d("end", real(0), real(5));
+    let radius = sketch.add_distance("radius", real(5));
+    let arc = sketch.add_arc_of_circle2("arc", center, start, end, radius);
+    let tangent_start = sketch.add_point2d("tangent start", real(-3), real(5));
+    let tangent = sketch.add_line_segment2("tangent", tangent_start, end);
+    let handle = sketch.add_arc_line_tangent2(
+        "arc end to line end tangent",
+        arc,
+        SketchArcEndpoint::End,
+        tangent,
+        SketchLineEndpoint::End,
+        SketchTangentOrientation::CounterClockwise,
+    );
+
+    let lowered = sketch.lower_to_problem();
+    let certification = certify_candidate(
+        &PreparedProblem::new(&lowered.problem),
+        &context_from_problem(&lowered.problem),
+    );
+    let forms = sketch.residual_forms_for_constraint(handle);
+
+    assert_eq!(lowered.rows.len(), 5);
+    assert!(lowered.rows.iter().all(|row| {
+        row.strategy == Some(SketchResidualStrategy::ArcLineTangent)
+            && row.status == SketchGeneratedRowStatus::Generated
+    }));
+    assert!(certification.all_satisfied());
+    assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+    assert_eq!(forms.forms.len(), 5);
+}
+
+#[test]
+fn sketch_arc_line_tangent_relations_report_stale_wrong_and_non_2d_inputs() {
+    let mut sketch = SketchSolveProblem::new();
+    let center = sketch.add_point2d("center", real(0), real(0));
+    let start = sketch.add_point2d("start", real(5), real(0));
+    let end = sketch.add_point2d("end", real(0), real(5));
+    let radius = sketch.add_distance("radius", real(5));
+    let arc = sketch.add_arc_of_circle2("arc", center, start, end, radius);
+    let line_end = sketch.add_point2d("line end", real(5), real(3));
+    let line = sketch.add_line_segment2("line", start, line_end);
+    let point3 = sketch.add_point3d("point3", real(5), real(0), real(0));
+    let non_2d_line = sketch.add_line_segment2("non 2d line", point3, line_end);
+    sketch.add_arc_line_tangent2(
+        "missing arc",
+        SketchEntityHandle(999),
+        SketchArcEndpoint::Start,
+        line,
+        SketchLineEndpoint::Start,
+        SketchTangentOrientation::CounterClockwise,
+    );
+    sketch.add_arc_line_tangent2(
+        "wrong arc family",
+        start,
+        SketchArcEndpoint::Start,
+        line,
+        SketchLineEndpoint::Start,
+        SketchTangentOrientation::CounterClockwise,
+    );
+    sketch.add_arc_line_tangent2(
+        "wrong line family",
+        arc,
+        SketchArcEndpoint::Start,
+        start,
+        SketchLineEndpoint::Start,
+        SketchTangentOrientation::CounterClockwise,
+    );
+    sketch.add_arc_line_tangent2(
+        "non 2d line",
+        arc,
+        SketchArcEndpoint::Start,
+        non_2d_line,
+        SketchLineEndpoint::Start,
+        SketchTangentOrientation::CounterClockwise,
+    );
+    sketch.add_arc_line_tangent2(
+        "valid control",
+        arc,
+        SketchArcEndpoint::Start,
+        line,
+        SketchLineEndpoint::Start,
+        SketchTangentOrientation::CounterClockwise,
+    );
+
+    let lowered = sketch.lower_to_problem();
+
+    assert_eq!(lowered.problem.constraints.len(), 5);
+    assert_eq!(lowered.rows.len(), 9);
+    assert_eq!(
+        lowered.rows[0].status,
+        SketchGeneratedRowStatus::MissingEntity(SketchEntityHandle(999))
+    );
+    assert_eq!(
+        lowered.rows[1].status,
+        SketchGeneratedRowStatus::WrongEntityKind {
+            handle: start,
+            expected: "2D circular arc"
+        }
+    );
+    assert_eq!(
+        lowered.rows[2].status,
+        SketchGeneratedRowStatus::WrongEntityKind {
+            handle: start,
+            expected: "2D line segment"
+        }
+    );
+    assert_eq!(
+        lowered.rows[3].status,
+        SketchGeneratedRowStatus::WrongEntityKind {
+            handle: non_2d_line,
+            expected: "2D line segment"
+        }
+    );
+    assert!(lowered.rows[4..].iter().all(|row| {
+        row.status == SketchGeneratedRowStatus::Generated
+            && row.strategy == Some(SketchResidualStrategy::ArcLineTangent)
+    }));
+}
+
+#[test]
+fn sketch_arc_line_tangent_rejects_inconsistent_arc_radius() {
+    let mut sketch = SketchSolveProblem::new();
+    let center = sketch.add_point2d("center", real(0), real(0));
+    let start = sketch.add_point2d("start", real(6), real(0));
+    let end = sketch.add_point2d("end", real(0), real(5));
+    let radius = sketch.add_distance("radius", real(5));
+    let arc = sketch.add_arc_of_circle2("inconsistent arc", center, start, end, radius);
+    let line_end = sketch.add_point2d("line end", real(6), real(3));
+    let line = sketch.add_line_segment2("line", start, line_end);
+    sketch.add_arc_line_tangent2(
+        "inconsistent arc tangent",
+        arc,
+        SketchArcEndpoint::Start,
+        line,
+        SketchLineEndpoint::Start,
+        SketchTangentOrientation::CounterClockwise,
+    );
+
+    let lowered = sketch.lower_to_problem();
+    let certification = certify_candidate(
+        &PreparedProblem::new(&lowered.problem),
+        &context_from_problem(&lowered.problem),
+    );
+
+    assert_eq!(lowered.rows.len(), 5);
+    assert!(matches!(
+        certification.rows[0].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
+    assert!(matches!(
+        certification.rows[3].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
 }
 
 #[test]
