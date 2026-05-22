@@ -713,7 +713,6 @@ pub(crate) fn htriangle_area_hreal(
 /// topology-affecting area checks in the exact-aware geometry layer, following
 /// Yap's exact-geometric-computation boundary model
 /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-#[cfg(any(feature = "sdf", feature = "metaballs"))]
 pub(crate) fn htriangle_area2_is_nonzero(
     a: &Point3<Real>,
     b: &Point3<Real>,

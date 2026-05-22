@@ -1,9 +1,9 @@
 //! Struct and functions for working with planar `Polygon`s without holes
 
 use crate::float_types::{
-    Real, hperpendicular_basis, hpoint3_bounds, hreal_from_f64, hreal_gt_f64, hreal_lt_f64,
-    hunit_vector3, hvector3_dot, hvector3_from_point3, hvector3_from_vector3,
-    parry3d::bounding_volume::Aabb, tolerance,
+    Real, hperpendicular_basis, hpoint3_bounds, hreal_from_f64, hreal_lt_f64,
+    htriangle_area2_is_nonzero, hunit_vector3, hvector3_dot, hvector3_from_point3,
+    hvector3_from_vector3, parry3d::bounding_volume::Aabb,
 };
 use crate::mesh::plane::Plane;
 use crate::vertex::Vertex;
@@ -363,16 +363,10 @@ fn hyper_triangle_orientation(
     tri_vertices: &[Vertex; 3],
     polygon_normal: &Vector3<Real>,
 ) -> Option<TriangleOrientation> {
-    let a = hvector3_from_point3(&tri_vertices[0].position)?;
-    let b = hvector3_from_point3(&tri_vertices[1].position)?;
-    let c = hvector3_from_point3(&tri_vertices[2].position)?;
-
-    let edge1 = b - &a;
-    let edge2 = c - a;
-    let winding_normal = edge1.cross(&edge2);
-    if !hreal_gt_f64(
-        &winding_normal.dot(&winding_normal),
-        tolerance() * tolerance(),
+    if !htriangle_area2_is_nonzero(
+        &tri_vertices[0].position,
+        &tri_vertices[1].position,
+        &tri_vertices[2].position,
     ) {
         return None;
     }
@@ -482,12 +476,27 @@ mod tests {
     }
 
     #[test]
-    fn hyper_triangle_orientation_rejects_near_degenerate_triangle() {
+    fn hyper_triangle_orientation_accepts_tiny_nonzero_triangle() {
+        let normal = Vector3::z();
+        let tiny = [
+            Vertex::new(Point3::new(0.0, 0.0, 0.0), normal),
+            Vertex::new(Point3::new(1.0e-15, 0.0, 0.0), normal),
+            Vertex::new(Point3::new(0.0, 1.0e-15, 0.0), normal),
+        ];
+
+        assert_eq!(
+            hyper_triangle_orientation(&tiny, &normal),
+            Some(TriangleOrientation::Aligned)
+        );
+    }
+
+    #[test]
+    fn hyper_triangle_orientation_rejects_exact_zero_area_triangle() {
         let normal = Vector3::z();
         let degenerate = [
             Vertex::new(Point3::new(0.0, 0.0, 0.0), normal),
-            Vertex::new(Point3::new(tolerance() * 0.25, 0.0, 0.0), normal),
-            Vertex::new(Point3::new(0.0, tolerance() * 0.25, 0.0), normal),
+            Vertex::new(Point3::new(1.0, 0.0, 0.0), normal),
+            Vertex::new(Point3::new(2.0, 0.0, 0.0), normal),
         ];
 
         assert_eq!(hyper_triangle_orientation(&degenerate, &normal), None);
