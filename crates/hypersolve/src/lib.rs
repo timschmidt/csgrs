@@ -37,6 +37,7 @@ pub mod sketch_degeneracy;
 pub mod sketch_domains;
 pub mod sketch_entity_domains;
 pub mod sketch_fixtures;
+mod sketch_projection;
 pub mod sketch_units;
 pub mod sketch_workplanes;
 pub mod solver;

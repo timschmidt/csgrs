@@ -627,6 +627,28 @@ fn sketch_problem_with_workplane_lifts(
     (sketch, workplane, points)
 }
 
+fn sketch_problem_with_projected_distances(row_count: usize) -> hypersolve::SketchSolveProblem {
+    let mut sketch = hypersolve::SketchSolveProblem::new();
+    let origin = sketch.add_point3d("project.origin", r(0), r(0), r(0));
+    let normal = sketch.add_normal3d("project.normal", r(1), r(0), r(0), r(0));
+    let workplane = sketch.add_workplane("project.workplane", origin, normal);
+    for index in 0..row_count {
+        let x = index as i64;
+        let a = sketch.add_point3d(format!("proj{index}.a"), r(x), r(x + 1), r(x + 2));
+        let b = sketch.add_point3d(format!("proj{index}.b"), r(x + 3), r(x + 5), r(x + 99));
+        let distance = sketch.add_distance(format!("proj{index}.d"), r(5));
+        hypersolve::sketch_distance_builders::projected_point_point_distance(
+            &mut sketch,
+            format!("projected distance {index}"),
+            workplane,
+            a,
+            b,
+            distance,
+        );
+    }
+    sketch
+}
+
 fn sketch_problem_with_entity_domains(row_count: usize) -> hypersolve::SketchSolveProblem {
     let mut sketch = hypersolve::SketchSolveProblem::new();
     for index in 0..row_count {
@@ -761,6 +783,10 @@ fn certification(c: &mut Criterion) {
             }
         })
     });
+    let projected_distance_sketch = sketch_problem_with_projected_distances(16);
+    c.bench_function("sketch_projected_distance_lowering", |b| {
+        b.iter(|| projected_distance_sketch.lower_to_problem())
+    });
     let entity_domain_sketch = sketch_problem_with_entity_domains(16);
     c.bench_function("sketch_entity_domain_preflight", |b| {
         b.iter(|| preflight_sketch_entity_domains(&entity_domain_sketch))
@@ -855,6 +881,24 @@ fn certification(c: &mut Criterion) {
         b.iter(|| {
             for handle in &tangent_form_handles {
                 let _ = tangent_same_direction_sketch.residual_forms_for_constraint(*handle);
+            }
+        })
+    });
+    let projected_form_handles = projected_distance_sketch
+        .constraints()
+        .iter()
+        .filter(|constraint| {
+            matches!(
+                constraint.kind,
+                hypersolve::SketchConstraintKind::ProjectedPointPointDistance { .. }
+            )
+        })
+        .map(|constraint| constraint.handle)
+        .collect::<Vec<_>>();
+    c.bench_function("sketch_projected_distance_residual_forms", |b| {
+        b.iter(|| {
+            for handle in &projected_form_handles {
+                let _ = projected_distance_sketch.residual_forms_for_constraint(*handle);
             }
         })
     });

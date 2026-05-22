@@ -1,0 +1,20 @@
+[package]
+name = "hypersolve-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2024"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+hyperreal = { path = "../../hyperreal", default-features = false }
+hypersolve = { path = "..", default-features = false }
+
+[[bin]]
+name = "sketch_projected_distance"
+path = "fuzz_targets/sketch_projected_distance.rs"
+test = false
+doc = false
+bench = false

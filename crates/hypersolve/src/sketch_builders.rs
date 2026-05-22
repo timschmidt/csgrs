@@ -210,6 +210,38 @@ pub mod distance {
         }
     }
 
+    /// Add a retained workplane-projected point-to-point distance relation.
+    ///
+    /// This is the SolveSpace-style projected-distance row with Hyper's exact
+    /// proof boundary: the workplane remains a retained object, lowering emits
+    /// a unit-quaternion guard plus a squared projected-distance polynomial,
+    /// and any square-root projected-distance form is only proposal/UI data.
+    /// The split follows Yap, "Towards Exact Geometric Computation" (1997);
+    /// the frame polynomial uses the unit-quaternion rotation matrix described
+    /// by Shoemake, "Animating Rotation with Quaternion Curves" (1985).
+    pub fn projected_point_point_distance(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+        distance: SketchEntityHandle,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::ProjectedPointPointDistance {
+            workplane,
+            a,
+            b,
+            distance,
+        };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Distance,
+            strategy: SketchResidualStrategy::SquaredProjectedDistance,
+            kind,
+        }
+    }
+
     /// Add a 2D line equal-length relation.
     ///
     /// Lowering compares squared segment lengths exactly. This is the

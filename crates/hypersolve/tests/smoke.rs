@@ -2416,6 +2416,119 @@ fn sketch_workplane_frame_reports_exact_quaternion_axes_and_lift_project() {
 }
 
 #[test]
+fn sketch_projected_distance_lowers_unit_guard_and_exact_projection_rows() {
+    let mut sketch = SketchSolveProblem::new();
+    let origin = sketch.add_point3d("origin", real(10), real(20), real(30));
+    let normal = sketch.add_normal3d("normal", real(1), real(0), real(0), real(0));
+    let workplane = sketch.add_workplane("workplane", origin, normal);
+    let a = sketch.add_point3d("a", real(10), real(20), real(30));
+    let b = sketch.add_point3d("b", real(13), real(24), real(99));
+    let distance = sketch.add_distance("projected five", real(5));
+    let constraint =
+        sketch.add_projected_point_point_distance("projected distance", workplane, a, b, distance);
+
+    let report = sketch.lower_to_problem();
+
+    assert!(report.all_generated());
+    assert_eq!(report.problem.constraints.len(), 2);
+    assert_eq!(
+        report
+            .rows
+            .iter()
+            .map(|row| row.constraint)
+            .collect::<Vec<_>>(),
+        vec![constraint, constraint]
+    );
+    assert_eq!(
+        report.rows[0].strategy,
+        Some(SketchResidualStrategy::WorkplaneUnitQuaternion)
+    );
+    assert_eq!(
+        report.rows[1].strategy,
+        Some(SketchResidualStrategy::SquaredProjectedDistance)
+    );
+
+    let certification = certify_candidate(
+        &PreparedProblem::new(&report.problem),
+        &context_from_problem(&report.problem),
+    );
+    assert!(certification.all_satisfied());
+    assert!(matches!(
+        certification.rows[0].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[1].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+
+    let forms = sketch.residual_forms_for_constraint(constraint);
+    assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+    assert_eq!(forms.forms.len(), 3);
+    assert_eq!(
+        forms.forms[0].kind,
+        SketchResidualFormKind::WorkplaneUnitQuaternionPolynomial
+    );
+    assert_eq!(forms.forms[0].role, SketchResidualFormRole::ExactProof);
+    assert_eq!(
+        forms.forms[1].kind,
+        SketchResidualFormKind::SquaredProjectedDistancePolynomial
+    );
+    assert_eq!(forms.forms[1].role, SketchResidualFormRole::ExactProof);
+    assert_eq!(
+        forms.forms[2].kind,
+        SketchResidualFormKind::TrueProjectedDistanceProposal
+    );
+    assert_eq!(forms.forms[2].role, SketchResidualFormRole::ProposalOnly);
+}
+
+#[test]
+fn sketch_projected_distance_reports_bad_workplanes_and_nonunit_frames() {
+    let mut sketch = SketchSolveProblem::new();
+    let origin = sketch.add_point3d("origin", real(0), real(0), real(0));
+    let nonunit = sketch.add_normal3d("nonunit", real(2), real(0), real(0), real(0));
+    let workplane = sketch.add_workplane("workplane", origin, nonunit);
+    let a = sketch.add_point3d("a", real(0), real(0), real(0));
+    let b = sketch.add_point3d("b", real(3), real(0), real(7));
+    let distance = sketch.add_distance("d", real(3));
+    sketch.add_projected_point_point_distance("nonunit projected", workplane, a, b, distance);
+
+    let report = sketch.lower_to_problem();
+    assert!(report.all_generated());
+    assert_eq!(
+        report.rows[0].strategy,
+        Some(SketchResidualStrategy::WorkplaneUnitQuaternion)
+    );
+    let certification = certify_candidate(
+        &PreparedProblem::new(&report.problem),
+        &context_from_problem(&report.problem),
+    );
+    assert!(matches!(
+        certification.rows[0].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
+
+    let wrong_workplane = sketch.add_point2d("not a workplane", real(0), real(0));
+    sketch.add_projected_point_point_distance(
+        "wrong workplane projected",
+        wrong_workplane,
+        a,
+        b,
+        distance,
+    );
+    let wrong = sketch.lower_to_problem();
+    assert!(wrong.rows.iter().any(|row| {
+        matches!(
+            row.status,
+            SketchGeneratedRowStatus::WrongEntityKind {
+                handle,
+                expected: "workplane"
+            } if handle == wrong_workplane
+        )
+    }));
+}
+
+#[test]
 fn sketch_workplane_frame_respects_rotated_unit_quaternion_basis() {
     let mut sketch = SketchSolveProblem::new();
     let origin = sketch.add_point3d("origin", real(0), real(0), real(5));

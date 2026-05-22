@@ -1290,7 +1290,13 @@ proptest! {
         let v = i64::from(v);
         let mut sketch = SketchSolveProblem::new();
         let origin = sketch.add_point3d("origin", Real::from(ox), Real::from(oy), Real::from(oz));
-        let normal = sketch.add_normal3d("normal", Real::from(1), Real::from(0), Real::from(0), Real::from(0));
+        let normal = sketch.add_normal3d(
+            "normal",
+            Real::from(1),
+            Real::from(0),
+            Real::from(0),
+            Real::from(0),
+        );
         let workplane = sketch.add_workplane("workplane", origin, normal);
         let point = sketch.add_point2d("uv", Real::from(u), Real::from(v));
 
@@ -1300,6 +1306,52 @@ proptest! {
         prop_assert_eq!(
             report.lifted_coordinates,
             Some([Real::from(ox + u), Real::from(oy + v), Real::from(oz)])
+        );
+    }
+
+    #[test]
+    fn sketch_projected_distance_identity_workplane_ignores_normal_displacement(
+        ax in -16_i16..=16,
+        ay in -16_i16..=16,
+        az in -16_i16..=16,
+        u in -16_i16..=16,
+        normal_offset in -16_i16..=16,
+    ) {
+        let ax = i64::from(ax);
+        let ay = i64::from(ay);
+        let az = i64::from(az);
+        let u = i64::from(u);
+        let normal_offset = i64::from(normal_offset);
+        let mut sketch = SketchSolveProblem::new();
+        let origin = sketch.add_point3d("origin", Real::from(0), Real::from(0), Real::from(0));
+        let normal = sketch.add_normal3d("normal", Real::from(1), Real::from(0), Real::from(0), Real::from(0));
+        let workplane = sketch.add_workplane("workplane", origin, normal);
+        let a = sketch.add_point3d("a", Real::from(ax), Real::from(ay), Real::from(az));
+        let b = sketch.add_point3d(
+            "b",
+            Real::from(ax + u),
+            Real::from(ay),
+            Real::from(az + normal_offset),
+        );
+        let distance = sketch.add_distance("projected distance", Real::from(u.abs()));
+        sketch.add_projected_point_point_distance("projected", workplane, a, b, distance);
+
+        let lowered = sketch.lower_to_problem();
+        let certification = certify_candidate(
+            &PreparedProblem::new(&lowered.problem),
+            &context_from_problem(&lowered.problem),
+        );
+
+        prop_assert_eq!(lowered.problem.constraints.len(), 2);
+        prop_assert!(lowered.all_generated());
+        prop_assert!(certification.all_satisfied());
+        prop_assert_eq!(
+            lowered.rows[0].strategy,
+            Some(SketchResidualStrategy::WorkplaneUnitQuaternion)
+        );
+        prop_assert_eq!(
+            lowered.rows[1].strategy,
+            Some(SketchResidualStrategy::SquaredProjectedDistance)
         );
     }
 
