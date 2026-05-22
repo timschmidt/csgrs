@@ -2,7 +2,7 @@
 
 use crate::float_types::{
     PI, Real, hangle_between_vectors, hangle_sin_cos, hpoint_centroid, hpoint_distance,
-    hpoint_lerp, hpoint_weighted_sum, hpoints_within_tolerance, hreal_boundary_or_zero,
+    hpoint_lerp, hpoint_weighted_sum, hpoints_exactly_equal, hreal_boundary_or_zero,
     hreal_clamp_f64, hreal_div, hreal_f64s_within_tolerance, hreal_from_f64, hreal_gt_f64,
     hreal_lt_f64, hreal_max_report_value, hreal_mean, hreal_mul, hreal_sample_stddev,
     hreal_sqrt_ref, hreal_sqrt_to_f64, hreal_sub, hreal_sum, hreal_to_f64, hunit_vector3,
@@ -529,15 +529,15 @@ impl Vertex {
 
     /// **Mathematical Foundation: Position-Based Vertex Lookup**
     ///
-    /// Simplified connectivity analysis that searches for the vertex in the adjacency map
-    /// by position matching (with tolerance). This is slower but more convenient
-    /// when you don't have the global vertex index readily available.
+    /// Simplified connectivity analysis that searches for the vertex in the
+    /// adjacency map by exact position matching. This is slower but more
+    /// convenient when you don't have the global vertex index readily available.
     ///
     /// The position equality test promotes both candidate points into
-    /// `hyperlattice::Vector3` and compares squared distance in
-    /// `hyperreal::Real`, so the topological lookup avoids a local f64 square
-    /// root and fails closed for non-finite boundary coordinates. This follows
-    /// Yap's exact-geometric-computation boundary discipline
+    /// `hyperlattice::Vector3` and requires zero squared distance in
+    /// `hyperreal::Real`, so the topological lookup avoids a local f64
+    /// tolerance and fails closed for non-finite boundary coordinates. This
+    /// follows Yap's exact-geometric-computation boundary discipline
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     ///
     /// **Note**: This is a convenience method. For performance-critical applications,
@@ -546,12 +546,11 @@ impl Vertex {
         &self,
         adjacency_map: &HashMap<usize, Vec<usize>>,
         vertex_positions: &HashMap<usize, Point3<Real>>,
-        tolerance: Real,
     ) -> (usize, Real) {
         // Find the vertex index by position matching
         let mut vertex_index = None;
         for (&idx, &position) in vertex_positions {
-            if hpoints_within_tolerance(&self.position, &position, tolerance) {
+            if hpoints_exactly_equal(&self.position, &position) {
                 vertex_index = Some(idx);
                 break;
             }

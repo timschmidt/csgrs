@@ -1,7 +1,6 @@
-//! Mesh connectivity helpers for tolerance-aware vertex indexing and topology
-//! analysis.
+//! Mesh connectivity helpers for exact vertex indexing and topology analysis.
 
-use crate::float_types::{HReal, Real, hreal_sign, tolerance};
+use crate::float_types::{Real, hpoints_exactly_equal};
 use crate::mesh::Mesh;
 use hashbrown::HashMap;
 use nalgebra::Point3;
@@ -9,59 +8,45 @@ use std::fmt::Debug;
 
 /// **Mathematical Foundation: Robust Vertex Indexing for Mesh Connectivity**
 ///
-/// Handles boundary-coordinate comparison with tolerance:
-/// - **Spatial Hashing**: Groups nearby vertices for efficient lookup
-/// - **Tolerance Matching**: Considers vertices within tolerance as identical
+/// Handles boundary-coordinate comparison exactly:
+/// - **Exact Matching**: Considers vertices identical only when promoted
+///   hyperreal coordinates prove equality
 /// - **Global Indexing**: Maintains consistent vertex indices across mesh
 ///
-/// The tolerance predicate promotes candidate positions into
-/// `hyperlattice::Vector3` and compares squared distance in `hyperreal::Real`.
-/// That keeps mesh-topology equivalence decisions on the exact-aware side of
-/// the API boundary, following Yap, "Towards Exact Geometric Computation,"
+/// The identity predicate promotes candidate positions into `hyperlattice`
+/// vectors and requires exact zero squared distance in `hyperreal::Real`. That
+/// keeps mesh-topology equivalence decisions on the exact-aware side of the API
+/// boundary, following Yap, "Towards Exact Geometric Computation,"
 /// *Computational Geometry* 7(1-2), 1997
 /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
 #[derive(Debug, Clone)]
 pub struct VertexIndexMap {
-    /// Maps vertex positions to global indices (with tolerance)
+    /// Maps vertex positions to global indices.
     pub position_to_index: Vec<(Point3<Real>, usize)>,
-    /// Maps global indices to representative positions
+    /// Maps global indices to representative positions.
     pub index_to_position: HashMap<usize, Point3<Real>>,
-    /// Spatial tolerance for vertex matching, owned as a hyperreal scalar.
-    pub tolerance: HReal,
 }
 
 impl VertexIndexMap {
-    /// Create a new vertex index map with a hyperreal-promoted tolerance.
+    /// Create a new exact vertex index map.
     ///
-    /// The primary scalar surface is `hyperreal::Real`; primitive `f64` and
-    /// integer literals are accepted when `hyperreal` can promote them. Invalid
-    /// or non-positive tolerances fail closed by storing exact zero, so topology
-    /// matching cannot silently widen. This keeps connectivity equivalence on
-    /// the exact-aware side of Yap's exact geometric computation boundary model
-    /// (1997) while preserving ergonomic scalar promotion at API call sites.
-    pub fn new<E>(tolerance: E) -> Self
-    where
-        E: TryInto<HReal>,
-    {
-        let tolerance = tolerance
-            .try_into()
-            .ok()
-            .filter(hreal_positive)
-            .unwrap_or_else(HReal::zero);
+    /// No tolerance is stored or accepted: two boundary positions share an index
+    /// only when Hyper proves their promoted coordinates are equal. That keeps
+    /// connectivity equivalence on the exact-aware side of Yap's exact
+    /// geometric computation boundary model (1997).
+    pub fn new() -> Self {
         Self {
             position_to_index: Vec::new(),
             index_to_position: HashMap::new(),
-            tolerance,
         }
     }
 
-    /// Get the existing index for a position within this map's tolerance.
+    /// Get the existing index for an exactly equal position.
     pub fn find_index(&self, position: &Point3<Real>) -> Option<usize> {
         self.position_to_index
             .iter()
             .find_map(|(existing_position, existing_index)| {
-                hpoints_within_hreal_tolerance(position, existing_position, &self.tolerance)
-                    .then_some(*existing_index)
+                hpoints_exactly_equal(position, existing_position).then_some(*existing_index)
             })
     }
 
@@ -109,8 +94,8 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     ///    `hypermesh` rather than repeated here
     ///
     /// Keeping adjacency on retained hypermesh edge facts avoids a second
-    /// tolerance-based topology model in
-    /// `csgrs`. This follows Yap, "Towards Exact Geometric Computation,"
+    /// approximate topology model in `csgrs`. This follows Yap, "Towards Exact
+    /// Geometric Computation,"
     /// *Computational Geometry* 7(1-2), 1997
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>), and the CGAL
     /// triangulation-data-structure separation of vertices, edges, and faces
@@ -118,7 +103,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     ///
     /// Returns (vertex_map, adjacency_graph) for robust mesh processing.
     pub fn build_connectivity(&self) -> (VertexIndexMap, HashMap<usize, Vec<usize>>) {
-        let mut vertex_map = VertexIndexMap::new(tolerance() * 100.0);
+        let mut vertex_map = VertexIndexMap::new();
         let mut adjacency: HashMap<usize, Vec<usize>> = HashMap::new();
 
         let Ok(mesh) = self.to_hypermesh_exact_with_policy(
@@ -154,34 +139,6 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     }
 }
 
-fn hreal_positive(value: &HReal) -> bool {
-    matches!(hreal_sign(value), Some(hyperreal::RealSign::Positive))
-}
-
-fn hpoints_within_hreal_tolerance(
-    lhs: &Point3<Real>,
-    rhs: &Point3<Real>,
-    tolerance: &HReal,
-) -> bool {
-    if !hreal_positive(tolerance) {
-        return false;
-    }
-    let Some(lhs) = hyperlattice::Point3::try_from_f64_array([lhs.x, lhs.y, lhs.z]).ok()
-    else {
-        return false;
-    };
-    let Some(rhs) = hyperlattice::Point3::try_from_f64_array([rhs.x, rhs.y, rhs.z]).ok()
-    else {
-        return false;
-    };
-    let distance_squared = lhs.to_vector().squared_distance(&rhs.to_vector());
-    let tolerance_squared = tolerance.clone() * tolerance.clone();
-    matches!(
-        hreal_sign(&(distance_squared - tolerance_squared)),
-        Some(hyperreal::RealSign::Negative | hyperreal::RealSign::Zero)
-    )
-}
-
 fn add_adjacency_edge(adjacency: &mut HashMap<usize, Vec<usize>>, a: usize, b: usize) {
     adjacency.entry(a).or_default().push(b);
     adjacency.entry(b).or_default().push(a);
@@ -192,24 +149,27 @@ mod tests {
     use super::*;
 
     #[test]
-    fn vertex_index_map_promotes_public_tolerance_to_hyperreal() {
-        let mut map = VertexIndexMap::new(1);
+    fn vertex_index_map_shares_only_exact_positions() {
+        let mut map = VertexIndexMap::new();
         let base = Point3::new(0.0, 0.0, 0.0);
-        let near = Point3::new(0.5, 0.0, 0.0);
+        let exact = Point3::new(0.0, 0.0, 0.0);
+        let near = Point3::new(1.0e-12, 0.0, 0.0);
         let far = Point3::new(2.0, 0.0, 0.0);
 
         let base_index = map.get_or_create_index(base);
-        assert_eq!(map.get_or_create_index(near), base_index);
+        assert_eq!(map.get_or_create_index(exact), base_index);
+        assert_ne!(map.get_or_create_index(near), base_index);
         assert_ne!(map.get_or_create_index(far), base_index);
     }
 
     #[test]
-    fn vertex_index_map_rejects_invalid_hyperreal_tolerance() {
-        let mut map = VertexIndexMap::new(Real::NAN);
+    fn vertex_index_map_rejects_nonfinite_positions() {
+        let mut map = VertexIndexMap::new();
         let base = Point3::new(0.0, 0.0, 0.0);
-        let near = Point3::new(tolerance() * 0.25, 0.0, 0.0);
+        let nonfinite = Point3::new(Real::NAN, 0.0, 0.0);
 
         let base_index = map.get_or_create_index(base);
-        assert_ne!(map.get_or_create_index(near), base_index);
+        assert_eq!(map.find_index(&nonfinite), None);
+        assert_ne!(map.get_or_create_index(nonfinite), base_index);
     }
 }
