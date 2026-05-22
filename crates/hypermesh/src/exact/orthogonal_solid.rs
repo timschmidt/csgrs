@@ -230,9 +230,13 @@ fn orthogonal_cell_plan(
             }
         }
     }
-    if selected_count == 0 && operation == AxisAlignedOrthogonalSolidOperation::Intersection {
-        return None;
-    }
+    // An empty selected set is still a certified regularized boolean result.
+    // In particular, a closed orthogonal shell and a solid floating inside its
+    // cavity have overlapping AABBs but no occupied cell overlap. Returning an
+    // empty mesh here keeps the exact cell-complex proof in the boolean
+    // certificate instead of falling through to ray-winding heuristics. This is
+    // Yap's TEGC object/predicate separation: the retained grid occupancy is
+    // the object-level witness for emptiness.
     Some(OrthogonalCellPlan {
         x,
         y,

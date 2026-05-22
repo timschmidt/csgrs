@@ -6469,6 +6469,69 @@ fn exact_axis_aligned_orthogonal_solid_cell_complex_reenters_boolean() {
 
 #[cfg(feature = "exact-triangulation")]
 #[test]
+fn exact_axis_aligned_orthogonal_solid_intersection_materializes_empty_cavity_cell_set() {
+    let outer = axis_aligned_box_i64([0, 0, 0], [8, 8, 8]);
+    let cavity = axis_aligned_box_i64([2, 2, 2], [6, 6, 6]);
+    let hollow = hypermesh::exact::boolean_exact(
+        &outer,
+        &cavity,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap()
+    .mesh;
+    assert!(hollow.facts().mesh.closed_manifold);
+
+    let floating = axis_aligned_box_i64([3, 3, 3], [5, 5, 5]);
+    let preflight = hypermesh::exact::preflight_boolean_exact(
+        &hollow,
+        &floating,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+    )
+    .unwrap();
+    preflight.validate().unwrap();
+    preflight
+        .validate_against_sources(&hollow, &floating)
+        .unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellIntersection
+    );
+
+    let intersection = hypermesh::exact::boolean_exact(
+        &hollow,
+        &floating,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    intersection.validate().unwrap();
+    intersection
+        .validate_operation_against_sources(
+            &hollow,
+            &floating,
+            hypermesh::exact::ExactBooleanOperation::Intersection,
+            ValidationPolicy::CLOSED,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        intersection.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::
+                AxisAlignedOrthogonalSolidCellIntersection
+        }
+    );
+    assert!(intersection.mesh.vertices().is_empty());
+    assert!(intersection.mesh.triangles().is_empty());
+
+    let mut stale = preflight.clone();
+    stale.support = hypermesh::exact::ExactBooleanSupport::CertifiedWindingMaterialized;
+    assert!(stale.validate_against_sources(&hollow, &floating).is_err());
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
 fn exact_axis_aligned_orthogonal_solid_accepts_face_fan_cell_split() {
     let left = top_subdivided_axis_aligned_box_i64([0, 0, 0], [2, 2, 2]);
     let right = axis_aligned_box_i64([1, 1, 0], [3, 3, 2]);
@@ -6990,6 +7053,68 @@ fn exact_affine_orthogonal_solid_cell_complexes_discover_shared_frame() {
     let mut stale = union_preflight.clone();
     stale.support = hypermesh::exact::ExactBooleanSupport::CertifiedAffineBoxUnion;
     assert!(stale.validate_against_sources(&first, &second).is_err());
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
+fn exact_affine_orthogonal_solid_intersection_materializes_empty_cavity_cell_set() {
+    let origin = [0, 0, 0];
+    let basis_u = [2, 1, 0];
+    let basis_v = [-1, 2, 0];
+    let basis_w = [0, 1, 2];
+    let outer = affine_box_i64([0, 0, 0], [8, 8, 8], origin, basis_u, basis_v, basis_w);
+    let cavity = affine_box_i64([2, 2, 2], [6, 6, 6], origin, basis_u, basis_v, basis_w);
+    let hollow = hypermesh::exact::boolean_exact(
+        &outer,
+        &cavity,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap()
+    .mesh;
+    assert!(hollow.facts().mesh.closed_manifold);
+
+    let floating = affine_box_i64([3, 3, 3], [5, 5, 5], origin, basis_u, basis_v, basis_w);
+    let preflight = hypermesh::exact::preflight_boolean_exact(
+        &hollow,
+        &floating,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+    )
+    .unwrap();
+    preflight.validate().unwrap();
+    preflight
+        .validate_against_sources(&hollow, &floating)
+        .unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellIntersection
+    );
+
+    let intersection = hypermesh::exact::boolean_exact(
+        &hollow,
+        &floating,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    intersection
+        .validate_operation_against_sources(
+            &hollow,
+            &floating,
+            hypermesh::exact::ExactBooleanOperation::Intersection,
+            ValidationPolicy::CLOSED,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        intersection.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut:
+                hypermesh::exact::ExactBooleanShortcutKind::AffineOrthogonalSolidCellIntersection
+        }
+    );
+    assert!(intersection.mesh.vertices().is_empty());
+    assert!(intersection.mesh.triangles().is_empty());
 }
 
 #[cfg(feature = "exact-triangulation")]

@@ -528,6 +528,11 @@ pub fn preflight_boolean_exact(
         {
             ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
         }
+        ExactBooleanOperation::Intersection
+            if has_empty_axis_aligned_orthogonal_solid_intersection(left, right)? =>
+        {
+            ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellIntersection
+        }
         ExactBooleanOperation::Union
         | ExactBooleanOperation::Intersection
         | ExactBooleanOperation::Difference
@@ -620,6 +625,9 @@ pub fn preflight_boolean_exact(
             | ExactBooleanSupport::CertifiedAxisAlignedBoxMultiDifference
             | ExactBooleanSupport::CertifiedAxisAlignedBoxNestedDifference
             | ExactBooleanSupport::CertifiedAxisAlignedBoxEmptyDifference
+            | ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellUnion
+            | ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellIntersection
+            | ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellDifference
             | ExactBooleanSupport::CertifiedAffineBoxUnion
             | ExactBooleanSupport::CertifiedAffineBoxIntersection
             | ExactBooleanSupport::CertifiedAffineBoxDifference
@@ -2391,6 +2399,30 @@ fn boolean_axis_aligned_orthogonal_solid_cell_meshes(
         mesh,
         axis_aligned_orthogonal_solid_shortcut(solid_operation),
     )))
+}
+
+#[cfg(feature = "exact-triangulation")]
+/// Return whether exact orthogonal occupancy certifies an empty intersection.
+///
+/// This is intentionally narrower than the general orthogonal-cell shortcut:
+/// ordinary nonempty unions/intersections/differences should keep the more
+/// specific graph, box-cell, and boundary-touch certificates when available.
+/// The empty cavity case can have overlapping AABBs and no graph events, so
+/// this retained-object witness is checked before falling through to winding,
+/// following Yap, "Towards Exact Geometric Computation," *Computational
+/// Geometry* 7.1-2 (1997).
+fn has_empty_axis_aligned_orthogonal_solid_intersection(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Result<bool, MeshError> {
+    Ok(materialize_axis_aligned_orthogonal_solid_cells(
+        left,
+        right,
+        AxisAlignedOrthogonalSolidOperation::Intersection,
+        "empty exact axis-aligned orthogonal solid cell intersection",
+        ValidationPolicy::CLOSED,
+    )?
+    .is_some_and(|mesh| mesh.vertices().is_empty() && mesh.triangles().is_empty()))
 }
 
 #[cfg(feature = "exact-triangulation")]

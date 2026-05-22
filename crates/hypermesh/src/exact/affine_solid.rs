@@ -85,6 +85,14 @@ impl AffineOrthogonalSolidArrangement {
                 "affine orthogonal solid output mesh is stale: {error:?}"
             ))
         })?;
+        // Empty intersections are valid regularized solids in the retained
+        // boolean algebra. Yap, "Towards Exact Geometric Computation,"
+        // Comput. Geom. 7.1-2 (1997), still requires source replay for the
+        // decision, but the local output audit must not demand nonempty
+        // topology once replay has certified an empty selected cell set.
+        if self.mesh.vertices().is_empty() && self.mesh.triangles().is_empty() {
+            return Ok(());
+        }
         let normalized = mesh_to_uvw(&self.mesh, &self.basis, self.mesh.validation_policy())
             .ok_or_else(|| {
                 affine_solid_error("affine orthogonal solid output does not replay through basis")

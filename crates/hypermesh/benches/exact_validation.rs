@@ -4833,6 +4833,18 @@ fn exact_boolean_affine_box_cells(c: &mut Criterion) {
         .unwrap()
         .mesh;
         let affine_cutter = affine_box_i64([2, 0, 0], [3, 2, 2], origin, basis_u, basis_v, basis_w);
+        let affine_outer = affine_box_i64([0, 0, 0], [8, 8, 8], origin, basis_u, basis_v, basis_w);
+        let affine_cavity = affine_box_i64([2, 2, 2], [6, 6, 6], origin, basis_u, basis_v, basis_w);
+        let affine_hollow = hypermesh::exact::boolean_exact(
+            &affine_outer,
+            &affine_cavity,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap()
+        .mesh;
+        let affine_floating =
+            affine_box_i64([3, 3, 3], [5, 5, 5], origin, basis_u, basis_v, basis_w);
         let discovered_left = affine_complex.clone();
         let discovered_right_a =
             affine_box_i64([2, 0, 0], [4, 2, 2], origin, basis_u, basis_v, basis_w);
@@ -4982,6 +4994,26 @@ fn exact_boolean_affine_box_cells(c: &mut Criterion) {
                         &affine_complex,
                         &affine_cutter,
                         hypermesh::exact::ExactBooleanOperation::Difference,
+                        ValidationPolicy::CLOSED,
+                        hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+                    ),
+                    hypermesh::exact::preflight_boolean_exact(
+                        &affine_hollow,
+                        &affine_floating,
+                        hypermesh::exact::ExactBooleanOperation::Intersection,
+                    )
+                    .map(|report| report.validate()),
+                    hypermesh::exact::boolean_exact(
+                        &affine_hollow,
+                        &affine_floating,
+                        hypermesh::exact::ExactBooleanOperation::Intersection,
+                        ValidationPolicy::CLOSED,
+                    )
+                    .unwrap()
+                    .validate_operation_against_sources(
+                        &affine_hollow,
+                        &affine_floating,
+                        hypermesh::exact::ExactBooleanOperation::Intersection,
                         ValidationPolicy::CLOSED,
                         hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
                     ),
@@ -6299,6 +6331,17 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
         .unwrap()
         .mesh;
         let orthogonal_cutter = axis_aligned_box_i64([2, 0, 0], [3, 2, 2]);
+        let orthogonal_outer = axis_aligned_box_i64([0, 0, 0], [8, 8, 8]);
+        let orthogonal_cavity = axis_aligned_box_i64([2, 2, 2], [6, 6, 6]);
+        let orthogonal_hollow = hypermesh::exact::boolean_exact(
+            &orthogonal_outer,
+            &orthogonal_cavity,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap()
+        .mesh;
+        let orthogonal_floating = axis_aligned_box_i64([3, 3, 3], [5, 5, 5]);
         let face_touch_left = axis_aligned_box_i64([0, 0, 0], [2, 2, 2]);
         let face_touch_right = axis_aligned_box_i64([2, 0, 0], [4, 2, 2]);
 
@@ -6590,6 +6633,19 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
                         &fan_cell_left,
                         &fan_cell_right,
                         hypermesh::exact::ExactBooleanOperation::Difference,
+                        ValidationPolicy::CLOSED,
+                    )
+                    .unwrap(),
+                    hypermesh::exact::preflight_boolean_exact(
+                        &orthogonal_hollow,
+                        &orthogonal_floating,
+                        hypermesh::exact::ExactBooleanOperation::Intersection,
+                    )
+                    .unwrap(),
+                    hypermesh::exact::boolean_exact(
+                        &orthogonal_hollow,
+                        &orthogonal_floating,
+                        hypermesh::exact::ExactBooleanOperation::Intersection,
                         ValidationPolicy::CLOSED,
                     )
                     .unwrap(),
