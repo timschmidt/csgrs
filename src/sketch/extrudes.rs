@@ -2,11 +2,11 @@
 
 use crate::errors::ValidationError;
 use crate::float_types::{
-    Real, hangle_sin_cos, hdegrees_to_radians, hpoints_within_tolerance, hreal_div,
-    hreal_f64s_within_tolerance, hreal_from_f64, hreal_gt_f64, hreal_lt_f64, hreal_mul,
+    Real, hangle_sin_cos, hdegrees_to_radians, hpoints_exactly_equal, hreal_div,
+    hreal_f64s_exactly_equal, hreal_from_f64, hreal_gt_f64, hreal_lt_f64, hreal_mul,
     hrotation_between_vectors, htranslation_matrix, hunit_cross_vector3, hunit_vector3,
-    hvector3_from_point3, hvector3_from_vector3, hvectors_within_tolerance,
-    hxy_ring_orientation_sign, tolerance,
+    hvector3_from_point3, hvector3_from_vector3, hvectors_exactly_equal,
+    hxy_ring_orientation_sign,
 };
 use crate::mesh::Mesh;
 use crate::polygon::Polygon;
@@ -123,7 +123,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// - **Centroid**: c⃗ = centroid(base) + 0.5×d⃗
     ///
     /// ## **Numerical Considerations**
-    /// - **Degenerate Direction**: |d⃗| < ε returns original geometry
+    /// - **Degenerate Direction**: exact zero or non-finite directions return no geometry
     /// - **Normal Calculation**: Cross products normalized for unit normals
     /// - **Manifold Preservation**: Ensures watertight mesh topology
     ///
@@ -139,16 +139,16 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// - `direction`: 3D vector defining extrusion direction and magnitude
     ///
     /// Direction degeneracy is tested by promoting the boundary `Vector3<f64>`
-    /// into `hyperlattice::Vector3` and comparing squared length in
-    /// `hyperreal::Real`. This keeps the decision to emit no solid for a
-    /// near-zero extrusion on the same exact-aware predicate path used by mesh
-    /// topology; see Yap, "Towards Exact Geometric Computation,"
+    /// into `hyperlattice::Vector3` and comparing squared length exactly in
+    /// `hyperreal::Real`. This keeps the decision to emit no solid for an
+    /// exact-zero extrusion on the same exact predicate path used by mesh
+    /// topology, while preserving nonzero infinitesimal-scale boundary values;
+    /// see Yap, "Towards Exact Geometric Computation,"
     /// *Computational Geometry* 7(1-2), 1997
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     pub fn extrude_vector(&self, direction: Vector3<Real>) -> Mesh<M> {
-        let tol = tolerance();
         if hvector3_from_vector3(&direction).is_none()
-            || hvectors_within_tolerance(&direction, &Vector3::zeros(), tol)
+            || hvectors_exactly_equal(&direction, &Vector3::zeros())
         {
             return Mesh::empty(self.metadata.clone());
         }
@@ -428,8 +428,8 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     // return CSG::new();
     // }
     // let height = hyperlattice_magnitude(direction);
-    // if height < tolerance() {
-    // no real extrusion
+    // if height is exact zero {
+    // no extrusion volume
     // return CSG::new();
     // }
     //
@@ -535,11 +535,11 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     // Step 3) If direction is not along +Z, rotate final mesh so +Z aligns with your direction
     // (This is optional or can be done up front. Typical OpenSCAD style is to do everything
     // along +Z, then rotate the final.)
-    // if hyperlattice_distance(axis_dir, Vector3::z()) > tolerance() {
+    // if axis_dir is not exactly Vector3::z() {
     // rotate from +Z to axis_dir
     // let rot_axis = hvector3_cross(&Vector3::z(), &axis_dir)?;
     // let sin_theta = hyperlattice_magnitude(rot_axis);
-    // if sin_theta > tolerance() {
+    // if sin_theta is not exact zero {
     // let cos_theta = hvector3_dot(&Vector3::z(), &axis_dir)?;
     // let angle = cos_theta.acos();
     // let mat = hrotation_between_vectors(&Vector3::z(), &axis_dir)?;
@@ -779,7 +779,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
             // with an explicit duplicate endpoint.
             let last = pts_3d.last().unwrap();
             let first = pts_3d.first().unwrap();
-            if !hpoints_within_tolerance(last, first, tolerance()) {
+            if !hpoints_exactly_equal(last, first) {
                 pts_3d.push(*first);
             }
 
@@ -806,7 +806,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         // 2) Iterate over each hypercurve finite profile, revolve side walls,
         //    and possibly add caps when angle_degs < 360.
         //----------------------------------------------------------------------
-        let full_revolve = hreal_f64s_within_tolerance(angle_degs, 360.0, tolerance());
+        let full_revolve = hreal_f64s_exactly_equal(angle_degs, 360.0);
         let angle_positive = hreal_from_f64(angle_degs)
             .ok()
             .is_some_and(|angle| hreal_gt_f64(&angle, 0.0));
@@ -898,7 +898,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// (<https://doi.org/10.2307/2319846>).
     ///
     /// * `path` - ordered list of 3-D points. If the first and last points
-    ///   coincide under the hyperreal squared-distance predicate, the path is
+    ///   coincide under the exact hyperreal squared-distance predicate, the path is
     ///   treated as **closed** and no caps are added.
     ///
     /// * returns - a `Mesh<M>` containing all side quads plus automatically triangulated caps (respecting any holes).
@@ -911,8 +911,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
             return Mesh::empty(self.metadata.clone());
         }
         let n_path = path.len();
-        let path_is_closed =
-            hpoints_within_tolerance(&path[0], &path[n_path - 1], tolerance());
+        let path_is_closed = hpoints_exactly_equal(&path[0], &path[n_path - 1]);
 
         // pre-compute a transform for each path vertex
         let mut slice_xforms: Vec<Matrix4<Real>> = Vec::with_capacity(n_path);
@@ -1141,8 +1140,7 @@ fn close_region_ring(mut points: Vec<[Real; 2]>) -> Vec<[Real; 2]> {
 }
 
 fn same_xy(a: (Real, Real), b: (Real, Real)) -> bool {
-    hreal_f64s_within_tolerance(a.0, b.0, tolerance())
-        && hreal_f64s_within_tolerance(a.1, b.1, tolerance())
+    hreal_f64s_exactly_equal(a.0, b.0) && hreal_f64s_exactly_equal(a.1, b.1)
 }
 
 #[cfg(test)]
@@ -1150,9 +1148,9 @@ mod tests {
     use super::*;
 
     #[test]
-    fn same_xy_uses_hyperreal_tolerance_boundary() {
-        assert!(same_xy((0.0, 0.0), (tolerance() * 0.25, -tolerance() * 0.25)));
-        assert!(!same_xy((0.0, 0.0), (tolerance() * 4.0, 0.0)));
+    fn same_xy_uses_exact_hyperreal_identity() {
+        assert!(same_xy((0.0, 0.0), (0.0, -0.0)));
+        assert!(!same_xy((0.0, 0.0), (1.0e-12, 0.0)));
         assert!(!same_xy((0.0, 0.0), (Real::NAN, 0.0)));
     }
 

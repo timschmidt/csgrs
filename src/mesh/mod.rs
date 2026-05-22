@@ -2,9 +2,8 @@
 
 use crate::errors::ValidationError;
 use crate::float_types::{
-    HReal, Real, hangle_between_vectors, hpoint_distance, hpoint3_bounds,
-    hpoints_exactly_equal, hreal_cmp_f64, hreal_from_f64, hreal_sign, hunit_vector3,
-    hvector3_from_vector3,
+    Real, hangle_between_vectors, hpoint_distance, hpoint3_bounds, hpoints_exactly_equal,
+    hreal_cmp_f64, hreal_f64s_exactly_equal, hunit_vector3, hvector3_from_vector3,
     parry3d::{bounding_volume::Aabb, query::RayCast, shape::Shape},
     rapier3d::prelude::{
         ColliderBuilder, ColliderSet, Ray, RigidBodyBuilder, RigidBodyHandle, RigidBodySet,
@@ -78,20 +77,6 @@ pub struct Mesh<M: Clone + Send + Sync + Debug> {
     /// Whole-mesh metadata. Use `M = ()` for no metadata and `M = Option<YourMetadata>`
     /// for optional metadata.
     pub metadata: M,
-}
-
-fn hreal_zero(value: &HReal) -> bool {
-    matches!(hreal_sign(value), Some(hyperreal::RealSign::Zero))
-}
-
-fn hreal_f64s_exactly_equal(lhs: Real, rhs: Real) -> bool {
-    let Ok(lhs) = hreal_from_f64(lhs) else {
-        return false;
-    };
-    let Ok(rhs) = hreal_from_f64(rhs) else {
-        return false;
-    };
-    hreal_zero(&(lhs - rhs))
 }
 
 fn bounding_box_contains_bounds(container: &Aabb, contained: &Aabb) -> bool {

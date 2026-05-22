@@ -214,15 +214,21 @@ fn adversarial_extrude_height_and_direction_catalog_is_finite() {
 }
 
 #[test]
-fn adversarial_extrude_vector_rejects_hyperreal_degenerate_direction() {
+fn adversarial_extrude_vector_rejects_only_exact_zero_direction() {
     let sketch = Profile::<()>::rectangle(1.0, 1.0, ());
-    let near_zero = sketch.extrude_vector(Vector3::new(tolerance() * 0.25, 0.0, 0.0));
+    let exact_zero = sketch.extrude_vector(Vector3::zeros());
+    let tiny_nonzero = sketch.extrude_vector(Vector3::new(tolerance() * 0.25, 0.0, 0.0));
     let nonfinite = sketch.extrude_vector(Vector3::new(Real::NAN, 0.0, 1.0));
 
     assert!(
-        near_zero.polygons.is_empty(),
-        "near-zero extrusion direction should produce an empty mesh"
+        exact_zero.polygons.is_empty(),
+        "exact-zero extrusion direction should produce an empty mesh"
     );
+    assert!(
+        !tiny_nonzero.polygons.is_empty(),
+        "nonzero extrusion direction must not be collapsed by tolerance"
+    );
+    assert_mesh_finite(&tiny_nonzero);
     assert!(
         nonfinite.polygons.is_empty(),
         "non-finite extrusion direction should produce an empty mesh"
@@ -302,7 +308,7 @@ fn adversarial_sweep_path_catalog_is_finite() {
 }
 
 #[test]
-fn adversarial_sweep_uses_hyperreal_path_closure_and_tangents() {
+fn adversarial_sweep_uses_exact_hyperreal_path_closure_and_tangents() {
     let sketch = Profile::<()>::rectangle(0.5, 0.25, ());
     let path = vec![
         Point3::new(0.0, 0.0, 0.0),
@@ -316,7 +322,7 @@ fn adversarial_sweep_uses_hyperreal_path_closure_and_tangents() {
     assert_mesh_finite(&mesh);
     assert!(
         !mesh.polygons.is_empty(),
-        "near-closed sweep path should still emit finite side walls"
+        "near-but-open sweep path should still emit finite side walls"
     );
 }
 
