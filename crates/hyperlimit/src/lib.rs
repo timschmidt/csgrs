@@ -154,7 +154,7 @@ pub use predicates::filters::{
     certified_interval_sign_report_with_policy, certified_interval_sign_with_policy,
 };
 pub use predicates::halfspace::{
-    HalfspaceFeasibilityReport, classify_halfspace_feasibility3,
+    HalfspaceFeasibilityReport, HalfspaceInfeasibilityCertificate, classify_halfspace_feasibility3,
     classify_halfspace_feasibility3_with_policy,
 };
 pub use predicates::interval::{

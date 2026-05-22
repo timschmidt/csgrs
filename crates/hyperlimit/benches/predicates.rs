@@ -543,7 +543,7 @@ fn bench_exact_rational_kernels(c: &mut Criterion) {
                 .unwrap_or(false);
             let infeasible_status = classify_halfspace_feasibility3(black_box(&infeasible))
                 .value()
-                .map(|report| report.is_feasible())
+                .map(|report| report.infeasibility_certificate.is_some())
                 .unwrap_or(true);
             black_box((feasible_status, infeasible_status))
         });

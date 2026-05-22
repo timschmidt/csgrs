@@ -114,6 +114,12 @@ fn halfspace_feasibility_rejects_inconsistent_parallel_slabs() {
 
     assert_eq!(report.status, HalfspaceFeasibility::Infeasible);
     assert!(report.witness.is_none());
+    let certificate = report
+        .infeasibility_certificate
+        .as_ref()
+        .expect("opposed slabs should produce a two-plane Farkas certificate");
+    assert_eq!(certificate.active_planes, [Some(0), Some(1), None, None]);
+    assert_eq!(certificate.offset_sum, r(1));
     assert_eq!(
         report
             .validate_against_planes(&planes, PredicatePolicy::default())
@@ -130,4 +136,37 @@ fn halfspace_feasibility_rejects_zero_normal_positive_offset() {
 
     assert_eq!(report.status, HalfspaceFeasibility::Infeasible);
     assert!(report.witness.is_none());
+    assert!(
+        report.infeasibility_certificate.is_none(),
+        "zero-normal contradiction is structurally infeasible but has no nonzero Farkas normal combination"
+    );
+}
+
+#[test]
+fn halfspace_feasibility_reports_four_plane_farkas_certificate() {
+    let planes = vec![
+        plane(-1, 0, 0, 1),
+        plane(0, -1, 0, 1),
+        plane(0, 0, -1, 1),
+        plane(1, 1, 1, -2),
+    ];
+
+    let report = decided(classify_halfspace_feasibility3(&planes));
+
+    assert_eq!(report.status, HalfspaceFeasibility::Infeasible);
+    let certificate = report
+        .infeasibility_certificate
+        .as_ref()
+        .expect("tetrahedral infeasibility should produce a four-plane Farkas certificate");
+    assert_eq!(
+        certificate.active_planes,
+        [Some(0), Some(1), Some(2), Some(3)]
+    );
+    assert_eq!(certificate.offset_sum, r(1));
+    assert_eq!(
+        certificate
+            .validate_against_planes(&planes, PredicatePolicy::default())
+            .value(),
+        Some(true)
+    );
 }

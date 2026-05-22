@@ -631,13 +631,24 @@ fn predicate_invariants(input: Input) {
         Plane3::new(Point3::new(1.into(), 0.into(), 0.into()), 1.into()),
         Plane3::new(Point3::new((-1).into(), 0.into(), 0.into()), 0.into()),
     ];
-    assert_eq!(
-        classify_halfspace_feasibility3(&impossible_halfspaces)
-            .value()
-            .map(|report| report.status),
-        Some(hyperlimit::HalfspaceFeasibility::Infeasible),
-        "opposed exact halfspaces x <= -1 and x >= 0 must be infeasible"
-    );
+    if let Some(report) = classify_halfspace_feasibility3(&impossible_halfspaces).value() {
+        assert_eq!(
+            report.status,
+            hyperlimit::HalfspaceFeasibility::Infeasible,
+            "opposed exact halfspaces x <= -1 and x >= 0 must be infeasible"
+        );
+        assert!(
+            report.infeasibility_certificate.is_some(),
+            "opposed exact halfspaces should retain a Farkas certificate"
+        );
+        assert_eq!(
+            report
+                .validate_against_planes(&impossible_halfspaces, PredicatePolicy::default())
+                .value(),
+            Some(true),
+            "halfspace infeasibility certificate must replay exactly"
+        );
+    }
 }
 
 fn rational(numerator: i16, denominator_byte: u8) -> Real {

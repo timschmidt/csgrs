@@ -12,10 +12,14 @@
 //! at most three active planes is enough to recover a candidate. This is the
 //! same fixed-dimension LP viewpoint used by Seidel, "Small-Dimensional Linear
 //! Programming and Convex Hulls Made Easy," *Discrete & Computational
-//! Geometry* 6 (1991), while preserving Yap's exact-geometric-computation
-//! boundary: every candidate is built over `Real` and then certified by exact
-//! predicates; see Yap, "Towards Exact Geometric Computation," *Computational
-//! Geometry* 7.1-2 (1997).
+//! Geometry* 6 (1991). Infeasible outcomes can carry a Farkas certificate: a
+//! nonnegative linear combination of halfspace inequalities whose normal sum is
+//! zero and whose offset sum is strictly positive. That is the standard theorem
+//! of alternatives for linear inequalities; see Schrijver, *Theory of Linear
+//! and Integer Programming*, Wiley, 1986. Both routes preserve Yap's
+//! exact-geometric-computation boundary: candidates and certificates are built
+//! over `Real` and then replayed by exact predicates; see Yap, "Towards Exact
+//! Geometric Computation," *Computational Geometry* 7.1-2 (1997).
 
 use hyperreal::Real;
 
@@ -35,6 +39,8 @@ pub struct HalfspaceFeasibilityReport {
     pub status: HalfspaceFeasibility,
     /// Exact point satisfying every halfspace when feasible.
     pub witness: Option<Point3>,
+    /// Exact Farkas certificate for infeasible systems, when found.
+    pub infeasibility_certificate: Option<HalfspaceInfeasibilityCertificate>,
     /// Active plane indices used to construct [`Self::witness`].
     ///
     /// Empty entries mean the witness came from a lower-dimensional active set:
@@ -49,15 +55,19 @@ impl HalfspaceFeasibilityReport {
         Self {
             status: HalfspaceFeasibility::Feasible,
             witness: Some(witness),
+            infeasibility_certificate: None,
             active_planes,
         }
     }
 
     /// Construct an infeasible report.
-    pub const fn infeasible() -> Self {
+    pub const fn infeasible(
+        infeasibility_certificate: Option<HalfspaceInfeasibilityCertificate>,
+    ) -> Self {
         Self {
             status: HalfspaceFeasibility::Infeasible,
             witness: None,
+            infeasibility_certificate,
             active_planes: [None, None, None],
         }
     }
@@ -69,8 +79,10 @@ impl HalfspaceFeasibilityReport {
 
     /// Replay the witness against the source planes.
     ///
-    /// Infeasible reports have no compact Farkas certificate yet, so this
-    /// method validates only structural consistency for infeasible outcomes.
+    /// Feasible reports replay their witness against every halfspace.
+    /// Infeasible reports replay their Farkas certificate when present; an
+    /// older or deliberately compact infeasible report without a certificate is
+    /// structurally valid but not proof-producing.
     pub fn validate_against_planes(
         &self,
         planes: &[Plane3],
@@ -80,10 +92,103 @@ impl HalfspaceFeasibilityReport {
             (HalfspaceFeasibility::Feasible, Some(witness)) => {
                 point_satisfies_halfspaces(witness, planes, policy)
             }
-            (HalfspaceFeasibility::Infeasible, None) => {
-                PredicateOutcome::decided(true, Certainty::Exact, Escalation::Structural)
-            }
+            (HalfspaceFeasibility::Infeasible, None) => match &self.infeasibility_certificate {
+                Some(certificate) => certificate.validate_against_planes(planes, policy),
+                None => PredicateOutcome::decided(true, Certainty::Exact, Escalation::Structural),
+            },
             _ => PredicateOutcome::decided(false, Certainty::Exact, Escalation::Structural),
+        }
+    }
+}
+
+/// Exact Farkas certificate for an infeasible 3D halfspace system.
+///
+/// For halfspaces `n_i . x + d_i <= 0`, nonnegative multipliers with
+/// `sum(lambda_i n_i) = 0` and `sum(lambda_i d_i) > 0` prove infeasibility:
+/// multiplying all inequalities by `lambda_i` and summing gives
+/// `0 . x + positive <= 0`, a contradiction. This certificate keeps that proof
+/// as exact `Real` data so callers can replay it without depending on a solver
+/// implementation. The theorem is Farkas' lemma; see Schrijver, *Theory of
+/// Linear and Integer Programming*, Wiley, 1986.
+#[derive(Clone, Debug, PartialEq)]
+pub struct HalfspaceInfeasibilityCertificate {
+    /// Plane indices participating in the certificate.
+    pub active_planes: [Option<usize>; 4],
+    /// Nonnegative multipliers corresponding to [`Self::active_planes`].
+    pub multipliers: [Real; 4],
+    /// Exact positive offset sum `sum(lambda_i * plane_i.offset)`.
+    pub offset_sum: Real,
+}
+
+impl HalfspaceInfeasibilityCertificate {
+    /// Replay the Farkas certificate against a source plane list.
+    pub fn validate_against_planes(
+        &self,
+        planes: &[Plane3],
+        policy: PredicatePolicy,
+    ) -> PredicateOutcome<bool> {
+        let mut normal_sum = Point3::new(Real::from(0), Real::from(0), Real::from(0));
+        let mut offset_sum = Real::from(0);
+        let mut saw_positive_multiplier = false;
+
+        for slot in 0..4 {
+            let multiplier = &self.multipliers[slot];
+            let sign = match sign_of(multiplier, policy) {
+                PredicateOutcome::Decided { value, .. } => value,
+                PredicateOutcome::Unknown { needed, stage } => {
+                    return PredicateOutcome::unknown(needed, stage);
+                }
+            };
+            if sign == Sign::Negative {
+                return PredicateOutcome::decided(false, Certainty::Exact, Escalation::Exact);
+            }
+            saw_positive_multiplier |= sign == Sign::Positive;
+
+            match self.active_planes[slot] {
+                Some(index) if index < planes.len() => {
+                    let plane = &planes[index];
+                    normal_sum = add_points(&normal_sum, &scale_point(&plane.normal, multiplier));
+                    offset_sum = add(&offset_sum, &mul(multiplier, &plane.offset));
+                }
+                Some(_) => {
+                    return PredicateOutcome::decided(false, Certainty::Exact, Escalation::Exact);
+                }
+                None => {
+                    if sign != Sign::Zero {
+                        return PredicateOutcome::decided(
+                            false,
+                            Certainty::Exact,
+                            Escalation::Exact,
+                        );
+                    }
+                }
+            }
+        }
+
+        if !saw_positive_multiplier {
+            return PredicateOutcome::decided(false, Certainty::Exact, Escalation::Exact);
+        }
+        if offset_sum != self.offset_sum {
+            return PredicateOutcome::decided(false, Certainty::Exact, Escalation::Exact);
+        }
+        match point_zero(&normal_sum, policy) {
+            PredicateOutcome::Decided { value: true, .. } => {}
+            PredicateOutcome::Decided { value: false, .. } => {
+                return PredicateOutcome::decided(false, Certainty::Exact, Escalation::Exact);
+            }
+            PredicateOutcome::Unknown { needed, stage } => {
+                return PredicateOutcome::unknown(needed, stage);
+            }
+        }
+        match sign_of(&offset_sum, policy) {
+            PredicateOutcome::Decided {
+                value: Sign::Positive,
+                ..
+            } => PredicateOutcome::decided(true, Certainty::Exact, Escalation::Exact),
+            PredicateOutcome::Decided { .. } => {
+                PredicateOutcome::decided(false, Certainty::Exact, Escalation::Exact)
+            }
+            PredicateOutcome::Unknown { needed, stage } => PredicateOutcome::unknown(needed, stage),
         }
     }
 }
@@ -170,11 +275,320 @@ pub fn classify_halfspace_feasibility3_with_policy(
         }
     }
 
+    let certificate = match find_farkas_certificate(planes, policy) {
+        CertificateSearch::Found(certificate) => Some(certificate),
+        CertificateSearch::NotFound => None,
+        CertificateSearch::Unknown { needed, stage } => {
+            return PredicateOutcome::unknown(needed, stage);
+        }
+    };
+
     PredicateOutcome::decided(
-        HalfspaceFeasibilityReport::infeasible(),
+        HalfspaceFeasibilityReport::infeasible(certificate),
         Certainty::Exact,
         Escalation::Exact,
     )
+}
+
+enum CertificateSearch {
+    Found(HalfspaceInfeasibilityCertificate),
+    NotFound,
+    Unknown {
+        needed: RefinementNeed,
+        stage: Escalation,
+    },
+}
+
+fn find_farkas_certificate(planes: &[Plane3], policy: PredicatePolicy) -> CertificateSearch {
+    crate::trace_dispatch!("hyperlimit", "halfspace_feasibility3", "farkas-certificate");
+
+    for first in 0..planes.len() {
+        for second in first + 1..planes.len() {
+            match pair_dependency(&planes[first].normal, &planes[second].normal, policy) {
+                DependencySearch::Found(multipliers) => {
+                    match accept_farkas_dependency(
+                        planes,
+                        [Some(first), Some(second), None, None],
+                        multipliers,
+                        policy,
+                    ) {
+                        CertificateSearch::Found(certificate) => {
+                            return CertificateSearch::Found(certificate);
+                        }
+                        CertificateSearch::Unknown { needed, stage } => {
+                            return CertificateSearch::Unknown { needed, stage };
+                        }
+                        CertificateSearch::NotFound => {}
+                    }
+                }
+                DependencySearch::NotFound => {}
+                DependencySearch::Unknown { needed, stage } => {
+                    return CertificateSearch::Unknown { needed, stage };
+                }
+            }
+        }
+    }
+
+    for first in 0..planes.len() {
+        for second in first + 1..planes.len() {
+            for third in second + 1..planes.len() {
+                match triple_dependency(
+                    &planes[first].normal,
+                    &planes[second].normal,
+                    &planes[third].normal,
+                    policy,
+                ) {
+                    DependencySearch::Found(multipliers) => {
+                        match accept_farkas_dependency(
+                            planes,
+                            [Some(first), Some(second), Some(third), None],
+                            multipliers,
+                            policy,
+                        ) {
+                            CertificateSearch::Found(certificate) => {
+                                return CertificateSearch::Found(certificate);
+                            }
+                            CertificateSearch::Unknown { needed, stage } => {
+                                return CertificateSearch::Unknown { needed, stage };
+                            }
+                            CertificateSearch::NotFound => {}
+                        }
+                    }
+                    DependencySearch::NotFound => {}
+                    DependencySearch::Unknown { needed, stage } => {
+                        return CertificateSearch::Unknown { needed, stage };
+                    }
+                }
+            }
+        }
+    }
+
+    for first in 0..planes.len() {
+        for second in first + 1..planes.len() {
+            for third in second + 1..planes.len() {
+                for fourth in third + 1..planes.len() {
+                    let multipliers = four_plane_dependency(
+                        &planes[first].normal,
+                        &planes[second].normal,
+                        &planes[third].normal,
+                        &planes[fourth].normal,
+                    );
+                    match accept_farkas_dependency(
+                        planes,
+                        [Some(first), Some(second), Some(third), Some(fourth)],
+                        multipliers,
+                        policy,
+                    ) {
+                        CertificateSearch::Found(certificate) => {
+                            return CertificateSearch::Found(certificate);
+                        }
+                        CertificateSearch::Unknown { needed, stage } => {
+                            return CertificateSearch::Unknown { needed, stage };
+                        }
+                        CertificateSearch::NotFound => {}
+                    }
+                }
+            }
+        }
+    }
+
+    CertificateSearch::NotFound
+}
+
+enum DependencySearch {
+    Found([Real; 4]),
+    NotFound,
+    Unknown {
+        needed: RefinementNeed,
+        stage: Escalation,
+    },
+}
+
+fn pair_dependency(first: &Point3, second: &Point3, policy: PredicatePolicy) -> DependencySearch {
+    for (a, b) in [
+        (&first.x, &second.x),
+        (&first.y, &second.y),
+        (&first.z, &second.z),
+    ] {
+        let a_sign = match sign_of(a, policy) {
+            PredicateOutcome::Decided { value, .. } => value,
+            PredicateOutcome::Unknown { needed, stage } => {
+                return DependencySearch::Unknown { needed, stage };
+            }
+        };
+        let b_sign = match sign_of(b, policy) {
+            PredicateOutcome::Decided { value, .. } => value,
+            PredicateOutcome::Unknown { needed, stage } => {
+                return DependencySearch::Unknown { needed, stage };
+            }
+        };
+        if a_sign == Sign::Zero || b_sign == Sign::Zero {
+            continue;
+        }
+        let multipliers = [b.clone(), neg(a), Real::from(0), Real::from(0)];
+        return DependencySearch::Found(multipliers);
+    }
+    DependencySearch::NotFound
+}
+
+fn triple_dependency(
+    first: &Point3,
+    second: &Point3,
+    third: &Point3,
+    policy: PredicatePolicy,
+) -> DependencySearch {
+    for projection in 0..3 {
+        let multipliers = match projection {
+            0 => [
+                det2(&second.y, &second.z, &third.y, &third.z),
+                det2(&third.y, &third.z, &first.y, &first.z),
+                det2(&first.y, &first.z, &second.y, &second.z),
+                Real::from(0),
+            ],
+            1 => [
+                det2(&second.x, &second.z, &third.x, &third.z),
+                det2(&third.x, &third.z, &first.x, &first.z),
+                det2(&first.x, &first.z, &second.x, &second.z),
+                Real::from(0),
+            ],
+            _ => [
+                det2(&second.x, &second.y, &third.x, &third.y),
+                det2(&third.x, &third.y, &first.x, &first.y),
+                det2(&first.x, &first.y, &second.x, &second.y),
+                Real::from(0),
+            ],
+        };
+        match orient_nonnegative_multipliers(multipliers, policy) {
+            MultiplierOrientation::Oriented(oriented) => {
+                let zero = Point3::new(0.into(), 0.into(), 0.into());
+                let normal_sum = weighted_normal_sum(&[first, second, third, &zero], &oriented);
+                match point_zero(&normal_sum, policy) {
+                    PredicateOutcome::Decided { value: true, .. } => {
+                        return DependencySearch::Found(oriented);
+                    }
+                    PredicateOutcome::Decided { value: false, .. } => {}
+                    PredicateOutcome::Unknown { needed, stage } => {
+                        return DependencySearch::Unknown { needed, stage };
+                    }
+                }
+            }
+            MultiplierOrientation::NotConePositive => {}
+            MultiplierOrientation::Unknown { needed, stage } => {
+                return DependencySearch::Unknown { needed, stage };
+            }
+        }
+    }
+    DependencySearch::NotFound
+}
+
+fn four_plane_dependency(
+    first: &Point3,
+    second: &Point3,
+    third: &Point3,
+    fourth: &Point3,
+) -> [Real; 4] {
+    [
+        det3(&second, &third, &fourth),
+        neg(&det3(&first, &third, &fourth)),
+        det3(&first, &second, &fourth),
+        neg(&det3(&first, &second, &third)),
+    ]
+}
+
+fn accept_farkas_dependency(
+    planes: &[Plane3],
+    active_planes: [Option<usize>; 4],
+    multipliers: [Real; 4],
+    policy: PredicatePolicy,
+) -> CertificateSearch {
+    let multipliers = match orient_nonnegative_multipliers(multipliers, policy) {
+        MultiplierOrientation::Oriented(multipliers) => multipliers,
+        MultiplierOrientation::NotConePositive => return CertificateSearch::NotFound,
+        MultiplierOrientation::Unknown { needed, stage } => {
+            return CertificateSearch::Unknown { needed, stage };
+        }
+    };
+
+    let mut offset_sum = Real::from(0);
+    let zero = Point3::new(0.into(), 0.into(), 0.into());
+    let mut normals = [&zero, &zero, &zero, &zero];
+    for slot in 0..4 {
+        match active_planes[slot] {
+            Some(index) if index < planes.len() => {
+                normals[slot] = &planes[index].normal;
+                offset_sum = add(&offset_sum, &mul(&multipliers[slot], &planes[index].offset));
+            }
+            Some(_) => return CertificateSearch::NotFound,
+            None => {}
+        }
+    }
+
+    let normal_sum = weighted_normal_sum(&normals, &multipliers);
+    match point_zero(&normal_sum, policy) {
+        PredicateOutcome::Decided { value: true, .. } => {}
+        PredicateOutcome::Decided { value: false, .. } => return CertificateSearch::NotFound,
+        PredicateOutcome::Unknown { needed, stage } => {
+            return CertificateSearch::Unknown { needed, stage };
+        }
+    }
+    match sign_of(&offset_sum, policy) {
+        PredicateOutcome::Decided {
+            value: Sign::Positive,
+            ..
+        } => CertificateSearch::Found(HalfspaceInfeasibilityCertificate {
+            active_planes,
+            multipliers,
+            offset_sum,
+        }),
+        PredicateOutcome::Decided { .. } => CertificateSearch::NotFound,
+        PredicateOutcome::Unknown { needed, stage } => CertificateSearch::Unknown { needed, stage },
+    }
+}
+
+enum MultiplierOrientation {
+    Oriented([Real; 4]),
+    NotConePositive,
+    Unknown {
+        needed: RefinementNeed,
+        stage: Escalation,
+    },
+}
+
+fn orient_nonnegative_multipliers(
+    multipliers: [Real; 4],
+    policy: PredicatePolicy,
+) -> MultiplierOrientation {
+    let mut positive = false;
+    let mut negative = false;
+    for multiplier in &multipliers {
+        match sign_of(multiplier, policy) {
+            PredicateOutcome::Decided {
+                value: Sign::Positive,
+                ..
+            } => positive = true,
+            PredicateOutcome::Decided {
+                value: Sign::Negative,
+                ..
+            } => negative = true,
+            PredicateOutcome::Decided {
+                value: Sign::Zero, ..
+            } => {}
+            PredicateOutcome::Unknown { needed, stage } => {
+                return MultiplierOrientation::Unknown { needed, stage };
+            }
+        }
+    }
+
+    match (positive, negative) {
+        (true, false) => MultiplierOrientation::Oriented(multipliers),
+        (false, true) => MultiplierOrientation::Oriented([
+            neg(&multipliers[0]),
+            neg(&multipliers[1]),
+            neg(&multipliers[2]),
+            neg(&multipliers[3]),
+        ]),
+        _ => MultiplierOrientation::NotConePositive,
+    }
 }
 
 enum CandidateConstruction {
@@ -291,6 +705,51 @@ fn closest_point_on_plane_pair(
         &scale_point(&first.normal, &lambda_first),
         &scale_point(&second.normal, &lambda_second),
     ))
+}
+
+fn weighted_normal_sum(normals: &[&Point3; 4], multipliers: &[Real; 4]) -> Point3 {
+    let mut sum = Point3::new(Real::from(0), Real::from(0), Real::from(0));
+    for index in 0..4 {
+        sum = add_points(&sum, &scale_point(normals[index], &multipliers[index]));
+    }
+    sum
+}
+
+fn point_zero(point: &Point3, policy: PredicatePolicy) -> PredicateOutcome<bool> {
+    for coordinate in [&point.x, &point.y, &point.z] {
+        match sign_of(coordinate, policy) {
+            PredicateOutcome::Decided {
+                value: Sign::Zero, ..
+            } => {}
+            PredicateOutcome::Decided { .. } => {
+                return PredicateOutcome::decided(false, Certainty::Exact, Escalation::Exact);
+            }
+            PredicateOutcome::Unknown { needed, stage } => {
+                return PredicateOutcome::unknown(needed, stage);
+            }
+        }
+    }
+    PredicateOutcome::decided(true, Certainty::Exact, Escalation::Exact)
+}
+
+fn det2(ax: &Real, ay: &Real, bx: &Real, by: &Real) -> Real {
+    sub(&mul(ax, by), &mul(ay, bx))
+}
+
+fn det3(a: &Point3, b: &Point3, c: &Point3) -> Real {
+    let by_cz = mul(&b.y, &c.z);
+    let bz_cy = mul(&b.z, &c.y);
+    let bz_cx = mul(&b.z, &c.x);
+    let bx_cz = mul(&b.x, &c.z);
+    let bx_cy = mul(&b.x, &c.y);
+    let by_cx = mul(&b.y, &c.x);
+    let x_cofactor = sub(&by_cz, &bz_cy);
+    let y_cofactor = sub(&bz_cx, &bx_cz);
+    let z_cofactor = sub(&bx_cy, &by_cx);
+    add(
+        &add(&mul(&a.x, &x_cofactor), &mul(&a.y, &y_cofactor)),
+        &mul(&a.z, &z_cofactor),
+    )
 }
 
 fn sign_of(value: &Real, policy: PredicatePolicy) -> PredicateOutcome<Sign> {
