@@ -37,9 +37,10 @@ use hypersolve::{
     schedule_candidate_batch_predicates, sketch_angle_builders, sketch_compatibility_fixtures,
     sketch_distance_builders, sketch_incidence_builders, sketch_objective_builders,
     sketch_orientation_builders, sketch_range_builders, sketch_symmetry_builders,
-    solve_damped_least_squares, solve_direct_affine_equalities, solve_direct_affine_system,
-    solve_direct_univariate_quadratic_equalities, squared_distance_equation,
-    tangent_parallel_equation, tangent_same_direction_constraint, validate_equality_substitutions,
+    sketch_tangency_builders, solve_damped_least_squares, solve_direct_affine_equalities,
+    solve_direct_affine_system, solve_direct_univariate_quadratic_equalities,
+    squared_distance_equation, tangent_parallel_equation, tangent_same_direction_constraint,
+    validate_equality_substitutions,
 };
 
 fn real(value: i64) -> Real {
@@ -918,6 +919,101 @@ fn sketch_same_direction_relations_report_stale_and_wrong_inputs() {
             expected: "2D line segment"
         }
     );
+}
+
+#[test]
+fn sketch_tangent_same_direction_relations_lower_to_g1_predicate_rows() {
+    let mut sketch = SketchSolveProblem::new();
+    let a0 = sketch.add_point2d("candidate start", real(0), real(0));
+    let a1 = sketch.add_point2d("candidate end", real(3), real(4));
+    let b0 = sketch.add_point2d("target start", real(2), real(1));
+    let b1 = sketch.add_point2d("target end", real(8), real(9));
+    let c0 = sketch.add_point2d("reverse start", real(8), real(9));
+    let c1 = sketch.add_point2d("reverse end", real(2), real(1));
+    let candidate = sketch.add_line_segment2("candidate tangent", a0, a1);
+    let target = sketch.add_line_segment2("target tangent", b0, b1);
+    let reversed = sketch.add_line_segment2("reversed tangent", c0, c1);
+    let report = sketch_tangency_builders::tangent_same_direction_lines2(
+        &mut sketch,
+        "same tangent",
+        candidate,
+        target,
+    );
+    sketch.add_tangent_same_direction_lines2("opposite tangent", candidate, reversed);
+
+    assert_eq!(report.family, hypersolve::SketchConstraintFamily::Tangency);
+    assert_eq!(
+        report.strategy,
+        SketchResidualStrategy::TangentSameDirection
+    );
+
+    let lowered = sketch.lower_to_problem();
+    let certification = certify_candidate(
+        &PreparedProblem::new(&lowered.problem),
+        &context_from_problem(&lowered.problem),
+    );
+
+    assert_eq!(lowered.problem.constraints.len(), 4);
+    assert_eq!(lowered.rows.len(), 4);
+    assert!(lowered.rows.iter().all(|row| {
+        row.strategy == Some(SketchResidualStrategy::TangentSameDirection)
+            && row.status == SketchGeneratedRowStatus::Generated
+    }));
+    assert!(matches!(
+        certification.rows[0].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[1].status,
+        CertifiedCandidateStatus::CertifiedSatisfiedInequality { .. }
+    ));
+    assert!(matches!(
+        certification.rows[2].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[3].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
+}
+
+#[test]
+fn sketch_tangent_same_direction_relations_report_stale_wrong_and_non_2d_inputs() {
+    let mut sketch = SketchSolveProblem::new();
+    let p = sketch.add_point2d("p", real(0), real(0));
+    let q = sketch.add_point2d("q", real(1), real(0));
+    let point3 = sketch.add_point3d("point3", real(1), real(0), real(0));
+    let line = sketch.add_line_segment2("line", p, q);
+    let non_2d = sketch.add_line_segment2("non 2d", point3, q);
+    sketch.add_tangent_same_direction_lines2("missing tangent", line, SketchEntityHandle(999));
+    sketch.add_tangent_same_direction_lines2("wrong tangent family", line, p);
+    sketch.add_tangent_same_direction_lines2("non 2d tangent", line, non_2d);
+    sketch.add_tangent_same_direction_lines2("valid control", line, line);
+
+    let lowered = sketch.lower_to_problem();
+
+    assert_eq!(lowered.problem.constraints.len(), 2);
+    assert_eq!(lowered.rows.len(), 5);
+    assert_eq!(
+        lowered.rows[0].status,
+        SketchGeneratedRowStatus::MissingEntity(SketchEntityHandle(999))
+    );
+    assert_eq!(
+        lowered.rows[1].status,
+        SketchGeneratedRowStatus::WrongEntityKind {
+            handle: p,
+            expected: "2D line segment"
+        }
+    );
+    assert_eq!(
+        lowered.rows[2].status,
+        SketchGeneratedRowStatus::WrongEntityKind {
+            handle: non_2d,
+            expected: "2D line segment"
+        }
+    );
+    assert_eq!(lowered.rows[3].status, SketchGeneratedRowStatus::Generated);
+    assert_eq!(lowered.rows[4].status, SketchGeneratedRowStatus::Generated);
 }
 
 #[test]

@@ -15,7 +15,7 @@ use hyperreal::{Real, RealSign};
 
 use crate::model::{Constraint, ConstraintKind, Problem, VariableId};
 use crate::sketch_builders::{
-    angle, distance, incidence, objective, orientation, ranges, symmetry,
+    angle, distance, incidence, objective, orientation, ranges, symmetry, tangency,
 };
 use crate::symbolic::{Expr, SymbolId};
 
@@ -495,6 +495,19 @@ pub enum SketchConstraintKind {
         /// Second line entity.
         b: SketchEntityHandle,
     },
+    /// 2D same-direction G1 tangent-carrier relation.
+    ///
+    /// Lowering emits exact, unnormalized tangent predicates: cross-product
+    /// equality for common tangent support and dot-product nonnegativity for
+    /// the same-direction branch. Tangent construction and smoothing may be
+    /// proposal behavior, but accepted candidates must pass exact replay in
+    /// the style of Yap, "Towards Exact Geometric Computation" (1997).
+    TangentSameDirectionLines2 {
+        /// Candidate tangent-carrier line entity.
+        candidate: SketchEntityHandle,
+        /// Target tangent-carrier line entity.
+        target: SketchEntityHandle,
+    },
     /// Unsigned equal-angle relation between two 2D line pairs.
     ///
     /// Lowering compares squared cosines, which certifies ordinary equal
@@ -678,6 +691,8 @@ pub enum SketchResidualStrategy {
     DirectionDotProduct,
     /// Exact same-orientation relation for two retained 2D directions.
     DirectionSameOrientation,
+    /// Exact same-direction predicate package for retained G1 tangent carriers.
+    TangentSameDirection,
     /// Squared-cosine equality for unsigned 2D line angles.
     SquaredCosineAngleEquality,
     /// Linear coordinate equality for a retained midpoint relation.
@@ -1298,6 +1313,20 @@ impl SketchSolveProblem {
         b: SketchEntityHandle,
     ) -> SketchConstraintHandle {
         orientation::same_direction_lines2(self, name, a, b).handle
+    }
+
+    /// Add a retained 2D same-direction tangent-carrier relation.
+    ///
+    /// Lowering emits a G1 tangent package: exact cross-product equality and
+    /// exact dot-product nonnegativity, with degenerate tangent carriers left
+    /// to explicit entity-domain preflight.
+    pub fn add_tangent_same_direction_lines2(
+        &mut self,
+        name: impl Into<String>,
+        candidate: SketchEntityHandle,
+        target: SketchEntityHandle,
+    ) -> SketchConstraintHandle {
+        tangency::tangent_same_direction_lines2(self, name, candidate, target).handle
     }
 
     /// Add a retained unsigned 2D equal-angle relation between two line pairs.
@@ -2034,6 +2063,37 @@ impl SketchSolveProblem {
                     format!("{} orientation", constraint.name),
                     direction_dot2(&a, &b),
                     SketchResidualStrategy::DirectionSameOrientation,
+                    ConstraintKind::GreaterOrEqual,
+                    Real::one(),
+                );
+            }
+            SketchConstraintKind::TangentSameDirectionLines2 { candidate, target } => {
+                // This is the retained G1 tangent-carrier package. Yap,
+                // "Towards Exact Geometric Computation" (1997), puts trust in
+                // exact predicates, so the tangent branch is certified by
+                // cross == 0 and dot >= 0 without normalizing or dividing by
+                // tangent length.
+                let (Some(candidate), Some(target)) = (
+                    self.line2_direction(candidate, constraint, rows),
+                    self.line2_direction(target, constraint, rows),
+                ) else {
+                    return;
+                };
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} tangent support", constraint.name),
+                    direction_cross2(&candidate, &target),
+                    SketchResidualStrategy::TangentSameDirection,
+                );
+                self.push_residual_with_kind(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} tangent orientation", constraint.name),
+                    direction_dot2(&candidate, &target),
+                    SketchResidualStrategy::TangentSameDirection,
                     ConstraintKind::GreaterOrEqual,
                     Real::one(),
                 );

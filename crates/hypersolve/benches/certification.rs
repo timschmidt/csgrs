@@ -514,6 +514,29 @@ fn sketch_problem_with_same_direction_relations(
     sketch
 }
 
+fn sketch_problem_with_tangent_same_direction_relations(
+    row_count: usize,
+) -> hypersolve::SketchSolveProblem {
+    let mut sketch = hypersolve::SketchSolveProblem::new();
+    for index in 0..row_count {
+        let y = index as i64;
+        let candidate0 = sketch.add_point2d(format!("tan{index}.c0"), r(0), r(y));
+        let candidate1 = sketch.add_point2d(format!("tan{index}.c1"), r(3), r(y + 4));
+        let target0 = sketch.add_point2d(format!("tan{index}.t0"), r(2), r(y + 3));
+        let target1 = sketch.add_point2d(format!("tan{index}.t1"), r(8), r(y + 11));
+        let candidate =
+            sketch.add_line_segment2(format!("tan{index}.candidate"), candidate0, candidate1);
+        let target = sketch.add_line_segment2(format!("tan{index}.target"), target0, target1);
+        hypersolve::sketch_tangency_builders::tangent_same_direction_lines2(
+            &mut sketch,
+            format!("same tangent {index}"),
+            candidate,
+            target,
+        );
+    }
+    sketch
+}
+
 fn sketch_problem_with_parameter_orderings(row_count: usize) -> hypersolve::SketchSolveProblem {
     let mut sketch = hypersolve::SketchSolveProblem::new();
     let mut previous = sketch.add_parameter("order0", r(0));
@@ -683,6 +706,10 @@ fn certification(c: &mut Criterion) {
     let same_direction_sketch = sketch_problem_with_same_direction_relations(16);
     c.bench_function("sketch_same_direction_lowering", |b| {
         b.iter(|| same_direction_sketch.lower_to_problem())
+    });
+    let tangent_same_direction_sketch = sketch_problem_with_tangent_same_direction_relations(16);
+    c.bench_function("sketch_tangent_same_direction_lowering", |b| {
+        b.iter(|| tangent_same_direction_sketch.lower_to_problem())
     });
     let ordering_sketch = sketch_problem_with_parameter_orderings(16);
     c.bench_function("sketch_parameter_ordering_lowering", |b| {

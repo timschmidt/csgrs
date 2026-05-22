@@ -689,6 +689,48 @@ proptest! {
     }
 
     #[test]
+    fn sketch_tangent_same_direction_rows_match_generated_positive_scaled_directions(
+        ax in -8_i16..=8,
+        ay in -8_i16..=8,
+        dx in -8_i16..=8,
+        dy in -8_i16..=8,
+        scale in 1_i16..=5,
+    ) {
+        prop_assume!(dx != 0 || dy != 0);
+        let ax = i64::from(ax);
+        let ay = i64::from(ay);
+        let dx = i64::from(dx);
+        let dy = i64::from(dy);
+        let scale = i64::from(scale);
+        let mut sketch = SketchSolveProblem::new();
+        let a0 = sketch.add_point2d("a0", Real::from(ax), Real::from(ay));
+        let a1 = sketch.add_point2d("a1", Real::from(ax + dx), Real::from(ay + dy));
+        let b0 = sketch.add_point2d("b0", Real::from(-4), Real::from(7));
+        let b1 = sketch.add_point2d(
+            "b1",
+            Real::from(-4 + scale * dx),
+            Real::from(7 + scale * dy),
+        );
+        let candidate = sketch.add_line_segment2("candidate tangent", a0, a1);
+        let target = sketch.add_line_segment2("target tangent", b0, b1);
+        sketch.add_tangent_same_direction_lines2("same tangent", candidate, target);
+
+        let lowered = sketch.lower_to_problem();
+        let certification = certify_candidate(
+            &PreparedProblem::new(&lowered.problem),
+            &context_from_problem(&lowered.problem),
+        );
+
+        prop_assert_eq!(lowered.rows.len(), 2);
+        let all_tangent_rows = lowered.rows.iter().all(|row| {
+            row.strategy == Some(SketchResidualStrategy::TangentSameDirection)
+                && row.status == SketchGeneratedRowStatus::Generated
+        });
+        prop_assert!(all_tangent_rows);
+        prop_assert!(certification.all_satisfied());
+    }
+
+    #[test]
     fn sketch_equal_angle_rows_match_generated_scaled_line_pairs(
         ux in -6_i16..=6,
         uy in -6_i16..=6,

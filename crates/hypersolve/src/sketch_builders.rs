@@ -27,6 +27,8 @@ pub enum SketchConstraintFamily {
     Orientation,
     /// Angle relation, such as equal unsigned angle between line pairs.
     Angle,
+    /// Tangency relation, such as same-direction G1 tangent carriers.
+    Tangency,
     /// Symmetry relation, such as a point constrained to a midpoint.
     Symmetry,
     /// Inequality/domain range relation.
@@ -75,6 +77,35 @@ pub mod angle {
             handle,
             family: SketchConstraintFamily::Angle,
             strategy: SketchResidualStrategy::SquaredCosineAngleEquality,
+            kind,
+        }
+    }
+}
+
+/// Tangency relation builders.
+pub mod tangency {
+    use super::*;
+
+    /// Add a 2D same-direction tangent-carrier relation.
+    ///
+    /// Lowering emits exact unnormalized G1 tangent predicates: a cross-product
+    /// equality for common tangent support and a dot-product inequality for the
+    /// same orientation branch. Degenerate tangent carriers remain explicit
+    /// entity-domain obligations. This follows Yap's "Towards Exact Geometric
+    /// Computation" (1997): tangent construction may be a proposal step, but
+    /// candidate acceptance is exact predicate replay.
+    pub fn tangent_same_direction_lines2(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        candidate: SketchEntityHandle,
+        target: SketchEntityHandle,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::TangentSameDirectionLines2 { candidate, target };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Tangency,
+            strategy: SketchResidualStrategy::TangentSameDirection,
             kind,
         }
     }
