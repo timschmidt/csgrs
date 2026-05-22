@@ -16,6 +16,8 @@ use hypercurve::{
     BezierBooleanAlgebraicParameterOrderingReport2 as HBezierBooleanAlgebraicParameterOrderingReport2,
     BezierBooleanAlgebraicParameterOrderingStatus as HBezierBooleanAlgebraicParameterOrderingStatus,
     BezierBooleanAlgebraicParameterReadinessReport2 as HBezierBooleanAlgebraicParameterReadinessReport2,
+    BezierBooleanAlgebraicParameterRole as HBezierBooleanAlgebraicParameterRole,
+    BezierBooleanAlgebraicSplitBridgeReport2 as HBezierBooleanAlgebraicSplitBridgeReport2,
     BezierBooleanAssemblyReadinessStatus as HBezierBooleanAssemblyReadinessStatus,
     BezierBooleanConstructionReadinessStatus as HBezierBooleanConstructionReadinessStatus,
     BezierBooleanCubicFragmentReport2 as HBezierBooleanCubicFragmentReport2,
@@ -4458,12 +4460,21 @@ pub fn h_assert_bezier_boolean_algebraic_parameter_carrier(reader: &mut ByteRead
             HClassification::Decided(report) => report,
             HClassification::Uncertain(_) => return,
         };
-    let ordering = HBezierBooleanAlgebraicParameterOrderingReport2::from_readiness(
+    let mut ordering = HBezierBooleanAlgebraicParameterOrderingReport2::from_readiness(
         &readiness,
         HAlgebraicRootRefinementComparisonConfig::default(),
         &h_policy(),
     );
+    if ordering.status == HBezierBooleanAlgebraicParameterOrderingStatus::Ready {
+        let role = match reader.byte() % 3 {
+            0 => HBezierBooleanAlgebraicParameterRole::FirstCurve,
+            1 => HBezierBooleanAlgebraicParameterRole::SecondCurve,
+            _ => HBezierBooleanAlgebraicParameterRole::SharedRange,
+        };
+        ordering.sorted_events[0].role = role;
+    }
     let carrier = HBezierBooleanAlgebraicParameterCarrierReport2::from_ordering(&ordering);
+    let bridge = HBezierBooleanAlgebraicSplitBridgeReport2::from_ordering(&ordering, &h_policy());
 
     assert_eq!(carrier.ordering_status, ordering.status);
     if ordering.status == HBezierBooleanAlgebraicParameterOrderingStatus::Ready {
@@ -4474,8 +4485,18 @@ pub fn h_assert_bezier_boolean_algebraic_parameter_carrier(reader: &mut ByteRead
         assert_eq!(carrier.ordered_event_count, 1);
         assert_eq!(carrier.exact_rational_event_count, usize::from(exact));
         assert_eq!(carrier.interval_event_count, usize::from(!exact));
-        assert_eq!(carrier.shared_range_events.len(), 1);
+        assert_eq!(
+            carrier.first_curve_events.len()
+                + carrier.second_curve_events.len()
+                + carrier.shared_range_events.len(),
+            1
+        );
         assert_eq!(carrier.can_feed_rational_split_bridge(), exact);
+        if let HClassification::Decided(bridge) = bridge {
+            assert_eq!(bridge.is_ready(), exact);
+            assert_eq!(bridge.exact_rational_parameter_count, usize::from(exact));
+            assert_eq!(bridge.non_rational_parameter_count, usize::from(!exact));
+        }
     } else {
         assert!(carrier.has_blockers() || carrier.ordered_event_count == 0);
     }

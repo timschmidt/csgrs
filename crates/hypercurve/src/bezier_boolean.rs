@@ -2933,7 +2933,10 @@ pub enum BezierBooleanAlgebraicSplitBridgeStatus {
 /// approximated just because a downstream construction currently accepts
 /// rationals. Greiner-Hormann (1998) and Martinez-Rueda-Feito (2009) still
 /// require split insertion before traversal; this bridge states when today's
-/// insertion API can be used safely.
+/// insertion API can be used safely. First-curve, second-curve, and shared
+/// range lanes all lower when their parameters have exact rational witnesses;
+/// the current univariate handoff usually produces only shared-range roots,
+/// but paired curve/curve algebraic evidence can use the operand lanes.
 #[derive(Clone, Debug, PartialEq)]
 pub struct BezierBooleanAlgebraicSplitBridgeReport2 {
     /// Coarse bridge status.
@@ -18631,9 +18634,7 @@ impl BezierBooleanAlgebraicParameterCarrierReport2 {
         for event in &ordering.sorted_events {
             if event.root.exact_rational_witness().is_some() {
                 exact_rational_event_count += 1;
-                if event.role == BezierBooleanAlgebraicParameterRole::SharedRange {
-                    rational_split_lowerable_event_count += 1;
-                }
+                rational_split_lowerable_event_count += 1;
             } else {
                 interval_event_count += 1;
             }
@@ -18700,7 +18701,10 @@ impl BezierBooleanAlgebraicParameterCarrierReport2 {
     ///
     /// This helper is intentionally stricter than [`Self::is_ready`]: a carrier
     /// with interval-only roots is valid exact evidence, but it cannot feed the
-    /// rational split insertion backend without an algebraic splitter.
+    /// rational split insertion backend without an algebraic splitter. All
+    /// currently defined lanes are lowerable when they carry exact rational
+    /// witnesses; future lane variants must update the count logic here before
+    /// returning true.
     pub fn can_feed_rational_split_bridge(&self) -> bool {
         self.is_ready()
             && self.interval_event_count == 0
@@ -18714,9 +18718,11 @@ impl BezierBooleanAlgebraicSplitBridgeReport2 {
     /// The method preserves the order certified by
     /// [`BezierBooleanAlgebraicParameterOrderingReport2`] and rejects
     /// interval-only roots rather than choosing a sample from their isolating
-    /// intervals. At present, algebraic root handoff events only support the
-    /// shared monotone-range lane; first/second curve roles remain blockers
-    /// until paired curve-curve algebraic parameter evidence exists.
+    /// intervals. Shared-range events feed both operands, while first-curve and
+    /// second-curve events feed their own split lanes. This is the rational
+    /// construction subset of the algebraic carrier: it accepts all currently
+    /// typed lanes when they are exact, but it still refuses interval roots
+    /// instead of sampling them.
     pub fn from_ordering(
         ordering: &BezierBooleanAlgebraicParameterOrderingReport2,
         policy: &CurvePolicy,
@@ -18754,20 +18760,28 @@ impl BezierBooleanAlgebraicSplitBridgeReport2 {
             BezierBooleanAlgebraicParameterOrderingStatus::Ready => {}
         }
 
-        let mut shared_range_parameters = Vec::with_capacity(ordering.sorted_events.len());
+        let mut first_curve_parameters = Vec::new();
+        let mut second_curve_parameters = Vec::new();
+        let mut shared_range_parameters = Vec::new();
         let mut exact_rational_parameter_count = 0;
         let mut non_rational_parameter_count = 0;
-        let mut unsupported_role_count = 0;
+        let unsupported_role_count = 0;
         for event in &ordering.sorted_events {
-            if event.role != BezierBooleanAlgebraicParameterRole::SharedRange {
-                unsupported_role_count += 1;
-                continue;
-            }
             let Some(parameter) = event.root.exact_rational_witness() else {
                 non_rational_parameter_count += 1;
                 continue;
             };
-            shared_range_parameters.push(parameter.clone());
+            match event.role {
+                BezierBooleanAlgebraicParameterRole::FirstCurve => {
+                    first_curve_parameters.push(parameter.clone());
+                }
+                BezierBooleanAlgebraicParameterRole::SecondCurve => {
+                    second_curve_parameters.push(parameter.clone());
+                }
+                BezierBooleanAlgebraicParameterRole::SharedRange => {
+                    shared_range_parameters.push(parameter.clone());
+                }
+            }
             exact_rational_parameter_count += 1;
         }
 
@@ -18791,16 +18805,19 @@ impl BezierBooleanAlgebraicSplitBridgeReport2 {
         }
 
         let split_plan = BezierBooleanSplitPlanReport2 {
-            status: if shared_range_parameters.is_empty() {
+            status: if first_curve_parameters.is_empty()
+                && second_curve_parameters.is_empty()
+                && shared_range_parameters.is_empty()
+            {
                 BezierBooleanSplitPlanStatus::Empty
             } else {
                 BezierBooleanSplitPlanStatus::Ready
             },
             scheduler_status: BezierBooleanPathSchedulerStatus::NeedsRegionIsolation,
-            first_curve_parameters: Vec::new(),
-            second_curve_parameters: Vec::new(),
-            relation_event_count: 0,
+            relation_event_count: first_curve_parameters.len() + second_curve_parameters.len(),
             range_event_count: shared_range_parameters.len(),
+            first_curve_parameters,
+            second_curve_parameters,
             shared_range_parameters,
             uncertainty_reason: None,
         };

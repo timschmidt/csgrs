@@ -5750,8 +5750,8 @@ fn bezier_boolean_algebraic_parameter_carrier_partitions_ordered_roles() {
     assert_eq!(carrier.first_curve_events.len(), 1);
     assert_eq!(carrier.second_curve_events.len(), 1);
     assert_eq!(carrier.shared_range_events.len(), 1);
-    assert_eq!(carrier.rational_split_lowerable_event_count, 1);
-    assert!(!carrier.can_feed_rational_split_bridge());
+    assert_eq!(carrier.rational_split_lowerable_event_count, 3);
+    assert!(carrier.can_feed_rational_split_bridge());
     assert_eq!(
         carrier.ordered_events[0].role,
         BezierBooleanAlgebraicParameterRole::FirstCurve
@@ -5914,6 +5914,91 @@ fn bezier_boolean_algebraic_split_bridge_lowers_exact_rational_ordered_roots() {
         vec![ratio(1, 4), ratio(3, 4)]
     );
     assert_eq!(fragments.fragments.len(), 3);
+}
+
+#[test]
+fn bezier_boolean_algebraic_split_bridge_lowers_operand_lanes() {
+    let range_reports = vec![
+        BezierPathRangeOrderReport2::from_graph_order(
+            &BezierMonotoneGraphOrder::IntersectsOrTouches {
+                parameters: Vec::new(),
+                spans: vec![span(ratio(1, 8), ratio(1, 4))],
+            },
+        ),
+        BezierPathRangeOrderReport2::from_graph_order(
+            &BezierMonotoneGraphOrder::IntersectsOrTouches {
+                parameters: Vec::new(),
+                spans: vec![span(ratio(1, 4), ratio(1, 2))],
+            },
+        ),
+        BezierPathRangeOrderReport2::from_graph_order(
+            &BezierMonotoneGraphOrder::IntersectsOrTouches {
+                parameters: Vec::new(),
+                spans: vec![span(ratio(1, 2), ratio(3, 4))],
+            },
+        ),
+    ];
+    let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &range_reports);
+    let handoff =
+        match BezierBooleanAlgebraicParameterHandoffReport2::from_hypersolve_algebraic_root_reports(
+            &scheduler,
+            &[
+                algebraic_root_report(ratio(3, 4), true),
+                algebraic_root_report(ratio(1, 4), true),
+                algebraic_root_report(ratio(1, 2), true),
+            ],
+            &policy(),
+        ) {
+            Classification::Decided(report) => report,
+            Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
+        };
+    let readiness =
+        match BezierBooleanAlgebraicParameterReadinessReport2::from_handoff(&handoff, &policy()) {
+            Classification::Decided(report) => report,
+            Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
+        };
+    let mut ordering = BezierBooleanAlgebraicParameterOrderingReport2::from_readiness(
+        &readiness,
+        AlgebraicRootRefinementComparisonConfig::default(),
+        &policy(),
+    );
+    ordering.sorted_events[0].role = BezierBooleanAlgebraicParameterRole::FirstCurve;
+    ordering.sorted_events[1].role = BezierBooleanAlgebraicParameterRole::SharedRange;
+    ordering.sorted_events[2].role = BezierBooleanAlgebraicParameterRole::SecondCurve;
+
+    let bridge = match BezierBooleanAlgebraicSplitBridgeReport2::from_ordering(&ordering, &policy())
+    {
+        Classification::Decided(report) => report,
+        Classification::Uncertain(reason) => panic!("unexpected bridge uncertainty: {reason:?}"),
+    };
+
+    assert_eq!(
+        bridge.status,
+        BezierBooleanAlgebraicSplitBridgeStatus::Ready
+    );
+    assert!(bridge.is_ready());
+    assert_eq!(bridge.ordered_event_count, 3);
+    assert_eq!(bridge.exact_rational_parameter_count, 3);
+    assert_eq!(bridge.unsupported_role_count, 0);
+    assert_eq!(bridge.non_rational_parameter_count, 0);
+    assert_eq!(bridge.split_plan.first_curve_parameters, vec![ratio(1, 4)]);
+    assert_eq!(bridge.split_plan.shared_range_parameters, vec![half()]);
+    assert_eq!(bridge.split_plan.second_curve_parameters, vec![ratio(3, 4)]);
+    assert_eq!(bridge.split_plan.relation_event_count, 2);
+    assert_eq!(bridge.split_plan.range_event_count, 1);
+    assert_eq!(bridge.insertion.interior_parameter_count, 3);
+    assert_eq!(
+        bridge.insertion.first_curve_interior_parameters,
+        vec![ratio(1, 4)]
+    );
+    assert_eq!(
+        bridge.insertion.shared_range_interior_parameters,
+        vec![half()]
+    );
+    assert_eq!(
+        bridge.insertion.second_curve_interior_parameters,
+        vec![ratio(3, 4)]
+    );
 }
 
 #[test]
