@@ -2,7 +2,7 @@
 
 use crate::float_types::{
     HReal, Real, hreal_from_f64, hreal_gt_f64, hreal_max_pair, hreal_min_pair, hreal_sign,
-    hreal_to_f64, tolerance,
+    hreal_to_f64,
 };
 use crate::sketch::Profile;
 use hashbrown::HashMap;
@@ -96,7 +96,9 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         };
 
         // 2) Fill a grid with the summed "influence" minus iso_value
-        /// **Mathematical Foundation**: 2D metaball influence I(p) = r²/(|p-c|² + ε)
+        /// **Mathematical Foundation**: 2D metaball influence I(p) = r²/|p-c|².
+        /// Exact center singularities are mapped to a finite extraction sentinel
+        /// instead of perturbing every denominator with a tolerance.
         /// **Optimization**: Iterator-based computation with early termination for distant points.
         fn scalar_field(balls: &[(&Point2, HReal)], sample: &Point2) -> Option<HReal> {
             let mut sum = HReal::zero();
@@ -111,7 +113,11 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
                     continue;
                 }
 
-                let denominator = distance_sq + hreal_from_f64(tolerance()).ok()?;
+                if matches!(hreal_sign(&distance_sq), Some(RealSign::Zero)) {
+                    sum = sum + hreal_from_f64(1.0e10).ok()?;
+                    continue;
+                }
+                let denominator = distance_sq;
                 sum = sum + (radius_squared / denominator).ok()?;
             }
             Some(sum)
@@ -142,7 +148,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
                            (x2, y2, v2): (&HReal, &HReal, &HReal)|
          -> Option<(Real, Real)> {
             let delta = v2.clone() - v1.clone();
-            if !hreal_gt_f64(&delta.abs(), tolerance()) {
+            if matches!(hreal_sign(&delta), Some(RealSign::Zero)) {
                 Some((hreal_to_f64(x1)?, hreal_to_f64(y1)?))
             } else {
                 let t = (HReal::zero() - v1.clone()) / delta; // crossing at 0

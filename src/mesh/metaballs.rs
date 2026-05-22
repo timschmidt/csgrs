@@ -3,7 +3,7 @@
 use crate::float_types::{
     F32, HReal, Real, hreal_from_f32, hreal_from_f64, hreal_max_pair, hreal_max_report_value,
     hreal_min_pair, hreal_min_report_value, hreal_sign, hreal_to_f64,
-    htriangle_area2_is_nonzero, hvector3_from_point3, hvector3_from_vector3, tolerance,
+    htriangle_area2_is_nonzero, hvector3_from_point3, hvector3_from_vector3,
 };
 use crate::mesh::Mesh;
 use crate::polygon::Polygon;
@@ -46,8 +46,7 @@ impl MetaBall {
         Self { center, radius }
     }
 
-    /// **Mathematical Foundation**: Metaball influence function I(p) = r²/(|p-c|² + ε)
-    /// where ε prevents division by zero and maintains numerical stability.
+    /// **Mathematical Foundation**: Metaball influence function I(p) = r²/|p-c|².
     ///
     /// This public method is an f64 reporting boundary. Internally, radius,
     /// distance, denominator, and division are evaluated as `hyperreal::Real`
@@ -66,7 +65,9 @@ impl MetaBall {
     ///
     /// This is the internal sampling primitive. It keeps the implicit scalar
     /// field in hyperreal space until diagnostics or `fast_surface_nets` require
-    /// lossy boundary scalars.
+    /// lossy boundary scalars. Exact center singularities are represented by a
+    /// large finite sampling sentinel at that extraction boundary rather than by
+    /// perturbing every denominator with a tolerance.
     fn influence_hreal(&self, p: &Point3<Real>) -> Option<HReal> {
         let radius = hreal_from_f64(self.radius).ok()?;
         if !matches!(hreal_sign(&radius), Some(RealSign::Positive)) {
@@ -86,9 +87,16 @@ impl MetaBall {
             return Some(HReal::zero());
         }
 
-        let denominator = distance_squared + hreal_from_f64(tolerance()).ok()?;
+        if matches!(hreal_sign(&distance_squared), Some(RealSign::Zero)) {
+            return singular_metaball_influence();
+        }
+        let denominator = distance_squared;
         (radius_squared / denominator).ok()
     }
+}
+
+fn singular_metaball_influence() -> Option<HReal> {
+    hreal_from_f64(1.0e10).ok()
 }
 
 impl<M: Clone + Debug + Send + Sync> Mesh<M> {
@@ -508,6 +516,30 @@ fn finite_point3(point: &Point3<Real>) -> bool {
 #[inline]
 fn finite_vector3(vector: &Vector3<Real>) -> bool {
     hvector3_from_vector3(vector).is_some()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::float_types::{hreal_gt_f64, tolerance};
+
+    #[test]
+    fn metaball_influence_uses_exact_center_singularity_without_tolerance() {
+        let ball = MetaBall::new(Point3::new(0.0, 0.0, 0.0), 1.0);
+        let center = ball.influence_hreal(&Point3::new(0.0, 0.0, 0.0)).unwrap();
+        let tiny_offset = ball
+            .influence_hreal(&Point3::new(tolerance() * 0.25, 0.0, 0.0))
+            .unwrap();
+
+        assert!(hreal_gt_f64(&center, 1.0e9));
+        assert!(hreal_gt_f64(&tiny_offset, 1.0e9));
+    }
+
+    #[test]
+    fn metaball_influence_rejects_exact_zero_radius() {
+        let ball = MetaBall::new(Point3::new(0.0, 0.0, 0.0), 0.0);
+        assert!(ball.influence_hreal(&Point3::new(0.0, 0.0, 0.0)).is_none());
+    }
 }
 
 fn surface_nets_scalar(value: &HReal) -> Option<F32> {
