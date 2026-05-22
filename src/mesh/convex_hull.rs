@@ -9,7 +9,7 @@
 #![cfg_attr(doc, doc = doc_image_embed::embed_image!("Pre-ConvexHull demo image", "docs/convex_hull_before_nobackground.png"))]
 #![cfg_attr(doc, doc = doc_image_embed::embed_image!("ConvexHull demo image", "docs/convex_hull_nobackground.png"))]
 
-use crate::float_types::{Real, hreal_gt_f64, hvector3_from_point3, tolerance};
+use crate::float_types::{Real, hreal_gt_f64, hvector3_from_point3};
 use crate::mesh::Mesh;
 use crate::polygon::Polygon;
 use crate::vertex::Vertex;
@@ -26,7 +26,7 @@ fn hyper_triangle_unit_normal(
     let p1 = hvector3_from_point3(p1)?;
     let p2 = hvector3_from_point3(p2)?;
     let normal = (&p1 - &p0).cross(&(&p2 - &p0));
-    if !hreal_gt_f64(&normal.dot(&normal), tolerance() * tolerance()) {
+    if !hreal_gt_f64(&normal.dot(&normal), 0.0) {
         return None;
     }
     let unit = normal.normalize_checked().ok()?;

@@ -698,14 +698,15 @@ pub(crate) fn hpoint_lerp(
     Some(Point3::new(coords[0], coords[1], coords[2]))
 }
 
-/// Return the finite hyperreal area of a triangle from public boundary points.
+/// Return the finite nonzero hyperreal area of a triangle from public boundary points.
 ///
 /// The doubled-area determinant `(b-a) x (c-a)` and magnitude are evaluated in
 /// `hyperlattice::Vector3`/`hyperreal::Real` and kept there for callers that
-/// still need to compose additional CAD metrics. This avoids repeating local
-/// nalgebra cross/dot area predicates in mesh quality and import paths,
-/// following Yap, "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7(1-2), 1997
+/// still need to compose additional CAD metrics. Only exact zero area is
+/// rejected; nonzero infinitesimal or tolerance-scale triangles remain
+/// measurable. This avoids repeating local nalgebra cross/dot area predicates
+/// in mesh quality and import paths, following Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7(1-2), 1997
 /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
 pub(crate) fn htriangle_area_hreal(
     a: &Point3<Real>,
@@ -717,8 +718,7 @@ pub(crate) fn htriangle_area_hreal(
     let c = hvector3_from_point3(c)?;
     let area2 = (&b - &a).cross(&(&c - &a));
     let magnitude_squared = area2.dot(&area2);
-    let tolerance_squared = hpositive_boundary_scalar_squared(tolerance())?;
-    if !hreal_gt_hreal(&magnitude_squared, &tolerance_squared) {
+    if matches!(hreal_sign(&magnitude_squared), Some(RealSign::Zero)) {
         return None;
     }
     let twice_area = hreal_sqrt_ref(&magnitude_squared)?;
@@ -1447,6 +1447,14 @@ mod tests {
             3.0,
             tolerance()
         ));
+        assert!(
+            htriangle_area_hreal(
+                &a,
+                &Point3::new(tolerance() * 0.25, 0.0, 0.0),
+                &Point3::new(0.0, tolerance() * 0.25, 0.0),
+            )
+            .is_some()
+        );
         assert!(htriangle_area_hreal(&a, &a, &c).is_none());
         assert!(htriangle_area_hreal(&a, &Point3::new(Real::NAN, 0.0, 0.0), &c).is_none());
     }

@@ -4,7 +4,7 @@ use crate::float_types::{
     HReal, PI, Real, hdegrees_to_radians, hreal_clamp_hreal, hreal_cmp_f64, hreal_div,
     hreal_from_f64, hreal_gt_f64, hreal_max_pair, hreal_mean, hreal_min, hreal_min_pair,
     hreal_sample_stddev, hreal_sqrt_ref, hreal_sqrt_to_f64, hreal_to_f64,
-    htriangle_area_hreal, hvector3_from_point3, tolerance,
+    htriangle_area_hreal, hvector3_from_point3,
 };
 use crate::mesh::Mesh;
 use crate::vertex::Vertex;
@@ -78,9 +78,9 @@ fn hyper_triangle_quality(vertices: &[Vertex]) -> Option<TriangleQuality> {
     let len_bc = hreal_sqrt_ref(&b.squared_distance(&c))?;
     let len_ca = hreal_sqrt_ref(&c.squared_distance(&a))?;
 
-    if !hreal_gt_f64(&len_ab, tolerance())
-        || !hreal_gt_f64(&len_bc, tolerance())
-        || !hreal_gt_f64(&len_ca, tolerance())
+    if !hreal_gt_f64(&len_ab, 0.0)
+        || !hreal_gt_f64(&len_bc, 0.0)
+        || !hreal_gt_f64(&len_ca, 0.0)
     {
         return None;
     }
