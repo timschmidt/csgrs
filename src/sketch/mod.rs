@@ -2,9 +2,8 @@
 
 use crate::float_types::parry3d::bounding_volume::Aabb;
 use crate::float_types::{
-    Real, hreal_abs, hreal_cmp_f64, hreal_from_f64, hreal_gt_f64, hreal_lt_f64, hreal_mul,
-    hreal_sign, hreal_sub, hreal_sum, hreal_to_f64, hrotation_between_vectors, hunit_vector3,
-    tolerance,
+    Real, hreal_cmp_f64, hreal_from_f64, hreal_mul, hreal_sign, hreal_sub, hreal_sum,
+    hreal_to_f64, hrotation_between_vectors, hunit_vector3, tolerance,
 };
 
 #[cfg(feature = "mesh")]
@@ -280,20 +279,19 @@ impl<M: Clone + Send + Sync + Debug> Profile<M> {
     /// area.
     ///
     /// `Region2::filled_area` keeps material-minus-hole area semantics and
-    /// Green's-theorem contour accumulation inside hypercurve. Finite sampled
-    /// rings are only a fallback for contours that cannot yet report exact
-    /// area, preserving the exact-computation boundary described by Yap,
+    /// Green's-theorem contour accumulation inside hypercurve. Only exact zero
+    /// area is rejected; finite projected rings are only a fallback for contours
+    /// that cannot yet report exact area, preserving the exact-computation
+    /// boundary described by Yap,
     /// "Towards Exact Geometric Computation," *Computational Geometry*
     /// 7(1-2), 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     pub(crate) fn region_has_nonzero_area(region: &Region2) -> bool {
         match region.filled_area(&CurvePolicy::certified()) {
             Ok(Classification::Decided(Some(area))) => {
-                if hreal_gt_f64(&area, tolerance()) || hreal_lt_f64(&area, -tolerance()) {
-                    return true;
-                }
                 if matches!(hreal_sign(&area), Some(hyperreal::RealSign::Zero)) {
                     return false;
                 }
+                return true;
             },
             Ok(Classification::Decided(None)) | Ok(Classification::Uncertain(_)) | Err(_) => {
             },
@@ -303,9 +301,10 @@ impl<M: Clone + Send + Sync + Debug> Profile<M> {
             .expect("positive finite projection tolerance");
         match region.project_to_finite_profiles(&options, &CurvePolicy::certified()) {
             Ok(Classification::Decided(profiles)) => profiles.iter().any(|profile| {
-                hreal_abs(profile.projected_filled_area())
-                    .map(|area| matches!(hreal_cmp_f64(area, tolerance()), Ordering::Greater))
-                    .unwrap_or(false)
+                !matches!(
+                    hreal_cmp_f64(profile.projected_filled_area(), 0.0),
+                    Ordering::Equal
+                )
             }),
             Ok(Classification::Uncertain(_)) | Err(_) => false,
         }
@@ -590,8 +589,8 @@ impl<M: Clone + Send + Sync + Debug> Profile<M> {
             hreal_mul(mat[(0, 1)], mat[(1, 0)]).and_then(|cross| hreal_sub(main, cross))
         })?;
         if !matches!(
-            hreal_abs(determinant).map(|value| hreal_cmp_f64(value, tolerance())),
-            Some(Ordering::Greater)
+            hreal_cmp_f64(determinant, 0.0),
+            Ordering::Greater | Ordering::Less
         ) {
             return None;
         }
