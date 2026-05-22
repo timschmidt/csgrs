@@ -1,5 +1,8 @@
-//! A fast, optionally multithreaded **Constructive Solid Geometry (CSG)** library,
-//! built around Boolean operations (*union*, *difference*, *intersection*, *xor*) on sets of polygons stored in [BSP](https://en.wikipedia.org/wiki/Binary_space_partitioning) trees.
+//! A fast **Constructive Solid Geometry (CSG)** library built around Boolean
+//! operations (*union*, *difference*, *intersection*, *xor*) composed from the
+//! Hyper geometry crates. `Mesh` is migrating to `hypermesh` for topology and
+//! `Profile` is backed by `hypercurve`, keeping primitive floats at audited
+//! compatibility boundaries.
 //!
 //! ![Example CSG output][Example CSG output]
 #![cfg_attr(doc, doc = doc_image_embed::embed_image!("Example CSG output", "docs/csg.png"))]

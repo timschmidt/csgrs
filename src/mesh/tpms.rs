@@ -19,7 +19,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// * `iso_value`  – iso‑contour value (normally 0.0)
     ///
     /// The result is sampled inside `self`'s bounding box. The TPMS output is an
-    /// open implicit surface, so it is not boolean-intersected with `self`; BSP
+    /// open implicit surface, so it is not boolean-intersected with `self`;
     /// solid booleans assume closed volumes and can delete valid sheet triangles.
     #[inline]
     fn tpms_from_sdf<F>(

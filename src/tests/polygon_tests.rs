@@ -138,5 +138,5 @@ fn polygon_newell_normal_and_basis_use_hyperreal_checked_normalization() {
 }
 
 // ------------------------------------------------------------
-// Node tests
+// Plane split tests
 // ------------------------------------------------------------

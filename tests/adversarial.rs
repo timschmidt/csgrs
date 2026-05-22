@@ -5,7 +5,6 @@ use csgrs::float_types::{PI, Real, hreal_from_f64, tolerance};
 #[cfg(feature = "svg-io")]
 use csgrs::io::svg::FromSVG;
 use csgrs::mesh::Mesh;
-use csgrs::mesh::bsp::Node;
 use csgrs::mesh::connectivity::VertexIndexMap;
 use csgrs::mesh::plane::Plane;
 use csgrs::polygon::Polygon;
@@ -152,19 +151,6 @@ fn assert_triangles_finite(triangles: &[[Point3<Real>; 3]]) {
             assert!(point.x.is_finite(), "non-finite triangle x: {triangle:?}");
             assert!(point.y.is_finite(), "non-finite triangle y: {triangle:?}");
             assert!(point.z.is_finite(), "non-finite triangle z: {triangle:?}");
-        }
-    }
-}
-
-fn assert_slice_edges_on_plane(edges: &[[Vertex; 2]], plane: &Plane) {
-    for edge in edges {
-        for vertex in edge {
-            assert_vertex_finite(vertex);
-            assert_eq!(
-                plane.orient_point(&vertex.position),
-                csgrs::mesh::plane::COPLANAR,
-                "BSP slice edge vertex drifted off slicing plane: {vertex:?}"
-            );
         }
     }
 }
@@ -1589,15 +1575,16 @@ fn adversarial_vertex_cluster_uses_hyperreal_radius_and_checked_normal() {
 }
 
 #[test]
-fn adversarial_bsp_slice_intersections_remain_hyperreal_coplanar() {
+fn adversarial_mesh_slice_intersections_remain_hyperreal_coplanar() {
     let mesh: Mesh<()> = Mesh::cube(2.0, ());
     let plane = Plane::from_normal(Vector3::new(1.0, -2.0, 0.5), 0.0);
-    let node = Node::from_polygons(&mesh.polygons);
+    let profile = mesh.slice(plane);
 
-    let (_coplanar, edges) = node.slice(&plane);
-
-    assert!(!edges.is_empty(), "central oblique slice should cut the cube");
-    assert_slice_edges_on_plane(&edges, &plane);
+    assert!(
+        !profile.is_empty(),
+        "central oblique slice should cut the cube"
+    );
+    assert_profile_sane(&profile);
 }
 
 #[test]
@@ -2162,7 +2149,7 @@ proptest! {
     }
 
     #[test]
-    fn proptest_bsp_slice_edges_are_coplanar_after_hyperreal_intersection(
+    fn proptest_mesh_slice_edges_are_coplanar_after_hyperreal_intersection(
         size in positive_real(),
         nx in -8.0f64..8.0f64,
         ny in -8.0f64..8.0f64,
@@ -2176,10 +2163,9 @@ proptest! {
         let mesh: Mesh<()> = Mesh::cube(size, ());
         let offset = offset_fraction as Real * size * normal_len;
         let plane = Plane::from_normal(normal, offset);
-        let node = Node::from_polygons(&mesh.polygons);
-        let (_coplanar, edges) = node.slice(&plane);
+        let profile = mesh.slice(plane);
 
-        assert_slice_edges_on_plane(&edges, &plane);
+        assert_profile_sane(&profile);
     }
 
     #[test]

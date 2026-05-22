@@ -6,8 +6,7 @@ use crate::float_types::{
     hxy_orientation_sign, tolerance,
 };
 use crate::mesh::Mesh;
-use crate::mesh::bsp::Node;
-use crate::mesh::plane::Plane;
+use crate::mesh::plane::{BACK, COPLANAR, FRONT, Plane, SPANNING};
 use crate::sketch::Profile;
 use crate::vertex::Vertex;
 use hashbrown::HashMap;
@@ -120,11 +119,8 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// //   - Or empty if no intersection
     /// ```
     pub fn slice(&self, plane: Plane) -> Profile<M> {
-        // Build a BSP from all of our polygons:
-        let node = Node::from_polygons(&self.polygons.clone());
-
-        // Ask the BSP for coplanar polygons + intersection edges:
-        let (coplanar_polys, intersection_edges) = node.slice(&plane);
+        let (coplanar_polys, intersection_edges) =
+            slice_polygons_by_plane(&self.polygons, &plane);
 
         // "Knit" those intersection edges into polylines. Each edge is [vA, vB].
         let polylines_3d = unify_intersection_edges(&intersection_edges);
@@ -194,6 +190,65 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             Profile::<M>::prepare_origin_transform(Vertex::default()),
         )
     }
+}
+
+/// Slice polygons directly against a plane without constructing a partition tree.
+///
+/// Each polygon is classified by the existing hyperreal plane predicate and
+/// spanning edges are intersected in polygon order. This keeps slicing as
+/// direct plane/hypercurve composition instead of routing through a tree owned
+/// by `csgrs`, following Yap's exact-geometric-computation boundary discipline
+/// (<https://doi.org/10.1016/0925-7721(95)00040-2>) and the finite segment
+/// output guidance in Hobby, "Practical Segment Intersection with Finite
+/// Precision Output," *Computational Geometry* 13(4), 1999
+/// (<https://doi.org/10.1016/S0925-7721(99)00021-8>).
+fn slice_polygons_by_plane<M: Clone + Send + Sync>(
+    polygons: &[crate::polygon::Polygon<M>],
+    slicing_plane: &Plane,
+) -> (Vec<crate::polygon::Polygon<M>>, Vec<[Vertex; 2]>) {
+    let mut coplanar_polygons = Vec::new();
+    let mut intersection_edges = Vec::new();
+
+    for poly in polygons {
+        let vcount = poly.vertices.len();
+        if vcount < 2 {
+            continue;
+        }
+
+        let types = poly
+            .vertices
+            .iter()
+            .map(|vertex| slicing_plane.orient_point(&vertex.position))
+            .collect::<Vec<_>>();
+        let polygon_type = types.iter().fold(0, |acc, &vertex_type| acc | vertex_type);
+
+        match polygon_type {
+            COPLANAR => coplanar_polygons.push(poly.clone()),
+            FRONT | BACK => {},
+            SPANNING => {
+                let crossing_points = (0..vcount)
+                    .filter_map(|i| {
+                        let j = (i + 1) % vcount;
+                        ((types[i] | types[j]) == SPANNING)
+                            .then(|| {
+                                slicing_plane
+                                    .intersect_edge(&poly.vertices[i], &poly.vertices[j])
+                            })
+                            .flatten()
+                    })
+                    .collect::<Vec<_>>();
+
+                intersection_edges.extend(
+                    crossing_points
+                        .chunks_exact(2)
+                        .map(|chunk| [chunk[0], chunk[1]]),
+                );
+            },
+            _ => {},
+        }
+    }
+
+    (coplanar_polygons, intersection_edges)
 }
 
 /// Return projected ring orientation through the shared hyperreal 2D predicate.

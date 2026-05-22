@@ -9,7 +9,6 @@ mod flatten_slice_tests;
 mod mesh_quality_tests;
 mod metadata_tests;
 mod misc_tests;
-mod node_tests;
 mod offset_tests;
 mod plane_tests;
 mod polygon_tests;

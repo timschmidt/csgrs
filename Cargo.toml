@@ -2,7 +2,7 @@
 name = "csgrs"
 version = "0.23.0"
 edition = "2024"
-description = "Constructive solid geometry (CSG) on meshes using BSP trees in Rust"
+description = "Constructive solid geometry (CSG) on meshes composed from hyper geometry crates"
 authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
 # msrv
 rust-version = "1.95.0"
@@ -61,7 +61,7 @@ chull = { version = "0.2.4", optional = true }
 hypercurve = { path = "../hypercurve", features = ["triangulation"] }
 hyperlattice = { path = "../hyperlattice" }
 hyperlimit = { path = "../hyperlimit" }
-hypermesh = { path = "../hypermesh", default-features = false, features = ["exact"] }
+hypermesh = { path = "../hypermesh", default-features = false, features = ["exact", "legacy-boolean"] }
 hyperphysics = { path = "../hyperphysics" }
 hyperreal = { path = "../hyperreal", default-features = false }
 hypersdf = { path = "../hypersdf", optional = true }
@@ -129,11 +129,12 @@ parallel = [
   "rapier3d-f64/parallel"
 ]
 mesh = [
-  # BSP backed Mesh datatype
+  # hypermesh backed Mesh datatype
   "sketch",
 ]
 mesh-bbopt = [
-  # Enable bounding box optimization for Mesh BSP
+  # Compatibility feature retained while Mesh booleans move to hypermesh.
+  "mesh",
 ]
 bmesh = [
   # Compatibility feature for downstream crates that request the BMesh module.

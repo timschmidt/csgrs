@@ -55,7 +55,7 @@
 //! ## **Numerical Stability**
 //!
 //! - **Robust Predicates**: Uses hyperreal arithmetic for orientation tests,
-//!   with the current BSP tolerance applied as a hyperreal threshold
+//!   with the current mesh tolerance applied as a hyperreal threshold
 //! - **Boundary Tolerances**: Governed by `float_types::tolerance()` where the
 //!   legacy f64 API still needs degeneracy filters
 //! - **Degenerate Case Handling**: Proper fallbacks for collinear points and zero-area triangles
@@ -93,7 +93,7 @@ use nalgebra::{Matrix4, Point3, Vector3};
 use std::cmp::Ordering;
 
 /// Classification of a polygon or point whose hyperreal orientation determinant
-/// is inside the current BSP tolerance band, or whose boundary coordinates
+/// is inside the current mesh tolerance band, or whose boundary coordinates
 /// cannot be promoted.
 pub const COPLANAR: i8 = 0;
 
@@ -463,6 +463,7 @@ impl Plane {
     /// scalar arithmetic (<https://doi.org/10.1016/0925-7721(95)00040-2>);
     /// the line-plane solve is the Sutherland-Hodgman clipping intersection
     /// used by this module (<https://doi.org/10.1145/360767.360802>).
+    #[cfg(feature = "sketch")]
     pub(crate) fn intersect_edge(&self, start: &Vertex, end: &Vertex) -> Option<Vertex> {
         let normal = self.unscaled_hreal_normal()?;
         let parameter = self.edge_intersection_parameter(start, end, Some(&normal))?;

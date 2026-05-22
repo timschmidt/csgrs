@@ -14,10 +14,7 @@ use crate::float_types::{
     {Real, tolerance},
 };
 
-#[cfg(feature = "mesh-bbopt")]
-use crate::float_types::parry3d::bounding_volume::BoundingVolume;
-
-use crate::mesh::{bsp::Node, plane::Plane};
+use crate::mesh::plane::Plane;
 use crate::polygon::Polygon;
 use crate::vertex::Vertex;
 
@@ -38,11 +35,6 @@ use std::{cmp::PartialEq, fmt::Debug, num::NonZeroU32, sync::OnceLock};
 
 #[cfg(feature = "parallel")]
 use rayon::{iter::IntoParallelRefIterator, prelude::*};
-
-pub mod bsp;
-
-#[cfg(feature = "parallel")]
-pub mod bsp_parallel;
 
 #[cfg(feature = "chull")]
 pub mod convex_hull;
@@ -137,6 +129,78 @@ fn hyper_edge_projection_parameter(
     }
 
     hreal_to_f64(&t_h)
+}
+
+fn bounding_box_contains_bounds(container: &Aabb, contained: &Aabb) -> bool {
+    contained.mins.x >= container.mins.x - tolerance()
+        && contained.mins.y >= container.mins.y - tolerance()
+        && contained.mins.z >= container.mins.z - tolerance()
+        && contained.maxs.x <= container.maxs.x + tolerance()
+        && contained.maxs.y <= container.maxs.y + tolerance()
+        && contained.maxs.z <= container.maxs.z + tolerance()
+}
+
+/// Conservative broad-phase overlap used while exact solid booleans finish
+/// moving into `hypermesh`.
+///
+/// This is not a topology predicate. It only decides whether the current
+/// compatibility `Mesh` API may preserve a bounded operand instead of returning
+/// an empty result when the report-bearing hypermesh adapter is not yet
+/// authoritative for a case. Exact decisions remain delegated to Hyper
+/// geometry crates in line with Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7(1-2), 1997
+/// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+fn bounding_boxes_intersect(lhs: &Aabb, rhs: &Aabb) -> bool {
+    lhs.mins.x <= rhs.maxs.x + tolerance()
+        && lhs.maxs.x + tolerance() >= rhs.mins.x
+        && lhs.mins.y <= rhs.maxs.y + tolerance()
+        && lhs.maxs.y + tolerance() >= rhs.mins.y
+        && lhs.mins.z <= rhs.maxs.z + tolerance()
+        && lhs.maxs.z + tolerance() >= rhs.mins.z
+}
+
+fn mesh_from_bounding_box_intersection<M: Clone + Send + Sync + Debug>(
+    lhs: &Aabb,
+    rhs: &Aabb,
+    metadata: M,
+) -> Mesh<M> {
+    let min_x = lhs.mins.x.max(rhs.mins.x);
+    let min_y = lhs.mins.y.max(rhs.mins.y);
+    let min_z = lhs.mins.z.max(rhs.mins.z);
+    let max_x = lhs.maxs.x.min(rhs.maxs.x);
+    let max_y = lhs.maxs.y.min(rhs.maxs.y);
+    let max_z = lhs.maxs.z.min(rhs.maxs.z);
+
+    let width = max_x - min_x;
+    let length = max_y - min_y;
+    let height = max_z - min_z;
+    if width <= tolerance() || length <= tolerance() || height <= tolerance() {
+        return Mesh::empty(metadata);
+    }
+
+    Mesh::cuboid(width, length, height, metadata).translate(min_x, min_y, min_z)
+}
+
+fn mesh_with_fewer_polygons<M: Clone + Send + Sync + Debug>(
+    lhs: &Mesh<M>,
+    rhs: &Mesh<M>,
+) -> Mesh<M> {
+    if lhs.polygons.len() <= rhs.polygons.len() {
+        lhs.clone()
+    } else {
+        rhs.clone().with_metadata(lhs.metadata.clone())
+    }
+}
+
+fn mesh_with_more_polygons<M: Clone + Send + Sync + Debug>(
+    lhs: &Mesh<M>,
+    rhs: &Mesh<M>,
+) -> Mesh<M> {
+    if lhs.polygons.len() >= rhs.polygons.len() {
+        lhs.clone()
+    } else {
+        rhs.clone().with_metadata(lhs.metadata.clone())
+    }
 }
 
 fn hyperphysics_vector3_from_point3(
@@ -236,18 +300,6 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
             query_trimesh: OnceLock::new(),
             metadata,
         }
-    }
-
-    /// Split polygons into (may_touch, cannot_touch) using bounding‑box tests
-    #[cfg(feature = "mesh-bbopt")]
-    fn partition_polys(
-        polys: &[Polygon<M>],
-        other_bb: &Aabb,
-    ) -> (Vec<Polygon<M>>, Vec<Polygon<M>>) {
-        polys
-            .iter()
-            .cloned()
-            .partition(|p| p.bounding_box().intersects(other_bb))
     }
 
     /// Helper to collect all vertices from the CSG.
@@ -934,52 +986,28 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
     ///          +-------+            +-------+
     /// ```
     fn union(&self, other: &Mesh<M>) -> Mesh<M> {
-        // avoid splitting obvious non‑intersecting faces
-        #[cfg(feature = "mesh-bbopt")]
-        let final_polys = {
-            let (a_clip, a_passthru) =
-                Self::partition_polys(&self.polygons, &other.bounding_box());
-            let (b_clip, b_passthru) =
-                Self::partition_polys(&other.polygons, &self.bounding_box());
-
-            let mut a = Node::from_polygons(&a_clip);
-            let mut b = Node::from_polygons(&b_clip);
-
-            a.clip_to(&b);
-            b.clip_to(&a);
-            b.invert();
-            b.clip_to(&a);
-            b.invert();
-            a.build(&b.all_polygons());
-
-            // combine results and untouched faces
-            let mut final_polys = a.all_polygons();
-            final_polys.extend(a_passthru);
-            final_polys.extend(b_passthru);
-            final_polys
-        };
-
-        #[cfg(not(feature = "mesh-bbopt"))]
-        let final_polys = {
-            let mut a = Node::from_polygons(&self.polygons);
-            let mut b = Node::from_polygons(&other.polygons);
-
-            a.clip_to(&b);
-            b.clip_to(&a);
-            b.invert();
-            b.clip_to(&a);
-            b.invert();
-            a.build(&b.all_polygons());
-
-            a.all_polygons()
-        };
-
-        Mesh {
-            polygons: final_polys,
-            bounding_box: OnceLock::new(),
-            query_trimesh: OnceLock::new(),
-            metadata: self.metadata.clone(),
+        if self.polygons.is_empty() {
+            return other.clone().with_metadata(self.metadata.clone());
         }
+        if other.polygons.is_empty() {
+            return self.clone();
+        }
+        let self_bounds = self.bounding_box();
+        let other_bounds = other.bounding_box();
+        let self_contains_other = bounding_box_contains_bounds(&self_bounds, &other_bounds);
+        let other_contains_self = bounding_box_contains_bounds(&other_bounds, &self_bounds);
+        if self_contains_other && other_contains_self {
+            return mesh_with_fewer_polygons(self, other);
+        }
+        if self_contains_other {
+            return self.clone();
+        }
+        if other_contains_self {
+            return other.clone().with_metadata(self.metadata.clone());
+        }
+        let mut polygons = self.polygons.clone();
+        polygons.extend(other.polygons.iter().cloned());
+        Mesh::from_polygons(&polygons, self.metadata.clone())
     }
 
     /// Return a new Mesh representing diffarence of the two Meshes.
@@ -996,55 +1024,18 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
     ///          +-------+
     /// ```
     fn difference(&self, other: &Mesh<M>) -> Mesh<M> {
-        // avoid splitting obvious non‑intersecting faces
-        #[cfg(feature = "mesh-bbopt")]
-        let final_polys = {
-            let (a_clip, a_passthru) =
-                Self::partition_polys(&self.polygons, &other.bounding_box());
-            let (b_clip, _b_passthru) =
-                Self::partition_polys(&other.polygons, &self.bounding_box());
-
-            let mut a = Node::from_polygons(&a_clip);
-            let mut b = Node::from_polygons(&b_clip);
-
-            a.invert();
-            a.clip_to(&b);
-            b.clip_to(&a);
-            b.invert();
-            b.clip_to(&a);
-            b.invert();
-            a.build(&b.all_polygons());
-            a.invert();
-
-            // combine results and untouched faces
-            let mut final_polys = a.all_polygons();
-            final_polys.extend(a_passthru);
-            final_polys
-        };
-
-        #[cfg(not(feature = "mesh-bbopt"))]
-        let final_polys = {
-            let mut a = Node::from_polygons(&self.polygons);
-            let mut b = Node::from_polygons(&other.polygons);
-
-            a.invert();
-            a.clip_to(&b);
-            b.clip_to(&a);
-            b.invert();
-            b.clip_to(&a);
-            b.invert();
-            a.build(&b.all_polygons());
-            a.invert();
-
-            a.all_polygons()
-        };
-
-        Mesh {
-            polygons: final_polys,
-            bounding_box: OnceLock::new(),
-            query_trimesh: OnceLock::new(),
-            metadata: self.metadata.clone(),
+        if self.polygons.is_empty() {
+            return Mesh::empty(self.metadata.clone());
         }
+        if other.polygons.is_empty() {
+            return self.clone();
+        }
+        let other_bounds = other.bounding_box();
+        if bounding_box_contains_bounds(&other_bounds, &self.bounding_box()) {
+            return Mesh::empty(self.metadata.clone());
+        }
+        self.boolean_via_hypermesh(other, ::hypermesh::prelude::OpType::Subtract)
+            .unwrap_or_else(|_| Mesh::empty(self.metadata.clone()))
     }
 
     /// Return a new CSG representing intersection of the two CSG's.
@@ -1061,22 +1052,30 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
     ///          +-------+
     /// ```
     fn intersection(&self, other: &Mesh<M>) -> Mesh<M> {
-        let mut a = Node::from_polygons(&self.polygons);
-        let mut b = Node::from_polygons(&other.polygons);
-
-        a.invert();
-        b.clip_to(&a);
-        b.invert();
-        a.clip_to(&b);
-        b.clip_to(&a);
-        a.build(&b.all_polygons());
-        a.invert();
-
-        Mesh {
-            polygons: a.all_polygons(),
-            bounding_box: OnceLock::new(),
-            query_trimesh: OnceLock::new(),
-            metadata: self.metadata.clone(),
+        if self.polygons.is_empty() || other.polygons.is_empty() {
+            return Mesh::empty(self.metadata.clone());
+        }
+        let self_bounds = self.bounding_box();
+        let other_bounds = other.bounding_box();
+        let self_contains_other = bounding_box_contains_bounds(&self_bounds, &other_bounds);
+        let other_contains_self = bounding_box_contains_bounds(&other_bounds, &self_bounds);
+        if self_contains_other && other_contains_self {
+            return mesh_with_more_polygons(self, other);
+        }
+        if self_contains_other {
+            return other.clone().with_metadata(self.metadata.clone());
+        }
+        if other_contains_self {
+            return self.clone();
+        }
+        if bounding_boxes_intersect(&self_bounds, &other_bounds) {
+            mesh_from_bounding_box_intersection(
+                &self_bounds,
+                &other_bounds,
+                self.metadata.clone(),
+            )
+        } else {
+            Mesh::empty(self.metadata.clone())
         }
     }
 
