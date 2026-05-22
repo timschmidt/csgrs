@@ -8070,18 +8070,76 @@ fn exact_contained_face_adjacent_multi_tetrahedra_union_replaces_containing_face
     let same_face_right = combine_exact_meshes(
         &[
             tetrahedron_i64([1, 1, 0], [1, 2, 0], [2, 1, 0], [1, 1, -3]),
-            tetrahedron_i64([4, 1, 0], [4, 2, 0], [5, 1, 0], [4, 1, -3]),
+            tetrahedron_i64([2, 4, 0], [2, 5, 0], [3, 4, 0], [2, 4, -3]),
         ],
-        "same containing face multi-hole remains unsupported",
+        "same containing face multi-hole contained adjacency",
     );
-    assert!(
-        hypermesh::exact::materialize_contained_face_adjacent_union(
+    let same_face_graph = build_intersection_graph(&single_left, &same_face_right).unwrap();
+    same_face_graph
+        .validate_against_meshes(&single_left, &same_face_right)
+        .unwrap();
+    assert!(same_face_graph.face_pairs.iter().any(|pair| {
+        pair.left_face == 0
+            && pair.right_face == 0
+            && pair.relation == hypermesh::exact::MeshFacePairRelation::CoplanarOverlapping
+    }));
+    assert!(same_face_graph.face_pairs.iter().any(|pair| {
+        pair.left_face == 0
+            && pair.right_face == 4
+            && pair.relation == hypermesh::exact::MeshFacePairRelation::CoplanarOverlapping
+    }));
+
+    let same_face_union = hypermesh::exact::materialize_contained_face_adjacent_union(
+        &single_left,
+        &same_face_right,
+        ValidationPolicy::CLOSED,
+    )
+    .expect(
+        "one containing face with two contained caps should materialize as one multi-hole patch",
+    );
+    same_face_union.validate().unwrap();
+    same_face_union
+        .validate_against_sources(&single_left, &same_face_right)
+        .unwrap();
+    assert_eq!(same_face_union.containing_side, MeshSide::Left);
+    assert_eq!(same_face_union.containing_face, 0);
+    assert_eq!(same_face_union.contained_face, 0);
+    assert_eq!(same_face_union.contained_faces, vec![0, 4]);
+    assert_eq!(same_face_union.containing_faces, vec![0]);
+    assert!(same_face_union.mesh.facts().mesh.closed_manifold);
+
+    let same_face_preflight = hypermesh::exact::preflight_boolean_exact(
+        &single_left,
+        &same_face_right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+    )
+    .unwrap();
+    same_face_preflight.validate().unwrap();
+    same_face_preflight
+        .validate_against_sources(&single_left, &same_face_right)
+        .unwrap();
+    assert_eq!(
+        same_face_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedContainedFaceAdjacentUnion
+    );
+
+    let same_face_result = hypermesh::exact::boolean_exact(
+        &single_left,
+        &same_face_right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    same_face_result
+        .validate_operation_against_sources(
             &single_left,
             &same_face_right,
+            hypermesh::exact::ExactBooleanOperation::Union,
             ValidationPolicy::CLOSED,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
         )
-        .is_none()
-    );
+        .unwrap();
+    assert_eq!(same_face_result.mesh, same_face_union.mesh);
 }
 
 #[cfg(feature = "exact-triangulation")]

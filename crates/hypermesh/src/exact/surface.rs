@@ -2239,15 +2239,16 @@ pub fn arrange_coplanar_convex_surface_holed_difference(
     Some(arrangement)
 }
 
-/// Materialize a convex coplanar difference with several triangle holes.
+/// Materialize a convex coplanar difference with several holes.
 ///
-/// This bounded materializer handles one convex coplanar left sheet and a
-/// right operand made of two or more disjoint connected convex sheets, all
-/// strictly inside the left hull. It is intentionally narrower than arbitrary
-/// planar-cell extraction: touching holes, nested holes, and nonconvex
-/// coverage still fail closed. The accepted case retains every component hull
-/// as a ring and replays exact area, matching Yap's exact-computation
-/// discipline.
+/// This bounded materializer handles one convex coplanar left sheet, including
+/// a single source triangle, and a right operand made of two or more disjoint
+/// connected convex sheets, all strictly inside the left hull. It is
+/// intentionally narrower than arbitrary planar-cell extraction: touching
+/// holes, nested holes, and nonconvex coverage still fail closed. The accepted
+/// case retains every component hull as a ring and replays exact area,
+/// matching Yap's exact-computation discipline from "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997).
 #[cfg(feature = "exact-triangulation")]
 pub fn arrange_coplanar_convex_surface_multi_holed_difference(
     left: &ExactMesh,
@@ -2260,20 +2261,14 @@ pub fn arrange_coplanar_convex_surface_multi_holed_difference(
         return None;
     }
 
-    let (projection, mut outer, _, _, _) = convex_surface_hulls_and_areas(left, left)?;
+    let (projection, mut outer) = convex_outer_ring_for_multi_hole_difference(left)?;
     orient_polygon_ccw(&mut outer, projection)?;
     let outer_area = projected_area2_abs(&outer, projection)?;
     let mut holes = Vec::new();
     let mut hole_area_sum = ExactReal::from(0);
     for component in connected_face_component_meshes(right)? {
         let hole_mesh = component;
-        let certificate = certify_coplanar_convex_surface_containment(left, &hole_mesh)?;
-        if certificate.projection != projection
-            || certificate.relation != CoplanarConvexSurfaceContainment::RightInsideLeft
-        {
-            return None;
-        }
-        let mut hole = certificate.right_hull;
+        let mut hole = contained_hole_ring_for_multi_hole_difference(left, &hole_mesh, projection)?;
         orient_polygon_cw(&mut hole, projection)?;
         hole_area_sum = add(&hole_area_sum, &projected_area2_abs(&hole, projection)?);
         holes.push(hole);
@@ -2303,6 +2298,50 @@ pub fn arrange_coplanar_convex_surface_multi_holed_difference(
     };
     arrangement.validate().ok()?;
     Some(arrangement)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn convex_outer_ring_for_multi_hole_difference(
+    left: &ExactMesh,
+) -> Option<(CoplanarProjection, Vec<Point3>)> {
+    if left.triangles().len() == 1 {
+        let projection = choose_mesh_projection(left)?;
+        let triangle = left.triangles()[0].0;
+        let outer = triangle
+            .iter()
+            .map(|&index| Some(left.vertices().get(index)?.to_hyperlimit_point()))
+            .collect::<Option<Vec<_>>>()?;
+        return Some((projection, outer));
+    }
+    let (projection, outer, _, _, _) = convex_surface_hulls_and_areas(left, left)?;
+    Some((projection, outer))
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn contained_hole_ring_for_multi_hole_difference(
+    left: &ExactMesh,
+    hole_mesh: &ExactMesh,
+    projection: CoplanarProjection,
+) -> Option<Vec<Point3>> {
+    if left.triangles().len() == 1 && hole_mesh.triangles().len() == 1 {
+        if certify_single_triangle_coplanar_containment(left, hole_mesh)?
+            != CoplanarSurfaceContainment::RightInsideLeft
+        {
+            return None;
+        }
+        let triangle = hole_mesh.triangles()[0].0;
+        return triangle
+            .iter()
+            .map(|&index| Some(hole_mesh.vertices().get(index)?.to_hyperlimit_point()))
+            .collect::<Option<Vec<_>>>();
+    }
+    let certificate = certify_coplanar_convex_surface_containment(left, hole_mesh)?;
+    if certificate.projection != projection
+        || certificate.relation != CoplanarConvexSurfaceContainment::RightInsideLeft
+    {
+        return None;
+    }
+    Some(certificate.right_hull)
 }
 
 /// Split a mesh into connected face components using retained triangle edges.

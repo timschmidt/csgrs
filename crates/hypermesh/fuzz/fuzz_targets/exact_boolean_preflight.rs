@@ -5104,6 +5104,46 @@ fn exercise_contained_face_adjacent_union() {
         )
         .unwrap();
     assert_eq!(multi_result.mesh, multi_union.mesh);
+
+    let same_face_left = tetrahedron_i64([0, 0, 0], [8, 0, 0], [0, 8, 0], [0, 0, 8]);
+    let same_face_right = combine_exact_meshes(
+        &[
+            tetrahedron_i64([1, 1, 0], [1, 2, 0], [2, 1, 0], [1, 1, -3]),
+            tetrahedron_i64([2, 4, 0], [2, 5, 0], [3, 4, 0], [2, 4, -3]),
+        ],
+        "contained-face adjacent fuzz same-face two-hole fixture",
+    );
+    let same_face_union = hypermesh::exact::materialize_contained_face_adjacent_union(
+        &same_face_left,
+        &same_face_right,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("same containing face with two caps should materialize");
+    same_face_union.validate().unwrap();
+    same_face_union
+        .validate_against_sources(&same_face_left, &same_face_right)
+        .unwrap();
+    assert_eq!(same_face_union.contained_faces, vec![0, 4]);
+    assert_eq!(same_face_union.containing_faces, vec![0]);
+
+    let same_face_result = boolean_exact_with_boundary_policy(
+        &same_face_left,
+        &same_face_right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+    same_face_result
+        .validate_operation_against_sources(
+            &same_face_left,
+            &same_face_right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(same_face_result.mesh, same_face_union.mesh);
 }
 
 #[cfg(feature = "exact-triangulation")]

@@ -34,7 +34,10 @@ use super::intersection::MeshFacePairRelation;
 use super::mesh::{ExactMesh, ExactMeshValidationError, ExactPoint3, Triangle};
 use super::provenance::SourceProvenance;
 use super::scalar::ExactReal;
-use super::surface::arrange_single_triangle_coplanar_holed_difference;
+use super::surface::{
+    arrange_coplanar_convex_surface_multi_holed_difference,
+    arrange_single_triangle_coplanar_holed_difference,
+};
 use super::validation::ValidationPolicy;
 use super::winding::{
     ClosedMeshWindingRelation, classify_mesh_vertices_against_closed_mesh_winding_report,
@@ -60,7 +63,7 @@ pub struct ContainedFaceAdjacentUnion {
     /// there for API compatibility and replay the full set here, so stale
     /// copied artifacts cannot silently drop one internal cap.
     pub contained_faces: Vec<usize>,
-    /// All source faces replaced by one-hole remnant patches.
+    /// All source faces replaced by holed remnant patches.
     pub containing_faces: Vec<usize>,
     /// Closed output mesh after replacing the containing face and deleting the
     /// contained face.
@@ -180,10 +183,13 @@ impl ContainedFaceAdjacencyCertificate {
     }
 
     fn containing_faces(&self) -> Vec<usize> {
-        self.patches
-            .iter()
-            .map(|patch| patch.containing_face)
-            .collect()
+        let mut faces = Vec::new();
+        for patch in &self.patches {
+            if !faces.contains(&patch.containing_face) {
+                faces.push(patch.containing_face);
+            }
+        }
+        faces
     }
 }
 
@@ -251,11 +257,11 @@ fn contained_face_pair(
 /// Merge one contained-face candidate into a bounded multi-patch certificate.
 ///
 /// The accepted topology replaces several independent source faces with
-/// one-hole remnants. Multiple holes on the same containing face still belong
-/// to the general planar/coplanar-volumetric materializer because that requires
-/// a multi-hole face triangulation in this closed-solid path. Following Yap,
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997), unsupported topology remains explicit instead of being guessed.
+/// one-hole remnants or several contained caps on the same source face with a
+/// retained multi-hole remnant. Following Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997), the merge accepts only
+/// source-owned caps whose projection and orientation replay exactly; arbitrary
+/// branch graphs still remain explicit planar/coplanar-volumetric blockers.
 fn merge_contained_face_candidate(
     existing: &mut ContainedFaceAdjacencyCertificate,
     candidate: ContainedFaceAdjacencyCertificate,
@@ -267,12 +273,15 @@ fn merge_contained_face_candidate(
         if existing
             .patches
             .iter()
-            .any(|existing| existing.containing_face == patch.containing_face)
-            || existing
-                .patches
-                .iter()
-                .any(|existing| existing.contained_face == patch.contained_face)
+            .any(|existing| existing.contained_face == patch.contained_face)
         {
+            return None;
+        }
+        if existing.patches.iter().any(|existing| {
+            existing.containing_face == patch.containing_face
+                && (existing.projection != patch.projection
+                    || existing.containing_projected_sign != patch.containing_projected_sign)
+        }) {
             return None;
         }
         existing.patches.push(patch);
@@ -434,23 +443,12 @@ fn contained_face_union_mesh(
         &mut vertices,
         &mut triangles,
     )?;
-    for patch in &certificate.patches {
-        let containing_mesh = face_mesh(
-            mesh_for_side(certificate.containing_side, left, right),
-            patch.containing_face,
-            "exact contained-face adjacency containing face",
-        )?;
-        let contained_mesh = face_mesh(
-            mesh_for_side(opposite_side(certificate.containing_side), left, right),
-            patch.contained_face,
-            "exact contained-face adjacency contained face",
-        )?;
-        let holed =
-            arrange_single_triangle_coplanar_holed_difference(&containing_mesh, &contained_mesh)?;
-        append_holed_replacement(
-            &holed.mesh,
-            patch.projection,
-            patch.containing_projected_sign,
+    for group in contained_face_patch_groups(certificate) {
+        append_contained_face_patch_group(
+            left,
+            right,
+            certificate.containing_side,
+            &group,
             &mut vertices,
             &mut triangles,
         )?;
@@ -465,14 +463,105 @@ fn contained_face_union_mesh(
     .ok()
 }
 
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct ContainedFacePatchGroup {
+    containing_face: usize,
+    contained_faces: Vec<usize>,
+    projection: CoplanarProjection,
+    containing_projected_sign: Sign,
+}
+
+fn contained_face_patch_groups(
+    certificate: &ContainedFaceAdjacencyCertificate,
+) -> Vec<ContainedFacePatchGroup> {
+    let mut groups = Vec::<ContainedFacePatchGroup>::new();
+    for patch in &certificate.patches {
+        if let Some(group) = groups
+            .iter_mut()
+            .find(|group| group.containing_face == patch.containing_face)
+        {
+            group.contained_faces.push(patch.contained_face);
+        } else {
+            groups.push(ContainedFacePatchGroup {
+                containing_face: patch.containing_face,
+                contained_faces: vec![patch.contained_face],
+                projection: patch.projection,
+                containing_projected_sign: patch.containing_projected_sign,
+            });
+        }
+    }
+    groups
+}
+
+/// Append one retained holed replacement for a containing source face.
+///
+/// A single contained cap uses the one-hole triangle arrangement. Multiple
+/// caps on the same containing face use the convex multi-hole surface
+/// materializer, which retains every hole ring and validates exact area before
+/// triangulation. That is the same retained-object discipline Yap argues for
+/// in "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+/// (1997): the closed-solid shortcut consumes a certified planar object rather
+/// than inferring holes from triangle soup.
+fn append_contained_face_patch_group(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    containing_side: MeshSide,
+    group: &ContainedFacePatchGroup,
+    vertices: &mut Vec<ExactPoint3>,
+    triangles: &mut Vec<Triangle>,
+) -> Option<()> {
+    let containing_mesh = face_mesh(
+        mesh_for_side(containing_side, left, right),
+        group.containing_face,
+        "exact contained-face adjacency containing face",
+    )?;
+    let contained_mesh = faces_mesh(
+        mesh_for_side(opposite_side(containing_side), left, right),
+        &group.contained_faces,
+        "exact contained-face adjacency contained faces",
+    )?;
+    let replacement = if group.contained_faces.len() == 1 {
+        arrange_single_triangle_coplanar_holed_difference(&containing_mesh, &contained_mesh)?.mesh
+    } else {
+        arrange_coplanar_convex_surface_multi_holed_difference(&containing_mesh, &contained_mesh)?
+            .mesh
+    };
+    append_holed_replacement(
+        &replacement,
+        group.projection,
+        group.containing_projected_sign,
+        vertices,
+        triangles,
+    )
+}
+
 fn face_mesh(mesh: &ExactMesh, face: usize, label: &'static str) -> Option<ExactMesh> {
-    let triangle = mesh.triangles().get(face)?.0;
+    faces_mesh(mesh, &[face], label)
+}
+
+fn faces_mesh(mesh: &ExactMesh, faces: &[usize], label: &'static str) -> Option<ExactMesh> {
+    let mut vertices = Vec::new();
+    let mut triangles = Vec::new();
+    for &face in faces {
+        let triangle = mesh.triangles().get(face)?.0;
+        triangles.push(Triangle([
+            map_point(
+                &mut vertices,
+                &mesh.vertices().get(triangle[0])?.to_hyperlimit_point(),
+            )?,
+            map_point(
+                &mut vertices,
+                &mesh.vertices().get(triangle[1])?.to_hyperlimit_point(),
+            )?,
+            map_point(
+                &mut vertices,
+                &mesh.vertices().get(triangle[2])?.to_hyperlimit_point(),
+            )?,
+        ]));
+    }
     ExactMesh::new_with_policy(
-        triangle
-            .iter()
-            .map(|&vertex| mesh.vertices().get(vertex).cloned())
-            .collect::<Option<Vec<_>>>()?,
-        vec![Triangle([0, 1, 2])],
+        vertices,
+        triangles,
         SourceProvenance::exact(label),
         ValidationPolicy::ALLOW_BOUNDARY,
     )

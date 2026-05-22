@@ -5953,6 +5953,14 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
             ],
             "bench contained-face adjacent two-cap fixture",
         );
+        let contained_same_face_left = tetrahedron_i64([0, 0, 0], [8, 0, 0], [0, 8, 0], [0, 0, 8]);
+        let contained_same_face_right = combine_exact_meshes(
+            &[
+                tetrahedron_i64([1, 1, 0], [1, 2, 0], [2, 1, 0], [1, 1, -3]),
+                tetrahedron_i64([2, 4, 0], [2, 5, 0], [3, 4, 0], [2, 4, -3]),
+            ],
+            "bench contained-face adjacent same-face two-hole fixture",
+        );
 
         let graph = build_intersection_graph(&left, &right).unwrap();
 
@@ -6341,6 +6349,38 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
                             .validate_operation_against_sources(
                                 &contained_multi_left,
                                 &contained_multi_right,
+                                hypermesh::exact::ExactBooleanOperation::Union,
+                                ValidationPolicy::CLOSED,
+                                hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+                            )
+                            .unwrap();
+                        result.mesh.triangles().len()
+                    }),
+                    hypermesh::exact::materialize_contained_face_adjacent_union(
+                        &contained_same_face_left,
+                        &contained_same_face_right,
+                        ValidationPolicy::CLOSED,
+                    )
+                    .map(|union| {
+                        union
+                            .validate_against_sources(
+                                &contained_same_face_left,
+                                &contained_same_face_right,
+                            )
+                            .unwrap();
+                        union.mesh.triangles().len()
+                    }),
+                    hypermesh::exact::boolean_exact(
+                        &contained_same_face_left,
+                        &contained_same_face_right,
+                        hypermesh::exact::ExactBooleanOperation::Union,
+                        ValidationPolicy::CLOSED,
+                    )
+                    .map(|result| {
+                        result
+                            .validate_operation_against_sources(
+                                &contained_same_face_left,
+                                &contained_same_face_right,
                                 hypermesh::exact::ExactBooleanOperation::Union,
                                 ValidationPolicy::CLOSED,
                                 hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
