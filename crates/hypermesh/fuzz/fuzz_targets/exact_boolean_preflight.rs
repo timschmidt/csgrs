@@ -2683,6 +2683,75 @@ fn exercise_component_coplanar_intersection() {
             ExactBoundaryBooleanPolicy::Reject,
         )
         .unwrap();
+
+    let disconnected_nonconvex_left = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            0, 0, 0, 2, 0, 0, 2, 1, 0, 1, 1, 0, 1, 2, 0, 0, 2, 0, 0, 1, 0, //
+            5, 0, 0, 7, 0, 0, 7, 1, 0, 6, 1, 0, 6, 2, 0, 5, 2, 0, 5, 1, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, 0, 3, 6, 6, 3, 4, 6, 4, 5, //
+            7, 8, 9, 7, 9, 10, 7, 10, 13, 13, 10, 11, 13, 11, 12,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("disconnected nonconvex intersection left fixture must import");
+    let disconnected_covering = ExactMesh::from_i64_triangles_with_policy(
+        &[-1, -1, 0, 12, -1, 0, -1, 6, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("disconnected nonconvex intersection covering fixture must import");
+    assert!(
+        arrange_coplanar_surface_component_intersection(
+            &disconnected_nonconvex_left,
+            &disconnected_covering
+        )
+        .is_none()
+    );
+    let disconnected_nonconvex = arrange_coplanar_surface_multi_component_intersection(
+        &disconnected_nonconvex_left,
+        &disconnected_covering,
+    )
+    .expect("disconnected adjacent face-cell clips should retain two nonconvex loops");
+    disconnected_nonconvex.validate().unwrap();
+    disconnected_nonconvex
+        .validate_intersection_against_sources(&disconnected_nonconvex_left, &disconnected_covering)
+        .unwrap();
+    assert_eq!(disconnected_nonconvex.polygons.len(), 2);
+    assert!(
+        disconnected_nonconvex
+            .polygons
+            .iter()
+            .all(|polygon| polygon.len() == 6)
+    );
+    let disconnected_preflight = preflight_boolean_exact(
+        &disconnected_nonconvex_left,
+        &disconnected_covering,
+        ExactBooleanOperation::Intersection,
+    )
+    .expect("disconnected nonconvex intersection preflight should classify shortcut");
+    disconnected_preflight.validate().unwrap();
+    assert_eq!(
+        disconnected_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+    );
+    let disconnected_result = hypermesh::exact::boolean_exact(
+        &disconnected_nonconvex_left,
+        &disconnected_covering,
+        ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("disconnected nonconvex intersection boolean should materialize");
+    disconnected_result
+        .validate_operation_against_sources(
+            &disconnected_nonconvex_left,
+            &disconnected_covering,
+            ExactBooleanOperation::Intersection,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
 }
 
 #[cfg(feature = "exact-triangulation")]

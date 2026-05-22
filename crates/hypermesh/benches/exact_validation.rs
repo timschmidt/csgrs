@@ -5235,6 +5235,24 @@ fn exact_boolean_coplanar_surface_intersection(c: &mut Criterion) {
             ValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
+        let nonconvex_multi_intersection_left = ExactMesh::from_i64_triangles_with_policy(
+            &[
+                0, 0, 0, 2, 0, 0, 2, 1, 0, 1, 1, 0, 1, 2, 0, 0, 2, 0, 0, 1, 0, //
+                5, 0, 0, 7, 0, 0, 7, 1, 0, 6, 1, 0, 6, 2, 0, 5, 2, 0, 5, 1, 0,
+            ],
+            &[
+                0, 1, 2, 0, 2, 3, 0, 3, 6, 6, 3, 4, 6, 4, 5, //
+                7, 8, 9, 7, 9, 10, 7, 10, 13, 13, 10, 11, 13, 11, 12,
+            ],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let nonconvex_multi_intersection_right = ExactMesh::from_i64_triangles_with_policy(
+            &[-1, -1, 0, 12, -1, 0, -1, 6, 0],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
 
         c.bench_function("exact_boolean_coplanar_surface_intersection", |b| {
             b.iter(|| {
@@ -5357,6 +5375,28 @@ fn exact_boolean_coplanar_surface_intersection(c: &mut Criterion) {
                         &nonconvex_intersection_right,
                     )
                     .is_none(),
+                    arrange_coplanar_surface_component_intersection(
+                        &nonconvex_multi_intersection_left,
+                        &nonconvex_multi_intersection_right,
+                    )
+                    .is_none(),
+                    arrange_coplanar_surface_multi_component_intersection(
+                        &nonconvex_multi_intersection_left,
+                        &nonconvex_multi_intersection_right,
+                    )
+                    .map(|output| {
+                        output.validate_intersection_against_sources(
+                            &nonconvex_multi_intersection_left,
+                            &nonconvex_multi_intersection_right,
+                        )
+                    }),
+                    hypermesh::exact::boolean_exact(
+                        &nonconvex_multi_intersection_left,
+                        &nonconvex_multi_intersection_right,
+                        hypermesh::exact::ExactBooleanOperation::Intersection,
+                        ValidationPolicy::ALLOW_BOUNDARY,
+                    )
+                    .unwrap(),
                     hypermesh::exact::boolean_exact(
                         &nonconvex_intersection_left,
                         &nonconvex_intersection_right,

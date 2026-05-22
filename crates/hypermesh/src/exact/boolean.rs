@@ -100,7 +100,7 @@ use super::scalar::ExactReal;
 use super::solid::{ConvexSolidMeshRelation, classify_mesh_vertices_against_convex_solid};
 #[cfg(feature = "exact-triangulation")]
 use super::surface::{
-    CoplanarConvexSurfaceContainment, CoplanarSurfaceContainment,
+    CoplanarArrangementOperation, CoplanarConvexSurfaceContainment, CoplanarSurfaceContainment,
     arrange_coplanar_convex_surface_component_holed_difference,
     arrange_coplanar_convex_surface_component_union, arrange_coplanar_convex_surface_difference,
     arrange_coplanar_convex_surface_holed_difference, arrange_coplanar_convex_surface_intersection,
@@ -1728,6 +1728,11 @@ fn boolean_coplanar_convex_arrangement_intersection(
 ) -> Result<ExactBooleanResult, MeshError> {
     let intersection = arrange_coplanar_convex_surface_intersection(left, right)
         .expect("caller checked convex coplanar arrangement intersection");
+    intersection.validate_against_sources(
+        left,
+        right,
+        CoplanarArrangementOperation::Intersection,
+    )?;
     let mesh = copy_mesh(
         &intersection.mesh,
         "exact coplanar convex arrangement intersection",
@@ -1747,6 +1752,7 @@ fn boolean_coplanar_convex_multi_intersection(
 ) -> Result<ExactBooleanResult, MeshError> {
     let intersection = arrange_coplanar_convex_surface_multi_intersection(left, right)
         .expect("caller checked convex coplanar multi-component intersection");
+    intersection.validate_intersection_against_sources(left, right)?;
     let mesh = copy_mesh(
         &intersection.mesh,
         "exact coplanar convex multi-component intersection",
