@@ -3,11 +3,10 @@
 use crate::float_types::{
     PI, Real, hangle_between_vectors, hangle_sin_cos, hpoint_centroid, hpoint_distance,
     hpoint_lerp, hpoint_weighted_sum, hpoints_exactly_equal, hreal_boundary_or_zero,
-    hreal_clamp_f64, hreal_div, hreal_f64s_within_tolerance, hreal_from_f64, hreal_gt_f64,
-    hreal_lt_f64, hreal_max_report_value, hreal_mean, hreal_mul, hreal_sample_stddev,
-    hreal_sqrt_ref, hreal_sqrt_to_f64, hreal_sub, hreal_sum, hreal_to_f64, hunit_vector3,
-    hvector3_distance, hvector3_dot, hvector3_from_point3, hvector3_mean,
-    hvector3_weighted_sum, tolerance,
+    hreal_clamp_f64, hreal_div, hreal_from_f64, hreal_gt_f64, hreal_max_report_value,
+    hreal_mean, hreal_mul, hreal_sample_stddev, hreal_sign, hreal_sqrt_ref, hreal_sqrt_to_f64,
+    hreal_sub, hreal_sum, hreal_to_f64, hunit_vector3, hvector3_distance, hvector3_dot,
+    hvector3_from_point3, hvector3_mean, hvector3_weighted_sum,
 };
 use hashbrown::HashMap;
 use nalgebra::{Point3, Vector3};
@@ -135,10 +134,8 @@ impl Vertex {
             return self.interpolate(other, t);
         };
 
-        // If normals are nearly parallel, use linear interpolation
-        if hreal_f64s_within_tolerance(dot, 1.0, tolerance())
-            || hreal_f64s_within_tolerance(dot, -1.0, tolerance())
-        {
+        // If normals are exactly parallel, use linear interpolation.
+        if hreal_f64s_exactly_equal(dot, 1.0) || hreal_f64s_exactly_equal(dot, -1.0) {
             let new_normal = hvector3_weighted_sum(
                 &[self.normal, other.normal],
                 &[hreal_sub(1.0, t).unwrap_or(0.0), t],
@@ -155,7 +152,7 @@ impl Vertex {
             return self.interpolate(other, t);
         };
 
-        if hreal_f64s_within_tolerance(sin_omega, 0.0, tolerance()) {
+        if hreal_f64s_exactly_equal(sin_omega, 0.0) {
             // Fallback to linear interpolation
             let new_normal = hvector3_weighted_sum(
                 &[self.normal, other.normal],
@@ -350,7 +347,7 @@ fn hyper_normalized_barycentric_weights(
     let w_h = hreal_from_f64(w).ok()?;
     let total = u_h.clone() + v_h.clone() + w_h.clone();
 
-    if !hreal_gt_f64(&total, tolerance()) && !hreal_lt_f64(&total, -tolerance()) {
+    if hreal_is_zero(&total) {
         return None;
     }
 
@@ -359,6 +356,20 @@ fn hyper_normalized_barycentric_weights(
         hreal_to_f64(&(v_h / total.clone()).ok()?)?,
         hreal_to_f64(&(w_h / total).ok()?)?,
     ))
+}
+
+fn hreal_is_zero(value: &hyperreal::Real) -> bool {
+    matches!(hreal_sign(value), Some(hyperreal::RealSign::Zero))
+}
+
+fn hreal_f64s_exactly_equal(lhs: Real, rhs: Real) -> bool {
+    let Ok(lhs) = hreal_from_f64(lhs) else {
+        return false;
+    };
+    let Ok(rhs) = hreal_from_f64(rhs) else {
+        return false;
+    };
+    hreal_is_zero(&(lhs - rhs))
 }
 
 fn hyper_normalized_weights(weights: impl IntoIterator<Item = Real>) -> Option<Vec<Real>> {
@@ -375,7 +386,7 @@ fn hyper_normalized_weights(weights: impl IntoIterator<Item = Real>) -> Option<V
         .iter()
         .cloned()
         .fold(hyperreal::Real::zero(), |acc, weight| acc + weight);
-    if !hreal_gt_f64(&total, tolerance()) {
+    if !hreal_gt_f64(&total, 0.0) {
         return None;
     }
 
@@ -403,7 +414,7 @@ fn hyper_cotangent_at_opposite(
     let edge2 = neighbor - opposite;
     let cross = edge1.cross(&edge2);
     let cross_len = hreal_sqrt_ref(&cross.dot(&cross))?;
-    if !hreal_gt_f64(&cross_len, tolerance()) {
+    if !hreal_gt_f64(&cross_len, 0.0) {
         return None;
     }
     hreal_to_f64(&(edge1.dot(&edge2) / cross_len).ok()?)
@@ -618,7 +629,7 @@ impl Vertex {
             .filter(|_| {
                 hreal_from_f64(mixed_area)
                     .ok()
-                    .is_some_and(|area| hreal_gt_f64(&area, tolerance()))
+                    .is_some_and(|area| hreal_gt_f64(&area, 0.0))
             })
             .and_then(|angle_deficit| hreal_div(angle_deficit, mixed_area))
             .unwrap_or(0.0)
@@ -687,7 +698,7 @@ impl Vertex {
             // Normalize to [0,1] where 1 = perfectly uniform
             hreal_from_f64(mean_edge)
                 .ok()
-                .filter(|mean| hreal_gt_f64(mean, tolerance()))
+                .filter(|mean| hreal_gt_f64(mean, 0.0))
                 .and_then(|_| hreal_div(std_dev, mean_edge))
                 .and_then(|ratio| hreal_div(1.0, 1.0 + ratio))
                 .and_then(|uniformity| hreal_clamp_f64(uniformity, 0.0, 1.0))
@@ -826,5 +837,17 @@ mod test {
 
         assert_eq!(vertex.position, Point3::new(1.25, 0.0, -2.5));
         assert_eq!(vertex.normal, Vector3::new(0.0, -3.5, 0.0));
+    }
+
+    #[test]
+    pub fn barycentric_weights_reject_only_exact_zero_total() {
+        assert!(hyper_normalized_barycentric_weights(1.0, -1.0, 0.0).is_none());
+
+        let weights = hyper_normalized_barycentric_weights(1.0, -1.0, 1.0e-12)
+            .expect("nonzero hyperreal total remains admissible");
+
+        assert!(weights.0.is_finite());
+        assert!(weights.1.is_finite());
+        assert!(weights.2.is_finite());
     }
 }
