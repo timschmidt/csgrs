@@ -3763,6 +3763,10 @@ fn exact_boolean_coplanar_orthogonal_surface_cells(c: &mut Criterion) {
         let graph_left = rect_surface_i64(&[(0, 0, 12, 10)]);
         let graph_right =
             rect_surface_i64(&[(3, 3, 5, 5), (7, 3, 9, 5), (5, 4, 7, 5), (-1, 4, 3, 5)]);
+        let overlap_source_left = rect_surface_i64(&[(0, 0, 4, 6), (2, 2, 8, 4)]);
+        let overlap_source_right = rect_surface_i64(&[(8, 2, 10, 4)]);
+        let rectangular_overlap_left = rect_surface_i64(&[(0, 0, 20, 20)]);
+        let rectangular_overlap_right = rect_surface_i64(&[(8, 8, 12, 12), (0, 9, 10, 11)]);
 
         c.bench_function("exact_boolean_coplanar_orthogonal_surface_cells", |b| {
             b.iter(|| {
@@ -3780,6 +3784,14 @@ fn exact_boolean_coplanar_orthogonal_surface_cells(c: &mut Criterion) {
                         &graph_left,
                         &graph_right,
                     );
+                let overlap_union = arrange_coplanar_orthogonal_surface_union(
+                    &overlap_source_left,
+                    &overlap_source_right,
+                );
+                let rectangular_overlap_difference = arrange_coplanar_orthogonal_surface_difference(
+                    &rectangular_overlap_left,
+                    &rectangular_overlap_right,
+                );
                 let union_result = hypermesh::exact::boolean_exact(
                     &l_left,
                     &l_right,
@@ -3797,6 +3809,20 @@ fn exact_boolean_coplanar_orthogonal_surface_cells(c: &mut Criterion) {
                 let difference_result = hypermesh::exact::boolean_exact(
                     &holed_left,
                     &holed_right,
+                    hypermesh::exact::ExactBooleanOperation::Difference,
+                    ValidationPolicy::ALLOW_BOUNDARY,
+                )
+                .unwrap();
+                let overlap_union_result = hypermesh::exact::boolean_exact(
+                    &overlap_source_left,
+                    &overlap_source_right,
+                    hypermesh::exact::ExactBooleanOperation::Union,
+                    ValidationPolicy::ALLOW_BOUNDARY,
+                )
+                .unwrap();
+                let rectangular_overlap_difference_result = hypermesh::exact::boolean_exact(
+                    &rectangular_overlap_left,
+                    &rectangular_overlap_right,
                     hypermesh::exact::ExactBooleanOperation::Difference,
                     ValidationPolicy::ALLOW_BOUNDARY,
                 )
@@ -3869,6 +3895,45 @@ fn exact_boolean_coplanar_orthogonal_surface_cells(c: &mut Criterion) {
                         hypermesh::exact::ExactBooleanOperation::Difference,
                     )
                     .map(|report| report.validate()),
+                    overlap_union.as_ref().map(|output| {
+                        output.validate_against_sources(&overlap_source_left, &overlap_source_right)
+                    }),
+                    overlap_union.as_ref().map(|output| output.validate()),
+                    hypermesh::exact::preflight_boolean_exact(
+                        &overlap_source_left,
+                        &overlap_source_right,
+                        hypermesh::exact::ExactBooleanOperation::Union,
+                    )
+                    .map(|report| report.validate()),
+                    overlap_union_result.validate_operation_against_sources(
+                        &overlap_source_left,
+                        &overlap_source_right,
+                        hypermesh::exact::ExactBooleanOperation::Union,
+                        ValidationPolicy::ALLOW_BOUNDARY,
+                        hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+                    ),
+                    rectangular_overlap_difference.as_ref().map(|output| {
+                        output.validate_against_sources(
+                            &rectangular_overlap_left,
+                            &rectangular_overlap_right,
+                        )
+                    }),
+                    rectangular_overlap_difference
+                        .as_ref()
+                        .map(|output| output.validate()),
+                    hypermesh::exact::preflight_boolean_exact(
+                        &rectangular_overlap_left,
+                        &rectangular_overlap_right,
+                        hypermesh::exact::ExactBooleanOperation::Difference,
+                    )
+                    .map(|report| report.validate()),
+                    rectangular_overlap_difference_result.validate_operation_against_sources(
+                        &rectangular_overlap_left,
+                        &rectangular_overlap_right,
+                        hypermesh::exact::ExactBooleanOperation::Difference,
+                        ValidationPolicy::ALLOW_BOUNDARY,
+                        hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+                    ),
                 )
             })
         });

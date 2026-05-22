@@ -11279,6 +11279,63 @@ fn exact_coplanar_surface_cutter_hole_contact_accepts_straddling_overlap_pair() 
         )
         .is_none()
     );
+    let rectangular_overlap_cells =
+        hypermesh::exact::arrange_coplanar_orthogonal_surface_difference(
+            &left,
+            &rectangular_overlap,
+        )
+        .expect("overlapping rectangular cutter/hole pair should replay as exact cells");
+    rectangular_overlap_cells.validate().unwrap();
+    rectangular_overlap_cells
+        .validate_against_sources(&left, &rectangular_overlap)
+        .unwrap();
+    assert_eq!(rectangular_overlap_cells.components.len(), 1);
+    assert!(rectangular_overlap_cells.components[0].holes.is_empty());
+    assert!(rectangular_overlap_cells.components[0].outer.len() > 8);
+    assert!(
+        rectangular_overlap_cells.components[0]
+            .outer
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(12))
+                && real_eq(&point.y, &ExactReal::from(8)))
+    );
+    let rectangular_overlap_preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &rectangular_overlap,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    rectangular_overlap_preflight.validate().unwrap();
+    rectangular_overlap_preflight
+        .validate_against_sources(&left, &rectangular_overlap)
+        .unwrap();
+    assert_eq!(
+        rectangular_overlap_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceDifference
+    );
+    let rectangular_overlap_result = hypermesh::exact::boolean_exact(
+        &left,
+        &rectangular_overlap,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    rectangular_overlap_result
+        .validate_operation_against_sources(
+            &left,
+            &rectangular_overlap,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        rectangular_overlap_result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut:
+                hypermesh::exact::ExactBooleanShortcutKind::CoplanarOrthogonalSurfaceDifference
+        }
+    );
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -11872,6 +11929,79 @@ fn exact_coplanar_orthogonal_surface_cells_materialize_nonconvex_outputs() {
     assert_eq!(
         graph_preflight.support,
         hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceDifference
+    );
+
+    let overlap_source_left = rect_surface_i64(&[(0, 0, 4, 6), (2, 2, 8, 4)]);
+    let overlap_source_right = rect_surface_i64(&[(8, 2, 10, 4)]);
+    assert!(
+        hypermesh::exact::arrange_coplanar_convex_surface_union(
+            &overlap_source_left,
+            &overlap_source_right,
+        )
+        .is_none()
+    );
+    let overlap_union = hypermesh::exact::arrange_coplanar_orthogonal_surface_union(
+        &overlap_source_left,
+        &overlap_source_right,
+    )
+    .expect("same-side overlapping rectangles should materialize by exact set occupancy");
+    overlap_union.validate().unwrap();
+    overlap_union
+        .validate_against_sources(&overlap_source_left, &overlap_source_right)
+        .unwrap();
+    assert_eq!(overlap_union.components.len(), 1);
+    assert_eq!(overlap_union.components[0].holes.len(), 0);
+    assert!(overlap_union.components[0].outer.len() > 6);
+    assert!(
+        overlap_union.components[0]
+            .outer
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(4))
+                && real_eq(&point.y, &ExactReal::from(2)))
+    );
+    let mut wrong_overlap_operation = overlap_union.clone();
+    wrong_overlap_operation.operation =
+        hypermesh::exact::CoplanarOrthogonalSurfaceOperation::Difference;
+    assert!(
+        wrong_overlap_operation
+            .validate_against_sources(&overlap_source_left, &overlap_source_right)
+            .is_err()
+    );
+    let overlap_union_preflight = hypermesh::exact::preflight_boolean_exact(
+        &overlap_source_left,
+        &overlap_source_right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+    )
+    .unwrap();
+    overlap_union_preflight.validate().unwrap();
+    overlap_union_preflight
+        .validate_against_sources(&overlap_source_left, &overlap_source_right)
+        .unwrap();
+    assert_eq!(
+        overlap_union_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceUnion
+    );
+    let overlap_union_result = hypermesh::exact::boolean_exact(
+        &overlap_source_left,
+        &overlap_source_right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    overlap_union_result
+        .validate_operation_against_sources(
+            &overlap_source_left,
+            &overlap_source_right,
+            hypermesh::exact::ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        overlap_union_result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarOrthogonalSurfaceUnion
+        }
     );
 }
 

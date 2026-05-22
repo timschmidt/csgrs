@@ -8,6 +8,11 @@
 //! "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997):
 //! combinatorial topology is promoted from exact object structure, not from a
 //! primitive-float polygon repair pass.
+//! Same-operand rectangles may overlap in positive area; those cells use set
+//! occupancy (`covered by at least one retained source rectangle`) and are
+//! accepted only when the resulting loops and mesh replay. This keeps
+//! multiplicity out of the topology certificate while still retaining the exact
+//! grid facts that justified the set boundary.
 //!
 //! The grid subdivision is the orthogonal analogue of the arrangement viewpoint
 //! in de Berg, Cheong, van Kreveld, and Overmars, *Computational Geometry:
@@ -398,9 +403,15 @@ struct OrthogonalCellComplex {
 /// Each open cell is classified by the exact midpoint of its bounding interval.
 /// Because all source boundaries are grid lines from exact rectangle
 /// coordinates, midpoint membership is a certified cell-level predicate rather
-/// than a sampling heuristic. This is the orthogonal-cell specialization of the
-/// arrangement model in de Berg et al., with Yap's requirement that the decision
-/// path remain explicit.
+/// than a sampling heuristic. Same-side overlaps are deliberately collapsed to
+/// boolean set occupancy before the operation is evaluated; the retained output
+/// is therefore a set arrangement, not a multiplicity-carrying surface cover.
+/// That promotion is allowed only because the exact cell grid remains retained
+/// and the loops are revalidated afterward, following Yap, "Towards Exact
+/// Geometric Computation," *Computational Geometry* 7.1-2 (1997). This is the
+/// orthogonal-cell specialization of the arrangement model in de Berg, Cheong,
+/// van Kreveld, and Overmars, *Computational Geometry: Algorithms and
+/// Applications*, 3rd ed. (2008), Chapter 2.
 #[cfg(feature = "exact-triangulation")]
 fn build_orthogonal_cell_complex(
     projection: CoplanarProjection,
@@ -419,8 +430,6 @@ fn build_orthogonal_cell_complex(
     {
         return None;
     }
-    reject_positive_area_overlaps(left)?;
-    reject_positive_area_overlaps(right)?;
 
     let mut xs = Vec::new();
     let mut ys = Vec::new();
@@ -452,19 +461,14 @@ fn build_orthogonal_cell_complex(
             );
             let in_left = left
                 .iter()
-                .filter(|rect| point_strictly_inside_projected_rectangle(&midpoint, rect))
-                .count();
+                .any(|rect| point_strictly_inside_projected_rectangle(&midpoint, rect));
             let in_right = right
                 .iter()
-                .filter(|rect| point_strictly_inside_projected_rectangle(&midpoint, rect))
-                .count();
-            if in_left > 1 || in_right > 1 {
-                return None;
-            }
+                .any(|rect| point_strictly_inside_projected_rectangle(&midpoint, rect));
             occupied[x * y_cells + y] = match operation {
-                CoplanarOrthogonalSurfaceOperation::Union => in_left == 1 || in_right == 1,
-                CoplanarOrthogonalSurfaceOperation::Intersection => in_left == 1 && in_right == 1,
-                CoplanarOrthogonalSurfaceOperation::Difference => in_left == 1 && in_right == 0,
+                CoplanarOrthogonalSurfaceOperation::Union => in_left || in_right,
+                CoplanarOrthogonalSurfaceOperation::Intersection => in_left && in_right,
+                CoplanarOrthogonalSurfaceOperation::Difference => in_left && !in_right,
             };
         }
     }
@@ -479,24 +483,6 @@ fn build_orthogonal_cell_complex(
         y_cells,
         occupied,
     })
-}
-
-#[cfg(feature = "exact-triangulation")]
-fn reject_positive_area_overlaps(rectangles: &[ProjectedRectangle]) -> Option<()> {
-    for left in 0..rectangles.len() {
-        for right in left + 1..rectangles.len() {
-            let x_min = exact_max_real(&rectangles[left].min.x, &rectangles[right].min.x)?;
-            let x_max = exact_min_real(&rectangles[left].max.x, &rectangles[right].max.x)?;
-            let y_min = exact_max_real(&rectangles[left].min.y, &rectangles[right].min.y)?;
-            let y_max = exact_min_real(&rectangles[left].max.y, &rectangles[right].max.y)?;
-            if real_order(&x_min, &x_max)? == Ordering::Less
-                && real_order(&y_min, &y_max)? == Ordering::Less
-            {
-                return None;
-            }
-        }
-    }
-    Some(())
 }
 
 #[cfg(feature = "exact-triangulation")]

@@ -2593,6 +2593,43 @@ fn exercise_component_coplanar_difference() {
         )
         .is_none()
     );
+    let rectangular_overlap_cells = arrange_coplanar_orthogonal_surface_difference(
+        &nonrect_contact_left,
+        &rectangular_overlap_right,
+    )
+    .expect("overlapping rectangular cutter-hole pair should replay through orthogonal cells");
+    rectangular_overlap_cells.validate().unwrap();
+    rectangular_overlap_cells
+        .validate_against_sources(&nonrect_contact_left, &rectangular_overlap_right)
+        .unwrap();
+    assert_eq!(rectangular_overlap_cells.components.len(), 1);
+    assert!(rectangular_overlap_cells.components[0].holes.is_empty());
+    let rectangular_overlap_preflight = preflight_boolean_exact(
+        &nonrect_contact_left,
+        &rectangular_overlap_right,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("rectangular overlap preflight should classify orthogonal shortcut");
+    rectangular_overlap_preflight.validate().unwrap();
+    assert_eq!(
+        rectangular_overlap_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceDifference
+    );
+    let rectangular_overlap_result = hypermesh::exact::boolean_exact(
+        &nonrect_contact_left,
+        &rectangular_overlap_right,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("rectangular overlap boolean should materialize through orthogonal cells");
+    rectangular_overlap_result.validate().unwrap();
+    assert_eq!(
+        rectangular_overlap_result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::
+                CoplanarOrthogonalSurfaceDifference
+        }
+    );
     let pairwise_overlap_graph_right = ExactMesh::from_i64_triangles_with_policy(
         &[
             8, 4, 0, 11, 7, 0, 8, 8, 0, //
@@ -2832,6 +2869,43 @@ fn exercise_component_coplanar_difference() {
     graph_difference
         .validate_against_sources(&graph_left, &graph_right)
         .unwrap();
+
+    let overlap_source_left = rect_surface_i64(&[(0, 0, 4, 6), (2, 2, 8, 4)]);
+    let overlap_source_right = rect_surface_i64(&[(8, 2, 10, 4)]);
+    let overlap_union =
+        arrange_coplanar_orthogonal_surface_union(&overlap_source_left, &overlap_source_right)
+            .expect("same-side overlapping rectangles should replay as set occupancy");
+    overlap_union.validate().unwrap();
+    overlap_union
+        .validate_against_sources(&overlap_source_left, &overlap_source_right)
+        .unwrap();
+    assert_eq!(overlap_union.components.len(), 1);
+    assert!(overlap_union.components[0].holes.is_empty());
+    let overlap_union_preflight = preflight_boolean_exact(
+        &overlap_source_left,
+        &overlap_source_right,
+        ExactBooleanOperation::Union,
+    )
+    .expect("same-side overlap union preflight should classify shortcut");
+    overlap_union_preflight.validate().unwrap();
+    assert_eq!(
+        overlap_union_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceUnion
+    );
+    let overlap_union_result = hypermesh::exact::boolean_exact(
+        &overlap_source_left,
+        &overlap_source_right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("same-side overlap union boolean should materialize");
+    overlap_union_result.validate().unwrap();
+    assert_eq!(
+        overlap_union_result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarOrthogonalSurfaceUnion
+        }
+    );
 
     let origin = (0, 0, 0);
     let basis_u = (2, 1, 0);
