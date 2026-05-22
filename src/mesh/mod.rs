@@ -2,16 +2,14 @@
 
 use crate::errors::ValidationError;
 use crate::float_types::{
-    hangle_between_vectors, hpoint_distance, hpoint3_bounds, hpoints_within_tolerance,
-    hpositive_boundary_scalar_squared, hreal_cmp_f64, hreal_f64s_within_tolerance,
-    hreal_from_f64, hreal_gt_hreal, hreal_lt_hreal, hreal_to_f64, hunit_vector3,
-    hvector3_from_point3, hvector3_from_vector3,
+    HReal, Real, hangle_between_vectors, hpoint_distance, hpoint3_bounds,
+    hpoints_exactly_equal, hreal_cmp_f64, hreal_from_f64, hreal_gt_hreal, hreal_lt_hreal,
+    hreal_sign, hreal_to_f64, hunit_vector3, hvector3_from_point3, hvector3_from_vector3,
     parry3d::{bounding_volume::Aabb, query::RayCast, shape::Shape},
     rapier3d::prelude::{
         ColliderBuilder, ColliderSet, Ray, RigidBodyBuilder, RigidBodyHandle, RigidBodySet,
         SharedShape, TriMesh, Triangle,
     },
-    {Real, tolerance},
 };
 
 use crate::mesh::plane::Plane;
@@ -84,17 +82,15 @@ pub struct Mesh<M: Clone + Send + Sync + Debug> {
 
 /// Return a hyperreal edge projection parameter for a boundary point.
 ///
-/// Points and tolerances still enter as finite public scalars while `Mesh`
-/// carries transitional nalgebra storage, but all segment length, endpoint, and
-/// off-edge predicates are promoted before comparison. This keeps topology
-/// splits aligned with Yap's exact-geometric-computation boundary model,
+/// `Mesh` still carries transitional nalgebra storage, but all segment length,
+/// endpoint, and off-edge predicates are promoted before comparison. This keeps
+/// topology splits aligned with Yap's exact-geometric-computation boundary model,
 /// "Towards Exact Geometric Computation," *Computational Geometry* 7(1-2),
 /// 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>).
 fn hyper_edge_projection_parameter(
     point: &Point3<Real>,
     edge_start: &Point3<Real>,
     edge_end: &Point3<Real>,
-    tolerance: Real,
 ) -> Option<Real> {
     let a = hvector3_from_point3(edge_start)?;
     let b = hvector3_from_point3(edge_end)?;
@@ -103,41 +99,54 @@ fn hyper_edge_projection_parameter(
     let av = &p - &a;
     let bv = &p - &b;
 
-    let tolerance_squared = hpositive_boundary_scalar_squared(tolerance)?;
-    let tolerance = hreal_from_f64(tolerance).ok()?;
     let ab_len_sq = ab.dot(&ab);
-    if !hreal_gt_hreal(&ab_len_sq, &tolerance_squared) {
+    if !hreal_positive(&ab_len_sq) {
         return None;
     }
 
-    if !hreal_gt_hreal(&av.dot(&av), &tolerance_squared)
-        || !hreal_gt_hreal(&bv.dot(&bv), &tolerance_squared)
-    {
+    if !hreal_positive(&av.dot(&av)) || !hreal_positive(&bv.dot(&bv)) {
         return None;
     }
 
     let t_h = (ab.dot(&av) / ab_len_sq).ok()?;
-    let one_minus_tolerance = hreal_from_f64(1.0).ok()? - tolerance.clone();
-    if !hreal_gt_hreal(&t_h, &tolerance) || !hreal_lt_hreal(&t_h, &one_minus_tolerance) {
+    if !hreal_gt_hreal(&t_h, &HReal::zero()) || !hreal_lt_hreal(&t_h, &HReal::from(1)) {
         return None;
     }
 
     let projected = a + ab * &t_h;
     let delta = p - projected;
-    if hreal_gt_hreal(&delta.dot(&delta), &tolerance_squared) {
+    if !hreal_zero(&delta.dot(&delta)) {
         return None;
     }
 
     hreal_to_f64(&t_h)
 }
 
+fn hreal_positive(value: &HReal) -> bool {
+    matches!(hreal_sign(value), Some(hyperreal::RealSign::Positive))
+}
+
+fn hreal_zero(value: &HReal) -> bool {
+    matches!(hreal_sign(value), Some(hyperreal::RealSign::Zero))
+}
+
+fn hreal_f64s_exactly_equal(lhs: Real, rhs: Real) -> bool {
+    let Ok(lhs) = hreal_from_f64(lhs) else {
+        return false;
+    };
+    let Ok(rhs) = hreal_from_f64(rhs) else {
+        return false;
+    };
+    hreal_zero(&(lhs - rhs))
+}
+
 fn bounding_box_contains_bounds(container: &Aabb, contained: &Aabb) -> bool {
-    contained.mins.x >= container.mins.x - tolerance()
-        && contained.mins.y >= container.mins.y - tolerance()
-        && contained.mins.z >= container.mins.z - tolerance()
-        && contained.maxs.x <= container.maxs.x + tolerance()
-        && contained.maxs.y <= container.maxs.y + tolerance()
-        && contained.maxs.z <= container.maxs.z + tolerance()
+    contained.mins.x >= container.mins.x
+        && contained.mins.y >= container.mins.y
+        && contained.mins.z >= container.mins.z
+        && contained.maxs.x <= container.maxs.x
+        && contained.maxs.y <= container.maxs.y
+        && contained.maxs.z <= container.maxs.z
 }
 
 /// Conservative broad-phase overlap used while exact solid booleans finish
@@ -151,12 +160,12 @@ fn bounding_box_contains_bounds(container: &Aabb, contained: &Aabb) -> bool {
 /// *Computational Geometry* 7(1-2), 1997
 /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
 fn bounding_boxes_intersect(lhs: &Aabb, rhs: &Aabb) -> bool {
-    lhs.mins.x <= rhs.maxs.x + tolerance()
-        && lhs.maxs.x + tolerance() >= rhs.mins.x
-        && lhs.mins.y <= rhs.maxs.y + tolerance()
-        && lhs.maxs.y + tolerance() >= rhs.mins.y
-        && lhs.mins.z <= rhs.maxs.z + tolerance()
-        && lhs.maxs.z + tolerance() >= rhs.mins.z
+    lhs.mins.x <= rhs.maxs.x
+        && lhs.maxs.x >= rhs.mins.x
+        && lhs.mins.y <= rhs.maxs.y
+        && lhs.maxs.y >= rhs.mins.y
+        && lhs.mins.z <= rhs.maxs.z
+        && lhs.maxs.z >= rhs.mins.z
 }
 
 fn mesh_from_bounding_box_intersection<M: Clone + Send + Sync + Debug>(
@@ -174,7 +183,10 @@ fn mesh_from_bounding_box_intersection<M: Clone + Send + Sync + Debug>(
     let width = max_x - min_x;
     let length = max_y - min_y;
     let height = max_z - min_z;
-    if width <= tolerance() || length <= tolerance() || height <= tolerance() {
+    if !matches!(hreal_cmp_f64(width, 0.0), std::cmp::Ordering::Greater)
+        || !matches!(hreal_cmp_f64(length, 0.0), std::cmp::Ordering::Greater)
+        || !matches!(hreal_cmp_f64(height, 0.0), std::cmp::Ordering::Greater)
+    {
         return Mesh::empty(metadata);
     }
 
@@ -336,8 +348,6 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     /// Botsch et al., *Polygon Mesh Processing*, 2010
     /// (<https://doi.org/10.1201/b10688>).
     fn fix_t_junctions_on_shared_edges(polygons: &mut [Polygon<M>]) {
-        let eps = tolerance();
-
         if polygons.len() < 2 {
             return;
         }
@@ -366,7 +376,6 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
                             &vert.position,
                             &a.position,
                             &b.position,
-                            eps,
                         ) else {
                             continue;
                         };
@@ -374,11 +383,10 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
                         let new_vertex = Vertex::new(vert.position, poly_j.plane.normal());
                         let entry = edge_splits[j].entry(edge_start).or_default();
                         let already_present = entry.iter().any(|(existing_t, existing_v)| {
-                            (existing_t - t).abs() < eps
-                                || hpoints_within_tolerance(
+                            hreal_f64s_exactly_equal(*existing_t, t)
+                                || hpoints_exactly_equal(
                                     &existing_v.position,
                                     &new_vertex.position,
-                                    eps,
                                 )
                         });
 
@@ -683,10 +691,9 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
 
         // 4) Sort hits by ascending distance (toi):
         hits.sort_by(|a, b| hreal_cmp_f64(a.1, b.1));
-        // 5) remove duplicate hits if they fall within tolerance
+        // 5) remove duplicate hits only when Hyper proves exact identity.
         hits.dedup_by(|a, b| {
-            hreal_f64s_within_tolerance(a.1, b.1, tolerance())
-                || hpoints_within_tolerance(&a.0, &b.0, tolerance())
+            hreal_f64s_exactly_equal(a.1, b.1) || hpoints_exactly_equal(&a.0, &b.0)
         });
 
         hits
@@ -696,10 +703,10 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     /// triangulated surface.
     ///
     /// Each consecutive pair of points defines one segment. Hits are deduplicated
-    /// locally and returned in polyline order. Deduplication compares squared
-    /// hit-point distance through `hyperlattice::Vector3` and
-    /// `hyperreal::Real`, keeping this topology-affecting equality decision out
-    /// of local f64 square-root arithmetic. This follows Yap's
+    /// locally and returned in polyline order. Deduplication requires exact
+    /// hit-point equality through `hyperlattice::Vector3` and `hyperreal::Real`,
+    /// keeping this topology-affecting equality decision out of local f64
+    /// tolerance arithmetic. This follows Yap's
     /// exact-geometric-computation boundary discipline
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     pub fn intersect_polyline(&self, polyline: &[Point3<Real>]) -> Vec<Point3<Real>> {
@@ -708,7 +715,6 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         }
 
         let iso = Isometry3::identity();
-        let tol = tolerance();
         let triangles: Vec<[Vertex; 3]> = self
             .polygons
             .iter()
@@ -723,7 +729,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
             let Some(seg_len) = hpoint_distance(&seg_start, &seg_end) else {
                 continue;
             };
-            if seg_len < tol {
+            if hpoints_exactly_equal(&seg_start, &seg_end) {
                 continue;
             }
 
@@ -734,11 +740,10 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
             for tri in &triangles {
                 let triangle =
                     Triangle::new(tri[0].position, tri[1].position, tri[2].position);
-                if let Some(hit) =
-                    triangle.cast_ray_and_get_normal(&iso, &ray, seg_len + tol, true)
+                if let Some(hit) = triangle.cast_ray_and_get_normal(&iso, &ray, seg_len, true)
                 {
                     let t = hit.time_of_impact;
-                    if t >= -tol && t <= seg_len + tol {
+                    if t >= 0.0 && t <= seg_len {
                         seg_hits.push((Point3::from(ray.point_at(t).coords), t));
                     }
                 }
@@ -748,7 +753,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
 
             for (point, _) in seg_hits {
                 if let Some(last) = hits.last() {
-                    if hpoints_within_tolerance(&point, last, tol) {
+                    if hpoints_exactly_equal(&point, last) {
                         continue;
                     }
                 }
@@ -1301,6 +1306,7 @@ impl<M: Clone + Send + Sync + Debug> From<Profile<M>> for Mesh<M> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::float_types::tolerance;
 
     #[test]
     fn hyper_edge_projection_parameter_accepts_exact_t_vertex() {
@@ -1308,10 +1314,10 @@ mod tests {
         let edge_start = Point3::new(0.0, 0.0, 0.0);
         let edge_end = Point3::new(2.0, 0.0, 0.0);
 
-        let t = hyper_edge_projection_parameter(&point, &edge_start, &edge_end, tolerance())
+        let t = hyper_edge_projection_parameter(&point, &edge_start, &edge_end)
             .expect("point lies strictly inside the edge");
 
-        assert!(hreal_f64s_within_tolerance(t, 0.5, tolerance()));
+        assert!(hreal_f64s_exactly_equal(t, 0.5));
     }
 
     #[test]
@@ -1320,28 +1326,39 @@ mod tests {
         let edge_start = Point3::new(0.0, 0.0, 0.0);
         let edge_end = Point3::new(2.0, 0.0, 0.0);
 
-        assert!(
-            hyper_edge_projection_parameter(&point, &edge_start, &edge_end, tolerance())
-                .is_none()
-        );
+        assert!(hyper_edge_projection_parameter(&point, &edge_start, &edge_end).is_none());
     }
 
     #[test]
-    fn hyper_edge_projection_parameter_rejects_bad_tolerance_and_endpoints() {
+    fn hyper_edge_projection_parameter_rejects_endpoints() {
         let edge_start = Point3::new(0.0, 0.0, 0.0);
         let edge_end = Point3::new(2.0, 0.0, 0.0);
         let midpoint = Point3::new(1.0, 0.0, 0.0);
 
         assert!(
-            hyper_edge_projection_parameter(&midpoint, &edge_start, &edge_end, 0.0).is_none()
+            hyper_edge_projection_parameter(&edge_start, &edge_start, &edge_end).is_none()
         );
         assert!(
-            hyper_edge_projection_parameter(&midpoint, &edge_start, &edge_end, Real::NAN)
-                .is_none()
+            hyper_edge_projection_parameter(&midpoint, &edge_start, &edge_start).is_none()
         );
-        assert!(
-            hyper_edge_projection_parameter(&edge_start, &edge_start, &edge_end, tolerance())
-                .is_none()
+    }
+
+    #[test]
+    fn mesh_bounding_box_helpers_do_not_widen_by_tolerance() {
+        let container = Aabb::new(Point3::origin(), Point3::new(1.0, 1.0, 1.0));
+        let exact_touch =
+            Aabb::new(Point3::new(1.0, 0.25, 0.25), Point3::new(2.0, 0.75, 0.75));
+        let just_outside = Aabb::new(
+            Point3::new(1.0 + tolerance() * 0.25, 0.25, 0.25),
+            Point3::new(2.0, 0.75, 0.75),
         );
+        let overhanging = Aabb::new(
+            Point3::new(tolerance() * -0.25, 0.25, 0.25),
+            Point3::new(0.75, 0.75, 0.75),
+        );
+
+        assert!(bounding_boxes_intersect(&container, &exact_touch));
+        assert!(!bounding_boxes_intersect(&container, &just_outside));
+        assert!(!bounding_box_contains_bounds(&container, &overhanging));
     }
 }
