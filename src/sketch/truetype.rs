@@ -1,8 +1,8 @@
 //! Create `Profile`s using ttf fonts
 
 use crate::float_types::{
-    Real, hreal_cmp_f64, hreal_div, hreal_f64s_within_or_equal_tolerance, hreal_from_f64,
-    hreal_gt_f64, hreal_mul, hreal_sum, hxy_ring_orientation_sign, tolerance,
+    Real, hreal_cmp_f64, hreal_div, hreal_f64s_exactly_equal, hreal_from_f64, hreal_gt_f64,
+    hreal_mul, hreal_sum, hxy_ring_orientation_sign,
 };
 use crate::sketch::Profile;
 use hypercurve::{Contour2, CurveString2, Region2};
@@ -410,8 +410,22 @@ impl OutlineFlattener {
 }
 
 fn same_outline_point(first: [Real; 2], last: [Real; 2]) -> bool {
-    hreal_f64s_within_or_equal_tolerance(first[0], last[0], tolerance())
-        && hreal_f64s_within_or_equal_tolerance(first[1], last[1], tolerance())
+    hreal_f64s_exactly_equal(first[0], last[0]) && hreal_f64s_exactly_equal(first[1], last[1])
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::float_types::tolerance;
+
+    #[test]
+    fn truetype_outline_closure_uses_exact_endpoint_identity() {
+        assert!(same_outline_point([1.0, 2.0], [1.0, 2.0]));
+        assert!(!same_outline_point(
+            [1.0, 2.0],
+            [1.0 + tolerance() * 0.25, 2.0]
+        ));
+    }
 }
 
 impl OutlineBuilder for OutlineFlattener {
