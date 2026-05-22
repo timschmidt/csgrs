@@ -586,6 +586,24 @@ pub(crate) fn hpoints_within_tolerance(
     hreal_lt_hreal(&lhs.squared_distance(&rhs), &tolerance_squared)
 }
 
+/// Return whether two finite boundary points are exactly equal after promotion.
+///
+/// This is the zero-tolerance counterpart to [`hpoints_within_tolerance`].
+/// Indexed topology should not merge distinct vertices merely because their
+/// primitive representatives are close; it should share rows only when the
+/// hyperreal squared distance refines to exact zero. This follows Yap,
+/// "Towards Exact Geometric Computation," *Computational Geometry* 7(1-2),
+/// 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+pub(crate) fn hpoints_exactly_equal(lhs: &Point3<Real>, rhs: &Point3<Real>) -> bool {
+    let Some(lhs) = hvector3_from_point3(lhs) else {
+        return false;
+    };
+    let Some(rhs) = hvector3_from_point3(rhs) else {
+        return false;
+    };
+    matches!(hreal_sign(&lhs.squared_distance(&rhs)), Some(RealSign::Zero))
+}
+
 /// Return the finite Euclidean distance between two public boundary points.
 ///
 /// Distance construction and square root are delegated to `hyperlattice` /
@@ -760,6 +778,21 @@ pub(crate) fn hvectors_within_tolerance(
     };
 
     hreal_lt_hreal(&lhs.squared_distance(&rhs), &tolerance_squared)
+}
+
+/// Return whether two finite boundary vectors are exactly equal after promotion.
+///
+/// Generic indexed-triangle export paths use this to preserve distinct normals
+/// unless Hyper's exact scalar layer proves equality. Non-finite boundary
+/// vectors fail closed instead of being coalesced.
+pub(crate) fn hvectors_exactly_equal(lhs: &Vector3<Real>, rhs: &Vector3<Real>) -> bool {
+    let Some(lhs) = hvector3_from_vector3(lhs) else {
+        return false;
+    };
+    let Some(rhs) = hvector3_from_vector3(rhs) else {
+        return false;
+    };
+    matches!(hreal_sign(&lhs.squared_distance(&rhs)), Some(RealSign::Zero))
 }
 
 /// Refine the sign of a hyperreal expression for topology decisions.

@@ -1,7 +1,5 @@
 /// Traits for shapes which can be represented by triangles.
-use crate::float_types::{
-    Real, hpoints_within_tolerance, hvectors_within_tolerance, tolerance,
-};
+use crate::float_types::{Real, hpoints_exactly_equal, hvectors_exactly_equal};
 use crate::vertex::Vertex;
 use nalgebra::{Point3, Vector3};
 
@@ -21,13 +19,13 @@ pub trait Triangulated3D {
 /// Indexed triangle view with position rows, normal rows, and face rows.
 ///
 /// The default implementation is a compatibility path over [`Triangulated3D`]:
-/// it deduplicates finite boundary positions/normals through the crate's
-/// hyperreal-backed tolerance predicates. Exact mesh carriers should override
-/// this method and preserve their native indexed topology instead. This keeps
-/// legacy triangle exporters generic while allowing hyper geometry types to
-/// avoid reconstructing topology from approximate triangle streams, following
-/// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-/// 7.1-2 (1997), <https://doi.org/10.1016/0925-7721(95)00040-2>.
+/// it deduplicates finite boundary positions/normals only when promotion to
+/// hyperreal-backed vectors proves exact equality. Exact mesh carriers should
+/// override this method and preserve their native indexed topology instead.
+/// This keeps legacy triangle exporters generic while avoiding tolerance-based
+/// topology reconstruction from approximate triangle streams, following Yap,
+/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+/// (1997), <https://doi.org/10.1016/0925-7721(95)00040-2>.
 #[derive(Clone, Debug, PartialEq)]
 pub struct IndexedTriangleMesh3D {
     /// Position rows.
@@ -66,7 +64,7 @@ pub trait IndexedTriangulated3D: Triangulated3D {
 
 fn add_unique_position(positions: &mut Vec<Point3<Real>>, position: Point3<Real>) -> usize {
     for (index, existing) in positions.iter().enumerate() {
-        if hpoints_within_tolerance(existing, &position, tolerance()) {
+        if hpoints_exactly_equal(existing, &position) {
             return index;
         }
     }
@@ -76,10 +74,49 @@ fn add_unique_position(positions: &mut Vec<Point3<Real>>, position: Point3<Real>
 
 fn add_unique_normal(normals: &mut Vec<Vector3<Real>>, normal: Vector3<Real>) -> usize {
     for (index, existing) in normals.iter().enumerate() {
-        if hvectors_within_tolerance(existing, &normal, tolerance()) {
+        if hvectors_exactly_equal(existing, &normal) {
             return index;
         }
     }
     normals.push(normal);
     normals.len() - 1
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[derive(Clone)]
+    struct TriangleSoup(Vec<[Vertex; 3]>);
+
+    impl Triangulated3D for TriangleSoup {
+        fn visit_triangles<F>(&self, mut f: F)
+        where
+            F: FnMut([Vertex; 3]),
+        {
+            for triangle in &self.0 {
+                f(*triangle);
+            }
+        }
+    }
+
+    impl IndexedTriangulated3D for TriangleSoup {}
+
+    #[test]
+    fn indexed_triangles_deduplicate_only_exact_hyperreal_rows() {
+        let normal = Vector3::z();
+        let origin = Vertex::new(Point3::origin(), normal);
+        let exact_repeat = Vertex::new(Point3::origin(), normal);
+        let near = Vertex::new(Point3::new(1.0e-12, 0.0, 0.0), normal);
+        let top = Vertex::new(Point3::new(0.0, 1.0, 0.0), normal);
+
+        let indexed = TriangleSoup(vec![[origin, exact_repeat, near], [origin, near, top]])
+            .indexed_triangles();
+
+        assert_eq!(indexed.positions.len(), 3);
+        assert_eq!(indexed.faces[0][0].0, indexed.faces[0][1].0);
+        assert_ne!(indexed.faces[0][0].0, indexed.faces[0][2].0);
+        assert_eq!(indexed.faces[0][2].0, indexed.faces[1][1].0);
+        assert_eq!(indexed.normals.len(), 1);
+    }
 }
