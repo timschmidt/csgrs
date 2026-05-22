@@ -166,6 +166,57 @@ pub struct AlgebraicRootArithmeticReport {
     pub message: Option<String>,
 }
 
+/// Status for evaluating a polynomial at a represented algebraic root.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum AlgebraicRootPolynomialEvaluationStatus {
+    /// The represented root had an exact rational witness, so the polynomial
+    /// value was computed exactly.
+    EvaluatedExactRationalWitness,
+    /// Interval arithmetic proved the polynomial value is strictly positive
+    /// throughout the isolating interval.
+    IntervalCertifiedPositive,
+    /// Interval arithmetic proved the polynomial value is strictly negative
+    /// throughout the isolating interval.
+    IntervalCertifiedNegative,
+    /// The conservative interval enclosure contains zero.
+    IntervalContainsZero,
+    /// The represented root failed structural validation.
+    InvalidEvidence,
+    /// The evaluated polynomial is empty or has unsupported coefficients.
+    InvalidPolynomial,
+    /// Exact interval endpoint comparisons did not decide.
+    Undecided,
+}
+
+/// Exact or conservative value report for `q(alpha)`.
+///
+/// The input polynomial is stored in ascending power order. For rational
+/// witnesses, `exact_value` is filled and compared exactly. For interval-only
+/// represented roots, `interval_value` is a conservative exact interval
+/// enclosure produced without primitive-float sampling.
+#[derive(Clone, Debug, PartialEq)]
+pub struct AlgebraicRootPolynomialEvaluationReport {
+    /// Final evaluation status.
+    pub status: AlgebraicRootPolynomialEvaluationStatus,
+    /// Exact value when the represented root has a rational witness.
+    pub exact_value: Option<Real>,
+    /// Conservative interval value for interval-only roots.
+    pub interval_value: Option<AlgebraicPolynomialValueInterval>,
+    /// Certified sign when the report proves one.
+    pub sign: Option<Ordering>,
+    /// Compact diagnostic reason.
+    pub message: Option<String>,
+}
+
+/// Conservative exact interval enclosure for a polynomial value.
+#[derive(Clone, Debug, PartialEq)]
+pub struct AlgebraicPolynomialValueInterval {
+    /// Lower endpoint of the value enclosure.
+    pub lower: Real,
+    /// Upper endpoint of the value enclosure.
+    pub upper: Real,
+}
+
 /// Validation report for a represented algebraic root.
 #[derive(Clone, Debug, PartialEq)]
 pub struct AlgebraicRootValidationReport {
@@ -578,6 +629,144 @@ pub fn arithmetic_algebraic_root_representations(
     )
 }
 
+/// Evaluate an exact-rational polynomial at a represented algebraic root.
+///
+/// This is the first consumer-facing scalar operation for
+/// [`AlgebraicRootRepresentation`]. If the root carries an exact rational
+/// witness, the value is computed by exact Horner evaluation. Otherwise the
+/// polynomial is evaluated over the isolating interval with conservative
+/// interval arithmetic and the sign is certified only when the whole enclosure
+/// lies on one side of zero. This follows the exact-object/certified-decision
+/// split in Yap, "Towards Exact Geometric Computation," *Computational
+/// Geometry* 7.1-2 (1997), and the isolating-interval model of Collins and
+/// Loos, "Real Zeros of Polynomials" (1982).
+pub fn evaluate_polynomial_at_algebraic_root(
+    root: &AlgebraicRootRepresentation,
+    polynomial_coefficients: &[Real],
+    policy: PredicatePolicy,
+) -> AlgebraicRootPolynomialEvaluationReport {
+    if !root.is_valid() {
+        return algebraic_polynomial_evaluation_report(
+            AlgebraicRootPolynomialEvaluationStatus::InvalidEvidence,
+            None,
+            None,
+            None,
+            Some("algebraic root representation must be valid before evaluation".to_owned()),
+        );
+    }
+    if polynomial_coefficients.is_empty() {
+        return algebraic_polynomial_evaluation_report(
+            AlgebraicRootPolynomialEvaluationStatus::InvalidPolynomial,
+            None,
+            None,
+            None,
+            Some("polynomial evaluation requires at least one coefficient".to_owned()),
+        );
+    }
+    let Some(polynomial) = trim_polynomial(polynomial_coefficients.to_vec(), policy) else {
+        return algebraic_polynomial_evaluation_report(
+            AlgebraicRootPolynomialEvaluationStatus::Undecided,
+            None,
+            None,
+            None,
+            Some("could not trim evaluated polynomial coefficients exactly".to_owned()),
+        );
+    };
+    if polynomial
+        .iter()
+        .any(|coefficient| coefficient.exact_rational_ref().is_none())
+    {
+        return algebraic_polynomial_evaluation_report(
+            AlgebraicRootPolynomialEvaluationStatus::InvalidPolynomial,
+            None,
+            None,
+            None,
+            Some("polynomial evaluation requires exact-rational coefficients".to_owned()),
+        );
+    }
+    if let Some(witness) = root.exact_rational_witness() {
+        let value = evaluate_polynomial(&polynomial, witness);
+        let Some(sign) = compare_reals_with_policy(&value, &Real::zero(), policy).value() else {
+            return algebraic_polynomial_evaluation_report(
+                AlgebraicRootPolynomialEvaluationStatus::Undecided,
+                Some(value),
+                None,
+                None,
+                Some("could not certify exact rational witness value sign".to_owned()),
+            );
+        };
+        return algebraic_polynomial_evaluation_report(
+            AlgebraicRootPolynomialEvaluationStatus::EvaluatedExactRationalWitness,
+            Some(value),
+            None,
+            Some(sign),
+            None,
+        );
+    }
+
+    let Some(interval) = evaluate_polynomial_interval(
+        &polynomial,
+        &AlgebraicPolynomialValueInterval {
+            lower: root.interval.lower.clone(),
+            upper: root.interval.upper.clone(),
+        },
+        policy,
+    ) else {
+        return algebraic_polynomial_evaluation_report(
+            AlgebraicRootPolynomialEvaluationStatus::Undecided,
+            None,
+            None,
+            None,
+            Some("could not order interval polynomial endpoints exactly".to_owned()),
+        );
+    };
+    let Some(lower_cmp) = compare_reals_with_policy(&interval.lower, &Real::zero(), policy).value()
+    else {
+        return algebraic_polynomial_evaluation_report(
+            AlgebraicRootPolynomialEvaluationStatus::Undecided,
+            None,
+            Some(interval),
+            None,
+            Some("could not compare interval lower endpoint with zero".to_owned()),
+        );
+    };
+    let Some(upper_cmp) = compare_reals_with_policy(&interval.upper, &Real::zero(), policy).value()
+    else {
+        return algebraic_polynomial_evaluation_report(
+            AlgebraicRootPolynomialEvaluationStatus::Undecided,
+            None,
+            Some(interval),
+            None,
+            Some("could not compare interval upper endpoint with zero".to_owned()),
+        );
+    };
+    if lower_cmp == Ordering::Greater {
+        return algebraic_polynomial_evaluation_report(
+            AlgebraicRootPolynomialEvaluationStatus::IntervalCertifiedPositive,
+            None,
+            Some(interval),
+            Some(Ordering::Greater),
+            None,
+        );
+    }
+    if upper_cmp == Ordering::Less {
+        return algebraic_polynomial_evaluation_report(
+            AlgebraicRootPolynomialEvaluationStatus::IntervalCertifiedNegative,
+            None,
+            Some(interval),
+            Some(Ordering::Less),
+            None,
+        );
+    }
+    algebraic_polynomial_evaluation_report(
+        AlgebraicRootPolynomialEvaluationStatus::IntervalContainsZero,
+        None,
+        Some(interval),
+        None,
+        Some("interval polynomial enclosure contains zero".to_owned()),
+    )
+}
+
 fn negate_algebraic_root_representation(
     root: &AlgebraicRootRepresentation,
 ) -> AlgebraicRootRepresentation {
@@ -972,6 +1161,71 @@ fn evaluate_polynomial(polynomial: &[Real], point: &Real) -> Real {
         })
 }
 
+fn evaluate_polynomial_interval(
+    polynomial: &[Real],
+    point: &AlgebraicPolynomialValueInterval,
+    policy: PredicatePolicy,
+) -> Option<AlgebraicPolynomialValueInterval> {
+    let mut value = AlgebraicPolynomialValueInterval {
+        lower: Real::zero(),
+        upper: Real::zero(),
+    };
+    for coefficient in polynomial.iter().rev() {
+        value = interval_add(
+            interval_mul(&value, point, policy)?,
+            &AlgebraicPolynomialValueInterval {
+                lower: coefficient.clone(),
+                upper: coefficient.clone(),
+            },
+        );
+    }
+    Some(value)
+}
+
+fn interval_add(
+    left: AlgebraicPolynomialValueInterval,
+    right: &AlgebraicPolynomialValueInterval,
+) -> AlgebraicPolynomialValueInterval {
+    AlgebraicPolynomialValueInterval {
+        lower: left.lower + right.lower.clone(),
+        upper: left.upper + right.upper.clone(),
+    }
+}
+
+fn interval_mul(
+    left: &AlgebraicPolynomialValueInterval,
+    right: &AlgebraicPolynomialValueInterval,
+    policy: PredicatePolicy,
+) -> Option<AlgebraicPolynomialValueInterval> {
+    let mut products = [
+        left.lower.clone() * right.lower.clone(),
+        left.lower.clone() * right.upper.clone(),
+        left.upper.clone() * right.lower.clone(),
+        left.upper.clone() * right.upper.clone(),
+    ];
+    sort_reals_exact(&mut products, policy)?;
+    Some(AlgebraicPolynomialValueInterval {
+        lower: products[0].clone(),
+        upper: products[3].clone(),
+    })
+}
+
+fn sort_reals_exact(values: &mut [Real], policy: PredicatePolicy) -> Option<()> {
+    for index in 1..values.len() {
+        let mut cursor = index;
+        while cursor > 0 {
+            let ordering =
+                compare_reals_with_policy(&values[cursor], &values[cursor - 1], policy).value()?;
+            if ordering != Ordering::Less {
+                break;
+            }
+            values.swap(cursor, cursor - 1);
+            cursor -= 1;
+        }
+    }
+    Some(())
+}
+
 fn same_represented_root(
     left: &AlgebraicRootRepresentation,
     right: &AlgebraicRootRepresentation,
@@ -1049,6 +1303,22 @@ fn algebraic_arithmetic_report(
         status,
         exact_result,
         result_representation,
+        message,
+    }
+}
+
+fn algebraic_polynomial_evaluation_report(
+    status: AlgebraicRootPolynomialEvaluationStatus,
+    exact_value: Option<Real>,
+    interval_value: Option<AlgebraicPolynomialValueInterval>,
+    sign: Option<Ordering>,
+    message: Option<String>,
+) -> AlgebraicRootPolynomialEvaluationReport {
+    AlgebraicRootPolynomialEvaluationReport {
+        status,
+        exact_value,
+        interval_value,
+        sign,
         message,
     }
 }
@@ -1440,6 +1710,71 @@ mod tests {
         );
     }
 
+    #[test]
+    fn algebraic_root_polynomial_evaluation_certifies_witnesses_and_intervals() {
+        let rational_root = AlgebraicRootRepresentation {
+            constraint_index: 0,
+            symbol: SymbolId(0),
+            interval_index: 0,
+            polynomial_coefficients: vec![real(-3), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: real(3),
+                upper: real(3),
+                exact_root: Some(real(3)),
+                distinct_root_count: 1,
+            },
+            kind: AlgebraicRootKind::ExactRationalWitness,
+            validation: AlgebraicRootValidationReport::valid(),
+        };
+        let rational = evaluate_polynomial_at_algebraic_root(
+            &rational_root,
+            &[real(-9), Real::zero(), Real::one()],
+            PredicatePolicy::default(),
+        );
+        assert_eq!(
+            rational.status,
+            AlgebraicRootPolynomialEvaluationStatus::EvaluatedExactRationalWitness
+        );
+        assert_eq!(rational.exact_value, Some(Real::zero()));
+        assert_eq!(rational.sign, Some(Ordering::Equal));
+
+        let sqrt_two = AlgebraicRootRepresentation {
+            constraint_index: 1,
+            symbol: SymbolId(0),
+            interval_index: 0,
+            polynomial_coefficients: vec![real(-2), Real::zero(), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: real(1),
+                upper: real(2),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            kind: AlgebraicRootKind::IsolatingInterval,
+            validation: AlgebraicRootValidationReport::valid(),
+        };
+        let positive = evaluate_polynomial_at_algebraic_root(
+            &sqrt_two,
+            &[Real::one(), Real::one()],
+            PredicatePolicy::default(),
+        );
+        assert_eq!(
+            positive.status,
+            AlgebraicRootPolynomialEvaluationStatus::IntervalCertifiedPositive
+        );
+        assert_eq!(positive.sign, Some(Ordering::Greater));
+
+        let crossing = evaluate_polynomial_at_algebraic_root(
+            &sqrt_two,
+            &[real(-2), Real::zero(), Real::one()],
+            PredicatePolicy::default(),
+        );
+        assert_eq!(
+            crossing.status,
+            AlgebraicRootPolynomialEvaluationStatus::IntervalContainsZero
+        );
+        assert_eq!(crossing.sign, None);
+    }
+
     proptest! {
         #[test]
         fn generated_linear_roots_become_valid_represented_intervals(root in -64_i16..=64) {
@@ -1654,6 +1989,48 @@ mod tests {
             prop_assert_eq!(&representation.interval.lower, &real(-upper));
             prop_assert_eq!(&representation.interval.upper, &real(-lower));
             prop_assert_eq!(&representation.kind, &AlgebraicRootKind::IsolatingInterval);
+        }
+
+        #[test]
+        fn generated_rational_witness_polynomial_evaluation_matches_integer_arithmetic(
+            root in -32_i16..=32,
+            constant in -32_i16..=32,
+            linear in -16_i16..=16,
+            quadratic in -8_i16..=8,
+        ) {
+            let root = i64::from(root);
+            let constant = i64::from(constant);
+            let linear = i64::from(linear);
+            let quadratic = i64::from(quadratic);
+            let represented = AlgebraicRootRepresentation {
+                constraint_index: 0,
+                symbol: SymbolId(0),
+                interval_index: 0,
+                polynomial_coefficients: vec![real(-root), Real::one()],
+                interval: IsolatedRootInterval {
+                    lower: real(root),
+                    upper: real(root),
+                    exact_root: Some(real(root)),
+                    distinct_root_count: 1,
+                },
+                kind: AlgebraicRootKind::ExactRationalWitness,
+                validation: AlgebraicRootValidationReport::valid(),
+            };
+
+            let report = evaluate_polynomial_at_algebraic_root(
+                &represented,
+                &[real(constant), real(linear), real(quadratic)],
+                PredicatePolicy::default(),
+            );
+
+            prop_assert_eq!(
+                report.status,
+                AlgebraicRootPolynomialEvaluationStatus::EvaluatedExactRationalWitness
+            );
+            prop_assert_eq!(
+                report.exact_value,
+                Some(real(constant + linear * root + quadratic * root * root))
+            );
         }
     }
 }

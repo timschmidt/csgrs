@@ -20,20 +20,21 @@ use hypersolve::{
     count_bernstein_univariate_polynomial_interval_roots,
     count_descartes_univariate_polynomial_roots, determinant_bareiss, diagnose_failed_constraints,
     eliminate_affine_rows_with_substitution_classes,
-    enumerate_direct_univariate_quadratic_branches, isolate_univariate_polynomial_roots,
-    lift_sketch_point2_to_workplane3, preflight_sketch_degeneracies,
-    preflight_sketch_entity_domains, preflight_sketch_parameter_domains,
-    prepare_sparse_linear_residual_system, propose_active_set_update,
-    regenerate_active_set_affine_candidate, replay_dense_linear_residuals,
-    replay_sketch_compatibility_fixture, replay_sparse_linear_residuals,
-    report_lossy_adapter_only_candidate, represent_univariate_algebraic_roots,
-    resultant_univariate_polynomials, run_active_set_update_loop,
-    schedule_candidate_batch_predicates, schedule_univariate_resultant_pairs,
-    search_failed_constraint_pair_removals, search_failed_constraint_set_removals,
-    search_failed_constraint_single_removals, sketch_compatibility_fixtures,
-    solve_damped_least_squares, solve_dense_linear_system_bareiss, solve_direct_affine_system,
-    solve_direct_univariate_quadratic_equalities, solve_sparse_linear_system_bareiss,
-    squared_distance_equation, subdivide_bernstein_univariate_polynomial_interval_roots,
+    enumerate_direct_univariate_quadratic_branches, evaluate_polynomial_at_algebraic_root,
+    isolate_univariate_polynomial_roots, lift_sketch_point2_to_workplane3,
+    preflight_sketch_degeneracies, preflight_sketch_entity_domains,
+    preflight_sketch_parameter_domains, prepare_sparse_linear_residual_system,
+    propose_active_set_update, regenerate_active_set_affine_candidate,
+    replay_dense_linear_residuals, replay_sketch_compatibility_fixture,
+    replay_sparse_linear_residuals, report_lossy_adapter_only_candidate,
+    represent_univariate_algebraic_roots, resultant_univariate_polynomials,
+    run_active_set_update_loop, schedule_candidate_batch_predicates,
+    schedule_univariate_resultant_pairs, search_failed_constraint_pair_removals,
+    search_failed_constraint_set_removals, search_failed_constraint_single_removals,
+    sketch_compatibility_fixtures, solve_damped_least_squares, solve_dense_linear_system_bareiss,
+    solve_direct_affine_system, solve_direct_univariate_quadratic_equalities,
+    solve_sparse_linear_system_bareiss, squared_distance_equation,
+    subdivide_bernstein_univariate_polynomial_interval_roots,
     subresultant_chain_univariate_polynomials,
 };
 
@@ -1229,6 +1230,15 @@ fn certification(c: &mut Criterion) {
                 &rational_two,
                 Some(&rational_three),
                 AlgebraicRootArithmeticOp::Multiply,
+            )
+        })
+    });
+    c.bench_function("evaluate_polynomial_at_algebraic_root", |b| {
+        b.iter(|| {
+            evaluate_polynomial_at_algebraic_root(
+                &sqrt_two,
+                &[r(1), r(1), r(1)],
+                hyperlimit::PredicatePolicy::default(),
             )
         })
     });

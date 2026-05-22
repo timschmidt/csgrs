@@ -53,13 +53,15 @@ pub use active_set::{
 };
 pub use affine::PreparedAffineResidual;
 pub use algebraic::{
-    AlgebraicRootArithmeticOp, AlgebraicRootArithmeticReport, AlgebraicRootArithmeticStatus,
-    AlgebraicRootComparisonReport, AlgebraicRootComparisonStatus, AlgebraicRootKind,
-    AlgebraicRootRefinementComparisonConfig, AlgebraicRootRefinementComparisonReport,
-    AlgebraicRootRepresentation, AlgebraicRootRepresentationReport,
-    AlgebraicRootRepresentationStatus, AlgebraicRootValidationReport,
-    AlgebraicRootValidationStatus, arithmetic_algebraic_root_representations,
-    compare_algebraic_root_representations, compare_algebraic_root_representations_with_refinement,
+    AlgebraicPolynomialValueInterval, AlgebraicRootArithmeticOp, AlgebraicRootArithmeticReport,
+    AlgebraicRootArithmeticStatus, AlgebraicRootComparisonReport, AlgebraicRootComparisonStatus,
+    AlgebraicRootKind, AlgebraicRootPolynomialEvaluationReport,
+    AlgebraicRootPolynomialEvaluationStatus, AlgebraicRootRefinementComparisonConfig,
+    AlgebraicRootRefinementComparisonReport, AlgebraicRootRepresentation,
+    AlgebraicRootRepresentationReport, AlgebraicRootRepresentationStatus,
+    AlgebraicRootValidationReport, AlgebraicRootValidationStatus,
+    arithmetic_algebraic_root_representations, compare_algebraic_root_representations,
+    compare_algebraic_root_representations_with_refinement, evaluate_polynomial_at_algebraic_root,
     represent_univariate_algebraic_roots, represent_univariate_algebraic_roots_from_reports,
     validate_algebraic_root_representation,
 };
