@@ -9133,6 +9133,77 @@ fn exact_multi_component_coplanar_intersection_materializes_before_winding() {
 
 #[cfg(feature = "exact-triangulation")]
 #[test]
+fn exact_coplanar_surface_intersection_merges_adjacent_face_cell_clips() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            0, 0, 0, //
+            2, 0, 0, //
+            2, 1, 0, //
+            1, 1, 0, //
+            1, 2, 0, //
+            0, 2, 0, //
+            0, 1, 0,
+        ],
+        &[0, 1, 2, 0, 2, 3, 0, 3, 6, 6, 3, 4, 6, 4, 5],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let right = ExactMesh::from_i64_triangles_with_policy(
+        &[-1, -1, 0, 6, -1, 0, -1, 6, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+
+    assert!(
+        hypermesh::exact::arrange_coplanar_convex_surface_intersection(&left, &right).is_none()
+    );
+    assert!(
+        hypermesh::exact::arrange_coplanar_convex_surface_multi_intersection(&left, &right)
+            .is_none()
+    );
+    let intersection =
+        hypermesh::exact::arrange_coplanar_surface_component_intersection(&left, &right)
+            .expect("adjacent face-cell clips should merge into one retained L loop");
+    intersection.validate().unwrap();
+    intersection
+        .validate_intersection_against_sources(&left, &right)
+        .unwrap();
+    assert_eq!(intersection.polygon.len(), 6);
+
+    let preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+    )
+    .unwrap();
+    preflight.validate().unwrap();
+    preflight.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+    );
+    assert!(preflight.blocker.is_none());
+
+    let result = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    result.validate().unwrap();
+    assert_eq!(
+        result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfaceIntersection
+        }
+    );
+    assert_eq!(result.mesh.vertices().len(), 6);
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
 fn exact_coplanar_surface_outputs_validate_public_artifacts() {
     let left = ExactMesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 4, 0, 0, 0, 4, 0],

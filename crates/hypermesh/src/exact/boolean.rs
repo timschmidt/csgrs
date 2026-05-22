@@ -108,8 +108,9 @@ use super::surface::{
     arrange_coplanar_convex_surface_multi_holed_difference,
     arrange_coplanar_convex_surface_multi_intersection,
     arrange_coplanar_convex_surface_multi_union, arrange_coplanar_convex_surface_union,
-    arrange_coplanar_surface_component_union,
+    arrange_coplanar_surface_component_intersection, arrange_coplanar_surface_component_union,
     arrange_coplanar_surface_cutter_hole_contact_difference,
+    arrange_coplanar_surface_multi_component_intersection,
     arrange_coplanar_surface_multi_component_union, arrange_coplanar_surface_multi_difference,
     arrange_coplanar_surface_side_cutter_difference, arrange_single_triangle_coplanar_difference,
     arrange_single_triangle_coplanar_holed_difference, arrange_single_triangle_coplanar_union,
@@ -358,6 +359,12 @@ pub fn preflight_boolean_exact(
             if arrange_coplanar_convex_surface_multi_intersection(left, right).is_some() =>
         {
             ExactBooleanSupport::CertifiedCoplanarConvexSurfaceIntersection
+        }
+        ExactBooleanOperation::Intersection
+            if arrange_coplanar_surface_component_intersection(left, right).is_some()
+                || arrange_coplanar_surface_multi_component_intersection(left, right).is_some() =>
+        {
+            ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
         }
         ExactBooleanOperation::Intersection
             if arrange_coplanar_orthogonal_surface_intersection(left, right).is_some() =>
@@ -1881,6 +1888,32 @@ fn boolean_coplanar_surface_intersection(
         return Ok(None);
     }
     let Some(intersection) = intersect_single_triangle_coplanar_surfaces(left, right) else {
+        if let Some(intersection) = arrange_coplanar_surface_component_intersection(left, right) {
+            intersection.validate_intersection_against_sources(left, right)?;
+            let mesh = copy_mesh(
+                &intersection.mesh,
+                "exact coplanar nonconvex component intersection",
+                validation,
+            )?;
+            return Ok(Some(certified_shortcut_result(
+                mesh,
+                ExactBooleanShortcutKind::CoplanarSurfaceIntersection,
+            )));
+        }
+        if let Some(intersection) =
+            arrange_coplanar_surface_multi_component_intersection(left, right)
+        {
+            intersection.validate_intersection_against_sources(left, right)?;
+            let mesh = copy_mesh(
+                &intersection.mesh,
+                "exact coplanar nonconvex multi-component intersection",
+                validation,
+            )?;
+            return Ok(Some(certified_shortcut_result(
+                mesh,
+                ExactBooleanShortcutKind::CoplanarSurfaceIntersection,
+            )));
+        }
         return Ok(None);
     };
     let mesh = copy_mesh(

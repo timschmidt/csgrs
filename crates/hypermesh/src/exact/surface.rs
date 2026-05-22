@@ -1622,6 +1622,37 @@ impl CoplanarSurfaceMultiArrangement {
             ))
         }
     }
+
+    /// Validate this nonconvex multi-component intersection against sources.
+    ///
+    /// The intersection path starts from exact pairwise convex clips and
+    /// merges only positive-length adjacent clip components. Replaying from
+    /// sources is therefore part of the certificate: it ties every retained
+    /// loop to the source triangle pairs and exact area replay that produced
+    /// it, following Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7.1-2 (1997).
+    pub fn validate_intersection_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<(), MeshError> {
+        self.validate()?;
+        let replay = arrange_coplanar_surface_multi_component_intersection(left, right)
+            .ok_or_else(|| {
+                surface_validation_error(
+                    "coplanar nonconvex multi-component arrangement",
+                    "source replay did not reproduce a nonconvex multi-component intersection",
+                )
+            })?;
+        if self == &replay {
+            Ok(())
+        } else {
+            Err(surface_validation_error(
+                "coplanar nonconvex multi-component arrangement",
+                "retained intersection does not match source replay",
+            ))
+        }
+    }
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -1732,6 +1763,37 @@ impl CoplanarSurfaceArrangement {
             Err(surface_validation_error(
                 "coplanar nonconvex simple-loop arrangement",
                 "retained component union does not match source replay",
+            ))
+        }
+    }
+
+    /// Validate this nonconvex simple-loop intersection against its sources.
+    ///
+    /// Source replay recomputes the exact pairwise triangle clips, the
+    /// positive-length contact graph, the stitched boundary loop, and the
+    /// retained triangulation. That replay requirement keeps this bounded
+    /// planar-cell materializer aligned with Yap's retained exact object model
+    /// from "Towards Exact Geometric Computation," *Computational Geometry*
+    /// 7.1-2 (1997).
+    pub fn validate_intersection_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<(), MeshError> {
+        self.validate()?;
+        let replay =
+            arrange_coplanar_surface_component_intersection(left, right).ok_or_else(|| {
+                surface_validation_error(
+                    "coplanar nonconvex simple-loop arrangement",
+                    "source replay did not reproduce a nonconvex intersection",
+                )
+            })?;
+        if self == &replay {
+            Ok(())
+        } else {
+            Err(surface_validation_error(
+                "coplanar nonconvex simple-loop arrangement",
+                "retained intersection does not match source replay",
             ))
         }
     }
@@ -2398,6 +2460,100 @@ pub fn arrange_coplanar_convex_surface_multi_intersection(
     })
 }
 
+/// Certify and materialize one nonconvex coplanar intersection loop.
+///
+/// This is the adjacent face-cell counterpart to
+/// [`arrange_coplanar_convex_surface_multi_intersection`]. Pairwise convex
+/// triangle clips are first retained exactly, then clips that meet along
+/// positive-length boundaries are replayed as one connected convex-contact
+/// union loop. The shortcut is accepted only when that merged loop is simple
+/// and nonconvex; convex and disjoint-convex cases stay with the narrower
+/// convex intersection certificates.
+///
+/// The local clips use Sutherland and Hodgman's exact half-plane clipping
+/// construction, while the merge uses the Weiler-Atherton boundary-fragment
+/// idea already used by coplanar unions. Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997), is the reason the
+/// promoted loop must replay from retained convex clips and exact area
+/// equality rather than from sampled arrangement cells.
+#[cfg(feature = "exact-triangulation")]
+pub fn arrange_coplanar_surface_component_intersection(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Option<CoplanarSurfaceArrangement> {
+    let (projection, mut polygons) =
+        coplanar_surface_pairwise_triangle_intersection_polygons(left, right)?;
+    if polygons.len() != 1 {
+        return None;
+    }
+    let mut polygon = polygons.pop()?;
+    orient_polygon_ccw(&mut polygon, projection)?;
+    if validate_projected_strictly_convex_loop(
+        &polygon,
+        projection,
+        "coplanar nonconvex intersection",
+    )
+    .is_ok()
+    {
+        return None;
+    }
+    let mesh = polygon_to_earcut_open_mesh_with_label(
+        &polygon,
+        projection,
+        "exact coplanar nonconvex intersection",
+    )?;
+    let arrangement = CoplanarSurfaceArrangement {
+        projection,
+        polygon,
+        mesh,
+    };
+    arrangement.validate().ok()?;
+    Some(arrangement)
+}
+
+/// Certify and materialize several coplanar intersection loops, allowing
+/// nonconvex components produced by adjacent exact face-cell clips.
+///
+/// Each output component is either one retained pairwise convex clip or the
+/// exact convex-contact union of several clips. At least one output loop must
+/// be nonconvex; an all-convex disjoint result remains the responsibility of
+/// [`arrange_coplanar_convex_surface_multi_intersection`]. This keeps the
+/// public artifact contract explicit while advancing the remaining planar
+/// cell-arrangement work.
+#[cfg(feature = "exact-triangulation")]
+pub fn arrange_coplanar_surface_multi_component_intersection(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Option<CoplanarSurfaceMultiArrangement> {
+    let (projection, polygons) =
+        coplanar_surface_pairwise_triangle_intersection_polygons(left, right)?;
+    if polygons.len() < 2 {
+        return None;
+    }
+    if polygons.iter().all(|polygon| {
+        validate_projected_strictly_convex_loop(
+            polygon,
+            projection,
+            "coplanar nonconvex multi-component intersection",
+        )
+        .is_ok()
+    }) {
+        return None;
+    }
+    let mesh = polygons_to_earcut_open_mesh_with_label(
+        &polygons,
+        projection,
+        "exact coplanar nonconvex multi-component intersection",
+    )?;
+    let arrangement = CoplanarSurfaceMultiArrangement {
+        projection,
+        polygons,
+        mesh,
+    };
+    arrangement.validate().ok()?;
+    Some(arrangement)
+}
+
 #[cfg(feature = "exact-triangulation")]
 fn arrange_coplanar_convex_surface_pairwise_triangle_multi_intersection(
     left: &ExactMesh,
@@ -2445,6 +2601,134 @@ fn arrange_coplanar_convex_surface_pairwise_triangle_multi_intersection(
     };
     arrangement.validate().ok()?;
     Some(arrangement)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn coplanar_surface_pairwise_triangle_intersection_polygons(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Option<(CoplanarProjection, Vec<Vec<Point3>>)> {
+    if arrange_coplanar_convex_surface_intersection(left, right).is_some()
+        || arrange_coplanar_convex_surface_multi_intersection(left, right).is_some()
+        || intersect_single_triangle_coplanar_surfaces(left, right).is_some()
+    {
+        return None;
+    }
+
+    let mut projection = None;
+    let mut clips = Vec::new();
+    for left_face in 0..left.triangles().len() {
+        let left_triangle = single_face_mesh(left, left_face)?;
+        for right_face in 0..right.triangles().len() {
+            let right_triangle = single_face_mesh(right, right_face)?;
+            let Some((intersection_projection, mut polygon)) =
+                pairwise_coplanar_triangle_intersection_polygon(&left_triangle, &right_triangle)
+            else {
+                continue;
+            };
+            match projection {
+                Some(expected) if expected != intersection_projection => return None,
+                None => projection = Some(intersection_projection),
+                _ => {}
+            }
+            orient_polygon_ccw(&mut polygon, intersection_projection)?;
+            clips.push(polygon);
+        }
+    }
+    if clips.len() < 2 {
+        return None;
+    }
+    let projection = projection?;
+
+    let mut contact_graph = UnionFind::new(clips.len());
+    for left_index in 0..clips.len() {
+        for right_index in left_index + 1..clips.len() {
+            let relation = convex_union_component_relation(
+                &clips[left_index],
+                &clips[right_index],
+                projection,
+            );
+            match relation? {
+                ConvexUnionComponentRelation::Disjoint => {}
+                ConvexUnionComponentRelation::BoundaryOnly => {
+                    if convex_polygons_touch_on_positive_boundary(
+                        &clips[left_index],
+                        &clips[right_index],
+                        projection,
+                    )
+                    .unwrap_or(false)
+                    {
+                        contact_graph.union(left_index, right_index);
+                    }
+                }
+                ConvexUnionComponentRelation::PositiveArea => {
+                    contact_graph.union(left_index, right_index);
+                }
+            }
+        }
+    }
+
+    let mut groups: Vec<(usize, Vec<usize>)> = Vec::new();
+    for index in 0..clips.len() {
+        let root = contact_graph.find(index);
+        if let Some((_, members)) = groups.iter_mut().find(|(candidate, _)| *candidate == root) {
+            members.push(index);
+        } else {
+            groups.push((root, vec![index]));
+        }
+    }
+
+    let mut polygons = Vec::with_capacity(groups.len());
+    for (_, members) in groups {
+        let mut polygon = if members.len() == 1 {
+            clips[members[0]].clone()
+        } else {
+            let regions = members
+                .iter()
+                .map(|&member| clips[member].clone())
+                .collect::<Vec<_>>();
+            connected_convex_face_cell_union_polygon(&regions, projection)?
+        };
+        orient_polygon_ccw(&mut polygon, projection)?;
+        polygon = simplify_projected_polygon(polygon, projection);
+        validate_projected_simple_loop(&polygon, projection, "coplanar nonconvex intersection")
+            .ok()?;
+        polygons.push(polygon);
+    }
+    sort_polygons_for_replay(&mut polygons, projection);
+    validate_simple_component_loops_disjoint(
+        &polygons,
+        projection,
+        "coplanar nonconvex intersection",
+    )
+    .ok()?;
+    Some((projection, polygons))
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn pairwise_coplanar_triangle_intersection_polygon(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Option<(CoplanarProjection, Vec<Point3>)> {
+    if let Some(intersection) = intersect_single_triangle_coplanar_surfaces(left, right) {
+        return Some((intersection.projection, intersection.polygon));
+    }
+    let containment = certify_single_triangle_coplanar_containment(left, right)?;
+    let projection = choose_mesh_projection(left).or_else(|| choose_mesh_projection(right))?;
+    let mut polygon = match containment {
+        CoplanarSurfaceContainment::LeftInsideRight => left.triangles()[0]
+            .0
+            .iter()
+            .map(|&index| left.vertices()[index].to_hyperlimit_point())
+            .collect::<Vec<_>>(),
+        CoplanarSurfaceContainment::RightInsideLeft => right.triangles()[0]
+            .0
+            .iter()
+            .map(|&index| right.vertices()[index].to_hyperlimit_point())
+            .collect::<Vec<_>>(),
+    };
+    orient_polygon_ccw(&mut polygon, projection)?;
+    Some((projection, polygon))
 }
 
 /// Certify disjoint intersections from exact convex source components.
@@ -5040,6 +5324,34 @@ fn connected_convex_contact_union_polygon(
     regions: &[Vec<Point3>],
     projection: CoplanarProjection,
 ) -> Option<Vec<Point3>> {
+    connected_convex_union_polygon_with_contact_policy(regions, projection, true)
+}
+
+/// Materialize one connected face-cell union while allowing incidental
+/// point-only contacts between non-neighbor clips.
+///
+/// Pairwise triangle clips from a valid triangulated sheet may meet at shared
+/// vertices even when the actual cell adjacency travels through other clips.
+/// Those point contacts are not branch decisions for this bounded
+/// intersection materializer, because the promoted component still requires a
+/// positive-length connected contact graph, a simple stitched boundary, and an
+/// exact finite union-area replay. This is the same Yap retained-object rule
+/// used by [`connected_convex_contact_union_polygon`], but with the weaker
+/// local contact policy needed for face-cell triangulations.
+#[cfg(feature = "exact-triangulation")]
+fn connected_convex_face_cell_union_polygon(
+    regions: &[Vec<Point3>],
+    projection: CoplanarProjection,
+) -> Option<Vec<Point3>> {
+    connected_convex_union_polygon_with_contact_policy(regions, projection, false)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn connected_convex_union_polygon_with_contact_policy(
+    regions: &[Vec<Point3>],
+    projection: CoplanarProjection,
+    reject_point_only_boundary: bool,
+) -> Option<Vec<Point3>> {
     if regions.len() < 2 {
         return None;
     }
@@ -5060,14 +5372,16 @@ fn connected_convex_contact_union_polygon(
             match convex_union_component_relation(&regions[left], &regions[right], projection)? {
                 ConvexUnionComponentRelation::Disjoint => {}
                 ConvexUnionComponentRelation::BoundaryOnly => {
-                    if !convex_polygons_touch_on_positive_boundary(
+                    let positive_boundary = convex_polygons_touch_on_positive_boundary(
                         &regions[left],
                         &regions[right],
                         projection,
-                    )? {
+                    );
+                    if positive_boundary == Some(true) {
+                        contact_graph.union(left, right);
+                    } else if reject_point_only_boundary || positive_boundary.is_none() {
                         return None;
                     }
-                    contact_graph.union(left, right);
                 }
                 ConvexUnionComponentRelation::PositiveArea => contact_graph.union(left, right),
             }

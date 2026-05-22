@@ -19,7 +19,9 @@ use hypermesh::exact::{
     arrange_coplanar_convex_surface_multi_union, arrange_coplanar_convex_surface_union,
     arrange_coplanar_orthogonal_surface_difference,
     arrange_coplanar_orthogonal_surface_intersection, arrange_coplanar_orthogonal_surface_union,
+    arrange_coplanar_surface_component_intersection,
     arrange_coplanar_surface_component_union, arrange_coplanar_surface_cutter_hole_contact_difference,
+    arrange_coplanar_surface_multi_component_intersection,
     arrange_coplanar_surface_multi_component_union, arrange_coplanar_surface_multi_difference,
     arrange_coplanar_surface_side_cutter_difference, arrange_single_triangle_coplanar_difference,
     arrange_single_triangle_coplanar_holed_difference, arrange_single_triangle_coplanar_union,
@@ -2634,6 +2636,53 @@ fn exercise_component_coplanar_intersection() {
     )
     .expect("component intersection touching fixture must import");
     assert!(arrange_coplanar_convex_surface_multi_intersection(&left, &touching_right).is_none());
+
+    let nonconvex_left = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            0, 0, 0, 2, 0, 0, 2, 1, 0, 1, 1, 0, 1, 2, 0, 0, 2, 0, 0, 1, 0,
+        ],
+        &[0, 1, 2, 0, 2, 3, 0, 3, 6, 6, 3, 4, 6, 4, 5],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("nonconvex intersection left fixture must import");
+    let covering = ExactMesh::from_i64_triangles_with_policy(
+        &[-1, -1, 0, 6, -1, 0, -1, 6, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("nonconvex intersection covering fixture must import");
+    let nonconvex = arrange_coplanar_surface_component_intersection(&nonconvex_left, &covering)
+        .expect("adjacent face-cell clips should materialize as one nonconvex loop");
+    nonconvex.validate().unwrap();
+    nonconvex
+        .validate_intersection_against_sources(&nonconvex_left, &covering)
+        .unwrap();
+    assert!(arrange_coplanar_surface_multi_component_intersection(&nonconvex_left, &covering)
+        .is_none());
+    let nonconvex_preflight =
+        preflight_boolean_exact(&nonconvex_left, &covering, ExactBooleanOperation::Intersection)
+            .expect("nonconvex face-cell intersection preflight should classify shortcut");
+    nonconvex_preflight.validate().unwrap();
+    assert_eq!(
+        nonconvex_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+    );
+    let nonconvex_result = hypermesh::exact::boolean_exact(
+        &nonconvex_left,
+        &covering,
+        ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("nonconvex face-cell intersection boolean should materialize");
+    nonconvex_result
+        .validate_operation_against_sources(
+            &nonconvex_left,
+            &covering,
+            ExactBooleanOperation::Intersection,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
 }
 
 #[cfg(feature = "exact-triangulation")]

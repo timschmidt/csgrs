@@ -16,8 +16,9 @@ use hypermesh::exact::{
     arrange_coplanar_convex_surface_multi_union, arrange_coplanar_convex_surface_union,
     arrange_coplanar_orthogonal_surface_difference,
     arrange_coplanar_orthogonal_surface_intersection, arrange_coplanar_orthogonal_surface_union,
-    arrange_coplanar_surface_component_union,
+    arrange_coplanar_surface_component_intersection, arrange_coplanar_surface_component_union,
     arrange_coplanar_surface_cutter_hole_contact_difference,
+    arrange_coplanar_surface_multi_component_intersection,
     arrange_coplanar_surface_multi_component_union, arrange_coplanar_surface_multi_difference,
     arrange_coplanar_surface_side_cutter_difference,
     arrange_single_triangle_coplanar_holed_difference, arrange_single_triangle_coplanar_union,
@@ -5220,6 +5221,20 @@ fn exact_boolean_coplanar_surface_intersection(c: &mut Criterion) {
             ValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
+        let nonconvex_intersection_left = ExactMesh::from_i64_triangles_with_policy(
+            &[
+                0, 0, 0, 2, 0, 0, 2, 1, 0, 1, 1, 0, 1, 2, 0, 0, 2, 0, 0, 1, 0,
+            ],
+            &[0, 1, 2, 0, 2, 3, 0, 3, 6, 6, 3, 4, 6, 4, 5],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let nonconvex_intersection_right = ExactMesh::from_i64_triangles_with_policy(
+            &[-1, -1, 0, 6, -1, 0, -1, 6, 0],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
 
         c.bench_function("exact_boolean_coplanar_surface_intersection", |b| {
             b.iter(|| {
@@ -5327,6 +5342,28 @@ fn exact_boolean_coplanar_surface_intersection(c: &mut Criterion) {
                         hypermesh::exact::ExactBooleanOperation::Intersection,
                     )
                     .map(|report| report.validate()),
+                    arrange_coplanar_surface_component_intersection(
+                        &nonconvex_intersection_left,
+                        &nonconvex_intersection_right,
+                    )
+                    .map(|output| {
+                        output.validate_intersection_against_sources(
+                            &nonconvex_intersection_left,
+                            &nonconvex_intersection_right,
+                        )
+                    }),
+                    arrange_coplanar_surface_multi_component_intersection(
+                        &nonconvex_intersection_left,
+                        &nonconvex_intersection_right,
+                    )
+                    .is_none(),
+                    hypermesh::exact::boolean_exact(
+                        &nonconvex_intersection_left,
+                        &nonconvex_intersection_right,
+                        hypermesh::exact::ExactBooleanOperation::Intersection,
+                        ValidationPolicy::ALLOW_BOUNDARY,
+                    )
+                    .unwrap(),
                 )
             })
         });
