@@ -177,8 +177,11 @@ pub use predicates::order::{
     real_le, real_le_with_policy, real_max, real_max_with_policy, real_min, real_min_with_policy,
 };
 pub use predicates::ring::{
-    Ring2Facts, classify_point_indexed_ring_even_odd,
+    Ring2Facts, RingEvenOddEdgeReport, RingEvenOddReport, RingEvenOddValidationError,
+    classify_point_indexed_ring_even_odd, classify_point_indexed_ring_even_odd_report,
+    classify_point_indexed_ring_even_odd_report_with_policy,
     classify_point_indexed_ring_even_odd_with_policy, classify_point_ring_even_odd,
+    classify_point_ring_even_odd_report, classify_point_ring_even_odd_report_with_policy,
     classify_point_ring_even_odd_with_policy, indexed_ring_area_sign,
     indexed_ring_area_sign_with_policy, indexed_ring_convexity, indexed_ring_convexity_with_policy,
     indexed_ring2_facts, indexed_ring2_facts_with_policy, point_in_indexed_ring_even_odd,

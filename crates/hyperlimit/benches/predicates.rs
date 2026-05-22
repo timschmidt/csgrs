@@ -14,7 +14,7 @@ use hyperlimit::{
     classify_circle_segment2, classify_coplanar_triangles, classify_halfspace_feasibility3,
     classify_homogeneous_point_plane, classify_point_convex_planes3,
     classify_point_convex_polygon2, classify_point_line, classify_point_oriented_plane,
-    classify_point_plane, classify_ray_triangle3_intersection,
+    classify_point_plane, classify_point_ring_even_odd_report, classify_ray_triangle3_intersection,
     classify_ray_triangle3_intersection_report, classify_segment_triangle3_intersection,
     classify_segment_triangle3_intersection_report, classify_segment3_intersection,
     classify_sphere3_intersection, classify_triangle_triangle3, classify_triangle3_degeneracy,
@@ -591,6 +591,21 @@ fn bench_exact_rational_kernels(c: &mut Criterion) {
                     classify_point_convex_planes3(black_box(&planes), black_box(point))
                         .value()
                         .is_some_and(|location| location.is_inside_or_boundary()),
+                );
+            }
+            black_box(score)
+        });
+    });
+    group.bench_function("ring/even_odd_reports", |b| {
+        b.iter(|| {
+            let mut score = 0_i64;
+            for (_, _, point) in &orient2_points {
+                score += i64::from(
+                    classify_point_ring_even_odd_report(black_box(&polygon), black_box(point))
+                        .value()
+                        .is_some_and(|report| {
+                            report.location.is_inside_or_boundary() && report.validate().is_ok()
+                        }),
                 );
             }
             black_box(score)

@@ -115,6 +115,8 @@ Version `0.4.0` is an early but usable predicate crate. It currently includes:
 - exact real and point ordering, squared-distance comparison, interval, AABB, segment,
   ring, triangle, line, plane, orientation, in-circle, in-sphere, and
   D-dimensional orientation/in-sphere/affine-independence predicates;
+- exact report-bearing even-odd point/ring classification that retains boundary
+  edge checks, y-straddle comparisons, orientation signs, and crossing parity;
 - exact report-bearing 3D triangle/triangle classification that composes
   plane-side rejection, segment/triangle edge replay, and coplanar projected
   overlap predicates;

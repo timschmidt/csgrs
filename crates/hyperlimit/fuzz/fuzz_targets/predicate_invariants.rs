@@ -20,7 +20,8 @@ use hyperlimit::{
     classify_circle_line2_batch, classify_circle_segment2_batch,
     classify_halfspace_feasibility3, classify_homogeneous_point_plane,
     classify_point_convex_planes3, classify_point_convex_polygon2, classify_point_line,
-    classify_point_line_batch, classify_ray_triangle3_intersection,
+    classify_point_line_batch, classify_point_ring_even_odd, classify_point_ring_even_odd_report,
+    classify_ray_triangle3_intersection,
     classify_ray_triangle3_intersection_batch, classify_ray_triangle3_intersection_report,
     classify_segment_triangle3_intersection, classify_segment3_intersection,
     classify_segment_triangle3_intersection_batch, classify_segment3_intersection_batch,
@@ -131,6 +132,25 @@ fn predicate_invariants(input: Input) {
     let line_side = classify_point_line(&a, &b, &c).value();
     if let Some(sign) = orient2d(&a, &b, &c).value() {
         assert_eq!(line_side, Some(LineSide::from(sign)));
+    }
+
+    let ring = [a.clone(), b.clone(), c.clone(), d.clone()];
+    let reversed_ring = [d.clone(), c.clone(), b.clone(), a.clone()];
+    let ring_location = classify_point_ring_even_odd(&ring, &a).value();
+    assert_eq!(
+        classify_point_ring_even_odd(&reversed_ring, &a).value(),
+        ring_location,
+        "even-odd point/ring classification must be invariant under ring reversal"
+    );
+    if let Some(report) = classify_point_ring_even_odd_report(&ring, &a).value() {
+        assert_eq!(
+            Some(report.location),
+            ring_location,
+            "even-odd report relation must match scalar classifier"
+        );
+        report
+            .validate_against_sources(&ring, &a, PredicatePolicy::default())
+            .expect("even-odd ring report must replay against exact sources");
     }
 
     let session = hyperlimit::ExactGeometrySession::default();
