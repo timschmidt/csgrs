@@ -12823,33 +12823,6 @@ impl BezierBooleanMaterializedRegionReport2 {
         Self::from_result_laminar_containment_facts(&result, containment_facts)
     }
 
-    /// Materializes a multi-cycle-successor result from an end-to-end certificate.
-    ///
-    /// The containment certificate owns locator replay and containment-fact
-    /// validation; this wrapper owns only the final accepted-result audit and
-    /// laminar component construction. That separation mirrors the exact
-    /// geometric-computation contract in Yap (1997) and keeps the
-    /// Vatti/Greiner-Hormann/Martinez-Rueda-Feito boolean phases explicit.
-    pub fn from_multi_cycle_successor_laminar_containment_certification(
-        multi_cycle: &BezierBooleanLoopGraphMultiCycleWalkReport2,
-        traversal: &BezierBooleanLoopGraphTraversalReport2,
-        plan: &BezierBooleanLoopAssemblyPlanReport2,
-        first_endpoints: &[(Point2, Point2)],
-        second_endpoints: &[(Point2, Point2)],
-        certification: &BezierBooleanLoopContainmentCertificationReport2,
-    ) -> Self {
-        let result =
-            BezierBooleanResultReport2::from_multi_cycle_successor_containment_certification(
-                multi_cycle,
-                traversal,
-                plan,
-                first_endpoints,
-                second_endpoints,
-                certification,
-            );
-        Self::from_result_laminar_containment_certification(&result, certification)
-    }
-
     /// Materializes a scheduled result from exact multi-cycle successor facts.
     ///
     /// This is the scheduled counterpart to
