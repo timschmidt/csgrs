@@ -54,6 +54,16 @@ fn p(x: i32, y: i32) -> Point2 {
     Point2::new(Real::from(x), Real::from(y))
 }
 
+fn quadratic_report_endpoints(
+    report: &BezierBooleanQuadraticFragmentReport2,
+) -> Vec<(Point2, Point2)> {
+    report
+        .fragments
+        .iter()
+        .map(|fragment| (fragment.start().clone(), fragment.end().clone()))
+        .collect()
+}
+
 fn endpoint_tangents(start: Point2, end: Point2) -> BezierBooleanFragmentEndpointTangents2 {
     let tangent = Point2::new(end.x() - start.x(), end.y() - start.y());
     BezierBooleanFragmentEndpointTangents2 {
@@ -3008,25 +3018,27 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     })
                     .collect::<Vec<_>>();
                 let roles = vec![BezierBooleanOutputLoopRole::Material; output.loops.len()];
+                let first_endpoints = quadratic_report_endpoints(first);
+                let second_endpoints = quadratic_report_endpoints(second);
                 format!(
                     "{:?}{:?}",
-                    BezierBooleanResultReport2::from_quadratic_schedule_graph_walk_depth_facts(
+                    BezierBooleanResultReport2::from_schedule_graph_walk_depth_facts(
                         &schedule,
                         BooleanOp::Union,
                         &ownership_facts,
-                        first,
-                        second,
+                        &first_endpoints,
+                        &second_endpoints,
                         usize::from(!plan.emitted_steps.is_empty()),
                         usize::from(!plan.emitted_steps.is_empty()),
                         &walk_indices,
                         &depth_facts
                     ),
-                    BezierBooleanResultReport2::from_quadratic_schedule_graph_walk_depth_role_facts(
+                    BezierBooleanResultReport2::from_schedule_graph_walk_depth_role_facts(
                         &schedule,
                         BooleanOp::Union,
                         &ownership_facts,
-                        first,
-                        second,
+                        &first_endpoints,
+                        &second_endpoints,
                         usize::from(!plan.emitted_steps.is_empty()),
                         usize::from(!plan.emitted_steps.is_empty()),
                         &walk_indices,
@@ -3101,14 +3113,16 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                         nesting_depth: 0,
                     })
                     .collect::<Vec<_>>();
+                let first_endpoints = quadratic_report_endpoints(first);
+                let second_endpoints = quadratic_report_endpoints(second);
                 format!(
                     "{:?}",
-                    BezierBooleanResultReport2::from_quadratic_schedule_graph_fact_walk_depth_facts(
+                    BezierBooleanResultReport2::from_schedule_graph_fact_walk_depth_facts(
                         &schedule,
                         BooleanOp::Union,
                         &ownership_facts,
-                        first,
-                        second,
+                        &first_endpoints,
+                        &second_endpoints,
                         &graph_facts,
                         &walk_indices,
                         &depth_facts
@@ -3192,24 +3206,26 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                         }
                     })
                     .collect::<Vec<_>>();
+                let first_endpoints = quadratic_report_endpoints(first);
+                let second_endpoints = quadratic_report_endpoints(second);
                 let containment_result =
-                    BezierBooleanResultReport2::from_quadratic_schedule_graph_fact_walk_containment_facts(
+                    BezierBooleanResultReport2::from_schedule_graph_fact_walk_containment_facts(
                         &schedule,
                         BooleanOp::Union,
                         &ownership_facts,
-                        first,
-                        second,
+                        &first_endpoints,
+                        &second_endpoints,
                         &graph_facts,
                         &walk_indices,
                         &containment_facts,
                     );
                 let role_result =
-                    BezierBooleanResultReport2::from_quadratic_schedule_graph_fact_walk_containment_role_facts(
+                    BezierBooleanResultReport2::from_schedule_graph_fact_walk_containment_role_facts(
                         &schedule,
                         BooleanOp::Union,
                         &ownership_facts,
-                        first,
-                        second,
+                        &first_endpoints,
+                        &second_endpoints,
                         &graph_facts,
                         &walk_indices,
                         &containment_facts,
@@ -3442,25 +3458,27 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     nesting_depth: 0,
                 }];
                 let roles = [BezierBooleanOutputLoopRole::Material];
+                let first_endpoints = quadratic_report_endpoints(first);
+                let second_endpoints = quadratic_report_endpoints(second);
                 format!(
                     "{:?}{:?}",
-                    BezierBooleanResultReport2::from_quadratic_schedule_operand_locations_graph_fact_identity_depth_facts(
+                    BezierBooleanResultReport2::from_schedule_operand_locations_graph_fact_identity_depth_facts(
                         &schedule,
                         BooleanOp::Union,
                         &first_locations,
                         &second_locations,
-                        first,
-                        second,
+                        &first_endpoints,
+                        &second_endpoints,
                         &graph_facts,
                         &depth_facts
                     ),
-                    BezierBooleanResultReport2::from_quadratic_schedule_operand_locations_graph_fact_identity_depth_role_facts(
+                    BezierBooleanResultReport2::from_schedule_operand_locations_graph_fact_identity_depth_role_facts(
                         &schedule,
                         BooleanOp::Union,
                         &first_locations,
                         &second_locations,
-                        first,
-                        second,
+                        &first_endpoints,
+                        &second_endpoints,
                         &graph_facts,
                         &depth_facts,
                         &roles
@@ -3614,15 +3632,17 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     loop_index: 0,
                     nesting_depth: 0,
                 }];
+                let first_endpoints = quadratic_report_endpoints(first);
+                let second_endpoints = quadratic_report_endpoints(second);
                 format!(
                     "{:?}",
-                    BezierBooleanResultReport2::from_quadratic_schedule_operand_locations_graph_fact_walk_depth_facts(
+                    BezierBooleanResultReport2::from_schedule_operand_locations_graph_fact_walk_depth_facts(
                         &schedule,
                         BooleanOp::Union,
                         &first_locations,
                         &second_locations,
-                        first,
-                        second,
+                        &first_endpoints,
+                        &second_endpoints,
                         &graph_facts,
                         &walk_indices,
                         &depth_facts
@@ -3666,15 +3686,17 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     loop_index: 0,
                     nesting_depth: 0,
                 }];
+                let first_endpoints = quadratic_report_endpoints(first);
+                let second_endpoints = quadratic_report_endpoints(second);
                 format!(
                     "{:?}",
-                    BezierBooleanResultReport2::from_quadratic_schedule_operand_locations_graph_walk_depth_facts(
+                    BezierBooleanResultReport2::from_schedule_operand_locations_graph_walk_depth_facts(
                         &schedule,
                         BooleanOp::Union,
                         &first_locations,
                         &second_locations,
-                        first,
-                        second,
+                        &first_endpoints,
+                        &second_endpoints,
                         usize::from(!schedule.steps.is_empty()),
                         usize::from(!schedule.steps.is_empty()),
                         &walk_indices,
@@ -3719,15 +3741,17 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     branch_vertex_count: 0,
                     resolved_overlap_count: 0,
                 };
+                let first_endpoints = quadratic_report_endpoints(first);
+                let second_endpoints = quadratic_report_endpoints(second);
                 format!(
                     "{:?}",
-                    BezierBooleanResultReport2::from_quadratic_schedule_operand_locations_graph_fact_identity_containment_facts(
+                    BezierBooleanResultReport2::from_schedule_operand_locations_graph_fact_identity_containment_facts(
                         &schedule,
                         BooleanOp::Union,
                         &first_locations,
                         &second_locations,
-                        first,
-                        second,
+                        &first_endpoints,
+                        &second_endpoints,
                         &graph_facts,
                         &[]
                     )
@@ -3771,15 +3795,17 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     resolved_overlap_count: 0,
                 };
                 let walk_indices = (0..schedule.steps.len()).collect::<Vec<_>>();
+                let first_endpoints = quadratic_report_endpoints(first);
+                let second_endpoints = quadratic_report_endpoints(second);
                 format!(
                     "{:?}",
-                    BezierBooleanResultReport2::from_quadratic_schedule_operand_locations_graph_fact_walk_containment_facts(
+                    BezierBooleanResultReport2::from_schedule_operand_locations_graph_fact_walk_containment_facts(
                         &schedule,
                         BooleanOp::Union,
                         &first_locations,
                         &second_locations,
-                        first,
-                        second,
+                        &first_endpoints,
+                        &second_endpoints,
                         &graph_facts,
                         &walk_indices,
                         &[]

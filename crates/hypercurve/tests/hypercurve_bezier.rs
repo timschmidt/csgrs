@@ -92,6 +92,16 @@ fn ratio(numerator: i32, denominator: i32) -> Real {
     (Real::from(numerator) / Real::from(denominator)).unwrap()
 }
 
+fn quadratic_report_endpoints(
+    report: &BezierBooleanQuadraticFragmentReport2,
+) -> Vec<(Point2, Point2)> {
+    report
+        .fragments
+        .iter()
+        .map(|fragment| (fragment.start().clone(), fragment.end().clone()))
+        .collect()
+}
+
 fn point(x: i32, y: i32) -> Point2 {
     Point2::new(r(x), r(y))
 }
@@ -11863,7 +11873,7 @@ fn bezier_boolean_operand_locations_depth_role_facts_block_stale_roles() {
 }
 
 #[test]
-fn bezier_boolean_quadratic_operand_location_depth_role_wrappers_block_stale_roles() {
+fn bezier_boolean_operand_location_depth_role_path_blocks_stale_roles() {
     let schedule = BezierBooleanTraversalScheduleReport2 {
         status: BezierBooleanTraversalScheduleStatus::Ready,
         precondition_status: BezierBooleanTraversalPreconditionStatus::Ready,
@@ -11920,6 +11930,8 @@ fn bezier_boolean_quadratic_operand_location_depth_role_wrappers_block_stale_rol
         branch_vertex_count: 0,
         resolved_overlap_count: 0,
     };
+    let first_endpoints = quadratic_report_endpoints(&first);
+    let second_endpoints = quadratic_report_endpoints(&second);
 
     let ready =
         BezierBooleanResultReport2::from_quadratic_schedule_operand_locations_linear_identity_depth_role_facts(
@@ -11935,13 +11947,13 @@ fn bezier_boolean_quadratic_operand_location_depth_role_wrappers_block_stale_rol
     assert_eq!(ready.status, BezierBooleanResultStatus::Ready);
 
     let stale =
-        BezierBooleanResultReport2::from_quadratic_schedule_operand_locations_graph_fact_walk_depth_role_facts(
+        BezierBooleanResultReport2::from_schedule_operand_locations_graph_fact_walk_depth_role_facts(
             &schedule,
             BooleanOp::Union,
             &first_locations,
             &second_locations,
-            &first,
-            &second,
+            &first_endpoints,
+            &second_endpoints,
             &graph_facts,
             &[0, 1],
             &depth_facts,
