@@ -69,6 +69,15 @@ fn profile_extrude_promotes_height_through_hyperreal() {
 }
 
 #[test]
+fn profile_contains_xy_promotes_query_coordinates_through_hyperreal() {
+    let sketch = Profile::<()>::rectangle(2, hyperreal::Real::from(1), ());
+    let half = (hyperreal::Real::from(1) / hyperreal::Real::from(2)).unwrap();
+
+    assert_eq!(sketch.contains_xy(1, half.clone()), Some(true));
+    assert_eq!(sketch.contains_xy(3, half), Some(false));
+}
+
+#[test]
 fn region_profiles_are_hypercurve_projection_products() {
     let sketch = Profile::<()>::square(4.0, ());
     let options = FiniteProjectionOptions::try_new(1.0e-3).unwrap();
