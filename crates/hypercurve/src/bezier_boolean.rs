@@ -3973,45 +3973,6 @@ impl BezierBooleanArrangementReadinessReport2 {
 }
 
 impl BezierBooleanTraversalPreconditionReport2 {
-    /// Audits quadratic Bezier fragment chains for traversal.
-    pub fn from_quadratic_fragments(
-        readiness: &BezierBooleanArrangementReadinessReport2,
-        first: &BezierBooleanQuadraticFragmentReport2,
-        second: &BezierBooleanQuadraticFragmentReport2,
-    ) -> Self {
-        Self::from_endpoint_chains(
-            readiness,
-            &quadratic_fragment_endpoints(&first.fragments),
-            &quadratic_fragment_endpoints(&second.fragments),
-        )
-    }
-
-    /// Audits cubic Bezier fragment chains for traversal.
-    pub fn from_cubic_fragments(
-        readiness: &BezierBooleanArrangementReadinessReport2,
-        first: &BezierBooleanCubicFragmentReport2,
-        second: &BezierBooleanCubicFragmentReport2,
-    ) -> Self {
-        Self::from_endpoint_chains(
-            readiness,
-            &cubic_fragment_endpoints(&first.fragments),
-            &cubic_fragment_endpoints(&second.fragments),
-        )
-    }
-
-    /// Audits rational quadratic/conic fragment chains for traversal.
-    pub fn from_rational_quadratic_fragments(
-        readiness: &BezierBooleanArrangementReadinessReport2,
-        first: &BezierBooleanRationalQuadraticFragmentReport2,
-        second: &BezierBooleanRationalQuadraticFragmentReport2,
-    ) -> Self {
-        Self::from_endpoint_chains(
-            readiness,
-            &rational_quadratic_fragment_endpoints(&first.fragments),
-            &rational_quadratic_fragment_endpoints(&second.fragments),
-        )
-    }
-
     /// Builds a traversal-precondition audit from generic fragment endpoints.
     ///
     /// Each endpoint pair is `(fragment_start, fragment_end)`. This constructor

@@ -6680,10 +6680,10 @@ fn bezier_boolean_traversal_preconditions_accept_continuous_split_chains() {
         &overlaps,
     );
 
-    let report = BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
+    let report = BezierBooleanTraversalPreconditionReport2::from_endpoint_chains(
         &readiness,
-        &first_fragments,
-        &second_fragments,
+        &quadratic_report_endpoints(&first_fragments),
+        &quadratic_report_endpoints(&second_fragments),
     );
 
     assert_eq!(
