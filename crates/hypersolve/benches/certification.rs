@@ -246,6 +246,36 @@ fn sketch_problem_with_distance_ranges(row_count: usize) -> hypersolve::SketchSo
     sketch
 }
 
+fn sketch_problem_with_equal_length_and_radius(row_count: usize) -> hypersolve::SketchSolveProblem {
+    let mut sketch = hypersolve::SketchSolveProblem::new();
+    for index in 0..row_count {
+        let y = index as i64;
+        let a0 = sketch.add_point2d(format!("equal{index}.a0"), r(0), r(y));
+        let a1 = sketch.add_point2d(format!("equal{index}.a1"), r(3), r(y + 4));
+        let b0 = sketch.add_point2d(format!("equal{index}.b0"), r(10), r(y));
+        let b1 = sketch.add_point2d(format!("equal{index}.b1"), r(6), r(y + 3));
+        let line_a = sketch.add_line_segment2(format!("equal{index}.la"), a0, a1);
+        let line_b = sketch.add_line_segment2(format!("equal{index}.lb"), b0, b1);
+        hypersolve::sketch_distance_builders::equal_length_lines2(
+            &mut sketch,
+            format!("equal length {index}"),
+            line_a,
+            line_b,
+        );
+        let r0 = sketch.add_distance(format!("equal{index}.r0"), r(5));
+        let r1 = sketch.add_distance(format!("equal{index}.r1"), r(5));
+        let c0 = sketch.add_circle2(format!("equal{index}.c0"), a0, r0);
+        let c1 = sketch.add_circle2(format!("equal{index}.c1"), b0, r1);
+        hypersolve::sketch_distance_builders::equal_radius2(
+            &mut sketch,
+            format!("equal radius {index}"),
+            c0,
+            c1,
+        );
+    }
+    sketch
+}
+
 fn sketch_problem_with_line_orientation_relations(
     row_count: usize,
 ) -> hypersolve::SketchSolveProblem {
@@ -446,6 +476,10 @@ fn certification(c: &mut Criterion) {
     let distance_range_sketch = sketch_problem_with_distance_ranges(16);
     c.bench_function("sketch_distance_range_lowering", |b| {
         b.iter(|| distance_range_sketch.lower_to_problem())
+    });
+    let equal_length_radius_sketch = sketch_problem_with_equal_length_and_radius(16);
+    c.bench_function("sketch_equal_length_radius_lowering", |b| {
+        b.iter(|| equal_length_radius_sketch.lower_to_problem())
     });
     let line_orientation_sketch = sketch_problem_with_line_orientation_relations(16);
     c.bench_function("sketch_line_orientation_lowering", |b| {

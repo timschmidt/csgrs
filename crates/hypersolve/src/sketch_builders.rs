@@ -144,6 +144,49 @@ pub mod distance {
             kind,
         }
     }
+
+    /// Add a 2D line equal-length relation.
+    ///
+    /// Lowering compares squared segment lengths exactly. This is the
+    /// polynomial proof form preferred by Yap's "Towards Exact Geometric
+    /// Computation" (1997); true-length proposal forms can be retained
+    /// separately when a caller needs SolveSpace-style UI behavior.
+    pub fn equal_length_lines2(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::EqualLengthLines2 { a, b };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Distance,
+            strategy: SketchResidualStrategy::SquaredLineLengthEquality,
+            kind,
+        }
+    }
+
+    /// Add an exact equal-radius relation for 2D circles or circular arcs.
+    ///
+    /// The relation lowers to direct equality of retained radius carriers.
+    /// Radius positivity is deliberately a separate entity-domain obligation,
+    /// not an implicit solver tolerance.
+    pub fn equal_radius2(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::EqualRadius2 { a, b };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Distance,
+            strategy: SketchResidualStrategy::RadiusEquality,
+            kind,
+        }
+    }
 }
 
 /// Orientation relation builders.

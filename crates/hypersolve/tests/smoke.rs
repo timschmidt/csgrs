@@ -1028,6 +1028,128 @@ fn sketch_point_distance_ranges_report_invalid_empty_and_stale_inputs() {
 }
 
 #[test]
+fn sketch_equal_length_and_radius_relations_lower_to_exact_rows() {
+    let mut sketch = SketchSolveProblem::new();
+    let a0 = sketch.add_point2d("a0", real(0), real(0));
+    let a1 = sketch.add_point2d("a1", real(3), real(4));
+    let b0 = sketch.add_point2d("b0", real(10), real(1));
+    let b1 = sketch.add_point2d("b1", real(13), real(5));
+    let c1 = sketch.add_point2d("c1", real(12), real(1));
+    let line_a = sketch.add_line_segment2("line a", a0, a1);
+    let line_b = sketch.add_line_segment2("line b", b0, b1);
+    let short = sketch.add_line_segment2("short", b0, c1);
+    let radius = sketch.add_distance("radius", real(5));
+    let other_radius = sketch.add_distance("other radius", real(5));
+    let wrong_radius = sketch.add_distance("wrong radius", real(7));
+    let circle = sketch.add_circle2("circle", a0, radius);
+    let same_circle = sketch.add_circle2("same circle", b0, other_radius);
+    let wrong_circle = sketch.add_circle2("wrong circle", b0, wrong_radius);
+
+    let length_report =
+        sketch_distance_builders::equal_length_lines2(&mut sketch, "equal length", line_a, line_b);
+    let radius_report =
+        sketch_distance_builders::equal_radius2(&mut sketch, "equal radius", circle, same_circle);
+    sketch.add_equal_length_lines2("violated length", line_a, short);
+    sketch.add_equal_radius2("violated radius", circle, wrong_circle);
+
+    assert_eq!(
+        length_report.family,
+        hypersolve::SketchConstraintFamily::Distance
+    );
+    assert_eq!(
+        length_report.strategy,
+        SketchResidualStrategy::SquaredLineLengthEquality
+    );
+    assert_eq!(
+        radius_report.strategy,
+        SketchResidualStrategy::RadiusEquality
+    );
+
+    let lowered = sketch.lower_to_problem();
+    let certification = certify_candidate(
+        &PreparedProblem::new(&lowered.problem),
+        &context_from_problem(&lowered.problem),
+    );
+
+    assert_eq!(lowered.problem.constraints.len(), 4);
+    assert_eq!(lowered.rows.len(), 4);
+    assert_eq!(
+        lowered.rows[0].strategy,
+        Some(SketchResidualStrategy::SquaredLineLengthEquality)
+    );
+    assert_eq!(
+        lowered.rows[1].strategy,
+        Some(SketchResidualStrategy::RadiusEquality)
+    );
+    assert!(matches!(
+        certification.rows[0].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[1].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[2].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
+    assert!(matches!(
+        certification.rows[3].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
+}
+
+#[test]
+fn sketch_equal_length_and_radius_relations_report_bad_inputs() {
+    let mut sketch = SketchSolveProblem::new();
+    let p = sketch.add_point2d("p", real(0), real(0));
+    let q = sketch.add_point2d("q", real(1), real(0));
+    let line = sketch.add_line_segment2("line", p, q);
+    let radius = sketch.add_distance("radius", real(1));
+    let circle = sketch.add_circle2("circle", p, radius);
+    let bad_circle = sketch.add_circle2("bad circle", p, line);
+    sketch.add_equal_length_lines2("missing line", line, SketchEntityHandle(999));
+    sketch.add_equal_length_lines2("wrong length input", line, p);
+    sketch.add_equal_radius2("missing radius object", circle, SketchEntityHandle(999));
+    sketch.add_equal_radius2("wrong radius object", circle, line);
+    sketch.add_equal_radius2("wrong radius carrier", circle, bad_circle);
+
+    let lowered = sketch.lower_to_problem();
+
+    assert_eq!(lowered.problem.constraints.len(), 0);
+    assert_eq!(lowered.rows.len(), 5);
+    assert_eq!(
+        lowered.rows[0].status,
+        SketchGeneratedRowStatus::MissingEntity(SketchEntityHandle(999))
+    );
+    assert_eq!(
+        lowered.rows[1].status,
+        SketchGeneratedRowStatus::WrongEntityKind {
+            handle: p,
+            expected: "2D line segment"
+        }
+    );
+    assert_eq!(
+        lowered.rows[2].status,
+        SketchGeneratedRowStatus::MissingEntity(SketchEntityHandle(999))
+    );
+    assert_eq!(
+        lowered.rows[3].status,
+        SketchGeneratedRowStatus::WrongEntityKind {
+            handle: line,
+            expected: "circle or circular arc"
+        }
+    );
+    assert_eq!(
+        lowered.rows[4].status,
+        SketchGeneratedRowStatus::WrongEntityKind {
+            handle: line,
+            expected: "distance"
+        }
+    );
+}
+
+#[test]
 fn sketch_parameter_domain_preflight_certifies_valid_invalid_and_empty_bounds() {
     let mut sketch = SketchSolveProblem::new();
     let positive = sketch.add_parameter("positive radius", real(3));

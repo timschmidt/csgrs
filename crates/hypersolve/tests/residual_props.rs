@@ -280,6 +280,77 @@ proptest! {
     }
 
     #[test]
+    fn sketch_equal_length_rows_match_generated_integer_directions(
+        ax in -8_i16..=8,
+        ay in -8_i16..=8,
+        bx in -8_i16..=8,
+        by in -8_i16..=8,
+        dx in -8_i16..=8,
+        dy in -8_i16..=8,
+    ) {
+        prop_assume!(dx != 0 || dy != 0);
+        let ax = i64::from(ax);
+        let ay = i64::from(ay);
+        let bx = i64::from(bx);
+        let by = i64::from(by);
+        let dx = i64::from(dx);
+        let dy = i64::from(dy);
+        let mut sketch = SketchSolveProblem::new();
+        let a0 = sketch.add_point2d("a0", Real::from(ax), Real::from(ay));
+        let a1 = sketch.add_point2d("a1", Real::from(ax + dx), Real::from(ay + dy));
+        let b0 = sketch.add_point2d("b0", Real::from(bx), Real::from(by));
+        let b1 = sketch.add_point2d("b1", Real::from(bx - dy), Real::from(by + dx));
+        let line_a = sketch.add_line_segment2("a", a0, a1);
+        let line_b = sketch.add_line_segment2("b", b0, b1);
+        sketch.add_equal_length_lines2("equal length", line_a, line_b);
+
+        let lowered = sketch.lower_to_problem();
+        let certification = certify_candidate(
+            &PreparedProblem::new(&lowered.problem),
+            &context_from_problem(&lowered.problem),
+        );
+
+        prop_assert_eq!(lowered.rows.len(), 1);
+        prop_assert_eq!(
+            lowered.rows[0].strategy,
+            Some(SketchResidualStrategy::SquaredLineLengthEquality)
+        );
+        prop_assert!(certification.all_satisfied());
+    }
+
+    #[test]
+    fn sketch_equal_radius_rows_match_generated_integer_radii(
+        radius in 0_i16..=16,
+        cx in -8_i16..=8,
+        cy in -8_i16..=8,
+    ) {
+        let radius = i64::from(radius);
+        let cx = i64::from(cx);
+        let cy = i64::from(cy);
+        let mut sketch = SketchSolveProblem::new();
+        let c0 = sketch.add_point2d("c0", Real::from(0), Real::from(0));
+        let c1 = sketch.add_point2d("c1", Real::from(cx), Real::from(cy));
+        let r0 = sketch.add_distance("r0", Real::from(radius));
+        let r1 = sketch.add_distance("r1", Real::from(radius));
+        let circle = sketch.add_circle2("circle", c0, r0);
+        let arc = sketch.add_arc_of_circle2("arc", c1, c0, c1, r1);
+        sketch.add_equal_radius2("equal radius", circle, arc);
+
+        let lowered = sketch.lower_to_problem();
+        let certification = certify_candidate(
+            &PreparedProblem::new(&lowered.problem),
+            &context_from_problem(&lowered.problem),
+        );
+
+        prop_assert_eq!(lowered.rows.len(), 1);
+        prop_assert_eq!(
+            lowered.rows[0].strategy,
+            Some(SketchResidualStrategy::RadiusEquality)
+        );
+        prop_assert!(certification.all_satisfied());
+    }
+
+    #[test]
     fn sketch_line_parallel_rows_match_generated_integer_directions(
         ax in -8_i16..=8,
         ay in -8_i16..=8,

@@ -343,6 +343,30 @@ pub enum SketchConstraintKind {
         /// Optional exact upper distance bound.
         upper: Option<Real>,
     },
+    /// 2D line-segment equal-length relation.
+    ///
+    /// Lowering emits `|dir(a)|^2 - |dir(b)|^2 == 0`, a polynomial exact
+    /// replay row. True line lengths remain proposal/UI data for future
+    /// multi-form packages; the proof row follows Yap, "Towards Exact
+    /// Geometric Computation" (1997), by avoiding square-root decisions unless
+    /// they are explicitly certified.
+    EqualLengthLines2 {
+        /// First line entity.
+        a: SketchEntityHandle,
+        /// Second line entity.
+        b: SketchEntityHandle,
+    },
+    /// 2D circle/arc equal-radius relation.
+    ///
+    /// Lowering emits direct exact radius-parameter equality. Positive-radius
+    /// policy remains an explicit entity-domain obligation, not a hidden
+    /// tolerance or normalization step.
+    EqualRadius2 {
+        /// First circle or circular-arc entity.
+        a: SketchEntityHandle,
+        /// Second circle or circular-arc entity.
+        b: SketchEntityHandle,
+    },
     /// 2D horizontal line constraint.
     Horizontal {
         /// Line entity.
@@ -485,6 +509,10 @@ pub enum SketchResidualStrategy {
     SquaredDistance,
     /// Squared Euclidean distance inequality for bounded-distance constraints.
     BoundedSquaredDistance,
+    /// Squared 2D line length equality.
+    SquaredLineLengthEquality,
+    /// Exact retained radius equality.
+    RadiusEquality,
     /// Incidence represented as a squared-distance polynomial.
     SquaredIncidence,
     /// Scalar parameter bound.
@@ -966,6 +994,29 @@ impl SketchSolveProblem {
         distance::point_point_distance_range(self, name, a, b, lower, upper).handle
     }
 
+    /// Add a retained 2D line equal-length relation.
+    ///
+    /// The proof row compares squared lengths exactly, so candidate replay does
+    /// not depend on a lossy square-root length computation.
+    pub fn add_equal_length_lines2(
+        &mut self,
+        name: impl Into<String>,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+    ) -> SketchConstraintHandle {
+        distance::equal_length_lines2(self, name, a, b).handle
+    }
+
+    /// Add a retained 2D equal-radius relation for circles or circular arcs.
+    pub fn add_equal_radius2(
+        &mut self,
+        name: impl Into<String>,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+    ) -> SketchConstraintHandle {
+        distance::equal_radius2(self, name, a, b).handle
+    }
+
     /// Add a horizontal 2D line constraint.
     pub fn add_horizontal(
         &mut self,
@@ -1388,6 +1439,44 @@ impl SketchSolveProblem {
                     });
                 }
             }
+            SketchConstraintKind::EqualLengthLines2 { a, b } => {
+                // Equal segment length has a square-root proposal reading, but
+                // Yap's exact-geometric-computation boundary is cleaner as
+                // squared-length polynomial replay.
+                let (Some(a), Some(b)) = (
+                    self.line2_direction(a, constraint, rows),
+                    self.line2_direction(b, constraint, rows),
+                ) else {
+                    return;
+                };
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    constraint.name.clone(),
+                    squared_norm2(&a) - squared_norm2(&b),
+                    SketchResidualStrategy::SquaredLineLengthEquality,
+                );
+            }
+            SketchConstraintKind::EqualRadius2 { a, b } => {
+                // Radius equality is exact scalar equality over retained
+                // circle/arc radius carriers. Positive-radius semantics remain
+                // explicit preflight domains.
+                let (Some(a), Some(b)) = (
+                    self.circle_or_arc_radius_expr(a, constraint, rows),
+                    self.circle_or_arc_radius_expr(b, constraint, rows),
+                ) else {
+                    return;
+                };
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    constraint.name.clone(),
+                    a - b,
+                    SketchResidualStrategy::RadiusEquality,
+                );
+            }
             SketchConstraintKind::Horizontal { line } => {
                 let Some((start, end)) = self.line2_points(line, constraint, rows) else {
                     return;
@@ -1770,6 +1859,31 @@ impl SketchSolveProblem {
         self.parameter_expr(distance.value, constraint, rows)
     }
 
+    fn circle_or_arc_radius_expr(
+        &self,
+        handle: SketchEntityHandle,
+        constraint: &SketchConstraint,
+        rows: &mut Vec<SketchGeneratedRow>,
+    ) -> Option<Expr> {
+        let Some(entity) = self.entity(handle) else {
+            rows.push(missing_entity_row(constraint, handle));
+            return None;
+        };
+        let radius = match &entity.kind {
+            SketchEntityKind::Circle2(circle) => circle.radius,
+            SketchEntityKind::ArcOfCircle2(arc) => arc.radius,
+            _ => {
+                rows.push(wrong_entity_row(
+                    constraint,
+                    handle,
+                    "circle or circular arc",
+                ));
+                return None;
+            }
+        };
+        self.distance_expr(radius, constraint, rows)
+    }
+
     fn point2_coordinates(
         &self,
         handle: SketchEntityHandle,
@@ -1979,4 +2093,8 @@ fn direction_cross2(a: &[Expr; 2], b: &[Expr; 2]) -> Expr {
 
 fn direction_dot2(a: &[Expr; 2], b: &[Expr; 2]) -> Expr {
     a[0].clone() * b[0].clone() + a[1].clone() * b[1].clone()
+}
+
+fn squared_norm2(direction: &[Expr; 2]) -> Expr {
+    direction[0].clone() * direction[0].clone() + direction[1].clone() * direction[1].clone()
 }
