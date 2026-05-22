@@ -3226,13 +3226,23 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                         &role_result,
                         &containment_facts,
                     );
+                let first_endpoints = first
+                    .fragments
+                    .iter()
+                    .map(|fragment| (fragment.start().clone(), fragment.end().clone()))
+                    .collect::<Vec<_>>();
+                let second_endpoints = second
+                    .fragments
+                    .iter()
+                    .map(|fragment| (fragment.start().clone(), fragment.end().clone()))
+                    .collect::<Vec<_>>();
                 let scheduled_materialized =
-                    BezierBooleanMaterializedRegionReport2::from_quadratic_schedule_graph_fact_walk_laminar_containment_role_facts(
+                    BezierBooleanMaterializedRegionReport2::from_schedule_graph_fact_walk_laminar_containment_role_facts(
                         &schedule,
                         BooleanOp::Union,
                         &ownership_facts,
-                        first,
-                        second,
+                        &first_endpoints,
+                        &second_endpoints,
                         &graph_facts,
                         &walk_indices,
                         &containment_facts,
@@ -3242,13 +3252,18 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     cubic_fragments,
                 ) = &boolean_cubic_fragments
                 {
+                    let endpoints = cubic_fragments
+                        .fragments
+                        .iter()
+                        .map(|fragment| (fragment.start().clone(), fragment.end().clone()))
+                        .collect::<Vec<_>>();
                     Some(
-                            BezierBooleanMaterializedRegionReport2::from_cubic_schedule_graph_fact_walk_laminar_containment_role_facts(
+                            BezierBooleanMaterializedRegionReport2::from_schedule_graph_fact_walk_laminar_containment_role_facts(
                                 &schedule,
                                 BooleanOp::Union,
                                 &ownership_facts,
-                                cubic_fragments,
-                                cubic_fragments,
+                                &endpoints,
+                                &endpoints,
                                 &graph_facts,
                                 &walk_indices,
                                 &containment_facts,
@@ -3262,13 +3277,18 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     rational_fragments,
                 ) = &boolean_rational_quadratic_fragments
                 {
+                    let endpoints = rational_fragments
+                        .fragments
+                        .iter()
+                        .map(|fragment| (fragment.start().clone(), fragment.end().clone()))
+                        .collect::<Vec<_>>();
                     Some(
-                            BezierBooleanMaterializedRegionReport2::from_rational_quadratic_schedule_graph_fact_walk_laminar_containment_role_facts(
+                            BezierBooleanMaterializedRegionReport2::from_schedule_graph_fact_walk_laminar_containment_role_facts(
                                 &schedule,
                                 BooleanOp::Union,
                                 &ownership_facts,
-                                rational_fragments,
-                                rational_fragments,
+                                &endpoints,
+                                &endpoints,
                                 &graph_facts,
                                 &walk_indices,
                                 &containment_facts,

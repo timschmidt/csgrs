@@ -13504,7 +13504,7 @@ fn bezier_boolean_scheduled_laminar_materialization_replays_full_certificate_cha
 }
 
 #[test]
-fn bezier_boolean_typed_laminar_materialization_covers_cubic_and_rational_conic() {
+fn bezier_boolean_laminar_materialization_uses_generic_curve_endpoints() {
     let schedule = BezierBooleanTraversalScheduleReport2 {
         status: BezierBooleanTraversalScheduleStatus::Ready,
         precondition_status: BezierBooleanTraversalPreconditionStatus::Ready,
@@ -13564,13 +13564,18 @@ fn bezier_boolean_typed_laminar_materialization_covers_cubic_and_rational_conic(
         panic!("rational split parameters should construct decided fragments");
     };
 
+    let cubic_endpoints = cubic_fragments
+        .fragments
+        .iter()
+        .map(|fragment| (fragment.start().clone(), fragment.end().clone()))
+        .collect::<Vec<_>>();
     let cubic_materialized =
-        BezierBooleanMaterializedRegionReport2::from_cubic_schedule_graph_fact_walk_laminar_containment_role_facts(
+        BezierBooleanMaterializedRegionReport2::from_schedule_graph_fact_walk_laminar_containment_role_facts(
             &schedule,
             BooleanOp::Union,
             &ownership_facts,
-            &cubic_fragments,
-            &cubic_fragments,
+            &cubic_endpoints,
+            &cubic_endpoints,
             &graph_facts,
             &[0, 1],
             &containment_facts,
@@ -13582,13 +13587,18 @@ fn bezier_boolean_typed_laminar_materialization_covers_cubic_and_rational_conic(
     );
     assert!(cubic_materialized.has_blockers());
 
+    let rational_endpoints = rational_fragments
+        .fragments
+        .iter()
+        .map(|fragment| (fragment.start().clone(), fragment.end().clone()))
+        .collect::<Vec<_>>();
     let rational_materialized =
-        BezierBooleanMaterializedRegionReport2::from_rational_quadratic_schedule_graph_fact_walk_laminar_containment_role_facts(
+        BezierBooleanMaterializedRegionReport2::from_schedule_graph_fact_walk_laminar_containment_role_facts(
             &schedule,
             BooleanOp::Union,
             &ownership_facts,
-            &rational_fragments,
-            &rational_fragments,
+            &rational_endpoints,
+            &rational_endpoints,
             &graph_facts,
             &[0, 1],
             &containment_facts,
