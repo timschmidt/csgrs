@@ -4007,6 +4007,33 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     &quadratic_second,
                     &CurvePolicy::certified(),
                 );
+            let cubic_fragments = endpoints
+                .iter()
+                .map(|(start, end)| {
+                    CubicBezier2::new(start.clone(), start.clone(), end.clone(), end.clone())
+                })
+                .collect::<Vec<_>>();
+            let cubic_first = BezierBooleanCubicFragmentReport2 {
+                status: BezierBooleanFragmentConstructionStatus::Ready,
+                readiness_status: BezierBooleanConstructionReadinessStatus::Ready,
+                source_parameter_count: 0,
+                endpoint_parameter_count: 0,
+                out_of_range_parameter_count: 0,
+                inserted_parameter_count: 0,
+                inserted_parameters: Vec::new(),
+                fragments: cubic_fragments,
+            };
+            let cubic_second = BezierBooleanCubicFragmentReport2 {
+                fragments: Vec::new(),
+                ..cubic_first.clone()
+            };
+            let cubic_replay =
+                BezierBooleanLoopContainmentQueryResultReport2::from_output_loop_cubic_fragments(
+                    &output,
+                    &cubic_first,
+                    &cubic_second,
+                    &CurvePolicy::certified(),
+                );
             let rational_quadratic_fragments = endpoints
                 .iter()
                 .map(|(start, end)| {
@@ -4044,7 +4071,7 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     &output, &results,
                 );
             format!(
-                "{:?}{:?}{:?}{:?}{:?}{:?}",
+                "{:?}{:?}{:?}{:?}{:?}{:?}{:?}",
                 BezierBooleanResultReport2::from_schedule_graph_walk_containment_query_results(
                     &schedule,
                     BooleanOp::Union,
@@ -4080,6 +4107,7 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 ),
                 linear_replay,
                 quadratic_replay,
+                cubic_replay,
                 rational_quadratic_replay,
             )
         };

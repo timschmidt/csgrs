@@ -12,6 +12,7 @@ use hypercurve::{
     ArcArcIntersectionPoint as HArcArcIntersectionPoint, Axis2 as HAxis2,
     BezierBooleanAssemblyReadinessStatus as HBezierBooleanAssemblyReadinessStatus,
     BezierBooleanConstructionReadinessStatus as HBezierBooleanConstructionReadinessStatus,
+    BezierBooleanCubicFragmentReport2 as HBezierBooleanCubicFragmentReport2,
     BezierBooleanFragmentConstructionStatus as HBezierBooleanFragmentConstructionStatus,
     BezierBooleanFragmentEndpointTangents2 as HBezierBooleanFragmentEndpointTangents2,
     BezierBooleanFragmentLocatorInputReport2 as HBezierBooleanFragmentLocatorInputReport2,
@@ -4126,6 +4127,113 @@ fn h_assert_bezier_boolean_quadratic_loop_locator(_reader: &mut ByteReader<'_>) 
     assert_eq!(replay.outside_count, 1);
 }
 
+fn h_assert_bezier_boolean_cubic_loop_locator(_reader: &mut ByteReader<'_>) {
+    let fragments = vec![
+        HCubicBezier2::new(
+            h_point_i32(0, 0),
+            h_point_i32(3, -2),
+            h_point_i32(7, -2),
+            h_point_i32(10, 0),
+        ),
+        HCubicBezier2::new(
+            h_point_i32(10, 0),
+            h_point_i32(10, 3),
+            h_point_i32(10, 7),
+            h_point_i32(10, 10),
+        ),
+        HCubicBezier2::new(
+            h_point_i32(10, 10),
+            h_point_i32(7, 12),
+            h_point_i32(3, 12),
+            h_point_i32(0, 10),
+        ),
+        HCubicBezier2::new(
+            h_point_i32(0, 10),
+            h_point_i32(0, 7),
+            h_point_i32(0, 3),
+            h_point_i32(0, 0),
+        ),
+        HCubicBezier2::new(
+            h_point_i32(2, 5),
+            h_point_i32(3, 4),
+            h_point_i32(3, 4),
+            h_point_i32(4, 5),
+        ),
+        HCubicBezier2::new(
+            h_point_i32(4, 5),
+            h_point_i32(4, 6),
+            h_point_i32(4, 6),
+            h_point_i32(4, 7),
+        ),
+        HCubicBezier2::new(
+            h_point_i32(4, 7),
+            h_point_i32(3, 8),
+            h_point_i32(3, 8),
+            h_point_i32(2, 7),
+        ),
+        HCubicBezier2::new(
+            h_point_i32(2, 7),
+            h_point_i32(2, 6),
+            h_point_i32(2, 6),
+            h_point_i32(2, 5),
+        ),
+    ];
+    let endpoints = fragments
+        .iter()
+        .map(|fragment| (fragment.start().clone(), fragment.end().clone()))
+        .collect::<Vec<_>>();
+    let plan = HBezierBooleanLoopAssemblyPlanReport2 {
+        status: HBezierBooleanLoopAssemblyPlanStatus::Ready,
+        assembly_status: HBezierBooleanAssemblyReadinessStatus::Ready,
+        operation: HBooleanOp::Union,
+        emitted_steps: (0..endpoints.len())
+            .map(|fragment_index| HBezierBooleanOwnedTraversalStep2 {
+                step: HBezierBooleanTraversalStep2 {
+                    operand: HBezierBooleanTraversalOperand::First,
+                    fragment_index,
+                },
+                opposite_location: HBezierBooleanFragmentOwnershipLocation::Outside,
+                action: HBooleanFragmentAction::KeepSourceDirection,
+            })
+            .collect(),
+        first_emitted_count: endpoints.len(),
+        second_emitted_count: 0,
+        keep_source_count: endpoints.len(),
+        keep_reversed_count: 0,
+        invalid_reference_count: 0,
+        blocker_count: 0,
+    };
+    let closure = HBezierBooleanLoopClosureReport2::from_fragment_endpoints(&plan, &endpoints, &[]);
+    let output = HBezierBooleanOutputLoopReport2::from_loop_closure(&closure);
+    let first = HBezierBooleanCubicFragmentReport2 {
+        status: HBezierBooleanFragmentConstructionStatus::Ready,
+        readiness_status: HBezierBooleanConstructionReadinessStatus::Ready,
+        source_parameter_count: 0,
+        endpoint_parameter_count: 0,
+        out_of_range_parameter_count: 0,
+        inserted_parameter_count: 0,
+        inserted_parameters: Vec::new(),
+        fragments,
+    };
+    let second = HBezierBooleanCubicFragmentReport2 {
+        fragments: Vec::new(),
+        ..first.clone()
+    };
+    let replay = HBezierBooleanLoopContainmentQueryResultReport2::from_output_loop_cubic_fragments(
+        &output,
+        &first,
+        &second,
+        &HCurvePolicy::certified(),
+    );
+
+    assert_eq!(
+        replay.status,
+        HBezierBooleanLoopContainmentQueryResultStatus::Ready
+    );
+    assert_eq!(replay.contains_count, 1);
+    assert_eq!(replay.outside_count, 1);
+}
+
 fn h_assert_bezier_boolean_rational_quadratic_loop_locator(_reader: &mut ByteReader<'_>) {
     let fragments = vec![
         HRationalQuadraticBezier2::try_unit_end_weights(
@@ -4243,7 +4351,7 @@ fn h_assert_bezier_boolean_rational_quadratic_loop_locator(_reader: &mut ByteRea
 
 /// Aggregate hypercurve fuzz entrypoint covering public APIs and cross-path invariants.
 pub fn h_assert_full_api(reader: &mut ByteReader<'_>) {
-    match reader.byte() % 22 {
+    match reader.byte() % 23 {
         0 => h_assert_segment_intersections(reader),
         1 => h_assert_segment_containment_and_reversal(reader),
         2 => h_assert_contour_region_classification(reader),
@@ -4265,6 +4373,7 @@ pub fn h_assert_full_api(reader: &mut ByteReader<'_>) {
         18 => h_assert_bezier_boolean_linear_loop_locator(reader),
         19 => h_assert_bezier_boolean_quadratic_loop_locator(reader),
         20 => h_assert_bezier_boolean_rational_quadratic_loop_locator(reader),
+        21 => h_assert_bezier_boolean_cubic_loop_locator(reader),
         _ => h_assert_adversarial_polygon_pipeline(reader),
     }
 }

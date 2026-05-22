@@ -16,10 +16,11 @@
 use crate::{
     Axis2, BezierCurveIntersectionRegion, BezierCurveRelation, BezierGraphContact,
     BezierIntersectionRegionIsolationCertificate, BezierIntersectionRegionShape,
-    BezierIntersectionRegionSummary, BezierLineContactKind, BezierMonotoneGraphContactOrder,
-    BezierMonotoneGraphOrder, BezierMonotoneSpan, BooleanFragmentAction, BooleanOp, Classification,
-    CubicBezier2, CurvePolicy, IntersectionKind, LineLineIntersection, ParamRange, Point2,
-    QuadraticBezier2, RationalQuadraticBezier2, UncertaintyReason,
+    BezierIntersectionRegionSummary, BezierLineContactKind, BezierLineContactRelation,
+    BezierMonotoneGraphContactOrder, BezierMonotoneGraphOrder, BezierMonotoneSpan,
+    BooleanFragmentAction, BooleanOp, Classification, CubicBezier2, CurvePolicy, IntersectionKind,
+    LineLineIntersection, LineSeg2, ParamRange, Point2, QuadraticBezier2, RationalQuadraticBezier2,
+    UncertaintyReason,
 };
 use hyperreal::{Real, RealSign};
 use hypersolve::{
@@ -7938,6 +7939,60 @@ impl BezierBooleanLoopContainmentQueryResultReport2 {
             .iter()
             .map(|query| {
                 let result = match classify_point_against_quadratic_output_loop(
+                    output,
+                    query.candidate_container_loop_index,
+                    &query.representative_point,
+                    first,
+                    second,
+                    policy,
+                ) {
+                    Classification::Decided(result) => result,
+                    Classification::Uncertain(_) => {
+                        BezierBooleanLoopContainmentQueryResult::Unknown
+                    }
+                };
+                BezierBooleanLoopContainmentQueryResult2 {
+                    query_loop_index: query.query_loop_index,
+                    candidate_container_loop_index: query.candidate_container_loop_index,
+                    result,
+                }
+            })
+            .collect::<Vec<_>>();
+
+        Self::from_query_results(&queries, &results)
+    }
+
+    /// Classifies output-loop representatives against retained cubic fragments.
+    ///
+    /// Cubic containment is intentionally narrower than the quadratic locator:
+    /// a horizontal ray can meet a cubic at roots of a cubic scalar Bernstein
+    /// polynomial, so this method consumes only represented contacts returned
+    /// by [`CubicBezier2::relation_to_line_with_contacts`]. Strict
+    /// control-hull side proofs are accepted as no-crossing evidence, while
+    /// isolated non-represented roots and unresolved contacts become keyed
+    /// `Unknown` replay answers. This follows Yap, "Towards Exact Geometric
+    /// Computation" (1997), by refusing to turn isolating intervals into
+    /// topology until a native algebraic parameter carrier exists. The winding
+    /// structure is the half-open horizontal-ray rule of Hormann and Agathos,
+    /// "The point in polygon problem for arbitrary polygons" (2001), applied
+    /// to retained cubic Bezier objects rather than chords.
+    pub fn from_output_loop_cubic_fragments(
+        output: &BezierBooleanOutputLoopReport2,
+        first: &BezierBooleanCubicFragmentReport2,
+        second: &BezierBooleanCubicFragmentReport2,
+        policy: &CurvePolicy,
+    ) -> Self {
+        let locator = BezierBooleanLoopLocatorInputReport2::from_output_loops(output);
+        let queries = BezierBooleanLoopContainmentQueryReport2::from_locator_inputs(&locator);
+        if queries.status != BezierBooleanLoopContainmentQueryStatus::Ready {
+            return Self::from_query_results(&queries, &[]);
+        }
+
+        let results = queries
+            .queries
+            .iter()
+            .map(|query| {
+                let result = match classify_point_against_cubic_output_loop(
                     output,
                     query.candidate_container_loop_index,
                     &query.representative_point,
@@ -16838,6 +16893,167 @@ fn quadratic_axis_derivative_at(curve: &QuadraticBezier2, axis: Axis2, parameter
     c1 + (&two * c2 * parameter)
 }
 
+fn classify_point_against_cubic_output_loop(
+    output: &BezierBooleanOutputLoopReport2,
+    loop_index: usize,
+    point: &Point2,
+    first: &BezierBooleanCubicFragmentReport2,
+    second: &BezierBooleanCubicFragmentReport2,
+    policy: &CurvePolicy,
+) -> Classification<BezierBooleanLoopContainmentQueryResult> {
+    let Some(output_loop) = output.loops.get(loop_index) else {
+        return Classification::Uncertain(UncertaintyReason::Predicate);
+    };
+    let Some(end) = output_loop
+        .first_directed_fragment_index
+        .checked_add(output_loop.directed_fragment_count)
+    else {
+        return Classification::Uncertain(UncertaintyReason::Predicate);
+    };
+    if output_loop.directed_fragment_count == 0 || end > output.directed_fragments.len() {
+        return Classification::Uncertain(UncertaintyReason::Predicate);
+    }
+
+    let mut winding = 0_i32;
+    for fragment_index in output_loop.first_directed_fragment_index..end {
+        let fragment = &output.directed_fragments[fragment_index];
+        let Some(curve) = directed_cubic_fragment_curve(fragment, first, second) else {
+            return Classification::Decided(BezierBooleanLoopContainmentQueryResult::Unknown);
+        };
+        if curve.start() != &fragment.start || curve.end() != &fragment.end {
+            return Classification::Decided(BezierBooleanLoopContainmentQueryResult::Unknown);
+        }
+        if point_equal_for_boolean(curve.start(), point, policy)
+            || point_equal_for_boolean(curve.end(), point, policy)
+        {
+            return Classification::Decided(BezierBooleanLoopContainmentQueryResult::Boundary);
+        }
+        match curve.dyadic_parameters_for_point(point, policy) {
+            Classification::Decided(parameters) if !parameters.is_empty() => {
+                return Classification::Decided(BezierBooleanLoopContainmentQueryResult::Boundary);
+            }
+            Classification::Decided(_) => {}
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        }
+        match cubic_fragment_winding_delta(&curve, point, policy) {
+            Classification::Decided(delta) => winding += delta,
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        }
+    }
+
+    Classification::Decided(if winding == 0 {
+        BezierBooleanLoopContainmentQueryResult::Outside
+    } else {
+        BezierBooleanLoopContainmentQueryResult::Contains
+    })
+}
+
+fn directed_cubic_fragment_curve(
+    fragment: &BezierBooleanDirectedLoopFragment2,
+    first: &BezierBooleanCubicFragmentReport2,
+    second: &BezierBooleanCubicFragmentReport2,
+) -> Option<CubicBezier2> {
+    let source = match fragment.operand {
+        BezierBooleanTraversalOperand::First => first.fragments.get(fragment.fragment_index)?,
+        BezierBooleanTraversalOperand::Second => second.fragments.get(fragment.fragment_index)?,
+    };
+    match fragment.action {
+        BooleanFragmentAction::KeepSourceDirection => Some(source.clone()),
+        BooleanFragmentAction::KeepReversed => Some(CubicBezier2::new(
+            source.end().clone(),
+            source.control2().clone(),
+            source.control1().clone(),
+            source.start().clone(),
+        )),
+        BooleanFragmentAction::Discard | BooleanFragmentAction::BoundaryNeedsResolution => None,
+    }
+}
+
+fn cubic_fragment_winding_delta(
+    curve: &CubicBezier2,
+    point: &Point2,
+    policy: &CurvePolicy,
+) -> Classification<i32> {
+    let bernstein = cubic_axis_minus_point_bernstein_values(curve, point, Axis2::Y);
+    if same_strict_sign(&bernstein, policy) == Some(true) {
+        return Classification::Decided(0);
+    }
+    if bernstein
+        .iter()
+        .all(|value| crate::classify::is_zero(value, policy) == Some(true))
+    {
+        return Classification::Decided(0);
+    }
+
+    let horizontal = LineSeg2::new_unchecked(
+        point.clone(),
+        Point2::new(point.x() + Real::one(), point.y().clone()),
+    );
+    let contacts = match curve.relation_to_line_with_contacts(&horizontal, policy) {
+        Classification::Decided(BezierLineContactRelation::ControlHullDisjoint { .. })
+        | Classification::Decided(BezierLineContactRelation::OnSupportingLine) => {
+            return Classification::Decided(0);
+        }
+        Classification::Decided(BezierLineContactRelation::Contacts { contacts }) => contacts,
+        Classification::Decided(
+            BezierLineContactRelation::IsolatedIntersections { .. }
+            | BezierLineContactRelation::Unresolved,
+        ) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+    };
+
+    let mut winding = 0_i32;
+    for contact in contacts {
+        let parameter = contact.parameter();
+        if crate::classify::compare_reals(parameter, &Real::one(), policy) == Some(Ordering::Equal)
+        {
+            continue;
+        }
+        if contact.kind() == BezierLineContactKind::Tangent {
+            continue;
+        }
+        let curve_point = curve.point_at(parameter.clone());
+        match crate::classify::compare_reals(curve_point.x(), point.x(), policy) {
+            Some(Ordering::Less | Ordering::Equal) => continue,
+            Some(Ordering::Greater) => {}
+            None => return Classification::Uncertain(UncertaintyReason::Ordering),
+        }
+        let dy = cubic_axis_derivative_at(curve, Axis2::Y, parameter);
+        match crate::classify::real_sign(&dy, policy) {
+            Some(RealSign::Positive) => winding += 1,
+            Some(RealSign::Negative) => winding -= 1,
+            Some(RealSign::Zero) => {}
+            None => return Classification::Uncertain(UncertaintyReason::RealSign),
+        }
+    }
+
+    Classification::Decided(winding)
+}
+
+fn cubic_axis_minus_point_bernstein_values(
+    curve: &CubicBezier2,
+    point: &Point2,
+    axis: Axis2,
+) -> [Real; 4] {
+    [
+        coordinate(curve.start(), axis) - coordinate(point, axis),
+        coordinate(curve.control1(), axis) - coordinate(point, axis),
+        coordinate(curve.control2(), axis) - coordinate(point, axis),
+        coordinate(curve.end(), axis) - coordinate(point, axis),
+    ]
+}
+
+fn cubic_axis_derivative_at(curve: &CubicBezier2, axis: Axis2, parameter: &Real) -> Real {
+    let one_minus_t = Real::one() - parameter;
+    let b0 = &one_minus_t * &one_minus_t;
+    let b1 = Real::from(2_i8) * parameter * &one_minus_t;
+    let b2 = parameter * parameter;
+    let d0 = coordinate(curve.control1(), axis) - coordinate(curve.start(), axis);
+    let d1 = coordinate(curve.control2(), axis) - coordinate(curve.control1(), axis);
+    let d2 = coordinate(curve.end(), axis) - coordinate(curve.control2(), axis);
+    Real::from(3_i8) * ((&b0 * d0) + (&b1 * d1) + (&b2 * d2))
+}
+
 fn classify_point_against_rational_quadratic_output_loop(
     output: &BezierBooleanOutputLoopReport2,
     loop_index: usize,
@@ -17039,6 +17255,10 @@ fn same_strict_sign(values: &[Real], policy: &CurvePolicy) -> Option<bool> {
         }
     }
     Some(expected.is_some())
+}
+
+fn point_equal_for_boolean(first: &Point2, second: &Point2, policy: &CurvePolicy) -> bool {
+    crate::classify::is_zero(&first.distance_squared(second), policy) == Some(true)
 }
 
 fn coordinate(point: &Point2, axis: Axis2) -> &Real {

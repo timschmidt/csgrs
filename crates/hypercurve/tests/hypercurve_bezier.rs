@@ -9382,6 +9382,174 @@ fn bezier_boolean_quadratic_loop_locator_blocks_boundary_and_stale_fragments() {
 }
 
 #[test]
+fn bezier_boolean_cubic_loop_locator_derives_curved_nested_containment() {
+    let outer = vec![
+        CubicBezier2::new(point(0, 0), point(3, -2), point(7, -2), point(10, 0)),
+        CubicBezier2::new(point(10, 0), point(10, 3), point(10, 7), point(10, 10)),
+        CubicBezier2::new(point(10, 10), point(7, 12), point(3, 12), point(0, 10)),
+        CubicBezier2::new(point(0, 10), point(0, 7), point(0, 3), point(0, 0)),
+    ];
+    let inner = vec![
+        CubicBezier2::new(point(2, 5), point(3, 4), point(3, 4), point(4, 5)),
+        CubicBezier2::new(point(4, 5), point(4, 6), point(4, 6), point(4, 7)),
+        CubicBezier2::new(point(4, 7), point(3, 8), point(3, 8), point(2, 7)),
+        CubicBezier2::new(point(2, 7), point(2, 6), point(2, 6), point(2, 5)),
+    ];
+    let fragments = outer.into_iter().chain(inner).collect::<Vec<_>>();
+    let endpoints = fragments
+        .iter()
+        .map(|fragment| (fragment.start().clone(), fragment.end().clone()))
+        .collect::<Vec<_>>();
+    let plan = BezierBooleanLoopAssemblyPlanReport2 {
+        status: BezierBooleanLoopAssemblyPlanStatus::Ready,
+        assembly_status: BezierBooleanAssemblyReadinessStatus::Ready,
+        operation: BooleanOp::Union,
+        emitted_steps: (0..endpoints.len())
+            .map(
+                |fragment_index| hypercurve::BezierBooleanOwnedTraversalStep2 {
+                    step: hypercurve::BezierBooleanTraversalStep2 {
+                        operand: BezierBooleanTraversalOperand::First,
+                        fragment_index,
+                    },
+                    opposite_location: BezierBooleanFragmentOwnershipLocation::Outside,
+                    action: BooleanFragmentAction::KeepSourceDirection,
+                },
+            )
+            .collect(),
+        first_emitted_count: endpoints.len(),
+        second_emitted_count: 0,
+        keep_source_count: endpoints.len(),
+        keep_reversed_count: 0,
+        invalid_reference_count: 0,
+        blocker_count: 0,
+    };
+    let closure = BezierBooleanLoopClosureReport2::from_fragment_endpoints(&plan, &endpoints, &[]);
+    let output = BezierBooleanOutputLoopReport2::from_loop_closure(&closure);
+    let first = BezierBooleanCubicFragmentReport2 {
+        status: BezierBooleanFragmentConstructionStatus::Ready,
+        readiness_status: BezierBooleanConstructionReadinessStatus::Ready,
+        source_parameter_count: 0,
+        endpoint_parameter_count: 0,
+        out_of_range_parameter_count: 0,
+        inserted_parameter_count: 0,
+        inserted_parameters: Vec::new(),
+        fragments,
+    };
+    let second = BezierBooleanCubicFragmentReport2 {
+        fragments: Vec::new(),
+        ..first.clone()
+    };
+
+    let replay = BezierBooleanLoopContainmentQueryResultReport2::from_output_loop_cubic_fragments(
+        &output,
+        &first,
+        &second,
+        &policy(),
+    );
+
+    assert_eq!(
+        replay.status,
+        BezierBooleanLoopContainmentQueryResultStatus::Ready
+    );
+    assert_eq!(replay.contains_count, 1);
+    assert_eq!(replay.outside_count, 1);
+    assert_eq!(
+        replay.containment_facts,
+        vec![BezierBooleanLoopContainmentFact2 {
+            container_loop_index: 0,
+            contained_loop_index: 1,
+        }]
+    );
+}
+
+#[test]
+fn bezier_boolean_cubic_loop_locator_blocks_boundary_and_stale_fragments() {
+    let outer = vec![
+        CubicBezier2::new(point(0, 0), point(3, -2), point(7, -2), point(10, 0)),
+        CubicBezier2::new(point(10, 0), point(10, 3), point(10, 7), point(10, 10)),
+        CubicBezier2::new(point(10, 10), point(7, 12), point(3, 12), point(0, 10)),
+        CubicBezier2::new(point(0, 10), point(0, 7), point(0, 3), point(0, 0)),
+    ];
+    let boundary_probe = vec![
+        CubicBezier2::new(point(10, 5), point(11, 5), point(11, 6), point(11, 7)),
+        CubicBezier2::new(point(11, 7), point(10, 7), point(10, 6), point(10, 5)),
+    ];
+    let fragments = outer.into_iter().chain(boundary_probe).collect::<Vec<_>>();
+    let endpoints = fragments
+        .iter()
+        .map(|fragment| (fragment.start().clone(), fragment.end().clone()))
+        .collect::<Vec<_>>();
+    let plan = BezierBooleanLoopAssemblyPlanReport2 {
+        status: BezierBooleanLoopAssemblyPlanStatus::Ready,
+        assembly_status: BezierBooleanAssemblyReadinessStatus::Ready,
+        operation: BooleanOp::Union,
+        emitted_steps: (0..endpoints.len())
+            .map(
+                |fragment_index| hypercurve::BezierBooleanOwnedTraversalStep2 {
+                    step: hypercurve::BezierBooleanTraversalStep2 {
+                        operand: BezierBooleanTraversalOperand::First,
+                        fragment_index,
+                    },
+                    opposite_location: BezierBooleanFragmentOwnershipLocation::Outside,
+                    action: BooleanFragmentAction::KeepSourceDirection,
+                },
+            )
+            .collect(),
+        first_emitted_count: endpoints.len(),
+        second_emitted_count: 0,
+        keep_source_count: endpoints.len(),
+        keep_reversed_count: 0,
+        invalid_reference_count: 0,
+        blocker_count: 0,
+    };
+    let closure = BezierBooleanLoopClosureReport2::from_fragment_endpoints(&plan, &endpoints, &[]);
+    let output = BezierBooleanOutputLoopReport2::from_loop_closure(&closure);
+    let first = BezierBooleanCubicFragmentReport2 {
+        status: BezierBooleanFragmentConstructionStatus::Ready,
+        readiness_status: BezierBooleanConstructionReadinessStatus::Ready,
+        source_parameter_count: 0,
+        endpoint_parameter_count: 0,
+        out_of_range_parameter_count: 0,
+        inserted_parameter_count: 0,
+        inserted_parameters: Vec::new(),
+        fragments,
+    };
+    let second = BezierBooleanCubicFragmentReport2 {
+        fragments: Vec::new(),
+        ..first.clone()
+    };
+
+    let boundary = BezierBooleanLoopContainmentQueryResultReport2::from_output_loop_cubic_fragments(
+        &output,
+        &first,
+        &second,
+        &policy(),
+    );
+    assert_eq!(
+        boundary.status,
+        BezierBooleanLoopContainmentQueryResultStatus::BoundaryNeedsResolution
+    );
+    assert_eq!(boundary.boundary_count, 1);
+
+    let stale_first = BezierBooleanCubicFragmentReport2 {
+        fragments: first.fragments[..4].to_vec(),
+        ..first
+    };
+    let stale = BezierBooleanLoopContainmentQueryResultReport2::from_output_loop_cubic_fragments(
+        &output,
+        &stale_first,
+        &second,
+        &policy(),
+    );
+    assert_eq!(
+        stale.status,
+        BezierBooleanLoopContainmentQueryResultStatus::BoundaryNeedsResolution
+    );
+    assert_eq!(stale.boundary_count, 1);
+    assert_eq!(stale.unknown_count, 1);
+}
+
+#[test]
 fn bezier_boolean_rational_quadratic_loop_locator_derives_curved_nested_containment() {
     let outer = vec![
         RationalQuadraticBezier2::try_unit_end_weights(
