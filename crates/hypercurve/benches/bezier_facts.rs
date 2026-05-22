@@ -8,7 +8,8 @@ use hypercurve::{
     BezierBooleanAlgebraicParameterReadinessReport2, BezierBooleanAlgebraicSplitBridgeReport2,
     BezierBooleanArrangementReadinessReport2, BezierBooleanAssemblyReadinessReport2,
     BezierBooleanBatchHandoffReport2, BezierBooleanConstructionReadinessReport2,
-    BezierBooleanCubicFragmentReport2, BezierBooleanEmissionPlanReport2,
+    BezierBooleanConstructionReadinessStatus, BezierBooleanCubicFragmentReport2,
+    BezierBooleanEmissionPlanReport2, BezierBooleanFragmentConstructionStatus,
     BezierBooleanFragmentEndpointTangents2, BezierBooleanFragmentLocatorInputReport2,
     BezierBooleanFragmentOwnershipLocation, BezierBooleanHandoffReport2,
     BezierBooleanLoopAssemblyPlanReport2, BezierBooleanLoopClosureReport2,
@@ -3975,12 +3976,43 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     &vec![true; output.directed_fragment_count],
                     &CurvePolicy::certified(),
                 );
+            let quadratic_fragments = endpoints
+                .iter()
+                .map(|(start, end)| {
+                    QuadraticBezier2::new(
+                        start.clone(),
+                        start.lerp(end, Real::from(1_i8)),
+                        end.clone(),
+                    )
+                })
+                .collect::<Vec<_>>();
+            let quadratic_first = BezierBooleanQuadraticFragmentReport2 {
+                status: BezierBooleanFragmentConstructionStatus::Ready,
+                readiness_status: BezierBooleanConstructionReadinessStatus::Ready,
+                source_parameter_count: 0,
+                endpoint_parameter_count: 0,
+                out_of_range_parameter_count: 0,
+                inserted_parameter_count: 0,
+                inserted_parameters: Vec::new(),
+                fragments: quadratic_fragments,
+            };
+            let quadratic_second = BezierBooleanQuadraticFragmentReport2 {
+                fragments: Vec::new(),
+                ..quadratic_first.clone()
+            };
+            let quadratic_replay =
+                BezierBooleanLoopContainmentQueryResultReport2::from_output_loop_quadratic_fragments(
+                    &output,
+                    &quadratic_first,
+                    &quadratic_second,
+                    &CurvePolicy::certified(),
+                );
             let certification =
                 BezierBooleanLoopContainmentCertificationReport2::from_output_loop_query_results(
                     &output, &results,
                 );
             format!(
-                "{:?}{:?}{:?}{:?}",
+                "{:?}{:?}{:?}{:?}{:?}",
                 BezierBooleanResultReport2::from_schedule_graph_walk_containment_query_results(
                     &schedule,
                     BooleanOp::Union,
@@ -4015,6 +4047,7 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     &results,
                 ),
                 linear_replay,
+                quadratic_replay,
             )
         };
         checksum ^= boolean_query_result_result.len();
