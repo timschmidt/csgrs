@@ -5837,9 +5837,12 @@ fn exact_max_real(left: &ExactReal, right: &ExactReal) -> Option<ExactReal> {
 /// bounded side-attached cutter/hole contact groups, including several
 /// independent openings, when retained fragments stitch one simple nonconvex
 /// outer ring and unrelated strictly contained holes replay inside that opened
-/// ring. Point-only contacts, branch opening graphs, and non-rectilinear
-/// nonconvex multi-cutter outputs still need a full planar subdivision. This
-/// preserves Yap's rule from "Towards Exact Geometric Computation,"
+/// ring. Connected non-rectilinear side cutters are also accepted when their
+/// exact clipped union opens one outer side and all unrelated holes replay
+/// strictly inside the opened ring. Point-only contacts, branch opening graphs,
+/// and overlapping multi-cutter outputs that create multiple attachments or
+/// unassigned holes still need a full planar subdivision. This preserves Yap's
+/// rule from "Towards Exact Geometric Computation,"
 /// *Computational Geometry* 7.1-2 (1997): every promoted loop is justified by
 /// exact source topology, containment, or area replay, and unsupported
 /// combinatorics remain explicit. The rectangular
@@ -5969,6 +5972,17 @@ pub fn arrange_coplanar_convex_surface_component_holed_difference(
             emitted_cut = true;
             if let Some(opened_components) =
                 materialize_cutter_hole_contact_component_holed_difference(
+                    component,
+                    &cut_indices,
+                    &holes,
+                    &right_components,
+                )
+            {
+                components.extend(opened_components);
+                continue;
+            }
+            if let Some(opened_components) =
+                materialize_connected_multi_cutter_component_holed_difference(
                     component,
                     &cut_indices,
                     &holes,
@@ -6185,6 +6199,129 @@ fn materialize_cutter_hole_contact_component_holed_difference(
         {
             continue;
         }
+        if !polygon_strictly_inside_simple_polygon(&hole.ring, &opening, projection)? {
+            return None;
+        }
+        retained_holes.push(hole.ring.clone());
+    }
+    if retained_holes.is_empty() {
+        return None;
+    }
+    sort_polygons_for_replay(&mut retained_holes, projection);
+    Some(vec![CoplanarConvexHoledComponent {
+        outer: opening,
+        holes: retained_holes,
+    }])
+}
+
+/// Replay connected non-rectilinear side cutters while retaining strict holes.
+///
+/// This is the cutter-only sibling of
+/// [`materialize_cutter_hole_contact_component_holed_difference`]. Several
+/// side-attached convex cutters may overlap or touch along positive-length
+/// boundaries, but they are promoted only after their clipped regions replay
+/// as one exact simple union loop. That loop must open exactly one side of the
+/// convex source component, and the output area must satisfy
+/// `area(component) = area(opened) + area(cutter_union)` exactly. Unrelated
+/// strict holes are then retained only when simple-polygon containment proves
+/// they remain strictly inside the opened loop.
+///
+/// This is a bounded retained-fragment construction in the sense of Yap,
+/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+/// (1997): no floating witness selects the bay topology. The boundary splice
+/// is the same Weiler-Atherton retained-edge traversal used elsewhere in this
+/// module; see Weiler and Atherton, "Hidden Surface Removal Using Polygon Area
+/// Sorting," *SIGGRAPH Computer Graphics* 11.2 (1977). Fully rectangular
+/// cases remain with the orthogonal cell materializer of de Berg, Cheong, van
+/// Kreveld, and Overmars, *Computational Geometry: Algorithms and
+/// Applications*, 3rd ed. (2008), Chapter 2, so this helper covers the
+/// non-rectilinear multi-cutter gap instead of changing rectilinear shortcut
+/// precedence.
+#[cfg(feature = "exact-triangulation")]
+fn materialize_connected_multi_cutter_component_holed_difference(
+    component: &ConvexUnionComponent,
+    cut_indices: &[usize],
+    holes: &[ComponentHoleCandidate],
+    right_components: &[ConvexUnionComponent],
+) -> Option<Vec<CoplanarConvexHoledComponent>> {
+    if cut_indices.len() < 2 || holes.is_empty() {
+        return None;
+    }
+    let projection = component.projection;
+    let mut regions = Vec::with_capacity(cut_indices.len());
+    let mut all_clipped_cutters_are_rectangles = true;
+    for &right_index in cut_indices {
+        let mut clipped = convex_polygon_intersection_boundary(
+            &right_components[right_index].hull,
+            &component.hull,
+            projection,
+        )?;
+        if clipped.len() < 3 {
+            return None;
+        }
+        orient_polygon_ccw(&mut clipped, projection)?;
+        validate_projected_strictly_convex_loop(
+            &clipped,
+            projection,
+            "coplanar component-holed connected multi-cutter opening",
+        )
+        .ok()?;
+        all_clipped_cutters_are_rectangles &=
+            projected_axis_aligned_rectangle(&clipped, projection).is_some();
+        regions.push(RemovedRegionCandidate {
+            right_index,
+            is_cutter: true,
+            region: clipped,
+        });
+    }
+    if all_clipped_cutters_are_rectangles {
+        return None;
+    }
+
+    let groups = removed_region_contact_groups(&regions, projection)?;
+    if groups.len() != 1 || groups[0].len() != cut_indices.len() {
+        return None;
+    }
+    let mut removed_union =
+        materialize_removed_region_group_polygon(&regions, &groups[0], projection)?;
+    orient_polygon_ccw(&mut removed_union, projection)?;
+    removed_union = simplify_projected_polygon(removed_union, projection);
+
+    let mut opening =
+        if let Some(rectangle) = projected_axis_aligned_rectangle(&component.hull, projection) {
+            side_opened_difference_polygon(&rectangle, &removed_union, projection)?
+        } else {
+            convex_side_opened_difference_polygon(&component.hull, &removed_union, projection)?
+        };
+    orient_polygon_ccw(&mut opening, projection)?;
+    opening = simplify_projected_polygon(opening, projection);
+    validate_projected_simple_loop(
+        &opening,
+        projection,
+        "coplanar component-holed connected multi-cutter opening",
+    )
+    .ok()?;
+    if validate_projected_strictly_convex_loop(
+        &opening,
+        projection,
+        "coplanar component-holed connected multi-cutter opening",
+    )
+    .is_ok()
+    {
+        return None;
+    }
+
+    let component_area = projected_area2_abs(&component.hull, projection)?;
+    let opening_area = projected_area2_abs(&opening, projection)?;
+    let removed_area = projected_area2_abs(&removed_union, projection)?;
+    if compare_reals(&add(&opening_area, &removed_area), &component_area).value()
+        != Some(Ordering::Equal)
+    {
+        return None;
+    }
+
+    let mut retained_holes = Vec::with_capacity(holes.len());
+    for hole in holes {
         if !polygon_strictly_inside_simple_polygon(&hole.ring, &opening, projection)? {
             return None;
         }
