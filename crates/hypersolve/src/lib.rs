@@ -38,6 +38,7 @@ pub mod sketch_domains;
 pub mod sketch_entity_domains;
 pub mod sketch_fixtures;
 pub mod sketch_units;
+pub mod sketch_workplanes;
 pub mod solver;
 pub mod solver_block;
 pub mod sparse_pattern;
@@ -231,6 +232,13 @@ pub use sketch_units::{
     SketchUnitToleranceObjectKind, SketchUnitToleranceReport, SketchUnitToleranceRow,
     SketchUnitToleranceStatus, audit_sketch_unit_tolerances,
     audit_sketch_unit_tolerances_with_policy,
+};
+pub use sketch_workplanes::{
+    SketchWorkplaneFrameReport, SketchWorkplaneFrameStatus, SketchWorkplanePointLiftReport,
+    SketchWorkplanePointProjectionReport, build_sketch_workplane_frame,
+    build_sketch_workplane_frame_with_policy, lift_sketch_point2_to_workplane3,
+    lift_sketch_point2_to_workplane3_with_policy, project_sketch_point3_to_workplane2,
+    project_sketch_point3_to_workplane2_with_policy,
 };
 pub use solver::{SolverConfig, SolverState, solve_damped_least_squares};
 pub use solver_block::{

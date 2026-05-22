@@ -10,23 +10,24 @@ use hypersolve::{
     SketchEntityDomainStatus, SketchGeneratedRowStatus, SketchParameterDomain,
     SketchParameterDomainStatus, SketchResidualFormKind, SketchResidualFormRole,
     SketchResidualFormsStatus, SketchResidualStrategy, SketchRoundTripMetadata, SketchSolveProblem,
-    SketchUnitToleranceStatus, SolverBlockRowKind, SolverConfig, SolverPoint2, SolverState,
-    SymbolId, VariableBall, apply_equality_substitution_classes, audit_sketch_unit_tolerances,
-    certify_affine_krawczyk_box, certify_candidate, certify_candidate_batch,
-    certify_candidate_domains, certify_direct_univariate_quadratic_roots,
+    SketchUnitToleranceStatus, SketchWorkplaneFrameStatus, SolverBlockRowKind, SolverConfig,
+    SolverPoint2, SolverState, SymbolId, VariableBall, apply_equality_substitution_classes,
+    audit_sketch_unit_tolerances, certify_affine_krawczyk_box, certify_candidate,
+    certify_candidate_batch, certify_candidate_domains, certify_direct_univariate_quadratic_roots,
     certify_interval_box_candidate, certify_multivariate_quadratic_interval_candidate,
     certify_multivariate_quadratic_krawczyk_box, certify_quadratic_interval_candidate,
     certify_sketch_construction, certify_univariate_quadratic_alpha,
     certify_univariate_quadratic_krawczyk_box, context_from_problem, determinant_bareiss,
     diagnose_failed_constraints, eliminate_affine_rows_with_substitution_classes,
     enumerate_direct_univariate_quadratic_branches, isolate_univariate_polynomial_roots,
-    preflight_sketch_degeneracies, preflight_sketch_entity_domains,
-    preflight_sketch_parameter_domains, report_lossy_adapter_only_candidate,
-    resultant_univariate_polynomials, search_failed_constraint_pair_removals,
-    search_failed_constraint_single_removals, sketch_range_builders, solve_damped_least_squares,
-    solve_dense_linear_system_bareiss, solve_direct_affine_system,
-    solve_direct_univariate_quadratic_equalities, squared_distance_equation,
-    subresultant_chain_univariate_polynomials, validate_equality_substitutions,
+    lift_sketch_point2_to_workplane3, preflight_sketch_degeneracies,
+    preflight_sketch_entity_domains, preflight_sketch_parameter_domains,
+    report_lossy_adapter_only_candidate, resultant_univariate_polynomials,
+    search_failed_constraint_pair_removals, search_failed_constraint_single_removals,
+    sketch_range_builders, solve_damped_least_squares, solve_dense_linear_system_bareiss,
+    solve_direct_affine_system, solve_direct_univariate_quadratic_equalities,
+    squared_distance_equation, subresultant_chain_univariate_polynomials,
+    validate_equality_substitutions,
 };
 use proptest::prelude::*;
 
@@ -1177,6 +1178,34 @@ proptest! {
         prop_assert_eq!(
             row.status == SketchDegeneracyStatus::CertifiedNondegenerate,
             !expected_degenerate
+        );
+    }
+
+    #[test]
+    fn sketch_workplane_lift_generated_identity_quaternion_matches_integer_uv(
+        ox in -16_i16..=16,
+        oy in -16_i16..=16,
+        oz in -16_i16..=16,
+        u in -16_i16..=16,
+        v in -16_i16..=16,
+    ) {
+        let ox = i64::from(ox);
+        let oy = i64::from(oy);
+        let oz = i64::from(oz);
+        let u = i64::from(u);
+        let v = i64::from(v);
+        let mut sketch = SketchSolveProblem::new();
+        let origin = sketch.add_point3d("origin", Real::from(ox), Real::from(oy), Real::from(oz));
+        let normal = sketch.add_normal3d("normal", Real::from(1), Real::from(0), Real::from(0), Real::from(0));
+        let workplane = sketch.add_workplane("workplane", origin, normal);
+        let point = sketch.add_point2d("uv", Real::from(u), Real::from(v));
+
+        let report = lift_sketch_point2_to_workplane3(&sketch, workplane, point);
+
+        prop_assert_eq!(report.status, SketchWorkplaneFrameStatus::Certified);
+        prop_assert_eq!(
+            report.lifted_coordinates,
+            Some([Real::from(ox + u), Real::from(oy + v), Real::from(oz)])
         );
     }
 

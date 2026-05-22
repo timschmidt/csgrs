@@ -21,18 +21,19 @@ use hypersolve::{
     count_descartes_univariate_polynomial_roots, determinant_bareiss, diagnose_failed_constraints,
     eliminate_affine_rows_with_substitution_classes,
     enumerate_direct_univariate_quadratic_branches, isolate_univariate_polynomial_roots,
-    preflight_sketch_degeneracies, preflight_sketch_entity_domains,
-    preflight_sketch_parameter_domains, prepare_sparse_linear_residual_system,
-    propose_active_set_update, regenerate_active_set_affine_candidate,
-    replay_dense_linear_residuals, replay_sketch_compatibility_fixture,
-    replay_sparse_linear_residuals, report_lossy_adapter_only_candidate,
-    represent_univariate_algebraic_roots, resultant_univariate_polynomials,
-    run_active_set_update_loop, schedule_candidate_batch_predicates,
-    schedule_univariate_resultant_pairs, search_failed_constraint_pair_removals,
-    search_failed_constraint_single_removals, sketch_compatibility_fixtures,
-    solve_damped_least_squares, solve_dense_linear_system_bareiss, solve_direct_affine_system,
-    solve_direct_univariate_quadratic_equalities, solve_sparse_linear_system_bareiss,
-    squared_distance_equation, subdivide_bernstein_univariate_polynomial_interval_roots,
+    lift_sketch_point2_to_workplane3, preflight_sketch_degeneracies,
+    preflight_sketch_entity_domains, preflight_sketch_parameter_domains,
+    prepare_sparse_linear_residual_system, propose_active_set_update,
+    regenerate_active_set_affine_candidate, replay_dense_linear_residuals,
+    replay_sketch_compatibility_fixture, replay_sparse_linear_residuals,
+    report_lossy_adapter_only_candidate, represent_univariate_algebraic_roots,
+    resultant_univariate_polynomials, run_active_set_update_loop,
+    schedule_candidate_batch_predicates, schedule_univariate_resultant_pairs,
+    search_failed_constraint_pair_removals, search_failed_constraint_single_removals,
+    sketch_compatibility_fixtures, solve_damped_least_squares, solve_dense_linear_system_bareiss,
+    solve_direct_affine_system, solve_direct_univariate_quadratic_equalities,
+    solve_sparse_linear_system_bareiss, squared_distance_equation,
+    subdivide_bernstein_univariate_polynomial_interval_roots,
     subresultant_chain_univariate_polynomials,
 };
 
@@ -602,6 +603,29 @@ fn sketch_problem_with_degeneracy_checks(row_count: usize) -> hypersolve::Sketch
     sketch
 }
 
+fn sketch_problem_with_workplane_lifts(
+    row_count: usize,
+) -> (
+    hypersolve::SketchSolveProblem,
+    hypersolve::SketchEntityHandle,
+    Vec<hypersolve::SketchEntityHandle>,
+) {
+    let mut sketch = hypersolve::SketchSolveProblem::new();
+    let origin = sketch.add_point3d("origin", r(10), r(20), r(30));
+    let normal = sketch.add_normal3d("normal", r(1), r(0), r(0), r(0));
+    let workplane = sketch.add_workplane("workplane", origin, normal);
+    let points = (0..row_count)
+        .map(|index| {
+            sketch.add_point2d(
+                format!("uv{index}"),
+                r(index as i64),
+                r((row_count - index) as i64),
+            )
+        })
+        .collect();
+    (sketch, workplane, points)
+}
+
 fn sketch_problem_with_entity_domains(row_count: usize) -> hypersolve::SketchSolveProblem {
     let mut sketch = hypersolve::SketchSolveProblem::new();
     for index in 0..row_count {
@@ -727,6 +751,14 @@ fn certification(c: &mut Criterion) {
     let degeneracy_sketch = sketch_problem_with_degeneracy_checks(16);
     c.bench_function("sketch_degeneracy_preflight", |b| {
         b.iter(|| preflight_sketch_degeneracies(&degeneracy_sketch))
+    });
+    let (workplane_sketch, workplane, workplane_points) = sketch_problem_with_workplane_lifts(16);
+    c.bench_function("sketch_workplane_point_lifts", |b| {
+        b.iter(|| {
+            for point in &workplane_points {
+                let _ = lift_sketch_point2_to_workplane3(&workplane_sketch, workplane, *point);
+            }
+        })
     });
     let entity_domain_sketch = sketch_problem_with_entity_domains(16);
     c.bench_function("sketch_entity_domain_preflight", |b| {

@@ -15,10 +15,11 @@ use hypersolve::{
     SketchParameterDomain, SketchParameterDomainKind, SketchParameterDomainStatus,
     SketchResidualFormKind, SketchResidualFormRole, SketchResidualFormsStatus,
     SketchResidualStrategy, SketchRoundTripMetadata, SketchRoundTripRole, SketchSolveProblem,
-    SketchUnitToleranceStatus, SolverBlockRowKind, SolverConfig, SolverPoint2, SolverState,
-    SparseResidualBatchStatus, SparseResidualTerm, SymbolId, VariableBall,
-    analyze_exact_affine_rank, apply_equality_substitution_classes, apply_equality_substitutions,
-    audit_sketch_unit_tolerances, build_equality_substitution_classes,
+    SketchUnitToleranceStatus, SketchWorkplaneFrameStatus, SolverBlockRowKind, SolverConfig,
+    SolverPoint2, SolverState, SparseResidualBatchStatus, SparseResidualTerm, SymbolId,
+    VariableBall, analyze_exact_affine_rank, apply_equality_substitution_classes,
+    apply_equality_substitutions, audit_sketch_unit_tolerances,
+    build_equality_substitution_classes, build_sketch_workplane_frame,
     certify_affine_interval_candidate, certify_affine_krawczyk_box, certify_candidate,
     certify_candidate_batch, certify_candidate_domains, certify_candidate_with_config,
     certify_candidate_with_residual_balls, certify_direct_univariate_quadratic_roots,
@@ -29,9 +30,10 @@ use hypersolve::{
     diagnose_failed_constraints_from_certification,
     eliminate_affine_rows_with_substitution_classes,
     enumerate_direct_univariate_quadratic_branches, evaluate_residuals, facts_depend_on_symbol,
-    find_equality_substitutions, isolate_univariate_polynomial_roots, point_coincidence_equations,
-    preflight_sketch_degeneracies, preflight_sketch_entity_domains,
-    preflight_sketch_parameter_domains, prepare_sparse_linear_residual_system,
+    find_equality_substitutions, isolate_univariate_polynomial_roots,
+    lift_sketch_point2_to_workplane3, point_coincidence_equations, preflight_sketch_degeneracies,
+    preflight_sketch_entity_domains, preflight_sketch_parameter_domains,
+    prepare_sparse_linear_residual_system, project_sketch_point3_to_workplane2,
     regenerate_active_set_affine_candidate, replay_sketch_compatibility_fixture,
     replay_sparse_linear_residual_batch, report_lossy_adapter_only_candidate,
     schedule_candidate_batch_predicates, search_failed_constraint_pair_removals,
@@ -2248,6 +2250,102 @@ fn sketch_degeneracy_preflight_reports_stale_and_wrong_references() {
                 } if handle == distance
             )
     }));
+}
+
+#[test]
+fn sketch_workplane_frame_reports_exact_quaternion_axes_and_lift_project() {
+    let mut sketch = SketchSolveProblem::new();
+    let origin = sketch.add_point3d("origin", real(10), real(20), real(30));
+    let normal = sketch.add_normal3d("normal", real(1), real(0), real(0), real(0));
+    let workplane = sketch.add_workplane("workplane", origin, normal);
+    let point2 = sketch.add_point2d("uv", real(3), real(4));
+    let point3 = sketch.add_point3d("xyz", real(13), real(24), real(30));
+
+    let frame = build_sketch_workplane_frame(&sketch, workplane);
+
+    assert_eq!(frame.status, SketchWorkplaneFrameStatus::Certified);
+    assert_eq!(
+        frame.origin_coordinates,
+        Some([real(10), real(20), real(30)])
+    );
+    assert_eq!(frame.u_axis, Some([real(1), real(0), real(0)]));
+    assert_eq!(frame.v_axis, Some([real(0), real(1), real(0)]));
+    assert_eq!(frame.n_axis, Some([real(0), real(0), real(1)]));
+
+    let lift = lift_sketch_point2_to_workplane3(&sketch, workplane, point2);
+    assert_eq!(lift.status, SketchWorkplaneFrameStatus::Certified);
+    assert_eq!(
+        lift.lifted_coordinates,
+        Some([real(13), real(24), real(30)])
+    );
+
+    let project = project_sketch_point3_to_workplane2(&sketch, workplane, point3);
+    assert_eq!(project.status, SketchWorkplaneFrameStatus::Certified);
+    assert_eq!(project.projected_coordinates, Some([real(3), real(4)]));
+}
+
+#[test]
+fn sketch_workplane_frame_respects_rotated_unit_quaternion_basis() {
+    let mut sketch = SketchSolveProblem::new();
+    let origin = sketch.add_point3d("origin", real(0), real(0), real(5));
+    let normal = sketch.add_normal3d("flip z", real(0), real(1), real(0), real(0));
+    let workplane = sketch.add_workplane("workplane", origin, normal);
+    let point2 = sketch.add_point2d("uv", real(2), real(3));
+
+    let frame = build_sketch_workplane_frame(&sketch, workplane);
+    let lift = lift_sketch_point2_to_workplane3(&sketch, workplane, point2);
+
+    assert_eq!(frame.status, SketchWorkplaneFrameStatus::Certified);
+    assert_eq!(frame.u_axis, Some([real(1), real(0), real(0)]));
+    assert_eq!(frame.v_axis, Some([real(0), real(-1), real(0)]));
+    assert_eq!(frame.n_axis, Some([real(0), real(0), real(-1)]));
+    assert_eq!(lift.lifted_coordinates, Some([real(2), real(-3), real(5)]));
+}
+
+#[test]
+fn sketch_workplane_frame_reports_nonunit_and_invalid_references() {
+    let mut sketch = SketchSolveProblem::new();
+    let origin = sketch.add_point3d("origin", real(0), real(0), real(0));
+    let point2 = sketch.add_point2d("point2", real(0), real(0));
+    let distance = sketch.add_distance("distance", real(1));
+    let bad_normal = sketch.add_normal3d("bad normal", real(2), real(0), real(0), real(0));
+    let nonunit_workplane = sketch.add_workplane("nonunit", origin, bad_normal);
+    let wrong_origin_workplane = sketch.add_workplane("wrong origin", point2, bad_normal);
+    let wrong_normal_workplane = sketch.add_workplane("wrong normal", origin, distance);
+
+    let nonunit = build_sketch_workplane_frame(&sketch, nonunit_workplane);
+    assert_eq!(
+        nonunit.status,
+        SketchWorkplaneFrameStatus::NonunitNormal {
+            squared_norm: real(4)
+        }
+    );
+
+    let wrong_origin = build_sketch_workplane_frame(&sketch, wrong_origin_workplane);
+    assert_eq!(
+        wrong_origin.status,
+        SketchWorkplaneFrameStatus::WrongEntityKind {
+            handle: point2,
+            expected: "3D point"
+        }
+    );
+
+    let wrong_normal = build_sketch_workplane_frame(&sketch, wrong_normal_workplane);
+    assert_eq!(
+        wrong_normal.status,
+        SketchWorkplaneFrameStatus::WrongEntityKind {
+            handle: distance,
+            expected: "3D normal"
+        }
+    );
+
+    let missing = build_sketch_workplane_frame(&sketch, SketchEntityHandle(999));
+    assert_eq!(
+        missing.status,
+        SketchWorkplaneFrameStatus::MissingEntity {
+            handle: SketchEntityHandle(999)
+        }
+    );
 }
 
 #[test]
