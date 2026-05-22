@@ -40,6 +40,21 @@ pub fn hreal_to_f64(value: &HReal) -> Option<F64> {
     value.to_f64_lossy().filter(|value| value.is_finite())
 }
 
+/// Promote a boundary scalar through hyperreal and fall back to zero on failure.
+///
+/// This is for compatibility constructors that still accept primitive `f64`
+/// fields at public/IO boundaries but must not make finiteness decisions with
+/// local float predicates. Invalid inputs fail closed to the additive identity
+/// after hyperreal promotion/export rejects them. This follows Yap's
+/// exact-geometric-computation boundary split between primitive inputs and
+/// exact-aware decisions (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+pub(crate) fn hreal_boundary_or_zero(value: F64) -> F64 {
+    hreal_from_f64(value)
+        .ok()
+        .and_then(|value| hreal_to_f64(&value))
+        .unwrap_or(0.0)
+}
+
 /// Promote a finite f64 boundary point to a hyperreal lattice vector.
 ///
 /// The checked primitive lift is owned by `hyperlattice`; `csgrs` only adapts
