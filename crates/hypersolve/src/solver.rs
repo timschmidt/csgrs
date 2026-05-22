@@ -1,4 +1,5 @@
 use std::cmp::Ordering;
+use std::collections::BTreeSet;
 
 use hyperlimit::{PredicatePolicy, compare_reals_with_policy};
 use hyperreal::Real;
@@ -18,6 +19,7 @@ use crate::jacobian::{
 use crate::linalg::{DenseLinearBackend, LinearBackend};
 use crate::model::{Problem, VariableId};
 use crate::prepared::PreparedProblem;
+use crate::symbolic::SymbolId;
 
 #[derive(Clone, Debug)]
 pub struct SolverConfig {
@@ -97,7 +99,14 @@ pub fn solve_damped_least_squares(mut state: SolverState) -> SolveReport {
     let mut linear_reports = Vec::new();
     let proposal_engine = proposal_engine_report(state.config.proposal_engine);
     let mut preprocessing = proposal_preprocessing_report(&state.problem, &state.config);
-    apply_modified_newton_affine_seeds(&mut state.problem, &state.config, &mut preprocessing);
+    let affine_seeded_symbols =
+        apply_modified_newton_affine_seeds(&mut state.problem, &state.config, &mut preprocessing);
+    apply_modified_newton_quadratic_seeds(
+        &mut state.problem,
+        &state.config,
+        &mut preprocessing,
+        &affine_seeded_symbols,
+    );
     if !proposal_engine.supported {
         return SolveReport {
             reason: ConvergenceReason::UnsupportedProposalEngine,
@@ -303,6 +312,8 @@ fn proposal_preprocessing_report(
                 quadratic_soluble_alone_rows: 0,
                 affine_seed_assignments: 0,
                 rejected_affine_seed_assignments: 0,
+                quadratic_seed_assignments: 0,
+                rejected_quadratic_seed_assignments: 0,
                 dragged_parameter_weights: dragged_rows.valid_count,
                 invalid_dragged_parameter_weights: dragged_rows.invalid_count,
                 completed: false,
@@ -319,6 +330,8 @@ fn proposal_preprocessing_report(
                 quadratic_soluble_alone_rows: 0,
                 affine_seed_assignments: 0,
                 rejected_affine_seed_assignments: 0,
+                quadratic_seed_assignments: 0,
+                rejected_quadratic_seed_assignments: 0,
                 dragged_parameter_weights: dragged_rows.valid_count,
                 invalid_dragged_parameter_weights: dragged_rows.invalid_count,
                 completed: false,
@@ -335,6 +348,8 @@ fn proposal_preprocessing_report(
                 quadratic_soluble_alone_rows: 0,
                 affine_seed_assignments: 0,
                 rejected_affine_seed_assignments: 0,
+                quadratic_seed_assignments: 0,
+                rejected_quadratic_seed_assignments: 0,
                 dragged_parameter_weights: dragged_rows.valid_count,
                 invalid_dragged_parameter_weights: dragged_rows.invalid_count,
                 completed: false,
@@ -348,6 +363,8 @@ fn proposal_preprocessing_report(
         quadratic_soluble_alone_rows: quadratic_soluble,
         affine_seed_assignments: 0,
         rejected_affine_seed_assignments: 0,
+        quadratic_seed_assignments: 0,
+        rejected_quadratic_seed_assignments: 0,
         dragged_parameter_weights: dragged_rows.valid_count,
         invalid_dragged_parameter_weights: dragged_rows.invalid_count,
         completed: true,
@@ -358,16 +375,17 @@ fn apply_modified_newton_affine_seeds(
     problem: &mut Problem,
     config: &SolverConfig,
     preprocessing: &mut ProposalPreprocessingReport,
-) {
+) -> BTreeSet<SymbolId> {
+    let mut seeded = BTreeSet::new();
     if config.proposal_engine != ProposalEngineKind::ModifiedNewtonLeastSquares {
-        return;
+        return seeded;
     }
     let solutions = {
         let prepared = PreparedProblem::new(problem);
         solve_direct_affine_equalities(&prepared)
     };
     let Ok(solutions) = solutions else {
-        return;
+        return seeded;
     };
     for solution in solutions {
         let Some(variable_index) = problem
@@ -390,7 +408,51 @@ fn apply_modified_newton_affine_seeds(
             continue;
         }
         variable.value = solution.value;
+        seeded.insert(solution.symbol);
         preprocessing.affine_seed_assignments += 1;
+    }
+    seeded
+}
+
+fn apply_modified_newton_quadratic_seeds(
+    problem: &mut Problem,
+    config: &SolverConfig,
+    preprocessing: &mut ProposalPreprocessingReport,
+    affine_seeded_symbols: &BTreeSet<SymbolId>,
+) {
+    if config.proposal_engine != ProposalEngineKind::ModifiedNewtonLeastSquares {
+        return;
+    }
+    let solutions = {
+        let prepared = PreparedProblem::new(problem);
+        solve_direct_univariate_quadratic_equalities(&prepared)
+    };
+    let Ok(solutions) = solutions else {
+        return;
+    };
+    for solution in solutions {
+        if solution.roots.len() != 1 || affine_seeded_symbols.contains(&solution.symbol) {
+            preprocessing.rejected_quadratic_seed_assignments += 1;
+            continue;
+        }
+        let root = solution.roots[0].clone();
+        let Some(variable_index) = problem
+            .variables
+            .iter()
+            .position(|variable| variable.symbol == solution.symbol)
+        else {
+            preprocessing.rejected_quadratic_seed_assignments += 1;
+            continue;
+        };
+        let variable = &mut problem.variables[variable_index];
+        if variable.fixed
+            || !value_within_bounds(&root, variable.lower.as_ref(), variable.upper.as_ref())
+        {
+            preprocessing.rejected_quadratic_seed_assignments += 1;
+            continue;
+        }
+        variable.value = root;
+        preprocessing.quadratic_seed_assignments += 1;
     }
 }
 

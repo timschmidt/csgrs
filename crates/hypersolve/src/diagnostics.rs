@@ -120,6 +120,11 @@ pub struct ProposalPreprocessingReport {
     /// Number of exact affine soluble-alone assignments rejected before
     /// seeding.
     pub rejected_affine_seed_assignments: usize,
+    /// Number of unique exact quadratic-root assignments applied as initial
+    /// proposal seeds.
+    pub quadratic_seed_assignments: usize,
+    /// Number of quadratic-root candidates rejected before seeding.
+    pub rejected_quadratic_seed_assignments: usize,
     /// Number of dragged-parameter proposal weights accepted for the named
     /// modified-Newton route.
     pub dragged_parameter_weights: usize,
@@ -141,6 +146,8 @@ impl ProposalPreprocessingReport {
             quadratic_soluble_alone_rows: 0,
             affine_seed_assignments: 0,
             rejected_affine_seed_assignments: 0,
+            quadratic_seed_assignments: 0,
+            rejected_quadratic_seed_assignments: 0,
             dragged_parameter_weights: 0,
             invalid_dragged_parameter_weights: 0,
             completed: true,

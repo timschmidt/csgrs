@@ -2977,6 +2977,8 @@ fn modified_newton_preprocessing_reports_substitution_and_soluble_alone_rows() {
     assert_eq!(report.preprocessing.quadratic_soluble_alone_rows, 1);
     assert_eq!(report.preprocessing.affine_seed_assignments, 1);
     assert_eq!(report.preprocessing.rejected_affine_seed_assignments, 0);
+    assert_eq!(report.preprocessing.quadratic_seed_assignments, 0);
+    assert_eq!(report.preprocessing.rejected_quadratic_seed_assignments, 1);
     assert_eq!(report.preprocessing.dragged_parameter_weights, 0);
     assert_eq!(report.preprocessing.invalid_dragged_parameter_weights, 0);
 }
@@ -3022,6 +3024,53 @@ fn modified_newton_affine_seed_rejects_out_of_bounds_assignments() {
     assert_eq!(report.preprocessing.affine_soluble_alone_rows, 1);
     assert_eq!(report.preprocessing.affine_seed_assignments, 0);
     assert_eq!(report.preprocessing.rejected_affine_seed_assignments, 1);
+}
+
+#[test]
+fn modified_newton_unique_quadratic_root_seeds_initial_candidate() {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let mut problem = Problem::default();
+    problem.add_variable("x", real(0));
+    problem.add_constraint(Constraint::equality(
+        "double root",
+        x.clone() * x.clone() - Expr::int(6) * x + Expr::int(9),
+    ));
+    let config = SolverConfig {
+        proposal_engine: ProposalEngineKind::ModifiedNewtonLeastSquares,
+        max_iterations: 1,
+        ..SolverConfig::default()
+    };
+
+    let report = solve_damped_least_squares(SolverState { problem, config });
+
+    assert_eq!(report.reason, ConvergenceReason::Converged);
+    assert_eq!(report.iterations, 0);
+    assert_eq!(report.preprocessing.quadratic_soluble_alone_rows, 1);
+    assert_eq!(report.preprocessing.quadratic_seed_assignments, 1);
+    assert_eq!(report.preprocessing.rejected_quadratic_seed_assignments, 0);
+}
+
+#[test]
+fn modified_newton_quadratic_seed_rejects_ambiguous_roots() {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let mut problem = Problem::default();
+    problem.add_variable("x", real(0));
+    problem.add_constraint(Constraint::equality(
+        "two roots",
+        x.clone() * x.clone() - Expr::int(5) * x + Expr::int(6),
+    ));
+    let config = SolverConfig {
+        proposal_engine: ProposalEngineKind::ModifiedNewtonLeastSquares,
+        max_iterations: 0,
+        ..SolverConfig::default()
+    };
+
+    let report = solve_damped_least_squares(SolverState { problem, config });
+
+    assert_eq!(report.reason, ConvergenceReason::MaxIterations);
+    assert_eq!(report.preprocessing.quadratic_soluble_alone_rows, 1);
+    assert_eq!(report.preprocessing.quadratic_seed_assignments, 0);
+    assert_eq!(report.preprocessing.rejected_quadratic_seed_assignments, 1);
 }
 
 #[test]

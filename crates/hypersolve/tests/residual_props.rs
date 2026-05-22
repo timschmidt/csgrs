@@ -1597,6 +1597,13 @@ proptest! {
         prop_assert_eq!(report.preprocessing.quadratic_soluble_alone_rows, 1);
         prop_assert_eq!(report.preprocessing.affine_seed_assignments, 1);
         prop_assert_eq!(report.preprocessing.rejected_affine_seed_assignments, 0);
+        if root == 0 {
+            prop_assert_eq!(report.preprocessing.quadratic_seed_assignments, 1);
+            prop_assert_eq!(report.preprocessing.rejected_quadratic_seed_assignments, 0);
+        } else {
+            prop_assert_eq!(report.preprocessing.quadratic_seed_assignments, 0);
+            prop_assert_eq!(report.preprocessing.rejected_quadratic_seed_assignments, 1);
+        }
         prop_assert_eq!(report.preprocessing.dragged_parameter_weights, 0);
         prop_assert_eq!(report.preprocessing.invalid_dragged_parameter_weights, 0);
     }
@@ -1628,6 +1635,36 @@ proptest! {
         prop_assert_eq!(report.preprocessing.affine_soluble_alone_rows, 1);
         prop_assert_eq!(report.preprocessing.affine_seed_assignments, 1);
         prop_assert_eq!(report.preprocessing.rejected_affine_seed_assignments, 0);
+    }
+
+    #[test]
+    fn modified_newton_generated_unique_quadratic_seeds_converge_without_iteration(
+        start in -12_i16..=12,
+        root in -8_i16..=8,
+    ) {
+        let x = Expr::symbol(SymbolId(0), "x");
+        let root = i64::from(root);
+        let mut problem = Problem::default();
+        problem.add_variable("x", Real::from(i64::from(start)));
+        problem.add_constraint(Constraint::equality(
+            "generated double root",
+            x.clone() * x.clone() - Expr::int(2 * root) * x + Expr::int(root * root),
+        ));
+
+        let report = solve_damped_least_squares(SolverState {
+            problem,
+            config: SolverConfig {
+                max_iterations: 1,
+                proposal_engine: ProposalEngineKind::ModifiedNewtonLeastSquares,
+                ..SolverConfig::default()
+            },
+        });
+
+        prop_assert_eq!(report.reason, ConvergenceReason::Converged);
+        prop_assert_eq!(report.iterations, 0);
+        prop_assert_eq!(report.preprocessing.quadratic_soluble_alone_rows, 1);
+        prop_assert_eq!(report.preprocessing.quadratic_seed_assignments, 1);
+        prop_assert_eq!(report.preprocessing.rejected_quadratic_seed_assignments, 0);
     }
 
     #[test]
