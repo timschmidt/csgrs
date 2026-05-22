@@ -40,24 +40,26 @@ fn test_plane_split_polygon() {
     assert!(front_poly.vertices.len() >= 3);
     assert!(back_poly.vertices.len() >= 3);
 
-    // Quick check: all front vertices should have y >= 0 (within a tolerance).
+    // Quick check: all front vertices should have y >= 0.
     for v in &front_poly.vertices {
-        assert!(v.position.y >= -tolerance());
+        assert!(v.position.y >= 0.0);
     }
-    // All back vertices should have y <= 0 (within a tolerance).
+    // All back vertices should have y <= 0.
     for v in &back_poly.vertices {
-        assert!(v.position.y <= tolerance());
+        assert!(v.position.y <= 0.0);
     }
 }
 
 #[test]
-fn test_plane_orient_point_uses_hyperreal_tolerance_band() {
+fn test_plane_orient_point_uses_exact_hyperreal_sign() {
     let plane = Plane::from_normal(Vector3::y(), 0.0);
-    let near = Point3::new(0.0, tolerance() * 0.25, 0.0);
+    let on_plane = Point3::new(0.0, 0.0, 0.0);
+    let near_front = Point3::new(0.0, tolerance() * 0.25, 0.0);
     let front = Point3::new(0.0, tolerance() * 2.0, 0.0);
     let back = Point3::new(0.0, -tolerance() * 2.0, 0.0);
 
-    assert_eq!(plane.orient_point(&near), crate::mesh::plane::COPLANAR);
+    assert_eq!(plane.orient_point(&on_plane), crate::mesh::plane::COPLANAR);
+    assert_eq!(plane.orient_point(&near_front), crate::mesh::plane::FRONT);
     assert_eq!(plane.orient_point(&front), crate::mesh::plane::FRONT);
     assert_eq!(plane.orient_point(&back), crate::mesh::plane::BACK);
 }
@@ -72,7 +74,7 @@ fn plane_from_normal_uses_hyperreal_scale_and_rejects_invalid_normals() {
         crate::mesh::plane::COPLANAR
     );
     assert_eq!(
-        plane.orient_point(&Point3::new(2.0 + tolerance() * 4.0, 0.0, 0.0)),
+        plane.orient_point(&Point3::new(2.0 + tolerance() * 0.25, 0.0, 0.0)),
         crate::mesh::plane::FRONT
     );
 
@@ -80,6 +82,13 @@ fn plane_from_normal_uses_hyperreal_scale_and_rejects_invalid_normals() {
     assert_eq!(
         Plane::from_normal(Vector3::zeros(), 0.0).normal(),
         Vector3::z()
+    );
+    let tiny_normal_plane =
+        Plane::try_from_normal(Vector3::new(tolerance() * 0.25, 0.0, 0.0), 0.0)
+            .expect("nonzero normals are valid under exact hyperreal predicates");
+    assert_eq!(
+        tiny_normal_plane.orient_point(&Point3::new(tolerance() * 0.25, 0.0, 0.0)),
+        crate::mesh::plane::FRONT
     );
 
     assert!(Plane::try_from_normal(Vector3::new(Real::NAN, 0.0, 0.0), 0.0).is_none());

@@ -3,12 +3,13 @@
 use crate::csg::CSG;
 use crate::errors::ValidationError;
 use crate::float_types::{
-    PI, Real, TAU, hangle_sin_cos, hdegrees_to_radians, hperpendicular_basis,
-    hradians_to_degrees, hreal_abs, hreal_affine, hreal_cmp_f64, hreal_div, hreal_from_f64,
-    hreal_mul, hreal_sqrt, hreal_sub, hreal_sum, hrotation_between_vectors, hscale_matrix,
-    htranslation_matrix, hunit_vector3, hunit_vector3_and_magnitude, hvector3_from_point3,
-    tolerance,
+    PI, Real, TAU, hangle_sin_cos, hperpendicular_basis, hreal_abs, hreal_affine,
+    hreal_cmp_f64, hreal_div, hreal_from_f64, hreal_mul, hreal_sqrt, hreal_sub, hreal_sum,
+    hrotation_between_vectors, hscale_matrix, htranslation_matrix, hunit_vector3,
+    hunit_vector3_and_magnitude, hvector3_from_point3, tolerance,
 };
+#[cfg(feature = "sketch")]
+use crate::float_types::{hdegrees_to_radians, hradians_to_degrees};
 use crate::mesh::Mesh;
 use crate::polygon::Polygon;
 #[cfg(feature = "sketch")]

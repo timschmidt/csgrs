@@ -796,6 +796,7 @@ pub(crate) fn hpositive_boundary_scalar_squared(value: Real) -> Option<HReal> {
 }
 
 /// Returns true when `value` is strictly greater than a hyperreal threshold.
+#[cfg(any(test, feature = "wasm", feature = "sdf", feature = "metaballs"))]
 pub(crate) fn hreal_gt_hreal(value: &HReal, threshold: &HReal) -> bool {
     match hyperlimit::compare_reals(value, threshold).value() {
         Some(Ordering::Greater) => true,
@@ -808,6 +809,14 @@ pub(crate) fn hreal_gt_hreal(value: &HReal, threshold: &HReal) -> bool {
 }
 
 /// Returns true when `value` is strictly less than a hyperreal threshold.
+#[cfg(any(
+    test,
+    feature = "wasm",
+    feature = "sketch",
+    feature = "gerber-io",
+    feature = "truetype-text",
+    feature = "offset"
+))]
 pub(crate) fn hreal_lt_hreal(value: &HReal, threshold: &HReal) -> bool {
     match hyperlimit::compare_reals(value, threshold).value() {
         Some(Ordering::Less) => true,
@@ -931,6 +940,13 @@ pub(crate) fn hreal_clamp_hreal(value: HReal, min: F64, max: F64) -> Option<HRea
 /// mixing f64 subtraction, absolute value, and tolerance logic in local CAD
 /// code. This follows the same Yap exact-computation boundary model cited in
 /// [`hreal_cmp_f64`].
+#[cfg(any(
+    test,
+    feature = "sketch",
+    feature = "gerber-io",
+    feature = "truetype-text",
+    feature = "offset"
+))]
 pub(crate) fn hreal_f64s_within_tolerance(lhs: F64, rhs: F64, tolerance: F64) -> bool {
     let Some(tolerance_squared) = hpositive_boundary_scalar_squared(tolerance) else {
         return false;
@@ -1119,6 +1135,7 @@ pub(crate) fn hdegrees_to_radians(degrees: Real) -> Option<Real> {
 }
 
 /// Convert finite public radians to degrees through hyperreal arithmetic.
+#[cfg(any(test, feature = "sketch"))]
 pub(crate) fn hradians_to_degrees(radians: Real) -> Option<Real> {
     let radians = hreal_from_f64(radians).ok()?;
     hreal_to_f64(&radians.to_degrees())

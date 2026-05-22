@@ -52,13 +52,14 @@
 //!
 //! This enables 2D algorithms to be applied to 3D planar polygons.
 //!
-//! ## **Numerical Stability**
+//! ## **Exact Predicate Discipline**
 //!
-//! - **Robust Predicates**: Uses hyperreal arithmetic for orientation tests,
-//!   with the current mesh tolerance applied as a hyperreal threshold
-//! - **Boundary Tolerances**: Governed by `float_types::tolerance()` where the
-//!   legacy f64 API still needs degeneracy filters
-//! - **Degenerate Case Handling**: Proper fallbacks for collinear points and zero-area triangles
+//! - **Robust Predicates**: Uses hyperreal arithmetic for orientation tests and
+//!   treats only exact zero as coplanar.
+//! - **Boundary Admission**: Primitive finite API values are promoted into
+//!   `hyperlattice` / `hyperreal` before topology decisions.
+//! - **Degenerate Case Handling**: Proper fallbacks for collinear points and
+//!   exact zero-area triangles.
 //!
 //! The predicate split follows Yap's exact geometric computation model
 //! (*Computational Geometry* 7(1-2), 1997,
@@ -76,14 +77,10 @@
 //!   refinement depends on the hyperreal expression
 //! - **Polygon Splitting**: O(n) per polygon, where n is the number of vertices
 //!
-//! Unless stated otherwise, boundary degeneracy filters are governed by
-//! `float_types::tolerance()`.
-
 use crate::float_types::{
-    HReal, Real, hperpendicular_basis, hpositive_boundary_scalar_squared, hreal_from_f64,
-    hreal_gt_f64, hreal_gt_hreal, hreal_sign, hreal_to_f64, hrotation_between_vectors,
-    htranslation_matrix, hunit_vector3, hvector3_dot, hvector3_from_point3,
-    hvector3_from_vector3, tolerance,
+    HReal, Real, hperpendicular_basis, hreal_from_f64, hreal_gt_f64, hreal_sign, hreal_to_f64,
+    hrotation_between_vectors, htranslation_matrix, hunit_vector3, hvector3_dot,
+    hvector3_from_point3, hvector3_from_vector3,
 };
 use crate::polygon::Polygon;
 use crate::vertex::Vertex;
@@ -93,8 +90,7 @@ use nalgebra::{Matrix4, Point3, Vector3};
 use std::cmp::Ordering;
 
 /// Classification of a polygon or point whose hyperreal orientation determinant
-/// is inside the current mesh tolerance band, or whose boundary coordinates
-/// cannot be promoted.
+/// is exact zero, or whose boundary coordinates cannot be promoted.
 pub const COPLANAR: i8 = 0;
 
 /// Classification of a polygon or point that lies strictly on the
@@ -117,23 +113,6 @@ pub struct Plane {
     pub point_c: Point3<Real>,
 }
 
-fn hreal_sign_with_tolerance(value: &HReal) -> Option<RealSign> {
-    let tolerance = hreal_from_f64(tolerance()).ok()?;
-    if matches!(
-        hreal_sign(&(value.clone() - tolerance.clone())),
-        Some(RealSign::Positive)
-    ) {
-        return Some(RealSign::Positive);
-    }
-    if matches!(
-        hreal_sign(&(value.clone() + tolerance)),
-        Some(RealSign::Negative)
-    ) {
-        return Some(RealSign::Negative);
-    }
-    Some(RealSign::Zero)
-}
-
 fn hreal_cmp_or_equal(lhs: &HReal, rhs: &HReal) -> Ordering {
     match hreal_sign(&(lhs.clone() - rhs.clone())) {
         Some(RealSign::Positive) => Ordering::Greater,
@@ -151,6 +130,10 @@ fn newell_hreal_normal(points: &[HVector3]) -> HVector3 {
         .iter()
         .zip(points.iter().cycle().skip(1))
         .fold(HVector3::zero(), |acc, (curr, next)| acc + curr.cross(next))
+}
+
+fn hreal_is_exact_zero(value: &HReal) -> bool {
+    matches!(hreal_sign(value), Some(RealSign::Zero))
 }
 
 impl PartialEq for Plane {
@@ -218,11 +201,8 @@ impl Plane {
         let p1 = vertices[i1].position;
         let hdir = &hpoints[i1] - &hpoints[i0];
         let hdir2 = hdir.dot(&hdir);
-        let Some(tolerance_squared) = hpositive_boundary_scalar_squared(tolerance()) else {
-            return reference_plane;
-        };
-        if !hreal_gt_hreal(&hdir2, &tolerance_squared) {
-            return reference_plane; // everything almost coincident
+        if hreal_is_exact_zero(&hdir2) {
+            return reference_plane; // everything exactly coincident
         }
 
         // vertex farthest from the line  p0-p1  → i2
@@ -241,10 +221,10 @@ impl Plane {
             return reference_plane;
         };
 
-        let i2 = if hreal_gt_hreal(&max_area2, &tolerance_squared) {
+        let i2 = if !hreal_is_exact_zero(&max_area2) {
             i2
         } else {
-            return reference_plane; // all vertices collinear
+            return reference_plane; // all vertices exactly collinear
         };
         let p2 = vertices[i2].position;
 
@@ -295,8 +275,7 @@ impl Plane {
     pub fn try_from_normal(normal: Vector3<Real>, offset: Real) -> Option<Self> {
         let hyper_normal = hvector3_from_vector3(&normal)?;
         let n2 = hyper_normal.dot(&hyper_normal);
-        let tolerance_squared = hpositive_boundary_scalar_squared(tolerance())?;
-        if !hreal_gt_hreal(&n2, &tolerance_squared) {
+        if hreal_is_exact_zero(&n2) {
             return None;
         }
 
@@ -339,7 +318,7 @@ impl Plane {
         let Some(det) = self.orient_point_hreal(point) else {
             return COPLANAR;
         };
-        match hreal_sign_with_tolerance(&det) {
+        match hreal_sign(&det) {
             Some(RealSign::Positive) => self.orient_point_hyperlimit(point).unwrap_or(FRONT),
             Some(RealSign::Negative) => self.orient_point_hyperlimit(point).unwrap_or(BACK),
             Some(RealSign::Zero) | None => COPLANAR,
@@ -620,21 +599,6 @@ fn normals_same_direction(lhs: &Vector3<Real>, rhs: &Vector3<Real>) -> bool {
         return false;
     };
     hreal_gt_f64(&lhs.dot(&rhs), 0.0)
-}
-
-#[test]
-fn plane_tolerance_squared_stays_hyperreal() {
-    let tolerance_squared =
-        hpositive_boundary_scalar_squared(tolerance()).expect("finite crate tolerance");
-    let tolerance_hreal = hreal_from_f64(tolerance()).expect("finite crate tolerance");
-
-    let below = tolerance_hreal.clone() * hreal_from_f64(0.5).expect("finite scalar");
-    let below_squared = below.clone() * below;
-    assert!(!hreal_gt_hreal(&below_squared, &tolerance_squared));
-
-    let above = tolerance_hreal * hreal_from_f64(2.0).expect("finite scalar");
-    let above_squared = above.clone() * above;
-    assert!(hreal_gt_hreal(&above_squared, &tolerance_squared));
 }
 
 #[test]
