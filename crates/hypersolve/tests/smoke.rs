@@ -2939,7 +2939,8 @@ fn modified_newton_least_squares_route_reports_named_lossy_adapter() {
     );
     assert!(report.preprocessing.requested);
     assert!(report.preprocessing.completed);
-    assert!(!report.linear_reports.is_empty());
+    assert_eq!(report.preprocessing.affine_seed_assignments, 1);
+    assert!(report.linear_reports.is_empty());
 }
 
 #[test]
@@ -2974,8 +2975,53 @@ fn modified_newton_preprocessing_reports_substitution_and_soluble_alone_rows() {
     assert_eq!(report.preprocessing.equality_substitutions, 1);
     assert_eq!(report.preprocessing.affine_soluble_alone_rows, 1);
     assert_eq!(report.preprocessing.quadratic_soluble_alone_rows, 1);
+    assert_eq!(report.preprocessing.affine_seed_assignments, 1);
+    assert_eq!(report.preprocessing.rejected_affine_seed_assignments, 0);
     assert_eq!(report.preprocessing.dragged_parameter_weights, 0);
     assert_eq!(report.preprocessing.invalid_dragged_parameter_weights, 0);
+}
+
+#[test]
+fn modified_newton_affine_soluble_alone_rows_seed_initial_candidate() {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let mut problem = Problem::default();
+    problem.add_variable("x", real(0));
+    problem.add_constraint(Constraint::equality("solve x alone", x - Expr::int(7)));
+    let config = SolverConfig {
+        proposal_engine: ProposalEngineKind::ModifiedNewtonLeastSquares,
+        max_iterations: 1,
+        ..SolverConfig::default()
+    };
+
+    let report = solve_damped_least_squares(SolverState { problem, config });
+
+    assert_eq!(report.reason, ConvergenceReason::Converged);
+    assert_eq!(report.iterations, 0);
+    assert_eq!(report.preprocessing.affine_soluble_alone_rows, 1);
+    assert_eq!(report.preprocessing.affine_seed_assignments, 1);
+    assert_eq!(report.preprocessing.rejected_affine_seed_assignments, 0);
+    assert!(report.linear_reports.is_empty());
+}
+
+#[test]
+fn modified_newton_affine_seed_rejects_out_of_bounds_assignments() {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let mut problem = Problem::default();
+    let variable = problem.add_variable("x", real(0));
+    problem.variables[variable.0 as usize].upper = Some(real(3));
+    problem.add_constraint(Constraint::equality("solve x alone", x - Expr::int(7)));
+    let config = SolverConfig {
+        proposal_engine: ProposalEngineKind::ModifiedNewtonLeastSquares,
+        max_iterations: 0,
+        ..SolverConfig::default()
+    };
+
+    let report = solve_damped_least_squares(SolverState { problem, config });
+
+    assert_eq!(report.reason, ConvergenceReason::MaxIterations);
+    assert_eq!(report.preprocessing.affine_soluble_alone_rows, 1);
+    assert_eq!(report.preprocessing.affine_seed_assignments, 0);
+    assert_eq!(report.preprocessing.rejected_affine_seed_assignments, 1);
 }
 
 #[test]
