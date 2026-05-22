@@ -13938,7 +13938,10 @@ impl BezierBooleanConstructionReadinessReport2 {
         bridge: &BezierBooleanAlgebraicSplitBridgeReport2,
         policy: &CurvePolicy,
     ) -> Classification<Self> {
-        let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &[]);
+        let scheduler = BezierBooleanPathSchedulerReport2::from_batches(
+            BezierBooleanBatchHandoffReport2::from_handoff_reports(&[]),
+            BezierPathRangeBatchReport2::from_range_reports(&[]),
+        );
         let split_plan = if bridge.is_ready()
             || matches!(
                 bridge.status,
@@ -16571,17 +16574,6 @@ impl BezierBooleanPathSchedulerReport2 {
             range_batch,
             uncertainty_reason,
         }
-    }
-
-    /// Builds a global scheduler report directly from report slices.
-    pub fn from_reports(
-        relation_reports: &[BezierBooleanHandoffReport2],
-        range_reports: &[BezierPathRangeOrderReport2],
-    ) -> Self {
-        Self::from_batches(
-            BezierBooleanBatchHandoffReport2::from_handoff_reports(relation_reports),
-            BezierPathRangeBatchReport2::from_range_reports(range_reports),
-        )
     }
 
     /// Returns true when all represented split candidates can be inserted.

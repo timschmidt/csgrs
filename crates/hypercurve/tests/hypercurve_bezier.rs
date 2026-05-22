@@ -4703,7 +4703,10 @@ fn bezier_boolean_root_isolation_handoff_accepts_path_scheduler_range_spans() {
             spans: vec![span(ratio(1, 4), ratio(1, 2))],
         },
     );
-    let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &[range]);
+    let scheduler = BezierBooleanPathSchedulerReport2::from_batches(
+        BezierBooleanBatchHandoffReport2::from_handoff_reports(&[]),
+        BezierPathRangeBatchReport2::from_range_reports(&[range]),
+    );
 
     let root_handoff = BezierBooleanRootIsolationHandoffReport2::from_path_scheduler(&scheduler);
 
@@ -4721,7 +4724,10 @@ fn bezier_boolean_root_isolation_handoff_accepts_path_scheduler_range_spans() {
             spans: Vec::new(),
         },
     );
-    let blocked = BezierBooleanPathSchedulerReport2::from_reports(&[], &[unclassified]);
+    let blocked = BezierBooleanPathSchedulerReport2::from_batches(
+        BezierBooleanBatchHandoffReport2::from_handoff_reports(&[]),
+        BezierPathRangeBatchReport2::from_range_reports(&[unclassified]),
+    );
     let blocked_handoff = BezierBooleanRootIsolationHandoffReport2::from_path_scheduler(&blocked);
     assert_eq!(
         blocked_handoff.status,
@@ -4738,7 +4744,10 @@ fn bezier_boolean_root_isolation_replay_accepts_hypersolve_parameters() {
             spans: vec![span(ratio(1, 4), ratio(1, 2))],
         },
     );
-    let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &[range]);
+    let scheduler = BezierBooleanPathSchedulerReport2::from_batches(
+        BezierBooleanBatchHandoffReport2::from_handoff_reports(&[]),
+        BezierPathRangeBatchReport2::from_range_reports(&[range]),
+    );
 
     let replay = match BezierBooleanRootIsolationReplayReport2::from_hypersolve_roots(
         &scheduler,
@@ -4782,7 +4791,10 @@ fn bezier_boolean_root_isolation_replay_blocks_missing_and_out_of_range_roots() 
             spans: vec![span(ratio(1, 4), ratio(1, 2))],
         },
     );
-    let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &[range]);
+    let scheduler = BezierBooleanPathSchedulerReport2::from_batches(
+        BezierBooleanBatchHandoffReport2::from_handoff_reports(&[]),
+        BezierPathRangeBatchReport2::from_range_reports(&[range]),
+    );
 
     let missing = match BezierBooleanRootIsolationReplayReport2::from_hypersolve_roots(
         &scheduler,
@@ -4825,7 +4837,10 @@ fn bezier_boolean_root_isolation_replay_consumes_hypersolve_reports() {
             spans: vec![span(ratio(1, 4), ratio(1, 2))],
         },
     );
-    let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &[range]);
+    let scheduler = BezierBooleanPathSchedulerReport2::from_batches(
+        BezierBooleanBatchHandoffReport2::from_handoff_reports(&[]),
+        BezierPathRangeBatchReport2::from_range_reports(&[range]),
+    );
     let isolation = UnivariateRootIsolationReport {
         constraint_index: 0,
         symbol: None,
@@ -4895,7 +4910,10 @@ fn bezier_boolean_root_isolation_replay_consumes_bernstein_subdivision_reports()
             spans: vec![span(ratio(1, 4), ratio(1, 2))],
         },
     );
-    let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &[range]);
+    let scheduler = BezierBooleanPathSchedulerReport2::from_batches(
+        BezierBooleanBatchHandoffReport2::from_handoff_reports(&[]),
+        BezierPathRangeBatchReport2::from_range_reports(&[range]),
+    );
     let subdivision = BernsteinSubdivisionReport {
         constraint_index: 0,
         symbol: None,
@@ -4998,7 +5016,10 @@ fn bezier_boolean_root_isolation_replay_consumes_algebraic_root_reports() {
             spans: vec![span(ratio(1, 4), ratio(1, 2))],
         },
     );
-    let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &[range]);
+    let scheduler = BezierBooleanPathSchedulerReport2::from_batches(
+        BezierBooleanBatchHandoffReport2::from_handoff_reports(&[]),
+        BezierPathRangeBatchReport2::from_range_reports(&[range]),
+    );
     let algebraic = algebraic_root_report(half(), true);
 
     let replay =
@@ -5047,7 +5068,10 @@ fn bezier_boolean_root_isolation_replay_blocks_unusable_hypersolve_reports() {
             spans: vec![span(ratio(1, 4), ratio(1, 2))],
         },
     );
-    let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &[range]);
+    let scheduler = BezierBooleanPathSchedulerReport2::from_batches(
+        BezierBooleanBatchHandoffReport2::from_handoff_reports(&[]),
+        BezierPathRangeBatchReport2::from_range_reports(&[range]),
+    );
     let undecided = UnivariateRootIsolationReport {
         constraint_index: 0,
         symbol: None,
@@ -5099,7 +5123,10 @@ fn bezier_boolean_root_isolation_replay_blocks_bernstein_non_witnesses() {
             spans: vec![span(ratio(1, 4), ratio(1, 2))],
         },
     );
-    let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &[range]);
+    let scheduler = BezierBooleanPathSchedulerReport2::from_batches(
+        BezierBooleanBatchHandoffReport2::from_handoff_reports(&[]),
+        BezierPathRangeBatchReport2::from_range_reports(&[range]),
+    );
     let subdivision = BernsteinSubdivisionReport {
         constraint_index: 0,
         symbol: None,
@@ -5147,7 +5174,10 @@ fn bezier_boolean_root_count_prefilter_discharges_empty_bernstein_spans() {
             spans: vec![span(ratio(1, 4), ratio(1, 2))],
         },
     );
-    let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &[range]);
+    let scheduler = BezierBooleanPathSchedulerReport2::from_batches(
+        BezierBooleanBatchHandoffReport2::from_handoff_reports(&[]),
+        BezierPathRangeBatchReport2::from_range_reports(&[range]),
+    );
     let count = BernsteinRootCountReport {
         constraint_index: 0,
         symbol: None,
@@ -5203,7 +5233,10 @@ fn bezier_boolean_root_count_prefilter_blocks_possible_bernstein_roots() {
             spans: vec![span(ratio(1, 4), ratio(1, 2))],
         },
     );
-    let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &[range]);
+    let scheduler = BezierBooleanPathSchedulerReport2::from_batches(
+        BezierBooleanBatchHandoffReport2::from_handoff_reports(&[]),
+        BezierPathRangeBatchReport2::from_range_reports(&[range]),
+    );
     let count = BernsteinRootCountReport {
         constraint_index: 0,
         symbol: None,
@@ -5256,7 +5289,10 @@ fn bezier_boolean_root_count_prefilter_accepts_descartes_zero_root_proof() {
             spans: vec![span(ratio(1, 4), ratio(1, 2))],
         },
     );
-    let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &[range]);
+    let scheduler = BezierBooleanPathSchedulerReport2::from_batches(
+        BezierBooleanBatchHandoffReport2::from_handoff_reports(&[]),
+        BezierPathRangeBatchReport2::from_range_reports(&[range]),
+    );
     let count = DescartesRootCountReport {
         constraint_index: 0,
         symbol: None,
@@ -5294,7 +5330,10 @@ fn bezier_boolean_root_isolation_replay_blocks_non_rational_algebraic_roots() {
             spans: vec![span(ratio(1, 4), ratio(1, 2))],
         },
     );
-    let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &[range]);
+    let scheduler = BezierBooleanPathSchedulerReport2::from_batches(
+        BezierBooleanBatchHandoffReport2::from_handoff_reports(&[]),
+        BezierPathRangeBatchReport2::from_range_reports(&[range]),
+    );
     let algebraic = algebraic_root_report(half(), false);
 
     let replay =
@@ -5329,7 +5368,10 @@ fn bezier_boolean_algebraic_parameter_handoff_accepts_interval_roots() {
             spans: vec![span(ratio(1, 4), ratio(1, 2))],
         },
     );
-    let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &[range]);
+    let scheduler = BezierBooleanPathSchedulerReport2::from_batches(
+        BezierBooleanBatchHandoffReport2::from_handoff_reports(&[]),
+        BezierPathRangeBatchReport2::from_range_reports(&[range]),
+    );
     let algebraic = algebraic_root_report(half(), false);
 
     let handoff =
@@ -5369,7 +5411,10 @@ fn bezier_boolean_algebraic_parameter_handoff_blocks_missing_and_out_of_range_ro
             spans: vec![span(ratio(1, 4), ratio(1, 2))],
         },
     );
-    let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &[range]);
+    let scheduler = BezierBooleanPathSchedulerReport2::from_batches(
+        BezierBooleanBatchHandoffReport2::from_handoff_reports(&[]),
+        BezierPathRangeBatchReport2::from_range_reports(&[range]),
+    );
 
     let missing =
         match BezierBooleanAlgebraicParameterHandoffReport2::from_hypersolve_algebraic_root_reports(
@@ -5412,7 +5457,10 @@ fn bezier_boolean_algebraic_parameter_audit_accepts_ready_events() {
             spans: vec![span(ratio(1, 4), ratio(1, 2))],
         },
     );
-    let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &[range]);
+    let scheduler = BezierBooleanPathSchedulerReport2::from_batches(
+        BezierBooleanBatchHandoffReport2::from_handoff_reports(&[]),
+        BezierPathRangeBatchReport2::from_range_reports(&[range]),
+    );
     let handoff =
         match BezierBooleanAlgebraicParameterHandoffReport2::from_hypersolve_algebraic_root_reports(
             &scheduler,
@@ -5446,7 +5494,10 @@ fn bezier_boolean_algebraic_parameter_audit_blocks_stale_counts() {
             spans: vec![span(ratio(1, 4), ratio(1, 2))],
         },
     );
-    let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &[range]);
+    let scheduler = BezierBooleanPathSchedulerReport2::from_batches(
+        BezierBooleanBatchHandoffReport2::from_handoff_reports(&[]),
+        BezierPathRangeBatchReport2::from_range_reports(&[range]),
+    );
     let mut handoff =
         match BezierBooleanAlgebraicParameterHandoffReport2::from_hypersolve_algebraic_root_reports(
             &scheduler,
@@ -5486,7 +5537,10 @@ fn bezier_boolean_algebraic_parameter_readiness_packages_exact_and_interval_even
             },
         ),
     ];
-    let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &range_reports);
+    let scheduler = BezierBooleanPathSchedulerReport2::from_batches(
+        BezierBooleanBatchHandoffReport2::from_handoff_reports(&[]),
+        BezierPathRangeBatchReport2::from_range_reports(&range_reports),
+    );
     let handoff =
         match BezierBooleanAlgebraicParameterHandoffReport2::from_hypersolve_algebraic_root_reports(
             &scheduler,
@@ -5535,7 +5589,10 @@ fn bezier_boolean_algebraic_parameter_ordering_sorts_represented_roots() {
             },
         ),
     ];
-    let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &range_reports);
+    let scheduler = BezierBooleanPathSchedulerReport2::from_batches(
+        BezierBooleanBatchHandoffReport2::from_handoff_reports(&[]),
+        BezierPathRangeBatchReport2::from_range_reports(&range_reports),
+    );
     let handoff =
         match BezierBooleanAlgebraicParameterHandoffReport2::from_hypersolve_algebraic_root_reports(
             &scheduler,
@@ -5591,7 +5648,10 @@ fn bezier_boolean_algebraic_parameter_ordering_blocks_unrefined_overlaps() {
             },
         ),
     ];
-    let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &range_reports);
+    let scheduler = BezierBooleanPathSchedulerReport2::from_batches(
+        BezierBooleanBatchHandoffReport2::from_handoff_reports(&[]),
+        BezierPathRangeBatchReport2::from_range_reports(&range_reports),
+    );
     let handoff =
         match BezierBooleanAlgebraicParameterHandoffReport2::from_hypersolve_algebraic_root_reports(
             &scheduler,
@@ -5637,7 +5697,10 @@ fn bezier_boolean_algebraic_parameter_carrier_preserves_interval_only_roots() {
             spans: vec![span(ratio(1, 4), ratio(1, 2))],
         },
     );
-    let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &[range]);
+    let scheduler = BezierBooleanPathSchedulerReport2::from_batches(
+        BezierBooleanBatchHandoffReport2::from_handoff_reports(&[]),
+        BezierPathRangeBatchReport2::from_range_reports(&[range]),
+    );
     let handoff =
         match BezierBooleanAlgebraicParameterHandoffReport2::from_hypersolve_algebraic_root_reports(
             &scheduler,
@@ -5706,7 +5769,10 @@ fn bezier_boolean_algebraic_parameter_carrier_partitions_ordered_roles() {
             },
         ),
     ];
-    let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &range_reports);
+    let scheduler = BezierBooleanPathSchedulerReport2::from_batches(
+        BezierBooleanBatchHandoffReport2::from_handoff_reports(&[]),
+        BezierPathRangeBatchReport2::from_range_reports(&range_reports),
+    );
     let handoff =
         match BezierBooleanAlgebraicParameterHandoffReport2::from_hypersolve_algebraic_root_reports(
             &scheduler,
@@ -5774,7 +5840,10 @@ fn bezier_boolean_algebraic_parameter_carrier_blocks_failed_ordering() {
             },
         ),
     ];
-    let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &range_reports);
+    let scheduler = BezierBooleanPathSchedulerReport2::from_batches(
+        BezierBooleanBatchHandoffReport2::from_handoff_reports(&[]),
+        BezierPathRangeBatchReport2::from_range_reports(&range_reports),
+    );
     let handoff =
         match BezierBooleanAlgebraicParameterHandoffReport2::from_hypersolve_algebraic_root_reports(
             &scheduler,
@@ -5829,7 +5898,10 @@ fn bezier_boolean_algebraic_split_bridge_lowers_exact_rational_ordered_roots() {
             },
         ),
     ];
-    let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &range_reports);
+    let scheduler = BezierBooleanPathSchedulerReport2::from_batches(
+        BezierBooleanBatchHandoffReport2::from_handoff_reports(&[]),
+        BezierPathRangeBatchReport2::from_range_reports(&range_reports),
+    );
     let handoff =
         match BezierBooleanAlgebraicParameterHandoffReport2::from_hypersolve_algebraic_root_reports(
             &scheduler,
@@ -5934,7 +6006,10 @@ fn bezier_boolean_algebraic_split_bridge_lowers_operand_lanes() {
             },
         ),
     ];
-    let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &range_reports);
+    let scheduler = BezierBooleanPathSchedulerReport2::from_batches(
+        BezierBooleanBatchHandoffReport2::from_handoff_reports(&[]),
+        BezierPathRangeBatchReport2::from_range_reports(&range_reports),
+    );
     let handoff =
         match BezierBooleanAlgebraicParameterHandoffReport2::from_hypersolve_algebraic_root_reports(
             &scheduler,
@@ -6004,7 +6079,10 @@ fn bezier_boolean_algebraic_split_bridge_blocks_interval_only_roots() {
             spans: vec![span(ratio(1, 4), ratio(1, 2))],
         },
     );
-    let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &[range]);
+    let scheduler = BezierBooleanPathSchedulerReport2::from_batches(
+        BezierBooleanBatchHandoffReport2::from_handoff_reports(&[]),
+        BezierPathRangeBatchReport2::from_range_reports(&[range]),
+    );
     let handoff =
         match BezierBooleanAlgebraicParameterHandoffReport2::from_hypersolve_algebraic_root_reports(
             &scheduler,
@@ -6048,7 +6126,10 @@ fn bezier_boolean_algebraic_parameter_readiness_blocks_failed_audits() {
             spans: vec![span(ratio(1, 4), ratio(1, 2))],
         },
     );
-    let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &[range]);
+    let scheduler = BezierBooleanPathSchedulerReport2::from_batches(
+        BezierBooleanBatchHandoffReport2::from_handoff_reports(&[]),
+        BezierPathRangeBatchReport2::from_range_reports(&[range]),
+    );
     let mut handoff =
         match BezierBooleanAlgebraicParameterHandoffReport2::from_hypersolve_algebraic_root_reports(
             &scheduler,
@@ -6176,7 +6257,10 @@ fn bezier_boolean_path_scheduler_combines_relation_and_range_split_events() {
         },
     );
 
-    let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[relation], &[range]);
+    let scheduler = BezierBooleanPathSchedulerReport2::from_batches(
+        BezierBooleanBatchHandoffReport2::from_handoff_reports(&[relation]),
+        BezierPathRangeBatchReport2::from_range_reports(&[range]),
+    );
 
     assert_eq!(
         scheduler.status,
@@ -6201,7 +6285,10 @@ fn bezier_boolean_path_scheduler_prioritizes_global_blockers() {
         &BezierMonotoneGraphContactOrder::Coincident,
     );
 
-    let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[relation], &[overlap_range]);
+    let scheduler = BezierBooleanPathSchedulerReport2::from_batches(
+        BezierBooleanBatchHandoffReport2::from_handoff_reports(&[relation]),
+        BezierPathRangeBatchReport2::from_range_reports(&[overlap_range]),
+    );
 
     assert_eq!(
         scheduler.status,
@@ -6217,8 +6304,10 @@ fn bezier_boolean_path_scheduler_prioritizes_global_blockers() {
     let ordered_range = BezierPathRangeOrderReport2::from_graph_contact_order(
         &BezierMonotoneGraphContactOrder::FirstLess,
     );
-    let uncertain_scheduler =
-        BezierBooleanPathSchedulerReport2::from_reports(&[uncertain_relation], &[ordered_range]);
+    let uncertain_scheduler = BezierBooleanPathSchedulerReport2::from_batches(
+        BezierBooleanBatchHandoffReport2::from_handoff_reports(&[uncertain_relation]),
+        BezierPathRangeBatchReport2::from_range_reports(&[ordered_range]),
+    );
     assert_eq!(
         uncertain_scheduler.status,
         BezierBooleanPathSchedulerStatus::Uncertain
@@ -6247,7 +6336,10 @@ fn bezier_boolean_split_plan_extracts_ready_scheduler_parameters() {
             spans: Vec::new(),
         },
     );
-    let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[relation], &[range]);
+    let scheduler = BezierBooleanPathSchedulerReport2::from_batches(
+        BezierBooleanBatchHandoffReport2::from_handoff_reports(&[relation]),
+        BezierPathRangeBatchReport2::from_range_reports(&[range]),
+    );
 
     let plan = BezierBooleanSplitPlanReport2::from_scheduler(&scheduler);
 
@@ -6266,7 +6358,10 @@ fn bezier_boolean_split_plan_preserves_scheduler_blockers() {
     let relation = BezierBooleanHandoffReport2::from_classified_relation(
         &Classification::Uncertain(UncertaintyReason::Ordering),
     );
-    let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[relation], &[]);
+    let scheduler = BezierBooleanPathSchedulerReport2::from_batches(
+        BezierBooleanBatchHandoffReport2::from_handoff_reports(&[relation]),
+        BezierPathRangeBatchReport2::from_range_reports(&[]),
+    );
 
     let plan = BezierBooleanSplitPlanReport2::from_scheduler(&scheduler);
 
@@ -6291,7 +6386,10 @@ fn bezier_boolean_split_plan_audit_certifies_ready_unit_parameters() {
         BezierBooleanHandoffReport2::from_relation(&BezierCurveRelation::LineSegmentIntersection {
             intersection,
         });
-    let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[relation], &[]);
+    let scheduler = BezierBooleanPathSchedulerReport2::from_batches(
+        BezierBooleanBatchHandoffReport2::from_handoff_reports(&[relation]),
+        BezierPathRangeBatchReport2::from_range_reports(&[]),
+    );
     let plan = BezierBooleanSplitPlanReport2::from_scheduler(&scheduler);
 
     let audit = plan.audit(&policy());
@@ -6336,7 +6434,10 @@ fn bezier_boolean_split_plan_audit_keeps_blocked_plans_non_insertable() {
     let relation = BezierBooleanHandoffReport2::from_classified_relation(
         &Classification::Uncertain(UncertaintyReason::Ordering),
     );
-    let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[relation], &[]);
+    let scheduler = BezierBooleanPathSchedulerReport2::from_batches(
+        BezierBooleanBatchHandoffReport2::from_handoff_reports(&[relation]),
+        BezierPathRangeBatchReport2::from_range_reports(&[]),
+    );
     let plan = BezierBooleanSplitPlanReport2::from_scheduler(&scheduler);
 
     let audit = plan.audit(&policy());
@@ -6433,7 +6534,10 @@ fn bezier_boolean_construction_readiness_reports_ready_interior_splits() {
         });
 
     let readiness = BezierBooleanConstructionReadinessReport2::from_scheduler(
-        BezierBooleanPathSchedulerReport2::from_reports(&[relation], &[]),
+        BezierBooleanPathSchedulerReport2::from_batches(
+            BezierBooleanBatchHandoffReport2::from_handoff_reports(&[relation]),
+            BezierPathRangeBatchReport2::from_range_reports(&[]),
+        ),
         &policy(),
     );
 
@@ -6460,7 +6564,10 @@ fn bezier_boolean_construction_readiness_reports_noop_and_blocked_states() {
             intersection: endpoint_intersection,
         });
     let readiness = BezierBooleanConstructionReadinessReport2::from_scheduler(
-        BezierBooleanPathSchedulerReport2::from_reports(&[endpoint_relation], &[]),
+        BezierBooleanPathSchedulerReport2::from_batches(
+            BezierBooleanBatchHandoffReport2::from_handoff_reports(&[endpoint_relation]),
+            BezierPathRangeBatchReport2::from_range_reports(&[]),
+        ),
         &policy(),
     )
     .unwrap_decided_for_test();
@@ -6475,7 +6582,10 @@ fn bezier_boolean_construction_readiness_reports_noop_and_blocked_states() {
         &Classification::Uncertain(UncertaintyReason::Ordering),
     );
     let blocked = BezierBooleanConstructionReadinessReport2::from_scheduler(
-        BezierBooleanPathSchedulerReport2::from_reports(&[blocked_relation], &[]),
+        BezierBooleanPathSchedulerReport2::from_batches(
+            BezierBooleanBatchHandoffReport2::from_handoff_reports(&[blocked_relation]),
+            BezierPathRangeBatchReport2::from_range_reports(&[]),
+        ),
         &policy(),
     )
     .unwrap_decided_for_test();
@@ -6496,7 +6606,10 @@ fn bezier_boolean_quadratic_fragment_report_splits_ready_first_operand() {
             regions: vec![region],
         });
     let readiness = BezierBooleanConstructionReadinessReport2::from_scheduler(
-        BezierBooleanPathSchedulerReport2::from_reports(&[relation], &[]),
+        BezierBooleanPathSchedulerReport2::from_batches(
+            BezierBooleanBatchHandoffReport2::from_handoff_reports(&[relation]),
+            BezierPathRangeBatchReport2::from_range_reports(&[]),
+        ),
         &policy(),
     )
     .unwrap_decided_for_test();
@@ -14568,7 +14681,10 @@ fn bezier_boolean_fragment_reports_preserve_blocked_and_invalid_states() {
         &Classification::Uncertain(UncertaintyReason::Ordering),
     );
     let blocked_readiness = BezierBooleanConstructionReadinessReport2::from_scheduler(
-        BezierBooleanPathSchedulerReport2::from_reports(&[blocked_relation], &[]),
+        BezierBooleanPathSchedulerReport2::from_batches(
+            BezierBooleanBatchHandoffReport2::from_handoff_reports(&[blocked_relation]),
+            BezierPathRangeBatchReport2::from_range_reports(&[]),
+        ),
         &policy(),
     )
     .unwrap_decided_for_test();
@@ -14831,7 +14947,10 @@ proptest! {
                 )
             })
             .collect::<Vec<_>>();
-        let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &reports);
+        let scheduler = BezierBooleanPathSchedulerReport2::from_batches(
+        BezierBooleanBatchHandoffReport2::from_handoff_reports(&[]),
+        BezierPathRangeBatchReport2::from_range_reports(&reports),
+    );
 
         let root_handoff =
             BezierBooleanRootIsolationHandoffReport2::from_path_scheduler(&scheduler);
@@ -14862,7 +14981,10 @@ proptest! {
         let roots = (0..span_count)
             .map(|index| ratio(index as i32 + 1, 16))
             .collect::<Vec<_>>();
-        let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &reports);
+        let scheduler = BezierBooleanPathSchedulerReport2::from_batches(
+        BezierBooleanBatchHandoffReport2::from_handoff_reports(&[]),
+        BezierPathRangeBatchReport2::from_range_reports(&reports),
+    );
 
         let replay = match BezierBooleanRootIsolationReplayReport2::from_hypersolve_roots(
             &scheduler,
@@ -14920,7 +15042,10 @@ proptest! {
                 }
             })
             .collect::<Vec<_>>();
-        let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &reports);
+        let scheduler = BezierBooleanPathSchedulerReport2::from_batches(
+        BezierBooleanBatchHandoffReport2::from_handoff_reports(&[]),
+        BezierPathRangeBatchReport2::from_range_reports(&reports),
+    );
 
         let replay = match BezierBooleanRootIsolationReplayReport2::from_hypersolve_range_reports(
             &scheduler,
@@ -15000,7 +15125,10 @@ proptest! {
                 }
             })
             .collect::<Vec<_>>();
-        let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &reports);
+        let scheduler = BezierBooleanPathSchedulerReport2::from_batches(
+        BezierBooleanBatchHandoffReport2::from_handoff_reports(&[]),
+        BezierPathRangeBatchReport2::from_range_reports(&reports),
+    );
 
         let replay =
             match BezierBooleanRootIsolationReplayReport2::from_hypersolve_bernstein_subdivision_reports(
@@ -15060,7 +15188,10 @@ proptest! {
         let solver_reports = (0..span_count)
             .map(|index| algebraic_root_report(ratio(index as i32 + 1, 16), true))
             .collect::<Vec<_>>();
-        let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &reports);
+        let scheduler = BezierBooleanPathSchedulerReport2::from_batches(
+        BezierBooleanBatchHandoffReport2::from_handoff_reports(&[]),
+        BezierPathRangeBatchReport2::from_range_reports(&reports),
+    );
 
         let replay =
             match BezierBooleanRootIsolationReplayReport2::from_hypersolve_algebraic_root_reports(
@@ -15122,7 +15253,10 @@ proptest! {
             .rev()
             .map(|index| algebraic_root_report(ratio(index as i32 + 1, 16), true))
             .collect::<Vec<_>>();
-        let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &reports);
+        let scheduler = BezierBooleanPathSchedulerReport2::from_batches(
+        BezierBooleanBatchHandoffReport2::from_handoff_reports(&[]),
+        BezierPathRangeBatchReport2::from_range_reports(&reports),
+    );
         let handoff =
             match BezierBooleanAlgebraicParameterHandoffReport2::from_hypersolve_algebraic_root_reports(
                 &scheduler,
@@ -15226,7 +15360,10 @@ proptest! {
                 message: None,
             })
             .collect::<Vec<_>>();
-        let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &reports);
+        let scheduler = BezierBooleanPathSchedulerReport2::from_batches(
+        BezierBooleanBatchHandoffReport2::from_handoff_reports(&[]),
+        BezierPathRangeBatchReport2::from_range_reports(&reports),
+    );
 
         let prefilter =
             BezierBooleanRootCountPrefilterReport2::from_hypersolve_bernstein_root_count_reports(
@@ -15279,7 +15416,10 @@ proptest! {
         let solver_reports = (0..span_count)
             .map(|_| algebraic_root_report(half(), false))
             .collect::<Vec<_>>();
-        let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[], &reports);
+        let scheduler = BezierBooleanPathSchedulerReport2::from_batches(
+        BezierBooleanBatchHandoffReport2::from_handoff_reports(&[]),
+        BezierPathRangeBatchReport2::from_range_reports(&reports),
+    );
 
         let handoff =
             match BezierBooleanAlgebraicParameterHandoffReport2::from_hypersolve_algebraic_root_reports(
@@ -15421,7 +15561,10 @@ proptest! {
             },
         );
 
-        let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[relation], &[range]);
+        let scheduler = BezierBooleanPathSchedulerReport2::from_batches(
+        BezierBooleanBatchHandoffReport2::from_handoff_reports(&[relation]),
+        BezierPathRangeBatchReport2::from_range_reports(&[range]),
+    );
 
         prop_assert_eq!(scheduler.status, BezierBooleanPathSchedulerStatus::SplitEventsReady);
         prop_assert!(scheduler.can_feed_split_events());
@@ -15445,7 +15588,10 @@ proptest! {
                 regions: vec![region],
             },
         );
-        let scheduler = BezierBooleanPathSchedulerReport2::from_reports(&[relation], &[]);
+        let scheduler = BezierBooleanPathSchedulerReport2::from_batches(
+        BezierBooleanBatchHandoffReport2::from_handoff_reports(&[relation]),
+        BezierPathRangeBatchReport2::from_range_reports(&[]),
+    );
 
         let plan = BezierBooleanSplitPlanReport2::from_scheduler(&scheduler);
 
@@ -15532,7 +15678,10 @@ proptest! {
 
         let readiness =
             BezierBooleanConstructionReadinessReport2::from_scheduler(
-        BezierBooleanPathSchedulerReport2::from_reports(&[relation], &[]),
+        BezierBooleanPathSchedulerReport2::from_batches(
+        BezierBooleanBatchHandoffReport2::from_handoff_reports(&[relation]),
+        BezierPathRangeBatchReport2::from_range_reports(&[]),
+    ),
         &policy(),
     );
 

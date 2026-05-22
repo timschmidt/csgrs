@@ -19,6 +19,7 @@ use hypercurve::{
     BezierBooleanAlgebraicParameterRole as HBezierBooleanAlgebraicParameterRole,
     BezierBooleanAlgebraicSplitBridgeReport2 as HBezierBooleanAlgebraicSplitBridgeReport2,
     BezierBooleanAssemblyReadinessStatus as HBezierBooleanAssemblyReadinessStatus,
+    BezierBooleanBatchHandoffReport2 as HBezierBooleanBatchHandoffReport2,
     BezierBooleanConstructionReadinessStatus as HBezierBooleanConstructionReadinessStatus,
     BezierBooleanCubicFragmentReport2 as HBezierBooleanCubicFragmentReport2,
     BezierBooleanFragmentConstructionStatus as HBezierBooleanFragmentConstructionStatus,
@@ -63,6 +64,7 @@ use hypercurve::{
     BezierMonotoneGraphOrder as HBezierMonotoneGraphOrder,
     BezierMonotoneSpan as HBezierMonotoneSpan, BezierOffsetCandidate2 as HBezierOffsetCandidate2,
     BezierOffsetRisk as HBezierOffsetRisk,
+    BezierPathRangeBatchReport2 as HBezierPathRangeBatchReport2,
     BezierPathRangeOrderReport2 as HBezierPathRangeOrderReport2,
     BezierPointFitRelation as HBezierPointFitRelation,
     BezierPointImageFitRelation as HBezierPointImageFitRelation,
@@ -4444,7 +4446,10 @@ pub fn h_assert_bezier_boolean_algebraic_parameter_carrier(reader: &mut ByteRead
             spans: vec![HBezierMonotoneSpan::new(h_ratio(1, 8), h_ratio(7, 8))],
         },
     );
-    let scheduler = HBezierBooleanPathSchedulerReport2::from_reports(&[], &[range]);
+    let scheduler = HBezierBooleanPathSchedulerReport2::from_batches(
+        HBezierBooleanBatchHandoffReport2::from_handoff_reports(&[]),
+        HBezierPathRangeBatchReport2::from_range_reports(&[range]),
+    );
     let handoff =
         match HBezierBooleanAlgebraicParameterHandoffReport2::from_hypersolve_algebraic_root_reports(
             &scheduler,
