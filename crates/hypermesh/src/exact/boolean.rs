@@ -125,6 +125,8 @@ use super::volumetric::{
     classify_triangulated_regions_against_opposite_meshes,
 };
 #[cfg(feature = "exact-triangulation")]
+use super::volumetric_cells::CoplanarVolumetricCellEvidenceReport;
+#[cfg(feature = "exact-triangulation")]
 use super::winding::{
     ClosedMeshWindingMeshRelation, ClosedMeshWindingMeshReport, ClosedMeshWindingRelation,
     WindingReportError, classify_mesh_vertices_against_closed_mesh_winding_report,
@@ -799,7 +801,7 @@ pub fn preflight_boolean_exact(
             arrangement_readiness: None,
         });
     }
-    if graph_requires_coplanar_volumetric_cells(&relation_counts) {
+    if graph_requires_coplanar_volumetric_cells_for_sources(&graph, left, right) {
         return Ok(ExactBooleanPreflight {
             operation,
             support: ExactBooleanSupport::RequiresCoplanarVolumetricCells,
@@ -942,6 +944,29 @@ fn graph_requires_coplanar_volumetric_cells(counts: &GraphRelationCounts) -> boo
     // state instead of approximating the cells or relabeling them as generic
     // winding readiness.
     counts.coplanar_overlapping_pairs + counts.coplanar_touching_pairs > 0
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn graph_requires_coplanar_volumetric_cells_for_sources(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> bool {
+    let counts = graph_relation_counts(graph);
+    if !graph_requires_coplanar_volumetric_cells(&counts) {
+        return false;
+    }
+    // This is the source-aware replacement for the coarse relation-count gate
+    // above. A positive-area coplanar face pair is not automatically a
+    // volumetric-cell blocker: opposite-side shared faces are boundary contact,
+    // while same-side or undecided positive-area overlap needs the missing
+    // coplanar volumetric-cell materializer. Keeping the decision in
+    // `CoplanarVolumetricCellEvidenceReport` follows Yap, "Towards Exact
+    // Geometric Computation," Comput. Geom. 7.1-2 (1997): topology policy must
+    // consume replayable exact object evidence, not aggregate counters.
+    CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right)
+        .obstacle
+        .requires_coplanar_volumetric_cells()
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -3340,7 +3365,7 @@ fn winding_readiness_report_from_graph(
             graph.event_count(),
             triangulations.len(),
             region_classifications,
-            if graph_requires_coplanar_volumetric_cells(&counts) {
+            if graph_requires_coplanar_volumetric_cells_for_sources(&graph, left, right) {
                 counts.into_blocker(ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells)
             } else {
                 counts.into_blocker(ExactBooleanBlockerKind::NeedsWinding)
@@ -3348,7 +3373,7 @@ fn winding_readiness_report_from_graph(
             None,
         ));
     }
-    if graph_requires_coplanar_volumetric_cells(&counts) {
+    if graph_requires_coplanar_volumetric_cells_for_sources(&graph, left, right) {
         return Ok(winding_readiness_report(
             operation,
             ExactWindingReadinessStatus::CoplanarVolumetricCellsRequired,
@@ -3675,7 +3700,9 @@ fn boolean_volumetric_winding_regions(
         })?;
     let mesh = match assembly.checked_to_exact_mesh_with_sources(left, right, validation) {
         Ok(mesh) => mesh,
-        Err(_error) if graph_requires_coplanar_volumetric_cells(&graph_relation_counts(&graph)) => {
+        Err(_error)
+            if graph_requires_coplanar_volumetric_cells_for_sources(&graph, left, right) =>
+        {
             return Ok(None);
         }
         Err(error) => return Err(error),
@@ -3723,7 +3750,7 @@ fn volumetric_winding_region_plan_from_graph(
 
     let cell_plan = match triangulate_all_face_cells_with_cdt(graph, left, right) {
         Ok(plan) => plan,
-        Err(_error) if graph_requires_coplanar_volumetric_cells(&counts) => {
+        Err(_error) if graph_requires_coplanar_volumetric_cells_for_sources(graph, left, right) => {
             // Coplanar source-face overlaps can expose constraint-normalization
             // cases that are not part of the current bounded volumetric cell
             // materializer. Keep Yap's exact boundary explicit: the caller
@@ -4369,4 +4396,58 @@ fn concatenate_meshes(
         super::provenance::SourceProvenance::exact("exact disjoint union"),
         validation,
     )
+}
+
+#[cfg(all(test, feature = "exact-triangulation"))]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn coplanar_volumetric_gate_uses_source_side_evidence() {
+        let boundary_left = axis_aligned_box_i64([0, 0, 0], [2, 2, 2]);
+        let boundary_right = axis_aligned_box_i64([2, 0, 0], [4, 2, 2]);
+        let boundary_graph = build_intersection_graph(&boundary_left, &boundary_right).unwrap();
+        assert!(graph_requires_coplanar_volumetric_cells(
+            &graph_relation_counts(&boundary_graph)
+        ));
+        assert!(!graph_requires_coplanar_volumetric_cells_for_sources(
+            &boundary_graph,
+            &boundary_left,
+            &boundary_right
+        ));
+
+        let same_side_left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
+        let same_side_right = same_side_left.clone();
+        let same_side_graph = build_intersection_graph(&same_side_left, &same_side_right).unwrap();
+        assert!(graph_requires_coplanar_volumetric_cells_for_sources(
+            &same_side_graph,
+            &same_side_left,
+            &same_side_right
+        ));
+    }
+
+    fn tetrahedron_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3], d: [i64; 3]) -> ExactMesh {
+        ExactMesh::from_i64_triangles(
+            &[
+                a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2], d[0], d[1], d[2],
+            ],
+            &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+        )
+        .unwrap()
+    }
+
+    fn axis_aligned_box_i64(min: [i64; 3], max: [i64; 3]) -> ExactMesh {
+        ExactMesh::from_i64_triangles(
+            &[
+                min[0], min[1], min[2], max[0], min[1], min[2], max[0], max[1], min[2], min[0],
+                max[1], min[2], min[0], min[1], max[2], max[0], min[1], max[2], max[0], max[1],
+                max[2], min[0], max[1], max[2],
+            ],
+            &[
+                0, 2, 1, 0, 3, 2, 4, 5, 6, 4, 6, 7, 0, 1, 5, 0, 5, 4, 1, 2, 6, 1, 6, 5, 2, 3, 7, 2,
+                7, 6, 3, 0, 4, 3, 4, 7,
+            ],
+        )
+        .unwrap()
+    }
 }
