@@ -6,15 +6,17 @@ use hypercurve::{
     BezierBooleanAlgebraicParameterOrderingStatus, BezierBooleanAlgebraicParameterReadinessReport2,
     BezierBooleanAlgebraicParameterReadinessStatus, BezierBooleanAlgebraicParameterRole,
     BezierBooleanAlgebraicSplitBridgeReport2, BezierBooleanAlgebraicSplitBridgeStatus,
-    BezierBooleanArrangementReadinessReport2, BezierBooleanArrangementReadinessStatus,
-    BezierBooleanAssemblyReadinessReport2, BezierBooleanAssemblyReadinessStatus,
-    BezierBooleanBatchHandoffReport2, BezierBooleanBatchHandoffStatus,
-    BezierBooleanConstructionReadinessReport2, BezierBooleanConstructionReadinessStatus,
-    BezierBooleanCubicFragmentReport2, BezierBooleanEmissionPlanReport2,
-    BezierBooleanEmissionPlanStatus, BezierBooleanFragmentConstructionStatus,
-    BezierBooleanFragmentEndpointTangents2, BezierBooleanFragmentLocatorInputReport2,
-    BezierBooleanFragmentLocatorInputStatus, BezierBooleanFragmentOwnershipLocation,
-    BezierBooleanHandoffReport2, BezierBooleanHandoffStatus, BezierBooleanLoopAssemblyPlanReport2,
+    BezierBooleanAlgebraicSplitSpanBoundary2, BezierBooleanAlgebraicSplitSpanReport2,
+    BezierBooleanAlgebraicSplitSpanStatus, BezierBooleanArrangementReadinessReport2,
+    BezierBooleanArrangementReadinessStatus, BezierBooleanAssemblyReadinessReport2,
+    BezierBooleanAssemblyReadinessStatus, BezierBooleanBatchHandoffReport2,
+    BezierBooleanBatchHandoffStatus, BezierBooleanConstructionReadinessReport2,
+    BezierBooleanConstructionReadinessStatus, BezierBooleanCubicFragmentReport2,
+    BezierBooleanEmissionPlanReport2, BezierBooleanEmissionPlanStatus,
+    BezierBooleanFragmentConstructionStatus, BezierBooleanFragmentEndpointTangents2,
+    BezierBooleanFragmentLocatorInputReport2, BezierBooleanFragmentLocatorInputStatus,
+    BezierBooleanFragmentOwnershipLocation, BezierBooleanHandoffReport2,
+    BezierBooleanHandoffStatus, BezierBooleanLoopAssemblyPlanReport2,
     BezierBooleanLoopAssemblyPlanStatus, BezierBooleanLoopClosureReport2,
     BezierBooleanLoopClosureStatus, BezierBooleanLoopContainmentCertificationReport2,
     BezierBooleanLoopContainmentCertificationStatus, BezierBooleanLoopContainmentFact2,
@@ -5748,6 +5750,69 @@ fn bezier_boolean_algebraic_parameter_carrier_preserves_interval_only_roots() {
 }
 
 #[test]
+fn bezier_boolean_algebraic_split_spans_materialize_interval_boundaries() {
+    let range = BezierPathRangeOrderReport2::from_graph_order(
+        &BezierMonotoneGraphOrder::IntersectsOrTouches {
+            parameters: Vec::new(),
+            spans: vec![span(ratio(1, 4), ratio(1, 2))],
+        },
+    );
+    let scheduler = BezierBooleanPathSchedulerReport2::from_batches(
+        BezierBooleanBatchHandoffReport2::from_handoff_reports(&[]),
+        BezierPathRangeBatchReport2::from_range_reports(&[range]),
+    );
+    let handoff =
+        match BezierBooleanAlgebraicParameterHandoffReport2::from_hypersolve_algebraic_root_reports(
+            &scheduler,
+            &[algebraic_root_report(half(), false)],
+            &policy(),
+        ) {
+            Classification::Decided(report) => report,
+            Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
+        };
+    let readiness =
+        match BezierBooleanAlgebraicParameterReadinessReport2::from_handoff(&handoff, &policy()) {
+            Classification::Decided(report) => report,
+            Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
+        };
+    let ordering = BezierBooleanAlgebraicParameterOrderingReport2::from_readiness(
+        &readiness,
+        AlgebraicRootRefinementComparisonConfig::default(),
+        &policy(),
+    );
+    let carrier = BezierBooleanAlgebraicParameterCarrierReport2::from_ordering(&ordering);
+
+    let spans = BezierBooleanAlgebraicSplitSpanReport2::from_carrier(&carrier);
+
+    assert_eq!(spans.status, BezierBooleanAlgebraicSplitSpanStatus::Ready);
+    assert!(spans.is_ready());
+    assert!(!spans.has_blockers());
+    assert_eq!(spans.span_count, 2);
+    assert_eq!(spans.algebraic_boundary_count, 1);
+    assert_eq!(spans.exact_rational_boundary_count, 0);
+    assert_eq!(spans.interval_boundary_count, 1);
+    assert!(spans.first_curve_spans.is_empty());
+    assert!(spans.second_curve_spans.is_empty());
+    assert_eq!(spans.shared_range_spans.len(), 2);
+    assert!(matches!(
+        spans.shared_range_spans[0].start,
+        BezierBooleanAlgebraicSplitSpanBoundary2::UnitStart
+    ));
+    assert!(matches!(
+        spans.shared_range_spans[0].end,
+        BezierBooleanAlgebraicSplitSpanBoundary2::Algebraic(_)
+    ));
+    assert!(matches!(
+        spans.shared_range_spans[1].start,
+        BezierBooleanAlgebraicSplitSpanBoundary2::Algebraic(_)
+    ));
+    assert!(matches!(
+        spans.shared_range_spans[1].end,
+        BezierBooleanAlgebraicSplitSpanBoundary2::UnitEnd
+    ));
+}
+
+#[test]
 fn bezier_boolean_algebraic_parameter_carrier_partitions_ordered_roles() {
     let range_reports = vec![
         BezierPathRangeOrderReport2::from_graph_order(
@@ -5822,6 +5887,24 @@ fn bezier_boolean_algebraic_parameter_carrier_partitions_ordered_roles() {
         carrier.ordered_events[2].role,
         BezierBooleanAlgebraicParameterRole::SecondCurve
     );
+
+    let spans = BezierBooleanAlgebraicSplitSpanReport2::from_carrier(&carrier);
+
+    assert_eq!(spans.status, BezierBooleanAlgebraicSplitSpanStatus::Ready);
+    assert_eq!(spans.span_count, 6);
+    assert_eq!(spans.exact_rational_boundary_count, 3);
+    assert_eq!(spans.interval_boundary_count, 0);
+    assert_eq!(spans.first_curve_spans.len(), 2);
+    assert_eq!(spans.second_curve_spans.len(), 2);
+    assert_eq!(spans.shared_range_spans.len(), 2);
+    assert_eq!(
+        spans.first_curve_spans[0].role,
+        BezierBooleanAlgebraicParameterRole::FirstCurve
+    );
+    assert_eq!(
+        spans.second_curve_spans[1].role,
+        BezierBooleanAlgebraicParameterRole::SecondCurve
+    );
 }
 
 #[test]
@@ -5880,6 +5963,15 @@ fn bezier_boolean_algebraic_parameter_carrier_blocks_failed_ordering() {
     assert!(carrier.has_blockers());
     assert_eq!(carrier.blocker_count, 1);
     assert!(carrier.ordered_events.is_empty());
+
+    let spans = BezierBooleanAlgebraicSplitSpanReport2::from_carrier(&carrier);
+    assert_eq!(
+        spans.status,
+        BezierBooleanAlgebraicSplitSpanStatus::CarrierBlocked
+    );
+    assert!(spans.has_blockers());
+    assert_eq!(spans.blocker_count, 1);
+    assert_eq!(spans.span_count, 0);
 }
 
 #[test]

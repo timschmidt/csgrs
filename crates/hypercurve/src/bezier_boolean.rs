@@ -2899,6 +2899,97 @@ pub struct BezierBooleanAlgebraicParameterCarrierReport2 {
     pub blocker_count: usize,
 }
 
+/// Boundary of a native algebraic Bezier/conic split span.
+///
+/// Existing polynomial and rational-conic fragment constructors can only split
+/// at parameters represented as exact [`Real`] values. This boundary type is
+/// the construction-side counterpart for non-rational represented roots: a
+/// span endpoint is either one of the unit-interval endpoints or the complete
+/// [`AlgebraicRootRepresentation`] carried by
+/// [`BezierBooleanAlgebraicParameterEvent2`]. That keeps the parameter as an
+/// exact algebraic object instead of sampling its isolating interval, following
+/// Yap, "Towards Exact Geometric Computation" (1997), and the Collins-Loos
+/// isolating-interval representation for real algebraic numbers.
+#[derive(Clone, Debug, PartialEq)]
+pub enum BezierBooleanAlgebraicSplitSpanBoundary2 {
+    /// The start of the Bezier unit parameter domain.
+    UnitStart,
+    /// A certified represented algebraic split parameter.
+    Algebraic(BezierBooleanAlgebraicParameterEvent2),
+    /// The end of the Bezier unit parameter domain.
+    UnitEnd,
+}
+
+/// Exact parameter span between adjacent algebraic split boundaries.
+///
+/// The span is not a mutated Bezier curve segment. It is a retained parameter
+/// object that later evaluators can use to build algebraic endpoint/tangent
+/// predicates, arrangement edges, or a future algebraic de Casteljau backend.
+/// This is the Yap-style construction boundary missing from the rational split
+/// bridge: topology may be scheduled over exact algebraic spans, while concrete
+/// coordinate materialization remains blocked until a backend can consume the
+/// represented roots directly.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BezierBooleanAlgebraicSplitSpan2 {
+    /// Parameter lane this span belongs to.
+    pub role: BezierBooleanAlgebraicParameterRole,
+    /// Inclusive lower boundary in certified parameter order.
+    pub start: BezierBooleanAlgebraicSplitSpanBoundary2,
+    /// Inclusive upper boundary in certified parameter order.
+    pub end: BezierBooleanAlgebraicSplitSpanBoundary2,
+}
+
+/// Status for native algebraic split-span materialization.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum BezierBooleanAlgebraicSplitSpanStatus {
+    /// No scheduler or algebraic parameter work exists.
+    Empty,
+    /// The scheduler did not need algebraic parameter evidence.
+    NotNeeded,
+    /// Existing rational split events already satisfy the scheduler.
+    RationalSplitEventsReady,
+    /// Algebraic split spans were materialized as exact parameter objects.
+    Ready,
+    /// Algebraic ordering blocked span materialization.
+    CarrierBlocked,
+}
+
+/// Native split-span construction for ordered algebraic Bezier/conic parameters.
+///
+/// This report consumes [`BezierBooleanAlgebraicParameterCarrierReport2`] and
+/// turns its certified order into half-open-style parameter spans for each
+/// curve lane. Unlike [`BezierBooleanAlgebraicSplitBridgeReport2`], it accepts
+/// interval-only represented roots and preserves them as span boundaries. It
+/// therefore advances non-rational split construction without changing the
+/// existing `Real`-parameter fragment APIs or introducing sampled coordinates.
+/// Greiner-Hormann (1998) and Martinez-Rueda-Feito (2009) require split
+/// insertion before traversal; this report supplies the exact algebraic
+/// insertion skeleton for the Bezier/conic case while retaining Yap's
+/// certified-or-explicit-blocker contract.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BezierBooleanAlgebraicSplitSpanReport2 {
+    /// Coarse span materialization status.
+    pub status: BezierBooleanAlgebraicSplitSpanStatus,
+    /// Carrier status used to derive this report.
+    pub carrier_status: BezierBooleanAlgebraicParameterCarrierStatus,
+    /// Ordered spans on the first relation operand.
+    pub first_curve_spans: Vec<BezierBooleanAlgebraicSplitSpan2>,
+    /// Ordered spans on the second relation operand.
+    pub second_curve_spans: Vec<BezierBooleanAlgebraicSplitSpan2>,
+    /// Ordered spans on the shared monotone-range lane.
+    pub shared_range_spans: Vec<BezierBooleanAlgebraicSplitSpan2>,
+    /// Total spans across all lanes.
+    pub span_count: usize,
+    /// Number of algebraic boundaries consumed.
+    pub algebraic_boundary_count: usize,
+    /// Number of exact-rational algebraic boundaries consumed.
+    pub exact_rational_boundary_count: usize,
+    /// Number of interval-only algebraic boundaries consumed.
+    pub interval_boundary_count: usize,
+    /// Number of retained blockers.
+    pub blocker_count: usize,
+}
+
 /// Status for bridging ordered algebraic parameters into today's split plan.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum BezierBooleanAlgebraicSplitBridgeStatus {
@@ -16061,6 +16152,110 @@ impl BezierBooleanAlgebraicParameterCarrierReport2 {
     }
 }
 
+impl BezierBooleanAlgebraicSplitSpanReport2 {
+    /// Materializes ordered algebraic parameters into exact split spans.
+    ///
+    /// This is the first native construction-shaped consumer for interval-only
+    /// represented Bezier/conic roots. It does not evaluate the source curve at
+    /// those roots and does not manufacture `Real` split parameters. Instead,
+    /// each retained algebraic root becomes an explicit span boundary, so later
+    /// arrangement code can reason over exact parameter intervals while a future
+    /// algebraic de Casteljau backend handles coordinate construction. This is
+    /// the same predicate/construction separation Yap requires in "Towards
+    /// Exact Geometric Computation" (1997): exact objects cross the boundary,
+    /// approximations do not.
+    pub fn from_carrier(carrier: &BezierBooleanAlgebraicParameterCarrierReport2) -> Self {
+        match carrier.status {
+            BezierBooleanAlgebraicParameterCarrierStatus::Empty => {
+                return Self::blocked_or_empty(
+                    BezierBooleanAlgebraicSplitSpanStatus::Empty,
+                    carrier,
+                    0,
+                );
+            }
+            BezierBooleanAlgebraicParameterCarrierStatus::NotNeeded => {
+                return Self::blocked_or_empty(
+                    BezierBooleanAlgebraicSplitSpanStatus::NotNeeded,
+                    carrier,
+                    0,
+                );
+            }
+            BezierBooleanAlgebraicParameterCarrierStatus::RationalSplitEventsReady => {
+                return Self::blocked_or_empty(
+                    BezierBooleanAlgebraicSplitSpanStatus::RationalSplitEventsReady,
+                    carrier,
+                    0,
+                );
+            }
+            BezierBooleanAlgebraicParameterCarrierStatus::OrderingBlocked => {
+                return Self::blocked_or_empty(
+                    BezierBooleanAlgebraicSplitSpanStatus::CarrierBlocked,
+                    carrier,
+                    carrier.blocker_count.max(1),
+                );
+            }
+            BezierBooleanAlgebraicParameterCarrierStatus::Ready => {}
+        }
+
+        let first_curve_spans = algebraic_split_spans_for_role(
+            BezierBooleanAlgebraicParameterRole::FirstCurve,
+            &carrier.first_curve_events,
+        );
+        let second_curve_spans = algebraic_split_spans_for_role(
+            BezierBooleanAlgebraicParameterRole::SecondCurve,
+            &carrier.second_curve_events,
+        );
+        let shared_range_spans = algebraic_split_spans_for_role(
+            BezierBooleanAlgebraicParameterRole::SharedRange,
+            &carrier.shared_range_events,
+        );
+        let span_count =
+            first_curve_spans.len() + second_curve_spans.len() + shared_range_spans.len();
+
+        Self {
+            status: BezierBooleanAlgebraicSplitSpanStatus::Ready,
+            carrier_status: carrier.status,
+            first_curve_spans,
+            second_curve_spans,
+            shared_range_spans,
+            span_count,
+            algebraic_boundary_count: carrier.ordered_event_count,
+            exact_rational_boundary_count: carrier.exact_rational_event_count,
+            interval_boundary_count: carrier.interval_event_count,
+            blocker_count: 0,
+        }
+    }
+
+    fn blocked_or_empty(
+        status: BezierBooleanAlgebraicSplitSpanStatus,
+        carrier: &BezierBooleanAlgebraicParameterCarrierReport2,
+        blocker_count: usize,
+    ) -> Self {
+        Self {
+            status,
+            carrier_status: carrier.status,
+            first_curve_spans: Vec::new(),
+            second_curve_spans: Vec::new(),
+            shared_range_spans: Vec::new(),
+            span_count: 0,
+            algebraic_boundary_count: 0,
+            exact_rational_boundary_count: 0,
+            interval_boundary_count: 0,
+            blocker_count,
+        }
+    }
+
+    /// Returns true when exact algebraic span boundaries are available.
+    pub fn is_ready(&self) -> bool {
+        self.status == BezierBooleanAlgebraicSplitSpanStatus::Ready
+    }
+
+    /// Returns true when carrier construction blocked span materialization.
+    pub fn has_blockers(&self) -> bool {
+        self.status == BezierBooleanAlgebraicSplitSpanStatus::CarrierBlocked
+    }
+}
+
 impl BezierBooleanAlgebraicSplitBridgeReport2 {
     /// Lowers ordered exact rational algebraic roots into a split plan.
     ///
@@ -16248,6 +16443,33 @@ fn algebraic_bridge_empty_insertion() -> BezierBooleanSplitInsertionReport2 {
         interior_parameter_count: 0,
         out_of_range_parameter_count: 0,
     }
+}
+
+fn algebraic_split_spans_for_role(
+    role: BezierBooleanAlgebraicParameterRole,
+    events: &[BezierBooleanAlgebraicParameterEvent2],
+) -> Vec<BezierBooleanAlgebraicSplitSpan2> {
+    if events.is_empty() {
+        return Vec::new();
+    }
+
+    let mut spans = Vec::with_capacity(events.len() + 1);
+    let mut start = BezierBooleanAlgebraicSplitSpanBoundary2::UnitStart;
+    for event in events {
+        let end = BezierBooleanAlgebraicSplitSpanBoundary2::Algebraic(event.clone());
+        spans.push(BezierBooleanAlgebraicSplitSpan2 {
+            role,
+            start,
+            end: end.clone(),
+        });
+        start = end;
+    }
+    spans.push(BezierBooleanAlgebraicSplitSpan2 {
+        role,
+        start,
+        end: BezierBooleanAlgebraicSplitSpanBoundary2::UnitEnd,
+    });
+    spans
 }
 
 fn algebraic_parameter_ordering_comparison(
