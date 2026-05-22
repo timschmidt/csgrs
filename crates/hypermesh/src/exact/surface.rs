@@ -3772,7 +3772,7 @@ pub fn arrange_coplanar_surface_cutter_hole_contact_difference(
     {
         return None;
     }
-    let left_rect = projected_axis_aligned_rectangle(&left_component.hull, projection)?;
+    let left_rect = projected_axis_aligned_rectangle(&left_component.hull, projection);
 
     let mut holes = Vec::new();
     let mut clipped_cutters = Vec::new();
@@ -3840,7 +3840,11 @@ pub fn arrange_coplanar_surface_cutter_hole_contact_difference(
         connected_convex_contact_union_polygon(&removed_regions, projection)?
     };
     orient_polygon_ccw(&mut removed_polygon, projection)?;
-    let mut polygon = side_opened_difference_polygon(&left_rect, &removed_polygon, projection)?;
+    let mut polygon = if let Some(left_rect) = &left_rect {
+        side_opened_difference_polygon(left_rect, &removed_polygon, projection)?
+    } else {
+        convex_side_opened_difference_polygon(&left_component.hull, &removed_polygon, projection)?
+    };
     orient_polygon_ccw(&mut polygon, projection)?;
     polygon = simplify_projected_polygon(polygon, projection);
     if validate_projected_strictly_convex_loop(
@@ -4628,6 +4632,127 @@ fn side_opened_difference_polygon(
     };
     remove_duplicate_neighbors(&mut polygon);
     Some(polygon)
+}
+
+/// Open a convex outer loop by one retained removed-region attachment.
+///
+/// This is the non-axis-aligned counterpart to
+/// [`side_opened_difference_polygon`]. The removed region must lie inside the
+/// convex outer loop, share exactly one positive-length segment with the
+/// relative interior of one outer edge, and carry that segment as a retained
+/// boundary edge. The output walks the long outer boundary path around the
+/// attachment and then the reverse removed-region boundary path. This is the
+/// same retained-fragment discipline Yap requires in "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997): no sampled point or
+/// floating tolerance decides topology. The boundary splice follows the
+/// Weiler-Atherton clipping traversal idea from "Hidden Surface Removal Using
+/// Polygon Area Sorting," *SIGGRAPH Computer Graphics* 11.2 (1977).
+#[cfg(feature = "exact-triangulation")]
+fn convex_side_opened_difference_polygon(
+    outer: &[Point3],
+    removed: &[Point3],
+    projection: CoplanarProjection,
+) -> Option<Vec<Point3>> {
+    if outer.len() < 3 || removed.len() < 3 {
+        return None;
+    }
+    for point in removed {
+        if convex_polygon_location(point, outer, projection)? == ConvexPolygonLocation::Outside {
+            return None;
+        }
+    }
+    let attachment = convex_opened_side_attachment(outer, removed, projection)?;
+    let edge_end = (attachment.edge + 1) % outer.len();
+    let mut polygon = vec![attachment.end.clone(), outer[edge_end].clone()];
+    let mut index = (edge_end + 1) % outer.len();
+    while index != attachment.edge {
+        polygon.push(outer[index].clone());
+        index = (index + 1) % outer.len();
+        if polygon.len() > outer.len() + 3 {
+            return None;
+        }
+    }
+    polygon.push(outer[attachment.edge].clone());
+    polygon.push(attachment.start.clone());
+    let mut removed_path =
+        removed_boundary_path_reverse(removed, &attachment.start, &attachment.end)?;
+    polygon.append(&mut removed_path);
+    remove_duplicate_neighbors(&mut polygon);
+    Some(polygon)
+}
+
+/// Exact evidence that a removed-region boundary edge opens one convex outer edge.
+///
+/// `edge` names the oriented outer edge, and `start..end` is the positive
+/// parameter interval on that edge. Keeping these exact source vertices is the
+/// retained-object boundary Yap argues for in "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997).
+#[cfg(feature = "exact-triangulation")]
+struct ConvexOpenedSideAttachment {
+    edge: usize,
+    start: Point3,
+    end: Point3,
+}
+
+/// Find the unique retained positive-length attachment segment.
+///
+/// The generic convex opener deliberately rejects corner contact, multiple
+/// boundary hits, and non-edge attachment so that the later topology splice is
+/// a direct replay of one exact boundary fact rather than a planar arrangement
+/// guess.
+#[cfg(feature = "exact-triangulation")]
+fn convex_opened_side_attachment(
+    outer: &[Point3],
+    removed: &[Point3],
+    projection: CoplanarProjection,
+) -> Option<ConvexOpenedSideAttachment> {
+    let mut boundary_points = Vec::new();
+    for point in removed {
+        for edge in 0..outer.len() {
+            let start = &outer[edge];
+            let end = &outer[(edge + 1) % outer.len()];
+            if !point_on_projected_segment(start, end, point, projection) {
+                continue;
+            }
+            let parameter = projected_segment_parameter(start, end, point, projection)?;
+            if real_order(&ExactReal::from(0), &parameter)? == Ordering::Less
+                && real_order(&parameter, &ExactReal::from(1))? == Ordering::Less
+            {
+                boundary_points.push((edge, point.clone(), parameter));
+            }
+        }
+    }
+    if boundary_points.len() != 2 || boundary_points[0].0 != boundary_points[1].0 {
+        return None;
+    }
+    if real_order(&boundary_points[1].2, &boundary_points[0].2)? == Ordering::Less {
+        boundary_points.swap(0, 1);
+    }
+    let edge = boundary_points[0].0;
+    let start = boundary_points[0].1.clone();
+    let end = boundary_points[1].1.clone();
+    if real_order(&boundary_points[0].2, &boundary_points[1].2)? != Ordering::Less {
+        return None;
+    }
+    if !polygon_has_edge_between(removed, &start, &end) {
+        return None;
+    }
+    Some(ConvexOpenedSideAttachment { edge, start, end })
+}
+
+/// Return whether a polygon carries the exact segment as one boundary edge.
+///
+/// The edge may be oriented either way because the caller has already oriented
+/// the removed polygon and chooses the reverse traversal needed for the opened
+/// loop.
+#[cfg(feature = "exact-triangulation")]
+fn polygon_has_edge_between(polygon: &[Point3], left: &Point3, right: &Point3) -> bool {
+    (0..polygon.len()).any(|index| {
+        let start = &polygon[index];
+        let end = &polygon[(index + 1) % polygon.len()];
+        (points_equal(start, left) && points_equal(end, right))
+            || (points_equal(start, right) && points_equal(end, left))
+    })
 }
 
 #[cfg(feature = "exact-triangulation")]

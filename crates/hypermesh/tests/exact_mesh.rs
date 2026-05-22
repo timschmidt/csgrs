@@ -11143,6 +11143,111 @@ fn exact_coplanar_surface_cutter_hole_contact_accepts_straddling_overlap_pair() 
 
 #[cfg(feature = "exact-triangulation")]
 #[test]
+fn exact_coplanar_surface_cutter_hole_contact_accepts_affine_outer_opening() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 20, 4, 0, 18, 18, 0, -2, 14, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let right = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            7, 5, 0, 12, 6, 0, 8, 9, 0, //
+            5, 1, 0, 10, 2, 0, 8, 7, 0,
+        ],
+        &[
+            0, 1, 2, //
+            3, 4, 5,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+
+    assert!(
+        hypermesh::exact::arrange_coplanar_convex_surface_component_holed_difference(&left, &right)
+            .is_none()
+    );
+    let opened =
+        hypermesh::exact::arrange_coplanar_surface_cutter_hole_contact_difference(&left, &right)
+            .expect("affine convex outer side opening should materialize one exact loop");
+    opened.validate().unwrap();
+    opened
+        .validate_cutter_hole_contact_difference_against_sources(&left, &right)
+        .unwrap();
+    assert!(opened.polygon.len() > 8);
+    assert!(
+        opened
+            .polygon
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(5))
+                && real_eq(&point.y, &ExactReal::from(1)))
+    );
+    assert!(
+        opened
+            .polygon
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(10))
+                && real_eq(&point.y, &ExactReal::from(2)))
+    );
+    let preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    preflight.validate().unwrap();
+    preflight.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceCutterHoleContactDifference
+    );
+    let result = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    result
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::
+                CoplanarSurfaceCutterHoleContactDifference
+        }
+    );
+
+    let corner_attachment = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            7, 5, 0, 12, 6, 0, 8, 9, 0, //
+            0, 0, 0, 10, 2, 0, 8, 7, 0,
+        ],
+        &[
+            0, 1, 2, //
+            3, 4, 5,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_cutter_hole_contact_difference(
+            &left,
+            &corner_attachment,
+        )
+        .is_none()
+    );
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
 fn exact_coplanar_surface_cutter_hole_contact_accepts_pairwise_overlap_graph() {
     let left = ExactMesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 20, 0, 0, 20, 20, 0, 0, 20, 0],
@@ -11751,13 +11856,15 @@ fn exact_coplanar_affine_surface_cells_materialize_rotated_nonconvex_outputs() {
         basis_u,
         basis_v,
     );
-    assert!(
-        hypermesh::exact::arrange_coplanar_surface_cutter_hole_contact_difference(
-            &graph_left,
-            &graph_right,
-        )
-        .is_none()
-    );
+    let graph_contact = hypermesh::exact::arrange_coplanar_surface_cutter_hole_contact_difference(
+        &graph_left,
+        &graph_right,
+    )
+    .expect("rotated cutter/hole graph now replays through retained convex side opening");
+    graph_contact.validate().unwrap();
+    graph_contact
+        .validate_cutter_hole_contact_difference_against_sources(&graph_left, &graph_right)
+        .unwrap();
     let graph_difference =
         hypermesh::exact::arrange_coplanar_affine_surface_difference(&graph_left, &graph_right)
             .expect("rotated multi-parallelogram cutter/hole graph should replay through cells");

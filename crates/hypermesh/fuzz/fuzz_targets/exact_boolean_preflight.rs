@@ -2411,6 +2411,81 @@ fn exercise_component_coplanar_difference() {
         straddling_contact_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarSurfaceCutterHoleContactDifference
     );
+    let affine_contact_left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 20, 4, 0, 18, 18, 0, -2, 14, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("affine cutter-hole left fixture must import");
+    let affine_contact_right = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            7, 5, 0, 12, 6, 0, 8, 9, 0, //
+            5, 1, 0, 10, 2, 0, 8, 7, 0,
+        ],
+        &[
+            0, 1, 2, //
+            3, 4, 5,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("affine cutter-hole right fixture must import");
+    let affine_contact = arrange_coplanar_surface_cutter_hole_contact_difference(
+        &affine_contact_left,
+        &affine_contact_right,
+    )
+    .expect("affine cutter-hole side opening should materialize one nonconvex loop");
+    affine_contact.validate().unwrap();
+    affine_contact
+        .validate_cutter_hole_contact_difference_against_sources(
+            &affine_contact_left,
+            &affine_contact_right,
+        )
+        .unwrap();
+    let affine_contact_preflight = preflight_boolean_exact(
+        &affine_contact_left,
+        &affine_contact_right,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("affine cutter-hole preflight should classify shortcut");
+    affine_contact_preflight.validate().unwrap();
+    assert_eq!(
+        affine_contact_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfaceCutterHoleContactDifference
+    );
+    let affine_contact_boolean = hypermesh::exact::boolean_exact(
+        &affine_contact_left,
+        &affine_contact_right,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("affine cutter-hole boolean shortcut should materialize");
+    affine_contact_boolean.validate().unwrap();
+    assert_eq!(
+        affine_contact_boolean.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::
+                CoplanarSurfaceCutterHoleContactDifference
+        }
+    );
+    let affine_corner_contact = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            7, 5, 0, 12, 6, 0, 8, 9, 0, //
+            0, 0, 0, 10, 2, 0, 8, 7, 0,
+        ],
+        &[
+            0, 1, 2, //
+            3, 4, 5,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("affine corner-contact fixture must import");
+    assert!(
+        arrange_coplanar_surface_cutter_hole_contact_difference(
+            &affine_contact_left,
+            &affine_corner_contact,
+        )
+        .is_none()
+    );
     let rectangular_overlap_right = ExactMesh::from_i64_triangles_with_policy(
         &[
             8, 8, 0, 12, 8, 0, 12, 12, 0, 8, 12, 0, //

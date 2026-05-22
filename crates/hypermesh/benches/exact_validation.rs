@@ -3108,6 +3108,24 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
             ValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
+        let affine_contact_left = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 0, 20, 4, 0, 18, 18, 0, -2, 14, 0],
+            &[0, 1, 2, 0, 2, 3],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let affine_contact_right = ExactMesh::from_i64_triangles_with_policy(
+            &[
+                7, 5, 0, 12, 6, 0, 8, 9, 0, //
+                5, 1, 0, 10, 2, 0, 8, 7, 0,
+            ],
+            &[
+                0, 1, 2, //
+                3, 4, 5,
+            ],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
         let pairwise_overlap_graph_right = ExactMesh::from_i64_triangles_with_policy(
             &[
                 8, 4, 0, 11, 7, 0, 8, 8, 0, //
@@ -3499,6 +3517,29 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
                         hypermesh::exact::boolean_exact(
                             &nonrect_contact_left,
                             &straddling_contact_right,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                            ValidationPolicy::ALLOW_BOUNDARY,
+                        )
+                        .unwrap(),
+                        arrange_coplanar_surface_cutter_hole_contact_difference(
+                            &affine_contact_left,
+                            &affine_contact_right,
+                        )
+                        .map(|output| {
+                            output.validate_cutter_hole_contact_difference_against_sources(
+                                &affine_contact_left,
+                                &affine_contact_right,
+                            )
+                        }),
+                        hypermesh::exact::preflight_boolean_exact(
+                            &affine_contact_left,
+                            &affine_contact_right,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                        )
+                        .map(|report| report.validate()),
+                        hypermesh::exact::boolean_exact(
+                            &affine_contact_left,
+                            &affine_contact_right,
                             hypermesh::exact::ExactBooleanOperation::Difference,
                             ValidationPolicy::ALLOW_BOUNDARY,
                         )
