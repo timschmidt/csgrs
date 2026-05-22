@@ -39,8 +39,8 @@ fn sketch_owns_region_and_wires_as_hypercurve_types() {
     assert_eq!(sketch.metadata(), &"native");
     assert_eq!(sketch.material_contour_count(), 1);
     assert_eq!(sketch.wires().len(), 1);
-    assert!(sketch.contains_xy(1.0, 0.5).unwrap());
-    assert!(!sketch.contains_xy(3.5, 0.5).unwrap());
+    assert!(sketch.contains_xy(hr(1.0), hr(0.5)).unwrap());
+    assert!(!sketch.contains_xy(hr(3.5), hr(0.5)).unwrap());
 
     let polylines = sketch.wire_polylines();
     assert_eq!(polylines.len(), 1);
@@ -69,12 +69,18 @@ fn profile_extrude_promotes_height_through_hyperreal() {
 }
 
 #[test]
-fn profile_contains_xy_promotes_query_coordinates_through_hyperreal() {
+fn profile_contains_xy_accepts_hyperreal_query_coordinates() {
     let sketch = Profile::<()>::rectangle(2, hyperreal::Real::from(1), ());
     let half = (hyperreal::Real::from(1) / hyperreal::Real::from(2)).unwrap();
 
-    assert_eq!(sketch.contains_xy(1, half.clone()), Some(true));
-    assert_eq!(sketch.contains_xy(3, half), Some(false));
+    assert_eq!(
+        sketch.contains_xy(hyperreal::Real::from(1), half.clone()),
+        Some(true)
+    );
+    assert_eq!(
+        sketch.contains_xy(hyperreal::Real::from(3), half),
+        Some(false)
+    );
 }
 
 #[test]
@@ -116,7 +122,7 @@ fn closed_rings_become_region_topology_not_sidecar_wires() {
 
     assert_eq!(sketch.material_contour_count(), 1);
     assert!(sketch.wires().is_empty());
-    assert!(sketch.contains_xy(1.0, 1.0).unwrap());
+    assert!(sketch.contains_xy(hr(1.0), hr(1.0)).unwrap());
 }
 
 #[test]
@@ -142,7 +148,7 @@ fn transform_preserves_native_region_and_wire_topology() {
     );
     let moved = sketch.translate(5.0, -2.0, 0.0);
 
-    assert!(moved.contains_xy(6.0, -1.0).unwrap());
+    assert!(moved.contains_xy(hr(6.0), hr(-1.0)).unwrap());
     assert_eq!(moved.wire_polylines()[0], vec![[8.0, -2.0], [9.0, -2.0]]);
     let bounds = moved.bounding_box();
     assert_eq!(bounds.mins.x, 5.0);
@@ -200,9 +206,9 @@ fn disjoint_boolean_preserves_native_hole_roles() {
 
     assert_eq!(union.material_contour_count(), 2);
     assert_eq!(union.hole_contour_count(), 1);
-    assert_eq!(union.contains_xy(0.5, 0.5), Some(true));
-    assert_eq!(union.contains_xy(2.0, 2.0), Some(false));
-    assert_eq!(union.contains_xy(10.5, 0.5), Some(true));
+    assert_eq!(union.contains_xy(hr(0.5), hr(0.5)), Some(true));
+    assert_eq!(union.contains_xy(hr(2.0), hr(2.0)), Some(false));
+    assert_eq!(union.contains_xy(hr(10.5), hr(0.5)), Some(true));
 }
 
 #[test]

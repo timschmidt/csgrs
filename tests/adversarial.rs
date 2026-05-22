@@ -524,7 +524,11 @@ fn adversarial_sketch_polygon_points_uses_hypercurve_points_directly() {
     let sketch = Profile::<()>::polygon_points(&points, ());
 
     assert!(!sketch.is_empty());
-    assert!(sketch.contains_xy(1.0, 0.25).unwrap_or(false));
+    assert!(
+        sketch
+            .contains_xy(hreal_from_f64(1.0).unwrap(), hreal_from_f64(0.25).unwrap())
+            .unwrap_or(false)
+    );
 
     let duplicate = [
         HPoint2::new(hreal_from_f64(0.0).unwrap(), hreal_from_f64(0.0).unwrap()),

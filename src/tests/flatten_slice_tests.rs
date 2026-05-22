@@ -31,7 +31,7 @@ fn flatten_promotes_union_projection_to_hypercurve_region() {
 
     assert!(!flat.as_region().is_empty());
     assert_eq!(flat.material_contour_count(), 1);
-    assert!(flat.contains_xy(0.5, 0.5).unwrap());
+    assert!(flat.contains_xy(hr(0.5), hr(0.5)).unwrap());
 
     assert!(
         !flat.region_profiles().is_empty(),
@@ -54,7 +54,7 @@ fn sketch_from_mesh_uses_same_hypercurve_flatten_path() {
 
     assert!(!sketch.as_region().is_empty());
     assert_eq!(sketch.material_contour_count(), 1);
-    assert!(sketch.contains_xy(1.0, 0.5).unwrap());
+    assert!(sketch.contains_xy(hr(1.0), hr(0.5)).unwrap());
 
     let bbox = sketch.bounding_box();
     assert_eq!(bbox.mins.x, 0.0);
@@ -119,7 +119,7 @@ fn flatten_union_normalizes_opposite_projected_winding() {
 
     let flat = mesh.flatten();
 
-    assert!(flat.contains_xy(1.0, 1.0).unwrap());
+    assert!(flat.contains_xy(hr(1.0), hr(1.0)).unwrap());
     assert_eq!(flat.material_contour_count(), 1);
     let bounds = flat.bounding_box();
     assert_eq!(bounds.mins.x, 0.0);

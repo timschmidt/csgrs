@@ -172,25 +172,21 @@ impl<M: Clone + Send + Sync + Debug> Profile<M> {
             .project_to_finite_profiles(options, &CurvePolicy::certified())
     }
 
-    /// Decided hypercurve-region containment for a promotable XY point.
+    /// Decided hypercurve-region containment for a hyperreal XY point.
     ///
     /// Returns `None` when the point lies on a certified boundary or when
     /// hypercurve cannot decide the classification under the certified policy.
     ///
-    /// Coordinates are promoted through `hyperreal::Real` before constructing a
-    /// native [`Point2`], keeping primitive numbers at the query boundary. This
-    /// follows Yap, "Towards Exact Geometric Computation," *Computational
-    /// Geometry* 7(1-2), 1997
+    /// Coordinates are accepted only as `hyperreal::Real`; primitive numbers
+    /// must be promoted explicitly at API/IO boundaries before querying native
+    /// [`Point2`] topology. This follows Yap, "Towards Exact Geometric
+    /// Computation," *Computational Geometry* 7(1-2), 1997
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-    pub fn contains_xy<X, Y>(&self, x: X, y: Y) -> Option<bool>
-    where
-        X: TryInto<hyperreal::Real>,
-        Y: TryInto<hyperreal::Real>,
-    {
+    pub fn contains_xy(&self, x: hyperreal::Real, y: hyperreal::Real) -> Option<bool> {
         if self.region.is_empty() {
             return None;
         }
-        let point = Point2::new(x.try_into().ok()?, y.try_into().ok()?);
+        let point = Point2::new(x, y);
         match self.region.classify_point(&point, &CurvePolicy::certified()) {
             Classification::Decided(RegionPointLocation::Inside) => Some(true),
             Classification::Decided(RegionPointLocation::Outside) => Some(false),

@@ -2355,6 +2355,11 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
             let Some(mid_y) = hreal_mul(sum_y, 0.5) else {
                 continue;
             };
+            let (Some(mid_x), Some(mid_y)) =
+                (hreal_from_f64(mid_x).ok(), hreal_from_f64(mid_y).ok())
+            else {
+                continue;
+            };
             let keep = self.contains_xy(mid_x, mid_y).unwrap_or(true);
 
             if keep {
