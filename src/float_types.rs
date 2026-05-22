@@ -156,6 +156,7 @@ pub(crate) fn hvector3_cross(
     test,
     feature = "gerber-io",
     feature = "mesh",
+    feature = "sketch",
     feature = "truetype-text"
 ))]
 pub(crate) fn hxy_orientation_sign(
@@ -177,7 +178,7 @@ pub(crate) fn hxy_orientation_sign(
 /// non-collinear turn, which keeps winding classification in hyperreal
 /// predicates without introducing a separate primitive f64 area accumulator.
 /// Degenerate or non-finite rings return `None`.
-#[cfg(any(test, feature = "mesh", feature = "truetype-text"))]
+#[cfg(any(test, feature = "mesh", feature = "sketch", feature = "truetype-text"))]
 pub(crate) fn hxy_ring_orientation_sign(ring: &[[Real; 2]]) -> Option<RealSign> {
     let origin = ring.first()?;
     for pair in ring[1..].windows(2) {
@@ -845,6 +846,7 @@ pub(crate) fn hreal_cmp_f64(lhs: F64, rhs: F64) -> Ordering {
 /// convenience wrapper around [`hreal_cmp_f64`], following Yap's exact
 /// geometric computation boundary model
 /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+#[cfg(any(test, feature = "dxf-io", feature = "gerber-io", feature = "svg-io"))]
 pub(crate) fn hreal_f64_gt(lhs: F64, rhs: F64) -> bool {
     matches!(hreal_cmp_f64(lhs, rhs), Ordering::Greater)
 }
@@ -853,6 +855,7 @@ pub(crate) fn hreal_f64_gt(lhs: F64, rhs: F64) -> bool {
 ///
 /// This keeps boundary closeness checks out of local `f64::abs` arithmetic
 /// where the caller only needs a tolerance predicate.
+#[cfg(any(test, feature = "gerber-io", feature = "truetype-text"))]
 pub(crate) fn hreal_f64s_within_or_equal_tolerance(
     lhs: F64,
     rhs: F64,
@@ -988,7 +991,7 @@ pub(crate) fn hreal_max_report_value(current: Option<Real>, sample: &HReal) -> O
 }
 
 /// Fold an optional f64 reporting boundary minimum with a hyperreal sample.
-#[cfg(any(test, feature = "metaballs", feature = "sdf"))]
+#[cfg(any(feature = "metaballs", feature = "sdf"))]
 pub(crate) fn hreal_min_report_value(current: Option<Real>, sample: &HReal) -> Option<Real> {
     let current = current.map(hreal_from_f64).transpose().ok()?;
     let min = match current {
