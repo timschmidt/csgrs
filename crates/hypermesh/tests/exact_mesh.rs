@@ -12949,6 +12949,21 @@ fn exact_named_booleans_materialize_partial_convex_intersection() {
             .iter()
             .all(|classification| classification.relation.is_strictly_decided())
     );
+    let mut mislabeled_union = union.clone();
+    mislabeled_union.kind = hypermesh::exact::ExactBooleanResultKind::WindingMaterialized {
+        operation: hypermesh::exact::ExactBooleanOperation::Difference,
+    };
+    assert_eq!(
+        mislabeled_union.validate().unwrap_err(),
+        hypermesh::exact::ExactReportValidationError::WindingMaterializedAssemblyViolatesOperation
+    );
+    let mut wrong_union_orientation = union.clone();
+    wrong_union_orientation.assembly.triangles[0].orientation =
+        hypermesh::exact::ExactOutputTriangleOrientation::ReverseSource;
+    assert_eq!(
+        wrong_union_orientation.validate().unwrap_err(),
+        hypermesh::exact::ExactReportValidationError::WindingMaterializedAssemblyViolatesOperation
+    );
     let mut missing_volumetric = union.clone();
     missing_volumetric.volumetric_classifications.clear();
     assert_eq!(
@@ -13011,6 +13026,21 @@ fn exact_named_booleans_materialize_partial_convex_intersection() {
             .iter()
             .any(|triangle| triangle.orientation
                 == hypermesh::exact::ExactOutputTriangleOrientation::ReverseSource)
+    );
+    let mut wrong_difference_orientation = difference.clone();
+    let reversed_triangle = wrong_difference_orientation
+        .assembly
+        .triangles
+        .iter_mut()
+        .find(|triangle| {
+            triangle.orientation == hypermesh::exact::ExactOutputTriangleOrientation::ReverseSource
+        })
+        .expect("difference should retain a reversed right-hand cell");
+    reversed_triangle.orientation =
+        hypermesh::exact::ExactOutputTriangleOrientation::PreserveSource;
+    assert_eq!(
+        wrong_difference_orientation.validate().unwrap_err(),
+        hypermesh::exact::ExactReportValidationError::WindingMaterializedAssemblyViolatesOperation
     );
 }
 

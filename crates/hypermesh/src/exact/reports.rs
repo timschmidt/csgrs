@@ -35,8 +35,9 @@ use super::intersection::MeshFacePairRelation;
 use super::provenance::PredicateUse;
 #[cfg(feature = "exact-triangulation")]
 use super::region::{
-    ExactBooleanAssemblyPlan, ExactRegionSelection, FaceRegionPlaneClassification,
-    FaceRegionPlaneValidationError, FaceRegionTriangulation, boundary_node_point,
+    ExactBooleanAssemblyPlan, ExactOutputTriangle, ExactOutputTriangleOrientation,
+    ExactRegionSelection, FaceRegionPlaneClassification, FaceRegionPlaneValidationError,
+    FaceRegionTriangulation, boundary_node_point,
 };
 #[cfg(feature = "exact-triangulation")]
 use super::validation::ValidationPolicy;
@@ -135,6 +136,9 @@ pub enum ExactReportValidationError {
     /// A selected-region result retained output triangles from a source side
     /// excluded by its declared selection policy.
     SelectedRegionAssemblyViolatesSelection,
+    /// A winding-materialized result retained output triangles that do not
+    /// match the declared operation's per-cell volumetric retention policy.
+    WindingMaterializedAssemblyViolatesOperation,
     /// A certified graph shortcut retained graph events that contradict the
     /// shortcut status.
     UnexpectedGraphEvents,
@@ -909,6 +913,15 @@ impl ExactBooleanResult {
             validate_output_mesh_matches_assembly(&self.assembly, &self.mesh)?;
         }
 
+        if let ExactBooleanResultKind::WindingMaterialized { operation } = self.kind {
+            validate_winding_materialized_assembly_matches_operation(
+                operation,
+                &self.triangulations,
+                &self.volumetric_classifications,
+                &self.assembly,
+            )?;
+        }
+
         let ExactBooleanResultKind::SelectedRegions { selection } = self.kind else {
             return Ok(());
         };
@@ -1006,6 +1019,203 @@ impl ExactBooleanResult {
             Err(ExactReportValidationError::SourceReplayMismatch)
         }
     }
+}
+
+#[cfg(feature = "exact-triangulation")]
+/// Local per-cell retention state for a winding-materialized result.
+///
+/// This mirrors the named-boolean assembly policy, but lives in the public
+/// report validator so a copied result can be audited without re-running the
+/// boolean executor. Keeping the operation decision replayable from retained
+/// per-cell winding facts follows Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997): a materialized topology result is
+/// only valid while the retained predicate facts still justify exactly the
+/// emitted combinatorics.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum WindingCellRetention {
+    Drop,
+    Keep,
+    KeepReversed,
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn validate_winding_materialized_assembly_matches_operation(
+    operation: ExactBooleanOperation,
+    triangulations: &[FaceRegionTriangulation],
+    classifications: &[ExactVolumetricRegionClassification],
+    assembly: &ExactBooleanAssemblyPlan,
+) -> Result<(), ExactReportValidationError> {
+    for triangulation in triangulations {
+        for triangle in triangulation.triangles.chunks_exact(3) {
+            let triangle = [triangle[0], triangle[1], triangle[2]];
+            let expected = winding_cell_retention_for_operation(
+                operation,
+                triangulation,
+                triangle,
+                classifications,
+            );
+            let matches = assembly
+                .triangles
+                .iter()
+                .filter(|output| {
+                    output.source_side == triangulation.side
+                        && output.source_face == triangulation.face
+                        && output_triangle_matches_triangulated_cell(
+                            output,
+                            assembly,
+                            triangulation,
+                            triangle,
+                        )
+                })
+                .collect::<Vec<_>>();
+            match expected {
+                WindingCellRetention::Drop if !matches.is_empty() => {
+                    return Err(
+                        ExactReportValidationError::WindingMaterializedAssemblyViolatesOperation,
+                    );
+                }
+                WindingCellRetention::Keep | WindingCellRetention::KeepReversed => {
+                    if matches.len() != 1 {
+                        return Err(
+                            ExactReportValidationError::WindingMaterializedAssemblyViolatesOperation,
+                        );
+                    }
+                    let expected_orientation = match expected {
+                        WindingCellRetention::Keep => {
+                            ExactOutputTriangleOrientation::PreserveSource
+                        }
+                        WindingCellRetention::KeepReversed => {
+                            ExactOutputTriangleOrientation::ReverseSource
+                        }
+                        WindingCellRetention::Drop => unreachable!("handled above"),
+                    };
+                    if matches[0].orientation != expected_orientation {
+                        return Err(
+                            ExactReportValidationError::WindingMaterializedAssemblyViolatesOperation,
+                        );
+                    }
+                }
+                WindingCellRetention::Drop => {}
+            }
+        }
+    }
+
+    for output in &assembly.triangles {
+        if !triangulations.iter().any(|triangulation| {
+            triangulation.side == output.source_side
+                && triangulation.face == output.source_face
+                && triangulation.triangles.chunks_exact(3).any(|triangle| {
+                    output_triangle_matches_triangulated_cell(
+                        output,
+                        assembly,
+                        triangulation,
+                        [triangle[0], triangle[1], triangle[2]],
+                    )
+                })
+        }) {
+            return Err(ExactReportValidationError::WindingMaterializedAssemblyViolatesOperation);
+        }
+    }
+
+    Ok(())
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn winding_cell_retention_for_operation(
+    operation: ExactBooleanOperation,
+    triangulation: &FaceRegionTriangulation,
+    triangle: [usize; 3],
+    classifications: &[ExactVolumetricRegionClassification],
+) -> WindingCellRetention {
+    let Some(classification) = classifications.iter().find(|classification| {
+        classification.region_side == triangulation.side
+            && classification.region_face == triangulation.face
+            && classification.triangle == triangle
+    }) else {
+        return WindingCellRetention::Drop;
+    };
+    // Boundary cells are exact non-strict facts, not inside/outside guesses.
+    // The executor consumes them through the deterministic owner policy
+    // documented in `boolean::volumetric_retention_for_operation`: union and
+    // intersection keep the left boundary copy and drop the coincident right
+    // copy, while difference drops coincident boundary cells. This preserves
+    // Yap's predicate/construction boundary by making the non-strict state
+    // explicit in retained report validation.
+    match (operation, triangulation.side, classification.relation) {
+        (
+            ExactBooleanOperation::Union,
+            _,
+            super::volumetric::ExactVolumetricRegionRelation::Outside,
+        )
+        | (
+            ExactBooleanOperation::Union,
+            MeshSide::Left,
+            super::volumetric::ExactVolumetricRegionRelation::Boundary,
+        )
+        | (
+            ExactBooleanOperation::Intersection,
+            _,
+            super::volumetric::ExactVolumetricRegionRelation::Inside,
+        )
+        | (
+            ExactBooleanOperation::Intersection,
+            MeshSide::Left,
+            super::volumetric::ExactVolumetricRegionRelation::Boundary,
+        )
+        | (
+            ExactBooleanOperation::Difference,
+            MeshSide::Left,
+            super::volumetric::ExactVolumetricRegionRelation::Outside,
+        ) => WindingCellRetention::Keep,
+        (
+            ExactBooleanOperation::Difference,
+            MeshSide::Right,
+            super::volumetric::ExactVolumetricRegionRelation::Inside,
+        ) => WindingCellRetention::KeepReversed,
+        _ => WindingCellRetention::Drop,
+    }
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn output_triangle_matches_triangulated_cell(
+    output: &ExactOutputTriangle,
+    assembly: &ExactBooleanAssemblyPlan,
+    triangulation: &FaceRegionTriangulation,
+    triangle: [usize; 3],
+) -> bool {
+    let Some(output_points) = output
+        .vertices
+        .iter()
+        .map(|&vertex| assembly.vertices.get(vertex).map(|vertex| &vertex.point))
+        .collect::<Option<Vec<_>>>()
+    else {
+        return false;
+    };
+    let Some(cell_points) = triangle
+        .iter()
+        .map(|&vertex| triangulation.boundary.get(vertex).map(boundary_node_point))
+        .collect::<Option<Vec<_>>>()
+    else {
+        return false;
+    };
+    exact_point_sets_equal(&output_points, &cell_points)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn exact_point_sets_equal(left: &[&Point3], right: &[&Point3]) -> bool {
+    if left.len() != right.len() {
+        return false;
+    }
+    let mut matched = vec![false; right.len()];
+    for left_point in left {
+        let Some(index) = right.iter().enumerate().position(|(index, right_point)| {
+            !matched[index] && points_equal(left_point, right_point)
+        }) else {
+            return false;
+        };
+        matched[index] = true;
+    }
+    true
 }
 
 #[cfg(feature = "exact-triangulation")]

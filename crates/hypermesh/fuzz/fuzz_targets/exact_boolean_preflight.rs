@@ -4299,6 +4299,31 @@ fn exercise_non_rectilinear_coplanar_volumetric_materialization() {
             )
             .unwrap();
         assert!(result.mesh.facts().mesh.closed_manifold);
+        if operation == ExactBooleanOperation::Union {
+            let mut mislabeled = result.clone();
+            mislabeled.kind = hypermesh::exact::ExactBooleanResultKind::WindingMaterialized {
+                operation: ExactBooleanOperation::Difference,
+            };
+            assert!(matches!(
+                mislabeled.validate(),
+                Err(
+                    hypermesh::exact::ExactReportValidationError::
+                        WindingMaterializedAssemblyViolatesOperation
+                )
+            ));
+            let mut wrong_orientation = result.clone();
+            if let Some(triangle) = wrong_orientation.assembly.triangles.first_mut() {
+                triangle.orientation =
+                    hypermesh::exact::ExactOutputTriangleOrientation::ReverseSource;
+                assert!(matches!(
+                    wrong_orientation.validate(),
+                    Err(
+                        hypermesh::exact::ExactReportValidationError::
+                            WindingMaterializedAssemblyViolatesOperation
+                    )
+                ));
+            }
+        }
     }
 }
 

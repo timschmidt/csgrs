@@ -5460,6 +5460,32 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
             },
         );
 
+        let mut non_rectilinear_wrong_operation = hypermesh::exact::boolean_exact(
+            &non_rectilinear_coplanar_left,
+            &non_rectilinear_coplanar_right,
+            hypermesh::exact::ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap();
+        non_rectilinear_wrong_operation.kind =
+            hypermesh::exact::ExactBooleanResultKind::WindingMaterialized {
+                operation: hypermesh::exact::ExactBooleanOperation::Difference,
+            };
+        let mut non_rectilinear_wrong_orientation = hypermesh::exact::boolean_exact(
+            &non_rectilinear_coplanar_left,
+            &non_rectilinear_coplanar_right,
+            hypermesh::exact::ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap();
+        if let Some(triangle) = non_rectilinear_wrong_orientation
+            .assembly
+            .triangles
+            .first_mut()
+        {
+            triangle.orientation = hypermesh::exact::ExactOutputTriangleOrientation::ReverseSource;
+        }
+
         c.bench_function(
             "exact_boolean_non_rectilinear_coplanar_volumetric_cells",
             |b| {
@@ -5492,6 +5518,8 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
                             ValidationPolicy::CLOSED,
                         )
                         .unwrap(),
+                        non_rectilinear_wrong_operation.validate().is_err(),
+                        non_rectilinear_wrong_orientation.validate().is_err(),
                     )
                 })
             },
