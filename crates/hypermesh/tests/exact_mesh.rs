@@ -11242,13 +11242,17 @@ fn exact_coplanar_surface_cutter_hole_contact_accepts_pairwise_overlap_graph() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    assert!(
+    let triple_difference =
         hypermesh::exact::arrange_coplanar_surface_cutter_hole_contact_difference(
             &left,
             &triple_overlap_graph,
         )
-        .is_none()
-    );
+        .expect("triple-overlapping cutter/hole graph should replay finite inclusion-exclusion");
+    triple_difference.validate().unwrap();
+    triple_difference
+        .validate_cutter_hole_contact_difference_against_sources(&left, &triple_overlap_graph)
+        .unwrap();
+    assert!(triple_difference.polygon.len() > 10);
 }
 
 #[cfg(feature = "exact-triangulation")]

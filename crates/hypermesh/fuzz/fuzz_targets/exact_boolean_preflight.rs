@@ -2481,12 +2481,28 @@ fn exercise_component_coplanar_difference() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .expect("triple-overlap cutter-hole graph fixture must import");
-    assert!(
-        arrange_coplanar_surface_cutter_hole_contact_difference(
+    let triple_overlap_graph = arrange_coplanar_surface_cutter_hole_contact_difference(
+        &nonrect_contact_left,
+        &triple_overlap_graph_right,
+    )
+    .expect("triple-overlap cutter-hole graph should materialize one nonconvex loop");
+    triple_overlap_graph.validate().unwrap();
+    triple_overlap_graph
+        .validate_cutter_hole_contact_difference_against_sources(
             &nonrect_contact_left,
             &triple_overlap_graph_right,
         )
-        .is_none()
+        .unwrap();
+    let triple_overlap_graph_preflight = preflight_boolean_exact(
+        &nonrect_contact_left,
+        &triple_overlap_graph_right,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("triple-overlap cutter-hole graph preflight should classify shortcut");
+    triple_overlap_graph_preflight.validate().unwrap();
+    assert_eq!(
+        triple_overlap_graph_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfaceCutterHoleContactDifference
     );
     let nonrect_contact_chain_right = ExactMesh::from_i64_triangles_with_policy(
         &[

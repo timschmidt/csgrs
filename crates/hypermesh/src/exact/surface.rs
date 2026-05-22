@@ -4252,19 +4252,19 @@ fn two_convex_cutter_hole_removed_polygon(
 /// This is the multi-component sibling of
 /// [`two_convex_cutter_hole_removed_polygon`]. It accepts only a
 /// connected interaction graph whose convex regions either touch through
-/// positive-length boundary intervals or overlap in positive area. Positive
-/// triple-overlap, point-only contact, disconnected holes, and branch
-/// structures that do not stitch into exactly one simple loop remain
-/// unsupported. The acceptance rule is the same exact-state rule Yap gives in
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997): the shortcut promotes topology only from retained predicates and
-/// exact area replay. Boundary fragments follow Weiler and Atherton, "Hidden
-/// Surface Removal Using Polygon Area Sorting," *SIGGRAPH Computer Graphics*
-/// 11.2 (1977), segment contact decisions use Guigue and Devillers, "Fast and
-/// Robust Triangle-Triangle Overlap Test Using Orientation Predicates,"
-/// *Journal of Graphics Tools* 8.1 (2003), and the bounded pairwise-overlap
-/// area replay is the finite inclusion-exclusion certificate described by
-/// Yap's exact-computation model.
+/// positive-length boundary intervals or overlap in positive area. Point-only
+/// contact, disconnected holes, high-order graphs beyond the retained
+/// inclusion-exclusion cap, and branch structures that do not stitch into
+/// exactly one simple loop remain unsupported. The acceptance rule is the same
+/// exact-state rule Yap gives in "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997): the shortcut promotes topology only
+/// from retained predicates and exact area replay. Boundary fragments follow
+/// Weiler and Atherton, "Hidden Surface Removal Using Polygon Area Sorting,"
+/// *SIGGRAPH Computer Graphics* 11.2 (1977), segment contact decisions use
+/// Guigue and Devillers, "Fast and Robust Triangle-Triangle Overlap Test Using
+/// Orientation Predicates," *Journal of Graphics Tools* 8.1 (2003), and the
+/// bounded overlap area replay is an exact finite inclusion-exclusion
+/// certificate over retained convex intersections.
 #[cfg(feature = "exact-triangulation")]
 fn connected_convex_contact_union_polygon(
     regions: &[Vec<Point3>],
@@ -4395,75 +4395,71 @@ fn multi_convex_contact_union_area_matches_inputs(
     projection: CoplanarProjection,
 ) -> Option<bool> {
     let union_area = projected_area2_abs(polygon, projection)?;
-    let mut expected = ExactReal::from(0);
-    for region in regions {
-        expected = add(&expected, &projected_area2_abs(region, projection)?);
-    }
-    for left in 0..regions.len() {
-        for right in left + 1..regions.len() {
-            let intersection =
-                convex_polygon_intersection_boundary(&regions[left], &regions[right], projection)?;
-            if intersection.len() >= 3 {
-                let intersection_area = projected_area2_abs(&intersection, projection)?;
-                if compare_reals(&intersection_area, &ExactReal::from(0)).value()
-                    == Some(Ordering::Greater)
-                {
-                    expected = sub(&expected, &intersection_area);
-                }
-            }
-        }
-    }
-    if convex_regions_have_positive_triple_overlap(regions, projection)? {
-        return Some(false);
-    }
+    let expected = convex_region_union_area_inclusion_exclusion(regions, projection)?;
     Some(compare_reals(&union_area, &expected).value() == Some(Ordering::Equal))
 }
 
+/// Replay a bounded convex union area by finite inclusion-exclusion.
+///
+/// This helper is deliberately small rather than a general arrangement engine:
+/// every nonempty subset is intersected exactly by repeated convex clipping,
+/// and the alternating subset areas are compared with the stitched boundary
+/// area by [`multi_convex_contact_union_area_matches_inputs`]. The cap keeps
+/// the certificate replay bounded and auditable, preserving Yap's retained
+/// exact-object discipline from "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997).
 #[cfg(feature = "exact-triangulation")]
-fn convex_regions_have_positive_triple_overlap(
+fn convex_region_union_area_inclusion_exclusion(
     regions: &[Vec<Point3>],
     projection: CoplanarProjection,
-) -> Option<bool> {
-    for first in 0..regions.len() {
-        for second in first + 1..regions.len() {
-            let first_second = simplify_projected_polygon(
-                convex_polygon_intersection_boundary(
-                    &regions[first],
-                    &regions[second],
-                    projection,
-                )?,
-                projection,
-            );
-            if first_second.len() < 3
-                || compare_reals(
-                    &projected_area2_abs(&first_second, projection)?,
-                    &ExactReal::from(0),
-                )
-                .value()
-                    != Some(Ordering::Greater)
-            {
-                continue;
-            }
-            for third_region in regions.iter().skip(second + 1) {
-                let triple = simplify_projected_polygon(
-                    clip_convex_polygon(&first_second, third_region, projection)
-                        .unwrap_or_default(),
-                    projection,
-                );
-                if triple.len() >= 3
-                    && compare_reals(
-                        &projected_area2_abs(&triple, projection)?,
-                        &ExactReal::from(0),
-                    )
-                    .value()
-                        == Some(Ordering::Greater)
-                {
-                    return Some(true);
-                }
-            }
+) -> Option<ExactReal> {
+    const MAX_INCLUSION_EXCLUSION_REGIONS: usize = 8;
+    if regions.is_empty() || regions.len() > MAX_INCLUSION_EXCLUSION_REGIONS {
+        return None;
+    }
+
+    let subset_count = 1usize.checked_shl(regions.len() as u32)?;
+    let mut area = ExactReal::from(0);
+    for mask in 1..subset_count {
+        let subset_area = convex_region_subset_intersection_area(regions, projection, mask)?;
+        if mask.count_ones() % 2 == 1 {
+            area = add(&area, &subset_area);
+        } else {
+            area = sub(&area, &subset_area);
         }
     }
-    Some(false)
+    Some(area)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn convex_region_subset_intersection_area(
+    regions: &[Vec<Point3>],
+    projection: CoplanarProjection,
+    mask: usize,
+) -> Option<ExactReal> {
+    let mut intersection = None::<Vec<Point3>>;
+    for (index, region) in regions.iter().enumerate() {
+        if mask & (1usize << index) == 0 {
+            continue;
+        }
+        intersection = Some(if let Some(current) = intersection {
+            simplify_projected_polygon(
+                clip_convex_polygon(&current, region, projection).unwrap_or_default(),
+                projection,
+            )
+        } else {
+            region.clone()
+        });
+        if intersection.as_ref()?.len() < 3 {
+            return Some(ExactReal::from(0));
+        }
+    }
+    let intersection = intersection?;
+    if intersection.len() < 3 {
+        Some(ExactReal::from(0))
+    } else {
+        projected_area2_abs(&intersection, projection)
+    }
 }
 
 #[cfg(feature = "exact-triangulation")]
