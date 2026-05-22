@@ -43,6 +43,13 @@ doc = false
 bench = false
 
 [[bin]]
+name = "mesh_artifact_manifest"
+path = "fuzz_targets/mesh_artifact_manifest.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
 name = "exact_boolean_preflight"
 path = "fuzz_targets/exact_boolean_preflight.rs"
 test = false

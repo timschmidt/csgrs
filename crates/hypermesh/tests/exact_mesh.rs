@@ -15,11 +15,14 @@ use hypermesh::exact::{
     ExactMeshProposalAcceptance, ExactMeshProposalReportError, ExactMeshProposalSourceKind,
     ExactPoint3, ExactReal, ExactSplitTopologyPlan, FacePairEvents, FaceRegionBoundary,
     FaceSplitBoundaryChain, FaceSplitBoundaryNode, FaceSplitEdge, FaceSplitGeometry, FaceSplitPlan,
-    IntersectionEvent, MeshFacePairRelation, MeshSide, MeshSource, SegmentPlaneRelation, Severity,
-    SourceProvenance, SplitEdgeChain, SplitEdgeNode, SplitPlanDiagnosticKind, Triangle,
-    TrianglePlaneRelation, TriangleTriangleRelation, ValidationPolicy, VertexLinkKind,
-    audit_exact_mesh, build_intersection_graph, certify_convex_solid, certify_exact_mesh_proposal,
-    classify_coplanar_triangles, classify_mesh_face_pair, classify_mesh_face_pairs,
+    IntersectionEvent, MeshArtifactBlocker, MeshArtifactFaceRecord, MeshArtifactManifest,
+    MeshArtifactRole, MeshArtifactSourceKind, MeshArtifactVertexRecord, MeshCoordinateEvidence,
+    MeshFacePairRelation, MeshNumericAdapterContract, MeshSide, MeshSource, MeshTopologyEvidence,
+    SegmentPlaneRelation, Severity, SourceProvenance, SplitEdgeChain, SplitEdgeNode,
+    SplitPlanDiagnosticKind, Triangle, TrianglePlaneRelation, TriangleTriangleRelation,
+    ValidationPolicy, VertexLinkKind, audit_exact_mesh, build_intersection_graph,
+    certify_convex_solid, certify_exact_mesh_proposal, classify_coplanar_triangles,
+    classify_mesh_face_pair, classify_mesh_face_pairs,
     classify_mesh_triangle_against_retained_face_plane,
     classify_mesh_vertices_against_convex_solid,
     classify_mesh_vertices_against_convex_solid_report, classify_point_against_convex_solid,
@@ -16035,6 +16038,418 @@ fn exact_mesh_boundary_policy_constructs_open_mesh_explicitly() {
 
     assert_eq!(mesh.facts().mesh.boundary_edges, 3);
     assert!(!mesh.facts().mesh.closed_manifold);
+}
+
+#[test]
+fn shared_mesh_artifact_from_exact_mesh_is_validation_ready() {
+    let mesh = ExactMesh::from_i64_triangles(
+        &[
+            0, 0, 0, //
+            1, 0, 0, //
+            0, 1, 0, //
+            0, 0, 1,
+        ],
+        &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+    )
+    .unwrap();
+
+    let manifest = MeshArtifactManifest::from_exact_mesh(&mesh).unwrap();
+    let report = manifest.report();
+
+    assert_eq!(manifest.source_kind, MeshArtifactSourceKind::HypermeshExact);
+    assert_eq!(
+        manifest.numeric_contract.coordinate_evidence,
+        MeshCoordinateEvidence::ExactRational
+    );
+    assert_eq!(manifest.role, MeshArtifactRole::SolidHandoff);
+    assert_eq!(manifest.vertices.len(), mesh.vertices().len());
+    assert_eq!(manifest.faces.len(), mesh.triangles().len());
+    assert!(report.source_current);
+    assert!(report.coordinates_exact_replay_ready);
+    assert!(report.topology_validation_replay_ready);
+    assert!(report.validation_handoff_ready);
+    assert!(report.blockers.is_empty());
+}
+
+#[test]
+fn shared_mesh_artifact_keeps_lossy_f64_replay_visible() {
+    let (positions, indices) = tetrahedron();
+    let mesh = ExactMesh::from_f64_triangles(&positions, &indices).unwrap();
+
+    let report = MeshArtifactManifest::from_exact_mesh(&mesh)
+        .unwrap()
+        .report();
+
+    assert_eq!(
+        report.source_kind,
+        MeshArtifactSourceKind::HypermeshLossyF64Replay
+    );
+    assert_eq!(
+        report.numeric_contract.coordinate_evidence,
+        MeshCoordinateEvidence::ExactDyadicFromLossyFloat
+    );
+    assert!(report.numeric_contract.primitive_float_lowering);
+    assert!(report.numeric_contract.lossy_adapter_route);
+    assert!(report.coordinates_exact_replay_ready);
+    assert!(report.validation_handoff_ready);
+}
+
+#[test]
+fn shared_mesh_artifact_preview_summary_never_becomes_topology_handoff() {
+    let manifest =
+        MeshArtifactManifest::sdf_surface_nets_preview("sdf sphere surface-nets preview", 8, 12);
+
+    let report = manifest.report();
+
+    assert_eq!(report.role, MeshArtifactRole::Preview);
+    assert!(report.preview_only);
+    assert!(!report.coordinates_exact_replay_ready);
+    assert!(!report.topology_validation_replay_ready);
+    assert!(!report.validation_handoff_ready);
+    assert!(
+        report
+            .blockers
+            .contains(&MeshArtifactBlocker::MissingOrMismatchedVertexRecords)
+    );
+    assert!(
+        report
+            .blockers
+            .contains(&MeshArtifactBlocker::MissingOrMismatchedFaceRecords)
+    );
+    assert!(
+        report
+            .blockers
+            .contains(&MeshArtifactBlocker::PreviewOrExportOnly)
+    );
+    assert!(
+        report
+            .blockers
+            .contains(&MeshArtifactBlocker::PreviewOrExportSource)
+    );
+}
+
+#[test]
+fn shared_mesh_artifact_reports_stale_and_invalid_face_records() {
+    let mesh = ExactMesh::from_i64_triangles(
+        &[
+            0, 0, 0, //
+            1, 0, 0, //
+            0, 1, 0, //
+            0, 0, 1,
+        ],
+        &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+    )
+    .unwrap();
+    let mut manifest = MeshArtifactManifest::from_exact_mesh(&mesh).unwrap();
+    manifest.expected_source_version = Some(manifest.source_version + 1);
+    manifest.faces[0].vertices[0] = manifest.declared_vertex_count;
+
+    let report = manifest.report();
+
+    assert!(!report.source_current);
+    assert!(!report.validation_handoff_ready);
+    assert!(
+        report
+            .blockers
+            .contains(&MeshArtifactBlocker::SourceVersionMismatch)
+    );
+    assert!(
+        report
+            .blockers
+            .contains(&MeshArtifactBlocker::FaceVertexOutOfRange)
+    );
+}
+
+#[test]
+fn shared_mesh_artifact_manual_derived_records_require_exact_evidence() {
+    let vertices = (0..4)
+        .map(|index| MeshArtifactVertexRecord {
+            index,
+            coordinate_evidence: MeshCoordinateEvidence::CertifiedDerivedExact,
+        })
+        .collect::<Vec<_>>();
+    let faces = vec![
+        MeshArtifactFaceRecord {
+            index: 0,
+            vertices: vec![0, 1, 2],
+            topology_evidence: MeshTopologyEvidence::DerivedExactSurfaceHandoff,
+        },
+        MeshArtifactFaceRecord {
+            index: 1,
+            vertices: vec![0, 2, 3],
+            topology_evidence: MeshTopologyEvidence::DerivedExactSurfaceHandoff,
+        },
+    ];
+    let manifest = MeshArtifactManifest::brep_tessellation_handoff(
+        "brep exact planar face tessellation",
+        7,
+        vertices,
+        faces,
+    );
+
+    let report = manifest.report();
+
+    assert!(report.coordinates_exact_replay_ready);
+    assert!(report.topology_validation_replay_ready);
+    assert!(report.validation_handoff_ready);
+    assert!(report.blockers.is_empty());
+}
+
+#[test]
+fn shared_mesh_artifact_proposal_adapter_replays_source_report() {
+    let mesh = ExactMesh::new_with_policy(
+        vec![
+            ExactPoint3::new(ExactReal::from(0), ExactReal::from(0), ExactReal::from(0)),
+            ExactPoint3::new(ExactReal::from(1), ExactReal::from(0), ExactReal::from(0)),
+            ExactPoint3::new(ExactReal::from(0), ExactReal::from(1), ExactReal::from(0)),
+        ],
+        vec![Triangle([0, 1, 2])],
+        SourceProvenance::external_adapter("artifact proposal adapter"),
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let proposal = certify_exact_mesh_proposal(&mesh).unwrap();
+
+    let manifest = MeshArtifactManifest::from_exact_mesh_proposal(&mesh, &proposal).unwrap();
+    let report =
+        hypermesh::exact::mesh_artifact_from_exact_mesh_proposal(&mesh, &proposal).unwrap();
+
+    assert_eq!(
+        manifest.source_kind,
+        MeshArtifactSourceKind::HypermeshExternalAdapterReplay
+    );
+    assert_eq!(
+        report.numeric_contract.coordinate_evidence,
+        MeshCoordinateEvidence::CertifiedDerivedExact
+    );
+    assert!(report.numeric_contract.lossy_adapter_route);
+    assert!(report.validation_handoff_ready);
+
+    let mut stale = proposal.clone();
+    stale.source_label.push_str(" stale");
+    assert!(MeshArtifactManifest::from_exact_mesh_proposal(&mesh, &stale).is_err());
+}
+
+#[test]
+fn shared_mesh_artifact_rejects_preview_source_relabeling_attempt() {
+    let vertices = (0..3)
+        .map(|index| MeshArtifactVertexRecord {
+            index,
+            coordinate_evidence: MeshCoordinateEvidence::CertifiedDerivedExact,
+        })
+        .collect::<Vec<_>>();
+    let faces = vec![MeshArtifactFaceRecord {
+        index: 0,
+        vertices: vec![0, 1, 2],
+        topology_evidence: MeshTopologyEvidence::DerivedExactSurfaceHandoff,
+    }];
+    let manifest = MeshArtifactManifest::new(
+        MeshArtifactSourceKind::SdfSurfaceNetsPreview,
+        "maliciously relabeled surface-nets preview",
+        11,
+        MeshArtifactRole::DerivedHandoff,
+        MeshNumericAdapterContract::exact(MeshCoordinateEvidence::CertifiedDerivedExact),
+        vertices,
+        faces,
+    );
+
+    let report = manifest.report();
+
+    assert!(report.coordinates_exact_replay_ready);
+    assert!(report.topology_validation_replay_ready);
+    assert!(report.preview_only);
+    assert!(!report.validation_handoff_ready);
+    assert!(
+        report
+            .blockers
+            .contains(&MeshArtifactBlocker::PreviewOrExportSource)
+    );
+    assert!(
+        report
+            .blockers
+            .contains(&MeshArtifactBlocker::PreviewOrExportOnly)
+    );
+}
+
+#[test]
+fn shared_mesh_artifact_requires_source_replay_for_handoff() {
+    let vertices = (0..3)
+        .map(|index| MeshArtifactVertexRecord {
+            index,
+            coordinate_evidence: MeshCoordinateEvidence::CertifiedDerivedExact,
+        })
+        .collect::<Vec<_>>();
+    let faces = vec![MeshArtifactFaceRecord {
+        index: 0,
+        vertices: vec![0, 1, 2],
+        topology_evidence: MeshTopologyEvidence::DerivedExactSurfaceHandoff,
+    }];
+    let manifest = MeshArtifactManifest::new(
+        MeshArtifactSourceKind::BrepTessellation,
+        "brep tessellation without source replay",
+        3,
+        MeshArtifactRole::DerivedHandoff,
+        MeshNumericAdapterContract {
+            coordinate_evidence: MeshCoordinateEvidence::CertifiedDerivedExact,
+            exact_coordinate_replay: true,
+            primitive_float_lowering: false,
+            lossy_adapter_route: false,
+            source_replay_ready: false,
+            preview_only: false,
+        },
+        vertices,
+        faces,
+    );
+
+    let report = manifest.report();
+
+    assert!(!report.coordinates_exact_replay_ready);
+    assert!(!report.validation_handoff_ready);
+    assert!(
+        report
+            .blockers
+            .contains(&MeshArtifactBlocker::MissingSourceReplay)
+    );
+    assert!(
+        report
+            .blockers
+            .contains(&MeshArtifactBlocker::MissingExactCoordinateReplay)
+    );
+}
+
+#[test]
+fn shared_mesh_artifact_rejects_coordinate_evidence_mismatch() {
+    let vertices = (0..3)
+        .map(|index| MeshArtifactVertexRecord {
+            index,
+            coordinate_evidence: MeshCoordinateEvidence::CertifiedDerivedExact,
+        })
+        .collect::<Vec<_>>();
+    let faces = vec![MeshArtifactFaceRecord {
+        index: 0,
+        vertices: vec![0, 1, 2],
+        topology_evidence: MeshTopologyEvidence::DerivedExactSurfaceHandoff,
+    }];
+    let manifest = MeshArtifactManifest::new(
+        MeshArtifactSourceKind::BrepTessellation,
+        "brep mismatched coordinate evidence",
+        5,
+        MeshArtifactRole::DerivedHandoff,
+        MeshNumericAdapterContract::exact(MeshCoordinateEvidence::ExactRational),
+        vertices,
+        faces,
+    );
+
+    let report = manifest.report();
+
+    assert!(!report.coordinates_exact_replay_ready);
+    assert!(!report.validation_handoff_ready);
+    assert!(
+        report
+            .blockers
+            .contains(&MeshArtifactBlocker::CoordinateEvidenceMismatch)
+    );
+}
+
+#[test]
+fn shared_mesh_artifact_voxel_exposed_faces_are_exact_grid_handoffs() {
+    let vertices = (0..4)
+        .map(|index| MeshArtifactVertexRecord {
+            index,
+            coordinate_evidence: MeshCoordinateEvidence::ExactIntegerGrid,
+        })
+        .collect::<Vec<_>>();
+    let faces = vec![MeshArtifactFaceRecord {
+        index: 0,
+        vertices: vec![0, 1, 2, 3],
+        topology_evidence: MeshTopologyEvidence::ExactVoxelFaceRows,
+    }];
+    let manifest = MeshArtifactManifest::voxel_exposed_face_handoff(
+        "voxel exposed z-face rows",
+        9,
+        vertices,
+        faces,
+    );
+
+    let report = manifest.report();
+
+    assert_eq!(
+        report.source_kind,
+        MeshArtifactSourceKind::VoxelExposedFaces
+    );
+    assert_eq!(
+        report.numeric_contract.coordinate_evidence,
+        MeshCoordinateEvidence::ExactIntegerGrid
+    );
+    assert!(!report.preview_only);
+    assert!(report.validation_handoff_ready);
+    assert!(report.blockers.is_empty());
+}
+
+#[test]
+fn shared_mesh_artifact_unknown_source_is_not_validation_handoff() {
+    let vertices = (0..3)
+        .map(|index| MeshArtifactVertexRecord {
+            index,
+            coordinate_evidence: MeshCoordinateEvidence::CertifiedDerivedExact,
+        })
+        .collect::<Vec<_>>();
+    let faces = vec![MeshArtifactFaceRecord {
+        index: 0,
+        vertices: vec![0, 1, 2],
+        topology_evidence: MeshTopologyEvidence::DerivedExactSurfaceHandoff,
+    }];
+    let manifest = MeshArtifactManifest::new(
+        MeshArtifactSourceKind::Unknown,
+        "unknown exact-looking producer",
+        1,
+        MeshArtifactRole::DerivedHandoff,
+        MeshNumericAdapterContract::exact(MeshCoordinateEvidence::CertifiedDerivedExact),
+        vertices,
+        faces,
+    );
+
+    let report = manifest.report();
+
+    assert!(!report.validation_handoff_ready);
+    assert!(
+        report
+            .blockers
+            .contains(&MeshArtifactBlocker::UnknownSourceKind)
+    );
+}
+
+proptest! {
+    #[test]
+    fn generated_preview_summaries_do_not_become_validation_handoffs(
+        vertex_count in 0_usize..=32,
+        face_count in 0_usize..=64,
+    ) {
+        let report = MeshArtifactManifest::voxel_greedy_preview(
+            "generated voxel greedy preview",
+            vertex_count,
+            face_count,
+        )
+        .report();
+
+        prop_assert!(report.preview_only);
+        prop_assert!(!report.validation_handoff_ready);
+        prop_assert!(report.blockers.contains(&MeshArtifactBlocker::PreviewOrExportOnly));
+        if vertex_count > 0 {
+            prop_assert!(
+                report
+                    .blockers
+                    .contains(&MeshArtifactBlocker::MissingOrMismatchedVertexRecords)
+            );
+        }
+        if face_count > 0 {
+            prop_assert!(
+                report
+                    .blockers
+                    .contains(&MeshArtifactBlocker::MissingOrMismatchedFaceRecords)
+            );
+        }
+    }
 }
 
 #[test]

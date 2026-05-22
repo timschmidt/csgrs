@@ -4,8 +4,10 @@ use criterion::{Criterion, criterion_group, criterion_main};
 use hyperlimit::Point3;
 use hypermesh::exact::{
     CoplanarArrangementOperation, ExactMesh, ExactPoint3, ExactReportValidationError,
-    FaceRegionPlaneRelation, MeshFacePairClassification, PredicateUse, SourceProvenance, Triangle,
-    ValidationPolicy, arrange_coplanar_affine_surface_difference,
+    FaceRegionPlaneRelation, MeshArtifactBlocker, MeshArtifactFaceRecord, MeshArtifactManifest,
+    MeshArtifactRole, MeshArtifactSourceKind, MeshArtifactVertexRecord, MeshCoordinateEvidence,
+    MeshFacePairClassification, MeshNumericAdapterContract, MeshTopologyEvidence, PredicateUse,
+    SourceProvenance, Triangle, ValidationPolicy, arrange_coplanar_affine_surface_difference,
     arrange_coplanar_affine_surface_intersection, arrange_coplanar_affine_surface_union,
     arrange_coplanar_convex_surface_component_holed_difference,
     arrange_coplanar_convex_surface_component_union, arrange_coplanar_convex_surface_difference,
@@ -35,6 +37,7 @@ use hypermesh::exact::{
     difference_single_triangle_coplanar_surfaces, inspect_f64_mesh_input, inspect_i64_mesh_input,
     intersect_closed_convex_solids, intersect_segment_with_face_plane,
     intersect_segment_with_retained_face_plane, intersect_single_triangle_coplanar_surfaces,
+    mesh_artifact_from_exact_mesh, mesh_artifact_from_exact_mesh_proposal,
     subtract_closed_convex_solids_single_cap, union_single_triangle_coplanar_surfaces,
 };
 use hyperreal::Real;
@@ -484,6 +487,46 @@ fn exact_mesh_proposal_acceptance(c: &mut Criterion) {
                 exact_report,
                 lossy_report,
                 external_report,
+            )
+        })
+    });
+    c.bench_function("shared_mesh_artifact_report", |b| {
+        b.iter(|| {
+            let exact_report = mesh_artifact_from_exact_mesh(&exact).unwrap();
+            let lossy_report = mesh_artifact_from_exact_mesh(&lossy).unwrap();
+            let external_report = mesh_artifact_from_exact_mesh(&external).unwrap();
+            let external_proposal = certify_exact_mesh_proposal(&external).unwrap();
+            let proposal_report =
+                mesh_artifact_from_exact_mesh_proposal(&external, &external_proposal).unwrap();
+            let malicious_vertices = (0..3)
+                .map(|index| MeshArtifactVertexRecord {
+                    index,
+                    coordinate_evidence: MeshCoordinateEvidence::CertifiedDerivedExact,
+                })
+                .collect::<Vec<_>>();
+            let malicious_faces = vec![MeshArtifactFaceRecord {
+                index: 0,
+                vertices: vec![0, 1, 2],
+                topology_evidence: MeshTopologyEvidence::DerivedExactSurfaceHandoff,
+            }];
+            let relabeled_preview = MeshArtifactManifest::new(
+                MeshArtifactSourceKind::SdfSurfaceNetsPreview,
+                "bench relabeled surface-nets preview",
+                1,
+                MeshArtifactRole::DerivedHandoff,
+                MeshNumericAdapterContract::exact(MeshCoordinateEvidence::CertifiedDerivedExact),
+                malicious_vertices,
+                malicious_faces,
+            )
+            .report();
+            (
+                exact_report.validation_handoff_ready,
+                lossy_report.numeric_contract.lossy_adapter_route,
+                external_report.source_kind,
+                proposal_report.validation_handoff_ready,
+                relabeled_preview
+                    .blockers
+                    .contains(&MeshArtifactBlocker::PreviewOrExportSource),
             )
         })
     });

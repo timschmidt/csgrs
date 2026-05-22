@@ -17,6 +17,7 @@ pub mod affine_box;
 pub mod affine_solid;
 #[cfg(feature = "exact-triangulation")]
 pub mod affine_surface;
+pub mod artifact;
 pub mod audit;
 pub mod boolean;
 pub mod bounds;
@@ -90,6 +91,12 @@ pub use affine_surface::{
     CoplanarAffineSurfaceArrangement, CoplanarAffineSurfaceBasis,
     arrange_coplanar_affine_surface_difference, arrange_coplanar_affine_surface_intersection,
     arrange_coplanar_affine_surface_union,
+};
+pub use artifact::{
+    MeshArtifactBlocker, MeshArtifactFaceRecord, MeshArtifactManifest, MeshArtifactReport,
+    MeshArtifactRole, MeshArtifactSourceKind, MeshArtifactVertexRecord, MeshCoordinateEvidence,
+    MeshNumericAdapterContract, MeshTopologyEvidence, mesh_artifact_from_exact_mesh,
+    mesh_artifact_from_exact_mesh_proposal,
 };
 pub use audit::{
     ExactMeshAuditError, ExactMeshAuditFreshness, ExactMeshAuditReport, audit_exact_mesh,
