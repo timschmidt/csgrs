@@ -48,6 +48,17 @@ fn sketch_owns_region_and_wires_as_hypercurve_types() {
 }
 
 #[test]
+fn primitive_profile_constructors_promote_scalars_through_hyperreal() {
+    let rectangle = Profile::<()>::rectangle(hyperreal::Real::from(2), 1, ());
+    let circle = Profile::<()>::circle(hyperreal::Real::from(1), 16, ());
+    let triangle = Profile::<()>::right_triangle(2, hyperreal::Real::from(1), ());
+
+    assert!(!rectangle.as_region().is_empty());
+    assert!(!circle.as_region().is_empty());
+    assert!(!triangle.as_region().is_empty());
+}
+
+#[test]
 fn region_profiles_are_hypercurve_projection_products() {
     let sketch = Profile::<()>::square(4.0, ());
     let options = FiniteProjectionOptions::try_new(1.0e-3).unwrap();
