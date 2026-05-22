@@ -6,7 +6,7 @@ use crate::float_types::{
     PI, Real, TAU, hangle_sin_cos, hperpendicular_basis, hreal_abs, hreal_affine,
     hreal_cmp_f64, hreal_div, hreal_from_f64, hreal_mul, hreal_sqrt, hreal_sub, hreal_sum,
     hrotation_between_vectors, hscale_matrix, htranslation_matrix, hunit_vector3,
-    hunit_vector3_and_magnitude, hvector3_from_point3, tolerance,
+    hunit_vector3_and_magnitude, hvector3_from_point3,
 };
 #[cfg(feature = "sketch")]
 use crate::float_types::{hdegrees_to_radians, hradians_to_degrees};
@@ -25,6 +25,20 @@ fn finite_mesh_scalar(value: Real) -> bool {
 
 fn finite_mesh_point(point: &Point3<Real>) -> bool {
     hvector3_from_point3(point).is_some()
+}
+
+/// Accept any finite, strictly positive mesh scalar exactly.
+///
+/// Mesh constructors are still fed by primitive boundary scalars, but admission
+/// decisions should not collapse small nonzero values through a tolerance band.
+/// This follows Yap, "Towards Exact Geometric Computation," *Computational
+/// Geometry* 7(1-2), 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+fn hmesh_scalar_positive(value: Real) -> bool {
+    matches!(hreal_cmp_f64(value, 0.0), Ordering::Greater)
+}
+
+fn hmesh_scalar_nonzero(value: Real) -> bool {
+    hreal_abs(value).is_some_and(hmesh_scalar_positive)
 }
 
 impl<M: Clone + Debug + Send + Sync> Mesh<M> {
@@ -370,10 +384,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         let Some((axis_z, axis_length)) = hunit_vector3_and_magnitude(&ray) else {
             return Mesh::empty(metadata);
         };
-        if matches!(
-            hreal_cmp_f64(axis_length, tolerance()),
-            Ordering::Less | Ordering::Equal
-        ) {
+        if !hmesh_scalar_positive(axis_length) {
             return Mesh::empty(metadata);
         }
 
@@ -439,14 +450,8 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         let mut polygons = Vec::new();
 
         // Special-case flags for degenerate faces.
-        let bottom_degenerate = matches!(
-            hreal_abs(radius1).map(|value| hreal_cmp_f64(value, tolerance())),
-            Some(Ordering::Less)
-        );
-        let top_degenerate = matches!(
-            hreal_abs(radius2).map(|value| hreal_cmp_f64(value, tolerance())),
-            Some(Ordering::Less)
-        );
+        let bottom_degenerate = !hmesh_scalar_nonzero(radius1);
+        let top_degenerate = !hmesh_scalar_nonzero(radius2);
 
         // If both faces are degenerate, we cannot build a meaningful volume.
         if bottom_degenerate && top_degenerate {
@@ -803,10 +808,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         let Some((unit_dir, arrow_length)) = hunit_vector3_and_magnitude(&direction) else {
             return Mesh::empty(metadata);
         };
-        if matches!(
-            hreal_cmp_f64(arrow_length, tolerance()),
-            Ordering::Less | Ordering::Equal
-        ) {
+        if !hmesh_scalar_positive(arrow_length) {
             return Mesh::empty(metadata);
         }
 
@@ -1032,14 +1034,8 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     ) -> Self {
         if !finite_mesh_scalar(major_r)
             || !finite_mesh_scalar(minor_r)
-            || !matches!(
-                hreal_abs(major_r).map(|value| hreal_cmp_f64(value, tolerance())),
-                Some(Ordering::Greater)
-            )
-            || !matches!(
-                hreal_abs(minor_r).map(|value| hreal_cmp_f64(value, tolerance())),
-                Some(Ordering::Greater)
-            )
+            || !hmesh_scalar_nonzero(major_r)
+            || !hmesh_scalar_nonzero(minor_r)
             || segments_major < 3
             || segments_minor < 3
         {
