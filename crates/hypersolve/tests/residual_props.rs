@@ -22,11 +22,11 @@ use hypersolve::{
     enumerate_direct_univariate_quadratic_branches, isolate_univariate_polynomial_roots,
     preflight_sketch_degeneracies, preflight_sketch_entity_domains,
     preflight_sketch_parameter_domains, report_lossy_adapter_only_candidate,
-    resultant_univariate_polynomials, search_failed_constraint_single_removals,
-    sketch_range_builders, solve_damped_least_squares, solve_dense_linear_system_bareiss,
-    solve_direct_affine_system, solve_direct_univariate_quadratic_equalities,
-    squared_distance_equation, subresultant_chain_univariate_polynomials,
-    validate_equality_substitutions,
+    resultant_univariate_polynomials, search_failed_constraint_pair_removals,
+    search_failed_constraint_single_removals, sketch_range_builders, solve_damped_least_squares,
+    solve_dense_linear_system_bareiss, solve_direct_affine_system,
+    solve_direct_univariate_quadratic_equalities, squared_distance_equation,
+    subresultant_chain_univariate_polynomials, validate_equality_substitutions,
 };
 use proptest::prelude::*;
 
@@ -1276,6 +1276,43 @@ proptest! {
         prop_assert_eq!(report.original.blocking_rows, 1);
         prop_assert_eq!(report.probes.len(), 1);
         prop_assert_eq!(report.clearing_single_removals, 1);
+        prop_assert_eq!(
+            &report.probes[0].removal_status,
+            &FailedConstraintRemovalStatus::ClearsAllBlockingRows
+        );
+    }
+
+    #[test]
+    fn failed_constraint_pair_removal_generated_two_misses_clear(
+        value in -32_i16..=32,
+        first_target in -32_i16..=32,
+        second_target in -32_i16..=32,
+    ) {
+        prop_assume!(value != first_target);
+        prop_assume!(value != second_target);
+        let value = i64::from(value);
+        let first_target = i64::from(first_target);
+        let second_target = i64::from(second_target);
+        let x = Expr::symbol(SymbolId(0), "x");
+        let mut problem = Problem::default();
+        problem.add_variable("x", Real::from(value));
+        problem.add_constraint(Constraint::equality(
+            "first generated miss",
+            x.clone() - Expr::int(first_target),
+        ));
+        problem.add_constraint(Constraint::equality(
+            "second generated miss",
+            x - Expr::int(second_target),
+        ));
+
+        let report = search_failed_constraint_pair_removals(
+            &PreparedProblem::new(&problem),
+            &context_from_problem(&problem),
+        );
+
+        prop_assert_eq!(report.original.blocking_rows, 2);
+        prop_assert_eq!(report.probes.len(), 1);
+        prop_assert_eq!(report.clearing_pair_removals, 1);
         prop_assert_eq!(
             &report.probes[0].removal_status,
             &FailedConstraintRemovalStatus::ClearsAllBlockingRows

@@ -34,13 +34,14 @@ use hypersolve::{
     preflight_sketch_parameter_domains, prepare_sparse_linear_residual_system,
     regenerate_active_set_affine_candidate, replay_sketch_compatibility_fixture,
     replay_sparse_linear_residual_batch, report_lossy_adapter_only_candidate,
-    schedule_candidate_batch_predicates, search_failed_constraint_single_removals,
-    sketch_angle_builders, sketch_compatibility_fixtures, sketch_distance_builders,
-    sketch_incidence_builders, sketch_objective_builders, sketch_orientation_builders,
-    sketch_range_builders, sketch_symmetry_builders, sketch_tangency_builders,
-    solve_damped_least_squares, solve_direct_affine_equalities, solve_direct_affine_system,
-    solve_direct_univariate_quadratic_equalities, squared_distance_equation,
-    tangent_parallel_equation, tangent_same_direction_constraint, validate_equality_substitutions,
+    schedule_candidate_batch_predicates, search_failed_constraint_pair_removals,
+    search_failed_constraint_single_removals, sketch_angle_builders, sketch_compatibility_fixtures,
+    sketch_distance_builders, sketch_incidence_builders, sketch_objective_builders,
+    sketch_orientation_builders, sketch_range_builders, sketch_symmetry_builders,
+    sketch_tangency_builders, solve_damped_least_squares, solve_direct_affine_equalities,
+    solve_direct_affine_system, solve_direct_univariate_quadratic_equalities,
+    squared_distance_equation, tangent_parallel_equation, tangent_same_direction_constraint,
+    validate_equality_substitutions,
 };
 
 fn real(value: i64) -> Real {
@@ -2912,6 +2913,60 @@ fn failed_constraint_single_removal_search_reports_clearing_and_still_blocking_r
         probe.original_status == FailedConstraintStatus::CertifiedCandidateViolation
             && probe.removal_status
                 == FailedConstraintRemovalStatus::StillBlocking { blocking_rows: 1 }
+    }));
+}
+
+#[test]
+fn failed_constraint_pair_removal_search_reports_bounded_two_row_resolutions() {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let mut paired = Problem::default();
+    paired.add_variable("x", real(0));
+    paired.add_constraint(Constraint::equality(
+        "first candidate miss",
+        x.clone() - Expr::int(1),
+    ));
+    paired.add_constraint(Constraint::equality(
+        "second candidate miss",
+        x.clone() - Expr::int(2),
+    ));
+
+    let paired_search = search_failed_constraint_pair_removals(
+        &PreparedProblem::new(&paired),
+        &context_from_problem(&paired),
+    );
+
+    assert!(paired_search.has_pair_removal_resolution());
+    assert_eq!(paired_search.original.blocking_rows, 2);
+    assert_eq!(paired_search.probes.len(), 1);
+    assert_eq!(paired_search.clearing_pair_removals, 1);
+    assert_eq!(
+        paired_search.probes[0].removal_status,
+        FailedConstraintRemovalStatus::ClearsAllBlockingRows
+    );
+
+    let y = Expr::symbol(SymbolId(0), "y");
+    let mut triple = Problem::default();
+    triple.add_variable("y", real(0));
+    triple.add_constraint(Constraint::equality(
+        "first triple miss",
+        y.clone() - Expr::int(1),
+    ));
+    triple.add_constraint(Constraint::equality(
+        "second triple miss",
+        y.clone() - Expr::int(2),
+    ));
+    triple.add_constraint(Constraint::equality("third triple miss", y - Expr::int(3)));
+
+    let triple_search = search_failed_constraint_pair_removals(
+        &PreparedProblem::new(&triple),
+        &context_from_problem(&triple),
+    );
+
+    assert!(!triple_search.has_pair_removal_resolution());
+    assert_eq!(triple_search.original.blocking_rows, 3);
+    assert_eq!(triple_search.probes.len(), 3);
+    assert!(triple_search.probes.iter().all(|probe| {
+        probe.removal_status == FailedConstraintRemovalStatus::StillBlocking { blocking_rows: 1 }
     }));
 }
 

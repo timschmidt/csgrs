@@ -148,6 +148,32 @@ pub struct FailedConstraintRemovalSearchReport {
     pub clearing_single_removals: usize,
 }
 
+/// One two-row failed-constraint removal probe.
+#[derive(Clone, Debug, PartialEq)]
+pub struct FailedConstraintPairRemovalProbe {
+    /// First source constraint index deactivated for this probe.
+    pub first_constraint_index: usize,
+    /// Second source constraint index deactivated for this probe.
+    pub second_constraint_index: usize,
+    /// First constraint name copied for diagnostics.
+    pub first_name: String,
+    /// Second constraint name copied for diagnostics.
+    pub second_name: String,
+    /// Result after deactivating this pair.
+    pub removal_status: FailedConstraintRemovalStatus,
+}
+
+/// Deterministic two-row removal-search report.
+#[derive(Clone, Debug, PartialEq)]
+pub struct FailedConstraintPairRemovalSearchReport {
+    /// Original exact failed-constraint diagnostics.
+    pub original: FailedConstraintReport,
+    /// One probe per pair of original blocking rows.
+    pub probes: Vec<FailedConstraintPairRemovalProbe>,
+    /// Number of pairs whose removal clears all blocking rows.
+    pub clearing_pair_removals: usize,
+}
+
 impl FailedConstraintReport {
     /// Returns true when any diagnostic row blocks accepting the candidate.
     pub fn has_blocking_rows(&self) -> bool {
@@ -164,6 +190,13 @@ impl FailedConstraintRemovalSearchReport {
     /// Return whether any single-row removal clears the current blocking set.
     pub fn has_single_removal_resolution(&self) -> bool {
         self.clearing_single_removals > 0
+    }
+}
+
+impl FailedConstraintPairRemovalSearchReport {
+    /// Return whether any pair removal clears the current blocking set.
+    pub fn has_pair_removal_resolution(&self) -> bool {
+        self.clearing_pair_removals > 0
     }
 }
 
@@ -196,6 +229,88 @@ pub fn search_failed_constraint_single_removals(
         CandidateCertificationConfig::default(),
         CandidateCertificationConfig::default().min_precision,
     )
+}
+
+/// Probe every pair of blocking rows by deactivating both rows.
+///
+/// This is the first bounded multi-row search layer. It is useful when no
+/// single removal clears the candidate but a pair does. It remains deliberately
+/// finite and report-bearing rather than a general minimal unsat-core
+/// extractor; each pair is replayed through exact diagnostics following Yap,
+/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+/// (1997).
+pub fn search_failed_constraint_pair_removals(
+    prepared: &PreparedProblem<'_>,
+    context: &EvaluationContext,
+) -> FailedConstraintPairRemovalSearchReport {
+    search_failed_constraint_pair_removals_with_config(
+        prepared,
+        context,
+        CandidateCertificationConfig::default(),
+        CandidateCertificationConfig::default().min_precision,
+    )
+}
+
+/// Probe every blocking-row pair with explicit certification and rank policies.
+pub fn search_failed_constraint_pair_removals_with_config(
+    prepared: &PreparedProblem<'_>,
+    context: &EvaluationContext,
+    certification_config: CandidateCertificationConfig,
+    rank_min_precision: i32,
+) -> FailedConstraintPairRemovalSearchReport {
+    let original = diagnose_failed_constraints_with_config(
+        prepared,
+        context,
+        certification_config,
+        rank_min_precision,
+    );
+    let blocking = original
+        .rows
+        .iter()
+        .filter(|row| row.status.blocks_candidate_acceptance())
+        .collect::<Vec<_>>();
+    let mut probes = Vec::new();
+    let mut clearing_pair_removals = 0;
+    for first in 0..blocking.len() {
+        for second in (first + 1)..blocking.len() {
+            let first_row = blocking[first];
+            let second_row = blocking[second];
+            let mut reduced = prepared.problem().clone();
+            if let Some(constraint) = reduced.constraints.get_mut(first_row.constraint_index) {
+                constraint.active = false;
+            }
+            if let Some(constraint) = reduced.constraints.get_mut(second_row.constraint_index) {
+                constraint.active = false;
+            }
+            let reduced_prepared = PreparedProblem::new(&reduced);
+            let reduced_report = diagnose_failed_constraints_with_config(
+                &reduced_prepared,
+                context,
+                certification_config,
+                rank_min_precision,
+            );
+            let removal_status = if reduced_report.blocking_rows == 0 {
+                clearing_pair_removals += 1;
+                FailedConstraintRemovalStatus::ClearsAllBlockingRows
+            } else {
+                FailedConstraintRemovalStatus::StillBlocking {
+                    blocking_rows: reduced_report.blocking_rows,
+                }
+            };
+            probes.push(FailedConstraintPairRemovalProbe {
+                first_constraint_index: first_row.constraint_index,
+                second_constraint_index: second_row.constraint_index,
+                first_name: first_row.name.clone(),
+                second_name: second_row.name.clone(),
+                removal_status,
+            });
+        }
+    }
+    FailedConstraintPairRemovalSearchReport {
+        original,
+        probes,
+        clearing_pair_removals,
+    }
 }
 
 /// Probe each blocking row with explicit certification and rank policies.
