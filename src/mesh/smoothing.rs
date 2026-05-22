@@ -2,7 +2,7 @@
 
 use crate::float_types::{
     Real, hdegrees_to_radians, hpoint_centroid, hpoint_distance, hpoint_lerp, hreal_cmp_f64,
-    hreal_from_f64, hreal_max_report_value, tolerance,
+    hreal_from_f64, hreal_max_report_value,
 };
 use crate::mesh::Mesh;
 use crate::polygon::Polygon;
@@ -432,7 +432,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             let keep_triangle = if i < qualities.len() {
                 let quality = &qualities[i];
                 hyper_scalar_ge(quality.quality_score, min_quality)
-                    && hyper_scalar_gt(quality.area, tolerance())
+                    && hyper_scalar_gt(quality.area, 0.0)
                     && hyper_scalar_gt(quality.min_angle, min_angle_rad)
                     && hyper_scalar_lt(quality.aspect_ratio, 20.0)
             } else {
