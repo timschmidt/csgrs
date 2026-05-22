@@ -79,8 +79,8 @@ pub use classify::{
     PlaneSide, PlaneTriangleRelation, PointSegmentLocation, RayTriangleIntersection,
     RealIntervalLocation, RingConvexity, RingPointLocation, Segment3Intersection,
     SegmentIntersection, SegmentTriangleIntersection, SphereIntersection, SpherePointLocation,
-    SupportDopRelation, TetrahedronLocation, Triangle3Location, TriangleLocation,
-    TriangleTriangleIntersection,
+    SupportDopPlaneRelation, SupportDopRelation, TetrahedronLocation, Triangle3Location,
+    TriangleLocation, TriangleTriangleIntersection,
 };
 pub use geometry::{
     Aabb2Facts, CoordinateAxis2, HomogeneousLine3, HomogeneousPoint3, Plane3Facts,
@@ -149,7 +149,8 @@ pub use predicates::distance::{
 };
 pub use predicates::dop::{
     SupportDop3, SupportDopAabb3Report, SupportDopAabb3SlabReport, SupportDopAabb3ValidationError,
-    SupportSlab3, support_dop3_from_points, support_dop3_from_points_with_policy,
+    SupportDopPlane3Report, SupportDopPlane3ValidationError, SupportSlab3,
+    support_dop3_from_points, support_dop3_from_points_with_policy,
 };
 pub use predicates::filters::{
     certified_ball_sign, certified_ball_sign_report, certified_ball_sign_report_with_policy,

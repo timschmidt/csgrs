@@ -230,6 +230,30 @@ impl SupportDopRelation {
     }
 }
 
+/// Relation between a retained support k-DOP and an oriented plane.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum SupportDopPlaneRelation {
+    /// The retained slab set is empty, invalid, or infeasible.
+    Degenerate,
+    /// Every feasible retained-DOP point lies below the oriented plane.
+    Below,
+    /// Every feasible retained-DOP point lies above the oriented plane.
+    Above,
+    /// The retained-DOP point set has at least one point on the plane.
+    ///
+    /// This includes strict crossings and tangential/coplanar contact. The
+    /// report-bearing API keeps side feasibility witnesses when callers need to
+    /// distinguish those cases at a higher object layer.
+    Intersecting,
+}
+
+impl SupportDopPlaneRelation {
+    /// Returns whether the retained DOP may touch or cross the plane.
+    pub const fn intersects_plane(self) -> bool {
+        matches!(self, Self::Intersecting)
+    }
+}
+
 /// Intersection relation between two explicit 3D spheres.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum SphereIntersection {

@@ -16,13 +16,18 @@ use core::cmp::Ordering;
 
 use hyperreal::Real;
 
-use crate::classify::{ConvexPointLocation, SupportDopRelation};
-use crate::geometry::Point3;
+use crate::classify::{
+    ConvexPointLocation, HalfspaceFeasibility, SupportDopPlaneRelation, SupportDopRelation,
+};
+use crate::geometry::{Plane3, Point3};
 use crate::predicate::{
     Certainty, Escalation, PredicateOutcome, PredicatePolicy, RefinementNeed, Sign,
 };
+use crate::predicates::halfspace::{
+    HalfspaceFeasibilityReport, classify_halfspace_feasibility3_with_policy,
+};
 use crate::predicates::order::compare_reals_with_policy;
-use crate::real::{add_ref, mul_ref};
+use crate::real::{add_ref, mul_ref, sub_ref};
 use crate::resolve::resolve_real_sign;
 
 /// One retained support slab of a 3D k-DOP.
@@ -265,6 +270,172 @@ impl SupportDopAabb3Report {
         match dop.classify_aabb3_report_with_policy(min, max, policy) {
             PredicateOutcome::Decided { value, .. } if &value == self => Ok(()),
             _ => Err(SupportDopAabb3ValidationError::SourceReplayMismatch),
+        }
+    }
+}
+
+/// Structural inconsistency in a retained support-DOP/plane report.
+///
+/// The report validates a k-DOP/plane decision as two exact halfspace
+/// feasibility queries: retained-DOP points satisfying the query plane's
+/// `<= 0` side, and retained-DOP points satisfying the opposite closed side.
+/// This is the fixed-dimensional LP view of Seidel, "Small-Dimensional Linear
+/// Programming and Convex Hulls Made Easy," *Discrete & Computational
+/// Geometry* 6 (1991), kept at the object-evidence boundary required by Yap,
+/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+/// (1997). Individual slab carriers follow Klosowski, Held, Mitchell,
+/// Sowizral, and Zikan's k-DOP support-slab model, *IEEE TVCG* 4.1 (1998).
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum SupportDopPlane3ValidationError {
+    /// An empty retained DOP did not report the structural degenerate relation.
+    EmptyDopRelationMismatch,
+    /// The retained slab halfspaces are not exactly two per source slab.
+    SlabHalfspaceCountMismatch,
+    /// The retained carrier feasibility report did not replay.
+    CarrierFeasibilityMismatch,
+    /// A side feasibility report was missing for a feasible retained DOP.
+    MissingSideFeasibility,
+    /// A side feasibility report was present for an infeasible retained DOP.
+    UnexpectedSideFeasibility,
+    /// The retained below-side feasibility report did not replay.
+    BelowFeasibilityMismatch,
+    /// The retained above-side feasibility report did not replay.
+    AboveFeasibilityMismatch,
+    /// The retained feasibility statuses derive a different coarse relation.
+    RelationMismatch,
+    /// Recomputing from source geometry did not reproduce this report.
+    SourceReplayMismatch,
+}
+
+/// Report-bearing exact support-DOP/oriented-plane classification.
+///
+/// Slabs are lowered to halfspaces with the convention `normal . point + offset
+/// <= 0`: each retained support interval `min <= axis . point <= max` becomes
+/// `axis . point - max <= 0` and `-axis . point + min <= 0`. The report stores
+/// those exact halfspaces plus feasibility reports for the carrier and both
+/// closed query-plane sides. A relation is therefore a replayable consequence
+/// of exact witnesses or exact infeasibility certificates, not a float
+/// broad-phase guess.
+#[derive(Clone, Debug, PartialEq)]
+pub struct SupportDopPlane3Report {
+    /// Coarse relation between the retained DOP and the oriented plane.
+    pub relation: SupportDopPlaneRelation,
+    /// Number of slabs retained by the source DOP.
+    pub slab_count: usize,
+    /// Query plane used to form the closed side feasibility systems.
+    pub plane: Plane3,
+    /// Exact halfspaces produced from the retained support slabs.
+    pub slab_halfspaces: Vec<Plane3>,
+    /// Feasibility of the retained DOP carrier itself.
+    pub carrier_feasibility: Option<HalfspaceFeasibilityReport>,
+    /// Feasibility of `DOP ∩ {plane.normal . point + plane.offset <= 0}`.
+    pub below_feasibility: Option<HalfspaceFeasibilityReport>,
+    /// Feasibility of `DOP ∩ {plane.normal . point + plane.offset >= 0}`.
+    pub above_feasibility: Option<HalfspaceFeasibilityReport>,
+}
+
+impl SupportDopPlane3Report {
+    /// Validate retained halfspace evidence and the derived coarse relation.
+    pub fn validate(&self) -> Result<(), SupportDopPlane3ValidationError> {
+        if self.slab_count == 0 {
+            return if self.relation == SupportDopPlaneRelation::Degenerate
+                && self.slab_halfspaces.is_empty()
+                && self.carrier_feasibility.is_none()
+                && self.below_feasibility.is_none()
+                && self.above_feasibility.is_none()
+            {
+                Ok(())
+            } else {
+                Err(SupportDopPlane3ValidationError::EmptyDopRelationMismatch)
+            };
+        }
+
+        if self.slab_halfspaces.is_empty() {
+            return if self.relation == SupportDopPlaneRelation::Degenerate
+                && self.carrier_feasibility.is_none()
+                && self.below_feasibility.is_none()
+                && self.above_feasibility.is_none()
+            {
+                Ok(())
+            } else {
+                Err(SupportDopPlane3ValidationError::SlabHalfspaceCountMismatch)
+            };
+        }
+
+        if self.slab_halfspaces.len() != self.slab_count * 2 {
+            return Err(SupportDopPlane3ValidationError::SlabHalfspaceCountMismatch);
+        }
+
+        let carrier = self
+            .carrier_feasibility
+            .as_ref()
+            .ok_or(SupportDopPlane3ValidationError::CarrierFeasibilityMismatch)?;
+        if !decided_bool(
+            carrier.validate_against_planes(&self.slab_halfspaces, PredicatePolicy::default()),
+        )
+        .unwrap_or(false)
+        {
+            return Err(SupportDopPlane3ValidationError::CarrierFeasibilityMismatch);
+        }
+
+        if !carrier.is_feasible() {
+            if self.below_feasibility.is_some() || self.above_feasibility.is_some() {
+                return Err(SupportDopPlane3ValidationError::UnexpectedSideFeasibility);
+            }
+            return if self.relation == SupportDopPlaneRelation::Degenerate {
+                Ok(())
+            } else {
+                Err(SupportDopPlane3ValidationError::RelationMismatch)
+            };
+        }
+
+        let below = self
+            .below_feasibility
+            .as_ref()
+            .ok_or(SupportDopPlane3ValidationError::MissingSideFeasibility)?;
+        let above = self
+            .above_feasibility
+            .as_ref()
+            .ok_or(SupportDopPlane3ValidationError::MissingSideFeasibility)?;
+
+        let below_planes =
+            side_halfspaces(&self.slab_halfspaces, &self.plane, PlaneQuerySide::Below);
+        if !decided_bool(below.validate_against_planes(&below_planes, PredicatePolicy::default()))
+            .unwrap_or(false)
+        {
+            return Err(SupportDopPlane3ValidationError::BelowFeasibilityMismatch);
+        }
+
+        let above_planes =
+            side_halfspaces(&self.slab_halfspaces, &self.plane, PlaneQuerySide::Above);
+        if !decided_bool(above.validate_against_planes(&above_planes, PredicatePolicy::default()))
+            .unwrap_or(false)
+        {
+            return Err(SupportDopPlane3ValidationError::AboveFeasibilityMismatch);
+        }
+
+        let derived_relation = support_dop_plane_relation_from_side_feasibility(
+            below.is_feasible(),
+            above.is_feasible(),
+        );
+        if derived_relation == self.relation {
+            Ok(())
+        } else {
+            Err(SupportDopPlane3ValidationError::RelationMismatch)
+        }
+    }
+
+    /// Replay this report against a source DOP and query plane.
+    pub fn validate_against_sources(
+        &self,
+        dop: &SupportDop3,
+        plane: &Plane3,
+        policy: PredicatePolicy,
+    ) -> Result<(), SupportDopPlane3ValidationError> {
+        self.validate()?;
+        match dop.classify_plane3_report_with_policy(plane, policy) {
+            PredicateOutcome::Decided { value, .. } if &value == self => Ok(()),
+            _ => Err(SupportDopPlane3ValidationError::SourceReplayMismatch),
         }
     }
 }
@@ -629,6 +800,175 @@ impl SupportDop3 {
             stage,
         )
     }
+
+    /// Classify this retained DOP relative to an oriented plane.
+    pub fn classify_plane3(&self, plane: &Plane3) -> PredicateOutcome<SupportDopPlaneRelation> {
+        self.classify_plane3_with_policy(plane, PredicatePolicy::default())
+    }
+
+    /// Classify this retained DOP relative to an oriented plane with a policy.
+    pub fn classify_plane3_with_policy(
+        &self,
+        plane: &Plane3,
+        policy: PredicatePolicy,
+    ) -> PredicateOutcome<SupportDopPlaneRelation> {
+        match self.classify_plane3_report_with_policy(plane, policy) {
+            PredicateOutcome::Decided {
+                value,
+                certainty,
+                stage,
+            } => PredicateOutcome::decided(value.relation, certainty, stage),
+            PredicateOutcome::Unknown { needed, stage } => PredicateOutcome::unknown(needed, stage),
+        }
+    }
+
+    /// Classify this retained DOP relative to an oriented plane and retain
+    /// exact halfspace feasibility evidence.
+    pub fn classify_plane3_report(
+        &self,
+        plane: &Plane3,
+    ) -> PredicateOutcome<SupportDopPlane3Report> {
+        self.classify_plane3_report_with_policy(plane, PredicatePolicy::default())
+    }
+
+    /// Classify this retained DOP relative to an oriented plane with an
+    /// explicit policy and retain exact feasibility evidence.
+    ///
+    /// This is a report-bearing k-DOP/plane broad-phase predicate. The retained
+    /// support slabs are first replayed as exact halfspaces, then the carrier
+    /// and both closed sides of the query plane are certified by the
+    /// halfspace-feasibility predicate. The result follows the same
+    /// report-first discipline as [`Self::classify_aabb3_report_with_policy`].
+    pub fn classify_plane3_report_with_policy(
+        &self,
+        plane: &Plane3,
+        policy: PredicatePolicy,
+    ) -> PredicateOutcome<SupportDopPlane3Report> {
+        if self.slabs.is_empty() {
+            return PredicateOutcome::decided(
+                SupportDopPlane3Report {
+                    relation: SupportDopPlaneRelation::Degenerate,
+                    slab_count: 0,
+                    plane: plane.clone(),
+                    slab_halfspaces: Vec::new(),
+                    carrier_feasibility: None,
+                    below_feasibility: None,
+                    above_feasibility: None,
+                },
+                Certainty::Exact,
+                Escalation::Structural,
+            );
+        }
+
+        let (slab_halfspaces, mut certainty, mut stage) =
+            match support_dop_slab_halfspaces(&self.slabs, policy) {
+                PredicateOutcome::Decided {
+                    value,
+                    certainty,
+                    stage,
+                } => (value, certainty, stage),
+                PredicateOutcome::Unknown { needed, stage } => {
+                    return PredicateOutcome::unknown(needed, stage);
+                }
+            };
+
+        if slab_halfspaces.is_empty() {
+            return PredicateOutcome::decided(
+                SupportDopPlane3Report {
+                    relation: SupportDopPlaneRelation::Degenerate,
+                    slab_count: self.slabs.len(),
+                    plane: plane.clone(),
+                    slab_halfspaces,
+                    carrier_feasibility: None,
+                    below_feasibility: None,
+                    above_feasibility: None,
+                },
+                certainty,
+                stage,
+            );
+        }
+
+        let carrier_feasibility =
+            match classify_halfspace_feasibility3_with_policy(&slab_halfspaces, policy) {
+                PredicateOutcome::Decided {
+                    value,
+                    certainty: value_certainty,
+                    stage: value_stage,
+                } => {
+                    absorb_trace(&mut certainty, &mut stage, value_certainty, value_stage);
+                    value
+                }
+                PredicateOutcome::Unknown { needed, stage } => {
+                    return PredicateOutcome::unknown(needed, stage);
+                }
+            };
+
+        if carrier_feasibility.status == HalfspaceFeasibility::Infeasible {
+            return PredicateOutcome::decided(
+                SupportDopPlane3Report {
+                    relation: SupportDopPlaneRelation::Degenerate,
+                    slab_count: self.slabs.len(),
+                    plane: plane.clone(),
+                    slab_halfspaces,
+                    carrier_feasibility: Some(carrier_feasibility),
+                    below_feasibility: None,
+                    above_feasibility: None,
+                },
+                certainty,
+                stage,
+            );
+        }
+
+        let below_planes = side_halfspaces(&slab_halfspaces, plane, PlaneQuerySide::Below);
+        let below_feasibility =
+            match classify_halfspace_feasibility3_with_policy(&below_planes, policy) {
+                PredicateOutcome::Decided {
+                    value,
+                    certainty: value_certainty,
+                    stage: value_stage,
+                } => {
+                    absorb_trace(&mut certainty, &mut stage, value_certainty, value_stage);
+                    value
+                }
+                PredicateOutcome::Unknown { needed, stage } => {
+                    return PredicateOutcome::unknown(needed, stage);
+                }
+            };
+
+        let above_planes = side_halfspaces(&slab_halfspaces, plane, PlaneQuerySide::Above);
+        let above_feasibility =
+            match classify_halfspace_feasibility3_with_policy(&above_planes, policy) {
+                PredicateOutcome::Decided {
+                    value,
+                    certainty: value_certainty,
+                    stage: value_stage,
+                } => {
+                    absorb_trace(&mut certainty, &mut stage, value_certainty, value_stage);
+                    value
+                }
+                PredicateOutcome::Unknown { needed, stage } => {
+                    return PredicateOutcome::unknown(needed, stage);
+                }
+            };
+
+        let relation = support_dop_plane_relation_from_side_feasibility(
+            below_feasibility.is_feasible(),
+            above_feasibility.is_feasible(),
+        );
+        PredicateOutcome::decided(
+            SupportDopPlane3Report {
+                relation,
+                slab_count: self.slabs.len(),
+                plane: plane.clone(),
+                slab_halfspaces,
+                carrier_feasibility: Some(carrier_feasibility),
+                below_feasibility: Some(below_feasibility),
+                above_feasibility: Some(above_feasibility),
+            },
+            certainty,
+            stage,
+        )
+    }
 }
 
 /// Build an exact support k-DOP from axis directions and source points.
@@ -664,6 +1004,85 @@ fn decided_bool(outcome: PredicateOutcome<bool>) -> Option<bool> {
         PredicateOutcome::Decided { value, .. } => Some(value),
         PredicateOutcome::Unknown { .. } => None,
     }
+}
+
+fn support_dop_slab_halfspaces(
+    slabs: &[SupportSlab3],
+    policy: PredicatePolicy,
+) -> PredicateOutcome<Vec<Plane3>> {
+    let mut halfspaces = Vec::with_capacity(slabs.len() * 2);
+    let mut certainty = Certainty::Exact;
+    let mut stage = Escalation::Structural;
+
+    for slab in slabs {
+        match validate_slab_bounds(slab, policy) {
+            PredicateOutcome::Decided {
+                value: true,
+                certainty: value_certainty,
+                stage: value_stage,
+            } => absorb_trace(&mut certainty, &mut stage, value_certainty, value_stage),
+            PredicateOutcome::Decided {
+                value: false,
+                certainty: value_certainty,
+                stage: value_stage,
+            } => {
+                absorb_trace(&mut certainty, &mut stage, value_certainty, value_stage);
+                return PredicateOutcome::decided(Vec::new(), certainty, stage);
+            }
+            PredicateOutcome::Unknown { needed, stage } => {
+                return PredicateOutcome::unknown(needed, stage);
+            }
+        }
+
+        halfspaces.push(Plane3::new(slab.axis.clone(), negate(&slab.max)));
+        halfspaces.push(Plane3::new(negate_point(&slab.axis), slab.min.clone()));
+    }
+
+    PredicateOutcome::decided(halfspaces, certainty, stage)
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum PlaneQuerySide {
+    Below,
+    Above,
+}
+
+fn side_halfspaces(
+    slab_halfspaces: &[Plane3],
+    plane: &Plane3,
+    side: PlaneQuerySide,
+) -> Vec<Plane3> {
+    let mut halfspaces = Vec::with_capacity(slab_halfspaces.len() + 1);
+    halfspaces.extend_from_slice(slab_halfspaces);
+    match side {
+        PlaneQuerySide::Below => halfspaces.push(plane.clone()),
+        PlaneQuerySide::Above => halfspaces.push(negate_plane(plane)),
+    }
+    halfspaces
+}
+
+fn support_dop_plane_relation_from_side_feasibility(
+    below_feasible: bool,
+    above_feasible: bool,
+) -> SupportDopPlaneRelation {
+    match (below_feasible, above_feasible) {
+        (true, true) => SupportDopPlaneRelation::Intersecting,
+        (true, false) => SupportDopPlaneRelation::Below,
+        (false, true) => SupportDopPlaneRelation::Above,
+        (false, false) => SupportDopPlaneRelation::Degenerate,
+    }
+}
+
+fn negate_plane(plane: &Plane3) -> Plane3 {
+    Plane3::new(negate_point(&plane.normal), negate(&plane.offset))
+}
+
+fn negate_point(point: &Point3) -> Point3 {
+    Point3::new(negate(&point.x), negate(&point.y), negate(&point.z))
+}
+
+fn negate(value: &Real) -> Real {
+    sub_ref(&Real::from(0), value)
 }
 
 fn build_slab(

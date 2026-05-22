@@ -240,6 +240,38 @@ fn bench_hypermesh_port_helpers(c: &mut Criterion) {
             })
         });
     });
+    group.bench_function("support_dop3/build_and_plane_report", |bench| {
+        let axes = vec![
+            rational_point3(1, 1, 0, 1, 0, 1),
+            rational_point3(0, 1, 1, 1, 0, 1),
+            rational_point3(0, 1, 0, 1, 1, 1),
+            rational_point3(1, 1, 1, 1, 1, 1),
+            rational_point3(1, 1, -1, 1, 0, 1),
+            rational_point3(0, 1, 1, 1, -1, 1),
+        ];
+        let cloud = vec![
+            rational_point3(0, 1, 0, 1, 0, 1),
+            rational_point3(4, 1, 0, 1, 0, 1),
+            rational_point3(0, 1, 4, 1, 0, 1),
+            rational_point3(0, 1, 0, 1, 4, 1),
+            rational_point3(1, 2, 3, 2, 5, 2),
+            rational_point3(-1, 2, 7, 2, 1, 2),
+        ];
+        let plane = hyperlimit::Plane3::new(rational_point3(1, 1, 1, 1, 0, 1), (-3).into());
+        bench.iter(|| {
+            let dop = support_dop3_from_points(black_box(&axes), black_box(&cloud))
+                .value()
+                .expect("benchmark support DOP should decide");
+            let report = dop
+                .classify_plane3_report(black_box(&plane))
+                .value()
+                .expect("benchmark support DOP plane report should decide");
+            black_box(match report.validate() {
+                Ok(()) => report.slab_halfspaces.len() as i64,
+                Err(_) => -1,
+            })
+        });
+    });
     group.finish();
 }
 

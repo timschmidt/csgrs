@@ -14,10 +14,10 @@ use arbitrary::Arbitrary;
 use hyperlimit::{
     AabbSphereIntersection, CachePayoff, ConstructionFreshness, ConstructionVersion, LineSide,
     Plane3, Point2, Point3, PredicateApiSemantics, PredicateOutcome, PredicatePolicy, Sign,
-    SphereIntersection, SupportDop3, SupportDopRelation, SupportSlab3, certified_ball_sign,
-    certified_interval_sign, classify_coplanar_triangles, classify_triangle3_degeneracy,
-    classify_aabb3_sphere_intersection, classify_circle_line2, classify_circle_segment2,
-    classify_circle_line2_batch, classify_circle_segment2_batch,
+    SphereIntersection, SupportDop3, SupportDopPlaneRelation, SupportDopRelation, SupportSlab3,
+    certified_ball_sign, certified_interval_sign, classify_coplanar_triangles,
+    classify_triangle3_degeneracy, classify_aabb3_sphere_intersection, classify_circle_line2,
+    classify_circle_segment2, classify_circle_line2_batch, classify_circle_segment2_batch,
     classify_halfspace_feasibility3, classify_homogeneous_point_plane,
     classify_plane_aabb3_report,
     classify_point_convex_planes3, classify_point_convex_polygon2, classify_point_line,
@@ -742,6 +742,34 @@ fn predicate_invariants(input: Input) {
                 )
                 .is_ok(),
             "separating support-DOP/AABB report must replay its terminal slab"
+        );
+    }
+    let unit_plane = Plane3::new(Point3::new(1.into(), 0.into(), 0.into()), (-1).into());
+    if let Some(report) = unit_dop.classify_plane3_report(&unit_plane).value() {
+        assert_eq!(
+            report.relation,
+            SupportDopPlaneRelation::Intersecting,
+            "unit support DOP must touch the x=1 query plane"
+        );
+        assert!(
+            report
+                .validate_against_sources(&unit_dop, &unit_plane, PredicatePolicy::default())
+                .is_ok(),
+            "support-DOP/plane feasibility evidence must replay from exact sources"
+        );
+    }
+    let outside_plane = Plane3::new(Point3::new(1.into(), 0.into(), 0.into()), (-2).into());
+    if let Some(report) = unit_dop.classify_plane3_report(&outside_plane).value() {
+        assert_eq!(
+            report.relation,
+            SupportDopPlaneRelation::Below,
+            "unit support DOP must lie below the x=2 query plane"
+        );
+        assert!(
+            report
+                .validate_against_sources(&unit_dop, &outside_plane, PredicatePolicy::default())
+                .is_ok(),
+            "one-sided support-DOP/plane evidence must replay"
         );
     }
 

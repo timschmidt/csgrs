@@ -1,6 +1,7 @@
 use hyperlimit::{
-    ConvexPointLocation, Point3, PredicateOutcome, PredicatePolicy, SupportDop3,
-    SupportDopAabb3ValidationError, SupportDopRelation, SupportSlab3, support_dop3_from_points,
+    ConvexPointLocation, Plane3, Point3, PredicateOutcome, PredicatePolicy, SupportDop3,
+    SupportDopAabb3ValidationError, SupportDopPlane3ValidationError, SupportDopPlaneRelation,
+    SupportDopRelation, SupportSlab3, support_dop3_from_points,
 };
 use hyperreal::{Rational, Real};
 
@@ -188,6 +189,118 @@ fn support_dop_aabb_report_rejects_forged_relations_and_missing_evidence() {
     assert_eq!(
         truncated.validate(),
         Err(SupportDopAabb3ValidationError::MissingSlabEvidence)
+    );
+}
+
+#[test]
+fn support_dop_plane_report_classifies_strict_sides_and_intersections() {
+    let dop = SupportDop3::from_slabs(vec![
+        SupportSlab3::new(pi(1, 0, 0), r(0), r(1)),
+        SupportSlab3::new(pi(0, 1, 0), r(0), r(1)),
+        SupportSlab3::new(pi(0, 0, 1), r(0), r(1)),
+    ]);
+
+    let below_plane = Plane3::new(pi(1, 0, 0), r(-2));
+    assert_eq!(
+        dop.classify_plane3(&below_plane).value(),
+        Some(SupportDopPlaneRelation::Below)
+    );
+    let above_plane = Plane3::new(pi(1, 0, 0), r(1));
+    assert_eq!(
+        dop.classify_plane3(&above_plane).value(),
+        Some(SupportDopPlaneRelation::Above)
+    );
+
+    let tangent_plane = Plane3::new(pi(1, 0, 0), r(-1));
+    let tangent = decided(dop.classify_plane3_report(&tangent_plane));
+    assert_eq!(tangent.relation, SupportDopPlaneRelation::Intersecting);
+    assert_eq!(tangent.slab_halfspaces.len(), 6);
+    assert!(
+        tangent
+            .below_feasibility
+            .as_ref()
+            .expect("below side report")
+            .is_feasible()
+    );
+    assert!(
+        tangent
+            .above_feasibility
+            .as_ref()
+            .expect("above side report")
+            .is_feasible()
+    );
+    assert_eq!(
+        tangent.validate_against_sources(&dop, &tangent_plane, PredicatePolicy::default()),
+        Ok(())
+    );
+
+    let crossing_plane = Plane3::new(pi(1, 1, 1), q(-3, 2));
+    let crossing = decided(dop.classify_plane3_report(&crossing_plane));
+    assert_eq!(crossing.relation, SupportDopPlaneRelation::Intersecting);
+    assert_eq!(
+        crossing.validate_against_sources(&dop, &crossing_plane, PredicatePolicy::default()),
+        Ok(())
+    );
+}
+
+#[test]
+fn support_dop_plane_report_detects_invalid_and_infeasible_carriers() {
+    let invalid = SupportDop3::from_slabs(vec![SupportSlab3::new(pi(1, 0, 0), r(2), r(1))]);
+    let plane = Plane3::new(pi(1, 0, 0), r(0));
+    let invalid_report = decided(invalid.classify_plane3_report(&plane));
+    assert_eq!(invalid_report.relation, SupportDopPlaneRelation::Degenerate);
+    assert!(invalid_report.carrier_feasibility.is_none());
+    assert_eq!(
+        invalid_report.validate_against_sources(&invalid, &plane, PredicatePolicy::default()),
+        Ok(())
+    );
+
+    let infeasible = SupportDop3::from_slabs(vec![
+        SupportSlab3::new(pi(1, 0, 0), r(0), r(0)),
+        SupportSlab3::new(pi(1, 0, 0), r(1), r(1)),
+    ]);
+    let infeasible_report = decided(infeasible.classify_plane3_report(&plane));
+    assert_eq!(
+        infeasible_report.relation,
+        SupportDopPlaneRelation::Degenerate
+    );
+    assert!(
+        !infeasible_report
+            .carrier_feasibility
+            .as_ref()
+            .expect("carrier feasibility report")
+            .is_feasible()
+    );
+    assert!(infeasible_report.below_feasibility.is_none());
+    assert!(infeasible_report.above_feasibility.is_none());
+    assert_eq!(
+        infeasible_report.validate_against_sources(&infeasible, &plane, PredicatePolicy::default()),
+        Ok(())
+    );
+}
+
+#[test]
+fn support_dop_plane_report_rejects_forged_side_evidence() {
+    let dop = SupportDop3::from_slabs(vec![
+        SupportSlab3::new(pi(1, 0, 0), r(0), r(1)),
+        SupportSlab3::new(pi(0, 1, 0), r(0), r(1)),
+    ]);
+    let plane = Plane3::new(pi(1, 0, 0), r(-2));
+    let report = decided(dop.classify_plane3_report(&plane));
+    assert_eq!(report.relation, SupportDopPlaneRelation::Below);
+
+    let mut forged = report.clone();
+    forged.relation = SupportDopPlaneRelation::Intersecting;
+    assert_eq!(
+        forged.validate(),
+        Err(SupportDopPlane3ValidationError::RelationMismatch)
+    );
+
+    let mut missing_side = report;
+    missing_side.below_feasibility = None;
+    assert_eq!(
+        missing_side.validate(),
+        Err(SupportDopPlane3ValidationError::MissingSideFeasibility)
     );
 }
 
