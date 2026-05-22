@@ -68,8 +68,8 @@ pub use adapter::{
 };
 #[cfg(feature = "exact-triangulation")]
 pub use adjacent::{
-    FullFaceAdjacentFacePair, FullFaceAdjacentUnion, FullFaceAdjacentUnionError,
-    has_full_face_adjacent_union, materialize_full_face_adjacent_union,
+    FullFaceAdjacentFacePair, FullFaceAdjacentPatch, FullFaceAdjacentUnion,
+    FullFaceAdjacentUnionError, has_full_face_adjacent_union, materialize_full_face_adjacent_union,
 };
 #[cfg(feature = "exact-triangulation")]
 pub use affine_box::{

@@ -3368,6 +3368,26 @@ fn tetrahedron_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3], d: [i64; 3]) -> ExactM
 }
 
 #[cfg(feature = "exact-triangulation")]
+fn base_fan_tetrahedron_i64(
+    a: [i64; 3],
+    b: [i64; 3],
+    c: [i64; 3],
+    center: [i64; 3],
+    d: [i64; 3],
+) -> ExactMesh {
+    ExactMesh::from_i64_triangles(
+        &[
+            a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2], center[0], center[1],
+            center[2], d[0], d[1], d[2],
+        ],
+        &[
+            0, 1, 3, 1, 2, 3, 2, 0, 3, 0, 2, 4, 2, 1, 4, 1, 0, 4,
+        ],
+    )
+    .expect("base fan tetrahedron fixture should import")
+}
+
+#[cfg(feature = "exact-triangulation")]
 fn affine_box_i64(
     min: [i64; 3],
     max: [i64; 3],
@@ -3498,6 +3518,45 @@ fn exercise_full_face_adjacent_union() {
         hypermesh::exact::materialize_full_face_adjacent_union(
             &left,
             &same_side_overlap,
+            ValidationPolicy::CLOSED,
+        )
+        .is_none()
+    );
+
+    let fan_right =
+        base_fan_tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [1, 1, 0], [0, 0, -4]);
+    let fan_union = hypermesh::exact::materialize_full_face_adjacent_union(
+        &left,
+        &fan_right,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("fan-patch adjacent fuzz fixture should materialize");
+    fan_union.validate().unwrap();
+    fan_union
+        .validate_against_sources(&left, &fan_right)
+        .unwrap();
+    assert!(fan_union.shared_faces.is_empty());
+    assert_eq!(fan_union.shared_patches.len(), 1);
+    assert_eq!(fan_union.mesh.vertices().len(), 5);
+    assert_eq!(fan_union.mesh.triangles().len(), 6);
+
+    let fan_preflight =
+        preflight_boolean_exact(&left, &fan_right, ExactBooleanOperation::Union).unwrap();
+    fan_preflight.validate().unwrap();
+    fan_preflight
+        .validate_against_sources(&left, &fan_right)
+        .unwrap();
+    assert_eq!(
+        fan_preflight.support,
+        ExactBooleanSupport::CertifiedFullFaceAdjacentUnion
+    );
+
+    let same_side_fan =
+        base_fan_tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [1, 1, 0], [0, 0, 2]);
+    assert!(
+        hypermesh::exact::materialize_full_face_adjacent_union(
+            &left,
+            &same_side_fan,
             ValidationPolicy::CLOSED,
         )
         .is_none()
