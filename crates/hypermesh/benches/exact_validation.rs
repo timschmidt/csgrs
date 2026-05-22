@@ -91,6 +91,24 @@ fn affine_rect_surface_i64(
 }
 
 #[cfg(feature = "exact-triangulation")]
+fn fan_surface_mesh_from_points(points: &[Point3]) -> ExactMesh {
+    let vertices = points
+        .iter()
+        .map(|point| ExactPoint3::new(point.x.clone(), point.y.clone(), point.z.clone()))
+        .collect::<Vec<_>>();
+    let triangles = (1..points.len() - 1)
+        .map(|index| Triangle([0, index, index + 1]))
+        .collect::<Vec<_>>();
+    ExactMesh::new_with_policy(
+        vertices,
+        triangles,
+        SourceProvenance::exact("bench retained-ring fan surface mesh"),
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap()
+}
+
+#[cfg(feature = "exact-triangulation")]
 fn axis_aligned_box_i64(min: [i64; 3], max: [i64; 3]) -> ExactMesh {
     ExactMesh::from_i64_triangles(
         &[
@@ -3767,6 +3785,25 @@ fn exact_boolean_coplanar_orthogonal_surface_cells(c: &mut Criterion) {
         let overlap_source_right = rect_surface_i64(&[(8, 2, 10, 4)]);
         let rectangular_overlap_left = rect_surface_i64(&[(0, 0, 20, 20)]);
         let rectangular_overlap_right = rect_surface_i64(&[(8, 8, 12, 12), (0, 9, 10, 11)]);
+        let retained_outer = vec![
+            p3(0, 0, 0),
+            p3(6, 0, 0),
+            p3(6, 1, 0),
+            p3(1, 1, 0),
+            p3(1, 5, 0),
+            p3(6, 5, 0),
+            p3(6, 6, 0),
+            p3(0, 6, 0),
+        ];
+        let orthogonal_fan_rejection = hypermesh::exact::CoplanarOrthogonalSurfaceArrangement {
+            projection: hypermesh::exact::CoplanarProjection::Xy,
+            operation: hypermesh::exact::CoplanarOrthogonalSurfaceOperation::Union,
+            components: vec![hypermesh::exact::CoplanarOrthogonalSurfaceComponent {
+                outer: retained_outer.clone(),
+                holes: Vec::new(),
+            }],
+            mesh: fan_surface_mesh_from_points(&retained_outer),
+        };
 
         c.bench_function("exact_boolean_coplanar_orthogonal_surface_cells", |b| {
             b.iter(|| {
@@ -3889,6 +3926,7 @@ fn exact_boolean_coplanar_orthogonal_surface_cells(c: &mut Criterion) {
                         .as_ref()
                         .map(|output| output.validate_against_sources(&graph_left, &graph_right)),
                     graph_difference.as_ref().map(|output| output.validate()),
+                    orthogonal_fan_rejection.validate().is_err(),
                     hypermesh::exact::preflight_boolean_exact(
                         &graph_left,
                         &graph_right,
@@ -3959,6 +3997,31 @@ fn exact_boolean_coplanar_affine_surface_cells(c: &mut Criterion) {
         let holed_left =
             affine_rect_surface_i64(&[(0, 0, 10, 10), (10, 0, 12, 2)], origin, basis_u, basis_v);
         let holed_right = affine_rect_surface_i64(&[(2, 2, 4, 4)], origin, basis_u, basis_v);
+        let lift = |u: i32, v: i32| p3(2 * u - v, u + 2 * v, 0);
+        let affine_outer = vec![
+            lift(0, 0),
+            lift(6, 0),
+            lift(6, 1),
+            lift(1, 1),
+            lift(1, 5),
+            lift(6, 5),
+            lift(6, 6),
+            lift(0, 6),
+        ];
+        let affine_fan_rejection = hypermesh::exact::CoplanarAffineSurfaceArrangement {
+            basis: hypermesh::exact::CoplanarAffineSurfaceBasis {
+                projection: hypermesh::exact::CoplanarProjection::Xy,
+                origin: p3(0, 0, 0),
+                basis_u: p3(2, 1, 0),
+                basis_v: p3(-1, 2, 0),
+            },
+            operation: hypermesh::exact::CoplanarOrthogonalSurfaceOperation::Union,
+            components: vec![hypermesh::exact::CoplanarOrthogonalSurfaceComponent {
+                outer: affine_outer.clone(),
+                holes: Vec::new(),
+            }],
+            mesh: fan_surface_mesh_from_points(&affine_outer),
+        };
 
         c.bench_function("exact_boolean_coplanar_affine_surface_cells", |b| {
             b.iter(|| {
@@ -4005,6 +4068,7 @@ fn exact_boolean_coplanar_affine_surface_cells(c: &mut Criterion) {
                     difference
                         .as_ref()
                         .map(|output| output.validate_against_sources(&holed_left, &holed_right)),
+                    affine_fan_rejection.validate().is_err(),
                     hypermesh::exact::preflight_boolean_exact(
                         &holed_left,
                         &holed_right,

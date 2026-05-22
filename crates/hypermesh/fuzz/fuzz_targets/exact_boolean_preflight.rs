@@ -1,10 +1,13 @@
 #![no_main]
 
 use hypermesh::exact::{
-    CoplanarArrangementOperation, CoplanarSurfaceContainment, CoplanarSurfaceContainmentStatus,
-    CoplanarTriangleRelation, ExactBooleanOperation, ExactBooleanPolicy, ExactBooleanSupport,
-    ExactBoundaryBooleanPolicy, ExactMesh, ExactRegionSelection, FaceRegionPlaneRelation,
-    FaceSplitBoundaryNode, SourceProvenance, Triangle, ValidationPolicy,
+    CoplanarAffineSurfaceArrangement, CoplanarAffineSurfaceBasis, CoplanarArrangementOperation,
+    CoplanarOrthogonalSurfaceArrangement, CoplanarOrthogonalSurfaceComponent,
+    CoplanarOrthogonalSurfaceOperation, CoplanarSurfaceContainment,
+    CoplanarSurfaceContainmentStatus, CoplanarTriangleRelation, ExactBooleanOperation,
+    ExactBooleanPolicy, ExactBooleanSupport, ExactBoundaryBooleanPolicy, ExactMesh,
+    ExactRegionSelection, FaceRegionPlaneRelation, FaceSplitBoundaryNode, SourceProvenance,
+    Triangle, ValidationPolicy,
     arrange_coplanar_affine_surface_difference, arrange_coplanar_affine_surface_intersection,
     arrange_coplanar_affine_surface_union,
     arrange_coplanar_convex_surface_component_holed_difference,
@@ -2869,6 +2872,11 @@ fn exercise_component_coplanar_difference() {
     graph_difference
         .validate_against_sources(&graph_left, &graph_right)
         .unwrap();
+    if let Some(mesh) = fan_surface_mesh_from_points(&graph_difference.components[0].outer) {
+        let mut crossing_fan = graph_difference.clone();
+        crossing_fan.mesh = mesh;
+        assert!(crossing_fan.validate().is_err());
+    }
 
     let overlap_source_left = rect_surface_i64(&[(0, 0, 4, 6), (2, 2, 8, 4)]);
     let overlap_source_right = rect_surface_i64(&[(8, 2, 10, 4)]);
@@ -2956,6 +2964,76 @@ fn exercise_component_coplanar_difference() {
     affine_difference
         .validate_against_sources(&affine_holed_left, &affine_holed_right)
         .unwrap();
+    let affine_graph_left = affine_rect_surface_i64(&[(0, 0, 12, 10)], origin, basis_u, basis_v);
+    let affine_graph_right = affine_rect_surface_i64(
+        &[(3, 3, 5, 5), (7, 3, 9, 5), (5, 4, 7, 5), (-1, 4, 3, 5)],
+        origin,
+        basis_u,
+        basis_v,
+    );
+    let affine_graph_difference =
+        arrange_coplanar_affine_surface_difference(&affine_graph_left, &affine_graph_right)
+            .expect("affine graph fixture should materialize");
+    affine_graph_difference.validate().unwrap();
+    affine_graph_difference
+        .validate_against_sources(&affine_graph_left, &affine_graph_right)
+        .unwrap();
+    if let Some(mesh) = fan_surface_mesh_from_points(&affine_graph_difference.components[0].outer)
+    {
+        let mut crossing_fan = affine_graph_difference.clone();
+        crossing_fan.mesh = mesh;
+        assert!(crossing_fan.validate().is_err());
+    }
+
+    let retained_outer = vec![
+        point3(0, 0, 0),
+        point3(6, 0, 0),
+        point3(6, 1, 0),
+        point3(1, 1, 0),
+        point3(1, 5, 0),
+        point3(6, 5, 0),
+        point3(6, 6, 0),
+        point3(0, 6, 0),
+    ];
+    let orthogonal_fan = CoplanarOrthogonalSurfaceArrangement {
+        projection: CoplanarProjection::Xy,
+        operation: CoplanarOrthogonalSurfaceOperation::Union,
+        components: vec![CoplanarOrthogonalSurfaceComponent {
+            outer: retained_outer.clone(),
+            holes: Vec::new(),
+        }],
+        mesh: fan_surface_mesh_from_points(&retained_outer)
+            .expect("reflex fan fixture should import"),
+    };
+    assert!(orthogonal_fan.validate().is_err());
+
+    let lift = |u: i64, v: i64| point3(2 * u - v, u + 2 * v, 0);
+    let affine_outer = vec![
+        lift(0, 0),
+        lift(6, 0),
+        lift(6, 1),
+        lift(1, 1),
+        lift(1, 5),
+        lift(6, 5),
+        lift(6, 6),
+        lift(0, 6),
+    ];
+    let affine_fan = CoplanarAffineSurfaceArrangement {
+        basis: CoplanarAffineSurfaceBasis {
+            projection: CoplanarProjection::Xy,
+            origin: point3(0, 0, 0),
+            basis_u: point3(2, 1, 0),
+            basis_v: point3(-1, 2, 0),
+        },
+        operation: CoplanarOrthogonalSurfaceOperation::Union,
+        components: vec![CoplanarOrthogonalSurfaceComponent {
+            outer: affine_outer.clone(),
+            holes: Vec::new(),
+        }],
+        mesh: fan_surface_mesh_from_points(&affine_outer)
+            .expect("affine reflex fan fixture should import"),
+    };
+    assert!(affine_fan.validate().is_err());
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -4396,6 +4474,33 @@ fn fan_surface_mesh_with_swapped_tail(mesh: &ExactMesh) -> Option<ExactMesh> {
         vertices,
         triangles,
         SourceProvenance::exact("fuzz fan surface mesh"),
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .ok()
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn fan_surface_mesh_from_points(points: &[hyperlimit::Point3]) -> Option<ExactMesh> {
+    if points.len() < 3 {
+        return None;
+    }
+    let vertices = points
+        .iter()
+        .map(|point| {
+            hypermesh::exact::ExactPoint3::new(
+                point.x.clone(),
+                point.y.clone(),
+                point.z.clone(),
+            )
+        })
+        .collect::<Vec<_>>();
+    let triangles = (1..points.len() - 1)
+        .map(|index| Triangle([0, index, index + 1]))
+        .collect::<Vec<_>>();
+    ExactMesh::new_with_policy(
+        vertices,
+        triangles,
+        SourceProvenance::exact("fuzz retained-ring fan surface mesh"),
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .ok()

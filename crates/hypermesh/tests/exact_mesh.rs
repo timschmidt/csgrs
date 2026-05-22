@@ -11807,6 +11807,11 @@ fn exact_coplanar_orthogonal_surface_cells_materialize_nonconvex_outputs() {
     let mut reversed_union = l_union.clone();
     reversed_union.components[0].outer.reverse();
     assert!(reversed_union.validate().is_err());
+    if let Some(mesh) = boundary_mismatched_mesh(&l_union.mesh) {
+        let mut bad_boundary_union = l_union.clone();
+        bad_boundary_union.mesh = mesh;
+        assert!(bad_boundary_union.validate().is_err());
+    }
     let union_preflight = hypermesh::exact::preflight_boolean_exact(
         &l_left,
         &l_right,
@@ -12027,6 +12032,11 @@ fn exact_coplanar_affine_surface_cells_materialize_rotated_nonconvex_outputs() {
     let mut reversed_union = l_union.clone();
     reversed_union.components[0].outer.reverse();
     assert!(reversed_union.validate().is_err());
+    if let Some(mesh) = boundary_mismatched_mesh(&l_union.mesh) {
+        let mut bad_boundary_union = l_union.clone();
+        bad_boundary_union.mesh = mesh;
+        assert!(bad_boundary_union.validate().is_err());
+    }
     let union_preflight = hypermesh::exact::preflight_boolean_exact(
         &l_left,
         &l_right,
@@ -12144,6 +12154,71 @@ fn exact_coplanar_affine_surface_cells_materialize_rotated_nonconvex_outputs() {
         .unwrap();
     assert_eq!(graph_difference.components.len(), 1);
     assert!(graph_difference.components[0].holes.is_empty());
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
+fn exact_coplanar_orthogonal_surface_validation_rejects_reflex_fan_mesh() {
+    let outer = vec![
+        p3(0, 0, 0),
+        p3(6, 0, 0),
+        p3(6, 1, 0),
+        p3(1, 1, 0),
+        p3(1, 5, 0),
+        p3(6, 5, 0),
+        p3(6, 6, 0),
+        p3(0, 6, 0),
+    ];
+    let arrangement = hypermesh::exact::CoplanarOrthogonalSurfaceArrangement {
+        projection: CoplanarProjection::Xy,
+        operation: hypermesh::exact::CoplanarOrthogonalSurfaceOperation::Union,
+        components: vec![hypermesh::exact::CoplanarOrthogonalSurfaceComponent {
+            outer: outer.clone(),
+            holes: Vec::new(),
+        }],
+        mesh: fan_mesh_from_points(&outer),
+    };
+
+    assert!(arrangement.validate().is_err());
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
+fn exact_coplanar_affine_surface_validation_rejects_reflex_fan_mesh() {
+    let basis = hypermesh::exact::CoplanarAffineSurfaceBasis {
+        projection: CoplanarProjection::Xy,
+        origin: p3(0, 0, 0),
+        basis_u: p3(2, 1, 0),
+        basis_v: p3(-1, 2, 0),
+    };
+    let lift = |u: i32, v: i32| -> Point3 {
+        Point3::new(
+            ExactReal::from(2 * u - v),
+            ExactReal::from(u + 2 * v),
+            ExactReal::from(0),
+        )
+    };
+    let outer = vec![
+        lift(0, 0),
+        lift(6, 0),
+        lift(6, 1),
+        lift(1, 1),
+        lift(1, 5),
+        lift(6, 5),
+        lift(6, 6),
+        lift(0, 6),
+    ];
+    let arrangement = hypermesh::exact::CoplanarAffineSurfaceArrangement {
+        basis,
+        operation: hypermesh::exact::CoplanarOrthogonalSurfaceOperation::Union,
+        components: vec![hypermesh::exact::CoplanarOrthogonalSurfaceComponent {
+            outer: outer.clone(),
+            holes: Vec::new(),
+        }],
+        mesh: fan_mesh_from_points(&outer),
+    };
+
+    assert!(arrangement.validate().is_err());
 }
 
 #[cfg(feature = "exact-triangulation")]

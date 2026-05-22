@@ -823,6 +823,23 @@ fn validate_component_mesh(
             "orthogonal arrangement mesh has no triangulation",
         ));
     }
+    let mut retained_rings = Vec::new();
+    let mut component_ranges = Vec::new();
+    let mut hole_ranges = Vec::new();
+    let mut expected_vertices = 0;
+    for component in components {
+        let component_start = expected_vertices;
+        let outer_start = expected_vertices;
+        expected_vertices += component.outer.len();
+        retained_rings.push(outer_start..expected_vertices);
+        for hole in &component.holes {
+            let hole_start = expected_vertices;
+            expected_vertices += hole.len();
+            retained_rings.push(hole_start..expected_vertices);
+            hole_ranges.push(hole_start..expected_vertices);
+        }
+        component_ranges.push(component_start..expected_vertices);
+    }
     let retained_points = components
         .iter()
         .flat_map(|component| {
@@ -844,6 +861,45 @@ fn validate_component_mesh(
             ));
         }
     }
+    for triangle in mesh.triangles() {
+        if triangle.0.iter().any(|&index| index >= expected_vertices) {
+            return Err(orthogonal_error(
+                "orthogonal mesh triangle index is out of retained loop range",
+            ));
+        }
+        let Some(first_component) = component_for_retained_vertex(triangle.0[0], &component_ranges)
+        else {
+            return Err(orthogonal_error(
+                "orthogonal mesh triangle has no retained component",
+            ));
+        };
+        if triangle.0.iter().any(|&index| {
+            component_for_retained_vertex(index, &component_ranges) != Some(first_component)
+        }) {
+            return Err(orthogonal_error(
+                "orthogonal mesh triangle spans retained components",
+            ));
+        }
+        for hole_range in &hole_ranges {
+            if triangle.0.iter().all(|index| hole_range.contains(index)) {
+                return Err(orthogonal_error(
+                    "orthogonal mesh triangle fills a retained hole",
+                ));
+            }
+        }
+    }
+    validate_mesh_edges_respect_retained_rings(
+        mesh,
+        projection,
+        &retained_rings,
+        "orthogonal mesh edge crosses a retained ring",
+    )?;
+    validate_mesh_uses_all_retained_vertices(mesh, expected_vertices)?;
+    validate_mesh_boundary_matches_retained_rings(
+        mesh,
+        &retained_rings,
+        "orthogonal mesh boundary does not match retained loops",
+    )?;
     let mut retained_signed_area = ExactReal::from(0);
     for component in components {
         retained_signed_area = add(
@@ -867,6 +923,202 @@ fn validate_component_mesh(
         ));
     }
     Ok(())
+}
+
+/// Return the retained component range that owns a mesh vertex index.
+///
+/// Orthogonal cell arrangements retain topology as loop ranges before they are
+/// triangulated. Yap, "Towards Exact Geometric Computation," *Computational
+/// Geometry* 7.1-2 (1997), treats that retained combinatorial state as part of
+/// the exact object, so validation rejects triangles spanning components rather
+/// than letting a later area check hide the copied topology error.
+fn component_for_retained_vertex(
+    index: usize,
+    ranges: &[core::ops::Range<usize>],
+) -> Option<usize> {
+    ranges
+        .iter()
+        .position(|range| range.start <= index && index < range.end)
+}
+
+/// Validate that every retained output vertex participates in triangulation.
+///
+/// Retained ring vertices are certified boundary state, not optional display
+/// coordinates. This follows Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997): the triangulated artifact must replay
+/// the exact object structure before signed-area summaries can certify it.
+fn validate_mesh_uses_all_retained_vertices(
+    mesh: &ExactMesh,
+    retained_vertices: usize,
+) -> Result<(), MeshError> {
+    let mut used = vec![false; retained_vertices];
+    for triangle in mesh.triangles() {
+        for &index in &triangle.0 {
+            if let Some(slot) = used.get_mut(index) {
+                *slot = true;
+            }
+        }
+    }
+    if used.iter().any(|used| !*used) {
+        return Err(orthogonal_error(
+            "orthogonal mesh leaves a retained loop vertex unused",
+        ));
+    }
+    Ok(())
+}
+
+/// Validate that mesh boundary edges exactly match retained ring edges.
+///
+/// A cell arrangement materializes retained loops, not an arbitrary triangle
+/// soup with matching area. Under Yap's exact-object boundary, the mesh must
+/// replay those loop edges exactly. The boundary-as-chain invariant is the
+/// planar-subdivision view used by de Berg, Cheong, van Kreveld, and Overmars,
+/// *Computational Geometry: Algorithms and Applications*, 3rd ed. (2008),
+/// Chapter 2.
+fn validate_mesh_boundary_matches_retained_rings(
+    mesh: &ExactMesh,
+    retained_rings: &[core::ops::Range<usize>],
+    message: &'static str,
+) -> Result<(), MeshError> {
+    let mut expected = Vec::new();
+    for ring in retained_rings {
+        let len = ring.end.saturating_sub(ring.start);
+        if len < 3 {
+            return Err(orthogonal_error(
+                "orthogonal retained ring has fewer than three vertices",
+            ));
+        }
+        for local in 0..len {
+            expected.push(canonical_edge(
+                ring.start + local,
+                ring.start + ((local + 1) % len),
+            ));
+        }
+    }
+    expected.sort_unstable();
+    if expected.windows(2).any(|window| window[0] == window[1]) {
+        return Err(orthogonal_error(
+            "orthogonal retained rings repeat a boundary edge",
+        ));
+    }
+
+    let mut edge_counts: Vec<((usize, usize), usize)> = Vec::new();
+    for triangle in mesh.triangles() {
+        let [a, b, c] = triangle.0;
+        for edge in [
+            canonical_edge(a, b),
+            canonical_edge(b, c),
+            canonical_edge(c, a),
+        ] {
+            if let Some((_, count)) = edge_counts.iter_mut().find(|(key, _)| *key == edge) {
+                *count += 1;
+            } else {
+                edge_counts.push((edge, 1));
+            }
+        }
+    }
+    let mut actual = edge_counts
+        .into_iter()
+        .filter_map(|(edge, count)| (count == 1).then_some(edge))
+        .collect::<Vec<_>>();
+    actual.sort_unstable();
+
+    if actual != expected {
+        return Err(orthogonal_error(message));
+    }
+    Ok(())
+}
+
+fn canonical_edge(a: usize, b: usize) -> (usize, usize) {
+    if a <= b { (a, b) } else { (b, a) }
+}
+
+/// Validate mesh edges against retained ring edges.
+///
+/// Interior triangulation edges may not cross, overlap, or touch retained
+/// boundary rings except at shared endpoints or identical boundary edges. This
+/// is the retained-topology counterpart to Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997). The segment relation is
+/// supplied by the orientation-predicate classifier used by Guigue and
+/// Devillers, "Fast and Robust Triangle-Triangle Overlap Test Using
+/// Orientation Predicates," *Journal of Graphics Tools* 8.1 (2003).
+fn validate_mesh_edges_respect_retained_rings(
+    mesh: &ExactMesh,
+    projection: CoplanarProjection,
+    retained_rings: &[core::ops::Range<usize>],
+    message: &'static str,
+) -> Result<(), MeshError> {
+    let retained_edges = retained_ring_edges(retained_rings)?;
+    let mut mesh_edges = Vec::new();
+    for triangle in mesh.triangles() {
+        let [a, b, c] = triangle.0;
+        mesh_edges.extend([
+            canonical_edge(a, b),
+            canonical_edge(b, c),
+            canonical_edge(c, a),
+        ]);
+    }
+    mesh_edges.sort_unstable();
+    mesh_edges.dedup();
+
+    for &(edge_a, edge_b) in &mesh_edges {
+        for &(ring_a, ring_b) in &retained_edges {
+            if canonical_edge(edge_a, edge_b) == canonical_edge(ring_a, ring_b) {
+                continue;
+            }
+            let edge_start = mesh.vertices()[edge_a].to_hyperlimit_point();
+            let edge_end = mesh.vertices()[edge_b].to_hyperlimit_point();
+            let ring_start = mesh.vertices()[ring_a].to_hyperlimit_point();
+            let ring_end = mesh.vertices()[ring_b].to_hyperlimit_point();
+            match classify_segment_intersection(
+                &project_point(&edge_start, projection),
+                &project_point(&edge_end, projection),
+                &project_point(&ring_start, projection),
+                &project_point(&ring_end, projection),
+            )
+            .value()
+            {
+                Some(SegmentIntersection::Disjoint) => {}
+                Some(SegmentIntersection::EndpointTouch)
+                    if edge_a == ring_a
+                        || edge_a == ring_b
+                        || edge_b == ring_a
+                        || edge_b == ring_b => {}
+                Some(
+                    SegmentIntersection::Proper
+                    | SegmentIntersection::EndpointTouch
+                    | SegmentIntersection::CollinearOverlap
+                    | SegmentIntersection::Identical,
+                ) => {
+                    return Err(orthogonal_error(message));
+                }
+                None => {
+                    return Err(orthogonal_error(
+                        "orthogonal mesh edge/ring predicate was undecided",
+                    ));
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+fn retained_ring_edges(
+    retained_rings: &[core::ops::Range<usize>],
+) -> Result<Vec<(usize, usize)>, MeshError> {
+    let mut edges = Vec::new();
+    for ring in retained_rings {
+        let len = ring.end.saturating_sub(ring.start);
+        if len < 3 {
+            return Err(orthogonal_error(
+                "orthogonal retained ring has fewer than three vertices",
+            ));
+        }
+        for local in 0..len {
+            edges.push((ring.start + local, ring.start + ((local + 1) % len)));
+        }
+    }
+    Ok(edges)
 }
 
 fn validate_loop(
