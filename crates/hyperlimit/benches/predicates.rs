@@ -549,6 +549,30 @@ fn bench_exact_rational_kernels(c: &mut Criterion) {
         });
     });
 
+    group.bench_function("convex/prepared_halfspace_feasibility3", |b| {
+        let session = ExactGeometrySession::default();
+        let feasible = exact_rational_shifted_box_planes3();
+        let infeasible = vec![
+            Plane3::new(rational_point3(1, 1, 0, 1, 0, 1), rational_real(1, 1)),
+            Plane3::new(rational_point3(-1, 1, 0, 1, 0, 1), rational_real(0, 1)),
+        ];
+        let prepared_feasible = session.prepare_halfspace_system3(&feasible);
+        let prepared_infeasible = session.prepare_halfspace_system3(&infeasible);
+        b.iter(|| {
+            let feasible_status = session
+                .classify_prepared_halfspace_feasibility3(black_box(&prepared_feasible))
+                .value()
+                .map(|report| report.is_feasible())
+                .unwrap_or(false);
+            let infeasible_status = session
+                .classify_prepared_halfspace_feasibility3(black_box(&prepared_infeasible))
+                .value()
+                .map(|report| report.infeasibility_certificate.is_some())
+                .unwrap_or(true);
+            black_box((feasible_status, infeasible_status))
+        });
+    });
+
     // These rows keep the D-dimensional predicate boundary visible while it is
     // still intentionally generic. They measure exact determinant ownership in
     // `hyperlimit` before `hypertri` or mesh crates add prepared common-scale

@@ -24,13 +24,72 @@
 use hyperreal::Real;
 
 use crate::classify::{HalfspaceFeasibility, PlaneSide};
-use crate::geometry::{Plane3, Point3, intersect_three_planes};
+use crate::geometry::{Plane3, Plane3Facts, Point3, intersect_three_planes};
 use crate::plane::classify_point_plane_with_policy;
 use crate::predicate::{
     Certainty, Escalation, PredicateOutcome, PredicatePolicy, RefinementNeed, Sign,
 };
 use crate::real::{add_ref, mul_ref, sub_ref};
 use crate::resolve::resolve_real_sign;
+
+/// Reusable borrowed 3D halfspace system.
+///
+/// A prepared halfspace system stores the source plane slice and cached
+/// [`Plane3Facts`] for diagnostics and scheduling. Feasibility still replays
+/// through exact predicates; cached facts are not themselves feasibility
+/// certificates. This mirrors Yap's geometric-object layer: retain object
+/// structure and preparation metadata, but let exact predicates decide
+/// combinatorial truth. See Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997).
+#[derive(Clone, Debug, PartialEq)]
+pub struct PreparedHalfspaceSystem3<'a> {
+    planes: &'a [Plane3],
+    plane_facts: Vec<Plane3Facts>,
+}
+
+impl<'a> PreparedHalfspaceSystem3<'a> {
+    /// Prepare a borrowed plane-halfspace system.
+    pub fn new(planes: &'a [Plane3]) -> Self {
+        crate::trace_dispatch!("hyperlimit", "prepared_halfspace_system3", "new");
+        let plane_facts = planes.iter().map(Plane3::structural_facts).collect();
+        Self {
+            planes,
+            plane_facts,
+        }
+    }
+
+    /// Return the borrowed source planes.
+    pub fn planes(&self) -> &'a [Plane3] {
+        self.planes
+    }
+
+    /// Return cached per-plane structural facts.
+    pub fn plane_facts(&self) -> &[Plane3Facts] {
+        &self.plane_facts
+    }
+
+    /// Classify feasibility using the default predicate policy.
+    pub fn classify_feasibility(&self) -> PredicateOutcome<HalfspaceFeasibilityReport> {
+        self.classify_feasibility_with_policy(PredicatePolicy::default())
+    }
+
+    /// Classify feasibility using an explicit predicate policy.
+    pub fn classify_feasibility_with_policy(
+        &self,
+        policy: PredicatePolicy,
+    ) -> PredicateOutcome<HalfspaceFeasibilityReport> {
+        classify_halfspace_feasibility3_with_policy(self.planes, policy)
+    }
+
+    /// Replay a feasibility report against this prepared system.
+    pub fn validate_report(
+        &self,
+        report: &HalfspaceFeasibilityReport,
+        policy: PredicatePolicy,
+    ) -> PredicateOutcome<bool> {
+        report.validate_against_planes(self.planes, policy)
+    }
+}
 
 /// Feasibility report for a closed 3D halfspace system.
 #[derive(Clone, Debug, PartialEq)]

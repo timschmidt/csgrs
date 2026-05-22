@@ -20,8 +20,9 @@ use crate::predicates::aabb::{PreparedAabb2, PreparedAabb3};
 use crate::predicates::segment::{PreparedSegment2, PreparedSegment3};
 use crate::predicates::triangle::{PreparedTriangle2, PreparedTriangle3};
 use crate::{
-    Plane3, Point3, PreparedExplicitSphere3, PreparedIncircle2, PreparedInsphere3, PreparedLine2,
-    PreparedOrientedPlane3, PreparedPlane3, Sign,
+    HalfspaceFeasibilityReport, Plane3, Point3, PreparedExplicitSphere3, PreparedHalfspaceSystem3,
+    PreparedIncircle2, PreparedInsphere3, PreparedLine2, PreparedOrientedPlane3, PreparedPlane3,
+    Sign,
 };
 
 /// Monotone construction version carried by an [`ExactGeometrySession`].
@@ -847,9 +848,10 @@ impl ExactGeometrySession {
     /// [`Self::prepare_line2`], [`Self::prepare_segment2`],
     /// [`Self::prepare_triangle2`], [`Self::prepare_aabb2`],
     /// [`Self::prepare_incircle2`], [`Self::prepare_insphere3`],
-    /// [`Self::prepare_plane3`], and [`Self::prepare_oriented_plane3`]. It keeps
-    /// invalidation metadata in the session layer without moving application
-    /// topology ownership into `hyperlimit`.
+    /// [`Self::prepare_plane3`], [`Self::prepare_oriented_plane3`], and
+    /// [`Self::prepare_halfspace_system3`]. It keeps invalidation metadata in
+    /// the session layer without moving application topology ownership into
+    /// `hyperlimit`.
     pub fn versioned_prepared<P>(&self, prepared: P) -> VersionedPrepared<P> {
         VersionedPrepared::new(prepared, self.version)
     }
@@ -987,6 +989,21 @@ impl ExactGeometrySession {
         c: &Point3,
     ) -> PreparedOrientedPlane3 {
         PreparedOrientedPlane3::new(a, b, c)
+    }
+
+    /// Prepare a borrowed closed 3D halfspace feasibility system.
+    ///
+    /// The prepared object caches per-plane structural facts while preserving
+    /// the source slice as the caller-owned object package. Feasibility still
+    /// returns exact witnesses or Farkas certificates and replays them through
+    /// exact predicates, matching Yap's separation between geometric objects,
+    /// preparation metadata, and combinatorial decisions in "Towards Exact
+    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+    pub fn prepare_halfspace_system3<'a>(
+        &self,
+        planes: &'a [Plane3],
+    ) -> PreparedHalfspaceSystem3<'a> {
+        PreparedHalfspaceSystem3::new(planes)
     }
 
     /// Classify a point against a prepared line using this session's policy.
@@ -1157,6 +1174,23 @@ impl ExactGeometrySession {
         point: &Point3,
     ) -> PredicateOutcome<PlaneSide> {
         plane.classify_point_with_policy(point, self.policy)
+    }
+
+    /// Classify a prepared closed 3D halfspace system using this session's policy.
+    pub fn classify_prepared_halfspace_feasibility3(
+        &self,
+        system: &PreparedHalfspaceSystem3<'_>,
+    ) -> PredicateOutcome<HalfspaceFeasibilityReport> {
+        system.classify_feasibility_with_policy(self.policy)
+    }
+
+    /// Replay a halfspace feasibility report against a prepared system.
+    pub fn validate_prepared_halfspace_report3(
+        &self,
+        system: &PreparedHalfspaceSystem3<'_>,
+        report: &HalfspaceFeasibilityReport,
+    ) -> PredicateOutcome<bool> {
+        system.validate_report(report, self.policy)
     }
 }
 
@@ -1437,6 +1471,65 @@ mod tests {
     }
 
     #[test]
+    fn session_prepares_halfspace_systems_with_certified_replay() {
+        let session = ExactGeometrySession::default();
+        let feasible_planes = vec![
+            Plane3::new(p3(1, 0, 0), hyperreal::Real::from(-2)),
+            Plane3::new(p3(-1, 0, 0), hyperreal::Real::from(1)),
+            Plane3::new(p3(0, 1, 0), hyperreal::Real::from(-1)),
+            Plane3::new(p3(0, -1, 0), hyperreal::Real::from(0)),
+            Plane3::new(p3(0, 0, 1), hyperreal::Real::from(-3)),
+            Plane3::new(p3(0, 0, -1), hyperreal::Real::from(2)),
+        ];
+        let feasible = session.prepare_halfspace_system3(&feasible_planes);
+
+        assert_eq!(feasible.planes(), feasible_planes.as_slice());
+        assert_eq!(feasible.plane_facts().len(), feasible_planes.len());
+        assert!(
+            feasible
+                .plane_facts()
+                .iter()
+                .all(|facts| facts.normal_has_sparse_support())
+        );
+
+        let feasible_report = session
+            .classify_prepared_halfspace_feasibility3(&feasible)
+            .value()
+            .expect("closed unit-width slab should be decided exactly");
+        assert!(feasible_report.is_feasible());
+        assert_eq!(
+            session
+                .validate_prepared_halfspace_report3(&feasible, &feasible_report)
+                .value(),
+            Some(true)
+        );
+
+        let infeasible_planes = vec![
+            Plane3::new(p3(1, 0, 0), hyperreal::Real::from(1)),
+            Plane3::new(p3(-1, 0, 0), hyperreal::Real::from(0)),
+        ];
+        let infeasible = session.prepare_halfspace_system3(&infeasible_planes);
+        let infeasible_report = session
+            .classify_prepared_halfspace_feasibility3(&infeasible)
+            .value()
+            .expect("opposed exact slabs should be decided exactly");
+        assert_eq!(
+            infeasible_report.status,
+            crate::classify::HalfspaceFeasibility::Infeasible
+        );
+        assert!(
+            infeasible_report.infeasibility_certificate.is_some(),
+            "session-prepared infeasible systems should keep replayable Farkas certificates"
+        );
+        assert_eq!(
+            session
+                .validate_prepared_halfspace_report3(&infeasible, &infeasible_report)
+                .value(),
+            Some(true)
+        );
+    }
+
+    #[test]
     fn versioned_prepared_predicates_report_stale_source_without_certifying_topology() {
         let mut session = ExactGeometrySession::default();
         let origin = p2(0, 0);
@@ -1449,6 +1542,10 @@ mod tests {
         let r = p3(0, 1, 0);
         let s = p3(0, 0, 1);
         let plane = Plane3::new(p3(0, 0, 1), hyperreal::Real::from(0));
+        let halfspaces = vec![
+            Plane3::new(p3(1, 0, 0), hyperreal::Real::from(-1)),
+            Plane3::new(p3(-1, 0, 0), hyperreal::Real::from(0)),
+        ];
         let payoff = CachePayoff::new(4, 2, 3).expect("prepared line should repay");
 
         let line =
@@ -1463,6 +1560,8 @@ mod tests {
         let explicit_plane = session.versioned_prepared(session.prepare_plane3(&plane));
         let oriented_plane =
             session.versioned_prepared(session.prepare_oriented_plane3(&p, &q, &r));
+        let halfspace_system =
+            session.versioned_prepared(session.prepare_halfspace_system3(&halfspaces));
 
         assert_eq!(line.source_version(), ConstructionVersion::ZERO);
         assert_eq!(line.payoff(), Some(payoff));
@@ -1476,6 +1575,7 @@ mod tests {
             insphere.is_current_for(session),
             explicit_plane.is_current_for(session),
             oriented_plane.is_current_for(session),
+            halfspace_system.is_current_for(session),
         ] {
             assert!(current);
         }
@@ -1504,6 +1604,17 @@ mod tests {
                 .value(),
             Some(Aabb2PointLocation::Inside)
         );
+        let halfspace_report = session
+            .classify_prepared_halfspace_feasibility3(halfspace_system.prepared())
+            .value()
+            .expect("versioned prepared halfspace system should classify exactly");
+        assert!(halfspace_report.is_feasible());
+        assert_eq!(
+            session
+                .validate_prepared_halfspace_report3(halfspace_system.prepared(), &halfspace_report)
+                .value(),
+            Some(true)
+        );
 
         session.advance_version();
         for freshness in [
@@ -1515,6 +1626,7 @@ mod tests {
             insphere.freshness_for(session),
             explicit_plane.freshness_for(session),
             oriented_plane.freshness_for(session),
+            halfspace_system.freshness_for(session),
         ] {
             assert_eq!(
                 freshness,

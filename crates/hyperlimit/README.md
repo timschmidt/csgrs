@@ -62,13 +62,14 @@ than inventing a float decision.
   `RingPointLocation`, interval, and AABB classifications are the common result enums.
 - `orient_d`, `insphere_d`, and `affine_independent_d` provide the first exact
   D-dimensional determinant predicate boundary for triangulation and mesh crates.
-- Prepared segment, triangle, AABB, line, circle/sphere, and plane helpers retain facts
-  for repeated decisions.
+- Prepared segment, triangle, AABB, line, circle/sphere, plane, and halfspace-system
+  helpers retain facts for repeated decisions.
 - `SupportDop3` and `SupportSlab3` retain exact support-axis bounds and source
   witnesses for reusable k-DOP/bounding-volume slab predicates.
 - `HalfspaceFeasibilityReport` records exact 3D halfspace feasibility witnesses,
   active plane sets, and Farkas-style infeasibility certificates for replayable
-  convex-kernel prechecks.
+  convex-kernel prechecks; `PreparedHalfspaceSystem3` adds the borrowed
+  session-prepared form for repeated feasibility queries.
 - Session types such as `ExactGeometrySession`, `ConstructionCertificate`,
   `VersionedFacts`, and `VersionedPrepared` track cache freshness and construction
   provenance.
@@ -116,10 +117,10 @@ Version `0.4.0` is an early but usable predicate crate. It currently includes:
 - exact support k-DOP slab carriers with witness-preserving point and AABB projection
   classifiers;
 - exact 3D halfspace feasibility reports over `Plane3` systems, using active-set
-  candidates, point-plane replay, and Farkas-style negative certificates instead
-  of primitive LP tolerances;
-- prepared segment, triangle, AABB, line, circle/sphere, and plane helpers for repeated
-  decisions;
+  candidates, point-plane replay, Farkas-style negative certificates, and a
+  prepared/session form instead of primitive LP tolerances;
+- prepared segment, triangle, AABB, line, circle/sphere, plane, and halfspace-system
+  helpers for repeated decisions;
 - `PredicateOutcome`, `PredicateReport`, `PredicateCertificate`, certainty,
   precision-stage, API-semantics, and policy types;
 - versioned sessions, construction certificates, cached approximate-view labels, and

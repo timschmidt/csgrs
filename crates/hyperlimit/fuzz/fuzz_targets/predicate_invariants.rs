@@ -627,6 +627,31 @@ fn predicate_invariants(input: Input) {
             "halfspace feasibility witness must replay through point-plane predicates"
         );
     }
+    let prepared_fixed_point_halfspaces =
+        session.versioned_prepared(session.prepare_halfspace_system3(&fixed_point_halfspaces));
+    assert!(
+        prepared_fixed_point_halfspaces.is_current_for(session),
+        "freshly prepared halfspace systems must be current for their session"
+    );
+    if let Some(feasibility) = session
+        .classify_prepared_halfspace_feasibility3(prepared_fixed_point_halfspaces.prepared())
+        .value()
+    {
+        assert!(
+            feasibility.is_feasible(),
+            "prepared coordinate halfspaces that pin a generated point must be feasible"
+        );
+        assert_eq!(
+            session
+                .validate_prepared_halfspace_report3(
+                    prepared_fixed_point_halfspaces.prepared(),
+                    &feasibility,
+                )
+                .value(),
+            Some(true),
+            "prepared halfspace feasibility witnesses must replay exactly"
+        );
+    }
     let impossible_halfspaces = vec![
         Plane3::new(Point3::new(1.into(), 0.into(), 0.into()), 1.into()),
         Plane3::new(Point3::new((-1).into(), 0.into(), 0.into()), 0.into()),
@@ -647,6 +672,32 @@ fn predicate_invariants(input: Input) {
                 .value(),
             Some(true),
             "halfspace infeasibility certificate must replay exactly"
+        );
+    }
+    let prepared_impossible_halfspaces =
+        session.versioned_prepared(session.prepare_halfspace_system3(&impossible_halfspaces));
+    if let Some(report) = session
+        .classify_prepared_halfspace_feasibility3(prepared_impossible_halfspaces.prepared())
+        .value()
+    {
+        assert_eq!(
+            report.status,
+            hyperlimit::HalfspaceFeasibility::Infeasible,
+            "prepared opposed exact halfspaces must be infeasible"
+        );
+        assert!(
+            report.infeasibility_certificate.is_some(),
+            "prepared opposed exact halfspaces should retain a Farkas certificate"
+        );
+        assert_eq!(
+            session
+                .validate_prepared_halfspace_report3(
+                    prepared_impossible_halfspaces.prepared(),
+                    &report,
+                )
+                .value(),
+            Some(true),
+            "prepared halfspace infeasibility certificates must replay exactly"
         );
     }
 }
