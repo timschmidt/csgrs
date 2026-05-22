@@ -604,6 +604,24 @@ pub(crate) fn hpoints_exactly_equal(lhs: &Point3<Real>, rhs: &Point3<Real>) -> b
     matches!(hreal_sign(&lhs.squared_distance(&rhs)), Some(RealSign::Zero))
 }
 
+/// Return whether two finite public scalar values are exactly equal after promotion.
+///
+/// This is for topology-affecting boundary decisions that still receive `Real`
+/// values from public APIs or projection adapters. Primitive floats and
+/// integers may enter at the edge, but equality is decided only after promotion
+/// to `hyperreal::Real`, following Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7(1-2), 1997
+/// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+pub(crate) fn hreal_f64s_exactly_equal(lhs: Real, rhs: Real) -> bool {
+    let Ok(lhs) = hreal_from_f64(lhs) else {
+        return false;
+    };
+    let Ok(rhs) = hreal_from_f64(rhs) else {
+        return false;
+    };
+    matches!(hreal_sign(&(lhs - rhs)), Some(RealSign::Zero))
+}
+
 /// Return the finite Euclidean distance between two public boundary points.
 ///
 /// Distance construction and square root are delegated to `hyperlattice` /
@@ -753,31 +771,6 @@ pub(crate) fn htriangle_area2_exceeds_tolerance(
     };
     let area2 = (&b - &a).cross(&(&c - &a));
     hreal_gt_hreal(&area2.dot(&area2), &tolerance_squared)
-}
-
-/// Compare finite f64 boundary vectors by squared distance in hyperreal space.
-///
-/// This is the vector analogue of [`hpoints_within_tolerance`], used for normals
-/// and directions that still cross public API or file-format boundaries as
-/// primitive floats while topology-sensitive equality is evaluated with
-/// `hyperreal::Real`.
-pub(crate) fn hvectors_within_tolerance(
-    lhs: &Vector3<Real>,
-    rhs: &Vector3<Real>,
-    tolerance: Real,
-) -> bool {
-    let Some(tolerance_squared) = hpositive_boundary_scalar_squared(tolerance) else {
-        return false;
-    };
-
-    let Some(lhs) = hvector3_from_vector3(lhs) else {
-        return false;
-    };
-    let Some(rhs) = hvector3_from_vector3(rhs) else {
-        return false;
-    };
-
-    hreal_lt_hreal(&lhs.squared_distance(&rhs), &tolerance_squared)
 }
 
 /// Return whether two finite boundary vectors are exactly equal after promotion.
@@ -1289,16 +1282,15 @@ mod tests {
     }
 
     #[test]
-    fn hvectors_within_tolerance_uses_hyperreal_distance() {
-        let tolerance = 1e-6;
+    fn hvectors_exactly_equal_uses_hyperreal_identity() {
         let lhs = Vector3::new(0.0, 1.0, 0.0);
-        let near = Vector3::new(0.0, 1.0 + tolerance * 0.25, 0.0);
-        let distant = Vector3::new(0.0, 1.0 + tolerance * 2.0, 0.0);
+        let same = Vector3::new(0.0, 1.0, 0.0);
+        let distant = Vector3::new(0.0, 1.0 + 1.0e-12, 0.0);
         let nonfinite = Vector3::new(0.0, f64::INFINITY, 0.0);
 
-        assert!(hvectors_within_tolerance(&lhs, &near, tolerance));
-        assert!(!hvectors_within_tolerance(&lhs, &distant, tolerance));
-        assert!(!hvectors_within_tolerance(&lhs, &nonfinite, tolerance));
+        assert!(hvectors_exactly_equal(&lhs, &same));
+        assert!(!hvectors_exactly_equal(&lhs, &distant));
+        assert!(!hvectors_exactly_equal(&lhs, &nonfinite));
     }
 
     #[test]

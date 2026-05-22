@@ -3,10 +3,11 @@
 use crate::float_types::{
     PI, Real, hangle_between_vectors, hangle_sin_cos, hpoint_centroid, hpoint_distance,
     hpoint_lerp, hpoint_weighted_sum, hpoints_exactly_equal, hreal_boundary_or_zero,
-    hreal_clamp_f64, hreal_div, hreal_from_f64, hreal_gt_f64, hreal_max_report_value,
-    hreal_mean, hreal_mul, hreal_sample_stddev, hreal_sign, hreal_sqrt_ref, hreal_sqrt_to_f64,
-    hreal_sub, hreal_sum, hreal_to_f64, hunit_vector3, hvector3_distance, hvector3_dot,
-    hvector3_from_point3, hvector3_mean, hvector3_weighted_sum,
+    hreal_clamp_f64, hreal_div, hreal_f64s_exactly_equal, hreal_from_f64, hreal_gt_f64,
+    hreal_max_report_value, hreal_mean, hreal_mul, hreal_sample_stddev, hreal_sign,
+    hreal_sqrt_ref, hreal_sqrt_to_f64, hreal_sub, hreal_sum, hreal_to_f64, hunit_vector3,
+    hvector3_distance, hvector3_dot, hvector3_from_point3, hvector3_mean,
+    hvector3_weighted_sum,
 };
 use hashbrown::HashMap;
 use nalgebra::{Point3, Vector3};
@@ -360,16 +361,6 @@ fn hyper_normalized_barycentric_weights(
 
 fn hreal_is_zero(value: &hyperreal::Real) -> bool {
     matches!(hreal_sign(value), Some(hyperreal::RealSign::Zero))
-}
-
-fn hreal_f64s_exactly_equal(lhs: Real, rhs: Real) -> bool {
-    let Ok(lhs) = hreal_from_f64(lhs) else {
-        return false;
-    };
-    let Ok(rhs) = hreal_from_f64(rhs) else {
-        return false;
-    };
-    hreal_is_zero(&(lhs - rhs))
 }
 
 fn hyper_normalized_weights(weights: impl IntoIterator<Item = Real>) -> Option<Vec<Real>> {
