@@ -5,8 +5,9 @@
 //! triangle containment, positive-area intersection, convex union, simple
 //! single-loop planar-arrangement union/difference, one-hole and bounded
 //! multi-hole differences, nonconvex component-union loops, disconnected
-//! nonconvex component-union multi-loops, and the convex one-corner difference
-//! shapes that can be represented as an open triangle mesh. The
+//! nonconvex component-union multi-loops, bounded cutter/hole openings with
+//! retained strict holes, and the convex one-corner difference shapes that can
+//! be represented as an open triangle mesh. The
 //! predicates are the same projected orientation and point-in-triangle facts
 //! used by the coplanar overlap classifier, following
 //! Yap, "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
@@ -872,7 +873,10 @@ pub struct CoplanarConvexHoledComponent {
 /// one or more disjoint components and at least one component carries exact
 /// holes. Source decomposition remains convex, but a bounded cutter may leave
 /// either a convex remnant or a simple nonconvex remnant when every retained
-/// hole is assigned strictly inside exactly one output loop. More tangled
+/// hole is assigned strictly inside exactly one output loop. Multiple
+/// independent cutter/hole openings may now be retained as one nonconvex
+/// outer loop when every opening has a certified side attachment and exact
+/// area replay, while unrelated strict holes stay as holes. More tangled
 /// cut/hole interactions still require a full planar subdivision. Each
 /// retained component must replay from exact component decomposition,
 /// containment, disjointness, and convex difference certificates before the
@@ -4216,7 +4220,8 @@ pub fn arrange_coplanar_surface_cutter_hole_contact_difference(
 
     let mut holes = Vec::new();
     let mut clipped_cutters = Vec::new();
-    for component in &right_components {
+    let mut removed_candidates = Vec::new();
+    for (right_index, component) in right_components.iter().enumerate() {
         if polygon_strictly_inside_convex_polygon(
             &component.hull,
             &left_component.hull,
@@ -4224,6 +4229,11 @@ pub fn arrange_coplanar_surface_cutter_hole_contact_difference(
         )? {
             let mut hole = component.hull.clone();
             orient_polygon_ccw(&mut hole, projection)?;
+            removed_candidates.push(RemovedRegionCandidate {
+                right_index,
+                is_cutter: false,
+                region: hole.clone(),
+            });
             holes.push(hole);
         } else if convex_union_component_relation(
             &left_component.hull,
@@ -4240,6 +4250,11 @@ pub fn arrange_coplanar_surface_cutter_hole_contact_difference(
                 return None;
             }
             orient_polygon_ccw(&mut clipped_cutter, projection)?;
+            removed_candidates.push(RemovedRegionCandidate {
+                right_index,
+                is_cutter: true,
+                region: clipped_cutter.clone(),
+            });
             clipped_cutters.push(clipped_cutter);
         } else {
             return None;
@@ -4249,41 +4264,61 @@ pub fn arrange_coplanar_surface_cutter_hole_contact_difference(
         return None;
     }
 
-    let mut removed_regions = Vec::with_capacity(holes.len() + clipped_cutters.len());
-    removed_regions.extend(holes.iter().cloned());
-    removed_regions.extend(clipped_cutters.iter().cloned());
-    let mut removed_polygon = if holes.len() == 1 && clipped_cutters.len() == 1 {
-        let hole = &holes[0];
-        let clipped_cutter = &clipped_cutters[0];
-        let hole_rect = projected_axis_aligned_rectangle(hole, projection);
-        let clipped_cutter_rect = projected_axis_aligned_rectangle(clipped_cutter, projection);
-        match (hole_rect, clipped_cutter_rect) {
-            (Some(hole_rect), Some(clipped_cutter_rect)) => {
-                if rectangles_touch_on_positive_boundary(&hole_rect, &clipped_cutter_rect)? {
-                    axis_aligned_rectangle_union_polygon(
-                        &[clipped_cutter_rect, hole_rect],
-                        projection,
-                    )?
-                } else {
-                    return None;
-                }
-            }
-            _ => two_convex_cutter_hole_removed_polygon(hole, clipped_cutter, projection)?,
-        }
+    let removed_regions = removed_candidates
+        .iter()
+        .map(|candidate| candidate.region.clone())
+        .collect::<Vec<_>>();
+    let all_removed_regions_are_rectangles = removed_regions
+        .iter()
+        .all(|region| projected_axis_aligned_rectangle(region, projection).is_some());
+    let multi_opening_polygon = if all_removed_regions_are_rectangles {
+        None
     } else {
-        if removed_regions
-            .iter()
-            .all(|region| projected_axis_aligned_rectangle(region, projection).is_some())
-        {
-            return None;
-        }
-        connected_convex_contact_union_polygon(&removed_regions, projection)?
+        materialize_multi_cutter_hole_opening_difference(
+            &left_component.hull,
+            &removed_candidates,
+            projection,
+        )
     };
-    orient_polygon_ccw(&mut removed_polygon, projection)?;
-    let mut polygon = if let Some(left_rect) = &left_rect {
-        side_opened_difference_polygon(left_rect, &removed_polygon, projection)?
+    let mut replay_removed_area = None;
+    let mut polygon = if let Some(polygon) = multi_opening_polygon {
+        polygon
     } else {
-        convex_side_opened_difference_polygon(&left_component.hull, &removed_polygon, projection)?
+        let mut removed_polygon = if holes.len() == 1 && clipped_cutters.len() == 1 {
+            let hole = &holes[0];
+            let clipped_cutter = &clipped_cutters[0];
+            let hole_rect = projected_axis_aligned_rectangle(hole, projection);
+            let clipped_cutter_rect = projected_axis_aligned_rectangle(clipped_cutter, projection);
+            match (hole_rect, clipped_cutter_rect) {
+                (Some(hole_rect), Some(clipped_cutter_rect)) => {
+                    if rectangles_touch_on_positive_boundary(&hole_rect, &clipped_cutter_rect)? {
+                        axis_aligned_rectangle_union_polygon(
+                            &[clipped_cutter_rect, hole_rect],
+                            projection,
+                        )?
+                    } else {
+                        return None;
+                    }
+                }
+                _ => two_convex_cutter_hole_removed_polygon(hole, clipped_cutter, projection)?,
+            }
+        } else {
+            if all_removed_regions_are_rectangles {
+                return None;
+            }
+            connected_convex_contact_union_polygon(&removed_regions, projection)?
+        };
+        replay_removed_area = Some(projected_area2_abs(&removed_polygon, projection)?);
+        orient_polygon_ccw(&mut removed_polygon, projection)?;
+        if let Some(left_rect) = &left_rect {
+            side_opened_difference_polygon(left_rect, &removed_polygon, projection)?
+        } else {
+            convex_side_opened_difference_polygon(
+                &left_component.hull,
+                &removed_polygon,
+                projection,
+            )?
+        }
     };
     orient_polygon_ccw(&mut polygon, projection)?;
     polygon = simplify_projected_polygon(polygon, projection);
@@ -4297,12 +4332,14 @@ pub fn arrange_coplanar_surface_cutter_hole_contact_difference(
         return None;
     }
 
-    let left_area = projected_area2_abs(&left_component.hull, projection)?;
-    let removed_area = projected_area2_abs(&removed_polygon, projection)?;
-    let output_area = projected_area2_abs(&polygon, projection)?;
-    if compare_reals(&add(&output_area, &removed_area), &left_area).value() != Some(Ordering::Equal)
-    {
-        return None;
+    if let Some(removed_area) = replay_removed_area {
+        let left_area = projected_area2_abs(&left_component.hull, projection)?;
+        let output_area = projected_area2_abs(&polygon, projection)?;
+        if compare_reals(&add(&output_area, &removed_area), &left_area).value()
+            != Some(Ordering::Equal)
+        {
+            return None;
+        }
     }
 
     let mesh = polygon_to_earcut_open_mesh_with_label(
@@ -4865,6 +4902,321 @@ fn connected_convex_contact_union_polygon(
         return None;
     }
     Some(polygon)
+}
+
+/// Materialize several independent cutter/hole openings as one simple loop.
+///
+/// Each connected removed-region group must contain at least one side cutter
+/// and one strict hole, and each group is first replayed as an exact union of
+/// retained convex regions. The groups are then subtracted from the convex
+/// outer sheet by retained boundary fragments, accepting only the case where
+/// every group opens through one positive-length outer-edge attachment and the
+/// final boundary stitches into one simple loop. This is a bounded
+/// Weiler-Atherton-style fragment construction; see Weiler and Atherton,
+/// "Hidden Surface Removal Using Polygon Area Sorting," *SIGGRAPH Computer
+/// Graphics* 11.2 (1977). Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997), is the reason this helper requires
+/// exact contact groups and exact area replay instead of sampling a point in
+/// each prospective bay.
+#[cfg(feature = "exact-triangulation")]
+fn materialize_multi_cutter_hole_opening_difference(
+    outer: &[Point3],
+    removed_regions: &[RemovedRegionCandidate],
+    projection: CoplanarProjection,
+) -> Option<Vec<Point3>> {
+    let groups = removed_region_contact_groups(removed_regions, projection)?;
+    if groups.len() < 2 {
+        return None;
+    }
+
+    let mut removed_openings = Vec::with_capacity(groups.len());
+    for group in &groups {
+        if !group.iter().any(|&index| removed_regions[index].is_cutter)
+            || !group.iter().any(|&index| !removed_regions[index].is_cutter)
+        {
+            return None;
+        }
+        removed_openings.push(materialize_removed_region_group_polygon(
+            removed_regions,
+            group,
+            projection,
+        )?);
+    }
+
+    multi_side_opened_difference_polygon(
+        outer,
+        &removed_openings,
+        projection,
+        "coplanar multi-opening cutter-hole difference",
+    )
+}
+
+/// Build exact contact groups among removed convex regions.
+///
+/// Boundary-only contact is useful only when the shared boundary has positive
+/// length; point-only contact remains unsupported because it would create a
+/// branch decision in the planar subdivision. The positive-length test uses
+/// the same exact segment relation surface as the rest of this module, matching
+/// Guigue and Devillers, "Fast and Robust Triangle-Triangle Overlap Test Using
+/// Orientation Predicates," *Journal of Graphics Tools* 8.1 (2003).
+#[cfg(feature = "exact-triangulation")]
+fn removed_region_contact_groups(
+    regions: &[RemovedRegionCandidate],
+    projection: CoplanarProjection,
+) -> Option<Vec<Vec<usize>>> {
+    if regions.is_empty() {
+        return None;
+    }
+    let mut contact_graph = UnionFind::new(regions.len());
+    for left in 0..regions.len() {
+        for right in left + 1..regions.len() {
+            match convex_union_component_relation(
+                &regions[left].region,
+                &regions[right].region,
+                projection,
+            )? {
+                ConvexUnionComponentRelation::Disjoint => {}
+                ConvexUnionComponentRelation::BoundaryOnly => {
+                    if !convex_polygons_touch_on_positive_boundary(
+                        &regions[left].region,
+                        &regions[right].region,
+                        projection,
+                    )? {
+                        return None;
+                    }
+                    contact_graph.union(left, right);
+                }
+                ConvexUnionComponentRelation::PositiveArea => contact_graph.union(left, right),
+            }
+        }
+    }
+
+    let mut groups: Vec<(usize, Vec<usize>)> = Vec::new();
+    for index in 0..regions.len() {
+        let root = contact_graph.find(index);
+        if let Some((_, members)) = groups.iter_mut().find(|(candidate, _)| *candidate == root) {
+            members.push(index);
+        } else {
+            groups.push((root, vec![index]));
+        }
+    }
+    groups.sort_by_key(|(_, members)| members.first().copied().unwrap_or(usize::MAX));
+    Some(groups.into_iter().map(|(_, members)| members).collect())
+}
+
+/// Replay one connected removed-region group as a simple boundary.
+///
+/// The group members are retained convex pieces: strict holes, clipped side
+/// cutters, or both. The output loop is accepted only after the existing
+/// connected convex-union fragment stitcher and finite inclusion-exclusion
+/// area replay certify the group. Keeping this as a small helper lets the
+/// single-opening, multi-opening, and component-holed paths share the same
+/// removed-region proof obligation.
+#[cfg(feature = "exact-triangulation")]
+fn materialize_removed_region_group_polygon(
+    regions: &[RemovedRegionCandidate],
+    group: &[usize],
+    projection: CoplanarProjection,
+) -> Option<Vec<Point3>> {
+    if group.len() < 2 {
+        return None;
+    }
+    let group_regions = group
+        .iter()
+        .map(|&index| regions[index].region.clone())
+        .collect::<Vec<_>>();
+    connected_convex_contact_union_polygon(&group_regions, projection)
+}
+
+/// Subtract several side-opened removed loops from one convex outer loop.
+///
+/// This is not a general planar arrangement. It only accepts removed loops
+/// that are pairwise disjoint, lie inside the convex outer loop, and each share
+/// exactly one retained positive-length segment with the relative interior of
+/// one outer edge. The resulting boundary is stitched from exact outer
+/// fragments outside every removed loop plus reversed removed-loop fragments
+/// strictly inside the outer loop. The final area equation is checked exactly:
+/// `area(output) + sum(area(removed_i)) == area(outer)`. That is the
+/// object-level exactness boundary advocated by Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997).
+#[cfg(feature = "exact-triangulation")]
+fn multi_side_opened_difference_polygon(
+    outer: &[Point3],
+    removed: &[Vec<Point3>],
+    projection: CoplanarProjection,
+    label: &'static str,
+) -> Option<Vec<Point3>> {
+    if outer.len() < 3 || removed.len() < 2 {
+        return None;
+    }
+    let mut outer = outer.to_vec();
+    orient_polygon_ccw(&mut outer, projection)?;
+    validate_projected_strictly_convex_loop(&outer, projection, label).ok()?;
+
+    let mut removed = removed.to_vec();
+    for polygon in &mut removed {
+        orient_polygon_ccw(polygon, projection)?;
+        validate_projected_simple_loop(polygon, projection, label).ok()?;
+        for point in polygon.iter() {
+            if convex_polygon_location(point, &outer, projection)? == ConvexPolygonLocation::Outside
+            {
+                return None;
+            }
+        }
+        convex_opened_side_attachment(&outer, polygon, projection)?;
+    }
+    validate_simple_component_loops_disjoint(&removed, projection, label).ok()?;
+
+    let mut fragments = Vec::new();
+    collect_outer_difference_fragments(&outer, &removed, projection, &mut fragments)?;
+    for index in 0..removed.len() {
+        collect_removed_difference_fragments(index, &outer, &removed, projection, &mut fragments)?;
+    }
+    let mut polygon = stitch_simple_loop(fragments, projection)?;
+    orient_polygon_ccw(&mut polygon, projection)?;
+    polygon = simplify_projected_polygon(polygon, projection);
+    validate_projected_simple_loop(&polygon, projection, label).ok()?;
+
+    let outer_area = projected_area2_abs(&outer, projection)?;
+    let output_area = projected_area2_abs(&polygon, projection)?;
+    let mut removed_area = ExactReal::from(0);
+    for removed_polygon in &removed {
+        removed_area = add(
+            &removed_area,
+            &projected_area2_abs(removed_polygon, projection)?,
+        );
+    }
+    if compare_reals(&add(&output_area, &removed_area), &outer_area).value()
+        != Some(Ordering::Equal)
+    {
+        return None;
+    }
+    Some(polygon)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn collect_outer_difference_fragments(
+    outer: &[Point3],
+    removed: &[Vec<Point3>],
+    projection: CoplanarProjection,
+    fragments: &mut Vec<DirectedFragment>,
+) -> Option<()> {
+    for edge in 0..outer.len() {
+        let start = &outer[edge];
+        let end = &outer[(edge + 1) % outer.len()];
+        let mut splits = vec![start.clone(), end.clone()];
+        for removed_polygon in removed {
+            for other_edge in 0..removed_polygon.len() {
+                add_projected_edge_intersections(
+                    start,
+                    end,
+                    &removed_polygon[other_edge],
+                    &removed_polygon[(other_edge + 1) % removed_polygon.len()],
+                    projection,
+                    &mut splits,
+                )?;
+            }
+        }
+        sort_points_along_segment(&mut splits, start, end, projection)?;
+        dedup_points(&mut splits);
+        for pair in splits.windows(2) {
+            let a = &pair[0];
+            let b = &pair[1];
+            if points_equal(a, b) {
+                continue;
+            }
+            let midpoint = midpoint3(a, b);
+            if point_outside_all_simple_polygons(&midpoint, removed, projection)? {
+                fragments.push(DirectedFragment {
+                    start: a.clone(),
+                    end: b.clone(),
+                });
+            }
+        }
+    }
+    Some(())
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn collect_removed_difference_fragments(
+    removed_index: usize,
+    outer: &[Point3],
+    removed: &[Vec<Point3>],
+    projection: CoplanarProjection,
+    fragments: &mut Vec<DirectedFragment>,
+) -> Option<()> {
+    let polygon = removed.get(removed_index)?;
+    for edge in 0..polygon.len() {
+        let start = &polygon[edge];
+        let end = &polygon[(edge + 1) % polygon.len()];
+        let mut splits = vec![start.clone(), end.clone()];
+        for outer_edge in 0..outer.len() {
+            add_projected_edge_intersections(
+                start,
+                end,
+                &outer[outer_edge],
+                &outer[(outer_edge + 1) % outer.len()],
+                projection,
+                &mut splits,
+            )?;
+        }
+        sort_points_along_segment(&mut splits, start, end, projection)?;
+        dedup_points(&mut splits);
+        for pair in splits.windows(2) {
+            let a = &pair[0];
+            let b = &pair[1];
+            if points_equal(a, b) {
+                continue;
+            }
+            let midpoint = midpoint3(a, b);
+            if convex_polygon_location(&midpoint, outer, projection)?
+                != ConvexPolygonLocation::Inside
+            {
+                continue;
+            }
+            if !point_outside_other_simple_polygons(&midpoint, removed_index, removed, projection)?
+            {
+                continue;
+            }
+            fragments.push(DirectedFragment {
+                start: b.clone(),
+                end: a.clone(),
+            });
+        }
+    }
+    Some(())
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn point_outside_all_simple_polygons(
+    point: &Point3,
+    polygons: &[Vec<Point3>],
+    projection: CoplanarProjection,
+) -> Option<bool> {
+    for polygon in polygons {
+        if simple_polygon_location(point, polygon, projection)? != ConvexPolygonLocation::Outside {
+            return Some(false);
+        }
+    }
+    Some(true)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn point_outside_other_simple_polygons(
+    point: &Point3,
+    polygon_index: usize,
+    polygons: &[Vec<Point3>],
+    projection: CoplanarProjection,
+) -> Option<bool> {
+    for (index, polygon) in polygons.iter().enumerate() {
+        if index == polygon_index {
+            continue;
+        }
+        if simple_polygon_location(point, polygon, projection)? != ConvexPolygonLocation::Outside {
+            return Some(false);
+        }
+    }
+    Some(true)
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -5481,17 +5833,20 @@ fn exact_max_real(left: &ExactReal, right: &ExactReal) -> Option<ExactReal> {
 /// difference certificates, cut by boundary-attached partial-height rectangular
 /// multi-cutters through exact orthogonal cells, pierced by one or more
 /// strictly contained right components, or both cut and pierced when every
-/// retained hole falls strictly inside one cut remnant. Holes that straddle or
-/// touch a cut boundary, point-only contacts, and non-rectilinear nonconvex
-/// multi-cutter outputs still need a full planar subdivision. This preserves
-/// Yap's rule from "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997): every promoted loop is justified by exact source
-/// topology, containment, or area replay, and unsupported combinatorics remain
-/// explicit. The rectangular multi-cutter/strict-hole replay is the bounded
-/// cell arrangement of de Berg, Cheong, van Kreveld, and Overmars,
-/// *Computational Geometry: Algorithms and Applications*, 3rd ed. (2008),
-/// Chapter 2, promoted only after retained cell topology exposes simple outer
-/// rings and strict hole rings.
+/// retained hole falls strictly inside one cut remnant. It also accepts
+/// bounded side-attached cutter/hole contact groups, including several
+/// independent openings, when retained fragments stitch one simple nonconvex
+/// outer ring and unrelated strictly contained holes replay inside that opened
+/// ring. Point-only contacts, branch opening graphs, and non-rectilinear
+/// nonconvex multi-cutter outputs still need a full planar subdivision. This
+/// preserves Yap's rule from "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997): every promoted loop is justified by
+/// exact source topology, containment, or area replay, and unsupported
+/// combinatorics remain explicit. The rectangular
+/// multi-cutter/strict-hole replay is the bounded cell arrangement of de Berg,
+/// Cheong, van Kreveld, and Overmars, *Computational Geometry: Algorithms and
+/// Applications*, 3rd ed. (2008), Chapter 2, promoted only after retained cell
+/// topology exposes simple outer rings and strict hole rings.
 #[cfg(feature = "exact-triangulation")]
 pub fn arrange_coplanar_convex_surface_component_holed_difference(
     left: &ExactMesh,
@@ -5535,12 +5890,12 @@ pub fn arrange_coplanar_convex_surface_component_holed_difference(
         .iter()
         .map(|component| component.hull.clone())
         .collect::<Vec<_>>();
-    validate_component_loops_disjoint(
+    let right_hulls_are_disjoint = validate_component_loops_disjoint(
         &right_hulls,
         projection,
         "coplanar convex component-holed arrangement",
     )
-    .ok()?;
+    .is_ok();
 
     let mut components = Vec::new();
     let mut emitted_cut = false;
@@ -5612,6 +5967,20 @@ pub fn arrange_coplanar_convex_surface_component_holed_difference(
             .collect::<Vec<_>>();
         if !cut_indices.is_empty() {
             emitted_cut = true;
+            if let Some(opened_components) =
+                materialize_cutter_hole_contact_component_holed_difference(
+                    component,
+                    &cut_indices,
+                    &holes,
+                    &right_components,
+                )
+            {
+                components.extend(opened_components);
+                continue;
+            }
+            if !right_hulls_are_disjoint {
+                return None;
+            }
             if let Some(cell_components) =
                 materialize_rectangle_multi_cutter_component_holed_cell_difference(
                     component,
@@ -5661,6 +6030,9 @@ pub fn arrange_coplanar_convex_surface_component_holed_difference(
                     .map(|(outer, holes)| CoplanarConvexHoledComponent { outer, holes }),
             );
         } else {
+            if !right_hulls_are_disjoint {
+                return None;
+            }
             let mut outer = component.hull.clone();
             orient_polygon_ccw(&mut outer, projection)?;
             components.push(CoplanarConvexHoledComponent {
@@ -5694,6 +6066,138 @@ pub fn arrange_coplanar_convex_surface_component_holed_difference(
 struct ComponentHoleCandidate {
     ring: Vec<Point3>,
     right_index: usize,
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Debug)]
+struct RemovedRegionCandidate {
+    right_index: usize,
+    is_cutter: bool,
+    region: Vec<Point3>,
+}
+
+/// Replay one cutter/hole opening while retaining unrelated strict holes.
+///
+/// This helper is the holed-output sibling of
+/// [`arrange_coplanar_surface_cutter_hole_contact_difference`]. A connected
+/// group of clipped side cutters and strict holes is first replayed as a
+/// removed-region loop. One group delegates to the existing
+/// cutter/hole-contact certificate. Several independent groups use the same
+/// retained fragment rule as the public multi-opening surface path: every
+/// removed group must carry one positive-length side attachment, the stitched
+/// output must be a simple loop, and exact projected area must replay
+/// `outer = output + removed`. Strict holes in non-opening components are then
+/// retained only if exact simple-polygon containment proves they lie inside
+/// that opened loop. Point-only contacts and branch graphs still require a
+/// full planar subdivision. Boundary fragments follow Weiler and Atherton,
+/// "Hidden Surface Removal Using Polygon Area Sorting," *SIGGRAPH Computer
+/// Graphics* 11.2 (1977), and the replay/retained ring split follows Yap,
+/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+/// (1997).
+#[cfg(feature = "exact-triangulation")]
+fn materialize_cutter_hole_contact_component_holed_difference(
+    component: &ConvexUnionComponent,
+    cut_indices: &[usize],
+    holes: &[ComponentHoleCandidate],
+    right_components: &[ConvexUnionComponent],
+) -> Option<Vec<CoplanarConvexHoledComponent>> {
+    if cut_indices.is_empty() || holes.len() < 2 {
+        return None;
+    }
+    let projection = component.projection;
+    let mut regions = Vec::with_capacity(cut_indices.len() + holes.len());
+    for &right_index in cut_indices {
+        let mut clipped = convex_polygon_intersection_boundary(
+            &right_components[right_index].hull,
+            &component.hull,
+            projection,
+        )?;
+        if clipped.len() < 3 {
+            return None;
+        }
+        orient_polygon_ccw(&mut clipped, projection)?;
+        regions.push(RemovedRegionCandidate {
+            right_index,
+            is_cutter: true,
+            region: clipped,
+        });
+    }
+    for hole in holes {
+        let mut region = right_components[hole.right_index].hull.clone();
+        orient_polygon_ccw(&mut region, projection)?;
+        regions.push(RemovedRegionCandidate {
+            right_index: hole.right_index,
+            is_cutter: false,
+            region,
+        });
+    }
+
+    let groups = removed_region_contact_groups(&regions, projection)?;
+    let mut opening_groups = Vec::new();
+    for group in &groups {
+        if group.iter().any(|&index| regions[index].is_cutter) {
+            if !group.iter().any(|&index| !regions[index].is_cutter) {
+                return None;
+            }
+            opening_groups.push(group.clone());
+        }
+    }
+    if opening_groups.is_empty() {
+        return None;
+    }
+
+    let opening = if opening_groups.len() == 1 {
+        let opening_indices = opening_groups[0]
+            .iter()
+            .map(|&index| regions[index].right_index)
+            .collect::<Vec<_>>();
+        let opening_mesh = merge_component_meshes(
+            opening_indices
+                .iter()
+                .map(|&index| &right_components[index].mesh),
+            "exact coplanar cutter-hole contact opening source",
+        )?;
+        arrange_coplanar_surface_cutter_hole_contact_difference(&component.mesh, &opening_mesh)?
+            .polygon
+    } else {
+        let mut removed_openings = Vec::with_capacity(opening_groups.len());
+        for group in &opening_groups {
+            removed_openings.push(materialize_removed_region_group_polygon(
+                &regions, group, projection,
+            )?);
+        }
+        multi_side_opened_difference_polygon(
+            &component.hull,
+            &removed_openings,
+            projection,
+            "coplanar component-holed multi-opening difference",
+        )?
+    };
+
+    let mut retained_holes = Vec::new();
+    for hole in holes {
+        let member_index = regions
+            .iter()
+            .position(|region| !region.is_cutter && region.right_index == hole.right_index)?;
+        if opening_groups
+            .iter()
+            .any(|group| group.contains(&member_index))
+        {
+            continue;
+        }
+        if !polygon_strictly_inside_simple_polygon(&hole.ring, &opening, projection)? {
+            return None;
+        }
+        retained_holes.push(hole.ring.clone());
+    }
+    if retained_holes.is_empty() {
+        return None;
+    }
+    sort_polygons_for_replay(&mut retained_holes, projection);
+    Some(vec![CoplanarConvexHoledComponent {
+        outer: opening,
+        holes: retained_holes,
+    }])
 }
 
 /// Replay rectangular mixed multi-cutter/holed remnants through exact cells.

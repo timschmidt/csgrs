@@ -1378,7 +1378,7 @@ fuzz_target!(|data: &[u8]| {
 
 #[cfg(feature = "exact-triangulation")]
 fn exercise_deterministic_case(selector: u8) {
-    match selector % 21 {
+    match selector % 23 {
         0 => exercise_partial_convex_union_boundary(),
         1 => exercise_face_interior_steiner_boundary(),
         2 => exercise_multi_component_coplanar_union(),
@@ -1399,6 +1399,8 @@ fn exercise_deterministic_case(selector: u8) {
         17 => exercise_contained_face_adjacent_union(),
         18 => exercise_nonconvex_component_union_loop(),
         19 => exercise_nonconvex_multi_component_union_loop(),
+        20 => exercise_contact_opening_with_retained_hole(),
+        21 => exercise_independent_contact_openings(),
         _ => exercise_nonrectangular_component_union_hull_coverage(),
     }
 }
@@ -1950,6 +1952,173 @@ fn exercise_nonconvex_multi_component_union_loop() {
     )
     .expect("point-only disconnected component union fixture must import");
     assert!(arrange_coplanar_surface_multi_component_union(&point_only_left, &right).is_none());
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn exercise_contact_opening_with_retained_hole() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 20, 0, 0, 20, 20, 0, 0, 20, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("contact opening retained-hole left fixture must import");
+    let opening_plus_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            8, 8, 0, 12, 10, 0, 8, 12, 0, //
+            0, 9, 0, 10, 8, 0, 10, 12, 0, 0, 11, 0, //
+            15, 15, 0, 17, 15, 0, 17, 17, 0, 15, 17, 0,
+        ],
+        &[
+            0, 1, 2, //
+            3, 4, 5, 3, 5, 6, //
+            7, 8, 9, 7, 9, 10,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("contact opening retained-hole right fixture must import");
+
+    assert!(
+        arrange_coplanar_surface_cutter_hole_contact_difference(&left, &opening_plus_hole)
+            .is_none()
+    );
+    let holed =
+        arrange_coplanar_convex_surface_component_holed_difference(&left, &opening_plus_hole)
+            .expect("contact opening should retain unrelated strict holes");
+    holed.validate().unwrap();
+    holed
+        .validate_against_sources(&left, &opening_plus_hole)
+        .unwrap();
+    assert_eq!(holed.components.len(), 1);
+    assert_eq!(holed.components[0].holes.len(), 1);
+
+    let mut stale = holed.clone();
+    stale.components[0].holes.clear();
+    assert!(stale.validate().is_err());
+
+    let preflight =
+        preflight_boolean_exact(&left, &opening_plus_hole, ExactBooleanOperation::Difference)
+            .expect("contact opening retained-hole preflight should classify shortcut");
+    preflight.validate().unwrap();
+    preflight
+        .validate_against_sources(&left, &opening_plus_hole)
+        .unwrap();
+    assert_eq!(
+        preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+    );
+
+    let result = hypermesh::exact::boolean_exact(
+        &left,
+        &opening_plus_hole,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("contact opening retained-hole boolean should materialize");
+    result
+        .validate_operation_against_sources(
+            &left,
+            &opening_plus_hole,
+            ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+
+    let point_only_opening_plus_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            8, 10, 0, 10, 8, 0, 10, 12, 0, //
+            0, 8, 0, 8, 10, 0, 0, 12, 0, //
+            15, 15, 0, 17, 15, 0, 17, 17, 0, 15, 17, 0,
+        ],
+        &[
+            0, 1, 2, //
+            3, 4, 5, //
+            6, 7, 8, 6, 8, 9,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("point-only retained-hole fixture must import");
+    assert!(
+        arrange_coplanar_convex_surface_component_holed_difference(
+            &left,
+            &point_only_opening_plus_hole,
+        )
+        .is_none()
+    );
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn exercise_independent_contact_openings() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 20, 0, 0, 20, 20, 0, 0, 20, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("independent opening left fixture must import");
+    let openings = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            8, 8, 0, 12, 10, 0, 8, 12, 0, //
+            0, 9, 0, 10, 8, 0, 10, 12, 0, 0, 11, 0, //
+            12, 4, 0, 16, 6, 0, 12, 8, 0, //
+            20, 5, 0, 14, 4, 0, 14, 8, 0, 20, 7, 0,
+        ],
+        &[
+            0, 1, 2, //
+            3, 4, 5, 3, 5, 6, //
+            7, 8, 9, //
+            10, 11, 12, 10, 12, 13,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("independent opening right fixture must import");
+
+    let opened = arrange_coplanar_surface_cutter_hole_contact_difference(&left, &openings)
+        .expect("independent openings should materialize");
+    opened.validate().unwrap();
+    opened
+        .validate_cutter_hole_contact_difference_against_sources(&left, &openings)
+        .unwrap();
+
+    let preflight = preflight_boolean_exact(&left, &openings, ExactBooleanOperation::Difference)
+        .expect("independent opening preflight should classify shortcut");
+    preflight.validate().unwrap();
+    preflight.validate_against_sources(&left, &openings).unwrap();
+    assert_eq!(
+        preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfaceCutterHoleContactDifference
+    );
+
+    let with_retained_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            8, 8, 0, 12, 10, 0, 8, 12, 0, //
+            0, 9, 0, 10, 8, 0, 10, 12, 0, 0, 11, 0, //
+            12, 4, 0, 16, 6, 0, 12, 8, 0, //
+            20, 5, 0, 14, 4, 0, 14, 8, 0, 20, 7, 0, //
+            3, 15, 0, 5, 15, 0, 5, 17, 0, 3, 17, 0,
+        ],
+        &[
+            0, 1, 2, //
+            3, 4, 5, 3, 5, 6, //
+            7, 8, 9, //
+            10, 11, 12, 10, 12, 13, //
+            14, 15, 16, 14, 16, 17,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("independent opening retained-hole right fixture must import");
+    assert!(
+        arrange_coplanar_surface_cutter_hole_contact_difference(&left, &with_retained_hole)
+            .is_none()
+    );
+    let holed =
+        arrange_coplanar_convex_surface_component_holed_difference(&left, &with_retained_hole)
+            .expect("independent openings should retain unrelated strict holes");
+    holed.validate().unwrap();
+    holed
+        .validate_against_sources(&left, &with_retained_hole)
+        .unwrap();
+    assert_eq!(holed.components.len(), 1);
+    assert_eq!(holed.components[0].holes.len(), 1);
 }
 
 #[cfg(feature = "exact-triangulation")]
