@@ -16,6 +16,7 @@ mod bezier_metric;
 mod bezier_moment;
 mod bezier_offset;
 mod bezier_parameter;
+mod bezier_region;
 mod bezier_split;
 mod bezier_topology;
 mod boolean;
@@ -70,6 +71,7 @@ pub use bezier_offset::{BezierOffsetCandidate2, BezierOffsetPreflight2, BezierOf
 pub use bezier_parameter::{
     BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval, BezierParameterPolynomial,
 };
+pub use bezier_region::{BezierBoundaryLoop2, BezierRegion2};
 pub use bezier_split::{BezierSplitFragment2, BezierSplitMaterialization2, BezierSubcurve2};
 pub use bezier_topology::{
     Axis2, BezierCurveIntersectionPoint, BezierCurveIntersectionRegion, BezierCurveRelation,

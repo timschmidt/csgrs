@@ -31,3 +31,10 @@ path = "fuzz_targets/bezier_arrangement.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "bezier_region"
+path = "fuzz_targets/bezier_region.rs"
+test = false
+doc = false
+bench = false
