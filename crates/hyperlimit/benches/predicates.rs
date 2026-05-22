@@ -12,7 +12,7 @@ use hyperlimit::{
     SupportDopRelation, TriangleDegeneracy, TriangleTriangleIntersection, affine_independent_d,
     certified_ball_sign, classify_aabb3_sphere_intersection, classify_circle_line2,
     classify_circle_segment2, classify_coplanar_triangles, classify_halfspace_feasibility3,
-    classify_homogeneous_point_plane, classify_point_convex_planes3,
+    classify_homogeneous_point_plane, classify_plane_aabb3_report, classify_point_convex_planes3,
     classify_point_convex_polygon2, classify_point_line, classify_point_oriented_plane,
     classify_point_plane, classify_point_ring_even_odd_report, classify_ray_triangle3_intersection,
     classify_ray_triangle3_intersection_report, classify_segment_triangle3_intersection,
@@ -460,6 +460,21 @@ fn bench_exact_rational_kernels(c: &mut Criterion) {
                     ))
                     .value()
                     .is_some_and(|relation| relation.intersects()),
+                );
+            }
+            black_box(score)
+        });
+    });
+
+    let plane_aabb_cases = exact_rational_plane_aabb3_cases();
+    group.bench_function("plane/aabb3_reports", |b| {
+        b.iter(|| {
+            let mut score = 0_i64;
+            for (plane, min, max) in &plane_aabb_cases {
+                score += i64::from(
+                    classify_plane_aabb3_report(black_box(plane), black_box(min), black_box(max))
+                        .value()
+                        .is_some_and(|report| report.validate().is_ok()),
                 );
             }
             black_box(score)
@@ -1555,6 +1570,21 @@ fn exact_rational_point_feature_distance_cases() -> Vec<(Point3, Point3, Point3,
             rational_real(j % 23 - 11, 11),
         );
         cases.push((point, a, b, plane));
+    }
+    cases
+}
+
+fn exact_rational_plane_aabb3_cases() -> Vec<(Plane3, Point3, Point3)> {
+    let mut cases = Vec::with_capacity(BATCH);
+    for i in 0..BATCH {
+        let j = i as i64;
+        let plane = Plane3::new(
+            rational_point3(1, 11, -2, 11, 1, 11),
+            rational_real(j % 9 - 4, 11),
+        );
+        let min = rational_point3(j % 7 - 3, 11, j % 5 - 2, 11, j % 3 - 1, 11);
+        let max = rational_point3(j % 7 + 1, 11, j % 5 + 2, 11, j % 3 + 3, 11);
+        cases.push((plane, min, max));
     }
     cases
 }

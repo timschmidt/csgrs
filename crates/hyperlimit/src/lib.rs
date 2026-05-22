@@ -101,10 +101,11 @@ pub use orient::{
     orient3d_report_with_policy, orient3d_with_policy,
 };
 pub use plane::{
-    Plane3, PreparedOrientedPlane3, PreparedPlane3, classify_plane_aabb3,
-    classify_plane_aabb3_with_policy, classify_plane_segment, classify_plane_segment_with_policy,
-    classify_plane_triangle, classify_plane_triangle_with_policy, classify_point_oriented_plane,
-    classify_point_plane,
+    Plane3, PlaneAabbReport, PlaneAabbReportValidationError, PreparedOrientedPlane3,
+    PreparedPlane3, classify_plane_aabb3, classify_plane_aabb3_report,
+    classify_plane_aabb3_report_with_policy, classify_plane_aabb3_with_policy,
+    classify_plane_segment, classify_plane_segment_with_policy, classify_plane_triangle,
+    classify_plane_triangle_with_policy, classify_point_oriented_plane, classify_point_plane,
 };
 pub use predicate::{
     Certainty, DeterminantScheduleHint, Escalation, ExactPredicateKernel, PredicateApiSemantics,

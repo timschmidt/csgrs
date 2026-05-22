@@ -111,7 +111,8 @@ Version `0.4.0` is an early but usable predicate crate. It currently includes:
 - predicate-facing re-exports of lattice-owned `Point2`, `Point3`, shared-scale point
   facts, homogeneous points, and Pluecker lines;
 - `Plane3`, prepared plane facts, homogeneous point/plane incidence classification,
-  and exact two-plane/three-plane intersection wrappers;
+  exact two-plane/three-plane intersection wrappers, and report-bearing
+  plane/AABB support-extrema classification;
 - exact real and point ordering, squared-distance comparison, interval, AABB, segment,
   ring, triangle, line, plane, orientation, in-circle, in-sphere, and
   D-dimensional orientation/in-sphere/affine-independence predicates;

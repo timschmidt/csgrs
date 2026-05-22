@@ -74,6 +74,103 @@ pub struct Plane3Facts {
     pub coefficient_unknown_zero_mask: u8,
 }
 
+/// Structural inconsistency in a retained plane/AABB report.
+///
+/// The report validates the support-extrema reduction used to classify a box
+/// against an oriented plane. This keeps the mesh-kernel style broad-phase
+/// shortcut inside the exact predicate layer: extrema may be cached and replayed
+/// as object evidence, but the relation is still certified by exact signs. That
+/// is the object/predicate split advocated by Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997). The extrema selection
+/// is the interval AABB transform idea from Arvo, "Transforming Axis-Aligned
+/// Bounding Boxes," *Graphics Gems* (1990), specialized to one plane
+/// expression.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum PlaneAabbReportValidationError {
+    /// The retained lower/upper expression values are ordered incorrectly.
+    ExtremumOrderMismatch,
+    /// A retained sign does not match its retained expression value.
+    ExtremumSignMismatch,
+    /// The retained extrema signs derive a different coarse relation.
+    RelationMismatch,
+    /// Recomputing from source geometry did not reproduce this report.
+    SourceReplayMismatch,
+}
+
+/// Report-bearing closed AABB/oriented-plane classification.
+///
+/// The coarse [`PlaneAabbRelation`] is retained for cheap callers. This report
+/// keeps the exact lower and upper support points selected by comparing each
+/// `normal_i * bound_i` term, the exact plane-expression value at both extrema,
+/// the certified signs of those values, and the per-axis term orderings that
+/// chose the support points.
+#[derive(Clone, Debug, PartialEq)]
+pub struct PlaneAabbReport {
+    /// Coarse relation between the closed box and plane.
+    pub relation: PlaneAabbRelation,
+    /// Point in the box minimizing `normal . point + offset`.
+    pub lower_point: Point3,
+    /// Point in the box maximizing `normal . point + offset`.
+    pub upper_point: Point3,
+    /// Exact expression value at [`Self::lower_point`].
+    pub lower_value: Real,
+    /// Exact expression value at [`Self::upper_point`].
+    pub upper_value: Real,
+    /// Certified sign of [`Self::lower_value`].
+    pub lower_sign: Sign,
+    /// Certified sign of [`Self::upper_value`].
+    pub upper_sign: Sign,
+    /// Per-axis ordering of `normal_i * min_i` versus `normal_i * max_i`.
+    pub axis_term_orderings: [Ordering; 3],
+}
+
+impl PlaneAabbReport {
+    /// Validate retained extrema ordering, signs, and derived relation.
+    pub fn validate(&self) -> Result<(), PlaneAabbReportValidationError> {
+        match compare_reals_with_policy(
+            &self.lower_value,
+            &self.upper_value,
+            PredicatePolicy::default(),
+        ) {
+            PredicateOutcome::Decided {
+                value: Ordering::Greater,
+                ..
+            } => return Err(PlaneAabbReportValidationError::ExtremumOrderMismatch),
+            PredicateOutcome::Decided { .. } => {}
+            PredicateOutcome::Unknown { .. } => {
+                return Err(PlaneAabbReportValidationError::ExtremumOrderMismatch);
+            }
+        }
+
+        if sign_real_default(&self.lower_value) != Some(self.lower_sign)
+            || sign_real_default(&self.upper_value) != Some(self.upper_sign)
+        {
+            return Err(PlaneAabbReportValidationError::ExtremumSignMismatch);
+        }
+
+        if plane_aabb_relation_from_extrema(self.lower_sign, self.upper_sign) == self.relation {
+            Ok(())
+        } else {
+            Err(PlaneAabbReportValidationError::RelationMismatch)
+        }
+    }
+
+    /// Replay this report against source plane and box bounds.
+    pub fn validate_against_sources(
+        &self,
+        plane: &Plane3,
+        min: &Point3,
+        max: &Point3,
+        policy: PredicatePolicy,
+    ) -> Result<(), PlaneAabbReportValidationError> {
+        self.validate()?;
+        match classify_plane_aabb3_report_with_policy(plane, min, max, policy) {
+            PredicateOutcome::Decided { value, .. } if &value == self => Ok(()),
+            _ => Err(PlaneAabbReportValidationError::SourceReplayMismatch),
+        }
+    }
+}
+
 impl Plane3Facts {
     /// Counts coefficients known to be exactly zero.
     pub fn coefficient_zero_count(self) -> u32 {
@@ -236,6 +333,26 @@ impl<'a> PreparedPlane3<'a> {
         policy: PredicatePolicy,
     ) -> PredicateOutcome<PlaneAabbRelation> {
         classify_plane_aabb3_with_policy(self.plane, min, max, policy)
+    }
+
+    /// Classify a closed 3D AABB and retain exact support-extrema evidence.
+    pub fn classify_aabb3_report(
+        &self,
+        min: &Point3,
+        max: &Point3,
+    ) -> PredicateOutcome<PlaneAabbReport> {
+        self.classify_aabb3_report_with_policy(min, max, PredicatePolicy::default())
+    }
+
+    /// Classify a closed 3D AABB with an explicit policy and retain exact
+    /// support-extrema evidence.
+    pub fn classify_aabb3_report_with_policy(
+        &self,
+        min: &Point3,
+        max: &Point3,
+        policy: PredicatePolicy,
+    ) -> PredicateOutcome<PlaneAabbReport> {
+        classify_plane_aabb3_report_with_policy(self.plane, min, max, policy)
     }
 }
 
@@ -459,6 +576,16 @@ pub fn classify_plane_aabb3(
     classify_plane_aabb3_with_policy(plane, min, max, PredicatePolicy::default())
 }
 
+/// Classify a closed 3D AABB relative to a plane and retain exact
+/// support-extrema evidence.
+pub fn classify_plane_aabb3_report(
+    plane: &Plane3,
+    min: &Point3,
+    max: &Point3,
+) -> PredicateOutcome<PlaneAabbReport> {
+    classify_plane_aabb3_report_with_policy(plane, min, max, PredicatePolicy::default())
+}
+
 /// Classify a closed 3D AABB relative to a plane with an explicit escalation
 /// policy.
 ///
@@ -473,12 +600,35 @@ pub fn classify_plane_aabb3_with_policy(
     max: &Point3,
     policy: PredicatePolicy,
 ) -> PredicateOutcome<PlaneAabbRelation> {
+    match classify_plane_aabb3_report_with_policy(plane, min, max, policy) {
+        PredicateOutcome::Decided {
+            value,
+            certainty,
+            stage,
+        } => PredicateOutcome::decided(value.relation, certainty, stage),
+        PredicateOutcome::Unknown { needed, stage } => PredicateOutcome::unknown(needed, stage),
+    }
+}
+
+/// Policy-controlled report-bearing variant of [`classify_plane_aabb3`].
+///
+/// This evaluates the plane expression only at the selected minimum and maximum
+/// support corners. The retained `axis_term_orderings` document which bound was
+/// chosen on each axis, so callers can audit the Arvo-style interval reduction
+/// without enumerating all eight corners.
+pub fn classify_plane_aabb3_report_with_policy(
+    plane: &Plane3,
+    min: &Point3,
+    max: &Point3,
+    policy: PredicatePolicy,
+) -> PredicateOutcome<PlaneAabbReport> {
     crate::trace_dispatch!("hyperlimit", "classify_plane_aabb3", "term-interval");
     let axis_normals = [&plane.normal.x, &plane.normal.y, &plane.normal.z];
     let box_min = [&min.x, &min.y, &min.z];
     let box_max = [&max.x, &max.y, &max.z];
     let mut lower_coords = box_min;
     let mut upper_coords = box_max;
+    let mut axis_term_orderings = [Ordering::Equal; 3];
     let mut certainty = Certainty::Exact;
     let mut stage = Escalation::Structural;
 
@@ -498,6 +648,7 @@ pub fn classify_plane_aabb3_with_policy(
                 return PredicateOutcome::unknown(needed, stage);
             }
         };
+        axis_term_orderings[axis] = ordering;
         if ordering == Ordering::Greater {
             lower_coords[axis] = box_max[axis];
             upper_coords[axis] = box_min[axis];
@@ -531,10 +682,6 @@ pub fn classify_plane_aabb3_with_policy(
             return PredicateOutcome::unknown(needed, stage);
         }
     };
-    if upper_sign == Sign::Negative {
-        return PredicateOutcome::decided(PlaneAabbRelation::Below, certainty, stage);
-    }
-
     let lower_value = point_plane_expression_from_coords(
         lower_coords,
         plane,
@@ -560,12 +707,21 @@ pub fn classify_plane_aabb3_with_policy(
             return PredicateOutcome::unknown(needed, stage);
         }
     };
-    let relation = if lower_sign == Sign::Positive {
-        PlaneAabbRelation::Above
-    } else {
-        PlaneAabbRelation::Intersecting
-    };
-    PredicateOutcome::decided(relation, certainty, stage)
+    let relation = plane_aabb_relation_from_extrema(lower_sign, upper_sign);
+    PredicateOutcome::decided(
+        PlaneAabbReport {
+            relation,
+            lower_point: point3_from_coords(lower_coords),
+            upper_point: point3_from_coords(upper_coords),
+            lower_value,
+            upper_value,
+            lower_sign,
+            upper_sign,
+            axis_term_orderings,
+        },
+        certainty,
+        stage,
+    )
 }
 
 fn classify_point_plane_real(
@@ -596,6 +752,35 @@ fn classify_point_plane_real(
             RefinementNeed::RealRefinement,
         ),
         PlaneSide::from,
+    )
+}
+
+fn plane_aabb_relation_from_extrema(lower_sign: Sign, upper_sign: Sign) -> PlaneAabbRelation {
+    if upper_sign == Sign::Negative {
+        PlaneAabbRelation::Below
+    } else if lower_sign == Sign::Positive {
+        PlaneAabbRelation::Above
+    } else {
+        PlaneAabbRelation::Intersecting
+    }
+}
+
+fn sign_real_default(value: &Real) -> Option<Sign> {
+    resolve_real_sign(
+        value,
+        PredicatePolicy::default(),
+        || None,
+        || None,
+        RefinementNeed::RealRefinement,
+    )
+    .value()
+}
+
+fn point3_from_coords(coordinates: [&Real; 3]) -> Point3 {
+    Point3::new(
+        coordinates[0].clone(),
+        coordinates[1].clone(),
+        coordinates[2].clone(),
     )
 }
 
@@ -915,6 +1100,87 @@ mod tests {
                 .classify_aabb3(&p3(1.0, 3.0, 1.0), &p3(0.0, 2.0, 0.0))
                 .value(),
             Some(PlaneAabbRelation::Below)
+        );
+    }
+
+    #[test]
+    fn plane_aabb3_report_retains_support_extrema() {
+        let plane = Plane3::new(p3(1.0, -2.0, 1.0), real(-1.0));
+        let min = p3(0.0, 0.0, 0.0);
+        let max = p3(2.0, 2.0, 2.0);
+        let report = classify_plane_aabb3_report(&plane, &min, &max)
+            .value()
+            .expect("exact rational plane/AABB report should decide");
+
+        assert_eq!(report.relation, PlaneAabbRelation::Intersecting);
+        assert_eq!(report.lower_point, p3(0.0, 2.0, 0.0));
+        assert_eq!(report.upper_point, p3(2.0, 0.0, 2.0));
+        assert_eq!(report.lower_sign, Sign::Negative);
+        assert_eq!(report.upper_sign, Sign::Positive);
+        assert_eq!(
+            report.axis_term_orderings,
+            [Ordering::Less, Ordering::Greater, Ordering::Less]
+        );
+        assert_eq!(report.validate(), Ok(()));
+        assert_eq!(
+            report.validate_against_sources(&plane, &min, &max, PredicatePolicy::default()),
+            Ok(())
+        );
+    }
+
+    #[test]
+    fn plane_aabb3_report_distinguishes_strict_sides_and_reversed_bounds() {
+        let plane = Plane3::new(p3(1.0, -2.0, 1.0), real(-1.0));
+        let below = classify_plane_aabb3_report(&plane, &p3(0.0, 2.0, 0.0), &p3(1.0, 3.0, 1.0))
+            .value()
+            .expect("below box should decide");
+        let above = classify_plane_aabb3_report(&plane, &p3(3.0, 0.0, 1.0), &p3(4.0, 0.0, 2.0))
+            .value()
+            .expect("above box should decide");
+        let reversed = plane
+            .prepare()
+            .classify_aabb3_report(&p3(1.0, 3.0, 1.0), &p3(0.0, 2.0, 0.0))
+            .value()
+            .expect("reversed caller bounds should preserve endpoint set");
+
+        assert_eq!(below.relation, PlaneAabbRelation::Below);
+        assert_eq!(below.upper_sign, Sign::Negative);
+        assert_eq!(below.validate(), Ok(()));
+        assert_eq!(above.relation, PlaneAabbRelation::Above);
+        assert_eq!(above.lower_sign, Sign::Positive);
+        assert_eq!(above.validate(), Ok(()));
+        assert_eq!(reversed.relation, PlaneAabbRelation::Below);
+        assert_eq!(reversed.validate(), Ok(()));
+
+        let mut forged = above.clone();
+        forged.relation = PlaneAabbRelation::Intersecting;
+        assert_eq!(
+            forged.validate(),
+            Err(PlaneAabbReportValidationError::RelationMismatch)
+        );
+    }
+
+    #[test]
+    fn session_prepared_plane_aabb3_report_replays() {
+        let session = crate::session::ExactGeometrySession::default();
+        let plane = Plane3::new(p3(1.0, -2.0, 1.0), real(-1.0));
+        let prepared = session.prepare_plane3(&plane);
+        let min = p3(0.0, 0.0, 0.0);
+        let max = p3(2.0, 2.0, 2.0);
+        let report = session
+            .classify_prepared_plane3_aabb3_report(&prepared, &min, &max)
+            .value()
+            .expect("session report should decide");
+
+        assert_eq!(
+            session
+                .classify_prepared_plane3_aabb3(&prepared, &min, &max)
+                .value(),
+            Some(report.relation)
+        );
+        assert_eq!(
+            report.validate_against_sources(&plane, &min, &max, PredicatePolicy::default()),
+            Ok(())
         );
     }
 

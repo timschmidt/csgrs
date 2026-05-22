@@ -20,9 +20,9 @@ use crate::predicates::aabb::{PreparedAabb2, PreparedAabb3};
 use crate::predicates::segment::{PreparedSegment2, PreparedSegment3};
 use crate::predicates::triangle::{PreparedTriangle2, PreparedTriangle3};
 use crate::{
-    HalfspaceFeasibilityReport, Plane3, Point3, PreparedExplicitSphere3, PreparedHalfspaceSystem3,
-    PreparedIncircle2, PreparedInsphere3, PreparedLine2, PreparedOrientedPlane3, PreparedPlane3,
-    Sign,
+    HalfspaceFeasibilityReport, Plane3, PlaneAabbReport, Point3, PreparedExplicitSphere3,
+    PreparedHalfspaceSystem3, PreparedIncircle2, PreparedInsphere3, PreparedLine2,
+    PreparedOrientedPlane3, PreparedPlane3, Sign,
 };
 
 /// Monotone construction version carried by an [`ExactGeometrySession`].
@@ -1165,6 +1165,17 @@ impl ExactGeometrySession {
         max: &Point3,
     ) -> PredicateOutcome<PlaneAabbRelation> {
         plane.classify_aabb3_with_policy(min, max, self.policy)
+    }
+
+    /// Classify a closed 3D AABB against a prepared explicit plane and retain
+    /// exact support-extrema evidence.
+    pub fn classify_prepared_plane3_aabb3_report(
+        &self,
+        plane: &PreparedPlane3<'_>,
+        min: &Point3,
+        max: &Point3,
+    ) -> PredicateOutcome<PlaneAabbReport> {
+        plane.classify_aabb3_report_with_policy(min, max, self.policy)
     }
 
     /// Classify a point against a prepared oriented plane using this session's policy.

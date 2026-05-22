@@ -19,6 +19,7 @@ use hyperlimit::{
     classify_aabb3_sphere_intersection, classify_circle_line2, classify_circle_segment2,
     classify_circle_line2_batch, classify_circle_segment2_batch,
     classify_halfspace_feasibility3, classify_homogeneous_point_plane,
+    classify_plane_aabb3_report,
     classify_point_convex_planes3, classify_point_convex_polygon2, classify_point_line,
     classify_point_line_batch, classify_point_ring_even_odd, classify_point_ring_even_odd_report,
     classify_ray_triangle3_intersection,
@@ -417,6 +418,18 @@ fn predicate_invariants(input: Input) {
         Some(AabbSphereIntersection::Touching),
         "zero-volume AABB and zero-radius sphere touch exactly at their shared point"
     );
+    if let Some(report) = classify_plane_aabb3_report(&z_plane, &p, &p).value() {
+        assert_eq!(
+            report.validate_against_sources(&z_plane, &p, &p, PredicatePolicy::default()),
+            Ok(()),
+            "point-sized AABB plane report must replay exact support extrema"
+        );
+        assert_eq!(
+            report.relation,
+            hyperlimit::PlaneAabbRelation::Intersecting,
+            "point-sized AABB on its coordinate plane must intersect"
+        );
+    }
 
     let ray_direction = Point3::new(&q.x - &p.x, &q.y - &p.y, &q.z - &p.z);
     let segment_triangle =
