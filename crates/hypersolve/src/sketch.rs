@@ -491,6 +491,33 @@ pub enum SketchConstraintKind {
         /// Second endpoint entity.
         b: SketchEntityHandle,
     },
+    /// 2D points symmetric across the horizontal line `y = axis_y`.
+    ///
+    /// Lowering emits `a.x - b.x == 0` and `a.y + b.y - 2*axis_y == 0`.
+    /// Retaining the axis value exactly keeps SolveSpace-style horizontal
+    /// symmetry explicit while candidate acceptance follows Yap, "Towards
+    /// Exact Geometric Computation" (1997), through exact replay.
+    SymmetricHorizontal2 {
+        /// First point entity.
+        a: SketchEntityHandle,
+        /// Second point entity.
+        b: SketchEntityHandle,
+        /// Exact horizontal mirror-axis coordinate.
+        axis_y: Real,
+    },
+    /// 2D points symmetric across the vertical line `x = axis_x`.
+    ///
+    /// Lowering emits `a.y - b.y == 0` and `a.x + b.x - 2*axis_x == 0`.
+    /// The mirror axis is retained as exact data rather than a hidden UI
+    /// tolerance or floating construction.
+    SymmetricVertical2 {
+        /// First point entity.
+        a: SketchEntityHandle,
+        /// Second point entity.
+        b: SketchEntityHandle,
+        /// Exact vertical mirror-axis coordinate.
+        axis_x: Real,
+    },
     /// Point-on-circle incidence using squared radius residual.
     PointOnCircle {
         /// Point entity.
@@ -600,6 +627,8 @@ pub enum SketchResidualStrategy {
     DirectionSameOrientation,
     /// Linear coordinate equality for a retained midpoint relation.
     MidpointCoordinateEquality,
+    /// Linear coordinate equality for retained axis symmetry.
+    AxisSymmetryCoordinateEquality,
     /// Soft stay-near objective.
     SoftObjective,
 }
@@ -1209,6 +1238,28 @@ impl SketchSolveProblem {
         b: SketchEntityHandle,
     ) -> SketchConstraintHandle {
         symmetry::at_midpoint2(self, name, point, a, b).handle
+    }
+
+    /// Add a retained 2D horizontal-axis point symmetry relation.
+    pub fn add_symmetric_horizontal2(
+        &mut self,
+        name: impl Into<String>,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+        axis_y: Real,
+    ) -> SketchConstraintHandle {
+        symmetry::symmetric_horizontal2(self, name, a, b, axis_y).handle
+    }
+
+    /// Add a retained 2D vertical-axis point symmetry relation.
+    pub fn add_symmetric_vertical2(
+        &mut self,
+        name: impl Into<String>,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+        axis_x: Real,
+    ) -> SketchConstraintHandle {
+        symmetry::symmetric_vertical2(self, name, a, b, axis_x).handle
     }
 
     /// Add a point-on-circle incidence constraint.
@@ -1823,6 +1874,62 @@ impl SketchSolveProblem {
                         SketchResidualStrategy::MidpointCoordinateEquality,
                     );
                 }
+            }
+            SketchConstraintKind::SymmetricHorizontal2 { a, b, ref axis_y } => {
+                // Horizontal symmetry is exact affine replay: matching x
+                // coordinates and a y-coordinate sum fixed to twice the exact
+                // mirror axis. No midpoint rounding is introduced.
+                let (Some(a), Some(b)) = (
+                    self.point2_coordinates(a, constraint, rows),
+                    self.point2_coordinates(b, constraint, rows),
+                ) else {
+                    return;
+                };
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} x coordinate", constraint.name),
+                    a.exprs[0].clone() - b.exprs[0].clone(),
+                    SketchResidualStrategy::AxisSymmetryCoordinateEquality,
+                );
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} y mirror", constraint.name),
+                    a.exprs[1].clone() + b.exprs[1].clone()
+                        - Expr::real(axis_y.clone() * Real::from(2)),
+                    SketchResidualStrategy::AxisSymmetryCoordinateEquality,
+                );
+            }
+            SketchConstraintKind::SymmetricVertical2 { a, b, ref axis_x } => {
+                // Vertical symmetry mirrors the horizontal package with exact
+                // affine rows. The retained axis value is proof input, not an
+                // editor tolerance.
+                let (Some(a), Some(b)) = (
+                    self.point2_coordinates(a, constraint, rows),
+                    self.point2_coordinates(b, constraint, rows),
+                ) else {
+                    return;
+                };
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} y coordinate", constraint.name),
+                    a.exprs[1].clone() - b.exprs[1].clone(),
+                    SketchResidualStrategy::AxisSymmetryCoordinateEquality,
+                );
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} x mirror", constraint.name),
+                    a.exprs[0].clone() + b.exprs[0].clone()
+                        - Expr::real(axis_x.clone() * Real::from(2)),
+                    SketchResidualStrategy::AxisSymmetryCoordinateEquality,
+                );
             }
             SketchConstraintKind::PointOnCircle { point, circle } => {
                 let Some(point) = self.point_coordinates(point, constraint, rows) else {

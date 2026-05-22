@@ -937,6 +937,115 @@ fn sketch_midpoint_relations_report_stale_wrong_and_non_2d_inputs() {
 }
 
 #[test]
+fn sketch_axis_symmetry_relations_lower_to_exact_linear_rows() {
+    let mut sketch = SketchSolveProblem::new();
+    let top = sketch.add_point2d("top", real(2), real(7));
+    let bottom = sketch.add_point2d("bottom", real(2), real(1));
+    let left = sketch.add_point2d("left", real(-4), real(3));
+    let right = sketch.add_point2d("right", real(6), real(3));
+    let wrong = sketch.add_point2d("wrong", real(3), real(1));
+    let horizontal = sketch_symmetry_builders::symmetric_horizontal2(
+        &mut sketch,
+        "horizontal symmetry",
+        top,
+        bottom,
+        real(4),
+    );
+    let vertical = sketch_symmetry_builders::symmetric_vertical2(
+        &mut sketch,
+        "vertical symmetry",
+        left,
+        right,
+        real(1),
+    );
+    sketch.add_symmetric_horizontal2("violated symmetry", top, wrong, real(4));
+
+    assert_eq!(
+        horizontal.family,
+        hypersolve::SketchConstraintFamily::Symmetry
+    );
+    assert_eq!(
+        horizontal.strategy,
+        SketchResidualStrategy::AxisSymmetryCoordinateEquality
+    );
+    assert_eq!(
+        vertical.strategy,
+        SketchResidualStrategy::AxisSymmetryCoordinateEquality
+    );
+
+    let lowered = sketch.lower_to_problem();
+    let certification = certify_candidate(
+        &PreparedProblem::new(&lowered.problem),
+        &context_from_problem(&lowered.problem),
+    );
+
+    assert_eq!(lowered.problem.constraints.len(), 6);
+    assert_eq!(lowered.rows.len(), 6);
+    assert!(lowered.rows.iter().all(|row| {
+        row.strategy == Some(SketchResidualStrategy::AxisSymmetryCoordinateEquality)
+            && row.status == SketchGeneratedRowStatus::Generated
+    }));
+    assert!(matches!(
+        certification.rows[0].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[1].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[2].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[3].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[4].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
+}
+
+#[test]
+fn sketch_axis_symmetry_relations_report_stale_wrong_and_non_2d_inputs() {
+    let mut sketch = SketchSolveProblem::new();
+    let p = sketch.add_point2d("p", real(0), real(0));
+    let q = sketch.add_point2d("q", real(1), real(1));
+    let point3 = sketch.add_point3d("point3", real(1), real(1), real(1));
+    let distance = sketch.add_distance("distance", real(1));
+    sketch.add_symmetric_horizontal2("missing", p, SketchEntityHandle(999), real(0));
+    sketch.add_symmetric_vertical2("wrong family", p, distance, real(0));
+    sketch.add_symmetric_horizontal2("not 2d", p, point3, real(0));
+    sketch.add_symmetric_vertical2("valid control", p, q, real(0));
+
+    let lowered = sketch.lower_to_problem();
+
+    assert_eq!(lowered.problem.constraints.len(), 2);
+    assert_eq!(lowered.rows.len(), 5);
+    assert_eq!(
+        lowered.rows[0].status,
+        SketchGeneratedRowStatus::MissingEntity(SketchEntityHandle(999))
+    );
+    assert_eq!(
+        lowered.rows[1].status,
+        SketchGeneratedRowStatus::WrongEntityKind {
+            handle: distance,
+            expected: "point"
+        }
+    );
+    assert_eq!(
+        lowered.rows[2].status,
+        SketchGeneratedRowStatus::WrongEntityKind {
+            handle: point3,
+            expected: "2D point"
+        }
+    );
+    assert_eq!(lowered.rows[3].status, SketchGeneratedRowStatus::Generated);
+    assert_eq!(lowered.rows[4].status, SketchGeneratedRowStatus::Generated);
+}
+
+#[test]
 fn sketch_point_distance_ranges_lower_to_exact_squared_inequalities() {
     let mut sketch = SketchSolveProblem::new();
     let a = sketch.add_point2d("a", real(0), real(0));

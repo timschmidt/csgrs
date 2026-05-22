@@ -677,6 +677,54 @@ proptest! {
     }
 
     #[test]
+    fn sketch_axis_symmetry_rows_match_generated_integer_reflections(
+        axis_x in -8_i16..=8,
+        axis_y in -8_i16..=8,
+        px in -8_i16..=8,
+        py in -8_i16..=8,
+        dx in -8_i16..=8,
+        dy in -8_i16..=8,
+    ) {
+        let axis_x = i64::from(axis_x);
+        let axis_y = i64::from(axis_y);
+        let px = i64::from(px);
+        let py = i64::from(py);
+        let dx = i64::from(dx);
+        let dy = i64::from(dy);
+        let mut sketch = SketchSolveProblem::new();
+        let horizontal_a = sketch.add_point2d("ha", Real::from(px), Real::from(axis_y + dy));
+        let horizontal_b = sketch.add_point2d("hb", Real::from(px), Real::from(axis_y - dy));
+        let vertical_a = sketch.add_point2d("va", Real::from(axis_x + dx), Real::from(py));
+        let vertical_b = sketch.add_point2d("vb", Real::from(axis_x - dx), Real::from(py));
+        sketch.add_symmetric_horizontal2(
+            "horizontal symmetry",
+            horizontal_a,
+            horizontal_b,
+            Real::from(axis_y),
+        );
+        sketch.add_symmetric_vertical2(
+            "vertical symmetry",
+            vertical_a,
+            vertical_b,
+            Real::from(axis_x),
+        );
+
+        let lowered = sketch.lower_to_problem();
+        let certification = certify_candidate(
+            &PreparedProblem::new(&lowered.problem),
+            &context_from_problem(&lowered.problem),
+        );
+
+        prop_assert_eq!(lowered.rows.len(), 4);
+        let all_symmetry_rows = lowered.rows.iter().all(|row| {
+            row.strategy == Some(SketchResidualStrategy::AxisSymmetryCoordinateEquality)
+                && row.status == SketchGeneratedRowStatus::Generated
+        });
+        prop_assert!(all_symmetry_rows);
+        prop_assert!(certification.all_satisfied());
+    }
+
+    #[test]
     fn sketch_construction_certificate_generated_integer_segments_match_distance(
         ax in -12_i16..=12,
         ay in -12_i16..=12,

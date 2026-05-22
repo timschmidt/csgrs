@@ -397,6 +397,32 @@ fn sketch_problem_with_midpoint_relations(row_count: usize) -> hypersolve::Sketc
     sketch
 }
 
+fn sketch_problem_with_axis_symmetry_relations(row_count: usize) -> hypersolve::SketchSolveProblem {
+    let mut sketch = hypersolve::SketchSolveProblem::new();
+    for index in 0..row_count {
+        let axis = index as i64;
+        let top = sketch.add_point2d(format!("axis{index}.top"), r(axis + 2), r(axis + 5));
+        let bottom = sketch.add_point2d(format!("axis{index}.bottom"), r(axis + 2), r(axis - 1));
+        let left = sketch.add_point2d(format!("axis{index}.left"), r(axis - 4), r(axis + 3));
+        let right = sketch.add_point2d(format!("axis{index}.right"), r(axis + 6), r(axis + 3));
+        hypersolve::sketch_symmetry_builders::symmetric_horizontal2(
+            &mut sketch,
+            format!("horizontal symmetry {index}"),
+            top,
+            bottom,
+            r(axis + 2),
+        );
+        hypersolve::sketch_symmetry_builders::symmetric_vertical2(
+            &mut sketch,
+            format!("vertical symmetry {index}"),
+            left,
+            right,
+            r(axis + 1),
+        );
+    }
+    sketch
+}
+
 fn sketch_problem_with_same_direction_relations(
     row_count: usize,
 ) -> hypersolve::SketchSolveProblem {
@@ -568,6 +594,10 @@ fn certification(c: &mut Criterion) {
     let midpoint_sketch = sketch_problem_with_midpoint_relations(16);
     c.bench_function("sketch_midpoint_lowering", |b| {
         b.iter(|| midpoint_sketch.lower_to_problem())
+    });
+    let axis_symmetry_sketch = sketch_problem_with_axis_symmetry_relations(16);
+    c.bench_function("sketch_axis_symmetry_lowering", |b| {
+        b.iter(|| axis_symmetry_sketch.lower_to_problem())
     });
     let same_direction_sketch = sketch_problem_with_same_direction_relations(16);
     c.bench_function("sketch_same_direction_lowering", |b| {

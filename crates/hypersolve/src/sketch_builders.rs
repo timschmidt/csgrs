@@ -433,6 +433,52 @@ pub mod symmetry {
             kind,
         }
     }
+
+    /// Add a 2D horizontal-axis point symmetry relation.
+    ///
+    /// Lowering emits exact affine rows for `a.x == b.x` and
+    /// `a.y + b.y == 2*axis_y`. The mirror axis is retained as exact data,
+    /// matching Yap's "Towards Exact Geometric Computation" (1997): the
+    /// builder records a proof obligation, and exact replay decides whether a
+    /// candidate satisfies it.
+    pub fn symmetric_horizontal2(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+        axis_y: Real,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::SymmetricHorizontal2 { a, b, axis_y };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Symmetry,
+            strategy: SketchResidualStrategy::AxisSymmetryCoordinateEquality,
+            kind,
+        }
+    }
+
+    /// Add a 2D vertical-axis point symmetry relation.
+    ///
+    /// Lowering emits exact affine rows for `a.y == b.y` and
+    /// `a.x + b.x == 2*axis_x`, preserving the original relation for
+    /// diagnostics instead of lowering it to anonymous coordinate equations.
+    pub fn symmetric_vertical2(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+        axis_x: Real,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::SymmetricVertical2 { a, b, axis_x };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Symmetry,
+            strategy: SketchResidualStrategy::AxisSymmetryCoordinateEquality,
+            kind,
+        }
+    }
 }
 
 /// Inequality and parameter-domain builders.
