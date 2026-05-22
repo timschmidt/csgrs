@@ -2932,6 +2932,53 @@ fn exercise_component_coplanar_difference() {
         arrange_coplanar_surface_multi_difference(&wide_left, &contained_hole_cutters).is_none()
     );
 
+    let channel_left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 20, 0, 0, 20, 20, 0, 0, 20, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("nonrectilinear channel left fixture must import");
+    let nonrectilinear_channel_cutters = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            8, -2, 0, 12, -2, 0, 12, 22, 0, 8, 22, 0, //
+            -2, 4, 0, 5, 4, 0, 3, 8, 0, -2, 8, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("nonrectilinear channel cutter fixture must import");
+    assert!(
+        arrange_coplanar_convex_surface_multi_difference(
+            &channel_left,
+            &nonrectilinear_channel_cutters,
+        )
+        .is_none()
+    );
+    let channel_difference = arrange_coplanar_surface_multi_difference(
+        &channel_left,
+        &nonrectilinear_channel_cutters,
+    )
+    .expect("nonrectilinear side-cutter channel should retain split components");
+    channel_difference.validate().unwrap();
+    channel_difference
+        .validate_difference_against_sources(&channel_left, &nonrectilinear_channel_cutters)
+        .unwrap();
+    assert_eq!(channel_difference.polygons.len(), 2);
+    let channel_preflight = preflight_boolean_exact(
+        &channel_left,
+        &nonrectilinear_channel_cutters,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("nonrectilinear channel preflight should classify shortcut");
+    channel_preflight.validate().unwrap();
+    assert_eq!(
+        channel_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
+    );
+
     let holed_left = ExactMesh::from_i64_triangles_with_policy(
         &[
             0, 0, 0, 10, 0, 0, 10, 10, 0, 0, 10, 0, //

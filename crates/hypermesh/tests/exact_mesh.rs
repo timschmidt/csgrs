@@ -11575,6 +11575,72 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
         .is_none()
     );
 
+    let channel_left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 20, 0, 0, 20, 20, 0, 0, 20, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let nonrectilinear_channel_cutters = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            8, -2, 0, 12, -2, 0, 12, 22, 0, 8, 22, 0, //
+            -2, 4, 0, 5, 4, 0, 3, 8, 0, -2, 8, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert!(
+        hypermesh::exact::arrange_coplanar_convex_surface_multi_difference(
+            &channel_left,
+            &nonrectilinear_channel_cutters,
+        )
+        .is_none()
+    );
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_side_cutter_difference(
+            &channel_left,
+            &nonrectilinear_channel_cutters,
+        )
+        .is_none()
+    );
+    let channel_difference = hypermesh::exact::arrange_coplanar_surface_multi_difference(
+        &channel_left,
+        &nonrectilinear_channel_cutters,
+    )
+    .expect("a retained non-rectilinear cutter channel should split into simple components");
+    channel_difference.validate().unwrap();
+    channel_difference
+        .validate_difference_against_sources(&channel_left, &nonrectilinear_channel_cutters)
+        .unwrap();
+    assert_eq!(channel_difference.polygons.len(), 2);
+    assert!(channel_difference.polygons.iter().any(|polygon| {
+        polygon.len() > 4
+            && polygon
+                .iter()
+                .any(|point| real_eq(&point.x, &ExactReal::from(5)))
+    }));
+    let mut stale_channel = channel_difference.clone();
+    stale_channel.polygons.pop();
+    assert!(stale_channel.validate().is_err());
+    let channel_preflight = hypermesh::exact::preflight_boolean_exact(
+        &channel_left,
+        &nonrectilinear_channel_cutters,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    channel_preflight.validate().unwrap();
+    channel_preflight
+        .validate_against_sources(&channel_left, &nonrectilinear_channel_cutters)
+        .unwrap();
+    assert_eq!(
+        channel_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
+    );
+
     let side_opening_left = ExactMesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 20, 0, 0, 20, 20, 0, 0, 20, 0],
         &[0, 1, 2, 0, 2, 3],

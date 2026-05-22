@@ -4030,8 +4030,11 @@ fn arrange_coplanar_convex_surface_component_difference(
 /// than rejected by the convex multi-component certificate. Rectangular
 /// multi-cutters may also enter through exact no-hole orthogonal cell replay,
 /// including boundary-attached partial-height cutters that would otherwise
-/// require nonconvex loop surgery. Hole-producing cuts, point-only boundary
-/// contacts, overlapping loops, and self-intersections remain explicit
+/// require nonconvex loop surgery. Overlapping same-source side cutters are
+/// accepted only by the retained side-cutter channel replay below; they are
+/// not prefiltered away because their exact union can be the materialized
+/// removed object. Hole-producing cuts, point-only boundary contacts,
+/// overlapping output loops, and self-intersections remain explicit
 /// planar-arrangement work. This follows Yap, "Towards Exact Geometric
 /// Computation," *Computational Geometry* 7.1-2 (1997): the system may broaden
 /// the object model only when the exact construction history and output
@@ -4042,7 +4045,8 @@ pub fn arrange_coplanar_surface_multi_difference(
     right: &ExactMesh,
 ) -> Option<CoplanarSurfaceMultiArrangement> {
     let left_components = connected_face_component_meshes(left)?;
-    let right_components = connected_face_component_meshes(right)?;
+    let right_components = connected_face_component_meshes(right)
+        .or_else(|| triangle_piece_component_meshes(right))?;
     if right_components.is_empty() {
         return None;
     }
@@ -4052,9 +4056,16 @@ pub fn arrange_coplanar_surface_multi_difference(
         .map(|mesh| ConvexUnionComponent::from_mesh(MultiUnionSide::Left, mesh))
         .collect::<Option<Vec<_>>>()?;
     let right_components = right_components
-        .into_iter()
+        .iter()
+        .cloned()
         .map(|mesh| ConvexUnionComponent::from_mesh(MultiUnionSide::Right, mesh))
-        .collect::<Option<Vec<_>>>()?;
+        .collect::<Option<Vec<_>>>()
+        .or_else(|| {
+            triangle_piece_component_meshes(right)?
+                .into_iter()
+                .map(|mesh| ConvexUnionComponent::from_mesh(MultiUnionSide::Right, mesh))
+                .collect::<Option<Vec<_>>>()
+        })?;
     let projection = left_components.first()?.projection;
     if left_components
         .iter()
@@ -4073,17 +4084,6 @@ pub fn arrange_coplanar_surface_multi_difference(
         "coplanar nonconvex multi-component difference",
     )
     .ok()?;
-    let right_hulls = right_components
-        .iter()
-        .map(|component| component.hull.clone())
-        .collect::<Vec<_>>();
-    validate_component_loops_disjoint(
-        &right_hulls,
-        projection,
-        "coplanar nonconvex multi-component difference",
-    )
-    .ok()?;
-
     let mut polygons = Vec::new();
     for component in &mut left_components {
         let mut drop_component = false;
@@ -4157,12 +4157,22 @@ pub fn arrange_coplanar_surface_multi_difference(
                 }
             }
             _ => {
-                let mut remnants = materialize_component_multi_cutter_difference(
-                    component,
-                    &cutter_indices,
-                    &right_components,
-                    projection,
-                )?;
+                let mut remnants = if let Some(remnants) =
+                    materialize_side_cutter_multi_component_difference(
+                        component,
+                        &cutter_indices,
+                        &right_components,
+                        "coplanar nonconvex multi-component side-cutter difference",
+                    ) {
+                    remnants
+                } else {
+                    materialize_component_multi_cutter_difference(
+                        component,
+                        &cutter_indices,
+                        &right_components,
+                        projection,
+                    )?
+                };
                 polygons.append(&mut remnants);
             }
         }
@@ -4174,7 +4184,7 @@ pub fn arrange_coplanar_surface_multi_difference(
         orient_polygon_ccw(polygon, projection)?;
     }
     sort_polygons_for_replay(&mut polygons, projection);
-    validate_component_loops_disjoint(
+    validate_simple_component_loops_disjoint(
         &polygons,
         projection,
         "coplanar nonconvex multi-component difference",
@@ -4680,6 +4690,42 @@ fn merge_component_meshes<'a>(
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .ok()
+}
+
+/// Split a source surface into one retained convex mesh per triangle.
+///
+/// Most coplanar surface shortcuts consume connected convex components. A
+/// connected cutter graph, however, may be intentionally nonconvex while each
+/// input triangle is still an exact convex source object. The nonconvex
+/// multi-difference path uses this fallback only after connected-component
+/// convex import fails, and every resulting triangle piece is still replayed
+/// through the same exact contact, fragment, and area certificates before it
+/// can affect topology. This is Yap's retained-object rule from "Towards
+/// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997): the
+/// fallback preserves concrete source pieces instead of flattening the cutter
+/// graph into an approximate polygon.
+#[cfg(feature = "exact-triangulation")]
+fn triangle_piece_component_meshes(mesh: &ExactMesh) -> Option<Vec<ExactMesh>> {
+    if mesh.triangles().is_empty() {
+        return None;
+    }
+    let mut pieces = Vec::with_capacity(mesh.triangles().len());
+    for triangle in mesh.triangles() {
+        let vertices = triangle
+            .0
+            .iter()
+            .map(|&index| mesh.vertices().get(index).cloned())
+            .collect::<Option<Vec<_>>>()?;
+        let piece = ExactMesh::new_with_policy(
+            vertices,
+            vec![Triangle([0, 1, 2])],
+            SourceProvenance::exact("exact coplanar triangle cutter piece"),
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .ok()?;
+        pieces.push(piece);
+    }
+    Some(pieces)
 }
 
 /// Materialize a bounded multi-cutter rectangle difference.
@@ -6623,6 +6669,184 @@ fn materialize_nonrectilinear_side_cutter_opening(
         return None;
     }
     Some((removed_openings, opening))
+}
+
+/// Replay side-attached cutters that split one source component into loops.
+///
+/// [`materialize_nonrectilinear_side_cutter_opening`] accepts the common bay
+/// case where removed material opens one retained simple loop. This helper is
+/// the multi-component sibling: clipped cutter groups are replayed as exact
+/// removed loops, each removed loop must carry positive-length contact with
+/// the convex source boundary, and the retained boundary fragments are
+/// stitched into two or more disjoint simple loops. The final area equation is
+/// checked exactly:
+/// `area(source) = sum(area(output_i)) + sum(area(removed_j))`.
+///
+/// This is a bounded planar-cell promotion, not a tolerance polygon clip. The
+/// retained fragments are precisely the outside portions of the convex source
+/// boundary and the reversed inside portions of removed cutter groups, in the
+/// Weiler-Atherton retained-boundary style; see Weiler and Atherton, "Hidden
+/// Surface Removal Using Polygon Area Sorting," *SIGGRAPH Computer Graphics*
+/// 11.2 (1977). The reason the helper demands exact attachment, simplicity,
+/// disjointness, and area replay is Yap's object-level requirement from
+/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+/// (1997): the shortcut may widen only when retained combinatorial facts, not
+/// sampled witnesses, determine the output topology.
+#[cfg(feature = "exact-triangulation")]
+fn materialize_side_cutter_multi_component_difference(
+    component: &ConvexUnionComponent,
+    cut_indices: &[usize],
+    right_components: &[ConvexUnionComponent],
+    label: &'static str,
+) -> Option<Vec<Vec<Point3>>> {
+    if cut_indices.is_empty() {
+        return None;
+    }
+    let projection = component.projection;
+    let mut regions = Vec::with_capacity(cut_indices.len());
+    let mut all_clipped_cutters_are_rectangles = true;
+    for &right_index in cut_indices {
+        let mut clipped = convex_polygon_intersection_boundary(
+            &right_components[right_index].hull,
+            &component.hull,
+            projection,
+        )?;
+        if clipped.len() < 3 {
+            return None;
+        }
+        orient_polygon_ccw(&mut clipped, projection)?;
+        validate_projected_strictly_convex_loop(&clipped, projection, label).ok()?;
+        all_clipped_cutters_are_rectangles &=
+            projected_axis_aligned_rectangle(&clipped, projection).is_some();
+        regions.push(RemovedRegionCandidate {
+            right_index,
+            is_cutter: true,
+            region: clipped,
+        });
+    }
+    if all_clipped_cutters_are_rectangles {
+        return None;
+    }
+
+    let groups = removed_region_contact_groups(&regions, projection)?;
+    let mut removed_openings = Vec::with_capacity(groups.len());
+    for group in &groups {
+        let mut opening = if group.len() == 1 {
+            regions[group[0]].region.clone()
+        } else {
+            materialize_removed_region_group_polygon(&regions, group, projection)?
+        };
+        orient_polygon_ccw(&mut opening, projection)?;
+        opening = simplify_projected_polygon(opening, projection);
+        validate_projected_simple_loop(&opening, projection, label).ok()?;
+        if convex_boundary_attachment_count(&component.hull, &opening, projection)? == 0 {
+            return None;
+        }
+        for point in &opening {
+            if convex_polygon_location(point, &component.hull, projection)?
+                == ConvexPolygonLocation::Outside
+            {
+                return None;
+            }
+        }
+        removed_openings.push(opening);
+    }
+    if removed_openings.is_empty() {
+        return None;
+    }
+    if validate_simple_component_loops_disjoint(&removed_openings, projection, label).is_err() {
+        return None;
+    }
+
+    let mut fragments = Vec::new();
+    collect_outer_difference_fragments(
+        &component.hull,
+        &removed_openings,
+        projection,
+        &mut fragments,
+    )?;
+    for index in 0..removed_openings.len() {
+        collect_removed_difference_fragments(
+            index,
+            &component.hull,
+            &removed_openings,
+            projection,
+            &mut fragments,
+        )?;
+    }
+    let mut polygons = stitch_disjoint_simple_loops(fragments, projection)?;
+    if polygons.len() < 2 {
+        return None;
+    }
+    let mut output_area = ExactReal::from(0);
+    for polygon in &mut polygons {
+        orient_polygon_ccw(polygon, projection)?;
+        *polygon = simplify_projected_polygon(polygon.clone(), projection);
+        if validate_projected_simple_loop(polygon, projection, label).is_err() {
+            return None;
+        }
+        output_area = add(&output_area, &projected_area2_abs(polygon, projection)?);
+    }
+    if validate_simple_component_loops_disjoint(&polygons, projection, label).is_err() {
+        return None;
+    }
+
+    let mut removed_area = ExactReal::from(0);
+    for opening in &removed_openings {
+        removed_area = add(&removed_area, &projected_area2_abs(opening, projection)?);
+    }
+    let component_area = projected_area2_abs(&component.hull, projection)?;
+    if compare_reals(&add(&output_area, &removed_area), &component_area).value()
+        != Some(Ordering::Equal)
+    {
+        return None;
+    }
+    Some(polygons)
+}
+
+/// Count positive-length retained contacts between a removed loop and source.
+///
+/// A side-cutter split is admitted only when the removed loop owns exact
+/// boundary contact with the source component. Point touches are deliberately
+/// ignored: they are branch vertices in the planar subdivision and need their
+/// own cell traversal. The segment relation is the same orientation-predicate
+/// classifier used throughout the module, following Guigue and Devillers,
+/// "Fast and Robust Triangle-Triangle Overlap Test Using Orientation
+/// Predicates," *Journal of Graphics Tools* 8.1 (2003).
+#[cfg(feature = "exact-triangulation")]
+fn convex_boundary_attachment_count(
+    outer: &[Point3],
+    removed: &[Point3],
+    projection: CoplanarProjection,
+) -> Option<usize> {
+    let mut attached_outer_edges = Vec::new();
+    for outer_edge in 0..outer.len() {
+        let outer_start = project_point(&outer[outer_edge], projection);
+        let outer_end = project_point(&outer[(outer_edge + 1) % outer.len()], projection);
+        for removed_edge in 0..removed.len() {
+            let removed_start = project_point(&removed[removed_edge], projection);
+            let removed_end =
+                project_point(&removed[(removed_edge + 1) % removed.len()], projection);
+            match classify_segment_intersection(
+                &outer_start,
+                &outer_end,
+                &removed_start,
+                &removed_end,
+            )
+            .value()?
+            {
+                SegmentIntersection::CollinearOverlap | SegmentIntersection::Identical => {
+                    if !attached_outer_edges.contains(&outer_edge) {
+                        attached_outer_edges.push(outer_edge);
+                    }
+                }
+                SegmentIntersection::Disjoint
+                | SegmentIntersection::EndpointTouch
+                | SegmentIntersection::Proper => {}
+            }
+        }
+    }
+    Some(attached_outer_edges.len())
 }
 
 /// Return whether a strict hole is wholly removed by one side opening.
@@ -9795,11 +10019,18 @@ fn stitch_disjoint_simple_loops(
                 polygon.pop();
                 break;
             }
-            let next_index = fragments
-                .iter()
-                .position(|fragment| points_equal(&fragment.start, &current))?;
+            let (next_index, reversed) =
+                fragments.iter().enumerate().find_map(|(index, fragment)| {
+                    if points_equal(&fragment.start, &current) {
+                        Some((index, false))
+                    } else if points_equal(&fragment.end, &current) {
+                        Some((index, true))
+                    } else {
+                        None
+                    }
+                })?;
             let next = fragments.remove(next_index);
-            polygon.push(next.end);
+            polygon.push(if reversed { next.start } else { next.end });
             if polygon.len() > 128 {
                 return None;
             }
