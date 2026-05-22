@@ -2,12 +2,15 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hyperparts::{
-    AssertionValue, Capability, CapabilityEnvelope, CapabilityInput, CapabilityOutput,
-    CapabilityStatus, ConnectionDecision, ElectricalCompatibilityReport, ElectricalFactStatus,
-    ElectricalPolarity, ElectronicPackage, MaterialRequirement, PartConstraint, PartFamily,
-    PartGraph, PartId, PartQuery, PartQueryEvidence, PhysicalFactStatus, PhysicalPropertyHandle,
-    PhysicsHandoffReport, PinFunction, Pinout, Process, ProcessKind, Real, Terminal, TerminalId,
-    ToolPart, VariantId, VoltageEnvelope, VoltageRange,
+    AssertionValue, AutorouterOutputRecord, Capability, CapabilityEnvelope, CapabilityInput,
+    CapabilityOutput, CapabilityStatus, CircuitJsonSourceRecord, ConnectionDecision,
+    EdaAuthoringBundle, EdaExactField, EdaFabricationReadiness, EdaFootprintString, EdaModelStatus,
+    EdaPackageMetadata, EdaPackagePin, EdaRouteStatus, ElectricalCompatibilityReport,
+    ElectricalFactStatus, ElectricalPolarity, ElectronicPackage, FabricationOutputRecord,
+    GeneratedModelReference, MaterialRequirement, PartConstraint, PartFamily, PartGraph, PartId,
+    PartQuery, PartQueryEvidence, PhysicalFactStatus, PhysicalPropertyHandle, PhysicsHandoffReport,
+    PinFunction, Pinout, Process, ProcessKind, Real, Terminal, TerminalId, ToolPart, VariantId,
+    VoltageEnvelope, VoltageRange, import_eda_authoring_bundle,
 };
 
 fn id(value: &str) -> PartId {
@@ -20,6 +23,87 @@ fn variant(value: &str) -> VariantId {
 
 fn terminal(value: &str) -> TerminalId {
     TerminalId::new(value).unwrap()
+}
+
+fn eda_bundle() -> EdaAuthoringBundle {
+    EdaAuthoringBundle {
+        source: hyperparts::SourceRef::new("bench", "tscircuit-authoring").unwrap(),
+        part: id("eda:bench-board"),
+        variant: variant("A"),
+        display_name: "Bench EDA Board".into(),
+        circuit_records: vec![
+            CircuitJsonSourceRecord {
+                id: "R1".into(),
+                kind: "resistor".into(),
+                reference: Some("R1".into()),
+                nets: vec!["VCC".into(), "OUT".into()],
+                exact_fields: vec![EdaExactField {
+                    field: "resistance".into(),
+                    value: Some("10000".into()),
+                    unit: Some("ohm".into()),
+                }],
+            },
+            CircuitJsonSourceRecord {
+                id: "C1".into(),
+                kind: "capacitor".into(),
+                reference: Some("C1".into()),
+                nets: vec!["VCC".into(), "GND".into()],
+                exact_fields: vec![EdaExactField {
+                    field: "capacitance".into(),
+                    value: Some("100".into()),
+                    unit: Some("nF".into()),
+                }],
+            },
+        ],
+        footprint: Some(EdaFootprintString {
+            handle: "footprint:soic8".into(),
+            expression: "soic:pins=8,pitch=1.27mm,width=3.9mm".into(),
+        }),
+        model_references: vec![GeneratedModelReference {
+            handle: "model:soic8-step".into(),
+            owner: "hypercad".into(),
+            format: "step".into(),
+            uri: None,
+            units: Some("mm".into()),
+            status: EdaModelStatus::Exact,
+        }],
+        package: Some(EdaPackageMetadata {
+            name: "SOIC-8".into(),
+            handle: "package:soic8".into(),
+            terminal_count: Some(2),
+            pins: vec![
+                EdaPackagePin {
+                    terminal: "vcc".into(),
+                    name: "VCC".into(),
+                    function: PinFunction::Power,
+                    voltage_min: Some("3".into()),
+                    voltage_max: Some("5".into()),
+                },
+                EdaPackagePin {
+                    terminal: "gnd".into(),
+                    name: "GND".into(),
+                    function: PinFunction::Ground,
+                    voltage_min: Some("0".into()),
+                    voltage_max: Some("0".into()),
+                },
+            ],
+        }),
+        routes: vec![AutorouterOutputRecord {
+            route_id: "route:vcc".into(),
+            net: "VCC".into(),
+            geometry_handle: Some("trace:vcc/exact".into()),
+            units: Some("mm".into()),
+            exact_grid: Some("0.05".into()),
+            status: EdaRouteStatus::Exact,
+        }],
+        fabrication: vec![FabricationOutputRecord {
+            artifact_id: "fab:gerbers".into(),
+            format: "gerber-x2".into(),
+            process: ProcessKind::Pcb,
+            readiness: EdaFabricationReadiness::Ready,
+            notes: Vec::new(),
+        }],
+    }
 }
 
 fn main() {
@@ -209,6 +293,22 @@ fn main() {
     let elapsed = started.elapsed();
     println!(
         "part_query: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={query_checksum}",
+        elapsed / iterations
+    );
+
+    let eda = eda_bundle();
+    let started = Instant::now();
+    let mut eda_checksum = 0_usize;
+    for _ in 0..iterations {
+        let result = import_eda_authoring_bundle(black_box(eda.clone()));
+        eda_checksum ^= result.import_report.parsed_assertions.len();
+        eda_checksum ^= result.circuit_handoffs.len();
+        eda_checksum ^= result.route_handoffs.len();
+        eda_checksum ^= result.drc_handoffs.len();
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "eda_authoring_intake_import: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={eda_checksum}",
         elapsed / iterations
     );
 }

@@ -15,6 +15,7 @@
 
 pub mod assertion;
 pub mod compatibility;
+pub mod eda_intake;
 pub mod electronics;
 pub mod error;
 pub mod geometry;
@@ -33,6 +34,13 @@ pub use assertion::{
 pub use compatibility::{
     CompatibilityClass, CompatibilityKind, CompatibilityRelation, ConnectionDecision,
     InteractionKind, Relationship, RelationshipKind,
+};
+pub use eda_intake::{
+    AutorouterOutputRecord, CircuitJsonSourceRecord, CircuitResidualFactHandoff,
+    CircuitResidualParameter, DrcFabricationHandoff, EdaAuthoringBundle, EdaAuthoringImportResult,
+    EdaExactField, EdaFabricationReadiness, EdaFootprintString, EdaHandoffStatus, EdaIntakeStatus,
+    EdaModelStatus, EdaPackageMetadata, EdaPackagePin, EdaRouteStatus, FabricationOutputRecord,
+    GeneratedModelReference, RouteGeometryHandoff, import_eda_authoring_bundle,
 };
 pub use electronics::{
     AbsoluteMaximumRating, CurrentLimit, DieNet, DiePort, ElectricalCompatibilityReport,

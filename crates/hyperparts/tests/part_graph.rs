@@ -1,21 +1,24 @@
 use hyperparts::{
     AbsoluteMaximumRating, AspectKind, Assertion, AssertionCondition, AssertionConfidence,
-    AssertionValue, CalibrationState, Capability, CapabilityEnvelope, CapabilityInput,
-    CapabilityOutput, CapabilityStatus, CompatibilityClass, CompatibilityKind,
-    CompatibilityRelation, ComplianceClaim, ConnectionDecision, ConsumableRequirement,
-    ElectricalCompatibilityReport, ElectricalFactStatus, ElectricalPolarity, ElectronicPackage,
-    FixtureRequirement, GeneralPartAssertion, GeometryHandle, GeometryHandoffReport,
-    GeometryStatus, GridFeature, GridSystem, ImportIssue, ImportIssueKind, ImportReport,
-    ImportTargetKind, InteractionKind, Interface, InterfaceKind, ManufacturerPartNumber,
-    ManufacturingRoute, MassPropertyNeed, MaterialRequirement, MechanicalLoadPath, MountingFeature,
-    MountingPattern, Operation, PartAspect, PartAssertion, PartConstraint, PartFamily, PartGraph,
-    PartId, PartKnowledgeReport, PartQuery, PartQueryEvidence, PhysicalFactStatus,
-    PhysicalPropertyHandle, PhysicsHandoffReport, PinFunction, PinMap, Pinout, PowerDomain,
-    PowerIntent, Process, ProcessCapability, ProcessKind, ProcurementOffer, Real,
-    RecommendedOperatingCondition, ReferenceDesignatorClass, Relationship, RelationshipKind,
-    SafeConnectionReport, ShapeSource, SourceRef, SourceRevision, SupplierSku, SupplyRail,
-    Terminal, TerminalId, TerminalRole, ThermalPath, ToleranceEnvelope, ToolCapability, ToolPart,
-    VariantId, VoltageEnvelope, VoltageRange,
+    AssertionValue, AutorouterOutputRecord, CalibrationState, Capability, CapabilityEnvelope,
+    CapabilityInput, CapabilityOutput, CapabilityStatus, CircuitJsonSourceRecord,
+    CompatibilityClass, CompatibilityKind, CompatibilityRelation, ComplianceClaim,
+    ConnectionDecision, ConsumableRequirement, EdaAuthoringBundle, EdaExactField,
+    EdaFabricationReadiness, EdaFootprintString, EdaHandoffStatus, EdaIntakeStatus, EdaModelStatus,
+    EdaPackageMetadata, EdaPackagePin, EdaRouteStatus, ElectricalCompatibilityReport,
+    ElectricalFactStatus, ElectricalPolarity, ElectronicPackage, FabricationOutputRecord,
+    FixtureRequirement, GeneralPartAssertion, GeneratedModelReference, GeometryHandle,
+    GeometryHandoffReport, GeometryStatus, GridFeature, GridSystem, ImportIssue, ImportIssueKind,
+    ImportReport, ImportTargetKind, InteractionKind, Interface, InterfaceKind,
+    ManufacturerPartNumber, ManufacturingRoute, MassPropertyNeed, MaterialRequirement,
+    MechanicalLoadPath, MountingFeature, MountingPattern, Operation, PartAspect, PartAssertion,
+    PartConstraint, PartFamily, PartGraph, PartId, PartKnowledgeReport, PartQuery,
+    PartQueryEvidence, PhysicalFactStatus, PhysicalPropertyHandle, PhysicsHandoffReport,
+    PinFunction, PinMap, Pinout, PowerDomain, PowerIntent, Process, ProcessCapability, ProcessKind,
+    ProcurementOffer, Real, RecommendedOperatingCondition, ReferenceDesignatorClass, Relationship,
+    RelationshipKind, SafeConnectionReport, ShapeSource, SourceRef, SourceRevision, SupplierSku,
+    SupplyRail, Terminal, TerminalId, TerminalRole, ThermalPath, ToleranceEnvelope, ToolCapability,
+    ToolPart, VariantId, VoltageEnvelope, VoltageRange, import_eda_authoring_bundle,
 };
 use proptest::prelude::*;
 
@@ -718,6 +721,221 @@ fn part_queries_return_ranked_candidates_and_unknowns() {
     assert_eq!(custom.unknowns[0].field, "adapter-only");
 }
 
+#[test]
+fn eda_authoring_intake_splits_exact_part_circuit_route_and_drc_handoffs() {
+    let board = part("eda:bench-board");
+    let rev = variant("A");
+    let result = import_eda_authoring_bundle(EdaAuthoringBundle {
+        source: source(),
+        part: board.clone(),
+        variant: rev.clone(),
+        display_name: "Bench Board".into(),
+        circuit_records: vec![CircuitJsonSourceRecord {
+            id: "R1".into(),
+            kind: "resistor".into(),
+            reference: Some("R1".into()),
+            nets: vec!["VCC".into(), "OUT".into()],
+            exact_fields: vec![EdaExactField {
+                field: "resistance".into(),
+                value: Some("10000".into()),
+                unit: Some("ohm".into()),
+            }],
+        }],
+        footprint: Some(EdaFootprintString {
+            handle: "footprint:soic8".into(),
+            expression: "soic:pins=8,pitch=1.27mm,width=3.9mm,leadform=gullwing".into(),
+        }),
+        model_references: vec![GeneratedModelReference {
+            handle: "model:soic8-step".into(),
+            owner: "hypercad".into(),
+            format: "step".into(),
+            uri: Some("pkg://bench/soic8.step".into()),
+            units: Some("mm".into()),
+            status: EdaModelStatus::Exact,
+        }],
+        package: Some(EdaPackageMetadata {
+            name: "SOIC-8".into(),
+            handle: "package:soic8".into(),
+            terminal_count: Some(2),
+            pins: vec![
+                EdaPackagePin {
+                    terminal: "vcc".into(),
+                    name: "VCC".into(),
+                    function: PinFunction::Power,
+                    voltage_min: Some("3".into()),
+                    voltage_max: Some("5".into()),
+                },
+                EdaPackagePin {
+                    terminal: "gnd".into(),
+                    name: "GND".into(),
+                    function: PinFunction::Ground,
+                    voltage_min: Some("0".into()),
+                    voltage_max: Some("0".into()),
+                },
+            ],
+        }),
+        routes: vec![AutorouterOutputRecord {
+            route_id: "route:vcc".into(),
+            net: "VCC".into(),
+            geometry_handle: Some("trace:vcc/exact".into()),
+            units: Some("mm".into()),
+            exact_grid: Some("0.05".into()),
+            status: EdaRouteStatus::Exact,
+        }],
+        fabrication: vec![FabricationOutputRecord {
+            artifact_id: "fab:gerbers".into(),
+            format: "gerber-x2".into(),
+            process: ProcessKind::Pcb,
+            readiness: EdaFabricationReadiness::Ready,
+            notes: vec!["fixture generated release files".into()],
+        }],
+    });
+
+    assert_eq!(result.status, EdaIntakeStatus::Accepted);
+    assert!(result.is_exact_ready());
+    assert_eq!(result.import_report.unknown_field_count, 0);
+    assert!(result.import_report.rejected_fields.is_empty());
+    assert_eq!(result.circuit_handoffs[0].owner, "hypercircuit");
+    assert_eq!(result.circuit_handoffs[0].status, EdaHandoffStatus::Exact);
+    assert_eq!(
+        result.circuit_handoffs[0].exact_parameters[0].value.clone(),
+        Real::from(10000)
+    );
+    assert_eq!(result.route_handoffs[0].owner, "hyperpath");
+    assert_eq!(result.route_handoffs[0].status, EdaHandoffStatus::Exact);
+    assert_eq!(result.drc_handoffs[0].owner, "hyperdrc");
+    assert_eq!(result.drc_handoffs[0].status, EdaHandoffStatus::Certified);
+    assert_eq!(result.geometry_handoffs[0].status, GeometryStatus::Exact);
+
+    let imported = result.graph.family(&board).unwrap().variant(&rev).unwrap();
+    assert_eq!(
+        imported.terminal(&terminal("vcc")).unwrap().polarity(),
+        ElectricalPolarity::Power
+    );
+    assert!(imported.assertions().iter().any(|assertion| {
+        matches!(
+            assertion,
+            PartAssertion::General(general)
+                if general.key == "eda.circuit.R1.resistance"
+                    && general.value == AssertionValue::exact_scalar(Real::from(10000))
+        )
+    }));
+    assert!(matches!(
+        result.graph.import_reports()[0].target,
+        ImportTargetKind::Custom(ref target) if target == "tscircuit-authoring"
+    ));
+}
+
+#[test]
+fn eda_authoring_intake_reports_lossy_rejected_unknown_and_unresolved_inputs() {
+    let board = part("eda:bad-board");
+    let result = import_eda_authoring_bundle(EdaAuthoringBundle {
+        source: source(),
+        part: board.clone(),
+        variant: variant("A"),
+        display_name: "".into(),
+        circuit_records: vec![CircuitJsonSourceRecord {
+            id: "Rbad".into(),
+            kind: "resistor".into(),
+            reference: Some("R?".into()),
+            nets: Vec::new(),
+            exact_fields: vec![
+                EdaExactField {
+                    field: "resistance".into(),
+                    value: Some("NaN".into()),
+                    unit: Some("ohm".into()),
+                },
+                EdaExactField {
+                    field: "tolerance".into(),
+                    value: None,
+                    unit: Some("%".into()),
+                },
+            ],
+        }],
+        footprint: Some(EdaFootprintString {
+            handle: "footprint:bad-qfn".into(),
+            expression: "qfn:pins=abc,pitch=1.2.3mm".into(),
+        }),
+        model_references: vec![GeneratedModelReference {
+            handle: "model:preview-stl".into(),
+            owner: "browser-preview".into(),
+            format: "stl".into(),
+            uri: None,
+            units: Some("mm".into()),
+            status: EdaModelStatus::LossyPreview,
+        }],
+        package: Some(EdaPackageMetadata {
+            name: "QFN".into(),
+            handle: "package:qfn".into(),
+            terminal_count: Some(4),
+            pins: vec![
+                EdaPackagePin {
+                    terminal: "".into(),
+                    name: "bad".into(),
+                    function: PinFunction::Unknown,
+                    voltage_min: None,
+                    voltage_max: None,
+                },
+                EdaPackagePin {
+                    terminal: "io".into(),
+                    name: "IO".into(),
+                    function: PinFunction::Digital,
+                    voltage_min: Some("0".into()),
+                    voltage_max: None,
+                },
+            ],
+        }),
+        routes: vec![AutorouterOutputRecord {
+            route_id: "route:missing".into(),
+            net: "IO".into(),
+            geometry_handle: None,
+            units: Some("mm".into()),
+            exact_grid: None,
+            status: EdaRouteStatus::Missing,
+        }],
+        fabrication: vec![FabricationOutputRecord {
+            artifact_id: "fab:failed".into(),
+            format: "gerber-x2".into(),
+            process: ProcessKind::Pcb,
+            readiness: EdaFabricationReadiness::Failed,
+            notes: Vec::new(),
+        }],
+    });
+
+    assert_eq!(result.status, EdaIntakeStatus::NeedsReview);
+    assert!(!result.is_exact_ready());
+    assert!(result.import_report.unknown_field_count >= 2);
+    assert!(!result.import_report.rejected_fields.is_empty());
+    assert!(!result.import_report.lossy_conversions.is_empty());
+    assert!(!result.import_report.unresolved_references.is_empty());
+    assert_eq!(result.circuit_handoffs[0].status, EdaHandoffStatus::Unknown);
+    assert_eq!(result.route_handoffs[0].status, EdaHandoffStatus::Unknown);
+    assert_eq!(result.drc_handoffs[0].status, EdaHandoffStatus::Rejected);
+    assert_eq!(
+        result.geometry_handoffs[0].status,
+        GeometryStatus::LossyMesh
+    );
+
+    let query = result.graph.query_parts(&PartQuery {
+        constraints: vec![PartConstraint::HasGeometry],
+    });
+    assert!(query.candidates.is_empty());
+    assert!(
+        result
+            .import_report
+            .rejected_fields
+            .iter()
+            .any(|issue| issue.field == "footprint/pitch")
+    );
+    assert!(
+        result
+            .import_report
+            .review_requirements
+            .iter()
+            .any(|issue| issue.field.contains("display_name"))
+    );
+}
+
 proptest! {
     #[test]
     fn empty_ids_are_rejected(id in "\\PC*") {
@@ -742,5 +960,40 @@ proptest! {
         } else {
             prop_assert!(result.is_ok());
         }
+    }
+
+    #[test]
+    fn eda_intake_keeps_decimal_circuit_parameters_exact(whole in 0_i32..10_000, frac in 0_u32..1_000) {
+        let decimal = format!("{whole}.{frac:03}");
+        let result = import_eda_authoring_bundle(EdaAuthoringBundle {
+            source: source(),
+            part: part("eda:prop-board"),
+            variant: variant("A"),
+            display_name: "Property Board".into(),
+            circuit_records: vec![CircuitJsonSourceRecord {
+                id: "Cprop".into(),
+                kind: "capacitor".into(),
+                reference: Some("Cprop".into()),
+                nets: vec!["A".into(), "B".into()],
+                exact_fields: vec![EdaExactField {
+                    field: "capacitance".into(),
+                    value: Some(decimal.clone()),
+                    unit: Some("nF".into()),
+                }],
+            }],
+            footprint: None,
+            model_references: Vec::new(),
+            package: None,
+            routes: Vec::new(),
+            fabrication: Vec::new(),
+        });
+
+        prop_assert_eq!(result.status, EdaIntakeStatus::Accepted);
+        prop_assert_eq!(
+            result.circuit_handoffs[0].exact_parameters[0].value.clone(),
+            decimal.parse::<Real>().unwrap()
+        );
+        prop_assert!(result.import_report.rejected_fields.is_empty());
+        prop_assert!(result.import_report.lossy_conversions.is_empty());
     }
 }

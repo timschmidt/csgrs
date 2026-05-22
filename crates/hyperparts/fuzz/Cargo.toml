@@ -1,0 +1,19 @@
+[package]
+name = "hyperparts-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2024"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+hyperparts = { path = ".." }
+
+[[bin]]
+name = "eda_authoring_intake"
+path = "fuzz_targets/eda_authoring_intake.rs"
+test = false
+doc = false
+bench = false
