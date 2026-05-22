@@ -56,14 +56,15 @@ pub use algebraic::{
     AlgebraicPolynomialValueInterval, AlgebraicRootArithmeticOp, AlgebraicRootArithmeticReport,
     AlgebraicRootArithmeticStatus, AlgebraicRootComparisonReport, AlgebraicRootComparisonStatus,
     AlgebraicRootKind, AlgebraicRootPolynomialEvaluationReport,
-    AlgebraicRootPolynomialEvaluationStatus, AlgebraicRootRefinementComparisonConfig,
+    AlgebraicRootPolynomialEvaluationStatus, AlgebraicRootRationalEvaluationReport,
+    AlgebraicRootRationalEvaluationStatus, AlgebraicRootRefinementComparisonConfig,
     AlgebraicRootRefinementComparisonReport, AlgebraicRootRepresentation,
     AlgebraicRootRepresentationReport, AlgebraicRootRepresentationStatus,
     AlgebraicRootValidationReport, AlgebraicRootValidationStatus,
     arithmetic_algebraic_root_representations, compare_algebraic_root_representations,
     compare_algebraic_root_representations_with_refinement, evaluate_polynomial_at_algebraic_root,
-    represent_univariate_algebraic_roots, represent_univariate_algebraic_roots_from_reports,
-    validate_algebraic_root_representation,
+    evaluate_rational_expression_at_algebraic_root, represent_univariate_algebraic_roots,
+    represent_univariate_algebraic_roots_from_reports, validate_algebraic_root_representation,
 };
 pub use alpha::{
     UnivariateQuadraticAlphaReport, UnivariateQuadraticAlphaRow, UnivariateQuadraticAlphaStatus,

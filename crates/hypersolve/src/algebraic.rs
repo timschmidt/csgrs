@@ -217,6 +217,50 @@ pub struct AlgebraicPolynomialValueInterval {
     pub upper: Real,
 }
 
+/// Status for evaluating a rational expression at a represented root.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum AlgebraicRootRationalEvaluationStatus {
+    /// Both numerator and denominator evaluated exactly at a rational witness.
+    EvaluatedExactRationalWitness,
+    /// Interval arithmetic certified a nonzero denominator and produced a
+    /// rational value enclosure.
+    IntervalEvaluated,
+    /// The denominator is exactly zero at a rational witness.
+    CertifiedZeroDenominator,
+    /// The denominator interval contains zero, so division is not certified.
+    DenominatorMayContainZero,
+    /// The represented root failed structural validation.
+    InvalidEvidence,
+    /// The numerator or denominator polynomial was empty or unsupported.
+    InvalidPolynomial,
+    /// Exact interval endpoint comparisons did not decide.
+    Undecided,
+}
+
+/// Exact or conservative report for `p(alpha) / q(alpha)`.
+///
+/// This is intentionally a domain-checking operation, not algebraic field
+/// construction. It reports the numerator and denominator evidence separately
+/// so callers can distinguish an unknown denominator from an unknown quotient.
+#[derive(Clone, Debug, PartialEq)]
+pub struct AlgebraicRootRationalEvaluationReport {
+    /// Final rational evaluation status.
+    pub status: AlgebraicRootRationalEvaluationStatus,
+    /// Numerator evaluation evidence.
+    pub numerator: AlgebraicRootPolynomialEvaluationReport,
+    /// Denominator evaluation evidence.
+    pub denominator: AlgebraicRootPolynomialEvaluationReport,
+    /// Exact quotient when the root has a rational witness and the denominator
+    /// is certified nonzero.
+    pub exact_value: Option<Real>,
+    /// Conservative interval quotient for interval-only roots.
+    pub interval_value: Option<AlgebraicPolynomialValueInterval>,
+    /// Certified sign when the quotient sign is proved.
+    pub sign: Option<Ordering>,
+    /// Compact diagnostic reason.
+    pub message: Option<String>,
+}
+
 /// Validation report for a represented algebraic root.
 #[derive(Clone, Debug, PartialEq)]
 pub struct AlgebraicRootValidationReport {
@@ -767,6 +811,181 @@ pub fn evaluate_polynomial_at_algebraic_root(
     )
 }
 
+/// Evaluate an exact-rational rational expression at a represented root.
+///
+/// Numerator and denominator are supplied in ascending power order. The
+/// denominator must be certified nonzero before division is performed. For
+/// rational witnesses, this is exact scalar division in [`Real`]. For
+/// interval-only roots, denominator intervals that contain zero remain explicit
+/// domain uncertainty; certified positive or negative denominator intervals
+/// are inverted conservatively and multiplied by the numerator interval. This
+/// is the rational-expression companion to
+/// [`evaluate_polynomial_at_algebraic_root`] and follows Yap's exact
+/// construction/certified-decision split (Yap, "Towards Exact Geometric
+/// Computation," 1997) without approximating the represented root.
+pub fn evaluate_rational_expression_at_algebraic_root(
+    root: &AlgebraicRootRepresentation,
+    numerator_coefficients: &[Real],
+    denominator_coefficients: &[Real],
+    policy: PredicatePolicy,
+) -> AlgebraicRootRationalEvaluationReport {
+    let numerator = evaluate_polynomial_at_algebraic_root(root, numerator_coefficients, policy);
+    let denominator = evaluate_polynomial_at_algebraic_root(root, denominator_coefficients, policy);
+    if matches!(
+        numerator.status,
+        AlgebraicRootPolynomialEvaluationStatus::InvalidEvidence
+    ) || matches!(
+        denominator.status,
+        AlgebraicRootPolynomialEvaluationStatus::InvalidEvidence
+    ) {
+        return algebraic_rational_evaluation_report(
+            AlgebraicRootRationalEvaluationStatus::InvalidEvidence,
+            numerator,
+            denominator,
+            None,
+            None,
+            None,
+            Some("algebraic root representation must be valid before evaluation".to_owned()),
+        );
+    }
+    if matches!(
+        numerator.status,
+        AlgebraicRootPolynomialEvaluationStatus::InvalidPolynomial
+    ) || matches!(
+        denominator.status,
+        AlgebraicRootPolynomialEvaluationStatus::InvalidPolynomial
+    ) {
+        return algebraic_rational_evaluation_report(
+            AlgebraicRootRationalEvaluationStatus::InvalidPolynomial,
+            numerator,
+            denominator,
+            None,
+            None,
+            None,
+            Some("rational expression evaluation requires supported numerator and denominator polynomials".to_owned()),
+        );
+    }
+
+    if let (Some(numerator_value), Some(denominator_value)) = (
+        numerator.exact_value.as_ref(),
+        denominator.exact_value.as_ref(),
+    ) {
+        let Some(denominator_sign) =
+            compare_reals_with_policy(denominator_value, &Real::zero(), policy).value()
+        else {
+            return algebraic_rational_evaluation_report(
+                AlgebraicRootRationalEvaluationStatus::Undecided,
+                numerator,
+                denominator,
+                None,
+                None,
+                None,
+                Some("could not certify exact denominator sign".to_owned()),
+            );
+        };
+        if denominator_sign == Ordering::Equal {
+            return algebraic_rational_evaluation_report(
+                AlgebraicRootRationalEvaluationStatus::CertifiedZeroDenominator,
+                numerator,
+                denominator,
+                None,
+                None,
+                None,
+                Some("denominator evaluates exactly to zero".to_owned()),
+            );
+        }
+        let Ok(quotient) = numerator_value.clone() / denominator_value.clone() else {
+            return algebraic_rational_evaluation_report(
+                AlgebraicRootRationalEvaluationStatus::Undecided,
+                numerator,
+                denominator,
+                None,
+                None,
+                None,
+                Some("exact rational division failed".to_owned()),
+            );
+        };
+        let sign = compare_reals_with_policy(&quotient, &Real::zero(), policy).value();
+        return algebraic_rational_evaluation_report(
+            AlgebraicRootRationalEvaluationStatus::EvaluatedExactRationalWitness,
+            numerator,
+            denominator,
+            Some(quotient),
+            None,
+            sign,
+            None,
+        );
+    }
+
+    let Some(numerator_interval) = numerator.interval_value.as_ref() else {
+        return algebraic_rational_evaluation_report(
+            AlgebraicRootRationalEvaluationStatus::Undecided,
+            numerator,
+            denominator,
+            None,
+            None,
+            None,
+            Some("numerator interval was not available".to_owned()),
+        );
+    };
+    let Some(denominator_interval) = denominator.interval_value.as_ref() else {
+        return algebraic_rational_evaluation_report(
+            AlgebraicRootRationalEvaluationStatus::Undecided,
+            numerator,
+            denominator,
+            None,
+            None,
+            None,
+            Some("denominator interval was not available".to_owned()),
+        );
+    };
+    if interval_contains_zero(denominator_interval, policy).unwrap_or(true) {
+        return algebraic_rational_evaluation_report(
+            AlgebraicRootRationalEvaluationStatus::DenominatorMayContainZero,
+            numerator,
+            denominator,
+            None,
+            None,
+            None,
+            Some(
+                "denominator interval contains zero or could not be separated from zero".to_owned(),
+            ),
+        );
+    }
+    let Some(denominator_reciprocal) = interval_reciprocal(denominator_interval, policy) else {
+        return algebraic_rational_evaluation_report(
+            AlgebraicRootRationalEvaluationStatus::Undecided,
+            numerator,
+            denominator,
+            None,
+            None,
+            None,
+            Some("could not invert denominator interval exactly".to_owned()),
+        );
+    };
+    let Some(quotient) = interval_mul(numerator_interval, &denominator_reciprocal, policy) else {
+        return algebraic_rational_evaluation_report(
+            AlgebraicRootRationalEvaluationStatus::Undecided,
+            numerator,
+            denominator,
+            None,
+            None,
+            None,
+            Some("could not multiply numerator and reciprocal intervals exactly".to_owned()),
+        );
+    };
+    let sign = interval_sign(&quotient, policy);
+    algebraic_rational_evaluation_report(
+        AlgebraicRootRationalEvaluationStatus::IntervalEvaluated,
+        numerator,
+        denominator,
+        None,
+        Some(quotient),
+        sign,
+        None,
+    )
+}
+
 fn negate_algebraic_root_representation(
     root: &AlgebraicRootRepresentation,
 ) -> AlgebraicRootRepresentation {
@@ -1210,6 +1429,49 @@ fn interval_mul(
     })
 }
 
+fn interval_reciprocal(
+    value: &AlgebraicPolynomialValueInterval,
+    policy: PredicatePolicy,
+) -> Option<AlgebraicPolynomialValueInterval> {
+    if interval_contains_zero(value, policy)? {
+        return None;
+    }
+    let lower_reciprocal = (Real::one() / value.lower.clone()).ok()?;
+    let upper_reciprocal = (Real::one() / value.upper.clone()).ok()?;
+    let mut endpoints = [lower_reciprocal, upper_reciprocal];
+    sort_reals_exact(&mut endpoints, policy)?;
+    Some(AlgebraicPolynomialValueInterval {
+        lower: endpoints[0].clone(),
+        upper: endpoints[1].clone(),
+    })
+}
+
+fn interval_contains_zero(
+    value: &AlgebraicPolynomialValueInterval,
+    policy: PredicatePolicy,
+) -> Option<bool> {
+    let lower = compare_reals_with_policy(&value.lower, &Real::zero(), policy).value()?;
+    let upper = compare_reals_with_policy(&value.upper, &Real::zero(), policy).value()?;
+    Some(lower != Ordering::Greater && upper != Ordering::Less)
+}
+
+fn interval_sign(
+    value: &AlgebraicPolynomialValueInterval,
+    policy: PredicatePolicy,
+) -> Option<Ordering> {
+    let lower = compare_reals_with_policy(&value.lower, &Real::zero(), policy).value()?;
+    let upper = compare_reals_with_policy(&value.upper, &Real::zero(), policy).value()?;
+    if lower == Ordering::Greater {
+        Some(Ordering::Greater)
+    } else if upper == Ordering::Less {
+        Some(Ordering::Less)
+    } else if lower == Ordering::Equal && upper == Ordering::Equal {
+        Some(Ordering::Equal)
+    } else {
+        None
+    }
+}
+
 fn sort_reals_exact(values: &mut [Real], policy: PredicatePolicy) -> Option<()> {
     for index in 1..values.len() {
         let mut cursor = index;
@@ -1316,6 +1578,26 @@ fn algebraic_polynomial_evaluation_report(
 ) -> AlgebraicRootPolynomialEvaluationReport {
     AlgebraicRootPolynomialEvaluationReport {
         status,
+        exact_value,
+        interval_value,
+        sign,
+        message,
+    }
+}
+
+fn algebraic_rational_evaluation_report(
+    status: AlgebraicRootRationalEvaluationStatus,
+    numerator: AlgebraicRootPolynomialEvaluationReport,
+    denominator: AlgebraicRootPolynomialEvaluationReport,
+    exact_value: Option<Real>,
+    interval_value: Option<AlgebraicPolynomialValueInterval>,
+    sign: Option<Ordering>,
+    message: Option<String>,
+) -> AlgebraicRootRationalEvaluationReport {
+    AlgebraicRootRationalEvaluationReport {
+        status,
+        numerator,
+        denominator,
         exact_value,
         interval_value,
         sign,
@@ -1775,6 +2057,85 @@ mod tests {
         assert_eq!(crossing.sign, None);
     }
 
+    #[test]
+    fn algebraic_root_rational_evaluation_checks_denominator_domain() {
+        let rational_root = AlgebraicRootRepresentation {
+            constraint_index: 0,
+            symbol: SymbolId(0),
+            interval_index: 0,
+            polynomial_coefficients: vec![real(-3), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: real(3),
+                upper: real(3),
+                exact_root: Some(real(3)),
+                distinct_root_count: 1,
+            },
+            kind: AlgebraicRootKind::ExactRationalWitness,
+            validation: AlgebraicRootValidationReport::valid(),
+        };
+        let exact = evaluate_rational_expression_at_algebraic_root(
+            &rational_root,
+            &[real(1), Real::one()],
+            &[real(-1), Real::one()],
+            PredicatePolicy::default(),
+        );
+        assert_eq!(
+            exact.status,
+            AlgebraicRootRationalEvaluationStatus::EvaluatedExactRationalWitness
+        );
+        assert_eq!(exact.exact_value, Some(real(2)));
+        assert_eq!(exact.sign, Some(Ordering::Greater));
+
+        let zero_denominator = evaluate_rational_expression_at_algebraic_root(
+            &rational_root,
+            &[Real::one()],
+            &[real(-3), Real::one()],
+            PredicatePolicy::default(),
+        );
+        assert_eq!(
+            zero_denominator.status,
+            AlgebraicRootRationalEvaluationStatus::CertifiedZeroDenominator
+        );
+
+        let sqrt_two = AlgebraicRootRepresentation {
+            constraint_index: 1,
+            symbol: SymbolId(0),
+            interval_index: 0,
+            polynomial_coefficients: vec![real(-2), Real::zero(), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: real(1),
+                upper: real(2),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            kind: AlgebraicRootKind::IsolatingInterval,
+            validation: AlgebraicRootValidationReport::valid(),
+        };
+        let interval = evaluate_rational_expression_at_algebraic_root(
+            &sqrt_two,
+            &[Real::one()],
+            &[Real::one(), Real::one()],
+            PredicatePolicy::default(),
+        );
+        assert_eq!(
+            interval.status,
+            AlgebraicRootRationalEvaluationStatus::IntervalEvaluated
+        );
+        assert_eq!(interval.sign, Some(Ordering::Greater));
+        assert!(interval.interval_value.is_some());
+
+        let may_contain_zero = evaluate_rational_expression_at_algebraic_root(
+            &sqrt_two,
+            &[Real::one()],
+            &[real(-1), Real::one()],
+            PredicatePolicy::default(),
+        );
+        assert_eq!(
+            may_contain_zero.status,
+            AlgebraicRootRationalEvaluationStatus::DenominatorMayContainZero
+        );
+    }
+
     proptest! {
         #[test]
         fn generated_linear_roots_become_valid_represented_intervals(root in -64_i16..=64) {
@@ -2030,6 +2391,53 @@ mod tests {
             prop_assert_eq!(
                 report.exact_value,
                 Some(real(constant + linear * root + quadratic * root * root))
+            );
+        }
+
+        #[test]
+        fn generated_rational_witness_rational_evaluation_matches_integer_arithmetic(
+            root in -24_i16..=24,
+            numerator_constant in -24_i16..=24,
+            numerator_linear in -12_i16..=12,
+            denominator_constant in -24_i16..=24,
+            denominator_linear in -12_i16..=12,
+        ) {
+            let root = i64::from(root);
+            let numerator_constant = i64::from(numerator_constant);
+            let numerator_linear = i64::from(numerator_linear);
+            let denominator_constant = i64::from(denominator_constant);
+            let denominator_linear = i64::from(denominator_linear);
+            let denominator = denominator_constant + denominator_linear * root;
+            prop_assume!(denominator != 0);
+            let represented = AlgebraicRootRepresentation {
+                constraint_index: 0,
+                symbol: SymbolId(0),
+                interval_index: 0,
+                polynomial_coefficients: vec![real(-root), Real::one()],
+                interval: IsolatedRootInterval {
+                    lower: real(root),
+                    upper: real(root),
+                    exact_root: Some(real(root)),
+                    distinct_root_count: 1,
+                },
+                kind: AlgebraicRootKind::ExactRationalWitness,
+                validation: AlgebraicRootValidationReport::valid(),
+            };
+
+            let report = evaluate_rational_expression_at_algebraic_root(
+                &represented,
+                &[real(numerator_constant), real(numerator_linear)],
+                &[real(denominator_constant), real(denominator_linear)],
+                PredicatePolicy::default(),
+            );
+
+            prop_assert_eq!(
+                report.status,
+                AlgebraicRootRationalEvaluationStatus::EvaluatedExactRationalWitness
+            );
+            prop_assert_eq!(
+                report.exact_value,
+                Some((real(numerator_constant + numerator_linear * root) / real(denominator)).unwrap())
             );
         }
     }
