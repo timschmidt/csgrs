@@ -15644,6 +15644,12 @@ fn exact_planar_arrangement_evidence_reports_retained_obstacles() {
     assert!(overlap_report.obstacle.requires_general_arrangement());
     assert_eq!(overlap_report.split_graph_count, 1);
     assert!(overlap_report.split_edge_count > 0);
+    assert!(overlap_report.left_branch_point_count <= overlap_report.branch_point_count);
+    assert!(overlap_report.right_branch_point_count <= overlap_report.branch_point_count);
+    assert!(overlap_report.mixed_side_branch_point_count <= overlap_report.left_branch_point_count);
+    assert!(
+        overlap_report.mixed_side_branch_point_count <= overlap_report.right_branch_point_count
+    );
 
     let touching_report = certify_planar_arrangement_evidence(&left, &point_touching).unwrap();
     touching_report.validate().unwrap();
@@ -15659,6 +15665,11 @@ fn exact_planar_arrangement_evidence_reports_retained_obstacles() {
         touching_report.obstacle,
         PlanarArrangementObstacle::PointOnlyContact | PlanarArrangementObstacle::BranchPoint
     ));
+    if touching_report.branch_point_count > 0 {
+        assert!(touching_report.left_branch_point_count > 0);
+        assert!(touching_report.right_branch_point_count > 0);
+        assert!(touching_report.mixed_side_branch_point_count > 0);
+    }
 
     let no_overlap_report = certify_planar_arrangement_evidence(&left, &separated).unwrap();
     no_overlap_report.validate().unwrap();
@@ -15718,6 +15729,18 @@ fn exact_planar_arrangement_evidence_validation_rejects_stale_counts() {
     assert_eq!(
         stale_obstacle.freshness_against_sources(&left, &right),
         ExactPlanarArrangementEvidenceFreshness::StaleObstacle
+    );
+
+    let mut stale_branch_side_count = report.clone();
+    stale_branch_side_count.left_branch_point_count =
+        stale_branch_side_count.branch_point_count.saturating_add(1);
+    assert_eq!(
+        stale_branch_side_count.validate().unwrap_err(),
+        ExactPlanarArrangementEvidenceError::BranchSideCountMismatch
+    );
+    assert_eq!(
+        stale_branch_side_count.freshness_against_sources(&left, &right),
+        ExactPlanarArrangementEvidenceFreshness::StaleBranchPoints
     );
 
     assert_eq!(

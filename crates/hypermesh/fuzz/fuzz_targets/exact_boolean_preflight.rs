@@ -581,6 +581,16 @@ fuzz_target!(|data: &[u8]| {
                 hypermesh::exact::ExactPlanarArrangementEvidenceFreshness::Current
             );
         }
+        let mut stale_branch_side = report.clone();
+        stale_branch_side.left_branch_point_count =
+            stale_branch_side.branch_point_count.saturating_add(1);
+        if stale_branch_side != report {
+            assert!(stale_branch_side.validate().is_err());
+            assert_eq!(
+                stale_branch_side.freshness_against_sources(&left, &right),
+                hypermesh::exact::ExactPlanarArrangementEvidenceFreshness::StaleBranchPoints
+            );
+        }
     });
     let _ = certify_coplanar_volumetric_cell_evidence(&left, &right).map(|report| {
         let _ = report.validate();

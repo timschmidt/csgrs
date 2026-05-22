@@ -1126,12 +1126,18 @@ fn exact_planar_arrangement_evidence(c: &mut Criterion) {
             let source_validation = report.validate_against_sources(&left, &right);
             let freshness = report.freshness_against_sources(&left, &right);
             let needs_general_arrangement = report.obstacle.requires_general_arrangement();
+            let branch_side_counts = (
+                report.left_branch_point_count,
+                report.right_branch_point_count,
+                report.mixed_side_branch_point_count,
+            );
             (
                 report,
                 validation,
                 source_validation,
                 freshness,
                 needs_general_arrangement,
+                branch_side_counts,
             )
         })
     });

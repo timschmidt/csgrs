@@ -96,6 +96,8 @@ pub enum ExactPlanarArrangementEvidenceError {
     PointOnlyContactCountMismatch,
     /// Branch count and maximum incident edge count disagree.
     BranchPointCountMismatch,
+    /// Branch side-participation counters are inconsistent with branch points.
+    BranchSideCountMismatch,
     /// The derived obstacle does not match the retained report.
     ObstacleMismatch,
     /// A projected split-point equality could not be certified exactly.
@@ -151,7 +153,8 @@ impl From<ExactPlanarArrangementEvidenceError> for ExactPlanarArrangementEvidenc
             ExactPlanarArrangementEvidenceError::PointOnlyContactCountMismatch => {
                 Self::StalePointOnlyContacts
             }
-            ExactPlanarArrangementEvidenceError::BranchPointCountMismatch => {
+            ExactPlanarArrangementEvidenceError::BranchPointCountMismatch
+            | ExactPlanarArrangementEvidenceError::BranchSideCountMismatch => {
                 Self::StaleBranchPoints
             }
             ExactPlanarArrangementEvidenceError::ObstacleMismatch => Self::StaleObstacle,
@@ -192,6 +195,22 @@ pub struct ExactPlanarArrangementEvidenceReport {
     /// Number of projected split points with more than two incident source
     /// edges in the retained split evidence.
     pub branch_point_count: usize,
+    /// Number of branch points touched by at least one left-mesh source edge or
+    /// vertex event.
+    ///
+    /// This keeps source-side ownership at the exact handoff boundary instead
+    /// of collapsing a high-valence projected point into an unlabeled count.
+    /// That is the object/provenance split advocated by Yap, "Towards Exact
+    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997), and it
+    /// is the incidence information a later arrangement traversal needs in the
+    /// sense of de Berg et al., *Computational Geometry: Algorithms and
+    /// Applications*, 3rd ed. (2008).
+    pub left_branch_point_count: usize,
+    /// Number of branch points touched by at least one right-mesh source edge
+    /// or vertex event.
+    pub right_branch_point_count: usize,
+    /// Number of branch points with source incidence from both operands.
+    pub mixed_side_branch_point_count: usize,
     /// Largest retained projected split-point incidence count.
     pub max_incident_edges_at_projected_point: usize,
     /// Most specific obstacle exposed by the retained evidence.
@@ -225,6 +244,9 @@ impl ExactPlanarArrangementEvidenceReport {
         let mut interval_endpoint_count = 0;
         let mut vertex_overlap_count = 0;
         let mut branch_point_count = 0;
+        let mut left_branch_point_count = 0;
+        let mut right_branch_point_count = 0;
+        let mut mixed_side_branch_point_count = 0;
         let mut max_incident_edges_at_projected_point = 0;
 
         for graph in &split_plan.graphs {
@@ -235,7 +257,12 @@ impl ExactPlanarArrangementEvidenceReport {
             for split in &graph.edge_splits {
                 point_split_count += split.points.len();
                 for point in &split.points {
-                    merge_projected_incident(&mut incidents, &point.point, graph.projection, 2)?;
+                    merge_projected_incident(
+                        &mut incidents,
+                        &point.point,
+                        graph.projection,
+                        SideIncidentCounts::edge_pair(),
+                    )?;
                 }
                 if split.interval_overlap {
                     interval_overlap_count += 1;
@@ -246,7 +273,7 @@ impl ExactPlanarArrangementEvidenceReport {
                                 &mut incidents,
                                 &endpoint.point,
                                 graph.projection,
-                                2,
+                                SideIncidentCounts::edge_pair(),
                             )?;
                         }
                     }
@@ -256,14 +283,28 @@ impl ExactPlanarArrangementEvidenceReport {
             for vertex in &graph.vertex_overlaps {
                 let point = vertex_overlap_point(vertex.vertex_side, vertex.vertex, left, right)
                     .ok_or(ExactPlanarArrangementEvidenceError::SourceReplayMismatch)?;
-                merge_projected_incident(&mut incidents, &point, graph.projection, 1)?;
+                merge_projected_incident(
+                    &mut incidents,
+                    &point,
+                    graph.projection,
+                    SideIncidentCounts::vertex(vertex.vertex_side),
+                )?;
             }
 
             for incident in &incidents {
                 max_incident_edges_at_projected_point =
-                    max_incident_edges_at_projected_point.max(incident.incident_edges);
-                if incident.incident_edges > 2 {
+                    max_incident_edges_at_projected_point.max(incident.total());
+                if incident.is_branch() {
                     branch_point_count += 1;
+                    if incident.left_incident_count > 0 {
+                        left_branch_point_count += 1;
+                    }
+                    if incident.right_incident_count > 0 {
+                        right_branch_point_count += 1;
+                    }
+                    if incident.left_incident_count > 0 && incident.right_incident_count > 0 {
+                        mixed_side_branch_point_count += 1;
+                    }
                 }
             }
         }
@@ -292,6 +333,9 @@ impl ExactPlanarArrangementEvidenceReport {
             vertex_overlap_count,
             point_only_contact_count,
             branch_point_count,
+            left_branch_point_count,
+            right_branch_point_count,
+            mixed_side_branch_point_count,
             max_incident_edges_at_projected_point,
             obstacle,
         };
@@ -347,6 +391,27 @@ impl ExactPlanarArrangementEvidenceReport {
             || (self.branch_point_count > 0 && self.max_incident_edges_at_projected_point <= 2)
         {
             return Err(ExactPlanarArrangementEvidenceError::BranchPointCountMismatch);
+        }
+        if self.branch_point_count == 0 {
+            if self.left_branch_point_count != 0
+                || self.right_branch_point_count != 0
+                || self.mixed_side_branch_point_count != 0
+            {
+                return Err(ExactPlanarArrangementEvidenceError::BranchSideCountMismatch);
+            }
+        } else if self.left_branch_point_count > self.branch_point_count
+            || self.right_branch_point_count > self.branch_point_count
+            || self.mixed_side_branch_point_count > self.left_branch_point_count
+            || self.mixed_side_branch_point_count > self.right_branch_point_count
+            || match self
+                .left_branch_point_count
+                .checked_add(self.right_branch_point_count)
+            {
+                Some(side_total) => side_total < self.branch_point_count,
+                None => true,
+            }
+        {
+            return Err(ExactPlanarArrangementEvidenceError::BranchSideCountMismatch);
         }
         let expected_obstacle = derive_obstacle(
             &self.readiness,
@@ -434,7 +499,38 @@ pub fn certify_planar_arrangement_evidence(
 #[derive(Clone, Debug)]
 struct ProjectedIncidentPoint {
     point: Point2,
-    incident_edges: usize,
+    left_incident_count: usize,
+    right_incident_count: usize,
+}
+
+impl ProjectedIncidentPoint {
+    fn total(&self) -> usize {
+        self.left_incident_count
+            .saturating_add(self.right_incident_count)
+    }
+
+    fn is_branch(&self) -> bool {
+        self.total() > 2
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+struct SideIncidentCounts {
+    left: usize,
+    right: usize,
+}
+
+impl SideIncidentCounts {
+    fn edge_pair() -> Self {
+        Self { left: 1, right: 1 }
+    }
+
+    fn vertex(side: MeshSide) -> Self {
+        match side {
+            MeshSide::Left => Self { left: 1, right: 0 },
+            MeshSide::Right => Self { left: 0, right: 1 },
+        }
+    }
 }
 
 fn derive_obstacle(
@@ -478,18 +574,24 @@ fn merge_projected_incident(
     incidents: &mut Vec<ProjectedIncidentPoint>,
     point: &Point3,
     projection: CoplanarProjection,
-    incident_edges: usize,
+    side_counts: SideIncidentCounts,
 ) -> Result<(), ExactPlanarArrangementEvidenceError> {
     let projected = project_point3(point, projection);
     for incident in incidents.iter_mut() {
         if projected_points_equal(&incident.point, &projected)? {
-            incident.incident_edges += incident_edges;
+            incident.left_incident_count = incident
+                .left_incident_count
+                .saturating_add(side_counts.left);
+            incident.right_incident_count = incident
+                .right_incident_count
+                .saturating_add(side_counts.right);
             return Ok(());
         }
     }
     incidents.push(ProjectedIncidentPoint {
         point: projected,
-        incident_edges,
+        left_incident_count: side_counts.left,
+        right_incident_count: side_counts.right,
     });
     Ok(())
 }
