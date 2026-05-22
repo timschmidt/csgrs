@@ -1,3 +1,6 @@
+use std::cmp::Ordering;
+
+use hyperlimit::{PredicatePolicy, compare_reals_with_policy};
 use hyperreal::Real;
 
 use crate::diagnostics::{
@@ -13,7 +16,7 @@ use crate::jacobian::{
     FiniteDifferenceConfig, finite_difference_jacobian, symbolic_jacobian_prepared,
 };
 use crate::linalg::{DenseLinearBackend, LinearBackend};
-use crate::model::Problem;
+use crate::model::{Problem, VariableId};
 use crate::prepared::PreparedProblem;
 
 #[derive(Clone, Debug)]
@@ -40,6 +43,15 @@ pub struct SolverConfig {
     /// least-squares proposal described in Nocedal and Wright, *Numerical
     /// Optimization*, 2nd ed. (2006), not a proof of constrained optimality.
     pub proposal_engine: ProposalEngineKind,
+    /// Dragged-parameter proposal weights for
+    /// [`ProposalEngineKind::ModifiedNewtonLeastSquares`].
+    ///
+    /// These rows model the SolveSpace-style "prefer this edited parameter
+    /// target" behavior as lossy proposal-only soft rows. They never become
+    /// exact proof obligations; final acceptance still requires exact residual
+    /// replay. See Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7.1-2 (1997), for the proof boundary.
+    pub dragged_parameters: Vec<DraggedParameterWeight>,
 }
 
 impl Default for SolverConfig {
@@ -50,8 +62,27 @@ impl Default for SolverConfig {
             step_tolerance: real_from_dense_solver_f64(1.0e-9),
             damping: real_from_dense_solver_f64(1.0e-6),
             proposal_engine: ProposalEngineKind::DampedLeastSquares,
+            dragged_parameters: Vec::new(),
         }
     }
+}
+
+/// Proposal-only weight pulling one variable toward a dragged target.
+///
+/// The row added to the dense modified-Newton proposal is
+/// `weight * (variable - target)`. It is intentionally not inserted into the
+/// exact [`Problem`]: this mirrors SolveSpace-style interactive dragging while
+/// preserving Yap's rule that approximate proposal aids are not topology or
+/// feasibility evidence. See Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997).
+#[derive(Clone, Debug, PartialEq)]
+pub struct DraggedParameterWeight {
+    /// Variable to bias during proposal generation.
+    pub variable: VariableId,
+    /// Desired proposal target value.
+    pub target: Real,
+    /// Strictly positive proposal weight.
+    pub weight: Real,
 }
 
 #[derive(Clone, Debug)]
@@ -65,7 +96,7 @@ pub fn solve_damped_least_squares(mut state: SolverState) -> SolveReport {
     let mut last_residuals = Vec::new();
     let mut linear_reports = Vec::new();
     let proposal_engine = proposal_engine_report(state.config.proposal_engine);
-    let preprocessing = proposal_preprocessing_report(&state.problem, state.config.proposal_engine);
+    let preprocessing = proposal_preprocessing_report(&state.problem, &state.config);
     if !proposal_engine.supported {
         return SolveReport {
             reason: ConvergenceReason::UnsupportedProposalEngine,
@@ -100,10 +131,12 @@ pub fn solve_damped_least_squares(mut state: SolverState) -> SolveReport {
                 preprocessing,
             };
         };
-        let numeric = residuals
+        let mut numeric = residuals
             .iter()
             .filter_map(|row| row.weighted_dense_solver_estimate)
             .collect::<Vec<_>>();
+        let dragged_rows = dragged_parameter_dense_rows(&state.problem, &state.config);
+        numeric.extend(dragged_rows.residuals.iter().copied());
         let norm = numeric
             .iter()
             .map(|value| value * value)
@@ -121,7 +154,7 @@ pub fn solve_damped_least_squares(mut state: SolverState) -> SolveReport {
             };
         }
 
-        let jacobian = match symbolic_jacobian_prepared(&prepared, &context) {
+        let mut jacobian = match symbolic_jacobian_prepared(&prepared, &context) {
             Ok(jacobian) => jacobian,
             Err(_) => {
                 let Ok(jacobian) = finite_difference_jacobian(
@@ -141,6 +174,7 @@ pub fn solve_damped_least_squares(mut state: SolverState) -> SolveReport {
                 jacobian
             }
         };
+        jacobian.extend(dragged_rows.jacobian);
         // f64 is confined to this dense linear-solver edge. The surrounding
         // model, residuals, bounds, and tolerances remain hyperreal values.
         let gradient = dense_gradient(&jacobian, &numeric);
@@ -250,11 +284,13 @@ fn proposal_engine_report(requested: ProposalEngineKind) -> ProposalEngineReport
 
 fn proposal_preprocessing_report(
     problem: &Problem,
-    requested: ProposalEngineKind,
+    config: &SolverConfig,
 ) -> ProposalPreprocessingReport {
+    let requested = config.proposal_engine;
     if requested != ProposalEngineKind::ModifiedNewtonLeastSquares {
         return ProposalPreprocessingReport::not_requested();
     }
+    let dragged_rows = dragged_parameter_dense_rows(problem, config);
     let prepared = PreparedProblem::new(problem);
     let substitutions = match find_equality_substitutions(&prepared) {
         Ok(substitutions) => substitutions.len(),
@@ -264,6 +300,8 @@ fn proposal_preprocessing_report(
                 equality_substitutions: 0,
                 affine_soluble_alone_rows: 0,
                 quadratic_soluble_alone_rows: 0,
+                dragged_parameter_weights: dragged_rows.valid_count,
+                invalid_dragged_parameter_weights: dragged_rows.invalid_count,
                 completed: false,
             };
         }
@@ -276,6 +314,8 @@ fn proposal_preprocessing_report(
                 equality_substitutions: substitutions,
                 affine_soluble_alone_rows: 0,
                 quadratic_soluble_alone_rows: 0,
+                dragged_parameter_weights: dragged_rows.valid_count,
+                invalid_dragged_parameter_weights: dragged_rows.invalid_count,
                 completed: false,
             };
         }
@@ -288,6 +328,8 @@ fn proposal_preprocessing_report(
                 equality_substitutions: substitutions,
                 affine_soluble_alone_rows: affine_soluble,
                 quadratic_soluble_alone_rows: 0,
+                dragged_parameter_weights: dragged_rows.valid_count,
+                invalid_dragged_parameter_weights: dragged_rows.invalid_count,
                 completed: false,
             };
         }
@@ -297,8 +339,67 @@ fn proposal_preprocessing_report(
         equality_substitutions: substitutions,
         affine_soluble_alone_rows: affine_soluble,
         quadratic_soluble_alone_rows: quadratic_soluble,
+        dragged_parameter_weights: dragged_rows.valid_count,
+        invalid_dragged_parameter_weights: dragged_rows.invalid_count,
         completed: true,
     }
+}
+
+#[derive(Clone, Debug, Default)]
+struct DraggedParameterDenseRows {
+    residuals: Vec<f64>,
+    jacobian: Vec<Vec<f64>>,
+    valid_count: usize,
+    invalid_count: usize,
+}
+
+fn dragged_parameter_dense_rows(
+    problem: &Problem,
+    config: &SolverConfig,
+) -> DraggedParameterDenseRows {
+    if config.proposal_engine != ProposalEngineKind::ModifiedNewtonLeastSquares {
+        return DraggedParameterDenseRows::default();
+    }
+    let mut rows = DraggedParameterDenseRows::default();
+    for dragged in &config.dragged_parameters {
+        let Some(variable) = problem.variables.get(dragged.variable.0 as usize) else {
+            rows.invalid_count += 1;
+            continue;
+        };
+        if variable.fixed {
+            rows.invalid_count += 1;
+            continue;
+        }
+        if compare_reals_with_policy(&dragged.weight, &Real::zero(), PredicatePolicy::default())
+            .value()
+            != Some(Ordering::Greater)
+        {
+            rows.invalid_count += 1;
+            continue;
+        }
+        let Some(current) = variable.value.to_f64_lossy() else {
+            rows.invalid_count += 1;
+            continue;
+        };
+        let Some(target) = dragged.target.to_f64_lossy() else {
+            rows.invalid_count += 1;
+            continue;
+        };
+        let Some(weight) = dragged.weight.to_f64_lossy() else {
+            rows.invalid_count += 1;
+            continue;
+        };
+        if !current.is_finite() || !target.is_finite() || !weight.is_finite() {
+            rows.invalid_count += 1;
+            continue;
+        }
+        let mut row = vec![0.0; problem.variables.len()];
+        row[dragged.variable.0 as usize] = weight;
+        rows.residuals.push((current - target) * weight);
+        rows.jacobian.push(row);
+        rows.valid_count += 1;
+    }
+    rows
 }
 
 fn dense_point(problem: &Problem) -> Vec<f64> {

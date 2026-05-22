@@ -1,8 +1,8 @@
 use hyperreal::{Real, RealSign};
 use hypersolve::{
     BatchCandidateStatus, CertifiedCandidateStatus, Constraint, ConvergenceReason, DomainCheckKind,
-    DomainCheckStatus, EqualitySubstitution, EqualitySubstitutionProblem, Expr,
-    FailedConstraintRemovalStatus, FailedConstraintStatus, IntervalBoxCertificationPackage,
+    DomainCheckStatus, DraggedParameterWeight, EqualitySubstitution, EqualitySubstitutionProblem,
+    Expr, FailedConstraintRemovalStatus, FailedConstraintStatus, IntervalBoxCertificationPackage,
     IntervalBoxCertificationStatus, MultivariateQuadraticKrawczykStatus, PreparedProblem,
     PreparedSolverBlock, Problem, ProposalEngineKind, ProposalEnginePrecision,
     ProposalEngineReport, RootIsolationStatus, SketchConstructionCertificateStatus,
@@ -1595,6 +1595,38 @@ proptest! {
         prop_assert_eq!(report.preprocessing.equality_substitutions, 1);
         prop_assert_eq!(report.preprocessing.affine_soluble_alone_rows, 1);
         prop_assert_eq!(report.preprocessing.quadratic_soluble_alone_rows, 1);
+        prop_assert_eq!(report.preprocessing.dragged_parameter_weights, 0);
+        prop_assert_eq!(report.preprocessing.invalid_dragged_parameter_weights, 0);
+    }
+
+    #[test]
+    fn modified_newton_generated_dragged_weights_report_and_converge(
+        start in -12_i16..=12,
+        target in -12_i16..=12,
+        weight in 1_i16..=8,
+    ) {
+        let mut problem = Problem::default();
+        let x = problem.add_variable("x", Real::from(i64::from(start)));
+
+        let report = solve_damped_least_squares(SolverState {
+            problem,
+            config: SolverConfig {
+                max_iterations: 4,
+                damping: Real::zero(),
+                proposal_engine: ProposalEngineKind::ModifiedNewtonLeastSquares,
+                dragged_parameters: vec![DraggedParameterWeight {
+                    variable: x,
+                    target: Real::from(i64::from(target)),
+                    weight: Real::from(i64::from(weight)),
+                }],
+                ..SolverConfig::default()
+            },
+        });
+
+        prop_assert_eq!(report.reason, ConvergenceReason::Converged);
+        prop_assert!(report.preprocessing.requested);
+        prop_assert_eq!(report.preprocessing.dragged_parameter_weights, 1);
+        prop_assert_eq!(report.preprocessing.invalid_dragged_parameter_weights, 0);
     }
 
     #[test]

@@ -114,6 +114,12 @@ pub struct ProposalPreprocessingReport {
     pub affine_soluble_alone_rows: usize,
     /// Number of active univariate quadratic equality rows inspected exactly.
     pub quadratic_soluble_alone_rows: usize,
+    /// Number of dragged-parameter proposal weights accepted for the named
+    /// modified-Newton route.
+    pub dragged_parameter_weights: usize,
+    /// Number of dragged-parameter proposal weights rejected before numerical
+    /// iteration.
+    pub invalid_dragged_parameter_weights: usize,
     /// Whether exact preprocessing completed without an unsupported branch.
     pub completed: bool,
 }
@@ -127,6 +133,8 @@ impl ProposalPreprocessingReport {
             equality_substitutions: 0,
             affine_soluble_alone_rows: 0,
             quadratic_soluble_alone_rows: 0,
+            dragged_parameter_weights: 0,
+            invalid_dragged_parameter_weights: 0,
             completed: true,
         }
     }

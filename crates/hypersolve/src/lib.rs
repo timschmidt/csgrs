@@ -240,7 +240,7 @@ pub use sketch_workplanes::{
     lift_sketch_point2_to_workplane3_with_policy, project_sketch_point3_to_workplane2,
     project_sketch_point3_to_workplane2_with_policy,
 };
-pub use solver::{SolverConfig, SolverState, solve_damped_least_squares};
+pub use solver::{DraggedParameterWeight, SolverConfig, SolverState, solve_damped_least_squares};
 pub use solver_block::{
     PreparedSolverBlock, PreparedSolverBlockFacts, SolverBlockRow, SolverBlockRowKind,
 };

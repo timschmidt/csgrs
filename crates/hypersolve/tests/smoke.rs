@@ -4,29 +4,30 @@ use hypersolve::{
     ActiveSetAffineRegenerationStatus, BatchCandidateStatus, BatchPredicateScheduleConfig,
     BatchPredicateScheduleError, CandidateCertificationConfig, CandidateResidualBall,
     CertifiedCandidateStatus, Constraint, ConstraintKind, ConvergenceReason, DenseLinearBackend,
-    DirectAffineSystemStatus, DomainCheckKind, DomainCheckStatus, ExactAffineRankStatus,
-    ExactBranchStatus, Expr, ExprDegree, FailedConstraintRemovalStatus, FailedConstraintStatus,
-    IntervalBoxCertificationPackage, IntervalBoxCertificationStatus, LinearAdapterKind,
-    LinearAdapterPrecision, LinearBackend, MultivariateQuadraticKrawczykStatus, PreparedProblem,
-    PreparedSolverBlock, Problem, ProposalEngineKind, ProposalEnginePrecision, RootIsolationStatus,
-    RootMultiplicityStatus, SketchConstraintKind, SketchConstructionCertificateStatus,
-    SketchDegeneracyKind, SketchDegeneracyStatus, SketchEntityDomain, SketchEntityDomainKind,
-    SketchEntityDomainStatus, SketchEntityHandle, SketchEntityKind, SketchGeneratedRowStatus,
-    SketchParameterDomain, SketchParameterDomainKind, SketchParameterDomainStatus,
-    SketchResidualFormKind, SketchResidualFormRole, SketchResidualFormsStatus,
-    SketchResidualStrategy, SketchRoundTripMetadata, SketchRoundTripRole, SketchSolveProblem,
-    SketchUnitToleranceStatus, SketchWorkplaneFrameStatus, SolverBlockRowKind, SolverConfig,
-    SolverPoint2, SolverState, SparseResidualBatchStatus, SparseResidualTerm, SymbolId,
-    VariableBall, analyze_exact_affine_rank, apply_equality_substitution_classes,
-    apply_equality_substitutions, audit_sketch_unit_tolerances,
-    build_equality_substitution_classes, build_sketch_workplane_frame,
-    certify_affine_interval_candidate, certify_affine_krawczyk_box, certify_candidate,
-    certify_candidate_batch, certify_candidate_domains, certify_candidate_with_config,
-    certify_candidate_with_residual_balls, certify_direct_univariate_quadratic_roots,
-    certify_interval_box_candidate, certify_multivariate_quadratic_interval_candidate,
-    certify_multivariate_quadratic_krawczyk_box, certify_quadratic_interval_candidate,
-    certify_sketch_construction, certify_univariate_quadratic_alpha,
-    certify_univariate_quadratic_krawczyk_box, context_from_problem, diagnose_failed_constraints,
+    DirectAffineSystemStatus, DomainCheckKind, DomainCheckStatus, DraggedParameterWeight,
+    ExactAffineRankStatus, ExactBranchStatus, Expr, ExprDegree, FailedConstraintRemovalStatus,
+    FailedConstraintStatus, IntervalBoxCertificationPackage, IntervalBoxCertificationStatus,
+    LinearAdapterKind, LinearAdapterPrecision, LinearBackend, MultivariateQuadraticKrawczykStatus,
+    PreparedProblem, PreparedSolverBlock, Problem, ProposalEngineKind, ProposalEnginePrecision,
+    RootIsolationStatus, RootMultiplicityStatus, SketchConstraintKind,
+    SketchConstructionCertificateStatus, SketchDegeneracyKind, SketchDegeneracyStatus,
+    SketchEntityDomain, SketchEntityDomainKind, SketchEntityDomainStatus, SketchEntityHandle,
+    SketchEntityKind, SketchGeneratedRowStatus, SketchParameterDomain, SketchParameterDomainKind,
+    SketchParameterDomainStatus, SketchResidualFormKind, SketchResidualFormRole,
+    SketchResidualFormsStatus, SketchResidualStrategy, SketchRoundTripMetadata,
+    SketchRoundTripRole, SketchSolveProblem, SketchUnitToleranceStatus, SketchWorkplaneFrameStatus,
+    SolverBlockRowKind, SolverConfig, SolverPoint2, SolverState, SparseResidualBatchStatus,
+    SparseResidualTerm, SymbolId, VariableBall, analyze_exact_affine_rank,
+    apply_equality_substitution_classes, apply_equality_substitutions,
+    audit_sketch_unit_tolerances, build_equality_substitution_classes,
+    build_sketch_workplane_frame, certify_affine_interval_candidate, certify_affine_krawczyk_box,
+    certify_candidate, certify_candidate_batch, certify_candidate_domains,
+    certify_candidate_with_config, certify_candidate_with_residual_balls,
+    certify_direct_univariate_quadratic_roots, certify_interval_box_candidate,
+    certify_multivariate_quadratic_interval_candidate, certify_multivariate_quadratic_krawczyk_box,
+    certify_quadratic_interval_candidate, certify_sketch_construction,
+    certify_univariate_quadratic_alpha, certify_univariate_quadratic_krawczyk_box,
+    context_from_problem, diagnose_failed_constraints,
     diagnose_failed_constraints_from_certification,
     eliminate_affine_rows_with_substitution_classes,
     enumerate_direct_univariate_quadratic_branches, evaluate_residuals, facts_depend_on_symbol,
@@ -2726,6 +2727,7 @@ fn symbolic_derivative_solves_one_variable_linear_equation() {
             step_tolerance: edge_real(1.0e-12),
             damping: edge_real(1.0e-9),
             proposal_engine: ProposalEngineKind::DampedLeastSquares,
+            dragged_parameters: Vec::new(),
         },
     });
 
@@ -2880,6 +2882,7 @@ fn levenberg_marquardt_proposal_route_reports_named_lossy_adapter() {
         step_tolerance: edge_real(1.0e-12),
         damping: edge_real(1.0e-9),
         proposal_engine: ProposalEngineKind::LevenbergMarquardt,
+        dragged_parameters: Vec::new(),
     };
 
     let report = solve_damped_least_squares(SolverState { problem, config });
@@ -2971,6 +2974,69 @@ fn modified_newton_preprocessing_reports_substitution_and_soluble_alone_rows() {
     assert_eq!(report.preprocessing.equality_substitutions, 1);
     assert_eq!(report.preprocessing.affine_soluble_alone_rows, 1);
     assert_eq!(report.preprocessing.quadratic_soluble_alone_rows, 1);
+    assert_eq!(report.preprocessing.dragged_parameter_weights, 0);
+    assert_eq!(report.preprocessing.invalid_dragged_parameter_weights, 0);
+}
+
+#[test]
+fn modified_newton_dragged_parameter_weights_bias_proposal_only() {
+    let mut problem = Problem::default();
+    let x = problem.add_variable("x", real(0));
+    let config = SolverConfig {
+        proposal_engine: ProposalEngineKind::ModifiedNewtonLeastSquares,
+        max_iterations: 4,
+        damping: real(0),
+        dragged_parameters: vec![DraggedParameterWeight {
+            variable: x,
+            target: real(10),
+            weight: real(1),
+        }],
+        ..SolverConfig::default()
+    };
+
+    let report = solve_damped_least_squares(SolverState { problem, config });
+
+    assert_eq!(report.reason, ConvergenceReason::Converged);
+    assert!(report.preprocessing.requested);
+    assert_eq!(report.preprocessing.dragged_parameter_weights, 1);
+    assert_eq!(report.preprocessing.invalid_dragged_parameter_weights, 0);
+    assert!(!report.linear_reports.is_empty());
+}
+
+#[test]
+fn modified_newton_dragged_parameter_weights_report_invalid_inputs() {
+    let mut problem = Problem::default();
+    let fixed = problem.add_variable("fixed", real(0));
+    problem.variables[fixed.0 as usize].fixed = true;
+    let config = SolverConfig {
+        proposal_engine: ProposalEngineKind::ModifiedNewtonLeastSquares,
+        max_iterations: 0,
+        dragged_parameters: vec![
+            DraggedParameterWeight {
+                variable: fixed,
+                target: real(1),
+                weight: real(1),
+            },
+            DraggedParameterWeight {
+                variable: hypersolve::VariableId(999),
+                target: real(1),
+                weight: real(1),
+            },
+            DraggedParameterWeight {
+                variable: fixed,
+                target: real(1),
+                weight: real(0),
+            },
+        ],
+        ..SolverConfig::default()
+    };
+
+    let report = solve_damped_least_squares(SolverState { problem, config });
+
+    assert_eq!(report.reason, ConvergenceReason::MaxIterations);
+    assert!(report.preprocessing.requested);
+    assert_eq!(report.preprocessing.dragged_parameter_weights, 0);
+    assert_eq!(report.preprocessing.invalid_dragged_parameter_weights, 3);
 }
 
 #[test]

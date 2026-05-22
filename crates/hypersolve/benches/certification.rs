@@ -3,7 +3,7 @@ use hyperreal::{Rational, Real};
 use hypersolve::{
     AlgebraicRootArithmeticOp, AlgebraicRootKind, AlgebraicRootRefinementComparisonConfig,
     AlgebraicRootRepresentation, AlgebraicRootValidationReport, AlgebraicRootValidationStatus,
-    BatchPredicateScheduleConfig, Constraint, EqualitySubstitution, Expr,
+    BatchPredicateScheduleConfig, Constraint, DraggedParameterWeight, EqualitySubstitution, Expr,
     IntervalBoxCertificationPackage, IsolatedRootInterval, PreparedProblem, PreparedSolverBlock,
     Problem, ProposalEngineKind, ProposalEnginePrecision, ProposalEngineReport, SolverConfig,
     SolverPoint2, SolverState, SparseResidualTerm, SymbolId, UnivariateResultantPairInput,
@@ -1535,6 +1535,26 @@ fn certification(c: &mut Criterion) {
                 config: SolverConfig {
                     max_iterations: 0,
                     proposal_engine: ProposalEngineKind::ModifiedNewtonLeastSquares,
+                    ..SolverConfig::default()
+                },
+            })
+        })
+    });
+    c.bench_function("solve_modified_newton_dragged_parameter", |b| {
+        b.iter(|| {
+            let mut problem = Problem::default();
+            let x = problem.add_variable("x", r(0));
+            solve_damped_least_squares(SolverState {
+                problem,
+                config: SolverConfig {
+                    max_iterations: 4,
+                    damping: r(0),
+                    proposal_engine: ProposalEngineKind::ModifiedNewtonLeastSquares,
+                    dragged_parameters: vec![DraggedParameterWeight {
+                        variable: x,
+                        target: r(10),
+                        weight: r(1),
+                    }],
                     ..SolverConfig::default()
                 },
             })
