@@ -12,6 +12,11 @@
 //! "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
 //! (1997): exact boundary evidence is retained and replayed before it is
 //! allowed to change output topology.
+//!
+//! The union artifact is also the proof object used by named boolean dispatch
+//! for the matching regularized intersection and difference shortcuts:
+//! boundary-only full-face/fan-patch contact contributes no intersection
+//! volume, and subtracting the adjacent right solid preserves the left solid.
 
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};

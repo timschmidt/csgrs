@@ -314,6 +314,12 @@ pub fn preflight_boolean_exact(
         ExactBooleanOperation::Union if has_full_face_adjacent_union(left, right) => {
             ExactBooleanSupport::CertifiedFullFaceAdjacentUnion
         }
+        ExactBooleanOperation::Intersection if has_full_face_adjacent_union(left, right) => {
+            ExactBooleanSupport::CertifiedFullFaceAdjacentIntersection
+        }
+        ExactBooleanOperation::Difference if has_full_face_adjacent_union(left, right) => {
+            ExactBooleanSupport::CertifiedFullFaceAdjacentDifference
+        }
         ExactBooleanOperation::Union
         | ExactBooleanOperation::Intersection
         | ExactBooleanOperation::Difference
@@ -570,6 +576,8 @@ pub fn preflight_boolean_exact(
             | ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellIntersection
             | ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellDifference
             | ExactBooleanSupport::CertifiedFullFaceAdjacentUnion
+            | ExactBooleanSupport::CertifiedFullFaceAdjacentIntersection
+            | ExactBooleanSupport::CertifiedFullFaceAdjacentDifference
             | ExactBooleanSupport::CertifiedOpenSurfaceDisjoint
             | ExactBooleanSupport::CertifiedCoplanarSurfaceContainment
             | ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
@@ -1057,6 +1065,12 @@ pub fn boolean_exact_with_boundary_policy(
         }
         ExactBooleanOperation::Union if has_full_face_adjacent_union(left, right) => {
             boolean_full_face_adjacent_union(left, right, validation)
+        }
+        ExactBooleanOperation::Intersection if has_full_face_adjacent_union(left, right) => {
+            boolean_full_face_adjacent_intersection(left, right, validation)
+        }
+        ExactBooleanOperation::Difference if has_full_face_adjacent_union(left, right) => {
+            boolean_full_face_adjacent_difference(left, right, validation)
         }
         ExactBooleanOperation::Union
         | ExactBooleanOperation::Intersection
@@ -2363,16 +2377,85 @@ fn boolean_same_surface_meshes(
 }
 
 #[cfg(feature = "exact-triangulation")]
+/// Materialize the certified full-face/fan-patch adjacent regularized union.
 fn boolean_full_face_adjacent_union(
     left: &ExactMesh,
     right: &ExactMesh,
     validation: ValidationPolicy,
 ) -> Result<ExactBooleanResult, MeshError> {
+    let union = replay_full_face_adjacent_certificate(left, right, validation)?;
+    Ok(certified_shortcut_result(
+        union.mesh,
+        ExactBooleanShortcutKind::FullFaceAdjacentUnion,
+    ))
+}
+
+#[cfg(feature = "exact-triangulation")]
+/// Materialize the empty regularized intersection for certified adjacency.
+///
+/// Regularized solid booleans drop lower-dimensional boundary contact from
+/// the intersection volume, so an exact full-face/fan-patch adjacency has no
+/// volume to emit. The certificate is still replayed before constructing the
+/// empty mesh, following Yap, "Towards Exact Geometric Computation," *Comput.
+/// Geom.* 7.1-2 (1997): topology decisions must be tied to exact retained
+/// combinatorial evidence.
+fn boolean_full_face_adjacent_intersection(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    validation: ValidationPolicy,
+) -> Result<ExactBooleanResult, MeshError> {
+    replay_full_face_adjacent_certificate(left, right, ValidationPolicy::CLOSED)?;
+    Ok(certified_shortcut_result(
+        empty_mesh(
+            "empty exact full-face adjacent regularized intersection",
+            validation,
+        )?,
+        ExactBooleanShortcutKind::FullFaceAdjacentIntersection,
+    ))
+}
+
+#[cfg(feature = "exact-triangulation")]
+/// Materialize the left-preserving regularized difference for certified adjacency.
+///
+/// A boundary-only full-face/fan-patch contact removes no left volume, but the
+/// exact adjacency certificate is replayed before the left source is copied.
+/// This keeps the shortcut in Yap's exact-computation paradigm rather than
+/// relying on floating-point coincidence or tolerance-side effects.
+fn boolean_full_face_adjacent_difference(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    validation: ValidationPolicy,
+) -> Result<ExactBooleanResult, MeshError> {
+    replay_full_face_adjacent_certificate(left, right, ValidationPolicy::CLOSED)?;
+    Ok(certified_shortcut_result(
+        copy_mesh(
+            left,
+            "exact full-face adjacent regularized difference keeps left",
+            validation,
+        )?,
+        ExactBooleanShortcutKind::FullFaceAdjacentDifference,
+    ))
+}
+
+#[cfg(feature = "exact-triangulation")]
+/// Replay the source-bound full-face/fan-patch adjacency certificate.
+///
+/// The union artifact is the canonical certificate because it must prove
+/// closed inputs, exact boundary-only winding, opposite-oriented shared faces
+/// or bounded fan patches, seam-only vertex welding, and a closed output mesh.
+/// Reusing it for intersection and difference preserves Yap's requirement that
+/// exact geometric programs expose and replay the exact state justifying a
+/// combinatorial branch.
+fn replay_full_face_adjacent_certificate(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    validation: ValidationPolicy,
+) -> Result<super::adjacent::FullFaceAdjacentUnion, MeshError> {
     let union = materialize_full_face_adjacent_union(left, right, validation).ok_or_else(|| {
         MeshError::one(MeshDiagnostic::new(
             Severity::Error,
             DiagnosticKind::UnsupportedExactOperation,
-            "exact full-face adjacent union certificate did not replay",
+            "exact full-face adjacent certificate did not replay",
         ))
     })?;
     union
@@ -2381,13 +2464,10 @@ fn boolean_full_face_adjacent_union(
             MeshError::one(MeshDiagnostic::new(
                 Severity::Error,
                 DiagnosticKind::UnsupportedExactOperation,
-                format!("exact full-face adjacent union/source replay failed: {error:?}"),
+                format!("exact full-face adjacent certificate/source replay failed: {error:?}"),
             ))
         })?;
-    Ok(certified_shortcut_result(
-        union.mesh,
-        ExactBooleanShortcutKind::FullFaceAdjacentUnion,
-    ))
+    Ok(union)
 }
 
 #[cfg(feature = "exact-triangulation")]

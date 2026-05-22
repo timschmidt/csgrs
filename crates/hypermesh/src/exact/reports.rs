@@ -634,8 +634,15 @@ pub enum ExactBooleanShortcutKind {
     /// Certified affine-frame orthogonal-cell difference of solid cell
     /// complexes.
     AffineOrthogonalSolidCellDifference,
-    /// Certified regularized union of closed solids sharing exact whole faces.
+    /// Certified regularized union of closed solids sharing exact whole faces
+    /// or bounded opposite-oriented full-face fan patches.
     FullFaceAdjacentUnion,
+    /// Certified empty regularized intersection of closed solids whose only
+    /// overlap is an exact full-face/fan-patch boundary contact.
+    FullFaceAdjacentIntersection,
+    /// Certified left-preserving regularized difference of closed solids whose
+    /// only overlap is an exact full-face/fan-patch boundary contact.
+    FullFaceAdjacentDifference,
     /// Certified graph absence for open surfaces.
     OpenSurfaceDisjoint,
     /// Certified closed-convex containment.
@@ -1399,9 +1406,16 @@ pub enum ExactBooleanSupport {
     /// Difference was materialized by normalizing affine-frame orthogonal
     /// solid cell complexes into one exact cell grid.
     CertifiedAffineOrthogonalSolidCellDifference,
-    /// Union was materialized by deleting exact coincident whole faces between
-    /// adjacent closed solids and welding only those seam vertices.
+    /// Union was materialized by deleting exact coincident whole faces or
+    /// bounded fan patches between adjacent closed solids and welding only
+    /// those seam vertices.
     CertifiedFullFaceAdjacentUnion,
+    /// Intersection was certified empty because adjacent closed solids only
+    /// share exact coincident whole faces or bounded fan patches.
+    CertifiedFullFaceAdjacentIntersection,
+    /// Difference was certified as the left solid because adjacent closed
+    /// solids only share exact coincident whole faces or bounded fan patches.
+    CertifiedFullFaceAdjacentDifference,
     /// A named operation was answered by exact no-intersection facts for open
     /// surface meshes.
     CertifiedOpenSurfaceDisjoint,
@@ -1580,6 +1594,8 @@ impl ExactBooleanPreflight {
             | ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellIntersection
             | ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellDifference
             | ExactBooleanSupport::CertifiedFullFaceAdjacentUnion
+            | ExactBooleanSupport::CertifiedFullFaceAdjacentIntersection
+            | ExactBooleanSupport::CertifiedFullFaceAdjacentDifference
             | ExactBooleanSupport::CertifiedOpenSurfaceDisjoint
             | ExactBooleanSupport::CertifiedConvexContainment
             | ExactBooleanSupport::CertifiedConvexIntersection

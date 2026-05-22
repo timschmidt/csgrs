@@ -6918,6 +6918,97 @@ fn exact_full_face_adjacent_tetrahedra_union_deletes_internal_face() {
     );
     assert_eq!(result.mesh, union.mesh);
 
+    let intersection_preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+    )
+    .unwrap();
+    intersection_preflight.validate().unwrap();
+    intersection_preflight
+        .validate_against_sources(&left, &right)
+        .unwrap();
+    assert_eq!(
+        intersection_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedFullFaceAdjacentIntersection
+    );
+    let intersection = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    intersection.validate().unwrap();
+    intersection
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            hypermesh::exact::ExactBooleanOperation::Intersection,
+            ValidationPolicy::CLOSED,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        intersection.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::FullFaceAdjacentIntersection
+        }
+    );
+    assert!(intersection.mesh.triangles().is_empty());
+    assert_eq!(
+        intersection
+            .validate_operation_against_sources(
+                &left,
+                &right,
+                hypermesh::exact::ExactBooleanOperation::Difference,
+                ValidationPolicy::CLOSED,
+                hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+            )
+            .unwrap_err(),
+        hypermesh::exact::ExactReportValidationError::SourceReplayMismatch
+    );
+
+    let difference_preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    difference_preflight.validate().unwrap();
+    difference_preflight
+        .validate_against_sources(&left, &right)
+        .unwrap();
+    assert_eq!(
+        difference_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedFullFaceAdjacentDifference
+    );
+    let difference = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    difference.validate().unwrap();
+    difference
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::CLOSED,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        difference.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::FullFaceAdjacentDifference
+        }
+    );
+    assert_eq!(difference.mesh.vertices(), left.vertices());
+    assert_eq!(difference.mesh.triangles(), left.triangles());
+
     let same_orientation = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, -4]);
     assert!(
         hypermesh::exact::materialize_full_face_adjacent_union(
@@ -7024,6 +7115,108 @@ fn exact_full_face_adjacent_fan_patch_union_deletes_nonconforming_internal_faces
         }
     );
     assert_eq!(result.mesh, union.mesh);
+
+    let intersection_preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+    )
+    .unwrap();
+    intersection_preflight.validate().unwrap();
+    intersection_preflight
+        .validate_against_sources(&left, &right)
+        .unwrap();
+    assert_eq!(
+        intersection_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedFullFaceAdjacentIntersection
+    );
+    let intersection = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    intersection
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            hypermesh::exact::ExactBooleanOperation::Intersection,
+            ValidationPolicy::CLOSED,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        intersection.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::FullFaceAdjacentIntersection
+        }
+    );
+    assert!(intersection.mesh.triangles().is_empty());
+
+    let difference_preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    difference_preflight.validate().unwrap();
+    difference_preflight
+        .validate_against_sources(&left, &right)
+        .unwrap();
+    assert_eq!(
+        difference_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedFullFaceAdjacentDifference
+    );
+    let difference = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    difference
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::CLOSED,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        difference.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::FullFaceAdjacentDifference
+        }
+    );
+    assert_eq!(difference.mesh.vertices(), left.vertices());
+    assert_eq!(difference.mesh.triangles(), left.triangles());
+
+    let reverse_difference = hypermesh::exact::boolean_exact(
+        &right,
+        &left,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    reverse_difference
+        .validate_operation_against_sources(
+            &right,
+            &left,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::CLOSED,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        reverse_difference.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::FullFaceAdjacentDifference
+        }
+    );
+    assert_eq!(reverse_difference.mesh.vertices(), right.vertices());
+    assert_eq!(reverse_difference.mesh.triangles(), right.triangles());
 
     let same_side_overlap =
         base_fan_tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [1, 1, 0], [0, 0, 2]);

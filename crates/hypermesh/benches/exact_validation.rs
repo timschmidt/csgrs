@@ -5188,6 +5188,54 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
                             .unwrap();
                         result.mesh.triangles().len()
                     }),
+                    hypermesh::exact::preflight_boolean_exact(
+                        &adjacent_left,
+                        &adjacent_right,
+                        hypermesh::exact::ExactBooleanOperation::Intersection,
+                    )
+                    .map(|report| report.validate()),
+                    hypermesh::exact::boolean_exact(
+                        &adjacent_left,
+                        &adjacent_right,
+                        hypermesh::exact::ExactBooleanOperation::Intersection,
+                        ValidationPolicy::CLOSED,
+                    )
+                    .map(|result| {
+                        result
+                            .validate_operation_against_sources(
+                                &adjacent_left,
+                                &adjacent_right,
+                                hypermesh::exact::ExactBooleanOperation::Intersection,
+                                ValidationPolicy::CLOSED,
+                                hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+                            )
+                            .unwrap();
+                        result.mesh.triangles().len()
+                    }),
+                    hypermesh::exact::preflight_boolean_exact(
+                        &adjacent_left,
+                        &adjacent_right,
+                        hypermesh::exact::ExactBooleanOperation::Difference,
+                    )
+                    .map(|report| report.validate()),
+                    hypermesh::exact::boolean_exact(
+                        &adjacent_left,
+                        &adjacent_right,
+                        hypermesh::exact::ExactBooleanOperation::Difference,
+                        ValidationPolicy::CLOSED,
+                    )
+                    .map(|result| {
+                        result
+                            .validate_operation_against_sources(
+                                &adjacent_left,
+                                &adjacent_right,
+                                hypermesh::exact::ExactBooleanOperation::Difference,
+                                ValidationPolicy::CLOSED,
+                                hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+                            )
+                            .unwrap();
+                        result.mesh.triangles().len()
+                    }),
                 )
             })
         });
@@ -5224,6 +5272,54 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
                                 &adjacent_left,
                                 &adjacent_fan_right,
                                 hypermesh::exact::ExactBooleanOperation::Union,
+                                ValidationPolicy::CLOSED,
+                                hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+                            )
+                            .unwrap();
+                        result.mesh.triangles().len()
+                    }),
+                    hypermesh::exact::preflight_boolean_exact(
+                        &adjacent_left,
+                        &adjacent_fan_right,
+                        hypermesh::exact::ExactBooleanOperation::Intersection,
+                    )
+                    .map(|report| report.validate()),
+                    hypermesh::exact::boolean_exact(
+                        &adjacent_left,
+                        &adjacent_fan_right,
+                        hypermesh::exact::ExactBooleanOperation::Intersection,
+                        ValidationPolicy::CLOSED,
+                    )
+                    .map(|result| {
+                        result
+                            .validate_operation_against_sources(
+                                &adjacent_left,
+                                &adjacent_fan_right,
+                                hypermesh::exact::ExactBooleanOperation::Intersection,
+                                ValidationPolicy::CLOSED,
+                                hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+                            )
+                            .unwrap();
+                        result.mesh.triangles().len()
+                    }),
+                    hypermesh::exact::preflight_boolean_exact(
+                        &adjacent_left,
+                        &adjacent_fan_right,
+                        hypermesh::exact::ExactBooleanOperation::Difference,
+                    )
+                    .map(|report| report.validate()),
+                    hypermesh::exact::boolean_exact(
+                        &adjacent_left,
+                        &adjacent_fan_right,
+                        hypermesh::exact::ExactBooleanOperation::Difference,
+                        ValidationPolicy::CLOSED,
+                    )
+                    .map(|result| {
+                        result
+                            .validate_operation_against_sources(
+                                &adjacent_left,
+                                &adjacent_fan_right,
+                                hypermesh::exact::ExactBooleanOperation::Difference,
                                 ValidationPolicy::CLOSED,
                                 hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
                             )
