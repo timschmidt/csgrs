@@ -152,13 +152,7 @@ pub(crate) fn hvector3_cross(
 /// shared 2D turn predicate instead of local f64 cross products, in line with
 /// Yap's exact-geometric-computation split between primitive boundary data and
 /// exact-aware predicates (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-#[cfg(any(
-    test,
-    feature = "gerber-io",
-    feature = "mesh",
-    feature = "sketch",
-    feature = "truetype-text"
-))]
+#[cfg(any(test, feature = "gerber-io", feature = "mesh", feature = "sketch"))]
 pub(crate) fn hxy_orientation_sign(
     a: (Real, Real),
     b: (Real, Real),
@@ -178,7 +172,7 @@ pub(crate) fn hxy_orientation_sign(
 /// non-collinear turn, which keeps winding classification in hyperreal
 /// predicates without introducing a separate primitive f64 area accumulator.
 /// Degenerate or non-finite rings return `None`.
-#[cfg(any(test, feature = "mesh", feature = "sketch", feature = "truetype-text"))]
+#[cfg(any(test, feature = "mesh", feature = "sketch"))]
 pub(crate) fn hxy_ring_orientation_sign(ring: &[[Real; 2]]) -> Option<RealSign> {
     let origin = ring.first()?;
     for pair in ring[1..].windows(2) {
@@ -710,23 +704,21 @@ pub(crate) fn htriangle_area_hreal(
     Some(twice_area * hreal_from_f64(0.5).ok()?)
 }
 
-/// Return true when a triangle's doubled area exceeds `tolerance`.
+/// Return true when a triangle's doubled area is exact nonzero.
 ///
 /// The public mesh carrier still stores nalgebra points during the transition,
 /// but degenerate-triangle predicates should be evaluated after promotion to
-/// `hyperlattice::Vector3`. This keeps topology-affecting area checks in the
-/// exact-aware geometry layer, following Yap's exact-geometric-computation
-/// boundary model (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+/// `hyperlattice::Vector3`. Only exact zero area is rejected: tolerance-scale
+/// and infinitesimal nonzero triangles remain geometry. This keeps
+/// topology-affecting area checks in the exact-aware geometry layer, following
+/// Yap's exact-geometric-computation boundary model
+/// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
 #[cfg(any(feature = "sdf", feature = "metaballs"))]
-pub(crate) fn htriangle_area2_exceeds_tolerance(
+pub(crate) fn htriangle_area2_is_nonzero(
     a: &Point3<Real>,
     b: &Point3<Real>,
     c: &Point3<Real>,
-    tolerance: Real,
 ) -> bool {
-    let Some(tolerance_squared) = hpositive_boundary_scalar_squared(tolerance) else {
-        return false;
-    };
     let Some(a) = hvector3_from_point3(a) else {
         return false;
     };
@@ -737,7 +729,10 @@ pub(crate) fn htriangle_area2_exceeds_tolerance(
         return false;
     };
     let area2 = (&b - &a).cross(&(&c - &a));
-    hreal_gt_hreal(&area2.dot(&area2), &tolerance_squared)
+    matches!(
+        hreal_sign(&area2.dot(&area2)),
+        Some(RealSign::Positive | RealSign::Negative)
+    )
 }
 
 /// Return whether two finite boundary vectors are exactly equal after promotion.
@@ -790,13 +785,14 @@ fn hpositive_boundary_scalar(value: Real) -> Option<HReal> {
 /// exact-aware layer described by Yap, "Towards Exact Geometric Computation,"
 /// *Computational Geometry* 7(1-2), 1997
 /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+#[cfg(any(test, feature = "sketch", feature = "gerber-io", feature = "offset"))]
 pub(crate) fn hpositive_boundary_scalar_squared(value: Real) -> Option<HReal> {
     let value = hpositive_boundary_scalar(value)?;
     Some(value.clone() * value)
 }
 
 /// Returns true when `value` is strictly greater than a hyperreal threshold.
-#[cfg(any(test, feature = "wasm", feature = "sdf", feature = "metaballs"))]
+#[cfg(any(test, feature = "wasm"))]
 pub(crate) fn hreal_gt_hreal(value: &HReal, threshold: &HReal) -> bool {
     match hyperlimit::compare_reals(value, threshold).value() {
         Some(Ordering::Greater) => true,
@@ -814,7 +810,6 @@ pub(crate) fn hreal_gt_hreal(value: &HReal, threshold: &HReal) -> bool {
     feature = "wasm",
     feature = "sketch",
     feature = "gerber-io",
-    feature = "truetype-text",
     feature = "offset"
 ))]
 pub(crate) fn hreal_lt_hreal(value: &HReal, threshold: &HReal) -> bool {
@@ -896,7 +891,11 @@ pub(crate) fn hreal_f64_gt(lhs: F64, rhs: F64) -> bool {
 ///
 /// This keeps boundary closeness checks out of local `f64::abs` arithmetic
 /// where the caller only needs a tolerance predicate.
-#[cfg(any(test, feature = "gerber-io", feature = "truetype-text"))]
+#[cfg(any(
+    test,
+    feature = "gerber-io",
+    all(feature = "sketch", feature = "truetype-text")
+))]
 pub(crate) fn hreal_f64s_within_or_equal_tolerance(
     lhs: F64,
     rhs: F64,
@@ -940,13 +939,7 @@ pub(crate) fn hreal_clamp_hreal(value: HReal, min: F64, max: F64) -> Option<HRea
 /// mixing f64 subtraction, absolute value, and tolerance logic in local CAD
 /// code. This follows the same Yap exact-computation boundary model cited in
 /// [`hreal_cmp_f64`].
-#[cfg(any(
-    test,
-    feature = "sketch",
-    feature = "gerber-io",
-    feature = "truetype-text",
-    feature = "offset"
-))]
+#[cfg(any(test, feature = "sketch", feature = "gerber-io", feature = "offset"))]
 pub(crate) fn hreal_f64s_within_tolerance(lhs: F64, rhs: F64, tolerance: F64) -> bool {
     let Some(tolerance_squared) = hpositive_boundary_scalar_squared(tolerance) else {
         return false;
@@ -1424,6 +1417,22 @@ mod tests {
         );
         assert!(htriangle_area_hreal(&a, &a, &c).is_none());
         assert!(htriangle_area_hreal(&a, &Point3::new(Real::NAN, 0.0, 0.0), &c).is_none());
+    }
+
+    #[test]
+    #[cfg(any(feature = "sdf", feature = "metaballs"))]
+    fn htriangle_area2_is_nonzero_rejects_only_exact_zero_area() {
+        let a = Point3::new(0.0, 0.0, 0.0);
+        let tiny_b = Point3::new(tolerance() * 0.25, 0.0, 0.0);
+        let tiny_c = Point3::new(0.0, tolerance() * 0.25, 0.0);
+
+        assert!(htriangle_area2_is_nonzero(&a, &tiny_b, &tiny_c));
+        assert!(!htriangle_area2_is_nonzero(&a, &a, &tiny_c));
+        assert!(!htriangle_area2_is_nonzero(
+            &a,
+            &Point3::new(Real::NAN, 0.0, 0.0),
+            &tiny_c
+        ));
     }
 
     #[test]
