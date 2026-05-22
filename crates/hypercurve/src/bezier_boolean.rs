@@ -14,7 +14,7 @@
 //! 1177-1185 (2009).
 
 use crate::{
-    BezierCurveIntersectionRegion, BezierCurveRelation, BezierGraphContact,
+    Axis2, BezierCurveIntersectionRegion, BezierCurveRelation, BezierGraphContact,
     BezierIntersectionRegionIsolationCertificate, BezierIntersectionRegionShape,
     BezierIntersectionRegionSummary, BezierLineContactKind, BezierMonotoneGraphContactOrder,
     BezierMonotoneGraphOrder, BezierMonotoneSpan, BooleanFragmentAction, BooleanOp, Classification,
@@ -7938,6 +7938,59 @@ impl BezierBooleanLoopContainmentQueryResultReport2 {
             .iter()
             .map(|query| {
                 let result = match classify_point_against_quadratic_output_loop(
+                    output,
+                    query.candidate_container_loop_index,
+                    &query.representative_point,
+                    first,
+                    second,
+                    policy,
+                ) {
+                    Classification::Decided(result) => result,
+                    Classification::Uncertain(_) => {
+                        BezierBooleanLoopContainmentQueryResult::Unknown
+                    }
+                };
+                BezierBooleanLoopContainmentQueryResult2 {
+                    query_loop_index: query.query_loop_index,
+                    candidate_container_loop_index: query.candidate_container_loop_index,
+                    result,
+                }
+            })
+            .collect::<Vec<_>>();
+
+        Self::from_query_results(&queries, &results)
+    }
+
+    /// Classifies output-loop representatives against retained rational quadratic fragments.
+    ///
+    /// This conic locator is the rational analogue of
+    /// [`Self::from_output_loop_quadratic_fragments`]. It keeps every crossing
+    /// predicate in homogeneous Bernstein form: boundary tests use
+    /// [`RationalQuadraticBezier2::parameters_for_point`], and ray crossings
+    /// solve `sum B_i(t) w_i (y_i - query.y) = 0` before evaluating the affine
+    /// conic point. That is the rational Bezier construction described by
+    /// Farin, *Curves and Surfaces for CAGD* (2002), applied under Yap,
+    /// "Towards Exact Geometric Computation" (1997): projective denominator
+    /// boundaries, stale retained fragments, and unresolved signs remain
+    /// explicit `Unknown`/uncertain evidence rather than being flattened to
+    /// chords or sampled.
+    pub fn from_output_loop_rational_quadratic_fragments(
+        output: &BezierBooleanOutputLoopReport2,
+        first: &BezierBooleanRationalQuadraticFragmentReport2,
+        second: &BezierBooleanRationalQuadraticFragmentReport2,
+        policy: &CurvePolicy,
+    ) -> Self {
+        let locator = BezierBooleanLoopLocatorInputReport2::from_output_loops(output);
+        let queries = BezierBooleanLoopContainmentQueryReport2::from_locator_inputs(&locator);
+        if queries.status != BezierBooleanLoopContainmentQueryStatus::Ready {
+            return Self::from_query_results(&queries, &[]);
+        }
+
+        let results = queries
+            .queries
+            .iter()
+            .map(|query| {
+                let result = match classify_point_against_rational_quadratic_output_loop(
                     output,
                     query.candidate_container_loop_index,
                     &query.representative_point,
@@ -16783,6 +16836,209 @@ fn quadratic_axis_derivative_at(curve: &QuadraticBezier2, axis: Axis2, parameter
     let c1 = &two * &(p1 - p0);
     let c2 = p0 - &(&two * p1) + p2;
     c1 + (&two * c2 * parameter)
+}
+
+fn classify_point_against_rational_quadratic_output_loop(
+    output: &BezierBooleanOutputLoopReport2,
+    loop_index: usize,
+    point: &Point2,
+    first: &BezierBooleanRationalQuadraticFragmentReport2,
+    second: &BezierBooleanRationalQuadraticFragmentReport2,
+    policy: &CurvePolicy,
+) -> Classification<BezierBooleanLoopContainmentQueryResult> {
+    let Some(output_loop) = output.loops.get(loop_index) else {
+        return Classification::Uncertain(UncertaintyReason::Predicate);
+    };
+    let Some(end) = output_loop
+        .first_directed_fragment_index
+        .checked_add(output_loop.directed_fragment_count)
+    else {
+        return Classification::Uncertain(UncertaintyReason::Predicate);
+    };
+    if output_loop.directed_fragment_count == 0 || end > output.directed_fragments.len() {
+        return Classification::Uncertain(UncertaintyReason::Predicate);
+    }
+
+    let mut winding = 0_i32;
+    for fragment_index in output_loop.first_directed_fragment_index..end {
+        let fragment = &output.directed_fragments[fragment_index];
+        let Some(curve) = directed_rational_quadratic_fragment_curve(fragment, first, second)
+        else {
+            return Classification::Decided(BezierBooleanLoopContainmentQueryResult::Unknown);
+        };
+        if curve.start() != &fragment.start || curve.end() != &fragment.end {
+            return Classification::Decided(BezierBooleanLoopContainmentQueryResult::Unknown);
+        }
+        match curve.parameters_for_point(point, policy) {
+            Classification::Decided(parameters) if !parameters.is_empty() => {
+                return Classification::Decided(BezierBooleanLoopContainmentQueryResult::Boundary);
+            }
+            Classification::Decided(_) => {}
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        }
+        match rational_quadratic_fragment_winding_delta(&curve, point, policy) {
+            Classification::Decided(delta) => winding += delta,
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        }
+    }
+
+    Classification::Decided(if winding == 0 {
+        BezierBooleanLoopContainmentQueryResult::Outside
+    } else {
+        BezierBooleanLoopContainmentQueryResult::Contains
+    })
+}
+
+fn directed_rational_quadratic_fragment_curve(
+    fragment: &BezierBooleanDirectedLoopFragment2,
+    first: &BezierBooleanRationalQuadraticFragmentReport2,
+    second: &BezierBooleanRationalQuadraticFragmentReport2,
+) -> Option<RationalQuadraticBezier2> {
+    let source = match fragment.operand {
+        BezierBooleanTraversalOperand::First => first.fragments.get(fragment.fragment_index)?,
+        BezierBooleanTraversalOperand::Second => second.fragments.get(fragment.fragment_index)?,
+    };
+    match fragment.action {
+        BooleanFragmentAction::KeepSourceDirection => Some(source.clone()),
+        BooleanFragmentAction::KeepReversed => RationalQuadraticBezier2::try_new(
+            source.end().clone(),
+            source.control().clone(),
+            source.start().clone(),
+            source.end_weight().clone(),
+            source.control_weight().clone(),
+            source.start_weight().clone(),
+        )
+        .ok(),
+        BooleanFragmentAction::Discard | BooleanFragmentAction::BoundaryNeedsResolution => None,
+    }
+}
+
+fn rational_quadratic_fragment_winding_delta(
+    curve: &RationalQuadraticBezier2,
+    point: &Point2,
+    policy: &CurvePolicy,
+) -> Classification<i32> {
+    let bernstein = rational_quadratic_axis_minus_point_bernstein_values(curve, point, Axis2::Y);
+    if same_strict_sign(&bernstein, policy) == Some(true) {
+        return Classification::Decided(0);
+    }
+    let [c0, c1, c2] = rational_quadratic_axis_minus_point_coefficients(curve, point, Axis2::Y);
+    if crate::classify::is_zero(&c0, policy) == Some(true)
+        && crate::classify::is_zero(&c1, policy) == Some(true)
+        && crate::classify::is_zero(&c2, policy) == Some(true)
+    {
+        return Classification::Decided(0);
+    }
+
+    let roots = match crate::bezier_topology::polynomial_roots_in_unit_interval(c0, c1, c2, policy)
+    {
+        Classification::Decided(roots) => roots,
+        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+    };
+
+    let mut winding = 0_i32;
+    for root in roots {
+        if crate::classify::compare_reals(&root, &Real::one(), policy) == Some(Ordering::Equal) {
+            continue;
+        }
+        let curve_point = match curve.point_at(root.clone(), policy) {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        };
+        match crate::classify::compare_reals(curve_point.x(), point.x(), policy) {
+            Some(Ordering::Less | Ordering::Equal) => continue,
+            Some(Ordering::Greater) => {}
+            None => return Classification::Uncertain(UncertaintyReason::Ordering),
+        }
+
+        let numerator_derivative =
+            rational_quadratic_axis_minus_point_derivative_at(curve, point, Axis2::Y, &root);
+        let denominator = rational_quadratic_denominator_at(curve, &root);
+        let derivative_sign = match (
+            crate::classify::real_sign(&numerator_derivative, policy),
+            crate::classify::real_sign(&denominator, policy),
+        ) {
+            (Some(RealSign::Zero), _) => continue,
+            (_, Some(RealSign::Zero)) => {
+                return Classification::Uncertain(UncertaintyReason::Boundary);
+            }
+            (Some(RealSign::Positive), Some(RealSign::Positive))
+            | (Some(RealSign::Negative), Some(RealSign::Negative)) => RealSign::Positive,
+            (Some(RealSign::Positive), Some(RealSign::Negative))
+            | (Some(RealSign::Negative), Some(RealSign::Positive)) => RealSign::Negative,
+            _ => return Classification::Uncertain(UncertaintyReason::RealSign),
+        };
+        match derivative_sign {
+            RealSign::Positive => winding += 1,
+            RealSign::Negative => winding -= 1,
+            RealSign::Zero => {}
+        }
+    }
+
+    Classification::Decided(winding)
+}
+
+fn rational_quadratic_axis_minus_point_bernstein_values(
+    curve: &RationalQuadraticBezier2,
+    point: &Point2,
+    axis: Axis2,
+) -> [Real; 3] {
+    let weights = curve.weights();
+    [
+        (coordinate(curve.start(), axis) - coordinate(point, axis)) * weights[0],
+        (coordinate(curve.control(), axis) - coordinate(point, axis)) * weights[1],
+        (coordinate(curve.end(), axis) - coordinate(point, axis)) * weights[2],
+    ]
+}
+
+fn rational_quadratic_axis_minus_point_coefficients(
+    curve: &RationalQuadraticBezier2,
+    point: &Point2,
+    axis: Axis2,
+) -> [Real; 3] {
+    let [p0, p1, p2] = rational_quadratic_axis_minus_point_bernstein_values(curve, point, axis);
+    let two = Real::from(2_i8);
+    [p0.clone(), &two * &(&p1 - &p0), &p0 - &(&two * &p1) + &p2]
+}
+
+fn rational_quadratic_axis_minus_point_derivative_at(
+    curve: &RationalQuadraticBezier2,
+    point: &Point2,
+    axis: Axis2,
+    parameter: &Real,
+) -> Real {
+    let [_, c1, c2] = rational_quadratic_axis_minus_point_coefficients(curve, point, axis);
+    let two = Real::from(2_i8);
+    c1 + (&two * c2 * parameter)
+}
+
+fn rational_quadratic_denominator_at(curve: &RationalQuadraticBezier2, parameter: &Real) -> Real {
+    let one_minus_t = Real::one() - parameter;
+    let two = Real::from(2_i8);
+    let weights = curve.weights();
+    (&one_minus_t * &one_minus_t * weights[0])
+        + (&two * &one_minus_t * parameter * weights[1])
+        + (parameter * parameter * weights[2])
+}
+
+fn same_strict_sign(values: &[Real], policy: &CurvePolicy) -> Option<bool> {
+    let mut expected = None;
+    for value in values {
+        let sign = crate::classify::real_sign(value, policy)?;
+        match sign {
+            RealSign::Positive | RealSign::Negative => {
+                if let Some(expected) = expected {
+                    if sign != expected {
+                        return Some(false);
+                    }
+                } else {
+                    expected = Some(sign);
+                }
+            }
+            RealSign::Zero => return Some(false),
+        }
+    }
+    Some(expected.is_some())
 }
 
 fn coordinate(point: &Point2, axis: Axis2) -> &Real {

@@ -4007,12 +4007,44 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     &quadratic_second,
                     &CurvePolicy::certified(),
                 );
+            let rational_quadratic_fragments = endpoints
+                .iter()
+                .map(|(start, end)| {
+                    RationalQuadraticBezier2::try_unit_end_weights(
+                        start.clone(),
+                        start.lerp(end, Real::from(1_i8)),
+                        end.clone(),
+                        Real::one(),
+                    )
+                    .expect("unit-weight rational quadratic benchmark fragment is valid")
+                })
+                .collect::<Vec<_>>();
+            let rational_quadratic_first = BezierBooleanRationalQuadraticFragmentReport2 {
+                status: BezierBooleanFragmentConstructionStatus::Ready,
+                readiness_status: BezierBooleanConstructionReadinessStatus::Ready,
+                source_parameter_count: 0,
+                endpoint_parameter_count: 0,
+                out_of_range_parameter_count: 0,
+                inserted_parameter_count: 0,
+                inserted_parameters: Vec::new(),
+                fragments: rational_quadratic_fragments,
+            };
+            let rational_quadratic_second = BezierBooleanRationalQuadraticFragmentReport2 {
+                fragments: Vec::new(),
+                ..rational_quadratic_first.clone()
+            };
+            let rational_quadratic_replay = BezierBooleanLoopContainmentQueryResultReport2::from_output_loop_rational_quadratic_fragments(
+                &output,
+                &rational_quadratic_first,
+                &rational_quadratic_second,
+                &CurvePolicy::certified(),
+            );
             let certification =
                 BezierBooleanLoopContainmentCertificationReport2::from_output_loop_query_results(
                     &output, &results,
                 );
             format!(
-                "{:?}{:?}{:?}{:?}{:?}",
+                "{:?}{:?}{:?}{:?}{:?}{:?}",
                 BezierBooleanResultReport2::from_schedule_graph_walk_containment_query_results(
                     &schedule,
                     BooleanOp::Union,
@@ -4048,6 +4080,7 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 ),
                 linear_replay,
                 quadratic_replay,
+                rational_quadratic_replay,
             )
         };
         checksum ^= boolean_query_result_result.len();
