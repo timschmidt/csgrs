@@ -479,6 +479,16 @@ pub fn preflight_boolean_exact(
         {
             ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellDifference
         }
+        ExactBooleanOperation::Intersection
+            if certified_closed_boundary_touching_regularized_report(left, right)?.is_some() =>
+        {
+            ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
+        }
+        ExactBooleanOperation::Difference
+            if certified_closed_boundary_touching_regularized_report(left, right)?.is_some() =>
+        {
+            ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
+        }
         ExactBooleanOperation::Union
         | ExactBooleanOperation::Intersection
         | ExactBooleanOperation::Difference
@@ -578,6 +588,8 @@ pub fn preflight_boolean_exact(
             | ExactBooleanSupport::CertifiedFullFaceAdjacentUnion
             | ExactBooleanSupport::CertifiedFullFaceAdjacentIntersection
             | ExactBooleanSupport::CertifiedFullFaceAdjacentDifference
+            | ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
+            | ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
             | ExactBooleanSupport::CertifiedOpenSurfaceDisjoint
             | ExactBooleanSupport::CertifiedCoplanarSurfaceContainment
             | ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
@@ -1016,7 +1028,10 @@ pub fn boolean_exact(
 /// events have no proper crossings, construction failures, or unknowns. In
 /// that narrow case, [`ExactBoundaryBooleanPolicy::PreserveSeparateShells`]
 /// projects lower-dimensional contact into triangle-mesh output instead of
-/// silently invoking the legacy tolerance path.
+/// silently invoking the legacy tolerance path. Closed-solid regularized
+/// intersection and difference do not need that projection policy once the
+/// same exact boundary-touch report proves no shared interior volume; those
+/// two operations use certified shortcuts before the policy layer.
 #[cfg(feature = "exact-triangulation")]
 pub fn boolean_exact_with_boundary_policy(
     left: &ExactMesh,
@@ -1247,6 +1262,16 @@ pub fn boolean_exact_with_boundary_policy(
                 AffineOrthogonalSolidOperation::Difference,
                 validation,
             )
+        }
+        ExactBooleanOperation::Intersection
+            if certified_closed_boundary_touching_regularized_report(left, right)?.is_some() =>
+        {
+            boolean_closed_boundary_touching_intersection(left, right, validation)
+        }
+        ExactBooleanOperation::Difference
+            if certified_closed_boundary_touching_regularized_report(left, right)?.is_some() =>
+        {
+            boolean_closed_boundary_touching_difference(left, right, validation)
         }
         ExactBooleanOperation::Union
         | ExactBooleanOperation::Intersection
@@ -2562,6 +2587,88 @@ fn boolean_coplanar_convex_containment_surfaces(
     };
 
     Ok(certified_shortcut_result(mesh, shortcut))
+}
+
+#[cfg(feature = "exact-triangulation")]
+/// Certify regularized lower-dimensional contact between closed solids.
+///
+/// [`certify_boundary_touching_report`] also certifies open-surface touching
+/// cases, where the caller still must decide whether to preserve separate
+/// shells. This helper deliberately narrows that report to closed manifolds.
+/// In the regularized solid model, exact boundary-only contact has empty
+/// intersection volume and subtracts no volume from the left operand. The
+/// source-replayed report keeps that decision in the object/predicate split
+/// advocated by Yap, "Towards Exact Geometric Computation," *Computational
+/// Geometry* 7.1-2 (1997): graph events and closed-mesh winding evidence are
+/// retained instead of replaced by an epsilon contact test.
+fn certified_closed_boundary_touching_regularized_report(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Result<Option<ExactBoundaryTouchingReport>, MeshError> {
+    if !left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold {
+        return Ok(None);
+    }
+    let report = certify_boundary_touching_report(left, right)?;
+    if !report.is_certified() {
+        return Ok(None);
+    }
+    report
+        .validate_against_sources(left, right)
+        .map_err(|error| {
+            MeshError::one(MeshDiagnostic::new(
+                Severity::Error,
+                DiagnosticKind::UnsupportedExactOperation,
+                format!("exact closed-boundary-touch report/source replay failed: {error:?}"),
+            ))
+        })?;
+    Ok(Some(report))
+}
+
+#[cfg(feature = "exact-triangulation")]
+/// Materialize the empty regularized intersection for closed boundary contact.
+fn boolean_closed_boundary_touching_intersection(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    validation: ValidationPolicy,
+) -> Result<ExactBooleanResult, MeshError> {
+    certified_closed_boundary_touching_regularized_report(left, right)?.ok_or_else(|| {
+        MeshError::one(MeshDiagnostic::new(
+            Severity::Error,
+            DiagnosticKind::UnsupportedExactOperation,
+            "exact closed-boundary-touch intersection certificate did not replay",
+        ))
+    })?;
+    Ok(certified_shortcut_result(
+        empty_mesh(
+            "empty exact closed-boundary-touch regularized intersection",
+            validation,
+        )?,
+        ExactBooleanShortcutKind::ClosedBoundaryTouchingIntersection,
+    ))
+}
+
+#[cfg(feature = "exact-triangulation")]
+/// Materialize the left-preserving difference for closed boundary contact.
+fn boolean_closed_boundary_touching_difference(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    validation: ValidationPolicy,
+) -> Result<ExactBooleanResult, MeshError> {
+    certified_closed_boundary_touching_regularized_report(left, right)?.ok_or_else(|| {
+        MeshError::one(MeshDiagnostic::new(
+            Severity::Error,
+            DiagnosticKind::UnsupportedExactOperation,
+            "exact closed-boundary-touch difference certificate did not replay",
+        ))
+    })?;
+    Ok(certified_shortcut_result(
+        copy_mesh(
+            left,
+            "exact closed-boundary-touch regularized difference keeps left",
+            validation,
+        )?,
+        ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference,
+    ))
 }
 
 #[cfg(feature = "exact-triangulation")]

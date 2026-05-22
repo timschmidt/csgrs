@@ -3328,6 +3328,65 @@ fn exercise_closed_vertex_touch_boundary_policy() {
         ExactBooleanSupport::RequiresBoundaryPolicy
     );
 
+    let intersection_preflight =
+        preflight_boolean_exact(&left, &right, ExactBooleanOperation::Intersection)
+            .expect("closed vertex-touch intersection should classify regularized shortcut");
+    intersection_preflight.validate().unwrap();
+    intersection_preflight
+        .validate_against_sources(&left, &right)
+        .unwrap();
+    assert_eq!(
+        intersection_preflight.support,
+        ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
+    );
+    let intersection = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        ExactBooleanOperation::Intersection,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("closed vertex-touch intersection should regularize to empty");
+    intersection
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            ExactBooleanOperation::Intersection,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert!(intersection.mesh.triangles().is_empty());
+
+    let difference_preflight =
+        preflight_boolean_exact(&left, &right, ExactBooleanOperation::Difference)
+            .expect("closed vertex-touch difference should classify regularized shortcut");
+    difference_preflight.validate().unwrap();
+    difference_preflight
+        .validate_against_sources(&left, &right)
+        .unwrap();
+    assert_eq!(
+        difference_preflight.support,
+        ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
+    );
+    let difference = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("closed vertex-touch difference should preserve left");
+    difference
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            ExactBooleanOperation::Difference,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(difference.mesh.vertices(), left.vertices());
+    assert_eq!(difference.mesh.triangles(), left.triangles());
+
     let shortcut = boolean_exact_with_boundary_policy(
         &left,
         &right,
@@ -3777,6 +3836,31 @@ fn exercise_axis_aligned_coplanar_volumetric_boxes() {
         face_difference_result.mesh.triangles(),
         face_left.triangles()
     );
+    let face_intersection =
+        preflight_boolean_exact(&face_left, &face_right, ExactBooleanOperation::Intersection)
+            .expect("face-adjacent box intersection should classify regularized shortcut");
+    face_intersection.validate().unwrap();
+    assert_eq!(
+        face_intersection.support,
+        ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
+    );
+    let face_intersection_result = hypermesh::exact::boolean_exact(
+        &face_left,
+        &face_right,
+        ExactBooleanOperation::Intersection,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("face-adjacent box intersection should regularize to empty");
+    face_intersection_result
+        .validate_operation_against_sources(
+            &face_left,
+            &face_right,
+            ExactBooleanOperation::Intersection,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert!(face_intersection_result.mesh.triangles().is_empty());
 
     let edge_right = axis_aligned_box_i64([2, 2, 0], [4, 4, 2]);
     assert!(intersect_closed_convex_solids(&face_left, &edge_right).is_none());
@@ -3787,6 +3871,57 @@ fn exercise_axis_aligned_coplanar_volumetric_boxes() {
         edge_union.support,
         ExactBooleanSupport::RequiresBoundaryPolicy
     );
+    let edge_intersection =
+        preflight_boolean_exact(&face_left, &edge_right, ExactBooleanOperation::Intersection)
+            .expect("edge-adjacent box intersection should classify regularized shortcut");
+    edge_intersection.validate().unwrap();
+    assert_eq!(
+        edge_intersection.support,
+        ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
+    );
+    let edge_intersection_result = hypermesh::exact::boolean_exact(
+        &face_left,
+        &edge_right,
+        ExactBooleanOperation::Intersection,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("edge-adjacent box intersection should regularize to empty");
+    edge_intersection_result
+        .validate_operation_against_sources(
+            &face_left,
+            &edge_right,
+            ExactBooleanOperation::Intersection,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert!(edge_intersection_result.mesh.triangles().is_empty());
+    let edge_difference =
+        preflight_boolean_exact(&face_left, &edge_right, ExactBooleanOperation::Difference)
+            .expect("edge-adjacent box difference should classify regularized shortcut");
+    edge_difference.validate().unwrap();
+    assert_eq!(
+        edge_difference.support,
+        ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
+    );
+    let edge_difference_result = hypermesh::exact::boolean_exact(
+        &face_left,
+        &edge_right,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("edge-adjacent box difference should preserve left");
+    edge_difference_result
+        .validate_operation_against_sources(
+            &face_left,
+            &edge_right,
+            ExactBooleanOperation::Difference,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(edge_difference_result.mesh.vertices(), face_left.vertices());
+    assert_eq!(edge_difference_result.mesh.triangles(), face_left.triangles());
 
     let difference = preflight_boolean_exact(&left, &right, ExactBooleanOperation::Difference)
         .expect("axis-aligned box difference preflight should classify shortcut");

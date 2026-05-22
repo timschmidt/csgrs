@@ -5010,6 +5010,28 @@ fn exact_preflight_reports_boundary_touching_policy_gap() {
         preflight.support,
         hypermesh::exact::ExactBooleanSupport::RequiresBoundaryPolicy
     );
+    let open_intersection_preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+    )
+    .unwrap();
+    open_intersection_preflight.validate().unwrap();
+    assert_eq!(
+        open_intersection_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::RequiresBoundaryPolicy
+    );
+    let open_difference_preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    open_difference_preflight.validate().unwrap();
+    assert_eq!(
+        open_difference_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::RequiresBoundaryPolicy
+    );
     assert!(!preflight.graph_had_unknowns);
     assert_eq!(preflight.retained_face_pairs, 1);
     assert!(preflight.retained_events > 0);
@@ -5070,6 +5092,24 @@ fn exact_preflight_reports_boundary_touching_policy_gap() {
             .diagnostics
             .iter()
             .any(|diagnostic| diagnostic.kind == DiagnosticKind::UnsupportedExactOperation)
+    );
+    assert!(
+        hypermesh::exact::boolean_exact(
+            &left,
+            &right,
+            hypermesh::exact::ExactBooleanOperation::Intersection,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .is_err()
+    );
+    assert!(
+        hypermesh::exact::boolean_exact(
+            &left,
+            &right,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .is_err()
     );
 
     let union = hypermesh::exact::boolean_exact_with_boundary_policy(
@@ -5258,7 +5298,7 @@ fn exact_closed_full_face_overlap_contact_materializes_adjacent_union() {
 
 #[cfg(feature = "exact-triangulation")]
 #[test]
-fn exact_closed_vertex_touch_contact_uses_boundary_policy() {
+fn exact_closed_vertex_touch_contact_materializes_regularized_shortcuts() {
     let left = ExactMesh::from_i64_triangles(
         &[0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 2],
         &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
@@ -5346,6 +5386,84 @@ fn exact_closed_vertex_touch_contact_uses_boundary_policy() {
         preflight.support,
         hypermesh::exact::ExactBooleanSupport::RequiresBoundaryPolicy
     );
+
+    let intersection_preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+    )
+    .unwrap();
+    intersection_preflight.validate().unwrap();
+    intersection_preflight
+        .validate_against_sources(&left, &right)
+        .unwrap();
+    assert_eq!(
+        intersection_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
+    );
+    let intersection = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    intersection
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            hypermesh::exact::ExactBooleanOperation::Intersection,
+            ValidationPolicy::CLOSED,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        intersection.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut:
+                hypermesh::exact::ExactBooleanShortcutKind::ClosedBoundaryTouchingIntersection
+        }
+    );
+    assert!(intersection.mesh.triangles().is_empty());
+
+    let difference_preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    difference_preflight.validate().unwrap();
+    difference_preflight
+        .validate_against_sources(&left, &right)
+        .unwrap();
+    assert_eq!(
+        difference_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
+    );
+    let difference = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    difference
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::CLOSED,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        difference.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference
+        }
+    );
+    assert_eq!(difference.mesh.vertices(), left.vertices());
+    assert_eq!(difference.mesh.triangles(), left.triangles());
 
     let winding_report = hypermesh::exact::certify_winding_readiness_report(
         &left,
@@ -5484,16 +5602,32 @@ fn exact_axis_aligned_face_touching_boxes_materialize_regularized_union_only() {
         .unwrap();
     assert_eq!(
         intersection_preflight.support,
-        hypermesh::exact::ExactBooleanSupport::RequiresBoundaryPolicy
+        hypermesh::exact::ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
     );
-    let intersection = hypermesh::exact::boolean_exact_with_boundary_policy(
+    let intersection = hypermesh::exact::boolean_exact(
         &left,
         &right,
         hypermesh::exact::ExactBooleanOperation::Intersection,
         ValidationPolicy::CLOSED,
-        hypermesh::exact::ExactBoundaryBooleanPolicy::PreserveSeparateShells,
     )
     .unwrap();
+    intersection.validate().unwrap();
+    intersection
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            hypermesh::exact::ExactBooleanOperation::Intersection,
+            ValidationPolicy::CLOSED,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        intersection.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut:
+                hypermesh::exact::ExactBooleanShortcutKind::ClosedBoundaryTouchingIntersection
+        }
+    );
     assert!(intersection.mesh.triangles().is_empty());
 
     let edge_touching = axis_aligned_box_i64([2, 2, 0], [4, 4, 2]);
@@ -5512,6 +5646,70 @@ fn exact_axis_aligned_face_touching_boxes_materialize_regularized_union_only() {
         edge_union_preflight.support,
         hypermesh::exact::ExactBooleanSupport::RequiresBoundaryPolicy
     );
+    let edge_intersection_preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &edge_touching,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+    )
+    .unwrap();
+    edge_intersection_preflight.validate().unwrap();
+    edge_intersection_preflight
+        .validate_against_sources(&left, &edge_touching)
+        .unwrap();
+    assert_eq!(
+        edge_intersection_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
+    );
+    let edge_intersection = hypermesh::exact::boolean_exact(
+        &left,
+        &edge_touching,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    edge_intersection
+        .validate_operation_against_sources(
+            &left,
+            &edge_touching,
+            hypermesh::exact::ExactBooleanOperation::Intersection,
+            ValidationPolicy::CLOSED,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert!(edge_intersection.mesh.triangles().is_empty());
+
+    let edge_difference_preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &edge_touching,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    edge_difference_preflight.validate().unwrap();
+    edge_difference_preflight
+        .validate_against_sources(&left, &edge_touching)
+        .unwrap();
+    assert_eq!(
+        edge_difference_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
+    );
+    let edge_difference = hypermesh::exact::boolean_exact(
+        &left,
+        &edge_touching,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    edge_difference
+        .validate_operation_against_sources(
+            &left,
+            &edge_touching,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::CLOSED,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(edge_difference.mesh.vertices(), left.vertices());
+    assert_eq!(edge_difference.mesh.triangles(), left.triangles());
 }
 
 #[cfg(feature = "exact-triangulation")]

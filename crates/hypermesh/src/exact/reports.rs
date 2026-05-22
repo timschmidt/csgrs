@@ -643,6 +643,12 @@ pub enum ExactBooleanShortcutKind {
     /// Certified left-preserving regularized difference of closed solids whose
     /// only overlap is an exact full-face/fan-patch boundary contact.
     FullFaceAdjacentDifference,
+    /// Certified empty regularized intersection of closed solids whose exact
+    /// graph proves only lower-dimensional boundary contact.
+    ClosedBoundaryTouchingIntersection,
+    /// Certified left-preserving regularized difference of closed solids whose
+    /// exact graph proves only lower-dimensional boundary contact.
+    ClosedBoundaryTouchingDifference,
     /// Certified graph absence for open surfaces.
     OpenSurfaceDisjoint,
     /// Certified closed-convex containment.
@@ -1416,6 +1422,12 @@ pub enum ExactBooleanSupport {
     /// Difference was certified as the left solid because adjacent closed
     /// solids only share exact coincident whole faces or bounded fan patches.
     CertifiedFullFaceAdjacentDifference,
+    /// Intersection was certified empty because closed solids only touch at
+    /// exact boundary features and share no interior volume.
+    CertifiedClosedBoundaryTouchingIntersection,
+    /// Difference was certified as the left solid because closed solids only
+    /// touch at exact boundary features and share no interior volume.
+    CertifiedClosedBoundaryTouchingDifference,
     /// A named operation was answered by exact no-intersection facts for open
     /// surface meshes.
     CertifiedOpenSurfaceDisjoint,
@@ -1596,6 +1608,8 @@ impl ExactBooleanPreflight {
             | ExactBooleanSupport::CertifiedFullFaceAdjacentUnion
             | ExactBooleanSupport::CertifiedFullFaceAdjacentIntersection
             | ExactBooleanSupport::CertifiedFullFaceAdjacentDifference
+            | ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
+            | ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
             | ExactBooleanSupport::CertifiedOpenSurfaceDisjoint
             | ExactBooleanSupport::CertifiedConvexContainment
             | ExactBooleanSupport::CertifiedConvexIntersection

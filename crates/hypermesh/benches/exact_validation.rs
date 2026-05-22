@@ -2328,6 +2328,56 @@ fn exact_boolean_boundary_preflight(c: &mut Criterion) {
                         hypermesh::exact::ExactBoundaryBooleanPolicy::PreserveSeparateShells,
                     )
                     .unwrap(),
+                    hypermesh::exact::preflight_boolean_exact(
+                        &vertex_left,
+                        &vertex_right,
+                        hypermesh::exact::ExactBooleanOperation::Intersection,
+                    )
+                    .unwrap(),
+                    hypermesh::exact::boolean_exact(
+                        &vertex_left,
+                        &vertex_right,
+                        hypermesh::exact::ExactBooleanOperation::Intersection,
+                        ValidationPolicy::CLOSED,
+                    )
+                    .map(|result| {
+                        result
+                            .validate_operation_against_sources(
+                                &vertex_left,
+                                &vertex_right,
+                                hypermesh::exact::ExactBooleanOperation::Intersection,
+                                ValidationPolicy::CLOSED,
+                                hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+                            )
+                            .unwrap();
+                        result.mesh.triangles().len()
+                    })
+                    .unwrap(),
+                    hypermesh::exact::preflight_boolean_exact(
+                        &vertex_left,
+                        &vertex_right,
+                        hypermesh::exact::ExactBooleanOperation::Difference,
+                    )
+                    .unwrap(),
+                    hypermesh::exact::boolean_exact(
+                        &vertex_left,
+                        &vertex_right,
+                        hypermesh::exact::ExactBooleanOperation::Difference,
+                        ValidationPolicy::CLOSED,
+                    )
+                    .map(|result| {
+                        result
+                            .validate_operation_against_sources(
+                                &vertex_left,
+                                &vertex_right,
+                                hypermesh::exact::ExactBooleanOperation::Difference,
+                                ValidationPolicy::CLOSED,
+                                hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+                            )
+                            .unwrap();
+                        result.mesh.triangles().len()
+                    })
+                    .unwrap(),
                 )
             })
         });
