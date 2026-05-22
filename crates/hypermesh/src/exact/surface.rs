@@ -5838,11 +5838,11 @@ fn exact_max_real(left: &ExactReal, right: &ExactReal) -> Option<ExactReal> {
 /// independent openings, when retained fragments stitch one simple nonconvex
 /// outer ring and unrelated strictly contained holes replay inside that opened
 /// ring. Connected non-rectilinear side cutters are also accepted when their
-/// exact clipped union opens one outer side and all unrelated holes replay
-/// strictly inside the opened ring. Point-only contacts, branch opening graphs,
-/// and overlapping multi-cutter outputs that create multiple attachments or
-/// unassigned holes still need a full planar subdivision. This preserves Yap's
-/// rule from "Towards Exact Geometric Computation,"
+/// exact clipped union opens one or more outer sides and all unrelated holes
+/// replay strictly inside the opened ring. Point-only contacts, branch opening
+/// graphs, and overlapping multi-cutter outputs that leave unassigned holes
+/// still need a full planar subdivision. This preserves Yap's rule from
+/// "Towards Exact Geometric Computation,"
 /// *Computational Geometry* 7.1-2 (1997): every promoted loop is justified by
 /// exact source topology, containment, or area replay, and unsupported
 /// combinatorics remain explicit. The rectangular
@@ -6214,17 +6214,18 @@ fn materialize_cutter_hole_contact_component_holed_difference(
     }])
 }
 
-/// Replay connected non-rectilinear side cutters while retaining strict holes.
+/// Replay non-rectilinear side-cutter openings while retaining strict holes.
 ///
 /// This is the cutter-only sibling of
 /// [`materialize_cutter_hole_contact_component_holed_difference`]. Several
 /// side-attached convex cutters may overlap or touch along positive-length
-/// boundaries, but they are promoted only after their clipped regions replay
-/// as one exact simple union loop. That loop must open exactly one side of the
-/// convex source component, and the output area must satisfy
-/// `area(component) = area(opened) + area(cutter_union)` exactly. Unrelated
-/// strict holes are then retained only when simple-polygon containment proves
-/// they remain strictly inside the opened loop.
+/// boundaries inside each connected group, but a group is promoted only after
+/// its clipped regions replay as one exact simple union loop. Disconnected
+/// groups become independent side openings through
+/// [`multi_side_opened_difference_polygon`]. The final output area must
+/// satisfy `area(component) = area(opened) + sum(area(opening_i))` exactly.
+/// Unrelated strict holes are then retained only when simple-polygon
+/// containment proves they remain strictly inside the opened loop.
 ///
 /// This is a bounded retained-fragment construction in the sense of Yap,
 /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
@@ -6236,7 +6237,8 @@ fn materialize_cutter_hole_contact_component_holed_difference(
 /// Kreveld, and Overmars, *Computational Geometry: Algorithms and
 /// Applications*, 3rd ed. (2008), Chapter 2, so this helper covers the
 /// non-rectilinear multi-cutter gap instead of changing rectilinear shortcut
-/// precedence.
+/// precedence. Branch graphs and holes consumed by the cutter union stay
+/// outside this helper because they require explicit planar-cell ownership.
 #[cfg(feature = "exact-triangulation")]
 fn materialize_connected_multi_cutter_component_holed_difference(
     component: &ConvexUnionComponent,
@@ -6279,20 +6281,42 @@ fn materialize_connected_multi_cutter_component_holed_difference(
     }
 
     let groups = removed_region_contact_groups(&regions, projection)?;
-    if groups.len() != 1 || groups[0].len() != cut_indices.len() {
+    let mut removed_openings = Vec::with_capacity(groups.len());
+    for group in &groups {
+        let mut opening = if group.len() == 1 {
+            regions[group[0]].region.clone()
+        } else {
+            materialize_removed_region_group_polygon(&regions, group, projection)?
+        };
+        orient_polygon_ccw(&mut opening, projection)?;
+        opening = simplify_projected_polygon(opening, projection);
+        validate_projected_simple_loop(
+            &opening,
+            projection,
+            "coplanar component-holed connected multi-cutter opening",
+        )
+        .ok()?;
+        removed_openings.push(opening);
+    }
+    if removed_openings.is_empty() {
         return None;
     }
-    let mut removed_union =
-        materialize_removed_region_group_polygon(&regions, &groups[0], projection)?;
-    orient_polygon_ccw(&mut removed_union, projection)?;
-    removed_union = simplify_projected_polygon(removed_union, projection);
 
-    let mut opening =
+    let mut opening = if removed_openings.len() == 1 {
+        let removed_union = &removed_openings[0];
         if let Some(rectangle) = projected_axis_aligned_rectangle(&component.hull, projection) {
-            side_opened_difference_polygon(&rectangle, &removed_union, projection)?
+            side_opened_difference_polygon(&rectangle, removed_union, projection)?
         } else {
-            convex_side_opened_difference_polygon(&component.hull, &removed_union, projection)?
-        };
+            convex_side_opened_difference_polygon(&component.hull, removed_union, projection)?
+        }
+    } else {
+        multi_side_opened_difference_polygon(
+            &component.hull,
+            &removed_openings,
+            projection,
+            "coplanar component-holed multi-side-cutter opening",
+        )?
+    };
     orient_polygon_ccw(&mut opening, projection)?;
     opening = simplify_projected_polygon(opening, projection);
     validate_projected_simple_loop(
@@ -6313,7 +6337,13 @@ fn materialize_connected_multi_cutter_component_holed_difference(
 
     let component_area = projected_area2_abs(&component.hull, projection)?;
     let opening_area = projected_area2_abs(&opening, projection)?;
-    let removed_area = projected_area2_abs(&removed_union, projection)?;
+    let mut removed_area = ExactReal::from(0);
+    for removed_opening in &removed_openings {
+        removed_area = add(
+            &removed_area,
+            &projected_area2_abs(removed_opening, projection)?,
+        );
+    }
     if compare_reals(&add(&opening_area, &removed_area), &component_area).value()
         != Some(Ordering::Equal)
     {

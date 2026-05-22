@@ -13305,6 +13305,142 @@ fn exact_coplanar_component_holed_difference_accepts_connected_multi_cutter_open
 
 #[cfg(feature = "exact-triangulation")]
 #[test]
+fn exact_coplanar_component_holed_difference_accepts_multiple_side_cutter_openings() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 20, 0, 0, 20, 20, 0, 0, 20, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let multiple_openings_plus_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            15, 16, 0, 17, 16, 0, 17, 18, 0, 15, 18, 0, //
+            -2, 4, 0, 9, 4, 0, 7, 10, 0, -2, 10, 0, //
+            -2, 8, 0, 8, 7, 0, 10, 13, 0, -2, 13, 0, //
+            11, 3, 0, 22, 3, 0, 22, 11, 0, 13, 11, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7, //
+            8, 9, 10, 8, 10, 11, //
+            12, 13, 14, 12, 14, 15,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_cutter_hole_contact_difference(
+            &left,
+            &multiple_openings_plus_hole,
+        )
+        .is_none()
+    );
+    let holed = hypermesh::exact::arrange_coplanar_convex_surface_component_holed_difference(
+        &left,
+        &multiple_openings_plus_hole,
+    )
+    .expect("independent connected cutter groups should open multiple sides and retain holes");
+    holed.validate().unwrap();
+    holed
+        .validate_against_sources(&left, &multiple_openings_plus_hole)
+        .unwrap();
+    assert_eq!(holed.components.len(), 1);
+    assert_eq!(holed.components[0].holes.len(), 1);
+    assert!(holed.components[0].outer.len() > 10);
+    assert!(
+        holed.components[0]
+            .outer
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(9))
+                && real_eq(&point.y, &ExactReal::from(4)))
+    );
+    assert!(
+        holed.components[0]
+            .outer
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(11))
+                && real_eq(&point.y, &ExactReal::from(3)))
+    );
+    assert!(holed.components[0].holes[0].iter().any(|point| real_eq(
+        &point.x,
+        &ExactReal::from(15)
+    ) && real_eq(
+        &point.y,
+        &ExactReal::from(16)
+    )));
+
+    let mut reversed_hole = holed.clone();
+    reversed_hole.components[0].holes[0].reverse();
+    assert!(reversed_hole.validate().is_err());
+
+    let preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &multiple_openings_plus_hole,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    preflight.validate().unwrap();
+    preflight
+        .validate_against_sources(&left, &multiple_openings_plus_hole)
+        .unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::exact::ExactBooleanSupport::
+            CertifiedCoplanarConvexSurfaceComponentHoledDifference
+    );
+
+    let result = hypermesh::exact::boolean_exact(
+        &left,
+        &multiple_openings_plus_hole,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    result
+        .validate_operation_against_sources(
+            &left,
+            &multiple_openings_plus_hole,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::
+                CoplanarConvexSurfaceComponentHoledDifference
+        }
+    );
+
+    let consumed_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            4, 8, 0, 5, 8, 0, 5, 9, 0, 4, 9, 0, //
+            -2, 4, 0, 9, 4, 0, 7, 10, 0, -2, 10, 0, //
+            -2, 8, 0, 8, 7, 0, 10, 13, 0, -2, 13, 0, //
+            11, 3, 0, 22, 3, 0, 22, 11, 0, 13, 11, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7, //
+            8, 9, 10, 8, 10, 11, //
+            12, 13, 14, 12, 14, 15,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert!(
+        hypermesh::exact::arrange_coplanar_convex_surface_component_holed_difference(
+            &left,
+            &consumed_hole,
+        )
+        .is_none()
+    );
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
 fn exact_coplanar_orthogonal_surface_cells_materialize_nonconvex_outputs() {
     let l_left = rect_surface_i64(&[(0, 0, 2, 6), (2, 0, 6, 2)]);
     let l_right = rect_surface_i64(&[(2, 2, 4, 4)]);

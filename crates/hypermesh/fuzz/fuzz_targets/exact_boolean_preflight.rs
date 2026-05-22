@@ -1378,7 +1378,7 @@ fuzz_target!(|data: &[u8]| {
 
 #[cfg(feature = "exact-triangulation")]
 fn exercise_deterministic_case(selector: u8) {
-    match selector % 24 {
+    match selector % 25 {
         0 => exercise_partial_convex_union_boundary(),
         1 => exercise_face_interior_steiner_boundary(),
         2 => exercise_multi_component_coplanar_union(),
@@ -1402,6 +1402,7 @@ fn exercise_deterministic_case(selector: u8) {
         20 => exercise_contact_opening_with_retained_hole(),
         21 => exercise_independent_contact_openings(),
         22 => exercise_connected_multi_cutter_opening_with_retained_hole(),
+        23 => exercise_multiple_side_cutter_openings_with_retained_hole(),
         _ => exercise_nonrectangular_component_union_hull_coverage(),
     }
 }
@@ -2214,6 +2215,93 @@ fn exercise_connected_multi_cutter_opening_with_retained_hole() {
         arrange_coplanar_convex_surface_component_holed_difference(&left, &point_only_graph)
             .is_none()
     );
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn exercise_multiple_side_cutter_openings_with_retained_hole() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 20, 0, 0, 20, 20, 0, 0, 20, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("multiple side-cutter opening left fixture must import");
+    let openings = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            15, 16, 0, 17, 16, 0, 17, 18, 0, 15, 18, 0, //
+            -2, 4, 0, 9, 4, 0, 7, 10, 0, -2, 10, 0, //
+            -2, 8, 0, 8, 7, 0, 10, 13, 0, -2, 13, 0, //
+            11, 3, 0, 22, 3, 0, 22, 11, 0, 13, 11, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7, //
+            8, 9, 10, 8, 10, 11, //
+            12, 13, 14, 12, 14, 15,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("multiple side-cutter opening right fixture must import");
+
+    assert!(arrange_coplanar_surface_cutter_hole_contact_difference(&left, &openings).is_none());
+    let holed = arrange_coplanar_convex_surface_component_holed_difference(&left, &openings)
+        .expect("multiple side-cutter openings should retain the unrelated strict hole");
+    holed.validate().unwrap();
+    holed.validate_against_sources(&left, &openings).unwrap();
+    assert_eq!(holed.components.len(), 1);
+    assert_eq!(holed.components[0].holes.len(), 1);
+    assert!(holed.components[0].outer.len() > 10);
+
+    let mut stale = holed.clone();
+    stale.components[0].holes[0].reverse();
+    assert!(stale.validate().is_err());
+
+    let preflight = preflight_boolean_exact(&left, &openings, ExactBooleanOperation::Difference)
+        .expect("multiple side-cutter opening preflight should classify shortcut");
+    preflight.validate().unwrap();
+    preflight.validate_against_sources(&left, &openings).unwrap();
+    assert_eq!(
+        preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+    );
+
+    let result = hypermesh::exact::boolean_exact(
+        &left,
+        &openings,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("multiple side-cutter opening boolean should materialize");
+    result
+        .validate_operation_against_sources(
+            &left,
+            &openings,
+            ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+
+    let consumed_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            4, 8, 0, 5, 8, 0, 5, 9, 0, 4, 9, 0, //
+            -2, 4, 0, 9, 4, 0, 7, 10, 0, -2, 10, 0, //
+            -2, 8, 0, 8, 7, 0, 10, 13, 0, -2, 13, 0, //
+            11, 3, 0, 22, 3, 0, 22, 11, 0, 13, 11, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7, //
+            8, 9, 10, 8, 10, 11, //
+            12, 13, 14, 12, 14, 15,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("consumed-hole multiple side-cutter fixture must import");
+    assert!(arrange_coplanar_convex_surface_component_holed_difference(
+        &left,
+        &consumed_hole
+    )
+    .is_none());
 }
 
 #[cfg(feature = "exact-triangulation")]
