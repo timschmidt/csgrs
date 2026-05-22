@@ -2395,8 +2395,47 @@ fn exercise_consumed_hole_side_cutter_openings() {
     )
     .expect("straddling consumed-hole fixture must import");
     assert!(
-        arrange_coplanar_convex_surface_component_holed_difference(&left, &straddling_hole)
+        arrange_coplanar_surface_cutter_hole_contact_difference(&left, &straddling_hole)
             .is_none()
+    );
+    let straddling =
+        arrange_coplanar_convex_surface_component_holed_difference(&left, &straddling_hole)
+            .expect("straddling strict hole should be consumed by its side-opening group");
+    straddling.validate().unwrap();
+    straddling
+        .validate_against_sources(&left, &straddling_hole)
+        .unwrap();
+    assert_eq!(straddling.components.len(), 1);
+    assert_eq!(straddling.components[0].holes.len(), 1);
+    assert!(
+        straddling.components[0]
+            .outer
+            .iter()
+            .any(|point| point.x == hypermesh::exact::ExactReal::from(8)
+                && point.y == hypermesh::exact::ExactReal::from(14))
+    );
+    let mut stale_straddling = straddling.clone();
+    stale_straddling.components[0].holes.push(vec![
+        point3(8, 12, 0),
+        point3(10, 12, 0),
+        point3(10, 14, 0),
+        point3(8, 14, 0),
+    ]);
+    assert!(
+        stale_straddling
+            .validate_against_sources(&left, &straddling_hole)
+            .is_err()
+    );
+    let straddling_preflight =
+        preflight_boolean_exact(&left, &straddling_hole, ExactBooleanOperation::Difference)
+            .expect("straddling consumed-hole preflight should classify component-holed shortcut");
+    straddling_preflight.validate().unwrap();
+    straddling_preflight
+        .validate_against_sources(&left, &straddling_hole)
+        .unwrap();
+    assert_eq!(
+        straddling_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
     );
 }
 

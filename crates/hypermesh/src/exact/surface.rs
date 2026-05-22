@@ -5167,6 +5167,34 @@ fn materialize_removed_region_group_polygon(
     connected_convex_contact_union_polygon(&group_regions, projection)
 }
 
+/// Materialize one removed-region group, allowing a single convex group.
+///
+/// Mixed cutter/hole groups still route through
+/// [`connected_convex_contact_union_polygon`] so overlap and positive-length
+/// contact replay exact inclusion-exclusion area. A single cutter-only group
+/// is already one clipped convex removed region, but it is still reoriented
+/// and loop-validated here before it participates in the multi-opening
+/// difference certificate. This preserves Yap's object-level replay boundary
+/// from "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+/// (1997): even the singleton shortcut is a retained exact region, not a
+/// sampled polygon bay.
+#[cfg(feature = "exact-triangulation")]
+fn materialize_removed_region_group_or_single_polygon(
+    regions: &[RemovedRegionCandidate],
+    group: &[usize],
+    projection: CoplanarProjection,
+) -> Option<Vec<Point3>> {
+    if group.len() == 1 {
+        let mut polygon = regions[group[0]].region.clone();
+        orient_polygon_ccw(&mut polygon, projection)?;
+        polygon = simplify_projected_polygon(polygon, projection);
+        validate_projected_simple_loop(&polygon, projection, "coplanar removed side-opening group")
+            .ok()?;
+        return Some(polygon);
+    }
+    materialize_removed_region_group_polygon(regions, group, projection)
+}
+
 /// Subtract several side-opened removed loops from one convex outer loop.
 ///
 /// This is not a general planar arrangement. It only accepts removed loops
@@ -6229,24 +6257,29 @@ struct RemovedRegionCandidate {
     region: Vec<Point3>,
 }
 
-/// Replay one cutter/hole opening while retaining unrelated strict holes.
+/// Replay mixed cutter/hole openings while retaining unrelated strict holes.
 ///
 /// This helper is the holed-output sibling of
 /// [`arrange_coplanar_surface_cutter_hole_contact_difference`]. A connected
 /// group of clipped side cutters and strict holes is first replayed as a
-/// removed-region loop. One group delegates to the existing
-/// cutter/hole-contact certificate. Several independent groups use the same
-/// retained fragment rule as the public multi-opening surface path: every
-/// removed group must carry one positive-length side attachment, the stitched
-/// output must be a simple loop, and exact projected area must replay
-/// `outer = output + removed`. Strict holes in non-opening components are then
+/// removed-region loop, which consumes every strict hole in that group. The
+/// bounded extension here is that the same component may also have independent
+/// cutter-only side openings; those groups are materialized with the same
+/// retained side-opening rule as
+/// [`materialize_nonrectilinear_side_cutter_opening`]. The final outer loop is
+/// accepted only when every removed group has one positive-length side
+/// attachment, the stitched output is simple, and exact projected area replays
+/// `outer = output + sum(removed_i)`.
+///
+/// This covers the bounded partially straddling-hole case without claiming a
+/// general planar subdivision: a hole overlapping a side-opening group is
+/// consumed by that exact removed union, while unrelated strict holes are
 /// retained only if exact simple-polygon containment proves they lie inside
-/// that opened loop. Point-only contacts and branch graphs still require a
-/// full planar subdivision. Boundary fragments follow Weiler and Atherton,
-/// "Hidden Surface Removal Using Polygon Area Sorting," *SIGGRAPH Computer
-/// Graphics* 11.2 (1977), and the replay/retained ring split follows Yap,
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997).
+/// the opened loop. Point-only contacts and branch graphs still require a full
+/// planar subdivision. Boundary fragments follow Weiler and Atherton, "Hidden
+/// Surface Removal Using Polygon Area Sorting," *SIGGRAPH Computer Graphics*
+/// 11.2 (1977), and the replay/retained ring split follows Yap, "Towards
+/// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997).
 #[cfg(feature = "exact-triangulation")]
 fn materialize_cutter_hole_contact_component_holed_difference(
     component: &ConvexUnionComponent,
@@ -6287,19 +6320,26 @@ fn materialize_cutter_hole_contact_component_holed_difference(
 
     let groups = removed_region_contact_groups(&regions, projection)?;
     let mut opening_groups = Vec::new();
+    let mut consumed_hole_groups = 0usize;
     for group in &groups {
         if group.iter().any(|&index| regions[index].is_cutter) {
-            if !group.iter().any(|&index| !regions[index].is_cutter) {
-                return None;
+            if group.iter().any(|&index| !regions[index].is_cutter) {
+                consumed_hole_groups += 1;
             }
             opening_groups.push(group.clone());
         }
     }
-    if opening_groups.is_empty() {
+    if opening_groups.is_empty() || consumed_hole_groups == 0 {
         return None;
     }
 
     let opening = if opening_groups.len() == 1 {
+        if !opening_groups[0]
+            .iter()
+            .any(|&index| !regions[index].is_cutter)
+        {
+            return None;
+        }
         let opening_indices = opening_groups[0]
             .iter()
             .map(|&index| regions[index].right_index)
@@ -6315,7 +6355,7 @@ fn materialize_cutter_hole_contact_component_holed_difference(
     } else {
         let mut removed_openings = Vec::with_capacity(opening_groups.len());
         for group in &opening_groups {
-            removed_openings.push(materialize_removed_region_group_polygon(
+            removed_openings.push(materialize_removed_region_group_or_single_polygon(
                 &regions, group, projection,
             )?);
         }

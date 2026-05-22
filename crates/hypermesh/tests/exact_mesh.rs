@@ -13683,11 +13683,103 @@ fn exact_coplanar_component_holed_difference_omits_holes_consumed_by_side_cutter
     )
     .unwrap();
     assert!(
-        hypermesh::exact::arrange_coplanar_convex_surface_component_holed_difference(
+        hypermesh::exact::arrange_coplanar_surface_cutter_hole_contact_difference(
             &left,
             &straddling_hole,
         )
         .is_none()
+    );
+    let straddling = hypermesh::exact::arrange_coplanar_convex_surface_component_holed_difference(
+        &left,
+        &straddling_hole,
+    )
+    .expect(
+        "a hole overlapping one side-opening group should be consumed while unrelated holes remain",
+    );
+    straddling.validate().unwrap();
+    straddling
+        .validate_against_sources(&left, &straddling_hole)
+        .unwrap();
+    assert_eq!(straddling.components.len(), 1);
+    assert_eq!(straddling.components[0].holes.len(), 1);
+    assert!(
+        straddling.components[0].holes[0]
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(15))
+                && real_eq(&point.y, &ExactReal::from(16)))
+    );
+    assert!(straddling.components[0].outer.iter().any(|point| real_eq(
+        &point.x,
+        &ExactReal::from(8)
+    ) && real_eq(
+        &point.y,
+        &ExactReal::from(14)
+    )));
+    assert!(straddling.components[0].outer.iter().any(|point| real_eq(
+        &point.x,
+        &ExactReal::from(10)
+    ) && real_eq(
+        &point.y,
+        &ExactReal::from(14)
+    )));
+    assert!(
+        !straddling.components[0].holes[0]
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(8))
+                && real_eq(&point.y, &ExactReal::from(12)))
+    );
+
+    let mut stale_straddling = straddling.clone();
+    stale_straddling.components[0].holes.push(vec![
+        p3(8, 12, 0),
+        p3(10, 12, 0),
+        p3(10, 14, 0),
+        p3(8, 14, 0),
+    ]);
+    assert!(
+        stale_straddling
+            .validate_against_sources(&left, &straddling_hole)
+            .is_err()
+    );
+
+    let straddling_preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &straddling_hole,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    straddling_preflight.validate().unwrap();
+    straddling_preflight
+        .validate_against_sources(&left, &straddling_hole)
+        .unwrap();
+    assert_eq!(
+        straddling_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::
+            CertifiedCoplanarConvexSurfaceComponentHoledDifference
+    );
+
+    let straddling_result = hypermesh::exact::boolean_exact(
+        &left,
+        &straddling_hole,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    straddling_result
+        .validate_operation_against_sources(
+            &left,
+            &straddling_hole,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        straddling_result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::
+                CoplanarConvexSurfaceComponentHoledDifference
+        }
     );
 }
 

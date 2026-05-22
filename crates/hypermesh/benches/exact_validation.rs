@@ -3456,6 +3456,24 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
             ValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
+        let straddling_hole_side_cutter_right = ExactMesh::from_i64_triangles_with_policy(
+            &[
+                15, 16, 0, 17, 16, 0, 17, 18, 0, 15, 18, 0, //
+                8, 12, 0, 10, 12, 0, 10, 14, 0, 8, 14, 0, //
+                -2, 4, 0, 9, 4, 0, 7, 10, 0, -2, 10, 0, //
+                -2, 8, 0, 8, 7, 0, 10, 13, 0, -2, 13, 0, //
+                11, 3, 0, 22, 3, 0, 22, 11, 0, 13, 11, 0,
+            ],
+            &[
+                0, 1, 2, 0, 2, 3, //
+                4, 5, 6, 4, 6, 7, //
+                8, 9, 10, 8, 10, 11, //
+                12, 13, 14, 12, 14, 15, //
+                16, 17, 18, 16, 18, 19,
+            ],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
         let side_cutter_no_hole_right = ExactMesh::from_i64_triangles_with_policy(
             &[
                 -2, 4, 0, 9, 4, 0, 7, 10, 0, -2, 10, 0, //
@@ -4063,6 +4081,29 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
                         hypermesh::exact::boolean_exact(
                             &contact_opening_holed_left,
                             &consumed_hole_side_cutter_right,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                            ValidationPolicy::ALLOW_BOUNDARY,
+                        )
+                        .unwrap(),
+                        arrange_coplanar_convex_surface_component_holed_difference(
+                            &contact_opening_holed_left,
+                            &straddling_hole_side_cutter_right,
+                        )
+                        .map(|output| {
+                            output.validate_against_sources(
+                                &contact_opening_holed_left,
+                                &straddling_hole_side_cutter_right,
+                            )
+                        }),
+                        hypermesh::exact::preflight_boolean_exact(
+                            &contact_opening_holed_left,
+                            &straddling_hole_side_cutter_right,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                        )
+                        .map(|report| report.validate()),
+                        hypermesh::exact::boolean_exact(
+                            &contact_opening_holed_left,
+                            &straddling_hole_side_cutter_right,
                             hypermesh::exact::ExactBooleanOperation::Difference,
                             ValidationPolicy::ALLOW_BOUNDARY,
                         )
