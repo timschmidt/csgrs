@@ -6432,8 +6432,10 @@ fn bezier_boolean_construction_readiness_reports_ready_interior_splits() {
             intersection,
         });
 
-    let readiness =
-        BezierBooleanConstructionReadinessReport2::from_reports(&[relation], &[], &policy());
+    let readiness = BezierBooleanConstructionReadinessReport2::from_scheduler(
+        BezierBooleanPathSchedulerReport2::from_reports(&[relation], &[]),
+        &policy(),
+    );
 
     let Classification::Decided(readiness) = readiness else {
         panic!("ready construction report should be decided");
@@ -6457,9 +6459,8 @@ fn bezier_boolean_construction_readiness_reports_noop_and_blocked_states() {
         BezierBooleanHandoffReport2::from_relation(&BezierCurveRelation::LineSegmentIntersection {
             intersection: endpoint_intersection,
         });
-    let readiness = BezierBooleanConstructionReadinessReport2::from_reports(
-        &[endpoint_relation],
-        &[],
+    let readiness = BezierBooleanConstructionReadinessReport2::from_scheduler(
+        BezierBooleanPathSchedulerReport2::from_reports(&[endpoint_relation], &[]),
         &policy(),
     )
     .unwrap_decided_for_test();
@@ -6473,9 +6474,8 @@ fn bezier_boolean_construction_readiness_reports_noop_and_blocked_states() {
     let blocked_relation = BezierBooleanHandoffReport2::from_classified_relation(
         &Classification::Uncertain(UncertaintyReason::Ordering),
     );
-    let blocked = BezierBooleanConstructionReadinessReport2::from_reports(
-        &[blocked_relation],
-        &[],
+    let blocked = BezierBooleanConstructionReadinessReport2::from_scheduler(
+        BezierBooleanPathSchedulerReport2::from_reports(&[blocked_relation], &[]),
         &policy(),
     )
     .unwrap_decided_for_test();
@@ -6495,9 +6495,11 @@ fn bezier_boolean_quadratic_fragment_report_splits_ready_first_operand() {
         BezierBooleanHandoffReport2::from_relation(&BezierCurveRelation::IntersectionRegions {
             regions: vec![region],
         });
-    let readiness =
-        BezierBooleanConstructionReadinessReport2::from_reports(&[relation], &[], &policy())
-            .unwrap_decided_for_test();
+    let readiness = BezierBooleanConstructionReadinessReport2::from_scheduler(
+        BezierBooleanPathSchedulerReport2::from_reports(&[relation], &[]),
+        &policy(),
+    )
+    .unwrap_decided_for_test();
 
     let report = BezierBooleanQuadraticFragmentReport2::from_first_curve_readiness(
         &curve,
@@ -14565,9 +14567,8 @@ fn bezier_boolean_fragment_reports_preserve_blocked_and_invalid_states() {
     let blocked_relation = BezierBooleanHandoffReport2::from_classified_relation(
         &Classification::Uncertain(UncertaintyReason::Ordering),
     );
-    let blocked_readiness = BezierBooleanConstructionReadinessReport2::from_reports(
-        &[blocked_relation],
-        &[],
+    let blocked_readiness = BezierBooleanConstructionReadinessReport2::from_scheduler(
+        BezierBooleanPathSchedulerReport2::from_reports(&[blocked_relation], &[]),
         &policy(),
     )
     .unwrap_decided_for_test();
@@ -15530,7 +15531,10 @@ proptest! {
         );
 
         let readiness =
-            BezierBooleanConstructionReadinessReport2::from_reports(&[relation], &[], &policy());
+            BezierBooleanConstructionReadinessReport2::from_scheduler(
+        BezierBooleanPathSchedulerReport2::from_reports(&[relation], &[]),
+        &policy(),
+    );
 
         let Classification::Decided(readiness) = readiness else {
             panic!("generated construction readiness should be decided");

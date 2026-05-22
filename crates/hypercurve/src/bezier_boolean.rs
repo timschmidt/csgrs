@@ -13962,18 +13962,6 @@ impl BezierBooleanConstructionReadinessReport2 {
         Self::from_split_plan(scheduler, split_plan, policy)
     }
 
-    /// Builds construction readiness directly from relation and range reports.
-    pub fn from_reports(
-        relation_reports: &[BezierBooleanHandoffReport2],
-        range_reports: &[BezierPathRangeOrderReport2],
-        policy: &CurvePolicy,
-    ) -> Classification<Self> {
-        Self::from_scheduler(
-            BezierBooleanPathSchedulerReport2::from_reports(relation_reports, range_reports),
-            policy,
-        )
-    }
-
     fn from_split_plan(
         scheduler: BezierBooleanPathSchedulerReport2,
         split_plan: BezierBooleanSplitPlanReport2,
