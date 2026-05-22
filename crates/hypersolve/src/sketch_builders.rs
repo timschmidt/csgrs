@@ -224,6 +224,29 @@ pub mod orientation {
             kind,
         }
     }
+
+    /// Add a 2D line same-orientation relation.
+    ///
+    /// The lowered package uses exact unnormalized predicates: cross product
+    /// equality for parallel support and dot product nonnegativity for shared
+    /// orientation. This keeps the orientation decision report-bearing, as
+    /// required by Yap's "Towards Exact Geometric Computation" (1997), and
+    /// avoids importing any SolveSpace implementation code.
+    pub fn same_direction_lines2(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::SameDirectionLines2 { a, b };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Orientation,
+            strategy: SketchResidualStrategy::DirectionSameOrientation,
+            kind,
+        }
+    }
 }
 
 /// Symmetry and midpoint relation builders.

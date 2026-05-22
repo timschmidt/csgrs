@@ -376,6 +376,19 @@ pub enum SketchConstraintKind {
         /// Second line entity.
         b: SketchEntityHandle,
     },
+    /// 2D line same-orientation relation.
+    ///
+    /// Lowering emits exact, unnormalized direction predicates: cross product
+    /// equality for parallel support and dot product nonnegativity for common
+    /// orientation. This mirrors the exact predicate style advocated by Yap,
+    /// "Towards Exact Geometric Computation" (1997), while leaving degenerate
+    /// line carriers to explicit entity-domain preflight reports.
+    SameDirectionLines2 {
+        /// First line entity.
+        a: SketchEntityHandle,
+        /// Second line entity.
+        b: SketchEntityHandle,
+    },
     /// 2D point-at-midpoint relation.
     ///
     /// Lowering emits exact linear coordinate equations without averaging in
@@ -484,6 +497,8 @@ pub enum SketchResidualStrategy {
     DirectionCrossProduct,
     /// 2D direction dot-product equality.
     DirectionDotProduct,
+    /// Exact same-orientation relation for two retained 2D directions.
+    DirectionSameOrientation,
     /// Linear coordinate equality for a retained midpoint relation.
     MidpointCoordinateEquality,
     /// Soft stay-near objective.
@@ -993,6 +1008,20 @@ impl SketchSolveProblem {
         orientation::perpendicular_lines2(self, name, a, b).handle
     }
 
+    /// Add a retained 2D line same-orientation constraint.
+    ///
+    /// Lowering emits exact cross-product and dot-product rows without
+    /// direction normalization. Degenerate line detection stays in explicit
+    /// sketch-domain preflight rather than a hidden epsilon.
+    pub fn add_same_direction_lines2(
+        &mut self,
+        name: impl Into<String>,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+    ) -> SketchConstraintHandle {
+        orientation::same_direction_lines2(self, name, a, b).handle
+    }
+
     /// Add a retained 2D point-at-midpoint relation.
     ///
     /// Lowering emits one exact linear equality per coordinate. This mirrors
@@ -1415,6 +1444,36 @@ impl SketchSolveProblem {
                     constraint.name.clone(),
                     direction_dot2(&a, &b),
                     SketchResidualStrategy::DirectionDotProduct,
+                );
+            }
+            SketchConstraintKind::SameDirectionLines2 { a, b } => {
+                // Yap, "Towards Exact Geometric Computation" (1997), keeps
+                // the exact predicate package explicit. Same-direction support
+                // is certified by cross == 0, while orientation is certified
+                // by dot >= 0 without lossy normalization.
+                let (Some(a), Some(b)) = (
+                    self.line2_direction(a, constraint, rows),
+                    self.line2_direction(b, constraint, rows),
+                ) else {
+                    return;
+                };
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} parallel support", constraint.name),
+                    direction_cross2(&a, &b),
+                    SketchResidualStrategy::DirectionSameOrientation,
+                );
+                self.push_residual_with_kind(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} orientation", constraint.name),
+                    direction_dot2(&a, &b),
+                    SketchResidualStrategy::DirectionSameOrientation,
+                    ConstraintKind::GreaterOrEqual,
+                    Real::one(),
                 );
             }
             SketchConstraintKind::AtMidpoint2 { point, a, b } => {

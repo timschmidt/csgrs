@@ -295,6 +295,28 @@ fn sketch_problem_with_midpoint_relations(row_count: usize) -> hypersolve::Sketc
     sketch
 }
 
+fn sketch_problem_with_same_direction_relations(
+    row_count: usize,
+) -> hypersolve::SketchSolveProblem {
+    let mut sketch = hypersolve::SketchSolveProblem::new();
+    for index in 0..row_count {
+        let y = index as i64;
+        let a0 = sketch.add_point2d(format!("same{index}.a0"), r(0), r(y));
+        let a1 = sketch.add_point2d(format!("same{index}.a1"), r(3), r(y + 1));
+        let b0 = sketch.add_point2d(format!("same{index}.b0"), r(2), r(y + 3));
+        let b1 = sketch.add_point2d(format!("same{index}.b1"), r(8), r(y + 5));
+        let a = sketch.add_line_segment2(format!("same{index}.a"), a0, a1);
+        let b = sketch.add_line_segment2(format!("same{index}.b"), b0, b1);
+        hypersolve::sketch_orientation_builders::same_direction_lines2(
+            &mut sketch,
+            format!("same direction {index}"),
+            a,
+            b,
+        );
+    }
+    sketch
+}
+
 fn sketch_problem_with_parameter_orderings(row_count: usize) -> hypersolve::SketchSolveProblem {
     let mut sketch = hypersolve::SketchSolveProblem::new();
     let mut previous = sketch.add_parameter("order0", r(0));
@@ -432,6 +454,10 @@ fn certification(c: &mut Criterion) {
     let midpoint_sketch = sketch_problem_with_midpoint_relations(16);
     c.bench_function("sketch_midpoint_lowering", |b| {
         b.iter(|| midpoint_sketch.lower_to_problem())
+    });
+    let same_direction_sketch = sketch_problem_with_same_direction_relations(16);
+    c.bench_function("sketch_same_direction_lowering", |b| {
+        b.iter(|| same_direction_sketch.lower_to_problem())
     });
     let ordering_sketch = sketch_problem_with_parameter_orderings(16);
     c.bench_function("sketch_parameter_ordering_lowering", |b| {

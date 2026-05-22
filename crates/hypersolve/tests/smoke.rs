@@ -768,6 +768,90 @@ fn sketch_line_orientation_relations_report_stale_and_wrong_inputs() {
 }
 
 #[test]
+fn sketch_same_direction_relations_lower_to_parallel_and_orientation_rows() {
+    let mut sketch = SketchSolveProblem::new();
+    let a0 = sketch.add_point2d("a0", real(0), real(0));
+    let a1 = sketch.add_point2d("a1", real(3), real(0));
+    let b0 = sketch.add_point2d("b0", real(1), real(2));
+    let b1 = sketch.add_point2d("b1", real(5), real(2));
+    let c0 = sketch.add_point2d("c0", real(5), real(4));
+    let c1 = sketch.add_point2d("c1", real(1), real(4));
+    let same_a = sketch.add_line_segment2("same a", a0, a1);
+    let same_b = sketch.add_line_segment2("same b", b0, b1);
+    let reversed = sketch.add_line_segment2("reversed", c0, c1);
+    let same_report = sketch_orientation_builders::same_direction_lines2(
+        &mut sketch,
+        "same direction",
+        same_a,
+        same_b,
+    );
+    sketch.add_same_direction_lines2("opposite direction", same_a, reversed);
+
+    assert_eq!(
+        same_report.strategy,
+        SketchResidualStrategy::DirectionSameOrientation
+    );
+
+    let lowered = sketch.lower_to_problem();
+    let certification = certify_candidate(
+        &PreparedProblem::new(&lowered.problem),
+        &context_from_problem(&lowered.problem),
+    );
+
+    assert_eq!(lowered.problem.constraints.len(), 4);
+    assert_eq!(lowered.rows.len(), 4);
+    assert!(lowered.rows.iter().all(|row| {
+        row.strategy == Some(SketchResidualStrategy::DirectionSameOrientation)
+            && row.status == SketchGeneratedRowStatus::Generated
+    }));
+    assert!(matches!(
+        certification.rows[0].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[1].status,
+        CertifiedCandidateStatus::CertifiedSatisfiedInequality { .. }
+    ));
+    assert!(matches!(
+        certification.rows[2].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[3].status,
+        CertifiedCandidateStatus::CertifiedViolation {
+            sign: hyperreal::RealSign::Positive,
+            ..
+        }
+    ));
+}
+
+#[test]
+fn sketch_same_direction_relations_report_stale_and_wrong_inputs() {
+    let mut sketch = SketchSolveProblem::new();
+    let p = sketch.add_point2d("p", real(0), real(0));
+    let q = sketch.add_point2d("q", real(1), real(0));
+    let line = sketch.add_line_segment2("line", p, q);
+    sketch.add_same_direction_lines2("missing line", line, SketchEntityHandle(999));
+    sketch.add_same_direction_lines2("wrong family", line, p);
+
+    let lowered = sketch.lower_to_problem();
+
+    assert_eq!(lowered.problem.constraints.len(), 0);
+    assert_eq!(lowered.rows.len(), 2);
+    assert_eq!(
+        lowered.rows[0].status,
+        SketchGeneratedRowStatus::MissingEntity(SketchEntityHandle(999))
+    );
+    assert_eq!(
+        lowered.rows[1].status,
+        SketchGeneratedRowStatus::WrongEntityKind {
+            handle: p,
+            expected: "2D line segment"
+        }
+    );
+}
+
+#[test]
 fn sketch_midpoint_relations_lower_to_exact_linear_rows() {
     let mut sketch = SketchSolveProblem::new();
     let a = sketch.add_point2d("a", real(0), real(0));

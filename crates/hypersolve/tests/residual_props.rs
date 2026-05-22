@@ -364,6 +364,48 @@ proptest! {
     }
 
     #[test]
+    fn sketch_same_direction_rows_match_generated_positive_scaled_directions(
+        ax in -8_i16..=8,
+        ay in -8_i16..=8,
+        dx in -8_i16..=8,
+        dy in -8_i16..=8,
+        scale in 1_i16..=5,
+    ) {
+        prop_assume!(dx != 0 || dy != 0);
+        let ax = i64::from(ax);
+        let ay = i64::from(ay);
+        let dx = i64::from(dx);
+        let dy = i64::from(dy);
+        let scale = i64::from(scale);
+        let mut sketch = SketchSolveProblem::new();
+        let a0 = sketch.add_point2d("a0", Real::from(ax), Real::from(ay));
+        let a1 = sketch.add_point2d("a1", Real::from(ax + dx), Real::from(ay + dy));
+        let b0 = sketch.add_point2d("b0", Real::from(3), Real::from(-2));
+        let b1 = sketch.add_point2d(
+            "b1",
+            Real::from(3 + scale * dx),
+            Real::from(-2 + scale * dy),
+        );
+        let line_a = sketch.add_line_segment2("a", a0, a1);
+        let line_b = sketch.add_line_segment2("b", b0, b1);
+        sketch.add_same_direction_lines2("same direction", line_a, line_b);
+
+        let lowered = sketch.lower_to_problem();
+        let certification = certify_candidate(
+            &PreparedProblem::new(&lowered.problem),
+            &context_from_problem(&lowered.problem),
+        );
+
+        prop_assert_eq!(lowered.rows.len(), 2);
+        let all_same_orientation_rows = lowered.rows.iter().all(|row| {
+            row.strategy == Some(SketchResidualStrategy::DirectionSameOrientation)
+                && row.status == SketchGeneratedRowStatus::Generated
+        });
+        prop_assert!(all_same_orientation_rows);
+        prop_assert!(certification.all_satisfied());
+    }
+
+    #[test]
     fn sketch_midpoint_rows_match_generated_integer_points(
         mx in -12_i16..=12,
         my in -12_i16..=12,
