@@ -80,9 +80,10 @@
 //! `float_types::tolerance()`.
 
 use crate::float_types::{
-    HReal, Real, hperpendicular_basis, hreal_from_f64, hreal_gt_f64, hreal_sign, hreal_to_f64,
-    hrotation_between_vectors, htranslation_matrix, hunit_vector3, hvector3_dot,
-    hvector3_from_point3, hvector3_from_vector3, tolerance,
+    HReal, Real, hperpendicular_basis, hpositive_boundary_scalar_squared, hreal_from_f64,
+    hreal_gt_f64, hreal_gt_hreal, hreal_sign, hreal_to_f64, hrotation_between_vectors,
+    htranslation_matrix, hunit_vector3, hvector3_dot, hvector3_from_point3,
+    hvector3_from_vector3, tolerance,
 };
 use crate::polygon::Polygon;
 use crate::vertex::Vertex;
@@ -139,26 +140,6 @@ fn hreal_cmp_or_equal(lhs: &HReal, rhs: &HReal) -> Ordering {
         Some(RealSign::Negative) => Ordering::Less,
         Some(RealSign::Zero) | None => Ordering::Equal,
     }
-}
-
-fn hreal_gt_hreal(lhs: &HReal, rhs: &HReal) -> bool {
-    matches!(
-        hreal_sign(&(lhs.clone() - rhs.clone())),
-        Some(RealSign::Positive)
-    )
-}
-
-/// Return the configured BSP tolerance squared as a hyperreal scalar.
-///
-/// `tolerance()` is still a runtime boundary knob, but squared support-area
-/// and normal-length thresholds remain in hyperreal space once imported. That
-/// keeps plane degeneracy decisions aligned with Yap's exact-geometric-
-/// computation model instead of multiplying primitive thresholds inside the
-/// predicate path (Computational Geometry 7(1-2), 1997,
-/// <https://doi.org/10.1016/0925-7721(95)00040-2>).
-fn hplane_tolerance_squared() -> Option<HReal> {
-    let tolerance = hreal_from_f64(tolerance()).ok()?;
-    Some(tolerance.clone() * tolerance)
 }
 
 fn hlimit_point3_from_point3(point: &Point3<Real>) -> Option<hyperlimit::Point3> {
@@ -237,7 +218,7 @@ impl Plane {
         let p1 = vertices[i1].position;
         let hdir = &hpoints[i1] - &hpoints[i0];
         let hdir2 = hdir.dot(&hdir);
-        let Some(tolerance_squared) = hplane_tolerance_squared() else {
+        let Some(tolerance_squared) = hpositive_boundary_scalar_squared(tolerance()) else {
             return reference_plane;
         };
         if !hreal_gt_hreal(&hdir2, &tolerance_squared) {
@@ -314,7 +295,7 @@ impl Plane {
     pub fn try_from_normal(normal: Vector3<Real>, offset: Real) -> Option<Self> {
         let hyper_normal = hvector3_from_vector3(&normal)?;
         let n2 = hyper_normal.dot(&hyper_normal);
-        let tolerance_squared = hplane_tolerance_squared()?;
+        let tolerance_squared = hpositive_boundary_scalar_squared(tolerance())?;
         if !hreal_gt_hreal(&n2, &tolerance_squared) {
             return None;
         }
@@ -642,7 +623,8 @@ fn normals_same_direction(lhs: &Vector3<Real>, rhs: &Vector3<Real>) -> bool {
 
 #[test]
 fn plane_tolerance_squared_stays_hyperreal() {
-    let tolerance_squared = hplane_tolerance_squared().expect("finite crate tolerance");
+    let tolerance_squared =
+        hpositive_boundary_scalar_squared(tolerance()).expect("finite crate tolerance");
     let tolerance_hreal = hreal_from_f64(tolerance()).expect("finite crate tolerance");
 
     let below = tolerance_hreal.clone() * hreal_from_f64(0.5).expect("finite scalar");
