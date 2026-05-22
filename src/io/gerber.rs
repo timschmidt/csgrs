@@ -1483,10 +1483,10 @@ mod tests {
         ]);
 
         assert_eq!(hull.len(), 4);
-        assert!(
-            hull.iter()
-                .all(|point| point.x.is_finite() && point.y.is_finite())
-        );
+        assert!(hull.iter().all(|point| {
+            crate::float_types::hreal_from_f64(point.x).is_ok()
+                && crate::float_types::hreal_from_f64(point.y).is_ok()
+        }));
         assert!(hull.iter().any(|point| point.x == 0.0 && point.y == 0.0));
         assert!(hull.iter().any(|point| point.x == 1.0 && point.y == 0.0));
         assert!(hull.iter().any(|point| point.x == 1.0 && point.y == 1.0));
