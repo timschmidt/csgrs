@@ -774,6 +774,52 @@ proptest! {
     }
 
     #[test]
+    fn sketch_point_line_residual_forms_replay_generated_signed_branches(
+        x0 in -8_i16..=8,
+        y0 in -8_i16..=8,
+        px in -8_i16..=8,
+        offset in -12_i16..=12,
+    ) {
+        prop_assume!(offset != 0);
+        let x0 = i64::from(x0);
+        let y0 = i64::from(y0);
+        let px = i64::from(px);
+        let offset = i64::from(offset);
+        let distance_value = offset.abs();
+        let mut sketch = SketchSolveProblem::new();
+        let start = sketch.add_point2d("start", Real::from(x0), Real::from(y0));
+        let end = sketch.add_point2d("end", Real::from(x0 + 5), Real::from(y0));
+        let point = sketch.add_point2d("point", Real::from(px), Real::from(y0 + offset));
+        let line = sketch.add_line_segment2("line", start, end);
+        let distance = sketch.add_distance("distance", Real::from(distance_value));
+        let handle = sketch.add_point_line_distance2("point line distance", point, line, distance);
+
+        let forms = sketch.residual_forms_for_constraint(handle);
+        let context = context_from_problem(&sketch.lower_to_problem().problem);
+
+        prop_assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+        prop_assert_eq!(forms.forms.len(), 3);
+        prop_assert_eq!(
+            forms.forms[0].kind,
+            SketchResidualFormKind::SquaredPointLineDistancePolynomial
+        );
+        prop_assert_eq!(forms.forms[0].role, SketchResidualFormRole::ExactProof);
+        prop_assert_eq!(
+            forms.forms[0].residual.eval_real(context.bindings()).unwrap(),
+            Real::zero()
+        );
+        let positive_branch = forms.forms[1].residual.eval_real(context.bindings()).unwrap();
+        let negative_branch = forms.forms[2].residual.eval_real(context.bindings()).unwrap();
+        if offset < 0 {
+            prop_assert_eq!(positive_branch, Real::zero());
+            prop_assert_ne!(negative_branch, Real::zero());
+        } else {
+            prop_assert_ne!(positive_branch, Real::zero());
+            prop_assert_eq!(negative_branch, Real::zero());
+        }
+    }
+
+    #[test]
     fn sketch_equal_angle_rows_match_generated_scaled_line_pairs(
         ux in -6_i16..=6,
         uy in -6_i16..=6,

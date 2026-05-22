@@ -303,6 +303,71 @@ fn sketch_distance_constraints_retain_exact_and_proposal_residual_forms() {
 }
 
 #[test]
+fn sketch_point_line_distance_constraints_retain_signed_distance_forms() {
+    let mut sketch = SketchSolveProblem::new();
+    let start = sketch.add_point2d("start", real(0), real(0));
+    let end = sketch.add_point2d("end", real(5), real(0));
+    let above = sketch.add_point2d("above", real(2), real(3));
+    let line = sketch.add_line_segment2("line", start, end);
+    let distance = sketch.add_distance("distance", real(3));
+    let relation = sketch_distance_builders::point_line_distance2(
+        &mut sketch,
+        "point line distance",
+        above,
+        line,
+        distance,
+    );
+
+    let forms = sketch.residual_forms_for_constraint(relation.handle);
+
+    assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+    assert!(forms.diagnostics.is_empty());
+    assert_eq!(forms.forms.len(), 3);
+    assert_eq!(
+        forms.forms[0].kind,
+        SketchResidualFormKind::SquaredPointLineDistancePolynomial
+    );
+    assert_eq!(forms.forms[0].role, SketchResidualFormRole::ExactProof);
+    assert_eq!(
+        forms.forms[0].strategy,
+        Some(SketchResidualStrategy::SquaredPointLineDistance)
+    );
+    assert_eq!(
+        forms.forms[1].kind,
+        SketchResidualFormKind::PointLineSignedDistancePositiveProposal
+    );
+    assert_eq!(forms.forms[1].role, SketchResidualFormRole::ProposalOnly);
+    assert_eq!(
+        forms.forms[2].kind,
+        SketchResidualFormKind::PointLineSignedDistanceNegativeProposal
+    );
+    assert_eq!(forms.forms[2].role, SketchResidualFormRole::ProposalOnly);
+
+    let context = context_from_problem(&sketch.lower_to_problem().problem);
+    assert_eq!(
+        forms.forms[0]
+            .residual
+            .eval_real(context.bindings())
+            .unwrap(),
+        Real::zero()
+    );
+    assert_eq!(
+        forms.forms[1]
+            .residual
+            .eval_real(context.bindings())
+            .unwrap(),
+        real(-30)
+    );
+    assert_eq!(
+        forms.forms[2]
+            .residual
+            .eval_real(context.bindings())
+            .unwrap(),
+        Real::zero()
+    );
+}
+
+#[test]
 fn sketch_equal_angle_constraints_retain_exact_and_proposal_residual_forms() {
     let mut sketch = SketchSolveProblem::new();
     let origin = sketch.add_point2d("origin", real(0), real(0));
@@ -452,6 +517,15 @@ fn sketch_residual_form_reports_reject_unsupported_and_bad_inputs() {
     assert_eq!(bad_forms.status, SketchResidualFormsStatus::InvalidInputs);
     assert!(bad_forms.forms.is_empty());
     assert!(!bad_forms.diagnostics.is_empty());
+    let bad_point_line =
+        sketch.add_point_line_distance2("bad point line", point, distance, distance);
+    let bad_point_line_forms = sketch.residual_forms_for_constraint(bad_point_line);
+    assert_eq!(
+        bad_point_line_forms.status,
+        SketchResidualFormsStatus::InvalidInputs
+    );
+    assert!(bad_point_line_forms.forms.is_empty());
+    assert!(!bad_point_line_forms.diagnostics.is_empty());
     let bad_angle_forms = sketch.residual_forms_for_constraint(bad_angle.handle);
     assert_eq!(
         bad_angle_forms.status,

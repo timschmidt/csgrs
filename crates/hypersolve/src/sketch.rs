@@ -752,6 +752,12 @@ pub enum SketchResidualFormKind {
     SquaredDistancePolynomial,
     /// `sqrt(|a-b|^2) - d`, retained for proposal compatibility.
     TrueDistanceProposal,
+    /// Squared point-line distance polynomial proof row.
+    SquaredPointLineDistancePolynomial,
+    /// Positive signed point-line distance proposal branch.
+    PointLineSignedDistancePositiveProposal,
+    /// Negative signed point-line distance proposal branch.
+    PointLineSignedDistanceNegativeProposal,
     /// Squared-cosine equality for an unsigned angle proof row.
     SquaredCosineAnglePolynomial,
     /// `acos(cos(first)) - acos(cos(second))`, retained for proposal/UI parity.
@@ -1535,8 +1541,11 @@ impl SketchSolveProblem {
     /// coverage plan. For point-to-point distance it keeps both
     /// `|a-b|^2 - d^2`, which is the polynomial exact-replay form, and
     /// `sqrt(|a-b|^2) - d`, which is useful for proposal engines and UI
-    /// parity. For equal unsigned line angles it similarly keeps a
-    /// squared-cosine polynomial proof form and an `acos` proposal form.
+    /// parity. For point-line distance it keeps the exact squared polynomial
+    /// proof form plus both oriented signed-distance proposal branches; the
+    /// branch is data until an orientation-aware constraint or predicate
+    /// package certifies it. For equal unsigned line angles it similarly keeps
+    /// a squared-cosine polynomial proof form and an `acos` proposal form.
     /// Tangency keeps exact cross/dot predicate forms because the orientation
     /// branch is itself proof data, not a proposal residual. Yap (1997) is the
     /// controlling rule here: proposal-compatible forms are retained as data,
@@ -1608,6 +1617,62 @@ impl SketchSolveProblem {
                             role: SketchResidualFormRole::ProposalOnly,
                             strategy: None,
                             residual: true_distance,
+                        },
+                    ],
+                    diagnostics,
+                }
+            }
+            SketchConstraintKind::PointLineDistance2 {
+                point,
+                line,
+                distance,
+            } => {
+                let mut diagnostics = Vec::new();
+                let (Some(point), Some((start, end)), Some(distance)) = (
+                    self.point2_coordinates(point, constraint, &mut diagnostics),
+                    self.line2_points(line, constraint, &mut diagnostics),
+                    self.distance_expr(distance, constraint, &mut diagnostics),
+                ) else {
+                    return SketchResidualFormsReport {
+                        constraint: handle,
+                        status: SketchResidualFormsStatus::InvalidInputs,
+                        forms: Vec::new(),
+                        diagnostics,
+                    };
+                };
+                let direction = [
+                    end.exprs[0].clone() - start.exprs[0].clone(),
+                    end.exprs[1].clone() - start.exprs[1].clone(),
+                ];
+                let point_delta = [
+                    point.exprs[0].clone() - start.exprs[0].clone(),
+                    point.exprs[1].clone() - start.exprs[1].clone(),
+                ];
+                let cross = direction_cross2(&point_delta, &direction);
+                let direction_norm_squared = squared_norm2(&direction);
+                let scaled_distance = distance.clone() * direction_norm_squared.clone().sqrt();
+                SketchResidualFormsReport {
+                    constraint: handle,
+                    status: SketchResidualFormsStatus::Generated,
+                    forms: vec![
+                        SketchResidualForm {
+                            kind: SketchResidualFormKind::SquaredPointLineDistancePolynomial,
+                            role: SketchResidualFormRole::ExactProof,
+                            strategy: Some(SketchResidualStrategy::SquaredPointLineDistance),
+                            residual: cross.clone() * cross.clone()
+                                - distance.clone() * distance * direction_norm_squared,
+                        },
+                        SketchResidualForm {
+                            kind: SketchResidualFormKind::PointLineSignedDistancePositiveProposal,
+                            role: SketchResidualFormRole::ProposalOnly,
+                            strategy: None,
+                            residual: cross.clone() - scaled_distance.clone(),
+                        },
+                        SketchResidualForm {
+                            kind: SketchResidualFormKind::PointLineSignedDistanceNegativeProposal,
+                            role: SketchResidualFormRole::ProposalOnly,
+                            strategy: None,
+                            residual: cross + scaled_distance,
                         },
                     ],
                     diagnostics,
