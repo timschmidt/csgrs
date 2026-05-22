@@ -1593,6 +1593,9 @@ proptest! {
         prop_assert!(report.preprocessing.requested);
         prop_assert!(report.preprocessing.completed);
         prop_assert_eq!(report.preprocessing.equality_substitutions, 1);
+        prop_assert_eq!(report.preprocessing.substitution_seed_classes, 1);
+        prop_assert_eq!(report.preprocessing.rejected_substitution_seed_classes, 0);
+        prop_assert_eq!(report.preprocessing.substitution_seed_assignments, 2);
         prop_assert_eq!(report.preprocessing.affine_soluble_alone_rows, 1);
         prop_assert_eq!(report.preprocessing.quadratic_soluble_alone_rows, 1);
         prop_assert_eq!(report.preprocessing.affine_seed_assignments, 1);
@@ -1606,6 +1609,45 @@ proptest! {
         }
         prop_assert_eq!(report.preprocessing.dragged_parameter_weights, 0);
         prop_assert_eq!(report.preprocessing.invalid_dragged_parameter_weights, 0);
+    }
+
+    #[test]
+    fn modified_newton_generated_substitution_classes_seed_from_affine_anchor(
+        start_x in -12_i16..=12,
+        start_y in -12_i16..=12,
+        offset in -12_i16..=12,
+        target in -12_i16..=12,
+    ) {
+        let x = Expr::symbol(SymbolId(0), "x");
+        let y = Expr::symbol(SymbolId(1), "y");
+        let mut problem = Problem::default();
+        problem.add_variable("x", Real::from(i64::from(start_x)));
+        problem.add_variable("y", Real::from(i64::from(start_y)));
+        problem.add_constraint(Constraint::equality(
+            "generated substitution",
+            x - y.clone() - Expr::int(i64::from(offset)),
+        ));
+        problem.add_constraint(Constraint::equality(
+            "generated soluble affine",
+            y - Expr::int(i64::from(target)),
+        ));
+
+        let report = solve_damped_least_squares(SolverState {
+            problem,
+            config: SolverConfig {
+                max_iterations: 1,
+                proposal_engine: ProposalEngineKind::ModifiedNewtonLeastSquares,
+                ..SolverConfig::default()
+            },
+        });
+
+        prop_assert_eq!(report.reason, ConvergenceReason::Converged);
+        prop_assert_eq!(report.iterations, 0);
+        prop_assert_eq!(report.preprocessing.equality_substitutions, 1);
+        prop_assert_eq!(report.preprocessing.affine_seed_assignments, 1);
+        prop_assert_eq!(report.preprocessing.substitution_seed_classes, 1);
+        prop_assert_eq!(report.preprocessing.rejected_substitution_seed_classes, 0);
+        prop_assert_eq!(report.preprocessing.substitution_seed_assignments, 2);
     }
 
     #[test]

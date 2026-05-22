@@ -110,6 +110,14 @@ pub struct ProposalPreprocessingReport {
     pub requested: bool,
     /// Number of exact equality-substitution candidates found.
     pub equality_substitutions: usize,
+    /// Number of equality-substitution classes applied as initial proposal
+    /// seeds.
+    pub substitution_seed_classes: usize,
+    /// Number of equality-substitution classes rejected before seeding.
+    pub rejected_substitution_seed_classes: usize,
+    /// Number of exact equality-substitution member assignments written into
+    /// the initial proposal state.
+    pub substitution_seed_assignments: usize,
     /// Number of active one-variable affine equality rows solved exactly.
     pub affine_soluble_alone_rows: usize,
     /// Number of active univariate quadratic equality rows inspected exactly.
@@ -142,6 +150,9 @@ impl ProposalPreprocessingReport {
         Self {
             requested: false,
             equality_substitutions: 0,
+            substitution_seed_classes: 0,
+            rejected_substitution_seed_classes: 0,
+            substitution_seed_assignments: 0,
             affine_soluble_alone_rows: 0,
             quadratic_soluble_alone_rows: 0,
             affine_seed_assignments: 0,

@@ -1,5 +1,5 @@
 use std::cmp::Ordering;
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 
 use hyperlimit::{PredicatePolicy, compare_reals_with_policy};
 use hyperreal::Real;
@@ -9,8 +9,8 @@ use crate::diagnostics::{
     ProposalPreprocessingReport, SolveReport,
 };
 use crate::direct::{
-    find_equality_substitutions, solve_direct_affine_equalities,
-    solve_direct_univariate_quadratic_equalities,
+    build_equality_substitution_classes, find_equality_substitutions,
+    solve_direct_affine_equalities, solve_direct_univariate_quadratic_equalities,
 };
 use crate::eval::context_from_problem;
 use crate::jacobian::{
@@ -99,13 +99,19 @@ pub fn solve_damped_least_squares(mut state: SolverState) -> SolveReport {
     let mut linear_reports = Vec::new();
     let proposal_engine = proposal_engine_report(state.config.proposal_engine);
     let mut preprocessing = proposal_preprocessing_report(&state.problem, &state.config);
-    let affine_seeded_symbols =
+    let mut seeded_symbols =
         apply_modified_newton_affine_seeds(&mut state.problem, &state.config, &mut preprocessing);
     apply_modified_newton_quadratic_seeds(
         &mut state.problem,
         &state.config,
         &mut preprocessing,
-        &affine_seeded_symbols,
+        &mut seeded_symbols,
+    );
+    apply_modified_newton_substitution_seeds(
+        &mut state.problem,
+        &state.config,
+        &mut preprocessing,
+        &mut seeded_symbols,
     );
     if !proposal_engine.supported {
         return SolveReport {
@@ -308,6 +314,9 @@ fn proposal_preprocessing_report(
             return ProposalPreprocessingReport {
                 requested: true,
                 equality_substitutions: 0,
+                substitution_seed_classes: 0,
+                rejected_substitution_seed_classes: 0,
+                substitution_seed_assignments: 0,
                 affine_soluble_alone_rows: 0,
                 quadratic_soluble_alone_rows: 0,
                 affine_seed_assignments: 0,
@@ -326,6 +335,9 @@ fn proposal_preprocessing_report(
             return ProposalPreprocessingReport {
                 requested: true,
                 equality_substitutions: substitutions,
+                substitution_seed_classes: 0,
+                rejected_substitution_seed_classes: 0,
+                substitution_seed_assignments: 0,
                 affine_soluble_alone_rows: 0,
                 quadratic_soluble_alone_rows: 0,
                 affine_seed_assignments: 0,
@@ -344,6 +356,9 @@ fn proposal_preprocessing_report(
             return ProposalPreprocessingReport {
                 requested: true,
                 equality_substitutions: substitutions,
+                substitution_seed_classes: 0,
+                rejected_substitution_seed_classes: 0,
+                substitution_seed_assignments: 0,
                 affine_soluble_alone_rows: affine_soluble,
                 quadratic_soluble_alone_rows: 0,
                 affine_seed_assignments: 0,
@@ -359,6 +374,9 @@ fn proposal_preprocessing_report(
     ProposalPreprocessingReport {
         requested: true,
         equality_substitutions: substitutions,
+        substitution_seed_classes: 0,
+        rejected_substitution_seed_classes: 0,
+        substitution_seed_assignments: 0,
         affine_soluble_alone_rows: affine_soluble,
         quadratic_soluble_alone_rows: quadratic_soluble,
         affine_seed_assignments: 0,
@@ -418,7 +436,7 @@ fn apply_modified_newton_quadratic_seeds(
     problem: &mut Problem,
     config: &SolverConfig,
     preprocessing: &mut ProposalPreprocessingReport,
-    affine_seeded_symbols: &BTreeSet<SymbolId>,
+    seeded_symbols: &mut BTreeSet<SymbolId>,
 ) {
     if config.proposal_engine != ProposalEngineKind::ModifiedNewtonLeastSquares {
         return;
@@ -431,7 +449,7 @@ fn apply_modified_newton_quadratic_seeds(
         return;
     };
     for solution in solutions {
-        if solution.roots.len() != 1 || affine_seeded_symbols.contains(&solution.symbol) {
+        if solution.roots.len() != 1 || seeded_symbols.contains(&solution.symbol) {
             preprocessing.rejected_quadratic_seed_assignments += 1;
             continue;
         }
@@ -452,8 +470,125 @@ fn apply_modified_newton_quadratic_seeds(
             continue;
         }
         variable.value = root;
+        seeded_symbols.insert(solution.symbol);
         preprocessing.quadratic_seed_assignments += 1;
     }
+}
+
+fn apply_modified_newton_substitution_seeds(
+    problem: &mut Problem,
+    config: &SolverConfig,
+    preprocessing: &mut ProposalPreprocessingReport,
+    seeded_symbols: &mut BTreeSet<SymbolId>,
+) {
+    if config.proposal_engine != ProposalEngineKind::ModifiedNewtonLeastSquares {
+        return;
+    }
+    let classes = {
+        let prepared = PreparedProblem::new(problem);
+        let Ok(substitutions) = find_equality_substitutions(&prepared) else {
+            return;
+        };
+        let Ok(classes) = build_equality_substitution_classes(&substitutions) else {
+            return;
+        };
+        classes
+    };
+    let symbol_to_variable = problem
+        .variables
+        .iter()
+        .enumerate()
+        .map(|(index, variable)| (variable.symbol, index))
+        .collect::<BTreeMap<_, _>>();
+
+    for class in classes {
+        if class.members.len() < 2 {
+            continue;
+        }
+        let Some(representative_value) =
+            substitution_representative_seed(problem, &symbol_to_variable, &class, seeded_symbols)
+        else {
+            preprocessing.rejected_substitution_seed_classes += 1;
+            continue;
+        };
+        let mut proposed = Vec::new();
+        let mut rejected = false;
+        for member in &class.members {
+            let Some(&variable_index) = symbol_to_variable.get(&member.symbol) else {
+                rejected = true;
+                break;
+            };
+            let value = representative_value.clone() + member.offset_from_representative.clone();
+            let variable = &problem.variables[variable_index];
+            if variable.fixed && variable.value != value {
+                rejected = true;
+                break;
+            }
+            if !value_within_bounds(&value, variable.lower.as_ref(), variable.upper.as_ref()) {
+                rejected = true;
+                break;
+            }
+            proposed.push((variable_index, member.symbol, value));
+        }
+        if rejected {
+            preprocessing.rejected_substitution_seed_classes += 1;
+            continue;
+        }
+        for (variable_index, symbol, value) in proposed {
+            if problem.variables[variable_index].fixed {
+                continue;
+            }
+            problem.variables[variable_index].value = value;
+            seeded_symbols.insert(symbol);
+            preprocessing.substitution_seed_assignments += 1;
+        }
+        preprocessing.substitution_seed_classes += 1;
+    }
+}
+
+/// Pick the exact representative value used to seed one substitution class.
+///
+/// SolveSpace-style substitution treats rows like `x = y + c` as symbolic
+/// pre-Newton construction. Following Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997), this helper only
+/// constructs a proposal state; exact residual replay remains the proof of
+/// feasibility. Already exact-seeded or fixed members are preferred anchors so
+/// direct affine/quadratic evidence is not overwritten by arbitrary initial
+/// coordinates.
+fn substitution_representative_seed(
+    problem: &Problem,
+    symbol_to_variable: &BTreeMap<SymbolId, usize>,
+    class: &crate::direct::EqualitySubstitutionClass,
+    seeded_symbols: &BTreeSet<SymbolId>,
+) -> Option<Real> {
+    let mut anchored: Option<Real> = None;
+    for member in &class.members {
+        let variable = problem
+            .variables
+            .get(*symbol_to_variable.get(&member.symbol)?)?;
+        if seeded_symbols.contains(&member.symbol) || variable.fixed {
+            let representative_value =
+                variable.value.clone() - member.offset_from_representative.clone();
+            if let Some(existing) = &anchored {
+                if existing != &representative_value {
+                    return None;
+                }
+            } else {
+                anchored = Some(representative_value);
+            }
+        }
+    }
+    if anchored.is_some() {
+        return anchored;
+    }
+    let representative = class
+        .members
+        .iter()
+        .find(|member| member.symbol == class.representative)?;
+    let variable = problem
+        .variables
+        .get(*symbol_to_variable.get(&representative.symbol)?)?;
+    Some(variable.value.clone() - representative.offset_from_representative.clone())
 }
 
 fn value_within_bounds(value: &Real, lower: Option<&Real>, upper: Option<&Real>) -> bool {

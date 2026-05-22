@@ -1556,6 +1556,31 @@ fn certification(c: &mut Criterion) {
             })
         })
     });
+    c.bench_function("solve_modified_newton_substitution_seed", |b| {
+        b.iter(|| {
+            let x = Expr::symbol(SymbolId(0), "x");
+            let y = Expr::symbol(SymbolId(1), "y");
+            let mut problem = Problem::default();
+            problem.add_variable("x", r(0));
+            problem.add_variable("y", r(0));
+            problem.add_constraint(Constraint::equality(
+                "bench substitution seed",
+                x - y.clone() - Expr::int(3),
+            ));
+            problem.add_constraint(Constraint::equality(
+                "bench affine anchor",
+                y - Expr::int(2),
+            ));
+            solve_damped_least_squares(SolverState {
+                problem,
+                config: SolverConfig {
+                    max_iterations: 1,
+                    proposal_engine: ProposalEngineKind::ModifiedNewtonLeastSquares,
+                    ..SolverConfig::default()
+                },
+            })
+        })
+    });
     c.bench_function("solve_modified_newton_quadratic_seed", |b| {
         b.iter(|| {
             let x = Expr::symbol(SymbolId(0), "x");
