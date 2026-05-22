@@ -5426,11 +5426,10 @@ fn bezier_boolean_algebraic_parameter_audit_accepts_ready_events() {
     assert!(!audit.has_blockers());
     assert_eq!(audit.checked_event_count, 1);
     assert_eq!(audit.count_mismatch_count, 0);
-    assert_eq!(audit.unsupported_role_count, 0);
 }
 
 #[test]
-fn bezier_boolean_algebraic_parameter_audit_blocks_stale_counts_and_roles() {
+fn bezier_boolean_algebraic_parameter_audit_blocks_stale_counts() {
     let range = BezierPathRangeOrderReport2::from_graph_order(
         &BezierMonotoneGraphOrder::IntersectsOrTouches {
             parameters: Vec::new(),
@@ -5459,19 +5458,6 @@ fn bezier_boolean_algebraic_parameter_audit_blocks_stale_counts_and_roles() {
     );
     assert!(stale_counts.has_blockers());
     assert_eq!(stale_counts.count_mismatch_count, 1);
-
-    handoff.required_algebraic_parameter_count = 1;
-    handoff.events[0].role = BezierBooleanAlgebraicParameterRole::FirstCurve;
-    let stale_role = match handoff.audit(&policy()) {
-        Classification::Decided(report) => report,
-        Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
-    };
-    assert_eq!(
-        stale_role.status,
-        BezierBooleanAlgebraicParameterAuditStatus::UnsupportedRole
-    );
-    assert!(stale_role.has_blockers());
-    assert_eq!(stale_role.unsupported_role_count, 1);
 }
 
 #[test]

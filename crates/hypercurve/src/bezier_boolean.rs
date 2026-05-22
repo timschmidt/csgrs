@@ -2692,8 +2692,6 @@ pub enum BezierBooleanAlgebraicParameterAuditStatus {
     HandoffBlocked,
     /// The handoff's public counts disagree with retained events.
     CountMismatch,
-    /// An event role is not supported by the current univariate handoff.
-    UnsupportedRole,
     /// An event carries invalid algebraic-root evidence.
     InvalidAlgebraicEvidence,
     /// An event's isolating interval is outside the Bezier unit domain.
@@ -2721,8 +2719,6 @@ pub struct BezierBooleanAlgebraicParameterAuditReport2 {
     pub checked_event_count: usize,
     /// Number of public count mismatches found.
     pub count_mismatch_count: usize,
-    /// Number of event roles unsupported by the current univariate handoff.
-    pub unsupported_role_count: usize,
     /// Number of invalid represented-root payloads.
     pub invalid_algebraic_evidence_count: usize,
     /// Number of represented-root intervals outside `[0, 1]`.
@@ -16253,8 +16249,8 @@ impl BezierBooleanConstructionReadinessReport2 {
     /// the result through the same readiness API as scheduler and
     /// root-isolation replay paths.
     ///
-    /// If the bridge is blocked by ordering, unsupported roles, or
-    /// interval-only algebraic roots, readiness remains explicitly blocked.
+    /// If the bridge is blocked by ordering or interval-only algebraic roots,
+    /// readiness remains explicitly blocked.
     /// This follows Yap, "Towards Exact Geometric Computation" (1997): exact
     /// algebraic root objects are carried until a construction has certified
     /// operands, and non-rational interval evidence is never converted to
@@ -18121,12 +18117,12 @@ impl BezierBooleanAlgebraicParameterHandoffReport2 {
 
     /// Audits retained algebraic parameter events before future exact consumers.
     ///
-    /// The current univariate algebraic-root handoff can only certify shared
-    /// monotone-range parameters. First/second curve roles require paired
-    /// curve-curve event evidence and therefore remain unsupported here. This
-    /// check also validates count fields and replays the represented-root
+    /// This check validates count fields and replays the represented-root
     /// validation/unit-domain obligations so later layers do not trust stale or
-    /// forged algebraic events.
+    /// forged algebraic events. Role-specific construction is intentionally
+    /// left to the carrier and split bridge, which consume first-curve,
+    /// second-curve, and shared-range lanes under the same exact-object
+    /// discipline.
     pub fn audit(
         &self,
         policy: &CurvePolicy,
@@ -18136,7 +18132,6 @@ impl BezierBooleanAlgebraicParameterHandoffReport2 {
             handoff_status: self.status,
             checked_event_count: 0,
             count_mismatch_count: 0,
-            unsupported_role_count: 0,
             invalid_algebraic_evidence_count: 0,
             out_of_range_parameter_count: 0,
             blocker_count: 0,
@@ -18186,9 +18181,6 @@ impl BezierBooleanAlgebraicParameterHandoffReport2 {
         }
 
         for event in &self.events {
-            if event.role != BezierBooleanAlgebraicParameterRole::SharedRange {
-                audit.unsupported_role_count += 1;
-            }
             if !event.root.is_valid() {
                 audit.invalid_algebraic_evidence_count += 1;
                 continue;
@@ -18201,13 +18193,10 @@ impl BezierBooleanAlgebraicParameterHandoffReport2 {
         }
 
         audit.blocker_count = audit.count_mismatch_count
-            + audit.unsupported_role_count
             + audit.invalid_algebraic_evidence_count
             + audit.out_of_range_parameter_count;
         audit.status = if audit.count_mismatch_count > 0 {
             BezierBooleanAlgebraicParameterAuditStatus::CountMismatch
-        } else if audit.unsupported_role_count > 0 {
-            BezierBooleanAlgebraicParameterAuditStatus::UnsupportedRole
         } else if audit.invalid_algebraic_evidence_count > 0 {
             BezierBooleanAlgebraicParameterAuditStatus::InvalidAlgebraicEvidence
         } else if audit.out_of_range_parameter_count > 0 {
@@ -18232,7 +18221,6 @@ impl BezierBooleanAlgebraicParameterAuditReport2 {
             self.status,
             BezierBooleanAlgebraicParameterAuditStatus::HandoffBlocked
                 | BezierBooleanAlgebraicParameterAuditStatus::CountMismatch
-                | BezierBooleanAlgebraicParameterAuditStatus::UnsupportedRole
                 | BezierBooleanAlgebraicParameterAuditStatus::InvalidAlgebraicEvidence
                 | BezierBooleanAlgebraicParameterAuditStatus::InvalidParameterDomain
         )
@@ -18278,7 +18266,6 @@ impl BezierBooleanAlgebraicParameterReadinessReport2 {
             BezierBooleanAlgebraicParameterAuditStatus::Valid => {}
             BezierBooleanAlgebraicParameterAuditStatus::HandoffBlocked
             | BezierBooleanAlgebraicParameterAuditStatus::CountMismatch
-            | BezierBooleanAlgebraicParameterAuditStatus::UnsupportedRole
             | BezierBooleanAlgebraicParameterAuditStatus::InvalidAlgebraicEvidence
             | BezierBooleanAlgebraicParameterAuditStatus::InvalidParameterDomain => {
                 return Classification::Decided(Self::blocked_or_empty(
