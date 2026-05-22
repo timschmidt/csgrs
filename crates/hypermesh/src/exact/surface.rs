@@ -6224,8 +6224,11 @@ fn materialize_cutter_hole_contact_component_holed_difference(
 /// groups become independent side openings through
 /// [`multi_side_opened_difference_polygon`]. The final output area must
 /// satisfy `area(component) = area(opened) + sum(area(opening_i))` exactly.
-/// Unrelated strict holes are then retained only when simple-polygon
-/// containment proves they remain strictly inside the opened loop.
+/// Strict holes are then classified by exact containment: holes inside the
+/// retained opened loop remain holes, while holes strictly inside exactly one
+/// removed opening are consumed by that opening and omitted. A hole that is
+/// split by an opening boundary remains unsupported because its ownership
+/// would require a general planar-cell subdivision.
 ///
 /// This is a bounded retained-fragment construction in the sense of Yap,
 /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
@@ -6237,8 +6240,8 @@ fn materialize_cutter_hole_contact_component_holed_difference(
 /// Kreveld, and Overmars, *Computational Geometry: Algorithms and
 /// Applications*, 3rd ed. (2008), Chapter 2, so this helper covers the
 /// non-rectilinear multi-cutter gap instead of changing rectilinear shortcut
-/// precedence. Branch graphs and holes consumed by the cutter union stay
-/// outside this helper because they require explicit planar-cell ownership.
+/// precedence. Branch graphs and partially consumed holes stay outside this
+/// helper because they require explicit planar-cell ownership.
 #[cfg(feature = "exact-triangulation")]
 fn materialize_connected_multi_cutter_component_holed_difference(
     component: &ConvexUnionComponent,
@@ -6350,21 +6353,77 @@ fn materialize_connected_multi_cutter_component_holed_difference(
         return None;
     }
 
+    let retained_holes = assign_holes_to_connected_multi_cutter_opening(
+        holes,
+        &opening,
+        &removed_openings,
+        projection,
+    )?;
+    Some(vec![CoplanarConvexHoledComponent {
+        outer: opening,
+        holes: retained_holes,
+    }])
+}
+
+/// Return whether a strict hole is wholly removed by one side opening.
+///
+/// This is an ownership predicate, not a polygon clipper. A hole may be
+/// omitted from the retained component only when exact simple-polygon
+/// containment proves the whole ring is strictly inside one removed opening.
+/// Zero or two owner openings are rejected so ambiguous ownership and
+/// branch-point subdivision stay explicit. This is the retained-object
+/// discipline Yap argues for in "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997): the output topology changes only
+/// when exact source facts identify the owner of the removed ring.
+#[cfg(feature = "exact-triangulation")]
+fn hole_strictly_consumed_by_one_removed_opening(
+    hole: &[Point3],
+    removed_openings: &[Vec<Point3>],
+    projection: CoplanarProjection,
+) -> Option<bool> {
+    let mut owner_count = 0usize;
+    for removed_opening in removed_openings {
+        if polygon_strictly_inside_simple_polygon(hole, removed_opening, projection)? {
+            owner_count += 1;
+            if owner_count > 1 {
+                return Some(false);
+            }
+        }
+    }
+    Some(owner_count == 1)
+}
+
+/// Assign strict holes after side-cutter openings have been replayed.
+///
+/// A retained hole must be strictly inside the final opened component. A
+/// consumed hole must be strictly inside one removed opening. Anything else is
+/// an unowned hole: usually a straddling ring, a boundary contact, or a branch
+/// case. Those remain outside this bounded certificate so a later planar-cell
+/// materializer can carry the exact split topology explicitly.
+#[cfg(feature = "exact-triangulation")]
+fn assign_holes_to_connected_multi_cutter_opening(
+    holes: &[ComponentHoleCandidate],
+    opening: &[Point3],
+    removed_openings: &[Vec<Point3>],
+    projection: CoplanarProjection,
+) -> Option<Vec<Vec<Point3>>> {
     let mut retained_holes = Vec::with_capacity(holes.len());
     for hole in holes {
-        if !polygon_strictly_inside_simple_polygon(&hole.ring, &opening, projection)? {
+        if polygon_strictly_inside_simple_polygon(&hole.ring, opening, projection)? {
+            retained_holes.push(hole.ring.clone());
+        } else if !hole_strictly_consumed_by_one_removed_opening(
+            &hole.ring,
+            removed_openings,
+            projection,
+        )? {
             return None;
         }
-        retained_holes.push(hole.ring.clone());
     }
     if retained_holes.is_empty() {
         return None;
     }
     sort_polygons_for_replay(&mut retained_holes, projection);
-    Some(vec![CoplanarConvexHoledComponent {
-        outer: opening,
-        holes: retained_holes,
-    }])
+    Some(retained_holes)
 }
 
 /// Replay rectangular mixed multi-cutter/holed remnants through exact cells.

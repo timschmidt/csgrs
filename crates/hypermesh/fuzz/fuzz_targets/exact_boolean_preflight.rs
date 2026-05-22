@@ -1378,7 +1378,7 @@ fuzz_target!(|data: &[u8]| {
 
 #[cfg(feature = "exact-triangulation")]
 fn exercise_deterministic_case(selector: u8) {
-    match selector % 25 {
+    match selector % 26 {
         0 => exercise_partial_convex_union_boundary(),
         1 => exercise_face_interior_steiner_boundary(),
         2 => exercise_multi_component_coplanar_union(),
@@ -1403,6 +1403,7 @@ fn exercise_deterministic_case(selector: u8) {
         21 => exercise_independent_contact_openings(),
         22 => exercise_connected_multi_cutter_opening_with_retained_hole(),
         23 => exercise_multiple_side_cutter_openings_with_retained_hole(),
+        24 => exercise_consumed_hole_side_cutter_openings(),
         _ => exercise_nonrectangular_component_union_hull_coverage(),
     }
 }
@@ -2302,6 +2303,99 @@ fn exercise_multiple_side_cutter_openings_with_retained_hole() {
         &consumed_hole
     )
     .is_none());
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn exercise_consumed_hole_side_cutter_openings() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 20, 0, 0, 20, 20, 0, 0, 20, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("consumed-hole side-cutter opening left fixture must import");
+    let retained_and_consumed = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            15, 16, 0, 17, 16, 0, 17, 18, 0, 15, 18, 0, //
+            4, 8, 0, 5, 8, 0, 5, 9, 0, 4, 9, 0, //
+            -2, 4, 0, 9, 4, 0, 7, 10, 0, -2, 10, 0, //
+            -2, 8, 0, 8, 7, 0, 10, 13, 0, -2, 13, 0, //
+            11, 3, 0, 22, 3, 0, 22, 11, 0, 13, 11, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7, //
+            8, 9, 10, 8, 10, 11, //
+            12, 13, 14, 12, 14, 15, //
+            16, 17, 18, 16, 18, 19,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("retained-and-consumed side-cutter fixture must import");
+
+    assert!(
+        arrange_coplanar_surface_cutter_hole_contact_difference(&left, &retained_and_consumed)
+            .is_none()
+    );
+    let holed =
+        arrange_coplanar_convex_surface_component_holed_difference(&left, &retained_and_consumed)
+            .expect("fully consumed strict hole should be omitted while retained hole remains");
+    holed.validate().unwrap();
+    holed
+        .validate_against_sources(&left, &retained_and_consumed)
+        .unwrap();
+    assert_eq!(holed.components.len(), 1);
+    assert_eq!(holed.components[0].holes.len(), 1);
+
+    let mut stale = holed.clone();
+    stale.components[0].holes.push(vec![
+        point3(4, 8, 0),
+        point3(5, 8, 0),
+        point3(5, 9, 0),
+        point3(4, 9, 0),
+    ]);
+    assert!(
+        stale
+            .validate_against_sources(&left, &retained_and_consumed)
+            .is_err()
+    );
+
+    let preflight = preflight_boolean_exact(
+        &left,
+        &retained_and_consumed,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("consumed-hole side-cutter opening preflight should classify shortcut");
+    preflight.validate().unwrap();
+    preflight
+        .validate_against_sources(&left, &retained_and_consumed)
+        .unwrap();
+    assert_eq!(
+        preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+    );
+
+    let straddling_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            15, 16, 0, 17, 16, 0, 17, 18, 0, 15, 18, 0, //
+            8, 12, 0, 10, 12, 0, 10, 14, 0, 8, 14, 0, //
+            -2, 4, 0, 9, 4, 0, 7, 10, 0, -2, 10, 0, //
+            -2, 8, 0, 8, 7, 0, 10, 13, 0, -2, 13, 0, //
+            11, 3, 0, 22, 3, 0, 22, 11, 0, 13, 11, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7, //
+            8, 9, 10, 8, 10, 11, //
+            12, 13, 14, 12, 14, 15, //
+            16, 17, 18, 16, 18, 19,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("straddling consumed-hole fixture must import");
+    assert!(
+        arrange_coplanar_convex_surface_component_holed_difference(&left, &straddling_hole)
+            .is_none()
+    );
 }
 
 #[cfg(feature = "exact-triangulation")]
