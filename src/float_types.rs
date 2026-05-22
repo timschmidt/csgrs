@@ -289,11 +289,11 @@ pub(crate) fn hrotation_between_vectors(
     let to = hunit_vector3(to)?;
     let dot = hvector3_dot(&from, &to)?;
 
-    if dot >= 1.0 - tolerance() {
+    if hreal_f64s_exactly_equal(dot, 1.0) {
         return Some(Matrix4::identity());
     }
 
-    let (axis, angle) = if dot <= -1.0 + tolerance() {
+    let (axis, angle) = if hreal_f64s_exactly_equal(dot, -1.0) {
         let seed = if from.x.abs() < 0.9 {
             Vector3::x()
         } else {
@@ -1319,6 +1319,24 @@ mod tests {
                 .is_none()
         );
         assert!(hrotation_between_vectors(&Vector3::zeros(), &Vector3::z()).is_none());
+    }
+
+    #[test]
+    fn hrotation_between_vectors_preserves_nearly_antiparallel_direction() {
+        let nearly_opposite = hunit_vector3(&Vector3::new(-1.0, 1.0e-5, 0.0)).unwrap();
+        let rotation = hrotation_between_vectors(&Vector3::x(), &nearly_opposite).unwrap();
+        let rotated =
+            Point3::from_homogeneous(rotation * Point3::new(1.0, 0.0, 0.0).to_homogeneous())
+                .unwrap();
+
+        assert!(matches!(
+            hreal_cmp_f64(rotated.y, 0.0),
+            std::cmp::Ordering::Greater
+        ));
+        assert!(matches!(
+            hreal_cmp_f64(rotated.y, 1.0e-4),
+            std::cmp::Ordering::Less
+        ));
     }
 
     #[test]

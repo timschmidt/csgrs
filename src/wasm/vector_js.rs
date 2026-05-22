@@ -1,9 +1,12 @@
 //! JavaScript wrapper for 3D vectors.
 
+#[cfg(test)]
+use crate::float_types::tolerance;
 use crate::float_types::{
-    Real, hangle_between_vectors, hangle_sin_cos, hreal_mul, hreal_sub, hunit_quaternion,
-    hunit_vector3, hvector3_cross, hvector3_dot, hvector3_from_vector3, hvector3_magnitude,
-    hvector3_weighted_sum, hvectors_orthogonal_within, tolerance,
+    Real, hangle_between_vectors, hangle_sin_cos, hreal_f64s_exactly_equal, hreal_mul,
+    hreal_sub, hunit_quaternion, hunit_vector3, hvector3_cross, hvector3_dot,
+    hvector3_from_vector3, hvector3_magnitude, hvector3_weighted_sum,
+    hvectors_orthogonal_within,
 };
 use nalgebra::Vector3;
 use wasm_bindgen::prelude::*;
@@ -21,7 +24,7 @@ fn rotation_between_quaternion_components(
     let b = hunit_vector3(to)?;
     let dot = hvector3_dot(&a, &b)?;
 
-    if dot <= -1.0 + tolerance() {
+    if hreal_f64s_exactly_equal(dot, -1.0) {
         let seed = if a.x.abs() < 0.9 {
             Vector3::x()
         } else {
@@ -308,6 +311,23 @@ mod tests {
                 &Vector3::y()
             )
             .is_none()
+        );
+    }
+
+    #[test]
+    fn vector_js_rotation_between_preserves_nearly_antiparallel_direction() {
+        let x = Vector3::x();
+        let nearly_opposite = hunit_vector3(&Vector3::new(-1.0, 1.0e-5, 0.0)).unwrap();
+        let [w, _qx, _qy, qz] =
+            rotation_between_quaternion_components(&x, &nearly_opposite).unwrap();
+
+        assert!(
+            w > 0.0,
+            "near-antiparallel rotations should not collapse to exact pi"
+        );
+        assert!(
+            qz > 0.0,
+            "quaternion axis should retain the exact positive turn direction"
         );
     }
 }
