@@ -4140,48 +4140,6 @@ impl BezierBooleanTraversalScheduleReport2 {
 }
 
 impl BezierBooleanOwnershipFactReport2 {
-    /// Expands per-fragment operand locator vectors and validates the facts.
-    ///
-    /// This is the non-uniform counterpart to
-    /// [`Self::from_uniform_operand_locations`]. A future exact locator can
-    /// classify each first-operand fragment against the second operand and
-    /// each second-operand fragment against the first operand, then hand those
-    /// vectors here without constructing keyed facts manually. Count and
-    /// boundary blockers remain explicit before boolean selection.
-    pub fn from_operand_locations(
-        schedule: &BezierBooleanTraversalScheduleReport2,
-        first_fragments_in_second: &[BezierBooleanFragmentOwnershipLocation],
-        second_fragments_in_first: &[BezierBooleanFragmentOwnershipLocation],
-    ) -> Self {
-        let locations = BezierBooleanOperandOwnershipLocationReport2::from_schedule_locations(
-            schedule,
-            first_fragments_in_second,
-            second_fragments_in_first,
-        );
-        Self::from_schedule_facts(schedule, &locations.facts)
-    }
-
-    /// Expands uniform operand-level locator results and validates the facts.
-    ///
-    /// This is a convenience constructor over
-    /// [`BezierBooleanUniformOwnershipFactReport2`] followed by
-    /// [`Self::from_schedule_facts`]. Use it when a certified arrangement or
-    /// containment pass has proved one relation for all first fragments and one
-    /// relation for all second fragments. It deliberately does not sample a
-    /// representative point or infer containment from bounding boxes.
-    pub fn from_uniform_operand_locations(
-        schedule: &BezierBooleanTraversalScheduleReport2,
-        first_fragments_in_second: BezierBooleanFragmentOwnershipLocation,
-        second_fragments_in_first: BezierBooleanFragmentOwnershipLocation,
-    ) -> Self {
-        let uniform = BezierBooleanUniformOwnershipFactReport2::from_schedule_locations(
-            schedule,
-            first_fragments_in_second,
-            second_fragments_in_first,
-        );
-        Self::from_schedule_facts(schedule, &uniform.facts)
-    }
-
     /// Validates externally certified ownership facts against a traversal schedule.
     ///
     /// The supplied facts must be in the same deterministic order as
@@ -10238,11 +10196,12 @@ impl BezierBooleanResultReport2 {
         second_endpoints: &[(Point2, Point2)],
         depth_facts: &[BezierBooleanLoopNestingDepthFact2],
     ) -> Self {
-        let facts = BezierBooleanOwnershipFactReport2::from_uniform_operand_locations(
+        let location_report = BezierBooleanUniformOwnershipFactReport2::from_schedule_locations(
             schedule,
             first_fragments_in_second,
             second_fragments_in_first,
         );
+        let facts = location_report.validate(schedule);
         let ownership = facts.classify(schedule, operation);
         let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
         let assembly = BezierBooleanAssemblyReadinessReport2::from_fragment_counts(
@@ -10292,11 +10251,12 @@ impl BezierBooleanResultReport2 {
         second_endpoints: &[(Point2, Point2)],
         containment_facts: &[BezierBooleanLoopContainmentFact2],
     ) -> Self {
-        let facts = BezierBooleanOwnershipFactReport2::from_uniform_operand_locations(
+        let location_report = BezierBooleanUniformOwnershipFactReport2::from_schedule_locations(
             schedule,
             first_fragments_in_second,
             second_fragments_in_first,
         );
+        let facts = location_report.validate(schedule);
         let ownership = facts.classify(schedule, operation);
         let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
         let assembly = BezierBooleanAssemblyReadinessReport2::from_fragment_counts(
@@ -10345,11 +10305,12 @@ impl BezierBooleanResultReport2 {
         graph_facts: &BezierBooleanLoopGraphFacts2,
         containment_facts: &[BezierBooleanLoopContainmentFact2],
     ) -> Self {
-        let facts = BezierBooleanOwnershipFactReport2::from_uniform_operand_locations(
+        let location_report = BezierBooleanUniformOwnershipFactReport2::from_schedule_locations(
             schedule,
             first_fragments_in_second,
             second_fragments_in_first,
         );
+        let facts = location_report.validate(schedule);
         let ownership = facts.classify(schedule, operation);
         let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
         let assembly = BezierBooleanAssemblyReadinessReport2::from_fragment_counts(
@@ -10394,11 +10355,12 @@ impl BezierBooleanResultReport2 {
         graph_facts: &BezierBooleanLoopGraphFacts2,
         depth_facts: &[BezierBooleanLoopNestingDepthFact2],
     ) -> Self {
-        let facts = BezierBooleanOwnershipFactReport2::from_uniform_operand_locations(
+        let location_report = BezierBooleanUniformOwnershipFactReport2::from_schedule_locations(
             schedule,
             first_fragments_in_second,
             second_fragments_in_first,
         );
+        let facts = location_report.validate(schedule);
         let ownership = facts.classify(schedule, operation);
         let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
         let assembly = BezierBooleanAssemblyReadinessReport2::from_fragment_counts(
@@ -10442,11 +10404,12 @@ impl BezierBooleanResultReport2 {
         second_endpoints: &[(Point2, Point2)],
         depth_facts: &[BezierBooleanLoopNestingDepthFact2],
     ) -> Self {
-        let facts = BezierBooleanOwnershipFactReport2::from_operand_locations(
+        let location_report = BezierBooleanOperandOwnershipLocationReport2::from_schedule_locations(
             schedule,
             first_fragments_in_second,
             second_fragments_in_first,
         );
+        let facts = location_report.validate(schedule);
         let ownership = facts.classify(schedule, operation);
         let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
         let assembly = BezierBooleanAssemblyReadinessReport2::from_fragment_counts(
@@ -10495,11 +10458,12 @@ impl BezierBooleanResultReport2 {
         depth_facts: &[BezierBooleanLoopNestingDepthFact2],
         roles: &[BezierBooleanOutputLoopRole],
     ) -> Self {
-        let facts = BezierBooleanOwnershipFactReport2::from_operand_locations(
+        let location_report = BezierBooleanOperandOwnershipLocationReport2::from_schedule_locations(
             schedule,
             first_fragments_in_second,
             second_fragments_in_first,
         );
+        let facts = location_report.validate(schedule);
         let ownership = facts.classify(schedule, operation);
         let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
         let assembly = BezierBooleanAssemblyReadinessReport2::from_fragment_counts(
@@ -10546,11 +10510,12 @@ impl BezierBooleanResultReport2 {
         second_endpoints: &[(Point2, Point2)],
         containment_facts: &[BezierBooleanLoopContainmentFact2],
     ) -> Self {
-        let facts = BezierBooleanOwnershipFactReport2::from_operand_locations(
+        let location_report = BezierBooleanOperandOwnershipLocationReport2::from_schedule_locations(
             schedule,
             first_fragments_in_second,
             second_fragments_in_first,
         );
+        let facts = location_report.validate(schedule);
         let ownership = facts.classify(schedule, operation);
         let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
         let assembly = BezierBooleanAssemblyReadinessReport2::from_fragment_counts(
@@ -10600,11 +10565,12 @@ impl BezierBooleanResultReport2 {
         graph_facts: &BezierBooleanLoopGraphFacts2,
         depth_facts: &[BezierBooleanLoopNestingDepthFact2],
     ) -> Self {
-        let facts = BezierBooleanOwnershipFactReport2::from_operand_locations(
+        let location_report = BezierBooleanOperandOwnershipLocationReport2::from_schedule_locations(
             schedule,
             first_fragments_in_second,
             second_fragments_in_first,
         );
+        let facts = location_report.validate(schedule);
         let ownership = facts.classify(schedule, operation);
         let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
         let assembly = BezierBooleanAssemblyReadinessReport2::from_fragment_counts(
@@ -10643,11 +10609,12 @@ impl BezierBooleanResultReport2 {
         depth_facts: &[BezierBooleanLoopNestingDepthFact2],
         roles: &[BezierBooleanOutputLoopRole],
     ) -> Self {
-        let facts = BezierBooleanOwnershipFactReport2::from_operand_locations(
+        let location_report = BezierBooleanOperandOwnershipLocationReport2::from_schedule_locations(
             schedule,
             first_fragments_in_second,
             second_fragments_in_first,
         );
+        let facts = location_report.validate(schedule);
         let ownership = facts.classify(schedule, operation);
         let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
         let assembly = BezierBooleanAssemblyReadinessReport2::from_fragment_counts(
@@ -10692,11 +10659,12 @@ impl BezierBooleanResultReport2 {
         graph_facts: &BezierBooleanLoopGraphFacts2,
         containment_facts: &[BezierBooleanLoopContainmentFact2],
     ) -> Self {
-        let facts = BezierBooleanOwnershipFactReport2::from_operand_locations(
+        let location_report = BezierBooleanOperandOwnershipLocationReport2::from_schedule_locations(
             schedule,
             first_fragments_in_second,
             second_fragments_in_first,
         );
+        let facts = location_report.validate(schedule);
         let ownership = facts.classify(schedule, operation);
         let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
         let assembly = BezierBooleanAssemblyReadinessReport2::from_fragment_counts(
@@ -11687,11 +11655,12 @@ impl BezierBooleanResultReport2 {
         walk_indices: &[usize],
         depth_facts: &[BezierBooleanLoopNestingDepthFact2],
     ) -> Self {
-        let facts = BezierBooleanOwnershipFactReport2::from_operand_locations(
+        let location_report = BezierBooleanOperandOwnershipLocationReport2::from_schedule_locations(
             schedule,
             first_fragments_in_second,
             second_fragments_in_first,
         );
+        let facts = location_report.validate(schedule);
         let ownership = facts.classify(schedule, operation);
         let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
         let assembly = BezierBooleanAssemblyReadinessReport2::from_fragment_counts(
@@ -11737,11 +11706,12 @@ impl BezierBooleanResultReport2 {
         depth_facts: &[BezierBooleanLoopNestingDepthFact2],
         roles: &[BezierBooleanOutputLoopRole],
     ) -> Self {
-        let facts = BezierBooleanOwnershipFactReport2::from_operand_locations(
+        let location_report = BezierBooleanOperandOwnershipLocationReport2::from_schedule_locations(
             schedule,
             first_fragments_in_second,
             second_fragments_in_first,
         );
+        let facts = location_report.validate(schedule);
         let ownership = facts.classify(schedule, operation);
         let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
         let assembly = BezierBooleanAssemblyReadinessReport2::from_fragment_counts(
@@ -11793,11 +11763,12 @@ impl BezierBooleanResultReport2 {
         walk_indices: &[usize],
         depth_facts: &[BezierBooleanLoopNestingDepthFact2],
     ) -> Self {
-        let facts = BezierBooleanOwnershipFactReport2::from_operand_locations(
+        let location_report = BezierBooleanOperandOwnershipLocationReport2::from_schedule_locations(
             schedule,
             first_fragments_in_second,
             second_fragments_in_first,
         );
+        let facts = location_report.validate(schedule);
         let ownership = facts.classify(schedule, operation);
         let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
         let assembly = BezierBooleanAssemblyReadinessReport2::from_fragment_counts(
@@ -11844,11 +11815,12 @@ impl BezierBooleanResultReport2 {
         depth_facts: &[BezierBooleanLoopNestingDepthFact2],
         roles: &[BezierBooleanOutputLoopRole],
     ) -> Self {
-        let facts = BezierBooleanOwnershipFactReport2::from_operand_locations(
+        let location_report = BezierBooleanOperandOwnershipLocationReport2::from_schedule_locations(
             schedule,
             first_fragments_in_second,
             second_fragments_in_first,
         );
+        let facts = location_report.validate(schedule);
         let ownership = facts.classify(schedule, operation);
         let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
         let assembly = BezierBooleanAssemblyReadinessReport2::from_fragment_counts(
@@ -11901,11 +11873,12 @@ impl BezierBooleanResultReport2 {
         walk_indices: &[usize],
         containment_facts: &[BezierBooleanLoopContainmentFact2],
     ) -> Self {
-        let facts = BezierBooleanOwnershipFactReport2::from_operand_locations(
+        let location_report = BezierBooleanOperandOwnershipLocationReport2::from_schedule_locations(
             schedule,
             first_fragments_in_second,
             second_fragments_in_first,
         );
+        let facts = location_report.validate(schedule);
         let ownership = facts.classify(schedule, operation);
         let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
         let assembly = BezierBooleanAssemblyReadinessReport2::from_fragment_counts(
@@ -11952,11 +11925,12 @@ impl BezierBooleanResultReport2 {
         walk_indices: &[usize],
         containment_facts: &[BezierBooleanLoopContainmentFact2],
     ) -> Self {
-        let facts = BezierBooleanOwnershipFactReport2::from_operand_locations(
+        let location_report = BezierBooleanOperandOwnershipLocationReport2::from_schedule_locations(
             schedule,
             first_fragments_in_second,
             second_fragments_in_first,
         );
+        let facts = location_report.validate(schedule);
         let ownership = facts.classify(schedule, operation);
         let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
         let assembly = BezierBooleanAssemblyReadinessReport2::from_fragment_counts(
@@ -13109,63 +13083,6 @@ impl BezierBooleanMaterializedRegionReport2 {
             successor_facts,
             &certification,
         )
-    }
-
-    /// Materializes a scheduled endpoint result with graph facts and laminar containment.
-    pub fn from_schedule_graph_fact_walk_laminar_containment_facts(
-        schedule: &BezierBooleanTraversalScheduleReport2,
-        operation: BooleanOp,
-        ownership_facts: &[BezierBooleanOwnershipFact2],
-        first_endpoints: &[(Point2, Point2)],
-        second_endpoints: &[(Point2, Point2)],
-        graph_facts: &BezierBooleanLoopGraphFacts2,
-        walk_indices: &[usize],
-        containment_facts: &[BezierBooleanLoopContainmentFact2],
-    ) -> Self {
-        let result = BezierBooleanResultReport2::from_schedule_graph_fact_walk_containment_facts(
-            schedule,
-            operation,
-            ownership_facts,
-            first_endpoints,
-            second_endpoints,
-            graph_facts,
-            walk_indices,
-            containment_facts,
-        );
-        Self::from_result_laminar_containment_facts(&result, containment_facts)
-    }
-
-    /// Materializes a scheduled endpoint result when explicit roles match containment parity.
-    ///
-    /// The explicit roles are not trusted independently: the result constructor
-    /// first checks them against containment-derived depth parity, then this
-    /// materializer attaches holes through the same laminar containment
-    /// certificate. Stale role facts therefore block before materialization.
-    pub fn from_schedule_graph_walk_laminar_containment_role_facts(
-        schedule: &BezierBooleanTraversalScheduleReport2,
-        operation: BooleanOp,
-        ownership_facts: &[BezierBooleanOwnershipFact2],
-        first_endpoints: &[(Point2, Point2)],
-        second_endpoints: &[(Point2, Point2)],
-        branch_vertex_count: usize,
-        resolved_overlap_count: usize,
-        walk_indices: &[usize],
-        containment_facts: &[BezierBooleanLoopContainmentFact2],
-        roles: &[BezierBooleanOutputLoopRole],
-    ) -> Self {
-        let result = BezierBooleanResultReport2::from_schedule_graph_walk_containment_role_facts(
-            schedule,
-            operation,
-            ownership_facts,
-            first_endpoints,
-            second_endpoints,
-            branch_vertex_count,
-            resolved_overlap_count,
-            walk_indices,
-            containment_facts,
-            roles,
-        );
-        Self::from_result_laminar_containment_facts(&result, containment_facts)
     }
 
     /// Materializes a scheduled endpoint result with graph facts and containment-certified roles.
