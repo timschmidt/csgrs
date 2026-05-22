@@ -701,6 +701,24 @@ fn certification(c: &mut Criterion) {
             }
         })
     });
+    let angle_form_handles = equal_angle_sketch
+        .constraints()
+        .iter()
+        .filter(|constraint| {
+            matches!(
+                constraint.kind,
+                hypersolve::SketchConstraintKind::EqualAngleLines2 { .. }
+            )
+        })
+        .map(|constraint| constraint.handle)
+        .collect::<Vec<_>>();
+    c.bench_function("sketch_equal_angle_residual_forms", |b| {
+        b.iter(|| {
+            for handle in &angle_form_handles {
+                let _ = equal_angle_sketch.residual_forms_for_constraint(*handle);
+            }
+        })
+    });
     let compatibility_fixtures = sketch_compatibility_fixtures();
     c.bench_function("sketch_compatibility_fixture_replay", |b| {
         b.iter(|| {

@@ -718,6 +718,10 @@ pub enum SketchResidualFormKind {
     SquaredDistancePolynomial,
     /// `sqrt(|a-b|^2) - d`, retained for proposal compatibility.
     TrueDistanceProposal,
+    /// Squared-cosine equality for an unsigned angle proof row.
+    SquaredCosineAnglePolynomial,
+    /// `acos(cos(first)) - acos(cos(second))`, retained for proposal/UI parity.
+    TrueAngleProposal,
 }
 
 /// Proof role for a retained residual form.
@@ -1464,9 +1468,11 @@ impl SketchSolveProblem {
     /// coverage plan. For point-to-point distance it keeps both
     /// `|a-b|^2 - d^2`, which is the polynomial exact-replay form, and
     /// `sqrt(|a-b|^2) - d`, which is useful for proposal engines and UI
-    /// parity. Yap (1997) is the controlling rule here: proposal-compatible
-    /// forms are retained as data, but only exact replay/certification turns a
-    /// residual into evidence.
+    /// parity. For equal unsigned line angles it similarly keeps a
+    /// squared-cosine polynomial proof form and an `acos` proposal form. Yap
+    /// (1997) is the controlling rule here: proposal-compatible forms are
+    /// retained as data, but only exact replay/certification turns a residual
+    /// into evidence.
     pub fn residual_forms_for_constraint(
         &self,
         handle: SketchConstraintHandle,
@@ -1534,6 +1540,44 @@ impl SketchSolveProblem {
                             role: SketchResidualFormRole::ProposalOnly,
                             strategy: None,
                             residual: true_distance,
+                        },
+                    ],
+                    diagnostics,
+                }
+            }
+            SketchConstraintKind::EqualAngleLines2 { a, b, c, d } => {
+                let mut diagnostics = Vec::new();
+                let (Some(a), Some(b), Some(c), Some(d)) = (
+                    self.line2_direction(a, constraint, &mut diagnostics),
+                    self.line2_direction(b, constraint, &mut diagnostics),
+                    self.line2_direction(c, constraint, &mut diagnostics),
+                    self.line2_direction(d, constraint, &mut diagnostics),
+                ) else {
+                    return SketchResidualFormsReport {
+                        constraint: handle,
+                        status: SketchResidualFormsStatus::InvalidInputs,
+                        forms: Vec::new(),
+                        diagnostics,
+                    };
+                };
+                let squared_cosine = squared_cosine_angle_residual(&a, &b, &c, &d);
+                let first_angle = angle_cosine_expr(&a, &b).acos();
+                let second_angle = angle_cosine_expr(&c, &d).acos();
+                SketchResidualFormsReport {
+                    constraint: handle,
+                    status: SketchResidualFormsStatus::Generated,
+                    forms: vec![
+                        SketchResidualForm {
+                            kind: SketchResidualFormKind::SquaredCosineAnglePolynomial,
+                            role: SketchResidualFormRole::ExactProof,
+                            strategy: Some(SketchResidualStrategy::SquaredCosineAngleEquality),
+                            residual: squared_cosine,
+                        },
+                        SketchResidualForm {
+                            kind: SketchResidualFormKind::TrueAngleProposal,
+                            role: SketchResidualFormRole::ProposalOnly,
+                            strategy: None,
+                            residual: first_angle - second_angle,
                         },
                     ],
                     diagnostics,
@@ -1973,15 +2017,12 @@ impl SketchSolveProblem {
                 ) else {
                     return;
                 };
-                let first_dot = direction_dot2(&a, &b);
-                let second_dot = direction_dot2(&c, &d);
                 self.push_residual(
                     problem,
                     rows,
                     constraint,
                     constraint.name.clone(),
-                    first_dot.clone() * first_dot * squared_norm2(&c) * squared_norm2(&d)
-                        - second_dot.clone() * second_dot * squared_norm2(&a) * squared_norm2(&b),
+                    squared_cosine_angle_residual(&a, &b, &c, &d),
                     SketchResidualStrategy::SquaredCosineAngleEquality,
                 );
             }
@@ -2652,4 +2693,20 @@ fn direction_dot2(a: &[Expr; 2], b: &[Expr; 2]) -> Expr {
 
 fn squared_norm2(direction: &[Expr; 2]) -> Expr {
     direction[0].clone() * direction[0].clone() + direction[1].clone() * direction[1].clone()
+}
+
+fn squared_cosine_angle_residual(
+    a: &[Expr; 2],
+    b: &[Expr; 2],
+    c: &[Expr; 2],
+    d: &[Expr; 2],
+) -> Expr {
+    let first_dot = direction_dot2(a, b);
+    let second_dot = direction_dot2(c, d);
+    first_dot.clone() * first_dot * squared_norm2(c) * squared_norm2(d)
+        - second_dot.clone() * second_dot * squared_norm2(a) * squared_norm2(b)
+}
+
+fn angle_cosine_expr(a: &[Expr; 2], b: &[Expr; 2]) -> Expr {
+    direction_dot2(a, b) / (squared_norm2(a).sqrt() * squared_norm2(b).sqrt())
 }

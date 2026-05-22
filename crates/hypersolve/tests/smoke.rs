@@ -299,6 +299,60 @@ fn sketch_distance_constraints_retain_exact_and_proposal_residual_forms() {
 }
 
 #[test]
+fn sketch_equal_angle_constraints_retain_exact_and_proposal_residual_forms() {
+    let mut sketch = SketchSolveProblem::new();
+    let origin = sketch.add_point2d("origin", real(0), real(0));
+    let x = sketch.add_point2d("x", real(5), real(0));
+    let diagonal = sketch.add_point2d("diagonal", real(3), real(4));
+    let other_origin = sketch.add_point2d("other origin", real(10), real(0));
+    let other_x = sketch.add_point2d("other x", real(15), real(0));
+    let other_diagonal = sketch.add_point2d("other diagonal", real(13), real(4));
+    let line_x = sketch.add_line_segment2("x", origin, x);
+    let line_diagonal = sketch.add_line_segment2("diagonal", origin, diagonal);
+    let other_line_x = sketch.add_line_segment2("other x", other_origin, other_x);
+    let other_line_diagonal =
+        sketch.add_line_segment2("other diagonal", other_origin, other_diagonal);
+    let angle = sketch_angle_builders::equal_angle_lines2(
+        &mut sketch,
+        "equal angle",
+        line_x,
+        line_diagonal,
+        other_line_x,
+        other_line_diagonal,
+    );
+
+    let forms = sketch.residual_forms_for_constraint(angle.handle);
+
+    assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+    assert!(forms.diagnostics.is_empty());
+    assert_eq!(forms.forms.len(), 2);
+    assert_eq!(
+        forms.forms[0].kind,
+        SketchResidualFormKind::SquaredCosineAnglePolynomial
+    );
+    assert_eq!(forms.forms[0].role, SketchResidualFormRole::ExactProof);
+    assert_eq!(
+        forms.forms[0].strategy,
+        Some(SketchResidualStrategy::SquaredCosineAngleEquality)
+    );
+    assert_eq!(
+        forms.forms[1].kind,
+        SketchResidualFormKind::TrueAngleProposal
+    );
+    assert_eq!(forms.forms[1].role, SketchResidualFormRole::ProposalOnly);
+    assert_eq!(forms.forms[1].strategy, None);
+
+    let context = context_from_problem(&sketch.lower_to_problem().problem);
+    assert_eq!(
+        forms.forms[0]
+            .residual
+            .eval_real(context.bindings())
+            .unwrap(),
+        Real::zero()
+    );
+}
+
+#[test]
 fn sketch_residual_form_reports_reject_unsupported_and_bad_inputs() {
     let mut sketch = SketchSolveProblem::new();
     let point = sketch.add_point2d("point", real(0), real(0));
@@ -311,6 +365,14 @@ fn sketch_residual_form_reports_reject_unsupported_and_bad_inputs() {
         distance,
         distance,
     );
+    let bad_angle = sketch_angle_builders::equal_angle_lines2(
+        &mut sketch,
+        "bad angle",
+        point,
+        point,
+        point,
+        point,
+    );
 
     assert_eq!(
         sketch.residual_forms_for_constraint(horizontal).status,
@@ -321,6 +383,13 @@ fn sketch_residual_form_reports_reject_unsupported_and_bad_inputs() {
     assert_eq!(bad_forms.status, SketchResidualFormsStatus::InvalidInputs);
     assert!(bad_forms.forms.is_empty());
     assert!(!bad_forms.diagnostics.is_empty());
+    let bad_angle_forms = sketch.residual_forms_for_constraint(bad_angle.handle);
+    assert_eq!(
+        bad_angle_forms.status,
+        SketchResidualFormsStatus::InvalidInputs
+    );
+    assert!(bad_angle_forms.forms.is_empty());
+    assert!(!bad_angle_forms.diagnostics.is_empty());
     assert_eq!(
         sketch
             .residual_forms_for_constraint(hypersolve::SketchConstraintHandle(999))
