@@ -3,8 +3,9 @@
 use crate::errors::ValidationError;
 use crate::float_types::{
     hangle_between_vectors, hpoint_distance, hpoint3_bounds, hpoints_within_tolerance,
-    hreal_cmp_f64, hreal_f64s_within_tolerance, hreal_gt_f64, hreal_lt_f64, hreal_to_f64,
-    hunit_vector3, hvector3_from_point3, hvector3_from_vector3,
+    hpositive_boundary_scalar_squared, hreal_cmp_f64, hreal_f64s_within_tolerance,
+    hreal_from_f64, hreal_gt_hreal, hreal_lt_hreal, hreal_to_f64, hunit_vector3,
+    hvector3_from_point3, hvector3_from_vector3,
     parry3d::{bounding_volume::Aabb, query::RayCast, shape::Shape},
     rapier3d::prelude::{
         ColliderBuilder, ColliderSet, Ray, RigidBodyBuilder, RigidBodyHandle, RigidBodySet,
@@ -89,6 +90,14 @@ pub struct Mesh<M: Clone + Send + Sync + Debug> {
     pub metadata: M,
 }
 
+/// Return a hyperreal edge projection parameter for a boundary point.
+///
+/// Points and tolerances still enter as finite public scalars while `Mesh`
+/// carries transitional nalgebra storage, but all segment length, endpoint, and
+/// off-edge predicates are promoted before comparison. This keeps topology
+/// splits aligned with Yap's exact-geometric-computation boundary model,
+/// "Towards Exact Geometric Computation," *Computational Geometry* 7(1-2),
+/// 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>).
 fn hyper_edge_projection_parameter(
     point: &Point3<Real>,
     edge_start: &Point3<Real>,
@@ -102,26 +111,28 @@ fn hyper_edge_projection_parameter(
     let av = &p - &a;
     let bv = &p - &b;
 
-    let tolerance_squared = tolerance * tolerance;
+    let tolerance_squared = hpositive_boundary_scalar_squared(tolerance)?;
+    let tolerance = hreal_from_f64(tolerance).ok()?;
     let ab_len_sq = ab.dot(&ab);
-    if !hreal_gt_f64(&ab_len_sq, tolerance_squared) {
+    if !hreal_gt_hreal(&ab_len_sq, &tolerance_squared) {
         return None;
     }
 
-    if !hreal_gt_f64(&av.dot(&av), tolerance_squared)
-        || !hreal_gt_f64(&bv.dot(&bv), tolerance_squared)
+    if !hreal_gt_hreal(&av.dot(&av), &tolerance_squared)
+        || !hreal_gt_hreal(&bv.dot(&bv), &tolerance_squared)
     {
         return None;
     }
 
     let t_h = (ab.dot(&av) / ab_len_sq).ok()?;
-    if !hreal_gt_f64(&t_h, tolerance) || !hreal_lt_f64(&t_h, 1.0 - tolerance) {
+    let one_minus_tolerance = hreal_from_f64(1.0).ok()? - tolerance.clone();
+    if !hreal_gt_hreal(&t_h, &tolerance) || !hreal_lt_hreal(&t_h, &one_minus_tolerance) {
         return None;
     }
 
     let projected = a + ab * &t_h;
     let delta = p - projected;
-    if hreal_gt_f64(&delta.dot(&delta), tolerance_squared) {
+    if hreal_gt_hreal(&delta.dot(&delta), &tolerance_squared) {
         return None;
     }
 
@@ -1301,7 +1312,7 @@ mod tests {
         let t = hyper_edge_projection_parameter(&point, &edge_start, &edge_end, tolerance())
             .expect("point lies strictly inside the edge");
 
-        assert!((t - 0.5).abs() < tolerance());
+        assert!(hreal_f64s_within_tolerance(t, 0.5, tolerance()));
     }
 
     #[test]
@@ -1312,6 +1323,25 @@ mod tests {
 
         assert!(
             hyper_edge_projection_parameter(&point, &edge_start, &edge_end, tolerance())
+                .is_none()
+        );
+    }
+
+    #[test]
+    fn hyper_edge_projection_parameter_rejects_bad_tolerance_and_endpoints() {
+        let edge_start = Point3::new(0.0, 0.0, 0.0);
+        let edge_end = Point3::new(2.0, 0.0, 0.0);
+        let midpoint = Point3::new(1.0, 0.0, 0.0);
+
+        assert!(
+            hyper_edge_projection_parameter(&midpoint, &edge_start, &edge_end, 0.0).is_none()
+        );
+        assert!(
+            hyper_edge_projection_parameter(&midpoint, &edge_start, &edge_end, Real::NAN)
+                .is_none()
+        );
+        assert!(
+            hyper_edge_projection_parameter(&edge_start, &edge_start, &edge_end, tolerance())
                 .is_none()
         );
     }
