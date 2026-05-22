@@ -1700,9 +1700,23 @@ fn adversarial_ray_intersections_deduplicate_coplanar_triangle_face_hits() {
 
 #[test]
 fn adversarial_axis_primitives_use_hyperreal_checked_direction() {
-    let empty_frustum = Mesh::<()>::frustum_ptp(
+    let tiny_axis_frustum = Mesh::<()>::frustum_ptp(
         Point3::new(1.0, 2.0, 3.0),
         Point3::new(1.0 + tolerance() * 0.25, 2.0, 3.0),
+        1.0,
+        1.0,
+        16,
+        (),
+    );
+    assert!(
+        !tiny_axis_frustum.polygons.is_empty(),
+        "nonzero frustum axis must not be collapsed by tolerance"
+    );
+    assert_mesh_sane(&tiny_axis_frustum);
+
+    let empty_frustum = Mesh::<()>::frustum_ptp(
+        Point3::new(1.0, 2.0, 3.0),
+        Point3::new(1.0, 2.0, 3.0),
         1.0,
         1.0,
         16,
@@ -1722,6 +1736,19 @@ fn adversarial_axis_primitives_use_hyperreal_checked_direction() {
 
     let empty_arrow = Mesh::<()>::arrow(Point3::origin(), Vector3::zeros(), 16, false, ());
     assert!(empty_arrow.polygons.is_empty());
+
+    let tiny_arrow = Mesh::<()>::arrow(
+        Point3::new(0.0, 0.0, 0.0),
+        Vector3::new(tolerance() * 0.25, 0.0, 0.0),
+        16,
+        false,
+        (),
+    );
+    assert!(
+        !tiny_arrow.polygons.is_empty(),
+        "nonzero arrow direction must not be collapsed by tolerance"
+    );
+    assert_mesh_sane(&tiny_arrow);
 
     let arrow = Mesh::<()>::arrow(
         Point3::new(0.0, 0.0, 0.0),
