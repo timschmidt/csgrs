@@ -2,11 +2,12 @@
 
 use crate::float_types::{
     PI, Real, hangle_between_vectors, hangle_sin_cos, hpoint_centroid, hpoint_distance,
-    hpoint_lerp, hpoint_weighted_sum, hpoints_within_tolerance, hreal_clamp_f64, hreal_div,
-    hreal_f64s_within_tolerance, hreal_from_f64, hreal_gt_f64, hreal_lt_f64,
-    hreal_max_report_value, hreal_mean, hreal_mul, hreal_sample_stddev, hreal_sqrt_ref,
-    hreal_sqrt_to_f64, hreal_sub, hreal_sum, hreal_to_f64, hunit_vector3, hvector3_distance,
-    hvector3_dot, hvector3_from_point3, hvector3_mean, hvector3_weighted_sum, tolerance,
+    hpoint_lerp, hpoint_weighted_sum, hpoints_within_tolerance, hreal_boundary_or_zero,
+    hreal_clamp_f64, hreal_div, hreal_f64s_within_tolerance, hreal_from_f64, hreal_gt_f64,
+    hreal_lt_f64, hreal_max_report_value, hreal_mean, hreal_mul, hreal_sample_stddev,
+    hreal_sqrt_ref, hreal_sqrt_to_f64, hreal_sub, hreal_sum, hreal_to_f64, hunit_vector3,
+    hvector3_distance, hvector3_dot, hvector3_from_point3, hvector3_mean,
+    hvector3_weighted_sum, tolerance,
 };
 use hashbrown::HashMap;
 use nalgebra::{Point3, Vector3};
@@ -27,40 +28,32 @@ impl Default for Vertex {
 impl Vertex {
     /// Create a new [`Vertex`].
     ///
-    /// * `position`    – the position in model space  
-    /// * `normal` – (optionally non‑unit) normal; it will be **copied verbatim**, so make sure it is oriented the way you need it for lighting / BSP tests.
+    /// Primitive `Point3<f64>` and `Vector3<f64>` remain accepted at the API
+    /// boundary, but each component is promoted through `hyperreal::Real`
+    /// before storage. Components that cannot round-trip as finite boundary
+    /// values fail closed to zero instead of being classified by local `f64`
+    /// predicates. This keeps vertex construction aligned with Yap's exact
+    /// geometric computation model, where primitive inputs are admitted only at
+    /// the boundary and topology-affecting decisions happen after exact-aware
+    /// promotion (*Computational Geometry* 7(1-2), 1997,
+    /// <https://doi.org/10.1016/0925-7721(95)00040-2>).
+    ///
+    /// * `position` - the position in model space
+    /// * `normal` - optionally non-unit normal copied after boundary sanitizing
     #[inline]
-    pub const fn new(mut position: Point3<Real>, mut normal: Vector3<Real>) -> Self {
-        // Sanitise position
-        // Nasty loop unrolling to allow for const-context evaluations.
-        // Can be replaced with proper for _ in _ {} loops once
-        // https://github.com/rust-lang/rust/issues/87575 is merged
-        let [[x, y, z]]: &mut [[_; 3]; 1] = &mut position.coords.data.0;
-
-        if !x.is_finite() {
-            *x = 0.0;
+    pub fn new(position: Point3<Real>, normal: Vector3<Real>) -> Self {
+        Vertex {
+            position: Point3::new(
+                hreal_boundary_or_zero(position.x),
+                hreal_boundary_or_zero(position.y),
+                hreal_boundary_or_zero(position.z),
+            ),
+            normal: Vector3::new(
+                hreal_boundary_or_zero(normal.x),
+                hreal_boundary_or_zero(normal.y),
+                hreal_boundary_or_zero(normal.z),
+            ),
         }
-        if !y.is_finite() {
-            *y = 0.0;
-        }
-        if !z.is_finite() {
-            *z = 0.0;
-        }
-
-        // Sanitise normal
-        let [[nx, ny, nz]]: &mut [[_; 3]; 1] = &mut normal.data.0;
-
-        if !nx.is_finite() {
-            *nx = 0.0;
-        }
-        if !ny.is_finite() {
-            *ny = 0.0;
-        }
-        if !nz.is_finite() {
-            *nz = 0.0;
-        }
-
-        Vertex { position, normal }
     }
 
     /// Flip vertex normal
@@ -802,7 +795,7 @@ impl VertexCluster {
     }
 
     /// Convert cluster back to a representative vertex
-    pub const fn to_vertex(&self) -> Vertex {
+    pub fn to_vertex(&self) -> Vertex {
         Vertex::new(self.position, self.normal)
     }
 }
@@ -823,5 +816,16 @@ mod test {
 
         assert!(vertex.position.iter().copied().all(Real::is_finite));
         assert!(vertex.normal.iter().copied().all(Real::is_finite));
+    }
+
+    #[test]
+    pub fn vertex_new_sanitizes_boundary_components_through_hyperreal() {
+        let vertex = Vertex::new(
+            Point3::new(1.25, Real::NAN, -2.5),
+            Vector3::new(Real::INFINITY, -3.5, Real::NEG_INFINITY),
+        );
+
+        assert_eq!(vertex.position, Point3::new(1.25, 0.0, -2.5));
+        assert_eq!(vertex.normal, Vector3::new(0.0, -3.5, 0.0));
     }
 }
