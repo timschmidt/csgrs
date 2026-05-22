@@ -354,6 +354,65 @@ fn sketch_equal_angle_constraints_retain_exact_and_proposal_residual_forms() {
 }
 
 #[test]
+fn sketch_tangent_constraints_retain_exact_predicate_residual_forms() {
+    let mut sketch = SketchSolveProblem::new();
+    let candidate_start = sketch.add_point2d("candidate start", real(0), real(0));
+    let candidate_end = sketch.add_point2d("candidate end", real(3), real(4));
+    let target_start = sketch.add_point2d("target start", real(2), real(1));
+    let target_end = sketch.add_point2d("target end", real(8), real(9));
+    let candidate = sketch.add_line_segment2("candidate tangent", candidate_start, candidate_end);
+    let target = sketch.add_line_segment2("target tangent", target_start, target_end);
+    let tangent = sketch_tangency_builders::tangent_same_direction_lines2(
+        &mut sketch,
+        "same tangent",
+        candidate,
+        target,
+    );
+
+    let forms = sketch.residual_forms_for_constraint(tangent.handle);
+
+    assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+    assert!(forms.diagnostics.is_empty());
+    assert_eq!(forms.forms.len(), 2);
+    assert_eq!(
+        forms.forms[0].kind,
+        SketchResidualFormKind::TangentCrossProductPredicate
+    );
+    assert_eq!(forms.forms[0].role, SketchResidualFormRole::ExactProof);
+    assert_eq!(
+        forms.forms[0].strategy,
+        Some(SketchResidualStrategy::TangentSameDirection)
+    );
+    assert_eq!(
+        forms.forms[1].kind,
+        SketchResidualFormKind::TangentDotProductPredicate
+    );
+    assert_eq!(forms.forms[1].role, SketchResidualFormRole::ExactProof);
+    assert_eq!(
+        forms.forms[1].strategy,
+        Some(SketchResidualStrategy::TangentSameDirection)
+    );
+
+    let context = context_from_problem(&sketch.lower_to_problem().problem);
+    assert_eq!(
+        forms.forms[0]
+            .residual
+            .eval_real(context.bindings())
+            .unwrap(),
+        Real::zero()
+    );
+    assert_eq!(
+        forms.forms[1]
+            .residual
+            .eval_real(context.bindings())
+            .unwrap()
+            .structural_facts()
+            .sign,
+        Some(hyperreal::RealSign::Positive)
+    );
+}
+
+#[test]
 fn sketch_residual_form_reports_reject_unsupported_and_bad_inputs() {
     let mut sketch = SketchSolveProblem::new();
     let point = sketch.add_point2d("point", real(0), real(0));
@@ -374,6 +433,12 @@ fn sketch_residual_form_reports_reject_unsupported_and_bad_inputs() {
         point,
         point,
     );
+    let bad_tangent = sketch_tangency_builders::tangent_same_direction_lines2(
+        &mut sketch,
+        "bad tangent",
+        point,
+        point,
+    );
 
     assert_eq!(
         sketch.residual_forms_for_constraint(horizontal).status,
@@ -391,6 +456,13 @@ fn sketch_residual_form_reports_reject_unsupported_and_bad_inputs() {
     );
     assert!(bad_angle_forms.forms.is_empty());
     assert!(!bad_angle_forms.diagnostics.is_empty());
+    let bad_tangent_forms = sketch.residual_forms_for_constraint(bad_tangent.handle);
+    assert_eq!(
+        bad_tangent_forms.status,
+        SketchResidualFormsStatus::InvalidInputs
+    );
+    assert!(bad_tangent_forms.forms.is_empty());
+    assert!(!bad_tangent_forms.diagnostics.is_empty());
     assert_eq!(
         sketch
             .residual_forms_for_constraint(hypersolve::SketchConstraintHandle(999))

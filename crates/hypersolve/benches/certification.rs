@@ -770,6 +770,24 @@ fn certification(c: &mut Criterion) {
             }
         })
     });
+    let tangent_form_handles = tangent_same_direction_sketch
+        .constraints()
+        .iter()
+        .filter(|constraint| {
+            matches!(
+                constraint.kind,
+                hypersolve::SketchConstraintKind::TangentSameDirectionLines2 { .. }
+            )
+        })
+        .map(|constraint| constraint.handle)
+        .collect::<Vec<_>>();
+    c.bench_function("sketch_tangent_residual_forms", |b| {
+        b.iter(|| {
+            for handle in &tangent_form_handles {
+                let _ = tangent_same_direction_sketch.residual_forms_for_constraint(*handle);
+            }
+        })
+    });
     let compatibility_fixtures = sketch_compatibility_fixtures();
     c.bench_function("sketch_compatibility_fixture_replay", |b| {
         b.iter(|| {

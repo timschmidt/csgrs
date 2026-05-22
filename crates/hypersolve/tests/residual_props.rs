@@ -7,7 +7,8 @@ use hypersolve::{
     ProposalEngineKind, ProposalEnginePrecision, ProposalEngineReport, RootIsolationStatus,
     SketchConstructionCertificateStatus, SketchDegeneracyKind, SketchDegeneracyStatus,
     SketchEntityDomain, SketchEntityDomainKind, SketchEntityDomainStatus, SketchGeneratedRowStatus,
-    SketchParameterDomain, SketchParameterDomainStatus, SketchResidualStrategy,
+    SketchParameterDomain, SketchParameterDomainStatus, SketchResidualFormKind,
+    SketchResidualFormRole, SketchResidualFormsStatus, SketchResidualStrategy,
     SketchRoundTripMetadata, SketchSolveProblem, SketchUnitToleranceStatus, SolverBlockRowKind,
     SolverConfig, SolverPoint2, SolverState, SymbolId, VariableBall,
     apply_equality_substitution_classes, audit_sketch_unit_tolerances, certify_affine_krawczyk_box,
@@ -728,6 +729,46 @@ proptest! {
         });
         prop_assert!(all_tangent_rows);
         prop_assert!(certification.all_satisfied());
+    }
+
+    #[test]
+    fn sketch_tangent_residual_forms_replay_generated_positive_scaled_directions(
+        dx in -8_i16..=8,
+        dy in -8_i16..=8,
+        scale in 1_i16..=5,
+    ) {
+        prop_assume!(dx != 0 || dy != 0);
+        let dx = i64::from(dx);
+        let dy = i64::from(dy);
+        let scale = i64::from(scale);
+        let mut sketch = SketchSolveProblem::new();
+        let a0 = sketch.add_point2d("a0", Real::from(0), Real::from(0));
+        let a1 = sketch.add_point2d("a1", Real::from(dx), Real::from(dy));
+        let b0 = sketch.add_point2d("b0", Real::from(3), Real::from(-5));
+        let b1 = sketch.add_point2d(
+            "b1",
+            Real::from(3 + scale * dx),
+            Real::from(-5 + scale * dy),
+        );
+        let candidate = sketch.add_line_segment2("candidate tangent", a0, a1);
+        let target = sketch.add_line_segment2("target tangent", b0, b1);
+        let handle = sketch.add_tangent_same_direction_lines2("same tangent", candidate, target);
+
+        let forms = sketch.residual_forms_for_constraint(handle);
+        let context = context_from_problem(&sketch.lower_to_problem().problem);
+
+        prop_assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+        prop_assert_eq!(forms.forms.len(), 2);
+        prop_assert_eq!(forms.forms[0].kind, SketchResidualFormKind::TangentCrossProductPredicate);
+        prop_assert_eq!(forms.forms[0].role, SketchResidualFormRole::ExactProof);
+        prop_assert_eq!(forms.forms[1].kind, SketchResidualFormKind::TangentDotProductPredicate);
+        prop_assert_eq!(forms.forms[1].role, SketchResidualFormRole::ExactProof);
+        prop_assert_eq!(
+            forms.forms[0].residual.eval_real(context.bindings()).unwrap(),
+            Real::zero()
+        );
+        let dot = forms.forms[1].residual.eval_real(context.bindings()).unwrap();
+        prop_assert_eq!(dot.structural_facts().sign, Some(RealSign::Positive));
     }
 
     #[test]

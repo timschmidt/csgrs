@@ -756,6 +756,10 @@ pub enum SketchResidualFormKind {
     SquaredCosineAnglePolynomial,
     /// `acos(cos(first)) - acos(cos(second))`, retained for proposal/UI parity.
     TrueAngleProposal,
+    /// Exact cross-product equality for a G1 tangent support proof row.
+    TangentCrossProductPredicate,
+    /// Exact dot-product inequality for a same-direction tangent proof row.
+    TangentDotProductPredicate,
 }
 
 /// Proof role for a retained residual form.
@@ -1532,10 +1536,11 @@ impl SketchSolveProblem {
     /// `|a-b|^2 - d^2`, which is the polynomial exact-replay form, and
     /// `sqrt(|a-b|^2) - d`, which is useful for proposal engines and UI
     /// parity. For equal unsigned line angles it similarly keeps a
-    /// squared-cosine polynomial proof form and an `acos` proposal form. Yap
-    /// (1997) is the controlling rule here: proposal-compatible forms are
-    /// retained as data, but only exact replay/certification turns a residual
-    /// into evidence.
+    /// squared-cosine polynomial proof form and an `acos` proposal form.
+    /// Tangency keeps exact cross/dot predicate forms because the orientation
+    /// branch is itself proof data, not a proposal residual. Yap (1997) is the
+    /// controlling rule here: proposal-compatible forms are retained as data,
+    /// but only exact replay/certification turns a residual into evidence.
     pub fn residual_forms_for_constraint(
         &self,
         handle: SketchConstraintHandle,
@@ -1641,6 +1646,39 @@ impl SketchSolveProblem {
                             role: SketchResidualFormRole::ProposalOnly,
                             strategy: None,
                             residual: first_angle - second_angle,
+                        },
+                    ],
+                    diagnostics,
+                }
+            }
+            SketchConstraintKind::TangentSameDirectionLines2 { candidate, target } => {
+                let mut diagnostics = Vec::new();
+                let (Some(candidate), Some(target)) = (
+                    self.line2_direction(candidate, constraint, &mut diagnostics),
+                    self.line2_direction(target, constraint, &mut diagnostics),
+                ) else {
+                    return SketchResidualFormsReport {
+                        constraint: handle,
+                        status: SketchResidualFormsStatus::InvalidInputs,
+                        forms: Vec::new(),
+                        diagnostics,
+                    };
+                };
+                SketchResidualFormsReport {
+                    constraint: handle,
+                    status: SketchResidualFormsStatus::Generated,
+                    forms: vec![
+                        SketchResidualForm {
+                            kind: SketchResidualFormKind::TangentCrossProductPredicate,
+                            role: SketchResidualFormRole::ExactProof,
+                            strategy: Some(SketchResidualStrategy::TangentSameDirection),
+                            residual: direction_cross2(&candidate, &target),
+                        },
+                        SketchResidualForm {
+                            kind: SketchResidualFormKind::TangentDotProductPredicate,
+                            role: SketchResidualFormRole::ExactProof,
+                            strategy: Some(SketchResidualStrategy::TangentSameDirection),
+                            residual: direction_dot2(&candidate, &target),
                         },
                     ],
                     diagnostics,
