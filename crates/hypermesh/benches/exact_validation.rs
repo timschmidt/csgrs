@@ -142,6 +142,30 @@ fn tetrahedron_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3], d: [i64; 3]) -> ExactM
 }
 
 #[cfg(feature = "exact-triangulation")]
+fn combine_exact_meshes(meshes: &[ExactMesh], label: &'static str) -> ExactMesh {
+    let mut vertices = Vec::new();
+    let mut triangles = Vec::new();
+    for mesh in meshes {
+        let offset = vertices.len();
+        vertices.extend(mesh.vertices().iter().cloned());
+        triangles.extend(mesh.triangles().iter().map(|triangle| {
+            Triangle([
+                triangle.0[0] + offset,
+                triangle.0[1] + offset,
+                triangle.0[2] + offset,
+            ])
+        }));
+    }
+    ExactMesh::new_with_policy(
+        vertices,
+        triangles,
+        SourceProvenance::exact(label),
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap()
+}
+
+#[cfg(feature = "exact-triangulation")]
 fn base_fan_tetrahedron_i64(
     a: [i64; 3],
     b: [i64; 3],
@@ -5915,6 +5939,20 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
             base_fan_tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [2, 1, 0], [0, 0, -4]);
         let contained_adjacent_left = tetrahedron_i64([0, 0, 0], [6, 0, 0], [0, 6, 0], [0, 0, 6]);
         let contained_adjacent_right = tetrahedron_i64([1, 1, 0], [1, 2, 0], [2, 1, 0], [1, 1, -3]);
+        let contained_multi_left = combine_exact_meshes(
+            &[
+                tetrahedron_i64([0, 0, 0], [8, 0, 0], [0, 8, 0], [0, 0, 8]),
+                tetrahedron_i64([20, 0, 0], [28, 0, 0], [20, 8, 0], [20, 0, 8]),
+            ],
+            "bench contained-face adjacent two-container fixture",
+        );
+        let contained_multi_right = combine_exact_meshes(
+            &[
+                tetrahedron_i64([1, 1, 0], [1, 2, 0], [2, 1, 0], [1, 1, -3]),
+                tetrahedron_i64([21, 1, 0], [21, 2, 0], [22, 1, 0], [21, 1, -3]),
+            ],
+            "bench contained-face adjacent two-cap fixture",
+        );
 
         let graph = build_intersection_graph(&left, &right).unwrap();
 
@@ -6281,6 +6319,35 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
                         hypermesh::exact::ExactBooleanOperation::Difference,
                     )
                     .map(|report| report.validate()),
+                    hypermesh::exact::materialize_contained_face_adjacent_union(
+                        &contained_multi_left,
+                        &contained_multi_right,
+                        ValidationPolicy::CLOSED,
+                    )
+                    .map(|union| {
+                        union
+                            .validate_against_sources(&contained_multi_left, &contained_multi_right)
+                            .unwrap();
+                        union.mesh.triangles().len()
+                    }),
+                    hypermesh::exact::boolean_exact(
+                        &contained_multi_left,
+                        &contained_multi_right,
+                        hypermesh::exact::ExactBooleanOperation::Union,
+                        ValidationPolicy::CLOSED,
+                    )
+                    .map(|result| {
+                        result
+                            .validate_operation_against_sources(
+                                &contained_multi_left,
+                                &contained_multi_right,
+                                hypermesh::exact::ExactBooleanOperation::Union,
+                                ValidationPolicy::CLOSED,
+                                hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+                            )
+                            .unwrap();
+                        result.mesh.triangles().len()
+                    }),
                 )
             })
         });

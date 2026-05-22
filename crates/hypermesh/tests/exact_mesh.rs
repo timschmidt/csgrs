@@ -67,6 +67,30 @@ fn tetrahedron_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3], d: [i64; 3]) -> ExactM
 }
 
 #[cfg(feature = "exact-triangulation")]
+fn combine_exact_meshes(meshes: &[ExactMesh], label: &'static str) -> ExactMesh {
+    let mut vertices = Vec::new();
+    let mut triangles = Vec::new();
+    for mesh in meshes {
+        let offset = vertices.len();
+        vertices.extend(mesh.vertices().iter().cloned());
+        triangles.extend(mesh.triangles().iter().map(|triangle| {
+            Triangle([
+                triangle.0[0] + offset,
+                triangle.0[1] + offset,
+                triangle.0[2] + offset,
+            ])
+        }));
+    }
+    ExactMesh::new_with_policy(
+        vertices,
+        triangles,
+        SourceProvenance::exact(label),
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap()
+}
+
+#[cfg(feature = "exact-triangulation")]
 fn base_fan_tetrahedron_i64(
     a: [i64; 3],
     b: [i64; 3],
@@ -7843,6 +7867,8 @@ fn exact_contained_face_adjacent_tetrahedra_union_replaces_containing_face_with_
     assert_eq!(union.containing_side, MeshSide::Left);
     assert_eq!(union.containing_face, 0);
     assert_eq!(union.contained_face, 0);
+    assert_eq!(union.contained_faces, vec![0]);
+    assert_eq!(union.containing_faces, vec![0]);
     assert!(union.mesh.facts().mesh.closed_manifold);
     assert!(union.mesh.vertices().len() >= left.vertices().len() + right.vertices().len());
     assert!(union.mesh.triangles().len() > left.triangles().len() + right.triangles().len());
@@ -7945,6 +7971,113 @@ fn exact_contained_face_adjacent_tetrahedra_union_replaces_containing_face_with_
         hypermesh::exact::materialize_contained_face_adjacent_union(
             &left,
             &same_side_inner,
+            ValidationPolicy::CLOSED,
+        )
+        .is_none()
+    );
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
+fn exact_contained_face_adjacent_multi_tetrahedra_union_replaces_containing_face_with_holes() {
+    let left_a = tetrahedron_i64([0, 0, 0], [8, 0, 0], [0, 8, 0], [0, 0, 8]);
+    let left_b = tetrahedron_i64([20, 0, 0], [28, 0, 0], [20, 8, 0], [20, 0, 8]);
+    let left = combine_exact_meshes(
+        &[left_a, left_b],
+        "exact contained-face adjacent two-container fixture",
+    );
+    let right_a = tetrahedron_i64([1, 1, 0], [1, 2, 0], [2, 1, 0], [1, 1, -3]);
+    let right_b = tetrahedron_i64([21, 1, 0], [21, 2, 0], [22, 1, 0], [21, 1, -3]);
+    let right = combine_exact_meshes(
+        &[right_a, right_b],
+        "exact contained-face adjacent two-cap fixture",
+    );
+
+    let graph = build_intersection_graph(&left, &right).unwrap();
+    graph.validate_against_meshes(&left, &right).unwrap();
+    assert!(graph.face_pairs.iter().any(|pair| {
+        pair.left_face == 0
+            && pair.right_face == 0
+            && pair.relation == hypermesh::exact::MeshFacePairRelation::CoplanarOverlapping
+    }));
+    assert!(graph.face_pairs.iter().any(|pair| {
+        pair.left_face == 4
+            && pair.right_face == 4
+            && pair.relation == hypermesh::exact::MeshFacePairRelation::CoplanarOverlapping
+    }));
+
+    let union = hypermesh::exact::materialize_contained_face_adjacent_union(
+        &left,
+        &right,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("multiple disjoint contained caps should replay as a multi-holed adjacent union");
+    union.validate().unwrap();
+    union.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(union.containing_side, MeshSide::Left);
+    assert_eq!(union.containing_face, 0);
+    assert_eq!(union.contained_face, 0);
+    assert_eq!(union.contained_faces, vec![0, 4]);
+    assert_eq!(union.containing_faces, vec![0, 4]);
+    assert!(union.mesh.facts().mesh.closed_manifold);
+    assert!(union.mesh.triangles().len() > left.triangles().len() + right.triangles().len());
+
+    let mut stale = union.clone();
+    stale.contained_faces.pop();
+    assert_eq!(
+        stale.validate_against_sources(&left, &right).unwrap_err(),
+        hypermesh::exact::ContainedFaceAdjacentUnionError::SourceReplayMismatch
+    );
+
+    let preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+    )
+    .unwrap();
+    preflight.validate().unwrap();
+    preflight.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedContainedFaceAdjacentUnion
+    );
+
+    let result = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    result
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            hypermesh::exact::ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ContainedFaceAdjacentUnion
+        }
+    );
+    assert_eq!(result.mesh, union.mesh);
+
+    let single_left = tetrahedron_i64([0, 0, 0], [8, 0, 0], [0, 8, 0], [0, 0, 8]);
+    let same_face_right = combine_exact_meshes(
+        &[
+            tetrahedron_i64([1, 1, 0], [1, 2, 0], [2, 1, 0], [1, 1, -3]),
+            tetrahedron_i64([4, 1, 0], [4, 2, 0], [5, 1, 0], [4, 1, -3]),
+        ],
+        "same containing face multi-hole remains unsupported",
+    );
+    assert!(
+        hypermesh::exact::materialize_contained_face_adjacent_union(
+            &single_left,
+            &same_face_right,
             ValidationPolicy::CLOSED,
         )
         .is_none()

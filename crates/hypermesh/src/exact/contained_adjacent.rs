@@ -53,6 +53,15 @@ pub struct ContainedFaceAdjacentUnion {
     /// Face index on the opposite source mesh that is removed from the
     /// regularized union.
     pub contained_face: usize,
+    /// All opposite-source faces removed from the regularized union.
+    ///
+    /// One-hole certificates retain exactly this face in
+    /// [`Self::contained_face`]. Multi-hole certificates keep the first cap
+    /// there for API compatibility and replay the full set here, so stale
+    /// copied artifacts cannot silently drop one internal cap.
+    pub contained_faces: Vec<usize>,
+    /// All source faces replaced by one-hole remnant patches.
+    pub containing_faces: Vec<usize>,
     /// Closed output mesh after replacing the containing face and deleting the
     /// contained face.
     pub mesh: ExactMesh,
@@ -134,21 +143,48 @@ pub fn materialize_contained_face_adjacent_union(
     let mesh = contained_face_union_mesh(left, right, &certificate, validation)?;
     let union = ContainedFaceAdjacentUnion {
         containing_side: certificate.containing_side,
-        containing_face: certificate.containing_face,
-        contained_face: certificate.contained_face,
+        containing_face: certificate.containing_face(),
+        contained_face: certificate.contained_faces()[0],
+        contained_faces: certificate.contained_faces(),
+        containing_faces: certificate.containing_faces(),
         mesh,
     };
     union.validate().ok()?;
     Some(union)
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 struct ContainedFaceAdjacencyCertificate {
     containing_side: MeshSide,
+    patches: Vec<ContainedFacePatch>,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct ContainedFacePatch {
     containing_face: usize,
     contained_face: usize,
     projection: CoplanarProjection,
     containing_projected_sign: Sign,
+}
+
+impl ContainedFaceAdjacencyCertificate {
+    fn containing_face(&self) -> usize {
+        self.patches[0].containing_face
+    }
+
+    fn contained_faces(&self) -> Vec<usize> {
+        self.patches
+            .iter()
+            .map(|patch| patch.contained_face)
+            .collect()
+    }
+
+    fn containing_faces(&self) -> Vec<usize> {
+        self.patches
+            .iter()
+            .map(|patch| patch.containing_face)
+            .collect()
+    }
 }
 
 fn contained_face_adjacency_certificate(
@@ -162,8 +198,9 @@ fn contained_face_adjacency_certificate(
             continue;
         }
         let candidate = contained_face_pair(left, right, pair)?;
-        if certificate.replace(candidate).is_some() {
-            return None;
+        match &mut certificate {
+            Some(existing) => merge_contained_face_candidate(existing, candidate)?,
+            None => certificate = Some(candidate),
         }
     }
     let certificate = certificate?;
@@ -187,10 +224,12 @@ fn contained_face_pair(
     {
         return Some(ContainedFaceAdjacencyCertificate {
             containing_side: MeshSide::Left,
-            containing_face: pair.left_face,
-            contained_face: pair.right_face,
-            projection,
-            containing_projected_sign: sign,
+            patches: vec![ContainedFacePatch {
+                containing_face: pair.left_face,
+                contained_face: pair.right_face,
+                projection,
+                containing_projected_sign: sign,
+            }],
         });
     }
     if let Some((projection, sign)) =
@@ -198,13 +237,47 @@ fn contained_face_pair(
     {
         return Some(ContainedFaceAdjacencyCertificate {
             containing_side: MeshSide::Right,
-            containing_face: pair.right_face,
-            contained_face: pair.left_face,
-            projection,
-            containing_projected_sign: sign,
+            patches: vec![ContainedFacePatch {
+                containing_face: pair.right_face,
+                contained_face: pair.left_face,
+                projection,
+                containing_projected_sign: sign,
+            }],
         });
     }
     None
+}
+
+/// Merge one contained-face candidate into a bounded multi-patch certificate.
+///
+/// The accepted topology replaces several independent source faces with
+/// one-hole remnants. Multiple holes on the same containing face still belong
+/// to the general planar/coplanar-volumetric materializer because that requires
+/// a multi-hole face triangulation in this closed-solid path. Following Yap,
+/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+/// (1997), unsupported topology remains explicit instead of being guessed.
+fn merge_contained_face_candidate(
+    existing: &mut ContainedFaceAdjacencyCertificate,
+    candidate: ContainedFaceAdjacencyCertificate,
+) -> Option<()> {
+    if existing.containing_side != candidate.containing_side {
+        return None;
+    }
+    for patch in candidate.patches {
+        if existing
+            .patches
+            .iter()
+            .any(|existing| existing.containing_face == patch.containing_face)
+            || existing
+                .patches
+                .iter()
+                .any(|existing| existing.contained_face == patch.contained_face)
+        {
+            return None;
+        }
+        existing.patches.push(patch);
+    }
+    Some(())
 }
 
 fn contained_adjacency_contact_pair(
@@ -213,9 +286,7 @@ fn contained_adjacency_contact_pair(
     pair: &FacePairEvents,
     certificate: &ContainedFaceAdjacencyCertificate,
 ) -> bool {
-    if pair.left_face == left_face_for_certificate(certificate)
-        && pair.right_face == right_face_for_certificate(certificate)
-    {
+    if certificate_face_pair_contains(certificate, pair.left_face, pair.right_face) {
         return pair.relation == MeshFacePairRelation::CoplanarOverlapping;
     }
 
@@ -230,17 +301,20 @@ fn contained_adjacency_contact_pair(
     }
 }
 
-const fn left_face_for_certificate(certificate: &ContainedFaceAdjacencyCertificate) -> usize {
+fn certificate_face_pair_contains(
+    certificate: &ContainedFaceAdjacencyCertificate,
+    left_face: usize,
+    right_face: usize,
+) -> bool {
     match certificate.containing_side {
-        MeshSide::Left => certificate.containing_face,
-        MeshSide::Right => certificate.contained_face,
-    }
-}
-
-const fn right_face_for_certificate(certificate: &ContainedFaceAdjacencyCertificate) -> usize {
-    match certificate.containing_side {
-        MeshSide::Left => certificate.contained_face,
-        MeshSide::Right => certificate.containing_face,
+        MeshSide::Left => certificate
+            .patches
+            .iter()
+            .any(|patch| patch.containing_face == left_face && patch.contained_face == right_face),
+        MeshSide::Right => certificate
+            .patches
+            .iter()
+            .any(|patch| patch.containing_face == right_face && patch.contained_face == left_face),
     }
 }
 
@@ -346,40 +420,41 @@ fn contained_face_union_mesh(
     certificate: &ContainedFaceAdjacencyCertificate,
     validation: ValidationPolicy,
 ) -> Option<ExactMesh> {
-    let containing_mesh = face_mesh(
-        mesh_for_side(certificate.containing_side, left, right),
-        certificate.containing_face,
-        "exact contained-face adjacency containing face",
-    )?;
-    let contained_mesh = face_mesh(
-        mesh_for_side(opposite_side(certificate.containing_side), left, right),
-        certificate.contained_face,
-        "exact contained-face adjacency contained face",
-    )?;
-    let holed =
-        arrange_single_triangle_coplanar_holed_difference(&containing_mesh, &contained_mesh)?;
-
     let mut vertices = Vec::new();
     let mut triangles = Vec::new();
     append_source_mesh_without_face(
         left,
-        skip_face_for_side(certificate, MeshSide::Left),
+        skip_faces_for_side(certificate, MeshSide::Left),
         &mut vertices,
         &mut triangles,
     )?;
     append_source_mesh_without_face(
         right,
-        skip_face_for_side(certificate, MeshSide::Right),
+        skip_faces_for_side(certificate, MeshSide::Right),
         &mut vertices,
         &mut triangles,
     )?;
-    append_holed_replacement(
-        &holed.mesh,
-        certificate.projection,
-        certificate.containing_projected_sign,
-        &mut vertices,
-        &mut triangles,
-    )?;
+    for patch in &certificate.patches {
+        let containing_mesh = face_mesh(
+            mesh_for_side(certificate.containing_side, left, right),
+            patch.containing_face,
+            "exact contained-face adjacency containing face",
+        )?;
+        let contained_mesh = face_mesh(
+            mesh_for_side(opposite_side(certificate.containing_side), left, right),
+            patch.contained_face,
+            "exact contained-face adjacency contained face",
+        )?;
+        let holed =
+            arrange_single_triangle_coplanar_holed_difference(&containing_mesh, &contained_mesh)?;
+        append_holed_replacement(
+            &holed.mesh,
+            patch.projection,
+            patch.containing_projected_sign,
+            &mut vertices,
+            &mut triangles,
+        )?;
+    }
 
     ExactMesh::new_with_policy(
         vertices,
@@ -406,12 +481,12 @@ fn face_mesh(mesh: &ExactMesh, face: usize, label: &'static str) -> Option<Exact
 
 fn append_source_mesh_without_face(
     mesh: &ExactMesh,
-    skip_face: Option<usize>,
+    skip_faces: Vec<usize>,
     vertices: &mut Vec<ExactPoint3>,
     triangles: &mut Vec<Triangle>,
 ) -> Option<()> {
     for (face, triangle) in mesh.triangles().iter().enumerate() {
-        if skip_face == Some(face) {
+        if skip_faces.contains(&face) {
             continue;
         }
         triangles.push(Triangle([
@@ -481,16 +556,16 @@ fn point_to_exact(point: &Point3) -> ExactPoint3 {
     ExactPoint3::new(point.x.clone(), point.y.clone(), point.z.clone())
 }
 
-const fn skip_face_for_side(
+fn skip_faces_for_side(
     certificate: &ContainedFaceAdjacencyCertificate,
     side: MeshSide,
-) -> Option<usize> {
+) -> Vec<usize> {
     match (certificate.containing_side, side) {
         (MeshSide::Left, MeshSide::Left) | (MeshSide::Right, MeshSide::Right) => {
-            Some(certificate.containing_face)
+            certificate.containing_faces()
         }
         (MeshSide::Left, MeshSide::Right) | (MeshSide::Right, MeshSide::Left) => {
-            Some(certificate.contained_face)
+            certificate.contained_faces()
         }
     }
 }

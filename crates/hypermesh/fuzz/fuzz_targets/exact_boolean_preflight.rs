@@ -56,10 +56,24 @@ fuzz_target!(|data: &[u8]| {
     let mut values = Vec::new();
     let mut indices = Vec::new();
 
-    for chunk in data.chunks_exact(2).take(72) {
-        values.push(i16::from_le_bytes(chunk.try_into().unwrap()) as i64);
+    const FUZZ_VALUE_WORDS: usize = 36;
+    const FUZZ_INDEX_WORDS: usize = 36;
+
+    for chunk in data.chunks_exact(2).take(FUZZ_VALUE_WORDS) {
+        let raw = i16::from_le_bytes(chunk.try_into().unwrap()) as i32;
+        // Yap's exact-computation model keeps decisions exact but still
+        // requires an explicit resource budget for adversarial inputs; see
+        // Chee K. Yap, "Towards Exact Geometric Computation,"
+        // Computational Geometry 7.1-2 (1997). The fuzz target stresses
+        // degeneracy and topology on a bounded integer grid so coefficient
+        // swell does not mask boolean regressions as allocator OOMs.
+        values.push((raw.rem_euclid(257) - 128) as i64);
     }
-    for chunk in data.chunks_exact(2).skip(72).take(72) {
+    for chunk in data
+        .chunks_exact(2)
+        .skip(FUZZ_VALUE_WORDS)
+        .take(FUZZ_INDEX_WORDS)
+    {
         indices.push((u16::from_le_bytes(chunk.try_into().unwrap()) % 12) as usize);
     }
 
@@ -4530,6 +4544,30 @@ fn tetrahedron_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3], d: [i64; 3]) -> ExactM
 }
 
 #[cfg(feature = "exact-triangulation")]
+fn combine_exact_meshes(meshes: &[ExactMesh], label: &'static str) -> ExactMesh {
+    let mut vertices = Vec::new();
+    let mut triangles = Vec::new();
+    for mesh in meshes {
+        let offset = vertices.len();
+        vertices.extend(mesh.vertices().iter().cloned());
+        triangles.extend(mesh.triangles().iter().map(|triangle| {
+            Triangle([
+                triangle.0[0] + offset,
+                triangle.0[1] + offset,
+                triangle.0[2] + offset,
+            ])
+        }));
+    }
+    ExactMesh::new_with_policy(
+        vertices,
+        triangles,
+        SourceProvenance::exact(label),
+        ValidationPolicy::CLOSED,
+    )
+    .expect("combined fixture should import")
+}
+
+#[cfg(feature = "exact-triangulation")]
 fn base_fan_tetrahedron_i64(
     a: [i64; 3],
     b: [i64; 3],
@@ -5022,6 +5060,50 @@ fn exercise_contained_face_adjacent_union() {
         )
         .is_none()
     );
+
+    let left_a = tetrahedron_i64([0, 0, 0], [8, 0, 0], [0, 8, 0], [0, 0, 8]);
+    let left_b = tetrahedron_i64([20, 0, 0], [28, 0, 0], [20, 8, 0], [20, 0, 8]);
+    let multi_left = combine_exact_meshes(
+        &[left_a, left_b],
+        "contained-face adjacent fuzz two-container fixture",
+    );
+    let right_a = tetrahedron_i64([1, 1, 0], [1, 2, 0], [2, 1, 0], [1, 1, -3]);
+    let right_b = tetrahedron_i64([21, 1, 0], [21, 2, 0], [22, 1, 0], [21, 1, -3]);
+    let multi_right = combine_exact_meshes(
+        &[right_a, right_b],
+        "contained-face adjacent fuzz two-cap fixture",
+    );
+    let multi_union = hypermesh::exact::materialize_contained_face_adjacent_union(
+        &multi_left,
+        &multi_right,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("independent contained-face patches should materialize");
+    multi_union.validate().unwrap();
+    multi_union
+        .validate_against_sources(&multi_left, &multi_right)
+        .unwrap();
+    assert_eq!(multi_union.contained_faces, vec![0, 4]);
+    assert_eq!(multi_union.containing_faces, vec![0, 4]);
+
+    let multi_result = boolean_exact_with_boundary_policy(
+        &multi_left,
+        &multi_right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+    multi_result
+        .validate_operation_against_sources(
+            &multi_left,
+            &multi_right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(multi_result.mesh, multi_union.mesh);
 }
 
 #[cfg(feature = "exact-triangulation")]
