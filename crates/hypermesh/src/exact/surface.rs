@@ -4,9 +4,9 @@
 //! shortcuts. The certified cases are intentionally narrow: single coplanar
 //! triangle containment, positive-area intersection, convex union, simple
 //! single-loop planar-arrangement union/difference, one-hole and bounded
-//! multi-hole differences, nonconvex component-union loops, and the convex
-//! one-corner difference shapes that can be represented as an open triangle
-//! mesh. The
+//! multi-hole differences, nonconvex component-union loops, disconnected
+//! nonconvex component-union multi-loops, and the convex one-corner difference
+//! shapes that can be represented as an open triangle mesh. The
 //! predicates are the same projected orientation and point-in-triangle facts
 //! used by the coplanar overlap classifier, following
 //! Yap, "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
@@ -1140,14 +1140,19 @@ pub struct CoplanarConvexMultiArrangement {
 /// This artifact is the bounded continuation of
 /// [`CoplanarConvexMultiArrangement`] for component-wise differences whose
 /// output remains a set of disjoint simple loops but at least one loop is not
-/// strictly convex. It exists so the convex certificate does not silently
-/// weaken its invariant. Construction still follows exact Weiler-Atherton
-/// style boundary replay for each promoted loop, and triangulation is retained
-/// through `hypertri`'s FIST-style earcut handoff. See Weiler and Atherton,
-/// "Hidden Surface Removal Using Polygon Area Sorting," *SIGGRAPH Computer
-/// Graphics* 11.2 (1977), Held, "FIST: Fast Industrial-Strength
-/// Triangulation of Polygons," *Algorithmica* 30 (2001), and Yap, "Towards
-/// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+/// strictly convex. It is also the bounded disconnected counterpart to
+/// [`CoplanarSurfaceArrangement`] for component-wise unions: each connected
+/// source contact cluster is retained as its own simple loop, so a far
+/// component no longer forces an otherwise certified nonconvex union back to
+/// the generic planar-arrangement blocker. The artifact exists so the convex
+/// certificate does not silently weaken its invariant. Construction still
+/// follows exact Weiler-Atherton style boundary replay for each promoted loop,
+/// and triangulation is retained through `hypertri`'s FIST-style earcut
+/// handoff. See Weiler and Atherton, "Hidden Surface Removal Using Polygon
+/// Area Sorting," *SIGGRAPH Computer Graphics* 11.2 (1977), Held, "FIST:
+/// Fast Industrial-Strength Triangulation of Polygons," *Algorithmica* 30
+/// (2001), and Yap, "Towards Exact Geometric Computation," *Computational
+/// Geometry* 7.1-2 (1997).
 #[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, PartialEq)]
 pub struct CoplanarSurfaceMultiArrangement {
@@ -1578,6 +1583,37 @@ impl CoplanarSurfaceMultiArrangement {
             Err(surface_validation_error(
                 "coplanar nonconvex multi-component arrangement",
                 "retained difference does not match source replay",
+            ))
+        }
+    }
+
+    /// Validate this nonconvex multi-component union against its sources.
+    ///
+    /// The retained union is accepted only while exact source replay rebuilds
+    /// the same disconnected contact clusters, stitched loops, and
+    /// triangulated mesh. This keeps disconnected nonconvex unions in Yap's
+    /// retained-computation model from "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7.1-2 (1997): consumers receive a replayable
+    /// arrangement artifact instead of a detached triangle soup.
+    pub fn validate_union_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<(), MeshError> {
+        self.validate()?;
+        let replay =
+            arrange_coplanar_surface_multi_component_union(left, right).ok_or_else(|| {
+                surface_validation_error(
+                    "coplanar nonconvex multi-component arrangement",
+                    "source replay did not reproduce a nonconvex multi-component union",
+                )
+            })?;
+        if self == &replay {
+            Ok(())
+        } else {
+            Err(surface_validation_error(
+                "coplanar nonconvex multi-component arrangement",
+                "retained union does not match source replay",
             ))
         }
     }
@@ -3335,6 +3371,57 @@ pub fn arrange_coplanar_surface_component_union(
     Some(arrangement)
 }
 
+/// Certify and materialize disconnected nonconvex component-union loops.
+///
+/// This is the multi-loop counterpart to
+/// [`arrange_coplanar_surface_component_union`]. Exact source topology is
+/// decomposed into disjoint convex components, cross-source positive-area
+/// overlaps and positive-length boundary contacts form connected clusters, and
+/// each non-singleton cluster is stitched from exposed convex boundary
+/// fragments. The public artifact is accepted only when at least two
+/// component loops remain and at least one loop is nonconvex; all-convex
+/// outputs stay on [`arrange_coplanar_convex_surface_multi_union`], while
+/// point-only contact, same-source overlap, holes, branch vertices, and
+/// non-simple stitched loops remain explicit planar-arrangement work.
+///
+/// The boundary-fragment construction follows Weiler and Atherton, "Hidden
+/// Surface Removal Using Polygon Area Sorting," *SIGGRAPH Computer Graphics*
+/// 11.2 (1977). Exact finite inclusion-exclusion area replay for each stitched
+/// cluster keeps the shortcut in Yap's retained-state model from "Towards
+/// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+#[cfg(feature = "exact-triangulation")]
+pub fn arrange_coplanar_surface_multi_component_union(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Option<CoplanarSurfaceMultiArrangement> {
+    let (projection, polygons) = coplanar_surface_component_union_polygons(left, right)?;
+    if polygons.len() < 2 {
+        return None;
+    }
+    if polygons.iter().all(|polygon| {
+        validate_projected_strictly_convex_loop(
+            polygon,
+            projection,
+            "coplanar nonconvex multi-component union",
+        )
+        .is_ok()
+    }) {
+        return None;
+    }
+    let mesh = polygons_to_earcut_open_mesh_with_label(
+        &polygons,
+        projection,
+        "exact coplanar nonconvex multi-component union",
+    )?;
+    let arrangement = CoplanarSurfaceMultiArrangement {
+        projection,
+        polygons,
+        mesh,
+    };
+    arrangement.validate().ok()?;
+    Some(arrangement)
+}
+
 #[cfg(feature = "exact-triangulation")]
 fn coplanar_surface_component_union_loop(
     left: &ExactMesh,
@@ -3444,6 +3531,137 @@ fn coplanar_surface_component_union_loop(
     validate_projected_simple_loop(&polygon, projection, "coplanar nonconvex component union")
         .ok()?;
     Some((projection, polygon))
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn coplanar_surface_component_union_polygons(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Option<(CoplanarProjection, Vec<Vec<Point3>>)> {
+    if arrange_coplanar_convex_surface_union(left, right).is_some()
+        || certify_coplanar_convex_surface_equivalence(left, right).is_some()
+        || certify_coplanar_convex_surface_containment(left, right).is_some()
+    {
+        return None;
+    }
+
+    let left_components = connected_face_component_meshes(left)?;
+    let right_components = connected_face_component_meshes(right)?;
+    if left_components.len() + right_components.len() < 3 {
+        return None;
+    }
+
+    let mut components = Vec::new();
+    for mesh in left_components {
+        components.push(ConvexUnionComponent::from_mesh(MultiUnionSide::Left, mesh)?);
+    }
+    for mesh in right_components {
+        components.push(ConvexUnionComponent::from_mesh(
+            MultiUnionSide::Right,
+            mesh,
+        )?);
+    }
+    let projection = components.first()?.projection;
+    if components
+        .iter()
+        .any(|component| component.projection != projection)
+    {
+        return None;
+    }
+
+    let left_hulls = components
+        .iter()
+        .filter(|component| component.side == MultiUnionSide::Left)
+        .map(|component| component.hull.clone())
+        .collect::<Vec<_>>();
+    let right_hulls = components
+        .iter()
+        .filter(|component| component.side == MultiUnionSide::Right)
+        .map(|component| component.hull.clone())
+        .collect::<Vec<_>>();
+    validate_component_loops_disjoint(
+        &left_hulls,
+        projection,
+        "coplanar nonconvex multi-component union",
+    )
+    .ok()?;
+    validate_component_loops_disjoint(
+        &right_hulls,
+        projection,
+        "coplanar nonconvex multi-component union",
+    )
+    .ok()?;
+
+    let mut contact_graph = UnionFind::new(components.len());
+    for left_index in 0..components.len() {
+        for right_index in left_index + 1..components.len() {
+            match convex_union_component_relation(
+                &components[left_index].hull,
+                &components[right_index].hull,
+                projection,
+            )? {
+                ConvexUnionComponentRelation::Disjoint => {}
+                ConvexUnionComponentRelation::BoundaryOnly => {
+                    if components[left_index].side == components[right_index].side
+                        || !convex_polygons_touch_on_positive_boundary(
+                            &components[left_index].hull,
+                            &components[right_index].hull,
+                            projection,
+                        )?
+                    {
+                        return None;
+                    }
+                    contact_graph.union(left_index, right_index);
+                }
+                ConvexUnionComponentRelation::PositiveArea => {
+                    if components[left_index].side == components[right_index].side {
+                        return None;
+                    }
+                    contact_graph.union(left_index, right_index);
+                }
+            }
+        }
+    }
+
+    let mut groups: Vec<(usize, Vec<usize>)> = Vec::new();
+    for index in 0..components.len() {
+        let root = contact_graph.find(index);
+        if let Some((_, members)) = groups.iter_mut().find(|(candidate, _)| *candidate == root) {
+            members.push(index);
+        } else {
+            groups.push((root, vec![index]));
+        }
+    }
+
+    let mut polygons = Vec::with_capacity(groups.len());
+    for (_, members) in groups {
+        let mut polygon =
+            materialize_component_union_group(&components, &members).or_else(|| {
+                let regions = members
+                    .iter()
+                    .map(|&member| components[member].hull.clone())
+                    .collect::<Vec<_>>();
+                connected_convex_contact_union_polygon(&regions, projection)
+            })?;
+        orient_polygon_ccw(&mut polygon, projection)?;
+        polygon = simplify_projected_polygon(polygon, projection);
+        validate_projected_simple_loop(
+            &polygon,
+            projection,
+            "coplanar nonconvex multi-component union",
+        )
+        .ok()?;
+        polygons.push(polygon);
+    }
+
+    sort_polygons_for_replay(&mut polygons, projection);
+    validate_simple_component_loops_disjoint(
+        &polygons,
+        projection,
+        "coplanar nonconvex multi-component union",
+    )
+    .ok()?;
+    Some((projection, polygons))
 }
 
 /// Certify and materialize a simple-loop difference of convex coplanar surfaces.
@@ -6522,7 +6740,11 @@ fn validate_multi_surface_output_with_loop_policy(
             }
         }
     }
-    validate_component_loops_disjoint(polygons, projection, label)?;
+    if require_strict_convex {
+        validate_component_loops_disjoint(polygons, projection, label)?;
+    } else {
+        validate_simple_component_loops_disjoint(polygons, projection, label)?;
+    }
 
     let mut vertex_offset = 0;
     for polygon in polygons {

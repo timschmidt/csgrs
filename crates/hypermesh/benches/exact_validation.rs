@@ -16,14 +16,14 @@ use hypermesh::exact::{
     arrange_coplanar_orthogonal_surface_intersection, arrange_coplanar_orthogonal_surface_union,
     arrange_coplanar_surface_component_union,
     arrange_coplanar_surface_cutter_hole_contact_difference,
-    arrange_coplanar_surface_multi_difference, arrange_single_triangle_coplanar_holed_difference,
-    arrange_single_triangle_coplanar_union, audit_exact_mesh, build_intersection_graph,
-    certify_boundary_touching_report, certify_convex_solid,
-    certify_coplanar_convex_surface_containment, certify_coplanar_convex_surface_equivalence,
-    certify_coplanar_convex_surface_report, certify_coplanar_volumetric_cell_evidence,
-    certify_exact_mesh_proposal, certify_open_surface_disjoint_report,
-    certify_planar_arrangement_evidence, certify_planar_arrangement_report,
-    certify_refinement_report, certify_same_surface_report,
+    arrange_coplanar_surface_multi_component_union, arrange_coplanar_surface_multi_difference,
+    arrange_single_triangle_coplanar_holed_difference, arrange_single_triangle_coplanar_union,
+    audit_exact_mesh, build_intersection_graph, certify_boundary_touching_report,
+    certify_convex_solid, certify_coplanar_convex_surface_containment,
+    certify_coplanar_convex_surface_equivalence, certify_coplanar_convex_surface_report,
+    certify_coplanar_volumetric_cell_evidence, certify_exact_mesh_proposal,
+    certify_open_surface_disjoint_report, certify_planar_arrangement_evidence,
+    certify_planar_arrangement_report, certify_refinement_report, certify_same_surface_report,
     certify_single_triangle_coplanar_containment,
     certify_single_triangle_coplanar_containment_report, certify_winding_readiness_report,
     checked_classify_face_regions_against_opposite_planes, classify_coplanar_triangles,
@@ -2727,6 +2727,21 @@ fn exact_boolean_coplanar_convex_surface_multi_union(c: &mut Criterion) {
             ValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
+        let nonconvex_multi_loop_left = ExactMesh::from_i64_triangles_with_policy(
+            &[
+                3, 2, 0, 4, -2, 0, 5, 2, 0, //
+                2, 5, 0, -2, 4, 0, 2, 3, 0, //
+                -7, -5, 0, -5, -5, 0, -6, -3, 0,
+            ],
+            &[
+                0, 1, 2, //
+                3, 4, 5, //
+                6, 7, 8,
+            ],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let nonconvex_multi_loop_right = nonconvex_loop_right.clone();
 
         c.bench_function("exact_boolean_coplanar_convex_surface_multi_union", |b| {
             b.iter(|| {
@@ -2751,6 +2766,11 @@ fn exact_boolean_coplanar_convex_surface_multi_union(c: &mut Criterion) {
                     &nonconvex_loop_left,
                     &nonconvex_loop_right,
                 );
+                let nonconvex_multi_loop_arrangement =
+                    arrange_coplanar_surface_multi_component_union(
+                        &nonconvex_multi_loop_left,
+                        &nonconvex_multi_loop_right,
+                    );
                 (
                     arrangement
                         .as_ref()
@@ -2816,6 +2836,16 @@ fn exact_boolean_coplanar_convex_surface_multi_union(c: &mut Criterion) {
                         .as_ref()
                         .map(|output| output.validate()),
                     nonconvex_loop_arrangement,
+                    nonconvex_multi_loop_arrangement.as_ref().map(|output| {
+                        output.validate_union_against_sources(
+                            &nonconvex_multi_loop_left,
+                            &nonconvex_multi_loop_right,
+                        )
+                    }),
+                    nonconvex_multi_loop_arrangement
+                        .as_ref()
+                        .map(|output| output.validate()),
+                    nonconvex_multi_loop_arrangement,
                     hypermesh::exact::preflight_boolean_exact(
                         &left,
                         &right,
@@ -2858,6 +2888,12 @@ fn exact_boolean_coplanar_convex_surface_multi_union(c: &mut Criterion) {
                         hypermesh::exact::ExactBooleanOperation::Union,
                     )
                     .map(|report| report.validate()),
+                    hypermesh::exact::preflight_boolean_exact(
+                        &nonconvex_multi_loop_left,
+                        &nonconvex_multi_loop_right,
+                        hypermesh::exact::ExactBooleanOperation::Union,
+                    )
+                    .map(|report| report.validate()),
                     hypermesh::exact::boolean_exact(
                         &left,
                         &right,
@@ -2903,6 +2939,13 @@ fn exact_boolean_coplanar_convex_surface_multi_union(c: &mut Criterion) {
                     hypermesh::exact::boolean_exact(
                         &nonconvex_loop_left,
                         &nonconvex_loop_right,
+                        hypermesh::exact::ExactBooleanOperation::Union,
+                        ValidationPolicy::ALLOW_BOUNDARY,
+                    )
+                    .unwrap(),
+                    hypermesh::exact::boolean_exact(
+                        &nonconvex_multi_loop_left,
+                        &nonconvex_multi_loop_right,
                         hypermesh::exact::ExactBooleanOperation::Union,
                         ValidationPolicy::ALLOW_BOUNDARY,
                     )

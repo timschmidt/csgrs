@@ -110,11 +110,12 @@ use super::surface::{
     arrange_coplanar_convex_surface_multi_union, arrange_coplanar_convex_surface_union,
     arrange_coplanar_surface_component_union,
     arrange_coplanar_surface_cutter_hole_contact_difference,
-    arrange_coplanar_surface_multi_difference, arrange_single_triangle_coplanar_difference,
-    arrange_single_triangle_coplanar_holed_difference, arrange_single_triangle_coplanar_union,
-    certify_coplanar_convex_surface_containment, certify_coplanar_convex_surface_equivalence,
-    certify_single_triangle_coplanar_containment, difference_single_triangle_coplanar_surfaces,
-    intersect_single_triangle_coplanar_surfaces, union_single_triangle_coplanar_surfaces,
+    arrange_coplanar_surface_multi_component_union, arrange_coplanar_surface_multi_difference,
+    arrange_single_triangle_coplanar_difference, arrange_single_triangle_coplanar_holed_difference,
+    arrange_single_triangle_coplanar_union, certify_coplanar_convex_surface_containment,
+    certify_coplanar_convex_surface_equivalence, certify_single_triangle_coplanar_containment,
+    difference_single_triangle_coplanar_surfaces, intersect_single_triangle_coplanar_surfaces,
+    union_single_triangle_coplanar_surfaces,
 };
 #[cfg(feature = "exact-triangulation")]
 use super::validation::ValidationPolicy;
@@ -382,6 +383,11 @@ pub fn preflight_boolean_exact(
             ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
         }
         ExactBooleanOperation::Union
+            if arrange_coplanar_surface_multi_component_union(left, right).is_some() =>
+        {
+            ExactBooleanSupport::CertifiedCoplanarSurfaceMultiUnion
+        }
+        ExactBooleanOperation::Union
             if arrange_coplanar_convex_surface_multi_union(left, right).is_some() =>
         {
             ExactBooleanSupport::CertifiedCoplanarConvexSurfaceMultiUnion
@@ -578,6 +584,7 @@ pub fn preflight_boolean_exact(
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceIntersection
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceArrangementUnion
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceMultiUnion
+            | ExactBooleanSupport::CertifiedCoplanarSurfaceMultiUnion
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceArrangementDifference
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceMultiDifference
             | ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
@@ -1255,6 +1262,11 @@ pub fn boolean_exact_with_boundary_policy(
             boolean_coplanar_surface_component_union(left, right, validation)
         }
         ExactBooleanOperation::Union
+            if arrange_coplanar_surface_multi_component_union(left, right).is_some() =>
+        {
+            boolean_coplanar_surface_multi_component_union(left, right, validation)
+        }
+        ExactBooleanOperation::Union
             if arrange_coplanar_convex_surface_multi_union(left, right).is_some() =>
         {
             boolean_coplanar_convex_multi_union(left, right, validation)
@@ -1589,6 +1601,26 @@ fn boolean_coplanar_surface_component_union(
 }
 
 #[cfg(feature = "exact-triangulation")]
+fn boolean_coplanar_surface_multi_component_union(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    validation: ValidationPolicy,
+) -> Result<ExactBooleanResult, MeshError> {
+    let union = arrange_coplanar_surface_multi_component_union(left, right)
+        .expect("caller checked coplanar nonconvex multi-component union");
+    union.validate_union_against_sources(left, right)?;
+    let mesh = copy_mesh(
+        &union.mesh,
+        "exact coplanar nonconvex multi-component union",
+        validation,
+    )?;
+    Ok(certified_shortcut_result(
+        mesh,
+        ExactBooleanShortcutKind::CoplanarSurfaceMultiUnion,
+    ))
+}
+
+#[cfg(feature = "exact-triangulation")]
 fn boolean_convex_intersection_meshes(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -1809,17 +1841,29 @@ fn boolean_coplanar_surface_arrangement_union(
         return Ok(None);
     }
     let Some(union) = arrange_single_triangle_coplanar_union(left, right) else {
-        return arrange_coplanar_surface_component_union(left, right)
+        if let Some(union) = arrange_coplanar_surface_component_union(left, right) {
+            union.validate_component_union_against_sources(left, right)?;
+            let mesh = copy_mesh(
+                &union.mesh,
+                "exact coplanar nonconvex component union",
+                validation,
+            )?;
+            return Ok(Some(certified_shortcut_result(
+                mesh,
+                ExactBooleanShortcutKind::CoplanarSurfaceArrangementUnion,
+            )));
+        }
+        return arrange_coplanar_surface_multi_component_union(left, right)
             .map(|union| {
-                union.validate_component_union_against_sources(left, right)?;
+                union.validate_union_against_sources(left, right)?;
                 let mesh = copy_mesh(
                     &union.mesh,
-                    "exact coplanar nonconvex component union",
+                    "exact coplanar nonconvex multi-component union",
                     validation,
                 )?;
                 Ok(certified_shortcut_result(
                     mesh,
-                    ExactBooleanShortcutKind::CoplanarSurfaceArrangementUnion,
+                    ExactBooleanShortcutKind::CoplanarSurfaceMultiUnion,
                 ))
             })
             .transpose();
