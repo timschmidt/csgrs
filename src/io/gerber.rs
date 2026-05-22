@@ -8,8 +8,9 @@
 
 use crate::csg::CSG;
 use crate::float_types::{
-    PI, Real, TAU, hangle_sin_cos, hdegrees_to_radians, hreal_affine, hreal_mul, hreal_sub,
-    hreal_to_f64, hxy_distance, hxy_orientation_sign, hxy_unit_direction, tolerance,
+    PI, Real, TAU, hangle_sin_cos, hdegrees_to_radians, hreal_affine, hreal_f64_gt,
+    hreal_f64s_within_or_equal_tolerance, hreal_mul, hreal_sub, hreal_to_f64, hxy_distance,
+    hxy_orientation_sign, hxy_unit_direction, tolerance,
 };
 use crate::sketch::Profile;
 use gerber_types::{
@@ -1050,7 +1051,7 @@ fn circular_swept_path_sketch<M>(
 where
     M: Clone + Debug + Send + Sync,
 {
-    if radius <= tolerance() {
+    if !hreal_f64_gt(radius, tolerance()) {
         return polygon_from_coords(path.to_vec(), metadata);
     }
 
@@ -1127,7 +1128,7 @@ where
     M: Clone + Debug + Send + Sync,
 {
     let length = hxy_distance((start.x, start.y), (end.x, end.y)).unwrap_or(0.0);
-    if length <= tolerance() {
+    if !hreal_f64_gt(length, tolerance()) {
         return Profile::circle(radius, 64, metadata).translate(start.x, start.y, 0.0);
     }
 
@@ -1176,7 +1177,7 @@ fn approximate_arc(
         y: start.y + offset.y,
     };
     let radius = hxy_distance((start.x, start.y), (center.x, center.y)).unwrap_or(0.0);
-    if radius <= tolerance() {
+    if !hreal_f64_gt(radius, tolerance()) {
         return vec![end];
     }
 
@@ -1236,7 +1237,7 @@ fn rounded_rect_points(
     corner_segments: usize,
 ) -> Vec<Coord<Real>> {
     let radius = radius.min(width * 0.5).min(height * 0.5);
-    if radius <= tolerance() {
+    if !hreal_f64_gt(radius, tolerance()) {
         let hw = width * 0.5;
         let hh = height * 0.5;
         return vec![
@@ -1429,7 +1430,8 @@ fn is_left_turn(origin: Coord<Real>, a: Coord<Real>, b: Coord<Real>) -> bool {
 }
 
 fn nearly_same(a: Coord<Real>, b: Coord<Real>) -> bool {
-    (a.x - b.x).abs() <= tolerance() && (a.y - b.y).abs() <= tolerance()
+    hreal_f64s_within_or_equal_tolerance(a.x, b.x, tolerance())
+        && hreal_f64s_within_or_equal_tolerance(a.y, b.y, tolerance())
 }
 
 fn unit_scale(unit: Unit) -> Real {

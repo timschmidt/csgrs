@@ -1,7 +1,7 @@
 //! DXF import support for converting 2D CAD entities into `csgrs` geometry.
 
 use crate::float_types::{
-    Real, hreal_from_f64, hunit_vector3, hvector3_from_point3, tolerance,
+    Real, hreal_f64_gt, hreal_from_f64, hunit_vector3, hvector3_from_point3, tolerance,
 };
 use crate::mesh::Mesh;
 use crate::polygon::Polygon;
@@ -68,7 +68,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                         continue;
                     }
                     let radius = circle.radius as Real;
-                    if !radius.is_finite() || radius <= tolerance() {
+                    if !hreal_f64_gt(radius, tolerance()) {
                         continue;
                     }
                     let segments = 32;
