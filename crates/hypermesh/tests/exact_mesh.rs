@@ -10862,12 +10862,75 @@ fn exact_coplanar_convex_surface_difference_materializes_component_holes() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    assert!(
+    let partial_height_holed =
         hypermesh::exact::arrange_coplanar_convex_surface_component_holed_difference(
             &left,
             &hole_and_partial_height_cuts,
         )
-        .is_none()
+        .expect("rectangular partial-height multi-cutters should retain strict holes");
+    partial_height_holed.validate().unwrap();
+    partial_height_holed
+        .validate_against_sources(&left, &hole_and_partial_height_cuts)
+        .unwrap();
+    assert_eq!(partial_height_holed.components.len(), 2);
+    assert!(partial_height_holed.components.iter().any(|component| {
+        component.outer.len() > 4
+            && component.holes.len() == 1
+            && component
+                .outer
+                .iter()
+                .any(|point| real_eq(&point.x, &ExactReal::from(4)))
+            && component
+                .outer
+                .iter()
+                .any(|point| real_eq(&point.y, &ExactReal::from(5)))
+    }));
+    assert_eq!(partial_height_holed.mesh.vertices().len(), 16);
+    let mut missing_hole = partial_height_holed.clone();
+    let holed_component = missing_hole
+        .components
+        .iter_mut()
+        .find(|component| !component.holes.is_empty())
+        .unwrap();
+    holed_component.holes.clear();
+    assert!(missing_hole.validate().is_err());
+    let partial_height_holed_preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &hole_and_partial_height_cuts,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    partial_height_holed_preflight.validate().unwrap();
+    partial_height_holed_preflight
+        .validate_against_sources(&left, &hole_and_partial_height_cuts)
+        .unwrap();
+    assert_eq!(
+        partial_height_holed_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::
+            CertifiedCoplanarConvexSurfaceComponentHoledDifference
+    );
+    let partial_height_holed_result = hypermesh::exact::boolean_exact(
+        &left,
+        &hole_and_partial_height_cuts,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    partial_height_holed_result
+        .validate_operation_against_sources(
+            &left,
+            &hole_and_partial_height_cuts,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        partial_height_holed_result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::
+                CoplanarConvexSurfaceComponentHoledDifference
+        }
     );
 
     let cutter_hole_contact = ExactMesh::from_i64_triangles_with_policy(

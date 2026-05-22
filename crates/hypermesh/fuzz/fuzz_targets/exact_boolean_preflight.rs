@@ -2342,12 +2342,50 @@ fn exercise_component_coplanar_difference() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .expect("component-holed partial-height double-cutter fixture must import");
-    assert!(
+    let partial_height_component_holed =
         arrange_coplanar_convex_surface_component_holed_difference(
             &holed_left,
             &holed_partial_height_cutters_right,
         )
-        .is_none()
+        .expect("component-holed partial-height double-cutter should materialize");
+    partial_height_component_holed.validate().unwrap();
+    partial_height_component_holed
+        .validate_against_sources(&holed_left, &holed_partial_height_cutters_right)
+        .unwrap();
+    assert_eq!(partial_height_component_holed.components.len(), 2);
+    assert!(
+        partial_height_component_holed
+            .components
+            .iter()
+            .any(|component| component.outer.len() > 4 && component.holes.len() == 1)
+    );
+    let partial_height_component_holed_preflight = preflight_boolean_exact(
+        &holed_left,
+        &holed_partial_height_cutters_right,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("component-holed partial-height double-cutter preflight should classify shortcut");
+    partial_height_component_holed_preflight
+        .validate()
+        .unwrap();
+    assert_eq!(
+        partial_height_component_holed_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+    );
+    let partial_height_component_holed_result = hypermesh::exact::boolean_exact(
+        &holed_left,
+        &holed_partial_height_cutters_right,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("component-holed partial-height double-cutter boolean should materialize");
+    partial_height_component_holed_result.validate().unwrap();
+    assert_eq!(
+        partial_height_component_holed_result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::
+                CoplanarConvexSurfaceComponentHoledDifference
+        }
     );
 
     let cutter_hole_contact_right = ExactMesh::from_i64_triangles_with_policy(

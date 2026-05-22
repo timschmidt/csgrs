@@ -5069,14 +5069,20 @@ fn exact_max_real(left: &ExactReal, right: &ExactReal) -> Option<ExactReal> {
 /// certificate, cut by several full-span rectangular slab components through
 /// exact interval subtraction, cut by sequential non-rectangular convex
 /// cutters when each emitted remnant still replays through the exact convex
-/// difference certificates, pierced by one or more strictly contained right
-/// components, or both cut and pierced when every retained hole falls strictly
-/// inside one cut remnant. Holes that straddle or touch a cut boundary and
-/// nonconvex multi-cutter outputs still need a full planar subdivision. This
-/// preserves Yap's rule from "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997): every promoted loop is justified by
-/// exact source topology, containment, or area replay, and unsupported
-/// combinatorics remain explicit.
+/// difference certificates, cut by boundary-attached partial-height rectangular
+/// multi-cutters through exact orthogonal cells, pierced by one or more
+/// strictly contained right components, or both cut and pierced when every
+/// retained hole falls strictly inside one cut remnant. Holes that straddle or
+/// touch a cut boundary, point-only contacts, and non-rectilinear nonconvex
+/// multi-cutter outputs still need a full planar subdivision. This preserves
+/// Yap's rule from "Towards Exact Geometric Computation," *Computational
+/// Geometry* 7.1-2 (1997): every promoted loop is justified by exact source
+/// topology, containment, or area replay, and unsupported combinatorics remain
+/// explicit. The rectangular multi-cutter/strict-hole replay is the bounded
+/// cell arrangement of de Berg, Cheong, van Kreveld, and Overmars,
+/// *Computational Geometry: Algorithms and Applications*, 3rd ed. (2008),
+/// Chapter 2, promoted only after retained cell topology exposes simple outer
+/// rings and strict hole rings.
 #[cfg(feature = "exact-triangulation")]
 pub fn arrange_coplanar_convex_surface_component_holed_difference(
     left: &ExactMesh,
@@ -5152,9 +5158,23 @@ pub fn arrange_coplanar_convex_surface_component_holed_difference(
                 if dropped {
                     return None;
                 }
-                let mut hole = right_component.hull.clone();
-                orient_polygon_cw(&mut hole, projection)?;
-                holes.push(hole);
+                if convex_polygons_touch_on_positive_boundary(
+                    &component.hull,
+                    &right_component.hull,
+                    projection,
+                )? {
+                    cut_indices.push(right_index);
+                } else if polygon_strictly_inside_convex_polygon(
+                    &right_component.hull,
+                    &component.hull,
+                    projection,
+                )? {
+                    let mut ring = right_component.hull.clone();
+                    orient_polygon_cw(&mut ring, projection)?;
+                    holes.push(ComponentHoleCandidate { ring, right_index });
+                } else {
+                    return None;
+                }
                 continue;
             }
 
@@ -5177,8 +5197,23 @@ pub fn arrange_coplanar_convex_surface_component_holed_difference(
         if dropped {
             continue;
         }
+        let hole_rings = holes
+            .iter()
+            .map(|hole| hole.ring.clone())
+            .collect::<Vec<_>>();
         if !cut_indices.is_empty() {
             emitted_cut = true;
+            if let Some(cell_components) =
+                materialize_rectangle_multi_cutter_component_holed_cell_difference(
+                    component,
+                    &cut_indices,
+                    &holes,
+                    &right_components,
+                )
+            {
+                components.extend(cell_components);
+                continue;
+            }
             let mut cut_polygons = match cut_indices.as_slice() {
                 [right_index] => {
                     let right_component = &right_components[*right_index];
@@ -5209,7 +5244,7 @@ pub fn arrange_coplanar_convex_surface_component_holed_difference(
                 orient_polygon_ccw(polygon, projection)?;
             }
             let holes_by_cut =
-                assign_holes_to_cut_component_outputs(&holes, &cut_polygons, projection)?;
+                assign_holes_to_cut_component_outputs(&hole_rings, &cut_polygons, projection)?;
             components.extend(
                 cut_polygons
                     .into_iter()
@@ -5219,7 +5254,10 @@ pub fn arrange_coplanar_convex_surface_component_holed_difference(
         } else {
             let mut outer = component.hull.clone();
             orient_polygon_ccw(&mut outer, projection)?;
-            components.push(CoplanarConvexHoledComponent { outer, holes });
+            components.push(CoplanarConvexHoledComponent {
+                outer,
+                holes: hole_rings,
+            });
         }
     }
     if !emitted_cut && source_component_count < 2 {
@@ -5241,6 +5279,113 @@ pub fn arrange_coplanar_convex_surface_component_holed_difference(
     };
     arrangement.validate().ok()?;
     Some(arrangement)
+}
+
+#[cfg(feature = "exact-triangulation")]
+struct ComponentHoleCandidate {
+    ring: Vec<Point3>,
+    right_index: usize,
+}
+
+/// Replay rectangular mixed multi-cutter/holed remnants through exact cells.
+///
+/// This is the component-holed counterpart to the simple-loop rectangular
+/// multi-cutter bridge. When a convex source component is cut by several exact
+/// rectangular components and also contains strict rectangular holes, the
+/// combined removed set is an orthogonal cell arrangement. We delegate topology
+/// to `orthogonal_surface`, then import only the retained simple outer rings
+/// and hole rings into [`CoplanarConvexComponentHoledArrangement`]. The helper
+/// rejects non-rectilinear inputs, missing retained holes, and one-cutter cases
+/// so those remain on the smaller convex-difference and cutter/hole-contact
+/// certificates.
+///
+/// The promotion rule is Yap's retained exact-object discipline from "Towards
+/// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997): the
+/// component-holed shortcut may widen only when exact cell occupancy carries
+/// the topology. The rectilinear subdivision itself follows de Berg, Cheong,
+/// van Kreveld, and Overmars, *Computational Geometry: Algorithms and
+/// Applications*, 3rd ed. (2008), Chapter 2.
+#[cfg(feature = "exact-triangulation")]
+fn materialize_rectangle_multi_cutter_component_holed_cell_difference(
+    component: &ConvexUnionComponent,
+    cutter_indices: &[usize],
+    holes: &[ComponentHoleCandidate],
+    right_components: &[ConvexUnionComponent],
+) -> Option<Vec<CoplanarConvexHoledComponent>> {
+    if cutter_indices.len() < 2 || holes.is_empty() {
+        return None;
+    }
+    projected_axis_aligned_rectangle(&component.hull, component.projection)?;
+    if !cutter_indices.iter().all(|&index| {
+        projected_axis_aligned_rectangle(&right_components[index].hull, component.projection)
+            .is_some()
+    }) || !holes.iter().all(|hole| {
+        projected_axis_aligned_rectangle(
+            &right_components[hole.right_index].hull,
+            component.projection,
+        )
+        .is_some()
+    }) {
+        return None;
+    }
+
+    let mut removal_meshes = Vec::with_capacity(cutter_indices.len() + holes.len());
+    removal_meshes.extend(
+        cutter_indices
+            .iter()
+            .map(|&index| &right_components[index].mesh),
+    );
+    removal_meshes.extend(
+        holes
+            .iter()
+            .map(|hole| &right_components[hole.right_index].mesh),
+    );
+    let cutters = merge_component_meshes(
+        removal_meshes,
+        "exact coplanar rectangular component-holed multi-cutter source",
+    )?;
+    let arrangement = super::orthogonal_surface::arrange_coplanar_orthogonal_surface_difference(
+        &component.mesh,
+        &cutters,
+    )?;
+    let mut components = arrangement
+        .components
+        .into_iter()
+        .map(|component| {
+            let mut outer = component.outer;
+            orient_polygon_ccw(&mut outer, arrangement.projection)?;
+            let mut retained_holes = component.holes;
+            for hole in &mut retained_holes {
+                orient_polygon_cw(hole, arrangement.projection)?;
+            }
+            sort_polygons_for_replay(&mut retained_holes, arrangement.projection);
+            Some(CoplanarConvexHoledComponent {
+                outer,
+                holes: retained_holes,
+            })
+        })
+        .collect::<Option<Vec<_>>>()?;
+    if components.is_empty() {
+        return None;
+    }
+    sort_components_for_replay(&mut components, arrangement.projection);
+    let retained_hole_count = components
+        .iter()
+        .map(|component| component.holes.len())
+        .sum::<usize>();
+    if retained_hole_count != holes.len()
+        || !holes.iter().all(|candidate| {
+            components.iter().any(|component| {
+                component
+                    .holes
+                    .iter()
+                    .any(|retained| polygons_equal(&candidate.ring, retained))
+            })
+        })
+    {
+        return None;
+    }
+    Some(components)
 }
 
 /// Assign retained hole rings to exact cut remnants.
