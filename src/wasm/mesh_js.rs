@@ -64,16 +64,13 @@ impl MeshJs {
 
             let mut points = Vec::with_capacity(data.len() / 3);
             for chunk in data.chunks_exact(3) {
-                if !chunk.iter().all(|value| value.is_finite()) {
+                let point = Point3::new(chunk[0] as Real, chunk[1] as Real, chunk[2] as Real);
+                if hvector3_from_point3(&point).is_none() {
                     return Err(JsValue::from_str(&format!(
                         "{label} contains a non-finite coordinate"
                     )));
                 }
-                points.push(Point3::new(
-                    chunk[0] as Real,
-                    chunk[1] as Real,
-                    chunk[2] as Real,
-                ));
+                points.push(point);
             }
             Ok(points)
         }
