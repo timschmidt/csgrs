@@ -142,6 +142,27 @@ fn tetrahedron_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3], d: [i64; 3]) -> ExactM
 }
 
 #[cfg(feature = "exact-triangulation")]
+fn downward_square_pyramid_i64(
+    a: [i64; 3],
+    b: [i64; 3],
+    c: [i64; 3],
+    d: [i64; 3],
+    apex: [i64; 3],
+) -> ExactMesh {
+    ExactMesh::from_i64_triangles(
+        &[
+            a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2], d[0], d[1], d[2], apex[0],
+            apex[1], apex[2],
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            0, 4, 1, 1, 4, 2, 2, 4, 3, 3, 4, 0,
+        ],
+    )
+    .unwrap()
+}
+
+#[cfg(feature = "exact-triangulation")]
 fn combine_exact_meshes(meshes: &[ExactMesh], label: &'static str) -> ExactMesh {
     let mut vertices = Vec::new();
     let mut triangles = Vec::new();
@@ -5961,6 +5982,10 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
             ],
             "bench contained-face adjacent same-face two-hole fixture",
         );
+        let contained_component_hole_left =
+            tetrahedron_i64([0, 0, 0], [8, 0, 0], [0, 8, 0], [0, 0, 8]);
+        let contained_component_hole_right =
+            downward_square_pyramid_i64([1, 1, 0], [3, 1, 0], [3, 3, 0], [1, 3, 0], [2, 2, -3]);
 
         let graph = build_intersection_graph(&left, &right).unwrap();
 
@@ -6381,6 +6406,38 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
                             .validate_operation_against_sources(
                                 &contained_same_face_left,
                                 &contained_same_face_right,
+                                hypermesh::exact::ExactBooleanOperation::Union,
+                                ValidationPolicy::CLOSED,
+                                hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+                            )
+                            .unwrap();
+                        result.mesh.triangles().len()
+                    }),
+                    hypermesh::exact::materialize_contained_face_adjacent_union(
+                        &contained_component_hole_left,
+                        &contained_component_hole_right,
+                        ValidationPolicy::CLOSED,
+                    )
+                    .map(|union| {
+                        union
+                            .validate_against_sources(
+                                &contained_component_hole_left,
+                                &contained_component_hole_right,
+                            )
+                            .unwrap();
+                        union.mesh.triangles().len()
+                    }),
+                    hypermesh::exact::boolean_exact(
+                        &contained_component_hole_left,
+                        &contained_component_hole_right,
+                        hypermesh::exact::ExactBooleanOperation::Union,
+                        ValidationPolicy::CLOSED,
+                    )
+                    .map(|result| {
+                        result
+                            .validate_operation_against_sources(
+                                &contained_component_hole_left,
+                                &contained_component_hole_right,
                                 hypermesh::exact::ExactBooleanOperation::Union,
                                 ValidationPolicy::CLOSED,
                                 hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,

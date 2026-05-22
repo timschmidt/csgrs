@@ -67,6 +67,27 @@ fn tetrahedron_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3], d: [i64; 3]) -> ExactM
 }
 
 #[cfg(feature = "exact-triangulation")]
+fn downward_square_pyramid_i64(
+    a: [i64; 3],
+    b: [i64; 3],
+    c: [i64; 3],
+    d: [i64; 3],
+    apex: [i64; 3],
+) -> ExactMesh {
+    ExactMesh::from_i64_triangles(
+        &[
+            a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2], d[0], d[1], d[2], apex[0],
+            apex[1], apex[2],
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            0, 4, 1, 1, 4, 2, 2, 4, 3, 3, 4, 0,
+        ],
+    )
+    .unwrap()
+}
+
+#[cfg(feature = "exact-triangulation")]
 fn combine_exact_meshes(meshes: &[ExactMesh], label: &'static str) -> ExactMesh {
     let mut vertices = Vec::new();
     let mut triangles = Vec::new();
@@ -8140,6 +8161,80 @@ fn exact_contained_face_adjacent_multi_tetrahedra_union_replaces_containing_face
         )
         .unwrap();
     assert_eq!(same_face_result.mesh, same_face_union.mesh);
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
+fn exact_contained_face_adjacent_square_cap_union_replaces_containing_face_with_component_hole() {
+    let left = tetrahedron_i64([0, 0, 0], [8, 0, 0], [0, 8, 0], [0, 0, 8]);
+    let right = downward_square_pyramid_i64([1, 1, 0], [3, 1, 0], [3, 3, 0], [1, 3, 0], [2, 2, -3]);
+
+    let graph = build_intersection_graph(&left, &right).unwrap();
+    graph.validate_against_meshes(&left, &right).unwrap();
+    assert!(graph.face_pairs.iter().any(|pair| {
+        pair.left_face == 0
+            && pair.right_face == 0
+            && pair.relation == hypermesh::exact::MeshFacePairRelation::CoplanarOverlapping
+    }));
+    assert!(graph.face_pairs.iter().any(|pair| {
+        pair.left_face == 0
+            && pair.right_face == 1
+            && pair.relation == hypermesh::exact::MeshFacePairRelation::CoplanarOverlapping
+    }));
+
+    let union = hypermesh::exact::materialize_contained_face_adjacent_union(
+        &left,
+        &right,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("connected square cap should replay as one retained component hole");
+    union.validate().unwrap();
+    union.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(union.containing_side, MeshSide::Left);
+    assert_eq!(union.containing_face, 0);
+    assert_eq!(union.contained_face, 0);
+    assert_eq!(union.contained_faces, vec![0, 1]);
+    assert_eq!(union.containing_faces, vec![0]);
+    assert!(union.mesh.facts().mesh.closed_manifold);
+    assert!(union.mesh.triangles().len() > left.triangles().len() + right.triangles().len());
+
+    let mut stale = union.clone();
+    stale.contained_faces.reverse();
+    assert_eq!(
+        stale.validate_against_sources(&left, &right).unwrap_err(),
+        hypermesh::exact::ContainedFaceAdjacentUnionError::SourceReplayMismatch
+    );
+
+    let preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+    )
+    .unwrap();
+    preflight.validate().unwrap();
+    preflight.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedContainedFaceAdjacentUnion
+    );
+
+    let result = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    result
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            hypermesh::exact::ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(result.mesh, union.mesh);
 }
 
 #[cfg(feature = "exact-triangulation")]

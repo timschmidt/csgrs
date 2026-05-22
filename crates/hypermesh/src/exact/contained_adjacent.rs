@@ -35,6 +35,7 @@ use super::mesh::{ExactMesh, ExactMeshValidationError, ExactPoint3, Triangle};
 use super::provenance::SourceProvenance;
 use super::scalar::ExactReal;
 use super::surface::{
+    arrange_coplanar_convex_surface_holed_difference,
     arrange_coplanar_convex_surface_multi_holed_difference,
     arrange_single_triangle_coplanar_holed_difference,
 };
@@ -496,12 +497,16 @@ fn contained_face_patch_groups(
 /// Append one retained holed replacement for a containing source face.
 ///
 /// A single contained cap uses the one-hole triangle arrangement. Multiple
-/// caps on the same containing face use the convex multi-hole surface
-/// materializer, which retains every hole ring and validates exact area before
+/// caps on the same containing face are first split into retained connected
+/// face components: one connected cap uses the convex one-hole surface
+/// artifact, while several independent caps use the convex multi-hole surface
+/// artifact. Both retain exact rings and validate exact area before
 /// triangulation. That is the same retained-object discipline Yap argues for
 /// in "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
 /// (1997): the closed-solid shortcut consumes a certified planar object rather
-/// than inferring holes from triangle soup.
+/// than inferring holes from triangle soup. The ring triangulation handoff
+/// follows Held, "FIST: Fast Industrial-Strength Triangulation of Polygons,"
+/// *Algorithmica* 30 (2001).
 fn append_contained_face_patch_group(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -522,6 +527,8 @@ fn append_contained_face_patch_group(
     )?;
     let replacement = if group.contained_faces.len() == 1 {
         arrange_single_triangle_coplanar_holed_difference(&containing_mesh, &contained_mesh)?.mesh
+    } else if connected_face_components(&contained_mesh)?.len() == 1 {
+        arrange_coplanar_convex_surface_holed_difference(&containing_mesh, &contained_mesh)?.mesh
     } else {
         arrange_coplanar_convex_surface_multi_holed_difference(&containing_mesh, &contained_mesh)?
             .mesh
@@ -566,6 +573,57 @@ fn faces_mesh(mesh: &ExactMesh, faces: &[usize], label: &'static str) -> Option<
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .ok()
+}
+
+fn connected_face_components(mesh: &ExactMesh) -> Option<Vec<Vec<usize>>> {
+    if mesh.triangles().is_empty() {
+        return None;
+    }
+    let mut visited = vec![false; mesh.triangles().len()];
+    let mut components = Vec::new();
+    for seed in 0..mesh.triangles().len() {
+        if visited[seed] {
+            continue;
+        }
+        let mut component = Vec::new();
+        let mut stack = vec![seed];
+        visited[seed] = true;
+        while let Some(face) = stack.pop() {
+            component.push(face);
+            for neighbor in 0..mesh.triangles().len() {
+                if !visited[neighbor]
+                    && triangles_share_edge(mesh.triangles()[face], mesh.triangles()[neighbor])
+                {
+                    visited[neighbor] = true;
+                    stack.push(neighbor);
+                }
+            }
+        }
+        components.push(component);
+    }
+    Some(components)
+}
+
+fn triangles_share_edge(left: Triangle, right: Triangle) -> bool {
+    triangle_edges(left)
+        .iter()
+        .any(|left| triangle_edges(right).iter().any(|right| left == right))
+}
+
+fn triangle_edges(triangle: Triangle) -> [(usize, usize); 3] {
+    [
+        canonical_edge(triangle.0[0], triangle.0[1]),
+        canonical_edge(triangle.0[1], triangle.0[2]),
+        canonical_edge(triangle.0[2], triangle.0[0]),
+    ]
+}
+
+const fn canonical_edge(left: usize, right: usize) -> (usize, usize) {
+    if left <= right {
+        (left, right)
+    } else {
+        (right, left)
+    }
 }
 
 fn append_source_mesh_without_face(
