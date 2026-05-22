@@ -17,13 +17,16 @@
 //! Computer Graphics* 11.2 (1977), where surface classification depends on
 //! correctly retaining face/edge intersection structure before traversal.
 
-use hyperlimit::{SegmentIntersection, TriangleLocation};
+use std::cmp::Ordering;
+
+use hyperlimit::{PlaneSide, SegmentIntersection, TriangleLocation, compare_reals};
 
 use super::construction::SegmentPlaneRelation;
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
 use super::graph::{ExactIntersectionGraph, IntersectionEvent, build_intersection_graph};
 use super::intersection::MeshFacePairRelation;
 use super::mesh::ExactMesh;
+use super::scalar::ExactReal;
 
 /// Most specific retained obstacle for volumetric coplanar source-face cells.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -71,6 +74,8 @@ pub enum CoplanarVolumetricCellEvidenceError {
     SegmentPlaneEventCountMismatch,
     /// Coplanar event counters contradict retained coplanar face-pair count.
     CoplanarEvidenceMismatch,
+    /// Coplanar face-side counters contradict retained overlapping pairs.
+    CoplanarSideEvidenceMismatch,
     /// The retained obstacle does not match the report counters.
     ObstacleMismatch,
     /// Recomputing the report from source meshes did not reproduce it.
@@ -115,6 +120,9 @@ impl From<CoplanarVolumetricCellEvidenceError> for CoplanarVolumetricCellEvidenc
             CoplanarVolumetricCellEvidenceError::CoplanarEvidenceMismatch => {
                 Self::StaleCoplanarEvidence
             }
+            CoplanarVolumetricCellEvidenceError::CoplanarSideEvidenceMismatch => {
+                Self::StaleCoplanarEvidence
+            }
             CoplanarVolumetricCellEvidenceError::ObstacleMismatch => Self::StaleObstacle,
             CoplanarVolumetricCellEvidenceError::SourceReplayMismatch => Self::SourceReplayMismatch,
         }
@@ -138,6 +146,28 @@ pub struct CoplanarVolumetricCellEvidenceReport {
     pub coplanar_touching_pairs: usize,
     /// Retained positive-area coplanar overlap face pairs.
     pub coplanar_overlapping_pairs: usize,
+    /// Coplanar overlap pairs whose retained edge/vertex facts certify a
+    /// positive-area face overlap rather than only a positive-length edge
+    /// interval.
+    pub positive_area_coplanar_overlapping_pairs: usize,
+    /// Positive-area coplanar face overlaps whose adjacent solids lie on
+    /// opposite sides of the shared plane.
+    ///
+    /// These are boundary-only adjacencies, such as two closed solids sharing a
+    /// full face. The side test replays exact off-plane vertices from each
+    /// closed operand against the retained shared face plane. That distinction
+    /// is the retained-object boundary Yap argues for in "Towards Exact
+    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997): a
+    /// coplanar face-pair blocker should not be inferred from a sampled point
+    /// near the shared face.
+    pub opposite_side_coplanar_overlapping_pairs: usize,
+    /// Positive-area coplanar face overlaps whose adjacent solids lie on the
+    /// same side of the shared plane and therefore still require coplanar
+    /// volumetric-cell ownership.
+    pub same_side_coplanar_overlapping_pairs: usize,
+    /// Positive-area coplanar face overlaps whose side ownership could not be
+    /// certified from exact retained plane and orientation evidence.
+    pub undecided_side_coplanar_overlapping_pairs: usize,
     /// Retained unknown face pairs.
     pub unknown_pairs: usize,
     /// Retained segment/plane events.
@@ -176,6 +206,10 @@ impl CoplanarVolumetricCellEvidenceReport {
             proper_crossing_candidate_pairs: 0,
             coplanar_touching_pairs: 0,
             coplanar_overlapping_pairs: 0,
+            positive_area_coplanar_overlapping_pairs: 0,
+            opposite_side_coplanar_overlapping_pairs: 0,
+            same_side_coplanar_overlapping_pairs: 0,
+            undecided_side_coplanar_overlapping_pairs: 0,
             unknown_pairs: 0,
             segment_plane_events: 0,
             proper_crossing_events: 0,
@@ -196,7 +230,21 @@ impl CoplanarVolumetricCellEvidenceReport {
                     }
                 }
                 MeshFacePairRelation::CoplanarTouching => report.coplanar_touching_pairs += 1,
-                MeshFacePairRelation::CoplanarOverlapping => report.coplanar_overlapping_pairs += 1,
+                MeshFacePairRelation::CoplanarOverlapping => {
+                    report.coplanar_overlapping_pairs += 1;
+                    if coplanar_pair_has_positive_area_overlap(&pair.events) {
+                        report.positive_area_coplanar_overlapping_pairs += 1;
+                        match classify_coplanar_overlap_sides(left, right, pair.left_face) {
+                            Some(CoplanarOverlapSideEvidence::OppositeSides) => {
+                                report.opposite_side_coplanar_overlapping_pairs += 1;
+                            }
+                            Some(CoplanarOverlapSideEvidence::SameSide) => {
+                                report.same_side_coplanar_overlapping_pairs += 1;
+                            }
+                            None => report.undecided_side_coplanar_overlapping_pairs += 1,
+                        }
+                    }
+                }
                 MeshFacePairRelation::Unknown => report.unknown_pairs += 1,
                 MeshFacePairRelation::BoundsDisjoint | MeshFacePairRelation::PlaneSeparated => {}
             }
@@ -273,6 +321,18 @@ impl CoplanarVolumetricCellEvidenceReport {
             && (self.coplanar_edge_events > 0 || self.coplanar_vertex_events > 0)
         {
             return Err(CoplanarVolumetricCellEvidenceError::CoplanarEvidenceMismatch);
+        }
+        let Some(side_count) = self
+            .opposite_side_coplanar_overlapping_pairs
+            .checked_add(self.same_side_coplanar_overlapping_pairs)
+            .and_then(|count| count.checked_add(self.undecided_side_coplanar_overlapping_pairs))
+        else {
+            return Err(CoplanarVolumetricCellEvidenceError::CoplanarSideEvidenceMismatch);
+        };
+        if self.positive_area_coplanar_overlapping_pairs > self.coplanar_overlapping_pairs
+            || side_count != self.positive_area_coplanar_overlapping_pairs
+        {
+            return Err(CoplanarVolumetricCellEvidenceError::CoplanarSideEvidenceMismatch);
         }
         let expected = derive_obstacle(self);
         if self.obstacle != expected {
@@ -362,7 +422,104 @@ fn derive_obstacle(
     if report.proper_crossing_events > 0 {
         return CoplanarVolumetricCellObstacle::MixedCoplanarAndCrossingCells;
     }
+    if report.same_side_coplanar_overlapping_pairs > 0
+        || report.undecided_side_coplanar_overlapping_pairs > 0
+        || report.opposite_side_coplanar_overlapping_pairs
+            < report.positive_area_coplanar_overlapping_pairs
+    {
+        return CoplanarVolumetricCellObstacle::NeedsCoplanarVolumetricCells;
+    }
     CoplanarVolumetricCellObstacle::BoundaryOnlyContact
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum CoplanarOverlapSideEvidence {
+    OppositeSides,
+    SameSide,
+}
+
+/// Classify local solid ownership across one positive-area coplanar face pair.
+///
+/// This does not decide a boolean output. It only separates full-face boundary
+/// adjacency from coplanar volumetric cell ownership by replaying every
+/// operand vertex against the retained plane of the left face. If all off-plane
+/// vertices of an operand lie on one exact side, that side is used as the local
+/// ownership witness. This is deliberately an object-level certificate in
+/// Yap's sense: the later cell materializer receives explicit
+/// same-side/opposite-side evidence instead of a tolerance-derived "touching"
+/// label.
+fn classify_coplanar_overlap_sides(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    left_face: usize,
+) -> Option<CoplanarOverlapSideEvidence> {
+    let left_plane = &left.facts().faces.get(left_face)?.plane;
+    let left_side = mesh_off_plane_side(left, left_plane)?;
+    let right_side = mesh_off_plane_side(right, left_plane)?;
+    if left_side == right_side {
+        Some(CoplanarOverlapSideEvidence::SameSide)
+    } else {
+        Some(CoplanarOverlapSideEvidence::OppositeSides)
+    }
+}
+
+fn coplanar_pair_has_positive_area_overlap(events: &[IntersectionEvent]) -> bool {
+    let mut identical_edges = 0usize;
+    for event in events {
+        match event {
+            IntersectionEvent::CoplanarVertex {
+                location: TriangleLocation::Inside,
+                ..
+            }
+            | IntersectionEvent::CoplanarEdge {
+                relation: SegmentIntersection::Proper,
+                ..
+            } => return true,
+            IntersectionEvent::CoplanarEdge {
+                relation: SegmentIntersection::Identical,
+                ..
+            } => identical_edges += 1,
+            _ => {}
+        }
+    }
+    identical_edges >= 3
+}
+
+fn mesh_off_plane_side(
+    mesh: &ExactMesh,
+    plane: &super::facts::FacePlaneFacts,
+) -> Option<PlaneSide> {
+    let mut side = None;
+    for vertex in mesh.vertices() {
+        match retained_plane_side(plane, &vertex.to_hyperlimit_point())? {
+            PlaneSide::On => {}
+            candidate => {
+                if let Some(existing) = side {
+                    if existing != candidate {
+                        return None;
+                    }
+                } else {
+                    side = Some(candidate);
+                }
+            }
+        }
+    }
+    side
+}
+
+fn retained_plane_side(
+    plane: &super::facts::FacePlaneFacts,
+    point: &hyperlimit::Point3,
+) -> Option<PlaneSide> {
+    let x_term = &plane.normal[0] * &point.x;
+    let y_term = &plane.normal[1] * &point.y;
+    let z_term = &plane.normal[2] * &point.z;
+    let value = &(&(&x_term + &y_term) + &z_term) + &plane.offset;
+    match compare_reals(&value, &ExactReal::from(0)).value()? {
+        Ordering::Less => Some(PlaneSide::Above),
+        Ordering::Equal => Some(PlaneSide::On),
+        Ordering::Greater => Some(PlaneSide::Below),
+    }
 }
 
 fn proper_crossing_event(event: &IntersectionEvent) -> bool {

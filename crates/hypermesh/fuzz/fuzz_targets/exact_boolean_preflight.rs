@@ -603,6 +603,16 @@ fuzz_target!(|data: &[u8]| {
             stale_counts.freshness_against_sources(&left, &right),
             hypermesh::exact::CoplanarVolumetricCellEvidenceFreshness::Current
         );
+        let mut stale_side_counts = report.clone();
+        stale_side_counts.same_side_coplanar_overlapping_pairs =
+            stale_side_counts.same_side_coplanar_overlapping_pairs.saturating_add(1);
+        if stale_side_counts != report {
+            assert!(stale_side_counts.validate().is_err());
+            assert_eq!(
+                stale_side_counts.freshness_against_sources(&left, &right),
+                hypermesh::exact::CoplanarVolumetricCellEvidenceFreshness::StaleCoplanarEvidence
+            );
+        }
     });
     let _ = certify_exact_mesh_proposal(&left).map(|report| {
         let _ = report.validate();

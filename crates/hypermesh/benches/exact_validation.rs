@@ -1154,12 +1154,18 @@ fn exact_coplanar_volumetric_cell_evidence(c: &mut Criterion) {
             let source_validation = report.validate_against_sources(&left, &right);
             let freshness = report.freshness_against_sources(&left, &right);
             let requires_cells = report.obstacle.requires_coplanar_volumetric_cells();
+            let coplanar_side_counts = (
+                report.opposite_side_coplanar_overlapping_pairs,
+                report.same_side_coplanar_overlapping_pairs,
+                report.undecided_side_coplanar_overlapping_pairs,
+            );
             (
                 report,
                 validation,
                 source_validation,
                 freshness,
                 requires_cells,
+                coplanar_side_counts,
             )
         })
     });

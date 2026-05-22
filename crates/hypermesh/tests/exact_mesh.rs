@@ -7651,6 +7651,13 @@ fn exact_coplanar_volumetric_cell_evidence_reports_mixed_and_boundary_cases() {
     assert!(mixed.left_closed_manifold);
     assert!(mixed.right_closed_manifold);
     assert!(mixed.coplanar_overlapping_pairs > 0);
+    assert!(mixed.positive_area_coplanar_overlapping_pairs > 0);
+    assert_eq!(
+        mixed.opposite_side_coplanar_overlapping_pairs
+            + mixed.same_side_coplanar_overlapping_pairs
+            + mixed.undecided_side_coplanar_overlapping_pairs,
+        mixed.positive_area_coplanar_overlapping_pairs
+    );
     assert!(mixed.proper_crossing_events > 0);
     assert_eq!(
         mixed.obstacle,
@@ -7668,10 +7675,33 @@ fn exact_coplanar_volumetric_cell_evidence_reports_mixed_and_boundary_cases() {
         .unwrap();
     assert!(boundary.coplanar_face_pairs() > 0);
     assert_eq!(
+        boundary.opposite_side_coplanar_overlapping_pairs,
+        boundary.positive_area_coplanar_overlapping_pairs
+    );
+    assert_eq!(boundary.same_side_coplanar_overlapping_pairs, 0);
+    assert_eq!(boundary.undecided_side_coplanar_overlapping_pairs, 0);
+    assert_eq!(
         boundary.obstacle,
         CoplanarVolumetricCellObstacle::BoundaryOnlyContact
     );
     assert!(!boundary.obstacle.requires_coplanar_volumetric_cells());
+
+    let same_side_left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
+    let same_side_right = same_side_left.clone();
+    let same_side =
+        certify_coplanar_volumetric_cell_evidence(&same_side_left, &same_side_right).unwrap();
+    same_side.validate().unwrap();
+    same_side
+        .validate_against_sources(&same_side_left, &same_side_right)
+        .unwrap();
+    assert!(same_side.coplanar_overlapping_pairs > 0);
+    assert!(same_side.positive_area_coplanar_overlapping_pairs > 0);
+    assert!(same_side.same_side_coplanar_overlapping_pairs > 0);
+    assert_eq!(
+        same_side.obstacle,
+        CoplanarVolumetricCellObstacle::NeedsCoplanarVolumetricCells
+    );
+    assert!(same_side.obstacle.requires_coplanar_volumetric_cells());
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -7706,6 +7736,17 @@ fn exact_coplanar_volumetric_cell_evidence_validation_rejects_stale_counts() {
     assert_eq!(
         stale_obstacle.freshness_against_sources(&left, &right),
         CoplanarVolumetricCellEvidenceFreshness::StaleObstacle
+    );
+
+    let mut stale_coplanar_side_counts = report.clone();
+    stale_coplanar_side_counts.same_side_coplanar_overlapping_pairs += 1;
+    assert_eq!(
+        stale_coplanar_side_counts.validate().unwrap_err(),
+        CoplanarVolumetricCellEvidenceError::CoplanarSideEvidenceMismatch
+    );
+    assert_eq!(
+        stale_coplanar_side_counts.freshness_against_sources(&left, &right),
+        CoplanarVolumetricCellEvidenceFreshness::StaleCoplanarEvidence
     );
 
     assert_eq!(
