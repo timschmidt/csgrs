@@ -66,6 +66,8 @@ than inventing a float decision.
   for repeated decisions.
 - `SupportDop3` and `SupportSlab3` retain exact support-axis bounds and source
   witnesses for reusable k-DOP/bounding-volume slab predicates.
+- `HalfspaceFeasibilityReport` records exact 3D halfspace feasibility witnesses
+  and active plane sets for replayable convex-kernel prechecks.
 - Session types such as `ExactGeometrySession`, `ConstructionCertificate`,
   `VersionedFacts`, and `VersionedPrepared` track cache freshness and construction
   provenance.
@@ -112,6 +114,8 @@ Version `0.4.0` is an early but usable predicate crate. It currently includes:
   D-dimensional orientation/in-sphere/affine-independence predicates;
 - exact support k-DOP slab carriers with witness-preserving point and AABB projection
   classifiers;
+- exact 3D halfspace feasibility reports over `Plane3` systems, using active-set
+  candidates and point-plane replay instead of primitive LP tolerances;
 - prepared segment, triangle, AABB, line, circle/sphere, and plane helpers for repeated
   decisions;
 - `PredicateOutcome`, `PredicateReport`, `PredicateCertificate`, certainty,
@@ -195,6 +199,9 @@ Klosowski, James T., Martin Held, Joseph S. B. Mitchell, Henry Sowizral, and
 Karel Zikan. "Efficient Collision Detection Using Bounding Volume Hierarchies
 of k-DOPs." *IEEE Transactions on Visualization and Computer Graphics*, vol. 4,
 no. 1, 1998, pp. 21-36.
+
+Seidel, Raimund. "Small-Dimensional Linear Programming and Convex Hulls Made
+Easy." *Discrete & Computational Geometry*, vol. 6, 1991, pp. 423-434.
 
 Shewchuk, Jonathan Richard. "Adaptive Precision Floating-Point Arithmetic and
 Fast Robust Geometric Predicates." *Discrete & Computational Geometry*, vol.

@@ -18,8 +18,9 @@ use hyperlimit::{
     certified_interval_sign, classify_coplanar_triangles, classify_triangle3_degeneracy,
     classify_aabb3_sphere_intersection, classify_circle_line2, classify_circle_segment2,
     classify_circle_line2_batch, classify_circle_segment2_batch,
-    classify_homogeneous_point_plane, classify_point_convex_planes3, classify_point_convex_polygon2,
-    classify_point_line, classify_point_line_batch, classify_ray_triangle3_intersection,
+    classify_halfspace_feasibility3, classify_homogeneous_point_plane,
+    classify_point_convex_planes3, classify_point_convex_polygon2, classify_point_line,
+    classify_point_line_batch, classify_ray_triangle3_intersection,
     classify_ray_triangle3_intersection_batch,
     classify_segment_triangle3_intersection, classify_segment3_intersection,
     classify_segment_triangle3_intersection_batch, classify_segment3_intersection_batch,
@@ -603,6 +604,39 @@ fn predicate_invariants(input: Input) {
             .value(),
         Some(SupportDopRelation::Separated),
         "a separating support axis must produce an exact separated relation"
+    );
+
+    let fixed_point_halfspaces = vec![
+        Plane3::new(Point3::new(1.into(), 0.into(), 0.into()), -&p.x),
+        Plane3::new(Point3::new((-1).into(), 0.into(), 0.into()), p.x.clone()),
+        Plane3::new(Point3::new(0.into(), 1.into(), 0.into()), -&p.y),
+        Plane3::new(Point3::new(0.into(), (-1).into(), 0.into()), p.y.clone()),
+        Plane3::new(Point3::new(0.into(), 0.into(), 1.into()), -&p.z),
+        Plane3::new(Point3::new(0.into(), 0.into(), (-1).into()), p.z.clone()),
+    ];
+    if let Some(feasibility) = classify_halfspace_feasibility3(&fixed_point_halfspaces).value() {
+        assert!(
+            feasibility.is_feasible(),
+            "coordinate halfspaces that pin a generated point must be feasible"
+        );
+        assert_eq!(
+            feasibility
+                .validate_against_planes(&fixed_point_halfspaces, PredicatePolicy::default())
+                .value(),
+            Some(true),
+            "halfspace feasibility witness must replay through point-plane predicates"
+        );
+    }
+    let impossible_halfspaces = vec![
+        Plane3::new(Point3::new(1.into(), 0.into(), 0.into()), 1.into()),
+        Plane3::new(Point3::new((-1).into(), 0.into(), 0.into()), 0.into()),
+    ];
+    assert_eq!(
+        classify_halfspace_feasibility3(&impossible_halfspaces)
+            .value()
+            .map(|report| report.status),
+        Some(hyperlimit::HalfspaceFeasibility::Infeasible),
+        "opposed exact halfspaces x <= -1 and x >= 0 must be infeasible"
     );
 }
 

@@ -75,11 +75,11 @@ pub use batch::{
 pub use classify::{
     Aabb2Intersection, Aabb2PointLocation, Aabb3Intersection, Aabb3PointLocation,
     AabbSphereIntersection, CircleLineRelation, CircleSegmentRelation, ClosedIntervalIntersection,
-    ConvexPointLocation, LineSide, PlaneAabbRelation, PlaneSegmentRelation, PlaneSide,
-    PlaneTriangleRelation, PointSegmentLocation, RayTriangleIntersection, RealIntervalLocation,
-    RingConvexity, RingPointLocation, Segment3Intersection, SegmentIntersection,
-    SegmentTriangleIntersection, SphereIntersection, SpherePointLocation, SupportDopRelation,
-    TetrahedronLocation, Triangle3Location, TriangleLocation,
+    ConvexPointLocation, HalfspaceFeasibility, LineSide, PlaneAabbRelation, PlaneSegmentRelation,
+    PlaneSide, PlaneTriangleRelation, PointSegmentLocation, RayTriangleIntersection,
+    RealIntervalLocation, RingConvexity, RingPointLocation, Segment3Intersection,
+    SegmentIntersection, SegmentTriangleIntersection, SphereIntersection, SpherePointLocation,
+    SupportDopRelation, TetrahedronLocation, Triangle3Location, TriangleLocation,
 };
 pub use geometry::{
     Aabb2Facts, CoordinateAxis2, HomogeneousLine3, HomogeneousPoint3, Plane3Facts,
@@ -152,6 +152,10 @@ pub use predicates::filters::{
     certified_ball_sign, certified_ball_sign_report, certified_ball_sign_report_with_policy,
     certified_ball_sign_with_policy, certified_interval_sign, certified_interval_sign_report,
     certified_interval_sign_report_with_policy, certified_interval_sign_with_policy,
+};
+pub use predicates::halfspace::{
+    HalfspaceFeasibilityReport, classify_halfspace_feasibility3,
+    classify_halfspace_feasibility3_with_policy,
 };
 pub use predicates::interval::{
     classify_closed_interval_intersection, classify_closed_interval_intersection_with_policy,

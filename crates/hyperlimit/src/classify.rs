@@ -194,6 +194,15 @@ impl ConvexPointLocation {
     }
 }
 
+/// Feasibility status for a closed intersection of oriented plane halfspaces.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum HalfspaceFeasibility {
+    /// At least one exact point satisfies every halfspace.
+    Feasible,
+    /// No exact point satisfies every halfspace.
+    Infeasible,
+}
+
 /// Relation between a query interval and a retained support k-DOP slab set.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum SupportDopRelation {

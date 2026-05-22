@@ -11,9 +11,9 @@ use hyperlimit::{
     PreparedLine2, PreparedOrientedPlane3, Segment3Intersection, SegmentPlaneRelation, Sign,
     SupportDopRelation, TriangleDegeneracy, affine_independent_d, certified_ball_sign,
     classify_aabb3_sphere_intersection, classify_circle_line2, classify_circle_segment2,
-    classify_coplanar_triangles, classify_homogeneous_point_plane, classify_point_convex_planes3,
-    classify_point_convex_polygon2, classify_point_line, classify_point_oriented_plane,
-    classify_point_plane, classify_ray_triangle3_intersection,
+    classify_coplanar_triangles, classify_halfspace_feasibility3, classify_homogeneous_point_plane,
+    classify_point_convex_planes3, classify_point_convex_polygon2, classify_point_line,
+    classify_point_oriented_plane, classify_point_plane, classify_ray_triangle3_intersection,
     classify_segment_triangle3_intersection, classify_segment3_intersection,
     classify_sphere3_intersection, classify_triangle3_degeneracy,
     compare_point_line3_distance_squared, compare_point_plane_distance_squared,
@@ -527,6 +527,25 @@ fn bench_exact_rational_kernels(c: &mut Criterion) {
                 );
             }
             black_box(score)
+        });
+    });
+
+    group.bench_function("convex/halfspace_feasibility3_active_sets", |b| {
+        let feasible = exact_rational_shifted_box_planes3();
+        let infeasible = vec![
+            Plane3::new(rational_point3(1, 1, 0, 1, 0, 1), rational_real(1, 1)),
+            Plane3::new(rational_point3(-1, 1, 0, 1, 0, 1), rational_real(0, 1)),
+        ];
+        b.iter(|| {
+            let feasible_status = classify_halfspace_feasibility3(black_box(&feasible))
+                .value()
+                .map(|report| report.is_feasible())
+                .unwrap_or(false);
+            let infeasible_status = classify_halfspace_feasibility3(black_box(&infeasible))
+                .value()
+                .map(|report| report.is_feasible())
+                .unwrap_or(true);
+            black_box((feasible_status, infeasible_status))
         });
     });
 
@@ -1496,6 +1515,17 @@ fn exact_rational_convex_box_planes3() -> Vec<Plane3> {
             rational_point3(0, 11, 0, 11, 1, 11),
             rational_real(-40, 121),
         ),
+    ]
+}
+
+fn exact_rational_shifted_box_planes3() -> Vec<Plane3> {
+    vec![
+        Plane3::new(rational_point3(-1, 1, 0, 1, 0, 1), rational_real(2, 1)),
+        Plane3::new(rational_point3(1, 1, 0, 1, 0, 1), rational_real(-5, 1)),
+        Plane3::new(rational_point3(0, 1, -1, 1, 0, 1), rational_real(3, 1)),
+        Plane3::new(rational_point3(0, 1, 1, 1, 0, 1), rational_real(-6, 1)),
+        Plane3::new(rational_point3(0, 1, 0, 1, -1, 1), rational_real(1, 1)),
+        Plane3::new(rational_point3(0, 1, 0, 1, 1, 1), rational_real(-4, 1)),
     ]
 }
 
