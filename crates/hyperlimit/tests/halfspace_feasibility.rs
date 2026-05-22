@@ -136,9 +136,17 @@ fn halfspace_feasibility_rejects_zero_normal_positive_offset() {
 
     assert_eq!(report.status, HalfspaceFeasibility::Infeasible);
     assert!(report.witness.is_none());
-    assert!(
-        report.infeasibility_certificate.is_none(),
-        "zero-normal contradiction is structurally infeasible but has no nonzero Farkas normal combination"
+    let certificate = report
+        .infeasibility_certificate
+        .as_ref()
+        .expect("zero-normal contradiction should produce a one-plane Farkas certificate");
+    assert_eq!(certificate.active_planes, [Some(0), None, None, None]);
+    assert_eq!(certificate.offset_sum, r(1));
+    assert_eq!(
+        certificate
+            .validate_against_planes(&planes, PredicatePolicy::default())
+            .value(),
+        Some(true)
     );
 }
 

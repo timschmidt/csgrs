@@ -302,6 +302,31 @@ enum CertificateSearch {
 fn find_farkas_certificate(planes: &[Plane3], policy: PredicatePolicy) -> CertificateSearch {
     crate::trace_dispatch!("hyperlimit", "halfspace_feasibility3", "farkas-certificate");
 
+    for (index, plane) in planes.iter().enumerate() {
+        match point_zero(&plane.normal, policy) {
+            PredicateOutcome::Decided { value: true, .. } => {
+                match accept_farkas_dependency(
+                    planes,
+                    [Some(index), None, None, None],
+                    [Real::from(1), Real::from(0), Real::from(0), Real::from(0)],
+                    policy,
+                ) {
+                    CertificateSearch::Found(certificate) => {
+                        return CertificateSearch::Found(certificate);
+                    }
+                    CertificateSearch::Unknown { needed, stage } => {
+                        return CertificateSearch::Unknown { needed, stage };
+                    }
+                    CertificateSearch::NotFound => {}
+                }
+            }
+            PredicateOutcome::Decided { value: false, .. } => {}
+            PredicateOutcome::Unknown { needed, stage } => {
+                return CertificateSearch::Unknown { needed, stage };
+            }
+        }
+    }
+
     for first in 0..planes.len() {
         for second in first + 1..planes.len() {
             match pair_dependency(&planes[first].normal, &planes[second].normal, policy) {
