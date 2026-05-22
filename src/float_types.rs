@@ -502,9 +502,9 @@ pub(crate) fn hvectors_orthogonal_within(
     rhs: &Vector3<Real>,
     tolerance: Real,
 ) -> bool {
-    if hnonnegative_boundary_scalar(tolerance).is_none() {
+    let Some(tolerance) = hnonnegative_boundary_scalar(tolerance) else {
         return false;
-    }
+    };
     let Some(lhs) = hvector3_from_vector3(lhs) else {
         return false;
     };
@@ -512,7 +512,8 @@ pub(crate) fn hvectors_orthogonal_within(
         return false;
     };
     let dot = lhs.dot(&rhs);
-    !hreal_gt_f64(&dot, tolerance) && !hreal_lt_f64(&dot, -tolerance)
+    let negative_tolerance = -tolerance.clone();
+    !hreal_gt_hreal(&dot, &tolerance) && !hreal_lt_hreal(&dot, &negative_tolerance)
 }
 
 /// Return the finite angle between two public boundary vectors in radians.
@@ -571,9 +572,9 @@ pub(crate) fn hpoints_within_tolerance(
     rhs: &Point3<Real>,
     tolerance: Real,
 ) -> bool {
-    if hpositive_boundary_scalar(tolerance).is_none() {
+    let Some(tolerance_squared) = hpositive_boundary_scalar_squared(tolerance) else {
         return false;
-    }
+    };
 
     let Some(lhs) = hvector3_from_point3(lhs) else {
         return false;
@@ -582,7 +583,7 @@ pub(crate) fn hpoints_within_tolerance(
         return false;
     };
 
-    hreal_lt_f64(&lhs.squared_distance(&rhs), tolerance * tolerance)
+    hreal_lt_hreal(&lhs.squared_distance(&rhs), &tolerance_squared)
 }
 
 /// Return the finite Euclidean distance between two public boundary points.
@@ -698,7 +699,8 @@ pub(crate) fn htriangle_area_hreal(
     let c = hvector3_from_point3(c)?;
     let area2 = (&b - &a).cross(&(&c - &a));
     let magnitude_squared = area2.dot(&area2);
-    if !hreal_gt_f64(&magnitude_squared, tolerance() * tolerance()) {
+    let tolerance_squared = hpositive_boundary_scalar_squared(tolerance())?;
+    if !hreal_gt_hreal(&magnitude_squared, &tolerance_squared) {
         return None;
     }
     let twice_area = hreal_sqrt_ref(&magnitude_squared)?;
@@ -719,9 +721,9 @@ pub(crate) fn htriangle_area2_exceeds_tolerance(
     c: &Point3<Real>,
     tolerance: Real,
 ) -> bool {
-    if hpositive_boundary_scalar(tolerance).is_none() {
+    let Some(tolerance_squared) = hpositive_boundary_scalar_squared(tolerance) else {
         return false;
-    }
+    };
     let Some(a) = hvector3_from_point3(a) else {
         return false;
     };
@@ -732,7 +734,7 @@ pub(crate) fn htriangle_area2_exceeds_tolerance(
         return false;
     };
     let area2 = (&b - &a).cross(&(&c - &a));
-    hreal_gt_f64(&area2.dot(&area2), tolerance * tolerance)
+    hreal_gt_hreal(&area2.dot(&area2), &tolerance_squared)
 }
 
 /// Compare finite f64 boundary vectors by squared distance in hyperreal space.
@@ -746,9 +748,9 @@ pub(crate) fn hvectors_within_tolerance(
     rhs: &Vector3<Real>,
     tolerance: Real,
 ) -> bool {
-    if hpositive_boundary_scalar(tolerance).is_none() {
+    let Some(tolerance_squared) = hpositive_boundary_scalar_squared(tolerance) else {
         return false;
-    }
+    };
 
     let Some(lhs) = hvector3_from_vector3(lhs) else {
         return false;
@@ -757,7 +759,7 @@ pub(crate) fn hvectors_within_tolerance(
         return false;
     };
 
-    hreal_lt_f64(&lhs.squared_distance(&rhs), tolerance * tolerance)
+    hreal_lt_hreal(&lhs.squared_distance(&rhs), &tolerance_squared)
 }
 
 /// Refine the sign of a hyperreal expression for topology decisions.
@@ -785,6 +787,43 @@ fn hnonnegative_boundary_scalar(value: Real) -> Option<HReal> {
 fn hpositive_boundary_scalar(value: Real) -> Option<HReal> {
     let value = hreal_from_f64(value).ok()?;
     hreal_gt_f64(&value, 0.0).then_some(value)
+}
+
+/// Promote a positive finite public scalar and square it in hyperreal space.
+///
+/// Runtime tolerances still enter through public `f64` configuration and file
+/// format boundaries, but squared-distance predicates should not multiply
+/// primitive thresholds after promotion. This keeps tolerance predicates in the
+/// exact-aware layer described by Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7(1-2), 1997
+/// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+pub(crate) fn hpositive_boundary_scalar_squared(value: Real) -> Option<HReal> {
+    let value = hpositive_boundary_scalar(value)?;
+    Some(value.clone() * value)
+}
+
+/// Returns true when `value` is strictly greater than a hyperreal threshold.
+pub(crate) fn hreal_gt_hreal(value: &HReal, threshold: &HReal) -> bool {
+    match hyperlimit::compare_reals(value, threshold).value() {
+        Some(Ordering::Greater) => true,
+        Some(_) => false,
+        None => matches!(
+            hreal_sign(&(value.clone() - threshold.clone())),
+            Some(RealSign::Positive)
+        ),
+    }
+}
+
+/// Returns true when `value` is strictly less than a hyperreal threshold.
+pub(crate) fn hreal_lt_hreal(value: &HReal, threshold: &HReal) -> bool {
+    match hyperlimit::compare_reals(value, threshold).value() {
+        Some(Ordering::Less) => true,
+        Some(_) => false,
+        None => matches!(
+            hreal_sign(&(value.clone() - threshold.clone())),
+            Some(RealSign::Negative)
+        ),
+    }
 }
 
 /// Returns true when `value` is strictly greater than the finite f64 threshold.
@@ -900,14 +939,14 @@ pub(crate) fn hreal_clamp_hreal(value: HReal, min: F64, max: F64) -> Option<HRea
 /// code. This follows the same Yap exact-computation boundary model cited in
 /// [`hreal_cmp_f64`].
 pub(crate) fn hreal_f64s_within_tolerance(lhs: F64, rhs: F64, tolerance: F64) -> bool {
-    if hpositive_boundary_scalar(tolerance).is_none() {
+    let Some(tolerance_squared) = hpositive_boundary_scalar_squared(tolerance) else {
         return false;
-    }
+    };
     let (Ok(lhs), Ok(rhs)) = (hreal_from_f64(lhs), hreal_from_f64(rhs)) else {
         return false;
     };
     let delta = lhs - rhs;
-    hreal_lt_f64(&(delta.clone() * delta), tolerance * tolerance)
+    hreal_lt_hreal(&(delta.clone() * delta), &tolerance_squared)
 }
 
 /// Return the finite sum of public boundary scalars.
@@ -1599,6 +1638,27 @@ mod tests {
         ));
         assert!(!hreal_f64s_within_tolerance(1.0, f64::INFINITY, tolerance));
         assert!(!hreal_f64s_within_tolerance(1.0, 1.0, 0.0));
+    }
+
+    #[test]
+    fn positive_boundary_scalar_squared_stays_hyperreal() {
+        let tolerance = 1e-6;
+        let tolerance_squared =
+            hpositive_boundary_scalar_squared(tolerance).expect("positive finite tolerance");
+        let tolerance_hreal = hreal_from_f64(tolerance).expect("positive finite tolerance");
+
+        let expected_squared = tolerance_hreal.clone() * tolerance_hreal.clone();
+        assert_eq!(
+            hyperlimit::compare_reals(&tolerance_squared, &expected_squared).value(),
+            Some(Ordering::Equal)
+        );
+        let doubled = tolerance_hreal.clone() * hreal_from_f64(2.0).expect("finite scalar");
+        assert!(hreal_gt_hreal(
+            &(doubled.clone() * doubled),
+            &tolerance_squared
+        ));
+        assert!(hpositive_boundary_scalar_squared(0.0).is_none());
+        assert!(hpositive_boundary_scalar_squared(Real::NAN).is_none());
     }
 
     #[test]
