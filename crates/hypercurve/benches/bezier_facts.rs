@@ -2862,20 +2862,22 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     })
                     .collect::<Vec<_>>();
                 let roles = vec![BezierBooleanOutputLoopRole::Material; output.loops.len()];
+                let first_endpoints = quadratic_report_endpoints(first);
+                let second_endpoints = quadratic_report_endpoints(second);
                 format!(
                     "{:?}{:?}",
-                    BezierBooleanRegionAssemblyReport2::from_quadratic_graph_walk_depth_facts(
+                    BezierBooleanRegionAssemblyReport2::from_graph_walk_depth_facts(
                         &walk,
                         &plan,
-                        first,
-                        second,
+                        &first_endpoints,
+                        &second_endpoints,
                         &depth_facts
                     ),
-                    BezierBooleanRegionAssemblyReport2::from_quadratic_graph_walk_depth_role_facts(
+                    BezierBooleanRegionAssemblyReport2::from_graph_walk_depth_role_facts(
                         &walk,
                         &plan,
-                        first,
-                        second,
+                        &first_endpoints,
+                        &second_endpoints,
                         &depth_facts,
                         &roles
                     )
@@ -2937,20 +2939,22 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     })
                     .collect::<Vec<_>>();
                 let roles = vec![BezierBooleanOutputLoopRole::Material; output.loops.len()];
+                let first_endpoints = quadratic_report_endpoints(first);
+                let second_endpoints = quadratic_report_endpoints(second);
                 format!(
                     "{:?}{:?}",
-                    BezierBooleanResultReport2::from_quadratic_graph_walk_depth_facts(
+                    BezierBooleanResultReport2::from_graph_walk_depth_facts(
                         &walk,
                         &plan,
-                        first,
-                        second,
+                        &first_endpoints,
+                        &second_endpoints,
                         &depth_facts
                     ),
-                    BezierBooleanResultReport2::from_quadratic_graph_walk_depth_role_facts(
+                    BezierBooleanResultReport2::from_graph_walk_depth_role_facts(
                         &walk,
                         &plan,
-                        first,
-                        second,
+                        &first_endpoints,
+                        &second_endpoints,
                         &depth_facts,
                         &roles
                     )
