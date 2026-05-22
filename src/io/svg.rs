@@ -1224,6 +1224,10 @@ fn svg_points_to_coords(points: &str) -> Result<Vec<SvgCoord>, IoError> {
 mod tests {
     use super::*;
 
+    fn hr(value: Real) -> hyperreal::Real {
+        hyperreal::Real::try_from(value).expect("finite SVG test scalar")
+    }
+
     #[test]
     fn basic_svg_io() {
         let svg_in = r#"
@@ -1334,9 +1338,9 @@ mod tests {
         assert_eq!(sketch.material_contour_count(), 2);
         assert_eq!(sketch.hole_contour_count(), 1);
         assert!(sketch.wires().is_empty());
-        assert!(sketch.contains_xy(1.0, 1.0).unwrap());
-        assert!(!sketch.contains_xy(3.0, 3.0).unwrap());
-        assert!(sketch.contains_xy(5.0, 5.0).unwrap());
+        assert!(sketch.contains_xy(hr(1.0), hr(1.0)).unwrap());
+        assert!(!sketch.contains_xy(hr(3.0), hr(3.0)).unwrap());
+        assert!(sketch.contains_xy(hr(5.0), hr(5.0)).unwrap());
     }
 
     #[test]
@@ -1355,7 +1359,7 @@ mod tests {
         assert_eq!(sketch.material_contour_count(), 1);
         assert_eq!(sketch.hole_contour_count(), 0);
         assert_eq!(sketch.wires().len(), 1);
-        assert!(sketch.contains_xy(1.0, 1.0).unwrap());
+        assert!(sketch.contains_xy(hr(1.0), hr(1.0)).unwrap());
         assert!(
             sketch
                 .wire_polylines()

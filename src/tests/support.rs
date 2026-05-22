@@ -61,6 +61,10 @@ pub fn approx_eq(a: Real, b: Real, eps: Real) -> bool {
     (a - b).abs() < eps
 }
 
+pub fn hr(value: Real) -> hyperreal::Real {
+    hyperreal::Real::try_from(value).expect("finite test scalar")
+}
+
 pub fn make_polygon_3d(points: &[[Real; 3]]) -> Polygon<()> {
     let mut verts = Vec::new();
     for p in points {
