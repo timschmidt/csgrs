@@ -1173,14 +1173,15 @@ pub struct CoplanarSurfaceMultiArrangement {
 /// This is the single-component counterpart to
 /// [`CoplanarSurfaceMultiArrangement`]. It covers bounded cases where the
 /// output is neither convex nor holed, but still has one retained simple loop
-/// that can be audited directly. The first producer is the cutter/hole-contact
-/// difference path: a side-attached cutter opens a strictly contained hole to
-/// the outer boundary, producing one nonconvex loop rather than a ring pair.
-/// The output keeps that loop as exact topology and triangulates it through
-/// `hypertri`'s FIST-style earcut handoff. See Held, "FIST: Fast
-/// Industrial-Strength Triangulation of Polygons," *Algorithmica* 30 (2001),
-/// and Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-/// 7.1-2 (1997).
+/// that can be audited directly. Producers include cutter/hole-contact
+/// differences, where a side-attached cutter opens a strictly contained hole
+/// to the outer boundary, and side-cutter-only differences, where exact
+/// non-rectilinear cutter openings carve one nonconvex simple remnant without
+/// retained hole rings. The output keeps that loop as exact topology and
+/// triangulates it through `hypertri`'s FIST-style earcut handoff. See Held,
+/// "FIST: Fast Industrial-Strength Triangulation of Polygons,"
+/// *Algorithmica* 30 (2001), and Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997).
 #[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, PartialEq)]
 pub struct CoplanarSurfaceArrangement {
@@ -1668,6 +1669,37 @@ impl CoplanarSurfaceArrangement {
             Err(surface_validation_error(
                 "coplanar nonconvex simple-loop arrangement",
                 "retained cutter-hole contact difference does not match source replay",
+            ))
+        }
+    }
+
+    /// Validate this side-cutter-only difference against its sources.
+    ///
+    /// Source replay rebuilds the clipped cutter openings, retained boundary
+    /// splice, and exact area equation from the supplied meshes. The artifact
+    /// is accepted only when that replay reproduces the same loop and mesh,
+    /// keeping this single-loop nonconvex shortcut inside Yap's retained-state
+    /// model from "Towards Exact Geometric Computation," *Computational
+    /// Geometry* 7.1-2 (1997).
+    pub fn validate_side_cutter_difference_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<(), MeshError> {
+        self.validate()?;
+        let replay =
+            arrange_coplanar_surface_side_cutter_difference(left, right).ok_or_else(|| {
+                surface_validation_error(
+                    "coplanar nonconvex simple-loop arrangement",
+                    "source replay did not reproduce a side-cutter difference",
+                )
+            })?;
+        if self == &replay {
+            Ok(())
+        } else {
+            Err(surface_validation_error(
+                "coplanar nonconvex simple-loop arrangement",
+                "retained side-cutter difference does not match source replay",
             ))
         }
     }
@@ -4172,6 +4204,113 @@ pub fn arrange_coplanar_surface_multi_difference(
     Some(arrangement)
 }
 
+/// Certify a side-cutter-only nonconvex coplanar difference.
+///
+/// This is the no-hole sibling of
+/// [`arrange_coplanar_convex_surface_component_holed_difference`]'s
+/// non-rectilinear side-cutter opening path. A single convex source component
+/// is cut by two or more side-attached convex right components. Their clipped
+/// material is replayed as one or more exact removed openings, each attached
+/// to the outer boundary, and the retained boundary is accepted only if it
+/// stitches into one nonconvex simple loop with exact area replay:
+/// `area(left) = area(output) + sum(area(removed_i))`.
+///
+/// The helper deliberately rejects strict interior right components, fully
+/// rectangular cutter sets, point-only cutter contacts, convex remnants, and
+/// multi-loop remnants. Rectangular cases belong to the orthogonal cell
+/// materializer; branch and split cases remain for the general planar-cell
+/// materializer. This follows Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997): topology is promoted only from
+/// retained exact boundary and area facts. The boundary splice follows the
+/// Weiler-Atherton retained-fragment construction; see Weiler and Atherton,
+/// "Hidden Surface Removal Using Polygon Area Sorting," *SIGGRAPH Computer
+/// Graphics* 11.2 (1977).
+#[cfg(feature = "exact-triangulation")]
+pub fn arrange_coplanar_surface_side_cutter_difference(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Option<CoplanarSurfaceArrangement> {
+    let left_components = connected_face_component_meshes(left)?;
+    let right_components = connected_face_component_meshes(right)?;
+    if left_components.len() != 1 || right_components.len() < 2 {
+        return None;
+    }
+
+    let left_component =
+        ConvexUnionComponent::from_mesh(MultiUnionSide::Left, left_components.into_iter().next()?)?;
+    let right_components = right_components
+        .into_iter()
+        .map(|mesh| ConvexUnionComponent::from_mesh(MultiUnionSide::Right, mesh))
+        .collect::<Option<Vec<_>>>()?;
+    let projection = left_component.projection;
+    if right_components
+        .iter()
+        .any(|component| component.projection != projection)
+    {
+        return None;
+    }
+
+    let mut cut_indices = Vec::new();
+    for (right_index, right_component) in right_components.iter().enumerate() {
+        if polygons_equal(&left_component.hull, &right_component.hull)
+            || polygon_in_closed_convex_polygon(
+                &left_component.hull,
+                &right_component.hull,
+                projection,
+            )?
+        {
+            return None;
+        }
+        if polygon_in_closed_convex_polygon(
+            &right_component.hull,
+            &left_component.hull,
+            projection,
+        )? {
+            if convex_polygons_touch_on_positive_boundary(
+                &left_component.hull,
+                &right_component.hull,
+                projection,
+            )? {
+                cut_indices.push(right_index);
+                continue;
+            }
+            return None;
+        }
+
+        match convex_union_component_relation(
+            &left_component.hull,
+            &right_component.hull,
+            projection,
+        )? {
+            ConvexUnionComponentRelation::Disjoint => {}
+            ConvexUnionComponentRelation::BoundaryOnly => return None,
+            ConvexUnionComponentRelation::PositiveArea => cut_indices.push(right_index),
+        }
+    }
+    if cut_indices.len() < 2 {
+        return None;
+    }
+
+    let (_, polygon) = materialize_nonrectilinear_side_cutter_opening(
+        &left_component,
+        &cut_indices,
+        &right_components,
+        "coplanar side-cutter simple-loop difference",
+    )?;
+    let mesh = polygon_to_earcut_open_mesh_with_label(
+        &polygon,
+        projection,
+        "exact coplanar side-cutter simple-loop difference",
+    )?;
+    let arrangement = CoplanarSurfaceArrangement {
+        projection,
+        polygon,
+        mesh,
+    };
+    arrangement.validate().ok()?;
+    Some(arrangement)
+}
+
 /// Certify a bounded cutter/hole-contact coplanar difference.
 ///
 /// This handles the narrow case that the strict component/holed arrangement
@@ -6253,6 +6392,43 @@ fn materialize_connected_multi_cutter_component_holed_difference(
         return None;
     }
     let projection = component.projection;
+    let (removed_openings, opening) = materialize_nonrectilinear_side_cutter_opening(
+        component,
+        cut_indices,
+        right_components,
+        "coplanar component-holed connected multi-cutter opening",
+    )?;
+    let retained_holes = assign_holes_to_connected_multi_cutter_opening(
+        holes,
+        &opening,
+        &removed_openings,
+        projection,
+    )?;
+    Some(vec![CoplanarConvexHoledComponent {
+        outer: opening,
+        holes: retained_holes,
+    }])
+}
+
+/// Replay non-rectilinear side cutters as removed openings and one output loop.
+///
+/// The returned pair is `(removed_openings, output)`. Each removed opening is
+/// either one clipped convex cutter or an exact retained union of a connected
+/// cutter contact group; disconnected groups become independent openings. The
+/// final output loop is accepted only after exact simple-loop validation,
+/// nonconvexity, and exact area replay. This is the reusable no-hole core for
+/// side-cutter-only differences and mixed component/holed differences.
+#[cfg(feature = "exact-triangulation")]
+fn materialize_nonrectilinear_side_cutter_opening(
+    component: &ConvexUnionComponent,
+    cut_indices: &[usize],
+    right_components: &[ConvexUnionComponent],
+    label: &'static str,
+) -> Option<(Vec<Vec<Point3>>, Vec<Point3>)> {
+    if cut_indices.is_empty() {
+        return None;
+    }
+    let projection = component.projection;
     let mut regions = Vec::with_capacity(cut_indices.len());
     let mut all_clipped_cutters_are_rectangles = true;
     for &right_index in cut_indices {
@@ -6265,12 +6441,7 @@ fn materialize_connected_multi_cutter_component_holed_difference(
             return None;
         }
         orient_polygon_ccw(&mut clipped, projection)?;
-        validate_projected_strictly_convex_loop(
-            &clipped,
-            projection,
-            "coplanar component-holed connected multi-cutter opening",
-        )
-        .ok()?;
+        validate_projected_strictly_convex_loop(&clipped, projection, label).ok()?;
         all_clipped_cutters_are_rectangles &=
             projected_axis_aligned_rectangle(&clipped, projection).is_some();
         regions.push(RemovedRegionCandidate {
@@ -6293,12 +6464,7 @@ fn materialize_connected_multi_cutter_component_holed_difference(
         };
         orient_polygon_ccw(&mut opening, projection)?;
         opening = simplify_projected_polygon(opening, projection);
-        validate_projected_simple_loop(
-            &opening,
-            projection,
-            "coplanar component-holed connected multi-cutter opening",
-        )
-        .ok()?;
+        validate_projected_simple_loop(&opening, projection, label).ok()?;
         removed_openings.push(opening);
     }
     if removed_openings.is_empty() {
@@ -6322,19 +6488,8 @@ fn materialize_connected_multi_cutter_component_holed_difference(
     };
     orient_polygon_ccw(&mut opening, projection)?;
     opening = simplify_projected_polygon(opening, projection);
-    validate_projected_simple_loop(
-        &opening,
-        projection,
-        "coplanar component-holed connected multi-cutter opening",
-    )
-    .ok()?;
-    if validate_projected_strictly_convex_loop(
-        &opening,
-        projection,
-        "coplanar component-holed connected multi-cutter opening",
-    )
-    .is_ok()
-    {
+    validate_projected_simple_loop(&opening, projection, label).ok()?;
+    if validate_projected_strictly_convex_loop(&opening, projection, label).is_ok() {
         return None;
     }
 
@@ -6352,17 +6507,7 @@ fn materialize_connected_multi_cutter_component_holed_difference(
     {
         return None;
     }
-
-    let retained_holes = assign_holes_to_connected_multi_cutter_opening(
-        holes,
-        &opening,
-        &removed_openings,
-        projection,
-    )?;
-    Some(vec![CoplanarConvexHoledComponent {
-        outer: opening,
-        holes: retained_holes,
-    }])
+    Some((removed_openings, opening))
 }
 
 /// Return whether a strict hole is wholly removed by one side opening.

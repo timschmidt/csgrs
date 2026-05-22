@@ -11489,6 +11489,124 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
         .is_none()
     );
 
+    let side_opening_left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 20, 0, 0, 20, 20, 0, 0, 20, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let side_opening_cutters = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            -2, 4, 0, 9, 4, 0, 7, 10, 0, -2, 10, 0, //
+            -2, 8, 0, 8, 7, 0, 10, 13, 0, -2, 13, 0, //
+            11, 3, 0, 22, 3, 0, 22, 11, 0, 13, 11, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7, //
+            8, 9, 10, 8, 10, 11,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_multi_difference(
+            &side_opening_left,
+            &side_opening_cutters,
+        )
+        .is_none()
+    );
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_cutter_hole_contact_difference(
+            &side_opening_left,
+            &side_opening_cutters,
+        )
+        .is_none()
+    );
+    let side_opening = hypermesh::exact::arrange_coplanar_surface_side_cutter_difference(
+        &side_opening_left,
+        &side_opening_cutters,
+    )
+    .expect("non-rectilinear side cutters should retain one nonconvex no-hole loop");
+    side_opening.validate().unwrap();
+    side_opening
+        .validate_side_cutter_difference_against_sources(&side_opening_left, &side_opening_cutters)
+        .unwrap();
+    assert!(side_opening.polygon.len() > 10);
+    assert!(
+        side_opening
+            .polygon
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(9))
+                && real_eq(&point.y, &ExactReal::from(4)))
+    );
+    assert!(
+        side_opening
+            .polygon
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(11))
+                && real_eq(&point.y, &ExactReal::from(3)))
+    );
+    let mut reversed_side_opening = side_opening.clone();
+    reversed_side_opening.polygon.reverse();
+    assert!(reversed_side_opening.validate().is_err());
+
+    let side_opening_preflight = hypermesh::exact::preflight_boolean_exact(
+        &side_opening_left,
+        &side_opening_cutters,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    side_opening_preflight.validate().unwrap();
+    side_opening_preflight
+        .validate_against_sources(&side_opening_left, &side_opening_cutters)
+        .unwrap();
+    assert_eq!(
+        side_opening_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceSideCutterDifference
+    );
+
+    let side_opening_result = hypermesh::exact::boolean_exact(
+        &side_opening_left,
+        &side_opening_cutters,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    side_opening_result
+        .validate_operation_against_sources(
+            &side_opening_left,
+            &side_opening_cutters,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        side_opening_result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut:
+                hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfaceSideCutterDifference
+        }
+    );
+
+    let point_only_side_opening = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            -2, 4, 0, 9, 4, 0, 7, 10, 0, -2, 10, 0, //
+            -2, 13, 0, 7, 10, 0, 10, 14, 0, -2, 18, 0,
+        ],
+        &[0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_side_cutter_difference(
+            &side_opening_left,
+            &point_only_side_opening,
+        )
+        .is_none()
+    );
+
     let preflight = hypermesh::exact::preflight_boolean_exact(
         &left,
         &right,

@@ -573,6 +573,9 @@ pub enum ExactBooleanShortcutKind {
     /// Certified nonconvex simple-loop difference where a side cutter opens a
     /// contained coplanar hole to the component boundary.
     CoplanarSurfaceCutterHoleContactDifference,
+    /// Certified nonconvex simple-loop difference from exact side-cutter
+    /// openings with no retained hole rings.
+    CoplanarSurfaceSideCutterDifference,
     /// Certified orthogonal-cell union of coplanar rectangular surface pieces.
     CoplanarOrthogonalSurfaceUnion,
     /// Certified orthogonal-cell intersection of coplanar rectangular surfaces.
@@ -1342,6 +1345,9 @@ pub enum ExactBooleanSupport {
     /// Difference was materialized as one nonconvex simple loop after exact
     /// cutter/hole boundary contact opened a retained hole to the boundary.
     CertifiedCoplanarSurfaceCutterHoleContactDifference,
+    /// Difference was materialized as one nonconvex simple loop from exact
+    /// side-cutter openings with no retained hole rings.
+    CertifiedCoplanarSurfaceSideCutterDifference,
     /// Union was materialized by an exact orthogonal coplanar surface cell
     /// complex.
     CertifiedCoplanarOrthogonalSurfaceUnion,
@@ -1598,6 +1604,7 @@ impl ExactBooleanPreflight {
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceMultiDifference
             | ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
             | ExactBooleanSupport::CertifiedCoplanarSurfaceCutterHoleContactDifference
+            | ExactBooleanSupport::CertifiedCoplanarSurfaceSideCutterDifference
             | ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceUnion
             | ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceIntersection
             | ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceDifference
