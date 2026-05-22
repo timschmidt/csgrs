@@ -24,3 +24,10 @@ path = "fuzz_targets/bezier_split_materialization.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "bezier_arrangement"
+path = "fuzz_targets/bezier_arrangement.rs"
+test = false
+doc = false
+bench = false

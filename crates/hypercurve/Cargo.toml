@@ -48,6 +48,10 @@ name = "bezier_algebraic_parameter"
 harness = false
 
 [[bench]]
+name = "bezier_arrangement"
+harness = false
+
+[[bench]]
 name = "bezier_split_materialization"
 harness = false
 

@@ -9,6 +9,7 @@
 
 mod bbox;
 mod bezier;
+mod bezier_arrangement;
 mod bezier_fit;
 mod bezier_flatten;
 mod bezier_metric;
@@ -50,6 +51,10 @@ mod triangulation;
 
 pub use bbox::Aabb2;
 pub use bezier::{BezierEndpoint, CubicBezier2, EndpointTangent2, QuadraticBezier2};
+pub use bezier_arrangement::{
+    BezierArrangementChain2, BezierArrangementFragment2, BezierArrangementGraph2,
+    BezierArrangementTraversal2,
+};
 pub use bezier_fit::{
     BezierFitBoundKind, BezierFitCertificate, BezierFitErrorMetric, BezierLineFitRelation,
     BezierLineImageFitRelation, BezierPointFitRelation, BezierPointImageFitRelation,

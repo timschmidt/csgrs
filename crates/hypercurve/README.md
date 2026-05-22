@@ -94,11 +94,12 @@ The crate promotes exact low-degree evidence where it can: line/arc relations, s
 Bezier roots, retained intersection-region shape/refinement/isolation facts, monotone
 graph ordering, exact area and moment contributions, length intervals, zero-error
 line/arc and Bezier/conic primitive-fit evidence, exact Bezier area/moment
-prefix sums for repeated path-range queries, and exact-parameter Bezier/conic
-split materialization. Algebraic split boundaries are carried as certified
-unresolved fragments until the scalar layer can materialize true algebraic
-root endpoints. Cases that need a more complete root solver, bounded
-higher-order fit, or offset trimmer return unresolved regions, exact bisection
+prefix sums for repeated path-range queries, exact-parameter Bezier/conic
+split materialization, and retained branch-free Bezier/conic arrangement
+traversal. Algebraic split boundaries are carried as certified unresolved
+fragments until the scalar layer can materialize true algebraic root endpoints.
+Cases that need branch/overlap traversal, a more complete root solver, bounded
+higher-order fit, or offset trimming return unresolved regions, exact bisection
 or target-width isolation results, or explicit uncertainty.
 
 ## Performance Model
