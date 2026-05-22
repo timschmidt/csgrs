@@ -409,6 +409,52 @@ impl RayTriangleIntersection {
     }
 }
 
+/// Intersection relation between two closed 3D triangles.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum TriangleTriangleIntersection {
+    /// At least one input triangle is degenerate, so no two-triangle area
+    /// relation is asserted.
+    Degenerate,
+    /// The closed triangles have no point in common.
+    Disjoint,
+    /// The triangles meet along a non-coplanar set.
+    ///
+    /// This includes transverse line-segment intersections. Downstream
+    /// arrangement builders can refine the retained edge reports into exact
+    /// split events.
+    NonCoplanarIntersection,
+    /// The triangles meet only at certified boundary features.
+    BoundaryTouch,
+    /// The triangles are coplanar and disjoint after exact projection.
+    CoplanarDisjoint,
+    /// The triangles are coplanar and touch only on projected boundary.
+    CoplanarTouching,
+    /// The triangles are coplanar and overlap with positive projected area or
+    /// a positive-length edge interval.
+    CoplanarOverlapping,
+}
+
+impl TriangleTriangleIntersection {
+    /// Returns whether the relation has at least one shared point.
+    pub const fn intersects(self) -> bool {
+        !matches!(
+            self,
+            Self::Degenerate | Self::Disjoint | Self::CoplanarDisjoint
+        )
+    }
+
+    /// Returns whether the relation needs a downstream arrangement/split builder.
+    pub const fn needs_construction(self) -> bool {
+        matches!(
+            self,
+            Self::NonCoplanarIntersection
+                | Self::BoundaryTouch
+                | Self::CoplanarTouching
+                | Self::CoplanarOverlapping
+        )
+    }
+}
+
 /// Location of a point relative to a closed 2D polygon ring.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum RingPointLocation {

@@ -24,7 +24,8 @@ use hyperlimit::{
     classify_ray_triangle3_intersection_batch,
     classify_segment_triangle3_intersection, classify_segment3_intersection,
     classify_segment_triangle3_intersection_batch, classify_segment3_intersection_batch,
-    classify_sphere3_intersection, compare_point_line3_distance_squared,
+    classify_sphere3_intersection, classify_triangle_triangle3,
+    compare_point_line3_distance_squared,
     compare_point_plane_distance_squared, compare_point_segment3_distance_squared,
     compare_point2_lexicographic, compare_point2_lexicographic_report, compare_reals,
     compare_reals_report, incircle2d, insphere3d, intersect_segment_with_oriented_plane,
@@ -470,6 +471,28 @@ fn predicate_invariants(input: Input) {
     coplanar
         .validate_against_sources(&lifted, [0, 1, 2], [3, 4, 5])
         .expect("coplanar classifier must validate and replay");
+    if let Some(tri_tri) = classify_triangle_triangle3(
+        &lifted[0], &lifted[1], &lifted[2], &lifted[3], &lifted[4], &lifted[5],
+    )
+    .value()
+    {
+        tri_tri
+            .validate_against_triangles(
+                [&lifted[0], &lifted[1], &lifted[2]],
+                [&lifted[3], &lifted[4], &lifted[5]],
+                PredicatePolicy::default(),
+            )
+            .expect("triangle/triangle report must replay against exact sources");
+        let swapped = classify_triangle_triangle3(
+            &lifted[3], &lifted[4], &lifted[5], &lifted[0], &lifted[1], &lifted[2],
+        )
+        .value()
+        .expect("swapped exact triangle pair should decide");
+        assert_eq!(
+            tri_tri.relation, swapped.relation,
+            "triangle/triangle relation must be symmetric under pair exchange"
+        );
+    }
 
     let exact_half = (Real::from(1) / &Real::from(2)).expect("half is rational");
     assert_eq!(

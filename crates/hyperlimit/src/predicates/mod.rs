@@ -18,6 +18,7 @@ pub mod ring;
 pub mod segment;
 pub mod segment_plane;
 pub mod triangle;
+pub mod triangle_triangle;
 
 pub use self::aabb::*;
 pub use self::convex::*;
@@ -34,3 +35,4 @@ pub use self::ring::*;
 pub use self::segment::*;
 pub use self::segment_plane::*;
 pub use self::triangle::*;
+pub use self::triangle_triangle::*;

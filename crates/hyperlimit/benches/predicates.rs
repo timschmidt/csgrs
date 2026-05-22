@@ -9,13 +9,14 @@ use hyperlimit::{
     CoplanarProjection, CoplanarTriangleRelation, ExactGeometrySession, LineSide, Plane3,
     PlaneSide, Point2, Point3, PredicateOutcome, PreparedIncircle2, PreparedInsphere3,
     PreparedLine2, PreparedOrientedPlane3, Segment3Intersection, SegmentPlaneRelation, Sign,
-    SupportDopRelation, TriangleDegeneracy, affine_independent_d, certified_ball_sign,
-    classify_aabb3_sphere_intersection, classify_circle_line2, classify_circle_segment2,
-    classify_coplanar_triangles, classify_halfspace_feasibility3, classify_homogeneous_point_plane,
-    classify_point_convex_planes3, classify_point_convex_polygon2, classify_point_line,
-    classify_point_oriented_plane, classify_point_plane, classify_ray_triangle3_intersection,
+    SupportDopRelation, TriangleDegeneracy, TriangleTriangleIntersection, affine_independent_d,
+    certified_ball_sign, classify_aabb3_sphere_intersection, classify_circle_line2,
+    classify_circle_segment2, classify_coplanar_triangles, classify_halfspace_feasibility3,
+    classify_homogeneous_point_plane, classify_point_convex_planes3,
+    classify_point_convex_polygon2, classify_point_line, classify_point_oriented_plane,
+    classify_point_plane, classify_ray_triangle3_intersection,
     classify_segment_triangle3_intersection, classify_segment3_intersection,
-    classify_sphere3_intersection, classify_triangle3_degeneracy,
+    classify_sphere3_intersection, classify_triangle_triangle3, classify_triangle3_degeneracy,
     compare_point_line3_distance_squared, compare_point_plane_distance_squared,
     compare_point_segment3_distance_squared, incircle2d, insphere_d, insphere3d,
     intersect_segment_with_oriented_plane, intersect_three_planes, intersect_two_planes, orient_d,
@@ -124,6 +125,28 @@ fn bench_hypermesh_port_helpers(c: &mut Criterion) {
                 CoplanarTriangleRelation::Touching => 1,
                 CoplanarTriangleRelation::Overlapping => 2,
                 CoplanarTriangleRelation::Unknown => -1,
+            })
+        });
+    });
+    group.bench_function("triangle_triangle3/report_replay", |bench| {
+        bench.iter(|| {
+            let classification = classify_triangle_triangle3(
+                black_box(&points[0]),
+                black_box(&points[1]),
+                black_box(&points[2]),
+                black_box(&points[3]),
+                black_box(&points[4]),
+                black_box(&points[5]),
+            );
+            black_box(match classification.value().map(|report| report.relation) {
+                Some(TriangleTriangleIntersection::Degenerate) => -2_i64,
+                Some(TriangleTriangleIntersection::Disjoint) => 0,
+                Some(TriangleTriangleIntersection::BoundaryTouch) => 1,
+                Some(TriangleTriangleIntersection::NonCoplanarIntersection) => 2,
+                Some(TriangleTriangleIntersection::CoplanarDisjoint) => 3,
+                Some(TriangleTriangleIntersection::CoplanarTouching) => 4,
+                Some(TriangleTriangleIntersection::CoplanarOverlapping) => 5,
+                None => -1,
             })
         });
     });

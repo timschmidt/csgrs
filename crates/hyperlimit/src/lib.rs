@@ -80,6 +80,7 @@ pub use classify::{
     RealIntervalLocation, RingConvexity, RingPointLocation, Segment3Intersection,
     SegmentIntersection, SegmentTriangleIntersection, SphereIntersection, SpherePointLocation,
     SupportDopRelation, TetrahedronLocation, Triangle3Location, TriangleLocation,
+    TriangleTriangleIntersection,
 };
 pub use geometry::{
     Aabb2Facts, CoordinateAxis2, HomogeneousLine3, HomogeneousPoint3, Plane3Facts,
@@ -212,6 +213,10 @@ pub use predicates::triangle::{
     classify_ray_triangle3_intersection_with_policy, classify_segment_triangle3_intersection,
     classify_segment_triangle3_intersection_with_policy, triangle3_winding_normal_sign,
     triangle3_winding_normal_sign_with_policy,
+};
+pub use predicates::triangle_triangle::{
+    TriangleTriangleClassification, TriangleTriangleValidationError, classify_triangle_triangle3,
+    classify_triangle_triangle3_points_with_policy, classify_triangle_triangle3_with_policy,
 };
 pub use provenance::{
     ApproximationPolicy, ConstructionProvenance, ConstructionProvenanceValidationError, MeshSource,

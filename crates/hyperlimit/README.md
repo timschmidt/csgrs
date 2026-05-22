@@ -59,7 +59,8 @@ than inventing a float decision.
   decided and how.
 - `PredicatePolicy` controls refinement and approximate-edge behavior.
 - `Sign`, `LineSide`, `PlaneSide`, `TriangleLocation`, `SegmentIntersection`,
-  `RingPointLocation`, interval, and AABB classifications are the common result enums.
+  `TriangleTriangleIntersection`, `RingPointLocation`, interval, and AABB
+  classifications are the common result enums.
 - `orient_d`, `insphere_d`, and `affine_independent_d` provide the first exact
   D-dimensional determinant predicate boundary for triangulation and mesh crates.
 - Prepared segment, triangle, AABB, line, circle/sphere, plane, and halfspace-system
@@ -114,6 +115,9 @@ Version `0.4.0` is an early but usable predicate crate. It currently includes:
 - exact real and point ordering, squared-distance comparison, interval, AABB, segment,
   ring, triangle, line, plane, orientation, in-circle, in-sphere, and
   D-dimensional orientation/in-sphere/affine-independence predicates;
+- exact report-bearing 3D triangle/triangle classification that composes
+  plane-side rejection, segment/triangle edge replay, and coplanar projected
+  overlap predicates;
 - exact support k-DOP slab carriers with witness-preserving point and AABB projection
   classifiers;
 - exact 3D halfspace feasibility reports over `Plane3` systems, using active-set
