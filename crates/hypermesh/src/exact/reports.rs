@@ -676,7 +676,8 @@ pub enum ExactBooleanShortcutKind {
     CoplanarSurfaceIntersection,
     /// Certified convex coplanar single-triangle union output.
     CoplanarSurfaceConvexUnion,
-    /// Certified simple planar-arrangement coplanar single-triangle union.
+    /// Certified simple planar-arrangement coplanar union, including the
+    /// bounded single-triangle path and nonconvex component-union loops.
     CoplanarSurfaceArrangementUnion,
     /// Certified one-corner coplanar single-triangle difference output.
     CoplanarSurfaceCornerDifference,
@@ -1453,8 +1454,9 @@ pub enum ExactBooleanSupport {
     /// Union was materialized as a certified convex polygon for two coplanar
     /// single-triangle surfaces.
     CertifiedCoplanarSurfaceConvexUnion,
-    /// Union was materialized by the simple single-loop planar arrangement for
-    /// two coplanar single-triangle surfaces.
+    /// Union was materialized by a simple single-loop planar arrangement,
+    /// either for two coplanar single-triangle surfaces or for one certified
+    /// nonconvex component-union loop.
     CertifiedCoplanarSurfaceArrangementUnion,
     /// Difference was materialized as a certified one-corner cut from a
     /// coplanar single-triangle surface.

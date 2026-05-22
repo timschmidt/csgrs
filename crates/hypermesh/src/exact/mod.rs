@@ -240,6 +240,7 @@ pub use surface::{
     arrange_coplanar_convex_surface_multi_holed_difference,
     arrange_coplanar_convex_surface_multi_intersection,
     arrange_coplanar_convex_surface_multi_union, arrange_coplanar_convex_surface_union,
+    arrange_coplanar_surface_component_union,
     arrange_coplanar_surface_cutter_hole_contact_difference,
     arrange_coplanar_surface_multi_difference, arrange_single_triangle_coplanar_difference,
     arrange_single_triangle_coplanar_holed_difference, arrange_single_triangle_coplanar_union,
