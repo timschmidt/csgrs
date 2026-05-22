@@ -1,25 +1,25 @@
 use hyperreal::{Rational, Real, SymbolicDependencyMask};
 use hypersolve::jacobian::{symbolic_jacobian, symbolic_jacobian_prepared};
 use hypersolve::{
-    BatchCandidateStatus, BatchPredicateScheduleConfig, BatchPredicateScheduleError,
-    CandidateCertificationConfig, CandidateResidualBall, CertifiedCandidateStatus, Constraint,
-    ConstraintKind, ConvergenceReason, DenseLinearBackend, DirectAffineSystemStatus,
-    DomainCheckKind, DomainCheckStatus, ExactAffineRankStatus, ExactBranchStatus, Expr, ExprDegree,
-    IntervalBoxCertificationPackage, IntervalBoxCertificationStatus, LinearAdapterKind,
-    LinearAdapterPrecision, LinearBackend, MultivariateQuadraticKrawczykStatus, PreparedProblem,
-    PreparedSolverBlock, Problem, ProposalEngineKind, ProposalEnginePrecision, RootIsolationStatus,
-    RootMultiplicityStatus, SketchConstraintKind, SketchConstructionCertificateStatus,
-    SketchDegeneracyKind, SketchDegeneracyStatus, SketchEntityHandle, SketchEntityKind,
-    SketchGeneratedRowStatus, SketchParameterDomain, SketchParameterDomainKind,
-    SketchParameterDomainStatus, SketchResidualFormKind, SketchResidualFormRole,
-    SketchResidualFormsStatus, SketchResidualStrategy, SketchRoundTripMetadata,
-    SketchRoundTripRole, SketchSolveProblem, SketchUnitToleranceStatus, SolverBlockRowKind,
-    SolverConfig, SolverPoint2, SolverState, SparseResidualBatchStatus, SparseResidualTerm,
-    SymbolId, VariableBall, analyze_exact_affine_rank, apply_equality_substitution_classes,
-    apply_equality_substitutions, audit_sketch_unit_tolerances,
-    build_equality_substitution_classes, certify_affine_interval_candidate,
-    certify_affine_krawczyk_box, certify_candidate, certify_candidate_batch,
-    certify_candidate_domains, certify_candidate_with_config,
+    ActiveSetAffineRegenerationStatus, BatchCandidateStatus, BatchPredicateScheduleConfig,
+    BatchPredicateScheduleError, CandidateCertificationConfig, CandidateResidualBall,
+    CertifiedCandidateStatus, Constraint, ConstraintKind, ConvergenceReason, DenseLinearBackend,
+    DirectAffineSystemStatus, DomainCheckKind, DomainCheckStatus, ExactAffineRankStatus,
+    ExactBranchStatus, Expr, ExprDegree, IntervalBoxCertificationPackage,
+    IntervalBoxCertificationStatus, LinearAdapterKind, LinearAdapterPrecision, LinearBackend,
+    MultivariateQuadraticKrawczykStatus, PreparedProblem, PreparedSolverBlock, Problem,
+    ProposalEngineKind, ProposalEnginePrecision, RootIsolationStatus, RootMultiplicityStatus,
+    SketchConstraintKind, SketchConstructionCertificateStatus, SketchDegeneracyKind,
+    SketchDegeneracyStatus, SketchEntityHandle, SketchEntityKind, SketchGeneratedRowStatus,
+    SketchParameterDomain, SketchParameterDomainKind, SketchParameterDomainStatus,
+    SketchResidualFormKind, SketchResidualFormRole, SketchResidualFormsStatus,
+    SketchResidualStrategy, SketchRoundTripMetadata, SketchRoundTripRole, SketchSolveProblem,
+    SketchUnitToleranceStatus, SolverBlockRowKind, SolverConfig, SolverPoint2, SolverState,
+    SparseResidualBatchStatus, SparseResidualTerm, SymbolId, VariableBall,
+    analyze_exact_affine_rank, apply_equality_substitution_classes, apply_equality_substitutions,
+    audit_sketch_unit_tolerances, build_equality_substitution_classes,
+    certify_affine_interval_candidate, certify_affine_krawczyk_box, certify_candidate,
+    certify_candidate_batch, certify_candidate_domains, certify_candidate_with_config,
     certify_candidate_with_residual_balls, certify_direct_univariate_quadratic_roots,
     certify_interval_box_candidate, certify_multivariate_quadratic_interval_candidate,
     certify_multivariate_quadratic_krawczyk_box, certify_quadratic_interval_candidate,
@@ -29,14 +29,14 @@ use hypersolve::{
     enumerate_direct_univariate_quadratic_branches, evaluate_residuals, facts_depend_on_symbol,
     find_equality_substitutions, isolate_univariate_polynomial_roots, point_coincidence_equations,
     preflight_sketch_degeneracies, preflight_sketch_parameter_domains,
-    prepare_sparse_linear_residual_system, replay_sketch_compatibility_fixture,
-    replay_sparse_linear_residual_batch, report_lossy_adapter_only_candidate,
-    schedule_candidate_batch_predicates, sketch_compatibility_fixtures, sketch_distance_builders,
-    sketch_incidence_builders, sketch_objective_builders, sketch_orientation_builders,
-    sketch_range_builders, solve_damped_least_squares, solve_direct_affine_equalities,
-    solve_direct_affine_system, solve_direct_univariate_quadratic_equalities,
-    squared_distance_equation, tangent_parallel_equation, tangent_same_direction_constraint,
-    validate_equality_substitutions,
+    prepare_sparse_linear_residual_system, regenerate_active_set_affine_candidate,
+    replay_sketch_compatibility_fixture, replay_sparse_linear_residual_batch,
+    report_lossy_adapter_only_candidate, schedule_candidate_batch_predicates,
+    sketch_compatibility_fixtures, sketch_distance_builders, sketch_incidence_builders,
+    sketch_objective_builders, sketch_orientation_builders, sketch_range_builders,
+    solve_damped_least_squares, solve_direct_affine_equalities, solve_direct_affine_system,
+    solve_direct_univariate_quadratic_equalities, squared_distance_equation,
+    tangent_parallel_equation, tangent_same_direction_constraint, validate_equality_substitutions,
 };
 
 fn real(value: i64) -> Real {
@@ -2924,6 +2924,39 @@ fn direct_affine_system_solves_square_rows_and_replays_exactly() {
         singular_report.status,
         DirectAffineSystemStatus::SingularOrUnsupportedPivot { pivot: 1 }
     );
+}
+
+#[test]
+fn affine_active_set_regeneration_solves_masked_rows_and_audits_source_problem() {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let y = Expr::symbol(SymbolId(1), "y");
+    let mut problem = Problem::default();
+    problem.add_variable("x", real(0));
+    problem.add_variable("y", real(0));
+    problem.add_constraint(Constraint::equality(
+        "sum",
+        x.clone() + y.clone() - Expr::int(7),
+    ));
+    problem.add_constraint(Constraint::equality(
+        "difference",
+        x.clone() - y.clone() - Expr::int(1),
+    ));
+    let mut inactive_bound = Constraint::equality("x upper", x - Expr::int(5));
+    inactive_bound.kind = ConstraintKind::LessOrEqual;
+    inactive_bound.active = false;
+    problem.add_constraint(inactive_bound);
+
+    let report = regenerate_active_set_affine_candidate(
+        &PreparedProblem::new(&problem),
+        &[true, true, false],
+        CandidateCertificationConfig::default(),
+    );
+
+    assert_eq!(report.status, ActiveSetAffineRegenerationStatus::Certified);
+    let candidate = report.candidate.as_ref().unwrap();
+    assert_eq!(candidate.bindings().get(&SymbolId(0)), Some(&real(4)));
+    assert_eq!(candidate.bindings().get(&SymbolId(1)), Some(&real(3)));
+    assert!(report.audit.as_ref().unwrap().all_consistent());
 }
 
 #[test]

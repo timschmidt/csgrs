@@ -15,6 +15,9 @@
 use hyperreal::{CertifiedRealSign, Real, RealSign, RealSignCertificate};
 
 use crate::certification::CandidateCertificationConfig;
+use crate::direct::{
+    DirectAffineSystemReport, DirectAffineSystemStatus, solve_direct_affine_system,
+};
 use crate::eval::EvaluationContext;
 use crate::model::ConstraintKind;
 use crate::prepared::PreparedProblem;
@@ -257,6 +260,50 @@ pub struct ActiveSetLoopReport {
     pub final_mask: Option<Vec<bool>>,
 }
 
+/// Status for exact affine candidate regeneration from an active mask.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum ActiveSetAffineRegenerationStatus {
+    /// The active affine equality system solved and the regenerated candidate
+    /// is certified consistent with the supplied mask.
+    Certified,
+    /// The supplied active mask did not match the source constraint count.
+    InvalidActiveMask,
+    /// Exact direct affine solving could not produce a complete candidate.
+    DirectSolveFailed,
+    /// The regenerated candidate produced a certified residual violation.
+    RejectedCandidate,
+    /// Exact replay left at least one row undecided.
+    Unknown,
+    /// Exact replay hit an expression/domain failure.
+    DomainFailure,
+}
+
+/// Exact affine candidate regeneration report.
+///
+/// This is the first candidate-regeneration layer above active-mask updates.
+/// It clones the source problem, applies the caller-supplied active mask, solves
+/// the resulting active affine equality system through
+/// [`crate::solve_direct_affine_system`], then audits the regenerated candidate
+/// against the original problem and mask. This is intentionally affine-only:
+/// Nocedal and Wright, *Numerical Optimization*, describe active-set iteration
+/// as a mask-driven candidate-generation process; Yap, *Towards Exact
+/// Geometric Computing*, requires the regenerated candidate and mask to be
+/// replayed at an exact-computation boundary before trust.
+#[derive(Clone, Debug)]
+pub struct ActiveSetAffineRegenerationReport {
+    /// Final regeneration status.
+    pub status: ActiveSetAffineRegenerationStatus,
+    /// Active mask supplied by the caller.
+    pub active_mask: Vec<bool>,
+    /// Exact direct affine solve report for the masked problem, when the mask
+    /// shape was valid.
+    pub direct_solve: Option<DirectAffineSystemReport>,
+    /// Regenerated exact candidate bindings, when direct solving succeeded.
+    pub candidate: Option<EvaluationContext>,
+    /// Exact active-mask audit for the regenerated candidate, when available.
+    pub audit: Option<ActiveSetAuditReport>,
+}
+
 impl ActiveSetUpdateReport {
     /// Returns true when the policy produced a complete next active mask.
     pub fn has_complete_mask(&self) -> bool {
@@ -374,6 +421,72 @@ pub fn run_active_set_update_loop(
         status: ActiveSetLoopStatus::IterationLimit,
         iterations,
         final_mask: Some(mask),
+    }
+}
+
+/// Regenerate an exact candidate for a supplied active mask using affine rows.
+///
+/// The active mask selects the equality rows used by
+/// [`crate::solve_direct_affine_system`]. Non-equality active rows,
+/// under/overdetermined affine systems, singular pivots, and non-affine rows
+/// remain explicit direct-solve failures. When solving succeeds, the candidate
+/// is audited against every source constraint under the supplied mask before it
+/// can be reported as certified. This follows Yap, *Towards Exact Geometric
+/// Computing*, by separating proposal mechanics from exact predicate replay.
+pub fn regenerate_active_set_affine_candidate(
+    prepared: &PreparedProblem<'_>,
+    active_mask: &[bool],
+    config: CandidateCertificationConfig,
+) -> ActiveSetAffineRegenerationReport {
+    if active_mask.len() != prepared.problem().constraints.len() {
+        return ActiveSetAffineRegenerationReport {
+            status: ActiveSetAffineRegenerationStatus::InvalidActiveMask,
+            active_mask: active_mask.to_vec(),
+            direct_solve: None,
+            candidate: None,
+            audit: None,
+        };
+    }
+
+    let mut masked_problem = prepared.problem().clone();
+    for (constraint, active) in masked_problem.constraints.iter_mut().zip(active_mask) {
+        constraint.active = *active;
+    }
+    let masked_prepared = PreparedProblem::new(&masked_problem);
+    let direct_solve = solve_direct_affine_system(&masked_prepared);
+    if direct_solve.status != DirectAffineSystemStatus::Solved {
+        return ActiveSetAffineRegenerationReport {
+            status: ActiveSetAffineRegenerationStatus::DirectSolveFailed,
+            active_mask: active_mask.to_vec(),
+            direct_solve: Some(direct_solve),
+            candidate: None,
+            audit: None,
+        };
+    }
+
+    let mut candidate = EvaluationContext::default();
+    for assignment in &direct_solve.assignments {
+        candidate.bind(assignment.symbol, assignment.value.clone());
+    }
+    let audit = audit_active_mask(prepared, &candidate, active_mask, config);
+    let status = if audit.violation_rows > 0 {
+        ActiveSetAffineRegenerationStatus::RejectedCandidate
+    } else if audit.domain_failure_rows > 0 {
+        ActiveSetAffineRegenerationStatus::DomainFailure
+    } else if audit.unknown_rows > 0 {
+        ActiveSetAffineRegenerationStatus::Unknown
+    } else if audit.all_consistent() {
+        ActiveSetAffineRegenerationStatus::Certified
+    } else {
+        ActiveSetAffineRegenerationStatus::RejectedCandidate
+    };
+
+    ActiveSetAffineRegenerationReport {
+        status,
+        active_mask: active_mask.to_vec(),
+        direct_solve: Some(direct_solve),
+        candidate: Some(candidate),
+        audit: Some(audit),
     }
 }
 
@@ -626,6 +739,7 @@ mod tests {
     use super::*;
     use crate::model::{Constraint, Problem};
     use crate::symbolic::{Expr, SymbolId};
+    use proptest::prelude::*;
 
     fn real(value: i64) -> Real {
         Real::from(value)
@@ -821,6 +935,79 @@ mod tests {
         assert_eq!(rejected.final_mask, None);
     }
 
+    #[test]
+    fn affine_regeneration_solves_masked_active_equalities_and_audits_candidate() {
+        let x = Expr::symbol(SymbolId(0), "x");
+        let y = Expr::symbol(SymbolId(1), "y");
+        let mut problem = Problem::default();
+        problem.add_variable("x", real(0));
+        problem.add_variable("y", real(0));
+        problem.add_constraint(Constraint::equality(
+            "sum",
+            x.clone() + y.clone() - Expr::int(5),
+        ));
+        problem.add_constraint(Constraint::equality(
+            "difference",
+            x.clone() - y.clone() - Expr::int(1),
+        ));
+        let mut upper = Constraint::equality("x at most four", x - Expr::int(4));
+        upper.kind = ConstraintKind::LessOrEqual;
+        upper.active = false;
+        problem.add_constraint(upper);
+        let prepared = PreparedProblem::new(&problem);
+
+        let report = regenerate_active_set_affine_candidate(
+            &prepared,
+            &[true, true, false],
+            CandidateCertificationConfig::default(),
+        );
+
+        assert_eq!(report.status, ActiveSetAffineRegenerationStatus::Certified);
+        assert!(report.direct_solve.as_ref().unwrap().solved());
+        let candidate = report.candidate.as_ref().unwrap();
+        assert_eq!(candidate.bindings().get(&SymbolId(0)), Some(&real(3)));
+        assert_eq!(candidate.bindings().get(&SymbolId(1)), Some(&real(2)));
+        assert!(report.audit.as_ref().unwrap().all_consistent());
+    }
+
+    #[test]
+    fn affine_regeneration_reports_bad_masks_and_non_affine_active_sets() {
+        let x = Expr::symbol(SymbolId(0), "x");
+        let mut problem = Problem::default();
+        problem.add_variable("x", real(0));
+        problem.add_constraint(Constraint::equality("linear", x.clone() - Expr::int(1)));
+        let mut inequality = Constraint::equality("bound", x - Expr::int(2));
+        inequality.kind = ConstraintKind::LessOrEqual;
+        problem.add_constraint(inequality);
+        let prepared = PreparedProblem::new(&problem);
+
+        let invalid = regenerate_active_set_affine_candidate(
+            &prepared,
+            &[true],
+            CandidateCertificationConfig::default(),
+        );
+        assert_eq!(
+            invalid.status,
+            ActiveSetAffineRegenerationStatus::InvalidActiveMask
+        );
+
+        let failed = regenerate_active_set_affine_candidate(
+            &prepared,
+            &[true, true],
+            CandidateCertificationConfig::default(),
+        );
+        assert_eq!(
+            failed.status,
+            ActiveSetAffineRegenerationStatus::DirectSolveFailed
+        );
+        assert!(matches!(
+            failed.direct_solve.unwrap().status,
+            DirectAffineSystemStatus::NonEqualityRow {
+                constraint_index: 1
+            }
+        ));
+    }
+
     proptest::proptest! {
         #[test]
         fn generated_less_equal_active_masks_follow_exact_sign(
@@ -859,6 +1046,41 @@ mod tests {
                     assert!(matches!(status, ActiveSetRowStatus::InactiveStrictlySatisfied { .. }));
                 }
             }
+        }
+
+        #[test]
+        fn generated_affine_regeneration_solves_two_variable_systems(
+            x_value in -32_i16..=32,
+            y_value in -32_i16..=32,
+        ) {
+            let x_value = i64::from(x_value);
+            let y_value = i64::from(y_value);
+            let x = Expr::symbol(SymbolId(0), "x");
+            let y = Expr::symbol(SymbolId(1), "y");
+            let mut problem = Problem::default();
+            problem.add_variable("x", real(0));
+            problem.add_variable("y", real(0));
+            problem.add_constraint(Constraint::equality(
+                "x row",
+                x - Expr::int(x_value),
+            ));
+            problem.add_constraint(Constraint::equality(
+                "y row",
+                y - Expr::int(y_value),
+            ));
+            let prepared = PreparedProblem::new(&problem);
+
+            let report = regenerate_active_set_affine_candidate(
+                &prepared,
+                &[true, true],
+                CandidateCertificationConfig::default(),
+            );
+
+            prop_assert_eq!(report.status, ActiveSetAffineRegenerationStatus::Certified);
+            let candidate = report.candidate.as_ref().unwrap();
+            prop_assert_eq!(candidate.bindings().get(&SymbolId(0)), Some(&real(x_value)));
+            prop_assert_eq!(candidate.bindings().get(&SymbolId(1)), Some(&real(y_value)));
+            prop_assert!(report.audit.as_ref().unwrap().all_consistent());
         }
     }
 }

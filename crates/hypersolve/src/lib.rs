@@ -42,10 +42,11 @@ pub mod sparse_pattern;
 pub mod symbolic;
 
 pub use active_set::{
-    ActiveSetAuditReport, ActiveSetAuditRow, ActiveSetLoopConfig, ActiveSetLoopIteration,
-    ActiveSetLoopReport, ActiveSetLoopStatus, ActiveSetRowStatus, ActiveSetUpdateAction,
-    ActiveSetUpdateReport, ActiveSetUpdateRow, audit_active_mask, audit_active_set,
-    propose_active_set_update, run_active_set_update_loop,
+    ActiveSetAffineRegenerationReport, ActiveSetAffineRegenerationStatus, ActiveSetAuditReport,
+    ActiveSetAuditRow, ActiveSetLoopConfig, ActiveSetLoopIteration, ActiveSetLoopReport,
+    ActiveSetLoopStatus, ActiveSetRowStatus, ActiveSetUpdateAction, ActiveSetUpdateReport,
+    ActiveSetUpdateRow, audit_active_mask, audit_active_set, propose_active_set_update,
+    regenerate_active_set_affine_candidate, run_active_set_update_loop,
 };
 pub use affine::PreparedAffineResidual;
 pub use algebraic::{

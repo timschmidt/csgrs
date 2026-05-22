@@ -23,14 +23,15 @@ use hypersolve::{
     enumerate_direct_univariate_quadratic_branches, isolate_univariate_polynomial_roots,
     preflight_sketch_degeneracies, preflight_sketch_parameter_domains,
     prepare_sparse_linear_residual_system, propose_active_set_update,
-    replay_dense_linear_residuals, replay_sketch_compatibility_fixture,
-    replay_sparse_linear_residuals, report_lossy_adapter_only_candidate,
-    represent_univariate_algebraic_roots, resultant_univariate_polynomials,
-    run_active_set_update_loop, schedule_candidate_batch_predicates,
-    schedule_univariate_resultant_pairs, sketch_compatibility_fixtures, solve_damped_least_squares,
-    solve_dense_linear_system_bareiss, solve_direct_affine_system,
-    solve_direct_univariate_quadratic_equalities, solve_sparse_linear_system_bareiss,
-    squared_distance_equation, subdivide_bernstein_univariate_polynomial_interval_roots,
+    regenerate_active_set_affine_candidate, replay_dense_linear_residuals,
+    replay_sketch_compatibility_fixture, replay_sparse_linear_residuals,
+    report_lossy_adapter_only_candidate, represent_univariate_algebraic_roots,
+    resultant_univariate_polynomials, run_active_set_update_loop,
+    schedule_candidate_batch_predicates, schedule_univariate_resultant_pairs,
+    sketch_compatibility_fixtures, solve_damped_least_squares, solve_dense_linear_system_bareiss,
+    solve_direct_affine_system, solve_direct_univariate_quadratic_equalities,
+    solve_sparse_linear_system_bareiss, squared_distance_equation,
+    subdivide_bernstein_univariate_polynomial_interval_roots,
     subresultant_chain_univariate_polynomials,
 };
 
@@ -946,6 +947,21 @@ fn certification(c: &mut Criterion) {
                 &context,
                 &active_mask,
                 hypersolve::ActiveSetLoopConfig::default(),
+            )
+        })
+    });
+    let krawczyk_active_mask = krawczyk_prepared
+        .problem()
+        .constraints
+        .iter()
+        .map(|constraint| constraint.active)
+        .collect::<Vec<_>>();
+    c.bench_function("regenerate_active_set_affine_candidate", |b| {
+        b.iter(|| {
+            regenerate_active_set_affine_candidate(
+                &krawczyk_prepared,
+                &krawczyk_active_mask,
+                hypersolve::CandidateCertificationConfig::default(),
             )
         })
     });
