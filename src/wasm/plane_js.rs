@@ -1,6 +1,8 @@
 //! JavaScript wrapper for mesh planes.
 
-use crate::float_types::{Real, hunit_cross_vector3, hunit_vector3};
+use crate::float_types::{
+    Real, hreal_boundary_or_zero, hunit_cross_vector3, hunit_vector3, hvector3_from_point3,
+};
 use crate::mesh::plane::Plane;
 use crate::vertex::Vertex;
 use crate::wasm::{
@@ -12,7 +14,7 @@ use wasm_bindgen::prelude::*;
 
 fn wasm_plane_from_normal_or_default(normal: Vector3<Real>, offset: Real) -> Plane {
     let normal = hunit_vector3(&normal).unwrap_or_else(Vector3::z);
-    let offset = if offset.is_finite() { offset } else { 0.0 };
+    let offset = hreal_boundary_or_zero(offset);
     Plane::from_normal(normal, offset)
 }
 
@@ -24,9 +26,9 @@ fn wasm_plane_from_points_or_default(
     let Some(normal) = hunit_cross_vector3(&(point_b - point_a), &(point_c - point_a)) else {
         return Plane::from_normal(Vector3::z(), 0.0);
     };
-    if !point_a.coords.iter().all(|value| value.is_finite())
-        || !point_b.coords.iter().all(|value| value.is_finite())
-        || !point_c.coords.iter().all(|value| value.is_finite())
+    if hvector3_from_point3(&point_a).is_none()
+        || hvector3_from_point3(&point_b).is_none()
+        || hvector3_from_point3(&point_c).is_none()
     {
         return Plane::from_normal(Vector3::z(), 0.0);
     }
