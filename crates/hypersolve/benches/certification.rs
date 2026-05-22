@@ -1233,6 +1233,18 @@ fn certification(c: &mut Criterion) {
             )
         })
     });
+    c.bench_function(
+        "arithmetic_algebraic_root_representations_mixed_scalar",
+        |b| {
+            b.iter(|| {
+                arithmetic_algebraic_root_representations(
+                    &sqrt_two,
+                    Some(&rational_three),
+                    AlgebraicRootArithmeticOp::Add,
+                )
+            })
+        },
+    );
     c.bench_function("evaluate_polynomial_at_algebraic_root", |b| {
         b.iter(|| {
             evaluate_polynomial_at_algebraic_root(

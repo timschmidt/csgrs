@@ -620,11 +620,12 @@ pub fn compare_algebraic_root_representations_with_refinement(
 ///
 /// This is deliberately a witness arithmetic package, not a full algebraic
 /// number field. When both required inputs carry exact rational witnesses, the
-/// result is computed exactly in [`Real`]. For unary negation, an interval-only
-/// represented root can also be transformed exactly by replacing `p(x)` with
-/// `p(-x)` and reflecting its isolating interval. That small operation is a
-/// structural algebraic-number operation, not approximation; broader binary
-/// non-rational arithmetic remains explicit
+/// result is computed exactly in [`Real`]. When exactly one binary operand is
+/// an exact rational witness, add/subtract/multiply by that scalar is lowered
+/// to the exact affine construction `beta = scale * alpha + offset`; unary
+/// negation is the same structural operation specialized to `scale = -1`.
+/// These operations transform retained algebraic evidence rather than sampling
+/// approximations. Binary non-rational/non-rational arithmetic remains explicit
 /// [`AlgebraicRootArithmeticStatus::NonRationalInput`]. This follows Yap's
 /// exact-object rule from "Towards Exact Geometric Computation" (1997):
 /// unsupported algebraic arithmetic remains explicit until a true
@@ -642,6 +643,11 @@ pub fn arithmetic_algebraic_root_representations(
             None,
             Some("algebraic root arithmetic requires valid represented inputs".to_owned()),
         );
+    }
+    if let Some(report) =
+        arithmetic_with_one_rational_scalar(left, right, operation, PredicatePolicy::default())
+    {
+        return report;
     }
     let Some(left_value) = left.exact_rational_witness() else {
         if operation == AlgebraicRootArithmeticOp::Negate {
@@ -707,6 +713,149 @@ pub fn arithmetic_algebraic_root_representations(
         None,
         None,
     )
+}
+
+/// Lower a supported mixed rational/non-rational operation to an affine image.
+///
+/// Yap's exact-geometric-computation model separates construction of exact
+/// algebraic objects from later predicate decisions. See Yap, "Towards Exact
+/// Geometric Computation" (1997). A scalar affine image of one represented
+/// root is a safe construction because `scale^n * P((y - offset) / scale)`
+/// gives exact polynomial evidence for the image and preserves interval
+/// evidence by exact endpoint transforms. General products or sums of two
+/// independent non-rational algebraic roots need resultants or a full
+/// algebraic-number package, so this helper refuses those cases.
+fn arithmetic_with_one_rational_scalar(
+    left: &AlgebraicRootRepresentation,
+    right: Option<&AlgebraicRootRepresentation>,
+    operation: AlgebraicRootArithmeticOp,
+    policy: PredicatePolicy,
+) -> Option<AlgebraicRootArithmeticReport> {
+    if operation == AlgebraicRootArithmeticOp::Negate {
+        return None;
+    }
+    let right = right?;
+    let left_value = left.exact_rational_witness();
+    let right_value = right.exact_rational_witness();
+    match (left_value, right_value) {
+        (Some(_), Some(_)) | (None, None) => None,
+        (Some(scalar), None) => match operation {
+            AlgebraicRootArithmeticOp::Add => Some(affine_transform_arithmetic_report(
+                right,
+                Real::one(),
+                scalar.clone(),
+                operation,
+                policy,
+                "left rational scalar added to represented right root",
+            )),
+            AlgebraicRootArithmeticOp::Subtract => Some(affine_transform_arithmetic_report(
+                right,
+                -Real::one(),
+                scalar.clone(),
+                operation,
+                policy,
+                "represented right root subtracted from left rational scalar",
+            )),
+            AlgebraicRootArithmeticOp::Multiply => Some(multiply_by_rational_scalar_report(
+                right, scalar, operation, policy,
+            )),
+            AlgebraicRootArithmeticOp::Negate => unreachable!("handled above"),
+        },
+        (None, Some(scalar)) => match operation {
+            AlgebraicRootArithmeticOp::Add => Some(affine_transform_arithmetic_report(
+                left,
+                Real::one(),
+                scalar.clone(),
+                operation,
+                policy,
+                "right rational scalar added to represented left root",
+            )),
+            AlgebraicRootArithmeticOp::Subtract => Some(affine_transform_arithmetic_report(
+                left,
+                Real::one(),
+                -scalar.clone(),
+                operation,
+                policy,
+                "right rational scalar subtracted from represented left root",
+            )),
+            AlgebraicRootArithmeticOp::Multiply => Some(multiply_by_rational_scalar_report(
+                left, scalar, operation, policy,
+            )),
+            AlgebraicRootArithmeticOp::Negate => unreachable!("handled above"),
+        },
+    }
+}
+
+fn multiply_by_rational_scalar_report(
+    root: &AlgebraicRootRepresentation,
+    scalar: &Real,
+    operation: AlgebraicRootArithmeticOp,
+    policy: PredicatePolicy,
+) -> AlgebraicRootArithmeticReport {
+    let Some(ordering) = compare_reals_with_policy(scalar, &Real::zero(), policy).value() else {
+        return algebraic_arithmetic_report(
+            operation,
+            AlgebraicRootArithmeticStatus::Undecided,
+            None,
+            None,
+            Some("could not certify rational scalar zero/nonzero for multiplication".to_owned()),
+        );
+    };
+    if ordering == Ordering::Equal {
+        return algebraic_arithmetic_report(
+            operation,
+            AlgebraicRootArithmeticStatus::ComputedExactRationalWitness,
+            Some(Real::zero()),
+            None,
+            None,
+        );
+    }
+    affine_transform_arithmetic_report(
+        root,
+        scalar.clone(),
+        Real::zero(),
+        operation,
+        policy,
+        "represented root multiplied by nonzero rational scalar",
+    )
+}
+
+fn affine_transform_arithmetic_report(
+    root: &AlgebraicRootRepresentation,
+    scale: Real,
+    offset: Real,
+    operation: AlgebraicRootArithmeticOp,
+    policy: PredicatePolicy,
+    success_message: &str,
+) -> AlgebraicRootArithmeticReport {
+    let transform = transform_algebraic_root_affine(root, scale, offset, policy);
+    match transform.status {
+        AlgebraicRootAffineTransformStatus::Transformed => algebraic_arithmetic_report(
+            operation,
+            AlgebraicRootArithmeticStatus::ComputedRepresentation,
+            None,
+            transform.representation,
+            Some(success_message.to_owned()),
+        ),
+        AlgebraicRootAffineTransformStatus::InvalidEvidence
+        | AlgebraicRootAffineTransformStatus::InvalidTransformedEvidence => {
+            algebraic_arithmetic_report(
+                operation,
+                AlgebraicRootArithmeticStatus::InvalidEvidence,
+                None,
+                transform.representation,
+                transform.message,
+            )
+        }
+        AlgebraicRootAffineTransformStatus::ZeroScale
+        | AlgebraicRootAffineTransformStatus::Undecided => algebraic_arithmetic_report(
+            operation,
+            AlgebraicRootArithmeticStatus::Undecided,
+            None,
+            transform.representation,
+            transform.message,
+        ),
+    }
 }
 
 /// Construct the exact affine image `beta = scale * alpha + offset`.
@@ -2218,6 +2367,122 @@ mod tests {
     }
 
     #[test]
+    fn algebraic_root_arithmetic_transforms_interval_only_roots_by_rational_scalars() {
+        let sqrt_two = AlgebraicRootRepresentation {
+            constraint_index: 0,
+            symbol: SymbolId(0),
+            interval_index: 0,
+            polynomial_coefficients: vec![real(-2), Real::zero(), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: real(1),
+                upper: real(2),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            kind: AlgebraicRootKind::IsolatingInterval,
+            validation: AlgebraicRootValidationReport::valid(),
+        };
+        let rational_three = AlgebraicRootRepresentation {
+            constraint_index: 1,
+            symbol: SymbolId(0),
+            interval_index: 0,
+            polynomial_coefficients: vec![real(-3), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: real(3),
+                upper: real(3),
+                exact_root: Some(real(3)),
+                distinct_root_count: 1,
+            },
+            kind: AlgebraicRootKind::ExactRationalWitness,
+            validation: AlgebraicRootValidationReport::valid(),
+        };
+        let rational_two = AlgebraicRootRepresentation {
+            constraint_index: 2,
+            polynomial_coefficients: vec![real(-2), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: real(2),
+                upper: real(2),
+                exact_root: Some(real(2)),
+                distinct_root_count: 1,
+            },
+            ..rational_three.clone()
+        };
+        let rational_zero = AlgebraicRootRepresentation {
+            constraint_index: 3,
+            polynomial_coefficients: vec![Real::zero(), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: Real::zero(),
+                upper: Real::zero(),
+                exact_root: Some(Real::zero()),
+                distinct_root_count: 1,
+            },
+            ..rational_three.clone()
+        };
+
+        let sum = arithmetic_algebraic_root_representations(
+            &sqrt_two,
+            Some(&rational_three),
+            AlgebraicRootArithmeticOp::Add,
+        );
+        assert_eq!(
+            sum.status,
+            AlgebraicRootArithmeticStatus::ComputedRepresentation
+        );
+        let sum_root = sum.result_representation.as_ref().unwrap();
+        assert_eq!(
+            sum_root.polynomial_coefficients,
+            vec![real(7), real(-6), Real::one()]
+        );
+        assert_eq!(sum_root.interval.lower, real(4));
+        assert_eq!(sum_root.interval.upper, real(5));
+
+        let difference = arithmetic_algebraic_root_representations(
+            &rational_three,
+            Some(&sqrt_two),
+            AlgebraicRootArithmeticOp::Subtract,
+        );
+        assert_eq!(
+            difference.status,
+            AlgebraicRootArithmeticStatus::ComputedRepresentation
+        );
+        let difference_root = difference.result_representation.as_ref().unwrap();
+        assert_eq!(
+            difference_root.polynomial_coefficients,
+            vec![real(7), real(-6), Real::one()]
+        );
+        assert_eq!(difference_root.interval.lower, real(1));
+        assert_eq!(difference_root.interval.upper, real(2));
+
+        let product = arithmetic_algebraic_root_representations(
+            &sqrt_two,
+            Some(&rational_two),
+            AlgebraicRootArithmeticOp::Multiply,
+        );
+        assert_eq!(
+            product.status,
+            AlgebraicRootArithmeticStatus::ComputedRepresentation
+        );
+        let product_root = product.result_representation.as_ref().unwrap();
+        assert_eq!(
+            product_root.polynomial_coefficients,
+            vec![real(-8), Real::zero(), Real::one()]
+        );
+        assert_eq!(product_root.interval.lower, real(2));
+        assert_eq!(product_root.interval.upper, real(4));
+
+        let zero_product = arithmetic_algebraic_root_representations(
+            &sqrt_two,
+            Some(&rational_zero),
+            AlgebraicRootArithmeticOp::Multiply,
+        );
+        assert_eq!(
+            zero_product.status,
+            AlgebraicRootArithmeticStatus::ComputedExactRationalWitness
+        );
+        assert_eq!(zero_product.exact_result, Some(Real::zero()));
+    }
+
+    #[test]
     fn algebraic_root_polynomial_evaluation_certifies_witnesses_and_intervals() {
         let rational_root = AlgebraicRootRepresentation {
             constraint_index: 0,
@@ -2637,6 +2902,71 @@ mod tests {
             prop_assert_eq!(&representation.interval.lower, &real(-upper));
             prop_assert_eq!(&representation.interval.upper, &real(-lower));
             prop_assert_eq!(&representation.kind, &AlgebraicRootKind::IsolatingInterval);
+        }
+
+        #[test]
+        fn generated_interval_only_addition_by_rational_scalar_matches_affine_transform(
+            lower in -24_i16..=23,
+            width in 1_i16..=24,
+            constant in -12_i16..=12,
+            linear in -12_i16..=12,
+            quadratic in 1_i16..=12,
+            offset in -12_i16..=12,
+        ) {
+            let lower = i64::from(lower);
+            let upper = lower + i64::from(width);
+            let offset = i64::from(offset);
+            let root = AlgebraicRootRepresentation {
+                constraint_index: 0,
+                symbol: SymbolId(0),
+                interval_index: 0,
+                polynomial_coefficients: vec![
+                    real(i64::from(constant)),
+                    real(i64::from(linear)),
+                    real(i64::from(quadratic)),
+                ],
+                interval: IsolatedRootInterval {
+                    lower: real(lower),
+                    upper: real(upper),
+                    exact_root: None,
+                    distinct_root_count: 1,
+                },
+                kind: AlgebraicRootKind::IsolatingInterval,
+                validation: AlgebraicRootValidationReport::valid(),
+            };
+            let scalar = AlgebraicRootRepresentation {
+                constraint_index: 1,
+                symbol: SymbolId(0),
+                interval_index: 0,
+                polynomial_coefficients: vec![real(-offset), Real::one()],
+                interval: IsolatedRootInterval {
+                    lower: real(offset),
+                    upper: real(offset),
+                    exact_root: Some(real(offset)),
+                    distinct_root_count: 1,
+                },
+                kind: AlgebraicRootKind::ExactRationalWitness,
+                validation: AlgebraicRootValidationReport::valid(),
+            };
+
+            let arithmetic = arithmetic_algebraic_root_representations(
+                &root,
+                Some(&scalar),
+                AlgebraicRootArithmeticOp::Add,
+            );
+            let affine = transform_algebraic_root_affine(
+                &root,
+                Real::one(),
+                real(offset),
+                PredicatePolicy::default(),
+            );
+
+            prop_assert_eq!(
+                arithmetic.status,
+                AlgebraicRootArithmeticStatus::ComputedRepresentation
+            );
+            prop_assert_eq!(affine.status, AlgebraicRootAffineTransformStatus::Transformed);
+            prop_assert_eq!(arithmetic.result_representation, affine.representation);
         }
 
         #[test]
