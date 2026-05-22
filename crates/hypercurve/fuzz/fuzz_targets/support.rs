@@ -17,15 +17,20 @@ use hypercurve::{
     BezierBooleanFragmentOwnershipLocation as HBezierBooleanFragmentOwnershipLocation,
     BezierBooleanLoopAssemblyPlanReport2 as HBezierBooleanLoopAssemblyPlanReport2,
     BezierBooleanLoopAssemblyPlanStatus as HBezierBooleanLoopAssemblyPlanStatus,
+    BezierBooleanLoopClosureReport2 as HBezierBooleanLoopClosureReport2,
+    BezierBooleanLoopContainmentQueryResultReport2 as HBezierBooleanLoopContainmentQueryResultReport2,
+    BezierBooleanLoopContainmentQueryResultStatus as HBezierBooleanLoopContainmentQueryResultStatus,
     BezierBooleanLoopGraphMultiCycleWalkReport2 as HBezierBooleanLoopGraphMultiCycleWalkReport2,
     BezierBooleanLoopGraphMultiCycleWalkStatus as HBezierBooleanLoopGraphMultiCycleWalkStatus,
+    BezierBooleanLoopGraphSuccessorFact2 as HBezierBooleanLoopGraphSuccessorFact2,
     BezierBooleanLoopGraphTraversalReport2 as HBezierBooleanLoopGraphTraversalReport2,
     BezierBooleanLoopNestingDepthFact2 as HBezierBooleanLoopNestingDepthFact2,
+    BezierBooleanOutputLoopReport2 as HBezierBooleanOutputLoopReport2,
     BezierBooleanOverlapEvent2 as HBezierBooleanOverlapEvent2,
     BezierBooleanOverlapResolutionReport2 as HBezierBooleanOverlapResolutionReport2,
     BezierBooleanOwnedTraversalStep2 as HBezierBooleanOwnedTraversalStep2,
     BezierBooleanOwnershipFact2 as HBezierBooleanOwnershipFact2,
-    BezierBooleanResolvedOverlapSuccessor2 as HBezierBooleanResolvedOverlapSuccessor2,
+    BezierBooleanOverlapBridgeFact2 as HBezierBooleanOverlapBridgeFact2,
     BezierBooleanResultReport2 as HBezierBooleanResultReport2,
     BezierBooleanResultStatus as HBezierBooleanResultStatus,
     BezierBooleanTangentTurnPolicy as HBezierBooleanTangentTurnPolicy,
@@ -3930,25 +3935,33 @@ fn h_assert_bezier_boolean_overlap_bridge_successors(_reader: &mut ByteReader<'_
         return;
     };
     let bridges = [
-        HBezierBooleanResolvedOverlapSuccessor2 {
+        HBezierBooleanOverlapBridgeFact2 {
             overlap_event_index: 0,
-            from_step_index: 0,
-            to_step_index: 3,
+            successor: HBezierBooleanLoopGraphSuccessorFact2 {
+                from_step_index: 0,
+                to_step_index: 3,
+            },
         },
-        HBezierBooleanResolvedOverlapSuccessor2 {
+        HBezierBooleanOverlapBridgeFact2 {
             overlap_event_index: 0,
-            from_step_index: 3,
-            to_step_index: 0,
+            successor: HBezierBooleanLoopGraphSuccessorFact2 {
+                from_step_index: 3,
+                to_step_index: 0,
+            },
         },
-        HBezierBooleanResolvedOverlapSuccessor2 {
+        HBezierBooleanOverlapBridgeFact2 {
             overlap_event_index: 0,
-            from_step_index: 1,
-            to_step_index: 2,
+            successor: HBezierBooleanLoopGraphSuccessorFact2 {
+                from_step_index: 1,
+                to_step_index: 2,
+            },
         },
-        HBezierBooleanResolvedOverlapSuccessor2 {
+        HBezierBooleanOverlapBridgeFact2 {
             overlap_event_index: 0,
-            from_step_index: 2,
-            to_step_index: 1,
+            successor: HBezierBooleanLoopGraphSuccessorFact2 {
+                from_step_index: 2,
+                to_step_index: 1,
+            },
         },
     ];
     let plan = HBezierBooleanLoopAssemblyPlanReport2 {
@@ -3975,7 +3988,7 @@ fn h_assert_bezier_boolean_overlap_bridge_successors(_reader: &mut ByteReader<'_
     let traversal =
         HBezierBooleanLoopGraphTraversalReport2::from_certified_walk_graph_facts(&plan, 0, 1);
     let bridged =
-        HBezierBooleanLoopGraphMultiCycleWalkReport2::from_fragment_endpoint_tangents_and_resolved_overlap_successors(
+        HBezierBooleanLoopGraphMultiCycleWalkReport2::from_fragment_endpoint_tangents_and_overlap_bridges(
             &traversal,
             &plan,
             &overlaps,
@@ -3992,9 +4005,58 @@ fn h_assert_bezier_boolean_overlap_bridge_successors(_reader: &mut ByteReader<'_
     assert_eq!(bridged.cycle_step_counts, vec![2, 2]);
 }
 
+fn h_assert_bezier_boolean_linear_loop_locator(_reader: &mut ByteReader<'_>) {
+    let endpoints = [
+        (h_point_i32(0, 0), h_point_i32(10, 0)),
+        (h_point_i32(10, 0), h_point_i32(10, 10)),
+        (h_point_i32(10, 10), h_point_i32(0, 10)),
+        (h_point_i32(0, 10), h_point_i32(0, 0)),
+        (h_point_i32(2, 2), h_point_i32(4, 2)),
+        (h_point_i32(4, 2), h_point_i32(4, 4)),
+        (h_point_i32(4, 4), h_point_i32(2, 4)),
+        (h_point_i32(2, 4), h_point_i32(2, 2)),
+    ];
+    let plan = HBezierBooleanLoopAssemblyPlanReport2 {
+        status: HBezierBooleanLoopAssemblyPlanStatus::Ready,
+        assembly_status: HBezierBooleanAssemblyReadinessStatus::Ready,
+        operation: HBooleanOp::Union,
+        emitted_steps: (0..endpoints.len())
+            .map(|fragment_index| HBezierBooleanOwnedTraversalStep2 {
+                step: HBezierBooleanTraversalStep2 {
+                    operand: HBezierBooleanTraversalOperand::First,
+                    fragment_index,
+                },
+                opposite_location: HBezierBooleanFragmentOwnershipLocation::Outside,
+                action: HBooleanFragmentAction::KeepSourceDirection,
+            })
+            .collect(),
+        first_emitted_count: endpoints.len(),
+        second_emitted_count: 0,
+        keep_source_count: endpoints.len(),
+        keep_reversed_count: 0,
+        invalid_reference_count: 0,
+        blocker_count: 0,
+    };
+    let closure = HBezierBooleanLoopClosureReport2::from_fragment_endpoints(&plan, &endpoints, &[]);
+    let output = HBezierBooleanOutputLoopReport2::from_loop_closure(&closure);
+    let flags = vec![true; output.directed_fragment_count];
+    let replay = HBezierBooleanLoopContainmentQueryResultReport2::from_output_loop_linear_fragments(
+        &output,
+        &flags,
+        &HCurvePolicy::certified(),
+    );
+
+    assert_eq!(
+        replay.status,
+        HBezierBooleanLoopContainmentQueryResultStatus::Ready
+    );
+    assert_eq!(replay.contains_count, 1);
+    assert_eq!(replay.outside_count, 1);
+}
+
 /// Aggregate hypercurve fuzz entrypoint covering public APIs and cross-path invariants.
 pub fn h_assert_full_api(reader: &mut ByteReader<'_>) {
-    match reader.byte() % 19 {
+    match reader.byte() % 20 {
         0 => h_assert_segment_intersections(reader),
         1 => h_assert_segment_containment_and_reversal(reader),
         2 => h_assert_contour_region_classification(reader),
@@ -4013,6 +4075,7 @@ pub fn h_assert_full_api(reader: &mut ByteReader<'_>) {
         15 => h_assert_bezier_boolean_endpoint_successors(reader),
         16 => h_assert_bezier_boolean_tangent_branch_successors(reader),
         17 => h_assert_bezier_boolean_overlap_bridge_successors(reader),
+        18 => h_assert_bezier_boolean_linear_loop_locator(reader),
         _ => h_assert_adversarial_polygon_pipeline(reader),
     }
 }

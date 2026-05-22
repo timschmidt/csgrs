@@ -23,12 +23,12 @@ use hypercurve::{
     BezierBooleanLoopNestingDepthFactReport2, BezierBooleanLoopNestingRoleReport2,
     BezierBooleanLoopRoleAssignmentReport2, BezierBooleanMaterializationAuditReport2,
     BezierBooleanMaterializedRegionReport2, BezierBooleanOutputLoopReport2,
-    BezierBooleanOutputLoopRole, BezierBooleanOverlapResolutionReport2,
+    BezierBooleanOutputLoopRole, BezierBooleanOverlapBridgeFact2,
+    BezierBooleanOverlapBridgeReport2, BezierBooleanOverlapResolutionReport2,
     BezierBooleanOwnershipClassificationReport2, BezierBooleanOwnershipFact2,
     BezierBooleanOwnershipFactReport2, BezierBooleanPathSchedulerReport2,
     BezierBooleanQuadraticFragmentReport2, BezierBooleanRationalQuadraticFragmentReport2,
-    BezierBooleanRegionAssemblyReport2, BezierBooleanResolvedOverlapSuccessor2,
-    BezierBooleanResolvedOverlapSuccessorReport2, BezierBooleanResultReport2,
+    BezierBooleanRegionAssemblyReport2, BezierBooleanResultReport2,
     BezierBooleanRootCountPrefilterReport2, BezierBooleanRootIsolationHandoffReport2,
     BezierBooleanRootIsolationReplayReport2, BezierBooleanSplitPlanReport2,
     BezierBooleanTangentTurnPolicy, BezierBooleanTraversalPreconditionReport2,
@@ -1870,25 +1870,33 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                         &CurvePolicy::certified(),
                     );
                 let overlap_bridges = [
-                    BezierBooleanResolvedOverlapSuccessor2 {
+                    BezierBooleanOverlapBridgeFact2 {
                         overlap_event_index: 0,
-                        from_step_index: 0,
-                        to_step_index: 3,
+                        successor: BezierBooleanLoopGraphSuccessorFact2 {
+                            from_step_index: 0,
+                            to_step_index: 3,
+                        },
                     },
-                    BezierBooleanResolvedOverlapSuccessor2 {
+                    BezierBooleanOverlapBridgeFact2 {
                         overlap_event_index: 0,
-                        from_step_index: 3,
-                        to_step_index: 0,
+                        successor: BezierBooleanLoopGraphSuccessorFact2 {
+                            from_step_index: 3,
+                            to_step_index: 0,
+                        },
                     },
-                    BezierBooleanResolvedOverlapSuccessor2 {
+                    BezierBooleanOverlapBridgeFact2 {
                         overlap_event_index: 0,
-                        from_step_index: 1,
-                        to_step_index: 2,
+                        successor: BezierBooleanLoopGraphSuccessorFact2 {
+                            from_step_index: 1,
+                            to_step_index: 2,
+                        },
                     },
-                    BezierBooleanResolvedOverlapSuccessor2 {
+                    BezierBooleanOverlapBridgeFact2 {
                         overlap_event_index: 0,
-                        from_step_index: 2,
-                        to_step_index: 1,
+                        successor: BezierBooleanLoopGraphSuccessorFact2 {
+                            from_step_index: 2,
+                            to_step_index: 1,
+                        },
                     },
                 ];
                 let overlap_bridge_resolution =
@@ -1905,7 +1913,7 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                         }
                     };
                 let overlap_bridge_report =
-                    BezierBooleanResolvedOverlapSuccessorReport2::from_fragment_endpoint_tangents(
+                    BezierBooleanOverlapBridgeReport2::from_fragment_endpoint_tangents(
                         &overlap_bridge_resolution,
                         &branch_plan,
                         &branch_tangents,
@@ -1915,7 +1923,7 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                         &CurvePolicy::certified(),
                     );
                 let overlap_bridge_multi =
-                    BezierBooleanLoopGraphMultiCycleWalkReport2::from_fragment_endpoint_tangents_and_resolved_overlap_successors(
+                    BezierBooleanLoopGraphMultiCycleWalkReport2::from_fragment_endpoint_tangents_and_overlap_bridges(
                         &BezierBooleanLoopGraphTraversalReport2::from_certified_walk_graph_facts(
                             &branch_plan,
                             0,
@@ -3961,12 +3969,18 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
             let replay = BezierBooleanLoopContainmentQueryResultReport2::from_query_results(
                 &queries, &results,
             );
+            let linear_replay =
+                BezierBooleanLoopContainmentQueryResultReport2::from_output_loop_linear_fragments(
+                    &output,
+                    &vec![true; output.directed_fragment_count],
+                    &CurvePolicy::certified(),
+                );
             let certification =
                 BezierBooleanLoopContainmentCertificationReport2::from_output_loop_query_results(
                     &output, &results,
                 );
             format!(
-                "{:?}{:?}{:?}",
+                "{:?}{:?}{:?}{:?}",
                 BezierBooleanResultReport2::from_schedule_graph_walk_containment_query_results(
                     &schedule,
                     BooleanOp::Union,
@@ -3999,7 +4013,8 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     0,
                     &[0, 1],
                     &results,
-                )
+                ),
+                linear_replay,
             )
         };
         checksum ^= boolean_query_result_result.len();
