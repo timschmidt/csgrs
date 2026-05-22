@@ -2,30 +2,31 @@ use hyperreal::{Real, RealSign};
 use hypersolve::{
     BatchCandidateStatus, CertifiedCandidateStatus, Constraint, ConvergenceReason, DomainCheckKind,
     DomainCheckStatus, EqualitySubstitution, EqualitySubstitutionProblem, Expr,
-    FailedConstraintStatus, IntervalBoxCertificationPackage, IntervalBoxCertificationStatus,
-    MultivariateQuadraticKrawczykStatus, PreparedProblem, PreparedSolverBlock, Problem,
-    ProposalEngineKind, ProposalEnginePrecision, ProposalEngineReport, RootIsolationStatus,
-    SketchConstructionCertificateStatus, SketchDegeneracyKind, SketchDegeneracyStatus,
-    SketchEntityDomain, SketchEntityDomainKind, SketchEntityDomainStatus, SketchGeneratedRowStatus,
-    SketchParameterDomain, SketchParameterDomainStatus, SketchResidualFormKind,
-    SketchResidualFormRole, SketchResidualFormsStatus, SketchResidualStrategy,
-    SketchRoundTripMetadata, SketchSolveProblem, SketchUnitToleranceStatus, SolverBlockRowKind,
-    SolverConfig, SolverPoint2, SolverState, SymbolId, VariableBall,
-    apply_equality_substitution_classes, audit_sketch_unit_tolerances, certify_affine_krawczyk_box,
-    certify_candidate, certify_candidate_batch, certify_candidate_domains,
-    certify_direct_univariate_quadratic_roots, certify_interval_box_candidate,
-    certify_multivariate_quadratic_interval_candidate, certify_multivariate_quadratic_krawczyk_box,
-    certify_quadratic_interval_candidate, certify_sketch_construction,
-    certify_univariate_quadratic_alpha, certify_univariate_quadratic_krawczyk_box,
-    context_from_problem, determinant_bareiss, diagnose_failed_constraints,
-    eliminate_affine_rows_with_substitution_classes,
+    FailedConstraintRemovalStatus, FailedConstraintStatus, IntervalBoxCertificationPackage,
+    IntervalBoxCertificationStatus, MultivariateQuadraticKrawczykStatus, PreparedProblem,
+    PreparedSolverBlock, Problem, ProposalEngineKind, ProposalEnginePrecision,
+    ProposalEngineReport, RootIsolationStatus, SketchConstructionCertificateStatus,
+    SketchDegeneracyKind, SketchDegeneracyStatus, SketchEntityDomain, SketchEntityDomainKind,
+    SketchEntityDomainStatus, SketchGeneratedRowStatus, SketchParameterDomain,
+    SketchParameterDomainStatus, SketchResidualFormKind, SketchResidualFormRole,
+    SketchResidualFormsStatus, SketchResidualStrategy, SketchRoundTripMetadata, SketchSolveProblem,
+    SketchUnitToleranceStatus, SolverBlockRowKind, SolverConfig, SolverPoint2, SolverState,
+    SymbolId, VariableBall, apply_equality_substitution_classes, audit_sketch_unit_tolerances,
+    certify_affine_krawczyk_box, certify_candidate, certify_candidate_batch,
+    certify_candidate_domains, certify_direct_univariate_quadratic_roots,
+    certify_interval_box_candidate, certify_multivariate_quadratic_interval_candidate,
+    certify_multivariate_quadratic_krawczyk_box, certify_quadratic_interval_candidate,
+    certify_sketch_construction, certify_univariate_quadratic_alpha,
+    certify_univariate_quadratic_krawczyk_box, context_from_problem, determinant_bareiss,
+    diagnose_failed_constraints, eliminate_affine_rows_with_substitution_classes,
     enumerate_direct_univariate_quadratic_branches, isolate_univariate_polynomial_roots,
     preflight_sketch_degeneracies, preflight_sketch_entity_domains,
     preflight_sketch_parameter_domains, report_lossy_adapter_only_candidate,
-    resultant_univariate_polynomials, sketch_range_builders, solve_damped_least_squares,
-    solve_dense_linear_system_bareiss, solve_direct_affine_system,
-    solve_direct_univariate_quadratic_equalities, squared_distance_equation,
-    subresultant_chain_univariate_polynomials, validate_equality_substitutions,
+    resultant_univariate_polynomials, search_failed_constraint_single_removals,
+    sketch_range_builders, solve_damped_least_squares, solve_dense_linear_system_bareiss,
+    solve_direct_affine_system, solve_direct_univariate_quadratic_equalities,
+    squared_distance_equation, subresultant_chain_univariate_polynomials,
+    validate_equality_substitutions,
 };
 use proptest::prelude::*;
 
@@ -1249,6 +1250,36 @@ proptest! {
             .rows
             .iter()
             .all(|row| row.status == FailedConstraintStatus::RankRedundant));
+    }
+
+    #[test]
+    fn failed_constraint_single_removal_generated_single_miss_clears(
+        value in -32_i16..=32,
+        target in -32_i16..=32,
+    ) {
+        prop_assume!(value != target);
+        let value = i64::from(value);
+        let target = i64::from(target);
+        let x = Expr::symbol(SymbolId(0), "x");
+        let mut problem = Problem::default();
+        problem.add_variable("x", Real::from(value));
+        problem.add_constraint(Constraint::equality(
+            "generated miss",
+            x - Expr::int(target),
+        ));
+
+        let report = search_failed_constraint_single_removals(
+            &PreparedProblem::new(&problem),
+            &context_from_problem(&problem),
+        );
+
+        prop_assert_eq!(report.original.blocking_rows, 1);
+        prop_assert_eq!(report.probes.len(), 1);
+        prop_assert_eq!(report.clearing_single_removals, 1);
+        prop_assert_eq!(
+            &report.probes[0].removal_status,
+            &FailedConstraintRemovalStatus::ClearsAllBlockingRows
+        );
     }
 
     #[test]

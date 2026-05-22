@@ -28,10 +28,11 @@ use hypersolve::{
     replay_sparse_linear_residuals, report_lossy_adapter_only_candidate,
     represent_univariate_algebraic_roots, resultant_univariate_polynomials,
     run_active_set_update_loop, schedule_candidate_batch_predicates,
-    schedule_univariate_resultant_pairs, sketch_compatibility_fixtures, solve_damped_least_squares,
-    solve_dense_linear_system_bareiss, solve_direct_affine_system,
-    solve_direct_univariate_quadratic_equalities, solve_sparse_linear_system_bareiss,
-    squared_distance_equation, subdivide_bernstein_univariate_polynomial_interval_roots,
+    schedule_univariate_resultant_pairs, search_failed_constraint_single_removals,
+    sketch_compatibility_fixtures, solve_damped_least_squares, solve_dense_linear_system_bareiss,
+    solve_direct_affine_system, solve_direct_univariate_quadratic_equalities,
+    solve_sparse_linear_system_bareiss, squared_distance_equation,
+    subdivide_bernstein_univariate_polynomial_interval_roots,
     subresultant_chain_univariate_polynomials,
 };
 
@@ -1304,6 +1305,23 @@ fn certification(c: &mut Criterion) {
     });
     c.bench_function("diagnose_failed_constraints_affine", |b| {
         b.iter(|| diagnose_failed_constraints(&prepared, &context))
+    });
+    let failed_search_problem = {
+        let x = Expr::symbol(SymbolId(0), "x");
+        let mut problem = Problem::default();
+        problem.add_variable("x", r(0));
+        problem.add_constraint(Constraint::equality("x equals one", x - Expr::int(1)));
+        problem
+    };
+    let failed_search_prepared = PreparedProblem::new(&failed_search_problem);
+    let failed_search_context = context_from_problem(&failed_search_problem);
+    c.bench_function("search_failed_constraint_single_removals", |b| {
+        b.iter(|| {
+            search_failed_constraint_single_removals(
+                &failed_search_prepared,
+                &failed_search_context,
+            )
+        })
     });
     c.bench_function("schedule_candidate_batch_predicates", |b| {
         b.iter(|| {

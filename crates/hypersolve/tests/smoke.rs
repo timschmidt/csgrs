@@ -5,19 +5,19 @@ use hypersolve::{
     BatchPredicateScheduleError, CandidateCertificationConfig, CandidateResidualBall,
     CertifiedCandidateStatus, Constraint, ConstraintKind, ConvergenceReason, DenseLinearBackend,
     DirectAffineSystemStatus, DomainCheckKind, DomainCheckStatus, ExactAffineRankStatus,
-    ExactBranchStatus, Expr, ExprDegree, FailedConstraintStatus, IntervalBoxCertificationPackage,
-    IntervalBoxCertificationStatus, LinearAdapterKind, LinearAdapterPrecision, LinearBackend,
-    MultivariateQuadraticKrawczykStatus, PreparedProblem, PreparedSolverBlock, Problem,
-    ProposalEngineKind, ProposalEnginePrecision, RootIsolationStatus, RootMultiplicityStatus,
-    SketchConstraintKind, SketchConstructionCertificateStatus, SketchDegeneracyKind,
-    SketchDegeneracyStatus, SketchEntityDomain, SketchEntityDomainKind, SketchEntityDomainStatus,
-    SketchEntityHandle, SketchEntityKind, SketchGeneratedRowStatus, SketchParameterDomain,
-    SketchParameterDomainKind, SketchParameterDomainStatus, SketchResidualFormKind,
-    SketchResidualFormRole, SketchResidualFormsStatus, SketchResidualStrategy,
-    SketchRoundTripMetadata, SketchRoundTripRole, SketchSolveProblem, SketchUnitToleranceStatus,
-    SolverBlockRowKind, SolverConfig, SolverPoint2, SolverState, SparseResidualBatchStatus,
-    SparseResidualTerm, SymbolId, VariableBall, analyze_exact_affine_rank,
-    apply_equality_substitution_classes, apply_equality_substitutions,
+    ExactBranchStatus, Expr, ExprDegree, FailedConstraintRemovalStatus, FailedConstraintStatus,
+    IntervalBoxCertificationPackage, IntervalBoxCertificationStatus, LinearAdapterKind,
+    LinearAdapterPrecision, LinearBackend, MultivariateQuadraticKrawczykStatus, PreparedProblem,
+    PreparedSolverBlock, Problem, ProposalEngineKind, ProposalEnginePrecision, RootIsolationStatus,
+    RootMultiplicityStatus, SketchConstraintKind, SketchConstructionCertificateStatus,
+    SketchDegeneracyKind, SketchDegeneracyStatus, SketchEntityDomain, SketchEntityDomainKind,
+    SketchEntityDomainStatus, SketchEntityHandle, SketchEntityKind, SketchGeneratedRowStatus,
+    SketchParameterDomain, SketchParameterDomainKind, SketchParameterDomainStatus,
+    SketchResidualFormKind, SketchResidualFormRole, SketchResidualFormsStatus,
+    SketchResidualStrategy, SketchRoundTripMetadata, SketchRoundTripRole, SketchSolveProblem,
+    SketchUnitToleranceStatus, SolverBlockRowKind, SolverConfig, SolverPoint2, SolverState,
+    SparseResidualBatchStatus, SparseResidualTerm, SymbolId, VariableBall,
+    analyze_exact_affine_rank, apply_equality_substitution_classes, apply_equality_substitutions,
     audit_sketch_unit_tolerances, build_equality_substitution_classes,
     certify_affine_interval_candidate, certify_affine_krawczyk_box, certify_candidate,
     certify_candidate_batch, certify_candidate_domains, certify_candidate_with_config,
@@ -34,13 +34,13 @@ use hypersolve::{
     preflight_sketch_parameter_domains, prepare_sparse_linear_residual_system,
     regenerate_active_set_affine_candidate, replay_sketch_compatibility_fixture,
     replay_sparse_linear_residual_batch, report_lossy_adapter_only_candidate,
-    schedule_candidate_batch_predicates, sketch_angle_builders, sketch_compatibility_fixtures,
-    sketch_distance_builders, sketch_incidence_builders, sketch_objective_builders,
-    sketch_orientation_builders, sketch_range_builders, sketch_symmetry_builders,
-    sketch_tangency_builders, solve_damped_least_squares, solve_direct_affine_equalities,
-    solve_direct_affine_system, solve_direct_univariate_quadratic_equalities,
-    squared_distance_equation, tangent_parallel_equation, tangent_same_direction_constraint,
-    validate_equality_substitutions,
+    schedule_candidate_batch_predicates, search_failed_constraint_single_removals,
+    sketch_angle_builders, sketch_compatibility_fixtures, sketch_distance_builders,
+    sketch_incidence_builders, sketch_objective_builders, sketch_orientation_builders,
+    sketch_range_builders, sketch_symmetry_builders, sketch_tangency_builders,
+    solve_damped_least_squares, solve_direct_affine_equalities, solve_direct_affine_system,
+    solve_direct_univariate_quadratic_equalities, squared_distance_equation,
+    tangent_parallel_equation, tangent_same_direction_constraint, validate_equality_substitutions,
 };
 
 fn real(value: i64) -> Real {
@@ -2862,6 +2862,57 @@ fn failed_constraint_diagnostics_preserve_lossy_proposal_only_rows() {
         diagnostics.rows[0].status,
         FailedConstraintStatus::DidNotConvergeOnly
     );
+}
+
+#[test]
+fn failed_constraint_single_removal_search_reports_clearing_and_still_blocking_rows() {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let mut single = Problem::default();
+    single.add_variable("x", real(0));
+    single.add_constraint(Constraint::equality(
+        "single candidate miss",
+        x.clone() - Expr::int(1),
+    ));
+
+    let single_search = search_failed_constraint_single_removals(
+        &PreparedProblem::new(&single),
+        &context_from_problem(&single),
+    );
+
+    assert!(single_search.has_single_removal_resolution());
+    assert_eq!(single_search.original.blocking_rows, 1);
+    assert_eq!(single_search.probes.len(), 1);
+    assert_eq!(single_search.clearing_single_removals, 1);
+    assert_eq!(
+        single_search.probes[0].removal_status,
+        FailedConstraintRemovalStatus::ClearsAllBlockingRows
+    );
+
+    let y = Expr::symbol(SymbolId(0), "y");
+    let mut paired = Problem::default();
+    paired.add_variable("y", real(0));
+    paired.add_constraint(Constraint::equality(
+        "first candidate miss",
+        y.clone() - Expr::int(1),
+    ));
+    paired.add_constraint(Constraint::equality(
+        "second candidate miss",
+        y - Expr::int(2),
+    ));
+
+    let paired_search = search_failed_constraint_single_removals(
+        &PreparedProblem::new(&paired),
+        &context_from_problem(&paired),
+    );
+
+    assert!(!paired_search.has_single_removal_resolution());
+    assert_eq!(paired_search.original.blocking_rows, 2);
+    assert_eq!(paired_search.probes.len(), 2);
+    assert!(paired_search.probes.iter().all(|probe| {
+        probe.original_status == FailedConstraintStatus::CertifiedCandidateViolation
+            && probe.removal_status
+                == FailedConstraintRemovalStatus::StillBlocking { blocking_rows: 1 }
+    }));
 }
 
 #[test]

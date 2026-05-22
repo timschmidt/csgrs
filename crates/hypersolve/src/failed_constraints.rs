@@ -103,6 +103,51 @@ pub struct FailedConstraintReport {
     pub bounded_unknown_rows: usize,
 }
 
+/// Result of deactivating one blocking row during failed-constraint search.
+///
+/// This is the first exact removal-search layer for SolveSpace-like failed
+/// constraint diagnostics. It does not claim a globally minimal unsat core;
+/// it only answers the cheap and deterministic question "does removing this
+/// one blocking row clear the current candidate under exact replay?" Yap's
+/// exact-geometric-computation boundary still applies: every probe reruns
+/// exact residual diagnostics instead of trusting numerical convergence
+/// labels. See Yap, "Towards Exact Geometric Computation," *Computational
+/// Geometry* 7.1-2 (1997).
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum FailedConstraintRemovalStatus {
+    /// Removing this single row clears every blocking diagnostic row.
+    ClearsAllBlockingRows,
+    /// Blocking rows remain after this row is removed.
+    StillBlocking {
+        /// Number of blocking rows in the reduced problem.
+        blocking_rows: usize,
+    },
+}
+
+/// One single-row failed-constraint removal probe.
+#[derive(Clone, Debug, PartialEq)]
+pub struct FailedConstraintRemovalProbe {
+    /// Source constraint index deactivated for this probe.
+    pub constraint_index: usize,
+    /// Constraint name copied for diagnostics.
+    pub name: String,
+    /// Original diagnostic status that made this row blocking.
+    pub original_status: FailedConstraintStatus,
+    /// Result after deactivating only this row.
+    pub removal_status: FailedConstraintRemovalStatus,
+}
+
+/// Deterministic single-row removal-search report.
+#[derive(Clone, Debug, PartialEq)]
+pub struct FailedConstraintRemovalSearchReport {
+    /// Original exact failed-constraint diagnostics.
+    pub original: FailedConstraintReport,
+    /// One probe per original blocking row.
+    pub probes: Vec<FailedConstraintRemovalProbe>,
+    /// Number of probes whose single removal clears all blocking rows.
+    pub clearing_single_removals: usize,
+}
+
 impl FailedConstraintReport {
     /// Returns true when any diagnostic row blocks accepting the candidate.
     pub fn has_blocking_rows(&self) -> bool {
@@ -112,6 +157,13 @@ impl FailedConstraintReport {
     /// Returns true when the report found only exact rank redundancy.
     pub fn only_rank_redundancy(&self) -> bool {
         !self.rows.is_empty() && self.blocking_rows == 0
+    }
+}
+
+impl FailedConstraintRemovalSearchReport {
+    /// Return whether any single-row removal clears the current blocking set.
+    pub fn has_single_removal_resolution(&self) -> bool {
+        self.clearing_single_removals > 0
     }
 }
 
@@ -126,6 +178,77 @@ pub fn diagnose_failed_constraints(
         CandidateCertificationConfig::default(),
         CandidateCertificationConfig::default().min_precision,
     )
+}
+
+/// Probe each blocking row by deactivating it and rerunning exact diagnostics.
+///
+/// This is deliberately a first-order failed-constraint search, not a full
+/// minimal unsat-core extractor. It gives UI and API callers a certified,
+/// deterministic candidate list for "try removing this one constraint" while
+/// leaving multi-row core minimization explicit future work.
+pub fn search_failed_constraint_single_removals(
+    prepared: &PreparedProblem<'_>,
+    context: &EvaluationContext,
+) -> FailedConstraintRemovalSearchReport {
+    search_failed_constraint_single_removals_with_config(
+        prepared,
+        context,
+        CandidateCertificationConfig::default(),
+        CandidateCertificationConfig::default().min_precision,
+    )
+}
+
+/// Probe each blocking row with explicit certification and rank policies.
+pub fn search_failed_constraint_single_removals_with_config(
+    prepared: &PreparedProblem<'_>,
+    context: &EvaluationContext,
+    certification_config: CandidateCertificationConfig,
+    rank_min_precision: i32,
+) -> FailedConstraintRemovalSearchReport {
+    let original = diagnose_failed_constraints_with_config(
+        prepared,
+        context,
+        certification_config,
+        rank_min_precision,
+    );
+    let mut probes = Vec::new();
+    let mut clearing_single_removals = 0;
+    for row in original
+        .rows
+        .iter()
+        .filter(|row| row.status.blocks_candidate_acceptance())
+    {
+        let mut reduced = prepared.problem().clone();
+        if let Some(constraint) = reduced.constraints.get_mut(row.constraint_index) {
+            constraint.active = false;
+        }
+        let reduced_prepared = PreparedProblem::new(&reduced);
+        let reduced_report = diagnose_failed_constraints_with_config(
+            &reduced_prepared,
+            context,
+            certification_config,
+            rank_min_precision,
+        );
+        let removal_status = if reduced_report.blocking_rows == 0 {
+            clearing_single_removals += 1;
+            FailedConstraintRemovalStatus::ClearsAllBlockingRows
+        } else {
+            FailedConstraintRemovalStatus::StillBlocking {
+                blocking_rows: reduced_report.blocking_rows,
+            }
+        };
+        probes.push(FailedConstraintRemovalProbe {
+            constraint_index: row.constraint_index,
+            name: row.name.clone(),
+            original_status: row.status.clone(),
+            removal_status,
+        });
+    }
+    FailedConstraintRemovalSearchReport {
+        original,
+        probes,
+        clearing_single_removals,
+    }
 }
 
 /// Certify a candidate and emit exact failed-constraint diagnostics with an
