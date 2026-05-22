@@ -11500,40 +11500,6 @@ impl BezierBooleanResultReport2 {
         Self::from_region_assembly(&assembly)
     }
 
-    /// Accepts a multi-cycle-successor result from exact locator answers.
-    ///
-    /// This is the prebuilt-certificate counterpart to
-    /// [`Self::from_schedule_multi_cycle_successor_locator_results`]. The
-    /// locator answers are replayed through output loops derived from the
-    /// same multi-cycle successor certificate, so boundary/unknown/stale
-    /// answers remain blockers instead of becoming inferred containment.
-    pub fn from_multi_cycle_successor_locator_results(
-        multi_cycle: &BezierBooleanLoopGraphMultiCycleWalkReport2,
-        traversal: &BezierBooleanLoopGraphTraversalReport2,
-        plan: &BezierBooleanLoopAssemblyPlanReport2,
-        first_endpoints: &[(Point2, Point2)],
-        second_endpoints: &[(Point2, Point2)],
-        results: &[BezierBooleanLoopContainmentQueryResult2],
-    ) -> Self {
-        let certification =
-            BezierBooleanLoopContainmentCertificationReport2::from_multi_cycle_successor_query_results(
-                multi_cycle,
-                traversal,
-                plan,
-                first_endpoints,
-                second_endpoints,
-                results,
-            );
-        Self::from_multi_cycle_successor_containment_certification(
-            multi_cycle,
-            traversal,
-            plan,
-            first_endpoints,
-            second_endpoints,
-            &certification,
-        )
-    }
-
     /// Accepts a full generic endpoint result using a keyed graph-facts certificate.
     ///
     /// This is the strictest report-only result constructor: ownership facts
@@ -12857,33 +12823,6 @@ impl BezierBooleanMaterializedRegionReport2 {
         Self::from_result_laminar_containment_facts(&result, containment_facts)
     }
 
-    /// Materializes a multi-cycle-successor result from replayed containment queries.
-    ///
-    /// Query replay is kept report-bearing all the way to materialization: a
-    /// boundary, unknown, stale, missing, or extra locator answer blocks the
-    /// result constructor and then blocks this materializer. Ready replayed
-    /// facts are attached through the laminar nearest-material ancestor rule,
-    /// preserving Yap's (1997) predicate/construction separation.
-    pub fn from_multi_cycle_successor_laminar_containment_query_results(
-        multi_cycle: &BezierBooleanLoopGraphMultiCycleWalkReport2,
-        traversal: &BezierBooleanLoopGraphTraversalReport2,
-        plan: &BezierBooleanLoopAssemblyPlanReport2,
-        first_endpoints: &[(Point2, Point2)],
-        second_endpoints: &[(Point2, Point2)],
-        query_results: &BezierBooleanLoopContainmentQueryResultReport2,
-    ) -> Self {
-        let result =
-            BezierBooleanResultReport2::from_multi_cycle_successor_containment_query_results(
-                multi_cycle,
-                traversal,
-                plan,
-                first_endpoints,
-                second_endpoints,
-                query_results,
-            );
-        Self::from_result_laminar_containment_query_results(&result, query_results)
-    }
-
     /// Materializes a multi-cycle-successor result from an end-to-end certificate.
     ///
     /// The containment certificate owns locator replay and containment-fact
@@ -12909,39 +12848,6 @@ impl BezierBooleanMaterializedRegionReport2 {
                 certification,
             );
         Self::from_result_laminar_containment_certification(&result, certification)
-    }
-
-    /// Materializes a multi-cycle-successor result from exact locator answers.
-    ///
-    /// The containment certificate is derived from the successor-preserved
-    /// output loops before materialization, rather than accepted as a detached
-    /// query replay. This keeps Yap's (1997) exact predicate replay boundary
-    /// intact through final laminar component construction.
-    pub fn from_multi_cycle_successor_laminar_locator_results(
-        multi_cycle: &BezierBooleanLoopGraphMultiCycleWalkReport2,
-        traversal: &BezierBooleanLoopGraphTraversalReport2,
-        plan: &BezierBooleanLoopAssemblyPlanReport2,
-        first_endpoints: &[(Point2, Point2)],
-        second_endpoints: &[(Point2, Point2)],
-        results: &[BezierBooleanLoopContainmentQueryResult2],
-    ) -> Self {
-        let certification =
-            BezierBooleanLoopContainmentCertificationReport2::from_multi_cycle_successor_query_results(
-                multi_cycle,
-                traversal,
-                plan,
-                first_endpoints,
-                second_endpoints,
-                results,
-            );
-        Self::from_multi_cycle_successor_laminar_containment_certification(
-            multi_cycle,
-            traversal,
-            plan,
-            first_endpoints,
-            second_endpoints,
-            &certification,
-        )
     }
 
     /// Materializes a scheduled result from exact multi-cycle successor facts.
