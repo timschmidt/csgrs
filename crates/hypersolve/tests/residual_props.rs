@@ -351,6 +351,90 @@ proptest! {
     }
 
     #[test]
+    fn sketch_length_ratio_rows_match_generated_integer_scaled_directions(
+        ax in -8_i16..=8,
+        ay in -8_i16..=8,
+        bx in -8_i16..=8,
+        by in -8_i16..=8,
+        dx in -6_i16..=6,
+        dy in -6_i16..=6,
+        scale in 1_i16..=4,
+    ) {
+        prop_assume!(dx != 0 || dy != 0);
+        let ax = i64::from(ax);
+        let ay = i64::from(ay);
+        let bx = i64::from(bx);
+        let by = i64::from(by);
+        let dx = i64::from(dx);
+        let dy = i64::from(dy);
+        let scale = i64::from(scale);
+        let mut sketch = SketchSolveProblem::new();
+        let a0 = sketch.add_point2d("a0", Real::from(ax), Real::from(ay));
+        let a1 = sketch.add_point2d(
+            "a1",
+            Real::from(ax + scale * dx),
+            Real::from(ay + scale * dy),
+        );
+        let b0 = sketch.add_point2d("b0", Real::from(bx), Real::from(by));
+        let b1 = sketch.add_point2d("b1", Real::from(bx + dx), Real::from(by + dy));
+        let line_a = sketch.add_line_segment2("a", a0, a1);
+        let line_b = sketch.add_line_segment2("b", b0, b1);
+        sketch.add_length_ratio_lines2(
+            "length ratio",
+            line_a,
+            line_b,
+            Real::from(scale),
+            Real::from(1),
+        );
+
+        let lowered = sketch.lower_to_problem();
+        let certification = certify_candidate(
+            &PreparedProblem::new(&lowered.problem),
+            &context_from_problem(&lowered.problem),
+        );
+
+        prop_assert_eq!(lowered.rows.len(), 1);
+        prop_assert_eq!(
+            lowered.rows[0].strategy,
+            Some(SketchResidualStrategy::SquaredLineLengthRatio)
+        );
+        prop_assert!(certification.all_satisfied());
+    }
+
+    #[test]
+    fn sketch_point_line_distance_rows_match_generated_horizontal_offsets(
+        x0 in -8_i16..=8,
+        y0 in -8_i16..=8,
+        px in -8_i16..=8,
+        offset in 0_i16..=12,
+    ) {
+        let x0 = i64::from(x0);
+        let y0 = i64::from(y0);
+        let px = i64::from(px);
+        let offset = i64::from(offset);
+        let mut sketch = SketchSolveProblem::new();
+        let start = sketch.add_point2d("start", Real::from(x0), Real::from(y0));
+        let end = sketch.add_point2d("end", Real::from(x0 + 5), Real::from(y0));
+        let point = sketch.add_point2d("point", Real::from(px), Real::from(y0 + offset));
+        let line = sketch.add_line_segment2("line", start, end);
+        let distance = sketch.add_distance("distance", Real::from(offset));
+        sketch.add_point_line_distance2("point line distance", point, line, distance);
+
+        let lowered = sketch.lower_to_problem();
+        let certification = certify_candidate(
+            &PreparedProblem::new(&lowered.problem),
+            &context_from_problem(&lowered.problem),
+        );
+
+        prop_assert_eq!(lowered.rows.len(), 1);
+        prop_assert_eq!(
+            lowered.rows[0].strategy,
+            Some(SketchResidualStrategy::SquaredPointLineDistance)
+        );
+        prop_assert!(certification.all_satisfied());
+    }
+
+    #[test]
     fn sketch_line_parallel_rows_match_generated_integer_directions(
         ax in -8_i16..=8,
         ay in -8_i16..=8,

@@ -167,6 +167,63 @@ pub mod distance {
         }
     }
 
+    /// Add a 2D line length-ratio relation.
+    ///
+    /// The relation retains the exact ratio `numerator / denominator` and
+    /// lowers to a squared polynomial equality only after exact sign
+    /// validation. This follows Yap's "Towards Exact Geometric Computation"
+    /// (1997): invalid semantic inputs become diagnostics, not silently
+    /// accepted squared rows.
+    pub fn length_ratio_lines2(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+        numerator: Real,
+        denominator: Real,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::LengthRatioLines2 {
+            a,
+            b,
+            numerator,
+            denominator,
+        };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Distance,
+            strategy: SketchResidualStrategy::SquaredLineLengthRatio,
+            kind,
+        }
+    }
+
+    /// Add a 2D point-to-line distance relation.
+    ///
+    /// Lowering uses the exact polynomial
+    /// `cross(point-start, dir)^2 - distance^2*|dir|^2 == 0` so certification
+    /// avoids square roots and division by line length. Nondegenerate-line and
+    /// nonnegative-distance assumptions should be modeled as explicit domains.
+    pub fn point_line_distance2(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        point: SketchEntityHandle,
+        line: SketchEntityHandle,
+        distance: SketchEntityHandle,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::PointLineDistance2 {
+            point,
+            line,
+            distance,
+        };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Distance,
+            strategy: SketchResidualStrategy::SquaredPointLineDistance,
+            kind,
+        }
+    }
+
     /// Add an exact equal-radius relation for 2D circles or circular arcs.
     ///
     /// The relation lowers to direct equality of retained radius carriers.

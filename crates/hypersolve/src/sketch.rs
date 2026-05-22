@@ -356,6 +356,39 @@ pub enum SketchConstraintKind {
         /// Second line entity.
         b: SketchEntityHandle,
     },
+    /// 2D line-segment length-ratio relation.
+    ///
+    /// The retained relation is `length(a) / length(b) = numerator /
+    /// denominator`. Lowering emits
+    /// `|dir(a)|^2 * denominator^2 - |dir(b)|^2 * numerator^2 == 0` after
+    /// proving the ratio inputs are nonnegative and the denominator is
+    /// positive. This is the squared algebraic proof form preferred by Yap,
+    /// "Towards Exact Geometric Computation" (1997); true lengths remain a
+    /// proposal/UI concern.
+    LengthRatioLines2 {
+        /// First line entity.
+        a: SketchEntityHandle,
+        /// Second line entity.
+        b: SketchEntityHandle,
+        /// Exact nonnegative ratio numerator.
+        numerator: Real,
+        /// Exact strictly positive ratio denominator.
+        denominator: Real,
+    },
+    /// 2D point-to-line distance relation.
+    ///
+    /// Lowering emits `cross(point-start, dir)^2 - distance^2*|dir|^2 == 0`.
+    /// This polynomial row avoids dividing by line length or taking square
+    /// roots during certification, in the exact-replay style described by Yap,
+    /// "Towards Exact Geometric Computation" (1997).
+    PointLineDistance2 {
+        /// Point entity.
+        point: SketchEntityHandle,
+        /// 2D line entity.
+        line: SketchEntityHandle,
+        /// Distance entity.
+        distance: SketchEntityHandle,
+    },
     /// 2D circle/arc equal-radius relation.
     ///
     /// Lowering emits direct exact radius-parameter equality. Positive-radius
@@ -511,6 +544,10 @@ pub enum SketchResidualStrategy {
     BoundedSquaredDistance,
     /// Squared 2D line length equality.
     SquaredLineLengthEquality,
+    /// Squared 2D line length ratio equality.
+    SquaredLineLengthRatio,
+    /// Squared 2D point-to-line distance equality.
+    SquaredPointLineDistance,
     /// Exact retained radius equality.
     RadiusEquality,
     /// Incidence represented as a squared-distance polynomial.
@@ -1007,6 +1044,33 @@ impl SketchSolveProblem {
         distance::equal_length_lines2(self, name, a, b).handle
     }
 
+    /// Add a retained 2D line length-ratio relation.
+    ///
+    /// The proof row compares squared lengths scaled by exact ratio terms.
+    /// Invalid negative numerator or nonpositive denominator inputs are
+    /// reported during lowering rather than hidden by squaring.
+    pub fn add_length_ratio_lines2(
+        &mut self,
+        name: impl Into<String>,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+        numerator: Real,
+        denominator: Real,
+    ) -> SketchConstraintHandle {
+        distance::length_ratio_lines2(self, name, a, b, numerator, denominator).handle
+    }
+
+    /// Add a retained 2D point-to-line distance relation.
+    pub fn add_point_line_distance2(
+        &mut self,
+        name: impl Into<String>,
+        point: SketchEntityHandle,
+        line: SketchEntityHandle,
+        distance: SketchEntityHandle,
+    ) -> SketchConstraintHandle {
+        distance::point_line_distance2(self, name, point, line, distance).handle
+    }
+
     /// Add a retained 2D equal-radius relation for circles or circular arcs.
     pub fn add_equal_radius2(
         &mut self,
@@ -1456,6 +1520,69 @@ impl SketchSolveProblem {
                     constraint.name.clone(),
                     squared_norm2(&a) - squared_norm2(&b),
                     SketchResidualStrategy::SquaredLineLengthEquality,
+                );
+            }
+            SketchConstraintKind::LengthRatioLines2 {
+                a,
+                b,
+                ref numerator,
+                ref denominator,
+            } => {
+                // This keeps the exact proof in polynomial space. Squaring the
+                // ratio is safe only after exact sign validation, otherwise a
+                // negative ratio could be silently accepted.
+                if !validate_length_ratio(constraint, numerator, denominator, rows) {
+                    return;
+                }
+                let (Some(a), Some(b)) = (
+                    self.line2_direction(a, constraint, rows),
+                    self.line2_direction(b, constraint, rows),
+                ) else {
+                    return;
+                };
+                let numerator_squared = Expr::real(numerator.clone() * numerator.clone());
+                let denominator_squared = Expr::real(denominator.clone() * denominator.clone());
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    constraint.name.clone(),
+                    squared_norm2(&a) * denominator_squared - squared_norm2(&b) * numerator_squared,
+                    SketchResidualStrategy::SquaredLineLengthRatio,
+                );
+            }
+            SketchConstraintKind::PointLineDistance2 {
+                point,
+                line,
+                distance,
+            } => {
+                // The exact polynomial form is equivalent to the usual
+                // point-line distance under explicit nondegenerate-line and
+                // nonnegative-distance domain assumptions. Those assumptions
+                // remain visible domain/preflight obligations.
+                let (Some(point), Some((start, end)), Some(distance)) = (
+                    self.point2_coordinates(point, constraint, rows),
+                    self.line2_points(line, constraint, rows),
+                    self.distance_expr(distance, constraint, rows),
+                ) else {
+                    return;
+                };
+                let direction = [
+                    end.exprs[0].clone() - start.exprs[0].clone(),
+                    end.exprs[1].clone() - start.exprs[1].clone(),
+                ];
+                let point_delta = [
+                    point.exprs[0].clone() - start.exprs[0].clone(),
+                    point.exprs[1].clone() - start.exprs[1].clone(),
+                ];
+                let cross = direction_cross2(&point_delta, &direction);
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    constraint.name.clone(),
+                    cross.clone() * cross - distance.clone() * distance * squared_norm2(&direction),
+                    SketchResidualStrategy::SquaredPointLineDistance,
                 );
             }
             SketchConstraintKind::EqualRadius2 { a, b } => {
@@ -2070,6 +2197,64 @@ fn validate_parameter_margin(
         Some(RealSign::Zero | RealSign::Positive) => true,
         None => {
             rows.push(invalid_parameter_margin_row(
+                constraint,
+                SketchGeneratedRowStatus::UnresolvedExactBound,
+            ));
+            false
+        }
+    }
+}
+
+fn invalid_length_ratio_row(
+    constraint: &SketchConstraint,
+    status: SketchGeneratedRowStatus,
+) -> SketchGeneratedRow {
+    SketchGeneratedRow {
+        constraint: constraint.handle,
+        residual_index: None,
+        name: constraint.name.clone(),
+        strategy: Some(SketchResidualStrategy::SquaredLineLengthRatio),
+        status,
+    }
+}
+
+fn validate_length_ratio(
+    constraint: &SketchConstraint,
+    numerator: &Real,
+    denominator: &Real,
+    rows: &mut Vec<SketchGeneratedRow>,
+) -> bool {
+    let numerator_ok = match numerator.structural_facts().sign {
+        Some(RealSign::Zero | RealSign::Positive) => true,
+        Some(RealSign::Negative) => {
+            rows.push(invalid_length_ratio_row(
+                constraint,
+                SketchGeneratedRowStatus::InvalidExactBound,
+            ));
+            false
+        }
+        None => {
+            rows.push(invalid_length_ratio_row(
+                constraint,
+                SketchGeneratedRowStatus::UnresolvedExactBound,
+            ));
+            false
+        }
+    };
+    if !numerator_ok {
+        return false;
+    }
+    match denominator.structural_facts().sign {
+        Some(RealSign::Positive) => true,
+        Some(RealSign::Negative | RealSign::Zero) => {
+            rows.push(invalid_length_ratio_row(
+                constraint,
+                SketchGeneratedRowStatus::InvalidExactBound,
+            ));
+            false
+        }
+        None => {
+            rows.push(invalid_length_ratio_row(
                 constraint,
                 SketchGeneratedRowStatus::UnresolvedExactBound,
             ));

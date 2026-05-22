@@ -276,6 +276,40 @@ fn sketch_problem_with_equal_length_and_radius(row_count: usize) -> hypersolve::
     sketch
 }
 
+fn sketch_problem_with_length_ratio_and_point_line(
+    row_count: usize,
+) -> hypersolve::SketchSolveProblem {
+    let mut sketch = hypersolve::SketchSolveProblem::new();
+    for index in 0..row_count {
+        let y = index as i64;
+        let long0 = sketch.add_point2d(format!("ratio{index}.long0"), r(0), r(y));
+        let long1 = sketch.add_point2d(format!("ratio{index}.long1"), r(6), r(y + 8));
+        let short0 = sketch.add_point2d(format!("ratio{index}.short0"), r(12), r(y));
+        let short1 = sketch.add_point2d(format!("ratio{index}.short1"), r(15), r(y + 4));
+        let long = sketch.add_line_segment2(format!("ratio{index}.long"), long0, long1);
+        let short = sketch.add_line_segment2(format!("ratio{index}.short"), short0, short1);
+        hypersolve::sketch_distance_builders::length_ratio_lines2(
+            &mut sketch,
+            format!("length ratio {index}"),
+            long,
+            short,
+            r(2),
+            r(1),
+        );
+        let p = sketch.add_point2d(format!("ptline{index}.p"), r(index as i64), r(y + 3));
+        let line = sketch.add_line_segment2(format!("ptline{index}.line"), long0, short0);
+        let distance = sketch.add_distance(format!("ptline{index}.d"), r(3));
+        hypersolve::sketch_distance_builders::point_line_distance2(
+            &mut sketch,
+            format!("point line distance {index}"),
+            p,
+            line,
+            distance,
+        );
+    }
+    sketch
+}
+
 fn sketch_problem_with_line_orientation_relations(
     row_count: usize,
 ) -> hypersolve::SketchSolveProblem {
@@ -480,6 +514,10 @@ fn certification(c: &mut Criterion) {
     let equal_length_radius_sketch = sketch_problem_with_equal_length_and_radius(16);
     c.bench_function("sketch_equal_length_radius_lowering", |b| {
         b.iter(|| equal_length_radius_sketch.lower_to_problem())
+    });
+    let length_ratio_point_line_sketch = sketch_problem_with_length_ratio_and_point_line(16);
+    c.bench_function("sketch_length_ratio_point_line_lowering", |b| {
+        b.iter(|| length_ratio_point_line_sketch.lower_to_problem())
     });
     let line_orientation_sketch = sketch_problem_with_line_orientation_relations(16);
     c.bench_function("sketch_line_orientation_lowering", |b| {
