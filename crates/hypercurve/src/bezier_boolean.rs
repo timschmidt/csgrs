@@ -6458,51 +6458,6 @@ impl BezierBooleanLoopGraphSuccessorWalkReport2 {
         }
     }
 
-    /// Derives one closed graph walk from quadratic Bezier fragment endpoints.
-    pub fn from_quadratic_fragments(
-        traversal: &BezierBooleanLoopGraphTraversalReport2,
-        plan: &BezierBooleanLoopAssemblyPlanReport2,
-        first: &BezierBooleanQuadraticFragmentReport2,
-        second: &BezierBooleanQuadraticFragmentReport2,
-    ) -> Self {
-        Self::from_fragment_endpoints(
-            traversal,
-            plan,
-            &quadratic_fragment_endpoints(&first.fragments),
-            &quadratic_fragment_endpoints(&second.fragments),
-        )
-    }
-
-    /// Derives one closed graph walk from cubic Bezier fragment endpoints.
-    pub fn from_cubic_fragments(
-        traversal: &BezierBooleanLoopGraphTraversalReport2,
-        plan: &BezierBooleanLoopAssemblyPlanReport2,
-        first: &BezierBooleanCubicFragmentReport2,
-        second: &BezierBooleanCubicFragmentReport2,
-    ) -> Self {
-        Self::from_fragment_endpoints(
-            traversal,
-            plan,
-            &cubic_fragment_endpoints(&first.fragments),
-            &cubic_fragment_endpoints(&second.fragments),
-        )
-    }
-
-    /// Derives one closed graph walk from rational quadratic/conic fragment endpoints.
-    pub fn from_rational_quadratic_fragments(
-        traversal: &BezierBooleanLoopGraphTraversalReport2,
-        plan: &BezierBooleanLoopAssemblyPlanReport2,
-        first: &BezierBooleanRationalQuadraticFragmentReport2,
-        second: &BezierBooleanRationalQuadraticFragmentReport2,
-    ) -> Self {
-        Self::from_fragment_endpoints(
-            traversal,
-            plan,
-            &rational_quadratic_fragment_endpoints(&first.fragments),
-            &rational_quadratic_fragment_endpoints(&second.fragments),
-        )
-    }
-
     /// Derives a certified walk order from exact successor facts.
     ///
     /// A ready report requires exactly one successor and one predecessor for
@@ -6942,51 +6897,6 @@ impl BezierBooleanLoopGraphMultiCycleWalkReport2 {
                 report.blocker_count.max(1),
             )
         }
-    }
-
-    /// Derives closed graph-walk cycles from quadratic Bezier fragment endpoints.
-    pub fn from_quadratic_fragments(
-        traversal: &BezierBooleanLoopGraphTraversalReport2,
-        plan: &BezierBooleanLoopAssemblyPlanReport2,
-        first: &BezierBooleanQuadraticFragmentReport2,
-        second: &BezierBooleanQuadraticFragmentReport2,
-    ) -> Self {
-        Self::from_fragment_endpoints(
-            traversal,
-            plan,
-            &quadratic_fragment_endpoints(&first.fragments),
-            &quadratic_fragment_endpoints(&second.fragments),
-        )
-    }
-
-    /// Derives closed graph-walk cycles from cubic Bezier fragment endpoints.
-    pub fn from_cubic_fragments(
-        traversal: &BezierBooleanLoopGraphTraversalReport2,
-        plan: &BezierBooleanLoopAssemblyPlanReport2,
-        first: &BezierBooleanCubicFragmentReport2,
-        second: &BezierBooleanCubicFragmentReport2,
-    ) -> Self {
-        Self::from_fragment_endpoints(
-            traversal,
-            plan,
-            &cubic_fragment_endpoints(&first.fragments),
-            &cubic_fragment_endpoints(&second.fragments),
-        )
-    }
-
-    /// Derives closed graph-walk cycles from rational quadratic/conic fragment endpoints.
-    pub fn from_rational_quadratic_fragments(
-        traversal: &BezierBooleanLoopGraphTraversalReport2,
-        plan: &BezierBooleanLoopAssemblyPlanReport2,
-        first: &BezierBooleanRationalQuadraticFragmentReport2,
-        second: &BezierBooleanRationalQuadraticFragmentReport2,
-    ) -> Self {
-        Self::from_fragment_endpoints(
-            traversal,
-            plan,
-            &rational_quadratic_fragment_endpoints(&first.fragments),
-            &rational_quadratic_fragment_endpoints(&second.fragments),
-        )
     }
 
     /// Derives deterministic closed cycles from exact successor facts.
@@ -14262,29 +14172,6 @@ fn rational_quadratic_fragment_report(
         inserted_parameters,
         fragments,
     }
-}
-
-fn quadratic_fragment_endpoints(fragments: &[QuadraticBezier2]) -> Vec<(Point2, Point2)> {
-    fragments
-        .iter()
-        .map(|fragment| (fragment.start().clone(), fragment.end().clone()))
-        .collect()
-}
-
-fn cubic_fragment_endpoints(fragments: &[CubicBezier2]) -> Vec<(Point2, Point2)> {
-    fragments
-        .iter()
-        .map(|fragment| (fragment.start().clone(), fragment.end().clone()))
-        .collect()
-}
-
-fn rational_quadratic_fragment_endpoints(
-    fragments: &[RationalQuadraticBezier2],
-) -> Vec<(Point2, Point2)> {
-    fragments
-        .iter()
-        .map(|fragment| (fragment.start().clone(), fragment.end().clone()))
-        .collect()
 }
 
 fn directed_emitted_step_endpoints(
