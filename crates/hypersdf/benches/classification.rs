@@ -3,8 +3,9 @@ use hyperlattice::{Matrix4, Vector3};
 use hyperlimit::{Plane3, Point3};
 use hyperreal::Real;
 use hypersdf::{
-    SdfCoordinate, SdfExpr, SdfHandoffDomain, SdfPreviewGrid, SdfProjectionProposal,
-    SdfProjectionProposalKind, SdfSamplingPrecision, SdfVoxelCellGrid, SdfVoxelGridSource, prepare,
+    SdfCoordinate, SdfExpr, SdfGradientContourReport, SdfHandoffDomain, SdfPreviewGrid,
+    SdfProjectionProposal, SdfProjectionProposalKind, SdfSamplingPrecision, SdfVoxelCellGrid,
+    SdfVoxelGridSource, prepare,
 };
 
 fn r(value: i32) -> Real {
@@ -129,6 +130,23 @@ fn bench_point_classification(c: &mut Criterion) {
             hypersdf::SdfDualContouringReport::from_signed_grid_samples(black_box(
                 signed_grid_samples.clone(),
             ))
+        })
+    });
+    let gradient_grid = SdfPreviewGrid::new(p(-2, 0, 0), p(3, 1, 1), [3, 3, 2]);
+    c.bench_function("hypersdf gradient contouring projection report", |b| {
+        b.iter(|| {
+            dual_affine.gradient_contouring_report_from_grid(
+                black_box(gradient_grid.clone()),
+                SdfSamplingPrecision::F64,
+            )
+        })
+    });
+    let gradient_samples = dual_affine
+        .sample_grid_preview(gradient_grid.clone(), SdfSamplingPrecision::F64)
+        .expect("bench gradient contour samples");
+    c.bench_function("hypersdf gradient contouring signed-grid report", |b| {
+        b.iter(|| {
+            SdfGradientContourReport::from_signed_grid_samples(black_box(gradient_samples.clone()))
         })
     });
     c.bench_function("hypersdf glsl preview export", |b| {

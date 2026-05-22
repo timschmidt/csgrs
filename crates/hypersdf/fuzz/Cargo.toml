@@ -20,3 +20,10 @@ path = "fuzz_targets/dual_contouring.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "gradient_contouring"
+path = "fuzz_targets/gradient_contouring.rs"
+test = false
+doc = false
+bench = false

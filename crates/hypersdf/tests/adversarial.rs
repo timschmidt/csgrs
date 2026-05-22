@@ -2,15 +2,16 @@ use hyperlattice::{Matrix4, Vector3};
 use hyperlimit::{Plane3, Point3};
 use hyperreal::Real;
 use hypersdf::{
-    SdfBatchDispatch, SdfCellLocation, SdfCoordinate, SdfDomainStatus, SdfDualCellTopologyStatus,
-    SdfDualContouringBlocker, SdfDualContouringReport, SdfDualContouringSource,
-    SdfDualEdgeRootEvidence, SdfDualVertexPlacementStatus, SdfExpr, SdfFreshness,
-    SdfGradientStatus, SdfGridSamplingReport, SdfHandoffBlocker, SdfHandoffDomain,
-    SdfHandoffReadiness, SdfLipschitzStatus, SdfMetricStatus, SdfPointLocation, SdfPreviewGrid,
-    SdfPreviewSample, SdfProjectionProposal, SdfProjectionProposalKind, SdfProjectionReplayStatus,
-    SdfSampleTopologyStatus, SdfSamplingPrecision, SdfSamplingReport, SdfVoxelCellGrid,
-    SdfVoxelCoordinateSystem, SdfVoxelGridSource, SdfVoxelOccupancy, SdfVoxelRowOrder, prepare,
-    prepare_versioned,
+    SdfBatchDispatch, SdfCellLocation, SdfContourProjectionFilterStatus, SdfCoordinate,
+    SdfDomainStatus, SdfDualCellTopologyStatus, SdfDualContouringBlocker, SdfDualContouringReport,
+    SdfDualContouringSource, SdfDualEdgeRootEvidence, SdfDualVertexPlacementStatus, SdfExpr,
+    SdfFiniteDifferenceStencil, SdfFreshness, SdfGradientContourBlocker, SdfGradientContourReport,
+    SdfGradientContourSource, SdfGradientStatus, SdfGridSamplingReport, SdfHandoffBlocker,
+    SdfHandoffDomain, SdfHandoffReadiness, SdfLipschitzStatus, SdfMetricStatus, SdfPointLocation,
+    SdfPreviewGrid, SdfPreviewSample, SdfProjectionProposal, SdfProjectionProposalKind,
+    SdfProjectionReplayStatus, SdfSampleTopologyStatus, SdfSamplingPrecision, SdfSamplingReport,
+    SdfVoxelCellGrid, SdfVoxelCoordinateSystem, SdfVoxelGridSource, SdfVoxelOccupancy,
+    SdfVoxelRowOrder, prepare, prepare_versioned,
 };
 use proptest::prelude::*;
 
@@ -438,6 +439,27 @@ proptest! {
     }
 
     #[test]
+    fn generated_gradient_contouring_affine_plane_projects_inside_cell(offset in -12_i32..=12, span in 1_i32..=6) {
+        let sdf = prepare(SdfExpr::x().sub_expr(SdfExpr::constant(r(offset))));
+        let grid = SdfPreviewGrid::new(p(offset - span, -1, -1), p(span * 2, 2, 2), [2, 2, 2]);
+        let report = sdf
+            .gradient_contouring_report_from_grid(grid, SdfSamplingPrecision::F64)
+            .expect("valid generated gradient-contouring grid");
+
+        prop_assert!(report.is_self_consistent());
+        prop_assert!(!report.validation_handoff_ready);
+        prop_assert_eq!(report.active_cell_count, 1);
+        prop_assert_eq!(report.kept_projection_count, 1);
+        prop_assert!(report.blockers.contains(&SdfGradientContourBlocker::LossyGradientApproximation));
+        let projected = report.projections[0].projected_point.expect("kept projection");
+        prop_assert_eq!(projected[0], f64::from(offset));
+        prop_assert_eq!(
+            report.projections[0].filter_status,
+            SdfContourProjectionFilterStatus::KeptProposal
+        );
+    }
+
+    #[test]
     fn generated_coordinate_lipschitz_bound_is_one(a in -50_i32..=50, b in -50_i32..=50) {
         let min_x = a.min(b);
         let max_x = a.max(b);
@@ -745,6 +767,192 @@ fn dual_contouring_malformed_signed_grid_does_not_panic_or_claim_handoff() {
             .contains(&SdfDualContouringBlocker::InvalidSampleCount)
     );
     assert!(!report.is_self_consistent());
+}
+
+#[test]
+fn gradient_contouring_plane_reports_projected_sampled_candidates() {
+    let sdf = prepare(SdfExpr::x());
+    let grid = SdfPreviewGrid::new(p(-1, -1, -1), p(2, 2, 2), [2, 2, 2]);
+    let report = sdf
+        .gradient_contouring_report_from_grid(grid, SdfSamplingPrecision::F64)
+        .expect("valid gradient-contouring grid");
+
+    assert!(report.is_self_consistent());
+    assert_eq!(report.source, SdfGradientContourSource::PreparedSdfGrid);
+    assert!(!report.validation_handoff_ready);
+    assert!(
+        report
+            .blockers
+            .contains(&SdfGradientContourBlocker::LossyGradientApproximation)
+    );
+    assert_eq!(report.sample_count, 8);
+    assert_eq!(report.finite_gradient_count, 8);
+    assert_eq!(report.active_cell_count, 1);
+    assert_eq!(report.kept_projection_count, 1);
+    assert_eq!(report.rejected_projection_count, 0);
+    assert_eq!(
+        report.projections[0].filter_status,
+        SdfContourProjectionFilterStatus::KeptProposal
+    );
+    assert_eq!(
+        report.projections[0].averaged_gradient,
+        Some([1.0, 0.0, 0.0])
+    );
+    assert_eq!(report.projections[0].projected_point, Some([0.0, 0.0, 0.0]));
+    assert_eq!(
+        report.gradients[0].stencils,
+        [
+            SdfFiniteDifferenceStencil::Forward,
+            SdfFiniteDifferenceStencil::Forward,
+            SdfFiniteDifferenceStencil::Forward,
+        ]
+    );
+}
+
+#[test]
+fn gradient_contouring_connectivity_is_sampled_proposal_only() {
+    let sdf = prepare(SdfExpr::x());
+    let grid = SdfPreviewGrid::new(p(-2, 0, 0), p(3, 1, 1), [3, 3, 2]);
+    let report = sdf
+        .gradient_contouring_report_from_grid(grid, SdfSamplingPrecision::F64)
+        .expect("valid connected gradient-contouring grid");
+
+    assert!(report.is_self_consistent());
+    assert_eq!(report.active_cell_count, 2);
+    assert_eq!(report.kept_projection_count, 2);
+    assert_eq!(report.connectivity.len(), 1);
+    assert_eq!(report.connectivity[0].axis, 1);
+    assert_eq!(report.connectivity[0].face_crossing_count, 2);
+    assert_eq!(report.connectivity_component_count, 1);
+    assert!(!report.validation_handoff_ready);
+    assert!(
+        report
+            .blockers
+            .contains(&SdfGradientContourBlocker::ConnectivityProposalOnly)
+    );
+}
+
+#[test]
+fn gradient_contouring_zero_touch_is_filtered_before_projection() {
+    let sdf = prepare(SdfExpr::x());
+    let grid = SdfPreviewGrid::new(p(0, -1, -1), p(1, 2, 2), [2, 2, 2]);
+    let report = sdf
+        .gradient_contouring_report_from_grid(grid, SdfSamplingPrecision::F64)
+        .expect("valid zero-touch gradient-contouring grid");
+
+    assert!(report.is_self_consistent());
+    assert_eq!(report.active_cell_count, 1);
+    assert_eq!(report.kept_projection_count, 0);
+    assert_eq!(report.rejected_projection_count, 1);
+    assert_eq!(
+        report.projections[0].filter_status,
+        SdfContourProjectionFilterStatus::DegenerateZeroTouch
+    );
+    assert!(
+        report
+            .blockers
+            .contains(&SdfGradientContourBlocker::DegenerateZeroTouch)
+    );
+}
+
+#[test]
+fn gradient_contouring_external_signed_grid_remains_lossy() {
+    let sdf = prepare(SdfExpr::x());
+    let grid = SdfPreviewGrid::new(p(-1, -1, -1), p(2, 2, 2), [2, 2, 2]);
+    let samples = sdf
+        .sample_grid_preview(grid, SdfSamplingPrecision::F64)
+        .expect("valid sampled grid");
+    let report = SdfGradientContourReport::from_signed_grid_samples(samples);
+
+    assert!(report.is_self_consistent());
+    assert_eq!(report.source, SdfGradientContourSource::ExternalSignedGrid);
+    assert_eq!(report.kept_projection_count, 1);
+    assert!(!report.validation_handoff_ready);
+    assert!(
+        report
+            .blockers
+            .contains(&SdfGradientContourBlocker::LossyGradientApproximation)
+    );
+}
+
+#[test]
+fn gradient_contouring_reports_nonfinite_samples_and_bad_steps() {
+    let invalid = prepare(SdfExpr::sphere(p(0, 0, 0), r(-1)));
+    let grid = SdfPreviewGrid::new(p(-1, -1, -1), p(2, 2, 2), [2, 2, 2]);
+    let nonfinite = invalid
+        .gradient_contouring_report_from_grid(grid, SdfSamplingPrecision::F64)
+        .expect("valid grid with invalid SDF values");
+
+    assert!(nonfinite.is_self_consistent());
+    assert_eq!(nonfinite.non_finite_sample_count, 8);
+    assert!(
+        nonfinite
+            .blockers
+            .contains(&SdfGradientContourBlocker::NonFinitePrimitiveSample)
+    );
+    assert!(
+        nonfinite
+            .blockers
+            .contains(&SdfGradientContourBlocker::UnknownSampleSign)
+    );
+
+    let samples = SdfSamplingReport {
+        precision: SdfSamplingPrecision::F64,
+        metric_status: SdfMetricStatus::SampledApproximation,
+        topology_status: SdfSampleTopologyStatus::PreviewOnly,
+        freshness: SdfFreshness::Unversioned,
+        sample_count: 8,
+        non_finite_count: 0,
+        negative_count: 4,
+        zero_count: 0,
+        positive_count: 4,
+        unknown_sign_count: 0,
+        samples: vec![
+            SdfPreviewSample {
+                point: p(0, 0, 0),
+                value: Some(-1.0),
+            },
+            SdfPreviewSample {
+                point: p(0, 0, 0),
+                value: Some(1.0),
+            },
+            SdfPreviewSample {
+                point: p(0, 0, 0),
+                value: Some(-1.0),
+            },
+            SdfPreviewSample {
+                point: p(0, 0, 0),
+                value: Some(1.0),
+            },
+            SdfPreviewSample {
+                point: p(0, 0, 0),
+                value: Some(-1.0),
+            },
+            SdfPreviewSample {
+                point: p(0, 0, 0),
+                value: Some(1.0),
+            },
+            SdfPreviewSample {
+                point: p(0, 0, 0),
+                value: Some(-1.0),
+            },
+            SdfPreviewSample {
+                point: p(0, 0, 0),
+                value: Some(1.0),
+            },
+        ],
+    };
+    let bad_step = SdfGradientContourReport::from_signed_grid_samples(SdfGridSamplingReport {
+        grid: SdfPreviewGrid::new(p(0, 0, 0), p(0, 1, 1), [2, 2, 2]),
+        samples,
+    });
+
+    assert!(!bad_step.validation_handoff_ready);
+    assert!(
+        bad_step
+            .blockers
+            .contains(&SdfGradientContourBlocker::NonFiniteOrZeroStep)
+    );
 }
 
 #[test]

@@ -24,6 +24,9 @@ use crate::facts::SdfFacts;
 use crate::gradient::{
     SdfGradientReport, SdfNormalReport, gradient_expr_point, normal_from_gradient_report,
 };
+use crate::gradient_contour::{
+    SdfGradientContourReport, gradient_contour_report_from_prepared_grid,
+};
 use crate::handoff::SdfVoxelHandoffReport;
 use crate::interval::{SdfIntervalReport, interval_expr_cell};
 use crate::lipschitz::{SdfLipschitzReport, lipschitz_expr_cell};
@@ -370,6 +373,23 @@ impl PreparedSdf {
     ) -> Result<SdfDualContouringReport, SdfGridSamplingError> {
         self.sample_grid_preview(grid, precision)
             .map(|samples| dual_contouring_report_from_exact_sdf(&self.expr, samples))
+    }
+
+    /// Build an approximated-gradient contouring proposal from a sampled grid.
+    ///
+    /// This route records finite-difference gradients, one-step projected
+    /// surface candidates, primitive filters, and sampled face connectivity.
+    /// The data is useful to downstream meshing algorithms, but it is not exact
+    /// topology evidence. The report therefore keeps lossy-gradient and
+    /// connectivity blockers visible, following Yap's EGC requirement that
+    /// sampled views do not silently become accepted geometry.
+    pub fn gradient_contouring_report_from_grid(
+        &self,
+        grid: SdfPreviewGrid,
+        precision: SdfSamplingPrecision,
+    ) -> Result<SdfGradientContourReport, SdfGridSamplingError> {
+        self.sample_grid_preview(grid, precision)
+            .map(gradient_contour_report_from_prepared_grid)
     }
 
     /// Export a preview-only GLSL scalar function.

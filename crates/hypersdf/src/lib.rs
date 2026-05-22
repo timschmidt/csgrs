@@ -13,6 +13,7 @@ mod dual_contour;
 mod expr;
 mod facts;
 mod gradient;
+mod gradient_contour;
 mod handoff;
 #[cfg(feature = "hypervoxel-adapter")]
 mod hypervoxel_adapter;
@@ -43,6 +44,12 @@ pub use dual_contour::{
 pub use expr::{SdfCoordinate, SdfExpr};
 pub use facts::SdfFacts;
 pub use gradient::{SdfGradientReport, SdfNormalReport};
+pub use gradient_contour::{
+    SdfApproxGradientRecord, SdfContourConnectivityEdge, SdfContourConnectivityStatus,
+    SdfContourProjectionFilterStatus, SdfFiniteDifferenceStencil, SdfGradientContourBlocker,
+    SdfGradientContourReport, SdfGradientContourSampleRecord, SdfGradientContourSampleSign,
+    SdfGradientContourSource, SdfProjectedSurfacePointRecord,
+};
 pub use handoff::SdfVoxelHandoffReport;
 #[cfg(feature = "hypervoxel-adapter")]
 pub use hypervoxel_adapter::{SdfHypervoxelAdapterError, continuous_field_manifest_from_sdf};
