@@ -10391,6 +10391,83 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
         )
         .is_none()
     );
+    let partial_height_nonconvex = hypermesh::exact::arrange_coplanar_surface_multi_difference(
+        &wide_left,
+        &partial_height_cutters,
+    )
+    .expect("orthogonal no-hole replay should retain partial-height multi-cutter loops");
+    partial_height_nonconvex.validate().unwrap();
+    partial_height_nonconvex
+        .validate_difference_against_sources(&wide_left, &partial_height_cutters)
+        .unwrap();
+    assert_eq!(partial_height_nonconvex.polygons.len(), 3);
+    assert!(partial_height_nonconvex.polygons.iter().any(|polygon| {
+        polygon.len() > 4
+            && polygon
+                .iter()
+                .any(|point| real_eq(&point.x, &ExactReal::from(1)))
+            && polygon
+                .iter()
+                .any(|point| real_eq(&point.y, &ExactReal::from(1)))
+    }));
+    let partial_height_preflight = hypermesh::exact::preflight_boolean_exact(
+        &wide_left,
+        &partial_height_cutters,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    partial_height_preflight.validate().unwrap();
+    partial_height_preflight
+        .validate_against_sources(&wide_left, &partial_height_cutters)
+        .unwrap();
+    assert_eq!(
+        partial_height_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
+    );
+    let partial_height_result = hypermesh::exact::boolean_exact(
+        &wide_left,
+        &partial_height_cutters,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    partial_height_result
+        .validate_operation_against_sources(
+            &wide_left,
+            &partial_height_cutters,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        partial_height_result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfaceMultiDifference
+        }
+    );
+
+    let contained_hole_cutters = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            1, 0, 0, 2, 0, 0, 2, 1, 0, 1, 1, 0, //
+            4, -1, 0, 5, -1, 0, 5, 3, 0, 4, 3, 0, //
+            11, 1, 0, 12, 1, 0, 12, 2, 0, 11, 2, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7, //
+            8, 9, 10, 8, 10, 11,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_multi_difference(
+            &wide_left,
+            &contained_hole_cutters,
+        )
+        .is_none()
+    );
 
     let preflight = hypermesh::exact::preflight_boolean_exact(
         &left,

@@ -2078,6 +2078,56 @@ fn exercise_component_coplanar_difference() {
         arrange_coplanar_convex_surface_multi_difference(&wide_left, &partial_height_cutters)
             .is_none()
     );
+    let partial_height_nonconvex =
+        arrange_coplanar_surface_multi_difference(&wide_left, &partial_height_cutters)
+            .expect("partial-height multi-cutter should retain no-hole nonconvex loops");
+    partial_height_nonconvex.validate().unwrap();
+    partial_height_nonconvex
+        .validate_difference_against_sources(&wide_left, &partial_height_cutters)
+        .unwrap();
+    assert_eq!(partial_height_nonconvex.polygons.len(), 3);
+    let partial_height_preflight = preflight_boolean_exact(
+        &wide_left,
+        &partial_height_cutters,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("partial-height multi-cutter preflight should classify shortcut");
+    partial_height_preflight.validate().unwrap();
+    assert_eq!(
+        partial_height_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
+    );
+    let partial_height_result = hypermesh::exact::boolean_exact(
+        &wide_left,
+        &partial_height_cutters,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("partial-height multi-cutter boolean should materialize");
+    partial_height_result.validate().unwrap();
+    assert_eq!(
+        partial_height_result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfaceMultiDifference
+        }
+    );
+    let contained_hole_cutters = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            1, 0, 0, 2, 0, 0, 2, 1, 0, 1, 1, 0, //
+            4, -1, 0, 5, -1, 0, 5, 3, 0, 4, 3, 0, //
+            11, 1, 0, 12, 1, 0, 12, 2, 0, 11, 2, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7, //
+            8, 9, 10, 8, 10, 11,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("hole-producing partial-height cutter fixture must import");
+    assert!(
+        arrange_coplanar_surface_multi_difference(&wide_left, &contained_hole_cutters).is_none()
+    );
 
     let holed_left = ExactMesh::from_i64_triangles_with_policy(
         &[

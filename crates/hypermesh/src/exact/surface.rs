@@ -3397,16 +3397,22 @@ fn arrange_coplanar_convex_surface_multi_difference_convex(
 /// separation from every right component. A partially cut component replays
 /// through the existing convex difference certificates when there is one
 /// cutter, or through the bounded rectangle-slab certificate when several
-/// disjoint cutters span the component on one projected axis. Other
-/// multi-cutter cases are accepted only when each sequential cutter still
-/// replays through the existing exact convex difference certificates and
-/// emits convex remnants. Boundary-only contacts, holes, nonconvex components,
-/// and nonconvex multi-cutter outputs still return `None` so the general
-/// arrangement layer remains explicit. This follows Yap, "Towards Exact
-/// Geometric Computation,"
+/// disjoint cutters span the component on one projected axis. Other rectangular
+/// multi-cutter cases can replay through exact orthogonal cells when no output
+/// component has a retained hole; the convex artifact still accepts only
+/// strictly convex loops, so nonconvex no-hole output is left to
+/// [`CoplanarSurfaceMultiArrangement`]. Remaining multi-cutter cases are
+/// accepted only when each sequential cutter still replays through the existing
+/// exact convex difference certificates and emits convex remnants.
+/// Point-only boundary contacts, strict interior holes, and overlapping
+/// nonconvex loops still return `None` so the general arrangement layer remains
+/// explicit. This follows Yap, "Towards Exact Geometric Computation,"
 /// *Computational Geometry* 7.1-2 (1997): the shortcut promotes output loops
 /// only from retained exact component, containment, intersection, and area
-/// evidence, never from sampled polygon surgery.
+/// evidence, never from sampled polygon surgery. The orthogonal no-hole path is
+/// the bounded cell arrangement of de Berg, Cheong, van Kreveld, and Overmars,
+/// *Computational Geometry: Algorithms and Applications*, 3rd ed. (2008),
+/// Chapter 2, consumed only after exact retained grid occupancy is known.
 #[cfg(feature = "exact-triangulation")]
 fn arrange_coplanar_convex_surface_component_difference(
     left: &ExactMesh,
@@ -3481,7 +3487,18 @@ fn arrange_coplanar_convex_surface_component_difference(
             }
             if polygon_in_closed_convex_polygon(&right_component.hull, &component.hull, projection)?
             {
-                return None;
+                if !convex_polygons_touch_on_positive_boundary(
+                    &component.hull,
+                    &right_component.hull,
+                    projection,
+                )? {
+                    return None;
+                }
+                if drop_component {
+                    return None;
+                }
+                cutter_indices.push(right_index);
+                continue;
             }
 
             match convex_union_component_relation(
@@ -3565,12 +3582,15 @@ fn arrange_coplanar_convex_surface_component_difference(
 /// The only new acceptance is at the retained-output boundary: when a valid
 /// result contains two or more disjoint simple loops and at least one loop is
 /// nonconvex, the loops are kept in [`CoplanarSurfaceMultiArrangement`] rather
-/// than rejected by the convex multi-component certificate. Hole-producing
-/// cuts, boundary-only contacts, overlapping loops, and self-intersections
-/// remain explicit planar-arrangement work. This follows Yap, "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7.1-2 (1997): the system
-/// may broaden the object model only when the exact construction history and
-/// output topology are both retained.
+/// than rejected by the convex multi-component certificate. Rectangular
+/// multi-cutters may also enter through exact no-hole orthogonal cell replay,
+/// including boundary-attached partial-height cutters that would otherwise
+/// require nonconvex loop surgery. Hole-producing cuts, point-only boundary
+/// contacts, overlapping loops, and self-intersections remain explicit
+/// planar-arrangement work. This follows Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997): the system may broaden
+/// the object model only when the exact construction history and output
+/// topology are both retained.
 #[cfg(feature = "exact-triangulation")]
 pub fn arrange_coplanar_surface_multi_difference(
     left: &ExactMesh,
@@ -3639,7 +3659,18 @@ pub fn arrange_coplanar_surface_multi_difference(
             }
             if polygon_in_closed_convex_polygon(&right_component.hull, &component.hull, projection)?
             {
-                return None;
+                if !convex_polygons_touch_on_positive_boundary(
+                    &component.hull,
+                    &right_component.hull,
+                    projection,
+                )? {
+                    return None;
+                }
+                if drop_component {
+                    return None;
+                }
+                cutter_indices.push(right_index);
+                continue;
             }
 
             match convex_union_component_relation(
@@ -3888,13 +3919,16 @@ pub fn arrange_coplanar_surface_cutter_hole_contact_difference(
 /// certificates to replay the emitted remnant loops. A cutter contained in a
 /// remnant would create a hole, and a cutter whose result is nonconvex cannot
 /// be represented by the convex component output model, so both cases stay
-/// explicit planar-arrangement work. This is Yap's retained-computation model
-/// applied to a bounded Weiler-Atherton style traversal: each promoted loop is
-/// produced by an already audited exact arrangement fragment, not by a sampled
-/// polygon clip. See Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997), and Weiler and Atherton, "Hidden
-/// Surface Removal Using Polygon Area Sorting," *SIGGRAPH Computer Graphics*
-/// 11.2 (1977).
+/// explicit planar-arrangement work unless the orthogonal-cell replay proves a
+/// set of no-hole simple loops. This is Yap's retained-computation model
+/// applied to bounded Weiler-Atherton and orthogonal-cell traversals: each
+/// promoted loop is produced by an already audited exact arrangement fragment,
+/// not by a sampled polygon clip. See Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997), Weiler and Atherton,
+/// "Hidden Surface Removal Using Polygon Area Sorting," *SIGGRAPH Computer
+/// Graphics* 11.2 (1977), and de Berg, Cheong, van Kreveld, and Overmars,
+/// *Computational Geometry: Algorithms and Applications*, 3rd ed. (2008),
+/// Chapter 2.
 #[cfg(feature = "exact-triangulation")]
 fn materialize_component_multi_cutter_difference(
     component: &ConvexUnionComponent,
@@ -3913,6 +3947,13 @@ fn materialize_component_multi_cutter_difference(
     if let Some(rectangle_remnants) =
         materialize_rectangle_multi_cutter_difference(&component.hull, &cutters, projection)
     {
+        return Some(rectangle_remnants);
+    }
+    if let Some(rectangle_remnants) = materialize_rectangle_multi_cutter_no_hole_cell_difference(
+        component,
+        cutter_indices,
+        right_components,
+    ) {
         return Some(rectangle_remnants);
     }
 
@@ -3960,6 +4001,90 @@ fn materialize_component_multi_cutter_difference(
     }
 
     Some(remnants)
+}
+
+/// Replay rectangular multi-cutter remnants through exact orthogonal cells.
+///
+/// This is a bounded bridge from the general rectangular cell materializer back
+/// to the simple-loop surface artifact. The cell arrangement may produce
+/// holes, but [`CoplanarSurfaceMultiArrangement`] cannot retain ring topology;
+/// those cases are rejected here and left to
+/// [`crate::exact::orthogonal_surface`]. Accepting only hole-free components
+/// keeps the output model honest while still materializing nonconvex
+/// partial-height multi-cutter remnants from exact grid occupancy. This is the
+/// orthogonal arrangement model of de Berg, Cheong, van Kreveld, and Overmars,
+/// *Computational Geometry: Algorithms and Applications*, 3rd ed. (2008),
+/// Chapter 2, constrained by Yap's retained exact-object rule from "Towards
+/// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+#[cfg(feature = "exact-triangulation")]
+fn materialize_rectangle_multi_cutter_no_hole_cell_difference(
+    component: &ConvexUnionComponent,
+    cutter_indices: &[usize],
+    right_components: &[ConvexUnionComponent],
+) -> Option<Vec<Vec<Point3>>> {
+    projected_axis_aligned_rectangle(&component.hull, component.projection)?;
+    if !cutter_indices.iter().all(|&index| {
+        projected_axis_aligned_rectangle(&right_components[index].hull, component.projection)
+            .is_some()
+    }) {
+        return None;
+    }
+
+    let cutters = merge_component_meshes(
+        cutter_indices
+            .iter()
+            .map(|&index| &right_components[index].mesh),
+        "exact coplanar rectangular multi-cutter source",
+    )?;
+    let arrangement = super::orthogonal_surface::arrange_coplanar_orthogonal_surface_difference(
+        &component.mesh,
+        &cutters,
+    )?;
+    if arrangement
+        .components
+        .iter()
+        .any(|component| !component.holes.is_empty())
+    {
+        return None;
+    }
+    let polygons = arrangement
+        .components
+        .into_iter()
+        .map(|component| component.outer)
+        .collect::<Vec<_>>();
+    if polygons.is_empty() {
+        None
+    } else {
+        Some(polygons)
+    }
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn merge_component_meshes<'a>(
+    meshes: impl IntoIterator<Item = &'a ExactMesh>,
+    label: &'static str,
+) -> Option<ExactMesh> {
+    let mut vertices = Vec::new();
+    let mut triangles = Vec::new();
+    for mesh in meshes {
+        let offset = vertices.len();
+        vertices.extend(mesh.vertices().iter().cloned());
+        triangles.extend(
+            mesh.triangles()
+                .iter()
+                .map(|triangle| Triangle(triangle.0.map(|index| index + offset))),
+        );
+    }
+    if triangles.is_empty() {
+        return None;
+    }
+    ExactMesh::new_with_policy(
+        vertices,
+        triangles,
+        SourceProvenance::exact(label),
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .ok()
 }
 
 /// Materialize a bounded multi-cutter rectangle difference.
