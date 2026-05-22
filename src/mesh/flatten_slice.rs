@@ -2,18 +2,17 @@
 //! or slicing a `Mesh` with an arbitrary `Plane` into a `Profile`
 
 use crate::float_types::{
-    Real, hpoints_within_tolerance, hreal_from_f64, hreal_gt_f64, hxy_distance,
-    hxy_orientation_sign, tolerance,
+    Real, hpoints_exactly_equal, hreal_f64s_exactly_equal, hxy_orientation_sign,
 };
 use crate::mesh::Mesh;
 use crate::mesh::plane::{BACK, COPLANAR, FRONT, Plane, SPANNING};
 use crate::sketch::Profile;
 use crate::vertex::Vertex;
-use hashbrown::HashMap;
 use hypercurve::{
     BooleanOp, Classification, Contour2, CurvePolicy, CurveString2, FillRule, Region2,
 };
 use hyperreal::RealSign;
+#[cfg(test)]
 use nalgebra::Point3;
 use std::fmt::Debug;
 
@@ -95,11 +94,11 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// - **Open polygons** (poly-lines) if the plane cuts through edges,
     /// - Potentially **closed loops** if the intersection lines form a cycle.
     ///
-    /// Loop closure uses the shared hyperreal point predicate, promoting
+    /// Loop closure uses the shared exact hyperreal point predicate, promoting
     /// boundary `Point3<f64>` endpoints into `hyperlattice::Vector3` before
-    /// testing squared distance. This keeps slice topology decisions aligned
-    /// with Yap's exact-geometric-computation model, "Towards Exact Geometric
-    /// Computation," *Computational Geometry* 7(1-2), 1997
+    /// testing squared distance for exact zero. This keeps slice topology
+    /// decisions aligned with Yap's exact-geometric-computation model,
+    /// "Towards Exact Geometric Computation," *Computational Geometry* 7(1-2), 1997
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     /// Open intersection chains are promoted directly to native
     /// `hypercurve::CurveString2` wires, so finite projected points are no
@@ -145,12 +144,8 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                 continue;
             }
 
-            // Check loop closure with the shared hyperreal point predicate.
-            if hpoints_within_tolerance(
-                &chain[0].position,
-                &chain[n - 1].position,
-                crate::float_types::tolerance(),
-            ) {
+            // Check loop closure with the shared exact hyperreal point predicate.
+            if hpoints_exactly_equal(&chain[0].position, &chain[n - 1].position) {
                 // Force them to be exactly the same, closing the line
                 chain[n - 1] = chain[0];
             }
@@ -163,7 +158,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             let closed = points
                 .first()
                 .zip(points.last())
-                .is_some_and(|(first, last)| xy_points_within_tolerance(*first, *last));
+                .is_some_and(|(first, last)| xy_points_exactly_equal(*first, *last));
 
             if closed {
                 if let Ok(contour) = Contour2::from_finite_ring(&points) {
@@ -268,70 +263,24 @@ fn ring_orientation_sign(ring: &[[Real; 2]]) -> Option<RealSign> {
     )
 }
 
-/// Test projected XY loop closure with hyperlattice distance.
-fn xy_points_within_tolerance(first: [Real; 2], last: [Real; 2]) -> bool {
-    hxy_distance((first[0], first[1]), (last[0], last[1])).is_some_and(|distance| {
-        hreal_from_f64(distance)
-            .ok()
-            .is_some_and(|distance| !hreal_gt_f64(&distance, tolerance()))
-    })
-}
-
-// Build a small helper for hashing endpoints:
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-struct EndKey(i64, i64, i64);
-
-/// Round a floating coordinate to a tolerance-scaled grid for endpoint hashing.
-///
-/// The hash is only a candidate bucket: actual endpoint identity is still
-/// verified by [`hpoints_within_tolerance`], which promotes coordinates into
-/// `hyperlattice::Vector3`/`hyperreal::Real`. Using the crate tolerance for the
-/// coarse grid keeps this acceleration structure aligned with the exact-aware
-/// topology predicate, following Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7(1-2), 1997
-/// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-fn quantize(x: Real) -> i64 {
-    (x / tolerance()).round() as i64
-}
-
-/// Convert a Vertex's position to an EndKey
-fn make_key(position: &Point3<Real>) -> EndKey {
-    EndKey(
-        quantize(position.x),
-        quantize(position.y),
-        quantize(position.z),
-    )
-}
-
-fn neighboring_keys(key: EndKey) -> impl Iterator<Item = EndKey> {
-    (-1..=1).flat_map(move |dx| {
-        (-1..=1).flat_map(move |dy| {
-            (-1..=1).map(move |dz| EndKey(key.0 + dx, key.1 + dy, key.2 + dz))
-        })
-    })
+/// Test projected XY loop closure with exact hyperreal scalar equality.
+fn xy_points_exactly_equal(first: [Real; 2], last: [Real; 2]) -> bool {
+    hreal_f64s_exactly_equal(first[0], last[0]) && hreal_f64s_exactly_equal(first[1], last[1])
 }
 
 /// Take a list of intersection edges `[Vertex;2]` and merge them into polylines.
 /// Each edge is a line segment between two 3D points.  We want to "knit" them together by
-/// matching endpoints that lie within tolerance of each other, forming either open or closed chains.
+/// matching endpoints whose promoted coordinates are exactly equal, forming
+/// either open or closed chains.
+///
+/// The direct scan is intentionally simple while the mesh carrier is still a
+/// finite boundary type: endpoint identity is owned by `hyperlattice` /
+/// `hyperreal`, not by a tolerance grid or `f64` hash. This follows Yap,
+/// "Towards Exact Geometric Computation," *Computational Geometry* 7(1-2), 1997
+/// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
 ///
 /// This returns a `Vec` of polylines, where each polyline is a `Vec<Vertex>`.
 fn unify_intersection_edges(edges: &[[Vertex; 2]]) -> Vec<Vec<Vertex>> {
-    // We will store adjacency by a "key" that identifies an endpoint up to tolerance,
-    // then link edges that share the same key.
-
-    // Adjacency map: key -> list of (edge_index, is_start_or_end)
-    // We'll store "(edge_idx, which_end)" as which_end = 0 or 1 for edges[edge_idx][0/1].
-    let mut adjacency: HashMap<EndKey, Vec<(usize, usize)>> = HashMap::new();
-
-    // Collect all endpoints
-    for (i, edge) in edges.iter().enumerate() {
-        for (end_idx, v) in edge.iter().enumerate() {
-            let k = make_key(&v.position);
-            adjacency.entry(k).or_default().push((i, end_idx));
-        }
-    }
-
     // We'll keep track of which edges have been “visited” in the final polylines.
     let mut visited = vec![false; edges.len()];
 
@@ -351,13 +300,13 @@ fn unify_intersection_edges(edges: &[[Vertex; 2]]) -> Vec<Vec<Vertex>> {
         let mut chain = vec![e[0], e[1]];
 
         // We walk "forward" from edge[1] if possible
-        extend_chain_forward(&mut chain, &adjacency, &mut visited, edges);
+        extend_chain_forward(&mut chain, &mut visited, edges);
 
         // We also might walk "backward" from edge[0], but
         // we can do that by reversing the chain at the end if needed. Alternatively,
         // we can do a separate pass.  Let's do it in place for clarity:
         chain.reverse();
-        extend_chain_forward(&mut chain, &adjacency, &mut visited, edges);
+        extend_chain_forward(&mut chain, &mut visited, edges);
         // Then reverse back so it goes in the original direction
         chain.reverse();
 
@@ -369,34 +318,20 @@ fn unify_intersection_edges(edges: &[[Vertex; 2]]) -> Vec<Vec<Vertex>> {
 
 /// Extends a chain "forward" by repeatedly finding any unvisited edge that starts
 /// at the chain's current end vertex.
-fn extend_chain_forward(
-    chain: &mut Vec<Vertex>,
-    adjacency: &HashMap<EndKey, Vec<(usize, usize)>>,
-    visited: &mut [bool],
-    edges: &[[Vertex; 2]],
-) {
+fn extend_chain_forward(chain: &mut Vec<Vertex>, visited: &mut [bool], edges: &[[Vertex; 2]]) {
     loop {
         // The chain's current end point:
         let last_v = chain.last().unwrap();
-        let key = make_key(&last_v.position);
 
         // Among these candidates, we want one whose "other endpoint" we can follow
         // and is not visited yet.
         let mut found_next = None;
-        'candidate_search: for candidate_key in neighboring_keys(key) {
-            let Some(candidates) = adjacency.get(&candidate_key) else {
+        'candidate_search: for (edge_idx, edge) in edges.iter().enumerate() {
+            if visited[edge_idx] {
                 continue;
-            };
-
-            for &(edge_idx, end_idx) in candidates {
-                if visited[edge_idx] {
-                    continue;
-                }
-                if !hpoints_within_tolerance(
-                    &last_v.position,
-                    &edges[edge_idx][end_idx].position,
-                    tolerance(),
-                ) {
+            }
+            for end_idx in 0..=1 {
+                if !hpoints_exactly_equal(&last_v.position, &edge[end_idx].position) {
                     continue;
                 }
 
@@ -404,7 +339,7 @@ fn extend_chain_forward(
                 // edges[edge_idx][1-end_idx]. We want that other end to
                 // continue the chain.
                 let other_end_idx = 1 - end_idx;
-                let next_vertex = &edges[edge_idx][other_end_idx];
+                let next_vertex = &edge[other_end_idx];
 
                 // Mark visited
                 visited[edge_idx] = true;
@@ -430,26 +365,29 @@ mod tests {
     use nalgebra::Vector3;
 
     #[test]
-    fn intersection_edge_knitting_uses_hyperreal_endpoint_predicate() {
+    fn intersection_edge_knitting_uses_exact_hyperreal_endpoint_predicate() {
         let z = Vector3::z();
         let edge_a = [
             Vertex::new(Point3::new(0.0, 0.0, 0.0), z),
             Vertex::new(Point3::new(1.0, 0.0, 0.0), z),
         ];
-        let edge_b = [
-            Vertex::new(Point3::new(1.0 + tolerance() * 0.25, 0.0, 0.0), z),
+        let exact_edge_b = [
+            Vertex::new(Point3::new(1.0, 0.0, 0.0), z),
+            Vertex::new(Point3::new(2.0, 0.0, 0.0), z),
+        ];
+        let near_edge_b = [
+            Vertex::new(Point3::new(1.0 + 1.0e-12, 0.0, 0.0), z),
             Vertex::new(Point3::new(2.0, 0.0, 0.0), z),
         ];
 
-        let chains = unify_intersection_edges(&[edge_a, edge_b]);
+        let exact_chains = unify_intersection_edges(&[edge_a, exact_edge_b]);
+        assert_eq!(exact_chains.len(), 1);
+        assert_eq!(exact_chains[0].len(), 3);
+        assert_eq!(exact_chains[0][1].position, edge_a[1].position);
+        assert_eq!(exact_chains[0][2].position, exact_edge_b[1].position);
 
-        assert_eq!(chains.len(), 1);
-        assert_eq!(chains[0].len(), 3);
-        assert!(hpoints_within_tolerance(
-            &chains[0][1].position,
-            &edge_a[1].position,
-            tolerance()
-        ));
-        assert_eq!(chains[0][2].position, edge_b[1].position);
+        let near_chains = unify_intersection_edges(&[edge_a, near_edge_b]);
+        assert_eq!(near_chains.len(), 2);
+        assert!(near_chains.iter().all(|chain| chain.len() == 2));
     }
 }

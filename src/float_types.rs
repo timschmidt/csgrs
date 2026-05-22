@@ -201,13 +201,7 @@ pub(crate) fn hxy_ring_orientation_sign(ring: &[[Real; 2]]) -> Option<RealSign> 
 /// is still evaluated in `hyperlattice::Vector2`/`hyperreal::Real`, following
 /// Yap's exact-geometric-computation split between primitive boundary data and
 /// exact-aware predicates (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-#[cfg(any(
-    test,
-    feature = "gerber-io",
-    feature = "mesh",
-    feature = "offset",
-    feature = "sketch"
-))]
+#[cfg(any(test, feature = "gerber-io", feature = "offset"))]
 pub(crate) fn hxy_distance(lhs: (Real, Real), rhs: (Real, Real)) -> Option<Real> {
     let lhs = hyperlattice::Vector2::try_from_f64_array([lhs.0, lhs.1]).ok()?;
     let rhs = hyperlattice::Vector2::try_from_f64_array([rhs.0, rhs.1]).ok()?;
@@ -560,35 +554,8 @@ pub(crate) fn hunit_quaternion(
     )))
 }
 
-/// Compare finite f64 boundary points by squared distance in hyperreal space.
-///
-/// This keeps tolerance predicates on the exact-aware side of the API boundary:
-/// public callers still pass `Point3<f64>`, while topology-sensitive code gets
-/// a `hyperlattice::Vector3` predicate that fails closed for non-finite inputs.
-/// That mirrors Yap's exact-geometric-computation boundary discipline
-/// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-pub(crate) fn hpoints_within_tolerance(
-    lhs: &Point3<Real>,
-    rhs: &Point3<Real>,
-    tolerance: Real,
-) -> bool {
-    let Some(tolerance_squared) = hpositive_boundary_scalar_squared(tolerance) else {
-        return false;
-    };
-
-    let Some(lhs) = hvector3_from_point3(lhs) else {
-        return false;
-    };
-    let Some(rhs) = hvector3_from_point3(rhs) else {
-        return false;
-    };
-
-    hreal_lt_hreal(&lhs.squared_distance(&rhs), &tolerance_squared)
-}
-
 /// Return whether two finite boundary points are exactly equal after promotion.
 ///
-/// This is the zero-tolerance counterpart to [`hpoints_within_tolerance`].
 /// Indexed topology should not merge distinct vertices merely because their
 /// primitive representatives are close; it should share rows only when the
 /// hyperreal squared distance refines to exact zero. This follows Yap,
@@ -1261,24 +1228,15 @@ mod tests {
     use nalgebra::Point3;
 
     #[test]
-    fn hpoints_within_tolerance_accepts_nearby_finite_points() {
-        let tolerance = 1e-6;
+    fn hpoints_exactly_equal_uses_hyperreal_identity() {
         let lhs = Point3::new(1.0, 2.0, 3.0);
-        let rhs = Point3::new(1.0 + tolerance * 0.25, 2.0, 3.0);
-
-        assert!(hpoints_within_tolerance(&lhs, &rhs, tolerance));
-    }
-
-    #[test]
-    fn hpoints_within_tolerance_rejects_distant_or_nonfinite_points() {
-        let tolerance = 1e-6;
-        let lhs = Point3::new(1.0, 2.0, 3.0);
-        let distant = Point3::new(1.0 + tolerance * 2.0, 2.0, 3.0);
+        let same = Point3::new(1.0, 2.0, 3.0);
+        let distant = Point3::new(1.0 + 1.0e-12, 2.0, 3.0);
         let nonfinite = Point3::new(f64::NAN, 2.0, 3.0);
 
-        assert!(!hpoints_within_tolerance(&lhs, &distant, tolerance));
-        assert!(!hpoints_within_tolerance(&lhs, &nonfinite, tolerance));
-        assert!(!hpoints_within_tolerance(&lhs, &lhs, 0.0));
+        assert!(hpoints_exactly_equal(&lhs, &same));
+        assert!(!hpoints_exactly_equal(&lhs, &distant));
+        assert!(!hpoints_exactly_equal(&lhs, &nonfinite));
     }
 
     #[test]
