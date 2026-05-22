@@ -389,6 +389,36 @@ pub enum SketchConstraintKind {
         /// Distance entity.
         distance: SketchEntityHandle,
     },
+    /// 2D line length equals a 2D point-to-line distance.
+    ///
+    /// Lowering emits `|dir(length_line)|^2 * |dir(distance_line)|^2 -
+    /// cross(point-start, dir(distance_line))^2 == 0`, avoiding division by
+    /// line length. Degenerate-line assumptions remain explicit domain
+    /// obligations, following Yap, "Towards Exact Geometric Computation"
+    /// (1997): construction convenience is separate from certified predicates.
+    EqualLengthPointLineDistance2 {
+        /// Line whose length is compared.
+        length_line: SketchEntityHandle,
+        /// Point used by the point-line distance.
+        point: SketchEntityHandle,
+        /// Line used by the point-line distance.
+        distance_line: SketchEntityHandle,
+    },
+    /// Equality between two 2D point-to-line distances.
+    ///
+    /// Lowering cross-multiplies squared point-line distance numerators and
+    /// line squared norms, so exact replay does not need square roots,
+    /// divisions, or primitive-float tolerances.
+    EqualPointLineDistances2 {
+        /// First point entity.
+        a_point: SketchEntityHandle,
+        /// First line entity.
+        a_line: SketchEntityHandle,
+        /// Second point entity.
+        b_point: SketchEntityHandle,
+        /// Second line entity.
+        b_line: SketchEntityHandle,
+    },
     /// 2D circle/arc equal-radius relation.
     ///
     /// Lowering emits direct exact radius-parameter equality. Positive-radius
@@ -548,6 +578,10 @@ pub enum SketchResidualStrategy {
     SquaredLineLengthRatio,
     /// Squared 2D point-to-line distance equality.
     SquaredPointLineDistance,
+    /// Squared 2D line-length-to-point-line-distance equality.
+    SquaredLineLengthPointLineDistance,
+    /// Squared equality between two 2D point-line distances.
+    SquaredEqualPointLineDistances,
     /// Exact retained radius equality.
     RadiusEquality,
     /// Incidence represented as a squared-distance polynomial.
@@ -1071,6 +1105,31 @@ impl SketchSolveProblem {
         distance::point_line_distance2(self, name, point, line, distance).handle
     }
 
+    /// Add a retained relation equating a 2D line length to a point-line
+    /// distance.
+    pub fn add_equal_length_point_line_distance2(
+        &mut self,
+        name: impl Into<String>,
+        length_line: SketchEntityHandle,
+        point: SketchEntityHandle,
+        distance_line: SketchEntityHandle,
+    ) -> SketchConstraintHandle {
+        distance::equal_length_point_line_distance2(self, name, length_line, point, distance_line)
+            .handle
+    }
+
+    /// Add a retained equality between two 2D point-line distances.
+    pub fn add_equal_point_line_distances2(
+        &mut self,
+        name: impl Into<String>,
+        a_point: SketchEntityHandle,
+        a_line: SketchEntityHandle,
+        b_point: SketchEntityHandle,
+        b_line: SketchEntityHandle,
+    ) -> SketchConstraintHandle {
+        distance::equal_point_line_distances2(self, name, a_point, a_line, b_point, b_line).handle
+    }
+
     /// Add a retained 2D equal-radius relation for circles or circular arcs.
     pub fn add_equal_radius2(
         &mut self,
@@ -1585,6 +1644,54 @@ impl SketchSolveProblem {
                     SketchResidualStrategy::SquaredPointLineDistance,
                 );
             }
+            SketchConstraintKind::EqualLengthPointLineDistance2 {
+                length_line,
+                point,
+                distance_line,
+            } => {
+                // This is the algebraic proof package for SolveSpace's
+                // equal-line-length-to-point-line-distance relation. Yap
+                // (1997) keeps the division/square-root-free predicate as the
+                // acceptance boundary; degenerate-line preconditions stay
+                // reportable elsewhere.
+                let (Some(length_direction), Some((distance_numerator, distance_denominator))) = (
+                    self.line2_direction(length_line, constraint, rows),
+                    self.point_line_distance_squared_parts(point, distance_line, constraint, rows),
+                ) else {
+                    return;
+                };
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    constraint.name.clone(),
+                    squared_norm2(&length_direction) * distance_denominator - distance_numerator,
+                    SketchResidualStrategy::SquaredLineLengthPointLineDistance,
+                );
+            }
+            SketchConstraintKind::EqualPointLineDistances2 {
+                a_point,
+                a_line,
+                b_point,
+                b_line,
+            } => {
+                // Cross-multiplying squared distance forms keeps the proof
+                // exact and avoids deciding a square root during replay.
+                let (Some((a_numerator, a_denominator)), Some((b_numerator, b_denominator))) = (
+                    self.point_line_distance_squared_parts(a_point, a_line, constraint, rows),
+                    self.point_line_distance_squared_parts(b_point, b_line, constraint, rows),
+                ) else {
+                    return;
+                };
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    constraint.name.clone(),
+                    a_numerator * b_denominator - b_numerator * a_denominator,
+                    SketchResidualStrategy::SquaredEqualPointLineDistances,
+                );
+            }
             SketchConstraintKind::EqualRadius2 { a, b } => {
                 // Radius equality is exact scalar equality over retained
                 // circle/arc radius carriers. Positive-radius semantics remain
@@ -2059,6 +2166,27 @@ impl SketchSolveProblem {
             end.exprs[0].clone() - start.exprs[0].clone(),
             end.exprs[1].clone() - start.exprs[1].clone(),
         ])
+    }
+
+    fn point_line_distance_squared_parts(
+        &self,
+        point: SketchEntityHandle,
+        line: SketchEntityHandle,
+        constraint: &SketchConstraint,
+        rows: &mut Vec<SketchGeneratedRow>,
+    ) -> Option<(Expr, Expr)> {
+        let point = self.point2_coordinates(point, constraint, rows)?;
+        let (start, end) = self.line2_points(line, constraint, rows)?;
+        let direction = [
+            end.exprs[0].clone() - start.exprs[0].clone(),
+            end.exprs[1].clone() - start.exprs[1].clone(),
+        ];
+        let point_delta = [
+            point.exprs[0].clone() - start.exprs[0].clone(),
+            point.exprs[1].clone() - start.exprs[1].clone(),
+        ];
+        let cross = direction_cross2(&point_delta, &direction);
+        Some((cross.clone() * cross, squared_norm2(&direction)))
     }
 }
 

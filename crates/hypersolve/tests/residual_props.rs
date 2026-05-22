@@ -435,6 +435,90 @@ proptest! {
     }
 
     #[test]
+    fn sketch_equal_length_point_line_distance_rows_match_horizontal_offsets(
+        x0 in -8_i16..=8,
+        y0 in -8_i16..=8,
+        length in 0_i16..=12,
+        px in -8_i16..=8,
+    ) {
+        let x0 = i64::from(x0);
+        let y0 = i64::from(y0);
+        let length = i64::from(length);
+        let px = i64::from(px);
+        let mut sketch = SketchSolveProblem::new();
+        let length_start = sketch.add_point2d("length start", Real::from(0), Real::from(0));
+        let length_end = sketch.add_point2d("length end", Real::from(length), Real::from(0));
+        let line_start = sketch.add_point2d("line start", Real::from(x0), Real::from(y0));
+        let line_end = sketch.add_point2d("line end", Real::from(x0 + 5), Real::from(y0));
+        let point = sketch.add_point2d("point", Real::from(px), Real::from(y0 + length));
+        let length_line = sketch.add_line_segment2("length line", length_start, length_end);
+        let distance_line = sketch.add_line_segment2("distance line", line_start, line_end);
+        sketch.add_equal_length_point_line_distance2(
+            "length equals point-line",
+            length_line,
+            point,
+            distance_line,
+        );
+
+        let lowered = sketch.lower_to_problem();
+        let certification = certify_candidate(
+            &PreparedProblem::new(&lowered.problem),
+            &context_from_problem(&lowered.problem),
+        );
+
+        prop_assert_eq!(lowered.rows.len(), 1);
+        prop_assert_eq!(
+            lowered.rows[0].strategy,
+            Some(SketchResidualStrategy::SquaredLineLengthPointLineDistance)
+        );
+        prop_assert!(certification.all_satisfied());
+    }
+
+    #[test]
+    fn sketch_equal_point_line_distances_rows_match_horizontal_offsets(
+        y0 in -8_i16..=8,
+        y1 in -8_i16..=8,
+        x0 in -8_i16..=8,
+        x1 in -8_i16..=8,
+        offset in 0_i16..=12,
+    ) {
+        let y0 = i64::from(y0);
+        let y1 = i64::from(y1);
+        let x0 = i64::from(x0);
+        let x1 = i64::from(x1);
+        let offset = i64::from(offset);
+        let mut sketch = SketchSolveProblem::new();
+        let a0 = sketch.add_point2d("a0", Real::from(0), Real::from(y0));
+        let a1 = sketch.add_point2d("a1", Real::from(5), Real::from(y0));
+        let b0 = sketch.add_point2d("b0", Real::from(3), Real::from(y1));
+        let b1 = sketch.add_point2d("b1", Real::from(8), Real::from(y1));
+        let point_a = sketch.add_point2d("point a", Real::from(x0), Real::from(y0 + offset));
+        let point_b = sketch.add_point2d("point b", Real::from(x1), Real::from(y1 + offset));
+        let line_a = sketch.add_line_segment2("line a", a0, a1);
+        let line_b = sketch.add_line_segment2("line b", b0, b1);
+        sketch.add_equal_point_line_distances2(
+            "equal point-line distances",
+            point_a,
+            line_a,
+            point_b,
+            line_b,
+        );
+
+        let lowered = sketch.lower_to_problem();
+        let certification = certify_candidate(
+            &PreparedProblem::new(&lowered.problem),
+            &context_from_problem(&lowered.problem),
+        );
+
+        prop_assert_eq!(lowered.rows.len(), 1);
+        prop_assert_eq!(
+            lowered.rows[0].strategy,
+            Some(SketchResidualStrategy::SquaredEqualPointLineDistances)
+        );
+        prop_assert!(certification.all_satisfied());
+    }
+
+    #[test]
     fn sketch_line_parallel_rows_match_generated_integer_directions(
         ax in -8_i16..=8,
         ay in -8_i16..=8,

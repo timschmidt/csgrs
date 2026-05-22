@@ -224,6 +224,62 @@ pub mod distance {
         }
     }
 
+    /// Add a relation equating a 2D line length to a point-line distance.
+    ///
+    /// The lowered row uses the exact cross-multiplied squared form
+    /// `|dir(length_line)|^2*|dir(distance_line)|^2 - cross^2 == 0`.
+    /// This follows Yap's "Towards Exact Geometric Computation" (1997) by
+    /// retaining the semantic relation while making exact replay the trust
+    /// boundary.
+    pub fn equal_length_point_line_distance2(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        length_line: SketchEntityHandle,
+        point: SketchEntityHandle,
+        distance_line: SketchEntityHandle,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::EqualLengthPointLineDistance2 {
+            length_line,
+            point,
+            distance_line,
+        };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Distance,
+            strategy: SketchResidualStrategy::SquaredLineLengthPointLineDistance,
+            kind,
+        }
+    }
+
+    /// Add equality between two 2D point-line distances.
+    ///
+    /// Lowering cross-multiplies squared point-line distance expressions so
+    /// exact replay avoids square roots and division. Degenerate line carriers
+    /// remain explicit domain obligations instead of hidden epsilons.
+    pub fn equal_point_line_distances2(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        a_point: SketchEntityHandle,
+        a_line: SketchEntityHandle,
+        b_point: SketchEntityHandle,
+        b_line: SketchEntityHandle,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::EqualPointLineDistances2 {
+            a_point,
+            a_line,
+            b_point,
+            b_line,
+        };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Distance,
+            strategy: SketchResidualStrategy::SquaredEqualPointLineDistances,
+            kind,
+        }
+    }
+
     /// Add an exact equal-radius relation for 2D circles or circular arcs.
     ///
     /// The relation lowers to direct equality of retained radius carriers.

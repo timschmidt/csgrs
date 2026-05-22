@@ -1290,6 +1290,167 @@ fn sketch_length_ratio_and_point_line_distance_report_bad_inputs() {
 }
 
 #[test]
+fn sketch_equal_point_line_distance_relations_lower_to_exact_rows() {
+    let mut sketch = SketchSolveProblem::new();
+    let origin = sketch.add_point2d("origin", real(0), real(0));
+    let x_axis_end = sketch.add_point2d("x axis end", real(5), real(0));
+    let three_line_end = sketch.add_point2d("three line end", real(3), real(0));
+    let x_axis = sketch.add_line_segment2("x axis", origin, x_axis_end);
+    let length_three = sketch.add_line_segment2("length three", origin, three_line_end);
+    let distance_point = sketch.add_point2d("distance point", real(2), real(3));
+    let other_line_start = sketch.add_point2d("other line start", real(0), real(10));
+    let other_line_end = sketch.add_point2d("other line end", real(5), real(10));
+    let other_line = sketch.add_line_segment2("other line", other_line_start, other_line_end);
+    let equal_point = sketch.add_point2d("equal point", real(2), real(13));
+    let wrong_point = sketch.add_point2d("wrong point", real(2), real(14));
+
+    let length_report = sketch_distance_builders::equal_length_point_line_distance2(
+        &mut sketch,
+        "length equals distance",
+        length_three,
+        distance_point,
+        x_axis,
+    );
+    let equal_distance_report = sketch_distance_builders::equal_point_line_distances2(
+        &mut sketch,
+        "equal point-line distances",
+        distance_point,
+        x_axis,
+        equal_point,
+        other_line,
+    );
+    sketch.add_equal_length_point_line_distance2(
+        "violated length distance",
+        x_axis,
+        distance_point,
+        other_line,
+    );
+    sketch.add_equal_point_line_distances2(
+        "violated point-line distances",
+        distance_point,
+        x_axis,
+        wrong_point,
+        other_line,
+    );
+
+    assert_eq!(
+        length_report.strategy,
+        SketchResidualStrategy::SquaredLineLengthPointLineDistance
+    );
+    assert_eq!(
+        equal_distance_report.strategy,
+        SketchResidualStrategy::SquaredEqualPointLineDistances
+    );
+
+    let lowered = sketch.lower_to_problem();
+    let certification = certify_candidate(
+        &PreparedProblem::new(&lowered.problem),
+        &context_from_problem(&lowered.problem),
+    );
+
+    assert_eq!(lowered.problem.constraints.len(), 4);
+    assert_eq!(lowered.rows.len(), 4);
+    assert_eq!(
+        lowered.rows[0].strategy,
+        Some(SketchResidualStrategy::SquaredLineLengthPointLineDistance)
+    );
+    assert_eq!(
+        lowered.rows[1].strategy,
+        Some(SketchResidualStrategy::SquaredEqualPointLineDistances)
+    );
+    assert!(matches!(
+        certification.rows[0].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[1].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[2].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
+    assert!(matches!(
+        certification.rows[3].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
+}
+
+#[test]
+fn sketch_equal_point_line_distance_relations_report_bad_inputs() {
+    let mut sketch = SketchSolveProblem::new();
+    let p = sketch.add_point2d("p", real(0), real(0));
+    let q = sketch.add_point2d("q", real(1), real(0));
+    let line = sketch.add_line_segment2("line", p, q);
+    sketch.add_equal_length_point_line_distance2(
+        "missing length line",
+        SketchEntityHandle(999),
+        p,
+        line,
+    );
+    sketch.add_equal_length_point_line_distance2("wrong point", line, line, line);
+    sketch.add_equal_length_point_line_distance2("wrong distance line", line, p, p);
+    sketch.add_equal_point_line_distances2(
+        "missing first point",
+        SketchEntityHandle(999),
+        line,
+        p,
+        line,
+    );
+    sketch.add_equal_point_line_distances2("wrong first line", p, p, q, line);
+    sketch.add_equal_point_line_distances2("wrong second point", p, line, line, line);
+    sketch.add_equal_point_line_distances2("wrong second line", p, line, q, q);
+
+    let lowered = sketch.lower_to_problem();
+
+    assert_eq!(lowered.problem.constraints.len(), 0);
+    assert_eq!(lowered.rows.len(), 7);
+    assert_eq!(
+        lowered.rows[0].status,
+        SketchGeneratedRowStatus::MissingEntity(SketchEntityHandle(999))
+    );
+    assert_eq!(
+        lowered.rows[1].status,
+        SketchGeneratedRowStatus::WrongEntityKind {
+            handle: line,
+            expected: "point"
+        }
+    );
+    assert_eq!(
+        lowered.rows[2].status,
+        SketchGeneratedRowStatus::WrongEntityKind {
+            handle: p,
+            expected: "2D line segment"
+        }
+    );
+    assert_eq!(
+        lowered.rows[3].status,
+        SketchGeneratedRowStatus::MissingEntity(SketchEntityHandle(999))
+    );
+    assert_eq!(
+        lowered.rows[4].status,
+        SketchGeneratedRowStatus::WrongEntityKind {
+            handle: p,
+            expected: "2D line segment"
+        }
+    );
+    assert_eq!(
+        lowered.rows[5].status,
+        SketchGeneratedRowStatus::WrongEntityKind {
+            handle: line,
+            expected: "point"
+        }
+    );
+    assert_eq!(
+        lowered.rows[6].status,
+        SketchGeneratedRowStatus::WrongEntityKind {
+            handle: q,
+            expected: "2D line segment"
+        }
+    );
+}
+
+#[test]
 fn sketch_parameter_domain_preflight_certifies_valid_invalid_and_empty_bounds() {
     let mut sketch = SketchSolveProblem::new();
     let positive = sketch.add_parameter("positive radius", real(3));
