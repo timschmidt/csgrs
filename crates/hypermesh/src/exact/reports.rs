@@ -637,6 +637,9 @@ pub enum ExactBooleanShortcutKind {
     /// Certified regularized union of closed solids sharing exact whole faces
     /// or bounded opposite-oriented full-face fan patches.
     FullFaceAdjacentUnion,
+    /// Certified regularized union of closed solids sharing one strictly
+    /// contained opposite-oriented triangular boundary face.
+    ContainedFaceAdjacentUnion,
     /// Certified empty regularized intersection of closed solids whose only
     /// overlap is an exact full-face/fan-patch boundary contact.
     FullFaceAdjacentIntersection,
@@ -1416,6 +1419,9 @@ pub enum ExactBooleanSupport {
     /// bounded fan patches between adjacent closed solids and welding only
     /// those seam vertices.
     CertifiedFullFaceAdjacentUnion,
+    /// Union was materialized by replacing one containing boundary face with a
+    /// holed remnant and deleting the strictly contained opposite face.
+    CertifiedContainedFaceAdjacentUnion,
     /// Intersection was certified empty because adjacent closed solids only
     /// share exact coincident whole faces or bounded fan patches.
     CertifiedFullFaceAdjacentIntersection,
@@ -1606,6 +1612,7 @@ impl ExactBooleanPreflight {
             | ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellIntersection
             | ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellDifference
             | ExactBooleanSupport::CertifiedFullFaceAdjacentUnion
+            | ExactBooleanSupport::CertifiedContainedFaceAdjacentUnion
             | ExactBooleanSupport::CertifiedFullFaceAdjacentIntersection
             | ExactBooleanSupport::CertifiedFullFaceAdjacentDifference
             | ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection

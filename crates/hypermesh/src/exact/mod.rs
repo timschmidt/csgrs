@@ -25,6 +25,8 @@ pub mod box_solid;
 #[cfg(feature = "exact-triangulation")]
 pub mod cells;
 pub mod construction;
+#[cfg(feature = "exact-triangulation")]
+pub mod contained_adjacent;
 pub mod convex;
 pub mod coplanar;
 pub mod error;
@@ -107,6 +109,11 @@ pub use construction::{
     SegmentPlaneConstructionFailure, SegmentPlaneIntersection, SegmentPlaneParameterRatio,
     SegmentPlaneRelation, SegmentPlaneValidationError, intersect_segment_with_face_plane,
     intersect_segment_with_oriented_plane, intersect_segment_with_retained_face_plane,
+};
+#[cfg(feature = "exact-triangulation")]
+pub use contained_adjacent::{
+    ContainedFaceAdjacentUnion, ContainedFaceAdjacentUnionError, has_contained_face_adjacent_union,
+    materialize_contained_face_adjacent_union,
 };
 pub use convex::{
     ConvexSolidIntersection, ConvexSolidSingleCapDifference, intersect_closed_convex_solids,

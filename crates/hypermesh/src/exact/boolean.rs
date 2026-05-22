@@ -53,6 +53,10 @@ use super::cells::triangulate_all_face_cells_with_cdt;
 #[cfg(feature = "exact-triangulation")]
 use super::construction::SegmentPlaneRelation;
 #[cfg(feature = "exact-triangulation")]
+use super::contained_adjacent::{
+    has_contained_face_adjacent_union, replay_contained_face_adjacent_union,
+};
+#[cfg(feature = "exact-triangulation")]
 use super::convex::{intersect_closed_convex_solids, subtract_closed_convex_solids_single_cap};
 #[cfg(feature = "exact-triangulation")]
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
@@ -91,6 +95,8 @@ use super::reports::{
     ExactWindingReadinessReport, ExactWindingReadinessStatus,
 };
 #[cfg(feature = "exact-triangulation")]
+use super::scalar::ExactReal;
+#[cfg(feature = "exact-triangulation")]
 use super::solid::{ConvexSolidMeshRelation, classify_mesh_vertices_against_convex_solid};
 #[cfg(feature = "exact-triangulation")]
 use super::surface::{
@@ -122,7 +128,11 @@ use super::winding::{
     WindingReportError, classify_mesh_vertices_against_closed_mesh_winding_report,
 };
 #[cfg(feature = "exact-triangulation")]
-use hyperlimit::{SegmentIntersection, TriangleLocation, compare_reals, compare_reals_report};
+use hyperlimit::{
+    CoplanarProjection, Point3, SegmentIntersection, Sign, TriangleLocation,
+    classify_point_triangle, compare_reals, compare_reals_report, project_point3,
+    projected_polygon_area2_value,
+};
 #[cfg(feature = "exact-triangulation")]
 use std::cmp::Ordering;
 
@@ -313,6 +323,9 @@ pub fn preflight_boolean_exact(
         }
         ExactBooleanOperation::Union if has_full_face_adjacent_union(left, right) => {
             ExactBooleanSupport::CertifiedFullFaceAdjacentUnion
+        }
+        ExactBooleanOperation::Union if has_contained_face_adjacent_union(left, right) => {
+            ExactBooleanSupport::CertifiedContainedFaceAdjacentUnion
         }
         ExactBooleanOperation::Intersection if has_full_face_adjacent_union(left, right) => {
             ExactBooleanSupport::CertifiedFullFaceAdjacentIntersection
@@ -586,6 +599,7 @@ pub fn preflight_boolean_exact(
             | ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellIntersection
             | ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellDifference
             | ExactBooleanSupport::CertifiedFullFaceAdjacentUnion
+            | ExactBooleanSupport::CertifiedContainedFaceAdjacentUnion
             | ExactBooleanSupport::CertifiedFullFaceAdjacentIntersection
             | ExactBooleanSupport::CertifiedFullFaceAdjacentDifference
             | ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
@@ -865,7 +879,7 @@ fn graph_requires_boundary_policy(
     if graph_has_only_coplanar_touching_pairs(graph) {
         return Ok(true);
     }
-    if !graph_has_only_boundary_contact_pairs(graph) {
+    if !graph_has_only_boundary_contact_pairs(graph, left, right) {
         return Ok(false);
     }
     certified_closed_boundary_contact(left, right)
@@ -912,15 +926,26 @@ fn graph_requires_coplanar_volumetric_cells(counts: &GraphRelationCounts) -> boo
 }
 
 #[cfg(feature = "exact-triangulation")]
-fn graph_has_only_boundary_contact_pairs(graph: &super::graph::ExactIntersectionGraph) -> bool {
-    !graph.face_pairs.is_empty() && graph.face_pairs.iter().all(boundary_contact_pair_shape)
+fn graph_has_only_boundary_contact_pairs(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> bool {
+    !graph.face_pairs.is_empty()
+        && graph
+            .face_pairs
+            .iter()
+            .all(|pair| boundary_contact_pair_shape(pair, left, right))
 }
 
 #[cfg(feature = "exact-triangulation")]
-fn boundary_contact_pair_shape(pair: &FacePairEvents) -> bool {
+fn boundary_contact_pair_shape(pair: &FacePairEvents, left: &ExactMesh, right: &ExactMesh) -> bool {
     match pair.relation {
         MeshFacePairRelation::CoplanarTouching | MeshFacePairRelation::CoplanarOverlapping => true,
-        MeshFacePairRelation::Candidate => pair.events.iter().all(boundary_contact_candidate_event),
+        MeshFacePairRelation::Candidate => pair
+            .events
+            .iter()
+            .all(|event| boundary_contact_candidate_event(event, left, right)),
         MeshFacePairRelation::BoundsDisjoint
         | MeshFacePairRelation::PlaneSeparated
         | MeshFacePairRelation::Unknown => false,
@@ -928,7 +953,11 @@ fn boundary_contact_pair_shape(pair: &FacePairEvents) -> bool {
 }
 
 #[cfg(feature = "exact-triangulation")]
-fn boundary_contact_candidate_event(event: &IntersectionEvent) -> bool {
+fn boundary_contact_candidate_event(
+    event: &IntersectionEvent,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> bool {
     // Positive-area coplanar contact between closed solids also retains
     // adjacent non-coplanar face pairs where an endpoint or coplanar source
     // edge lies on the opposite plane. Those are still boundary facts, not
@@ -937,12 +966,15 @@ fn boundary_contact_candidate_event(event: &IntersectionEvent) -> bool {
     // distinction instead of collapsing every retained candidate into the
     // same unsupported topology bucket.
     match event {
-        IntersectionEvent::SegmentPlane { relation, .. } => matches!(
-            relation,
-            SegmentPlaneRelation::Disjoint
-                | SegmentPlaneRelation::Coplanar
-                | SegmentPlaneRelation::EndpointOnPlane
-        ),
+        IntersectionEvent::SegmentPlane { relation, .. } => {
+            matches!(
+                relation,
+                SegmentPlaneRelation::Disjoint
+                    | SegmentPlaneRelation::Coplanar
+                    | SegmentPlaneRelation::EndpointOnPlane
+            ) || (*relation == SegmentPlaneRelation::ProperCrossing
+                && proper_crossing_outside_plane_face(event, left, right))
+        }
         IntersectionEvent::CoplanarEdge { relation, .. } => {
             *relation != SegmentIntersection::Disjoint
         }
@@ -951,6 +983,85 @@ fn boundary_contact_candidate_event(event: &IntersectionEvent) -> bool {
             TriangleLocation::Inside | TriangleLocation::OnEdge | TriangleLocation::OnVertex
         ),
         IntersectionEvent::Unknown => false,
+    }
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn proper_crossing_outside_plane_face(
+    event: &IntersectionEvent,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> bool {
+    let IntersectionEvent::SegmentPlane {
+        relation: SegmentPlaneRelation::ProperCrossing,
+        plane_side,
+        plane_face,
+        point: Some(point),
+        ..
+    } = event
+    else {
+        return false;
+    };
+    let Some(triangle) = triangle_points(mesh_for_side(*plane_side, left, right), *plane_face)
+    else {
+        return false;
+    };
+    let Some(projection) = choose_triangle_projection(&triangle) else {
+        return false;
+    };
+    // A segment/supporting-plane crossing outside the finite opposite triangle
+    // is retained construction evidence, but it is not a surface crossing.
+    // Yap's exact-computation boundary lets boundary-policy certificates keep
+    // this distinction exactly instead of treating every proper plane crossing
+    // as volume overlap.
+    classify_point_triangle(
+        &project_point3(&triangle[0], projection),
+        &project_point3(&triangle[1], projection),
+        &project_point3(&triangle[2], projection),
+        &project_point3(point, projection),
+    )
+    .value()
+        == Some(TriangleLocation::Outside)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn mesh_for_side<'a>(side: MeshSide, left: &'a ExactMesh, right: &'a ExactMesh) -> &'a ExactMesh {
+    match side {
+        MeshSide::Left => left,
+        MeshSide::Right => right,
+    }
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn triangle_points(mesh: &ExactMesh, face: usize) -> Option<[Point3; 3]> {
+    let triangle = mesh.triangles().get(face)?.0;
+    Some([
+        mesh.vertices().get(triangle[0])?.to_hyperlimit_point(),
+        mesh.vertices().get(triangle[1])?.to_hyperlimit_point(),
+        mesh.vertices().get(triangle[2])?.to_hyperlimit_point(),
+    ])
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn choose_triangle_projection(points: &[Point3; 3]) -> Option<CoplanarProjection> {
+    [
+        CoplanarProjection::Xy,
+        CoplanarProjection::Xz,
+        CoplanarProjection::Yz,
+    ]
+    .into_iter()
+    .find(|&projection| {
+        let area = projected_polygon_area2_value(points, projection);
+        !matches!(real_sign(&area), Some(Sign::Zero) | None)
+    })
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn real_sign(value: &ExactReal) -> Option<Sign> {
+    match compare_reals(value, &ExactReal::from(0)).value()? {
+        Ordering::Less => Some(Sign::Negative),
+        Ordering::Equal => Some(Sign::Zero),
+        Ordering::Greater => Some(Sign::Positive),
     }
 }
 
@@ -1080,6 +1191,9 @@ pub fn boolean_exact_with_boundary_policy(
         }
         ExactBooleanOperation::Union if has_full_face_adjacent_union(left, right) => {
             boolean_full_face_adjacent_union(left, right, validation)
+        }
+        ExactBooleanOperation::Union if has_contained_face_adjacent_union(left, right) => {
+            boolean_contained_face_adjacent_union(left, right, validation)
         }
         ExactBooleanOperation::Intersection if has_full_face_adjacent_union(left, right) => {
             boolean_full_face_adjacent_intersection(left, right, validation)
@@ -2412,6 +2526,27 @@ fn boolean_full_face_adjacent_union(
     Ok(certified_shortcut_result(
         union.mesh,
         ExactBooleanShortcutKind::FullFaceAdjacentUnion,
+    ))
+}
+
+#[cfg(feature = "exact-triangulation")]
+/// Materialize the certified contained-face adjacent regularized union.
+///
+/// A strictly contained opposite-oriented boundary triangle is a bounded
+/// coplanar-volumetric cell case: the contained source face is deleted, and
+/// the containing source face is replaced by a holed remnant whose inner ring
+/// welds to the other solid. The replayed certificate keeps the branch within
+/// Yap's exact object/predicate boundary instead of treating the contact as a
+/// mesh tolerance merge.
+fn boolean_contained_face_adjacent_union(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    validation: ValidationPolicy,
+) -> Result<ExactBooleanResult, MeshError> {
+    let union = replay_contained_face_adjacent_union(left, right, validation)?;
+    Ok(certified_shortcut_result(
+        union.mesh,
+        ExactBooleanShortcutKind::ContainedFaceAdjacentUnion,
     ))
 }
 

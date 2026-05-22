@@ -7430,6 +7430,146 @@ fn exact_full_face_adjacent_fan_patch_union_deletes_nonconforming_internal_faces
 
 #[cfg(feature = "exact-triangulation")]
 #[test]
+fn exact_contained_face_adjacent_tetrahedra_union_replaces_containing_face_with_hole() {
+    let left = tetrahedron_i64([0, 0, 0], [6, 0, 0], [0, 6, 0], [0, 0, 6]);
+    let right = tetrahedron_i64([1, 1, 0], [1, 2, 0], [2, 1, 0], [1, 1, -3]);
+
+    let graph = build_intersection_graph(&left, &right).unwrap();
+    graph.validate_against_meshes(&left, &right).unwrap();
+    assert!(graph.face_pairs.iter().any(|pair| {
+        pair.left_face == 0
+            && pair.right_face == 0
+            && pair.relation == hypermesh::exact::MeshFacePairRelation::CoplanarOverlapping
+    }));
+
+    let boundary = hypermesh::exact::certify_boundary_touching_report(&left, &right).unwrap();
+    boundary.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        boundary.status,
+        hypermesh::exact::ExactBoundaryTouchingStatus::Certified
+    );
+
+    let union = hypermesh::exact::materialize_contained_face_adjacent_union(
+        &left,
+        &right,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("strictly contained opposite-oriented face should replay as a holed union");
+    union.validate().unwrap();
+    union.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(union.containing_side, MeshSide::Left);
+    assert_eq!(union.containing_face, 0);
+    assert_eq!(union.contained_face, 0);
+    assert!(union.mesh.facts().mesh.closed_manifold);
+    assert!(union.mesh.vertices().len() >= left.vertices().len() + right.vertices().len());
+    assert!(union.mesh.triangles().len() > left.triangles().len() + right.triangles().len());
+
+    let mut stale_face = union.clone();
+    stale_face.contained_face = 1;
+    assert_eq!(
+        stale_face
+            .validate_against_sources(&left, &right)
+            .unwrap_err(),
+        hypermesh::exact::ContainedFaceAdjacentUnionError::SourceReplayMismatch
+    );
+    let mut stale_mesh = union.clone();
+    stale_mesh.mesh = left.clone();
+    assert_eq!(
+        stale_mesh
+            .validate_against_sources(&left, &right)
+            .unwrap_err(),
+        hypermesh::exact::ContainedFaceAdjacentUnionError::SourceReplayMismatch
+    );
+
+    let preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+    )
+    .unwrap();
+    preflight.validate().unwrap();
+    preflight.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedContainedFaceAdjacentUnion
+    );
+
+    let result = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    result.validate().unwrap();
+    result
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            hypermesh::exact::ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ContainedFaceAdjacentUnion
+        }
+    );
+    assert_eq!(result.mesh, union.mesh);
+
+    let intersection_preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+    )
+    .unwrap();
+    intersection_preflight.validate().unwrap();
+    intersection_preflight
+        .validate_against_sources(&left, &right)
+        .unwrap();
+    assert_eq!(
+        intersection_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
+    );
+
+    let difference = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    difference
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::CLOSED,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        difference.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference
+        }
+    );
+
+    let same_side_inner = tetrahedron_i64([1, 1, 0], [2, 1, 0], [1, 2, 0], [1, 1, 3]);
+    assert!(
+        hypermesh::exact::materialize_contained_face_adjacent_union(
+            &left,
+            &same_side_inner,
+            ValidationPolicy::CLOSED,
+        )
+        .is_none()
+    );
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
 fn exact_non_rectilinear_coplanar_volumetric_overlap_splits_source_faces() {
     let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
     let right = tetrahedron_i64([1, 1, 0], [5, 1, 0], [1, 5, 0], [1, 1, 4]);
