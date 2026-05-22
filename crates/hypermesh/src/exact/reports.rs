@@ -634,6 +634,8 @@ pub enum ExactBooleanShortcutKind {
     /// Certified affine-frame orthogonal-cell difference of solid cell
     /// complexes.
     AffineOrthogonalSolidCellDifference,
+    /// Certified regularized union of closed solids sharing exact whole faces.
+    FullFaceAdjacentUnion,
     /// Certified graph absence for open surfaces.
     OpenSurfaceDisjoint,
     /// Certified closed-convex containment.
@@ -1397,6 +1399,9 @@ pub enum ExactBooleanSupport {
     /// Difference was materialized by normalizing affine-frame orthogonal
     /// solid cell complexes into one exact cell grid.
     CertifiedAffineOrthogonalSolidCellDifference,
+    /// Union was materialized by deleting exact coincident whole faces between
+    /// adjacent closed solids and welding only those seam vertices.
+    CertifiedFullFaceAdjacentUnion,
     /// A named operation was answered by exact no-intersection facts for open
     /// surface meshes.
     CertifiedOpenSurfaceDisjoint,
@@ -1574,6 +1579,7 @@ impl ExactBooleanPreflight {
             | ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellUnion
             | ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellIntersection
             | ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellDifference
+            | ExactBooleanSupport::CertifiedFullFaceAdjacentUnion
             | ExactBooleanSupport::CertifiedOpenSurfaceDisjoint
             | ExactBooleanSupport::CertifiedConvexContainment
             | ExactBooleanSupport::CertifiedConvexIntersection

@@ -17,6 +17,8 @@
 //! as policy choices/unknowns.
 
 #[cfg(feature = "exact-triangulation")]
+use super::adjacent::{has_full_face_adjacent_union, materialize_full_face_adjacent_union};
+#[cfg(feature = "exact-triangulation")]
 use super::affine_box::{
     AffineBoxOperation, has_affine_box_difference, has_affine_box_intersection,
     has_affine_box_union, materialize_affine_box_difference, materialize_affine_box_intersection,
@@ -309,6 +311,9 @@ pub fn preflight_boolean_exact(
         {
             ExactBooleanSupport::CertifiedSameSurface
         }
+        ExactBooleanOperation::Union if has_full_face_adjacent_union(left, right) => {
+            ExactBooleanSupport::CertifiedFullFaceAdjacentUnion
+        }
         ExactBooleanOperation::Union
         | ExactBooleanOperation::Intersection
         | ExactBooleanOperation::Difference
@@ -564,6 +569,7 @@ pub fn preflight_boolean_exact(
             | ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellUnion
             | ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellIntersection
             | ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellDifference
+            | ExactBooleanSupport::CertifiedFullFaceAdjacentUnion
             | ExactBooleanSupport::CertifiedOpenSurfaceDisjoint
             | ExactBooleanSupport::CertifiedCoplanarSurfaceContainment
             | ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
@@ -1048,6 +1054,9 @@ pub fn boolean_exact_with_boundary_policy(
             if meshes_are_certified_same_surface(left, right) =>
         {
             boolean_same_surface_meshes(left, operation, validation)
+        }
+        ExactBooleanOperation::Union if has_full_face_adjacent_union(left, right) => {
+            boolean_full_face_adjacent_union(left, right, validation)
         }
         ExactBooleanOperation::Union
         | ExactBooleanOperation::Intersection
@@ -2350,6 +2359,34 @@ fn boolean_same_surface_meshes(
     Ok(certified_shortcut_result(
         mesh,
         ExactBooleanShortcutKind::SameSurface,
+    ))
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn boolean_full_face_adjacent_union(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    validation: ValidationPolicy,
+) -> Result<ExactBooleanResult, MeshError> {
+    let union = materialize_full_face_adjacent_union(left, right, validation).ok_or_else(|| {
+        MeshError::one(MeshDiagnostic::new(
+            Severity::Error,
+            DiagnosticKind::UnsupportedExactOperation,
+            "exact full-face adjacent union certificate did not replay",
+        ))
+    })?;
+    union
+        .validate_against_sources(left, right)
+        .map_err(|error| {
+            MeshError::one(MeshDiagnostic::new(
+                Severity::Error,
+                DiagnosticKind::UnsupportedExactOperation,
+                format!("exact full-face adjacent union/source replay failed: {error:?}"),
+            ))
+        })?;
+    Ok(certified_shortcut_result(
+        union.mesh,
+        ExactBooleanShortcutKind::FullFaceAdjacentUnion,
     ))
 }
 

@@ -5066,6 +5066,8 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
             &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
         )
         .unwrap();
+        let adjacent_left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
+        let adjacent_right = tetrahedron_i64([0, 0, 0], [0, 4, 0], [4, 0, 0], [0, 0, -4]);
 
         let graph = build_intersection_graph(&left, &right).unwrap();
 
@@ -5118,6 +5120,48 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
                                 &left,
                                 &right,
                                 hypermesh::exact::ExactBooleanOperation::Difference,
+                                ValidationPolicy::CLOSED,
+                                hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+                            )
+                            .unwrap();
+                        result.mesh.triangles().len()
+                    }),
+                )
+            })
+        });
+
+        c.bench_function("exact_boolean_full_face_adjacent_union", |b| {
+            b.iter(|| {
+                (
+                    hypermesh::exact::materialize_full_face_adjacent_union(
+                        &adjacent_left,
+                        &adjacent_right,
+                        ValidationPolicy::CLOSED,
+                    )
+                    .map(|union| {
+                        union
+                            .validate_against_sources(&adjacent_left, &adjacent_right)
+                            .unwrap();
+                        union.mesh.triangles().len()
+                    }),
+                    hypermesh::exact::preflight_boolean_exact(
+                        &adjacent_left,
+                        &adjacent_right,
+                        hypermesh::exact::ExactBooleanOperation::Union,
+                    )
+                    .map(|report| report.validate()),
+                    hypermesh::exact::boolean_exact(
+                        &adjacent_left,
+                        &adjacent_right,
+                        hypermesh::exact::ExactBooleanOperation::Union,
+                        ValidationPolicy::CLOSED,
+                    )
+                    .map(|result| {
+                        result
+                            .validate_operation_against_sources(
+                                &adjacent_left,
+                                &adjacent_right,
+                                hypermesh::exact::ExactBooleanOperation::Union,
                                 ValidationPolicy::CLOSED,
                                 hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
                             )

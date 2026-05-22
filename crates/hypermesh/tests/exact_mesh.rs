@@ -5095,7 +5095,7 @@ fn exact_preflight_reports_boundary_touching_policy_gap() {
 
 #[cfg(feature = "exact-triangulation")]
 #[test]
-fn exact_closed_coplanar_overlap_contact_uses_boundary_policy_not_planar_cells() {
+fn exact_closed_full_face_overlap_contact_materializes_adjacent_union() {
     let left = axis_aligned_box_i64([0, 0, -2], [2, 2, 0]);
     let right = top_subdivided_axis_aligned_box_i64([0, 0, 0], [2, 2, 2]);
 
@@ -5177,39 +5177,44 @@ fn exact_closed_coplanar_overlap_contact_uses_boundary_policy_not_planar_cells()
     preflight.validate().unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::exact::ExactBooleanSupport::RequiresBoundaryPolicy
+        hypermesh::exact::ExactBooleanSupport::CertifiedFullFaceAdjacentUnion
     );
-    assert!(preflight.blocker.unwrap().coplanar_overlapping_pairs > 0);
+    assert!(preflight.blocker.is_none());
 
-    assert!(
-        hypermesh::exact::boolean_exact(
-            &left,
-            &right,
-            hypermesh::exact::ExactBooleanOperation::Union,
-            ValidationPolicy::CLOSED,
-        )
-        .is_err()
-    );
-    let union = hypermesh::exact::boolean_exact_with_boundary_policy(
+    let direct_union = hypermesh::exact::materialize_full_face_adjacent_union(
+        &left,
+        &right,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    direct_union
+        .validate_against_sources(&left, &right)
+        .unwrap();
+
+    let union = hypermesh::exact::boolean_exact(
         &left,
         &right,
         hypermesh::exact::ExactBooleanOperation::Union,
         ValidationPolicy::CLOSED,
-        hypermesh::exact::ExactBoundaryBooleanPolicy::PreserveSeparateShells,
     )
     .unwrap();
     union.validate().unwrap();
-    union.validate_against_sources(&left, &right).unwrap();
+    union
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            hypermesh::exact::ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
     assert_eq!(
         union.kind,
-        hypermesh::exact::ExactBooleanResultKind::BoundaryPolicyShortcut {
-            operation: hypermesh::exact::ExactBooleanOperation::Union
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::FullFaceAdjacentUnion
         }
     );
-    assert_eq!(
-        union.mesh.triangles().len(),
-        left.triangles().len() + right.triangles().len()
-    );
+    assert_eq!(union.mesh, direct_union.mesh);
 
     let intersection = hypermesh::exact::boolean_exact_with_boundary_policy(
         &left,
@@ -6798,6 +6803,122 @@ fn exact_mixed_coplanar_volumetric_overlap_materializes_from_face_cells() {
         }
     );
     assert!(result.mesh.facts().mesh.closed_manifold);
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
+fn exact_full_face_adjacent_tetrahedra_union_deletes_internal_face() {
+    let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
+    let right = tetrahedron_i64([0, 0, 0], [0, 4, 0], [4, 0, 0], [0, 0, -4]);
+
+    let graph = build_intersection_graph(&left, &right).unwrap();
+    graph.validate_against_meshes(&left, &right).unwrap();
+    assert!(graph.face_pairs.iter().any(|pair| {
+        pair.relation == hypermesh::exact::MeshFacePairRelation::CoplanarOverlapping
+            && pair.left_face == 0
+            && pair.right_face == 0
+    }));
+
+    let boundary = hypermesh::exact::certify_boundary_touching_report(&left, &right).unwrap();
+    boundary.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        boundary.status,
+        hypermesh::exact::ExactBoundaryTouchingStatus::Certified
+    );
+
+    let union = hypermesh::exact::materialize_full_face_adjacent_union(
+        &left,
+        &right,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("opposite-oriented shared faces should merge as an exact closed union");
+    union.validate().unwrap();
+    union.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        union.shared_faces,
+        vec![hypermesh::exact::FullFaceAdjacentFacePair {
+            left_face: 0,
+            right_face: 0,
+        }]
+    );
+    assert_eq!(union.mesh.vertices().len(), 5);
+    assert_eq!(union.mesh.triangles().len(), 6);
+    assert!(union.mesh.facts().mesh.closed_manifold);
+
+    let mut stale_faces = union.clone();
+    stale_faces.shared_faces[0].right_face = 1;
+    assert_eq!(
+        stale_faces
+            .validate_against_sources(&left, &right)
+            .unwrap_err(),
+        hypermesh::exact::FullFaceAdjacentUnionError::SourceReplayMismatch
+    );
+    let mut stale_mesh = union.clone();
+    stale_mesh.mesh = left.clone();
+    assert_eq!(
+        stale_mesh
+            .validate_against_sources(&left, &right)
+            .unwrap_err(),
+        hypermesh::exact::FullFaceAdjacentUnionError::SourceReplayMismatch
+    );
+
+    let preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+    )
+    .unwrap();
+    preflight.validate().unwrap();
+    preflight.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedFullFaceAdjacentUnion
+    );
+
+    let result = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    result.validate().unwrap();
+    result
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            hypermesh::exact::ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::FullFaceAdjacentUnion
+        }
+    );
+    assert_eq!(result.mesh, union.mesh);
+
+    let same_orientation = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, -4]);
+    assert!(
+        hypermesh::exact::materialize_full_face_adjacent_union(
+            &left,
+            &same_orientation,
+            ValidationPolicy::CLOSED,
+        )
+        .is_none()
+    );
+
+    let same_side_overlap = tetrahedron_i64([0, 0, 0], [0, 4, 0], [4, 0, 0], [0, 0, 2]);
+    assert!(
+        hypermesh::exact::materialize_full_face_adjacent_union(
+            &left,
+            &same_side_overlap,
+            ValidationPolicy::CLOSED,
+        )
+        .is_none()
+    );
 }
 
 #[cfg(feature = "exact-triangulation")]

@@ -1377,7 +1377,7 @@ fuzz_target!(|data: &[u8]| {
 
 #[cfg(feature = "exact-triangulation")]
 fn exercise_deterministic_case(selector: u8) {
-    match selector % 17 {
+    match selector % 18 {
         0 => exercise_partial_convex_union_boundary(),
         1 => exercise_face_interior_steiner_boundary(),
         2 => exercise_multi_component_coplanar_union(),
@@ -1394,6 +1394,7 @@ fn exercise_deterministic_case(selector: u8) {
         13 => exercise_affine_orthogonal_solid_cell_complex_frame_discovery(),
         14 => exercise_mixed_coplanar_volumetric_materialization(),
         15 => exercise_non_rectilinear_coplanar_volumetric_materialization(),
+        16 => exercise_full_face_adjacent_union(),
         _ => exercise_nonrectangular_component_union_hull_coverage(),
     }
 }
@@ -3430,6 +3431,77 @@ fn determinant_i128(a: [i64; 3], b: [i64; 3], c: [i64; 3]) -> i128 {
     let c = c.map(i128::from);
     a[0] * (b[1] * c[2] - b[2] * c[1]) - a[1] * (b[0] * c[2] - b[2] * c[0])
         + a[2] * (b[0] * c[1] - b[1] * c[0])
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn exercise_full_face_adjacent_union() {
+    let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
+    let right = tetrahedron_i64([0, 0, 0], [0, 4, 0], [4, 0, 0], [0, 0, -4]);
+
+    let union =
+        hypermesh::exact::materialize_full_face_adjacent_union(&left, &right, ValidationPolicy::CLOSED)
+            .expect("full-face adjacent fuzz fixture should materialize");
+    union.validate().unwrap();
+    union.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(union.mesh.vertices().len(), 5);
+    assert_eq!(union.mesh.triangles().len(), 6);
+
+    let mut stale_faces = union.clone();
+    stale_faces.shared_faces[0].right_face = 1;
+    assert!(stale_faces.validate_against_sources(&left, &right).is_err());
+
+    let preflight =
+        preflight_boolean_exact(&left, &right, ExactBooleanOperation::Union).unwrap();
+    preflight.validate().unwrap();
+    preflight.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        preflight.support,
+        ExactBooleanSupport::CertifiedFullFaceAdjacentUnion
+    );
+
+    let result = boolean_exact_with_boundary_policy(
+        &left,
+        &right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+    result
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::FullFaceAdjacentUnion
+        }
+    );
+
+    let same_orientation = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, -4]);
+    assert!(
+        hypermesh::exact::materialize_full_face_adjacent_union(
+            &left,
+            &same_orientation,
+            ValidationPolicy::CLOSED,
+        )
+        .is_none()
+    );
+
+    let same_side_overlap = tetrahedron_i64([0, 0, 0], [0, 4, 0], [4, 0, 0], [0, 0, 2]);
+    assert!(
+        hypermesh::exact::materialize_full_face_adjacent_union(
+            &left,
+            &same_side_overlap,
+            ValidationPolicy::CLOSED,
+        )
+        .is_none()
+    );
 }
 
 #[cfg(feature = "exact-triangulation")]

@@ -10,6 +10,8 @@
 
 pub mod adapter;
 #[cfg(feature = "exact-triangulation")]
+pub mod adjacent;
+#[cfg(feature = "exact-triangulation")]
 pub mod affine_box;
 #[cfg(feature = "exact-triangulation")]
 pub mod affine_solid;
@@ -63,6 +65,11 @@ pub use adapter::{
     ExactI64MeshInputReadiness, ExactI64MeshInputReport, ExactI64MeshInputReportValidationError,
     LossyF64MeshInputReadiness, LossyF64MeshInputReport, LossyF64MeshInputReportValidationError,
     inspect_f64_mesh_input, inspect_i64_mesh_input,
+};
+#[cfg(feature = "exact-triangulation")]
+pub use adjacent::{
+    FullFaceAdjacentFacePair, FullFaceAdjacentUnion, FullFaceAdjacentUnionError,
+    has_full_face_adjacent_union, materialize_full_face_adjacent_union,
 };
 #[cfg(feature = "exact-triangulation")]
 pub use affine_box::{
