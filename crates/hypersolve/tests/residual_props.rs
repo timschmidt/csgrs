@@ -23,11 +23,11 @@ use hypersolve::{
     lift_sketch_point2_to_workplane3, preflight_sketch_degeneracies,
     preflight_sketch_entity_domains, preflight_sketch_parameter_domains,
     report_lossy_adapter_only_candidate, resultant_univariate_polynomials,
-    search_failed_constraint_pair_removals, search_failed_constraint_single_removals,
-    sketch_range_builders, solve_damped_least_squares, solve_dense_linear_system_bareiss,
-    solve_direct_affine_system, solve_direct_univariate_quadratic_equalities,
-    squared_distance_equation, subresultant_chain_univariate_polynomials,
-    validate_equality_substitutions,
+    search_failed_constraint_pair_removals, search_failed_constraint_set_removals,
+    search_failed_constraint_single_removals, sketch_range_builders, solve_damped_least_squares,
+    solve_dense_linear_system_bareiss, solve_direct_affine_system,
+    solve_direct_univariate_quadratic_equalities, squared_distance_equation,
+    subresultant_chain_univariate_polynomials, validate_equality_substitutions,
 };
 use proptest::prelude::*;
 
@@ -1440,6 +1440,56 @@ proptest! {
             &report.probes[0].removal_status,
             &FailedConstraintRemovalStatus::ClearsAllBlockingRows
         );
+    }
+
+    #[test]
+    fn failed_constraint_set_removal_generated_three_misses_clear_at_cardinality_three(
+        value in -32_i16..=32,
+        first_target in -32_i16..=32,
+        second_target in -32_i16..=32,
+        third_target in -32_i16..=32,
+    ) {
+        prop_assume!(value != first_target);
+        prop_assume!(value != second_target);
+        prop_assume!(value != third_target);
+        let value = i64::from(value);
+        let first_target = i64::from(first_target);
+        let second_target = i64::from(second_target);
+        let third_target = i64::from(third_target);
+        let x = Expr::symbol(SymbolId(0), "x");
+        let mut problem = Problem::default();
+        problem.add_variable("x", Real::from(value));
+        problem.add_constraint(Constraint::equality(
+            "first generated miss",
+            x.clone() - Expr::int(first_target),
+        ));
+        problem.add_constraint(Constraint::equality(
+            "second generated miss",
+            x.clone() - Expr::int(second_target),
+        ));
+        problem.add_constraint(Constraint::equality(
+            "third generated miss",
+            x - Expr::int(third_target),
+        ));
+
+        let pair_bounded = search_failed_constraint_set_removals(
+            &PreparedProblem::new(&problem),
+            &context_from_problem(&problem),
+            2,
+        );
+        prop_assert_eq!(pair_bounded.original.blocking_rows, 3);
+        prop_assert_eq!(pair_bounded.probes.len(), 6);
+        prop_assert_eq!(pair_bounded.clearing_removals, 0);
+
+        let triple_bounded = search_failed_constraint_set_removals(
+            &PreparedProblem::new(&problem),
+            &context_from_problem(&problem),
+            3,
+        );
+        prop_assert_eq!(triple_bounded.original.blocking_rows, 3);
+        prop_assert_eq!(triple_bounded.probes.len(), 7);
+        prop_assert_eq!(triple_bounded.clearing_removals, 1);
+        prop_assert!(triple_bounded.has_removal_resolution());
     }
 
     #[test]

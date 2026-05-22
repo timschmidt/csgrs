@@ -38,13 +38,13 @@ use hypersolve::{
     regenerate_active_set_affine_candidate, replay_sketch_compatibility_fixture,
     replay_sparse_linear_residual_batch, report_lossy_adapter_only_candidate,
     schedule_candidate_batch_predicates, search_failed_constraint_pair_removals,
-    search_failed_constraint_single_removals, sketch_angle_builders, sketch_compatibility_fixtures,
-    sketch_distance_builders, sketch_incidence_builders, sketch_objective_builders,
-    sketch_orientation_builders, sketch_range_builders, sketch_symmetry_builders,
-    sketch_tangency_builders, solve_damped_least_squares, solve_direct_affine_equalities,
-    solve_direct_affine_system, solve_direct_univariate_quadratic_equalities,
-    squared_distance_equation, tangent_parallel_equation, tangent_same_direction_constraint,
-    validate_equality_substitutions,
+    search_failed_constraint_set_removals, search_failed_constraint_single_removals,
+    sketch_angle_builders, sketch_compatibility_fixtures, sketch_distance_builders,
+    sketch_incidence_builders, sketch_objective_builders, sketch_orientation_builders,
+    sketch_range_builders, sketch_symmetry_builders, sketch_tangency_builders,
+    solve_damped_least_squares, solve_direct_affine_equalities, solve_direct_affine_system,
+    solve_direct_univariate_quadratic_equalities, squared_distance_equation,
+    tangent_parallel_equation, tangent_same_direction_constraint, validate_equality_substitutions,
 };
 
 fn real(value: i64) -> Real {
@@ -3419,6 +3419,60 @@ fn failed_constraint_pair_removal_search_reports_bounded_two_row_resolutions() {
     assert!(triple_search.probes.iter().all(|probe| {
         probe.removal_status == FailedConstraintRemovalStatus::StillBlocking { blocking_rows: 1 }
     }));
+}
+
+#[test]
+fn failed_constraint_set_removal_search_reports_bounded_cardinality_resolutions() {
+    let y = Expr::symbol(SymbolId(0), "y");
+    let mut triple = Problem::default();
+    triple.add_variable("y", real(0));
+    triple.add_constraint(Constraint::equality(
+        "first triple miss",
+        y.clone() - Expr::int(1),
+    ));
+    triple.add_constraint(Constraint::equality(
+        "second triple miss",
+        y.clone() - Expr::int(2),
+    ));
+    triple.add_constraint(Constraint::equality("third triple miss", y - Expr::int(3)));
+
+    let zero_search = search_failed_constraint_set_removals(
+        &PreparedProblem::new(&triple),
+        &context_from_problem(&triple),
+        0,
+    );
+    assert_eq!(zero_search.original.blocking_rows, 3);
+    assert!(zero_search.probes.is_empty());
+    assert!(!zero_search.has_removal_resolution());
+
+    let pair_bounded_search = search_failed_constraint_set_removals(
+        &PreparedProblem::new(&triple),
+        &context_from_problem(&triple),
+        2,
+    );
+    assert_eq!(pair_bounded_search.original.blocking_rows, 3);
+    assert_eq!(pair_bounded_search.probes.len(), 6);
+    assert_eq!(pair_bounded_search.clearing_removals, 0);
+    assert!(!pair_bounded_search.has_removal_resolution());
+
+    let triple_search = search_failed_constraint_set_removals(
+        &PreparedProblem::new(&triple),
+        &context_from_problem(&triple),
+        3,
+    );
+    assert_eq!(triple_search.original.blocking_rows, 3);
+    assert_eq!(triple_search.max_cardinality, 3);
+    assert_eq!(triple_search.probes.len(), 7);
+    assert_eq!(triple_search.clearing_removals, 1);
+    assert!(triple_search.has_removal_resolution());
+    assert_eq!(
+        triple_search
+            .probes
+            .last()
+            .expect("triple combination should be probed")
+            .removal_status,
+        FailedConstraintRemovalStatus::ClearsAllBlockingRows
+    );
 }
 
 #[test]

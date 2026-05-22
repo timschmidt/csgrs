@@ -174,6 +174,38 @@ pub struct FailedConstraintPairRemovalSearchReport {
     pub clearing_pair_removals: usize,
 }
 
+/// One bounded set-removal probe for failed-constraint diagnostics.
+#[derive(Clone, Debug, PartialEq)]
+pub struct FailedConstraintSetRemovalProbe {
+    /// Source constraint indices deactivated for this probe.
+    pub constraint_indices: Vec<usize>,
+    /// Constraint names copied for diagnostics in the same order as
+    /// [`Self::constraint_indices`].
+    pub names: Vec<String>,
+    /// Result after deactivating this set.
+    pub removal_status: FailedConstraintRemovalStatus,
+}
+
+/// Deterministic bounded-cardinality removal-search report.
+///
+/// This is a bounded exact replay search, not a full proof of global minimal
+/// unsatisfiable cores. It gives callers a report-bearing way to ask whether
+/// removing any blocking set up to `max_cardinality` clears the current
+/// candidate. Every probe reruns exact failed-constraint diagnostics, following
+/// Yap, "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+/// (1997), rather than trusting numerical failed-solve labels.
+#[derive(Clone, Debug, PartialEq)]
+pub struct FailedConstraintSetRemovalSearchReport {
+    /// Original exact failed-constraint diagnostics.
+    pub original: FailedConstraintReport,
+    /// Maximum set cardinality requested by the caller.
+    pub max_cardinality: usize,
+    /// One probe per blocking-row combination up to `max_cardinality`.
+    pub probes: Vec<FailedConstraintSetRemovalProbe>,
+    /// Number of probed sets whose removal clears all blocking rows.
+    pub clearing_removals: usize,
+}
+
 impl FailedConstraintReport {
     /// Returns true when any diagnostic row blocks accepting the candidate.
     pub fn has_blocking_rows(&self) -> bool {
@@ -197,6 +229,13 @@ impl FailedConstraintPairRemovalSearchReport {
     /// Return whether any pair removal clears the current blocking set.
     pub fn has_pair_removal_resolution(&self) -> bool {
         self.clearing_pair_removals > 0
+    }
+}
+
+impl FailedConstraintSetRemovalSearchReport {
+    /// Return whether any bounded set removal clears the current blocking set.
+    pub fn has_removal_resolution(&self) -> bool {
+        self.clearing_removals > 0
     }
 }
 
@@ -249,6 +288,71 @@ pub fn search_failed_constraint_pair_removals(
         CandidateCertificationConfig::default(),
         CandidateCertificationConfig::default().min_precision,
     )
+}
+
+/// Probe all blocking-row sets up to `max_cardinality`.
+///
+/// This generalizes the single and pair helpers while keeping the search
+/// explicitly bounded. `max_cardinality == 0` returns the original diagnostic
+/// report with no probes.
+pub fn search_failed_constraint_set_removals(
+    prepared: &PreparedProblem<'_>,
+    context: &EvaluationContext,
+    max_cardinality: usize,
+) -> FailedConstraintSetRemovalSearchReport {
+    search_failed_constraint_set_removals_with_config(
+        prepared,
+        context,
+        max_cardinality,
+        CandidateCertificationConfig::default(),
+        CandidateCertificationConfig::default().min_precision,
+    )
+}
+
+/// Probe bounded blocking-row sets with explicit certification and rank
+/// policies.
+pub fn search_failed_constraint_set_removals_with_config(
+    prepared: &PreparedProblem<'_>,
+    context: &EvaluationContext,
+    max_cardinality: usize,
+    certification_config: CandidateCertificationConfig,
+    rank_min_precision: i32,
+) -> FailedConstraintSetRemovalSearchReport {
+    let original = diagnose_failed_constraints_with_config(
+        prepared,
+        context,
+        certification_config,
+        rank_min_precision,
+    );
+    let blocking = original
+        .rows
+        .iter()
+        .filter(|row| row.status.blocks_candidate_acceptance())
+        .collect::<Vec<_>>();
+    let capped_cardinality = max_cardinality.min(blocking.len());
+    let mut probes = Vec::new();
+    let mut clearing_removals = 0;
+    for size in 1..=capped_cardinality {
+        let mut selected = Vec::with_capacity(size);
+        collect_failed_constraint_set_removal_probes(
+            prepared,
+            context,
+            &blocking,
+            size,
+            0,
+            &mut selected,
+            certification_config,
+            rank_min_precision,
+            &mut probes,
+            &mut clearing_removals,
+        );
+    }
+    FailedConstraintSetRemovalSearchReport {
+        original,
+        max_cardinality,
+        probes,
+        clearing_removals,
+    }
 }
 
 /// Probe every blocking-row pair with explicit certification and rank policies.
@@ -363,6 +467,76 @@ pub fn search_failed_constraint_single_removals_with_config(
         original,
         probes,
         clearing_single_removals,
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn collect_failed_constraint_set_removal_probes(
+    prepared: &PreparedProblem<'_>,
+    context: &EvaluationContext,
+    blocking: &[&FailedConstraintRow],
+    target_size: usize,
+    start: usize,
+    selected: &mut Vec<usize>,
+    certification_config: CandidateCertificationConfig,
+    rank_min_precision: i32,
+    probes: &mut Vec<FailedConstraintSetRemovalProbe>,
+    clearing_removals: &mut usize,
+) {
+    if selected.len() == target_size {
+        let selected_rows = selected
+            .iter()
+            .map(|index| blocking[*index])
+            .collect::<Vec<_>>();
+        let mut reduced = prepared.problem().clone();
+        for row in &selected_rows {
+            if let Some(constraint) = reduced.constraints.get_mut(row.constraint_index) {
+                constraint.active = false;
+            }
+        }
+        let reduced_prepared = PreparedProblem::new(&reduced);
+        let reduced_report = diagnose_failed_constraints_with_config(
+            &reduced_prepared,
+            context,
+            certification_config,
+            rank_min_precision,
+        );
+        let removal_status = if reduced_report.blocking_rows == 0 {
+            *clearing_removals += 1;
+            FailedConstraintRemovalStatus::ClearsAllBlockingRows
+        } else {
+            FailedConstraintRemovalStatus::StillBlocking {
+                blocking_rows: reduced_report.blocking_rows,
+            }
+        };
+        probes.push(FailedConstraintSetRemovalProbe {
+            constraint_indices: selected_rows
+                .iter()
+                .map(|row| row.constraint_index)
+                .collect(),
+            names: selected_rows.iter().map(|row| row.name.clone()).collect(),
+            removal_status,
+        });
+        return;
+    }
+
+    let remaining_slots = target_size - selected.len();
+    let last_start = blocking.len().saturating_sub(remaining_slots);
+    for index in start..=last_start {
+        selected.push(index);
+        collect_failed_constraint_set_removal_probes(
+            prepared,
+            context,
+            blocking,
+            target_size,
+            index + 1,
+            selected,
+            certification_config,
+            rank_min_precision,
+            probes,
+            clearing_removals,
+        );
+        selected.pop();
     }
 }
 
