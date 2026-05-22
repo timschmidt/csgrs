@@ -5979,7 +5979,6 @@ fn bezier_boolean_algebraic_split_bridge_lowers_operand_lanes() {
     assert!(bridge.is_ready());
     assert_eq!(bridge.ordered_event_count, 3);
     assert_eq!(bridge.exact_rational_parameter_count, 3);
-    assert_eq!(bridge.unsupported_role_count, 0);
     assert_eq!(bridge.non_rational_parameter_count, 0);
     assert_eq!(bridge.split_plan.first_curve_parameters, vec![ratio(1, 4)]);
     assert_eq!(bridge.split_plan.shared_range_parameters, vec![half()]);

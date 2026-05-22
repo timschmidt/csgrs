@@ -2916,8 +2916,6 @@ pub enum BezierBooleanAlgebraicSplitBridgeStatus {
     Ready,
     /// Algebraic ordering blocked the bridge.
     OrderingBlocked,
-    /// A retained algebraic event used an unsupported split lane.
-    UnsupportedRole,
     /// At least one ordered algebraic event has no exact rational witness.
     NonRationalParameter,
 }
@@ -2953,8 +2951,6 @@ pub struct BezierBooleanAlgebraicSplitBridgeReport2 {
     pub exact_rational_parameter_count: usize,
     /// Number of interval-only algebraic roots that blocked lowering.
     pub non_rational_parameter_count: usize,
-    /// Number of unsupported event roles.
-    pub unsupported_role_count: usize,
     /// Number of retained blocking preconditions.
     pub blocker_count: usize,
 }
@@ -18765,7 +18761,6 @@ impl BezierBooleanAlgebraicSplitBridgeReport2 {
         let mut shared_range_parameters = Vec::new();
         let mut exact_rational_parameter_count = 0;
         let mut non_rational_parameter_count = 0;
-        let unsupported_role_count = 0;
         for event in &ordering.sorted_events {
             let Some(parameter) = event.root.exact_rational_witness() else {
                 non_rational_parameter_count += 1;
@@ -18785,22 +18780,12 @@ impl BezierBooleanAlgebraicSplitBridgeReport2 {
             exact_rational_parameter_count += 1;
         }
 
-        if unsupported_role_count > 0 {
-            return Classification::Decided(Self::blocked(
-                BezierBooleanAlgebraicSplitBridgeStatus::UnsupportedRole,
-                ordering,
-                exact_rational_parameter_count,
-                non_rational_parameter_count,
-                unsupported_role_count,
-            ));
-        }
         if non_rational_parameter_count > 0 {
             return Classification::Decided(Self::blocked(
                 BezierBooleanAlgebraicSplitBridgeStatus::NonRationalParameter,
                 ordering,
                 exact_rational_parameter_count,
                 non_rational_parameter_count,
-                unsupported_role_count,
             ));
         }
 
@@ -18831,7 +18816,6 @@ impl BezierBooleanAlgebraicSplitBridgeReport2 {
             ordered_event_count: ordering.sorted_events.len(),
             exact_rational_parameter_count,
             non_rational_parameter_count: 0,
-            unsupported_role_count: 0,
             blocker_count: 0,
             split_plan,
             insertion,
@@ -18851,7 +18835,6 @@ impl BezierBooleanAlgebraicSplitBridgeReport2 {
             ordered_event_count: 0,
             exact_rational_parameter_count: 0,
             non_rational_parameter_count: 0,
-            unsupported_role_count: 0,
             blocker_count,
         }
     }
@@ -18861,7 +18844,6 @@ impl BezierBooleanAlgebraicSplitBridgeReport2 {
         ordering: &BezierBooleanAlgebraicParameterOrderingReport2,
         exact_rational_parameter_count: usize,
         non_rational_parameter_count: usize,
-        unsupported_role_count: usize,
     ) -> Self {
         Self {
             status,
@@ -18871,8 +18853,7 @@ impl BezierBooleanAlgebraicSplitBridgeReport2 {
             ordered_event_count: ordering.sorted_events.len(),
             exact_rational_parameter_count,
             non_rational_parameter_count,
-            unsupported_role_count,
-            blocker_count: non_rational_parameter_count + unsupported_role_count,
+            blocker_count: non_rational_parameter_count,
         }
     }
 
@@ -18881,12 +18862,11 @@ impl BezierBooleanAlgebraicSplitBridgeReport2 {
         self.status == BezierBooleanAlgebraicSplitBridgeStatus::Ready
     }
 
-    /// Returns true when ordering, role, or interval-only evidence blocked lowering.
+    /// Returns true when ordering or interval-only evidence blocked lowering.
     pub fn has_blockers(&self) -> bool {
         matches!(
             self.status,
             BezierBooleanAlgebraicSplitBridgeStatus::OrderingBlocked
-                | BezierBooleanAlgebraicSplitBridgeStatus::UnsupportedRole
                 | BezierBooleanAlgebraicSplitBridgeStatus::NonRationalParameter
         )
     }
