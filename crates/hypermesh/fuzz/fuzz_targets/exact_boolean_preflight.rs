@@ -2460,6 +2460,81 @@ fn exercise_consumed_hole_side_cutter_openings() {
         straddling_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
     );
+
+    let multi_component_consumed = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            0, 0, 0, 20, 0, 0, 20, 20, 0, 0, 20, 0, //
+            30, 0, 0, 40, 0, 0, 40, 10, 0, 30, 10, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("multi-component consumed-hole left fixture must import");
+    let multi_component_consumed_right = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            8, 8, 0, 12, 10, 0, 8, 12, 0, //
+            0, 9, 0, 10, 8, 0, 10, 12, 0, 0, 11, 0, //
+            33, 3, 0, 35, 3, 0, 35, 5, 0, 33, 5, 0,
+        ],
+        &[
+            0, 1, 2, //
+            3, 4, 5, 3, 5, 6, //
+            7, 8, 9, 7, 9, 10,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("multi-component consumed-hole right fixture must import");
+    assert!(
+        arrange_coplanar_surface_cutter_hole_contact_difference(
+            &multi_component_consumed,
+            &multi_component_consumed_right,
+        )
+        .is_none()
+    );
+    let multi_component_holed = arrange_coplanar_convex_surface_component_holed_difference(
+        &multi_component_consumed,
+        &multi_component_consumed_right,
+    )
+    .expect("multi-component difference should retain a no-hole opening and a strict hole");
+    multi_component_holed.validate().unwrap();
+    multi_component_holed
+        .validate_against_sources(&multi_component_consumed, &multi_component_consumed_right)
+        .unwrap();
+    assert_eq!(multi_component_holed.components.len(), 2);
+    assert!(
+        multi_component_holed
+            .components
+            .iter()
+            .any(|component| component.holes.is_empty())
+    );
+    assert!(
+        multi_component_holed
+            .components
+            .iter()
+            .any(|component| component.holes.len() == 1)
+    );
+    let multi_component_preflight = preflight_boolean_exact(
+        &multi_component_consumed,
+        &multi_component_consumed_right,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("multi-component consumed-hole preflight should classify component-holed shortcut");
+    multi_component_preflight.validate().unwrap();
+    assert_eq!(
+        multi_component_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+    );
+    let multi_component_result = hypermesh::exact::boolean_exact(
+        &multi_component_consumed,
+        &multi_component_consumed_right,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("multi-component consumed-hole boolean should materialize");
+    multi_component_result.validate().unwrap();
 }
 
 #[cfg(feature = "exact-triangulation")]

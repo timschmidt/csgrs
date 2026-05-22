@@ -6491,17 +6491,6 @@ pub fn arrange_coplanar_convex_surface_component_holed_difference(
         "coplanar convex component-holed arrangement",
     )
     .ok()?;
-    let right_hulls = right_components
-        .iter()
-        .map(|component| component.hull.clone())
-        .collect::<Vec<_>>();
-    let right_hulls_are_disjoint = validate_component_loops_disjoint(
-        &right_hulls,
-        projection,
-        "coplanar convex component-holed arrangement",
-    )
-    .is_ok();
-
     let mut components = Vec::new();
     let mut emitted_cut = false;
     for component in &mut left_components {
@@ -6594,7 +6583,12 @@ pub fn arrange_coplanar_convex_surface_component_holed_difference(
                 components.extend(opened_components);
                 continue;
             }
-            if !right_hulls_are_disjoint {
+            if !component_relevant_right_regions_are_disjoint(
+                &cut_indices,
+                &holes,
+                &right_components,
+                projection,
+            )? {
                 return None;
             }
             if let Some(cell_components) =
@@ -6646,7 +6640,12 @@ pub fn arrange_coplanar_convex_surface_component_holed_difference(
                     .map(|(outer, holes)| CoplanarConvexHoledComponent { outer, holes }),
             );
         } else {
-            if !right_hulls_are_disjoint {
+            if !component_relevant_right_regions_are_disjoint(
+                &cut_indices,
+                &holes,
+                &right_components,
+                projection,
+            )? {
                 return None;
             }
             let mut outer = component.hull.clone();
@@ -6692,7 +6691,54 @@ struct RemovedRegionCandidate {
     region: Vec<Point3>,
 }
 
-/// Replay mixed cutter/hole openings while retaining unrelated strict holes.
+/// Check only the right components that affect one left component.
+///
+/// Earlier bounded component-holed replay required all right components to be
+/// pairwise disjoint before the fallback cut/hole assignment could run. That
+/// was unnecessarily global for multi-component differences: one left
+/// component may consume an overlapping cutter/hole group while an independent
+/// left component retains a strict hole. Following Yap, "Towards Exact
+/// Geometric Computation," *Computational Geometry* 7.1-2 (1997), this helper
+/// keeps the proof local to the exact source component whose topology is being
+/// emitted. Components unrelated to that source component cannot invalidate
+/// its retained loop; related components are still required to replay as
+/// disjoint whenever the narrower fallback path relies on simple hole
+/// assignment instead of explicit removed-region contact groups.
+#[cfg(feature = "exact-triangulation")]
+fn component_relevant_right_regions_are_disjoint(
+    cut_indices: &[usize],
+    holes: &[ComponentHoleCandidate],
+    right_components: &[ConvexUnionComponent],
+    projection: CoplanarProjection,
+) -> Option<bool> {
+    let mut indices = cut_indices.to_vec();
+    for hole in holes {
+        if !indices.contains(&hole.right_index) {
+            indices.push(hole.right_index);
+        }
+    }
+    if indices.len() < 2 {
+        return Some(true);
+    }
+    let regions = indices
+        .into_iter()
+        .map(|index| {
+            right_components
+                .get(index)
+                .map(|component| component.hull.clone())
+        })
+        .collect::<Option<Vec<_>>>()?;
+    Some(
+        validate_component_loops_disjoint(
+            &regions,
+            projection,
+            "coplanar convex component-holed arrangement",
+        )
+        .is_ok(),
+    )
+}
+
+/// Replay mixed cutter/hole openings while optionally retaining strict holes.
 ///
 /// This helper is the holed-output sibling of
 /// [`arrange_coplanar_surface_cutter_hole_contact_difference`]. A connected
@@ -6701,8 +6747,14 @@ struct RemovedRegionCandidate {
 /// bounded extension here is that the same component may also have independent
 /// cutter-only side openings; those groups are materialized with the same
 /// retained side-opening rule as
-/// [`materialize_nonrectilinear_side_cutter_opening`]. The final outer loop is
-/// accepted only when every removed group has one positive-length side
+/// [`materialize_nonrectilinear_side_cutter_opening`]. The helper may return a
+/// no-hole opened component when all holes in that source component are
+/// consumed by certified side openings. That is not a standalone holed
+/// certificate: [`validate_component_holed_surface_output`] still requires at
+/// least one retained hole in the complete arrangement. This is the necessary
+/// multi-component case where one source component is opened and another
+/// independent source component still carries retained holes. The final outer
+/// loop is accepted only when every removed group has one positive-length side
 /// attachment, the stitched output is simple, and exact projected area replays
 /// `outer = output + sum(removed_i)`.
 ///
@@ -6722,7 +6774,7 @@ fn materialize_cutter_hole_contact_component_holed_difference(
     holes: &[ComponentHoleCandidate],
     right_components: &[ConvexUnionComponent],
 ) -> Option<Vec<CoplanarConvexHoledComponent>> {
-    if cut_indices.is_empty() || holes.len() < 2 {
+    if cut_indices.is_empty() || holes.is_empty() {
         return None;
     }
     let projection = component.projection;
@@ -6817,9 +6869,6 @@ fn materialize_cutter_hole_contact_component_holed_difference(
             return None;
         }
         retained_holes.push(hole.ring.clone());
-    }
-    if retained_holes.is_empty() {
-        return None;
     }
     sort_polygons_for_replay(&mut retained_holes, projection);
     Some(vec![CoplanarConvexHoledComponent {

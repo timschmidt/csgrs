@@ -14209,6 +14209,112 @@ fn exact_coplanar_component_holed_difference_omits_holes_consumed_by_side_cutter
 
 #[cfg(feature = "exact-triangulation")]
 #[test]
+fn exact_coplanar_component_holed_difference_allows_opened_component_without_local_holes() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            0, 0, 0, 20, 0, 0, 20, 20, 0, 0, 20, 0, //
+            30, 0, 0, 40, 0, 0, 40, 10, 0, 30, 10, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let right = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            8, 8, 0, 12, 10, 0, 8, 12, 0, //
+            0, 9, 0, 10, 8, 0, 10, 12, 0, 0, 11, 0, //
+            33, 3, 0, 35, 3, 0, 35, 5, 0, 33, 5, 0,
+        ],
+        &[
+            0, 1, 2, //
+            3, 4, 5, 3, 5, 6, //
+            7, 8, 9, 7, 9, 10,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_cutter_hole_contact_difference(&left, &right)
+            .is_none()
+    );
+    let holed =
+        hypermesh::exact::arrange_coplanar_convex_surface_component_holed_difference(&left, &right)
+            .expect(
+                "one component may consume a straddling hole while another retains a strict hole",
+            );
+    holed.validate().unwrap();
+    holed.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(holed.components.len(), 2);
+    assert!(holed.components.iter().any(|component| {
+        component.holes.is_empty()
+            && component.outer.iter().any(|point| {
+                real_eq(&point.x, &ExactReal::from(10)) && real_eq(&point.y, &ExactReal::from(8))
+            })
+    }));
+    assert!(holed.components.iter().any(|component| {
+        component.holes.len() == 1
+            && component.holes[0].iter().any(|point| {
+                real_eq(&point.x, &ExactReal::from(33)) && real_eq(&point.y, &ExactReal::from(3))
+            })
+    }));
+
+    let mut stale = holed.clone();
+    if let Some(opened) = stale
+        .components
+        .iter_mut()
+        .find(|component| component.holes.is_empty())
+    {
+        opened
+            .holes
+            .push(vec![p3(8, 8, 0), p3(12, 10, 0), p3(8, 12, 0)]);
+    }
+    assert!(stale.validate_against_sources(&left, &right).is_err());
+
+    let preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    preflight.validate().unwrap();
+    preflight.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::exact::ExactBooleanSupport::
+            CertifiedCoplanarConvexSurfaceComponentHoledDifference
+    );
+
+    let result = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    result
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::
+                CoplanarConvexSurfaceComponentHoledDifference
+        }
+    );
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
 fn exact_coplanar_cutter_hole_contact_accepts_mixed_side_openings_without_retained_holes() {
     let left = ExactMesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 20, 0, 0, 20, 20, 0, 0, 20, 0],
