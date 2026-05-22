@@ -823,6 +823,58 @@ proptest! {
     }
 
     #[test]
+    fn sketch_line_symmetry_rows_match_generated_integer_reflections(
+        sx in -8_i16..=8,
+        sy in -8_i16..=8,
+        ux in -6_i16..=6,
+        uy in -6_i16..=6,
+        t in -5_i16..=5,
+        offset in -5_i16..=5,
+    ) {
+        prop_assume!(ux != 0 || uy != 0);
+        let sx = i64::from(sx);
+        let sy = i64::from(sy);
+        let ux = i64::from(ux);
+        let uy = i64::from(uy);
+        let t = i64::from(t);
+        let offset = i64::from(offset);
+        let midpoint_x = sx + t * ux;
+        let midpoint_y = sy + t * uy;
+        let normal_x = -uy;
+        let normal_y = ux;
+        let mut sketch = SketchSolveProblem::new();
+        let axis_start = sketch.add_point2d("axis start", Real::from(sx), Real::from(sy));
+        let axis_end =
+            sketch.add_point2d("axis end", Real::from(sx + ux), Real::from(sy + uy));
+        let axis = sketch.add_line_segment2("axis", axis_start, axis_end);
+        let a = sketch.add_point2d(
+            "a",
+            Real::from(midpoint_x + offset * normal_x),
+            Real::from(midpoint_y + offset * normal_y),
+        );
+        let b = sketch.add_point2d(
+            "b",
+            Real::from(midpoint_x - offset * normal_x),
+            Real::from(midpoint_y - offset * normal_y),
+        );
+        sketch.add_symmetric_line2("line symmetry", a, b, axis);
+
+        let lowered = sketch.lower_to_problem();
+        let certification = certify_candidate(
+            &PreparedProblem::new(&lowered.problem),
+            &context_from_problem(&lowered.problem),
+        );
+
+        prop_assert_eq!(lowered.rows.len(), 2);
+        let all_line_symmetry_rows = lowered.rows.iter().all(|row| {
+            row.strategy == Some(SketchResidualStrategy::LineSymmetryPolynomial)
+                && row.status == SketchGeneratedRowStatus::Generated
+        });
+        prop_assert!(all_line_symmetry_rows);
+        prop_assert!(certification.all_satisfied());
+    }
+
+    #[test]
     fn sketch_construction_certificate_generated_integer_segments_match_distance(
         ax in -12_i16..=12,
         ay in -12_i16..=12,

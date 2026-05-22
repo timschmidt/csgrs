@@ -542,6 +542,31 @@ pub mod symmetry {
             kind,
         }
     }
+
+    /// Add a 2D line-axis point symmetry relation.
+    ///
+    /// Lowering emits exact midpoint-on-axis and perpendicular-offset rows
+    /// using the retained axis direction without normalization. This records
+    /// the SolveSpace-style mirror relation as semantic source data while
+    /// preserving Yap's proof boundary from "Towards Exact Geometric
+    /// Computation" (1997): exact predicates, not rounded construction
+    /// coordinates, decide candidate acceptance.
+    pub fn symmetric_line2(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+        axis: SketchEntityHandle,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::SymmetricLine2 { a, b, axis };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Symmetry,
+            strategy: SketchResidualStrategy::LineSymmetryPolynomial,
+            kind,
+        }
+    }
 }
 
 /// Inequality and parameter-domain builders.

@@ -552,6 +552,23 @@ pub enum SketchConstraintKind {
         /// Exact vertical mirror-axis coordinate.
         axis_x: Real,
     },
+    /// 2D points symmetric across a retained 2D line.
+    ///
+    /// Lowering emits two exact polynomial rows: the midpoint of `a` and `b`
+    /// lies on the mirror line, and the segment from `a` to `b` is
+    /// perpendicular to that line. The rows use the unnormalized line
+    /// direction, so degenerate-axis handling remains an explicit
+    /// entity-domain obligation. This follows Yap, "Towards Exact Geometric
+    /// Computation" (1997), by retaining the construction object while using
+    /// exact predicates as the certification boundary.
+    SymmetricLine2 {
+        /// First point entity.
+        a: SketchEntityHandle,
+        /// Second point entity.
+        b: SketchEntityHandle,
+        /// 2D line segment used as the mirror axis.
+        axis: SketchEntityHandle,
+    },
     /// Point-on-circle incidence using squared radius residual.
     PointOnCircle {
         /// Point entity.
@@ -667,6 +684,8 @@ pub enum SketchResidualStrategy {
     MidpointCoordinateEquality,
     /// Linear coordinate equality for retained axis symmetry.
     AxisSymmetryCoordinateEquality,
+    /// Exact midpoint-on-axis/perpendicular rows for retained line symmetry.
+    LineSymmetryPolynomial,
     /// Soft stay-near objective.
     SoftObjective,
 }
@@ -1331,6 +1350,21 @@ impl SketchSolveProblem {
         axis_x: Real,
     ) -> SketchConstraintHandle {
         symmetry::symmetric_vertical2(self, name, a, b, axis_x).handle
+    }
+
+    /// Add a retained 2D line-axis point symmetry relation.
+    ///
+    /// Lowering emits exact rows for midpoint-on-axis and perpendicularity to
+    /// the mirror-axis direction, avoiding normalized vectors or rounded
+    /// reflected coordinates.
+    pub fn add_symmetric_line2(
+        &mut self,
+        name: impl Into<String>,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+        axis: SketchEntityHandle,
+    ) -> SketchConstraintHandle {
+        symmetry::symmetric_line2(self, name, a, b, axis).handle
     }
 
     /// Add a point-on-circle incidence constraint.
@@ -2105,6 +2139,48 @@ impl SketchSolveProblem {
                     a.exprs[0].clone() + b.exprs[0].clone()
                         - Expr::real(axis_x.clone() * Real::from(2)),
                     SketchResidualStrategy::AxisSymmetryCoordinateEquality,
+                );
+            }
+            SketchConstraintKind::SymmetricLine2 { a, b, axis } => {
+                // Yap, "Towards Exact Geometric Computation" (1997), keeps
+                // geometric decisions at exact predicate replay. A reflected
+                // pair across a line is therefore certified by midpoint
+                // incidence and perpendicularity, both using the unnormalized
+                // retained line direction.
+                let (Some(a), Some(b), Some((start, end))) = (
+                    self.point2_coordinates(a, constraint, rows),
+                    self.point2_coordinates(b, constraint, rows),
+                    self.line2_points(axis, constraint, rows),
+                ) else {
+                    return;
+                };
+                let axis_direction = [
+                    end.exprs[0].clone() - start.exprs[0].clone(),
+                    end.exprs[1].clone() - start.exprs[1].clone(),
+                ];
+                let doubled_midpoint_delta = [
+                    a.exprs[0].clone() + b.exprs[0].clone() - Expr::int(2) * start.exprs[0].clone(),
+                    a.exprs[1].clone() + b.exprs[1].clone() - Expr::int(2) * start.exprs[1].clone(),
+                ];
+                let point_delta = [
+                    a.exprs[0].clone() - b.exprs[0].clone(),
+                    a.exprs[1].clone() - b.exprs[1].clone(),
+                ];
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} midpoint on axis", constraint.name),
+                    direction_cross2(&doubled_midpoint_delta, &axis_direction),
+                    SketchResidualStrategy::LineSymmetryPolynomial,
+                );
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} perpendicular offset", constraint.name),
+                    direction_dot2(&point_delta, &axis_direction),
+                    SketchResidualStrategy::LineSymmetryPolynomial,
                 );
             }
             SketchConstraintKind::PointOnCircle { point, circle } => {

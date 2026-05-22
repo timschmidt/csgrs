@@ -1209,6 +1209,92 @@ fn sketch_axis_symmetry_relations_report_stale_wrong_and_non_2d_inputs() {
 }
 
 #[test]
+fn sketch_line_symmetry_relations_lower_to_exact_polynomial_rows() {
+    let mut sketch = SketchSolveProblem::new();
+    let axis_start = sketch.add_point2d("axis start", real(0), real(0));
+    let axis_end = sketch.add_point2d("axis end", real(5), real(0));
+    let axis = sketch.add_line_segment2("axis", axis_start, axis_end);
+    let top = sketch.add_point2d("top", real(2), real(3));
+    let bottom = sketch.add_point2d("bottom", real(2), real(-3));
+    let wrong = sketch.add_point2d("wrong", real(3), real(-3));
+    let valid =
+        sketch_symmetry_builders::symmetric_line2(&mut sketch, "line symmetry", top, bottom, axis);
+    sketch.add_symmetric_line2("violated line symmetry", top, wrong, axis);
+
+    assert_eq!(valid.family, hypersolve::SketchConstraintFamily::Symmetry);
+    assert_eq!(
+        valid.strategy,
+        SketchResidualStrategy::LineSymmetryPolynomial
+    );
+
+    let lowered = sketch.lower_to_problem();
+    let certification = certify_candidate(
+        &PreparedProblem::new(&lowered.problem),
+        &context_from_problem(&lowered.problem),
+    );
+
+    assert_eq!(lowered.problem.constraints.len(), 4);
+    assert_eq!(lowered.rows.len(), 4);
+    assert!(lowered.rows.iter().all(|row| {
+        row.strategy == Some(SketchResidualStrategy::LineSymmetryPolynomial)
+            && row.status == SketchGeneratedRowStatus::Generated
+    }));
+    assert!(matches!(
+        certification.rows[0].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[1].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[3].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
+}
+
+#[test]
+fn sketch_line_symmetry_relations_report_stale_wrong_and_non_2d_inputs() {
+    let mut sketch = SketchSolveProblem::new();
+    let p = sketch.add_point2d("p", real(0), real(0));
+    let q = sketch.add_point2d("q", real(1), real(1));
+    let axis_start = sketch.add_point2d("axis start", real(0), real(0));
+    let axis_end = sketch.add_point2d("axis end", real(1), real(0));
+    let axis = sketch.add_line_segment2("axis", axis_start, axis_end);
+    let point3 = sketch.add_point3d("point3", real(1), real(1), real(1));
+    let non_2d_axis = sketch.add_line_segment2("non 2d axis", point3, axis_end);
+    sketch.add_symmetric_line2("missing axis", p, q, SketchEntityHandle(999));
+    sketch.add_symmetric_line2("wrong axis family", p, q, p);
+    sketch.add_symmetric_line2("non 2d axis", p, q, non_2d_axis);
+    sketch.add_symmetric_line2("valid control", p, q, axis);
+
+    let lowered = sketch.lower_to_problem();
+
+    assert_eq!(lowered.problem.constraints.len(), 2);
+    assert_eq!(lowered.rows.len(), 5);
+    assert_eq!(
+        lowered.rows[0].status,
+        SketchGeneratedRowStatus::MissingEntity(SketchEntityHandle(999))
+    );
+    assert_eq!(
+        lowered.rows[1].status,
+        SketchGeneratedRowStatus::WrongEntityKind {
+            handle: p,
+            expected: "2D line segment"
+        }
+    );
+    assert_eq!(
+        lowered.rows[2].status,
+        SketchGeneratedRowStatus::WrongEntityKind {
+            handle: non_2d_axis,
+            expected: "2D line segment"
+        }
+    );
+    assert_eq!(lowered.rows[3].status, SketchGeneratedRowStatus::Generated);
+    assert_eq!(lowered.rows[4].status, SketchGeneratedRowStatus::Generated);
+}
+
+#[test]
 fn sketch_point_distance_ranges_lower_to_exact_squared_inequalities() {
     let mut sketch = SketchSolveProblem::new();
     let a = sketch.add_point2d("a", real(0), real(0));

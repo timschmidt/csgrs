@@ -472,6 +472,26 @@ fn sketch_problem_with_axis_symmetry_relations(row_count: usize) -> hypersolve::
     sketch
 }
 
+fn sketch_problem_with_line_symmetry_relations(row_count: usize) -> hypersolve::SketchSolveProblem {
+    let mut sketch = hypersolve::SketchSolveProblem::new();
+    for index in 0..row_count {
+        let x = index as i64;
+        let axis_start = sketch.add_point2d(format!("line_sym{index}.axis0"), r(x), r(x + 1));
+        let axis_end = sketch.add_point2d(format!("line_sym{index}.axis1"), r(x + 3), r(x + 5));
+        let axis = sketch.add_line_segment2(format!("line_sym{index}.axis"), axis_start, axis_end);
+        let a = sketch.add_point2d(format!("line_sym{index}.a"), r(x - 1), r(x + 5));
+        let b = sketch.add_point2d(format!("line_sym{index}.b"), r(x + 7), r(x - 1));
+        hypersolve::sketch_symmetry_builders::symmetric_line2(
+            &mut sketch,
+            format!("line symmetry {index}"),
+            a,
+            b,
+            axis,
+        );
+    }
+    sketch
+}
+
 fn sketch_problem_with_same_direction_relations(
     row_count: usize,
 ) -> hypersolve::SketchSolveProblem {
@@ -655,6 +675,10 @@ fn certification(c: &mut Criterion) {
     let axis_symmetry_sketch = sketch_problem_with_axis_symmetry_relations(16);
     c.bench_function("sketch_axis_symmetry_lowering", |b| {
         b.iter(|| axis_symmetry_sketch.lower_to_problem())
+    });
+    let line_symmetry_sketch = sketch_problem_with_line_symmetry_relations(16);
+    c.bench_function("sketch_line_symmetry_lowering", |b| {
+        b.iter(|| line_symmetry_sketch.lower_to_problem())
     });
     let same_direction_sketch = sketch_problem_with_same_direction_relations(16);
     c.bench_function("sketch_same_direction_lowering", |b| {
