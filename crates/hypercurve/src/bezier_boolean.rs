@@ -5307,33 +5307,6 @@ impl BezierBooleanEmissionPlanReport2 {
 }
 
 impl BezierBooleanAssemblyReadinessReport2 {
-    /// Audits an emission plan against quadratic Bezier fragment reports.
-    pub fn from_quadratic_fragments(
-        plan: &BezierBooleanEmissionPlanReport2,
-        first: &BezierBooleanQuadraticFragmentReport2,
-        second: &BezierBooleanQuadraticFragmentReport2,
-    ) -> Self {
-        Self::from_fragment_counts(plan, first.fragments.len(), second.fragments.len())
-    }
-
-    /// Audits an emission plan against cubic Bezier fragment reports.
-    pub fn from_cubic_fragments(
-        plan: &BezierBooleanEmissionPlanReport2,
-        first: &BezierBooleanCubicFragmentReport2,
-        second: &BezierBooleanCubicFragmentReport2,
-    ) -> Self {
-        Self::from_fragment_counts(plan, first.fragments.len(), second.fragments.len())
-    }
-
-    /// Audits an emission plan against rational quadratic/conic fragment reports.
-    pub fn from_rational_quadratic_fragments(
-        plan: &BezierBooleanEmissionPlanReport2,
-        first: &BezierBooleanRationalQuadraticFragmentReport2,
-        second: &BezierBooleanRationalQuadraticFragmentReport2,
-    ) -> Self {
-        Self::from_fragment_counts(plan, first.fragments.len(), second.fragments.len())
-    }
-
     /// Audits an emission plan against generic operand fragment counts.
     pub fn from_fragment_counts(
         plan: &BezierBooleanEmissionPlanReport2,

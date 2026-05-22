@@ -1542,8 +1542,10 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
                 format!(
                     "{:?}",
-                    BezierBooleanAssemblyReadinessReport2::from_quadratic_fragments(
-                        &emission, first, second
+                    BezierBooleanAssemblyReadinessReport2::from_fragment_counts(
+                        &emission,
+                        first.fragments.len(),
+                        second.fragments.len()
                     )
                 )
             }
@@ -1576,8 +1578,10 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     &ownerships,
                 );
                 let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
-                let assembly = BezierBooleanAssemblyReadinessReport2::from_quadratic_fragments(
-                    &emission, first, second,
+                let assembly = BezierBooleanAssemblyReadinessReport2::from_fragment_counts(
+                    &emission,
+                    first.fragments.len(),
+                    second.fragments.len(),
                 );
                 format!(
                     "{:?}",
@@ -1615,8 +1619,10 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     &ownerships,
                 );
                 let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
-                let assembly = BezierBooleanAssemblyReadinessReport2::from_quadratic_fragments(
-                    &emission, first, second,
+                let assembly = BezierBooleanAssemblyReadinessReport2::from_fragment_counts(
+                    &emission,
+                    first.fragments.len(),
+                    second.fragments.len(),
                 );
                 let plan = BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(
                     &assembly, &emission,
@@ -1659,8 +1665,10 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     &ownerships,
                 );
                 let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
-                let assembly = BezierBooleanAssemblyReadinessReport2::from_quadratic_fragments(
-                    &emission, first, second,
+                let assembly = BezierBooleanAssemblyReadinessReport2::from_fragment_counts(
+                    &emission,
+                    first.fragments.len(),
+                    second.fragments.len(),
                 );
                 let plan = BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(
                     &assembly, &emission,
@@ -1704,8 +1712,10 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     &ownerships,
                 );
                 let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
-                let assembly = BezierBooleanAssemblyReadinessReport2::from_quadratic_fragments(
-                    &emission, first, second,
+                let assembly = BezierBooleanAssemblyReadinessReport2::from_fragment_counts(
+                    &emission,
+                    first.fragments.len(),
+                    second.fragments.len(),
                 );
                 let plan = BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(
                     &assembly, &emission,
@@ -1746,8 +1756,10 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     &ownerships,
                 );
                 let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
-                let assembly = BezierBooleanAssemblyReadinessReport2::from_quadratic_fragments(
-                    &emission, first, second,
+                let assembly = BezierBooleanAssemblyReadinessReport2::from_fragment_counts(
+                    &emission,
+                    first.fragments.len(),
+                    second.fragments.len(),
                 );
                 let plan = BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(
                     &assembly, &emission,
@@ -2135,8 +2147,10 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     &ownerships,
                 );
                 let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
-                let assembly = BezierBooleanAssemblyReadinessReport2::from_quadratic_fragments(
-                    &emission, first, second,
+                let assembly = BezierBooleanAssemblyReadinessReport2::from_fragment_counts(
+                    &emission,
+                    first.fragments.len(),
+                    second.fragments.len(),
                 );
                 let plan = BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(
                     &assembly, &emission,
@@ -2184,8 +2198,10 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     &ownerships,
                 );
                 let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
-                let assembly = BezierBooleanAssemblyReadinessReport2::from_quadratic_fragments(
-                    &emission, first, second,
+                let assembly = BezierBooleanAssemblyReadinessReport2::from_fragment_counts(
+                    &emission,
+                    first.fragments.len(),
+                    second.fragments.len(),
                 );
                 let plan = BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(
                     &assembly, &emission,
@@ -2228,8 +2244,10 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     &ownerships,
                 );
                 let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
-                let assembly = BezierBooleanAssemblyReadinessReport2::from_quadratic_fragments(
-                    &emission, first, second,
+                let assembly = BezierBooleanAssemblyReadinessReport2::from_fragment_counts(
+                    &emission,
+                    first.fragments.len(),
+                    second.fragments.len(),
                 );
                 let plan = BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(
                     &assembly, &emission,
@@ -2273,8 +2291,10 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     &ownerships,
                 );
                 let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
-                let assembly = BezierBooleanAssemblyReadinessReport2::from_quadratic_fragments(
-                    &emission, first, second,
+                let assembly = BezierBooleanAssemblyReadinessReport2::from_fragment_counts(
+                    &emission,
+                    first.fragments.len(),
+                    second.fragments.len(),
                 );
                 let plan = BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(
                     &assembly, &emission,
@@ -2319,8 +2339,10 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     &ownerships,
                 );
                 let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
-                let assembly = BezierBooleanAssemblyReadinessReport2::from_quadratic_fragments(
-                    &emission, first, second,
+                let assembly = BezierBooleanAssemblyReadinessReport2::from_fragment_counts(
+                    &emission,
+                    first.fragments.len(),
+                    second.fragments.len(),
                 );
                 let plan = BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(
                     &assembly, &emission,
@@ -2366,8 +2388,10 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     &ownerships,
                 );
                 let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
-                let assembly = BezierBooleanAssemblyReadinessReport2::from_quadratic_fragments(
-                    &emission, first, second,
+                let assembly = BezierBooleanAssemblyReadinessReport2::from_fragment_counts(
+                    &emission,
+                    first.fragments.len(),
+                    second.fragments.len(),
                 );
                 let plan = BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(
                     &assembly, &emission,
@@ -2426,8 +2450,10 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     &ownerships,
                 );
                 let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
-                let assembly = BezierBooleanAssemblyReadinessReport2::from_quadratic_fragments(
-                    &emission, first, second,
+                let assembly = BezierBooleanAssemblyReadinessReport2::from_fragment_counts(
+                    &emission,
+                    first.fragments.len(),
+                    second.fragments.len(),
                 );
                 let plan = BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(
                     &assembly, &emission,
@@ -2479,8 +2505,10 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     &ownerships,
                 );
                 let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
-                let assembly = BezierBooleanAssemblyReadinessReport2::from_quadratic_fragments(
-                    &emission, first, second,
+                let assembly = BezierBooleanAssemblyReadinessReport2::from_fragment_counts(
+                    &emission,
+                    first.fragments.len(),
+                    second.fragments.len(),
                 );
                 let plan = BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(
                     &assembly, &emission,
@@ -2526,8 +2554,10 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     &ownerships,
                 );
                 let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
-                let assembly = BezierBooleanAssemblyReadinessReport2::from_quadratic_fragments(
-                    &emission, first, second,
+                let assembly = BezierBooleanAssemblyReadinessReport2::from_fragment_counts(
+                    &emission,
+                    first.fragments.len(),
+                    second.fragments.len(),
                 );
                 let plan = BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(
                     &assembly, &emission,
@@ -2580,8 +2610,10 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     &ownerships,
                 );
                 let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
-                let assembly = BezierBooleanAssemblyReadinessReport2::from_quadratic_fragments(
-                    &emission, first, second,
+                let assembly = BezierBooleanAssemblyReadinessReport2::from_fragment_counts(
+                    &emission,
+                    first.fragments.len(),
+                    second.fragments.len(),
                 );
                 let plan = BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(
                     &assembly, &emission,
@@ -2689,8 +2721,10 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     &ownerships,
                 );
                 let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
-                let assembly = BezierBooleanAssemblyReadinessReport2::from_quadratic_fragments(
-                    &emission, first, second,
+                let assembly = BezierBooleanAssemblyReadinessReport2::from_fragment_counts(
+                    &emission,
+                    first.fragments.len(),
+                    second.fragments.len(),
                 );
                 let plan = BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(
                     &assembly, &emission,
@@ -2750,8 +2784,10 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     &ownerships,
                 );
                 let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
-                let assembly = BezierBooleanAssemblyReadinessReport2::from_quadratic_fragments(
-                    &emission, first, second,
+                let assembly = BezierBooleanAssemblyReadinessReport2::from_fragment_counts(
+                    &emission,
+                    first.fragments.len(),
+                    second.fragments.len(),
                 );
                 let plan = BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(
                     &assembly, &emission,
@@ -2799,8 +2835,10 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     &ownerships,
                 );
                 let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
-                let assembly = BezierBooleanAssemblyReadinessReport2::from_quadratic_fragments(
-                    &emission, first, second,
+                let assembly = BezierBooleanAssemblyReadinessReport2::from_fragment_counts(
+                    &emission,
+                    first.fragments.len(),
+                    second.fragments.len(),
                 );
                 let plan = BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(
                     &assembly, &emission,
@@ -2876,8 +2914,10 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     &ownerships,
                 );
                 let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
-                let assembly = BezierBooleanAssemblyReadinessReport2::from_quadratic_fragments(
-                    &emission, first, second,
+                let assembly = BezierBooleanAssemblyReadinessReport2::from_fragment_counts(
+                    &emission,
+                    first.fragments.len(),
+                    second.fragments.len(),
                 );
                 let plan = BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(
                     &assembly, &emission,
@@ -2959,8 +2999,10 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 )
                 .classify(&schedule, BooleanOp::Union);
                 let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
-                let assembly = BezierBooleanAssemblyReadinessReport2::from_quadratic_fragments(
-                    &emission, first, second,
+                let assembly = BezierBooleanAssemblyReadinessReport2::from_fragment_counts(
+                    &emission,
+                    first.fragments.len(),
+                    second.fragments.len(),
                 );
                 let plan = BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(
                     &assembly, &emission,
@@ -3050,8 +3092,10 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 )
                 .classify(&schedule, BooleanOp::Union);
                 let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
-                let assembly = BezierBooleanAssemblyReadinessReport2::from_quadratic_fragments(
-                    &emission, first, second,
+                let assembly = BezierBooleanAssemblyReadinessReport2::from_fragment_counts(
+                    &emission,
+                    first.fragments.len(),
+                    second.fragments.len(),
                 );
                 let plan = BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(
                     &assembly, &emission,
@@ -3132,8 +3176,10 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 )
                 .classify(&schedule, BooleanOp::Union);
                 let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
-                let assembly = BezierBooleanAssemblyReadinessReport2::from_quadratic_fragments(
-                    &emission, first, second,
+                let assembly = BezierBooleanAssemblyReadinessReport2::from_fragment_counts(
+                    &emission,
+                    first.fragments.len(),
+                    second.fragments.len(),
                 );
                 let plan = BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(
                     &assembly, &emission,
@@ -3866,8 +3912,10 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     &ownerships,
                 );
                 let emission = BezierBooleanEmissionPlanReport2::from_ownership(&ownership);
-                let assembly = BezierBooleanAssemblyReadinessReport2::from_quadratic_fragments(
-                    &emission, first, second,
+                let assembly = BezierBooleanAssemblyReadinessReport2::from_fragment_counts(
+                    &emission,
+                    first.fragments.len(),
+                    second.fragments.len(),
                 );
                 let plan = BezierBooleanLoopAssemblyPlanReport2::from_assembly_readiness(
                     &assembly, &emission,
