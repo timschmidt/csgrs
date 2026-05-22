@@ -78,8 +78,8 @@ pub use classify::{
     ConvexPointLocation, LineSide, PlaneAabbRelation, PlaneSegmentRelation, PlaneSide,
     PlaneTriangleRelation, PointSegmentLocation, RayTriangleIntersection, RealIntervalLocation,
     RingConvexity, RingPointLocation, Segment3Intersection, SegmentIntersection,
-    SegmentTriangleIntersection, SphereIntersection, SpherePointLocation, TetrahedronLocation,
-    Triangle3Location, TriangleLocation,
+    SegmentTriangleIntersection, SphereIntersection, SpherePointLocation, SupportDopRelation,
+    TetrahedronLocation, Triangle3Location, TriangleLocation,
 };
 pub use geometry::{
     Aabb2Facts, CoordinateAxis2, HomogeneousLine3, HomogeneousPoint3, Plane3Facts,
@@ -144,6 +144,9 @@ pub use predicates::distance::{
     compare_point_segment3_distance_squared_with_policy, compare_point2_distance_squared,
     compare_point2_distance_squared_with_policy, compare_point3_distance_squared,
     compare_point3_distance_squared_with_policy,
+};
+pub use predicates::dop::{
+    SupportDop3, SupportSlab3, support_dop3_from_points, support_dop3_from_points_with_policy,
 };
 pub use predicates::filters::{
     certified_ball_sign, certified_ball_sign_report, certified_ball_sign_report_with_policy,

@@ -194,6 +194,33 @@ impl ConvexPointLocation {
     }
 }
 
+/// Relation between a query interval and a retained support k-DOP slab set.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum SupportDopRelation {
+    /// The retained slab set is empty or contains an invalid interval.
+    Degenerate,
+    /// At least one support axis separates the query from the k-DOP.
+    Separated,
+    /// No support axis separates the query, and at least one tested interval
+    /// touches only at a slab boundary.
+    BoundaryTouch,
+    /// All tested support-axis intervals overlap with positive width.
+    ///
+    /// For AABB queries this is a conservative interval relation against the
+    /// retained k-DOP axes. It is exact for the tested slab projections, but it
+    /// is not a constructive witness that the AABB intersects the underlying
+    /// source object unless the caller's k-DOP axis family is complete for that
+    /// domain.
+    ConservativeOverlap,
+}
+
+impl SupportDopRelation {
+    /// Returns whether the tested support intervals are not separated.
+    pub const fn may_intersect(self) -> bool {
+        !matches!(self, Self::Degenerate | Self::Separated)
+    }
+}
+
 /// Intersection relation between two explicit 3D spheres.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum SphereIntersection {

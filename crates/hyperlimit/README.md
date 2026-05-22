@@ -64,6 +64,8 @@ than inventing a float decision.
   D-dimensional determinant predicate boundary for triangulation and mesh crates.
 - Prepared segment, triangle, AABB, line, circle/sphere, and plane helpers retain facts
   for repeated decisions.
+- `SupportDop3` and `SupportSlab3` retain exact support-axis bounds and source
+  witnesses for reusable k-DOP/bounding-volume slab predicates.
 - Session types such as `ExactGeometrySession`, `ConstructionCertificate`,
   `VersionedFacts`, and `VersionedPrepared` track cache freshness and construction
   provenance.
@@ -99,7 +101,7 @@ reducers, filters, bounded refinement, or fallback paths.
 
 ## Current Status
 
-Version `0.3.0` is an early but usable predicate crate. It currently includes:
+Version `0.4.0` is an early but usable predicate crate. It currently includes:
 
 - predicate-facing re-exports of lattice-owned `Point2`, `Point3`, shared-scale point
   facts, homogeneous points, and Pluecker lines;
@@ -108,6 +110,8 @@ Version `0.3.0` is an early but usable predicate crate. It currently includes:
 - exact real and point ordering, squared-distance comparison, interval, AABB, segment,
   ring, triangle, line, plane, orientation, in-circle, in-sphere, and
   D-dimensional orientation/in-sphere/affine-independence predicates;
+- exact support k-DOP slab carriers with witness-preserving point and AABB projection
+  classifiers;
 - prepared segment, triangle, AABB, line, circle/sphere, and plane helpers for repeated
   decisions;
 - `PredicateOutcome`, `PredicateReport`, `PredicateCertificate`, certainty,
@@ -124,6 +128,12 @@ domain-specific geometry.
 ```toml
 [dependencies]
 hyperlimit = "0.3.0"
+```
+
+Current local development version:
+
+```toml
+hyperlimit = "0.4.0"
 ```
 
 Feature summary:
@@ -180,6 +190,11 @@ Arbitrary Polygons." *Computational Geometry*, vol. 20, no. 3, 2001, pp.
 131-144.
 
 Moore, Ramon E. *Interval Analysis*. Prentice-Hall, 1966.
+
+Klosowski, James T., Martin Held, Joseph S. B. Mitchell, Henry Sowizral, and
+Karel Zikan. "Efficient Collision Detection Using Bounding Volume Hierarchies
+of k-DOPs." *IEEE Transactions on Visualization and Computer Graphics*, vol. 4,
+no. 1, 1998, pp. 21-36.
 
 Shewchuk, Jonathan Richard. "Adaptive Precision Floating-Point Arithmetic and
 Fast Robust Geometric Predicates." *Discrete & Computational Geometry*, vol.

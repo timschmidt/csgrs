@@ -9,7 +9,7 @@ use hyperlimit::{
     CoplanarProjection, CoplanarTriangleRelation, ExactGeometrySession, LineSide, Plane3,
     PlaneSide, Point2, Point3, PredicateOutcome, PreparedIncircle2, PreparedInsphere3,
     PreparedLine2, PreparedOrientedPlane3, Segment3Intersection, SegmentPlaneRelation, Sign,
-    TriangleDegeneracy, affine_independent_d, certified_ball_sign,
+    SupportDopRelation, TriangleDegeneracy, affine_independent_d, certified_ball_sign,
     classify_aabb3_sphere_intersection, classify_circle_line2, classify_circle_segment2,
     classify_coplanar_triangles, classify_homogeneous_point_plane, classify_point_convex_planes3,
     classify_point_convex_polygon2, classify_point_line, classify_point_oriented_plane,
@@ -20,6 +20,7 @@ use hyperlimit::{
     compare_point_segment3_distance_squared, incircle2d, insphere_d, insphere3d,
     intersect_segment_with_oriented_plane, intersect_three_planes, intersect_two_planes, orient_d,
     orient2d, orient3d, projected_line_parameter3, projected_segment_parameter3,
+    support_dop3_from_points,
 };
 
 const BATCH: usize = 512;
@@ -143,6 +144,43 @@ fn bench_hypermesh_port_helpers(c: &mut Criterion) {
                 CoplanarProjection::Xy,
             );
             black_box((segment_t, line_t))
+        });
+    });
+    group.bench_function("support_dop3/build_and_aabb_project", |bench| {
+        let axes = vec![
+            rational_point3(1, 1, 0, 1, 0, 1),
+            rational_point3(0, 1, 1, 1, 0, 1),
+            rational_point3(0, 1, 0, 1, 1, 1),
+            rational_point3(1, 1, 1, 1, 1, 1),
+            rational_point3(1, 1, -1, 1, 0, 1),
+            rational_point3(0, 1, 1, 1, -1, 1),
+        ];
+        let cloud = vec![
+            rational_point3(0, 1, 0, 1, 0, 1),
+            rational_point3(4, 1, 0, 1, 0, 1),
+            rational_point3(0, 1, 4, 1, 0, 1),
+            rational_point3(0, 1, 0, 1, 4, 1),
+            rational_point3(1, 2, 3, 2, 5, 2),
+            rational_point3(-1, 2, 7, 2, 1, 2),
+        ];
+        let query_min = rational_point3(1, 1, 1, 1, 1, 1);
+        let query_max = rational_point3(2, 1, 2, 1, 2, 1);
+        bench.iter(|| {
+            let dop = support_dop3_from_points(black_box(&axes), black_box(&cloud))
+                .value()
+                .expect("benchmark support DOP should decide");
+            black_box(
+                match dop
+                    .classify_aabb3(black_box(&query_min), black_box(&query_max))
+                    .value()
+                {
+                    Some(SupportDopRelation::Degenerate) => -2,
+                    Some(SupportDopRelation::Separated) => 0_i64,
+                    Some(SupportDopRelation::BoundaryTouch) => 1,
+                    Some(SupportDopRelation::ConservativeOverlap) => 2,
+                    None => -1,
+                },
+            )
         });
     });
     group.finish();

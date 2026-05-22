@@ -14,8 +14,8 @@ use arbitrary::Arbitrary;
 use hyperlimit::{
     AabbSphereIntersection, CachePayoff, ConstructionFreshness, ConstructionVersion, LineSide,
     Plane3, Point2, Point3, PredicateApiSemantics, PredicateOutcome, PredicatePolicy, Sign,
-    SphereIntersection, certified_ball_sign, certified_interval_sign, classify_coplanar_triangles,
-    classify_triangle3_degeneracy,
+    SphereIntersection, SupportDop3, SupportDopRelation, SupportSlab3, certified_ball_sign,
+    certified_interval_sign, classify_coplanar_triangles, classify_triangle3_degeneracy,
     classify_aabb3_sphere_intersection, classify_circle_line2, classify_circle_segment2,
     classify_circle_line2_batch, classify_circle_segment2_batch,
     classify_homogeneous_point_plane, classify_point_convex_planes3, classify_point_convex_polygon2,
@@ -541,6 +541,68 @@ fn predicate_invariants(input: Input) {
             .value(),
         Some(hyperlimit::ConvexPointLocation::Boundary),
         "convex plane composition must retain exact boundary points"
+    );
+
+    let dop_axes = [
+        Point3::new(1.into(), 0.into(), 0.into()),
+        Point3::new(0.into(), 1.into(), 0.into()),
+        Point3::new(0.into(), 0.into(), 1.into()),
+        Point3::new(1.into(), 1.into(), 1.into()),
+    ];
+    let dop_points = [p.clone(), q.clone(), r.clone(), s.clone(), t.clone()];
+    if let Some(dop) = SupportDop3::from_points(&dop_axes, &dop_points).value() {
+        for point in &dop_points {
+            assert!(
+                dop.classify_point(point)
+                    .value()
+                    .is_some_and(|location| location.is_inside_or_boundary()),
+                "support k-DOP built from exact points must contain every source witness"
+            );
+        }
+        for slab in dop.slabs() {
+            assert!(
+                slab.min_witness.is_some() && slab.max_witness.is_some(),
+                "support slabs should retain source witnesses"
+            );
+            let min_witness = &dop_points[slab.min_witness.expect("checked min witness")];
+            let max_witness = &dop_points[slab.max_witness.expect("checked max witness")];
+            assert_eq!(
+                slab.project_point(min_witness),
+                slab.min,
+                "min support witness projection must replay exactly"
+            );
+            assert_eq!(
+                slab.project_point(max_witness),
+                slab.max,
+                "max support witness projection must replay exactly"
+            );
+        }
+    }
+
+    let unit_dop = SupportDop3::from_slabs(vec![
+        SupportSlab3::new(Point3::new(1.into(), 0.into(), 0.into()), 0.into(), 1.into()),
+        SupportSlab3::new(Point3::new(0.into(), 1.into(), 0.into()), 0.into(), 1.into()),
+        SupportSlab3::new(Point3::new(0.into(), 0.into(), 1.into()), 0.into(), 1.into()),
+    ]);
+    assert_eq!(
+        unit_dop
+            .classify_aabb3(
+                &Point3::new(1.into(), 0.into(), 0.into()),
+                &Point3::new(2.into(), 1.into(), 1.into())
+            )
+            .value(),
+        Some(SupportDopRelation::BoundaryTouch),
+        "AABB sharing a support plane must be a boundary touch, not separated"
+    );
+    assert_eq!(
+        unit_dop
+            .classify_aabb3(
+                &Point3::new(2.into(), 0.into(), 0.into()),
+                &Point3::new(3.into(), 1.into(), 1.into())
+            )
+            .value(),
+        Some(SupportDopRelation::Separated),
+        "a separating support axis must produce an exact separated relation"
     );
 }
 
