@@ -9143,6 +9143,19 @@ fn bezier_boolean_linear_loop_locator_derives_nested_square_containment() {
             },
         ]
     );
+
+    let certification =
+        BezierBooleanLoopContainmentCertificationReport2::from_output_loop_linear_fragments(
+            &output,
+            &linear_flags,
+            &policy(),
+        );
+    assert_eq!(
+        certification.status,
+        BezierBooleanLoopContainmentCertificationStatus::Ready
+    );
+    assert_eq!(certification.containment_facts, replay.containment_facts);
+    assert_eq!(certification.depth_facts, depths.facts);
 }
 
 #[test]
@@ -9290,6 +9303,31 @@ fn bezier_boolean_quadratic_loop_locator_derives_curved_nested_containment() {
             contained_loop_index: 1,
         }]
     );
+    let certification =
+        BezierBooleanLoopContainmentCertificationReport2::from_output_loop_quadratic_fragments(
+            &output,
+            &first,
+            &second,
+            &policy(),
+        );
+    assert_eq!(
+        certification.status,
+        BezierBooleanLoopContainmentCertificationStatus::Ready
+    );
+    assert_eq!(certification.containment_facts, replay.containment_facts);
+    assert_eq!(
+        certification.depth_facts,
+        vec![
+            BezierBooleanLoopNestingDepthFact2 {
+                loop_index: 0,
+                nesting_depth: 0,
+            },
+            BezierBooleanLoopNestingDepthFact2 {
+                loop_index: 1,
+                nesting_depth: 1,
+            },
+        ]
+    );
 }
 
 #[test]
@@ -9379,6 +9417,18 @@ fn bezier_boolean_quadratic_loop_locator_blocks_boundary_and_stale_fragments() {
     );
     assert_eq!(stale.boundary_count, 1);
     assert_eq!(stale.unknown_count, 1);
+    let blocked_certification =
+        BezierBooleanLoopContainmentCertificationReport2::from_output_loop_quadratic_fragments(
+            &output,
+            &stale_first,
+            &second,
+            &policy(),
+        );
+    assert_eq!(
+        blocked_certification.status,
+        BezierBooleanLoopContainmentCertificationStatus::QueryResultBlocked
+    );
+    assert!(blocked_certification.has_blockers());
 }
 
 #[test]
@@ -9459,6 +9509,31 @@ fn bezier_boolean_cubic_loop_locator_derives_curved_nested_containment() {
             container_loop_index: 0,
             contained_loop_index: 1,
         }]
+    );
+    let certification =
+        BezierBooleanLoopContainmentCertificationReport2::from_output_loop_cubic_fragments(
+            &output,
+            &first,
+            &second,
+            &policy(),
+        );
+    assert_eq!(
+        certification.status,
+        BezierBooleanLoopContainmentCertificationStatus::Ready
+    );
+    assert_eq!(certification.containment_facts, replay.containment_facts);
+    assert_eq!(
+        certification.depth_facts,
+        vec![
+            BezierBooleanLoopNestingDepthFact2 {
+                loop_index: 0,
+                nesting_depth: 0,
+            },
+            BezierBooleanLoopNestingDepthFact2 {
+                loop_index: 1,
+                nesting_depth: 1,
+            },
+        ]
     );
 }
 
@@ -9675,6 +9750,30 @@ fn bezier_boolean_rational_quadratic_loop_locator_derives_curved_nested_containm
             container_loop_index: 0,
             contained_loop_index: 1,
         }]
+    );
+    let certification = BezierBooleanLoopContainmentCertificationReport2::from_output_loop_rational_quadratic_fragments(
+        &output,
+        &first,
+        &second,
+        &policy(),
+    );
+    assert_eq!(
+        certification.status,
+        BezierBooleanLoopContainmentCertificationStatus::Ready
+    );
+    assert_eq!(certification.containment_facts, replay.containment_facts);
+    assert_eq!(
+        certification.depth_facts,
+        vec![
+            BezierBooleanLoopNestingDepthFact2 {
+                loop_index: 0,
+                nesting_depth: 0,
+            },
+            BezierBooleanLoopNestingDepthFact2 {
+                loop_index: 1,
+                nesting_depth: 1,
+            },
+        ]
     );
 }
 

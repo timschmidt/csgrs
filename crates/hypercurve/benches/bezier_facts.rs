@@ -3970,10 +3970,11 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
             let replay = BezierBooleanLoopContainmentQueryResultReport2::from_query_results(
                 &queries, &results,
             );
+            let linear_flags = vec![true; output.directed_fragment_count];
             let linear_replay =
                 BezierBooleanLoopContainmentQueryResultReport2::from_output_loop_linear_fragments(
                     &output,
-                    &vec![true; output.directed_fragment_count],
+                    &linear_flags,
                     &CurvePolicy::certified(),
                 );
             let quadratic_fragments = endpoints
@@ -4066,12 +4067,39 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 &rational_quadratic_second,
                 &CurvePolicy::certified(),
             );
+            let retained_linear_certification =
+                BezierBooleanLoopContainmentCertificationReport2::from_output_loop_linear_fragments(
+                    &output,
+                    &linear_flags,
+                    &CurvePolicy::certified(),
+                );
+            let retained_quadratic_certification =
+                BezierBooleanLoopContainmentCertificationReport2::from_output_loop_quadratic_fragments(
+                    &output,
+                    &quadratic_first,
+                    &quadratic_second,
+                    &CurvePolicy::certified(),
+                );
+            let retained_cubic_certification =
+                BezierBooleanLoopContainmentCertificationReport2::from_output_loop_cubic_fragments(
+                    &output,
+                    &cubic_first,
+                    &cubic_second,
+                    &CurvePolicy::certified(),
+                );
+            let retained_rational_quadratic_certification =
+                BezierBooleanLoopContainmentCertificationReport2::from_output_loop_rational_quadratic_fragments(
+                    &output,
+                    &rational_quadratic_first,
+                    &rational_quadratic_second,
+                    &CurvePolicy::certified(),
+                );
             let certification =
                 BezierBooleanLoopContainmentCertificationReport2::from_output_loop_query_results(
                     &output, &results,
                 );
             format!(
-                "{:?}{:?}{:?}{:?}{:?}{:?}{:?}",
+                "{:?}{:?}{:?}{:?}{:?}{:?}{:?}{:?}{:?}{:?}{:?}",
                 BezierBooleanResultReport2::from_schedule_graph_walk_containment_query_results(
                     &schedule,
                     BooleanOp::Union,
@@ -4109,6 +4137,10 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 quadratic_replay,
                 cubic_replay,
                 rational_quadratic_replay,
+                retained_linear_certification,
+                retained_quadratic_certification,
+                retained_cubic_certification,
+                retained_rational_quadratic_certification,
             )
         };
         checksum ^= boolean_query_result_result.len();

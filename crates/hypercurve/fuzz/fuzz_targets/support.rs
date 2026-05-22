@@ -21,6 +21,8 @@ use hypercurve::{
     BezierBooleanLoopAssemblyPlanReport2 as HBezierBooleanLoopAssemblyPlanReport2,
     BezierBooleanLoopAssemblyPlanStatus as HBezierBooleanLoopAssemblyPlanStatus,
     BezierBooleanLoopClosureReport2 as HBezierBooleanLoopClosureReport2,
+    BezierBooleanLoopContainmentCertificationReport2 as HBezierBooleanLoopContainmentCertificationReport2,
+    BezierBooleanLoopContainmentCertificationStatus as HBezierBooleanLoopContainmentCertificationStatus,
     BezierBooleanLoopContainmentQueryResultReport2 as HBezierBooleanLoopContainmentQueryResultReport2,
     BezierBooleanLoopContainmentQueryResultStatus as HBezierBooleanLoopContainmentQueryResultStatus,
     BezierBooleanLoopGraphMultiCycleWalkReport2 as HBezierBooleanLoopGraphMultiCycleWalkReport2,
@@ -4057,6 +4059,17 @@ fn h_assert_bezier_boolean_linear_loop_locator(_reader: &mut ByteReader<'_>) {
     );
     assert_eq!(replay.contains_count, 1);
     assert_eq!(replay.outside_count, 1);
+    let certification =
+        HBezierBooleanLoopContainmentCertificationReport2::from_output_loop_linear_fragments(
+            &output,
+            &flags,
+            &HCurvePolicy::certified(),
+        );
+    assert_eq!(
+        certification.status,
+        HBezierBooleanLoopContainmentCertificationStatus::Ready
+    );
+    assert_eq!(certification.containment_facts, replay.containment_facts);
 }
 
 fn h_assert_bezier_boolean_quadratic_loop_locator(_reader: &mut ByteReader<'_>) {
@@ -4232,6 +4245,18 @@ fn h_assert_bezier_boolean_cubic_loop_locator(_reader: &mut ByteReader<'_>) {
     );
     assert_eq!(replay.contains_count, 1);
     assert_eq!(replay.outside_count, 1);
+    let certification =
+        HBezierBooleanLoopContainmentCertificationReport2::from_output_loop_cubic_fragments(
+            &output,
+            &first,
+            &second,
+            &HCurvePolicy::certified(),
+        );
+    assert_eq!(
+        certification.status,
+        HBezierBooleanLoopContainmentCertificationStatus::Ready
+    );
+    assert_eq!(certification.containment_facts, replay.containment_facts);
 }
 
 fn h_assert_bezier_boolean_rational_quadratic_loop_locator(_reader: &mut ByteReader<'_>) {

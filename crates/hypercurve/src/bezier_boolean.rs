@@ -8255,6 +8255,191 @@ impl BezierBooleanLoopContainmentCertificationReport2 {
         }
     }
 
+    /// Certifies containment and nesting depths for retained linear output loops.
+    ///
+    /// This is the direct retained-geometry continuation of
+    /// [`BezierBooleanLoopContainmentQueryResultReport2::from_output_loop_linear_fragments`].
+    /// It does not introduce a new evidence kind: the same locator input,
+    /// ordered query replay, laminar containment validation, and depth-fact
+    /// derivation used by [`Self::from_output_loop_query_results`] are run in
+    /// one call. Yap, "Towards Exact Geometric Computation" (1997), is the
+    /// contract: exact point/loop predicates are replayed into certified
+    /// containment facts before any nesting depth can affect topology.
+    pub fn from_output_loop_linear_fragments(
+        output: &BezierBooleanOutputLoopReport2,
+        directed_fragment_is_linear: &[bool],
+        policy: &CurvePolicy,
+    ) -> Self {
+        let locator = BezierBooleanLoopLocatorInputReport2::from_output_loops(output);
+        let queries = BezierBooleanLoopContainmentQueryReport2::from_locator_inputs(&locator);
+        let replay =
+            BezierBooleanLoopContainmentQueryResultReport2::from_output_loop_linear_fragments(
+                output,
+                directed_fragment_is_linear,
+                policy,
+            );
+        Self::from_output_loop_replay(output, &locator, &queries, &replay)
+    }
+
+    /// Certifies containment and nesting depths for retained quadratic output loops.
+    ///
+    /// The retained quadratic locator provides the point/loop predicate
+    /// answers; this method immediately validates their laminar containment
+    /// graph and derives depth facts. This is the arrangement-nesting
+    /// continuation of the Greiner-Hormann/Martinez-Rueda-Feito
+    /// split-traverse-classify pipeline, with Yap-style explicit blockers for
+    /// stale fragments, boundary answers, and unresolved predicates.
+    pub fn from_output_loop_quadratic_fragments(
+        output: &BezierBooleanOutputLoopReport2,
+        first: &BezierBooleanQuadraticFragmentReport2,
+        second: &BezierBooleanQuadraticFragmentReport2,
+        policy: &CurvePolicy,
+    ) -> Self {
+        let locator = BezierBooleanLoopLocatorInputReport2::from_output_loops(output);
+        let queries = BezierBooleanLoopContainmentQueryReport2::from_locator_inputs(&locator);
+        let replay =
+            BezierBooleanLoopContainmentQueryResultReport2::from_output_loop_quadratic_fragments(
+                output, first, second, policy,
+            );
+        Self::from_output_loop_replay(output, &locator, &queries, &replay)
+    }
+
+    /// Certifies containment and nesting depths for retained cubic output loops.
+    ///
+    /// Cubic ray intersections may still expose non-represented algebraic
+    /// parameter intervals; those remain `Unknown` in the locator replay and
+    /// therefore block certification here. Represented crossings and strict
+    /// outside answers are lowered into laminar depth facts without any
+    /// flattening or chord substitution, preserving Yap's exact
+    /// predicate/construction boundary.
+    pub fn from_output_loop_cubic_fragments(
+        output: &BezierBooleanOutputLoopReport2,
+        first: &BezierBooleanCubicFragmentReport2,
+        second: &BezierBooleanCubicFragmentReport2,
+        policy: &CurvePolicy,
+    ) -> Self {
+        let locator = BezierBooleanLoopLocatorInputReport2::from_output_loops(output);
+        let queries = BezierBooleanLoopContainmentQueryReport2::from_locator_inputs(&locator);
+        let replay =
+            BezierBooleanLoopContainmentQueryResultReport2::from_output_loop_cubic_fragments(
+                output, first, second, policy,
+            );
+        Self::from_output_loop_replay(output, &locator, &queries, &replay)
+    }
+
+    /// Certifies containment and nesting depths for retained rational conic output loops.
+    ///
+    /// The conic locator keeps horizontal-ray predicates in homogeneous
+    /// Bernstein form and returns explicit blockers at projective denominator
+    /// boundaries. This method consumes only its certified strict
+    /// contains/outside replay into laminar depth facts, following Yap (1997)
+    /// and Farin's rational Bezier formulation without sampling or flattening.
+    pub fn from_output_loop_rational_quadratic_fragments(
+        output: &BezierBooleanOutputLoopReport2,
+        first: &BezierBooleanRationalQuadraticFragmentReport2,
+        second: &BezierBooleanRationalQuadraticFragmentReport2,
+        policy: &CurvePolicy,
+    ) -> Self {
+        let locator = BezierBooleanLoopLocatorInputReport2::from_output_loops(output);
+        let queries = BezierBooleanLoopContainmentQueryReport2::from_locator_inputs(&locator);
+        let replay =
+            BezierBooleanLoopContainmentQueryResultReport2::from_output_loop_rational_quadratic_fragments(
+                output, first, second, policy,
+            );
+        Self::from_output_loop_replay(output, &locator, &queries, &replay)
+    }
+
+    fn from_output_loop_replay(
+        output: &BezierBooleanOutputLoopReport2,
+        locator: &BezierBooleanLoopLocatorInputReport2,
+        queries: &BezierBooleanLoopContainmentQueryReport2,
+        replay: &BezierBooleanLoopContainmentQueryResultReport2,
+    ) -> Self {
+        if locator.has_blockers() {
+            return Self::blocked_like(
+                BezierBooleanLoopContainmentCertificationStatus::LocatorInputBlocked,
+                output,
+                locator,
+                queries,
+                replay,
+                BezierBooleanLoopContainmentFactStatus::OutputLoopBlocked,
+                locator.blocker_count.max(1),
+            );
+        }
+
+        if replay.has_blockers() {
+            return Self::blocked_like(
+                BezierBooleanLoopContainmentCertificationStatus::QueryResultBlocked,
+                output,
+                locator,
+                queries,
+                replay,
+                BezierBooleanLoopContainmentFactStatus::OutputLoopBlocked,
+                replay.blocker_count.max(1),
+            );
+        }
+
+        let facts = BezierBooleanLoopContainmentFactReport2::from_output_loop_containment_facts(
+            output,
+            &replay.containment_facts,
+        );
+        let status = match facts.status {
+            BezierBooleanLoopContainmentFactStatus::Ready => {
+                BezierBooleanLoopContainmentCertificationStatus::Ready
+            }
+            BezierBooleanLoopContainmentFactStatus::Empty => {
+                BezierBooleanLoopContainmentCertificationStatus::Empty
+            }
+            BezierBooleanLoopContainmentFactStatus::NoInteriorSplits => {
+                BezierBooleanLoopContainmentCertificationStatus::NoInteriorSplits
+            }
+            BezierBooleanLoopContainmentFactStatus::NoEmittedFragments => {
+                BezierBooleanLoopContainmentCertificationStatus::NoEmittedFragments
+            }
+            BezierBooleanLoopContainmentFactStatus::OutputLoopBlocked => {
+                BezierBooleanLoopContainmentCertificationStatus::LocatorInputBlocked
+            }
+            BezierBooleanLoopContainmentFactStatus::OutOfRangeLoopIndex
+            | BezierBooleanLoopContainmentFactStatus::SelfContainment
+            | BezierBooleanLoopContainmentFactStatus::DuplicateContainmentFact
+            | BezierBooleanLoopContainmentFactStatus::CyclicContainmentFacts
+            | BezierBooleanLoopContainmentFactStatus::NonLaminarContainmentFacts => {
+                BezierBooleanLoopContainmentCertificationStatus::ContainmentFactBlocked
+            }
+        };
+        let blocker_count = if status == BezierBooleanLoopContainmentCertificationStatus::Ready
+            || matches!(
+                status,
+                BezierBooleanLoopContainmentCertificationStatus::Empty
+                    | BezierBooleanLoopContainmentCertificationStatus::NoInteriorSplits
+                    | BezierBooleanLoopContainmentCertificationStatus::NoEmittedFragments
+            ) {
+            0
+        } else {
+            facts.blocker_count.max(1)
+        };
+
+        let depth_fact_count = facts.depth_facts.len();
+
+        Self {
+            status,
+            locator_status: locator.status,
+            query_status: queries.status,
+            query_result_status: replay.status,
+            fact_status: facts.status,
+            operation: output.operation,
+            containment_facts: facts.facts,
+            depth_facts: facts.depth_facts,
+            output_loop_count: output.loops.len(),
+            locator_input_count: locator.input_count,
+            query_count: queries.query_count,
+            supplied_result_count: replay.supplied_result_count,
+            containment_fact_count: replay.containment_fact_count,
+            depth_fact_count,
+            blocker_count,
+        }
+    }
+
     /// Certifies scheduled graph-walk output loops from exact locator answers.
     ///
     /// This is the atomic scheduled counterpart to
