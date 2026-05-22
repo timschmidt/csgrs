@@ -11934,13 +11934,13 @@ fn bezier_boolean_operand_location_depth_role_path_blocks_stale_roles() {
     let second_endpoints = quadratic_report_endpoints(&second);
 
     let ready =
-        BezierBooleanResultReport2::from_quadratic_schedule_operand_locations_linear_identity_depth_role_facts(
+        BezierBooleanResultReport2::from_schedule_operand_locations_linear_identity_depth_role_facts(
             &schedule,
             BooleanOp::Union,
             &first_locations,
             &second_locations,
-            &first,
-            &second,
+            &first_endpoints,
+            &second_endpoints,
             &depth_facts,
             &[BezierBooleanOutputLoopRole::Material],
         );
