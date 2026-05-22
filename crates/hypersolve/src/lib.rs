@@ -90,7 +90,7 @@ pub use certification::{
 };
 pub use diagnostics::{
     ConvergenceReason, ProposalEngineKind, ProposalEnginePrecision, ProposalEngineReport,
-    SolveReport,
+    ProposalPreprocessingReport, SolveReport,
 };
 pub use direct::{
     DirectAffineSolution, DirectAffineSystemAssignment, DirectAffineSystemReport,

@@ -96,6 +96,42 @@ pub struct ProposalEngineReport {
     pub supported: bool,
 }
 
+/// Exact preprocessing surfaced before a numerical proposal step.
+///
+/// SolveSpace-style solvers perform substitution and "soluble alone" passes
+/// before Newton iteration. In Hyper these passes are exact proposal
+/// diagnostics: they may explain or seed a candidate route, but Yap's
+/// construction/proof boundary still requires ordinary exact residual replay
+/// before any candidate is accepted. See Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997).
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ProposalPreprocessingReport {
+    /// Whether the requested proposal route asked for this preprocessing.
+    pub requested: bool,
+    /// Number of exact equality-substitution candidates found.
+    pub equality_substitutions: usize,
+    /// Number of active one-variable affine equality rows solved exactly.
+    pub affine_soluble_alone_rows: usize,
+    /// Number of active univariate quadratic equality rows inspected exactly.
+    pub quadratic_soluble_alone_rows: usize,
+    /// Whether exact preprocessing completed without an unsupported branch.
+    pub completed: bool,
+}
+
+impl ProposalPreprocessingReport {
+    /// Return an empty report for proposal engines that do not request this
+    /// SolveSpace-style preprocessing route.
+    pub const fn not_requested() -> Self {
+        Self {
+            requested: false,
+            equality_substitutions: 0,
+            affine_soluble_alone_rows: 0,
+            quadratic_soluble_alone_rows: 0,
+            completed: true,
+        }
+    }
+}
+
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum ConvergenceReason {
     Converged,
@@ -130,4 +166,11 @@ pub struct SolveReport {
     /// exact object facts and approximate numerical stages; see Yap, "Towards
     /// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997).
     pub linear_reports: Vec<LinearSolveReport>,
+    /// Exact proposal preprocessing found before lossy iteration.
+    ///
+    /// This is currently populated for
+    /// [`ProposalEngineKind::ModifiedNewtonLeastSquares`] to expose
+    /// SolveSpace-like equality substitution and soluble-alone discovery
+    /// without letting those proposal facts bypass exact replay.
+    pub preprocessing: ProposalPreprocessingReport,
 }

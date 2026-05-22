@@ -2705,7 +2705,43 @@ fn modified_newton_least_squares_route_reports_named_lossy_adapter() {
         report.proposal_engine.precision,
         ProposalEnginePrecision::LossyF64
     );
+    assert!(report.preprocessing.requested);
+    assert!(report.preprocessing.completed);
     assert!(!report.linear_reports.is_empty());
+}
+
+#[test]
+fn modified_newton_preprocessing_reports_substitution_and_soluble_alone_rows() {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let y = Expr::symbol(SymbolId(1), "y");
+    let z = Expr::symbol(SymbolId(2), "z");
+    let mut problem = Problem::default();
+    problem.add_variable("x", real(0));
+    problem.add_variable("y", real(0));
+    problem.add_variable("z", real(0));
+    problem.add_constraint(Constraint::equality(
+        "substitute x from y",
+        x.clone() - y.clone() - Expr::int(3),
+    ));
+    problem.add_constraint(Constraint::equality("solve y alone", y - Expr::int(2)));
+    problem.add_constraint(Constraint::equality(
+        "quadratic soluble alone",
+        z.clone() * z - Expr::int(9),
+    ));
+    let config = SolverConfig {
+        proposal_engine: ProposalEngineKind::ModifiedNewtonLeastSquares,
+        max_iterations: 0,
+        ..SolverConfig::default()
+    };
+
+    let report = solve_damped_least_squares(SolverState { problem, config });
+
+    assert_eq!(report.reason, ConvergenceReason::MaxIterations);
+    assert!(report.preprocessing.requested);
+    assert!(report.preprocessing.completed);
+    assert_eq!(report.preprocessing.equality_substitutions, 1);
+    assert_eq!(report.preprocessing.affine_soluble_alone_rows, 1);
+    assert_eq!(report.preprocessing.quadratic_soluble_alone_rows, 1);
 }
 
 #[test]

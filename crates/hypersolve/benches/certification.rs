@@ -1402,6 +1402,37 @@ fn certification(c: &mut Criterion) {
             })
         })
     });
+    c.bench_function("solve_modified_newton_preprocessing", |b| {
+        b.iter(|| {
+            let x = hypersolve::Expr::symbol(hypersolve::SymbolId(0), "x");
+            let y = hypersolve::Expr::symbol(hypersolve::SymbolId(1), "y");
+            let z = hypersolve::Expr::symbol(hypersolve::SymbolId(2), "z");
+            let mut problem = Problem::default();
+            problem.add_variable("x", r(0));
+            problem.add_variable("y", r(0));
+            problem.add_variable("z", r(0));
+            problem.add_constraint(hypersolve::Constraint::equality(
+                "bench substitution",
+                x - y.clone() - hypersolve::Expr::int(3),
+            ));
+            problem.add_constraint(hypersolve::Constraint::equality(
+                "bench affine soluble alone",
+                y - hypersolve::Expr::int(2),
+            ));
+            problem.add_constraint(hypersolve::Constraint::equality(
+                "bench quadratic soluble alone",
+                z.clone() * z - hypersolve::Expr::int(9),
+            ));
+            solve_damped_least_squares(SolverState {
+                problem,
+                config: SolverConfig {
+                    max_iterations: 0,
+                    proposal_engine: ProposalEngineKind::ModifiedNewtonLeastSquares,
+                    ..SolverConfig::default()
+                },
+            })
+        })
+    });
     c.bench_function("solve_dogleg_affine", |b| {
         b.iter(|| {
             solve_damped_least_squares(SolverState {

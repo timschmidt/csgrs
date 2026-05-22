@@ -2,7 +2,11 @@ use hyperreal::Real;
 
 use crate::diagnostics::{
     ConvergenceReason, ProposalEngineKind, ProposalEnginePrecision, ProposalEngineReport,
-    SolveReport,
+    ProposalPreprocessingReport, SolveReport,
+};
+use crate::direct::{
+    find_equality_substitutions, solve_direct_affine_equalities,
+    solve_direct_univariate_quadratic_equalities,
 };
 use crate::eval::context_from_problem;
 use crate::jacobian::{
@@ -61,6 +65,7 @@ pub fn solve_damped_least_squares(mut state: SolverState) -> SolveReport {
     let mut last_residuals = Vec::new();
     let mut linear_reports = Vec::new();
     let proposal_engine = proposal_engine_report(state.config.proposal_engine);
+    let preprocessing = proposal_preprocessing_report(&state.problem, state.config.proposal_engine);
     if !proposal_engine.supported {
         return SolveReport {
             reason: ConvergenceReason::UnsupportedProposalEngine,
@@ -68,6 +73,7 @@ pub fn solve_damped_least_squares(mut state: SolverState) -> SolveReport {
             proposal_engine,
             residuals: last_residuals,
             linear_reports,
+            preprocessing,
         };
     }
     let residual_tolerance = state
@@ -91,6 +97,7 @@ pub fn solve_damped_least_squares(mut state: SolverState) -> SolveReport {
                 proposal_engine,
                 residuals: last_residuals,
                 linear_reports,
+                preprocessing,
             };
         };
         let numeric = residuals
@@ -110,6 +117,7 @@ pub fn solve_damped_least_squares(mut state: SolverState) -> SolveReport {
                 proposal_engine,
                 residuals: last_residuals,
                 linear_reports,
+                preprocessing,
             };
         }
 
@@ -127,6 +135,7 @@ pub fn solve_damped_least_squares(mut state: SolverState) -> SolveReport {
                         proposal_engine,
                         residuals: last_residuals,
                         linear_reports,
+                        preprocessing,
                     };
                 };
                 jacobian
@@ -180,6 +189,7 @@ pub fn solve_damped_least_squares(mut state: SolverState) -> SolveReport {
                 proposal_engine,
                 residuals: last_residuals,
                 linear_reports,
+                preprocessing,
             };
         };
         linear_reports.push(linear_report);
@@ -191,6 +201,7 @@ pub fn solve_damped_least_squares(mut state: SolverState) -> SolveReport {
                 proposal_engine,
                 residuals: last_residuals,
                 linear_reports,
+                preprocessing,
             };
         }
         for (variable, delta) in state.problem.variables.iter_mut().zip(step) {
@@ -215,6 +226,7 @@ pub fn solve_damped_least_squares(mut state: SolverState) -> SolveReport {
         proposal_engine,
         residuals: last_residuals,
         linear_reports,
+        preprocessing,
     }
 }
 
@@ -233,6 +245,59 @@ fn proposal_engine_report(requested: ProposalEngineKind) -> ProposalEngineReport
             precision: ProposalEnginePrecision::Unsupported,
             supported: false,
         }
+    }
+}
+
+fn proposal_preprocessing_report(
+    problem: &Problem,
+    requested: ProposalEngineKind,
+) -> ProposalPreprocessingReport {
+    if requested != ProposalEngineKind::ModifiedNewtonLeastSquares {
+        return ProposalPreprocessingReport::not_requested();
+    }
+    let prepared = PreparedProblem::new(problem);
+    let substitutions = match find_equality_substitutions(&prepared) {
+        Ok(substitutions) => substitutions.len(),
+        Err(_) => {
+            return ProposalPreprocessingReport {
+                requested: true,
+                equality_substitutions: 0,
+                affine_soluble_alone_rows: 0,
+                quadratic_soluble_alone_rows: 0,
+                completed: false,
+            };
+        }
+    };
+    let affine_soluble = match solve_direct_affine_equalities(&prepared) {
+        Ok(solutions) => solutions.len(),
+        Err(_) => {
+            return ProposalPreprocessingReport {
+                requested: true,
+                equality_substitutions: substitutions,
+                affine_soluble_alone_rows: 0,
+                quadratic_soluble_alone_rows: 0,
+                completed: false,
+            };
+        }
+    };
+    let quadratic_soluble = match solve_direct_univariate_quadratic_equalities(&prepared) {
+        Ok(solutions) => solutions.len(),
+        Err(_) => {
+            return ProposalPreprocessingReport {
+                requested: true,
+                equality_substitutions: substitutions,
+                affine_soluble_alone_rows: affine_soluble,
+                quadratic_soluble_alone_rows: 0,
+                completed: false,
+            };
+        }
+    };
+    ProposalPreprocessingReport {
+        requested: true,
+        equality_substitutions: substitutions,
+        affine_soluble_alone_rows: affine_soluble,
+        quadratic_soluble_alone_rows: quadratic_soluble,
+        completed: true,
     }
 }
 

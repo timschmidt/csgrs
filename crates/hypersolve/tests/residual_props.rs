@@ -1,8 +1,8 @@
 use hyperreal::{Real, RealSign};
 use hypersolve::{
-    BatchCandidateStatus, CertifiedCandidateStatus, Constraint, DomainCheckKind, DomainCheckStatus,
-    EqualitySubstitution, EqualitySubstitutionProblem, Expr, FailedConstraintStatus,
-    IntervalBoxCertificationPackage, IntervalBoxCertificationStatus,
+    BatchCandidateStatus, CertifiedCandidateStatus, Constraint, ConvergenceReason, DomainCheckKind,
+    DomainCheckStatus, EqualitySubstitution, EqualitySubstitutionProblem, Expr,
+    FailedConstraintStatus, IntervalBoxCertificationPackage, IntervalBoxCertificationStatus,
     MultivariateQuadraticKrawczykStatus, PreparedProblem, PreparedSolverBlock, Problem,
     ProposalEngineKind, ProposalEnginePrecision, ProposalEngineReport, RootIsolationStatus,
     SketchConstructionCertificateStatus, SketchDegeneracyKind, SketchDegeneracyStatus,
@@ -1360,6 +1360,50 @@ proptest! {
         );
         prop_assert!(!report.linear_reports.is_empty());
         prop_assert!(report.linear_reports.iter().all(|row| row.is_lossy()));
+    }
+
+    #[test]
+    fn modified_newton_generated_preprocessing_counts_exact_rows(
+        offset in -12_i16..=12,
+        target in -12_i16..=12,
+        root in -8_i16..=8,
+    ) {
+        let x = Expr::symbol(SymbolId(0), "x");
+        let y = Expr::symbol(SymbolId(1), "y");
+        let z = Expr::symbol(SymbolId(2), "z");
+        let mut problem = Problem::default();
+        problem.add_variable("x", Real::from(0));
+        problem.add_variable("y", Real::from(0));
+        problem.add_variable("z", Real::from(0));
+        problem.add_constraint(Constraint::equality(
+            "generated substitution",
+            x - y.clone() - Expr::int(i64::from(offset)),
+        ));
+        problem.add_constraint(Constraint::equality(
+            "generated soluble affine",
+            y - Expr::int(i64::from(target)),
+        ));
+        let root = i64::from(root);
+        problem.add_constraint(Constraint::equality(
+            "generated soluble quadratic",
+            z.clone() * z - Expr::int(root * root),
+        ));
+
+        let report = solve_damped_least_squares(SolverState {
+            problem,
+            config: SolverConfig {
+                max_iterations: 0,
+                proposal_engine: ProposalEngineKind::ModifiedNewtonLeastSquares,
+                ..SolverConfig::default()
+            },
+        });
+
+        prop_assert_eq!(report.reason, ConvergenceReason::MaxIterations);
+        prop_assert!(report.preprocessing.requested);
+        prop_assert!(report.preprocessing.completed);
+        prop_assert_eq!(report.preprocessing.equality_substitutions, 1);
+        prop_assert_eq!(report.preprocessing.affine_soluble_alone_rows, 1);
+        prop_assert_eq!(report.preprocessing.quadratic_soluble_alone_rows, 1);
     }
 
     #[test]
