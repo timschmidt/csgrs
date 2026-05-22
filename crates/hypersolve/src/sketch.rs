@@ -18,6 +18,7 @@ use crate::sketch_arc_tangent::{ArcLineTangentExprs, arc_line_tangent_exprs};
 use crate::sketch_builders::{
     angle, distance, incidence, objective, orientation, ranges, symmetry, tangency,
 };
+use crate::sketch_oriented_angle::{OrientedAngleExprs, oriented_angle_exprs};
 use crate::sketch_projection::{projected_distance_squared, unit_quaternion_residual};
 use crate::sketch_workplane_symmetry::{WorkplaneSymmetryExprs, workplane_point_symmetry_exprs};
 use crate::symbolic::{Expr, SymbolId};
@@ -603,6 +604,26 @@ pub enum SketchConstraintKind {
         /// Second line in the second angle.
         d: SketchEntityHandle,
     },
+    /// Oriented equality between two 2D line-pair angles.
+    ///
+    /// Lowering compares the exact angle vectors `(dot, cross)` for the two
+    /// line pairs. A polynomial collinearity row proves equal tangent of the
+    /// angles, while a dot-product inequality selects the same oriented branch
+    /// rather than the supplemental branch. This is the `ANGLE` proof package
+    /// used when branch direction matters: Yap, "Towards Exact Geometric
+    /// Computation" (1997), motivates keeping the exact rows separate from
+    /// any `atan2` proposal value, and Bouma et al., "A Geometric Constraint
+    /// Solver" (1995), motivates retaining angle relations semantically.
+    EqualOrientedAngleLines2 {
+        /// First line in the first oriented angle.
+        a: SketchEntityHandle,
+        /// Second line in the first oriented angle.
+        b: SketchEntityHandle,
+        /// First line in the second oriented angle.
+        c: SketchEntityHandle,
+        /// Second line in the second oriented angle.
+        d: SketchEntityHandle,
+    },
     /// 2D point-at-midpoint relation.
     ///
     /// Lowering emits exact linear coordinate equations without averaging in
@@ -798,6 +819,8 @@ pub enum SketchResidualStrategy {
     ArcLineTangent,
     /// Squared-cosine equality for unsigned 2D line angles.
     SquaredCosineAngleEquality,
+    /// Exact angle-vector package for oriented 2D line-pair angles.
+    OrientedAngleEquality,
     /// Linear coordinate equality for a retained midpoint relation.
     MidpointCoordinateEquality,
     /// Linear coordinate equality for retained axis symmetry.
@@ -877,6 +900,10 @@ pub enum SketchResidualFormKind {
     SquaredCosineAnglePolynomial,
     /// `acos(cos(first)) - acos(cos(second))`, retained for proposal/UI parity.
     TrueAngleProposal,
+    /// Exact angle-vector collinearity proof row for oriented angle equality.
+    OrientedAngleVectorCollinearityPolynomial,
+    /// Exact same-branch predicate for oriented angle equality.
+    OrientedAngleSameBranchPredicate,
     /// Exact cross-product equality for a G1 tangent support proof row.
     TangentCrossProductPredicate,
     /// Exact dot-product inequality for a same-direction tangent proof row.
@@ -1525,6 +1552,23 @@ impl SketchSolveProblem {
         angle::equal_angle_lines2(self, name, a, b, c, d).handle
     }
 
+    /// Add a retained oriented 2D equal-angle relation between two line pairs.
+    ///
+    /// The lowered proof package compares the exact `(dot, cross)` angle
+    /// vectors and adds a same-branch inequality. It therefore distinguishes
+    /// equal unsigned angles from reversed oriented angles without using
+    /// `atan2` during proof replay.
+    pub fn add_equal_oriented_angle_lines2(
+        &mut self,
+        name: impl Into<String>,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+        c: SketchEntityHandle,
+        d: SketchEntityHandle,
+    ) -> SketchConstraintHandle {
+        angle::equal_oriented_angle_lines2(self, name, a, b, c, d).handle
+    }
+
     /// Add a retained 2D point-at-midpoint relation.
     ///
     /// Lowering emits one exact linear equality per coordinate. This mirrors
@@ -2072,6 +2116,38 @@ impl SketchSolveProblem {
                             role: SketchResidualFormRole::ProposalOnly,
                             strategy: None,
                             residual: first_angle - second_angle,
+                        },
+                    ],
+                    diagnostics,
+                }
+            }
+            SketchConstraintKind::EqualOrientedAngleLines2 { a, b, c, d } => {
+                let mut diagnostics = Vec::new();
+                let Some(parts) =
+                    self.oriented_angle_exprs(a, b, c, d, constraint, &mut diagnostics)
+                else {
+                    return SketchResidualFormsReport {
+                        constraint: handle,
+                        status: SketchResidualFormsStatus::InvalidInputs,
+                        forms: Vec::new(),
+                        diagnostics,
+                    };
+                };
+                SketchResidualFormsReport {
+                    constraint: handle,
+                    status: SketchResidualFormsStatus::Generated,
+                    forms: vec![
+                        SketchResidualForm {
+                            kind: SketchResidualFormKind::OrientedAngleVectorCollinearityPolynomial,
+                            role: SketchResidualFormRole::ExactProof,
+                            strategy: Some(SketchResidualStrategy::OrientedAngleEquality),
+                            residual: parts.angle_vector_collinear,
+                        },
+                        SketchResidualForm {
+                            kind: SketchResidualFormKind::OrientedAngleSameBranchPredicate,
+                            role: SketchResidualFormRole::ExactProof,
+                            strategy: Some(SketchResidualStrategy::OrientedAngleEquality),
+                            residual: parts.same_branch,
                         },
                     ],
                     diagnostics,
@@ -2724,7 +2800,8 @@ impl SketchSolveProblem {
                 // Equal unsigned angle is certified by squared cosine equality
                 // rather than by evaluating an inverse trig function. This is
                 // Yap's exact-geometric-computation boundary applied to angle
-                // constraints; oriented branches remain explicit future work.
+                // constraints; branch-sensitive equality is handled by
+                // `EqualOrientedAngleLines2`.
                 let (Some(a), Some(b), Some(c), Some(d)) = (
                     self.line2_direction(a, constraint, rows),
                     self.line2_direction(b, constraint, rows),
@@ -2740,6 +2817,33 @@ impl SketchSolveProblem {
                     constraint.name.clone(),
                     squared_cosine_angle_residual(&a, &b, &c, &d),
                     SketchResidualStrategy::SquaredCosineAngleEquality,
+                );
+            }
+            SketchConstraintKind::EqualOrientedAngleLines2 { a, b, c, d } => {
+                // Branch-sensitive angle equality is certified by the exact
+                // angle vector `(dot, cross)`. Yap (1997) motivates avoiding
+                // `atan2` in the proof path; the second row is a predicate that
+                // rejects the opposite/supplemental angle-vector branch.
+                let Some(parts) = self.oriented_angle_exprs(a, b, c, d, constraint, rows) else {
+                    return;
+                };
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} angle vector collinearity", constraint.name),
+                    parts.angle_vector_collinear,
+                    SketchResidualStrategy::OrientedAngleEquality,
+                );
+                self.push_residual_with_kind(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} same angle branch", constraint.name),
+                    parts.same_branch,
+                    SketchResidualStrategy::OrientedAngleEquality,
+                    ConstraintKind::GreaterOrEqual,
+                    Real::one(),
                 );
             }
             SketchConstraintKind::AtMidpoint2 { point, a, b } => {
@@ -3344,6 +3448,22 @@ impl SketchSolveProblem {
             &line.tangent,
             tangent_orientation_sign(orientation),
         ))
+    }
+
+    fn oriented_angle_exprs(
+        &self,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+        c: SketchEntityHandle,
+        d: SketchEntityHandle,
+        constraint: &SketchConstraint,
+        rows: &mut Vec<SketchGeneratedRow>,
+    ) -> Option<OrientedAngleExprs> {
+        let a = self.line2_direction(a, constraint, rows)?;
+        let b = self.line2_direction(b, constraint, rows)?;
+        let c = self.line2_direction(c, constraint, rows)?;
+        let d = self.line2_direction(d, constraint, rows)?;
+        Some(oriented_angle_exprs(&a, &b, &c, &d))
     }
 
     fn line2_points(

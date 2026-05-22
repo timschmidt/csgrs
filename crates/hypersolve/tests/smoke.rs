@@ -471,6 +471,70 @@ fn sketch_equal_angle_constraints_retain_exact_and_proposal_residual_forms() {
 }
 
 #[test]
+fn sketch_oriented_angle_constraints_retain_exact_branch_residual_forms() {
+    let mut sketch = SketchSolveProblem::new();
+    let origin = sketch.add_point2d("origin", real(0), real(0));
+    let x = sketch.add_point2d("x", real(4), real(0));
+    let y = sketch.add_point2d("y", real(0), real(4));
+    let shifted_origin = sketch.add_point2d("shifted origin", real(10), real(2));
+    let shifted_x = sketch.add_point2d("shifted x", real(16), real(2));
+    let shifted_y = sketch.add_point2d("shifted y", real(10), real(8));
+    let first_a = sketch.add_line_segment2("first a", origin, x);
+    let first_b = sketch.add_line_segment2("first b", origin, y);
+    let second_a = sketch.add_line_segment2("second a", shifted_origin, shifted_x);
+    let second_b = sketch.add_line_segment2("second b", shifted_origin, shifted_y);
+    let angle = sketch_angle_builders::equal_oriented_angle_lines2(
+        &mut sketch,
+        "oriented angle",
+        first_a,
+        first_b,
+        second_a,
+        second_b,
+    );
+
+    let forms = sketch.residual_forms_for_constraint(angle.handle);
+    let context = context_from_problem(&sketch.lower_to_problem().problem);
+
+    assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+    assert!(forms.diagnostics.is_empty());
+    assert_eq!(forms.forms.len(), 2);
+    assert_eq!(
+        forms.forms[0].kind,
+        SketchResidualFormKind::OrientedAngleVectorCollinearityPolynomial
+    );
+    assert_eq!(forms.forms[0].role, SketchResidualFormRole::ExactProof);
+    assert_eq!(
+        forms.forms[0].strategy,
+        Some(SketchResidualStrategy::OrientedAngleEquality)
+    );
+    assert_eq!(
+        forms.forms[1].kind,
+        SketchResidualFormKind::OrientedAngleSameBranchPredicate
+    );
+    assert_eq!(forms.forms[1].role, SketchResidualFormRole::ExactProof);
+    assert_eq!(
+        forms.forms[1].strategy,
+        Some(SketchResidualStrategy::OrientedAngleEquality)
+    );
+    assert_eq!(
+        forms.forms[0]
+            .residual
+            .eval_real(context.bindings())
+            .unwrap(),
+        Real::zero()
+    );
+    assert_eq!(
+        forms.forms[1]
+            .residual
+            .eval_real(context.bindings())
+            .unwrap()
+            .structural_facts()
+            .sign,
+        Some(hyperreal::RealSign::Positive)
+    );
+}
+
+#[test]
 fn sketch_tangent_constraints_retain_exact_predicate_residual_forms() {
     let mut sketch = SketchSolveProblem::new();
     let candidate_start = sketch.add_point2d("candidate start", real(0), real(0));
@@ -609,7 +673,7 @@ fn sketch_residual_form_reports_reject_unsupported_and_bad_inputs() {
 fn sketch_compatibility_fixtures_are_license_clean_and_exactly_certified() {
     let fixtures = sketch_compatibility_fixtures();
 
-    assert_eq!(fixtures.len(), 5);
+    assert_eq!(fixtures.len(), 6);
     assert!(fixtures.iter().all(|fixture| {
         fixture.source.starts_with("Hyper-authored")
             && !fixture.source.to_ascii_lowercase().contains("copied")
@@ -1556,6 +1620,94 @@ fn sketch_equal_angle_relations_lower_to_exact_squared_cosine_rows() {
 }
 
 #[test]
+fn sketch_oriented_angle_relations_lower_to_exact_branch_rows() {
+    let mut sketch = SketchSolveProblem::new();
+    let origin = sketch.add_point2d("origin", real(0), real(0));
+    let x = sketch.add_point2d("x", real(4), real(0));
+    let y = sketch.add_point2d("y", real(0), real(4));
+    let shifted_origin = sketch.add_point2d("shifted origin", real(10), real(2));
+    let shifted_x = sketch.add_point2d("shifted x", real(16), real(2));
+    let shifted_y = sketch.add_point2d("shifted y", real(10), real(8));
+    let shifted_neg_y = sketch.add_point2d("shifted neg y", real(10), real(-4));
+    let diagonal = sketch.add_point2d("diagonal", real(4), real(4));
+    let first_a = sketch.add_line_segment2("first a", origin, x);
+    let first_b = sketch.add_line_segment2("first b", origin, y);
+    let second_a = sketch.add_line_segment2("second a", shifted_origin, shifted_x);
+    let second_b = sketch.add_line_segment2("second b", shifted_origin, shifted_y);
+    let reversed_b = sketch.add_line_segment2("reversed b", shifted_origin, shifted_neg_y);
+    let diagonal_b = sketch.add_line_segment2("diagonal b", origin, diagonal);
+    let valid = sketch_angle_builders::equal_oriented_angle_lines2(
+        &mut sketch,
+        "oriented angle",
+        first_a,
+        first_b,
+        second_a,
+        second_b,
+    );
+    sketch.add_equal_oriented_angle_lines2(
+        "unsigned only violation",
+        first_a,
+        first_b,
+        second_a,
+        reversed_b,
+    );
+    sketch.add_equal_oriented_angle_lines2(
+        "angle magnitude violation",
+        first_a,
+        first_b,
+        first_a,
+        diagonal_b,
+    );
+
+    assert_eq!(valid.family, hypersolve::SketchConstraintFamily::Angle);
+    assert_eq!(
+        valid.strategy,
+        SketchResidualStrategy::OrientedAngleEquality
+    );
+
+    let lowered = sketch.lower_to_problem();
+    let certification = certify_candidate(
+        &PreparedProblem::new(&lowered.problem),
+        &context_from_problem(&lowered.problem),
+    );
+
+    assert_eq!(lowered.problem.constraints.len(), 6);
+    assert_eq!(lowered.rows.len(), 6);
+    assert!(lowered.rows.iter().all(|row| {
+        row.strategy == Some(SketchResidualStrategy::OrientedAngleEquality)
+            && row.status == SketchGeneratedRowStatus::Generated
+    }));
+    assert!(matches!(
+        certification.rows[0].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[1].status,
+        CertifiedCandidateStatus::CertifiedSatisfiedInequality { .. }
+    ));
+    assert!(matches!(
+        certification.rows[2].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[3].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
+    assert!(matches!(
+        certification.rows[4].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
+
+    let forms = sketch.residual_forms_for_constraint(valid.handle);
+    assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+    assert_eq!(forms.forms.len(), 2);
+    assert!(forms.forms.iter().all(|form| {
+        form.role == SketchResidualFormRole::ExactProof
+            && form.strategy == Some(SketchResidualStrategy::OrientedAngleEquality)
+    }));
+}
+
+#[test]
 fn sketch_equal_angle_relations_report_stale_wrong_and_non_2d_inputs() {
     let mut sketch = SketchSolveProblem::new();
     let p = sketch.add_point2d("p", real(0), real(0));
@@ -1568,6 +1720,44 @@ fn sketch_equal_angle_relations_report_stale_wrong_and_non_2d_inputs() {
     sketch.add_equal_angle_lines2("missing", line, other, line, SketchEntityHandle(999));
     sketch.add_equal_angle_lines2("wrong family", line, other, line, p);
     sketch.add_equal_angle_lines2("not 2d", line, other, line, not_2d);
+
+    let lowered = sketch.lower_to_problem();
+
+    assert_eq!(lowered.problem.constraints.len(), 0);
+    assert_eq!(lowered.rows.len(), 3);
+    assert_eq!(
+        lowered.rows[0].status,
+        SketchGeneratedRowStatus::MissingEntity(SketchEntityHandle(999))
+    );
+    assert_eq!(
+        lowered.rows[1].status,
+        SketchGeneratedRowStatus::WrongEntityKind {
+            handle: p,
+            expected: "2D line segment"
+        }
+    );
+    assert_eq!(
+        lowered.rows[2].status,
+        SketchGeneratedRowStatus::WrongEntityKind {
+            handle: not_2d,
+            expected: "2D line segment"
+        }
+    );
+}
+
+#[test]
+fn sketch_oriented_angle_relations_report_stale_wrong_and_non_2d_inputs() {
+    let mut sketch = SketchSolveProblem::new();
+    let p = sketch.add_point2d("p", real(0), real(0));
+    let q = sketch.add_point2d("q", real(1), real(0));
+    let r = sketch.add_point2d("r", real(0), real(1));
+    let point3 = sketch.add_point3d("point3", real(0), real(0), real(1));
+    let line = sketch.add_line_segment2("line", p, q);
+    let other = sketch.add_line_segment2("other", p, r);
+    let not_2d = sketch.add_line_segment2("not 2d", p, point3);
+    sketch.add_equal_oriented_angle_lines2("missing", line, other, line, SketchEntityHandle(999));
+    sketch.add_equal_oriented_angle_lines2("wrong family", line, other, line, p);
+    sketch.add_equal_oriented_angle_lines2("not 2d", line, other, line, not_2d);
 
     let lowered = sketch.lower_to_problem();
 

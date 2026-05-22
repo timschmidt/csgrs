@@ -81,6 +81,33 @@ pub mod angle {
             kind,
         }
     }
+
+    /// Add an oriented 2D equal-angle relation between two line pairs.
+    ///
+    /// Lowering compares the exact angle vectors `(dot, cross)` for `(a,b)`
+    /// and `(c,d)`, then adds a same-branch predicate. This is the proof row
+    /// package for branch-sensitive `ANGLE` behavior: unsigned angle equality
+    /// is not enough when a sketch distinguishes clockwise from
+    /// counterclockwise turns. The package follows Yap's "Towards Exact
+    /// Geometric Computation" (1997) by proving the branch with exact
+    /// polynomials rather than by trusting an `atan2` proposal.
+    pub fn equal_oriented_angle_lines2(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+        c: SketchEntityHandle,
+        d: SketchEntityHandle,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::EqualOrientedAngleLines2 { a, b, c, d };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Angle,
+            strategy: SketchResidualStrategy::OrientedAngleEquality,
+            kind,
+        }
+    }
 }
 
 /// Tangency relation builders.

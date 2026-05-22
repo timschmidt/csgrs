@@ -32,3 +32,10 @@ path = "fuzz_targets/sketch_arc_line_tangent.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "sketch_oriented_angle"
+path = "fuzz_targets/sketch_oriented_angle.rs"
+test = false
+doc = false
+bench = false

@@ -17,7 +17,7 @@ use crate::sketch::{
     SketchArcEndpoint, SketchEntityKind, SketchGeneratedRowStatus, SketchLineEndpoint,
     SketchLoweringReport, SketchSolveProblem, SketchTangentOrientation,
 };
-use crate::sketch_builders::{distance, incidence, orientation, symmetry, tangency};
+use crate::sketch_builders::{angle, distance, incidence, orientation, symmetry, tangency};
 
 /// Compatibility fixture family.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -33,6 +33,8 @@ pub enum SketchCompatibilityFixtureKind {
     WorkplaneSymmetry3D,
     /// Covers retained 2D arc-line tangent endpoint/orientation lowering.
     ArcLineTangent2D,
+    /// Covers retained oriented 2D angle branch lowering.
+    OrientedAngle2D,
 }
 
 /// One license-clean sketch compatibility fixture.
@@ -89,6 +91,7 @@ pub fn sketch_compatibility_fixtures() -> Vec<SketchCompatibilityFixture> {
         free_3d_point_coincidence_fixture(),
         workplane_symmetry_3d_fixture(),
         arc_line_tangent_2d_fixture(),
+        oriented_angle_2d_fixture(),
     ]
 }
 
@@ -243,5 +246,35 @@ fn arc_line_tangent_2d_fixture() -> SketchCompatibilityFixture {
         source: "Hyper-authored 2D arc-line tangent fixture",
         sketch,
         expected_generated_rows: 5,
+    }
+}
+
+fn oriented_angle_2d_fixture() -> SketchCompatibilityFixture {
+    let mut sketch = SketchSolveProblem::new();
+    let origin = sketch.add_point2d("origin", 0.into(), 0.into());
+    let x = sketch.add_point2d("x", 4.into(), 0.into());
+    let y = sketch.add_point2d("y", 0.into(), 4.into());
+    let shifted_origin = sketch.add_point2d("shifted_origin", 7.into(), 3.into());
+    let shifted_x = sketch.add_point2d("shifted_x", 13.into(), 3.into());
+    let shifted_y = sketch.add_point2d("shifted_y", 7.into(), 9.into());
+    let first_a = sketch.add_line_segment2("first_a", origin, x);
+    let first_b = sketch.add_line_segment2("first_b", origin, y);
+    let second_a = sketch.add_line_segment2("second_a", shifted_origin, shifted_x);
+    let second_b = sketch.add_line_segment2("second_b", shifted_origin, shifted_y);
+    angle::equal_oriented_angle_lines2(
+        &mut sketch,
+        "oriented angle",
+        first_a,
+        first_b,
+        second_a,
+        second_b,
+    );
+
+    SketchCompatibilityFixture {
+        name: "oriented_angle_2d",
+        kind: SketchCompatibilityFixtureKind::OrientedAngle2D,
+        source: "Hyper-authored 2D oriented angle fixture",
+        sketch,
+        expected_generated_rows: 2,
     }
 }

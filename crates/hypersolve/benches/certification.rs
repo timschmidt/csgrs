@@ -431,6 +431,36 @@ fn sketch_problem_with_equal_angle_relations(row_count: usize) -> hypersolve::Sk
     sketch
 }
 
+fn sketch_problem_with_oriented_angle_relations(
+    row_count: usize,
+) -> hypersolve::SketchSolveProblem {
+    let mut sketch = hypersolve::SketchSolveProblem::new();
+    for index in 0..row_count {
+        let y = index as i64;
+        let a0 = sketch.add_point2d(format!("oangle{index}.a0"), r(0), r(y));
+        let a1 = sketch.add_point2d(format!("oangle{index}.a1"), r(3), r(y));
+        let b0 = sketch.add_point2d(format!("oangle{index}.b0"), r(0), r(y));
+        let b1 = sketch.add_point2d(format!("oangle{index}.b1"), r(3), r(y + 4));
+        let c0 = sketch.add_point2d(format!("oangle{index}.c0"), r(10), r(y + 1));
+        let c1 = sketch.add_point2d(format!("oangle{index}.c1"), r(16), r(y + 1));
+        let d0 = sketch.add_point2d(format!("oangle{index}.d0"), r(10), r(y + 1));
+        let d1 = sketch.add_point2d(format!("oangle{index}.d1"), r(16), r(y + 9));
+        let a = sketch.add_line_segment2(format!("oangle{index}.a"), a0, a1);
+        let b = sketch.add_line_segment2(format!("oangle{index}.b"), b0, b1);
+        let c = sketch.add_line_segment2(format!("oangle{index}.c"), c0, c1);
+        let d = sketch.add_line_segment2(format!("oangle{index}.d"), d0, d1);
+        hypersolve::sketch_angle_builders::equal_oriented_angle_lines2(
+            &mut sketch,
+            format!("oriented angle {index}"),
+            a,
+            b,
+            c,
+            d,
+        );
+    }
+    sketch
+}
+
 fn sketch_problem_with_midpoint_relations(row_count: usize) -> hypersolve::SketchSolveProblem {
     let mut sketch = hypersolve::SketchSolveProblem::new();
     for index in 0..row_count {
@@ -787,6 +817,10 @@ fn certification(c: &mut Criterion) {
     c.bench_function("sketch_equal_angle_lowering", |b| {
         b.iter(|| equal_angle_sketch.lower_to_problem())
     });
+    let oriented_angle_sketch = sketch_problem_with_oriented_angle_relations(16);
+    c.bench_function("sketch_oriented_angle_lowering", |b| {
+        b.iter(|| oriented_angle_sketch.lower_to_problem())
+    });
     let midpoint_sketch = sketch_problem_with_midpoint_relations(16);
     c.bench_function("sketch_midpoint_lowering", |b| {
         b.iter(|| midpoint_sketch.lower_to_problem())
@@ -919,6 +953,24 @@ fn certification(c: &mut Criterion) {
         b.iter(|| {
             for handle in &angle_form_handles {
                 let _ = equal_angle_sketch.residual_forms_for_constraint(*handle);
+            }
+        })
+    });
+    let oriented_angle_form_handles = oriented_angle_sketch
+        .constraints()
+        .iter()
+        .filter(|constraint| {
+            matches!(
+                constraint.kind,
+                hypersolve::SketchConstraintKind::EqualOrientedAngleLines2 { .. }
+            )
+        })
+        .map(|constraint| constraint.handle)
+        .collect::<Vec<_>>();
+    c.bench_function("sketch_oriented_angle_residual_forms", |b| {
+        b.iter(|| {
+            for handle in &oriented_angle_form_handles {
+                let _ = oriented_angle_sketch.residual_forms_for_constraint(*handle);
             }
         })
     });

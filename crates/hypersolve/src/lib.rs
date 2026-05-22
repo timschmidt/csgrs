@@ -38,6 +38,7 @@ pub mod sketch_degeneracy;
 pub mod sketch_domains;
 pub mod sketch_entity_domains;
 pub mod sketch_fixtures;
+mod sketch_oriented_angle;
 mod sketch_projection;
 pub mod sketch_units;
 mod sketch_workplane_symmetry;
