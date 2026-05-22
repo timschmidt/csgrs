@@ -1,8 +1,8 @@
 //! Create `Profile`s using ttf fonts
 
 use crate::float_types::{
-    Real, hreal_cmp_f64, hreal_div, hreal_from_f64, hreal_gt_f64, hreal_mul, hreal_sum,
-    hxy_ring_orientation_sign, tolerance,
+    Real, hreal_cmp_f64, hreal_div, hreal_f64s_within_or_equal_tolerance, hreal_from_f64,
+    hreal_gt_f64, hreal_mul, hreal_sum, hxy_ring_orientation_sign, tolerance,
 };
 use crate::sketch::Profile;
 use hypercurve::{Contour2, CurveString2, Region2};
@@ -388,12 +388,14 @@ impl OutlineFlattener {
         // We have a subpath that should be closed => replicate first point as last if needed.
         let n = self.current.len();
         if n > 2 {
-            // If the last point != the first, close it.
+            // Font outline samples are primitive boundary data; compare the
+            // closure predicate after hyperreal promotion instead of local
+            // absolute-value arithmetic. This keeps TrueType contour admission
+            // aligned with Yap's EGC boundary model
+            // (<https://doi.org/10.1016/0925-7721(95)00040-2>).
             let first = self.current[0];
             let last = self.current[n - 1];
-            if (first[0] - last[0]).abs() > tolerance()
-                || (first[1] - last[1]).abs() > tolerance()
-            {
+            if !same_outline_point(first, last) {
                 self.current.push(first);
             }
             // That becomes one closed contour
@@ -405,6 +407,11 @@ impl OutlineFlattener {
         self.current.clear();
         self.subpath_open = false;
     }
+}
+
+fn same_outline_point(first: [Real; 2], last: [Real; 2]) -> bool {
+    hreal_f64s_within_or_equal_tolerance(first[0], last[0], tolerance())
+        && hreal_f64s_within_or_equal_tolerance(first[1], last[1], tolerance())
 }
 
 impl OutlineBuilder for OutlineFlattener {
