@@ -12,6 +12,7 @@
 use std::fmt::Debug;
 
 use hashbrown::HashMap;
+use hypermesh::prelude::{Manifold as HypermeshManifold, OpType as HypermeshOpType};
 use nalgebra::{Point3, Vector3};
 
 use crate::{
@@ -221,6 +222,56 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         let mesh = self.to_hypermesh_exact_with_policy(policy)?;
         Ok(::hypermesh::exact::ExactMeshHandoffPackage::from_mesh(&mesh)?)
     }
+
+    /// Compute a mesh boolean through `hypermesh` instead of a csgrs-owned tree.
+    ///
+    /// `csgrs::Mesh` still exposes transitional finite polygon storage, so this
+    /// method packages both operands through the `hypermesh` boundary, requests
+    /// a report-bearing boolean, and reconstructs finite polygons only for the
+    /// legacy `Mesh` API surface. The retained report makes the current
+    /// primitive-float adapter explicit while exact solid booleans continue to
+    /// migrate into `hypermesh`, following Yap, "Towards Exact Geometric
+    /// Computation," *Computational Geometry* 7.1-2 (1997),
+    /// <https://doi.org/10.1016/0925-7721(95)00040-2>.
+    pub(crate) fn boolean_via_hypermesh(
+        &self,
+        other: &Self,
+        operation: HypermeshOpType,
+    ) -> Result<Self, String> {
+        let left = self.to_hypermesh_legacy_manifold()?;
+        let right = other.to_hypermesh_legacy_manifold()?;
+        let result = ::hypermesh::compute_boolean_with_report(&left, &right, operation)?;
+        Ok(Self::from_hypermesh_legacy_manifold(
+            &result.mesh,
+            self.metadata.clone(),
+        ))
+    }
+
+    fn to_hypermesh_legacy_manifold(&self) -> Result<HypermeshManifold, String> {
+        let buffers = self.to_hypermesh_buffers();
+        HypermeshManifold::new(&buffers.positions, &buffers.indices)
+    }
+
+    fn from_hypermesh_legacy_manifold(manifold: &HypermeshManifold, metadata: M) -> Self {
+        let mut polygons = Vec::with_capacity(manifold.nf);
+
+        for face in manifold.hs.chunks_exact(3) {
+            let a = legacy_manifold_position(manifold, face[0].tail);
+            let b = legacy_manifold_position(manifold, face[1].tail);
+            let c = legacy_manifold_position(manifold, face[2].tail);
+            let normal = hyper_triangle_unit_normal(&a, &b, &c).unwrap_or_else(Vector3::z);
+            polygons.push(Polygon::new(
+                vec![
+                    Vertex::new(a, normal),
+                    Vertex::new(b, normal),
+                    Vertex::new(c, normal),
+                ],
+                metadata.clone(),
+            ));
+        }
+
+        Self::from_polygons(&polygons, metadata)
+    }
 }
 
 impl Triangulated3D for ::hypermesh::exact::ExactMesh {
@@ -300,6 +351,11 @@ fn view_position(positions: &[Real], vertex: usize) -> Point3<Real> {
         positions[offset + 1],
         positions[offset + 2],
     )
+}
+
+fn legacy_manifold_position(manifold: &HypermeshManifold, vertex: usize) -> Point3<Real> {
+    let point = manifold.ps[vertex];
+    Point3::new(point.x as Real, point.y as Real, point.z as Real)
 }
 
 fn hyper_triangle_unit_normal(

@@ -571,7 +571,7 @@ if let Some(data_mut) = poly.metadata_mut() {
 ## Project Status
 
 `csgrs` is usable today as a Rust-first CSG and geometry toolkit. The stable
-core is BSP-backed `Mesh`, hypercurve-backed `Profile`, hypertri polygon
+core is hypermesh-backed `Mesh`, hypercurve-backed `Profile`, hypertri polygon
 triangulation, common 2D/3D primitive construction, extrusion/revolve/sweep/loft
 operations, transformations, metadata propagation, cached bounding boxes,
 TriMesh query conversion, ray intersection helpers, mesh quality utilities, and
@@ -579,13 +579,12 @@ import/export for common mesh and manufacturing formats behind Cargo features.
 
 The project is also intentionally experimental in several areas:
 
-- **Boolean kernels**: BSP booleans are the compatibility baseline while mesh
-  representation migrates to `hypermesh`. The former alternate mesh carrier has
-  been removed so topology validation and indexed mesh handoff are concentrated
-  in the hyper geometry stack. Prefer `Mesh::to_hypermesh_handoff_package`
-  when a downstream consumer needs replayable surface, solid, readiness, or
-  lossy display/export artifacts; raw vertex/index buffers are compatibility
-  views, not topology authority.
+- **Boolean kernels**: `Mesh` booleans now route through `hypermesh` rather
+  than a csgrs-owned partition tree. The current compatibility adapter remains
+  report-bearing while exact solid booleans continue moving into `hypermesh`.
+  Prefer `Mesh::to_hypermesh_handoff_package` when a downstream consumer needs
+  replayable surface, solid, readiness, or lossy display/export artifacts; raw
+  vertex/index buffers are compatibility views, not topology authority.
 - **Triangulation**: hypertri is the single triangulation backend. It replaces
   the former Spade, Earcut, and `delaunay` dependency matrix.
 - **Numeric model**: hyperreals are the internal scalar model being carried
@@ -623,10 +622,10 @@ README_RENDER_OUTPUT_DIR=/tmp/csgrs-readme-renders cargo run --example readme_re
 
 ## Roadmap
 
-- **Boolean robustness**: keep BSP as the early verification layer, route exact
-  mesh handoff and validation through `hypermesh`, reduce excess polygon
-  production by testing only polygons whose cached bounding boxes intersect,
-  and add indexed mesh conversion/merge utilities.
+- **Boolean robustness**: finish replacing the remaining primitive-float
+  compatibility adapter with exact `hypermesh` solid booleans, route mesh
+  handoff and validation through `hypermesh`, and add indexed mesh
+  conversion/merge utilities.
 - **Numeric backend**: continue removing tolerance-driven compatibility
   branches by pushing more predicates into hyperreal-backed hyper geometry,
   while keeping primitive `f32`/`f64` conversions at API and IO boundaries.

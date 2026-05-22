@@ -51,7 +51,7 @@ fn test_to_stl_ascii() {
 }
 
 // --------------------------------------------------------
-//   Node & Clipping Tests
+//   Plane clipping tests
 //   (Optional: these get more into internal details)
 // --------------------------------------------------------
 

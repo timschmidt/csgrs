@@ -4,7 +4,6 @@ pub use crate::csg::CSG;
 pub use crate::errors::ValidationError;
 pub use crate::float_types::{FRAC_PI_2, PI, Real, tolerance};
 pub use crate::mesh::Mesh;
-pub use crate::mesh::bsp::Node;
 pub use crate::mesh::plane::Plane;
 pub use crate::polygon::Polygon;
 pub use crate::sketch::Profile;

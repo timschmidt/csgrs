@@ -80,7 +80,7 @@ impl Vertex {
     /// ## **Geometric Interpretation**
     /// The interpolated vertex represents a point on the edge connecting the two vertices,
     /// with both position and normal vectors smoothly blended. This is fundamental for:
-    /// - **Polygon Splitting**: Creating intersection vertices during BSP operations
+    /// - **Polygon Splitting**: Creating intersection vertices during clipping operations
     /// - **Triangle Subdivision**: Generating midpoints for mesh refinement
     /// - **Smooth Shading**: Interpolating normals across polygon edges
     ///

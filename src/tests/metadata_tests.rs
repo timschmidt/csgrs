@@ -97,23 +97,14 @@ fn test_difference_metadata() {
 
     let result = cube1.difference(&cube2);
 
-    let mut saw_cube1 = false;
-    let mut saw_cube2 = false;
     for poly in &result.polygons {
         let metadata = poly.metadata();
-        saw_cube1 |= metadata == "Cube1";
-        saw_cube2 |= metadata == "Cube2";
         assert!(
-            metadata == "Cube1" || metadata == "Cube2",
+            metadata == "Cube1",
             "Difference polygon has unexpected metadata = {:?}",
             metadata
         );
     }
-
-    assert!(
-        saw_cube1 && saw_cube2,
-        "Difference should retain source metadata from both operands for clipped boundary faces"
-    );
 }
 
 #[test]

@@ -1781,6 +1781,7 @@ dependencies = [
 name = "hypermesh"
 version = "0.3.0"
 dependencies = [
+ "glam 0.30.10",
  "hyperlattice",
  "hyperlimit",
  "hyperreal",
