@@ -103,6 +103,21 @@ fn hfinite_nonzero(value: Real) -> bool {
     hreal_from_f64(value).is_ok() && !matches!(hreal_cmp_f64(value, 0.0), Ordering::Equal)
 }
 
+/// Compare a public profile scalar through hyperreal ordering.
+///
+/// Shape constructors still accept primitive `Real` parameters at the API
+/// boundary, but admission decisions should not use local float ordering. This
+/// helper promotes both operands and compares through Hyper's refinement path,
+/// following Yap's exact geometric computation boundary model
+/// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+fn hprofile_scalar_gt(lhs: Real, rhs: Real) -> bool {
+    matches!(hreal_cmp_f64(lhs, rhs), Ordering::Greater)
+}
+
+fn hprofile_scalar_gt_tolerance(value: Real) -> bool {
+    hprofile_scalar_gt(value, tolerance())
+}
+
 impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// Build a finite boundary sketch as a native hypercurve region.
     ///
@@ -494,8 +509,8 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     // todo: center on focus of the arc
     pub fn teardrop(width: Real, length: Real, segments: usize, metadata: M) -> Profile<M> {
         if segments < 2
-            || width < tolerance()
-            || length < tolerance()
+            || !hprofile_scalar_gt_tolerance(width)
+            || !hprofile_scalar_gt_tolerance(length)
             || !finite_profile_scalars(&[width, length])
         {
             return Profile::empty(metadata);
@@ -721,7 +736,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     ) -> Profile<M> {
         if sides < 3
             || circle_segments < 6
-            || diameter <= tolerance()
+            || !hprofile_scalar_gt_tolerance(diameter)
             || !finite_profile_scalar(diameter)
         {
             return Profile::empty(metadata);
@@ -1366,7 +1381,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     ) -> Profile<M> {
         if teeth < 4
             || segments_per_flank < 2
-            || module <= tolerance()
+            || !hprofile_scalar_gt_tolerance(module)
             || !finite_profile_scalars(&[module, pressure_angle_deg, clearance, backlash])
         {
             return Profile::empty(metadata);
@@ -1432,10 +1447,10 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
             base_radius,
             tooth_thickness_at_pitch,
             half_tooth_angle,
-        ]) || pitch_radius <= tolerance()
-            || base_radius <= tolerance()
-            || outer_radius <= base_radius
-            || tooth_thickness_at_pitch <= tolerance()
+        ]) || !hprofile_scalar_gt_tolerance(pitch_radius)
+            || !hprofile_scalar_gt_tolerance(base_radius)
+            || !hprofile_scalar_gt(outer_radius, base_radius)
+            || !hprofile_scalar_gt_tolerance(tooth_thickness_at_pitch)
         {
             return Profile::empty(metadata);
         }
@@ -1621,9 +1636,9 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
             root_radius,
             ang_pitch,
             half_tooth_angle,
-        ]) || pitch_radius <= tolerance()
-            || outer_radius <= pitch_radius
-            || half_tooth_angle <= tolerance()
+        ]) || !hprofile_scalar_gt_tolerance(pitch_radius)
+            || !hprofile_scalar_gt(outer_radius, pitch_radius)
+            || !hprofile_scalar_gt_tolerance(half_tooth_angle)
         {
             return Profile::empty(metadata);
         }
@@ -1930,8 +1945,8 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     ) -> Profile<M> {
         if num_teeth < 1
             || segments_per_flank < 4
-            || module_ <= tolerance()
-            || generating_radius <= tolerance()
+            || !hprofile_scalar_gt_tolerance(module_)
+            || !hprofile_scalar_gt_tolerance(generating_radius)
             || !finite_profile_scalars(&[module_, generating_radius, clearance])
         {
             return Profile::empty(metadata);
@@ -2352,4 +2367,18 @@ fn hilbert_points(order: usize) -> Vec<(Real, Real)> {
     let mut pts = Vec::with_capacity(1usize << shift);
     recur(&mut pts, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, order);
     pts
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn profile_scalar_admission_uses_hyperreal_ordering() {
+        assert!(hprofile_scalar_gt_tolerance(tolerance() * 2.0));
+        assert!(!hprofile_scalar_gt_tolerance(tolerance()));
+        assert!(!hprofile_scalar_gt_tolerance(0.0));
+        assert!(!hprofile_scalar_gt_tolerance(Real::NAN));
+        assert!(!hprofile_scalar_gt(1.0, Real::NAN));
+    }
 }
