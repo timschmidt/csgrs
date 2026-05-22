@@ -4317,12 +4317,14 @@ fn arrange_coplanar_convex_surface_component_difference(
 /// require nonconvex loop surgery. Overlapping same-source side cutters are
 /// accepted only by the retained side-cutter channel replay below; they are
 /// not prefiltered away because their exact union can be the materialized
-/// removed object. Hole-producing cuts, point-only boundary contacts,
-/// overlapping output loops, and self-intersections remain explicit
-/// planar-arrangement work. This follows Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997): the system may broaden
-/// the object model only when the exact construction history and output
-/// topology are both retained.
+/// removed object. A strict interior right component may also be consumed by a
+/// cutter/hole-contact opening on the same left component, but only when that
+/// local replay emits no retained holes. Hole-producing cuts, point-only
+/// boundary contacts, overlapping output loops, and self-intersections remain
+/// explicit planar-arrangement work. This follows Yap, "Towards Exact
+/// Geometric Computation," *Computational Geometry* 7.1-2 (1997): the system
+/// may broaden the object model only when the exact construction history and
+/// output topology are both retained.
 #[cfg(feature = "exact-triangulation")]
 pub fn arrange_coplanar_surface_multi_difference(
     left: &ExactMesh,
@@ -4372,6 +4374,7 @@ pub fn arrange_coplanar_surface_multi_difference(
     for component in &mut left_components {
         let mut drop_component = false;
         let mut cutter_indices = Vec::new();
+        let mut holes = Vec::new();
         for (right_index, right_component) in right_components.iter().enumerate() {
             if polygons_equal(&component.hull, &right_component.hull)
                 || polygon_in_closed_convex_polygon(
@@ -4393,6 +4396,16 @@ pub fn arrange_coplanar_surface_multi_difference(
                     &right_component.hull,
                     projection,
                 )? {
+                    if polygon_strictly_inside_convex_polygon(
+                        &right_component.hull,
+                        &component.hull,
+                        projection,
+                    )? {
+                        let mut ring = right_component.hull.clone();
+                        orient_polygon_cw(&mut ring, projection)?;
+                        holes.push(ComponentHoleCandidate { ring, right_index });
+                        continue;
+                    }
                     return None;
                 }
                 if drop_component {
@@ -4420,34 +4433,63 @@ pub fn arrange_coplanar_surface_multi_difference(
         if drop_component {
             continue;
         }
+        if !holes.is_empty() && cutter_indices.is_empty() {
+            return None;
+        }
         match cutter_indices.as_slice() {
             [] => polygons.push(component.hull.clone()),
             [right_index] => {
-                let right_component = &right_components[*right_index];
-                if let Some(difference) = arrange_coplanar_convex_surface_difference(
-                    &component.mesh,
-                    &right_component.mesh,
-                ) {
-                    polygons.push(difference.polygon);
-                } else if let Some(difference) =
-                    arrange_coplanar_convex_surface_multi_difference_convex(
+                if !holes.is_empty() {
+                    let opened = materialize_cutter_hole_contact_component_holed_difference(
+                        component,
+                        &cutter_indices,
+                        &holes,
+                        &right_components,
+                    )?;
+                    if opened.iter().any(|component| !component.holes.is_empty()) {
+                        return None;
+                    }
+                    polygons.extend(opened.into_iter().map(|component| component.outer));
+                } else {
+                    let right_component = &right_components[*right_index];
+                    if let Some(difference) = arrange_coplanar_convex_surface_difference(
                         &component.mesh,
                         &right_component.mesh,
-                    )
-                {
-                    polygons.extend(difference.polygons);
-                } else {
-                    return None;
+                    ) {
+                        polygons.push(difference.polygon);
+                    } else if let Some(difference) =
+                        arrange_coplanar_convex_surface_multi_difference_convex(
+                            &component.mesh,
+                            &right_component.mesh,
+                        )
+                    {
+                        polygons.extend(difference.polygons);
+                    } else {
+                        return None;
+                    }
                 }
             }
             _ => {
-                let mut remnants = if let Some(remnants) =
-                    materialize_side_cutter_multi_component_difference(
+                let mut remnants = if !holes.is_empty() {
+                    let opened = materialize_cutter_hole_contact_component_holed_difference(
                         component,
                         &cutter_indices,
+                        &holes,
                         &right_components,
-                        "coplanar nonconvex multi-component side-cutter difference",
-                    ) {
+                    )?;
+                    if opened.iter().any(|component| !component.holes.is_empty()) {
+                        return None;
+                    }
+                    opened
+                        .into_iter()
+                        .map(|component| component.outer)
+                        .collect::<Vec<_>>()
+                } else if let Some(remnants) = materialize_side_cutter_multi_component_difference(
+                    component,
+                    &cutter_indices,
+                    &right_components,
+                    "coplanar nonconvex multi-component side-cutter difference",
+                ) {
                     remnants
                 } else {
                     materialize_component_multi_cutter_difference(

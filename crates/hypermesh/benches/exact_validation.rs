@@ -3384,6 +3384,34 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
             ValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
+        let multi_component_no_hole_consumed_left = ExactMesh::from_i64_triangles_with_policy(
+            &[
+                0, 0, 0, 20, 0, 0, 20, 20, 0, 0, 20, 0, //
+                30, 0, 0, 50, 0, 0, 50, 20, 0, 30, 20, 0,
+            ],
+            &[
+                0, 1, 2, 0, 2, 3, //
+                4, 5, 6, 4, 6, 7,
+            ],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let multi_component_no_hole_consumed_right = ExactMesh::from_i64_triangles_with_policy(
+            &[
+                8, 8, 0, 12, 10, 0, 8, 12, 0, //
+                0, 9, 0, 10, 8, 0, 10, 12, 0, 0, 11, 0, //
+                38, 8, 0, 42, 10, 0, 38, 12, 0, //
+                30, 9, 0, 40, 8, 0, 40, 12, 0, 30, 11, 0,
+            ],
+            &[
+                0, 1, 2, //
+                3, 4, 5, 3, 5, 6, //
+                7, 8, 9, //
+                10, 11, 12, 10, 12, 13,
+            ],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
         let nonrect_contact_left = ExactMesh::from_i64_triangles_with_policy(
             &[0, 0, 0, 20, 0, 0, 20, 20, 0, 0, 20, 0],
             &[0, 1, 2, 0, 2, 3],
@@ -3970,6 +3998,29 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
                         hypermesh::exact::boolean_exact(
                             &multi_component_consumed_hole_left,
                             &multi_component_consumed_hole_right,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                            ValidationPolicy::ALLOW_BOUNDARY,
+                        )
+                        .unwrap(),
+                        arrange_coplanar_surface_multi_difference(
+                            &multi_component_no_hole_consumed_left,
+                            &multi_component_no_hole_consumed_right,
+                        )
+                        .map(|output| {
+                            output.validate_difference_against_sources(
+                                &multi_component_no_hole_consumed_left,
+                                &multi_component_no_hole_consumed_right,
+                            )
+                        }),
+                        hypermesh::exact::preflight_boolean_exact(
+                            &multi_component_no_hole_consumed_left,
+                            &multi_component_no_hole_consumed_right,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                        )
+                        .map(|report| report.validate()),
+                        hypermesh::exact::boolean_exact(
+                            &multi_component_no_hole_consumed_left,
+                            &multi_component_no_hole_consumed_right,
                             hypermesh::exact::ExactBooleanOperation::Difference,
                             ValidationPolicy::ALLOW_BOUNDARY,
                         )
