@@ -1606,34 +1606,6 @@ fn adversarial_plane_from_normal_rejects_hostile_boundary_without_panic() {
 }
 
 #[test]
-fn adversarial_triangulate_repairs_t_junction_with_hyperreal_projection() {
-    let normal = Vector3::z();
-    let t_point = Point3::new(1.0, 0.0, 0.0);
-    let polygons = vec![
-        Polygon::new(
-            vec![
-                Vertex::new(Point3::new(0.0, 0.0, 0.0), normal),
-                Vertex::new(Point3::new(2.0, 0.0, 0.0), normal),
-                Vertex::new(Point3::new(2.0, 1.0, 0.0), normal),
-                Vertex::new(Point3::new(0.0, 1.0, 0.0), normal),
-            ],
-            (),
-        ),
-        Polygon::new(
-            vec![
-                Vertex::new(t_point, normal),
-                Vertex::new(Point3::new(1.5, -0.5, 0.0), normal),
-                Vertex::new(Point3::new(0.5, -0.5, 0.0), normal),
-            ],
-            (),
-        ),
-    ];
-
-    let triangulated = Mesh::from_polygons(&polygons, ()).triangulate();
-    assert_mesh_sane(&triangulated);
-}
-
-#[test]
 fn adversarial_polygon_triangulate_filters_near_degenerate_hyperreal_winding() {
     let normal = Vector3::z();
     let polygon = Polygon::new(

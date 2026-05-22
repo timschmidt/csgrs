@@ -3,8 +3,8 @@
 use crate::errors::ValidationError;
 use crate::float_types::{
     HReal, Real, hangle_between_vectors, hpoint_distance, hpoint3_bounds,
-    hpoints_exactly_equal, hreal_cmp_f64, hreal_from_f64, hreal_gt_hreal, hreal_lt_hreal,
-    hreal_sign, hreal_to_f64, hunit_vector3, hvector3_from_point3, hvector3_from_vector3,
+    hpoints_exactly_equal, hreal_cmp_f64, hreal_from_f64, hreal_sign, hunit_vector3,
+    hvector3_from_vector3,
     parry3d::{bounding_volume::Aabb, query::RayCast, shape::Shape},
     rapier3d::prelude::{
         ColliderBuilder, ColliderSet, Ray, RigidBodyBuilder, RigidBodyHandle, RigidBodySet,
@@ -78,52 +78,6 @@ pub struct Mesh<M: Clone + Send + Sync + Debug> {
     /// Whole-mesh metadata. Use `M = ()` for no metadata and `M = Option<YourMetadata>`
     /// for optional metadata.
     pub metadata: M,
-}
-
-/// Return a hyperreal edge projection parameter for a boundary point.
-///
-/// `Mesh` still carries transitional nalgebra storage, but all segment length,
-/// endpoint, and off-edge predicates are promoted before comparison. This keeps
-/// topology splits aligned with Yap's exact-geometric-computation boundary model,
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7(1-2),
-/// 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-fn hyper_edge_projection_parameter(
-    point: &Point3<Real>,
-    edge_start: &Point3<Real>,
-    edge_end: &Point3<Real>,
-) -> Option<Real> {
-    let a = hvector3_from_point3(edge_start)?;
-    let b = hvector3_from_point3(edge_end)?;
-    let p = hvector3_from_point3(point)?;
-    let ab = &b - &a;
-    let av = &p - &a;
-    let bv = &p - &b;
-
-    let ab_len_sq = ab.dot(&ab);
-    if !hreal_positive(&ab_len_sq) {
-        return None;
-    }
-
-    if !hreal_positive(&av.dot(&av)) || !hreal_positive(&bv.dot(&bv)) {
-        return None;
-    }
-
-    let t_h = (ab.dot(&av) / ab_len_sq).ok()?;
-    if !hreal_gt_hreal(&t_h, &HReal::zero()) || !hreal_lt_hreal(&t_h, &HReal::from(1)) {
-        return None;
-    }
-
-    let projected = a + ab * &t_h;
-    let delta = p - projected;
-    if !hreal_zero(&delta.dot(&delta)) {
-        return None;
-    }
-
-    hreal_to_f64(&t_h)
-}
-
-fn hreal_positive(value: &HReal) -> bool {
-    matches!(hreal_sign(value), Some(hyperreal::RealSign::Positive))
 }
 
 fn hreal_zero(value: &HReal) -> bool {
@@ -332,110 +286,10 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
             .collect()
     }
 
-    /// Pre-pass to remove T-junctions between polygons by inserting missing
-    /// vertices on shared or colinear overlapping edges before triangulation.
-    ///
-    /// Edge projection and point-edge distance checks are evaluated in
-    /// `hyperreal::Real` through `hyperlattice::Vector3`; only the accepted
-    /// insertion parameter is exported back to `f64` so existing mesh vertices
-    /// can still be stored at the public API boundary. Retaining the point and
-    /// edge as hyper geometry objects before scalar fallback follows Yap's
-    /// exact-geometric-computation model, "Towards Exact Geometric
-    /// Computation," *Computational Geometry* 7(1-2), 1997
-    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>). The repair addresses
-    /// T-vertices before triangulation because mesh cracks violate the
-    /// watertightness assumptions behind triangle mesh processing; see
-    /// Botsch et al., *Polygon Mesh Processing*, 2010
-    /// (<https://doi.org/10.1201/b10688>).
-    fn fix_t_junctions_on_shared_edges(polygons: &mut [Polygon<M>]) {
-        if polygons.len() < 2 {
-            return;
-        }
-
-        let poly_count = polygons.len();
-        let mut edge_splits: Vec<HashMap<usize, Vec<(Real, Vertex)>>> =
-            vec![HashMap::new(); poly_count];
-
-        for (i, poly_i) in polygons.iter().enumerate() {
-            if poly_i.vertices.len() < 2 {
-                continue;
-            }
-
-            for vert in &poly_i.vertices {
-                for (j, poly_j) in polygons.iter().enumerate() {
-                    if i == j || poly_j.vertices.len() < 2 {
-                        continue;
-                    }
-
-                    let verts_j = &poly_j.vertices;
-                    let n_j = verts_j.len();
-                    for edge_start in 0..n_j {
-                        let a = &verts_j[edge_start];
-                        let b = &verts_j[(edge_start + 1) % n_j];
-                        let Some(t) = hyper_edge_projection_parameter(
-                            &vert.position,
-                            &a.position,
-                            &b.position,
-                        ) else {
-                            continue;
-                        };
-
-                        let new_vertex = Vertex::new(vert.position, poly_j.plane.normal());
-                        let entry = edge_splits[j].entry(edge_start).or_default();
-                        let already_present = entry.iter().any(|(existing_t, existing_v)| {
-                            hreal_f64s_exactly_equal(*existing_t, t)
-                                || hpoints_exactly_equal(
-                                    &existing_v.position,
-                                    &new_vertex.position,
-                                )
-                        });
-
-                        if !already_present {
-                            entry.push((t, new_vertex));
-                        }
-                    }
-                }
-            }
-        }
-
-        for (poly_index, poly) in polygons.iter_mut().enumerate() {
-            let splits_map = &edge_splits[poly_index];
-            if splits_map.is_empty() {
-                continue;
-            }
-
-            let original = poly.vertices.clone();
-            let n = original.len();
-            if n < 2 {
-                continue;
-            }
-
-            let extra_vertices: usize = splits_map.values().map(Vec::len).sum();
-            let mut new_vertices = Vec::with_capacity(n + extra_vertices);
-
-            for edge_start in 0..n {
-                new_vertices.push(original[edge_start]);
-
-                if let Some(splits) = splits_map.get(&edge_start) {
-                    let mut splits_sorted = splits.clone();
-                    splits_sorted.sort_by(|(t_a, _), (t_b, _)| hreal_cmp_f64(*t_a, *t_b));
-
-                    for (_, vertex) in splits_sorted {
-                        new_vertices.push(vertex);
-                    }
-                }
-            }
-
-            poly.vertices = new_vertices;
-        }
-    }
-
     /// Triangulate each polygon in the Mesh returning a Mesh containing triangles
     pub fn triangulate(&self) -> Mesh<M> {
-        let mut polygons = self.polygons.clone();
-        Self::fix_t_junctions_on_shared_edges(&mut polygons);
-
-        let triangles = polygons
+        let triangles = self
+            .polygons
             .iter()
             .flat_map(|poly| {
                 poly.triangulate().into_iter().map(move |triangle| {
@@ -1309,41 +1163,6 @@ mod tests {
     use crate::float_types::tolerance;
 
     #[test]
-    fn hyper_edge_projection_parameter_accepts_exact_t_vertex() {
-        let point = Point3::new(1.0, 0.0, 0.0);
-        let edge_start = Point3::new(0.0, 0.0, 0.0);
-        let edge_end = Point3::new(2.0, 0.0, 0.0);
-
-        let t = hyper_edge_projection_parameter(&point, &edge_start, &edge_end)
-            .expect("point lies strictly inside the edge");
-
-        assert!(hreal_f64s_exactly_equal(t, 0.5));
-    }
-
-    #[test]
-    fn hyper_edge_projection_parameter_rejects_off_edge_point() {
-        let point = Point3::new(1.0, tolerance() * 4.0, 0.0);
-        let edge_start = Point3::new(0.0, 0.0, 0.0);
-        let edge_end = Point3::new(2.0, 0.0, 0.0);
-
-        assert!(hyper_edge_projection_parameter(&point, &edge_start, &edge_end).is_none());
-    }
-
-    #[test]
-    fn hyper_edge_projection_parameter_rejects_endpoints() {
-        let edge_start = Point3::new(0.0, 0.0, 0.0);
-        let edge_end = Point3::new(2.0, 0.0, 0.0);
-        let midpoint = Point3::new(1.0, 0.0, 0.0);
-
-        assert!(
-            hyper_edge_projection_parameter(&edge_start, &edge_start, &edge_end).is_none()
-        );
-        assert!(
-            hyper_edge_projection_parameter(&midpoint, &edge_start, &edge_start).is_none()
-        );
-    }
-
-    #[test]
     fn mesh_bounding_box_helpers_do_not_widen_by_tolerance() {
         let container = Aabb::new(Point3::origin(), Point3::new(1.0, 1.0, 1.0));
         let exact_touch =
@@ -1360,5 +1179,33 @@ mod tests {
         assert!(bounding_boxes_intersect(&container, &exact_touch));
         assert!(!bounding_boxes_intersect(&container, &just_outside));
         assert!(!bounding_box_contains_bounds(&container, &overhanging));
+    }
+
+    #[test]
+    fn mesh_triangulate_does_not_repair_cross_polygon_t_junctions() {
+        let normal = Vector3::z();
+        let polygons = vec![
+            Polygon::new(
+                vec![
+                    Vertex::new(Point3::new(0.0, 0.0, 0.0), normal),
+                    Vertex::new(Point3::new(2.0, 0.0, 0.0), normal),
+                    Vertex::new(Point3::new(2.0, 1.0, 0.0), normal),
+                    Vertex::new(Point3::new(0.0, 1.0, 0.0), normal),
+                ],
+                (),
+            ),
+            Polygon::new(
+                vec![
+                    Vertex::new(Point3::new(1.0, 0.0, 0.0), normal),
+                    Vertex::new(Point3::new(1.5, -0.5, 0.0), normal),
+                    Vertex::new(Point3::new(0.5, -0.5, 0.0), normal),
+                ],
+                (),
+            ),
+        ];
+
+        let triangulated = Mesh::from_polygons(&polygons, ()).triangulate();
+
+        assert_eq!(triangulated.polygons.len(), 3);
     }
 }
