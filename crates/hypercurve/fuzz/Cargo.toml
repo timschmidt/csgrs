@@ -17,3 +17,10 @@ path = "fuzz_targets/bezier_algebraic_parameter.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "bezier_split_materialization"
+path = "fuzz_targets/bezier_split_materialization.rs"
+test = false
+doc = false
+bench = false
