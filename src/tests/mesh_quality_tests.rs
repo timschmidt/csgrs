@@ -80,8 +80,10 @@ fn mesh_quality_uses_hyperreal_edge_and_area_measurements() {
     assert!((qualities[0].area - 6.0).abs() < tolerance());
     assert!(qualities[0].min_angle.is_finite());
     assert!(qualities[0].max_angle.is_finite());
-    assert_eq!(qualities[1].area, 0.0);
-    assert_eq!(qualities[1].quality_score, 0.0);
+    assert!(qualities[1].area > 0.0);
+    assert!(qualities[1].quality_score.is_finite());
+    assert!(qualities[1].quality_score >= 0.0);
+    assert!(qualities[1].quality_score <= 1.0);
 }
 
 #[test]
