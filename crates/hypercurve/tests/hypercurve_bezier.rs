@@ -6601,9 +6601,11 @@ fn bezier_boolean_arrangement_readiness_accepts_split_fragments_and_overlaps() {
         BezierBooleanOverlapResolutionReport2::from_overlap_events(&[overlap], &policy())
             .unwrap_decided_for_test();
 
-    let report = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
-        &first_fragments,
-        &second_fragments,
+    let report = BezierBooleanArrangementReadinessReport2::from_parts(
+        first_fragments.status,
+        first_fragments.fragments.len(),
+        second_fragments.status,
+        second_fragments.fragments.len(),
         &overlaps,
     );
 
@@ -6670,9 +6672,11 @@ fn bezier_boolean_traversal_preconditions_accept_continuous_split_chains() {
             .unwrap_decided_for_test();
     let overlaps = BezierBooleanOverlapResolutionReport2::from_overlap_events(&[], &policy())
         .unwrap_decided_for_test();
-    let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
-        &first_fragments,
-        &second_fragments,
+    let readiness = BezierBooleanArrangementReadinessReport2::from_parts(
+        first_fragments.status,
+        first_fragments.fragments.len(),
+        second_fragments.status,
+        second_fragments.fragments.len(),
         &overlaps,
     );
 

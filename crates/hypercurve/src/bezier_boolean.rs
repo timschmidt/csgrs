@@ -3892,51 +3892,6 @@ impl BezierBooleanOverlapResolutionReport2 {
 }
 
 impl BezierBooleanArrangementReadinessReport2 {
-    /// Builds arrangement readiness for two quadratic Bezier operand reports.
-    pub fn from_quadratic_fragments(
-        first: &BezierBooleanQuadraticFragmentReport2,
-        second: &BezierBooleanQuadraticFragmentReport2,
-        overlaps: &BezierBooleanOverlapResolutionReport2,
-    ) -> Self {
-        Self::from_parts(
-            first.status,
-            first.fragments.len(),
-            second.status,
-            second.fragments.len(),
-            overlaps,
-        )
-    }
-
-    /// Builds arrangement readiness for two cubic Bezier operand reports.
-    pub fn from_cubic_fragments(
-        first: &BezierBooleanCubicFragmentReport2,
-        second: &BezierBooleanCubicFragmentReport2,
-        overlaps: &BezierBooleanOverlapResolutionReport2,
-    ) -> Self {
-        Self::from_parts(
-            first.status,
-            first.fragments.len(),
-            second.status,
-            second.fragments.len(),
-            overlaps,
-        )
-    }
-
-    /// Builds arrangement readiness for two rational quadratic/conic operand reports.
-    pub fn from_rational_quadratic_fragments(
-        first: &BezierBooleanRationalQuadraticFragmentReport2,
-        second: &BezierBooleanRationalQuadraticFragmentReport2,
-        overlaps: &BezierBooleanOverlapResolutionReport2,
-    ) -> Self {
-        Self::from_parts(
-            first.status,
-            first.fragments.len(),
-            second.status,
-            second.fragments.len(),
-            overlaps,
-        )
-    }
-
     /// Builds arrangement readiness from generic fragment statuses and counts.
     ///
     /// This constructor is useful when a future path owns a heterogeneous

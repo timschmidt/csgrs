@@ -1301,8 +1301,12 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 hypercurve::Classification::Decided(overlaps),
             ) => format!(
                 "{:?}",
-                BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
-                    first, second, overlaps
+                BezierBooleanArrangementReadinessReport2::from_parts(
+                    first.status,
+                    first.fragments.len(),
+                    second.status,
+                    second.fragments.len(),
+                    overlaps
                 )
             ),
             other => format!("{other:?}"),
@@ -1317,8 +1321,12 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 hypercurve::Classification::Decided(second),
                 hypercurve::Classification::Decided(overlaps),
             ) => {
-                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
-                    first, second, overlaps,
+                let readiness = BezierBooleanArrangementReadinessReport2::from_parts(
+                    first.status,
+                    first.fragments.len(),
+                    second.status,
+                    second.fragments.len(),
+                    overlaps,
                 );
                 format!(
                     "{:?}",
@@ -1339,8 +1347,12 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 hypercurve::Classification::Decided(second),
                 hypercurve::Classification::Decided(overlaps),
             ) => {
-                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
-                    first, second, overlaps,
+                let readiness = BezierBooleanArrangementReadinessReport2::from_parts(
+                    first.status,
+                    first.fragments.len(),
+                    second.status,
+                    second.fragments.len(),
+                    overlaps,
                 );
                 let preconditions =
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
@@ -1363,8 +1375,12 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 hypercurve::Classification::Decided(second),
                 hypercurve::Classification::Decided(overlaps),
             ) => {
-                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
-                    first, second, overlaps,
+                let readiness = BezierBooleanArrangementReadinessReport2::from_parts(
+                    first.status,
+                    first.fragments.len(),
+                    second.status,
+                    second.fragments.len(),
+                    overlaps,
                 );
                 let preconditions =
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
@@ -1395,8 +1411,12 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 hypercurve::Classification::Decided(second),
                 hypercurve::Classification::Decided(overlaps),
             ) => {
-                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
-                    first, second, overlaps,
+                let readiness = BezierBooleanArrangementReadinessReport2::from_parts(
+                    first.status,
+                    first.fragments.len(),
+                    second.status,
+                    second.fragments.len(),
+                    overlaps,
                 );
                 let preconditions =
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
@@ -1429,8 +1449,12 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 hypercurve::Classification::Decided(second),
                 hypercurve::Classification::Decided(overlaps),
             ) => {
-                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
-                    first, second, overlaps,
+                let readiness = BezierBooleanArrangementReadinessReport2::from_parts(
+                    first.status,
+                    first.fragments.len(),
+                    second.status,
+                    second.fragments.len(),
+                    overlaps,
                 );
                 let preconditions =
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
@@ -1460,8 +1484,12 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 hypercurve::Classification::Decided(second),
                 hypercurve::Classification::Decided(overlaps),
             ) => {
-                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
-                    first, second, overlaps,
+                let readiness = BezierBooleanArrangementReadinessReport2::from_parts(
+                    first.status,
+                    first.fragments.len(),
+                    second.status,
+                    second.fragments.len(),
+                    overlaps,
                 );
                 let preconditions =
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
@@ -1490,8 +1518,12 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 hypercurve::Classification::Decided(second),
                 hypercurve::Classification::Decided(overlaps),
             ) => {
-                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
-                    first, second, overlaps,
+                let readiness = BezierBooleanArrangementReadinessReport2::from_parts(
+                    first.status,
+                    first.fragments.len(),
+                    second.status,
+                    second.fragments.len(),
+                    overlaps,
                 );
                 let preconditions =
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
@@ -1523,8 +1555,12 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 hypercurve::Classification::Decided(second),
                 hypercurve::Classification::Decided(overlaps),
             ) => {
-                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
-                    first, second, overlaps,
+                let readiness = BezierBooleanArrangementReadinessReport2::from_parts(
+                    first.status,
+                    first.fragments.len(),
+                    second.status,
+                    second.fragments.len(),
+                    overlaps,
                 );
                 let preconditions =
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
@@ -1561,8 +1597,12 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 hypercurve::Classification::Decided(second),
                 hypercurve::Classification::Decided(overlaps),
             ) => {
-                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
-                    first, second, overlaps,
+                let readiness = BezierBooleanArrangementReadinessReport2::from_parts(
+                    first.status,
+                    first.fragments.len(),
+                    second.status,
+                    second.fragments.len(),
+                    overlaps,
                 );
                 let preconditions =
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
@@ -1602,8 +1642,12 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 hypercurve::Classification::Decided(second),
                 hypercurve::Classification::Decided(overlaps),
             ) => {
-                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
-                    first, second, overlaps,
+                let readiness = BezierBooleanArrangementReadinessReport2::from_parts(
+                    first.status,
+                    first.fragments.len(),
+                    second.status,
+                    second.fragments.len(),
+                    overlaps,
                 );
                 let preconditions =
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
@@ -1648,8 +1692,12 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 hypercurve::Classification::Decided(second),
                 hypercurve::Classification::Decided(overlaps),
             ) => {
-                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
-                    first, second, overlaps,
+                let readiness = BezierBooleanArrangementReadinessReport2::from_parts(
+                    first.status,
+                    first.fragments.len(),
+                    second.status,
+                    second.fragments.len(),
+                    overlaps,
                 );
                 let preconditions =
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
@@ -1695,8 +1743,12 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 hypercurve::Classification::Decided(second),
                 hypercurve::Classification::Decided(overlaps),
             ) => {
-                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
-                    first, second, overlaps,
+                let readiness = BezierBooleanArrangementReadinessReport2::from_parts(
+                    first.status,
+                    first.fragments.len(),
+                    second.status,
+                    second.fragments.len(),
+                    overlaps,
                 );
                 let preconditions =
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
@@ -1739,8 +1791,12 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 hypercurve::Classification::Decided(second),
                 hypercurve::Classification::Decided(overlaps),
             ) => {
-                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
-                    first, second, overlaps,
+                let readiness = BezierBooleanArrangementReadinessReport2::from_parts(
+                    first.status,
+                    first.fragments.len(),
+                    second.status,
+                    second.fragments.len(),
+                    overlaps,
                 );
                 let preconditions =
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
@@ -2130,8 +2186,12 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 hypercurve::Classification::Decided(second),
                 hypercurve::Classification::Decided(overlaps),
             ) => {
-                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
-                    first, second, overlaps,
+                let readiness = BezierBooleanArrangementReadinessReport2::from_parts(
+                    first.status,
+                    first.fragments.len(),
+                    second.status,
+                    second.fragments.len(),
+                    overlaps,
                 );
                 let preconditions =
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
@@ -2181,8 +2241,12 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 hypercurve::Classification::Decided(second),
                 hypercurve::Classification::Decided(overlaps),
             ) => {
-                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
-                    first, second, overlaps,
+                let readiness = BezierBooleanArrangementReadinessReport2::from_parts(
+                    first.status,
+                    first.fragments.len(),
+                    second.status,
+                    second.fragments.len(),
+                    overlaps,
                 );
                 let preconditions =
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
@@ -2227,8 +2291,12 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 hypercurve::Classification::Decided(second),
                 hypercurve::Classification::Decided(overlaps),
             ) => {
-                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
-                    first, second, overlaps,
+                let readiness = BezierBooleanArrangementReadinessReport2::from_parts(
+                    first.status,
+                    first.fragments.len(),
+                    second.status,
+                    second.fragments.len(),
+                    overlaps,
                 );
                 let preconditions =
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
@@ -2274,8 +2342,12 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 hypercurve::Classification::Decided(second),
                 hypercurve::Classification::Decided(overlaps),
             ) => {
-                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
-                    first, second, overlaps,
+                let readiness = BezierBooleanArrangementReadinessReport2::from_parts(
+                    first.status,
+                    first.fragments.len(),
+                    second.status,
+                    second.fragments.len(),
+                    overlaps,
                 );
                 let preconditions =
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
@@ -2322,8 +2394,12 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 hypercurve::Classification::Decided(second),
                 hypercurve::Classification::Decided(overlaps),
             ) => {
-                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
-                    first, second, overlaps,
+                let readiness = BezierBooleanArrangementReadinessReport2::from_parts(
+                    first.status,
+                    first.fragments.len(),
+                    second.status,
+                    second.fragments.len(),
+                    overlaps,
                 );
                 let preconditions =
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
@@ -2371,8 +2447,12 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 hypercurve::Classification::Decided(second),
                 hypercurve::Classification::Decided(overlaps),
             ) => {
-                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
-                    first, second, overlaps,
+                let readiness = BezierBooleanArrangementReadinessReport2::from_parts(
+                    first.status,
+                    first.fragments.len(),
+                    second.status,
+                    second.fragments.len(),
+                    overlaps,
                 );
                 let preconditions =
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
@@ -2433,8 +2513,12 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 hypercurve::Classification::Decided(second),
                 hypercurve::Classification::Decided(overlaps),
             ) => {
-                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
-                    first, second, overlaps,
+                let readiness = BezierBooleanArrangementReadinessReport2::from_parts(
+                    first.status,
+                    first.fragments.len(),
+                    second.status,
+                    second.fragments.len(),
+                    overlaps,
                 );
                 let preconditions =
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
@@ -2488,8 +2572,12 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 hypercurve::Classification::Decided(second),
                 hypercurve::Classification::Decided(overlaps),
             ) => {
-                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
-                    first, second, overlaps,
+                let readiness = BezierBooleanArrangementReadinessReport2::from_parts(
+                    first.status,
+                    first.fragments.len(),
+                    second.status,
+                    second.fragments.len(),
+                    overlaps,
                 );
                 let preconditions =
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
@@ -2537,8 +2625,12 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 hypercurve::Classification::Decided(second),
                 hypercurve::Classification::Decided(overlaps),
             ) => {
-                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
-                    first, second, overlaps,
+                let readiness = BezierBooleanArrangementReadinessReport2::from_parts(
+                    first.status,
+                    first.fragments.len(),
+                    second.status,
+                    second.fragments.len(),
+                    overlaps,
                 );
                 let preconditions =
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
@@ -2593,8 +2685,12 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 hypercurve::Classification::Decided(second),
                 hypercurve::Classification::Decided(overlaps),
             ) => {
-                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
-                    first, second, overlaps,
+                let readiness = BezierBooleanArrangementReadinessReport2::from_parts(
+                    first.status,
+                    first.fragments.len(),
+                    second.status,
+                    second.fragments.len(),
+                    overlaps,
                 );
                 let preconditions =
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
@@ -2704,8 +2800,12 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 hypercurve::Classification::Decided(second),
                 hypercurve::Classification::Decided(overlaps),
             ) => {
-                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
-                    first, second, overlaps,
+                let readiness = BezierBooleanArrangementReadinessReport2::from_parts(
+                    first.status,
+                    first.fragments.len(),
+                    second.status,
+                    second.fragments.len(),
+                    overlaps,
                 );
                 let preconditions =
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
@@ -2767,8 +2867,12 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 hypercurve::Classification::Decided(second),
                 hypercurve::Classification::Decided(overlaps),
             ) => {
-                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
-                    first, second, overlaps,
+                let readiness = BezierBooleanArrangementReadinessReport2::from_parts(
+                    first.status,
+                    first.fragments.len(),
+                    second.status,
+                    second.fragments.len(),
+                    overlaps,
                 );
                 let preconditions =
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
@@ -2818,8 +2922,12 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 hypercurve::Classification::Decided(second),
                 hypercurve::Classification::Decided(overlaps),
             ) => {
-                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
-                    first, second, overlaps,
+                let readiness = BezierBooleanArrangementReadinessReport2::from_parts(
+                    first.status,
+                    first.fragments.len(),
+                    second.status,
+                    second.fragments.len(),
+                    overlaps,
                 );
                 let preconditions =
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
@@ -2897,8 +3005,12 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 hypercurve::Classification::Decided(second),
                 hypercurve::Classification::Decided(overlaps),
             ) => {
-                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
-                    first, second, overlaps,
+                let readiness = BezierBooleanArrangementReadinessReport2::from_parts(
+                    first.status,
+                    first.fragments.len(),
+                    second.status,
+                    second.fragments.len(),
+                    overlaps,
                 );
                 let preconditions =
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
@@ -2976,8 +3088,12 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 hypercurve::Classification::Decided(second),
                 hypercurve::Classification::Decided(overlaps),
             ) => {
-                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
-                    first, second, overlaps,
+                let readiness = BezierBooleanArrangementReadinessReport2::from_parts(
+                    first.status,
+                    first.fragments.len(),
+                    second.status,
+                    second.fragments.len(),
+                    overlaps,
                 );
                 let preconditions =
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
@@ -3069,8 +3185,12 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 hypercurve::Classification::Decided(second),
                 hypercurve::Classification::Decided(overlaps),
             ) => {
-                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
-                    first, second, overlaps,
+                let readiness = BezierBooleanArrangementReadinessReport2::from_parts(
+                    first.status,
+                    first.fragments.len(),
+                    second.status,
+                    second.fragments.len(),
+                    overlaps,
                 );
                 let preconditions =
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
@@ -3153,8 +3273,12 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 hypercurve::Classification::Decided(second),
                 hypercurve::Classification::Decided(overlaps),
             ) => {
-                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
-                    first, second, overlaps,
+                let readiness = BezierBooleanArrangementReadinessReport2::from_parts(
+                    first.status,
+                    first.fragments.len(),
+                    second.status,
+                    second.fragments.len(),
+                    overlaps,
                 );
                 let preconditions =
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
@@ -3352,8 +3476,12 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 hypercurve::Classification::Decided(second),
                 hypercurve::Classification::Decided(overlaps),
             ) => {
-                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
-                    first, second, overlaps,
+                let readiness = BezierBooleanArrangementReadinessReport2::from_parts(
+                    first.status,
+                    first.fragments.len(),
+                    second.status,
+                    second.fragments.len(),
+                    overlaps,
                 );
                 let preconditions =
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
@@ -3394,8 +3522,12 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 hypercurve::Classification::Decided(second),
                 hypercurve::Classification::Decided(overlaps),
             ) => {
-                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
-                    first, second, overlaps,
+                let readiness = BezierBooleanArrangementReadinessReport2::from_parts(
+                    first.status,
+                    first.fragments.len(),
+                    second.status,
+                    second.fragments.len(),
+                    overlaps,
                 );
                 let preconditions =
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
@@ -3440,8 +3572,12 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 hypercurve::Classification::Decided(second),
                 hypercurve::Classification::Decided(overlaps),
             ) => {
-                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
-                    first, second, overlaps,
+                let readiness = BezierBooleanArrangementReadinessReport2::from_parts(
+                    first.status,
+                    first.fragments.len(),
+                    second.status,
+                    second.fragments.len(),
+                    overlaps,
                 );
                 let preconditions =
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
@@ -3506,8 +3642,12 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 hypercurve::Classification::Decided(second),
                 hypercurve::Classification::Decided(overlaps),
             ) => {
-                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
-                    first, second, overlaps,
+                let readiness = BezierBooleanArrangementReadinessReport2::from_parts(
+                    first.status,
+                    first.fragments.len(),
+                    second.status,
+                    second.fragments.len(),
+                    overlaps,
                 );
                 let preconditions =
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
@@ -3565,8 +3705,12 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 hypercurve::Classification::Decided(second),
                 hypercurve::Classification::Decided(overlaps),
             ) => {
-                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
-                    first, second, overlaps,
+                let readiness = BezierBooleanArrangementReadinessReport2::from_parts(
+                    first.status,
+                    first.fragments.len(),
+                    second.status,
+                    second.fragments.len(),
+                    overlaps,
                 );
                 let preconditions =
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
@@ -3609,8 +3753,12 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 hypercurve::Classification::Decided(second),
                 hypercurve::Classification::Decided(overlaps),
             ) => {
-                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
-                    first, second, overlaps,
+                let readiness = BezierBooleanArrangementReadinessReport2::from_parts(
+                    first.status,
+                    first.fragments.len(),
+                    second.status,
+                    second.fragments.len(),
+                    overlaps,
                 );
                 let preconditions =
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
@@ -3665,8 +3813,12 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 hypercurve::Classification::Decided(second),
                 hypercurve::Classification::Decided(overlaps),
             ) => {
-                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
-                    first, second, overlaps,
+                let readiness = BezierBooleanArrangementReadinessReport2::from_parts(
+                    first.status,
+                    first.fragments.len(),
+                    second.status,
+                    second.fragments.len(),
+                    overlaps,
                 );
                 let preconditions =
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
@@ -3717,8 +3869,12 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 hypercurve::Classification::Decided(second),
                 hypercurve::Classification::Decided(overlaps),
             ) => {
-                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
-                    first, second, overlaps,
+                let readiness = BezierBooleanArrangementReadinessReport2::from_parts(
+                    first.status,
+                    first.fragments.len(),
+                    second.status,
+                    second.fragments.len(),
+                    overlaps,
                 );
                 let preconditions =
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
@@ -3767,8 +3923,12 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 hypercurve::Classification::Decided(second),
                 hypercurve::Classification::Decided(overlaps),
             ) => {
-                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
-                    first, second, overlaps,
+                let readiness = BezierBooleanArrangementReadinessReport2::from_parts(
+                    first.status,
+                    first.fragments.len(),
+                    second.status,
+                    second.fragments.len(),
+                    overlaps,
                 );
                 let preconditions =
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
@@ -3819,8 +3979,12 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 hypercurve::Classification::Decided(second),
                 hypercurve::Classification::Decided(overlaps),
             ) => {
-                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
-                    first, second, overlaps,
+                let readiness = BezierBooleanArrangementReadinessReport2::from_parts(
+                    first.status,
+                    first.fragments.len(),
+                    second.status,
+                    second.fragments.len(),
+                    overlaps,
                 );
                 let preconditions =
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
@@ -3855,8 +4019,12 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 hypercurve::Classification::Decided(second),
                 hypercurve::Classification::Decided(overlaps),
             ) => {
-                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
-                    first, second, overlaps,
+                let readiness = BezierBooleanArrangementReadinessReport2::from_parts(
+                    first.status,
+                    first.fragments.len(),
+                    second.status,
+                    second.fragments.len(),
+                    overlaps,
                 );
                 let preconditions =
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
@@ -3895,8 +4063,12 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                 hypercurve::Classification::Decided(second),
                 hypercurve::Classification::Decided(overlaps),
             ) => {
-                let readiness = BezierBooleanArrangementReadinessReport2::from_quadratic_fragments(
-                    first, second, overlaps,
+                let readiness = BezierBooleanArrangementReadinessReport2::from_parts(
+                    first.status,
+                    first.fragments.len(),
+                    second.status,
+                    second.fragments.len(),
+                    overlaps,
                 );
                 let preconditions =
                     BezierBooleanTraversalPreconditionReport2::from_quadratic_fragments(
