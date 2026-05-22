@@ -21,17 +21,17 @@ use hypersolve::{
     count_descartes_univariate_polynomial_roots, determinant_bareiss,
     eliminate_affine_rows_with_substitution_classes,
     enumerate_direct_univariate_quadratic_branches, isolate_univariate_polynomial_roots,
-    preflight_sketch_degeneracies, preflight_sketch_parameter_domains,
-    prepare_sparse_linear_residual_system, propose_active_set_update,
-    regenerate_active_set_affine_candidate, replay_dense_linear_residuals,
-    replay_sketch_compatibility_fixture, replay_sparse_linear_residuals,
-    report_lossy_adapter_only_candidate, represent_univariate_algebraic_roots,
-    resultant_univariate_polynomials, run_active_set_update_loop,
-    schedule_candidate_batch_predicates, schedule_univariate_resultant_pairs,
-    sketch_compatibility_fixtures, solve_damped_least_squares, solve_dense_linear_system_bareiss,
-    solve_direct_affine_system, solve_direct_univariate_quadratic_equalities,
-    solve_sparse_linear_system_bareiss, squared_distance_equation,
-    subdivide_bernstein_univariate_polynomial_interval_roots,
+    preflight_sketch_degeneracies, preflight_sketch_entity_domains,
+    preflight_sketch_parameter_domains, prepare_sparse_linear_residual_system,
+    propose_active_set_update, regenerate_active_set_affine_candidate,
+    replay_dense_linear_residuals, replay_sketch_compatibility_fixture,
+    replay_sparse_linear_residuals, report_lossy_adapter_only_candidate,
+    represent_univariate_algebraic_roots, resultant_univariate_polynomials,
+    run_active_set_update_loop, schedule_candidate_batch_predicates,
+    schedule_univariate_resultant_pairs, sketch_compatibility_fixtures, solve_damped_least_squares,
+    solve_dense_linear_system_bareiss, solve_direct_affine_system,
+    solve_direct_univariate_quadratic_equalities, solve_sparse_linear_system_bareiss,
+    squared_distance_equation, subdivide_bernstein_univariate_polynomial_interval_roots,
     subresultant_chain_univariate_polynomials,
 };
 
@@ -310,6 +310,28 @@ fn sketch_problem_with_degeneracy_checks(row_count: usize) -> hypersolve::Sketch
     sketch
 }
 
+fn sketch_problem_with_entity_domains(row_count: usize) -> hypersolve::SketchSolveProblem {
+    let mut sketch = hypersolve::SketchSolveProblem::new();
+    for index in 0..row_count {
+        let a = sketch.add_point2d(format!("domain{index}.a"), r(index as i64), r(0));
+        let b = sketch.add_point2d(format!("domain{index}.b"), r(index as i64 + 1), r(0));
+        let radius = sketch.add_distance(format!("domain{index}.r"), r(index as i64 + 1));
+        let normal = sketch.add_normal2d(format!("domain{index}.n"), r(1), r(0));
+        let line = sketch.add_line_segment2(format!("domain{index}.line"), a, b);
+        let circle = sketch.add_circle2(format!("domain{index}.circle"), a, radius);
+        let arc = sketch.add_arc_of_circle2(format!("domain{index}.arc"), a, a, b, radius);
+        sketch.add_entity_domain(normal, hypersolve::SketchEntityDomain::UnitNormal);
+        sketch.add_entity_domain(radius, hypersolve::SketchEntityDomain::PositiveRadius);
+        sketch.add_entity_domain(circle, hypersolve::SketchEntityDomain::PositiveRadius);
+        sketch.add_entity_domain(
+            line,
+            hypersolve::SketchEntityDomain::NonzeroTangentLineSegment2,
+        );
+        sketch.add_entity_domain(arc, hypersolve::SketchEntityDomain::NondegenerateArc2);
+    }
+    sketch
+}
+
 fn unary_endpoint_expression(row_count: usize) -> Expr {
     let mut expression = Expr::zero();
     for index in 1..=row_count {
@@ -369,6 +391,10 @@ fn certification(c: &mut Criterion) {
     let degeneracy_sketch = sketch_problem_with_degeneracy_checks(16);
     c.bench_function("sketch_degeneracy_preflight", |b| {
         b.iter(|| preflight_sketch_degeneracies(&degeneracy_sketch))
+    });
+    let entity_domain_sketch = sketch_problem_with_entity_domains(16);
+    c.bench_function("sketch_entity_domain_preflight", |b| {
+        b.iter(|| preflight_sketch_entity_domains(&entity_domain_sketch))
     });
     c.bench_function("sketch_construction_certificate", |b| {
         b.iter(|| certify_sketch_construction(&sketch))

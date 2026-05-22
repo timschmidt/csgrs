@@ -19,6 +19,7 @@ use crate::sketch::{
 };
 use crate::sketch_degeneracy::{SketchDegeneracyReport, preflight_sketch_degeneracies};
 use crate::sketch_domains::{SketchParameterDomainReport, preflight_sketch_parameter_domains};
+use crate::sketch_entity_domains::{SketchEntityDomainReport, preflight_sketch_entity_domains};
 
 /// Overall proof status for a sketch construction certificate.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -76,6 +77,8 @@ pub struct SketchConstructionCertificate {
     pub parameter_domains: SketchParameterDomainReport,
     /// Exact retained-entity degeneracy preflight.
     pub degeneracies: SketchDegeneracyReport,
+    /// Exact retained-entity domain preflight.
+    pub entity_domains: SketchEntityDomainReport,
     /// Exact residual replay for the lowered initial candidate.
     pub residual_replay: CandidateCertificationReport,
     /// Round-trip/provenance manifest for retained sketch objects.
@@ -101,6 +104,7 @@ impl SketchConstructionCertificate {
 pub fn certify_sketch_construction(sketch: &SketchSolveProblem) -> SketchConstructionCertificate {
     let parameter_domains = preflight_sketch_parameter_domains(sketch);
     let degeneracies = preflight_sketch_degeneracies(sketch);
+    let entity_domains = preflight_sketch_entity_domains(sketch);
     let lowering = sketch.lower_to_problem();
     let context = context_from_problem(&lowering.problem);
     let prepared = PreparedProblem::new(&lowering.problem);
@@ -119,6 +123,7 @@ pub fn certify_sketch_construction(sketch: &SketchSolveProblem) -> SketchConstru
     let status = classify_certificate_status(
         &parameter_domains,
         &degeneracies,
+        &entity_domains,
         &lowering,
         &residual_replay,
     );
@@ -128,6 +133,7 @@ pub fn certify_sketch_construction(sketch: &SketchSolveProblem) -> SketchConstru
         lowering,
         parameter_domains,
         degeneracies,
+        entity_domains,
         residual_replay,
         provenance,
         traces,
@@ -137,6 +143,7 @@ pub fn certify_sketch_construction(sketch: &SketchSolveProblem) -> SketchConstru
 fn classify_certificate_status(
     parameter_domains: &SketchParameterDomainReport,
     degeneracies: &SketchDegeneracyReport,
+    entity_domains: &SketchEntityDomainReport,
     lowering: &SketchLoweringReport,
     residual_replay: &CandidateCertificationReport,
 ) -> SketchConstructionCertificateStatus {
@@ -145,6 +152,9 @@ fn classify_certificate_status(
         || degeneracies.has_certified_degeneracy()
         || degeneracies.unknown_checks > 0
         || degeneracies.invalid_reference_checks > 0
+        || entity_domains.has_certified_invalid_domain()
+        || entity_domains.unknown_checks > 0
+        || entity_domains.invalid_reference_checks > 0
     {
         return SketchConstructionCertificateStatus::InvalidPreflight;
     }

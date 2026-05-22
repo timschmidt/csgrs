@@ -10,13 +10,14 @@ use hypersolve::{
     MultivariateQuadraticKrawczykStatus, PreparedProblem, PreparedSolverBlock, Problem,
     ProposalEngineKind, ProposalEnginePrecision, RootIsolationStatus, RootMultiplicityStatus,
     SketchConstraintKind, SketchConstructionCertificateStatus, SketchDegeneracyKind,
-    SketchDegeneracyStatus, SketchEntityHandle, SketchEntityKind, SketchGeneratedRowStatus,
-    SketchParameterDomain, SketchParameterDomainKind, SketchParameterDomainStatus,
-    SketchResidualFormKind, SketchResidualFormRole, SketchResidualFormsStatus,
-    SketchResidualStrategy, SketchRoundTripMetadata, SketchRoundTripRole, SketchSolveProblem,
-    SketchUnitToleranceStatus, SolverBlockRowKind, SolverConfig, SolverPoint2, SolverState,
-    SparseResidualBatchStatus, SparseResidualTerm, SymbolId, VariableBall,
-    analyze_exact_affine_rank, apply_equality_substitution_classes, apply_equality_substitutions,
+    SketchDegeneracyStatus, SketchEntityDomain, SketchEntityDomainKind, SketchEntityDomainStatus,
+    SketchEntityHandle, SketchEntityKind, SketchGeneratedRowStatus, SketchParameterDomain,
+    SketchParameterDomainKind, SketchParameterDomainStatus, SketchResidualFormKind,
+    SketchResidualFormRole, SketchResidualFormsStatus, SketchResidualStrategy,
+    SketchRoundTripMetadata, SketchRoundTripRole, SketchSolveProblem, SketchUnitToleranceStatus,
+    SolverBlockRowKind, SolverConfig, SolverPoint2, SolverState, SparseResidualBatchStatus,
+    SparseResidualTerm, SymbolId, VariableBall, analyze_exact_affine_rank,
+    apply_equality_substitution_classes, apply_equality_substitutions,
     audit_sketch_unit_tolerances, build_equality_substitution_classes,
     certify_affine_interval_candidate, certify_affine_krawczyk_box, certify_candidate,
     certify_candidate_batch, certify_candidate_domains, certify_candidate_with_config,
@@ -28,15 +29,16 @@ use hypersolve::{
     eliminate_affine_rows_with_substitution_classes,
     enumerate_direct_univariate_quadratic_branches, evaluate_residuals, facts_depend_on_symbol,
     find_equality_substitutions, isolate_univariate_polynomial_roots, point_coincidence_equations,
-    preflight_sketch_degeneracies, preflight_sketch_parameter_domains,
-    prepare_sparse_linear_residual_system, regenerate_active_set_affine_candidate,
-    replay_sketch_compatibility_fixture, replay_sparse_linear_residual_batch,
-    report_lossy_adapter_only_candidate, schedule_candidate_batch_predicates,
-    sketch_compatibility_fixtures, sketch_distance_builders, sketch_incidence_builders,
-    sketch_objective_builders, sketch_orientation_builders, sketch_range_builders,
-    solve_damped_least_squares, solve_direct_affine_equalities, solve_direct_affine_system,
-    solve_direct_univariate_quadratic_equalities, squared_distance_equation,
-    tangent_parallel_equation, tangent_same_direction_constraint, validate_equality_substitutions,
+    preflight_sketch_degeneracies, preflight_sketch_entity_domains,
+    preflight_sketch_parameter_domains, prepare_sparse_linear_residual_system,
+    regenerate_active_set_affine_candidate, replay_sketch_compatibility_fixture,
+    replay_sparse_linear_residual_batch, report_lossy_adapter_only_candidate,
+    schedule_candidate_batch_predicates, sketch_compatibility_fixtures, sketch_distance_builders,
+    sketch_incidence_builders, sketch_objective_builders, sketch_orientation_builders,
+    sketch_range_builders, solve_damped_least_squares, solve_direct_affine_equalities,
+    solve_direct_affine_system, solve_direct_univariate_quadratic_equalities,
+    squared_distance_equation, tangent_parallel_equation, tangent_same_direction_constraint,
+    validate_equality_substitutions,
 };
 
 fn real(value: i64) -> Real {
@@ -932,6 +934,129 @@ fn sketch_degeneracy_preflight_reports_stale_and_wrong_references() {
 }
 
 #[test]
+fn sketch_entity_domains_certify_unit_normals_radii_tangents_and_arcs() {
+    let mut sketch = SketchSolveProblem::new();
+    let origin = sketch.add_point2d("origin", real(0), real(0));
+    let same = sketch.add_point2d("same", real(0), real(0));
+    let unit_x = sketch.add_point2d("unit x", real(1), real(0));
+    let radius = sketch.add_distance("radius", real(2));
+    let zero_radius = sketch.add_distance("zero radius", real(0));
+    let unit_normal = sketch.add_normal2d("unit normal", real(0), real(1));
+    let nonunit_normal = sketch.add_normal3d("bad normal", real(2), real(0), real(0), real(0));
+    let line = sketch.add_line_segment2("line", origin, unit_x);
+    let zero_tangent = sketch.add_line_segment2("zero tangent", origin, same);
+    let arc = sketch.add_arc_of_circle2("arc", origin, origin, unit_x, radius);
+    let full_arc = sketch.add_arc_of_circle2("full arc", origin, same, same, radius);
+    let circle = sketch.add_circle2("circle", origin, zero_radius);
+
+    assert!(sketch.add_entity_domain(unit_normal, SketchEntityDomain::UnitNormal));
+    assert!(sketch.add_entity_domain(nonunit_normal, SketchEntityDomain::UnitNormal));
+    assert!(sketch.add_entity_domain(radius, SketchEntityDomain::PositiveRadius));
+    assert!(sketch.add_entity_domain(circle, SketchEntityDomain::PositiveRadius));
+    assert!(sketch.add_entity_domain(line, SketchEntityDomain::NonzeroLengthLineSegment2));
+    assert!(
+        sketch.add_entity_domain(zero_tangent, SketchEntityDomain::NonzeroTangentLineSegment2,)
+    );
+    assert!(sketch.add_entity_domain(arc, SketchEntityDomain::NondegenerateArc2));
+    assert!(sketch.add_entity_domain(full_arc, SketchEntityDomain::NondegenerateArc2));
+
+    let report = preflight_sketch_entity_domains(&sketch);
+
+    assert_eq!(report.entity_count, sketch.entities().len());
+    assert_eq!(report.checks.len(), 8);
+    assert_eq!(report.certified_valid_checks, 4);
+    assert_eq!(report.certified_invalid_checks, 4);
+    assert_eq!(report.unknown_checks, 0);
+    assert_eq!(report.invalid_reference_checks, 0);
+    assert!(report.has_certified_invalid_domain());
+    assert!(!report.all_certified_valid());
+    assert!(report.checks.iter().any(|check| {
+        check.entity == unit_normal
+            && check.kind == SketchEntityDomainKind::UnitNormal
+            && check.status == SketchEntityDomainStatus::CertifiedValid
+    }));
+    assert!(report.checks.iter().any(|check| {
+        check.entity == nonunit_normal
+            && check.kind == SketchEntityDomainKind::UnitNormal
+            && check.status == SketchEntityDomainStatus::CertifiedInvalid
+    }));
+    assert!(report.checks.iter().any(|check| {
+        check.entity == circle
+            && check.kind == SketchEntityDomainKind::PositiveRadius
+            && check.status == SketchEntityDomainStatus::CertifiedInvalid
+    }));
+    assert!(report.checks.iter().any(|check| {
+        check.entity == zero_tangent
+            && check.kind == SketchEntityDomainKind::NonzeroTangentLineSegment2
+            && check.status == SketchEntityDomainStatus::CertifiedInvalid
+    }));
+    assert!(report.checks.iter().any(|check| {
+        check.entity == full_arc
+            && check.kind == SketchEntityDomainKind::NondegenerateArc2
+            && check.status == SketchEntityDomainStatus::CertifiedInvalid
+    }));
+}
+
+#[test]
+fn sketch_entity_domains_report_stale_and_wrong_references() {
+    let mut sketch = SketchSolveProblem::new();
+    let point = sketch.add_point2d("p", real(0), real(0));
+    let distance = sketch.add_distance("d", real(1));
+    let wrong_unit = point;
+    let wrong_radius = point;
+    let stale_line = sketch.add_line_segment2("stale tangent", point, SketchEntityHandle(999));
+    let circle_with_wrong_radius = sketch.add_circle2("wrong circle", point, point);
+
+    assert!(sketch.add_entity_domain(wrong_unit, SketchEntityDomain::UnitNormal));
+    assert!(sketch.add_entity_domain(wrong_radius, SketchEntityDomain::PositiveRadius));
+    assert!(sketch.add_entity_domain(stale_line, SketchEntityDomain::NonzeroTangentLineSegment2,));
+    assert!(
+        sketch.add_entity_domain(circle_with_wrong_radius, SketchEntityDomain::PositiveRadius,)
+    );
+    assert!(
+        !sketch.add_entity_domain(SketchEntityHandle(999), SketchEntityDomain::PositiveRadius,)
+    );
+
+    let report = preflight_sketch_entity_domains(&sketch);
+
+    assert_eq!(report.invalid_reference_checks, 4);
+    assert!(report.checks.iter().any(|check| {
+        check.entity == wrong_unit
+            && matches!(
+                check.status,
+                SketchEntityDomainStatus::WrongEntityKind {
+                    handle,
+                    expected: "normal"
+                } if handle == point
+            )
+    }));
+    assert!(report.checks.iter().any(|check| {
+        check.entity == stale_line
+            && matches!(
+                check.status,
+                SketchEntityDomainStatus::MissingEntity {
+                    handle: SketchEntityHandle(999)
+                }
+            )
+    }));
+    assert!(report.checks.iter().any(|check| {
+        check.entity == circle_with_wrong_radius
+            && matches!(
+                check.status,
+                SketchEntityDomainStatus::WrongEntityKind {
+                    handle,
+                    expected: "distance"
+                } if handle == point
+            )
+    }));
+    assert_eq!(
+        sketch.entities()[distance.0 as usize].domains.len(),
+        0,
+        "stale-domain attempts must not mutate unrelated entities"
+    );
+}
+
+#[test]
 fn sketch_construction_certificate_bundles_replay_preflight_and_provenance() {
     let mut sketch = SketchSolveProblem::new();
     let a = sketch.add_point2d("a", real(0), real(0));
@@ -959,6 +1084,7 @@ fn sketch_construction_certificate_bundles_replay_preflight_and_provenance() {
     );
     assert!(certificate.lowering.all_generated());
     assert!(certificate.parameter_domains.all_certified_valid());
+    assert!(certificate.entity_domains.all_certified_valid());
     assert!(!certificate.degeneracies.has_certified_degeneracy());
     assert!(certificate.residual_replay.all_satisfied());
     assert_eq!(certificate.traces.lossy_adapter_metadata_rows, 1);
@@ -977,12 +1103,19 @@ fn sketch_construction_certificate_reports_preflight_lowering_and_replay_failure
     let mut invalid = SketchSolveProblem::new();
     let p = invalid.add_point2d("p", real(0), real(0));
     invalid.add_line_segment2("zero line", p, p);
+    let bad_normal = invalid.add_normal2d("bad normal", real(2), real(0));
+    assert!(invalid.add_entity_domain(bad_normal, SketchEntityDomain::UnitNormal));
     let invalid_certificate = certify_sketch_construction(&invalid);
     assert_eq!(
         invalid_certificate.status,
         SketchConstructionCertificateStatus::InvalidPreflight
     );
     assert!(invalid_certificate.degeneracies.has_certified_degeneracy());
+    assert!(
+        invalid_certificate
+            .entity_domains
+            .has_certified_invalid_domain()
+    );
 
     let mut incomplete = SketchSolveProblem::new();
     let q = incomplete.add_point2d("q", real(0), real(0));

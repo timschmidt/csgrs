@@ -132,6 +132,31 @@ pub enum SketchParameterDomain {
     },
 }
 
+/// First-class exact domain obligation for a retained sketch entity.
+///
+/// Entity domains are semantic preflight checks, not hidden solver tolerances.
+/// They keep SolveSpace-style retained objects such as normals, radii, lines,
+/// arcs, and tangent carriers honest before numerical proposal engines run.
+/// Each obligation must be certified exactly or reported as unresolved,
+/// following Yap, "Towards Exact Geometric Computation," *Computational
+/// Geometry* 7.1-2 (1997).
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum SketchEntityDomain {
+    /// A retained 2D or 3D normal/quaternion must have squared length one.
+    UnitNormal,
+    /// A retained distance, circle radius, or arc radius must be strictly
+    /// positive.
+    PositiveRadius,
+    /// A retained 2D line segment must have nonzero exact length.
+    NonzeroLengthLineSegment2,
+    /// A retained 2D circular arc must have distinct start and end points.
+    NondegenerateArc2,
+    /// A retained 2D line segment used as a tangent carrier must have nonzero
+    /// direction. This is deliberately separate from generic line length so
+    /// future tangent reports can explain the source relation.
+    NonzeroTangentLineSegment2,
+}
+
 /// Point entity in a two-dimensional workplane.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SketchPoint2 {
@@ -275,6 +300,8 @@ pub struct SketchEntity {
     pub name: String,
     /// Entity payload.
     pub kind: SketchEntityKind,
+    /// Exact entity-domain obligations checked before numerical iteration.
+    pub domains: Vec<SketchEntityDomain>,
     /// Editor/API round-trip metadata.
     pub metadata: SketchRoundTripMetadata,
 }
@@ -795,9 +822,28 @@ impl SketchSolveProblem {
             group: None,
             name: name.into(),
             kind,
+            domains: Vec::new(),
             metadata: SketchRoundTripMetadata::default(),
         });
         handle
+    }
+
+    /// Attach an exact preflight domain obligation to a retained entity.
+    ///
+    /// Returns `false` for stale handles. The obligation is stored at the
+    /// semantic sketch layer and does not generate residual rows by itself;
+    /// callers can run [`crate::preflight_sketch_entity_domains`] before
+    /// lowering or numerical iteration.
+    pub fn add_entity_domain(
+        &mut self,
+        handle: SketchEntityHandle,
+        domain: SketchEntityDomain,
+    ) -> bool {
+        let Some(entity) = self.entities.get_mut(handle.0 as usize) else {
+            return false;
+        };
+        entity.domains.push(domain);
+        true
     }
 
     /// Attach round-trip metadata to a retained entity.

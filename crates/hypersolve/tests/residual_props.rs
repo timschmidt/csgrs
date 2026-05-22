@@ -5,7 +5,8 @@ use hypersolve::{
     IntervalBoxCertificationStatus, MultivariateQuadraticKrawczykStatus, PreparedProblem,
     PreparedSolverBlock, Problem, ProposalEngineKind, ProposalEnginePrecision,
     ProposalEngineReport, RootIsolationStatus, SketchConstructionCertificateStatus,
-    SketchDegeneracyKind, SketchDegeneracyStatus, SketchGeneratedRowStatus, SketchParameterDomain,
+    SketchDegeneracyKind, SketchDegeneracyStatus, SketchEntityDomain, SketchEntityDomainKind,
+    SketchEntityDomainStatus, SketchGeneratedRowStatus, SketchParameterDomain,
     SketchParameterDomainStatus, SketchResidualStrategy, SketchRoundTripMetadata,
     SketchSolveProblem, SketchUnitToleranceStatus, SolverBlockRowKind, SolverConfig, SolverPoint2,
     SolverState, SymbolId, VariableBall, apply_equality_substitution_classes,
@@ -17,9 +18,10 @@ use hypersolve::{
     certify_univariate_quadratic_krawczyk_box, context_from_problem, determinant_bareiss,
     eliminate_affine_rows_with_substitution_classes,
     enumerate_direct_univariate_quadratic_branches, isolate_univariate_polynomial_roots,
-    preflight_sketch_degeneracies, preflight_sketch_parameter_domains,
-    report_lossy_adapter_only_candidate, resultant_univariate_polynomials, sketch_range_builders,
-    solve_damped_least_squares, solve_dense_linear_system_bareiss, solve_direct_affine_system,
+    preflight_sketch_degeneracies, preflight_sketch_entity_domains,
+    preflight_sketch_parameter_domains, report_lossy_adapter_only_candidate,
+    resultant_univariate_polynomials, sketch_range_builders, solve_damped_least_squares,
+    solve_dense_linear_system_bareiss, solve_direct_affine_system,
     solve_direct_univariate_quadratic_equalities, squared_distance_equation,
     subresultant_chain_univariate_polynomials, validate_equality_substitutions,
 };
@@ -495,6 +497,47 @@ proptest! {
         prop_assert_eq!(
             row.status == SketchDegeneracyStatus::CertifiedNondegenerate,
             !expected_degenerate
+        );
+    }
+
+    #[test]
+    fn sketch_entity_domain_generated_tangent_lengths_match_integer_points(
+        ax in -16_i16..=16,
+        ay in -16_i16..=16,
+        bx in -16_i16..=16,
+        by in -16_i16..=16,
+    ) {
+        let ax = i64::from(ax);
+        let ay = i64::from(ay);
+        let bx = i64::from(bx);
+        let by = i64::from(by);
+        let mut sketch = SketchSolveProblem::new();
+        let a = sketch.add_point2d("a", Real::from(ax), Real::from(ay));
+        let b = sketch.add_point2d("b", Real::from(bx), Real::from(by));
+        let tangent = sketch.add_line_segment2("tangent", a, b);
+        prop_assert!(sketch.add_entity_domain(
+            tangent,
+            SketchEntityDomain::NonzeroTangentLineSegment2,
+        ));
+
+        let report = preflight_sketch_entity_domains(&sketch);
+        let row = report
+            .checks
+            .iter()
+            .find(|check| {
+                check.entity == tangent
+                    && check.kind == SketchEntityDomainKind::NonzeroTangentLineSegment2
+            })
+            .expect("tangent domain row should be emitted");
+        let expected_nonzero = ax != bx || ay != by;
+
+        prop_assert_eq!(
+            row.status == SketchEntityDomainStatus::CertifiedValid,
+            expected_nonzero
+        );
+        prop_assert_eq!(
+            row.status == SketchEntityDomainStatus::CertifiedInvalid,
+            !expected_nonzero
         );
     }
 

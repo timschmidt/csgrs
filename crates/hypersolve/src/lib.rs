@@ -34,6 +34,7 @@ pub mod sketch_builders;
 pub mod sketch_certificates;
 pub mod sketch_degeneracy;
 pub mod sketch_domains;
+pub mod sketch_entity_domains;
 pub mod sketch_fixtures;
 pub mod sketch_units;
 pub mod solver;
@@ -179,11 +180,11 @@ pub use root_isolation::{
 };
 pub use sketch::{
     SketchArcOfCircle2, SketchCircle2, SketchConstraint, SketchConstraintHandle,
-    SketchConstraintKind, SketchCubic2, SketchDistance, SketchEntity, SketchEntityHandle,
-    SketchEntityKind, SketchGeneratedRow, SketchGeneratedRowStatus, SketchGroupHandle,
-    SketchLineSegment2, SketchLoweringReport, SketchNormal2, SketchNormal3, SketchParameter,
-    SketchParameterDomain, SketchParameterHandle, SketchPoint2, SketchPoint3, SketchResidualForm,
-    SketchResidualFormKind, SketchResidualFormRole, SketchResidualFormsReport,
+    SketchConstraintKind, SketchCubic2, SketchDistance, SketchEntity, SketchEntityDomain,
+    SketchEntityHandle, SketchEntityKind, SketchGeneratedRow, SketchGeneratedRowStatus,
+    SketchGroupHandle, SketchLineSegment2, SketchLoweringReport, SketchNormal2, SketchNormal3,
+    SketchParameter, SketchParameterDomain, SketchParameterHandle, SketchPoint2, SketchPoint3,
+    SketchResidualForm, SketchResidualFormKind, SketchResidualFormRole, SketchResidualFormsReport,
     SketchResidualFormsStatus, SketchResidualStrategy, SketchRoundTripMetadata,
     SketchRoundTripRole, SketchSolveProblem, SketchWorkplane,
 };
@@ -204,6 +205,11 @@ pub use sketch_domains::{
     SketchParameterDomainCheck, SketchParameterDomainKind, SketchParameterDomainReport,
     SketchParameterDomainStatus, preflight_sketch_parameter_domains,
     preflight_sketch_parameter_domains_with_policy,
+};
+pub use sketch_entity_domains::{
+    SketchEntityDomainCheck, SketchEntityDomainKind, SketchEntityDomainReport,
+    SketchEntityDomainStatus, preflight_sketch_entity_domains,
+    preflight_sketch_entity_domains_with_policy,
 };
 pub use sketch_fixtures::{
     SketchCompatibilityFixture, SketchCompatibilityFixtureKind, SketchCompatibilityReplayReport,
