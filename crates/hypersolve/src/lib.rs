@@ -18,6 +18,7 @@ pub mod direct;
 pub mod domain;
 pub mod domain_certification;
 pub mod eval;
+pub mod failed_constraints;
 pub mod interval;
 pub mod jacobian;
 pub mod linalg;
@@ -118,6 +119,11 @@ pub use domain_certification::{
 };
 pub use eval::{
     EvalError, EvaluationContext, ResidualEvaluation, context_from_problem, evaluate_residuals,
+};
+pub use failed_constraints::{
+    FailedConstraintReport, FailedConstraintRow, FailedConstraintStatus,
+    diagnose_failed_constraints, diagnose_failed_constraints_from_certification,
+    diagnose_failed_constraints_with_config,
 };
 pub use interval::{
     AffineIntervalError, AffineKrawczykReport, AffineKrawczykStatus, AffineKrawczykVariableStep,

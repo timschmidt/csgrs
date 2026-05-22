@@ -1,21 +1,22 @@
 use hyperreal::{Real, RealSign};
 use hypersolve::{
     BatchCandidateStatus, CertifiedCandidateStatus, Constraint, DomainCheckKind, DomainCheckStatus,
-    EqualitySubstitution, EqualitySubstitutionProblem, Expr, IntervalBoxCertificationPackage,
-    IntervalBoxCertificationStatus, MultivariateQuadraticKrawczykStatus, PreparedProblem,
-    PreparedSolverBlock, Problem, ProposalEngineKind, ProposalEnginePrecision,
-    ProposalEngineReport, RootIsolationStatus, SketchConstructionCertificateStatus,
-    SketchDegeneracyKind, SketchDegeneracyStatus, SketchEntityDomain, SketchEntityDomainKind,
-    SketchEntityDomainStatus, SketchGeneratedRowStatus, SketchParameterDomain,
-    SketchParameterDomainStatus, SketchResidualStrategy, SketchRoundTripMetadata,
-    SketchSolveProblem, SketchUnitToleranceStatus, SolverBlockRowKind, SolverConfig, SolverPoint2,
-    SolverState, SymbolId, VariableBall, apply_equality_substitution_classes,
-    audit_sketch_unit_tolerances, certify_affine_krawczyk_box, certify_candidate,
-    certify_candidate_batch, certify_candidate_domains, certify_direct_univariate_quadratic_roots,
-    certify_interval_box_candidate, certify_multivariate_quadratic_interval_candidate,
-    certify_multivariate_quadratic_krawczyk_box, certify_quadratic_interval_candidate,
-    certify_sketch_construction, certify_univariate_quadratic_alpha,
-    certify_univariate_quadratic_krawczyk_box, context_from_problem, determinant_bareiss,
+    EqualitySubstitution, EqualitySubstitutionProblem, Expr, FailedConstraintStatus,
+    IntervalBoxCertificationPackage, IntervalBoxCertificationStatus,
+    MultivariateQuadraticKrawczykStatus, PreparedProblem, PreparedSolverBlock, Problem,
+    ProposalEngineKind, ProposalEnginePrecision, ProposalEngineReport, RootIsolationStatus,
+    SketchConstructionCertificateStatus, SketchDegeneracyKind, SketchDegeneracyStatus,
+    SketchEntityDomain, SketchEntityDomainKind, SketchEntityDomainStatus, SketchGeneratedRowStatus,
+    SketchParameterDomain, SketchParameterDomainStatus, SketchResidualStrategy,
+    SketchRoundTripMetadata, SketchSolveProblem, SketchUnitToleranceStatus, SolverBlockRowKind,
+    SolverConfig, SolverPoint2, SolverState, SymbolId, VariableBall,
+    apply_equality_substitution_classes, audit_sketch_unit_tolerances, certify_affine_krawczyk_box,
+    certify_candidate, certify_candidate_batch, certify_candidate_domains,
+    certify_direct_univariate_quadratic_roots, certify_interval_box_candidate,
+    certify_multivariate_quadratic_interval_candidate, certify_multivariate_quadratic_krawczyk_box,
+    certify_quadratic_interval_candidate, certify_sketch_construction,
+    certify_univariate_quadratic_alpha, certify_univariate_quadratic_krawczyk_box,
+    context_from_problem, determinant_bareiss, diagnose_failed_constraints,
     eliminate_affine_rows_with_substitution_classes,
     enumerate_direct_univariate_quadratic_branches, isolate_univariate_polynomial_roots,
     preflight_sketch_degeneracies, preflight_sketch_entity_domains,
@@ -539,6 +540,37 @@ proptest! {
             row.status == SketchEntityDomainStatus::CertifiedInvalid,
             !expected_nonzero
         );
+    }
+
+    #[test]
+    fn failed_constraint_diagnostics_generated_duplicate_affine_rows_are_redundant(
+        value in -32_i16..=32,
+    ) {
+        let value = i64::from(value);
+        let x = Expr::symbol(SymbolId(0), "x");
+        let mut problem = Problem::default();
+        problem.add_variable("x", Real::from(value));
+        problem.add_constraint(Constraint::equality(
+            "x row",
+            x.clone() - Expr::int(value),
+        ));
+        problem.add_constraint(Constraint::equality(
+            "duplicate row",
+            x * Expr::int(2) - Expr::int(value * 2),
+        ));
+
+        let report = diagnose_failed_constraints(
+            &PreparedProblem::new(&problem),
+            &context_from_problem(&problem),
+        );
+
+        prop_assert_eq!(report.blocking_rows, 0);
+        prop_assert_eq!(report.rank_redundant_rows, 2);
+        prop_assert_eq!(report.rows.len(), 2);
+        prop_assert!(report
+            .rows
+            .iter()
+            .all(|row| row.status == FailedConstraintStatus::RankRedundant));
     }
 
     #[test]

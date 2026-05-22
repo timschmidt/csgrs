@@ -18,7 +18,7 @@ use hypersolve::{
     certify_univariate_quadratic_krawczyk_box, compare_algebraic_root_representations,
     compare_algebraic_root_representations_with_refinement, context_from_problem,
     count_bernstein_univariate_polynomial_interval_roots,
-    count_descartes_univariate_polynomial_roots, determinant_bareiss,
+    count_descartes_univariate_polynomial_roots, determinant_bareiss, diagnose_failed_constraints,
     eliminate_affine_rows_with_substitution_classes,
     enumerate_direct_univariate_quadratic_branches, isolate_univariate_polynomial_roots,
     preflight_sketch_degeneracies, preflight_sketch_entity_domains,
@@ -930,6 +930,9 @@ fn certification(c: &mut Criterion) {
     let batch_contexts = (0..16).map(|_| context.clone()).collect::<Vec<_>>();
     c.bench_function("certify_candidate_batch_affine", |b| {
         b.iter(|| certify_candidate_batch(&prepared, &batch_contexts))
+    });
+    c.bench_function("diagnose_failed_constraints_affine", |b| {
+        b.iter(|| diagnose_failed_constraints(&prepared, &context))
     });
     c.bench_function("schedule_candidate_batch_predicates", |b| {
         b.iter(|| {

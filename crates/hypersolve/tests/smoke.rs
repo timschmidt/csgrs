@@ -5,7 +5,7 @@ use hypersolve::{
     BatchPredicateScheduleError, CandidateCertificationConfig, CandidateResidualBall,
     CertifiedCandidateStatus, Constraint, ConstraintKind, ConvergenceReason, DenseLinearBackend,
     DirectAffineSystemStatus, DomainCheckKind, DomainCheckStatus, ExactAffineRankStatus,
-    ExactBranchStatus, Expr, ExprDegree, IntervalBoxCertificationPackage,
+    ExactBranchStatus, Expr, ExprDegree, FailedConstraintStatus, IntervalBoxCertificationPackage,
     IntervalBoxCertificationStatus, LinearAdapterKind, LinearAdapterPrecision, LinearBackend,
     MultivariateQuadraticKrawczykStatus, PreparedProblem, PreparedSolverBlock, Problem,
     ProposalEngineKind, ProposalEnginePrecision, RootIsolationStatus, RootMultiplicityStatus,
@@ -25,7 +25,8 @@ use hypersolve::{
     certify_interval_box_candidate, certify_multivariate_quadratic_interval_candidate,
     certify_multivariate_quadratic_krawczyk_box, certify_quadratic_interval_candidate,
     certify_sketch_construction, certify_univariate_quadratic_alpha,
-    certify_univariate_quadratic_krawczyk_box, context_from_problem,
+    certify_univariate_quadratic_krawczyk_box, context_from_problem, diagnose_failed_constraints,
+    diagnose_failed_constraints_from_certification,
     eliminate_affine_rows_with_substitution_classes,
     enumerate_direct_univariate_quadratic_branches, evaluate_residuals, facts_depend_on_symbol,
     find_equality_substitutions, isolate_univariate_polynomial_roots, point_coincidence_equations,
@@ -1429,6 +1430,87 @@ fn lossy_adapter_only_report_preserves_proposal_boundary_without_exact_replay() 
             precision: ProposalEnginePrecision::LossyF64,
         }
     ));
+}
+
+#[test]
+fn failed_constraint_diagnostics_classify_contradictions_violations_and_redundancy() {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let mut failed = Problem::default();
+    failed.add_variable("x", real(0));
+    failed.add_constraint(Constraint::equality("constant contradiction", Expr::int(1)));
+    failed.add_constraint(Constraint::equality(
+        "candidate miss",
+        x.clone() - Expr::int(1),
+    ));
+
+    let failed_report = diagnose_failed_constraints(
+        &PreparedProblem::new(&failed),
+        &context_from_problem(&failed),
+    );
+
+    assert!(failed_report.has_blocking_rows());
+    assert_eq!(failed_report.blocking_rows, 2);
+    assert_eq!(failed_report.certified_contradictions, 1);
+    assert_eq!(failed_report.certified_candidate_violations, 1);
+    assert!(failed_report.rows.iter().any(|row| {
+        row.name == "constant contradiction"
+            && row.status == FailedConstraintStatus::CertifiedContradiction
+    }));
+    assert!(failed_report.rows.iter().any(|row| {
+        row.name == "candidate miss"
+            && row.status == FailedConstraintStatus::CertifiedCandidateViolation
+    }));
+
+    let mut redundant = Problem::default();
+    let rx = Expr::symbol(SymbolId(0), "x");
+    redundant.add_variable("x", real(2));
+    redundant.add_constraint(Constraint::equality(
+        "x equals two",
+        rx.clone() - Expr::int(2),
+    ));
+    redundant.add_constraint(Constraint::equality(
+        "twice x equals four",
+        rx * Expr::int(2) - Expr::int(4),
+    ));
+
+    let redundant_report = diagnose_failed_constraints(
+        &PreparedProblem::new(&redundant),
+        &context_from_problem(&redundant),
+    );
+
+    assert!(!redundant_report.has_blocking_rows());
+    assert!(redundant_report.only_rank_redundancy());
+    assert_eq!(redundant_report.rank_redundant_rows, 2);
+    assert!(redundant_report.rows.iter().all(|row| {
+        row.status == FailedConstraintStatus::RankRedundant && row.rank_without_row.is_some()
+    }));
+}
+
+#[test]
+fn failed_constraint_diagnostics_preserve_lossy_proposal_only_rows() {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let mut problem = Problem::default();
+    problem.add_variable("x", real(2));
+    problem.add_constraint(Constraint::equality("x squared", x.powi(2) - Expr::int(4)));
+    let prepared = PreparedProblem::new(&problem);
+    let proposal_only = report_lossy_adapter_only_candidate(
+        &prepared,
+        hypersolve::ProposalEngineReport {
+            requested: ProposalEngineKind::ModifiedNewtonLeastSquares,
+            used: Some(ProposalEngineKind::ModifiedNewtonLeastSquares),
+            precision: ProposalEnginePrecision::LossyF64,
+            supported: true,
+        },
+    );
+
+    let diagnostics = diagnose_failed_constraints_from_certification(&prepared, proposal_only, -64);
+
+    assert_eq!(diagnostics.blocking_rows, 1);
+    assert_eq!(diagnostics.did_not_converge_only_rows, 1);
+    assert_eq!(
+        diagnostics.rows[0].status,
+        FailedConstraintStatus::DidNotConvergeOnly
+    );
 }
 
 #[test]
