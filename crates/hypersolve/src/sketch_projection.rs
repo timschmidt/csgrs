@@ -42,7 +42,9 @@ fn dot3(a: &[Expr; 3], b: &[Expr; 3]) -> Expr {
     a[0].clone() * b[0].clone() + a[1].clone() * b[1].clone() + a[2].clone() * b[2].clone()
 }
 
-fn quaternion_frame_axes_expr(quaternion: &[Expr; 4]) -> ([Expr; 3], [Expr; 3], [Expr; 3]) {
+pub(crate) fn quaternion_frame_axes_expr(
+    quaternion: &[Expr; 4],
+) -> ([Expr; 3], [Expr; 3], [Expr; 3]) {
     let w = quaternion[0].clone();
     let x = quaternion[1].clone();
     let y = quaternion[2].clone();

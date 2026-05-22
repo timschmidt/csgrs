@@ -18,6 +18,7 @@ use crate::sketch_builders::{
     angle, distance, incidence, objective, orientation, ranges, symmetry, tangency,
 };
 use crate::sketch_projection::{projected_distance_squared, unit_quaternion_residual};
+use crate::sketch_workplane_symmetry::{WorkplaneSymmetryExprs, workplane_point_symmetry_exprs};
 use crate::symbolic::{Expr, SymbolId};
 
 /// Stable caller-facing handle for a sketch parameter.
@@ -606,6 +607,23 @@ pub enum SketchConstraintKind {
         /// 2D line segment used as the mirror axis.
         axis: SketchEntityHandle,
     },
+    /// 3D points symmetric across a retained workplane.
+    ///
+    /// Lowering emits a unit-quaternion guard for the workplane frame, a
+    /// midpoint-on-plane row, and three normal-offset cross-product rows.
+    /// This is the 3D analogue of retained line symmetry: no reflected point
+    /// is rounded into existence, no normal is normalized by primitive floats,
+    /// and exact replay certifies the relation. The construction/proof split
+    /// follows Yap, "Towards Exact Geometric Computation" (1997), and the
+    /// retained workplane normal uses Shoemake's unit-quaternion frame.
+    SymmetricWorkplane3 {
+        /// First 3D point entity.
+        a: SketchEntityHandle,
+        /// Second 3D point entity.
+        b: SketchEntityHandle,
+        /// Workplane used as the mirror plane.
+        workplane: SketchEntityHandle,
+    },
     /// Point-on-circle incidence using squared radius residual.
     PointOnCircle {
         /// Point entity.
@@ -729,6 +747,8 @@ pub enum SketchResidualStrategy {
     AxisSymmetryCoordinateEquality,
     /// Exact midpoint-on-axis/perpendicular rows for retained line symmetry.
     LineSymmetryPolynomial,
+    /// Exact midpoint-on-plane/normal-offset rows for retained workplane symmetry.
+    WorkplaneSymmetryPolynomial,
     /// Soft stay-near objective.
     SoftObjective,
 }
@@ -804,6 +824,10 @@ pub enum SketchResidualFormKind {
     TangentCrossProductPredicate,
     /// Exact dot-product inequality for a same-direction tangent proof row.
     TangentDotProductPredicate,
+    /// Exact midpoint-on-workplane proof row for 3D workplane symmetry.
+    WorkplaneSymmetryMidpointPlanePolynomial,
+    /// Exact normal-offset cross-product proof row for 3D workplane symmetry.
+    WorkplaneSymmetryNormalOffsetPolynomial,
 }
 
 /// Proof role for a retained residual form.
@@ -1460,6 +1484,23 @@ impl SketchSolveProblem {
         symmetry::symmetric_line2(self, name, a, b, axis).handle
     }
 
+    /// Add a retained 3D workplane point-symmetry relation.
+    ///
+    /// Lowering emits exact rows for a certified unit workplane frame, the
+    /// mirrored midpoint lying on the workplane, and the point offset being
+    /// parallel to the workplane normal. This covers the SolveSpace-style
+    /// plane-symmetry relation without constructing a reflected point through
+    /// lossy coordinates.
+    pub fn add_symmetric_workplane3(
+        &mut self,
+        name: impl Into<String>,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+        workplane: SketchEntityHandle,
+    ) -> SketchConstraintHandle {
+        symmetry::symmetric_workplane3(self, name, a, b, workplane).handle
+    }
+
     /// Add a point-on-circle incidence constraint.
     pub fn add_point_on_circle(
         &mut self,
@@ -1730,6 +1771,47 @@ impl SketchSolveProblem {
                             residual: true_distance,
                         },
                     ],
+                    diagnostics,
+                }
+            }
+            SketchConstraintKind::SymmetricWorkplane3 { a, b, workplane } => {
+                let mut diagnostics = Vec::new();
+                let Some(parts) =
+                    self.workplane_symmetry_exprs(workplane, a, b, constraint, &mut diagnostics)
+                else {
+                    return SketchResidualFormsReport {
+                        constraint: handle,
+                        status: SketchResidualFormsStatus::InvalidInputs,
+                        forms: Vec::new(),
+                        diagnostics,
+                    };
+                };
+                let mut forms = vec![
+                    SketchResidualForm {
+                        kind: SketchResidualFormKind::WorkplaneUnitQuaternionPolynomial,
+                        role: SketchResidualFormRole::ExactProof,
+                        strategy: Some(SketchResidualStrategy::WorkplaneUnitQuaternion),
+                        residual: parts.unit_guard,
+                    },
+                    SketchResidualForm {
+                        kind: SketchResidualFormKind::WorkplaneSymmetryMidpointPlanePolynomial,
+                        role: SketchResidualFormRole::ExactProof,
+                        strategy: Some(SketchResidualStrategy::WorkplaneSymmetryPolynomial),
+                        residual: parts.midpoint_plane,
+                    },
+                ];
+                forms.extend(parts.normal_offset_cross.into_iter().map(|residual| {
+                    SketchResidualForm {
+                        kind: SketchResidualFormKind::WorkplaneSymmetryNormalOffsetPolynomial,
+                        role: SketchResidualFormRole::ExactProof,
+                        strategy: Some(SketchResidualStrategy::WorkplaneSymmetryPolynomial),
+                        residual,
+                    }
+                }));
+                SketchResidualFormsReport {
+                    constraint: handle,
+                    status: SketchResidualFormsStatus::Generated,
+                    forms,
                     diagnostics,
                 }
             }
@@ -2566,6 +2648,43 @@ impl SketchSolveProblem {
                     SketchResidualStrategy::LineSymmetryPolynomial,
                 );
             }
+            SketchConstraintKind::SymmetricWorkplane3 { a, b, workplane } => {
+                // This is the retained 3D mirror-plane package. Following Yap
+                // (1997), the workplane is not normalized by a proposal engine:
+                // exact replay first checks the unit-quaternion guard, then
+                // proves midpoint incidence and normal offset using the
+                // Shoemake unit-quaternion frame polynomial.
+                let Some(parts) = self.workplane_symmetry_exprs(workplane, a, b, constraint, rows)
+                else {
+                    return;
+                };
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} workplane unit", constraint.name),
+                    parts.unit_guard,
+                    SketchResidualStrategy::WorkplaneUnitQuaternion,
+                );
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} midpoint on workplane", constraint.name),
+                    parts.midpoint_plane,
+                    SketchResidualStrategy::WorkplaneSymmetryPolynomial,
+                );
+                for (axis, residual) in parts.normal_offset_cross.into_iter().enumerate() {
+                    self.push_residual(
+                        problem,
+                        rows,
+                        constraint,
+                        format!("{} normal offset cross {axis}", constraint.name),
+                        residual,
+                        SketchResidualStrategy::WorkplaneSymmetryPolynomial,
+                    );
+                }
+            }
             SketchConstraintKind::PointOnCircle { point, circle } => {
                 let Some(point) = self.point_coordinates(point, constraint, rows) else {
                     return;
@@ -2916,6 +3035,16 @@ impl SketchSolveProblem {
         constraint: &SketchConstraint,
         rows: &mut Vec<SketchGeneratedRow>,
     ) -> Option<[Expr; 4]> {
+        self.workplane_origin_and_quaternion(handle, constraint, rows)
+            .map(|(_, quaternion)| quaternion)
+    }
+
+    fn workplane_origin_and_quaternion(
+        &self,
+        handle: SketchEntityHandle,
+        constraint: &SketchConstraint,
+        rows: &mut Vec<SketchGeneratedRow>,
+    ) -> Option<(CoordinateExprs, [Expr; 4])> {
         let Some(entity) = self.entity(handle) else {
             rows.push(missing_entity_row(constraint, handle));
             return None;
@@ -2928,8 +3057,9 @@ impl SketchSolveProblem {
         // retained workplane with a broken origin is not a valid source object.
         // Validate it here so projected-distance rows cannot outlive stale
         // workplane references.
-        self.point3_coordinates(workplane.origin, constraint, rows)?;
-        self.normal3_quaternion(workplane.normal, constraint, rows)
+        let origin = self.point3_coordinates(workplane.origin, constraint, rows)?;
+        let quaternion = self.normal3_quaternion(workplane.normal, constraint, rows)?;
+        Some((origin, quaternion))
     }
 
     fn projected_point_distance_exprs(
@@ -2955,6 +3085,26 @@ impl SketchSolveProblem {
             quaternion,
             distance,
         })
+    }
+
+    fn workplane_symmetry_exprs(
+        &self,
+        workplane: SketchEntityHandle,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+        constraint: &SketchConstraint,
+        rows: &mut Vec<SketchGeneratedRow>,
+    ) -> Option<WorkplaneSymmetryExprs> {
+        let (origin, quaternion) =
+            self.workplane_origin_and_quaternion(workplane, constraint, rows)?;
+        let a = self.point3_coordinates(a, constraint, rows)?;
+        let b = self.point3_coordinates(b, constraint, rows)?;
+        Some(workplane_point_symmetry_exprs(
+            &coordinate_exprs3(&origin),
+            &quaternion,
+            &coordinate_exprs3(&a),
+            &coordinate_exprs3(&b),
+        ))
     }
 
     fn line2_points(
@@ -3025,6 +3175,15 @@ impl CoordinateExprs {
     fn len(&self) -> usize {
         self.exprs.len()
     }
+}
+
+fn coordinate_exprs3(coordinates: &CoordinateExprs) -> [Expr; 3] {
+    debug_assert_eq!(coordinates.len(), 3);
+    [
+        coordinates.exprs[0].clone(),
+        coordinates.exprs[1].clone(),
+        coordinates.exprs[2].clone(),
+    ]
 }
 
 #[derive(Clone, Debug)]

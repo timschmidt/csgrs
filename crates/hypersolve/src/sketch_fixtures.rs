@@ -16,7 +16,7 @@ use crate::prepared::PreparedProblem;
 use crate::sketch::{
     SketchEntityKind, SketchGeneratedRowStatus, SketchLoweringReport, SketchSolveProblem,
 };
-use crate::sketch_builders::{distance, incidence, orientation};
+use crate::sketch_builders::{distance, incidence, orientation, symmetry};
 
 /// Compatibility fixture family.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -28,6 +28,8 @@ pub enum SketchCompatibilityFixtureKind {
     ConstraintCoverage2D,
     /// Covers free-3D point coincidence lowering and exact replay.
     Free3DPointCoincidence,
+    /// Covers retained 3D workplane symmetry lowering and exact replay.
+    WorkplaneSymmetry3D,
 }
 
 /// One license-clean sketch compatibility fixture.
@@ -82,6 +84,7 @@ pub fn sketch_compatibility_fixtures() -> Vec<SketchCompatibilityFixture> {
         entity_coverage_fixture(),
         constraint_coverage_2d_fixture(),
         free_3d_point_coincidence_fixture(),
+        workplane_symmetry_3d_fixture(),
     ]
 }
 
@@ -190,5 +193,23 @@ fn free_3d_point_coincidence_fixture() -> SketchCompatibilityFixture {
         source: "Hyper-authored free-3D point coincidence fixture",
         sketch,
         expected_generated_rows: 3,
+    }
+}
+
+fn workplane_symmetry_3d_fixture() -> SketchCompatibilityFixture {
+    let mut sketch = SketchSolveProblem::new();
+    let origin = sketch.add_point3d("origin", 0.into(), 0.into(), 0.into());
+    let normal = sketch.add_normal3d("normal", 1.into(), 0.into(), 0.into(), 0.into());
+    let workplane = sketch.add_workplane("xy", origin, normal);
+    let top = sketch.add_point3d("top", 2.into(), 3.into(), 5.into());
+    let bottom = sketch.add_point3d("bottom", 2.into(), 3.into(), (-5).into());
+    symmetry::symmetric_workplane3(&mut sketch, "xy workplane symmetry", top, bottom, workplane);
+
+    SketchCompatibilityFixture {
+        name: "workplane_symmetry_3d",
+        kind: SketchCompatibilityFixtureKind::WorkplaneSymmetry3D,
+        source: "Hyper-authored 3D workplane symmetry fixture",
+        sketch,
+        expected_generated_rows: 5,
     }
 }

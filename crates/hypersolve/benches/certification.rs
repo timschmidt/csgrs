@@ -649,6 +649,27 @@ fn sketch_problem_with_projected_distances(row_count: usize) -> hypersolve::Sket
     sketch
 }
 
+fn sketch_problem_with_workplane_symmetry(row_count: usize) -> hypersolve::SketchSolveProblem {
+    let mut sketch = hypersolve::SketchSolveProblem::new();
+    let origin = sketch.add_point3d("sym.origin", r(0), r(0), r(0));
+    let normal = sketch.add_normal3d("sym.normal", r(1), r(0), r(0), r(0));
+    let workplane = sketch.add_workplane("sym.workplane", origin, normal);
+    for index in 0..row_count {
+        let x = index as i64;
+        let offset = index as i64 + 1;
+        let a = sketch.add_point3d(format!("sym{index}.a"), r(x), r(x + 2), r(offset));
+        let b = sketch.add_point3d(format!("sym{index}.b"), r(x), r(x + 2), r(-offset));
+        hypersolve::sketch_symmetry_builders::symmetric_workplane3(
+            &mut sketch,
+            format!("workplane symmetry {index}"),
+            a,
+            b,
+            workplane,
+        );
+    }
+    sketch
+}
+
 fn sketch_problem_with_entity_domains(row_count: usize) -> hypersolve::SketchSolveProblem {
     let mut sketch = hypersolve::SketchSolveProblem::new();
     for index in 0..row_count {
@@ -787,6 +808,10 @@ fn certification(c: &mut Criterion) {
     c.bench_function("sketch_projected_distance_lowering", |b| {
         b.iter(|| projected_distance_sketch.lower_to_problem())
     });
+    let workplane_symmetry_sketch = sketch_problem_with_workplane_symmetry(16);
+    c.bench_function("sketch_workplane_symmetry_lowering", |b| {
+        b.iter(|| workplane_symmetry_sketch.lower_to_problem())
+    });
     let entity_domain_sketch = sketch_problem_with_entity_domains(16);
     c.bench_function("sketch_entity_domain_preflight", |b| {
         b.iter(|| preflight_sketch_entity_domains(&entity_domain_sketch))
@@ -899,6 +924,24 @@ fn certification(c: &mut Criterion) {
         b.iter(|| {
             for handle in &projected_form_handles {
                 let _ = projected_distance_sketch.residual_forms_for_constraint(*handle);
+            }
+        })
+    });
+    let workplane_symmetry_form_handles = workplane_symmetry_sketch
+        .constraints()
+        .iter()
+        .filter(|constraint| {
+            matches!(
+                constraint.kind,
+                hypersolve::SketchConstraintKind::SymmetricWorkplane3 { .. }
+            )
+        })
+        .map(|constraint| constraint.handle)
+        .collect::<Vec<_>>();
+    c.bench_function("sketch_workplane_symmetry_residual_forms", |b| {
+        b.iter(|| {
+            for handle in &workplane_symmetry_form_handles {
+                let _ = workplane_symmetry_sketch.residual_forms_for_constraint(*handle);
             }
         })
     });

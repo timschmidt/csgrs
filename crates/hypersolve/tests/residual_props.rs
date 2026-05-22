@@ -1054,6 +1054,70 @@ proptest! {
     }
 
     #[test]
+    fn sketch_workplane_symmetry_rows_match_generated_integer_reflections(
+        x in -12_i16..=12,
+        y in -12_i16..=12,
+        z0 in -12_i16..=12,
+        offset in -12_i16..=12,
+    ) {
+        let x = i64::from(x);
+        let y = i64::from(y);
+        let z0 = i64::from(z0);
+        let offset = i64::from(offset);
+        let mut sketch = SketchSolveProblem::new();
+        let origin = sketch.add_point3d("origin", Real::from(0), Real::from(0), Real::from(z0));
+        let normal = sketch.add_normal3d(
+            "normal",
+            Real::from(1),
+            Real::from(0),
+            Real::from(0),
+            Real::from(0),
+        );
+        let workplane = sketch.add_workplane("workplane", origin, normal);
+        let a = sketch.add_point3d(
+            "a",
+            Real::from(x),
+            Real::from(y),
+            Real::from(z0 + offset),
+        );
+        let b = sketch.add_point3d(
+            "b",
+            Real::from(x),
+            Real::from(y),
+            Real::from(z0 - offset),
+        );
+        let handle = sketch.add_symmetric_workplane3("workplane symmetry", a, b, workplane);
+
+        let lowered = sketch.lower_to_problem();
+        let context = context_from_problem(&lowered.problem);
+        let certification = certify_candidate(&PreparedProblem::new(&lowered.problem), &context);
+        let forms = sketch.residual_forms_for_constraint(handle);
+
+        prop_assert_eq!(lowered.rows.len(), 5);
+        prop_assert_eq!(lowered.rows[0].strategy, Some(SketchResidualStrategy::WorkplaneUnitQuaternion));
+        let all_workplane_symmetry_rows = lowered.rows[1..].iter().all(|row| {
+            row.strategy == Some(SketchResidualStrategy::WorkplaneSymmetryPolynomial)
+                && row.status == SketchGeneratedRowStatus::Generated
+        });
+        prop_assert!(all_workplane_symmetry_rows);
+        prop_assert!(certification.all_satisfied());
+        prop_assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+        prop_assert_eq!(forms.forms.len(), 5);
+        for form in &forms.forms {
+            prop_assert_eq!(form.role, SketchResidualFormRole::ExactProof);
+            prop_assert_eq!(form.residual.eval_real(context.bindings()).unwrap(), Real::zero());
+        }
+        prop_assert_eq!(
+            forms.forms[1].kind,
+            SketchResidualFormKind::WorkplaneSymmetryMidpointPlanePolynomial
+        );
+        let all_normal_offset_forms = forms.forms[2..].iter().all(|form| {
+            form.kind == SketchResidualFormKind::WorkplaneSymmetryNormalOffsetPolynomial
+        });
+        prop_assert!(all_normal_offset_forms);
+    }
+
+    #[test]
     fn sketch_construction_certificate_generated_integer_segments_match_distance(
         ax in -12_i16..=12,
         ay in -12_i16..=12,

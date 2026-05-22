@@ -39,6 +39,7 @@ pub mod sketch_entity_domains;
 pub mod sketch_fixtures;
 mod sketch_projection;
 pub mod sketch_units;
+mod sketch_workplane_symmetry;
 pub mod sketch_workplanes;
 pub mod solver;
 pub mod solver_block;

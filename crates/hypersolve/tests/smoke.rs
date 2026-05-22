@@ -609,7 +609,7 @@ fn sketch_residual_form_reports_reject_unsupported_and_bad_inputs() {
 fn sketch_compatibility_fixtures_are_license_clean_and_exactly_certified() {
     let fixtures = sketch_compatibility_fixtures();
 
-    assert_eq!(fixtures.len(), 3);
+    assert_eq!(fixtures.len(), 4);
     assert!(fixtures.iter().all(|fixture| {
         fixture.source.starts_with("Hyper-authored")
             && !fixture.source.to_ascii_lowercase().contains("copied")
@@ -1594,6 +1594,161 @@ fn sketch_line_symmetry_relations_report_stale_wrong_and_non_2d_inputs() {
     );
     assert_eq!(lowered.rows[3].status, SketchGeneratedRowStatus::Generated);
     assert_eq!(lowered.rows[4].status, SketchGeneratedRowStatus::Generated);
+}
+
+#[test]
+fn sketch_workplane_symmetry_relations_lower_to_exact_polynomial_rows() {
+    let mut sketch = SketchSolveProblem::new();
+    let origin = sketch.add_point3d("origin", real(0), real(0), real(0));
+    let normal = sketch.add_normal3d("normal", real(1), real(0), real(0), real(0));
+    let workplane = sketch.add_workplane("xy workplane", origin, normal);
+    let top = sketch.add_point3d("top", real(2), real(3), real(5));
+    let bottom = sketch.add_point3d("bottom", real(2), real(3), real(-5));
+    let wrong_midpoint = sketch.add_point3d("wrong midpoint", real(2), real(3), real(-4));
+    let wrong_normal = sketch.add_point3d("wrong normal", real(3), real(3), real(-5));
+    let valid = sketch_symmetry_builders::symmetric_workplane3(
+        &mut sketch,
+        "workplane symmetry",
+        top,
+        bottom,
+        workplane,
+    );
+    sketch.add_symmetric_workplane3("violated midpoint", top, wrong_midpoint, workplane);
+    sketch.add_symmetric_workplane3("violated normal", top, wrong_normal, workplane);
+
+    assert_eq!(valid.family, hypersolve::SketchConstraintFamily::Symmetry);
+    assert_eq!(
+        valid.strategy,
+        SketchResidualStrategy::WorkplaneSymmetryPolynomial
+    );
+
+    let lowered = sketch.lower_to_problem();
+    let certification = certify_candidate(
+        &PreparedProblem::new(&lowered.problem),
+        &context_from_problem(&lowered.problem),
+    );
+
+    assert_eq!(lowered.problem.constraints.len(), 15);
+    assert_eq!(lowered.rows.len(), 15);
+    assert_eq!(
+        lowered.rows[0].strategy,
+        Some(SketchResidualStrategy::WorkplaneUnitQuaternion)
+    );
+    assert!(lowered.rows[1..5].iter().all(|row| {
+        row.strategy == Some(SketchResidualStrategy::WorkplaneSymmetryPolynomial)
+            && row.status == SketchGeneratedRowStatus::Generated
+    }));
+    assert!(matches!(
+        certification.rows[0].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[1].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[2].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[6].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
+    assert!(matches!(
+        certification.rows[13].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
+
+    let forms = sketch.residual_forms_for_constraint(valid.handle);
+    assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+    assert_eq!(forms.forms.len(), 5);
+    assert_eq!(
+        forms.forms[0].kind,
+        SketchResidualFormKind::WorkplaneUnitQuaternionPolynomial
+    );
+    assert_eq!(
+        forms.forms[1].kind,
+        SketchResidualFormKind::WorkplaneSymmetryMidpointPlanePolynomial
+    );
+    assert!(forms.forms[2..].iter().all(|form| {
+        form.kind == SketchResidualFormKind::WorkplaneSymmetryNormalOffsetPolynomial
+            && form.role == SketchResidualFormRole::ExactProof
+            && form.strategy == Some(SketchResidualStrategy::WorkplaneSymmetryPolynomial)
+    }));
+}
+
+#[test]
+fn sketch_workplane_symmetry_relations_report_stale_wrong_and_non_3d_inputs() {
+    let mut sketch = SketchSolveProblem::new();
+    let origin = sketch.add_point3d("origin", real(0), real(0), real(0));
+    let normal = sketch.add_normal3d("normal", real(1), real(0), real(0), real(0));
+    let workplane = sketch.add_workplane("xy workplane", origin, normal);
+    let a = sketch.add_point3d("a", real(0), real(0), real(1));
+    let b = sketch.add_point3d("b", real(0), real(0), real(-1));
+    let point2 = sketch.add_point2d("point2", real(0), real(0));
+    sketch.add_symmetric_workplane3("missing workplane", a, b, SketchEntityHandle(999));
+    sketch.add_symmetric_workplane3("wrong workplane family", a, b, a);
+    sketch.add_symmetric_workplane3("non 3d point", point2, b, workplane);
+    sketch.add_symmetric_workplane3("valid control", a, b, workplane);
+
+    let lowered = sketch.lower_to_problem();
+
+    assert_eq!(lowered.problem.constraints.len(), 5);
+    assert_eq!(lowered.rows.len(), 8);
+    assert_eq!(
+        lowered.rows[0].status,
+        SketchGeneratedRowStatus::MissingEntity(SketchEntityHandle(999))
+    );
+    assert_eq!(
+        lowered.rows[1].status,
+        SketchGeneratedRowStatus::WrongEntityKind {
+            handle: a,
+            expected: "workplane"
+        }
+    );
+    assert_eq!(
+        lowered.rows[2].status,
+        SketchGeneratedRowStatus::WrongEntityKind {
+            handle: point2,
+            expected: "3D point"
+        }
+    );
+    assert!(lowered.rows[3..].iter().all(|row| {
+        row.status == SketchGeneratedRowStatus::Generated
+            && matches!(
+                row.strategy,
+                Some(
+                    SketchResidualStrategy::WorkplaneUnitQuaternion
+                        | SketchResidualStrategy::WorkplaneSymmetryPolynomial
+                )
+            )
+    }));
+}
+
+#[test]
+fn sketch_workplane_symmetry_keeps_nonunit_frame_as_proof_row() {
+    let mut sketch = SketchSolveProblem::new();
+    let origin = sketch.add_point3d("origin", real(0), real(0), real(0));
+    let nonunit = sketch.add_normal3d("nonunit", real(2), real(0), real(0), real(0));
+    let workplane = sketch.add_workplane("bad workplane", origin, nonunit);
+    let a = sketch.add_point3d("a", real(0), real(0), real(3));
+    let b = sketch.add_point3d("b", real(0), real(0), real(-3));
+    sketch.add_symmetric_workplane3("nonunit symmetry", a, b, workplane);
+
+    let lowered = sketch.lower_to_problem();
+    assert!(lowered.all_generated());
+    assert_eq!(
+        lowered.rows[0].strategy,
+        Some(SketchResidualStrategy::WorkplaneUnitQuaternion)
+    );
+    let certification = certify_candidate(
+        &PreparedProblem::new(&lowered.problem),
+        &context_from_problem(&lowered.problem),
+    );
+    assert!(matches!(
+        certification.rows[0].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
 }
 
 #[test]

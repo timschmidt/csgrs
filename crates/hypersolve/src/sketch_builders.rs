@@ -630,6 +630,32 @@ pub mod symmetry {
             kind,
         }
     }
+
+    /// Add a 3D workplane point-symmetry relation.
+    ///
+    /// Lowering emits an exact unit-workplane guard, a midpoint-on-plane row,
+    /// and normal-offset cross-product rows. This is the retained 3D
+    /// plane-symmetry package requested by the SolveSpace coverage plan:
+    /// reflection is proved by exact predicates over the retained workplane,
+    /// not by constructing a rounded mirror point. The boundary follows Yap's
+    /// "Towards Exact Geometric Computation" (1997); the workplane frame uses
+    /// Shoemake's unit-quaternion rotation matrix.
+    pub fn symmetric_workplane3(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+        workplane: SketchEntityHandle,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::SymmetricWorkplane3 { a, b, workplane };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Symmetry,
+            strategy: SketchResidualStrategy::WorkplaneSymmetryPolynomial,
+            kind,
+        }
+    }
 }
 
 /// Inequality and parameter-domain builders.
