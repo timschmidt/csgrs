@@ -6023,6 +6023,8 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
         let boundary_contained_inner = axis_aligned_box_i64([0, 1, 1], [2, 3, 3]);
         let cell_left = axis_aligned_box_i64([0, 0, 0], [2, 2, 2]);
         let cell_right = axis_aligned_box_i64([1, 1, 0], [3, 3, 2]);
+        let fan_cell_left = top_subdivided_axis_aligned_box_i64([0, 0, 0], [2, 2, 2]);
+        let fan_cell_right = axis_aligned_box_i64([1, 1, 0], [3, 3, 2]);
         let orthogonal_complex = hypermesh::exact::boolean_exact(
             &cell_left,
             &cell_right,
@@ -6283,6 +6285,45 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
                     hypermesh::exact::boolean_exact(
                         &orthogonal_complex,
                         &orthogonal_cutter,
+                        hypermesh::exact::ExactBooleanOperation::Difference,
+                        ValidationPolicy::CLOSED,
+                    )
+                    .unwrap(),
+                    hypermesh::exact::preflight_boolean_exact(
+                        &fan_cell_left,
+                        &fan_cell_right,
+                        hypermesh::exact::ExactBooleanOperation::Union,
+                    )
+                    .unwrap(),
+                    hypermesh::exact::boolean_exact(
+                        &fan_cell_left,
+                        &fan_cell_right,
+                        hypermesh::exact::ExactBooleanOperation::Union,
+                        ValidationPolicy::CLOSED,
+                    )
+                    .unwrap(),
+                    hypermesh::exact::preflight_boolean_exact(
+                        &fan_cell_left,
+                        &fan_cell_right,
+                        hypermesh::exact::ExactBooleanOperation::Intersection,
+                    )
+                    .unwrap(),
+                    hypermesh::exact::boolean_exact(
+                        &fan_cell_left,
+                        &fan_cell_right,
+                        hypermesh::exact::ExactBooleanOperation::Intersection,
+                        ValidationPolicy::CLOSED,
+                    )
+                    .unwrap(),
+                    hypermesh::exact::preflight_boolean_exact(
+                        &fan_cell_left,
+                        &fan_cell_right,
+                        hypermesh::exact::ExactBooleanOperation::Difference,
+                    )
+                    .unwrap(),
+                    hypermesh::exact::boolean_exact(
+                        &fan_cell_left,
+                        &fan_cell_right,
                         hypermesh::exact::ExactBooleanOperation::Difference,
                         ValidationPolicy::CLOSED,
                     )

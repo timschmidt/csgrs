@@ -13,7 +13,7 @@
 //! non-certifications rather than tolerance-based guesses.
 
 use core::cmp::Ordering;
-use std::collections::{BTreeMap, VecDeque};
+use std::collections::{BTreeMap, BTreeSet, VecDeque};
 
 use hyperlimit::{Point3, compare_reals};
 
@@ -81,6 +81,36 @@ struct RectFaceSample {
     key: RectFaceKey,
     normal_sign: i8,
     corners: [(usize, usize); 3],
+}
+
+#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
+struct FacePlaneKey {
+    axis: Axis,
+    plane: usize,
+}
+
+#[derive(Clone, Debug)]
+struct FacePlaneAccumulator {
+    key: FacePlaneKey,
+    normal_sign: i8,
+    selected: BTreeSet<(usize, usize)>,
+    triangle_area2: ExactReal,
+}
+
+#[derive(Clone, Debug)]
+struct FaceTriangleSample {
+    key: FacePlaneKey,
+    normal_sign: i8,
+    u_range: core::ops::Range<usize>,
+    v_range: core::ops::Range<usize>,
+    projected: [ProjectedFacePoint; 3],
+    area2: ExactReal,
+}
+
+#[derive(Clone, Debug)]
+struct ProjectedFacePoint {
+    u: ExactReal,
+    v: ExactReal,
 }
 
 /// Certified occupancy over an exact axis-aligned coordinate grid.
@@ -225,6 +255,13 @@ fn orthogonal_cell_plan(
 /// the accepted mesh is a retained cell complex, not merely a triangle soup
 /// whose samples happen to look orthogonal.
 fn certify_axis_aligned_orthogonal_solid(mesh: &ExactMesh) -> Option<AxisAlignedOrthogonalSolid> {
+    certify_axis_aligned_orthogonal_solid_rect_faces(mesh)
+        .or_else(|| certify_axis_aligned_orthogonal_solid_face_cells(mesh))
+}
+
+fn certify_axis_aligned_orthogonal_solid_rect_faces(
+    mesh: &ExactMesh,
+) -> Option<AxisAlignedOrthogonalSolid> {
     if mesh.vertices().is_empty() || mesh.triangles().is_empty() {
         return None;
     }
@@ -336,6 +373,109 @@ fn certify_axis_aligned_orthogonal_solid(mesh: &ExactMesh) -> Option<AxisAligned
     })
 }
 
+/// Certify an orthogonal solid whose source faces are triangulated over cells.
+///
+/// The strict importer above requires every rectangular source face to arrive
+/// as exactly two triangles. This fallback keeps the same retained-cell model
+/// but accepts a broader exact face triangulation: every triangle must lie on
+/// one axis-aligned grid plane, each triangle is replayed over the exact
+/// projected grid cells on that plane, and the selected unit-face cells must
+/// have exactly the same projected area as the source triangles on the plane.
+/// Only after that replay do we reuse the same inside/outside occupancy
+/// certification as the rectangular importer.
+///
+/// This is the volumetric analogue of a planar cell arrangement. It follows
+/// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
+/// 7.1-2 (1997): the topology is promoted from retained exact cells and exact
+/// area equality, not from a tolerance repair of a triangle soup. The grid-cell
+/// viewpoint is the orthogonal arrangement model described by de Berg, Cheong,
+/// van Kreveld, and Overmars, *Computational Geometry: Algorithms and
+/// Applications*, 3rd ed. (2008), Chapter 2.
+fn certify_axis_aligned_orthogonal_solid_face_cells(
+    mesh: &ExactMesh,
+) -> Option<AxisAlignedOrthogonalSolid> {
+    if mesh.vertices().is_empty() || mesh.triangles().is_empty() {
+        return None;
+    }
+    let x = collect_sorted_unique_axis_coords(mesh, Axis::X)?;
+    let y = collect_sorted_unique_axis_coords(mesh, Axis::Y)?;
+    let z = collect_sorted_unique_axis_coords(mesh, Axis::Z)?;
+    let nx = x.len().checked_sub(1)?;
+    let ny = y.len().checked_sub(1)?;
+    let nz = z.len().checked_sub(1)?;
+    if nx == 0 || ny == 0 || nz == 0 {
+        return None;
+    }
+
+    let mut planes = Vec::<FacePlaneAccumulator>::new();
+    for triangle in mesh.triangles() {
+        let sample = triangle_face_cell_sample(mesh, triangle, &x, &y, &z)?;
+        let accumulator = match planes
+            .iter_mut()
+            .find(|plane| plane.key == sample.key && plane.normal_sign == sample.normal_sign)
+        {
+            Some(accumulator) => accumulator,
+            None => {
+                planes.push(FacePlaneAccumulator {
+                    key: sample.key,
+                    normal_sign: sample.normal_sign,
+                    selected: BTreeSet::new(),
+                    triangle_area2: ExactReal::from(0),
+                });
+                planes.last_mut()?
+            }
+        };
+        accumulator.triangle_area2 = add(&accumulator.triangle_area2, &sample.area2);
+        for u in sample.u_range.clone() {
+            for v in sample.v_range.clone() {
+                let midpoint = ProjectedFacePoint {
+                    u: midpoint_real(
+                        &axis_coords(&x, &y, &z, canonical_face_axes(sample.key.axis).0)[u],
+                        &axis_coords(&x, &y, &z, canonical_face_axes(sample.key.axis).0)[u + 1],
+                    ),
+                    v: midpoint_real(
+                        &axis_coords(&x, &y, &z, canonical_face_axes(sample.key.axis).1)[v],
+                        &axis_coords(&x, &y, &z, canonical_face_axes(sample.key.axis).1)[v + 1],
+                    ),
+                };
+                if point_in_projected_triangle(&midpoint, &sample.projected)? {
+                    accumulator.selected.insert((u, v));
+                }
+            }
+        }
+    }
+
+    let mut faces = BTreeMap::<UnitFaceKey, i8>::new();
+    for plane in planes {
+        let normal = plane.normal_sign;
+        if plane.selected.is_empty() {
+            return None;
+        }
+        let (u_axis, v_axis) = canonical_face_axes(plane.key.axis);
+        let u_coords = axis_coords(&x, &y, &z, u_axis);
+        let v_coords = axis_coords(&x, &y, &z, v_axis);
+        let mut cell_area2 = ExactReal::from(0);
+        for &(u, v) in &plane.selected {
+            let du = sub(&u_coords[u + 1], &u_coords[u]);
+            let dv = sub(&v_coords[v + 1], &v_coords[v]);
+            cell_area2 = add(&cell_area2, &mul(&ExactReal::from(2), &mul(&du, &dv)));
+            let key = UnitFaceKey {
+                axis: plane.key.axis,
+                plane: plane.key.plane,
+                u,
+                v,
+            };
+            if faces.insert(key, normal).is_some() {
+                return None;
+            }
+        }
+        if cmp(&cell_area2, &plane.triangle_area2)? != Ordering::Equal {
+            return None;
+        }
+    }
+    certify_axis_aligned_orthogonal_solid_from_faces(x, y, z, faces)
+}
+
 fn triangle_rect_face_sample(
     mesh: &ExactMesh,
     triangle: &Triangle,
@@ -429,6 +569,158 @@ fn triangle_rect_face_sample(
         },
         normal_sign,
         corners: [canonical[0], canonical[1], canonical[2]],
+    })
+}
+
+fn triangle_face_cell_sample(
+    mesh: &ExactMesh,
+    triangle: &Triangle,
+    x: &[ExactReal],
+    y: &[ExactReal],
+    z: &[ExactReal],
+) -> Option<FaceTriangleSample> {
+    let points = triangle
+        .0
+        .map(|index| {
+            mesh.vertices()
+                .get(index)
+                .map(ExactPoint3::to_hyperlimit_point)
+        })
+        .into_iter()
+        .collect::<Option<Vec<_>>>()?;
+    let points: [Point3; 3] = points.try_into().ok()?;
+    let constant_axes = [Axis::X, Axis::Y, Axis::Z]
+        .into_iter()
+        .filter(|&axis| {
+            real_eq(axis_coord(&points[0], axis), axis_coord(&points[1], axis))
+                && real_eq(axis_coord(&points[0], axis), axis_coord(&points[2], axis))
+        })
+        .collect::<Vec<_>>();
+    if constant_axes.len() != 1 {
+        return None;
+    }
+    let axis = constant_axes[0];
+    let plane = coord_index(axis_coords(x, y, z, axis), axis_coord(&points[0], axis))?;
+    let (canonical_u_axis, canonical_v_axis) = canonical_face_axes(axis);
+    let projected = points
+        .iter()
+        .map(|point| ProjectedFacePoint {
+            u: axis_coord(point, canonical_u_axis).clone(),
+            v: axis_coord(point, canonical_v_axis).clone(),
+        })
+        .collect::<Vec<_>>();
+    let projected: [ProjectedFacePoint; 3] = projected.try_into().ok()?;
+
+    let u_indices = points
+        .iter()
+        .map(|point| {
+            coord_index(
+                axis_coords(x, y, z, canonical_u_axis),
+                axis_coord(point, canonical_u_axis),
+            )
+        })
+        .collect::<Option<Vec<_>>>()?;
+    let v_indices = points
+        .iter()
+        .map(|point| {
+            coord_index(
+                axis_coords(x, y, z, canonical_v_axis),
+                axis_coord(point, canonical_v_axis),
+            )
+        })
+        .collect::<Option<Vec<_>>>()?;
+    let u_min = u_indices.iter().copied().min()?;
+    let u_max = u_indices.iter().copied().max()?;
+    let v_min = v_indices.iter().copied().min()?;
+    let v_max = v_indices.iter().copied().max()?;
+    if u_min == u_max || v_min == v_max {
+        return None;
+    }
+
+    let (oriented_u_axis, oriented_v_axis) = oriented_face_axes(axis);
+    let oriented = points
+        .iter()
+        .map(|point| {
+            Some((
+                coord_index(
+                    axis_coords(x, y, z, oriented_u_axis),
+                    axis_coord(point, oriented_u_axis),
+                )?,
+                coord_index(
+                    axis_coords(x, y, z, oriented_v_axis),
+                    axis_coord(point, oriented_v_axis),
+                )?,
+            ))
+        })
+        .collect::<Option<Vec<_>>>()?;
+    let normal_sign = projected_orientation([oriented[0], oriented[1], oriented[2]])?;
+    let area2 = projected_triangle_area2(&projected)?;
+    if cmp(&area2, &ExactReal::from(0))? != Ordering::Greater {
+        return None;
+    }
+    Some(FaceTriangleSample {
+        key: FacePlaneKey { axis, plane },
+        normal_sign,
+        u_range: u_min..u_max,
+        v_range: v_min..v_max,
+        projected,
+        area2,
+    })
+}
+
+fn certify_axis_aligned_orthogonal_solid_from_faces(
+    x: Vec<ExactReal>,
+    y: Vec<ExactReal>,
+    z: Vec<ExactReal>,
+    faces: BTreeMap<UnitFaceKey, i8>,
+) -> Option<AxisAlignedOrthogonalSolid> {
+    if faces.is_empty() {
+        return None;
+    }
+    let nx = x.len().checked_sub(1)?;
+    let ny = y.len().checked_sub(1)?;
+    let nz = z.len().checked_sub(1)?;
+    let components = connected_components(nx, ny, nz, &faces)?;
+    let component_count = components.iter().copied().max()?.checked_add(1)?;
+    let mut component_occupancy = vec![None; component_count];
+    for (&face, &normal) in &faces {
+        constrain_face_side(
+            face_side_cell(face, false, nx, ny, nz),
+            normal > 0,
+            &components,
+            &mut component_occupancy,
+            ny,
+            nz,
+        )?;
+        constrain_face_side(
+            face_side_cell(face, true, nx, ny, nz),
+            normal < 0,
+            &components,
+            &mut component_occupancy,
+            ny,
+            nz,
+        )?;
+    }
+    if component_occupancy.iter().any(Option::is_none) {
+        return None;
+    }
+
+    let occupied = components
+        .iter()
+        .map(|component| component_occupancy[*component].unwrap_or(false))
+        .collect::<Vec<_>>();
+    if !occupied.iter().any(|occupied| *occupied) {
+        return None;
+    }
+    validate_face_set_against_occupancy(nx, ny, nz, &occupied, &faces)?;
+    Some(AxisAlignedOrthogonalSolid {
+        x,
+        y,
+        z,
+        occupied,
+        nx,
+        ny,
+        nz,
     })
 }
 
@@ -1080,6 +1372,64 @@ fn real_eq(left: &ExactReal, right: &ExactReal) -> bool {
 
 fn points_equal(left: &Point3, right: &Point3) -> bool {
     real_eq(&left.x, &right.x) && real_eq(&left.y, &right.y) && real_eq(&left.z, &right.z)
+}
+
+fn point_in_projected_triangle(
+    point: &ProjectedFacePoint,
+    triangle: &[ProjectedFacePoint; 3],
+) -> Option<bool> {
+    let orientation = projected_face_orientation(&triangle[0], &triangle[1], &triangle[2])?;
+    if cmp(&orientation, &ExactReal::from(0))? == Ordering::Equal {
+        return Some(false);
+    }
+    let expected_positive = cmp(&orientation, &ExactReal::from(0))? == Ordering::Greater;
+    for edge in 0..3 {
+        let side = projected_face_orientation(&triangle[edge], &triangle[(edge + 1) % 3], point)?;
+        match cmp(&side, &ExactReal::from(0))? {
+            Ordering::Equal => {}
+            Ordering::Greater if expected_positive => {}
+            Ordering::Less if !expected_positive => {}
+            Ordering::Greater | Ordering::Less => return Some(false),
+        }
+    }
+    Some(true)
+}
+
+fn projected_triangle_area2(triangle: &[ProjectedFacePoint; 3]) -> Option<ExactReal> {
+    let area = projected_face_orientation(&triangle[0], &triangle[1], &triangle[2])?;
+    match cmp(&area, &ExactReal::from(0))? {
+        Ordering::Less => Some(mul(&ExactReal::from(-1), &area)),
+        Ordering::Equal | Ordering::Greater => Some(area),
+    }
+}
+
+fn projected_face_orientation(
+    a: &ProjectedFacePoint,
+    b: &ProjectedFacePoint,
+    c: &ProjectedFacePoint,
+) -> Option<ExactReal> {
+    let ab_u = sub(&b.u, &a.u);
+    let ab_v = sub(&b.v, &a.v);
+    let ac_u = sub(&c.u, &a.u);
+    let ac_v = sub(&c.v, &a.v);
+    Some(sub(&mul(&ab_u, &ac_v), &mul(&ab_v, &ac_u)))
+}
+
+fn midpoint_real(left: &ExactReal, right: &ExactReal) -> ExactReal {
+    let half = (ExactReal::from(1) / &ExactReal::from(2)).expect("2 is nonzero");
+    mul(&add(left, right), &half)
+}
+
+fn add(left: &ExactReal, right: &ExactReal) -> ExactReal {
+    left + right
+}
+
+fn sub(left: &ExactReal, right: &ExactReal) -> ExactReal {
+    left - right
+}
+
+fn mul(left: &ExactReal, right: &ExactReal) -> ExactReal {
+    left * right
 }
 
 #[cfg(test)]

@@ -158,6 +158,36 @@ fn top_subdivided_axis_aligned_box_i64(min: [i64; 3], max: [i64; 3]) -> ExactMes
 }
 
 #[cfg(feature = "exact-triangulation")]
+fn disconnected_top_subdivided_axis_aligned_boxes_i64(
+    first_min: [i64; 3],
+    first_max: [i64; 3],
+    second_min: [i64; 3],
+    second_max: [i64; 3],
+) -> ExactMesh {
+    let mut coordinates = Vec::with_capacity(54);
+    let mut indices = Vec::with_capacity(84);
+    for (min, max) in [(first_min, first_max), (second_min, second_max)] {
+        let vertex_offset = coordinates.len() / 3;
+        let mid_x = (min[0] + max[0]) / 2;
+        let mid_y = (min[1] + max[1]) / 2;
+        coordinates.extend_from_slice(&[
+            min[0], min[1], min[2], max[0], min[1], min[2], max[0], max[1], min[2], min[0], max[1],
+            min[2], min[0], min[1], max[2], max[0], min[1], max[2], max[0], max[1], max[2], min[0],
+            max[1], max[2], mid_x, mid_y, max[2],
+        ]);
+        indices.extend(
+            [
+                0, 2, 1, 0, 3, 2, 4, 5, 8, 5, 6, 8, 6, 7, 8, 7, 4, 8, 0, 1, 5, 0, 5, 4, 1, 2, 6, 1,
+                6, 5, 2, 3, 7, 2, 7, 6, 3, 0, 4, 3, 4, 7,
+            ]
+            .into_iter()
+            .map(|index| index + vertex_offset),
+        );
+    }
+    ExactMesh::from_i64_triangles(&coordinates, &indices).unwrap()
+}
+
+#[cfg(feature = "exact-triangulation")]
 fn determinant_i128(a: [i64; 3], b: [i64; 3], c: [i64; 3]) -> i128 {
     let a = a.map(i128::from);
     let b = b.map(i128::from);
@@ -6421,7 +6451,7 @@ fn exact_axis_aligned_orthogonal_solid_cell_complex_reenters_boolean() {
 
 #[cfg(feature = "exact-triangulation")]
 #[test]
-fn exact_axis_aligned_orthogonal_solid_rejects_non_rectangular_face_split() {
+fn exact_axis_aligned_orthogonal_solid_accepts_face_fan_cell_split() {
     let left = top_subdivided_axis_aligned_box_i64([0, 0, 0], [2, 2, 2]);
     let right = axis_aligned_box_i64([1, 1, 0], [3, 3, 2]);
 
@@ -6432,10 +6462,103 @@ fn exact_axis_aligned_orthogonal_solid_rejects_non_rectangular_face_split() {
     )
     .unwrap();
     preflight.validate().unwrap();
-    assert_ne!(
+    preflight.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
         preflight.support,
         hypermesh::exact::ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellUnion
     );
+
+    let union = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    union
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            hypermesh::exact::ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        union.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut:
+                hypermesh::exact::ExactBooleanShortcutKind::AxisAlignedOrthogonalSolidCellUnion
+        }
+    );
+    assert!(union.mesh.facts().mesh.closed_manifold);
+    assert!(union.mesh.triangles().len() > left.triangles().len());
+
+    let intersection_preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+    )
+    .unwrap();
+    intersection_preflight.validate().unwrap();
+    assert_eq!(
+        intersection_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellIntersection
+    );
+    let difference_preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    difference_preflight.validate().unwrap();
+    assert_eq!(
+        difference_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellDifference
+    );
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
+fn exact_axis_aligned_orthogonal_solid_accepts_opposite_faces_on_same_plane() {
+    let left = disconnected_top_subdivided_axis_aligned_boxes_i64(
+        [0, 0, 0],
+        [2, 2, 2],
+        [2, 4, 0],
+        [4, 6, 2],
+    );
+    let right = axis_aligned_box_i64([1, 0, 0], [3, 6, 2]);
+
+    let preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+    )
+    .unwrap();
+    preflight.validate().unwrap();
+    preflight.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellUnion
+    );
+
+    let union = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    union
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            hypermesh::exact::ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert!(union.mesh.facts().mesh.closed_manifold);
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -6981,10 +7104,10 @@ fn exact_mixed_coplanar_volumetric_overlap_materializes_from_face_cells() {
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedWindingMaterialized
+        hypermesh::exact::ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellUnion
     );
     assert!(preflight.blocker.is_none());
-    assert!(preflight.region_count > 0);
+    assert_eq!(preflight.region_count, 0);
 
     let winding_report = hypermesh::exact::certify_winding_readiness_report(
         &left,
@@ -7021,8 +7144,9 @@ fn exact_mixed_coplanar_volumetric_overlap_materializes_from_face_cells() {
         .unwrap();
     assert_eq!(
         result.kind,
-        hypermesh::exact::ExactBooleanResultKind::WindingMaterialized {
-            operation: hypermesh::exact::ExactBooleanOperation::Union
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut:
+                hypermesh::exact::ExactBooleanShortcutKind::AxisAlignedOrthogonalSolidCellUnion
         }
     );
     assert!(result.mesh.facts().mesh.closed_manifold);

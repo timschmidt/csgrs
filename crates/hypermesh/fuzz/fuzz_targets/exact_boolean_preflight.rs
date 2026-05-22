@@ -5142,6 +5142,8 @@ fn exercise_axis_aligned_coplanar_volumetric_boxes() {
 fn exercise_axis_aligned_orthogonal_solid_cell_complexes() {
     let left = axis_aligned_box_i64([0, 0, 0], [2, 2, 2]);
     let right = axis_aligned_box_i64([1, 1, 0], [3, 3, 2]);
+    let fan_left = top_subdivided_axis_aligned_box_i64([0, 0, 0], [2, 2, 2]);
+    let fan_right = axis_aligned_box_i64([1, 1, 0], [3, 3, 2]);
     let complex = hypermesh::exact::boolean_exact(
         &left,
         &right,
@@ -5224,6 +5226,48 @@ fn exercise_axis_aligned_orthogonal_solid_cell_complexes() {
             ExactBoundaryBooleanPolicy::Reject,
         )
         .unwrap();
+
+    let fan_union = preflight_boolean_exact(&fan_left, &fan_right, ExactBooleanOperation::Union)
+        .expect("face-cell triangulated orthogonal solid union should classify shortcut");
+    fan_union.validate().unwrap();
+    assert_eq!(
+        fan_union.support,
+        ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellUnion
+    );
+    let fan_union_result = hypermesh::exact::boolean_exact(
+        &fan_left,
+        &fan_right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("face-cell triangulated orthogonal solid union should materialize");
+    fan_union_result
+        .validate_operation_against_sources(
+            &fan_left,
+            &fan_right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+
+    let fan_intersection =
+        preflight_boolean_exact(&fan_left, &fan_right, ExactBooleanOperation::Intersection)
+            .expect("face-cell triangulated orthogonal solid intersection should classify shortcut");
+    fan_intersection.validate().unwrap();
+    assert_eq!(
+        fan_intersection.support,
+        ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellIntersection
+    );
+
+    let fan_difference =
+        preflight_boolean_exact(&fan_left, &fan_right, ExactBooleanOperation::Difference)
+            .expect("face-cell triangulated orthogonal solid difference should classify shortcut");
+    fan_difference.validate().unwrap();
+    assert_eq!(
+        fan_difference.support,
+        ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellDifference
+    );
 }
 
 #[cfg(feature = "exact-triangulation")]
