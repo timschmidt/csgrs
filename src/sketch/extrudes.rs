@@ -2,7 +2,7 @@
 
 use crate::errors::ValidationError;
 use crate::float_types::{
-    HReal, Real, hangle_sin_cos, hdegrees_to_radians, hpoints_exactly_equal, hreal_div,
+    Real, hangle_sin_cos, hdegrees_to_radians, hpoints_exactly_equal, hreal_div,
     hreal_f64s_exactly_equal, hreal_from_f64, hreal_gt_f64, hreal_lt_f64, hreal_mul,
     hreal_to_f64, hrotation_between_vectors, htranslation_matrix, hunit_cross_vector3,
     hunit_vector3, hvector3_from_point3, hvector3_from_vector3, hvectors_exactly_equal,
@@ -36,7 +36,7 @@ fn mesh_projection_options() -> FiniteProjectionOptions {
 /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
 fn finite_extrude_scalar<S>(value: S) -> Option<Real>
 where
-    S: TryInto<HReal>,
+    S: TryInto<hyperreal::Real>,
 {
     hreal_to_f64(&value.try_into().ok()?)
 }
@@ -81,7 +81,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// This is just a convenience wrapper around extrude_vector using Vector3::new(0.0, 0.0, height)
     pub fn extrude<H>(&self, height: H) -> Mesh<M>
     where
-        H: TryInto<HReal>,
+        H: TryInto<hyperreal::Real>,
     {
         let Some(height) = finite_extrude_scalar(height) else {
             return Mesh::empty(self.metadata.clone());

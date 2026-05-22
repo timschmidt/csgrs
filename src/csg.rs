@@ -3,9 +3,9 @@
 
 use crate::float_types::parry3d::bounding_volume::Aabb;
 use crate::float_types::{
-    HReal, Real, hangle_sin_cos, hdegrees_to_radians, hpoint_centroid, hreal_affine,
-    hreal_div, hreal_mul, hreal_sub, hreal_to_f64, hscale_matrix, htranslation_matrix,
-    hunit_vector3, hunit_vector3_and_magnitude, hvector3_weighted_sum,
+    Real, hangle_sin_cos, hdegrees_to_radians, hpoint_centroid, hreal_affine, hreal_div,
+    hreal_mul, hreal_sub, hreal_to_f64, hscale_matrix, htranslation_matrix, hunit_vector3,
+    hunit_vector3_and_magnitude, hvector3_weighted_sum,
 };
 use crate::mesh::plane::Plane;
 use nalgebra::{Matrix4, Vector3};
@@ -32,7 +32,7 @@ fn finite_translation(vector: Vector3<Real>) -> Option<Matrix4<Real>> {
 /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
 fn finite_csg_scalar<S>(value: S) -> Option<Real>
 where
-    S: TryInto<HReal>,
+    S: TryInto<hyperreal::Real>,
 {
     hreal_to_f64(&value.try_into().ok()?)
 }
@@ -90,9 +90,9 @@ pub trait CSG: Sized + Clone {
     /// Returns a new Self translated by x, y, and z.
     fn translate<X, Y, Z>(&self, x: X, y: Y, z: Z) -> Self
     where
-        X: TryInto<HReal>,
-        Y: TryInto<HReal>,
-        Z: TryInto<HReal>,
+        X: TryInto<hyperreal::Real>,
+        Y: TryInto<hyperreal::Real>,
+        Z: TryInto<hyperreal::Real>,
     {
         let (Some(x), Some(y), Some(z)) = (
             finite_csg_scalar(x),
@@ -148,9 +148,9 @@ pub trait CSG: Sized + Clone {
     /// Appliquées* 5, 1840.
     fn rotate<X, Y, Z>(&self, x_deg: X, y_deg: Y, z_deg: Z) -> Self
     where
-        X: TryInto<HReal>,
-        Y: TryInto<HReal>,
-        Z: TryInto<HReal>,
+        X: TryInto<hyperreal::Real>,
+        Y: TryInto<hyperreal::Real>,
+        Z: TryInto<hyperreal::Real>,
     {
         let (Some(x_deg), Some(y_deg), Some(z_deg)) = (
             finite_csg_scalar(x_deg),
@@ -187,9 +187,9 @@ pub trait CSG: Sized + Clone {
     /// geometry should only receive finite transform carriers.
     fn scale<X, Y, Z>(&self, sx: X, sy: Y, sz: Z) -> Self
     where
-        X: TryInto<HReal>,
-        Y: TryInto<HReal>,
-        Z: TryInto<HReal>,
+        X: TryInto<hyperreal::Real>,
+        Y: TryInto<hyperreal::Real>,
+        Z: TryInto<hyperreal::Real>,
     {
         let (Some(sx), Some(sy), Some(sz)) = (
             finite_csg_scalar(sx),
@@ -307,9 +307,9 @@ pub trait CSG: Sized + Clone {
         end_angle_deg: B,
     ) -> Self
     where
-        R: TryInto<HReal>,
-        A: TryInto<HReal>,
-        B: TryInto<HReal>,
+        R: TryInto<hyperreal::Real>,
+        A: TryInto<hyperreal::Real>,
+        B: TryInto<hyperreal::Real>,
     {
         let (Some(radius), Some(start_angle_deg), Some(end_angle_deg)) = (
             finite_csg_scalar(radius),
@@ -368,7 +368,7 @@ pub trait CSG: Sized + Clone {
     /// discipline (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     fn distribute_linear<S>(&self, count: usize, dir: Vector3<Real>, spacing: S) -> Self
     where
-        S: TryInto<HReal>,
+        S: TryInto<hyperreal::Real>,
     {
         let Some(spacing) = finite_csg_scalar(spacing) else {
             return self.clone();
@@ -403,8 +403,8 @@ pub trait CSG: Sized + Clone {
     /// Non-finite primitive spacings fail closed before transform construction.
     fn distribute_grid<X, Y>(&self, rows: usize, cols: usize, dx: X, dy: Y) -> Self
     where
-        X: TryInto<HReal>,
-        Y: TryInto<HReal>,
+        X: TryInto<hyperreal::Real>,
+        Y: TryInto<hyperreal::Real>,
     {
         let (Some(dx), Some(dy)) = (finite_csg_scalar(dx), finite_csg_scalar(dy)) else {
             return self.clone();
@@ -464,19 +464,19 @@ mod tests {
         let cube = Mesh::cube(1.0, ());
         let cube_bb = cube.bounding_box();
 
-        let translated = cube.translate(HReal::from(1), 2, HReal::from(3));
+        let translated = cube.translate(hyperreal::Real::from(1), 2, hyperreal::Real::from(3));
         let translated_bb = translated.bounding_box();
         assert_eq!(translated_bb.mins.x - cube_bb.mins.x, 1.0);
         assert_eq!(translated_bb.mins.y - cube_bb.mins.y, 2.0);
         assert_eq!(translated_bb.mins.z - cube_bb.mins.z, 3.0);
 
-        let scaled = cube.scale(HReal::from(2), 1, HReal::from(3));
+        let scaled = cube.scale(hyperreal::Real::from(2), 1, hyperreal::Real::from(3));
         let scaled_bb = scaled.bounding_box();
         assert_eq!(scaled_bb.maxs.x - scaled_bb.mins.x, 2.0);
         assert_eq!(scaled_bb.maxs.y - scaled_bb.mins.y, 1.0);
         assert_eq!(scaled_bb.maxs.z - scaled_bb.mins.z, 3.0);
 
-        let rotated = cube.rotate(HReal::from(0), 0, HReal::from(90));
+        let rotated = cube.rotate(hyperreal::Real::from(0), 0, hyperreal::Real::from(90));
         assert_eq!(rotated.polygons.len(), cube.polygons.len());
     }
 }

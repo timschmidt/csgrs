@@ -78,7 +78,7 @@
 //! - **Polygon Splitting**: O(n) per polygon, where n is the number of vertices
 //!
 use crate::float_types::{
-    HReal, Real, hperpendicular_basis, hreal_from_f64, hreal_gt_f64, hreal_sign, hreal_to_f64,
+    Real, hperpendicular_basis, hreal_from_f64, hreal_gt_f64, hreal_sign, hreal_to_f64,
     hrotation_between_vectors, htranslation_matrix, hunit_vector3, hvector3_dot,
     hvector3_from_point3, hvector3_from_vector3,
 };
@@ -113,7 +113,7 @@ pub struct Plane {
     pub point_c: Point3<Real>,
 }
 
-fn hreal_cmp_or_equal(lhs: &HReal, rhs: &HReal) -> Ordering {
+fn hreal_cmp_or_equal(lhs: &hyperreal::Real, rhs: &hyperreal::Real) -> Ordering {
     match hreal_sign(&(lhs.clone() - rhs.clone())) {
         Some(RealSign::Positive) => Ordering::Greater,
         Some(RealSign::Negative) => Ordering::Less,
@@ -132,7 +132,7 @@ fn newell_hreal_normal(points: &[HVector3]) -> HVector3 {
         .fold(HVector3::zero(), |acc, (curr, next)| acc + curr.cross(next))
 }
 
-fn hreal_is_exact_zero(value: &HReal) -> bool {
+fn hreal_is_exact_zero(value: &hyperreal::Real) -> bool {
     matches!(hreal_sign(value), Some(RealSign::Zero))
 }
 
@@ -372,7 +372,7 @@ impl Plane {
         polygon_type
     }
 
-    fn orient_point_hreal(&self, point: &Point3<Real>) -> Option<HReal> {
+    fn orient_point_hreal(&self, point: &Point3<Real>) -> Option<hyperreal::Real> {
         let a = hvector3_from_point3(&self.point_a)?;
         let b = hvector3_from_point3(&self.point_b)?;
         let c = hvector3_from_point3(&self.point_c)?;

@@ -9,15 +9,16 @@ use std::cmp::Ordering;
 pub use parry3d_f64 as parry3d;
 pub use rapier3d_f64 as rapier3d;
 
-/// Public API scalar type.
+/// Legacy finite boundary scalar type.
 ///
-/// This is the legacy f64 boundary scalar retained while the crate is ported
-/// module-by-module to [`HReal`]. New internal geometry should use `HReal` and
-/// convert primitive floats only at API and IO boundaries.
+/// This is retained only for API, file-format, rendering, and physics adapter
+/// edges while the exact CAD surface moves to [`hyperreal::Real`]. New internal
+/// geometry should spell the exact scalar directly as `hyperreal::Real`, avoiding
+/// a crate-local alias that can hide whether a value is exact or a boundary
+/// approximation. That split follows Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7(1-2), 1997
+/// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
 pub type Real = f64;
-
-/// Primary internal scalar type for exact-aware geometry.
-pub type HReal = hyperreal::Real;
 
 /// Explicit f64 boundary scalar alias.
 pub type F64 = f64;
@@ -26,17 +27,17 @@ pub type F64 = f64;
 pub type F32 = f32;
 
 /// Promote an f64 boundary value to the internal hyperreal scalar.
-pub fn hreal_from_f64(value: F64) -> Result<HReal, hyperreal::Problem> {
-    HReal::try_from(value)
+pub fn hreal_from_f64(value: F64) -> Result<hyperreal::Real, hyperreal::Problem> {
+    hyperreal::Real::try_from(value)
 }
 
 /// Promote an f32 boundary value to the internal hyperreal scalar.
-pub fn hreal_from_f32(value: F32) -> Result<HReal, hyperreal::Problem> {
-    HReal::try_from(value)
+pub fn hreal_from_f32(value: F32) -> Result<hyperreal::Real, hyperreal::Problem> {
+    hyperreal::Real::try_from(value)
 }
 
 /// Lossy f64 export for API, rendering, and IO boundaries.
-pub fn hreal_to_f64(value: &HReal) -> Option<F64> {
+pub fn hreal_to_f64(value: &hyperreal::Real) -> Option<F64> {
     value.to_f64_lossy().filter(|value| value.is_finite())
 }
 
@@ -683,7 +684,7 @@ pub(crate) fn htriangle_area_hreal(
     a: &Point3<Real>,
     b: &Point3<Real>,
     c: &Point3<Real>,
-) -> Option<HReal> {
+) -> Option<hyperreal::Real> {
     let a = hvector3_from_point3(a)?;
     let b = hvector3_from_point3(b)?;
     let c = hvector3_from_point3(c)?;
@@ -742,7 +743,7 @@ pub(crate) fn hvectors_exactly_equal(lhs: &Vector3<Real>, rhs: &Vector3<Real>) -
 }
 
 /// Refine the sign of a hyperreal expression for topology decisions.
-pub(crate) fn hreal_sign(value: &HReal) -> Option<RealSign> {
+pub(crate) fn hreal_sign(value: &hyperreal::Real) -> Option<RealSign> {
     value.refine_sign_until(128)
 }
 
@@ -753,7 +754,7 @@ pub(crate) fn hreal_sign(value: &HReal) -> Option<RealSign> {
 /// decision is refined through hyperreal comparison rather than local f64
 /// predicates.
 #[cfg(test)]
-fn hpositive_boundary_scalar(value: Real) -> Option<HReal> {
+fn hpositive_boundary_scalar(value: Real) -> Option<hyperreal::Real> {
     let value = hreal_from_f64(value).ok()?;
     hreal_gt_f64(&value, 0.0).then_some(value)
 }
@@ -766,14 +767,14 @@ fn hpositive_boundary_scalar(value: Real) -> Option<HReal> {
 /// Exact Geometric Computation," *Computational Geometry* 7(1-2), 1997
 /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
 #[cfg(test)]
-pub(crate) fn hpositive_boundary_scalar_squared(value: Real) -> Option<HReal> {
+pub(crate) fn hpositive_boundary_scalar_squared(value: Real) -> Option<hyperreal::Real> {
     let value = hpositive_boundary_scalar(value)?;
     Some(value.clone() * value)
 }
 
 /// Returns true when `value` is strictly greater than a hyperreal threshold.
 #[cfg(test)]
-pub(crate) fn hreal_gt_hreal(value: &HReal, threshold: &HReal) -> bool {
+pub(crate) fn hreal_gt_hreal(value: &hyperreal::Real, threshold: &hyperreal::Real) -> bool {
     match hyperlimit::compare_reals(value, threshold).value() {
         Some(Ordering::Greater) => true,
         Some(_) => false,
@@ -786,7 +787,7 @@ pub(crate) fn hreal_gt_hreal(value: &HReal, threshold: &HReal) -> bool {
 
 /// Returns true when `value` is strictly less than a hyperreal threshold.
 #[cfg(test)]
-pub(crate) fn hreal_lt_hreal(value: &HReal, threshold: &HReal) -> bool {
+pub(crate) fn hreal_lt_hreal(value: &hyperreal::Real, threshold: &hyperreal::Real) -> bool {
     match hyperlimit::compare_reals(value, threshold).value() {
         Some(Ordering::Less) => true,
         Some(_) => false,
@@ -798,7 +799,7 @@ pub(crate) fn hreal_lt_hreal(value: &HReal, threshold: &HReal) -> bool {
 }
 
 /// Returns true when `value` is strictly greater than the finite f64 threshold.
-pub(crate) fn hreal_gt_f64(value: &HReal, threshold: F64) -> bool {
+pub(crate) fn hreal_gt_f64(value: &hyperreal::Real, threshold: F64) -> bool {
     let Ok(threshold) = hreal_from_f64(threshold) else {
         return false;
     };
@@ -813,7 +814,7 @@ pub(crate) fn hreal_gt_f64(value: &HReal, threshold: F64) -> bool {
 }
 
 /// Returns true when `value` is strictly less than the finite f64 threshold.
-pub(crate) fn hreal_lt_f64(value: &HReal, threshold: F64) -> bool {
+pub(crate) fn hreal_lt_f64(value: &hyperreal::Real, threshold: F64) -> bool {
     let Ok(threshold) = hreal_from_f64(threshold) else {
         return false;
     };
@@ -897,7 +898,11 @@ pub(crate) fn hreal_clamp_f64(value: F64, min: F64, max: F64) -> Option<F64> {
 /// layer for the branch decision. This follows Yap, "Towards Exact Geometric
 /// Computation," *Computational Geometry* 7(1-2), 1997
 /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-pub(crate) fn hreal_clamp_hreal(value: HReal, min: F64, max: F64) -> Option<HReal> {
+pub(crate) fn hreal_clamp_hreal(
+    value: hyperreal::Real,
+    min: F64,
+    max: F64,
+) -> Option<hyperreal::Real> {
     let min_h = hreal_from_f64(min).ok()?;
     let max_h = hreal_from_f64(max).ok()?;
     hyperlimit::real_clamp(value, &min_h, &max_h).value()
@@ -933,7 +938,7 @@ pub(crate) fn hreal_sum(values: &[Real]) -> Option<Real> {
         .map(hreal_from_f64)
         .collect::<Result<Vec<_>, _>>()
         .ok()?;
-    hreal_to_f64(&HReal::sum_refs(values.iter()))
+    hreal_to_f64(&hyperreal::Real::sum_refs(values.iter()))
 }
 
 /// Return the finite maximum of public boundary scalars in hyperreal order.
@@ -966,7 +971,10 @@ pub(crate) fn hreal_max(values: &[Real]) -> Option<Real> {
 /// same exact-aware ordering discipline used by constructor bounds, following
 /// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
 /// 7(1-2), 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-pub(crate) fn hreal_max_pair(lhs: &HReal, rhs: &HReal) -> Option<HReal> {
+pub(crate) fn hreal_max_pair(
+    lhs: &hyperreal::Real,
+    rhs: &hyperreal::Real,
+) -> Option<hyperreal::Real> {
     hyperlimit::real_max(lhs, rhs).value().cloned()
 }
 
@@ -987,12 +995,18 @@ pub(crate) fn hreal_min(values: &[Real]) -> Option<Real> {
 }
 
 /// Return the minimum of two already-promoted hyperreal values.
-pub(crate) fn hreal_min_pair(lhs: &HReal, rhs: &HReal) -> Option<HReal> {
+pub(crate) fn hreal_min_pair(
+    lhs: &hyperreal::Real,
+    rhs: &hyperreal::Real,
+) -> Option<hyperreal::Real> {
     hyperlimit::real_min(lhs, rhs).value().cloned()
 }
 
 /// Fold an optional f64 reporting boundary maximum with a hyperreal sample.
-pub(crate) fn hreal_max_report_value(current: Option<Real>, sample: &HReal) -> Option<Real> {
+pub(crate) fn hreal_max_report_value(
+    current: Option<Real>,
+    sample: &hyperreal::Real,
+) -> Option<Real> {
     let current = current.map(hreal_from_f64).transpose().ok()?;
     let max = match current {
         Some(current) => hreal_max_pair(&current, sample)?,
@@ -1003,7 +1017,10 @@ pub(crate) fn hreal_max_report_value(current: Option<Real>, sample: &HReal) -> O
 
 /// Fold an optional f64 reporting boundary minimum with a hyperreal sample.
 #[cfg(any(feature = "metaballs", feature = "sdf"))]
-pub(crate) fn hreal_min_report_value(current: Option<Real>, sample: &HReal) -> Option<Real> {
+pub(crate) fn hreal_min_report_value(
+    current: Option<Real>,
+    sample: &hyperreal::Real,
+) -> Option<Real> {
     let current = current.map(hreal_from_f64).transpose().ok()?;
     let min = match current {
         Some(current) => hreal_min_pair(&current, sample)?,
@@ -1052,12 +1069,12 @@ pub(crate) fn hreal_sqrt(value: Real) -> Option<Real> {
 /// narrow reporting boundary for the rare APIs that still return primitive
 /// lengths, following Yap's exact-geometric-computation split between exact
 /// predicates and finite output values (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-pub(crate) fn hreal_sqrt_ref(value: &HReal) -> Option<HReal> {
+pub(crate) fn hreal_sqrt_ref(value: &hyperreal::Real) -> Option<hyperreal::Real> {
     value.clone().sqrt().ok()
 }
 
 /// Export the finite square root of an already-promoted hyperreal value.
-pub(crate) fn hreal_sqrt_to_f64(value: &HReal) -> Option<Real> {
+pub(crate) fn hreal_sqrt_to_f64(value: &hyperreal::Real) -> Option<Real> {
     hreal_to_f64(&hreal_sqrt_ref(value)?)
 }
 
@@ -1088,7 +1105,7 @@ pub(crate) fn hreal_affine(origin: Real, t: Real, delta: Real) -> Option<Real> {
     let origin = hreal_from_f64(origin).ok()?;
     let t = hreal_from_f64(t).ok()?;
     let delta = hreal_from_f64(delta).ok()?;
-    hreal_to_f64(&HReal::affine(&origin, &t, &delta))
+    hreal_to_f64(&hyperreal::Real::affine(&origin, &t, &delta))
 }
 
 /// Convert finite public degrees to radians through hyperreal arithmetic.
@@ -1116,7 +1133,7 @@ pub(crate) fn hreal_mean(values: &[Real]) -> Option<Real> {
         .map(hreal_from_f64)
         .collect::<Result<Vec<_>, _>>()
         .ok()?;
-    hreal_to_f64(&HReal::mean(&values)?)
+    hreal_to_f64(&hyperreal::Real::mean(&values)?)
 }
 
 /// Return the finite sample standard deviation of public boundary scalars.
@@ -1132,7 +1149,7 @@ pub(crate) fn hreal_sample_stddev(values: &[Real]) -> Option<Real> {
         .map(hreal_from_f64)
         .collect::<Result<Vec<_>, _>>()
         .ok()?;
-    hreal_to_f64(&HReal::sample_stddev(&values)?)
+    hreal_to_f64(&hyperreal::Real::sample_stddev(&values)?)
 }
 
 #[cfg(test)]
