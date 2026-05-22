@@ -24,8 +24,8 @@ use hyperlimit::{
     classify_ray_triangle3_intersection_batch,
     classify_segment_triangle3_intersection, classify_segment3_intersection,
     classify_segment_triangle3_intersection_batch, classify_segment3_intersection_batch,
-    classify_sphere3_intersection, classify_triangle_triangle3,
-    compare_point_line3_distance_squared,
+    classify_segment_triangle3_intersection_report, classify_sphere3_intersection,
+    classify_triangle_triangle3, compare_point_line3_distance_squared,
     compare_point_plane_distance_squared, compare_point_segment3_distance_squared,
     compare_point2_lexicographic, compare_point2_lexicographic_report, compare_reals,
     compare_reals_report, incircle2d, insphere3d, intersect_segment_with_oriented_plane,
@@ -432,6 +432,23 @@ fn predicate_invariants(input: Input) {
             Some(segment_relation.intersects()),
             "ray from the segment start toward the segment end must preserve endpoint-triangle incidence"
         );
+    }
+    if let Some(report) = classify_segment_triangle3_intersection_report(&p, &q, &p, &r, &s).value()
+    {
+        assert_eq!(
+            Some(report.relation),
+            segment_triangle,
+            "segment/triangle report relation must match scalar classifier"
+        );
+        report
+            .validate_against_sources(&p, &q, &p, &r, &s, PredicatePolicy::default())
+            .expect("segment/triangle report must replay against exact sources");
+        if report.relation.intersects() && report.relation != hyperlimit::SegmentTriangleIntersection::Coplanar {
+            assert!(
+                report.has_candidate_point(),
+                "non-coplanar segment/triangle contacts must retain a candidate point"
+            );
+        }
     }
 
     let triangle_degeneracy = classify_triangle3_degeneracy(&p, &q, &r);

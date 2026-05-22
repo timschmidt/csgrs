@@ -1,14 +1,20 @@
 //! Triangle classification predicates.
 
 use crate::classify::{
-    RayTriangleIntersection, SegmentTriangleIntersection, TetrahedronLocation, Triangle3Location,
-    TriangleLocation,
+    PlaneSide, RayTriangleIntersection, SegmentTriangleIntersection, TetrahedronLocation,
+    Triangle3Location, TriangleLocation,
 };
 use crate::geometry::{HomogeneousLine3, Plane3, Point2, Point3, Triangle2Facts, triangle2_facts};
 use crate::predicate::{
-    Certainty, Escalation, PredicateOutcome, PredicatePolicy, RefinementNeed, Sign,
+    Certainty, Escalation, PredicateOutcome, PredicatePolicy, PredicateUse, RefinementNeed, Sign,
 };
-use crate::predicates::orient::{orient2d_with_policy, orient3d_with_policy};
+use crate::predicates::orient::{
+    orient2d_with_policy, orient3d_report_with_policy, orient3d_with_policy,
+};
+use crate::predicates::segment_plane::{
+    SegmentPlaneIntersection, SegmentPlaneRelation, SegmentPlaneValidationError,
+    intersect_segment_with_plane_values, point_plane_value,
+};
 use crate::real::{add_ref, mul_ref, sub_ref};
 use crate::resolve::resolve_real_sign;
 use hyperreal::Real;
@@ -248,6 +254,89 @@ impl<'a> PreparedTriangle3<'a> {
     }
 }
 
+/// Structural inconsistency in a retained segment/triangle report.
+///
+/// The report validates the composition of a segment/plane construction event
+/// with a point/triangle classifier. This follows Yap's exact geometric
+/// computation boundary: the exact predicate layer owns replayable evidence,
+/// while mesh, voxel, and boolean crates own any topology mutation derived from
+/// that evidence. See Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997).
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum SegmentTriangleValidationError {
+    /// The retained segment/plane event is internally inconsistent.
+    PlaneEventInvalid(SegmentPlaneValidationError),
+    /// A retained point/triangle location was missing when the plane event
+    /// constructed a candidate point.
+    MissingTriangleLocation,
+    /// A retained point/triangle location was present for a relation that
+    /// should not construct a single candidate point.
+    UnexpectedTriangleLocation,
+    /// Retained plane-event and point/triangle facts derive a different coarse
+    /// relation.
+    RelationMismatch,
+    /// Recomputing from source geometry did not reproduce this report.
+    SourceReplayMismatch,
+}
+
+/// Report-bearing segment/triangle intersection classification.
+///
+/// The coarse [`SegmentTriangleIntersection`] relation is kept for cheap
+/// callers, while this report retains the exact segment/plane construction and
+/// the point/triangle location that justified it. Proper crossings keep the
+/// determinant-ratio segment parameter through [`SegmentPlaneIntersection`].
+/// This is the construction-preserving counterpart to the
+/// Moller/Guigue-Devillers triangle-intersection decompositions and uses Yap's
+/// report-before-topology discipline.
+#[derive(Clone, Debug, PartialEq)]
+pub struct SegmentTriangleIntersectionReport {
+    /// Coarse segment/triangle relation.
+    pub relation: SegmentTriangleIntersection,
+    /// Exact segment against triangle-supporting-plane event.
+    pub plane_event: SegmentPlaneIntersection,
+    /// Location of the constructed endpoint or proper-crossing point relative
+    /// to the closed triangle.
+    pub triangle_location: Option<Triangle3Location>,
+}
+
+impl SegmentTriangleIntersectionReport {
+    /// Validate retained construction and classification facts.
+    pub fn validate(&self) -> Result<(), SegmentTriangleValidationError> {
+        self.plane_event
+            .validate()
+            .map_err(SegmentTriangleValidationError::PlaneEventInvalid)?;
+        let expected =
+            relation_from_segment_plane_event(&self.plane_event, self.triangle_location)?;
+        if expected == self.relation {
+            Ok(())
+        } else {
+            Err(SegmentTriangleValidationError::RelationMismatch)
+        }
+    }
+
+    /// Replay this report against source segment and triangle geometry.
+    pub fn validate_against_sources(
+        &self,
+        p: &Point3,
+        q: &Point3,
+        a: &Point3,
+        b: &Point3,
+        c: &Point3,
+        policy: PredicatePolicy,
+    ) -> Result<(), SegmentTriangleValidationError> {
+        self.validate()?;
+        match classify_segment_triangle3_intersection_report_with_policy(p, q, a, b, c, policy) {
+            PredicateOutcome::Decided { value, .. } if &value == self => Ok(()),
+            _ => Err(SegmentTriangleValidationError::SourceReplayMismatch),
+        }
+    }
+
+    /// Return whether this report retained a constructed candidate point.
+    pub fn has_candidate_point(&self) -> bool {
+        self.plane_event.point.is_some()
+    }
+}
+
 /// Classify `point` relative to triangle `abc`.
 pub fn classify_point_triangle(
     a: &Point2,
@@ -349,6 +438,118 @@ pub fn classify_segment_triangle3_intersection(
     c: &Point3,
 ) -> PredicateOutcome<SegmentTriangleIntersection> {
     classify_segment_triangle3_intersection_with_policy(p, q, a, b, c, PredicatePolicy::default())
+}
+
+/// Classify a closed 3D segment against a triangle and retain exact
+/// construction evidence.
+pub fn classify_segment_triangle3_intersection_report(
+    p: &Point3,
+    q: &Point3,
+    a: &Point3,
+    b: &Point3,
+    c: &Point3,
+) -> PredicateOutcome<SegmentTriangleIntersectionReport> {
+    classify_segment_triangle3_intersection_report_with_policy(
+        p,
+        q,
+        a,
+        b,
+        c,
+        PredicatePolicy::default(),
+    )
+}
+
+/// Policy-controlled report-bearing variant of
+/// [`classify_segment_triangle3_intersection`].
+///
+/// Endpoint signs are first certified against the triangle's supporting plane.
+/// A single candidate point is retained only for endpoint-on-plane and proper
+/// crossing events, using the exact segment/plane determinant ratio described
+/// by Yap (1997) and used by robust triangle-intersection pipelines such as
+/// Moller (1997) and Guigue-Devillers (2003). The candidate is then replayed
+/// through the exact 3D point/triangle classifier before the coarse relation is
+/// accepted.
+pub fn classify_segment_triangle3_intersection_report_with_policy(
+    p: &Point3,
+    q: &Point3,
+    a: &Point3,
+    b: &Point3,
+    c: &Point3,
+    policy: PredicatePolicy,
+) -> PredicateOutcome<SegmentTriangleIntersectionReport> {
+    crate::trace_dispatch!(
+        "hyperlimit",
+        "segment_triangle3_report",
+        "plane-event-replay"
+    );
+    let plane = triangle_support_plane(a, b, c);
+    let reports = [
+        orient3d_report_with_policy(a, b, c, p, policy),
+        orient3d_report_with_policy(a, b, c, q, policy),
+    ];
+    for report in reports {
+        if let PredicateOutcome::Unknown { needed, stage } = report.outcome {
+            return PredicateOutcome::unknown(needed, stage);
+        }
+    }
+    let predicates = reports
+        .iter()
+        .map(|report| PredicateUse::from_certificate(report.certificate))
+        .collect::<Vec<_>>();
+    let sides = [
+        reports[0].value().map(PlaneSide::from),
+        reports[1].value().map(PlaneSide::from),
+    ];
+    let d0 = point_plane_value(&plane, p);
+    let d1 = point_plane_value(&plane, q);
+    let plane_event = intersect_segment_with_plane_values(&d0, &d1, p, q, sides, predicates);
+
+    match plane_event.relation {
+        SegmentPlaneRelation::Unknown => {
+            PredicateOutcome::unknown(RefinementNeed::Unsupported, Escalation::Undecided)
+        }
+        SegmentPlaneRelation::ConstructionFailed => {
+            PredicateOutcome::unknown(RefinementNeed::Unsupported, Escalation::Exact)
+        }
+        SegmentPlaneRelation::Disjoint | SegmentPlaneRelation::Coplanar => {
+            let relation = match plane_event.relation {
+                SegmentPlaneRelation::Disjoint => SegmentTriangleIntersection::Disjoint,
+                SegmentPlaneRelation::Coplanar => SegmentTriangleIntersection::Coplanar,
+                _ => unreachable!("matched above"),
+            };
+            PredicateOutcome::decided(
+                SegmentTriangleIntersectionReport {
+                    relation,
+                    plane_event,
+                    triangle_location: None,
+                },
+                Certainty::Exact,
+                Escalation::Exact,
+            )
+        }
+        SegmentPlaneRelation::EndpointOnPlane | SegmentPlaneRelation::ProperCrossing => {
+            let Some(point) = plane_event.point.as_ref() else {
+                return PredicateOutcome::unknown(RefinementNeed::Unsupported, Escalation::Exact);
+            };
+            let location = match classify_point_triangle3_with_policy(a, b, c, point, policy) {
+                PredicateOutcome::Decided { value, .. } => value,
+                PredicateOutcome::Unknown { needed, stage } => {
+                    return PredicateOutcome::unknown(needed, stage);
+                }
+            };
+            let relation =
+                relation_from_constructed_segment_triangle_point(plane_event.relation, location);
+            PredicateOutcome::decided(
+                SegmentTriangleIntersectionReport {
+                    relation,
+                    plane_event,
+                    triangle_location: Some(location),
+                },
+                Certainty::Exact,
+                Escalation::Exact,
+            )
+        }
+    }
 }
 
 /// Classify the intersection of a closed 3D segment `pq` with triangle `abc`
@@ -1000,6 +1201,60 @@ fn segment_endpoint_triangle_relation(
     }
 }
 
+fn relation_from_segment_plane_event(
+    plane_event: &SegmentPlaneIntersection,
+    triangle_location: Option<Triangle3Location>,
+) -> Result<SegmentTriangleIntersection, SegmentTriangleValidationError> {
+    match plane_event.relation {
+        SegmentPlaneRelation::Disjoint => {
+            if triangle_location.is_some() {
+                Err(SegmentTriangleValidationError::UnexpectedTriangleLocation)
+            } else {
+                Ok(SegmentTriangleIntersection::Disjoint)
+            }
+        }
+        SegmentPlaneRelation::Coplanar => {
+            if triangle_location.is_some() {
+                Err(SegmentTriangleValidationError::UnexpectedTriangleLocation)
+            } else {
+                Ok(SegmentTriangleIntersection::Coplanar)
+            }
+        }
+        SegmentPlaneRelation::EndpointOnPlane | SegmentPlaneRelation::ProperCrossing => {
+            let Some(location) = triangle_location else {
+                return Err(SegmentTriangleValidationError::MissingTriangleLocation);
+            };
+            Ok(relation_from_constructed_segment_triangle_point(
+                plane_event.relation,
+                location,
+            ))
+        }
+        SegmentPlaneRelation::Unknown | SegmentPlaneRelation::ConstructionFailed => {
+            Err(SegmentTriangleValidationError::RelationMismatch)
+        }
+    }
+}
+
+fn relation_from_constructed_segment_triangle_point(
+    plane_relation: SegmentPlaneRelation,
+    location: Triangle3Location,
+) -> SegmentTriangleIntersection {
+    match (plane_relation, location) {
+        (SegmentPlaneRelation::ProperCrossing, Triangle3Location::Inside) => {
+            SegmentTriangleIntersection::Proper
+        }
+        (
+            SegmentPlaneRelation::EndpointOnPlane,
+            Triangle3Location::Inside | Triangle3Location::OnEdge | Triangle3Location::OnVertex,
+        )
+        | (
+            SegmentPlaneRelation::ProperCrossing,
+            Triangle3Location::OnEdge | Triangle3Location::OnVertex,
+        ) => SegmentTriangleIntersection::BoundaryTouch,
+        _ => SegmentTriangleIntersection::Disjoint,
+    }
+}
+
 fn segment_triangle_sign(
     outcome: PredicateOutcome<Sign>,
     certainty: &mut Certainty,
@@ -1389,6 +1644,78 @@ mod tests {
             .value(),
             Some(SegmentTriangleIntersection::Coplanar)
         );
+    }
+
+    #[test]
+    fn segment_triangle3_report_retains_crossing_construction() {
+        let a = p3(0.0, 0.0, 0.0);
+        let b = p3(4.0, 0.0, 0.0);
+        let c = p3(0.0, 4.0, 0.0);
+        let p = p3(1.0, 1.0, -1.0);
+        let q = p3(1.0, 1.0, 1.0);
+        let report = classify_segment_triangle3_intersection_report(&p, &q, &a, &b, &c)
+            .value()
+            .expect("exact crossing should decide");
+
+        assert_eq!(report.relation, SegmentTriangleIntersection::Proper);
+        assert_eq!(
+            report.plane_event.relation,
+            SegmentPlaneRelation::ProperCrossing
+        );
+        assert!(report.has_candidate_point());
+        assert_eq!(report.triangle_location, Some(Triangle3Location::Inside));
+        assert!(report.plane_event.parameter_ratio.is_some());
+        assert_eq!(report.validate(), Ok(()));
+        assert_eq!(
+            report.validate_against_sources(&p, &q, &a, &b, &c, PredicatePolicy::default()),
+            Ok(())
+        );
+    }
+
+    #[test]
+    fn segment_triangle3_report_keeps_endpoint_and_coplanar_cases_distinct() {
+        let a = p3(0.0, 0.0, 0.0);
+        let b = p3(4.0, 0.0, 0.0);
+        let c = p3(0.0, 4.0, 0.0);
+        let endpoint = classify_segment_triangle3_intersection_report(
+            &p3(4.0, 0.0, 0.0),
+            &p3(4.0, 0.0, 3.0),
+            &a,
+            &b,
+            &c,
+        )
+        .value()
+        .expect("endpoint touch should decide");
+        let coplanar = classify_segment_triangle3_intersection_report(
+            &p3(1.0, 1.0, 0.0),
+            &p3(2.0, 1.0, 0.0),
+            &a,
+            &b,
+            &c,
+        )
+        .value()
+        .expect("coplanar segment should decide");
+
+        assert_eq!(
+            endpoint.relation,
+            SegmentTriangleIntersection::BoundaryTouch
+        );
+        assert_eq!(
+            endpoint.plane_event.relation,
+            SegmentPlaneRelation::EndpointOnPlane
+        );
+        assert_eq!(
+            endpoint.triangle_location,
+            Some(Triangle3Location::OnVertex)
+        );
+        assert_eq!(endpoint.validate(), Ok(()));
+        assert_eq!(coplanar.relation, SegmentTriangleIntersection::Coplanar);
+        assert_eq!(
+            coplanar.plane_event.relation,
+            SegmentPlaneRelation::Coplanar
+        );
+        assert_eq!(coplanar.triangle_location, None);
+        assert_eq!(coplanar.validate(), Ok(()));
     }
 
     #[test]

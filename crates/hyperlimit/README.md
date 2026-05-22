@@ -118,6 +118,8 @@ Version `0.4.0` is an early but usable predicate crate. It currently includes:
 - exact report-bearing 3D triangle/triangle classification that composes
   plane-side rejection, segment/triangle edge replay, and coplanar projected
   overlap predicates;
+- exact segment/triangle reports that retain segment-plane crossing parameters,
+  candidate points, and point/triangle replay evidence;
 - exact support k-DOP slab carriers with witness-preserving point and AABB projection
   classifiers;
 - exact 3D halfspace feasibility reports over `Plane3` systems, using active-set
