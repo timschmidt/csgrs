@@ -59,6 +59,16 @@ fn primitive_profile_constructors_promote_scalars_through_hyperreal() {
 }
 
 #[test]
+fn profile_extrude_promotes_height_through_hyperreal() {
+    let sketch = Profile::<()>::rectangle(2, hyperreal::Real::from(1), ());
+    let hyper_height = sketch.extrude(hyperreal::Real::from(1));
+    let int_height = sketch.extrude(1);
+
+    assert!(!hyper_height.polygons.is_empty());
+    assert_eq!(hyper_height.polygons.len(), int_height.polygons.len());
+}
+
+#[test]
 fn region_profiles_are_hypercurve_projection_products() {
     let sketch = Profile::<()>::square(4.0, ());
     let options = FiniteProjectionOptions::try_new(1.0e-3).unwrap();

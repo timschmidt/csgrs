@@ -2,10 +2,10 @@
 
 use crate::errors::ValidationError;
 use crate::float_types::{
-    Real, hangle_sin_cos, hdegrees_to_radians, hpoints_exactly_equal, hreal_div,
+    HReal, Real, hangle_sin_cos, hdegrees_to_radians, hpoints_exactly_equal, hreal_div,
     hreal_f64s_exactly_equal, hreal_from_f64, hreal_gt_f64, hreal_lt_f64, hreal_mul,
-    hrotation_between_vectors, htranslation_matrix, hunit_cross_vector3, hunit_vector3,
-    hvector3_from_point3, hvector3_from_vector3, hvectors_exactly_equal,
+    hreal_to_f64, hrotation_between_vectors, htranslation_matrix, hunit_cross_vector3,
+    hunit_vector3, hvector3_from_point3, hvector3_from_vector3, hvectors_exactly_equal,
     hxy_ring_orientation_sign,
 };
 use crate::mesh::Mesh;
@@ -24,6 +24,21 @@ use std::sync::OnceLock;
 fn mesh_projection_options() -> FiniteProjectionOptions {
     FiniteProjectionOptions::try_new(1e-3)
         .expect("positive finite projection tolerance is valid")
+}
+
+/// Promote an extrusion scalar through hyperreal and export it only at the
+/// current finite mesh boundary.
+///
+/// This keeps the public `Profile::extrude` API centered on
+/// `hyperreal::Real`, while still accepting promotable primitive numbers at
+/// caller edges. The boundary split follows Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7(1-2), 1997
+/// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+fn finite_extrude_scalar<S>(value: S) -> Option<Real>
+where
+    S: TryInto<HReal>,
+{
+    hreal_to_f64(&value.try_into().ok()?)
 }
 
 fn finite_triangles_to_xy_points(triangles: Vec<FiniteTriangle2>) -> Vec<[Point3<Real>; 3]> {
@@ -64,7 +79,13 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// Linearly extrude this (2D) shape in the +Z direction by `height`.
     ///
     /// This is just a convenience wrapper around extrude_vector using Vector3::new(0.0, 0.0, height)
-    pub fn extrude(&self, height: Real) -> Mesh<M> {
+    pub fn extrude<H>(&self, height: H) -> Mesh<M>
+    where
+        H: TryInto<HReal>,
+    {
+        let Some(height) = finite_extrude_scalar(height) else {
+            return Mesh::empty(self.metadata.clone());
+        };
         self.extrude_vector(Vector3::new(0.0, 0.0, height))
     }
 
