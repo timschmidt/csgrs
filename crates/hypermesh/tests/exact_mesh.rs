@@ -4234,6 +4234,7 @@ fn exact_face_region_triangulates_through_feature_gated_hypertri() {
         region_classifications: Vec::new(),
         blocker: None,
         arrangement_readiness: None,
+        coplanar_volumetric_evidence: None,
     };
     assert_eq!(
         certified_selected_preflight.validate().unwrap_err(),
@@ -4250,6 +4251,7 @@ fn exact_face_region_triangulates_through_feature_gated_hypertri() {
         region_classifications: Vec::new(),
         blocker: None,
         arrangement_readiness: None,
+        coplanar_volumetric_evidence: None,
     };
     assert_eq!(
         certified_with_graph_evidence.validate().unwrap_err(),
@@ -4266,6 +4268,7 @@ fn exact_face_region_triangulates_through_feature_gated_hypertri() {
         region_classifications: Vec::new(),
         blocker: None,
         arrangement_readiness: None,
+        coplanar_volumetric_evidence: None,
     };
     assert_eq!(
         selected_policy_for_named_operation.validate().unwrap_err(),
@@ -4289,6 +4292,7 @@ fn exact_face_region_triangulates_through_feature_gated_hypertri() {
             construction_failed_events: 0,
         }),
         arrangement_readiness: None,
+        coplanar_volumetric_evidence: None,
     };
     assert_eq!(
         winding_preflight_without_pairs.validate().unwrap_err(),
@@ -7610,7 +7614,37 @@ fn exact_non_rectilinear_coplanar_volumetric_overlap_splits_source_faces() {
             hypermesh::exact::ExactBooleanSupport::CertifiedWindingMaterialized
         );
         assert!(preflight.blocker.is_none());
+        let preflight_evidence = preflight
+            .coplanar_volumetric_evidence
+            .as_ref()
+            .expect("materialized coplanar-volumetric preflight retains source evidence");
+        preflight_evidence.validate().unwrap();
+        assert_eq!(
+            preflight_evidence.obstacle,
+            CoplanarVolumetricCellObstacle::MixedCoplanarAndCrossingCells
+        );
         assert!(preflight.region_count > 0);
+
+        let readiness =
+            hypermesh::exact::certify_winding_readiness_report(&left, &right, operation).unwrap();
+        readiness.validate().unwrap();
+        assert_eq!(
+            readiness.status,
+            hypermesh::exact::ExactWindingReadinessStatus::Ready
+        );
+        assert_eq!(
+            readiness
+                .coplanar_volumetric_evidence
+                .as_ref()
+                .map(|evidence| evidence.obstacle),
+            Some(CoplanarVolumetricCellObstacle::MixedCoplanarAndCrossingCells)
+        );
+        let mut missing_readiness_evidence = readiness.clone();
+        missing_readiness_evidence.coplanar_volumetric_evidence = None;
+        assert_eq!(
+            missing_readiness_evidence.validate().unwrap_err(),
+            hypermesh::exact::ExactReportValidationError::MissingCoplanarVolumetricEvidence
+        );
 
         let result =
             hypermesh::exact::boolean_exact(&left, &right, operation, ValidationPolicy::CLOSED)
@@ -8140,6 +8174,7 @@ fn exact_graph_shortcut_reports_retain_rejection_state() {
             construction_failed_events: 0,
         },
         arrangement_readiness: None,
+        coplanar_volumetric_evidence: None,
     };
     assert_eq!(
         impossible_winding_report.validate().unwrap_err(),
@@ -8346,6 +8381,7 @@ fn exact_graph_shortcut_reports_retain_rejection_state() {
             construction_failed_events: 0,
         },
         arrangement_readiness: None,
+        coplanar_volumetric_evidence: None,
     };
     assert_eq!(
         unknown_winding_status_mismatch.validate().unwrap_err(),
@@ -8369,6 +8405,7 @@ fn exact_graph_shortcut_reports_retain_rejection_state() {
             construction_failed_events: 1,
         },
         arrangement_readiness: None,
+        coplanar_volumetric_evidence: None,
     };
     assert_eq!(
         construction_failed_winding_report.validate().unwrap_err(),
@@ -8402,6 +8439,7 @@ fn exact_graph_shortcut_reports_retain_rejection_state() {
             construction_failed_events: 0,
         },
         arrangement_readiness: None,
+        coplanar_volumetric_evidence: None,
     };
     assert_eq!(
         undecided_winding_region.validate().unwrap_err(),
@@ -8509,6 +8547,7 @@ fn exact_graph_shortcut_reports_retain_rejection_state() {
             construction_failed_events: 0,
         },
         arrangement_readiness: None,
+        coplanar_volumetric_evidence: None,
     };
     assert_eq!(
         winding_selected_ready.validate().unwrap_err(),
@@ -8532,6 +8571,7 @@ fn exact_graph_shortcut_reports_retain_rejection_state() {
             construction_failed_events: 0,
         },
         arrangement_readiness: None,
+        coplanar_volumetric_evidence: None,
     };
     assert_eq!(
         winding_no_overlap_with_pairs.validate().unwrap_err(),
@@ -8555,6 +8595,7 @@ fn exact_graph_shortcut_reports_retain_rejection_state() {
             construction_failed_events: 0,
         },
         arrangement_readiness: None,
+        coplanar_volumetric_evidence: None,
     };
     assert_eq!(
         coplanar_volumetric_wrong_blocker.validate().unwrap_err(),
@@ -8579,6 +8620,7 @@ fn exact_graph_shortcut_reports_retain_rejection_state() {
                 construction_failed_events: 0,
             },
             arrangement_readiness: None,
+            coplanar_volumetric_evidence: None,
         };
     assert_eq!(
         coplanar_volumetric_without_coplanar_evidence

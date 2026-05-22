@@ -5092,6 +5092,7 @@ fn exact_policy_report_refinement_blocker_validation(c: &mut Criterion) {
                     region_classifications: Vec::new(),
                     blocker: open.blocker.clone(),
                     arrangement_readiness: None,
+                    coplanar_volumetric_evidence: None,
                 };
                 let valid = (
                     open.validate(),
@@ -6308,13 +6309,21 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
             "exact_boolean_non_rectilinear_coplanar_volumetric_cells",
             |b| {
                 b.iter(|| {
+                    let preflight = hypermesh::exact::preflight_boolean_exact(
+                        &non_rectilinear_coplanar_left,
+                        &non_rectilinear_coplanar_right,
+                        hypermesh::exact::ExactBooleanOperation::Union,
+                    )
+                    .unwrap();
+                    let preflight_retains_evidence = preflight
+                        .coplanar_volumetric_evidence
+                        .as_ref()
+                        .is_some_and(|evidence| {
+                            evidence.obstacle.requires_coplanar_volumetric_cells()
+                        });
                     (
-                        hypermesh::exact::preflight_boolean_exact(
-                            &non_rectilinear_coplanar_left,
-                            &non_rectilinear_coplanar_right,
-                            hypermesh::exact::ExactBooleanOperation::Union,
-                        )
-                        .unwrap(),
+                        preflight,
+                        preflight_retains_evidence,
                         hypermesh::exact::boolean_exact(
                             &non_rectilinear_coplanar_left,
                             &non_rectilinear_coplanar_right,

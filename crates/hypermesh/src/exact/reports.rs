@@ -43,6 +43,8 @@ use super::region::{
 use super::validation::ValidationPolicy;
 #[cfg(feature = "exact-triangulation")]
 use super::volumetric::{ExactVolumetricRegionClassification, ExactVolumetricRegionError};
+#[cfg(feature = "exact-triangulation")]
+use super::volumetric_cells::CoplanarVolumetricCellEvidenceReport;
 
 /// Validation failure for an exact report object.
 ///
@@ -154,6 +156,16 @@ pub enum ExactReportValidationError {
     /// A retained planar-arrangement readiness summary failed its own count
     /// audit.
     InvalidArrangementReadiness,
+    /// A coplanar-volumetric blocker did not retain its source-aware evidence.
+    MissingCoplanarVolumetricEvidence,
+    /// Coplanar-volumetric evidence was retained for a report state that
+    /// cannot consume it.
+    UnexpectedCoplanarVolumetricEvidence,
+    /// Retained coplanar-volumetric evidence failed its local count audit.
+    InvalidCoplanarVolumetricEvidence,
+    /// Retained coplanar-volumetric evidence disagrees with the report's
+    /// blocker counts or status.
+    CoplanarVolumetricEvidenceMismatch,
     /// The report's unknown-graph flag contradicts its status.
     GraphUnknownStatusMismatch,
     /// The report status contradicts retained preconditions, relation counts,
@@ -201,6 +213,15 @@ pub enum ExactReportFreshness {
     InvalidArrangementReadiness,
     /// Readiness counts no longer agree with retained blocker counts.
     StaleArrangementReadiness,
+    /// Required coplanar-volumetric evidence is absent.
+    MissingCoplanarVolumetricEvidence,
+    /// Coplanar-volumetric evidence is present for a status that cannot use it.
+    UnexpectedCoplanarVolumetricEvidence,
+    /// The retained coplanar-volumetric evidence failed its own validation.
+    InvalidCoplanarVolumetricEvidence,
+    /// Volumetric-cell evidence counts no longer agree with retained blocker
+    /// counts or report status.
+    StaleCoplanarVolumetricEvidence,
     /// A validation error outside the report's freshness categories occurred.
     InvalidReportShape,
     /// The report is locally valid but no longer replays from the sources.
@@ -236,6 +257,18 @@ impl From<ExactReportValidationError> for ExactReportFreshness {
             }
             ExactReportValidationError::ArrangementReadinessMismatch => {
                 Self::StaleArrangementReadiness
+            }
+            ExactReportValidationError::MissingCoplanarVolumetricEvidence => {
+                Self::MissingCoplanarVolumetricEvidence
+            }
+            ExactReportValidationError::UnexpectedCoplanarVolumetricEvidence => {
+                Self::UnexpectedCoplanarVolumetricEvidence
+            }
+            ExactReportValidationError::InvalidCoplanarVolumetricEvidence => {
+                Self::InvalidCoplanarVolumetricEvidence
+            }
+            ExactReportValidationError::CoplanarVolumetricEvidenceMismatch => {
+                Self::StaleCoplanarVolumetricEvidence
             }
             ExactReportValidationError::SourceReplayMismatch => Self::SourceReplayMismatch,
             _ => Self::InvalidReportShape,
@@ -465,6 +498,53 @@ fn checked_region_facts(
         return Err(ExactReportValidationError::RegionCountMismatch);
     }
     Ok(())
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn validate_coplanar_volumetric_evidence_matches_blocker(
+    evidence: &CoplanarVolumetricCellEvidenceReport,
+    blocker: &ExactBooleanBlocker,
+) -> Result<(), ExactReportValidationError> {
+    evidence
+        .validate()
+        .map_err(|_| ExactReportValidationError::InvalidCoplanarVolumetricEvidence)?;
+    if evidence.candidate_pairs != blocker.candidate_pairs
+        || evidence.coplanar_touching_pairs != blocker.coplanar_touching_pairs
+        || evidence.coplanar_overlapping_pairs != blocker.coplanar_overlapping_pairs
+        || evidence.unknown_pairs != blocker.unknown_pairs
+        || evidence.construction_failed_events != blocker.construction_failed_events
+    {
+        return Err(ExactReportValidationError::CoplanarVolumetricEvidenceMismatch);
+    }
+    Ok(())
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn validate_coplanar_volumetric_evidence_shape(
+    evidence: &CoplanarVolumetricCellEvidenceReport,
+    retained_face_pairs: usize,
+    retained_events: usize,
+) -> Result<(), ExactReportValidationError> {
+    evidence
+        .validate()
+        .map_err(|_| ExactReportValidationError::InvalidCoplanarVolumetricEvidence)?;
+    if !evidence.obstacle.requires_coplanar_volumetric_cells()
+        || evidence.retained_face_pair_count != retained_face_pairs
+        || coplanar_volumetric_evidence_event_count(evidence) != retained_events
+    {
+        return Err(ExactReportValidationError::CoplanarVolumetricEvidenceMismatch);
+    }
+    Ok(())
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn coplanar_volumetric_evidence_event_count(
+    evidence: &CoplanarVolumetricCellEvidenceReport,
+) -> usize {
+    evidence
+        .segment_plane_events
+        .saturating_add(evidence.coplanar_edge_events)
+        .saturating_add(evidence.coplanar_vertex_events)
 }
 
 /// Auditable result of an exact selected-region boolean pipeline.
@@ -1550,6 +1630,16 @@ pub struct ExactBooleanPreflight {
     /// structured program state; the positive-area coplanar graph evidence
     /// must not be flattened into a generic "unsupported" boolean.
     pub arrangement_readiness: Option<CoplanarArrangementReadinessReport>,
+    /// Source-aware coplanar volumetric-cell evidence retained when the
+    /// preflight crosses that exact boundary.
+    ///
+    /// This report separates boundary-only opposite-side shared faces from
+    /// same-side or undecided positive-area coplanar overlap. Retaining it
+    /// beside preflight follows Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7.1-2 (1997): the public report carries the
+    /// exact object evidence that authorized either a blocker or a
+    /// winding-materialized consumption of coplanar source-face cells.
+    pub coplanar_volumetric_evidence: Option<CoplanarVolumetricCellEvidenceReport>,
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -1589,6 +1679,15 @@ impl ExactBooleanPreflight {
             || (self.retained_face_pairs != 0 && self.retained_events == 0)
         {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        }
+        if self.coplanar_volumetric_evidence.is_some()
+            && !matches!(
+                self.support,
+                ExactBooleanSupport::CertifiedWindingMaterialized
+                    | ExactBooleanSupport::RequiresCoplanarVolumetricCells
+            )
+        {
+            return Err(ExactReportValidationError::UnexpectedCoplanarVolumetricEvidence);
         }
         match self.support {
             ExactBooleanSupport::CertifiedEmptyOperand
@@ -1701,6 +1800,13 @@ impl ExactBooleanPreflight {
                 if self.arrangement_readiness.is_some() {
                     return Err(ExactReportValidationError::UnexpectedArrangementReadiness);
                 }
+                if let Some(evidence) = &self.coplanar_volumetric_evidence {
+                    validate_coplanar_volumetric_evidence_shape(
+                        evidence,
+                        self.retained_face_pairs,
+                        self.retained_events,
+                    )?;
+                }
                 checked_region_facts(self.region_count, &self.region_classifications)
             }
             ExactBooleanSupport::RequiresBoundaryPolicy => {
@@ -1782,6 +1888,17 @@ impl ExactBooleanPreflight {
                 )?;
                 if self.arrangement_readiness.is_some() {
                     return Err(ExactReportValidationError::UnexpectedArrangementReadiness);
+                }
+                let evidence = self
+                    .coplanar_volumetric_evidence
+                    .as_ref()
+                    .ok_or(ExactReportValidationError::MissingCoplanarVolumetricEvidence)?;
+                validate_coplanar_volumetric_evidence_matches_blocker(
+                    evidence,
+                    self.blocker.as_ref().unwrap(),
+                )?;
+                if !evidence.obstacle.requires_coplanar_volumetric_cells() {
+                    return Err(ExactReportValidationError::CoplanarVolumetricEvidenceMismatch);
                 }
                 no_region_facts(self.region_count, &self.region_classifications)
             }
@@ -2821,6 +2938,13 @@ pub struct ExactWindingReadinessReport {
     /// Checked coplanar-overlap readiness retained when winding is blocked by
     /// planar-cell extraction rather than by volumetric inside/outside policy.
     pub arrangement_readiness: Option<CoplanarArrangementReadinessReport>,
+    /// Source-aware coplanar volumetric-cell evidence retained when readiness
+    /// is blocked by, or has just consumed, coplanar source-face cells.
+    ///
+    /// The winding handoff must not reduce this state to raw coplanar pair
+    /// counts: exact side evidence is what distinguishes boundary-only contact
+    /// from a real volumetric-cell topology obligation.
+    pub coplanar_volumetric_evidence: Option<CoplanarVolumetricCellEvidenceReport>,
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -2893,6 +3017,15 @@ impl ExactWindingReadinessReport {
             matches!(self.status, ExactWindingReadinessStatus::GraphUnknowns),
             &self.blocker,
         )?;
+        if self.coplanar_volumetric_evidence.is_some()
+            && !matches!(
+                self.status,
+                ExactWindingReadinessStatus::Ready
+                    | ExactWindingReadinessStatus::CoplanarVolumetricCellsRequired
+            )
+        {
+            return Err(ExactReportValidationError::UnexpectedCoplanarVolumetricEvidence);
+        }
         match self.status {
             ExactWindingReadinessStatus::GraphUnknowns => {
                 if self.arrangement_readiness.is_some() {
@@ -3000,6 +3133,14 @@ impl ExactWindingReadinessReport {
                     self.retained_face_pairs,
                     self.retained_events,
                 )?;
+                let evidence = self
+                    .coplanar_volumetric_evidence
+                    .as_ref()
+                    .ok_or(ExactReportValidationError::MissingCoplanarVolumetricEvidence)?;
+                validate_coplanar_volumetric_evidence_matches_blocker(evidence, &self.blocker)?;
+                if !evidence.obstacle.requires_coplanar_volumetric_cells() {
+                    return Err(ExactReportValidationError::CoplanarVolumetricEvidenceMismatch);
+                }
                 no_region_facts(self.region_count, &self.region_classifications)
             }
             ExactWindingReadinessStatus::Ready => {
@@ -3024,6 +3165,33 @@ impl ExactWindingReadinessReport {
                     self.retained_face_pairs,
                     self.retained_events,
                 )?;
+                match (
+                    self.blocker.kind,
+                    self.coplanar_volumetric_evidence.as_ref(),
+                ) {
+                    (ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells, Some(evidence)) => {
+                        validate_coplanar_volumetric_evidence_matches_blocker(
+                            evidence,
+                            &self.blocker,
+                        )?;
+                        if !evidence.obstacle.requires_coplanar_volumetric_cells() {
+                            return Err(
+                                ExactReportValidationError::CoplanarVolumetricEvidenceMismatch,
+                            );
+                        }
+                    }
+                    (ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells, None) => {
+                        return Err(ExactReportValidationError::MissingCoplanarVolumetricEvidence);
+                    }
+                    (_, Some(evidence)) => {
+                        validate_coplanar_volumetric_evidence_shape(
+                            evidence,
+                            self.retained_face_pairs,
+                            self.retained_events,
+                        )?;
+                    }
+                    (_, None) => {}
+                }
                 checked_region_facts(self.region_count, &self.region_classifications)
             }
             ExactWindingReadinessStatus::NotNamedOperation

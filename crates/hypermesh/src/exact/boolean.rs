@@ -650,6 +650,7 @@ pub fn preflight_boolean_exact(
             region_classifications: Vec::new(),
             blocker: None,
             arrangement_readiness: None,
+            coplanar_volumetric_evidence: None,
         });
     }
 
@@ -670,6 +671,7 @@ pub fn preflight_boolean_exact(
             region_classifications: Vec::new(),
             blocker: Some(relation_counts.into_blocker(ExactBooleanBlockerKind::NeedsRefinement)),
             arrangement_readiness: None,
+            coplanar_volumetric_evidence: None,
         });
     }
     if relation_counts.construction_failed_events > 0 {
@@ -683,6 +685,7 @@ pub fn preflight_boolean_exact(
             region_classifications: Vec::new(),
             blocker: Some(relation_counts.into_blocker(ExactBooleanBlockerKind::NeedsRefinement)),
             arrangement_readiness: None,
+            coplanar_volumetric_evidence: None,
         });
     }
     if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
@@ -700,6 +703,7 @@ pub fn preflight_boolean_exact(
             region_classifications,
             blocker: None,
             arrangement_readiness: None,
+            coplanar_volumetric_evidence: None,
         });
     }
     let boundary_report = boundary_touching_report_from_graph(&graph, left, right)?;
@@ -714,6 +718,7 @@ pub fn preflight_boolean_exact(
             region_classifications: Vec::new(),
             blocker: Some(boundary_report.blocker),
             arrangement_readiness: None,
+            coplanar_volumetric_evidence: None,
         });
     }
     let planar_report = planar_arrangement_report_from_graph(&graph, left, right, operation)?;
@@ -728,6 +733,7 @@ pub fn preflight_boolean_exact(
             region_classifications: Vec::new(),
             blocker: Some(planar_report.blocker),
             arrangement_readiness: planar_report.arrangement_readiness,
+            coplanar_volumetric_evidence: None,
         });
     }
     let eager_axis_aligned_cell_support = match operation {
@@ -750,6 +756,7 @@ pub fn preflight_boolean_exact(
             region_classifications: Vec::new(),
             blocker: None,
             arrangement_readiness: None,
+            coplanar_volumetric_evidence: None,
         });
     }
     if let Some(solid_operation) = axis_aligned_orthogonal_solid_operation(operation)
@@ -765,6 +772,7 @@ pub fn preflight_boolean_exact(
             region_classifications: Vec::new(),
             blocker: None,
             arrangement_readiness: None,
+            coplanar_volumetric_evidence: None,
         });
     }
     if let Some((region_classifications, triangulations, _volumetric_classifications)) =
@@ -799,6 +807,9 @@ pub fn preflight_boolean_exact(
             region_classifications,
             blocker: None,
             arrangement_readiness: None,
+            coplanar_volumetric_evidence: coplanar_volumetric_evidence_if_required(
+                &graph, left, right,
+            ),
         });
     }
     if graph_requires_coplanar_volumetric_cells_for_sources(&graph, left, right) {
@@ -814,6 +825,9 @@ pub fn preflight_boolean_exact(
                 relation_counts.into_blocker(ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells),
             ),
             arrangement_readiness: None,
+            coplanar_volumetric_evidence: coplanar_volumetric_evidence_if_required(
+                &graph, left, right,
+            ),
         });
     }
 
@@ -829,6 +843,7 @@ pub fn preflight_boolean_exact(
         region_classifications: winding_report.region_classifications,
         blocker: Some(winding_report.blocker),
         arrangement_readiness: None,
+        coplanar_volumetric_evidence: winding_report.coplanar_volumetric_evidence,
     })
 }
 
@@ -967,6 +982,23 @@ fn graph_requires_coplanar_volumetric_cells_for_sources(
     CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right)
         .obstacle
         .requires_coplanar_volumetric_cells()
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn coplanar_volumetric_evidence_if_required(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Option<CoplanarVolumetricCellEvidenceReport> {
+    let counts = graph_relation_counts(graph);
+    if !graph_requires_coplanar_volumetric_cells(&counts) {
+        return None;
+    }
+    let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right);
+    evidence
+        .obstacle
+        .requires_coplanar_volumetric_cells()
+        .then_some(evidence)
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -3280,6 +3312,7 @@ fn winding_readiness_report_from_graph(
             Vec::new(),
             counts.into_blocker(ExactBooleanBlockerKind::NeedsWinding),
             None,
+            None,
         ));
     }
     if graph_had_unknowns {
@@ -3293,6 +3326,7 @@ fn winding_readiness_report_from_graph(
             Vec::new(),
             counts.into_blocker(ExactBooleanBlockerKind::NeedsRefinement),
             None,
+            None,
         ));
     }
     if graph_requires_boundary_policy(graph, left, right)? {
@@ -3305,6 +3339,7 @@ fn winding_readiness_report_from_graph(
             0,
             Vec::new(),
             counts.into_blocker(ExactBooleanBlockerKind::NeedsBoundaryPolicy),
+            None,
             None,
         ));
     }
@@ -3320,6 +3355,7 @@ fn winding_readiness_report_from_graph(
             Vec::new(),
             counts.into_blocker(ExactBooleanBlockerKind::NeedsPlanarArrangement),
             planar_report.arrangement_readiness,
+            None,
         ));
     }
     if planar_report.status == ExactPlanarArrangementStatus::AlreadyMaterialized {
@@ -3333,6 +3369,7 @@ fn winding_readiness_report_from_graph(
             Vec::new(),
             counts.into_blocker(ExactBooleanBlockerKind::NeedsPlanarArrangement),
             planar_report.arrangement_readiness,
+            None,
         ));
     }
     if let Some((region_classifications, triangulations, _volumetric_classifications)) =
@@ -3371,6 +3408,7 @@ fn winding_readiness_report_from_graph(
                 counts.into_blocker(ExactBooleanBlockerKind::NeedsWinding)
             },
             None,
+            coplanar_volumetric_evidence_if_required(graph, left, right),
         ));
     }
     if graph_requires_coplanar_volumetric_cells_for_sources(&graph, left, right) {
@@ -3384,6 +3422,7 @@ fn winding_readiness_report_from_graph(
             Vec::new(),
             counts.into_blocker(ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells),
             None,
+            coplanar_volumetric_evidence_if_required(graph, left, right),
         ));
     }
     if graph.face_pairs.is_empty() {
@@ -3396,6 +3435,7 @@ fn winding_readiness_report_from_graph(
             0,
             Vec::new(),
             counts.into_blocker(ExactBooleanBlockerKind::NeedsWinding),
+            None,
             None,
         ));
     }
@@ -3414,6 +3454,7 @@ fn winding_readiness_report_from_graph(
         region_classifications,
         counts.into_blocker(ExactBooleanBlockerKind::NeedsWinding),
         None,
+        None,
     ))
 }
 
@@ -3428,6 +3469,7 @@ fn winding_readiness_report(
     region_classifications: Vec<FaceRegionPlaneClassification>,
     blocker: ExactBooleanBlocker,
     arrangement_readiness: Option<super::graph::CoplanarArrangementReadinessReport>,
+    coplanar_volumetric_evidence: Option<CoplanarVolumetricCellEvidenceReport>,
 ) -> ExactWindingReadinessReport {
     ExactWindingReadinessReport {
         operation,
@@ -3439,6 +3481,7 @@ fn winding_readiness_report(
         region_classifications,
         blocker,
         arrangement_readiness,
+        coplanar_volumetric_evidence,
     }
 }
 

@@ -5591,6 +5591,12 @@ fn exercise_non_rectilinear_coplanar_volumetric_materialization() {
             preflight.support,
             ExactBooleanSupport::CertifiedWindingMaterialized
         );
+        let evidence = preflight
+            .coplanar_volumetric_evidence
+            .as_ref()
+            .expect("coplanar-volumetric preflight should retain source evidence");
+        evidence.validate().unwrap();
+        assert!(evidence.obstacle.requires_coplanar_volumetric_cells());
 
         let result =
             hypermesh::exact::boolean_exact(&left, &right, operation, ValidationPolicy::CLOSED)
