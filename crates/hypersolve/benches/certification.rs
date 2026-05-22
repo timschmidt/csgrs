@@ -310,6 +310,27 @@ fn sketch_problem_with_length_ratio_and_point_line(
     sketch
 }
 
+fn sketch_problem_with_length_differences(row_count: usize) -> hypersolve::SketchSolveProblem {
+    let mut sketch = hypersolve::SketchSolveProblem::new();
+    for index in 0..row_count {
+        let y = index as i64;
+        let start = sketch.add_point2d(format!("diff{index}.start"), r(0), r(y));
+        let shorter_end = sketch.add_point2d(format!("diff{index}.short"), r(4), r(y));
+        let longer_end = sketch.add_point2d(format!("diff{index}.long"), r(7), r(y));
+        let shorter = sketch.add_line_segment2(format!("diff{index}.shorter"), start, shorter_end);
+        let longer = sketch.add_line_segment2(format!("diff{index}.longer"), start, longer_end);
+        let difference = sketch.add_distance(format!("diff{index}.d"), r(3));
+        hypersolve::sketch_distance_builders::length_difference_lines2(
+            &mut sketch,
+            format!("length difference {index}"),
+            longer,
+            shorter,
+            difference,
+        );
+    }
+    sketch
+}
+
 fn sketch_problem_with_equal_point_line_distances(
     row_count: usize,
 ) -> hypersolve::SketchSolveProblem {
@@ -582,6 +603,10 @@ fn certification(c: &mut Criterion) {
     let length_ratio_point_line_sketch = sketch_problem_with_length_ratio_and_point_line(16);
     c.bench_function("sketch_length_ratio_point_line_lowering", |b| {
         b.iter(|| length_ratio_point_line_sketch.lower_to_problem())
+    });
+    let length_difference_sketch = sketch_problem_with_length_differences(16);
+    c.bench_function("sketch_length_difference_lowering", |b| {
+        b.iter(|| length_difference_sketch.lower_to_problem())
     });
     let equal_point_line_sketch = sketch_problem_with_equal_point_line_distances(16);
     c.bench_function("sketch_equal_point_line_distance_lowering", |b| {

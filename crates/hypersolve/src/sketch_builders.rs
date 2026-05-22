@@ -197,6 +197,35 @@ pub mod distance {
         }
     }
 
+    /// Add a 2D line length-difference relation.
+    ///
+    /// The retained relation is `length(longer) = length(shorter) +
+    /// difference`. Lowering uses the exact squared polynomial
+    /// `(A + B - d^2)^2 - 4AB == 0` plus the exact branch inequality
+    /// `A - B - d^2 >= 0`. This directly follows Yap's "Towards Exact
+    /// Geometric Computation" (1997): the algebraic predicate and its branch
+    /// assumptions are explicit proof rows.
+    pub fn length_difference_lines2(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        longer: SketchEntityHandle,
+        shorter: SketchEntityHandle,
+        difference: SketchEntityHandle,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::LengthDifferenceLines2 {
+            longer,
+            shorter,
+            difference,
+        };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Distance,
+            strategy: SketchResidualStrategy::SquaredLineLengthDifference,
+            kind,
+        }
+    }
+
     /// Add a 2D point-to-line distance relation.
     ///
     /// Lowering uses the exact polynomial

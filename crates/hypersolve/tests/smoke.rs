@@ -1399,6 +1399,107 @@ fn sketch_length_ratio_and_point_line_distance_report_bad_inputs() {
 }
 
 #[test]
+fn sketch_length_difference_relations_lower_to_exact_polynomial_and_branch_rows() {
+    let mut sketch = SketchSolveProblem::new();
+    let origin = sketch.add_point2d("origin", real(0), real(0));
+    let long_end = sketch.add_point2d("long end", real(7), real(0));
+    let short_end = sketch.add_point2d("short end", real(4), real(0));
+    let wrong_end = sketch.add_point2d("wrong end", real(6), real(0));
+    let longer = sketch.add_line_segment2("longer", origin, long_end);
+    let shorter = sketch.add_line_segment2("shorter", origin, short_end);
+    let wrong = sketch.add_line_segment2("wrong", origin, wrong_end);
+    let three = sketch.add_distance("three", real(3));
+    let two = sketch.add_distance("two", real(2));
+    let length_difference = sketch_distance_builders::length_difference_lines2(
+        &mut sketch,
+        "length difference",
+        longer,
+        shorter,
+        three,
+    );
+    sketch.add_length_difference_lines2("swapped branch", shorter, longer, three);
+    sketch.add_length_difference_lines2("wrong difference", longer, wrong, three);
+    sketch.add_length_difference_lines2("different distance", longer, wrong, two);
+
+    assert_eq!(
+        length_difference.strategy,
+        SketchResidualStrategy::SquaredLineLengthDifference
+    );
+
+    let lowered = sketch.lower_to_problem();
+    let certification = certify_candidate(
+        &PreparedProblem::new(&lowered.problem),
+        &context_from_problem(&lowered.problem),
+    );
+
+    assert_eq!(lowered.problem.constraints.len(), 8);
+    assert_eq!(lowered.rows.len(), 8);
+    assert!(lowered.rows.iter().all(|row| {
+        row.strategy == Some(SketchResidualStrategy::SquaredLineLengthDifference)
+            && row.status == SketchGeneratedRowStatus::Generated
+    }));
+    assert!(matches!(
+        certification.rows[0].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[1].status,
+        CertifiedCandidateStatus::CertifiedSatisfiedInequality { .. }
+    ));
+    assert!(matches!(
+        certification.rows[2].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[3].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
+    assert!(matches!(
+        certification.rows[4].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
+    assert!(matches!(
+        certification.rows[6].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
+}
+
+#[test]
+fn sketch_length_difference_relations_report_bad_inputs() {
+    let mut sketch = SketchSolveProblem::new();
+    let p = sketch.add_point2d("p", real(0), real(0));
+    let q = sketch.add_point2d("q", real(1), real(0));
+    let line = sketch.add_line_segment2("line", p, q);
+    let distance = sketch.add_distance("distance", real(1));
+    sketch.add_length_difference_lines2("missing longer", SketchEntityHandle(999), line, distance);
+    sketch.add_length_difference_lines2("wrong shorter", line, p, distance);
+    sketch.add_length_difference_lines2("wrong distance", line, line, line);
+
+    let lowered = sketch.lower_to_problem();
+
+    assert_eq!(lowered.problem.constraints.len(), 0);
+    assert_eq!(lowered.rows.len(), 3);
+    assert_eq!(
+        lowered.rows[0].status,
+        SketchGeneratedRowStatus::MissingEntity(SketchEntityHandle(999))
+    );
+    assert_eq!(
+        lowered.rows[1].status,
+        SketchGeneratedRowStatus::WrongEntityKind {
+            handle: p,
+            expected: "2D line segment"
+        }
+    );
+    assert_eq!(
+        lowered.rows[2].status,
+        SketchGeneratedRowStatus::WrongEntityKind {
+            handle: line,
+            expected: "distance"
+        }
+    );
+}
+
+#[test]
 fn sketch_equal_point_line_distance_relations_lower_to_exact_rows() {
     let mut sketch = SketchSolveProblem::new();
     let origin = sketch.add_point2d("origin", real(0), real(0));

@@ -375,6 +375,23 @@ pub enum SketchConstraintKind {
         /// Exact strictly positive ratio denominator.
         denominator: Real,
     },
+    /// 2D line-segment length-difference relation.
+    ///
+    /// The retained relation is `length(longer) = length(shorter) +
+    /// difference`. Lowering emits the exact polynomial
+    /// `(A + B - d^2)^2 - 4AB == 0`, where `A = |dir(longer)|^2` and
+    /// `B = |dir(shorter)|^2`, plus `A - B - d^2 >= 0` to reject the
+    /// opposite ordering branch. This follows Yap, "Towards Exact Geometric
+    /// Computation" (1997), by keeping square roots out of the proof row while
+    /// making branch assumptions explicit.
+    LengthDifferenceLines2 {
+        /// Line expected to be longer.
+        longer: SketchEntityHandle,
+        /// Line expected to be shorter.
+        shorter: SketchEntityHandle,
+        /// Distance entity for the exact length difference.
+        difference: SketchEntityHandle,
+    },
     /// 2D point-to-line distance relation.
     ///
     /// Lowering emits `cross(point-start, dir)^2 - distance^2*|dir|^2 == 0`.
@@ -603,6 +620,8 @@ pub enum SketchResidualStrategy {
     SquaredLineLengthEquality,
     /// Squared 2D line length ratio equality.
     SquaredLineLengthRatio,
+    /// Squared 2D line length difference equality/order package.
+    SquaredLineLengthDifference,
     /// Squared 2D point-to-line distance equality.
     SquaredPointLineDistance,
     /// Squared 2D line-length-to-point-line-distance equality.
@@ -1121,6 +1140,20 @@ impl SketchSolveProblem {
         denominator: Real,
     ) -> SketchConstraintHandle {
         distance::length_ratio_lines2(self, name, a, b, numerator, denominator).handle
+    }
+
+    /// Add a retained 2D line length-difference relation.
+    ///
+    /// Lowering emits an exact squared polynomial row and an exact ordering
+    /// inequality that selects the `longer >= shorter` branch.
+    pub fn add_length_difference_lines2(
+        &mut self,
+        name: impl Into<String>,
+        longer: SketchEntityHandle,
+        shorter: SketchEntityHandle,
+        difference: SketchEntityHandle,
+    ) -> SketchConstraintHandle {
+        distance::length_difference_lines2(self, name, longer, shorter, difference).handle
     }
 
     /// Add a retained 2D point-to-line distance relation.
@@ -1659,6 +1692,49 @@ impl SketchSolveProblem {
                     constraint.name.clone(),
                     squared_norm2(&a) * denominator_squared - squared_norm2(&b) * numerator_squared,
                     SketchResidualStrategy::SquaredLineLengthRatio,
+                );
+            }
+            SketchConstraintKind::LengthDifferenceLines2 {
+                longer,
+                shorter,
+                difference,
+            } => {
+                // For lengths l, s and difference d, the equation
+                // l = s + d can be replayed without square roots as
+                // (l^2 + s^2 - d^2)^2 - 4*l^2*s^2 == 0. The companion
+                // inequality l^2 - s^2 - d^2 >= 0 selects the intended
+                // nonnegative branch. Yap (1997) is the reason the branch is
+                // explicit instead of hidden in a floating proposal.
+                let (Some(longer), Some(shorter), Some(difference)) = (
+                    self.line2_direction(longer, constraint, rows),
+                    self.line2_direction(shorter, constraint, rows),
+                    self.distance_expr(difference, constraint, rows),
+                ) else {
+                    return;
+                };
+                let longer_squared = squared_norm2(&longer);
+                let shorter_squared = squared_norm2(&shorter);
+                let difference_squared = difference.clone() * difference;
+                let sum_minus_difference =
+                    longer_squared.clone() + shorter_squared.clone() - difference_squared.clone();
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} squared difference", constraint.name),
+                    sum_minus_difference.clone() * sum_minus_difference
+                        - Expr::int(4) * longer_squared.clone() * shorter_squared.clone(),
+                    SketchResidualStrategy::SquaredLineLengthDifference,
+                );
+                self.push_residual_with_kind(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} longer branch", constraint.name),
+                    longer_squared - shorter_squared - difference_squared,
+                    SketchResidualStrategy::SquaredLineLengthDifference,
+                    ConstraintKind::GreaterOrEqual,
+                    Real::one(),
                 );
             }
             SketchConstraintKind::PointLineDistance2 {

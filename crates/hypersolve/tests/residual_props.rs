@@ -402,6 +402,50 @@ proptest! {
     }
 
     #[test]
+    fn sketch_length_difference_rows_match_generated_horizontal_lengths(
+        x0 in -8_i16..=8,
+        y0 in -8_i16..=8,
+        shorter in 0_i16..=12,
+        difference in 0_i16..=12,
+    ) {
+        let x0 = i64::from(x0);
+        let y0 = i64::from(y0);
+        let shorter = i64::from(shorter);
+        let difference = i64::from(difference);
+        let mut sketch = SketchSolveProblem::new();
+        let start = sketch.add_point2d("start", Real::from(x0), Real::from(y0));
+        let shorter_end = sketch.add_point2d("shorter end", Real::from(x0 + shorter), Real::from(y0));
+        let longer_end = sketch.add_point2d(
+            "longer end",
+            Real::from(x0 + shorter + difference),
+            Real::from(y0),
+        );
+        let shorter_line = sketch.add_line_segment2("shorter", start, shorter_end);
+        let longer_line = sketch.add_line_segment2("longer", start, longer_end);
+        let difference = sketch.add_distance("difference", Real::from(difference));
+        sketch.add_length_difference_lines2(
+            "length difference",
+            longer_line,
+            shorter_line,
+            difference,
+        );
+
+        let lowered = sketch.lower_to_problem();
+        let certification = certify_candidate(
+            &PreparedProblem::new(&lowered.problem),
+            &context_from_problem(&lowered.problem),
+        );
+
+        prop_assert_eq!(lowered.rows.len(), 2);
+        let all_difference_rows = lowered.rows.iter().all(|row| {
+            row.strategy == Some(SketchResidualStrategy::SquaredLineLengthDifference)
+                && row.status == SketchGeneratedRowStatus::Generated
+        });
+        prop_assert!(all_difference_rows);
+        prop_assert!(certification.all_satisfied());
+    }
+
+    #[test]
     fn sketch_point_line_distance_rows_match_generated_horizontal_offsets(
         x0 in -8_i16..=8,
         y0 in -8_i16..=8,
