@@ -2015,7 +2015,7 @@ fn atan_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt 
     }
 
     let half = HALF_RATIONAL.deref();
-    if r <= &half {
+    if r <= half {
         return atan_rational_small(signal, r, p);
     }
 

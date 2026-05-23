@@ -622,7 +622,7 @@ fn real_matmul_6(left: &[Real], right: &[Real]) -> Vec<Real> {
         for col in 0..n {
             let mut sum = Real::zero();
             for k in 0..n {
-                sum = sum + (black_box(&left[row * n + k]) * black_box(&right[k * n + col]));
+                sum += black_box(&left[row * n + k]) * black_box(&right[k * n + col]);
             }
             out[row * n + col] = sum;
         }

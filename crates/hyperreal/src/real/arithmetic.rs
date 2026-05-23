@@ -539,7 +539,7 @@ impl Class {
                 Self::ln_computable(&product.left).multiply(Self::ln_computable(&product.right))
             }
             Log10(base) => {
-                Self::ln_computable(base).multiply(Self::ln_computable(&*rationals::TEN).inverse())
+                Self::ln_computable(base).multiply(Self::ln_computable(&rationals::TEN).inverse())
             }
             SinPi(rational) => {
                 let argument =
@@ -1149,6 +1149,38 @@ impl Real {
     pub fn e() -> Real {
         crate::trace_dispatch!("real", "constructor", "cached-e");
         constants::e()
+    }
+
+    /// Returns the smaller value according to certified partial ordering.
+    ///
+    /// If refinement cannot decide the order at the standard partial-order
+    /// precision, this keeps `self`, matching the conservative behavior of
+    /// [`PartialOrd`] callers that treat incomparability as no improvement.
+    pub fn min(self, other: Real) -> Real {
+        match self.partial_cmp(&other) {
+            Some(Ordering::Greater) => other,
+            _ => self,
+        }
+    }
+
+    /// Returns the larger value according to certified partial ordering.
+    ///
+    /// If refinement cannot decide the order at the standard partial-order
+    /// precision, this keeps `self`, matching the conservative behavior of
+    /// [`PartialOrd`] callers that treat incomparability as no improvement.
+    pub fn max(self, other: Real) -> Real {
+        match self.partial_cmp(&other) {
+            Some(Ordering::Less) => other,
+            _ => self,
+        }
+    }
+
+    /// Returns true for every constructed hyperreal value.
+    ///
+    /// `Real` has no NaN or infinity inhabitants; failed primitive conversions
+    /// are rejected before construction.
+    pub const fn is_finite(&self) -> bool {
+        true
     }
 }
 
@@ -3253,7 +3285,7 @@ impl Real {
 
         crate::trace_dispatch!("real", "log10", "rational-log10-special-form");
         let computable =
-            Class::ln_computable(&r).multiply(Class::ln_computable(&*rationals::TEN).inverse());
+            Class::ln_computable(&r).multiply(Class::ln_computable(&rationals::TEN).inverse());
         Ok(Self {
             rational: Rational::one(),
             class: Log10(r),
@@ -3660,7 +3692,7 @@ impl Real {
                 } else if self.rational == *rationals::HALF {
                     Some(Self::pi_fraction(1, 6))
                 } else if self.rational.sign() == Sign::Minus
-                    && self.rational.compare_magnitude(&*rationals::HALF)
+                    && self.rational.compare_magnitude(&rationals::HALF)
                         == std::cmp::Ordering::Equal
                 {
                     Some(Self::pi_fraction(-1, 6))
@@ -3675,7 +3707,7 @@ impl Real {
                 // scale must have exact magnitude 1/2.
                 let sign = self.rational.sign();
                 let half_magnitude =
-                    self.rational.compare_magnitude(&*rationals::HALF) == std::cmp::Ordering::Equal;
+                    self.rational.compare_magnitude(&rationals::HALF) == std::cmp::Ordering::Equal;
                 if !half_magnitude {
                     return None;
                 }
@@ -3721,7 +3753,7 @@ impl Real {
                 } else if self.rational == *rationals::HALF {
                     Some(Self::pi_fraction(1, 3))
                 } else if self.rational.sign() == Sign::Minus
-                    && self.rational.compare_magnitude(&*rationals::HALF)
+                    && self.rational.compare_magnitude(&rationals::HALF)
                         == std::cmp::Ordering::Equal
                 {
                     Some(Self::pi_fraction(2, 3))
@@ -3732,7 +3764,7 @@ impl Real {
             Sqrt(r) => {
                 let sign = self.rational.sign();
                 let half_magnitude =
-                    self.rational.compare_magnitude(&*rationals::HALF) == std::cmp::Ordering::Equal;
+                    self.rational.compare_magnitude(&rationals::HALF) == std::cmp::Ordering::Equal;
                 if !half_magnitude {
                     return None;
                 }
@@ -3783,7 +3815,7 @@ impl Real {
                 let sign = self.rational.sign();
                 let angle = if self.rational.abs_cmp_one_structural() == std::cmp::Ordering::Equal {
                     Some(rationals::THIRD.clone())
-                } else if self.rational.compare_magnitude(&*rationals::THIRD)
+                } else if self.rational.compare_magnitude(&rationals::THIRD)
                     == std::cmp::Ordering::Equal
                 {
                     Some(rationals::SIXTH.clone())
@@ -3833,7 +3865,7 @@ impl Real {
         if let Sqrt(r) = &self.class
             && self
                 .rational
-                .compare_magnitude_squared_times(r, &*rationals::ONE)
+                .compare_magnitude_squared_times(r, &rationals::ONE)
                 == std::cmp::Ordering::Greater
         {
             crate::trace_dispatch!("real", "asin", "sqrt-domain-error");
@@ -3863,13 +3895,13 @@ impl Real {
             crate::trace_dispatch!("real", "acos", "exact-special-form");
             return Ok(exact);
         }
-        if self.class == One {
-            if self.rational.abs_cmp_one_structural() == std::cmp::Ordering::Greater {
-                // Exact rational domain failures are rejected before any
-                // approximation machinery is constructed.
-                crate::trace_dispatch!("real", "acos", "rational-domain-error");
-                return Err(Problem::NotANumber);
-            }
+        if self.class == One
+            && self.rational.abs_cmp_one_structural() == std::cmp::Ordering::Greater
+        {
+            // Exact rational domain failures are rejected before any
+            // approximation machinery is constructed.
+            crate::trace_dispatch!("real", "acos", "rational-domain-error");
+            return Err(Problem::NotANumber);
         }
         if !matches!(&self.class, Sqrt(_))
             && let Some(asin) = self.asin_exact()
@@ -3881,7 +3913,7 @@ impl Real {
         if let Sqrt(r) = &self.class
             && self
                 .rational
-                .compare_magnitude_squared_times(r, &*rationals::ONE)
+                .compare_magnitude_squared_times(r, &rationals::ONE)
                 == std::cmp::Ordering::Greater
         {
             crate::trace_dispatch!("real", "acos", "sqrt-domain-error");
@@ -3999,7 +4031,7 @@ impl Real {
             if self.rational.sign() == Sign::Minus
                 || self
                     .rational
-                    .compare_magnitude_squared_times(r, &*rationals::ONE)
+                    .compare_magnitude_squared_times(r, &rationals::ONE)
                     == std::cmp::Ordering::Less
             {
                 crate::trace_dispatch!("real", "acosh", "sqrt-domain-error");
@@ -4068,7 +4100,7 @@ impl Real {
                 return Ok(constants::half_ln3());
             }
             if self.rational.sign() == Sign::Minus
-                && self.rational.compare_magnitude(&*rationals::HALF) == std::cmp::Ordering::Equal
+                && self.rational.compare_magnitude(&rationals::HALF) == std::cmp::Ordering::Equal
             {
                 crate::trace_dispatch!("real", "atanh", "rational-minus-half-ln3-special-form");
                 return Ok(-constants::half_ln3());
@@ -4079,7 +4111,7 @@ impl Real {
                 crate::trace_dispatch!("real", "atanh", "tiny-rational-computable");
                 return Ok(self.make_computable(Computable::atanh));
             }
-            if self.rational.compare_magnitude(&*rationals::SEVEN_EIGHTHS)
+            if self.rational.compare_magnitude(&rationals::SEVEN_EIGHTHS)
                 != std::cmp::Ordering::Less
             {
                 // Endpoint-adjacent rationals are hot in scalar predicates and
@@ -4112,11 +4144,11 @@ impl Real {
         }
         if let Sqrt(r) = &self.class {
             if r == &*rationals::TWO {
-                if self.rational.compare_magnitude(&*rationals::ONE) == std::cmp::Ordering::Equal {
+                if self.rational.compare_magnitude(&rationals::ONE) == std::cmp::Ordering::Equal {
                     crate::trace_dispatch!("real", "atanh", "sqrt-two-domain-error");
                     return Err(Problem::NotANumber);
                 }
-                if self.rational.compare_magnitude(&*rationals::HALF) == std::cmp::Ordering::Equal {
+                if self.rational.compare_magnitude(&rationals::HALF) == std::cmp::Ordering::Equal {
                     // atanh(1/sqrt(2)) = ln(1 + sqrt(2)) = asinh(1). This
                     // exact structural identity is common enough to test
                     // before the generic squared-magnitude domain machinery.
@@ -4131,7 +4163,7 @@ impl Real {
             }
             match self
                 .rational
-                .compare_magnitude_squared_times(r, &*rationals::ONE)
+                .compare_magnitude_squared_times(r, &rationals::ONE)
             {
                 std::cmp::Ordering::Greater => {
                     // Exact sqrt domain failure avoids an approximation sign query.
@@ -4147,7 +4179,7 @@ impl Real {
             }
             if self
                 .rational
-                .compare_magnitude_squared_times(r, &*rationals::HALF)
+                .compare_magnitude_squared_times(r, &rationals::HALF)
                 == std::cmp::Ordering::Equal
             {
                 // atanh(1/sqrt(2)) = ln(1 + sqrt(2)) = asinh(1). This exact
@@ -4189,7 +4221,7 @@ impl Real {
         let bits = exp.bits();
         for b in 0..bits {
             if exp.bit(b) {
-                result = result * factor.clone();
+                result *= factor.clone();
             }
             if b + 1 < bits {
                 factor = factor.clone() * factor;
@@ -4773,6 +4805,10 @@ impl std::str::FromStr for Real {
 
 use std::ops::*;
 
+fn finite_f64_operand(value: f64) -> Real {
+    Real::try_from(value).expect("Real arithmetic f64 operand must be finite")
+}
+
 impl Real {
     fn simple_log_sum(
         a: Rational,
@@ -4900,6 +4936,54 @@ impl<T: AsRef<Real>> Add<T> for Real {
     }
 }
 
+impl Add<f64> for Real {
+    type Output = Self;
+
+    fn add(self, other: f64) -> Self {
+        &self + &finite_f64_operand(other)
+    }
+}
+
+impl Add<f64> for &Real {
+    type Output = Real;
+
+    fn add(self, other: f64) -> Self::Output {
+        self + &finite_f64_operand(other)
+    }
+}
+
+impl Add<Real> for f64 {
+    type Output = Real;
+
+    fn add(self, other: Real) -> Self::Output {
+        finite_f64_operand(self) + other
+    }
+}
+
+impl<T: AsRef<Real>> AddAssign<T> for Real {
+    fn add_assign(&mut self, other: T) {
+        *self = &*self + other.as_ref();
+    }
+}
+
+impl AddAssign<f64> for Real {
+    fn add_assign(&mut self, other: f64) {
+        *self = &*self + other;
+    }
+}
+
+impl std::iter::Sum for Real {
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+        iter.fold(Self::zero(), |sum, value| sum + value)
+    }
+}
+
+impl<'a> std::iter::Sum<&'a Real> for Real {
+    fn sum<I: Iterator<Item = &'a Real>>(iter: I) -> Self {
+        iter.fold(Self::zero(), |sum, value| sum + value)
+    }
+}
+
 impl Neg for Real {
     type Output = Self;
 
@@ -4928,17 +5012,21 @@ impl<T: AsRef<Real>> Sub<T> for &Real {
 
     fn sub(self, other: T) -> Self::Output {
         let other = other.as_ref();
-        if self.class == Pi && self.rational.is_one() && other.class == One {
-            if other.rational == *rationals::THREE {
-                crate::trace_dispatch!("real", "sub", "cached-pi-minus-three");
-                return constants::pi_minus_three();
-            }
+        if self.class == Pi
+            && self.rational.is_one()
+            && other.class == One
+            && other.rational == *rationals::THREE
+        {
+            crate::trace_dispatch!("real", "sub", "cached-pi-minus-three");
+            return constants::pi_minus_three();
         }
-        if self.class == One && self.rational == *rationals::THREE && other.class == Pi {
-            if other.rational.is_one() {
-                crate::trace_dispatch!("real", "sub", "cached-three-minus-pi");
-                return -constants::pi_minus_three();
-            }
+        if self.class == One
+            && self.rational == *rationals::THREE
+            && other.class == Pi
+            && other.rational.is_one()
+        {
+            crate::trace_dispatch!("real", "sub", "cached-three-minus-pi");
+            return -constants::pi_minus_three();
         }
         if self.class == other.class {
             // Same symbolic basis subtraction mirrors addition: update the scale only.
@@ -4979,19 +5067,19 @@ impl<T: AsRef<Real>> Sub<T> for &Real {
                 return simple;
             }
         }
-        if other.class == One && self.class.can_take_const_offset() {
-            if let Some(difference) =
+        if other.class == One
+            && self.class.can_take_const_offset()
+            && let Some(difference) =
                 Self::Output::try_add_rational_to_const_term(self, -other.rational.clone())
-            {
-                return difference;
-            }
+        {
+            return difference;
         }
-        if self.class == One && other.class.can_take_const_offset() {
-            if let Some(difference) =
+        if self.class == One
+            && other.class.can_take_const_offset()
+            && let Some(difference) =
                 Self::Output::try_add_rational_to_const_term(other, -self.rational.clone())
-            {
-                return -difference;
-            }
+        {
+            return -difference;
         }
         let left = self.fold_ref();
         let right = other.fold_ref().negate();
@@ -5011,6 +5099,42 @@ impl<T: AsRef<Real>> Sub<T> for Real {
 
     fn sub(self, other: T) -> Self {
         &self - other.as_ref()
+    }
+}
+
+impl Sub<f64> for Real {
+    type Output = Self;
+
+    fn sub(self, other: f64) -> Self {
+        &self - &finite_f64_operand(other)
+    }
+}
+
+impl Sub<f64> for &Real {
+    type Output = Real;
+
+    fn sub(self, other: f64) -> Self::Output {
+        self - &finite_f64_operand(other)
+    }
+}
+
+impl Sub<Real> for f64 {
+    type Output = Real;
+
+    fn sub(self, other: Real) -> Self::Output {
+        finite_f64_operand(self) - other
+    }
+}
+
+impl<T: AsRef<Real>> SubAssign<T> for Real {
+    fn sub_assign(&mut self, other: T) {
+        *self = &*self - other.as_ref();
+    }
+}
+
+impl SubAssign<f64> for Real {
+    fn sub_assign(&mut self, other: f64) {
+        *self = &*self - other;
     }
 }
 
@@ -5422,84 +5546,76 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                     ) = (
                         self.class.const_product_sqrt_parts(),
                         other.class.const_product_sqrt_parts(),
-                    ) {
-                        if let Some(pi_power) = left_pi.checked_add(right_pi) {
-                            let square = Self::Output::multiply_sqrts(&left_rad, &right_rad);
-                            let rational = &square.rational * &self.rational * &other.rational;
-                            let exp_power = left_exp + right_exp;
-                            match square.class {
-                                One => {
-                                    let (class, computable) =
-                                        Class::make_const_product(pi_power, exp_power);
-                                    return Self::Output {
-                                        rational,
-                                        class,
-                                        computable: Some(computable),
-                                        signal: None,
-                                        primitive_approx_cache: Cell::new(
-                                            PrimitiveApproxCache::Empty,
-                                        ),
-                                    };
-                                }
-                                Sqrt(radicand) => {
-                                    let (class, computable) = Class::make_const_product_sqrt(
-                                        pi_power, exp_power, radicand,
-                                    );
-                                    return Self::Output {
-                                        rational,
-                                        class,
-                                        computable: Some(computable),
-                                        signal: None,
-                                        primitive_approx_cache: Cell::new(
-                                            PrimitiveApproxCache::Empty,
-                                        ),
-                                    };
-                                }
-                                _ => unreachable!(),
+                    ) && let Some(pi_power) = left_pi.checked_add(right_pi)
+                    {
+                        let square = Self::Output::multiply_sqrts(&left_rad, &right_rad);
+                        let rational = &square.rational * &self.rational * &other.rational;
+                        let exp_power = left_exp + right_exp;
+                        match square.class {
+                            One => {
+                                let (class, computable) =
+                                    Class::make_const_product(pi_power, exp_power);
+                                return Self::Output {
+                                    rational,
+                                    class,
+                                    computable: Some(computable),
+                                    signal: None,
+                                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                                };
                             }
+                            Sqrt(radicand) => {
+                                let (class, computable) =
+                                    Class::make_const_product_sqrt(pi_power, exp_power, radicand);
+                                return Self::Output {
+                                    rational,
+                                    class,
+                                    computable: Some(computable),
+                                    signal: None,
+                                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                                };
+                            }
+                            _ => unreachable!(),
                         }
                     }
                     if let (Some((sqrt_pi, sqrt_exp, radicand)), Some((product_pi, product_exp))) = (
                         self.class.const_product_sqrt_parts(),
                         other.class.const_product_parts(),
-                    ) {
-                        if let Some(pi_power) = sqrt_pi.checked_add(product_pi) {
-                            // General sqrt-product closure covers less common forms such as
-                            // `(pi*sqrt(2))*e` without moving hot `pi*sqrt(n)` arms.
-                            let (class, computable) = Class::make_const_product_sqrt(
-                                pi_power,
-                                sqrt_exp + product_exp,
-                                radicand,
-                            );
-                            let rational = &self.rational * &other.rational;
-                            return Self::Output {
-                                rational,
-                                class,
-                                computable: Some(computable),
-                                signal: None,
-                                primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
-                            };
-                        }
+                    ) && let Some(pi_power) = sqrt_pi.checked_add(product_pi)
+                    {
+                        // General sqrt-product closure covers less common forms such as
+                        // `(pi*sqrt(2))*e` without moving hot `pi*sqrt(n)` arms.
+                        let (class, computable) = Class::make_const_product_sqrt(
+                            pi_power,
+                            sqrt_exp + product_exp,
+                            radicand,
+                        );
+                        let rational = &self.rational * &other.rational;
+                        return Self::Output {
+                            rational,
+                            class,
+                            computable: Some(computable),
+                            signal: None,
+                            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                        };
                     }
                     if let (Some((product_pi, product_exp)), Some((sqrt_pi, sqrt_exp, radicand))) = (
                         self.class.const_product_parts(),
                         other.class.const_product_sqrt_parts(),
-                    ) {
-                        if let Some(pi_power) = product_pi.checked_add(sqrt_pi) {
-                            let (class, computable) = Class::make_const_product_sqrt(
-                                pi_power,
-                                product_exp + sqrt_exp,
-                                radicand,
-                            );
-                            let rational = &self.rational * &other.rational;
-                            return Self::Output {
-                                rational,
-                                class,
-                                computable: Some(computable),
-                                signal: None,
-                                primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
-                            };
-                        }
+                    ) && let Some(pi_power) = product_pi.checked_add(sqrt_pi)
+                    {
+                        let (class, computable) = Class::make_const_product_sqrt(
+                            pi_power,
+                            product_exp + sqrt_exp,
+                            radicand,
+                        );
+                        let rational = &self.rational * &other.rational;
+                        return Self::Output {
+                            rational,
+                            class,
+                            computable: Some(computable),
+                            signal: None,
+                            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                        };
                     }
                 }
                 if let Some((class, computable)) =
@@ -5537,6 +5653,42 @@ impl<T: AsRef<Real>> Mul<T> for Real {
 
     fn mul(self, other: T) -> Self {
         &self * other.as_ref()
+    }
+}
+
+impl Mul<f64> for Real {
+    type Output = Self;
+
+    fn mul(self, other: f64) -> Self {
+        &self * &finite_f64_operand(other)
+    }
+}
+
+impl Mul<f64> for &Real {
+    type Output = Real;
+
+    fn mul(self, other: f64) -> Self::Output {
+        self * &finite_f64_operand(other)
+    }
+}
+
+impl Mul<Real> for f64 {
+    type Output = Real;
+
+    fn mul(self, other: Real) -> Self::Output {
+        finite_f64_operand(self) * other
+    }
+}
+
+impl<T: AsRef<Real>> MulAssign<T> for Real {
+    fn mul_assign(&mut self, other: T) {
+        *self = &*self * other.as_ref();
+    }
+}
+
+impl MulAssign<f64> for Real {
+    fn mul_assign(&mut self, other: f64) {
+        *self = &*self * other;
     }
 }
 
@@ -5744,53 +5896,51 @@ impl<T: AsRef<Real>> Div<T> for &Real {
             if let (Some((left_pi, left_exp, left_rad)), Some((right_pi, right_exp, right_rad))) = (
                 self.class.const_product_sqrt_parts(),
                 other.class.const_product_sqrt_parts(),
-            ) {
-                if let Some(pi_power) = left_pi.checked_sub(right_pi) {
-                    // Rationalize sqrt-heavy quotients before falling back to `other.inverse()`.
-                    // This keeps `(pi*e*sqrt(2))/(e*sqrt(3))` as one factored sqrt
-                    // product instead of an opaque division graph.
-                    let square = Real::multiply_sqrts(&left_rad, &right_rad);
-                    let denominator = if other.rational.is_one() {
-                        // Preserve the factored sqrt quotient while skipping
-                        // exact multiplication by one. Avoiding this gcd matters
-                        // in matrix/vector scalar paths that divide by cached
-                        // unit-scaled symbolic constants; see Yap (1997).
-                        right_rad.clone()
-                    } else {
-                        &other.rational * right_rad
-                    };
-                    let rational = if square.rational.is_one() && self.rational.is_one() {
-                        denominator.inverse()?
-                    } else {
-                        &square.rational * &self.rational / denominator
-                    };
-                    let exp_power = left_exp - right_exp;
-                    return Ok(match square.class {
-                        One => {
-                            let (class, computable) =
-                                Class::make_const_product(pi_power, exp_power);
-                            Real {
-                                rational,
-                                class,
-                                computable: Some(computable),
-                                signal: None,
-                                primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
-                            }
+            ) && let Some(pi_power) = left_pi.checked_sub(right_pi)
+            {
+                // Rationalize sqrt-heavy quotients before falling back to `other.inverse()`.
+                // This keeps `(pi*e*sqrt(2))/(e*sqrt(3))` as one factored sqrt
+                // product instead of an opaque division graph.
+                let square = Real::multiply_sqrts(&left_rad, &right_rad);
+                let denominator = if other.rational.is_one() {
+                    // Preserve the factored sqrt quotient while skipping
+                    // exact multiplication by one. Avoiding this gcd matters
+                    // in matrix/vector scalar paths that divide by cached
+                    // unit-scaled symbolic constants; see Yap (1997).
+                    right_rad.clone()
+                } else {
+                    &other.rational * right_rad
+                };
+                let rational = if square.rational.is_one() && self.rational.is_one() {
+                    denominator.inverse()?
+                } else {
+                    &square.rational * &self.rational / denominator
+                };
+                let exp_power = left_exp - right_exp;
+                return Ok(match square.class {
+                    One => {
+                        let (class, computable) = Class::make_const_product(pi_power, exp_power);
+                        Real {
+                            rational,
+                            class,
+                            computable: Some(computable),
+                            signal: None,
+                            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                         }
-                        Sqrt(radicand) => {
-                            let (class, computable) =
-                                Class::make_const_product_sqrt(pi_power, exp_power, radicand);
-                            Real {
-                                rational,
-                                class,
-                                computable: Some(computable),
-                                signal: None,
-                                primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
-                            }
+                    }
+                    Sqrt(radicand) => {
+                        let (class, computable) =
+                            Class::make_const_product_sqrt(pi_power, exp_power, radicand);
+                        Real {
+                            rational,
+                            class,
+                            computable: Some(computable),
+                            signal: None,
+                            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                         }
-                        _ => unreachable!(),
-                    });
-                }
+                    }
+                    _ => unreachable!(),
+                });
             }
             if let (Some((sqrt_pi, sqrt_exp, radicand)), Some((product_pi, product_exp))) = (
                 self.class.const_product_sqrt_parts(),
@@ -5824,30 +5974,29 @@ impl<T: AsRef<Real>> Div<T> for &Real {
             if let (Some((product_pi, product_exp)), Some((sqrt_pi, sqrt_exp, radicand))) = (
                 self.class.const_product_parts(),
                 other.class.const_product_sqrt_parts(),
-            ) {
-                if let Some(pi_power) = product_pi.checked_sub(sqrt_pi) {
-                    // Dividing by sqrt(r) multiplies numerator and denominator
-                    // by sqrt(r); keep the remaining sqrt(r) factored.
-                    let denominator = if other.rational.is_one() {
-                        // The denominator is just the exact radicand for
-                        // unit-scaled sqrt factors. Bypassing `1 * r` preserves
-                        // the delayed-canonicalization invariant from Yap
-                        // (1997) and keeps hot quotient paths flatter.
-                        radicand.clone()
-                    } else {
-                        &other.rational * radicand.clone()
-                    };
-                    let rational = &self.rational / denominator;
-                    let (class, computable) =
-                        Class::make_const_product_sqrt(pi_power, product_exp - sqrt_exp, radicand);
-                    return Ok(Real {
-                        rational,
-                        class,
-                        computable: Some(computable),
-                        signal: None,
-                        primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
-                    });
-                }
+            ) && let Some(pi_power) = product_pi.checked_sub(sqrt_pi)
+            {
+                // Dividing by sqrt(r) multiplies numerator and denominator
+                // by sqrt(r); keep the remaining sqrt(r) factored.
+                let denominator = if other.rational.is_one() {
+                    // The denominator is just the exact radicand for
+                    // unit-scaled sqrt factors. Bypassing `1 * r` preserves
+                    // the delayed-canonicalization invariant from Yap
+                    // (1997) and keeps hot quotient paths flatter.
+                    radicand.clone()
+                } else {
+                    &other.rational * radicand.clone()
+                };
+                let rational = &self.rational / denominator;
+                let (class, computable) =
+                    Class::make_const_product_sqrt(pi_power, product_exp - sqrt_exp, radicand);
+                return Ok(Real {
+                    rational,
+                    class,
+                    computable: Some(computable),
+                    signal: None,
+                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                });
             }
         }
         if let Some((class, computable)) = Class::divide_const_products(&self.class, &other.class) {
@@ -5902,6 +6051,42 @@ impl<T: AsRef<Real>> Div<T> for Real {
     }
 }
 
+impl Div<f64> for Real {
+    type Output = Result<Self, Problem>;
+
+    fn div(self, other: f64) -> Self::Output {
+        &self / &finite_f64_operand(other)
+    }
+}
+
+impl Div<f64> for &Real {
+    type Output = Result<Real, Problem>;
+
+    fn div(self, other: f64) -> Self::Output {
+        self / &finite_f64_operand(other)
+    }
+}
+
+impl Div<Real> for f64 {
+    type Output = Result<Real, Problem>;
+
+    fn div(self, other: Real) -> Self::Output {
+        finite_f64_operand(self) / other
+    }
+}
+
+impl<T: AsRef<Real>> DivAssign<T> for Real {
+    fn div_assign(&mut self, other: T) {
+        *self = (&*self / other.as_ref()).expect("division assignment by zero Real");
+    }
+}
+
+impl DivAssign<f64> for Real {
+    fn div_assign(&mut self, other: f64) {
+        *self = (&*self / other).expect("division assignment by zero finite f64");
+    }
+}
+
 // Best efforts only, definitely not adequate for Eq
 // Requirements: PartialEq should be transitive and symmetric
 // however it needn't be complete or reflexive.
@@ -5915,6 +6100,34 @@ impl PartialOrd for Real {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         self.certified_cmp_until(other, Self::PARTIAL_CMP_MIN_PRECISION)
             .ordering()
+    }
+}
+
+impl PartialEq<f64> for Real {
+    fn eq(&self, other: &f64) -> bool {
+        Real::try_from(*other).is_ok_and(|other| self == &other)
+    }
+}
+
+impl PartialEq<Real> for f64 {
+    fn eq(&self, other: &Real) -> bool {
+        other == self
+    }
+}
+
+impl PartialOrd<f64> for Real {
+    fn partial_cmp(&self, other: &f64) -> Option<Ordering> {
+        Real::try_from(*other)
+            .ok()
+            .and_then(|other| self.partial_cmp(&other))
+    }
+}
+
+impl PartialOrd<Real> for f64 {
+    fn partial_cmp(&self, other: &Real) -> Option<Ordering> {
+        Real::try_from(*self)
+            .ok()
+            .and_then(|this| this.partial_cmp(other))
     }
 }
 

@@ -324,7 +324,7 @@ fn collect_real_cases(out: &mut Vec<TimedCase>) {
             value.structural_facts()
         }));
         out.push(time_case("real", "to_f64", name.clone(), || {
-            f64::try_from(value.clone())
+            f64::from(value.clone())
         }));
         out.push(time_case("real", "sin_build", name.clone(), || {
             value.clone().sin()
@@ -486,7 +486,7 @@ fn collect_all_cases() -> Vec<TimedCase> {
     collect_real_cases(&mut cases);
     collect_generated_fuzz_cases(&mut cases);
     cases.truncate(TARGET_CASES);
-    cases.sort_by(|left, right| right.nanos.cmp(&left.nanos));
+    cases.sort_by_key(|case| std::cmp::Reverse(case.nanos));
     cases
 }
 
@@ -601,7 +601,7 @@ fn merge_historical_cases(report_path: &Path, current: &[TimedCase]) -> Vec<Time
         }
         deduped.push(case);
     }
-    deduped.sort_by(|left, right| right.nanos.cmp(&left.nanos));
+    deduped.sort_by_key(|case| std::cmp::Reverse(case.nanos));
     deduped.truncate(REPORT_LIMIT);
     deduped
 }
@@ -749,7 +749,7 @@ fn rotate_promoted_cases(promoted_path: &Path, historical: &[TimedCase]) -> Vec<
         .into_iter()
         .filter_map(|case| time_promoted_case(&case))
         .collect();
-    retained.sort_by(|left, right| right.nanos.cmp(&left.nanos));
+    retained.sort_by_key(|case| std::cmp::Reverse(case.nanos));
     let removed = retained.len().min(PROMOTION_ROTATION);
     let released = if removed > 0 {
         retained.split_off(retained.len() - removed)
@@ -791,7 +791,7 @@ fn rotate_promoted_cases(promoted_path: &Path, historical: &[TimedCase]) -> Vec<
         retained.push(candidate.clone());
     }
 
-    retained.sort_by(|left, right| right.nanos.cmp(&left.nanos));
+    retained.sort_by_key(|case| std::cmp::Reverse(case.nanos));
     retained.truncate(PROMOTED_TARGET);
     retained
 }
@@ -847,7 +847,7 @@ fn score_promoted_cases(promoted_path: &Path) -> Option<(PromotedScore, Vec<Time
         .iter()
         .filter_map(time_promoted_case_current)
         .collect();
-    timed.sort_by(|left, right| right.nanos.cmp(&left.nanos));
+    timed.sort_by_key(|case| std::cmp::Reverse(case.nanos));
     let average_nanos = average_nanos(&timed)?;
     let previous = read_previous_promoted_score(&crate_benchmarks_path());
     let previous_score = previous
@@ -869,7 +869,7 @@ fn score_promoted_cases(promoted_path: &Path) -> Option<(PromotedScore, Vec<Time
 }
 
 fn parse_metadata_i128(contents: &str, prefix: &str) -> Option<i128> {
-    for line in contents.lines() {
+    if let Some(line) = contents.lines().next() {
         let value = line.trim().strip_prefix(prefix)?.trim();
         let value = value.strip_suffix("-->")?.trim();
         return value.parse().ok();

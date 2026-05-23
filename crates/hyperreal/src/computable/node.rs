@@ -709,7 +709,7 @@ impl Computable {
                 if perturb_msd.is_some_and(|msd| msd < tolerance) {
                     Some(Ordering::Equal)
                 } else if let (Some(base_msd), Some(perturb_msd)) = (base_msd, perturb_msd) {
-                    if base_msd >= perturb_msd + 1 {
+                    if base_msd > perturb_msd {
                         Some(Ordering::Less)
                     } else {
                         None
@@ -2481,18 +2481,18 @@ impl Computable {
             crate::trace_dispatch!("computable", "tan", "known-negative-symmetry");
             return self.negate().tan().negate();
         }
-        if let Some(msd) = self.trig_reduction_msd() {
-            if msd <= 0 {
-                // Known |x| < 2: enter the tangent quotient kernel directly.
-                crate::trace_dispatch!("computable", "tan", "structural-small-prescaled");
-                return Self {
-                    internal: Box::new(Approximation::PrescaledTan(self)),
-                    cache: RefCell::new(Cache::Invalid),
-                    bound: RefCell::new(BoundCache::Invalid),
-                    exact_sign: RefCell::new(ExactSignCache::Invalid),
-                    signal: None,
-                };
-            }
+        if let Some(msd) = self.trig_reduction_msd()
+            && msd <= 0
+        {
+            // Known |x| < 2: enter the tangent quotient kernel directly.
+            crate::trace_dispatch!("computable", "tan", "structural-small-prescaled");
+            return Self {
+                internal: Box::new(Approximation::PrescaledTan(self)),
+                cache: RefCell::new(Cache::Invalid),
+                bound: RefCell::new(BoundCache::Invalid),
+                exact_sign: RefCell::new(ExactSignCache::Invalid),
+                signal: None,
+            };
         }
         let rough_appr = self.approx(-1);
         if rough_appr.sign() == Sign::Minus {
@@ -2849,9 +2849,7 @@ impl Computable {
                 // Structurally large exact values can be reduced by powers of
                 // two before probing. This avoids building sqrt/sqrt/log graphs
                 // for moderate exact-rational logs such as ln(1+x^2).
-                let mut extra_bits: i32 = msd.try_into().expect(
-                    "Approximation should have few enough bits to fit in a 32-bit signed integer",
-                );
+                let mut extra_bits: i32 = msd;
 
                 let mut scaled = self.clone().shift_right(extra_bits);
                 let mut scaled_rough = scaled.approx(low_prec);
@@ -3944,8 +3942,8 @@ impl Computable {
                 right_planning_msd,
             ) {
                 match (left_sign, right_sign) {
-                    (Sign::Plus, Sign::Minus) if left_msd >= right_msd + 1 => Some(Sign::Plus),
-                    (Sign::Minus, Sign::Plus) if right_msd >= left_msd + 1 => Some(Sign::Minus),
+                    (Sign::Plus, Sign::Minus) if left_msd > right_msd => Some(Sign::Plus),
+                    (Sign::Minus, Sign::Plus) if right_msd > left_msd => Some(Sign::Minus),
                     (Sign::Plus, Sign::Plus) => Some(Sign::Plus),
                     (Sign::Minus, Sign::Minus) => Some(Sign::Minus),
                     (Sign::NoSign, Sign::NoSign) => Some(Sign::NoSign),
@@ -4437,8 +4435,8 @@ impl Computable {
             return order;
         }
 
-        if let Approximation::Add(left, right) = &*self.internal {
-            if let Some(order) = if Self::internal_structural_eq(left, other) {
+        if let Approximation::Add(left, right) = &*self.internal
+            && let Some(order) = if Self::internal_structural_eq(left, other) {
                 crate::trace_dispatch!(
                     "computable",
                     "compare_absolute",
@@ -4454,12 +4452,12 @@ impl Computable {
                 Self::compare_absolute_dominant_perturbation(right, left, other, tolerance)
             } else {
                 None
-            } {
-                return order;
             }
+        {
+            return order;
         }
-        if let Approximation::Add(left, right) = &*other.internal {
-            if let Some(order) = if Self::internal_structural_eq(left, self) {
+        if let Approximation::Add(left, right) = &*other.internal
+            && let Some(order) = if Self::internal_structural_eq(left, self) {
                 crate::trace_dispatch!(
                     "computable",
                     "compare_absolute",
@@ -4475,9 +4473,9 @@ impl Computable {
                 Self::compare_absolute_dominant_perturbation(right, left, self, tolerance)
             } else {
                 None
-            } {
-                return order.reverse();
             }
+        {
+            return order.reverse();
         }
 
         if let (Some(left), Some(right)) = (self.exact_rational(), other.exact_rational()) {
@@ -4531,14 +4529,13 @@ impl Computable {
                 other_structural_sign,
                 self_msd,
                 other_msd,
-            ) {
-                if left_msd != right_msd {
-                    crate::trace_dispatch!("computable", "compare_absolute", "exact-sign-msd-gap");
-                    match (left_sign, right_sign) {
-                        (Sign::Plus, Sign::Plus) => return left_msd.cmp(&right_msd),
-                        (Sign::Minus, Sign::Minus) => return right_msd.cmp(&left_msd),
-                        _ => {}
-                    }
+            ) && left_msd != right_msd
+            {
+                crate::trace_dispatch!("computable", "compare_absolute", "exact-sign-msd-gap");
+                match (left_sign, right_sign) {
+                    (Sign::Plus, Sign::Plus) => return left_msd.cmp(&right_msd),
+                    (Sign::Minus, Sign::Minus) => return right_msd.cmp(&left_msd),
+                    _ => {}
                 }
             }
             if let (Some(Some(left_msd)), Some(Some(right_msd))) = (self_msd, other_msd) {
@@ -4566,21 +4563,16 @@ impl Computable {
             let other_bound = other.cheap_bound();
             if let (Some(Some(self_msd)), Some(Some(other_msd))) =
                 (self_bound.known_msd(), other_bound.known_msd())
+                && let (Some(left_sign), Some(right_sign)) = (self_sign, other_sign)
+                && left_sign == right_sign
+                && self_msd != other_msd
             {
-                if let (Some(left_sign), Some(right_sign)) = (self_sign, other_sign) {
-                    if left_sign == right_sign && self_msd != other_msd {
-                        crate::trace_dispatch!(
-                            "computable",
-                            "compare_absolute",
-                            "exact-sign-msd-gap"
-                        );
-                        return match (left_sign, right_sign) {
-                            (Sign::Plus, Sign::Plus) => self_msd.cmp(&other_msd),
-                            (Sign::Minus, Sign::Minus) => other_msd.cmp(&self_msd),
-                            _ => Ordering::Equal,
-                        };
-                    }
-                }
+                crate::trace_dispatch!("computable", "compare_absolute", "exact-sign-msd-gap");
+                return match (left_sign, right_sign) {
+                    (Sign::Plus, Sign::Plus) => self_msd.cmp(&other_msd),
+                    (Sign::Minus, Sign::Minus) => other_msd.cmp(&self_msd),
+                    _ => Ordering::Equal,
+                };
             }
         }
         crate::trace_dispatch!("computable", "compare_absolute", "approx-refinement");
