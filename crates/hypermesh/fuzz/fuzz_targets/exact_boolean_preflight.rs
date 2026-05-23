@@ -4630,6 +4630,52 @@ fn upward_square_pyramid_quad_fan_i64(
 }
 
 #[cfg(feature = "exact-triangulation")]
+fn downward_square_pyramid_two_branch_i64(
+    a: [i64; 3],
+    b: [i64; 3],
+    c: [i64; 3],
+    d: [i64; 3],
+    p: [i64; 3],
+    q: [i64; 3],
+    apex: [i64; 3],
+) -> ExactMesh {
+    ExactMesh::from_i64_triangles(
+        &[
+            a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2], d[0], d[1], d[2], p[0], p[1],
+            p[2], q[0], q[1], q[2], apex[0], apex[1], apex[2],
+        ],
+        &[
+            0, 1, 4, 1, 5, 4, 1, 2, 5, 2, 3, 5, 3, 4, 5, 3, 0, 4, //
+            0, 6, 1, 1, 6, 2, 2, 6, 3, 3, 6, 0,
+        ],
+    )
+    .expect("downward two-branch square pyramid fixture should import")
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn upward_square_pyramid_two_branch_i64(
+    a: [i64; 3],
+    b: [i64; 3],
+    c: [i64; 3],
+    d: [i64; 3],
+    p: [i64; 3],
+    q: [i64; 3],
+    apex: [i64; 3],
+) -> ExactMesh {
+    ExactMesh::from_i64_triangles(
+        &[
+            a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2], d[0], d[1], d[2], p[0], p[1],
+            p[2], q[0], q[1], q[2], apex[0], apex[1], apex[2],
+        ],
+        &[
+            0, 4, 1, 1, 4, 5, 1, 5, 2, 2, 5, 3, 3, 5, 4, 3, 4, 0, //
+            0, 1, 6, 1, 2, 6, 2, 3, 6, 3, 0, 6,
+        ],
+    )
+    .expect("upward two-branch square pyramid fixture should import")
+}
+
+#[cfg(feature = "exact-triangulation")]
 fn upward_pentagonal_pyramid_i64(
     a: [i64; 3],
     b: [i64; 3],
@@ -5613,6 +5659,70 @@ fn exercise_full_face_adjacent_union() {
         )
         .unwrap();
     assert_eq!(quad_fan_result.mesh, quad_fan_union.mesh);
+
+    let two_branch_right = downward_square_pyramid_two_branch_i64(
+        [0, 0, 0],
+        [6, 0, 0],
+        [6, 6, 0],
+        [0, 6, 0],
+        [2, 3, 0],
+        [4, 3, 0],
+        [3, 3, -5],
+    );
+    let two_branch_left =
+        upward_square_pyramid_i64([0, 0, 0], [6, 0, 0], [6, 6, 0], [0, 6, 0], [3, 3, 5]);
+    let two_branch_union = hypermesh::exact::materialize_full_face_adjacent_union(
+        &two_branch_left,
+        &two_branch_right,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("two-branch square patch should materialize");
+    two_branch_union.validate().unwrap();
+    two_branch_union
+        .validate_against_sources(&two_branch_left, &two_branch_right)
+        .unwrap();
+    assert_eq!(two_branch_union.shared_patches[0].left_faces, vec![0, 1]);
+    assert_eq!(
+        two_branch_union.shared_patches[0].right_faces,
+        vec![0, 1, 2, 3, 4, 5]
+    );
+
+    let same_side_two_branch = upward_square_pyramid_two_branch_i64(
+        [0, 0, 0],
+        [6, 0, 0],
+        [6, 6, 0],
+        [0, 6, 0],
+        [2, 3, 0],
+        [4, 3, 0],
+        [3, 3, 5],
+    );
+    assert!(
+        hypermesh::exact::materialize_full_face_adjacent_union(
+            &two_branch_left,
+            &same_side_two_branch,
+            ValidationPolicy::CLOSED,
+        )
+        .is_none()
+    );
+
+    let two_branch_result = boolean_exact_with_boundary_policy(
+        &two_branch_left,
+        &two_branch_right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+    two_branch_result
+        .validate_operation_against_sources(
+            &two_branch_left,
+            &two_branch_right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(two_branch_result.mesh, two_branch_union.mesh);
 
     let pentagon_left = upward_pentagonal_pyramid_i64(
         [0, 0, 0],
