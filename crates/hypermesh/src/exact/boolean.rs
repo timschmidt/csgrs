@@ -45,7 +45,7 @@ use super::box_solid::{
     has_axis_aligned_box_difference, has_axis_aligned_box_empty_difference,
     has_axis_aligned_box_intersection, has_axis_aligned_box_multi_difference,
     has_axis_aligned_box_nested_difference, has_axis_aligned_box_union,
-    intersection_axis_aligned_boxes, multi_difference_axis_aligned_boxes,
+    intersection_axis_aligned_boxes, is_axis_aligned_box, multi_difference_axis_aligned_boxes,
     nested_difference_axis_aligned_boxes, union_axis_aligned_boxes,
 };
 #[cfg(feature = "exact-triangulation")]
@@ -326,16 +326,25 @@ pub fn preflight_boolean_exact(
         {
             ExactBooleanSupport::CertifiedSameSurface
         }
-        ExactBooleanOperation::Union if has_full_face_adjacent_union(left, right) => {
+        ExactBooleanOperation::Union if has_axis_aligned_box_union(left, right) => {
+            ExactBooleanSupport::CertifiedAxisAlignedBoxUnion
+        }
+        ExactBooleanOperation::Intersection if has_axis_aligned_box_intersection(left, right) => {
+            ExactBooleanSupport::CertifiedAxisAlignedBoxIntersection
+        }
+        ExactBooleanOperation::Difference if has_axis_aligned_box_difference(left, right) => {
+            ExactBooleanSupport::CertifiedAxisAlignedBoxDifference
+        }
+        ExactBooleanOperation::Union if non_box_full_face_adjacency(left, right) => {
             ExactBooleanSupport::CertifiedFullFaceAdjacentUnion
         }
         ExactBooleanOperation::Union if has_contained_face_adjacent_union(left, right) => {
             ExactBooleanSupport::CertifiedContainedFaceAdjacentUnion
         }
-        ExactBooleanOperation::Intersection if has_full_face_adjacent_union(left, right) => {
+        ExactBooleanOperation::Intersection if non_box_full_face_adjacency(left, right) => {
             ExactBooleanSupport::CertifiedFullFaceAdjacentIntersection
         }
-        ExactBooleanOperation::Difference if has_full_face_adjacent_union(left, right) => {
+        ExactBooleanOperation::Difference if non_box_full_face_adjacency(left, right) => {
             ExactBooleanSupport::CertifiedFullFaceAdjacentDifference
         }
         ExactBooleanOperation::Union
@@ -1157,6 +1166,12 @@ fn real_sign(value: &ExactReal) -> Option<Sign> {
 }
 
 #[cfg(feature = "exact-triangulation")]
+fn non_box_full_face_adjacency(left: &ExactMesh, right: &ExactMesh) -> bool {
+    has_full_face_adjacent_union(left, right)
+        && !(is_axis_aligned_box(left) && is_axis_aligned_box(right))
+}
+
+#[cfg(feature = "exact-triangulation")]
 fn certified_closed_boundary_contact(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -1280,16 +1295,25 @@ pub fn boolean_exact_with_boundary_policy(
         {
             boolean_same_surface_meshes(left, operation, validation)
         }
-        ExactBooleanOperation::Union if has_full_face_adjacent_union(left, right) => {
+        ExactBooleanOperation::Union if has_axis_aligned_box_union(left, right) => {
+            boolean_axis_aligned_box_union(left, right, validation)
+        }
+        ExactBooleanOperation::Intersection if has_axis_aligned_box_intersection(left, right) => {
+            boolean_axis_aligned_box_intersection(left, right, validation)
+        }
+        ExactBooleanOperation::Difference if has_axis_aligned_box_difference(left, right) => {
+            boolean_axis_aligned_box_difference(left, right, validation)
+        }
+        ExactBooleanOperation::Union if non_box_full_face_adjacency(left, right) => {
             boolean_full_face_adjacent_union(left, right, validation)
         }
         ExactBooleanOperation::Union if has_contained_face_adjacent_union(left, right) => {
             boolean_contained_face_adjacent_union(left, right, validation)
         }
-        ExactBooleanOperation::Intersection if has_full_face_adjacent_union(left, right) => {
+        ExactBooleanOperation::Intersection if non_box_full_face_adjacency(left, right) => {
             boolean_full_face_adjacent_intersection(left, right, validation)
         }
-        ExactBooleanOperation::Difference if has_full_face_adjacent_union(left, right) => {
+        ExactBooleanOperation::Difference if non_box_full_face_adjacency(left, right) => {
             boolean_full_face_adjacent_difference(left, right, validation)
         }
         ExactBooleanOperation::Union

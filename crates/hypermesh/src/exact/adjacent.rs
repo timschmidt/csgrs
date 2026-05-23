@@ -435,6 +435,28 @@ fn full_face_adjacency_certificate(
         });
     }
 
+    for (left_faces, right_faces) in quad_patch_pairs(left, &left_seen, right, &right_seen)? {
+        if left_faces.iter().any(|face| left_seen.contains(face))
+            || right_faces.iter().any(|face| right_seen.contains(face))
+        {
+            return None;
+        }
+        for &left_face in &left_faces {
+            if !left_seen.insert(left_face) {
+                return None;
+            }
+        }
+        for &right_face in &right_faces {
+            if !right_seen.insert(right_face) {
+                return None;
+            }
+        }
+        certificate.shared_patches.push(FullFaceAdjacentPatch {
+            left_faces,
+            right_faces,
+        });
+    }
+
     Some(certificate)
 }
 
@@ -937,11 +959,246 @@ fn boundary_point_sets_equal(left: &[Point3; 3], right: &[Point3; 3]) -> Option<
     Some(true)
 }
 
+/// Discover bounded cross-diagonal quadrilateral adjacency patches.
+///
+/// Two closed solids often share a quadrilateral face that each source split
+/// into two triangles, but along opposite diagonals. No single triangle is a
+/// whole-face match and neither side is a three-triangle fan, so the earlier
+/// adjacency certificates had to fall through to boundary policy. This
+/// certificate promotes only the exact two-triangle/two-triangle case: each
+/// side must form one strictly convex coplanar quadrilateral with the same
+/// four boundary points and opposite signed area. That source-owned replay is
+/// the Yap boundary from "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997): the diagonal is removed only because
+/// exact source topology proves both patches are the same boundary object.
+fn quad_patch_pairs(
+    left: &ExactMesh,
+    consumed_left_faces: &BTreeSet<usize>,
+    right: &ExactMesh,
+    consumed_right_faces: &BTreeSet<usize>,
+) -> Option<Vec<(Vec<usize>, Vec<usize>)>> {
+    let left_candidates = quad_patch_candidates(left, consumed_left_faces)?;
+    let right_candidates = quad_patch_candidates(right, consumed_right_faces)?;
+    let mut pairs = Vec::new();
+    let mut used_left = BTreeSet::new();
+    let mut used_right = BTreeSet::new();
+
+    for left_candidate in &left_candidates {
+        if left_candidate
+            .faces
+            .iter()
+            .any(|face| used_left.contains(face))
+        {
+            continue;
+        }
+        let Some((right_index, right_candidate)) =
+            right_candidates
+                .iter()
+                .enumerate()
+                .find(|(right_index, candidate)| {
+                    !used_right.contains(right_index)
+                        && quad_patch_candidates_match(left_candidate, candidate)
+                })
+        else {
+            continue;
+        };
+        used_left.extend(left_candidate.faces.iter().copied());
+        used_right.insert(right_index);
+        pairs.push((left_candidate.faces.clone(), right_candidate.faces.clone()));
+    }
+
+    Some(pairs)
+}
+
+#[derive(Clone, Debug, PartialEq)]
+struct QuadPatchCandidate {
+    faces: Vec<usize>,
+    boundary_points: Vec<Point3>,
+    signed_area2: ExactReal,
+    area_abs: ExactReal,
+}
+
+fn quad_patch_candidates(
+    mesh: &ExactMesh,
+    consumed_faces: &BTreeSet<usize>,
+) -> Option<Vec<QuadPatchCandidate>> {
+    let mut candidates = Vec::new();
+    for first in 0..mesh.triangles().len() {
+        if consumed_faces.contains(&first) {
+            continue;
+        }
+        for second in first + 1..mesh.triangles().len() {
+            if consumed_faces.contains(&second) {
+                continue;
+            }
+            if let Some(candidate) = quad_patch_candidate(mesh, [first, second])? {
+                candidates.push(candidate);
+            }
+        }
+    }
+    Some(candidates)
+}
+
+fn quad_patch_candidate(mesh: &ExactMesh, faces: [usize; 2]) -> Option<Option<QuadPatchCandidate>> {
+    let mut edge_counts = BTreeMap::<(usize, usize), usize>::new();
+    for face in faces {
+        let triangle = mesh.triangles().get(face)?.0;
+        for edge in triangle_edges(triangle) {
+            *edge_counts.entry(edge).or_default() += 1;
+        }
+    }
+    if edge_counts.values().filter(|&&count| count == 2).count() != 1 {
+        return Some(None);
+    }
+    let boundary_edges = edge_counts
+        .iter()
+        .filter_map(|(&edge, &count)| (count == 1).then_some(edge))
+        .collect::<Vec<_>>();
+    if boundary_edges.len() != 4 {
+        return Some(None);
+    }
+    let boundary_vertices = order_quad_boundary_vertices(&boundary_edges)?;
+    let boundary_points = boundary_vertices
+        .iter()
+        .map(|&vertex| {
+            mesh.vertices()
+                .get(vertex)
+                .map(|point| point.to_hyperlimit_point())
+        })
+        .collect::<Option<Vec<_>>>()?;
+    let projection = choose_polygon_projection(&boundary_points)?;
+    if !quad_loop_is_strictly_convex(&boundary_points, projection)? {
+        return Some(None);
+    }
+
+    let mut signed_area2 = ExactReal::from(0);
+    for face in faces {
+        let triangle = mesh.triangles().get(face)?.0;
+        let points = triangle_points(mesh, triangle)?;
+        if !points
+            .iter()
+            .all(|point| point_on_triangle_plane_vec(&boundary_points, point) == Some(true))
+        {
+            return Some(None);
+        }
+        let area = projected_polygon_area2_value(&points, projection);
+        if real_sign(&area)? == Sign::Zero {
+            return Some(None);
+        }
+        signed_area2 = signed_area2 + area;
+    }
+
+    let area_abs = real_abs(&signed_area2)?;
+    let boundary_area_abs = real_abs(&projected_polygon_area2_value(&boundary_points, projection))?;
+    if compare_reals(&area_abs, &boundary_area_abs).value() != Some(Ordering::Equal) {
+        return Some(None);
+    }
+
+    Some(Some(QuadPatchCandidate {
+        faces: faces.into(),
+        boundary_points,
+        signed_area2,
+        area_abs,
+    }))
+}
+
+fn order_quad_boundary_vertices(edges: &[(usize, usize)]) -> Option<Vec<usize>> {
+    let mut adjacency = BTreeMap::<usize, Vec<usize>>::new();
+    for &(a, b) in edges {
+        adjacency.entry(a).or_default().push(b);
+        adjacency.entry(b).or_default().push(a);
+    }
+    if adjacency.len() != 4 || adjacency.values().any(|neighbors| neighbors.len() != 2) {
+        return None;
+    }
+    let start = *adjacency.keys().next()?;
+    let mut ordered = vec![start];
+    let mut previous = usize::MAX;
+    let mut current = start;
+    loop {
+        let neighbors = adjacency.get(&current)?;
+        let next = neighbors
+            .iter()
+            .copied()
+            .find(|&neighbor| neighbor != previous)?;
+        if next == start {
+            break;
+        }
+        if ordered.contains(&next) {
+            return None;
+        }
+        ordered.push(next);
+        previous = current;
+        current = next;
+        if ordered.len() > 4 {
+            return None;
+        }
+    }
+    (ordered.len() == 4).then_some(ordered)
+}
+
+fn quad_loop_is_strictly_convex(points: &[Point3], projection: CoplanarProjection) -> Option<bool> {
+    if points.len() != 4 {
+        return Some(false);
+    }
+    let area_sign = real_sign(&projected_polygon_area2_value(points, projection))?;
+    if area_sign == Sign::Zero {
+        return Some(false);
+    }
+    for index in 0..points.len() {
+        let a = &points[index];
+        let b = &points[(index + 1) % points.len()];
+        let c = &points[(index + 2) % points.len()];
+        let turn = projected_polygon_area2_value(&[a.clone(), b.clone(), c.clone()], projection);
+        if real_sign(&turn)? != area_sign {
+            return Some(false);
+        }
+    }
+    Some(true)
+}
+
+fn quad_patch_candidates_match(left: &QuadPatchCandidate, right: &QuadPatchCandidate) -> bool {
+    boundary_point_sets_equal_slice(&left.boundary_points, &right.boundary_points) == Some(true)
+        && compare_reals(&left.area_abs, &right.area_abs).value() == Some(Ordering::Equal)
+        && compare_reals(
+            &(left.signed_area2.clone() + right.signed_area2.clone()),
+            &ExactReal::from(0),
+        )
+        .value()
+            == Some(Ordering::Equal)
+}
+
+fn boundary_point_sets_equal_slice(left: &[Point3], right: &[Point3]) -> Option<bool> {
+    if left.len() != right.len() {
+        return Some(false);
+    }
+    for right_point in right {
+        if !left
+            .iter()
+            .any(|left_point| points_equal(left_point, right_point) == Some(true))
+        {
+            return Some(false);
+        }
+    }
+    Some(true)
+}
+
 fn point_on_triangle_plane(triangle: &[Point3; 3], point: &Point3) -> Option<bool> {
     Some(orient3d_report(&triangle[0], &triangle[1], &triangle[2], point).value()? == Sign::Zero)
 }
 
+fn point_on_triangle_plane_vec(points: &[Point3], point: &Point3) -> Option<bool> {
+    let [a, b, c, ..] = points else {
+        return Some(false);
+    };
+    Some(orient3d_report(a, b, c, point).value()? == Sign::Zero)
+}
+
 fn choose_triangle_projection(points: &[Point3; 3]) -> Option<CoplanarProjection> {
+    choose_polygon_projection(points)
+}
+
+fn choose_polygon_projection(points: &[Point3]) -> Option<CoplanarProjection> {
     [
         CoplanarProjection::Xy,
         CoplanarProjection::Xz,
@@ -1019,6 +1276,22 @@ fn triangle_points(mesh: &ExactMesh, triangle: [usize; 3]) -> Option<[Point3; 3]
         mesh.vertices().get(triangle[1])?.to_hyperlimit_point(),
         mesh.vertices().get(triangle[2])?.to_hyperlimit_point(),
     ])
+}
+
+fn triangle_edges(triangle: [usize; 3]) -> [(usize, usize); 3] {
+    [
+        canonical_edge(triangle[0], triangle[1]),
+        canonical_edge(triangle[1], triangle[2]),
+        canonical_edge(triangle[2], triangle[0]),
+    ]
+}
+
+const fn canonical_edge(left: usize, right: usize) -> (usize, usize) {
+    if left <= right {
+        (left, right)
+    } else {
+        (right, left)
+    }
 }
 
 const fn is_reversed_cycle(labels: [usize; 3]) -> bool {

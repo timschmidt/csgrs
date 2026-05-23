@@ -88,6 +88,27 @@ fn downward_square_pyramid_i64(
 }
 
 #[cfg(feature = "exact-triangulation")]
+fn downward_square_pyramid_opposite_diagonal_i64(
+    a: [i64; 3],
+    b: [i64; 3],
+    c: [i64; 3],
+    d: [i64; 3],
+    apex: [i64; 3],
+) -> ExactMesh {
+    ExactMesh::from_i64_triangles(
+        &[
+            a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2], d[0], d[1], d[2], apex[0],
+            apex[1], apex[2],
+        ],
+        &[
+            0, 1, 3, 1, 2, 3, //
+            0, 4, 1, 1, 4, 2, 2, 4, 3, 3, 4, 0,
+        ],
+    )
+    .unwrap()
+}
+
+#[cfg(feature = "exact-triangulation")]
 fn upward_square_pyramid_i64(
     a: [i64; 3],
     b: [i64; 3],
@@ -7875,6 +7896,110 @@ fn exact_full_face_adjacent_dual_fan_patch_union_deletes_cross_triangulated_inte
         )
         .is_none()
     );
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
+fn exact_full_face_adjacent_cross_diagonal_square_patch_union_deletes_internal_faces() {
+    let left = upward_square_pyramid_i64([0, 0, 0], [4, 0, 0], [4, 4, 0], [0, 4, 0], [2, 2, 4]);
+    let right = downward_square_pyramid_opposite_diagonal_i64(
+        [0, 0, 0],
+        [4, 0, 0],
+        [4, 4, 0],
+        [0, 4, 0],
+        [2, 2, -4],
+    );
+
+    let graph = build_intersection_graph(&left, &right).unwrap();
+    graph.validate_against_meshes(&left, &right).unwrap();
+    assert_eq!(
+        graph
+            .face_pairs
+            .iter()
+            .filter(|pair| {
+                pair.left_face < 2
+                    && pair.right_face < 2
+                    && pair.relation == hypermesh::exact::MeshFacePairRelation::CoplanarOverlapping
+            })
+            .count(),
+        4
+    );
+
+    let union = hypermesh::exact::materialize_full_face_adjacent_union(
+        &left,
+        &right,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("opposite-diagonal quadrilateral patch should merge");
+    union.validate().unwrap();
+    union.validate_against_sources(&left, &right).unwrap();
+    assert!(union.shared_faces.is_empty());
+    assert_eq!(
+        union.shared_patches,
+        vec![hypermesh::exact::FullFaceAdjacentPatch {
+            left_faces: vec![0, 1],
+            right_faces: vec![0, 1],
+        }]
+    );
+    assert_eq!(union.mesh.vertices().len(), 6);
+    assert_eq!(union.mesh.triangles().len(), 8);
+    assert!(union.mesh.facts().mesh.closed_manifold);
+
+    let mut stale = union.clone();
+    stale.shared_patches[0].right_faces.pop();
+    assert_eq!(
+        stale.validate_against_sources(&left, &right).unwrap_err(),
+        hypermesh::exact::FullFaceAdjacentUnionError::SourceReplayMismatch
+    );
+
+    let preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+    )
+    .unwrap();
+    preflight.validate().unwrap();
+    preflight.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedFullFaceAdjacentUnion
+    );
+
+    let result = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    result
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            hypermesh::exact::ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(result.mesh, union.mesh);
+
+    for operation in [
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    ] {
+        let result =
+            hypermesh::exact::boolean_exact(&left, &right, operation, ValidationPolicy::CLOSED)
+                .unwrap();
+        result
+            .validate_operation_against_sources(
+                &left,
+                &right,
+                operation,
+                ValidationPolicy::CLOSED,
+                hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+            )
+            .unwrap();
+    }
 }
 
 #[cfg(feature = "exact-triangulation")]

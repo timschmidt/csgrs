@@ -4565,6 +4565,27 @@ fn downward_square_pyramid_i64(
 }
 
 #[cfg(feature = "exact-triangulation")]
+fn downward_square_pyramid_opposite_diagonal_i64(
+    a: [i64; 3],
+    b: [i64; 3],
+    c: [i64; 3],
+    d: [i64; 3],
+    apex: [i64; 3],
+) -> ExactMesh {
+    ExactMesh::from_i64_triangles(
+        &[
+            a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2], d[0], d[1], d[2], apex[0],
+            apex[1], apex[2],
+        ],
+        &[
+            0, 1, 3, 1, 2, 3, //
+            0, 4, 1, 1, 4, 2, 2, 4, 3, 3, 4, 0,
+        ],
+    )
+    .expect("opposite-diagonal square pyramid fixture should import")
+}
+
+#[cfg(feature = "exact-triangulation")]
 fn upward_square_pyramid_i64(
     a: [i64; 3],
     b: [i64; 3],
@@ -4991,6 +5012,54 @@ fn exercise_full_face_adjacent_union() {
         )
         .unwrap();
     assert_eq!(dual_fan_result.mesh, dual_fan_union.mesh);
+
+    let quad_left = upward_square_pyramid_i64(
+        [0, 0, 0],
+        [4, 0, 0],
+        [4, 4, 0],
+        [0, 4, 0],
+        [2, 2, 4],
+    );
+    let quad_right = downward_square_pyramid_opposite_diagonal_i64(
+        [0, 0, 0],
+        [4, 0, 0],
+        [4, 4, 0],
+        [0, 4, 0],
+        [2, 2, -4],
+    );
+    let quad_union = hypermesh::exact::materialize_full_face_adjacent_union(
+        &quad_left,
+        &quad_right,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("opposite-diagonal square patch should materialize");
+    quad_union.validate().unwrap();
+    quad_union
+        .validate_against_sources(&quad_left, &quad_right)
+        .unwrap();
+    assert!(quad_union.shared_faces.is_empty());
+    assert_eq!(quad_union.shared_patches.len(), 1);
+    assert_eq!(quad_union.shared_patches[0].left_faces, vec![0, 1]);
+    assert_eq!(quad_union.shared_patches[0].right_faces, vec![0, 1]);
+
+    let quad_result = boolean_exact_with_boundary_policy(
+        &quad_left,
+        &quad_right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+    quad_result
+        .validate_operation_against_sources(
+            &quad_left,
+            &quad_right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(quad_result.mesh, quad_union.mesh);
 }
 
 #[cfg(feature = "exact-triangulation")]
