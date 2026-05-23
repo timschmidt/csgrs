@@ -7,11 +7,7 @@
 //! standard apertures by constructing the swept aperture area.
 
 use crate::csg::CSG;
-use crate::float_types::{
-    PI, Real, TAU, hangle_sin_cos, hdegrees_to_radians, hreal_affine, hreal_f64_gt,
-    hreal_f64s_exactly_equal, hreal_mul, hreal_sub, hreal_to_f64, hxy_distance,
-    hxy_orientation_sign, hxy_unit_direction,
-};
+use crate::hyper_math::{Real, hreal_to_f64};
 use crate::sketch::Profile;
 use gerber_types::{
     Aperture, ApertureDefinition, AxisSelect, Circle, Command, CommentContent,
@@ -52,14 +48,18 @@ struct GerberCoord<T> {
 
 type Coord<T> = GerberCoord<T>;
 
-fn coord_on_circle(center: Coord<Real>, radius: Real, angle: Real) -> Option<Coord<Real>> {
-    let (sin, cos) = hangle_sin_cos(angle)?;
-    let x = hreal_affine(center.x, cos, radius)?;
-    let y = hreal_affine(center.y, sin, radius)?;
-    Some(Coord { x, y })
+fn real(value: f64) -> Option<Real> {
+    Real::try_from(value).ok()
 }
 
-fn origin_circle_coord(radius: Real, angle: Real) -> Option<Coord<Real>> {
+fn coord_on_circle(center: Coord<f64>, radius: f64, angle: f64) -> Coord<f64> {
+    Coord {
+        x: center.x + angle.cos() * radius,
+        y: center.y + angle.sin() * radius,
+    }
+}
+
+fn origin_circle_coord(radius: f64, angle: f64) -> Coord<f64> {
     coord_on_circle(Coord { x: 0.0, y: 0.0 }, radius, angle)
 }
 
@@ -220,8 +220,8 @@ where
 struct ImportState<M> {
     sketch: Profile<M>,
     metadata: M,
-    unit_scale: Real,
-    current: Coord<Real>,
+    unit_scale: f64,
+    current: Coord<f64>,
     selected_aperture: Option<i32>,
     interpolation_mode: InterpolationMode,
     polarity: Polarity,
@@ -330,8 +330,8 @@ where
             } => Some(StepRepeatState {
                 repeat_x,
                 repeat_y,
-                distance_x: (distance_x as Real) * self.unit_scale,
-                distance_y: (distance_y as Real) * self.unit_scale,
+                distance_x: distance_x * self.unit_scale,
+                distance_y: distance_y * self.unit_scale,
             }),
             StepAndRepeat::Close => None,
         };
@@ -413,7 +413,7 @@ where
                 if points.len() > 1 {
                     let mut path = Vec::with_capacity(points.len() + 1);
                     path.push(self.current);
-                    path.extend(points.iter().copied());
+                    path.extend(points.iter().cloned());
                     if let Some(sketch) = trace_path_to_sketch(
                         aperture,
                         &path,
@@ -476,16 +476,16 @@ where
 }
 
 struct RegionBuilder {
-    current_ring: Vec<[Real; 2]>,
-    rings: Vec<Vec<[Real; 2]>>,
+    current_ring: Vec<[f64; 2]>,
+    rings: Vec<Vec<[f64; 2]>>,
 }
 
 #[derive(Clone, Copy, Debug)]
 struct StepRepeatState {
     repeat_x: u32,
     repeat_y: u32,
-    distance_x: Real,
-    distance_y: Real,
+    distance_x: f64,
+    distance_y: f64,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -534,12 +534,12 @@ impl RegionBuilder {
         }
     }
 
-    fn move_to(&mut self, point: Coord<Real>) {
+    fn move_to(&mut self, point: Coord<f64>) {
         self.finish_ring();
         self.current_ring.push(point_from_coord(point));
     }
 
-    fn line_to(&mut self, start: Coord<Real>, end: Coord<Real>) {
+    fn line_to(&mut self, start: Coord<f64>, end: Coord<f64>) {
         if self.current_ring.is_empty() {
             self.current_ring.push(point_from_coord(start));
         }
@@ -616,7 +616,7 @@ fn emit_region_profiles(
 }
 
 fn emit_point_ring(
-    ring: &[[Real; 2]],
+    ring: &[[f64; 2]],
     commands: &mut Vec<Command>,
     options: GerberExportOptions,
 ) -> Result<(), IoError> {
@@ -736,7 +736,7 @@ fn emit_native_wire(
 }
 
 fn gerber_coordinates(
-    coord: Coord<Real>,
+    coord: Coord<f64>,
     options: GerberExportOptions,
 ) -> Result<Coordinates, IoError> {
     let x = export_coordinate_number(coord.x, options)?;
@@ -745,7 +745,7 @@ fn gerber_coordinates(
 }
 
 fn gerber_coordinate_offset(
-    coord: Coord<Real>,
+    coord: Coord<f64>,
     options: GerberExportOptions,
 ) -> Result<CoordinateOffset, IoError> {
     let x = export_coordinate_number(coord.x, options)?;
@@ -753,7 +753,7 @@ fn gerber_coordinate_offset(
     Ok(CoordinateOffset::new(x, y, options.coordinate_format).validate()?)
 }
 
-fn finite_coord(point: &Point2) -> Result<Coord<Real>, IoError> {
+fn finite_coord(point: &Point2) -> Result<Coord<f64>, IoError> {
     Ok(Coord {
         x: hreal_to_f64(point.x()).ok_or_else(|| {
             IoError::MalformedInput("non-finite hyperreal x coordinate".into())
@@ -765,30 +765,30 @@ fn finite_coord(point: &Point2) -> Result<Coord<Real>, IoError> {
 }
 
 fn export_coordinate_number(
-    value: Real,
+    value: f64,
     options: GerberExportOptions,
 ) -> Result<CoordinateNumber, IoError> {
     let value = match options.unit {
-        Unit::Millimeters => value as f64,
-        Unit::Inches => (value as f64) / 25.4,
+        Unit::Millimeters => value,
+        Unit::Inches => value / 25.4,
     };
     Ok(CoordinateNumber::try_from(value)?.validate(&options.coordinate_format)?)
 }
 
 fn resolve_coordinates(
     coords: &Coordinates,
-    current: Coord<Real>,
-    unit_scale: Real,
+    current: Coord<f64>,
+    unit_scale: f64,
     image_transform: ImageTransform,
-) -> Coord<Real> {
+) -> Coord<f64> {
     let coord = Coord {
         x: coords
             .x
-            .map(|x| (f64::from(x) as Real) * unit_scale)
+            .map(|x| f64::from(x) * unit_scale)
             .unwrap_or(current.x),
         y: coords
             .y
-            .map(|y| (f64::from(y) as Real) * unit_scale)
+            .map(|y| f64::from(y) * unit_scale)
             .unwrap_or(current.y),
     };
     image_transform.apply_point(coord, unit_scale)
@@ -796,24 +796,18 @@ fn resolve_coordinates(
 
 fn resolve_offset(
     offset: &CoordinateOffset,
-    unit_scale: Real,
+    unit_scale: f64,
     image_transform: ImageTransform,
-) -> Coord<Real> {
+) -> Coord<f64> {
     let coord = Coord {
-        x: offset
-            .x
-            .map(|x| (f64::from(x) as Real) * unit_scale)
-            .unwrap_or(0.0),
-        y: offset
-            .y
-            .map(|y| (f64::from(y) as Real) * unit_scale)
-            .unwrap_or(0.0),
+        x: offset.x.map(|x| f64::from(x) * unit_scale).unwrap_or(0.0),
+        y: offset.y.map(|y| f64::from(y) * unit_scale).unwrap_or(0.0),
     };
     image_transform.apply_vector(coord)
 }
 
 impl ImageTransform {
-    fn apply_point(self, point: Coord<Real>, unit_scale: Real) -> Coord<Real> {
+    fn apply_point(self, point: Coord<f64>, unit_scale: f64) -> Coord<f64> {
         let mut point = match self.axis_select {
             AxisSelect::AXBY => point,
             AxisSelect::AYBX => Coord {
@@ -822,8 +816,8 @@ impl ImageTransform {
             },
         };
 
-        point.x *= self.scaling.a as Real;
-        point.y *= self.scaling.b as Real;
+        point.x *= self.scaling.a;
+        point.y *= self.scaling.b;
 
         match self.mirroring {
             ImageMirroring::None => {},
@@ -836,12 +830,12 @@ impl ImageTransform {
         }
 
         point = rotate_coord(point, image_rotation_degrees(self.rotation));
-        point.x += (self.offset.a as Real) * unit_scale;
-        point.y += (self.offset.b as Real) * unit_scale;
+        point.x += self.offset.a * unit_scale;
+        point.y += self.offset.b * unit_scale;
         point
     }
 
-    fn apply_vector(self, vector: Coord<Real>) -> Coord<Real> {
+    fn apply_vector(self, vector: Coord<f64>) -> Coord<f64> {
         let mut vector = match self.axis_select {
             AxisSelect::AXBY => vector,
             AxisSelect::AYBX => Coord {
@@ -850,8 +844,8 @@ impl ImageTransform {
             },
         };
 
-        vector.x *= self.scaling.a as Real;
-        vector.y *= self.scaling.b as Real;
+        vector.x *= self.scaling.a;
+        vector.y *= self.scaling.b;
 
         match self.mirroring {
             ImageMirroring::None => {},
@@ -869,9 +863,9 @@ impl ImageTransform {
 
 fn flash_to_sketch<M>(
     aperture: &Aperture,
-    center: Coord<Real>,
+    center: Coord<f64>,
     metadata: M,
-    unit_scale: Real,
+    unit_scale: f64,
     aperture_transform: ApertureTransform,
 ) -> Option<Profile<M>>
 where
@@ -879,13 +873,11 @@ where
 {
     let mut sketch = match aperture {
         Aperture::Circle(circle) => {
-            let radius =
-                aperture_transform.scale_length((circle.diameter as Real) * unit_scale) * 0.5;
-            let mut sketch = Profile::circle(radius, 64, metadata.clone());
+            let radius = aperture_transform.scale_length(circle.diameter * unit_scale) * 0.5;
+            let mut sketch = Profile::circle(real(radius)?, 64, metadata.clone());
             if let Some(hole_diameter) = circle.hole_diameter {
                 sketch = sketch.difference(&Profile::circle(
-                    aperture_transform.scale_length((hole_diameter as Real) * unit_scale)
-                        * 0.5,
+                    real(aperture_transform.scale_length(hole_diameter * unit_scale) * 0.5)?,
                     64,
                     metadata,
                 ));
@@ -893,22 +885,23 @@ where
             sketch
         },
         Aperture::Rectangle(rect) => {
-            aperture_rect_sketch(rect, metadata, unit_scale, aperture_transform, false)
+            aperture_rect_sketch(rect, metadata, unit_scale, aperture_transform, false)?
         },
         Aperture::Obround(rect) => {
-            aperture_rect_sketch(rect, metadata, unit_scale, aperture_transform, true)
+            aperture_rect_sketch(rect, metadata, unit_scale, aperture_transform, true)?
         },
         Aperture::Polygon(polygon) => {
-            let radius =
-                aperture_transform.scale_length((polygon.diameter as Real) * unit_scale) * 0.5;
-            let rotation = polygon.rotation.unwrap_or(0.0) as Real;
-            let mut sketch =
-                Profile::regular_ngon(polygon.vertices as usize, radius, metadata.clone())
-                    .rotate(0.0, 0.0, rotation);
+            let radius = aperture_transform.scale_length(polygon.diameter * unit_scale) * 0.5;
+            let rotation = polygon.rotation.unwrap_or(0.0);
+            let mut sketch = Profile::regular_ngon(
+                polygon.vertices as usize,
+                real(radius)?,
+                metadata.clone(),
+            )
+            .rotate(real(0.0)?, real(0.0)?, real(rotation)?);
             if let Some(hole_diameter) = polygon.hole_diameter {
                 sketch = sketch.difference(&Profile::circle(
-                    aperture_transform.scale_length((hole_diameter as Real) * unit_scale)
-                        * 0.5,
+                    real(aperture_transform.scale_length(hole_diameter * unit_scale) * 0.5)?,
                     64,
                     metadata,
                 ));
@@ -918,58 +911,58 @@ where
         Aperture::Macro(..) => return None,
     };
 
-    sketch = apply_aperture_transform(sketch, aperture_transform);
-    Some(sketch.translate(center.x, center.y, 0.0))
+    sketch = apply_aperture_transform(sketch, aperture_transform)?;
+    Some(sketch.translate(real(center.x)?, real(center.y)?, real(0.0)?))
 }
 
 impl ApertureTransform {
-    fn scale_length(self, value: Real) -> Real {
-        value * (self.scaling.scale as Real)
+    fn scale_length(self, value: f64) -> f64 {
+        value * self.scaling.scale
     }
 }
 
 fn aperture_rect_sketch<M>(
     rect: &Rectangular,
     metadata: M,
-    unit_scale: Real,
+    unit_scale: f64,
     aperture_transform: ApertureTransform,
     rounded: bool,
-) -> Profile<M>
+) -> Option<Profile<M>>
 where
     M: Clone + Debug + Send + Sync,
 {
-    let width = aperture_transform.scale_length((rect.x as Real) * unit_scale);
-    let height = aperture_transform.scale_length((rect.y as Real) * unit_scale);
+    let width = aperture_transform.scale_length(rect.x * unit_scale);
+    let height = aperture_transform.scale_length(rect.y * unit_scale);
     let mut sketch = if rounded {
         Profile::rounded_rectangle(
-            width,
-            height,
-            width.min(height) * 0.5,
+            real(width)?,
+            real(height)?,
+            real(width.min(height) * 0.5)?,
             16,
             metadata.clone(),
         )
     } else {
-        Profile::rectangle(width, height, metadata.clone())
+        Profile::rectangle(real(width)?, real(height)?, metadata.clone())
     }
-    .translate(-width * 0.5, -height * 0.5, 0.0);
+    .translate(real(-width * 0.5)?, real(-height * 0.5)?, real(0.0)?);
 
     if let Some(hole_diameter) = rect.hole_diameter {
         sketch = sketch.difference(&Profile::circle(
-            aperture_transform.scale_length((hole_diameter as Real) * unit_scale) * 0.5,
+            real(aperture_transform.scale_length(hole_diameter * unit_scale) * 0.5)?,
             64,
             metadata,
         ));
     }
 
-    sketch
+    Some(sketch)
 }
 
 fn trace_to_sketch<M>(
     aperture: &Aperture,
-    start: Coord<Real>,
-    end: Coord<Real>,
+    start: Coord<f64>,
+    end: Coord<f64>,
     metadata: M,
-    unit_scale: Real,
+    unit_scale: f64,
     aperture_transform: ApertureTransform,
 ) -> Option<Profile<M>>
 where
@@ -981,8 +974,7 @@ where
 
     match aperture {
         Aperture::Circle(circle) => {
-            let radius =
-                aperture_transform.scale_length((circle.diameter as Real) * unit_scale) * 0.5;
+            let radius = aperture_transform.scale_length(circle.diameter * unit_scale) * 0.5;
             Some(capsule_sketch(start, end, radius, metadata))
         },
         Aperture::Rectangle(_) | Aperture::Obround(_) | Aperture::Polygon(_) => {
@@ -1010,9 +1002,9 @@ where
 
 fn trace_path_to_sketch<M>(
     aperture: &Aperture,
-    path: &[Coord<Real>],
+    path: &[Coord<f64>],
     metadata: M,
-    unit_scale: Real,
+    unit_scale: f64,
     aperture_transform: ApertureTransform,
 ) -> Option<Profile<M>>
 where
@@ -1024,8 +1016,7 @@ where
 
     match aperture {
         Aperture::Circle(circle) => {
-            let radius =
-                aperture_transform.scale_length((circle.diameter as Real) * unit_scale) * 0.5;
+            let radius = aperture_transform.scale_length(circle.diameter * unit_scale) * 0.5;
             circular_swept_path_sketch(path, radius, metadata)
         },
         Aperture::Rectangle(_) | Aperture::Obround(_) | Aperture::Polygon(_) => None,
@@ -1044,14 +1035,14 @@ where
 /// Finite Precision Output," *Computational Geometry* 13(4), 1999
 /// (<https://doi.org/10.1016/S0925-7721(99)00021-8>).
 fn circular_swept_path_sketch<M>(
-    path: &[Coord<Real>],
-    radius: Real,
+    path: &[Coord<f64>],
+    radius: f64,
     metadata: M,
 ) -> Option<Profile<M>>
 where
     M: Clone + Debug + Send + Sync,
 {
-    if !hreal_f64_gt(radius, 0.0) {
+    if radius <= 0.0 {
         return polygon_from_coords(path.to_vec(), metadata);
     }
 
@@ -1069,18 +1060,17 @@ where
 
 fn aperture_outline_points(
     aperture: &Aperture,
-    unit_scale: Real,
+    unit_scale: f64,
     aperture_transform: ApertureTransform,
-) -> Option<Vec<Coord<Real>>> {
+) -> Option<Vec<Coord<f64>>> {
     let points = match aperture {
         Aperture::Circle(circle) => {
-            let radius =
-                aperture_transform.scale_length((circle.diameter as Real) * unit_scale) * 0.5;
+            let radius = aperture_transform.scale_length(circle.diameter * unit_scale) * 0.5;
             circle_points(radius, 64)
         },
         Aperture::Rectangle(rect) => {
-            let hw = aperture_transform.scale_length((rect.x as Real) * unit_scale) * 0.5;
-            let hh = aperture_transform.scale_length((rect.y as Real) * unit_scale) * 0.5;
+            let hw = aperture_transform.scale_length(rect.x * unit_scale) * 0.5;
+            let hh = aperture_transform.scale_length(rect.y * unit_scale) * 0.5;
             vec![
                 Coord { x: -hw, y: -hh },
                 Coord { x: hw, y: -hh },
@@ -1089,20 +1079,18 @@ fn aperture_outline_points(
             ]
         },
         Aperture::Obround(rect) => {
-            let width = aperture_transform.scale_length((rect.x as Real) * unit_scale);
-            let height = aperture_transform.scale_length((rect.y as Real) * unit_scale);
+            let width = aperture_transform.scale_length(rect.x * unit_scale);
+            let height = aperture_transform.scale_length(rect.y * unit_scale);
             rounded_rect_points(width, height, width.min(height) * 0.5, 16)
         },
         Aperture::Polygon(polygon) => {
-            let radius =
-                aperture_transform.scale_length((polygon.diameter as Real) * unit_scale) * 0.5;
-            let rotation = polygon.rotation.unwrap_or(0.0) as Real;
-            let Some(rotation) = hdegrees_to_radians(rotation) else {
-                return None;
-            };
+            let radius = aperture_transform.scale_length(polygon.diameter * unit_scale) * 0.5;
+            let rotation = polygon.rotation.unwrap_or(0.0).to_radians();
             (0..polygon.vertices)
-                .filter_map(|i| {
-                    let theta = TAU * (i as Real) / (polygon.vertices as Real) + rotation;
+                .map(|i| {
+                    let theta = std::f64::consts::TAU * f64::from(i)
+                        / f64::from(polygon.vertices)
+                        + rotation;
                     origin_circle_coord(radius, theta)
                 })
                 .collect()
@@ -1119,22 +1107,28 @@ fn aperture_outline_points(
 }
 
 fn capsule_sketch<M>(
-    start: Coord<Real>,
-    end: Coord<Real>,
-    radius: Real,
+    start: Coord<f64>,
+    end: Coord<f64>,
+    radius: f64,
     metadata: M,
 ) -> Profile<M>
 where
     M: Clone + Debug + Send + Sync,
 {
-    let length = hxy_distance((start.x, start.y), (end.x, end.y)).unwrap_or(0.0);
-    if !hreal_f64_gt(length, 0.0) {
-        return Profile::circle(radius, 64, metadata).translate(start.x, start.y, 0.0);
+    let length = (end.x - start.x).hypot(end.y - start.y);
+    let Some(radius_real) = real(radius) else {
+        return Profile::empty(metadata);
+    };
+    if length <= 0.0 {
+        return Profile::circle(radius_real, 64, metadata.clone()).translate(
+            real(start.x).unwrap_or_else(Real::zero),
+            real(start.y).unwrap_or_else(Real::zero),
+            Real::zero(),
+        );
     }
 
-    let Some((ux, uy)) = hxy_unit_direction((start.x, start.y), (end.x, end.y)) else {
-        return Profile::circle(radius, 64, metadata).translate(start.x, start.y, 0.0);
-    };
+    let ux = (end.x - start.x) / length;
+    let uy = (end.y - start.y) / length;
     let nx = -uy;
     let ny = ux;
     let start_angle = ny.atan2(nx);
@@ -1167,17 +1161,17 @@ where
 }
 
 fn approximate_arc(
-    start: Coord<Real>,
-    end: Coord<Real>,
-    offset: Coord<Real>,
+    start: Coord<f64>,
+    end: Coord<f64>,
+    offset: Coord<f64>,
     mode: InterpolationMode,
-) -> Vec<Coord<Real>> {
+) -> Vec<Coord<f64>> {
     let center = Coord {
         x: start.x + offset.x,
         y: start.y + offset.y,
     };
-    let radius = hxy_distance((start.x, start.y), (center.x, center.y)).unwrap_or(0.0);
-    if !hreal_f64_gt(radius, 0.0) {
+    let radius = (start.x - center.x).hypot(start.y - center.y);
+    if radius <= 0.0 {
         return vec![end];
     }
 
@@ -1187,9 +1181,9 @@ fn approximate_arc(
 
     if nearly_same(start, end) {
         end_angle = if clockwise {
-            start_angle - TAU
+            start_angle - std::f64::consts::TAU
         } else {
-            start_angle + TAU
+            start_angle + std::f64::consts::TAU
         };
     }
 
@@ -1198,46 +1192,47 @@ fn approximate_arc(
 }
 
 fn arc_points(
-    center: Coord<Real>,
-    radius: Real,
-    start_angle: Real,
-    end_angle: Real,
+    center: Coord<f64>,
+    radius: f64,
+    start_angle: f64,
+    end_angle: f64,
     clockwise: bool,
     min_segments: usize,
-) -> Vec<Coord<Real>> {
+) -> Vec<Coord<f64>> {
     let mut sweep = end_angle - start_angle;
     if clockwise && sweep >= 0.0 {
-        sweep -= TAU;
+        sweep -= std::f64::consts::TAU;
     } else if !clockwise && sweep <= 0.0 {
-        sweep += TAU;
+        sweep += std::f64::consts::TAU;
     }
 
-    let segments = ((sweep.abs() / (PI / 24.0)).ceil() as usize).max(min_segments);
+    let segments =
+        ((sweep.abs() / (std::f64::consts::PI / 24.0)).ceil() as usize).max(min_segments);
     (0..=segments)
         .map(|i| {
-            let angle = start_angle + sweep * (i as Real) / (segments as Real);
-            coord_on_circle(center, radius, angle).unwrap_or(center)
+            let angle = start_angle + sweep * (i as f64) / (segments as f64);
+            coord_on_circle(center, radius, angle)
         })
         .collect()
 }
 
-fn circle_points(radius: Real, segments: usize) -> Vec<Coord<Real>> {
+fn circle_points(radius: f64, segments: usize) -> Vec<Coord<f64>> {
     (0..segments)
         .map(|i| {
-            let theta = TAU * (i as Real) / (segments as Real);
-            origin_circle_coord(radius, theta).unwrap_or(Coord { x: 0.0, y: 0.0 })
+            let theta = std::f64::consts::TAU * (i as f64) / (segments as f64);
+            origin_circle_coord(radius, theta)
         })
         .collect()
 }
 
 fn rounded_rect_points(
-    width: Real,
-    height: Real,
-    radius: Real,
+    width: f64,
+    height: f64,
+    radius: f64,
     corner_segments: usize,
-) -> Vec<Coord<Real>> {
+) -> Vec<Coord<f64>> {
     let radius = radius.min(width * 0.5).min(height * 0.5);
-    if !hreal_f64_gt(radius, 0.0) {
+    if radius <= 0.0 {
         let hw = width * 0.5;
         let hh = height * 0.5;
         return vec![
@@ -1250,23 +1245,35 @@ fn rounded_rect_points(
 
     let centers = [
         (width * 0.5 - radius, height * 0.5 - radius, 0.0),
-        (-width * 0.5 + radius, height * 0.5 - radius, PI * 0.5),
-        (-width * 0.5 + radius, -height * 0.5 + radius, PI),
-        (width * 0.5 - radius, -height * 0.5 + radius, PI * 1.5),
+        (
+            -width * 0.5 + radius,
+            height * 0.5 - radius,
+            std::f64::consts::PI * 0.5,
+        ),
+        (
+            -width * 0.5 + radius,
+            -height * 0.5 + radius,
+            std::f64::consts::PI,
+        ),
+        (
+            width * 0.5 - radius,
+            -height * 0.5 + radius,
+            std::f64::consts::PI * 1.5,
+        ),
     ];
     centers
         .into_iter()
         .flat_map(|(cx, cy, start)| {
             (0..=corner_segments).map(move |i| {
-                let theta = start + (PI * 0.5) * (i as Real) / (corner_segments as Real);
+                let theta = start
+                    + (std::f64::consts::PI * 0.5) * (i as f64) / (corner_segments as f64);
                 coord_on_circle(Coord { x: cx, y: cy }, radius, theta)
-                    .unwrap_or(Coord { x: cx, y: cy })
             })
         })
         .collect()
 }
 
-fn polygon_from_coords<M>(mut points: Vec<Coord<Real>>, metadata: M) -> Option<Profile<M>>
+fn polygon_from_coords<M>(mut points: Vec<Coord<f64>>, metadata: M) -> Option<Profile<M>>
 where
     M: Clone + Debug + Send + Sync,
 {
@@ -1285,7 +1292,7 @@ where
         .map(|contour| Profile::from_contour(contour, metadata))
 }
 
-fn point_from_coord(coord: Coord<Real>) -> [Real; 2] {
+fn point_from_coord(coord: Coord<f64>) -> [f64; 2] {
     [coord.x, coord.y]
 }
 
@@ -1304,9 +1311,9 @@ where
     for x in 0..step_repeat.repeat_x {
         for y in 0..step_repeat.repeat_y {
             sketches.push(sketch.translate(
-                (x as Real) * step_repeat.distance_x,
-                (y as Real) * step_repeat.distance_y,
-                0.0,
+                real(f64::from(x) * step_repeat.distance_x).unwrap_or_else(Real::zero),
+                real(f64::from(y) * step_repeat.distance_y).unwrap_or_else(Real::zero),
+                Real::zero(),
             ));
         }
     }
@@ -1316,7 +1323,7 @@ where
 fn apply_aperture_transform<M>(
     sketch: Profile<M>,
     aperture_transform: ApertureTransform,
-) -> Profile<M>
+) -> Option<Profile<M>>
 where
     M: Clone + Debug + Send + Sync,
 {
@@ -1326,15 +1333,17 @@ where
         Mirroring::Y => (1.0, -1.0),
         Mirroring::XY => (-1.0, -1.0),
     };
-    sketch
-        .scale(sx, sy, 1.0)
-        .rotate(0.0, 0.0, aperture_transform.rotation.rotation as Real)
+    Some(sketch.scale(real(sx)?, real(sy)?, real(1.0)?).rotate(
+        real(0.0)?,
+        real(0.0)?,
+        real(aperture_transform.rotation.rotation)?,
+    ))
 }
 
 fn apply_aperture_transform_to_coord(
-    point: Coord<Real>,
+    point: Coord<f64>,
     aperture_transform: ApertureTransform,
-) -> Coord<Real> {
+) -> Coord<f64> {
     let mut point = point;
     match aperture_transform.mirroring {
         Mirroring::None => {},
@@ -1345,35 +1354,18 @@ fn apply_aperture_transform_to_coord(
             point.y = -point.y;
         },
     }
-    rotate_coord(point, aperture_transform.rotation.rotation as Real)
+    rotate_coord(point, aperture_transform.rotation.rotation)
 }
 
-fn rotate_coord(point: Coord<Real>, degrees: Real) -> Coord<Real> {
-    let Some(radians) = hdegrees_to_radians(degrees) else {
-        return point;
-    };
-    let Some((sin, cos)) = hangle_sin_cos(radians) else {
-        return point;
-    };
-    let Some(x_cos) = hreal_mul(point.x, cos) else {
-        return point;
-    };
-    let Some(y_sin) = hreal_mul(point.y, sin) else {
-        return point;
-    };
-    let Some(x) = hreal_sub(x_cos, y_sin) else {
-        return point;
-    };
-    let Some(x_sin) = hreal_mul(point.x, sin) else {
-        return point;
-    };
-    let Some(y) = hreal_affine(x_sin, cos, point.y) else {
-        return point;
-    };
+fn rotate_coord(point: Coord<f64>, degrees: f64) -> Coord<f64> {
+    let radians = degrees.to_radians();
+    let (sin, cos) = radians.sin_cos();
+    let x = point.x * cos - point.y * sin;
+    let y = point.x * sin + point.y * cos;
     Coord { x, y }
 }
 
-fn image_rotation_degrees(rotation: ImageRotation) -> Real {
+fn image_rotation_degrees(rotation: ImageRotation) -> f64 {
     match rotation {
         ImageRotation::None => 0.0,
         ImageRotation::CCW_90 => 90.0,
@@ -1382,7 +1374,7 @@ fn image_rotation_degrees(rotation: ImageRotation) -> Real {
     }
 }
 
-fn convex_hull(mut points: Vec<Coord<Real>>) -> Vec<Coord<Real>> {
+fn convex_hull(mut points: Vec<Coord<f64>>) -> Vec<Coord<f64>> {
     // Andrew's monotone-chain hull keeps the finite Gerber aperture sweep
     // bounded, while turn classification is delegated to the shared hyperreal
     // orientation predicate. See Andrew, "Another Efficient Algorithm for
@@ -1422,18 +1414,36 @@ fn convex_hull(mut points: Vec<Coord<Real>>) -> Vec<Coord<Real>> {
     lower
 }
 
-fn is_left_turn(origin: Coord<Real>, a: Coord<Real>, b: Coord<Real>) -> bool {
+fn is_left_turn(origin: Coord<f64>, a: Coord<f64>, b: Coord<f64>) -> bool {
+    let Some(origin) = real(origin.x)
+        .zip(real(origin.y))
+        .map(|(x, y)| hyperlimit::Point2::new(x, y))
+    else {
+        return false;
+    };
+    let Some(a) = real(a.x)
+        .zip(real(a.y))
+        .map(|(x, y)| hyperlimit::Point2::new(x, y))
+    else {
+        return false;
+    };
+    let Some(b) = real(b.x)
+        .zip(real(b.y))
+        .map(|(x, y)| hyperlimit::Point2::new(x, y))
+    else {
+        return false;
+    };
     matches!(
-        hxy_orientation_sign((origin.x, origin.y), (a.x, a.y), (b.x, b.y)),
-        Some(hyperreal::RealSign::Positive)
+        hyperlimit::orient2d(&origin, &a, &b).value(),
+        Some(hyperlimit::Sign::Positive)
     )
 }
 
-fn nearly_same(a: Coord<Real>, b: Coord<Real>) -> bool {
-    hreal_f64s_exactly_equal(a.x, b.x) && hreal_f64s_exactly_equal(a.y, b.y)
+fn nearly_same(a: Coord<f64>, b: Coord<f64>) -> bool {
+    a.x == b.x && a.y == b.y
 }
 
-fn unit_scale(unit: Unit) -> Real {
+fn unit_scale(unit: Unit) -> f64 {
     match unit {
         Unit::Millimeters => 1.0,
         Unit::Inches => 25.4,
@@ -1444,8 +1454,12 @@ fn unit_scale(unit: Unit) -> Real {
 mod tests {
     use super::{Coord, FromGerber, ToGerber, convex_hull};
     use crate::csg::CSG;
-    use crate::float_types::{PI, Real};
+    use crate::hyper_math::{Real, hreal_from_f64, pi};
     use crate::sketch::Profile;
+
+    fn r(value: f64) -> Real {
+        hreal_from_f64(value).expect("test values must be finite")
+    }
 
     fn assert_bounds_close(
         sketch: &Profile<()>,
@@ -1467,7 +1481,7 @@ mod tests {
             .region_profiles()
             .iter()
             .map(|profile| profile.projected_filled_area())
-            .sum()
+            .fold(Real::zero(), |sum, area| sum + area)
     }
 
     #[test]
@@ -1483,8 +1497,7 @@ mod tests {
 
         assert_eq!(hull.len(), 4);
         assert!(hull.iter().all(|point| {
-            crate::float_types::hreal_from_f64(point.x).is_ok()
-                && crate::float_types::hreal_from_f64(point.y).is_ok()
+            hreal_from_f64(point.x).is_ok() && hreal_from_f64(point.y).is_ok()
         }));
         assert!(hull.iter().any(|point| point.x == 0.0 && point.y == 0.0));
         assert!(hull.iter().any(|point| point.x == 1.0 && point.y == 0.0));
@@ -1494,7 +1507,7 @@ mod tests {
 
     #[test]
     fn exports_and_imports_square_region() {
-        let square = Profile::<()>::square(5.0, ());
+        let square = Profile::<()>::square(r(5.0), ());
 
         let gerber = square.to_gerber().unwrap();
         let gerber_text = String::from_utf8(gerber.clone()).unwrap();
@@ -1503,7 +1516,7 @@ mod tests {
         assert!(gerber_text.contains("G37*"));
 
         let parsed = Profile::<()>::from_gerber(&gerber, ()).unwrap();
-        assert_bounds_close(&parsed, 0.0, 0.0, 5.0, 5.0, 1.0e-9);
+        assert_bounds_close(&parsed, r(0.0), r(0.0), r(5.0), r(5.0), r(1.0e-9));
     }
 
     #[test]
@@ -1514,7 +1527,7 @@ mod tests {
         assert_eq!(parsed.material_contour_count(), 1);
         assert!(!parsed.as_region().is_empty());
 
-        assert_bounds_close(&parsed, 0.0, 0.0, 4.0, 3.0, 1.0e-9);
+        assert_bounds_close(&parsed, r(0.0), r(0.0), r(4.0), r(3.0), r(1.0e-9));
     }
 
     #[test]
@@ -1522,7 +1535,7 @@ mod tests {
         let gerber = b"G04 flash*\n%MOMM*%\n%FSLAX46Y46*%\n%ADD10C,2*%\nD10*\nX3000000Y4000000D03*\nM02*\n";
 
         let parsed = Profile::<()>::from_gerber(gerber, ()).unwrap();
-        assert_bounds_close(&parsed, 2.0, 3.0, 4.0, 5.0, 1.0e-6);
+        assert_bounds_close(&parsed, r(2.0), r(3.0), r(4.0), r(5.0), r(1.0e-6));
     }
 
     #[test]
@@ -1530,7 +1543,7 @@ mod tests {
         let gerber = b"G04 trace*\n%MOMM*%\n%FSLAX46Y46*%\n%ADD10C,1*%\nD10*\nX0Y0D02*\nX4000000Y0D01*\nM02*\n";
 
         let parsed = Profile::<()>::from_gerber(gerber, ()).unwrap();
-        assert_bounds_close(&parsed, -0.5, -0.5, 4.5, 0.5, 1.0e-6);
+        assert_bounds_close(&parsed, r(-0.5), r(-0.5), r(4.5), r(0.5), r(1.0e-6));
     }
 
     #[test]
@@ -1538,7 +1551,7 @@ mod tests {
         let gerber = b"G04 trace*\n%MOMM*%\n%FSLAX46Y46*%\n%ADD10R,1X2*%\nD10*\nX0Y0D02*\nX4000000Y0D01*\nM02*\n";
 
         let parsed = Profile::<()>::from_gerber(gerber, ()).unwrap();
-        assert_bounds_close(&parsed, -0.5, -1.0, 4.5, 1.0, 1.0e-6);
+        assert_bounds_close(&parsed, r(-0.5), r(-1.0), r(4.5), r(1.0), r(1.0e-6));
     }
 
     #[test]
@@ -1549,10 +1562,10 @@ mod tests {
         let bounds = parsed.bounding_box();
         let (min_x, min_y, max_x, max_y) =
             (bounds.mins.x, bounds.mins.y, bounds.maxs.x, bounds.maxs.y);
-        assert!(min_x >= -0.11);
-        assert!(min_y >= -0.11);
-        assert!((max_x - 1.1).abs() < 0.02);
-        assert!((max_y - 1.1).abs() < 0.02);
+        assert!(min_x >= r(-0.11));
+        assert!(min_y >= r(-0.11));
+        assert!((max_x - r(1.1)).abs() < r(0.02));
+        assert!((max_y - r(1.1)).abs() < r(0.02));
     }
 
     #[test]
@@ -1560,7 +1573,7 @@ mod tests {
         let gerber = b"G04 step repeat*\n%MOMM*%\n%FSLAX46Y46*%\n%ADD10C,1*%\nD10*\n%SRX2Y2I2J3*%\nX0Y0D03*\n%SR*%\nM02*\n";
 
         let parsed = Profile::<()>::from_gerber(gerber, ()).unwrap();
-        assert_bounds_close(&parsed, -0.5, -0.5, 2.5, 3.5, 1.0e-6);
+        assert_bounds_close(&parsed, r(-0.5), r(-0.5), r(2.5), r(3.5), r(1.0e-6));
     }
 
     #[test]
@@ -1568,7 +1581,7 @@ mod tests {
         let gerber = b"G04 rotated flash*\n%MOMM*%\n%FSLAX46Y46*%\n%ADD10R,1X2*%\nD10*\n%LR90*%\nX0Y0D03*\nM02*\n";
 
         let parsed = Profile::<()>::from_gerber(gerber, ()).unwrap();
-        assert_bounds_close(&parsed, -1.0, -0.5, 1.0, 0.5, 1.0e-6);
+        assert_bounds_close(&parsed, r(-1.0), r(-0.5), r(1.0), r(0.5), r(1.0e-6));
     }
 
     #[test]
@@ -1577,7 +1590,7 @@ mod tests {
 
         let parsed = Profile::<()>::from_gerber(gerber, ()).unwrap();
         let area = native_region_area(&parsed);
-        assert!((area - (PI * 3.0)).abs() < 0.05);
+        assert!((area - (pi() * r(3.0))).abs() < r(0.05));
     }
 
     #[test]
@@ -1586,7 +1599,7 @@ mod tests {
 
         let parsed = Profile::<()>::from_gerber(gerber, ()).unwrap();
         let area = native_region_area(&parsed);
-        assert!((area - 12.0).abs() < 1.0e-6);
+        assert!((area - r(12.0)).abs() < r(1.0e-6));
     }
 
     #[test]

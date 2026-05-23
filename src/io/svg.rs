@@ -1,7 +1,7 @@
 //! SVG input and output.
 
 use crate::csg::CSG;
-use crate::float_types::{Real, hreal_f64_gt, hreal_from_f64, hreal_to_f64};
+use crate::hyper_math::{Real, hreal_f64_gt, hreal_from_f64, hreal_to_f64};
 use crate::sketch::Profile;
 use hypercurve::{
     Classification, Contour2, CurvePolicy, CurveString2, FiniteProjectionOptions,
@@ -21,10 +21,10 @@ use super::IoError;
 /// "Towards Exact Geometric Computation," *Computational Geometry* 7(1-2), 1997
 /// (<https://doi.org/10.1016/0925-7721(95)00040-2>), with SVG path syntax from
 /// the W3C SVG 1.1 path-data specification.
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 struct SvgCoord {
-    x: Real,
-    y: Real,
+    x: f64,
+    y: f64,
 }
 
 impl SvgCoord {
@@ -33,7 +33,7 @@ impl SvgCoord {
     }
 }
 
-fn finite_svg_scalar(value: Real, label: &str) -> Result<Real, IoError> {
+fn finite_svg_scalar(value: f64, label: &str) -> Result<f64, IoError> {
     hreal_from_f64(value).map_err(|error| {
         IoError::MalformedInput(format!(
             "SVG {label} must be finite hyperreal boundary data: {error:?}"
@@ -42,7 +42,7 @@ fn finite_svg_scalar(value: Real, label: &str) -> Result<Real, IoError> {
     Ok(value)
 }
 
-fn positive_svg_scalar(value: Real, label: &str) -> Result<Real, IoError> {
+fn positive_svg_scalar(value: f64, label: &str) -> Result<f64, IoError> {
     finite_svg_scalar(value, label)?;
     if !hreal_f64_gt(value, 0.0) {
         return Err(IoError::MalformedInput(format!(
@@ -52,7 +52,7 @@ fn positive_svg_scalar(value: Real, label: &str) -> Result<Real, IoError> {
     Ok(value)
 }
 
-fn nonnegative_svg_scalar(value: Real, label: &str) -> Result<Real, IoError> {
+fn nonnegative_svg_scalar(value: f64, label: &str) -> Result<f64, IoError> {
     finite_svg_scalar(value, label)?;
     if hreal_f64_gt(0.0, value) {
         return Err(IoError::MalformedInput(format!(
@@ -62,7 +62,15 @@ fn nonnegative_svg_scalar(value: Real, label: &str) -> Result<Real, IoError> {
     Ok(value)
 }
 
-fn finite_svg_coord(x: Real, y: Real, label: &str) -> Result<SvgCoord, IoError> {
+fn svg_real(value: f64, label: &str) -> Result<Real, IoError> {
+    hreal_from_f64(value).map_err(|error| {
+        IoError::MalformedInput(format!(
+            "SVG {label} must be finite hyperreal boundary data: {error:?}"
+        ))
+    })
+}
+
+fn finite_svg_coord(x: f64, y: f64, label: &str) -> Result<SvgCoord, IoError> {
     Ok(SvgCoord {
         x: finite_svg_scalar(x, &format!("{label}.x"))?,
         y: finite_svg_scalar(y, &format!("{label}.y"))?,
@@ -150,7 +158,7 @@ impl PathBuilder {
             .runs
             .last()
             .and_then(|run| run.last())
-            .copied()
+            .cloned()
             .unwrap_or(SvgCoord::zero())
     }
 
@@ -209,7 +217,7 @@ impl PathBuilder {
 
     /// Extend the current path with a horizontal move to `x`.
     /// Can not be the first command.
-    pub fn hline_to(&mut self, x: Real) -> Result<(), IoError> {
+    pub fn hline_to(&mut self, x: f64) -> Result<(), IoError> {
         let SvgCoord { y, .. } = self.get_position();
         let line = self.get_path_mut_or_fail()?;
         line.push(SvgCoord { x, y });
@@ -218,7 +226,7 @@ impl PathBuilder {
 
     /// Extend the current path with a horizontal move by `dx` relative to the current point.
     /// Can not be the first command.
-    pub fn hline_by(&mut self, dx: Real) -> Result<(), IoError> {
+    pub fn hline_by(&mut self, dx: f64) -> Result<(), IoError> {
         let SvgCoord { x, y } = self.get_position();
         let line = self.get_path_mut_or_fail()?;
         line.push(SvgCoord { x: x + dx, y });
@@ -227,7 +235,7 @@ impl PathBuilder {
 
     /// Extend the current path with a vertical move to `y`.
     /// Can not be the first command.
-    pub fn vline_to(&mut self, y: Real) -> Result<(), IoError> {
+    pub fn vline_to(&mut self, y: f64) -> Result<(), IoError> {
         let SvgCoord { x, .. } = self.get_position();
         let line = self.get_path_mut_or_fail()?;
         line.push(SvgCoord { x, y });
@@ -236,7 +244,7 @@ impl PathBuilder {
 
     /// Extend the current path with a vertical move by `dy` relative to the current point.
     /// Can not be the first command.
-    pub fn vline_by(&mut self, dy: Real) -> Result<(), IoError> {
+    pub fn vline_by(&mut self, dy: f64) -> Result<(), IoError> {
         let SvgCoord { x, y } = self.get_position();
         let line = self.get_path_mut_or_fail()?;
         line.push(SvgCoord { x, y: y + dy });
@@ -259,7 +267,7 @@ impl PathBuilder {
     pub fn close(&mut self) -> Result<(), IoError> {
         // TODO: maybe make sure there are at least 3 points?
         let line = self.get_path_mut_or_fail()?;
-        if let (Some(first), Some(last)) = (line.first().copied(), line.last().copied()) {
+        if let (Some(first), Some(last)) = (line.first().cloned(), line.last().cloned()) {
             if first != last {
                 line.push(first);
             }
@@ -445,9 +453,9 @@ impl PathBuilder {
     /// [svg-arc-impl-notes]: https://www.w3.org/TR/SVG11/implnote.html#ArcImplementationNotes
     pub fn elliptical_arc_to(
         &mut self,
-        _rx: Real,
-        _ry: Real,
-        _x_axis_rotation: Real,
+        _rx: f64,
+        _ry: f64,
+        _x_axis_rotation: f64,
         _large_arc_flag: bool,
         _sweep_flag: bool,
         _end: SvgCoord,
@@ -470,9 +478,9 @@ impl PathBuilder {
     /// [svg-arc-impl-notes]: https://www.w3.org/TR/SVG11/implnote.html#ArcImplementationNotes
     pub fn elliptical_arc_by(
         &mut self,
-        _rx: Real,
-        _ry: Real,
-        _x_axis_rotation: Real,
+        _rx: f64,
+        _ry: f64,
+        _x_axis_rotation: f64,
         _large_arc_flag: bool,
         _sweep_flag: bool,
         _end: SvgCoord,
@@ -560,31 +568,30 @@ where
                 Event::Tag(tag::Circle, Empty, attrs) => {
                     let cx = finite_svg_scalar(expect_attr!(attrs, "cx")?.parse()?, "cx")?;
                     let cy = finite_svg_scalar(expect_attr!(attrs, "cy")?.parse()?, "cy")?;
-                    let r: Real =
-                        positive_svg_scalar(expect_attr!(attrs, "r")?.parse()?, "r")?;
+                    let r = positive_svg_scalar(expect_attr!(attrs, "r")?.parse()?, "r")?;
 
                     // TODO: add a way for the user to configure this?
                     let segments = (r.ceil() as usize).max(6);
 
-                    let sketch =
-                        Self::circle(r, segments, metadata.clone()).translate(cx, cy, 0.0);
+                    let sketch = Self::circle(svg_real(r, "r")?, segments, metadata.clone())
+                        .translate(svg_real(cx, "cx")?, svg_real(cy, "cy")?, Real::zero());
                     sketch_union = sketch_union.union(&sketch);
                 },
 
                 Event::Tag(tag::Rectangle, Empty, attrs) => {
-                    let x: Real = finite_svg_scalar(expect_attr!(attrs, "x")?.parse()?, "x")?;
-                    let y: Real = finite_svg_scalar(expect_attr!(attrs, "y")?.parse()?, "y")?;
-                    let w: Real =
+                    let x = finite_svg_scalar(expect_attr!(attrs, "x")?.parse()?, "x")?;
+                    let y = finite_svg_scalar(expect_attr!(attrs, "y")?.parse()?, "y")?;
+                    let w =
                         positive_svg_scalar(expect_attr!(attrs, "width")?.parse()?, "width")?;
-                    let h: Real = positive_svg_scalar(
+                    let h = positive_svg_scalar(
                         expect_attr!(attrs, "height")?.parse()?,
                         "height",
                     )?;
-                    let rx: Real = nonnegative_svg_scalar(
+                    let rx = nonnegative_svg_scalar(
                         option_attr!(attrs, "rx").map_or(Ok(0.0), |a| a.parse())?,
                         "rx",
                     )?;
-                    let ry: Real = nonnegative_svg_scalar(
+                    let ry = nonnegative_svg_scalar(
                         option_attr!(attrs, "ry").map_or(Ok(0.0), |a| a.parse())?,
                         "ry",
                     )?;
@@ -595,36 +602,49 @@ where
                     // TODO: add a way for the user to configure this?
                     let segments = (r.ceil() as usize).max(6);
 
-                    let sketch = Self::rounded_rectangle(w, h, r, segments, metadata.clone())
-                        .translate(x, y, 0.0);
+                    let sketch = Self::rounded_rectangle(
+                        svg_real(w, "width")?,
+                        svg_real(h, "height")?,
+                        svg_real(r, "corner radius")?,
+                        segments,
+                        metadata.clone(),
+                    )
+                    .translate(
+                        svg_real(x, "x")?,
+                        svg_real(y, "y")?,
+                        Real::zero(),
+                    );
                     sketch_union = sketch_union.union(&sketch);
                 },
 
                 Event::Tag(tag::Ellipse, Empty, attrs) => {
                     let cx = finite_svg_scalar(expect_attr!(attrs, "cx")?.parse()?, "cx")?;
                     let cy = finite_svg_scalar(expect_attr!(attrs, "cy")?.parse()?, "cy")?;
-                    let rx: Real =
-                        positive_svg_scalar(expect_attr!(attrs, "rx")?.parse()?, "rx")?;
-                    let ry: Real =
-                        positive_svg_scalar(expect_attr!(attrs, "ry")?.parse()?, "ry")?;
+                    let rx = positive_svg_scalar(expect_attr!(attrs, "rx")?.parse()?, "rx")?;
+                    let ry = positive_svg_scalar(expect_attr!(attrs, "ry")?.parse()?, "ry")?;
 
                     // TODO: add a way for the user to configure this?
                     let segments = (rx.max(ry).ceil() as usize).max(6);
 
-                    let sketch = Self::ellipse(rx * 2.0, ry * 2.0, segments, metadata.clone())
-                        .translate(cx, cy, 0.0);
+                    let sketch = Self::ellipse(
+                        svg_real(rx * 2.0, "rx")?,
+                        svg_real(ry * 2.0, "ry")?,
+                        segments,
+                        metadata.clone(),
+                    )
+                    .translate(
+                        svg_real(cx, "cx")?,
+                        svg_real(cy, "cy")?,
+                        Real::zero(),
+                    );
                     sketch_union = sketch_union.union(&sketch);
                 },
 
                 Event::Tag(tag::Line, Empty, attrs) => {
-                    let x1: Real =
-                        finite_svg_scalar(expect_attr!(attrs, "x1")?.parse()?, "x1")?;
-                    let y1: Real =
-                        finite_svg_scalar(expect_attr!(attrs, "y1")?.parse()?, "y1")?;
-                    let x2: Real =
-                        finite_svg_scalar(expect_attr!(attrs, "x2")?.parse()?, "x2")?;
-                    let y2: Real =
-                        finite_svg_scalar(expect_attr!(attrs, "y2")?.parse()?, "y2")?;
+                    let x1 = finite_svg_scalar(expect_attr!(attrs, "x1")?.parse()?, "x1")?;
+                    let y1 = finite_svg_scalar(expect_attr!(attrs, "y1")?.parse()?, "y1")?;
+                    let x2 = finite_svg_scalar(expect_attr!(attrs, "x2")?.parse()?, "x2")?;
+                    let y2 = finite_svg_scalar(expect_attr!(attrs, "y2")?.parse()?, "y2")?;
 
                     if let Ok(wire) =
                         CurveString2::from_finite_point_iter([[x1, y1], [x2, y2]])
@@ -640,8 +660,10 @@ where
                         .into_iter()
                         .map(|coord| [coord.x, coord.y])
                         .collect::<Vec<_>>();
-                    let sketch = Self::polygon(&points, metadata.clone());
-                    sketch_union = sketch_union.union(&sketch);
+                    if let Ok(contour) = Contour2::from_finite_ring(&points) {
+                        sketch_union =
+                            sketch_union.union(&Self::from_contour(contour, metadata.clone()));
+                    }
                 },
 
                 Event::Tag(tag::Polyline, Empty, attrs) => {
@@ -727,7 +749,7 @@ where
     }
 }
 
-fn svg_run_to_points(run: &[SvgCoord]) -> Vec<[Real; 2]> {
+fn svg_run_to_points(run: &[SvgCoord]) -> Vec<[f64; 2]> {
     run.iter().map(|coord| [coord.x, coord.y]).collect()
 }
 
@@ -819,8 +841,17 @@ impl<M: Clone + Send + Sync + Debug> ToSVG for Profile<M> {
             }
         }
 
-        let (min_x, min_y, max_x, max_y) =
-            self.native_xy_bounds().unwrap_or((0.0, 0.0, 1.0, 1.0));
+        let (min_x, min_y, max_x, max_y) = self
+            .native_xy_bounds()
+            .and_then(|(min_x, min_y, max_x, max_y)| {
+                Some((
+                    hreal_to_f64(&min_x)?,
+                    hreal_to_f64(&min_y)?,
+                    hreal_to_f64(&max_x)?,
+                    hreal_to_f64(&max_y)?,
+                ))
+            })
+            .unwrap_or((0.0, 0.0, 1.0, 1.0));
         let doc = svg::Document::new()
             .set("viewBox", (min_x, min_y, max_x - min_x, max_y - min_y))
             .add(g);
@@ -829,7 +860,7 @@ impl<M: Clone + Send + Sync + Debug> ToSVG for Profile<M> {
     }
 }
 
-fn finite_svg_point(point: &Point2) -> Option<(Real, Real)> {
+fn finite_svg_point(point: &Point2) -> Option<(f64, f64)> {
     Some((hreal_to_f64(point.x())?, hreal_to_f64(point.y())?))
 }
 
@@ -912,16 +943,16 @@ fn svg_path_to_runs(path_data: path::Data) -> Result<SvgPathRuns, IoError> {
 
                 if let Some(&[x, y]) = coords.next() {
                     builder.move_to(SvgCoord {
-                        x: x as Real,
-                        y: y as Real,
+                        x: f64::from(x),
+                        y: f64::from(y),
                     });
                 }
 
                 // Follow-up coordinates for MoveTo are implicit LineTo
                 while let Some(&[x, y]) = coords.next() {
                     builder.line_to(SvgCoord {
-                        x: x as Real,
-                        y: y as Real,
+                        x: f64::from(x),
+                        y: f64::from(y),
                     })?;
                 }
             },
@@ -931,16 +962,16 @@ fn svg_path_to_runs(path_data: path::Data) -> Result<SvgPathRuns, IoError> {
 
                 if let Some(&[dx, dy]) = coords.next() {
                     builder.move_by(SvgCoord {
-                        x: dx as Real,
-                        y: dy as Real,
+                        x: f64::from(dx),
+                        y: f64::from(dy),
                     });
                 }
 
                 // Follow-up coordinates for MoveTo are implicit LineTo
                 while let Some(&[dx, dy]) = coords.next() {
                     builder.line_by(SvgCoord {
-                        x: dx as Real,
-                        y: dy as Real,
+                        x: f64::from(dx),
+                        y: f64::from(dy),
                     })?;
                 }
             },
@@ -949,8 +980,8 @@ fn svg_path_to_runs(path_data: path::Data) -> Result<SvgPathRuns, IoError> {
                 let mut coords = params.chunks(param_count);
                 while let Some(&[x, y]) = coords.next() {
                     builder.line_to(SvgCoord {
-                        x: x as Real,
-                        y: y as Real,
+                        x: f64::from(x),
+                        y: f64::from(y),
                     })?;
                 }
             },
@@ -959,29 +990,29 @@ fn svg_path_to_runs(path_data: path::Data) -> Result<SvgPathRuns, IoError> {
                 let mut coords = params.chunks(param_count);
                 while let Some(&[dx, dy]) = coords.next() {
                     builder.line_by(SvgCoord {
-                        x: dx as Real,
-                        y: dy as Real,
+                        x: f64::from(dx),
+                        y: f64::from(dy),
                     })?;
                 }
             },
             HorizontalLine(Absolute, params) => {
                 for &x in params.iter() {
-                    builder.hline_to(x as Real)?;
+                    builder.hline_to(f64::from(x))?;
                 }
             },
             HorizontalLine(Relative, params) => {
                 for &dx in params.iter() {
-                    builder.hline_by(dx as Real)?;
+                    builder.hline_by(f64::from(dx))?;
                 }
             },
             VerticalLine(Absolute, params) => {
                 for &y in params.iter() {
-                    builder.vline_to(y as Real)?;
+                    builder.vline_to(f64::from(y))?;
                 }
             },
             VerticalLine(Relative, params) => {
                 for &dy in params.iter() {
-                    builder.vline_by(dy as Real)?;
+                    builder.vline_by(f64::from(dy))?;
                 }
             },
 
@@ -991,12 +1022,12 @@ fn svg_path_to_runs(path_data: path::Data) -> Result<SvgPathRuns, IoError> {
                 while let Some(&[cx, cy, x, y]) = params.next() {
                     builder.quadratic_curve_to(
                         SvgCoord {
-                            x: cx as Real,
-                            y: cy as Real,
+                            x: f64::from(cx),
+                            y: f64::from(cy),
                         },
                         SvgCoord {
-                            x: x as Real,
-                            y: y as Real,
+                            x: f64::from(x),
+                            y: f64::from(y),
                         },
                     )?;
                 }
@@ -1007,12 +1038,12 @@ fn svg_path_to_runs(path_data: path::Data) -> Result<SvgPathRuns, IoError> {
                 while let Some(&[cx, cy, x, y]) = params.next() {
                     builder.quadratic_curve_by(
                         SvgCoord {
-                            x: cx as Real,
-                            y: cy as Real,
+                            x: f64::from(cx),
+                            y: f64::from(cy),
                         },
                         SvgCoord {
-                            x: x as Real,
-                            y: y as Real,
+                            x: f64::from(x),
+                            y: f64::from(y),
                         },
                     )?;
                 }
@@ -1022,8 +1053,8 @@ fn svg_path_to_runs(path_data: path::Data) -> Result<SvgPathRuns, IoError> {
                 let mut params = params.chunks(param_count);
                 while let Some(&[x, y]) = params.next() {
                     builder.quadratic_smooth_curve_to(SvgCoord {
-                        x: x as Real,
-                        y: y as Real,
+                        x: f64::from(x),
+                        y: f64::from(y),
                     })?;
                 }
             },
@@ -1032,8 +1063,8 @@ fn svg_path_to_runs(path_data: path::Data) -> Result<SvgPathRuns, IoError> {
                 let mut params = params.chunks(param_count);
                 while let Some(&[x, y]) = params.next() {
                     builder.quadratic_smooth_curve_by(SvgCoord {
-                        x: x as Real,
-                        y: y as Real,
+                        x: f64::from(x),
+                        y: f64::from(y),
                     })?;
                 }
             },
@@ -1044,16 +1075,16 @@ fn svg_path_to_runs(path_data: path::Data) -> Result<SvgPathRuns, IoError> {
                 while let Some(&[c1x, c1y, c2x, c2y, x, y]) = params.next() {
                     builder.curve_to(
                         SvgCoord {
-                            x: c1x as Real,
-                            y: c1y as Real,
+                            x: f64::from(c1x),
+                            y: f64::from(c1y),
                         },
                         SvgCoord {
-                            x: c2x as Real,
-                            y: c2y as Real,
+                            x: f64::from(c2x),
+                            y: f64::from(c2y),
                         },
                         SvgCoord {
-                            x: x as Real,
-                            y: y as Real,
+                            x: f64::from(x),
+                            y: f64::from(y),
                         },
                     )?;
                 }
@@ -1064,16 +1095,16 @@ fn svg_path_to_runs(path_data: path::Data) -> Result<SvgPathRuns, IoError> {
                 while let Some(&[c1x, c1y, c2x, c2y, x, y]) = params.next() {
                     builder.curve_by(
                         SvgCoord {
-                            x: c1x as Real,
-                            y: c1y as Real,
+                            x: f64::from(c1x),
+                            y: f64::from(c1y),
                         },
                         SvgCoord {
-                            x: c2x as Real,
-                            y: c2y as Real,
+                            x: f64::from(c2x),
+                            y: f64::from(c2y),
                         },
                         SvgCoord {
-                            x: x as Real,
-                            y: y as Real,
+                            x: f64::from(x),
+                            y: f64::from(y),
                         },
                     )?;
                 }
@@ -1084,12 +1115,12 @@ fn svg_path_to_runs(path_data: path::Data) -> Result<SvgPathRuns, IoError> {
                 while let Some(&[c2x, c2y, x, y]) = params.next() {
                     builder.smooth_curve_to(
                         SvgCoord {
-                            x: c2x as Real,
-                            y: c2y as Real,
+                            x: f64::from(c2x),
+                            y: f64::from(c2y),
                         },
                         SvgCoord {
-                            x: x as Real,
-                            y: y as Real,
+                            x: f64::from(x),
+                            y: f64::from(y),
                         },
                     )?;
                 }
@@ -1100,12 +1131,12 @@ fn svg_path_to_runs(path_data: path::Data) -> Result<SvgPathRuns, IoError> {
                 while let Some(&[c2x, c2y, x, y]) = params.next() {
                     builder.smooth_curve_by(
                         SvgCoord {
-                            x: c2x as Real,
-                            y: c2y as Real,
+                            x: f64::from(c2x),
+                            y: f64::from(c2y),
                         },
                         SvgCoord {
-                            x: x as Real,
-                            y: y as Real,
+                            x: f64::from(x),
+                            y: f64::from(y),
                         },
                     )?;
                 }
@@ -1118,14 +1149,14 @@ fn svg_path_to_runs(path_data: path::Data) -> Result<SvgPathRuns, IoError> {
                     let large_arc = large_arc == 1.0;
                     let sweep = sweep == 1.0;
                     builder.elliptical_arc_to(
-                        rx as Real,
-                        ry as Real,
-                        x_rot as Real,
+                        f64::from(rx),
+                        f64::from(ry),
+                        f64::from(x_rot),
                         large_arc,
                         sweep,
                         SvgCoord {
-                            x: x as Real,
-                            y: y as Real,
+                            x: f64::from(x),
+                            y: f64::from(y),
                         },
                     )?;
                 }
@@ -1137,14 +1168,14 @@ fn svg_path_to_runs(path_data: path::Data) -> Result<SvgPathRuns, IoError> {
                     let large_arc = large_arc == 1.0;
                     let sweep = sweep == 1.0;
                     builder.elliptical_arc_by(
-                        rx as Real,
-                        ry as Real,
-                        x_rot as Real,
+                        f64::from(rx),
+                        f64::from(ry),
+                        f64::from(x_rot),
                         large_arc,
                         sweep,
                         SvgCoord {
-                            x: x as Real,
-                            y: y as Real,
+                            x: f64::from(x),
+                            y: f64::from(y),
                         },
                     )?;
                 }
@@ -1194,8 +1225,8 @@ fn svg_points_to_coords(points: &str) -> Result<Vec<SvgCoord>, IoError> {
         Ok((
             i,
             SvgCoord {
-                x: x as Real,
-                y: y as Real,
+                x: f64::from(x),
+                y: f64::from(y),
             },
         ))
     }
@@ -1224,8 +1255,8 @@ fn svg_points_to_coords(points: &str) -> Result<Vec<SvgCoord>, IoError> {
 mod tests {
     use super::*;
 
-    fn hr(value: Real) -> hyperreal::Real {
-        hyperreal::Real::try_from(value).expect("finite SVG test scalar")
+    fn hr(value: f64) -> Real {
+        Real::try_from(value).expect("finite SVG test scalar")
     }
 
     #[test]

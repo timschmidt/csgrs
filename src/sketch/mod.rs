@@ -1,9 +1,8 @@
 //! `Profile` struct and implementations of the `CSGOps` trait for `Profile`
 
-use crate::float_types::parry3d::bounding_volume::Aabb;
-use crate::float_types::{
-    Real, hreal_cmp_f64, hreal_from_f64, hreal_mul, hreal_sign, hreal_sub, hreal_sum,
-    hreal_to_f64, hrotation_between_vectors, hunit_vector3,
+use crate::hyper_math::{
+    Aabb, Real, hreal_cmp_f64, hreal_from_f64, hreal_mul, hreal_sign, hreal_sub, hreal_sum,
+    hrotation_between_vectors, hunit_vector3,
 };
 
 #[cfg(feature = "mesh")]
@@ -16,7 +15,8 @@ use hypercurve::{
     CurveString2, FillRule, FinitePolyline2, FiniteProjectionOptions, FiniteRegionProfile2,
     Point2, Region2, RegionPointLocation,
 };
-use nalgebra::{Matrix4, Point3, Vector3};
+use hyperlattice::{Matrix4, Point3, Vector3};
+use hyperreal::RealSign;
 use std::cmp::Ordering;
 use std::fmt::Debug;
 use std::sync::OnceLock;
@@ -44,14 +44,14 @@ pub mod triangulated;
 /// Position transform plus rotation from the sketch's local XY plane into 3D.
 ///
 /// The rotation is a finite homogeneous matrix assembled from hyperlattice
-/// unit-vector/dot/cross predicates instead of a nalgebra unit quaternion.
+/// unit-vector/dot/cross predicates.
 /// This keeps sketch lifting aligned with Yap's exact-geometric-computation
 /// boundary discipline (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-pub(crate) type OriginTransform = (Vector3<Real>, Matrix4<Real>);
+pub(crate) type OriginTransform = (Vector3, Matrix4);
 
 #[derive(Debug, Clone)]
 pub struct GraphicLineString {
-    pub points: Vec<[f32; 3]>,
+    pub points: Vec<[Real; 3]>,
 }
 
 impl GraphicLineString {
@@ -88,8 +88,8 @@ pub struct Profile<M> {
     /// Native open hypercurve wires for line/path sketches.
     ///
     /// Closed areas belong in [`Profile::region`]. Open paths are represented as
-    /// `CurveString2`, so text strokes, SVG paths, Hilbert infill, and toolpath
-    /// helpers compose with hypercurve directly.
+    /// `CurveString2`, so text strokes, SVG paths, and Hilbert infill compose
+    /// with hypercurve directly.
     pub(crate) wires: Vec<CurveString2>,
 
     /// Lazily calculated AABB that spans the finite boundary projection.
@@ -177,12 +177,12 @@ impl<M: Clone + Send + Sync + Debug> Profile<M> {
     /// Returns `None` when the point lies on a certified boundary or when
     /// hypercurve cannot decide the classification under the certified policy.
     ///
-    /// Coordinates are accepted only as `hyperreal::Real`; primitive numbers
+    /// Coordinates are accepted only as `Real`; primitive numbers
     /// must be promoted explicitly at API/IO boundaries before querying native
     /// [`Point2`] topology. This follows Yap, "Towards Exact Geometric
     /// Computation," *Computational Geometry* 7(1-2), 1997
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-    pub fn contains_xy(&self, x: hyperreal::Real, y: hyperreal::Real) -> Option<bool> {
+    pub fn contains_xy(&self, x: Real, y: Real) -> Option<bool> {
         if self.region.is_empty() {
             return None;
         }
@@ -258,13 +258,9 @@ impl<M: Clone + Send + Sync + Debug> Profile<M> {
             .flat_map(|ring| ring.iter())
             .chain(wire_polylines.iter().flat_map(|wire| wire.points()));
         let first = iter.next()?;
-        hreal_from_f64(first[0]).ok()?;
-        hreal_from_f64(first[1]).ok()?;
         let (mut min_x, mut min_y, mut max_x, mut max_y) =
             (first[0], first[1], first[0], first[1]);
         for point in iter {
-            hreal_from_f64(point[0]).ok()?;
-            hreal_from_f64(point[1]).ok()?;
             if matches!(hreal_cmp_f64(point[0], min_x), Ordering::Less) {
                 min_x = point[0];
             }
@@ -278,7 +274,12 @@ impl<M: Clone + Send + Sync + Debug> Profile<M> {
                 max_y = point[1];
             }
         }
-        Some((min_x, min_y, max_x, max_y))
+        Some((
+            hreal_from_f64(min_x).ok()?,
+            hreal_from_f64(min_y).ok()?,
+            hreal_from_f64(max_x).ok()?,
+            hreal_from_f64(max_y).ok()?,
+        ))
     }
 
     /// Decide whether a native region has any material contour with nonzero
@@ -294,7 +295,7 @@ impl<M: Clone + Send + Sync + Debug> Profile<M> {
     pub(crate) fn region_has_nonzero_area(region: &Region2) -> bool {
         match region.filled_area(&CurvePolicy::certified()) {
             Ok(Classification::Decided(Some(area))) => {
-                if matches!(hreal_sign(&area), Some(hyperreal::RealSign::Zero)) {
+                if matches!(hreal_sign(&area), Some(RealSign::Zero)) {
                     return false;
                 }
                 return true;
@@ -455,6 +456,17 @@ impl<M: Clone + Send + Sync + Debug> Profile<M> {
             .into_iter()
             .map(FinitePolyline2::into_points)
             .filter(|points| points.len() >= 2)
+            .filter_map(|points| {
+                points
+                    .into_iter()
+                    .map(|point| {
+                        Some([
+                            hreal_from_f64(point[0]).ok()?,
+                            hreal_from_f64(point[1]).ok()?,
+                        ])
+                    })
+                    .collect::<Option<Vec<_>>>()
+            })
             .collect()
     }
 
@@ -582,17 +594,17 @@ impl<M: Clone + Send + Sync + Debug> Profile<M> {
         // boundary by avoiding a finite detour solely to retain wires.
         let wires = self.boolean_wires_with(other, op);
         let mut sketch = Self::from_region_and_wires(region, wires, self.metadata.clone());
-        sketch.origin = self.origin;
-        sketch.origin_transform = self.origin_transform;
+        sketch.origin = self.origin.clone();
+        sketch.origin_transform = self.origin_transform.clone();
         Some(sketch)
     }
 
-    fn transformed_region_with_matrix(&self, mat: &Matrix4<Real>) -> Option<Region2> {
+    fn transformed_region_with_matrix(&self, mat: &Matrix4) -> Option<Region2> {
         if self.region.is_empty() || !Self::region_has_nonzero_area(&self.region) {
             return None;
         }
-        let determinant = hreal_mul(mat[(0, 0)], mat[(1, 1)]).and_then(|main| {
-            hreal_mul(mat[(0, 1)], mat[(1, 0)]).and_then(|cross| hreal_sub(main, cross))
+        let determinant = hreal_mul(&mat[0][0], &mat[1][1]).and_then(|main| {
+            hreal_mul(&mat[0][1], &mat[1][0]).and_then(|cross| hreal_sub(main, cross))
         })?;
         if !matches!(
             hreal_cmp_f64(determinant, 0.0),
@@ -601,17 +613,17 @@ impl<M: Clone + Send + Sync + Debug> Profile<M> {
             return None;
         }
 
-        let transform_point = |point: &[Real; 2]| -> Option<[Real; 2]> {
+        let transform_point = |point: &[f64; 2]| -> Option<[Real; 2]> {
             Some([
                 hreal_sum(&[
-                    hreal_mul(mat[(0, 0)], point[0])?,
-                    hreal_mul(mat[(0, 1)], point[1])?,
-                    mat[(0, 3)],
+                    hreal_mul(&mat[0][0], point[0])?,
+                    hreal_mul(&mat[0][1], point[1])?,
+                    mat[0][3].clone(),
                 ])?,
                 hreal_sum(&[
-                    hreal_mul(mat[(1, 0)], point[0])?,
-                    hreal_mul(mat[(1, 1)], point[1])?,
-                    mat[(1, 3)],
+                    hreal_mul(&mat[1][0], point[0])?,
+                    hreal_mul(&mat[1][1], point[1])?,
+                    mat[1][3].clone(),
                 ])?,
             ])
         };
@@ -631,7 +643,7 @@ impl<M: Clone + Send + Sync + Debug> Profile<M> {
                     .map(transform_point)
                     .collect::<Option<Vec<[Real; 2]>>>()
             })
-            .filter_map(|ring| ring.and_then(|ring| Contour2::from_finite_ring(&ring).ok()))
+            .filter_map(|ring| ring.and_then(|ring| Contour2::from_real_ring(&ring).ok()))
             .collect::<Vec<_>>();
         let holes = profiles
             .iter()
@@ -642,24 +654,24 @@ impl<M: Clone + Send + Sync + Debug> Profile<M> {
                     .map(transform_point)
                     .collect::<Option<Vec<[Real; 2]>>>()
             })
-            .filter_map(|ring| ring.and_then(|ring| Contour2::from_finite_ring(&ring).ok()))
+            .filter_map(|ring| ring.and_then(|ring| Contour2::from_real_ring(&ring).ok()))
             .collect::<Vec<_>>();
 
         (!material.is_empty()).then(|| Region2::new(material, holes))
     }
 
-    fn transformed_wires_with_matrix(&self, mat: &Matrix4<Real>) -> Vec<CurveString2> {
-        let transform_point = |point: (Real, Real)| -> Option<[Real; 2]> {
+    fn transformed_wires_with_matrix(&self, mat: &Matrix4) -> Vec<CurveString2> {
+        let transform_point = |point: (f64, f64)| -> Option<[Real; 2]> {
             Some([
                 hreal_sum(&[
-                    hreal_mul(mat[(0, 0)], point.0)?,
-                    hreal_mul(mat[(0, 1)], point.1)?,
-                    mat[(0, 3)],
+                    hreal_mul(&mat[0][0], point.0)?,
+                    hreal_mul(&mat[0][1], point.1)?,
+                    mat[0][3].clone(),
                 ])?,
                 hreal_sum(&[
-                    hreal_mul(mat[(1, 0)], point.0)?,
-                    hreal_mul(mat[(1, 1)], point.1)?,
-                    mat[(1, 3)],
+                    hreal_mul(&mat[1][0], point.0)?,
+                    hreal_mul(&mat[1][1], point.1)?,
+                    mat[1][3].clone(),
                 ])?,
             ])
         };
@@ -672,7 +684,7 @@ impl<M: Clone + Send + Sync + Debug> Profile<M> {
                     .into_iter()
                     .map(transform_point)
                     .collect::<Option<Vec<[Real; 2]>>>()?;
-                CurveString2::from_finite_point_iter(transformed).ok()
+                CurveString2::from_real_point_iter(transformed).ok()
             })
             .collect()
     }
@@ -687,8 +699,8 @@ impl<M: Clone + Send + Sync + Debug> Profile<M> {
             wires: self.wires,
             bounding_box: OnceLock::new(),
             metadata,
-            origin: self.origin,
-            origin_transform: self.origin_transform,
+            origin: self.origin.clone(),
+            origin_transform: self.origin_transform.clone(),
         }
     }
 
@@ -702,8 +714,8 @@ impl<M: Clone + Send + Sync + Debug> Profile<M> {
             wires: self.wires,
             bounding_box: OnceLock::new(),
             metadata: f(self.metadata),
-            origin: self.origin,
-            origin_transform: self.origin_transform,
+            origin: self.origin.clone(),
+            origin_transform: self.origin_transform.clone(),
         }
     }
 
@@ -737,7 +749,7 @@ impl<M: Clone + Send + Sync + Debug> Profile<M> {
 
     /// Set the origin used when rendering or lifting this sketch into 3D.
     pub fn set_origin(&mut self, origin: Vertex) {
-        self.origin_transform = Self::prepare_origin_transform(origin);
+        self.origin_transform = Self::prepare_origin_transform(origin.clone());
         self.origin = origin;
     }
 
@@ -751,7 +763,8 @@ impl<M: Clone + Send + Sync + Debug> Profile<M> {
         let default_origin = Vertex::default();
         let pos_transform = origin.position - default_origin.position;
         let default_normal = hunit_vector3(&default_origin.normal).unwrap_or_else(Vector3::z);
-        let origin_normal = hunit_vector3(&origin.normal).unwrap_or(default_normal);
+        let origin_normal =
+            hunit_vector3(&origin.normal).unwrap_or_else(|| default_normal.clone());
         let rotation = hrotation_between_vectors(&default_normal, &origin_normal)
             .unwrap_or_else(Matrix4::identity);
 
@@ -763,35 +776,30 @@ impl<M: Clone + Send + Sync + Debug> Profile<M> {
         origin_transform: OriginTransform,
     ) -> Vertex {
         let (pos_transform, rotation) = origin_transform;
-        let rotated_position =
-            Point3::from_homogeneous(rotation * vertex.position.to_homogeneous())
-                .unwrap_or(vertex.position);
-        let position = Point3::from(rotated_position.coords + pos_transform);
-        let rotated_normal = rotation * vertex.normal.push(0.0);
-        let normal = hunit_vector3(&Vector3::new(
-            rotated_normal.x,
-            rotated_normal.y,
-            rotated_normal.z,
-        ))
-        .unwrap_or_else(Vector3::z);
+        let rotated_position = rotation
+            .transform_point3(&vertex.position)
+            .unwrap_or_else(|_| vertex.position.clone());
+        let position = rotated_position + pos_transform;
+        let rotated_normal = rotation.transform_direction3(&vertex.normal);
+        let normal = hunit_vector3(&rotated_normal).unwrap_or_else(Vector3::z);
         Vertex::new(position, normal)
     }
 
     fn apply_origin_transform_point(
-        point: Point3<Real>,
+        point: Point3,
         origin_transform: OriginTransform,
-    ) -> Point3<Real> {
+    ) -> Point3 {
         let (pos_transform, rotation) = origin_transform;
-        let rotated =
-            Point3::from_homogeneous(rotation * point.to_homogeneous()).unwrap_or(point);
-        Point3::from(rotated.coords + pos_transform)
+        let rotated = rotation
+            .transform_point3(&point)
+            .unwrap_or_else(|_| point.clone());
+        rotated + pos_transform
     }
 
     /// Create render-ready line strings from this sketch's visible edges in 3D space.
     ///
     /// Region- and wire-backed sketches project visible boundaries directly
-    /// from hypercurve contours and curve strings. Finite `f32` output is a
-    /// renderer boundary, while the source topology remains `Region2` and
+    /// from hypercurve contours and curve strings. The source topology remains `Region2` and
     /// `CurveString2`. If native topology is absent, display output is empty
     /// rather than reconstructed from stale finite boundary products. This
     /// follows Yap's exact-geometric-computation
@@ -830,18 +838,22 @@ impl<M: Clone + Send + Sync + Debug> Profile<M> {
         }
     }
 
-    fn ring_to_graphic_line_string(&self, ring: &[[Real; 2]]) -> GraphicLineString {
+    fn ring_to_graphic_line_string(&self, ring: &[[f64; 2]]) -> GraphicLineString {
         let points = ring
             .iter()
-            .map(|coord| {
-                let point = Point3::new(coord[0], coord[1], 0.0);
+            .filter_map(|coord| {
+                let point = Point3::new(
+                    hreal_from_f64(coord[0]).ok()?,
+                    hreal_from_f64(coord[1]).ok()?,
+                    Real::zero(),
+                );
                 let point_transformed =
-                    Self::apply_origin_transform_point(point, self.origin_transform);
-                [
-                    point_transformed.x as f32,
-                    point_transformed.y as f32,
-                    point_transformed.z as f32,
-                ]
+                    Self::apply_origin_transform_point(point, self.origin_transform.clone());
+                Some([
+                    point_transformed.x,
+                    point_transformed.y,
+                    point_transformed.z,
+                ])
             })
             .collect();
         GraphicLineString { points }
@@ -859,8 +871,8 @@ impl<M: Clone + Send + Sync + Debug> Profile<M> {
     ///
     /// # Returns
     ///
-    /// A `Vec<[Point3<Real>; 3]>` containing all the triangles resulting from the triangulation.
-    pub fn triangulate(&self) -> Vec<[Point3<Real>; 3]> {
+    /// A `Vec<[Point3; 3]>` containing all the triangles resulting from the triangulation.
+    pub fn triangulate(&self) -> Vec<[Point3; 3]> {
         let options = FiniteProjectionOptions::try_new(1e-3)
             .expect("positive finite projection tolerance is valid");
         let profiles = match self.project_region_profiles(&options) {
@@ -869,15 +881,31 @@ impl<M: Clone + Send + Sync + Debug> Profile<M> {
         };
         let mut all_triangles = Vec::new();
         for profile in profiles {
-            all_triangles.extend(profile.triangulate().unwrap_or_default().into_iter().map(
-                |tri| {
-                    [
-                        Point3::new(tri[0][0], tri[0][1], 0.0),
-                        Point3::new(tri[1][0], tri[1][1], 0.0),
-                        Point3::new(tri[2][0], tri[2][1], 0.0),
-                    ]
-                },
-            ));
+            all_triangles.extend(
+                profile
+                    .triangulate()
+                    .unwrap_or_default()
+                    .into_iter()
+                    .filter_map(|tri| {
+                        Some([
+                            Point3::new(
+                                hreal_from_f64(tri[0][0]).ok()?,
+                                hreal_from_f64(tri[0][1]).ok()?,
+                                Real::zero(),
+                            ),
+                            Point3::new(
+                                hreal_from_f64(tri[1][0]).ok()?,
+                                hreal_from_f64(tri[1][1]).ok()?,
+                                Real::zero(),
+                            ),
+                            Point3::new(
+                                hreal_from_f64(tri[2][0]).ok()?,
+                                hreal_from_f64(tri[2][1]).ok()?,
+                                Real::zero(),
+                            ),
+                        ])
+                    }),
+            );
         }
 
         all_triangles
@@ -907,8 +935,8 @@ impl<M: Clone + Send + Sync + Debug> Profile<M> {
                 self.wires.clone(),
                 self.metadata.clone(),
             );
-            sketch.origin = self.origin;
-            sketch.origin_transform = self.origin_transform;
+            sketch.origin = self.origin.clone();
+            sketch.origin_transform = self.origin_transform.clone();
             return sketch;
         }
 
@@ -916,8 +944,8 @@ impl<M: Clone + Send + Sync + Debug> Profile<M> {
             Region2::empty(),
             Vec::new(),
             self.metadata.clone(),
-            self.origin,
-            self.origin_transform,
+            self.origin.clone(),
+            self.origin_transform.clone(),
         )
     }
 }
@@ -931,14 +959,14 @@ impl Profile<()> {
 
 fn hyper_aabb_to_finite_xy_bounds(bbox: &HyperAabb2) -> Option<(Real, Real, Real, Real)> {
     Some((
-        hreal_to_f64(bbox.min_x())?,
-        hreal_to_f64(bbox.min_y())?,
-        hreal_to_f64(bbox.max_x())?,
-        hreal_to_f64(bbox.max_y())?,
+        bbox.min_x().clone(),
+        bbox.min_y().clone(),
+        bbox.max_x().clone(),
+        bbox.max_y().clone(),
     ))
 }
 
-fn curve_string_to_polyline(wire: &CurveString2) -> Option<Vec<(Real, Real)>> {
+fn curve_string_to_polyline(wire: &CurveString2) -> Option<Vec<(f64, f64)>> {
     let options = FiniteProjectionOptions::try_new(1e-3).ok()?;
     Some(
         wire.project_to_finite_polyline(&options)
@@ -972,8 +1000,8 @@ impl<M: Clone + Send + Sync + Debug> CSG for Profile<M> {
             Region2::empty(),
             self.boolean_wires_with(other, BooleanOp::Union),
             self.metadata.clone(),
-            self.origin,
-            self.origin_transform,
+            self.origin.clone(),
+            self.origin_transform.clone(),
         )
     }
 
@@ -998,8 +1026,8 @@ impl<M: Clone + Send + Sync + Debug> CSG for Profile<M> {
             Region2::empty(),
             self.boolean_wires_with(other, BooleanOp::Difference),
             self.metadata.clone(),
-            self.origin,
-            self.origin_transform,
+            self.origin.clone(),
+            self.origin_transform.clone(),
         )
     }
 
@@ -1024,8 +1052,8 @@ impl<M: Clone + Send + Sync + Debug> CSG for Profile<M> {
             Region2::empty(),
             self.boolean_wires_with(other, BooleanOp::Intersection),
             self.metadata.clone(),
-            self.origin,
-            self.origin_transform,
+            self.origin.clone(),
+            self.origin_transform.clone(),
         )
     }
 
@@ -1051,8 +1079,8 @@ impl<M: Clone + Send + Sync + Debug> CSG for Profile<M> {
             Region2::empty(),
             self.boolean_wires_with(other, BooleanOp::Xor),
             self.metadata.clone(),
-            self.origin,
-            self.origin_transform,
+            self.origin.clone(),
+            self.origin_transform.clone(),
         )
     }
 
@@ -1071,7 +1099,7 @@ impl<M: Clone + Send + Sync + Debug> CSG for Profile<M> {
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>); the affine projection
     /// is the ordinary homogeneous-coordinate convention described by Foley et
     /// al., *Computer Graphics: Principles and Practice*, 2nd ed., 1990.
-    fn transform(&self, mat: &Matrix4<Real>) -> Profile<M> {
+    fn transform(&self, mat: &Matrix4) -> Profile<M> {
         if let Some(region) = self.transformed_region_with_matrix(mat) {
             // Open wires follow the same finite projection boundary as region
             // rings, but rebuild directly as `CurveString2` instead of routing
@@ -1084,8 +1112,8 @@ impl<M: Clone + Send + Sync + Debug> CSG for Profile<M> {
                 region,
                 wires,
                 self.metadata.clone(),
-                self.origin,
-                self.origin_transform,
+                self.origin.clone(),
+                self.origin_transform.clone(),
             );
         }
 
@@ -1095,8 +1123,8 @@ impl<M: Clone + Send + Sync + Debug> CSG for Profile<M> {
                 Region2::empty(),
                 wires,
                 self.metadata.clone(),
-                self.origin,
-                self.origin_transform,
+                self.origin.clone(),
+                self.origin_transform.clone(),
             );
         }
 
@@ -1104,8 +1132,8 @@ impl<M: Clone + Send + Sync + Debug> CSG for Profile<M> {
             Region2::empty(),
             Vec::new(),
             self.metadata.clone(),
-            self.origin,
-            self.origin_transform,
+            self.origin.clone(),
+            self.origin_transform.clone(),
         )
     }
 
@@ -1123,16 +1151,18 @@ impl<M: Clone + Send + Sync + Debug> CSG for Profile<M> {
     /// Hierarchical Structure for Rapid Interference Detection," SIGGRAPH 1996
     /// (<https://doi.org/10.1145/237170.237244>).
     fn bounding_box(&self) -> Aabb {
-        *self.bounding_box.get_or_init(|| {
-            if let Some((min_x, min_y, max_x, max_y)) = self.native_xy_bounds() {
-                return Aabb::new(
-                    Point3::new(min_x, min_y, 0.0),
-                    Point3::new(max_x, max_y, 0.0),
-                );
-            }
+        self.bounding_box
+            .get_or_init(|| {
+                if let Some((min_x, min_y, max_x, max_y)) = self.native_xy_bounds() {
+                    return Aabb::new(
+                        Point3::new(min_x, min_y, Real::zero()),
+                        Point3::new(max_x, max_y, Real::zero()),
+                    );
+                }
 
-            Aabb::new(Point3::origin(), Point3::origin())
-        })
+                Aabb::origin()
+            })
+            .clone()
     }
 
     /// Invalidates object's cached bounding box.
@@ -1162,8 +1192,8 @@ impl<M: Clone + Send + Sync + Debug> CSG for Profile<M> {
                 self.region.clone(),
                 self.wires.clone(),
                 self.metadata.clone(),
-                self.origin,
-                self.origin_transform,
+                self.origin.clone(),
+                self.origin_transform.clone(),
             );
         }
 
@@ -1171,8 +1201,8 @@ impl<M: Clone + Send + Sync + Debug> CSG for Profile<M> {
             Region2::empty(),
             Vec::new(),
             self.metadata.clone(),
-            self.origin,
-            self.origin_transform,
+            self.origin.clone(),
+            self.origin_transform.clone(),
         )
     }
 }

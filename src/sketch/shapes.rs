@@ -1,38 +1,30 @@
 //! 2D Shapes as `Profile`s
 
 use crate::csg::CSG;
-use crate::float_types::{
-    FRAC_PI_2, PI, Real, TAU, hangle_sin_cos, hdegrees_to_radians, hreal_abs, hreal_affine,
+use crate::hyper_math::{
+    IntoReal, Real, frac_pi_2, hangle_sin_cos, hdegrees_to_radians, hreal_abs, hreal_affine,
     hreal_atan, hreal_clamp_f64, hreal_cmp_f64, hreal_div, hreal_f64s_exactly_equal,
     hreal_from_f64, hreal_mul, hreal_pow, hreal_sqrt, hreal_sub, hreal_sum, hreal_tan,
-    hreal_to_f64, hxy_lerp,
+    hxy_lerp, pi, tau,
 };
 use crate::sketch::Profile;
 use hypercurve::{Contour2, CurveString2, LineSeg2, Point2, Segment2};
+use std::borrow::Borrow;
 use std::cmp::Ordering;
 use std::fmt::Debug;
 
-fn finite_profile_scalar(value: Real) -> bool {
+fn finite_profile_scalar(value: &Real) -> bool {
     hreal_from_f64(value).is_ok()
 }
 
-fn finite_profile_scalars(values: &[Real]) -> bool {
-    values.iter().all(|&value| finite_profile_scalar(value))
-}
-
-/// Promote a public profile scalar through hyperreal and export it only at the
-/// current finite hypercurve construction boundary.
-///
-/// This makes `hyperreal::Real` the primary shape-constructor surface while
-/// still accepting ordinary integers and floats that implement promotion. The
-/// edge split follows Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7(1-2), 1997
-/// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-fn finite_promoted_profile_scalar<S>(value: S) -> Option<Real>
+fn finite_profile_scalars<I, V>(values: I) -> bool
 where
-    S: TryInto<hyperreal::Real>,
+    I: IntoIterator<Item = V>,
+    V: Borrow<Real>,
 {
-    hreal_to_f64(&value.try_into().ok()?)
+    values
+        .into_iter()
+        .all(|value| finite_profile_scalar(value.borrow()))
 }
 
 /// Sample `start + sweep * index / count` through hyperreal arithmetic.
@@ -43,26 +35,44 @@ where
 /// *Computational Geometry* 7(1-2), 1997
 /// (<https://doi.org/10.1016/0925-7721(95)00040-2>), keeping predicate-adjacent
 /// construction algebra out of local primitive arithmetic.
-fn hsample_angle(index: usize, count: usize, start: Real, sweep: Real) -> Option<Real> {
-    let t = hreal_div(index as Real, count as Real)?;
+fn hsample_angle<S: IntoReal, W: IntoReal>(
+    index: usize,
+    count: usize,
+    start: S,
+    sweep: W,
+) -> Option<Real> {
+    let t = hreal_div(index, count)?;
     hreal_affine(start, t, sweep)
 }
 
 /// Return a finite point on `x = rx*cos(theta), y = ry*sin(theta)`.
-fn hellipse_point(rx: Real, ry: Real, theta: Real) -> Option<[Real; 2]> {
+fn hellipse_point<RX: IntoReal, RY: IntoReal, T: IntoReal>(
+    rx: RX,
+    ry: RY,
+    theta: T,
+) -> Option<[Real; 2]> {
+    let rx = rx.into_real().ok()?;
+    let ry = ry.into_real().ok()?;
     let (sin_theta, cos_theta) = hangle_sin_cos(theta)?;
-    Some([hreal_mul(rx, cos_theta)?, hreal_mul(ry, sin_theta)?])
+    Some([hreal_mul(&rx, cos_theta)?, hreal_mul(&ry, sin_theta)?])
 }
 
-fn hpolar_point(radius: Real, theta: Real) -> Option<[Real; 2]> {
-    hellipse_point(radius, radius, theta)
+fn hpolar_point<R: IntoReal, T: IntoReal>(radius: R, theta: T) -> Option<[Real; 2]> {
+    let radius = radius.into_real().ok()?;
+    hellipse_point(&radius, &radius, theta)
 }
 
-fn hrotate_xy(x: Real, y: Real, angle: Real) -> Option<(Real, Real)> {
+fn hrotate_xy<X: IntoReal, Y: IntoReal, A: IntoReal>(
+    x: X,
+    y: Y,
+    angle: A,
+) -> Option<(Real, Real)> {
+    let x = x.into_real().ok()?;
+    let y = y.into_real().ok()?;
     let (sin_angle, cos_angle) = hangle_sin_cos(angle)?;
     Some((
-        hreal_sub(hreal_mul(x, cos_angle)?, hreal_mul(y, sin_angle)?)?,
-        hreal_sum(&[hreal_mul(x, sin_angle)?, hreal_mul(y, cos_angle)?])?,
+        hreal_sub(hreal_mul(&x, &cos_angle)?, hreal_mul(&y, &sin_angle)?)?,
+        hreal_sum(&[hreal_mul(&x, sin_angle)?, hreal_mul(&y, cos_angle)?])?,
     ))
 }
 
@@ -76,30 +86,30 @@ fn hellipse_samples(
     let mut points = Vec::with_capacity(samples);
     for i in 0..samples {
         points.push(hellipse_point(
-            rx,
-            ry,
-            hsample_angle(i, samples, start, sweep)?,
+            rx.clone(),
+            ry.clone(),
+            hsample_angle(i, samples, start.clone(), sweep.clone())?,
         )?);
     }
     Some(points)
 }
 
 fn hcircle_samples(samples: usize, radius: Real) -> Option<Vec<[Real; 2]>> {
-    hellipse_samples(samples, radius, radius, 0.0, TAU)
+    hellipse_samples(samples, radius.clone(), radius, Real::zero(), tau())
 }
 
 fn hfinite_min_max(values: impl IntoIterator<Item = Real>) -> Option<(Real, Real)> {
     let mut iter = values.into_iter();
     let first = iter.next()?;
-    hreal_from_f64(first).ok()?;
-    let mut min = first;
+    hreal_from_f64(&first).ok()?;
+    let mut min = first.clone();
     let mut max = first;
     for value in iter {
-        hreal_from_f64(value).ok()?;
-        if matches!(hreal_cmp_f64(value, min), Ordering::Less) {
-            min = value;
+        hreal_from_f64(&value).ok()?;
+        if matches!(hreal_cmp_f64(&value, &min), Ordering::Less) {
+            min = value.clone();
         }
-        if matches!(hreal_cmp_f64(value, max), Ordering::Greater) {
+        if matches!(hreal_cmp_f64(&value, &max), Ordering::Greater) {
             max = value;
         }
     }
@@ -107,15 +117,15 @@ fn hfinite_min_max(values: impl IntoIterator<Item = Real>) -> Option<(Real, Real
 }
 
 fn hsigned_sqrt_abs(value: Real) -> Option<Real> {
-    let magnitude = hreal_sqrt(hreal_abs(value)?)?;
-    match hreal_cmp_f64(value, 0.0) {
+    let magnitude = hreal_sqrt(hreal_abs(value.clone())?)?;
+    match hreal_cmp_f64(&value, 0.0) {
         Ordering::Less => hreal_sub(0.0, magnitude),
         Ordering::Equal | Ordering::Greater => Some(magnitude),
     }
 }
 
 fn hfinite_nonzero(value: Real) -> bool {
-    hreal_from_f64(value).is_ok() && !matches!(hreal_cmp_f64(value, 0.0), Ordering::Equal)
+    hreal_from_f64(&value).is_ok() && !matches!(hreal_cmp_f64(&value, 0.0), Ordering::Equal)
 }
 
 /// Compare a public profile scalar through hyperreal ordering.
@@ -125,7 +135,7 @@ fn hfinite_nonzero(value: Real) -> bool {
 /// helper promotes both operands and compares through Hyper's refinement path,
 /// following Yap's exact geometric computation boundary model
 /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-fn hprofile_scalar_gt(lhs: Real, rhs: Real) -> bool {
+fn hprofile_scalar_gt<L: IntoReal, R: IntoReal>(lhs: L, rhs: R) -> bool {
     matches!(hreal_cmp_f64(lhs, rhs), Ordering::Greater)
 }
 
@@ -135,7 +145,7 @@ fn hprofile_scalar_gt(lhs: Real, rhs: Real) -> bool {
 /// degenerate. Keeping admission predicates exact follows Yap's exact
 /// geometric computation model (<https://doi.org/10.1016/0925-7721(95)00040-2>)
 /// and avoids reintroducing a floating tolerance into `Profile` construction.
-fn hprofile_scalar_positive(value: Real) -> bool {
+fn hprofile_scalar_positive<T: IntoReal>(value: T) -> bool {
     hprofile_scalar_gt(value, 0.0)
 }
 
@@ -148,7 +158,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// described by Yap, "Towards exact geometric computation",
     /// Computational Geometry 7(1-2), 1997, DOI: 10.1016/0925-7721(95)00040-2.
     fn polygonal_region(points: Vec<[Real; 2]>, metadata: M) -> Self {
-        let Ok(contour) = Contour2::from_finite_ring(&points) else {
+        let Ok(contour) = Contour2::from_real_ring(&points) else {
             return Profile::empty(metadata);
         };
         Profile::from_contour(contour, metadata)
@@ -167,18 +177,13 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// use csgrs::sketch::Profile;
     /// let sq2 = Profile::<()>::rectangle(2.0, 3.0, ());
     /// ```
-    pub fn rectangle<W, L>(width: W, length: L, metadata: M) -> Self
-    where
-        W: TryInto<hyperreal::Real>,
-        L: TryInto<hyperreal::Real>,
-    {
-        let (Some(width), Some(length)) = (
-            finite_promoted_profile_scalar(width),
-            finite_promoted_profile_scalar(length),
-        ) else {
-            return Profile::empty(metadata);
-        };
-        let points = [[0.0, 0.0], [width, 0.0], [width, length], [0.0, length]];
+    pub fn rectangle(width: Real, length: Real, metadata: M) -> Self {
+        let points = [
+            [Real::zero(), Real::zero()],
+            [width.clone(), Real::zero()],
+            [width, length.clone()],
+            [Real::zero(), length],
+        ];
         Self::polygon(&points, metadata)
     }
 
@@ -191,10 +196,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     ///
     /// # Example
     /// let sq2 = Profile::square(2.0, None);
-    pub fn square<W>(width: W, metadata: M) -> Self
-    where
-        W: TryInto<hyperreal::Real> + Clone,
-    {
+    pub fn square(width: Real, metadata: M) -> Self {
         Self::rectangle(width.clone(), width, metadata)
     }
 
@@ -227,7 +229,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// - **Area error**: πr² - (nr²sin(2π/n))/2 ≈ πr³/6n² for large n
     ///
     /// ### **Numerical Stability**
-    /// - Uses TAU (2π) constant for better floating-point precision
+    /// - Uses tau() (2π) constant for better floating-point precision
     /// - Explicit closure ensures geometric validity
     /// - Minimum 3 segments to avoid degenerate polygons
     ///
@@ -240,14 +242,8 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// - `radius`: Circle radius (must be > 0)
     /// - `segments`: Number of polygon edges (minimum 3 for valid geometry)
     /// - `metadata`: Optional metadata attached to the shape
-    pub fn circle<R>(radius: R, segments: usize, metadata: M) -> Self
-    where
-        R: TryInto<hyperreal::Real>,
-    {
-        let Some(radius) = finite_promoted_profile_scalar(radius) else {
-            return Profile::empty(metadata);
-        };
-        if segments < 3 || !finite_profile_scalar(radius) {
+    pub fn circle(radius: Real, segments: usize, metadata: M) -> Self {
+        if segments < 3 || !finite_profile_scalar(&radius) {
             return Profile::empty(metadata);
         }
         let Some(points) = hcircle_samples(segments, radius) else {
@@ -257,18 +253,12 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     }
 
     /// Right triangle from (0,0) to (width,0) to (0,height).
-    pub fn right_triangle<W, H>(width: W, height: H, metadata: M) -> Self
-    where
-        W: TryInto<hyperreal::Real>,
-        H: TryInto<hyperreal::Real>,
-    {
-        let (Some(width), Some(height)) = (
-            finite_promoted_profile_scalar(width),
-            finite_promoted_profile_scalar(height),
-        ) else {
-            return Profile::empty(metadata);
-        };
-        let points = [[0.0, 0.0], [width, 0.0], [0.0, height]];
+    pub fn right_triangle(width: Real, height: Real, metadata: M) -> Self {
+        let points = [
+            [Real::zero(), Real::zero()],
+            [width, Real::zero()],
+            [Real::zero(), height],
+        ];
         Self::polygon(&points, metadata)
     }
 
@@ -283,7 +273,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// let pts = vec![[0.0, 0.0], [2.0, 0.0], [1.0, 1.5]];
     /// let poly2d = Profile::polygon_points(&pts, metadata);
     pub fn polygon(points: &[[Real; 2]], metadata: M) -> Self {
-        let Ok(contour) = Contour2::from_finite_ring(points) else {
+        let Ok(contour) = Contour2::from_real_ring(points) else {
             return Profile::empty(metadata);
         };
         Profile::from_contour(contour, metadata)
@@ -371,24 +361,14 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// - `height`: Full height (diameter) along y-axis  
     /// - `segments`: Number of polygon edges (minimum 3)
     /// - `metadata`: Optional metadata
-    pub fn ellipse<W, H>(width: W, height: H, segments: usize, metadata: M) -> Self
-    where
-        W: TryInto<hyperreal::Real>,
-        H: TryInto<hyperreal::Real>,
-    {
-        let (Some(width), Some(height)) = (
-            finite_promoted_profile_scalar(width),
-            finite_promoted_profile_scalar(height),
-        ) else {
-            return Profile::empty(metadata);
-        };
-        if segments < 3 || !finite_profile_scalars(&[width, height]) {
+    pub fn ellipse(width: Real, height: Real, segments: usize, metadata: M) -> Self {
+        if segments < 3 || !finite_profile_scalars([&width, &height]) {
             return Profile::empty(metadata);
         }
-        let (Some(rx), Some(ry)) = (hreal_mul(0.5, width), hreal_mul(0.5, height)) else {
+        let (Some(rx), Some(ry)) = (hreal_mul(0.5, &width), hreal_mul(0.5, &height)) else {
             return Profile::empty(metadata);
         };
-        let Some(points) = hellipse_samples(segments, rx, ry, 0.0, TAU) else {
+        let Some(points) = hellipse_samples(segments, rx, ry, Real::zero(), tau()) else {
             return Profile::empty(metadata);
         };
         Self::polygonal_region(points, metadata)
@@ -438,7 +418,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// - **Error bound**: |A_circle - A_n| ≤ πr³/(3n²) for large n
     ///
     /// ## **Numerical Considerations**
-    /// - Uses TAU for precise angular calculations
+    /// - Uses tau() for precise angular calculations
     /// - Explicit closure for geometric validity
     /// - Minimum n = 3 to avoid degenerate cases
     ///
@@ -446,14 +426,8 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// - `sides`: Number of polygon edges (≥ 3)
     /// - `radius`: Circumscribed circle radius
     /// - `metadata`: Optional metadata
-    pub fn regular_ngon<R>(sides: usize, radius: R, metadata: M) -> Self
-    where
-        R: TryInto<hyperreal::Real>,
-    {
-        let Some(radius) = finite_promoted_profile_scalar(radius) else {
-            return Profile::empty(metadata);
-        };
-        if sides < 3 || !finite_profile_scalar(radius) {
+    pub fn regular_ngon(sides: usize, radius: Real, metadata: M) -> Self {
+        if sides < 3 || !finite_profile_scalar(&radius) {
             return Profile::empty(metadata);
         }
         let Some(points) = hcircle_samples(sides, radius) else {
@@ -496,16 +470,17 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         // The arrow points along the positive X-axis
         let half_shaft_width = shaft_width * 0.5;
         let half_head_width = head_width * 0.5;
+        let tip_x = shaft_length.clone() + head_length;
 
         let points = vec![
-            [0.0, half_shaft_width],           // Top-left of shaft
-            [shaft_length, half_shaft_width],  // Top-right of shaft
-            [shaft_length, half_head_width],   // Top-right of head base
-            [shaft_length + head_length, 0.0], // Tip of arrow
-            [shaft_length, -half_head_width],  // Bottom-right of head base
-            [shaft_length, -half_shaft_width], // Bottom-right of shaft
-            [0.0, -half_shaft_width],          // Bottom-left of shaft
-            [0.0, half_shaft_width],           // Back to top-left to close
+            [Real::zero(), half_shaft_width.clone()], // Top-left of shaft
+            [shaft_length.clone(), half_shaft_width.clone()], // Top-right of shaft
+            [shaft_length.clone(), half_head_width.clone()], // Top-right of head base
+            [tip_x, Real::zero()],                    // Tip of arrow
+            [shaft_length.clone(), -half_head_width], // Bottom-right of head base
+            [shaft_length, -half_shaft_width.clone()], // Bottom-right of shaft
+            [Real::zero(), -half_shaft_width.clone()], // Bottom-left of shaft
+            [Real::zero(), half_shaft_width],         // Back to top-left to close
         ];
 
         Self::polygonal_region(points, metadata)
@@ -521,9 +496,9 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         metadata: M,
     ) -> Self {
         let points = vec![
-            [0.0, 0.0],
-            [bottom_width, 0.0],
-            [top_width + top_offset, height],
+            [Real::zero(), Real::zero()],
+            [bottom_width, Real::zero()],
+            [top_width + top_offset.clone(), height.clone()],
             [top_offset, height],
         ];
         Self::polygonal_region(points, metadata)
@@ -537,22 +512,26 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         inner_radius: Real,
         metadata: M,
     ) -> Self {
-        if num_points < 2 || !finite_profile_scalars(&[outer_radius, inner_radius]) {
+        if num_points < 2 || !finite_profile_scalars([&outer_radius, &inner_radius]) {
             return Profile::empty(metadata);
         }
         let mut points = Vec::with_capacity(num_points * 2);
         for i in 0..num_points {
-            let Some(theta_out) = hsample_angle(i, num_points, 0.0, TAU) else {
+            let Some(theta_out) = hsample_angle(i, num_points, Real::zero(), tau()) else {
                 return Profile::empty(metadata);
             };
-            let Some(theta_in) = hsample_angle((i * 2) + 1, num_points * 2, 0.0, TAU) else {
-                return Profile::empty(metadata);
-            };
-            let Some(outer_point) = hellipse_point(outer_radius, outer_radius, theta_out)
+            let Some(theta_in) =
+                hsample_angle((i * 2) + 1, num_points * 2, Real::zero(), tau())
             else {
                 return Profile::empty(metadata);
             };
-            let Some(inner_point) = hellipse_point(inner_radius, inner_radius, theta_in)
+            let Some(outer_point) =
+                hellipse_point(outer_radius.clone(), outer_radius.clone(), theta_out)
+            else {
+                return Profile::empty(metadata);
+            };
+            let Some(inner_point) =
+                hellipse_point(inner_radius.clone(), inner_radius.clone(), theta_in)
             else {
                 return Profile::empty(metadata);
             };
@@ -575,29 +554,29 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     // todo: center on focus of the arc
     pub fn teardrop(width: Real, length: Real, segments: usize, metadata: M) -> Profile<M> {
         if segments < 2
-            || !hprofile_scalar_positive(width)
-            || !hprofile_scalar_positive(length)
-            || !finite_profile_scalars(&[width, length])
+            || !hprofile_scalar_positive(&width)
+            || !hprofile_scalar_positive(&length)
+            || !finite_profile_scalars([&width, &length])
         {
             return Profile::empty(metadata);
         }
-        let Some(r) = hreal_mul(0.5, width) else {
+        let Some(r) = hreal_mul(0.5, &width) else {
             return Profile::empty(metadata);
         };
-        let Some(center_y) = hreal_sub(length, r) else {
+        let Some(center_y) = hreal_sub(&length, &r) else {
             return Profile::empty(metadata);
         };
         let half_seg = segments / 2;
 
-        let mut points = vec![[0.0, 0.0]]; // Start at the tip
+        let mut points = vec![[Real::zero(), Real::zero()]]; // Start at the tip
         for i in 0..=half_seg {
-            let Some(t) = hsample_angle(i, half_seg, 0.0, PI) else {
+            let Some(t) = hsample_angle(i, half_seg, Real::zero(), pi()) else {
                 return Profile::empty(metadata);
             };
-            let Some([dx, dy]) = hellipse_point(r, r, t) else {
+            let Some([dx, dy]) = hellipse_point(r.clone(), r.clone(), t) else {
                 return Profile::empty(metadata);
             };
-            let (Some(x), Some(y)) = (hreal_sub(0.0, dx), hreal_affine(center_y, 1.0, dy))
+            let (Some(x), Some(y)) = (hreal_sub(0.0, dx), hreal_affine(&center_y, 1.0, dy))
             else {
                 return Profile::empty(metadata);
             };
@@ -610,32 +589,32 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// Egg outline.  Approximate an egg shape using a parametric approach.
     /// This is only a toy approximation.  It creates a closed "egg-ish" outline around the origin.
     ///
-    /// The trigonometric sampling is evaluated on `hyperreal::Real` before
+    /// The trigonometric sampling is evaluated on `Real` before
     /// exporting the finite polygonal boundary. That keeps this parametric
     /// constructor aligned with Yap's exact-geometric-computation boundary
     /// model (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     pub fn egg(width: Real, length: Real, segments: usize, metadata: M) -> Profile<M> {
-        if segments < 3 || !finite_profile_scalars(&[width, length]) {
+        if segments < 3 || !finite_profile_scalars([&width, &length]) {
             return Profile::empty(metadata);
         }
-        let (Some(rx), Some(ry)) = (hreal_mul(0.5, width), hreal_mul(0.5, length)) else {
+        let (Some(rx), Some(ry)) = (hreal_mul(0.5, &width), hreal_mul(0.5, &length)) else {
             return Profile::empty(metadata);
         };
         let mut points = Vec::with_capacity(segments);
         for i in 0..segments {
-            let Some(theta) = hsample_angle(i, segments, 0.0, TAU) else {
+            let Some(theta) = hsample_angle(i, segments, Real::zero(), tau()) else {
                 return Profile::empty(metadata);
             };
-            let Some((sin_theta, cos_theta)) = hangle_sin_cos(theta) else {
+            let Some((sin_theta, cos_theta)) = hangle_sin_cos(&theta) else {
                 return Profile::empty(metadata);
             };
-            let Some(distort) = hreal_affine(1.0, 0.2, cos_theta) else {
+            let Some(distort) = hreal_affine(1.0, 0.2, &cos_theta) else {
                 return Profile::empty(metadata);
             };
-            let Some(x) = hreal_mul(rx, sin_theta).and_then(|x| hreal_sub(0.0, x)) else {
+            let Some(x) = hreal_mul(&rx, &sin_theta).and_then(|x| hreal_sub(0.0, x)) else {
                 return Profile::empty(metadata);
             };
-            let Some(y) = hreal_mul(ry, cos_theta)
+            let Some(y) = hreal_mul(&ry, &cos_theta)
                 .and_then(|y| hreal_mul(y, distort))
                 .and_then(|y| hreal_mul(y, 0.8))
             else {
@@ -661,49 +640,50 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         corner_segments: usize,
         metadata: M,
     ) -> Self {
-        if !finite_profile_scalars(&[width, height, corner_radius]) {
+        if !finite_profile_scalars([&width, &height, &corner_radius]) {
             return Profile::empty(metadata);
         }
         let (Some(half_width), Some(half_height)) =
-            (hreal_mul(width, 0.5), hreal_mul(height, 0.5))
+            (hreal_mul(&width, 0.5), hreal_mul(&height, 0.5))
         else {
             return Profile::empty(metadata);
         };
-        let radius = match hreal_cmp_f64(corner_radius, half_width) {
+        let radius = match hreal_cmp_f64(&corner_radius, &half_width) {
             Ordering::Greater => half_width,
-            Ordering::Less | Ordering::Equal => corner_radius,
+            Ordering::Less | Ordering::Equal => corner_radius.clone(),
         };
-        let r = match hreal_cmp_f64(radius, half_height) {
+        let r = match hreal_cmp_f64(&radius, &half_height) {
             Ordering::Greater => half_height,
             Ordering::Less | Ordering::Equal => radius,
         };
-        if corner_segments == 0 || !hprofile_scalar_positive(r) {
+        if corner_segments == 0 || !hprofile_scalar_positive(&r) {
             return Profile::rectangle(width, height, metadata);
         }
         // We'll approximate each 90° corner with `corner_segments` arcs
         let mut points = Vec::with_capacity((corner_segments + 1) * 4);
-        let Some(right) = hreal_sub(width, r) else {
+        let Some(right) = hreal_sub(&width, &r) else {
             return Profile::empty(metadata);
         };
-        let Some(top) = hreal_sub(height, r) else {
+        let Some(top) = hreal_sub(&height, &r) else {
             return Profile::empty(metadata);
         };
         for (cx, cy, start_angle) in [
-            (r, r, PI),
-            (right, r, 1.5 * PI),
-            (right, top, 0.0),
-            (r, top, 0.5 * PI),
+            (r.clone(), r.clone(), pi()),
+            (right.clone(), r.clone(), 1.5 * pi()),
+            (right, top.clone(), Real::zero()),
+            (r.clone(), top, 0.5 * pi()),
         ] {
             for i in 0..=corner_segments {
-                let Some(angle) = hsample_angle(i, corner_segments, start_angle, FRAC_PI_2)
+                let Some(angle) =
+                    hsample_angle(i, corner_segments, start_angle.clone(), frac_pi_2())
                 else {
                     return Profile::empty(metadata);
                 };
-                let Some([dx, dy]) = hellipse_point(r, r, angle) else {
+                let Some([dx, dy]) = hellipse_point(r.clone(), r.clone(), angle) else {
                     return Profile::empty(metadata);
                 };
                 let (Some(x), Some(y)) =
-                    (hreal_affine(cx, 1.0, dx), hreal_affine(cy, 1.0, dy))
+                    (hreal_affine(&cx, 1.0, dx), hreal_affine(&cy, 1.0, dy))
                 else {
                     return Profile::empty(metadata);
                 };
@@ -725,15 +705,15 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// *Examen des différentes méthodes employées pour résoudre les problèmes
     /// de géométrie*, 1818.
     pub fn squircle(width: Real, height: Real, segments: usize, metadata: M) -> Profile<M> {
-        if segments < 3 || !finite_profile_scalars(&[width, height]) {
+        if segments < 3 || !finite_profile_scalars([&width, &height]) {
             return Profile::empty(metadata);
         }
-        let (Some(rx), Some(ry)) = (hreal_mul(0.5, width), hreal_mul(0.5, height)) else {
+        let (Some(rx), Some(ry)) = (hreal_mul(0.5, &width), hreal_mul(0.5, &height)) else {
             return Profile::empty(metadata);
         };
         let mut points = Vec::with_capacity(segments);
         for i in 0..segments {
-            let Some(t) = hsample_angle(i, segments, 0.0, TAU) else {
+            let Some(t) = hsample_angle(i, segments, Real::zero(), tau()) else {
                 return Profile::empty(metadata);
             };
             let Some((sin_t, cos_t)) = hangle_sin_cos(t) else {
@@ -743,7 +723,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
             else {
                 return Profile::empty(metadata);
             };
-            let (Some(x), Some(y)) = (hreal_mul(rx, ct), hreal_mul(ry, st)) else {
+            let (Some(x), Some(y)) = (hreal_mul(&rx, ct), hreal_mul(&ry, st)) else {
                 return Profile::empty(metadata);
             };
             points.push([x, y]);
@@ -769,10 +749,11 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         let circle = Profile::circle(circle_radius, segments, metadata.clone());
 
         // 2) Rectangle (handle)
+        let handle_offset = -(&handle_width * 0.5);
         let handle = Profile::rectangle(handle_width, handle_height, metadata).translate(
-            -handle_width * 0.5,
-            0.0,
-            0.0,
+            handle_offset,
+            Real::zero(),
+            Real::zero(),
         );
 
         // 3) Union them
@@ -801,8 +782,8 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     ) -> Profile<M> {
         if sides < 3
             || circle_segments < 6
-            || !hprofile_scalar_positive(diameter)
-            || !finite_profile_scalar(diameter)
+            || !hprofile_scalar_positive(&diameter)
+            || !finite_profile_scalar(&diameter)
         {
             return Profile::empty(metadata);
         }
@@ -811,7 +792,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         //            s
         //   R = -------------
         //        2 sin(π/n)
-        let Some(angle) = hreal_div(PI, sides as Real) else {
+        let Some(angle) = hreal_div(pi(), sides) else {
             return Profile::empty(metadata);
         };
         let Some((sin_angle, _)) = hangle_sin_cos(angle) else {
@@ -820,29 +801,29 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         let Some(denom) = hreal_mul(2.0, sin_angle) else {
             return Profile::empty(metadata);
         };
-        let Some(r_circ) = hreal_div(diameter, denom) else {
+        let Some(r_circ) = hreal_div(&diameter, denom) else {
             return Profile::empty(metadata);
         };
 
         // Pre-compute vertex positions of the regular n-gon
         let mut verts = Vec::with_capacity(sides);
         for i in 0..sides {
-            let Some(theta) = hsample_angle(i, sides, 0.0, TAU) else {
+            let Some(theta) = hsample_angle(i, sides, Real::zero(), tau()) else {
                 return Profile::empty(metadata);
             };
-            let Some([x, y]) = hellipse_point(r_circ, r_circ, theta) else {
+            let Some([x, y]) = hellipse_point(r_circ.clone(), r_circ.clone(), theta) else {
                 return Profile::empty(metadata);
             };
             verts.push((x, y));
         }
 
         // Build the first disk and use it as the running intersection
-        let base = Profile::circle(diameter, circle_segments, metadata.clone())
-            .translate(verts[0].0, verts[0].1, 0.0);
+        let base = Profile::circle(diameter.clone(), circle_segments, metadata.clone())
+            .translate(verts[0].0.clone(), verts[0].1.clone(), Real::zero());
 
-        let shape = verts.iter().skip(1).fold(base, |acc, &(x, y)| {
-            let disk = Profile::circle(diameter, circle_segments, metadata.clone())
-                .translate(x, y, 0.0);
+        let shape = verts.iter().skip(1).fold(base, |acc, (x, y)| {
+            let disk = Profile::circle(diameter.clone(), circle_segments, metadata.clone())
+                .translate(x.clone(), y.clone(), Real::zero());
             acc.intersection(&disk)
         });
 
@@ -859,14 +840,14 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         if id <= 0.0
             || thickness <= 0.0
             || segments < 3
-            || !finite_profile_scalars(&[id, thickness])
+            || !finite_profile_scalars([&id, &thickness])
         {
             return Profile::empty(metadata);
         }
-        let Some(inner_radius) = hreal_mul(0.5, id) else {
+        let Some(inner_radius) = hreal_mul(0.5, &id) else {
             return Profile::empty(metadata);
         };
-        let Some(outer_radius) = hreal_affine(inner_radius, 1.0, thickness) else {
+        let Some(outer_radius) = hreal_affine(&inner_radius, 1.0, thickness) else {
             return Profile::empty(metadata);
         };
 
@@ -889,28 +870,30 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         segments: usize,
         metadata: M,
     ) -> Profile<M> {
-        if segments < 1 || !finite_profile_scalars(&[radius, start_angle_deg, end_angle_deg]) {
+        if segments < 1 || !finite_profile_scalars([&radius, &start_angle_deg, &end_angle_deg])
+        {
             return Profile::empty(metadata);
         }
 
         let (Some(start_rad), Some(end_rad)) = (
-            hdegrees_to_radians(start_angle_deg),
+            hdegrees_to_radians(start_angle_deg.clone()),
             hdegrees_to_radians(end_angle_deg),
         ) else {
             return Profile::empty(metadata);
         };
-        let Some(sweep) = hreal_sub(end_rad, start_rad) else {
+        let Some(sweep) = hreal_sub(&end_rad, &start_rad) else {
             return Profile::empty(metadata);
         };
 
         // Build a ring of coordinates starting at (0,0), going around the arc, and closing at (0,0).
         let mut points = Vec::with_capacity(segments + 2);
-        points.push([0.0, 0.0]);
+        points.push([Real::zero(), Real::zero()]);
         for i in 0..=segments {
-            let Some(angle) = hsample_angle(i, segments, start_rad, sweep) else {
+            let Some(angle) = hsample_angle(i, segments, start_rad.clone(), sweep.clone())
+            else {
                 return Profile::empty(metadata);
             };
-            let Some(point) = hellipse_point(radius, radius, angle) else {
+            let Some(point) = hellipse_point(radius.clone(), radius.clone(), angle) else {
                 return Profile::empty(metadata);
             };
             points.push(point);
@@ -943,10 +926,10 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         metadata: M,
     ) -> Profile<M> {
         if segments < 3
-            || !finite_profile_scalars(&[a, b, m, n1, n2, n3])
-            || !hfinite_nonzero(a)
-            || !hfinite_nonzero(b)
-            || !hfinite_nonzero(n1)
+            || !finite_profile_scalars([&a, &b, &m, &n1, &n2, &n3])
+            || !hfinite_nonzero(a.clone())
+            || !hfinite_nonzero(b.clone())
+            || !hfinite_nonzero(n1.clone())
         {
             return Profile::empty(metadata);
         }
@@ -974,17 +957,26 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
 
         let mut points = Vec::with_capacity(segments);
         for i in 0..segments {
-            let Some(theta) = hsample_angle(i, segments, 0.0, TAU) else {
+            let Some(theta) = hsample_angle(i, segments, Real::zero(), tau()) else {
                 return Profile::empty(metadata);
             };
-            let Some(r) = supershape_r(theta, a, b, m, n1, n2, n3) else {
+            let Some(r) = supershape_r(
+                theta.clone(),
+                a.clone(),
+                b.clone(),
+                m.clone(),
+                n1.clone(),
+                n2.clone(),
+                n3.clone(),
+            ) else {
                 return Profile::empty(metadata);
             };
 
             let Some((sin_theta, cos_theta)) = hangle_sin_cos(theta) else {
                 return Profile::empty(metadata);
             };
-            let (Some(x), Some(y)) = (hreal_mul(r, cos_theta), hreal_mul(r, sin_theta)) else {
+            let (Some(x), Some(y)) = (hreal_mul(&r, cos_theta), hreal_mul(r, sin_theta))
+            else {
                 return Profile::empty(metadata);
             };
             points.push([x, y]);
@@ -1005,21 +997,24 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         key_depth: Real,
         metadata: M,
     ) -> Profile<M> {
-        if segments < 3 || !finite_profile_scalars(&[radius, key_width, key_depth]) {
+        if segments < 3 || !finite_profile_scalars([&radius, &key_width, &key_depth]) {
             return Profile::empty(metadata);
         }
         // 1. Full circle
-        let circle = Profile::circle(radius, segments, metadata.clone());
+        let circle = Profile::circle(radius.clone(), segments, metadata.clone());
 
         // 2. Construct the keyway rectangle
-        let Some(key_x) = hreal_sub(radius, key_depth) else {
+        let Some(key_x) = hreal_sub(&radius, &key_depth) else {
             return Profile::empty(metadata);
         };
-        let Some(key_y) = hreal_mul(-0.5, key_width) else {
+        let Some(key_y) = hreal_mul(-0.5, &key_width) else {
             return Profile::empty(metadata);
         };
-        let key_rect = Profile::rectangle(key_depth, key_width, metadata.clone())
-            .translate(key_x, key_y, 0.0);
+        let key_rect = Profile::rectangle(key_depth, key_width, metadata.clone()).translate(
+            key_x,
+            key_y,
+            Real::zero(),
+        );
 
         circle.difference(&key_rect)
     }
@@ -1036,25 +1031,25 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         flat_dist: Real,
         metadata: M,
     ) -> Profile<M> {
-        if segments < 3 || !finite_profile_scalars(&[radius, flat_dist]) {
+        if segments < 3 || !finite_profile_scalars([&radius, &flat_dist]) {
             return Profile::empty(metadata);
         }
         // 1. Full circle
-        let circle = Profile::circle(radius, segments, metadata.clone());
+        let circle = Profile::circle(radius.clone(), segments, metadata.clone());
 
         // 2. Build a large rectangle that cuts off everything below y = -flat_dist
-        let cutter_height = 9999.0; // some large number
+        let cutter_height = hreal_from_f64(9999.0).expect("finite cutter height");
         let (Some(width), Some(neg_radius), Some(neg_height), Some(neg_flat)) = (
-            hreal_mul(2.0, radius),
-            hreal_sub(0.0, radius),
-            hreal_sub(0.0, cutter_height),
-            hreal_sub(0.0, flat_dist),
+            hreal_mul(2.0, &radius),
+            hreal_sub(0.0, &radius),
+            hreal_sub(0.0, &cutter_height),
+            hreal_sub(0.0, &flat_dist),
         ) else {
             return Profile::empty(metadata);
         };
         let rect_cutter = Profile::rectangle(width, cutter_height, metadata.clone())
-            .translate(neg_radius, neg_height, 0.0) // put its bottom near "negative infinity"
-            .translate(0.0, neg_flat, 0.0); // now top edge is at y = -flat_dist
+            .translate(neg_radius, neg_height, Real::zero()) // put its bottom near "negative infinity"
+            .translate(Real::zero(), neg_flat, Real::zero()); // now top edge is at y = -flat_dist
 
         // 3. Subtract to produce the flat chord
         circle.difference(&rect_cutter)
@@ -1071,32 +1066,33 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         flat_dist: Real,
         metadata: M,
     ) -> Profile<M> {
-        if segments < 3 || !finite_profile_scalars(&[radius, flat_dist]) {
+        if segments < 3 || !finite_profile_scalars([&radius, &flat_dist]) {
             return Profile::empty(metadata);
         }
         // 1. Full circle
-        let circle = Profile::circle(radius, segments, metadata.clone());
+        let circle = Profile::circle(radius.clone(), segments, metadata.clone());
 
         // 2. Large rectangle to cut the TOP (above +flat_dist)
-        let cutter_height = 9999.0;
+        let cutter_height = hreal_from_f64(9999.0).expect("finite cutter height");
         let (Some(width), Some(neg_radius), Some(neg_height)) = (
-            hreal_mul(2.0, radius),
-            hreal_sub(0.0, radius),
-            hreal_sub(0.0, cutter_height),
+            hreal_mul(2.0, &radius),
+            hreal_sub(0.0, &radius),
+            hreal_sub(0.0, &cutter_height),
         ) else {
             return Profile::empty(metadata);
         };
-        let top_rect = Profile::rectangle(width, cutter_height, metadata.clone())
-            // place bottom at y=flat_dist
-            .translate(neg_radius, flat_dist, 0.0);
+        let top_rect =
+            Profile::rectangle(width.clone(), cutter_height.clone(), metadata.clone())
+                // place bottom at y=flat_dist
+                .translate(neg_radius.clone(), flat_dist.clone(), Real::zero());
 
         // 3. Large rectangle to cut the BOTTOM (below -flat_dist)
-        let Some(bottom_y) = hreal_sub(neg_height, flat_dist) else {
+        let Some(bottom_y) = hreal_sub(&neg_height, &flat_dist) else {
             return Profile::empty(metadata);
         };
         let bottom_rect = Profile::rectangle(width, cutter_height, metadata.clone())
             // place top at y=-flat_dist => bottom extends downward
-            .translate(neg_radius, bottom_y, 0.0);
+            .translate(neg_radius, bottom_y, Real::zero());
 
         // 4. Subtract both
         let with_top_flat = circle.difference(&top_rect);
@@ -1132,19 +1128,19 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
             for k in 1..n {
                 for i in 0..(n - k) {
                     let next = hxy_lerp(
-                        (points[i][0], points[i][1]),
-                        (points[i + 1][0], points[i + 1][1]),
-                        t,
+                        (points[i][0].clone(), points[i][1].clone()),
+                        (points[i + 1][0].clone(), points[i + 1][1].clone()),
+                        t.clone(),
                     )?;
                     points[i] = [next.0, next.1];
                 }
             }
-            Some((points[0][0], points[0][1]))
+            Some((points[0][0].clone(), points[0][1].clone()))
         }
 
         let mut pts = Vec::with_capacity(segments + 1);
         for i in 0..=segments {
-            let Some(t) = hreal_div(i as Real, segments as Real) else {
+            let Some(t) = hreal_div(i, segments) else {
                 return Profile::empty(metadata);
             };
             let Some((x, y)) = de_casteljau(control, t) else {
@@ -1154,17 +1150,18 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         }
 
         let is_closed = {
-            let first = pts[0];
-            let last = pts[segments];
-            hreal_f64s_exactly_equal(first[0], last[0])
-                && hreal_f64s_exactly_equal(first[1], last[1])
+            let first = &pts[0];
+            let last = &pts[segments];
+            let first = hyperlimit::Point2::new(first[0].clone(), first[1].clone());
+            let last = hyperlimit::Point2::new(last[0].clone(), last[1].clone());
+            matches!(hyperlimit::point2_equal(&first, &last).value(), Some(true))
         };
 
         if is_closed {
             return Self::polygonal_region(pts, metadata);
         }
 
-        CurveString2::from_finite_point_iter(pts)
+        CurveString2::from_real_point_iter(pts)
             .map(|wire| Profile::from_wire(wire, metadata.clone()))
             .unwrap_or_else(|_| Profile::empty(metadata))
     }
@@ -1202,11 +1199,11 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         let mut knot = Vec::<Real>::with_capacity(m + 1);
         for i in 0..=m {
             if i <= p {
-                knot.push(0.0);
+                knot.push(Real::zero());
             } else if i >= m - p {
-                knot.push((n - p) as Real);
+                knot.push(Real::from((n - p) as u64));
             } else {
-                knot.push((i - p) as Real);
+                knot.push(Real::from((i - p) as u64));
             }
         }
 
@@ -1214,31 +1211,34 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         fn basis(i: usize, p: usize, u: Real, knot: &[Real]) -> Option<Real> {
             if p == 0 {
                 return Some(if u >= knot[i] && u < knot[i + 1] {
-                    1.0
+                    Real::from(1_u8)
                 } else {
-                    0.0
+                    Real::zero()
                 });
             }
-            let denom1 = hreal_sub(knot[i + p], knot[i])?;
-            let denom2 = hreal_sub(knot[i + p + 1], knot[i + 1])?;
-            let term1 = if hreal_f64s_exactly_equal(denom1, 0.0) {
-                0.0
+            let denom1 = hreal_sub(&knot[i + p], &knot[i])?;
+            let denom2 = hreal_sub(&knot[i + p + 1], &knot[i + 1])?;
+            let term1 = if hreal_f64s_exactly_equal(&denom1, 0.0) {
+                Real::zero()
             } else {
-                let numerator = hreal_sub(u, knot[i])?;
-                hreal_mul(hreal_div(numerator, denom1)?, basis(i, p - 1, u, knot)?)?
+                let numerator = hreal_sub(&u, &knot[i])?;
+                hreal_mul(
+                    hreal_div(numerator, denom1)?,
+                    basis(i, p - 1, u.clone(), knot)?,
+                )?
             };
-            let term2 = if hreal_f64s_exactly_equal(denom2, 0.0) {
-                0.0
+            let term2 = if hreal_f64s_exactly_equal(&denom2, 0.0) {
+                Real::zero()
             } else {
-                let numerator = hreal_sub(knot[i + p + 1], u)?;
+                let numerator = hreal_sub(&knot[i + p + 1], &u)?;
                 hreal_mul(hreal_div(numerator, denom2)?, basis(i + 1, p - 1, u, knot)?)?
             };
             hreal_affine(term1, 1.0, term2)
         }
 
         let span_count = n - p; // #inner knot spans
-        let _max_u = span_count as Real; // parametric upper bound
-        let Some(dt) = hreal_div(1.0, segments_per_span as Real) else {
+        let _max_u = Real::from(span_count as u64); // parametric upper bound
+        let Some(dt) = hreal_div(1.0, segments_per_span) else {
             return Profile::empty(metadata);
         };
 
@@ -1249,16 +1249,18 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
                     // avoid duplicating final knot value
                     continue;
                 }
-                let Some(u) = hreal_affine(span as Real, s as Real, dt) else {
+                let Some(u) = hreal_affine(span, s, dt.clone()) else {
                     return Profile::empty(metadata);
                 };
                 let mut xs = Vec::with_capacity(control.len());
                 let mut ys = Vec::with_capacity(control.len());
-                for (idx, &[px, py]) in control.iter().enumerate() {
-                    let Some(b) = basis(idx, p, u, &knot) else {
+                for (idx, point) in control.iter().enumerate() {
+                    let Some(b) = basis(idx, p, u.clone(), &knot) else {
                         return Profile::empty(metadata);
                     };
-                    let (Some(x), Some(y)) = (hreal_mul(b, px), hreal_mul(b, py)) else {
+                    let (Some(x), Some(y)) =
+                        (hreal_mul(&b, &point[0]), hreal_mul(b, &point[1]))
+                    else {
                         return Profile::empty(metadata);
                     };
                     xs.push(x);
@@ -1270,16 +1272,17 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
                 pts.push([x, y]);
             }
         }
-        if let Some(&last) = control.last() {
-            pts.push(last);
+        if let Some(last) = control.last() {
+            pts.push(last.clone());
         }
 
-        let first = *pts.first().unwrap();
-        let last = *pts.last().unwrap();
-        let closed = hreal_f64s_exactly_equal(first[0], last[0])
-            && hreal_f64s_exactly_equal(first[1], last[1]);
+        let first = pts.first().unwrap();
+        let last = pts.last().unwrap();
+        let first = hyperlimit::Point2::new(first[0].clone(), first[1].clone());
+        let last = hyperlimit::Point2::new(last[0].clone(), last[1].clone());
+        let closed = matches!(hyperlimit::point2_equal(&first, &last).value(), Some(true));
         if !closed {
-            return CurveString2::from_finite_point_iter(pts)
+            return CurveString2::from_real_point_iter(pts)
                 .map(|wire| Profile::from_wire(wire, metadata.clone()))
                 .unwrap_or_else(|_| Profile::empty(metadata));
         }
@@ -1292,54 +1295,54 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// `segments` controls smoothness (≥ 8 recommended).
     ///
     /// The classic analytic heart curve is sampled and normalized through
-    /// `hyperreal::Real` before finite coordinates are exported to hypercurve.
+    /// `Real` before finite coordinates are exported to hypercurve.
     /// This follows Yap, "Towards Exact Geometric Computation,"
     /// *Computational Geometry* 7(1-2), 1997
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>), keeping constructor
     /// algebra out of local primitive arithmetic.
     pub fn heart(width: Real, height: Real, segments: usize, metadata: M) -> Self {
-        if segments < 8 || !finite_profile_scalars(&[width, height]) {
+        if segments < 8 || !finite_profile_scalars([&width, &height]) {
             return Profile::empty(metadata);
         }
 
         // classic analytic “cardioid-style” heart
         let mut pts = Vec::with_capacity(segments);
         for i in 0..segments {
-            let Some(t) = hsample_angle(i, segments, 0.0, TAU) else {
+            let Some(t) = hsample_angle(i, segments, Real::zero(), tau()) else {
                 return Profile::empty(metadata);
             };
-            let Some((sin_t, cos_t)) = hangle_sin_cos(t) else {
+            let Some((sin_t, cos_t)) = hangle_sin_cos(&t) else {
                 return Profile::empty(metadata);
             };
-            let Some(sin2) = hreal_mul(sin_t, sin_t) else {
+            let Some(sin2) = hreal_mul(&sin_t, &sin_t) else {
                 return Profile::empty(metadata);
             };
-            let Some(sin3) = hreal_mul(sin2, sin_t) else {
+            let Some(sin3) = hreal_mul(sin2, &sin_t) else {
                 return Profile::empty(metadata);
             };
             let Some(x) = hreal_mul(16.0, sin3) else {
                 return Profile::empty(metadata);
             };
 
-            let Some(t2) = hreal_mul(2.0, t) else {
+            let Some(t2) = hreal_mul(2.0, &t) else {
                 return Profile::empty(metadata);
             };
-            let Some(t3) = hreal_mul(3.0, t) else {
+            let Some(t3) = hreal_mul(3.0, &t) else {
                 return Profile::empty(metadata);
             };
-            let Some(t4) = hreal_mul(4.0, t) else {
+            let Some(t4) = hreal_mul(4.0, &t) else {
                 return Profile::empty(metadata);
             };
-            let Some((_, cos_2t)) = hangle_sin_cos(t2) else {
+            let Some((_, cos_2t)) = hangle_sin_cos(&t2) else {
                 return Profile::empty(metadata);
             };
-            let Some((_, cos_3t)) = hangle_sin_cos(t3) else {
+            let Some((_, cos_3t)) = hangle_sin_cos(&t3) else {
                 return Profile::empty(metadata);
             };
-            let Some((_, cos_4t)) = hangle_sin_cos(t4) else {
+            let Some((_, cos_4t)) = hangle_sin_cos(&t4) else {
                 return Profile::empty(metadata);
             };
-            let Some(mut y) = hreal_mul(13.0, cos_t) else {
+            let Some(mut y) = hreal_mul(13.0, &cos_t) else {
                 return Profile::empty(metadata);
             };
             let Some(term) = hreal_mul(5.0, cos_2t) else {
@@ -1363,34 +1366,34 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         }
 
         // normalise & scale to desired bounding box ---------------------
-        let Some((min_x, max_x)) = hfinite_min_max(pts.iter().map(|&(x, _)| x)) else {
+        let Some((min_x, max_x)) = hfinite_min_max(pts.iter().map(|(x, _)| x.clone())) else {
             return Profile::empty(metadata);
         };
-        let Some((min_y, max_y)) = hfinite_min_max(pts.iter().map(|&(_, y)| y)) else {
+        let Some((min_y, max_y)) = hfinite_min_max(pts.iter().map(|(_, y)| y.clone())) else {
             return Profile::empty(metadata);
         };
-        let Some(w) = hreal_sub(max_x, min_x) else {
+        let Some(w) = hreal_sub(&max_x, &min_x) else {
             return Profile::empty(metadata);
         };
-        let Some(h) = hreal_sub(max_y, min_y) else {
+        let Some(h) = hreal_sub(&max_y, &min_y) else {
             return Profile::empty(metadata);
         };
-        let Some(s_x) = hreal_div(width, w) else {
+        let Some(s_x) = hreal_div(&width, w) else {
             return Profile::empty(metadata);
         };
-        let Some(s_y) = hreal_div(height, h) else {
+        let Some(s_y) = hreal_div(&height, h) else {
             return Profile::empty(metadata);
         };
 
         let mut points = Vec::with_capacity(pts.len());
         for (x, y) in pts {
-            let Some(dx) = hreal_sub(x, min_x) else {
+            let Some(dx) = hreal_sub(x, &min_x) else {
                 return Profile::empty(metadata);
             };
-            let Some(dy) = hreal_sub(y, min_y) else {
+            let Some(dy) = hreal_sub(y, &min_y) else {
                 return Profile::empty(metadata);
             };
-            let (Some(x), Some(y)) = (hreal_mul(dx, s_x), hreal_mul(dy, s_y)) else {
+            let (Some(x), Some(y)) = (hreal_mul(dx, &s_x), hreal_mul(dy, &s_y)) else {
                 return Profile::empty(metadata);
             };
             points.push([x, y]);
@@ -1415,16 +1418,19 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         metadata: M,
     ) -> Self {
         if segments < 6
-            || !finite_profile_scalars(&[outer_r, inner_r, offset])
-            || !hprofile_scalar_gt(outer_r, inner_r)
-            || !hprofile_scalar_positive(inner_r)
+            || !finite_profile_scalars([&outer_r, &inner_r, &offset])
+            || !hprofile_scalar_gt(&outer_r, &inner_r)
+            || !hprofile_scalar_positive(&inner_r)
         {
             return Profile::empty(metadata);
         }
 
         let big = Self::circle(outer_r, segments, metadata.clone());
-        let small =
-            Self::circle(inner_r, segments, metadata.clone()).translate(offset, 0.0, 0.0);
+        let small = Self::circle(inner_r, segments, metadata.clone()).translate(
+            offset,
+            Real::zero(),
+            Real::zero(),
+        );
 
         big.difference(&small)
     }
@@ -1450,101 +1456,101 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     ) -> Profile<M> {
         if teeth < 4
             || segments_per_flank < 2
-            || !hprofile_scalar_positive(module)
-            || !finite_profile_scalars(&[module, pressure_angle_deg, clearance, backlash])
+            || !hprofile_scalar_positive(&module)
+            || !finite_profile_scalars([&module, &pressure_angle_deg, &clearance, &backlash])
         {
             return Profile::empty(metadata);
         }
 
-        let m = module;
-        let z = teeth as Real;
-        let Some(pressure_angle) = hdegrees_to_radians(pressure_angle_deg) else {
+        let m = &module;
+        let z = Real::from(teeth as u64);
+        let Some(pressure_angle) = hdegrees_to_radians(&pressure_angle_deg) else {
             return Profile::empty(metadata);
         };
 
         // Standard gear dimensions. Involute sampling follows Litvin and Fuentes,
         // Gear Geometry and Applied Theory, 2nd ed., Cambridge University Press,
         // 2004, while scalar construction stays in hyperreal helpers.
-        let Some(pitch_radius) = hreal_mul(0.5, m).and_then(|half_m| hreal_mul(half_m, z))
+        let Some(pitch_radius) = hreal_mul(0.5, m).and_then(|half_m| hreal_mul(&half_m, &z))
         else {
             return Profile::empty(metadata);
         };
-        let addendum = m;
+        let addendum = module.clone();
         let Some(dedendum) =
-            hreal_mul(1.25, m).and_then(|scaled| hreal_sum(&[scaled, clearance]))
+            hreal_mul(1.25, m).and_then(|scaled| hreal_sum(&[scaled, clearance.clone()]))
         else {
             return Profile::empty(metadata);
         };
-        let Some(outer_radius) = hreal_sum(&[pitch_radius, addendum]) else {
+        let Some(outer_radius) = hreal_sum(&[pitch_radius.clone(), addendum]) else {
             return Profile::empty(metadata);
         };
-        let Some((_, pressure_cos)) = hangle_sin_cos(pressure_angle) else {
+        let Some((_, pressure_cos)) = hangle_sin_cos(&pressure_angle) else {
             return Profile::empty(metadata);
         };
-        let Some(base_radius) = hreal_mul(pitch_radius, pressure_cos) else {
+        let Some(base_radius) = hreal_mul(&pitch_radius, pressure_cos) else {
             return Profile::empty(metadata);
         };
-        let Some(raw_root_radius) = hreal_sub(pitch_radius, dedendum) else {
+        let Some(raw_root_radius) = hreal_sub(&pitch_radius, &dedendum) else {
             return Profile::empty(metadata);
         };
-        let Some(base_root_floor) = hreal_mul(base_radius, 0.9) else {
+        let Some(base_root_floor) = hreal_mul(&base_radius, 0.9) else {
             return Profile::empty(metadata);
         };
-        let _root_radius = match hreal_cmp_f64(raw_root_radius, base_root_floor) {
-            Ordering::Greater => raw_root_radius,
-            _ => base_root_floor,
+        let _root_radius = match hreal_cmp_f64(&raw_root_radius, &base_root_floor) {
+            Ordering::Greater => raw_root_radius.clone(),
+            _ => base_root_floor.clone(),
         };
 
-        let Some(angular_pitch) = hreal_div(TAU, z) else {
+        let Some(angular_pitch) = hreal_div(tau(), &z) else {
             return Profile::empty(metadata);
         };
-        let Some(backlash_angle) = hreal_div(backlash, pitch_radius) else {
+        let Some(backlash_angle) = hreal_div(&backlash, &pitch_radius) else {
             return Profile::empty(metadata);
         };
-        let Some(tooth_thickness_at_pitch) = hreal_div(angular_pitch, 2.0)
-            .and_then(|half_pitch| hreal_sub(half_pitch, backlash_angle))
+        let Some(tooth_thickness_at_pitch) = hreal_div(&angular_pitch, 2.0)
+            .and_then(|half_pitch| hreal_sub(&half_pitch, &backlash_angle))
         else {
             return Profile::empty(metadata);
         };
-        let Some(half_tooth_angle) = hreal_div(tooth_thickness_at_pitch, 2.0) else {
+        let Some(half_tooth_angle) = hreal_div(&tooth_thickness_at_pitch, 2.0) else {
             return Profile::empty(metadata);
         };
 
-        if !finite_profile_scalars(&[
-            pitch_radius,
-            outer_radius,
-            base_radius,
-            tooth_thickness_at_pitch,
-            half_tooth_angle,
-        ]) || !hprofile_scalar_positive(pitch_radius)
-            || !hprofile_scalar_positive(base_radius)
-            || !hprofile_scalar_gt(outer_radius, base_radius)
-            || !hprofile_scalar_positive(tooth_thickness_at_pitch)
+        if !finite_profile_scalars([
+            &pitch_radius,
+            &outer_radius,
+            &base_radius,
+            &tooth_thickness_at_pitch,
+            &half_tooth_angle,
+        ]) || !hprofile_scalar_positive(&pitch_radius)
+            || !hprofile_scalar_positive(&base_radius)
+            || !hprofile_scalar_gt(&outer_radius, &base_radius)
+            || !hprofile_scalar_positive(&tooth_thickness_at_pitch)
         {
             return Profile::empty(metadata);
         }
 
         // Helper: generate one involute flank from r1 to r2
         let generate_flank =
-            |r_start: Real, r_end: Real, reverse: bool| -> Option<Vec<(Real, Real)>> {
+            |r_start: &Real, r_end: &Real, reverse: bool| -> Option<Vec<(Real, Real)>> {
                 let mut pts = Vec::with_capacity(segments_per_flank + 1);
                 for i in 0..=segments_per_flank {
-                    let t = hreal_div(i as Real, segments_per_flank as Real)?;
+                    let t = hreal_div(i, segments_per_flank)?;
                     let delta_r = hreal_sub(r_end, r_start)?;
-                    let r = hreal_affine(r_start, t, delta_r)?;
-                    let radius_ratio = hreal_div(r, base_radius)?;
-                    let ratio2 = hreal_mul(radius_ratio, radius_ratio)?;
-                    let phi2 = match hreal_cmp_f64(ratio2, 1.0) {
-                        Ordering::Less => 0.0,
-                        _ => hreal_sub(ratio2, 1.0)?,
+                    let r = hreal_affine(r_start, &t, &delta_r)?;
+                    let radius_ratio = hreal_div(&r, &base_radius)?;
+                    let ratio2 = hreal_mul(&radius_ratio, &radius_ratio)?;
+                    let phi2 = match hreal_cmp_f64(&ratio2, 1.0) {
+                        Ordering::Less => Real::zero(),
+                        _ => hreal_sub(&ratio2, 1.0)?,
                     };
                     let phi = hreal_sqrt(phi2)?;
-                    let (sin_phi, cos_phi) = hangle_sin_cos(phi)?;
-                    let x_term = hreal_sum(&[cos_phi, hreal_mul(phi, sin_phi)?])?;
-                    let y_term = hreal_sub(sin_phi, hreal_mul(phi, cos_phi)?)?;
+                    let (sin_phi, cos_phi) = hangle_sin_cos(&phi)?;
+                    let x_term = hreal_sum(&[cos_phi.clone(), hreal_mul(&phi, &sin_phi)?])?;
+                    let y_term = hreal_sub(&sin_phi, hreal_mul(&phi, &cos_phi)?)?;
                     pts.push((
-                        hreal_mul(base_radius, x_term)?,
-                        hreal_mul(base_radius, y_term)?,
+                        hreal_mul(&base_radius, x_term)?,
+                        hreal_mul(&base_radius, y_term)?,
                     ));
                 }
                 if reverse {
@@ -1557,39 +1563,43 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         let mut tooth_profile = Vec::new();
 
         // Right flank: from base to outer
-        let Some(right_flank) = generate_flank(base_radius, outer_radius, false) else {
+        let Some(right_flank) = generate_flank(&base_radius, &outer_radius, false) else {
             return Profile::empty(metadata);
         };
         // Left flank: mirror and reverse
-        let left_flank: Vec<_> = right_flank.iter().map(|&(x, y)| (x, -y)).rev().collect();
+        let left_flank: Vec<_> = right_flank
+            .iter()
+            .map(|(x, y)| (x.clone(), -y.clone()))
+            .rev()
+            .collect();
 
         // Angular offset from tooth center to flank start at base circle
-        let Some(phi_base) = hreal_div(pitch_radius, base_radius)
-            .and_then(|ratio| hreal_mul(ratio, ratio))
-            .and_then(|ratio2| hreal_sub(ratio2, 1.0))
+        let Some(phi_base) = hreal_div(&pitch_radius, &base_radius)
+            .and_then(|ratio| hreal_mul(&ratio, &ratio))
+            .and_then(|ratio2| hreal_sub(&ratio2, 1.0))
             .and_then(hreal_sqrt)
         else {
             return Profile::empty(metadata);
         };
-        let Some(inv_phi_base) = hreal_sub(phi_base, pressure_angle) else {
+        let Some(inv_phi_base) = hreal_sub(&phi_base, &pressure_angle) else {
             return Profile::empty(metadata);
         };
-        let Some(offset_angle) = hreal_sum(&[inv_phi_base, half_tooth_angle]) else {
+        let Some(offset_angle) = hreal_sum(&[inv_phi_base, half_tooth_angle.clone()]) else {
             return Profile::empty(metadata);
         };
 
         // Apply rotation to flanks
-        for &(x, y) in &right_flank {
-            let Some(angle) = hreal_sub(0.0, offset_angle) else {
+        for (x, y) in &right_flank {
+            let Some(angle) = hreal_sub(0.0, &offset_angle) else {
                 return Profile::empty(metadata);
             };
-            let Some(rotated) = hrotate_xy(x, y, angle) else {
+            let Some(rotated) = hrotate_xy(x, y, &angle) else {
                 return Profile::empty(metadata);
             };
             tooth_profile.push(rotated);
         }
-        for &(x, y) in &left_flank {
-            let Some(rotated) = hrotate_xy(x, y, offset_angle) else {
+        for (x, y) in &left_flank {
+            let Some(rotated) = hrotate_xy(x, y, &offset_angle) else {
                 return Profile::empty(metadata);
             };
             tooth_profile.push(rotated);
@@ -1603,17 +1613,17 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         // Now replicate around the gear
         let mut outline = Vec::with_capacity(tooth_profile.len() * teeth + 1);
         for i in 0..teeth {
-            let Some(rot) = hreal_mul(i as Real, angular_pitch) else {
+            let Some(rot) = hreal_mul(i, &angular_pitch) else {
                 return Profile::empty(metadata);
             };
-            for &(x, y) in &tooth_profile {
-                let Some((x, y)) = hrotate_xy(x, y, rot) else {
+            for (x, y) in &tooth_profile {
+                let Some((x, y)) = hrotate_xy(x, y, &rot) else {
                     return Profile::empty(metadata);
                 };
                 outline.push([x, y]);
             }
         }
-        outline.push(outline[0]); // close
+        outline.push(outline[0].clone()); // close
 
         Self::polygonal_region(outline, metadata)
     }
@@ -1654,66 +1664,66 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     ) -> Profile<M> {
         if teeth < 3
             || segments_per_flank < 2
-            || !finite_profile_scalars(&[module, clearance])
-            || !hprofile_scalar_positive(module)
+            || !finite_profile_scalars([&module, &clearance])
+            || !hprofile_scalar_positive(&module)
         {
             return Profile::empty(metadata);
         }
 
-        let z = teeth as Real;
-        let m = module;
+        let z = Real::from(teeth as u64);
+        let m = &module;
 
         // Basic radii (same conventions as involute_gear).
         let Some(half_module) = hreal_mul(0.5, m) else {
             return Profile::empty(metadata);
         };
-        let Some(pitch_radius) = hreal_mul(half_module, z) else {
+        let Some(pitch_radius) = hreal_mul(&half_module, &z) else {
             return Profile::empty(metadata);
         };
-        let addendum = m;
+        let addendum = module.clone();
         let Some(scaled_module) = hreal_mul(1.25, m) else {
             return Profile::empty(metadata);
         };
-        let Some(dedendum) = hreal_sum(&[scaled_module, clearance]) else {
+        let Some(dedendum) = hreal_sum(&[scaled_module, clearance.clone()]) else {
             return Profile::empty(metadata);
         };
-        let Some(outer_radius) = hreal_sum(&[pitch_radius, addendum]) else {
+        let Some(outer_radius) = hreal_sum(&[pitch_radius.clone(), addendum]) else {
             return Profile::empty(metadata);
         };
-        let Some(raw_root_radius) = hreal_sub(pitch_radius, dedendum) else {
+        let Some(raw_root_radius) = hreal_sub(&pitch_radius, &dedendum) else {
             return Profile::empty(metadata);
         };
-        if !hprofile_scalar_positive(raw_root_radius) {
+        if !hprofile_scalar_positive(&raw_root_radius) {
             return Profile::empty(metadata);
         }
         let root_radius = raw_root_radius;
 
         // Angular pitch between tooth centres.
-        let Some(ang_pitch) = hreal_div(TAU, z) else {
+        let Some(ang_pitch) = hreal_div(tau(), &z) else {
             return Profile::empty(metadata);
         };
 
         // We give each tooth half the pitch for material, half for space.
         // So tooth half-angle at the pitch circle is:
-        let Some(half_tooth_angle) = hreal_mul(ang_pitch, 0.25) else {
+        let Some(half_tooth_angle) = hreal_mul(&ang_pitch, 0.25) else {
             return Profile::empty(metadata);
         };
 
-        if !finite_profile_scalars(&[
-            pitch_radius,
-            outer_radius,
-            root_radius,
-            ang_pitch,
-            half_tooth_angle,
-        ]) || !hprofile_scalar_positive(pitch_radius)
-            || !hprofile_scalar_gt(outer_radius, pitch_radius)
-            || !hprofile_scalar_positive(half_tooth_angle)
+        if !finite_profile_scalars([
+            &pitch_radius,
+            &outer_radius,
+            &root_radius,
+            &ang_pitch,
+            &half_tooth_angle,
+        ]) || !hprofile_scalar_positive(&pitch_radius)
+            || !hprofile_scalar_gt(&outer_radius, &pitch_radius)
+            || !hprofile_scalar_positive(&half_tooth_angle)
         {
             return Profile::empty(metadata);
         }
 
         // Total angular span per tooth profile (from left gap to right gap):
-        let Some(_span_per_tooth) = hreal_mul(2.0, half_tooth_angle) else {
+        let Some(_span_per_tooth) = hreal_mul(2.0, &half_tooth_angle) else {
             return Profile::empty(metadata);
         };
 
@@ -1723,10 +1733,10 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         // We map that to u ∈ [-1, +1] and use a smooth bump with zero slope at
         // the edges and tip.
         fn addendum_profile(
-            pitch_radius: Real,
-            outer_radius: Real,
-            half_tooth_angle: Real,
-            phi_offset: Real,
+            pitch_radius: &Real,
+            outer_radius: &Real,
+            half_tooth_angle: &Real,
+            phi_offset: &Real,
         ) -> Option<Real> {
             // Normalised offset from tooth centre: u ∈ [-1, 1]
             let u = hreal_clamp_f64(hreal_div(phi_offset, half_tooth_angle)?, -1.0, 1.0)?;
@@ -1737,7 +1747,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
             let bump = hreal_sub(1.0, hreal_pow(hreal_abs(u)?, p)?)?;
 
             hreal_sum(&[
-                pitch_radius,
+                pitch_radius.clone(),
                 hreal_mul(bump, hreal_sub(outer_radius, pitch_radius)?)?,
             ])
         }
@@ -1749,7 +1759,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         let mut outline: Vec<[Real; 2]> = Vec::with_capacity(samples_per_tooth * teeth + 1);
 
         for i in 0..teeth {
-            let Some(tooth_center_angle) = hreal_mul(i as Real, ang_pitch) else {
+            let Some(tooth_center_angle) = hreal_mul(i, &ang_pitch) else {
                 return Profile::empty(metadata);
             };
 
@@ -1758,29 +1768,32 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
             // We sample φ over the tooth-material region:
             //   φ ∈ [φ_c - half_tooth_angle, φ_c + half_tooth_angle]
             for j in 0..=segments_per_flank {
-                let Some(left_tooth_angle) = hreal_sub(tooth_center_angle, half_tooth_angle)
+                let Some(left_tooth_angle) = hreal_sub(&tooth_center_angle, &half_tooth_angle)
                 else {
                     return Profile::empty(metadata);
                 };
-                let Some(addendum_sweep) = hreal_mul(2.0, half_tooth_angle) else {
+                let Some(addendum_sweep) = hreal_mul(2.0, &half_tooth_angle) else {
                     return Profile::empty(metadata);
                 };
                 let Some(phi) =
-                    hsample_angle(j, segments_per_flank, left_tooth_angle, addendum_sweep)
+                    hsample_angle(j, segments_per_flank, &left_tooth_angle, &addendum_sweep)
                 else {
                     return Profile::empty(metadata);
                 };
-                let Some(phi_offset) = hreal_sub(phi, tooth_center_angle) else {
+                let Some(phi_offset) = hreal_sub(&phi, &tooth_center_angle) else {
                     return Profile::empty(metadata);
                 };
 
-                let Some(r) =
-                    addendum_profile(pitch_radius, outer_radius, half_tooth_angle, phi_offset)
-                else {
+                let Some(r) = addendum_profile(
+                    &pitch_radius,
+                    &outer_radius,
+                    &half_tooth_angle,
+                    &phi_offset,
+                ) else {
                     return Profile::empty(metadata);
                 };
 
-                let Some(point) = hpolar_point(r, phi) else {
+                let Some(point) = hpolar_point(&r, &phi) else {
                     return Profile::empty(metadata);
                 };
                 outline.push(point);
@@ -1790,29 +1803,33 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
             //    this tooth's right gap and the next tooth's left gap.
             //
             // Right gap angle for this tooth:
-            let Some(right_gap_angle) = hreal_sum(&[tooth_center_angle, half_tooth_angle])
+            let Some(right_gap_angle) =
+                hreal_sum(&[tooth_center_angle.clone(), half_tooth_angle.clone()])
             else {
                 return Profile::empty(metadata);
             };
             // Left gap angle for next tooth (wrap around at 2π):
-            let Some(next_center_angle) = hreal_sum(&[tooth_center_angle, ang_pitch]) else {
+            let Some(next_center_angle) =
+                hreal_sum(&[tooth_center_angle.clone(), ang_pitch.clone()])
+            else {
                 return Profile::empty(metadata);
             };
-            let Some(next_left_gap_angle) = hreal_sub(next_center_angle, half_tooth_angle)
+            let Some(next_left_gap_angle) = hreal_sub(&next_center_angle, &half_tooth_angle)
             else {
                 return Profile::empty(metadata);
             };
 
             for j in 0..=segments_per_flank {
-                let Some(root_sweep) = hreal_sub(next_left_gap_angle, right_gap_angle) else {
-                    return Profile::empty(metadata);
-                };
-                let Some(phi) =
-                    hsample_angle(j, segments_per_flank, right_gap_angle, root_sweep)
+                let Some(root_sweep) = hreal_sub(&next_left_gap_angle, &right_gap_angle)
                 else {
                     return Profile::empty(metadata);
                 };
-                let Some(point) = hpolar_point(root_radius, phi) else {
+                let Some(phi) =
+                    hsample_angle(j, segments_per_flank, &right_gap_angle, &root_sweep)
+                else {
+                    return Profile::empty(metadata);
+                };
+                let Some(point) = hpolar_point(&root_radius, &phi) else {
                     return Profile::empty(metadata);
                 };
                 outline.push(point);
@@ -1820,7 +1837,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         }
 
         // Close the polygon
-        outline.push(outline[0]);
+        outline.push(outline[0].clone());
 
         Self::polygonal_region(outline, metadata)
     }
@@ -1852,48 +1869,48 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         metadata: M,
     ) -> Profile<M> {
         if num_teeth < 1
-            || !finite_profile_scalars(&[module_, pressure_angle_deg, clearance, backlash])
-            || !hprofile_scalar_positive(module_)
+            || !finite_profile_scalars([&module_, &pressure_angle_deg, &clearance, &backlash])
+            || !hprofile_scalar_positive(&module_)
         {
             return Profile::empty(metadata);
         }
-        let m = module_;
-        let Some(p) = hreal_mul(PI, m) else {
+        let m = &module_;
+        let Some(p) = hreal_mul(pi(), m) else {
             return Profile::empty(metadata);
         }; // linear pitch
-        let addendum = m;
+        let addendum = module_.clone();
         let Some(scaled_module) = hreal_mul(1.25, m) else {
             return Profile::empty(metadata);
         };
-        let Some(dedendum) = hreal_sum(&[scaled_module, clearance]) else {
+        let Some(dedendum) = hreal_sum(&[scaled_module, clearance.clone()]) else {
             return Profile::empty(metadata);
         };
-        let tip_y = addendum;
-        let Some(root_y) = hreal_sub(0.0, dedendum) else {
+        let tip_y = addendum.clone();
+        let Some(root_y) = hreal_sub(0.0, &dedendum) else {
             return Profile::empty(metadata);
         };
         // Tooth thickness at pitch‑line (centre) minus backlash.
-        let Some(half_pitch) = hreal_div(p, 2.0) else {
+        let Some(half_pitch) = hreal_div(&p, 2.0) else {
             return Profile::empty(metadata);
         };
-        let Some(t) = hreal_sub(half_pitch, backlash) else {
+        let Some(t) = hreal_sub(&half_pitch, &backlash) else {
             return Profile::empty(metadata);
         };
-        let Some(half_t) = hreal_div(t, 2.0) else {
+        let Some(half_t) = hreal_div(&t, 2.0) else {
             return Profile::empty(metadata);
         };
         // For a rack, the involute flank is a straight line at pressure angle
-        let Some(alpha) = hdegrees_to_radians(pressure_angle_deg) else {
+        let Some(alpha) = hdegrees_to_radians(&pressure_angle_deg) else {
             return Profile::empty(metadata);
         };
-        let Some(tan_alpha) = hreal_tan(alpha) else {
+        let Some(tan_alpha) = hreal_tan(&alpha) else {
             return Profile::empty(metadata);
         };
 
-        if !finite_profile_scalars(&[
-            p, addendum, dedendum, tip_y, root_y, t, half_t, tan_alpha,
-        ]) || !hreal_abs(tan_alpha).is_some_and(|value| hfinite_nonzero(value))
-            || !hprofile_scalar_positive(t)
+        if !finite_profile_scalars([
+            &p, &addendum, &dedendum, &tip_y, &root_y, &t, &half_t, &tan_alpha,
+        ]) || !hreal_abs(&tan_alpha).is_some_and(hfinite_nonzero)
+            || !hprofile_scalar_positive(&t)
         {
             return Profile::empty(metadata);
         }
@@ -1902,78 +1919,78 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         let mut outline = Vec::<[Real; 2]>::new();
 
         // Start at the bottom left of the first tooth
-        let Some(tooth_height) = hreal_sub(tip_y, root_y) else {
+        let Some(tooth_height) = hreal_sub(&tip_y, &root_y) else {
             return Profile::empty(metadata);
         };
-        let Some(root_slant) = hreal_div(tooth_height, tan_alpha) else {
+        let Some(root_slant) = hreal_div(&tooth_height, &tan_alpha) else {
             return Profile::empty(metadata);
         };
-        let Some(negative_half_t) = hreal_sub(0.0, half_t) else {
+        let Some(negative_half_t) = hreal_sub(0.0, &half_t) else {
             return Profile::empty(metadata);
         };
-        let Some(first_x) = hreal_sub(negative_half_t, root_slant) else {
+        let Some(first_x) = hreal_sub(&negative_half_t, &root_slant) else {
             return Profile::empty(metadata);
         };
-        outline.push([first_x, root_y]);
+        outline.push([first_x.clone(), root_y.clone()]);
 
         // Build each tooth
         for i in 0..num_teeth {
-            let Some(tooth_center) = hreal_mul(i as Real, p) else {
+            let Some(tooth_center) = hreal_mul(i, &p) else {
                 return Profile::empty(metadata);
             };
-            let Some(left_pitch) = hreal_sub(tooth_center, half_t) else {
+            let Some(left_pitch) = hreal_sub(&tooth_center, &half_t) else {
                 return Profile::empty(metadata);
             };
-            let Some(right_pitch) = hreal_sum(&[tooth_center, half_t]) else {
+            let Some(right_pitch) = hreal_sum(&[tooth_center.clone(), half_t.clone()]) else {
                 return Profile::empty(metadata);
             };
-            let Some(tip_slant) = hreal_div(tip_y, tan_alpha) else {
+            let Some(tip_slant) = hreal_div(&tip_y, &tan_alpha) else {
                 return Profile::empty(metadata);
             };
-            let Some(left_tip) = hreal_sub(left_pitch, tip_slant) else {
+            let Some(left_tip) = hreal_sub(&left_pitch, &tip_slant) else {
                 return Profile::empty(metadata);
             };
-            let Some(right_tip) = hreal_sum(&[right_pitch, tip_slant]) else {
+            let Some(right_tip) = hreal_sum(&[right_pitch.clone(), tip_slant.clone()]) else {
                 return Profile::empty(metadata);
             };
 
             // Left flank (from root to tip)
-            outline.push([left_pitch, 0.0]);
-            outline.push([left_tip, tip_y]);
+            outline.push([left_pitch.clone(), Real::zero()]);
+            outline.push([left_tip, tip_y.clone()]);
 
             // Top of tooth
-            outline.push([right_tip, tip_y]);
+            outline.push([right_tip, tip_y.clone()]);
 
             // Right flank (from tip to root)
-            outline.push([right_pitch, 0.0]);
+            outline.push([right_pitch, Real::zero()]);
 
             // Bottom right (root)
             if i < num_teeth - 1 {
-                let Some(next_center) = hreal_mul(i as Real + 1.0, p) else {
+                let Some(next_center) = hreal_mul(i + 1, &p) else {
                     return Profile::empty(metadata);
                 };
-                let Some(next_left_pitch) = hreal_sub(next_center, half_t) else {
+                let Some(next_left_pitch) = hreal_sub(&next_center, &half_t) else {
                     return Profile::empty(metadata);
                 };
-                let Some(next_root_left) = hreal_sub(next_left_pitch, root_slant) else {
+                let Some(next_root_left) = hreal_sub(&next_left_pitch, &root_slant) else {
                     return Profile::empty(metadata);
                 };
-                outline.push([next_root_left, root_y]);
+                outline.push([next_root_left, root_y.clone()]);
             }
         }
 
         // Close the polygon by connecting back to the start
         // Add the bottom right corner
-        let Some(last_tooth_center) = hreal_mul((num_teeth - 1) as Real, p) else {
+        let Some(last_tooth_center) = hreal_mul(num_teeth - 1, &p) else {
             return Profile::empty(metadata);
         };
-        let Some(last_right_pitch) = hreal_sum(&[last_tooth_center, half_t]) else {
+        let Some(last_right_pitch) = hreal_sum(&[last_tooth_center, half_t.clone()]) else {
             return Profile::empty(metadata);
         };
         let Some(last_root_right) = hreal_sum(&[last_right_pitch, root_slant]) else {
             return Profile::empty(metadata);
         };
-        outline.push([last_root_right, root_y]);
+        outline.push([last_root_right, root_y.clone()]);
 
         // Now close the polygon by going back to the start
         outline.push([first_x, root_y]);
@@ -1986,7 +2003,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// rack's pitch‑line. The flanks become a trochoid; for practical purposes we
     /// approximate with the classic curtate cycloid equations.
     ///
-    /// The cycloidal cap samples are evaluated through `hyperreal::Real`
+    /// The cycloidal cap samples are evaluated through `Real`
     /// before the finite outline is composed as a `hypercurve` region. This
     /// keeps the tooth-pitch and trigonometric construction on the
     /// exact-aware side of the boundary, following Yap, "Towards Exact
@@ -2012,25 +2029,25 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     ) -> Profile<M> {
         if num_teeth < 1
             || segments_per_flank < 4
-            || !hprofile_scalar_positive(module_)
-            || !hprofile_scalar_positive(generating_radius)
-            || !finite_profile_scalars(&[module_, generating_radius, clearance])
+            || !hprofile_scalar_positive(&module_)
+            || !hprofile_scalar_positive(&generating_radius)
+            || !finite_profile_scalars([&module_, &generating_radius, &clearance])
         {
             return Profile::empty(metadata);
         }
-        let Some(p) = hreal_mul(PI, module_) else {
+        let Some(p) = hreal_mul(pi(), &module_) else {
             return Profile::empty(metadata);
         };
-        let addendum = module_;
-        let Some(dedendum) = hreal_affine(clearance, 1.25, module_) else {
+        let addendum = module_.clone();
+        let Some(dedendum) = hreal_affine(&clearance, 1.25, &module_) else {
             return Profile::empty(metadata);
         };
-        let _tip_y = addendum;
-        let Some(root_y) = hreal_sub(0.0, dedendum) else {
+        let _tip_y = addendum.clone();
+        let Some(root_y) = hreal_sub(0.0, &dedendum) else {
             return Profile::empty(metadata);
         };
 
-        if !finite_profile_scalars(&[p, addendum, dedendum, root_y]) {
+        if !finite_profile_scalars([&p, &addendum, &dedendum, &root_y]) {
             return Profile::empty(metadata);
         }
 
@@ -2038,40 +2055,40 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         // tooth island. The sampled cycloidal cap is intentionally composed
         // into a single hypercurve region, avoiding self-intersections at
         // tooth joins while preserving Profile as the 2-D shape carrier.
-        let Some(left_edge) = hreal_mul(-0.5, p) else {
+        let Some(left_edge) = hreal_mul(-0.5, &p) else {
             return Profile::empty(metadata);
         };
-        let Some(right_edge) = hreal_mul(num_teeth as Real - 0.5, p) else {
+        let Some(right_edge) = hreal_mul(Real::from(num_teeth as u64) - 0.5, &p) else {
             return Profile::empty(metadata);
         };
-        let Some(half_addendum) = hreal_mul(addendum, 0.5) else {
+        let Some(half_addendum) = hreal_mul(&addendum, 0.5) else {
             return Profile::empty(metadata);
         };
         let mut top = Vec::<[Real; 2]>::with_capacity(num_teeth * segments_per_flank + 1);
         for k in 0..num_teeth {
-            let Some(tooth_left) = hreal_mul(k as Real - 0.5, p) else {
+            let Some(tooth_left) = hreal_mul(Real::from(k as u64) - 0.5, &p) else {
                 return Profile::empty(metadata);
             };
             for j in 0..=segments_per_flank {
                 if k > 0 && j == 0 {
                     continue;
                 }
-                let Some(u) = hreal_div(j as Real, segments_per_flank as Real) else {
+                let Some(u) = hreal_div(j, segments_per_flank) else {
                     return Profile::empty(metadata);
                 };
-                let Some(theta) = hreal_mul(TAU, u) else {
+                let Some(theta) = hreal_mul(tau(), &u) else {
                     return Profile::empty(metadata);
                 };
-                let Some(x) = hreal_affine(tooth_left, u, p) else {
+                let Some(x) = hreal_affine(&tooth_left, &u, &p) else {
                     return Profile::empty(metadata);
                 };
-                let Some((_, cos_theta)) = hangle_sin_cos(theta) else {
+                let Some((_, cos_theta)) = hangle_sin_cos(&theta) else {
                     return Profile::empty(metadata);
                 };
-                let Some(one_minus_cos) = hreal_sub(1.0, cos_theta) else {
+                let Some(one_minus_cos) = hreal_sub(1.0, &cos_theta) else {
                     return Profile::empty(metadata);
                 };
-                let Some(y) = hreal_mul(half_addendum, one_minus_cos) else {
+                let Some(y) = hreal_mul(&half_addendum, one_minus_cos) else {
                     return Profile::empty(metadata);
                 };
                 top.push([x, y]);
@@ -2079,8 +2096,8 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         }
 
         let mut outline = Vec::<[Real; 2]>::with_capacity(top.len() + 3);
-        outline.push([left_edge, root_y]);
-        outline.push([right_edge, root_y]);
+        outline.push([left_edge.clone(), root_y.clone()]);
+        outline.push([right_edge, root_y.clone()]);
         for point in top.into_iter().rev() {
             outline.push(point);
         }
@@ -2118,71 +2135,72 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         metadata: M,
     ) -> Profile<M> {
         if samples < 10
-            || !finite_profile_scalars(&[max_camber, camber_position, thickness, chord])
-            || !hprofile_scalar_positive(chord)
-            || !matches!(hreal_cmp_f64(thickness, 0.0), Ordering::Greater)
+            || !finite_profile_scalars([&max_camber, &camber_position, &thickness, &chord])
+            || !hprofile_scalar_positive(&chord)
+            || !matches!(hreal_cmp_f64(&thickness, 0.0), Ordering::Greater)
         {
             return Profile::empty(metadata);
         }
-        let Some(max_camber_percentage) = hreal_div(max_camber, 100.0) else {
+        let Some(max_camber_percentage) = hreal_div(&max_camber, 100.0) else {
             return Profile::empty(metadata);
         };
-        let Some(camber_pos) = hreal_div(camber_position, 10.0) else {
+        let Some(camber_pos) = hreal_div(&camber_position, 10.0) else {
             return Profile::empty(metadata);
         };
-        let cambered = !matches!(hreal_cmp_f64(max_camber_percentage, 0.0), Ordering::Equal);
+        let cambered = !matches!(hreal_cmp_f64(&max_camber_percentage, 0.0), Ordering::Equal);
         if cambered
-            && (!matches!(hreal_cmp_f64(camber_pos, 0.0), Ordering::Greater)
-                || !matches!(hreal_cmp_f64(camber_pos, 1.0), Ordering::Less))
+            && (!matches!(hreal_cmp_f64(&camber_pos, 0.0), Ordering::Greater)
+                || !matches!(hreal_cmp_f64(&camber_pos, 1.0), Ordering::Less))
         {
             return Profile::empty(metadata);
         }
 
         // thickness half-profile
-        let half_profile = |x: Real| -> Option<Real> {
+        let half_profile = |x: &Real| -> Option<Real> {
             let x2 = hreal_mul(x, x)?;
-            let x3 = hreal_mul(x2, x)?;
-            let x4 = hreal_mul(x3, x)?;
+            let x3 = hreal_mul(&x2, x)?;
+            let x4 = hreal_mul(&x3, x)?;
             let terms = [
                 hreal_mul(0.2969, hreal_sqrt(x)?)?,
                 hreal_mul(-0.1260, x)?,
-                hreal_mul(-0.3516, x2)?,
-                hreal_mul(0.2843, x3)?,
+                hreal_mul(-0.3516, &x2)?,
+                hreal_mul(0.2843, &x3)?,
                 hreal_mul(-0.1015, x4)?,
             ];
-            let thickness_scale = hreal_div(hreal_mul(5.0, thickness)?, 100.0)?;
+            let thickness_scale = hreal_div(hreal_mul(5.0, &thickness)?, 100.0)?;
             hreal_mul(thickness_scale, hreal_sum(&terms)?)
         };
 
         // mean-camber line & slope
-        let camber = |x: Real| -> Option<(Real, Real)> {
+        let camber = |x: &Real| -> Option<(Real, Real)> {
             if !cambered {
-                return Some((0.0, 0.0));
+                return Some((Real::zero(), Real::zero()));
             }
 
-            if matches!(hreal_cmp_f64(x, camber_pos), Ordering::Less) {
-                let camber_pos2 = hreal_mul(camber_pos, camber_pos)?;
-                let scale = hreal_div(max_camber_percentage, camber_pos2)?;
-                let two_p_x = hreal_mul(hreal_mul(2.0, camber_pos)?, x)?;
+            if matches!(hreal_cmp_f64(x, &camber_pos), Ordering::Less) {
+                let camber_pos2 = hreal_mul(&camber_pos, &camber_pos)?;
+                let scale = hreal_div(&max_camber_percentage, &camber_pos2)?;
+                let two_p_x = hreal_mul(hreal_mul(2.0, &camber_pos)?, x)?;
                 let x2 = hreal_mul(x, x)?;
-                let yc = hreal_mul(scale, hreal_sub(two_p_x, x2)?)?;
-                let dy_scale = hreal_div(hreal_mul(2.0, max_camber_percentage)?, camber_pos2)?;
-                let dy = hreal_mul(dy_scale, hreal_sub(camber_pos, x)?)?;
+                let yc = hreal_mul(&scale, hreal_sub(&two_p_x, &x2)?)?;
+                let dy_scale =
+                    hreal_div(hreal_mul(2.0, &max_camber_percentage)?, &camber_pos2)?;
+                let dy = hreal_mul(dy_scale, hreal_sub(&camber_pos, x)?)?;
                 Some((yc, dy))
             } else {
-                let one_minus_p = hreal_sub(1.0, camber_pos)?;
-                let one_minus_p2 = hreal_mul(one_minus_p, one_minus_p)?;
-                let scale = hreal_div(max_camber_percentage, one_minus_p2)?;
-                let one_minus_2p = hreal_sub(1.0, hreal_mul(2.0, camber_pos)?)?;
-                let two_p_x = hreal_mul(hreal_mul(2.0, camber_pos)?, x)?;
+                let one_minus_p = hreal_sub(1.0, &camber_pos)?;
+                let one_minus_p2 = hreal_mul(&one_minus_p, &one_minus_p)?;
+                let scale = hreal_div(&max_camber_percentage, &one_minus_p2)?;
+                let one_minus_2p = hreal_sub(1.0, hreal_mul(2.0, &camber_pos)?)?;
+                let two_p_x = hreal_mul(hreal_mul(2.0, &camber_pos)?, x)?;
                 let x2 = hreal_mul(x, x)?;
                 let yc = hreal_mul(
-                    scale,
-                    hreal_sum(&[one_minus_2p, two_p_x, hreal_sub(0.0, x2)?])?,
+                    &scale,
+                    hreal_sum(&[one_minus_2p, two_p_x, hreal_sub(0.0, &x2)?])?,
                 )?;
                 let dy_scale =
-                    hreal_div(hreal_mul(2.0, max_camber_percentage)?, one_minus_p2)?;
-                let dy = hreal_mul(dy_scale, hreal_sub(camber_pos, x)?)?;
+                    hreal_div(hreal_mul(2.0, &max_camber_percentage)?, &one_minus_p2)?;
+                let dy = hreal_mul(dy_scale, hreal_sub(&camber_pos, x)?)?;
                 Some((yc, dy))
             }
         };
@@ -2192,38 +2210,38 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
 
         // leading-edge → trailing-edge (upper)
         for i in 0..=samples {
-            let Some(xc) = hreal_div(i as Real, samples as Real) else {
+            let Some(xc) = hreal_div(i, samples) else {
                 return Profile::empty(metadata);
             };
-            let Some(x) = hreal_mul(xc, chord) else {
+            let Some(x) = hreal_mul(&xc, &chord) else {
                 return Profile::empty(metadata);
             };
-            let Some(t) = half_profile(xc) else {
+            let Some(t) = half_profile(&xc) else {
                 return Profile::empty(metadata);
             };
-            let Some((yc_val, dy)) = camber(xc) else {
+            let Some((yc_val, dy)) = camber(&xc) else {
                 return Profile::empty(metadata);
             };
-            let Some(theta) = hreal_atan(dy) else {
+            let Some(theta) = hreal_atan(&dy) else {
                 return Profile::empty(metadata);
             };
-            let Some((sin_theta, cos_theta)) = hangle_sin_cos(theta) else {
+            let Some((sin_theta, cos_theta)) = hangle_sin_cos(&theta) else {
                 return Profile::empty(metadata);
             };
 
-            let Some(t_sin) = hreal_mul(t, sin_theta) else {
+            let Some(t_sin) = hreal_mul(&t, &sin_theta) else {
                 return Profile::empty(metadata);
             };
-            let Some(t_cos) = hreal_mul(t, cos_theta) else {
+            let Some(t_cos) = hreal_mul(&t, &cos_theta) else {
                 return Profile::empty(metadata);
             };
-            let Some(xu) = hreal_sub(x, t_sin) else {
+            let Some(xu) = hreal_sub(&x, &t_sin) else {
                 return Profile::empty(metadata);
             };
             let Some(upper_yc) = hreal_sum(&[yc_val, t_cos]) else {
                 return Profile::empty(metadata);
             };
-            let Some(yu) = hreal_mul(chord, upper_yc) else {
+            let Some(yu) = hreal_mul(&chord, upper_yc) else {
                 return Profile::empty(metadata);
             };
             points.push([xu, yu]);
@@ -2231,38 +2249,38 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
 
         // trailing-edge → leading-edge (lower)
         for i in (1..samples).rev() {
-            let Some(xc) = hreal_div(i as Real, samples as Real) else {
+            let Some(xc) = hreal_div(i, samples) else {
                 return Profile::empty(metadata);
             };
-            let Some(x) = hreal_mul(xc, chord) else {
+            let Some(x) = hreal_mul(&xc, &chord) else {
                 return Profile::empty(metadata);
             };
-            let Some(t) = half_profile(xc) else {
+            let Some(t) = half_profile(&xc) else {
                 return Profile::empty(metadata);
             };
-            let Some((yc_val, dy)) = camber(xc) else {
+            let Some((yc_val, dy)) = camber(&xc) else {
                 return Profile::empty(metadata);
             };
-            let Some(theta) = hreal_atan(dy) else {
+            let Some(theta) = hreal_atan(&dy) else {
                 return Profile::empty(metadata);
             };
-            let Some((sin_theta, cos_theta)) = hangle_sin_cos(theta) else {
+            let Some((sin_theta, cos_theta)) = hangle_sin_cos(&theta) else {
                 return Profile::empty(metadata);
             };
 
-            let Some(t_sin) = hreal_mul(t, sin_theta) else {
+            let Some(t_sin) = hreal_mul(&t, &sin_theta) else {
                 return Profile::empty(metadata);
             };
-            let Some(t_cos) = hreal_mul(t, cos_theta) else {
+            let Some(t_cos) = hreal_mul(&t, &cos_theta) else {
                 return Profile::empty(metadata);
             };
             let Some(xl) = hreal_sum(&[x, t_sin]) else {
                 return Profile::empty(metadata);
             };
-            let Some(lower_yc) = hreal_sub(yc_val, t_cos) else {
+            let Some(lower_yc) = hreal_sub(&yc_val, &t_cos) else {
                 return Profile::empty(metadata);
             };
-            let Some(yl) = hreal_mul(chord, lower_yc) else {
+            let Some(yl) = hreal_mul(&chord, lower_yc) else {
                 return Profile::empty(metadata);
             };
             points.push([xl, yl]);
@@ -2292,33 +2310,33 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         };
 
         // Bounding box and usable region (with padding).
-        let Some(raw_w) = hreal_sub(max_x, min_x) else {
+        let Some(raw_w) = hreal_sub(&max_x, &min_x) else {
             return Profile::empty(self.metadata.clone());
         };
-        let Some(raw_h) = hreal_sub(max_y, min_y) else {
+        let Some(raw_h) = hreal_sub(&max_y, &min_y) else {
             return Profile::empty(self.metadata.clone());
         };
-        if !hprofile_scalar_positive(raw_w) || !hprofile_scalar_positive(raw_h) {
+        if !hprofile_scalar_positive(&raw_w) || !hprofile_scalar_positive(&raw_h) {
             return Profile::empty(self.metadata.clone());
         }
         let w = raw_w;
         let h = raw_h;
-        let Some(ox) = hreal_sum(&[min_x, padding]) else {
+        let Some(ox) = hreal_sum(&[min_x, padding.clone()]) else {
             return Profile::empty(self.metadata.clone());
         };
-        let Some(oy) = hreal_sum(&[min_y, padding]) else {
+        let Some(oy) = hreal_sum(&[min_y, padding.clone()]) else {
             return Profile::empty(self.metadata.clone());
         };
-        let Some(double_padding) = hreal_mul(2.0, padding) else {
+        let Some(double_padding) = hreal_mul(2.0, &padding) else {
             return Profile::empty(self.metadata.clone());
         };
-        let Some(raw_sx) = hreal_sub(w, double_padding) else {
+        let Some(raw_sx) = hreal_sub(&w, &double_padding) else {
             return Profile::empty(self.metadata.clone());
         };
-        let Some(raw_sy) = hreal_sub(h, double_padding) else {
+        let Some(raw_sy) = hreal_sub(&h, &double_padding) else {
             return Profile::empty(self.metadata.clone());
         };
-        if !hprofile_scalar_positive(raw_sx) || !hprofile_scalar_positive(raw_sy) {
+        if !hprofile_scalar_positive(&raw_sx) || !hprofile_scalar_positive(&raw_sy) {
             return Profile::empty(self.metadata.clone());
         }
         let sx = raw_sx;
@@ -2328,10 +2346,10 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         let pts_norm = hilbert_points(order);
         let mut pts: Vec<(Real, Real)> = Vec::with_capacity(pts_norm.len());
         for (u, v) in pts_norm {
-            let Some(x) = hreal_affine(ox, u, sx) else {
+            let Some(x) = hreal_affine(&ox, &u, &sx) else {
                 return Profile::empty(self.metadata.clone());
             };
-            let Some(y) = hreal_affine(oy, v, sy) else {
+            let Some(y) = hreal_affine(&oy, &v, &sy) else {
                 return Profile::empty(self.metadata.clone());
             };
             pts.push((x, y));
@@ -2341,12 +2359,12 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         let mut run: Vec<(Real, Real)> = Vec::new();
 
         for w in pts.windows(2) {
-            let a = w[0];
-            let b = w[1];
-            let Some(sum_x) = hreal_sum(&[a.0, b.0]) else {
+            let a = &w[0];
+            let b = &w[1];
+            let Some(sum_x) = hreal_sum(&[a.0.clone(), b.0.clone()]) else {
                 continue;
             };
-            let Some(sum_y) = hreal_sum(&[a.1, b.1]) else {
+            let Some(sum_y) = hreal_sum(&[a.1.clone(), b.1.clone()]) else {
                 continue;
             };
             let Some(mid_x) = hreal_mul(sum_x, 0.5) else {
@@ -2355,18 +2373,13 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
             let Some(mid_y) = hreal_mul(sum_y, 0.5) else {
                 continue;
             };
-            let (Some(mid_x), Some(mid_y)) =
-                (hreal_from_f64(mid_x).ok(), hreal_from_f64(mid_y).ok())
-            else {
-                continue;
-            };
             let keep = self.contains_xy(mid_x, mid_y).unwrap_or(true);
 
             if keep {
                 if run.is_empty() {
-                    run.push(a);
+                    run.push(a.clone());
                 }
-                run.push(b);
+                run.push(b.clone());
             } else {
                 if run.len() >= 2 {
                     runs.push(std::mem::take(&mut run));
@@ -2385,7 +2398,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         let wires = runs
             .into_iter()
             .filter_map(|run| {
-                CurveString2::from_finite_point_iter(run.into_iter().map(|(x, y)| [x, y])).ok()
+                CurveString2::from_real_point_iter(run.into_iter().map(|(x, y)| [x, y])).ok()
             })
             .collect::<Vec<_>>();
         Profile::from_wires(wires, self.metadata.clone())
@@ -2410,17 +2423,44 @@ fn hilbert_points(order: usize) -> Vec<(Real, Real)> {
         n: usize,
     ) {
         if n == 0 {
-            out.push((x0 + (xi + yi) * 0.5, y0 + (xj + yj) * 0.5));
+            out.push((&x0 + &((&xi + &yi) * 0.5), &y0 + &((&xj + &yj) * 0.5)));
         } else {
-            let (xi2, xj2) = (xi * 0.5, xj * 0.5);
-            let (yi2, yj2) = (yi * 0.5, yj * 0.5);
-            recur(out, x0, y0, yi2, yj2, xi2, xj2, n - 1);
-            recur(out, x0 + xi2, y0 + xj2, xi2, xj2, yi2, yj2, n - 1);
-            recur(out, x0 + xi2 + yi2, y0 + xj2 + yj2, xi2, xj2, yi2, yj2, n - 1);
+            let (xi2, xj2) = (&xi * 0.5, &xj * 0.5);
+            let (yi2, yj2) = (&yi * 0.5, &yj * 0.5);
             recur(
                 out,
-                x0 + xi2 + yi,
-                y0 + xj2 + yj,
+                x0.clone(),
+                y0.clone(),
+                yi2.clone(),
+                yj2.clone(),
+                xi2.clone(),
+                xj2.clone(),
+                n - 1,
+            );
+            recur(
+                out,
+                &x0 + &xi2,
+                &y0 + &xj2,
+                xi2.clone(),
+                xj2.clone(),
+                yi2.clone(),
+                yj2.clone(),
+                n - 1,
+            );
+            recur(
+                out,
+                &(&x0 + &xi2) + &yi2,
+                &(&y0 + &xj2) + &yj2,
+                xi2.clone(),
+                xj2.clone(),
+                yi2.clone(),
+                yj2.clone(),
+                n - 1,
+            );
+            recur(
+                out,
+                &(&x0 + &xi2) + &yi,
+                &(&y0 + &xj2) + &yj,
                 -yi2,
                 -yj2,
                 -xi2,
@@ -2431,34 +2471,45 @@ fn hilbert_points(order: usize) -> Vec<(Real, Real)> {
     }
     let shift: u32 = ((2 * order) as u32).min(usize::BITS - 1);
     let mut pts = Vec::with_capacity(1usize << shift);
-    recur(&mut pts, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, order);
+    recur(
+        &mut pts,
+        Real::zero(),
+        Real::zero(),
+        Real::one(),
+        Real::zero(),
+        Real::zero(),
+        Real::one(),
+        order,
+    );
     pts
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::float_types::tolerance;
+    use crate::hyper_math::{Real, hreal_from_f64, tolerance};
+
+    fn r(value: f64) -> Real {
+        hreal_from_f64(value).expect("test values must be finite")
+    }
 
     #[test]
     fn profile_scalar_admission_uses_exact_hyperreal_positivity() {
-        assert!(hprofile_scalar_positive(tolerance() * 0.25));
+        assert!(hprofile_scalar_positive(tolerance() * r(0.25)));
         assert!(hprofile_scalar_positive(tolerance()));
-        assert!(hprofile_scalar_positive(tolerance() * 2.0));
-        assert!(!hprofile_scalar_positive(0.0));
+        assert!(hprofile_scalar_positive(tolerance() * r(2.0)));
+        assert!(!hprofile_scalar_positive(Real::zero()));
         assert!(!hprofile_scalar_positive(-tolerance()));
-        assert!(!hprofile_scalar_positive(Real::NAN));
-        assert!(!hprofile_scalar_gt(1.0, Real::NAN));
     }
 
     #[test]
     fn bezier_closure_uses_exact_hyperreal_endpoint_identity() {
         let nearly_closed = Profile::<()>::bezier(
             &[
-                [0.0, 0.0],
-                [0.25, 1.0],
-                [0.75, 1.0],
-                [tolerance() * 0.25, 0.0],
+                [r(0.0), r(0.0)],
+                [r(0.25), r(1.0)],
+                [r(0.75), r(1.0)],
+                [tolerance() * r(0.25), r(0.0)],
             ],
             8,
             (),
@@ -2466,8 +2517,16 @@ mod tests {
         assert_eq!(nearly_closed.material_contour_count(), 0);
         assert_eq!(nearly_closed.wires().len(), 1);
 
-        let exactly_closed =
-            Profile::<()>::bezier(&[[0.0, 0.0], [0.25, 1.0], [0.75, 1.0], [0.0, 0.0]], 8, ());
+        let exactly_closed = Profile::<()>::bezier(
+            &[
+                [r(0.0), r(0.0)],
+                [r(0.25), r(1.0)],
+                [r(0.75), r(1.0)],
+                [r(0.0), r(0.0)],
+            ],
+            8,
+            (),
+        );
         assert_eq!(exactly_closed.material_contour_count(), 1);
         assert!(exactly_closed.wires().is_empty());
     }

@@ -1,14 +1,9 @@
 //! Mesh quality metrics for triangles, vertices, and aggregate mesh health.
 
-use crate::float_types::{
-    PI, Real, hdegrees_to_radians, hreal_clamp_hreal, hreal_cmp_f64, hreal_div,
-    hreal_from_f64, hreal_gt_f64, hreal_max_pair, hreal_mean, hreal_min, hreal_min_pair,
-    hreal_sample_stddev, hreal_sqrt_ref, hreal_sqrt_to_f64, hreal_to_f64,
-    htriangle_area_hreal, hvector3_from_point3,
-};
 use crate::mesh::Mesh;
 use crate::vertex::Vertex;
-use nalgebra::Point3;
+use hyperlattice::{Point3, Real};
+use hyperreal::RealSign;
 use std::cmp::Ordering;
 use std::fmt::Debug;
 
@@ -16,61 +11,96 @@ use std::fmt::Debug;
 use rayon::prelude::*;
 
 fn degenerate_triangle_quality() -> TriangleQuality {
+    let sentinel = Real::from(1_000_000_000_u64);
     TriangleQuality {
-        aspect_ratio: Real::INFINITY,
-        min_angle: 0.0,
-        max_angle: 0.0,
-        edge_ratio: Real::INFINITY,
-        area: 0.0,
-        quality_score: 0.0,
+        aspect_ratio: sentinel.clone(),
+        min_angle: Real::zero(),
+        max_angle: Real::zero(),
+        edge_ratio: sentinel,
+        area: Real::zero(),
+        quality_score: Real::zero(),
     }
 }
 
-fn hyper_edge_length(a: &Point3<Real>, b: &Point3<Real>) -> Option<Real> {
-    let a = hvector3_from_point3(a)?;
-    let b = hvector3_from_point3(b)?;
-    hreal_sqrt_to_f64(&a.squared_distance(&b))
+fn hyper_edge_length(a: &Point3, b: &Point3) -> Option<Real> {
+    let edge = b - a;
+    edge.dot(&edge).sqrt().ok()
 }
 
-fn boundary_scalar_cmp(lhs: Real, rhs: Real) -> Ordering {
-    hreal_cmp_f64(lhs, rhs)
+fn real_cmp(lhs: &Real, rhs: &Real) -> Ordering {
+    hyperlimit::compare_reals(lhs, rhs)
+        .value()
+        .unwrap_or_else(|| match (lhs.clone() - rhs.clone()).refine_sign_until(128) {
+            Some(RealSign::Positive) => Ordering::Greater,
+            Some(RealSign::Negative) => Ordering::Less,
+            Some(RealSign::Zero) | None => Ordering::Equal,
+        })
 }
 
-fn boundary_scalar_lt(lhs: Real, rhs: Real) -> bool {
-    matches!(boundary_scalar_cmp(lhs, rhs), Ordering::Less)
+fn real_lt(lhs: &Real, rhs: &Real) -> bool {
+    matches!(real_cmp(lhs, rhs), Ordering::Less)
 }
 
-fn boundary_scalar_gt(lhs: Real, rhs: Real) -> bool {
-    matches!(boundary_scalar_cmp(lhs, rhs), Ordering::Greater)
+fn real_gt(lhs: &Real, rhs: &Real) -> bool {
+    matches!(real_cmp(lhs, rhs), Ordering::Greater)
+}
+
+fn real_zero(value: &Real) -> bool {
+    matches!(value.refine_sign_until(128), Some(RealSign::Zero))
+}
+
+fn real_clamp(value: Real, min: &Real, max: &Real) -> Real {
+    if real_lt(&value, min) {
+        min.clone()
+    } else if real_gt(&value, max) {
+        max.clone()
+    } else {
+        value
+    }
 }
 
 fn boundary_scalar_min(values: impl IntoIterator<Item = Real>) -> Option<Real> {
-    let values = values.into_iter().collect::<Vec<_>>();
-    hreal_min(&values)
+    values
+        .into_iter()
+        .reduce(|best, value| if real_lt(&value, &best) { value } else { best })
 }
 
-fn hreal_min3(
-    a: &hyperreal::Real,
-    b: &hyperreal::Real,
-    c: &hyperreal::Real,
-) -> Option<hyperreal::Real> {
-    hreal_min_pair(&hreal_min_pair(a, b)?, c)
+fn real_mean(values: &[Real]) -> Option<Real> {
+    if values.is_empty() {
+        return None;
+    }
+    let sum = values
+        .iter()
+        .cloned()
+        .fold(Real::zero(), |acc, value| acc + value);
+    (sum / Real::from(values.len() as u64)).ok()
 }
 
-fn hreal_max3(
-    a: &hyperreal::Real,
-    b: &hyperreal::Real,
-    c: &hyperreal::Real,
-) -> Option<hyperreal::Real> {
-    hreal_max_pair(&hreal_max_pair(a, b)?, c)
+fn real_sample_stddev(values: &[Real]) -> Option<Real> {
+    if values.len() < 2 {
+        return Some(Real::zero());
+    }
+    let mean = real_mean(values)?;
+    let sum_sq = values.iter().fold(Real::zero(), |acc, value| {
+        let delta = value.clone() - mean.clone();
+        acc + delta.clone() * delta
+    });
+    (sum_sq / Real::from((values.len() - 1) as u64))
+        .ok()?
+        .sqrt()
+        .ok()
 }
 
-fn hreal_is_le(lhs: &hyperreal::Real, rhs: &hyperreal::Real) -> Option<bool> {
-    hyperlimit::real_le(lhs, rhs).value()
+fn degrees_to_radians(degrees: Real) -> Option<Real> {
+    (degrees * Real::pi() / Real::from(180_u8)).ok()
 }
 
-fn hreal_is_ge(lhs: &hyperreal::Real, rhs: &hyperreal::Real) -> Option<bool> {
-    hyperlimit::real_ge(lhs, rhs).value()
+fn triangle_area(a: &Point3, b: &Point3, c: &Point3) -> Option<Real> {
+    let ab = b - a;
+    let ac = c - a;
+    let cross = ab.cross(&ac);
+    let magnitude = cross.dot(&cross).sqrt().ok()?;
+    (magnitude / Real::from(2_u8)).ok()
 }
 
 fn hyper_triangle_quality(vertices: &[Vertex]) -> Option<TriangleQuality> {
@@ -78,107 +108,112 @@ fn hyper_triangle_quality(vertices: &[Vertex]) -> Option<TriangleQuality> {
         return None;
     }
 
-    let a = hvector3_from_point3(&vertices[0].position)?;
-    let b = hvector3_from_point3(&vertices[1].position)?;
-    let c = hvector3_from_point3(&vertices[2].position)?;
+    let len_ab = hyper_edge_length(&vertices[0].position, &vertices[1].position)?;
+    let len_bc = hyper_edge_length(&vertices[1].position, &vertices[2].position)?;
+    let len_ca = hyper_edge_length(&vertices[2].position, &vertices[0].position)?;
 
-    let len_ab = hreal_sqrt_ref(&a.squared_distance(&b))?;
-    let len_bc = hreal_sqrt_ref(&b.squared_distance(&c))?;
-    let len_ca = hreal_sqrt_ref(&c.squared_distance(&a))?;
-
-    if !hreal_gt_f64(&len_ab, 0.0)
-        || !hreal_gt_f64(&len_bc, 0.0)
-        || !hreal_gt_f64(&len_ca, 0.0)
+    if !real_gt(&len_ab, &Real::zero())
+        || !real_gt(&len_bc, &Real::zero())
+        || !real_gt(&len_ca, &Real::zero())
     {
         return None;
     }
 
-    let Some(area) = htriangle_area_hreal(
+    let Some(area) = triangle_area(
         &vertices[0].position,
         &vertices[1].position,
         &vertices[2].position,
     ) else {
-        let min_edge = hreal_min3(&len_ab, &len_bc, &len_ca)?;
-        let max_edge = hreal_max3(&len_ab, &len_bc, &len_ca)?;
+        let min_ab = hyperlimit::real_min(&len_ab, &len_bc).value().cloned()?;
+        let min_edge = hyperlimit::real_min(&min_ab, &len_ca).value().cloned()?;
+        let max_ab = hyperlimit::real_max(&len_ab, &len_bc).value().cloned()?;
+        let max_edge = hyperlimit::real_max(&max_ab, &len_ca).value().cloned()?;
         let edge_ratio = (max_edge / min_edge).ok()?;
         return Some(TriangleQuality {
-            aspect_ratio: Real::INFINITY,
-            min_angle: 0.0,
-            max_angle: 0.0,
-            edge_ratio: hreal_to_f64(&edge_ratio)?,
-            area: 0.0,
-            quality_score: 0.0,
+            aspect_ratio: Real::from(1_000_000_000_u64),
+            min_angle: Real::zero(),
+            max_angle: Real::zero(),
+            edge_ratio,
+            area: Real::zero(),
+            quality_score: Real::zero(),
         });
     };
+    if real_zero(&area) {
+        return None;
+    }
 
-    let two = hreal_from_f64(2.0).ok()?;
-    let angle =
-        |opposite: &hyperreal::Real, side_a: &hyperreal::Real, side_b: &hyperreal::Real| {
-            let numerator = side_a.clone() * side_a.clone() + side_b.clone() * side_b.clone()
-                - opposite.clone() * opposite.clone();
-            let denominator = two.clone() * side_a.clone() * side_b.clone();
-            let cos_angle = hreal_clamp_hreal((numerator / denominator).ok()?, -1.0, 1.0)?;
-            hyperlattice::acos(cos_angle).ok()
-        };
+    let two = Real::from(2_u8);
+    let angle = |opposite: &Real, side_a: &Real, side_b: &Real| {
+        let numerator = side_a.clone() * side_a.clone() + side_b.clone() * side_b.clone()
+            - opposite.clone() * opposite.clone();
+        let denominator = two.clone() * side_a.clone() * side_b.clone();
+        let cos_angle =
+            real_clamp((numerator / denominator).ok()?, &(-Real::one()), &Real::one());
+        cos_angle.acos().ok()
+    };
 
-    let min_edge = hreal_min3(&len_ab, &len_bc, &len_ca)?;
-    let max_edge = hreal_max3(&len_ab, &len_bc, &len_ca)?;
+    let min_ab = hyperlimit::real_min(&len_ab, &len_bc).value().cloned()?;
+    let min_edge = hyperlimit::real_min(&min_ab, &len_ca).value().cloned()?;
+    let max_ab = hyperlimit::real_max(&len_ab, &len_bc).value().cloned()?;
+    let max_edge = hyperlimit::real_max(&max_ab, &len_ca).value().cloned()?;
     let edge_ratio = (max_edge / min_edge).ok()?;
 
-    let min_angle = if hreal_is_le(&len_ab, &len_bc)? && hreal_is_le(&len_ab, &len_ca)? {
+    let min_angle = if hyperlimit::real_le(&len_ab, &len_bc).value()?
+        && hyperlimit::real_le(&len_ab, &len_ca).value()?
+    {
         angle(&len_ab, &len_bc, &len_ca)?
-    } else if hreal_is_le(&len_bc, &len_ab)? && hreal_is_le(&len_bc, &len_ca)? {
+    } else if hyperlimit::real_le(&len_bc, &len_ab).value()?
+        && hyperlimit::real_le(&len_bc, &len_ca).value()?
+    {
         angle(&len_bc, &len_ca, &len_ab)?
     } else {
         angle(&len_ca, &len_ab, &len_bc)?
     };
-    let max_angle = if hreal_is_ge(&len_ab, &len_bc)? && hreal_is_ge(&len_ab, &len_ca)? {
+    let max_angle = if hyperlimit::real_ge(&len_ab, &len_bc).value()?
+        && hyperlimit::real_ge(&len_ab, &len_ca).value()?
+    {
         angle(&len_ab, &len_bc, &len_ca)?
-    } else if hreal_is_ge(&len_bc, &len_ab)? && hreal_is_ge(&len_bc, &len_ca)? {
+    } else if hyperlimit::real_ge(&len_bc, &len_ab).value()?
+        && hyperlimit::real_ge(&len_bc, &len_ca).value()?
+    {
         angle(&len_bc, &len_ca, &len_ab)?
     } else {
         angle(&len_ca, &len_ab, &len_bc)?
     };
 
-    let semiperimeter = ((len_ab.clone() + len_bc.clone() + len_ca.clone())
-        / hreal_from_f64(2.0).ok()?)
-    .ok()?;
-    let circumradius =
-        (len_ab * len_bc * len_ca / (hreal_from_f64(4.0).ok()? * area.clone())).ok()?;
+    let semiperimeter =
+        ((len_ab.clone() + len_bc.clone() + len_ca.clone()) / Real::from(2_u8)).ok()?;
+    let circumradius = (len_ab * len_bc * len_ca / (Real::from(4_u8) * area.clone())).ok()?;
     let inradius = (area.clone() / semiperimeter).ok()?;
     let aspect_ratio = (circumradius / inradius).ok()?;
 
-    let angle_quality = hreal_clamp_hreal(
-        (min_angle.clone() / hreal_from_f64(PI / 6.0).ok()?).ok()?,
-        0.0,
-        1.0,
-    )?;
-    let shape_quality = hreal_clamp_hreal(
-        (hreal_from_f64(1.0).ok()? / aspect_ratio.clone()).ok()?,
-        0.0,
-        1.0,
-    )?;
-    let edge_quality = hreal_clamp_hreal(
-        (hreal_from_f64(3.0).ok()? / edge_ratio.clone()).ok()?,
-        0.0,
-        1.0,
-    )?;
+    let zero = Real::zero();
+    let one = Real::one();
+    let angle_quality = real_clamp(
+        (min_angle.clone() / (Real::pi() / Real::from(6_u8)).ok()?).ok()?,
+        &zero,
+        &one,
+    );
+    let shape_quality = real_clamp((Real::one() / aspect_ratio.clone()).ok()?, &zero, &one);
+    let edge_quality = real_clamp((Real::from(3_u8) / edge_ratio.clone()).ok()?, &zero, &one);
 
-    let quality_score = hreal_clamp_hreal(
-        hreal_from_f64(0.4).ok()? * angle_quality
-            + hreal_from_f64(0.4).ok()? * shape_quality
-            + hreal_from_f64(0.2).ok()? * edge_quality,
-        0.0,
-        1.0,
-    )?;
+    let two_fifths = (Real::from(2_u8) / Real::from(5_u8)).ok()?;
+    let one_fifth = (Real::one() / Real::from(5_u8)).ok()?;
+    let quality_score = real_clamp(
+        two_fifths.clone() * angle_quality
+            + two_fifths * shape_quality
+            + one_fifth * edge_quality,
+        &zero,
+        &one,
+    );
 
     Some(TriangleQuality {
-        aspect_ratio: hreal_to_f64(&aspect_ratio)?,
-        min_angle: hreal_to_f64(&min_angle)?,
-        max_angle: hreal_to_f64(&max_angle)?,
-        edge_ratio: hreal_to_f64(&edge_ratio)?,
-        area: hreal_to_f64(&area)?,
-        quality_score: hreal_to_f64(&quality_score)?,
+        aspect_ratio,
+        min_angle,
+        max_angle,
+        edge_ratio,
+        area,
+        quality_score,
     })
 }
 
@@ -273,7 +308,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     ///
     /// Edge lengths, areas, law-of-cosines angle terms, radii, and normalized
     /// quality scores are measured through `hyperlattice::Vector3` and
-    /// `hyperreal::Real`, then exported to finite scalars for this reporting
+    /// `Real`, then exported to finite scalars for this reporting
     /// API. This keeps degeneracy decisions on the exact-aware side of the
     /// boundary, following Yap, "Towards Exact Geometric Computation,"
     /// *Computational Geometry* 7(1-2), 1997
@@ -322,7 +357,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// - **Aspect ratio bounds**: Shape quality bounds
     ///
     /// Aggregate comparisons are evaluated through the same
-    /// `hyperreal::Real` boundary comparators used by per-triangle metrics;
+    /// `Real` boundary comparators used by per-triangle metrics;
     /// the sliver threshold is converted through the shared degree adapter
     /// rather than primitive `to_radians`. This keeps reporting decisions
     /// aligned with Yap's exact-geometric-computation boundary discipline
@@ -337,32 +372,43 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
 
         if qualities.is_empty() {
             return MeshQualityMetrics {
-                avg_quality: 0.0,
-                min_quality: 0.0,
-                high_quality_ratio: 0.0,
+                avg_quality: Real::zero(),
+                min_quality: Real::zero(),
+                high_quality_ratio: Real::zero(),
                 sliver_count: 0,
-                avg_edge_length: 0.0,
-                edge_length_std: 0.0,
+                avg_edge_length: Real::zero(),
+                edge_length_std: Real::zero(),
             };
         }
 
-        let quality_scores = qualities.iter().map(|q| q.quality_score).collect::<Vec<_>>();
-        let avg_quality = hreal_mean(&quality_scores).unwrap_or(0.0);
+        let quality_scores = qualities
+            .iter()
+            .map(|q| q.quality_score.clone())
+            .collect::<Vec<_>>();
+        let avg_quality = real_mean(&quality_scores).unwrap_or_else(Real::zero);
 
         let min_quality =
-            boundary_scalar_min(qualities.iter().map(|q| q.quality_score)).unwrap_or(0.0);
+            boundary_scalar_min(qualities.iter().map(|q| q.quality_score.clone()))
+                .unwrap_or_else(Real::zero);
 
         let high_quality_count = qualities
             .iter()
-            .filter(|q| boundary_scalar_gt(q.quality_score, 0.7))
+            .filter(|q| {
+                real_gt(
+                    &q.quality_score,
+                    &(Real::from(7_u8) / Real::from(10_u8)).unwrap(),
+                )
+            })
             .count();
-        let high_quality_ratio =
-            hreal_div(high_quality_count as Real, qualities.len() as Real).unwrap_or(0.0);
+        let high_quality_ratio = (Real::from(high_quality_count as u64)
+            / Real::from(qualities.len() as u64))
+        .unwrap_or_else(|_| Real::zero());
 
-        let sliver_threshold = hdegrees_to_radians(10.0).unwrap_or(0.0);
+        let sliver_threshold =
+            degrees_to_radians(Real::from(10_u8)).unwrap_or_else(Real::zero);
         let sliver_count = qualities
             .iter()
-            .filter(|q| boundary_scalar_lt(q.min_angle, sliver_threshold))
+            .filter(|q| real_lt(&q.min_angle, &sliver_threshold))
             .count();
 
         // Compute edge length statistics
@@ -384,9 +430,9 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             })
             .collect();
 
-        let avg_edge_length = hreal_mean(&edge_lengths).unwrap_or(0.0);
+        let avg_edge_length = real_mean(&edge_lengths).unwrap_or_else(Real::zero);
 
-        let edge_length_std = hreal_sample_stddev(&edge_lengths).unwrap_or(0.0);
+        let edge_length_std = real_sample_stddev(&edge_lengths).unwrap_or_else(Real::zero);
 
         MeshQualityMetrics {
             avg_quality,

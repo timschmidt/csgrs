@@ -1,15 +1,6 @@
 //! `Mesh` struct and implementations of the `CSGOps` trait for `Mesh`
 
 use crate::errors::ValidationError;
-use crate::float_types::{
-    Real, hangle_between_vectors, hpoint_distance, hpoint3_bounds, hpoints_exactly_equal,
-    hreal_cmp_f64, hreal_f64s_exactly_equal, hunit_vector3, hvector3_from_vector3,
-    parry3d::{bounding_volume::Aabb, query::RayCast, shape::Shape},
-    rapier3d::prelude::{
-        ColliderBuilder, ColliderSet, Ray, RigidBodyBuilder, RigidBodyHandle, RigidBodySet,
-        SharedShape, TriMesh, Triangle,
-    },
-};
 
 use crate::mesh::plane::Plane;
 use crate::polygon::Polygon;
@@ -19,15 +10,16 @@ use crate::vertex::Vertex;
 use crate::sketch::Profile;
 
 use crate::csg::CSG;
-use hashbrown::HashMap;
 #[cfg(feature = "sketch")]
 use hypercurve::{Classification, FiniteProjectionOptions};
+use hyperlattice::{Aabb, Matrix4, Point3, Real, Vector3};
+use hyperlimit::{PreparedAabb3, aabb3s_intersect, real_max, real_min};
 use hyperphysics::{
     ClosedTriangleMesh3 as HyperClosedTriangleMesh3,
     MassPropertyReport3 as HyperMassPropertyReport3, Triangle3 as HyperTriangle3,
     Vector3 as HyperVector3,
 };
-use nalgebra::{Isometry3, Matrix4, Point3, Quaternion, Unit, Vector3};
+use hyperreal::RealSign;
 use std::{cmp::PartialEq, fmt::Debug, num::NonZeroU32, sync::OnceLock};
 
 #[cfg(feature = "parallel")]
@@ -53,10 +45,10 @@ pub mod smoothing;
 pub mod tpms;
 pub mod triangulated;
 
-/// Stored as `(position: [f32; 3], normal: [f32; 3])`.
-pub type GraphicsMeshVertex = ([f32; 3], [f32; 3]);
+/// Stored as `(position: [Real; 3], normal: [Real; 3])`.
+pub type GraphicsMeshVertex = ([Real; 3], [Real; 3]);
 
-/// Mesh data laid out for renderers that want packed f32 vertices plus u32 indices.
+/// Mesh data laid out for renderers that want vertex buffers plus u32 indices.
 #[derive(Debug, Clone)]
 pub struct GraphicsMesh {
     pub vertices: Vec<GraphicsMeshVertex>,
@@ -71,21 +63,36 @@ pub struct Mesh<M: Clone + Send + Sync + Debug> {
     /// Lazily calculated AABB that spans `polygons`.
     pub bounding_box: OnceLock<Aabb>,
 
-    /// Lazily built Parry TriMesh reused by query operations.
-    pub query_trimesh: OnceLock<Option<TriMesh>>,
-
     /// Whole-mesh metadata. Use `M = ()` for no metadata and `M = Option<YourMetadata>`
     /// for optional metadata.
     pub metadata: M,
 }
 
 fn bounding_box_contains_bounds(container: &Aabb, contained: &Aabb) -> bool {
-    contained.mins.x >= container.mins.x
-        && contained.mins.y >= container.mins.y
-        && contained.mins.z >= container.mins.z
-        && contained.maxs.x <= container.maxs.x
-        && contained.maxs.y <= container.maxs.y
-        && contained.maxs.z <= container.maxs.z
+    let container_min = hyperlimit::Point3::new(
+        container.mins.x.clone(),
+        container.mins.y.clone(),
+        container.mins.z.clone(),
+    );
+    let container_max = hyperlimit::Point3::new(
+        container.maxs.x.clone(),
+        container.maxs.y.clone(),
+        container.maxs.z.clone(),
+    );
+    let contained_min = hyperlimit::Point3::new(
+        contained.mins.x.clone(),
+        contained.mins.y.clone(),
+        contained.mins.z.clone(),
+    );
+    let contained_max = hyperlimit::Point3::new(
+        contained.maxs.x.clone(),
+        contained.maxs.y.clone(),
+        contained.maxs.z.clone(),
+    );
+
+    let container = PreparedAabb3::new(&container_min, &container_max);
+    matches!(container.contains_point(&contained_min).value(), Some(true))
+        && matches!(container.contains_point(&contained_max).value(), Some(true))
 }
 
 /// Conservative broad-phase overlap used while exact solid booleans finish
@@ -99,12 +106,65 @@ fn bounding_box_contains_bounds(container: &Aabb, contained: &Aabb) -> bool {
 /// *Computational Geometry* 7(1-2), 1997
 /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
 fn bounding_boxes_intersect(lhs: &Aabb, rhs: &Aabb) -> bool {
-    lhs.mins.x <= rhs.maxs.x
-        && lhs.maxs.x >= rhs.mins.x
-        && lhs.mins.y <= rhs.maxs.y
-        && lhs.maxs.y >= rhs.mins.y
-        && lhs.mins.z <= rhs.maxs.z
-        && lhs.maxs.z >= rhs.mins.z
+    let lhs_min =
+        hyperlimit::Point3::new(lhs.mins.x.clone(), lhs.mins.y.clone(), lhs.mins.z.clone());
+    let lhs_max =
+        hyperlimit::Point3::new(lhs.maxs.x.clone(), lhs.maxs.y.clone(), lhs.maxs.z.clone());
+    let rhs_min =
+        hyperlimit::Point3::new(rhs.mins.x.clone(), rhs.mins.y.clone(), rhs.mins.z.clone());
+    let rhs_max =
+        hyperlimit::Point3::new(rhs.maxs.x.clone(), rhs.maxs.y.clone(), rhs.maxs.z.clone());
+
+    matches!(
+        aabb3s_intersect(&lhs_min, &lhs_max, &rhs_min, &rhs_max).value(),
+        Some(true)
+    )
+}
+
+fn real_cmp(lhs: &Real, rhs: &Real) -> std::cmp::Ordering {
+    hyperlimit::compare_reals(lhs, rhs)
+        .value()
+        .unwrap_or_else(|| match (lhs.clone() - rhs.clone()).refine_sign_until(128) {
+            Some(RealSign::Positive) => std::cmp::Ordering::Greater,
+            Some(RealSign::Negative) => std::cmp::Ordering::Less,
+            Some(RealSign::Zero) | None => std::cmp::Ordering::Equal,
+        })
+}
+
+fn real_gt(lhs: &Real, rhs: &Real) -> bool {
+    matches!(real_cmp(lhs, rhs), std::cmp::Ordering::Greater)
+}
+
+fn real_lt(lhs: &Real, rhs: &Real) -> bool {
+    matches!(real_cmp(lhs, rhs), std::cmp::Ordering::Less)
+}
+
+fn real_zero(value: &Real) -> bool {
+    matches!(value.refine_sign_until(128), Some(RealSign::Zero))
+}
+
+fn point3_bounds(points: &[Point3]) -> Option<(Point3, Point3)> {
+    let first = points.first()?;
+    let mut min_x = first.x.clone();
+    let mut min_y = first.y.clone();
+    let mut min_z = first.z.clone();
+    let mut max_x = min_x.clone();
+    let mut max_y = min_y.clone();
+    let mut max_z = min_z.clone();
+
+    for point in &points[1..] {
+        min_x = real_min(&min_x, &point.x).value()?.clone();
+        min_y = real_min(&min_y, &point.y).value()?.clone();
+        min_z = real_min(&min_z, &point.z).value()?.clone();
+        max_x = real_max(&max_x, &point.x).value()?.clone();
+        max_y = real_max(&max_y, &point.y).value()?.clone();
+        max_z = real_max(&max_z, &point.z).value()?.clone();
+    }
+
+    Some((
+        Point3::new(min_x, min_y, min_z),
+        Point3::new(max_x, max_y, max_z),
+    ))
 }
 
 fn mesh_from_bounding_box_intersection<M: Clone + Send + Sync + Debug>(
@@ -112,19 +172,31 @@ fn mesh_from_bounding_box_intersection<M: Clone + Send + Sync + Debug>(
     rhs: &Aabb,
     metadata: M,
 ) -> Mesh<M> {
-    let min_x = lhs.mins.x.max(rhs.mins.x);
-    let min_y = lhs.mins.y.max(rhs.mins.y);
-    let min_z = lhs.mins.z.max(rhs.mins.z);
-    let max_x = lhs.maxs.x.min(rhs.maxs.x);
-    let max_y = lhs.maxs.y.min(rhs.maxs.y);
-    let max_z = lhs.maxs.z.min(rhs.maxs.z);
+    let Some(min_x) = real_max(&lhs.mins.x, &rhs.mins.x).value().cloned() else {
+        return Mesh::empty(metadata);
+    };
+    let Some(min_y) = real_max(&lhs.mins.y, &rhs.mins.y).value().cloned() else {
+        return Mesh::empty(metadata);
+    };
+    let Some(min_z) = real_max(&lhs.mins.z, &rhs.mins.z).value().cloned() else {
+        return Mesh::empty(metadata);
+    };
+    let Some(max_x) = real_min(&lhs.maxs.x, &rhs.maxs.x).value().cloned() else {
+        return Mesh::empty(metadata);
+    };
+    let Some(max_y) = real_min(&lhs.maxs.y, &rhs.maxs.y).value().cloned() else {
+        return Mesh::empty(metadata);
+    };
+    let Some(max_z) = real_min(&lhs.maxs.z, &rhs.maxs.z).value().cloned() else {
+        return Mesh::empty(metadata);
+    };
 
-    let width = max_x - min_x;
-    let length = max_y - min_y;
-    let height = max_z - min_z;
-    if !matches!(hreal_cmp_f64(width, 0.0), std::cmp::Ordering::Greater)
-        || !matches!(hreal_cmp_f64(length, 0.0), std::cmp::Ordering::Greater)
-        || !matches!(hreal_cmp_f64(height, 0.0), std::cmp::Ordering::Greater)
+    let width = max_x.clone() - min_x.clone();
+    let length = max_y.clone() - min_y.clone();
+    let height = max_z.clone() - min_z.clone();
+    if !real_gt(&width, &Real::zero())
+        || !real_gt(&length, &Real::zero())
+        || !real_gt(&height, &Real::zero())
     {
         return Mesh::empty(metadata);
     }
@@ -154,17 +226,52 @@ fn mesh_with_more_polygons<M: Clone + Send + Sync + Debug>(
     }
 }
 
-fn hyperphysics_vector3_from_point3(
-    point: &Point3<Real>,
-) -> Result<HyperVector3, ValidationError> {
+fn hyperphysics_vector3_from_point3(point: &Point3) -> Result<HyperVector3, ValidationError> {
     Ok(HyperVector3::new([
-        hyperphysics::Real::try_from(point.x)
-            .map_err(|err| ValidationError::Other(format!("{err:?}"), Some(*point)))?,
-        hyperphysics::Real::try_from(point.y)
-            .map_err(|err| ValidationError::Other(format!("{err:?}"), Some(*point)))?,
-        hyperphysics::Real::try_from(point.z)
-            .map_err(|err| ValidationError::Other(format!("{err:?}"), Some(*point)))?,
+        hyperphysics::Real::try_from(point.x.clone())
+            .map_err(|err| ValidationError::Other(format!("{err:?}"), Some(point.clone())))?,
+        hyperphysics::Real::try_from(point.y.clone())
+            .map_err(|err| ValidationError::Other(format!("{err:?}"), Some(point.clone())))?,
+        hyperphysics::Real::try_from(point.z.clone())
+            .map_err(|err| ValidationError::Other(format!("{err:?}"), Some(point.clone())))?,
     ]))
+}
+
+fn ray_triangle_intersection(
+    origin: &Point3,
+    direction: &Vector3,
+    tri: &[Vertex; 3],
+) -> Option<(Point3, Real)> {
+    let edge1 = &tri[1].position - &tri[0].position;
+    let edge2 = &tri[2].position - &tri[0].position;
+    let h = direction.cross(&edge2);
+    let det = edge1.dot(&h);
+    if real_zero(&det) {
+        return None;
+    }
+
+    let inv_det = (Real::one() / det).ok()?;
+    let s = origin - &tri[0].position;
+    let u = inv_det.clone() * s.dot(&h);
+    let zero = Real::zero();
+    let one = Real::one();
+    if real_lt(&u, &zero) || real_gt(&u, &one) {
+        return None;
+    }
+
+    let q = s.cross(&edge1);
+    let v = inv_det.clone() * direction.dot(&q);
+    if real_lt(&v, &zero) || real_gt(&(u.clone() + v.clone()), &one) {
+        return None;
+    }
+
+    let t = inv_det * edge2.dot(&q);
+    if real_lt(&t, &zero) {
+        return None;
+    }
+
+    let point = origin.clone() + direction.clone() * t.clone();
+    Some((point, t))
 }
 
 impl<M: Clone + Send + Sync + Debug + PartialEq> Mesh<M> {
@@ -187,7 +294,6 @@ impl<M: Clone + Send + Sync + Debug + PartialEq> Mesh<M> {
         Mesh {
             polygons: polys,
             bounding_box: std::sync::OnceLock::new(),
-            query_trimesh: std::sync::OnceLock::new(),
             metadata: self.metadata.clone(),
         }
     }
@@ -199,7 +305,6 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         Mesh {
             polygons: Vec::new(),
             bounding_box: OnceLock::new(),
-            query_trimesh: OnceLock::new(),
             metadata,
         }
     }
@@ -209,7 +314,6 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         Mesh {
             polygons: polygons.to_vec(),
             bounding_box: OnceLock::new(),
-            query_trimesh: OnceLock::new(),
             metadata,
         }
     }
@@ -228,7 +332,6 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         Mesh {
             polygons,
             bounding_box: OnceLock::new(),
-            query_trimesh: OnceLock::new(),
             metadata,
         }
     }
@@ -248,7 +351,6 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         Mesh {
             polygons,
             bounding_box: OnceLock::new(),
-            query_trimesh: OnceLock::new(),
             metadata,
         }
     }
@@ -297,7 +399,10 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
                 let sub_tris = poly.subdivide_triangles(levels);
                 // Convert each small tri back to a Polygon
                 sub_tris.into_par_iter().map(move |tri| {
-                    Polygon::new(vec![tri[0], tri[1], tri[2]], poly.metadata.clone())
+                    Polygon::new(
+                        vec![tri[0].clone(), tri[1].clone(), tri[2].clone()],
+                        poly.metadata.clone(),
+                    )
                 })
             })
             .collect();
@@ -309,7 +414,10 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
             .flat_map(|poly| {
                 let sub_tris = poly.subdivide_triangles(levels);
                 sub_tris.into_iter().map(move |tri| {
-                    Polygon::new(vec![tri[0], tri[1], tri[2]], poly.metadata.clone())
+                    Polygon::new(
+                        vec![tri[0].clone(), tri[1].clone(), tri[2].clone()],
+                        poly.metadata.clone(),
+                    )
                 })
             })
             .collect();
@@ -387,40 +495,32 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     pub fn dihedral_angle(p1: &Polygon<M>, p2: &Polygon<M>) -> Real {
         let n1 = p1.plane.normal();
         let n2 = p2.plane.normal();
-        hangle_between_vectors(&n1, &n2).unwrap_or(0.0)
+        n1.angle_to(&n2).unwrap_or_else(|_| Real::zero())
     }
 
-    /// Converts this mesh into f32 vertex/index buffers suitable for rendering.
-    ///
-    /// Vertices are deduplicated by exact f32 position and normal bit pattern.
+    /// Converts this mesh into exact vertex/index buffers suitable for rendering adapters.
     pub fn build_graphics_mesh(&self) -> GraphicsMesh {
         let triangles = self.triangulate().polygons;
         let triangle_count = triangles.len();
 
         let mut indices = Vec::with_capacity(triangle_count * 3);
         let mut vertices = Vec::with_capacity(triangle_count * 3);
-        let mut vertices_hash: HashMap<([u32; 3], [u32; 3]), u32> =
-            HashMap::with_capacity(triangle_count * 3);
 
         for triangle in triangles {
             for vertex in triangle.vertices {
                 let position = [
-                    vertex.position.x as f32,
-                    vertex.position.y as f32,
-                    vertex.position.z as f32,
+                    vertex.position.x.clone(),
+                    vertex.position.y.clone(),
+                    vertex.position.z.clone(),
                 ];
                 let normal = [
-                    vertex.normal.x as f32,
-                    vertex.normal.y as f32,
-                    vertex.normal.z as f32,
+                    vertex.normal.0[0].clone(),
+                    vertex.normal.0[1].clone(),
+                    vertex.normal.0[2].clone(),
                 ];
-                let key = (position.map(f32::to_bits), normal.map(f32::to_bits));
 
-                let index = *vertices_hash.entry(key).or_insert_with(|| {
-                    let new_index = vertices.len() as u32;
-                    vertices.push((position, normal));
-                    new_index
-                });
+                let index = vertices.len() as u32;
+                vertices.push((position, normal));
                 indices.push(index);
             }
         }
@@ -429,46 +529,30 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         GraphicsMesh { vertices, indices }
     }
 
-    /// Try to extract query/export vertices and triangle indices from a replayed
-    /// hypermesh handoff package.
+    /// Try to extract hyperreal vertices and triangle indices.
     ///
-    /// Primitive-float consumers such as Parry/Rapier still need flat finite
-    /// buffers, but those buffers are now lowered only after hypermesh validates
-    /// the mesh stream and packages an explicitly lossy display/query view.
-    /// This follows Yap, "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997),
-    /// <https://doi.org/10.1016/0925-7721(95)00040-2>: approximate
-    /// representatives are valid handoff artifacts, not topology evidence.
+    /// This is the native mesh-buffer view. It does not cross a primitive-float
+    /// boundary; coordinates stay in [`Real`] and only the
+    /// topological index carrier is lowered to `u32`.
     pub fn try_get_vertices_and_indices(
         &self,
-    ) -> Result<(Vec<Point3<Real>>, Vec<[u32; 3]>), ValidationError> {
-        let package = self
-            .to_hypermesh_surface_handoff_package()
-            .map_err(|err| ValidationError::TriMeshError(format!("{err}")))?;
-        let view = package.approximate_f64_view.ok_or_else(|| {
-            ValidationError::TriMeshError(
-                "hypermesh handoff package did not include a lossy query view".into(),
-            )
-        })?;
+    ) -> Result<(Vec<Point3>, Vec<[u32; 3]>), ValidationError> {
+        let triangles = self
+            .polygons
+            .iter()
+            .flat_map(|polygon| polygon.triangulate())
+            .collect::<Vec<_>>();
+        let mut vertices = Vec::with_capacity(triangles.len() * 3);
+        let mut indices = Vec::with_capacity(triangles.len());
 
-        let vertices = view
-            .positions
-            .chunks_exact(3)
-            .map(|coords| Point3::new(coords[0], coords[1], coords[2]))
-            .collect();
-
-        let mut indices = Vec::with_capacity(view.indices.len() / 3);
-        for triangle in view.indices.chunks_exact(3) {
-            let a = u32::try_from(triangle[0]).map_err(|_| {
-                ValidationError::TriMeshError("hypermesh query index exceeded u32".into())
+        for triangle in triangles {
+            let base = u32::try_from(vertices.len()).map_err(|_| {
+                ValidationError::MeshBufferError("mesh vertex count exceeded u32".into())
             })?;
-            let b = u32::try_from(triangle[1]).map_err(|_| {
-                ValidationError::TriMeshError("hypermesh query index exceeded u32".into())
-            })?;
-            let c = u32::try_from(triangle[2]).map_err(|_| {
-                ValidationError::TriMeshError("hypermesh query index exceeded u32".into())
-            })?;
-            indices.push([a, b, c]);
+            vertices.push(triangle[0].position.clone());
+            vertices.push(triangle[1].position.clone());
+            vertices.push(triangle[2].position.clone());
+            indices.push([base, base + 1, base + 2]);
         }
 
         Ok((vertices, indices))
@@ -479,7 +563,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     /// This compatibility method returns empty buffers when exact handoff
     /// rejects the mesh. Prefer [`Mesh::try_get_vertices_and_indices`] when the
     /// caller needs to distinguish empty geometry from invalid topology.
-    pub fn get_vertices_and_indices(&self) -> (Vec<Point3<Real>>, Vec<[u32; 3]>) {
+    pub fn get_vertices_and_indices(&self) -> (Vec<Point3>, Vec<[u32; 3]>) {
         self.try_get_vertices_and_indices().unwrap_or_default()
     }
 
@@ -492,47 +576,38 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     /// - `direction`: The ray’s direction vector.
     ///
     /// # Returns
-    /// A `Vec` of `(Point3<Real>, Real)` where:
-    /// - `Point3<Real>` is the intersection coordinate in 3D,
+    /// A `Vec` of `(Point3, Real)` where:
+    /// - `Point3` is the intersection coordinate in 3D,
     /// - `Real` is the distance (the ray parameter t) from `origin`.
     ///
-    /// Parry reports finite ray parameters at this query boundary. csgrs sorts
-    /// and deduplicates those scalar parameters through `hyperreal::Real`
-    /// adapters, keeping the topology-affecting ordering/tolerance decisions
-    /// aligned with the exact-geometric-computation model of Yap,
-    /// *Computational Geometry* 7(1-2), 1997
-    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+    /// Triangle intersections are evaluated with hyperreal vector operations,
+    /// keeping hit ordering and deduplication in the same scalar domain as the
+    /// mesh coordinates.
     pub fn ray_intersections(
         &self,
-        origin: &Point3<Real>,
-        direction: &Vector3<Real>,
-    ) -> Vec<(Point3<Real>, Real)> {
-        let ray = Ray::new(*origin, *direction);
-        let iso = Isometry3::identity(); // No transformation on the triangles themselves.
-
+        origin: &Point3,
+        direction: &Vector3,
+    ) -> Vec<(Point3, Real)> {
         let mut hits: Vec<_> = self
             .polygons
             .iter()
             .flat_map(|poly| poly.triangulate())
-            .filter_map(|tri| {
-                let a = tri[0].position;
-                let b = tri[1].position;
-                let c = tri[2].position;
-                let triangle = Triangle::new(a, b, c);
-                triangle
-                    .cast_ray_and_get_normal(&iso, &ray, Real::MAX, true)
-                    .map(|hit| {
-                        let point_on_ray = ray.point_at(hit.time_of_impact);
-                        (Point3::from(point_on_ray.coords), hit.time_of_impact)
-                    })
-            })
+            .filter_map(|tri| ray_triangle_intersection(origin, direction, &tri))
             .collect();
 
         // 4) Sort hits by ascending distance (toi):
-        hits.sort_by(|a, b| hreal_cmp_f64(a.1, b.1));
+        hits.sort_by(|a, b| real_cmp(&a.1, &b.1));
         // 5) remove duplicate hits only when Hyper proves exact identity.
         hits.dedup_by(|a, b| {
-            hreal_f64s_exactly_equal(a.1, b.1) || hpoints_exactly_equal(&a.0, &b.0)
+            if real_zero(&(a.1.clone() - b.1.clone())) {
+                return true;
+            }
+            let a_point = hyperlimit::Point3::new(a.0.x.clone(), a.0.y.clone(), a.0.z.clone());
+            let b_point = hyperlimit::Point3::new(b.0.x.clone(), b.0.y.clone(), b.0.z.clone());
+            matches!(
+                hyperlimit::point3_equal(&a_point, &b_point).value(),
+                Some(true)
+            )
         });
 
         hits
@@ -543,56 +618,61 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     ///
     /// Each consecutive pair of points defines one segment. Hits are deduplicated
     /// locally and returned in polyline order. Deduplication requires exact
-    /// hit-point equality through `hyperlattice::Vector3` and `hyperreal::Real`,
+    /// hit-point equality through `hyperlattice::Vector3` and `Real`,
     /// keeping this topology-affecting equality decision out of local f64
     /// tolerance arithmetic. This follows Yap's
     /// exact-geometric-computation boundary discipline
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-    pub fn intersect_polyline(&self, polyline: &[Point3<Real>]) -> Vec<Point3<Real>> {
+    pub fn intersect_polyline(&self, polyline: &[Point3]) -> Vec<Point3> {
         if polyline.len() < 2 {
             return Vec::new();
         }
 
-        let iso = Isometry3::identity();
         let triangles: Vec<[Vertex; 3]> = self
             .polygons
             .iter()
             .flat_map(|poly| poly.triangulate())
             .collect();
 
-        let mut hits: Vec<Point3<Real>> = Vec::new();
+        let mut hits: Vec<Point3> = Vec::new();
 
         for seg in polyline.windows(2) {
-            let seg_start = seg[0];
-            let seg_end = seg[1];
-            let Some(seg_len) = hpoint_distance(&seg_start, &seg_end) else {
-                continue;
-            };
-            if hpoints_exactly_equal(&seg_start, &seg_end) {
+            let seg_start = seg[0].clone();
+            let seg_end = seg[1].clone();
+            let seg_dir = &seg_end - &seg_start;
+            if real_zero(&seg_dir.dot(&seg_dir)) {
                 continue;
             }
 
-            let seg_dir = seg_end - seg_start;
-            let ray = Ray::new(seg_start, seg_dir / seg_len);
-            let mut seg_hits: Vec<(Point3<Real>, Real)> = Vec::new();
+            let mut seg_hits: Vec<(Point3, Real)> = Vec::new();
 
             for tri in &triangles {
-                let triangle =
-                    Triangle::new(tri[0].position, tri[1].position, tri[2].position);
-                if let Some(hit) = triangle.cast_ray_and_get_normal(&iso, &ray, seg_len, true)
+                if let Some((point, t)) = ray_triangle_intersection(&seg_start, &seg_dir, tri)
                 {
-                    let t = hit.time_of_impact;
-                    if t >= 0.0 && t <= seg_len {
-                        seg_hits.push((Point3::from(ray.point_at(t).coords), t));
+                    if !real_lt(&t, &Real::zero()) && !real_gt(&t, &Real::one()) {
+                        seg_hits.push((point, t));
                     }
                 }
             }
 
-            seg_hits.sort_by(|a, b| hreal_cmp_f64(a.1, b.1));
+            seg_hits.sort_by(|a, b| real_cmp(&a.1, &b.1));
 
             for (point, _) in seg_hits {
                 if let Some(last) = hits.last() {
-                    if hpoints_exactly_equal(&point, last) {
+                    let point_h = hyperlimit::Point3::new(
+                        point.x.clone(),
+                        point.y.clone(),
+                        point.z.clone(),
+                    );
+                    let last_h = hyperlimit::Point3::new(
+                        last.x.clone(),
+                        last.y.clone(),
+                        last.z.clone(),
+                    );
+                    if matches!(
+                        hyperlimit::point3_equal(&point_h, &last_h).value(),
+                        Some(true)
+                    ) {
                         continue;
                     }
                 }
@@ -603,42 +683,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         hits
     }
 
-    /// Convert the polygons in this Mesh to a Parry `TriMesh`, wrapped in a `SharedShape` to be used in Rapier.\
-    /// Useful for collision detection or physics simulations.
-    ///
-    /// ## Errors
-    /// If any 3d polygon has fewer than 3 vertices, or Parry returns a `TriMeshBuilderError`
-    pub fn to_rapier_shape(&self) -> Result<SharedShape, ValidationError> {
-        let (vertices, indices) = self.try_get_vertices_and_indices()?;
-        let trimesh = TriMesh::new(vertices, indices)
-            .map_err(|err| ValidationError::TriMeshError(format!("{err:?}")))?;
-        Ok(SharedShape::new(trimesh))
-    }
-
-    /// Convert the polygons in this Mesh to a Parry `TriMesh`.\
-    /// Useful for collision detection.
-    ///
-    /// ## Errors
-    /// If any 3d polygon has fewer than 3 vertices, or Parry returns a `TriMeshBuilderError`
-    pub fn to_trimesh(&self) -> Result<TriMesh, ValidationError> {
-        let (vertices, indices) = self.try_get_vertices_and_indices()?;
-        TriMesh::new(vertices, indices)
-            .map_err(|err| ValidationError::TriMeshError(format!("{err:?}")))
-    }
-
-    fn cached_trimesh(&self) -> Result<&TriMesh, ValidationError> {
-        self.query_trimesh
-            .get_or_init(|| {
-                let (vertices, indices) = self.try_get_vertices_and_indices().ok()?;
-                TriMesh::new(vertices, indices).ok()
-            })
-            .as_ref()
-            .ok_or_else(|| {
-                ValidationError::TriMeshError("failed to build triangle mesh".into())
-            })
-    }
-
-    /// Uses Parry to check if a point is inside a `Mesh`'s as a `TriMesh`.\
+    /// Uses hyperreal triangle ray intersections to check if a point is inside a `Mesh`.
     /// Note: this only use the 3d geometry of `CSG`
     ///
     /// ## Errors
@@ -647,8 +692,8 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     /// ## Example
     /// ```
     /// # use csgrs::mesh::Mesh;
-    /// # use nalgebra::Point3;
-    /// # use nalgebra::Vector3;
+    /// # use hyperlattice::Point3;
+    /// # use hyperlattice::Vector3;
     /// let csg_cube = Mesh::<()>::cube(6.0, ());
     ///
     /// assert!(csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 3.0)));
@@ -657,39 +702,40 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     /// assert!(!csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 6.0)));
     /// assert!(!csg_cube.contains_vertex(&Point3::new(3.0, 3.0, -6.0)));
     /// ```
-    pub fn contains_vertex(&self, point: &Point3<Real>) -> bool {
-        self.ray_intersections(point, &Vector3::new(1.0, 1.0, 1.0))
-            .len()
+    pub fn contains_vertex(&self, point: &Point3) -> bool {
+        self.ray_intersections(
+            point,
+            &Vector3::from_xyz(Real::one(), Real::one(), Real::one()),
+        )
+        .len()
             % 2
             == 1
     }
 
-    /// Approximate mass properties using Rapier.
+    /// Mass properties through the Hyper physics stack.
     pub fn mass_properties(
         &self,
         density: Real,
-    ) -> Result<(Real, Point3<Real>, Unit<Quaternion<Real>>), ValidationError> {
-        let trimesh = self.cached_trimesh()?;
-        let mp = trimesh.mass_properties(density);
-
-        Ok((
-            mp.mass(),
-            mp.local_com,                     // a Point3<Real>
-            mp.principal_inertia_local_frame, // a Unit<Quaternion<Real>>
-        ))
+    ) -> Result<(Real, Point3, Matrix4), ValidationError> {
+        let mp = self.exact_mass_properties(density)?;
+        let center = Point3::new(
+            mp.center_of_mass[0].clone(),
+            mp.center_of_mass[1].clone(),
+            mp.center_of_mass[2].clone(),
+        );
+        Ok((mp.mass, center, Matrix4::identity()))
     }
 
     /// Exact uniform-density mass properties through `hyperphysics`.
     ///
-    /// This is the Hyper-native counterpart to [`Mesh::mass_properties`]. Mesh
+    /// This is the report-bearing counterpart to [`Mesh::mass_properties`]. Mesh
     /// coordinates are finite `csgrs` adapter scalars at this boundary; each
     /// coordinate and the density are lifted into [`hyperphysics::Real`] before
     /// volume, center of mass, and inertia are accumulated. The report-bearing
     /// path follows Yap, "Towards Exact Geometric Computation,"
     /// *Computational Geometry* 7(1-2), 1997
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>) by keeping the lossy
-    /// `f64` CSG/engine surface explicit and moving physical integrals into the
-    /// exact object layer before any Rapier/Parry adapter is used.
+    /// exact object layer.
     pub fn exact_mass_properties(
         &self,
         density: Real,
@@ -701,8 +747,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
             .map_err(|err| ValidationError::Other(format!("{err:?}"), None))
     }
 
-    /// Converts triangulated mesh polygons into a `hyperphysics` closed mesh
-    /// carrier without going through Parry or Rapier.
+    /// Converts triangulated mesh polygons into a `hyperphysics` closed mesh carrier.
     pub fn to_hyperphysics_closed_triangle_mesh(
         &self,
     ) -> Result<HyperClosedTriangleMesh3, ValidationError> {
@@ -723,34 +768,6 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
             .collect::<Result<Vec<_>, _>>()?;
         HyperClosedTriangleMesh3::new(triangles)
             .map_err(|err| ValidationError::Other(format!("{err:?}"), None))
-    }
-
-    /// Create a Rapier rigid body + collider from this Mesh, using
-    /// an axis-angle `rotation` in 3D (the vector’s length is the
-    /// rotation in radians, and its direction is the axis).
-    pub fn to_rigid_body(
-        &self,
-        rb_set: &mut RigidBodySet,
-        co_set: &mut ColliderSet,
-        translation: Vector3<Real>,
-        rotation: Vector3<Real>, // rotation axis scaled by angle (radians)
-        density: Real,
-    ) -> Result<RigidBodyHandle, ValidationError> {
-        let shape = self.to_rapier_shape()?;
-
-        // Build a Rapier RigidBody
-        let rb = RigidBodyBuilder::dynamic()
-            .translation(translation)
-            // Now `rotation(...)` expects an axis-angle Vector3.
-            .rotation(rotation)
-            .build();
-        let rb_handle = rb_set.insert(rb);
-
-        // Build the collider
-        let coll = ColliderBuilder::new(shape).density(density).build();
-        co_set.insert_with_parent(coll, rb_handle, rb_set);
-
-        Ok(rb_handle)
     }
 
     /// Convert a Mesh into a Bevy `Mesh`.
@@ -778,12 +795,12 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
 
             // push 3 positions/normals
             for v in &poly.vertices {
-                positions_32.push([
-                    v.position.x as f32,
-                    v.position.y as f32,
-                    v.position.z as f32,
+                positions_32.push(v.position.to_f32_array_lossy().unwrap_or([0.0; 3]));
+                normals_32.push([
+                    v.normal.0[0].to_f32_lossy().unwrap_or(0.0),
+                    v.normal.0[1].to_f32_lossy().unwrap_or(0.0),
+                    v.normal.0[2].to_f32_lossy().unwrap_or(0.0),
                 ]);
-                normals_32.push([v.normal.x as f32, v.normal.y as f32, v.normal.z as f32]);
             }
 
             // triangle indices
@@ -984,16 +1001,16 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
     /// The polygon z-coordinates and normal vectors are fully transformed in 3D
     ///
     /// Transformed normals are checked-normalized through
-    /// `hyperlattice::Vector3`/`hyperreal::Real` before being stored back at the
+    /// `hyperlattice::Vector3`/`Real` before being stored back at the
     /// finite mesh boundary. This keeps the inverse-transpose normal path on
     /// the same exact-aware boundary discipline as mesh predicates; see Yap,
     /// "Towards Exact Geometric Computation," *Computational Geometry*
     /// 7(1-2), 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-    fn transform(&self, mat: &Matrix4<Real>) -> Mesh<M> {
+    fn transform(&self, mat: &Matrix4) -> Mesh<M> {
         // Compute inverse transpose for normal transformation
-        let mat_inv_transpose = match mat.try_inverse() {
-            Some(inv) => inv.transpose(),
-            None => {
+        let mat_inv_transpose = match mat.clone().inverse() {
+            Ok(inv) => inv.transpose(),
+            Err(_) => {
                 eprintln!(
                     "Warning: Transformation matrix is not invertible, using identity for normals"
                 );
@@ -1006,10 +1023,9 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
         for poly in &mut mesh.polygons {
             for vert in &mut poly.vertices {
                 // Transform position using homogeneous coordinates
-                let hom_position = mat * vert.position.to_homogeneous();
-                match Point3::from_homogeneous(hom_position) {
-                    Some(transformed_position) => vert.position = transformed_position,
-                    None => {
+                match mat.transform_point3(&vert.position) {
+                    Ok(transformed_position) => vert.position = transformed_position,
+                    Err(_) => {
                         eprintln!(
                             "Warning: Invalid homogeneous coordinates after transformation, skipping vertex"
                         );
@@ -1018,10 +1034,8 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
                 }
 
                 // Transform normal using inverse transpose rule
-                let transformed_normal = mat_inv_transpose.transform_vector(&vert.normal);
-                if hvector3_from_vector3(&transformed_normal).is_some()
-                    && let Some(normal) = hunit_vector3(&transformed_normal)
-                {
+                let transformed_normal = mat_inv_transpose.transform_direction3(&vert.normal);
+                if let Ok(normal) = transformed_normal.normalize_checked() {
                     vert.normal = normal;
                 }
             }
@@ -1035,7 +1049,6 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
 
         // invalidate the old cached bounding box
         mesh.bounding_box = OnceLock::new();
-        mesh.query_trimesh = OnceLock::new();
 
         mesh
     }
@@ -1043,23 +1056,26 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
     /// Returns an axis-aligned bounding box indicating the 3D bounds of all
     /// `polygons`.
     fn bounding_box(&self) -> Aabb {
-        *self.bounding_box.get_or_init(|| {
-            let points = self
-                .polygons
-                .iter()
-                .flat_map(|polygon| polygon.vertices.iter().map(|vertex| vertex.position))
-                .collect::<Vec<_>>();
-            let Some((mins, maxs)) = hpoint3_bounds(&points) else {
-                return Aabb::new(Point3::origin(), Point3::origin());
-            };
-            Aabb::new(mins, maxs)
-        })
+        self.bounding_box
+            .get_or_init(|| {
+                let points = self
+                    .polygons
+                    .iter()
+                    .flat_map(|polygon| {
+                        polygon.vertices.iter().map(|vertex| vertex.position.clone())
+                    })
+                    .collect::<Vec<_>>();
+                let Some((mins, maxs)) = point3_bounds(&points) else {
+                    return Aabb::origin();
+                };
+                Aabb::new(mins, maxs)
+            })
+            .clone()
     }
 
     /// Invalidates object's cached bounding box.
     fn invalidate_bounding_box(&mut self) {
         self.bounding_box = OnceLock::new();
-        self.query_trimesh = OnceLock::new();
     }
 
     /// Invert this Mesh (flip inside vs. outside)
@@ -1090,10 +1106,19 @@ impl<M: Clone + Send + Sync + Debug> From<Profile<M>> for Mesh<M> {
     /// hyper geometry, while mesh vertices are the finite API-boundary
     /// realization.
     fn from(sketch: Profile<M>) -> Self {
-        fn ring_to_vertices(ring: &[[Real; 2]]) -> Vec<Vertex> {
+        fn ring_to_vertices(ring: &[[f64; 2]]) -> Vec<Vertex> {
             let mut vertices: Vec<_> = ring
                 .iter()
-                .map(|p| Vertex::new(Point3::new(p[0], p[1], 0.0), Vector3::z()))
+                .map(|p| {
+                    Vertex::new(
+                        Point3::new(
+                            Real::try_from(p[0]).unwrap_or_else(|_| Real::zero()),
+                            Real::try_from(p[1]).unwrap_or_else(|_| Real::zero()),
+                            Real::zero(),
+                        ),
+                        Vector3::z(),
+                    )
+                })
                 .collect();
             if vertices.first() == vertices.last() {
                 vertices.pop();
@@ -1102,7 +1127,7 @@ impl<M: Clone + Send + Sync + Debug> From<Profile<M>> for Mesh<M> {
         }
 
         fn ring_to_polygon<M: Clone + Send + Sync>(
-            ring: &[[Real; 2]],
+            ring: &[[f64; 2]],
             metadata: &M,
         ) -> Option<Polygon<M>> {
             let vertices = ring_to_vertices(ring);
@@ -1128,7 +1153,6 @@ impl<M: Clone + Send + Sync + Debug> From<Profile<M>> for Mesh<M> {
             return Mesh {
                 polygons: final_polygons,
                 bounding_box: OnceLock::new(),
-                query_trimesh: OnceLock::new(),
                 metadata: sketch.metadata.clone(),
             };
         }
@@ -1136,7 +1160,6 @@ impl<M: Clone + Send + Sync + Debug> From<Profile<M>> for Mesh<M> {
         Mesh {
             polygons: Vec::new(),
             bounding_box: OnceLock::new(),
-            query_trimesh: OnceLock::new(),
             metadata: sketch.metadata.clone(),
         }
     }
@@ -1145,20 +1168,27 @@ impl<M: Clone + Send + Sync + Debug> From<Profile<M>> for Mesh<M> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::float_types::tolerance;
+    use crate::hyper_math::{Real, hreal_from_f64, tolerance};
+
+    fn r(value: f64) -> Real {
+        hreal_from_f64(value).expect("test values must be finite")
+    }
+
+    fn p3(x: f64, y: f64, z: f64) -> Point3 {
+        Point3::new(r(x), r(y), r(z))
+    }
 
     #[test]
     fn mesh_bounding_box_helpers_do_not_widen_by_tolerance() {
-        let container = Aabb::new(Point3::origin(), Point3::new(1.0, 1.0, 1.0));
-        let exact_touch =
-            Aabb::new(Point3::new(1.0, 0.25, 0.25), Point3::new(2.0, 0.75, 0.75));
+        let container = Aabb::new(Point3::origin(), p3(1.0, 1.0, 1.0));
+        let exact_touch = Aabb::new(p3(1.0, 0.25, 0.25), p3(2.0, 0.75, 0.75));
         let just_outside = Aabb::new(
-            Point3::new(1.0 + tolerance() * 0.25, 0.25, 0.25),
-            Point3::new(2.0, 0.75, 0.75),
+            Point3::new(r(1.0) + tolerance() * r(0.25), r(0.25), r(0.25)),
+            p3(2.0, 0.75, 0.75),
         );
         let overhanging = Aabb::new(
-            Point3::new(tolerance() * -0.25, 0.25, 0.25),
-            Point3::new(0.75, 0.75, 0.75),
+            Point3::new(tolerance() * r(-0.25), r(0.25), r(0.25)),
+            p3(0.75, 0.75, 0.75),
         );
 
         assert!(bounding_boxes_intersect(&container, &exact_touch));
@@ -1172,18 +1202,18 @@ mod tests {
         let polygons = vec![
             Polygon::new(
                 vec![
-                    Vertex::new(Point3::new(0.0, 0.0, 0.0), normal),
-                    Vertex::new(Point3::new(2.0, 0.0, 0.0), normal),
-                    Vertex::new(Point3::new(2.0, 1.0, 0.0), normal),
-                    Vertex::new(Point3::new(0.0, 1.0, 0.0), normal),
+                    Vertex::new(p3(0.0, 0.0, 0.0), normal.clone()),
+                    Vertex::new(p3(2.0, 0.0, 0.0), normal.clone()),
+                    Vertex::new(p3(2.0, 1.0, 0.0), normal.clone()),
+                    Vertex::new(p3(0.0, 1.0, 0.0), normal.clone()),
                 ],
                 (),
             ),
             Polygon::new(
                 vec![
-                    Vertex::new(Point3::new(1.0, 0.0, 0.0), normal),
-                    Vertex::new(Point3::new(1.5, -0.5, 0.0), normal),
-                    Vertex::new(Point3::new(0.5, -0.5, 0.0), normal),
+                    Vertex::new(p3(1.0, 0.0, 0.0), normal.clone()),
+                    Vertex::new(p3(1.5, -0.5, 0.0), normal.clone()),
+                    Vertex::new(p3(0.5, -0.5, 0.0), normal),
                 ],
                 (),
             ),

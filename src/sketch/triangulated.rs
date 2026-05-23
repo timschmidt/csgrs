@@ -3,29 +3,29 @@
 use crate::sketch::Profile;
 use crate::triangulated::{IndexedTriangulated3D, Triangulated3D};
 use crate::vertex::Vertex;
-use nalgebra::Vector3;
+use hyperlattice::Vector3;
 
 impl<M: Clone + Send + Sync + std::fmt::Debug> Triangulated3D for Profile<M> {
     fn visit_triangles<F>(&self, mut f: F)
     where
         F: FnMut([Vertex; 3]),
     {
-        let triangles_2d = self.triangulate(); // Vec<[Point3<Real>; 3]> with z=0
-        let normal = Vector3::new(0.0, 0.0, 1.0);
+        let triangles_2d = self.triangulate(); // Vec<[Point3; 3]> with z=0
+        let normal = Vector3::z();
 
         for tri in triangles_2d {
             f([
                 Vertex {
-                    position: tri[0],
-                    normal,
+                    position: tri[0].clone(),
+                    normal: normal.clone(),
                 },
                 Vertex {
-                    position: tri[1],
-                    normal,
+                    position: tri[1].clone(),
+                    normal: normal.clone(),
                 },
                 Vertex {
-                    position: tri[2],
-                    normal,
+                    position: tri[2].clone(),
+                    normal: normal.clone(),
                 },
             ]);
         }

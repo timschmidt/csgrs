@@ -34,7 +34,7 @@
 #![warn(clippy::missing_const_for_fn, clippy::approx_constant, clippy::all)]
 
 pub mod errors;
-pub mod float_types;
+pub(crate) mod hyper_math;
 pub mod io;
 pub mod mesh;
 pub mod polygon;
@@ -48,12 +48,11 @@ pub mod profile {
 pub use sketch::Profile;
 pub mod vertex;
 
-#[cfg(feature = "offset")]
-pub mod toolpath;
-
 pub mod csg;
 pub mod triangulated;
 pub mod voxels;
+
+pub use hyperreal::Real;
 
 /// Compatibility re-exports for trait imports used in examples.
 pub mod traits {

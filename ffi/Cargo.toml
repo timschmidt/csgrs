@@ -1,0 +1,17 @@
+[package]
+name = "csgrs-ffi"
+version = "0.1.0"
+edition = "2024"
+description = "C ABI for csgrs scalar adapters"
+authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
+license = "MIT"
+repository = "https://github.com/timschmidt/csgrs"
+readme = "README.md"
+
+[lib]
+crate-type = ["cdylib", "staticlib", "rlib"]
+
+[dependencies]
+csgrs-adapter = { path = "../adapters" }
+hyperlattice = { path = "../../hyperlattice" }
+hyperreal = { path = "../../hyperreal", default-features = false }

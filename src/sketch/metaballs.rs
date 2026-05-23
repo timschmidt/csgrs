@@ -1,16 +1,14 @@
 //! Provides a `MetaBall` struct and functions for creating a `Profile` from [MetaBalls](https://en.wikipedia.org/wiki/Metaballs)
 
-use crate::float_types::{
-    Real, hreal_from_f64, hreal_gt_f64, hreal_max_pair, hreal_min_pair, hreal_sign,
-    hreal_to_f64,
-};
+use crate::hyper_math::{Real, hreal_from_f64, hreal_gt_f64, hreal_sign, hreal_to_f64};
 use crate::sketch::Profile;
 use hashbrown::HashMap;
 use hypercurve::{Contour2, Point2, Region2};
+use hyperlimit::{real_max, real_min};
 use hyperreal::RealSign;
 use std::fmt::Debug;
 
-type SamplePoint = [Real; 2];
+type SamplePoint = [f64; 2];
 type Segment = [SamplePoint; 2];
 
 impl<M: Clone + Debug + Send + Sync> Profile<M> {
@@ -47,20 +45,20 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
             return Profile::empty(metadata);
         }
 
-        let Some(padding_h) = hreal_from_f64(padding).ok() else {
+        let Some(padding_h) = hreal_from_f64(&padding).ok() else {
             return Profile::empty(metadata);
         };
         if matches!(hreal_sign(&padding_h), Some(RealSign::Negative)) {
             return Profile::empty(metadata);
         }
-        let Some(iso_value_h) = hreal_from_f64(iso_value).ok() else {
+        let Some(iso_value_h) = hreal_from_f64(&iso_value).ok() else {
             return Profile::empty(metadata);
         };
 
         let valid_balls = balls
             .iter()
             .filter_map(|(center, radius)| {
-                let radius = hreal_from_f64(*radius).ok()?;
+                let radius = hreal_from_f64(radius).ok()?;
                 matches!(hreal_sign(&radius), Some(RealSign::Positive))
                     .then_some((center, radius))
             })
@@ -76,10 +74,10 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
             return Profile::empty(metadata);
         };
 
-        let Some(nx_step_count) = hreal_from_f64(nx as Real - 1.0).ok() else {
+        let Some(nx_step_count) = hreal_from_f64(nx - 1).ok() else {
             return Profile::empty(metadata);
         };
-        let Some(ny_step_count) = hreal_from_f64(ny as Real - 1.0).ok() else {
+        let Some(ny_step_count) = hreal_from_f64(ny - 1).ok() else {
             return Profile::empty(metadata);
         };
         let Some(dx) = ((max_x.clone() - min_x.clone()) / nx_step_count).ok() else {
@@ -100,11 +98,8 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         /// Exact center singularities are mapped to a finite extraction sentinel
         /// instead of perturbing every denominator with a tolerance.
         /// **Optimization**: Iterator-based computation with early termination for distant points.
-        fn scalar_field(
-            balls: &[(&Point2, hyperreal::Real)],
-            sample: &Point2,
-        ) -> Option<hyperreal::Real> {
-            let mut sum = hyperreal::Real::zero();
+        fn scalar_field(balls: &[(&Point2, Real)], sample: &Point2) -> Option<Real> {
+            let mut sum = Real::zero();
             for (center, radius) in balls {
                 let radius_squared = radius.clone() * radius.clone();
                 let distance_sq = sample.distance_squared(center);
@@ -126,15 +121,14 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
             Some(sum)
         }
 
-        let mut grid = vec![hyperreal::Real::zero(); nx * ny];
+        let mut grid = vec![Real::zero(); nx * ny];
         let index = |ix: usize, iy: usize| -> usize { iy * nx + ix };
         for iy in 0..ny {
             let yv = &y_coords[iy];
             for ix in 0..nx {
                 let xv = &x_coords[ix];
                 let sample = Point2::new(xv.clone(), yv.clone());
-                let val = scalar_field(&valid_balls, &sample)
-                    .unwrap_or_else(hyperreal::Real::zero)
+                let val = scalar_field(&valid_balls, &sample).unwrap_or_else(Real::zero)
                     - iso_value_h.clone();
                 grid[index(ix, iy)] = val;
             }
@@ -148,21 +142,20 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         let mut contours = Vec::<Segment>::new();
 
         // Interpolator:
-        let interpolate =
-            |(x1, y1, v1): (&hyperreal::Real, &hyperreal::Real, &hyperreal::Real),
-             (x2, y2, v2): (&hyperreal::Real, &hyperreal::Real, &hyperreal::Real)|
-             -> Option<(Real, Real)> {
-                let delta = v2.clone() - v1.clone();
-                if matches!(hreal_sign(&delta), Some(RealSign::Zero)) {
-                    Some((hreal_to_f64(x1)?, hreal_to_f64(y1)?))
-                } else {
-                    let t = (hyperreal::Real::zero() - v1.clone()) / delta; // crossing at 0
-                    let t = t.ok()?;
-                    let x = x1.clone() + t.clone() * (x2.clone() - x1.clone());
-                    let y = y1.clone() + t * (y2.clone() - y1.clone());
-                    Some((hreal_to_f64(&x)?, hreal_to_f64(&y)?))
-                }
-            };
+        let interpolate = |(x1, y1, v1): (&Real, &Real, &Real),
+                           (x2, y2, v2): (&Real, &Real, &Real)|
+         -> Option<(f64, f64)> {
+            let delta = v2.clone() - v1.clone();
+            if matches!(hreal_sign(&delta), Some(RealSign::Zero)) {
+                Some((hreal_to_f64(x1)?, hreal_to_f64(y1)?))
+            } else {
+                let t = (Real::zero() - v1.clone()) / delta; // crossing at 0
+                let t = t.ok()?;
+                let x = x1.clone() + t.clone() * (x2.clone() - x1.clone());
+                let y = y1.clone() + t * (y2.clone() - y1.clone());
+                Some((hreal_to_f64(&x)?, hreal_to_f64(&y)?))
+            }
+        };
 
         for iy in 0..(ny - 1) {
             let y0 = &y_coords[iy];
@@ -240,14 +233,9 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
 }
 
 fn metaball_bounds_hreal(
-    balls: &[(&Point2, hyperreal::Real)],
-    padding: &hyperreal::Real,
-) -> Option<(
-    hyperreal::Real,
-    hyperreal::Real,
-    hyperreal::Real,
-    hyperreal::Real,
-)> {
+    balls: &[(&Point2, Real)],
+    padding: &Real,
+) -> Option<(Real, Real, Real, Real)> {
     let mut bounds = balls.iter().map(|(center, radius)| {
         let extent = radius.clone() + padding.clone();
         Some((
@@ -260,22 +248,18 @@ fn metaball_bounds_hreal(
     let (mut min_x, mut min_y, mut max_x, mut max_y) = bounds.next()??;
     for bounds in bounds {
         let (next_min_x, next_min_y, next_max_x, next_max_y) = bounds?;
-        min_x = hreal_min_pair(&min_x, &next_min_x)?;
-        min_y = hreal_min_pair(&min_y, &next_min_y)?;
-        max_x = hreal_max_pair(&max_x, &next_max_x)?;
-        max_y = hreal_max_pair(&max_y, &next_max_y)?;
+        min_x = real_min(&min_x, &next_min_x).value().cloned()?;
+        min_y = real_min(&min_y, &next_min_y).value().cloned()?;
+        max_x = real_max(&max_x, &next_max_x).value().cloned()?;
+        max_y = real_max(&max_y, &next_max_y).value().cloned()?;
     }
     Some((min_x, min_y, max_x, max_y))
 }
 
-fn grid_axis_coords(
-    origin: &hyperreal::Real,
-    step: &hyperreal::Real,
-    count: usize,
-) -> Option<Vec<hyperreal::Real>> {
+fn grid_axis_coords(origin: &Real, step: &Real, count: usize) -> Option<Vec<Real>> {
     (0..count)
         .map(|index| {
-            let index = hreal_from_f64(index as Real).ok()?;
+            let index = hreal_from_f64(index).ok()?;
             Some(origin.clone() + step.clone() * index)
         })
         .collect()

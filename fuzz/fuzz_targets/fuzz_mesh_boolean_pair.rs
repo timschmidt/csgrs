@@ -3,9 +3,17 @@
 #![no_main]
 
 use csgrs::csg::CSG;
-use csgrs::float_types::{Real, tolerance};
 use csgrs::mesh::Mesh;
+use hyperlattice::Real;
 use libfuzzer_sys::fuzz_target;
+
+fn real(value: f64) -> Real {
+    Real::try_from(value).expect("fuzz decoder clamps to finite values")
+}
+
+fn tolerance() -> Real {
+    real(1.0e-9)
+}
 
 fn decode_real(bytes: &[u8], idx: &mut usize) -> Real {
     let mut raw = [0u8; 8];
@@ -14,7 +22,7 @@ fn decode_real(bytes: &[u8], idx: &mut usize) -> Real {
         *idx += 1;
     }
     let value = i64::from_le_bytes(raw) as f64 / 1.0e12;
-    value.clamp(-100.0, 100.0) as Real
+    real(value.clamp(-100.0, 100.0))
 }
 
 fn assert_mesh_finite(mesh: &Mesh<()>) {
@@ -22,9 +30,9 @@ fn assert_mesh_finite(mesh: &Mesh<()>) {
         assert!(vertex.position.x.is_finite());
         assert!(vertex.position.y.is_finite());
         assert!(vertex.position.z.is_finite());
-        assert!(vertex.normal.x.is_finite());
-        assert!(vertex.normal.y.is_finite());
-        assert!(vertex.normal.z.is_finite());
+        assert!(vertex.normal.0[0].is_finite());
+        assert!(vertex.normal.0[1].is_finite());
+        assert!(vertex.normal.0[2].is_finite());
     }
 }
 

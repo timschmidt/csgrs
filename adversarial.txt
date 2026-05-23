@@ -67,7 +67,7 @@ Global invariants to check everywhere
   should not crash downstream APIs.
 - Every invariant above should be encoded in reusable proptest assertion
   helpers so generated Mesh, Sketch, Polygon, Plane, Transform, I/O, wasm, and
-  toolpath cases all check the same safety rules.
+  related cases all check the same safety rules.
 - Every panic, hang, non-finite output, invalid index, and minimized proptest
   failure should be promoted into the deterministic regression corpus and, if
   byte-oriented, seeded into the fuzz corpus.
@@ -394,7 +394,7 @@ For `Sketch::rectangle`, `square`, `circle`, `right_triangle`, `polygon`,
   behavior, and import/export round trips.
 - Add proptest strategies for simple valid sketches, invalid sketches, and
   parameterized primitive constructors. Reuse them in boolean, extrusion,
-  offset, toolpath, and I/O tests.
+  offset, and I/O tests.
 - Add fuzz harnesses for `Sketch::polygon`, curve constructors, gear/rack
   constructors, and operation chains that move from Sketch to Mesh and back.
 
@@ -1064,36 +1064,6 @@ When the `wasm` feature is enabled, test `Point3Js`, `Vector3Js`, `VertexJs`,
 - Add JS-side fuzzing for arrays, typed arrays, metadata `JsValue`s, wrong
   arities, and operation sequences crossing the wasm boundary.
 
-Toolpath attacks
-----------------
-
-When `offset` enables the toolpath module, target `Toolpath`, `PathMove`,
-`fdm_layer_from_sketch`, `cut2d_contours`, `pocket2d`,
-`lathe_rough_from_profile`, `contour_only`, and G-code post output.
-
-- Empty sketch/profile.
-- Sketch with holes.
-- Self-intersecting sketch.
-- Open contours if constructible.
-- Nozzle diameter 0, negative, tiny, huge.
-- Tool diameter 0, negative, tiny, huge.
-- Layer height 0, negative, tiny, huge.
-- Feed rates 0, negative, huge.
-- Extrusion multiplier 0, negative, huge, NaN.
-- Kerf side left/right/on with zero kerf and huge kerf.
-- Lead-in/out longer than contour.
-- Pocket stepover 0, negative, larger than tool diameter.
-- Pocket depth 0, negative, huge.
-- Lathe profile crossing axis.
-- Lathe negative stock radius.
-- Travel/cut moves containing NaN or infinity.
-- G-code output with finite coordinates, stable line ordering, sanitized
-  comments, and no impossible feed/extrusion values.
-- Add proptest strategies for sketches, feeds, tool/nozzle dimensions,
-  lead-in/out settings, pocket settings, and lathe profiles.
-- Add fuzz targets that decode sketch rings and toolpath configuration bytes,
-  then postprocess to G-code and check for finite numeric output.
-
 Feature-flag matrix
 -------------------
 
@@ -1225,7 +1195,6 @@ the global invariants after the decoded operation completes.
 - `fuzz_gerber_import`
 - `fuzz_stl_obj_ply_amf_gltf_export_names`
 - `fuzz_wasm_array_inputs`
-- `fuzz_toolpath_from_sketch`
 - `fuzz_nurbs_polyline_to_sketch`
 
 Minimum adversarial CI tiers
@@ -1246,7 +1215,6 @@ Medium tier:
 - Cross-feature triangulation backend comparison.
 - Parallel vs sequential deterministic corpus.
 - Import malformed fixture corpus.
-- Toolpath malformed geometry corpus.
 
 Long tier:
 

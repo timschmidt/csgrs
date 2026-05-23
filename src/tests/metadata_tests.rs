@@ -6,8 +6,8 @@ use super::support::*;
 fn test_polygon_metadata_string() {
     let verts = vec![
         Vertex::new(Point3::origin(), Vector3::z()),
-        Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
-        Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
+        Vertex::new(p3(1.0, 0.0, 0.0), Vector3::z()),
+        Vertex::new(p3(0.0, 1.0, 0.0), Vector3::z()),
     ];
     let mut poly = Polygon::new(verts, "triangle".to_string());
 
@@ -24,8 +24,8 @@ fn test_polygon_metadata_string() {
 fn test_polygon_metadata_integer() {
     let verts = vec![
         Vertex::new(Point3::origin(), Vector3::z()),
-        Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
-        Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
+        Vertex::new(p3(1.0, 0.0, 0.0), Vector3::z()),
+        Vertex::new(p3(0.0, 1.0, 0.0), Vector3::z()),
     ];
     let poly = Polygon::new(verts, 42u32);
 
@@ -40,8 +40,8 @@ fn test_polygon_metadata_custom_struct() {
     };
     let verts = vec![
         Vertex::new(Point3::origin(), Vector3::z()),
-        Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
-        Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
+        Vertex::new(p3(1.0, 0.0, 0.0), Vector3::z()),
+        Vertex::new(p3(0.0, 1.0, 0.0), Vector3::z()),
     ];
     let poly = Polygon::new(verts, my_data.clone());
 
@@ -53,16 +53,16 @@ fn test_csg_construction_with_metadata() {
     let poly_a = Polygon::new(
         vec![
             Vertex::new(Point3::origin(), Vector3::z()),
-            Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
-            Vertex::new(Point3::new(1.0, 1.0, 0.0), Vector3::z()),
+            Vertex::new(p3(1.0, 0.0, 0.0), Vector3::z()),
+            Vertex::new(p3(1.0, 1.0, 0.0), Vector3::z()),
         ],
         "PolyA".to_string(),
     );
     let poly_b = Polygon::new(
         vec![
-            Vertex::new(Point3::new(2.0, 0.0, 0.0), Vector3::z()),
-            Vertex::new(Point3::new(3.0, 0.0, 0.0), Vector3::z()),
-            Vertex::new(Point3::new(3.0, 1.0, 0.0), Vector3::z()),
+            Vertex::new(p3(2.0, 0.0, 0.0), Vector3::z()),
+            Vertex::new(p3(3.0, 0.0, 0.0), Vector3::z()),
+            Vertex::new(p3(3.0, 1.0, 0.0), Vector3::z()),
         ],
         "PolyB".to_string(),
     );
@@ -75,8 +75,8 @@ fn test_csg_construction_with_metadata() {
 
 #[test]
 fn test_union_metadata() {
-    let cube1 = Mesh::cube(1.0, "Cube1".to_string());
-    let cube2 = Mesh::cube(1.0, "Cube2".to_string()).translate(0.5, 0.0, 0.0);
+    let cube1 = Mesh::cube(r(1.0), "Cube1".to_string());
+    let cube2 = Mesh::cube(r(1.0), "Cube2".to_string()).translate(r(0.5), r(0.0), r(0.0));
 
     let union_csg = cube1.union(&cube2);
 
@@ -92,8 +92,8 @@ fn test_union_metadata() {
 
 #[test]
 fn test_difference_metadata() {
-    let cube1 = Mesh::cube(2.0, "Cube1".to_string());
-    let cube2 = Mesh::cube(2.0, "Cube2".to_string()).translate(0.5, 0.5, 0.5);
+    let cube1 = Mesh::cube(r(2.0), "Cube1".to_string());
+    let cube2 = Mesh::cube(r(2.0), "Cube2".to_string()).translate(r(0.5), r(0.5), r(0.5));
 
     let result = cube1.difference(&cube2);
 
@@ -109,8 +109,8 @@ fn test_difference_metadata() {
 
 #[test]
 fn test_intersect_metadata() {
-    let cube1 = Mesh::cube(2.0, "Cube1".to_string());
-    let cube2 = Mesh::cube(2.0, "Cube2".to_string()).translate(0.5, 0.5, 0.5);
+    let cube1 = Mesh::cube(r(2.0), "Cube1".to_string());
+    let cube2 = Mesh::cube(r(2.0), "Cube2".to_string()).translate(r(0.5), r(0.5), r(0.5));
 
     let result = cube1.intersection(&cube2);
 
@@ -126,7 +126,7 @@ fn test_intersect_metadata() {
 
 #[test]
 fn test_flip_invert_metadata() {
-    let csg = Mesh::cube(2.0, "MyCube".to_string());
+    let csg = Mesh::cube(r(2.0), "MyCube".to_string());
 
     let inverted = csg.inverse();
     for poly in &inverted.polygons {
@@ -139,9 +139,9 @@ fn test_subdivide_metadata() {
     let poly = Polygon::new(
         vec![
             Vertex::new(Point3::origin(), Vector3::z()),
-            Vertex::new(Point3::new(2.0, 0.0, 0.0), Vector3::z()),
-            Vertex::new(Point3::new(2.0, 2.0, 0.0), Vector3::z()),
-            Vertex::new(Point3::new(0.0, 2.0, 0.0), Vector3::z()),
+            Vertex::new(p3(2.0, 0.0, 0.0), Vector3::z()),
+            Vertex::new(p3(2.0, 2.0, 0.0), Vector3::z()),
+            Vertex::new(p3(0.0, 2.0, 0.0), Vector3::z()),
         ],
         "LargeQuad".to_string(),
     );
@@ -159,15 +159,15 @@ fn test_transform_metadata() {
     let poly = Polygon::new(
         vec![
             Vertex::new(Point3::origin(), Vector3::z()),
-            Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
-            Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
+            Vertex::new(p3(1.0, 0.0, 0.0), Vector3::z()),
+            Vertex::new(p3(0.0, 1.0, 0.0), Vector3::z()),
         ],
         "Tri".to_string(),
     );
     let csg = Mesh::from_polygons(&[poly], "Mesh".to_string());
-    let csg_trans = csg.translate(10.0, 5.0, 0.0);
-    let csg_scale = csg_trans.scale(2.0, 2.0, 1.0);
-    let csg_rot = csg_scale.rotate(0.0, 0.0, 45.0);
+    let csg_trans = csg.translate(r(10.0), r(5.0), r(0.0));
+    let csg_scale = csg_trans.scale(r(2.0), r(2.0), r(1.0));
+    let csg_rot = csg_scale.rotate(r(0.0), r(0.0), r(45.0));
 
     for poly in &csg_rot.polygons {
         assert_eq!(poly.metadata(), &"Tri".to_string());
@@ -179,8 +179,8 @@ fn test_complex_metadata_struct_in_boolean_ops() {
     #[derive(Debug, Clone, PartialEq)]
     struct Color(u8, u8, u8);
 
-    let csg1 = Mesh::cube(2.0, Color(255, 0, 0));
-    let csg2 = Mesh::cube(2.0, Color(0, 255, 0)).translate(0.5, 0.5, 0.5);
+    let csg1 = Mesh::cube(r(2.0), Color(255, 0, 0));
+    let csg2 = Mesh::cube(r(2.0), Color(0, 255, 0)).translate(r(0.5), r(0.5), r(0.5));
 
     let unioned = csg1.union(&csg2);
     for poly in &unioned.polygons {

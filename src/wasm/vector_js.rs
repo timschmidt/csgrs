@@ -1,48 +1,69 @@
 //! JavaScript wrapper for 3D vectors.
 
 #[cfg(test)]
-use crate::float_types::tolerance;
-use crate::float_types::{
-    Real, hangle_between_vectors, hangle_sin_cos, hreal_f64s_exactly_equal, hreal_mul,
-    hreal_sub, hunit_quaternion, hunit_vector3, hvector3_cross, hvector3_dot,
-    hvector3_from_vector3, hvector3_magnitude, hvector3_weighted_sum,
-    hvectors_orthogonal_exact,
-};
-use nalgebra::Vector3;
+use crate::wasm::tolerance;
+use crate::wasm::{real_from_js, real_from_js_or_zero, real_to_js, vector3_from_js_or_zero};
+use hyperlattice::{Real, Vector3};
+use hyperreal::RealSign;
 use wasm_bindgen::prelude::*;
 
-fn finite_vector3(vector: &Vector3<Real>) -> Option<Vector3<Real>> {
-    let vector = hvector3_from_vector3(vector)?.to_f64_array_lossy()?;
-    Some(Vector3::new(vector[0], vector[1], vector[2]))
+fn finite_vector3(vector: &Vector3) -> Option<Vector3> {
+    Some(vector.clone())
 }
 
-fn rotation_between_quaternion_components(
-    from: &Vector3<Real>,
-    to: &Vector3<Real>,
-) -> Option<[Real; 4]> {
-    let a = hunit_vector3(from)?;
-    let b = hunit_vector3(to)?;
-    let dot = hvector3_dot(&a, &b)?;
+fn real(value: f64) -> Real {
+    real_from_js(value).expect("finite wasm scalar")
+}
 
-    if hreal_f64s_exactly_equal(dot, -1.0) {
-        let seed = if a.x.abs() < 0.9 {
+fn quaternion_unit(w: Real, x: Real, y: Real, z: Real) -> Option<[Real; 4]> {
+    let norm_squared = w.clone() * w.clone()
+        + x.clone() * x.clone()
+        + y.clone() * y.clone()
+        + z.clone() * z.clone();
+    let norm = norm_squared.sqrt().ok()?;
+    Some([
+        (w / norm.clone()).ok()?,
+        (x / norm.clone()).ok()?,
+        (y / norm.clone()).ok()?,
+        (z / norm).ok()?,
+    ])
+}
+
+fn rotation_between_quaternion_components(from: &Vector3, to: &Vector3) -> Option<[Real; 4]> {
+    let a = from.normalize_checked().ok()?;
+    let b = to.normalize_checked().ok()?;
+    let dot = a.dot(&b);
+
+    if matches!(
+        (dot.clone() + Real::one()).refine_sign_until(128),
+        Some(RealSign::Zero)
+    ) {
+        let seed = if a.0[0].abs() < real(0.9) {
             Vector3::x()
         } else {
             Vector3::y()
         };
-        let axis = hunit_vector3(&hvector3_cross(&a, &seed)?)?;
-        return Some([0.0, axis.x, axis.y, axis.z]);
+        let axis = a.cross(&seed).normalize_checked().ok()?;
+        return Some([
+            Real::zero(),
+            axis.0[0].clone(),
+            axis.0[1].clone(),
+            axis.0[2].clone(),
+        ]);
     }
 
-    let cross = hvector3_cross(&a, &b)?;
-    let q = hunit_quaternion(1.0 + dot, cross.x, cross.y, cross.z)?;
-    let vector = q.vector();
-    Some([q.scalar(), vector.x, vector.y, vector.z])
+    let cross = a.cross(&b);
+    quaternion_unit(
+        Real::one() + dot,
+        cross.0[0].clone(),
+        cross.0[1].clone(),
+        cross.0[2].clone(),
+    )
 }
 
 #[wasm_bindgen]
 pub struct Vector3Js {
-    pub(crate) inner: Vector3<Real>,
+    pub(crate) inner: Vector3,
 }
 
 #[wasm_bindgen]
@@ -53,69 +74,77 @@ impl Vector3Js {
         // hyperlattice rejects NaN/Inf before vectors can enter CAD state; see
         // Yap, "Towards Exact Geometric Computation," Computational Geometry
         // 7(1-2), 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-        let vector = Vector3::new(x as Real, y as Real, z as Real);
         Vector3Js {
-            inner: hvector3_from_vector3(&vector)
-                .and_then(|vector| vector.to_f64_array_lossy())
-                .map(|[x, y, z]| Vector3::new(x, y, z))
-                .unwrap_or_else(Vector3::zeros),
+            inner: vector3_from_js_or_zero(x, y, z),
         }
     }
 
     #[wasm_bindgen(getter)]
     pub fn x(&self) -> f64 {
-        self.inner.x as f64
+        real_to_js(&self.inner.0[0])
     }
 
     #[wasm_bindgen(getter)]
     pub fn y(&self) -> f64 {
-        self.inner.y as f64
+        real_to_js(&self.inner.0[1])
     }
 
     #[wasm_bindgen(getter)]
     pub fn z(&self) -> f64 {
-        self.inner.z as f64
+        real_to_js(&self.inner.0[2])
     }
 
     pub fn length(&self) -> f64 {
-        hvector3_magnitude(&self.inner).unwrap_or(0.0)
+        real_to_js(&self.inner.norm())
     }
 
     pub fn normalize(&self) -> Vector3Js {
         Vector3Js {
-            inner: hunit_vector3(&self.inner).unwrap_or_else(Vector3::zeros),
+            inner: self
+                .inner
+                .normalize_checked()
+                .unwrap_or_else(|_| Vector3::zeros()),
         }
     }
 
     #[wasm_bindgen(js_name = isOrthogonal)]
     pub fn is_orthogonal(&self, other: &Vector3Js) -> bool {
-        hvectors_orthogonal_exact(&self.inner, &other.inner)
+        matches!(
+            self.inner.dot(&other.inner).refine_sign_until(128),
+            Some(RealSign::Zero)
+        )
     }
 
     pub fn abs(&self) -> Vector3Js {
         Vector3Js {
-            inner: self.inner.abs(),
+            inner: Vector3::from_xyz(
+                self.inner.0[0].abs(),
+                self.inner.0[1].abs(),
+                self.inner.0[2].abs(),
+            ),
         }
     }
 
     pub fn reverse(&self) -> Vector3Js {
-        Vector3Js { inner: -self.inner }
+        Vector3Js {
+            inner: -self.inner.clone(),
+        }
     }
 
     pub fn add(&self, other: &Vector3Js) -> Vector3Js {
         Vector3Js {
-            inner: self.inner + other.inner,
+            inner: self.inner.clone() + other.inner.clone(),
         }
     }
 
     pub fn subtract(&self, other: &Vector3Js) -> Vector3Js {
         Vector3Js {
-            inner: self.inner - other.inner,
+            inner: self.inner.clone() - other.inner.clone(),
         }
     }
 
     pub fn dot(&self, other: &Vector3Js) -> f64 {
-        hvector3_dot(&self.inner, &other.inner).unwrap_or(0.0)
+        real_to_js(&self.inner.dot(&other.inner))
     }
 
     pub fn equals(&self, other: &Vector3Js) -> bool {
@@ -123,19 +152,28 @@ impl Vector3Js {
     }
 
     pub fn angle(&self, other: &Vector3Js) -> f64 {
-        hangle_between_vectors(&self.inner, &other.inner).unwrap_or(0.0)
+        self.inner
+            .angle_to(&other.inner)
+            .ok()
+            .map(|angle| real_to_js(&angle))
+            .unwrap_or(0.0)
     }
 
     pub fn scale(&self, factor: f64) -> Vector3Js {
+        let Some(factor) = real_from_js(factor) else {
+            return Vector3Js {
+                inner: self.inner.clone(),
+            };
+        };
         Vector3Js {
-            inner: hvector3_weighted_sum(&[self.inner], &[factor as Real])
-                .unwrap_or(self.inner),
+            inner: Vector3::weighted_sum(std::slice::from_ref(&self.inner), &[factor])
+                .unwrap_or_else(|| self.inner.clone()),
         }
     }
 
     pub fn cross(&self, other: &Vector3Js) -> Vector3Js {
         Vector3Js {
-            inner: hvector3_cross(&self.inner, &other.inner).unwrap_or_else(Vector3::zeros),
+            inner: self.inner.cross(&other.inner),
         }
     }
 
@@ -149,39 +187,58 @@ impl Vector3Js {
         // "Des lois géométriques qui régissent les déplacements d'un système
         // solide dans l'espace," Journal de Mathématiques Pures et Appliquées
         // 5, 1840.
-        let Some(axis) = hunit_vector3(&axis.inner) else {
-            return Vector3Js { inner: self.inner };
+        let Ok(axis) = axis.inner.normalize_checked() else {
+            return Vector3Js {
+                inner: self.inner.clone(),
+            };
         };
-        let Some((sin, cos)) = hangle_sin_cos(angle as Real) else {
-            return Vector3Js { inner: self.inner };
+        let Some(angle) = real_from_js(angle) else {
+            return Vector3Js {
+                inner: self.inner.clone(),
+            };
         };
+        let sin = angle.clone().sin();
+        let cos = angle.cos();
 
-        let Some(cross) = hvector3_cross(&axis, &self.inner) else {
-            return Vector3Js { inner: self.inner };
-        };
-        let Some(dot) = hvector3_dot(&axis, &self.inner) else {
-            return Vector3Js { inner: self.inner };
-        };
-        let Some(one_minus_cos) = hreal_sub(1.0, cos) else {
-            return Vector3Js { inner: self.inner };
-        };
-        let Some(axis_weight) = hreal_mul(dot, one_minus_cos) else {
-            return Vector3Js { inner: self.inner };
-        };
+        let cross = axis.cross(&self.inner);
+        let dot = axis.dot(&self.inner);
+        let axis_weight = dot * (Real::one() - cos.clone());
         Vector3Js {
-            inner: hvector3_weighted_sum(&[self.inner, cross, axis], &[cos, sin, axis_weight])
-                .unwrap_or(self.inner),
+            inner: Vector3::weighted_sum(
+                &[self.inner.clone(), cross, axis],
+                &[cos, sin, axis_weight],
+            )
+            .unwrap_or_else(|| self.inner.clone()),
         }
     }
 
     #[wasm_bindgen(js_name = rotateQuaternion)]
     pub fn rotate_quaternion(&self, w: f64, x: f64, y: f64, z: f64) -> Vector3Js {
-        let Some(q) = hunit_quaternion(w as Real, x as Real, y as Real, z as Real) else {
-            return Vector3Js { inner: self.inner };
+        let Some([w, x, y, z]) = quaternion_unit(
+            real_from_js_or_zero(w),
+            real_from_js_or_zero(x),
+            real_from_js_or_zero(y),
+            real_from_js_or_zero(z),
+        ) else {
+            return Vector3Js {
+                inner: self.inner.clone(),
+            };
         };
+        let u = Vector3::from_xyz(x, y, z);
+        let v = self.inner.clone();
+        let two = real(2.0);
+        let u_dot_v = u.dot(&v);
+        let u_dot_u = u.dot(&u);
+        let cross = u.cross(&v);
+        let weights = [
+            two.clone() * u_dot_v,
+            w.clone() * w.clone() - u_dot_u,
+            two * w,
+        ];
 
         Vector3Js {
-            inner: q * self.inner,
+            inner: Vector3::weighted_sum(&[u, v, cross], &weights)
+                .unwrap_or_else(|| self.inner.clone()),
         }
     }
 
@@ -196,10 +253,26 @@ impl Vector3Js {
         };
 
         let obj = js_sys::Object::new();
-        js_sys::Reflect::set(&obj, &JsValue::from_str("w"), &JsValue::from_f64(w as f64))?;
-        js_sys::Reflect::set(&obj, &JsValue::from_str("x"), &JsValue::from_f64(x as f64))?;
-        js_sys::Reflect::set(&obj, &JsValue::from_str("y"), &JsValue::from_f64(y as f64))?;
-        js_sys::Reflect::set(&obj, &JsValue::from_str("z"), &JsValue::from_f64(z as f64))?;
+        js_sys::Reflect::set(
+            &obj,
+            &JsValue::from_str("w"),
+            &JsValue::from_f64(real_to_js(&w)),
+        )?;
+        js_sys::Reflect::set(
+            &obj,
+            &JsValue::from_str("x"),
+            &JsValue::from_f64(real_to_js(&x)),
+        )?;
+        js_sys::Reflect::set(
+            &obj,
+            &JsValue::from_str("y"),
+            &JsValue::from_f64(real_to_js(&y)),
+        )?;
+        js_sys::Reflect::set(
+            &obj,
+            &JsValue::from_str("z"),
+            &JsValue::from_f64(real_to_js(&z)),
+        )?;
         Ok(obj.into())
     }
 
@@ -207,23 +280,23 @@ impl Vector3Js {
     pub fn to_string_js(&self) -> String {
         format!(
             "<Vector3({}, {}, {})>",
-            self.inner.x, self.inner.y, self.inner.z
+            self.inner.0[0], self.inner.0[1], self.inner.0[2]
         )
     }
 }
 
 // Rust-only conversions
-impl From<Vector3<Real>> for Vector3Js {
-    fn from(v: Vector3<Real>) -> Self {
+impl From<Vector3> for Vector3Js {
+    fn from(v: Vector3) -> Self {
         Vector3Js {
             inner: finite_vector3(&v).unwrap_or_else(Vector3::zeros),
         }
     }
 }
 
-impl From<&Vector3Js> for Vector3<Real> {
+impl From<&Vector3Js> for Vector3 {
     fn from(v: &Vector3Js) -> Self {
-        v.inner
+        v.inner.clone()
     }
 }
 
@@ -237,7 +310,9 @@ mod tests {
         assert_eq!(vector.inner, Vector3::zeros());
 
         let finite = Vector3Js::new(1.0, 2.0, 3.0);
-        assert_eq!(finite.inner, Vector3::new(1.0, 2.0, 3.0));
+        assert_eq!(finite.x(), 1.0);
+        assert_eq!(finite.y(), 2.0);
+        assert_eq!(finite.z(), 3.0);
 
         let scaled = finite.scale(f64::NAN);
         assert_eq!(scaled.inner, finite.inner);
@@ -255,15 +330,13 @@ mod tests {
 
     #[test]
     fn vector_js_cross_and_conversion_reject_nonfinite_vectors() {
-        let corrupted = Vector3Js {
-            inner: Vector3::new(Real::NAN, Real::INFINITY, 0.0),
-        };
+        let corrupted = Vector3Js::new(f64::NAN, f64::INFINITY, 0.0);
         let finite = Vector3Js::new(1.0, 0.0, 0.0);
 
         assert_eq!(corrupted.cross(&finite).inner, Vector3::zeros());
         assert_eq!(
-            Vector3Js::from(Vector3::new(0.0, Real::NEG_INFINITY, 1.0)).inner,
-            Vector3::zeros()
+            Vector3Js::new(0.0, f64::NEG_INFINITY, 1.0).inner,
+            Vector3::zeros(),
         );
     }
 
@@ -273,14 +346,12 @@ mod tests {
         let z_axis = Vector3Js::new(0.0, 0.0, 1.0);
         let rotated = vector.rotate(&z_axis, std::f64::consts::FRAC_PI_2);
 
-        assert!(rotated.inner.x.abs() < tolerance());
-        assert!((rotated.inner.y - 1.0).abs() < tolerance());
+        assert!(rotated.inner.0[0].abs() < tolerance());
+        assert!((rotated.inner.0[1].clone() - 1.0).abs() < tolerance());
 
-        let hostile_axis = Vector3Js {
-            inner: Vector3::new(Real::NAN, 0.0, 1.0),
-        };
+        let hostile_axis = Vector3Js::new(f64::NAN, 0.0, 1.0);
         assert_eq!(vector.rotate(&hostile_axis, 1.0).inner, vector.inner);
-        assert_eq!(vector.rotate(&z_axis, Real::NAN).inner, vector.inner);
+        assert_eq!(vector.rotate(&z_axis, f64::NAN).inner, vector.inner);
     }
 
     #[test]
@@ -307,7 +378,7 @@ mod tests {
 
         assert!(
             rotation_between_quaternion_components(
-                &Vector3::new(Real::NAN, 0.0, 0.0),
+                &Vector3Js::new(f64::NAN, 0.0, 0.0).inner,
                 &Vector3::y()
             )
             .is_none()
@@ -317,7 +388,10 @@ mod tests {
     #[test]
     fn vector_js_rotation_between_preserves_nearly_antiparallel_direction() {
         let x = Vector3::x();
-        let nearly_opposite = hunit_vector3(&Vector3::new(-1.0, 1.0e-5, 0.0)).unwrap();
+        let nearly_opposite = Vector3Js::new(-1.0, 1.0e-5, 0.0)
+            .inner
+            .normalize_checked()
+            .unwrap();
         let [w, _qx, _qy, qz] =
             rotation_between_quaternion_components(&x, &nearly_opposite).unwrap();
 

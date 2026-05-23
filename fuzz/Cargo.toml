@@ -12,12 +12,13 @@ cargo-fuzz = true
 # Development mode uses the local path lines. For release, comment those and uncomment the crates.io lines.
 csgrs = { path = "..", features = ["offset"] }
 hyperlimit = { path = "../../hyperlimit" }
+hyperlattice = { path = "../../hyperlattice" }
 hypersdf = { path = "../../hypersdf" }
 # csgrs = { version = "0.23.0", features = ["offset"] }
 # hyperlimit = "0.4.0"
+# hyperlattice = "0.6.0"
 # hypersdf = "0.2.0"
 libfuzzer-sys = "0.4"
-nalgebra = "0.34.1"
 hashbrown = "0.15"
 
 [[bin]]
@@ -79,13 +80,6 @@ bench = false
 [[bin]]
 name = "fuzz_plane_split_polygon"
 path = "fuzz_targets/fuzz_plane_split_polygon.rs"
-test = false
-doc = false
-bench = false
-
-[[bin]]
-name = "fuzz_toolpath_from_sketch"
-path = "fuzz_targets/fuzz_toolpath_from_sketch.rs"
 test = false
 doc = false
 bench = false

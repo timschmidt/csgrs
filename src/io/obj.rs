@@ -3,15 +3,21 @@
 #![doc = " This module provides import and export functionality for Wavefront OBJ files,"]
 #![doc = " a widely-supported 3D file format used by many modeling and rendering applications."]
 
-use crate::float_types::{Real, hunit_vector3, hvector3_from_point3};
 use crate::mesh::Mesh;
 use crate::polygon::Polygon;
 use crate::sketch::Profile;
 use crate::triangulated::IndexedTriangulated3D;
 use crate::vertex::Vertex;
-use nalgebra::{Point3, Vector3};
+use hyperlattice::{Point3, Real, Vector3};
 use std::fmt::Debug;
 use std::io::{BufRead, Write};
+
+fn real_f64(value: &Real) -> f64 {
+    value
+        .to_f64_lossy()
+        .filter(|value| value.is_finite())
+        .unwrap_or(0.0)
+}
 
 fn invalid_obj_data(message: impl Into<String>) -> std::io::Error {
     std::io::Error::new(std::io::ErrorKind::InvalidData, message.into())
@@ -19,11 +25,7 @@ fn invalid_obj_data(message: impl Into<String>) -> std::io::Error {
 
 fn build_obj_buffers<T: IndexedTriangulated3D>(
     shape: &T,
-) -> (
-    Vec<Point3<Real>>,
-    Vec<Vector3<Real>>,
-    Vec<Vec<(usize, usize)>>,
-) {
+) -> (Vec<Point3>, Vec<Vector3>, Vec<Vec<(usize, usize)>>) {
     let indexed = shape.indexed_triangles();
     let faces = indexed.faces.into_iter().map(Vec::from).collect();
     (indexed.positions, indexed.normals, faces)
@@ -47,7 +49,9 @@ pub fn to_obj<T: IndexedTriangulated3D>(shape: &T, object_name: &str) -> String 
     for vertex in &vertices {
         obj_content.push_str(&format!(
             "v {:.6} {:.6} {:.6}\n",
-            vertex.x, vertex.y, vertex.z
+            real_f64(&vertex.x),
+            real_f64(&vertex.y),
+            real_f64(&vertex.z)
         ));
     }
     obj_content.push('\n');
@@ -55,7 +59,9 @@ pub fn to_obj<T: IndexedTriangulated3D>(shape: &T, object_name: &str) -> String 
     for normal in &normals {
         obj_content.push_str(&format!(
             "vn {:.6} {:.6} {:.6}\n",
-            normal.x, normal.y, normal.z
+            real_f64(&normal.0[0]),
+            real_f64(&normal.0[1]),
+            real_f64(&normal.0[2])
         ));
     }
     obj_content.push('\n');
@@ -152,11 +158,6 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                             )
                         })?;
                         let point = Point3::new(x, y, z);
-                        if hvector3_from_point3(&point).is_none() {
-                            return Err(invalid_obj_data(
-                                "Invalid vertex coordinate: OBJ vertices must be finite",
-                            ));
-                        }
                         vertices.push(point);
                     }
                 },
@@ -180,7 +181,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                                 format!("Invalid normal z coordinate: {e}"),
                             )
                         })?;
-                        let normal = hunit_vector3(&Vector3::new(x, y, z)).ok_or_else(|| {
+                        let normal = Vector3::from_xyz(x, y, z).normalize_checked().map_err(|_| {
                             invalid_obj_data(
                                 "Invalid normal coordinate: OBJ normals must be finite and non-zero",
                             )
@@ -195,9 +196,9 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                         if face_vertices.len() >= 3 {
                             for i in 1..face_vertices.len() - 1 {
                                 let triangle = vec![
-                                    face_vertices[0],
-                                    face_vertices[i],
-                                    face_vertices[i + 1],
+                                    face_vertices[0].clone(),
+                                    face_vertices[i].clone(),
+                                    face_vertices[i + 1].clone(),
                                 ];
                                 polygons.push(Polygon::new(triangle, metadata.clone()));
                             }
@@ -213,8 +214,8 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
 
     fn parse_obj_face(
         face_parts: &[&str],
-        vertices: &[Point3<Real>],
-        normals: &[Vector3<Real>],
+        vertices: &[Point3],
+        normals: &[Vector3],
     ) -> std::io::Result<Vec<Vertex>> {
         let mut face_vertices = Vec::new();
         for part in face_parts {
@@ -226,7 +227,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                     format!("Vertex index {} out of range", vertex_idx + 1),
                 ));
             }
-            let position = vertices[vertex_idx];
+            let position = vertices[vertex_idx].clone();
             let normal = if indices.len() >= 3 && !indices[2].is_empty() {
                 let normal_idx = parse_obj_positive_index(indices[2], "normal")?;
                 if normal_idx >= normals.len() {
@@ -235,9 +236,9 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                         format!("Normal index {} out of range", normal_idx + 1),
                     ));
                 }
-                normals[normal_idx]
+                normals[normal_idx].clone()
             } else {
-                Vector3::new(0.0, 0.0, 1.0)
+                Vector3::z()
             };
             face_vertices.push(Vertex::new(position, normal));
         }

@@ -2,10 +2,17 @@
 
 #![no_main]
 
-use csgrs::float_types::{Real, tolerance};
 use csgrs::mesh::Mesh;
+use hyperlattice::{Point3, Real, Vector3};
 use libfuzzer_sys::fuzz_target;
-use nalgebra::{Point3, Vector3};
+
+fn real(value: f64) -> Real {
+    Real::try_from(value).expect("fuzz decoder clamps to finite values")
+}
+
+fn tolerance() -> Real {
+    real(1.0e-9)
+}
 
 fn decode_real(bytes: &[u8], idx: &mut usize) -> Real {
     let mut raw = [0u8; 8];
@@ -14,7 +21,7 @@ fn decode_real(bytes: &[u8], idx: &mut usize) -> Real {
         *idx += 1;
     }
     let value = i64::from_le_bytes(raw) as f64 / 1.0e12;
-    value.clamp(-100.0, 100.0) as Real
+    real(value.clamp(-100.0, 100.0))
 }
 
 fn decode_mesh(bytes: &[u8], idx: &mut usize) -> Mesh<()> {
@@ -37,7 +44,14 @@ fn decode_mesh(bytes: &[u8], idx: &mut usize) -> Mesh<()> {
         2 => Mesh::sphere(a.abs().max(tolerance()), segments, segments, ()),
         3 => Mesh::cylinder(a.abs().max(tolerance()), b, segments, ()),
         4 => Mesh::frustum(a.abs(), b.abs(), c, segments, ()),
-        5 => Mesh::frustum_ptp(Point3::origin(), Point3::new(a, b, c), a.abs(), b.abs(), segments, ()),
+        5 => Mesh::frustum_ptp(
+            Point3::origin(),
+            Point3::new(a.clone(), b.clone(), c.clone()),
+            a.abs(),
+            b.abs(),
+            segments,
+            (),
+        ),
         6 => Mesh::ellipsoid(
             a.abs().max(tolerance()),
             b.abs().max(tolerance()),
@@ -46,7 +60,13 @@ fn decode_mesh(bytes: &[u8], idx: &mut usize) -> Mesh<()> {
             segments,
             (),
         ),
-        _ => Mesh::arrow(Point3::origin(), Vector3::new(a, b, c), segments, false, ()),
+        _ => Mesh::arrow(
+            Point3::origin(),
+            Vector3::from_xyz(a, b, c),
+            segments,
+            false,
+            (),
+        ),
     }
 }
 
@@ -68,49 +88,27 @@ fuzz_target!(|bytes: &[u8]| {
     for index in &buffers.indices {
         assert!(*index < vertex_count);
     }
-    let report = mesh.inspect_hypermesh_input();
-    if let Ok(package) = mesh.to_hypermesh_surface_handoff_package() {
-        assert!(package.approximate_f64_view.is_some());
-        let (vertices, indices) = mesh.try_get_vertices_and_indices().expect("package should lower");
-        let view = package.approximate_f64_view.as_ref().unwrap();
-        assert_eq!(vertices.len() * 3, view.positions.len());
-        assert_eq!(indices.len() * 3, view.indices.len());
+    if mesh.to_hypermesh_exact().is_ok() {
+        let (vertices, indices) = mesh
+            .try_get_vertices_and_indices()
+            .expect("exact mesh should lower");
+        assert!(!vertices.is_empty());
+        assert!(!indices.is_empty());
         let (vertex_map, adjacency) = mesh.build_connectivity();
-        assert_eq!(vertex_map.vertex_count() * 3, view.positions.len());
+        assert_eq!(vertex_map.vertex_count(), vertices.len());
         let directed_edge_count = adjacency.values().map(Vec::len).sum::<usize>();
-        assert_eq!(directed_edge_count, package.audit.edge_count * 2);
-        assert!(mesh.to_trimesh().is_ok());
+        assert_eq!(directed_edge_count % 2, 0);
     } else {
         let (vertex_map, adjacency) = mesh.build_connectivity();
         assert_eq!(vertex_map.vertex_count(), 0);
         assert!(adjacency.is_empty());
         assert!(mesh.try_get_vertices_and_indices().is_err());
         assert_eq!(mesh.get_vertices_and_indices(), (Vec::new(), Vec::new()));
-        assert!(mesh.to_trimesh().is_err());
     }
 
-    if report.edge_ready() {
-        if let Ok(exact) = mesh.to_hypermesh_exact() {
-            assert!(exact.validate_retained_state().is_ok());
-            assert_eq!(mesh.is_manifold(), exact.facts().mesh.closed_manifold);
-            if let Ok(package) = mesh.to_hypermesh_handoff_package() {
-                assert!(package.validate_against_mesh(&exact).is_ok());
-                assert_eq!(package.readiness.closed_manifold, exact.facts().mesh.closed_manifold);
-                assert_eq!(package.readiness.solid_handoff_ready, package.solid.is_some());
-                assert_eq!(
-                    package.readiness.approximate_f64_view_ready,
-                    package.approximate_f64_view.is_some()
-                );
-            }
-            if let Ok(roundtrip) = Mesh::from_hypermesh_exact_lossy(&exact, ()) {
-                assert!(roundtrip.is_manifold());
-                let (roundtrip_vertices, roundtrip_indices) = roundtrip.get_vertices_and_indices();
-                assert_eq!(roundtrip_vertices.len(), exact.vertices().len());
-                assert_eq!(roundtrip_indices.len(), exact.triangles().len());
-            }
-        } else {
-            assert!(!mesh.is_manifold());
-        }
+    if let Ok(exact) = mesh.to_hypermesh_exact() {
+        assert!(exact.validate_retained_state().is_ok());
+        assert_eq!(mesh.is_manifold(), exact.facts().mesh.closed_manifold);
     } else {
         assert!(!mesh.is_manifold());
     }

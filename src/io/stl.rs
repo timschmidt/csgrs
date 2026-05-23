@@ -5,6 +5,20 @@ use std::fmt::Debug;
 use std::io::Cursor;
 use stl_io;
 
+fn real_f32(value: &hyperlattice::Real) -> f32 {
+    value
+        .to_f32_lossy()
+        .filter(|value| value.is_finite())
+        .unwrap_or(0.0)
+}
+
+fn real_f64(value: &hyperlattice::Real) -> f64 {
+    value
+        .to_f64_lossy()
+        .filter(|value| value.is_finite())
+        .unwrap_or(0.0)
+}
+
 /// Export to ASCII STL
 /// Convert this Mesh to an **ASCII STL** string with the given `name`.
 ///
@@ -23,12 +37,22 @@ pub fn to_stl_ascii<T: Triangulated3D>(shape: &T, name: &str) -> String {
     out.push_str(&format!("solid {name}\n"));
 
     shape.visit_triangles(|tri| {
-        let n = tri[0].normal; // or recompute if you want per-facet normals
-        out.push_str(&format!("  facet normal {:.6} {:.6} {:.6}\n", n.x, n.y, n.z));
+        let n = &tri[0].normal; // or recompute if you want per-facet normals
+        out.push_str(&format!(
+            "  facet normal {:.6} {:.6} {:.6}\n",
+            real_f64(&n.0[0]),
+            real_f64(&n.0[1]),
+            real_f64(&n.0[2])
+        ));
         out.push_str("    outer loop\n");
         for v in &tri {
-            let p = v.position;
-            out.push_str(&format!("      vertex {:.6} {:.6} {:.6}\n", p.x, p.y, p.z));
+            let p = &v.position;
+            out.push_str(&format!(
+                "      vertex {:.6} {:.6} {:.6}\n",
+                real_f64(&p.x),
+                real_f64(&p.y),
+                real_f64(&p.z)
+            ));
         }
         out.push_str("    endloop\n");
         out.push_str("  endfacet\n");
@@ -60,14 +84,14 @@ pub fn to_stl_binary<T: Triangulated3D>(shape: &T, _name: &str) -> std::io::Resu
     let mut triangles = Vec::<Triangle>::new();
 
     shape.visit_triangles(|tri| {
-        let n = tri[0].normal;
+        let n = &tri[0].normal;
         #[allow(clippy::unnecessary_cast)]
         {
             triangles.push(Triangle {
-                normal: Normal::new([n.x as f32, n.y as f32, n.z as f32]),
+                normal: Normal::new([real_f32(&n.0[0]), real_f32(&n.0[1]), real_f32(&n.0[2])]),
                 vertices: tri.map(|v| {
                     let p = v.position;
-                    Vertex::new([p.x as f32, p.y as f32, p.z as f32])
+                    Vertex::new([real_f32(&p.x), real_f32(&p.y), real_f32(&p.z)])
                 }),
             });
         }

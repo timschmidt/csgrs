@@ -135,14 +135,14 @@ fn test_union_of_extruded_shapes() {
 
     // Its bounding box should span at least from z=0 to z=1.5
     let bbox = unioned.bounding_box();
-    assert!(bbox.mins.z <= 0.0 + tolerance());
-    assert!(bbox.maxs.z >= 1.5 - tolerance());
+    assert!(bbox.mins.z <= r(0.0) + tolerance());
+    assert!(bbox.maxs.z >= r(1.5) - tolerance());
 }
 
 #[test]
 fn test_flatten_cube() {
     // 1) Create a cube from (-1,-1,-1) to (+1,+1,+1)
-    let cube = Mesh::<()>::cube(2.0, ());
+    let cube = Mesh::<()>::cube(r(2.0), ());
     // 2) Flatten into the XY plane
     let flattened = cube.flatten();
 
@@ -165,9 +165,9 @@ fn test_flatten_cube() {
 #[test]
 fn test_slice_cylinder() {
     // 1) Create a cylinder (start=-1, end=+1) with radius=1, 32 slices
-    let cyl = Mesh::<()>::cylinder(1.0, 2.0, 32, ()).center();
+    let cyl = Mesh::<()>::cylinder(r(1.0), r(2.0), 32, ()).center();
     // 2) Slice at z=0
-    let cross_section = cyl.slice(Plane::from_normal(Vector3::z(), 0.0));
+    let cross_section = cyl.slice(Plane::from_normal(Vector3::z(), r(0.0)));
 
     // For a simple cylinder, the cross-section is typically 1 circle polygon
     // (unless the top or bottom also exactly intersect z=0, which they do not in this scenario).

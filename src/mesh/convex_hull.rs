@@ -9,29 +9,24 @@
 #![cfg_attr(doc, doc = doc_image_embed::embed_image!("Pre-ConvexHull demo image", "docs/convex_hull_before_nobackground.png"))]
 #![cfg_attr(doc, doc = doc_image_embed::embed_image!("ConvexHull demo image", "docs/convex_hull_nobackground.png"))]
 
-use crate::float_types::{Real, hreal_gt_f64, hvector3_from_point3};
 use crate::mesh::Mesh;
 use crate::polygon::Polygon;
 use crate::vertex::Vertex;
 use chull::ConvexHullWrapper;
-use nalgebra::{Point3, Vector3};
+use hyperlattice::{Point3, Vector3};
 use std::fmt::Debug;
 
-fn hyper_triangle_unit_normal(
-    p0: &Point3<Real>,
-    p1: &Point3<Real>,
-    p2: &Point3<Real>,
-) -> Option<Vector3<Real>> {
-    let p0 = hvector3_from_point3(p0)?;
-    let p1 = hvector3_from_point3(p1)?;
-    let p2 = hvector3_from_point3(p2)?;
-    let normal = (&p1 - &p0).cross(&(&p2 - &p0));
-    if !hreal_gt_f64(&normal.dot(&normal), 0.0) {
-        return None;
-    }
-    let unit = normal.normalize_checked().ok()?;
-    let [x, y, z] = unit.to_f64_array_lossy()?;
-    Some(Vector3::new(x, y, z))
+fn hyper_triangle_unit_normal(p0: &Point3, p1: &Point3, p2: &Point3) -> Option<Vector3> {
+    let normal = (p1 - p0).cross(&(p2 - p0));
+    normal.normalize_checked().ok()
+}
+
+fn point_to_f64_vec(point: &Point3) -> Option<Vec<f64>> {
+    Some(point.to_f64_array_lossy()?.to_vec())
+}
+
+fn point_from_f64(values: &[f64]) -> Option<Point3> {
+    Point3::try_from_f64_array([values[0], values[1], values[2]]).ok()
 }
 
 impl<M: Clone + Debug + Send + Sync> Mesh<M> {
@@ -46,14 +41,14 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// <https://doi.org/10.1016/0925-7721(95)00040-2>.
     pub fn convex_hull(&self) -> Mesh<M> {
         // Gather all (x, y, z) coordinates from the polygons
-        let points: Vec<Point3<Real>> = self
+        let points: Vec<Point3> = self
             .polygons
             .iter()
-            .flat_map(|poly| poly.vertices.iter().map(|v| v.position))
+            .flat_map(|poly| poly.vertices.iter().map(|v| v.position.clone()))
             .collect();
 
-        let points_for_hull: Vec<Vec<Real>> =
-            points.iter().map(|p| vec![p.x, p.y, p.z]).collect();
+        let points_for_hull: Vec<Vec<f64>> =
+            points.iter().filter_map(point_to_f64_vec).collect();
 
         // Attempt to compute the convex hull using the robust wrapper
         let hull = match ConvexHullWrapper::try_new(&points_for_hull, None) {
@@ -73,15 +68,21 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             let v1 = &verts[tri[1]];
             let v2 = &verts[tri[2]];
 
-            let p0 = Point3::new(v0[0], v0[1], v0[2]);
-            let p1 = Point3::new(v1[0], v1[1], v1[2]);
-            let p2 = Point3::new(v2[0], v2[1], v2[2]);
+            let Some(p0) = point_from_f64(v0) else {
+                continue;
+            };
+            let Some(p1) = point_from_f64(v1) else {
+                continue;
+            };
+            let Some(p2) = point_from_f64(v2) else {
+                continue;
+            };
             let Some(normal) = hyper_triangle_unit_normal(&p0, &p1, &p2) else {
                 continue;
             };
 
-            let vv0 = Vertex::new(p0, normal);
-            let vv1 = Vertex::new(p1, normal);
+            let vv0 = Vertex::new(p0, normal.clone());
+            let vv1 = Vertex::new(p1, normal.clone());
             let vv2 = Vertex::new(p2, normal);
             polygons.push(Polygon::new(vec![vv0, vv1, vv2], self.metadata.clone()));
         }
@@ -98,17 +99,17 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// **Algorithm**: O(|A| × |B|) vertex combinations followed by O(n log n) convex hull computation.
     pub fn minkowski_sum(&self, other: &Mesh<M>) -> Mesh<M> {
         // Collect all vertices (x, y, z) from self
-        let verts_a: Vec<Point3<Real>> = self
+        let verts_a: Vec<Point3> = self
             .polygons
             .iter()
-            .flat_map(|poly| poly.vertices.iter().map(|v| v.position))
+            .flat_map(|poly| poly.vertices.iter().map(|v| v.position.clone()))
             .collect();
 
         // Collect all vertices from other
-        let verts_b: Vec<Point3<Real>> = other
+        let verts_b: Vec<Point3> = other
             .polygons
             .iter()
-            .flat_map(|poly| poly.vertices.iter().map(|v| v.position))
+            .flat_map(|poly| poly.vertices.iter().map(|v| v.position.clone()))
             .collect();
 
         if verts_a.is_empty() || verts_b.is_empty() {
@@ -118,8 +119,8 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         // For Minkowski, add every point in A to every point in B
         let sum_points: Vec<_> = verts_a
             .iter()
-            .flat_map(|a| verts_b.iter().map(move |b| a + b.coords))
-            .map(|v| vec![v.x, v.y, v.z])
+            .flat_map(|a| verts_b.iter().map(move |b| a.clone() + b.to_vector()))
+            .filter_map(|point| point.to_f64_array_lossy().map(|coords| coords.to_vec()))
             .collect();
 
         // Early return if no points generated
@@ -142,13 +143,13 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                 let v1 = &verts[tri[1]];
                 let v2 = &verts[tri[2]];
 
-                let p0 = Point3::new(v0[0], v0[1], v0[2]);
-                let p1 = Point3::new(v1[0], v1[1], v1[2]);
-                let p2 = Point3::new(v2[0], v2[1], v2[2]);
+                let p0 = point_from_f64(v0)?;
+                let p1 = point_from_f64(v1)?;
+                let p2 = point_from_f64(v2)?;
 
                 let normal = hyper_triangle_unit_normal(&p0, &p1, &p2)?;
-                let vv0 = Vertex::new(p0, normal);
-                let vv1 = Vertex::new(p1, normal);
+                let vv0 = Vertex::new(p0, normal.clone());
+                let vv1 = Vertex::new(p1, normal.clone());
                 let vv2 = Vertex::new(p2, normal);
                 Some(Polygon::new(vec![vv0, vv1, vv2], self.metadata.clone()))
             })

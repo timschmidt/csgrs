@@ -2,13 +2,17 @@
 //! signed‑distance mesher in `sdf.rs`.
 
 use crate::csg::CSG;
-use crate::float_types::{
-    Real, TAU, hpoint_lerp, hreal_abs, hreal_div, hreal_from_f64, hreal_gt_f64, hreal_max,
-    hreal_min, hreal_sub, hreal_sum, hreal_to_f64, hvector3_from_vector3,
+use crate::hyper_math::{
+    Real, hpoint_lerp, hreal_abs, hreal_div, hreal_from_f64, hreal_gt_f64, hreal_max,
+    hreal_min, hreal_sub, hreal_sum, hvector3_from_vector3, tau,
 };
 use crate::mesh::Mesh;
-use nalgebra::{Point3, Vector3};
+use hyperlattice::{Point3, Vector3};
 use std::fmt::Debug;
+
+fn invalid_sdf_value() -> Real {
+    hreal_from_f64(1.0e10).expect("finite SDF sentinel")
+}
 
 impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// **Generic helper** – build a TPMS inside `self` from the provided SDF.
@@ -29,7 +33,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         metadata: M,
     ) -> Mesh<M>
     where
-        F: Fn(&Point3<Real>) -> Real + Send + Sync,
+        F: Fn(&Point3) -> Real,
     {
         let aabb = self.bounding_box();
         let min_pt = aabb.mins;
@@ -57,7 +61,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         metadata: M,
     ) -> Mesh<M>
     where
-        F: Fn(&Point3<Real>) -> Real + Send + Sync,
+        F: Fn(&Point3) -> Real,
     {
         let Some(thickness_h) = hreal_from_f64(thickness).ok() else {
             return Mesh::empty(metadata);
@@ -72,14 +76,12 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         let Some(half) = hreal_from_f64(0.5).ok() else {
             return Mesh::empty(metadata);
         };
-        let Some(half_thickness) = hreal_to_f64(&(thickness_h.clone() * half)) else {
-            return Mesh::empty(metadata);
-        };
+        let half_thickness = thickness_h.clone() * half;
         let step = max_axis_step(&min_pt, &max_pt, resolution);
-        let Some(padding) = hreal_max(&[step, thickness]) else {
+        let Some(padding) = hreal_max(&[step, thickness_h.clone()]) else {
             return Mesh::empty(metadata);
         };
-        let Some(negative_padding) = hreal_sub(0.0, padding) else {
+        let Some(negative_padding) = hreal_sub(Real::zero(), padding.clone()) else {
             return Mesh::empty(metadata);
         };
         let Some(sample_min) = hpoint_pad(&min_pt, negative_padding) else {
@@ -90,18 +92,18 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         };
 
         Mesh::sdf(
-            move |p: &Point3<Real>| {
-                let sheet = hreal_sub(sdf_fn(p), iso_value)
+            move |p: &Point3| {
+                let sheet = hreal_sub(sdf_fn(p), iso_value.clone())
                     .and_then(hreal_abs)
-                    .and_then(|distance| hreal_sub(distance, half_thickness))
-                    .unwrap_or(Real::INFINITY);
+                    .and_then(|distance| hreal_sub(distance, half_thickness.clone()))
+                    .unwrap_or_else(invalid_sdf_value);
                 let bounds = axis_aligned_box_sdf(p, &min_pt, &max_pt);
-                hreal_max(&[sheet, bounds]).unwrap_or(Real::INFINITY)
+                hreal_max(&[sheet, bounds]).unwrap_or_else(invalid_sdf_value)
             },
             resolution,
             sample_min,
             sample_max,
-            0.0,
+            Real::zero(),
             metadata,
         )
     }
@@ -127,7 +129,9 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             return Mesh::empty(metadata);
         };
         self.tpms_from_sdf(
-            move |p: &Point3<Real>| tpms_gyroid_value(p, scale).unwrap_or(Real::INFINITY),
+            move |p: &Point3| {
+                tpms_gyroid_value(p, scale.clone()).unwrap_or_else(invalid_sdf_value)
+            },
             res,
             iso_value,
             metadata,
@@ -149,7 +153,9 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             return Mesh::empty(metadata);
         };
         self.tpms_solid_from_sdf(
-            move |p: &Point3<Real>| tpms_gyroid_value(p, scale).unwrap_or(Real::INFINITY),
+            move |p: &Point3| {
+                tpms_gyroid_value(p, scale.clone()).unwrap_or_else(invalid_sdf_value)
+            },
             res,
             iso_value,
             thickness,
@@ -173,7 +179,9 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             return Mesh::empty(metadata);
         };
         self.tpms_from_sdf(
-            move |p: &Point3<Real>| tpms_schwarz_p_value(p, scale).unwrap_or(Real::INFINITY),
+            move |p: &Point3| {
+                tpms_schwarz_p_value(p, scale.clone()).unwrap_or_else(invalid_sdf_value)
+            },
             res,
             iso_value,
             metadata,
@@ -195,7 +203,9 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             return Mesh::empty(metadata);
         };
         self.tpms_solid_from_sdf(
-            move |p: &Point3<Real>| tpms_schwarz_p_value(p, scale).unwrap_or(Real::INFINITY),
+            move |p: &Point3| {
+                tpms_schwarz_p_value(p, scale.clone()).unwrap_or_else(invalid_sdf_value)
+            },
             res,
             iso_value,
             thickness,
@@ -219,7 +229,9 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             return Mesh::empty(metadata);
         };
         self.tpms_from_sdf(
-            move |p: &Point3<Real>| tpms_schwarz_d_value(p, scale).unwrap_or(Real::INFINITY),
+            move |p: &Point3| {
+                tpms_schwarz_d_value(p, scale.clone()).unwrap_or_else(invalid_sdf_value)
+            },
             res,
             iso_value,
             metadata,
@@ -241,7 +253,9 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             return Mesh::empty(metadata);
         };
         self.tpms_solid_from_sdf(
-            move |p: &Point3<Real>| tpms_schwarz_d_value(p, scale).unwrap_or(Real::INFINITY),
+            move |p: &Point3| {
+                tpms_schwarz_d_value(p, scale.clone()).unwrap_or_else(invalid_sdf_value)
+            },
             res,
             iso_value,
             thickness,
@@ -264,23 +278,19 @@ fn tpms_scale(period: Real) -> Option<Real> {
     if !hreal_gt_f64(&period, 0.0) {
         return None;
     }
-    hreal_to_f64(&(hreal_from_f64(TAU).ok()? / period).ok()?)
+    (tau() / period).ok()
 }
 
-fn tpms_scaled_axes(
-    point: &Point3<Real>,
-    scale: Real,
-) -> Option<(hyperreal::Real, hyperreal::Real, hyperreal::Real)> {
-    let scale = hreal_from_f64(scale).ok()?;
+fn tpms_scaled_axes(point: &Point3, scale: Real) -> Option<(Real, Real, Real)> {
     Some((
-        hreal_from_f64(point.x).ok()? * scale.clone(),
-        hreal_from_f64(point.y).ok()? * scale.clone(),
-        hreal_from_f64(point.z).ok()? * scale,
+        point.x.clone() * scale.clone(),
+        point.y.clone() * scale.clone(),
+        point.z.clone() * scale,
     ))
 }
 
 /// Evaluate Schoen's gyroid approximation in hyperreal space.
-fn tpms_gyroid_value(point: &Point3<Real>, scale: Real) -> Option<Real> {
+fn tpms_gyroid_value(point: &Point3, scale: Real) -> Option<Real> {
     let (x, y, z) = tpms_scaled_axes(point, scale)?;
     let sin_x = x.clone().sin();
     let cos_x = x.cos();
@@ -288,17 +298,17 @@ fn tpms_gyroid_value(point: &Point3<Real>, scale: Real) -> Option<Real> {
     let cos_y = y.cos();
     let sin_z = z.clone().sin();
     let cos_z = z.cos();
-    hreal_to_f64(&(sin_x * cos_y + sin_y * cos_z + sin_z * cos_x))
+    Some(sin_x * cos_y + sin_y * cos_z + sin_z * cos_x)
 }
 
 /// Evaluate Schwarz's primitive cubic surface approximation in hyperreal space.
-fn tpms_schwarz_p_value(point: &Point3<Real>, scale: Real) -> Option<Real> {
+fn tpms_schwarz_p_value(point: &Point3, scale: Real) -> Option<Real> {
     let (x, y, z) = tpms_scaled_axes(point, scale)?;
-    hreal_to_f64(&(x.cos() + y.cos() + z.cos()))
+    Some(x.cos() + y.cos() + z.cos())
 }
 
 /// Evaluate Schwarz's diamond surface approximation in hyperreal space.
-fn tpms_schwarz_d_value(point: &Point3<Real>, scale: Real) -> Option<Real> {
+fn tpms_schwarz_d_value(point: &Point3, scale: Real) -> Option<Real> {
     let (x, y, z) = tpms_scaled_axes(point, scale)?;
     let sin_x = x.clone().sin();
     let cos_x = x.cos();
@@ -306,67 +316,72 @@ fn tpms_schwarz_d_value(point: &Point3<Real>, scale: Real) -> Option<Real> {
     let cos_y = y.cos();
     let sin_z = z.clone().sin();
     let cos_z = z.cos();
-    hreal_to_f64(
-        &(sin_x.clone() * sin_y.clone() * sin_z.clone()
+    Some(
+        sin_x.clone() * sin_y.clone() * sin_z.clone()
             + sin_x * cos_y.clone() * cos_z.clone()
             + cos_x.clone() * sin_y * cos_z
-            + cos_x * cos_y * sin_z),
+            + cos_x * cos_y * sin_z,
     )
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::float_types::tolerance;
+    use crate::hyper_math::tolerance;
 
     #[test]
     fn tpms_scale_accepts_any_exact_positive_period() {
         assert!(tpms_scale(tolerance() * 0.25).is_some());
         assert!(tpms_scale(tolerance()).is_some());
-        assert!(tpms_scale(1.0).is_some());
+        assert!(tpms_scale(Real::one()).is_some());
     }
 
     #[test]
-    fn tpms_scale_rejects_zero_negative_and_nonfinite_periods() {
-        assert!(tpms_scale(0.0).is_none());
+    fn tpms_scale_rejects_zero_and_negative_periods() {
+        assert!(tpms_scale(Real::zero()).is_none());
         assert!(tpms_scale(-tolerance()).is_none());
-        assert!(tpms_scale(Real::NAN).is_none());
-        assert!(tpms_scale(Real::INFINITY).is_none());
     }
 }
 
-fn axis_aligned_box_sdf(p: &Point3<Real>, min: &Point3<Real>, max: &Point3<Real>) -> Real {
+fn axis_aligned_box_sdf(p: &Point3, min: &Point3, max: &Point3) -> Real {
     // The outside distance is a vector magnitude, so evaluate it in
     // hyperlattice and export only the finite SDF boundary value. This keeps
     // TPMS solid capping aligned with Yap's exact-geometric-computation
     // boundary split (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-    let center = hpoint_lerp(min, max, 0.5).unwrap_or(*min);
-    let half = Vector3::new(
-        haxis_half_extent(min.x, max.x).unwrap_or(Real::INFINITY),
-        haxis_half_extent(min.y, max.y).unwrap_or(Real::INFINITY),
-        haxis_half_extent(min.z, max.z).unwrap_or(Real::INFINITY),
+    let half_scalar = (Real::one() / Real::from(2_u8)).expect("nonzero exact denominator");
+    let center = hpoint_lerp(min, max, half_scalar).unwrap_or_else(|| min.clone());
+    let half = Vector3::from_xyz(
+        haxis_half_extent(min.x.clone(), max.x.clone()).unwrap_or_else(invalid_sdf_value),
+        haxis_half_extent(min.y.clone(), max.y.clone()).unwrap_or_else(invalid_sdf_value),
+        haxis_half_extent(min.z.clone(), max.z.clone()).unwrap_or_else(invalid_sdf_value),
     );
-    let q = Vector3::new(
-        haxis_abs_offset(p.x, center.x, half.x).unwrap_or(Real::INFINITY),
-        haxis_abs_offset(p.y, center.y, half.y).unwrap_or(Real::INFINITY),
-        haxis_abs_offset(p.z, center.z, half.z).unwrap_or(Real::INFINITY),
+    let q = Vector3::from_xyz(
+        haxis_abs_offset(p.x.clone(), center.x, half.0[0].clone())
+            .unwrap_or_else(invalid_sdf_value),
+        haxis_abs_offset(p.y.clone(), center.y, half.0[1].clone())
+            .unwrap_or_else(invalid_sdf_value),
+        haxis_abs_offset(p.z.clone(), center.z, half.0[2].clone())
+            .unwrap_or_else(invalid_sdf_value),
     );
-    let outside_vec =
-        q.map(|component| hreal_max(&[component, 0.0]).unwrap_or(Real::INFINITY));
+    let outside_vec = Vector3::from_xyz(
+        hreal_max(&[q.0[0].clone(), Real::zero()]).unwrap_or_else(invalid_sdf_value),
+        hreal_max(&[q.0[1].clone(), Real::zero()]).unwrap_or_else(invalid_sdf_value),
+        hreal_max(&[q.0[2].clone(), Real::zero()]).unwrap_or_else(invalid_sdf_value),
+    );
     let outside = hvector3_from_vector3(&outside_vec)
-        .and_then(|vector| hreal_to_f64(&vector.magnitude().ok()?))
-        .unwrap_or(Real::INFINITY);
-    let inside = hreal_max(&[q.x, q.y, q.z])
-        .and_then(|max_component| hreal_min(&[max_component, 0.0]))
-        .unwrap_or(Real::INFINITY);
-    hreal_sum(&[outside, inside]).unwrap_or(Real::INFINITY)
+        .and_then(|vector| vector.magnitude().ok())
+        .unwrap_or_else(invalid_sdf_value);
+    let inside = hreal_max(&[q.0[0].clone(), q.0[1].clone(), q.0[2].clone()])
+        .and_then(|max_component| hreal_min(&[max_component, Real::zero()]))
+        .unwrap_or_else(invalid_sdf_value);
+    hreal_sum(&[outside, inside]).unwrap_or_else(invalid_sdf_value)
 }
 
-fn hpoint_pad(point: &Point3<Real>, padding: Real) -> Option<Point3<Real>> {
+fn hpoint_pad(point: &Point3, padding: Real) -> Option<Point3> {
     Some(Point3::new(
-        hreal_sum(&[point.x, padding])?,
-        hreal_sum(&[point.y, padding])?,
-        hreal_sum(&[point.z, padding])?,
+        hreal_sum(&[point.x.clone(), padding.clone()])?,
+        hreal_sum(&[point.y.clone(), padding.clone()])?,
+        hreal_sum(&[point.z.clone(), padding])?,
     ))
 }
 
@@ -382,22 +397,18 @@ fn haxis_abs_offset(value: Real, center: Real, half_extent: Real) -> Option<Real
         .and_then(|distance| hreal_sub(distance, half_extent))
 }
 
-fn max_axis_step(
-    min: &Point3<Real>,
-    max: &Point3<Real>,
-    resolution: (usize, usize, usize),
-) -> Real {
-    let dx = hreal_sub(max.x, min.x)
+fn max_axis_step(min: &Point3, max: &Point3, resolution: (usize, usize, usize)) -> Real {
+    let dx = hreal_sub(max.x.clone(), min.x.clone())
         .and_then(hreal_abs)
-        .and_then(|span| hreal_div(span, resolution.0.max(2) as Real - 1.0))
-        .unwrap_or(0.0);
-    let dy = hreal_sub(max.y, min.y)
+        .and_then(|span| hreal_div(span, Real::from((resolution.0.max(2) - 1) as u64)))
+        .unwrap_or_else(Real::zero);
+    let dy = hreal_sub(max.y.clone(), min.y.clone())
         .and_then(hreal_abs)
-        .and_then(|span| hreal_div(span, resolution.1.max(2) as Real - 1.0))
-        .unwrap_or(0.0);
-    let dz = hreal_sub(max.z, min.z)
+        .and_then(|span| hreal_div(span, Real::from((resolution.1.max(2) - 1) as u64)))
+        .unwrap_or_else(Real::zero);
+    let dz = hreal_sub(max.z.clone(), min.z.clone())
         .and_then(hreal_abs)
-        .and_then(|span| hreal_div(span, resolution.2.max(2) as Real - 1.0))
-        .unwrap_or(0.0);
-    hreal_max(&[dx, dy, dz]).unwrap_or(0.0)
+        .and_then(|span| hreal_div(span, Real::from((resolution.2.max(2) - 1) as u64)))
+        .unwrap_or_else(Real::zero);
+    hreal_max(&[dx, dy, dz]).unwrap_or_else(Real::zero)
 }

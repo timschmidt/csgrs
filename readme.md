@@ -5,23 +5,19 @@ library in Rust, built around Boolean operations (*union*, *difference*,
 *intersection*, *xor*) on several different internal geometry representations.
 **csgrs** provides data structures and methods for constructing 2D and 3D geometry
 with an [OpenSCAD](https://openscad.org/)-like syntax.  Our aim is for **csgrs**
-to be light weight and full featured through integration with the
-[Dimforge](https://www.dimforge.com/) ecosystem
-(e.g., [`nalgebra`](https://crates.io/crates/nalgebra),
-[`Parry`](https://crates.io/crates/parry3d),
-and [`Rapier`](https://crates.io/crates/rapier3d)) and
-the local hyper geometry crates for exact-aware planar regions, curves,
-triangulation, and physical-property calculations.
-**csgrs** has a number of functions useful for generating CNC toolpaths. The
-crate accepts finite primitive floats at API boundaries, uses the hyperreal
-stack for new exact-aware internals, and can be built for WASM. Dependencies
-are 100% Rust and nearly all optional.
+to be light weight and full featured through integration with the local hyper
+geometry crates for exact-aware planar regions, curves, triangulation, mesh
+topology, and physical-property calculations. The crate accepts hyperreal
+geometry values internally, keeps primitive floats at IO/JS/adapter boundaries,
+and can be built for WASM. Dependencies are 100% Rust and nearly all optional.
 
-Finite `f32`/`f64` values are accepted at API and IO boundaries, then promoted
-into the hyperreal stack for exact-aware geometry work.  Polygon triangulation
-uses [hypertri](../hypertri/README.md): **csgrs** rotates 3D polygons into 2D,
-lifts projected coordinates to hyperreals, runs exact predicate triangulation,
-then maps triangle indices back onto the original 3D vertices.
+The core API accepts raw `hyperreal::Real` values. Primitive scalar adapters live
+outside the core in [csgrs-adapter](adapters/README.md), where Rust `f32`,
+`f64`, `i128`, and raw hyperreal entry points convert at ingress and egress while
+all geometry remains hyperreal underneath. Polygon triangulation uses
+[hypertri](../hypertri/README.md): **csgrs** rotates 3D polygons into 2D, lifts
+projected coordinates to hyperreals, runs exact predicate triangulation, then
+maps triangle indices back onto the original 3D vertices.
 
 ![Example CSG output](docs/csg.png)
 
@@ -82,15 +78,18 @@ cargo add csgrs
 Change `src/main.rs` to the following code:
 ```rust
 use csgrs::traits::CSG;
+use csgrs::Real;
 
 type Mesh = csgrs::mesh::Mesh<()>;
 
 fn main() {
     // Create a cube
-    let cube: Mesh = Mesh::cube(2.0, ()); // 2×2×2 cube at origin, no metadata
+    let cube: Mesh = Mesh::cube(Real::from(2), ()); // 2×2×2 cube at origin, no metadata
 
     // Create sphere at (1, 1, 1) with radius 1.25:
-    let sphere: Mesh = Mesh::sphere(1.25, 16, 8, ()).translate(1.0, 1.0, 1.0);
+    let radius = (Real::from(5) / Real::from(4)).unwrap();
+    let sphere: Mesh = Mesh::sphere(radius, 16, 8, ())
+        .translate(Real::one(), Real::one(), Real::one());
 
     // Perform a difference operation:
     let result = cube.difference(&sphere);
@@ -111,6 +110,24 @@ cargo run
 This results in a file named `cube_sphere_difference.stl` in the current directory
 and it can be viewed in a STL viewer such as [f3d](https://github.com/f3d-app/f3d)
 with, `f3d cube_sphere_difference.stl`.
+
+### Primitive scalar adapters
+
+Use [csgrs-adapter](adapters/README.md) when an application wants a primitive
+Rust scalar surface while keeping `csgrs` exact internally:
+
+```rust
+use csgrs_adapter::{F64, Mesh};
+
+type MeshF64 = Mesh<F64, ()>;
+
+fn main() -> Result<(), csgrs_adapter::AdapterError> {
+    let cube = MeshF64::cube(2.0, ())?;
+    let moved = cube.translate(1.0, 0.0, 0.0)?;
+    let _bounds = moved.bounding_box()?;
+    Ok(())
+}
+```
 
 ### Building for WASM
 
@@ -164,7 +181,7 @@ are no longer public API, and the crate no longer depends on `geo`.
 - <img src="docs/circle_with_two_flats.png" width="128" alt="top down view of a circle with two flat edges"/> **`Profile::circle_with_two_flats(radius: Real, segments: usize, flat_dist: Real, metadata: M)`**
 - <img src="docs/from_image.png" width="128" alt="top down view of a pixleated circle"/> **`Profile::from_image(img: &GrayImage, threshold: u8, closepaths: bool, metadata: M)`** - Builds a new CSG from the “on” pixels of a grayscale image
 - <img src="docs/text.png" width="128" alt="top down view of the text 'HELLO'"/> **`Profile::text(text: &str, font_data: &[u8], size: Real, metadata: M)`** - generate 2D text geometry in the XY plane from TTF fonts
-- <img src="docs/metaballs_2d.png" width="128" alt="top down view of three metaballs merged"/> **`Profile::metaballs(balls: &[(nalgebra::Point2<Real>, Real)], resolution: (usize, usize), iso_value: Real, padding: Real, metadata: M)`**
+- <img src="docs/metaballs_2d.png" width="128" alt="top down view of three metaballs merged"/> **`Profile::metaballs(balls: &[(hypercurve::Point2, Real)], resolution: (usize, usize), iso_value: Real, padding: Real, metadata: M)`**
 - <img src="docs/airfoil_naca4.png" width="128" alt="a side view of an airfoil"/> **`Profile::airfoil_naca4(max_camber: Real, camber_position: Real, thickness: Real, chord: Real, samples: usize, metadata: M)`** - [NACA 4 digit](https://en.wikipedia.org/wiki/NACA_airfoil#Four-digit_series) airfoil
 - <img src="docs/bezier.png" width="128" alt="top down view of a bezier curve"/> **`Profile::bezier(control: &[[Real; 2]], segments: usize, metadata: M)`**
 - <img src="docs/bspline.png" width="128" alt="top down view of a neer semi-circle shape"/> **`Profile::bspline(control: &[[Real; 2]], p: usize, segments_per_span: usize, metadata: M)`**
@@ -231,7 +248,7 @@ let lofted = Profile::loft(&bottom.polygons[0], &top.polygons[0], false);
     - a lazily cached polygon bounding box (`OnceLock<Aabb>`) used by boolean and query code.
     - a metadata field of type `M` defined by you
   - a bounding box wrapped in a OnceLock (bounding_box: OnceLock<Aabb>)
-  - a lazily built Parry `TriMesh` cache for repeated point/ray query operations
+  - lazily retained connectivity/query state where repeated operations benefit
   - another metadata field of type `M` also defined by you
 
 `Mesh<M>` provides methods for working with 3D shapes. You can build a
@@ -350,20 +367,24 @@ Types implementing the CSG trait also provide the following transformation funct
 - **`::float()`** - Returns the CSG translated so that its bottommost point(s) sit exactly at z=0
 - **`::transform(&Matrix4)`** - Returns the CSG after applying arbitrary affine transforms
 - <img src="docs/distribute_arc.png" width="128"/> **`::distribute_arc(count: usize, radius: Real, start_angle_deg: Real, end_angle_deg: Real)`**
-- <img src="docs/distribute_linear.png" width="128"/> **`::distribute_linear(count: usize, dir: nalgebra::Vector3, spacing: Real)`**
+- <img src="docs/distribute_linear.png" width="128"/> **`::distribute_linear(count: usize, dir: hyperlattice::Vector3, spacing: Real)`**
 - <img src="docs/distribute_grid.png" width="128"/> **`::distribute_grid(rows: usize, cols: usize, dx: Real, dy: Real)`**
 - <img src="docs/inverse.png" width="128"/> **`::inverse()`** - flips the inside/outside orientation.
 
 ```rust
-use nalgebra::Vector3;
+use hyperlattice::{Real, Vector3};
 use csgrs::mesh::plane::Plane;
-use csgrs::traits::CSG;
+use csgrs::csg::CSG;
 
-let moved = cube.translate(3.0, 0.0, 0.0);
-let moved2 = cube.translate_vector(Vector3::new(3.0, 0.0, 0.0));
-let rotated = sphere.rotate(0.0, 45.0, 90.0);
-let scaled = cylinder.scale(2.0, 1.0, 1.0);
-let plane_x = Plane { normal: Vector3::x(), w: 0.0 }; // x=0 plane
+fn r(value: f64) -> Real {
+    Real::try_from(value).expect("finite example scalar")
+}
+
+let moved = cube.translate(r(3.0), r(0.0), r(0.0));
+let moved2 = cube.translate_vector(Vector3::from_xyz(r(3.0), r(0.0), r(0.0)));
+let rotated = sphere.rotate(r(0.0), r(45.0), r(90.0));
+let scaled = cylinder.scale(r(2.0), r(1.0), r(1.0));
+let plane_x = Plane::from_normal(Vector3::x(), r(0.0)); // x=0 plane
 let plane_y = Plane { normal: Vector3::y(), w: 0.0 }; // y=0 plane
 let plane_z = Plane { normal: Vector3::z(), w: 0.0 }; // z=0 plane
 let mirrored = cube.mirror(plane_x);
@@ -438,46 +459,10 @@ use bevy::{prelude::*, render::render_asset::RenderAssetUsages, render::mesh::{I
 let bevy_mesh = mesh_obj.to_bevy_mesh();
 ```
 
-### Create a Parry `TriMesh`
+### Mesh Queries
 
-`mesh.to_trimesh()` returns an `Option<TriMesh<Real>>`. `mesh.to_rapier_shape()`
-wraps the same triangle data in a Rapier `SharedShape`. `Mesh::ray_intersections`,
-`Mesh::intersect_polyline`, and `Mesh::contains_vertex` use Parry ray and point
-queries, and the mesh stores a cached query `TriMesh` where the operation can
-reuse it.
-
-```rust
-use csgrs::float_types::parry3d::query::{Ray, RayCast};
-use nalgebra::{Point3, Vector3};
-
-let trimesh = mesh_obj.to_trimesh().expect("valid triangle mesh");
-let ray = Ray::new(Point3::new(-10.0, 0.0, 0.0), Vector3::x());
-let hit = trimesh.cast_local_ray(&ray, 100.0, false);
-```
-
-### Create a Rapier Rigid Body
-
-`csg.to_rigid_body(rb_set, co_set, translation, rotation, density)` helps build and insert both a rigid body and a collider:
-
-```rust
-use nalgebra::Vector3;
-use csgrs::float_types::rapier3d::prelude::*;  // f64 physics boundary
-use csgrs::float_types::FRAC_PI_2;
-use csgrs::traits::CSG;
-use csgrs::mesh::Mesh;
-
-let mut rb_set = RigidBodySet::new();
-let mut co_set = ColliderSet::new();
-
-let axis_angle = Vector3::z() * FRAC_PI_2; // 90° around Z
-let rb_handle = mesh_obj.to_rigid_body(
-    &mut rb_set,
-    &mut co_set,
-    Vector3::new(0.0, 0.0, 0.0), // translation
-    axis_angle,                  // axis-angle
-    1.0,                         // density
-);
-```
+Mesh queries such as `Mesh::intersect_polyline` and `Mesh::contains_vertex`
+operate on hyperlattice points and vectors directly.
 
 ### Mass Properties
 
@@ -503,22 +488,9 @@ if (mesh_obj.is_manifold()){
 
 ## Tolerance
 
-Finite `f32`/`f64` values are accepted at API and IO boundaries, then promoted
-into hyperreal-backed geometry for topology-sensitive work. The remaining
-finite comparisons use one process-wide runtime tolerance for legacy mesh and
-interop boundaries; there are no Cargo precision flags for choosing `f32` or
-`f64`.
-
-Set the tolerance once at program start:
-
-```rust
-fn main() {
-    csgrs::float_types::set_tolerance(1e-6);
-    // ... rest of the program ...
-}
-```
-
-> `set_tolerance` is a one-shot setter; subsequent calls are ignored. Use it at program start.
+Primitive `f32`/`f64` values are limited to IO, rendering, and JS boundary
+adapters, then promoted into hyperreal-backed geometry for topology-sensitive
+work. There are no Cargo precision flags and no global float tolerance setter.
 
 ## Working with Metadata
 
@@ -528,7 +500,7 @@ Use cases include storing color, ID, or layer info.
 ```rust
 use csgrs::polygon::Polygon;
 use csgrs::vertex::Vertex;
-use nalgebra::{Point3, Vector3};
+use hyperlattice::{Point3, Real, Vector3};
 
 #[derive(Clone)]
 struct MyMetadata {
@@ -596,8 +568,6 @@ The project is also intentionally experimental in several areas:
   finite offset compatibility is isolated behind the optional `offset` feature.
 - **WASM**: JavaScript bindings cover the core mesh/sketch APIs and are useful
   for browser previews, but the Rust API remains the source of truth.
-- **Toolpaths**: contour, pocket, FDM layer, lathe roughing, and G-code helpers
-  exist, with more CAM robustness work still needed.
 
 ## README Renders
 
@@ -645,7 +615,7 @@ README_RENDER_OUTPUT_DIR=/tmp/csgrs-readme-renders cargo run --example readme_re
   parallel, preserve borrowed-slice APIs, minimize allocations, and use cached
   AABBs/TriMesh acceleration structures in query-heavy code.
 - **I/O and integration**: improve glTF/Gerber output, add STEP/IGES research,
-  continue Bevy/Rapier interop, and keep WASM bindings aligned with the Rust API.
+  continue Bevy/WASM interop, and keep boundary bindings aligned with the Rust API.
 - **Testing**: keep expanding adversarial, fuzz, and property tests around
   degeneracy, invalid geometry, boolean edge cases, extrusion/sweep/revolve,
   import/export round trips, and tolerance boundaries.
@@ -681,14 +651,9 @@ README_RENDER_OUTPUT_DIR=/tmp/csgrs-readme-renders cargo run --example readme_re
 > 3D Surface Construction Algorithm.” *Computer Graphics*, vol. 21, no. 4, 1987,
 > pp. 163-169.
 
-> “nalgebra.” *Dimforge*, https://nalgebra.org/.
-
 > Patrikalakis, Nicholas M., Takashi Maekawa, and Wonjoon Cho. *Shape
 > Interrogation for Computer Aided Design and Manufacturing*. Hyperbook ed., MIT,
 > https://web.mit.edu/hyperbook/Patrikalakis-Maekawa-Cho/.
-
-> “Parry: 2D and 3D Collision Detection Libraries for Rust.” *Dimforge*,
-> https://parry.rs/.
 
 > Pharr, Matt, Wenzel Jakob, and Greg Humphreys. *Physically Based Rendering:
 > From Theory to Implementation*. 4th ed., MIT Press, 2023,
@@ -696,8 +661,6 @@ README_RENDER_OUTPUT_DIR=/tmp/csgrs-readme-renders cargo run --example readme_re
 
 > Prade, Inigo Quilez. “Distance Functions.” *Inigo Quilez*,
 > https://iquilezles.org/articles/distfunctions/.
-
-> “Rapier: 2D and 3D Physics Engines for Rust.” *Dimforge*, https://rapier.rs/.
 
 > Schoen, Alan H. *Infinite Periodic Minimal Surfaces without Self-Intersections*.
 > NASA Technical Note D-5541, 1970.

@@ -1,14 +1,9 @@
 //! Struct and functions for working with planar `Polygon`s without holes
 
-use crate::float_types::{
-    Real, hperpendicular_basis, hpoint3_bounds, hreal_from_f64, hreal_lt_f64,
-    htriangle_area2_is_nonzero, hunit_vector3, hvector3_dot, hvector3_from_point3,
-    hvector3_from_vector3, parry3d::bounding_volume::Aabb,
-};
 use crate::mesh::plane::Plane;
 use crate::vertex::Vertex;
-use hyperlattice::Vector3 as HVector3;
-use nalgebra::{Point3, Vector3};
+use hyperlattice::{Aabb, Point3, Real, Vector3};
+use hyperreal::RealSign;
 use std::sync::OnceLock;
 
 /// A polygon, defined by a list of vertices.
@@ -84,17 +79,19 @@ impl<M: Clone + Send + Sync> Polygon<M> {
 
     /// Axis aligned bounding box of this Polygon (cached after first call)
     pub fn bounding_box(&self) -> Aabb {
-        *self.bounding_box.get_or_init(|| {
-            let points = self
-                .vertices
-                .iter()
-                .map(|vertex| vertex.position)
-                .collect::<Vec<_>>();
-            let Some((mins, maxs)) = hpoint3_bounds(&points) else {
-                return Aabb::new(Point3::origin(), Point3::origin());
-            };
-            Aabb::new(mins, maxs)
-        })
+        self.bounding_box
+            .get_or_init(|| {
+                let points = self
+                    .vertices
+                    .iter()
+                    .map(|vertex| vertex.position.clone())
+                    .collect::<Vec<_>>();
+                let Some((mins, maxs)) = point3_bounds(&points) else {
+                    return Aabb::origin();
+                };
+                Aabb::new(mins, maxs)
+            })
+            .clone()
     }
 
     /// Reverses winding order, flips vertices normals, and flips the plane normal
@@ -117,7 +114,7 @@ impl<M: Clone + Send + Sync> Polygon<M> {
     /// Triangulate this polygon into `[v0, v1, v2]` triangles with hypertri.
     ///
     /// The polygon is projected from its 3D support plane to 2D, each finite
-    /// projected coordinate is promoted to `hyperreal::Real`, and hypertri's
+    /// projected coordinate is promoted to `Real`, and hypertri's
     /// exact ear-clipping path decides topology. The projection is a boundary
     /// conversion; all irreversible 2D orientation and containment predicates
     /// are then made in hyperreal space. This follows Yap's exact geometric
@@ -135,37 +132,27 @@ impl<M: Clone + Send + Sync> Polygon<M> {
         // Returning it directly avoids robustness problems with very thin
         // triangles and makes the fast-path cheaper.
         if self.vertices.len() == 3 {
-            let a = self.vertices[0];
-            let b = self.vertices[1];
-            let c = self.vertices[2];
+            let a = self.vertices[0].clone();
+            let b = self.vertices[1].clone();
+            let c = self.vertices[2].clone();
 
             return vec![[a, b, c]];
         }
 
-        let Some(normal_3d) = hunit_vector3(&self.plane.normal()) else {
+        let Ok(normal_3d) = self.plane.normal().normalize_checked() else {
             return Vec::new();
         };
-        let Some((u, v)) = hperpendicular_basis(&normal_3d) else {
+        let Ok((u, v)) = normal_3d.orthonormal_basis_checked() else {
             return Vec::new();
         };
-        let origin_3d = self.vertices[0].position;
+        let origin_3d = self.vertices[0].position.clone();
 
         let n_verts = self.vertices.len();
         let mut points_2d = Vec::with_capacity(n_verts);
         for vert in &self.vertices {
-            let offset = vert.position.coords - origin_3d.coords;
-            let Some(x) = hvector3_dot(&offset, &u) else {
-                return Vec::new();
-            };
-            let Some(y) = hvector3_dot(&offset, &v) else {
-                return Vec::new();
-            };
-            let Ok(x) = hreal_from_f64(x) else {
-                return Vec::new();
-            };
-            let Ok(y) = hreal_from_f64(y) else {
-                return Vec::new();
-            };
+            let offset = &vert.position - &origin_3d;
+            let x = offset.dot(&u);
+            let y = offset.dot(&v);
             points_2d.push(hypertri::Point2::new(x, y));
         }
 
@@ -181,7 +168,11 @@ impl<M: Clone + Send + Sync> Polygon<M> {
                 continue;
             }
 
-            let mut tri_vertices = [self.vertices[i0], self.vertices[i1], self.vertices[i2]];
+            let mut tri_vertices = [
+                self.vertices[i0].clone(),
+                self.vertices[i1].clone(),
+                self.vertices[i2].clone(),
+            ];
             let Some(orientation) = hyper_triangle_orientation(&tri_vertices, &normal_3d)
             else {
                 continue;
@@ -290,12 +281,12 @@ impl<M: Clone + Send + Sync> Polygon<M> {
     /// Return a normal calculated from all polygon vertices.
     ///
     /// The Newell-style accumulated area normal is evaluated with
-    /// `hyperlattice::Vector3<hyperreal::Real>` and checked-normalized before
+    /// `hyperlattice::Vector3` and checked-normalized before
     /// export to the current finite mesh boundary type. This keeps polygon
     /// normal recomputation on the same exact-geometric-computation boundary
     /// model used by plane predicates (Yap, *Computational Geometry* 7(1-2),
     /// 1997, <https://doi.org/10.1016/0925-7721(95)00040-2>).
-    pub fn calculate_new_normal(&self) -> Vector3<Real> {
+    pub fn calculate_new_normal(&self) -> Vector3 {
         let n = self.vertices.len();
         if n < 3 {
             return Vector3::z(); // degenerate or empty
@@ -303,13 +294,11 @@ impl<M: Clone + Send + Sync> Polygon<M> {
 
         if let Some(mut poly_normal) = hyper_polygon_newell_normal(&self.vertices) {
             let plane_normal = self.plane.normal();
-            if let (Some(poly_h), Some(plane_h)) = (
-                hvector3_from_vector3(&poly_normal),
-                hvector3_from_vector3(&plane_normal),
+            if matches!(
+                poly_normal.dot(&plane_normal).refine_sign_until(128),
+                Some(RealSign::Negative)
             ) {
-                if hreal_lt_f64(&poly_h.dot(&plane_h), 0.0) {
-                    poly_normal = -poly_normal;
-                }
+                poly_normal = -poly_normal;
             }
             return poly_normal;
         }
@@ -322,7 +311,7 @@ impl<M: Clone + Send + Sync> Polygon<M> {
         // Assign each vertex's normal to match the plane
         let new_normal = self.calculate_new_normal();
         for v in &mut self.vertices {
-            v.normal = new_normal;
+            v.normal = new_normal.clone();
         }
     }
 
@@ -348,11 +337,35 @@ enum TriangleOrientation {
     Reversed,
 }
 
+fn point3_bounds(points: &[Point3]) -> Option<(Point3, Point3)> {
+    let first = points.first()?;
+    let mut min_x = first.x.clone();
+    let mut min_y = first.y.clone();
+    let mut min_z = first.z.clone();
+    let mut max_x = min_x.clone();
+    let mut max_y = min_y.clone();
+    let mut max_z = min_z.clone();
+
+    for point in &points[1..] {
+        min_x = hyperlimit::real_min(&min_x, &point.x).value()?.clone();
+        min_y = hyperlimit::real_min(&min_y, &point.y).value()?.clone();
+        min_z = hyperlimit::real_min(&min_z, &point.z).value()?.clone();
+        max_x = hyperlimit::real_max(&max_x, &point.x).value()?.clone();
+        max_y = hyperlimit::real_max(&max_y, &point.y).value()?.clone();
+        max_z = hyperlimit::real_max(&max_z, &point.z).value()?.clone();
+    }
+
+    Some((
+        Point3::new(min_x, min_y, min_z),
+        Point3::new(max_x, max_y, max_z),
+    ))
+}
+
 /// Classify a triangulated face against the polygon normal with hyperreal predicates.
 ///
 /// The winding normal is evaluated as `(b-a) x (c-a)` in
 /// `hyperlattice::Vector3`; degenerate-area and orientation-sign decisions are
-/// then made in `hyperreal::Real`. This keeps the post-`hypertri` topology
+/// then made in `Real`. This keeps the post-`hypertri` topology
 /// filter out of local f64 dot/cross comparisons, following Yap, "Towards
 /// Exact Geometric Computation," *Computational Geometry* 7(1-2), 1997
 /// (<https://doi.org/10.1016/0925-7721(95)00040-2>). The triangulation context
@@ -361,40 +374,37 @@ enum TriangleOrientation {
 /// (<https://doi.org/10.2307/2319703>).
 fn hyper_triangle_orientation(
     tri_vertices: &[Vertex; 3],
-    polygon_normal: &Vector3<Real>,
+    polygon_normal: &Vector3,
 ) -> Option<TriangleOrientation> {
-    if !htriangle_area2_is_nonzero(
-        &tri_vertices[0].position,
-        &tri_vertices[1].position,
-        &tri_vertices[2].position,
+    let area2 = (&tri_vertices[1].position - &tri_vertices[0].position)
+        .cross(&(&tri_vertices[2].position - &tri_vertices[0].position));
+    if !matches!(
+        area2.dot(&area2).refine_sign_until(128),
+        Some(RealSign::Positive | RealSign::Negative)
     ) {
         return None;
     }
 
-    let a = hyperlimit::Point3::try_from_f64_array([
-        tri_vertices[0].position.x,
-        tri_vertices[0].position.y,
-        tri_vertices[0].position.z,
-    ])
-    .ok()?;
-    let b = hyperlimit::Point3::try_from_f64_array([
-        tri_vertices[1].position.x,
-        tri_vertices[1].position.y,
-        tri_vertices[1].position.z,
-    ])
-    .ok()?;
-    let c = hyperlimit::Point3::try_from_f64_array([
-        tri_vertices[2].position.x,
-        tri_vertices[2].position.y,
-        tri_vertices[2].position.z,
-    ])
-    .ok()?;
-    let normal = hyperlimit::Point3::try_from_f64_array([
-        polygon_normal.x,
-        polygon_normal.y,
-        polygon_normal.z,
-    ])
-    .ok()?;
+    let a = hyperlimit::Point3::new(
+        tri_vertices[0].position.x.clone(),
+        tri_vertices[0].position.y.clone(),
+        tri_vertices[0].position.z.clone(),
+    );
+    let b = hyperlimit::Point3::new(
+        tri_vertices[1].position.x.clone(),
+        tri_vertices[1].position.y.clone(),
+        tri_vertices[1].position.z.clone(),
+    );
+    let c = hyperlimit::Point3::new(
+        tri_vertices[2].position.x.clone(),
+        tri_vertices[2].position.y.clone(),
+        tri_vertices[2].position.z.clone(),
+    );
+    let normal = hyperlimit::Point3::new(
+        polygon_normal.0[0].clone(),
+        polygon_normal.0[1].clone(),
+        polygon_normal.0[2].clone(),
+    );
 
     if matches!(
         hyperlimit::triangle3_winding_normal_sign(&a, &b, &c, &normal).value(),
@@ -406,20 +416,18 @@ fn hyper_triangle_orientation(
     }
 }
 
-fn hyper_polygon_newell_normal(vertices: &[Vertex]) -> Option<Vector3<Real>> {
+fn hyper_polygon_newell_normal(vertices: &[Vertex]) -> Option<Vector3> {
     let points = vertices
         .iter()
-        .map(|vertex| hvector3_from_point3(&vertex.position))
-        .collect::<Option<Vec<_>>>()?;
+        .map(|vertex| vertex.position.to_vector())
+        .collect::<Vec<_>>();
     let normal = points
         .iter()
         .zip(points.iter().cycle().skip(1))
-        .fold(HVector3::zero(), |acc, (current, next)| {
+        .fold(Vector3::zero(), |acc, (current, next)| {
             acc + current.cross(next)
         });
-    let normal = normal.normalize_checked().ok()?;
-    let [x, y, z] = normal.to_f64_array_lossy()?;
-    Some(Vector3::new(x, y, z))
+    normal.normalize_checked().ok()
 }
 
 /// Given a normal vector `n`, build two perpendicular unit vectors `u` and `v`
@@ -429,8 +437,8 @@ fn hyper_polygon_newell_normal(vertices: &[Vertex]) -> Option<Vector3<Real>> {
 /// `hyperlattice::Vector3`; the returned vectors are finite mesh-boundary
 /// values used by projection code. This follows Yap's exact-geometric-
 /// computation boundary discipline (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-pub fn build_orthonormal_basis(n: Vector3<Real>) -> (Vector3<Real>, Vector3<Real>) {
-    if let Some(basis) = hperpendicular_basis(&n) {
+pub fn build_orthonormal_basis(n: Vector3) -> (Vector3, Vector3) {
+    if let Ok(basis) = n.orthonormal_basis_checked() {
         return basis;
     }
 
@@ -439,14 +447,15 @@ pub fn build_orthonormal_basis(n: Vector3<Real>) -> (Vector3<Real>, Vector3<Real
 
 /// Helper function to subdivide a triangle into four smaller triangles.
 pub fn subdivide_triangle(tri: [Vertex; 3]) -> [[Vertex; 3]; 4] {
-    let v01 = tri[0].interpolate(&tri[1], 0.5);
-    let v12 = tri[1].interpolate(&tri[2], 0.5);
-    let v20 = tri[2].interpolate(&tri[0], 0.5);
+    let half = (Real::one() / Real::from(2_u8)).expect("nonzero exact denominator");
+    let v01 = tri[0].interpolate(&tri[1], half.clone());
+    let v12 = tri[1].interpolate(&tri[2], half.clone());
+    let v20 = tri[2].interpolate(&tri[0], half);
 
     [
-        [tri[0], v01, v20],
-        [v01, tri[1], v12],
-        [v20, v12, tri[2]],
+        [tri[0].clone(), v01.clone(), v20.clone()],
+        [v01.clone(), tri[1].clone(), v12.clone()],
+        [v20.clone(), v12.clone(), tri[2].clone()],
         [v01, v12, v20],
     ]
 }
@@ -454,16 +463,25 @@ pub fn subdivide_triangle(tri: [Vertex; 3]) -> [[Vertex; 3]; 4] {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::hyper_math::{Real, hreal_from_f64};
+
+    fn r(value: f64) -> Real {
+        hreal_from_f64(value).expect("test values must be finite")
+    }
+
+    fn p3(x: f64, y: f64, z: f64) -> Point3 {
+        Point3::new(r(x), r(y), r(z))
+    }
 
     #[test]
     fn hyper_triangle_orientation_classifies_aligned_and_reversed() {
         let normal = Vector3::z();
         let aligned = [
-            Vertex::new(Point3::new(0.0, 0.0, 0.0), normal),
-            Vertex::new(Point3::new(1.0, 0.0, 0.0), normal),
-            Vertex::new(Point3::new(0.0, 1.0, 0.0), normal),
+            Vertex::new(p3(0.0, 0.0, 0.0), normal.clone()),
+            Vertex::new(p3(1.0, 0.0, 0.0), normal.clone()),
+            Vertex::new(p3(0.0, 1.0, 0.0), normal.clone()),
         ];
-        let reversed = [aligned[0], aligned[2], aligned[1]];
+        let reversed = [aligned[0].clone(), aligned[2].clone(), aligned[1].clone()];
 
         assert_eq!(
             hyper_triangle_orientation(&aligned, &normal),
@@ -479,9 +497,9 @@ mod tests {
     fn hyper_triangle_orientation_accepts_tiny_nonzero_triangle() {
         let normal = Vector3::z();
         let tiny = [
-            Vertex::new(Point3::new(0.0, 0.0, 0.0), normal),
-            Vertex::new(Point3::new(1.0e-15, 0.0, 0.0), normal),
-            Vertex::new(Point3::new(0.0, 1.0e-15, 0.0), normal),
+            Vertex::new(p3(0.0, 0.0, 0.0), normal.clone()),
+            Vertex::new(p3(1.0e-15, 0.0, 0.0), normal.clone()),
+            Vertex::new(p3(0.0, 1.0e-15, 0.0), normal.clone()),
         ];
 
         assert_eq!(
@@ -494,9 +512,9 @@ mod tests {
     fn hyper_triangle_orientation_rejects_exact_zero_area_triangle() {
         let normal = Vector3::z();
         let degenerate = [
-            Vertex::new(Point3::new(0.0, 0.0, 0.0), normal),
-            Vertex::new(Point3::new(1.0, 0.0, 0.0), normal),
-            Vertex::new(Point3::new(2.0, 0.0, 0.0), normal),
+            Vertex::new(p3(0.0, 0.0, 0.0), normal.clone()),
+            Vertex::new(p3(1.0, 0.0, 0.0), normal.clone()),
+            Vertex::new(p3(2.0, 0.0, 0.0), normal.clone()),
         ];
 
         assert_eq!(hyper_triangle_orientation(&degenerate, &normal), None);

@@ -7,16 +7,17 @@ use crate::polygon::build_orthonormal_basis;
 fn test_polygon_new() {
     let vertices = vec![
         Vertex::new(Point3::origin(), Vector3::z()),
-        Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
-        Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
+        Vertex::new(p3(1.0, 0.0, 0.0), Vector3::z()),
+        Vertex::new(p3(0.0, 1.0, 0.0), Vector3::z()),
     ];
     let poly: Polygon<()> = Polygon::new(vertices.clone(), ());
     assert_eq!(poly.vertices.len(), 3);
     assert_eq!(poly.metadata, ());
     // Plane normal should be +Z for the above points
-    assert!(approx_eq(poly.plane.normal().x, 0.0, tolerance()));
-    assert!(approx_eq(poly.plane.normal().y, 0.0, tolerance()));
-    assert!(approx_eq(poly.plane.normal().z, 1.0, tolerance()));
+    let normal = poly.plane.normal();
+    assert!(approx_eq(&normal.0[0], 0.0, tolerance()));
+    assert!(approx_eq(&normal.0[1], 0.0, tolerance()));
+    assert!(approx_eq(&normal.0[2], 1.0, tolerance()));
 }
 
 #[test]
@@ -24,8 +25,8 @@ fn test_polygon_flip() {
     let mut poly: Polygon<()> = Polygon::new(
         vec![
             Vertex::new(Point3::origin(), Vector3::z()),
-            Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
-            Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
+            Vertex::new(p3(1.0, 0.0, 0.0), Vector3::z()),
+            Vertex::new(p3(0.0, 1.0, 0.0), Vector3::z()),
         ],
         (),
     );
@@ -33,19 +34,20 @@ fn test_polygon_flip() {
     poly.flip();
     // The vertices should be reversed, and normal flipped
     assert_eq!(poly.vertices.len(), 3);
+    let plane_normal_after = poly.plane.normal();
     assert!(approx_eq(
-        poly.plane.normal().x,
-        -plane_normal_before.x,
+        &plane_normal_after.0[0],
+        -plane_normal_before.0[0].clone(),
         tolerance()
     ));
     assert!(approx_eq(
-        poly.plane.normal().y,
-        -plane_normal_before.y,
+        &plane_normal_after.0[1],
+        -plane_normal_before.0[1].clone(),
         tolerance()
     ));
     assert!(approx_eq(
-        poly.plane.normal().z,
-        -plane_normal_before.z,
+        &plane_normal_after.0[2],
+        -plane_normal_before.0[2].clone(),
         tolerance()
     ));
 }
@@ -56,9 +58,9 @@ fn test_polygon_triangulate() {
     let poly: Polygon<()> = Polygon::new(
         vec![
             Vertex::new(Point3::origin(), Vector3::z()),
-            Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
-            Vertex::new(Point3::new(1.0, 1.0, 0.0), Vector3::z()),
-            Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
+            Vertex::new(p3(1.0, 0.0, 0.0), Vector3::z()),
+            Vertex::new(p3(1.0, 1.0, 0.0), Vector3::z()),
+            Vertex::new(p3(0.0, 1.0, 0.0), Vector3::z()),
         ],
         (),
     );
@@ -77,8 +79,8 @@ fn test_polygon_subdivide_triangles() {
     let poly: Polygon<()> = Polygon::new(
         vec![
             Vertex::new(Point3::origin(), Vector3::z()),
-            Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
-            Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
+            Vertex::new(p3(1.0, 0.0, 0.0), Vector3::z()),
+            Vertex::new(p3(0.0, 1.0, 0.0), Vector3::z()),
         ],
         (),
     );
@@ -96,17 +98,17 @@ fn test_polygon_recalc_plane_and_normals() {
     let mut poly: Polygon<()> = Polygon::new(
         vec![
             Vertex::new(Point3::origin(), Vector3::zeros()),
-            Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::zeros()),
-            Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::zeros()),
+            Vertex::new(p3(1.0, 0.0, 0.0), Vector3::zeros()),
+            Vertex::new(p3(0.0, 1.0, 0.0), Vector3::zeros()),
         ],
         (),
     );
     poly.set_new_normal();
-    assert!(approx_eq(poly.plane.normal().z, 1.0, tolerance()));
+    assert!(approx_eq(&poly.plane.normal().0[2], 1.0, tolerance()));
     for v in &poly.vertices {
-        assert!(approx_eq(v.normal.x, 0.0, tolerance()));
-        assert!(approx_eq(v.normal.y, 0.0, tolerance()));
-        assert!(approx_eq(v.normal.z, 1.0, tolerance()));
+        assert!(approx_eq(&v.normal.0[0], 0.0, tolerance()));
+        assert!(approx_eq(&v.normal.0[1], 0.0, tolerance()));
+        assert!(approx_eq(&v.normal.0[2], 1.0, tolerance()));
     }
 }
 
@@ -114,24 +116,24 @@ fn test_polygon_recalc_plane_and_normals() {
 fn polygon_newell_normal_and_basis_use_hyperreal_checked_normalization() {
     let mut poly: Polygon<()> = Polygon::new(
         vec![
-            Vertex::new(Point3::new(0.0, 0.0, 2.0), Vector3::zeros()),
-            Vertex::new(Point3::new(3.0, 0.0, 2.0), Vector3::zeros()),
-            Vertex::new(Point3::new(3.0, 4.0, 2.0), Vector3::zeros()),
-            Vertex::new(Point3::new(0.0, 4.0, 2.0), Vector3::zeros()),
+            Vertex::new(p3(0.0, 0.0, 2.0), Vector3::zeros()),
+            Vertex::new(p3(3.0, 0.0, 2.0), Vector3::zeros()),
+            Vertex::new(p3(3.0, 4.0, 2.0), Vector3::zeros()),
+            Vertex::new(p3(0.0, 4.0, 2.0), Vector3::zeros()),
         ],
         (),
     );
     poly.set_new_normal();
 
     for vertex in &poly.vertices {
-        assert!((vertex.normal.norm() - 1.0).abs() < tolerance());
-        assert!(vertex.normal.dot(&Vector3::z()) > 1.0 - tolerance());
+        assert!((vertex.normal.norm() - r(1.0)).abs() < tolerance());
+        assert!(vertex.normal.dot(&Vector3::z()) > r(1.0) - tolerance());
     }
 
-    let (u, v) = build_orthonormal_basis(Vector3::new(2.0, 3.0, 6.0));
-    let n = Vector3::new(2.0, 3.0, 6.0).normalize();
-    assert!((u.norm() - 1.0).abs() < tolerance());
-    assert!((v.norm() - 1.0).abs() < tolerance());
+    let (u, v) = build_orthonormal_basis(v3(2.0, 3.0, 6.0));
+    let n = v3(2.0, 3.0, 6.0).normalize().unwrap();
+    assert!((u.norm() - r(1.0)).abs() < tolerance());
+    assert!((v.norm() - r(1.0)).abs() < tolerance());
     assert!(u.dot(&v).abs() < tolerance());
     assert!(u.dot(&n).abs() < tolerance());
     assert!(v.dot(&n).abs() < tolerance());

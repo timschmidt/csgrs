@@ -2,6 +2,7 @@
 
 use crate::polygon::Polygon;
 use crate::vertex::Vertex;
+use crate::wasm::real_to_js;
 use crate::wasm::{
     js_metadata_to_string, plane_js::PlaneJs, point_js::Point3Js, vector_js::Vector3Js,
     vertex_js::VertexJs,
@@ -82,8 +83,8 @@ impl PolygonJs {
     #[wasm_bindgen(js_name = boundingBox)]
     pub fn bounding_box(&self) -> JsValue {
         let bb = self.inner.bounding_box();
-        let min_js = Point3Js::from(bb.mins);
-        let max_js = Point3Js::from(bb.maxs);
+        let min_js = Point3Js::from(bb.mins.clone());
+        let max_js = Point3Js::from(bb.maxs.clone());
 
         let obj = Object::new();
         Reflect::set(&obj, &"min".into(), &JsValue::from(min_js)).unwrap();
@@ -125,12 +126,12 @@ impl PolygonJs {
         let mut data = Vec::with_capacity(self.inner.vertices.len() * 6);
 
         for v in &self.inner.vertices {
-            data.push(v.position.x as f64);
-            data.push(v.position.y as f64);
-            data.push(v.position.z as f64);
-            data.push(v.normal.x as f64);
-            data.push(v.normal.y as f64);
-            data.push(v.normal.z as f64);
+            data.push(real_to_js(&v.position.x));
+            data.push(real_to_js(&v.position.y));
+            data.push(real_to_js(&v.position.z));
+            data.push(real_to_js(&v.normal.0[0]));
+            data.push(real_to_js(&v.normal.0[1]));
+            data.push(real_to_js(&v.normal.0[2]));
         }
 
         data

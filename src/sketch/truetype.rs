@@ -1,13 +1,8 @@
 //! Create `Profile`s using ttf fonts
 
-use crate::float_types::{
-    Real, hreal_cmp_f64, hreal_div, hreal_f64s_exactly_equal, hreal_from_f64, hreal_gt_f64,
-    hreal_mul, hreal_sum, hxy_ring_orientation_sign,
-};
+use crate::hyper_math::{Real, hreal_to_f64};
 use crate::sketch::Profile;
 use hypercurve::{Contour2, CurveString2, Region2};
-use hyperreal::RealSign;
-use std::cmp::Ordering;
 use std::fmt::Debug;
 use ttf_parser::{Face, GlyphId, OutlineBuilder};
 use ttf_utils::Outline;
@@ -47,31 +42,25 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         };
 
         // Treat `scale` as points-per-em and convert points to millimeters.
-        let units_per_em = face.units_per_em() as Real;
-        let Ok(scale_h) = hreal_from_f64(scale) else {
+        let units_per_em = f64::from(face.units_per_em());
+        let Some(scale) = hreal_to_f64(&scale) else {
             return Profile::empty(metadata);
         };
-        if !hreal_gt_f64(&scale_h, 0.0)
-            || hreal_cmp_f64(units_per_em, 0.0) != Ordering::Greater
-        {
+        if scale <= 0.0 || units_per_em <= 0.0 {
             return Profile::empty(metadata);
         }
-        let Some(font_scale) =
-            hreal_mul(scale, 0.3527777).and_then(|scaled| hreal_div(scaled, units_per_em))
-        else {
-            return Profile::empty(metadata);
-        };
+        let font_scale = scale * 0.3527777 / units_per_em;
         let default_advance = default_advance(&face, font_scale);
         let line_advance = line_advance(&face, font_scale);
-        let tab_advance = hreal_mul(default_advance, 4.0).unwrap_or(default_advance);
+        let tab_advance = default_advance * 4.0;
 
         let mut material_contours = Vec::new();
         let mut hole_contours = Vec::new();
         let mut wires = Vec::new();
 
         // 3) A simple "pen" cursor for horizontal text layout
-        let mut cursor_x = 0.0 as Real;
-        let mut cursor_y = 0.0 as Real;
+        let mut cursor_x = 0.0;
+        let mut cursor_y = 0.0;
         let mut previous_glyph = None;
 
         for ch in text.chars() {
@@ -102,18 +91,13 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
             // Find glyph index in the font
             if let Some(gid) = face.glyph_index(ch) {
                 if let Some(previous) = previous_glyph {
-                    if let Some(kerning) =
-                        hreal_mul(glyph_pair_kerning(&face, previous, gid), font_scale)
-                    {
-                        cursor_x += kerning;
-                    }
+                    cursor_x += glyph_pair_kerning(&face, previous, gid) * font_scale;
                 }
 
                 // Extract the glyph outline (if any)
                 if let Some(outline) = Outline::new(&face, gid) {
                     // Flatten the outline into line segments
-                    let mut collector =
-                        OutlineFlattener::new(font_scale as Real, cursor_x as Real, cursor_y);
+                    let mut collector = OutlineFlattener::new(font_scale, cursor_x, cursor_y);
                     outline.emit(&mut collector);
                     collector.finish_open_subpath();
 
@@ -128,11 +112,22 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
                         if closed_pts.len() < 3 {
                             continue;
                         }
-                        let orientation = hxy_ring_orientation_sign(&closed_pts);
+                        let ring = closed_pts
+                            .iter()
+                            .map(|point| {
+                                let x = Real::try_from(point[0]).ok()?;
+                                let y = Real::try_from(point[1]).ok()?;
+                                Some(hyperlimit::Point2::new(x, y))
+                            })
+                            .collect::<Option<Vec<_>>>();
+                        let Some(ring) = ring else {
+                            continue;
+                        };
+                        let orientation = hyperlimit::ring_area_sign(&ring).value();
                         let Ok(contour) = Contour2::from_finite_ring(&closed_pts) else {
                             continue;
                         };
-                        if matches!(orientation, Some(RealSign::Negative)) {
+                        if matches!(orientation, Some(hyperlimit::Sign::Negative)) {
                             material_contours.push(contour);
                         } else {
                             hole_contours.push(contour);
@@ -168,43 +163,38 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
 fn glyph_advance(
     face: &Face<'_>,
     glyph_id: GlyphId,
-    font_scale: Real,
-    default_advance: Real,
-) -> Real {
+    font_scale: f64,
+    default_advance: f64,
+) -> f64 {
     face.glyph_hor_advance(glyph_id)
-        .and_then(|advance| hreal_mul(advance as Real, font_scale))
-        .filter(|advance| hreal_cmp_f64(*advance, 0.0) != Ordering::Less)
+        .map(|advance| f64::from(advance) * font_scale)
+        .filter(|advance| *advance >= 0.0)
         .unwrap_or(default_advance)
 }
 
-fn default_advance(face: &Face<'_>, font_scale: Real) -> Real {
+fn default_advance(face: &Face<'_>, font_scale: f64) -> f64 {
     face.glyph_index(' ')
         .and_then(|glyph_id| face.glyph_hor_advance(glyph_id))
-        .and_then(|advance| hreal_mul(advance as Real, font_scale))
-        .filter(|advance| hreal_cmp_f64(*advance, 0.0) == Ordering::Greater)
-        .unwrap_or_else(|| {
-            hreal_mul(face.units_per_em() as Real, font_scale)
-                .and_then(|advance| hreal_mul(advance, 0.5))
-                .unwrap_or(0.0)
-        })
+        .map(|advance| f64::from(advance) * font_scale)
+        .filter(|advance| *advance > 0.0)
+        .unwrap_or_else(|| f64::from(face.units_per_em()) * font_scale * 0.5)
 }
 
-fn line_advance(face: &Face<'_>, font_scale: Real) -> Real {
-    let height = face.height() as Real;
-    let line_gap = face.line_gap() as Real;
-    let nominal = hreal_sum(&[height, line_gap]).unwrap_or(face.units_per_em() as Real);
-    let em = face.units_per_em() as Real;
-    let line_units = if hreal_cmp_f64(nominal, em) == Ordering::Less {
-        em
+fn line_advance(face: &Face<'_>, font_scale: f64) -> f64 {
+    let height = f64::from(face.height());
+    let line_gap = f64::from(face.line_gap());
+    let nominal = height + line_gap;
+    let em = f64::from(face.units_per_em());
+    let line_units = if nominal < em { em } else { nominal };
+    let advance = line_units * font_scale;
+    if advance > 0.0 {
+        advance
     } else {
-        nominal
-    };
-    hreal_mul(line_units, font_scale)
-        .filter(|advance| hreal_cmp_f64(*advance, 0.0) == Ordering::Greater)
-        .unwrap_or_else(|| hreal_mul(em, font_scale).unwrap_or(0.0))
+        em * font_scale
+    }
 }
 
-fn glyph_pair_kerning(face: &Face<'_>, left: GlyphId, right: GlyphId) -> Real {
+fn glyph_pair_kerning(face: &Face<'_>, left: GlyphId, right: GlyphId) -> f64 {
     let gpos_adjustment = gpos_pair_adjustment(face, left, right);
     if gpos_adjustment != 0.0 {
         return gpos_adjustment;
@@ -213,7 +203,7 @@ fn glyph_pair_kerning(face: &Face<'_>, left: GlyphId, right: GlyphId) -> Real {
     kern_pair_adjustment(face, left, right)
 }
 
-fn kern_pair_adjustment(face: &Face<'_>, left: GlyphId, right: GlyphId) -> Real {
+fn kern_pair_adjustment(face: &Face<'_>, left: GlyphId, right: GlyphId) -> f64 {
     let Some(kern) = face.tables().kern else {
         return 0.0;
     };
@@ -224,11 +214,11 @@ fn kern_pair_adjustment(face: &Face<'_>, left: GlyphId, right: GlyphId) -> Real 
             subtable.horizontal && !subtable.has_cross_stream && !subtable.has_state_machine
         })
         .filter_map(|subtable| subtable.glyphs_kerning(left, right))
-        .map(|value| value as Real)
+        .map(f64::from)
         .sum()
 }
 
-fn gpos_pair_adjustment(face: &Face<'_>, left: GlyphId, right: GlyphId) -> Real {
+fn gpos_pair_adjustment(face: &Face<'_>, left: GlyphId, right: GlyphId) -> f64 {
     let Some(gpos) = face.tables().gpos else {
         return 0.0;
     };
@@ -250,7 +240,7 @@ fn gpos_pair_adjustment(face: &Face<'_>, left: GlyphId, right: GlyphId) -> Real 
                     .and_then(|index| sets.get(index))
                     .and_then(|set| set.get(right))
                     .map(|(left_value, right_value)| {
-                        left_value.x_advance as Real + right_value.x_placement as Real
+                        f64::from(left_value.x_advance) + f64::from(right_value.x_placement)
                     })
                     .unwrap_or(0.0),
                 ttf_parser::gpos::PairAdjustment::Format2 {
@@ -260,7 +250,8 @@ fn gpos_pair_adjustment(face: &Face<'_>, left: GlyphId, right: GlyphId) -> Real 
                     matrix
                         .get(class_pair)
                         .map(|(left_value, right_value)| {
-                            left_value.x_advance as Real + right_value.x_placement as Real
+                            f64::from(left_value.x_advance)
+                                + f64::from(right_value.x_placement)
                         })
                         .unwrap_or(0.0)
                 },
@@ -279,21 +270,21 @@ fn gpos_pair_adjustment(face: &Face<'_>, left: GlyphId, right: GlyphId) -> Real 
 /// - If we start a new MoveTo while the old subpath is open, that old subpath is treated as open (`open_contours`).
 struct OutlineFlattener {
     // scale + offset
-    scale: Real,
-    offset_x: Real,
-    offset_y: Real,
+    scale: f64,
+    offset_x: f64,
+    offset_y: f64,
 
     // We gather shapes: each "subpath" can be closed or open
-    contours: Vec<Vec<[Real; 2]>>,      // closed polygons
-    open_contours: Vec<Vec<[Real; 2]>>, // open polylines
+    contours: Vec<Vec<[f64; 2]>>,      // closed polygons
+    open_contours: Vec<Vec<[f64; 2]>>, // open polylines
 
-    current: Vec<[Real; 2]>, // points for the subpath
-    last_pt: [Real; 2],      // current "cursor" in flattening
+    current: Vec<[f64; 2]>, // points for the subpath
+    last_pt: [f64; 2],      // current "cursor" in flattening
     subpath_open: bool,
 }
 
 impl OutlineFlattener {
-    const fn new(scale: Real, offset_x: Real, offset_y: Real) -> Self {
+    const fn new(scale: f64, offset_x: f64, offset_y: f64) -> Self {
         Self {
             scale,
             offset_x,
@@ -308,9 +299,9 @@ impl OutlineFlattener {
 
     /// Helper: transform TTF coordinates => final (x,y)
     #[inline]
-    fn tx(&self, x: f32, y: f32) -> [Real; 2] {
-        let sx = x as Real * self.scale + self.offset_x;
-        let sy = y as Real * self.scale + self.offset_y;
+    fn tx(&self, x: f32, y: f32) -> [f64; 2] {
+        let sx = f64::from(x) * self.scale + self.offset_x;
+        let sy = f64::from(y) * self.scale + self.offset_y;
         [sx, sy]
     }
 
@@ -353,7 +344,7 @@ impl OutlineFlattener {
 
         // B(t) = (1 - t)^2 * p0 + 2(1 - t)t * cp + t^2 * p2
         for i in 1..=steps {
-            let t = i as Real / steps as Real;
+            let t = i as f64 / steps as f64;
             let mt = 1.0 - t;
             let bx = mt * mt * px0 + 2.0 * mt * t * px1 + t * t * px2;
             let by = mt * mt * py0 + 2.0 * mt * t * py1 + t * t * py2;
@@ -372,7 +363,7 @@ impl OutlineFlattener {
 
         // B(t) = (1-t)^3 p0 + 3(1-t)^2 t c1 + 3(1-t) t^2 c2 + t^3 p3
         for i in 1..=steps {
-            let t = i as Real / steps as Real;
+            let t = i as f64 / steps as f64;
             let mt = 1.0 - t;
             let mt2 = mt * mt;
             let t2 = t * t;
@@ -395,7 +386,7 @@ impl OutlineFlattener {
             // (<https://doi.org/10.1016/0925-7721(95)00040-2>).
             let first = self.current[0];
             let last = self.current[n - 1];
-            if !same_outline_point(first, last) {
+            if first != last {
                 self.current.push(first);
             }
             // That becomes one closed contour
@@ -406,25 +397,6 @@ impl OutlineFlattener {
 
         self.current.clear();
         self.subpath_open = false;
-    }
-}
-
-fn same_outline_point(first: [Real; 2], last: [Real; 2]) -> bool {
-    hreal_f64s_exactly_equal(first[0], last[0]) && hreal_f64s_exactly_equal(first[1], last[1])
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::float_types::tolerance;
-
-    #[test]
-    fn truetype_outline_closure_uses_exact_endpoint_identity() {
-        assert!(same_outline_point([1.0, 2.0], [1.0, 2.0]));
-        assert!(!same_outline_point(
-            [1.0, 2.0],
-            [1.0 + tolerance() * 0.25, 2.0]
-        ));
     }
 }
 
