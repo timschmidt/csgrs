@@ -1,6 +1,6 @@
 [package]
 name = "hyperpath"
-version = "0.2.1"
+version = "0.3.0"
 edition = "2024"
 description = "Exact-aware path predicates and route constraints for the Hyper ecosystem"
 authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
@@ -11,15 +11,14 @@ keywords = ["paths", "routing", "constraints", "hyperreal", "cad"]
 categories = ["algorithms", "mathematics", "science"]
 
 [dependencies]
-# Hyper ecosystem dependencies: keep the crate-official release references and
-# the commented workspace references below. Switch to the workspace form for
-# local development, then switch back to crates.io versions before publishing.
+# Hyper sibling dependency switch: keep both local path and crates.io lines; do not remove either.
+# Development mode uses the local path lines. For release, comment those and uncomment the crates.io lines.
 hyperlimit = { path = "../hyperlimit", default-features = false }
-hyperreal = { version = "0.12.0", default-features = false }
+hyperreal = { path = "../hyperreal", default-features = false }
 hypersolve = { path = "../hypersolve", default-features = false }
-# hyperlimit = { path = "../hyperlimit", default-features = false }
-# hyperreal = { path = "../hyperreal", default-features = false }
-# hypersolve = { path = "../hypersolve", default-features = false }
+# hyperlimit = { version = "0.4.0", default-features = false }
+# hyperreal = { version = "0.13.0", default-features = false }
+# hypersolve = { version = "0.3.0", default-features = false }
 [dev-dependencies]
 criterion = "0.5"
 proptest = "1.7.0"
