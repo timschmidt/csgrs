@@ -1,6 +1,6 @@
 [package]
 name = "hypercircuit"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2024"
 description = "Exact-aware circuit MNA carriers and adapter reports for the Hyper ecosystem"
 license = "Apache-2.0"
@@ -10,12 +10,12 @@ keywords = ["circuits", "mna", "simulation", "hyperreal", "electronics"]
 categories = ["science", "simulation", "mathematics"]
 
 [dependencies]
-# Hyper ecosystem dependencies: keep the crate-official release references and
-# the commented workspace references below. Switch to the workspace form for
-# local development, then switch back to crates.io versions before publishing.
-hyperreal = { version = "0.12.0" }
+# Hyper sibling dependency switch: keep both local path and crates.io lines; do not remove either.
+# Development mode uses the local path lines. For release, comment those and uncomment the crates.io lines.
+hyperreal = { path = "../hyperreal" }
 hypersolve = { path = "../hypersolve" }
-# hyperreal = { path = "../hyperreal" }
+# hyperreal = { version = "0.13.0" }
+# hypersolve = { version = "0.3.0" }
 [dev-dependencies]
 proptest = "1.7.0"
 
