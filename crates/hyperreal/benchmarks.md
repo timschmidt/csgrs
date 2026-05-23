@@ -319,6 +319,9 @@ Borrowed versus owned operation overhead for rational and real operands.
 | `borrowed_op_overhead/real_dot4_refs_dense_symbolic` | 5.636 us | 5.625 us - 5.653 us | Computes a borrowed four-lane symbolic dot product with no rational shortcut terms. |
 | `borrowed_op_overhead/real_active_dot4_refs_dense_symbolic` | 5.677 us | 5.670 us - 5.688 us | Computes a borrowed four-lane symbolic dot product after the caller has already classified every lane active. |
 | `borrowed_op_overhead/real_dot4_refs_mixed_structural` | 653.48 ns | 651.96 ns - 655.30 ns | Computes a borrowed four-lane symbolic dot product with exact zero and rational scale terms. |
+| `borrowed_op_overhead/real_dot2_refs_dense_symbolic` | not run | not run | Computes a borrowed two-lane symbolic dot product with no rational shortcut terms. |
+| `borrowed_op_overhead/real_active_dot2_refs_dense_symbolic` | not run | not run | Computes a borrowed two-lane symbolic dot product after the caller has already classified every lane active. |
+| `borrowed_op_overhead/real_dot2_refs_mixed_structural` | not run | not run | Computes a borrowed two-lane symbolic dot product with an exact zero lane and a rational scale lane. |
 
 ### `dense_algebra`
 
