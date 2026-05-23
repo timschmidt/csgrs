@@ -1415,7 +1415,7 @@ fuzz_target!(|data: &[u8]| {
 
 #[cfg(feature = "exact-triangulation")]
 fn exercise_deterministic_case(selector: u8) {
-    match selector % 28 {
+    match selector % 29 {
         0 => exercise_partial_convex_union_boundary(),
         1 => exercise_face_interior_steiner_boundary(),
         2 => exercise_multi_component_coplanar_union(),
@@ -1443,6 +1443,7 @@ fn exercise_deterministic_case(selector: u8) {
         24 => exercise_consumed_hole_side_cutter_openings(),
         25 => exercise_side_cutter_opening_without_holes(),
         26 => exercise_mixed_consumed_hole_and_side_openings_without_retained_holes(),
+        27 => exercise_nonagon_full_face_adjacent_union(),
         _ => exercise_nonrectangular_component_union_hull_coverage(),
     }
 }
@@ -5226,6 +5227,154 @@ fn downward_octagonal_pyramid_fan_i64(
 }
 
 #[cfg(feature = "exact-triangulation")]
+fn upward_nonagonal_pyramid_i64(points: [[i64; 3]; 9], apex: [i64; 3]) -> ExactMesh {
+    ExactMesh::from_i64_triangles(
+        &[
+            points[0][0],
+            points[0][1],
+            points[0][2],
+            points[1][0],
+            points[1][1],
+            points[1][2],
+            points[2][0],
+            points[2][1],
+            points[2][2],
+            points[3][0],
+            points[3][1],
+            points[3][2],
+            points[4][0],
+            points[4][1],
+            points[4][2],
+            points[5][0],
+            points[5][1],
+            points[5][2],
+            points[6][0],
+            points[6][1],
+            points[6][2],
+            points[7][0],
+            points[7][1],
+            points[7][2],
+            points[8][0],
+            points[8][1],
+            points[8][2],
+            apex[0],
+            apex[1],
+            apex[2],
+        ],
+        &[
+            0, 2, 1, 0, 3, 2, 0, 4, 3, 0, 5, 4, 0, 6, 5, 0, 7, 6, 0, 8, 7, //
+            0, 1, 9, 1, 2, 9, 2, 3, 9, 3, 4, 9, 4, 5, 9, 5, 6, 9, 6, 7, 9, 7, 8, 9, 8, 0,
+            9,
+        ],
+    )
+    .expect("upward nonagonal pyramid fixture should import")
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn upward_nonagonal_pyramid_fan_i64(
+    points: [[i64; 3]; 9],
+    center: [i64; 3],
+    apex: [i64; 3],
+) -> ExactMesh {
+    ExactMesh::from_i64_triangles(
+        &[
+            points[0][0],
+            points[0][1],
+            points[0][2],
+            points[1][0],
+            points[1][1],
+            points[1][2],
+            points[2][0],
+            points[2][1],
+            points[2][2],
+            points[3][0],
+            points[3][1],
+            points[3][2],
+            points[4][0],
+            points[4][1],
+            points[4][2],
+            points[5][0],
+            points[5][1],
+            points[5][2],
+            points[6][0],
+            points[6][1],
+            points[6][2],
+            points[7][0],
+            points[7][1],
+            points[7][2],
+            points[8][0],
+            points[8][1],
+            points[8][2],
+            center[0],
+            center[1],
+            center[2],
+            apex[0],
+            apex[1],
+            apex[2],
+        ],
+        &[
+            0, 9, 1, 1, 9, 2, 2, 9, 3, 3, 9, 4, 4, 9, 5, 5, 9, 6, 6, 9, 7, 7, 9, 8, 8, 9,
+            0, //
+            0, 1, 10, 1, 2, 10, 2, 3, 10, 3, 4, 10, 4, 5, 10, 5, 6, 10, 6, 7, 10, 7, 8, 10,
+            8, 0, 10,
+        ],
+    )
+    .expect("upward nonagonal fan pyramid fixture should import")
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn downward_nonagonal_pyramid_fan_i64(
+    points: [[i64; 3]; 9],
+    center: [i64; 3],
+    apex: [i64; 3],
+) -> ExactMesh {
+    ExactMesh::from_i64_triangles(
+        &[
+            points[0][0],
+            points[0][1],
+            points[0][2],
+            points[1][0],
+            points[1][1],
+            points[1][2],
+            points[2][0],
+            points[2][1],
+            points[2][2],
+            points[3][0],
+            points[3][1],
+            points[3][2],
+            points[4][0],
+            points[4][1],
+            points[4][2],
+            points[5][0],
+            points[5][1],
+            points[5][2],
+            points[6][0],
+            points[6][1],
+            points[6][2],
+            points[7][0],
+            points[7][1],
+            points[7][2],
+            points[8][0],
+            points[8][1],
+            points[8][2],
+            center[0],
+            center[1],
+            center[2],
+            apex[0],
+            apex[1],
+            apex[2],
+        ],
+        &[
+            0, 1, 9, 1, 2, 9, 2, 3, 9, 3, 4, 9, 4, 5, 9, 5, 6, 9, 6, 7, 9, 7, 8, 9, 8, 0,
+            9, //
+            0, 10, 1, 1, 10, 2, 2, 10, 3, 3, 10, 4, 4, 10, 5, 5, 10, 6, 6, 10, 7, 7, 10, 8,
+            8, 10, 0,
+        ],
+    )
+    .expect("downward nonagonal fan pyramid fixture should import")
+}
+
+#[cfg(feature = "exact-triangulation")]
 fn upward_square_pyramid_i64(
     a: [i64; 3],
     b: [i64; 3],
@@ -6124,6 +6273,74 @@ fn exercise_full_face_adjacent_union() {
         )
         .unwrap();
     assert_eq!(octagon_result.mesh, octagon_union.mesh);
+
+    exercise_nonagon_full_face_adjacent_union();
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn exercise_nonagon_full_face_adjacent_union() {
+    let nonagon_boundary = [
+        [0, 0, 0],
+        [4, 0, 0],
+        [7, 2, 0],
+        [9, 4, 0],
+        [8, 7, 0],
+        [5, 9, 0],
+        [2, 10, 0],
+        [-1, 8, 0],
+        [-3, 4, 0],
+    ];
+    let nonagon_left = upward_nonagonal_pyramid_i64(nonagon_boundary, [2, 4, 8]);
+    let nonagon_fan_right =
+        downward_nonagonal_pyramid_fan_i64(nonagon_boundary, [2, 4, 0], [2, 4, -8]);
+    let nonagon_union = hypermesh::exact::materialize_full_face_adjacent_union(
+        &nonagon_left,
+        &nonagon_fan_right,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("nonagonal fan patch should materialize");
+    nonagon_union.validate().unwrap();
+    nonagon_union
+        .validate_against_sources(&nonagon_left, &nonagon_fan_right)
+        .unwrap();
+    assert_eq!(
+        nonagon_union.shared_patches[0].left_faces,
+        vec![0, 1, 2, 3, 4, 5, 6]
+    );
+    assert_eq!(
+        nonagon_union.shared_patches[0].right_faces,
+        vec![0, 1, 2, 3, 4, 5, 6, 7, 8]
+    );
+
+    let same_side_nonagon_fan =
+        upward_nonagonal_pyramid_fan_i64(nonagon_boundary, [2, 4, 0], [2, 4, 8]);
+    assert!(
+        hypermesh::exact::materialize_full_face_adjacent_union(
+            &nonagon_left,
+            &same_side_nonagon_fan,
+            ValidationPolicy::CLOSED,
+        )
+        .is_none()
+    );
+
+    let nonagon_result = boolean_exact_with_boundary_policy(
+        &nonagon_left,
+        &nonagon_fan_right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+    nonagon_result
+        .validate_operation_against_sources(
+            &nonagon_left,
+            &nonagon_fan_right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(nonagon_result.mesh, nonagon_union.mesh);
 }
 
 #[cfg(feature = "exact-triangulation")]

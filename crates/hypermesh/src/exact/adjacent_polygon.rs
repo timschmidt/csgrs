@@ -1,21 +1,19 @@
-//! Bounded simple-polygon full-face adjacency certificates.
+//! Source-owned triangulated-disk full-face adjacency certificates.
 //!
 //! This module is the branch-face companion to [`crate::exact::adjacent`].
-//! It accepts a small source-owned triangulated disk on each closed solid when
-//! both disks replay to the same simple projected boundary with opposite
-//! signed area. The certificate deliberately stops at a bounded branch
-//! grammar: diagonal, ear, fan-spoke, and nonconvex reflex-loop edges can be
-//! deleted only when exact source topology and exact projected predicates prove
-//! that they are internal to one retained boundary object.
+//! It accepts source-owned, coplanar face disks when both solids replay the same
+//! simple projected boundary with opposite signed area. The certificate keeps a
+//! strict separation in Yap, "Towards Exact Geometric Computation,"
+//! *Computational Geometry* 7.1-2 (1997): source topology is replayed as face
+//! lists and edge incidences, while exact predicates certify that replayed
+//! topology is valid in both source and projected spaces.
 //!
-//! The separation follows Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7.1-2 (1997): we keep the source triangles as the
-//! combinatorial object and use exact predicates only to certify that this
-//! object owns the topology change. The strict point-in-ring test uses the
-//! even-odd crossing classifier of Hormann and Agathos, "The point in polygon
-//! problem for arbitrary polygons," *Computational Geometry* 20.3 (2001),
-//! evaluated over exact coordinates. Larger coplanar cell extraction remains
-//! outside this bounded certificate.
+//! The strict point-in-ring check uses the even-odd crossing classifier of
+//! Hormann and Agathos, "The point in polygon problem for arbitrary polygons,"
+//! *Computational Geometry* 20.3 (2001). Boundary loop ordering uses a degree-two
+//! cycle reconstruction over the candidate boundary edge graph. Broader non-rectilinear
+//! coplanar-cell materialization remains intentionally separate from this full-face
+//! shortcut.
 
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
@@ -29,8 +27,8 @@ use hyperlimit::{
 use super::mesh::ExactMesh;
 use super::scalar::ExactReal;
 
-const MAX_POLYGON_PATCH_FACES: usize = 8;
-const MAX_POLYGON_PATCH_BOUNDARY: usize = 8;
+const MAX_POLYGON_PATCH_FACES: usize = 9;
+const MAX_POLYGON_PATCH_BOUNDARY: usize = 9;
 
 #[derive(Clone, Debug, PartialEq)]
 struct PolygonPatchCandidate {
@@ -40,16 +38,15 @@ struct PolygonPatchCandidate {
     area_abs: ExactReal,
 }
 
-/// Discover bounded simple-polygon adjacency patch pairs.
+/// Discover source-owned simple-polygon adjacency patch pairs.
 ///
-/// The accepted grammar covers small triangulated disks whose exposed
-/// boundary has at most eight vertices. This includes quadrilateral
-/// cross-diagonals, one-sided quad fans, and pentagonal through octagonal
-/// fan/boundary-ear triangulations, plus bounded nonconvex reflex loops. This
-/// is still not an arbitrary coplanar arrangement materializer: every subset
-/// must be edge-connected, replay as a source-owned disk, place all
-/// non-boundary vertices strictly inside the retained simple loop, and cancel
-/// signed projected area against the opposite operand.
+/// The input triangles are split into edge-connected components, and each component is
+/// exhaustively searched for triangulated-disk candidates within practical bounds.
+///
+/// Algorithmically this follows Yap, "Towards Exact Geometric Computation"'s
+/// object/predicate split: source topology is replayed from combinatorial adjacency,
+/// while exact predicates certify coplanarity, interior inclusion, and signed-area
+/// compatibility.
 pub(crate) fn polygon_patch_pairs(
     left: &ExactMesh,
     consumed_left_faces: &BTreeSet<usize>,
@@ -97,18 +94,33 @@ fn polygon_patch_candidates(
     let available = (0..mesh.triangles().len())
         .filter(|face| !consumed_faces.contains(face))
         .collect::<Vec<_>>();
+    if available.is_empty() {
+        return None;
+    }
+    let max_faces = available.len().min(MAX_POLYGON_PATCH_FACES);
+    let max_boundary = available.len().min(MAX_POLYGON_PATCH_BOUNDARY);
     let neighbors = edge_connected_face_neighbors(mesh, &available)?;
-    let mut seen = BTreeSet::<Vec<usize>>::new();
-    for &start_face in &available {
+    let mut unassigned = available.iter().copied().collect::<BTreeSet<_>>();
+    while let Some(start_face) = unassigned.iter().next().copied() {
+        let mut component =
+            extract_polygon_patch_component(start_face, &neighbors, &mut unassigned)?;
+        component.sort_unstable();
+        if component.len() < 2 {
+            continue;
+        }
+        let mut seen = BTreeSet::<Vec<usize>>::new();
         collect_polygon_patch_candidates(
             mesh,
             &neighbors,
-            start_face,
-            &mut vec![start_face],
+            component[0],
+            max_faces,
+            &mut vec![component[0]],
             &mut seen,
             &mut candidates,
+            max_boundary,
         )?;
     }
+
     candidates.sort_by(|left, right| {
         right
             .faces
@@ -120,51 +132,26 @@ fn polygon_patch_candidates(
     Some(candidates)
 }
 
-fn edge_connected_face_neighbors(
-    mesh: &ExactMesh,
-    faces: &[usize],
-) -> Option<BTreeMap<usize, BTreeSet<usize>>> {
-    let mut edge_faces = BTreeMap::<(usize, usize), Vec<usize>>::new();
-    for &face in faces {
-        for edge in triangle_edges(mesh.triangles().get(face)?.0) {
-            edge_faces.entry(edge).or_default().push(face);
-        }
-    }
-
-    let mut neighbors = BTreeMap::<usize, BTreeSet<usize>>::new();
-    for &face in faces {
-        neighbors.entry(face).or_default();
-    }
-    for edge_faces in edge_faces.values() {
-        for &face in edge_faces {
-            for &neighbor in edge_faces {
-                if neighbor != face {
-                    neighbors.entry(face).or_default().insert(neighbor);
-                }
-            }
-        }
-    }
-    Some(neighbors)
-}
-
 fn collect_polygon_patch_candidates(
     mesh: &ExactMesh,
     neighbors: &BTreeMap<usize, BTreeSet<usize>>,
     start_face: usize,
+    max_faces: usize,
     selected: &mut Vec<usize>,
     seen: &mut BTreeSet<Vec<usize>>,
     candidates: &mut Vec<PolygonPatchCandidate>,
+    max_boundary: usize,
 ) -> Option<()> {
-    if (2..=MAX_POLYGON_PATCH_FACES).contains(&selected.len()) {
+    if (2..=max_faces).contains(&selected.len()) {
         let mut key = selected.clone();
         key.sort_unstable();
         if seen.insert(key.clone())
-            && let Some(candidate) = polygon_patch_candidate(mesh, &key)?
+            && let Some(candidate) = polygon_patch_candidate(mesh, &key, max_boundary)?
         {
             candidates.push(candidate);
         }
     }
-    if selected.len() == MAX_POLYGON_PATCH_FACES {
+    if selected.len() == max_faces {
         return Some(());
     }
 
@@ -172,14 +159,23 @@ fn collect_polygon_patch_candidates(
     let mut extensions = BTreeSet::new();
     for face in selected.iter().copied() {
         for &neighbor in neighbors.get(&face)? {
-            if neighbor > start_face && !selected_set.contains(&neighbor) {
+            if neighbor >= start_face && !selected_set.contains(&neighbor) {
                 extensions.insert(neighbor);
             }
         }
     }
     for extension in extensions {
         selected.push(extension);
-        collect_polygon_patch_candidates(mesh, neighbors, start_face, selected, seen, candidates)?;
+        collect_polygon_patch_candidates(
+            mesh,
+            neighbors,
+            start_face,
+            max_faces,
+            selected,
+            seen,
+            candidates,
+            max_boundary,
+        )?;
         selected.pop();
     }
     Some(())
@@ -188,7 +184,14 @@ fn collect_polygon_patch_candidates(
 fn polygon_patch_candidate(
     mesh: &ExactMesh,
     faces: &[usize],
+    max_boundary: usize,
 ) -> Option<Option<PolygonPatchCandidate>> {
+    if faces.len() < 2 {
+        return Some(None);
+    }
+    // Boundary topology is reconstructed from source-owned edge incidences. Candidate
+    // patches must be a triangulated disk: every edge appears at most twice and at
+    // least one boundary cycle remains after interior-edge cancellation.
     let mut edge_counts = BTreeMap::<(usize, usize), usize>::new();
     for &face in faces {
         let triangle = mesh.triangles().get(face)?.0;
@@ -207,7 +210,7 @@ fn polygon_patch_candidate(
         .iter()
         .filter_map(|(&edge, &count)| (count == 1).then_some(edge))
         .collect::<Vec<_>>();
-    if !(3..=MAX_POLYGON_PATCH_BOUNDARY).contains(&boundary_edges.len()) {
+    if boundary_edges.len() < 3 || boundary_edges.len() > max_boundary {
         return Some(None);
     }
     let Some(boundary_vertices) = order_boundary_vertices(&boundary_edges) else {
@@ -282,7 +285,62 @@ fn polygon_patch_candidate(
     }))
 }
 
+fn edge_connected_face_neighbors(
+    mesh: &ExactMesh,
+    faces: &[usize],
+) -> Option<BTreeMap<usize, BTreeSet<usize>>> {
+    let mut edge_faces = BTreeMap::<(usize, usize), Vec<usize>>::new();
+    for &face in faces {
+        for edge in triangle_edges(mesh.triangles().get(face)?.0) {
+            edge_faces.entry(edge).or_default().push(face);
+        }
+    }
+
+    let mut neighbors = BTreeMap::<usize, BTreeSet<usize>>::new();
+    for &face in faces {
+        neighbors.entry(face).or_default();
+    }
+    for edge_faces in edge_faces.values() {
+        for &face in edge_faces {
+            for &neighbor in edge_faces {
+                if neighbor != face {
+                    neighbors.entry(face).or_default().insert(neighbor);
+                }
+            }
+        }
+    }
+    Some(neighbors)
+}
+
+fn extract_polygon_patch_component(
+    start_face: usize,
+    neighbors: &BTreeMap<usize, BTreeSet<usize>>,
+    available: &mut BTreeSet<usize>,
+) -> Option<Vec<usize>> {
+    // Traverse a source-owned connected component to avoid enumerating disconnected
+    // unions; each component is still searched exhaustively inside bounded limits.
+    let mut stack = vec![start_face];
+    let mut component = Vec::new();
+    while let Some(face) = stack.pop() {
+        if !available.remove(&face) {
+            continue;
+        }
+        component.push(face);
+        for neighbor in neighbors.get(&face)? {
+            if available.contains(neighbor) {
+                stack.push(*neighbor);
+            }
+        }
+    }
+    if component.len() < 2 {
+        return Some(component);
+    }
+    component.sort_unstable();
+    Some(component)
+}
+
 fn order_boundary_vertices(edges: &[(usize, usize)]) -> Option<Vec<usize>> {
+    // Reconstruct a single boundary cycle from degree-2 adjacency.
     let mut adjacency = BTreeMap::<usize, Vec<usize>>::new();
     for &(a, b) in edges {
         adjacency.entry(a).or_default().push(b);
@@ -318,6 +376,9 @@ fn order_boundary_vertices(edges: &[(usize, usize)]) -> Option<Vec<usize>> {
 }
 
 fn loop_is_simple(points: &[Point3], projection: CoplanarProjection) -> Option<bool> {
+    // Exact boundary simplification is judged by Hormann and Agathos' even-odd loop
+    // interpretation after exact projection. We keep strict edge/vertex separation here;
+    // touching at endpoints of adjacent edges is only accepted when expected.
     if points.len() < 3 {
         return Some(false);
     }
@@ -366,6 +427,8 @@ fn point_strictly_inside_simple_loop(
     projected_boundary: &[Point2],
     projection: CoplanarProjection,
 ) -> Option<bool> {
+    // Strict interior is required by the patch certificate; boundary-touching is
+    // rejected to prevent zero-area seam reuse and to preserve exact-source replay.
     if projected_boundary.len() < 3 {
         return Some(false);
     }
