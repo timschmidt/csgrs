@@ -4586,6 +4586,50 @@ fn downward_square_pyramid_opposite_diagonal_i64(
 }
 
 #[cfg(feature = "exact-triangulation")]
+fn downward_square_pyramid_quad_fan_i64(
+    a: [i64; 3],
+    b: [i64; 3],
+    c: [i64; 3],
+    d: [i64; 3],
+    center: [i64; 3],
+    apex: [i64; 3],
+) -> ExactMesh {
+    ExactMesh::from_i64_triangles(
+        &[
+            a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2], d[0], d[1], d[2], center[0],
+            center[1], center[2], apex[0], apex[1], apex[2],
+        ],
+        &[
+            0, 1, 4, 1, 2, 4, 2, 3, 4, 3, 0, 4, //
+            0, 5, 1, 1, 5, 2, 2, 5, 3, 3, 5, 0,
+        ],
+    )
+    .expect("quad-fan square pyramid fixture should import")
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn upward_square_pyramid_quad_fan_i64(
+    a: [i64; 3],
+    b: [i64; 3],
+    c: [i64; 3],
+    d: [i64; 3],
+    center: [i64; 3],
+    apex: [i64; 3],
+) -> ExactMesh {
+    ExactMesh::from_i64_triangles(
+        &[
+            a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2], d[0], d[1], d[2], center[0],
+            center[1], center[2], apex[0], apex[1], apex[2],
+        ],
+        &[
+            0, 4, 1, 1, 4, 2, 2, 4, 3, 3, 4, 0, //
+            0, 1, 5, 1, 2, 5, 2, 3, 5, 3, 0, 5,
+        ],
+    )
+    .expect("upward quad-fan square pyramid fixture should import")
+}
+
+#[cfg(feature = "exact-triangulation")]
 fn upward_square_pyramid_i64(
     a: [i64; 3],
     b: [i64; 3],
@@ -5060,6 +5104,67 @@ fn exercise_full_face_adjacent_union() {
         )
         .unwrap();
     assert_eq!(quad_result.mesh, quad_union.mesh);
+
+    let quad_fan_right = downward_square_pyramid_quad_fan_i64(
+        [0, 0, 0],
+        [4, 0, 0],
+        [4, 4, 0],
+        [0, 4, 0],
+        [2, 2, 0],
+        [2, 2, -4],
+    );
+    let quad_fan_union = hypermesh::exact::materialize_full_face_adjacent_union(
+        &quad_left,
+        &quad_fan_right,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("quadrilateral fan patch should materialize");
+    quad_fan_union.validate().unwrap();
+    quad_fan_union
+        .validate_against_sources(&quad_left, &quad_fan_right)
+        .unwrap();
+    assert!(quad_fan_union.shared_faces.is_empty());
+    assert_eq!(quad_fan_union.shared_patches[0].left_faces, vec![0, 1]);
+    assert_eq!(
+        quad_fan_union.shared_patches[0].right_faces,
+        vec![0, 1, 2, 3]
+    );
+
+    let same_side_quad_fan = upward_square_pyramid_quad_fan_i64(
+        [0, 0, 0],
+        [4, 0, 0],
+        [4, 4, 0],
+        [0, 4, 0],
+        [2, 2, 0],
+        [2, 2, 4],
+    );
+    assert!(
+        hypermesh::exact::materialize_full_face_adjacent_union(
+            &quad_left,
+            &same_side_quad_fan,
+            ValidationPolicy::CLOSED,
+        )
+        .is_none()
+    );
+
+    let quad_fan_result = boolean_exact_with_boundary_policy(
+        &quad_left,
+        &quad_fan_right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+    quad_fan_result
+        .validate_operation_against_sources(
+            &quad_left,
+            &quad_fan_right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(quad_fan_result.mesh, quad_fan_union.mesh);
 }
 
 #[cfg(feature = "exact-triangulation")]

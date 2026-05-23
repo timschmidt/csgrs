@@ -184,6 +184,28 @@ fn downward_square_pyramid_opposite_diagonal_i64(
 }
 
 #[cfg(feature = "exact-triangulation")]
+fn downward_square_pyramid_quad_fan_i64(
+    a: [i64; 3],
+    b: [i64; 3],
+    c: [i64; 3],
+    d: [i64; 3],
+    center: [i64; 3],
+    apex: [i64; 3],
+) -> ExactMesh {
+    ExactMesh::from_i64_triangles(
+        &[
+            a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2], d[0], d[1], d[2], center[0],
+            center[1], center[2], apex[0], apex[1], apex[2],
+        ],
+        &[
+            0, 1, 4, 1, 2, 4, 2, 3, 4, 3, 0, 4, //
+            0, 5, 1, 1, 5, 2, 2, 5, 3, 3, 5, 0,
+        ],
+    )
+    .unwrap()
+}
+
+#[cfg(feature = "exact-triangulation")]
 fn upward_square_pyramid_i64(
     a: [i64; 3],
     b: [i64; 3],
@@ -6009,6 +6031,14 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
             [0, 4, 0],
             [2, 2, -4],
         );
+        let adjacent_quad_fan_right = downward_square_pyramid_quad_fan_i64(
+            [0, 0, 0],
+            [4, 0, 0],
+            [4, 4, 0],
+            [0, 4, 0],
+            [2, 2, 0],
+            [2, 2, -4],
+        );
         let contained_adjacent_left = tetrahedron_i64([0, 0, 0], [6, 0, 0], [0, 6, 0], [0, 0, 6]);
         let contained_adjacent_right = tetrahedron_i64([1, 1, 0], [1, 2, 0], [2, 1, 0], [1, 1, -3]);
         let contained_multi_left = combine_exact_meshes(
@@ -6401,6 +6431,47 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
                                 .validate_operation_against_sources(
                                     &adjacent_quad_left,
                                     &adjacent_quad_right,
+                                    hypermesh::exact::ExactBooleanOperation::Union,
+                                    ValidationPolicy::CLOSED,
+                                    hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+                                )
+                                .unwrap();
+                            result.mesh.triangles().len()
+                        }),
+                    )
+                })
+            },
+        );
+        c.bench_function(
+            "exact_boolean_full_face_adjacent_quad_fan_patch_union",
+            |b| {
+                b.iter(|| {
+                    (
+                        hypermesh::exact::materialize_full_face_adjacent_union(
+                            &adjacent_quad_left,
+                            &adjacent_quad_fan_right,
+                            ValidationPolicy::CLOSED,
+                        )
+                        .map(|union| {
+                            union
+                                .validate_against_sources(
+                                    &adjacent_quad_left,
+                                    &adjacent_quad_fan_right,
+                                )
+                                .unwrap();
+                            union.mesh.triangles().len()
+                        }),
+                        hypermesh::exact::boolean_exact(
+                            &adjacent_quad_left,
+                            &adjacent_quad_fan_right,
+                            hypermesh::exact::ExactBooleanOperation::Union,
+                            ValidationPolicy::CLOSED,
+                        )
+                        .map(|result| {
+                            result
+                                .validate_operation_against_sources(
+                                    &adjacent_quad_left,
+                                    &adjacent_quad_fan_right,
                                     hypermesh::exact::ExactBooleanOperation::Union,
                                     ValidationPolicy::CLOSED,
                                     hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,

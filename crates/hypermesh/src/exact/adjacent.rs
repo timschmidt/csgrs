@@ -959,26 +959,27 @@ fn boundary_point_sets_equal(left: &[Point3; 3], right: &[Point3; 3]) -> Option<
     Some(true)
 }
 
-/// Discover bounded cross-diagonal quadrilateral adjacency patches.
+/// Discover bounded quadrilateral adjacency patches.
 ///
 /// Two closed solids often share a quadrilateral face that each source split
-/// into two triangles, but along opposite diagonals. No single triangle is a
-/// whole-face match and neither side is a three-triangle fan, so the earlier
-/// adjacency certificates had to fall through to boundary policy. This
-/// certificate promotes only the exact two-triangle/two-triangle case: each
-/// side must form one strictly convex coplanar quadrilateral with the same
-/// four boundary points and opposite signed area. That source-owned replay is
-/// the Yap boundary from "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997): the diagonal is removed only because
-/// exact source topology proves both patches are the same boundary object.
+/// into two triangles, or one side may split it into a four-triangle fan
+/// through one strict interior point. No single triangle is a whole-face match
+/// and the triangular fan certificate cannot see a four-corner boundary, so
+/// these cases otherwise fall through to boundary policy. This certificate
+/// promotes only exact quadrilateral source patches: each side must form one
+/// strictly convex coplanar quadrilateral with the same four boundary points
+/// and opposite signed area. That source-owned replay is the Yap boundary from
+/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+/// (1997): diagonals and fan spokes are deleted only because exact source
+/// topology proves both patches are the same boundary object.
 fn quad_patch_pairs(
     left: &ExactMesh,
     consumed_left_faces: &BTreeSet<usize>,
     right: &ExactMesh,
     consumed_right_faces: &BTreeSet<usize>,
 ) -> Option<Vec<(Vec<usize>, Vec<usize>)>> {
-    let left_candidates = quad_patch_candidates(left, consumed_left_faces)?;
-    let right_candidates = quad_patch_candidates(right, consumed_right_faces)?;
+    let left_candidates = quadrilateral_patch_candidates(left, consumed_left_faces)?;
+    let right_candidates = quadrilateral_patch_candidates(right, consumed_right_faces)?;
     let mut pairs = Vec::new();
     let mut used_left = BTreeSet::new();
     let mut used_right = BTreeSet::new();
@@ -1018,6 +1019,15 @@ struct QuadPatchCandidate {
     area_abs: ExactReal,
 }
 
+fn quadrilateral_patch_candidates(
+    mesh: &ExactMesh,
+    consumed_faces: &BTreeSet<usize>,
+) -> Option<Vec<QuadPatchCandidate>> {
+    let mut candidates = quad_patch_candidates(mesh, consumed_faces)?;
+    candidates.extend(quad_fan_patch_candidates(mesh, consumed_faces)?);
+    Some(candidates)
+}
+
 fn quad_patch_candidates(
     mesh: &ExactMesh,
     consumed_faces: &BTreeSet<usize>,
@@ -1033,6 +1043,38 @@ fn quad_patch_candidates(
             }
             if let Some(candidate) = quad_patch_candidate(mesh, [first, second])? {
                 candidates.push(candidate);
+            }
+        }
+    }
+    Some(candidates)
+}
+
+fn quad_fan_patch_candidates(
+    mesh: &ExactMesh,
+    consumed_faces: &BTreeSet<usize>,
+) -> Option<Vec<QuadPatchCandidate>> {
+    let mut candidates = Vec::new();
+    let face_count = mesh.triangles().len();
+    for a in 0..face_count {
+        if consumed_faces.contains(&a) {
+            continue;
+        }
+        for b in a + 1..face_count {
+            if consumed_faces.contains(&b) {
+                continue;
+            }
+            for c in b + 1..face_count {
+                if consumed_faces.contains(&c) {
+                    continue;
+                }
+                for d in c + 1..face_count {
+                    if consumed_faces.contains(&d) {
+                        continue;
+                    }
+                    if let Some(candidate) = quad_fan_patch_candidate(mesh, [a, b, c, d])? {
+                        candidates.push(candidate);
+                    }
+                }
             }
         }
     }
@@ -1074,6 +1116,98 @@ fn quad_patch_candidate(mesh: &ExactMesh, faces: [usize; 2]) -> Option<Option<Qu
     let mut signed_area2 = ExactReal::from(0);
     for face in faces {
         let triangle = mesh.triangles().get(face)?.0;
+        let points = triangle_points(mesh, triangle)?;
+        if !points
+            .iter()
+            .all(|point| point_on_triangle_plane_vec(&boundary_points, point) == Some(true))
+        {
+            return Some(None);
+        }
+        let area = projected_polygon_area2_value(&points, projection);
+        if real_sign(&area)? == Sign::Zero {
+            return Some(None);
+        }
+        signed_area2 = signed_area2 + area;
+    }
+
+    let area_abs = real_abs(&signed_area2)?;
+    let boundary_area_abs = real_abs(&projected_polygon_area2_value(&boundary_points, projection))?;
+    if compare_reals(&area_abs, &boundary_area_abs).value() != Some(Ordering::Equal) {
+        return Some(None);
+    }
+
+    Some(Some(QuadPatchCandidate {
+        faces: faces.into(),
+        boundary_points,
+        signed_area2,
+        area_abs,
+    }))
+}
+
+fn quad_fan_patch_candidate(
+    mesh: &ExactMesh,
+    faces: [usize; 4],
+) -> Option<Option<QuadPatchCandidate>> {
+    let mut vertex_counts = BTreeMap::<usize, usize>::new();
+    let mut edge_counts = BTreeMap::<(usize, usize), usize>::new();
+    for face in faces {
+        let triangle = mesh.triangles().get(face)?.0;
+        for vertex in triangle {
+            *vertex_counts.entry(vertex).or_default() += 1;
+        }
+        for edge in triangle_edges(triangle) {
+            *edge_counts.entry(edge).or_default() += 1;
+        }
+    }
+    let mut interior_vertex = None;
+    let mut boundary_vertices = Vec::new();
+    for (vertex, count) in vertex_counts {
+        match count {
+            4 if interior_vertex.is_none() => interior_vertex = Some(vertex),
+            2 => boundary_vertices.push(vertex),
+            _ => return Some(None),
+        }
+    }
+    let Some(interior_vertex) = interior_vertex else {
+        return Some(None);
+    };
+    if boundary_vertices.len() != 4 {
+        return Some(None);
+    }
+    let boundary_edges = edge_counts
+        .iter()
+        .filter_map(|(&edge, &count)| (count == 1).then_some(edge))
+        .collect::<Vec<_>>();
+    if boundary_edges.len() != 4 || edge_counts.values().filter(|&&count| count == 2).count() != 4 {
+        return Some(None);
+    }
+    let boundary_vertices = order_quad_boundary_vertices(&boundary_edges)?;
+    let boundary_points = boundary_vertices
+        .iter()
+        .map(|&vertex| {
+            mesh.vertices()
+                .get(vertex)
+                .map(|point| point.to_hyperlimit_point())
+        })
+        .collect::<Option<Vec<_>>>()?;
+    let projection = choose_polygon_projection(&boundary_points)?;
+    if !quad_loop_is_strictly_convex(&boundary_points, projection)? {
+        return Some(None);
+    }
+    let interior_point = mesh.vertices().get(interior_vertex)?.to_hyperlimit_point();
+    if point_on_triangle_plane_vec(&boundary_points, &interior_point) != Some(true) {
+        return Some(None);
+    }
+    if !point_strictly_inside_convex_loop(&interior_point, &boundary_points, projection)? {
+        return Some(None);
+    }
+
+    let mut signed_area2 = ExactReal::from(0);
+    for face in faces {
+        let triangle = mesh.triangles().get(face)?.0;
+        if !triangle.contains(&interior_vertex) {
+            return Some(None);
+        }
         let points = triangle_points(mesh, triangle)?;
         if !points
             .iter()
@@ -1150,6 +1284,35 @@ fn quad_loop_is_strictly_convex(points: &[Point3], projection: CoplanarProjectio
         let b = &points[(index + 1) % points.len()];
         let c = &points[(index + 2) % points.len()];
         let turn = projected_polygon_area2_value(&[a.clone(), b.clone(), c.clone()], projection);
+        if real_sign(&turn)? != area_sign {
+            return Some(false);
+        }
+    }
+    Some(true)
+}
+
+fn point_strictly_inside_convex_loop(
+    point: &Point3,
+    loop_points: &[Point3],
+    projection: CoplanarProjection,
+) -> Option<bool> {
+    if loop_points.len() < 3 {
+        return Some(false);
+    }
+    let area_sign = real_sign(&projected_polygon_area2_value(loop_points, projection))?;
+    if area_sign == Sign::Zero {
+        return Some(false);
+    }
+
+    // A fan center is an exact branch vertex on the shared face. Following
+    // Yap's exact-computation separation of predicates from construction, we
+    // only admit it when exact projected orientation predicates place it in
+    // the strict interior of every edge of the convex patch boundary.
+    for index in 0..loop_points.len() {
+        let a = &loop_points[index];
+        let b = &loop_points[(index + 1) % loop_points.len()];
+        let turn =
+            projected_polygon_area2_value(&[a.clone(), b.clone(), point.clone()], projection);
         if real_sign(&turn)? != area_sign {
             return Some(false);
         }
