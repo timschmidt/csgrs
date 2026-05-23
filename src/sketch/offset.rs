@@ -27,9 +27,7 @@
 //! simple finite profile projections rather than importing a separate skeleton
 //! geometry model.
 
-use crate::float_types::{
-    Real, hreal_abs, hreal_cmp_f64, hreal_from_f64, hreal_sign, hreal_to_f64,
-};
+use crate::hyper_math::{Real, hreal_abs, hreal_cmp_f64, hreal_sign};
 use crate::sketch::Profile;
 use hypercurve::{
     Classification, Contour2, CurvePolicy, CurveString2, FiniteRegionProfile2, OffsetCap,
@@ -50,8 +48,8 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
             Region2::empty(),
             Vec::new(),
             self.metadata.clone(),
-            self.origin,
-            self.origin_transform,
+            self.origin.clone(),
+            self.origin_transform.clone(),
         )
     }
 
@@ -63,14 +61,13 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// (1997) while preserving the zero-radius offset identity discussed in
     /// Farouki and Neff (1990).
     fn native_zero_offset(&self, distance: Real) -> Option<Profile<M>> {
-        let distance = finite_offset_distance(distance)?;
-        matches!(hreal_cmp_f64(distance, 0.0), std::cmp::Ordering::Equal).then(|| {
+        matches!(hreal_cmp_f64(&distance, 0.0), std::cmp::Ordering::Equal).then(|| {
             Profile::from_region_and_wires_with_origin(
                 self.region.clone(),
                 self.wires.clone(),
                 self.metadata.clone(),
-                self.origin,
-                self.origin_transform,
+                self.origin.clone(),
+                self.origin_transform.clone(),
             )
         })
     }
@@ -86,16 +83,15 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         distance: Real,
         cap: OffsetCap,
     ) -> Option<Profile<M>> {
-        let distance = finite_offset_distance(distance)?;
         if !self.region.is_empty()
             || self.wires.is_empty()
-            || !matches!(hreal_cmp_f64(distance, 0.0), std::cmp::Ordering::Greater)
+            || !matches!(hreal_cmp_f64(&distance, 0.0), std::cmp::Ordering::Greater)
         {
             return None;
         }
 
         let policy = CurvePolicy::certified();
-        let half_width = hreal_from_f64(hreal_abs(distance)?).ok()?;
+        let half_width = hreal_abs(distance)?;
         let mut contours = Vec::with_capacity(self.wires.len());
         for wire in &self.wires {
             let contour = match wire.offset_outline(half_width.clone(), cap, &policy).ok()? {
@@ -113,8 +109,8 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
             region,
             Vec::new(),
             self.metadata.clone(),
-            self.origin,
-            self.origin_transform,
+            self.origin.clone(),
+            self.origin_transform.clone(),
         ))
     }
 
@@ -128,7 +124,6 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// collapsed holes, splits, or merged components belongs in hypercurve
     /// rather than in a finite bridge.
     fn native_sharp_offset(&self, distance: Real) -> Option<Profile<M>> {
-        let distance = finite_offset_distance(distance)?;
         if self.region.is_empty()
             || !self.wires.is_empty()
             || !Self::region_has_nonzero_area(&self.region)
@@ -139,18 +134,28 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         let policy = CurvePolicy::certified();
         let mut material = Vec::with_capacity(self.region.material_contours().len());
         for contour in self.region.material_contours() {
-            material.push(native_role_offset_contour(contour, distance, false, &policy)?);
+            material.push(native_role_offset_contour(
+                contour,
+                distance.clone(),
+                false,
+                &policy,
+            )?);
         }
 
         let mut holes = Vec::with_capacity(self.region.hole_contours().len());
         for contour in self.region.hole_contours() {
-            holes.push(native_role_offset_contour(contour, distance, true, &policy)?);
+            holes.push(native_role_offset_contour(
+                contour,
+                distance.clone(),
+                true,
+                &policy,
+            )?);
         }
 
         let mut sketch =
             Profile::from_region(Region2::new(material, holes), self.metadata.clone());
-        sketch.origin = self.origin;
-        sketch.origin_transform = self.origin_transform;
+        sketch.origin = self.origin.clone();
+        sketch.origin_transform = self.origin_transform.clone();
         Some(sketch)
     }
 
@@ -162,17 +167,13 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// prove the result does not need global regularization. Unsupported cases
     /// return an empty native sketch instead of manufacturing CAD state through
     /// another geometry crate.
-    pub fn offset<D>(&self, distance: D) -> Profile<M>
-    where
-        D: TryInto<hyperreal::Real>,
-    {
-        let Some(distance) = finite_offset_distance(distance) else {
-            return self.empty_offset_result();
-        };
-        if let Some(sketch) = self.native_zero_offset(distance) {
+    pub fn offset(&self, distance: Real) -> Profile<M> {
+        if let Some(sketch) = self.native_zero_offset(distance.clone()) {
             return sketch;
         }
-        if let Some(sketch) = self.native_wire_outline_offset(distance, OffsetCap::Square) {
+        if let Some(sketch) =
+            self.native_wire_outline_offset(distance.clone(), OffsetCap::Square)
+        {
             return sketch;
         }
         if let Some(sketch) = self.native_sharp_offset(distance) {
@@ -187,17 +188,13 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// compatibility datatype. Until rounded regularized region offsets are
     /// native in hypercurve, filled regions use the same certified raw-contour
     /// path as [`Profile::offset`].
-    pub fn offset_rounded<D>(&self, distance: D) -> Profile<M>
-    where
-        D: TryInto<hyperreal::Real>,
-    {
-        let Some(distance) = finite_offset_distance(distance) else {
-            return self.empty_offset_result();
-        };
-        if let Some(sketch) = self.native_zero_offset(distance) {
+    pub fn offset_rounded(&self, distance: Real) -> Profile<M> {
+        if let Some(sketch) = self.native_zero_offset(distance.clone()) {
             return sketch;
         }
-        if let Some(sketch) = self.native_wire_outline_offset(distance, OffsetCap::Round) {
+        if let Some(sketch) =
+            self.native_wire_outline_offset(distance.clone(), OffsetCap::Round)
+        {
             return sketch;
         }
         if let Some(sketch) = self.native_sharp_offset(distance) {
@@ -225,26 +222,12 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
             Region2::empty(),
             wires,
             self.metadata.clone(),
-            self.origin,
-            self.origin_transform,
+            self.origin.clone(),
+            self.origin_transform.clone(),
         );
         self.preserve_offset_wires(&mut sketch);
         sketch
     }
-}
-
-/// Admit offset distances only after hyperreal promotion succeeds.
-///
-/// The public offset surface is `hyperreal::Real` first; primitive `f64` and
-/// integer values are accepted only through promotion. We export once to the
-/// current finite hypercurve distance boundary so topology-affecting branches
-/// never interpret rejected primitive values as exact zero offsets. This follows
-/// Yap's exact geometric computation boundary split (1997).
-fn finite_offset_distance<D>(distance: D) -> Option<Real>
-where
-    D: TryInto<hyperreal::Real>,
-{
-    hreal_to_f64(&distance.try_into().ok()?)
 }
 
 fn native_role_offset_contour(
@@ -264,8 +247,7 @@ fn native_role_offset_contour(
         (false, RealSign::Negative) | (true, RealSign::Positive) => distance,
         (_, RealSign::Zero) => return None,
     };
-    let offset_distance = hreal_from_f64(signed_distance).ok()?;
-    match contour.offset_left_checked(offset_distance, policy).ok()? {
+    match contour.offset_left_checked(signed_distance, policy).ok()? {
         Classification::Decided(offset) => Some(offset),
         Classification::Uncertain(_) => None,
     }
@@ -282,7 +264,7 @@ fn inward_profile_rays(profiles: &[FiniteRegionProfile2]) -> Vec<CurveString2> {
                 .material()
                 .points()
                 .iter()
-                .copied()
+                .cloned()
                 .filter(|point| point != &center)
                 .filter_map(|point| {
                     CurveString2::from_finite_line_string(&[point, center]).ok()

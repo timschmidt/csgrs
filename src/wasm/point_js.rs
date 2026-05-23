@@ -1,12 +1,12 @@
 //! JavaScript wrapper for 3D points.
 
-use crate::float_types::{Real, hreal_from_f64, hreal_to_f64};
-use nalgebra::Point3;
+use crate::wasm::{point3_from_js_or_origin, real_to_js};
+use hyperlattice::Point3;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
 pub struct Point3Js {
-    pub(crate) inner: Point3<Real>,
+    pub(crate) inner: Point3,
 }
 
 #[wasm_bindgen]
@@ -17,30 +17,24 @@ impl Point3Js {
         // hyperreal first and fall back to the origin if a caller supplies
         // NaN/Inf, following Yap's exact-geometric-computation boundary split
         // (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-        let point = match (hreal_from_f64(x), hreal_from_f64(y), hreal_from_f64(z)) {
-            (Ok(x), Ok(y), Ok(z)) => Point3::new(
-                hreal_to_f64(&x).unwrap_or(0.0),
-                hreal_to_f64(&y).unwrap_or(0.0),
-                hreal_to_f64(&z).unwrap_or(0.0),
-            ),
-            _ => Point3::origin(),
-        };
-        Point3Js { inner: point }
+        Point3Js {
+            inner: point3_from_js_or_origin(x, y, z),
+        }
     }
 
     #[wasm_bindgen(getter)]
     pub fn x(&self) -> f64 {
-        self.inner.x as f64
+        real_to_js(&self.inner.x)
     }
 
     #[wasm_bindgen(getter)]
     pub fn y(&self) -> f64 {
-        self.inner.y as f64
+        real_to_js(&self.inner.y)
     }
 
     #[wasm_bindgen(getter)]
     pub fn z(&self) -> f64 {
-        self.inner.z as f64
+        real_to_js(&self.inner.z)
     }
 
     #[wasm_bindgen(js_name = toString)]
@@ -53,15 +47,15 @@ impl Point3Js {
 }
 
 // Rust-only conversions (not visible to JS)
-impl From<Point3<Real>> for Point3Js {
-    fn from(p: Point3<Real>) -> Self {
+impl From<Point3> for Point3Js {
+    fn from(p: Point3) -> Self {
         Point3Js { inner: p }
     }
 }
 
-impl From<&Point3Js> for Point3<Real> {
+impl From<&Point3Js> for Point3 {
     fn from(p: &Point3Js) -> Self {
-        p.inner
+        p.inner.clone()
     }
 }
 
@@ -75,6 +69,8 @@ mod tests {
         assert_eq!(point.inner, Point3::origin());
 
         let finite = Point3Js::new(1.0, 2.0, 3.0);
-        assert_eq!(finite.inner, Point3::new(1.0, 2.0, 3.0));
+        assert_eq!(finite.x(), 1.0);
+        assert_eq!(finite.y(), 2.0);
+        assert_eq!(finite.z(), 3.0);
     }
 }

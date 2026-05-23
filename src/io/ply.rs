@@ -9,6 +9,13 @@ use hashbrown::HashMap;
 use std::fmt::Debug;
 use std::io::Write;
 
+fn real_f64(value: &hyperlattice::Real) -> f64 {
+    value
+        .to_f64_lossy()
+        .filter(|value| value.is_finite())
+        .unwrap_or(0.0)
+}
+
 fn build_ply_buffers<T: IndexedTriangulated3D>(shape: &T) -> (Vec<Vertex>, Vec<[usize; 3]>) {
     let indexed = shape.indexed_triangles();
     let mut vertices = Vec::new();
@@ -21,8 +28,8 @@ fn build_ply_buffers<T: IndexedTriangulated3D>(shape: &T) -> (Vec<Vertex>, Vec<[
                 *vertex_map.entry(key).or_insert_with(|| {
                     let index = vertices.len();
                     vertices.push(Vertex {
-                        position: indexed.positions[position],
-                        normal: indexed.normals[normal],
+                        position: indexed.positions[position].clone(),
+                        normal: indexed.normals[normal].clone(),
                     });
                     index
                 })
@@ -60,12 +67,12 @@ pub fn to_ply<T: IndexedTriangulated3D>(shape: &T, comment: &str) -> String {
     for vertex in &vertices {
         ply_content.push_str(&format!(
             "{:.6} {:.6} {:.6} {:.6} {:.6} {:.6}\n",
-            vertex.position.x,
-            vertex.position.y,
-            vertex.position.z,
-            vertex.normal.x,
-            vertex.normal.y,
-            vertex.normal.z
+            real_f64(&vertex.position.x),
+            real_f64(&vertex.position.y),
+            real_f64(&vertex.position.z),
+            real_f64(&vertex.normal.0[0]),
+            real_f64(&vertex.normal.0[1]),
+            real_f64(&vertex.normal.0[2])
         ));
     }
 

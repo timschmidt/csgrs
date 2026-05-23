@@ -2,13 +2,16 @@
 
 #![no_main]
 
-use csgrs::float_types::Real;
 use csgrs::mesh::{
     Mesh,
     metaballs::{MetaBall, MetaballDiagnostics},
 };
+use hyperlattice::{Point3, Real};
 use libfuzzer_sys::fuzz_target;
-use nalgebra::Point3;
+
+fn real(value: f64) -> Real {
+    Real::try_from(value).expect("fuzz decoder clamps to finite values")
+}
 
 fn decode_real(bytes: &[u8], idx: &mut usize) -> Real {
     let mut raw = [0u8; 8];
@@ -17,18 +20,7 @@ fn decode_real(bytes: &[u8], idx: &mut usize) -> Real {
         *idx += 1;
     }
     let value = i64::from_le_bytes(raw) as f64 / 1.0e12;
-    value.clamp(-100.0, 100.0) as Real
-}
-
-fn decode_boundary_real(bytes: &[u8], idx: &mut usize) -> Real {
-    let tag = bytes[*idx % bytes.len()] % 16;
-    *idx += 1;
-    match tag {
-        0 => Real::NAN,
-        1 => Real::INFINITY,
-        2 => Real::NEG_INFINITY,
-        _ => decode_real(bytes, idx),
-    }
+    real(value.clamp(-100.0, 100.0))
 }
 
 fn assert_mesh_finite(mesh: &Mesh<()>) {
@@ -36,9 +28,9 @@ fn assert_mesh_finite(mesh: &Mesh<()>) {
         assert!(vertex.position.x.is_finite());
         assert!(vertex.position.y.is_finite());
         assert!(vertex.position.z.is_finite());
-        assert!(vertex.normal.x.is_finite());
-        assert!(vertex.normal.y.is_finite());
-        assert!(vertex.normal.z.is_finite());
+        assert!(vertex.normal.0[0].is_finite());
+        assert!(vertex.normal.0[1].is_finite());
+        assert!(vertex.normal.0[2].is_finite());
     }
 }
 
@@ -74,19 +66,22 @@ fuzz_target!(|bytes: &[u8]| {
     let mut balls = Vec::with_capacity(ball_count);
     for _ in 0..ball_count {
         let center = Point3::new(
-            decode_boundary_real(bytes, &mut idx),
-            decode_boundary_real(bytes, &mut idx),
-            decode_boundary_real(bytes, &mut idx),
+            decode_real(bytes, &mut idx),
+            decode_real(bytes, &mut idx),
+            decode_real(bytes, &mut idx),
         );
-        let radius = decode_boundary_real(bytes, &mut idx);
+        let radius = decode_real(bytes, &mut idx);
         balls.push(MetaBall::new(center, radius));
     }
     if bytes[idx % bytes.len()] & 1 == 1 {
-        balls.push(MetaBall::new(Point3::new(0.0, 0.0, 0.0), 1.0e-25));
+        balls.push(MetaBall::new(
+            Point3::new(Real::zero(), Real::zero(), Real::zero()),
+            real(1.0e-25),
+        ));
     }
 
-    let iso_value = decode_boundary_real(bytes, &mut idx);
-    let padding = decode_boundary_real(bytes, &mut idx);
+    let iso_value = decode_real(bytes, &mut idx);
+    let padding = decode_real(bytes, &mut idx);
     let (mesh, diagnostics) = Mesh::<()>::metaballs_with_diagnostics(
         &balls,
         (resolution, resolution, resolution),

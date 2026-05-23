@@ -3,15 +3,19 @@
 #![doc = " This module provides export functionality for AMF (Additive Manufacturing File Format),"]
 #![doc = " an XML-based format specifically designed for 3D printing and additive manufacturing."]
 
-use crate::float_types::Real;
 use crate::triangulated::IndexedTriangulated3D;
-use nalgebra::Point3;
+use hyperlattice::{Point3, Real};
 use std::fmt::Debug;
 use std::io::Write;
 
-fn build_amf_buffers<T: IndexedTriangulated3D>(
-    shape: &T,
-) -> (Vec<Point3<Real>>, Vec<[usize; 3]>) {
+fn real_f64(value: &Real) -> f64 {
+    value
+        .to_f64_lossy()
+        .filter(|value| value.is_finite())
+        .unwrap_or(0.0)
+}
+
+fn build_amf_buffers<T: IndexedTriangulated3D>(shape: &T) -> (Vec<Point3>, Vec<[usize; 3]>) {
     let indexed = shape.indexed_triangles();
     let triangles = indexed
         .faces
@@ -49,9 +53,9 @@ pub fn to_amf<T: IndexedTriangulated3D>(shape: &T, object_name: &str, units: &st
     for (i, vertex) in vertices.iter().enumerate() {
         amf_content.push_str(&format!("        <vertex id=\"{i}\">\n"));
         amf_content.push_str("          <coordinates>\n");
-        amf_content.push_str(&format!("            <x>{:.6}</x>\n", vertex.x));
-        amf_content.push_str(&format!("            <y>{:.6}</y>\n", vertex.y));
-        amf_content.push_str(&format!("            <z>{:.6}</z>\n", vertex.z));
+        amf_content.push_str(&format!("            <x>{:.6}</x>\n", real_f64(&vertex.x)));
+        amf_content.push_str(&format!("            <y>{:.6}</y>\n", real_f64(&vertex.y)));
+        amf_content.push_str(&format!("            <z>{:.6}</z>\n", real_f64(&vertex.z)));
         amf_content.push_str("          </coordinates>\n");
         amf_content.push_str("        </vertex>\n");
     }
@@ -101,9 +105,9 @@ pub fn to_amf_with_color<T: IndexedTriangulated3D>(
     amf_content.push_str("  <material id=\"material1\">\n");
     amf_content.push_str("    <metadata type=\"name\">Default Material</metadata>\n");
     amf_content.push_str("    <color>\n");
-    amf_content.push_str(&format!("      <r>{:.3}</r>\n", color.0));
-    amf_content.push_str(&format!("      <g>{:.3}</g>\n", color.1));
-    amf_content.push_str(&format!("      <b>{:.3}</b>\n", color.2));
+    amf_content.push_str(&format!("      <r>{:.3}</r>\n", real_f64(&color.0)));
+    amf_content.push_str(&format!("      <g>{:.3}</g>\n", real_f64(&color.1)));
+    amf_content.push_str(&format!("      <b>{:.3}</b>\n", real_f64(&color.2)));
     amf_content.push_str("      <a>1.0</a>\n");
     amf_content.push_str("    </color>\n");
     amf_content.push_str("  </material>\n");
@@ -114,9 +118,9 @@ pub fn to_amf_with_color<T: IndexedTriangulated3D>(
     for (i, vertex) in vertices.iter().enumerate() {
         amf_content.push_str(&format!("        <vertex id=\"{i}\">\n"));
         amf_content.push_str("          <coordinates>\n");
-        amf_content.push_str(&format!("            <x>{:.6}</x>\n", vertex.x));
-        amf_content.push_str(&format!("            <y>{:.6}</y>\n", vertex.y));
-        amf_content.push_str(&format!("            <z>{:.6}</z>\n", vertex.z));
+        amf_content.push_str(&format!("            <x>{:.6}</x>\n", real_f64(&vertex.x)));
+        amf_content.push_str(&format!("            <y>{:.6}</y>\n", real_f64(&vertex.y)));
+        amf_content.push_str(&format!("            <z>{:.6}</z>\n", real_f64(&vertex.z)));
         amf_content.push_str("          </coordinates>\n");
         amf_content.push_str("        </vertex>\n");
     }

@@ -4,7 +4,7 @@ use super::support::*;
 
 #[test]
 fn test_mesh_quality_analysis() {
-    let cube: Mesh<()> = Mesh::cube(2.0, ());
+    let cube: Mesh<()> = Mesh::cube(r(2.0), ());
 
     // Analyze triangle quality
     let qualities = cube.analyze_triangle_quality();
@@ -16,38 +16,41 @@ fn test_mesh_quality_analysis() {
     // All cube triangles should have reasonable quality
     for quality in &qualities {
         assert!(
-            quality.quality_score >= 0.0,
+            quality.quality_score >= r(0.0),
             "Quality score should be non-negative"
         );
         assert!(
-            quality.quality_score <= 1.0,
+            quality.quality_score <= r(1.0),
             "Quality score should be at most 1.0"
         );
-        assert!(quality.area > 0.0, "Triangle area should be positive");
-        assert!(quality.min_angle > 0.0, "Minimum angle should be positive");
-        assert!(quality.max_angle < PI, "Maximum angle should be less than π");
+        assert!(quality.area > r(0.0), "Triangle area should be positive");
+        assert!(quality.min_angle > r(0.0), "Minimum angle should be positive");
+        assert!(
+            quality.max_angle < pi(),
+            "Maximum angle should be less than π"
+        );
     }
 
     // Compute overall mesh quality metrics
     let mesh_metrics = cube.compute_mesh_quality();
     assert!(
-        mesh_metrics.avg_quality >= 0.0,
+        mesh_metrics.avg_quality >= r(0.0),
         "Average quality should be non-negative"
     );
     assert!(
-        mesh_metrics.min_quality >= 0.0,
+        mesh_metrics.min_quality >= r(0.0),
         "Minimum quality should be non-negative"
     );
     assert!(
-        mesh_metrics.high_quality_ratio >= 0.0,
+        mesh_metrics.high_quality_ratio >= r(0.0),
         "High quality ratio should be non-negative"
     );
     assert!(
-        mesh_metrics.high_quality_ratio <= 1.0,
+        mesh_metrics.high_quality_ratio <= r(1.0),
         "High quality ratio should be at most 1.0"
     );
     assert!(
-        mesh_metrics.avg_edge_length > 0.0,
+        mesh_metrics.avg_edge_length > r(0.0),
         "Average edge length should be positive"
     );
 }
@@ -58,17 +61,17 @@ fn mesh_quality_uses_hyperreal_edge_and_area_measurements() {
     let polygons = vec![
         Polygon::new(
             vec![
-                Vertex::new(Point3::new(0.0, 0.0, 0.0), normal),
-                Vertex::new(Point3::new(3.0, 0.0, 0.0), normal),
-                Vertex::new(Point3::new(0.0, 4.0, 0.0), normal),
+                Vertex::new(p3(0.0, 0.0, 0.0), normal.clone()),
+                Vertex::new(p3(3.0, 0.0, 0.0), normal.clone()),
+                Vertex::new(p3(0.0, 4.0, 0.0), normal.clone()),
             ],
             (),
         ),
         Polygon::new(
             vec![
-                Vertex::new(Point3::new(0.0, 0.0, 1.0), normal),
-                Vertex::new(Point3::new(tolerance() * 0.25, 0.0, 1.0), normal),
-                Vertex::new(Point3::new(0.0, tolerance() * 0.25, 1.0), normal),
+                Vertex::new(p3(0.0, 0.0, 1.0), normal.clone()),
+                Vertex::new(p3(tolerance() * r(0.25), 0.0, 1.0), normal.clone()),
+                Vertex::new(p3(0.0, tolerance() * r(0.25), 1.0), normal.clone()),
             ],
             (),
         ),
@@ -77,13 +80,13 @@ fn mesh_quality_uses_hyperreal_edge_and_area_measurements() {
 
     let qualities = mesh.analyze_triangle_quality();
     assert_eq!(qualities.len(), 2);
-    assert!((qualities[0].area - 6.0).abs() < tolerance());
+    assert!((qualities[0].area.clone() - r(6.0)).abs() < tolerance());
     assert!(qualities[0].min_angle.is_finite());
     assert!(qualities[0].max_angle.is_finite());
-    assert!(qualities[1].area > 0.0);
+    assert!(qualities[1].area > r(0.0));
     assert!(qualities[1].quality_score.is_finite());
-    assert!(qualities[1].quality_score >= 0.0);
-    assert!(qualities[1].quality_score <= 1.0);
+    assert!(qualities[1].quality_score >= r(0.0));
+    assert!(qualities[1].quality_score <= r(1.0));
 }
 
 #[test]
@@ -91,9 +94,9 @@ fn mesh_quality_handles_nearly_collinear_triangle_with_hyperreal_metrics() {
     let normal = Vector3::z();
     let polygon = Polygon::new(
         vec![
-            Vertex::new(Point3::new(0.0, 0.0, 0.0), normal),
-            Vertex::new(Point3::new(1.0, 0.0, 0.0), normal),
-            Vertex::new(Point3::new(1.0, tolerance() * 64.0, 0.0), normal),
+            Vertex::new(p3(0.0, 0.0, 0.0), normal.clone()),
+            Vertex::new(p3(1.0, 0.0, 0.0), normal.clone()),
+            Vertex::new(p3(1.0, tolerance() * r(64.0), 0.0), normal),
         ],
         (),
     );
@@ -107,8 +110,8 @@ fn mesh_quality_handles_nearly_collinear_triangle_with_hyperreal_metrics() {
     assert!(quality.min_angle.is_finite());
     assert!(quality.max_angle.is_finite());
     assert!(quality.quality_score.is_finite());
-    assert!(quality.quality_score >= 0.0);
-    assert!(quality.quality_score <= 1.0);
+    assert!(quality.quality_score >= r(0.0));
+    assert!(quality.quality_score <= r(1.0));
 }
 
 #[test]
@@ -117,17 +120,17 @@ fn mesh_quality_aggregate_thresholds_use_hyperreal_comparisons() {
     let polygons = vec![
         Polygon::new(
             vec![
-                Vertex::new(Point3::new(0.0, 0.0, 0.0), normal),
-                Vertex::new(Point3::new(1.0, 0.0, 0.0), normal),
-                Vertex::new(Point3::new(0.0, 1.0, 0.0), normal),
+                Vertex::new(p3(0.0, 0.0, 0.0), normal.clone()),
+                Vertex::new(p3(1.0, 0.0, 0.0), normal.clone()),
+                Vertex::new(p3(0.0, 1.0, 0.0), normal.clone()),
             ],
             (),
         ),
         Polygon::new(
             vec![
-                Vertex::new(Point3::new(0.0, 0.0, 1.0), normal),
-                Vertex::new(Point3::new(1.0, 0.0, 1.0), normal),
-                Vertex::new(Point3::new(1.0, tolerance() * 64.0, 1.0), normal),
+                Vertex::new(p3(0.0, 0.0, 1.0), normal.clone()),
+                Vertex::new(p3(1.0, 0.0, 1.0), normal.clone()),
+                Vertex::new(p3(1.0, tolerance() * r(64.0), 1.0), normal),
             ],
             (),
         ),
@@ -146,32 +149,32 @@ fn mesh_quality_aggregate_thresholds_use_hyperreal_comparisons() {
 fn mesh_dihedral_angle_uses_hyperreal_normal_angle() {
     let xy = Polygon::new(
         vec![
-            Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::z()),
-            Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
-            Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
+            Vertex::new(p3(0.0, 0.0, 0.0), Vector3::z()),
+            Vertex::new(p3(1.0, 0.0, 0.0), Vector3::z()),
+            Vertex::new(p3(0.0, 1.0, 0.0), Vector3::z()),
         ],
         (),
     );
     let yz = Polygon::new(
         vec![
-            Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::x()),
-            Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::x()),
-            Vertex::new(Point3::new(0.0, 0.0, 1.0), Vector3::x()),
+            Vertex::new(p3(0.0, 0.0, 0.0), Vector3::x()),
+            Vertex::new(p3(0.0, 1.0, 0.0), Vector3::x()),
+            Vertex::new(p3(0.0, 0.0, 1.0), Vector3::x()),
         ],
         (),
     );
 
     let angle = Mesh::<()>::dihedral_angle(&xy, &yz);
-    assert!((angle - FRAC_PI_2).abs() < tolerance());
+    assert!((angle - frac_pi_2()).abs() < tolerance());
 }
 
 #[test]
 fn test_adaptive_mesh_refinement() {
-    let cube: Mesh<()> = Mesh::cube(2.0, ());
+    let cube: Mesh<()> = Mesh::cube(r(2.0), ());
     let original_polygon_count = cube.polygons.len();
 
     // Refine mesh adaptively based on quality and edge length
-    let refined = cube.adaptive_refine(0.3, 2.0, 15.0); // Refine triangles with quality < 0.3, edge length > 2.0, or curvature > 15 deg
+    let refined = cube.adaptive_refine(r(0.3), r(2.0), r(15.0)); // Refine triangles with quality < 0.3, edge length > 2.0, or curvature > 15 deg
 
     // Refined mesh should generally have more polygons (unless already very high quality)
     // Note: Since cube has high-quality faces, refinement may not increase polygon count significantly
@@ -181,7 +184,7 @@ fn test_adaptive_mesh_refinement() {
     );
 
     // Test with more aggressive settings
-    let aggressive_refined = cube.adaptive_refine(0.8, 1.0, 5.0);
+    let aggressive_refined = cube.adaptive_refine(r(0.8), r(1.0), r(5.0));
     assert!(
         aggressive_refined.polygons.len() >= refined.polygons.len(),
         "More aggressive refinement should result in equal or more polygons"
@@ -190,15 +193,15 @@ fn test_adaptive_mesh_refinement() {
 
 #[test]
 fn test_laplacian_mesh_smoothing() {
-    let sphere: Mesh<()> = Mesh::sphere(1.0, 16, 16, ());
+    let sphere: Mesh<()> = Mesh::sphere(r(1.0), 16, 16, ());
     let original_positions: Vec<_> = sphere
         .polygons
         .iter()
-        .flat_map(|poly| poly.vertices.iter().map(|v| v.position))
+        .flat_map(|poly| poly.vertices.iter().map(|v| v.position.clone()))
         .collect();
 
     // Apply mild Laplacian smoothing
-    let smoothed = sphere.laplacian_smooth(0.1, 2, false);
+    let smoothed = sphere.laplacian_smooth(r(0.1), 2, false);
 
     // Mesh should have same number of polygons
     assert_eq!(
@@ -211,7 +214,7 @@ fn test_laplacian_mesh_smoothing() {
     let smoothed_positions: Vec<_> = smoothed
         .polygons
         .iter()
-        .flat_map(|poly| poly.vertices.iter().map(|v| v.position))
+        .flat_map(|poly| poly.vertices.iter().map(|v| v.position.clone()))
         .collect();
 
     assert_eq!(
@@ -223,7 +226,7 @@ fn test_laplacian_mesh_smoothing() {
     // At least some vertices should have moved (unless mesh was already perfect)
     let mut moved_count = 0;
     for (orig, smooth) in original_positions.iter().zip(smoothed_positions.iter()) {
-        if (orig - smooth).norm() > 1e-10 {
+        if (orig - smooth).norm() > r(1e-10) {
             moved_count += 1;
         }
     }
@@ -236,15 +239,15 @@ fn test_laplacian_mesh_smoothing() {
 fn test_remove_poor_triangles() {
     // Create a degenerate case by making a very thin triangle
     let vertices = vec![
-        Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::z()),
-        Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
-        Vertex::new(Point3::new(0.5, 1e-8, 0.0), Vector3::z()), // Very thin triangle
+        Vertex::new(p3(0.0, 0.0, 0.0), Vector3::z()),
+        Vertex::new(p3(1.0, 0.0, 0.0), Vector3::z()),
+        Vertex::new(p3(0.5, 1e-8, 0.0), Vector3::z()), // Very thin triangle
     ];
     let bad_polygon: Polygon<()> = Polygon::new(vertices, ());
     let csg_with_bad = Mesh::from_polygons(&[bad_polygon], ());
 
     // Remove poor quality triangles
-    let filtered = csg_with_bad.remove_poor_triangles(0.1);
+    let filtered = csg_with_bad.remove_poor_triangles(r(0.1));
 
     // Should remove the poor quality triangle
     assert!(
@@ -255,76 +258,82 @@ fn test_remove_poor_triangles() {
 
 #[test]
 fn test_vertex_distance_operations() {
-    let v1 = Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::x());
-    let v2 = Vertex::new(Point3::new(3.0, 4.0, 0.0), Vector3::y());
+    let v1 = Vertex::new(p3(0.0, 0.0, 0.0), Vector3::x());
+    let v2 = Vertex::new(p3(3.0, 4.0, 0.0), Vector3::y());
 
     // Test distance calculation
     let distance = v1.distance_to(&v2);
     assert!(
-        (distance - 5.0).abs() < 1e-10,
+        (distance - r(5.0)).abs() < r(1e-10),
         "Distance should be 5.0 (3-4-5 triangle)"
     );
 
     // Test squared distance (should be 25.0)
     let distance_sq = v1.distance_squared_to(&v2);
     assert!(
-        (distance_sq - 25.0).abs() < 1e-10,
+        (distance_sq - r(25.0)).abs() < r(1e-10),
         "Squared distance should be 25.0"
     );
 
     // Test normal angle
     let angle = v1.normal_angle_to(&v2);
     assert!(
-        (angle - PI / 2.0).abs() < 1e-10,
+        (angle - (pi() / r(2.0)).unwrap()).abs() < r(1e-10),
         "Angle between x and y normals should be π/2"
     );
 }
 
 #[test]
 fn test_vertex_interpolation_methods() {
-    let v1 = Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::x());
-    let v2 = Vertex::new(Point3::new(2.0, 2.0, 2.0), Vector3::y());
+    let v1 = Vertex::new(p3(0.0, 0.0, 0.0), Vector3::x());
+    let v2 = Vertex::new(p3(2.0, 2.0, 2.0), Vector3::y());
 
     // Test linear interpolation
-    let mid_linear = v1.interpolate(&v2, 0.5);
+    let mid_linear = v1.interpolate(&v2, r(0.5));
     assert!(
-        (mid_linear.position - Point3::new(1.0, 1.0, 1.0)).norm() < 1e-10,
+        (mid_linear.position - p3(1.0, 1.0, 1.0)).norm() < r(1e-10),
         "Linear interpolation midpoint should be (1,1,1)"
     );
 
     // Test spherical interpolation
-    let mid_slerp = v1.slerp_interpolate(&v2, 0.5);
+    let mid_slerp = v1.slerp_interpolate(&v2, r(0.5));
     assert!(
-        (mid_slerp.position - Point3::new(1.0, 1.0, 1.0)).norm() < 1e-10,
+        (mid_slerp.position - p3(1.0, 1.0, 1.0)).norm() < r(1e-10),
         "SLERP position should match linear for positions"
     );
 
     // Normal should be normalized and between the two normals
     assert!(
-        (mid_slerp.normal.norm() - 1.0).abs() < 1e-10,
+        (mid_slerp.normal.norm() - r(1.0)).abs() < r(1e-10),
         "SLERP normal should be unit length"
     );
 }
 
 #[test]
 fn test_barycentric_interpolation() {
-    let v1 = Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::x());
-    let v2 = Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::y());
-    let v3 = Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z());
+    let v1 = Vertex::new(p3(0.0, 0.0, 0.0), Vector3::x());
+    let v2 = Vertex::new(p3(1.0, 0.0, 0.0), Vector3::y());
+    let v3 = Vertex::new(p3(0.0, 1.0, 0.0), Vector3::z());
 
     // Test centroid (equal weights)
-    let centroid =
-        Vertex::barycentric_interpolate(&v1, &v2, &v3, 1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0);
-    let expected_pos = Point3::new(1.0 / 3.0, 1.0 / 3.0, 0.0);
+    let centroid = Vertex::barycentric_interpolate(
+        &v1,
+        &v2,
+        &v3,
+        r(1.0 / 3.0),
+        r(1.0 / 3.0),
+        r(1.0 / 3.0),
+    );
+    let expected_pos = p3(1.0 / 3.0, 1.0 / 3.0, 0.0);
     assert!(
-        (centroid.position - expected_pos).norm() < 1e-10,
+        (centroid.position - expected_pos).norm() < r(1e-10),
         "Barycentric centroid should be at (1/3, 1/3, 0)"
     );
 
     // Test vertex recovery (weight=1 for one vertex)
-    let recovered_v1 = Vertex::barycentric_interpolate(&v1, &v2, &v3, 1.0, 0.0, 0.0);
+    let recovered_v1 = Vertex::barycentric_interpolate(&v1, &v2, &v3, r(1.0), r(0.0), r(0.0));
     assert!(
-        (recovered_v1.position - v1.position).norm() < 1e-10,
+        (recovered_v1.position - v1.position).norm() < r(1e-10),
         "Barycentric should recover original vertex"
     );
 }
@@ -332,32 +341,34 @@ fn test_barycentric_interpolation() {
 #[test]
 fn test_vertex_clustering() {
     let vertices = vec![
-        Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::x()),
-        Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::x()),
-        Vertex::new(Point3::new(0.5, 0.5, 0.0), Vector3::y()),
+        Vertex::new(p3(0.0, 0.0, 0.0), Vector3::x()),
+        Vertex::new(p3(1.0, 0.0, 0.0), Vector3::x()),
+        Vertex::new(p3(0.5, 0.5, 0.0), Vector3::y()),
     ];
 
     let cluster = VertexCluster::from_vertices(&vertices).expect("Should create cluster");
 
     // Check cluster properties
     assert_eq!(cluster.count, 3, "Cluster should contain 3 vertices");
-    assert!(cluster.radius > 0.0, "Cluster should have positive radius");
+    assert!(cluster.radius > r(0.0), "Cluster should have positive radius");
 
     // Centroid should be reasonable
-    let expected_centroid = Point3::new(0.5, 1.0 / 6.0, 0.0);
+    let expected_centroid = p3(0.5, 1.0 / 6.0, 0.0);
     assert!(
-        (cluster.position - expected_centroid).norm() < 1e-10,
+        (cluster.position.clone() - expected_centroid).norm() < r(1e-10),
         "Cluster centroid should be average of vertex positions"
     );
 
     // Convert back to vertex
     let representative = cluster.to_vertex();
     assert_eq!(
-        representative.position, cluster.position,
+        representative.position,
+        cluster.position.clone(),
         "Representative should have cluster position"
     );
     assert_eq!(
-        representative.normal, cluster.normal,
+        representative.normal,
+        cluster.normal.clone(),
         "Representative should have cluster normal"
     );
 }
@@ -365,7 +376,7 @@ fn test_vertex_clustering() {
 #[test]
 fn test_mesh_connectivity_adjacency_usage() {
     // Create a simple cube to test mesh connectivity
-    let cube: Mesh<()> = Mesh::cube(2.0, ());
+    let cube: Mesh<()> = Mesh::cube(r(2.0), ());
 
     // Build the mesh connectivity graph
     let (vertex_map, adjacency_map) = cube.build_connectivity();
@@ -396,7 +407,7 @@ fn test_mesh_connectivity_adjacency_usage() {
     println!("  Total neighbor relationships: {}", total_neighbors);
 
     // Test the actual mesh connectivity in Laplacian smoothing
-    let smoothed_cube = cube.laplacian_smooth(0.1, 1, false);
+    let smoothed_cube = cube.laplacian_smooth(r(0.1), 1, false);
 
     // Verify the smoothed mesh has the same number of polygons
     assert_eq!(
@@ -406,13 +417,13 @@ fn test_mesh_connectivity_adjacency_usage() {
     );
 
     // Verify that smoothing actually changes vertex positions
-    let original_pos = cube.polygons[0].vertices[0].position;
-    let smoothed_pos = smoothed_cube.polygons[0].vertices[0].position;
+    let original_pos = cube.polygons[0].vertices[0].position.clone();
+    let smoothed_pos = smoothed_cube.polygons[0].vertices[0].position.clone();
     let position_change = (original_pos - smoothed_pos).norm();
 
     println!("  Position change from smoothing: {:.6}", position_change);
     assert!(
-        position_change > 1e-10,
+        position_change > r(1e-10),
         "Smoothing should change vertex positions"
     );
 }
@@ -420,17 +431,18 @@ fn test_mesh_connectivity_adjacency_usage() {
 #[test]
 fn test_vertex_connectivity_analysis() {
     // Create a more complex mesh to test vertex connectivity
-    let sphere: Mesh<()> = Mesh::sphere(1.0, 16, 8, ());
+    let sphere: Mesh<()> = Mesh::sphere(r(1.0), 16, 8, ());
     let (vertex_map, adjacency_map) = sphere.build_connectivity();
 
     // Build vertex positions map for analysis
     let mut vertex_positions = HashMap::new();
     for (pos, idx) in vertex_map.get_vertex_positions() {
-        vertex_positions.insert(*idx, *pos);
+        vertex_positions.insert(*idx, pos.clone());
     }
+    assert_eq!(vertex_positions.len(), vertex_map.vertex_count());
 
     // Test vertex connectivity analysis for a few vertices
-    let mut total_regularity = 0.0;
+    let mut total_regularity = Real::zero();
     let mut vertex_count = 0;
 
     for &vertex_idx in adjacency_map.keys().take(5) {
@@ -444,7 +456,7 @@ fn test_vertex_connectivity_analysis() {
 
         assert!(valence > 0, "Vertex should have positive valence");
         assert!(
-            (0.0..=1.0).contains(&regularity),
+            regularity >= r(0.0) && regularity <= r(1.0),
             "Regularity should be in [0,1]"
         );
 
@@ -452,12 +464,12 @@ fn test_vertex_connectivity_analysis() {
         vertex_count += 1;
     }
 
-    let avg_regularity = total_regularity / vertex_count as Real;
+    let avg_regularity = (total_regularity / r(vertex_count)).unwrap();
     println!("Average regularity: {:.3}", avg_regularity);
 
     // Sphere vertices should have reasonable regularity
     assert!(
-        avg_regularity > 0.1,
+        avg_regularity > r(0.1),
         "Sphere vertices should have decent regularity"
     );
 }
@@ -465,7 +477,7 @@ fn test_vertex_connectivity_analysis() {
 #[test]
 fn test_mesh_quality_with_adjacency() {
     // Create a triangulated cube
-    let cube: Mesh<()> = Mesh::cube(2.0, ()).triangulate();
+    let cube: Mesh<()> = Mesh::cube(r(2.0), ()).triangulate();
 
     // Test triangle quality analysis
     let qualities = cube.analyze_triangle_quality();
@@ -473,19 +485,27 @@ fn test_mesh_quality_with_adjacency() {
     println!("  Number of triangles: {}", qualities.len());
 
     if !qualities.is_empty() {
-        let avg_quality: Real =
-            qualities.iter().map(|q| q.quality_score).sum::<Real>() / qualities.len() as Real;
+        let avg_quality: Real = (qualities
+            .iter()
+            .map(|q| q.quality_score.clone())
+            .sum::<Real>()
+            / r(qualities.len()))
+        .unwrap();
         println!("  Average quality score: {:.3}", avg_quality);
 
         let min_quality = qualities
             .iter()
-            .map(|q| q.quality_score)
-            .fold(Real::INFINITY, |a, b| a.min(b));
+            .map(|q| q.quality_score.clone())
+            .reduce(|a, b| a.min(b))
+            .unwrap_or_else(Real::zero);
         println!("  Minimum quality score: {:.3}", min_quality);
 
         // Cube triangles should have reasonable quality
-        assert!(avg_quality > 0.1, "Cube triangles should have decent quality");
-        assert!(min_quality >= 0.0, "Quality scores should be non-negative");
+        assert!(
+            avg_quality > r(0.1),
+            "Cube triangles should have decent quality"
+        );
+        assert!(min_quality >= r(0.0), "Quality scores should be non-negative");
     }
 
     // Test mesh quality metrics
@@ -499,15 +519,15 @@ fn test_mesh_quality_with_adjacency() {
     println!("  Edge length std: {:.3}", metrics.edge_length_std);
 
     assert!(
-        metrics.avg_quality >= 0.0,
+        metrics.avg_quality >= r(0.0),
         "Average quality should be non-negative"
     );
     assert!(
-        metrics.min_quality >= 0.0,
+        metrics.min_quality >= r(0.0),
         "Minimum quality should be non-negative"
     );
     assert!(
-        metrics.high_quality_ratio >= 0.0 && metrics.high_quality_ratio <= 1.0,
+        metrics.high_quality_ratio >= r(0.0) && metrics.high_quality_ratio <= r(1.0),
         "High quality ratio should be in [0,1]"
     );
 }
@@ -517,7 +537,7 @@ fn test_adjacency_map_actually_used() {
     // This test specifically verifies that the adjacency map is actually used
     // by comparing results with and without proper connectivity
 
-    let cube: Mesh<()> = Mesh::cube(2.0, ());
+    let cube: Mesh<()> = Mesh::cube(r(2.0), ());
 
     // Build connectivity
     let (vertex_map, adjacency_map) = cube.build_connectivity();
@@ -539,25 +559,26 @@ fn test_adjacency_map_actually_used() {
     );
 
     // Test that the adjacency map affects smoothing
-    let smoothed_0_iterations = cube.laplacian_smooth(0.0, 1, false);
-    let smoothed_1_iterations = cube.laplacian_smooth(0.1, 1, false);
+    let smoothed_0_iterations = cube.laplacian_smooth(r(0.0), 1, false);
+    let smoothed_1_iterations = cube.laplacian_smooth(r(0.1), 1, false);
 
     // With lambda=0, no smoothing should occur
-    let original_first_vertex = cube.polygons[0].vertices[0].position;
-    let zero_smoothed_first_vertex = smoothed_0_iterations.polygons[0].vertices[0].position;
-    let smoothed_first_vertex = smoothed_1_iterations.polygons[0].vertices[0].position;
+    let original_first_vertex = cube.polygons[0].vertices[0].position.clone();
+    let zero_smoothed_first_vertex =
+        smoothed_0_iterations.polygons[0].vertices[0].position.clone();
+    let smoothed_first_vertex = smoothed_1_iterations.polygons[0].vertices[0].position.clone();
 
     // With lambda=0, position should be unchanged
-    let zero_diff = (original_first_vertex - zero_smoothed_first_vertex).norm();
+    let zero_diff = (original_first_vertex.clone() - zero_smoothed_first_vertex).norm();
     assert!(
-        zero_diff < 1e-10,
+        zero_diff < r(1e-10),
         "Zero smoothing should not change positions"
     );
 
     // With lambda=0.1, position should change
     let smooth_diff = (original_first_vertex - smoothed_first_vertex).norm();
     assert!(
-        smooth_diff > 1e-10,
+        smooth_diff > r(1e-10),
         "Smoothing should change vertex positions"
     );
 

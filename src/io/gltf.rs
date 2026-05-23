@@ -11,6 +11,13 @@ use hashbrown::HashMap;
 use std::fmt::Debug;
 use std::io::Write;
 
+fn real_f32(value: &hyperlattice::Real) -> f32 {
+    value
+        .to_f32_lossy()
+        .filter(|value| value.is_finite())
+        .unwrap_or(0.0)
+}
+
 fn build_gltf_buffers<T: IndexedTriangulated3D>(shape: &T) -> (Vec<Vertex>, Vec<u32>) {
     let indexed = shape.indexed_triangles();
     let mut vertices = Vec::new();
@@ -23,8 +30,8 @@ fn build_gltf_buffers<T: IndexedTriangulated3D>(shape: &T) -> (Vec<Vertex>, Vec<
                 *vertex_map.entry(key).or_insert_with(|| {
                     let index = vertices.len() as u32;
                     vertices.push(Vertex {
-                        position: indexed.positions[position],
-                        normal: indexed.normals[normal],
+                        position: indexed.positions[position].clone(),
+                        normal: indexed.normals[normal].clone(),
                     });
                     index
                 })
@@ -47,17 +54,17 @@ fn gltf_from_vertices(vertices: &[Vertex], indices: &[u32], object_name: &str) -
     #[allow(clippy::unnecessary_cast)]
     {
         for v in vertices {
-            let px = v.position.x as f32;
-            let py = v.position.y as f32;
-            let pz = v.position.z as f32;
+            let px = real_f32(&v.position.x);
+            let py = real_f32(&v.position.y);
+            let pz = real_f32(&v.position.z);
 
             position_bytes.extend_from_slice(&px.to_le_bytes());
             position_bytes.extend_from_slice(&py.to_le_bytes());
             position_bytes.extend_from_slice(&pz.to_le_bytes());
 
-            let nx = v.normal.x as f32;
-            let ny = v.normal.y as f32;
-            let nz = v.normal.z as f32;
+            let nx = real_f32(&v.normal.0[0]);
+            let ny = real_f32(&v.normal.0[1]);
+            let nz = real_f32(&v.normal.0[2]);
 
             normal_bytes.extend_from_slice(&nx.to_le_bytes());
             normal_bytes.extend_from_slice(&ny.to_le_bytes());

@@ -53,7 +53,6 @@ opt-level = "z"
 
 [dependencies]
 # geometry
-nalgebra = { version = "0.34.1", features = ["serde-serialize"] }
 #alum = "0.6.1"
 chull = { version = "0.2.4", optional = true }
 # Hyper sibling dependency switch: keep both local path and crates.io lines; do not remove either.
@@ -74,9 +73,6 @@ hypertri = { path = "../hypertri", default-features = false, features = ["earcut
 # hyperreal = { version = "0.13.0", default-features = false }
 # hypersdf = { version = "0.2.0", optional = true }
 # hypertri = { version = "0.3.0", default-features = false, features = ["earcut"] }
-rapier3d-f64 = { version = "0.31.0" }
-parry3d-f64  = { version = "0.25.3" }
-
 # bevy mesh conversion
 bevy_mesh = { version = "0.18", optional = true }
 bevy_asset = { version = "0.18", optional = true }
@@ -124,9 +120,7 @@ uuid = { version = "1.18", features = ["js"] }
 default = ["mesh", "sketch", "stl-io", "dxf-io", "obj-io", "ply-io", "amf-io", "gltf-io", "gerber-io", "chull-io", "image-io", "metaballs", "sdf", "truetype-text", "hershey-text"]
 parallel = [
   "rayon",
-  "hashbrown/rayon",
-  "parry3d-f64/parallel",
-  "rapier3d-f64/parallel"
+  "hashbrown/rayon"
 ]
 mesh = [
   # hypermesh backed Mesh datatype

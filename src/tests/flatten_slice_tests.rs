@@ -15,10 +15,10 @@ fn test_flatten_and_union_single_polygon() {
     // Expect the same bounding box
     assert!(!flat_csg.as_region().is_empty(), "Result should not be empty");
     let bb = flat_csg.bounding_box();
-    assert_eq!(bb.mins.x, 0.0);
-    assert_eq!(bb.mins.y, 0.0);
-    assert_eq!(bb.maxs.x, 1.0);
-    assert_eq!(bb.maxs.y, 1.0);
+    assert_eq!(bb.mins.x, r(0.0));
+    assert_eq!(bb.mins.y, r(0.0));
+    assert_eq!(bb.maxs.x, r(1.0));
+    assert_eq!(bb.maxs.y, r(1.0));
 }
 
 #[test]
@@ -57,8 +57,8 @@ fn sketch_from_mesh_uses_same_hypercurve_flatten_path() {
     assert!(sketch.contains_xy(hr(1.0), hr(0.5)).unwrap());
 
     let bbox = sketch.bounding_box();
-    assert_eq!(bbox.mins.x, 0.0);
-    assert_eq!(bbox.maxs.x, 2.0);
+    assert_eq!(bbox.mins.x, r(0.0));
+    assert_eq!(bbox.maxs.x, r(2.0));
     assert!(
         !sketch.region_profiles().is_empty(),
         "Profile::from(mesh) should not depend on retained finite union geometry"
@@ -69,15 +69,15 @@ fn sketch_from_mesh_uses_same_hypercurve_flatten_path() {
 fn slice_open_intersection_chain_is_native_hypercurve_wire() {
     let polygon = Polygon::new(
         vec![
-            Vertex::new(Point3::new(-1.0, 0.0, -1.0), Vector3::z()),
-            Vertex::new(Point3::new(1.0, 0.0, 1.0), Vector3::z()),
-            Vertex::new(Point3::new(0.0, 1.0, 1.0), Vector3::z()),
+            Vertex::new(p3(-1.0, 0.0, -1.0), Vector3::z()),
+            Vertex::new(p3(1.0, 0.0, 1.0), Vector3::z()),
+            Vertex::new(p3(0.0, 1.0, 1.0), Vector3::z()),
         ],
         (),
     );
     let mesh = Mesh::from_polygons(&[polygon], ());
 
-    let section = mesh.slice(Plane::from_normal(Vector3::z(), 0.0));
+    let section = mesh.slice(Plane::from_normal(Vector3::z(), r(0.0)));
 
     assert!(section.as_region().is_empty());
     assert_eq!(section.wires().len(), 1);
@@ -105,10 +105,10 @@ fn test_flatten_and_union_two_overlapping_squares() {
 
     // The bounding box should now span x=0..2, y=0..1
     let bb = flat_csg.bounding_box();
-    assert_eq!(bb.mins.x, 0.0);
-    assert_eq!(bb.maxs.x, 2.0);
-    assert_eq!(bb.mins.y, 0.0);
-    assert_eq!(bb.maxs.y, 1.0);
+    assert_eq!(bb.mins.x, r(0.0));
+    assert_eq!(bb.maxs.x, r(2.0));
+    assert_eq!(bb.mins.y, r(0.0));
+    assert_eq!(bb.maxs.y, r(1.0));
 }
 
 #[test]
@@ -122,10 +122,10 @@ fn flatten_union_normalizes_opposite_projected_winding() {
     assert!(flat.contains_xy(hr(1.0), hr(1.0)).unwrap());
     assert_eq!(flat.material_contour_count(), 1);
     let bounds = flat.bounding_box();
-    assert_eq!(bounds.mins.x, 0.0);
-    assert_eq!(bounds.mins.y, 0.0);
-    assert_eq!(bounds.maxs.x, 2.0);
-    assert_eq!(bounds.maxs.y, 2.0);
+    assert_eq!(bounds.mins.x, r(0.0));
+    assert_eq!(bounds.mins.y, r(0.0));
+    assert_eq!(bounds.maxs.x, r(2.0));
+    assert_eq!(bounds.maxs.y, r(2.0));
 }
 
 /// Test `flatten_and_union` with two disjoint squares.
@@ -150,10 +150,10 @@ fn test_flatten_and_union_near_xy_plane() {
     // Slightly "tilted" or with z=1e-6
     let poly1 = Polygon::<()>::new(
         vec![
-            Vertex::new(Point3::new(0.0, 0.0, 1e-6), normal),
-            Vertex::new(Point3::new(1.0, 0.0, 1e-6), normal),
-            Vertex::new(Point3::new(1.0, 1.0, 1e-6), normal),
-            Vertex::new(Point3::new(0.0, 1.0, 1e-6), normal),
+            Vertex::new(p3(0.0, 0.0, 1e-6), normal.clone()),
+            Vertex::new(p3(1.0, 0.0, 1e-6), normal.clone()),
+            Vertex::new(p3(1.0, 1.0, 1e-6), normal.clone()),
+            Vertex::new(p3(0.0, 1.0, 1e-6), normal),
         ],
         (),
     );
@@ -166,10 +166,10 @@ fn test_flatten_and_union_near_xy_plane() {
         "Should flatten to a valid polygon"
     );
     let bb = flat_csg.bounding_box();
-    assert_eq!(bb.mins.x, 0.0);
-    assert_eq!(bb.maxs.x, 1.0);
-    assert_eq!(bb.mins.y, 0.0);
-    assert_eq!(bb.maxs.y, 1.0);
+    assert_eq!(bb.mins.x, r(0.0));
+    assert_eq!(bb.maxs.x, r(1.0));
+    assert_eq!(bb.mins.y, r(0.0));
+    assert_eq!(bb.maxs.y, r(1.0));
 }
 
 /// Test with multiple polygons that share edges or have nearly collinear edges
@@ -191,9 +191,12 @@ fn test_flatten_and_union_collinear_edges() {
     // Expect 1 polygon from x=0..4, y=0..~1.0ish
     assert!(!flat_csg.as_region().is_empty());
     let bb = flat_csg.bounding_box();
-    assert!((bb.maxs.x - 4.0).abs() < 1e-5, "Should span up to x=4.0");
+    assert!(
+        (bb.maxs.x - r(4.0)).abs() < r(1e-5),
+        "Should span up to x=4.0"
+    );
     // Also check the y-range is ~1.001
-    assert!((bb.maxs.y - 1.001).abs() < 1e-3);
+    assert!((bb.maxs.y - r(1.001)).abs() < r(1e-3));
 }
 
 /// If you suspect `flatten_and_union` is returning no polygons, this test
@@ -201,7 +204,7 @@ fn test_flatten_and_union_collinear_edges() {
 /// you can println! debug info in `flatten_and_union`.
 #[test]
 fn test_flatten_and_union_debug() {
-    let cube = Mesh::<()>::cube(2.0, ());
+    let cube = Mesh::<()>::cube(r(2.0), ());
     let flattened = cube.flatten();
     assert!(
         !flattened.as_region().is_empty(),
@@ -210,7 +213,9 @@ fn test_flatten_and_union_debug() {
     let area = flattened
         .region_profiles()
         .iter()
-        .map(|profile| hypercurve::finite_ring_signed_area(profile.material().points()).abs())
+        .map(|profile| {
+            r(hypercurve::finite_ring_signed_area(profile.material().points()).abs())
+        })
         .sum::<Real>();
-    assert!(area > 3.9, "Flattened cube too small");
+    assert!(area > r(3.9), "Flattened cube too small");
 }

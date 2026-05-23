@@ -1,27 +1,43 @@
 //! Mesh smoothing and refinement operations.
 
-use crate::float_types::{
-    Real, hdegrees_to_radians, hpoint_centroid, hpoint_distance, hpoint_lerp, hreal_cmp_f64,
-    hreal_from_f64, hreal_max_report_value,
-};
 use crate::mesh::Mesh;
 use crate::polygon::Polygon;
 use crate::vertex::Vertex;
-use nalgebra::Point3;
+use hyperlattice::{Point3, Real};
+use hyperreal::RealSign;
 use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::fmt::Debug;
 
-fn hyper_scalar_ge(lhs: Real, rhs: Real) -> bool {
-    matches!(hreal_cmp_f64(lhs, rhs), Ordering::Greater | Ordering::Equal)
+fn real_cmp(lhs: &Real, rhs: &Real) -> Ordering {
+    hyperlimit::compare_reals(lhs, rhs)
+        .value()
+        .unwrap_or_else(|| match (lhs.clone() - rhs.clone()).refine_sign_until(128) {
+            Some(RealSign::Positive) => Ordering::Greater,
+            Some(RealSign::Negative) => Ordering::Less,
+            Some(RealSign::Zero) | None => Ordering::Equal,
+        })
 }
 
-fn hyper_scalar_gt(lhs: Real, rhs: Real) -> bool {
-    matches!(hreal_cmp_f64(lhs, rhs), Ordering::Greater)
+fn real_ge(lhs: &Real, rhs: &Real) -> bool {
+    matches!(real_cmp(lhs, rhs), Ordering::Greater | Ordering::Equal)
 }
 
-fn hyper_scalar_lt(lhs: Real, rhs: Real) -> bool {
-    matches!(hreal_cmp_f64(lhs, rhs), Ordering::Less)
+fn real_gt(lhs: &Real, rhs: &Real) -> bool {
+    matches!(real_cmp(lhs, rhs), Ordering::Greater)
+}
+
+fn real_lt(lhs: &Real, rhs: &Real) -> bool {
+    matches!(real_cmp(lhs, rhs), Ordering::Less)
+}
+
+fn degrees_to_radians(degrees: Real) -> Option<Real> {
+    (degrees * Real::pi() / Real::from(180_u8)).ok()
+}
+
+fn point_distance(a: &Point3, b: &Point3) -> Option<Real> {
+    let edge = b - a;
+    edge.dot(&edge).sqrt().ok()
 }
 
 impl<M: Clone + Debug + Send + Sync> Mesh<M> {
@@ -48,7 +64,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     ///
     /// Vertex lookup reuses [`VertexIndexMap`](crate::mesh::connectivity::VertexIndexMap),
     /// whose matching predicate requires exact equality after promotion through
-    /// `hyperlattice::Vector3` and `hyperreal::Real`. This keeps the discrete
+    /// `hyperlattice::Vector3` and `Real`. This keeps the discrete
     /// Laplacian's adjacency relation stable before applying the uniform
     /// smoothing stencil described in Botsch et al., *Polygon Mesh Processing*,
     /// 2010 (<https://doi.org/10.1201/b10688>).
@@ -58,28 +74,24 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         iterations: usize,
         preserve_boundaries: bool,
     ) -> Mesh<M> {
-        if hreal_from_f64(lambda).is_err() {
-            return self.clone();
-        }
-
         let (vertex_map, adjacency) = self.build_connectivity();
         let mut smoothed_polygons = self.polygons.clone();
 
         for iteration in 0..iterations {
             // Build current vertex position mapping
-            let mut current_positions: HashMap<usize, Point3<Real>> = HashMap::new();
+            let mut current_positions: HashMap<usize, Point3> = HashMap::new();
             for polygon in &smoothed_polygons {
                 for vertex in &polygon.vertices {
                     if let Some(idx) = vertex_map.find_index(&vertex.position) {
-                        current_positions.insert(idx, vertex.position);
+                        current_positions.insert(idx, vertex.position.clone());
                     }
                 }
             }
 
             // Compute Laplacian for each vertex
-            let mut laplacian_updates: HashMap<usize, Point3<Real>> = HashMap::new();
+            let mut laplacian_updates: HashMap<usize, Point3> = HashMap::new();
             for (&vertex_idx, neighbors) in &adjacency {
-                if let Some(&current_position) = current_positions.get(&vertex_idx) {
+                if let Some(current_position) = current_positions.get(&vertex_idx).cloned() {
                     // Check if this is a boundary vertex
                     if preserve_boundaries && neighbors.len() < 4 {
                         // Boundary vertex - skip smoothing
@@ -90,14 +102,12 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                     let neighbor_positions = neighbors
                         .iter()
                         .filter_map(|neighbor_idx| {
-                            current_positions.get(neighbor_idx).copied()
+                            current_positions.get(neighbor_idx).cloned()
                         })
                         .collect::<Vec<_>>();
 
-                    if let Some(neighbor_avg) = hpoint_centroid(&neighbor_positions) {
-                        let new_position =
-                            hpoint_lerp(&current_position, &neighbor_avg, lambda)
-                                .unwrap_or(current_position);
+                    if let Some(neighbor_avg) = Point3::centroid(&neighbor_positions) {
+                        let new_position = current_position.lerp(&neighbor_avg, &lambda);
                         laplacian_updates.insert(vertex_idx, new_position);
                     } else {
                         laplacian_updates.insert(vertex_idx, current_position);
@@ -109,8 +119,8 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             for polygon in &mut smoothed_polygons {
                 for vertex in &mut polygon.vertices {
                     if let Some(idx) = vertex_map.find_index(&vertex.position) {
-                        if let Some(&new_position) = laplacian_updates.get(&idx) {
-                            vertex.position = new_position;
+                        if let Some(new_position) = laplacian_updates.get(&idx) {
+                            vertex.position = new_position.clone();
                         }
                     }
                 }
@@ -154,27 +164,23 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         iterations: usize,
         preserve_boundaries: bool,
     ) -> Mesh<M> {
-        if hreal_from_f64(lambda).is_err() || hreal_from_f64(mu).is_err() {
-            return self.clone();
-        }
-
         let (vertex_map, adjacency) = self.build_connectivity();
         let mut smoothed_polygons = self.polygons.clone();
 
         for _ in 0..iterations {
             // --- Lambda (shrinking) pass ---
-            let mut current_positions: HashMap<usize, Point3<Real>> = HashMap::new();
+            let mut current_positions: HashMap<usize, Point3> = HashMap::new();
             for polygon in &smoothed_polygons {
                 for vertex in &polygon.vertices {
                     if let Some(idx) = vertex_map.find_index(&vertex.position) {
-                        current_positions.insert(idx, vertex.position);
+                        current_positions.insert(idx, vertex.position.clone());
                     }
                 }
             }
 
-            let mut updates: HashMap<usize, Point3<Real>> = HashMap::new();
+            let mut updates: HashMap<usize, Point3> = HashMap::new();
             for (&vertex_idx, neighbors) in &adjacency {
-                if let Some(&current_position) = current_positions.get(&vertex_idx) {
+                if let Some(current_position) = current_positions.get(&vertex_idx).cloned() {
                     if preserve_boundaries && neighbors.len() < 4 {
                         updates.insert(vertex_idx, current_position);
                         continue;
@@ -183,16 +189,13 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                     let neighbor_positions = neighbors
                         .iter()
                         .filter_map(|neighbor_idx| {
-                            current_positions.get(neighbor_idx).copied()
+                            current_positions.get(neighbor_idx).cloned()
                         })
                         .collect::<Vec<_>>();
 
-                    if let Some(neighbor_avg) = hpoint_centroid(&neighbor_positions) {
-                        updates.insert(
-                            vertex_idx,
-                            hpoint_lerp(&current_position, &neighbor_avg, lambda)
-                                .unwrap_or(current_position),
-                        );
+                    if let Some(neighbor_avg) = Point3::centroid(&neighbor_positions) {
+                        updates
+                            .insert(vertex_idx, current_position.lerp(&neighbor_avg, &lambda));
                     }
                 }
             }
@@ -200,8 +203,8 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             for polygon in &mut smoothed_polygons {
                 for vertex in &mut polygon.vertices {
                     if let Some(idx) = vertex_map.find_index(&vertex.position) {
-                        if let Some(&new_position) = updates.get(&idx) {
-                            vertex.position = new_position;
+                        if let Some(new_position) = updates.get(&idx) {
+                            vertex.position = new_position.clone();
                         }
                     }
                 }
@@ -212,14 +215,14 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             for polygon in &smoothed_polygons {
                 for vertex in &polygon.vertices {
                     if let Some(idx) = vertex_map.find_index(&vertex.position) {
-                        current_positions.insert(idx, vertex.position);
+                        current_positions.insert(idx, vertex.position.clone());
                     }
                 }
             }
 
             updates.clear();
             for (&vertex_idx, neighbors) in &adjacency {
-                if let Some(&current_position) = current_positions.get(&vertex_idx) {
+                if let Some(current_position) = current_positions.get(&vertex_idx).cloned() {
                     if preserve_boundaries && neighbors.len() < 4 {
                         updates.insert(vertex_idx, current_position);
                         continue;
@@ -228,16 +231,12 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                     let neighbor_positions = neighbors
                         .iter()
                         .filter_map(|neighbor_idx| {
-                            current_positions.get(neighbor_idx).copied()
+                            current_positions.get(neighbor_idx).cloned()
                         })
                         .collect::<Vec<_>>();
 
-                    if let Some(neighbor_avg) = hpoint_centroid(&neighbor_positions) {
-                        updates.insert(
-                            vertex_idx,
-                            hpoint_lerp(&current_position, &neighbor_avg, mu)
-                                .unwrap_or(current_position),
-                        );
+                    if let Some(neighbor_avg) = Point3::centroid(&neighbor_positions) {
+                        updates.insert(vertex_idx, current_position.lerp(&neighbor_avg, &mu));
                     }
                 }
             }
@@ -245,8 +244,8 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             for polygon in &mut smoothed_polygons {
                 for vertex in &mut polygon.vertices {
                     if let Some(idx) = vertex_map.find_index(&vertex.position) {
-                        if let Some(&new_position) = updates.get(&idx) {
-                            vertex.position = new_position;
+                        if let Some(new_position) = updates.get(&idx) {
+                            vertex.position = new_position.clone();
                         }
                     }
                 }
@@ -276,7 +275,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// 2. **Size-based**: Subdivide triangles larger than target size
     /// 3. **Curvature-based**: Subdivide where surface curves significantly
     ///
-    /// The scalar thresholds are promoted through `hyperreal::Real` before
+    /// The scalar thresholds are promoted through `Real` before
     /// they participate in refinement predicates, and the curvature threshold
     /// is converted to radians through the shared hyperreal degree adapter.
     /// This keeps adaptive decisions aligned with Yap's exact-geometric-
@@ -291,14 +290,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         max_edge_length: Real,
         curvature_threshold_deg: Real,
     ) -> Mesh<M> {
-        if hreal_from_f64(quality_threshold).is_err()
-            || hreal_from_f64(max_edge_length).is_err()
-            || hreal_from_f64(curvature_threshold_deg).is_err()
-        {
-            return self.clone();
-        }
-        let Some(curvature_threshold_rad) = hdegrees_to_radians(curvature_threshold_deg)
-        else {
+        let Some(curvature_threshold_rad) = degrees_to_radians(curvature_threshold_deg) else {
             return self.clone();
         };
 
@@ -309,7 +301,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
 
         for (poly_idx, poly) in self.polygons.iter().enumerate() {
             for vertex in &poly.vertices {
-                let v_idx = vertex_map.get_or_create_index(vertex.position);
+                let v_idx = vertex_map.get_or_create_index(vertex.position.clone());
                 polygon_map.entry(v_idx).or_default().push(poly_idx);
             }
         }
@@ -320,11 +312,8 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             // Quality and edge length check
             if i < qualities.len() {
                 let quality = &qualities[i];
-                if hyper_scalar_lt(quality.quality_score, quality_threshold)
-                    || hyper_scalar_gt(
-                        Self::max_edge_length(&polygon.vertices),
-                        max_edge_length,
-                    )
+                if real_lt(&quality.quality_score, &quality_threshold)
+                    || real_gt(&Self::max_edge_length(&polygon.vertices), &max_edge_length)
                 {
                     should_refine = true;
                 }
@@ -333,8 +322,8 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             // Curvature check
             if !should_refine {
                 'edge_loop: for edge in polygon.edges() {
-                    let v1_idx = vertex_map.get_or_create_index(edge.0.position);
-                    let v2_idx = vertex_map.get_or_create_index(edge.1.position);
+                    let v1_idx = vertex_map.get_or_create_index(edge.0.position.clone());
+                    let v2_idx = vertex_map.get_or_create_index(edge.1.position.clone());
 
                     if let (Some(p1_indices), Some(p2_indices)) =
                         (polygon_map.get(&v1_idx), polygon_map.get(&v2_idx))
@@ -347,7 +336,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                                 if p1_idx == p2_idx {
                                     let other_poly = &self.polygons[p1_idx];
                                     let angle = Self::dihedral_angle(polygon, other_poly);
-                                    if hyper_scalar_gt(angle, curvature_threshold_rad) {
+                                    if real_gt(&angle, &curvature_threshold_rad) {
                                         should_refine = true;
                                         break 'edge_loop;
                                     }
@@ -380,21 +369,24 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     fn max_edge_length(vertices: &[Vertex]) -> Real {
         if vertices.len() < 2 {
-            return 0.0;
+            return Real::zero();
         }
 
         let mut max_length: Option<Real> = None;
         for i in 0..vertices.len() {
             let j = (i + 1) % vertices.len();
             if let Some(edge_length) =
-                hpoint_distance(&vertices[j].position, &vertices[i].position)
+                point_distance(&vertices[j].position, &vertices[i].position)
             {
-                if let Ok(edge_length) = hreal_from_f64(edge_length) {
-                    max_length = hreal_max_report_value(max_length, &edge_length);
-                }
+                max_length = match max_length {
+                    Some(current) => {
+                        hyperlimit::real_max(&current, &edge_length).value().cloned()
+                    },
+                    None => Some(edge_length),
+                };
             }
         }
-        max_length.unwrap_or(0.0)
+        max_length.unwrap_or_else(Real::zero)
     }
 
     /// **Mathematical Foundation: Feature-Preserving Mesh Optimization**
@@ -419,10 +411,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     ///
     /// Returns cleaned mesh with improved triangle quality.
     pub fn remove_poor_triangles(&self, min_quality: Real) -> Mesh<M> {
-        if hreal_from_f64(min_quality).is_err() {
-            return self.clone();
-        }
-        let Some(min_angle_rad) = hdegrees_to_radians(5.0) else {
+        let Some(min_angle_rad) = degrees_to_radians(Real::from(5_u8)) else {
             return self.clone();
         };
         let qualities = self.analyze_triangle_quality();
@@ -431,10 +420,10 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         for (i, polygon) in self.polygons.iter().enumerate() {
             let keep_triangle = if i < qualities.len() {
                 let quality = &qualities[i];
-                hyper_scalar_ge(quality.quality_score, min_quality)
-                    && hyper_scalar_gt(quality.area, 0.0)
-                    && hyper_scalar_gt(quality.min_angle, min_angle_rad)
-                    && hyper_scalar_lt(quality.aspect_ratio, 20.0)
+                real_ge(&quality.quality_score, &min_quality)
+                    && real_gt(&quality.area, &Real::zero())
+                    && real_gt(&quality.min_angle, &min_angle_rad)
+                    && real_lt(&quality.aspect_ratio, &Real::from(20_u8))
             } else {
                 true // Keep if we can't assess quality
             };

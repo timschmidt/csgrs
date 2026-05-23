@@ -1,22 +1,22 @@
 //! Provides a `MetaBall` struct and functions for creating a `Mesh` from [MetaBalls](https://en.wikipedia.org/wiki/Metaballs)
 
-use crate::float_types::{
-    F32, Real, hreal_from_f32, hreal_from_f64, hreal_max_pair, hreal_max_report_value,
-    hreal_min_pair, hreal_min_report_value, hreal_sign, hreal_to_f64,
-    htriangle_area2_is_nonzero, hvector3_from_point3, hvector3_from_vector3,
+use crate::hyper_math::{
+    hreal_from_f32, hreal_from_f64, hreal_sign, hreal_to_f64, htriangle_area2_is_nonzero,
+    hvector3_from_point3, hvector3_from_vector3,
 };
 use crate::mesh::Mesh;
 use crate::polygon::Polygon;
 use crate::vertex::Vertex;
 use fast_surface_nets::{SurfaceNetsBuffer, surface_nets};
+use hyperlattice::{Point3, Real, Vector3};
 use hyperlimit::Point3 as HPoint3;
+use hyperlimit::{real_max, real_min};
 use hyperreal::RealSign;
-use nalgebra::{Point3, Vector3};
 use std::fmt::Debug;
 
 #[derive(Debug, Clone)]
 pub struct MetaBall {
-    pub center: Point3<Real>,
+    pub center: Point3,
     pub radius: Real,
 }
 
@@ -42,23 +42,21 @@ pub struct MetaballDiagnostics {
 }
 
 impl MetaBall {
-    pub const fn new(center: Point3<Real>, radius: Real) -> Self {
+    pub const fn new(center: Point3, radius: Real) -> Self {
         Self { center, radius }
     }
 
     /// **Mathematical Foundation**: Metaball influence function I(p) = r²/|p-c|².
     ///
     /// This public method is an f64 reporting boundary. Internally, radius,
-    /// distance, denominator, and division are evaluated as `hyperreal::Real`
+    /// distance, denominator, and division are evaluated as `Real`
     /// through [`MetaBall::influence_hreal`], following Yap's exact-geometric-
     /// computation boundary split (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     /// The implicit-field model follows Blinn, "A Generalization of Algebraic
     /// Surface Drawing," *ACM Transactions on Graphics* 1(3), 1982
     /// (<https://doi.org/10.1145/357306.357310>).
-    pub fn influence(&self, p: &Point3<Real>) -> Real {
-        self.influence_hreal(p)
-            .and_then(|value| hreal_to_f64(&value))
-            .unwrap_or(0.0)
+    pub fn influence(&self, p: &Point3) -> Real {
+        self.influence_hreal(p).unwrap_or_else(Real::zero)
     }
 
     /// Return this metaball's finite influence as a hyperreal field value.
@@ -68,8 +66,8 @@ impl MetaBall {
     /// lossy boundary scalars. Exact center singularities are represented by a
     /// large finite sampling sentinel at that extraction boundary rather than by
     /// perturbing every denominator with a tolerance.
-    fn influence_hreal(&self, p: &Point3<Real>) -> Option<hyperreal::Real> {
-        let radius = hreal_from_f64(self.radius).ok()?;
+    fn influence_hreal(&self, p: &Point3) -> Option<Real> {
+        let radius = hreal_from_f64(self.radius.clone()).ok()?;
         if !matches!(hreal_sign(&radius), Some(RealSign::Positive)) {
             return None;
         }
@@ -84,7 +82,7 @@ impl MetaBall {
             hreal_sign(&(distance_squared.clone() - threshold_distance_sq)),
             Some(RealSign::Positive)
         ) {
-            return Some(hyperreal::Real::zero());
+            return Some(Real::zero());
         }
 
         if matches!(hreal_sign(&distance_squared), Some(RealSign::Zero)) {
@@ -95,7 +93,7 @@ impl MetaBall {
     }
 }
 
-fn singular_metaball_influence() -> Option<hyperreal::Real> {
+fn singular_metaball_influence() -> Option<Real> {
     hreal_from_f64(1.0e10).ok()
 }
 
@@ -153,7 +151,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         let valid_balls = balls
             .iter()
             .filter(|ball| {
-                let Some(radius) = hreal_from_f64(ball.radius).ok() else {
+                let Some(radius) = hreal_from_f64(ball.radius.clone()).ok() else {
                     return false;
                 };
                 hvector3_from_point3(&ball.center).is_some()
@@ -205,9 +203,8 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                         continue;
                     };
 
-                    let Some(field_value_h) = valid_balls
-                        .iter()
-                        .try_fold(hyperreal::Real::zero(), |acc, ball| {
+                    let Some(field_value_h) =
+                        valid_balls.iter().try_fold(Real::zero(), |acc, ball| {
                             ball.influence_hreal(&p).map(|value| acc + value)
                         })
                     else {
@@ -378,8 +375,8 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
 
 #[derive(Clone, Debug)]
 struct MetaballSampleField {
-    hyper_values: Vec<hyperreal::Real>,
-    surface_nets_values: Vec<F32>,
+    hyper_values: Vec<Real>,
+    surface_nets_values: Vec<f32>,
 }
 
 impl MetaballSampleField {
@@ -390,7 +387,7 @@ impl MetaballSampleField {
         }
     }
 
-    fn push_hyper_sample(&mut self, shifted: hyperreal::Real) -> bool {
+    fn push_hyper_sample(&mut self, shifted: Real) -> bool {
         let Some(surface_value) = surface_nets_scalar(&shifted) else {
             self.push_nonfinite_sample();
             return false;
@@ -407,21 +404,25 @@ impl MetaballSampleField {
     }
 }
 
-fn record_metaball_finite_sample(
-    diagnostics: &mut MetaballDiagnostics,
-    value: &hyperreal::Real,
-) {
-    diagnostics.min_finite_value = hreal_min_report_value(diagnostics.min_finite_value, value);
-    diagnostics.max_finite_value = hreal_max_report_value(diagnostics.max_finite_value, value);
+fn record_metaball_finite_sample(diagnostics: &mut MetaballDiagnostics, value: &Real) {
+    diagnostics.min_finite_value = match diagnostics.min_finite_value.take() {
+        Some(current) => hyperlimit::real_min(&current, value).value().cloned(),
+        None => Some(value.clone()),
+    };
+    diagnostics.max_finite_value = match diagnostics.max_finite_value.take() {
+        Some(current) => hyperlimit::real_max(&current, value).value().cloned(),
+        None => Some(value.clone()),
+    };
 }
 
-fn metaball_bounds_hreal(
-    balls: &[&MetaBall],
-    padding: &hyperreal::Real,
-) -> Option<(HPoint3, HPoint3)> {
+fn metaball_bounds_hreal(balls: &[&MetaBall], padding: &Real) -> Option<(HPoint3, HPoint3)> {
     let mut bounds = balls.iter().map(|ball| {
-        let center = hpoint3_from_point3(&ball.center)?;
-        let radius = hreal_from_f64(ball.radius).ok()?;
+        let center = HPoint3::new(
+            ball.center.x.clone(),
+            ball.center.y.clone(),
+            ball.center.z.clone(),
+        );
+        let radius = hreal_from_f64(ball.radius.clone()).ok()?;
         let extent = radius + padding.clone();
         Some((
             HPoint3::new(
@@ -440,14 +441,14 @@ fn metaball_bounds_hreal(
     for bounds in bounds {
         let (next_min, next_max) = bounds?;
         min_pt = HPoint3::new(
-            hreal_min_pair(&min_pt.x, &next_min.x)?,
-            hreal_min_pair(&min_pt.y, &next_min.y)?,
-            hreal_min_pair(&min_pt.z, &next_min.z)?,
+            real_min(&min_pt.x, &next_min.x).value().cloned()?,
+            real_min(&min_pt.y, &next_min.y).value().cloned()?,
+            real_min(&min_pt.z, &next_min.z).value().cloned()?,
         );
         max_pt = HPoint3::new(
-            hreal_max_pair(&max_pt.x, &next_max.x)?,
-            hreal_max_pair(&max_pt.y, &next_max.y)?,
-            hreal_max_pair(&max_pt.z, &next_max.z)?,
+            real_max(&max_pt.x, &next_max.x).value().cloned()?,
+            real_max(&max_pt.y, &next_max.y).value().cloned()?,
+            real_max(&max_pt.z, &next_max.z).value().cloned()?,
         );
     }
     Some((min_pt, max_pt))
@@ -471,74 +472,69 @@ impl MetaballSamplingGrid {
         let max = max_pt;
         Some(Self {
             step: HPoint3::new(
-                ((max.x - origin.x.clone()) / hreal_from_f64(nx as Real - 1.0).ok()?).ok()?,
-                ((max.y - origin.y.clone()) / hreal_from_f64(ny as Real - 1.0).ok()?).ok()?,
-                ((max.z - origin.z.clone()) / hreal_from_f64(nz as Real - 1.0).ok()?).ok()?,
+                ((max.x - origin.x.clone()) / Real::from(u64::from(nx - 1))).ok()?,
+                ((max.y - origin.y.clone()) / Real::from(u64::from(ny - 1))).ok()?,
+                ((max.z - origin.z.clone()) / Real::from(u64::from(nz - 1))).ok()?,
             ),
             origin,
         })
     }
 
-    fn point_at(&self, ix: u32, iy: u32, iz: u32) -> Option<Point3<Real>> {
-        let x =
-            self.origin.x.clone() + self.step.x.clone() * hreal_from_f64(ix as Real).ok()?;
-        let y =
-            self.origin.y.clone() + self.step.y.clone() * hreal_from_f64(iy as Real).ok()?;
-        let z =
-            self.origin.z.clone() + self.step.z.clone() * hreal_from_f64(iz as Real).ok()?;
-        point3_from_hpoint3(&HPoint3::new(x, y, z))
+    fn point_at(&self, ix: u32, iy: u32, iz: u32) -> Option<Point3> {
+        let x = self.origin.x.clone() + self.step.x.clone() * Real::from(u64::from(ix));
+        let y = self.origin.y.clone() + self.step.y.clone() * Real::from(u64::from(iy));
+        let z = self.origin.z.clone() + self.step.z.clone() * Real::from(u64::from(iz));
+        Some(Point3::new(x, y, z))
     }
 
-    fn point_from_surface_position(&self, position: [F32; 3]) -> Option<Point3<Real>> {
+    fn point_from_surface_position(&self, position: [f32; 3]) -> Option<Point3> {
         let x =
             self.origin.x.clone() + self.step.x.clone() * hreal_from_f32(position[0]).ok()?;
         let y =
             self.origin.y.clone() + self.step.y.clone() * hreal_from_f32(position[1]).ok()?;
         let z =
             self.origin.z.clone() + self.step.z.clone() * hreal_from_f32(position[2]).ok()?;
-        point3_from_hpoint3(&HPoint3::new(x, y, z))
+        Some(Point3::new(x, y, z))
     }
 }
 
-fn hyper_point_distance_squared(
-    lhs: &Point3<Real>,
-    rhs: &Point3<Real>,
-) -> Option<hyperreal::Real> {
+fn hyper_point_distance_squared(lhs: &Point3, rhs: &Point3) -> Option<Real> {
     let lhs = hvector3_from_point3(lhs)?;
     let rhs = hvector3_from_point3(rhs)?;
     Some(lhs.squared_distance(&rhs))
 }
 
-fn hpoint3_from_point3(point: &Point3<Real>) -> Option<HPoint3> {
-    HPoint3::try_from_f64_array([point.x, point.y, point.z]).ok()
-}
-
-fn point3_from_hpoint3(point: &HPoint3) -> Option<Point3<Real>> {
-    let [x, y, z] = point.to_f64_array_lossy()?;
-    Some(Point3::new(x, y, z))
-}
-
 #[inline]
-fn finite_point3(point: &Point3<Real>) -> bool {
+fn finite_point3(point: &Point3) -> bool {
     hvector3_from_point3(point).is_some()
 }
 
 #[inline]
-fn finite_vector3(vector: &Vector3<Real>) -> bool {
+fn finite_vector3(vector: &Vector3) -> bool {
     hvector3_from_vector3(vector).is_some()
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::float_types::{hreal_gt_f64, tolerance};
+    use crate::hyper_math::{Real, hreal_from_f64, hreal_gt_f64, tolerance};
+
+    fn r(value: f64) -> Real {
+        hreal_from_f64(value).expect("test values must be finite")
+    }
+
+    fn p3(x: Real, y: f64, z: f64) -> Point3 {
+        Point3::new(x, r(y), r(z))
+    }
 
     #[test]
     fn metaball_influence_uses_exact_center_singularity_without_tolerance() {
-        let ball = MetaBall::new(Point3::new(0.0, 0.0, 0.0), 1.0);
-        let center = ball.influence_hreal(&Point3::new(0.0, 0.0, 0.0)).unwrap();
+        let ball = MetaBall::new(Point3::new(r(0.0), r(0.0), r(0.0)), r(1.0));
+        let center = ball
+            .influence_hreal(&Point3::new(r(0.0), r(0.0), r(0.0)))
+            .unwrap();
         let tiny_offset = ball
-            .influence_hreal(&Point3::new(tolerance() * 0.25, 0.0, 0.0))
+            .influence_hreal(&p3(tolerance() * r(0.25), 0.0, 0.0))
             .unwrap();
 
         assert!(hreal_gt_f64(&center, 1.0e9));
@@ -547,25 +543,28 @@ mod tests {
 
     #[test]
     fn metaball_influence_rejects_exact_zero_radius() {
-        let ball = MetaBall::new(Point3::new(0.0, 0.0, 0.0), 0.0);
-        assert!(ball.influence_hreal(&Point3::new(0.0, 0.0, 0.0)).is_none());
+        let ball = MetaBall::new(Point3::new(r(0.0), r(0.0), r(0.0)), r(0.0));
+        assert!(
+            ball.influence_hreal(&Point3::new(r(0.0), r(0.0), r(0.0)))
+                .is_none()
+        );
     }
 }
 
-fn surface_nets_scalar(value: &hyperreal::Real) -> Option<F32> {
+fn surface_nets_scalar(value: &Real) -> Option<f32> {
     let sign = hreal_sign(value)?;
     let boundary = hreal_to_f64(value)?;
-    let value = boundary as F32;
+    let value = boundary as f32;
     let value = if value == 0.0 {
         match sign {
-            RealSign::Negative => -F32::MIN_POSITIVE,
-            RealSign::Positive => F32::MIN_POSITIVE,
+            RealSign::Negative => -f32::MIN_POSITIVE,
+            RealSign::Positive => f32::MIN_POSITIVE,
             RealSign::Zero => 0.0,
         }
     } else if value.is_infinite() {
         match sign {
-            RealSign::Negative => -F32::MAX,
-            RealSign::Positive => F32::MAX,
+            RealSign::Negative => -f32::MAX,
+            RealSign::Positive => f32::MAX,
             RealSign::Zero => 0.0,
         }
     } else {
@@ -575,14 +574,11 @@ fn surface_nets_scalar(value: &hyperreal::Real) -> Option<F32> {
     Some(value)
 }
 
-fn vector3_from_f32_boundary(vector: [F32; 3]) -> Option<Vector3<Real>> {
-    let [x, y, z] = hyperlattice::Vector3::try_from_f32_array(vector)
-        .ok()?
-        .to_f64_array_lossy()?;
-    Some(Vector3::new(x, y, z))
+fn vector3_from_f32_boundary(vector: [f32; 3]) -> Option<Vector3> {
+    Vector3::try_from_f32_array(vector).ok()
 }
 
-fn count_crossing_cells(field_values: &[hyperreal::Real], nx: u32, ny: u32, nz: u32) -> usize {
+fn count_crossing_cells(field_values: &[Real], nx: u32, ny: u32, nz: u32) -> usize {
     if nx < 2 || ny < 2 || nz < 2 {
         return 0;
     }

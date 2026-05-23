@@ -1,9 +1,6 @@
 //! Provides functions for flattening a `Mesh` against the Z=0 `Plane`
 //! or slicing a `Mesh` with an arbitrary `Plane` into a `Profile`
 
-use crate::float_types::{
-    Real, hpoints_exactly_equal, hreal_f64s_exactly_equal, hxy_orientation_sign,
-};
 use crate::mesh::Mesh;
 use crate::mesh::plane::{BACK, COPLANAR, FRONT, Plane, SPANNING};
 use crate::sketch::Profile;
@@ -11,9 +8,6 @@ use crate::vertex::Vertex;
 use hypercurve::{
     BooleanOp, Classification, Contour2, CurvePolicy, CurveString2, FillRule, Region2,
 };
-use hyperreal::RealSign;
-#[cfg(test)]
-use nalgebra::Point3;
 use std::fmt::Debug;
 
 impl<M: Clone + Debug + Send + Sync> Mesh<M> {
@@ -42,16 +36,23 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             // Project them onto XY => build a 2D polygon (triangle).
             for tri in triangles {
                 let mut ring = [
-                    [tri[0].position.x, tri[0].position.y],
-                    [tri[1].position.x, tri[1].position.y],
-                    [tri[2].position.x, tri[2].position.y],
-                    [tri[0].position.x, tri[0].position.y],
+                    [tri[0].position.x.clone(), tri[0].position.y.clone()],
+                    [tri[1].position.x.clone(), tri[1].position.y.clone()],
+                    [tri[2].position.x.clone(), tri[2].position.y.clone()],
+                    [tri[0].position.x.clone(), tri[0].position.y.clone()],
                 ];
-                if matches!(ring_orientation_sign(&ring), Some(RealSign::Negative)) {
+                let ring_points = ring
+                    .iter()
+                    .map(|point| hyperlimit::Point2::new(point[0].clone(), point[1].clone()))
+                    .collect::<Vec<_>>();
+                if matches!(
+                    hyperlimit::ring_area_sign(&ring_points).value(),
+                    Some(hyperlimit::Sign::Negative)
+                ) {
                     ring.swap(1, 2);
-                    ring[3] = ring[0];
+                    ring[3] = ring[0].clone();
                 }
-                let Ok(contour) = Contour2::from_finite_ring(&ring) else {
+                let Ok(contour) = Contour2::from_real_ring(&ring) else {
                     continue;
                 };
                 let triangle_region = Region2::from_material_contours(vec![contour.clone()]);
@@ -109,7 +110,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// use csgrs::mesh::Mesh;
     /// use csgrs::mesh::plane::Plane;
     /// use csgrs::sketch::Profile;
-    /// use nalgebra::Vector3;
+    /// use hyperlattice::Vector3;
     /// let cylinder = Mesh::<()>::cylinder(1.0, 2.0, 32, ());
     /// let plane_z0 = Plane::from_normal(Vector3::z(), 0.0);
     /// let cross_section = cylinder.slice(plane_z0);
@@ -144,28 +145,41 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                 continue;
             }
 
-            // Check loop closure with the shared exact hyperreal point predicate.
-            if hpoints_exactly_equal(&chain[0].position, &chain[n - 1].position) {
+            // Check loop closure with Hyper's exact point predicate.
+            let first = hyperlimit::Point3::new(
+                chain[0].position.x.clone(),
+                chain[0].position.y.clone(),
+                chain[0].position.z.clone(),
+            );
+            let last = hyperlimit::Point3::new(
+                chain[n - 1].position.x.clone(),
+                chain[n - 1].position.y.clone(),
+                chain[n - 1].position.z.clone(),
+            );
+            if matches!(hyperlimit::point3_equal(&first, &last).value(), Some(true)) {
                 // Force them to be exactly the same, closing the line
-                chain[n - 1] = chain[0];
+                chain[n - 1] = chain[0].clone();
             }
 
             let points = chain
                 .iter()
-                .map(|vertex| [vertex.position.x, vertex.position.y])
+                .map(|vertex| [vertex.position.x.clone(), vertex.position.y.clone()])
                 .collect::<Vec<_>>();
 
             let closed = points
                 .first()
                 .zip(points.last())
-                .is_some_and(|(first, last)| xy_points_exactly_equal(*first, *last));
+                .is_some_and(|(first, last)| {
+                    let first = hyperlimit::Point2::new(first[0].clone(), first[1].clone());
+                    let last = hyperlimit::Point2::new(last[0].clone(), last[1].clone());
+                    matches!(hyperlimit::point2_equal(&first, &last).value(), Some(true))
+                });
 
             if closed {
-                if let Ok(contour) = Contour2::from_finite_ring(&points) {
+                if let Ok(contour) = Contour2::from_real_ring(&points) {
                     material_contours.push(contour);
                 }
-            } else if let Ok(wire) =
-                CurveString2::from_finite_point_iter(points.iter().copied())
+            } else if let Ok(wire) = CurveString2::from_real_point_iter(points.iter().cloned())
             {
                 open_wires.push(wire);
             }
@@ -236,7 +250,7 @@ fn slice_polygons_by_plane<M: Clone + Send + Sync>(
                 intersection_edges.extend(
                     crossing_points
                         .chunks_exact(2)
-                        .map(|chunk| [chunk[0], chunk[1]]),
+                        .map(|chunk| [chunk[0].clone(), chunk[1].clone()]),
                 );
             },
             _ => {},
@@ -244,28 +258,6 @@ fn slice_polygons_by_plane<M: Clone + Send + Sync>(
     }
 
     (coplanar_polygons, intersection_edges)
-}
-
-/// Return projected ring orientation through the shared hyperreal 2D predicate.
-///
-/// Flattening still projects mesh vertices to finite XY boundary samples, but
-/// winding correction should not use local primitive area accumulation. The
-/// orientation predicate is delegated to `hyperlimit`, matching Yap's
-/// exact-geometric-computation split cited in [`Mesh::flatten`].
-fn ring_orientation_sign(ring: &[[Real; 2]]) -> Option<RealSign> {
-    if ring.len() < 3 {
-        return None;
-    }
-    hxy_orientation_sign(
-        (ring[0][0], ring[0][1]),
-        (ring[1][0], ring[1][1]),
-        (ring[2][0], ring[2][1]),
-    )
-}
-
-/// Test projected XY loop closure with exact hyperreal scalar equality.
-fn xy_points_exactly_equal(first: [Real; 2], last: [Real; 2]) -> bool {
-    hreal_f64s_exactly_equal(first[0], last[0]) && hreal_f64s_exactly_equal(first[1], last[1])
 }
 
 /// Take a list of intersection edges `[Vertex;2]` and merge them into polylines.
@@ -297,7 +289,7 @@ fn unify_intersection_edges(edges: &[[Vertex; 2]]) -> Vec<Vec<Vertex>> {
         // Our chain starts with `edges[start_edge_idx]`. We can build a small function to “walk”:
         // We'll store it in the direction edge[0] -> edge[1]
         let e = &edges[start_edge_idx];
-        let mut chain = vec![e[0], e[1]];
+        let mut chain = vec![e[0].clone(), e[1].clone()];
 
         // We walk "forward" from edge[1] if possible
         extend_chain_forward(&mut chain, &mut visited, edges);
@@ -331,7 +323,20 @@ fn extend_chain_forward(chain: &mut Vec<Vertex>, visited: &mut [bool], edges: &[
                 continue;
             }
             for end_idx in 0..=1 {
-                if !hpoints_exactly_equal(&last_v.position, &edge[end_idx].position) {
+                let last_point = hyperlimit::Point3::new(
+                    last_v.position.x.clone(),
+                    last_v.position.y.clone(),
+                    last_v.position.z.clone(),
+                );
+                let edge_point = hyperlimit::Point3::new(
+                    edge[end_idx].position.x.clone(),
+                    edge[end_idx].position.y.clone(),
+                    edge[end_idx].position.z.clone(),
+                );
+                if !matches!(
+                    hyperlimit::point3_equal(&last_point, &edge_point).value(),
+                    Some(true)
+                ) {
                     continue;
                 }
 
@@ -343,7 +348,7 @@ fn extend_chain_forward(chain: &mut Vec<Vertex>, visited: &mut [bool], edges: &[
 
                 // Mark visited
                 visited[edge_idx] = true;
-                found_next = Some(*next_vertex);
+                found_next = Some(next_vertex.clone());
                 break 'candidate_search;
             }
         }
@@ -362,25 +367,34 @@ fn extend_chain_forward(chain: &mut Vec<Vertex>, visited: &mut [bool], edges: &[
 #[cfg(test)]
 mod tests {
     use super::*;
-    use nalgebra::Vector3;
+    use crate::hyper_math::{Real, hreal_from_f64};
+    use hyperlattice::{Point3, Vector3};
+
+    fn r(value: f64) -> Real {
+        hreal_from_f64(value).expect("test values must be finite")
+    }
+
+    fn p3(x: f64, y: f64, z: f64) -> Point3 {
+        Point3::new(r(x), r(y), r(z))
+    }
 
     #[test]
     fn intersection_edge_knitting_uses_exact_hyperreal_endpoint_predicate() {
         let z = Vector3::z();
         let edge_a = [
-            Vertex::new(Point3::new(0.0, 0.0, 0.0), z),
-            Vertex::new(Point3::new(1.0, 0.0, 0.0), z),
+            Vertex::new(p3(0.0, 0.0, 0.0), z.clone()),
+            Vertex::new(p3(1.0, 0.0, 0.0), z.clone()),
         ];
         let exact_edge_b = [
-            Vertex::new(Point3::new(1.0, 0.0, 0.0), z),
-            Vertex::new(Point3::new(2.0, 0.0, 0.0), z),
+            Vertex::new(p3(1.0, 0.0, 0.0), z.clone()),
+            Vertex::new(p3(2.0, 0.0, 0.0), z.clone()),
         ];
         let near_edge_b = [
-            Vertex::new(Point3::new(1.0 + 1.0e-12, 0.0, 0.0), z),
-            Vertex::new(Point3::new(2.0, 0.0, 0.0), z),
+            Vertex::new(p3(1.0 + 1.0e-12, 0.0, 0.0), z.clone()),
+            Vertex::new(p3(2.0, 0.0, 0.0), z),
         ];
 
-        let exact_chains = unify_intersection_edges(&[edge_a, exact_edge_b]);
+        let exact_chains = unify_intersection_edges(&[edge_a.clone(), exact_edge_b.clone()]);
         assert_eq!(exact_chains.len(), 1);
         assert_eq!(exact_chains[0].len(), 3);
         assert_eq!(exact_chains[0][1].position, edge_a[1].position);

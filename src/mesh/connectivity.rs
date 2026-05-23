@@ -1,9 +1,8 @@
 //! Mesh connectivity helpers for exact vertex indexing and topology analysis.
 
-use crate::float_types::{Real, hpoints_exactly_equal};
 use crate::mesh::Mesh;
 use hashbrown::HashMap;
-use nalgebra::Point3;
+use hyperlattice::Point3;
 use std::fmt::Debug;
 
 /// **Mathematical Foundation: Robust Vertex Indexing for Mesh Connectivity**
@@ -14,7 +13,7 @@ use std::fmt::Debug;
 /// - **Global Indexing**: Maintains consistent vertex indices across mesh
 ///
 /// The identity predicate promotes candidate positions into `hyperlattice`
-/// vectors and requires exact zero squared distance in `hyperreal::Real`. That
+/// vectors and requires exact zero squared distance in `Real`. That
 /// keeps mesh-topology equivalence decisions on the exact-aware side of the API
 /// boundary, following Yap, "Towards Exact Geometric Computation,"
 /// *Computational Geometry* 7(1-2), 1997
@@ -22,9 +21,9 @@ use std::fmt::Debug;
 #[derive(Debug, Clone)]
 pub struct VertexIndexMap {
     /// Maps vertex positions to global indices.
-    pub position_to_index: Vec<(Point3<Real>, usize)>,
+    pub position_to_index: Vec<(Point3, usize)>,
     /// Maps global indices to representative positions.
-    pub index_to_position: HashMap<usize, Point3<Real>>,
+    pub index_to_position: HashMap<usize, Point3>,
 }
 
 impl VertexIndexMap {
@@ -42,30 +41,44 @@ impl VertexIndexMap {
     }
 
     /// Get the existing index for an exactly equal position.
-    pub fn find_index(&self, position: &Point3<Real>) -> Option<usize> {
+    pub fn find_index(&self, position: &Point3) -> Option<usize> {
         self.position_to_index
             .iter()
             .find_map(|(existing_position, existing_index)| {
-                hpoints_exactly_equal(position, existing_position).then_some(*existing_index)
+                let position = hyperlimit::Point3::new(
+                    position.x.clone(),
+                    position.y.clone(),
+                    position.z.clone(),
+                );
+                let existing_position = hyperlimit::Point3::new(
+                    existing_position.x.clone(),
+                    existing_position.y.clone(),
+                    existing_position.z.clone(),
+                );
+                matches!(
+                    hyperlimit::point3_equal(&position, &existing_position).value(),
+                    Some(true)
+                )
+                .then_some(*existing_index)
             })
     }
 
     /// Get or create an index for a vertex position
-    pub fn get_or_create_index(&mut self, position: Point3<Real>) -> usize {
+    pub fn get_or_create_index(&mut self, position: Point3) -> usize {
         if let Some(existing_index) = self.find_index(&position) {
             return existing_index;
         }
 
         // Create new index
         let new_index = self.position_to_index.len();
-        self.position_to_index.push((position, new_index));
+        self.position_to_index.push((position.clone(), new_index));
         self.index_to_position.insert(new_index, position);
         new_index
     }
 
     /// Get the position for a given index
-    pub fn get_position(&self, index: usize) -> Option<Point3<Real>> {
-        self.index_to_position.get(&index).copied()
+    pub fn get_position(&self, index: usize) -> Option<Point3> {
+        self.index_to_position.get(&index).cloned()
     }
 
     /// Get total number of unique vertices
@@ -74,7 +87,7 @@ impl VertexIndexMap {
     }
 
     /// Get all vertex positions and their indices (for iteration)
-    pub const fn get_vertex_positions(&self) -> &Vec<(Point3<Real>, usize)> {
+    pub const fn get_vertex_positions(&self) -> &Vec<(Point3, usize)> {
         &self.position_to_index
     }
 }
@@ -114,13 +127,14 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         if mesh.validate_retained_state().is_err() {
             return (vertex_map, adjacency);
         }
-        let Ok(view) = mesh.approximate_f64_view() else {
-            return (vertex_map, adjacency);
-        };
-
-        for (index, coords) in view.positions.chunks_exact(3).enumerate() {
-            let position = Point3::new(coords[0], coords[1], coords[2]);
-            vertex_map.position_to_index.push((position, index));
+        for (index, point) in mesh.vertices().iter().enumerate() {
+            let coordinates = point.coordinates();
+            let position = Point3::new(
+                coordinates.0[0].clone(),
+                coordinates.0[1].clone(),
+                coordinates.0[2].clone(),
+            );
+            vertex_map.position_to_index.push((position.clone(), index));
             vertex_map.index_to_position.insert(index, position);
         }
 
@@ -147,29 +161,27 @@ fn add_adjacency_edge(adjacency: &mut HashMap<usize, Vec<usize>>, a: usize, b: u
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::hyper_math::{Real, hreal_from_f64};
+
+    fn r(value: f64) -> Real {
+        hreal_from_f64(value).expect("test values must be finite")
+    }
+
+    fn p3(x: f64, y: f64, z: f64) -> Point3 {
+        Point3::new(r(x), r(y), r(z))
+    }
 
     #[test]
     fn vertex_index_map_shares_only_exact_positions() {
         let mut map = VertexIndexMap::new();
-        let base = Point3::new(0.0, 0.0, 0.0);
-        let exact = Point3::new(0.0, 0.0, 0.0);
-        let near = Point3::new(1.0e-12, 0.0, 0.0);
-        let far = Point3::new(2.0, 0.0, 0.0);
+        let base = p3(0.0, 0.0, 0.0);
+        let exact = p3(0.0, 0.0, 0.0);
+        let near = p3(1.0e-12, 0.0, 0.0);
+        let far = p3(2.0, 0.0, 0.0);
 
         let base_index = map.get_or_create_index(base);
         assert_eq!(map.get_or_create_index(exact), base_index);
         assert_ne!(map.get_or_create_index(near), base_index);
         assert_ne!(map.get_or_create_index(far), base_index);
-    }
-
-    #[test]
-    fn vertex_index_map_rejects_nonfinite_positions() {
-        let mut map = VertexIndexMap::new();
-        let base = Point3::new(0.0, 0.0, 0.0);
-        let nonfinite = Point3::new(Real::NAN, 0.0, 0.0);
-
-        let base_index = map.get_or_create_index(base);
-        assert_eq!(map.find_index(&nonfinite), None);
-        assert_ne!(map.get_or_create_index(nonfinite), base_index);
     }
 }

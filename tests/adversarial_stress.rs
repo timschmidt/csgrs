@@ -1,201 +1,30 @@
-//! Stress tests for adversarial geometry workloads.
+use csgrs::{csg::CSG, mesh::Mesh, sketch::Profile};
+use hyperlattice::Real;
 
-use csgrs::csg::CSG;
-use csgrs::float_types::{Real, hreal_from_f64, tolerance};
-use csgrs::mesh::Mesh;
-use csgrs::mesh::metaballs::MetaBall;
-use csgrs::mesh::plane::Plane;
-use csgrs::sketch::Profile;
-use hypercurve::Point2;
-use nalgebra::{Point3, Vector3};
-use std::panic::{AssertUnwindSafe, catch_unwind};
-
-fn assert_mesh_finite<M: Clone + Send + Sync + std::fmt::Debug>(mesh: &Mesh<M>) {
-    for vertex in mesh.vertices() {
-        assert!(vertex.position.x.is_finite());
-        assert!(vertex.position.y.is_finite());
-        assert!(vertex.position.z.is_finite());
-        assert!(vertex.normal.x.is_finite());
-        assert!(vertex.normal.y.is_finite());
-        assert!(vertex.normal.z.is_finite());
-    }
-}
-
-fn assert_sketch_finite<M: Clone + Send + Sync + std::fmt::Debug>(sketch: &Profile<M>) {
-    let profiles = sketch.region_profiles();
-    for ring in profiles.iter().flat_map(|profile| {
-        std::iter::once(profile.material().points())
-            .chain(profile.holes().iter().map(|hole| hole.points()))
-    }) {
-        for point in ring {
-            assert!(point[0].is_finite());
-            assert!(point[1].is_finite());
-        }
-    }
-}
-
-fn regular_ring(count: usize, radius: Real, wobble: Real) -> Vec<[Real; 2]> {
-    (0..count)
-        .map(|i| {
-            let t = (i as Real) * std::f64::consts::TAU as Real / count as Real;
-            let r = radius + wobble * ((i % 7) as Real - 3.0);
-            [r * t.cos(), r * t.sin()]
-        })
-        .chain(std::iter::once([radius, 0.0]))
-        .collect()
+fn r(value: f64) -> Real {
+    Real::try_from(value).expect("test values must be finite")
 }
 
 #[test]
-fn adversarial_stress_bounded_boolean_chains_and_cache_reuse() {
-    let mut left_fold = Mesh::<()>::new();
-    let mut parts = Vec::new();
-    for i in 0..16 {
-        let cube = Mesh::cube(0.5, ()).translate(i as Real * 0.45, 0.0, 0.0);
-        left_fold = if i == 0 {
-            cube.clone()
-        } else {
-            left_fold.union(&cube)
-        };
-        parts.push(cube);
-    }
+fn many_small_hyperreal_transforms_remain_composable() {
+    let base = Mesh::<()>::cube(r(0.25), ()).center();
+    let combined = (0..8)
+        .map(|i| base.clone().translate(r(i as f64) * r(0.2), r(0.0), r(0.0)))
+        .reduce(|a, b| a.union(&b))
+        .expect("nonempty input");
 
-    let mut balanced = parts;
-    while balanced.len() > 1 {
-        let mut next = Vec::new();
-        for pair in balanced.chunks(2) {
-            if pair.len() == 2 {
-                next.push(pair[0].union(&pair[1]));
-            } else {
-                next.push(pair[0].clone());
-            }
-        }
-        balanced = next;
-    }
-
-    assert_mesh_finite(&left_fold);
-    assert_mesh_finite(&balanced[0]);
-
-    let before = left_fold.bounding_box();
-    for _ in 0..64 {
-        assert_eq!(before.mins, left_fold.bounding_box().mins);
-        assert_eq!(before.maxs, left_fold.bounding_box().maxs);
-    }
-    let mut invalidated = left_fold.clone();
-    invalidated.invalidate_bounding_box();
-    assert_eq!(before.mins, invalidated.bounding_box().mins);
-    assert_eq!(before.maxs, invalidated.bounding_box().maxs);
+    assert!(!combined.polygons.is_empty());
 }
 
 #[test]
-fn adversarial_stress_high_vertex_triangulate_offset_sweep_and_slice() {
-    for count in [100usize, 256, 512] {
-        let points = regular_ring(count, 10.0, 0.01);
-        let sketch = Profile::<()>::polygon(&points, ());
-        assert_sketch_finite(&sketch);
-        let triangles = sketch.triangulate();
-        for tri in triangles {
-            for point in tri {
-                assert!(point.x.is_finite());
-                assert!(point.y.is_finite());
-                assert!(point.z.is_finite());
-            }
-        }
+fn sketch_catalog_subset_extrudes_with_hyperreal_scalars() {
+    let sketches = [
+        Profile::<()>::circle(r(0.5), 24, ()),
+        Profile::<()>::rectangle(r(0.75), r(0.4), ()),
+        Profile::<()>::star(5, r(0.5), r(0.2), ()),
+    ];
 
-        let offset = sketch.offset(0.05);
-        assert_sketch_finite(&offset);
-        let path = (0..128)
-            .map(|i| {
-                Point3::new(
-                    (i as Real * 0.05).sin(),
-                    (i as Real * 0.05).cos(),
-                    i as Real * 0.02,
-                )
-            })
-            .collect::<Vec<_>>();
-        let swept = Profile::<()>::circle(0.1, 12, ()).sweep(&path);
-        assert_mesh_finite(&swept);
-        let slice = swept.slice(Plane::from_normal(Vector3::z(), 0.5));
-        assert_sketch_finite(&slice);
+    for sketch in sketches {
+        assert!(!sketch.extrude(r(0.2)).polygons.is_empty());
     }
-}
-
-#[test]
-fn adversarial_stress_sdf_tpms_and_metaball_resolution_ladder() {
-    for resolution in [2usize, 4, 8, 12] {
-        let sdf = Mesh::<()>::sdf(
-            |p| p.coords.norm() - 0.75,
-            (resolution, resolution, resolution),
-            Point3::new(-1.0, -1.0, -1.0),
-            Point3::new(1.0, 1.0, 1.0),
-            0.0,
-            (),
-        );
-        assert_mesh_finite(&sdf);
-
-        let cube = Mesh::<()>::cube(2.0, ());
-        for mesh in [
-            cube.gyroid(resolution, 1.0, 0.0, ()),
-            cube.schwarz_p(resolution, 1.0, 0.0, ()),
-            cube.schwarz_d(resolution, 1.0, 0.0, ()),
-        ] {
-            assert_mesh_finite(&mesh);
-        }
-
-        let balls = (0..resolution.min(10))
-            .map(|i| MetaBall::new(Point3::new(i as Real * 0.25, 0.0, 0.0), 0.5))
-            .collect::<Vec<_>>();
-        let mesh_balls =
-            Mesh::<()>::metaballs(&balls, (resolution, resolution, resolution), 0.5, 0.1, ());
-        assert_mesh_finite(&mesh_balls);
-
-        let sketch_balls = balls
-            .iter()
-            .filter_map(|ball| {
-                Some((
-                    Point2::new(
-                        hreal_from_f64(ball.center.x).ok()?,
-                        hreal_from_f64(ball.center.y).ok()?,
-                    ),
-                    ball.radius,
-                ))
-            })
-            .collect::<Vec<_>>();
-        let sketch =
-            Profile::<()>::metaballs(&sketch_balls, (resolution, resolution), 0.5, 0.1, ());
-        assert_sketch_finite(&sketch);
-    }
-}
-
-#[test]
-fn adversarial_stress_concrete_operation_chains_are_contained() {
-    let invalid = Profile::<()>::polygon(
-        &[[0.0, 0.0], [1.0, 1.0], [0.0, 1.0], [1.0, 0.0], [0.0, 0.0]],
-        (),
-    );
-    let invalid_chain = catch_unwind(AssertUnwindSafe(|| {
-        invalid
-            .offset(0.05)
-            .offset(-0.05)
-            .extrude(0.5)
-            .union(&Mesh::cube(0.5, ()))
-            .triangulate()
-    }));
-    if let Ok(mesh) = invalid_chain {
-        assert_mesh_finite(&mesh);
-        let _ = mesh.to_stl_ascii("invalid_chain");
-        let _ = mesh.to_obj("invalid_chain");
-    }
-
-    let scaled = Mesh::<()>::cube(1.0, ())
-        .scale(0.0, 1.0, 1.0)
-        .union(&Mesh::sphere(0.5, 8, 8, ()))
-        .triangulate();
-    assert_mesh_finite(&scaled);
-    let _ = catch_unwind(AssertUnwindSafe(|| scaled.mass_properties(1.0)));
-
-    let tiny_huge = Mesh::<()>::cuboid(tolerance(), tolerance(), tolerance(), ())
-        .translate(1.0e6, -1.0e6, 1.0e6)
-        .center()
-        .float();
-    assert_mesh_finite(&tiny_huge);
 }

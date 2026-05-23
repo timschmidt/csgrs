@@ -1,15 +1,14 @@
 //! Shared error types used by geometry validation and file conversion APIs.
 
-use crate::float_types::Real;
-use nalgebra::Point3;
+use hyperlattice::{Point3, Real};
 
 /// Coordinate validation failure for a single point.
 #[derive(Clone, Debug, thiserror::Error, PartialEq)]
 pub enum PointError {
     #[error("point {0:?} has NaN fields")]
-    NaN(Point3<Real>),
+    NaN(Point3),
     #[error("point {0:?} has infinite fields")]
-    Infinite(Point3<Real>),
+    Infinite(Point3),
 }
 
 /// All the possible validation issues we might encounter,
@@ -18,37 +17,37 @@ pub enum PointError {
 pub enum ValidationError {
     /// (RepeatedPoint) Two consecutive coords are identical
     #[error("point {0:?} is repeated consecutively")]
-    RepeatedPoint(Point3<Real>),
+    RepeatedPoint(Point3),
     /// (HoleOutsideShell) A hole is *not* contained by its outer shell
     #[error("hole is not contained by its outer shell near {0:?}")]
-    HoleOutsideShell(Point3<Real>),
+    HoleOutsideShell(Point3),
     /// (NestedHoles) A hole is nested inside another hole
     #[error("hole is nested inside another hole near {0:?}")]
-    NestedHoles(Point3<Real>),
+    NestedHoles(Point3),
     /// (DisconnectedInterior) The interior is disconnected
     #[error("interior is disconnected near {0:?}")]
-    DisconnectedInterior(Point3<Real>),
+    DisconnectedInterior(Point3),
     /// (SelfIntersection) A polygon self‐intersects
     #[error("polygon self-intersects near {0:?}")]
-    SelfIntersection(Point3<Real>),
+    SelfIntersection(Point3),
     /// (RingSelfIntersection) A linear ring has a self‐intersection
     #[error("linear ring self-intersects near {0:?}")]
-    RingSelfIntersection(Point3<Real>),
+    RingSelfIntersection(Point3),
     /// (NestedShells) Two outer shells are nested incorrectly
     #[error("outer shells are nested incorrectly near {0:?}")]
-    NestedShells(Point3<Real>),
+    NestedShells(Point3),
     /// (TooFewPoints) A ring or line has fewer than the minimal #points
     #[error("ring or line has too few points near {0:?}")]
-    TooFewPoints(Point3<Real>),
+    TooFewPoints(Point3),
     /// (InvalidCoordinate) The coordinate has a NaN or infinite
     #[error("invalid coordinate {0:?}")]
-    InvalidCoordinate(Point3<Real>),
+    InvalidCoordinate(Point3),
     /// A more precise invalid-coordinate report.
     #[error(transparent)]
     PointError(#[from] PointError),
     /// (RingNotClosed) The ring's first/last points differ
     #[error("ring is not closed near {0:?}")]
-    RingNotClosed(Point3<Real>),
+    RingNotClosed(Point3),
     /// (MismatchedVertices) operation requires polygons with same number of vertices
     #[error("operation requires polygons with the same number of vertices")]
     MismatchedVertices,
@@ -70,12 +69,12 @@ pub enum ValidationError {
     /// A named real field is below the supported minimum.
     #[error("{name} must not be less than {min}")]
     FieldLessThanFloat { name: &'static str, min: Real },
-    /// An inconsistency while building a triangle mesh.
-    #[error("triangle mesh builder error: {0}")]
-    TriMeshError(String),
+    /// An inconsistency while building mesh buffers.
+    #[error("mesh buffer error: {0}")]
+    MeshBufferError(String),
     /// In general, anything else
     #[error("{0}")]
-    Other(String, Option<Point3<Real>>),
+    Other(String, Option<Point3>),
 }
 
 // Plane::from_points "Degenerate polygon: vertices do not define a plane"

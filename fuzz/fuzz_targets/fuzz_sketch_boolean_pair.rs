@@ -3,9 +3,17 @@
 #![no_main]
 
 use csgrs::csg::CSG;
-use csgrs::float_types::{Real, tolerance};
 use csgrs::sketch::Profile;
+use hyperlattice::Real;
 use libfuzzer_sys::fuzz_target;
+
+fn real(value: f64) -> Real {
+    Real::try_from(value).expect("fuzz decoder clamps to finite values")
+}
+
+fn tolerance() -> Real {
+    real(1.0e-9)
+}
 
 fn decode_real(bytes: &[u8], idx: &mut usize) -> Real {
     let mut raw = [0u8; 8];
@@ -14,7 +22,7 @@ fn decode_real(bytes: &[u8], idx: &mut usize) -> Real {
         *idx += 1;
     }
     let value = i64::from_le_bytes(raw) as f64 / 1.0e12;
-    value.clamp(-100.0, 100.0) as Real
+    real(value.clamp(-100.0, 100.0))
 }
 
 fn assert_sketch_finite<M: Clone + Send + Sync + std::fmt::Debug>(sketch: &Profile<M>) {
@@ -45,7 +53,11 @@ fuzz_target!(|bytes: &[u8]| {
         (bytes[idx % bytes.len()] as usize % 32) + 3,
         None,
     )
-    .translate(decode_real(bytes, &mut idx), decode_real(bytes, &mut idx), 0.0);
+    .translate(
+        decode_real(bytes, &mut idx),
+        decode_real(bytes, &mut idx),
+        Real::zero(),
+    );
     let result = match bytes[idx % bytes.len()] % 4 {
         0 => a.union(&b),
         1 => a.difference(&b),

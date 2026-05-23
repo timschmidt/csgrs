@@ -1,9 +1,9 @@
 //! Create `Profile`s using single stroke Hershey fonts
 
-use crate::float_types::Real;
 use crate::sketch::Profile;
 use hershey::{Font, Glyph as HersheyGlyph, Vector as HersheyVector};
 use hypercurve::CurveString2;
+use hyperlattice::Real;
 use std::fmt::Debug;
 
 impl<M: Clone + Debug + Send + Sync> Profile<M> {
@@ -29,33 +29,36 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// A new `Profile` where each glyph stroke is a native open wire.
     pub fn from_hershey(text: &str, font: &Font, size: Real, metadata: M) -> Profile<M> {
         let mut wires = Vec::new();
-        let mut cursor_x: Real = 0.0;
+        let mut cursor_x = Real::zero();
 
         for ch in text.chars() {
             // Hershey fonts do not carry filled glyphs; whitespace is advance only.
             if ch.is_control() || ch.is_whitespace() {
-                cursor_x += 6.0 * size;
+                cursor_x += Real::from(6_u8) * size.clone();
                 continue;
             }
 
             // Attempt to find a glyph in this font
             match font.glyph(ch) {
                 Ok(glyph) => {
-                    let glyph_width = (glyph.max_x - glyph.min_x) as Real;
+                    let glyph_width = Real::from(glyph.max_x - glyph.min_x);
                     wires.extend(
-                        build_hershey_glyph_lines(&glyph, size, cursor_x, 0.0)
-                            .into_iter()
-                            .filter_map(|points| {
-                                CurveString2::from_finite_point_iter(points).ok()
-                            }),
+                        build_hershey_glyph_lines(
+                            &glyph,
+                            size.clone(),
+                            cursor_x.clone(),
+                            Real::zero(),
+                        )
+                        .into_iter()
+                        .filter_map(|points| CurveString2::from_real_point_iter(points).ok()),
                     );
 
                     // Advance the pen in X
-                    cursor_x += glyph_width * size * 0.8;
+                    cursor_x += glyph_width * size.clone() * 0.8;
                 },
                 Err(_) => {
                     // Missing glyph => skip or just advance
-                    cursor_x += 6.0 * size;
+                    cursor_x += Real::from(6_u8) * size.clone();
                 },
             }
         }
@@ -86,13 +89,13 @@ fn build_hershey_glyph_lines(
                 }
                 // Start a new stroke
                 current_coords = Vec::new();
-                let px = offset_x + (*x as Real) * scale;
-                let py = offset_y + (*y as Real) * scale;
+                let px = offset_x.clone() + Real::from(*x) * scale.clone();
+                let py = offset_y.clone() + Real::from(*y) * scale.clone();
                 current_coords.push([px, py]);
             },
             HersheyVector::LineTo { x, y } => {
-                let px = offset_x + (*x as Real) * scale;
-                let py = offset_y + (*y as Real) * scale;
+                let px = offset_x.clone() + Real::from(*x) * scale.clone();
+                let py = offset_y.clone() + Real::from(*y) * scale.clone();
                 current_coords.push([px, py]);
             },
         }

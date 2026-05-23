@@ -1,35 +1,24 @@
-//! Generate the PNG renders referenced by the README.
+//! Generate lightweight PNG renders for README assets.
 //!
-//! This is intentionally a small pure-Rust software renderer. It does not try
-//! to be a production renderer; it just keeps README images reproducible without
-//! requiring Blender, OpenSCAD, a browser, or system graphics libraries.
-//!
-//! Run:
-//!
-//! ```text
-//! cargo run --example readme_renders
-//! ```
+//! Geometry is constructed with `hyperlattice::Real`; primitive floats are used
+//! only after projection into the image/raster boundary.
 
 use csgrs::csg::CSG;
-use csgrs::float_types::{Real, hreal_from_f64};
 use csgrs::mesh::Mesh;
 use csgrs::mesh::metaballs::MetaBall;
-use csgrs::polygon::Polygon;
 use csgrs::sketch::Profile;
-use csgrs::vertex::Vertex;
-use hypercurve::Point2;
-use image::{GrayImage, Luma, Rgba, RgbaImage};
-use nalgebra::{Point3, Vector3};
+use hyperlattice::{Point3, Real, Vector3};
+use image::{Rgba, RgbaImage};
 use std::fs;
 use std::path::PathBuf;
 
-const SIZE: u32 = 1024;
-const PADDING: Real = 0.12;
-
+const SIZE: u32 = 768;
+const PADDING: f64 = 0.12;
 const BG: Rgba<u8> = Rgba([0, 0, 0, 0]);
 const INK_2D: Rgba<u8> = Rgba([42, 95, 143, 255]);
 const EDGE_2D: Rgba<u8> = Rgba([15, 41, 70, 255]);
-const LINE_2D: Rgba<u8> = Rgba([31, 80, 126, 255]);
+const FILL_3D: Rgba<u8> = Rgba([104, 145, 178, 255]);
+const EDGE_3D: Rgba<u8> = Rgba([31, 47, 64, 160]);
 
 fn main() {
     let output_dir = output_dir();
@@ -42,422 +31,126 @@ fn main() {
 }
 
 fn render_readme_sketches() {
-    let font_data = include_bytes!("../asar.ttf");
-
-    let square = Profile::<()>::square(2.0, ());
-    render_sketch("square", &square);
-    render_sketch("rectangle", &Profile::<()>::rectangle(2.4, 1.35, ()));
-    render_sketch("circle", &Profile::<()>::circle(1.0, 96, ()));
+    render_sketch("square", &Profile::<()>::square(r(2.0), ()));
+    render_sketch("rectangle", &Profile::<()>::rectangle(r(2.4), r(1.35), ()));
+    render_sketch("circle", &Profile::<()>::circle(r(1.0), 96, ()));
     render_sketch(
         "polygon",
-        &Profile::<()>::polygon(&[[0.0, 1.2], [-1.1, -0.8], [1.1, -0.8]], ()),
+        &Profile::<()>::polygon(
+            &[[r(0.0), r(1.2)], [r(-1.1), r(-0.8)], [r(1.1), r(-0.8)]],
+            (),
+        ),
     );
     render_sketch(
         "rounded_rectangle",
-        &Profile::<()>::rounded_rectangle(2.4, 1.5, 0.28, 12, ()),
+        &Profile::<()>::rounded_rectangle(r(2.4), r(1.5), r(0.28), 12, ()),
     );
-    render_sketch("ellipse", &Profile::<()>::ellipse(2.3, 1.3, 96, ()));
-    render_sketch("regular_ngon", &Profile::<()>::regular_ngon(6, 1.0, ()));
-    render_sketch("sketch_arrow", &Profile::<()>::arrow(2.2, 0.35, 0.8, 1.0, ()));
-    render_sketch("right_triangle", &Profile::<()>::right_triangle(2.0, 1.5, ()));
+    render_sketch("ellipse", &Profile::<()>::ellipse(r(2.3), r(1.3), 96, ()));
+    render_sketch("regular_ngon", &Profile::<()>::regular_ngon(6, r(1.0), ()));
+    render_sketch(
+        "sketch_arrow",
+        &Profile::<()>::arrow(r(2.2), r(0.35), r(0.8), r(1.0), ()),
+    );
     render_sketch(
         "trapezoid",
-        &Profile::<()>::trapezoid(1.2, 2.2, 1.4, 0.45, ()),
+        &Profile::<()>::trapezoid(r(1.2), r(2.2), r(1.4), r(0.45), ()),
     );
-    render_sketch("star", &Profile::<()>::star(5, 1.1, 0.45, ()));
-    render_sketch("teardrop", &Profile::<()>::teardrop(1.5, 2.2, 80, ()));
-    render_sketch("sketch_egg", &Profile::<()>::egg(1.5, 2.2, 96, ()));
-    render_sketch("squircle", &Profile::<()>::squircle(2.0, 2.0, 96, ()));
-    render_sketch("keyhole", &Profile::<()>::keyhole(0.7, 0.55, 1.35, 64, ()));
-    render_sketch("reuleaux", &Profile::<()>::reuleaux(3, 1.0, 24, ()));
-    render_sketch("ring", &Profile::<()>::ring(1.4, 0.35, 96, ()));
+    render_sketch("star", &Profile::<()>::star(5, r(1.1), r(0.45), ()));
+    render_sketch("heart", &Profile::<()>::heart(r(2.0), r(1.8), 160, ()));
+    render_sketch("ring", &Profile::<()>::ring(r(1.4), r(0.35), 96, ()));
     render_sketch(
         "pie_slice",
-        &Profile::<()>::pie_slice(1.1, -35.0, 115.0, 64, ()),
+        &Profile::<()>::pie_slice(r(1.1), r(-35.0), r(115.0), 64, ()),
     );
-    render_sketch(
-        "supershape",
-        &Profile::<()>::supershape(1.0, 1.0, 6.0, 0.35, 0.8, 0.8, 240, ()),
-    );
-    render_sketch(
-        "circle_with_keyway",
-        &Profile::<()>::circle_with_keyway(1.0, 96, 0.42, 0.35, ()),
-    );
-    render_sketch(
-        "circle_with_flat",
-        &Profile::<()>::circle_with_flat(1.0, 96, 0.55, ()),
-    );
-    render_sketch(
-        "circle_with_two_flats",
-        &Profile::<()>::circle_with_two_flats(1.0, 96, 0.55, ()),
-    );
-    render_sketch("text", &Profile::<()>::text("HELLO", font_data, 28.0, ()));
-    render_sketch(
-        "airfoil_naca4",
-        &Profile::<()>::airfoil_naca4(2.0, 4.0, 12.0, 2.4, 80, ()),
-    );
-    render_sketch(
-        "bspline",
-        &Profile::<()>::bspline(
-            &[[-1.3, -0.7], [-0.6, 1.0], [0.5, 1.1], [1.3, -0.6]],
-            3,
-            32,
-            (),
-        ),
-    );
-    render_sketch("heart", &Profile::<()>::heart(2.0, 1.8, 160, ()));
-    render_sketch("crescent", &Profile::<()>::crescent(1.1, 0.85, 0.45, 96, ()));
-    render_sketch(
-        "involute_gear",
-        &Profile::<()>::involute_gear(0.2, 18, 20.0, 0.0, 0.0, 8, ()),
-    );
-    render_sketch(
-        "hilbert_curve",
-        &Profile::<()>::square(2.0, ()).hilbert_curve(5, 0.08),
-    );
-
-    let mut image = GrayImage::new(16, 16);
-    for y in 3..13 {
-        for x in 3..13 {
-            let dx = x as i32 - 8;
-            let dy = y as i32 - 8;
-            if dx * dx + dy * dy < 30 {
-                image.put_pixel(x, y, Luma([255]));
-            }
-        }
-    }
-    render_sketch(
-        "from_image",
-        &Profile::<()>::from_image(&image, 128, true, ()),
-    );
-
-    let metaballs = [
-        (
-            Point2::new(hreal_from_f64(-0.45).unwrap(), hreal_from_f64(0.0).unwrap()),
-            0.72,
-        ),
-        (
-            Point2::new(hreal_from_f64(0.45).unwrap(), hreal_from_f64(0.0).unwrap()),
-            0.72,
-        ),
-        (
-            Point2::new(hreal_from_f64(0.0).unwrap(), hreal_from_f64(0.55).unwrap()),
-            0.58,
-        ),
-    ];
-    render_sketch(
-        "metaballs_2d",
-        &Profile::<()>::metaballs(&metaballs, (48, 48), 0.7, 0.25, ()),
-    );
-
-    let bezier = Profile::<()>::bezier(
-        &[[-1.2, -0.75], [-0.55, 1.05], [0.55, -1.0], [1.2, 0.75]],
-        96,
-        (),
-    );
-    render_sketch("bezier", &bezier);
 }
 
 fn render_readme_meshes() {
-    render_mesh("cube", &Mesh::<()>::cube(2.0, ()));
-    render_mesh("cuboid", &Mesh::<()>::cuboid(1.4, 2.3, 0.95, ()));
-    render_mesh("sphere", &Mesh::<()>::sphere(1.0, 32, 16, ()));
-    render_mesh("cylinder", &Mesh::<()>::cylinder(1.0, 2.0, 32, ()));
-    render_mesh("frustum", &Mesh::<()>::frustum(0.65, 1.05, 2.0, 32, ()));
+    render_mesh("cube", &Mesh::<()>::cube(r(2.0), ()));
+    render_mesh("cuboid", &Mesh::<()>::cuboid(r(1.4), r(2.3), r(0.95), ()));
+    render_mesh("sphere", &Mesh::<()>::sphere(r(1.0), 32, 16, ()));
+    render_mesh("cylinder", &Mesh::<()>::cylinder(r(1.0), r(2.0), 32, ()));
     render_mesh(
-        "frustum_ptp",
-        &Mesh::<()>::frustum_ptp(
-            Point3::new(-0.8, -0.4, -0.4),
-            Point3::new(0.8, 0.45, 1.1),
-            0.35,
-            0.75,
-            32,
-            (),
-        ),
+        "frustum",
+        &Mesh::<()>::frustum(r(0.65), r(1.05), r(2.0), 32, ()),
     );
-    render_mesh("octahedron", &Mesh::<()>::octahedron(1.2, ()));
-    render_mesh("icosahedron", &Mesh::<()>::icosahedron(1.2, ()));
-    render_mesh("torus", &Mesh::<()>::torus(1.25, 0.35, 36, 14, ()));
-    render_mesh("mesh_egg", &Mesh::<()>::egg(1.3, 2.0, 32, 24, ()));
-    render_mesh("mesh_teardrop", &Mesh::<()>::teardrop(1.4, 2.0, 32, 24, ()));
-    render_mesh(
-        "teardrop_cylinder",
-        &Mesh::<()>::teardrop_cylinder(1.2, 2.1, 1.4, 32, ()),
-    );
-    render_mesh(
-        "ellipsoid",
-        &Mesh::<()>::ellipsoid(1.4, 0.85, 1.8, 32, 16, ()),
-    );
+    render_mesh("octahedron", &Mesh::<()>::octahedron(r(1.2), ()));
+    render_mesh("icosahedron", &Mesh::<()>::icosahedron(r(1.2), ()));
+    render_mesh("torus", &Mesh::<()>::torus(r(1.25), r(0.35), 36, 14, ()));
     render_mesh(
         "mesh_arrow",
-        &Mesh::<()>::arrow(Point3::origin(), Vector3::new(0.8, 0.4, 2.0), 32, false, ()),
-    );
-    render_mesh(
-        "polyhedron",
-        &Mesh::<()>::polyhedron(
-            &[
-                [1.0, 1.0, 1.0],
-                [-1.0, -1.0, 1.0],
-                [-1.0, 1.0, -1.0],
-                [1.0, -1.0, -1.0],
-            ],
-            &[&[0, 1, 2], &[0, 3, 1], &[0, 2, 3], &[1, 3, 2]],
-            (),
-        )
-        .expect("polyhedron"),
+        &Mesh::<()>::arrow(Point3::origin(), v3(0.8, 0.4, 2.0), 32, false, ()),
     );
 
-    let star = Profile::<()>::star(5, 1.0, 0.45, ());
-    render_mesh("extrude", &star.extrude(0.65));
-    render_mesh(
-        "extrude_vector",
-        &star.extrude_vector(Vector3::new(0.45, 0.25, 0.9)),
-    );
+    let star = Profile::<()>::star(5, r(1.0), r(0.45), ());
+    render_mesh("extrude", &star.extrude(r(0.65)));
+    render_mesh("extrude_vector", &star.extrude_vector(v3(0.45, 0.25, 0.9)));
     render_mesh(
         "revolve",
-        &Profile::<()>::circle(0.18, 32, ())
-            .translate(1.0, 0.0, 0.0)
-            .revolve(265.0, 32)
+        &Profile::<()>::circle(r(0.18), 32, ())
+            .translate(r(1.0), r(0.0), r(0.0))
+            .revolve(r(265.0), 32)
             .expect("revolve"),
     );
-    let bottom = Polygon::new(
-        vec![
-            Vertex::new(Point3::new(-0.8, -0.8, 0.0), Vector3::z()),
-            Vertex::new(Point3::new(0.8, -0.8, 0.0), Vector3::z()),
-            Vertex::new(Point3::new(0.8, 0.8, 0.0), Vector3::z()),
-            Vertex::new(Point3::new(-0.8, 0.8, 0.0), Vector3::z()),
-        ],
-        (),
-    );
-    let top = Polygon::new(
-        vec![
-            Vertex::new(Point3::new(-0.45, -0.45, 1.2), Vector3::z()),
-            Vertex::new(Point3::new(0.45, -0.45, 1.2), Vector3::z()),
-            Vertex::new(Point3::new(0.45, 0.45, 1.2), Vector3::z()),
-            Vertex::new(Point3::new(-0.45, 0.45, 1.2), Vector3::z()),
-        ],
-        (),
-    );
-    render_mesh(
-        "loft",
-        &Profile::<()>::loft(&bottom, &top, true).expect("loft"),
-    );
-    render_mesh(
-        "sweep",
-        &Profile::<()>::circle(0.18, 24, ()).sweep(&[
-            Point3::new(-1.2, -0.6, 0.0),
-            Point3::new(-0.45, 0.4, 0.55),
-            Point3::new(0.4, -0.25, 1.0),
-            Point3::new(1.15, 0.45, 1.25),
-        ]),
-    );
 
-    render_mesh("inverse", &Mesh::<()>::sphere(1.0, 32, 16, ()).inverse());
+    render_mesh("inverse", &Mesh::<()>::sphere(r(1.0), 32, 16, ()).inverse());
     render_mesh("csg", &cube_minus_translated_sphere());
-    render_mesh("convex_hull", &Mesh::<()>::cube(1.2, ()).convex_hull());
+    render_mesh("convex_hull", &Mesh::<()>::cube(r(1.2), ()).convex_hull());
     render_mesh(
         "minkowski_sum",
-        &Mesh::<()>::cube(1.1, ()).minkowski_sum(&Mesh::<()>::sphere(0.45, 16, 8, ())),
-    );
-    render_mesh(
-        "subdivide_triangles",
-        &Mesh::<()>::cube(2.0, ()).subdivide_triangles(1.try_into().unwrap()),
+        &Mesh::<()>::cube(r(1.1), ()).minkowski_sum(&Mesh::<()>::sphere(r(0.45), 16, 8, ())),
     );
 
     let balls = [
-        MetaBall::new(Point3::new(-0.55, 0.0, 0.0), 0.65),
-        MetaBall::new(Point3::new(0.55, 0.0, 0.0), 0.65),
-        MetaBall::new(Point3::new(0.0, 0.55, 0.25), 0.58),
+        MetaBall::new(p3(-0.55, 0.0, 0.0), r(0.65)),
+        MetaBall::new(p3(0.55, 0.0, 0.0), r(0.65)),
+        MetaBall::new(p3(0.0, 0.55, 0.25), r(0.58)),
     ];
     render_mesh(
         "metaballs_3d",
-        &Mesh::<()>::metaballs(&balls, (16, 16, 16), 0.7, 0.25, ()),
+        &Mesh::<()>::metaballs(&balls, (16, 16, 16), r(0.7), r(0.25), ()),
     );
 
+    let tpms_box = Mesh::<()>::cube(r(2.0), ());
     render_mesh(
-        "sdf",
-        &Mesh::<()>::sdf(
-            |p| p.coords.norm() - 0.75,
-            (20, 20, 20),
-            Point3::new(-1.1, -1.1, -1.1),
-            Point3::new(1.1, 1.1, 1.1),
-            0.0,
-            (),
-        ),
+        "gyroid",
+        &tpms_box.gyroid_solid(24, r(2.0), r(0.0), r(0.18), ()),
     );
-
-    let tpms_box = Mesh::<()>::cube(2.0, ());
-    render_mesh("gyroid", &tpms_box.gyroid_solid(24, 2.0, 0.0, 0.18, ()));
-    render_mesh("schwarz_p", &tpms_box.schwarz_p_solid(24, 2.0, 0.0, 0.18, ()));
-    render_mesh("schwarz_d", &tpms_box.schwarz_d_solid(24, 2.0, 0.0, 0.18, ()));
     render_mesh(
-        "spur_gear_involute",
-        &Mesh::<()>::spur_gear_involute(0.18, 22, 20.0, 0.0, 0.0, 8, 0.35, ()),
+        "schwarz_p",
+        &tpms_box.schwarz_p_solid(24, r(2.0), r(0.0), r(0.18), ()),
     );
-
-    render_distribution_examples();
+    render_mesh(
+        "schwarz_d",
+        &tpms_box.schwarz_d_solid(24, r(2.0), r(0.0), r(0.18), ()),
+    );
 }
 
 fn cube_minus_translated_sphere() -> Mesh<()> {
-    let cube = Mesh::<()>::cube(2.0, ());
-    let sphere = Mesh::<()>::sphere(1.25, 16, 8, ()).translate(1.0, 1.0, 1.0);
+    let cube = Mesh::<()>::cube(r(2.0), ());
+    let sphere = Mesh::<()>::sphere(r(1.25), 16, 8, ()).translate(r(1.0), r(1.0), r(1.0));
     cube.difference(&sphere)
-}
-
-fn render_distribution_examples() {
-    let base = Mesh::<()>::sphere(0.13, 16, 8, ());
-    let line = (0..7)
-        .map(|i| base.translate(i as Real * 0.38 - 1.14, 0.0, 0.0))
-        .reduce(|a, b| a.union(&b))
-        .unwrap();
-    render_mesh("distribute_linear", &line);
-
-    let grid = (0..3)
-        .flat_map(|row| (0..3).map(move |col| (row, col)))
-        .map(|(row, col)| {
-            base.translate(col as Real * 0.45 - 0.45, row as Real * 0.45 - 0.45, 0.0)
-        })
-        .reduce(|a, b| a.union(&b))
-        .unwrap();
-    render_mesh("distribute_grid", &grid);
-
-    let arc = (0..9)
-        .map(|i| {
-            let a = -120.0_f64.to_radians() as Real
-                + i as Real * (240.0_f64.to_radians() as Real / 8.0);
-            base.translate(a.cos(), a.sin(), 0.0)
-        })
-        .reduce(|a, b| a.union(&b))
-        .unwrap();
-    render_mesh("distribute_arc", &arc);
 }
 
 fn render_sketch(name: &str, sketch: &Profile<()>) {
     let mut image = RgbaImage::from_pixel(SIZE, SIZE, BG);
     let profiles = sketch.region_profiles();
     let wires = sketch.wire_polylines();
-    let Some((min_x, min_y, max_x, max_y)) = sketch_bounds(&profiles, &wires) else {
+    let Some(bounds) = sketch_bounds(&profiles, &wires) else {
         save_image(name, &image);
         return;
     };
-    let map = Map2::new(min_x, min_y, max_x, max_y);
+    let map = Map2::new(bounds);
 
     for profile in &profiles {
-        fill_profile(&mut image, &map, profile.material().points(), profile.holes());
         stroke_points(&mut image, &map, profile.material().points(), EDGE_2D);
         for hole in profile.holes() {
             stroke_points(&mut image, &map, hole.points(), EDGE_2D);
         }
     }
     for wire in &wires {
-        stroke_points(&mut image, &map, wire, LINE_2D);
+        stroke_real_points(&mut image, &map, wire, INK_2D);
     }
     save_image(name, &image);
-}
-
-fn fill_profile(
-    image: &mut RgbaImage,
-    map: &Map2,
-    material: &[[Real; 2]],
-    holes: &[hypercurve::FinitePolyline2],
-) {
-    let Some((min_x, min_y, max_x, max_y)) = ring_bounds(material) else {
-        return;
-    };
-    let (px_min_x, px_max_y) = map.point(min_x, min_y);
-    let (px_max_x, px_min_y) = map.point(max_x, max_y);
-    let x0 = px_min_x.min(px_max_x).saturating_sub(1).min(SIZE - 1);
-    let x1 = px_min_x.max(px_max_x).saturating_add(1).min(SIZE - 1);
-    let y0 = px_min_y.min(px_max_y).saturating_sub(1).min(SIZE - 1);
-    let y1 = px_min_y.max(px_max_y).saturating_add(1).min(SIZE - 1);
-
-    for y in y0..=y1 {
-        for x in x0..=x1 {
-            let (wx, wy) = map.world(x, y);
-            if point_in_ring([wx, wy], material)
-                && !holes
-                    .iter()
-                    .any(|hole| point_in_ring([wx, wy], hole.points()))
-            {
-                image.put_pixel(x, y, INK_2D);
-            }
-        }
-    }
-}
-
-fn stroke_points(image: &mut RgbaImage, map: &Map2, points: &[[Real; 2]], color: Rgba<u8>) {
-    let pixels = points
-        .iter()
-        .map(|point| map.point(point[0], point[1]))
-        .collect::<Vec<_>>();
-    for pair in pixels.windows(2) {
-        draw_line(image, pair[0], pair[1], color);
-    }
-}
-
-fn sketch_bounds(
-    profiles: &[hypercurve::FiniteRegionProfile2],
-    wires: &[Vec<[Real; 2]>],
-) -> Option<(Real, Real, Real, Real)> {
-    let mut bounds = None;
-    for profile in profiles {
-        include_ring_bounds(&mut bounds, profile.material().points());
-        for hole in profile.holes() {
-            include_ring_bounds(&mut bounds, hole.points());
-        }
-    }
-    for wire in wires {
-        include_ring_bounds(&mut bounds, wire);
-    }
-    bounds
-}
-
-fn include_ring_bounds(bounds: &mut Option<(Real, Real, Real, Real)>, ring: &[[Real; 2]]) {
-    let Some((min_x, min_y, max_x, max_y)) = ring_bounds(ring) else {
-        return;
-    };
-    *bounds = Some(match *bounds {
-        Some((old_min_x, old_min_y, old_max_x, old_max_y)) => (
-            old_min_x.min(min_x),
-            old_min_y.min(min_y),
-            old_max_x.max(max_x),
-            old_max_y.max(max_y),
-        ),
-        None => (min_x, min_y, max_x, max_y),
-    });
-}
-
-fn ring_bounds(ring: &[[Real; 2]]) -> Option<(Real, Real, Real, Real)> {
-    let first = ring.first()?;
-    let (mut min_x, mut min_y, mut max_x, mut max_y) =
-        (first[0], first[1], first[0], first[1]);
-    for point in ring.iter().skip(1) {
-        min_x = min_x.min(point[0]);
-        min_y = min_y.min(point[1]);
-        max_x = max_x.max(point[0]);
-        max_y = max_y.max(point[1]);
-    }
-    Some((min_x, min_y, max_x, max_y))
-}
-
-fn point_in_ring(point: [Real; 2], ring: &[[Real; 2]]) -> bool {
-    let mut inside = false;
-    let Some(mut previous) = ring.last().copied() else {
-        return false;
-    };
-    for &current in ring {
-        let crosses = (current[1] > point[1]) != (previous[1] > point[1]);
-        if crosses {
-            let x_intersection = (previous[0] - current[0]) * (point[1] - current[1])
-                / (previous[1] - current[1])
-                + current[0];
-            if point[0] < x_intersection {
-                inside = !inside;
-            }
-        }
-        previous = current;
-    }
-    inside
 }
 
 fn render_mesh(name: &str, mesh: &Mesh<()>) {
@@ -470,155 +163,149 @@ fn render_mesh(name: &str, mesh: &Mesh<()>) {
 
     let projected = triangles
         .iter()
-        .filter_map(project_triangle)
+        .filter_map(|poly| {
+            if poly.vertices.len() < 3 {
+                return None;
+            }
+            Some([
+                project_point(&poly.vertices[0].position),
+                project_point(&poly.vertices[1].position),
+                project_point(&poly.vertices[2].position),
+            ])
+        })
         .collect::<Vec<_>>();
-    if projected.is_empty() {
+
+    let Some(bounds) = projected_bounds(&projected) else {
         save_image(name, &image);
         return;
+    };
+    let map = Map2::new(bounds);
+
+    for tri in projected {
+        let a = map.point(tri[0]);
+        let b = map.point(tri[1]);
+        let c = map.point(tri[2]);
+        fill_triangle(&mut image, a, b, c, FILL_3D);
+        draw_line(&mut image, a, b, EDGE_3D);
+        draw_line(&mut image, b, c, EDGE_3D);
+        draw_line(&mut image, c, a, EDGE_3D);
     }
-
-    let bounds = projected_bounds_from_mesh(mesh);
-    let map = Map2::new(bounds.0, bounds.1, bounds.2, bounds.3);
-
-    let mut ordered = projected;
-    ordered.sort_by(|a, b| {
-        a.depth
-            .partial_cmp(&b.depth)
-            .unwrap_or(std::cmp::Ordering::Equal)
-    });
-    for tri in ordered {
-        fill_projected_triangle(&mut image, &map, &tri);
-    }
-
     save_image(name, &image);
 }
 
-fn projected_bounds_from_mesh(mesh: &Mesh<()>) -> (Real, Real, Real, Real) {
-    let aabb = mesh.bounding_box();
-    aabb_corners(aabb.mins, aabb.maxs).iter().fold(
-        (Real::MAX, Real::MAX, -Real::MAX, -Real::MAX),
-        |(min_x, min_y, max_x, max_y), point| {
-            let ((x, y), _) = project_point(*point);
-            (min_x.min(x), min_y.min(y), max_x.max(x), max_y.max(y))
-        },
-    )
-}
-
-fn aabb_corners(mins: Point3<Real>, maxs: Point3<Real>) -> [Point3<Real>; 8] {
-    [
-        Point3::new(mins.x, mins.y, mins.z),
-        Point3::new(maxs.x, mins.y, mins.z),
-        Point3::new(mins.x, maxs.y, mins.z),
-        Point3::new(maxs.x, maxs.y, mins.z),
-        Point3::new(mins.x, mins.y, maxs.z),
-        Point3::new(maxs.x, mins.y, maxs.z),
-        Point3::new(mins.x, maxs.y, maxs.z),
-        Point3::new(maxs.x, maxs.y, maxs.z),
-    ]
-}
-
-fn camera_axes() -> (Vector3<Real>, Vector3<Real>, Vector3<Real>) {
-    let screen_x = Vector3::new(1.0, -1.0, 0.0).normalize();
-    let view_dir = Vector3::new(1.0, 1.0, 1.0).normalize();
-    let screen_y = view_dir.cross(&screen_x).normalize();
-    (screen_x, screen_y, view_dir)
-}
-
-fn project_triangle(poly: &Polygon<()>) -> Option<ProjectedTriangle> {
-    if poly.vertices.len() < 3 {
-        return None;
+fn stroke_points(image: &mut RgbaImage, map: &Map2, points: &[[f64; 2]], color: Rgba<u8>) {
+    let pixels = points
+        .iter()
+        .map(|point| map.point((point[0], point[1])))
+        .collect::<Vec<_>>();
+    for pair in pixels.windows(2) {
+        draw_line(image, pair[0], pair[1], color);
     }
-    let a = poly.vertices[0].position;
-    let b = poly.vertices[1].position;
-    let c = poly.vertices[2].position;
-    let normal = (b - a).cross(&(c - a));
-    let normal = normal.try_normalize(1e-9 as Real)?;
-    let light = Vector3::new(-0.35, -0.45, 0.82).normalize();
-    let shade = normal.dot(&light).abs().mul_add(0.45, 0.35).clamp(0.18, 1.0);
-    let color = shade_color(shade);
-
-    let pa = project_point(a);
-    let pb = project_point(b);
-    let pc = project_point(c);
-    Some(ProjectedTriangle {
-        points: [pa.0, pb.0, pc.0],
-        depth: (pa.1 + pb.1 + pc.1) / 3.0,
-        color,
-    })
 }
 
-fn project_point(p: Point3<Real>) -> ((Real, Real), Real) {
-    let (screen_x, screen_y, view_dir) = camera_axes();
-    (
-        (p.coords.dot(&screen_x), p.coords.dot(&screen_y)),
-        p.coords.dot(&view_dir),
-    )
+fn stroke_real_points(
+    image: &mut RgbaImage,
+    map: &Map2,
+    points: &[[Real; 2]],
+    color: Rgba<u8>,
+) {
+    let pixels = points
+        .iter()
+        .map(|point| map.point((real_to_f64(&point[0]), real_to_f64(&point[1]))))
+        .collect::<Vec<_>>();
+    for pair in pixels.windows(2) {
+        draw_line(image, pair[0], pair[1], color);
+    }
 }
 
-fn shade_color(shade: Real) -> Rgba<u8> {
-    let r = (70.0 + shade * 70.0).clamp(0.0, 255.0) as u8;
-    let g = (105.0 + shade * 85.0).clamp(0.0, 255.0) as u8;
-    let b = (140.0 + shade * 95.0).clamp(0.0, 255.0) as u8;
-    Rgba([r, g, b, 255])
+fn sketch_bounds(
+    profiles: &[hypercurve::FiniteRegionProfile2],
+    wires: &[Vec<[Real; 2]>],
+) -> Option<(f64, f64, f64, f64)> {
+    let mut bounds = None;
+    for profile in profiles {
+        include_points(&mut bounds, profile.material().points());
+        for hole in profile.holes() {
+            include_points(&mut bounds, hole.points());
+        }
+    }
+    for wire in wires {
+        include_real_points(&mut bounds, wire);
+    }
+    bounds
 }
 
-fn fill_projected_triangle(image: &mut RgbaImage, map: &Map2, tri: &ProjectedTriangle) {
-    let p = tri.points.map(|point| map.point(point.0, point.1));
-    let min_x = p
-        .iter()
-        .map(|p| p.0)
-        .min()
-        .unwrap()
-        .saturating_sub(1)
-        .min(SIZE - 1);
-    let max_x = p
-        .iter()
-        .map(|p| p.0)
-        .max()
-        .unwrap()
-        .saturating_add(1)
-        .min(SIZE - 1);
-    let min_y = p
-        .iter()
-        .map(|p| p.1)
-        .min()
-        .unwrap()
-        .saturating_sub(1)
-        .min(SIZE - 1);
-    let max_y = p
-        .iter()
-        .map(|p| p.1)
-        .max()
-        .unwrap()
-        .saturating_add(1)
-        .min(SIZE - 1);
+fn projected_bounds(triangles: &[[(f64, f64); 3]]) -> Option<(f64, f64, f64, f64)> {
+    let mut bounds = None;
+    for point in triangles.iter().flat_map(|tri| tri.iter()) {
+        include_point(&mut bounds, *point);
+    }
+    bounds
+}
 
-    let a = (p[0].0 as Real, p[0].1 as Real);
-    let b = (p[1].0 as Real, p[1].1 as Real);
-    let c = (p[2].0 as Real, p[2].1 as Real);
-    let area = edge_function(a, b, c);
-    if area.abs() < 1e-9 as Real {
+fn include_points(bounds: &mut Option<(f64, f64, f64, f64)>, points: &[[f64; 2]]) {
+    for point in points {
+        include_point(bounds, (point[0], point[1]));
+    }
+}
+
+fn include_real_points(bounds: &mut Option<(f64, f64, f64, f64)>, points: &[[Real; 2]]) {
+    for point in points {
+        include_point(bounds, (real_to_f64(&point[0]), real_to_f64(&point[1])));
+    }
+}
+
+fn include_point(bounds: &mut Option<(f64, f64, f64, f64)>, point: (f64, f64)) {
+    *bounds = Some(match *bounds {
+        Some((min_x, min_y, max_x, max_y)) => (
+            min_x.min(point.0),
+            min_y.min(point.1),
+            max_x.max(point.0),
+            max_y.max(point.1),
+        ),
+        None => (point.0, point.1, point.0, point.1),
+    });
+}
+
+fn project_point(point: &Point3) -> (f64, f64) {
+    let x = real_to_f64(&point.x);
+    let y = real_to_f64(&point.y);
+    let z = real_to_f64(&point.z);
+    (x - y, (x + y) * 0.45 - z)
+}
+
+fn fill_triangle(
+    image: &mut RgbaImage,
+    a: (u32, u32),
+    b: (u32, u32),
+    c: (u32, u32),
+    color: Rgba<u8>,
+) {
+    let min_x = a.0.min(b.0).min(c.0);
+    let max_x = a.0.max(b.0).max(c.0);
+    let min_y = a.1.min(b.1).min(c.1);
+    let max_y = a.1.max(b.1).max(c.1);
+    let af = (a.0 as f64, a.1 as f64);
+    let bf = (b.0 as f64, b.1 as f64);
+    let cf = (c.0 as f64, c.1 as f64);
+    let area = edge(af, bf, cf);
+    if area.abs() < f64::EPSILON {
         return;
     }
-
     for y in min_y..=max_y {
         for x in min_x..=max_x {
-            let q = (x as Real + 0.5, y as Real + 0.5);
-            let w0 = edge_function(b, c, q);
-            let w1 = edge_function(c, a, q);
-            let w2 = edge_function(a, b, q);
+            let p = (x as f64 + 0.5, y as f64 + 0.5);
+            let w0 = edge(bf, cf, p);
+            let w1 = edge(cf, af, p);
+            let w2 = edge(af, bf, p);
             if (w0 >= 0.0 && w1 >= 0.0 && w2 >= 0.0) || (w0 <= 0.0 && w1 <= 0.0 && w2 <= 0.0) {
-                image.put_pixel(x, y, tri.color);
+                image.put_pixel(x, y, color);
             }
         }
     }
-
-    draw_line(image, p[0], p[1], Rgba([31, 47, 64, 140]));
-    draw_line(image, p[1], p[2], Rgba([31, 47, 64, 140]));
-    draw_line(image, p[2], p[0], Rgba([31, 47, 64, 140]));
 }
 
-fn edge_function(a: (Real, Real), b: (Real, Real), c: (Real, Real)) -> Real {
+fn edge(a: (f64, f64), b: (f64, f64), c: (f64, f64)) -> f64 {
     (c.0 - a.0) * (b.1 - a.1) - (c.1 - a.1) * (b.0 - a.0)
 }
 
@@ -650,6 +337,39 @@ fn draw_line(image: &mut RgbaImage, a: (u32, u32), b: (u32, u32), color: Rgba<u8
     }
 }
 
+struct Map2 {
+    min_x: f64,
+    min_y: f64,
+    scale: f64,
+    offset_x: f64,
+    offset_y: f64,
+}
+
+impl Map2 {
+    fn new((min_x, min_y, max_x, max_y): (f64, f64, f64, f64)) -> Self {
+        let width = (max_x - min_x).max(1.0e-6);
+        let height = (max_y - min_y).max(1.0e-6);
+        let scale = (SIZE as f64 * (1.0 - 2.0 * PADDING)) / width.max(height);
+        Self {
+            min_x,
+            min_y,
+            scale,
+            offset_x: (SIZE as f64 - width * scale) * 0.5,
+            offset_y: (SIZE as f64 - height * scale) * 0.5,
+        }
+    }
+
+    fn point(&self, point: (f64, f64)) -> (u32, u32) {
+        let px = ((point.0 - self.min_x) * self.scale + self.offset_x).round();
+        let py = (SIZE as f64 - 1.0 - ((point.1 - self.min_y) * self.scale + self.offset_y))
+            .round();
+        (
+            px.clamp(0.0, SIZE as f64 - 1.0) as u32,
+            py.clamp(0.0, SIZE as f64 - 1.0) as u32,
+        )
+    }
+}
+
 fn save_image(name: &str, image: &RgbaImage) {
     let path = output_dir().join(name).with_extension("png");
     image.save(&path).expect("save README render");
@@ -662,52 +382,18 @@ fn output_dir() -> PathBuf {
         .unwrap_or_else(|| PathBuf::from("docs"))
 }
 
-#[derive(Clone, Copy)]
-struct ProjectedTriangle {
-    points: [(Real, Real); 3],
-    depth: Real,
-    color: Rgba<u8>,
+fn r(value: f64) -> Real {
+    Real::try_from(value).expect("README render constants are finite")
 }
 
-#[derive(Clone, Copy)]
-struct Map2 {
-    min_x: Real,
-    min_y: Real,
-    scale: Real,
-    offset_x: Real,
-    offset_y: Real,
+fn real_to_f64(value: &Real) -> f64 {
+    value.to_f64_lossy().unwrap_or(0.0)
 }
 
-impl Map2 {
-    fn new(min_x: Real, min_y: Real, max_x: Real, max_y: Real) -> Self {
-        let width = (max_x - min_x).max(1e-6 as Real);
-        let height = (max_y - min_y).max(1e-6 as Real);
-        let scale = (SIZE as Real * (1.0 - 2.0 * PADDING)) / width.max(height);
-        let drawn_w = width * scale;
-        let drawn_h = height * scale;
-        Self {
-            min_x,
-            min_y,
-            scale,
-            offset_x: (SIZE as Real - drawn_w) * 0.5,
-            offset_y: (SIZE as Real - drawn_h) * 0.5,
-        }
-    }
+fn p3(x: f64, y: f64, z: f64) -> Point3 {
+    Point3::new(r(x), r(y), r(z))
+}
 
-    fn point(&self, x: Real, y: Real) -> (u32, u32) {
-        let px = ((x - self.min_x) * self.scale + self.offset_x).round();
-        let py =
-            (SIZE as Real - 1.0 - ((y - self.min_y) * self.scale + self.offset_y)).round();
-        (
-            px.clamp(0.0, SIZE as Real - 1.0) as u32,
-            py.clamp(0.0, SIZE as Real - 1.0) as u32,
-        )
-    }
-
-    fn world(&self, x: u32, y: u32) -> (Real, Real) {
-        let wx = (x as Real + 0.5 - self.offset_x) / self.scale + self.min_x;
-        let wy =
-            (SIZE as Real - 1.0 - y as Real + 0.5 - self.offset_y) / self.scale + self.min_y;
-        (wx, wy)
-    }
+fn v3(x: f64, y: f64, z: f64) -> Vector3 {
+    Vector3::from_xyz(r(x), r(y), r(z))
 }

@@ -1,6 +1,5 @@
 //! Demonstrates mesh connectivity and adjacency helpers.
 
-use csgrs::float_types::Real;
 /// **Adjacency Map Usage Demonstration**
 ///
 /// This example demonstrates that the adjacency map is now properly used
@@ -13,13 +12,14 @@ use csgrs::float_types::Real;
 /// 3. **True Laplacian Smoothing**: uses proper neighbor relationships from adjacency map
 /// 4. **Comprehensive Quality Analysis**: vertex valence, regularity, and mesh metrics
 use csgrs::mesh::Mesh;
+use hyperlattice::Real;
 
 fn main() {
     println!("=== ADJACENCY MAP USAGE DEMONSTRATION ===\n");
 
     // Create a test mesh - sphere for interesting connectivity
     println!("1. Creating test mesh (sphere with 16 segments, 8 rings)...");
-    let sphere: Mesh<()> = Mesh::sphere(1.0, 16, 8, ());
+    let sphere: Mesh<()> = Mesh::sphere(r(1.0), 16, 8, ());
     println!("   Original polygons: {}", sphere.polygons.len());
 
     // Build mesh connectivity - this is where adjacency map is created and used
@@ -50,7 +50,7 @@ fn main() {
     }
 
     valence_stats.sort();
-    let avg_valence = total_edges as Real / adjacency_map.len() as Real;
+    let avg_valence = (r(total_edges) / r(adjacency_map.len())).unwrap();
     let min_valence = valence_stats.first().unwrap_or(&0);
     let max_valence = valence_stats.last().unwrap_or(&0);
 
@@ -65,7 +65,7 @@ fn main() {
     for &vertex_idx in adjacency_map.keys().take(10) {
         let (valence, regularity) =
             csgrs::vertex::Vertex::analyze_connectivity_with_index(vertex_idx, &adjacency_map);
-        regularity_samples.push(regularity);
+        regularity_samples.push(regularity.clone());
 
         if vertex_idx < 3 {
             // Show first few
@@ -77,25 +77,25 @@ fn main() {
     }
 
     let avg_regularity: Real =
-        regularity_samples.iter().sum::<Real>() / regularity_samples.len() as Real;
+        (regularity_samples.iter().sum::<Real>() / r(regularity_samples.len())).unwrap();
     println!("   Average regularity (sample): {:.3}", avg_regularity);
 
     // Demonstrate Laplacian smoothing using the adjacency map
     println!("\n5. Laplacian smoothing using global connectivity:");
 
     // Track a specific vertex to show position changes
-    let test_vertex_pos = sphere.polygons[0].vertices[0].position;
+    let test_vertex_pos = sphere.polygons[0].vertices[0].position.clone();
     println!(
         "   Original test vertex position: ({:.3}, {:.3}, {:.3})",
         test_vertex_pos.x, test_vertex_pos.y, test_vertex_pos.z
     );
 
     // Apply smoothing with different lambda values
-    let smoothed_weak = sphere.laplacian_smooth(0.1, 1, false);
-    let smoothed_strong = sphere.laplacian_smooth(0.3, 1, false);
+    let smoothed_weak = sphere.laplacian_smooth(r(0.1), 1, false);
+    let smoothed_strong = sphere.laplacian_smooth(r(0.3), 1, false);
 
-    let weak_pos = smoothed_weak.polygons[0].vertices[0].position;
-    let strong_pos = smoothed_strong.polygons[0].vertices[0].position;
+    let weak_pos = smoothed_weak.polygons[0].vertices[0].position.clone();
+    let strong_pos = smoothed_strong.polygons[0].vertices[0].position.clone();
 
     println!(
         "   After weak smoothing (λ=0.1): ({:.3}, {:.3}, {:.3})",
@@ -106,7 +106,7 @@ fn main() {
         strong_pos.x, strong_pos.y, strong_pos.z
     );
 
-    let weak_change = (test_vertex_pos - weak_pos).norm();
+    let weak_change = (test_vertex_pos.clone() - weak_pos).norm();
     let strong_change = (test_vertex_pos - strong_pos).norm();
 
     println!("   Position change (weak): {:.6}", weak_change);
@@ -124,12 +124,17 @@ fn main() {
     let qualities = tessellated.analyze_triangle_quality();
 
     if !qualities.is_empty() {
-        let avg_quality: Real =
-            qualities.iter().map(|q| q.quality_score).sum::<Real>() / qualities.len() as Real;
+        let avg_quality: Real = (qualities
+            .iter()
+            .map(|q| q.quality_score.clone())
+            .sum::<Real>()
+            / r(qualities.len()))
+        .unwrap();
         let min_quality = qualities
             .iter()
-            .map(|q| q.quality_score)
-            .fold(Real::INFINITY, |a, b| a.min(b));
+            .map(|q| q.quality_score.clone())
+            .reduce(|a, b| a.min(b))
+            .unwrap_or_else(Real::zero);
 
         println!("   Triangle count: {}", qualities.len());
         println!("   Average quality: {:.3}", avg_quality);
@@ -143,7 +148,7 @@ fn main() {
 
     // Demonstrate adaptive refinement
     println!("\n7. Adaptive mesh refinement:");
-    let refined = tessellated.adaptive_refine(0.5, 2.0, 15.0);
+    let refined = tessellated.adaptive_refine(r(0.5), r(2.0), r(15.0));
     let (refined_vertex_map, refined_adjacency_map) = refined.build_connectivity();
     println!("   Original triangles: {}", tessellated.polygons.len());
     println!("   After refinement: {}", refined.polygons.len());
@@ -175,4 +180,24 @@ fn main() {
     println!("   Adjacency building: O(V + E) where E is number of edges");
     println!("   Smoothing: O(iterations × V × avg_valence)");
     println!("   Quality analysis: O(T) where T is number of triangles");
+}
+
+fn r(value: impl IntoExampleReal) -> Real {
+    value.into_real()
+}
+
+trait IntoExampleReal {
+    fn into_real(self) -> Real;
+}
+
+impl IntoExampleReal for f64 {
+    fn into_real(self) -> Real {
+        Real::try_from(self).expect("example values must be finite")
+    }
+}
+
+impl IntoExampleReal for usize {
+    fn into_real(self) -> Real {
+        Real::from(self as u64)
+    }
 }

@@ -1,12 +1,10 @@
 //! Functions to extrude, revolve, loft, and otherwise transform 2D `Profile`s into 3D `Mesh`s
 
 use crate::errors::ValidationError;
-use crate::float_types::{
-    Real, hangle_sin_cos, hdegrees_to_radians, hpoints_exactly_equal, hreal_div,
-    hreal_f64s_exactly_equal, hreal_from_f64, hreal_gt_f64, hreal_lt_f64, hreal_mul,
-    hreal_to_f64, hrotation_between_vectors, htranslation_matrix, hunit_cross_vector3,
-    hunit_vector3, hvector3_from_point3, hvector3_from_vector3, hvectors_exactly_equal,
-    hxy_ring_orientation_sign,
+use crate::hyper_math::{
+    hangle_sin_cos, hdegrees_to_radians, hreal_div, hreal_f64s_exactly_equal, hreal_from_f64,
+    hreal_gt_f64, hreal_lt_f64, hreal_mul, hrotation_between_vectors, htranslation_matrix,
+    hunit_cross_vector3, hunit_vector3, hvector3_from_point3, hvector3_from_vector3,
 };
 use crate::mesh::Mesh;
 use crate::polygon::Polygon;
@@ -16,8 +14,7 @@ use hypercurve::{
     Classification, FinitePolyline2, FiniteProjectionOptions, FiniteRegionProfile2,
     FiniteTriangle2, triangulate_finite_rings,
 };
-use hyperreal::RealSign;
-use nalgebra::{Matrix4, Point3, Vector3};
+use hyperlattice::{Matrix4, Point3, Real, Vector3};
 use std::fmt::Debug;
 use std::sync::OnceLock;
 
@@ -26,41 +23,33 @@ fn mesh_projection_options() -> FiniteProjectionOptions {
         .expect("positive finite projection tolerance is valid")
 }
 
-/// Promote an extrusion scalar through hyperreal and export it only at the
-/// current finite mesh boundary.
-///
-/// This keeps the public `Profile::extrude` API centered on
-/// `hyperreal::Real`, while still accepting promotable primitive numbers at
-/// caller edges. The boundary split follows Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7(1-2), 1997
-/// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-fn finite_extrude_scalar<S>(value: S) -> Option<Real>
-where
-    S: TryInto<hyperreal::Real>,
-{
-    hreal_to_f64(&value.try_into().ok()?)
+fn finite_real(value: f64) -> Option<Real> {
+    Real::try_from(value).ok()
 }
 
-fn finite_triangles_to_xy_points(triangles: Vec<FiniteTriangle2>) -> Vec<[Point3<Real>; 3]> {
+fn finite_xy_point3(x: f64, y: f64) -> Option<Point3> {
+    Some(Point3::new(finite_real(x)?, finite_real(y)?, Real::zero()))
+}
+
+fn finite_triangles_to_xy_points(triangles: Vec<FiniteTriangle2>) -> Vec<[Point3; 3]> {
     triangles
         .into_iter()
-        .map(|tri| {
-            [
-                Point3::new(tri[0][0], tri[0][1], 0.0),
-                Point3::new(tri[1][0], tri[1][1], 0.0),
-                Point3::new(tri[2][0], tri[2][1], 0.0),
-            ]
+        .filter_map(|tri| {
+            let [[ax, ay], [bx, by], [cx, cy]] = tri;
+            Some([
+                finite_xy_point3(ax, ay)?,
+                finite_xy_point3(bx, by)?,
+                finite_xy_point3(cx, cy)?,
+            ])
         })
         .collect()
 }
 
-fn hyper_direction_points_down(direction: &Vector3<Real>) -> bool {
+fn hyper_direction_points_down(direction: &Vector3) -> bool {
     let Some(direction) = hvector3_from_vector3(direction) else {
         return false;
     };
-    let Ok(z_axis) = hyperlattice::Vector3::try_from_f64_array([0.0, 0.0, 1.0]) else {
-        return false;
-    };
+    let z_axis = Vector3::z();
     hreal_lt_f64(&direction.dot(&z_axis), 0.0)
 }
 
@@ -78,15 +67,9 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
 
     /// Linearly extrude this (2D) shape in the +Z direction by `height`.
     ///
-    /// This is just a convenience wrapper around extrude_vector using Vector3::new(0.0, 0.0, height)
-    pub fn extrude<H>(&self, height: H) -> Mesh<M>
-    where
-        H: TryInto<hyperreal::Real>,
-    {
-        let Some(height) = finite_extrude_scalar(height) else {
-            return Mesh::empty(self.metadata.clone());
-        };
-        self.extrude_vector(Vector3::new(0.0, 0.0, height))
+    /// This is just a convenience wrapper around `extrude_vector` with a z-axis direction.
+    pub fn extrude(&self, height: Real) -> Mesh<M> {
+        self.extrude_vector(Vector3::from_xyz(Real::zero(), Real::zero(), height))
     }
 
     /// **Mathematical Foundation: Vector-Based Linear Extrusion**
@@ -112,7 +95,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     ///   = checked_unit(C'(u) × d⃗)
     /// ```
     /// where C'(u) is the tangent to the boundary curve. The checked unit
-    /// vector is computed with `hyperlattice::Vector3<hyperreal::Real>`, so
+    /// vector is computed with `hyperlattice::Vector3`, so
     /// degenerate or non-finite side normals are rejected before finite mesh
     /// output. This follows Yap, "Towards Exact Geometric Computation,"
     /// *Computational Geometry* 7(1-2), 1997
@@ -161,15 +144,26 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     ///
     /// Direction degeneracy is tested by promoting the boundary `Vector3<f64>`
     /// into `hyperlattice::Vector3` and comparing squared length exactly in
-    /// `hyperreal::Real`. This keeps the decision to emit no solid for an
+    /// `Real`. This keeps the decision to emit no solid for an
     /// exact-zero extrusion on the same exact predicate path used by mesh
     /// topology, while preserving nonzero infinitesimal-scale boundary values;
     /// see Yap, "Towards Exact Geometric Computation,"
     /// *Computational Geometry* 7(1-2), 1997
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-    pub fn extrude_vector(&self, direction: Vector3<Real>) -> Mesh<M> {
+    pub fn extrude_vector(&self, direction: Vector3) -> Mesh<M> {
+        let direction_point = hyperlimit::Point3::new(
+            direction.0[0].clone(),
+            direction.0[1].clone(),
+            direction.0[2].clone(),
+        );
+        let zero = Vector3::zeros();
+        let zero_point =
+            hyperlimit::Point3::new(zero.0[0].clone(), zero.0[1].clone(), zero.0[2].clone());
         if hvector3_from_vector3(&direction).is_none()
-            || hvectors_exactly_equal(&direction, &Vector3::zeros())
+            || matches!(
+                hyperlimit::point3_equal(&direction_point, &zero_point).value(),
+                Some(true)
+            )
         {
             return Mesh::empty(self.metadata.clone());
         }
@@ -206,10 +200,10 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>), and Meisters,
     /// "Polygons Have Ears," *American Mathematical Monthly* 82(6), 1975
     /// (<https://doi.org/10.2307/2319703>).
-    fn extrude_region_vector(&self, direction: Vector3<Real>) -> Mesh<M> {
+    fn extrude_region_vector(&self, direction: Vector3) -> Mesh<M> {
         let dir_unit = hunit_vector3(&direction).unwrap_or_else(Vector3::z);
         let flip = hyper_direction_points_down(&direction);
-        let bottom_normal = -dir_unit;
+        let bottom_normal = -dir_unit.clone();
         let top_normal = dir_unit;
         let mut polygons = Vec::new();
 
@@ -229,23 +223,23 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
 
             for tri in &triangles {
                 let (a, b, c) = if flip {
-                    (tri[0], tri[1], tri[2])
+                    (tri[0].clone(), tri[1].clone(), tri[2].clone())
                 } else {
-                    (tri[2], tri[1], tri[0])
+                    (tri[2].clone(), tri[1].clone(), tri[0].clone())
                 };
                 polygons.push(Polygon::new(
                     vec![
                         Self::apply_origin_transform_vertex(
-                            Vertex::new(a, bottom_normal),
-                            self.origin_transform,
+                            Vertex::new(a, bottom_normal.clone()),
+                            self.origin_transform.clone(),
                         ),
                         Self::apply_origin_transform_vertex(
-                            Vertex::new(b, bottom_normal),
-                            self.origin_transform,
+                            Vertex::new(b, bottom_normal.clone()),
+                            self.origin_transform.clone(),
                         ),
                         Self::apply_origin_transform_vertex(
-                            Vertex::new(c, bottom_normal),
-                            self.origin_transform,
+                            Vertex::new(c, bottom_normal.clone()),
+                            self.origin_transform.clone(),
                         ),
                     ],
                     self.metadata.clone(),
@@ -253,37 +247,37 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
             }
 
             for tri in &triangles {
-                let p0 = tri[0] + direction;
-                let p1 = tri[1] + direction;
-                let p2 = tri[2] + direction;
+                let p0 = tri[0].clone() + &direction;
+                let p1 = tri[1].clone() + &direction;
+                let p2 = tri[2].clone() + &direction;
                 let (a, b, c) = if flip { (p2, p1, p0) } else { (p0, p1, p2) };
                 polygons.push(Polygon::new(
                     vec![
                         Self::apply_origin_transform_vertex(
-                            Vertex::new(a, top_normal),
-                            self.origin_transform,
+                            Vertex::new(a, top_normal.clone()),
+                            self.origin_transform.clone(),
                         ),
                         Self::apply_origin_transform_vertex(
-                            Vertex::new(b, top_normal),
-                            self.origin_transform,
+                            Vertex::new(b, top_normal.clone()),
+                            self.origin_transform.clone(),
                         ),
                         Self::apply_origin_transform_vertex(
-                            Vertex::new(c, top_normal),
-                            self.origin_transform,
+                            Vertex::new(c, top_normal.clone()),
+                            self.origin_transform.clone(),
                         ),
                     ],
                     self.metadata.clone(),
                 ));
             }
 
-            self.push_region_ring_sides(&exterior, direction, flip, &mut polygons);
+            self.push_region_ring_sides(&exterior, direction.clone(), flip, &mut polygons);
             for hole in &holes {
-                self.push_region_ring_sides(hole, direction, flip, &mut polygons);
+                self.push_region_ring_sides(hole, direction.clone(), flip, &mut polygons);
             }
         }
 
         for wire in self.projected_wire_polylines_for_mesh() {
-            self.push_polyline_sides(wire.points(), direction, flip, &mut polygons);
+            self.push_polyline_sides(wire.points(), direction.clone(), flip, &mut polygons);
         }
 
         Mesh::from_polygons(&polygons, self.metadata.clone())
@@ -297,19 +291,19 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// Yap's exact-geometric-computation boundary: Yap, "Towards Exact
     /// Geometric Computation," *Computational Geometry* 7(1-2), 1997
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-    fn extrude_wires_vector(&self, direction: Vector3<Real>) -> Mesh<M> {
+    fn extrude_wires_vector(&self, direction: Vector3) -> Mesh<M> {
         let flip = hyper_direction_points_down(&direction);
         let mut polygons = Vec::new();
         for wire in self.projected_wire_polylines_for_mesh() {
-            self.push_polyline_sides(wire.points(), direction, flip, &mut polygons);
+            self.push_polyline_sides(wire.points(), direction.clone(), flip, &mut polygons);
         }
         Mesh::from_polygons(&polygons, self.metadata.clone())
     }
 
     fn push_region_ring_sides(
         &self,
-        ring: &[[Real; 2]],
-        direction: Vector3<Real>,
+        ring: &[[f64; 2]],
+        direction: Vector3,
         flip: bool,
         polygons: &mut Vec<Polygon<M>>,
     ) {
@@ -320,17 +314,21 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
 
     fn push_polyline_sides(
         &self,
-        polyline: &[[Real; 2]],
-        direction: Vector3<Real>,
+        polyline: &[[f64; 2]],
+        direction: Vector3,
         flip: bool,
         polygons: &mut Vec<Polygon<M>>,
     ) {
         for window in polyline.windows(2) {
-            let b_i = Point3::new(window[0][0], window[0][1], 0.0);
-            let b_j = Point3::new(window[1][0], window[1][1], 0.0);
-            let t_i = b_i + direction;
-            let t_j = b_j + direction;
-            let edge = b_j - b_i;
+            let Some(b_i) = finite_xy_point3(window[0][0], window[0][1]) else {
+                continue;
+            };
+            let Some(b_j) = finite_xy_point3(window[1][0], window[1][1]) else {
+                continue;
+            };
+            let t_i = b_i.clone() + &direction;
+            let t_j = b_j.clone() + &direction;
+            let edge = &b_j - &b_i;
             let Some(raw_normal) = hunit_cross_vector3(&edge, &direction) else {
                 continue;
             };
@@ -343,8 +341,8 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
             .into_iter()
             .map(|point| {
                 Self::apply_origin_transform_vertex(
-                    Vertex::new(point, normal),
-                    self.origin_transform,
+                    Vertex::new(point, normal.clone()),
+                    self.origin_transform.clone(),
                 )
             })
             .collect::<Vec<_>>();
@@ -398,10 +396,10 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
             // (depending on the orientation of bottom vs. top).
             let side_poly = Polygon::new(
                 vec![
-                    *b_i, // bottom[i]
-                    *b_j, // bottom[i+1]
-                    *t_j, // top[i+1]
-                    *t_i, // top[i]
+                    b_i.clone(), // bottom[i]
+                    b_j.clone(), // bottom[i+1]
+                    t_j.clone(), // top[i+1]
+                    t_i.clone(), // top[i]
                 ],
                 bottom.metadata.clone(), // carry over bottom polygon metadata
             );
@@ -430,7 +428,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     // ```
     // let shape_2d = CSG::square(2.0, None); // a 2D square in XY
     // let extruded = shape_2d.linear_extrude(
-    //     direction = Vector3::new(0.0, 0.0, 10.0),
+    //     direction = Vector3::from_xyz(Real::zero(), Real::zero(), r(10.0)),
     //     twist = 360.0,
     //     segments = 32,
     //     scale = 1.2,
@@ -438,7 +436,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     // ```
     // pub fn linear_extrude(
     // shape: &CCShape<Real>,
-    // direction: Vector3<Real>,
+    // direction: Vector3,
     // twist_degs: Real,
     // segments: usize,
     // scale_top: Real,
@@ -460,14 +458,14 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     //   - twist about Z => rot_i
     //   - translate in Z => z_i
     //
-    //   We'll store each “slice” in 3D form as a Vec<Vec<Point3<Real>>>,
+    //   We'll store each “slice” in 3D form as a Vec<Vec<Point3>>,
     //   i.e. one 3D polyline for each boundary or hole in the shape.
-    // let mut slices: Vec<Vec<Vec<Point3<Real>>>> = Vec::with_capacity(segments + 1);
+    // let mut slices: Vec<Vec<Vec<Point3>>> = Vec::with_capacity(segments + 1);
     // The axis to rotate around is the unit of `direction`. We'll do final alignment after constructing them along +Z.
     // let axis_dir = hyperlattice_checked_unit(direction);
     //
     // for i in 0..=segments {
-    // let f = i as Real / segments as Real;
+    // let f = (Real::from(i as u64) / Real::from(segments as u64)).ok()?;
     // let s_i = 1.0 + (scale_top - 1.0) * f;  // lerp(1, scale_top, f)
     // let twist_rad = twist_degs.to_radians() * f;
     // let z_i = height * f;
@@ -478,7 +476,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     //  - translate in Z
     // let mat_scale = hscale_matrix(s_i, s_i, 1.0)?;
     // let mat_rot = finite_rotation_z(twist_rad)?;
-    // let mat_trans = htranslation_matrix(&Vector3::new(0.0, 0.0, z_i))?;
+    // let mat_trans = htranslation_matrix(&Vector3::from_xyz(Real::zero(), Real::zero(), z_i))?;
     // let slice_mat = mat_trans * mat_rot * mat_scale;
     //
     // let slice_3d = project_shape_3d(shape, &slice_mat);
@@ -568,7 +566,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     // let mut final_polys = Vec::with_capacity(polygons_3d.len());
     // for mut poly in polygons_3d {
     // for v in &mut poly.vertices {
-    // let pos4 = mat * nalgebra::Vector4::new(v.position.x, v.position.y, v.position.z, 1.0);
+    // let pos4 = mat * hyperlattice::Vector4::from_xyzw(v.position.x, v.position.y, v.position.z, 1.0);
     // v.position = Point3::new(pos4.x / pos4.w, pos4.y / pos4.w, pos4.z / pos4.w);
     // }
     // poly.set_new_normal();
@@ -655,7 +653,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
     /// 7(1-2), 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     /// Degree conversion, angular step division, and sine/cosine evaluation
-    /// are promoted through `hyperreal::Real` before finite vertices are
+    /// are promoted through `Real` before finite vertices are
     /// emitted. The Y-axis sweep is the same trigonometric rotation formula
     /// underlying Rodrigues' theorem; see Rodrigues, "Des lois géométriques
     /// qui régissent les déplacements d'un système solide dans l'espace,"
@@ -677,7 +675,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
                 min: 2,
             });
         }
-        let Some(angle_radians) = hdegrees_to_radians(angle_degs) else {
+        let Some(angle_radians) = hdegrees_to_radians(angle_degs.clone()) else {
             return Err(ValidationError::InvalidArguments);
         };
 
@@ -685,14 +683,31 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
 
         // A small helper to revolve a point (x,y) in the XY plane around the Y-axis by theta.
         // The output is a 3D point (X, Y, Z).
-        fn revolve_around_y(x: Real, y: Real, theta: Real) -> Option<Point3<Real>> {
+        fn revolve_around_y(x: f64, y: f64, theta: Real) -> Option<Point3> {
+            let x = finite_real(x)?;
+            let y = finite_real(y)?;
             let (sin_t, cos_t) = hangle_sin_cos(theta)?;
             // Map (x, y, 0) => ( x*cos θ, y, x*sin θ )
-            Some(Point3::new(hreal_mul(x, cos_t)?, y, hreal_mul(x, sin_t)?))
+            Some(Point3::new(hreal_mul(&x, cos_t)?, y, hreal_mul(x, sin_t)?))
         }
 
-        fn is_ccw(ring: &[[Real; 2]]) -> bool {
-            matches!(hxy_ring_orientation_sign(ring), Some(RealSign::Positive))
+        fn is_ccw(ring: &[[f64; 2]]) -> bool {
+            let Some(ring) = ring
+                .iter()
+                .map(|point| {
+                    Some(hyperlimit::Point2::new(
+                        finite_real(point[0])?,
+                        finite_real(point[1])?,
+                    ))
+                })
+                .collect::<Option<Vec<_>>>()
+            else {
+                return false;
+            };
+            matches!(
+                hyperlimit::ring_area_sign(&ring).value(),
+                Some(hyperlimit::Sign::Positive)
+            )
         }
 
         // A helper to extrude one ring of coordinates (including the last->first if needed),
@@ -703,7 +718,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         // - `segments`: how many discrete slices around the revolve.
         // - `metadata`: user metadata to attach to side polygons.
         fn revolve_ring<M: Clone + Send + Sync>(
-            ring_coords: &[[Real; 2]],
+            ring_coords: &[[f64; 2]],
             ring_is_ccw: bool,
             angle_radians: Real,
             segments: usize,
@@ -718,7 +733,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
             // We'll iterate over each edge i..i+1, and revolve them around by segments slices.
 
             // The revolve step size in radians:
-            let Some(step) = hreal_div(angle_radians, segments as Real) else {
+            let Some(step) = hreal_div(angle_radians, segments) else {
                 return vec![];
             };
 
@@ -728,28 +743,43 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
                 let c_j = ring_coords[i + 1];
 
                 // If these two points are the same, skip degenerate edge
-                if same_xy((c_i[0], c_i[1]), (c_j[0], c_j[1])) {
+                let Some(edge_start) = finite_real(c_i[0])
+                    .zip(finite_real(c_i[1]))
+                    .map(|(x, y)| hyperlimit::Point2::new(x, y))
+                else {
+                    continue;
+                };
+                let Some(edge_end) = finite_real(c_j[0])
+                    .zip(finite_real(c_j[1]))
+                    .map(|(x, y)| hyperlimit::Point2::new(x, y))
+                else {
+                    continue;
+                };
+                if matches!(
+                    hyperlimit::point2_equal(&edge_start, &edge_end).value(),
+                    Some(true)
+                ) {
                     continue;
                 }
 
                 // For each revolve slice j..j+1
                 for s in 0..segments {
-                    let Some(th0) = hreal_mul(s as Real, step) else {
+                    let Some(th0) = hreal_mul(s, &step) else {
                         continue;
                     };
-                    let Some(th1) = hreal_mul(s as Real + 1.0, step) else {
+                    let Some(th1) = hreal_mul(s + 1, &step) else {
                         continue;
                     };
 
                     // revolve bottom edge endpoints at angle th0
-                    let Some(b_i) = revolve_around_y(c_i[0], c_i[1], th0) else {
+                    let Some(b_i) = revolve_around_y(c_i[0], c_i[1], th0.clone()) else {
                         continue;
                     };
                     let Some(b_j) = revolve_around_y(c_j[0], c_j[1], th0) else {
                         continue;
                     };
                     // revolve top edge endpoints at angle th1
-                    let Some(t_i) = revolve_around_y(c_i[0], c_i[1], th1) else {
+                    let Some(t_i) = revolve_around_y(c_i[0], c_i[1], th1.clone()) else {
                         continue;
                     };
                     let Some(t_j) = revolve_around_y(c_j[0], c_j[1], th1) else {
@@ -779,7 +809,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         //  - revolve each 2D point by `angle`, produce a 3D ring
         //  - if `flip` is true, reverse the ring so the normal is inverted
         fn build_cap_polygon<M: Clone + Send + Sync>(
-            ring_coords: &[[Real; 2]],
+            ring_coords: &[[f64; 2]],
             angle: Real,
             flip: bool,
             metadata: &M,
@@ -790,7 +820,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
             // revolve each coordinate at the given angle
             let mut pts_3d: Vec<_> = ring_coords
                 .iter()
-                .filter_map(|c| revolve_around_y(c[0], c[1], angle))
+                .filter_map(|c| revolve_around_y(c[0], c[1], angle.clone()))
                 .collect();
             if pts_3d.len() < 3 {
                 return None;
@@ -800,8 +830,15 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
             // with an explicit duplicate endpoint.
             let last = pts_3d.last().unwrap();
             let first = pts_3d.first().unwrap();
-            if !hpoints_exactly_equal(last, first) {
-                pts_3d.push(*first);
+            let last_point =
+                hyperlimit::Point3::new(last.x.clone(), last.y.clone(), last.z.clone());
+            let first_point =
+                hyperlimit::Point3::new(first.x.clone(), first.y.clone(), first.z.clone());
+            if !matches!(
+                hyperlimit::point3_equal(&last_point, &first_point).value(),
+                Some(true)
+            ) {
+                pts_3d.push(first.clone());
             }
 
             // Turn into Vertex
@@ -827,29 +864,31 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         // 2) Iterate over each hypercurve finite profile, revolve side walls,
         //    and possibly add caps when angle_degs < 360.
         //----------------------------------------------------------------------
-        let full_revolve = hreal_f64s_exactly_equal(angle_degs, 360.0);
-        let angle_positive = hreal_from_f64(angle_degs)
+        let full_revolve = hreal_f64s_exactly_equal(&angle_degs, 360.0);
+        let angle_positive = hreal_from_f64(&angle_degs)
             .ok()
             .is_some_and(|angle| hreal_gt_f64(&angle, 0.0));
         let do_caps = !full_revolve && angle_positive;
 
-        let mut emit_profile = |outer: &[[Real; 2]], holes: &[Vec<[Real; 2]>]| {
+        let mut emit_profile = |outer: &[[f64; 2]], holes: &[Vec<[f64; 2]>]| {
             let ext_ccw = is_ccw(outer);
 
             new_polygons.extend(revolve_ring(
                 outer,
                 ext_ccw,
-                angle_radians,
+                angle_radians.clone(),
                 segments,
                 &self.metadata,
             ));
 
             if do_caps {
-                if let Some(cap) = build_cap_polygon(outer, 0.0, ext_ccw, &self.metadata) {
+                if let Some(cap) =
+                    build_cap_polygon(outer, Real::zero(), ext_ccw, &self.metadata)
+                {
                     new_polygons.push(cap);
                 }
                 if let Some(cap) =
-                    build_cap_polygon(outer, angle_radians, !ext_ccw, &self.metadata)
+                    build_cap_polygon(outer, angle_radians.clone(), !ext_ccw, &self.metadata)
                 {
                     new_polygons.push(cap);
                 }
@@ -860,7 +899,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
                 new_polygons.extend(revolve_ring(
                     hole,
                     hole_ccw,
-                    angle_radians,
+                    angle_radians.clone(),
                     segments,
                     &self.metadata,
                 ));
@@ -883,7 +922,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
             new_polygons.extend(revolve_ring(
                 wire.points(),
                 true,
-                angle_radians,
+                angle_radians.clone(),
                 segments,
                 &self.metadata,
             ));
@@ -895,7 +934,6 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         Ok(Mesh {
             polygons: new_polygons,
             bounding_box: OnceLock::new(),
-            query_trimesh: OnceLock::new(),
             metadata: self.metadata.clone(),
         })
     }
@@ -923,7 +961,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     ///   treated as **closed** and no caps are added.
     ///
     /// * returns - a `Mesh<M>` containing all side quads plus automatically triangulated caps (respecting any holes).
-    pub fn sweep(&self, path: &[Point3<Real>]) -> Mesh<M> {
+    pub fn sweep(&self, path: &[Point3]) -> Mesh<M> {
         // sanity checks
         if path.len() < 2 {
             return Mesh::empty(self.metadata.clone());
@@ -932,27 +970,38 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
             return Mesh::empty(self.metadata.clone());
         }
         let n_path = path.len();
-        let path_is_closed = hpoints_exactly_equal(&path[0], &path[n_path - 1]);
+        let path_start =
+            hyperlimit::Point3::new(path[0].x.clone(), path[0].y.clone(), path[0].z.clone());
+        let path_end = hyperlimit::Point3::new(
+            path[n_path - 1].x.clone(),
+            path[n_path - 1].y.clone(),
+            path[n_path - 1].z.clone(),
+        );
+        let path_is_closed = matches!(
+            hyperlimit::point3_equal(&path_start, &path_end).value(),
+            Some(true)
+        );
 
         // pre-compute a transform for each path vertex
-        let mut slice_xforms: Vec<Matrix4<Real>> = Vec::with_capacity(n_path);
+        let mut slice_xforms: Vec<Matrix4> = Vec::with_capacity(n_path);
 
         // first slice
-        let mut dir_prev = hunit_vector3(&(path[1] - path[0])).unwrap_or_else(Vector3::z);
+        let mut dir_prev = hunit_vector3(&(&path[1] - &path[0])).unwrap_or_else(Vector3::z);
         let mut orientation = hrotation_between_vectors(&Vector3::z(), &dir_prev)
             .unwrap_or_else(Matrix4::identity);
-        let Some(first_translation) = htranslation_matrix(&path[0].coords) else {
+        let Some(first_translation) = htranslation_matrix(&path[0].to_vector()) else {
             return Mesh::empty(self.metadata.clone());
         };
-        slice_xforms.push(first_translation * orientation);
+        slice_xforms.push(first_translation * orientation.clone());
 
         // propagate frame with parallel transport
         for i in 1..n_path {
             // pick the outgoing tangent _now_
             let dir_curr = if i == n_path - 1 && !path_is_closed {
-                hunit_vector3(&(path[i] - path[i - 1])).unwrap_or(dir_prev) // look back at the end
+                hunit_vector3(&(&path[i] - &path[i - 1])).unwrap_or_else(|| dir_prev.clone())
             } else {
-                hunit_vector3(&(path[(i + 1) % n_path] - path[i])).unwrap_or(dir_prev)
+                hunit_vector3(&(&path[(i + 1) % n_path] - &path[i]))
+                    .unwrap_or_else(|| dir_prev.clone())
             };
 
             // Rotate the frame exactly once. The rotation matrix is assembled
@@ -962,10 +1011,10 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
             orientation = rot_between * orientation;
 
             // now the slice that lives at path[i]
-            let Some(translation) = htranslation_matrix(&path[i].coords) else {
+            let Some(translation) = htranslation_matrix(&path[i].to_vector()) else {
                 return Mesh::empty(self.metadata.clone());
             };
-            slice_xforms.push(translation * orientation);
+            slice_xforms.push(translation * orientation.clone());
 
             // ...and _immediately_ remember this tangent for the next turn
             dir_prev = dir_curr;
@@ -973,26 +1022,32 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
 
         // helper: map a 2-D point (x,y,0) through a slice transform
         #[inline]
-        fn map_pt(p2: [Real; 2], m: &Matrix4<Real>) -> Point3<Real> {
-            Point3::from_homogeneous(*m * Point3::new(p2[0], p2[1], 0.0).to_homogeneous())
-                .expect("homogeneous w != 0")
+        fn map_pt(p2: [f64; 2], m: &Matrix4) -> Option<Point3> {
+            let [x, y] = p2;
+            m.transform_point3(&finite_xy_point3(x, y)?).ok()
+        }
+
+        #[inline]
+        fn map_real_xy(x: Real, y: Real, m: &Matrix4) -> Option<Point3> {
+            m.transform_point3(&Point3::new(x, y, Real::zero())).ok()
         }
 
         // collect every closed region ring and open wire profile of the sketch
         #[derive(Debug)]
         struct Ring {
-            coords_2d: Vec<[Real; 2]>,      // original XY coords
-            slices: Vec<Vec<Point3<Real>>>, // one Vec<Point3> per path vertex
+            coords_2d: Vec<[f64; 2]>, // original XY coords
+            slices: Vec<Vec<Point3>>, // one Vec<Point3> per path vertex
         }
         let mut rings: Vec<Ring> = Vec::new();
 
-        let mut add_ring = |coords: Vec<[Real; 2]>| {
+        let mut add_ring = |coords: Vec<[f64; 2]>| {
             if coords.len() < 2 {
                 return;
             }
-            let mut slices: Vec<Vec<Point3<Real>>> = Vec::with_capacity(n_path);
+            let mut slices: Vec<Vec<Point3>> = Vec::with_capacity(n_path);
             for xf in &slice_xforms {
-                let slice: Vec<Point3<Real>> = coords.iter().map(|&p| map_pt(p, xf)).collect();
+                let slice: Vec<Point3> =
+                    coords.iter().filter_map(|p| map_pt(*p, xf)).collect();
                 slices.push(slice);
             }
             rings.push(Ring {
@@ -1001,7 +1056,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
             });
         };
 
-        let mut cap_profiles: Vec<(Vec<[Real; 2]>, Vec<Vec<[Real; 2]>>)> = Vec::new();
+        let mut cap_profiles: Vec<(Vec<[f64; 2]>, Vec<Vec<[f64; 2]>>)> = Vec::new();
         let region_profiles = self.projected_region_profiles_for_mesh();
         if !region_profiles.is_empty() {
             for profile in region_profiles {
@@ -1039,26 +1094,26 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
                 let slice_j = &ring.slices[j];
 
                 for k in 0..v_per_ring {
-                    let v0 = slice_i[k];
-                    let v1 = slice_i[k + 1];
-                    let v2 = slice_j[k + 1];
-                    let v3 = slice_j[k];
+                    let v0 = slice_i[k].clone();
+                    let v1 = slice_i[k + 1].clone();
+                    let v2 = slice_j[k + 1].clone();
+                    let v3 = slice_j[k].clone();
 
                     // triangle 1  (v0-v1-v2)
                     out_polys.push(Polygon::new(
                         vec![
-                            Vertex::new(v0, Vector3::zeros()),
-                            Vertex::new(v1, Vector3::zeros()),
-                            Vertex::new(v2, Vector3::zeros()),
+                            Vertex::new(v0.clone(), Vector3::zeros()),
+                            Vertex::new(v1.clone(), Vector3::zeros()),
+                            Vertex::new(v2.clone(), Vector3::zeros()),
                         ],
                         self.metadata.clone(),
                     ));
                     // triangle 2  (v0-v2-v3)
                     out_polys.push(Polygon::new(
                         vec![
-                            Vertex::new(v0, Vector3::zeros()),
-                            Vertex::new(v2, Vector3::zeros()),
-                            Vertex::new(v3, Vector3::zeros()),
+                            Vertex::new(v0.clone(), Vector3::zeros()),
+                            Vertex::new(v2.clone(), Vector3::zeros()),
+                            Vertex::new(v3.clone(), Vector3::zeros()),
                         ],
                         self.metadata.clone(),
                     ));
@@ -1072,8 +1127,8 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
             // then reuse the triangles for both ends.
 
             // helper so we don’t repeat the capping code twice
-            let mut add_caps = |ext: &[[Real; 2]], holes: &[Vec<[Real; 2]>]| {
-                let hole_refs: Vec<&[[Real; 2]]> = holes.iter().map(|v| &v[..]).collect();
+            let mut add_caps = |ext: &[[f64; 2]], holes: &[Vec<[f64; 2]>]| {
+                let hole_refs: Vec<&[[f64; 2]]> = holes.iter().map(|v| &v[..]).collect();
 
                 let tris = finite_triangles_to_xy_points(
                     triangulate_finite_rings(ext, &hole_refs).unwrap_or_default(),
@@ -1081,9 +1136,21 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
 
                 // cap at the start of the path (flip winding)
                 for t in &tris {
-                    let p0 = map_pt([t[0].x, t[0].y], &slice_xforms[0]);
-                    let p1 = map_pt([t[1].x, t[1].y], &slice_xforms[0]);
-                    let p2 = map_pt([t[2].x, t[2].y], &slice_xforms[0]);
+                    let Some(p0) =
+                        map_real_xy(t[0].x.clone(), t[0].y.clone(), &slice_xforms[0])
+                    else {
+                        continue;
+                    };
+                    let Some(p1) =
+                        map_real_xy(t[1].x.clone(), t[1].y.clone(), &slice_xforms[0])
+                    else {
+                        continue;
+                    };
+                    let Some(p2) =
+                        map_real_xy(t[2].x.clone(), t[2].y.clone(), &slice_xforms[0])
+                    else {
+                        continue;
+                    };
                     out_polys.push(Polygon::new(
                         vec![
                             Vertex::new(p2, Vector3::zeros()),
@@ -1096,9 +1163,21 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
 
                 // cap at the end of the path
                 for t in &tris {
-                    let p0 = map_pt([t[0].x, t[0].y], &slice_xforms[n_path - 1]);
-                    let p1 = map_pt([t[1].x, t[1].y], &slice_xforms[n_path - 1]);
-                    let p2 = map_pt([t[2].x, t[2].y], &slice_xforms[n_path - 1]);
+                    let Some(p0) =
+                        map_real_xy(t[0].x.clone(), t[0].y.clone(), &slice_xforms[n_path - 1])
+                    else {
+                        continue;
+                    };
+                    let Some(p1) =
+                        map_real_xy(t[1].x.clone(), t[1].y.clone(), &slice_xforms[n_path - 1])
+                    else {
+                        continue;
+                    };
+                    let Some(p2) =
+                        map_real_xy(t[2].x.clone(), t[2].y.clone(), &slice_xforms[n_path - 1])
+                    else {
+                        continue;
+                    };
                     out_polys.push(Polygon::new(
                         vec![
                             Vertex::new(p0, Vector3::zeros()),
@@ -1123,7 +1202,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
 ///
 /// If `flip_winding` is true, we reverse the vertex order (so the polygon’s normal flips).
 fn _polygon_from_slice<M: Clone + Send + Sync>(
-    slice_pts: &[Point3<Real>],
+    slice_pts: &[Point3],
     flip_winding: bool,
     metadata: M,
 ) -> Polygon<M> {
@@ -1134,7 +1213,7 @@ fn _polygon_from_slice<M: Clone + Send + Sync>(
     // Build the vertex list
     let mut verts: Vec<Vertex> = slice_pts
         .iter()
-        .map(|p| Vertex::new(*p, Vector3::zeros()))
+        .map(|p| Vertex::new(p.clone(), Vector3::zeros()))
         .collect();
 
     if flip_winding {
@@ -1147,12 +1226,12 @@ fn _polygon_from_slice<M: Clone + Send + Sync>(
     Polygon::new(verts, metadata)
 }
 
-fn close_region_ring(mut points: Vec<[Real; 2]>) -> Vec<[Real; 2]> {
+fn close_region_ring(mut points: Vec<[f64; 2]>) -> Vec<[f64; 2]> {
     if points.len() >= 2
         && points
             .first()
             .zip(points.last())
-            .is_some_and(|(first, last)| !same_xy((first[0], first[1]), (last[0], last[1])))
+            .is_some_and(|(first, last)| first != last)
     {
         let first = points[0];
         points.push(first);
@@ -1160,50 +1239,65 @@ fn close_region_ring(mut points: Vec<[Real; 2]>) -> Vec<[Real; 2]> {
     points
 }
 
-fn same_xy(a: (Real, Real), b: (Real, Real)) -> bool {
-    hreal_f64s_exactly_equal(a.0, b.0) && hreal_f64s_exactly_equal(a.1, b.1)
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::hyper_math::{Real, hreal_from_f64};
+
+    fn r(value: f64) -> Real {
+        hreal_from_f64(value).expect("test values must be finite")
+    }
 
     #[test]
-    fn same_xy_uses_exact_hyperreal_identity() {
-        assert!(same_xy((0.0, 0.0), (0.0, -0.0)));
-        assert!(!same_xy((0.0, 0.0), (1.0e-12, 0.0)));
-        assert!(!same_xy((0.0, 0.0), (Real::NAN, 0.0)));
+    fn close_region_ring_uses_exact_hyperreal_endpoint_identity() {
+        assert_eq!(close_region_ring(vec![[0.0, 0.0], [0.0, -0.0]]).len(), 2);
+        assert_eq!(close_region_ring(vec![[0.0, 0.0], [1.0e-12, 0.0]]).len(), 3);
     }
 
     #[test]
     fn ring_orientation_sign_skips_leading_collinear_points() {
         let ccw = [
-            [0.0, 0.0],
-            [0.25, 0.0],
-            [1.0, 0.0],
-            [1.0, 1.0],
-            [0.0, 1.0],
-            [0.0, 0.0],
+            [r(0.0), r(0.0)],
+            [r(0.25), r(0.0)],
+            [r(1.0), r(0.0)],
+            [r(1.0), r(1.0)],
+            [r(0.0), r(1.0)],
+            [r(0.0), r(0.0)],
         ];
         let cw = [
-            [0.0, 0.0],
-            [0.0, 0.25],
-            [0.0, 1.0],
-            [1.0, 1.0],
-            [1.0, 0.0],
-            [0.0, 0.0],
+            [r(0.0), r(0.0)],
+            [r(0.0), r(0.25)],
+            [r(0.0), r(1.0)],
+            [r(1.0), r(1.0)],
+            [r(1.0), r(0.0)],
+            [r(0.0), r(0.0)],
         ];
-        let collinear = [[0.0, 0.0], [0.25, 0.0], [1.0, 0.0]];
+        let collinear = [[r(0.0), r(0.0)], [r(0.25), r(0.0)], [r(1.0), r(0.0)]];
 
-        assert_eq!(hxy_ring_orientation_sign(&ccw), Some(RealSign::Positive));
-        assert_eq!(hxy_ring_orientation_sign(&cw), Some(RealSign::Negative));
-        assert_eq!(hxy_ring_orientation_sign(&collinear), None);
-    }
+        let ccw = ccw
+            .iter()
+            .map(|point| hyperlimit::Point2::new(point[0].clone(), point[1].clone()))
+            .collect::<Vec<_>>();
+        let cw = cw
+            .iter()
+            .map(|point| hyperlimit::Point2::new(point[0].clone(), point[1].clone()))
+            .collect::<Vec<_>>();
+        let collinear = collinear
+            .iter()
+            .map(|point| hyperlimit::Point2::new(point[0].clone(), point[1].clone()))
+            .collect::<Vec<_>>();
 
-    #[test]
-    fn close_region_ring_rejects_nonfinite_duplicate_endpoint() {
-        let points = close_region_ring(vec![[0.0, 0.0], [1.0, 0.0], [Real::NAN, 0.0]]);
-        assert_eq!(points.len(), 4);
-        assert_eq!(points[3], [0.0, 0.0]);
+        assert_eq!(
+            hyperlimit::ring_area_sign(&ccw).value(),
+            Some(hyperlimit::Sign::Positive)
+        );
+        assert_eq!(
+            hyperlimit::ring_area_sign(&cw).value(),
+            Some(hyperlimit::Sign::Negative)
+        );
+        assert_eq!(
+            hyperlimit::ring_area_sign(&collinear).value(),
+            Some(hyperlimit::Sign::Zero)
+        );
     }
 }

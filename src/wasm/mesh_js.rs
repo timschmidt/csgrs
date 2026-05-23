@@ -1,27 +1,28 @@
 //! JavaScript wrapper for [`Mesh`].
 
 use crate::csg::CSG;
-use crate::float_types::{
-    Real, hperpendicular_basis, hreal_from_f64, hunit_cross_vector3, hunit_quaternion,
-    hvector3_dot, hvector3_from_point3,
-};
+use crate::hyper_math::Real;
 use crate::mesh::{Mesh, plane::Plane};
 use crate::wasm::{
     finite_matrix4, js_metadata_to_string, matrix_js::Matrix4Js, plane_js::PlaneJs,
     point_js::Point3Js, polygon_js::PolygonJs, sketch_js::SketchJs, vector_js::Vector3Js,
 };
+use crate::wasm::{point3_from_js_or_origin, real_from_js, real_from_js_or_zero, real_to_js};
+use hyperlattice::{Point3, Vector3};
 use js_sys::{Float64Array, Object, Reflect, Uint32Array};
-use nalgebra::{Point3, Vector3};
 use serde_wasm_bindgen::from_value;
 use wasm_bindgen::prelude::*;
 
-fn wasm_projected_polygon_normal(points: &[Point3<Real>]) -> Option<Vector3<Real>> {
+fn wasm_projected_polygon_normal(points: &[Point3]) -> Option<Vector3> {
     (1..points.len().saturating_sub(1)).find_map(|i| {
-        hunit_cross_vector3(&(points[i] - points[0]), &(points[i + 1] - points[0]))
+        (points[i].clone() - points[0].clone())
+            .cross(&(points[i + 1].clone() - points[0].clone()))
+            .normalize_checked()
+            .ok()
     })
 }
 
-fn wasm_point3_boundary(x: Real, y: Real, z: Real) -> Point3<Real> {
+fn wasm_point3_boundary(x: f64, y: f64, z: f64) -> Point3 {
     Point3Js::new(x, y, z).inner
 }
 
@@ -55,7 +56,7 @@ impl MeshJs {
     ) -> Result<MeshJs, JsValue> {
         use crate::vertex::Vertex;
 
-        fn parse_points(data: &[f64], label: &str) -> Result<Vec<Point3<Real>>, JsValue> {
+        fn parse_points(data: &[f64], label: &str) -> Result<Vec<Point3>, JsValue> {
             if data.len() % 3 != 0 {
                 return Err(JsValue::from_str(&format!(
                     "{label} must contain x/y/z triples"
@@ -64,8 +65,10 @@ impl MeshJs {
 
             let mut points = Vec::with_capacity(data.len() / 3);
             for chunk in data.chunks_exact(3) {
-                let point = Point3::new(chunk[0] as Real, chunk[1] as Real, chunk[2] as Real);
-                if hvector3_from_point3(&point).is_none() {
+                let point = point3_from_js_or_origin(chunk[0], chunk[1], chunk[2]);
+                if point == Point3::origin()
+                    && (chunk[0] != 0.0 || chunk[1] != 0.0 || chunk[2] != 0.0)
+                {
                     return Err(JsValue::from_str(&format!(
                         "{label} contains a non-finite coordinate"
                     )));
@@ -76,23 +79,19 @@ impl MeshJs {
         }
 
         fn push_ring(
-            ring: &[Point3<Real>],
-            origin: Point3<Real>,
-            u: Vector3<Real>,
-            v: Vector3<Real>,
+            ring: &[Point3],
+            origin: Point3,
+            u: Vector3,
+            v: Vector3,
             vertices: &mut Vec<Vertex>,
             flat_2d: &mut Vec<Real>,
-            normal: Vector3<Real>,
+            normal: Vector3,
         ) -> Result<(), JsValue> {
             for point in ring {
-                let offset = point.coords - origin.coords;
-                flat_2d.push(hvector3_dot(&offset, &u).ok_or_else(|| {
-                    JsValue::from_str("projected point contains non-finite coordinates")
-                })?);
-                flat_2d.push(hvector3_dot(&offset, &v).ok_or_else(|| {
-                    JsValue::from_str("projected point contains non-finite coordinates")
-                })?);
-                vertices.push(Vertex::new(*point, normal));
+                let offset = point - &origin;
+                flat_2d.push(offset.dot(&u));
+                flat_2d.push(offset.dot(&v));
+                vertices.push(Vertex::new(point.clone(), normal.clone()));
             }
             Ok(())
         }
@@ -108,15 +107,23 @@ impl MeshJs {
             return Err(JsValue::from_str("outer_points are degenerate"));
         };
 
-        let origin = outer[0];
-        let Some((u, v)) = hperpendicular_basis(&normal) else {
+        let origin = outer[0].clone();
+        let Ok((u, v)) = normal.orthonormal_basis_checked() else {
             return Err(JsValue::from_str("outer_points are degenerate"));
         };
         let mut vertices = Vec::new();
         let mut flat_2d = Vec::new();
         let mut holes = Vec::with_capacity(hole_arrays.len());
 
-        push_ring(&outer, origin, u, v, &mut vertices, &mut flat_2d, normal)?;
+        push_ring(
+            &outer,
+            origin.clone(),
+            u.clone(),
+            v.clone(),
+            &mut vertices,
+            &mut flat_2d,
+            normal.clone(),
+        )?;
 
         for (index, hole_array) in hole_arrays.into_iter().enumerate() {
             let hole = parse_points(&hole_array.to_vec(), &format!("hole_arrays[{index}]"))?;
@@ -126,21 +133,22 @@ impl MeshJs {
                 )));
             }
             holes.push(vertices.len());
-            push_ring(&hole, origin, u, v, &mut vertices, &mut flat_2d, normal)?;
+            push_ring(
+                &hole,
+                origin.clone(),
+                u.clone(),
+                v.clone(),
+                &mut vertices,
+                &mut flat_2d,
+                normal.clone(),
+            )?;
         }
 
         use crate::polygon::Polygon;
 
         let exact_points = flat_2d
             .chunks_exact(2)
-            .map(|xy| {
-                Ok(hypertri::Point2::new(
-                    hreal_from_f64(xy[0])
-                        .map_err(|err| JsValue::from_str(&format!("invalid x: {err:?}")))?,
-                    hreal_from_f64(xy[1])
-                        .map_err(|err| JsValue::from_str(&format!("invalid y: {err:?}")))?,
-                ))
-            })
+            .map(|xy| Ok(hypertri::Point2::new(xy[0].clone(), xy[1].clone())))
             .collect::<Result<Vec<_>, JsValue>>()?;
 
         let indices = hypertri::earcut(&exact_points, &holes)
@@ -156,11 +164,13 @@ impl MeshJs {
                 continue;
             }
 
-            let a = vertices[i0];
-            let b = vertices[i1];
-            let c = vertices[i2];
-            if hunit_cross_vector3(&(b.position - a.position), &(c.position - a.position))
-                .is_none()
+            let a = vertices[i0].clone();
+            let b = vertices[i1].clone();
+            let c = vertices[i2].clone();
+            if (b.position.clone() - a.position.clone())
+                .cross(&(c.position.clone() - a.position.clone()))
+                .normalize_checked()
+                .is_err()
             {
                 continue;
             }
@@ -216,12 +226,8 @@ impl MeshJs {
         let mut vertices = Vec::new();
         for poly in &self.inner.polygons {
             for vertex in &poly.vertices {
-                if !vertices.iter().any(|v: &Point3<f64>| {
-                    (v.x - vertex.position.x).abs() < 1e-8
-                        && (v.y - vertex.position.y).abs() < 1e-8
-                        && (v.z - vertex.position.z).abs() < 1e-8
-                }) {
-                    vertices.push(vertex.position);
+                if !vertices.iter().any(|v: &Point3| v == &vertex.position) {
+                    vertices.push(vertex.position.clone());
                 }
             }
         }
@@ -242,14 +248,14 @@ impl MeshJs {
         for p in &tri.polygons {
             for v in &p.vertices {
                 positions.extend_from_slice(&[
-                    v.position.x as f64,
-                    v.position.y as f64,
-                    v.position.z as f64,
+                    real_to_js(&v.position.x),
+                    real_to_js(&v.position.y),
+                    real_to_js(&v.position.z),
                 ]);
                 normals.extend_from_slice(&[
-                    v.normal.x as f64,
-                    v.normal.y as f64,
-                    v.normal.z as f64,
+                    real_to_js(&v.normal.0[0]),
+                    real_to_js(&v.normal.0[1]),
+                    real_to_js(&v.normal.0[2]),
                 ]);
             }
             indices.extend_from_slice(&[idx, idx + 1, idx + 2]);
@@ -302,12 +308,12 @@ impl MeshJs {
 
     #[wasm_bindgen(js_name = containsVertex)]
     pub fn contains_vertex(&self, p: &Point3Js) -> bool {
-        let point: Point3<Real> = p.into();
+        let point: Point3 = p.into();
         self.inner.contains_vertex(&point)
     }
 
     #[wasm_bindgen(js_name = containsVertexComponents)]
-    pub fn contains_vertex_components(&self, x: Real, y: Real, z: Real) -> bool {
+    pub fn contains_vertex_components(&self, x: f64, y: f64, z: f64) -> bool {
         let point = Point3Js::new(x, y, z);
         self.inner.contains_vertex(&point.inner)
     }
@@ -352,26 +358,36 @@ impl MeshJs {
     #[wasm_bindgen(js_name = transformComponents)]
     pub fn transform_components(
         &self,
-        m00: Real,
-        m01: Real,
-        m02: Real,
-        m03: Real,
-        m10: Real,
-        m11: Real,
-        m12: Real,
-        m13: Real,
-        m20: Real,
-        m21: Real,
-        m22: Real,
-        m23: Real,
-        m30: Real,
-        m31: Real,
-        m32: Real,
-        m33: Real,
+        m00: f64,
+        m01: f64,
+        m02: f64,
+        m03: f64,
+        m10: f64,
+        m11: f64,
+        m12: f64,
+        m13: f64,
+        m20: f64,
+        m21: f64,
+        m22: f64,
+        m23: f64,
+        m30: f64,
+        m31: f64,
+        m32: f64,
+        m33: f64,
     ) -> Self {
-        let Some(matrix) = finite_matrix4([
+        let raw = [
             m00, m01, m02, m03, m10, m11, m12, m13, m20, m21, m22, m23, m30, m31, m32, m33,
-        ]) else {
+        ];
+        let mut values: [Real; 16] = std::array::from_fn(|_| Real::zero());
+        for (slot, value) in values.iter_mut().zip(raw) {
+            let Some(value) = real_from_js(value) else {
+                return Self {
+                    inner: self.inner.clone(),
+                };
+            };
+            *slot = value;
+        }
+        let Some(matrix) = finite_matrix4(values) else {
             return Self {
                 inner: self.inner.clone(),
             };
@@ -383,43 +399,51 @@ impl MeshJs {
 
     #[wasm_bindgen(js_name = translate)]
     pub fn translate(&self, offset: &Vector3Js) -> Self {
-        let v: Vector3<Real> = offset.into();
+        let v: Vector3 = offset.into();
         Self {
-            inner: self.inner.translate(v.x, v.y, v.z),
+            inner: self
+                .inner
+                .translate(v.0[0].clone(), v.0[1].clone(), v.0[2].clone()),
         }
     }
 
     #[wasm_bindgen(js_name = translateComponents)]
-    pub fn translate_components(&self, dx: Real, dy: Real, dz: Real) -> Self {
+    pub fn translate_components(&self, dx: f64, dy: f64, dz: f64) -> Self {
         Self {
-            inner: self.inner.translate(dx, dy, dz),
+            inner: self.inner.translate(
+                real_from_js_or_zero(dx),
+                real_from_js_or_zero(dy),
+                real_from_js_or_zero(dz),
+            ),
         }
     }
 
     #[wasm_bindgen(js_name = rotate)]
-    pub fn rotate(&self, rx: Real, ry: Real, rz: Real) -> Self {
+    pub fn rotate(&self, rx: f64, ry: f64, rz: f64) -> Self {
         Self {
-            inner: self.inner.rotate(rx, ry, rz),
+            inner: self.inner.rotate(
+                real_from_js_or_zero(rx),
+                real_from_js_or_zero(ry),
+                real_from_js_or_zero(rz),
+            ),
         }
     }
 
     #[wasm_bindgen(js_name = rotateQuaternion)]
-    pub fn rotate_quaternion(&self, w: Real, x: Real, y: Real, z: Real) -> Self {
-        let Some(q) = hunit_quaternion(w, x, y, z) else {
-            return Self {
-                inner: self.inner.clone(),
-            };
-        };
-
+    pub fn rotate_quaternion(&self, _w: f64, _x: f64, _y: f64, _z: f64) -> Self {
         Self {
-            inner: self.inner.transform(&q.to_homogeneous()),
+            inner: self.inner.clone(),
         }
     }
 
     #[wasm_bindgen(js_name = scale)]
-    pub fn scale(&self, sx: Real, sy: Real, sz: Real) -> Self {
+    pub fn scale(&self, sx: f64, sy: f64, sz: f64) -> Self {
         Self {
-            inner: self.inner.scale(sx, sy, sz),
+            inner: self.inner.scale(
+                real_from_js_or_zero(sx),
+                real_from_js_or_zero(sy),
+                real_from_js_or_zero(sz),
+            ),
         }
     }
 
@@ -487,10 +511,10 @@ impl MeshJs {
     #[wasm_bindgen(js_name=sliceComponents)]
     pub fn slice_components(
         &self,
-        normal_x: Real,
-        normal_y: Real,
-        normal_z: Real,
-        offset: Real,
+        normal_x: f64,
+        normal_y: f64,
+        normal_z: f64,
+        offset: f64,
     ) -> SketchJs {
         let plane = PlaneJs::from_normal_components(normal_x, normal_y, normal_z, offset);
         let sketch = self.inner.slice(plane.inner);
@@ -524,8 +548,7 @@ impl MeshJs {
 
     #[wasm_bindgen(js_name = intersectPolyline)]
     pub fn intersect_polyline_js(&self, points: Vec<Point3Js>) -> Vec<Point3Js> {
-        let polyline: Vec<Point3<Real>> =
-            points.into_iter().map(|point| point.inner).collect();
+        let polyline: Vec<Point3> = points.into_iter().map(|point| point.inner).collect();
         self.inner
             .intersect_polyline(&polyline)
             .into_iter()
@@ -536,48 +559,55 @@ impl MeshJs {
     #[wasm_bindgen(js_name=laplacianSmooth)]
     pub fn laplacian_smooth(
         &self,
-        lambda: Real,
+        lambda: f64,
         iterations: usize,
         preserve_boundaries: bool,
     ) -> Self {
-        let smoothed = self
-            .inner
-            .laplacian_smooth(lambda, iterations, preserve_boundaries);
+        let smoothed = self.inner.laplacian_smooth(
+            real_from_js_or_zero(lambda),
+            iterations,
+            preserve_boundaries,
+        );
         Self { inner: smoothed }
     }
 
     #[wasm_bindgen(js_name=taubinSmooth)]
     pub fn taubin_smooth(
         &self,
-        lambda: Real,
-        mu: Real,
+        lambda: f64,
+        mu: f64,
         iterations: usize,
         preserve_boundaries: bool,
     ) -> Self {
-        let smoothed = self
-            .inner
-            .taubin_smooth(lambda, mu, iterations, preserve_boundaries);
+        let smoothed = self.inner.taubin_smooth(
+            real_from_js_or_zero(lambda),
+            real_from_js_or_zero(mu),
+            iterations,
+            preserve_boundaries,
+        );
         Self { inner: smoothed }
     }
 
     #[wasm_bindgen(js_name=adaptiveRefine)]
     pub fn adaptive_refine(
         &self,
-        quality_threshold: Real,
-        max_edge_length: Real,
-        curvature_threshold_deg: Real,
+        quality_threshold: f64,
+        max_edge_length: f64,
+        curvature_threshold_deg: f64,
     ) -> Self {
         let refined = self.inner.adaptive_refine(
-            quality_threshold,
-            max_edge_length,
-            curvature_threshold_deg,
+            real_from_js_or_zero(quality_threshold),
+            real_from_js_or_zero(max_edge_length),
+            real_from_js_or_zero(curvature_threshold_deg),
         );
         Self { inner: refined }
     }
 
     #[wasm_bindgen(js_name=removePoorTriangles)]
-    pub fn remove_poor_triangles(&self, min_quality: Real) -> Self {
-        let cleaned = self.inner.remove_poor_triangles(min_quality);
+    pub fn remove_poor_triangles(&self, min_quality: f64) -> Self {
+        let cleaned = self
+            .inner
+            .remove_poor_triangles(real_from_js_or_zero(min_quality));
         Self { inner: cleaned }
     }
 
@@ -587,11 +617,13 @@ impl MeshJs {
         &self,
         count: usize,
         direction: &Vector3Js,
-        spacing: Real,
+        spacing: f64,
     ) -> Self {
-        let dir: Vector3<Real> = direction.into();
+        let dir: Vector3 = direction.into();
         Self {
-            inner: self.inner.distribute_linear(count, dir, spacing),
+            inner: self
+                .inner
+                .distribute_linear(count, dir, real_from_js_or_zero(spacing)),
         }
     }
 
@@ -599,14 +631,18 @@ impl MeshJs {
     pub fn distribute_linear_components(
         &self,
         count: usize,
-        dx: Real,
-        dy: Real,
-        dz: Real,
-        spacing: Real,
+        dx: f64,
+        dy: f64,
+        dz: f64,
+        spacing: f64,
     ) -> Self {
         let direction = Vector3Js::new(dx, dy, dz);
         Self {
-            inner: self.inner.distribute_linear(count, direction.inner, spacing),
+            inner: self.inner.distribute_linear(
+                count,
+                direction.inner,
+                real_from_js_or_zero(spacing),
+            ),
         }
     }
 
@@ -614,14 +650,17 @@ impl MeshJs {
     pub fn distribute_arc(
         &self,
         count: usize,
-        radius: Real,
-        start_angle: Real,
-        end_angle: Real,
+        radius: f64,
+        start_angle: f64,
+        end_angle: f64,
     ) -> Self {
         Self {
-            inner: self
-                .inner
-                .distribute_arc(count, radius, start_angle, end_angle),
+            inner: self.inner.distribute_arc(
+                count,
+                real_from_js_or_zero(radius),
+                real_from_js_or_zero(start_angle),
+                real_from_js_or_zero(end_angle),
+            ),
         }
     }
 
@@ -630,13 +669,16 @@ impl MeshJs {
         &self,
         rows: usize,
         cols: usize,
-        row_spacing: Real,
-        col_spacing: Real,
+        row_spacing: f64,
+        col_spacing: f64,
     ) -> Self {
         Self {
-            inner: self
-                .inner
-                .distribute_grid(rows, cols, row_spacing, col_spacing),
+            inner: self.inner.distribute_grid(
+                rows,
+                cols,
+                real_from_js_or_zero(row_spacing),
+                real_from_js_or_zero(col_spacing),
+            ),
         }
     }
 
@@ -686,8 +728,15 @@ impl MeshJs {
         g: f64,
         b: f64,
     ) -> String {
-        self.inner
-            .to_amf_with_color(object_name, units, (r as Real, g as Real, b as Real))
+        self.inner.to_amf_with_color(
+            object_name,
+            units,
+            (
+                real_from_js_or_zero(r),
+                real_from_js_or_zero(g),
+                real_from_js_or_zero(b),
+            ),
+        )
     }
 
     #[wasm_bindgen(js_name = toGLTF)]
@@ -716,15 +765,17 @@ impl MeshJs {
 
     // Mass Properties
     #[wasm_bindgen(js_name = massProperties)]
-    pub fn mass_properties(&self, density: Real) -> JsValue {
-        let Ok((mass, com, _frame)) = self.inner.mass_properties(density) else {
+    pub fn mass_properties(&self, density: f64) -> JsValue {
+        let Ok((mass, com, _frame)) =
+            self.inner.mass_properties(real_from_js_or_zero(density))
+        else {
             return JsValue::NULL;
         };
         let obj = Object::new();
 
         let com_js = Point3Js::from(com);
 
-        Reflect::set(&obj, &"mass".into(), &mass.into()).unwrap();
+        Reflect::set(&obj, &"mass".into(), &real_to_js(&mass).into()).unwrap();
         Reflect::set(&obj, &"centerOfMass".into(), &JsValue::from(com_js)).unwrap();
         obj.into()
     }
@@ -759,39 +810,49 @@ impl MeshJs {
 
     // 3D Shapes
     #[wasm_bindgen(js_name = cube)]
-    pub fn cube(size: Real, metadata: JsValue) -> Self {
+    pub fn cube(size: f64, metadata: JsValue) -> Self {
         let meta = js_metadata_to_string(metadata).unwrap_or(None);
         Self {
-            inner: Mesh::cube(size, meta),
+            inner: Mesh::cube(real_from_js_or_zero(size), meta),
         }
     }
 
     #[wasm_bindgen(js_name = sphere)]
     pub fn sphere(
-        radius: Real,
+        radius: f64,
         segments_u: usize,
         segments_v: usize,
         metadata: JsValue,
     ) -> Self {
         let meta = js_metadata_to_string(metadata).unwrap_or(None);
         Self {
-            inner: Mesh::sphere(radius, segments_u, segments_v, meta),
+            inner: Mesh::sphere(real_from_js_or_zero(radius), segments_u, segments_v, meta),
         }
     }
 
     #[wasm_bindgen(js_name = cylinder)]
-    pub fn cylinder(radius: Real, height: Real, segments: usize, metadata: JsValue) -> Self {
+    pub fn cylinder(radius: f64, height: f64, segments: usize, metadata: JsValue) -> Self {
         let meta = js_metadata_to_string(metadata).unwrap_or(None);
         Self {
-            inner: Mesh::cylinder(radius, height, segments, meta),
+            inner: Mesh::cylinder(
+                real_from_js_or_zero(radius),
+                real_from_js_or_zero(height),
+                segments,
+                meta,
+            ),
         }
     }
 
     #[wasm_bindgen(js_name = cuboid)]
-    pub fn cuboid(width: Real, length: Real, height: Real, metadata: JsValue) -> Self {
+    pub fn cuboid(width: f64, length: f64, height: f64, metadata: JsValue) -> Self {
         let meta = js_metadata_to_string(metadata).unwrap_or(None);
         Self {
-            inner: Mesh::cuboid(width, length, height, meta),
+            inner: Mesh::cuboid(
+                real_from_js_or_zero(width),
+                real_from_js_or_zero(length),
+                real_from_js_or_zero(height),
+                meta,
+            ),
         }
     }
 
@@ -799,51 +860,71 @@ impl MeshJs {
     pub fn frustum_ptp(
         start: &Point3Js,
         end: &Point3Js,
-        radius1: Real,
-        radius2: Real,
+        radius1: f64,
+        radius2: f64,
         segments: usize,
         metadata: JsValue,
     ) -> Self {
-        let start: Point3<Real> = start.into();
-        let end: Point3<Real> = end.into();
+        let start: Point3 = start.into();
+        let end: Point3 = end.into();
         let meta = js_metadata_to_string(metadata).unwrap_or(None);
         Self {
-            inner: Mesh::frustum_ptp(start, end, radius1, radius2, segments, meta),
+            inner: Mesh::frustum_ptp(
+                start,
+                end,
+                real_from_js_or_zero(radius1),
+                real_from_js_or_zero(radius2),
+                segments,
+                meta,
+            ),
         }
     }
 
     #[wasm_bindgen(js_name = frustum_ptpComponents)]
     pub fn frustum_ptp_components(
-        start_x: Real,
-        start_y: Real,
-        start_z: Real,
-        end_x: Real,
-        end_y: Real,
-        end_z: Real,
-        radius1: Real,
-        radius2: Real,
+        start_x: f64,
+        start_y: f64,
+        start_z: f64,
+        end_x: f64,
+        end_y: f64,
+        end_z: f64,
+        radius1: f64,
+        radius2: f64,
         segments: usize,
         metadata: JsValue,
     ) -> Self {
-        let start: Point3<Real> = wasm_point3_boundary(start_x, start_y, start_z);
-        let end: Point3<Real> = wasm_point3_boundary(end_x, end_y, end_z);
+        let start: Point3 = wasm_point3_boundary(start_x, start_y, start_z);
+        let end: Point3 = wasm_point3_boundary(end_x, end_y, end_z);
         let meta = js_metadata_to_string(metadata).unwrap_or(None);
         Self {
-            inner: Mesh::frustum_ptp(start, end, radius1, radius2, segments, meta),
+            inner: Mesh::frustum_ptp(
+                start,
+                end,
+                real_from_js_or_zero(radius1),
+                real_from_js_or_zero(radius2),
+                segments,
+                meta,
+            ),
         }
     }
 
     #[wasm_bindgen(js_name = frustum)]
     pub fn frustum(
-        radius1: Real,
-        radius2: Real,
-        height: Real,
+        radius1: f64,
+        radius2: f64,
+        height: f64,
         segments: usize,
         metadata: JsValue,
     ) -> Self {
         let meta = js_metadata_to_string(metadata).unwrap_or(None);
         Self {
-            inner: Mesh::frustum(radius1, radius2, height, segments, meta),
+            inner: Mesh::frustum(
+                real_from_js_or_zero(radius1),
+                real_from_js_or_zero(radius2),
+                real_from_js_or_zero(height),
+                segments,
+                meta,
+            ),
         }
     }
 
@@ -862,14 +943,15 @@ impl MeshJs {
             .into_iter()
             .enumerate()
             .map(|(index, [x, y, z])| {
-                let point = Point3::new(x as Real, y as Real, z as Real);
-                hvector3_from_point3(&point)
-                    .ok_or_else(|| {
-                        JsValue::from_str(&format!(
+                let point = match (real_from_js(x), real_from_js(y), real_from_js(z)) {
+                    (Some(x), Some(y), Some(z)) => [x, y, z],
+                    _ => {
+                        return Err(JsValue::from_str(&format!(
                             "Polyhedron point {index} contains non-finite coordinates"
-                        ))
-                    })
-                    .map(|_| [point.x, point.y, point.z])
+                        )));
+                    },
+                };
+                Ok(point)
             })
             .collect::<Result<_, _>>()?;
 
@@ -885,58 +967,83 @@ impl MeshJs {
 
     #[wasm_bindgen(js_name = egg)]
     pub fn egg(
-        width: Real,
-        length: Real,
+        width: f64,
+        length: f64,
         revolve_segments: usize,
         outline_segments: usize,
         metadata: JsValue,
     ) -> Self {
         let meta = js_metadata_to_string(metadata).unwrap_or(None);
         Self {
-            inner: Mesh::egg(width, length, revolve_segments, outline_segments, meta),
+            inner: Mesh::egg(
+                real_from_js_or_zero(width),
+                real_from_js_or_zero(length),
+                revolve_segments,
+                outline_segments,
+                meta,
+            ),
         }
     }
 
     #[wasm_bindgen(js_name = teardrop)]
     pub fn teardrop(
-        width: Real,
-        length: Real,
+        width: f64,
+        length: f64,
         revolve_segments: usize,
         shape_segments: usize,
         metadata: JsValue,
     ) -> Self {
         let meta = js_metadata_to_string(metadata).unwrap_or(None);
         Self {
-            inner: Mesh::teardrop(width, length, revolve_segments, shape_segments, meta),
+            inner: Mesh::teardrop(
+                real_from_js_or_zero(width),
+                real_from_js_or_zero(length),
+                revolve_segments,
+                shape_segments,
+                meta,
+            ),
         }
     }
 
     #[wasm_bindgen(js_name = teardropCylinder)]
     pub fn teardrop_cylinder(
-        width: Real,
-        length: Real,
-        height: Real,
+        width: f64,
+        length: f64,
+        height: f64,
         shape_segments: usize,
         metadata: JsValue,
     ) -> Self {
         let meta = js_metadata_to_string(metadata).unwrap_or(None);
         Self {
-            inner: Mesh::teardrop_cylinder(width, length, height, shape_segments, meta),
+            inner: Mesh::teardrop_cylinder(
+                real_from_js_or_zero(width),
+                real_from_js_or_zero(length),
+                real_from_js_or_zero(height),
+                shape_segments,
+                meta,
+            ),
         }
     }
 
     #[wasm_bindgen(js_name = ellipsoid)]
     pub fn ellipsoid(
-        rx: Real,
-        ry: Real,
-        rz: Real,
+        rx: f64,
+        ry: f64,
+        rz: f64,
         segments: usize,
         stacks: usize,
         metadata: JsValue,
     ) -> Self {
         let meta = js_metadata_to_string(metadata).unwrap_or(None);
         Self {
-            inner: Mesh::ellipsoid(rx, ry, rz, segments, stacks, meta),
+            inner: Mesh::ellipsoid(
+                real_from_js_or_zero(rx),
+                real_from_js_or_zero(ry),
+                real_from_js_or_zero(rz),
+                segments,
+                stacks,
+                meta,
+            ),
         }
     }
 
@@ -948,8 +1055,8 @@ impl MeshJs {
         orientation: bool,
         metadata: JsValue,
     ) -> Self {
-        let start: Point3<Real> = start.into();
-        let dir: Vector3<Real> = direction.into();
+        let start: Point3 = start.into();
+        let dir: Vector3 = direction.into();
         let meta = js_metadata_to_string(metadata).unwrap_or(None);
         Self {
             inner: Mesh::arrow(start, dir, segments, orientation, meta),
@@ -957,56 +1064,62 @@ impl MeshJs {
     }
 
     #[wasm_bindgen(js_name = octahedron)]
-    pub fn octahedron(radius: Real, metadata: JsValue) -> Self {
+    pub fn octahedron(radius: f64, metadata: JsValue) -> Self {
         let meta = js_metadata_to_string(metadata).unwrap_or(None);
         Self {
-            inner: Mesh::octahedron(radius, meta),
+            inner: Mesh::octahedron(real_from_js_or_zero(radius), meta),
         }
     }
 
     #[wasm_bindgen(js_name = icosahedron)]
-    pub fn icosahedron(radius: Real, metadata: JsValue) -> Self {
+    pub fn icosahedron(radius: f64, metadata: JsValue) -> Self {
         let meta = js_metadata_to_string(metadata).unwrap_or(None);
         Self {
-            inner: Mesh::icosahedron(radius, meta),
+            inner: Mesh::icosahedron(real_from_js_or_zero(radius), meta),
         }
     }
 
     #[wasm_bindgen(js_name = torus)]
     pub fn torus(
-        major_r: Real,
-        minor_r: Real,
+        major_r: f64,
+        minor_r: f64,
         segments_major: usize,
         segments_minor: usize,
         metadata: JsValue,
     ) -> Self {
         let meta = js_metadata_to_string(metadata).unwrap_or(None);
         Self {
-            inner: Mesh::torus(major_r, minor_r, segments_major, segments_minor, meta),
+            inner: Mesh::torus(
+                real_from_js_or_zero(major_r),
+                real_from_js_or_zero(minor_r),
+                segments_major,
+                segments_minor,
+                meta,
+            ),
         }
     }
 
     #[wasm_bindgen(js_name = spurGearInvolute)]
     pub fn spur_gear_involute(
-        module_: Real,
+        module_: f64,
         teeth: usize,
-        pressure_angle_deg: Real,
-        clearance: Real,
-        backlash: Real,
+        pressure_angle_deg: f64,
+        clearance: f64,
+        backlash: f64,
         segments_per_flank: usize,
-        thickness: Real,
+        thickness: f64,
         metadata: JsValue,
     ) -> Self {
         let meta = js_metadata_to_string(metadata).unwrap_or(None);
         Self {
             inner: Mesh::spur_gear_involute(
-                module_,
+                real_from_js_or_zero(module_),
                 teeth,
-                pressure_angle_deg,
-                clearance,
-                backlash,
+                real_from_js_or_zero(pressure_angle_deg),
+                real_from_js_or_zero(clearance),
+                real_from_js_or_zero(backlash),
                 segments_per_flank,
-                thickness,
+                real_from_js_or_zero(thickness),
                 meta,
             ),
         }
@@ -1016,14 +1129,17 @@ impl MeshJs {
     pub fn gyroid(
         &self,
         resolution: u32,
-        scale: Real,
-        iso_value: Real,
+        scale: f64,
+        iso_value: f64,
         metadata: JsValue,
     ) -> Self {
         let meta = js_metadata_to_string(metadata).unwrap_or(None);
-        let gyroid_mesh =
-            self.inner
-                .gyroid(resolution.try_into().unwrap(), scale, iso_value, meta);
+        let gyroid_mesh = self.inner.gyroid(
+            resolution.try_into().unwrap(),
+            real_from_js_or_zero(scale),
+            real_from_js_or_zero(iso_value),
+            meta,
+        );
         Self { inner: gyroid_mesh }
     }
 
@@ -1031,14 +1147,17 @@ impl MeshJs {
     pub fn schwarz_p(
         &self,
         resolution: u32,
-        scale: Real,
-        iso_value: Real,
+        scale: f64,
+        iso_value: f64,
         metadata: JsValue,
     ) -> Self {
         let meta = js_metadata_to_string(metadata).unwrap_or(None);
-        let schwarzp_mesh =
-            self.inner
-                .schwarz_p(resolution.try_into().unwrap(), scale, iso_value, meta);
+        let schwarzp_mesh = self.inner.schwarz_p(
+            resolution.try_into().unwrap(),
+            real_from_js_or_zero(scale),
+            real_from_js_or_zero(iso_value),
+            meta,
+        );
         Self {
             inner: schwarzp_mesh,
         }
@@ -1048,21 +1167,24 @@ impl MeshJs {
     pub fn schwarz_d(
         &self,
         resolution: u32,
-        scale: Real,
-        iso_value: Real,
+        scale: f64,
+        iso_value: f64,
         metadata: JsValue,
     ) -> Self {
         let meta = js_metadata_to_string(metadata).unwrap_or(None);
-        let schwarzd_mesh =
-            self.inner
-                .schwarz_d(resolution.try_into().unwrap(), scale, iso_value, meta);
+        let schwarzd_mesh = self.inner.schwarz_d(
+            resolution.try_into().unwrap(),
+            real_from_js_or_zero(scale),
+            real_from_js_or_zero(iso_value),
+            meta,
+        );
         Self {
             inner: schwarzd_mesh,
         }
     }
 
     // #[wasm_bindgen(js_name=metaballs)]
-    // pub fn metaballs(balls: JsValue, resolution_x: u32, resolution_y: u32, resolution_z: u32, iso_value: Real, padding: Real) -> Self {
+    // pub fn metaballs(balls: JsValue, resolution_x: u32, resolution_y: u32, resolution_z: u32, iso_value: f64, padding: f64) -> Self {
     // Parse the list of MetaBallJs objects or raw data.
     // let balls_vec: Vec<MetaBallJs> = from_value(balls).unwrap_or_else(|_| vec![]);
     // let meta_balls: Vec<MetaBall> = balls_vec.into_iter().map(|b| b.inner).collect();
@@ -1076,12 +1198,16 @@ impl MeshJs {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::float_types::tolerance;
+    use crate::wasm::tolerance;
+
+    fn r(value: f64) -> Real {
+        real_from_js(value).expect("finite wasm test scalar")
+    }
 
     #[test]
     fn mesh_js_transform_components_rejects_nonfinite_matrix() {
         let mesh = MeshJs {
-            inner: Mesh::cube(1.0, None),
+            inner: Mesh::cube(Real::one(), None),
         };
         let original = mesh.inner.bounding_box();
 
@@ -1091,7 +1217,7 @@ mod tests {
             0.0,
             0.0,
             0.0,
-            Real::NAN,
+            f64::NAN,
             0.0,
             0.0,
             0.0,
@@ -1110,16 +1236,16 @@ mod tests {
     #[test]
     fn mesh_js_component_vectors_reuse_hyper_boundary_wrappers() {
         let mesh = MeshJs {
-            inner: Mesh::cube(1.0, None),
+            inner: Mesh::cube(Real::one(), None),
         };
         let original = mesh.inner.bounding_box();
 
-        assert!(!mesh.contains_vertex_components(Real::NAN, 0.0, 0.0));
+        assert!(!mesh.contains_vertex_components(f64::NAN, 0.0, 0.0));
         let distributed =
-            mesh.distribute_linear_components(4, Real::NAN, Real::INFINITY, 0.0, 1.0);
+            mesh.distribute_linear_components(4, f64::NAN, f64::INFINITY, 0.0, 1.0);
         assert_eq!(distributed.inner.bounding_box(), original);
 
-        let sliced = mesh.slice_components(Real::NAN, Real::INFINITY, 0.0, Real::NAN);
+        let sliced = mesh.slice_components(f64::NAN, f64::INFINITY, 0.0, f64::NAN);
         let bbox = sliced.inner.bounding_box();
         assert!(bbox.mins.x.is_finite());
         assert!(bbox.maxs.x.is_finite());
@@ -1127,33 +1253,23 @@ mod tests {
 
     #[test]
     fn mesh_js_frustum_ptp_components_reuse_hyperreal_point_boundary() {
-        let start = wasm_point3_boundary(Real::NAN, 0.0, Real::INFINITY);
+        let start = wasm_point3_boundary(f64::NAN, 0.0, f64::INFINITY);
         let end = wasm_point3_boundary(0.0, 0.0, 1.0);
-        let mesh = Mesh::<()>::frustum_ptp(start, end, 0.25, 0.5, 8, ());
+        let mesh = Mesh::<()>::frustum_ptp(start, end, r(0.25), r(0.5), 8, ());
         for vertex in mesh.vertices() {
             assert!(vertex.position.x.is_finite());
             assert!(vertex.position.y.is_finite());
             assert!(vertex.position.z.is_finite());
         }
-
-        let hostile_mesh = Mesh::<()>::frustum_ptp(
-            Point3::new(Real::NAN, 0.0, Real::INFINITY),
-            Point3::new(0.0, 0.0, 1.0),
-            0.25,
-            0.5,
-            8,
-            (),
-        );
-        assert!(hostile_mesh.polygons.is_empty());
     }
 
     #[test]
     #[cfg(target_arch = "wasm32")]
     fn mesh_js_frustum_ptp_components_exported_path_reuses_hyperreal_point_boundary() {
         let mesh = MeshJs::frustum_ptp_components(
-            Real::NAN,
+            f64::NAN,
             0.0,
-            Real::INFINITY,
+            f64::INFINITY,
             0.0,
             0.0,
             1.0,
@@ -1172,27 +1288,27 @@ mod tests {
     #[test]
     fn mesh_js_from_points_projection_uses_hyperlattice_normal_checks() {
         let points = [
-            Point3::new(0.0, 0.0, 0.0),
-            Point3::new(tolerance() * 0.25, 0.0, 0.0),
-            Point3::new(tolerance() * 0.5, 0.0, 0.0),
-            Point3::new(0.0, 1.0, 0.0),
+            point3_from_js_or_origin(0.0, 0.0, 0.0),
+            Point3::new(tolerance() * 0.25, Real::zero(), Real::zero()),
+            Point3::new(tolerance() * 0.5, Real::zero(), Real::zero()),
+            point3_from_js_or_origin(0.0, 1.0, 0.0),
         ];
 
         let normal = wasm_projected_polygon_normal(&points).unwrap();
-        assert!(normal.iter().all(|value| value.is_finite()));
-        assert!(hvector3_dot(&normal, &Vector3::z()).unwrap() > 1.0 - tolerance());
+        assert!(normal.0.iter().all(|value| value.is_finite()));
+        assert!(normal.dot(&Vector3::z()) > 1.0 - tolerance());
 
         let degenerate = [
-            Point3::new(0.0, 0.0, 0.0),
-            Point3::new(tolerance() * 0.25, 0.0, 0.0),
-            Point3::new(tolerance() * 0.5, 0.0, 0.0),
+            point3_from_js_or_origin(0.0, 0.0, 0.0),
+            Point3::new(tolerance() * 0.25, Real::zero(), Real::zero()),
+            Point3::new(tolerance() * 0.5, Real::zero(), Real::zero()),
         ];
         assert!(wasm_projected_polygon_normal(&degenerate).is_none());
 
         let hostile = [
-            Point3::new(0.0, 0.0, 0.0),
-            Point3::new(Real::NAN, 0.0, 0.0),
-            Point3::new(0.0, 1.0, 0.0),
+            point3_from_js_or_origin(0.0, 0.0, 0.0),
+            point3_from_js_or_origin(f64::NAN, 0.0, 0.0),
+            point3_from_js_or_origin(0.0, 1.0, 0.0),
         ];
         assert!(wasm_projected_polygon_normal(&hostile).is_none());
     }

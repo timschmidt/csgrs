@@ -1,7 +1,6 @@
 /// Traits for shapes which can be represented by triangles.
-use crate::float_types::{Real, hpoints_exactly_equal, hvectors_exactly_equal};
 use crate::vertex::Vertex;
-use nalgebra::{Point3, Vector3};
+use hyperlattice::{Point3, Vector3};
 
 /// A triangulated 3D surface.
 ///
@@ -29,9 +28,9 @@ pub trait Triangulated3D {
 #[derive(Clone, Debug, PartialEq)]
 pub struct IndexedTriangleMesh3D {
     /// Position rows.
-    pub positions: Vec<Point3<Real>>,
+    pub positions: Vec<Point3>,
     /// Normal rows.
-    pub normals: Vec<Vector3<Real>>,
+    pub normals: Vec<Vector3>,
     /// Triangle rows as `(position_index, normal_index)` tuples.
     pub faces: Vec<[(usize, usize); 3]>,
 }
@@ -40,8 +39,8 @@ pub struct IndexedTriangleMesh3D {
 pub trait IndexedTriangulated3D: Triangulated3D {
     /// Build indexed triangle buffers.
     fn indexed_triangles(&self) -> IndexedTriangleMesh3D {
-        let mut positions = Vec::<Point3<Real>>::new();
-        let mut normals = Vec::<Vector3<Real>>::new();
+        let mut positions = Vec::<Point3>::new();
+        let mut normals = Vec::<Vector3>::new();
         let mut faces = Vec::<[(usize, usize); 3]>::new();
 
         self.visit_triangles(|tri| {
@@ -62,9 +61,22 @@ pub trait IndexedTriangulated3D: Triangulated3D {
     }
 }
 
-fn add_unique_position(positions: &mut Vec<Point3<Real>>, position: Point3<Real>) -> usize {
+fn add_unique_position(positions: &mut Vec<Point3>, position: Point3) -> usize {
     for (index, existing) in positions.iter().enumerate() {
-        if hpoints_exactly_equal(existing, &position) {
+        let existing_point = hyperlimit::Point3::new(
+            existing.x.clone(),
+            existing.y.clone(),
+            existing.z.clone(),
+        );
+        let position_point = hyperlimit::Point3::new(
+            position.x.clone(),
+            position.y.clone(),
+            position.z.clone(),
+        );
+        if matches!(
+            hyperlimit::point3_equal(&existing_point, &position_point).value(),
+            Some(true)
+        ) {
             return index;
         }
     }
@@ -72,9 +84,22 @@ fn add_unique_position(positions: &mut Vec<Point3<Real>>, position: Point3<Real>
     positions.len() - 1
 }
 
-fn add_unique_normal(normals: &mut Vec<Vector3<Real>>, normal: Vector3<Real>) -> usize {
+fn add_unique_normal(normals: &mut Vec<Vector3>, normal: Vector3) -> usize {
     for (index, existing) in normals.iter().enumerate() {
-        if hvectors_exactly_equal(existing, &normal) {
+        let existing_normal = hyperlimit::Point3::new(
+            existing.0[0].clone(),
+            existing.0[1].clone(),
+            existing.0[2].clone(),
+        );
+        let normal_point = hyperlimit::Point3::new(
+            normal.0[0].clone(),
+            normal.0[1].clone(),
+            normal.0[2].clone(),
+        );
+        if matches!(
+            hyperlimit::point3_equal(&existing_normal, &normal_point).value(),
+            Some(true)
+        ) {
             return index;
         }
     }
@@ -85,6 +110,7 @@ fn add_unique_normal(normals: &mut Vec<Vector3<Real>>, normal: Vector3<Real>) ->
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::hyper_math::{Real, hreal_from_f64};
 
     #[derive(Clone)]
     struct TriangleSoup(Vec<[Vertex; 3]>);
@@ -95,23 +121,34 @@ mod tests {
             F: FnMut([Vertex; 3]),
         {
             for triangle in &self.0 {
-                f(*triangle);
+                f(triangle.clone());
             }
         }
     }
 
     impl IndexedTriangulated3D for TriangleSoup {}
 
+    fn r(value: f64) -> Real {
+        hreal_from_f64(value).expect("test values must be finite")
+    }
+
+    fn p3(x: f64, y: f64, z: f64) -> Point3 {
+        Point3::new(r(x), r(y), r(z))
+    }
+
     #[test]
     fn indexed_triangles_deduplicate_only_exact_hyperreal_rows() {
         let normal = Vector3::z();
-        let origin = Vertex::new(Point3::origin(), normal);
-        let exact_repeat = Vertex::new(Point3::origin(), normal);
-        let near = Vertex::new(Point3::new(1.0e-12, 0.0, 0.0), normal);
-        let top = Vertex::new(Point3::new(0.0, 1.0, 0.0), normal);
+        let origin = Vertex::new(Point3::origin(), normal.clone());
+        let exact_repeat = Vertex::new(Point3::origin(), normal.clone());
+        let near = Vertex::new(p3(1.0e-12, 0.0, 0.0), normal.clone());
+        let top = Vertex::new(p3(0.0, 1.0, 0.0), normal);
 
-        let indexed = TriangleSoup(vec![[origin, exact_repeat, near], [origin, near, top]])
-            .indexed_triangles();
+        let indexed = TriangleSoup(vec![
+            [origin.clone(), exact_repeat, near.clone()],
+            [origin, near, top],
+        ])
+        .indexed_triangles();
 
         assert_eq!(indexed.positions.len(), 3);
         assert_eq!(indexed.faces[0][0].0, indexed.faces[0][1].0);

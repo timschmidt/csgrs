@@ -1,12 +1,20 @@
 //! JavaScript wrapper for 4x4 transform matrices.
 
-use crate::{float_types::Real, wasm::finite_matrix4};
-use nalgebra::Matrix4;
+use crate::wasm::{finite_matrix4, real_from_js, real_to_js};
+use hyperlattice::{Matrix4, Real};
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
 pub struct Matrix4Js {
-    pub(crate) inner: Matrix4<f64>,
+    pub(crate) inner: Matrix4,
+}
+
+fn matrix_from_js_values(values: [f64; 16]) -> Option<Matrix4> {
+    let mut promoted: [Real; 16] = std::array::from_fn(|_| Real::zero());
+    for (slot, value) in promoted.iter_mut().zip(values) {
+        *slot = real_from_js(value)?;
+    }
+    finite_matrix4(promoted)
 }
 
 #[wasm_bindgen]
@@ -30,23 +38,8 @@ impl Matrix4Js {
         m43: f64,
         m44: f64,
     ) -> Matrix4Js {
-        let matrix = finite_matrix4([
-            m11 as Real,
-            m12 as Real,
-            m13 as Real,
-            m20 as Real,
-            m21 as Real,
-            m22 as Real,
-            m23 as Real,
-            m30 as Real,
-            m31 as Real,
-            m32 as Real,
-            m33 as Real,
-            m34 as Real,
-            m41 as Real,
-            m42 as Real,
-            m43 as Real,
-            m44 as Real,
+        let matrix = matrix_from_js_values([
+            m11, m12, m13, m20, m21, m22, m23, m30, m31, m32, m33, m34, m41, m42, m43, m44,
         ])
         .unwrap_or_else(Matrix4::identity);
         Matrix4Js { inner: matrix }
@@ -54,61 +47,24 @@ impl Matrix4Js {
 
     #[wasm_bindgen(js_name = toArray)]
     pub fn to_array(&self) -> Vec<f64> {
-        vec![
-            self.inner.m11 as f64,
-            self.inner.m12 as f64,
-            self.inner.m13 as f64,
-            self.inner.m14 as f64,
-            self.inner.m21 as f64,
-            self.inner.m22 as f64,
-            self.inner.m23 as f64,
-            self.inner.m24 as f64,
-            self.inner.m31 as f64,
-            self.inner.m32 as f64,
-            self.inner.m33 as f64,
-            self.inner.m34 as f64,
-            self.inner.m41 as f64,
-            self.inner.m42 as f64,
-            self.inner.m43 as f64,
-            self.inner.m44 as f64,
-        ]
+        self.inner
+            .0
+            .iter()
+            .flat_map(|row| row.iter().map(real_to_js))
+            .collect()
     }
 }
 
 // Rust-only conversions
-impl From<Matrix4<Real>> for Matrix4Js {
-    fn from(v: Matrix4<Real>) -> Self {
-        let values = [
-            v.m11, v.m12, v.m13, v.m14, v.m21, v.m22, v.m23, v.m24, v.m31, v.m32, v.m33,
-            v.m34, v.m41, v.m42, v.m43, v.m44,
-        ];
-        Matrix4Js {
-            inner: finite_matrix4(values).unwrap_or_else(Matrix4::identity),
-        }
+impl From<Matrix4> for Matrix4Js {
+    fn from(v: Matrix4) -> Self {
+        Matrix4Js { inner: v }
     }
 }
 
-impl From<&Matrix4Js> for Matrix4<Real> {
+impl From<&Matrix4Js> for Matrix4 {
     fn from(v: &Matrix4Js) -> Self {
-        finite_matrix4([
-            v.inner.m11,
-            v.inner.m12,
-            v.inner.m13,
-            v.inner.m14,
-            v.inner.m21,
-            v.inner.m22,
-            v.inner.m23,
-            v.inner.m24,
-            v.inner.m31,
-            v.inner.m32,
-            v.inner.m33,
-            v.inner.m34,
-            v.inner.m41,
-            v.inner.m42,
-            v.inner.m43,
-            v.inner.m44,
-        ])
-        .unwrap_or_else(Matrix4::identity)
+        v.inner.clone()
     }
 }
 
@@ -123,7 +79,7 @@ mod tests {
             0.0,
             0.0,
             0.0,
-            Real::NAN,
+            f64::NAN,
             1.0,
             0.0,
             0.0,
@@ -141,29 +97,12 @@ mod tests {
     }
 
     #[test]
-    fn matrix_js_conversion_rejects_corrupted_nonfinite_inner_matrix() {
+    fn matrix_js_conversion_preserves_hyperlattice_matrix() {
         let matrix = Matrix4Js {
-            inner: Matrix4::new(
-                1.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                Real::INFINITY,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                1.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                1.0,
-            ),
+            inner: Matrix4::identity(),
         };
 
-        let converted = Matrix4::<Real>::from(&matrix);
+        let converted = Matrix4::from(&matrix);
         assert_eq!(converted, Matrix4::identity());
     }
 }

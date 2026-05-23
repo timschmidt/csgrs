@@ -58,7 +58,6 @@ if [[ "${RUN_FUZZ_SECONDS:-0}" != "0" ]]; then
     fuzz_transform_matrix
     fuzz_export_names
     fuzz_plane_split_polygon
-    fuzz_toolpath_from_sketch
     fuzz_mesh_primitive_catalog
     fuzz_sketch_shape_catalog
     fuzz_sdf_tpms

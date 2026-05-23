@@ -2,9 +2,17 @@
 
 #![no_main]
 
-use csgrs::float_types::{Real, tolerance};
 use csgrs::sketch::Profile;
+use hyperlattice::Real;
 use libfuzzer_sys::fuzz_target;
+
+fn real(value: f64) -> Real {
+    Real::try_from(value).expect("fuzz decoder clamps to finite values")
+}
+
+fn tolerance() -> Real {
+    real(1.0e-9)
+}
 
 fn decode_real(bytes: &[u8], idx: &mut usize) -> Real {
     let mut raw = [0u8; 8];
@@ -13,7 +21,7 @@ fn decode_real(bytes: &[u8], idx: &mut usize) -> Real {
         *idx += 1;
     }
     let value = i64::from_le_bytes(raw) as f64 / 1.0e12;
-    value.clamp(-1.0e3, 1.0e3) as Real
+    real(value.clamp(-1.0e3, 1.0e3))
 }
 
 fn assert_sketch_finite<M: Clone + Send + Sync + std::fmt::Debug>(sketch: &Profile<M>) {
@@ -54,7 +62,7 @@ fuzz_target!(|bytes: &[u8]| {
         4 => Profile::ellipse(a, b, segments, None),
         5 => Profile::regular_ngon(segments, a, None),
         6 => Profile::arrow(a, b, c, positive_b, None),
-        7 => Profile::trapezoid(a, b, c, 0.25, None),
+        7 => Profile::trapezoid(a, b, c, real(0.25), None),
         8 => Profile::star(segments, a, b, None),
         9 => Profile::rounded_rectangle(a, b, c, segments, None),
         10 => Profile::squircle(a, b, segments, None),
@@ -64,10 +72,18 @@ fuzz_target!(|bytes: &[u8]| {
         14 => Profile::pie_slice(a, b, c, segments, None),
         15 => Profile::heart(a, b, segments, None),
         16 => Profile::crescent(positive_a, positive_b, c, segments, None),
-        17 => Profile::airfoil_naca4(a, b, 12.0, positive_a, segments.max(2), None),
-        18 => Profile::involute_gear(a, teeth, b, c, 0.01 * b, segments, None),
+        17 => Profile::airfoil_naca4(a, b, real(12.0), positive_a, segments.max(2), None),
+        18 => Profile::involute_gear(
+            a,
+            teeth,
+            b.clone(),
+            c,
+            real(0.01) * b,
+            segments,
+            None,
+        ),
         19 => Profile::cycloidal_gear(a, teeth, teeth.saturating_add(1), b, segments, None),
-        20 => Profile::involute_rack(a, teeth, b, c, 0.01 * c, None),
+        20 => Profile::involute_rack(a, teeth, b, c.clone(), real(0.01) * c, None),
         _ => Profile::cycloidal_rack(a, teeth, positive_b, c, segments, None),
     };
 
