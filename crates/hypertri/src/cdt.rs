@@ -9,7 +9,7 @@
 use crate::cdt_constraints;
 use crate::error::{Error, Result};
 use crate::kernel::{ExactKernel, Kernel};
-use crate::predicates::{self, SegmentIntersection};
+use crate::predicates;
 use crate::types::{Constraint, ExactPoint, Point2, Real, Triangle};
 use crate::types::{Sign, TriangleLocation};
 
@@ -224,15 +224,14 @@ pub fn constrained_delaunay(
         return Ok(constrained);
     }
 
-    let planar = crate::cdt_insert::planarize_constraints::<ExactKernel>(points, constraints)?;
+    let planar = crate::cdt_insert::planarize_constraints(points, constraints)?;
     let points = planar.points;
     let internal_constraints = planar.constraints;
-    validate_constraint_geometry::<ExactKernel>(&points, &internal_constraints)?;
+    validate_constraint_geometry(&points, &internal_constraints)?;
 
-    if let Some(polygon) = cdt_constraints::polygon_from_closed_constraints::<ExactKernel>(
-        &points,
-        &internal_constraints,
-    )? {
+    if let Some(polygon) =
+        cdt_constraints::polygon_from_closed_constraints(&points, &internal_constraints)?
+    {
         // Structural-dispatch note: closed-constraint recognition has already
         // proved ring topology. Preserve facts such as convexity, hole count,
         // monotone chains, and lattice/grid provenance on the polygon record so
@@ -404,7 +403,7 @@ where
         let a = triangle[edge_index];
         let b = triangle[(edge_index + 1) % 3];
         let c = triangle[(edge_index + 2) % 3];
-        if predicates::point_on_segment::<K>(&points[a], &points[b], &points[point])? {
+        if predicates::point_on_segment(&points[a], &points[b], &points[point])? {
             return Ok(vec![
                 make_oriented::<K>(points, [a, point, c])?,
                 make_oriented::<K>(points, [point, b, c])?,
@@ -683,10 +682,7 @@ fn validate_constraints(point_count: usize, constraints: &[Constraint]) -> Resul
     Ok(())
 }
 
-fn validate_constraint_geometry<K>(points: &[Point2], constraints: &[Constraint]) -> Result<()>
-where
-    K: Kernel,
-{
+fn validate_constraint_geometry(points: &[Point2], constraints: &[Constraint]) -> Result<()> {
     for first in 0..constraints.len() {
         for second in first + 1..constraints.len() {
             let a = constraints[first];
@@ -700,23 +696,21 @@ where
             // normalization bug. The classification is exact and
             // predicate-backed, following the same exact-geometric-computation
             // discipline as Shewchuk's orientation predicates.
-            match predicates::segment_intersection::<K>(
+            let intersection = predicates::segment_intersection(
                 &points[a.from],
                 &points[a.to],
                 &points[b.from],
                 &points[b.to],
-            )? {
-                SegmentIntersection::Disjoint | SegmentIntersection::EndpointTouch => {}
-                SegmentIntersection::Proper => {
-                    return Err(Error::InvalidInput {
-                        reason: "properly crossing constraints are not supported",
-                    });
-                }
-                SegmentIntersection::CollinearOverlap => {
-                    return Err(Error::InvalidInput {
-                        reason: "overlapping constraints are not supported",
-                    });
-                }
+            )?;
+            if intersection.is_proper_crossing() {
+                return Err(Error::InvalidInput {
+                    reason: "properly crossing constraints are not supported",
+                });
+            }
+            if intersection.has_positive_length_overlap() {
+                return Err(Error::InvalidInput {
+                    reason: "overlapping constraints are not supported",
+                });
             }
         }
     }

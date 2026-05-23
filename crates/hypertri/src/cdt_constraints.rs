@@ -8,8 +8,7 @@
 
 use std::cmp::Ordering;
 
-use crate::error::Result;
-use crate::kernel::Kernel;
+use crate::error::{Error, Result};
 use crate::predicates;
 #[cfg(feature = "earcut")]
 use crate::types::ExactPoint;
@@ -54,19 +53,16 @@ impl ConstraintPolygon {
 /// order. This is the same containment model used in standard polygon
 /// algorithms; see de Berg et al., *Computational Geometry: Algorithms and
 /// Applications*, and Yap's exact-geometric-computation discipline.
-pub(crate) fn polygon_from_closed_constraints<K>(
+pub(crate) fn polygon_from_closed_constraints(
     points: &[Point2],
     constraints: &[Constraint],
-) -> Result<Option<ConstraintPolygon>>
-where
-    K: Kernel,
-{
+) -> Result<Option<ConstraintPolygon>> {
     let rings = extract_closed_rings(points.len(), constraints);
     let Some(rings) = rings else {
         return Ok(None);
     };
 
-    order_polygon_rings::<K>(points, rings)
+    order_polygon_rings(points, rings)
 }
 
 fn extract_closed_rings(point_count: usize, constraints: &[Constraint]) -> Option<Vec<Vec<usize>>> {
@@ -135,18 +131,15 @@ fn extract_closed_rings(point_count: usize, constraints: &[Constraint]) -> Optio
     used_edges.iter().all(|used| *used).then_some(rings)
 }
 
-fn order_polygon_rings<K>(
+fn order_polygon_rings(
     points: &[Point2],
     rings: Vec<Vec<usize>>,
-) -> Result<Option<ConstraintPolygon>>
-where
-    K: Kernel,
-{
+) -> Result<Option<ConstraintPolygon>> {
     if rings.len() == 1 {
         return Ok(Some(ConstraintPolygon { rings }));
     }
 
-    let Some(exterior_index) = exterior_ring_index::<K>(points, &rings)? else {
+    let Some(exterior_index) = exterior_ring_index(points, &rings)? else {
         return Ok(None);
     };
 
@@ -158,27 +151,24 @@ where
         if ring_index == exterior_index {
             continue;
         }
-        if ring_is_inside_any_other_hole::<K>(points, &rings, exterior_index, ring_index)? {
+        if ring_is_inside_any_other_hole(points, &rings, exterior_index, ring_index)? {
             return Ok(None);
         }
-        insert_hole_sorted::<K>(points, &mut holes, ring.clone())?;
+        insert_hole_sorted(points, &mut holes, ring.clone())?;
     }
     ordered.extend(holes);
 
     Ok(Some(ConstraintPolygon { rings: ordered }))
 }
 
-fn insert_hole_sorted<K>(
+fn insert_hole_sorted(
     points: &[Point2],
     holes: &mut Vec<Vec<usize>>,
     hole: Vec<usize>,
-) -> Result<()>
-where
-    K: Kernel,
-{
+) -> Result<()> {
     let mut insert_at = holes.len();
     for (candidate_at, candidate) in holes.iter().enumerate() {
-        if compare_ring_representatives::<K>(points, &hole, candidate)? == Ordering::Less {
+        if compare_ring_representatives(points, &hole, candidate)? == Ordering::Less {
             insert_at = candidate_at;
             break;
         }
@@ -187,10 +177,7 @@ where
     Ok(())
 }
 
-fn exterior_ring_index<K>(points: &[Point2], rings: &[Vec<usize>]) -> Result<Option<usize>>
-where
-    K: Kernel,
-{
+fn exterior_ring_index(points: &[Point2], rings: &[Vec<usize>]) -> Result<Option<usize>> {
     let mut candidate = None;
     for (ring_index, ring) in rings.iter().enumerate() {
         let contains_all_other_rings = rings
@@ -201,7 +188,7 @@ where
                 if !contains_all {
                     return Ok(false);
                 }
-                predicates::point_in_ring_even_odd::<K>(points, ring, &points[other[0]])
+                predicates::point_in_ring_even_odd(points, ring, &points[other[0]])
             })?;
 
         if contains_all_other_rings {
@@ -215,20 +202,17 @@ where
     Ok(candidate)
 }
 
-fn ring_is_inside_any_other_hole<K>(
+fn ring_is_inside_any_other_hole(
     points: &[Point2],
     rings: &[Vec<usize>],
     exterior_index: usize,
     ring_index: usize,
-) -> Result<bool>
-where
-    K: Kernel,
-{
+) -> Result<bool> {
     for (other_index, other) in rings.iter().enumerate() {
         if other_index == exterior_index || other_index == ring_index {
             continue;
         }
-        if predicates::point_in_ring_even_odd::<K>(points, other, &points[rings[ring_index][0]])? {
+        if predicates::point_in_ring_even_odd(points, other, &points[rings[ring_index][0]])? {
             return Ok(true);
         }
     }
@@ -236,38 +220,50 @@ where
     Ok(false)
 }
 
-fn compare_ring_representatives<K>(
+fn compare_ring_representatives(
     points: &[Point2],
     left: &[usize],
     right: &[usize],
-) -> Result<Ordering>
-where
-    K: Kernel,
-{
-    let left_rep = leftmost_position::<K>(points, left)?;
-    let right_rep = leftmost_position::<K>(points, right)?;
-    compare_points::<K>(points, left[left_rep], right[right_rep])
+) -> Result<Ordering> {
+    let left_rep = leftmost_position(points, left)?;
+    let right_rep = leftmost_position(points, right)?;
+    compare_points(points, left[left_rep], right[right_rep])
 }
 
-fn leftmost_position<K>(points: &[Point2], ring: &[usize]) -> Result<usize>
-where
-    K: Kernel,
-{
+fn leftmost_position(points: &[Point2], ring: &[usize]) -> Result<usize> {
     let mut best = 0;
     for position in 1..ring.len() {
-        if compare_points::<K>(points, ring[position], ring[best])? == Ordering::Less {
+        if compare_points(points, ring[position], ring[best])? == Ordering::Less {
             best = position;
         }
     }
     Ok(best)
 }
 
-fn compare_points<K>(points: &[Point2], left: usize, right: usize) -> Result<Ordering>
-where
-    K: Kernel,
-{
-    match K::cmp(&points[left].x, &points[right].x)? {
-        Ordering::Equal => K::cmp(&points[left].y, &points[right].y),
-        ordering => Ok(ordering),
+fn compare_points(points: &[Point2], left: usize, right: usize) -> Result<Ordering> {
+    // Ring ordering is not CDT topology; it is a reusable exact point-order
+    // predicate. Keep it in hyperlimit with the other Yap-style scalar
+    // decisions so hypertri only chooses how ordered rings are consumed.
+    match hyperlimit::compare_point2_lexicographic_with_policy(
+        &predicate_point(&points[left]),
+        &predicate_point(&points[right]),
+        constraint_predicate_policy(),
+    ) {
+        hyperlimit::PredicateOutcome::Decided { value, .. } => Ok(value),
+        hyperlimit::PredicateOutcome::Unknown { .. } => Err(Error::PredicateUndecided {
+            predicate: "compare_point2_lexicographic",
+        }),
+    }
+}
+
+fn predicate_point(point: &Point2) -> hyperlimit::Point2 {
+    hyperlimit::Point2::new(point.x.clone(), point.y.clone())
+}
+
+const fn constraint_predicate_policy() -> hyperlimit::PredicatePolicy {
+    hyperlimit::PredicatePolicy {
+        allow_exact: true,
+        allow_refinement: true,
+        max_refinement_precision: Some(-4096),
     }
 }

@@ -1,6 +1,6 @@
 //! Public data types shared by exact and runtime `f64` APIs.
 
-use hyperreal::{RealExactSetFacts, SymbolicDependencyMask, ZeroKnowledge};
+use hyperreal::{RealExactSetFacts, SymbolicDependencyMask};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
@@ -370,105 +370,24 @@ fn polygon_symbolic_dependencies(vertices: &[ExactPoint]) -> SymbolicDependencyM
 
 impl RingInputFacts {
     fn from_range(vertices: &[ExactPoint], start: usize, end: usize) -> Self {
-        let mut facts = Self {
+        let ring = predicate_ring(vertices, start, end);
+        let facts = hyperlimit::ring2_facts_with_policy(&ring, fact_predicate_policy());
+
+        Self {
             start,
             end,
-            known_degenerate_edges: 0,
-            known_axis_aligned_edges: 0,
-            unknown_edge_zero_status: 0,
-            signed_area: ring_area_sign(vertices, start, end),
-            convexity: ring_convexity(vertices, start, end),
-        };
-
-        let len = end.saturating_sub(start);
-        if len < 2 {
-            return facts;
+            known_degenerate_edges: facts.known_degenerate_edges,
+            known_axis_aligned_edges: facts.known_axis_aligned_edges,
+            unknown_edge_zero_status: facts.unknown_edge_zero_status,
+            signed_area: facts.signed_area.map(map_hyperlimit_sign),
+            convexity: map_hyperlimit_ring_convexity(facts.convexity),
         }
-
-        for offset in 0..len {
-            let current = start + offset;
-            let next = start + ((offset + 1) % len);
-            let dx = &vertices[next].x - &vertices[current].x;
-            let dy = &vertices[next].y - &vertices[current].y;
-            let dx_zero = dx.structural_facts().zero;
-            let dy_zero = dy.structural_facts().zero;
-
-            match (dx_zero, dy_zero) {
-                (ZeroKnowledge::Zero, ZeroKnowledge::Zero) => facts.known_degenerate_edges += 1,
-                (ZeroKnowledge::Zero, ZeroKnowledge::NonZero)
-                | (ZeroKnowledge::NonZero, ZeroKnowledge::Zero) => {
-                    facts.known_axis_aligned_edges += 1;
-                }
-                (ZeroKnowledge::Unknown, _) | (_, ZeroKnowledge::Unknown) => {
-                    facts.unknown_edge_zero_status += 1;
-                }
-                (ZeroKnowledge::NonZero, ZeroKnowledge::NonZero) => {}
-            }
-        }
-
-        facts
-    }
-}
-
-fn ring_area_sign(vertices: &[ExactPoint], start: usize, end: usize) -> Option<Sign> {
-    let ring = predicate_ring(vertices, start, end);
-    if ring.len() < 3 {
-        return Some(Sign::Zero);
-    }
-
-    // The shoelace determinant is the standard signed-area predicate from
-    // polygon geometry; see de Berg et al., *Computational Geometry:
-    // Algorithms and Applications*, 3rd ed. (2008). `hypertri` stores only the
-    // certified sign as an object fact, while `hyperlimit` owns the predicate.
-    hyperlimit::ring_area_sign_with_policy(&ring, fact_predicate_policy())
-        .value()
-        .map(map_hyperlimit_sign)
-}
-
-fn ring_convexity(vertices: &[ExactPoint], start: usize, end: usize) -> RingConvexity {
-    let ring = predicate_ring(vertices, start, end);
-    if ring.len() < 3 {
-        return RingConvexity::Degenerate;
-    }
-
-    let mut saw_positive = false;
-    let mut saw_negative = false;
-    for index in 0..ring.len() {
-        let previous = &ring[(index + ring.len() - 1) % ring.len()];
-        let current = &ring[index];
-        let next = &ring[(index + 1) % ring.len()];
-        let Some(sign) =
-            hyperlimit::orient2d_with_policy(previous, current, next, fact_predicate_policy())
-                .value()
-        else {
-            return RingConvexity::Unknown;
-        };
-
-        match sign {
-            hyperlimit::Sign::Positive => saw_positive = true,
-            hyperlimit::Sign::Negative => saw_negative = true,
-            hyperlimit::Sign::Zero => {}
-        }
-
-        if saw_positive && saw_negative {
-            return RingConvexity::MixedTurns;
-        }
-    }
-
-    if saw_positive || saw_negative {
-        RingConvexity::LocallyConvex
-    } else {
-        RingConvexity::Degenerate
     }
 }
 
 fn predicate_ring(vertices: &[ExactPoint], start: usize, end: usize) -> Vec<hyperlimit::Point2> {
-    let mut open_end = end.min(vertices.len());
+    let open_end = end.min(vertices.len());
     let start = start.min(open_end);
-    if open_end > start + 1 && vertices[start] == vertices[open_end - 1] {
-        open_end -= 1;
-    }
-
     vertices[start..open_end]
         .iter()
         .map(predicate_point)
@@ -491,6 +410,15 @@ fn map_hyperlimit_sign(sign: hyperlimit::Sign) -> Sign {
         hyperlimit::Sign::Negative => Sign::Negative,
         hyperlimit::Sign::Zero => Sign::Zero,
         hyperlimit::Sign::Positive => Sign::Positive,
+    }
+}
+
+fn map_hyperlimit_ring_convexity(convexity: hyperlimit::RingConvexity) -> RingConvexity {
+    match convexity {
+        hyperlimit::RingConvexity::Degenerate => RingConvexity::Degenerate,
+        hyperlimit::RingConvexity::LocallyConvex => RingConvexity::LocallyConvex,
+        hyperlimit::RingConvexity::MixedTurns => RingConvexity::MixedTurns,
+        hyperlimit::RingConvexity::Unknown => RingConvexity::Unknown,
     }
 }
 

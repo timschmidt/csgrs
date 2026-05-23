@@ -10,9 +10,9 @@ use std::cmp::Ordering;
 use crate::error::{Error, Result};
 use crate::kernel::{ExactKernel, Kernel};
 use crate::polygon::{RingRange, open_ring_indices, rings_from_hole_indices};
-use crate::predicates::{self, SegmentIntersection};
+use crate::predicates;
 use crate::types::Sign;
-use crate::types::{ExactPoint, Point2, Real, TriangleIndices};
+use crate::types::{ExactPoint, Point2, TriangleIndices};
 
 /// Non-certifying diagnostics for the exact earcut hot loop.
 ///
@@ -107,7 +107,7 @@ where
         });
     }
 
-    let winding = ring_area_sign::<K>(vertices, &ring)?;
+    let winding = ring_area_sign(vertices, &ring)?;
     if winding == Sign::Zero {
         return Ok(EarcutReport {
             triangles: Vec::new(),
@@ -158,7 +158,7 @@ where
             });
         }
 
-        let hole_winding = ring_area_sign::<K>(vertices, &hole)?;
+        let hole_winding = ring_area_sign(vertices, &hole)?;
         if hole_winding == Sign::Zero {
             return Err(Error::InvalidInput {
                 reason: "hole ring is degenerate",
@@ -210,11 +210,10 @@ fn find_visible_bridge<K>(
 where
     K: Kernel,
 {
-    let hole_positions = positions_by_xy::<K>(vertices, hole)?;
+    let hole_positions = positions_by_xy(vertices, hole)?;
 
     for hole_pos in hole_positions {
-        let boundary_positions =
-            positions_by_distance_then_xy::<K>(vertices, boundary, hole[hole_pos])?;
+        let boundary_positions = positions_by_distance_then_xy(vertices, boundary, hole[hole_pos])?;
         for &boundary_pos in &boundary_positions {
             if bridge_is_visible::<K>(vertices, boundary, hole, holes, boundary_pos, hole_pos)? {
                 return Ok(Bridge {
@@ -248,22 +247,22 @@ where
     }
 
     let midpoint = K::midpoint(&vertices[boundary_index], &vertices[hole_index])?;
-    if !predicates::point_in_ring_even_odd::<K>(vertices, boundary, &midpoint)? {
+    if !predicates::point_in_ring_even_odd(vertices, boundary, &midpoint)? {
         return Ok(false);
     }
 
     for other_hole in holes {
-        if predicates::point_in_ring_even_odd::<K>(vertices, other_hole, &midpoint)? {
+        if predicates::point_in_ring_even_odd(vertices, other_hole, &midpoint)? {
             return Ok(false);
         }
     }
 
-    if !segment_is_clear_of_ring::<K>(vertices, boundary_index, hole_index, boundary)? {
+    if !segment_is_clear_of_ring(vertices, boundary_index, hole_index, boundary)? {
         return Ok(false);
     }
 
     for other_hole in holes {
-        if !segment_is_clear_of_ring::<K>(vertices, boundary_index, hole_index, other_hole)? {
+        if !segment_is_clear_of_ring(vertices, boundary_index, hole_index, other_hole)? {
             return Ok(false);
         }
     }
@@ -271,15 +270,12 @@ where
     Ok(true)
 }
 
-fn segment_is_clear_of_ring<K>(
+fn segment_is_clear_of_ring(
     vertices: &[Point2],
     from: usize,
     to: usize,
     ring: &[usize],
-) -> Result<bool>
-where
-    K: Kernel,
-{
+) -> Result<bool> {
     for i in 0..ring.len() {
         let edge_from = ring[i];
         let edge_to = ring[(i + 1) % ring.len()];
@@ -287,26 +283,25 @@ where
             continue;
         }
 
-        match predicates::segment_intersection::<K>(
+        let intersection = predicates::segment_intersection(
             &vertices[from],
             &vertices[to],
             &vertices[edge_from],
             &vertices[edge_to],
-        )? {
-            SegmentIntersection::Disjoint => {}
-            SegmentIntersection::EndpointTouch => {
-                let touches_allowed_endpoint = same_point(vertices, edge_from, from)
-                    || same_point(vertices, edge_to, from)
-                    || same_point(vertices, edge_from, to)
-                    || same_point(vertices, edge_to, to);
-                if !touches_allowed_endpoint {
-                    return Ok(false);
-                }
-            }
-            SegmentIntersection::Proper
-            | SegmentIntersection::CollinearOverlap
-            | SegmentIntersection::Identical => return Ok(false),
+        )?;
+        if intersection.is_disjoint() {
+            continue;
         }
+        if intersection.is_endpoint_touch() {
+            let touches_allowed_endpoint = same_point(vertices, edge_from, from)
+                || same_point(vertices, edge_to, from)
+                || same_point(vertices, edge_from, to)
+                || same_point(vertices, edge_to, to);
+            if touches_allowed_endpoint {
+                continue;
+            }
+        }
+        return Ok(false);
     }
 
     Ok(true)
@@ -333,10 +328,7 @@ fn splice_hole(
     merged
 }
 
-fn positions_by_xy<K>(vertices: &[Point2], ring: &[usize]) -> Result<Vec<usize>>
-where
-    K: Kernel,
-{
+fn positions_by_xy(vertices: &[Point2], ring: &[usize]) -> Result<Vec<usize>> {
     // Structural-dispatch note: this insertion sort is intentionally simple for
     // the first exact port. If polygon preprocessing retains axis-aligned
     // bounding boxes and exact dyadic/integer coordinate tags, hole-bridge
@@ -346,7 +338,7 @@ where
     for position in 0..ring.len() {
         let mut insert_at = positions.len();
         for (candidate_at, &candidate) in positions.iter().enumerate() {
-            if compare_ring_positions::<K>(vertices, ring, position, candidate)? == Ordering::Less {
+            if compare_ring_positions(vertices, ring, position, candidate)? == Ordering::Less {
                 insert_at = candidate_at;
                 break;
             }
@@ -357,19 +349,16 @@ where
     Ok(positions)
 }
 
-fn positions_by_distance_then_xy<K>(
+fn positions_by_distance_then_xy(
     vertices: &[Point2],
     ring: &[usize],
     from: usize,
-) -> Result<Vec<usize>>
-where
-    K: Kernel,
-{
+) -> Result<Vec<usize>> {
     let mut positions = Vec::with_capacity(ring.len());
     for position in 0..ring.len() {
         let mut insert_at = positions.len();
         for (candidate_at, &candidate) in positions.iter().enumerate() {
-            if compare_distance_then_xy::<K>(vertices, from, ring, position, candidate)?
+            if compare_distance_then_xy(vertices, from, ring, position, candidate)?
                 == Ordering::Less
             {
                 insert_at = candidate_at;
@@ -382,53 +371,45 @@ where
     Ok(positions)
 }
 
-fn compare_distance_then_xy<K>(
+fn compare_distance_then_xy(
     vertices: &[Point2],
     from: usize,
     ring: &[usize],
     left_pos: usize,
     right_pos: usize,
-) -> Result<Ordering>
-where
-    K: Kernel,
-{
-    let left = squared_distance::<K>(&vertices[from], &vertices[ring[left_pos]]);
-    let right = squared_distance::<K>(&vertices[from], &vertices[ring[right_pos]]);
-    match K::cmp(&left, &right)? {
-        Ordering::Equal => compare_ring_positions::<K>(vertices, ring, left_pos, right_pos),
+) -> Result<Ordering> {
+    match decide_hyperlimit_ordering(
+        hyperlimit::compare_point2_distance_squared_with_policy(
+            &predicate_point(&vertices[from]),
+            &predicate_point(&vertices[ring[left_pos]]),
+            &predicate_point(&vertices[ring[right_pos]]),
+            earcut_predicate_policy(),
+        ),
+        "compare_point2_distance_squared",
+    )? {
+        Ordering::Equal => compare_ring_positions(vertices, ring, left_pos, right_pos),
         ordering => Ok(ordering),
     }
 }
 
-fn squared_distance<K>(left: &Point2, right: &Point2) -> Real
-where
-    K: Kernel,
-{
-    let dx = K::sub(&left.x, &right.x);
-    let dy = K::sub(&left.y, &right.y);
-    K::add(&K::mul(&dx, &dx), &K::mul(&dy, &dy))
-}
-
-fn compare_ring_positions<K>(
+fn compare_ring_positions(
     vertices: &[Point2],
     ring: &[usize],
     left_pos: usize,
     right_pos: usize,
-) -> Result<Ordering>
-where
-    K: Kernel,
-{
-    compare_point_indices::<K>(vertices, ring[left_pos], ring[right_pos])
+) -> Result<Ordering> {
+    compare_point_indices(vertices, ring[left_pos], ring[right_pos])
 }
 
-fn compare_point_indices<K>(vertices: &[Point2], left: usize, right: usize) -> Result<Ordering>
-where
-    K: Kernel,
-{
-    match K::cmp(&vertices[left].x, &vertices[right].x)? {
-        Ordering::Equal => K::cmp(&vertices[left].y, &vertices[right].y),
-        ordering => Ok(ordering),
-    }
+fn compare_point_indices(vertices: &[Point2], left: usize, right: usize) -> Result<Ordering> {
+    decide_hyperlimit_ordering(
+        hyperlimit::compare_point2_lexicographic_with_policy(
+            &predicate_point(&vertices[left]),
+            &predicate_point(&vertices[right]),
+            earcut_predicate_policy(),
+        ),
+        "compare_point2_lexicographic",
+    )
 }
 
 fn filter_ring<K>(vertices: &[Point2], mut ring: Vec<usize>) -> Result<Vec<usize>>
@@ -656,12 +637,8 @@ where
         return Ok(false);
     }
 
-    if predicates::segment_intersection::<K>(
-        &vertices[a],
-        &vertices[p],
-        &vertices[q],
-        &vertices[b],
-    )? != SegmentIntersection::Proper
+    if !predicates::segment_intersection(&vertices[a], &vertices[p], &vertices[q], &vertices[b])?
+        .is_proper_crossing()
     {
         return Ok(false);
     }
@@ -670,20 +647,17 @@ where
         return Ok(false);
     }
 
-    diagonal_clear_after_removing_local_pair::<K>(vertices, ring, a, p, q, b)
+    diagonal_clear_after_removing_local_pair(vertices, ring, a, p, q, b)
 }
 
-fn diagonal_clear_after_removing_local_pair<K>(
+fn diagonal_clear_after_removing_local_pair(
     vertices: &[Point2],
     ring: &[usize],
     from: usize,
     removed_first: usize,
     removed_second: usize,
     to: usize,
-) -> Result<bool>
-where
-    K: Kernel,
-{
+) -> Result<bool> {
     for i in 0..ring.len() {
         let edge_from = ring[i];
         let edge_to = ring[(i + 1) % ring.len()];
@@ -699,17 +673,15 @@ where
             continue;
         }
 
-        match predicates::segment_intersection::<K>(
+        if predicates::segment_intersection(
             &vertices[from],
             &vertices[to],
             &vertices[edge_from],
             &vertices[edge_to],
-        )? {
-            SegmentIntersection::Disjoint => {}
-            SegmentIntersection::EndpointTouch
-            | SegmentIntersection::Proper
-            | SegmentIntersection::CollinearOverlap
-            | SegmentIntersection::Identical => return Ok(false),
+        )?
+        .intersects()
+        {
+            return Ok(false);
         }
     }
 
@@ -813,12 +785,12 @@ where
         return Ok(false);
     }
 
-    if !segment_is_clear_of_ring::<K>(vertices, first, second, ring)? {
+    if !segment_is_clear_of_ring(vertices, first, second, ring)? {
         return Ok(false);
     }
 
     let midpoint = K::midpoint(&vertices[first], &vertices[second])?;
-    predicates::point_in_ring_even_odd::<K>(vertices, ring, &midpoint)
+    predicates::point_in_ring_even_odd(vertices, ring, &midpoint)
 }
 
 fn split_ring(ring: &[usize], first: usize, second: usize) -> (Vec<usize>, Vec<usize>) {
@@ -890,7 +862,7 @@ where
             continue;
         }
 
-        if !point_in_triangle_bbox::<K>(
+        if !point_in_triangle_bbox(
             &vertices[prev],
             &vertices[curr],
             &vertices[next],
@@ -981,10 +953,7 @@ where
     Ok(predicates::orient2d::<K>(&vertices[prev], &vertices[curr], &vertices[next])? == winding)
 }
 
-fn point_in_triangle_bbox<K>(a: &Point2, b: &Point2, c: &Point2, point: &Point2) -> Result<bool>
-where
-    K: Kernel,
-{
+fn point_in_triangle_bbox(a: &Point2, b: &Point2, c: &Point2, point: &Point2) -> Result<bool> {
     // This is only a rejection filter. Exact coordinate comparisons prove that
     // a point outside the triangle's axis-aligned bounding box cannot be inside
     // the triangle, while points inside the box still go through the exact
@@ -992,49 +961,28 @@ where
     // axis-aligned-box stage described in broad-phase geometry texts such as
     // Ericson, *Real-Time Collision Detection* (2005), but it is evaluated with
     // the crate's exact kernel rather than primitive floats.
-    let mut min_x = &a.x;
-    let mut max_x = &a.x;
-    let mut min_y = &a.y;
-    let mut max_y = &a.y;
-
-    for vertex in [b, c] {
-        if K::cmp(&vertex.x, min_x)? == Ordering::Less {
-            min_x = &vertex.x;
-        }
-        if K::cmp(&vertex.x, max_x)? == Ordering::Greater {
-            max_x = &vertex.x;
-        }
-        if K::cmp(&vertex.y, min_y)? == Ordering::Less {
-            min_y = &vertex.y;
-        }
-        if K::cmp(&vertex.y, max_y)? == Ordering::Greater {
-            max_y = &vertex.y;
-        }
-    }
-
-    Ok(K::cmp(&point.x, min_x)? != Ordering::Less
-        && K::cmp(&point.x, max_x)? != Ordering::Greater
-        && K::cmp(&point.y, min_y)? != Ordering::Less
-        && K::cmp(&point.y, max_y)? != Ordering::Greater)
+    decide_hyperlimit_bool(
+        hyperlimit::point_in_triangle2_aabb_with_policy(
+            &predicate_point(a),
+            &predicate_point(b),
+            &predicate_point(c),
+            &predicate_point(point),
+            earcut_predicate_policy(),
+        ),
+        "point_in_triangle2_aabb",
+    )
 }
 
-fn ring_area_sign<K>(vertices: &[Point2], ring: &[usize]) -> Result<Sign>
-where
-    K: Kernel,
-{
-    let mut area = K::zero();
-
-    for i in 0..ring.len() {
-        let current = &vertices[ring[i]];
-        let next = &vertices[ring[(i + 1) % ring.len()]];
-
-        let x0_y1 = K::mul(&current.x, &next.y);
-        let y0_x1 = K::mul(&current.y, &next.x);
-        let cross = K::sub(&x0_y1, &y0_x1);
-        area = K::add(&area, &cross);
-    }
-
-    K::real_sign(&area)
+fn ring_area_sign(vertices: &[Point2], ring: &[usize]) -> Result<Sign> {
+    let predicate_vertices: Vec<_> = vertices.iter().map(predicate_point).collect();
+    decide_hyperlimit_sign(
+        hyperlimit::indexed_ring_area_sign_with_policy(
+            &predicate_vertices,
+            ring,
+            earcut_predicate_policy(),
+        ),
+        "indexed_ring_area_sign",
+    )
 }
 
 fn push_triangle(triangles: &mut TriangleIndices, a: usize, b: usize, c: usize, winding: Sign) {
@@ -1050,6 +998,62 @@ fn points_equal(left: &ExactPoint, right: &ExactPoint) -> bool {
 
 fn same_point(vertices: &[ExactPoint], left: usize, right: usize) -> bool {
     points_equal(&vertices[left], &vertices[right])
+}
+
+fn predicate_point(point: &Point2) -> hyperlimit::Point2 {
+    hyperlimit::Point2::new(point.x.clone(), point.y.clone())
+}
+
+const fn earcut_predicate_policy() -> hyperlimit::PredicatePolicy {
+    hyperlimit::PredicatePolicy {
+        allow_exact: true,
+        allow_refinement: true,
+        max_refinement_precision: Some(-4096),
+    }
+}
+
+fn decide_hyperlimit_bool(
+    outcome: hyperlimit::PredicateOutcome<bool>,
+    predicate: &'static str,
+) -> Result<bool> {
+    match outcome {
+        hyperlimit::PredicateOutcome::Decided { value, .. } => Ok(value),
+        hyperlimit::PredicateOutcome::Unknown { .. } => {
+            Err(Error::PredicateUndecided { predicate })
+        }
+    }
+}
+
+fn decide_hyperlimit_ordering(
+    outcome: hyperlimit::PredicateOutcome<Ordering>,
+    predicate: &'static str,
+) -> Result<Ordering> {
+    match outcome {
+        hyperlimit::PredicateOutcome::Decided { value, .. } => Ok(value),
+        hyperlimit::PredicateOutcome::Unknown { .. } => {
+            Err(Error::PredicateUndecided { predicate })
+        }
+    }
+}
+
+fn decide_hyperlimit_sign(
+    outcome: hyperlimit::PredicateOutcome<hyperlimit::Sign>,
+    predicate: &'static str,
+) -> Result<Sign> {
+    match outcome {
+        hyperlimit::PredicateOutcome::Decided { value, .. } => Ok(map_hyperlimit_sign(value)),
+        hyperlimit::PredicateOutcome::Unknown { .. } => {
+            Err(Error::PredicateUndecided { predicate })
+        }
+    }
+}
+
+fn map_hyperlimit_sign(sign: hyperlimit::Sign) -> Sign {
+    match sign {
+        hyperlimit::Sign::Negative => Sign::Negative,
+        hyperlimit::Sign::Zero => Sign::Zero,
+        hyperlimit::Sign::Positive => Sign::Positive,
+    }
 }
 
 #[cfg(test)]

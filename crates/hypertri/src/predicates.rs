@@ -2,16 +2,16 @@
 //!
 //! These wrappers keep algorithm modules from depending directly on predicate
 //! provenance details. Exact code only consumes decided signs from the
-//! crate-local kernel.
+//! crate-local kernel, while reusable segment topology is delegated to
+//! `hyperlimit` so enum growth and exact overlap refinements stay centralized.
 
 #![allow(dead_code)]
 
-use std::cmp::Ordering;
-
-use crate::error::Result;
+use crate::error::{Error, Result};
 use crate::kernel::Kernel;
-use crate::types::{Point2, Real};
+use crate::types::Point2;
 use crate::types::{Sign, TriangleLocation};
+use hyperlimit::{PredicateOutcome, PredicatePolicy};
 
 pub use hyperlimit::SegmentIntersection;
 
@@ -40,173 +40,111 @@ where
 }
 
 /// Decide whether a point lies on a closed segment.
-pub(crate) fn point_on_segment<K>(a: &Point2, b: &Point2, point: &Point2) -> Result<bool>
-where
-    K: Kernel,
-{
-    if K::orient2d(a, b, point)? != Sign::Zero {
-        return Ok(false);
-    }
-
-    Ok(in_closed_range::<K>(&point.x, &a.x, &b.x)? && in_closed_range::<K>(&point.y, &a.y, &b.y)?)
+pub(crate) fn point_on_segment(a: &Point2, b: &Point2, point: &Point2) -> Result<bool> {
+    // This is a direct boundary predicate, not triangulation topology. Route it
+    // through hyperlimit's segment classifier so the exact interval and
+    // degenerate-segment rules have a single owner, matching Yap's
+    // object/predicate separation; see Yap, "Towards Exact Geometric
+    // Computation," Computational Geometry 7.1-2 (1997).
+    decide_hyperlimit_bool(
+        hyperlimit::point_on_segment_with_policy(
+            &predicate_point(a),
+            &predicate_point(b),
+            &predicate_point(point),
+            triangulation_predicate_policy(),
+        ),
+        "point_on_segment",
+    )
 }
 
-/// Decide whether a point is inside a closed ring by even-odd parity.
-///
-/// The ray-crossing comparison is written in orientation form so algorithms do
-/// not construct inexact edge/ray intersection coordinates. This is the same
-/// exactness discipline as the exact-geometric-computation model in Yap and
-/// the predicate-centered approach in Shewchuk.
-pub(crate) fn point_in_ring_even_odd<K>(
+/// Decide whether a point is inside a closed indexed ring by even-odd parity.
+pub(crate) fn point_in_ring_even_odd(
     vertices: &[Point2],
     ring: &[usize],
     point: &Point2,
-) -> Result<bool>
-where
-    K: Kernel,
-{
-    if ring.len() < 3 {
-        return Ok(false);
-    }
-
-    let mut inside = false;
-    for i in 0..ring.len() {
-        let a = &vertices[ring[i]];
-        let b = &vertices[ring[(i + 1) % ring.len()]];
-
-        if a == b {
-            continue;
-        }
-
-        if point_on_segment::<K>(a, b, point)? {
-            return Ok(true);
-        }
-
-        let a_above = K::cmp(&a.y, &point.y)? == Ordering::Greater;
-        let b_above = K::cmp(&b.y, &point.y)? == Ordering::Greater;
-        if a_above == b_above {
-            continue;
-        }
-
-        let orientation = K::orient2d(a, b, point)?;
-        let upward = K::cmp(&b.y, &a.y)? == Ordering::Greater;
-        let crosses_right = matches!(
-            (upward, orientation),
-            (true, Sign::Positive) | (false, Sign::Negative)
-        );
-        if crosses_right {
-            inside = !inside;
-        }
-    }
-
-    Ok(inside)
+) -> Result<bool> {
+    // Hyperlimit owns the Hormann-Agathos crossing-number predicate and the
+    // Yap-style exact boundary checks. Hypertri supplies only index topology.
+    let predicate_vertices: Vec<_> = vertices.iter().map(predicate_point).collect();
+    decide_hyperlimit_bool(
+        hyperlimit::point_in_indexed_ring_even_odd_with_policy(
+            &predicate_vertices,
+            ring,
+            &predicate_point(point),
+            triangulation_predicate_policy(),
+        ),
+        "point_in_indexed_ring_even_odd",
+    )
 }
 
 /// Classify two closed line segments.
-pub(crate) fn segment_intersection<K>(
+pub(crate) fn segment_intersection(
     a: &Point2,
     b: &Point2,
     c: &Point2,
     d: &Point2,
-) -> Result<SegmentIntersection>
-where
-    K: Kernel,
-{
-    let ab_c = K::orient2d(a, b, c)?;
-    let ab_d = K::orient2d(a, b, d)?;
-    let cd_a = K::orient2d(c, d, a)?;
-    let cd_b = K::orient2d(c, d, b)?;
-
-    if ab_c == Sign::Zero && ab_d == Sign::Zero && cd_a == Sign::Zero && cd_b == Sign::Zero {
-        return classify_collinear_segments::<K>(a, b, c, d);
-    }
-
-    if signs_strictly_differ(ab_c, ab_d) && signs_strictly_differ(cd_a, cd_b) {
-        return Ok(SegmentIntersection::Proper);
-    }
-
-    if (ab_c == Sign::Zero && point_on_segment::<K>(a, b, c)?)
-        || (ab_d == Sign::Zero && point_on_segment::<K>(a, b, d)?)
-        || (cd_a == Sign::Zero && point_on_segment::<K>(c, d, a)?)
-        || (cd_b == Sign::Zero && point_on_segment::<K>(c, d, b)?)
-    {
-        return Ok(SegmentIntersection::EndpointTouch);
-    }
-
-    Ok(SegmentIntersection::Disjoint)
-}
-
-fn classify_collinear_segments<K>(
-    a: &Point2,
-    b: &Point2,
-    c: &Point2,
-    d: &Point2,
-) -> Result<SegmentIntersection>
-where
-    K: Kernel,
-{
-    let use_x = K::cmp(&a.x, &b.x)? != Ordering::Equal || K::cmp(&c.x, &d.x)? != Ordering::Equal;
-
-    let (a0, a1) = ordered_pair::<K>(
-        if use_x { &a.x } else { &a.y },
-        if use_x { &b.x } else { &b.y },
-    )?;
-    let (b0, b1) = ordered_pair::<K>(
-        if use_x { &c.x } else { &c.y },
-        if use_x { &d.x } else { &d.y },
-    )?;
-
-    let left = max_ref::<K>(a0, b0)?;
-    let right = min_ref::<K>(a1, b1)?;
-
-    match K::cmp(left, right)? {
-        Ordering::Less => Ok(SegmentIntersection::CollinearOverlap),
-        Ordering::Equal => Ok(SegmentIntersection::EndpointTouch),
-        Ordering::Greater => Ok(SegmentIntersection::Disjoint),
+) -> Result<SegmentIntersection> {
+    // Segment intersection is the canonical topological predicate for CDT edge
+    // recovery and ear visibility. Keep the four-orientation classifier in
+    // hyperlimit, where the de Berg et al. classifier and Shewchuk/Yap exact
+    // predicate discipline are documented near the determinant and interval
+    // decisions. Hypertri consumes the decided combinatorial relation only.
+    match hyperlimit::classify_segment_intersection_with_policy(
+        &predicate_point(a),
+        &predicate_point(b),
+        &predicate_point(c),
+        &predicate_point(d),
+        triangulation_predicate_policy(),
+    ) {
+        PredicateOutcome::Decided { value, .. } => Ok(value),
+        PredicateOutcome::Unknown { .. } => Err(Error::PredicateUndecided {
+            predicate: "segment_intersection",
+        }),
     }
 }
 
-fn in_closed_range<K>(value: &Real, first: &Real, second: &Real) -> Result<bool>
-where
-    K: Kernel,
-{
-    let (min, max) = ordered_pair::<K>(first, second)?;
-    Ok(K::cmp(value, min)? != Ordering::Less && K::cmp(value, max)? != Ordering::Greater)
+fn predicate_point(point: &Point2) -> hyperlimit::Point2 {
+    hyperlimit::Point2::new(point.x.clone(), point.y.clone())
 }
 
-fn ordered_pair<'a, K>(first: &'a Real, second: &'a Real) -> Result<(&'a Real, &'a Real)>
-where
-    K: Kernel,
-{
-    match K::cmp(first, second)? {
-        Ordering::Greater => Ok((second, first)),
-        Ordering::Less | Ordering::Equal => Ok((first, second)),
+const fn triangulation_predicate_policy() -> PredicatePolicy {
+    PredicatePolicy {
+        allow_exact: true,
+        allow_refinement: true,
+        max_refinement_precision: Some(-4096),
     }
 }
 
-fn max_ref<'a, K>(first: &'a Real, second: &'a Real) -> Result<&'a Real>
-where
-    K: Kernel,
-{
-    match K::cmp(first, second)? {
-        Ordering::Less => Ok(second),
-        Ordering::Equal | Ordering::Greater => Ok(first),
+fn decide_hyperlimit_bool(
+    outcome: PredicateOutcome<bool>,
+    predicate: &'static str,
+) -> Result<bool> {
+    match outcome {
+        PredicateOutcome::Decided { value, .. } => Ok(value),
+        PredicateOutcome::Unknown { .. } => Err(Error::PredicateUndecided { predicate }),
     }
 }
 
-fn min_ref<'a, K>(first: &'a Real, second: &'a Real) -> Result<&'a Real>
-where
-    K: Kernel,
-{
-    match K::cmp(first, second)? {
-        Ordering::Greater => Ok(second),
-        Ordering::Less | Ordering::Equal => Ok(first),
-    }
-}
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::types::Real;
 
-fn signs_strictly_differ(first: Sign, second: Sign) -> bool {
-    matches!(
-        (first, second),
-        (Sign::Negative, Sign::Positive) | (Sign::Positive, Sign::Negative)
-    )
+    fn p(x: i64, y: i64) -> Point2 {
+        Point2::new(Real::from(x), Real::from(y))
+    }
+
+    #[test]
+    fn segment_intersection_delegates_identical_segments_to_hyperlimit() {
+        assert_eq!(
+            segment_intersection(&p(0, 0), &p(4, 0), &p(4, 0), &p(0, 0)).unwrap(),
+            SegmentIntersection::Identical
+        );
+    }
+
+    #[test]
+    fn point_on_segment_delegates_degenerate_segments_to_hyperlimit() {
+        assert!(point_on_segment(&p(2, 3), &p(2, 3), &p(2, 3)).unwrap());
+        assert!(!point_on_segment(&p(2, 3), &p(2, 3), &p(2, 4)).unwrap());
+    }
 }

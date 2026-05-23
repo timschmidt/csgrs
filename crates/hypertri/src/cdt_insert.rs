@@ -14,9 +14,9 @@
 
 use crate::error::{Error, Result};
 use crate::kernel::Kernel;
-use crate::predicates::{self, SegmentIntersection};
+use crate::predicates;
 use crate::types::Sign;
-use crate::types::{Constraint, Point2, Real, Triangle};
+use crate::types::{Constraint, Point2, Triangle};
 use std::cmp::Ordering;
 
 /// Exact planar straight-line graph produced from caller constraints.
@@ -74,13 +74,10 @@ where
 /// into subsegments. This is the PSLG view used by Lee and Lin's generalized
 /// Delaunay triangulation and by Shewchuk and Brown's incremental
 /// segment-insertion formulation.
-pub(crate) fn planarize_constraints<K>(
+pub(crate) fn planarize_constraints(
     points: &[Point2],
     constraints: &[Constraint],
-) -> Result<PlanarConstraints>
-where
-    K: Kernel,
-{
+) -> Result<PlanarConstraints> {
     let mut planar_points = points.to_vec();
 
     // Structural-dispatch note: this exact O(m^2) pair scan is the conservative
@@ -95,14 +92,15 @@ where
                 continue;
             }
 
-            if predicates::segment_intersection::<K>(
+            if predicates::segment_intersection(
                 &planar_points[a.from],
                 &planar_points[a.to],
                 &planar_points[b.from],
                 &planar_points[b.to],
-            )? == SegmentIntersection::Proper
+            )?
+            .is_proper_crossing()
             {
-                let point = segment_intersection_point::<K>(&planar_points, a, b)?;
+                let point = segment_intersection_point(&planar_points, a, b)?;
                 push_unique_point(&mut planar_points, point);
             }
         }
@@ -112,7 +110,7 @@ where
     for constraint in constraints {
         let mut on_segment = Vec::new();
         for point_index in 0..planar_points.len() {
-            if predicates::point_on_segment::<K>(
+            if predicates::point_on_segment(
                 &planar_points[constraint.from],
                 &planar_points[constraint.to],
                 &planar_points[point_index],
@@ -121,7 +119,7 @@ where
             }
         }
 
-        sort_indices_on_segment::<K>(&planar_points, constraint, &mut on_segment)?;
+        sort_indices_on_segment(&planar_points, constraint, &mut on_segment)?;
         for pair in on_segment.windows(2) {
             push_unique_constraint(&mut split, Constraint::new(pair[0], pair[1]));
         }
@@ -133,41 +131,33 @@ where
     })
 }
 
-fn segment_intersection_point<K>(
+fn segment_intersection_point(
     points: &[Point2],
     first: Constraint,
     second: Constraint,
-) -> Result<Point2>
-where
-    K: Kernel,
-{
+) -> Result<Point2> {
     let a = &points[first.from];
     let b = &points[first.to];
     let c = &points[second.from];
     let d = &points[second.to];
 
-    let ab_x = K::sub(&b.x, &a.x);
-    let ab_y = K::sub(&b.y, &a.y);
-    let cd_x = K::sub(&d.x, &c.x);
-    let cd_y = K::sub(&d.y, &c.y);
-    let ca_x = K::sub(&c.x, &a.x);
-    let ca_y = K::sub(&c.y, &a.y);
-
-    let denominator = cross::<K>(&ab_x, &ab_y, &cd_x, &cd_y);
-    let numerator = cross::<K>(&ca_x, &ca_y, &cd_x, &cd_y);
-    let t = K::div(&numerator, &denominator)?;
-
-    Ok(Point2::new(
-        K::add(&a.x, &K::mul(&t, &ab_x)),
-        K::add(&a.y, &K::mul(&t, &ab_y)),
-    ))
-}
-
-fn cross<K>(left_x: &Real, left_y: &Real, right_x: &Real, right_y: &Real) -> Real
-where
-    K: Kernel,
-{
-    K::sub(&K::mul(left_x, right_y), &K::mul(left_y, right_x))
+    match hyperlimit::proper_segment_intersection_point_with_policy(
+        &predicate_point(a),
+        &predicate_point(b),
+        &predicate_point(c),
+        &predicate_point(d),
+        cdt_insert_predicate_policy(),
+    ) {
+        hyperlimit::PredicateOutcome::Decided {
+            value: Some(point), ..
+        } => Ok(Point2::new(point.x, point.y)),
+        hyperlimit::PredicateOutcome::Decided { value: None, .. } => Err(Error::InvalidInput {
+            reason: "constraints do not properly cross",
+        }),
+        hyperlimit::PredicateOutcome::Unknown { .. } => Err(Error::PredicateUndecided {
+            predicate: "proper_segment_intersection_point",
+        }),
+    }
 }
 
 fn push_unique_point(points: &mut Vec<Point2>, point: Point2) -> usize {
@@ -187,20 +177,33 @@ fn constraints_share_endpoint(first: Constraint, second: Constraint) -> bool {
         || first.to == second.to
 }
 
-fn sort_indices_on_segment<K>(
+fn predicate_point(point: &Point2) -> hyperlimit::Point2 {
+    hyperlimit::Point2::new(point.x.clone(), point.y.clone())
+}
+
+const fn cdt_insert_predicate_policy() -> hyperlimit::PredicatePolicy {
+    hyperlimit::PredicatePolicy {
+        allow_exact: true,
+        allow_refinement: true,
+        max_refinement_precision: Some(-4096),
+    }
+}
+
+fn sort_indices_on_segment(
     points: &[Point2],
     constraint: &Constraint,
     indices: &mut [usize],
-) -> Result<()>
-where
-    K: Kernel,
-{
-    let use_x = K::cmp(&points[constraint.from].x, &points[constraint.to].x)? != Ordering::Equal;
+) -> Result<()> {
+    let use_x = compare_segment_axis_reals(
+        &points[constraint.from].x,
+        &points[constraint.to].x,
+        "compare_constraint_endpoint_x",
+    )? != Ordering::Equal;
 
     for index in 1..indices.len() {
         let mut cursor = index;
         while cursor > 0
-            && compare_segment_indices::<K>(points, indices[cursor], indices[cursor - 1], use_x)?
+            && compare_segment_indices(points, indices[cursor], indices[cursor - 1], use_x)?
                 == Ordering::Less
         {
             indices.swap(cursor, cursor - 1);
@@ -211,19 +214,33 @@ where
     Ok(())
 }
 
-fn compare_segment_indices<K>(
+fn compare_segment_indices(
     points: &[Point2],
     left: usize,
     right: usize,
     use_x: bool,
-) -> Result<Ordering>
-where
-    K: Kernel,
-{
+) -> Result<Ordering> {
     if use_x {
-        K::cmp(&points[left].x, &points[right].x)
+        compare_segment_axis_reals(&points[left].x, &points[right].x, "compare_segment_x")
     } else {
-        K::cmp(&points[left].y, &points[right].y)
+        compare_segment_axis_reals(&points[left].y, &points[right].y, "compare_segment_y")
+    }
+}
+
+fn compare_segment_axis_reals(
+    left: &crate::types::Real,
+    right: &crate::types::Real,
+    predicate: &'static str,
+) -> Result<Ordering> {
+    // Points have already been certified to lie on this segment. The remaining
+    // subsegment split order is therefore a scalar exact-ordering predicate,
+    // which belongs with hyperlimit's Yap-style predicate pipeline rather than
+    // with CDT topology.
+    match hyperlimit::compare_reals_with_policy(left, right, cdt_insert_predicate_policy()) {
+        hyperlimit::PredicateOutcome::Decided { value, .. } => Ok(value),
+        hyperlimit::PredicateOutcome::Unknown { .. } => {
+            Err(Error::PredicateUndecided { predicate })
+        }
     }
 }
 
@@ -255,7 +272,7 @@ where
         }
 
         let Some(crossing_edge) =
-            first_edge_crossing_constraint::<K>(points, triangles, constraint, constrained_edges)?
+            first_edge_crossing_constraint(points, triangles, constraint, constrained_edges)?
         else {
             return Err(Error::UnsupportedFeature {
                 feature: "constraint recovery without a flippable crossing edge",
@@ -268,7 +285,7 @@ where
             });
         };
         let new_edge = EdgeKey::new(first.opposite, second.opposite);
-        if !flip_preserves_constraints::<K>(points, new_edge, constrained_edges)? {
+        if !flip_preserves_constraints(points, new_edge, constrained_edges)? {
             return Err(Error::UnsupportedFeature {
                 feature: "constraint recovery would cross a previous constraint",
             });
@@ -286,26 +303,23 @@ where
     })
 }
 
-fn first_edge_crossing_constraint<K>(
+fn first_edge_crossing_constraint(
     points: &[Point2],
     triangles: &[Triangle],
     constraint: Constraint,
     constrained_edges: &[EdgeKey],
-) -> Result<Option<EdgeKey>>
-where
-    K: Kernel,
-{
+) -> Result<Option<EdgeKey>> {
     for edge in unique_edges(triangles) {
         if edge.contains(constraint.from) || edge.contains(constraint.to) {
             continue;
         }
-        let intersection = predicates::segment_intersection::<K>(
+        let intersection = predicates::segment_intersection(
             &points[constraint.from],
             &points[constraint.to],
             &points[edge.from],
             &points[edge.to],
         )?;
-        if intersection == SegmentIntersection::Proper {
+        if intersection.is_proper_crossing() {
             if constrained_edges.contains(&edge) {
                 return Err(Error::InvalidInput {
                     reason: "constraint crosses an existing constrained edge",
@@ -343,7 +357,7 @@ where
             if !edge_is_illegal::<K>(points, edge, first.opposite, second.opposite)? {
                 continue;
             }
-            if !flip_preserves_constraints::<K>(points, new_edge, constrained_edges)? {
+            if !flip_preserves_constraints(points, new_edge, constrained_edges)? {
                 continue;
             }
             if flip_edge::<K>(points, triangles, edge)? {
@@ -457,19 +471,16 @@ where
         && signs_strictly_differ(opposite_edge_side, opposite_other_side))
 }
 
-fn flip_preserves_constraints<K>(
+fn flip_preserves_constraints(
     points: &[Point2],
     new_edge: EdgeKey,
     constrained_edges: &[EdgeKey],
-) -> Result<bool>
-where
-    K: Kernel,
-{
+) -> Result<bool> {
     for point_index in 0..points.len() {
         if new_edge.contains(point_index) {
             continue;
         }
-        if predicates::point_on_segment::<K>(
+        if predicates::point_on_segment(
             &points[new_edge.from],
             &points[new_edge.to],
             &points[point_index],
@@ -483,19 +494,18 @@ where
             continue;
         }
 
-        let intersection = predicates::segment_intersection::<K>(
+        let intersection = predicates::segment_intersection(
             &points[new_edge.from],
             &points[new_edge.to],
             &points[constraint.from],
             &points[constraint.to],
         )?;
-        match intersection {
-            SegmentIntersection::Disjoint => {}
-            SegmentIntersection::EndpointTouch if new_edge.shares_endpoint(constraint) => {}
-            SegmentIntersection::EndpointTouch
-            | SegmentIntersection::Proper
-            | SegmentIntersection::CollinearOverlap => return Ok(false),
+        if intersection.is_disjoint()
+            || (intersection.is_endpoint_touch() && new_edge.shares_endpoint(constraint))
+        {
+            continue;
         }
+        return Ok(false);
     }
 
     Ok(true)
