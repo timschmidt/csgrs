@@ -1,6 +1,6 @@
 [package]
 name = "hyperevolution"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2024"
 description = "Exact-aware evolutionary and proposal-search carriers for the Hyper ecosystem"
 license = "Apache-2.0"
@@ -13,8 +13,10 @@ categories = ["algorithms", "science", "simulation"]
 # Hyper ecosystem dependencies: keep the crate-official release references and
 # the commented workspace references below. Switch to the workspace form for
 # local development, then switch back to crates.io versions before publishing.
-hyperreal = { version = "0.12.0" }
-# hyperreal = { path = "../hyperreal" }
+# Hyper sibling dependency switch: keep both local path and crates.io lines; do not remove either.
+# Development mode uses the local path line. For release, comment it and uncomment the crates.io line.
+hyperreal = { path = "../hyperreal" }
+# hyperreal = { version = "0.13.0" }
 [dev-dependencies]
 proptest = "1.7.0"
 
