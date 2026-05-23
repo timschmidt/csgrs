@@ -964,9 +964,9 @@ fn boundary_point_sets_equal(left: &[Point3; 3], right: &[Point3; 3]) -> Option<
 /// Two closed solids often share a face that is not a single triangle in
 /// either source. The current bounded grammar accepts small triangulated disks
 /// whose exposed boundary is one strictly convex projected loop, including
-/// quadrilateral cross-diagonals, one-sided quad fans, and pentagonal fan or
-/// boundary-ear triangulations. This is still not the arbitrary coplanar
-/// arrangement materializer: every source subset must be a source-owned disk,
+/// quadrilateral cross-diagonals, one-sided quad fans, and pentagonal or
+/// hexagonal fan/boundary-ear triangulations. This is still not the arbitrary
+/// coplanar arrangement materializer: every source subset must be a source-owned disk,
 /// all vertices must replay on or strictly inside the retained boundary, and
 /// exact signed projected areas must cancel across operands.
 ///
@@ -1021,6 +1021,9 @@ struct PolygonPatchCandidate {
     signed_area2: ExactReal,
     area_abs: ExactReal,
 }
+
+const MAX_POLYGON_PATCH_FACES: usize = 6;
+const MAX_POLYGON_PATCH_BOUNDARY: usize = 6;
 
 fn polygon_patch_candidates(
     mesh: &ExactMesh,
@@ -1080,7 +1083,7 @@ fn collect_polygon_patch_candidates(
     seen: &mut BTreeSet<Vec<usize>>,
     candidates: &mut Vec<PolygonPatchCandidate>,
 ) -> Option<()> {
-    if (2..=5).contains(&selected.len()) {
+    if (2..=MAX_POLYGON_PATCH_FACES).contains(&selected.len()) {
         let mut key = selected.clone();
         key.sort_unstable();
         if seen.insert(key.clone())
@@ -1089,7 +1092,7 @@ fn collect_polygon_patch_candidates(
             candidates.push(candidate);
         }
     }
-    if selected.len() == 5 {
+    if selected.len() == MAX_POLYGON_PATCH_FACES {
         return Some(());
     }
 
@@ -1132,7 +1135,7 @@ fn polygon_patch_candidate(
         .iter()
         .filter_map(|(&edge, &count)| (count == 1).then_some(edge))
         .collect::<Vec<_>>();
-    if !(3..=6).contains(&boundary_edges.len()) {
+    if !(3..=MAX_POLYGON_PATCH_BOUNDARY).contains(&boundary_edges.len()) {
         return Some(None);
     }
     let Some(boundary_vertices) = order_boundary_vertices(&boundary_edges) else {
