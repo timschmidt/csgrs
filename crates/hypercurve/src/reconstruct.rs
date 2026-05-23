@@ -166,6 +166,37 @@ impl BulgeVertex2 {
 }
 
 impl CurveString2 {
+    /// Constructs an open line-segment curve string from hyperreal points.
+    ///
+    /// This is the native counterpart to [`CurveString2::from_finite_line_string`].
+    /// It keeps already-promoted coordinates in `Real` form and builds exact-aware
+    /// line segments directly.
+    pub fn from_real_line_string(points: &[[Real; 2]]) -> CurveResult<Self> {
+        if points.len() < 2 {
+            return Err(CurveError::InsufficientVertices);
+        }
+
+        let mut segments = Vec::with_capacity(points.len() - 1);
+        for edge in points.windows(2) {
+            let start = point_from_real_xy(&edge[0]);
+            let end = point_from_real_xy(&edge[1]);
+            if let Ok(line) = crate::LineSeg2::try_new(start, end) {
+                segments.push(crate::Segment2::Line(line));
+            }
+        }
+        Self::try_new(segments)
+    }
+
+    /// Constructs an open line-segment curve string from an iterator of
+    /// hyperreal points.
+    pub fn from_real_point_iter<I>(points: I) -> CurveResult<Self>
+    where
+        I: IntoIterator<Item = [Real; 2]>,
+    {
+        let points = points.into_iter().collect::<Vec<_>>();
+        Self::from_real_line_string(&points)
+    }
+
     /// Constructs an open line-segment curve string from finite `f64` points.
     ///
     /// This is an API-boundary import adapter: primitive floats are accepted at
@@ -234,6 +265,43 @@ impl CurveString2 {
 }
 
 impl Contour2 {
+    /// Constructs a closed straight-segment contour from hyperreal ring points.
+    ///
+    /// A repeated final point equal to the first point is accepted and removed
+    /// before native contour construction. Unlike [`Contour2::from_finite_ring`],
+    /// this constructor does not cross a primitive-float boundary.
+    pub fn from_real_ring(points: &[[Real; 2]]) -> CurveResult<Self> {
+        Self::from_real_ring_with_fill_rule(points, FillRule::NonZero)
+    }
+
+    /// Constructs a closed straight-segment contour from hyperreal ring points
+    /// and an explicit fill rule.
+    pub fn from_real_ring_with_fill_rule(
+        points: &[[Real; 2]],
+        fill_rule: FillRule,
+    ) -> CurveResult<Self> {
+        if points.len() < 3 {
+            return Err(CurveError::InsufficientVertices);
+        }
+
+        let repeated_closing_point = points.len() > 1 && points.first() == points.last();
+        let end = if repeated_closing_point {
+            points.len() - 1
+        } else {
+            points.len()
+        };
+        if end < 3 {
+            return Err(CurveError::InsufficientVertices);
+        }
+
+        let vertices = points
+            .iter()
+            .take(end)
+            .map(|point| BulgeVertex2::new(point_from_real_xy(point), Real::zero()))
+            .collect::<Vec<_>>();
+        Self::from_bulge_vertices_with_fill_rule(&vertices, fill_rule)
+    }
+
     /// Constructs a closed straight-segment contour from finite `f64` ring points.
     ///
     /// A repeated final point equal to the first point is accepted and removed
@@ -388,6 +456,10 @@ fn point_from_finite_xy(point: [f64; 2]) -> CurveResult<Point2> {
         real_from_f64(point[0])?,
         real_from_f64(point[1])?,
     ))
+}
+
+fn point_from_real_xy(point: &[Real; 2]) -> Point2 {
+    Point2::new(point[0].clone(), point[1].clone())
 }
 
 fn sample_point(point: &Point2) -> CurveResult<SamplePoint> {
