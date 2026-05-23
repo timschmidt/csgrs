@@ -174,9 +174,12 @@ pub use predicates::nd::{
 pub use predicates::order::{
     compare_point2_lexicographic, compare_point2_lexicographic_report,
     compare_point2_lexicographic_report_with_policy, compare_point2_lexicographic_with_policy,
+    compare_point3_lexicographic, compare_point3_lexicographic_report,
+    compare_point3_lexicographic_report_with_policy, compare_point3_lexicographic_with_policy,
     compare_reals, compare_reals_report, compare_reals_report_with_policy,
     compare_reals_with_policy, point2_equal, point2_equal_report, point2_equal_report_with_policy,
-    point2_equal_with_policy, real_clamp, real_clamp_with_policy, real_ge, real_ge_with_policy,
+    point2_equal_with_policy, point3_equal, point3_equal_report, point3_equal_report_with_policy,
+    point3_equal_with_policy, real_clamp, real_clamp_with_policy, real_ge, real_ge_with_policy,
     real_le, real_le_with_policy, real_max, real_max_with_policy, real_min, real_min_with_policy,
 };
 pub use predicates::ring::{

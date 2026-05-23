@@ -6,7 +6,7 @@
 
 use core::cmp::Ordering;
 
-use crate::geometry::Point2;
+use crate::geometry::{Point2, Point3};
 use crate::predicate::{
     Certainty, Escalation, PredicateOutcome, PredicatePolicy, PredicateReport, RefinementNeed, Sign,
 };
@@ -317,6 +317,119 @@ pub fn point2_equal_report_with_policy(
     ))
 }
 
+/// Compare two 3D points lexicographically by `(x, y, z)`.
+pub fn compare_point3_lexicographic(left: &Point3, right: &Point3) -> PredicateOutcome<Ordering> {
+    compare_point3_lexicographic_with_policy(left, right, PredicatePolicy::default())
+}
+
+/// Compare two 3D points lexicographically with predicate provenance.
+pub fn compare_point3_lexicographic_report(
+    left: &Point3,
+    right: &Point3,
+) -> PredicateReport<Ordering> {
+    compare_point3_lexicographic_report_with_policy(left, right, PredicatePolicy::default())
+}
+
+/// Compare two 3D points lexicographically by `(x, y, z)` with an explicit
+/// policy.
+///
+/// This is the 3D counterpart to [`compare_point2_lexicographic`]. It composes
+/// exact Real ordering predicates for deterministic canonicalization and
+/// equality decisions without routing coordinate equality through an unrelated
+/// geometric primitive such as a zero-radius sphere.
+pub fn compare_point3_lexicographic_with_policy(
+    left: &Point3,
+    right: &Point3,
+    policy: PredicatePolicy,
+) -> PredicateOutcome<Ordering> {
+    compare_point3_lexicographic_report_with_policy(left, right, policy).outcome
+}
+
+/// Compare two 3D points lexicographically with an explicit policy and report.
+pub fn compare_point3_lexicographic_report_with_policy(
+    left: &Point3,
+    right: &Point3,
+    policy: PredicatePolicy,
+) -> PredicateReport<Ordering> {
+    match compare_reals_report_with_policy(&left.x, &right.x, policy).outcome {
+        PredicateOutcome::Decided {
+            value: Ordering::Equal,
+            certainty: x_certainty,
+            stage: x_stage,
+        } => match compare_reals_report_with_policy(&left.y, &right.y, policy).outcome {
+            PredicateOutcome::Decided {
+                value: Ordering::Equal,
+                certainty: y_certainty,
+                stage: y_stage,
+            } => match compare_reals_report_with_policy(&left.z, &right.z, policy).outcome {
+                PredicateOutcome::Decided {
+                    value,
+                    certainty: z_certainty,
+                    stage: z_stage,
+                } => PredicateReport::from_outcome(PredicateOutcome::decided(
+                    value,
+                    max_certainty(max_certainty(x_certainty, y_certainty), z_certainty),
+                    max_stage(max_stage(x_stage, y_stage), z_stage),
+                )),
+                PredicateOutcome::Unknown { needed, stage } => {
+                    PredicateReport::from_outcome(PredicateOutcome::unknown(needed, stage))
+                }
+            },
+            PredicateOutcome::Decided {
+                value,
+                certainty: y_certainty,
+                stage: y_stage,
+            } => PredicateReport::from_outcome(PredicateOutcome::decided(
+                value,
+                max_certainty(x_certainty, y_certainty),
+                max_stage(x_stage, y_stage),
+            )),
+            PredicateOutcome::Unknown { needed, stage } => {
+                PredicateReport::from_outcome(PredicateOutcome::unknown(needed, stage))
+            }
+        },
+        decided_or_unknown => PredicateReport::from_outcome(decided_or_unknown),
+    }
+}
+
+/// Return whether two 3D points have equal coordinates.
+pub fn point3_equal(left: &Point3, right: &Point3) -> PredicateOutcome<bool> {
+    point3_equal_with_policy(left, right, PredicatePolicy::default())
+}
+
+/// Return whether two 3D points have equal coordinates with provenance.
+pub fn point3_equal_report(left: &Point3, right: &Point3) -> PredicateReport<bool> {
+    point3_equal_report_with_policy(left, right, PredicatePolicy::default())
+}
+
+/// Return whether two 3D points have equal coordinates with an explicit
+/// predicate escalation policy.
+///
+/// Point equality is an exact predicate over Real coordinate differences.
+/// Keeping the 3D form beside [`point2_equal`] gives callers a direct semantic
+/// API for vertex identity and normal-row deduplication instead of requiring a
+/// zero-radius sphere classification.
+pub fn point3_equal_with_policy(
+    left: &Point3,
+    right: &Point3,
+    policy: PredicatePolicy,
+) -> PredicateOutcome<bool> {
+    point3_equal_report_with_policy(left, right, policy).outcome
+}
+
+/// Return whether two 3D points have equal coordinates with explicit policy
+/// and provenance.
+pub fn point3_equal_report_with_policy(
+    left: &Point3,
+    right: &Point3,
+    policy: PredicatePolicy,
+) -> PredicateReport<bool> {
+    PredicateReport::from_outcome(map_outcome(
+        compare_point3_lexicographic_report_with_policy(left, right, policy).outcome,
+        |ordering| ordering == Ordering::Equal,
+    ))
+}
+
 #[inline(always)]
 fn ordering_from_sign(sign: Sign) -> Ordering {
     match sign {
@@ -416,9 +529,32 @@ mod tests {
     }
 
     #[test]
+    fn point3_lexicographic_ordering_uses_z_as_second_tie_breaker() {
+        let left = Point3::new(real(1), real(4), real(6));
+        let right = Point3::new(real(1), real(4), real(7));
+
+        assert_eq!(
+            compare_point3_lexicographic(&left, &right).value(),
+            Some(Ordering::Less)
+        );
+    }
+
+    #[test]
+    fn point3_equal_uses_exact_coordinate_ordering() {
+        let left = Point3::new(real(1), real(4), real(6));
+        let same = Point3::new(real(1), real(4), real(6));
+        let different = Point3::new(real(1), real(4), real(7));
+
+        assert_eq!(point3_equal(&left, &same).value(), Some(true));
+        assert_eq!(point3_equal(&left, &different).value(), Some(false));
+    }
+
+    #[test]
     fn point_ordering_and_equality_reports_match_outcome_apis() {
         let left = Point2::new(real(1), real(4));
         let right = Point2::new(real(1), real(5));
+        let left3 = Point3::new(real(1), real(4), real(6));
+        let right3 = Point3::new(real(1), real(4), real(7));
 
         assert_eq!(
             compare_point2_lexicographic_report(&left, &right).value(),
@@ -427,6 +563,14 @@ mod tests {
         assert_eq!(
             point2_equal_report(&left, &right).value(),
             point2_equal(&left, &right).value()
+        );
+        assert_eq!(
+            compare_point3_lexicographic_report(&left3, &right3).value(),
+            compare_point3_lexicographic(&left3, &right3).value()
+        );
+        assert_eq!(
+            point3_equal_report(&left3, &right3).value(),
+            point3_equal(&left3, &right3).value()
         );
     }
 
