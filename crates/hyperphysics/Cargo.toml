@@ -1,6 +1,6 @@
 [package]
 name = "hyperphysics"
-version = "0.2.1"
+version = "0.3.0"
 edition = "2024"
 description = "Hyperreal-backed physical simulation primitives"
 authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
@@ -11,17 +11,18 @@ keywords = ["physics", "simulation", "hyperreal", "dynamics"]
 categories = ["science", "simulation", "mathematics"]
 
 [dependencies]
-# Hyper ecosystem dependencies: keep the crate-official release references and
-# the commented workspace references below. Switch to the workspace form for
-# local development, then switch back to crates.io versions before publishing.
+# Hyper sibling dependency switch: keep both local path and crates.io lines; do not remove either.
+# Development mode uses the local path lines. For release, comment those and uncomment the crates.io lines.
 hyperlattice = { path = "../hyperlattice" }
 hyperlimit = { path = "../hyperlimit" }
 hypermesh = { path = "../hypermesh", default-features = false, features = ["exact"] }
-hyperreal = { version = "0.12.0" }
-hypersolve = { version = "0.2.0" }
-# hyperlattice = { path = "../hyperlattice" }
-# hyperreal = { path = "../hyperreal" }
-# hypersolve = { path = "../hypersolve" }
+hyperreal = { path = "../hyperreal" }
+hypersolve = { path = "../hypersolve" }
+# hyperlattice = { version = "0.6.0" }
+# hyperlimit = { version = "0.4.0" }
+# hypermesh = { version = "0.3.0", default-features = false, features = ["exact"] }
+# hyperreal = { version = "0.13.0" }
+# hypersolve = { version = "0.3.0" }
 [dev-dependencies]
 proptest = "1.7.0"
 
