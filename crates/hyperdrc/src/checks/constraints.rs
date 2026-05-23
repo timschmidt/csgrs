@@ -20,6 +20,7 @@ use super::impedance::{ImpedanceModel, estimate_single_ended_impedance};
 use super::net_class::resolve_net_classes;
 use super::net_scope::{matching_class_indexes_for_feature, net_class_region_diagnostics};
 use super::spatial::CopperSpatialIndex;
+use crate::PcbSketchExt;
 use crate::constraint_policy::{
     DifferentialRole, FabricationCapabilityConfig, NetClassConfig, StackupConfig, StackupLayerKind,
     SurfaceFinish,
@@ -2003,7 +2004,7 @@ mod tests {
         DifferentialRole, FabricationCapabilityConfig, NetClassConfig, NetClassRegionConfig,
         StackupConfig, StackupLayerConfig, StackupLayerKind, SurfaceFinish,
     };
-    use crate::geometry::{circle_polygon, line_polygon, polygons_to_sketch, rect_polygon};
+    use crate::geometry::{circle_polygon, line_polygon, polygons_to_profile, rect_polygon};
     use crate::kicad::{BoardModel, CopperFeature, CopperKind};
 
     use super::{net_constraint_readiness, stackup_readiness};
@@ -2383,7 +2384,7 @@ mod tests {
             layer: "F.Cu".to_string(),
             net: Some("SIG".to_string()),
             kind: CopperKind::Segment,
-            sketch: polygons_to_sketch(vec![polygon], None),
+            sketch: polygons_to_profile(vec![polygon], None),
             location: [1.5, 2.0],
         }]);
 
@@ -3299,7 +3300,7 @@ mod tests {
             layer: layer.to_string(),
             net: Some(net.to_string()),
             kind,
-            sketch: polygons_to_sketch(vec![polygon], None),
+            sketch: polygons_to_profile(vec![polygon], None),
             location: center,
         }
     }

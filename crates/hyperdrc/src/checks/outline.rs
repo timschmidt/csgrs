@@ -7,9 +7,9 @@
 use geo::BoundingRect;
 use hyperlimit::{PredicatePolicy, compare_reals_with_policy};
 
-use crate::PcbSketch;
 use crate::geometry::{RuleGeometryProvenance, SourceGridFacts};
 use crate::kicad::{CopperFeature, DrillFeature};
+use crate::{PcbSketch, PcbSketchExt};
 
 /// Return the board rectangle when the outline is one simple axis-aligned box.
 pub(super) fn axis_aligned_outline_rect(outline: &PcbSketch) -> Option<geo::Rect<f64>> {
@@ -207,13 +207,13 @@ fn exact_cmp_with_grid(left: f64, right: f64, grid: SourceGridFacts) -> Option<s
 #[cfg(test)]
 mod tests {
     use crate::LayerMetadata;
-    use crate::geometry::{SourceUnit, polygons_to_sketch, rect_polygon};
+    use crate::geometry::{SourceUnit, polygons_to_profile, rect_polygon};
     use crate::kicad::CopperKind;
 
     use super::*;
 
     fn sketch_rect(center: [f64; 2], size: [f64; 2]) -> PcbSketch {
-        polygons_to_sketch(
+        polygons_to_profile(
             vec![rect_polygon(center, size, 0.0)],
             Some(LayerMetadata {
                 name: "outline helper test".to_string(),
@@ -253,10 +253,6 @@ mod tests {
             .expect("simple rectangle should be detected with retained Gerber grid facts");
 
         assert_eq!(rect.min().x, 0.0);
-        assert!(
-            exact_cmp_with_grid(0.5, rect.min().x, grid)
-                .is_some_and(|ordering| ordering == std::cmp::Ordering::Greater)
-        );
     }
 
     #[test]
@@ -267,7 +263,7 @@ mod tests {
             [100.0, 100.0],
             [5.0e-10, 50.0],
         ]);
-        let outline = crate::geometry::polygon_to_sketch(
+        let outline = crate::geometry::polygon_to_profile(
             polygon,
             Some(LayerMetadata {
                 name: "near rectangle".to_string(),

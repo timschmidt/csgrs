@@ -14,10 +14,10 @@ use std::collections::BTreeMap;
 
 use geo::{Area, BoundingRect};
 
-use crate::geometry::{circle_polygon, multipolygon_to_shapes, polygons_to_sketch};
+use crate::geometry::{circle_polygon, multipolygon_to_shapes, polygons_to_profile};
 use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
 use crate::report::{Severity, Violation};
-use crate::{LayerMetadata, PcbSketch};
+use crate::{LayerMetadata, PcbSketch, PcbSketchExt};
 
 use super::spatial::CopperSpatialIndex;
 
@@ -212,7 +212,7 @@ fn selected_copper_features<'a>(
 }
 
 fn drill_keepout_sketch(drill: &DrillFeature) -> PcbSketch {
-    polygons_to_sketch(
+    polygons_to_profile(
         vec![circle_polygon(drill.location, drill.diameter / 2.0, 32)],
         Some(LayerMetadata {
             name: "non-plated drill continuity keepout".to_string(),
@@ -231,7 +231,7 @@ fn rects_overlap(left: &geo::Rect<f64>, right: &geo::Rect<f64>) -> bool {
 mod tests {
     use super::{different_net_short_readiness, same_net_drill_break_readiness};
     use crate::LayerMetadata;
-    use crate::geometry::{circle_polygon, line_polygon, polygons_to_sketch, rect_polygon};
+    use crate::geometry::{circle_polygon, line_polygon, polygons_to_profile, rect_polygon};
     use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
 
     #[test]
@@ -444,7 +444,7 @@ mod tests {
             net: Some(net.to_string()),
             kind: CopperKind::Segment,
             location: [(start[0] + end[0]) / 2.0, (start[1] + end[1]) / 2.0],
-            sketch: polygons_to_sketch(
+            sketch: polygons_to_profile(
                 vec![line_polygon(start, end, width).expect("segment should be valid")],
                 Some(LayerMetadata {
                     name: "segment".to_string(),
@@ -459,7 +459,7 @@ mod tests {
             net: Some(net.to_string()),
             kind: CopperKind::Zone,
             location,
-            sketch: polygons_to_sketch(
+            sketch: polygons_to_profile(
                 vec![rect_polygon(location, size, 0.0)],
                 Some(LayerMetadata {
                     name: "zone".to_string(),
@@ -483,7 +483,7 @@ mod tests {
             net: net.map(str::to_string),
             kind: CopperKind::Pad,
             location,
-            sketch: polygons_to_sketch(
+            sketch: polygons_to_profile(
                 vec![rect_polygon(location, size, 0.0)],
                 Some(LayerMetadata {
                     name: "pad".to_string(),
@@ -508,7 +508,7 @@ mod tests {
             net: Some(net.to_string()),
             kind: CopperKind::Via,
             location,
-            sketch: polygons_to_sketch(
+            sketch: polygons_to_profile(
                 vec![circle_polygon(location, diameter / 2.0, 32)],
                 Some(LayerMetadata {
                     name: "via".to_string(),

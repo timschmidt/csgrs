@@ -14,12 +14,12 @@ use hyperlimit::{PredicatePolicy, compare_reals_with_policy};
 
 use crate::geometry::{
     RuleGeometryProvenance, SourceGridFacts, SourceUnit, circle_polygon, multipolygon_to_shapes,
-    polygons_to_sketch,
+    polygons_to_profile,
 };
 use crate::ipc356::Ipc356Point;
 use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
 use crate::report::{Severity, Violation};
-use crate::{LayerMetadata, PcbSketch};
+use crate::{LayerMetadata, PcbSketch, PcbSketchExt};
 
 use super::outline::{axis_aligned_outline_rect_with_grid, drill_keepout_inside_rect_with_grid};
 use super::spatial::{CopperSpatialIndex, DrillSpatialIndex, PointSpatialIndex};
@@ -312,7 +312,7 @@ pub fn drill_to_copper_clearance_with_grid(
             }
 
             let keepout = keepout.get_or_insert_with(|| {
-                polygons_to_sketch(
+                polygons_to_profile(
                     vec![circle_polygon(drill.location, keepout_radius, 64)],
                     Some(LayerMetadata {
                         name: "drill keepout".to_string(),
@@ -509,7 +509,7 @@ pub fn board_outline_drill_clearance_with_grid(
             continue;
         }
 
-        let keepout = polygons_to_sketch(
+        let keepout = polygons_to_profile(
             vec![circle_polygon(
                 drill.location,
                 drill.diameter / 2.0 + clearance,
@@ -572,7 +572,7 @@ pub fn castellation_intent(board: &BoardModel, min_area: f64) -> Vec<Violation> 
         }
         plated_holes += 1;
 
-        let hole = polygons_to_sketch(
+        let hole = polygons_to_profile(
             vec![circle_polygon(drill.location, drill.diameter / 2.0, 64)],
             Some(LayerMetadata {
                 name: "plated drill hole".to_string(),
@@ -636,7 +636,7 @@ pub fn castellation_hole_readiness(
         }
         undersized_plated_holes += 1;
 
-        let hole = polygons_to_sketch(
+        let hole = polygons_to_profile(
             vec![circle_polygon(drill.location, drill.diameter / 2.0, 64)],
             Some(LayerMetadata {
                 name: "plated drill hole".to_string(),
@@ -811,7 +811,7 @@ pub fn drills_to_sketch(drills: &[DrillFeature], name: &str) -> PcbSketch {
         .map(|drill| circle_polygon(drill.location, drill.diameter / 2.0, 48))
         .collect::<Vec<_>>();
 
-    polygons_to_sketch(
+    polygons_to_profile(
         polygons,
         Some(LayerMetadata {
             name: name.to_string(),
@@ -918,7 +918,7 @@ mod tests {
     };
     use crate::LayerMetadata;
     use crate::geometry::{
-        SourceGridFacts, SourceUnit, line_polygon, polygons_to_sketch, rect_polygon,
+        SourceGridFacts, SourceUnit, line_polygon, polygons_to_profile, rect_polygon,
     };
     use crate::ipc356::Ipc356Point;
     use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
@@ -1133,7 +1133,7 @@ mod tests {
     }
 
     fn sketch(polygons: Vec<geo::Polygon<f64>>) -> crate::PcbSketch {
-        polygons_to_sketch(
+        polygons_to_profile(
             polygons,
             Some(LayerMetadata {
                 name: "outline".to_string(),
@@ -1157,7 +1157,7 @@ mod tests {
             net: Some(net.to_string()),
             kind: CopperKind::Segment,
             location: [(start[0] + end[0]) / 2.0, (start[1] + end[1]) / 2.0],
-            sketch: polygons_to_sketch(
+            sketch: polygons_to_profile(
                 vec![line_polygon(start, end, width).expect("test segment should be valid")],
                 Some(LayerMetadata {
                     name: "segment".to_string(),
@@ -1172,7 +1172,7 @@ mod tests {
             net: Some(net.to_string()),
             kind: CopperKind::Pad,
             location,
-            sketch: polygons_to_sketch(
+            sketch: polygons_to_profile(
                 vec![rect_polygon(location, size, 0.0)],
                 Some(LayerMetadata {
                     name: "pad".to_string(),

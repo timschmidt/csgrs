@@ -13,10 +13,10 @@ use geo::BoundingRect;
 
 use super::distance::polygon_boundary_distance;
 use super::spatial::CopperSpatialIndex;
-use crate::LayerMetadata;
-use crate::geometry::{multipolygon_to_shapes, polygons_to_sketch};
+use crate::geometry::{multipolygon_to_shapes, polygons_to_profile};
 use crate::kicad::{BoardModel, CopperFeature, CopperKind};
 use crate::report::{Severity, Violation};
+use crate::{LayerMetadata, PcbSketchExt};
 
 /// Warn when a likely high-speed segment crosses separated ground-zone islands.
 ///
@@ -101,7 +101,7 @@ pub fn split_plane_crossing_readiness(
             .iter()
             .flat_map(|zone| zone.feature.sketch.to_multipolygon().0)
             .collect::<Vec<_>>();
-        let ground = polygons_to_sketch(
+        let ground = polygons_to_profile(
             ground_polygons,
             Some(LayerMetadata {
                 name: "nearby KiCad ground zones".to_string(),
@@ -346,7 +346,7 @@ mod tests {
             net: Some(net.to_string()),
             kind: CopperKind::Segment,
             location: [(start[0] + end[0]) / 2.0, (start[1] + end[1]) / 2.0],
-            sketch: polygons_to_sketch(
+            sketch: polygons_to_profile(
                 vec![line_polygon(start, end, width).expect("test segment should be valid")],
                 Some(LayerMetadata {
                     name: "test segment".to_string(),
@@ -361,7 +361,7 @@ mod tests {
             net: Some(net.to_string()),
             kind: CopperKind::Zone,
             location: center,
-            sketch: polygons_to_sketch(
+            sketch: polygons_to_profile(
                 vec![rect_polygon(center, size, 0.0)],
                 Some(LayerMetadata {
                     name: "test zone".to_string(),
@@ -484,7 +484,7 @@ mod tests {
                 net: Some("USB_DP".to_string()),
                 kind: CopperKind::Via,
                 location: [8.0, 0.0],
-                sketch: polygons_to_sketch(
+                sketch: polygons_to_profile(
                     vec![rect_polygon([8.0, 0.0], [0.20, 0.20], 0.0)],
                     Some(LayerMetadata {
                         name: "test via".to_string(),

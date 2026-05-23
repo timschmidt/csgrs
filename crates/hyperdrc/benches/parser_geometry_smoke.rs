@@ -61,7 +61,7 @@ use hyperdrc::constraint_policy::{
 use hyperdrc::excellon::parse_excellon_report;
 use hyperdrc::geometry::{
     arc_line_polygons, bezier_line_polygons, chamfered_rect_polygon, circle_polygon, line_polygon,
-    polygons_to_sketch, rect_polygon, rounded_rect_polygon, trapezoid_polygon,
+    polygons_to_profile, rect_polygon, rounded_rect_polygon, trapezoid_polygon,
 };
 use hyperdrc::gerber_metadata::parse_gerber_metadata_report;
 use hyperdrc::ipc356::{
@@ -113,7 +113,7 @@ fn main() {
                 0.08,
                 8,
             ));
-            let _ = polygons_to_sketch(
+            let _ = polygons_to_profile(
                 polygons,
                 Some(LayerMetadata {
                     name: "bench".to_string(),
@@ -256,7 +256,7 @@ fn main() {
             let y = (index / 4) as f64 * 12.0;
             (
                 format!("bench-layer-{index}"),
-                polygons_to_sketch(
+                polygons_to_profile(
                     vec![rect_polygon([x, y], [8.0, 8.0], 0.0)],
                     Some(LayerMetadata {
                         name: format!("bench-layer-{index}"),
@@ -270,7 +270,7 @@ fn main() {
             let _ = duplicate_layer_geometry_readiness(&duplicate_layers, 1.0e-9);
         }
     });
-    let duplicate_island_layer = polygons_to_sketch(
+    let duplicate_island_layer = polygons_to_profile(
         (0..100)
             .flat_map(|index| {
                 let x = (index % 10) as f64 * 0.5;
@@ -292,7 +292,7 @@ fn main() {
             );
         }
     });
-    let tiny_feature_layer = polygons_to_sketch(
+    let tiny_feature_layer = polygons_to_profile(
         (0..100)
             .map(|index| {
                 let x = (index % 10) as f64 * 0.2;
@@ -309,7 +309,7 @@ fn main() {
             let _ = tiny_layer_feature_readiness("bench tiny features", &tiny_feature_layer, 0.01);
         }
     });
-    let skinny_feature_layer = polygons_to_sketch(
+    let skinny_feature_layer = polygons_to_profile(
         (0..100)
             .map(|index| {
                 let x = (index % 10) as f64 * 0.5;
@@ -335,7 +335,7 @@ fn main() {
     let density_layers = vec![
         (
             "F.Cu".to_string(),
-            polygons_to_sketch(
+            polygons_to_profile(
                 vec![rect_polygon([25.0, 25.0], [50.0, 50.0], 0.0)],
                 Some(LayerMetadata {
                     name: "F.Cu".to_string(),
@@ -344,7 +344,7 @@ fn main() {
         ),
         (
             "B.Cu".to_string(),
-            polygons_to_sketch(
+            polygons_to_profile(
                 vec![rect_polygon([25.0, 25.0], [8.0, 8.0], 0.0)],
                 Some(LayerMetadata {
                     name: "B.Cu".to_string(),
@@ -383,7 +383,7 @@ fn main() {
             let _ = copper_net_intent(&sparse_copper_intent_board, &[]);
         }
     });
-    let sparse_apertures = polygons_to_sketch(
+    let sparse_apertures = polygons_to_profile(
         (0..2_000)
             .map(|index| rect_polygon([100.0 + index as f64 * 3.0, 10.0], [0.5, 0.5], 0.0))
             .chain([
@@ -401,13 +401,13 @@ fn main() {
                 paste_aperture_spacing("bench sparse apertures", &sparse_apertures, 0.10, 1.0e-9);
         }
     });
-    let sparse_ratio_copper = polygons_to_sketch(
+    let sparse_ratio_copper = polygons_to_profile(
         vec![rect_polygon([0.5, 0.5], [1.0, 1.0], 0.0)],
         Some(LayerMetadata {
             name: "bench sparse ratio copper".to_string(),
         }),
     );
-    let sparse_cover_copper = polygons_to_sketch(
+    let sparse_cover_copper = polygons_to_profile(
         (0..2_000)
             .map(|index| rect_polygon([100.0 + index as f64 * 3.0, 10.0], [0.5, 0.5], 0.0))
             .chain([rect_polygon([0.4, 0.5], [0.8, 1.0], 0.0)])
@@ -550,7 +550,7 @@ fn main() {
             let _ = mask_island_keepout("bench sparse apertures", &sparse_apertures, 0.10, 1.0e-9);
         }
     });
-    let sparse_silk = polygons_to_sketch(
+    let sparse_silk = polygons_to_profile(
         vec![
             line_polygon([-0.2, 0.5], [1.2, 0.5], 0.08)
                 .expect("benchmark silkscreen line should be valid"),
@@ -588,7 +588,7 @@ fn main() {
                 silkscreen_text_height_readiness("bench sparse silk", &sparse_silk, 0.80, 1.0e-9);
         }
     });
-    let tombstone_copper = polygons_to_sketch(
+    let tombstone_copper = polygons_to_profile(
         (0..1_000)
             .map(|index| {
                 let x = 100.0 + index as f64 * 5.0;
@@ -603,7 +603,7 @@ fn main() {
             name: "bench tombstone copper".to_string(),
         }),
     );
-    let tombstone_paste = polygons_to_sketch(
+    let tombstone_paste = polygons_to_profile(
         vec![
             rect_polygon([0.5, 0.5], [1.0, 1.0], 0.0),
             rect_polygon([1.65, 0.5], [0.5, 1.0], 0.0),
@@ -637,7 +637,7 @@ fn main() {
         board_outline: None,
         panel_features: None,
     };
-    let paste_via_sparse_paste = polygons_to_sketch(
+    let paste_via_sparse_paste = polygons_to_profile(
         (0..2_000)
             .map(|index| {
                 let x = 100.0 + index as f64 * 5.0;
@@ -649,7 +649,7 @@ fn main() {
             name: "bench paste via sparse paste".to_string(),
         }),
     );
-    let thermal_pad_windowpane_copper = polygons_to_sketch(
+    let thermal_pad_windowpane_copper = polygons_to_profile(
         vec![rect_polygon([0.0, 0.0], [4.0, 4.0], 0.0)],
         Some(LayerMetadata {
             name: "bench thermal copper".to_string(),
@@ -1177,7 +1177,7 @@ fn main() {
             .chain([bench_pad("U_NEAR", [0.65, 100.0], [0.3, 0.3])])
             .collect(),
         drills: Vec::new(),
-        board_outline: Some(polygons_to_sketch(
+        board_outline: Some(polygons_to_profile(
             vec![rect_polygon([100.0, 100.0], [200.0, 200.0], 0.0)],
             Some(LayerMetadata {
                 name: "bench component edge outline".to_string(),
@@ -1251,7 +1251,7 @@ fn main() {
             .chain([bench_pad("USB_D_P", [0.7, 8.3], [0.6, 0.6])])
             .collect(),
         drills: Vec::new(),
-        board_outline: Some(polygons_to_sketch(
+        board_outline: Some(polygons_to_profile(
             vec![rect_polygon([10.0, 10.0], [20.0, 20.0], 0.0)],
             Some(LayerMetadata {
                 name: "bench connector outline".to_string(),
@@ -1271,7 +1271,7 @@ fn main() {
             .chain([bench_segment("USB_D_P", [0.1, 1.0], [0.9, 1.0], 0.10)])
             .collect(),
         drills: Vec::new(),
-        board_outline: Some(polygons_to_sketch(
+        board_outline: Some(polygons_to_profile(
             vec![rect_polygon([5.0, 5.0], [10.0, 10.0], 0.0)],
             Some(LayerMetadata {
                 name: "bench edge-stitch outline".to_string(),
@@ -1300,7 +1300,7 @@ fn main() {
             .chain([bench_pad("EDGE", [99.95, 50.0], [0.30, 0.30])])
             .collect(),
         drills: Vec::new(),
-        board_outline: Some(polygons_to_sketch(
+        board_outline: Some(polygons_to_profile(
             vec![rect_polygon([50.0, 50.0], [100.0, 100.0], 0.0)],
             Some(LayerMetadata {
                 name: "bench rectangular edge outline".to_string(),
@@ -1324,7 +1324,7 @@ fn main() {
             .chain([bench_segment("PCIE_RX0", [0.10, 50.0], [0.90, 50.0], 0.10)])
             .collect(),
         drills: Vec::new(),
-        board_outline: Some(polygons_to_sketch(
+        board_outline: Some(polygons_to_profile(
             vec![rect_polygon([50.0, 50.0], [100.0, 100.0], 0.0)],
             Some(LayerMetadata {
                 name: "bench rectangular high-speed edge outline".to_string(),
@@ -1349,7 +1349,7 @@ fn main() {
             .chain([bench_segment("MAINS_L", [0.20, 50.0], [1.0, 50.0], 0.10)])
             .collect(),
         drills: Vec::new(),
-        board_outline: Some(polygons_to_sketch(
+        board_outline: Some(polygons_to_profile(
             vec![rect_polygon([50.0, 50.0], [100.0, 100.0], 0.0)],
             Some(LayerMetadata {
                 name: "bench rectangular high-voltage edge outline".to_string(),
@@ -1443,7 +1443,7 @@ fn main() {
             })
             .collect(),
         drills: Vec::new(),
-        board_outline: Some(polygons_to_sketch(
+        board_outline: Some(polygons_to_profile(
             vec![rect_polygon([100.0, 100.0], [200.0, 200.0], 0.0)],
             Some(LayerMetadata {
                 name: "bench fiducial outline".to_string(),
@@ -1564,7 +1564,7 @@ fn main() {
                 },
             ])
             .collect(),
-        board_outline: Some(polygons_to_sketch(
+        board_outline: Some(polygons_to_profile(
             vec![rect_polygon([50.0, 50.0], [100.0, 100.0], 0.0)],
             Some(LayerMetadata {
                 name: "bench tooling outline".to_string(),
@@ -2105,7 +2105,7 @@ fn main() {
             bench_pad("USB_TVS_CLAMP", [1.6, 5.0], [0.4, 0.4]),
         ],
         drills: Vec::new(),
-        board_outline: Some(polygons_to_sketch(
+        board_outline: Some(polygons_to_profile(
             vec![rect_polygon([10.0, 10.0], [20.0, 20.0], 0.0)],
             Some(LayerMetadata {
                 name: "bench outline".to_string(),
@@ -2203,7 +2203,7 @@ fn main() {
         }
     });
 
-    let neck_layer = polygons_to_sketch(
+    let neck_layer = polygons_to_profile(
         (0..120)
             .map(|index| {
                 let x = (index % 20) as f64 * 0.4;
@@ -2322,7 +2322,7 @@ fn main() {
             .collect(),
         drills: Vec::new(),
         board_outline: None,
-        panel_features: Some(polygons_to_sketch(
+        panel_features: Some(polygons_to_profile(
             vec![
                 line_polygon([0.0, -1.0], [0.0, 1.0], 0.05)
                     .expect("benchmark panel route line should be valid"),
@@ -2407,7 +2407,7 @@ fn main() {
             let _ = plating_intent(&plating_intent_board, &[], 0.05);
         }
     });
-    let drill_outline = polygons_to_sketch(
+    let drill_outline = polygons_to_profile(
         vec![rect_polygon([50.0, 50.0], [100.0, 100.0], 0.0)],
         Some(LayerMetadata {
             name: "bench outline".to_string(),
@@ -2615,7 +2615,7 @@ fn main() {
             })
             .chain([bench_drill([1.0, 5.0], 2.0, false)])
             .collect(),
-        board_outline: Some(polygons_to_sketch(
+        board_outline: Some(polygons_to_profile(
             vec![rect_polygon([5.0, 5.0], [10.0, 10.0], 0.0)],
             Some(LayerMetadata {
                 name: "bench mounting outline".to_string(),
@@ -2698,7 +2698,7 @@ fn main() {
             .chain([bench_pad("GOLD_FINGER_CENTER", [9.5, 9.5], [1.0, 1.0])])
             .collect(),
         drills: Vec::new(),
-        board_outline: Some(polygons_to_sketch(
+        board_outline: Some(polygons_to_profile(
             vec![rect_polygon([10.0, 10.0], [20.0, 20.0], 0.0)],
             Some(LayerMetadata {
                 name: "bench gold finger outline".to_string(),
@@ -2755,7 +2755,7 @@ fn main() {
             .chain([bench_pad("EDGE_PLATING", [0.25, 5.0], [0.2, 0.2])])
             .collect(),
         drills: Vec::new(),
-        board_outline: Some(polygons_to_sketch(
+        board_outline: Some(polygons_to_profile(
             vec![rect_polygon([5.0, 5.0], [10.0, 10.0], 0.0)],
             Some(LayerMetadata {
                 name: "bench edge plating outline".to_string(),
@@ -2773,13 +2773,13 @@ fn main() {
         source: "bench".to_string(),
         copper: Vec::new(),
         drills: Vec::new(),
-        board_outline: Some(polygons_to_sketch(
+        board_outline: Some(polygons_to_profile(
             vec![rect_polygon([5.0, 5.0], [10.0, 10.0], 0.0)],
             Some(LayerMetadata {
                 name: "bench panel outline".to_string(),
             }),
         )),
-        panel_features: Some(polygons_to_sketch(
+        panel_features: Some(polygons_to_profile(
             (0..1_000)
                 .map(|index| {
                     rect_polygon(
@@ -2814,7 +2814,7 @@ fn main() {
                 bench_drill([0.0, 3.7], 0.6, true),
             ])
             .collect(),
-        board_outline: Some(polygons_to_sketch(
+        board_outline: Some(polygons_to_profile(
             vec![rect_polygon([5.0, 2_000.0], [10.0, 4_100.0], 0.0)],
             Some(LayerMetadata {
                 name: "bench castellation outline".to_string(),
@@ -3626,7 +3626,7 @@ fn bench_segment_on_layer(
         net: Some(net.to_string()),
         kind: CopperKind::Segment,
         location: [(start[0] + end[0]) / 2.0, (start[1] + end[1]) / 2.0],
-        sketch: polygons_to_sketch(
+        sketch: polygons_to_profile(
             vec![line_polygon(start, end, width).expect("benchmark segment should be valid")],
             Some(LayerMetadata {
                 name: "bench segment".to_string(),
@@ -3665,7 +3665,7 @@ fn bench_unnetted_pad(location: [f64; 2], size: [f64; 2]) -> CopperFeature {
         net: None,
         kind: CopperKind::Pad,
         location,
-        sketch: polygons_to_sketch(
+        sketch: polygons_to_profile(
             vec![rect_polygon(location, size, 0.0)],
             Some(LayerMetadata {
                 name: "bench unnetted pad".to_string(),
@@ -3680,7 +3680,7 @@ fn bench_pad_on_layer(layer: &str, net: &str, location: [f64; 2], size: [f64; 2]
         net: Some(net.to_string()),
         kind: CopperKind::Pad,
         location,
-        sketch: polygons_to_sketch(
+        sketch: polygons_to_profile(
             vec![rect_polygon(location, size, 0.0)],
             Some(LayerMetadata {
                 name: "bench pad".to_string(),
@@ -3695,7 +3695,7 @@ fn bench_fiducial(location: [f64; 2], diameter: f64) -> CopperFeature {
         net: None,
         kind: CopperKind::Pad,
         location,
-        sketch: polygons_to_sketch(
+        sketch: polygons_to_profile(
             vec![rect_polygon(location, [diameter, diameter], 0.0)],
             Some(LayerMetadata {
                 name: "bench fiducial".to_string(),
@@ -3710,7 +3710,7 @@ fn bench_via(net: &str, location: [f64; 2], diameter: f64) -> CopperFeature {
         net: Some(net.to_string()),
         kind: CopperKind::Via,
         location,
-        sketch: polygons_to_sketch(
+        sketch: polygons_to_profile(
             vec![circle_polygon(location, diameter / 2.0, 32)],
             Some(LayerMetadata {
                 name: "bench via".to_string(),
@@ -3743,7 +3743,7 @@ fn bench_zone(net: &str, location: [f64; 2], size: [f64; 2]) -> CopperFeature {
         net: Some(net.to_string()),
         kind: CopperKind::Zone,
         location,
-        sketch: polygons_to_sketch(
+        sketch: polygons_to_profile(
             vec![rect_polygon(location, size, 0.0)],
             Some(LayerMetadata {
                 name: "bench zone".to_string(),

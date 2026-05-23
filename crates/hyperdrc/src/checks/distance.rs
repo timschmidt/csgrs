@@ -243,11 +243,6 @@ fn lift_coord(coord: Coord<f64>, provenance: RuleGeometryProvenance) -> Option<P
     ))
 }
 
-#[cfg(test)]
-fn exact_coords_equal(left: Coord<f64>, right: Coord<f64>) -> bool {
-    exact_coords_equal_with_grid(left, right, SourceGridFacts::PRIMITIVE_FLOAT_EDGE)
-}
-
 fn exact_coords_equal_with_grid(
     left: Coord<f64>,
     right: Coord<f64>,
@@ -388,8 +383,6 @@ mod tests {
             y: 0.0,
         };
 
-        assert!(super::exact_coords_equal(start, start));
-        assert!(!super::exact_coords_equal(start, end));
         assert_eq!(point_segment_distance(point, start, end), 0.0);
     }
 
@@ -427,14 +420,6 @@ mod tests {
             polygon_boundary_distance_with_grid(&left, &right, grid),
             0.0
         );
-        assert!(!super::exact_coords_equal_with_grid(
-            Coord { x: 0.0, y: 0.0 },
-            Coord {
-                x: 1.0e-200,
-                y: 0.0
-            },
-            grid,
-        ));
     }
 
     #[test]

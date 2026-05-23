@@ -11,6 +11,7 @@
 use csgrs::csg::CSG;
 use geo::BoundingRect;
 
+use crate::PcbSketchExt;
 use crate::checks::distance::polygon_boundary_distance;
 use crate::checks::spatial::CopperSpatialIndex;
 use crate::geometry::multipolygon_to_shapes;
@@ -454,7 +455,7 @@ fn sketches_within_clearance(
 #[cfg(test)]
 mod tests {
     use crate::LayerMetadata;
-    use crate::geometry::{line_polygon, polygons_to_sketch};
+    use crate::geometry::{line_polygon, polygons_to_profile};
     use crate::kicad::{BoardModel, CopperFeature, CopperKind};
 
     use super::{
@@ -677,7 +678,7 @@ mod tests {
             net: Some(net.to_string()),
             kind,
             location: [(start[0] + end[0]) / 2.0, (start[1] + end[1]) / 2.0],
-            sketch: polygons_to_sketch(
+            sketch: polygons_to_profile(
                 vec![line_polygon(start, end, width).expect("test line should be valid")],
                 Some(LayerMetadata {
                     name: "test line".to_string(),

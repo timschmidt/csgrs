@@ -18,10 +18,10 @@ use super::outline::{
 };
 use super::spatial::{CopperSpatialIndex, DrillSpatialIndex};
 use super::spread::maximum_point_spread;
-use crate::LayerMetadata;
-use crate::geometry::{circle_polygon, multipolygon_to_shapes, polygons_to_sketch};
+use crate::geometry::{circle_polygon, multipolygon_to_shapes, polygons_to_profile};
 use crate::kicad::{BoardModel, CopperFeature, DrillFeature};
 use crate::report::{Severity, Violation};
+use crate::{LayerMetadata, PcbSketchExt};
 
 /// Review likely mounting holes for nearby ground or chassis bonding copper.
 ///
@@ -500,7 +500,7 @@ pub fn panel_feature_outline_readiness(
     let mut exact_boundary_count = 0_usize;
     for polygon in panel_features.to_multipolygon().0 {
         feature_count += 1;
-        let feature = polygons_to_sketch(
+        let feature = polygons_to_profile(
             vec![polygon],
             Some(LayerMetadata {
                 name: "KiCad panel feature".to_string(),
@@ -853,7 +853,7 @@ fn feature_near_rect_outline(
 }
 
 fn drill_keepout(drill: &DrillFeature, keepout: f64) -> crate::PcbSketch {
-    polygons_to_sketch(
+    polygons_to_profile(
         vec![circle_polygon(
             drill.location,
             drill.diameter / 2.0 + keepout,
@@ -912,7 +912,7 @@ fn distance(start: [f64; 2], end: [f64; 2]) -> f64 {
 #[cfg(test)]
 mod tests {
     use crate::LayerMetadata;
-    use crate::geometry::{circle_polygon, polygons_to_sketch};
+    use crate::geometry::{circle_polygon, polygons_to_profile};
     use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
 
     use super::{
@@ -998,7 +998,7 @@ mod tests {
                 layer: "B.Cu".to_string(),
                 net: Some("SIG".to_string()),
                 kind: CopperKind::Pad,
-                sketch: polygons_to_sketch(
+                sketch: polygons_to_profile(
                     vec![circle_polygon([10.8, 10.0], 0.4, 32)],
                     Some(LayerMetadata {
                         name: "B.Cu pad".to_string(),
@@ -1043,7 +1043,7 @@ mod tests {
     #[test]
     fn mounting_hole_edge_clearance_reports_keepout_beyond_outline() {
         let mut board = board_with(vec![], vec![npth([1.0, 5.0], 2.0)]);
-        board.board_outline = Some(polygons_to_sketch(
+        board.board_outline = Some(polygons_to_profile(
             vec![crate::geometry::rect_polygon([5.0, 5.0], [10.0, 10.0], 0.0)],
             Some(LayerMetadata {
                 name: "outline".to_string(),
@@ -1064,7 +1064,7 @@ mod tests {
         let mut board = board_with(vec![], vec![npth([5.0, 5.0], 2.0)]);
         assert!(mounting_hole_edge_clearance_readiness(&board, 0.5, 1.0e-9).is_empty());
 
-        board.board_outline = Some(polygons_to_sketch(
+        board.board_outline = Some(polygons_to_profile(
             vec![crate::geometry::rect_polygon([5.0, 5.0], [10.0, 10.0], 0.0)],
             Some(LayerMetadata {
                 name: "outline".to_string(),
@@ -1262,7 +1262,7 @@ mod tests {
     #[test]
     fn panel_feature_outline_readiness_reports_missing_outline_or_interior_feature() {
         let mut missing_outline = board_with(vec![], vec![]);
-        missing_outline.panel_features = Some(polygons_to_sketch(
+        missing_outline.panel_features = Some(polygons_to_profile(
             vec![crate::geometry::rect_polygon([5.0, 5.0], [1.0, 1.0], 0.0)],
             Some(LayerMetadata {
                 name: "panel".to_string(),
@@ -1274,7 +1274,7 @@ mod tests {
 
         let mut interior = board_with(vec![], vec![]);
         interior.board_outline = Some(outline());
-        interior.panel_features = Some(polygons_to_sketch(
+        interior.panel_features = Some(polygons_to_profile(
             vec![crate::geometry::rect_polygon([5.0, 5.0], [1.0, 1.0], 0.0)],
             Some(LayerMetadata {
                 name: "panel".to_string(),
@@ -1295,7 +1295,7 @@ mod tests {
 
         let mut near_edge = board_with(vec![], vec![]);
         near_edge.board_outline = Some(outline());
-        near_edge.panel_features = Some(polygons_to_sketch(
+        near_edge.panel_features = Some(polygons_to_profile(
             vec![crate::geometry::rect_polygon([0.1, 5.0], [0.2, 2.0], 0.0)],
             Some(LayerMetadata {
                 name: "panel".to_string(),
@@ -1308,7 +1308,7 @@ mod tests {
     fn panel_feature_outline_readiness_handles_sparse_panel_artwork() {
         let mut board = board_with(vec![], vec![]);
         board.board_outline = Some(outline());
-        board.panel_features = Some(polygons_to_sketch(
+        board.panel_features = Some(polygons_to_profile(
             (0..1_000)
                 .map(|index| {
                     crate::geometry::rect_polygon(
@@ -1375,7 +1375,7 @@ mod tests {
                 layer: "B.Cu".to_string(),
                 net: Some("EDGE_PLATING".to_string()),
                 kind: CopperKind::Pad,
-                sketch: polygons_to_sketch(
+                sketch: polygons_to_profile(
                     vec![circle_polygon([0.25, 5.0], 0.2, 32)],
                     Some(LayerMetadata {
                         name: "B.Cu copper".to_string(),
@@ -1462,7 +1462,7 @@ mod tests {
         drills.push(pth([0.0, 3.0], 0.6, Some("CAST")));
         drills.push(pth([0.0, 3.7], 0.6, Some("CAST")));
         let mut board = board_with(vec![], drills);
-        board.board_outline = Some(polygons_to_sketch(
+        board.board_outline = Some(polygons_to_profile(
             vec![crate::geometry::rect_polygon(
                 [5.0, 4_000.0],
                 [10.0, 8_100.0],
@@ -1512,7 +1512,7 @@ mod tests {
     }
 
     fn outline() -> crate::PcbSketch {
-        polygons_to_sketch(
+        polygons_to_profile(
             vec![crate::geometry::rect_polygon([5.0, 5.0], [10.0, 10.0], 0.0)],
             Some(LayerMetadata {
                 name: "outline".to_string(),
@@ -1525,7 +1525,7 @@ mod tests {
             layer: "F.Cu".to_string(),
             net: Some(net.to_string()),
             kind,
-            sketch: polygons_to_sketch(
+            sketch: polygons_to_profile(
                 vec![circle_polygon(location, radius, 32)],
                 Some(LayerMetadata {
                     name: "F.Cu copper".to_string(),

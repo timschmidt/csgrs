@@ -1,7 +1,7 @@
 //! Geometry constructors used by parsers and checks.
 //!
 //! The module exposes a small, stable API over `geo` polygons. Submodules keep
-//! Sketch/report conversion code separate from primitive polygon generation.
+//! Profile/report conversion code separate from primitive polygon generation.
 
 mod primitives;
 mod sketch;
@@ -12,7 +12,7 @@ pub use primitives::{
     arc_line_polygons, bezier_line_polygons, chamfered_rect_polygon, circle_polygon, line_polygon,
     polygon_from_points, rect_polygon, rounded_rect_polygon, transform_polygon, trapezoid_polygon,
 };
-pub use sketch::{empty_sketch, polygon_to_sketch, polygons_to_sketch};
+pub use sketch::{empty_profile, polygon_to_profile, polygons_to_profile};
 pub use source_units::{
     ExactLiftKind, RuleGeometryProvenance, SourceGridFacts, SourceScalar, SourceUnit,
 };
@@ -25,11 +25,11 @@ mod tests {
 
     use super::{
         arc_line_polygons, bezier_line_polygons, chamfered_rect_polygon, circle_polygon,
-        empty_sketch, line_polygon, multipolygon_to_shapes, polygon_from_points, polygon_to_sketch,
-        polygons_to_sketch, rect_polygon, rounded_rect_polygon, transform_polygon,
-        trapezoid_polygon,
+        empty_profile, line_polygon, multipolygon_to_shapes, polygon_from_points,
+        polygon_to_profile, polygons_to_profile, rect_polygon, rounded_rect_polygon,
+        transform_polygon, trapezoid_polygon,
     };
-    use crate::LayerMetadata;
+    use crate::{LayerMetadata, PcbSketchExt};
 
     const EPS: f64 = 1.0e-9;
 
@@ -77,28 +77,28 @@ mod tests {
     }
 
     #[test]
-    fn sketch_wrappers_preserve_metadata_and_geometry() {
+    fn profile_constructors_preserve_metadata_and_geometry() {
         let square = polygon_from_points(vec![[0.0, 0.0], [2.0, 0.0], [2.0, 2.0], [0.0, 2.0]]);
         let triangle = polygon_from_points(vec![[10.0, 0.0], [11.0, 0.0], [10.0, 1.0]]);
-        let single = polygon_to_sketch(
+        let single = polygon_to_profile(
             square.clone(),
             Some(LayerMetadata {
                 name: "single".to_string(),
             }),
         );
-        let many = polygons_to_sketch(
+        let many = polygons_to_profile(
             vec![square.clone(), triangle],
             Some(LayerMetadata {
                 name: "many".to_string(),
             }),
         );
-        let empty = empty_sketch(Some(LayerMetadata {
+        let empty = empty_profile(Some(LayerMetadata {
             name: "empty".to_string(),
         }));
 
-        assert_eq!(single.metadata.as_ref().unwrap().name, "single");
-        assert_eq!(many.metadata.as_ref().unwrap().name, "many");
-        assert_eq!(empty.metadata.as_ref().unwrap().name, "empty");
+        assert_eq!(single.metadata().as_ref().unwrap().name, "single");
+        assert_eq!(many.metadata().as_ref().unwrap().name, "many");
+        assert_eq!(empty.metadata().as_ref().unwrap().name, "empty");
         assert_eq!(single.to_multipolygon().0.len(), 1);
         assert_eq!(many.to_multipolygon().0.len(), 2);
         assert!(empty.to_multipolygon().0.is_empty());
@@ -109,15 +109,15 @@ mod tests {
     }
 
     #[test]
-    fn sketch_wrappers_accept_empty_polygon_lists_without_losing_metadata() {
-        let sketch = polygons_to_sketch(
+    fn profile_constructors_accept_empty_polygon_lists_without_losing_metadata() {
+        let sketch = polygons_to_profile(
             Vec::new(),
             Some(LayerMetadata {
                 name: "empty multi".to_string(),
             }),
         );
 
-        assert_eq!(sketch.metadata.as_ref().unwrap().name, "empty multi");
+        assert_eq!(sketch.metadata().as_ref().unwrap().name, "empty multi");
         assert!(sketch.to_multipolygon().0.is_empty());
     }
 

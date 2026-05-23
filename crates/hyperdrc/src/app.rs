@@ -8299,7 +8299,7 @@ fn layer_pairs(layer_count: usize, raw_pairs: &[String]) -> Result<Vec<(usize, u
 }
 
 fn layer_name(layer: &Layer) -> String {
-    if let Some(metadata) = &layer.sketch.metadata {
+    if let Some(metadata) = layer.sketch.metadata() {
         return metadata.name.clone();
     }
 
@@ -8399,7 +8399,7 @@ mod tests {
 
     use crate::cli::{Check, Cli};
     use crate::config::{self, RuleOverrides};
-    use crate::geometry::{SourceGridFacts, SourceUnit, empty_sketch};
+    use crate::geometry::{SourceGridFacts, SourceUnit, empty_profile};
     use crate::io::{
         DiscoveredFile, IoAdapter, IoRole, SourceRecord, discover_gerber_dir,
         discover_package_sidecars, is_gerber_path,
@@ -8443,7 +8443,7 @@ mod tests {
             gerber_object_metadata: Vec::new(),
             gerber_attribute_deletes: Vec::new(),
             gerber_metadata_issues: Vec::new(),
-            sketch: empty_sketch(None),
+            sketch: empty_profile(None),
         }
     }
 
@@ -8475,7 +8475,7 @@ mod tests {
                 layer: (*layer).to_string(),
                 net: None,
                 kind: kicad::CopperKind::Pad,
-                sketch: empty_sketch(Some(crate::LayerMetadata {
+                sketch: empty_profile(Some(crate::LayerMetadata {
                     name: (*layer).to_string(),
                 })),
                 location: [0.0, 0.0],
@@ -8496,7 +8496,7 @@ mod tests {
                 Vec::new()
             },
             board_outline: if has_outline {
-                Some(empty_sketch(Some(crate::LayerMetadata {
+                Some(empty_profile(Some(crate::LayerMetadata {
                     name: "Edge.Cuts".to_string(),
                 })))
             } else {

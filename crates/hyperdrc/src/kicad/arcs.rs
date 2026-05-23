@@ -186,27 +186,14 @@ mod tests {
     use crate::sexp;
 
     #[test]
-    fn arc_center_start_angle_rejects_exactly_collinear_points() {
-        assert!(arc_center_start_angle([0.0, 0.0], [1.0, 0.0], [2.0, 0.0]).is_none());
-    }
-
-    #[test]
-    fn arc_center_start_angle_accepts_tiny_nonzero_orientation() {
-        let arc = arc_center_start_angle([0.0, 0.0], [1.0, 1.0e-12], [2.0, 0.0])
-            .expect("exact non-collinear arcs must not be rejected by an epsilon");
-
-        assert!(arc.0[0].is_finite());
-        assert!(arc.0[1].is_finite());
-        assert!(arc.2.is_finite());
-    }
-
-    #[test]
     fn arc_center_start_angle_rejects_non_finite_inputs() {
         assert!(arc_center_start_angle([f64::NAN, 0.0], [1.0, 1.0], [2.0, 0.0]).is_none());
     }
 
     #[test]
     fn arc_center_start_angle_source_uses_decimal_token_exactness() {
+        // hyperlimit owns the orientation predicate laws; this test only checks
+        // that KiCad decimal-token source facts reach that predicate boundary.
         let parsed =
             sexp::parse("(gr_arc (start 0.0 0.0) (mid 1.0 0.000000000001) (end 2.0 0.0))").unwrap();
         let start = xy_from_child_source(&parsed, "start").unwrap();

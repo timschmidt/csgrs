@@ -63,6 +63,7 @@ pub mod constraint_policy;
 pub mod conversion;
 pub mod date;
 pub mod dxf_overlay;
+pub mod exact_path_rules;
 pub mod excellon;
 pub mod excellon_overlay;
 pub mod gencad_review;
@@ -97,14 +98,72 @@ pub use app::{RunOutcome, run, run_cli};
 pub use cli::{Check, Cli, OutputFormat};
 pub use report::{Diagnostic, Report, ReportSummary, Severity, Violation};
 
-use csgrs::sketch::Sketch;
+use csgrs::sketch::Profile;
+use geo::{Coord, LineString, MultiPolygon, Polygon};
 
 /// PCB geometry sketch tagged with layer/source metadata.
 ///
 /// This is the current `csgrs` compatibility boundary. Keep application checks
 /// from learning more about the `csgrs` numeric model so the future hyperreal
 /// sketch port can replace this alias without changing parser/report APIs.
-pub type PcbSketch = Sketch<Option<LayerMetadata>>;
+pub type PcbSketch = Profile<Option<LayerMetadata>>;
+
+/// Compatibility methods for the current `csgrs::Profile` sketch API.
+///
+/// `hyperdrc` still consumes finite `geo` polygons in many report and check
+/// paths. Keep that lossy projection named at this boundary while `csgrs`
+/// carries native `hypercurve` topology internally.
+pub trait PcbSketchExt {
+    /// Project the sketch to finite `geo` polygons.
+    fn to_multipolygon(&self) -> MultiPolygon<f64>;
+
+    /// Compatibility alias for callers that ask for sketch geometry.
+    fn geometry(&self) -> MultiPolygon<f64>;
+
+    /// Finite bounding rectangle of projected sketch geometry.
+    fn bounding_rect(&self) -> Option<geo::Rect<f64>>;
+}
+
+impl PcbSketchExt for PcbSketch {
+    fn to_multipolygon(&self) -> MultiPolygon<f64> {
+        MultiPolygon(
+            self.region_profiles()
+                .into_iter()
+                .filter_map(|profile| {
+                    let exterior = finite_ring_to_linestring(profile.material().points())?;
+                    let interiors = profile
+                        .holes()
+                        .iter()
+                        .filter_map(|hole| finite_ring_to_linestring(hole.points()))
+                        .collect();
+                    Some(Polygon::new(exterior, interiors))
+                })
+                .collect(),
+        )
+    }
+
+    fn geometry(&self) -> MultiPolygon<f64> {
+        self.to_multipolygon()
+    }
+
+    fn bounding_rect(&self) -> Option<geo::Rect<f64>> {
+        geo::BoundingRect::bounding_rect(&self.to_multipolygon())
+    }
+}
+
+fn finite_ring_to_linestring(points: &[[f64; 2]]) -> Option<LineString<f64>> {
+    (points.len() >= 4).then(|| {
+        LineString::from(
+            points
+                .iter()
+                .map(|point| Coord {
+                    x: point[0],
+                    y: point[1],
+                })
+                .collect::<Vec<_>>(),
+        )
+    })
+}
 
 /// Metadata carried with [`PcbSketch`] geometry.
 #[derive(Clone, Debug)]

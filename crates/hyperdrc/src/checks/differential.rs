@@ -14,6 +14,7 @@ use geo::BoundingRect;
 
 use super::distance::polygon_boundary_distance;
 use super::spatial::{CopperSpatialIndex, PointSpatialIndex};
+use crate::PcbSketchExt;
 use crate::kicad::{BoardModel, CopperFeature, CopperKind};
 use crate::report::{Severity, Violation};
 
@@ -781,7 +782,7 @@ mod tests {
         differential_pair_via_return_readiness, differential_pair_width_readiness,
     };
     use crate::LayerMetadata;
-    use crate::geometry::{circle_polygon, line_polygon, polygons_to_sketch};
+    use crate::geometry::{circle_polygon, line_polygon, polygons_to_profile};
     use crate::kicad::{BoardModel, CopperFeature, CopperKind};
 
     #[test]
@@ -1301,7 +1302,7 @@ mod tests {
             net: Some(net.to_string()),
             kind: CopperKind::Segment,
             location: [(start[0] + end[0]) / 2.0, (start[1] + end[1]) / 2.0],
-            sketch: polygons_to_sketch(
+            sketch: polygons_to_profile(
                 vec![line_polygon(start, end, width).expect("test segment should be valid")],
                 Some(LayerMetadata {
                     name: layer.to_string(),
@@ -1316,7 +1317,7 @@ mod tests {
             net: Some(net.to_string()),
             kind: CopperKind::Via,
             location,
-            sketch: polygons_to_sketch(
+            sketch: polygons_to_profile(
                 vec![circle_polygon(location, diameter / 2.0, 32)],
                 Some(LayerMetadata {
                     name: layer.to_string(),

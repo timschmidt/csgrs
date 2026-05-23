@@ -2,7 +2,7 @@
 
 This folder contains the geometry helpers that make `hyperdrc` checks readable.
 The rest of the crate should describe PCB concepts; this module handles the
-repeatable polygon and sketch mechanics underneath those concepts.
+repeatable polygon and profile mechanics underneath those concepts.
 
 ## Geometry Choices
 
@@ -18,8 +18,8 @@ This split keeps geometry helpers small and predictable:
 - Source-specific interpretation belongs in parser modules, not here.
 - Filtering is caller-controlled so checks can choose their own reportable-area
   thresholds.
-- Metadata should survive sketch conversion whenever a helper accepts a full
-  sketch instead of plain polygons.
+- Metadata should survive profile conversion whenever a helper accepts a full
+  profile instead of plain polygons.
 
 ## Module Map
 
@@ -28,8 +28,8 @@ This split keeps geometry helpers small and predictable:
 - [`primitives.rs`](primitives.rs) builds common PCB shapes: circles,
   rectangles, trapezoids, rounded and chamfered rectangles, traces, arcs,
   Bezier strokes, transforms, and polygons from point lists.
-- [`sketch.rs`](sketch.rs) converts between `geo` polygons and `csgrs`
-  `Sketch` values while preserving layer metadata.
+- [`sketch.rs`](sketch.rs) converts `geo` polygons into `csgrs::Profile`
+  values while preserving layer metadata.
 - [`violations.rs`](violations.rs) converts `geo` multipolygons into reportable
   violation shapes, including area filtering and hole preservation.
 
@@ -47,10 +47,10 @@ Bezier sampling, zero-radius circles, and property-generated shapes. This is
 important because PCB data frequently contains small fragments and
 vendor-specific geometry edge cases.
 
-## Working With Sketches
+## Working With Profiles
 
-`hyperdrc` uses `PcbSketch`, an alias around `csgrs::Sketch<LayerMetadata>`, as
-the common geometry container. Parser modules build sketches, check modules
+`hyperdrc` uses `PcbSketch`, an alias around `csgrs::Profile<LayerMetadata>`, as
+the common geometry container. Parser modules build profiles, check modules
 combine them with offsets and booleans, and report modules convert resulting
 polygons into stable violation records.
 
@@ -58,7 +58,7 @@ When adding geometry helpers:
 
 - Keep functions deterministic and unit-test edge cases directly.
 - Prefer structured geometry operations over string or coordinate hacks.
-- Preserve metadata where the helper accepts or returns a full sketch.
+- Preserve metadata where the helper accepts or returns a full profile.
 - Filter only when the caller supplies an explicit threshold.
 
 Return to the [source tree README](../README.md).

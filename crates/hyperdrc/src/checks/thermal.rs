@@ -9,15 +9,15 @@
 //! spreaders, enclosures, unusual airflow, and package-specific requirements.
 
 use csgrs::csg::CSG;
-use geo::{Area, BoundingRect};
+use geo::{Area, BoundingRect, Contains, Point};
 
 use crate::checks::distance::polygon_boundary_distance;
 use crate::checks::spatial::CopperSpatialIndex;
 use crate::checks::spread::maximum_point_spread;
-use crate::geometry::{circle_polygon, multipolygon_to_shapes, polygons_to_sketch};
+use crate::geometry::{circle_polygon, multipolygon_to_shapes, polygons_to_profile};
 use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
 use crate::report::{Severity, Violation};
-use crate::{LayerMetadata, PcbSketch};
+use crate::{LayerMetadata, PcbSketch, PcbSketchExt};
 
 /// Run the `thermal_relief_readiness` design-readiness check or report helper.
 ///
@@ -553,7 +553,7 @@ pub fn thermal_mechanical_keepout_readiness(
 
     for drill in mechanical_drills {
         let keepout_radius = drill.diameter / 2.0 + keepout;
-        let keepout_sketch = polygons_to_sketch(
+        let keepout_sketch = polygons_to_profile(
             vec![circle_polygon(drill.location, keepout_radius, 32)],
             Some(LayerMetadata {
                 name: "thermal mechanical keepout".to_string(),
@@ -613,12 +613,15 @@ fn thermal_zone_vias_indexed<'a>(
 ) -> (Vec<&'a CopperFeature>, usize) {
     let candidates = via_index.same_layer_near_feature(zone, anchor_tolerance);
     let candidate_count = candidates.len();
+    let zone_geometry = zone.sketch.geometry();
     let zone_vias = candidates
         .into_iter()
         .filter_map(|via_index| {
             let via = vias[via_index];
-            (via.net == zone.net && copper_features_touch(via, zone, anchor_tolerance))
-                .then_some(via)
+            (via.net == zone.net
+                && (zone_geometry.contains(&Point::new(via.location[0], via.location[1]))
+                    || copper_features_touch(via, zone, anchor_tolerance)))
+            .then_some(via)
         })
         .collect();
     (zone_vias, candidate_count)
@@ -723,7 +726,7 @@ fn looks_ground_net(net: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use crate::LayerMetadata;
-    use crate::geometry::{circle_polygon, polygons_to_sketch, rect_polygon};
+    use crate::geometry::{circle_polygon, polygons_to_profile, rect_polygon};
     use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
 
     use super::{
@@ -1177,7 +1180,7 @@ mod tests {
             net: Some(net.to_string()),
             kind,
             location: [(min_x + max_x) / 2.0, (min_y + max_y) / 2.0],
-            sketch: polygons_to_sketch(
+            sketch: polygons_to_profile(
                 vec![rect_polygon(
                     [(min_x + max_x) / 2.0, (min_y + max_y) / 2.0],
                     [max_x - min_x, max_y - min_y],
@@ -1211,7 +1214,7 @@ mod tests {
             net: Some(net.to_string()),
             kind,
             location,
-            sketch: polygons_to_sketch(
+            sketch: polygons_to_profile(
                 vec![circle_polygon(location, diameter / 2.0, 32)],
                 Some(LayerMetadata {
                     name: "test disc".to_string(),

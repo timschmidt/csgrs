@@ -11,6 +11,7 @@
 use csgrs::csg::CSG;
 use geo::BoundingRect;
 
+use crate::PcbSketchExt;
 use crate::checks::distance::polygon_boundary_distance;
 use crate::checks::spatial::CopperSpatialIndex;
 use crate::geometry::multipolygon_to_shapes;
@@ -727,7 +728,7 @@ mod tests {
     use std::time::Instant;
 
     use crate::LayerMetadata;
-    use crate::geometry::{circle_polygon, polygons_to_sketch, rect_polygon};
+    use crate::geometry::{circle_polygon, polygons_to_profile, rect_polygon};
     use crate::kicad::{BoardModel, CopperFeature, CopperKind};
 
     use super::{
@@ -1096,7 +1097,7 @@ mod tests {
             source: "test".to_string(),
             copper: Vec::new(),
             drills: Vec::new(),
-            board_outline: Some(polygons_to_sketch(
+            board_outline: Some(polygons_to_profile(
                 vec![outline],
                 Some(LayerMetadata {
                     name: "outline".to_string(),
@@ -1128,7 +1129,7 @@ mod tests {
             net: Some(net.to_string()),
             kind,
             location: [(min_x + max_x) / 2.0, (min_y + max_y) / 2.0],
-            sketch: polygons_to_sketch(
+            sketch: polygons_to_profile(
                 vec![rect_polygon(
                     [(min_x + max_x) / 2.0, (min_y + max_y) / 2.0],
                     [max_x - min_x, max_y - min_y],
@@ -1162,7 +1163,7 @@ mod tests {
             net: Some(net.to_string()),
             kind,
             location,
-            sketch: polygons_to_sketch(
+            sketch: polygons_to_profile(
                 vec![circle_polygon(location, diameter / 2.0, 32)],
                 Some(LayerMetadata {
                     name: "test disc".to_string(),

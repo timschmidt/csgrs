@@ -13,6 +13,7 @@
 use csgrs::csg::CSG;
 use geo::BoundingRect;
 
+use crate::PcbSketchExt;
 use crate::checks::distance::polygon_boundary_distance;
 use crate::checks::spatial::CopperSpatialIndex;
 use crate::geometry::multipolygon_to_shapes;
@@ -373,7 +374,7 @@ fn looks_ground_net(net: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use crate::LayerMetadata;
-    use crate::geometry::{circle_polygon, line_polygon, polygons_to_sketch};
+    use crate::geometry::{circle_polygon, line_polygon, polygons_to_profile};
     use crate::kicad::{BoardModel, CopperFeature, CopperKind};
 
     use super::{antenna_copper_keepout_readiness, rf_keepout_readiness, rf_via_fence_readiness};
@@ -660,7 +661,7 @@ mod tests {
             net: Some(net.to_string()),
             kind,
             location: [(start[0] + end[0]) / 2.0, (start[1] + end[1]) / 2.0],
-            sketch: polygons_to_sketch(
+            sketch: polygons_to_profile(
                 vec![line_polygon(start, end, width).expect("test line should be valid")],
                 Some(LayerMetadata {
                     name: "test line".to_string(),
@@ -680,7 +681,7 @@ mod tests {
             net: Some(net.to_string()),
             kind,
             location,
-            sketch: polygons_to_sketch(
+            sketch: polygons_to_profile(
                 vec![circle_polygon(location, diameter / 2.0, 32)],
                 Some(LayerMetadata {
                     name: "test disc".to_string(),

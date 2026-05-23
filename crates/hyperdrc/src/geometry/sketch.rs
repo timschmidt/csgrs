@@ -1,34 +1,68 @@
-//! Sketch conversion helpers.
+//! Profile conversion helpers.
 //!
-//! Keep these wrappers small and explicit: most checks operate on `Sketch`,
-//! while parsers naturally produce `geo` polygons.
+//! Keep these wrappers small and explicit: most checks operate on `Profile`
+//! topology, while parsers naturally produce `geo` polygons.
 
 use csgrs::float_types::Real;
-use csgrs::sketch::Sketch;
-use geo::{Geometry, GeometryCollection, MultiPolygon, Polygon};
+use csgrs::sketch::Profile;
+use geo::{Area, LineString, Polygon};
+use hypercurve::{Contour2, Region2};
 
 use crate::{LayerMetadata, PcbSketch};
 
-/// Run the `polygon_to_sketch` design-readiness check or report helper.
-pub fn polygon_to_sketch(polygon: Polygon<Real>, metadata: Option<LayerMetadata>) -> PcbSketch {
-    Sketch::<Option<LayerMetadata>>::from_geo(
-        GeometryCollection(vec![Geometry::Polygon(polygon)]),
-        metadata,
-    )
+/// Convert one `geo` polygon into a `csgrs::Profile` with layer metadata.
+pub fn polygon_to_profile(polygon: Polygon<Real>, metadata: Option<LayerMetadata>) -> PcbSketch {
+    polygons_to_profile(vec![polygon], metadata)
 }
 
-/// Run the `polygons_to_sketch` design-readiness check or report helper.
-pub fn polygons_to_sketch(
+/// Convert `geo` polygons into a `csgrs::Profile` with layer metadata.
+pub fn polygons_to_profile(
     polygons: Vec<Polygon<Real>>,
     metadata: Option<LayerMetadata>,
 ) -> PcbSketch {
-    Sketch::<Option<LayerMetadata>>::from_geo(
-        GeometryCollection(vec![Geometry::MultiPolygon(MultiPolygon(polygons))]),
-        metadata,
-    )
+    let mut material = Vec::new();
+    let mut holes = Vec::new();
+    for polygon in polygons {
+        if let Some(contour) = linestring_to_contour(polygon.exterior(), RingRole::Material) {
+            material.push(contour);
+        }
+        holes.extend(
+            polygon
+                .interiors()
+                .iter()
+                .filter_map(|ring| linestring_to_contour(ring, RingRole::Hole)),
+        );
+    }
+    if material.is_empty() && holes.is_empty() {
+        return empty_profile(metadata);
+    }
+    Profile::<Option<LayerMetadata>>::from_region(Region2::new(material, holes), metadata)
 }
 
-/// Run the `empty_sketch` design-readiness check or report helper.
-pub fn empty_sketch(metadata: Option<LayerMetadata>) -> PcbSketch {
-    Sketch::<Option<LayerMetadata>>::from_geo(GeometryCollection::default(), metadata)
+/// Create an empty `csgrs::Profile` with layer metadata.
+pub fn empty_profile(metadata: Option<LayerMetadata>) -> PcbSketch {
+    Profile::<Option<LayerMetadata>>::empty(metadata)
+}
+
+#[derive(Clone, Copy)]
+enum RingRole {
+    Material,
+    Hole,
+}
+
+fn linestring_to_contour(ring: &LineString<Real>, role: RingRole) -> Option<Contour2> {
+    let mut points = ring
+        .0
+        .iter()
+        .map(|coord| [coord.x, coord.y])
+        .collect::<Vec<_>>();
+    let signed_area = Polygon::new(ring.clone(), vec![]).signed_area();
+    let should_reverse = match role {
+        RingRole::Material => signed_area < 0.0,
+        RingRole::Hole => signed_area > 0.0,
+    };
+    if should_reverse {
+        points.reverse();
+    }
+    Contour2::from_finite_ring(&points).ok()
 }

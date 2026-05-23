@@ -16,20 +16,34 @@ each finding.
 `hyperdrc` is a domain crate that bridges current CAM/parser tooling and the exact
 Hyper stack.
 
-- [hyperreal](https://github.com/timschmidt/hyperreal): exact source-grid, coordinate,
-  stackup, and rule values where checks can preserve them.
-- [hyperlimit](https://github.com/timschmidt/hyperlimit): exact predicate policy for
-  future geometry checks that should not use local epsilon rules.
-- [hypercurve](https://github.com/timschmidt/hypercurve) and
-  [hypertri](https://github.com/timschmidt/hypertri): exact-aware planar geometry and
-  triangulation surfaces for future CAM pipelines.
+- [hyperreal](https://github.com/timschmidt/hyperreal): exact scalar, source-grid,
+  coordinate, stackup, and rule values where checks can preserve them.
+- [hyperlattice](https://github.com/timschmidt/hyperlattice): exact vector, point,
+  transform, and projective carriers used at geometry handoff boundaries.
+- [hyperlimit](https://github.com/timschmidt/hyperlimit): exact predicate policy,
+  sign/ordering decisions, segment classification, and lattice re-exports.
+- [hypersolve](https://github.com/timschmidt/hypersolve): exact residual replay and
+  solver-certification surfaces for future electrical, routing, and fit checks.
+- [hypercurve](https://github.com/timschmidt/hypercurve): exact-aware planar curves,
+  Bezier contours, regions, and boolean/root-isolation readiness.
+- [hypertri](https://github.com/timschmidt/hypertri): triangulation, CDT, and
+  D-dimensional simplex carriers for CAM meshing and validation pipelines.
 - [hyperpath](https://github.com/timschmidt/hyperpath): routing, clearance, tangent,
-  and path provenance carriers.
+  via, board-outline, toolpath, and path provenance carriers.
+- [hypermesh](https://github.com/timschmidt/hypermesh) and
+  [hypervoxel](https://github.com/timschmidt/hypervoxel): exact mesh and sparse-grid
+  volumetric handoff targets for package, enclosure, and manufacturing evidence.
 - [hyperparts](https://github.com/timschmidt/hyperparts): part, package, interface,
   process, BOM, and compatibility evidence.
 - [hypercircuit](https://github.com/timschmidt/hypercircuit) and
   [hyperphysics](https://github.com/timschmidt/hyperphysics): future electrical,
   thermal, material, and coupled readiness checks.
+- [hyperpack](https://github.com/timschmidt/hyperpack) and
+  [hyperevolution](https://github.com/timschmidt/hyperevolution): exact verification,
+  portfolio search, and optimization loops for placement and package review.
+- [hyperbrep](https://github.com/timschmidt/hyperbrep) and
+  [hypersdf](https://github.com/timschmidt/hypersdf): exact BREP and signed-distance
+  evidence models for future mechanical/manufacturing handoffs.
 - [csgrs](https://github.com/timschmidt/csgrs): current Gerber parsing, polygon offset,
   and boolean interop target used by the prototype.
 
@@ -59,6 +73,9 @@ more of the CAM pipeline.
 - Rule and policy types cover CLI/config thresholds, package profiles, assembly
   profiles, stackup metadata, net classes, fabricator capability profiles, waivers, and
   baselines.
+- `exact_path_rules` owns DRC-facing wrappers over `hyperpath` via and board objects,
+  including exact annular-ring certification and retained drill-intent policy
+  classification.
 - Report writers produce text, JSON, JSON Lines, GeoJSON, SARIF, GitHub annotations,
   HTML, JUnit, SQLite, Arrow IPC, Parquet, overlays, and review companions.
 - Repository-local READMEs under `src`, `src/checks`, `src/geometry`, `src/kicad`,
@@ -76,6 +93,13 @@ reports should keep that boundary visible. Decimal/source-grid facts should be r
 at import, finite geometry should be lifted into Hyper crates where practical, and
 lossy `geo`/`csgrs` adapters should remain explicit.
 
+Numerical explosion is controlled by carrying source-grid facts, parser diagnostics,
+file-role evidence, hashes, waiver state, baselines, and sidecar provenance instead of
+eagerly expanding every CAM primitive into exact booleans. Exact comparisons are
+introduced at decision boundaries through `hyperreal`, `hyperlattice`, `hyperlimit`,
+and `hyperpath`, while lossy polygon adapters remain named so reports can distinguish
+certified decisions from review prompts.
+
 ## Performance Model
 
 The crate is intended to run in local preflight and CI. It keeps the CLI thin over the
@@ -87,6 +111,11 @@ by checks and reports.
 Performance work should keep expensive geometry checks observable, avoid hiding parser
 or adapter costs, and prefer reusable source/provenance records over reparsing release
 packages for each output format.
+
+Report sinks share the same `Report` model, so text, JSON, SARIF, SQLite, Arrow, Parquet,
+and overlays do not force independent analysis passes. Geometry hashes, baselines,
+waivers, parser summaries, and sidecar indexes let repeated CI runs compare evidence
+without rebuilding every derived artifact.
 
 ## Current Status
 
@@ -101,6 +130,8 @@ packages for each output format.
 - readiness checks for copper/layer geometry, board outline, mask/paste/silkscreen,
   drills, IPC-D-356, KiCad net/board context, stackup/net-class policies, assembly/test
   features, generated-output freshness, package completeness, and waiver governance;
+- exact path-rule wrappers for `hyperpath` via drill intent, drill diameter, and
+  annular-ring certification;
 - JSON rule configuration, CLI overrides, package/assembly/fabricator profiles, stackup
   metadata, net-class constraints, waivers, baselines, and baseline diffs;
 - reports in text, JSON, JSON Lines, GeoJSON, SARIF, GitHub annotations, HTML, JUnit,
@@ -207,6 +238,72 @@ roadmap remains in [docs/design-readiness-plan.md](docs/design-readiness-plan.md
 - [proptest-regressions](proptest-regressions/README.md): persisted property-test
   regression seeds.
 
+## Usage
+
+Use the CLI for release-package checks and the library API when integrating into a
+larger workflow:
+
+```sh
+hyperdrc board.zip --format json --config hyperdrc.json
+hyperdrc board.kicad_pcb --check package --check stackup --format sarif
+```
+
+```rust,ignore
+use clap::Parser;
+use hyperdrc::{Cli, run};
+
+let cli = Cli::try_parse_from([
+    "hyperdrc",
+    "release-package.zip",
+    "--format",
+    "json",
+])?;
+let outcome = run(cli)?;
+assert!(outcome.report.summary.active_count <= outcome.report.summary.total_count);
+```
+
+Major surfaces include parser diagnostics, rule/profile resolution, waivers, baselines,
+package and generated-output freshness checks, geometry/readiness findings, and report
+sinks for text, JSON, JSON Lines, GeoJSON, SARIF, GitHub annotations, HTML, JUnit,
+SQLite, Arrow IPC, Parquet, and review overlays.
+
+## Exact Path Rule Handoff
+
+`hyperdrc::exact_path_rules` keeps fabrication policy labels in this crate while
+delegating exact path geometry to `hyperpath`:
+
+```rust,ignore
+use hyperdrc::exact_path_rules::{classify_via_drill_policy, AnnularRingStatus};
+use hyperlimit::{Point2, PredicatePolicy};
+use hyperpath::{NetId, PcbViaStack, TraceLayer, ViaDrillIntent};
+use hyperreal::{Rational, Real};
+
+fn r(value: i64) -> Real {
+    Real::new(Rational::new(value))
+}
+
+fn p(x: i64, y: i64) -> Point2 {
+    Point2::new(r(x), r(y))
+}
+
+let via = PcbViaStack::with_drill_intent(
+    NetId(1),
+    TraceLayer(0),
+    TraceLayer(2),
+    p(0, 0),
+    r(10),
+    r(4),
+    ViaDrillIntent::Plated,
+)?;
+
+let report = classify_via_drill_policy(&via, &r(3), PredicatePolicy::STRICT);
+assert_eq!(report.annular_ring, Some(AnnularRingStatus::Certified));
+```
+
+That split keeps DRC policy semantics close to reports and waivers, while `hyperpath`
+continues to own path construction, clearance predicates, drill geometry, and retained
+source provenance.
+
 ## Development
 
 Useful local checks:
@@ -225,6 +322,8 @@ style so they can be copied into engineering review notes.
 
 - Areny, F. A., et al. "A Study of SnAgCu Solder Paste Transfer Efficiency and Effects of Optimal Reflow Profile on Solder Deposits." *Microelectronic Engineering*, 2011, https://doi.org/10.1016/j.mee.2011.02.104.
 - Andrew, A. M. "Another Efficient Algorithm for Convex Hulls in Two Dimensions." *Information Processing Letters*, vol. 9, no. 5, 1979, pp. 216-219, https://doi.org/10.1016/0020-0190(79)90072-3.
+- Apache Software Foundation. "Apache Arrow Columnar Format." *Apache Arrow Documentation*, https://arrow.apache.org/docs/format/Columnar.html. Accessed 20 May 2026.
+- Apache Software Foundation. "Apache Parquet." *Apache Parquet Documentation*, https://parquet.apache.org/docs/. Accessed 20 May 2026.
 - Becerra, Jose, Dennis Willie, and Murad Kurwa. "Press Fit Technology Roadmap and Control Parameters for a High Performance Process." *IPC APEX EXPO Conference Proceedings*, Flextronics, https://www.circuitinsight.com/pdf/press_fit_technology_roadmap_control_parameters_ipc.pdf. Accessed 14 May 2026.
 - Bentley, Jon Louis. "Multidimensional Binary Search Trees Used for Associative Searching." *Communications of the ACM*, vol. 18, no. 9, 1975, pp. 509-517, https://doi.org/10.1145/361002.361007.
 - Bhargava, Ankit, et al. "DC-DC Buck Converter EMI Reduction Using PCB Layout Modification." *IEEE Transactions on Electromagnetic Compatibility*, vol. 53, no. 3, 2011, pp. 806-813, https://doi.org/10.1109/TEMC.2011.2145421.
@@ -246,6 +345,7 @@ style so they can be copied into engineering review notes.
 - IPC. *Bare Substrate Electrical Test Data Format: IPC-D-356B*. IPC, 1 Oct. 2002, https://shop.electronics.org/ipc-d-356/ipc-d-356-standard-only.
 - IPC. *Computer Numerical Control Formatting for Drillers and Routers: IPC-NC-349*. IPC, 1985, https://www.electronics.org/TOC/IPC-NC-349.pdf. Accessed 16 May 2026.
 - IPC. *Generic Requirements for Surface Mount Design and Land Pattern Standard: IPC-7351B*. IPC, 2010, https://shop.ipc.org/ipc-7351/ipc-7351-standard-only.
+- IPC. *IPC-2581C: Generic Requirements for Printed Board Assembly Products Manufacturing Description Data and Transfer Methodology*. IPC, 2020, https://shop.ipc.org/ipc-2581/ipc-2581-standard-only.
 - KiCad. "S-Expression Format." *KiCad Developer Documentation*, https://dev-docs.kicad.org/en/file-formats/sexpr-intro/. Accessed 15 May 2026.
 - IEC. *IEC 60352-5: Solderless Connections, Part 5: Press-In Connections, General Requirements, Test Methods and Practical Guidance*. International Electrotechnical Commission, https://webstore.iec.ch/publication/23286.
 - IEC. *IEC 61000-4-5: Electromagnetic Compatibility (EMC), Part 4-5: Testing and Measurement Techniques, Surge Immunity Test*. International Electrotechnical Commission, https://webstore.iec.ch/publication/4184.
@@ -278,3 +378,4 @@ style so they can be copied into engineering review notes.
 - Wheeler, H. A. "Transmission-Line Properties of a Stripline Between Parallel Planes." *IEEE Transactions on Microwave Theory and Techniques*, vol. 26, no. 11, 1978, pp. 866-876, https://doi.org/10.1109/TMTT.1978.1129505.
 - Wong, Hang, et al. "Small Antennas in Wireless Communications." *Proceedings of the IEEE*, vol. 100, no. 7, 2012, pp. 2109-2121, https://doi.org/10.1109/JPROC.2012.2188089.
 - Xu, Jun, and Shuo Wang. "Investigating a Guard Trace Ring to Suppress the Crosstalk Due to a Clock Trace on a Power Electronics DSP Control Board." *IEEE Transactions on Electromagnetic Compatibility*, vol. 57, no. 3, 2015, pp. 546-554, https://doi.org/10.1109/TEMC.2015.2403289.
+- Yap, Chee K. "Towards Exact Geometric Computation." *Computational Geometry*, vol. 7, nos. 1-2, 1997, pp. 3-23, https://doi.org/10.1016/0925-7721(95)00040-2.

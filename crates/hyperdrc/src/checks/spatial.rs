@@ -9,6 +9,7 @@ use std::collections::BTreeMap;
 
 use geo::{BoundingRect, Polygon};
 
+use crate::PcbSketchExt;
 use crate::kicad::{CopperFeature, DrillFeature};
 
 const SPATIAL_GRID_EPSILON: f64 = 1.0e-9;
@@ -493,7 +494,7 @@ fn feature_span(feature: &CopperFeature) -> f64 {
 #[cfg(test)]
 mod tests {
     use crate::LayerMetadata;
-    use crate::geometry::{line_polygon, polygons_to_sketch, rect_polygon};
+    use crate::geometry::{line_polygon, polygons_to_profile, rect_polygon};
     use crate::kicad::{CopperFeature, CopperKind, DrillFeature};
 
     use super::{
@@ -635,7 +636,7 @@ mod tests {
             net: Some(net.to_string()),
             kind: CopperKind::Segment,
             location: [(start[0] + end[0]) / 2.0, (start[1] + end[1]) / 2.0],
-            sketch: polygons_to_sketch(
+            sketch: polygons_to_profile(
                 vec![line_polygon(start, end, width).expect("test line should be valid")],
                 Some(LayerMetadata {
                     name: "test line".to_string(),

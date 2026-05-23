@@ -9,7 +9,7 @@ use geo::Polygon;
 
 use crate::LayerMetadata;
 use crate::geometry::{
-    arc_line_polygons, bezier_line_polygons, line_polygon, polygons_to_sketch, transform_polygon,
+    arc_line_polygons, bezier_line_polygons, line_polygon, polygons_to_profile, transform_polygon,
 };
 use crate::sexp::Sexp;
 
@@ -396,7 +396,7 @@ fn push_graphic_features(
                 layer: layer.clone(),
                 net: None,
                 kind,
-                sketch: polygons_to_sketch(
+                sketch: polygons_to_profile(
                     vec![polygon.clone()],
                     Some(LayerMetadata {
                         name: metadata_name.to_string(),

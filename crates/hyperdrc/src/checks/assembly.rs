@@ -16,11 +16,11 @@ use geo::{Area, BoundingRect};
 use crate::checks::distance::polygon_boundary_distance;
 use crate::checks::outline::{axis_aligned_outline_rect, feature_bounds_inside_rect_margin};
 use crate::checks::spatial::{CopperSpatialIndex, PointSpatialIndex};
-use crate::geometry::{circle_polygon, multipolygon_to_shapes, polygons_to_sketch};
+use crate::geometry::{circle_polygon, multipolygon_to_shapes, polygons_to_profile};
 use crate::ipc356::{Ipc356AccessSide, Ipc356FeatureType, Ipc356Point, Ipc356Soldermask};
 use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
 use crate::report::{Severity, Violation};
-use crate::{LayerMetadata, PcbSketch};
+use crate::{LayerMetadata, PcbSketch, PcbSketchExt};
 
 const TESTPOINT_GRID_EPSILON: f64 = 1.0e-9;
 const FEATURE_GRID_EPSILON: f64 = 1.0e-9;
@@ -139,7 +139,7 @@ pub fn component_hole_clearance_readiness(
 
     for drill in mechanical_drills {
         let keepout_radius = drill.diameter / 2.0 + clearance;
-        let keepout = polygons_to_sketch(
+        let keepout = polygons_to_profile(
             vec![circle_polygon(drill.location, keepout_radius, 32)],
             Some(LayerMetadata {
                 name: "mechanical hole keepout".to_string(),
@@ -656,7 +656,7 @@ pub fn testpoint_accessibility_readiness(
         if let Some(outline) = &board.board_outline {
             let probe_diameter = point.diameter.unwrap_or(minimum_diameter);
             let probe = circle_polygon(point.location, probe_diameter / 2.0, 32);
-            let probe_sketch = polygons_to_sketch(
+            let probe_sketch = polygons_to_profile(
                 vec![probe],
                 Some(LayerMetadata {
                     name: "IPC-D-356 testpoint probe".to_string(),
@@ -808,7 +808,7 @@ pub fn testpoint_copper_clearance_readiness(
             .unwrap_or(minimum_diameter)
             .max(minimum_diameter);
         let keepout_radius = probe_diameter / 2.0 + clearance;
-        let keepout = polygons_to_sketch(
+        let keepout = polygons_to_profile(
             vec![circle_polygon(point.location, keepout_radius, 32)],
             Some(LayerMetadata {
                 name: "IPC-D-356 probe copper keepout".to_string(),
@@ -1015,7 +1015,7 @@ pub fn tooling_hole_readiness(
     if let Some(outline) = &board.board_outline {
         for drill in &candidates {
             edge_checks += 1;
-            let keepout = polygons_to_sketch(
+            let keepout = polygons_to_profile(
                 vec![circle_polygon(drill.location, drill.diameter / 2.0, 32)],
                 Some(LayerMetadata {
                     name: "tooling hole".to_string(),
@@ -1395,7 +1395,7 @@ pub fn selective_wave_solder_keepout_readiness(
 
     for drill in solder_drills {
         let keepout_radius = drill.diameter / 2.0 + keepout;
-        let keepout_sketch = polygons_to_sketch(
+        let keepout_sketch = polygons_to_profile(
             vec![circle_polygon(drill.location, keepout_radius, 32)],
             Some(LayerMetadata {
                 name: "selective/wave solder keepout".to_string(),
@@ -1819,7 +1819,7 @@ fn process_drill_keepout_readiness(
 
     for drill in drills {
         let keepout_radius = drill.diameter / 2.0 + keepout;
-        let keepout_sketch = polygons_to_sketch(
+        let keepout_sketch = polygons_to_profile(
             vec![circle_polygon(drill.location, keepout_radius, 32)],
             Some(LayerMetadata {
                 name: format!("{process_label} keepout"),
@@ -2019,7 +2019,7 @@ mod tests {
         testpoint_accessibility_readiness, testpoint_copper_clearance_readiness,
     };
     use crate::LayerMetadata;
-    use crate::geometry::{polygons_to_sketch, rect_polygon};
+    use crate::geometry::{polygons_to_profile, rect_polygon};
     use crate::ipc356::{Ipc356AccessSide, Ipc356FeatureType, Ipc356Point, Ipc356Soldermask};
     use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
 
@@ -2677,7 +2677,7 @@ mod tests {
             net: Some(net.to_string()),
             kind: CopperKind::Pad,
             location,
-            sketch: polygons_to_sketch(
+            sketch: polygons_to_profile(
                 vec![rect_polygon(location, [width, height], 0.0)],
                 Some(LayerMetadata {
                     name: "pad".to_string(),
@@ -2692,7 +2692,7 @@ mod tests {
             net: None,
             kind: CopperKind::Pad,
             location,
-            sketch: polygons_to_sketch(
+            sketch: polygons_to_profile(
                 vec![rect_polygon(location, [diameter, diameter], 0.0)],
                 Some(LayerMetadata {
                     name: "fiducial".to_string(),

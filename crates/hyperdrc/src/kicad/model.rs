@@ -7,8 +7,8 @@ use std::collections::HashMap;
 
 use geo::Polygon;
 
-use crate::geometry::{empty_sketch, polygons_to_sketch};
-use crate::{LayerMetadata, PcbSketch};
+use crate::geometry::{empty_profile, polygons_to_profile};
+use crate::{LayerMetadata, PcbSketch, PcbSketchExt};
 
 #[derive(Clone, Debug)]
 /// Public data model for `BoardModel`.
@@ -84,7 +84,7 @@ impl BoardModel {
         by_layer
             .into_iter()
             .map(|(layer, polygons)| {
-                let sketch = polygons_to_sketch(
+                let sketch = polygons_to_profile(
                     polygons,
                     Some(LayerMetadata {
                         name: format!("KiCad {layer}"),
@@ -104,12 +104,12 @@ impl BoardModel {
             .collect::<Vec<_>>();
 
         if polygons.is_empty() {
-            return empty_sketch(Some(LayerMetadata {
+            return empty_profile(Some(LayerMetadata {
                 name: "KiCad copper".to_string(),
             }));
         }
 
-        polygons_to_sketch(
+        polygons_to_profile(
             polygons,
             Some(LayerMetadata {
                 name: "KiCad copper".to_string(),

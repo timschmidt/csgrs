@@ -20,12 +20,12 @@ use hyperlimit::{Point2, PredicatePolicy, SegmentIntersection, Sign, compare_rea
 use crate::checks::distance::polygon_boundary_distance_with_grid;
 use crate::checks::spatial::LayerPolygonSpatialIndex;
 use crate::geometry::{
-    RuleGeometryProvenance, SourceGridFacts, multipolygon_to_shapes, polygon_to_sketch,
-    polygons_to_sketch, rect_polygon,
+    RuleGeometryProvenance, SourceGridFacts, multipolygon_to_shapes, polygon_to_profile,
+    polygons_to_profile, rect_polygon,
 };
 use crate::ipc356::Ipc356Point;
 use crate::report::{Severity, Violation};
-use crate::{LayerMetadata, PcbSketch};
+use crate::{LayerMetadata, PcbSketch, PcbSketchExt};
 
 const LOCAL_COPPER_DENSITY_FLOOR: f64 = 0.05;
 const LOCAL_COPPER_DENSITY_DELTA: f64 = 0.50;
@@ -71,9 +71,9 @@ pub fn mask_island_keepout(
             // of a dense soldermask layer for every island while preserving the
             // same exact polygon predicate for nearby island pairs.
             let island =
-                polygon_to_sketch(polygons[island_index].clone(), Some(metadata(layer_name)));
+                polygon_to_profile(polygons[island_index].clone(), Some(metadata(layer_name)));
             let neighbor =
-                polygon_to_sketch(polygons[neighbor_index].clone(), Some(metadata(layer_name)));
+                polygon_to_profile(polygons[neighbor_index].clone(), Some(metadata(layer_name)));
             let overlap = island
                 .offset(keepout)
                 .intersection(&neighbor.offset(keepout));
@@ -272,7 +272,7 @@ pub fn board_outline_cutout_clearance_with_grid(
     let mut violations = Vec::new();
     let outline_polygons = outline.to_multipolygon();
     for cutout in board_outline_cutouts(&outline_polygons) {
-        let cutout = polygon_to_sketch(cutout, Some(metadata("board cutout")));
+        let cutout = polygon_to_profile(cutout, Some(metadata("board cutout")));
         let clearance_band = if clearance > 0.0 {
             cutout.offset(clearance)
         } else {
@@ -524,7 +524,7 @@ pub fn paste_aperture_ratio(
             continue;
         }
 
-        let island = polygon_to_sketch(copper_polygon.clone(), Some(metadata(copper_name)));
+        let island = polygon_to_profile(copper_polygon.clone(), Some(metadata(copper_name)));
         let candidate_indexes = paste_index.candidates_near_polygon(&copper_polygon, 0.0);
         candidate_apertures += candidate_indexes.len();
         let paste_area = candidate_indexes
@@ -532,7 +532,7 @@ pub fn paste_aperture_ratio(
             .map(|index| &paste_polygons[index])
             .filter(|paste_polygon| {
                 let paste_island =
-                    polygon_to_sketch((*paste_polygon).clone(), Some(metadata(paste_name)));
+                    polygon_to_profile((*paste_polygon).clone(), Some(metadata(paste_name)));
                 island
                     .intersection(&paste_island)
                     .to_multipolygon()
@@ -590,7 +590,7 @@ pub fn minimum_paste_aperture(
             continue;
         }
 
-        let aperture = polygon_to_sketch(polygon, Some(metadata(paste_name)));
+        let aperture = polygon_to_profile(polygon, Some(metadata(paste_name)));
         violations.push(Violation::new(
             "minimum-paste-aperture",
             Severity::Warning,
@@ -638,12 +638,12 @@ pub fn paste_aperture_spacing(
             continue;
         }
 
-        let island = polygon_to_sketch(polygons[island_index].clone(), Some(metadata(paste_name)));
+        let island = polygon_to_profile(polygons[island_index].clone(), Some(metadata(paste_name)));
         let candidate_polygons = candidate_indexes
             .into_iter()
             .map(|index| polygons[index].clone())
             .collect::<Vec<_>>();
-        let remaining = polygons_to_sketch(candidate_polygons, Some(metadata(paste_name)));
+        let remaining = polygons_to_profile(candidate_polygons, Some(metadata(paste_name)));
         let overlap = island
             .offset(expansion)
             .intersection(&remaining.offset(expansion));
@@ -800,7 +800,7 @@ pub fn solder_mask_opening_ratio_readiness(
             continue;
         }
 
-        let island = polygon_to_sketch(copper_polygon.clone(), Some(metadata(copper_name)));
+        let island = polygon_to_profile(copper_polygon.clone(), Some(metadata(copper_name)));
         let candidate_indexes = mask_index.candidates_near_polygon(&copper_polygon, 0.0);
         candidate_openings += candidate_indexes.len();
         let opening_area = candidate_indexes
@@ -808,7 +808,7 @@ pub fn solder_mask_opening_ratio_readiness(
             .map(|index| &mask_polygons[index])
             .filter(|mask_polygon| {
                 let mask_island =
-                    polygon_to_sketch((*mask_polygon).clone(), Some(metadata(mask_name)));
+                    polygon_to_profile((*mask_polygon).clone(), Some(metadata(mask_name)));
                 island
                     .intersection(&mask_island)
                     .to_multipolygon()
@@ -893,7 +893,7 @@ pub fn solder_mask_annular_ring_readiness(
 
         let candidates = mask_index.candidates_near_polygon(&copper_polygon, min_mask_annular_ring);
         candidate_openings += candidates.len();
-        let required_opening = polygon_to_sketch(copper_polygon, Some(metadata(copper_name)))
+        let required_opening = polygon_to_profile(copper_polygon, Some(metadata(copper_name)))
             .offset(min_mask_annular_ring);
         let missing_relief = if candidates.is_empty() {
             required_opening
@@ -902,7 +902,7 @@ pub fn solder_mask_annular_ring_readiness(
                 .into_iter()
                 .map(|index| mask_polygons[index].clone())
                 .collect::<Vec<_>>();
-            let mask_sketch = polygons_to_sketch(candidate_openings, Some(metadata(mask_name)));
+            let mask_sketch = polygons_to_profile(candidate_openings, Some(metadata(mask_name)));
             required_opening.difference(&mask_sketch)
         };
         let shapes = multipolygon_to_shapes(&missing_relief.to_multipolygon(), min_area);
@@ -1047,7 +1047,7 @@ pub fn silkscreen_min_width(
         // time. Whole-layer opening can create pathological boolean operations
         // on dense Gerber packages, while island-local opening is equivalent
         // for independent silkscreen strokes.
-        let island = polygon_to_sketch(polygon, Some(metadata(silk_name)));
+        let island = polygon_to_profile(polygon, Some(metadata(silk_name)));
         let reconstructed = island.offset(-radius).offset(radius);
         let thin_features = island.difference(&reconstructed);
         shapes.extend(multipolygon_to_shapes(
@@ -1121,7 +1121,7 @@ pub fn silkscreen_text_height_readiness(
             continue;
         }
 
-        let island = polygon_to_sketch(polygon, Some(metadata(silk_name)));
+        let island = polygon_to_profile(polygon, Some(metadata(silk_name)));
         violations.push(Violation::new(
             "silkscreen-text-height-readiness",
             Severity::Warning,
@@ -1183,7 +1183,7 @@ pub fn min_copper_neck_width(
             polygon.interiors().len()
         );
         let source = MultiPolygon(vec![polygon.clone()]);
-        let island = polygon_to_sketch(polygon, Some(metadata(copper_name)));
+        let island = polygon_to_profile(polygon, Some(metadata(copper_name)));
         let reconstructed = island.offset(-radius).offset(radius);
         let thin_features = island.difference(&reconstructed);
         let thin = thin_features.to_multipolygon();
@@ -1284,7 +1284,7 @@ pub fn minimum_mask_opening(
             continue;
         }
 
-        let opening = polygon_to_sketch(polygon, Some(metadata(mask_name)));
+        let opening = polygon_to_profile(polygon, Some(metadata(mask_name)));
         violations.push(Violation::new(
             "minimum-mask-opening",
             Severity::Warning,
@@ -1337,9 +1337,9 @@ pub fn solder_mask_opening_spacing(
             }
 
             let opening =
-                polygon_to_sketch(openings[opening_index].clone(), Some(metadata(mask_name)));
+                polygon_to_profile(openings[opening_index].clone(), Some(metadata(mask_name)));
             let neighbor =
-                polygon_to_sketch(openings[neighbor_index].clone(), Some(metadata(mask_name)));
+                polygon_to_profile(openings[neighbor_index].clone(), Some(metadata(mask_name)));
             let bridge_conflict = opening
                 .offset(expansion)
                 .intersection(&neighbor.offset(expansion));
@@ -2035,7 +2035,7 @@ fn collect_local_density_window(
         return;
     }
 
-    let window = polygons_to_sketch(vec![window_polygon], Some(metadata("density window")));
+    let window = polygons_to_profile(vec![window_polygon], Some(metadata("density window")));
     let shapes = multipolygon_to_shapes(&window.to_multipolygon(), min_area);
     violations.push(Violation::new(
         "local-copper-density-readiness",
@@ -2594,8 +2594,8 @@ fn polygon_contains_other_outer_with_grid(
 }
 
 fn polygon_intersection_area(left: &Polygon<f64>, right: &Polygon<f64>) -> f64 {
-    let left_sketch = polygon_to_sketch(left.clone(), None);
-    let right_sketch = polygon_to_sketch(right.clone(), None);
+    let left_sketch = polygon_to_profile(left.clone(), None);
+    let right_sketch = polygon_to_profile(right.clone(), None);
     left_sketch
         .intersection(&right_sketch)
         .to_multipolygon()
@@ -2857,7 +2857,7 @@ fn indexed_difference(
         let candidates = cover_index.candidates_near_polygon(&subject_polygon, search_radius);
         candidate_polygons += candidates.len();
         let subject_island =
-            polygon_to_sketch(subject_polygon.clone(), Some(metadata(subject_name)));
+            polygon_to_profile(subject_polygon.clone(), Some(metadata(subject_name)));
 
         if candidates.is_empty() {
             remainder_polygons.push(subject_polygon);
@@ -2868,7 +2868,7 @@ fn indexed_difference(
             .into_iter()
             .map(|index| cover_polygons[index].clone())
             .collect::<Vec<_>>();
-        let cover_sketch = polygons_to_sketch(cover_candidates, Some(metadata(cover_name)));
+        let cover_sketch = polygons_to_profile(cover_candidates, Some(metadata(cover_name)));
         let cover_sketch = match mode {
             IndexedDifferenceMode::CoverAsIs => cover_sketch,
             IndexedDifferenceMode::CoverOffset(distance) => cover_sketch.offset(distance),
@@ -2884,7 +2884,7 @@ fn indexed_difference(
         candidate_polygons
     );
 
-    polygons_to_sketch(remainder_polygons, Some(metadata(subject_name)))
+    polygons_to_profile(remainder_polygons, Some(metadata(subject_name)))
 }
 
 fn indexed_intersection(
@@ -2926,12 +2926,12 @@ fn indexed_intersection_with_mode(
             continue;
         }
 
-        let subject_island = polygon_to_sketch(subject_polygon, Some(metadata(subject_name)));
+        let subject_island = polygon_to_profile(subject_polygon, Some(metadata(subject_name)));
         let cover_candidates = candidates
             .into_iter()
             .map(|index| cover_polygons[index].clone())
             .collect::<Vec<_>>();
-        let cover_sketch = polygons_to_sketch(cover_candidates, Some(metadata(cover_name)));
+        let cover_sketch = polygons_to_profile(cover_candidates, Some(metadata(cover_name)));
         let cover_sketch = match mode {
             IndexedCoverMode::AsIs => cover_sketch,
             IndexedCoverMode::Offset(distance) => cover_sketch.offset(distance),
@@ -2955,7 +2955,7 @@ fn indexed_intersection_with_mode(
         candidate_polygons
     );
 
-    polygons_to_sketch(overlap_polygons, Some(metadata(subject_name)))
+    polygons_to_profile(overlap_polygons, Some(metadata(subject_name)))
 }
 
 struct PairCheck<'a> {
@@ -3089,7 +3089,7 @@ mod tests {
     };
     use crate::LayerMetadata;
     use crate::geometry::{
-        SourceGridFacts, SourceUnit, empty_sketch, line_polygon, polygons_to_sketch, rect_polygon,
+        SourceGridFacts, SourceUnit, empty_profile, line_polygon, polygons_to_profile, rect_polygon,
     };
     use crate::ipc356::Ipc356Point;
     use crate::kicad::load_kicad_pcb;
@@ -3240,7 +3240,7 @@ mod tests {
         let layers = vec![
             (
                 "F.Cu".to_string(),
-                polygons_to_sketch(
+                polygons_to_profile(
                     vec![rect_polygon([5.0, 5.0], [10.0, 10.0], 0.0)],
                     Some(LayerMetadata {
                         name: "F.Cu".to_string(),
@@ -3249,7 +3249,7 @@ mod tests {
             ),
             (
                 "B.Cu".to_string(),
-                polygons_to_sketch(
+                polygons_to_profile(
                     vec![rect_polygon([5.0, 5.0], [1.0, 1.0], 0.0)],
                     Some(LayerMetadata {
                         name: "B.Cu".to_string(),
@@ -3275,7 +3275,7 @@ mod tests {
         let layers = vec![
             (
                 "F.Cu".to_string(),
-                polygons_to_sketch(
+                polygons_to_profile(
                     vec![rect_polygon([5.0, 5.0], [7.0, 7.0], 0.0)],
                     Some(LayerMetadata {
                         name: "F.Cu".to_string(),
@@ -3284,7 +3284,7 @@ mod tests {
             ),
             (
                 "B.Cu".to_string(),
-                polygons_to_sketch(
+                polygons_to_profile(
                     vec![rect_polygon([5.0, 5.0], [6.0, 6.0], 0.0)],
                     Some(LayerMetadata {
                         name: "B.Cu".to_string(),
@@ -3775,7 +3775,7 @@ mod tests {
 
     #[test]
     fn board_outline_sanity_reports_empty_outline_layers() {
-        let outline = empty_sketch(Some(LayerMetadata {
+        let outline = empty_profile(Some(LayerMetadata {
             name: "edge".to_string(),
         }));
 
@@ -4727,7 +4727,7 @@ mod tests {
 
     #[test]
     fn layer_sanity_reports_empty_or_unbounded_layers() {
-        let empty = empty_sketch(Some(LayerMetadata {
+        let empty = empty_profile(Some(LayerMetadata {
             name: "empty mask".to_string(),
         }));
 
@@ -4931,7 +4931,7 @@ mod tests {
     fn duplicate_layer_geometry_readiness_allows_different_or_empty_layers() {
         let top = sketch("F.Cu", vec![square(0.0, 0.0, 10.0, 10.0)]);
         let shifted = sketch("B.Cu", vec![square(12.0, 0.0, 22.0, 10.0)]);
-        let empty = empty_sketch(Some(LayerMetadata {
+        let empty = empty_profile(Some(LayerMetadata {
             name: "empty".to_string(),
         }));
         let layers = vec![
@@ -5146,7 +5146,7 @@ mod tests {
     }
 
     fn sketch(name: &str, polygons: Vec<Polygon<f64>>) -> crate::PcbSketch {
-        polygons_to_sketch(
+        polygons_to_profile(
             polygons,
             Some(LayerMetadata {
                 name: name.to_string(),

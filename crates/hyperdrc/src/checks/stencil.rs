@@ -8,11 +8,11 @@ use csgrs::csg::CSG;
 use geo::{Area, BoundingRect, Polygon};
 
 use crate::geometry::{
-    circle_polygon, multipolygon_to_shapes, polygon_to_sketch, polygons_to_sketch,
+    circle_polygon, multipolygon_to_shapes, polygon_to_profile, polygons_to_profile,
 };
 use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
 use crate::report::{Severity, Violation};
-use crate::{LayerMetadata, PcbSketch};
+use crate::{LayerMetadata, PcbSketch, PcbSketchExt};
 
 use super::spatial::{LayerPolygonSpatialIndex, PointSpatialIndex};
 
@@ -50,11 +50,11 @@ pub fn thermal_pad_paste_windowpane_readiness(
 
         let paste_candidates = paste_index.candidates_near_polygon(&copper_polygon, 0.0);
         candidate_apertures += paste_candidates.len();
-        let island = polygon_to_sketch(copper_polygon, Some(metadata(copper_name)));
+        let island = polygon_to_profile(copper_polygon, Some(metadata(copper_name)));
         let mut intersecting_apertures = 0usize;
         let mut paste_area = 0.0;
         for paste_index in paste_candidates {
-            let paste_island = polygon_to_sketch(
+            let paste_island = polygon_to_profile(
                 paste_polygons[paste_index].clone(),
                 Some(metadata(paste_name)),
             );
@@ -142,7 +142,7 @@ pub fn stencil_area_ratio_readiness(
             continue;
         }
 
-        let aperture = polygon_to_sketch(polygon, Some(metadata(paste_name)));
+        let aperture = polygon_to_profile(polygon, Some(metadata(paste_name)));
         violations.push(Violation::new(
             "stencil-area-ratio-readiness",
             Severity::Warning,
@@ -191,7 +191,7 @@ pub fn paste_aperture_aspect_ratio_readiness(
             continue;
         }
 
-        let aperture = polygon_to_sketch(polygon, Some(metadata(paste_name)));
+        let aperture = polygon_to_profile(polygon, Some(metadata(paste_name)));
         violations.push(Violation::new(
             "paste-aperture-aspect-ratio-readiness",
             Severity::Warning,
@@ -244,11 +244,11 @@ pub fn tombstone_paste_imbalance_readiness(
         };
         let paste_candidates = paste_index.candidates_near_polygon(&polygon, 0.0);
         paste_candidate_polygons += paste_candidates.len();
-        let island = polygon_to_sketch(polygon, Some(metadata(copper_name)));
+        let island = polygon_to_profile(polygon, Some(metadata(copper_name)));
         let paste_area = paste_candidates
             .into_iter()
             .map(|paste_index| {
-                let paste_island = polygon_to_sketch(
+                let paste_island = polygon_to_profile(
                     paste_polygons[paste_index].clone(),
                     Some(metadata(paste_name)),
                 );
@@ -340,7 +340,7 @@ pub fn paste_via_exposure_readiness(
     for via in &vias {
         let via_opening = matching_plated_drill(board, via)
             .map(|drill| {
-                polygons_to_sketch(
+                polygons_to_profile(
                     vec![circle_polygon(drill.location, drill.diameter / 2.0, 48)],
                     Some(LayerMetadata {
                         name: "via drill opening".to_string(),
@@ -362,7 +362,7 @@ pub fn paste_via_exposure_readiness(
             .map(|index| paste_polygons[index].clone())
             .collect::<Vec<_>>();
         let paste_candidate_sketch =
-            polygons_to_sketch(paste_candidates, Some(metadata(paste_name)));
+            polygons_to_profile(paste_candidates, Some(metadata(paste_name)));
 
         let overlap = paste_candidate_sketch.intersection(&via_opening);
         let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
@@ -446,7 +446,7 @@ mod tests {
         stencil_area_ratio_readiness, thermal_pad_paste_windowpane_readiness,
         tombstone_paste_imbalance_readiness,
     };
-    use crate::geometry::{circle_polygon, polygons_to_sketch};
+    use crate::geometry::{circle_polygon, polygons_to_profile};
     use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
     use crate::{LayerMetadata, PcbSketch};
     use geo::{Coord, LineString, Polygon};
@@ -815,7 +815,7 @@ mod tests {
     }
 
     fn sketch(name: &str, polygons: Vec<Polygon<f64>>) -> PcbSketch {
-        polygons_to_sketch(
+        polygons_to_profile(
             polygons,
             Some(LayerMetadata {
                 name: name.to_string(),
@@ -852,7 +852,7 @@ mod tests {
             net: Some(net.to_string()),
             kind,
             location,
-            sketch: polygons_to_sketch(
+            sketch: polygons_to_profile(
                 vec![circle_polygon(location, radius, 32)],
                 Some(LayerMetadata {
                     name: "feature".to_string(),

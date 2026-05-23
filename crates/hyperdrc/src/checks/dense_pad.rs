@@ -10,12 +10,12 @@ use std::collections::{BTreeMap, HashMap};
 use csgrs::csg::CSG;
 use geo::BoundingRect;
 
-use crate::PcbSketch;
 use crate::checks::distance::polygon_boundary_distance;
 use crate::checks::spatial::CopperSpatialIndex;
 use crate::geometry::multipolygon_to_shapes;
 use crate::kicad::{BoardModel, CopperFeature, CopperKind};
 use crate::report::{Severity, Violation};
+use crate::{PcbSketch, PcbSketchExt};
 
 const DENSE_PAD_CLUSTER_MIN_PADS: usize = 16;
 
@@ -567,7 +567,7 @@ mod tests {
         dense_pad_via_spacing_readiness, local_fiducial_readiness,
     };
     use crate::LayerMetadata;
-    use crate::geometry::{circle_polygon, polygons_to_sketch, rect_polygon};
+    use crate::geometry::{circle_polygon, polygons_to_profile, rect_polygon};
     use crate::kicad::{BoardModel, CopperFeature, CopperKind};
 
     #[test]
@@ -915,7 +915,7 @@ mod tests {
             net: Some(net.to_string()),
             kind: CopperKind::Pad,
             location,
-            sketch: polygons_to_sketch(
+            sketch: polygons_to_profile(
                 vec![rect_polygon(location, [width, height], 0.0)],
                 Some(LayerMetadata {
                     name: "pad".to_string(),
@@ -930,7 +930,7 @@ mod tests {
             net: None,
             kind: CopperKind::Pad,
             location,
-            sketch: polygons_to_sketch(
+            sketch: polygons_to_profile(
                 vec![rect_polygon(location, [diameter, diameter], 0.0)],
                 Some(LayerMetadata {
                     name: "fiducial".to_string(),
@@ -954,7 +954,7 @@ mod tests {
             net: Some(net.to_string()),
             kind: CopperKind::Via,
             location,
-            sketch: polygons_to_sketch(
+            sketch: polygons_to_profile(
                 vec![circle_polygon(location, diameter / 2.0, 32)],
                 Some(LayerMetadata {
                     name: "via".to_string(),

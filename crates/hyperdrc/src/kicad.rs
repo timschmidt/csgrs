@@ -31,7 +31,7 @@ use hyperreal::Real;
 use crate::LayerMetadata;
 use crate::geometry::{
     SourceGridFacts, SourceScalar, SourceUnit, chamfered_rect_polygon, circle_polygon,
-    line_polygon, polygon_from_points, polygons_to_sketch, rect_polygon, rounded_rect_polygon,
+    line_polygon, polygon_from_points, polygons_to_profile, rect_polygon, rounded_rect_polygon,
     trapezoid_polygon,
 };
 use crate::sexp::{self, Sexp};
@@ -70,7 +70,7 @@ pub fn load_kicad_pcb(path: &Path) -> Result<BoardModel> {
         copper,
         drills,
         board_outline: (!edge_polygons.is_empty()).then(|| {
-            polygons_to_sketch(
+            polygons_to_profile(
                 edge_polygons,
                 Some(LayerMetadata {
                     name: "KiCad Edge.Cuts".to_string(),
@@ -78,7 +78,7 @@ pub fn load_kicad_pcb(path: &Path) -> Result<BoardModel> {
             )
         }),
         panel_features: (!panel_polygons.is_empty()).then(|| {
-            polygons_to_sketch(
+            polygons_to_profile(
                 panel_polygons,
                 Some(LayerMetadata {
                     name: "KiCad panel features".to_string(),
@@ -158,7 +158,7 @@ fn parse_footprints(
                         layer: layer.clone(),
                         net: net.clone(),
                         kind: CopperKind::Pad,
-                        sketch: polygons_to_sketch(
+                        sketch: polygons_to_profile(
                             vec![polygon.clone()],
                             Some(LayerMetadata {
                                 name: "KiCad pad".to_string(),
@@ -361,7 +361,7 @@ fn parse_tracks_and_vias(
             layer,
             net: net_name(segment, nets),
             kind: CopperKind::Segment,
-            sketch: polygons_to_sketch(
+            sketch: polygons_to_profile(
                 vec![polygon],
                 Some(LayerMetadata {
                     name: "KiCad segment".to_string(),
@@ -392,7 +392,7 @@ fn parse_tracks_and_vias(
                 layer,
                 net: net.clone(),
                 kind: CopperKind::Via,
-                sketch: polygons_to_sketch(
+                sketch: polygons_to_profile(
                     vec![circle_polygon(location, size / 2.0, 48)],
                     Some(LayerMetadata {
                         name: "KiCad via".to_string(),
@@ -476,7 +476,7 @@ fn parse_zones(root: &Sexp, nets: &HashMap<i32, String>, copper: &mut Vec<Copper
                     .first()
                     .map(|coord| [coord.x, coord.y])
                     .unwrap_or([0.0, 0.0]),
-                sketch: polygons_to_sketch(
+                sketch: polygons_to_profile(
                     vec![polygon],
                     Some(LayerMetadata {
                         name: "KiCad zone".to_string(),
@@ -633,6 +633,7 @@ mod tests {
 
     use geo::Area;
 
+    use crate::PcbSketchExt;
     use crate::geometry::{SourceGridFacts, SourceUnit};
     use crate::sexp;
 

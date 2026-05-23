@@ -12,9 +12,9 @@ use geo::BoundingRect;
 
 use super::distance::polygon_boundary_distance;
 use super::spatial::CopperSpatialIndex;
-use crate::PcbSketch;
 use crate::kicad::{BoardModel, CopperFeature, CopperKind};
 use crate::report::{Severity, Violation};
+use crate::{PcbSketch, PcbSketchExt};
 
 /// Warn when a likely high-current pad has weak local same-net copper support.
 ///
@@ -333,7 +333,7 @@ fn expanded_rects_overlap(left: &geo::Rect<f64>, right: &geo::Rect<f64>, expansi
 mod tests {
     use super::*;
     use crate::LayerMetadata;
-    use crate::geometry::{circle_polygon, line_polygon, polygons_to_sketch, rect_polygon};
+    use crate::geometry::{circle_polygon, line_polygon, polygons_to_profile, rect_polygon};
 
     fn board(copper: Vec<CopperFeature>) -> BoardModel {
         BoardModel {
@@ -351,7 +351,7 @@ mod tests {
             net: Some(net.to_string()),
             kind: CopperKind::Pad,
             location,
-            sketch: polygons_to_sketch(
+            sketch: polygons_to_profile(
                 vec![rect_polygon(location, size, 0.0)],
                 Some(LayerMetadata {
                     name: "test pad".to_string(),
@@ -366,7 +366,7 @@ mod tests {
             net: Some(net.to_string()),
             kind: CopperKind::Segment,
             location: [(start[0] + end[0]) / 2.0, (start[1] + end[1]) / 2.0],
-            sketch: polygons_to_sketch(
+            sketch: polygons_to_profile(
                 vec![line_polygon(start, end, width).expect("test segment should be valid")],
                 Some(LayerMetadata {
                     name: "test segment".to_string(),
@@ -381,7 +381,7 @@ mod tests {
             net: Some(net.to_string()),
             kind: CopperKind::Zone,
             location,
-            sketch: polygons_to_sketch(
+            sketch: polygons_to_profile(
                 vec![rect_polygon(location, size, 0.0)],
                 Some(LayerMetadata {
                     name: "test zone".to_string(),
@@ -396,7 +396,7 @@ mod tests {
             net: Some(net.to_string()),
             kind: CopperKind::Via,
             location,
-            sketch: polygons_to_sketch(
+            sketch: polygons_to_profile(
                 vec![circle_polygon(location, 0.10, 32)],
                 Some(LayerMetadata {
                     name: "test via".to_string(),

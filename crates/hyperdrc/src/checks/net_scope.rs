@@ -160,7 +160,7 @@ fn region_bounds(region: &NetClassRegionConfig) -> Option<RegionBounds> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::geometry::{polygons_to_sketch, rect_polygon};
+    use crate::geometry::{polygons_to_profile, rect_polygon};
     use crate::kicad::CopperKind;
 
     #[test]
@@ -228,7 +228,7 @@ mod tests {
             layer: layer.to_string(),
             net: Some(net.to_string()),
             kind: CopperKind::Segment,
-            sketch: polygons_to_sketch(vec![rect_polygon(location, [0.2, 0.2], 0.0)], None),
+            sketch: polygons_to_profile(vec![rect_polygon(location, [0.2, 0.2], 0.0)], None),
             location,
         }
     }

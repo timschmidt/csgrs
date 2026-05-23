@@ -1,7 +1,7 @@
 //! Design-readiness checks grouped by the data model they operate on.
 //!
 //! `layer` checks work on already-flattened 2D geometry such as Gerber-derived
-//! `Sketch` layers. `drill` checks focus on holes, slots, and cross-source drill
+//! `Profile` layers. `drill` checks focus on holes, slots, and cross-source drill
 //! tables. `board` checks use richer board context such as KiCad nets, vias,
 //! component features, and panel intent.
 //! `safety` checks focus on voltage, board-edge, and ESD protective-interface

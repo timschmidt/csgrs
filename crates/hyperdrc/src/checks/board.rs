@@ -21,12 +21,12 @@ use super::spatial::{CopperSpatialIndex, DrillSpatialIndex, PointSpatialIndex};
 use crate::checks::drill::drills_to_sketch;
 use crate::geometry::{
     RuleGeometryProvenance, SourceGridFacts, circle_polygon, multipolygon_to_shapes,
-    polygons_to_sketch,
+    polygons_to_profile,
 };
 use crate::ipc356::Ipc356Point;
 use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
 use crate::report::{Severity, Violation};
-use crate::{LayerMetadata, PcbSketch};
+use crate::{LayerMetadata, PcbSketch, PcbSketchExt};
 
 /// Warn when parsed KiCad copper is narrower than the configured width.
 ///
@@ -311,7 +311,7 @@ pub fn plane_clearance_readiness(
         }
         drill_count += 1;
 
-        let hole = polygons_to_sketch(
+        let hole = polygons_to_profile(
             vec![circle_polygon(drill.location, drill.diameter / 2.0, 64)],
             Some(LayerMetadata {
                 name: "mechanical hole".to_string(),
@@ -1390,7 +1390,7 @@ pub fn reference_plane_void_readiness(
                 .into_iter()
                 .flat_map(|ground_index| ground_features[ground_index].sketch.to_multipolygon().0)
                 .collect::<Vec<_>>();
-            let ground = polygons_to_sketch(
+            let ground = polygons_to_profile(
                 ground_polygons,
                 Some(LayerMetadata {
                     name: "KiCad ground zones".to_string(),
@@ -2160,7 +2160,7 @@ pub fn gold_finger_drill_keepout_readiness(
 
     for drill in &drills {
         let keepout_radius = drill.diameter / 2.0 + keepout;
-        let keepout_sketch = polygons_to_sketch(
+        let keepout_sketch = polygons_to_profile(
             vec![circle_polygon(drill.location, keepout_radius, 32)],
             Some(LayerMetadata {
                 name: "gold finger drill keepout".to_string(),
@@ -2906,7 +2906,7 @@ pub fn panelization_clearance(
 
         for blocker_polygon in blocker.to_multipolygon().0 {
             blocker_polygon_count += 1;
-            let blocker_piece = polygons_to_sketch(vec![blocker_polygon], None);
+            let blocker_piece = polygons_to_profile(vec![blocker_polygon], None);
             let blocker_geometry = blocker_piece.to_multipolygon();
             let Some(blocker_bounds) = blocker_piece.geometry().bounding_rect() else {
                 continue;
@@ -3361,10 +3361,10 @@ mod tests {
     use geo::{Coord, LineString, Polygon};
 
     use crate::geometry::{
-        SourceGridFacts, SourceUnit, circle_polygon, line_polygon, polygons_to_sketch,
+        SourceGridFacts, SourceUnit, circle_polygon, line_polygon, polygons_to_profile,
     };
     use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
-    use crate::{LayerMetadata, PcbSketch};
+    use crate::{LayerMetadata, PcbSketch, PcbSketchExt};
 
     use crate::checks::{
         annular_ring, annular_ring_tolerance, board_outline_drill_clearance,
@@ -3410,7 +3410,7 @@ mod tests {
                 net: Some("GND".to_string()),
                 kind: CopperKind::Pad,
                 location: [0.0, 0.0],
-                sketch: polygons_to_sketch(
+                sketch: polygons_to_profile(
                     vec![circle_polygon([0.0, 0.0], 0.4, 32)],
                     Some(LayerMetadata {
                         name: "pad".to_string(),
@@ -3439,7 +3439,7 @@ mod tests {
                 net: Some("GND".to_string()),
                 kind: CopperKind::Via,
                 location: [0.0, 0.0],
-                sketch: polygons_to_sketch(
+                sketch: polygons_to_profile(
                     vec![circle_polygon([0.0, 0.0], 0.5, 64)],
                     Some(LayerMetadata {
                         name: "via".to_string(),
@@ -3864,7 +3864,7 @@ mod tests {
     #[test]
     fn copper_width_readiness_allows_wide_or_degenerate_features() {
         let mut degenerate = copper_disc("SIG", CopperKind::Zone, [2.0, 0.0], 0.0);
-        degenerate.sketch = polygons_to_sketch(Vec::new(), None);
+        degenerate.sketch = polygons_to_profile(Vec::new(), None);
         let board = board_with_copper(vec![
             copper_line("SIG", CopperKind::Segment, [0.0, 0.0], [1.0, 0.0], 0.16),
             degenerate,
@@ -8588,7 +8588,7 @@ mod tests {
                 plated: false,
             }],
             board_outline: None,
-            panel_features: Some(polygons_to_sketch(
+            panel_features: Some(polygons_to_profile(
                 vec![line_polygon([0.0, -1.0], [0.0, 1.0], 0.05).unwrap()],
                 Some(LayerMetadata {
                     name: "KiCad Panel".to_string(),
@@ -8617,7 +8617,7 @@ mod tests {
             ],
             drills: Vec::new(),
             board_outline: None,
-            panel_features: Some(polygons_to_sketch(
+            panel_features: Some(polygons_to_profile(
                 vec![
                     line_polygon([0.0, -1.0], [0.0, 1.0], 0.05).unwrap(),
                     line_polygon([2.0, -1.0], [2.0, 1.0], 0.05).unwrap(),
@@ -8673,7 +8673,7 @@ mod tests {
             copper,
             drills: Vec::new(),
             board_outline: None,
-            panel_features: Some(polygons_to_sketch(
+            panel_features: Some(polygons_to_profile(
                 vec![line_polygon([0.0, -1.0], [0.0, 1.0], 0.05).unwrap()],
                 Some(LayerMetadata {
                     name: "KiCad panel features".to_string(),
@@ -8724,7 +8724,10 @@ mod tests {
 
         let sketch = drills_to_sketch(&holes, "test panel drills");
 
-        assert_eq!(sketch.metadata.as_ref().unwrap().name, "test panel drills");
+        assert_eq!(
+            sketch.metadata().as_ref().unwrap().name,
+            "test panel drills"
+        );
         assert_eq!(sketch.to_multipolygon().0.len(), 2);
     }
 
@@ -8797,7 +8800,7 @@ mod tests {
                 net: None,
                 kind: CopperKind::Pad,
                 location: [1.0, 2.0],
-                sketch: polygons_to_sketch(
+                sketch: polygons_to_profile(
                     vec![circle_polygon([1.0, 2.0], 0.5, 32)],
                     Some(LayerMetadata {
                         name: "feature".to_string(),
@@ -8905,7 +8908,7 @@ mod tests {
                     net: None,
                     kind: CopperKind::Pad,
                     location: [1.0, 2.0],
-                    sketch: polygons_to_sketch(
+                    sketch: polygons_to_profile(
                         vec![circle_polygon([1.0, 2.0], 0.5, 32)],
                         Some(LayerMetadata {
                             name: "feature".to_string(),
@@ -9164,7 +9167,7 @@ mod tests {
     }
 
     fn sketch(polygons: Vec<Polygon<f64>>) -> PcbSketch {
-        polygons_to_sketch(
+        polygons_to_profile(
             polygons,
             Some(LayerMetadata {
                 name: "outline".to_string(),
@@ -9214,7 +9217,7 @@ mod tests {
             net: Some(net.to_string()),
             kind,
             location,
-            sketch: polygons_to_sketch(
+            sketch: polygons_to_profile(
                 vec![circle_polygon(location, radius, 32)],
                 Some(LayerMetadata {
                     name: "feature".to_string(),
@@ -9233,7 +9236,7 @@ mod tests {
             net: None,
             kind: CopperKind::Pad,
             location,
-            sketch: polygons_to_sketch(
+            sketch: polygons_to_profile(
                 vec![circle_polygon(location, radius, 32)],
                 Some(LayerMetadata {
                     name: "fiducial".to_string(),
@@ -9265,7 +9268,7 @@ mod tests {
             net: Some(net.to_string()),
             kind,
             location: [(start[0] + end[0]) / 2.0, (start[1] + end[1]) / 2.0],
-            sketch: polygons_to_sketch(
+            sketch: polygons_to_profile(
                 vec![line_polygon(start, end, width).unwrap()],
                 Some(LayerMetadata {
                     name: "feature".to_string(),
@@ -9288,7 +9291,7 @@ mod tests {
             net: Some(net.to_string()),
             kind,
             location: [(min_x + max_x) / 2.0, (min_y + max_y) / 2.0],
-            sketch: polygons_to_sketch(
+            sketch: polygons_to_profile(
                 vec![square(min_x, min_y, max_x, max_y)],
                 Some(LayerMetadata {
                     name: "feature".to_string(),
