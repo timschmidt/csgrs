@@ -1,6 +1,6 @@
 [package]
 name = "voxelis"
-version = "25.4.0"
+version = "25.5.0"
 authors = ["Artur Wyszyński <artur.wyszynski@wildpixelgames.com>"]
 license = "MIT OR Apache-2.0"
 description = "Sparse Voxel Octree DAG engine for building worlds, shaping matter, and mastering 3D space — powered by pure Rust."
@@ -29,7 +29,10 @@ trace_greedy_timings = []
 tracy = ["dep:tracy-client"]
 
 [dependencies]
-voxelis-memory = "25.4.0"
+# Voxelis sibling dependency switch: keep both local path and crates.io lines; do not remove either.
+# Development mode uses the local path line. For release, comment it and uncomment the crates.io line.
+voxelis-memory = { path = "../voxelis-memory" }
+# voxelis-memory = "25.5.0"
 fastnoise-lite.workspace = true
 glam.workspace = true
 parking_lot.workspace = true

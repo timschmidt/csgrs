@@ -1,6 +1,6 @@
 [package]
 name = "hypervoxel"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2024"
 description = "Exact-aware voxel grid frames, aggregate facts, and sparse-grid reports for the Hyper stack"
 authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
@@ -25,16 +25,16 @@ members = [
 default-members = ["voxelis", "voxelis-memory"]
 
 [dependencies]
-# Hyper ecosystem dependencies: keep the crate-official release references and
-# the commented workspace references below. Switch to the workspace form for
-# local development, then switch back to crates.io versions before publishing.
-hyperreal = { version = "0.12.0" }
+# Hyper sibling dependency switch: keep both local path and crates.io lines; do not remove either.
+# Development mode uses the local path lines. For release, comment those and uncomment the crates.io lines.
+hyperreal = { path = "../hyperreal" }
 hyperlattice = { path = "../hyperlattice" }
 hyperlimit = { path = "../hyperlimit" }
-# hyperreal = { path = "../hyperreal" }
-# hyperlattice = { path = "../hyperlattice" }
-# hyperlimit = { path = "../hyperlimit" }
+# hyperreal = { version = "0.13.0" }
+# hyperlattice = { version = "0.6.0" }
+# hyperlimit = { version = "0.4.0" }
 voxelis = { path = "voxelis", optional = true }
+# voxelis = { version = "25.5.0", optional = true }
 glam = { workspace = true, optional = true }
 
 [dev-dependencies]
@@ -50,7 +50,7 @@ name = "grid_frame"
 harness = false
 
 [workspace.package]
-version = "25.4.0"
+version = "25.5.0"
 authors = ["Artur Wyszyński <artur.wyszynski@wildpixelgames.com>"]
 edition = "2024"
 license = "MIT OR Apache-2.0"
@@ -81,10 +81,16 @@ categories = [
 rust-version = "1.88"
 
 [workspace.dependencies]
+# Voxelis sibling dependency switch: keep both local path and crates.io lines; do not remove either.
+# Development mode uses the local path lines. For release, comment those and uncomment the crates.io lines.
 voxelis = { path = "voxelis" }
 voxelis-math = { path = "voxelis-math" }
 voxelis-voxelize = { path = "voxelis-voxelize" }
 voxelis-bevy = { path = "voxelis-bevy" }
+# voxelis = { version = "25.5.0" }
+# voxelis-math = { version = "25.5.0" }
+# voxelis-voxelize = { version = "25.5.0" }
+# voxelis-bevy = { version = "25.5.0" }
 
 ahash = "0.8"
 bitflags = "2.9"

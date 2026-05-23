@@ -1,6 +1,6 @@
 [package]
 name = "hypervoxel-fuzz"
-version = "0.0.0"
+version = "0.1.0"
 publish = false
 edition = "2024"
 
@@ -12,8 +12,12 @@ cargo-fuzz = true
 [dependencies]
 arbitrary = { version = "1", features = ["derive"] }
 libfuzzer-sys = "0.4"
+# Hyper sibling dependency switch: keep both local path and crates.io lines; do not remove either.
+# Development mode uses the local path lines. For release, comment those and uncomment the crates.io lines.
 hypervoxel = { path = ".." }
-hyperreal = "0.12.0"
+hyperreal = { path = "../../hyperreal" }
+# hypervoxel = "0.3.0"
+# hyperreal = "0.13.0"
 
 [[bin]]
 name = "grid_address"

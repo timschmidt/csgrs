@@ -1,6 +1,6 @@
 [package]
 name = "voxelis-memory"
-version = "25.4.0"
+version = "25.5.0"
 authors = ["Artur Wyszyński <artur.wyszynski@wildpixelgames.com>"]
 license = "MIT OR Apache-2.0"
 description = "Memory utilities for the Voxelis voxel engine."
