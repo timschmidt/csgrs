@@ -325,9 +325,22 @@ name = "hyperbrep"
 version = "0.2.0"
 dependencies = [
  "criterion",
+ "hypercurve",
+ "hyperlimit",
+ "hyperphysics",
+ "hyperreal",
+ "hypertri",
+ "hypervoxel",
+ "proptest",
+]
+
+[[package]]
+name = "hypercurve"
+version = "0.3.0"
+dependencies = [
  "hyperlimit",
  "hyperreal",
- "proptest",
+ "hypersolve",
 ]
 
 [[package]]
@@ -346,6 +359,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "hypermesh"
+version = "0.3.0"
+dependencies = [
+ "hyperlattice",
+ "hyperlimit",
+ "hyperreal",
+]
+
+[[package]]
+name = "hyperphysics"
+version = "0.3.0"
+dependencies = [
+ "hyperlattice",
+ "hyperlimit",
+ "hypermesh",
+ "hyperreal",
+ "hypersolve",
+]
+
+[[package]]
 name = "hyperreal"
 version = "0.13.0"
 dependencies = [
@@ -353,6 +386,32 @@ dependencies = [
  "num",
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "hypersolve"
+version = "0.3.0"
+dependencies = [
+ "hyperlattice",
+ "hyperlimit",
+ "hyperreal",
+]
+
+[[package]]
+name = "hypertri"
+version = "0.3.0"
+dependencies = [
+ "hyperlimit",
+ "hyperreal",
+]
+
+[[package]]
+name = "hypervoxel"
+version = "0.3.0"
+dependencies = [
+ "hyperlattice",
+ "hyperlimit",
+ "hyperreal",
 ]
 
 [[package]]

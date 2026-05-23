@@ -5,17 +5,18 @@
 //! explicit: a mesh can be ready for downstream handoff only after the retained
 //! BREP face/shell evidence and the tessellation manifest agree.
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 
 use crate::provenance::{BrepConstructionManifest, BrepConstructionProvenanceReport};
 use crate::report::BrepShellClosureReport;
 use crate::surface::{BrepSurfaceKind, BrepSurfaceSource};
-use crate::topology::{BrepFaceId, BrepShell};
+use crate::topology::{BrepFaceId, BrepShell, BrepVertexId};
+use crate::triangle::{BrepTriangleMeshBlocker, collect_loop_vertices};
 
 /// Tessellation producer declared by a derived-mesh manifest.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
 pub enum BrepTessellationBackend {
-    /// Future exact planar lowering through `hypertri` constrained triangulation.
+    /// Exact planar lowering through `hypertri` earcut triangulation.
     HypertriPlanar,
     /// External tessellation replayed by exact Hyper predicates.
     ExactExternalReplay,
@@ -72,6 +73,99 @@ impl BrepFaceTessellationManifest {
             lossy_adapter_output: false,
         }
     }
+
+    /// Construct an exact planar manifest by replaying retained face loops
+    /// through the BREP surface frame and `hypertri`'s exact earcut route.
+    ///
+    /// This is the manifest-producing side of the Yap-style evidence boundary:
+    /// the derived triangle counts are accepted only after the source loops
+    /// project through the exact retained frame and `hypertri` returns a
+    /// topology index stream. The manifest still remains derived mesh
+    /// evidence; retained BREP topology stays authoritative. See Yap, "Towards
+    /// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997),
+    /// and Meisters, "Polygons Have Ears," *American Mathematical Monthly*
+    /// 82(6), 1975.
+    pub fn from_exact_planar_shell_face(shell: &BrepShell, face: BrepFaceId) -> Option<Self> {
+        let source_face = shell.faces.iter().find(|candidate| candidate.id == face)?;
+        let surface = shell
+            .surfaces
+            .iter()
+            .find(|surface| surface.id == source_face.surface)?;
+        if !matches!(surface.kind, BrepSurfaceKind::Plane(_)) {
+            return None;
+        }
+        let frame = surface.frame_report();
+        if !frame.exact_frame_ready {
+            return None;
+        }
+
+        let edge_by_id = shell
+            .edges
+            .iter()
+            .map(|edge| (edge.id, *edge))
+            .collect::<BTreeMap<_, _>>();
+        let vertex_by_id = shell
+            .vertices
+            .iter()
+            .map(|vertex| (vertex.id, vertex))
+            .collect::<BTreeMap<BrepVertexId, _>>();
+        let mut blockers = Vec::<BrepTriangleMeshBlocker>::new();
+        let mut points2 = Vec::new();
+        let mut hole_indices = Vec::new();
+
+        push_manifest_loop_uvs(
+            &source_face.outer.coedges,
+            surface,
+            &edge_by_id,
+            &vertex_by_id,
+            &mut blockers,
+            &mut points2,
+        )?;
+        for inner in &source_face.inner {
+            hole_indices.push(points2.len());
+            push_manifest_loop_uvs(
+                &inner.coedges,
+                surface,
+                &edge_by_id,
+                &vertex_by_id,
+                &mut blockers,
+                &mut points2,
+            )?;
+        }
+        if !blockers.is_empty() || points2.len() < 3 {
+            return None;
+        }
+
+        let exact = points2
+            .iter()
+            .map(|point| hypertri::Point2::new(point.x.clone(), point.y.clone()))
+            .collect::<Vec<_>>();
+        let indices = hypertri::earcut(&exact, &hole_indices).ok()?;
+        let triangle_count = indices.len() / 3;
+        (triangle_count > 0).then(|| {
+            let boundary_edge_count = source_face
+                .loops()
+                .map(|face_loop| face_loop.coedges.len())
+                .sum();
+            Self::exact_planar(face, triangle_count, points2.len(), boundary_edge_count, 0)
+        })
+    }
+}
+
+fn push_manifest_loop_uvs(
+    coedges: &[crate::topology::BrepCoedge],
+    surface: &crate::surface::BrepSurface,
+    edge_by_id: &BTreeMap<crate::topology::BrepEdgeId, crate::topology::BrepEdge>,
+    vertex_by_id: &BTreeMap<BrepVertexId, &crate::topology::BrepVertex>,
+    blockers: &mut Vec<BrepTriangleMeshBlocker>,
+    points2: &mut Vec<hyperlimit::Point2>,
+) -> Option<()> {
+    let vertices = collect_loop_vertices(coedges, edge_by_id, vertex_by_id, blockers)?;
+    for point in vertices {
+        let projection = surface.project_frame_point(point);
+        points2.push(projection.uv?);
+    }
+    Some(())
 }
 
 /// Explicit blocker for derived face-mesh readiness.
@@ -366,6 +460,19 @@ impl BrepShellTessellationReport {
         Self::from_parts(shell_closure, faces)
     }
 
+    /// Build a shell tessellation report by deriving exact planar manifests
+    /// from retained faces before replaying the normal manifest checks.
+    ///
+    /// This is the production path for current planar BREP faces: generated
+    /// manifests come from exact frame projection plus `hypertri`, then the
+    /// existing readiness report checks source topology, exact surface status,
+    /// boundary preservation, and shell closure. Failed faces simply have no
+    /// manifest and remain blocked by the same report vocabulary.
+    pub fn from_exact_planar_shell(shell: &BrepShell) -> Self {
+        let manifests = shell.exact_planar_tessellation_manifests();
+        Self::from_shell_manifests(shell, &manifests)
+    }
+
     fn from_parts(
         shell_closure: BrepShellClosureReport,
         faces: Vec<BrepFaceTessellationReport>,
@@ -435,6 +542,13 @@ impl BrepMeshHandoffReport {
         Self::from_shell_manifests_with_construction(shell, manifests, None)
     }
 
+    /// Build a mesh handoff by deriving exact planar face manifests from the
+    /// retained shell and replaying them through the normal handoff gate.
+    pub fn from_exact_planar_shell(shell: &BrepShell) -> Self {
+        let manifests = shell.exact_planar_tessellation_manifests();
+        Self::from_shell_manifests(shell, &manifests)
+    }
+
     /// Build a shell mesh handoff report with construction provenance replay.
     pub fn from_shell_manifests_with_construction(
         shell: &BrepShell,
@@ -462,5 +576,28 @@ impl BrepMeshHandoffReport {
             exact_solid_handoff_ready,
             derived_mesh_only: true,
         }
+    }
+}
+
+impl BrepShell {
+    /// Derive exact planar tessellation manifests for every face whose retained
+    /// loops can be projected and triangulated without adapter evidence.
+    pub fn exact_planar_tessellation_manifests(&self) -> Vec<BrepFaceTessellationManifest> {
+        self.faces
+            .iter()
+            .filter_map(|face| {
+                BrepFaceTessellationManifest::from_exact_planar_shell_face(self, face.id)
+            })
+            .collect()
+    }
+
+    /// Replay retained planar faces through exact tessellation readiness.
+    pub fn exact_planar_tessellation_report(&self) -> BrepShellTessellationReport {
+        BrepShellTessellationReport::from_exact_planar_shell(self)
+    }
+
+    /// Replay retained planar faces as an exact derived mesh handoff.
+    pub fn exact_planar_mesh_handoff_report(&self) -> BrepMeshHandoffReport {
+        BrepMeshHandoffReport::from_exact_planar_shell(self)
     }
 }

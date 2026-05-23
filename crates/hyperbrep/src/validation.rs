@@ -7,7 +7,9 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use hyperlimit::{PlaneSide, PredicateOutcome};
 
+use crate::adjacency::BrepShellEdgeAgreementReport;
 use crate::bounds::{BrepFaceBoundsReport, BrepShellBoundsReport};
+use crate::frame::BrepFaceUvBoundsReport;
 use crate::report::{BrepShellClosureReport, BrepTopologyValidationReport};
 use crate::surface::{BrepSurfaceBlocker, BrepSurfaceFacts, BrepSurfaceKind};
 use crate::tessellation::{BrepFaceTessellationManifest, BrepFaceTessellationReport};
@@ -25,6 +27,8 @@ pub enum BrepFaceValidationBlocker {
     TrimSetNotReady,
     /// Exact face bounds could not be derived.
     BoundsNotReady,
+    /// Exact face UV bounds could not be derived.
+    UvBoundsNotReady,
     /// Face geometry consistency could not be certified.
     GeometryNotReady,
     /// Optional tessellation evidence was supplied but was not ready.
@@ -40,6 +44,8 @@ pub enum BrepShellValidationBlocker {
     ShellClosureNotReady,
     /// Exact shell bounds could not be derived.
     ShellBoundsNotReady,
+    /// Adjacent face edge uses or support-surface images do not agree.
+    EdgeAgreementNotReady,
     /// At least one face boundary is not ready.
     FaceBoundaryNotReady,
     /// At least one face validation report is not exact-ready.
@@ -117,6 +123,8 @@ pub struct BrepFaceValidationReport {
     pub trim_set: Option<BrepFaceTrimSetReport>,
     /// Exact AABB/support report for the face, when the face exists.
     pub bounds: Option<BrepFaceBoundsReport>,
+    /// Exact UV bounds for the face, when the face exists.
+    pub uv_bounds: Option<BrepFaceUvBoundsReport>,
     /// Geometry consistency report for the face, when the face exists.
     pub geometry: Option<BrepGeometryValidationReport>,
     /// Optional tessellation report replayed against the same source face.
@@ -127,6 +135,8 @@ pub struct BrepFaceValidationReport {
     pub exact_face_boundary_ready: bool,
     /// Whether exact face bounds are ready.
     pub exact_bounds_ready: bool,
+    /// Whether exact face UV bounds are ready.
+    pub exact_uv_bounds_ready: bool,
     /// Whether the optional tessellation evidence is ready, or no tessellation
     /// evidence was requested.
     pub tessellation_ready: bool,
@@ -143,6 +153,8 @@ pub struct BrepShellValidationReport {
     pub closure: BrepShellClosureReport,
     /// Exact shell AABB/support facts.
     pub bounds: BrepShellBoundsReport,
+    /// Adjacent-face edge-use and endpoint/support-surface agreement.
+    pub edge_agreement: BrepShellEdgeAgreementReport,
     /// Per-face validation reports.
     pub faces: Vec<BrepFaceValidationReport>,
     /// Number of faces whose retained boundary evidence is exact-ready.
@@ -155,8 +167,8 @@ pub struct BrepShellValidationReport {
     pub blocked_face_count: usize,
     /// Whether all retained face boundary evidence is exact-ready.
     pub exact_surface_boundary_ready: bool,
-    /// Whether topology, closure, bounds, and all faces are exact-ready as a
-    /// closed shell.
+    /// Whether topology, closure, bounds, adjacent edges, and all faces are
+    /// exact-ready as a closed shell.
     pub exact_closed_shell_ready: bool,
     /// Explicit blockers.
     pub blockers: Vec<BrepShellValidationBlocker>,
@@ -177,6 +189,7 @@ impl BrepShellValidationReport {
         let topology = shell.validate_topology();
         let closure = shell.audit_closure();
         let bounds = shell.shell_bounds_report();
+        let edge_agreement = shell.edge_agreement_report();
         let faces = shell
             .faces
             .iter()
@@ -194,6 +207,7 @@ impl BrepShellValidationReport {
         let exact_closed_shell_ready = exact_surface_boundary_ready
             && topology.topology_ready
             && closure.exact_shell_ready
+            && edge_agreement.shell_edge_agreement_ready
             && blocked_face_count == 0;
 
         let mut blockers = Vec::new();
@@ -209,6 +223,9 @@ impl BrepShellValidationReport {
         if !bounds.exact_bounds_ready {
             blockers.push(BrepShellValidationBlocker::ShellBoundsNotReady);
         }
+        if !edge_agreement.shell_edge_agreement_ready {
+            blockers.push(BrepShellValidationBlocker::EdgeAgreementNotReady);
+        }
         if blocked_face_boundary_count > 0 || faces.is_empty() {
             blockers.push(BrepShellValidationBlocker::FaceBoundaryNotReady);
         }
@@ -220,6 +237,7 @@ impl BrepShellValidationReport {
             topology,
             closure,
             bounds,
+            edge_agreement,
             faces,
             ready_face_boundary_count,
             blocked_face_boundary_count,
@@ -254,11 +272,13 @@ impl BrepFaceValidationReport {
                 surface_blockers: Vec::new(),
                 trim_set: None,
                 bounds: None,
+                uv_bounds: None,
                 geometry: None,
                 tessellation: None,
                 blockers: vec![BrepFaceValidationBlocker::MissingFace],
                 exact_face_boundary_ready: false,
                 exact_bounds_ready: false,
+                exact_uv_bounds_ready: false,
                 tessellation_ready: tessellation_manifest.is_none(),
                 exact_face_ready: false,
             };
@@ -292,6 +312,10 @@ impl BrepFaceValidationReport {
         if !bounds.exact_bounds_ready {
             blockers.push(BrepFaceValidationBlocker::BoundsNotReady);
         }
+        let uv_bounds = shell.face_uv_bounds_report(face);
+        if !uv_bounds.exact_uv_bounds_ready {
+            blockers.push(BrepFaceValidationBlocker::UvBoundsNotReady);
+        }
         let geometry = shell.geometry_validation_report(face);
         if !geometry.geometry_ready {
             blockers.push(BrepFaceValidationBlocker::GeometryNotReady);
@@ -308,10 +332,13 @@ impl BrepFaceValidationReport {
         }
 
         let exact_bounds_ready = bounds.exact_bounds_ready;
+        let exact_uv_bounds_ready = uv_bounds.exact_uv_bounds_ready;
         let exact_face_boundary_ready =
             surface_ready && trim_set.trim_set_ready && geometry.geometry_ready;
-        let exact_face_ready =
-            exact_face_boundary_ready && exact_bounds_ready && tessellation_ready;
+        let exact_face_ready = exact_face_boundary_ready
+            && exact_bounds_ready
+            && exact_uv_bounds_ready
+            && tessellation_ready;
         Self {
             face,
             face_found: true,
@@ -319,11 +346,13 @@ impl BrepFaceValidationReport {
             surface_blockers,
             trim_set: Some(trim_set),
             bounds: Some(bounds),
+            uv_bounds: Some(uv_bounds),
             geometry: Some(geometry),
             tessellation,
             blockers,
             exact_face_boundary_ready,
             exact_bounds_ready,
+            exact_uv_bounds_ready,
             tessellation_ready,
             exact_face_ready,
         }

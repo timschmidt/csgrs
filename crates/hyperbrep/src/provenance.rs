@@ -11,6 +11,22 @@ use std::collections::BTreeSet;
 use crate::report::BrepTopologyCounts;
 use crate::topology::{BrepEdgeId, BrepFaceId, BrepShell, BrepVertexId};
 
+const FNV_OFFSET: u64 = 0xcbf29ce484222325;
+const FNV_PRIME: u64 = 0x00000100000001b3;
+
+fn fingerprint_bytes(mut state: u64, bytes: &[u8]) -> u64 {
+    for byte in bytes {
+        state ^= u64::from(*byte);
+        state = state.wrapping_mul(FNV_PRIME);
+    }
+    state
+}
+
+fn fingerprint_debug<T: core::fmt::Debug>(state: u64, label: &str, value: &T) -> u64 {
+    let state = fingerprint_bytes(state, label.as_bytes());
+    fingerprint_bytes(state, format!("{value:?}").as_bytes())
+}
+
 /// Stable identifier for a construction feature or adapter operation.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct BrepFeatureId(pub String);
@@ -126,6 +142,32 @@ impl BrepTopologySnapshot {
     }
 }
 
+/// Deterministic retained-shell fingerprint used to reject stale evidence.
+///
+/// This fingerprint is intentionally an audit token, not a geometric hash API.
+/// It records ordered retained object identity, incidence, surface records, and
+/// exact vertex payloads so count-preserving mutations cannot reuse an old
+/// construction manifest. The gate follows Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997): exact combinatorial
+/// decisions are valid only for the object representation that was replayed.
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
+pub struct BrepTopologyFingerprint {
+    /// Deterministic FNV-1a-style digest over retained BREP evidence.
+    pub value: u64,
+}
+
+impl BrepTopologyFingerprint {
+    /// Capture a deterministic fingerprint from a retained shell.
+    pub fn from_shell(shell: &BrepShell) -> Self {
+        let mut state = fingerprint_bytes(FNV_OFFSET, b"hyperbrep:v1");
+        state = fingerprint_debug(state, "vertices", &shell.vertices);
+        state = fingerprint_debug(state, "edges", &shell.edges);
+        state = fingerprint_debug(state, "surfaces", &shell.surfaces);
+        state = fingerprint_debug(state, "faces", &shell.faces);
+        Self { value: state }
+    }
+}
+
 /// Construction provenance manifest.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct BrepConstructionManifest {
@@ -145,6 +187,8 @@ pub struct BrepConstructionManifest {
     pub replay_status: BrepConstructionReplayStatus,
     /// Topology snapshot captured when the report was built.
     pub topology_snapshot: BrepTopologySnapshot,
+    /// Retained-shell fingerprint captured when the report was built.
+    pub topology_fingerprint: BrepTopologyFingerprint,
 }
 
 impl BrepConstructionManifest {
@@ -164,6 +208,7 @@ impl BrepConstructionManifest {
             adapter_diagnostics: Vec::new(),
             replay_status: BrepConstructionReplayStatus::Accepted,
             topology_snapshot: BrepTopologySnapshot::from_shell(shell),
+            topology_fingerprint: BrepTopologyFingerprint::from_shell(shell),
         }
     }
 
@@ -188,6 +233,8 @@ pub enum BrepConstructionBlocker {
     ReplayNotAccepted,
     /// Manifest topology snapshot differs from the current shell.
     StaleTopologySnapshot,
+    /// Manifest retained-shell fingerprint differs from the current shell.
+    StaleTopologyFingerprint,
     /// Adapter diagnostics are present.
     AdapterDiagnosticsPresent,
 }
@@ -209,6 +256,8 @@ pub struct BrepConstructionProvenanceReport {
     pub adapter_diagnostic_count: usize,
     /// Whether the topology snapshot still matches the current shell.
     pub topology_snapshot_current: bool,
+    /// Whether the retained-shell fingerprint still matches the current shell.
+    pub topology_fingerprint_current: bool,
     /// Whether exact/certified replay accepted this construction.
     pub replay_accepted: bool,
     /// Explicit blockers.
@@ -249,6 +298,11 @@ impl BrepConstructionProvenanceReport {
         if !topology_snapshot_current {
             blockers.insert(BrepConstructionBlocker::StaleTopologySnapshot);
         }
+        let topology_fingerprint_current =
+            manifest.topology_fingerprint == BrepTopologyFingerprint::from_shell(shell);
+        if !topology_fingerprint_current {
+            blockers.insert(BrepConstructionBlocker::StaleTopologyFingerprint);
+        }
 
         let vertex_ids = shell
             .vertices
@@ -286,6 +340,7 @@ impl BrepConstructionProvenanceReport {
             parameter_payload_count: manifest.parameter_payloads.len(),
             adapter_diagnostic_count: manifest.adapter_diagnostics.len(),
             topology_snapshot_current,
+            topology_fingerprint_current,
             replay_accepted: manifest.replay_status == BrepConstructionReplayStatus::Accepted,
             construction_fresh: blockers.is_empty(),
             blockers,

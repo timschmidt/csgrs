@@ -4,6 +4,7 @@
 //! closure, per-face validation, exact shell bounds, and optional construction
 //! freshness into a report-bearing solid handoff gate for downstream consumers.
 
+use crate::adjacency::BrepShellEdgeAgreementReport;
 use crate::bounds::BrepShellBoundsReport;
 use crate::provenance::{BrepConstructionManifest, BrepConstructionProvenanceReport};
 use crate::report::BrepShellClosureReport;
@@ -18,6 +19,8 @@ pub enum BrepSolidReadinessBlocker {
     ShellClosureNotReady,
     /// Exact shell bounds could not be derived.
     ShellBoundsNotReady,
+    /// Adjacent face edge uses or support-surface images do not agree.
+    EdgeAgreementNotReady,
     /// At least one face validation report is not exact-ready.
     FaceValidationNotReady,
     /// Optional construction provenance was supplied but is stale or rejected.
@@ -35,6 +38,8 @@ pub struct BrepSolidReadinessReport {
     pub shell_closure: BrepShellClosureReport,
     /// Exact shell AABB/support facts.
     pub shell_bounds: BrepShellBoundsReport,
+    /// Adjacent-face edge-use and endpoint/support-surface agreement.
+    pub edge_agreement: BrepShellEdgeAgreementReport,
     /// Per-face validation reports.
     pub faces: Vec<BrepFaceValidationReport>,
     /// Optional construction freshness replay.
@@ -51,6 +56,9 @@ pub struct BrepSolidReadinessReport {
     pub all_faces_ready: bool,
     /// Whether exact shell bounds are ready.
     pub exact_bounds_ready: bool,
+    /// Whether every retained edge has opposite adjacent uses whose endpoint
+    /// images replay on both adjacent support surfaces.
+    pub edge_agreement_ready: bool,
     /// Whether optional construction evidence is fresh, or no construction
     /// evidence was requested.
     pub construction_fresh: bool,
@@ -79,6 +87,7 @@ impl BrepSolidReadinessReport {
     pub fn from_shell(shell: &BrepShell, construction: Option<&BrepConstructionManifest>) -> Self {
         let shell_closure = shell.audit_closure();
         let shell_bounds = shell.shell_bounds_report();
+        let edge_agreement = shell.edge_agreement_report();
         let faces = shell
             .faces
             .iter()
@@ -91,6 +100,7 @@ impl BrepSolidReadinessReport {
         let closed_shell_ready = shell_closure.exact_shell_ready;
         let all_faces_ready = !faces.is_empty() && blocked_face_count == 0;
         let exact_bounds_ready = shell_bounds.exact_bounds_ready;
+        let edge_agreement_ready = edge_agreement.shell_edge_agreement_ready;
         let construction_fresh = construction
             .as_ref()
             .is_none_or(|report| report.construction_fresh);
@@ -106,6 +116,9 @@ impl BrepSolidReadinessReport {
         if !exact_bounds_ready {
             blockers.push(BrepSolidReadinessBlocker::ShellBoundsNotReady);
         }
+        if !edge_agreement_ready {
+            blockers.push(BrepSolidReadinessBlocker::EdgeAgreementNotReady);
+        }
         if !all_faces_ready {
             blockers.push(BrepSolidReadinessBlocker::FaceValidationNotReady);
         }
@@ -120,11 +133,13 @@ impl BrepSolidReadinessReport {
             && closed_shell_ready
             && all_faces_ready
             && exact_bounds_ready
+            && edge_agreement_ready
             && exact_volume_ready
             && construction_fresh;
         Self {
             shell_closure,
             shell_bounds,
+            edge_agreement,
             faces,
             construction,
             volume,
@@ -133,6 +148,7 @@ impl BrepSolidReadinessReport {
             closed_shell_ready,
             all_faces_ready,
             exact_bounds_ready,
+            edge_agreement_ready,
             construction_fresh,
             exact_volume_ready,
             blockers,

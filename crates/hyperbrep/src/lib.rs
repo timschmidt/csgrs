@@ -8,10 +8,16 @@
 //! certified predicates, while uncertain or adapter-derived evidence stays
 //! explicit.
 
+mod adjacency;
 mod area;
 mod bounds;
+mod construction;
 mod export;
+mod frame;
+mod handoff;
 mod import;
+mod package;
+mod physics;
 mod provenance;
 mod query;
 mod report;
@@ -19,32 +25,59 @@ mod solid;
 mod surface;
 mod tessellation;
 mod topology;
+mod triangle;
 mod trim;
 mod validation;
 mod volume;
+mod voxel;
 
+pub use adjacency::{
+    BrepEdgeAgreementBlocker, BrepEdgeAgreementReport, BrepEdgeUseReport,
+    BrepShellEdgeAgreementReport,
+};
 pub use area::{BrepAreaProjectionAxis, BrepFaceAreaBlocker, BrepFaceAreaReport};
 pub use bounds::{
     BrepFaceAabbPreflightBlocker, BrepFaceAabbPreflightReport, BrepFaceBoundsBlocker,
     BrepFaceBoundsReport, BrepShellBoundsBlocker, BrepShellBoundsReport, PreparedBrepFaceBounds,
     PreparedBrepShellBounds,
 };
+pub use construction::{
+    BrepPlanarExtrusionConstruction, BrepPlanarExtrusionConstructionBlocker,
+    BrepPlanarRegionConstruction, BrepPlanarRegionConstructionBlocker,
+};
 pub use export::{
     BrepExportBlocker, BrepExportFormat, BrepExportManifest, BrepExportReport,
     BrepExportScalarPolicy,
+};
+pub use frame::{
+    BrepFaceUvBoundsBlocker, BrepFaceUvBoundsReport, BrepPlaneFrameAxis, BrepSurfaceFrameBlocker,
+    BrepSurfaceFrameEvalReport, BrepSurfaceFrameProjectionReport, BrepSurfaceFrameReport,
+};
+pub use handoff::{
+    BrepExactSolidHandoffBlocker, BrepExactSolidHandoffReport, BrepExactSurfaceHandoffBlocker,
+    BrepExactSurfaceHandoffReport,
 };
 pub use import::{
     BrepImportedSurfaceFamily, BrepLossyFloatImportReport, BrepLossyImportBlocker,
     BrepPrimitiveFloatPrecision, BrepUnsupportedSurfaceRecord,
 };
+pub use package::{
+    BrepHandoffPackageBlocker, BrepHandoffPackageManifest, BrepHandoffPackageReport,
+    BrepVoxelPackageRequest,
+};
+pub use physics::{
+    BrepPhysicsFixtureHandoffReport, BrepPhysicsMassBlocker, BrepPhysicsMassHandoffReport,
+    BrepPhysicsShapeBlocker, BrepPhysicsShapeHandoffReport,
+};
 pub use provenance::{
     BrepConstructionBlocker, BrepConstructionKind, BrepConstructionManifest,
     BrepConstructionProvenanceReport, BrepConstructionReplayStatus, BrepFeatureId,
-    BrepSelectedReference, BrepSourceVersion, BrepTopologySnapshot,
+    BrepSelectedReference, BrepSourceVersion, BrepTopologyFingerprint, BrepTopologySnapshot,
 };
 pub use query::{
     BrepFacePlanePreflightBlocker, BrepFacePlanePreflightReport, BrepPointFacePlaneBlocker,
-    BrepPointFacePlaneReport, BrepSegmentFacePlaneBlocker, BrepSegmentFacePlaneReport,
+    BrepPointFacePlaneReport, BrepPreparedFaceQueryBatchReport, BrepPreparedFaceQueryBlocker,
+    BrepSegmentFacePlaneBlocker, BrepSegmentFacePlaneReport, PreparedBrepFaceQuery,
 };
 pub use report::{
     BrepShellBlocker, BrepShellClosureReport, BrepSurfaceInventoryReport, BrepTopologyCounts,
@@ -63,25 +96,53 @@ pub use topology::{
     BrepCoedge, BrepEdge, BrepEdgeId, BrepEdgeOrientation, BrepFace, BrepFaceId, BrepLoop,
     BrepLoopId, BrepShell, BrepVertex, BrepVertexId,
 };
+pub use triangle::{
+    BrepExactTriangle3, BrepExactTriangleMeshHandoffReport, BrepTriangleMeshBlocker,
+};
 pub use trim::{BrepFaceTrimSetReport, BrepTrimLoopBlocker, BrepTrimLoopReport, BrepTrimLoopRole};
 pub use validation::{
     BrepFaceValidationBlocker, BrepFaceValidationReport, BrepGeometryValidationBlocker,
     BrepGeometryValidationReport, BrepShellValidationBlocker, BrepShellValidationReport,
 };
 pub use volume::{BrepShellOrientation, BrepShellVolumeBlocker, BrepShellVolumeReport};
+pub use voxel::{BrepVoxelHandoffBlocker, BrepVoxelHandoffReport};
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use hypercurve::{Contour2, LineSeg2, Region2, Segment2};
     use hyperlimit::{Plane3, Point3};
-    use hyperreal::Real;
+    use hyperreal::{Rational, Real};
 
     fn r(value: i32) -> Real {
         Real::from(value)
     }
 
+    fn q(numerator: i64, denominator: u64) -> Real {
+        Real::new(Rational::fraction(numerator, denominator).unwrap())
+    }
+
     fn p(x: i32, y: i32, z: i32) -> Point3 {
         Point3::new(r(x), r(y), r(z))
+    }
+
+    fn uv(x: i32, y: i32) -> hypercurve::Point2 {
+        hypercurve::Point2::new(r(x), r(y))
+    }
+
+    fn line2(start: hypercurve::Point2, end: hypercurve::Point2) -> Segment2 {
+        Segment2::Line(LineSeg2::try_new(start, end).unwrap())
+    }
+
+    fn rectangle_region(min_x: i32, min_y: i32, max_x: i32, max_y: i32) -> Region2 {
+        let contour = Contour2::try_new(vec![
+            line2(uv(min_x, min_y), uv(max_x, min_y)),
+            line2(uv(max_x, min_y), uv(max_x, max_y)),
+            line2(uv(max_x, max_y), uv(min_x, max_y)),
+            line2(uv(min_x, max_y), uv(min_x, min_y)),
+        ])
+        .unwrap();
+        Region2::from_material_contours(vec![contour])
     }
 
     fn plane(id: u64, nx: i32, ny: i32, nz: i32, offset: i32) -> BrepSurface {
@@ -195,6 +256,60 @@ mod tests {
     }
 
     #[test]
+    fn edge_agreement_report_certifies_cube_adjacent_edge_images() {
+        let shell = cube_shell();
+        let report = shell.edge_agreement_report();
+
+        assert!(report.shell_edge_agreement_ready);
+        assert_eq!(report.edge_count, 12);
+        assert_eq!(report.ready_edge_count, 12);
+        assert_eq!(report.blocked_edge_count, 0);
+        assert_eq!(report.boundary_edge_count, 0);
+        assert_eq!(report.nonmanifold_edge_count, 0);
+        assert_eq!(report.same_orientation_pair_count, 0);
+        assert_eq!(report.exact_edge_image_count, 12);
+        assert!(report.blockers.is_empty());
+        assert!(report.edges.iter().all(|edge| edge.use_count == 2));
+        assert!(report.edges.iter().all(|edge| edge.manifold_pair_ready));
+        assert!(report.edges.iter().all(|edge| edge.exact_edge_image_ready));
+    }
+
+    #[test]
+    fn edge_agreement_report_blocks_boundary_orientation_and_off_surface_cases() {
+        let mut open = cube_shell();
+        open.faces.pop();
+        let open_report = open.edge_agreement_report();
+        assert!(!open_report.shell_edge_agreement_ready);
+        assert_eq!(open_report.boundary_edge_count, 4);
+        assert!(
+            open_report
+                .blockers
+                .contains(&BrepEdgeAgreementBlocker::BoundaryEdge)
+        );
+
+        let mut same_orientation = cube_shell();
+        same_orientation.faces[1].outer.coedges[0].orientation = BrepEdgeOrientation::Reversed;
+        let same_orientation_report = same_orientation.edge_agreement_report();
+        assert!(!same_orientation_report.shell_edge_agreement_ready);
+        assert_eq!(same_orientation_report.same_orientation_pair_count, 1);
+        assert!(
+            same_orientation_report
+                .blockers
+                .contains(&BrepEdgeAgreementBlocker::SameOrientationPair)
+        );
+
+        let mut off_surface = cube_shell();
+        off_surface.vertices[0] = BrepVertex::new(BrepVertexId(0), p(0, 0, 2));
+        let off_surface_report = off_surface.edge_agreement_report();
+        assert!(!off_surface_report.shell_edge_agreement_ready);
+        assert!(
+            off_surface_report
+                .blockers
+                .contains(&BrepEdgeAgreementBlocker::EndpointOffSurface)
+        );
+    }
+
+    #[test]
     fn planar_face_area_report_derives_exact_projected_twice_area() {
         let shell = cube_shell();
         let report = shell.face_area_report(BrepFaceId(0));
@@ -218,6 +333,7 @@ mod tests {
         assert!(report.topology.topology_ready);
         assert!(report.closure.exact_shell_ready);
         assert!(report.bounds.exact_bounds_ready);
+        assert!(report.edge_agreement.shell_edge_agreement_ready);
         assert_eq!(report.faces.len(), 6);
         assert_eq!(report.ready_face_boundary_count, 6);
         assert_eq!(report.blocked_face_boundary_count, 0);
@@ -299,6 +415,7 @@ mod tests {
         let validation = shell.shell_validation_report();
         assert!(!validation.exact_surface_boundary_ready);
         assert!(!validation.exact_closed_shell_ready);
+        assert!(!validation.edge_agreement.shell_edge_agreement_ready);
         assert!(
             validation
                 .blockers
@@ -308,6 +425,11 @@ mod tests {
             validation
                 .blockers
                 .contains(&BrepShellValidationBlocker::ShellClosureNotReady)
+        );
+        assert!(
+            validation
+                .blockers
+                .contains(&BrepShellValidationBlocker::EdgeAgreementNotReady)
         );
         assert!(
             validation
@@ -461,6 +583,42 @@ mod tests {
     }
 
     #[test]
+    fn exact_planar_tessellation_manifests_are_derived_from_retained_faces() {
+        let shell = cube_shell();
+        let manifests = shell.exact_planar_tessellation_manifests();
+
+        assert_eq!(manifests.len(), shell.faces.len());
+        assert!(
+            manifests
+                .iter()
+                .all(|manifest| manifest.backend == BrepTessellationBackend::HypertriPlanar)
+        );
+        assert_eq!(
+            manifests
+                .iter()
+                .map(|manifest| manifest.triangle_count)
+                .sum::<usize>(),
+            12
+        );
+        assert_eq!(
+            manifests
+                .iter()
+                .map(|manifest| manifest.lifted_vertex_count)
+                .sum::<usize>(),
+            24
+        );
+
+        let tessellation = shell.exact_planar_tessellation_report();
+        assert!(tessellation.exact_solid_handoff_ready);
+        assert_eq!(tessellation.triangle_count, 12);
+        assert_eq!(tessellation.lifted_vertex_count, 24);
+
+        let mesh = shell.exact_planar_mesh_handoff_report();
+        assert!(mesh.exact_solid_handoff_ready);
+        assert_eq!(mesh.tessellation, tessellation);
+    }
+
+    #[test]
     fn tessellation_manifest_blocks_lossy_or_unreplayed_output() {
         let shell = cube_shell();
         let mut manifest = BrepFaceTessellationManifest::exact_planar(BrepFaceId(0), 0, 0, 1, 2);
@@ -573,6 +731,7 @@ mod tests {
         );
         let report = manifest.report(&shell);
         assert!(report.construction_fresh);
+        assert!(report.topology_fingerprint_current);
         assert!(report.topology_snapshot_current);
         assert!(report.replay_accepted);
 
@@ -580,11 +739,29 @@ mod tests {
         stale_shell.faces.pop();
         let stale_report = manifest.report(&stale_shell);
         assert!(!stale_report.construction_fresh);
+        assert!(!stale_report.topology_fingerprint_current);
         assert!(!stale_report.topology_snapshot_current);
         assert!(
             stale_report
                 .blockers
                 .contains(&BrepConstructionBlocker::StaleTopologySnapshot)
+        );
+        assert!(
+            stale_report
+                .blockers
+                .contains(&BrepConstructionBlocker::StaleTopologyFingerprint)
+        );
+
+        let mut count_preserving_stale_shell = shell.clone();
+        count_preserving_stale_shell.edges[0] = edge(0, 1, 0);
+        let count_preserving_report = manifest.report(&count_preserving_stale_shell);
+        assert!(!count_preserving_report.construction_fresh);
+        assert!(count_preserving_report.topology_snapshot_current);
+        assert!(!count_preserving_report.topology_fingerprint_current);
+        assert!(
+            count_preserving_report
+                .blockers
+                .contains(&BrepConstructionBlocker::StaleTopologyFingerprint)
         );
 
         let mut rejected = manifest.clone();
@@ -612,6 +789,193 @@ mod tests {
                 .blockers
                 .contains(&BrepConstructionBlocker::MissingSelectedReference)
         );
+    }
+
+    #[test]
+    fn planar_region_construction_builds_exact_retained_face() {
+        let region = rectangle_region(0, 0, 2, 3);
+        let surface = plane(0, 0, 0, 1, 0);
+        let constructed = BrepPlanarRegionConstruction::from_region_on_surface(
+            &region,
+            surface,
+            BrepFeatureId::new("feature:rectangle-face").unwrap(),
+            vec![BrepSourceVersion::new("region:rectangle", 1).unwrap()],
+        );
+
+        assert!(constructed.exact_construction_ready);
+        assert!(constructed.blockers.is_empty());
+        assert_eq!(constructed.material_contour_count, 1);
+        assert_eq!(constructed.hole_contour_count, 0);
+        assert_eq!(constructed.vertex_count, 4);
+        assert_eq!(constructed.edge_count, 4);
+        let shell = constructed.shell.as_ref().unwrap();
+        assert_eq!(shell.faces.len(), 1);
+        assert_eq!(shell.faces[0].outer.coedges.len(), 4);
+        assert!(
+            constructed
+                .manifest
+                .as_ref()
+                .unwrap()
+                .report(shell)
+                .construction_fresh
+        );
+        let validation = shell.face_validation_report(BrepFaceId(0), None);
+        assert!(validation.exact_face_boundary_ready);
+        assert!(validation.exact_uv_bounds_ready);
+        assert_eq!(
+            validation.uv_bounds.as_ref().unwrap().min,
+            Some(hyperlimit::Point2::new(r(0), r(0)))
+        );
+        assert_eq!(
+            validation.uv_bounds.as_ref().unwrap().max,
+            Some(hyperlimit::Point2::new(r(2), r(3)))
+        );
+    }
+
+    #[test]
+    fn planar_region_construction_rejects_arcs_and_disconnected_material() {
+        let first = rectangle_region(0, 0, 1, 1).material_contours()[0].clone();
+        let second = rectangle_region(3, 0, 4, 1).material_contours()[0].clone();
+        let disconnected = Region2::from_material_contours(vec![first, second]);
+        let disconnected_report = BrepPlanarRegionConstruction::from_region_on_surface(
+            &disconnected,
+            plane(0, 0, 0, 1, 0),
+            BrepFeatureId::new("feature:disconnected").unwrap(),
+            vec![BrepSourceVersion::new("region:disconnected", 1).unwrap()],
+        );
+        assert!(!disconnected_report.exact_construction_ready);
+        assert!(
+            disconnected_report
+                .blockers
+                .contains(&BrepPlanarRegionConstructionBlocker::MultipleMaterialContours)
+        );
+
+        let arc_contour = Contour2::from_bulge_vertices(&[
+            hypercurve::BulgeVertex2::new(uv(0, 0), r(1)),
+            hypercurve::BulgeVertex2::new(uv(1, 0), r(0)),
+            hypercurve::BulgeVertex2::new(uv(0, 1), r(0)),
+        ])
+        .unwrap();
+        let arc_region = Region2::from_material_contours(vec![arc_contour]);
+        let arc_report = BrepPlanarRegionConstruction::from_region_on_surface(
+            &arc_region,
+            plane(0, 0, 0, 1, 0),
+            BrepFeatureId::new("feature:arc").unwrap(),
+            vec![BrepSourceVersion::new("region:arc", 1).unwrap()],
+        );
+        assert!(!arc_report.exact_construction_ready);
+        assert!(
+            arc_report
+                .blockers
+                .contains(&BrepPlanarRegionConstructionBlocker::UnsupportedCurveSegment)
+        );
+    }
+
+    #[test]
+    fn planar_extrusion_construction_builds_exact_closed_prism() {
+        let region = rectangle_region(0, 0, 2, 3);
+        let constructed = BrepPlanarExtrusionConstruction::vertical_prism_from_region(
+            &region,
+            r(0),
+            r(4),
+            BrepFeatureId::new("feature:rect-prism").unwrap(),
+            vec![BrepSourceVersion::new("region:rect", 2).unwrap()],
+        );
+
+        assert!(constructed.exact_construction_ready);
+        assert!(constructed.blockers.is_empty());
+        assert_eq!(constructed.source_vertex_count, 4);
+        assert_eq!(constructed.vertex_count, 8);
+        assert_eq!(constructed.edge_count, 12);
+        assert_eq!(constructed.face_count, 6);
+        let shell = constructed.shell.as_ref().unwrap();
+        assert!(
+            constructed
+                .manifest
+                .as_ref()
+                .unwrap()
+                .report(shell)
+                .construction_fresh
+        );
+        let solid = shell.solid_readiness_report(constructed.manifest.as_ref());
+        assert!(solid.exact_solid_boundary_ready);
+        assert!(solid.exact_volume_ready);
+        assert_eq!(solid.volume.signed_six_volume, Some(r(144)));
+        let physics = shell.physics_mass_handoff_report(r(1));
+        assert!(physics.exact_physics_mass_ready);
+        assert_eq!(physics.triangle_count, 12);
+    }
+
+    #[test]
+    fn planar_extrusion_construction_rejects_zero_height_and_arcs() {
+        let zero_height = BrepPlanarExtrusionConstruction::vertical_prism_from_region(
+            &rectangle_region(0, 0, 1, 1),
+            r(0),
+            r(0),
+            BrepFeatureId::new("feature:zero-height").unwrap(),
+            vec![BrepSourceVersion::new("region:zero", 1).unwrap()],
+        );
+        assert!(!zero_height.exact_construction_ready);
+        assert!(
+            zero_height
+                .blockers
+                .contains(&BrepPlanarExtrusionConstructionBlocker::NonPositiveHeight)
+        );
+
+        let arc_contour = Contour2::from_bulge_vertices(&[
+            hypercurve::BulgeVertex2::new(uv(0, 0), r(1)),
+            hypercurve::BulgeVertex2::new(uv(1, 0), r(0)),
+            hypercurve::BulgeVertex2::new(uv(0, 1), r(0)),
+        ])
+        .unwrap();
+        let arc_region = Region2::from_material_contours(vec![arc_contour]);
+        let arc_report = BrepPlanarExtrusionConstruction::vertical_prism_from_region(
+            &arc_region,
+            r(0),
+            r(1),
+            BrepFeatureId::new("feature:arc-extrude").unwrap(),
+            vec![BrepSourceVersion::new("region:arc", 1).unwrap()],
+        );
+        assert!(!arc_report.exact_construction_ready);
+        assert!(
+            arc_report
+                .blockers
+                .contains(&BrepPlanarExtrusionConstructionBlocker::UnsupportedCurveSegment)
+        );
+    }
+
+    #[test]
+    fn planar_extrusion_construction_preserves_hole_volume() {
+        let outer = rectangle_region(0, 0, 4, 4).material_contours()[0].clone();
+        let hole = rectangle_region(1, 1, 2, 2).material_contours()[0].clone();
+        let holed = Region2::new(vec![outer], vec![hole]);
+        let constructed = BrepPlanarExtrusionConstruction::vertical_prism_from_region(
+            &holed,
+            r(0),
+            r(2),
+            BrepFeatureId::new("feature:holed-prism").unwrap(),
+            vec![BrepSourceVersion::new("region:hole", 1).unwrap()],
+        );
+
+        assert!(constructed.exact_construction_ready);
+        assert!(constructed.blockers.is_empty());
+        assert_eq!(constructed.source_vertex_count, 8);
+        assert_eq!(constructed.vertex_count, 16);
+        assert_eq!(constructed.edge_count, 24);
+        assert_eq!(constructed.face_count, 10);
+        let shell = constructed.shell.as_ref().unwrap();
+        let solid = shell.solid_readiness_report(constructed.manifest.as_ref());
+        assert!(solid.exact_solid_boundary_ready);
+        assert_eq!(solid.volume.signed_six_volume, Some(r(180)));
+        let physics = shell.physics_mass_handoff_report(r(1));
+        assert!(physics.exact_physics_mass_ready);
+        assert_eq!(physics.triangle_count, 32);
+
+        let mesh = shell.exact_planar_mesh_handoff_report();
+        assert!(mesh.exact_solid_handoff_ready);
+        assert_eq!(mesh.tessellation.source_face_count, 10);
+        assert_eq!(mesh.triangle_count, 32);
+        assert_eq!(mesh.lifted_vertex_count, 48);
     }
 
     #[test]
@@ -664,6 +1028,7 @@ mod tests {
         assert!(report.closed_shell_ready);
         assert!(report.all_faces_ready);
         assert!(report.exact_bounds_ready);
+        assert!(report.edge_agreement_ready);
         assert!(report.construction_fresh);
         assert!(report.exact_volume_ready);
         assert!(report.exact_solid_boundary_ready);
@@ -672,6 +1037,7 @@ mod tests {
         assert_eq!(report.shell_bounds.min, Some(p(0, 0, 0)));
         assert_eq!(report.shell_bounds.max, Some(p(1, 1, 1)));
         assert_eq!(report.faces.len(), 6);
+        assert_eq!(report.edge_agreement.ready_edge_count, 12);
         assert_eq!(report.volume.signed_six_volume, Some(r(6)));
         assert_eq!(
             report.volume.orientation,
@@ -697,6 +1063,7 @@ mod tests {
         assert!(!report.exact_solid_boundary_ready);
         assert!(!report.closed_shell_ready);
         assert!(!report.all_faces_ready);
+        assert!(!report.edge_agreement_ready);
         assert!(!report.exact_volume_ready);
         assert!(!report.construction_fresh);
         assert!(
@@ -712,12 +1079,361 @@ mod tests {
         assert!(
             report
                 .blockers
+                .contains(&BrepSolidReadinessBlocker::EdgeAgreementNotReady)
+        );
+        assert!(
+            report
+                .blockers
                 .contains(&BrepSolidReadinessBlocker::ConstructionNotFresh)
         );
         assert!(
             report
                 .blockers
                 .contains(&BrepSolidReadinessBlocker::VolumeReplayUnavailable)
+        );
+    }
+
+    #[test]
+    fn exact_retained_handoffs_package_surface_and_solid_evidence() {
+        let shell = cube_shell();
+        let construction = BrepConstructionManifest::exact(
+            BrepFeatureId::new("feature:cube-handoff").unwrap(),
+            BrepConstructionKind::Extrusion,
+            vec![BrepSourceVersion::new("sketch:square", 7).unwrap()],
+            &shell,
+        );
+
+        let surface = shell.exact_surface_handoff();
+        assert!(surface.exact_surface_handoff_ready);
+        assert!(surface.closed_shell);
+        assert!(surface.nonempty_topology);
+        assert!(surface.retained_brep_only);
+        assert_eq!(surface.face_count, 6);
+        assert_eq!(surface.vertex_count, 8);
+        assert_eq!(surface.bounds.min, Some(p(0, 0, 0)));
+        assert_eq!(surface.bounds.max, Some(p(1, 1, 1)));
+        assert!(surface.blockers.is_empty());
+
+        let solid = shell.exact_solid_handoff(Some(&construction));
+        assert!(solid.exact_solid_handoff_ready);
+        assert!(solid.retained_brep_only);
+        assert!(solid.surface.exact_surface_handoff_ready);
+        assert!(solid.solid.exact_solid_boundary_ready);
+        assert!(solid.volume.exact_volume_ready);
+        assert_eq!(solid.volume.signed_six_volume, Some(r(6)));
+        assert!(solid.construction.as_ref().unwrap().construction_fresh);
+        assert!(solid.blockers.is_empty());
+    }
+
+    #[test]
+    fn exact_retained_handoffs_block_open_stale_or_invalid_evidence() {
+        let shell = cube_shell();
+        let construction = BrepConstructionManifest::exact(
+            BrepFeatureId::new("feature:cube-handoff").unwrap(),
+            BrepConstructionKind::Extrusion,
+            vec![BrepSourceVersion::new("sketch:square", 8).unwrap()],
+            &shell,
+        );
+        let mut broken = shell.clone();
+        broken.faces.pop();
+        broken.edges[0] = edge(0, 0, 0);
+
+        let surface = broken.exact_surface_handoff();
+        assert!(!surface.exact_surface_handoff_ready);
+        assert!(
+            surface
+                .blockers
+                .contains(&BrepExactSurfaceHandoffBlocker::ShellValidationNotReady)
+        );
+
+        let solid = broken.exact_solid_handoff(Some(&construction));
+        assert!(!solid.exact_solid_handoff_ready);
+        assert!(
+            solid
+                .blockers
+                .contains(&BrepExactSolidHandoffBlocker::SurfaceHandoffNotReady)
+        );
+        assert!(
+            solid
+                .blockers
+                .contains(&BrepExactSolidHandoffBlocker::SolidReadinessNotReady)
+        );
+        assert!(
+            solid
+                .blockers
+                .contains(&BrepExactSolidHandoffBlocker::VolumeNotReady)
+        );
+        assert!(
+            solid
+                .blockers
+                .contains(&BrepExactSolidHandoffBlocker::ConstructionNotFresh)
+        );
+    }
+
+    #[test]
+    fn physics_mass_handoff_replays_cube_into_exact_mass_properties() {
+        let shell = cube_shell();
+        let triangles = shell.exact_triangle_mesh_handoff_report();
+        assert!(triangles.exact_triangle_mesh_ready);
+        assert!(triangles.retained_brep_source);
+        assert!(!triangles.lossy_or_preview_mesh);
+        assert_eq!(triangles.face_count, 6);
+        assert_eq!(triangles.triangle_count, 12);
+        assert_eq!(triangles.triangles[0].vertices[0], p(0, 0, 0));
+        assert_eq!(triangles.triangles[0].vertices[1], p(1, 0, 0));
+        assert_eq!(triangles.triangles[0].vertices[2], p(1, 1, 0));
+
+        let shape = shell.physics_shape_handoff_report();
+        assert!(shape.exact_physics_shape_ready);
+        assert!(shape.triangle_mesh.exact_triangle_mesh_ready);
+        assert_eq!(shape.triangle_count, 12);
+        assert!(shape.mesh.is_some());
+        assert!(matches!(
+            shape.shape,
+            Some(hyperphysics::PhysicsShape3::ClosedTriangleMesh(_))
+        ));
+
+        let material = hyperphysics::ExactMaterial::new(
+            hyperphysics::MaterialId::new("mat:unit").unwrap(),
+            "unit",
+            r(1),
+        )
+        .unwrap();
+        let fixture = shell.physics_fixture_handoff_report("fixture:cube", material);
+        assert!(fixture.exact_physics_fixture_ready);
+        assert!(fixture.fixture.is_some());
+
+        let report = shell.physics_mass_handoff_report(r(2));
+
+        assert!(report.exact_physics_mass_ready);
+        assert!(report.solid.exact_solid_boundary_ready);
+        assert_eq!(report.face_count, 6);
+        assert_eq!(report.triangle_count, 12);
+        assert!(report.blockers.is_empty());
+
+        let mass = report.mass_properties.unwrap();
+        assert_eq!(mass.volume, r(1));
+        assert_eq!(mass.mass, r(2));
+        assert_eq!(mass.center_of_mass[0], q(1, 2));
+        assert_eq!(mass.center_of_mass[1], q(1, 2));
+        assert_eq!(mass.center_of_mass[2], q(1, 2));
+        assert_eq!(mass.inertia_about_center_of_mass.xx, q(1, 3));
+        assert_eq!(mass.inertia_about_center_of_mass.yy, q(1, 3));
+        assert_eq!(mass.inertia_about_center_of_mass.zz, q(1, 3));
+    }
+
+    #[test]
+    fn physics_mass_handoff_blocks_open_broken_loop_and_invalid_density() {
+        let mut open = cube_shell();
+        open.faces.pop();
+        let open_triangles = open.exact_triangle_mesh_handoff_report();
+        assert!(!open_triangles.exact_triangle_mesh_ready);
+        assert!(
+            open_triangles
+                .blockers
+                .contains(&BrepTriangleMeshBlocker::SolidReadinessNotReady)
+        );
+        let open_shape = open.physics_shape_handoff_report();
+        assert!(!open_shape.exact_physics_shape_ready);
+        assert!(
+            open_shape
+                .blockers
+                .contains(&BrepPhysicsShapeBlocker::SolidReadinessNotReady)
+        );
+        let open_report = open.physics_mass_handoff_report(r(1));
+        assert!(!open_report.exact_physics_mass_ready);
+        assert!(
+            open_report
+                .blockers
+                .contains(&BrepPhysicsMassBlocker::SolidReadinessNotReady)
+        );
+
+        let mut broken_loop = cube_shell();
+        broken_loop.faces[0].inner.push(BrepLoop::new(
+            BrepLoopId(99),
+            vec![
+                coedge(0, BrepEdgeOrientation::Forward),
+                coedge(1, BrepEdgeOrientation::Forward),
+                coedge(2, BrepEdgeOrientation::Forward),
+            ],
+        ));
+        let broken_report = broken_loop.physics_mass_handoff_report(r(1));
+        assert!(!broken_report.exact_physics_mass_ready);
+        assert!(
+            broken_report
+                .blockers
+                .contains(&BrepPhysicsMassBlocker::SolidReadinessNotReady)
+        );
+        let broken_triangles = broken_loop.exact_triangle_mesh_handoff_report();
+        assert!(!broken_triangles.exact_triangle_mesh_ready);
+        assert!(
+            broken_triangles
+                .blockers
+                .contains(&BrepTriangleMeshBlocker::SolidReadinessNotReady)
+        );
+        let material = hyperphysics::ExactMaterial::new(
+            hyperphysics::MaterialId::new("mat:unit").unwrap(),
+            "unit",
+            r(1),
+        )
+        .unwrap();
+        let bad_fixture = cube_shell().physics_fixture_handoff_report("", material);
+        assert!(!bad_fixture.exact_physics_fixture_ready);
+        assert!(
+            bad_fixture
+                .blockers
+                .contains(&BrepPhysicsShapeBlocker::PhysicsFixtureIdRejected)
+        );
+
+        let invalid_density = cube_shell().physics_mass_handoff_report(r(0));
+        assert!(!invalid_density.exact_physics_mass_ready);
+        assert!(
+            invalid_density
+                .blockers
+                .contains(&BrepPhysicsMassBlocker::PhysicsMassRejected)
+        );
+        assert_eq!(
+            invalid_density.physics_error,
+            Some(hyperphysics::PhysicsError::NonPositiveDensity)
+        );
+    }
+
+    #[test]
+    fn voxel_handoff_packages_exact_aabb_and_retained_triangle_sources() {
+        let shell = cube_shell();
+        let source = hypervoxel::GridSource::new("brep:cube", 1);
+        let frame = hypervoxel::GridFrame::new(
+            [r(0), r(0), r(0)],
+            [r(1), r(1), r(1)],
+            2,
+            hypervoxel::LengthUnit::Unitless,
+            Some(source.clone()),
+        )
+        .unwrap();
+
+        let report = shell.voxel_handoff_report(frame, Some(source));
+
+        assert!(report.exact_aabb_handoff_ready);
+        assert!(report.exact_triangle_source_ready);
+        assert!(!report.exact_triangle_voxelization_ready);
+        assert_eq!(report.bounds.min, Some(p(0, 0, 0)));
+        assert_eq!(report.bounds.max, Some(p(1, 1, 1)));
+        assert_eq!(report.triangle_mesh.triangle_count, 12);
+        assert!(report.exact_aabb_fixture.is_some());
+        assert!(
+            report
+                .blockers
+                .contains(&BrepVoxelHandoffBlocker::TriangleVoxelizationUnavailable)
+        );
+    }
+
+    #[test]
+    fn voxel_handoff_blocks_stale_frame_and_unready_shell_evidence() {
+        let source = hypervoxel::GridSource::new("brep:cube", 1);
+        let stale = hypervoxel::GridSource::new("brep:cube", 0);
+        let frame = hypervoxel::GridFrame::new(
+            [r(0), r(0), r(0)],
+            [r(1), r(1), r(1)],
+            1,
+            hypervoxel::LengthUnit::Unitless,
+            Some(stale),
+        )
+        .unwrap();
+        let mut shell = cube_shell();
+        shell.faces.pop();
+
+        let report = shell.voxel_handoff_report(frame, Some(source));
+
+        assert!(!report.exact_aabb_handoff_ready);
+        assert!(!report.exact_triangle_source_ready);
+        assert!(
+            report
+                .blockers
+                .contains(&BrepVoxelHandoffBlocker::StaleFrameSource)
+        );
+        assert!(
+            report
+                .blockers
+                .contains(&BrepVoxelHandoffBlocker::TriangleMeshNotReady)
+        );
+    }
+
+    #[test]
+    fn handoff_package_aggregates_requested_exact_surfaces() {
+        let shell = cube_shell();
+        let source = hypervoxel::GridSource::new("brep:cube-package", 1);
+        let frame = hypervoxel::GridFrame::new(
+            [r(0), r(0), r(0)],
+            [r(1), r(1), r(1)],
+            2,
+            hypervoxel::LengthUnit::Unitless,
+            Some(source.clone()),
+        )
+        .unwrap();
+        let manifest = BrepHandoffPackageManifest::basic()
+            .with_physics_density(r(3))
+            .with_voxel(BrepVoxelPackageRequest {
+                frame,
+                expected_source: Some(source),
+                require_triangle_voxelization: false,
+            });
+
+        let report = shell.handoff_package_report(None, manifest);
+
+        assert!(report.all_requested_exact_ready);
+        assert!(report.exact_surface_ready);
+        assert!(report.exact_solid_ready);
+        assert!(report.exact_triangle_mesh_ready);
+        assert!(report.requested_physics_ready);
+        assert!(report.requested_voxel_aabb_ready);
+        assert!(report.requested_triangle_voxelization_ready);
+        assert_eq!(report.physics_mass.as_ref().unwrap().triangle_count, 12);
+        assert!(report.voxel.as_ref().unwrap().exact_aabb_handoff_ready);
+        assert!(report.blockers.is_empty());
+    }
+
+    #[test]
+    fn handoff_package_reports_unavailable_or_blocked_requested_routes() {
+        let source = hypervoxel::GridSource::new("brep:cube-package", 1);
+        let stale = hypervoxel::GridSource::new("brep:cube-package", 0);
+        let frame = hypervoxel::GridFrame::new(
+            [r(0), r(0), r(0)],
+            [r(1), r(1), r(1)],
+            2,
+            hypervoxel::LengthUnit::Unitless,
+            Some(stale),
+        )
+        .unwrap();
+        let manifest = BrepHandoffPackageManifest::basic()
+            .with_physics_density(r(0))
+            .with_voxel(BrepVoxelPackageRequest {
+                frame,
+                expected_source: Some(source),
+                require_triangle_voxelization: true,
+            });
+
+        let report = cube_shell().handoff_package_report(None, manifest);
+
+        assert!(!report.all_requested_exact_ready);
+        assert!(report.exact_surface_ready);
+        assert!(report.exact_solid_ready);
+        assert!(!report.requested_physics_ready);
+        assert!(!report.requested_voxel_aabb_ready);
+        assert!(!report.requested_triangle_voxelization_ready);
+        assert!(
+            report
+                .blockers
+                .contains(&BrepHandoffPackageBlocker::PhysicsMassNotReady)
+        );
+        assert!(
+            report
+                .blockers
+                .contains(&BrepHandoffPackageBlocker::VoxelAabbNotReady)
+        );
+        assert!(
+            report
+                .blockers
+                .contains(&BrepHandoffPackageBlocker::TriangleVoxelizationUnavailable)
         );
     }
 
@@ -947,6 +1663,132 @@ mod tests {
                 .classify_point(&p(0, 0, 0))
                 .blockers
                 .contains(&BrepSurfaceBlocker::ZeroNormal)
+        );
+    }
+
+    #[test]
+    fn planar_surface_frame_evaluates_and_projects_exact_axis_uv() {
+        let surface = plane(20, 0, 0, 1, -2);
+        let frame = surface.frame_report();
+        assert!(frame.exact_frame_ready);
+        assert_eq!(frame.axis, Some(BrepPlaneFrameAxis::Z));
+        assert!(frame.blockers.is_empty());
+
+        let uv = hyperlimit::Point2::new(r(3), r(4));
+        let eval = surface.evaluate_frame_uv(uv.clone());
+        assert!(eval.exact_evaluation_ready);
+        assert_eq!(eval.point, Some(p(3, 4, 2)));
+
+        let projection = surface.project_frame_point(p(3, 4, 2));
+        assert!(projection.exact_projection_ready);
+        assert_eq!(projection.uv, Some(uv));
+
+        let x_surface = plane(21, 2, 0, 0, -6);
+        let x_eval = x_surface.evaluate_frame_uv(hyperlimit::Point2::new(r(7), r(8)));
+        assert_eq!(x_eval.frame.axis, Some(BrepPlaneFrameAxis::X));
+        assert_eq!(x_eval.point, Some(p(3, 7, 8)));
+        let y_surface = plane(22, 0, -2, 0, 6);
+        let y_eval = y_surface.evaluate_frame_uv(hyperlimit::Point2::new(r(9), r(10)));
+        assert_eq!(y_eval.frame.axis, Some(BrepPlaneFrameAxis::Y));
+        assert_eq!(y_eval.point, Some(p(10, 3, 9)));
+    }
+
+    #[test]
+    fn planar_surface_frame_blocks_unsupported_or_non_axis_frames() {
+        let diagonal = BrepSurface::plane(
+            BrepSurfaceId(23),
+            Plane3::new(p(1, 1, 0), r(0)),
+            BrepSurfaceSource::ExactConstruction,
+        );
+        let report = diagonal.frame_report();
+        assert!(!report.exact_frame_ready);
+        assert!(
+            report
+                .blockers
+                .contains(&BrepSurfaceFrameBlocker::NonAxisAlignedPlane)
+        );
+        let eval = diagonal.evaluate_frame_uv(hyperlimit::Point2::new(r(0), r(0)));
+        assert!(!eval.exact_evaluation_ready);
+        assert!(eval.point.is_none());
+
+        let unsupported =
+            BrepSurface::unsupported(BrepSurfaceId(24), "nurbs", BrepSurfaceSource::ExactImport);
+        let unsupported_report = unsupported.frame_report();
+        assert!(!unsupported_report.exact_frame_ready);
+        assert!(
+            unsupported_report
+                .blockers
+                .contains(&BrepSurfaceFrameBlocker::SurfaceNotReady)
+        );
+        assert!(
+            unsupported_report
+                .blockers
+                .contains(&BrepSurfaceFrameBlocker::UnsupportedSurface)
+        );
+    }
+
+    #[test]
+    fn face_uv_bounds_report_projects_boundary_vertices_through_frame() {
+        let shell = cube_shell();
+        let bottom = shell.face_uv_bounds_report(BrepFaceId(0));
+
+        assert!(bottom.exact_uv_bounds_ready);
+        assert_eq!(
+            bottom.frame.as_ref().unwrap().axis,
+            Some(BrepPlaneFrameAxis::Z)
+        );
+        assert_eq!(bottom.vertex_count, 4);
+        assert_eq!(bottom.min, Some(hyperlimit::Point2::new(r(0), r(0))));
+        assert_eq!(bottom.max, Some(hyperlimit::Point2::new(r(1), r(1))));
+        assert!(!bottom.zero_u_extent);
+        assert!(!bottom.zero_v_extent);
+        assert!(bottom.blockers.is_empty());
+
+        let left = shell.face_uv_bounds_report(BrepFaceId(4));
+        assert!(left.exact_uv_bounds_ready);
+        assert_eq!(
+            left.frame.as_ref().unwrap().axis,
+            Some(BrepPlaneFrameAxis::X)
+        );
+        assert_eq!(left.min, Some(hyperlimit::Point2::new(r(0), r(0))));
+        assert_eq!(left.max, Some(hyperlimit::Point2::new(r(1), r(1))));
+    }
+
+    #[test]
+    fn face_uv_bounds_report_blocks_missing_topology_or_unready_frame() {
+        let mut missing_edge = cube_shell();
+        missing_edge.faces[0]
+            .outer
+            .coedges
+            .push(coedge(999, BrepEdgeOrientation::Forward));
+        let missing_report = missing_edge.face_uv_bounds_report(BrepFaceId(0));
+        assert!(!missing_report.exact_uv_bounds_ready);
+        assert!(
+            missing_report
+                .blockers
+                .contains(&BrepFaceUvBoundsBlocker::MissingEdge)
+        );
+
+        let mut diagonal = cube_shell();
+        diagonal.surfaces[0] = BrepSurface::plane(
+            BrepSurfaceId(0),
+            Plane3::new(p(1, 1, 0), r(0)),
+            BrepSurfaceSource::ExactConstruction,
+        );
+        let diagonal_report = diagonal.face_uv_bounds_report(BrepFaceId(0));
+        assert!(!diagonal_report.exact_uv_bounds_ready);
+        assert!(
+            diagonal_report
+                .blockers
+                .contains(&BrepFaceUvBoundsBlocker::FrameNotReady)
+        );
+        assert!(
+            diagonal_report
+                .frame
+                .as_ref()
+                .unwrap()
+                .blockers
+                .contains(&BrepSurfaceFrameBlocker::NonAxisAlignedPlane)
         );
     }
 
@@ -1254,6 +2096,87 @@ mod tests {
     }
 
     #[test]
+    fn prepared_face_query_reuses_surface_and_bounds_evidence() {
+        let shell = cube_shell();
+        let prepared = shell.prepare_face_query(BrepFaceId(0));
+
+        assert!(prepared.prepared_query_ready);
+        assert!(prepared.bounds.exact_bounds_ready);
+        assert!(prepared.surface.as_ref().unwrap().exact_replay_ready());
+        assert!(prepared.blockers.is_empty());
+
+        let direct_point = shell.point_face_plane_preflight(BrepFaceId(0), &p(0, 0, 1));
+        let prepared_point = prepared.point_face_plane_preflight(&p(0, 0, 1));
+        assert_eq!(prepared_point, direct_point);
+        assert!(prepared_point.certified_off_support_plane);
+
+        let direct_segment =
+            shell.segment_face_plane_preflight(BrepFaceId(0), &p(0, 0, -1), &p(0, 0, 1));
+        let prepared_segment = prepared.segment_face_plane_preflight(&p(0, 0, -1), &p(0, 0, 1));
+        assert_eq!(prepared_segment, direct_segment);
+        assert!(prepared_segment.requires_narrow_phase);
+
+        let plane = Plane3::new(p(0, 0, 1), r(-2));
+        let direct_plane = shell.face_plane_preflight(BrepFaceId(0), &plane);
+        let prepared_plane = prepared.face_plane_preflight(&plane);
+        assert_eq!(prepared_plane, direct_plane);
+
+        let point_queries = vec![p(0, 0, 0), p(0, 0, 1)];
+        let segment_start = p(0, 0, -1);
+        let segment_end = p(0, 0, 1);
+        let above_start = p(0, 0, -2);
+        let above_end = p(1, 0, -2);
+        let segments = vec![(&segment_start, &segment_end), (&above_start, &above_end)];
+        let batch = prepared.batch_report(&point_queries, &segments);
+        assert!(batch.prepared_query_ready);
+        assert_eq!(batch.point_query_count, 2);
+        assert_eq!(batch.segment_query_count, 2);
+        assert_eq!(batch.certified_rejection_count, 2);
+        assert_eq!(batch.narrow_phase_candidate_count, 2);
+        assert!(batch.blockers.is_empty());
+    }
+
+    #[test]
+    fn prepared_face_query_reports_missing_and_unready_contexts() {
+        let shell = cube_shell();
+        let missing = shell.prepare_face_query(BrepFaceId(999));
+        assert!(!missing.prepared_query_ready);
+        assert!(
+            missing
+                .blockers
+                .contains(&BrepPreparedFaceQueryBlocker::MissingFace)
+        );
+        assert!(
+            missing
+                .blockers
+                .contains(&BrepPreparedFaceQueryBlocker::FaceBoundsNotReady)
+        );
+
+        let mut unsupported = cube_shell();
+        unsupported.surfaces[0] =
+            BrepSurface::unsupported(BrepSurfaceId(0), "nurbs", BrepSurfaceSource::ExactImport);
+        let prepared = unsupported.prepare_face_query(BrepFaceId(0));
+        assert!(!prepared.prepared_query_ready);
+        assert!(
+            prepared
+                .blockers
+                .contains(&BrepPreparedFaceQueryBlocker::SurfaceNotReady)
+        );
+        assert!(
+            prepared
+                .blockers
+                .contains(&BrepPreparedFaceQueryBlocker::UnsupportedSurface)
+        );
+        let point = prepared.point_face_plane_preflight(&p(0, 0, 0));
+        assert!(!point.preflight_ready);
+        assert!(
+            point
+                .blockers
+                .contains(&BrepPointFacePlaneBlocker::UnsupportedSurface)
+        );
+    }
+
+    #[test]
     fn face_validation_packages_surface_trim_and_optional_tessellation_evidence() {
         let shell = cube_shell();
         let manifest = BrepFaceTessellationManifest::exact_planar(BrepFaceId(0), 2, 4, 4, 0);
@@ -1262,11 +2185,13 @@ mod tests {
         assert!(report.face_found);
         assert!(report.exact_face_boundary_ready);
         assert!(report.exact_bounds_ready);
+        assert!(report.exact_uv_bounds_ready);
         assert!(report.tessellation_ready);
         assert!(report.exact_face_ready);
         assert!(report.surface_facts.as_ref().unwrap().exact_replay_ready);
         assert!(report.trim_set.as_ref().unwrap().trim_set_ready);
         assert!(report.bounds.as_ref().unwrap().exact_bounds_ready);
+        assert!(report.uv_bounds.as_ref().unwrap().exact_uv_bounds_ready);
         assert!(report.geometry.as_ref().unwrap().geometry_ready);
         assert!(
             report
@@ -1293,6 +2218,7 @@ mod tests {
 
         assert!(!report.exact_face_ready);
         assert!(!report.exact_bounds_ready);
+        assert!(!report.exact_uv_bounds_ready);
         assert!(
             report
                 .blockers
@@ -1307,6 +2233,11 @@ mod tests {
             report
                 .blockers
                 .contains(&BrepFaceValidationBlocker::BoundsNotReady)
+        );
+        assert!(
+            report
+                .blockers
+                .contains(&BrepFaceValidationBlocker::UvBoundsNotReady)
         );
         assert!(
             report
