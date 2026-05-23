@@ -1,16 +1,22 @@
 [package]
 name = "hypersdf"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 description = "Exact-aware signed-distance and implicit-field carriers for the Hyper stack"
 license = "Apache-2.0"
 
 [dependencies]
 fast-surface-nets = "0.2.1"
+# Hyper sibling dependency switch: keep both local path and crates.io lines; do not remove either.
+# Development mode uses the local path lines. For release, comment those and uncomment the crates.io lines.
 hyperlattice = { path = "../hyperlattice" }
 hyperlimit = { path = "../hyperlimit" }
 hyperreal = { path = "../hyperreal" }
 hypervoxel = { path = "../hypervoxel", optional = true }
+# hyperlattice = { version = "0.6.0" }
+# hyperlimit = { version = "0.4.0" }
+# hyperreal = { version = "0.13.0" }
+# hypervoxel = { version = "0.3.0", optional = true }
 
 [dev-dependencies]
 criterion = "0.5"
@@ -19,9 +25,6 @@ proptest = "1.7.0"
 [[bench]]
 name = "classification"
 harness = false
-
-[patch.crates-io]
-hyperreal = { path = "../hyperreal" }
 
 [features]
 default = []
