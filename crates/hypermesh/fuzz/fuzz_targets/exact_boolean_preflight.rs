@@ -4814,6 +4814,131 @@ fn downward_hexagonal_pyramid_fan_i64(
 }
 
 #[cfg(feature = "exact-triangulation")]
+fn upward_heptagonal_pyramid_i64(points: [[i64; 3]; 7], apex: [i64; 3]) -> ExactMesh {
+    ExactMesh::from_i64_triangles(
+        &[
+            points[0][0],
+            points[0][1],
+            points[0][2],
+            points[1][0],
+            points[1][1],
+            points[1][2],
+            points[2][0],
+            points[2][1],
+            points[2][2],
+            points[3][0],
+            points[3][1],
+            points[3][2],
+            points[4][0],
+            points[4][1],
+            points[4][2],
+            points[5][0],
+            points[5][1],
+            points[5][2],
+            points[6][0],
+            points[6][1],
+            points[6][2],
+            apex[0],
+            apex[1],
+            apex[2],
+        ],
+        &[
+            0, 2, 1, 0, 3, 2, 0, 4, 3, 0, 5, 4, 0, 6, 5, //
+            0, 1, 7, 1, 2, 7, 2, 3, 7, 3, 4, 7, 4, 5, 7, 5, 6, 7, 6, 0, 7,
+        ],
+    )
+    .expect("upward heptagonal pyramid fixture should import")
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn upward_heptagonal_pyramid_fan_i64(
+    points: [[i64; 3]; 7],
+    center: [i64; 3],
+    apex: [i64; 3],
+) -> ExactMesh {
+    ExactMesh::from_i64_triangles(
+        &[
+            points[0][0],
+            points[0][1],
+            points[0][2],
+            points[1][0],
+            points[1][1],
+            points[1][2],
+            points[2][0],
+            points[2][1],
+            points[2][2],
+            points[3][0],
+            points[3][1],
+            points[3][2],
+            points[4][0],
+            points[4][1],
+            points[4][2],
+            points[5][0],
+            points[5][1],
+            points[5][2],
+            points[6][0],
+            points[6][1],
+            points[6][2],
+            center[0],
+            center[1],
+            center[2],
+            apex[0],
+            apex[1],
+            apex[2],
+        ],
+        &[
+            0, 7, 1, 1, 7, 2, 2, 7, 3, 3, 7, 4, 4, 7, 5, 5, 7, 6, 6, 7, 0, //
+            0, 1, 8, 1, 2, 8, 2, 3, 8, 3, 4, 8, 4, 5, 8, 5, 6, 8, 6, 0, 8,
+        ],
+    )
+    .expect("upward heptagonal fan pyramid fixture should import")
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn downward_heptagonal_pyramid_fan_i64(
+    points: [[i64; 3]; 7],
+    center: [i64; 3],
+    apex: [i64; 3],
+) -> ExactMesh {
+    ExactMesh::from_i64_triangles(
+        &[
+            points[0][0],
+            points[0][1],
+            points[0][2],
+            points[1][0],
+            points[1][1],
+            points[1][2],
+            points[2][0],
+            points[2][1],
+            points[2][2],
+            points[3][0],
+            points[3][1],
+            points[3][2],
+            points[4][0],
+            points[4][1],
+            points[4][2],
+            points[5][0],
+            points[5][1],
+            points[5][2],
+            points[6][0],
+            points[6][1],
+            points[6][2],
+            center[0],
+            center[1],
+            center[2],
+            apex[0],
+            apex[1],
+            apex[2],
+        ],
+        &[
+            0, 1, 7, 1, 2, 7, 2, 3, 7, 3, 4, 7, 4, 5, 7, 5, 6, 7, 6, 0, 7, //
+            0, 8, 1, 1, 8, 2, 2, 8, 3, 3, 8, 4, 4, 8, 5, 5, 8, 6, 6, 8, 0,
+        ],
+    )
+    .expect("downward heptagonal fan pyramid fixture should import")
+}
+
+#[cfg(feature = "exact-triangulation")]
 fn upward_square_pyramid_i64(
     a: [i64; 3],
     b: [i64; 3],
@@ -5479,6 +5604,67 @@ fn exercise_full_face_adjacent_union() {
         )
         .unwrap();
     assert_eq!(hexagon_result.mesh, hexagon_union.mesh);
+
+    let heptagon_boundary = [
+        [0, 0, 0],
+        [4, 0, 0],
+        [7, 3, 0],
+        [5, 6, 0],
+        [2, 8, 0],
+        [-1, 6, 0],
+        [-3, 3, 0],
+    ];
+    let heptagon_left = upward_heptagonal_pyramid_i64(heptagon_boundary, [2, 4, 6]);
+    let heptagon_fan_right =
+        downward_heptagonal_pyramid_fan_i64(heptagon_boundary, [2, 4, 0], [2, 4, -6]);
+    let heptagon_union = hypermesh::exact::materialize_full_face_adjacent_union(
+        &heptagon_left,
+        &heptagon_fan_right,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("heptagonal fan patch should materialize");
+    heptagon_union.validate().unwrap();
+    heptagon_union
+        .validate_against_sources(&heptagon_left, &heptagon_fan_right)
+        .unwrap();
+    assert_eq!(
+        heptagon_union.shared_patches[0].left_faces,
+        vec![0, 1, 2, 3, 4]
+    );
+    assert_eq!(
+        heptagon_union.shared_patches[0].right_faces,
+        vec![0, 1, 2, 3, 4, 5, 6]
+    );
+
+    let same_side_heptagon_fan =
+        upward_heptagonal_pyramid_fan_i64(heptagon_boundary, [2, 4, 0], [2, 4, 6]);
+    assert!(
+        hypermesh::exact::materialize_full_face_adjacent_union(
+            &heptagon_left,
+            &same_side_heptagon_fan,
+            ValidationPolicy::CLOSED,
+        )
+        .is_none()
+    );
+
+    let heptagon_result = boolean_exact_with_boundary_policy(
+        &heptagon_left,
+        &heptagon_fan_right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+    heptagon_result
+        .validate_operation_against_sources(
+            &heptagon_left,
+            &heptagon_fan_right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(heptagon_result.mesh, heptagon_union.mesh);
 }
 
 #[cfg(feature = "exact-triangulation")]

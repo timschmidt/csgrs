@@ -964,11 +964,12 @@ fn boundary_point_sets_equal(left: &[Point3; 3], right: &[Point3; 3]) -> Option<
 /// Two closed solids often share a face that is not a single triangle in
 /// either source. The current bounded grammar accepts small triangulated disks
 /// whose exposed boundary is one strictly convex projected loop, including
-/// quadrilateral cross-diagonals, one-sided quad fans, and pentagonal or
-/// hexagonal fan/boundary-ear triangulations. This is still not the arbitrary
-/// coplanar arrangement materializer: every source subset must be a source-owned disk,
-/// all vertices must replay on or strictly inside the retained boundary, and
-/// exact signed projected areas must cancel across operands.
+/// quadrilateral cross-diagonals, one-sided quad fans, and pentagonal through
+/// heptagonal fan/boundary-ear triangulations. This is still not the arbitrary
+/// coplanar arrangement materializer: every source subset must be a
+/// source-owned disk, all vertices must replay on or strictly inside the
+/// retained boundary, and exact signed projected areas must cancel across
+/// operands.
 ///
 /// The boundary between accepted topology and future arrangement work follows
 /// Yap, "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
@@ -1022,8 +1023,8 @@ struct PolygonPatchCandidate {
     area_abs: ExactReal,
 }
 
-const MAX_POLYGON_PATCH_FACES: usize = 6;
-const MAX_POLYGON_PATCH_BOUNDARY: usize = 6;
+const MAX_POLYGON_PATCH_FACES: usize = 7;
+const MAX_POLYGON_PATCH_BOUNDARY: usize = 7;
 
 fn polygon_patch_candidates(
     mesh: &ExactMesh,
