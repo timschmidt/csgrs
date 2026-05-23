@@ -8,6 +8,7 @@
 use crate::{
     BlasResult, ExactRealSetFacts, Real, RealSymbolicDependencyMask, Vector2, Vector3, ZeroStatus,
 };
+use std::ops::{Add, Sub};
 
 /// Borrowed view of point coordinates that share one exact rational scale.
 #[derive(Clone, Copy, Debug)]
@@ -258,6 +259,11 @@ impl Point2 {
         Self { x, y }
     }
 
+    /// Returns the origin point.
+    pub fn origin() -> Self {
+        Self::new(Real::zero(), Real::zero())
+    }
+
     /// Lifts a finite `f64` coordinate array into a hyperreal-backed point.
     pub fn try_from_f64_array(values: [f64; 2]) -> BlasResult<Self> {
         crate::trace_dispatch!("hyperlattice_point", "constructor", "point2-from-f64-array");
@@ -396,6 +402,11 @@ impl Point3 {
         Self { x, y, z }
     }
 
+    /// Returns the origin point.
+    pub fn origin() -> Self {
+        Self::new(Real::zero(), Real::zero(), Real::zero())
+    }
+
     /// Lifts a finite `f64` coordinate array into a hyperreal-backed point.
     pub fn try_from_f64_array(values: [f64; 3]) -> BlasResult<Self> {
         crate::trace_dispatch!("hyperlattice_point", "constructor", "point3-from-f64-array");
@@ -518,6 +529,161 @@ impl From<Vector3> for Point3 {
 impl From<Point3> for Vector3 {
     fn from(value: Point3) -> Self {
         value.into_vector()
+    }
+}
+
+impl Add<Vector2> for Point2 {
+    type Output = Self;
+
+    fn add(self, rhs: Vector2) -> Self::Output {
+        let [x, y] = rhs.0;
+        Self::new(self.x + x, self.y + y)
+    }
+}
+
+impl Add<&Vector2> for Point2 {
+    type Output = Self;
+
+    fn add(self, rhs: &Vector2) -> Self::Output {
+        Self::new(self.x + rhs.0[0].clone(), self.y + rhs.0[1].clone())
+    }
+}
+
+impl Sub<Vector2> for Point2 {
+    type Output = Self;
+
+    fn sub(self, rhs: Vector2) -> Self::Output {
+        let [x, y] = rhs.0;
+        Self::new(self.x - x, self.y - y)
+    }
+}
+
+impl Sub<&Vector2> for Point2 {
+    type Output = Self;
+
+    fn sub(self, rhs: &Vector2) -> Self::Output {
+        Self::new(self.x - rhs.0[0].clone(), self.y - rhs.0[1].clone())
+    }
+}
+
+impl Sub for Point2 {
+    type Output = Vector2;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        Vector2::new([self.x - rhs.x, self.y - rhs.y])
+    }
+}
+
+impl Sub<&Point2> for Point2 {
+    type Output = Vector2;
+
+    fn sub(self, rhs: &Point2) -> Self::Output {
+        Vector2::new([self.x - rhs.x.clone(), self.y - rhs.y.clone()])
+    }
+}
+
+impl Sub<Point2> for &Point2 {
+    type Output = Vector2;
+
+    fn sub(self, rhs: Point2) -> Self::Output {
+        Vector2::new([self.x.clone() - rhs.x, self.y.clone() - rhs.y])
+    }
+}
+
+impl Sub<&Point2> for &Point2 {
+    type Output = Vector2;
+
+    fn sub(self, rhs: &Point2) -> Self::Output {
+        Vector2::new([
+            self.x.clone() - rhs.x.clone(),
+            self.y.clone() - rhs.y.clone(),
+        ])
+    }
+}
+
+impl Add<Vector3> for Point3 {
+    type Output = Self;
+
+    fn add(self, rhs: Vector3) -> Self::Output {
+        let [x, y, z] = rhs.0;
+        Self::new(self.x + x, self.y + y, self.z + z)
+    }
+}
+
+impl Add<&Vector3> for Point3 {
+    type Output = Self;
+
+    fn add(self, rhs: &Vector3) -> Self::Output {
+        Self::new(
+            self.x + rhs.0[0].clone(),
+            self.y + rhs.0[1].clone(),
+            self.z + rhs.0[2].clone(),
+        )
+    }
+}
+
+impl Sub<Vector3> for Point3 {
+    type Output = Self;
+
+    fn sub(self, rhs: Vector3) -> Self::Output {
+        let [x, y, z] = rhs.0;
+        Self::new(self.x - x, self.y - y, self.z - z)
+    }
+}
+
+impl Sub<&Vector3> for Point3 {
+    type Output = Self;
+
+    fn sub(self, rhs: &Vector3) -> Self::Output {
+        Self::new(
+            self.x - rhs.0[0].clone(),
+            self.y - rhs.0[1].clone(),
+            self.z - rhs.0[2].clone(),
+        )
+    }
+}
+
+impl Sub for Point3 {
+    type Output = Vector3;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        Vector3::new([self.x - rhs.x, self.y - rhs.y, self.z - rhs.z])
+    }
+}
+
+impl Sub<&Point3> for Point3 {
+    type Output = Vector3;
+
+    fn sub(self, rhs: &Point3) -> Self::Output {
+        Vector3::new([
+            self.x - rhs.x.clone(),
+            self.y - rhs.y.clone(),
+            self.z - rhs.z.clone(),
+        ])
+    }
+}
+
+impl Sub<Point3> for &Point3 {
+    type Output = Vector3;
+
+    fn sub(self, rhs: Point3) -> Self::Output {
+        Vector3::new([
+            self.x.clone() - rhs.x,
+            self.y.clone() - rhs.y,
+            self.z.clone() - rhs.z,
+        ])
+    }
+}
+
+impl Sub<&Point3> for &Point3 {
+    type Output = Vector3;
+
+    fn sub(self, rhs: &Point3) -> Self::Output {
+        Vector3::new([
+            self.x.clone() - rhs.x.clone(),
+            self.y.clone() - rhs.y.clone(),
+            self.z.clone() - rhs.z.clone(),
+        ])
     }
 }
 

@@ -88,6 +88,9 @@ pub use point::{
     Point2, Point2Facts, Point3, Point3Facts, PointSharedScaleFacts, PointSharedScaleView,
 };
 
+mod aabb;
+pub use aabb::Aabb;
+
 mod projective;
 pub use projective::{
     HomogeneousLine3, HomogeneousPoint3, Plane3Coefficients, ProjectivePlane3,

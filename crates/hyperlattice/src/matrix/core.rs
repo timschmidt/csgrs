@@ -12,6 +12,7 @@ use std::fmt;
 use std::mem;
 use std::ops::{Add, BitXor, Div, Index, IndexMut, Mul, Neg, Sub};
 
+use crate::point::Point3;
 use crate::scalar::{
     clone_with_abort, reject_definite_zero, require_known_nonzero,
     require_known_nonzero_with_abort, with_abort, zero_status, zero_status_with_abort,
@@ -19,7 +20,8 @@ use crate::scalar::{
 use crate::vector::{Vector3, Vector4, Vector4GeometricFacts, Vector4HomogeneousKind};
 use crate::{
     AbortSignal, BlasResult, CheckedBlasResult, ExactRationalKind, ExactRealSetFacts, Problem,
-    Real, RealKernelExt, RealSymbolicDependencyMask, RealZeroOneMinusOneStatus, ZeroStatus,
+    Real, RealKernelExt, RealSign, RealSymbolicDependencyMask, RealZeroOneMinusOneStatus,
+    ZeroStatus,
 };
 
 fn identity_array<const N: usize>() -> [[Real; N]; N] {
@@ -14519,6 +14521,43 @@ fn signed_axis4_apply(value: Real, axis: SignedAxis4) -> Real {
 }
 
 impl Matrix4 {
+    /// Constructs a matrix from row-major entries.
+    pub fn from_row_major(values: [Real; 16]) -> Self {
+        let [
+            m00,
+            m01,
+            m02,
+            m03,
+            m10,
+            m11,
+            m12,
+            m13,
+            m20,
+            m21,
+            m22,
+            m23,
+            m30,
+            m31,
+            m32,
+            m33,
+        ] = values;
+        Self::new([
+            [m00, m01, m02, m03],
+            [m10, m11, m12, m13],
+            [m20, m21, m22, m23],
+            [m30, m31, m32, m33],
+        ])
+    }
+
+    /// Constructs a 4x4 matrix from a row-major slice of exactly 16 entries.
+    pub fn from_row_slice(values: &[Real]) -> Option<Self> {
+        if values.len() != 16 {
+            return None;
+        }
+        let values = std::array::from_fn(|index| values[index].clone());
+        Some(Self::from_row_major(values))
+    }
+
     /// Returns exact-rational representation facts for all matrix entries.
     ///
     /// Transform stacks often preserve a common rational grid. Carrying this
@@ -14561,6 +14600,148 @@ impl Matrix4 {
             [Real::zero(), Real::zero(), Real::one(), tz],
             [Real::zero(), Real::zero(), Real::zero(), Real::one()],
         ])
+    }
+
+    /// Constructs an affine non-uniform scale matrix.
+    pub fn affine_nonuniform_scale(scale: [Real; 3]) -> Self {
+        let [sx, sy, sz] = scale;
+        Self([
+            [sx, Real::zero(), Real::zero(), Real::zero()],
+            [Real::zero(), sy, Real::zero(), Real::zero()],
+            [Real::zero(), Real::zero(), sz, Real::zero()],
+            [Real::zero(), Real::zero(), Real::zero(), Real::one()],
+        ])
+    }
+
+    /// Constructs an affine x-axis rotation matrix.
+    pub fn rotation_x(angle: Real) -> Self {
+        let sin = angle.clone().sin();
+        let cos = angle.cos();
+        Self::from_row_major([
+            Real::one(),
+            Real::zero(),
+            Real::zero(),
+            Real::zero(),
+            Real::zero(),
+            cos.clone(),
+            -sin.clone(),
+            Real::zero(),
+            Real::zero(),
+            sin,
+            cos,
+            Real::zero(),
+            Real::zero(),
+            Real::zero(),
+            Real::zero(),
+            Real::one(),
+        ])
+    }
+
+    /// Constructs an affine y-axis rotation matrix.
+    pub fn rotation_y(angle: Real) -> Self {
+        let sin = angle.clone().sin();
+        let cos = angle.cos();
+        Self::from_row_major([
+            cos.clone(),
+            Real::zero(),
+            sin.clone(),
+            Real::zero(),
+            Real::zero(),
+            Real::one(),
+            Real::zero(),
+            Real::zero(),
+            -sin,
+            Real::zero(),
+            cos,
+            Real::zero(),
+            Real::zero(),
+            Real::zero(),
+            Real::zero(),
+            Real::one(),
+        ])
+    }
+
+    /// Constructs an affine z-axis rotation matrix.
+    pub fn rotation_z(angle: Real) -> Self {
+        let sin = angle.clone().sin();
+        let cos = angle.cos();
+        Self::from_row_major([
+            cos.clone(),
+            -sin.clone(),
+            Real::zero(),
+            Real::zero(),
+            sin,
+            cos,
+            Real::zero(),
+            Real::zero(),
+            Real::zero(),
+            Real::zero(),
+            Real::one(),
+            Real::zero(),
+            Real::zero(),
+            Real::zero(),
+            Real::zero(),
+            Real::one(),
+        ])
+    }
+
+    /// Constructs an affine rotation matrix from a checked axis and angle.
+    pub fn rotation_axis_angle(axis: &Vector3, angle: Real) -> CheckedBlasResult<Self> {
+        let axis = axis.normalize_checked()?;
+        let sin = angle.clone().sin();
+        let cos = angle.cos();
+        let one_minus_cos = Real::one() - cos.clone();
+        let [x, y, z] = axis.0;
+        let zero = Real::zero();
+        let one = Real::one();
+        Ok(Self::from_row_major([
+            cos.clone() + x.clone() * x.clone() * one_minus_cos.clone(),
+            x.clone() * y.clone() * one_minus_cos.clone() - z.clone() * sin.clone(),
+            x.clone() * z.clone() * one_minus_cos.clone() + y.clone() * sin.clone(),
+            zero.clone(),
+            y.clone() * x.clone() * one_minus_cos.clone() + z.clone() * sin.clone(),
+            cos.clone() + y.clone() * y.clone() * one_minus_cos.clone(),
+            y.clone() * z.clone() * one_minus_cos.clone() - x.clone() * sin.clone(),
+            zero.clone(),
+            z.clone() * x.clone() * one_minus_cos.clone() - y.clone() * sin.clone(),
+            z.clone() * y.clone() * one_minus_cos.clone() + x.clone() * sin,
+            cos + z.clone() * z * one_minus_cos,
+            zero.clone(),
+            zero.clone(),
+            zero.clone(),
+            zero,
+            one,
+        ]))
+    }
+
+    /// Constructs an affine rotation matrix that maps `from` onto `to`.
+    pub fn rotation_between_vectors(from: &Vector3, to: &Vector3) -> CheckedBlasResult<Self> {
+        let from = from.normalize_checked()?;
+        let to = to.normalize_checked()?;
+        let dot = from.dot(&to);
+
+        match (dot.clone() - Real::one()).refine_sign_until(128) {
+            Some(RealSign::Zero) => return Ok(Self::identity()),
+            _ => {}
+        }
+
+        let (axis, angle) = match (dot + Real::one()).refine_sign_until(128) {
+            Some(RealSign::Zero) => {
+                let threshold = (Real::from(9_u8) / Real::from(10_u8))?;
+                let seed = if matches!(
+                    (from.0[0].clone().abs() - threshold).refine_sign_until(128),
+                    Some(RealSign::Negative)
+                ) {
+                    Vector3::x()
+                } else {
+                    Vector3::y()
+                };
+                (from.unit_cross_checked(&seed)?, Real::pi())
+            }
+            _ => (from.unit_cross_checked(&to)?, from.angle_to(&to)?),
+        };
+
+        Self::rotation_axis_angle(&axis, angle)
     }
 
     /// Constructs the inverse of a caller-certified affine translation.
@@ -15305,6 +15486,38 @@ impl Matrix4 {
         // handle, matching Yap's "geometric package" philosophy.
         // See Yap, "Towards Exact Geometric Computation", 1997.
         TransformedMatrix4::new_with_facts(self, facts).transform_point_vector(rhs)
+    }
+
+    /// Transforms a 3D point using homogeneous coordinates.
+    pub fn transform_point3(&self, point: &Point3) -> BlasResult<Point3> {
+        let transformed = self.transform_vec4_point(&Vector4::new([
+            point.x.clone(),
+            point.y.clone(),
+            point.z.clone(),
+            Real::one(),
+        ]));
+        let [x, y, z, w] = transformed.0;
+        if w.definitely_one() {
+            return Ok(Point3::new(x, y, z));
+        }
+        let inv_w = w.inverse()?;
+        Ok(Point3::new(
+            x.mul_cached(&inv_w),
+            y.mul_cached(&inv_w),
+            z.mul_cached(&inv_w),
+        ))
+    }
+
+    /// Transforms a 3D direction using homogeneous coordinates.
+    pub fn transform_direction3(&self, direction: &Vector3) -> Vector3 {
+        let transformed = self.transform_vec4_direction(&Vector4::new([
+            direction.0[0].clone(),
+            direction.0[1].clone(),
+            direction.0[2].clone(),
+            Real::zero(),
+        ]));
+        let [x, y, z, _w] = transformed.0;
+        Vector3::new([x, y, z])
     }
 
     /// Transforms a direction vector assuming `rhs[3] == 0`, keeping the fast

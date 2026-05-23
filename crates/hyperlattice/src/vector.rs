@@ -1079,10 +1079,26 @@ macro_rules! impl_vector {
                 Self(from_fn(|_| Real::zero()))
             }
 
+            /// Returns the zero vector.
+            pub fn zeros() -> Self {
+                Self::zero()
+            }
+
             /// Returns the Euclidean magnitude.
             pub fn magnitude(&self) -> BlasResult<Real> {
                 crate::trace_dispatch!("hyperlattice_vector", "method", "magnitude");
                 self.magnitude_squared_fast().sqrt()
+            }
+
+            /// Returns the Euclidean norm.
+            pub fn norm(&self) -> Real {
+                self.magnitude()
+                    .expect("hyperlattice vector norm should be defined for exact coordinates")
+            }
+
+            /// Returns the squared Euclidean norm.
+            pub fn norm_squared(&self) -> Real {
+                self.magnitude_squared_fast()
             }
 
             /// Returns the Euclidean magnitude after attaching an abort signal.
@@ -1517,6 +1533,52 @@ macro_rules! impl_vector {
     };
 }
 
+impl Vector2 {
+    /// Constructs a vector from x/y components.
+    pub fn from_xy(x: Real, y: Real) -> Self {
+        Self::new([x, y])
+    }
+
+    /// Returns the positive x basis vector.
+    pub fn x() -> Self {
+        Self::new([Real::one(), Real::zero()])
+    }
+
+    /// Returns the positive y basis vector.
+    pub fn y() -> Self {
+        Self::new([Real::zero(), Real::one()])
+    }
+}
+
+impl Vector3 {
+    /// Constructs a vector from x/y/z components.
+    pub fn from_xyz(x: Real, y: Real, z: Real) -> Self {
+        Self::new([x, y, z])
+    }
+
+    /// Returns the positive x basis vector.
+    pub fn x() -> Self {
+        Self::new([Real::one(), Real::zero(), Real::zero()])
+    }
+
+    /// Returns the positive y basis vector.
+    pub fn y() -> Self {
+        Self::new([Real::zero(), Real::one(), Real::zero()])
+    }
+
+    /// Returns the positive z basis vector.
+    pub fn z() -> Self {
+        Self::new([Real::zero(), Real::zero(), Real::one()])
+    }
+}
+
+impl Vector4 {
+    /// Constructs a vector from x/y/z/w components.
+    pub fn from_xyzw(x: Real, y: Real, z: Real, w: Real) -> Self {
+        Self::new([x, y, z, w])
+    }
+}
+
 impl_vector!(Vector2, 2);
 impl_vector!(Vector3, 3);
 impl_vector!(Vector4, 4);
@@ -1762,6 +1824,14 @@ impl Vector3 {
             }
         }
         Err(Problem::UnknownZero)
+    }
+
+    /// Returns the angle to `rhs` in radians.
+    pub fn angle_to(&self, rhs: &Self) -> CheckedBlasResult<Real> {
+        crate::trace_dispatch!("hyperlattice_vector", "method", "angle-to");
+        let lhs = self.normalize_checked()?;
+        let rhs = rhs.normalize_checked()?;
+        crate::acos(lhs.dot(&rhs))
     }
 
     /// Returns the dot product with `rhs`.
