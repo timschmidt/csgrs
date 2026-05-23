@@ -462,6 +462,140 @@ fn downward_heptagonal_pyramid_fan_i64(
 }
 
 #[cfg(feature = "exact-triangulation")]
+fn upward_octagonal_pyramid_i64(points: [[i64; 3]; 8], apex: [i64; 3]) -> ExactMesh {
+    ExactMesh::from_i64_triangles(
+        &[
+            points[0][0],
+            points[0][1],
+            points[0][2],
+            points[1][0],
+            points[1][1],
+            points[1][2],
+            points[2][0],
+            points[2][1],
+            points[2][2],
+            points[3][0],
+            points[3][1],
+            points[3][2],
+            points[4][0],
+            points[4][1],
+            points[4][2],
+            points[5][0],
+            points[5][1],
+            points[5][2],
+            points[6][0],
+            points[6][1],
+            points[6][2],
+            points[7][0],
+            points[7][1],
+            points[7][2],
+            apex[0],
+            apex[1],
+            apex[2],
+        ],
+        &[
+            0, 2, 1, 0, 3, 2, 0, 4, 3, 0, 5, 4, 0, 6, 5, 0, 7, 6, //
+            0, 1, 8, 1, 2, 8, 2, 3, 8, 3, 4, 8, 4, 5, 8, 5, 6, 8, 6, 7, 8, 7, 0, 8,
+        ],
+    )
+    .unwrap()
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn upward_octagonal_pyramid_fan_i64(
+    points: [[i64; 3]; 8],
+    center: [i64; 3],
+    apex: [i64; 3],
+) -> ExactMesh {
+    ExactMesh::from_i64_triangles(
+        &[
+            points[0][0],
+            points[0][1],
+            points[0][2],
+            points[1][0],
+            points[1][1],
+            points[1][2],
+            points[2][0],
+            points[2][1],
+            points[2][2],
+            points[3][0],
+            points[3][1],
+            points[3][2],
+            points[4][0],
+            points[4][1],
+            points[4][2],
+            points[5][0],
+            points[5][1],
+            points[5][2],
+            points[6][0],
+            points[6][1],
+            points[6][2],
+            points[7][0],
+            points[7][1],
+            points[7][2],
+            center[0],
+            center[1],
+            center[2],
+            apex[0],
+            apex[1],
+            apex[2],
+        ],
+        &[
+            0, 8, 1, 1, 8, 2, 2, 8, 3, 3, 8, 4, 4, 8, 5, 5, 8, 6, 6, 8, 7, 7, 8, 0, //
+            0, 1, 9, 1, 2, 9, 2, 3, 9, 3, 4, 9, 4, 5, 9, 5, 6, 9, 6, 7, 9, 7, 0, 9,
+        ],
+    )
+    .unwrap()
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn downward_octagonal_pyramid_fan_i64(
+    points: [[i64; 3]; 8],
+    center: [i64; 3],
+    apex: [i64; 3],
+) -> ExactMesh {
+    ExactMesh::from_i64_triangles(
+        &[
+            points[0][0],
+            points[0][1],
+            points[0][2],
+            points[1][0],
+            points[1][1],
+            points[1][2],
+            points[2][0],
+            points[2][1],
+            points[2][2],
+            points[3][0],
+            points[3][1],
+            points[3][2],
+            points[4][0],
+            points[4][1],
+            points[4][2],
+            points[5][0],
+            points[5][1],
+            points[5][2],
+            points[6][0],
+            points[6][1],
+            points[6][2],
+            points[7][0],
+            points[7][1],
+            points[7][2],
+            center[0],
+            center[1],
+            center[2],
+            apex[0],
+            apex[1],
+            apex[2],
+        ],
+        &[
+            0, 1, 8, 1, 2, 8, 2, 3, 8, 3, 4, 8, 4, 5, 8, 5, 6, 8, 6, 7, 8, 7, 0, 8, //
+            0, 9, 1, 1, 9, 2, 2, 9, 3, 3, 9, 4, 4, 9, 5, 5, 9, 6, 6, 9, 7, 7, 9, 0,
+        ],
+    )
+    .unwrap()
+}
+
+#[cfg(feature = "exact-triangulation")]
 fn upward_square_pyramid_i64(
     a: [i64; 3],
     b: [i64; 3],
@@ -8746,6 +8880,106 @@ fn exact_full_face_adjacent_heptagon_to_fan_patch_union_deletes_internal_faces()
     assert_eq!(result.mesh, union.mesh);
 
     let same_side_fan = upward_heptagonal_pyramid_fan_i64(boundary, [2, 4, 0], [2, 4, 6]);
+    assert!(
+        hypermesh::exact::materialize_full_face_adjacent_union(
+            &left,
+            &same_side_fan,
+            ValidationPolicy::CLOSED,
+        )
+        .is_none()
+    );
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
+fn exact_full_face_adjacent_octagon_to_fan_patch_union_deletes_internal_faces() {
+    let boundary = [
+        [0, 0, 0],
+        [4, 0, 0],
+        [7, 2, 0],
+        [8, 5, 0],
+        [5, 8, 0],
+        [1, 9, 0],
+        [-2, 6, 0],
+        [-3, 3, 0],
+    ];
+    let left = upward_octagonal_pyramid_i64(boundary, [2, 4, 7]);
+    let right = downward_octagonal_pyramid_fan_i64(boundary, [2, 4, 0], [2, 4, -7]);
+
+    let graph = build_intersection_graph(&left, &right).unwrap();
+    graph.validate_against_meshes(&left, &right).unwrap();
+    assert_eq!(
+        graph
+            .face_pairs
+            .iter()
+            .filter(|pair| {
+                pair.left_face < 6
+                    && pair.right_face < 8
+                    && pair.relation == hypermesh::exact::MeshFacePairRelation::CoplanarOverlapping
+            })
+            .count(),
+        22
+    );
+
+    let union = hypermesh::exact::materialize_full_face_adjacent_union(
+        &left,
+        &right,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("octagonal fan patch should merge with boundary-ear triangulated patch");
+    union.validate().unwrap();
+    union.validate_against_sources(&left, &right).unwrap();
+    assert!(union.shared_faces.is_empty());
+    assert_eq!(
+        union.shared_patches,
+        vec![hypermesh::exact::FullFaceAdjacentPatch {
+            left_faces: vec![0, 1, 2, 3, 4, 5],
+            right_faces: vec![0, 1, 2, 3, 4, 5, 6, 7],
+        }]
+    );
+    assert_eq!(union.mesh.vertices().len(), 10);
+    assert_eq!(union.mesh.triangles().len(), 16);
+    assert!(union.mesh.facts().mesh.closed_manifold);
+
+    let mut stale = union.clone();
+    stale.shared_patches[0].right_faces.pop();
+    assert_eq!(
+        stale.validate_against_sources(&left, &right).unwrap_err(),
+        hypermesh::exact::FullFaceAdjacentUnionError::SourceReplayMismatch
+    );
+
+    let preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+    )
+    .unwrap();
+    preflight.validate().unwrap();
+    preflight.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedFullFaceAdjacentUnion
+    );
+
+    let result = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    result
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            hypermesh::exact::ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(result.mesh, union.mesh);
+
+    let same_side_fan = upward_octagonal_pyramid_fan_i64(boundary, [2, 4, 0], [2, 4, 7]);
     assert!(
         hypermesh::exact::materialize_full_face_adjacent_union(
             &left,

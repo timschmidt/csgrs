@@ -12,6 +12,8 @@ pub mod adapter;
 #[cfg(feature = "exact-triangulation")]
 pub mod adjacent;
 #[cfg(feature = "exact-triangulation")]
+pub(crate) mod adjacent_polygon;
+#[cfg(feature = "exact-triangulation")]
 pub mod affine_box;
 #[cfg(feature = "exact-triangulation")]
 pub mod affine_solid;
