@@ -4565,6 +4565,27 @@ fn downward_square_pyramid_i64(
 }
 
 #[cfg(feature = "exact-triangulation")]
+fn upward_square_pyramid_i64(
+    a: [i64; 3],
+    b: [i64; 3],
+    c: [i64; 3],
+    d: [i64; 3],
+    apex: [i64; 3],
+) -> ExactMesh {
+    ExactMesh::from_i64_triangles(
+        &[
+            a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2], d[0], d[1], d[2], apex[0],
+            apex[1], apex[2],
+        ],
+        &[
+            0, 2, 1, 0, 3, 2, //
+            0, 1, 4, 1, 2, 4, 2, 3, 4, 3, 0, 4,
+        ],
+    )
+    .expect("upward square pyramid fixture should import")
+}
+
+#[cfg(feature = "exact-triangulation")]
 fn combine_exact_meshes(meshes: &[ExactMesh], label: &'static str) -> ExactMesh {
     let mut vertices = Vec::new();
     let mut triangles = Vec::new();
@@ -5205,6 +5226,52 @@ fn exercise_contained_face_adjacent_union() {
         )
         .unwrap();
     assert_eq!(component_hole_result.mesh, component_hole_union.mesh);
+
+    let multi_face_left = upward_square_pyramid_i64(
+        [0, 0, 0],
+        [8, 0, 0],
+        [8, 8, 0],
+        [0, 8, 0],
+        [4, 4, 5],
+    );
+    let multi_face_right = downward_square_pyramid_i64(
+        [3, 2, 0],
+        [6, 2, 0],
+        [6, 5, 0],
+        [3, 5, 0],
+        [4, 3, -3],
+    );
+    let multi_face_union = hypermesh::exact::materialize_contained_face_adjacent_union(
+        &multi_face_left,
+        &multi_face_right,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("multi-face containing component should materialize");
+    multi_face_union.validate().unwrap();
+    multi_face_union
+        .validate_against_sources(&multi_face_left, &multi_face_right)
+        .unwrap();
+    assert_eq!(multi_face_union.contained_faces, vec![0, 1]);
+    assert_eq!(multi_face_union.containing_faces, vec![0, 1]);
+
+    let multi_face_result = boolean_exact_with_boundary_policy(
+        &multi_face_left,
+        &multi_face_right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+    multi_face_result
+        .validate_operation_against_sources(
+            &multi_face_left,
+            &multi_face_right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(multi_face_result.mesh, multi_face_union.mesh);
 }
 
 #[cfg(feature = "exact-triangulation")]

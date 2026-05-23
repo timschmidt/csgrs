@@ -46,23 +46,24 @@ use super::winding::{
 
 use std::cmp::Ordering;
 
-/// Exact materialization of a closed-solid union across one contained face.
+/// Exact materialization of a closed-solid union across contained boundary caps.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ContainedFaceAdjacentUnion {
     /// Source side whose face is replaced by a holed face remnant.
     pub containing_side: MeshSide,
-    /// Face index on [`Self::containing_side`] that strictly contains the
-    /// opposite face.
+    /// First face index on [`Self::containing_side`] that participates in the
+    /// containing source patch.
     pub containing_face: usize,
-    /// Face index on the opposite source mesh that is removed from the
+    /// First face index on the opposite source mesh that is removed from the
     /// regularized union.
     pub contained_face: usize,
     /// All opposite-source faces removed from the regularized union.
     ///
-    /// One-hole certificates retain exactly this face in
-    /// [`Self::contained_face`]. Multi-hole certificates keep the first cap
+    /// One-face certificates retain exactly this face in
+    /// [`Self::contained_face`]. Multi-face certificates keep the first cap
     /// there for API compatibility and replay the full set here, so stale
-    /// copied artifacts cannot silently drop one internal cap.
+    /// copied artifacts cannot silently drop one internal cap or cap
+    /// component.
     pub contained_faces: Vec<usize>,
     /// All source faces replaced by holed remnant patches.
     pub containing_faces: Vec<usize>,
@@ -163,31 +164,38 @@ struct ContainedFaceAdjacencyCertificate {
     patches: Vec<ContainedFacePatch>,
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 struct ContainedFacePatch {
-    containing_face: usize,
-    contained_face: usize,
+    containing_faces: Vec<usize>,
+    contained_faces: Vec<usize>,
     projection: CoplanarProjection,
     containing_projected_sign: Sign,
 }
 
 impl ContainedFaceAdjacencyCertificate {
     fn containing_face(&self) -> usize {
-        self.patches[0].containing_face
+        self.patches[0].containing_faces[0]
     }
 
     fn contained_faces(&self) -> Vec<usize> {
-        self.patches
-            .iter()
-            .map(|patch| patch.contained_face)
-            .collect()
+        let mut faces = Vec::new();
+        for patch in &self.patches {
+            for &face in &patch.contained_faces {
+                if !faces.contains(&face) {
+                    faces.push(face);
+                }
+            }
+        }
+        faces
     }
 
     fn containing_faces(&self) -> Vec<usize> {
         let mut faces = Vec::new();
         for patch in &self.patches {
-            if !faces.contains(&patch.containing_face) {
-                faces.push(patch.containing_face);
+            for &face in &patch.containing_faces {
+                if !faces.contains(&face) {
+                    faces.push(face);
+                }
             }
         }
         faces
@@ -195,6 +203,23 @@ impl ContainedFaceAdjacencyCertificate {
 }
 
 fn contained_face_adjacency_certificate(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    pairs: &[FacePairEvents],
+) -> Option<ContainedFaceAdjacencyCertificate> {
+    let certificate = single_face_contained_adjacency_certificate(left, right, pairs)
+        .or_else(|| component_contained_adjacency_certificate(left, right, pairs))?;
+    if pairs
+        .iter()
+        .all(|pair| contained_adjacency_contact_pair(left, right, pair, &certificate))
+    {
+        Some(certificate)
+    } else {
+        None
+    }
+}
+
+fn single_face_contained_adjacency_certificate(
     left: &ExactMesh,
     right: &ExactMesh,
     pairs: &[FacePairEvents],
@@ -210,15 +235,7 @@ fn contained_face_adjacency_certificate(
             None => certificate = Some(candidate),
         }
     }
-    let certificate = certificate?;
-    if pairs
-        .iter()
-        .all(|pair| contained_adjacency_contact_pair(left, right, pair, &certificate))
-    {
-        Some(certificate)
-    } else {
-        None
-    }
+    certificate
 }
 
 fn contained_face_pair(
@@ -232,8 +249,8 @@ fn contained_face_pair(
         return Some(ContainedFaceAdjacencyCertificate {
             containing_side: MeshSide::Left,
             patches: vec![ContainedFacePatch {
-                containing_face: pair.left_face,
-                contained_face: pair.right_face,
+                containing_faces: vec![pair.left_face],
+                contained_faces: vec![pair.right_face],
                 projection,
                 containing_projected_sign: sign,
             }],
@@ -245,14 +262,108 @@ fn contained_face_pair(
         return Some(ContainedFaceAdjacencyCertificate {
             containing_side: MeshSide::Right,
             patches: vec![ContainedFacePatch {
-                containing_face: pair.right_face,
-                contained_face: pair.left_face,
+                containing_faces: vec![pair.right_face],
+                contained_faces: vec![pair.left_face],
                 projection,
                 containing_projected_sign: sign,
             }],
         });
     }
     None
+}
+
+/// Certify one connected coplanar containing component with one or more
+/// contained cap components.
+///
+/// This is still a bounded shortcut, not the arbitrary volumetric cell
+/// materializer. It promotes only the case where all positive-area coplanar
+/// overlaps form one convex containing surface and one strictly contained
+/// convex cap set. The check is performed by replaying the retained source
+/// face sets through the coplanar convex holed surface artifacts, preserving
+/// Yap's source-object discipline from "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997), rather than deciding containment by
+/// sampled representative points.
+fn component_contained_adjacency_certificate(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    pairs: &[FacePairEvents],
+) -> Option<ContainedFaceAdjacencyCertificate> {
+    let overlapping = pairs
+        .iter()
+        .filter(|pair| pair.relation == MeshFacePairRelation::CoplanarOverlapping)
+        .collect::<Vec<_>>();
+    if overlapping.len() < 2 {
+        return None;
+    }
+
+    let left_faces = unique_faces(overlapping.iter().map(|pair| pair.left_face));
+    let right_faces = unique_faces(overlapping.iter().map(|pair| pair.right_face));
+    component_contained_adjacency_for_side(
+        MeshSide::Left,
+        left,
+        right,
+        left_faces.clone(),
+        right_faces.clone(),
+    )
+    .or_else(|| {
+        component_contained_adjacency_for_side(
+            MeshSide::Right,
+            right,
+            left,
+            right_faces,
+            left_faces,
+        )
+    })
+}
+
+fn component_contained_adjacency_for_side(
+    containing_side: MeshSide,
+    containing_source: &ExactMesh,
+    contained_source: &ExactMesh,
+    containing_faces: Vec<usize>,
+    contained_faces: Vec<usize>,
+) -> Option<ContainedFaceAdjacencyCertificate> {
+    if containing_faces.is_empty() || contained_faces.is_empty() {
+        return None;
+    }
+    let containing_mesh = faces_mesh(
+        containing_source,
+        &containing_faces,
+        "exact contained-face adjacency containing component",
+    )?;
+    let contained_mesh = faces_mesh(
+        contained_source,
+        &contained_faces,
+        "exact contained-face adjacency contained component",
+    )?;
+    let contained_components = connected_face_components(&contained_mesh)?;
+    let arrangement_projection = if contained_components.len() == 1 {
+        arrange_coplanar_convex_surface_holed_difference(&containing_mesh, &contained_mesh)
+            .map(|arrangement| arrangement.projection)
+    } else {
+        arrange_coplanar_convex_surface_multi_holed_difference(&containing_mesh, &contained_mesh)
+            .map(|arrangement| arrangement.projection)
+    }?;
+    let sign = first_projected_mesh_triangle_sign(&containing_mesh, arrangement_projection)?;
+    Some(ContainedFaceAdjacencyCertificate {
+        containing_side,
+        patches: vec![ContainedFacePatch {
+            containing_faces,
+            contained_faces,
+            projection: arrangement_projection,
+            containing_projected_sign: sign,
+        }],
+    })
+}
+
+fn unique_faces(faces: impl Iterator<Item = usize>) -> Vec<usize> {
+    let mut unique = Vec::new();
+    for face in faces {
+        if !unique.contains(&face) {
+            unique.push(face);
+        }
+    }
+    unique
 }
 
 /// Merge one contained-face candidate into a bounded multi-patch certificate.
@@ -270,24 +381,40 @@ fn merge_contained_face_candidate(
     if existing.containing_side != candidate.containing_side {
         return None;
     }
-    for patch in candidate.patches {
+    for mut patch in candidate.patches {
+        patch.containing_faces.sort_unstable();
+        patch.contained_faces.sort_unstable();
         if existing
             .patches
             .iter()
-            .any(|existing| existing.contained_face == patch.contained_face)
+            .any(|existing| faces_overlap(&existing.contained_faces, &patch.contained_faces))
         {
             return None;
         }
         if existing.patches.iter().any(|existing| {
-            existing.containing_face == patch.containing_face
+            existing.containing_faces == patch.containing_faces
                 && (existing.projection != patch.projection
                     || existing.containing_projected_sign != patch.containing_projected_sign)
         }) {
             return None;
         }
-        existing.patches.push(patch);
+        if let Some(existing) = existing.patches.iter_mut().find(|existing| {
+            existing.containing_faces == patch.containing_faces
+                && existing.projection == patch.projection
+                && existing.containing_projected_sign == patch.containing_projected_sign
+        }) {
+            existing.contained_faces.extend(patch.contained_faces);
+            existing.contained_faces.sort_unstable();
+            existing.contained_faces.dedup();
+        } else {
+            existing.patches.push(patch);
+        }
     }
     Some(())
+}
+
+fn faces_overlap(left: &[usize], right: &[usize]) -> bool {
+    left.iter().any(|face| right.contains(face))
 }
 
 fn contained_adjacency_contact_pair(
@@ -317,14 +444,14 @@ fn certificate_face_pair_contains(
     right_face: usize,
 ) -> bool {
     match certificate.containing_side {
-        MeshSide::Left => certificate
-            .patches
-            .iter()
-            .any(|patch| patch.containing_face == left_face && patch.contained_face == right_face),
-        MeshSide::Right => certificate
-            .patches
-            .iter()
-            .any(|patch| patch.containing_face == right_face && patch.contained_face == left_face),
+        MeshSide::Left => certificate.patches.iter().any(|patch| {
+            patch.containing_faces.contains(&left_face)
+                && patch.contained_faces.contains(&right_face)
+        }),
+        MeshSide::Right => certificate.patches.iter().any(|patch| {
+            patch.containing_faces.contains(&right_face)
+                && patch.contained_faces.contains(&left_face)
+        }),
     }
 }
 
@@ -341,7 +468,7 @@ fn boundary_candidate_event(
                     | SegmentPlaneRelation::Coplanar
                     | SegmentPlaneRelation::EndpointOnPlane
             ) || (*relation == SegmentPlaneRelation::ProperCrossing
-                && retained_plane_crossing_is_outside_plane_face(left, right, event))
+                && retained_plane_crossing_is_not_inside_plane_face(left, right, event))
         }
         IntersectionEvent::CoplanarEdge { relation, .. } => {
             *relation != SegmentIntersection::Disjoint
@@ -354,7 +481,7 @@ fn boundary_candidate_event(
     }
 }
 
-fn retained_plane_crossing_is_outside_plane_face(
+fn retained_plane_crossing_is_not_inside_plane_face(
     left: &ExactMesh,
     right: &ExactMesh,
     event: &IntersectionEvent,
@@ -371,9 +498,10 @@ fn retained_plane_crossing_is_outside_plane_face(
     };
     // The graph may retain a source edge crossing the opposite face's
     // supporting plane even when the constructed point lies outside that
-    // finite triangle. That construction is exact evidence for splitting,
-    // not for volume overlap; preserving the distinction is the Yap-style
-    // predicate/object boundary this bounded shortcut consumes.
+    // finite triangle, or exactly on its boundary. That construction is exact
+    // evidence for splitting, not for volume overlap; preserving the
+    // distinction is the Yap-style predicate/object boundary this bounded
+    // shortcut consumes. Strict interior crossings remain blockers.
     let Some(triangle) = triangle_points(mesh_for_side(*plane_side, left, right), *plane_face)
     else {
         return false;
@@ -388,7 +516,7 @@ fn retained_plane_crossing_is_outside_plane_face(
         &project_point3(point, projection),
     )
     .value()
-        == Some(TriangleLocation::Outside)
+    .is_some_and(|location| location != TriangleLocation::Inside)
 }
 
 fn face_strictly_contains_opposite_face(
@@ -466,7 +594,7 @@ fn contained_face_union_mesh(
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 struct ContainedFacePatchGroup {
-    containing_face: usize,
+    containing_faces: Vec<usize>,
     contained_faces: Vec<usize>,
     projection: CoplanarProjection,
     containing_projected_sign: Sign,
@@ -475,23 +603,16 @@ struct ContainedFacePatchGroup {
 fn contained_face_patch_groups(
     certificate: &ContainedFaceAdjacencyCertificate,
 ) -> Vec<ContainedFacePatchGroup> {
-    let mut groups = Vec::<ContainedFacePatchGroup>::new();
-    for patch in &certificate.patches {
-        if let Some(group) = groups
-            .iter_mut()
-            .find(|group| group.containing_face == patch.containing_face)
-        {
-            group.contained_faces.push(patch.contained_face);
-        } else {
-            groups.push(ContainedFacePatchGroup {
-                containing_face: patch.containing_face,
-                contained_faces: vec![patch.contained_face],
-                projection: patch.projection,
-                containing_projected_sign: patch.containing_projected_sign,
-            });
-        }
-    }
-    groups
+    certificate
+        .patches
+        .iter()
+        .map(|patch| ContainedFacePatchGroup {
+            containing_faces: patch.containing_faces.clone(),
+            contained_faces: patch.contained_faces.clone(),
+            projection: patch.projection,
+            containing_projected_sign: patch.containing_projected_sign,
+        })
+        .collect()
 }
 
 /// Append one retained holed replacement for a containing source face.
@@ -515,10 +636,10 @@ fn append_contained_face_patch_group(
     vertices: &mut Vec<ExactPoint3>,
     triangles: &mut Vec<Triangle>,
 ) -> Option<()> {
-    let containing_mesh = face_mesh(
+    let containing_mesh = faces_mesh(
         mesh_for_side(containing_side, left, right),
-        group.containing_face,
-        "exact contained-face adjacency containing face",
+        &group.containing_faces,
+        "exact contained-face adjacency containing faces",
     )?;
     let contained_mesh = faces_mesh(
         mesh_for_side(opposite_side(containing_side), left, right),
@@ -540,10 +661,6 @@ fn append_contained_face_patch_group(
         vertices,
         triangles,
     )
-}
-
-fn face_mesh(mesh: &ExactMesh, face: usize, label: &'static str) -> Option<ExactMesh> {
-    faces_mesh(mesh, &[face], label)
 }
 
 fn faces_mesh(mesh: &ExactMesh, faces: &[usize], label: &'static str) -> Option<ExactMesh> {
