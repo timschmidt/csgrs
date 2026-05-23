@@ -296,23 +296,93 @@ fn component_contained_adjacency_certificate(
         return None;
     }
 
-    let left_faces = unique_faces(overlapping.iter().map(|pair| pair.left_face));
-    let right_faces = unique_faces(overlapping.iter().map(|pair| pair.right_face));
-    component_contained_adjacency_for_side(
-        MeshSide::Left,
-        left,
-        right,
-        left_faces.clone(),
-        right_faces.clone(),
-    )
-    .or_else(|| {
-        component_contained_adjacency_for_side(
-            MeshSide::Right,
-            right,
-            left,
-            right_faces,
-            left_faces,
-        )
+    let components = overlap_face_components(&overlapping)?;
+    component_contained_adjacency_components_for_side(MeshSide::Left, left, right, &components)
+        .or_else(|| {
+            component_contained_adjacency_components_for_side(
+                MeshSide::Right,
+                right,
+                left,
+                &components,
+            )
+        })
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct OverlapFaceComponent {
+    left_faces: Vec<usize>,
+    right_faces: Vec<usize>,
+}
+
+/// Split retained coplanar overlaps into independent source-face components.
+///
+/// The component contained-face certificate is a bounded replacement for a
+/// general coplanar volumetric cell materializer. Treating disconnected
+/// source patches as one polygon would invent topology that no exact source
+/// object owns. We therefore group the bipartite overlap graph by shared left
+/// or right source faces before replaying each patch. This follows Yap,
+/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+/// (1997): exact combinatorial objects, not numerical proximity, decide which
+/// topology can be promoted.
+fn overlap_face_components(overlapping: &[&FacePairEvents]) -> Option<Vec<OverlapFaceComponent>> {
+    if overlapping.is_empty() {
+        return None;
+    }
+    let mut components = PairUnionFind::new(overlapping.len());
+    for left in 0..overlapping.len() {
+        for right in left + 1..overlapping.len() {
+            if overlapping[left].left_face == overlapping[right].left_face
+                || overlapping[left].right_face == overlapping[right].right_face
+            {
+                components.union(left, right);
+            }
+        }
+    }
+
+    let mut grouped = Vec::<OverlapFaceComponent>::new();
+    let mut roots = Vec::<usize>::new();
+    for (index, pair) in overlapping.iter().enumerate() {
+        let root = components.find(index);
+        let group_index = if let Some(existing) = roots.iter().position(|&seen| seen == root) {
+            existing
+        } else {
+            roots.push(root);
+            grouped.push(OverlapFaceComponent {
+                left_faces: Vec::new(),
+                right_faces: Vec::new(),
+            });
+            grouped.len() - 1
+        };
+        push_unique_face(&mut grouped[group_index].left_faces, pair.left_face);
+        push_unique_face(&mut grouped[group_index].right_faces, pair.right_face);
+    }
+    Some(grouped)
+}
+
+fn component_contained_adjacency_components_for_side(
+    containing_side: MeshSide,
+    containing_source: &ExactMesh,
+    contained_source: &ExactMesh,
+    components: &[OverlapFaceComponent],
+) -> Option<ContainedFaceAdjacencyCertificate> {
+    let mut patches = Vec::with_capacity(components.len());
+    for component in components {
+        let (containing_faces, contained_faces) = match containing_side {
+            MeshSide::Left => (component.left_faces.clone(), component.right_faces.clone()),
+            MeshSide::Right => (component.right_faces.clone(), component.left_faces.clone()),
+        };
+        let certificate = component_contained_adjacency_for_side(
+            containing_side,
+            containing_source,
+            contained_source,
+            containing_faces,
+            contained_faces,
+        )?;
+        patches.extend(certificate.patches);
+    }
+    Some(ContainedFaceAdjacencyCertificate {
+        containing_side,
+        patches,
     })
 }
 
@@ -336,6 +406,9 @@ fn component_contained_adjacency_for_side(
         &contained_faces,
         "exact contained-face adjacency contained component",
     )?;
+    if connected_face_components(&containing_mesh)?.len() != 1 {
+        return None;
+    }
     let contained_components = connected_face_components(&contained_mesh)?;
     let arrangement_projection = if contained_components.len() == 1 {
         arrange_coplanar_convex_surface_holed_difference(&containing_mesh, &contained_mesh)
@@ -356,14 +429,10 @@ fn component_contained_adjacency_for_side(
     })
 }
 
-fn unique_faces(faces: impl Iterator<Item = usize>) -> Vec<usize> {
-    let mut unique = Vec::new();
-    for face in faces {
-        if !unique.contains(&face) {
-            unique.push(face);
-        }
+fn push_unique_face(faces: &mut Vec<usize>, face: usize) {
+    if !faces.contains(&face) {
+        faces.push(face);
     }
-    unique
 }
 
 /// Merge one contained-face candidate into a bounded multi-patch certificate.
@@ -719,6 +788,38 @@ fn connected_face_components(mesh: &ExactMesh) -> Option<Vec<Vec<usize>>> {
         components.push(component);
     }
     Some(components)
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct PairUnionFind {
+    parent: Vec<usize>,
+}
+
+impl PairUnionFind {
+    fn new(len: usize) -> Self {
+        Self {
+            parent: (0..len).collect(),
+        }
+    }
+
+    fn find(&mut self, index: usize) -> usize {
+        let parent = self.parent[index];
+        if parent == index {
+            index
+        } else {
+            let root = self.find(parent);
+            self.parent[index] = root;
+            root
+        }
+    }
+
+    fn union(&mut self, left: usize, right: usize) {
+        let left_root = self.find(left);
+        let right_root = self.find(right);
+        if left_root != right_root {
+            self.parent[right_root] = left_root;
+        }
+    }
 }
 
 fn triangles_share_edge(left: Triangle, right: Triangle) -> bool {

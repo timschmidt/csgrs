@@ -6011,6 +6011,32 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
             upward_square_pyramid_i64([0, 0, 0], [8, 0, 0], [8, 8, 0], [0, 8, 0], [4, 4, 5]);
         let contained_multi_face_right =
             downward_square_pyramid_i64([3, 2, 0], [6, 2, 0], [6, 5, 0], [3, 5, 0], [4, 3, -3]);
+        let contained_independent_multi_face_left = combine_exact_meshes(
+            &[
+                upward_square_pyramid_i64([0, 0, 0], [8, 0, 0], [8, 8, 0], [0, 8, 0], [4, 4, 5]),
+                upward_square_pyramid_i64(
+                    [20, 0, 0],
+                    [28, 0, 0],
+                    [28, 8, 0],
+                    [20, 8, 0],
+                    [24, 4, 5],
+                ),
+            ],
+            "bench contained-face adjacent independent multi-face containers",
+        );
+        let contained_independent_multi_face_right = combine_exact_meshes(
+            &[
+                downward_square_pyramid_i64([3, 2, 0], [6, 2, 0], [6, 5, 0], [3, 5, 0], [4, 3, -3]),
+                downward_square_pyramid_i64(
+                    [23, 2, 0],
+                    [26, 2, 0],
+                    [26, 5, 0],
+                    [23, 5, 0],
+                    [24, 3, -3],
+                ),
+            ],
+            "bench contained-face adjacent independent multi-face caps",
+        );
 
         let graph = build_intersection_graph(&left, &right).unwrap();
 
@@ -6495,6 +6521,38 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
                             .validate_operation_against_sources(
                                 &contained_multi_face_left,
                                 &contained_multi_face_right,
+                                hypermesh::exact::ExactBooleanOperation::Union,
+                                ValidationPolicy::CLOSED,
+                                hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+                            )
+                            .unwrap();
+                        result.mesh.triangles().len()
+                    }),
+                    hypermesh::exact::materialize_contained_face_adjacent_union(
+                        &contained_independent_multi_face_left,
+                        &contained_independent_multi_face_right,
+                        ValidationPolicy::CLOSED,
+                    )
+                    .map(|union| {
+                        union
+                            .validate_against_sources(
+                                &contained_independent_multi_face_left,
+                                &contained_independent_multi_face_right,
+                            )
+                            .unwrap();
+                        union.mesh.triangles().len()
+                    }),
+                    hypermesh::exact::boolean_exact(
+                        &contained_independent_multi_face_left,
+                        &contained_independent_multi_face_right,
+                        hypermesh::exact::ExactBooleanOperation::Union,
+                        ValidationPolicy::CLOSED,
+                    )
+                    .map(|result| {
+                        result
+                            .validate_operation_against_sources(
+                                &contained_independent_multi_face_left,
+                                &contained_independent_multi_face_right,
                                 hypermesh::exact::ExactBooleanOperation::Union,
                                 ValidationPolicy::CLOSED,
                                 hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,

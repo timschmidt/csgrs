@@ -5272,6 +5272,86 @@ fn exercise_contained_face_adjacent_union() {
         )
         .unwrap();
     assert_eq!(multi_face_result.mesh, multi_face_union.mesh);
+
+    let independent_multi_face_left = combine_exact_meshes(
+        &[
+            upward_square_pyramid_i64(
+                [0, 0, 0],
+                [8, 0, 0],
+                [8, 8, 0],
+                [0, 8, 0],
+                [4, 4, 5],
+            ),
+            upward_square_pyramid_i64(
+                [20, 0, 0],
+                [28, 0, 0],
+                [28, 8, 0],
+                [20, 8, 0],
+                [24, 4, 5],
+            ),
+        ],
+        "contained-face adjacent fuzz independent multi-face containers",
+    );
+    let independent_multi_face_right = combine_exact_meshes(
+        &[
+            downward_square_pyramid_i64(
+                [3, 2, 0],
+                [6, 2, 0],
+                [6, 5, 0],
+                [3, 5, 0],
+                [4, 3, -3],
+            ),
+            downward_square_pyramid_i64(
+                [23, 2, 0],
+                [26, 2, 0],
+                [26, 5, 0],
+                [23, 5, 0],
+                [24, 3, -3],
+            ),
+        ],
+        "contained-face adjacent fuzz independent multi-face caps",
+    );
+    let independent_multi_face_union =
+        hypermesh::exact::materialize_contained_face_adjacent_union(
+            &independent_multi_face_left,
+            &independent_multi_face_right,
+            ValidationPolicy::CLOSED,
+        )
+        .expect("independent multi-face containing components should materialize");
+    independent_multi_face_union.validate().unwrap();
+    independent_multi_face_union
+        .validate_against_sources(&independent_multi_face_left, &independent_multi_face_right)
+        .unwrap();
+    assert_eq!(
+        independent_multi_face_union.contained_faces,
+        vec![0, 1, 6, 7]
+    );
+    assert_eq!(
+        independent_multi_face_union.containing_faces,
+        vec![0, 1, 6, 7]
+    );
+
+    let independent_multi_face_result = boolean_exact_with_boundary_policy(
+        &independent_multi_face_left,
+        &independent_multi_face_right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+    independent_multi_face_result
+        .validate_operation_against_sources(
+            &independent_multi_face_left,
+            &independent_multi_face_right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        independent_multi_face_result.mesh,
+        independent_multi_face_union.mesh
+    );
 }
 
 #[cfg(feature = "exact-triangulation")]

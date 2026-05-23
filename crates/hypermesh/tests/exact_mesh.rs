@@ -8331,6 +8331,96 @@ fn exact_contained_face_adjacent_multi_face_container_union_replaces_component_w
 
 #[cfg(feature = "exact-triangulation")]
 #[test]
+fn exact_contained_face_adjacent_independent_multi_face_components_union_replays_each_patch() {
+    let left = combine_exact_meshes(
+        &[
+            upward_square_pyramid_i64([0, 0, 0], [8, 0, 0], [8, 8, 0], [0, 8, 0], [4, 4, 5]),
+            upward_square_pyramid_i64([20, 0, 0], [28, 0, 0], [28, 8, 0], [20, 8, 0], [24, 4, 5]),
+        ],
+        "exact contained-face adjacent two multi-face containers",
+    );
+    let right = combine_exact_meshes(
+        &[
+            downward_square_pyramid_i64([3, 2, 0], [6, 2, 0], [6, 5, 0], [3, 5, 0], [4, 3, -3]),
+            downward_square_pyramid_i64(
+                [23, 2, 0],
+                [26, 2, 0],
+                [26, 5, 0],
+                [23, 5, 0],
+                [24, 3, -3],
+            ),
+        ],
+        "exact contained-face adjacent two multi-face caps",
+    );
+
+    let graph = build_intersection_graph(&left, &right).unwrap();
+    graph.validate_against_meshes(&left, &right).unwrap();
+    let overlapping = graph
+        .face_pairs
+        .iter()
+        .filter(|pair| pair.relation == hypermesh::exact::MeshFacePairRelation::CoplanarOverlapping)
+        .collect::<Vec<_>>();
+    for (left_face, right_face) in [(0, 0), (1, 1), (6, 6), (7, 7)] {
+        assert!(
+            overlapping
+                .iter()
+                .any(|pair| pair.left_face == left_face && pair.right_face == right_face)
+        );
+    }
+
+    let union = hypermesh::exact::materialize_contained_face_adjacent_union(
+        &left,
+        &right,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("independent multi-face contained patches should replay separately");
+    union.validate().unwrap();
+    union.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(union.containing_side, MeshSide::Left);
+    assert_eq!(union.contained_faces, vec![0, 1, 6, 7]);
+    assert_eq!(union.containing_faces, vec![0, 1, 6, 7]);
+
+    let mut stale = union.clone();
+    stale.containing_faces.pop();
+    assert_eq!(
+        stale.validate_against_sources(&left, &right).unwrap_err(),
+        hypermesh::exact::ContainedFaceAdjacentUnionError::SourceReplayMismatch
+    );
+
+    let preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+    )
+    .unwrap();
+    preflight.validate().unwrap();
+    preflight.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedContainedFaceAdjacentUnion
+    );
+
+    let result = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    result
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            hypermesh::exact::ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(result.mesh, union.mesh);
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
 fn exact_non_rectilinear_coplanar_volumetric_overlap_splits_source_faces() {
     let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
     let right = tetrahedron_i64([1, 1, 0], [5, 1, 0], [1, 5, 0], [1, 1, 4]);
