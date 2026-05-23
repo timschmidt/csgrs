@@ -5960,7 +5960,8 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                         rational,
                         class: Log2(r.clone()),
                         computable: Some(computable),
-                        ..self.clone()
+                        signal: self.signal.clone(),
+                        primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                     });
                 }
             } else {
