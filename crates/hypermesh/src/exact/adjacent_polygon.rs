@@ -1,24 +1,29 @@
-//! Bounded convex-polygon full-face adjacency certificates.
+//! Bounded simple-polygon full-face adjacency certificates.
 //!
 //! This module is the branch-face companion to [`crate::exact::adjacent`].
 //! It accepts a small source-owned triangulated disk on each closed solid when
-//! both disks replay to the same strictly convex projected boundary with
-//! opposite signed area. The certificate deliberately stops at a bounded
-//! branch grammar: diagonal, ear, and fan-spoke edges can be deleted only when
-//! exact source topology and exact projected predicates prove that they are
-//! internal to one retained boundary object.
+//! both disks replay to the same simple projected boundary with opposite
+//! signed area. The certificate deliberately stops at a bounded branch
+//! grammar: diagonal, ear, fan-spoke, and nonconvex reflex-loop edges can be
+//! deleted only when exact source topology and exact projected predicates prove
+//! that they are internal to one retained boundary object.
 //!
 //! The separation follows Yap, "Towards Exact Geometric Computation,"
 //! *Computational Geometry* 7.1-2 (1997): we keep the source triangles as the
 //! combinatorial object and use exact predicates only to certify that this
-//! object owns the topology change. General nonconvex or larger coplanar cell
-//! extraction remains outside this bounded certificate.
+//! object owns the topology change. The strict point-in-ring test uses the
+//! even-odd crossing classifier of Hormann and Agathos, "The point in polygon
+//! problem for arbitrary polygons," *Computational Geometry* 20.3 (2001),
+//! evaluated over exact coordinates. Larger coplanar cell extraction remains
+//! outside this bounded certificate.
 
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
 
 use hyperlimit::{
-    CoplanarProjection, Point3, Sign, compare_reals, orient3d_report, projected_polygon_area2_value,
+    CoplanarProjection, Point2, Point3, RingPointLocation, SegmentIntersection, Sign,
+    classify_point_ring_even_odd, classify_segment_intersection, compare_reals, orient3d_report,
+    project_point3, projected_polygon_area2_value,
 };
 
 use super::mesh::ExactMesh;
@@ -35,16 +40,16 @@ struct PolygonPatchCandidate {
     area_abs: ExactReal,
 }
 
-/// Discover bounded convex-polygon adjacency patch pairs.
+/// Discover bounded simple-polygon adjacency patch pairs.
 ///
 /// The accepted grammar covers small triangulated disks whose exposed
 /// boundary has at most eight vertices. This includes quadrilateral
 /// cross-diagonals, one-sided quad fans, and pentagonal through octagonal
-/// fan/boundary-ear triangulations. This is still not an arbitrary coplanar
-/// arrangement materializer: every subset must be edge-connected, replay as a
-/// source-owned disk, place all non-boundary vertices strictly inside the
-/// retained convex loop, and cancel signed projected area against the opposite
-/// operand.
+/// fan/boundary-ear triangulations, plus bounded nonconvex reflex loops. This
+/// is still not an arbitrary coplanar arrangement materializer: every subset
+/// must be edge-connected, replay as a source-owned disk, place all
+/// non-boundary vertices strictly inside the retained simple loop, and cancel
+/// signed projected area against the opposite operand.
 pub(crate) fn polygon_patch_pairs(
     left: &ExactMesh,
     consumed_left_faces: &BTreeSet<usize>,
@@ -104,6 +109,14 @@ fn polygon_patch_candidates(
             &mut candidates,
         )?;
     }
+    candidates.sort_by(|left, right| {
+        right
+            .faces
+            .len()
+            .cmp(&left.faces.len())
+            .then_with(|| right.boundary_points.len().cmp(&left.boundary_points.len()))
+            .then_with(|| left.faces.cmp(&right.faces))
+    });
     Some(candidates)
 }
 
@@ -214,9 +227,13 @@ fn polygon_patch_candidate(
     let Some(projection) = choose_polygon_projection(&boundary_points) else {
         return Some(None);
     };
-    if !loop_is_strictly_convex(&boundary_points, projection)? {
+    if !loop_is_simple(&boundary_points, projection)? {
         return Some(None);
     }
+    let boundary_ring = boundary_points
+        .iter()
+        .map(|point| project_point3(point, projection))
+        .collect::<Vec<_>>();
 
     let mut area_sign = None;
     let mut signed_area2 = ExactReal::from(0);
@@ -233,7 +250,7 @@ fn polygon_patch_candidate(
             if !boundary_points
                 .iter()
                 .any(|boundary_point| points_equal(boundary_point, point) == Some(true))
-                && !point_strictly_inside_convex_loop(point, &boundary_points, projection)?
+                && !point_strictly_inside_simple_loop(point, &boundary_ring, projection)?
             {
                 return Some(None);
             }
@@ -300,49 +317,70 @@ fn order_boundary_vertices(edges: &[(usize, usize)]) -> Option<Vec<usize>> {
     (ordered.len() == adjacency.len()).then_some(ordered)
 }
 
-fn loop_is_strictly_convex(points: &[Point3], projection: CoplanarProjection) -> Option<bool> {
+fn loop_is_simple(points: &[Point3], projection: CoplanarProjection) -> Option<bool> {
     if points.len() < 3 {
         return Some(false);
     }
-    let area_sign = real_sign(&projected_polygon_area2_value(points, projection))?;
-    if area_sign == Sign::Zero {
+    if real_sign(&projected_polygon_area2_value(points, projection))? == Sign::Zero {
         return Some(false);
     }
-    for index in 0..points.len() {
-        let a = &points[index];
-        let b = &points[(index + 1) % points.len()];
-        let c = &points[(index + 2) % points.len()];
-        let turn = projected_polygon_area2_value(&[a.clone(), b.clone(), c.clone()], projection);
-        if real_sign(&turn)? != area_sign {
-            return Some(false);
+
+    let projected = points
+        .iter()
+        .map(|point| project_point3(point, projection))
+        .collect::<Vec<_>>();
+    for left in 0..projected.len() {
+        for right in left + 1..projected.len() {
+            if points2_equal(&projected[left], &projected[right])? {
+                return Some(false);
+            }
+        }
+    }
+
+    for left_edge in 0..projected.len() {
+        let left_next = (left_edge + 1) % projected.len();
+        for right_edge in left_edge + 1..projected.len() {
+            let right_next = (right_edge + 1) % projected.len();
+            let adjacent = left_next == right_edge
+                || right_next == left_edge
+                || (left_edge == 0 && right_next == 0);
+            let relation = classify_segment_intersection(
+                &projected[left_edge],
+                &projected[left_next],
+                &projected[right_edge],
+                &projected[right_next],
+            )
+            .value()?;
+            match (adjacent, relation) {
+                (true, SegmentIntersection::EndpointTouch) | (_, SegmentIntersection::Disjoint) => {
+                }
+                _ => return Some(false),
+            }
         }
     }
     Some(true)
 }
 
-fn point_strictly_inside_convex_loop(
+fn point_strictly_inside_simple_loop(
     point: &Point3,
-    loop_points: &[Point3],
+    projected_boundary: &[Point2],
     projection: CoplanarProjection,
 ) -> Option<bool> {
-    if loop_points.len() < 3 {
+    if projected_boundary.len() < 3 {
         return Some(false);
     }
-    let area_sign = real_sign(&projected_polygon_area2_value(loop_points, projection))?;
-    if area_sign == Sign::Zero {
-        return Some(false);
+    let projected = project_point3(point, projection);
+    match classify_point_ring_even_odd(projected_boundary, &projected).value()? {
+        RingPointLocation::Inside => Some(true),
+        RingPointLocation::Boundary | RingPointLocation::Outside => Some(false),
     }
+}
 
-    for index in 0..loop_points.len() {
-        let a = &loop_points[index];
-        let b = &loop_points[(index + 1) % loop_points.len()];
-        let turn =
-            projected_polygon_area2_value(&[a.clone(), b.clone(), point.clone()], projection);
-        if real_sign(&turn)? != area_sign {
-            return Some(false);
-        }
-    }
-    Some(true)
+fn points2_equal(left: &Point2, right: &Point2) -> Option<bool> {
+    Some(
+        compare_reals(&left.x, &right.x).value()? == Ordering::Equal
+            && compare_reals(&left.y, &right.y).value()? == Ordering::Equal,
+    )
 }
 
 fn polygon_patch_candidates_match(

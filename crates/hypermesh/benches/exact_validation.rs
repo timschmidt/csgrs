@@ -229,6 +229,39 @@ fn downward_square_pyramid_two_branch_i64(
 }
 
 #[cfg(feature = "exact-triangulation")]
+fn l_prism_pair_i64() -> (ExactMesh, ExactMesh) {
+    let vertices = &[
+        0, 0, 0, 4, 0, 0, 4, 2, 0, 2, 2, 0, 2, 4, 0, 0, 4, 0, 0, 0, 5, 4, 0, 5, 4, 2, 5, 2, 2, 5,
+        2, 4, 5, 0, 4, 5,
+    ];
+    let left = ExactMesh::from_i64_triangles(
+        vertices,
+        &[
+            0, 3, 1, 1, 3, 2, 0, 5, 3, 3, 5, 4, //
+            6, 7, 8, 6, 8, 9, 6, 9, 11, 9, 10, 11, //
+            0, 1, 7, 0, 7, 6, 1, 2, 8, 1, 8, 7, 2, 3, 9, 2, 9, 8, //
+            3, 4, 10, 3, 10, 9, 4, 5, 11, 4, 11, 10, 5, 0, 6, 5, 6, 11,
+        ],
+    )
+    .unwrap();
+    let right_vertices = &[
+        0, 0, 0, 4, 0, 0, 4, 2, 0, 2, 2, 0, 2, 4, 0, 0, 4, 0, 0, 0, -5, 4, 0, -5, 4, 2, -5, 2, 2,
+        -5, 2, 4, -5, 0, 4, -5,
+    ];
+    let right = ExactMesh::from_i64_triangles(
+        right_vertices,
+        &[
+            0, 1, 2, 0, 2, 3, 0, 3, 5, 3, 4, 5, //
+            6, 9, 7, 7, 9, 8, 6, 11, 9, 9, 11, 10, //
+            0, 7, 1, 0, 6, 7, 1, 8, 2, 1, 7, 8, 2, 9, 3, 2, 8, 9, //
+            3, 10, 4, 3, 9, 10, 4, 11, 5, 4, 10, 11, 5, 6, 0, 5, 11, 6,
+        ],
+    )
+    .unwrap();
+    (left, right)
+}
+
+#[cfg(feature = "exact-triangulation")]
 fn upward_pentagonal_pyramid_i64(
     a: [i64; 3],
     b: [i64; 3],
@@ -6361,6 +6394,7 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
             [4, 3, 0],
             [3, 3, -5],
         );
+        let (adjacent_l_prism_left, adjacent_l_prism_right) = l_prism_pair_i64();
         let adjacent_pentagon_left = upward_pentagonal_pyramid_i64(
             [0, 0, 0],
             [4, 0, 0],
@@ -6891,6 +6925,47 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
                                 .validate_operation_against_sources(
                                     &adjacent_two_branch_left,
                                     &adjacent_two_branch_right,
+                                    hypermesh::exact::ExactBooleanOperation::Union,
+                                    ValidationPolicy::CLOSED,
+                                    hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+                                )
+                                .unwrap();
+                            result.mesh.triangles().len()
+                        }),
+                    )
+                })
+            },
+        );
+        c.bench_function(
+            "exact_boolean_full_face_adjacent_nonconvex_l_prism_union",
+            |b| {
+                b.iter(|| {
+                    (
+                        hypermesh::exact::materialize_full_face_adjacent_union(
+                            &adjacent_l_prism_left,
+                            &adjacent_l_prism_right,
+                            ValidationPolicy::CLOSED,
+                        )
+                        .map(|union| {
+                            union
+                                .validate_against_sources(
+                                    &adjacent_l_prism_left,
+                                    &adjacent_l_prism_right,
+                                )
+                                .unwrap();
+                            union.mesh.triangles().len()
+                        }),
+                        hypermesh::exact::boolean_exact(
+                            &adjacent_l_prism_left,
+                            &adjacent_l_prism_right,
+                            hypermesh::exact::ExactBooleanOperation::Union,
+                            ValidationPolicy::CLOSED,
+                        )
+                        .map(|result| {
+                            result
+                                .validate_operation_against_sources(
+                                    &adjacent_l_prism_left,
+                                    &adjacent_l_prism_right,
                                     hypermesh::exact::ExactBooleanOperation::Union,
                                     ValidationPolicy::CLOSED,
                                     hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,

@@ -29,7 +29,7 @@ use hyperlimit::{
 
 use super::adjacent_polygon::polygon_patch_pairs;
 use super::construction::SegmentPlaneRelation;
-use super::graph::{FacePairEvents, IntersectionEvent, build_intersection_graph};
+use super::graph::{FacePairEvents, IntersectionEvent, MeshSide, build_intersection_graph};
 use super::intersection::MeshFacePairRelation;
 use super::mesh::{ExactMesh, ExactMeshValidationError, ExactPoint3, Triangle};
 use super::provenance::SourceProvenance;
@@ -231,6 +231,73 @@ fn shared_face_pair(certificate: &FullFaceAdjacencyCertificate, pair: &FacePairE
         })
 }
 
+fn consumed_by_certificate(
+    certificate: &FullFaceAdjacencyCertificate,
+    pair: &FacePairEvents,
+) -> bool {
+    face_consumed_by_certificate(certificate, MeshSide::Left, pair.left_face)
+        && face_consumed_by_certificate(certificate, MeshSide::Right, pair.right_face)
+}
+
+fn face_consumed_by_certificate(
+    certificate: &FullFaceAdjacencyCertificate,
+    side: MeshSide,
+    face: usize,
+) -> bool {
+    match side {
+        MeshSide::Left => {
+            certificate
+                .shared_faces
+                .iter()
+                .any(|shared| shared.left_face == face)
+                || certificate
+                    .shared_patches
+                    .iter()
+                    .any(|patch| patch.left_faces.contains(&face))
+        }
+        MeshSide::Right => {
+            certificate
+                .shared_faces
+                .iter()
+                .any(|shared| shared.right_face == face)
+                || certificate
+                    .shared_patches
+                    .iter()
+                    .any(|patch| patch.right_faces.contains(&face))
+        }
+    }
+}
+
+fn one_face_consumed_by_certificate(
+    certificate: &FullFaceAdjacencyCertificate,
+    pair: &FacePairEvents,
+) -> bool {
+    let left_consumed = face_consumed_by_certificate(certificate, MeshSide::Left, pair.left_face);
+    let right_consumed =
+        face_consumed_by_certificate(certificate, MeshSide::Right, pair.right_face);
+    left_consumed ^ right_consumed
+}
+
+fn consumed_boundary_candidate_event(event: &IntersectionEvent) -> bool {
+    match event {
+        IntersectionEvent::SegmentPlane { relation, .. } => matches!(
+            relation,
+            SegmentPlaneRelation::Disjoint
+                | SegmentPlaneRelation::Coplanar
+                | SegmentPlaneRelation::EndpointOnPlane
+                | SegmentPlaneRelation::ProperCrossing
+        ),
+        IntersectionEvent::CoplanarEdge { relation, .. } => {
+            *relation != SegmentIntersection::Disjoint
+        }
+        IntersectionEvent::CoplanarVertex { location, .. } => matches!(
+            location,
+            TriangleLocation::Inside | TriangleLocation::OnEdge | TriangleLocation::OnVertex
+        ),
+        IntersectionEvent::Unknown => false,
+    }
+}
+
 fn graph_has_only_adjacency_contacts(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -253,6 +320,27 @@ fn adjacency_contact_pair(
             pair.relation,
             MeshFacePairRelation::CoplanarOverlapping | MeshFacePairRelation::CoplanarTouching
         );
+    }
+    if consumed_by_certificate(certificate, pair) {
+        // A bounded source disk may replay partly as exact whole-face pairs and
+        // partly as a polygon patch. Cross-record coplanar edge contacts are
+        // still internal to the deleted source-owned interface; Yap's TEGC
+        // model requires that we keep this as certificate replay, not as a
+        // loose tolerance merge.
+        return matches!(
+            pair.relation,
+            MeshFacePairRelation::CoplanarOverlapping | MeshFacePairRelation::CoplanarTouching
+        );
+    }
+    if one_face_consumed_by_certificate(certificate, pair)
+        && pair.relation == MeshFacePairRelation::Candidate
+    {
+        // Retained side faces around a nonconvex source-owned disk can cross
+        // the deleted cap triangulation at exact boundary points even when no
+        // output-volume intersection exists. Hormann-Agathos/Yap exact
+        // boundary replay keeps those proper crossings tied to a consumed
+        // source face instead of relaxing the general candidate gate.
+        return pair.events.iter().all(consumed_boundary_candidate_event);
     }
 
     match pair.relation {
@@ -374,6 +462,28 @@ fn full_face_adjacency_certificate(
         }
     }
 
+    for (left_faces, right_faces) in polygon_patch_pairs(left, &left_seen, right, &right_seen)? {
+        if left_faces.iter().any(|face| left_seen.contains(face))
+            || right_faces.iter().any(|face| right_seen.contains(face))
+        {
+            return None;
+        }
+        for &left_face in &left_faces {
+            if !left_seen.insert(left_face) {
+                return None;
+            }
+        }
+        for &right_face in &right_faces {
+            if !right_seen.insert(right_face) {
+                return None;
+            }
+        }
+        certificate.shared_patches.push(FullFaceAdjacentPatch {
+            left_faces,
+            right_faces,
+        });
+    }
+
     for left_face in 0..left.triangles().len() {
         if left_seen.contains(&left_face) {
             continue;
@@ -415,28 +525,6 @@ fn full_face_adjacency_certificate(
     }
 
     for (left_faces, right_faces) in dual_fan_patch_pairs(left, &left_seen, right, &right_seen)? {
-        if left_faces.iter().any(|face| left_seen.contains(face))
-            || right_faces.iter().any(|face| right_seen.contains(face))
-        {
-            return None;
-        }
-        for &left_face in &left_faces {
-            if !left_seen.insert(left_face) {
-                return None;
-            }
-        }
-        for &right_face in &right_faces {
-            if !right_seen.insert(right_face) {
-                return None;
-            }
-        }
-        certificate.shared_patches.push(FullFaceAdjacentPatch {
-            left_faces,
-            right_faces,
-        });
-    }
-
-    for (left_faces, right_faces) in polygon_patch_pairs(left, &left_seen, right, &right_seen)? {
         if left_faces.iter().any(|face| left_seen.contains(face))
             || right_faces.iter().any(|face| right_seen.contains(face))
         {

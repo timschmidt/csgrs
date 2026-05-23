@@ -4676,6 +4676,108 @@ fn upward_square_pyramid_two_branch_i64(
 }
 
 #[cfg(feature = "exact-triangulation")]
+fn upward_l_prism_i64(points: [[i64; 2]; 6], top_z: i64) -> ExactMesh {
+    ExactMesh::from_i64_triangles(
+        &[
+            points[0][0],
+            points[0][1],
+            0,
+            points[1][0],
+            points[1][1],
+            0,
+            points[2][0],
+            points[2][1],
+            0,
+            points[3][0],
+            points[3][1],
+            0,
+            points[4][0],
+            points[4][1],
+            0,
+            points[5][0],
+            points[5][1],
+            0,
+            points[0][0],
+            points[0][1],
+            top_z,
+            points[1][0],
+            points[1][1],
+            top_z,
+            points[2][0],
+            points[2][1],
+            top_z,
+            points[3][0],
+            points[3][1],
+            top_z,
+            points[4][0],
+            points[4][1],
+            top_z,
+            points[5][0],
+            points[5][1],
+            top_z,
+        ],
+        &[
+            0, 3, 1, 1, 3, 2, 0, 5, 3, 3, 5, 4, //
+            6, 7, 8, 6, 8, 9, 6, 9, 11, 9, 10, 11, //
+            0, 1, 7, 0, 7, 6, 1, 2, 8, 1, 8, 7, 2, 3, 9, 2, 9, 8, //
+            3, 4, 10, 3, 10, 9, 4, 5, 11, 4, 11, 10, 5, 0, 6, 5, 6, 11,
+        ],
+    )
+    .expect("upward L-prism fixture should import")
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn downward_l_prism_i64(points: [[i64; 2]; 6], bottom_z: i64) -> ExactMesh {
+    ExactMesh::from_i64_triangles(
+        &[
+            points[0][0],
+            points[0][1],
+            0,
+            points[1][0],
+            points[1][1],
+            0,
+            points[2][0],
+            points[2][1],
+            0,
+            points[3][0],
+            points[3][1],
+            0,
+            points[4][0],
+            points[4][1],
+            0,
+            points[5][0],
+            points[5][1],
+            0,
+            points[0][0],
+            points[0][1],
+            bottom_z,
+            points[1][0],
+            points[1][1],
+            bottom_z,
+            points[2][0],
+            points[2][1],
+            bottom_z,
+            points[3][0],
+            points[3][1],
+            bottom_z,
+            points[4][0],
+            points[4][1],
+            bottom_z,
+            points[5][0],
+            points[5][1],
+            bottom_z,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, 0, 3, 5, 3, 4, 5, //
+            6, 9, 7, 7, 9, 8, 6, 11, 9, 9, 11, 10, //
+            0, 7, 1, 0, 6, 7, 1, 8, 2, 1, 7, 8, 2, 9, 3, 2, 8, 9, //
+            3, 10, 4, 3, 9, 10, 4, 11, 5, 4, 10, 11, 5, 6, 0, 5, 11, 6,
+        ],
+    )
+    .expect("downward L-prism fixture should import")
+}
+
+#[cfg(feature = "exact-triangulation")]
 fn upward_pentagonal_pyramid_i64(
     a: [i64; 3],
     b: [i64; 3],
@@ -5723,6 +5825,52 @@ fn exercise_full_face_adjacent_union() {
         )
         .unwrap();
     assert_eq!(two_branch_result.mesh, two_branch_union.mesh);
+
+    let l_boundary = [[0, 0], [4, 0], [4, 2], [2, 2], [2, 4], [0, 4]];
+    let l_left = upward_l_prism_i64(l_boundary, 5);
+    let l_right = downward_l_prism_i64(l_boundary, -5);
+    let l_union = hypermesh::exact::materialize_full_face_adjacent_union(
+        &l_left,
+        &l_right,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("nonconvex L-prism patch should materialize");
+    l_union.validate().unwrap();
+    l_union
+        .validate_against_sources(&l_left, &l_right)
+        .unwrap();
+    assert_eq!(l_union.shared_faces.len(), 2);
+    assert_eq!(l_union.shared_patches[0].left_faces, vec![0, 1]);
+    assert_eq!(l_union.shared_patches[0].right_faces, vec![0, 1]);
+
+    let same_side_l = upward_l_prism_i64(l_boundary, 5);
+    assert!(
+        hypermesh::exact::materialize_full_face_adjacent_union(
+            &l_left,
+            &same_side_l,
+            ValidationPolicy::CLOSED,
+        )
+        .is_none()
+    );
+
+    let l_result = boolean_exact_with_boundary_policy(
+        &l_left,
+        &l_right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+    l_result
+        .validate_operation_against_sources(
+            &l_left,
+            &l_right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(l_result.mesh, l_union.mesh);
 
     let pentagon_left = upward_pentagonal_pyramid_i64(
         [0, 0, 0],

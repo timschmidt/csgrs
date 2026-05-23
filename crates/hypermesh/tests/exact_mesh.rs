@@ -176,6 +176,108 @@ fn downward_square_pyramid_two_branch_i64(
 }
 
 #[cfg(feature = "exact-triangulation")]
+fn upward_l_prism_i64(points: [[i64; 2]; 6], top_z: i64) -> ExactMesh {
+    ExactMesh::from_i64_triangles(
+        &[
+            points[0][0],
+            points[0][1],
+            0,
+            points[1][0],
+            points[1][1],
+            0,
+            points[2][0],
+            points[2][1],
+            0,
+            points[3][0],
+            points[3][1],
+            0,
+            points[4][0],
+            points[4][1],
+            0,
+            points[5][0],
+            points[5][1],
+            0,
+            points[0][0],
+            points[0][1],
+            top_z,
+            points[1][0],
+            points[1][1],
+            top_z,
+            points[2][0],
+            points[2][1],
+            top_z,
+            points[3][0],
+            points[3][1],
+            top_z,
+            points[4][0],
+            points[4][1],
+            top_z,
+            points[5][0],
+            points[5][1],
+            top_z,
+        ],
+        &[
+            0, 3, 1, 1, 3, 2, 0, 5, 3, 3, 5, 4, //
+            6, 7, 8, 6, 8, 9, 6, 9, 11, 9, 10, 11, //
+            0, 1, 7, 0, 7, 6, 1, 2, 8, 1, 8, 7, 2, 3, 9, 2, 9, 8, //
+            3, 4, 10, 3, 10, 9, 4, 5, 11, 4, 11, 10, 5, 0, 6, 5, 6, 11,
+        ],
+    )
+    .unwrap()
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn downward_l_prism_i64(points: [[i64; 2]; 6], bottom_z: i64) -> ExactMesh {
+    ExactMesh::from_i64_triangles(
+        &[
+            points[0][0],
+            points[0][1],
+            0,
+            points[1][0],
+            points[1][1],
+            0,
+            points[2][0],
+            points[2][1],
+            0,
+            points[3][0],
+            points[3][1],
+            0,
+            points[4][0],
+            points[4][1],
+            0,
+            points[5][0],
+            points[5][1],
+            0,
+            points[0][0],
+            points[0][1],
+            bottom_z,
+            points[1][0],
+            points[1][1],
+            bottom_z,
+            points[2][0],
+            points[2][1],
+            bottom_z,
+            points[3][0],
+            points[3][1],
+            bottom_z,
+            points[4][0],
+            points[4][1],
+            bottom_z,
+            points[5][0],
+            points[5][1],
+            bottom_z,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, 0, 3, 5, 3, 4, 5, //
+            6, 9, 7, 7, 9, 8, 6, 11, 9, 9, 11, 10, //
+            0, 7, 1, 0, 6, 7, 1, 8, 2, 1, 7, 8, 2, 9, 3, 2, 8, 9, //
+            3, 10, 4, 3, 9, 10, 4, 11, 5, 4, 10, 11, 5, 6, 0, 5, 11, 6,
+        ],
+    )
+    .unwrap()
+}
+
+#[cfg(feature = "exact-triangulation")]
 fn upward_pentagonal_pyramid_i64(
     a: [i64; 3],
     b: [i64; 3],
@@ -8704,6 +8806,118 @@ fn exact_full_face_adjacent_square_to_two_branch_patch_union_deletes_internal_fa
         hypermesh::exact::materialize_full_face_adjacent_union(
             &left,
             &same_side_branch,
+            ValidationPolicy::CLOSED,
+        )
+        .is_none()
+    );
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
+fn exact_full_face_adjacent_nonconvex_l_patch_union_deletes_internal_faces() {
+    let boundary = [[0, 0], [4, 0], [4, 2], [2, 2], [2, 4], [0, 4]];
+    let left = upward_l_prism_i64(boundary, 5);
+    let right = downward_l_prism_i64(boundary, -5);
+
+    let graph = build_intersection_graph(&left, &right).unwrap();
+    graph.validate_against_meshes(&left, &right).unwrap();
+    assert!(
+        graph
+            .face_pairs
+            .iter()
+            .filter(|pair| {
+                pair.left_face < 4
+                    && pair.right_face < 4
+                    && pair.relation == hypermesh::exact::MeshFacePairRelation::CoplanarOverlapping
+            })
+            .count()
+            >= 6
+    );
+    let union = hypermesh::exact::materialize_full_face_adjacent_union(
+        &left,
+        &right,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("nonconvex L-shaped source-owned patch should merge");
+    union.validate().unwrap();
+    union.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        union.shared_faces,
+        vec![
+            hypermesh::exact::FullFaceAdjacentFacePair {
+                left_face: 2,
+                right_face: 2,
+            },
+            hypermesh::exact::FullFaceAdjacentFacePair {
+                left_face: 3,
+                right_face: 3,
+            },
+        ]
+    );
+    assert_eq!(
+        union.shared_patches,
+        vec![hypermesh::exact::FullFaceAdjacentPatch {
+            left_faces: vec![0, 1],
+            right_faces: vec![0, 1],
+        }]
+    );
+    assert_eq!(union.mesh.vertices().len(), 18);
+    assert_eq!(union.mesh.triangles().len(), 32);
+    assert!(union.mesh.facts().mesh.closed_manifold);
+
+    let preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+    )
+    .unwrap();
+    preflight.validate().unwrap();
+    preflight.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedFullFaceAdjacentUnion
+    );
+
+    let result = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    result
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            hypermesh::exact::ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(result.mesh, union.mesh);
+
+    let same_side = upward_l_prism_i64(boundary, 5);
+    assert!(
+        hypermesh::exact::materialize_full_face_adjacent_union(
+            &left,
+            &same_side,
+            ValidationPolicy::CLOSED,
+        )
+        .is_none()
+    );
+
+    let bow_tie = ExactMesh::from_i64_triangles(
+        &[0, 0, 0, 4, 0, 0, 0, 4, 0, 4, 4, 0, 2, 2, -5],
+        &[
+            0, 1, 2, 1, 3, 2, //
+            0, 4, 1, 1, 4, 3, 3, 4, 2, 2, 4, 0,
+        ],
+    )
+    .unwrap();
+    assert!(
+        hypermesh::exact::materialize_full_face_adjacent_union(
+            &left,
+            &bow_tie,
             ValidationPolicy::CLOSED,
         )
         .is_none()
