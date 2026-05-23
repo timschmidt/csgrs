@@ -174,6 +174,50 @@ impl ExactMesh {
         Self::from_f64_triangles_with_policy(pos, idx, ValidationPolicy::CLOSED)
     }
 
+    /// Construct an exact mesh from flat hyperreal coordinates.
+    pub fn from_real_triangles(pos: &[ExactReal], idx: &[usize]) -> Result<Self, MeshError> {
+        Self::from_real_triangles_with_policy(pos, idx, ValidationPolicy::CLOSED)
+    }
+
+    /// Construct an exact mesh from flat hyperreal coordinates with an explicit
+    /// validation policy.
+    pub fn from_real_triangles_with_policy(
+        pos: &[ExactReal],
+        idx: &[usize],
+        policy: ValidationPolicy,
+    ) -> Result<Self, MeshError> {
+        if !pos.len().is_multiple_of(3) {
+            return Err(MeshError::one(MeshDiagnostic::new(
+                Severity::Error,
+                DiagnosticKind::VertexBufferArity,
+                "position buffer length must be a multiple of 3",
+            )));
+        }
+        if !idx.len().is_multiple_of(3) {
+            return Err(MeshError::one(MeshDiagnostic::new(
+                Severity::Error,
+                DiagnosticKind::IndexBufferArity,
+                "index buffer length must be a multiple of 3",
+            )));
+        }
+
+        let vertices = pos
+            .chunks_exact(3)
+            .map(|coords| ExactPoint3::new(coords[0].clone(), coords[1].clone(), coords[2].clone()))
+            .collect::<Vec<_>>();
+        let triangles = idx
+            .chunks_exact(3)
+            .map(|tri| Triangle([tri[0], tri[1], tri[2]]))
+            .collect::<Vec<_>>();
+
+        Self::new_with_policy(
+            vertices,
+            triangles,
+            SourceProvenance::exact("flat hyperreal triangle mesh"),
+            policy,
+        )
+    }
+
     /// Construct an exact mesh from flat primitive-float coordinates with an
     /// explicit validation policy.
     pub fn from_f64_triangles_with_policy(
