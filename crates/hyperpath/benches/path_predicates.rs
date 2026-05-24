@@ -3,13 +3,14 @@ use hyperlimit::{Point2, PredicatePolicy};
 use hyperpath::{
     ArcDirection, BeadFillAxis, BezierParameter, CardinalPoint, CardinalRotation, CircularArc,
     ConstructionStamp, CubicBezier, ExplicitCircularArc, HigherOrderBezier, LinePathSegment,
-    MeanderObstacle, MeanderPlacementCandidate, NetId, OffsetSide, PathProvenance,
-    PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad, PcbCircularPad, PcbConvexBoardOutline,
-    PcbOrthogonalBoardOutline, PcbRectPad, PcbTrace, PcbViaStack, QuadraticBezier,
-    RationalQuadraticBezier, RectangularPocket, SourceLengthUnit, SpecctraGridTraceRecord,
-    SpecctraGridViaRecord, SpecctraLayerAlias, SpecctraNetAlias, SweptLineSegment, TangentSpan,
-    TraceLayer, ViaDrillIntent, build_alternating_detour_meander, build_g1_join_problem,
-    build_length_match_problem, build_multi_detour_meander, build_nonuniform_detour_meander,
+    MeanderObstacle, MeanderPlacementCandidate, NetId, OffsetSide, PathMeshBooleanOperation,
+    PathProvenance, PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad, PcbCircularPad,
+    PcbConvexBoardOutline, PcbOrthogonalBoardOutline, PcbRectPad, PcbTrace, PcbViaStack,
+    QuadraticBezier, RationalQuadraticBezier, RectangularPocket, SourceLengthUnit,
+    SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraLayerAlias, SpecctraNetAlias,
+    SweptLineSegment, TangentSpan, TraceLayer, ViaDrillIntent, boolean_rectangular_prisms,
+    build_alternating_detour_meander, build_g1_join_problem, build_length_match_problem,
+    build_multi_detour_meander, build_nonuniform_detour_meander,
     build_obstacle_aware_detour_meander, build_oriented_tangent_alignment_problem,
     build_rectangular_bead_plan, build_rectangular_pocket_plan,
     build_rectangular_serpentine_infill_graph, build_rectangular_support_plan,
@@ -28,9 +29,9 @@ use hyperpath::{
     offset_cardinal_arc, offset_cubic_bezier_sample, offset_explicit_arc,
     offset_higher_order_bezier_sample, offset_quadratic_bezier_sample,
     parse_specctra_grid_route_records, parse_specctra_grid_trace_records,
-    serialize_specctra_grid_route_records, serialize_specctra_grid_trace_records,
-    serialize_specctra_grid_via_records, specctra_grid_trace_record, specctra_grid_via_record,
-    subtract_rectangular_region,
+    rectangular_prism_from_i64_bounds, serialize_specctra_grid_route_records,
+    serialize_specctra_grid_trace_records, serialize_specctra_grid_via_records,
+    specctra_grid_trace_record, specctra_grid_via_record, subtract_rectangular_region,
 };
 use hyperreal::{Rational, Real};
 
@@ -716,6 +717,29 @@ fn path_predicates(c: &mut Criterion) {
                 support_overhang.clone(),
                 PredicatePolicy::default(),
             )
+        })
+    });
+    let prism_left = rectangular_prism_from_i64_bounds(
+        [0, 0, 0],
+        [10_000, 6_000, 500],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    let prism_right = rectangular_prism_from_i64_bounds(
+        [2_000, 1_000, 0],
+        [8_000, 5_000, 500],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    c.bench_function("rectangular_prism_mesh_boolean_difference_replay", |b| {
+        b.iter(|| {
+            let report = boolean_rectangular_prisms(
+                prism_left.clone(),
+                prism_right.clone(),
+                PathMeshBooleanOperation::Difference,
+            )
+            .unwrap();
+            report.validate_replay()
         })
     });
 

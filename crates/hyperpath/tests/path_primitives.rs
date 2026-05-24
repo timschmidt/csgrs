@@ -8,16 +8,18 @@ use hyperpath::{
     ExplicitArcSweepClass, ExplicitArcTangentClass, ExplicitCircleRelationClass,
     ExplicitCircularArc, HigherOrderBezier, HigherOrderBezierError, InfillGraphError,
     LineExplicitArcIntersectionClass, LineOffsetError, LinePathSegment, MeanderError,
-    MeanderObstacle, MeanderPlacementCandidate, NetId, OffsetSide, PathProvenance,
-    PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad, PcbCircularPad, PcbConvexBoardOutline,
-    PcbOrthogonalBoardOutline, PcbRectPad, PcbTrace, PcbViaStack, PocketPlanError,
-    PocketPlanStopReason, QuadraticBezier, RationalQuadraticBezier, RationalQuadraticBezierError,
-    RectangularPocket, RectangularRegionRelation, RouteCertificationError, SegmentParameterOrder,
-    SourceLengthUnit, SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraImportError,
-    SpecctraLayerAlias, SpecctraNetAlias, SpecctraParseError, SupportFootprintStatus,
-    SupportPlanError, SweptLineSegment, TangentAlignment, TangentJoinClass, TangentJoinReport,
-    TangentSpan, TraceLayer, ViaAnnularRingReport, ViaDrillIntent, ViaDrillPolicyClass,
-    ViaLayerSpanRelation, ViaLayerTransitionClass, build_alternating_detour_meander,
+    MeanderObstacle, MeanderPlacementCandidate, NetId, OffsetSide, PathMeshBooleanError,
+    PathMeshBooleanOperation, PathProvenance, PathSourceFormat, PcbBoardOutline,
+    PcbCardinalRectPad, PcbCircularPad, PcbConvexBoardOutline, PcbOrthogonalBoardOutline,
+    PcbRectPad, PcbTrace, PcbViaStack, PocketPlanError, PocketPlanStopReason, QuadraticBezier,
+    RationalQuadraticBezier, RationalQuadraticBezierError, RectangularPocket,
+    RectangularRegionRelation, RouteCertificationError, SegmentParameterOrder, SourceLengthUnit,
+    SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraImportError, SpecctraLayerAlias,
+    SpecctraNetAlias, SpecctraParseError, SupportFootprintStatus, SupportPlanError,
+    SweptLineSegment, TangentAlignment, TangentJoinClass, TangentJoinReport, TangentSpan,
+    TraceLayer, ViaAnnularRingReport, ViaDrillIntent, ViaDrillPolicyClass, ViaLayerSpanRelation,
+    ViaLayerTransitionClass, boolean_rectangular_prisms,
+    boolean_rectangular_prisms_with_boundary_policy, build_alternating_detour_meander,
     build_g1_join_problem, build_length_match_problem, build_multi_detour_meander,
     build_nonuniform_detour_meander, build_obstacle_aware_detour_meander,
     build_oriented_tangent_alignment_problem, build_rectangular_bead_plan,
@@ -37,10 +39,10 @@ use hyperpath::{
     intersect_rectangular_regions, offset_axis_aligned_segment, offset_cardinal_arc,
     offset_cubic_bezier_sample, offset_explicit_arc, offset_higher_order_bezier_sample,
     offset_quadratic_bezier_sample, parse_specctra_grid_route_records,
-    parse_specctra_grid_trace_records, serialize_specctra_grid_route_records,
-    serialize_specctra_grid_trace_records, serialize_specctra_grid_via_records,
-    specctra_grid_trace_record, specctra_grid_via_record, subtract_rectangular_region,
-    tangent_cross, tangent_dot, tangent_norm_squared,
+    parse_specctra_grid_trace_records, rectangular_prism_from_i64_bounds,
+    serialize_specctra_grid_route_records, serialize_specctra_grid_trace_records,
+    serialize_specctra_grid_via_records, specctra_grid_trace_record, specctra_grid_via_record,
+    subtract_rectangular_region, tangent_cross, tangent_dot, tangent_norm_squared,
 };
 use hyperreal::{Rational, Real};
 use proptest::prelude::*;
@@ -53,12 +55,130 @@ fn p(x: i64, y: i64) -> Point2 {
     Point2::new(r(x), r(y))
 }
 
+fn prism(min: [i64; 3], max: [i64; 3]) -> hyperpath::RectangularPrism {
+    rectangular_prism_from_i64_bounds(min, max, PredicatePolicy::default()).unwrap()
+}
+
 fn trace(net: u32, layer: u16, start: Point2, end: Point2, width: i64) -> PcbTrace {
     PcbTrace::new(
         NetId(net),
         TraceLayer(layer),
         SweptLineSegment::new(LinePathSegment::new(start, end), r(width)).unwrap(),
     )
+}
+
+#[test]
+fn rectangular_prism_mesh_booleans_replay_through_hypermesh() {
+    let left = prism([0, 0, 0], [10, 10, 4]);
+    let right = prism([4, 2, 0], [12, 8, 4]);
+
+    for operation in [
+        PathMeshBooleanOperation::Union,
+        PathMeshBooleanOperation::Intersection,
+        PathMeshBooleanOperation::Difference,
+    ] {
+        let report = boolean_rectangular_prisms(left.clone(), right.clone(), operation).unwrap();
+        report.validate_replay().unwrap();
+        report.result.validate().unwrap();
+        assert!(report.mesh().facts().mesh.closed_manifold);
+        assert!(!matches!(
+            report.result.kind,
+            hypermesh::exact::ExactBooleanResultKind::BoundaryPolicyShortcut { .. }
+        ));
+
+        let mut stale_operation = report.clone();
+        stale_operation.operation = match operation {
+            PathMeshBooleanOperation::Union => PathMeshBooleanOperation::Intersection,
+            PathMeshBooleanOperation::Intersection => PathMeshBooleanOperation::Difference,
+            PathMeshBooleanOperation::Difference => PathMeshBooleanOperation::Union,
+        };
+        assert!(matches!(
+            stale_operation.validate_replay(),
+            Err(PathMeshBooleanError::Replay(_))
+        ));
+    }
+}
+
+#[test]
+fn rectangular_prism_boundary_contact_replays_as_lower_dimensional_mesh_result() {
+    let left = prism([0, 0, 0], [10, 10, 4]);
+    let touching = prism([10, 0, 0], [12, 10, 4]);
+
+    let certified = boolean_rectangular_prisms(
+        left.clone(),
+        touching.clone(),
+        PathMeshBooleanOperation::Intersection,
+    )
+    .unwrap();
+    certified.validate_replay().unwrap();
+    assert_eq!(certified.mesh().triangles().len(), 0);
+    assert!(matches!(
+        certified.result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut { .. }
+    ));
+
+    let projected = boolean_rectangular_prisms_with_boundary_policy(
+        left,
+        touching,
+        PathMeshBooleanOperation::Intersection,
+        hypermesh::exact::ExactBoundaryBooleanPolicy::PreserveSeparateShells,
+    )
+    .unwrap();
+    projected.validate_replay().unwrap();
+    assert_eq!(
+        projected.boundary_policy,
+        hypermesh::exact::ExactBoundaryBooleanPolicy::PreserveSeparateShells
+    );
+    assert!(matches!(
+        projected.result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut:
+                hypermesh::exact::ExactBooleanShortcutKind::ClosedBoundaryTouchingIntersection
+        }
+    ));
+    assert_eq!(projected.mesh().triangles().len(), 0);
+}
+
+#[test]
+fn rectangular_prism_mesh_boolean_rejects_degenerate_sources_before_mesh_topology() {
+    assert_eq!(
+        rectangular_prism_from_i64_bounds([0, 0, 0], [0, 10, 4], PredicatePolicy::default())
+            .unwrap_err(),
+        PathMeshBooleanError::DegenerateFootprint
+    );
+    assert_eq!(
+        rectangular_prism_from_i64_bounds([0, 0, 4], [10, 10, 4], PredicatePolicy::default())
+            .unwrap_err(),
+        PathMeshBooleanError::DegenerateHeight
+    );
+}
+
+#[test]
+fn rectangular_prism_mesh_boolean_generated_integer_fixtures_replay() {
+    for (ax, ay, az, aw, ah, ad, dx, dy) in [
+        (-4, -3, 0, 8, 7, 3, 2, 1),
+        (0, 0, -2, 12, 5, 4, -3, 0),
+        (5, -8, 1, 9, 11, 2, 0, 4),
+        (-10, 6, -1, 14, 9, 5, 5, -2),
+    ] {
+        let left = rectangular_prism_from_i64_bounds(
+            [ax, ay, az],
+            [ax + aw, ay + ah, az + ad],
+            PredicatePolicy::default(),
+        )
+        .unwrap();
+        let right = rectangular_prism_from_i64_bounds(
+            [ax + dx, ay + dy, az],
+            [ax + dx + aw, ay + dy + ah, az + ad],
+            PredicatePolicy::default(),
+        )
+        .unwrap();
+        let report =
+            boolean_rectangular_prisms(left, right, PathMeshBooleanOperation::Intersection)
+                .unwrap();
+        report.validate_replay().unwrap();
+        assert!(report.mesh().facts().mesh.closed_manifold);
+    }
 }
 
 #[test]

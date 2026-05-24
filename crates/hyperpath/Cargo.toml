@@ -14,9 +14,11 @@ categories = ["algorithms", "mathematics", "science"]
 # Hyper sibling dependency switch: keep both local path and crates.io lines; do not remove either.
 # Development mode uses the local path lines. For release, comment those and uncomment the crates.io lines.
 hyperlimit = { path = "../hyperlimit", default-features = false }
+hypermesh = { path = "../hypermesh", default-features = false, features = ["exact-triangulation"] }
 hyperreal = { path = "../hyperreal", default-features = false }
 hypersolve = { path = "../hypersolve", default-features = false }
 # hyperlimit = { version = "0.4.0", default-features = false }
+# hypermesh = { version = "0.3.0", default-features = false, features = ["exact-triangulation"] }
 # hyperreal = { version = "0.13.0", default-features = false }
 # hypersolve = { version = "0.3.0", default-features = false }
 [dev-dependencies]

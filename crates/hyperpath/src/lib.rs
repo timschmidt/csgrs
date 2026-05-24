@@ -10,6 +10,7 @@
 pub mod arc;
 pub mod bezier;
 pub mod cam;
+pub mod mesh_boolean;
 pub mod offset;
 pub mod pcb;
 pub mod provenance;
@@ -42,6 +43,11 @@ pub use cam::{
     RegionBooleanError, SupportFootprintStatus, SupportPlanError, build_rectangular_bead_plan,
     build_rectangular_pocket_plan, build_rectangular_serpentine_infill_graph,
     build_rectangular_support_plan, intersect_rectangular_regions, subtract_rectangular_region,
+};
+pub use mesh_boolean::{
+    PathMeshBooleanError, PathMeshBooleanOperation, PathMeshBooleanReport, RectangularPrism,
+    boolean_rectangular_prisms, boolean_rectangular_prisms_with_boundary_policy,
+    rectangular_prism_from_i64_bounds,
 };
 pub use offset::{
     ArcOffsetCandidate, ArcOffsetError, BezierOffsetError, BezierOffsetSampleCandidate,
