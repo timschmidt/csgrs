@@ -90,6 +90,12 @@ pub enum PathMeshBooleanError {
     NonConvexPolygon,
     /// A polygonal source was not simple or could not be triangulated exactly.
     PolygonTriangulationFailed,
+    /// A retained polygon hole list was empty where a holed source was required.
+    EmptyPolygonHoles,
+    /// A retained polygon hole was not strictly inside its owning outer loop.
+    PolygonHoleOutsideOuter,
+    /// Retained polygon holes overlapped or nested ambiguously.
+    PolygonHoleOverlap,
     /// A PCB copper boolean program mixed multiple nets.
     MixedPcbNets,
     /// A PCB copper boolean program mixed multiple layers.

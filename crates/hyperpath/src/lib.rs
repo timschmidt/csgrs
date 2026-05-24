@@ -60,8 +60,9 @@ pub use mesh_boolean_cam::{
     cam_rectangular_pocket_cutter_from_i64_bounds,
 };
 pub use mesh_boolean_pcb::{
-    PcbCopperBooleanProgramReport, PcbCopperBooleanSource, PcbLayerSlab, PcbLayerZModel,
-    build_pcb_copper_union_program, pcb_cardinal_rect_pad_mesh_boolean_source,
+    PcbCopperBooleanProgramReport, PcbCopperBooleanSource, PcbHoledCopperBooleanProgramReport,
+    PcbHoledOrthogonalCopperSource, PcbLayerSlab, PcbLayerZModel, build_pcb_copper_union_program,
+    build_pcb_holed_orthogonal_copper_program, pcb_cardinal_rect_pad_mesh_boolean_source,
     pcb_convex_poly_pad_mesh_boolean_source, pcb_orthogonal_poly_pad_mesh_boolean_source,
     pcb_rect_pad_mesh_boolean_source, pcb_rect_pad_prism, pcb_trace_mesh_boolean_source,
 };

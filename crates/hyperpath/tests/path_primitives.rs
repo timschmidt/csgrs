@@ -12,21 +12,22 @@ use hyperpath::{
     PathMeshBooleanError, PathMeshBooleanOperation, PathMeshBooleanProgramStep,
     PathMeshBooleanSource, PathProvenance, PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad,
     PcbCircularPad, PcbConvexBoardOutline, PcbConvexPolyPad, PcbCopperBooleanSource,
-    PcbLayerZModel, PcbOrthogonalBoardOutline, PcbOrthogonalPolyPad, PcbRectPad, PcbTrace,
-    PcbViaStack, PocketPlanError, PocketPlanStopReason, QuadraticBezier, RationalQuadraticBezier,
-    RationalQuadraticBezierError, RectangularPocket, RectangularRegionRelation,
-    RouteCertificationError, SegmentParameterOrder, SourceLengthUnit, SpecctraGridTraceRecord,
-    SpecctraGridViaRecord, SpecctraImportError, SpecctraLayerAlias, SpecctraNetAlias,
-    SpecctraParseError, SupportFootprintStatus, SupportPlanError, SweptLineSegment,
-    TangentAlignment, TangentJoinClass, TangentJoinReport, TangentSpan, TraceLayer,
-    ViaAnnularRingReport, ViaDrillIntent, ViaDrillPolicyClass, ViaLayerSpanRelation,
+    PcbHoledOrthogonalCopperSource, PcbLayerZModel, PcbOrthogonalBoardOutline,
+    PcbOrthogonalPolyPad, PcbRectPad, PcbTrace, PcbViaStack, PocketPlanError, PocketPlanStopReason,
+    QuadraticBezier, RationalQuadraticBezier, RationalQuadraticBezierError, RectangularPocket,
+    RectangularRegionRelation, RouteCertificationError, SegmentParameterOrder, SourceLengthUnit,
+    SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraImportError, SpecctraLayerAlias,
+    SpecctraNetAlias, SpecctraParseError, SupportFootprintStatus, SupportPlanError,
+    SweptLineSegment, TangentAlignment, TangentJoinClass, TangentJoinReport, TangentSpan,
+    TraceLayer, ViaAnnularRingReport, ViaDrillIntent, ViaDrillPolicyClass, ViaLayerSpanRelation,
     ViaLayerTransitionClass, boolean_path_mesh_program, boolean_path_mesh_sources,
     boolean_rectangular_prism_chain, boolean_rectangular_prisms,
     boolean_rectangular_prisms_with_boundary_policy, build_alternating_detour_meander,
     build_cam_rest_material_program, build_g1_join_problem, build_length_match_problem,
     build_multi_detour_meander, build_nonuniform_detour_meander,
     build_obstacle_aware_detour_meander, build_oriented_tangent_alignment_problem,
-    build_pcb_copper_union_program, build_rectangular_bead_plan, build_rectangular_pocket_plan,
+    build_pcb_copper_union_program, build_pcb_holed_orthogonal_copper_program,
+    build_rectangular_bead_plan, build_rectangular_pocket_plan,
     build_rectangular_serpentine_infill_graph, build_rectangular_support_plan,
     build_single_detour_meander, build_tangent_alignment_problem, certify_constant_feed_time,
     certify_differential_pair_skew, certify_g1_chain, certify_g1_join_candidate,
@@ -573,6 +574,60 @@ fn pcb_copper_boolean_program_unions_nonconvex_orthogonal_polygon_pad_sources() 
 }
 
 #[test]
+fn pcb_holed_orthogonal_copper_program_replays_outer_minus_voids() {
+    let z_model = PcbLayerZModel::new(r(0), r(10), r(2), PredicatePolicy::default()).unwrap();
+    let source = PcbHoledOrthogonalCopperSource::new(
+        NetId(13),
+        TraceLayer(0),
+        vec![p(0, 0), p(14, 0), p(14, 10), p(0, 10)],
+        vec![
+            vec![p(3, 2), p(6, 2), p(6, 5), p(3, 5)],
+            vec![p(9, 4), p(12, 4), p(12, 8), p(9, 8)],
+        ],
+        PredicatePolicy::default(),
+    )
+    .expect("strict orthogonal holes should be retained");
+    assert_eq!(source.holes().len(), 2);
+    assert!(source.exact_facts().all_exact_rational);
+
+    let report = build_pcb_holed_orthogonal_copper_program(
+        source.clone(),
+        z_model,
+        PredicatePolicy::default(),
+    )
+    .expect("holed orthogonal copper should replay as difference program");
+    report.validate_replay(PredicatePolicy::default()).unwrap();
+    assert_eq!(report.net, NetId(13));
+    assert_eq!(report.layer, TraceLayer(0));
+    assert_eq!(report.program.steps.len(), 2);
+    assert!(report.program.mesh().unwrap().facts().mesh.closed_manifold);
+    assert!(
+        report
+            .program
+            .steps
+            .iter()
+            .all(|step| step.result.validate().is_ok())
+    );
+
+    let mut stale = report.clone();
+    stale.source = PcbHoledOrthogonalCopperSource::new(
+        NetId(13),
+        TraceLayer(0),
+        vec![p(0, 0), p(14, 0), p(14, 10), p(0, 10)],
+        vec![
+            vec![p(4, 2), p(7, 2), p(7, 5), p(4, 5)],
+            vec![p(9, 4), p(12, 4), p(12, 8), p(9, 8)],
+        ],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert!(matches!(
+        stale.validate_replay(PredicatePolicy::default()),
+        Err(PathMeshBooleanError::Replay(_))
+    ));
+}
+
+#[test]
 fn pcb_copper_boolean_program_rejects_mixed_nets_and_layers() {
     let z_model = PcbLayerZModel::new(r(0), r(10), r(2), PredicatePolicy::default()).unwrap();
     assert_eq!(
@@ -661,6 +716,57 @@ fn pcb_orthogonal_polygon_boolean_sources_reject_bad_loops() {
         )
         .unwrap_err(),
         BoardContourError::SelfIntersecting
+    );
+}
+
+#[test]
+fn pcb_holed_orthogonal_copper_rejects_empty_outside_touching_and_overlapping_holes() {
+    assert_eq!(
+        PcbHoledOrthogonalCopperSource::new(
+            NetId(1),
+            TraceLayer(0),
+            vec![p(0, 0), p(10, 0), p(10, 10), p(0, 10)],
+            vec![],
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        PathMeshBooleanError::EmptyPolygonHoles
+    );
+    assert_eq!(
+        PcbHoledOrthogonalCopperSource::new(
+            NetId(1),
+            TraceLayer(0),
+            vec![p(0, 0), p(10, 0), p(10, 10), p(0, 10)],
+            vec![vec![p(8, 8), p(12, 8), p(12, 12), p(8, 12)]],
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        PathMeshBooleanError::PolygonHoleOutsideOuter
+    );
+    assert_eq!(
+        PcbHoledOrthogonalCopperSource::new(
+            NetId(1),
+            TraceLayer(0),
+            vec![p(0, 0), p(10, 0), p(10, 10), p(0, 10)],
+            vec![vec![p(0, 2), p(4, 2), p(4, 5), p(0, 5)]],
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        PathMeshBooleanError::PolygonHoleOutsideOuter
+    );
+    assert_eq!(
+        PcbHoledOrthogonalCopperSource::new(
+            NetId(1),
+            TraceLayer(0),
+            vec![p(0, 0), p(10, 0), p(10, 10), p(0, 10)],
+            vec![
+                vec![p(2, 2), p(6, 2), p(6, 6), p(2, 6)],
+                vec![p(4, 4), p(8, 4), p(8, 8), p(4, 8)]
+            ],
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        PathMeshBooleanError::PolygonHoleOverlap
     );
 }
 

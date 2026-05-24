@@ -4,11 +4,11 @@ use hyperlimit::{Point2, PredicatePolicy};
 use hyperpath::{
     AxisAlignedSweptSegmentPrism, CamRestMaterialCutter, CardinalRotation, LinePathSegment, NetId,
     PathMeshBooleanOperation, PathMeshBooleanProgramStep, PcbCardinalRectPad,
-    PcbConvexPolyPad, PcbCopperBooleanSource, PcbLayerZModel, PcbOrthogonalPolyPad, PcbTrace,
-    SweptLineSegment, TraceLayer, boolean_path_mesh_program, boolean_path_mesh_sources,
-    boolean_rectangular_prism_chain, boolean_rectangular_prisms,
+    PcbConvexPolyPad, PcbCopperBooleanSource, PcbHoledOrthogonalCopperSource, PcbLayerZModel,
+    PcbOrthogonalPolyPad, PcbTrace, SweptLineSegment, TraceLayer, boolean_path_mesh_program,
+    boolean_path_mesh_sources, boolean_rectangular_prism_chain, boolean_rectangular_prisms,
     boolean_rectangular_prisms_with_boundary_policy, build_cam_rest_material_program,
-    build_pcb_copper_union_program,
+    build_pcb_copper_union_program, build_pcb_holed_orthogonal_copper_program,
     pcb_cardinal_rect_pad_mesh_boolean_source, pcb_trace_mesh_boolean_source,
     rectangular_prism_from_i64_bounds,
 };
@@ -336,6 +336,43 @@ fuzz_target!(|data: &[u8]| {
                         report.validate_replay(PredicatePolicy::default()).unwrap();
                         report.program.steps.last().unwrap().result.validate().unwrap();
                     }
+                }
+            }
+        }
+
+        if data[17] & 128 == 128 {
+            let min_x = Real::from(coord(6));
+            let min_y = Real::from(coord(7));
+            let w = Real::from(extent(9) + extent(10) + extent(11));
+            let h = Real::from(extent(10) + extent(11) + extent(12));
+            let hole_x0 = min_x.clone() + Real::from(extent(9));
+            let hole_y0 = min_y.clone() + Real::from(extent(10));
+            let hole_x1 = hole_x0.clone() + Real::from(extent(11));
+            let hole_y1 = hole_y0.clone() + Real::from(extent(12));
+            if let Ok(source) = PcbHoledOrthogonalCopperSource::new(
+                NetId(u32::from(data[16])),
+                layer,
+                vec![
+                    Point2::new(min_x.clone(), min_y.clone()),
+                    Point2::new(min_x.clone() + w.clone(), min_y.clone()),
+                    Point2::new(min_x.clone() + w, min_y.clone() + h.clone()),
+                    Point2::new(min_x, min_y.clone() + h),
+                ],
+                vec![vec![
+                    Point2::new(hole_x0.clone(), hole_y0.clone()),
+                    Point2::new(hole_x1.clone(), hole_y0),
+                    Point2::new(hole_x1, hole_y1.clone()),
+                    Point2::new(hole_x0, hole_y1),
+                ]],
+                PredicatePolicy::default(),
+            ) {
+                if let Ok(report) = build_pcb_holed_orthogonal_copper_program(
+                    source,
+                    z_model.clone(),
+                    PredicatePolicy::default(),
+                ) {
+                    report.validate_replay(PredicatePolicy::default()).unwrap();
+                    report.program.steps.last().unwrap().result.validate().unwrap();
                 }
             }
         }

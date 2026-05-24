@@ -7,15 +7,16 @@ use hyperpath::{
     MeanderPlacementCandidate, NetId, OffsetSide, PathMeshBooleanOperation,
     PathMeshBooleanProgramStep, PathProvenance, PathSourceFormat, PcbBoardOutline,
     PcbCardinalRectPad, PcbCircularPad, PcbConvexBoardOutline, PcbConvexPolyPad,
-    PcbCopperBooleanSource, PcbLayerZModel, PcbOrthogonalBoardOutline, PcbOrthogonalPolyPad,
-    PcbRectPad, PcbTrace, PcbViaStack, QuadraticBezier, RationalQuadraticBezier, RectangularPocket,
-    SourceLengthUnit, SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraLayerAlias,
-    SpecctraNetAlias, SweptLineSegment, TangentSpan, TraceLayer, ViaDrillIntent,
-    boolean_path_mesh_program, boolean_path_mesh_sources, boolean_rectangular_prism_chain,
-    boolean_rectangular_prisms, build_alternating_detour_meander, build_cam_rest_material_program,
-    build_g1_join_problem, build_length_match_problem, build_multi_detour_meander,
-    build_nonuniform_detour_meander, build_obstacle_aware_detour_meander,
-    build_oriented_tangent_alignment_problem, build_pcb_copper_union_program,
+    PcbCopperBooleanSource, PcbHoledOrthogonalCopperSource, PcbLayerZModel,
+    PcbOrthogonalBoardOutline, PcbOrthogonalPolyPad, PcbRectPad, PcbTrace, PcbViaStack,
+    QuadraticBezier, RationalQuadraticBezier, RectangularPocket, SourceLengthUnit,
+    SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraLayerAlias, SpecctraNetAlias,
+    SweptLineSegment, TangentSpan, TraceLayer, ViaDrillIntent, boolean_path_mesh_program,
+    boolean_path_mesh_sources, boolean_rectangular_prism_chain, boolean_rectangular_prisms,
+    build_alternating_detour_meander, build_cam_rest_material_program, build_g1_join_problem,
+    build_length_match_problem, build_multi_detour_meander, build_nonuniform_detour_meander,
+    build_obstacle_aware_detour_meander, build_oriented_tangent_alignment_problem,
+    build_pcb_copper_union_program, build_pcb_holed_orthogonal_copper_program,
     build_rectangular_bead_plan, build_rectangular_pocket_plan,
     build_rectangular_serpentine_infill_graph, build_rectangular_support_plan,
     build_single_detour_meander, build_tangent_alignment_problem, certify_constant_feed_time,
@@ -899,6 +900,43 @@ fn path_predicates(c: &mut Criterion) {
                     PcbCopperBooleanSource::Trace(pcb_trace_second.clone()),
                     PcbCopperBooleanSource::OrthogonalPolyPad(pcb_orthogonal_polygon.clone()),
                 ],
+                pcb_z.clone(),
+                PredicatePolicy::default(),
+            )
+            .unwrap();
+            report.validate_replay(PredicatePolicy::default())
+        })
+    });
+    let pcb_holed = PcbHoledOrthogonalCopperSource::new(
+        NetId(7),
+        TraceLayer(0),
+        vec![
+            p(10_000, 0),
+            p(20_000, 0),
+            p(20_000, 8_000),
+            p(10_000, 8_000),
+        ],
+        vec![
+            vec![
+                p(12_000, 2_000),
+                p(14_000, 2_000),
+                p(14_000, 4_000),
+                p(12_000, 4_000),
+            ],
+            vec![
+                p(16_000, 3_000),
+                p(18_000, 3_000),
+                p(18_000, 6_000),
+                p(16_000, 6_000),
+            ],
+        ],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    c.bench_function("pcb_holed_orthogonal_copper_program_replay", |b| {
+        b.iter(|| {
+            let report = build_pcb_holed_orthogonal_copper_program(
+                pcb_holed.clone(),
                 pcb_z.clone(),
                 PredicatePolicy::default(),
             )

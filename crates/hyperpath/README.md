@@ -74,7 +74,8 @@ before downstream crates accept the path as ready.
 - Mesh-boolean handoff types extrude retained rectangular path/CAM footprints,
   certified axis-aligned swept segments, and layer-aware PCB trace/rectangular
   pad, strictly convex polygonal copper, and simple orthogonal copper sources
-  into exact solids, fold multi-source boolean chains, mixed-operation boolean programs,
+  into exact solids, replay holed orthogonal copper as outer-minus-void
+  difference programs, fold multi-source boolean chains, mixed-operation boolean programs,
   same-net/layer PCB copper union programs, and CAM stock-minus-cutter
   rest-material programs through `hypermesh`, and replay exact evidence before
   exposing accepted output topology.
@@ -120,7 +121,8 @@ Implemented today:
 - line, arc, Bezier, and cardinal offset candidate APIs;
 - CAM rectangular pocket, bead, infill, support, and region-boolean helpers;
 - retained CAM stock/cutter rest-material mesh-boolean programs and strictly
-  convex/simple orthogonal polygon prism sources for PCB copper booleans;
+  convex/simple orthogonal polygon prism sources plus holed orthogonal
+  difference programs for PCB copper booleans;
 - PCB trace, pad, via, board-outline, clearance, via-policy, annular-ring, and
   layer-span reports;
 - length-match, meander, obstacle-aware detour, differential-pair skew, constant
