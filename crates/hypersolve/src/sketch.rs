@@ -15,7 +15,8 @@ use hyperreal::{Real, RealSign};
 
 use crate::model::{Constraint, ConstraintKind, Problem, VariableId};
 use crate::sketch_arc_tangent::{
-    ArcCubicTangentExprs, ArcLineTangentExprs, arc_cubic_tangent_exprs, arc_line_tangent_exprs,
+    ArcArcTangentExprs, ArcCubicTangentExprs, ArcLineTangentExprs, arc_arc_tangent_exprs,
+    arc_cubic_tangent_exprs, arc_line_tangent_exprs,
 };
 use crate::sketch_builders::{
     angle, distance, incidence, objective, orientation, ranges, symmetry, tangency,
@@ -329,6 +330,17 @@ pub enum SketchTangentOrientation {
     Clockwise,
 }
 
+/// Radius-vector branch for retained 2D arc-arc tangency.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum SketchArcTangencyBranch {
+    /// The selected radius vectors point in the same direction, certified by
+    /// `r_a . r_b >= 0`.
+    SameRadiusDirection,
+    /// The selected radius vectors point in opposite directions, certified by
+    /// `r_a . r_b <= 0`.
+    OppositeRadiusDirection,
+}
+
 /// A retained source entity.
 #[derive(Clone, Debug, PartialEq)]
 pub struct SketchEntity {
@@ -591,6 +603,28 @@ pub enum SketchConstraintKind {
         line_endpoint: SketchLineEndpoint,
         /// Signed orientation branch for the outgoing line tangent.
         orientation: SketchTangentOrientation,
+    },
+    /// 2D circular-arc endpoint tangent to another circular-arc endpoint.
+    ///
+    /// Lowering emits selected endpoint-on-radius rows for both arcs, endpoint
+    /// coordinate coincidence, radius-vector collinearity, and an explicit
+    /// same/opposite radius-vector branch. This covers retained arc-arc
+    /// tangency without deriving contact topology from primitive floats.
+    /// Degenerate arcs and ambiguous zero-radius branches remain explicit
+    /// entity-domain obligations, following Yap, "Towards Exact Geometric
+    /// Computation" (1997), and the endpoint-aware branch vocabulary follows
+    /// Bouma et al., "A Geometric Constraint Solver" (1995).
+    ArcArcTangent2 {
+        /// First circular arc entity.
+        first: SketchEntityHandle,
+        /// Endpoint of the first arc where tangency is enforced.
+        first_endpoint: SketchArcEndpoint,
+        /// Second circular arc entity.
+        second: SketchEntityHandle,
+        /// Endpoint of the second arc where tangency is enforced.
+        second_endpoint: SketchArcEndpoint,
+        /// Same/opposite radius-vector branch.
+        branch: SketchArcTangencyBranch,
     },
     /// 2D circular-arc endpoint tangent to a cubic Bezier at a retained parameter.
     ///
@@ -927,6 +961,8 @@ pub enum SketchResidualStrategy {
     TangentSameDirection,
     /// Exact endpoint/radius/tangent predicate package for retained arc-line tangency.
     ArcLineTangent,
+    /// Exact endpoint/radius/radius-branch package for retained arc-arc tangency.
+    ArcArcTangent,
     /// Exact endpoint/radius/cubic-derivative package for retained arc-cubic tangency.
     ArcCubicTangent,
     /// Exact point/derivative package for retained cubic-line tangency.
@@ -1034,6 +1070,14 @@ pub enum SketchResidualFormKind {
     ArcLineTangentRadiusPerpendicularPolynomial,
     /// Exact signed orientation predicate for arc-line tangency.
     ArcLineTangentOrientationPredicate,
+    /// Exact selected endpoint-on-radius proof row for arc-arc tangency.
+    ArcArcTangentEndpointRadiusPolynomial,
+    /// Exact selected endpoint coordinate-incidence proof row for arc-arc tangency.
+    ArcArcTangentEndpointIncidencePolynomial,
+    /// Exact radius-vector collinearity proof row for arc-arc tangency.
+    ArcArcTangentRadiusCrossProductPredicate,
+    /// Exact same/opposite radius branch predicate for arc-arc tangency.
+    ArcArcTangentRadiusBranchPredicate,
     /// Exact selected arc endpoint-on-radius proof row for arc-cubic tangency.
     ArcCubicTangentEndpointRadiusPolynomial,
     /// Exact cubic point/arc endpoint coordinate-incidence proof row.
@@ -1679,6 +1723,33 @@ impl SketchSolveProblem {
             line,
             line_endpoint,
             orientation,
+        )
+        .handle
+    }
+
+    /// Add a retained 2D arc/arc tangent relation with explicit endpoint and
+    /// same/opposite radius-vector branch flags.
+    ///
+    /// The selected endpoints are constrained to coincide, both endpoints are
+    /// checked against retained radii, and exact radius-vector predicates
+    /// certify the chosen tangency branch.
+    pub fn add_arc_arc_tangent2(
+        &mut self,
+        name: impl Into<String>,
+        first: SketchEntityHandle,
+        first_endpoint: SketchArcEndpoint,
+        second: SketchEntityHandle,
+        second_endpoint: SketchArcEndpoint,
+        branch: SketchArcTangencyBranch,
+    ) -> SketchConstraintHandle {
+        tangency::arc_arc_tangent2(
+            self,
+            name,
+            first,
+            first_endpoint,
+            second,
+            second_endpoint,
+            branch,
         )
         .handle
     }
@@ -2575,6 +2646,66 @@ impl SketchSolveProblem {
                     diagnostics,
                 }
             }
+            SketchConstraintKind::ArcArcTangent2 {
+                first,
+                first_endpoint,
+                second,
+                second_endpoint,
+                branch,
+            } => {
+                let mut diagnostics = Vec::new();
+                let Some(parts) = self.arc_arc_tangent_exprs(
+                    first,
+                    first_endpoint,
+                    second,
+                    second_endpoint,
+                    branch,
+                    constraint,
+                    &mut diagnostics,
+                ) else {
+                    return SketchResidualFormsReport {
+                        constraint: handle,
+                        status: SketchResidualFormsStatus::InvalidInputs,
+                        forms: Vec::new(),
+                        diagnostics,
+                    };
+                };
+                let mut forms = Vec::with_capacity(6);
+                forms.extend(parts.endpoint_radius.into_iter().map(|residual| {
+                    SketchResidualForm {
+                        kind: SketchResidualFormKind::ArcArcTangentEndpointRadiusPolynomial,
+                        role: SketchResidualFormRole::ExactProof,
+                        strategy: Some(SketchResidualStrategy::ArcArcTangent),
+                        residual,
+                    }
+                }));
+                forms.extend(parts.endpoint_incidence.into_iter().map(|residual| {
+                    SketchResidualForm {
+                        kind: SketchResidualFormKind::ArcArcTangentEndpointIncidencePolynomial,
+                        role: SketchResidualFormRole::ExactProof,
+                        strategy: Some(SketchResidualStrategy::ArcArcTangent),
+                        residual,
+                    }
+                }));
+                forms.push(SketchResidualForm {
+                    kind: SketchResidualFormKind::ArcArcTangentRadiusCrossProductPredicate,
+                    role: SketchResidualFormRole::ExactProof,
+                    strategy: Some(SketchResidualStrategy::ArcArcTangent),
+                    residual: parts.radius_cross,
+                });
+                forms.push(SketchResidualForm {
+                    kind: SketchResidualFormKind::ArcArcTangentRadiusBranchPredicate,
+                    role: SketchResidualFormRole::ExactProof,
+                    strategy: Some(SketchResidualStrategy::ArcArcTangent),
+                    residual: parts.radius_branch,
+                });
+                SketchResidualFormsReport {
+                    constraint: handle,
+                    status: SketchResidualFormsStatus::Generated,
+                    forms,
+                    diagnostics,
+                }
+            }
             SketchConstraintKind::CubicCubicTangent2 {
                 first,
                 first_parameter,
@@ -3333,6 +3464,67 @@ impl SketchSolveProblem {
                     format!("{} cubic tangent orientation", constraint.name),
                     parts.orientation,
                     SketchResidualStrategy::ArcCubicTangent,
+                    ConstraintKind::GreaterOrEqual,
+                    Real::one(),
+                );
+            }
+            SketchConstraintKind::ArcArcTangent2 {
+                first,
+                first_endpoint,
+                second,
+                second_endpoint,
+                branch,
+            } => {
+                // Arc/arc tangency is a retained branch package. The same or
+                // opposite radius-vector choice is replayed as an exact
+                // inequality instead of being inferred from a floating circle
+                // contact classifier.
+                let Some(parts) = self.arc_arc_tangent_exprs(
+                    first,
+                    first_endpoint,
+                    second,
+                    second_endpoint,
+                    branch,
+                    constraint,
+                    rows,
+                ) else {
+                    return;
+                };
+                for (index, residual) in parts.endpoint_radius.into_iter().enumerate() {
+                    self.push_residual(
+                        problem,
+                        rows,
+                        constraint,
+                        format!("{} arc endpoint radius {index}", constraint.name),
+                        residual,
+                        SketchResidualStrategy::ArcArcTangent,
+                    );
+                }
+                for (axis, residual) in parts.endpoint_incidence.into_iter().enumerate() {
+                    self.push_residual(
+                        problem,
+                        rows,
+                        constraint,
+                        format!("{} endpoint coordinate {axis}", constraint.name),
+                        residual,
+                        SketchResidualStrategy::ArcArcTangent,
+                    );
+                }
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} radius collinearity", constraint.name),
+                    parts.radius_cross,
+                    SketchResidualStrategy::ArcArcTangent,
+                );
+                self.push_residual_with_kind(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} radius branch", constraint.name),
+                    parts.radius_branch,
+                    SketchResidualStrategy::ArcArcTangent,
                     ConstraintKind::GreaterOrEqual,
                     Real::one(),
                 );
@@ -4203,6 +4395,30 @@ impl SketchSolveProblem {
         ))
     }
 
+    #[allow(clippy::too_many_arguments)]
+    fn arc_arc_tangent_exprs(
+        &self,
+        first: SketchEntityHandle,
+        first_endpoint: SketchArcEndpoint,
+        second: SketchEntityHandle,
+        second_endpoint: SketchArcEndpoint,
+        branch: SketchArcTangencyBranch,
+        constraint: &SketchConstraint,
+        rows: &mut Vec<SketchGeneratedRow>,
+    ) -> Option<ArcArcTangentExprs> {
+        let first = self.arc2_endpoint_parts(first, first_endpoint, constraint, rows)?;
+        let second = self.arc2_endpoint_parts(second, second_endpoint, constraint, rows)?;
+        Some(arc_arc_tangent_exprs(
+            &coordinate_exprs2(&first.center),
+            &coordinate_exprs2(&first.endpoint),
+            first.radius,
+            &coordinate_exprs2(&second.center),
+            &coordinate_exprs2(&second.endpoint),
+            second.radius,
+            arc_tangency_branch_sign(branch),
+        ))
+    }
+
     fn oriented_angle_exprs(
         &self,
         a: SketchEntityHandle,
@@ -4557,6 +4773,13 @@ fn tangent_orientation_sign(orientation: SketchTangentOrientation) -> i8 {
     match orientation {
         SketchTangentOrientation::CounterClockwise => 1,
         SketchTangentOrientation::Clockwise => -1,
+    }
+}
+
+fn arc_tangency_branch_sign(branch: SketchArcTangencyBranch) -> i8 {
+    match branch {
+        SketchArcTangencyBranch::SameRadiusDirection => 1,
+        SketchArcTangencyBranch::OppositeRadiusDirection => -1,
     }
 }
 

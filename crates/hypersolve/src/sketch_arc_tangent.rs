@@ -1,17 +1,18 @@
 //! Exact 2D circular-arc/line tangency packages for sketch constraints.
 //!
 //! The retained sketch layer resolves arc, endpoint, and line handles; this
-//! module owns only the symbolic proof rows. A certified arc-line or
-//! arc-cubic tangent package contains endpoint incidence, arc
-//! endpoint-on-radius validation, radius/tangent perpendicularity, and a
-//! signed orientation branch. This is the exact-computation boundary advocated
-//! by Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-//! 7.1-2 (1997): construction objects and endpoint flags stay explicit, and
-//! exact replay decides acceptance. The endpoint/orientation split follows the
-//! geometric-constraint-solver practice surveyed by Bouma, Fudos, Hoffmann,
-//! Cai, and Paige, "A Geometric Constraint Solver," *Computer-Aided Design*
-//! 27.6 (1995). Cubic tangent vectors are supplied by the Bernstein derivative
-//! package described by Farin, *Curves and Surfaces for CAGD*, 5th ed. (2002).
+//! module owns only the symbolic proof rows. A certified arc-line, arc-cubic,
+//! or arc-arc tangent package contains endpoint incidence, arc
+//! endpoint-on-radius validation, radius/tangent perpendicularity or radius
+//! collinearity, and a signed branch. This is the exact-computation boundary
+//! advocated by Yap, "Towards Exact Geometric Computation," *Computational
+//! Geometry* 7.1-2 (1997): construction objects and endpoint flags stay
+//! explicit, and exact replay decides acceptance. The endpoint/orientation
+//! split follows the geometric-constraint-solver practice surveyed by Bouma,
+//! Fudos, Hoffmann, Cai, and Paige, "A Geometric Constraint Solver,"
+//! *Computer-Aided Design* 27.6 (1995). Cubic tangent vectors are supplied by
+//! the Bernstein derivative package described by Farin, *Curves and Surfaces
+//! for CAGD*, 5th ed. (2002).
 
 use crate::symbolic::Expr;
 
@@ -47,6 +48,22 @@ pub(crate) struct ArcCubicTangentExprs {
     /// Signed orientation row. Callers lower this as `>= 0`; clockwise callers
     /// pass the negated cross product so the same inequality convention works.
     pub(crate) orientation: Expr,
+}
+
+/// Exact residual expressions for a retained 2D arc-arc tangency relation.
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) struct ArcArcTangentExprs {
+    /// Equations certifying that both selected arc endpoints lie on their
+    /// retained radius circles.
+    pub(crate) endpoint_radius: [Expr; 2],
+    /// Coordinate incidence rows between the selected arc endpoints.
+    pub(crate) endpoint_incidence: [Expr; 2],
+    /// Equation certifying that the two radius vectors are collinear.
+    pub(crate) radius_cross: Expr,
+    /// Signed radius branch row. Callers lower this as `>= 0`; opposite-radius
+    /// callers pass the negated dot product so the same inequality convention
+    /// covers internal and external tangency branches.
+    pub(crate) radius_branch: Expr,
 }
 
 /// Build exact rows for a selected arc endpoint tangent to a selected line
@@ -137,6 +154,62 @@ pub(crate) fn arc_cubic_tangent_exprs(
         endpoint_incidence: endpoint_delta,
         radius_perpendicular: dot2(&radius_vector, cubic_tangent),
         orientation,
+    }
+}
+
+/// Build exact rows for two selected arc endpoints that are tangent.
+///
+/// Let `r_a = endpoint_a - center_a` and `r_b = endpoint_b - center_b`.
+/// The proof rows are:
+///
+/// - `|r_a|^2 - radius_a^2 == 0`;
+/// - `|r_b|^2 - radius_b^2 == 0`;
+/// - selected endpoints coincide coordinate-wise;
+/// - `r_a x r_b == 0`;
+/// - signed `r_a . r_b >= 0` for the same-radius branch, or
+///   `-(r_a . r_b) >= 0` for the opposite-radius branch.
+///
+/// The same/opposite choice is a retained source branch, not something derived
+/// from a floating contact classifier. This follows Yap's exact-computation
+/// model: topology-relevant branch evidence is replayed from symbolic rows,
+/// while zero-radius arcs and coincident centers remain explicit domain
+/// obligations.
+pub(crate) fn arc_arc_tangent_exprs(
+    first_center: &[Expr; 2],
+    first_endpoint: &[Expr; 2],
+    first_radius: Expr,
+    second_center: &[Expr; 2],
+    second_endpoint: &[Expr; 2],
+    second_radius: Expr,
+    branch_sign: i8,
+) -> ArcArcTangentExprs {
+    let first_radius_vector = [
+        first_endpoint[0].clone() - first_center[0].clone(),
+        first_endpoint[1].clone() - first_center[1].clone(),
+    ];
+    let second_radius_vector = [
+        second_endpoint[0].clone() - second_center[0].clone(),
+        second_endpoint[1].clone() - second_center[1].clone(),
+    ];
+    let endpoint_delta = [
+        first_endpoint[0].clone() - second_endpoint[0].clone(),
+        first_endpoint[1].clone() - second_endpoint[1].clone(),
+    ];
+    let radius_dot = dot2(&first_radius_vector, &second_radius_vector);
+    let radius_branch = if branch_sign < 0 {
+        Expr::zero() - radius_dot
+    } else {
+        radius_dot
+    };
+
+    ArcArcTangentExprs {
+        endpoint_radius: [
+            squared_norm2(&first_radius_vector) - first_radius.clone() * first_radius,
+            squared_norm2(&second_radius_vector) - second_radius.clone() * second_radius,
+        ],
+        endpoint_incidence: endpoint_delta,
+        radius_cross: cross2(&first_radius_vector, &second_radius_vector),
+        radius_branch,
     }
 }
 

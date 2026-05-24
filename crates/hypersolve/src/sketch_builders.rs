@@ -12,9 +12,9 @@
 use hyperreal::Real;
 
 use crate::sketch::{
-    SketchArcEndpoint, SketchConstraintHandle, SketchConstraintKind, SketchEntityHandle,
-    SketchLineEndpoint, SketchParameterHandle, SketchResidualStrategy, SketchSolveProblem,
-    SketchTangentOrientation,
+    SketchArcEndpoint, SketchArcTangencyBranch, SketchConstraintHandle, SketchConstraintKind,
+    SketchEntityHandle, SketchLineEndpoint, SketchParameterHandle, SketchResidualStrategy,
+    SketchSolveProblem, SketchTangentOrientation,
 };
 
 /// High-level constraint family retained before residual lowering.
@@ -168,6 +168,40 @@ pub mod tangency {
             handle,
             family: SketchConstraintFamily::Tangency,
             strategy: SketchResidualStrategy::ArcLineTangent,
+            kind,
+        }
+    }
+
+    /// Add a retained 2D circular-arc/circular-arc tangent relation.
+    ///
+    /// The selected endpoints are constrained to coincide, both selected
+    /// endpoints are replayed against their retained radii, and the two radius
+    /// vectors are constrained collinear with an explicit same/opposite branch.
+    /// The branch is source evidence, not a floating contact classifier. This
+    /// follows Yap's "Towards Exact Geometric Computation" (1997) and the
+    /// endpoint-aware geometric-constraint vocabulary surveyed by Bouma et al.,
+    /// "A Geometric Constraint Solver" (1995).
+    pub fn arc_arc_tangent2(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        first: SketchEntityHandle,
+        first_endpoint: SketchArcEndpoint,
+        second: SketchEntityHandle,
+        second_endpoint: SketchArcEndpoint,
+        branch: SketchArcTangencyBranch,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::ArcArcTangent2 {
+            first,
+            first_endpoint,
+            second,
+            second_endpoint,
+            branch,
+        };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Tangency,
+            strategy: SketchResidualStrategy::ArcArcTangent,
             kind,
         }
     }

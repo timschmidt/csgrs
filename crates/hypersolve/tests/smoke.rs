@@ -9,25 +9,26 @@ use hypersolve::{
     FailedConstraintStatus, IntervalBoxCertificationPackage, IntervalBoxCertificationStatus,
     LinearAdapterKind, LinearAdapterPrecision, LinearBackend, MultivariateQuadraticKrawczykStatus,
     PreparedProblem, PreparedSolverBlock, Problem, ProposalEngineKind, ProposalEnginePrecision,
-    RootIsolationStatus, RootMultiplicityStatus, SketchArcEndpoint, SketchConstraintKind,
-    SketchConstructionCertificateStatus, SketchDegeneracyKind, SketchDegeneracyStatus,
-    SketchEntityDomain, SketchEntityDomainKind, SketchEntityDomainStatus, SketchEntityHandle,
-    SketchEntityKind, SketchGeneratedRowStatus, SketchLineEndpoint, SketchParameterDomain,
-    SketchParameterDomainKind, SketchParameterDomainStatus, SketchResidualFormKind,
-    SketchResidualFormRole, SketchResidualFormsStatus, SketchResidualStrategy,
-    SketchRoundTripMetadata, SketchRoundTripRole, SketchSolveProblem, SketchTangentOrientation,
-    SketchUnitToleranceStatus, SketchWorkplaneFrameStatus, SolverBlockRowKind, SolverConfig,
-    SolverPoint2, SolverState, SparseResidualBatchStatus, SparseResidualTerm, SymbolId,
-    VariableBall, analyze_exact_affine_rank, apply_equality_substitution_classes,
-    apply_equality_substitutions, audit_sketch_unit_tolerances,
-    build_equality_substitution_classes, build_sketch_workplane_frame,
-    certify_affine_interval_candidate, certify_affine_krawczyk_box, certify_candidate,
-    certify_candidate_batch, certify_candidate_domains, certify_candidate_with_config,
-    certify_candidate_with_residual_balls, certify_direct_univariate_quadratic_roots,
-    certify_interval_box_candidate, certify_multivariate_quadratic_interval_candidate,
-    certify_multivariate_quadratic_krawczyk_box, certify_quadratic_interval_candidate,
-    certify_sketch_construction, certify_univariate_quadratic_alpha,
-    certify_univariate_quadratic_krawczyk_box, context_from_problem, diagnose_failed_constraints,
+    RootIsolationStatus, RootMultiplicityStatus, SketchArcEndpoint, SketchArcTangencyBranch,
+    SketchConstraintKind, SketchConstructionCertificateStatus, SketchDegeneracyKind,
+    SketchDegeneracyStatus, SketchEntityDomain, SketchEntityDomainKind, SketchEntityDomainStatus,
+    SketchEntityHandle, SketchEntityKind, SketchGeneratedRowStatus, SketchLineEndpoint,
+    SketchParameterDomain, SketchParameterDomainKind, SketchParameterDomainStatus,
+    SketchResidualFormKind, SketchResidualFormRole, SketchResidualFormsStatus,
+    SketchResidualStrategy, SketchRoundTripMetadata, SketchRoundTripRole, SketchSolveProblem,
+    SketchTangentOrientation, SketchUnitToleranceStatus, SketchWorkplaneFrameStatus,
+    SolverBlockRowKind, SolverConfig, SolverPoint2, SolverState, SparseResidualBatchStatus,
+    SparseResidualTerm, SymbolId, VariableBall, analyze_exact_affine_rank,
+    apply_equality_substitution_classes, apply_equality_substitutions,
+    audit_sketch_unit_tolerances, build_equality_substitution_classes,
+    build_sketch_workplane_frame, certify_affine_interval_candidate, certify_affine_krawczyk_box,
+    certify_candidate, certify_candidate_batch, certify_candidate_domains,
+    certify_candidate_with_config, certify_candidate_with_residual_balls,
+    certify_direct_univariate_quadratic_roots, certify_interval_box_candidate,
+    certify_multivariate_quadratic_interval_candidate, certify_multivariate_quadratic_krawczyk_box,
+    certify_quadratic_interval_candidate, certify_sketch_construction,
+    certify_univariate_quadratic_alpha, certify_univariate_quadratic_krawczyk_box,
+    context_from_problem, diagnose_failed_constraints,
     diagnose_failed_constraints_from_certification,
     eliminate_affine_rows_with_substitution_classes,
     enumerate_direct_univariate_quadratic_branches, evaluate_residuals, facts_depend_on_symbol,
@@ -776,6 +777,125 @@ fn sketch_arc_cubic_tangent_lowers_exact_derivative_branch_rows() {
 }
 
 #[test]
+fn sketch_arc_arc_tangent_lowers_exact_radius_branch_rows() {
+    let mut sketch = SketchSolveProblem::new();
+    let first_center = sketch.add_point2d("first center", real(0), real(0));
+    let shared = sketch.add_point2d("shared", real(5), real(0));
+    let first_end = sketch.add_point2d("first end", real(0), real(5));
+    let first_radius = sketch.add_distance("first radius", real(5));
+    let first =
+        sketch.add_arc_of_circle2("first arc", first_center, shared, first_end, first_radius);
+    let second_center = sketch.add_point2d("second center", real(10), real(0));
+    let second_end = sketch.add_point2d("second end", real(10), real(5));
+    let second_radius = sketch.add_distance("second radius", real(5));
+    let second = sketch.add_arc_of_circle2(
+        "second arc",
+        second_center,
+        shared,
+        second_end,
+        second_radius,
+    );
+    let skew_center = sketch.add_point2d("skew center", real(5), real(5));
+    let skew_end = sketch.add_point2d("skew end", real(10), real(5));
+    let skew = sketch.add_arc_of_circle2("skew arc", skew_center, shared, skew_end, second_radius);
+    let valid = sketch_tangency_builders::arc_arc_tangent2(
+        &mut sketch,
+        "arc arc tangent",
+        first,
+        SketchArcEndpoint::Start,
+        second,
+        SketchArcEndpoint::Start,
+        SketchArcTangencyBranch::OppositeRadiusDirection,
+    );
+    sketch.add_arc_arc_tangent2(
+        "wrong branch",
+        first,
+        SketchArcEndpoint::Start,
+        second,
+        SketchArcEndpoint::Start,
+        SketchArcTangencyBranch::SameRadiusDirection,
+    );
+    sketch.add_arc_arc_tangent2(
+        "skew radius",
+        first,
+        SketchArcEndpoint::Start,
+        skew,
+        SketchArcEndpoint::Start,
+        SketchArcTangencyBranch::OppositeRadiusDirection,
+    );
+
+    assert_eq!(valid.family, hypersolve::SketchConstraintFamily::Tangency);
+    assert_eq!(valid.strategy, SketchResidualStrategy::ArcArcTangent);
+
+    let lowered = sketch.lower_to_problem();
+    let certification = certify_candidate(
+        &PreparedProblem::new(&lowered.problem),
+        &context_from_problem(&lowered.problem),
+    );
+    let forms = sketch.residual_forms_for_constraint(valid.handle);
+    let context = context_from_problem(&lowered.problem);
+
+    assert_eq!(lowered.problem.constraints.len(), 18);
+    assert_eq!(lowered.rows.len(), 18);
+    assert!(lowered.rows.iter().all(|row| {
+        row.strategy == Some(SketchResidualStrategy::ArcArcTangent)
+            && row.status == SketchGeneratedRowStatus::Generated
+    }));
+    for row in &certification.rows[..5] {
+        assert!(matches!(
+            row.status,
+            CertifiedCandidateStatus::CertifiedZero { .. }
+        ));
+    }
+    assert!(matches!(
+        certification.rows[5].status,
+        CertifiedCandidateStatus::CertifiedSatisfiedInequality { .. }
+    ));
+    assert!(matches!(
+        certification.rows[11].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
+    assert!(matches!(
+        certification.rows[16].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
+    assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+    assert!(forms.diagnostics.is_empty());
+    assert_eq!(forms.forms.len(), 6);
+    assert_eq!(
+        forms.forms[0].kind,
+        SketchResidualFormKind::ArcArcTangentEndpointRadiusPolynomial
+    );
+    assert_eq!(
+        forms.forms[2].kind,
+        SketchResidualFormKind::ArcArcTangentEndpointIncidencePolynomial
+    );
+    assert_eq!(
+        forms.forms[4].kind,
+        SketchResidualFormKind::ArcArcTangentRadiusCrossProductPredicate
+    );
+    assert_eq!(
+        forms.forms[5].kind,
+        SketchResidualFormKind::ArcArcTangentRadiusBranchPredicate
+    );
+    for form in &forms.forms[..5] {
+        assert_eq!(
+            form.residual.eval_real(context.bindings()).unwrap(),
+            Real::zero()
+        );
+    }
+    assert_eq!(
+        forms.forms[5]
+            .residual
+            .eval_real(context.bindings())
+            .unwrap()
+            .structural_facts()
+            .sign,
+        Some(hyperreal::RealSign::Positive)
+    );
+}
+
+#[test]
 fn sketch_cubic_cubic_c2_lowers_exact_second_derivative_rows() {
     let mut sketch = SketchSolveProblem::new();
     let a0 = sketch.add_point2d("a0", real(0), real(0));
@@ -1133,6 +1253,21 @@ fn sketch_residual_form_reports_reject_unsupported_and_bad_inputs() {
     );
     assert!(bad_arc_cubic_tangent_forms.forms.is_empty());
     assert!(!bad_arc_cubic_tangent_forms.diagnostics.is_empty());
+    let bad_arc_arc_tangent = sketch.add_arc_arc_tangent2(
+        "bad arc arc",
+        distance,
+        SketchArcEndpoint::Start,
+        distance,
+        SketchArcEndpoint::Start,
+        SketchArcTangencyBranch::SameRadiusDirection,
+    );
+    let bad_arc_arc_tangent_forms = sketch.residual_forms_for_constraint(bad_arc_arc_tangent);
+    assert_eq!(
+        bad_arc_arc_tangent_forms.status,
+        SketchResidualFormsStatus::InvalidInputs
+    );
+    assert!(bad_arc_arc_tangent_forms.forms.is_empty());
+    assert!(!bad_arc_arc_tangent_forms.diagnostics.is_empty());
     let bad_cubic_c2 = sketch.add_cubic_cubic_c2_continuity2("bad c2", distance, t, distance, t);
     let bad_cubic_c2_forms = sketch.residual_forms_for_constraint(bad_cubic_c2);
     assert_eq!(

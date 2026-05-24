@@ -5,7 +5,7 @@ use hypersolve::{
     Expr, FailedConstraintRemovalStatus, FailedConstraintStatus, IntervalBoxCertificationPackage,
     IntervalBoxCertificationStatus, MultivariateQuadraticKrawczykStatus, PreparedProblem,
     PreparedSolverBlock, Problem, ProposalEngineKind, ProposalEnginePrecision,
-    ProposalEngineReport, RootIsolationStatus, SketchArcEndpoint,
+    ProposalEngineReport, RootIsolationStatus, SketchArcEndpoint, SketchArcTangencyBranch,
     SketchConstructionCertificateStatus, SketchDegeneracyKind, SketchDegeneracyStatus,
     SketchEntityDomain, SketchEntityDomainKind, SketchEntityDomainStatus, SketchGeneratedRowStatus,
     SketchLineEndpoint, SketchParameterDomain, SketchParameterDomainStatus, SketchResidualFormKind,
@@ -896,6 +896,77 @@ proptest! {
         );
         let orientation = forms.forms[4].residual.eval_real(context.bindings()).unwrap();
         prop_assert_eq!(orientation.structural_facts().sign, Some(RealSign::Positive));
+    }
+
+    #[test]
+    fn sketch_arc_arc_tangent_rows_match_generated_external_circle_tangents(
+        cx in -8_i16..=8,
+        cy in -8_i16..=8,
+        radius in 1_i16..=12,
+    ) {
+        let cx = i64::from(cx);
+        let cy = i64::from(cy);
+        let radius = i64::from(radius);
+        let mut sketch = SketchSolveProblem::new();
+        let first_center = sketch.add_point2d("first center", Real::from(cx), Real::from(cy));
+        let shared = sketch.add_point2d("shared", Real::from(cx + radius), Real::from(cy));
+        let first_end = sketch.add_point2d("first end", Real::from(cx), Real::from(cy + radius));
+        let first_radius = sketch.add_distance("first radius", Real::from(radius));
+        let first = sketch.add_arc_of_circle2(
+            "first arc",
+            first_center,
+            shared,
+            first_end,
+            first_radius,
+        );
+        let second_center =
+            sketch.add_point2d("second center", Real::from(cx + 2 * radius), Real::from(cy));
+        let second_end = sketch.add_point2d(
+            "second end",
+            Real::from(cx + 2 * radius),
+            Real::from(cy + radius),
+        );
+        let second_radius = sketch.add_distance("second radius", Real::from(radius));
+        let second = sketch.add_arc_of_circle2(
+            "second arc",
+            second_center,
+            shared,
+            second_end,
+            second_radius,
+        );
+        let handle = sketch.add_arc_arc_tangent2(
+            "arc arc tangent",
+            first,
+            SketchArcEndpoint::Start,
+            second,
+            SketchArcEndpoint::Start,
+            SketchArcTangencyBranch::OppositeRadiusDirection,
+        );
+
+        let lowered = sketch.lower_to_problem();
+        let context = context_from_problem(&lowered.problem);
+        let certification = certify_candidate(&PreparedProblem::new(&lowered.problem), &context);
+        let forms = sketch.residual_forms_for_constraint(handle);
+
+        prop_assert_eq!(lowered.rows.len(), 6);
+        let all_rows_generated = lowered.rows.iter().all(|row| {
+            row.strategy == Some(SketchResidualStrategy::ArcArcTangent)
+                && row.status == SketchGeneratedRowStatus::Generated
+        });
+        prop_assert!(all_rows_generated);
+        prop_assert!(certification.all_satisfied());
+        prop_assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+        prop_assert_eq!(forms.forms.len(), 6);
+        for form in &forms.forms[..5] {
+            prop_assert_eq!(form.role, SketchResidualFormRole::ExactProof);
+            prop_assert_eq!(form.residual.eval_real(context.bindings()).unwrap(), Real::zero());
+        }
+        prop_assert_eq!(
+            forms.forms[5].kind,
+            SketchResidualFormKind::ArcArcTangentRadiusBranchPredicate
+        );
+        let branch = forms.forms[5].residual.eval_real(context.bindings()).unwrap();
+        prop_assert_eq!(branch.structural_facts().sign, Some(RealSign::Positive));
     }
 
     #[test]
