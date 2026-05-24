@@ -640,6 +640,41 @@ pub enum SketchConstraintKind {
         /// Explicit arc and point-sector branch.
         sweep: SketchArcPointSweep,
     },
+    /// 2D point-on-line incidence relation.
+    ///
+    /// Lowering emits the exact unnormalized line-incidence row
+    /// `cross(point - line_start, line_end - line_start) == 0`. Segment
+    /// containment and nondegenerate-line policy remain explicit domain or
+    /// range obligations; this incidence carrier only proves collinearity.
+    /// That separation follows Yap, "Towards Exact Geometric Computation"
+    /// (1997): retained geometric intent is accepted by exact replay, not by
+    /// rounded line projection or hidden tolerances. The retained
+    /// point/line vocabulary follows Bouma et al., "A Geometric Constraint
+    /// Solver" (1995).
+    PointOnLine2 {
+        /// 2D point entity.
+        point: SketchEntityHandle,
+        /// 2D line segment entity used as the support line.
+        line: SketchEntityHandle,
+    },
+    /// Point-on-line incidence after projecting 3D entities into a workplane.
+    ///
+    /// Lowering proves the workplane unit-quaternion guard, projects the 3D
+    /// point offset and line direction into exact `U/V` coordinates, and
+    /// replays `cross(point_uv - start_uv, line_dir_uv) == 0`. The row does
+    /// not normalize the projected line or construct rounded projected
+    /// coordinates. Degenerate 3D lines and zero projected directions remain
+    /// explicit entity-domain obligations, following Yap, "Towards Exact
+    /// Geometric Computation" (1997), with the workplane frame polynomial
+    /// from Shoemake, "Animating Rotation with Quaternion Curves" (1985).
+    ProjectedPointOnLine3 {
+        /// Workplane entity that supplies origin and normal/quaternion.
+        workplane: SketchEntityHandle,
+        /// 3D point entity projected into the workplane.
+        point: SketchEntityHandle,
+        /// 3D line segment entity whose projection supplies the support line.
+        line: SketchEntityHandle,
+    },
     /// Point-to-line distance after orthogonal projection into a workplane.
     ///
     /// This retained 3D/workplane relation projects a 3D point and a retained
@@ -1593,6 +1628,10 @@ pub enum SketchResidualStrategy {
     ProjectedLineCircleTangency,
     /// Exact projected point-on-arc incidence and branch package.
     ProjectedPointArcIncidence,
+    /// Exact point-on-line collinearity proof row.
+    PointLineIncidence,
+    /// Exact workplane-projected point-on-line collinearity proof package.
+    ProjectedPointLineIncidence,
     /// Squared 2D line length equality.
     SquaredLineLengthEquality,
     /// Squared 2D line length ratio equality.
@@ -1772,6 +1811,10 @@ pub enum SketchResidualFormKind {
     PointLineSignedDistanceNegativeProposal,
     /// Squared circle-incidence polynomial proof row.
     SquaredCircleIncidencePolynomial,
+    /// Exact unnormalized point-on-line collinearity proof row.
+    PointLineIncidencePolynomial,
+    /// Exact projected point-on-line collinearity proof row.
+    ProjectedPointLineIncidencePolynomial,
     /// Denominator-cleared projected 3D line/circle tangency proof row.
     ProjectedLineCircleTangencyPolynomial,
     /// Point-on-arc endpoint-on-radius proof row.
@@ -3155,6 +3198,27 @@ impl SketchSolveProblem {
         incidence::projected_point_on_arc3(self, name, workplane, point, arc, sweep).handle
     }
 
+    /// Add a retained 2D point-on-line incidence constraint.
+    pub fn add_point_on_line2(
+        &mut self,
+        name: impl Into<String>,
+        point: SketchEntityHandle,
+        line: SketchEntityHandle,
+    ) -> SketchConstraintHandle {
+        incidence::point_on_line2(self, name, point, line).handle
+    }
+
+    /// Add a retained projected 3D point-on-line incidence constraint.
+    pub fn add_projected_point_on_line3(
+        &mut self,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        point: SketchEntityHandle,
+        line: SketchEntityHandle,
+    ) -> SketchConstraintHandle {
+        incidence::projected_point_on_line3(self, name, workplane, point, line).handle
+    }
+
     /// Add a point-on-cubic-Bezier incidence constraint at a retained parameter.
     ///
     /// This emits exact Bernstein-coordinate proof rows. The curve parameter
@@ -3827,6 +3891,46 @@ impl SketchSolveProblem {
                     constraint: handle,
                     status: SketchResidualFormsStatus::Generated,
                     forms,
+                    diagnostics,
+                }
+            }
+            SketchConstraintKind::ProjectedPointOnLine3 {
+                workplane,
+                point,
+                line,
+            } => {
+                let mut diagnostics = Vec::new();
+                let Some(parts) = self.projected_point_line_incidence_exprs(
+                    workplane,
+                    point,
+                    line,
+                    constraint,
+                    &mut diagnostics,
+                ) else {
+                    return SketchResidualFormsReport {
+                        constraint: handle,
+                        status: SketchResidualFormsStatus::InvalidInputs,
+                        forms: Vec::new(),
+                        diagnostics,
+                    };
+                };
+                SketchResidualFormsReport {
+                    constraint: handle,
+                    status: SketchResidualFormsStatus::Generated,
+                    forms: vec![
+                        SketchResidualForm {
+                            kind: SketchResidualFormKind::WorkplaneUnitQuaternionPolynomial,
+                            role: SketchResidualFormRole::ExactProof,
+                            strategy: Some(SketchResidualStrategy::WorkplaneUnitQuaternion),
+                            residual: unit_quaternion_residual(&parts.quaternion),
+                        },
+                        SketchResidualForm {
+                            kind: SketchResidualFormKind::ProjectedPointLineIncidencePolynomial,
+                            role: SketchResidualFormRole::ExactProof,
+                            strategy: Some(SketchResidualStrategy::ProjectedPointLineIncidence),
+                            residual: parts.incidence,
+                        },
+                    ],
                     diagnostics,
                 }
             }
@@ -4563,6 +4667,30 @@ impl SketchSolveProblem {
                     constraint: handle,
                     status: SketchResidualFormsStatus::Generated,
                     forms,
+                    diagnostics,
+                }
+            }
+            SketchConstraintKind::PointOnLine2 { point, line } => {
+                let mut diagnostics = Vec::new();
+                let Some(incidence) =
+                    self.point_line_incidence_expr(point, line, constraint, &mut diagnostics)
+                else {
+                    return SketchResidualFormsReport {
+                        constraint: handle,
+                        status: SketchResidualFormsStatus::InvalidInputs,
+                        forms: Vec::new(),
+                        diagnostics,
+                    };
+                };
+                SketchResidualFormsReport {
+                    constraint: handle,
+                    status: SketchResidualFormsStatus::Generated,
+                    forms: vec![SketchResidualForm {
+                        kind: SketchResidualFormKind::PointLineIncidencePolynomial,
+                        role: SketchResidualFormRole::ExactProof,
+                        strategy: Some(SketchResidualStrategy::PointLineIncidence),
+                        residual: incidence,
+                    }],
                     diagnostics,
                 }
             }
@@ -5833,6 +5961,39 @@ impl SketchSolveProblem {
                     );
                 }
             }
+            SketchConstraintKind::ProjectedPointOnLine3 {
+                workplane,
+                point,
+                line,
+            } => {
+                // This is the workplane counterpart of point-on-line
+                // incidence. Projection remains retained evidence: exact
+                // replay first proves the unit frame, then evaluates the
+                // unnormalized U/V cross product. This follows Yap's (1997)
+                // exact geometric computation boundary and Shoemake's (1985)
+                // unit-quaternion frame.
+                let Some(parts) = self
+                    .projected_point_line_incidence_exprs(workplane, point, line, constraint, rows)
+                else {
+                    return;
+                };
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} workplane unit", constraint.name),
+                    unit_quaternion_residual(&parts.quaternion),
+                    SketchResidualStrategy::WorkplaneUnitQuaternion,
+                );
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} projected point-line incidence", constraint.name),
+                    parts.incidence,
+                    SketchResidualStrategy::ProjectedPointLineIncidence,
+                );
+            }
             SketchConstraintKind::ProjectedPointLineDistance {
                 workplane,
                 point,
@@ -6470,6 +6631,24 @@ impl SketchSolveProblem {
                     constraint.name.clone(),
                     cross.clone() * cross - distance.clone() * distance * squared_norm2(&direction),
                     SketchResidualStrategy::SquaredPointLineDistance,
+                );
+            }
+            SketchConstraintKind::PointOnLine2 { point, line } => {
+                // Point-on-line incidence is a support-line collinearity row,
+                // not a segment-membership claim. The unnormalized cross
+                // product keeps degenerate-line assumptions visible to
+                // separate entity-domain preflight, following Yap (1997).
+                let Some(incidence) = self.point_line_incidence_expr(point, line, constraint, rows)
+                else {
+                    return;
+                };
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    constraint.name.clone(),
+                    incidence,
+                    SketchResidualStrategy::PointLineIncidence,
                 );
             }
             SketchConstraintKind::EqualLengthPointLineDistance2 {
@@ -8334,6 +8513,55 @@ impl SketchSolveProblem {
         })
     }
 
+    fn point_line_incidence_expr(
+        &self,
+        point: SketchEntityHandle,
+        line: SketchEntityHandle,
+        constraint: &SketchConstraint,
+        rows: &mut Vec<SketchGeneratedRow>,
+    ) -> Option<Expr> {
+        let point = self.point2_coordinates(point, constraint, rows)?;
+        let (start, end) = self.line2_points(line, constraint, rows)?;
+        let point_delta = [
+            point.exprs[0].clone() - start.exprs[0].clone(),
+            point.exprs[1].clone() - start.exprs[1].clone(),
+        ];
+        let line_direction = [
+            end.exprs[0].clone() - start.exprs[0].clone(),
+            end.exprs[1].clone() - start.exprs[1].clone(),
+        ];
+        Some(direction_cross2(&point_delta, &line_direction))
+    }
+
+    fn projected_point_line_incidence_exprs(
+        &self,
+        workplane: SketchEntityHandle,
+        point: SketchEntityHandle,
+        line: SketchEntityHandle,
+        constraint: &SketchConstraint,
+        rows: &mut Vec<SketchGeneratedRow>,
+    ) -> Option<ProjectedPointLineIncidenceExprs> {
+        let quaternion = self.workplane_quaternion(workplane, constraint, rows)?;
+        let point = self.point3_coordinates(point, constraint, rows)?;
+        let (start, end) = self.line3_points(line, constraint, rows)?;
+        let point_delta = [
+            point.exprs[0].clone() - start.exprs[0].clone(),
+            point.exprs[1].clone() - start.exprs[1].clone(),
+            point.exprs[2].clone() - start.exprs[2].clone(),
+        ];
+        let line_direction = [
+            end.exprs[0].clone() - start.exprs[0].clone(),
+            end.exprs[1].clone() - start.exprs[1].clone(),
+            end.exprs[2].clone() - start.exprs[2].clone(),
+        ];
+        let projected_point_delta = projected_direction2(&point_delta, &quaternion);
+        let projected_line_direction = projected_direction2(&line_direction, &quaternion);
+        Some(ProjectedPointLineIncidenceExprs {
+            quaternion,
+            incidence: direction_cross2(&projected_point_delta, &projected_line_direction),
+        })
+    }
+
     fn projected_point_line_distance_squared_parts(
         &self,
         point: SketchEntityHandle,
@@ -9376,6 +9604,12 @@ struct ProjectedPointLineDistanceExprs {
     distance_denominator: Expr,
     signed_cross: Expr,
     distance: Expr,
+}
+
+#[derive(Clone, Debug)]
+struct ProjectedPointLineIncidenceExprs {
+    quaternion: [Expr; 4],
+    incidence: Expr,
 }
 
 #[derive(Clone, Debug)]

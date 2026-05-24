@@ -214,6 +214,24 @@ fn sketch_problem_with_point_on_arcs(row_count: usize) -> hypersolve::SketchSolv
     sketch
 }
 
+fn sketch_problem_with_point_on_lines(row_count: usize) -> hypersolve::SketchSolveProblem {
+    let mut sketch = hypersolve::SketchSolveProblem::new();
+    for index in 0..row_count {
+        let y = index as i64;
+        let start = sketch.add_point2d(format!("pntline{index}.start"), r(0), r(y));
+        let end = sketch.add_point2d(format!("pntline{index}.end"), r(5), r(y + 10));
+        let line = sketch.add_line_segment2(format!("pntline{index}.line"), start, end);
+        let point = sketch.add_point2d(format!("pntline{index}.point"), r(2), r(y + 4));
+        hypersolve::sketch_incidence_builders::point_on_line2(
+            &mut sketch,
+            format!("point on line {index}"),
+            point,
+            line,
+        );
+    }
+    sketch
+}
+
 fn sketch_problem_with_metadata(row_count: usize) -> hypersolve::SketchSolveProblem {
     let mut sketch = sketch_problem(row_count);
     for index in 0..sketch.parameters().len() {
@@ -1445,6 +1463,30 @@ fn sketch_problem_with_projected_point_on_arcs(row_count: usize) -> hypersolve::
     sketch
 }
 
+fn sketch_problem_with_projected_point_on_lines(
+    row_count: usize,
+) -> hypersolve::SketchSolveProblem {
+    let mut sketch = hypersolve::SketchSolveProblem::new();
+    let origin = sketch.add_point3d("project-point-line.origin", r(1), r(2), r(3));
+    let normal = sketch.add_normal3d("project-point-line.normal", r(1), r(0), r(0), r(0));
+    let workplane = sketch.add_workplane("project-point-line.workplane", origin, normal);
+    for index in 0..row_count {
+        let y = index as i64;
+        let start = sketch.add_point3d(format!("projline{index}.start"), r(1), r(y + 2), r(-y));
+        let end = sketch.add_point3d(format!("projline{index}.end"), r(6), r(y + 12), r(99 - y));
+        let line = sketch.add_line_segment3(format!("projline{index}.line"), start, end);
+        let point = sketch.add_point3d(format!("projline{index}.point"), r(3), r(y + 6), r(50 - y));
+        hypersolve::sketch_incidence_builders::projected_point_on_line3(
+            &mut sketch,
+            format!("projected point on line {index}"),
+            workplane,
+            point,
+            line,
+        );
+    }
+    sketch
+}
+
 fn sketch_problem_with_projected_point_line_distance_ranges(
     row_count: usize,
 ) -> hypersolve::SketchSolveProblem {
@@ -1744,6 +1786,10 @@ fn certification(c: &mut Criterion) {
     c.bench_function("sketch_point_on_arc_lowering", |b| {
         b.iter(|| point_on_arc_sketch.lower_to_problem())
     });
+    let point_on_line_sketch = sketch_problem_with_point_on_lines(16);
+    c.bench_function("sketch_point_on_line_lowering", |b| {
+        b.iter(|| point_on_line_sketch.lower_to_problem())
+    });
     let projected_line_arc_sweep_length_sketch =
         sketch_problem_with_projected_line_arc_sweep_lengths(16);
     c.bench_function("sketch_projected_line_arc_sweep_length_lowering", |b| {
@@ -1895,6 +1941,10 @@ fn certification(c: &mut Criterion) {
     c.bench_function("sketch_projected_point_on_arc_lowering", |b| {
         b.iter(|| projected_point_on_arc_sketch.lower_to_problem())
     });
+    let projected_point_on_line_sketch = sketch_problem_with_projected_point_on_lines(16);
+    c.bench_function("sketch_projected_point_on_line_lowering", |b| {
+        b.iter(|| projected_point_on_line_sketch.lower_to_problem())
+    });
     let projected_point_line_distance_range_sketch =
         sketch_problem_with_projected_point_line_distance_ranges(16);
     c.bench_function("sketch_projected_point_line_distance_range_lowering", |b| {
@@ -2030,6 +2080,24 @@ fn certification(c: &mut Criterion) {
         b.iter(|| {
             for handle in &point_on_arc_form_handles {
                 let _ = point_on_arc_sketch.residual_forms_for_constraint(*handle);
+            }
+        })
+    });
+    let point_on_line_form_handles = point_on_line_sketch
+        .constraints()
+        .iter()
+        .filter(|constraint| {
+            matches!(
+                constraint.kind,
+                hypersolve::SketchConstraintKind::PointOnLine2 { .. }
+            )
+        })
+        .map(|constraint| constraint.handle)
+        .collect::<Vec<_>>();
+    c.bench_function("sketch_point_on_line_residual_forms", |b| {
+        b.iter(|| {
+            for handle in &point_on_line_form_handles {
+                let _ = point_on_line_sketch.residual_forms_for_constraint(*handle);
             }
         })
     });
@@ -2450,6 +2518,24 @@ fn certification(c: &mut Criterion) {
         b.iter(|| {
             for handle in &projected_point_on_arc_form_handles {
                 let _ = projected_point_on_arc_sketch.residual_forms_for_constraint(*handle);
+            }
+        })
+    });
+    let projected_point_on_line_form_handles = projected_point_on_line_sketch
+        .constraints()
+        .iter()
+        .filter(|constraint| {
+            matches!(
+                constraint.kind,
+                hypersolve::SketchConstraintKind::ProjectedPointOnLine3 { .. }
+            )
+        })
+        .map(|constraint| constraint.handle)
+        .collect::<Vec<_>>();
+    c.bench_function("sketch_projected_point_on_line_residual_forms", |b| {
+        b.iter(|| {
+            for handle in &projected_point_on_line_form_handles {
+                let _ = projected_point_on_line_sketch.residual_forms_for_constraint(*handle);
             }
         })
     });

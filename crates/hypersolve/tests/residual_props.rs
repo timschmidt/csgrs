@@ -1378,6 +1378,46 @@ proptest! {
     }
 
     #[test]
+    fn sketch_point_on_line_rows_replay_generated_collinear_points(
+        sx in -8_i16..=8,
+        sy in -8_i16..=8,
+        ux in -6_i16..=6,
+        uy in -6_i16..=6,
+        t in -8_i16..=8,
+    ) {
+        prop_assume!(ux != 0 || uy != 0);
+        let sx = i64::from(sx);
+        let sy = i64::from(sy);
+        let ux = i64::from(ux);
+        let uy = i64::from(uy);
+        let t = i64::from(t);
+        let mut sketch = SketchSolveProblem::new();
+        let start = sketch.add_point2d("start", Real::from(sx), Real::from(sy));
+        let end = sketch.add_point2d("end", Real::from(sx + ux), Real::from(sy + uy));
+        let line = sketch.add_line_segment2("line", start, end);
+        let point =
+            sketch.add_point2d("point", Real::from(sx + t * ux), Real::from(sy + t * uy));
+        let handle = sketch.add_point_on_line2("point on line", point, line);
+
+        let lowered = sketch.lower_to_problem();
+        let context = context_from_problem(&lowered.problem);
+        let certification = certify_candidate(&PreparedProblem::new(&lowered.problem), &context);
+        let forms = sketch.residual_forms_for_constraint(handle);
+
+        prop_assert_eq!(lowered.rows.len(), 1);
+        prop_assert_eq!(lowered.rows[0].strategy, Some(SketchResidualStrategy::PointLineIncidence));
+        prop_assert!(certification.all_satisfied());
+        prop_assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+        prop_assert_eq!(forms.forms.len(), 1);
+        prop_assert_eq!(forms.forms[0].kind, SketchResidualFormKind::PointLineIncidencePolynomial);
+        prop_assert_eq!(forms.forms[0].role, SketchResidualFormRole::ExactProof);
+        prop_assert_eq!(
+            forms.forms[0].residual.eval_real(context.bindings()).unwrap(),
+            Real::zero()
+        );
+    }
+
+    #[test]
     fn sketch_point_on_cubic_rows_replay_generated_affine_cubics(
         ax in -8_i16..=8,
         ay in -8_i16..=8,
@@ -2488,6 +2528,74 @@ proptest! {
             forms.forms[1].kind,
             SketchResidualFormKind::ProjectedCircleIncidencePolynomial
         );
+    }
+
+    #[test]
+    fn sketch_projected_point_on_line_rows_replay_identity_workplane_collinearity(
+        ox in -4_i16..=4,
+        oy in -4_i16..=4,
+        oz in -4_i16..=4,
+        sx in -8_i16..=8,
+        sy in -8_i16..=8,
+        ux in -6_i16..=6,
+        uy in -6_i16..=6,
+        t in -8_i16..=8,
+        z0 in -8_i16..=8,
+        z1 in -8_i16..=8,
+        zp in -8_i16..=8,
+    ) {
+        prop_assume!(ux != 0 || uy != 0);
+        let ox = i64::from(ox);
+        let oy = i64::from(oy);
+        let oz = i64::from(oz);
+        let sx = i64::from(sx);
+        let sy = i64::from(sy);
+        let ux = i64::from(ux);
+        let uy = i64::from(uy);
+        let t = i64::from(t);
+        let z0 = i64::from(z0);
+        let z1 = i64::from(z1);
+        let zp = i64::from(zp);
+        let mut sketch = SketchSolveProblem::new();
+        let origin = sketch.add_point3d("origin", Real::from(ox), Real::from(oy), Real::from(oz));
+        let normal = sketch.add_normal3d("normal", Real::from(1), Real::from(0), Real::from(0), Real::from(0));
+        let workplane = sketch.add_workplane("workplane", origin, normal);
+        let start =
+            sketch.add_point3d("start", Real::from(ox + sx), Real::from(oy + sy), Real::from(oz + z0));
+        let end = sketch.add_point3d(
+            "end",
+            Real::from(ox + sx + ux),
+            Real::from(oy + sy + uy),
+            Real::from(oz + z1),
+        );
+        let line = sketch.add_line_segment3("line", start, end);
+        let point = sketch.add_point3d(
+            "point",
+            Real::from(ox + sx + t * ux),
+            Real::from(oy + sy + t * uy),
+            Real::from(oz + zp),
+        );
+        let handle = sketch.add_projected_point_on_line3("projected point on line", workplane, point, line);
+
+        let lowered = sketch.lower_to_problem();
+        let context = context_from_problem(&lowered.problem);
+        let certification = certify_candidate(&PreparedProblem::new(&lowered.problem), &context);
+        let forms = sketch.residual_forms_for_constraint(handle);
+
+        prop_assert_eq!(lowered.rows.len(), 2);
+        prop_assert_eq!(lowered.rows[0].strategy, Some(SketchResidualStrategy::WorkplaneUnitQuaternion));
+        prop_assert_eq!(lowered.rows[1].strategy, Some(SketchResidualStrategy::ProjectedPointLineIncidence));
+        prop_assert!(certification.all_satisfied());
+        prop_assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+        prop_assert_eq!(forms.forms.len(), 2);
+        prop_assert_eq!(
+            forms.forms[1].kind,
+            SketchResidualFormKind::ProjectedPointLineIncidencePolynomial
+        );
+        for form in &forms.forms {
+            prop_assert_eq!(form.role, SketchResidualFormRole::ExactProof);
+            prop_assert_eq!(form.residual.eval_real(context.bindings()).unwrap(), Real::zero());
+        }
     }
 
     #[test]

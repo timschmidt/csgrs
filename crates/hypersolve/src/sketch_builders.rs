@@ -636,6 +636,60 @@ pub mod incidence {
         }
     }
 
+    /// Add a 2D point-on-line incidence relation.
+    ///
+    /// Lowering emits the unnormalized exact row
+    /// `cross(point - line_start, line_end - line_start) == 0`. Segment
+    /// containment and nondegenerate-line policy remain explicit domain or
+    /// range obligations. This follows Yap, "Towards Exact Geometric
+    /// Computation" (1997), by keeping collinearity as exact replay evidence
+    /// rather than a rounded projection tolerance, and follows Bouma et al.
+    /// (1995) by retaining the point/line incidence relation semantically.
+    pub fn point_on_line2(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        point: SketchEntityHandle,
+        line: SketchEntityHandle,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::PointOnLine2 { point, line };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Incidence,
+            strategy: SketchResidualStrategy::PointLineIncidence,
+            kind,
+        }
+    }
+
+    /// Add a projected 3D point-on-line incidence relation.
+    ///
+    /// The 3D point and 3D line direction are projected through a retained
+    /// workplane and replayed by exact `U/V` collinearity. The workplane unit
+    /// guard is part of the proof package, following Yap, "Towards Exact
+    /// Geometric Computation" (1997); the retained frame uses Shoemake's
+    /// unit-quaternion rotation matrix from "Animating Rotation with
+    /// Quaternion Curves" (1985).
+    pub fn projected_point_on_line3(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        point: SketchEntityHandle,
+        line: SketchEntityHandle,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::ProjectedPointOnLine3 {
+            workplane,
+            point,
+            line,
+        };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Incidence,
+            strategy: SketchResidualStrategy::ProjectedPointLineIncidence,
+            kind,
+        }
+    }
+
     /// Add a point-on-cubic-Bezier incidence relation at a retained parameter.
     ///
     /// Lowering emits one exact Bernstein-coordinate equation per axis:

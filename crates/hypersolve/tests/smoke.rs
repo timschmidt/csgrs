@@ -420,6 +420,68 @@ fn sketch_point_on_circle_constraints_retain_exact_and_radial_forms() {
 }
 
 #[test]
+fn sketch_point_on_line_replays_unnormalized_collinearity_rows() {
+    let mut sketch = SketchSolveProblem::new();
+    let start = sketch.add_point2d("start", real(1), real(2));
+    let end = sketch.add_point2d("end", real(7), real(5));
+    let line = sketch.add_line_segment2("line", start, end);
+    let point = sketch.add_point2d("point", real(5), real(4));
+    let off_line = sketch.add_point2d("off line", real(5), real(5));
+    let distance = sketch.add_distance("not a line", real(3));
+    let valid =
+        sketch_incidence_builders::point_on_line2(&mut sketch, "point on line", point, line);
+    sketch.add_point_on_line2("off line", off_line, line);
+    let wrong = sketch.add_point_on_line2("wrong line kind", point, distance);
+
+    assert_eq!(valid.family, hypersolve::SketchConstraintFamily::Incidence);
+    assert_eq!(valid.strategy, SketchResidualStrategy::PointLineIncidence);
+
+    let lowered = sketch.lower_to_problem();
+    let certification = certify_candidate(
+        &PreparedProblem::new(&lowered.problem),
+        &context_from_problem(&lowered.problem),
+    );
+
+    assert_eq!(lowered.problem.constraints.len(), 2);
+    assert_eq!(lowered.rows.len(), 3);
+    assert_eq!(
+        lowered.rows[0].strategy,
+        Some(SketchResidualStrategy::PointLineIncidence)
+    );
+    assert_eq!(
+        lowered.rows[2].status,
+        SketchGeneratedRowStatus::WrongEntityKind {
+            handle: distance,
+            expected: "2D line segment",
+        }
+    );
+    assert!(matches!(
+        certification.rows[0].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[1].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
+
+    let forms = sketch.residual_forms_for_constraint(valid.handle);
+    assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+    assert_eq!(forms.forms.len(), 1);
+    assert_eq!(
+        forms.forms[0].kind,
+        SketchResidualFormKind::PointLineIncidencePolynomial
+    );
+    assert_eq!(forms.forms[0].role, SketchResidualFormRole::ExactProof);
+    assert_eq!(
+        forms.forms[0].strategy,
+        Some(SketchResidualStrategy::PointLineIncidence)
+    );
+
+    let wrong_forms = sketch.residual_forms_for_constraint(wrong);
+    assert_eq!(wrong_forms.status, SketchResidualFormsStatus::InvalidInputs);
+}
+
+#[test]
 fn sketch_point_on_cubic_constraints_retain_exact_bernstein_rows() {
     let mut sketch = SketchSolveProblem::new();
     let p0 = sketch.add_point2d("p0", real(0), real(0));
@@ -5887,6 +5949,89 @@ fn sketch_projected_point_on_circle_replays_workplane_and_incidence_rows() {
     assert_eq!(
         forms.forms[1].kind,
         SketchResidualFormKind::ProjectedCircleIncidencePolynomial
+    );
+    assert!(
+        forms
+            .forms
+            .iter()
+            .all(|form| form.role == SketchResidualFormRole::ExactProof)
+    );
+
+    let wrong_forms = sketch.residual_forms_for_constraint(wrong);
+    assert_eq!(wrong_forms.status, SketchResidualFormsStatus::InvalidInputs);
+}
+
+#[test]
+fn sketch_projected_point_on_line_replays_workplane_and_collinearity_rows() {
+    let mut sketch = SketchSolveProblem::new();
+    let origin3 = sketch.add_point3d("origin3", real(1), real(2), real(3));
+    let normal = sketch.add_normal3d("identity normal", real(1), real(0), real(0), real(0));
+    let workplane = sketch.add_workplane("workplane", origin3, normal);
+    let start = sketch.add_point3d("start", real(2), real(4), real(-11));
+    let end = sketch.add_point3d("end", real(8), real(7), real(19));
+    let line = sketch.add_line_segment3("line", start, end);
+    let point = sketch.add_point3d("point", real(6), real(6), real(99));
+    let off_line = sketch.add_point3d("off line", real(6), real(7), real(99));
+    let point2 = sketch.add_point2d("not a 3D line", real(0), real(0));
+    let valid = sketch_incidence_builders::projected_point_on_line3(
+        &mut sketch,
+        "projected point on line",
+        workplane,
+        point,
+        line,
+    );
+    sketch.add_projected_point_on_line3("off projected line", workplane, off_line, line);
+    let wrong =
+        sketch.add_projected_point_on_line3("wrong projected line kind", workplane, point, point2);
+
+    assert_eq!(valid.family, hypersolve::SketchConstraintFamily::Incidence);
+    assert_eq!(
+        valid.strategy,
+        SketchResidualStrategy::ProjectedPointLineIncidence
+    );
+
+    let lowered = sketch.lower_to_problem();
+    let certification = certify_candidate(
+        &PreparedProblem::new(&lowered.problem),
+        &context_from_problem(&lowered.problem),
+    );
+
+    assert_eq!(lowered.problem.constraints.len(), 4);
+    assert_eq!(lowered.rows.len(), 5);
+    assert_eq!(
+        lowered.rows.last().unwrap().status,
+        SketchGeneratedRowStatus::WrongEntityKind {
+            handle: point2,
+            expected: "3D line segment",
+        }
+    );
+    assert_eq!(
+        lowered.rows[0].strategy,
+        Some(SketchResidualStrategy::WorkplaneUnitQuaternion)
+    );
+    assert_eq!(
+        lowered.rows[1].strategy,
+        Some(SketchResidualStrategy::ProjectedPointLineIncidence)
+    );
+    assert!(matches!(
+        certification.rows[1].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[3].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
+
+    let forms = sketch.residual_forms_for_constraint(valid.handle);
+    assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+    assert_eq!(forms.forms.len(), 2);
+    assert_eq!(
+        forms.forms[0].kind,
+        SketchResidualFormKind::WorkplaneUnitQuaternionPolynomial
+    );
+    assert_eq!(
+        forms.forms[1].kind,
+        SketchResidualFormKind::ProjectedPointLineIncidencePolynomial
     );
     assert!(
         forms
