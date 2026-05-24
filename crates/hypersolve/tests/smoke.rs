@@ -674,6 +674,85 @@ fn sketch_cubic_cubic_tangent_lowers_exact_derivative_branch_rows() {
 }
 
 #[test]
+fn sketch_cubic_cubic_c2_lowers_exact_second_derivative_rows() {
+    let mut sketch = SketchSolveProblem::new();
+    let a0 = sketch.add_point2d("a0", real(0), real(0));
+    let a1 = sketch.add_point2d("a1", real(1), real(0));
+    let a2 = sketch.add_point2d("a2", real(2), real(0));
+    let join = sketch.add_point2d("join", real(3), real(0));
+    let b1 = sketch.add_point2d("b1", real(4), real(0));
+    let b2 = sketch.add_point2d("b2", real(5), real(0));
+    let b3 = sketch.add_point2d("b3", real(6), real(0));
+    let bad_b2 = sketch.add_point2d("bad b2", real(5), real(1));
+    let first = sketch.add_cubic2("first", a0, a1, a2, join);
+    let second = sketch.add_cubic2("second", join, b1, b2, b3);
+    let bad_second = sketch.add_cubic2("bad second", join, b1, bad_b2, b3);
+    let t_end = sketch.add_parameter("t_end", real(1));
+    let t_start = sketch.add_parameter("t_start", real(0));
+    let valid = sketch_tangency_builders::cubic_cubic_c2_continuity2(
+        &mut sketch,
+        "cubic c2",
+        first,
+        t_end,
+        second,
+        t_start,
+    );
+    sketch.add_cubic_cubic_c2_continuity2("bad cubic c2", first, t_end, bad_second, t_start);
+
+    assert_eq!(valid.family, hypersolve::SketchConstraintFamily::Tangency);
+    assert_eq!(
+        valid.strategy,
+        SketchResidualStrategy::CubicCubicC2Continuity
+    );
+
+    let lowered = sketch.lower_to_problem();
+    let certification = certify_candidate(
+        &PreparedProblem::new(&lowered.problem),
+        &context_from_problem(&lowered.problem),
+    );
+    let forms = sketch.residual_forms_for_constraint(valid.handle);
+    let context = context_from_problem(&lowered.problem);
+
+    assert_eq!(lowered.problem.constraints.len(), 12);
+    assert_eq!(lowered.rows.len(), 12);
+    assert!(lowered.rows.iter().all(|row| {
+        row.strategy == Some(SketchResidualStrategy::CubicCubicC2Continuity)
+            && row.status == SketchGeneratedRowStatus::Generated
+    }));
+    for row in &certification.rows[..6] {
+        assert!(matches!(
+            row.status,
+            CertifiedCandidateStatus::CertifiedZero { .. }
+        ));
+    }
+    assert!(matches!(
+        certification.rows[11].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
+    assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+    assert!(forms.diagnostics.is_empty());
+    assert_eq!(forms.forms.len(), 6);
+    assert_eq!(
+        forms.forms[0].kind,
+        SketchResidualFormKind::CubicCubicC2PointPolynomial
+    );
+    assert_eq!(
+        forms.forms[2].kind,
+        SketchResidualFormKind::CubicCubicC2FirstDerivativePolynomial
+    );
+    assert_eq!(
+        forms.forms[4].kind,
+        SketchResidualFormKind::CubicCubicC2SecondDerivativePolynomial
+    );
+    for form in &forms.forms {
+        assert_eq!(
+            form.residual.eval_real(context.bindings()).unwrap(),
+            Real::zero()
+        );
+    }
+}
+
+#[test]
 fn sketch_equal_angle_constraints_retain_exact_and_proposal_residual_forms() {
     let mut sketch = SketchSolveProblem::new();
     let origin = sketch.add_point2d("origin", real(0), real(0));
@@ -937,6 +1016,14 @@ fn sketch_residual_form_reports_reject_unsupported_and_bad_inputs() {
     );
     assert!(bad_cubic_cubic_tangent_forms.forms.is_empty());
     assert!(!bad_cubic_cubic_tangent_forms.diagnostics.is_empty());
+    let bad_cubic_c2 = sketch.add_cubic_cubic_c2_continuity2("bad c2", distance, t, distance, t);
+    let bad_cubic_c2_forms = sketch.residual_forms_for_constraint(bad_cubic_c2);
+    assert_eq!(
+        bad_cubic_c2_forms.status,
+        SketchResidualFormsStatus::InvalidInputs
+    );
+    assert!(bad_cubic_c2_forms.forms.is_empty());
+    assert!(!bad_cubic_c2_forms.diagnostics.is_empty());
     let bad_angle_forms = sketch.residual_forms_for_constraint(bad_angle.handle);
     assert_eq!(
         bad_angle_forms.status,

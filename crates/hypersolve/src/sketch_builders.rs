@@ -236,6 +236,38 @@ pub mod tangency {
             kind,
         }
     }
+
+    /// Add a retained parametric C2 continuity relation between two cubics.
+    ///
+    /// The generated proof package equates the exact cubic point, first
+    /// derivative, and second derivative vectors at retained parameters. This
+    /// is deliberately stronger than geometric G2 continuity: it preserves the
+    /// parameterization as source evidence instead of normalizing speed or
+    /// curvature through primitive floats. The package follows Yap's "Towards
+    /// Exact Geometric Computation" (1997) and Farin's Bernstein derivative
+    /// control-net formulas.
+    pub fn cubic_cubic_c2_continuity2(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        first: SketchEntityHandle,
+        first_parameter: SketchParameterHandle,
+        second: SketchEntityHandle,
+        second_parameter: SketchParameterHandle,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::CubicCubicC2Continuity2 {
+            first,
+            first_parameter,
+            second,
+            second_parameter,
+        };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Tangency,
+            strategy: SketchResidualStrategy::CubicCubicC2Continuity,
+            kind,
+        }
+    }
 }
 
 /// Incidence and positional relation builders.

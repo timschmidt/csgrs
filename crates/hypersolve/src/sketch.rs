@@ -633,6 +633,26 @@ pub enum SketchConstraintKind {
         /// Parameter on the second cubic.
         second_parameter: SketchParameterHandle,
     },
+    /// Parametric C2 continuity between two retained 2D cubic Beziers.
+    ///
+    /// Lowering evaluates both cubic points, first derivatives, and second
+    /// derivatives exactly in Bernstein form, then emits coordinate equality
+    /// rows for `B_a(t_a) = B_b(t_b)`, `B_a'(t_a) = B_b'(t_b)`, and
+    /// `B_a''(t_a) = B_b''(t_b)`. This is intentionally parametric C2, not a
+    /// sampled or normalized geometric-curvature test. Segment-domain and
+    /// degeneracy assumptions remain explicit obligations, following Yap,
+    /// "Towards Exact Geometric Computation" (1997), while the derivative
+    /// control nets follow Farin's Bernstein/de Casteljau construction.
+    CubicCubicC2Continuity2 {
+        /// First retained 2D cubic Bezier entity.
+        first: SketchEntityHandle,
+        /// Parameter on the first cubic.
+        first_parameter: SketchParameterHandle,
+        /// Second retained 2D cubic Bezier entity.
+        second: SketchEntityHandle,
+        /// Parameter on the second cubic.
+        second_parameter: SketchParameterHandle,
+    },
     /// Unsigned equal-angle relation between two 2D line pairs.
     ///
     /// Lowering compares squared cosines, which certifies ordinary equal
@@ -887,6 +907,8 @@ pub enum SketchResidualStrategy {
     CubicLineTangent,
     /// Exact point/derivative package for retained cubic-cubic tangency.
     CubicCubicTangent,
+    /// Exact point/first/second derivative rows for parametric cubic C2 continuity.
+    CubicCubicC2Continuity,
     /// Squared-cosine equality for unsigned 2D line angles.
     SquaredCosineAngleEquality,
     /// Exact angle-vector package for oriented 2D line-pair angles.
@@ -998,6 +1020,12 @@ pub enum SketchResidualFormKind {
     CubicCubicTangentCrossProductPredicate,
     /// Exact cubic/cubic derivative dot-product branch predicate.
     CubicCubicTangentDotProductPredicate,
+    /// Exact cubic/cubic C2 point coordinate equality proof row.
+    CubicCubicC2PointPolynomial,
+    /// Exact cubic/cubic C2 first-derivative coordinate equality proof row.
+    CubicCubicC2FirstDerivativePolynomial,
+    /// Exact cubic/cubic C2 second-derivative coordinate equality proof row.
+    CubicCubicC2SecondDerivativePolynomial,
     /// Exact midpoint-on-workplane proof row for 3D workplane symmetry.
     WorkplaneSymmetryMidpointPlanePolynomial,
     /// Exact normal-offset cross-product proof row for 3D workplane symmetry.
@@ -1654,6 +1682,30 @@ impl SketchSolveProblem {
     ) -> SketchConstraintHandle {
         tangency::cubic_cubic_tangent2(self, name, first, first_parameter, second, second_parameter)
             .handle
+    }
+
+    /// Add a retained parametric C2 continuity relation between two cubics.
+    ///
+    /// The proof package equates exact point, first derivative, and second
+    /// derivative coordinates. This keeps parameterization explicit instead of
+    /// smuggling geometric curvature normalization into lowering.
+    pub fn add_cubic_cubic_c2_continuity2(
+        &mut self,
+        name: impl Into<String>,
+        first: SketchEntityHandle,
+        first_parameter: SketchParameterHandle,
+        second: SketchEntityHandle,
+        second_parameter: SketchParameterHandle,
+    ) -> SketchConstraintHandle {
+        tangency::cubic_cubic_c2_continuity2(
+            self,
+            name,
+            first,
+            first_parameter,
+            second,
+            second_parameter,
+        )
+        .handle
     }
 
     /// Add a retained unsigned 2D equal-angle relation between two line pairs.
@@ -2457,6 +2509,58 @@ impl SketchSolveProblem {
                     diagnostics,
                 }
             }
+            SketchConstraintKind::CubicCubicC2Continuity2 {
+                first,
+                first_parameter,
+                second,
+                second_parameter,
+            } => {
+                let mut diagnostics = Vec::new();
+                let Some(parts) = self.cubic_cubic_c2_exprs(
+                    first,
+                    first_parameter,
+                    second,
+                    second_parameter,
+                    constraint,
+                    &mut diagnostics,
+                ) else {
+                    return SketchResidualFormsReport {
+                        constraint: handle,
+                        status: SketchResidualFormsStatus::InvalidInputs,
+                        forms: Vec::new(),
+                        diagnostics,
+                    };
+                };
+                let mut forms = Vec::with_capacity(6);
+                forms.extend(parts.point.into_iter().map(|residual| SketchResidualForm {
+                    kind: SketchResidualFormKind::CubicCubicC2PointPolynomial,
+                    role: SketchResidualFormRole::ExactProof,
+                    strategy: Some(SketchResidualStrategy::CubicCubicC2Continuity),
+                    residual,
+                }));
+                forms.extend(parts.first_derivative.into_iter().map(|residual| {
+                    SketchResidualForm {
+                        kind: SketchResidualFormKind::CubicCubicC2FirstDerivativePolynomial,
+                        role: SketchResidualFormRole::ExactProof,
+                        strategy: Some(SketchResidualStrategy::CubicCubicC2Continuity),
+                        residual,
+                    }
+                }));
+                forms.extend(parts.second_derivative.into_iter().map(|residual| {
+                    SketchResidualForm {
+                        kind: SketchResidualFormKind::CubicCubicC2SecondDerivativePolynomial,
+                        role: SketchResidualFormRole::ExactProof,
+                        strategy: Some(SketchResidualStrategy::CubicCubicC2Continuity),
+                        residual,
+                    }
+                }));
+                SketchResidualFormsReport {
+                    constraint: handle,
+                    status: SketchResidualFormsStatus::Generated,
+                    forms,
+                    diagnostics,
+                }
+            }
             SketchConstraintKind::ArcLineTangent2 {
                 arc,
                 arc_endpoint,
@@ -3104,6 +3208,57 @@ impl SketchSolveProblem {
                     ConstraintKind::GreaterOrEqual,
                     Real::one(),
                 );
+            }
+            SketchConstraintKind::CubicCubicC2Continuity2 {
+                first,
+                first_parameter,
+                second,
+                second_parameter,
+            } => {
+                // Parametric C2 continuity is deliberately stricter than
+                // geometric smoothness. It equates point, velocity, and
+                // acceleration vectors exactly, preserving the retained
+                // parameterization as proof input.
+                let Some(parts) = self.cubic_cubic_c2_exprs(
+                    first,
+                    first_parameter,
+                    second,
+                    second_parameter,
+                    constraint,
+                    rows,
+                ) else {
+                    return;
+                };
+                for (axis, residual) in parts.point.into_iter().enumerate() {
+                    self.push_residual(
+                        problem,
+                        rows,
+                        constraint,
+                        format!("{} c2 point coordinate {axis}", constraint.name),
+                        residual,
+                        SketchResidualStrategy::CubicCubicC2Continuity,
+                    );
+                }
+                for (axis, residual) in parts.first_derivative.into_iter().enumerate() {
+                    self.push_residual(
+                        problem,
+                        rows,
+                        constraint,
+                        format!("{} c2 first derivative {axis}", constraint.name),
+                        residual,
+                        SketchResidualStrategy::CubicCubicC2Continuity,
+                    );
+                }
+                for (axis, residual) in parts.second_derivative.into_iter().enumerate() {
+                    self.push_residual(
+                        problem,
+                        rows,
+                        constraint,
+                        format!("{} c2 second derivative {axis}", constraint.name),
+                        residual,
+                        SketchResidualStrategy::CubicCubicC2Continuity,
+                    );
+                }
             }
             SketchConstraintKind::ArcLineTangent2 {
                 arc,
@@ -4006,6 +4161,33 @@ impl SketchSolveProblem {
         })
     }
 
+    fn cubic_cubic_c2_exprs(
+        &self,
+        first: SketchEntityHandle,
+        first_parameter: SketchParameterHandle,
+        second: SketchEntityHandle,
+        second_parameter: SketchParameterHandle,
+        constraint: &SketchConstraint,
+        rows: &mut Vec<SketchGeneratedRow>,
+    ) -> Option<CubicCubicC2Exprs> {
+        let first = self.cubic2_point_tangent_exprs(first, first_parameter, constraint, rows)?;
+        let second = self.cubic2_point_tangent_exprs(second, second_parameter, constraint, rows)?;
+        Some(CubicCubicC2Exprs {
+            point: [
+                first.point[0].clone() - second.point[0].clone(),
+                first.point[1].clone() - second.point[1].clone(),
+            ],
+            first_derivative: [
+                first.tangent[0].clone() - second.tangent[0].clone(),
+                first.tangent[1].clone() - second.tangent[1].clone(),
+            ],
+            second_derivative: [
+                first.second_derivative[0].clone() - second.second_derivative[0].clone(),
+                first.second_derivative[1].clone() - second.second_derivative[1].clone(),
+            ],
+        })
+    }
+
     fn cubic2_point_tangent_exprs(
         &self,
         handle: SketchEntityHandle,
@@ -4126,6 +4308,13 @@ struct CubicCubicTangentExprs {
     point_incidence: [Expr; 2],
     tangent_cross: Expr,
     tangent_dot: Expr,
+}
+
+#[derive(Clone, Debug)]
+struct CubicCubicC2Exprs {
+    point: [Expr; 2],
+    first_derivative: [Expr; 2],
+    second_derivative: [Expr; 2],
 }
 
 fn coordinate_exprs2(coordinates: &CoordinateExprs) -> [Expr; 2] {
