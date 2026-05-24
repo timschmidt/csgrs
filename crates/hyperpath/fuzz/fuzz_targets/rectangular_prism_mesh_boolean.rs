@@ -2,10 +2,12 @@
 
 use hyperlimit::{Point2, PredicatePolicy};
 use hyperpath::{
-    AxisAlignedSweptSegmentPrism, LinePathSegment, PathMeshBooleanOperation,
-    PathMeshBooleanProgramStep, SweptLineSegment, boolean_path_mesh_program,
-    boolean_path_mesh_sources, boolean_rectangular_prism_chain, boolean_rectangular_prisms,
-    boolean_rectangular_prisms_with_boundary_policy, rectangular_prism_from_i64_bounds,
+    AxisAlignedSweptSegmentPrism, CardinalRotation, LinePathSegment, NetId,
+    PathMeshBooleanOperation, PathMeshBooleanProgramStep, PcbCardinalRectPad, PcbLayerZModel,
+    PcbTrace, SweptLineSegment, TraceLayer, boolean_path_mesh_program, boolean_path_mesh_sources,
+    boolean_rectangular_prism_chain, boolean_rectangular_prisms,
+    boolean_rectangular_prisms_with_boundary_policy, pcb_cardinal_rect_pad_mesh_boolean_source,
+    pcb_trace_mesh_boolean_source, rectangular_prism_from_i64_bounds,
 };
 use hyperreal::Real;
 use libfuzzer_sys::fuzz_target;
@@ -147,6 +149,57 @@ fuzz_target!(|data: &[u8]| {
                         ),
                         PathMeshBooleanProgramStep::new(operation, slab.into()),
                     ],
+                ) {
+                    program.validate_replay().unwrap();
+                    program.steps.last().unwrap().result.validate().unwrap();
+                }
+            }
+        }
+    }
+
+    if data.len() >= 20 && data[14] & 16 == 16 {
+        let Ok(z_model) = PcbLayerZModel::new(
+            Real::from(coord(2)),
+            Real::from(extent(3) + extent(4)),
+            Real::from(extent(3)),
+            PredicatePolicy::default(),
+        ) else {
+            return;
+        };
+        let layer = TraceLayer(u16::from(data[15] % 8));
+        let start = Point2::new(Real::from(coord(0)), Real::from(coord(1)));
+        let end = if data[14] & 4 == 4 {
+            Point2::new(start.x.clone() + Real::from(extent(17)), start.y.clone())
+        } else {
+            Point2::new(start.x.clone(), start.y.clone() + Real::from(extent(17)))
+        };
+        if let Ok(swept) =
+            SweptLineSegment::new(LinePathSegment::new(start, end), Real::from(extent(5)))
+        {
+            let trace = PcbTrace::new(NetId(u32::from(data[16])), layer, swept);
+            let pad = PcbCardinalRectPad::new(
+                NetId(u32::from(data[16])),
+                layer,
+                Point2::new(Real::from(coord(6)), Real::from(coord(7))),
+                Real::from(extent(9)),
+                Real::from(extent(10)),
+                if data[14] & 32 == 32 {
+                    CardinalRotation::Deg90
+                } else {
+                    CardinalRotation::Deg0
+                },
+            )
+            .unwrap();
+            if let (Ok(trace_source), Ok(pad_source)) = (
+                pcb_trace_mesh_boolean_source(&trace, &z_model, PredicatePolicy::default()),
+                pcb_cardinal_rect_pad_mesh_boolean_source(&pad, &z_model, PredicatePolicy::default()),
+            ) {
+                if let Ok(program) = boolean_path_mesh_program(
+                    trace_source,
+                    vec![PathMeshBooleanProgramStep::new(
+                        PathMeshBooleanOperation::Union,
+                        pad_source,
+                    )],
                 ) {
                     program.validate_replay().unwrap();
                     program.steps.last().unwrap().result.validate().unwrap();

@@ -11,14 +11,14 @@ use hyperpath::{
     MeanderError, MeanderObstacle, MeanderPlacementCandidate, NetId, OffsetSide,
     PathMeshBooleanError, PathMeshBooleanOperation, PathMeshBooleanProgramStep,
     PathMeshBooleanSource, PathProvenance, PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad,
-    PcbCircularPad, PcbConvexBoardOutline, PcbOrthogonalBoardOutline, PcbRectPad, PcbTrace,
-    PcbViaStack, PocketPlanError, PocketPlanStopReason, QuadraticBezier, RationalQuadraticBezier,
-    RationalQuadraticBezierError, RectangularPocket, RectangularRegionRelation,
-    RouteCertificationError, SegmentParameterOrder, SourceLengthUnit, SpecctraGridTraceRecord,
-    SpecctraGridViaRecord, SpecctraImportError, SpecctraLayerAlias, SpecctraNetAlias,
-    SpecctraParseError, SupportFootprintStatus, SupportPlanError, SweptLineSegment,
-    TangentAlignment, TangentJoinClass, TangentJoinReport, TangentSpan, TraceLayer,
-    ViaAnnularRingReport, ViaDrillIntent, ViaDrillPolicyClass, ViaLayerSpanRelation,
+    PcbCircularPad, PcbConvexBoardOutline, PcbLayerZModel, PcbOrthogonalBoardOutline, PcbRectPad,
+    PcbTrace, PcbViaStack, PocketPlanError, PocketPlanStopReason, QuadraticBezier,
+    RationalQuadraticBezier, RationalQuadraticBezierError, RectangularPocket,
+    RectangularRegionRelation, RouteCertificationError, SegmentParameterOrder, SourceLengthUnit,
+    SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraImportError, SpecctraLayerAlias,
+    SpecctraNetAlias, SpecctraParseError, SupportFootprintStatus, SupportPlanError,
+    SweptLineSegment, TangentAlignment, TangentJoinClass, TangentJoinReport, TangentSpan,
+    TraceLayer, ViaAnnularRingReport, ViaDrillIntent, ViaDrillPolicyClass, ViaLayerSpanRelation,
     ViaLayerTransitionClass, boolean_path_mesh_program, boolean_path_mesh_sources,
     boolean_rectangular_prism_chain, boolean_rectangular_prisms,
     boolean_rectangular_prisms_with_boundary_policy, build_alternating_detour_meander,
@@ -41,10 +41,12 @@ use hyperpath::{
     intersect_rectangular_regions, offset_axis_aligned_segment, offset_cardinal_arc,
     offset_cubic_bezier_sample, offset_explicit_arc, offset_higher_order_bezier_sample,
     offset_quadratic_bezier_sample, parse_specctra_grid_route_records,
-    parse_specctra_grid_trace_records, rectangular_prism_from_i64_bounds,
-    serialize_specctra_grid_route_records, serialize_specctra_grid_trace_records,
-    serialize_specctra_grid_via_records, specctra_grid_trace_record, specctra_grid_via_record,
-    subtract_rectangular_region, tangent_cross, tangent_dot, tangent_norm_squared,
+    parse_specctra_grid_trace_records, pcb_cardinal_rect_pad_mesh_boolean_source,
+    pcb_rect_pad_mesh_boolean_source, pcb_rect_pad_prism, pcb_trace_mesh_boolean_source,
+    rectangular_prism_from_i64_bounds, serialize_specctra_grid_route_records,
+    serialize_specctra_grid_trace_records, serialize_specctra_grid_via_records,
+    specctra_grid_trace_record, specctra_grid_via_record, subtract_rectangular_region,
+    tangent_cross, tangent_dot, tangent_norm_squared,
 };
 use hyperreal::{Rational, Real};
 use proptest::prelude::*;
@@ -351,6 +353,87 @@ fn mesh_boolean_program_replays_mixed_operations_over_path_sources() {
     assert_eq!(
         boolean_path_mesh_program(stock, vec![]).unwrap_err(),
         PathMeshBooleanError::NotEnoughSources
+    );
+}
+
+#[test]
+fn pcb_mesh_boolean_sources_replay_trace_and_cardinal_pad_layers() {
+    let z_model = PcbLayerZModel::new(r(0), r(10), r(2), PredicatePolicy::default()).unwrap();
+    let layer_slab = z_model.slab_for_layer(TraceLayer(2));
+    assert_eq!(layer_slab.z_min, r(20));
+    assert_eq!(layer_slab.z_max, r(22));
+
+    let trace = trace(7, 2, p(0, 5), p(12, 5), 4);
+    let trace_source =
+        pcb_trace_mesh_boolean_source(&trace, &z_model, PredicatePolicy::default()).unwrap();
+    let pad = PcbCardinalRectPad::new(
+        NetId(7),
+        TraceLayer(2),
+        p(10, 5),
+        r(2),
+        r(6),
+        CardinalRotation::Deg90,
+    )
+    .unwrap();
+    let pad_source =
+        pcb_cardinal_rect_pad_mesh_boolean_source(&pad, &z_model, PredicatePolicy::default())
+            .unwrap();
+    let pad_prism = pcb_rect_pad_prism(
+        &pad.effective_rect().unwrap(),
+        &z_model,
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert_eq!(pad_prism.footprint().min(), &p(7, 4));
+    assert_eq!(pad_prism.footprint().max(), &p(13, 6));
+    assert_eq!(pad_prism.z_min(), &r(20));
+    assert_eq!(pad_prism.z_max(), &r(22));
+
+    let report = boolean_path_mesh_program(
+        trace_source,
+        vec![PathMeshBooleanProgramStep::new(
+            PathMeshBooleanOperation::Union,
+            pad_source,
+        )],
+    )
+    .expect("PCB trace and cardinal pad sources should replay through hypermesh");
+    report.validate_replay().unwrap();
+    assert!(report.mesh().unwrap().facts().mesh.closed_manifold);
+    assert!(report.steps[0].result.validate().is_ok());
+}
+
+#[test]
+fn pcb_mesh_boolean_sources_reject_invalid_layer_and_geometry_models() {
+    assert_eq!(
+        PcbLayerZModel::new(r(0), r(0), r(1), PredicatePolicy::default()).unwrap_err(),
+        PathMeshBooleanError::NonPositiveLayerPitch
+    );
+    assert_eq!(
+        PcbLayerZModel::new(r(0), r(2), r(0), PredicatePolicy::default()).unwrap_err(),
+        PathMeshBooleanError::NonPositiveCopperThickness
+    );
+    assert_eq!(
+        PcbLayerZModel::new(r(0), r(2), r(3), PredicatePolicy::default()).unwrap_err(),
+        PathMeshBooleanError::CopperThicknessExceedsPitch
+    );
+
+    let z_model = PcbLayerZModel::new(r(0), r(10), r(2), PredicatePolicy::default()).unwrap();
+    let zero_pad = PcbRectPad::new(NetId(1), TraceLayer(0), p(0, 0), Real::zero(), r(2)).unwrap();
+    assert_eq!(
+        pcb_rect_pad_mesh_boolean_source(&zero_pad, &z_model, PredicatePolicy::default())
+            .unwrap_err(),
+        PathMeshBooleanError::NonPositivePadExtent
+    );
+
+    let diagonal_trace = PcbTrace::new(
+        NetId(1),
+        TraceLayer(0),
+        SweptLineSegment::new(LinePathSegment::new(p(0, 0), p(4, 4)), r(2)).unwrap(),
+    );
+    assert_eq!(
+        pcb_trace_mesh_boolean_source(&diagonal_trace, &z_model, PredicatePolicy::default())
+            .unwrap_err(),
+        PathMeshBooleanError::NonAxisAlignedSweep
     );
 }
 

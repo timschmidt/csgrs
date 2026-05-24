@@ -11,6 +11,7 @@ pub mod arc;
 pub mod bezier;
 pub mod cam;
 pub mod mesh_boolean;
+pub mod mesh_boolean_pcb;
 pub mod mesh_boolean_program;
 pub mod mesh_boolean_sources;
 pub mod offset;
@@ -51,6 +52,10 @@ pub use mesh_boolean::{
     PathMeshBooleanReport, PathMeshBooleanStep, RectangularPrism, boolean_rectangular_prism_chain,
     boolean_rectangular_prism_chain_with_boundary_policy, boolean_rectangular_prisms,
     boolean_rectangular_prisms_with_boundary_policy, rectangular_prism_from_i64_bounds,
+};
+pub use mesh_boolean_pcb::{
+    PcbLayerSlab, PcbLayerZModel, pcb_cardinal_rect_pad_mesh_boolean_source,
+    pcb_rect_pad_mesh_boolean_source, pcb_rect_pad_prism, pcb_trace_mesh_boolean_source,
 };
 pub use mesh_boolean_program::{
     PathMeshBooleanProgramReport, PathMeshBooleanProgramStep, PathMeshBooleanProgramStepReport,

@@ -6,7 +6,7 @@ use hyperpath::{
     HigherOrderBezier, LinePathSegment, MeanderObstacle, MeanderPlacementCandidate, NetId,
     OffsetSide, PathMeshBooleanOperation, PathMeshBooleanProgramStep, PathProvenance,
     PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad, PcbCircularPad, PcbConvexBoardOutline,
-    PcbOrthogonalBoardOutline, PcbRectPad, PcbTrace, PcbViaStack, QuadraticBezier,
+    PcbLayerZModel, PcbOrthogonalBoardOutline, PcbRectPad, PcbTrace, PcbViaStack, QuadraticBezier,
     RationalQuadraticBezier, RectangularPocket, SourceLengthUnit, SpecctraGridTraceRecord,
     SpecctraGridViaRecord, SpecctraLayerAlias, SpecctraNetAlias, SweptLineSegment, TangentSpan,
     TraceLayer, ViaDrillIntent, boolean_path_mesh_program, boolean_path_mesh_sources,
@@ -30,6 +30,7 @@ use hyperpath::{
     offset_cardinal_arc, offset_cubic_bezier_sample, offset_explicit_arc,
     offset_higher_order_bezier_sample, offset_quadratic_bezier_sample,
     parse_specctra_grid_route_records, parse_specctra_grid_trace_records,
+    pcb_cardinal_rect_pad_mesh_boolean_source, pcb_trace_mesh_boolean_source,
     rectangular_prism_from_i64_bounds, serialize_specctra_grid_route_records,
     serialize_specctra_grid_trace_records, serialize_specctra_grid_via_records,
     specctra_grid_trace_record, specctra_grid_via_record, subtract_rectangular_region,
@@ -794,6 +795,39 @@ fn path_predicates(c: &mut Criterion) {
                         swept_slab.clone().into(),
                     ),
                 ],
+            )
+            .unwrap();
+            report.validate_replay()
+        })
+    });
+    let pcb_z = PcbLayerZModel::new(r(0), r(10), r(2), PredicatePolicy::default()).unwrap();
+    let pcb_trace = trace(7, p(0, 3_000), p(10_000, 3_000));
+    let pcb_pad = PcbCardinalRectPad::new(
+        NetId(7),
+        TraceLayer(0),
+        p(8_000, 3_000),
+        r(2_000),
+        r(4_000),
+        CardinalRotation::Deg90,
+    )
+    .unwrap();
+    c.bench_function("pcb_mesh_boolean_trace_pad_program_replay", |b| {
+        b.iter(|| {
+            let trace_source =
+                pcb_trace_mesh_boolean_source(&pcb_trace, &pcb_z, PredicatePolicy::default())
+                    .unwrap();
+            let pad_source = pcb_cardinal_rect_pad_mesh_boolean_source(
+                &pcb_pad,
+                &pcb_z,
+                PredicatePolicy::default(),
+            )
+            .unwrap();
+            let report = boolean_path_mesh_program(
+                trace_source,
+                vec![PathMeshBooleanProgramStep::new(
+                    PathMeshBooleanOperation::Union,
+                    pad_source,
+                )],
             )
             .unwrap();
             report.validate_replay()

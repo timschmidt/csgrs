@@ -72,6 +72,14 @@ pub enum PathMeshBooleanError {
     NonAxisAlignedSweep,
     /// A swept path source did not have certified positive width.
     NonPositiveSweepWidth,
+    /// A PCB layer model did not have certified positive pitch.
+    NonPositiveLayerPitch,
+    /// A PCB layer model did not have certified positive copper thickness.
+    NonPositiveCopperThickness,
+    /// PCB copper thickness exceeded the layer pitch.
+    CopperThicknessExceedsPitch,
+    /// A rectangular PCB pad did not have certified positive width and height.
+    NonPositivePadExtent,
     /// Footprint bounds did not have strictly positive area.
     DegenerateFootprint,
     /// Z bounds were unordered, equal, or undecidable.
