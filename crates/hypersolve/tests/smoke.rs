@@ -4971,6 +4971,85 @@ fn modified_newton_quadratic_seed_rejects_ambiguous_roots() {
 }
 
 #[test]
+fn modified_newton_quadratic_seed_uses_bounds_to_choose_branch() {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let mut problem = Problem::default();
+    let variable = problem.add_variable("x", real(0));
+    problem.variables[variable.0 as usize].lower = Some(real(3));
+    problem.add_constraint(Constraint::equality(
+        "bounded two roots",
+        x.clone() * x.clone() - Expr::int(5) * x + Expr::int(6),
+    ));
+    let config = SolverConfig {
+        proposal_engine: ProposalEngineKind::ModifiedNewtonLeastSquares,
+        max_iterations: 1,
+        ..SolverConfig::default()
+    };
+
+    let report = solve_damped_least_squares(SolverState { problem, config });
+
+    assert_eq!(report.reason, ConvergenceReason::Converged);
+    assert_eq!(report.iterations, 0);
+    assert_eq!(report.preprocessing.quadratic_soluble_alone_rows, 1);
+    assert_eq!(report.preprocessing.quadratic_seed_assignments, 1);
+    assert_eq!(report.preprocessing.rejected_quadratic_seed_assignments, 0);
+}
+
+#[test]
+fn modified_newton_quadratic_seed_rejects_bounds_that_do_not_choose_one_branch() {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let mut both_in_bounds = Problem::default();
+    let both_variable = both_in_bounds.add_variable("x", real(0));
+    both_in_bounds.variables[both_variable.0 as usize].lower = Some(real(2));
+    both_in_bounds.variables[both_variable.0 as usize].upper = Some(real(3));
+    both_in_bounds.add_constraint(Constraint::equality(
+        "both roots retained",
+        x.clone() * x.clone() - Expr::int(5) * x.clone() + Expr::int(6),
+    ));
+    let config = SolverConfig {
+        proposal_engine: ProposalEngineKind::ModifiedNewtonLeastSquares,
+        max_iterations: 0,
+        ..SolverConfig::default()
+    };
+
+    let both_report = solve_damped_least_squares(SolverState {
+        problem: both_in_bounds,
+        config: config.clone(),
+    });
+
+    assert_eq!(both_report.reason, ConvergenceReason::MaxIterations);
+    assert_eq!(both_report.preprocessing.quadratic_seed_assignments, 0);
+    assert_eq!(
+        both_report
+            .preprocessing
+            .rejected_quadratic_seed_assignments,
+        1
+    );
+
+    let mut neither_in_bounds = Problem::default();
+    let neither_variable = neither_in_bounds.add_variable("x", real(0));
+    neither_in_bounds.variables[neither_variable.0 as usize].upper = Some(real(1));
+    neither_in_bounds.add_constraint(Constraint::equality(
+        "no retained root",
+        x.clone() * x.clone() - Expr::int(5) * x + Expr::int(6),
+    ));
+
+    let neither_report = solve_damped_least_squares(SolverState {
+        problem: neither_in_bounds,
+        config,
+    });
+
+    assert_eq!(neither_report.reason, ConvergenceReason::MaxIterations);
+    assert_eq!(neither_report.preprocessing.quadratic_seed_assignments, 0);
+    assert_eq!(
+        neither_report
+            .preprocessing
+            .rejected_quadratic_seed_assignments,
+        1
+    );
+}
+
+#[test]
 fn modified_newton_dragged_parameter_weights_bias_proposal_only() {
     let mut problem = Problem::default();
     let x = problem.add_variable("x", real(0));

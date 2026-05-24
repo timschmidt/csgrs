@@ -2626,6 +2626,26 @@ fn certification(c: &mut Criterion) {
             })
         })
     });
+    c.bench_function("solve_modified_newton_bounded_quadratic_seed", |b| {
+        b.iter(|| {
+            let x = Expr::symbol(SymbolId(0), "x");
+            let mut problem = Problem::default();
+            let variable = problem.add_variable("x", r(0));
+            problem.variables[variable.0 as usize].lower = Some(r(3));
+            problem.add_constraint(Constraint::equality(
+                "bench bounded quadratic seed",
+                x.clone() * x.clone() - Expr::int(5) * x + Expr::int(6),
+            ));
+            solve_damped_least_squares(SolverState {
+                problem,
+                config: SolverConfig {
+                    max_iterations: 1,
+                    proposal_engine: ProposalEngineKind::ModifiedNewtonLeastSquares,
+                    ..SolverConfig::default()
+                },
+            })
+        })
+    });
     c.bench_function("solve_modified_newton_dragged_parameter", |b| {
         b.iter(|| {
             let mut problem = Problem::default();

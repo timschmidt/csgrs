@@ -449,11 +449,10 @@ fn apply_modified_newton_quadratic_seeds(
         return;
     };
     for solution in solutions {
-        if solution.roots.len() != 1 || seeded_symbols.contains(&solution.symbol) {
+        if seeded_symbols.contains(&solution.symbol) {
             preprocessing.rejected_quadratic_seed_assignments += 1;
             continue;
         }
-        let root = solution.roots[0].clone();
         let Some(variable_index) = problem
             .variables
             .iter()
@@ -463,16 +462,43 @@ fn apply_modified_newton_quadratic_seeds(
             continue;
         };
         let variable = &mut problem.variables[variable_index];
-        if variable.fixed
-            || !value_within_bounds(&root, variable.lower.as_ref(), variable.upper.as_ref())
-        {
+        let Some(root) = branch_safe_quadratic_seed_root(&solution.roots, variable) else {
             preprocessing.rejected_quadratic_seed_assignments += 1;
             continue;
-        }
+        };
         variable.value = root;
         seeded_symbols.insert(solution.symbol);
         preprocessing.quadratic_seed_assignments += 1;
     }
+}
+
+/// Select an exact quadratic soluble-alone seed only when bounds choose a branch.
+///
+/// SolveSpace-style preprocessing can use "soluble alone" equations to improve
+/// the starting point before Newton iteration, but Yap's EGC boundary still
+/// treats this as proposal construction rather than proof. A univariate
+/// quadratic with two real roots is branch-ambiguous unless the retained exact
+/// variable bounds admit exactly one root. This helper therefore accepts the
+/// unique admissible root, rejects fixed variables, and rejects both
+/// zero-admissible and multi-admissible cases without consulting primitive
+/// floating order. Candidate acceptance remains exact residual replay after the
+/// proposal step. See Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997).
+fn branch_safe_quadratic_seed_root(
+    roots: &[Real],
+    variable: &crate::model::Variable,
+) -> Option<Real> {
+    if variable.fixed {
+        return None;
+    }
+    let mut admissible = roots
+        .iter()
+        .filter(|root| value_within_bounds(root, variable.lower.as_ref(), variable.upper.as_ref()));
+    let root = admissible.next()?.clone();
+    if admissible.next().is_some() {
+        return None;
+    }
+    Some(root)
 }
 
 fn apply_modified_newton_substitution_seeds(

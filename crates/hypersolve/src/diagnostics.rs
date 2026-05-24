@@ -128,8 +128,9 @@ pub struct ProposalPreprocessingReport {
     /// Number of exact affine soluble-alone assignments rejected before
     /// seeding.
     pub rejected_affine_seed_assignments: usize,
-    /// Number of unique exact quadratic-root assignments applied as initial
-    /// proposal seeds.
+    /// Number of branch-safe exact quadratic-root assignments applied as
+    /// initial proposal seeds. A quadratic row is branch-safe when it has a
+    /// repeated root or exact variable bounds admit exactly one real root.
     pub quadratic_seed_assignments: usize,
     /// Number of quadratic-root candidates rejected before seeding.
     pub rejected_quadratic_seed_assignments: usize,

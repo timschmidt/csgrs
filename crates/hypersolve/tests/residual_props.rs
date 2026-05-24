@@ -2681,6 +2681,41 @@ proptest! {
     }
 
     #[test]
+    fn modified_newton_generated_bounded_quadratic_seeds_choose_exact_branch(
+        start in -12_i16..=12,
+        lower_root in -12_i16..=8,
+        gap in 1_i16..=8,
+    ) {
+        let x = Expr::symbol(SymbolId(0), "x");
+        let lower_root = i64::from(lower_root);
+        let upper_root = lower_root + i64::from(gap);
+        let mut problem = Problem::default();
+        let variable = problem.add_variable("x", Real::from(i64::from(start)));
+        problem.variables[variable.0 as usize].lower = Some(Real::from(lower_root + 1));
+        problem.add_constraint(Constraint::equality(
+            "generated bounded quadratic",
+            x.clone() * x.clone()
+                - Expr::int(lower_root + upper_root) * x
+                + Expr::int(lower_root * upper_root),
+        ));
+
+        let report = solve_damped_least_squares(SolverState {
+            problem,
+            config: SolverConfig {
+                max_iterations: 1,
+                proposal_engine: ProposalEngineKind::ModifiedNewtonLeastSquares,
+                ..SolverConfig::default()
+            },
+        });
+
+        prop_assert_eq!(report.reason, ConvergenceReason::Converged);
+        prop_assert_eq!(report.iterations, 0);
+        prop_assert_eq!(report.preprocessing.quadratic_soluble_alone_rows, 1);
+        prop_assert_eq!(report.preprocessing.quadratic_seed_assignments, 1);
+        prop_assert_eq!(report.preprocessing.rejected_quadratic_seed_assignments, 0);
+    }
+
+    #[test]
     fn modified_newton_generated_dragged_weights_report_and_converge(
         start in -12_i16..=12,
         target in -12_i16..=12,
