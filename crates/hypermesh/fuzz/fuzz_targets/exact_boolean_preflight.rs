@@ -1652,9 +1652,13 @@ fn exercise_multi_component_coplanar_union() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .expect("vertex-edge point contact fixture must import");
-    assert!(
-        arrange_coplanar_surface_point_touch_union(&edge_touch_left, &vertex_edge_right).is_none()
-    );
+    let vertex_edge_union =
+        arrange_coplanar_surface_point_touch_union(&edge_touch_left, &vertex_edge_right)
+            .expect("vertex-edge point contact should split the touched edge exactly");
+    vertex_edge_union.validate().unwrap();
+    vertex_edge_union
+        .validate_union_against_sources(&edge_touch_left, &vertex_edge_right)
+        .unwrap();
 
     let bridge_left = ExactMesh::from_i64_triangles_with_policy(
         &[

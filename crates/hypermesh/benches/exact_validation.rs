@@ -3415,6 +3415,12 @@ fn exact_boolean_coplanar_convex_surface_multi_union(c: &mut Criterion) {
             ValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
+        let vertex_edge_point_touch_right = ExactMesh::from_i64_triangles_with_policy(
+            &[1, 2, 0, 3, 3, 0, 3, 4, 0],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
 
         c.bench_function("exact_boolean_coplanar_convex_surface_multi_union", |b| {
             b.iter(|| {
@@ -3448,6 +3454,11 @@ fn exact_boolean_coplanar_convex_surface_multi_union(c: &mut Criterion) {
                     &edge_touch_left,
                     &point_touch_right,
                 );
+                let vertex_edge_point_touch_arrangement =
+                    arrange_coplanar_surface_point_touch_union(
+                        &edge_touch_left,
+                        &vertex_edge_point_touch_right,
+                    );
                 (
                     arrangement
                         .as_ref()
@@ -3530,6 +3541,16 @@ fn exact_boolean_coplanar_convex_surface_multi_union(c: &mut Criterion) {
                         .as_ref()
                         .map(|output| output.validate()),
                     point_touch_arrangement,
+                    vertex_edge_point_touch_arrangement.as_ref().map(|output| {
+                        output.validate_union_against_sources(
+                            &edge_touch_left,
+                            &vertex_edge_point_touch_right,
+                        )
+                    }),
+                    vertex_edge_point_touch_arrangement
+                        .as_ref()
+                        .map(|output| output.validate()),
+                    vertex_edge_point_touch_arrangement,
                     hypermesh::exact::preflight_boolean_exact(
                         &left,
                         &right,
@@ -3584,6 +3605,12 @@ fn exact_boolean_coplanar_convex_surface_multi_union(c: &mut Criterion) {
                         hypermesh::exact::ExactBooleanOperation::Union,
                     )
                     .map(|report| report.validate()),
+                    hypermesh::exact::preflight_boolean_exact(
+                        &edge_touch_left,
+                        &vertex_edge_point_touch_right,
+                        hypermesh::exact::ExactBooleanOperation::Union,
+                    )
+                    .map(|report| report.validate()),
                     hypermesh::exact::boolean_exact(
                         &left,
                         &right,
@@ -3643,6 +3670,13 @@ fn exact_boolean_coplanar_convex_surface_multi_union(c: &mut Criterion) {
                     hypermesh::exact::boolean_exact(
                         &edge_touch_left,
                         &point_touch_right,
+                        hypermesh::exact::ExactBooleanOperation::Union,
+                        ValidationPolicy::ALLOW_BOUNDARY,
+                    )
+                    .unwrap(),
+                    hypermesh::exact::boolean_exact(
+                        &edge_touch_left,
+                        &vertex_edge_point_touch_right,
                         hypermesh::exact::ExactBooleanOperation::Union,
                         ValidationPolicy::ALLOW_BOUNDARY,
                     )

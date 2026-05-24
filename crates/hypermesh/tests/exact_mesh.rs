@@ -13102,7 +13102,7 @@ fn exact_coplanar_convex_surface_union_materializes_full_edge_touching_rectangle
 
 #[cfg(feature = "exact-triangulation")]
 #[test]
-fn exact_coplanar_surface_point_touch_union_rejects_t_junction_contact() {
+fn exact_coplanar_surface_point_touch_union_materializes_vertex_edge_contact() {
     let left = ExactMesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 2, 0, 0, 2, 2, 0, 0, 2, 0],
         &[0, 1, 2, 0, 2, 3],
@@ -13116,10 +13116,20 @@ fn exact_coplanar_surface_point_touch_union_rejects_t_junction_contact() {
     )
     .unwrap();
 
-    assert!(
+    let union =
         hypermesh::exact::arrange_coplanar_surface_point_touch_union(&left, &vertex_edge_right)
-            .is_none()
-    );
+            .expect("vertex-edge point contact should split the touched edge exactly");
+    union.validate().unwrap();
+    union
+        .validate_union_against_sources(&left, &vertex_edge_right)
+        .unwrap();
+    assert_eq!(union.polygons.len(), 2);
+    assert!(union.polygons.iter().any(|polygon| {
+        polygon.len() == 5
+            && polygon.iter().any(|point| {
+                real_eq(&point.x, &ExactReal::from(1)) && real_eq(&point.y, &ExactReal::from(2))
+            })
+    }));
     let preflight = hypermesh::exact::preflight_boolean_exact(
         &left,
         &vertex_edge_right,
@@ -13127,9 +13137,34 @@ fn exact_coplanar_surface_point_touch_union_rejects_t_junction_contact() {
     )
     .unwrap();
     preflight.validate().unwrap();
+    preflight
+        .validate_against_sources(&left, &vertex_edge_right)
+        .unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::exact::ExactBooleanSupport::RequiresBoundaryPolicy
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchUnion
+    );
+    let result = hypermesh::exact::boolean_exact(
+        &left,
+        &vertex_edge_right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    result
+        .validate_operation_against_sources(
+            &left,
+            &vertex_edge_right,
+            hypermesh::exact::ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfacePointTouchUnion
+        }
     );
 }
 
