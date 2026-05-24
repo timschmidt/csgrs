@@ -14448,6 +14448,111 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
         hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
     );
 
+    let nonrectilinear_channel_retained_hole_cutters = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            15, 4, 0, 17, 4, 0, 17, 6, 0, 15, 6, 0, //
+            8, -2, 0, 12, -2, 0, 12, 22, 0, 8, 22, 0, //
+            -2, 4, 0, 5, 4, 0, 3, 8, 0, -2, 8, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7, //
+            8, 9, 10, 8, 10, 11,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_multi_difference(
+            &channel_left,
+            &nonrectilinear_channel_retained_hole_cutters,
+        )
+        .is_none(),
+        "no-hole replay must not silently drop a retained strict hole"
+    );
+
+    let nonrectilinear_channel_consumed_hole_cutters = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            1, 5, 0, 2, 5, 0, 2, 6, 0, 1, 6, 0, //
+            8, -2, 0, 12, -2, 0, 12, 22, 0, 8, 22, 0, //
+            -2, 4, 0, 5, 4, 0, 3, 8, 0, -2, 8, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7, //
+            8, 9, 10, 8, 10, 11,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert!(
+        hypermesh::exact::arrange_coplanar_convex_surface_component_holed_difference(
+            &channel_left,
+            &nonrectilinear_channel_consumed_hole_cutters,
+        )
+        .is_none()
+    );
+    let consumed_channel_difference = hypermesh::exact::arrange_coplanar_surface_multi_difference(
+        &channel_left,
+        &nonrectilinear_channel_consumed_hole_cutters,
+    )
+    .expect("a side-cutter split should consume strict holes wholly inside removed openings");
+    consumed_channel_difference.validate().unwrap();
+    consumed_channel_difference
+        .validate_difference_against_sources(
+            &channel_left,
+            &nonrectilinear_channel_consumed_hole_cutters,
+        )
+        .unwrap();
+    assert_eq!(consumed_channel_difference.polygons.len(), 2);
+    assert!(
+        !consumed_channel_difference
+            .polygons
+            .iter()
+            .flatten()
+            .any(|point| real_eq(&point.x, &ExactReal::from(1))
+                && real_eq(&point.y, &ExactReal::from(5)))
+    );
+    let mut stale_consumed_channel = consumed_channel_difference.clone();
+    stale_consumed_channel.polygons.pop();
+    assert!(stale_consumed_channel.validate().is_err());
+    let consumed_channel_preflight = hypermesh::exact::preflight_boolean_exact(
+        &channel_left,
+        &nonrectilinear_channel_consumed_hole_cutters,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    consumed_channel_preflight.validate().unwrap();
+    consumed_channel_preflight
+        .validate_against_sources(&channel_left, &nonrectilinear_channel_consumed_hole_cutters)
+        .unwrap();
+    assert_eq!(
+        consumed_channel_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
+    );
+    let consumed_channel_result = hypermesh::exact::boolean_exact(
+        &channel_left,
+        &nonrectilinear_channel_consumed_hole_cutters,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    consumed_channel_result
+        .validate_operation_against_sources(
+            &channel_left,
+            &nonrectilinear_channel_consumed_hole_cutters,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        consumed_channel_result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfaceMultiDifference
+        }
+    );
+
     let side_opening_left = ExactMesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 20, 0, 0, 20, 20, 0, 0, 20, 0],
         &[0, 1, 2, 0, 2, 3],

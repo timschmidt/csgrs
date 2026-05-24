@@ -3877,6 +3877,20 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
             ValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
+        let nonrectilinear_channel_consumed_only_right = ExactMesh::from_i64_triangles_with_policy(
+            &[
+                1, 5, 0, 2, 5, 0, 2, 6, 0, 1, 6, 0, //
+                8, -2, 0, 12, -2, 0, 12, 22, 0, 8, 22, 0, //
+                -2, 4, 0, 5, 4, 0, 3, 8, 0, -2, 8, 0,
+            ],
+            &[
+                0, 1, 2, 0, 2, 3, //
+                4, 5, 6, 4, 6, 7, //
+                8, 9, 10, 8, 10, 11,
+            ],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
         let component_holed_left = ExactMesh::from_i64_triangles_with_policy(
             &[
                 0, 0, 0, 10, 0, 0, 10, 10, 0, 0, 10, 0, //
@@ -4471,6 +4485,29 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
                         hypermesh::exact::boolean_exact(
                             &nonrectilinear_channel_left,
                             &nonrectilinear_channel_right,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                            ValidationPolicy::ALLOW_BOUNDARY,
+                        )
+                        .unwrap(),
+                        arrange_coplanar_surface_multi_difference(
+                            &nonrectilinear_channel_left,
+                            &nonrectilinear_channel_consumed_only_right,
+                        )
+                        .map(|output| {
+                            output.validate_difference_against_sources(
+                                &nonrectilinear_channel_left,
+                                &nonrectilinear_channel_consumed_only_right,
+                            )
+                        }),
+                        hypermesh::exact::preflight_boolean_exact(
+                            &nonrectilinear_channel_left,
+                            &nonrectilinear_channel_consumed_only_right,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                        )
+                        .map(|report| report.validate()),
+                        hypermesh::exact::boolean_exact(
+                            &nonrectilinear_channel_left,
+                            &nonrectilinear_channel_consumed_only_right,
                             hypermesh::exact::ExactBooleanOperation::Difference,
                             ValidationPolicy::ALLOW_BOUNDARY,
                         )

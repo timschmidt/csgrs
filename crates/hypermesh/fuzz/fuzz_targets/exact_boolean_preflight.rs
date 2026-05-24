@@ -3251,6 +3251,72 @@ fn exercise_component_coplanar_difference() {
         channel_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
     );
+    let nonrectilinear_channel_retained_hole_cutters =
+        ExactMesh::from_i64_triangles_with_policy(
+            &[
+                15, 4, 0, 17, 4, 0, 17, 6, 0, 15, 6, 0, //
+                8, -2, 0, 12, -2, 0, 12, 22, 0, 8, 22, 0, //
+                -2, 4, 0, 5, 4, 0, 3, 8, 0, -2, 8, 0,
+            ],
+            &[
+                0, 1, 2, 0, 2, 3, //
+                4, 5, 6, 4, 6, 7, //
+                8, 9, 10, 8, 10, 11,
+            ],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .expect("nonrectilinear channel retained-hole cutter fixture must import");
+    assert!(
+        arrange_coplanar_surface_multi_difference(
+            &channel_left,
+            &nonrectilinear_channel_retained_hole_cutters,
+        )
+        .is_none()
+    );
+
+    let nonrectilinear_channel_consumed_hole_cutters =
+        ExactMesh::from_i64_triangles_with_policy(
+            &[
+                1, 5, 0, 2, 5, 0, 2, 6, 0, 1, 6, 0, //
+                8, -2, 0, 12, -2, 0, 12, 22, 0, 8, 22, 0, //
+                -2, 4, 0, 5, 4, 0, 3, 8, 0, -2, 8, 0,
+            ],
+            &[
+                0, 1, 2, 0, 2, 3, //
+                4, 5, 6, 4, 6, 7, //
+                8, 9, 10, 8, 10, 11,
+            ],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .expect("nonrectilinear channel consumed-hole cutter fixture must import");
+    let consumed_channel_difference = arrange_coplanar_surface_multi_difference(
+        &channel_left,
+        &nonrectilinear_channel_consumed_hole_cutters,
+    )
+    .expect("nonrectilinear side-cutter split should consume strict interior holes");
+    consumed_channel_difference.validate().unwrap();
+    consumed_channel_difference
+        .validate_difference_against_sources(
+            &channel_left,
+            &nonrectilinear_channel_consumed_hole_cutters,
+        )
+        .unwrap();
+    assert_eq!(consumed_channel_difference.polygons.len(), 2);
+    let consumed_channel_preflight = preflight_boolean_exact(
+        &channel_left,
+        &nonrectilinear_channel_consumed_hole_cutters,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("nonrectilinear consumed-hole channel preflight should classify shortcut");
+    consumed_channel_preflight.validate().unwrap();
+    consumed_channel_preflight
+        .validate_against_sources(&channel_left, &nonrectilinear_channel_consumed_hole_cutters)
+        .unwrap();
+    assert_eq!(
+        consumed_channel_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
+    );
+
     let nonrectilinear_channel_with_holes = ExactMesh::from_i64_triangles_with_policy(
         &[
             2, 17, 0, 4, 17, 0, 4, 19, 0, 2, 19, 0, //

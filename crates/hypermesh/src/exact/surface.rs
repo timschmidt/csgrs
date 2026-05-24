@@ -4510,19 +4510,32 @@ pub fn arrange_coplanar_surface_multi_difference(
             }
             _ => {
                 let mut remnants = if !holes.is_empty() {
-                    let opened = materialize_cutter_hole_contact_component_holed_difference(
+                    if let Some(opened) = materialize_cutter_hole_contact_component_holed_difference(
                         component,
                         &cutter_indices,
                         &holes,
                         &right_components,
-                    )?;
-                    if opened.iter().any(|component| !component.holes.is_empty()) {
+                    ) {
+                        if opened.iter().any(|component| !component.holes.is_empty()) {
+                            return None;
+                        }
+                        opened
+                            .into_iter()
+                            .map(|component| component.outer)
+                            .collect::<Vec<_>>()
+                    } else if let Some(remnants) =
+                        materialize_side_cutter_multi_component_difference_consuming_holes(
+                            component,
+                            &cutter_indices,
+                            &holes,
+                            &right_components,
+                            "coplanar nonconvex multi-component consumed-hole side-cutter difference",
+                        )
+                    {
+                        remnants
+                    } else {
                         return None;
                     }
-                    opened
-                        .into_iter()
-                        .map(|component| component.outer)
-                        .collect::<Vec<_>>()
                 } else if let Some(remnants) = materialize_side_cutter_multi_component_difference(
                     component,
                     &cutter_indices,
@@ -7220,6 +7233,52 @@ fn materialize_side_cutter_multi_component_difference(
         label,
     )
     .map(|(_, polygons)| polygons)
+}
+
+/// Replay a no-hole side-cutter split that consumes strict interior rings.
+///
+/// This is the no-hole counterpart to
+/// [`materialize_side_cutter_multi_component_holed_difference`]. The retained
+/// geometry is still the exact multi-output side-cutter split, but every
+/// strict interior right component must be wholly owned by exactly one removed
+/// side opening. If any ring would survive in a retained output, touch a split
+/// boundary, or have multiple possible owners, this helper rejects so the
+/// component/holed or later planar-cell materializer owns that topology.
+///
+/// The distinction is Yap's retained-object discipline from "Towards Exact
+/// Geometric Computation," *Computational Geometry* 7.1-2 (1997): removing a
+/// source ring is a certified topology change, not a side effect of polygon
+/// clipping. The retained split loops are the Weiler-Atherton fragment replay
+/// described in Weiler and Atherton, "Hidden Surface Removal Using Polygon
+/// Area Sorting," *SIGGRAPH Computer Graphics* 11.2 (1977).
+#[cfg(feature = "exact-triangulation")]
+fn materialize_side_cutter_multi_component_difference_consuming_holes(
+    component: &ConvexUnionComponent,
+    cut_indices: &[usize],
+    holes: &[ComponentHoleCandidate],
+    right_components: &[ConvexUnionComponent],
+    label: &'static str,
+) -> Option<Vec<Vec<Point3>>> {
+    if cut_indices.len() < 2 || holes.is_empty() {
+        return None;
+    }
+    let projection = component.projection;
+    let (removed_openings, polygons) = materialize_side_cutter_multi_component_difference_core(
+        component,
+        cut_indices,
+        right_components,
+        label,
+    )?;
+    for hole in holes {
+        if !hole_strictly_consumed_by_one_removed_opening(
+            &hole.ring,
+            &removed_openings,
+            projection,
+        )? {
+            return None;
+        }
+    }
+    Some(polygons)
 }
 
 #[cfg(feature = "exact-triangulation")]
