@@ -1246,6 +1246,32 @@ fn sketch_problem_with_projected_point_on_circles(
     sketch
 }
 
+fn sketch_problem_with_projected_point_on_arcs(row_count: usize) -> hypersolve::SketchSolveProblem {
+    let mut sketch = hypersolve::SketchSolveProblem::new();
+    let origin = sketch.add_point3d("project-arc.origin", r(1), r(2), r(3));
+    let normal = sketch.add_normal3d("project-arc.normal", r(1), r(0), r(0), r(0));
+    let workplane = sketch.add_workplane("project-arc.workplane", origin, normal);
+    for index in 0..row_count {
+        let y = index as i64;
+        let center = sketch.add_point2d(format!("projarc{index}.center"), r(2), r(y));
+        let start = sketch.add_point2d(format!("projarc{index}.start"), r(7), r(y));
+        let end = sketch.add_point2d(format!("projarc{index}.end"), r(2), r(y + 5));
+        let radius = sketch.add_distance(format!("projarc{index}.radius"), r(5));
+        let arc =
+            sketch.add_arc_of_circle2(format!("projarc{index}.arc"), center, start, end, radius);
+        let point = sketch.add_point3d(format!("projarc{index}.point"), r(6), r(y + 6), r(99 - y));
+        hypersolve::sketch_incidence_builders::projected_point_on_arc3(
+            &mut sketch,
+            format!("projected point on arc {index}"),
+            workplane,
+            point,
+            arc,
+            hypersolve::SketchArcPointSweep::CounterClockwiseMinor,
+        );
+    }
+    sketch
+}
+
 fn sketch_problem_with_projected_point_line_distance_ranges(
     row_count: usize,
 ) -> hypersolve::SketchSolveProblem {
@@ -1668,6 +1694,10 @@ fn certification(c: &mut Criterion) {
     let projected_point_on_circle_sketch = sketch_problem_with_projected_point_on_circles(16);
     c.bench_function("sketch_projected_point_on_circle_lowering", |b| {
         b.iter(|| projected_point_on_circle_sketch.lower_to_problem())
+    });
+    let projected_point_on_arc_sketch = sketch_problem_with_projected_point_on_arcs(16);
+    c.bench_function("sketch_projected_point_on_arc_lowering", |b| {
+        b.iter(|| projected_point_on_arc_sketch.lower_to_problem())
     });
     let projected_point_line_distance_range_sketch =
         sketch_problem_with_projected_point_line_distance_ranges(16);
@@ -2130,6 +2160,24 @@ fn certification(c: &mut Criterion) {
         b.iter(|| {
             for handle in &projected_point_on_circle_form_handles {
                 let _ = projected_point_on_circle_sketch.residual_forms_for_constraint(*handle);
+            }
+        })
+    });
+    let projected_point_on_arc_form_handles = projected_point_on_arc_sketch
+        .constraints()
+        .iter()
+        .filter(|constraint| {
+            matches!(
+                constraint.kind,
+                hypersolve::SketchConstraintKind::ProjectedPointOnArc3 { .. }
+            )
+        })
+        .map(|constraint| constraint.handle)
+        .collect::<Vec<_>>();
+    c.bench_function("sketch_projected_point_on_arc_residual_forms", |b| {
+        b.iter(|| {
+            for handle in &projected_point_on_arc_form_handles {
+                let _ = projected_point_on_arc_sketch.residual_forms_for_constraint(*handle);
             }
         })
     });

@@ -6,10 +6,10 @@ use hypersolve::{
     IntervalBoxCertificationStatus, MultivariateQuadraticKrawczykStatus, PreparedProblem,
     PreparedSolverBlock, Problem, ProposalEngineKind, ProposalEnginePrecision,
     ProposalEngineReport, RootIsolationStatus, SketchArcEndpoint, SketchArcLengthSweep,
-    SketchArcTangencyBranch, SketchConstructionCertificateStatus, SketchDegeneracyKind,
-    SketchDegeneracyStatus, SketchEntityDomain, SketchEntityDomainKind, SketchEntityDomainStatus,
-    SketchFailedConstraintStatus, SketchGeneratedRowStatus, SketchLineEndpoint,
-    SketchParameterDomain, SketchParameterDomainStatus, SketchResidualFormKind,
+    SketchArcPointSweep, SketchArcTangencyBranch, SketchConstructionCertificateStatus,
+    SketchDegeneracyKind, SketchDegeneracyStatus, SketchEntityDomain, SketchEntityDomainKind,
+    SketchEntityDomainStatus, SketchFailedConstraintStatus, SketchGeneratedRowStatus,
+    SketchLineEndpoint, SketchParameterDomain, SketchParameterDomainStatus, SketchResidualFormKind,
     SketchResidualFormRole, SketchResidualFormsStatus, SketchResidualStrategy,
     SketchRoundTripMetadata, SketchSolveProblem, SketchTangentOrientation,
     SketchUnitToleranceStatus, SketchWorkplaneFrameStatus, SolverBlockRowKind, SolverConfig,
@@ -2263,6 +2263,78 @@ proptest! {
         prop_assert_eq!(
             forms.forms[1].kind,
             SketchResidualFormKind::ProjectedCircleIncidencePolynomial
+        );
+    }
+
+    #[test]
+    fn sketch_projected_point_on_arc_rows_replay_identity_workplane_branches(
+        ox in -4_i16..=4,
+        oy in -4_i16..=4,
+        oz in -4_i16..=4,
+        cx in -4_i16..=4,
+        cy in -4_i16..=4,
+        radius in 1_i16..=8,
+        normal_offset in -8_i16..=8,
+    ) {
+        let ox = i64::from(ox);
+        let oy = i64::from(oy);
+        let oz = i64::from(oz);
+        let cx = i64::from(cx);
+        let cy = i64::from(cy);
+        let radius = i64::from(radius);
+        let normal_offset = i64::from(normal_offset);
+        let mut sketch = SketchSolveProblem::new();
+        let origin = sketch.add_point3d("origin", Real::from(ox), Real::from(oy), Real::from(oz));
+        let normal = sketch.add_normal3d(
+            "normal",
+            Real::from(1),
+            Real::from(0),
+            Real::from(0),
+            Real::from(0),
+        );
+        let workplane = sketch.add_workplane("workplane", origin, normal);
+        let center = sketch.add_point2d("center", Real::from(cx), Real::from(cy));
+        let start = sketch.add_point2d("start", Real::from(cx + radius), Real::from(cy));
+        let end = sketch.add_point2d("end", Real::from(cx), Real::from(cy + radius));
+        let radius_entity = sketch.add_distance("radius", Real::from(radius));
+        let arc = sketch.add_arc_of_circle2("arc", center, start, end, radius_entity);
+        let point = sketch.add_point3d(
+            "point",
+            Real::from(ox + cx + radius),
+            Real::from(oy + cy),
+            Real::from(oz + normal_offset),
+        );
+        let handle = sketch.add_projected_point_on_arc3(
+            "projected point on arc",
+            workplane,
+            point,
+            arc,
+            SketchArcPointSweep::CounterClockwiseMinor,
+        );
+
+        let lowered = sketch.lower_to_problem();
+        let certification = certify_candidate(
+            &PreparedProblem::new(&lowered.problem),
+            &context_from_problem(&lowered.problem),
+        );
+        let forms = sketch.residual_forms_for_constraint(handle);
+
+        prop_assert_eq!(lowered.rows.len(), 7);
+        prop_assert_eq!(lowered.rows[0].strategy, Some(SketchResidualStrategy::WorkplaneUnitQuaternion));
+        let arc_rows = lowered.rows[1..]
+            .iter()
+            .all(|row| row.strategy == Some(SketchResidualStrategy::ProjectedPointArcIncidence));
+        prop_assert!(arc_rows);
+        prop_assert!(certification.all_satisfied());
+        prop_assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+        prop_assert_eq!(forms.forms.len(), 7);
+        prop_assert_eq!(
+            forms.forms[4].kind,
+            SketchResidualFormKind::ProjectedArcIncidenceSweepBranchPredicate
+        );
+        prop_assert_eq!(
+            forms.forms[6].kind,
+            SketchResidualFormKind::ProjectedArcIncidencePointBranchPredicate
         );
     }
 

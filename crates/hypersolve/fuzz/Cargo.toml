@@ -42,6 +42,13 @@ doc = false
 bench = false
 
 [[bin]]
+name = "sketch_projected_point_on_arc"
+path = "fuzz_targets/sketch_projected_point_on_arc.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
 name = "sketch_projected_point_line_distance_range"
 path = "fuzz_targets/sketch_projected_point_line_distance_range.rs"
 test = false

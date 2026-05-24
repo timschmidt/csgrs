@@ -10,16 +10,17 @@ use hypersolve::{
     LinearAdapterKind, LinearAdapterPrecision, LinearBackend, MultivariateQuadraticKrawczykStatus,
     PreparedProblem, PreparedSolverBlock, Problem, ProposalEngineKind, ProposalEnginePrecision,
     RootIsolationStatus, RootMultiplicityStatus, SketchArcEndpoint, SketchArcLengthSweep,
-    SketchArcTangencyBranch, SketchConstraintKind, SketchConstructionCertificateStatus,
-    SketchDegeneracyKind, SketchDegeneracyStatus, SketchEntityDomain, SketchEntityDomainKind,
-    SketchEntityDomainStatus, SketchEntityHandle, SketchEntityKind, SketchFailedConstraintStatus,
-    SketchGeneratedRowStatus, SketchLineEndpoint, SketchParameterDomain, SketchParameterDomainKind,
-    SketchParameterDomainStatus, SketchResidualFormKind, SketchResidualFormRole,
-    SketchResidualFormsStatus, SketchResidualStrategy, SketchRoundTripMetadata,
-    SketchRoundTripRole, SketchSolveProblem, SketchTangentOrientation, SketchUnitToleranceStatus,
-    SketchWorkplaneFrameStatus, SolverBlockRowKind, SolverConfig, SolverPoint2, SolverState,
-    SparseResidualBatchStatus, SparseResidualTerm, SymbolId, VariableBall,
-    analyze_exact_affine_rank, apply_equality_substitution_classes, apply_equality_substitutions,
+    SketchArcPointSweep, SketchArcTangencyBranch, SketchConstraintKind,
+    SketchConstructionCertificateStatus, SketchDegeneracyKind, SketchDegeneracyStatus,
+    SketchEntityDomain, SketchEntityDomainKind, SketchEntityDomainStatus, SketchEntityHandle,
+    SketchEntityKind, SketchFailedConstraintStatus, SketchGeneratedRowStatus, SketchLineEndpoint,
+    SketchParameterDomain, SketchParameterDomainKind, SketchParameterDomainStatus,
+    SketchResidualFormKind, SketchResidualFormRole, SketchResidualFormsStatus,
+    SketchResidualStrategy, SketchRoundTripMetadata, SketchRoundTripRole, SketchSolveProblem,
+    SketchTangentOrientation, SketchUnitToleranceStatus, SketchWorkplaneFrameStatus,
+    SolverBlockRowKind, SolverConfig, SolverPoint2, SolverState, SparseResidualBatchStatus,
+    SparseResidualTerm, SymbolId, VariableBall, analyze_exact_affine_rank,
+    apply_equality_substitution_classes, apply_equality_substitutions,
     audit_sketch_unit_tolerances, build_equality_substitution_classes,
     build_sketch_workplane_frame, certify_affine_interval_candidate, certify_affine_krawczyk_box,
     certify_candidate, certify_candidate_batch, certify_candidate_domains,
@@ -5598,6 +5599,113 @@ fn sketch_projected_point_on_circle_replays_workplane_and_incidence_rows() {
     assert_eq!(
         forms.forms[1].kind,
         SketchResidualFormKind::ProjectedCircleIncidencePolynomial
+    );
+    assert!(
+        forms
+            .forms
+            .iter()
+            .all(|form| form.role == SketchResidualFormRole::ExactProof)
+    );
+
+    let wrong_forms = sketch.residual_forms_for_constraint(wrong);
+    assert_eq!(wrong_forms.status, SketchResidualFormsStatus::InvalidInputs);
+}
+
+#[test]
+fn sketch_projected_point_on_arc_replays_radius_and_branch_rows() {
+    let mut sketch = SketchSolveProblem::new();
+    let origin3 = sketch.add_point3d("origin3", real(1), real(2), real(3));
+    let normal = sketch.add_normal3d("identity normal", real(1), real(0), real(0), real(0));
+    let workplane = sketch.add_workplane("workplane", origin3, normal);
+    let center = sketch.add_point2d("center", real(0), real(0));
+    let start = sketch.add_point2d("start", real(5), real(0));
+    let end = sketch.add_point2d("end", real(0), real(5));
+    let radius = sketch.add_distance("radius", real(5));
+    let arc = sketch.add_arc_of_circle2("arc", center, start, end, radius);
+    let valid_point = sketch.add_point3d("valid projected point", real(4), real(6), real(11));
+    let outside_point = sketch.add_point3d("outside projected point", real(-2), real(6), real(11));
+    let valid = sketch.add_projected_point_on_arc3(
+        "projected point on ccw minor arc",
+        workplane,
+        valid_point,
+        arc,
+        SketchArcPointSweep::CounterClockwiseMinor,
+    );
+    sketch.add_projected_point_on_arc3(
+        "projected point on wrong arc branch",
+        workplane,
+        outside_point,
+        arc,
+        SketchArcPointSweep::CounterClockwiseMinor,
+    );
+    let wrong = sketch.add_constraint(
+        "wrong projected arc kind",
+        SketchConstraintKind::ProjectedPointOnArc3 {
+            workplane,
+            point: valid_point,
+            arc: radius,
+            sweep: SketchArcPointSweep::CounterClockwiseMinor,
+        },
+        false,
+        true,
+    );
+
+    let lowered = sketch.lower_to_problem();
+    assert_eq!(lowered.problem.constraints.len(), 14);
+    assert_eq!(
+        lowered
+            .rows
+            .iter()
+            .filter(|row| {
+                row.strategy == Some(SketchResidualStrategy::ProjectedPointArcIncidence)
+                    || row.strategy == Some(SketchResidualStrategy::WorkplaneUnitQuaternion)
+            })
+            .count(),
+        14
+    );
+    assert_eq!(
+        lowered.rows.last().unwrap().status,
+        SketchGeneratedRowStatus::WrongEntityKind {
+            handle: radius,
+            expected: "2D circular arc",
+        }
+    );
+
+    let certification = certify_candidate(
+        &PreparedProblem::new(&lowered.problem),
+        &context_from_problem(&lowered.problem),
+    );
+    assert!(matches!(
+        certification.rows[3].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[13].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
+
+    let forms = sketch.residual_forms_for_constraint(valid);
+    assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+    assert_eq!(forms.forms.len(), 7);
+    assert_eq!(
+        forms.forms[0].kind,
+        SketchResidualFormKind::WorkplaneUnitQuaternionPolynomial
+    );
+    assert_eq!(
+        forms.forms[3].kind,
+        SketchResidualFormKind::ProjectedArcIncidencePointRadiusPolynomial
+    );
+    assert_eq!(
+        forms.forms[4].kind,
+        SketchResidualFormKind::ProjectedArcIncidenceSweepBranchPredicate
+    );
+    assert_eq!(
+        forms.forms[5].kind,
+        SketchResidualFormKind::ProjectedArcIncidencePointBranchPredicate
+    );
+    assert_eq!(
+        forms.forms[6].kind,
+        SketchResidualFormKind::ProjectedArcIncidencePointBranchPredicate
     );
     assert!(
         forms

@@ -14,6 +14,9 @@
 use hyperreal::{Real, RealSign};
 
 use crate::model::{Constraint, ConstraintKind, Problem, VariableId};
+use crate::sketch_arc_incidence::{
+    ArcPointBranchPredicate, ArcPointIncidenceExprs, arc_point_incidence_exprs,
+};
 use crate::sketch_arc_length::{
     LineArcLengthExprs, LineArcSweepLengthExprs, line_arc_length_exprs, line_arc_sweep_length_exprs,
 };
@@ -387,6 +390,68 @@ impl SketchArcLengthSweep {
     }
 }
 
+/// Explicit retained branch for point-on-circular-arc incidence.
+///
+/// A point on the parent circle can lie on either the minor sweep or the
+/// complementary major sweep. Major sweeps are unions of two half-plane
+/// regions, so the major variants carry an additional half-branch. This keeps
+/// the exact replay package conjunctive and report-bearing, following Yap,
+/// "Towards Exact Geometric Computation" (1997), instead of hiding an
+/// angle-wrap disjunction in a floating proposal.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum SketchArcPointSweep {
+    /// Counterclockwise minor sweep from start radius to end radius.
+    CounterClockwiseMinor,
+    /// Clockwise minor sweep from start radius to end radius.
+    ClockwiseMinor,
+    /// Counterclockwise major sweep, using the half after the start radius.
+    CounterClockwiseMajorAfterStart,
+    /// Counterclockwise major sweep, using the half before the end radius.
+    CounterClockwiseMajorBeforeEnd,
+    /// Clockwise major sweep, using the half after the start radius.
+    ClockwiseMajorAfterStart,
+    /// Clockwise major sweep, using the half before the end radius.
+    ClockwiseMajorBeforeEnd,
+}
+
+impl SketchArcPointSweep {
+    pub(crate) const fn arc_cross_sign(self) -> i8 {
+        match self {
+            Self::CounterClockwiseMinor
+            | Self::ClockwiseMajorAfterStart
+            | Self::ClockwiseMajorBeforeEnd => 1,
+            Self::ClockwiseMinor
+            | Self::CounterClockwiseMajorAfterStart
+            | Self::CounterClockwiseMajorBeforeEnd => -1,
+        }
+    }
+
+    pub(crate) fn point_cross_signs(self) -> Vec<(ArcPointBranchPredicate, i8)> {
+        match self {
+            Self::CounterClockwiseMinor => vec![
+                (ArcPointBranchPredicate::StartToPoint, 1),
+                (ArcPointBranchPredicate::PointToEnd, 1),
+            ],
+            Self::ClockwiseMinor => vec![
+                (ArcPointBranchPredicate::StartToPoint, -1),
+                (ArcPointBranchPredicate::PointToEnd, -1),
+            ],
+            Self::CounterClockwiseMajorAfterStart => {
+                vec![(ArcPointBranchPredicate::StartToPoint, 1)]
+            }
+            Self::CounterClockwiseMajorBeforeEnd => {
+                vec![(ArcPointBranchPredicate::PointToEnd, 1)]
+            }
+            Self::ClockwiseMajorAfterStart => {
+                vec![(ArcPointBranchPredicate::StartToPoint, -1)]
+            }
+            Self::ClockwiseMajorBeforeEnd => {
+                vec![(ArcPointBranchPredicate::PointToEnd, -1)]
+            }
+        }
+    }
+}
+
 /// A retained source entity.
 #[derive(Clone, Debug, PartialEq)]
 pub struct SketchEntity {
@@ -507,6 +572,28 @@ pub enum SketchConstraintKind {
         point: SketchEntityHandle,
         /// Retained 2D circle entity in workplane coordinates.
         circle: SketchEntityHandle,
+    },
+    /// Point-on-arc incidence after projecting a 3D point into a workplane.
+    ///
+    /// The retained 3D point is projected to exact `U/V` coordinates relative
+    /// to the workplane origin, then replayed against a retained 2D circular
+    /// arc. Lowering proves the workplane unit frame, both retained arc
+    /// endpoints on the radius circle, the projected point on that same
+    /// radius circle, the selected arc sweep branch, and the selected point
+    /// half-branch when the arc is major. Yap, "Towards Exact Geometric
+    /// Computation" (1997), is the governing policy: arc membership is a
+    /// retained branch package, not a rounded angle comparison. The workplane
+    /// frame uses Shoemake, "Animating Rotation with Quaternion Curves"
+    /// (1985).
+    ProjectedPointOnArc3 {
+        /// Workplane entity that supplies origin and normal/quaternion.
+        workplane: SketchEntityHandle,
+        /// 3D point entity projected into the workplane.
+        point: SketchEntityHandle,
+        /// Retained 2D circular arc entity in workplane coordinates.
+        arc: SketchEntityHandle,
+        /// Explicit arc and point-sector branch.
+        sweep: SketchArcPointSweep,
     },
     /// Point-to-line distance after orthogonal projection into a workplane.
     ///
@@ -1389,6 +1476,8 @@ pub enum SketchResidualStrategy {
     ProjectedLineArcSweepLength,
     /// Squared projected point-on-circle incidence.
     ProjectedSquaredIncidence,
+    /// Exact projected point-on-arc incidence and branch package.
+    ProjectedPointArcIncidence,
     /// Squared 2D line length equality.
     SquaredLineLengthEquality,
     /// Squared 2D line length ratio equality.
@@ -1562,6 +1651,14 @@ pub enum SketchResidualFormKind {
     SquaredCircleIncidencePolynomial,
     /// Squared projected point-on-circle incidence proof row.
     ProjectedCircleIncidencePolynomial,
+    /// Projected point-on-arc endpoint-on-radius proof row.
+    ProjectedArcIncidenceEndpointRadiusPolynomial,
+    /// Projected point-on-arc point-on-radius proof row.
+    ProjectedArcIncidencePointRadiusPolynomial,
+    /// Projected point-on-arc retained sweep branch predicate.
+    ProjectedArcIncidenceSweepBranchPredicate,
+    /// Projected point-on-arc retained point branch predicate.
+    ProjectedArcIncidencePointBranchPredicate,
     /// True radial circle-incidence proposal form.
     CircleRadialDistanceProposal,
     /// Squared-cosine equality for an unsigned angle proof row.
@@ -2815,6 +2912,18 @@ impl SketchSolveProblem {
         incidence::projected_point_on_circle3(self, name, workplane, point, circle).handle
     }
 
+    /// Add a retained projected 3D point-on-2D-circular-arc incidence constraint.
+    pub fn add_projected_point_on_arc3(
+        &mut self,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        point: SketchEntityHandle,
+        arc: SketchEntityHandle,
+        sweep: SketchArcPointSweep,
+    ) -> SketchConstraintHandle {
+        incidence::projected_point_on_arc3(self, name, workplane, point, arc, sweep).handle
+    }
+
     /// Add a point-on-cubic-Bezier incidence constraint at a retained parameter.
     ///
     /// This emits exact Bernstein-coordinate proof rows. The curve parameter
@@ -3335,6 +3444,75 @@ impl SketchSolveProblem {
                             residual: parts.incidence,
                         },
                     ],
+                    diagnostics,
+                }
+            }
+            SketchConstraintKind::ProjectedPointOnArc3 {
+                workplane,
+                point,
+                arc,
+                sweep,
+            } => {
+                let mut diagnostics = Vec::new();
+                let Some(parts) = self.projected_point_arc_incidence_exprs(
+                    workplane,
+                    point,
+                    arc,
+                    sweep,
+                    constraint,
+                    &mut diagnostics,
+                ) else {
+                    return SketchResidualFormsReport {
+                        constraint: handle,
+                        status: SketchResidualFormsStatus::InvalidInputs,
+                        forms: Vec::new(),
+                        diagnostics,
+                    };
+                };
+                let mut forms = vec![
+                    SketchResidualForm {
+                        kind: SketchResidualFormKind::WorkplaneUnitQuaternionPolynomial,
+                        role: SketchResidualFormRole::ExactProof,
+                        strategy: Some(SketchResidualStrategy::WorkplaneUnitQuaternion),
+                        residual: unit_quaternion_residual(&parts.quaternion),
+                    },
+                    SketchResidualForm {
+                        kind: SketchResidualFormKind::ProjectedArcIncidenceEndpointRadiusPolynomial,
+                        role: SketchResidualFormRole::ExactProof,
+                        strategy: Some(SketchResidualStrategy::ProjectedPointArcIncidence),
+                        residual: parts.arc.endpoint_radius[0].clone(),
+                    },
+                    SketchResidualForm {
+                        kind: SketchResidualFormKind::ProjectedArcIncidenceEndpointRadiusPolynomial,
+                        role: SketchResidualFormRole::ExactProof,
+                        strategy: Some(SketchResidualStrategy::ProjectedPointArcIncidence),
+                        residual: parts.arc.endpoint_radius[1].clone(),
+                    },
+                    SketchResidualForm {
+                        kind: SketchResidualFormKind::ProjectedArcIncidencePointRadiusPolynomial,
+                        role: SketchResidualFormRole::ExactProof,
+                        strategy: Some(SketchResidualStrategy::ProjectedPointArcIncidence),
+                        residual: parts.arc.point_radius,
+                    },
+                    SketchResidualForm {
+                        kind: SketchResidualFormKind::ProjectedArcIncidenceSweepBranchPredicate,
+                        role: SketchResidualFormRole::ExactProof,
+                        strategy: Some(SketchResidualStrategy::ProjectedPointArcIncidence),
+                        residual: parts.arc.sweep_branch,
+                    },
+                ];
+                forms.extend(parts.arc.point_branch.into_iter().map(|residual| {
+                    SketchResidualForm {
+                        kind: SketchResidualFormKind::ProjectedArcIncidencePointBranchPredicate,
+                        role: SketchResidualFormRole::ExactProof,
+                        strategy: Some(SketchResidualStrategy::ProjectedPointArcIncidence),
+                        residual,
+                    }
+                }));
+                SketchResidualFormsReport {
+                    constraint: handle,
+                    status: SketchResidualFormsStatus::Generated,
+                    forms,
                     diagnostics,
                 }
             }
@@ -5028,6 +5206,72 @@ impl SketchSolveProblem {
                     parts.incidence,
                     SketchResidualStrategy::ProjectedSquaredIncidence,
                 );
+            }
+            SketchConstraintKind::ProjectedPointOnArc3 {
+                workplane,
+                point,
+                arc,
+                sweep,
+            } => {
+                // A projected point-on-arc relation is more than circle
+                // incidence: it also replays the retained endpoint/radius
+                // facts and the selected sweep/point branch. This keeps
+                // Yap's (1997) exact branch boundary explicit, while
+                // Shoemake's (1985) quaternion frame supplies exact U/V axes.
+                let Some(parts) = self.projected_point_arc_incidence_exprs(
+                    workplane, point, arc, sweep, constraint, rows,
+                ) else {
+                    return;
+                };
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} workplane unit", constraint.name),
+                    unit_quaternion_residual(&parts.quaternion),
+                    SketchResidualStrategy::WorkplaneUnitQuaternion,
+                );
+                for (index, residual) in parts.arc.endpoint_radius.into_iter().enumerate() {
+                    let endpoint = if index == 0 { "start" } else { "end" };
+                    self.push_residual(
+                        problem,
+                        rows,
+                        constraint,
+                        format!("{} arc {} radius", constraint.name, endpoint),
+                        residual,
+                        SketchResidualStrategy::ProjectedPointArcIncidence,
+                    );
+                }
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} projected point radius", constraint.name),
+                    parts.arc.point_radius,
+                    SketchResidualStrategy::ProjectedPointArcIncidence,
+                );
+                self.push_residual_with_kind(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} arc sweep branch", constraint.name),
+                    parts.arc.sweep_branch,
+                    SketchResidualStrategy::ProjectedPointArcIncidence,
+                    ConstraintKind::GreaterOrEqual,
+                    Real::one(),
+                );
+                for (index, residual) in parts.arc.point_branch.into_iter().enumerate() {
+                    self.push_residual_with_kind(
+                        problem,
+                        rows,
+                        constraint,
+                        format!("{} point branch {index}", constraint.name),
+                        residual,
+                        SketchResidualStrategy::ProjectedPointArcIncidence,
+                        ConstraintKind::GreaterOrEqual,
+                        Real::one(),
+                    );
+                }
             }
             SketchConstraintKind::ProjectedPointLineDistance {
                 workplane,
@@ -7135,6 +7379,54 @@ impl SketchSolveProblem {
         })
     }
 
+    fn projected_point_arc_incidence_exprs(
+        &self,
+        workplane: SketchEntityHandle,
+        point: SketchEntityHandle,
+        arc: SketchEntityHandle,
+        sweep: SketchArcPointSweep,
+        constraint: &SketchConstraint,
+        rows: &mut Vec<SketchGeneratedRow>,
+    ) -> Option<ProjectedPointArcIncidenceExprs> {
+        let (origin, quaternion) =
+            self.workplane_origin_and_quaternion(workplane, constraint, rows)?;
+        let point = self.point3_coordinates(point, constraint, rows)?;
+        let Some(arc_entity) = self.entity(arc) else {
+            rows.push(missing_entity_row(constraint, arc));
+            return None;
+        };
+        let SketchEntityKind::ArcOfCircle2(arc) = &arc_entity.kind else {
+            rows.push(wrong_entity_row(
+                constraint,
+                arc_entity.handle,
+                "2D circular arc",
+            ));
+            return None;
+        };
+        let center = self.point2_coordinates(arc.center, constraint, rows)?;
+        let start = self.point2_coordinates(arc.start, constraint, rows)?;
+        let end = self.point2_coordinates(arc.end, constraint, rows)?;
+        let radius = self.distance_expr(arc.radius, constraint, rows)?;
+        let delta = [
+            point.exprs[0].clone() - origin.exprs[0].clone(),
+            point.exprs[1].clone() - origin.exprs[1].clone(),
+            point.exprs[2].clone() - origin.exprs[2].clone(),
+        ];
+        let (u_axis, v_axis, _) = quaternion_frame_axes_expr(&quaternion);
+        let projected = [dot3_expr(&delta, &u_axis), dot3_expr(&delta, &v_axis)];
+        Some(ProjectedPointArcIncidenceExprs {
+            arc: arc_point_incidence_exprs(
+                &coordinate_exprs2(&center),
+                &coordinate_exprs2(&start),
+                &coordinate_exprs2(&end),
+                &projected,
+                radius,
+                sweep,
+            ),
+            quaternion,
+        })
+    }
+
     fn projected_point_range_exprs(
         &self,
         workplane: SketchEntityHandle,
@@ -8079,6 +8371,12 @@ struct ProjectedPointDistanceExprs {
 struct ProjectedPointCircleIncidenceExprs {
     quaternion: [Expr; 4],
     incidence: Expr,
+}
+
+#[derive(Clone, Debug)]
+struct ProjectedPointArcIncidenceExprs {
+    quaternion: [Expr; 4],
+    arc: ArcPointIncidenceExprs,
 }
 
 #[derive(Clone, Debug)]

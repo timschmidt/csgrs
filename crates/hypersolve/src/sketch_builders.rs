@@ -12,9 +12,9 @@
 use hyperreal::Real;
 
 use crate::sketch::{
-    SketchArcEndpoint, SketchArcLengthSweep, SketchArcTangencyBranch, SketchConstraintHandle,
-    SketchConstraintKind, SketchEntityHandle, SketchLineEndpoint, SketchParameterHandle,
-    SketchResidualStrategy, SketchSolveProblem, SketchTangentOrientation,
+    SketchArcEndpoint, SketchArcLengthSweep, SketchArcPointSweep, SketchArcTangencyBranch,
+    SketchConstraintHandle, SketchConstraintKind, SketchEntityHandle, SketchLineEndpoint,
+    SketchParameterHandle, SketchResidualStrategy, SketchSolveProblem, SketchTangentOrientation,
 };
 
 /// High-level constraint family retained before residual lowering.
@@ -512,6 +512,36 @@ pub mod incidence {
             handle,
             family: SketchConstraintFamily::Incidence,
             strategy: SketchResidualStrategy::ProjectedSquaredIncidence,
+            kind,
+        }
+    }
+
+    /// Add a projected 3D point-on-2D-circular-arc incidence relation.
+    ///
+    /// This is the retained arc counterpart of projected point-on-circle: the
+    /// projected point must lie on the parent circle and on the selected arc
+    /// sweep branch. Major arcs carry an explicit point half-branch so exact
+    /// replay remains a conjunction of reportable predicates, following Yap
+    /// (1997). The workplane axes use Shoemake's unit-quaternion frame.
+    pub fn projected_point_on_arc3(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        point: SketchEntityHandle,
+        arc: SketchEntityHandle,
+        sweep: SketchArcPointSweep,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::ProjectedPointOnArc3 {
+            workplane,
+            point,
+            arc,
+            sweep,
+        };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Incidence,
+            strategy: SketchResidualStrategy::ProjectedPointArcIncidence,
             kind,
         }
     }
