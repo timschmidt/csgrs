@@ -88,6 +88,8 @@ pub enum PathMeshBooleanError {
     UnknownPolygonOrientation,
     /// A polygonal source was not strictly convex.
     NonConvexPolygon,
+    /// A polygonal source was not simple or could not be triangulated exactly.
+    PolygonTriangulationFailed,
     /// A PCB copper boolean program mixed multiple nets.
     MixedPcbNets,
     /// A PCB copper boolean program mixed multiple layers.

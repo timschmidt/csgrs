@@ -3,8 +3,8 @@
 //! PCB routing objects are not generic boxes: they carry net, layer, source
 //! provenance, and exact swept geometry. This module lowers the subset that is
 //! already exact in `hyperpath`--axis-aligned traces, rectangular/cardinal
-//! rectangular pads, and strictly convex polygonal copper--into retained
-//! mesh-boolean sources. The lowering is
+//! rectangular pads, strictly convex polygonal copper, and simple orthogonal
+//! polygonal copper--into retained mesh-boolean sources. The lowering is
 //! layer-aware through [`PcbLayerZModel`], so boolean programs can operate over
 //! copper solids while replay still starts from PCB path objects.
 //!
@@ -22,12 +22,15 @@ use hyperreal::{Real, RealExactSetFacts};
 
 use crate::cam::{PocketPlanError, RectangularPocket};
 use crate::mesh_boolean::{PathMeshBooleanError, PathMeshBooleanOperation, RectangularPrism};
-use crate::mesh_boolean_polygon::ConvexPolygonPrism;
+use crate::mesh_boolean_polygon::{ConvexPolygonPrism, OrthogonalPolygonPrism};
 use crate::mesh_boolean_program::{
     PathMeshBooleanProgramReport, PathMeshBooleanProgramStep, boolean_path_mesh_program,
 };
 use crate::mesh_boolean_sources::{AxisAlignedSweptSegmentPrism, PathMeshBooleanSource};
-use crate::pcb::{NetId, PcbCardinalRectPad, PcbConvexPolyPad, PcbRectPad, PcbTrace, TraceLayer};
+use crate::pcb::{
+    NetId, PcbCardinalRectPad, PcbConvexPolyPad, PcbOrthogonalPolyPad, PcbRectPad, PcbTrace,
+    TraceLayer,
+};
 
 /// Exact Z mapping for discrete PCB copper layers.
 ///
@@ -58,7 +61,7 @@ pub struct PcbLayerSlab {
 ///
 /// This enum keeps PCB semantics attached until the final lowering step. It is
 /// intentionally narrower than all PCB geometry: circular/rounded pads and
-/// nonconvex copper pours need curved or arrangement evidence before they can
+/// holed copper pours need curved or arrangement evidence before they can
 /// become mesh-boolean operands without approximation.
 #[derive(Clone, Debug, PartialEq)]
 pub enum PcbCopperBooleanSource {
@@ -70,6 +73,8 @@ pub enum PcbCopperBooleanSource {
     CardinalRectPad(PcbCardinalRectPad),
     /// Strictly convex polygonal pad or copper zone.
     ConvexPolyPad(PcbConvexPolyPad),
+    /// Simple orthogonal polygonal pad or copper zone.
+    OrthogonalPolyPad(PcbOrthogonalPolyPad),
 }
 
 /// Exact PCB copper-union program for one net on one layer.
@@ -169,6 +174,7 @@ impl PcbCopperBooleanSource {
             Self::RectPad(source) => source.net(),
             Self::CardinalRectPad(source) => source.net(),
             Self::ConvexPolyPad(source) => source.net(),
+            Self::OrthogonalPolyPad(source) => source.net(),
         }
     }
 
@@ -179,6 +185,7 @@ impl PcbCopperBooleanSource {
             Self::RectPad(source) => source.layer(),
             Self::CardinalRectPad(source) => source.layer(),
             Self::ConvexPolyPad(source) => source.layer(),
+            Self::OrthogonalPolyPad(source) => source.layer(),
         }
     }
 
@@ -196,6 +203,9 @@ impl PcbCopperBooleanSource {
             }
             Self::ConvexPolyPad(source) => {
                 pcb_convex_poly_pad_mesh_boolean_source(source, z_model, policy)
+            }
+            Self::OrthogonalPolyPad(source) => {
+                pcb_orthogonal_poly_pad_mesh_boolean_source(source, z_model, policy)
             }
         }
     }
@@ -315,6 +325,29 @@ pub fn pcb_convex_poly_pad_mesh_boolean_source(
 ) -> Result<PathMeshBooleanSource, PathMeshBooleanError> {
     let slab = z_model.slab_for_layer(pad.layer());
     Ok(ConvexPolygonPrism::new(
+        pad.vertices().to_vec(),
+        slab.z_min,
+        slab.z_max,
+        pad.provenance(),
+        policy,
+    )?
+    .into())
+}
+
+/// Lower a retained simple orthogonal PCB pad into an exact source.
+///
+/// Orthogonal nonconvex copper is triangulated from retained vertices with
+/// exact orientation predicates before `hypermesh` sees any topology. This
+/// follows the same Yap boundary as the convex source, but uses the
+/// two-ears theorem cited by [`OrthogonalPolygonPrism`] instead of a convex
+/// fan. Holes and self-overlapping pours remain planar-arrangement work.
+pub fn pcb_orthogonal_poly_pad_mesh_boolean_source(
+    pad: &PcbOrthogonalPolyPad,
+    z_model: &PcbLayerZModel,
+    policy: PredicatePolicy,
+) -> Result<PathMeshBooleanSource, PathMeshBooleanError> {
+    let slab = z_model.slab_for_layer(pad.layer());
+    Ok(OrthogonalPolygonPrism::new(
         pad.vertices().to_vec(),
         slab.z_min,
         slab.z_max,

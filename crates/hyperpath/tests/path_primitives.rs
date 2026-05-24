@@ -12,15 +12,16 @@ use hyperpath::{
     PathMeshBooleanError, PathMeshBooleanOperation, PathMeshBooleanProgramStep,
     PathMeshBooleanSource, PathProvenance, PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad,
     PcbCircularPad, PcbConvexBoardOutline, PcbConvexPolyPad, PcbCopperBooleanSource,
-    PcbLayerZModel, PcbOrthogonalBoardOutline, PcbRectPad, PcbTrace, PcbViaStack, PocketPlanError,
-    PocketPlanStopReason, QuadraticBezier, RationalQuadraticBezier, RationalQuadraticBezierError,
-    RectangularPocket, RectangularRegionRelation, RouteCertificationError, SegmentParameterOrder,
-    SourceLengthUnit, SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraImportError,
-    SpecctraLayerAlias, SpecctraNetAlias, SpecctraParseError, SupportFootprintStatus,
-    SupportPlanError, SweptLineSegment, TangentAlignment, TangentJoinClass, TangentJoinReport,
-    TangentSpan, TraceLayer, ViaAnnularRingReport, ViaDrillIntent, ViaDrillPolicyClass,
-    ViaLayerSpanRelation, ViaLayerTransitionClass, boolean_path_mesh_program,
-    boolean_path_mesh_sources, boolean_rectangular_prism_chain, boolean_rectangular_prisms,
+    PcbLayerZModel, PcbOrthogonalBoardOutline, PcbOrthogonalPolyPad, PcbRectPad, PcbTrace,
+    PcbViaStack, PocketPlanError, PocketPlanStopReason, QuadraticBezier, RationalQuadraticBezier,
+    RationalQuadraticBezierError, RectangularPocket, RectangularRegionRelation,
+    RouteCertificationError, SegmentParameterOrder, SourceLengthUnit, SpecctraGridTraceRecord,
+    SpecctraGridViaRecord, SpecctraImportError, SpecctraLayerAlias, SpecctraNetAlias,
+    SpecctraParseError, SupportFootprintStatus, SupportPlanError, SweptLineSegment,
+    TangentAlignment, TangentJoinClass, TangentJoinReport, TangentSpan, TraceLayer,
+    ViaAnnularRingReport, ViaDrillIntent, ViaDrillPolicyClass, ViaLayerSpanRelation,
+    ViaLayerTransitionClass, boolean_path_mesh_program, boolean_path_mesh_sources,
+    boolean_rectangular_prism_chain, boolean_rectangular_prisms,
     boolean_rectangular_prisms_with_boundary_policy, build_alternating_detour_meander,
     build_cam_rest_material_program, build_g1_join_problem, build_length_match_problem,
     build_multi_detour_meander, build_nonuniform_detour_meander,
@@ -43,11 +44,12 @@ use hyperpath::{
     offset_cubic_bezier_sample, offset_explicit_arc, offset_higher_order_bezier_sample,
     offset_quadratic_bezier_sample, parse_specctra_grid_route_records,
     parse_specctra_grid_trace_records, pcb_cardinal_rect_pad_mesh_boolean_source,
-    pcb_convex_poly_pad_mesh_boolean_source, pcb_rect_pad_mesh_boolean_source, pcb_rect_pad_prism,
-    pcb_trace_mesh_boolean_source, rectangular_prism_from_i64_bounds,
-    serialize_specctra_grid_route_records, serialize_specctra_grid_trace_records,
-    serialize_specctra_grid_via_records, specctra_grid_trace_record, specctra_grid_via_record,
-    subtract_rectangular_region, tangent_cross, tangent_dot, tangent_norm_squared,
+    pcb_convex_poly_pad_mesh_boolean_source, pcb_orthogonal_poly_pad_mesh_boolean_source,
+    pcb_rect_pad_mesh_boolean_source, pcb_rect_pad_prism, pcb_trace_mesh_boolean_source,
+    rectangular_prism_from_i64_bounds, serialize_specctra_grid_route_records,
+    serialize_specctra_grid_trace_records, serialize_specctra_grid_via_records,
+    specctra_grid_trace_record, specctra_grid_via_record, subtract_rectangular_region,
+    tangent_cross, tangent_dot, tangent_norm_squared,
 };
 use hyperreal::{Rational, Real};
 use proptest::prelude::*;
@@ -524,6 +526,53 @@ fn pcb_copper_boolean_program_unions_convex_polygon_pad_sources() {
 }
 
 #[test]
+fn pcb_copper_boolean_program_unions_nonconvex_orthogonal_polygon_pad_sources() {
+    let z_model = PcbLayerZModel::new(r(0), r(10), r(2), PredicatePolicy::default()).unwrap();
+    let trace = trace(12, 0, p(0, 2), p(8, 2), 2);
+    let l_pad = PcbOrthogonalPolyPad::new(
+        NetId(12),
+        TraceLayer(0),
+        vec![p(7, 1), p(13, 1), p(13, 3), p(10, 3), p(10, 5), p(7, 5)],
+    )
+    .unwrap();
+    let source =
+        pcb_orthogonal_poly_pad_mesh_boolean_source(&l_pad, &z_model, PredicatePolicy::default())
+            .expect("simple orthogonal polygon pad should lower to exact mesh source");
+    let mesh = source.to_exact_mesh().unwrap();
+    mesh.audit().unwrap();
+    assert!(mesh.facts().mesh.closed_manifold);
+    assert_eq!(mesh.triangles().len(), 20);
+
+    let report = build_pcb_copper_union_program(
+        vec![
+            PcbCopperBooleanSource::Trace(trace),
+            PcbCopperBooleanSource::OrthogonalPolyPad(l_pad.clone()),
+        ],
+        z_model,
+        PredicatePolicy::default(),
+    )
+    .expect("same-net orthogonal polygon copper should union through exact mesh booleans");
+    report.validate_replay(PredicatePolicy::default()).unwrap();
+    assert_eq!(report.sources.len(), 2);
+    assert_eq!(report.program.steps.len(), 1);
+    assert!(report.program.mesh().unwrap().facts().mesh.closed_manifold);
+
+    let mut stale = report.clone();
+    stale.sources[1] = PcbCopperBooleanSource::OrthogonalPolyPad(
+        PcbOrthogonalPolyPad::new(
+            NetId(12),
+            TraceLayer(0),
+            vec![p(7, 2), p(13, 2), p(13, 4), p(10, 4), p(10, 6), p(7, 6)],
+        )
+        .unwrap(),
+    );
+    assert!(matches!(
+        stale.validate_replay(PredicatePolicy::default()),
+        Err(PathMeshBooleanError::Replay(_))
+    ));
+}
+
+#[test]
 fn pcb_copper_boolean_program_rejects_mixed_nets_and_layers() {
     let z_model = PcbLayerZModel::new(r(0), r(10), r(2), PredicatePolicy::default()).unwrap();
     assert_eq!(
@@ -586,6 +635,32 @@ fn pcb_convex_polygon_boolean_sources_reject_degenerate_and_nonconvex_inputs() {
         )
         .unwrap_err(),
         BoardContourError::NonConvex
+    );
+}
+
+#[test]
+fn pcb_orthogonal_polygon_boolean_sources_reject_bad_loops() {
+    assert_eq!(
+        PcbOrthogonalPolyPad::new(NetId(1), TraceLayer(0), vec![p(0, 0), p(1, 0)]).unwrap_err(),
+        BoardContourError::TooFewVertices
+    );
+    assert_eq!(
+        PcbOrthogonalPolyPad::new(
+            NetId(1),
+            TraceLayer(0),
+            vec![p(0, 0), p(2, 0), p(2, 2), p(1, 3), p(0, 2)]
+        )
+        .unwrap_err(),
+        BoardContourError::NonOrthogonal
+    );
+    assert_eq!(
+        PcbOrthogonalPolyPad::new(
+            NetId(1),
+            TraceLayer(0),
+            vec![p(0, 0), p(4, 0), p(4, 4), p(2, 4), p(2, -1), p(0, -1)]
+        )
+        .unwrap_err(),
+        BoardContourError::SelfIntersecting
     );
 }
 
