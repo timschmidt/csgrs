@@ -1921,6 +1921,90 @@ proptest! {
     }
 
     #[test]
+    fn sketch_projected_line_symmetry_rows_match_generated_integer_reflections(
+        ox in -4_i16..=4,
+        oy in -4_i16..=4,
+        oz in -4_i16..=4,
+        sx in -8_i16..=8,
+        sy in -8_i16..=8,
+        ux in -6_i16..=6,
+        uy in -6_i16..=6,
+        t in -5_i16..=5,
+        offset in -5_i16..=5,
+        z0 in -8_i16..=8,
+        z1 in -8_i16..=8,
+    ) {
+        prop_assume!(ux != 0 || uy != 0);
+        let ox = i64::from(ox);
+        let oy = i64::from(oy);
+        let oz = i64::from(oz);
+        let sx = i64::from(sx);
+        let sy = i64::from(sy);
+        let ux = i64::from(ux);
+        let uy = i64::from(uy);
+        let t = i64::from(t);
+        let offset = i64::from(offset);
+        let z0 = i64::from(z0);
+        let z1 = i64::from(z1);
+        let midpoint_x = sx + t * ux;
+        let midpoint_y = sy + t * uy;
+        let normal_x = -uy;
+        let normal_y = ux;
+        let mut sketch = SketchSolveProblem::new();
+        let origin = sketch.add_point3d("origin", Real::from(ox), Real::from(oy), Real::from(oz));
+        let normal = sketch.add_normal3d("normal", Real::from(1), Real::from(0), Real::from(0), Real::from(0));
+        let workplane = sketch.add_workplane("workplane", origin, normal);
+        let axis_start =
+            sketch.add_point3d("axis start", Real::from(ox + sx), Real::from(oy + sy), Real::from(oz + z0));
+        let axis_end = sketch.add_point3d(
+            "axis end",
+            Real::from(ox + sx + ux),
+            Real::from(oy + sy + uy),
+            Real::from(oz + z1),
+        );
+        let axis = sketch.add_line_segment3("axis", axis_start, axis_end);
+        let a = sketch.add_point3d(
+            "a",
+            Real::from(ox + midpoint_x + offset * normal_x),
+            Real::from(oy + midpoint_y + offset * normal_y),
+            Real::from(oz + z0 + z1),
+        );
+        let b = sketch.add_point3d(
+            "b",
+            Real::from(ox + midpoint_x - offset * normal_x),
+            Real::from(oy + midpoint_y - offset * normal_y),
+            Real::from(oz - z0 - z1),
+        );
+        let handle = sketch.add_projected_symmetric_line3(
+            "projected line symmetry",
+            workplane,
+            a,
+            b,
+            axis,
+        );
+
+        let lowered = sketch.lower_to_problem();
+        let context = context_from_problem(&lowered.problem);
+        let certification = certify_candidate(&PreparedProblem::new(&lowered.problem), &context);
+        let forms = sketch.residual_forms_for_constraint(handle);
+
+        prop_assert_eq!(lowered.rows.len(), 3);
+        prop_assert_eq!(lowered.rows[0].strategy, Some(SketchResidualStrategy::WorkplaneUnitQuaternion));
+        let all_projected_symmetry_rows = lowered.rows[1..].iter().all(|row| {
+            row.strategy == Some(SketchResidualStrategy::ProjectedLineSymmetryPolynomial)
+                && row.status == SketchGeneratedRowStatus::Generated
+        });
+        prop_assert!(all_projected_symmetry_rows);
+        prop_assert!(certification.all_satisfied());
+        prop_assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+        prop_assert_eq!(forms.forms.len(), 3);
+        for form in &forms.forms {
+            prop_assert_eq!(form.role, SketchResidualFormRole::ExactProof);
+            prop_assert_eq!(form.residual.eval_real(context.bindings()).unwrap(), Real::zero());
+        }
+    }
+
+    #[test]
     fn sketch_workplane_symmetry_rows_match_generated_integer_reflections(
         x in -12_i16..=12,
         y in -12_i16..=12,

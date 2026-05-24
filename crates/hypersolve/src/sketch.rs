@@ -1404,6 +1404,28 @@ pub enum SketchConstraintKind {
         /// 2D line segment used as the mirror axis.
         axis: SketchEntityHandle,
     },
+    /// 3D points symmetric across a projected 3D line in a retained workplane.
+    ///
+    /// Lowering projects the two points and the mirror-axis line direction
+    /// into the workplane `U/V` frame, then replays the same exact package as
+    /// [`SketchConstraintKind::SymmetricLine2`]: the doubled midpoint lies on
+    /// the projected axis, and the point offset is perpendicular to the
+    /// projected axis. The rows do not normalize the axis direction or
+    /// construct a rounded reflected point. Degenerate 3D axes and zero
+    /// projected directions remain explicit entity-domain obligations,
+    /// following Yap, "Towards Exact Geometric Computation" (1997), with the
+    /// workplane frame polynomial from Shoemake, "Animating Rotation with
+    /// Quaternion Curves" (1985).
+    ProjectedSymmetricLine3 {
+        /// Workplane entity that supplies origin and normal/quaternion.
+        workplane: SketchEntityHandle,
+        /// First 3D point entity.
+        a: SketchEntityHandle,
+        /// Second 3D point entity.
+        b: SketchEntityHandle,
+        /// 3D line segment whose projection is the mirror axis.
+        axis: SketchEntityHandle,
+    },
     /// 3D points symmetric across a retained workplane.
     ///
     /// Lowering emits a unit-quaternion guard for the workplane frame, a
@@ -1645,6 +1667,8 @@ pub enum SketchResidualStrategy {
     AxisSymmetryCoordinateEquality,
     /// Exact midpoint-on-axis/perpendicular rows for retained line symmetry.
     LineSymmetryPolynomial,
+    /// Exact workplane-projected midpoint/perpendicular rows for line symmetry.
+    ProjectedLineSymmetryPolynomial,
     /// Exact midpoint-on-plane/normal-offset rows for retained workplane symmetry.
     WorkplaneSymmetryPolynomial,
     /// Soft stay-near objective.
@@ -1866,6 +1890,10 @@ pub enum SketchResidualFormKind {
     WorkplaneSymmetryMidpointPlanePolynomial,
     /// Exact normal-offset cross-product proof row for 3D workplane symmetry.
     WorkplaneSymmetryNormalOffsetPolynomial,
+    /// Exact projected midpoint-on-axis proof row for projected line symmetry.
+    ProjectedLineSymmetryMidpointOnAxisPolynomial,
+    /// Exact projected perpendicular-offset proof row for projected line symmetry.
+    ProjectedLineSymmetryPerpendicularOffsetPolynomial,
     /// Exact cubic-Bezier coordinate incidence proof row.
     CubicBezierIncidencePolynomial,
 }
@@ -3036,6 +3064,22 @@ impl SketchSolveProblem {
         symmetry::symmetric_line2(self, name, a, b, axis).handle
     }
 
+    /// Add a retained 3D/workplane line-axis point symmetry relation.
+    ///
+    /// Lowering emits a certified workplane frame guard plus exact projected
+    /// rows for midpoint-on-axis and perpendicularity to the projected mirror
+    /// axis, avoiding normalized vectors or rounded reflected coordinates.
+    pub fn add_projected_symmetric_line3(
+        &mut self,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+        axis: SketchEntityHandle,
+    ) -> SketchConstraintHandle {
+        symmetry::projected_symmetric_line3(self, name, workplane, a, b, axis).handle
+    }
+
     /// Add a retained 3D workplane point-symmetry relation.
     ///
     /// Lowering emits exact rows for a certified unit workplane frame, the
@@ -4095,6 +4139,54 @@ impl SketchSolveProblem {
                             ),
                             residual: parts.a_numerator * parts.b_denominator
                                 - parts.b_numerator * parts.a_denominator,
+                        },
+                    ],
+                    diagnostics,
+                }
+            }
+            SketchConstraintKind::ProjectedSymmetricLine3 {
+                workplane,
+                a,
+                b,
+                axis,
+            } => {
+                let mut diagnostics = Vec::new();
+                let Some(parts) = self.projected_line_symmetry_exprs(
+                    workplane,
+                    a,
+                    b,
+                    axis,
+                    constraint,
+                    &mut diagnostics,
+                ) else {
+                    return SketchResidualFormsReport {
+                        constraint: handle,
+                        status: SketchResidualFormsStatus::InvalidInputs,
+                        forms: Vec::new(),
+                        diagnostics,
+                    };
+                };
+                SketchResidualFormsReport {
+                    constraint: handle,
+                    status: SketchResidualFormsStatus::Generated,
+                    forms: vec![
+                        SketchResidualForm {
+                            kind: SketchResidualFormKind::WorkplaneUnitQuaternionPolynomial,
+                            role: SketchResidualFormRole::ExactProof,
+                            strategy: Some(SketchResidualStrategy::WorkplaneUnitQuaternion),
+                            residual: unit_quaternion_residual(&parts.quaternion),
+                        },
+                        SketchResidualForm {
+                            kind: SketchResidualFormKind::ProjectedLineSymmetryMidpointOnAxisPolynomial,
+                            role: SketchResidualFormRole::ExactProof,
+                            strategy: Some(SketchResidualStrategy::ProjectedLineSymmetryPolynomial),
+                            residual: parts.midpoint_on_axis,
+                        },
+                        SketchResidualForm {
+                            kind: SketchResidualFormKind::ProjectedLineSymmetryPerpendicularOffsetPolynomial,
+                            role: SketchResidualFormRole::ExactProof,
+                            strategy: Some(SketchResidualStrategy::ProjectedLineSymmetryPolynomial),
+                            residual: parts.perpendicular_offset,
                         },
                     ],
                     diagnostics,
@@ -7415,6 +7507,49 @@ impl SketchSolveProblem {
                     SketchResidualStrategy::LineSymmetryPolynomial,
                 );
             }
+            SketchConstraintKind::ProjectedSymmetricLine3 {
+                workplane,
+                a,
+                b,
+                axis,
+            } => {
+                // This is the workplane-projected counterpart of retained
+                // line symmetry. The proof rows are exactly the 2D
+                // midpoint-on-axis and perpendicular-offset predicates after
+                // linear projection through the certified U/V frame; no
+                // reflected point or normalized projected axis is constructed.
+                // Yap (1997) supplies the exact replay boundary, and Shoemake
+                // (1985) supplies the unit-quaternion frame polynomial.
+                let Some(parts) =
+                    self.projected_line_symmetry_exprs(workplane, a, b, axis, constraint, rows)
+                else {
+                    return;
+                };
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} workplane unit", constraint.name),
+                    unit_quaternion_residual(&parts.quaternion),
+                    SketchResidualStrategy::WorkplaneUnitQuaternion,
+                );
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} projected midpoint on axis", constraint.name),
+                    parts.midpoint_on_axis,
+                    SketchResidualStrategy::ProjectedLineSymmetryPolynomial,
+                );
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} projected perpendicular offset", constraint.name),
+                    parts.perpendicular_offset,
+                    SketchResidualStrategy::ProjectedLineSymmetryPolynomial,
+                );
+            }
             SketchConstraintKind::SymmetricWorkplane3 { a, b, workplane } => {
                 // This is the retained 3D mirror-plane package. Following Yap
                 // (1997), the workplane is not normalized by a proposal engine:
@@ -8491,6 +8626,44 @@ impl SketchSolveProblem {
         ))
     }
 
+    fn projected_line_symmetry_exprs(
+        &self,
+        workplane: SketchEntityHandle,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+        axis: SketchEntityHandle,
+        constraint: &SketchConstraint,
+        rows: &mut Vec<SketchGeneratedRow>,
+    ) -> Option<ProjectedLineSymmetryExprs> {
+        let quaternion = self.workplane_quaternion(workplane, constraint, rows)?;
+        let a = self.point3_coordinates(a, constraint, rows)?;
+        let b = self.point3_coordinates(b, constraint, rows)?;
+        let (axis_start, axis_end) = self.line3_points(axis, constraint, rows)?;
+        let axis_direction = [
+            axis_end.exprs[0].clone() - axis_start.exprs[0].clone(),
+            axis_end.exprs[1].clone() - axis_start.exprs[1].clone(),
+            axis_end.exprs[2].clone() - axis_start.exprs[2].clone(),
+        ];
+        let doubled_midpoint_delta = [
+            a.exprs[0].clone() + b.exprs[0].clone() - Expr::int(2) * axis_start.exprs[0].clone(),
+            a.exprs[1].clone() + b.exprs[1].clone() - Expr::int(2) * axis_start.exprs[1].clone(),
+            a.exprs[2].clone() + b.exprs[2].clone() - Expr::int(2) * axis_start.exprs[2].clone(),
+        ];
+        let point_delta = [
+            a.exprs[0].clone() - b.exprs[0].clone(),
+            a.exprs[1].clone() - b.exprs[1].clone(),
+            a.exprs[2].clone() - b.exprs[2].clone(),
+        ];
+        let projected_axis = projected_direction2(&axis_direction, &quaternion);
+        let projected_midpoint_delta = projected_direction2(&doubled_midpoint_delta, &quaternion);
+        let projected_point_delta = projected_direction2(&point_delta, &quaternion);
+        Some(ProjectedLineSymmetryExprs {
+            quaternion,
+            midpoint_on_axis: direction_cross2(&projected_midpoint_delta, &projected_axis),
+            perpendicular_offset: direction_dot2(&projected_point_delta, &projected_axis),
+        })
+    }
+
     #[allow(clippy::too_many_arguments)]
     fn arc_cubic_second_order_contact_exprs(
         &self,
@@ -9174,6 +9347,13 @@ struct ProjectedLineCircleTangentExprs {
 struct ProjectedArcLineTangentExprs {
     quaternion: [Expr; 4],
     tangent: ArcLineTangentExprs,
+}
+
+#[derive(Clone, Debug)]
+struct ProjectedLineSymmetryExprs {
+    quaternion: [Expr; 4],
+    midpoint_on_axis: Expr,
+    perpendicular_offset: Expr,
 }
 
 #[derive(Clone, Debug)]

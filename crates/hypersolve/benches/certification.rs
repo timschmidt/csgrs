@@ -770,6 +770,56 @@ fn sketch_problem_with_line_symmetry_relations(row_count: usize) -> hypersolve::
     sketch
 }
 
+fn sketch_problem_with_projected_line_symmetry_relations(
+    row_count: usize,
+) -> hypersolve::SketchSolveProblem {
+    let mut sketch = hypersolve::SketchSolveProblem::new();
+    let origin = sketch.add_point3d("project-line-sym.origin", r(0), r(0), r(0));
+    let normal = sketch.add_normal3d("project-line-sym.normal", r(1), r(0), r(0), r(0));
+    let workplane = sketch.add_workplane("project-line-sym.workplane", origin, normal);
+    for index in 0..row_count {
+        let x = index as i64;
+        let axis_start = sketch.add_point3d(
+            format!("project-line-sym{index}.axis0"),
+            r(x),
+            r(x + 1),
+            r(-x),
+        );
+        let axis_end = sketch.add_point3d(
+            format!("project-line-sym{index}.axis1"),
+            r(x + 3),
+            r(x + 5),
+            r(2 * x + 1),
+        );
+        let axis = sketch.add_line_segment3(
+            format!("project-line-sym{index}.axis"),
+            axis_start,
+            axis_end,
+        );
+        let a = sketch.add_point3d(
+            format!("project-line-sym{index}.a"),
+            r(x - 1),
+            r(x + 5),
+            r(7),
+        );
+        let b = sketch.add_point3d(
+            format!("project-line-sym{index}.b"),
+            r(x + 7),
+            r(x - 1),
+            r(-11),
+        );
+        hypersolve::sketch_symmetry_builders::projected_symmetric_line3(
+            &mut sketch,
+            format!("projected line symmetry {index}"),
+            workplane,
+            a,
+            b,
+            axis,
+        );
+    }
+    sketch
+}
+
 fn sketch_problem_with_same_direction_relations(
     row_count: usize,
 ) -> hypersolve::SketchSolveProblem {
@@ -1737,6 +1787,10 @@ fn certification(c: &mut Criterion) {
     c.bench_function("sketch_line_symmetry_lowering", |b| {
         b.iter(|| line_symmetry_sketch.lower_to_problem())
     });
+    let projected_line_symmetry_sketch = sketch_problem_with_projected_line_symmetry_relations(16);
+    c.bench_function("sketch_projected_line_symmetry_lowering", |b| {
+        b.iter(|| projected_line_symmetry_sketch.lower_to_problem())
+    });
     let same_direction_sketch = sketch_problem_with_same_direction_relations(16);
     c.bench_function("sketch_same_direction_lowering", |b| {
         b.iter(|| same_direction_sketch.lower_to_problem())
@@ -2539,6 +2593,24 @@ fn certification(c: &mut Criterion) {
             })
         },
     );
+    let projected_line_symmetry_form_handles = projected_line_symmetry_sketch
+        .constraints()
+        .iter()
+        .filter(|constraint| {
+            matches!(
+                constraint.kind,
+                hypersolve::SketchConstraintKind::ProjectedSymmetricLine3 { .. }
+            )
+        })
+        .map(|constraint| constraint.handle)
+        .collect::<Vec<_>>();
+    c.bench_function("sketch_projected_line_symmetry_residual_forms", |b| {
+        b.iter(|| {
+            for handle in &projected_line_symmetry_form_handles {
+                let _ = projected_line_symmetry_sketch.residual_forms_for_constraint(*handle);
+            }
+        })
+    });
     let workplane_symmetry_form_handles = workplane_symmetry_sketch
         .constraints()
         .iter()

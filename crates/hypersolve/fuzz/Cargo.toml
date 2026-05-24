@@ -161,6 +161,13 @@ doc = false
 bench = false
 
 [[bin]]
+name = "sketch_projected_line_symmetry"
+path = "fuzz_targets/sketch_projected_line_symmetry.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
 name = "sketch_arc_cubic_tangent"
 path = "fuzz_targets/sketch_arc_cubic_tangent.rs"
 test = false

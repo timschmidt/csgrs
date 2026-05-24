@@ -1615,6 +1615,38 @@ pub mod symmetry {
         }
     }
 
+    /// Add a 3D/workplane projected line-axis point symmetry relation.
+    ///
+    /// Lowering proves the retained workplane unit frame and then replays the
+    /// ordinary line-symmetry predicates after exact projection: doubled
+    /// midpoint-on-axis and point-offset perpendicularity. This follows Yap,
+    /// "Towards Exact Geometric Computation" (1997), by keeping reflection as
+    /// retained source structure and accepting candidates only through exact
+    /// replay. The retained frame uses Shoemake's unit-quaternion rotation
+    /// matrix from "Animating Rotation with Quaternion Curves" (1985).
+    pub fn projected_symmetric_line3(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+        axis: SketchEntityHandle,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::ProjectedSymmetricLine3 {
+            workplane,
+            a,
+            b,
+            axis,
+        };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Symmetry,
+            strategy: SketchResidualStrategy::ProjectedLineSymmetryPolynomial,
+            kind,
+        }
+    }
+
     /// Add a 3D workplane point-symmetry relation.
     ///
     /// Lowering emits an exact unit-workplane guard, a midpoint-on-plane row,

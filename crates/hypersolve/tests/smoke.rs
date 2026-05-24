@@ -3043,6 +3043,100 @@ fn sketch_line_symmetry_relations_report_stale_wrong_and_non_2d_inputs() {
 }
 
 #[test]
+fn sketch_projected_line_symmetry_replays_workplane_midpoint_and_perpendicular_rows() {
+    let mut sketch = SketchSolveProblem::new();
+    let origin = sketch.add_point3d("origin", real(10), real(-2), real(7));
+    let normal = sketch.add_normal3d("identity normal", real(1), real(0), real(0), real(0));
+    let workplane = sketch.add_workplane("workplane", origin, normal);
+    let axis_start = sketch.add_point3d("axis start", real(11), real(0), real(-3));
+    let axis_end = sketch.add_point3d("axis end", real(16), real(0), real(13));
+    let axis = sketch.add_line_segment3("projected axis", axis_start, axis_end);
+    let top = sketch.add_point3d("top", real(14), real(5), real(19));
+    let bottom = sketch.add_point3d("bottom", real(14), real(-5), real(-11));
+    let wrong = sketch.add_point3d("wrong", real(15), real(-5), real(-11));
+    let point2 = sketch.add_point2d("point2", real(0), real(0));
+    let valid = sketch_symmetry_builders::projected_symmetric_line3(
+        &mut sketch,
+        "projected line symmetry",
+        workplane,
+        top,
+        bottom,
+        axis,
+    );
+    sketch.add_projected_symmetric_line3(
+        "violated projected line symmetry",
+        workplane,
+        top,
+        wrong,
+        axis,
+    );
+    let wrong_handle = sketch.add_projected_symmetric_line3(
+        "wrong projected line axis kind",
+        workplane,
+        top,
+        bottom,
+        point2,
+    );
+
+    assert_eq!(valid.family, hypersolve::SketchConstraintFamily::Symmetry);
+    assert_eq!(
+        valid.strategy,
+        SketchResidualStrategy::ProjectedLineSymmetryPolynomial
+    );
+
+    let lowered = sketch.lower_to_problem();
+    let certification = certify_candidate(
+        &PreparedProblem::new(&lowered.problem),
+        &context_from_problem(&lowered.problem),
+    );
+    let forms = sketch.residual_forms_for_constraint(valid.handle);
+
+    assert_eq!(lowered.problem.constraints.len(), 6);
+    assert_eq!(lowered.rows.len(), 7);
+    assert_eq!(
+        lowered.rows.last().unwrap().status,
+        SketchGeneratedRowStatus::WrongEntityKind {
+            handle: point2,
+            expected: "3D line segment",
+        }
+    );
+    assert_eq!(
+        lowered.rows[0].strategy,
+        Some(SketchResidualStrategy::WorkplaneUnitQuaternion)
+    );
+    assert!(lowered.rows[1..3].iter().all(|row| {
+        row.strategy == Some(SketchResidualStrategy::ProjectedLineSymmetryPolynomial)
+            && row.status == SketchGeneratedRowStatus::Generated
+    }));
+    assert!(
+        certification.rows[..3]
+            .iter()
+            .all(|row| { matches!(row.status, CertifiedCandidateStatus::CertifiedZero { .. }) })
+    );
+    assert!(matches!(
+        certification.rows[5].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
+    assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+    assert_eq!(forms.forms.len(), 3);
+    assert_eq!(
+        forms.forms[0].kind,
+        SketchResidualFormKind::WorkplaneUnitQuaternionPolynomial
+    );
+    assert_eq!(
+        forms.forms[1].kind,
+        SketchResidualFormKind::ProjectedLineSymmetryMidpointOnAxisPolynomial
+    );
+    assert_eq!(
+        forms.forms[2].kind,
+        SketchResidualFormKind::ProjectedLineSymmetryPerpendicularOffsetPolynomial
+    );
+
+    let wrong_forms = sketch.residual_forms_for_constraint(wrong_handle);
+    assert_eq!(wrong_forms.status, SketchResidualFormsStatus::InvalidInputs);
+}
+
+#[test]
 fn sketch_workplane_symmetry_relations_lower_to_exact_polynomial_rows() {
     let mut sketch = SketchSolveProblem::new();
     let origin = sketch.add_point3d("origin", real(0), real(0), real(0));
