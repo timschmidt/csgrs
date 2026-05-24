@@ -2,8 +2,8 @@ use hyperlimit::{Point2, PredicatePolicy};
 use hyperpath::{
     ArcDirection, ArcOffsetError, Axis, AxisAlignedSweptSegmentPrism, BeadFillAxis, BeadPlanError,
     BezierOffsetError, BezierParameter, BezierParameterError, BoardContourError,
-    BoardContourOrientation, CardinalPoint, CardinalRotation, CircularArc, CircularArcError,
-    ClearanceStatus, ConstructionStamp, CubicBezier, DrillBoardClearanceReport,
+    BoardContourOrientation, CamRestMaterialCutter, CardinalPoint, CardinalRotation, CircularArc,
+    CircularArcError, ClearanceStatus, ConstructionStamp, CubicBezier, DrillBoardClearanceReport,
     ExplicitArcArrangementClass, ExplicitArcIntersectionClass, ExplicitArcOverlapClass,
     ExplicitArcPointClassification, ExplicitArcSweepClass, ExplicitArcTangentClass,
     ExplicitCircleRelationClass, ExplicitCircularArc, HigherOrderBezier, HigherOrderBezierError,
@@ -22,10 +22,10 @@ use hyperpath::{
     ViaLayerSpanRelation, ViaLayerTransitionClass, boolean_path_mesh_program,
     boolean_path_mesh_sources, boolean_rectangular_prism_chain, boolean_rectangular_prisms,
     boolean_rectangular_prisms_with_boundary_policy, build_alternating_detour_meander,
-    build_g1_join_problem, build_length_match_problem, build_multi_detour_meander,
-    build_nonuniform_detour_meander, build_obstacle_aware_detour_meander,
-    build_oriented_tangent_alignment_problem, build_pcb_copper_union_program,
-    build_rectangular_bead_plan, build_rectangular_pocket_plan,
+    build_cam_rest_material_program, build_g1_join_problem, build_length_match_problem,
+    build_multi_detour_meander, build_nonuniform_detour_meander,
+    build_obstacle_aware_detour_meander, build_oriented_tangent_alignment_problem,
+    build_pcb_copper_union_program, build_rectangular_bead_plan, build_rectangular_pocket_plan,
     build_rectangular_serpentine_infill_graph, build_rectangular_support_plan,
     build_single_detour_meander, build_tangent_alignment_problem, certify_constant_feed_time,
     certify_differential_pair_skew, certify_g1_chain, certify_g1_join_candidate,
@@ -518,6 +518,88 @@ fn pcb_copper_boolean_program_rejects_mixed_nets_and_layers() {
         )
         .unwrap_err(),
         PathMeshBooleanError::MixedPcbLayers
+    );
+}
+
+#[test]
+fn cam_rest_material_program_replays_stock_minus_retained_cutters() {
+    let stock = RectangularPocket::new(p(0, 0), p(20, 12)).unwrap();
+    let slot = SweptLineSegment::new(LinePathSegment::new(p(4, 6), p(16, 6)), r(4)).unwrap();
+    let pocket = RectangularPocket::new(p(2, 2), p(6, 5)).unwrap();
+    let report = build_cam_rest_material_program(
+        stock.clone(),
+        r(0),
+        r(4),
+        vec![
+            CamRestMaterialCutter::AxisAlignedSweep(slot),
+            CamRestMaterialCutter::RectangularPocket(pocket),
+        ],
+        PredicatePolicy::default(),
+    )
+    .expect("rectangular stock minus retained cutters should replay");
+    report.validate_replay(PredicatePolicy::default()).unwrap();
+    assert_eq!(report.stock, stock);
+    assert_eq!(report.cutters.len(), 2);
+    assert_eq!(report.exact.len, 15);
+    assert!(report.exact.all_exact_rational);
+    assert_eq!(report.program.steps.len(), 2);
+    assert!(report.program.mesh().unwrap().facts().mesh.closed_manifold);
+    assert!(
+        report
+            .program
+            .steps
+            .iter()
+            .all(|step| step.result.validate().is_ok())
+    );
+
+    let mut stale = report.clone();
+    stale.cutters[0] = CamRestMaterialCutter::AxisAlignedSweep(
+        SweptLineSegment::new(LinePathSegment::new(p(0, 1), p(20, 1)), r(2)).unwrap(),
+    );
+    assert!(matches!(
+        stale.validate_replay(PredicatePolicy::default()),
+        Err(PathMeshBooleanError::Replay(_))
+    ));
+}
+
+#[test]
+fn cam_rest_material_program_rejects_empty_bad_z_and_non_axis_cutters() {
+    let stock = RectangularPocket::new(p(0, 0), p(10, 10)).unwrap();
+    assert_eq!(
+        build_cam_rest_material_program(
+            stock.clone(),
+            r(0),
+            r(4),
+            vec![],
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        PathMeshBooleanError::NotEnoughSources
+    );
+    assert_eq!(
+        build_cam_rest_material_program(
+            stock.clone(),
+            r(4),
+            r(4),
+            vec![CamRestMaterialCutter::RectangularPocket(
+                RectangularPocket::new(p(1, 1), p(2, 2)).unwrap()
+            )],
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        PathMeshBooleanError::DegenerateHeight
+    );
+    let diagonal = SweptLineSegment::new(LinePathSegment::new(p(0, 0), p(4, 4)), r(2)).unwrap();
+    assert_eq!(
+        build_cam_rest_material_program(
+            stock,
+            r(0),
+            r(4),
+            vec![CamRestMaterialCutter::AxisAlignedSweep(diagonal)],
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        PathMeshBooleanError::NonAxisAlignedSweep
     );
 }
 

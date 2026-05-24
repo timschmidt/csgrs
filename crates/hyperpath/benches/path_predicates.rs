@@ -1,17 +1,18 @@
 use criterion::{Criterion, criterion_group, criterion_main};
 use hyperlimit::{Point2, PredicatePolicy};
 use hyperpath::{
-    ArcDirection, AxisAlignedSweptSegmentPrism, BeadFillAxis, BezierParameter, CardinalPoint,
-    CardinalRotation, CircularArc, ConstructionStamp, CubicBezier, ExplicitCircularArc,
-    HigherOrderBezier, LinePathSegment, MeanderObstacle, MeanderPlacementCandidate, NetId,
-    OffsetSide, PathMeshBooleanOperation, PathMeshBooleanProgramStep, PathProvenance,
-    PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad, PcbCircularPad, PcbConvexBoardOutline,
-    PcbCopperBooleanSource, PcbLayerZModel, PcbOrthogonalBoardOutline, PcbRectPad, PcbTrace,
-    PcbViaStack, QuadraticBezier, RationalQuadraticBezier, RectangularPocket, SourceLengthUnit,
-    SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraLayerAlias, SpecctraNetAlias,
-    SweptLineSegment, TangentSpan, TraceLayer, ViaDrillIntent, boolean_path_mesh_program,
-    boolean_path_mesh_sources, boolean_rectangular_prism_chain, boolean_rectangular_prisms,
-    build_alternating_detour_meander, build_g1_join_problem, build_length_match_problem,
+    ArcDirection, AxisAlignedSweptSegmentPrism, BeadFillAxis, BezierParameter,
+    CamRestMaterialCutter, CardinalPoint, CardinalRotation, CircularArc, ConstructionStamp,
+    CubicBezier, ExplicitCircularArc, HigherOrderBezier, LinePathSegment, MeanderObstacle,
+    MeanderPlacementCandidate, NetId, OffsetSide, PathMeshBooleanOperation,
+    PathMeshBooleanProgramStep, PathProvenance, PathSourceFormat, PcbBoardOutline,
+    PcbCardinalRectPad, PcbCircularPad, PcbConvexBoardOutline, PcbCopperBooleanSource,
+    PcbLayerZModel, PcbOrthogonalBoardOutline, PcbRectPad, PcbTrace, PcbViaStack, QuadraticBezier,
+    RationalQuadraticBezier, RectangularPocket, SourceLengthUnit, SpecctraGridTraceRecord,
+    SpecctraGridViaRecord, SpecctraLayerAlias, SpecctraNetAlias, SweptLineSegment, TangentSpan,
+    TraceLayer, ViaDrillIntent, boolean_path_mesh_program, boolean_path_mesh_sources,
+    boolean_rectangular_prism_chain, boolean_rectangular_prisms, build_alternating_detour_meander,
+    build_cam_rest_material_program, build_g1_join_problem, build_length_match_problem,
     build_multi_detour_meander, build_nonuniform_detour_meander,
     build_obstacle_aware_detour_meander, build_oriented_tangent_alignment_problem,
     build_pcb_copper_union_program, build_rectangular_bead_plan, build_rectangular_pocket_plan,
@@ -844,6 +845,29 @@ fn path_predicates(c: &mut Criterion) {
                     PcbCopperBooleanSource::CardinalRectPad(pcb_pad.clone()),
                 ],
                 pcb_z.clone(),
+                PredicatePolicy::default(),
+            )
+            .unwrap();
+            report.validate_replay(PredicatePolicy::default())
+        })
+    });
+    let cam_stock = RectangularPocket::new(p(0, 0), p(20_000, 12_000)).unwrap();
+    let cam_slot = SweptLineSegment::new(
+        LinePathSegment::new(p(4_000, 6_000), p(16_000, 6_000)),
+        r(4_000),
+    )
+    .unwrap();
+    let cam_pocket = RectangularPocket::new(p(2_000, 2_000), p(6_000, 5_000)).unwrap();
+    c.bench_function("cam_rest_material_program_replay", |b| {
+        b.iter(|| {
+            let report = build_cam_rest_material_program(
+                cam_stock.clone(),
+                r(0),
+                r(2_000),
+                vec![
+                    CamRestMaterialCutter::AxisAlignedSweep(cam_slot.clone()),
+                    CamRestMaterialCutter::RectangularPocket(cam_pocket.clone()),
+                ],
                 PredicatePolicy::default(),
             )
             .unwrap();

@@ -11,6 +11,7 @@ pub mod arc;
 pub mod bezier;
 pub mod cam;
 pub mod mesh_boolean;
+pub mod mesh_boolean_cam;
 pub mod mesh_boolean_pcb;
 pub mod mesh_boolean_program;
 pub mod mesh_boolean_sources;
@@ -52,6 +53,10 @@ pub use mesh_boolean::{
     PathMeshBooleanReport, PathMeshBooleanStep, RectangularPrism, boolean_rectangular_prism_chain,
     boolean_rectangular_prism_chain_with_boundary_policy, boolean_rectangular_prisms,
     boolean_rectangular_prisms_with_boundary_policy, rectangular_prism_from_i64_bounds,
+};
+pub use mesh_boolean_cam::{
+    CamRestMaterialCutter, CamRestMaterialProgramReport, build_cam_rest_material_program,
+    cam_rectangular_pocket_cutter_from_i64_bounds,
 };
 pub use mesh_boolean_pcb::{
     PcbCopperBooleanProgramReport, PcbCopperBooleanSource, PcbLayerSlab, PcbLayerZModel,

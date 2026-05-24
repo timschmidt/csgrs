@@ -2,13 +2,14 @@
 
 use hyperlimit::{Point2, PredicatePolicy};
 use hyperpath::{
-    AxisAlignedSweptSegmentPrism, CardinalRotation, LinePathSegment, NetId,
+    AxisAlignedSweptSegmentPrism, CamRestMaterialCutter, CardinalRotation, LinePathSegment, NetId,
     PathMeshBooleanOperation, PathMeshBooleanProgramStep, PcbCardinalRectPad,
     PcbCopperBooleanSource, PcbLayerZModel, PcbTrace, SweptLineSegment, TraceLayer,
     boolean_path_mesh_program, boolean_path_mesh_sources, boolean_rectangular_prism_chain,
     boolean_rectangular_prisms, boolean_rectangular_prisms_with_boundary_policy,
-    build_pcb_copper_union_program, pcb_cardinal_rect_pad_mesh_boolean_source,
-    pcb_trace_mesh_boolean_source, rectangular_prism_from_i64_bounds,
+    build_cam_rest_material_program, build_pcb_copper_union_program,
+    pcb_cardinal_rect_pad_mesh_boolean_source, pcb_trace_mesh_boolean_source,
+    rectangular_prism_from_i64_bounds,
 };
 use hyperreal::Real;
 use libfuzzer_sys::fuzz_target;
@@ -259,6 +260,41 @@ fuzz_target!(|data: &[u8]| {
                         PcbCopperBooleanSource::CardinalRectPad(pad),
                     ],
                     z_model,
+                    PredicatePolicy::default(),
+                ) {
+                    report.validate_replay(PredicatePolicy::default()).unwrap();
+                    report.program.steps.last().unwrap().result.validate().unwrap();
+                }
+            }
+        }
+    }
+
+    if data.len() >= 20 && data[14] & 128 == 128 {
+        let stock_min = Point2::new(Real::from(left_min[0]), Real::from(left_min[1]));
+        let stock_max = Point2::new(Real::from(left_max[0]), Real::from(left_max[1]));
+        let Ok(stock) = hyperpath::RectangularPocket::new(stock_min, stock_max) else {
+            return;
+        };
+        let start = Point2::new(Real::from(coord(15)), Real::from(coord(16)));
+        let end = if data[14] & 4 == 4 {
+            Point2::new(start.x.clone() + Real::from(extent(17)), start.y.clone())
+        } else {
+            Point2::new(start.x.clone(), start.y.clone() + Real::from(extent(17)))
+        };
+        if let Ok(swept) =
+            SweptLineSegment::new(LinePathSegment::new(start, end), Real::from(extent(3)))
+        {
+            let pocket_min = Point2::new(Real::from(right_min[0]), Real::from(right_min[1]));
+            let pocket_max = Point2::new(Real::from(right_max[0]), Real::from(right_max[1]));
+            if let Ok(pocket) = hyperpath::RectangularPocket::new(pocket_min, pocket_max) {
+                if let Ok(report) = build_cam_rest_material_program(
+                    stock,
+                    Real::from(left_min[2]),
+                    Real::from(left_max[2]),
+                    vec![
+                        CamRestMaterialCutter::AxisAlignedSweep(swept),
+                        CamRestMaterialCutter::RectangularPocket(pocket),
+                    ],
                     PredicatePolicy::default(),
                 ) {
                     report.validate_replay(PredicatePolicy::default()).unwrap();
