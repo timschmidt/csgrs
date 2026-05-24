@@ -3,10 +3,11 @@
 use hyperlimit::{Point2, PredicatePolicy};
 use hyperpath::{
     AxisAlignedSweptSegmentPrism, CardinalRotation, LinePathSegment, NetId,
-    PathMeshBooleanOperation, PathMeshBooleanProgramStep, PcbCardinalRectPad, PcbLayerZModel,
-    PcbTrace, SweptLineSegment, TraceLayer, boolean_path_mesh_program, boolean_path_mesh_sources,
-    boolean_rectangular_prism_chain, boolean_rectangular_prisms,
-    boolean_rectangular_prisms_with_boundary_policy, pcb_cardinal_rect_pad_mesh_boolean_source,
+    PathMeshBooleanOperation, PathMeshBooleanProgramStep, PcbCardinalRectPad,
+    PcbCopperBooleanSource, PcbLayerZModel, PcbTrace, SweptLineSegment, TraceLayer,
+    boolean_path_mesh_program, boolean_path_mesh_sources, boolean_rectangular_prism_chain,
+    boolean_rectangular_prisms, boolean_rectangular_prisms_with_boundary_policy,
+    build_pcb_copper_union_program, pcb_cardinal_rect_pad_mesh_boolean_source,
     pcb_trace_mesh_boolean_source, rectangular_prism_from_i64_bounds,
 };
 use hyperreal::Real;
@@ -203,6 +204,65 @@ fuzz_target!(|data: &[u8]| {
                 ) {
                     program.validate_replay().unwrap();
                     program.steps.last().unwrap().result.validate().unwrap();
+                }
+            }
+        }
+
+        if data[14] & 64 == 64 {
+            let first_start = Point2::new(Real::from(coord(0)), Real::from(coord(1)));
+            let first_end = if data[14] & 4 == 4 {
+                Point2::new(first_start.x.clone() + Real::from(extent(17)), first_start.y.clone())
+            } else {
+                Point2::new(first_start.x.clone(), first_start.y.clone() + Real::from(extent(17)))
+            };
+            let second_start = Point2::new(Real::from(coord(8)), Real::from(coord(9)));
+            let second_end = if data[14] & 4 == 4 {
+                Point2::new(
+                    second_start.x.clone() + Real::from(extent(10)),
+                    second_start.y.clone(),
+                )
+            } else {
+                Point2::new(
+                    second_start.x.clone(),
+                    second_start.y.clone() + Real::from(extent(10)),
+                )
+            };
+            if let (Ok(first_swept), Ok(second_swept)) = (
+                SweptLineSegment::new(
+                    LinePathSegment::new(first_start, first_end),
+                    Real::from(extent(5)),
+                ),
+                SweptLineSegment::new(
+                    LinePathSegment::new(second_start, second_end),
+                    Real::from(extent(11)),
+                ),
+            ) {
+                let first_trace = PcbTrace::new(NetId(u32::from(data[16])), layer, first_swept);
+                let second_trace = PcbTrace::new(NetId(u32::from(data[16])), layer, second_swept);
+                let pad = PcbCardinalRectPad::new(
+                    NetId(u32::from(data[16])),
+                    layer,
+                    Point2::new(Real::from(coord(6)), Real::from(coord(7))),
+                    Real::from(extent(9)),
+                    Real::from(extent(10)),
+                    if data[14] & 32 == 32 {
+                        CardinalRotation::Deg90
+                    } else {
+                        CardinalRotation::Deg0
+                    },
+                )
+                .unwrap();
+                if let Ok(report) = build_pcb_copper_union_program(
+                    vec![
+                        PcbCopperBooleanSource::Trace(first_trace),
+                        PcbCopperBooleanSource::Trace(second_trace),
+                        PcbCopperBooleanSource::CardinalRectPad(pad),
+                    ],
+                    z_model,
+                    PredicatePolicy::default(),
+                ) {
+                    report.validate_replay(PredicatePolicy::default()).unwrap();
+                    report.program.steps.last().unwrap().result.validate().unwrap();
                 }
             }
         }

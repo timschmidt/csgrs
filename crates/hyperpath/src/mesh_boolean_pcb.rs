@@ -20,9 +20,12 @@ use hyperlimit::{Point2, PredicatePolicy, compare_reals_with_policy};
 use hyperreal::{Real, RealExactSetFacts};
 
 use crate::cam::{PocketPlanError, RectangularPocket};
-use crate::mesh_boolean::{PathMeshBooleanError, RectangularPrism};
+use crate::mesh_boolean::{PathMeshBooleanError, PathMeshBooleanOperation, RectangularPrism};
+use crate::mesh_boolean_program::{
+    PathMeshBooleanProgramReport, PathMeshBooleanProgramStep, boolean_path_mesh_program,
+};
 use crate::mesh_boolean_sources::{AxisAlignedSweptSegmentPrism, PathMeshBooleanSource};
-use crate::pcb::{PcbCardinalRectPad, PcbRectPad, PcbTrace, TraceLayer};
+use crate::pcb::{NetId, PcbCardinalRectPad, PcbRectPad, PcbTrace, TraceLayer};
 
 /// Exact Z mapping for discrete PCB copper layers.
 ///
@@ -47,6 +50,42 @@ pub struct PcbLayerSlab {
     pub z_min: Real,
     /// Exact upper Z face.
     pub z_max: Real,
+}
+
+/// Retained PCB copper source supported by the exact mesh-boolean handoff.
+///
+/// This enum keeps PCB semantics attached until the final lowering step. It is
+/// intentionally narrower than all PCB geometry: circular pads and arbitrary
+/// rotations need exact curved/arrangement evidence before they can become
+/// mesh-boolean operands without approximation.
+#[derive(Clone, Debug, PartialEq)]
+pub enum PcbCopperBooleanSource {
+    /// Axis-aligned retained trace.
+    Trace(PcbTrace),
+    /// Axis-aligned rectangular pad.
+    RectPad(PcbRectPad),
+    /// Cardinally rotated rectangular pad.
+    CardinalRectPad(PcbCardinalRectPad),
+}
+
+/// Exact PCB copper-union program for one net on one layer.
+///
+/// The accepted [`PathMeshBooleanProgramReport`] is retained rather than
+/// flattened to a mesh. Replay therefore revalidates source lowering, net/layer
+/// grouping, and `hypermesh` boolean evidence before the output topology is
+/// trusted.
+#[derive(Clone, Debug, PartialEq)]
+pub struct PcbCopperBooleanProgramReport {
+    /// Net shared by every retained copper source.
+    pub net: NetId,
+    /// Layer shared by every retained copper source.
+    pub layer: TraceLayer,
+    /// Exact layer-to-Z model used for lowering.
+    pub z_model: PcbLayerZModel,
+    /// Retained PCB copper sources in union order.
+    pub sources: Vec<PcbCopperBooleanSource>,
+    /// Accepted exact mesh-boolean program.
+    pub program: PathMeshBooleanProgramReport,
 }
 
 impl PcbLayerZModel {
@@ -116,6 +155,99 @@ impl PcbLayerZModel {
             z_max,
         }
     }
+}
+
+impl PcbCopperBooleanSource {
+    /// Return the source net.
+    pub const fn net(&self) -> NetId {
+        match self {
+            Self::Trace(source) => source.net(),
+            Self::RectPad(source) => source.net(),
+            Self::CardinalRectPad(source) => source.net(),
+        }
+    }
+
+    /// Return the source layer.
+    pub const fn layer(&self) -> TraceLayer {
+        match self {
+            Self::Trace(source) => source.layer(),
+            Self::RectPad(source) => source.layer(),
+            Self::CardinalRectPad(source) => source.layer(),
+        }
+    }
+
+    /// Lower this retained PCB source into a generic path mesh-boolean source.
+    pub fn to_path_source(
+        &self,
+        z_model: &PcbLayerZModel,
+        policy: PredicatePolicy,
+    ) -> Result<PathMeshBooleanSource, PathMeshBooleanError> {
+        match self {
+            Self::Trace(source) => pcb_trace_mesh_boolean_source(source, z_model, policy),
+            Self::RectPad(source) => pcb_rect_pad_mesh_boolean_source(source, z_model, policy),
+            Self::CardinalRectPad(source) => {
+                pcb_cardinal_rect_pad_mesh_boolean_source(source, z_model, policy)
+            }
+        }
+    }
+}
+
+impl PcbCopperBooleanProgramReport {
+    /// Rebuild source lowering, net/layer grouping, and boolean evidence.
+    pub fn validate_replay(&self, policy: PredicatePolicy) -> Result<(), PathMeshBooleanError> {
+        let replayed =
+            build_pcb_copper_union_program(self.sources.clone(), self.z_model.clone(), policy)?;
+        if replayed.net != self.net
+            || replayed.layer != self.layer
+            || replayed.program != self.program
+        {
+            return Err(PathMeshBooleanError::Replay(
+                "retained PCB copper boolean program no longer matches replay".into(),
+            ));
+        }
+        self.program.validate_replay()
+    }
+}
+
+/// Build an exact union program for retained PCB copper on one net/layer.
+///
+/// This is the PCB artwork companion to generic boolean programs. It rejects
+/// mixed nets and mixed layers before mesh construction, because those are
+/// routing semantics rather than geometric facts. The resulting boolean steps
+/// are all regularized unions over exact source lowerings.
+pub fn build_pcb_copper_union_program(
+    sources: Vec<PcbCopperBooleanSource>,
+    z_model: PcbLayerZModel,
+    policy: PredicatePolicy,
+) -> Result<PcbCopperBooleanProgramReport, PathMeshBooleanError> {
+    if sources.len() < 2 {
+        return Err(PathMeshBooleanError::NotEnoughSources);
+    }
+    let net = sources[0].net();
+    let layer = sources[0].layer();
+    if sources.iter().any(|source| source.net() != net) {
+        return Err(PathMeshBooleanError::MixedPcbNets);
+    }
+    if sources.iter().any(|source| source.layer() != layer) {
+        return Err(PathMeshBooleanError::MixedPcbLayers);
+    }
+    let mut lowered = sources
+        .iter()
+        .map(|source| source.to_path_source(&z_model, policy))
+        .collect::<Result<Vec<_>, _>>()?;
+    let initial = lowered.remove(0);
+    let steps = lowered
+        .into_iter()
+        .map(|right| PathMeshBooleanProgramStep::new(PathMeshBooleanOperation::Union, right))
+        .collect::<Vec<_>>();
+    let program = boolean_path_mesh_program(initial, steps)?;
+    Ok(PcbCopperBooleanProgramReport {
+        net,
+        layer,
+        z_model,
+        sources,
+        program,
+    })
 }
 
 /// Lower a retained PCB trace into an exact mesh-boolean source.

@@ -80,6 +80,10 @@ pub enum PathMeshBooleanError {
     CopperThicknessExceedsPitch,
     /// A rectangular PCB pad did not have certified positive width and height.
     NonPositivePadExtent,
+    /// A PCB copper boolean program mixed multiple nets.
+    MixedPcbNets,
+    /// A PCB copper boolean program mixed multiple layers.
+    MixedPcbLayers,
     /// Footprint bounds did not have strictly positive area.
     DegenerateFootprint,
     /// Z bounds were unordered, equal, or undecidable.

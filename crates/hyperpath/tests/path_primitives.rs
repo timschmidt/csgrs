@@ -11,24 +11,25 @@ use hyperpath::{
     MeanderError, MeanderObstacle, MeanderPlacementCandidate, NetId, OffsetSide,
     PathMeshBooleanError, PathMeshBooleanOperation, PathMeshBooleanProgramStep,
     PathMeshBooleanSource, PathProvenance, PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad,
-    PcbCircularPad, PcbConvexBoardOutline, PcbLayerZModel, PcbOrthogonalBoardOutline, PcbRectPad,
-    PcbTrace, PcbViaStack, PocketPlanError, PocketPlanStopReason, QuadraticBezier,
-    RationalQuadraticBezier, RationalQuadraticBezierError, RectangularPocket,
-    RectangularRegionRelation, RouteCertificationError, SegmentParameterOrder, SourceLengthUnit,
-    SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraImportError, SpecctraLayerAlias,
-    SpecctraNetAlias, SpecctraParseError, SupportFootprintStatus, SupportPlanError,
-    SweptLineSegment, TangentAlignment, TangentJoinClass, TangentJoinReport, TangentSpan,
-    TraceLayer, ViaAnnularRingReport, ViaDrillIntent, ViaDrillPolicyClass, ViaLayerSpanRelation,
-    ViaLayerTransitionClass, boolean_path_mesh_program, boolean_path_mesh_sources,
-    boolean_rectangular_prism_chain, boolean_rectangular_prisms,
+    PcbCircularPad, PcbConvexBoardOutline, PcbCopperBooleanSource, PcbLayerZModel,
+    PcbOrthogonalBoardOutline, PcbRectPad, PcbTrace, PcbViaStack, PocketPlanError,
+    PocketPlanStopReason, QuadraticBezier, RationalQuadraticBezier, RationalQuadraticBezierError,
+    RectangularPocket, RectangularRegionRelation, RouteCertificationError, SegmentParameterOrder,
+    SourceLengthUnit, SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraImportError,
+    SpecctraLayerAlias, SpecctraNetAlias, SpecctraParseError, SupportFootprintStatus,
+    SupportPlanError, SweptLineSegment, TangentAlignment, TangentJoinClass, TangentJoinReport,
+    TangentSpan, TraceLayer, ViaAnnularRingReport, ViaDrillIntent, ViaDrillPolicyClass,
+    ViaLayerSpanRelation, ViaLayerTransitionClass, boolean_path_mesh_program,
+    boolean_path_mesh_sources, boolean_rectangular_prism_chain, boolean_rectangular_prisms,
     boolean_rectangular_prisms_with_boundary_policy, build_alternating_detour_meander,
     build_g1_join_problem, build_length_match_problem, build_multi_detour_meander,
     build_nonuniform_detour_meander, build_obstacle_aware_detour_meander,
-    build_oriented_tangent_alignment_problem, build_rectangular_bead_plan,
-    build_rectangular_pocket_plan, build_rectangular_serpentine_infill_graph,
-    build_rectangular_support_plan, build_single_detour_meander, build_tangent_alignment_problem,
-    certify_constant_feed_time, certify_differential_pair_skew, certify_g1_chain,
-    certify_g1_join_candidate, certify_length_extension, certify_tangent_alignment_candidate,
+    build_oriented_tangent_alignment_problem, build_pcb_copper_union_program,
+    build_rectangular_bead_plan, build_rectangular_pocket_plan,
+    build_rectangular_serpentine_infill_graph, build_rectangular_support_plan,
+    build_single_detour_meander, build_tangent_alignment_problem, certify_constant_feed_time,
+    certify_differential_pair_skew, certify_g1_chain, certify_g1_join_candidate,
+    certify_length_extension, certify_tangent_alignment_candidate,
     check_cardinal_rect_pad_board_clearance, check_circular_pad_board_clearance,
     check_rect_pad_board_clearance, check_trace_board_clearance,
     check_trace_cardinal_rect_pad_clearance, check_trace_clearance,
@@ -434,6 +435,89 @@ fn pcb_mesh_boolean_sources_reject_invalid_layer_and_geometry_models() {
         pcb_trace_mesh_boolean_source(&diagonal_trace, &z_model, PredicatePolicy::default())
             .unwrap_err(),
         PathMeshBooleanError::NonAxisAlignedSweep
+    );
+}
+
+#[test]
+fn pcb_copper_boolean_program_unions_same_net_layer_sources() {
+    let z_model = PcbLayerZModel::new(r(0), r(10), r(2), PredicatePolicy::default()).unwrap();
+    let first_trace = trace(9, 1, p(0, 4), p(10, 4), 2);
+    let second_trace = trace(9, 1, p(8, 4), p(14, 4), 2);
+    let pad = PcbCardinalRectPad::new(
+        NetId(9),
+        TraceLayer(1),
+        p(14, 4),
+        r(2),
+        r(6),
+        CardinalRotation::Deg90,
+    )
+    .unwrap();
+    let report = build_pcb_copper_union_program(
+        vec![
+            PcbCopperBooleanSource::Trace(first_trace),
+            PcbCopperBooleanSource::Trace(second_trace),
+            PcbCopperBooleanSource::CardinalRectPad(pad),
+        ],
+        z_model,
+        PredicatePolicy::default(),
+    )
+    .expect("same-net same-layer PCB copper should union through exact mesh booleans");
+    report.validate_replay(PredicatePolicy::default()).unwrap();
+    assert_eq!(report.net, NetId(9));
+    assert_eq!(report.layer, TraceLayer(1));
+    assert_eq!(report.sources.len(), 3);
+    assert_eq!(report.program.steps.len(), 2);
+    assert!(report.program.mesh().unwrap().facts().mesh.closed_manifold);
+
+    let mut stale = report.clone();
+    stale.sources[1] = PcbCopperBooleanSource::Trace(trace(9, 1, p(20, 4), p(24, 4), 2));
+    assert!(matches!(
+        stale.validate_replay(PredicatePolicy::default()),
+        Err(PathMeshBooleanError::Replay(_))
+    ));
+}
+
+#[test]
+fn pcb_copper_boolean_program_rejects_mixed_nets_and_layers() {
+    let z_model = PcbLayerZModel::new(r(0), r(10), r(2), PredicatePolicy::default()).unwrap();
+    assert_eq!(
+        build_pcb_copper_union_program(
+            vec![PcbCopperBooleanSource::Trace(trace(
+                1,
+                0,
+                p(0, 0),
+                p(4, 0),
+                2
+            ))],
+            z_model.clone(),
+            PredicatePolicy::default(),
+        )
+        .unwrap_err(),
+        PathMeshBooleanError::NotEnoughSources
+    );
+    assert_eq!(
+        build_pcb_copper_union_program(
+            vec![
+                PcbCopperBooleanSource::Trace(trace(1, 0, p(0, 0), p(4, 0), 2)),
+                PcbCopperBooleanSource::Trace(trace(2, 0, p(2, 0), p(6, 0), 2)),
+            ],
+            z_model.clone(),
+            PredicatePolicy::default(),
+        )
+        .unwrap_err(),
+        PathMeshBooleanError::MixedPcbNets
+    );
+    assert_eq!(
+        build_pcb_copper_union_program(
+            vec![
+                PcbCopperBooleanSource::Trace(trace(1, 0, p(0, 0), p(4, 0), 2)),
+                PcbCopperBooleanSource::Trace(trace(1, 1, p(2, 0), p(6, 0), 2)),
+            ],
+            z_model,
+            PredicatePolicy::default(),
+        )
+        .unwrap_err(),
+        PathMeshBooleanError::MixedPcbLayers
     );
 }
 

@@ -71,11 +71,12 @@ before downstream crates accept the path as ready.
   sampled Bezier offsets.
 - CAM types describe rectangular pocket, bead, infill, support, and rectangular-region
   boolean plans.
-- Mesh-boolean handoff types extrude retained rectangular path/CAM footprints
+- Mesh-boolean handoff types extrude retained rectangular path/CAM footprints,
   certified axis-aligned swept segments, and layer-aware PCB trace/rectangular
-  pad sources into exact solids, fold multi-source boolean chains and
-  mixed-operation boolean programs through `hypermesh`, and replay exact
-  evidence before exposing accepted output topology.
+  pad sources into exact solids, fold multi-source boolean chains,
+  mixed-operation boolean programs, and same-net/layer PCB copper union programs
+  through `hypermesh`, and replay exact evidence before exposing accepted
+  output topology.
 - PCB types describe traces, pads, vias, board outlines, clearance reports, annular
   ring checks, via drill policy, and layer-span reports.
 - Routing helpers describe length matching, meanders, obstacle-aware detours,

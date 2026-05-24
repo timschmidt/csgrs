@@ -54,7 +54,8 @@ pub use mesh_boolean::{
     boolean_rectangular_prisms_with_boundary_policy, rectangular_prism_from_i64_bounds,
 };
 pub use mesh_boolean_pcb::{
-    PcbLayerSlab, PcbLayerZModel, pcb_cardinal_rect_pad_mesh_boolean_source,
+    PcbCopperBooleanProgramReport, PcbCopperBooleanSource, PcbLayerSlab, PcbLayerZModel,
+    build_pcb_copper_union_program, pcb_cardinal_rect_pad_mesh_boolean_source,
     pcb_rect_pad_mesh_boolean_source, pcb_rect_pad_prism, pcb_trace_mesh_boolean_source,
 };
 pub use mesh_boolean_program::{
