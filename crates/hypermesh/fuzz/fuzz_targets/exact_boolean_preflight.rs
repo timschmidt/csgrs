@@ -3251,6 +3251,67 @@ fn exercise_component_coplanar_difference() {
         channel_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
     );
+    let nonrectilinear_channel_with_holes = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            2, 17, 0, 4, 17, 0, 4, 19, 0, 2, 19, 0, //
+            15, 4, 0, 17, 4, 0, 17, 6, 0, 15, 6, 0, //
+            8, -2, 0, 12, -2, 0, 12, 22, 0, 8, 22, 0, //
+            -2, 4, 0, 5, 4, 0, 3, 8, 0, -2, 8, 0,
+            -2, 12, 0, 4, 11, 0, 5, 15, 0, -2, 16, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7, //
+            8, 9, 10, 8, 10, 11, //
+            12, 13, 14, 12, 14, 15,
+            16, 17, 18, 16, 18, 19,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("nonrectilinear channel with retained holes fixture must import");
+    assert!(
+        arrange_coplanar_surface_multi_difference(
+            &channel_left,
+            &nonrectilinear_channel_with_holes,
+        )
+        .is_none()
+    );
+    let channel_holed = arrange_coplanar_convex_surface_component_holed_difference(
+        &channel_left,
+        &nonrectilinear_channel_with_holes,
+    )
+    .expect("nonrectilinear side-cutter split should retain holes per emitted loop");
+    channel_holed.validate().unwrap();
+    channel_holed
+        .validate_against_sources(&channel_left, &nonrectilinear_channel_with_holes)
+        .unwrap();
+    assert_eq!(channel_holed.components.len(), 2);
+    assert_eq!(
+        channel_holed
+            .components
+            .iter()
+            .map(|component| component.holes.len())
+            .sum::<usize>(),
+        2
+    );
+    let mut stale_channel_holed = channel_holed.clone();
+    stale_channel_holed.components[0].holes.clear();
+    assert!(
+        stale_channel_holed
+            .validate_against_sources(&channel_left, &nonrectilinear_channel_with_holes)
+            .is_err()
+    );
+    let channel_holed_preflight = preflight_boolean_exact(
+        &channel_left,
+        &nonrectilinear_channel_with_holes,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("nonrectilinear channel with holes preflight should classify shortcut");
+    channel_holed_preflight.validate().unwrap();
+    assert_eq!(
+        channel_holed_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+    );
 
     let holed_left = ExactMesh::from_i64_triangles_with_policy(
         &[

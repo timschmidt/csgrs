@@ -15030,6 +15030,126 @@ fn exact_coplanar_convex_surface_difference_materializes_component_holes() {
         }
     );
 
+    let channel_holed_left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 20, 0, 0, 20, 20, 0, 0, 20, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let nonrectilinear_channel_with_holes = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            2, 17, 0, 4, 17, 0, 4, 19, 0, 2, 19, 0, //
+            15, 4, 0, 17, 4, 0, 17, 6, 0, 15, 6, 0, //
+            8, -2, 0, 12, -2, 0, 12, 22, 0, 8, 22, 0, //
+            -2, 4, 0, 5, 4, 0, 3, 8, 0, -2, 8, 0, -2, 12, 0, 4, 11, 0, 5, 15, 0, -2, 16, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7, //
+            8, 9, 10, 8, 10, 11, //
+            12, 13, 14, 12, 14, 15, 16, 17, 18, 16, 18, 19,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_multi_difference(
+            &channel_holed_left,
+            &nonrectilinear_channel_with_holes,
+        )
+        .is_none()
+    );
+    let channel_holed =
+        hypermesh::exact::arrange_coplanar_convex_surface_component_holed_difference(
+            &channel_holed_left,
+            &nonrectilinear_channel_with_holes,
+        )
+        .expect("non-rectilinear side-cutter split should retain strict holes per output loop");
+    channel_holed.validate().unwrap();
+    channel_holed
+        .validate_against_sources(&channel_holed_left, &nonrectilinear_channel_with_holes)
+        .unwrap();
+    assert_eq!(channel_holed.components.len(), 2);
+    assert_eq!(
+        channel_holed
+            .components
+            .iter()
+            .map(|component| component.holes.len())
+            .sum::<usize>(),
+        2
+    );
+    assert!(
+        channel_holed
+            .components
+            .iter()
+            .any(|component| component.outer.len() > 4
+                && component.holes.iter().any(|hole| hole.iter().any(|point| {
+                    real_eq(&point.x, &ExactReal::from(2))
+                        && real_eq(&point.y, &ExactReal::from(17))
+                })))
+    );
+    assert!(
+        channel_holed
+            .components
+            .iter()
+            .any(
+                |component| component.holes.iter().any(|hole| hole.iter().any(|point| {
+                    real_eq(&point.x, &ExactReal::from(15))
+                        && real_eq(&point.y, &ExactReal::from(4))
+                }))
+            )
+    );
+    let mut stale_channel = channel_holed.clone();
+    stale_channel.components[0].holes.push(vec![
+        p3(18, 14, 0),
+        p3(19, 14, 0),
+        p3(19, 15, 0),
+        p3(18, 15, 0),
+    ]);
+    assert!(
+        stale_channel
+            .validate_against_sources(&channel_holed_left, &nonrectilinear_channel_with_holes)
+            .is_err()
+    );
+    let channel_holed_preflight = hypermesh::exact::preflight_boolean_exact(
+        &channel_holed_left,
+        &nonrectilinear_channel_with_holes,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    channel_holed_preflight.validate().unwrap();
+    channel_holed_preflight
+        .validate_against_sources(&channel_holed_left, &nonrectilinear_channel_with_holes)
+        .unwrap();
+    assert_eq!(
+        channel_holed_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::
+            CertifiedCoplanarConvexSurfaceComponentHoledDifference
+    );
+    let channel_holed_result = hypermesh::exact::boolean_exact(
+        &channel_holed_left,
+        &nonrectilinear_channel_with_holes,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    channel_holed_result
+        .validate_operation_against_sources(
+            &channel_holed_left,
+            &nonrectilinear_channel_with_holes,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        channel_holed_result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::
+                CoplanarConvexSurfaceComponentHoledDifference
+        }
+    );
+
     let cutter_hole_contact = ExactMesh::from_i64_triangles_with_policy(
         &[
             4, 4, 0, 6, 4, 0, 6, 6, 0, 4, 6, 0, //

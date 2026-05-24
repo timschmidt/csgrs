@@ -6664,6 +6664,15 @@ pub fn arrange_coplanar_convex_surface_component_holed_difference(
                 components.extend(opened_components);
                 continue;
             }
+            if let Some(split_components) = materialize_side_cutter_multi_component_holed_difference(
+                component,
+                &cut_indices,
+                &holes,
+                &right_components,
+            ) {
+                components.extend(split_components);
+                continue;
+            }
             if !component_relevant_right_regions_are_disjoint(
                 &cut_indices,
                 &holes,
@@ -7013,6 +7022,63 @@ fn materialize_connected_multi_cutter_component_holed_difference(
         outer: opening,
         holes: retained_holes,
     }])
+}
+
+/// Replay a non-rectilinear side-cutter split while retaining strict holes.
+///
+/// [`materialize_side_cutter_multi_component_difference`] already proves the
+/// no-hole case where several side-attached cutters split one convex source
+/// sheet into two or more simple retained loops. This helper lifts that exact
+/// cell evidence into the component/holed artifact: after the split loops are
+/// replayed, each strict hole must be assigned to exactly one emitted loop by
+/// [`assign_holes_to_cut_component_outputs`]. Holes inside removed openings or
+/// touching split boundaries are deliberately rejected because they require
+/// explicit planar-cell ownership instead of a local loop assignment.
+///
+/// The construction follows Yap's retained-object rule from "Towards Exact
+/// Geometric Computation," *Computational Geometry* 7.1-2 (1997): the wider
+/// shortcut is admitted only when the retained split loops and hole ownership
+/// replay from exact predicates. The split-loop boundary traversal is the
+/// Weiler-Atherton retained-fragment construction used by
+/// [`materialize_side_cutter_multi_component_difference`]; see Weiler and
+/// Atherton, "Hidden Surface Removal Using Polygon Area Sorting," *SIGGRAPH
+/// Computer Graphics* 11.2 (1977).
+#[cfg(feature = "exact-triangulation")]
+fn materialize_side_cutter_multi_component_holed_difference(
+    component: &ConvexUnionComponent,
+    cut_indices: &[usize],
+    holes: &[ComponentHoleCandidate],
+    right_components: &[ConvexUnionComponent],
+) -> Option<Vec<CoplanarConvexHoledComponent>> {
+    if cut_indices.len() < 2 || holes.is_empty() {
+        return None;
+    }
+    let projection = component.projection;
+    let cut_polygons = materialize_side_cutter_multi_component_difference(
+        component,
+        cut_indices,
+        right_components,
+        "coplanar component-holed non-rectilinear side-cutter split",
+    )?;
+    if cut_polygons.len() < 2 {
+        return None;
+    }
+    let hole_rings = holes
+        .iter()
+        .map(|hole| hole.ring.clone())
+        .collect::<Vec<_>>();
+    let holes_by_cut =
+        assign_holes_to_cut_component_outputs(&hole_rings, &cut_polygons, projection)?;
+    if holes_by_cut.iter().all(Vec::is_empty) {
+        return None;
+    }
+    Some(
+        cut_polygons
+            .into_iter()
+            .zip(holes_by_cut)
+            .map(|(outer, holes)| CoplanarConvexHoledComponent { outer, holes })
+            .collect(),
+    )
 }
 
 /// Replay non-rectilinear side cutters as removed openings and one output loop.
