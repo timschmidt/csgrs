@@ -4,20 +4,20 @@ use hyperpath::{
     ArcDirection, AxisAlignedSweptSegmentPrism, BeadFillAxis, BezierParameter, CardinalPoint,
     CardinalRotation, CircularArc, ConstructionStamp, CubicBezier, ExplicitCircularArc,
     HigherOrderBezier, LinePathSegment, MeanderObstacle, MeanderPlacementCandidate, NetId,
-    OffsetSide, PathMeshBooleanOperation, PathProvenance, PathSourceFormat, PcbBoardOutline,
-    PcbCardinalRectPad, PcbCircularPad, PcbConvexBoardOutline, PcbOrthogonalBoardOutline,
-    PcbRectPad, PcbTrace, PcbViaStack, QuadraticBezier, RationalQuadraticBezier, RectangularPocket,
-    SourceLengthUnit, SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraLayerAlias,
-    SpecctraNetAlias, SweptLineSegment, TangentSpan, TraceLayer, ViaDrillIntent,
-    boolean_path_mesh_sources, boolean_rectangular_prism_chain, boolean_rectangular_prisms,
-    build_alternating_detour_meander, build_g1_join_problem, build_length_match_problem,
-    build_multi_detour_meander, build_nonuniform_detour_meander,
-    build_obstacle_aware_detour_meander, build_oriented_tangent_alignment_problem,
-    build_rectangular_bead_plan, build_rectangular_pocket_plan,
-    build_rectangular_serpentine_infill_graph, build_rectangular_support_plan,
-    build_single_detour_meander, build_tangent_alignment_problem, certify_constant_feed_time,
-    certify_differential_pair_skew, certify_g1_chain, certify_g1_join_candidate,
-    certify_length_extension, certify_tangent_alignment_candidate,
+    OffsetSide, PathMeshBooleanOperation, PathMeshBooleanProgramStep, PathProvenance,
+    PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad, PcbCircularPad, PcbConvexBoardOutline,
+    PcbOrthogonalBoardOutline, PcbRectPad, PcbTrace, PcbViaStack, QuadraticBezier,
+    RationalQuadraticBezier, RectangularPocket, SourceLengthUnit, SpecctraGridTraceRecord,
+    SpecctraGridViaRecord, SpecctraLayerAlias, SpecctraNetAlias, SweptLineSegment, TangentSpan,
+    TraceLayer, ViaDrillIntent, boolean_path_mesh_program, boolean_path_mesh_sources,
+    boolean_rectangular_prism_chain, boolean_rectangular_prisms, build_alternating_detour_meander,
+    build_g1_join_problem, build_length_match_problem, build_multi_detour_meander,
+    build_nonuniform_detour_meander, build_obstacle_aware_detour_meander,
+    build_oriented_tangent_alignment_problem, build_rectangular_bead_plan,
+    build_rectangular_pocket_plan, build_rectangular_serpentine_infill_graph,
+    build_rectangular_support_plan, build_single_detour_meander, build_tangent_alignment_problem,
+    certify_constant_feed_time, certify_differential_pair_skew, certify_g1_chain,
+    certify_g1_join_candidate, certify_length_extension, certify_tangent_alignment_candidate,
     check_cardinal_rect_pad_board_clearance, check_circular_pad_board_clearance,
     check_rect_pad_board_clearance, check_trace_board_clearance,
     check_trace_cardinal_rect_pad_clearance, check_trace_clearance,
@@ -775,6 +775,25 @@ fn path_predicates(c: &mut Criterion) {
             let report = boolean_path_mesh_sources(
                 vec![swept_slab.clone().into(), prism_right.clone().into()],
                 PathMeshBooleanOperation::Union,
+            )
+            .unwrap();
+            report.validate_replay()
+        })
+    });
+    c.bench_function("path_mesh_boolean_program_mixed_ops_replay", |b| {
+        b.iter(|| {
+            let report = boolean_path_mesh_program(
+                prism_left.clone().into(),
+                vec![
+                    PathMeshBooleanProgramStep::new(
+                        PathMeshBooleanOperation::Intersection,
+                        prism_third.clone().into(),
+                    ),
+                    PathMeshBooleanProgramStep::new(
+                        PathMeshBooleanOperation::Difference,
+                        swept_slab.clone().into(),
+                    ),
+                ],
             )
             .unwrap();
             report.validate_replay()

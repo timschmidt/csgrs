@@ -66,7 +66,7 @@ pub enum PathMeshBooleanOperation {
 /// Errors from the path-to-mesh boolean handoff.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum PathMeshBooleanError {
-    /// At least two prism sources are required for a boolean chain.
+    /// At least one boolean step and two effective sources are required.
     NotEnoughSources,
     /// A swept path source was not certified axis-aligned.
     NonAxisAlignedSweep,

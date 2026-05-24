@@ -136,6 +136,7 @@ dependencies = [
  "hyperlimit",
  "hypermesh",
  "hyperpath",
+ "hyperreal",
  "libfuzzer-sys",
 ]
 

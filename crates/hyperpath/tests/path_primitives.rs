@@ -9,16 +9,17 @@ use hyperpath::{
     ExplicitCircleRelationClass, ExplicitCircularArc, HigherOrderBezier, HigherOrderBezierError,
     InfillGraphError, LineExplicitArcIntersectionClass, LineOffsetError, LinePathSegment,
     MeanderError, MeanderObstacle, MeanderPlacementCandidate, NetId, OffsetSide,
-    PathMeshBooleanError, PathMeshBooleanOperation, PathMeshBooleanSource, PathProvenance,
-    PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad, PcbCircularPad, PcbConvexBoardOutline,
-    PcbOrthogonalBoardOutline, PcbRectPad, PcbTrace, PcbViaStack, PocketPlanError,
-    PocketPlanStopReason, QuadraticBezier, RationalQuadraticBezier, RationalQuadraticBezierError,
-    RectangularPocket, RectangularRegionRelation, RouteCertificationError, SegmentParameterOrder,
-    SourceLengthUnit, SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraImportError,
-    SpecctraLayerAlias, SpecctraNetAlias, SpecctraParseError, SupportFootprintStatus,
-    SupportPlanError, SweptLineSegment, TangentAlignment, TangentJoinClass, TangentJoinReport,
-    TangentSpan, TraceLayer, ViaAnnularRingReport, ViaDrillIntent, ViaDrillPolicyClass,
-    ViaLayerSpanRelation, ViaLayerTransitionClass, boolean_path_mesh_sources,
+    PathMeshBooleanError, PathMeshBooleanOperation, PathMeshBooleanProgramStep,
+    PathMeshBooleanSource, PathProvenance, PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad,
+    PcbCircularPad, PcbConvexBoardOutline, PcbOrthogonalBoardOutline, PcbRectPad, PcbTrace,
+    PcbViaStack, PocketPlanError, PocketPlanStopReason, QuadraticBezier, RationalQuadraticBezier,
+    RationalQuadraticBezierError, RectangularPocket, RectangularRegionRelation,
+    RouteCertificationError, SegmentParameterOrder, SourceLengthUnit, SpecctraGridTraceRecord,
+    SpecctraGridViaRecord, SpecctraImportError, SpecctraLayerAlias, SpecctraNetAlias,
+    SpecctraParseError, SupportFootprintStatus, SupportPlanError, SweptLineSegment,
+    TangentAlignment, TangentJoinClass, TangentJoinReport, TangentSpan, TraceLayer,
+    ViaAnnularRingReport, ViaDrillIntent, ViaDrillPolicyClass, ViaLayerSpanRelation,
+    ViaLayerTransitionClass, boolean_path_mesh_program, boolean_path_mesh_sources,
     boolean_rectangular_prism_chain, boolean_rectangular_prisms,
     boolean_rectangular_prisms_with_boundary_policy, build_alternating_detour_meander,
     build_g1_join_problem, build_length_match_problem, build_multi_detour_meander,
@@ -307,6 +308,49 @@ fn swept_segment_slab_boolean_source_rejects_unsupported_sweeps() {
         AxisAlignedSweptSegmentPrism::new(zero_length, r(0), r(2), PredicatePolicy::default())
             .unwrap_err(),
         PathMeshBooleanError::DegenerateFootprint
+    );
+}
+
+#[test]
+fn mesh_boolean_program_replays_mixed_operations_over_path_sources() {
+    let stock = PathMeshBooleanSource::from(prism([0, 0, 0], [20, 12, 4]));
+    let envelope = PathMeshBooleanSource::from(prism([0, 0, 0], [14, 12, 4]));
+    let slot = PathMeshBooleanSource::from(swept_slab(p(4, 6), p(12, 6), 4, 0, 4));
+    let report = boolean_path_mesh_program(
+        stock.clone(),
+        vec![
+            PathMeshBooleanProgramStep::new(PathMeshBooleanOperation::Intersection, envelope),
+            PathMeshBooleanProgramStep::new(PathMeshBooleanOperation::Difference, slot),
+        ],
+    )
+    .expect("mixed exact boolean program should materialize and replay");
+    report.validate_replay().unwrap();
+    assert_eq!(report.steps.len(), 2);
+    assert!(report.mesh().unwrap().facts().mesh.closed_manifold);
+    assert!(
+        report
+            .steps
+            .iter()
+            .all(|step| step.result.validate().is_ok())
+    );
+
+    let mut stale_operation = report.clone();
+    stale_operation.steps[1].operation = PathMeshBooleanOperation::Union;
+    assert!(matches!(
+        stale_operation.validate_replay(),
+        Err(PathMeshBooleanError::Replay(_))
+    ));
+
+    let mut stale_index = report.clone();
+    stale_index.steps[1].index = 0;
+    assert!(matches!(
+        stale_index.validate_replay(),
+        Err(PathMeshBooleanError::Replay(_))
+    ));
+
+    assert_eq!(
+        boolean_path_mesh_program(stock, vec![]).unwrap_err(),
+        PathMeshBooleanError::NotEnoughSources
     );
 }
 
