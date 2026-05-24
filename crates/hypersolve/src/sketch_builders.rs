@@ -108,6 +108,41 @@ pub mod angle {
             kind,
         }
     }
+
+    /// Add a workplane-projected oriented equal-angle relation for 3D lines.
+    ///
+    /// Lowering certifies the retained workplane unit frame, projects four
+    /// 3D line directions into exact `U/V` coordinates, and compares the
+    /// resulting oriented angle vectors `(dot, cross)` plus same-branch
+    /// predicate. This is the exact 3D/workplane counterpart of
+    /// [`equal_oriented_angle_lines2`]: Yap's "Towards Exact Geometric
+    /// Computation" (1997) keeps trigonometric proposal values out of the
+    /// proof path, and Shoemake's unit-quaternion frame supplies the
+    /// projection polynomial.
+    pub fn projected_equal_oriented_angle_lines3(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+        c: SketchEntityHandle,
+        d: SketchEntityHandle,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::ProjectedEqualOrientedAngleLines3 {
+            workplane,
+            a,
+            b,
+            c,
+            d,
+        };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Angle,
+            strategy: SketchResidualStrategy::ProjectedOrientedAngleEquality,
+            kind,
+        }
+    }
 }
 
 /// Tangency relation builders.

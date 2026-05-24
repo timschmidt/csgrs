@@ -470,6 +470,57 @@ fn sketch_problem_with_oriented_angle_relations(
     sketch
 }
 
+fn sketch_problem_with_projected_oriented_angle_relations(
+    row_count: usize,
+) -> hypersolve::SketchSolveProblem {
+    let mut sketch = hypersolve::SketchSolveProblem::new();
+    let origin = sketch.add_point3d("projected-oangle.origin", r(0), r(0), r(0));
+    let normal = sketch.add_normal3d("projected-oangle.normal", r(1), r(0), r(0), r(0));
+    let workplane = sketch.add_workplane("projected-oangle.workplane", origin, normal);
+    for index in 0..row_count {
+        let y = index as i64;
+        let base = sketch.add_point3d(format!("projected-oangle{index}.base"), r(0), r(y), r(0));
+        let a_end = sketch.add_point3d(
+            format!("projected-oangle{index}.a_end"),
+            r(3),
+            r(y),
+            r(7 + y),
+        );
+        let b_end = sketch.add_point3d(
+            format!("projected-oangle{index}.b_end"),
+            r(0),
+            r(y + 4),
+            r(-9 - y),
+        );
+        let c_end = sketch.add_point3d(
+            format!("projected-oangle{index}.c_end"),
+            r(6),
+            r(y),
+            r(11 + y),
+        );
+        let d_end = sketch.add_point3d(
+            format!("projected-oangle{index}.d_end"),
+            r(0),
+            r(y + 8),
+            r(-3 - y),
+        );
+        let a = sketch.add_line_segment3(format!("projected-oangle{index}.a"), base, a_end);
+        let b = sketch.add_line_segment3(format!("projected-oangle{index}.b"), base, b_end);
+        let c = sketch.add_line_segment3(format!("projected-oangle{index}.c"), base, c_end);
+        let d = sketch.add_line_segment3(format!("projected-oangle{index}.d"), base, d_end);
+        hypersolve::sketch_angle_builders::projected_equal_oriented_angle_lines3(
+            &mut sketch,
+            format!("projected oriented angle {index}"),
+            workplane,
+            a,
+            b,
+            c,
+            d,
+        );
+    }
+    sketch
+}
+
 fn sketch_problem_with_midpoint_relations(row_count: usize) -> hypersolve::SketchSolveProblem {
     let mut sketch = hypersolve::SketchSolveProblem::new();
     for index in 0..row_count {
@@ -1095,6 +1146,11 @@ fn certification(c: &mut Criterion) {
     c.bench_function("sketch_oriented_angle_lowering", |b| {
         b.iter(|| oriented_angle_sketch.lower_to_problem())
     });
+    let projected_oriented_angle_sketch =
+        sketch_problem_with_projected_oriented_angle_relations(16);
+    c.bench_function("sketch_projected_oriented_angle_lowering", |b| {
+        b.iter(|| projected_oriented_angle_sketch.lower_to_problem())
+    });
     let midpoint_sketch = sketch_problem_with_midpoint_relations(16);
     c.bench_function("sketch_midpoint_lowering", |b| {
         b.iter(|| midpoint_sketch.lower_to_problem())
@@ -1372,6 +1428,24 @@ fn certification(c: &mut Criterion) {
         b.iter(|| {
             for handle in &oriented_angle_form_handles {
                 let _ = oriented_angle_sketch.residual_forms_for_constraint(*handle);
+            }
+        })
+    });
+    let projected_oriented_angle_form_handles = projected_oriented_angle_sketch
+        .constraints()
+        .iter()
+        .filter(|constraint| {
+            matches!(
+                constraint.kind,
+                hypersolve::SketchConstraintKind::ProjectedEqualOrientedAngleLines3 { .. }
+            )
+        })
+        .map(|constraint| constraint.handle)
+        .collect::<Vec<_>>();
+    c.bench_function("sketch_projected_oriented_angle_residual_forms", |b| {
+        b.iter(|| {
+            for handle in &projected_oriented_angle_form_handles {
+                let _ = projected_oriented_angle_sketch.residual_forms_for_constraint(*handle);
             }
         })
     });

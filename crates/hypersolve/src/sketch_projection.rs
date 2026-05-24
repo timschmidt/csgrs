@@ -31,6 +31,19 @@ pub(crate) fn projected_distance_squared(delta: &[Expr; 3], quaternion: &[Expr; 
     u.clone() * u + v.clone() * v
 }
 
+/// Project a retained 3D direction into exact workplane `U/V` coordinates.
+///
+/// The two returned expressions are `(direction . U, direction . V)` using the
+/// same polynomial unit-quaternion frame as projected-distance rows. This
+/// helper intentionally does not normalize the direction; zero projected
+/// length remains a report-bearing domain obligation for callers. The
+/// construction follows Yap's exact replay boundary and Shoemake's
+/// unit-quaternion frame formula cited in the module docs.
+pub(crate) fn projected_direction2(direction: &[Expr; 3], quaternion: &[Expr; 4]) -> [Expr; 2] {
+    let (u_axis, v_axis, _) = quaternion_frame_axes_expr(quaternion);
+    [dot3(direction, &u_axis), dot3(direction, &v_axis)]
+}
+
 /// Build exact projected point-line distance parts in a workplane frame.
 ///
 /// The returned pair is `(cross_uv, |dir_uv|^2)`, where `cross_uv` is the

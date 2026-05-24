@@ -2114,6 +2114,79 @@ proptest! {
     }
 
     #[test]
+    fn sketch_projected_oriented_angle_identity_workplane_matches_scaled_directions(
+        ox in -8_i16..=8,
+        oy in -8_i16..=8,
+        oz in -8_i16..=8,
+        ax in 1_i16..=12,
+        by in 1_i16..=12,
+        scale_a in 1_i16..=8,
+        scale_b in 1_i16..=8,
+        az in -8_i16..=8,
+        bz in -8_i16..=8,
+    ) {
+        let ox = i64::from(ox);
+        let oy = i64::from(oy);
+        let oz = i64::from(oz);
+        let ax = i64::from(ax);
+        let by = i64::from(by);
+        let scale_a = i64::from(scale_a);
+        let scale_b = i64::from(scale_b);
+        let az = i64::from(az);
+        let bz = i64::from(bz);
+        let mut sketch = SketchSolveProblem::new();
+        let origin = sketch.add_point3d("origin", Real::from(0), Real::from(0), Real::from(0));
+        let normal = sketch.add_normal3d("normal", Real::from(1), Real::from(0), Real::from(0), Real::from(0));
+        let workplane = sketch.add_workplane("workplane", origin, normal);
+        let base = sketch.add_point3d("base", Real::from(ox), Real::from(oy), Real::from(oz));
+        let a_end = sketch.add_point3d("a end", Real::from(ox + ax), Real::from(oy), Real::from(oz + az));
+        let b_end = sketch.add_point3d("b end", Real::from(ox), Real::from(oy + by), Real::from(oz + bz));
+        let c_end = sketch.add_point3d("c end", Real::from(ox + scale_a * ax), Real::from(oy), Real::from(oz - az));
+        let d_end = sketch.add_point3d("d end", Real::from(ox), Real::from(oy + scale_b * by), Real::from(oz - bz));
+        let a = sketch.add_line_segment3("a", base, a_end);
+        let b = sketch.add_line_segment3("b", base, b_end);
+        let c = sketch.add_line_segment3("c", base, c_end);
+        let d = sketch.add_line_segment3("d", base, d_end);
+        let handle = sketch.add_projected_equal_oriented_angle_lines3(
+            "projected oriented angle",
+            workplane,
+            a,
+            b,
+            c,
+            d,
+        );
+
+        let lowered = sketch.lower_to_problem();
+        let certification = certify_candidate(
+            &PreparedProblem::new(&lowered.problem),
+            &context_from_problem(&lowered.problem),
+        );
+        let forms = sketch.residual_forms_for_constraint(handle);
+
+        prop_assert_eq!(lowered.problem.constraints.len(), 3);
+        prop_assert!(lowered.all_generated());
+        prop_assert!(certification.all_satisfied());
+        prop_assert_eq!(
+            lowered.rows[0].strategy,
+            Some(SketchResidualStrategy::WorkplaneUnitQuaternion)
+        );
+        prop_assert!(lowered.rows[1..]
+            .iter()
+            .all(|row| row.strategy
+                == Some(SketchResidualStrategy::ProjectedOrientedAngleEquality)));
+        prop_assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+        prop_assert_eq!(forms.forms.len(), 3);
+        prop_assert_eq!(
+            forms.forms[1].kind,
+            SketchResidualFormKind::ProjectedOrientedAngleVectorCollinearityPolynomial
+        );
+        prop_assert_eq!(
+            forms.forms[2].kind,
+            SketchResidualFormKind::ProjectedOrientedAngleSameBranchPredicate
+        );
+    }
+
+    #[test]
     fn sketch_entity_domain_generated_tangent_lengths_match_integer_points(
         ax in -16_i16..=16,
         ay in -16_i16..=16,

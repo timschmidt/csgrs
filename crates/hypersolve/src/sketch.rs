@@ -25,7 +25,7 @@ use crate::sketch_builders::{
 use crate::sketch_cubic_tangent::{CubicPointTangentExprs, cubic_point_tangent_exprs};
 use crate::sketch_oriented_angle::{OrientedAngleExprs, oriented_angle_exprs};
 use crate::sketch_projection::{
-    projected_distance_squared, projected_point_line_distance_squared_parts,
+    projected_direction2, projected_distance_squared, projected_point_line_distance_squared_parts,
     unit_quaternion_residual,
 };
 use crate::sketch_workplane_symmetry::{WorkplaneSymmetryExprs, workplane_point_symmetry_exprs};
@@ -830,6 +830,31 @@ pub enum SketchConstraintKind {
         /// Second line in the second oriented angle.
         d: SketchEntityHandle,
     },
+    /// Oriented equality between two 3D line-pair angles projected to a workplane.
+    ///
+    /// Lowering first emits a unit-quaternion guard for the retained
+    /// workplane, then projects all four 3D line directions into the exact
+    /// `U/V` frame and reuses the oriented angle-vector package
+    /// `(dot, cross)`. This is a 3D/workplane variant of
+    /// [`SketchConstraintKind::EqualOrientedAngleLines2`]: no projected
+    /// coordinates are rounded, no line directions are normalized, and no
+    /// `atan2` value is trusted as evidence. Degenerate 3D lines and zero
+    /// projected directions remain explicit domain/preflight obligations,
+    /// following Yap, "Towards Exact Geometric Computation" (1997), with the
+    /// workplane frame polynomial from Shoemake, "Animating Rotation with
+    /// Quaternion Curves" (1985).
+    ProjectedEqualOrientedAngleLines3 {
+        /// Workplane entity that supplies origin and normal/quaternion.
+        workplane: SketchEntityHandle,
+        /// First 3D line in the first oriented angle.
+        a: SketchEntityHandle,
+        /// Second 3D line in the first oriented angle.
+        b: SketchEntityHandle,
+        /// First 3D line in the second oriented angle.
+        c: SketchEntityHandle,
+        /// Second 3D line in the second oriented angle.
+        d: SketchEntityHandle,
+    },
     /// 2D point-at-midpoint relation.
     ///
     /// Lowering emits exact linear coordinate equations without averaging in
@@ -1065,6 +1090,8 @@ pub enum SketchResidualStrategy {
     SquaredCosineAngleEquality,
     /// Exact angle-vector package for oriented 2D line-pair angles.
     OrientedAngleEquality,
+    /// Exact workplane-projected oriented angle package for 3D line-pair angles.
+    ProjectedOrientedAngleEquality,
     /// Linear coordinate equality for a retained midpoint relation.
     MidpointCoordinateEquality,
     /// Linear coordinate equality for retained axis symmetry.
@@ -1154,6 +1181,10 @@ pub enum SketchResidualFormKind {
     OrientedAngleVectorCollinearityPolynomial,
     /// Exact same-branch predicate for oriented angle equality.
     OrientedAngleSameBranchPredicate,
+    /// Exact workplane-projected angle-vector collinearity proof row.
+    ProjectedOrientedAngleVectorCollinearityPolynomial,
+    /// Exact same-branch predicate for workplane-projected oriented angle equality.
+    ProjectedOrientedAngleSameBranchPredicate,
     /// Exact cross-product equality for a G1 tangent support proof row.
     TangentCrossProductPredicate,
     /// Exact dot-product inequality for a same-direction tangent proof row.
@@ -2057,6 +2088,19 @@ impl SketchSolveProblem {
         angle::equal_oriented_angle_lines2(self, name, a, b, c, d).handle
     }
 
+    /// Add a workplane-projected retained oriented angle equality for 3D lines.
+    pub fn add_projected_equal_oriented_angle_lines3(
+        &mut self,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+        c: SketchEntityHandle,
+        d: SketchEntityHandle,
+    ) -> SketchConstraintHandle {
+        angle::projected_equal_oriented_angle_lines3(self, name, workplane, a, b, c, d).handle
+    }
+
     /// Add a retained 2D point-at-midpoint relation.
     ///
     /// Lowering emits one exact linear equality per coordinate. This mirrors
@@ -2749,6 +2793,56 @@ impl SketchSolveProblem {
                             role: SketchResidualFormRole::ExactProof,
                             strategy: Some(SketchResidualStrategy::OrientedAngleEquality),
                             residual: parts.same_branch,
+                        },
+                    ],
+                    diagnostics,
+                }
+            }
+            SketchConstraintKind::ProjectedEqualOrientedAngleLines3 {
+                workplane,
+                a,
+                b,
+                c,
+                d,
+            } => {
+                let mut diagnostics = Vec::new();
+                let Some(parts) = self.projected_oriented_angle_exprs(
+                    workplane,
+                    a,
+                    b,
+                    c,
+                    d,
+                    constraint,
+                    &mut diagnostics,
+                ) else {
+                    return SketchResidualFormsReport {
+                        constraint: handle,
+                        status: SketchResidualFormsStatus::InvalidInputs,
+                        forms: Vec::new(),
+                        diagnostics,
+                    };
+                };
+                SketchResidualFormsReport {
+                    constraint: handle,
+                    status: SketchResidualFormsStatus::Generated,
+                    forms: vec![
+                        SketchResidualForm {
+                            kind: SketchResidualFormKind::WorkplaneUnitQuaternionPolynomial,
+                            role: SketchResidualFormRole::ExactProof,
+                            strategy: Some(SketchResidualStrategy::WorkplaneUnitQuaternion),
+                            residual: unit_quaternion_residual(&parts.quaternion),
+                        },
+                        SketchResidualForm {
+                            kind: SketchResidualFormKind::ProjectedOrientedAngleVectorCollinearityPolynomial,
+                            role: SketchResidualFormRole::ExactProof,
+                            strategy: Some(SketchResidualStrategy::ProjectedOrientedAngleEquality),
+                            residual: parts.angle.angle_vector_collinear,
+                        },
+                        SketchResidualForm {
+                            kind: SketchResidualFormKind::ProjectedOrientedAngleSameBranchPredicate,
+                            role: SketchResidualFormRole::ExactProof,
+                            strategy: Some(SketchResidualStrategy::ProjectedOrientedAngleEquality),
+                            residual: parts.angle.same_branch,
                         },
                     ],
                     diagnostics,
@@ -4298,6 +4392,51 @@ impl SketchSolveProblem {
                     Real::one(),
                 );
             }
+            SketchConstraintKind::ProjectedEqualOrientedAngleLines3 {
+                workplane,
+                a,
+                b,
+                c,
+                d,
+            } => {
+                // This is the workplane-projected 3D angle package. The
+                // workplane unit guard is part of the proof because the U/V
+                // metric is valid only for a certified frame. Once the 3D
+                // directions are projected, the same exact `(dot, cross)`
+                // angle-vector rows used by `EqualOrientedAngleLines2`
+                // certify equality and branch without `atan2`.
+                let Some(parts) =
+                    self.projected_oriented_angle_exprs(workplane, a, b, c, d, constraint, rows)
+                else {
+                    return;
+                };
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} workplane unit", constraint.name),
+                    unit_quaternion_residual(&parts.quaternion),
+                    SketchResidualStrategy::WorkplaneUnitQuaternion,
+                );
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} projected angle vector collinearity", constraint.name),
+                    parts.angle.angle_vector_collinear,
+                    SketchResidualStrategy::ProjectedOrientedAngleEquality,
+                );
+                self.push_residual_with_kind(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} projected same angle branch", constraint.name),
+                    parts.angle.same_branch,
+                    SketchResidualStrategy::ProjectedOrientedAngleEquality,
+                    ConstraintKind::GreaterOrEqual,
+                    Real::one(),
+                );
+            }
             SketchConstraintKind::AtMidpoint2 { point, a, b } => {
                 // Yap, "Towards Exact Geometric Computation" (1997), makes
                 // exact predicates the decision boundary. The midpoint
@@ -5051,6 +5190,28 @@ impl SketchSolveProblem {
         Some(oriented_angle_exprs(&a, &b, &c, &d))
     }
 
+    #[allow(clippy::too_many_arguments)]
+    fn projected_oriented_angle_exprs(
+        &self,
+        workplane: SketchEntityHandle,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+        c: SketchEntityHandle,
+        d: SketchEntityHandle,
+        constraint: &SketchConstraint,
+        rows: &mut Vec<SketchGeneratedRow>,
+    ) -> Option<ProjectedOrientedAngleExprs> {
+        let quaternion = self.workplane_quaternion(workplane, constraint, rows)?;
+        let a = projected_direction2(&self.line3_direction(a, constraint, rows)?, &quaternion);
+        let b = projected_direction2(&self.line3_direction(b, constraint, rows)?, &quaternion);
+        let c = projected_direction2(&self.line3_direction(c, constraint, rows)?, &quaternion);
+        let d = projected_direction2(&self.line3_direction(d, constraint, rows)?, &quaternion);
+        Some(ProjectedOrientedAngleExprs {
+            angle: oriented_angle_exprs(&a, &b, &c, &d),
+            quaternion,
+        })
+    }
+
     fn line2_points(
         &self,
         handle: SketchEntityHandle,
@@ -5095,6 +5256,20 @@ impl SketchSolveProblem {
             return None;
         }
         Some((start, end))
+    }
+
+    fn line3_direction(
+        &self,
+        handle: SketchEntityHandle,
+        constraint: &SketchConstraint,
+        rows: &mut Vec<SketchGeneratedRow>,
+    ) -> Option<[Expr; 3]> {
+        let (start, end) = self.line3_points(handle, constraint, rows)?;
+        Some([
+            end.exprs[0].clone() - start.exprs[0].clone(),
+            end.exprs[1].clone() - start.exprs[1].clone(),
+            end.exprs[2].clone() - start.exprs[2].clone(),
+        ])
     }
 
     fn line2_endpoint_tangent(
@@ -5481,6 +5656,12 @@ struct ProjectedPointLineDistanceExprs {
     distance_denominator: Expr,
     signed_cross: Expr,
     distance: Expr,
+}
+
+#[derive(Clone, Debug)]
+struct ProjectedOrientedAngleExprs {
+    quaternion: [Expr; 4],
+    angle: OrientedAngleExprs,
 }
 
 fn missing_entity_row(

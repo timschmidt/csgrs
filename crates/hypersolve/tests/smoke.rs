@@ -4122,6 +4122,118 @@ fn sketch_projected_point_line_distance_lowers_exact_workplane_rows() {
 }
 
 #[test]
+fn sketch_projected_oriented_angle_lowers_exact_workplane_branch_rows() {
+    let mut sketch = SketchSolveProblem::new();
+    let origin = sketch.add_point3d("origin", real(0), real(0), real(10));
+    let normal = sketch.add_normal3d("normal", real(1), real(0), real(0), real(0));
+    let workplane = sketch.add_workplane("workplane", origin, normal);
+    let p0 = sketch.add_point3d("p0", real(0), real(0), real(0));
+    let x = sketch.add_point3d("x", real(3), real(0), real(7));
+    let y = sketch.add_point3d("y", real(0), real(4), real(-9));
+    let sx = sketch.add_point3d("sx", real(6), real(0), real(11));
+    let sy = sketch.add_point3d("sy", real(0), real(8), real(-3));
+    let neg_y = sketch.add_point3d("neg y", real(0), real(-8), real(5));
+    let a = sketch.add_line_segment3("a", p0, x);
+    let b = sketch.add_line_segment3("b", p0, y);
+    let c = sketch.add_line_segment3("c", p0, sx);
+    let d = sketch.add_line_segment3("d", p0, sy);
+    let bad_d = sketch.add_line_segment3("bad d", p0, neg_y);
+    let valid = sketch_angle_builders::projected_equal_oriented_angle_lines3(
+        &mut sketch,
+        "projected oriented angle",
+        workplane,
+        a,
+        b,
+        c,
+        d,
+    );
+    sketch.add_projected_equal_oriented_angle_lines3(
+        "bad projected oriented angle",
+        workplane,
+        a,
+        b,
+        c,
+        bad_d,
+    );
+
+    let report = sketch.lower_to_problem();
+
+    assert_eq!(
+        valid.family,
+        hypersolve::sketch_builders::SketchConstraintFamily::Angle
+    );
+    assert_eq!(
+        valid.strategy,
+        SketchResidualStrategy::ProjectedOrientedAngleEquality
+    );
+    assert!(report.all_generated());
+    assert_eq!(report.problem.constraints.len(), 6);
+    assert_eq!(
+        report.rows[0].strategy,
+        Some(SketchResidualStrategy::WorkplaneUnitQuaternion)
+    );
+    assert_eq!(
+        report.rows[1].strategy,
+        Some(SketchResidualStrategy::ProjectedOrientedAngleEquality)
+    );
+    assert_eq!(
+        report.rows[2].strategy,
+        Some(SketchResidualStrategy::ProjectedOrientedAngleEquality)
+    );
+
+    let certification = certify_candidate(
+        &PreparedProblem::new(&report.problem),
+        &context_from_problem(&report.problem),
+    );
+    assert!(matches!(
+        certification.rows[0].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[1].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[2].status,
+        CertifiedCandidateStatus::CertifiedSatisfiedInequality { .. }
+    ));
+    assert!(matches!(
+        certification.rows[5].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
+
+    let forms = sketch.residual_forms_for_constraint(valid.handle);
+    assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+    assert_eq!(forms.forms.len(), 3);
+    assert_eq!(
+        forms.forms[0].kind,
+        SketchResidualFormKind::WorkplaneUnitQuaternionPolynomial
+    );
+    assert_eq!(
+        forms.forms[1].kind,
+        SketchResidualFormKind::ProjectedOrientedAngleVectorCollinearityPolynomial
+    );
+    assert_eq!(
+        forms.forms[2].kind,
+        SketchResidualFormKind::ProjectedOrientedAngleSameBranchPredicate
+    );
+    assert_eq!(forms.forms[2].role, SketchResidualFormRole::ExactProof);
+
+    let wrong_2d_line = sketch.add_line_segment2("wrong 2d line", p0, x);
+    let bad = sketch.add_projected_equal_oriented_angle_lines3(
+        "wrong projected angle",
+        workplane,
+        wrong_2d_line,
+        b,
+        c,
+        d,
+    );
+    let bad_forms = sketch.residual_forms_for_constraint(bad);
+    assert_eq!(bad_forms.status, SketchResidualFormsStatus::InvalidInputs);
+    assert!(!bad_forms.diagnostics.is_empty());
+}
+
+#[test]
 fn sketch_workplane_frame_respects_rotated_unit_quaternion_basis() {
     let mut sketch = SketchSolveProblem::new();
     let origin = sketch.add_point3d("origin", real(0), real(0), real(5));
