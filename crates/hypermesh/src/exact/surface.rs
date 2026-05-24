@@ -6,8 +6,9 @@
 //! single-loop planar-arrangement union/difference, one-hole and bounded
 //! multi-hole differences, nonconvex component-union loops, disconnected
 //! nonconvex component-union multi-loops, bounded cutter/hole openings with
-//! retained strict holes, and the convex one-corner difference shapes that can
-//! be represented as an open triangle mesh. The
+//! retained strict holes, independent consumed straddling-hole split groups,
+//! and the convex one-corner difference shapes that can be represented as an
+//! open triangle mesh. The
 //! predicates are the same projected orientation and point-in-triangle facts
 //! used by the coplanar overlap classifier, following
 //! Yap, "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
@@ -9831,45 +9832,48 @@ fn component_relevant_right_regions_are_disjoint(
     )
 }
 
+/// Retained loops after a cutter/hole-contact split has been replayed.
+///
+/// This private object is intentionally smaller than
+/// [`CoplanarConvexHoledComponent`]: it is the exact subtraction replay before
+/// choosing whether the public artifact is component-holed or no-hole
+/// multi-difference. Keeping that layer separate follows Yap, "Towards Exact
+/// Geometric Computation," *Computational Geometry* 7.1-2 (1997): the
+/// predicates certify contact, containment, and area first; only after that do
+/// we expose the boolean object with the topology it actually owns.
+#[cfg(feature = "exact-triangulation")]
+struct CutterHoleContactSplitComponent {
+    outer: Vec<Point3>,
+    holes: Vec<Vec<Point3>>,
+}
+
 /// Replay mixed cutter/hole openings while optionally retaining strict holes.
 ///
-/// This helper is the holed-output sibling of
-/// [`arrange_coplanar_surface_cutter_hole_contact_difference`]. A connected
-/// group of clipped side cutters and strict holes is first replayed as a
-/// removed-region loop, which consumes every strict hole in that group. The
-/// bounded extension here is that the same component may also have independent
-/// cutter-only side openings; those groups are materialized with the same
-/// retained side-opening rule as
-/// [`materialize_nonrectilinear_side_cutter_opening`]. The helper may return a
-/// no-hole opened component when all holes in that source component are
-/// consumed by certified side openings. That is not a standalone holed
-/// certificate: [`validate_component_holed_surface_output`] still requires at
-/// least one retained hole in the complete arrangement. This is the necessary
-/// multi-component case where one source component is opened and another
-/// independent source component still carries retained holes. A removed group
-/// may also touch multiple source sides and split its own source component;
-/// that multi-output case is accepted only when exact fragment replay produces
-/// disjoint simple retained loops and exact projected area replays
-/// `outer = sum(output_i) + sum(removed_i)`.
+/// This helper is the shared exact-object builder behind
+/// [`materialize_cutter_hole_contact_component_holed_difference`] and
+/// [`materialize_cutter_hole_contact_multi_component_difference_consuming_holes`].
+/// It does not decide the public artifact family. A connected group of clipped
+/// side cutters and strict holes is first replayed as a removed-region loop,
+/// which consumes every strict hole in that group. The bounded extension here
+/// is that the same component may also have independent cutter-only side
+/// openings; those groups are materialized with the same retained side-opening
+/// rule as [`materialize_nonrectilinear_side_cutter_opening`].
 ///
-/// This covers the bounded partially straddling-hole case without claiming a
-/// general planar subdivision: a hole overlapping a side-opening group is
-/// consumed by that exact removed union, while unrelated strict holes are
-/// retained only if exact simple-polygon containment proves they lie inside
-/// the opened loop. Point-only connectivity and branch graphs still require a
-/// full planar subdivision; incidental point contacts are admitted only inside
-/// an already positive-connected removed group. Boundary fragments follow
-/// Weiler and Atherton, "Hidden Surface Removal Using Polygon Area Sorting,"
-/// *SIGGRAPH Computer Graphics* 11.2 (1977), and the replay/retained ring
-/// split follows Yap, "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997).
+/// The result may contain components with no retained holes, several retained
+/// holes, or several disjoint retained components produced by side-to-side
+/// consumed groups. Callers then choose whether that evidence is a
+/// component-holed output or a no-hole multi-difference. Boundary fragments
+/// follow Weiler and Atherton, "Hidden Surface Removal Using Polygon Area
+/// Sorting," *SIGGRAPH Computer Graphics* 11.2 (1977); acceptance follows
+/// Yap's exact-computation boundary by requiring simple retained loops, exact
+/// hole ownership, and exact area replay before promotion.
 #[cfg(feature = "exact-triangulation")]
-fn materialize_cutter_hole_contact_component_holed_difference(
+fn materialize_cutter_hole_contact_split_components(
     component: &ConvexUnionComponent,
     cut_indices: &[usize],
     holes: &[ComponentHoleCandidate],
     right_components: &[ConvexUnionComponent],
-) -> Option<Vec<CoplanarConvexHoledComponent>> {
+) -> Option<Vec<CutterHoleContactSplitComponent>> {
     if cut_indices.is_empty() || holes.is_empty() {
         return None;
     }
@@ -9954,14 +9958,14 @@ fn materialize_cutter_hole_contact_component_holed_difference(
                 &component.hull,
                 &removed_openings,
                 projection,
-                "coplanar component-holed cutter-hole contact split difference",
+                "coplanar cutter-hole contact split difference",
             )?
         }
     } else if let Some(opening) = multi_side_opened_difference_polygon(
         &component.hull,
         &removed_openings,
         projection,
-        "coplanar component-holed multi-opening difference",
+        "coplanar cutter-hole contact multi-opening difference",
     ) {
         vec![opening]
     } else {
@@ -9969,7 +9973,7 @@ fn materialize_cutter_hole_contact_component_holed_difference(
             &component.hull,
             &removed_openings,
             projection,
-            "coplanar component-holed cutter-hole contact split difference",
+            "coplanar cutter-hole contact split difference",
         )?
     };
 
@@ -10002,8 +10006,63 @@ fn materialize_cutter_hole_contact_component_holed_difference(
         opened_polygons
             .into_iter()
             .zip(holes_by_opening)
-            .map(|(outer, holes)| CoplanarConvexHoledComponent { outer, holes })
+            .map(|(outer, holes)| CutterHoleContactSplitComponent { outer, holes })
             .collect(),
+    )
+}
+
+/// Replay mixed cutter/hole openings as component-holed output.
+///
+/// This helper is the holed-output sibling of
+/// [`arrange_coplanar_surface_cutter_hole_contact_difference`]. A connected
+/// group of clipped side cutters and strict holes is first replayed as a
+/// removed-region loop, which consumes every strict hole in that group. The
+/// bounded extension here is that the same component may also have independent
+/// cutter-only side openings; those groups are materialized with the same
+/// retained side-opening rule as
+/// [`materialize_nonrectilinear_side_cutter_opening`]. The helper may return a
+/// no-hole opened component when all holes in that source component are
+/// consumed by certified side openings. That is not a standalone holed
+/// certificate: [`validate_component_holed_surface_output`] still requires at
+/// least one retained hole in the complete arrangement. This is the necessary
+/// multi-component case where one source component is opened and another
+/// independent source component still carries retained holes. A removed group
+/// may also touch multiple source sides and split its own source component;
+/// that multi-output case is accepted only when exact fragment replay produces
+/// disjoint simple retained loops and exact projected area replays
+/// `outer = sum(output_i) + sum(removed_i)`.
+///
+/// This covers the bounded partially straddling-hole case without claiming a
+/// general planar subdivision: a hole overlapping a side-opening group is
+/// consumed by that exact removed union, while unrelated strict holes are
+/// retained only if exact simple-polygon containment proves they lie inside
+/// the opened loop. Point-only connectivity and branch graphs still require a
+/// full planar subdivision; incidental point contacts are admitted only inside
+/// an already positive-connected removed group. Boundary fragments follow
+/// Weiler and Atherton, "Hidden Surface Removal Using Polygon Area Sorting,"
+/// *SIGGRAPH Computer Graphics* 11.2 (1977), and the replay/retained ring
+/// split follows Yap, "Towards Exact Geometric Computation," *Computational
+/// Geometry* 7.1-2 (1997).
+#[cfg(feature = "exact-triangulation")]
+fn materialize_cutter_hole_contact_component_holed_difference(
+    component: &ConvexUnionComponent,
+    cut_indices: &[usize],
+    holes: &[ComponentHoleCandidate],
+    right_components: &[ConvexUnionComponent],
+) -> Option<Vec<CoplanarConvexHoledComponent>> {
+    Some(
+        materialize_cutter_hole_contact_split_components(
+            component,
+            cut_indices,
+            holes,
+            right_components,
+        )?
+        .into_iter()
+        .map(|component| CoplanarConvexHoledComponent {
+            outer: component.outer,
+            holes: component.holes,
+        })
+        .collect(),
     )
 }
 
@@ -10036,7 +10095,7 @@ fn materialize_cutter_hole_contact_multi_component_difference_consuming_holes(
     if cut_indices.is_empty() || holes.is_empty() {
         return None;
     }
-    let mut components = materialize_cutter_hole_contact_component_holed_difference(
+    let mut components = materialize_cutter_hole_contact_split_components(
         component,
         cut_indices,
         holes,
