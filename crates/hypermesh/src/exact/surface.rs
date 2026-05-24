@@ -5235,8 +5235,15 @@ fn coplanar_simple_surface_difference_polygons(
                 projection,
             )? {
                 SimpleSourceConvexRegionRelation::Disjoint => {}
-                SimpleSourceConvexRegionRelation::BoundaryOnly
-                | SimpleSourceConvexRegionRelation::UnsupportedCrossing => return None,
+                SimpleSourceConvexRegionRelation::BoundaryOnly => return None,
+                SimpleSourceConvexRegionRelation::UnsupportedCrossing => {
+                    let mut clipped = simple_source_convex_crossing_removed_openings(
+                        component,
+                        &right_component.hull,
+                        "coplanar nonconvex source clipped side-cutter difference",
+                    )?;
+                    removed.append(&mut clipped);
+                }
             }
         }
         if drop_component {
@@ -5261,6 +5268,162 @@ fn coplanar_simple_surface_difference_polygons(
     )
     .ok()?;
     Some((projection, polygons))
+}
+
+/// Clip a crossing convex cutter against a nonconvex simple source disk.
+///
+/// This is a bounded outside-clipping certificate for
+/// [`coplanar_simple_surface_difference_polygons`]. The general problem is a
+/// planar arrangement, but one convex cutter can be clipped against one exact
+/// source disk by replaying the boundary of `source ∩ cutter`: source-boundary
+/// fragments whose midpoints lie in the cutter, plus cutter-boundary
+/// fragments whose midpoints lie in the source. The emitted removed openings
+/// are then rechecked by the existing nonconvex source side-cutter
+/// materializer, including source containment, positive-length boundary
+/// ownership, disjointness, and exact area replay.
+///
+/// The fragment traversal is the same retained-boundary construction as
+/// Weiler and Atherton, "Hidden Surface Removal Using Polygon Area Sorting,"
+/// *SIGGRAPH Computer Graphics* 11.2 (1977). Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997), is the reason this
+/// helper promotes only stitched loops that replay exact source/cutter
+/// predicates; point-only and non-simple branch outputs remain unsupported
+/// instead of being selected by tolerance samples. Segment intersections use
+/// the exact orientation-predicate classifier from Guigue and Devillers,
+/// "Fast and Robust Triangle-Triangle Overlap Test Using Orientation
+/// Predicates," *Journal of Graphics Tools* 8.1 (2003).
+#[cfg(feature = "exact-triangulation")]
+fn simple_source_convex_crossing_removed_openings(
+    component: &SimpleSurfaceComponent,
+    cutter: &[Point3],
+    label: &'static str,
+) -> Option<Vec<Vec<Point3>>> {
+    let projection = component.projection;
+    let mut cutter = cutter.to_vec();
+    orient_polygon_ccw(&mut cutter, projection)?;
+    validate_projected_strictly_convex_loop(&cutter, projection, label).ok()?;
+
+    let mut fragments = Vec::new();
+    collect_source_inside_convex_intersection_fragments(
+        &component.boundary,
+        &cutter,
+        projection,
+        &mut fragments,
+    )?;
+    collect_convex_inside_source_intersection_fragments(
+        &cutter,
+        &component.boundary,
+        projection,
+        &mut fragments,
+    )?;
+
+    let mut openings = if let Some(opening) = stitch_simple_loop(fragments.clone(), projection) {
+        vec![opening]
+    } else {
+        stitch_disjoint_simple_loops(fragments, projection)?
+    };
+    if openings.is_empty() {
+        return None;
+    }
+    for opening in &mut openings {
+        orient_polygon_ccw(opening, projection)?;
+        *opening = simplify_projected_polygon(opening.clone(), projection);
+        validate_projected_simple_loop(opening, projection, label).ok()?;
+        if !polygon_lies_in_closed_simple_polygon(opening, &component.boundary, projection)? {
+            return None;
+        }
+        if simple_boundary_attachment_count(&component.boundary, opening, projection)? == 0 {
+            return None;
+        }
+    }
+    validate_simple_component_loops_disjoint(&openings, projection, label).ok()?;
+    Some(openings)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn collect_source_inside_convex_intersection_fragments(
+    source: &[Point3],
+    convex: &[Point3],
+    projection: CoplanarProjection,
+    fragments: &mut Vec<DirectedFragment>,
+) -> Option<()> {
+    for edge in 0..source.len() {
+        let start = &source[edge];
+        let end = &source[(edge + 1) % source.len()];
+        let mut splits = vec![start.clone(), end.clone()];
+        for other_edge in 0..convex.len() {
+            add_projected_edge_intersections(
+                start,
+                end,
+                &convex[other_edge],
+                &convex[(other_edge + 1) % convex.len()],
+                projection,
+                &mut splits,
+            )?;
+        }
+        sort_points_along_segment(&mut splits, start, end, projection)?;
+        dedup_points(&mut splits);
+        for pair in splits.windows(2) {
+            let a = &pair[0];
+            let b = &pair[1];
+            if points_equal(a, b) {
+                continue;
+            }
+            let midpoint = midpoint3(a, b);
+            if convex_polygon_location(&midpoint, convex, projection)?
+                != ConvexPolygonLocation::Outside
+            {
+                fragments.push(DirectedFragment {
+                    start: a.clone(),
+                    end: b.clone(),
+                });
+            }
+        }
+    }
+    Some(())
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn collect_convex_inside_source_intersection_fragments(
+    convex: &[Point3],
+    source: &[Point3],
+    projection: CoplanarProjection,
+    fragments: &mut Vec<DirectedFragment>,
+) -> Option<()> {
+    for edge in 0..convex.len() {
+        let start = &convex[edge];
+        let end = &convex[(edge + 1) % convex.len()];
+        let mut splits = vec![start.clone(), end.clone()];
+        for source_edge in 0..source.len() {
+            add_projected_edge_intersections(
+                start,
+                end,
+                &source[source_edge],
+                &source[(source_edge + 1) % source.len()],
+                projection,
+                &mut splits,
+            )?;
+        }
+        sort_points_along_segment(&mut splits, start, end, projection)?;
+        dedup_points(&mut splits);
+        for pair in splits.windows(2) {
+            let a = &pair[0];
+            let b = &pair[1];
+            if points_equal(a, b) {
+                continue;
+            }
+            let midpoint = midpoint3(a, b);
+            if simple_polygon_location(&midpoint, source, projection)?
+                != ConvexPolygonLocation::Outside
+            {
+                fragments.push(DirectedFragment {
+                    start: a.clone(),
+                    end: b.clone(),
+                });
+            }
+        }
+    }
+    Some(())
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -7946,6 +8109,7 @@ fn arrange_coplanar_simple_surface_component_holed_difference(
     for component in &mut left_components {
         let mut dropped = false;
         let mut side_cutter_indices = Vec::new();
+        let mut side_removed = Vec::new();
         let mut holes = Vec::new();
         for (right_index, right_component) in right_components.iter().enumerate() {
             if polygons_equal(&component.boundary, &right_component.hull)
@@ -7955,7 +8119,7 @@ fn arrange_coplanar_simple_surface_component_holed_difference(
                     projection,
                 )?
             {
-                if dropped || !side_cutter_indices.is_empty() || !holes.is_empty() {
+                if dropped || !side_removed.is_empty() || !holes.is_empty() {
                     return None;
                 }
                 dropped = true;
@@ -7976,6 +8140,9 @@ fn arrange_coplanar_simple_surface_component_holed_difference(
                         return None;
                     }
                     side_cutter_indices.push(right_index);
+                    let mut cutter = right_component.hull.clone();
+                    orient_polygon_ccw(&mut cutter, projection)?;
+                    side_removed.push(cutter);
                 } else if polygon_strictly_inside_simple_polygon(
                     &right_component.hull,
                     &component.boundary,
@@ -7995,8 +8162,18 @@ fn arrange_coplanar_simple_surface_component_holed_difference(
                 projection,
             )? {
                 SimpleSourceConvexRegionRelation::Disjoint => {}
-                SimpleSourceConvexRegionRelation::BoundaryOnly
-                | SimpleSourceConvexRegionRelation::UnsupportedCrossing => return None,
+                SimpleSourceConvexRegionRelation::BoundaryOnly => return None,
+                SimpleSourceConvexRegionRelation::UnsupportedCrossing => {
+                    if dropped {
+                        return None;
+                    }
+                    let mut clipped = simple_source_convex_crossing_removed_openings(
+                        component,
+                        &right_component.hull,
+                        "coplanar nonconvex source clipped component-holed arrangement",
+                    )?;
+                    side_removed.append(&mut clipped);
+                }
             }
         }
 
@@ -8007,14 +8184,14 @@ fn arrange_coplanar_simple_surface_component_holed_difference(
             .iter()
             .map(|hole| hole.ring.clone())
             .collect::<Vec<_>>();
-        if side_cutter_indices.is_empty() {
+        if side_removed.is_empty() {
             let mut outer = component.boundary.clone();
             orient_polygon_ccw(&mut outer, projection)?;
             components.push(CoplanarConvexHoledComponent {
                 outer,
                 holes: hole_rings,
             });
-        } else {
+        } else if side_removed.len() == side_cutter_indices.len() {
             if let Some(opened) =
                 materialize_simple_source_cutter_hole_contact_component_holed_difference(
                     component,
@@ -8025,16 +8202,11 @@ fn arrange_coplanar_simple_surface_component_holed_difference(
             {
                 components.extend(opened);
             } else {
-                let removed = side_cutter_indices
-                    .iter()
-                    .map(|&index| {
-                        let mut cutter = right_components.get(index)?.hull.clone();
-                        orient_polygon_ccw(&mut cutter, projection)?;
-                        Some(cutter)
-                    })
-                    .collect::<Option<Vec<_>>>()?;
                 let (removed_openings, mut cut_polygons) =
-                    materialize_simple_source_side_cutter_difference_core(component, &removed)?;
+                    materialize_simple_source_side_cutter_difference_core(
+                        component,
+                        &side_removed,
+                    )?;
                 for polygon in &mut cut_polygons {
                     orient_polygon_ccw(polygon, projection)?;
                 }
@@ -8051,6 +8223,24 @@ fn arrange_coplanar_simple_surface_component_holed_difference(
                         .map(|(outer, holes)| CoplanarConvexHoledComponent { outer, holes }),
                 );
             }
+        } else {
+            let (removed_openings, mut cut_polygons) =
+                materialize_simple_source_side_cutter_difference_core(component, &side_removed)?;
+            for polygon in &mut cut_polygons {
+                orient_polygon_ccw(polygon, projection)?;
+            }
+            let holes_by_cut = assign_holes_to_side_cutter_split_outputs(
+                &hole_rings,
+                &cut_polygons,
+                &removed_openings,
+                projection,
+            )?;
+            components.extend(
+                cut_polygons
+                    .into_iter()
+                    .zip(holes_by_cut)
+                    .map(|(outer, holes)| CoplanarConvexHoledComponent { outer, holes }),
+            );
         }
     }
     if components.is_empty()

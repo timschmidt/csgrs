@@ -4453,6 +4453,24 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
             ValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
+        let nonconvex_source_crossing_opening = ExactMesh::from_i64_triangles_with_policy(
+            &[4, 10, 0, 12, 10, 0, 12, 14, 0, 4, 14, 0],
+            &[0, 1, 2, 0, 2, 3],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let nonconvex_source_crossing_opening_and_hole = ExactMesh::from_i64_triangles_with_policy(
+            &[
+                2, 2, 0, 3, 2, 0, 2, 3, 0, //
+                4, 10, 0, 12, 10, 0, 12, 14, 0, 4, 14, 0,
+            ],
+            &[
+                0, 1, 2, //
+                3, 4, 5, 3, 5, 6,
+            ],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
         let nonconvex_source_straddling_hole = ExactMesh::from_i64_triangles_with_policy(
             &[
                 2, 2, 0, 3, 2, 0, 2, 3, 0, //
@@ -5332,6 +5350,38 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
                         hypermesh::exact::preflight_boolean_exact(
                             &nonconvex_source_left,
                             &nonconvex_source_opening_and_hole,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                        )
+                        .map(|report| report.validate()),
+                        arrange_coplanar_surface_component_difference(
+                            &nonconvex_source_left,
+                            &nonconvex_source_crossing_opening,
+                        )
+                        .map(|output| {
+                            output.validate_component_difference_against_sources(
+                                &nonconvex_source_left,
+                                &nonconvex_source_crossing_opening,
+                            )
+                        }),
+                        hypermesh::exact::preflight_boolean_exact(
+                            &nonconvex_source_left,
+                            &nonconvex_source_crossing_opening,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                        )
+                        .map(|report| report.validate()),
+                        arrange_coplanar_convex_surface_component_holed_difference(
+                            &nonconvex_source_left,
+                            &nonconvex_source_crossing_opening_and_hole,
+                        )
+                        .map(|output| {
+                            output.validate_against_sources(
+                                &nonconvex_source_left,
+                                &nonconvex_source_crossing_opening_and_hole,
+                            )
+                        }),
+                        hypermesh::exact::preflight_boolean_exact(
+                            &nonconvex_source_left,
+                            &nonconvex_source_crossing_opening_and_hole,
                             hypermesh::exact::ExactBooleanOperation::Difference,
                         )
                         .map(|report| report.validate()),

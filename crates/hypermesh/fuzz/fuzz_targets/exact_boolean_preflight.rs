@@ -3428,6 +3428,52 @@ fn exercise_component_coplanar_difference() {
         )
         .unwrap();
 
+    let nonconvex_source_crossing_opening = ExactMesh::from_i64_triangles_with_policy(
+        &[4, 10, 0, 12, 10, 0, 12, 14, 0, 4, 14, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("nonconvex source crossing-opening fixture must import");
+    let nonconvex_source_clipped_difference = arrange_coplanar_surface_component_difference(
+        &nonconvex_source_left,
+        &nonconvex_source_crossing_opening,
+    )
+    .expect("crossing cutter should clip into a nonconvex source opening");
+    nonconvex_source_clipped_difference.validate().unwrap();
+    nonconvex_source_clipped_difference
+        .validate_component_difference_against_sources(
+            &nonconvex_source_left,
+            &nonconvex_source_crossing_opening,
+        )
+        .unwrap();
+
+    let nonconvex_source_crossing_opening_and_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            2, 2, 0, 3, 2, 0, 2, 3, 0, //
+            4, 10, 0, 12, 10, 0, 12, 14, 0, 4, 14, 0,
+        ],
+        &[
+            0, 1, 2, //
+            3, 4, 5, 3, 5, 6,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("nonconvex source crossing-opening-and-hole fixture must import");
+    let nonconvex_source_clipped_holed =
+        arrange_coplanar_convex_surface_component_holed_difference(
+            &nonconvex_source_left,
+            &nonconvex_source_crossing_opening_and_hole,
+        )
+        .expect("crossing cutter should clip while retaining unrelated holes");
+    nonconvex_source_clipped_holed.validate().unwrap();
+    nonconvex_source_clipped_holed
+        .validate_against_sources(
+            &nonconvex_source_left,
+            &nonconvex_source_crossing_opening_and_hole,
+        )
+        .unwrap();
+    assert_eq!(nonconvex_source_clipped_holed.components[0].holes.len(), 1);
+
     let nonconvex_source_straddling_hole = ExactMesh::from_i64_triangles_with_policy(
         &[
             2, 2, 0, 3, 2, 0, 2, 3, 0, //

@@ -15303,6 +15303,71 @@ fn exact_coplanar_surface_difference_materializes_nonconvex_source_side_opening(
             .is_none()
     );
 
+    let crossing_opening = ExactMesh::from_i64_triangles_with_policy(
+        &[4, 10, 0, 12, 10, 0, 12, 14, 0, 4, 14, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert!(
+        hypermesh::exact::arrange_coplanar_convex_surface_multi_difference(
+            &left,
+            &crossing_opening,
+        )
+        .is_none()
+    );
+    let clipped =
+        hypermesh::exact::arrange_coplanar_surface_component_difference(&left, &crossing_opening)
+            .expect("crossing cutter should clip into a bounded nonconvex source opening");
+    clipped.validate().unwrap();
+    clipped
+        .validate_component_difference_against_sources(&left, &crossing_opening)
+        .unwrap();
+    assert!(
+        clipped
+            .polygon
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(4))
+                && real_eq(&point.y, &ExactReal::from(10)))
+    );
+    assert!(
+        clipped
+            .polygon
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(10))
+                && real_eq(&point.y, &ExactReal::from(10)))
+    );
+    let clipped_preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &crossing_opening,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    clipped_preflight.validate().unwrap();
+    clipped_preflight
+        .validate_against_sources(&left, &crossing_opening)
+        .unwrap();
+    assert_eq!(
+        clipped_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementDifference
+    );
+    let clipped_result = hypermesh::exact::boolean_exact(
+        &left,
+        &crossing_opening,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    clipped_result
+        .validate_operation_against_sources(
+            &left,
+            &crossing_opening,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+
     let multi_left = ExactMesh::from_i64_triangles_with_policy(
         &[
             0, 0, 0, 10, 0, 0, 10, 4, 0, 7, 4, 0, 6, 6, 0, 10, 8, 0, 10, 12, 0, 0, 12, 0, //
@@ -15513,6 +15578,53 @@ fn exact_coplanar_component_holed_difference_materializes_nonconvex_source_disk_
             &boundary_touching_hole,
         )
         .is_none()
+    );
+
+    let clipped_opening_and_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            2, 2, 0, 3, 2, 0, 2, 3, 0, //
+            4, 10, 0, 12, 10, 0, 12, 14, 0, 4, 14, 0,
+        ],
+        &[
+            0, 1, 2, //
+            3, 4, 5, 3, 5, 6,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let clipped_holed =
+        hypermesh::exact::arrange_coplanar_convex_surface_component_holed_difference(
+            &left,
+            &clipped_opening_and_hole,
+        )
+        .expect("crossing cutter should clip while retaining unrelated nonconvex source holes");
+    clipped_holed.validate().unwrap();
+    clipped_holed
+        .validate_against_sources(&left, &clipped_opening_and_hole)
+        .unwrap();
+    assert_eq!(clipped_holed.components.len(), 1);
+    assert_eq!(clipped_holed.components[0].holes.len(), 1);
+    assert!(
+        clipped_holed.components[0]
+            .outer
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(4))
+                && real_eq(&point.y, &ExactReal::from(10)))
+    );
+    let clipped_holed_preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &clipped_opening_and_hole,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    clipped_holed_preflight.validate().unwrap();
+    clipped_holed_preflight
+        .validate_against_sources(&left, &clipped_opening_and_hole)
+        .unwrap();
+    assert_eq!(
+        clipped_holed_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::
+            CertifiedCoplanarConvexSurfaceComponentHoledDifference
     );
 }
 
