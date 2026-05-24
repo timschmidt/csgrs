@@ -1,16 +1,17 @@
 use criterion::{Criterion, criterion_group, criterion_main};
 use hyperlimit::{Point2, PredicatePolicy};
 use hyperpath::{
-    ArcDirection, BeadFillAxis, BezierParameter, CardinalPoint, CardinalRotation, CircularArc,
-    ConstructionStamp, CubicBezier, ExplicitCircularArc, HigherOrderBezier, LinePathSegment,
-    MeanderObstacle, MeanderPlacementCandidate, NetId, OffsetSide, PathMeshBooleanOperation,
-    PathProvenance, PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad, PcbCircularPad,
-    PcbConvexBoardOutline, PcbOrthogonalBoardOutline, PcbRectPad, PcbTrace, PcbViaStack,
-    QuadraticBezier, RationalQuadraticBezier, RectangularPocket, SourceLengthUnit,
-    SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraLayerAlias, SpecctraNetAlias,
-    SweptLineSegment, TangentSpan, TraceLayer, ViaDrillIntent, boolean_rectangular_prism_chain,
-    boolean_rectangular_prisms, build_alternating_detour_meander, build_g1_join_problem,
-    build_length_match_problem, build_multi_detour_meander, build_nonuniform_detour_meander,
+    ArcDirection, AxisAlignedSweptSegmentPrism, BeadFillAxis, BezierParameter, CardinalPoint,
+    CardinalRotation, CircularArc, ConstructionStamp, CubicBezier, ExplicitCircularArc,
+    HigherOrderBezier, LinePathSegment, MeanderObstacle, MeanderPlacementCandidate, NetId,
+    OffsetSide, PathMeshBooleanOperation, PathProvenance, PathSourceFormat, PcbBoardOutline,
+    PcbCardinalRectPad, PcbCircularPad, PcbConvexBoardOutline, PcbOrthogonalBoardOutline,
+    PcbRectPad, PcbTrace, PcbViaStack, QuadraticBezier, RationalQuadraticBezier, RectangularPocket,
+    SourceLengthUnit, SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraLayerAlias,
+    SpecctraNetAlias, SweptLineSegment, TangentSpan, TraceLayer, ViaDrillIntent,
+    boolean_path_mesh_sources, boolean_rectangular_prism_chain, boolean_rectangular_prisms,
+    build_alternating_detour_meander, build_g1_join_problem, build_length_match_problem,
+    build_multi_detour_meander, build_nonuniform_detour_meander,
     build_obstacle_aware_detour_meander, build_oriented_tangent_alignment_problem,
     build_rectangular_bead_plan, build_rectangular_pocket_plan,
     build_rectangular_serpentine_infill_graph, build_rectangular_support_plan,
@@ -752,6 +753,27 @@ fn path_predicates(c: &mut Criterion) {
         b.iter(|| {
             let report = boolean_rectangular_prism_chain(
                 vec![prism_left.clone(), prism_right.clone(), prism_third.clone()],
+                PathMeshBooleanOperation::Union,
+            )
+            .unwrap();
+            report.validate_replay()
+        })
+    });
+    let swept_slab = AxisAlignedSweptSegmentPrism::new(
+        SweptLineSegment::new(
+            LinePathSegment::new(p(0, 3_000), p(10_000, 3_000)),
+            r(2_000),
+        )
+        .unwrap(),
+        r(0),
+        r(500),
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    c.bench_function("swept_slab_mesh_boolean_source_union_replay", |b| {
+        b.iter(|| {
+            let report = boolean_path_mesh_sources(
+                vec![swept_slab.clone().into(), prism_right.clone().into()],
                 PathMeshBooleanOperation::Union,
             )
             .unwrap();

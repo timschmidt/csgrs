@@ -1,10 +1,12 @@
 #![no_main]
 
-use hyperlimit::PredicatePolicy;
+use hyperlimit::{Point2, PredicatePolicy};
 use hyperpath::{
-    PathMeshBooleanOperation, boolean_rectangular_prism_chain, boolean_rectangular_prisms,
+    AxisAlignedSweptSegmentPrism, LinePathSegment, PathMeshBooleanOperation, SweptLineSegment,
+    boolean_path_mesh_sources, boolean_rectangular_prism_chain, boolean_rectangular_prisms,
     boolean_rectangular_prisms_with_boundary_policy, rectangular_prism_from_i64_bounds,
 };
+use hyperreal::Real;
 use libfuzzer_sys::fuzz_target;
 
 fuzz_target!(|data: &[u8]| {
@@ -75,6 +77,37 @@ fuzz_target!(|data: &[u8]| {
             {
                 chain.validate_replay().unwrap();
                 chain.steps.last().unwrap().result.validate().unwrap();
+            }
+        }
+    }
+
+    if data.len() >= 20 && data[14] & 2 == 2 {
+        let start = Point2::new(Real::from(coord(15)), Real::from(coord(16)));
+        let end = if data[14] & 4 == 4 {
+            Point2::new(start.x.clone() + Real::from(extent(17)), start.y.clone())
+        } else {
+            Point2::new(start.x.clone(), start.y.clone() + Real::from(extent(17)))
+        };
+        if let Ok(swept) =
+            SweptLineSegment::new(LinePathSegment::new(start, end), Real::from(extent(3)))
+        {
+            let z_min = Real::from(coord(18));
+            let z_max = z_min.clone() + Real::from(extent(19));
+            if let Ok(slab) =
+                AxisAlignedSweptSegmentPrism::new(swept, z_min, z_max, PredicatePolicy::default())
+            {
+                let right = rectangular_prism_from_i64_bounds(
+                    right_min,
+                    right_max,
+                    PredicatePolicy::default(),
+                )
+                .unwrap();
+                if let Ok(chain) =
+                    boolean_path_mesh_sources(vec![slab.into(), right.into()], operation)
+                {
+                    chain.validate_replay().unwrap();
+                    chain.steps.last().unwrap().result.validate().unwrap();
+                }
             }
         }
     }

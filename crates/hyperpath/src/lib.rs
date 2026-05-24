@@ -11,6 +11,7 @@ pub mod arc;
 pub mod bezier;
 pub mod cam;
 pub mod mesh_boolean;
+pub mod mesh_boolean_sources;
 pub mod offset;
 pub mod pcb;
 pub mod provenance;
@@ -49,6 +50,11 @@ pub use mesh_boolean::{
     PathMeshBooleanReport, PathMeshBooleanStep, RectangularPrism, boolean_rectangular_prism_chain,
     boolean_rectangular_prism_chain_with_boundary_policy, boolean_rectangular_prisms,
     boolean_rectangular_prisms_with_boundary_policy, rectangular_prism_from_i64_bounds,
+};
+pub use mesh_boolean_sources::{
+    AxisAlignedSweptSegmentPrism, PathMeshBooleanSource, PathMeshBooleanSourceChainReport,
+    PathMeshBooleanSourceStep, boolean_path_mesh_sources,
+    boolean_path_mesh_sources_with_boundary_policy,
 };
 pub use offset::{
     ArcOffsetCandidate, ArcOffsetError, BezierOffsetError, BezierOffsetSampleCandidate,

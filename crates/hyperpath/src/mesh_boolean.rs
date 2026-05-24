@@ -68,6 +68,10 @@ pub enum PathMeshBooleanOperation {
 pub enum PathMeshBooleanError {
     /// At least two prism sources are required for a boolean chain.
     NotEnoughSources,
+    /// A swept path source was not certified axis-aligned.
+    NonAxisAlignedSweep,
+    /// A swept path source did not have certified positive width.
+    NonPositiveSweepWidth,
     /// Footprint bounds did not have strictly positive area.
     DegenerateFootprint,
     /// Z bounds were unordered, equal, or undecidable.

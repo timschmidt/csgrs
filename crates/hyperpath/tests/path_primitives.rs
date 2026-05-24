@@ -1,24 +1,25 @@
 use hyperlimit::{Point2, PredicatePolicy};
 use hyperpath::{
-    ArcDirection, ArcOffsetError, Axis, BeadFillAxis, BeadPlanError, BezierOffsetError,
-    BezierParameter, BezierParameterError, BoardContourError, BoardContourOrientation,
-    CardinalPoint, CardinalRotation, CircularArc, CircularArcError, ClearanceStatus,
-    ConstructionStamp, CubicBezier, DrillBoardClearanceReport, ExplicitArcArrangementClass,
-    ExplicitArcIntersectionClass, ExplicitArcOverlapClass, ExplicitArcPointClassification,
-    ExplicitArcSweepClass, ExplicitArcTangentClass, ExplicitCircleRelationClass,
-    ExplicitCircularArc, HigherOrderBezier, HigherOrderBezierError, InfillGraphError,
-    LineExplicitArcIntersectionClass, LineOffsetError, LinePathSegment, MeanderError,
-    MeanderObstacle, MeanderPlacementCandidate, NetId, OffsetSide, PathMeshBooleanError,
-    PathMeshBooleanOperation, PathProvenance, PathSourceFormat, PcbBoardOutline,
-    PcbCardinalRectPad, PcbCircularPad, PcbConvexBoardOutline, PcbOrthogonalBoardOutline,
-    PcbRectPad, PcbTrace, PcbViaStack, PocketPlanError, PocketPlanStopReason, QuadraticBezier,
-    RationalQuadraticBezier, RationalQuadraticBezierError, RectangularPocket,
-    RectangularRegionRelation, RouteCertificationError, SegmentParameterOrder, SourceLengthUnit,
-    SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraImportError, SpecctraLayerAlias,
-    SpecctraNetAlias, SpecctraParseError, SupportFootprintStatus, SupportPlanError,
-    SweptLineSegment, TangentAlignment, TangentJoinClass, TangentJoinReport, TangentSpan,
-    TraceLayer, ViaAnnularRingReport, ViaDrillIntent, ViaDrillPolicyClass, ViaLayerSpanRelation,
-    ViaLayerTransitionClass, boolean_rectangular_prism_chain, boolean_rectangular_prisms,
+    ArcDirection, ArcOffsetError, Axis, AxisAlignedSweptSegmentPrism, BeadFillAxis, BeadPlanError,
+    BezierOffsetError, BezierParameter, BezierParameterError, BoardContourError,
+    BoardContourOrientation, CardinalPoint, CardinalRotation, CircularArc, CircularArcError,
+    ClearanceStatus, ConstructionStamp, CubicBezier, DrillBoardClearanceReport,
+    ExplicitArcArrangementClass, ExplicitArcIntersectionClass, ExplicitArcOverlapClass,
+    ExplicitArcPointClassification, ExplicitArcSweepClass, ExplicitArcTangentClass,
+    ExplicitCircleRelationClass, ExplicitCircularArc, HigherOrderBezier, HigherOrderBezierError,
+    InfillGraphError, LineExplicitArcIntersectionClass, LineOffsetError, LinePathSegment,
+    MeanderError, MeanderObstacle, MeanderPlacementCandidate, NetId, OffsetSide,
+    PathMeshBooleanError, PathMeshBooleanOperation, PathMeshBooleanSource, PathProvenance,
+    PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad, PcbCircularPad, PcbConvexBoardOutline,
+    PcbOrthogonalBoardOutline, PcbRectPad, PcbTrace, PcbViaStack, PocketPlanError,
+    PocketPlanStopReason, QuadraticBezier, RationalQuadraticBezier, RationalQuadraticBezierError,
+    RectangularPocket, RectangularRegionRelation, RouteCertificationError, SegmentParameterOrder,
+    SourceLengthUnit, SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraImportError,
+    SpecctraLayerAlias, SpecctraNetAlias, SpecctraParseError, SupportFootprintStatus,
+    SupportPlanError, SweptLineSegment, TangentAlignment, TangentJoinClass, TangentJoinReport,
+    TangentSpan, TraceLayer, ViaAnnularRingReport, ViaDrillIntent, ViaDrillPolicyClass,
+    ViaLayerSpanRelation, ViaLayerTransitionClass, boolean_path_mesh_sources,
+    boolean_rectangular_prism_chain, boolean_rectangular_prisms,
     boolean_rectangular_prisms_with_boundary_policy, build_alternating_detour_meander,
     build_g1_join_problem, build_length_match_problem, build_multi_detour_meander,
     build_nonuniform_detour_meander, build_obstacle_aware_detour_meander,
@@ -57,6 +58,18 @@ fn p(x: i64, y: i64) -> Point2 {
 
 fn prism(min: [i64; 3], max: [i64; 3]) -> hyperpath::RectangularPrism {
     rectangular_prism_from_i64_bounds(min, max, PredicatePolicy::default()).unwrap()
+}
+
+fn swept_slab(
+    start: Point2,
+    end: Point2,
+    width: i64,
+    z_min: i64,
+    z_max: i64,
+) -> AxisAlignedSweptSegmentPrism {
+    let swept = SweptLineSegment::new(LinePathSegment::new(start, end), r(width)).unwrap();
+    AxisAlignedSweptSegmentPrism::new(swept, r(z_min), r(z_max), PredicatePolicy::default())
+        .unwrap()
 }
 
 fn trace(net: u32, layer: u16, start: Point2, end: Point2, width: i64) -> PcbTrace {
@@ -243,6 +256,57 @@ fn rectangular_prism_boolean_chain_rejects_short_source_lists() {
         )
         .unwrap_err(),
         PathMeshBooleanError::NotEnoughSources
+    );
+}
+
+#[test]
+fn swept_segment_slab_boolean_source_replays_with_rectangular_prisms() {
+    let trace_slab = swept_slab(p(0, 5), p(10, 5), 4, 0, 2);
+    assert_eq!(trace_slab.axis(), Axis::X);
+    assert_eq!(trace_slab.derived_prism().footprint().min(), &p(0, 3));
+    assert_eq!(trace_slab.derived_prism().footprint().max(), &p(10, 7));
+
+    let pad_keepout = prism([8, 3, 0], [14, 7, 2]);
+    let report = boolean_path_mesh_sources(
+        vec![trace_slab.clone().into(), pad_keepout.clone().into()],
+        PathMeshBooleanOperation::Union,
+    )
+    .expect("axis-aligned swept trace slab should boolean with rectangular keepout");
+    report.validate_replay().unwrap();
+    assert_eq!(report.steps.len(), 1);
+    assert!(report.mesh().unwrap().facts().mesh.closed_manifold);
+    assert!(report.steps[0].result.validate().is_ok());
+
+    let mut stale_source = report.clone();
+    stale_source.sources[1] = PathMeshBooleanSource::from(prism([20, 20, 0], [24, 24, 2]));
+    assert!(matches!(
+        stale_source.validate_replay(),
+        Err(PathMeshBooleanError::Replay(_))
+    ));
+}
+
+#[test]
+fn swept_segment_slab_boolean_source_rejects_unsupported_sweeps() {
+    let diagonal = SweptLineSegment::new(LinePathSegment::new(p(0, 0), p(5, 5)), r(2)).unwrap();
+    assert_eq!(
+        AxisAlignedSweptSegmentPrism::new(diagonal, r(0), r(2), PredicatePolicy::default())
+            .unwrap_err(),
+        PathMeshBooleanError::NonAxisAlignedSweep
+    );
+
+    let zero_width =
+        SweptLineSegment::new(LinePathSegment::new(p(0, 0), p(5, 0)), Real::zero()).unwrap();
+    assert_eq!(
+        AxisAlignedSweptSegmentPrism::new(zero_width, r(0), r(2), PredicatePolicy::default())
+            .unwrap_err(),
+        PathMeshBooleanError::NonPositiveSweepWidth
+    );
+
+    let zero_length = SweptLineSegment::new(LinePathSegment::new(p(1, 1), p(1, 1)), r(2)).unwrap();
+    assert_eq!(
+        AxisAlignedSweptSegmentPrism::new(zero_length, r(0), r(2), PredicatePolicy::default())
+            .unwrap_err(),
+        PathMeshBooleanError::DegenerateFootprint
     );
 }
 
