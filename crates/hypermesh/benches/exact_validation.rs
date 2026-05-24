@@ -4414,6 +4414,27 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
             ValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
+        let nonconvex_source_left = ExactMesh::from_i64_triangles_with_policy(
+            &[
+                0, 0, 0, 10, 0, 0, 10, 4, 0, 7, 4, 0, 6, 6, 0, 10, 8, 0, 10, 12, 0, 0, 12, 0,
+            ],
+            &[
+                0, 1, 2, //
+                0, 2, 3, //
+                0, 3, 4, //
+                0, 4, 7, //
+                7, 4, 5, //
+                7, 5, 6,
+            ],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let nonconvex_source_opening = ExactMesh::from_i64_triangles_with_policy(
+            &[2, 12, 0, 5, 9, 0, 7, 10, 0, 4, 12, 0],
+            &[0, 1, 2, 0, 2, 3],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
         let affine_contact_left = ExactMesh::from_i64_triangles_with_policy(
             &[0, 0, 0, 20, 4, 0, 18, 18, 0, -2, 14, 0],
             &[0, 1, 2, 0, 2, 3],
@@ -5223,6 +5244,29 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
                         hypermesh::exact::boolean_exact(
                             &component_opening_left,
                             &component_opening_right,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                            ValidationPolicy::ALLOW_BOUNDARY,
+                        )
+                        .unwrap(),
+                        arrange_coplanar_surface_component_difference(
+                            &nonconvex_source_left,
+                            &nonconvex_source_opening,
+                        )
+                        .map(|output| {
+                            output.validate_component_difference_against_sources(
+                                &nonconvex_source_left,
+                                &nonconvex_source_opening,
+                            )
+                        }),
+                        hypermesh::exact::preflight_boolean_exact(
+                            &nonconvex_source_left,
+                            &nonconvex_source_opening,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                        )
+                        .map(|report| report.validate()),
+                        hypermesh::exact::boolean_exact(
+                            &nonconvex_source_left,
+                            &nonconvex_source_opening,
                             hypermesh::exact::ExactBooleanOperation::Difference,
                             ValidationPolicy::ALLOW_BOUNDARY,
                         )

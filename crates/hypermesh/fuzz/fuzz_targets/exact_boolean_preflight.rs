@@ -3283,6 +3283,103 @@ fn exercise_component_coplanar_difference() {
         )
         .unwrap();
 
+    let nonconvex_source_left = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            0, 0, 0, 10, 0, 0, 10, 4, 0, 7, 4, 0, 6, 6, 0, 10, 8, 0, 10, 12, 0, 0, 12, 0,
+        ],
+        &[
+            0, 1, 2, //
+            0, 2, 3, //
+            0, 3, 4, //
+            0, 4, 7, //
+            7, 4, 5, //
+            7, 5, 6,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("nonconvex source side-opening left fixture must import");
+    let nonconvex_source_opening = ExactMesh::from_i64_triangles_with_policy(
+        &[2, 12, 0, 5, 9, 0, 7, 10, 0, 4, 12, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("nonconvex source side-opening right fixture must import");
+    assert!(
+        arrange_coplanar_convex_surface_multi_difference(
+            &nonconvex_source_left,
+            &nonconvex_source_opening,
+        )
+        .is_none()
+    );
+    let nonconvex_source_difference = arrange_coplanar_surface_component_difference(
+        &nonconvex_source_left,
+        &nonconvex_source_opening,
+    )
+    .expect("side-attached cutter on a nonconvex source disk should replay exactly");
+    nonconvex_source_difference.validate().unwrap();
+    nonconvex_source_difference
+        .validate_component_difference_against_sources(
+            &nonconvex_source_left,
+            &nonconvex_source_opening,
+        )
+        .unwrap();
+    let nonconvex_source_preflight = preflight_boolean_exact(
+        &nonconvex_source_left,
+        &nonconvex_source_opening,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("nonconvex source side-opening preflight should classify shortcut");
+    nonconvex_source_preflight.validate().unwrap();
+    assert_eq!(
+        nonconvex_source_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementDifference
+    );
+
+    let nonconvex_source_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[2, 2, 0, 3, 2, 0, 2, 3, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("nonconvex source strict-hole fixture must import");
+    assert!(
+        arrange_coplanar_surface_component_difference(
+            &nonconvex_source_left,
+            &nonconvex_source_hole,
+        )
+        .is_none()
+    );
+
+    let nonconvex_source_multi_left = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            0, 0, 0, 10, 0, 0, 10, 4, 0, 7, 4, 0, 6, 6, 0, 10, 8, 0, 10, 12, 0, 0, 12, 0, //
+            20, 0, 0, 24, 0, 0, 24, 4, 0, 20, 4, 0,
+        ],
+        &[
+            0, 1, 2, //
+            0, 2, 3, //
+            0, 3, 4, //
+            0, 4, 7, //
+            7, 4, 5, //
+            7, 5, 6, //
+            8, 9, 10, //
+            8, 10, 11,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("nonconvex source side-opening multi-left fixture must import");
+    let nonconvex_source_multi = arrange_coplanar_surface_multi_difference(
+        &nonconvex_source_multi_left,
+        &nonconvex_source_opening,
+    )
+    .expect("nonconvex source side opening plus untouched component should emit two loops");
+    nonconvex_source_multi.validate().unwrap();
+    nonconvex_source_multi
+        .validate_difference_against_sources(
+            &nonconvex_source_multi_left,
+            &nonconvex_source_opening,
+        )
+        .unwrap();
+
     let partial_height_cutters = ExactMesh::from_i64_triangles_with_policy(
         &[
             1, 0, 0, 2, 0, 0, 2, 1, 0, 1, 1, 0, //

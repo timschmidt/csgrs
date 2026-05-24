@@ -2545,6 +2545,94 @@ fn component_mesh(mesh: &ExactMesh, faces: &[usize]) -> Option<ExactMesh> {
     .ok()
 }
 
+/// Recover the single boundary ring of an open triangulated source disk.
+///
+/// The ring is accepted only when every boundary vertex has degree two in the
+/// boundary-edge graph and all non-boundary edges have exactly two incident
+/// triangles. This is intentionally stricter than a general mesh traversal:
+/// multiple rings, non-manifold seams, dangling edges, and branch vertices are
+/// planar-arrangement inputs, not proof for the bounded nonconvex source
+/// difference path. The check preserves Yap's retained object/state split from
+/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+/// (1997): source topology is replayed from exact mesh incidence before any
+/// coordinate predicate is used.
+#[cfg(feature = "exact-triangulation")]
+fn order_single_mesh_boundary_loop(mesh: &ExactMesh) -> Option<Vec<usize>> {
+    let mut edge_counts: Vec<((usize, usize), usize)> = Vec::new();
+    for triangle in mesh.triangles() {
+        for (a, b) in [
+            (triangle.0[0], triangle.0[1]),
+            (triangle.0[1], triangle.0[2]),
+            (triangle.0[2], triangle.0[0]),
+        ] {
+            let edge = canonical_edge(a, b);
+            if let Some((_, count)) = edge_counts
+                .iter_mut()
+                .find(|(candidate, _)| *candidate == edge)
+            {
+                *count += 1;
+            } else {
+                edge_counts.push((edge, 1));
+            }
+        }
+    }
+    if edge_counts
+        .iter()
+        .any(|(_, count)| *count == 0 || *count > 2)
+    {
+        return None;
+    }
+    let boundary_edges = edge_counts
+        .into_iter()
+        .filter_map(|(edge, count)| (count == 1).then_some(edge))
+        .collect::<Vec<_>>();
+    if boundary_edges.len() < 3 {
+        return None;
+    }
+    let mut boundary_vertices = Vec::with_capacity(boundary_edges.len());
+    let start = boundary_edges.iter().map(|(a, b)| (*a).min(*b)).min()?;
+    let mut previous = None;
+    let mut current = start;
+    loop {
+        boundary_vertices.push(current);
+        let neighbors = boundary_edges
+            .iter()
+            .filter_map(|(a, b)| {
+                if *a == current {
+                    Some(*b)
+                } else if *b == current {
+                    Some(*a)
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>();
+        if neighbors.len() != 2 {
+            return None;
+        }
+        let next = match previous {
+            Some(previous) => *neighbors.iter().find(|&&candidate| candidate != previous)?,
+            None => neighbors.into_iter().min()?,
+        };
+        if next == start {
+            break;
+        }
+        if boundary_vertices.contains(&next) {
+            return None;
+        }
+        previous = Some(current);
+        current = next;
+        if boundary_vertices.len() > boundary_edges.len() {
+            return None;
+        }
+    }
+    if boundary_vertices.len() == boundary_edges.len() {
+        Some(boundary_vertices)
+    } else {
+        None
+    }
+}
+
 /// Certify and materialize the positive-area intersection of convex coplanar surfaces.
 ///
 /// This is the multi-face counterpart to
@@ -3056,6 +3144,67 @@ impl ConvexUnionComponent {
             mesh,
             projection,
             hull,
+        })
+    }
+}
+
+/// A connected coplanar source component with one retained simple boundary.
+///
+/// This is the nonconvex-source counterpart to [`ConvexUnionComponent`]. It is
+/// deliberately a disk-only object: the exact mesh boundary must form one
+/// degree-two ring, the projected ring must be simple, and the ring area must
+/// equal the sum of source-triangle areas. That is the Yap-style certificate
+/// boundary for consuming a triangulated source sheet without first replacing
+/// it by its convex hull; see Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997). The boundary ordering itself is
+/// pure mesh topology, not coordinate clustering.
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Debug)]
+struct SimpleSurfaceComponent {
+    projection: CoplanarProjection,
+    boundary: Vec<Point3>,
+    area2_abs: ExactReal,
+}
+
+#[cfg(feature = "exact-triangulation")]
+impl SimpleSurfaceComponent {
+    fn from_mesh(mesh: ExactMesh) -> Option<Self> {
+        if mesh.triangles().is_empty() {
+            return None;
+        }
+        for face in 0..mesh.triangles().len() {
+            let classification =
+                classify_mesh_triangle_against_retained_face_plane(&mesh, 0, &mesh, face).ok()?;
+            if classification.relation != TrianglePlaneRelation::Coplanar {
+                return None;
+            }
+        }
+        let projection = choose_mesh_projection(&mesh)?;
+        let mut boundary = order_single_mesh_boundary_loop(&mesh)?
+            .into_iter()
+            .map(|index| {
+                mesh.vertices()
+                    .get(index)
+                    .map(ExactPoint3::to_hyperlimit_point)
+            })
+            .collect::<Option<Vec<_>>>()?;
+        orient_polygon_ccw(&mut boundary, projection)?;
+        boundary = simplify_projected_polygon(boundary, projection);
+        validate_projected_simple_loop(
+            &boundary,
+            projection,
+            "coplanar nonconvex source component boundary",
+        )
+        .ok()?;
+        let boundary_area = projected_area2_abs(&boundary, projection)?;
+        let mesh_area = mesh_projected_area2(&mesh, projection)?;
+        if compare_reals(&mesh_area, &boundary_area).value() != Some(Ordering::Equal) {
+            return None;
+        }
+        Some(Self {
+            projection,
+            boundary,
+            area2_abs: boundary_area,
         })
     }
 }
@@ -4648,26 +4797,30 @@ fn arrange_coplanar_convex_surface_component_difference(
 /// Certify a nonconvex multi-component coplanar difference.
 ///
 /// This is the bounded output-model step beyond the convex component
-/// difference certificate. Source topology is
-/// still decomposed into disjoint convex components, and every cutter/remnant
-/// step must replay through the existing exact convex difference certificates.
-/// The only new acceptance is at the retained-output boundary: when a valid
-/// result contains two or more disjoint simple loops and at least one loop is
-/// nonconvex, the loops are kept in [`CoplanarSurfaceMultiArrangement`] rather
-/// than rejected by the convex multi-component certificate. Rectangular
-/// multi-cutters may also enter through exact no-hole orthogonal cell replay,
-/// including boundary-attached partial-height cutters that would otherwise
-/// require nonconvex loop surgery. Overlapping same-source side cutters are
-/// accepted only by the retained side-cutter channel replay below; they are
-/// not prefiltered away because their exact union can be the materialized
-/// removed object. A strict interior right component may also be consumed by a
-/// cutter/hole-contact opening on the same left component, but only when that
-/// local replay emits no retained holes. Hole-producing cuts, point-only
-/// boundary contacts, overlapping output loops, and self-intersections remain
-/// explicit planar-arrangement work. This follows Yap, "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7.1-2 (1997): the system
-/// may broaden the object model only when the exact construction history and
-/// output topology are both retained.
+/// difference certificate. Source topology is first decomposed into disjoint
+/// convex components, and every cutter/remnant step must replay through the
+/// existing exact convex difference certificates. If a source component is a
+/// triangulated nonconvex simple disk instead, the bounded side-cutter path
+/// below may replay its retained boundary ring directly: each removed convex
+/// component must lie in the closed source ring, own positive-length contact
+/// with that boundary, and pass exact fragment stitching plus area replay.
+/// Rectangular multi-cutters may also enter through exact no-hole orthogonal
+/// cell replay, including boundary-attached partial-height cutters that would
+/// otherwise require nonconvex loop surgery. Overlapping same-source side
+/// cutters are accepted only by the retained side-cutter channel replay below;
+/// they are not prefiltered away because their exact union can be the
+/// materialized removed object. A strict interior right component may also be
+/// consumed by a cutter/hole-contact opening on the same left component, but
+/// only when that local replay emits no retained holes. Hole-producing cuts,
+/// outside clipping against a nonconvex source boundary, point-only boundary
+/// contacts, overlapping output loops, and self-intersections remain explicit
+/// planar-arrangement work. This follows Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997): the system may
+/// broaden the object model only when the exact construction history and
+/// output topology are both retained. The boundary-fragment replay is the
+/// Weiler-Atherton retained-edge idea, not a sampled polygon clip; see Weiler
+/// and Atherton, "Hidden Surface Removal Using Polygon Area Sorting,"
+/// *SIGGRAPH Computer Graphics* 11.2 (1977).
 #[cfg(feature = "exact-triangulation")]
 pub fn arrange_coplanar_surface_multi_difference(
     left: &ExactMesh,
@@ -4765,18 +4918,26 @@ fn coplanar_surface_difference_polygons(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Option<(CoplanarProjection, Vec<Vec<Point3>>)> {
-    let left_components = connected_face_component_meshes(left)?;
-    let right_components = connected_face_component_meshes(right)
+    let left_component_meshes = connected_face_component_meshes(left)?;
+    let right_component_meshes = connected_face_component_meshes(right)
         .or_else(|| triangle_piece_component_meshes(right))?;
-    if right_components.is_empty() {
+    if right_component_meshes.is_empty() {
         return None;
     }
 
-    let mut left_components = left_components
+    let Some(mut left_components) = left_component_meshes
+        .iter()
+        .cloned()
         .into_iter()
         .map(|mesh| ConvexUnionComponent::from_mesh(MultiUnionSide::Left, mesh))
-        .collect::<Option<Vec<_>>>()?;
-    let right_components = right_components
+        .collect::<Option<Vec<_>>>()
+    else {
+        return coplanar_simple_surface_difference_polygons(
+            left_component_meshes,
+            right_component_meshes,
+        );
+    };
+    let Some(right_components) = right_component_meshes
         .iter()
         .cloned()
         .map(|mesh| ConvexUnionComponent::from_mesh(MultiUnionSide::Right, mesh))
@@ -4786,7 +4947,13 @@ fn coplanar_surface_difference_polygons(
                 .into_iter()
                 .map(|mesh| ConvexUnionComponent::from_mesh(MultiUnionSide::Right, mesh))
                 .collect::<Option<Vec<_>>>()
-        })?;
+        })
+    else {
+        return coplanar_simple_surface_difference_polygons(
+            left_component_meshes,
+            right_component_meshes,
+        );
+    };
     let projection = left_components.first()?.projection;
     if left_components
         .iter()
@@ -4962,6 +5129,392 @@ fn coplanar_surface_difference_polygons(
     )
     .ok()?;
     Some((projection, polygons))
+}
+
+/// Replay side-attached cutters on nonconvex simple source components.
+///
+/// This is the bounded nonconvex-source slice of the remaining planar
+/// arrangement work. Each left component must replay as one simple source disk
+/// by [`SimpleSurfaceComponent`]. Each right component must replay as a convex
+/// source object. For a nonconvex left component, a right object may either be
+/// disjoint, remove the whole component, or be a side-attached removed loop
+/// that lies in the closed source ring and owns positive-length boundary
+/// contact. Strict interior cutters would create retained holes, and cutters
+/// crossing out of a nonconvex source would require general clipping, so both
+/// remain explicit unsupported arrangement work.
+///
+/// The emitted loops are stitched from retained source-boundary fragments and
+/// reversed removed-boundary fragments, following Weiler and Atherton,
+/// "Hidden Surface Removal Using Polygon Area Sorting," *SIGGRAPH Computer
+/// Graphics* 11.2 (1977). Exact area replay is the final promotion gate, in
+/// the sense of Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997).
+#[cfg(feature = "exact-triangulation")]
+fn coplanar_simple_surface_difference_polygons(
+    left_component_meshes: Vec<ExactMesh>,
+    right_component_meshes: Vec<ExactMesh>,
+) -> Option<(CoplanarProjection, Vec<Vec<Point3>>)> {
+    let mut left_components = left_component_meshes
+        .into_iter()
+        .map(SimpleSurfaceComponent::from_mesh)
+        .collect::<Option<Vec<_>>>()?;
+    let right_components = right_component_meshes
+        .into_iter()
+        .map(|mesh| ConvexUnionComponent::from_mesh(MultiUnionSide::Right, mesh))
+        .collect::<Option<Vec<_>>>()?;
+    let projection = left_components.first()?.projection;
+    if left_components
+        .iter()
+        .any(|component| component.projection != projection)
+        || right_components
+            .iter()
+            .any(|component| component.projection != projection)
+    {
+        return None;
+    }
+    let left_boundaries = left_components
+        .iter()
+        .map(|component| component.boundary.clone())
+        .collect::<Vec<_>>();
+    validate_simple_component_loops_disjoint(
+        &left_boundaries,
+        projection,
+        "coplanar nonconvex source component difference",
+    )
+    .ok()?;
+    let right_hulls = right_components
+        .iter()
+        .map(|component| component.hull.clone())
+        .collect::<Vec<_>>();
+    validate_component_loops_disjoint(
+        &right_hulls,
+        projection,
+        "coplanar nonconvex source component difference",
+    )
+    .ok()?;
+
+    let mut polygons = Vec::new();
+    for component in &mut left_components {
+        let mut drop_component = false;
+        let mut removed = Vec::new();
+        for right_component in &right_components {
+            if polygons_equal(&component.boundary, &right_component.hull)
+                || polygon_in_closed_convex_polygon(
+                    &component.boundary,
+                    &right_component.hull,
+                    projection,
+                )?
+            {
+                if drop_component || !removed.is_empty() {
+                    return None;
+                }
+                drop_component = true;
+                continue;
+            }
+            if polygon_lies_in_closed_simple_polygon(
+                &right_component.hull,
+                &component.boundary,
+                projection,
+            )? {
+                let attachment_count = simple_boundary_attachment_count(
+                    &component.boundary,
+                    &right_component.hull,
+                    projection,
+                )?;
+                if attachment_count == 0 {
+                    return None;
+                }
+                let mut cutter = right_component.hull.clone();
+                orient_polygon_ccw(&mut cutter, projection)?;
+                removed.push(cutter);
+                continue;
+            }
+            match simple_source_convex_region_relation(
+                &component.boundary,
+                &right_component.hull,
+                projection,
+            )? {
+                SimpleSourceConvexRegionRelation::Disjoint => {}
+                SimpleSourceConvexRegionRelation::BoundaryOnly
+                | SimpleSourceConvexRegionRelation::UnsupportedCrossing => return None,
+            }
+        }
+        if drop_component {
+            continue;
+        }
+        if removed.is_empty() {
+            polygons.push(component.boundary.clone());
+        } else {
+            let mut remnants =
+                materialize_simple_source_side_cutter_difference(component, &removed)?;
+            polygons.append(&mut remnants);
+        }
+    }
+    for polygon in &mut polygons {
+        orient_polygon_ccw(polygon, projection)?;
+    }
+    sort_polygons_for_replay(&mut polygons, projection);
+    validate_simple_component_loops_disjoint(
+        &polygons,
+        projection,
+        "coplanar nonconvex source component difference",
+    )
+    .ok()?;
+    Some((projection, polygons))
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum SimpleSourceConvexRegionRelation {
+    Disjoint,
+    BoundaryOnly,
+    UnsupportedCrossing,
+}
+
+/// Classify a convex right component against a nonconvex source ring.
+///
+/// This is intentionally not a clipping predicate. If any positive-area part
+/// of the right component might cross the source ring, the bounded nonconvex
+/// source path rejects it so a later full planar-cell materializer can own the
+/// split topology. Only certified disjoint and boundary-only cases are
+/// returned here; side-attached contained cutters are handled before this
+/// helper. Segment relations use the exact orientation-predicate classifier
+/// described by Guigue and Devillers, "Fast and Robust Triangle-Triangle
+/// Overlap Test Using Orientation Predicates," *Journal of Graphics Tools*
+/// 8.1 (2003).
+#[cfg(feature = "exact-triangulation")]
+fn simple_source_convex_region_relation(
+    source: &[Point3],
+    convex: &[Point3],
+    projection: CoplanarProjection,
+) -> Option<SimpleSourceConvexRegionRelation> {
+    let mut saw_boundary = false;
+    for point in convex {
+        match simple_polygon_location(point, source, projection)? {
+            ConvexPolygonLocation::Inside => {
+                return Some(SimpleSourceConvexRegionRelation::UnsupportedCrossing);
+            }
+            ConvexPolygonLocation::Boundary => saw_boundary = true,
+            ConvexPolygonLocation::Outside => {}
+        }
+    }
+    for source_edge in 0..source.len() {
+        let source_start = project_point(&source[source_edge], projection);
+        let source_end = project_point(&source[(source_edge + 1) % source.len()], projection);
+        for convex_edge in 0..convex.len() {
+            let convex_start = project_point(&convex[convex_edge], projection);
+            let convex_end = project_point(&convex[(convex_edge + 1) % convex.len()], projection);
+            match classify_segment_intersection(
+                &source_start,
+                &source_end,
+                &convex_start,
+                &convex_end,
+            )
+            .value()?
+            {
+                SegmentIntersection::Disjoint => {}
+                SegmentIntersection::EndpointTouch => saw_boundary = true,
+                SegmentIntersection::CollinearOverlap | SegmentIntersection::Identical => {
+                    saw_boundary = true;
+                }
+                SegmentIntersection::Proper => {
+                    return Some(SimpleSourceConvexRegionRelation::UnsupportedCrossing);
+                }
+            }
+        }
+    }
+    if saw_boundary {
+        Some(SimpleSourceConvexRegionRelation::BoundaryOnly)
+    } else {
+        Some(SimpleSourceConvexRegionRelation::Disjoint)
+    }
+}
+
+/// Check that a cutter ring is wholly owned by a nonconvex source disk.
+///
+/// Vertex containment alone is not sufficient for a nonconvex source polygon:
+/// a cutter edge joining two inside vertices could still leave and reenter the
+/// source. This helper therefore rejects every proper source/cutter edge
+/// crossing while allowing exact collinear boundary overlap for side-attached
+/// openings. That keeps outside clipping out of this bounded certificate, as
+/// required by Yap's exact-object discipline.
+#[cfg(feature = "exact-triangulation")]
+fn polygon_lies_in_closed_simple_polygon(
+    polygon: &[Point3],
+    source: &[Point3],
+    projection: CoplanarProjection,
+) -> Option<bool> {
+    for point in polygon {
+        if simple_polygon_location(point, source, projection)? == ConvexPolygonLocation::Outside {
+            return Some(false);
+        }
+    }
+    for source_edge in 0..source.len() {
+        let source_start = project_point(&source[source_edge], projection);
+        let source_end = project_point(&source[(source_edge + 1) % source.len()], projection);
+        for polygon_edge in 0..polygon.len() {
+            let polygon_start = project_point(&polygon[polygon_edge], projection);
+            let polygon_end =
+                project_point(&polygon[(polygon_edge + 1) % polygon.len()], projection);
+            if classify_segment_intersection(
+                &source_start,
+                &source_end,
+                &polygon_start,
+                &polygon_end,
+            )
+            .value()?
+                == SegmentIntersection::Proper
+            {
+                return Some(false);
+            }
+        }
+    }
+    Some(true)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn simple_boundary_attachment_count(
+    outer: &[Point3],
+    removed: &[Point3],
+    projection: CoplanarProjection,
+) -> Option<usize> {
+    convex_boundary_attachment_count(outer, removed, projection)
+}
+
+/// Stitch side-attached removed loops out of a simple nonconvex source disk.
+///
+/// The output may be one loop or several loops when a removed side channel
+/// separates the source disk. Every retained loop must be simple and the exact
+/// area equation `area(source) = sum(area(output_i)) + sum(area(removed_j))`
+/// must replay before the loops are exported. This is the same retained-edge
+/// contract used by the convex side-cutter path, generalized only at the
+/// source-boundary containment predicate.
+#[cfg(feature = "exact-triangulation")]
+fn materialize_simple_source_side_cutter_difference(
+    component: &SimpleSurfaceComponent,
+    removed: &[Vec<Point3>],
+) -> Option<Vec<Vec<Point3>>> {
+    if removed.is_empty() {
+        return None;
+    }
+    let projection = component.projection;
+    let mut removed = removed.to_vec();
+    for polygon in &mut removed {
+        orient_polygon_ccw(polygon, projection)?;
+        validate_projected_simple_loop(
+            polygon,
+            projection,
+            "coplanar nonconvex source side-cutter difference",
+        )
+        .ok()?;
+        if !polygon_lies_in_closed_simple_polygon(polygon, &component.boundary, projection)? {
+            return None;
+        }
+        if simple_boundary_attachment_count(&component.boundary, polygon, projection)? == 0 {
+            return None;
+        }
+    }
+    validate_simple_component_loops_disjoint(
+        &removed,
+        projection,
+        "coplanar nonconvex source side-cutter difference",
+    )
+    .ok()?;
+
+    let mut fragments = Vec::new();
+    collect_outer_difference_fragments(&component.boundary, &removed, projection, &mut fragments)?;
+    for index in 0..removed.len() {
+        collect_simple_removed_difference_fragments(
+            index,
+            &component.boundary,
+            &removed,
+            projection,
+            &mut fragments,
+        )?;
+    }
+    let mut polygons = if let Some(polygon) = stitch_simple_loop(fragments.clone(), projection) {
+        vec![polygon]
+    } else {
+        stitch_disjoint_simple_loops(fragments, projection)?
+    };
+    let mut output_area = ExactReal::from(0);
+    for polygon in &mut polygons {
+        orient_polygon_ccw(polygon, projection)?;
+        *polygon = simplify_projected_polygon(polygon.clone(), projection);
+        validate_projected_simple_loop(
+            polygon,
+            projection,
+            "coplanar nonconvex source side-cutter difference",
+        )
+        .ok()?;
+        output_area = add(&output_area, &projected_area2_abs(polygon, projection)?);
+    }
+    validate_simple_component_loops_disjoint(
+        &polygons,
+        projection,
+        "coplanar nonconvex source side-cutter difference",
+    )
+    .ok()?;
+    let mut removed_area = ExactReal::from(0);
+    for polygon in &removed {
+        removed_area = add(&removed_area, &projected_area2_abs(polygon, projection)?);
+    }
+    if compare_reals(&add(&output_area, &removed_area), &component.area2_abs).value()
+        != Some(Ordering::Equal)
+    {
+        return None;
+    }
+    Some(polygons)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn collect_simple_removed_difference_fragments(
+    removed_index: usize,
+    outer: &[Point3],
+    removed: &[Vec<Point3>],
+    projection: CoplanarProjection,
+    fragments: &mut Vec<DirectedFragment>,
+) -> Option<()> {
+    let polygon = removed.get(removed_index)?;
+    for edge in 0..polygon.len() {
+        let start = &polygon[edge];
+        let end = &polygon[(edge + 1) % polygon.len()];
+        let mut splits = vec![start.clone(), end.clone()];
+        for outer_edge in 0..outer.len() {
+            add_projected_edge_intersections(
+                start,
+                end,
+                &outer[outer_edge],
+                &outer[(outer_edge + 1) % outer.len()],
+                projection,
+                &mut splits,
+            )?;
+        }
+        sort_points_along_segment(&mut splits, start, end, projection)?;
+        dedup_points(&mut splits);
+        for pair in splits.windows(2) {
+            let a = &pair[0];
+            let b = &pair[1];
+            if points_equal(a, b) {
+                continue;
+            }
+            let midpoint = midpoint3(a, b);
+            if simple_polygon_location(&midpoint, outer, projection)?
+                != ConvexPolygonLocation::Inside
+            {
+                continue;
+            }
+            if !point_outside_other_simple_polygons(&midpoint, removed_index, removed, projection)?
+            {
+                continue;
+            }
+            fragments.push(DirectedFragment {
+                start: b.clone(),
+                end: a.clone(),
+            });
+        }
+    }
+    Some(())
 }
 
 /// Certify a side-cutter-only nonconvex coplanar difference.
