@@ -2607,6 +2607,29 @@ fn certification(c: &mut Criterion) {
             })
         })
     });
+    c.bench_function("solve_modified_newton_bounded_substitution_seed", |b| {
+        b.iter(|| {
+            let x = Expr::symbol(SymbolId(0), "x");
+            let y = Expr::symbol(SymbolId(1), "y");
+            let mut problem = Problem::default();
+            let x_id = problem.add_variable("x", r(100));
+            problem.variables[x_id.0 as usize].upper = Some(r(4));
+            let y_id = problem.add_variable("y", r(100));
+            problem.variables[y_id.0 as usize].lower = Some(r(0));
+            problem.add_constraint(Constraint::equality(
+                "bench bounded substitution seed",
+                x - y - Expr::int(3),
+            ));
+            solve_damped_least_squares(SolverState {
+                problem,
+                config: SolverConfig {
+                    max_iterations: 1,
+                    proposal_engine: ProposalEngineKind::ModifiedNewtonLeastSquares,
+                    ..SolverConfig::default()
+                },
+            })
+        })
+    });
     c.bench_function("solve_modified_newton_quadratic_seed", |b| {
         b.iter(|| {
             let x = Expr::symbol(SymbolId(0), "x");

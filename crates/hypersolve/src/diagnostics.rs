@@ -111,7 +111,8 @@ pub struct ProposalPreprocessingReport {
     /// Number of exact equality-substitution candidates found.
     pub equality_substitutions: usize,
     /// Number of equality-substitution classes applied as initial proposal
-    /// seeds.
+    /// seeds, either from an exact anchor or from an exact retained-bound
+    /// intersection when no anchor exists.
     pub substitution_seed_classes: usize,
     /// Number of equality-substitution classes rejected before seeding.
     pub rejected_substitution_seed_classes: usize,

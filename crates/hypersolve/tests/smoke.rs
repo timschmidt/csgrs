@@ -4881,6 +4881,65 @@ fn modified_newton_substitution_seed_rejects_out_of_bounds_class() {
 }
 
 #[test]
+fn modified_newton_unanchored_substitution_seed_uses_exact_bound_intersection() {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let y = Expr::symbol(SymbolId(1), "y");
+    let mut problem = Problem::default();
+    let x_id = problem.add_variable("x", real(100));
+    problem.variables[x_id.0 as usize].upper = Some(real(4));
+    let y_id = problem.add_variable("y", real(100));
+    problem.variables[y_id.0 as usize].lower = Some(real(0));
+    problem.add_constraint(Constraint::equality(
+        "substitute x from y",
+        x - y - Expr::int(3),
+    ));
+    let config = SolverConfig {
+        proposal_engine: ProposalEngineKind::ModifiedNewtonLeastSquares,
+        max_iterations: 1,
+        ..SolverConfig::default()
+    };
+
+    let report = solve_damped_least_squares(SolverState { problem, config });
+
+    assert_eq!(report.reason, ConvergenceReason::Converged);
+    assert_eq!(report.iterations, 0);
+    assert_eq!(report.preprocessing.equality_substitutions, 1);
+    assert_eq!(report.preprocessing.affine_seed_assignments, 0);
+    assert_eq!(report.preprocessing.substitution_seed_classes, 1);
+    assert_eq!(report.preprocessing.rejected_substitution_seed_classes, 0);
+    assert_eq!(report.preprocessing.substitution_seed_assignments, 2);
+    assert!(report.linear_reports.is_empty());
+}
+
+#[test]
+fn modified_newton_unanchored_substitution_seed_rejects_empty_bound_intersection() {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let y = Expr::symbol(SymbolId(1), "y");
+    let mut problem = Problem::default();
+    let x_id = problem.add_variable("x", real(100));
+    problem.variables[x_id.0 as usize].upper = Some(real(2));
+    let y_id = problem.add_variable("y", real(100));
+    problem.variables[y_id.0 as usize].lower = Some(real(0));
+    problem.add_constraint(Constraint::equality(
+        "substitute x from y",
+        x - y - Expr::int(3),
+    ));
+    let config = SolverConfig {
+        proposal_engine: ProposalEngineKind::ModifiedNewtonLeastSquares,
+        max_iterations: 0,
+        ..SolverConfig::default()
+    };
+
+    let report = solve_damped_least_squares(SolverState { problem, config });
+
+    assert_eq!(report.reason, ConvergenceReason::MaxIterations);
+    assert_eq!(report.preprocessing.equality_substitutions, 1);
+    assert_eq!(report.preprocessing.substitution_seed_classes, 0);
+    assert_eq!(report.preprocessing.rejected_substitution_seed_classes, 1);
+    assert_eq!(report.preprocessing.substitution_seed_assignments, 0);
+}
+
+#[test]
 fn modified_newton_affine_soluble_alone_rows_seed_initial_candidate() {
     let x = Expr::symbol(SymbolId(0), "x");
     let mut problem = Problem::default();

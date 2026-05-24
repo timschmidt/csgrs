@@ -17,7 +17,7 @@ use crate::jacobian::{
     FiniteDifferenceConfig, finite_difference_jacobian, symbolic_jacobian_prepared,
 };
 use crate::linalg::{DenseLinearBackend, LinearBackend};
-use crate::model::{Problem, VariableId};
+use crate::model::{Problem, Variable, VariableId};
 use crate::prepared::PreparedProblem;
 use crate::symbolic::SymbolId;
 
@@ -484,10 +484,7 @@ fn apply_modified_newton_quadratic_seeds(
 /// floating order. Candidate acceptance remains exact residual replay after the
 /// proposal step. See Yap, "Towards Exact Geometric Computation,"
 /// *Computational Geometry* 7.1-2 (1997).
-fn branch_safe_quadratic_seed_root(
-    roots: &[Real],
-    variable: &crate::model::Variable,
-) -> Option<Real> {
+fn branch_safe_quadratic_seed_root(roots: &[Real], variable: &Variable) -> Option<Real> {
     if variable.fixed {
         return None;
     }
@@ -614,7 +611,103 @@ fn substitution_representative_seed(
     let variable = problem
         .variables
         .get(*symbol_to_variable.get(&representative.symbol)?)?;
-    Some(variable.value.clone() - representative.offset_from_representative.clone())
+    let current_representative_value =
+        variable.value.clone() - representative.offset_from_representative.clone();
+    if substitution_class_candidate_feasible(
+        &current_representative_value,
+        problem,
+        symbol_to_variable,
+        class,
+    ) {
+        return Some(current_representative_value);
+    }
+    substitution_representative_bound_seed(problem, symbol_to_variable, class)
+}
+
+/// Choose an exact representative value from retained member bounds.
+///
+/// An unanchored substitution class such as `x = y + c` is still branch-free,
+/// but arbitrary initial coordinates can put every member outside its retained
+/// bounds. Following Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997), this helper constructs only a
+/// proposal seed: it intersects the exact representative-space bounds induced
+/// by every class member and returns an exact endpoint when the intersection
+/// is nonempty. The later residual replay remains the proof boundary.
+fn substitution_representative_bound_seed(
+    problem: &Problem,
+    symbol_to_variable: &BTreeMap<SymbolId, usize>,
+    class: &crate::direct::EqualitySubstitutionClass,
+) -> Option<Real> {
+    let mut lower: Option<Real> = None;
+    let mut upper: Option<Real> = None;
+    for member in &class.members {
+        let variable = problem
+            .variables
+            .get(*symbol_to_variable.get(&member.symbol)?)?;
+        if variable.fixed {
+            return None;
+        }
+        if let Some(member_lower) = &variable.lower {
+            let representative_lower =
+                member_lower.clone() - member.offset_from_representative.clone();
+            lower = Some(match lower {
+                Some(existing) => max_exact_bound(existing, representative_lower)?,
+                None => representative_lower,
+            });
+        }
+        if let Some(member_upper) = &variable.upper {
+            let representative_upper =
+                member_upper.clone() - member.offset_from_representative.clone();
+            upper = Some(match upper {
+                Some(existing) => min_exact_bound(existing, representative_upper)?,
+                None => representative_upper,
+            });
+        }
+    }
+    if let (Some(lower), Some(upper)) = (&lower, &upper)
+        && matches!(
+            compare_reals_with_policy(lower, upper, PredicatePolicy::default()).value(),
+            Some(Ordering::Greater) | None
+        )
+    {
+        return None;
+    }
+    lower.or(upper)
+}
+
+fn substitution_class_candidate_feasible(
+    representative_value: &Real,
+    problem: &Problem,
+    symbol_to_variable: &BTreeMap<SymbolId, usize>,
+    class: &crate::direct::EqualitySubstitutionClass,
+) -> bool {
+    class.members.iter().all(|member| {
+        let Some(variable) = symbol_to_variable
+            .get(&member.symbol)
+            .and_then(|index| problem.variables.get(*index))
+        else {
+            return false;
+        };
+        if variable.fixed {
+            return false;
+        }
+        let value = representative_value.clone() + member.offset_from_representative.clone();
+        value_within_bounds(&value, variable.lower.as_ref(), variable.upper.as_ref())
+    })
+}
+
+fn max_exact_bound(left: Real, right: Real) -> Option<Real> {
+    match compare_reals_with_policy(&left, &right, PredicatePolicy::default()).value()? {
+        Ordering::Less => Some(right),
+        Ordering::Equal | Ordering::Greater => Some(left),
+    }
+}
+
+fn min_exact_bound(left: Real, right: Real) -> Option<Real> {
+    match compare_reals_with_policy(&left, &right, PredicatePolicy::default()).value()? {
+        Ordering::Greater => Some(right),
+        Ordering::Equal | Ordering::Less => Some(left),
+    }
 }
 
 fn value_within_bounds(value: &Real, lower: Option<&Real>, upper: Option<&Real>) -> bool {

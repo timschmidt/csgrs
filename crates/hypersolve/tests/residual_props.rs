@@ -2622,6 +2622,45 @@ proptest! {
     }
 
     #[test]
+    fn modified_newton_generated_unanchored_substitution_seeds_from_bounds(
+        start_x in -24_i16..=24,
+        start_y in -24_i16..=24,
+        offset in -12_i16..=12,
+        target_y in -12_i16..=12,
+    ) {
+        let offset = i64::from(offset);
+        let target_y = i64::from(target_y);
+        let x = Expr::symbol(SymbolId(0), "x");
+        let y = Expr::symbol(SymbolId(1), "y");
+        let mut problem = Problem::default();
+        let x_id = problem.add_variable("x", Real::from(i64::from(start_x)));
+        problem.variables[x_id.0 as usize].upper = Some(Real::from(target_y + offset));
+        let y_id = problem.add_variable("y", Real::from(i64::from(start_y)));
+        problem.variables[y_id.0 as usize].lower = Some(Real::from(target_y));
+        problem.add_constraint(Constraint::equality(
+            "generated bounded substitution",
+            x - y - Expr::int(offset),
+        ));
+
+        let report = solve_damped_least_squares(SolverState {
+            problem,
+            config: SolverConfig {
+                max_iterations: 1,
+                proposal_engine: ProposalEngineKind::ModifiedNewtonLeastSquares,
+                ..SolverConfig::default()
+            },
+        });
+
+        prop_assert_eq!(report.reason, ConvergenceReason::Converged);
+        prop_assert_eq!(report.iterations, 0);
+        prop_assert_eq!(report.preprocessing.equality_substitutions, 1);
+        prop_assert_eq!(report.preprocessing.affine_seed_assignments, 0);
+        prop_assert_eq!(report.preprocessing.substitution_seed_classes, 1);
+        prop_assert_eq!(report.preprocessing.rejected_substitution_seed_classes, 0);
+        prop_assert_eq!(report.preprocessing.substitution_seed_assignments, 2);
+    }
+
+    #[test]
     fn modified_newton_generated_affine_seeds_converge_without_iteration(
         start in -12_i16..=12,
         target in -12_i16..=12,

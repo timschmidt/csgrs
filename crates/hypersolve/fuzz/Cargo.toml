@@ -168,6 +168,13 @@ doc = false
 bench = false
 
 [[bin]]
+name = "modified_newton_bounded_substitution_seed"
+path = "fuzz_targets/modified_newton_bounded_substitution_seed.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
 name = "curve_resultant"
 path = "fuzz_targets/curve_resultant.rs"
 test = false
