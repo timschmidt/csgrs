@@ -4157,6 +4157,116 @@ fn exercise_component_coplanar_difference() {
         ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementDifference
     );
 
+    let nonconvex_split_left = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            0, 0, 0, 30, 0, 0, 30, 10, 0, 10, 10, 0, 10, 30, 0, 0, 30, 0,
+        ],
+        &[
+            0, 1, 2, //
+            0, 2, 3, //
+            0, 3, 5, //
+            3, 4, 5,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("nonconvex split source fixture must import");
+    let nonconvex_split_crossing_consumed_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            7, 12, 0, 9, 12, 0, 9, 14, 0, 7, 14, 0, //
+            8, -2, 0, 12, -2, 0, 12, 32, 0, 8, 32, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("nonconvex split consumed-hole fixture must import");
+    assert!(
+        arrange_coplanar_surface_component_difference(
+            &nonconvex_split_left,
+            &nonconvex_split_crossing_consumed_hole,
+        )
+        .is_none()
+    );
+    let nonconvex_split_consumed = arrange_coplanar_surface_multi_difference(
+        &nonconvex_split_left,
+        &nonconvex_split_crossing_consumed_hole,
+    )
+    .expect("clipped side-to-side opening should split after consuming its hole");
+    nonconvex_split_consumed.validate().unwrap();
+    nonconvex_split_consumed
+        .validate_difference_against_sources(
+            &nonconvex_split_left,
+            &nonconvex_split_crossing_consumed_hole,
+        )
+        .unwrap();
+    assert_eq!(nonconvex_split_consumed.polygons.len(), 2);
+    let nonconvex_split_preflight = preflight_boolean_exact(
+        &nonconvex_split_left,
+        &nonconvex_split_crossing_consumed_hole,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("split consumed-hole preflight should classify multi-difference");
+    nonconvex_split_preflight.validate().unwrap();
+    assert_eq!(
+        nonconvex_split_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
+    );
+
+    let nonconvex_split_crossing_consumed_and_retained_holes =
+        ExactMesh::from_i64_triangles_with_policy(
+            &[
+                20, 2, 0, 22, 2, 0, 22, 4, 0, 20, 4, 0, //
+                7, 12, 0, 9, 12, 0, 9, 14, 0, 7, 14, 0, //
+                8, -2, 0, 12, -2, 0, 12, 32, 0, 8, 32, 0,
+            ],
+            &[
+                0, 1, 2, 0, 2, 3, //
+                4, 5, 6, 4, 6, 7, //
+                8, 9, 10, 8, 10, 11,
+            ],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .expect("nonconvex split consumed-and-retained-hole fixture must import");
+    let nonconvex_split_consumed_holed =
+        arrange_coplanar_convex_surface_component_holed_difference(
+            &nonconvex_split_left,
+            &nonconvex_split_crossing_consumed_and_retained_holes,
+        )
+        .expect("clipped side-to-side opening should split while retaining unrelated holes");
+    nonconvex_split_consumed_holed.validate().unwrap();
+    nonconvex_split_consumed_holed
+        .validate_against_sources(
+            &nonconvex_split_left,
+            &nonconvex_split_crossing_consumed_and_retained_holes,
+        )
+        .unwrap();
+    assert_eq!(nonconvex_split_consumed_holed.components.len(), 2);
+    assert_eq!(
+        nonconvex_split_consumed_holed
+            .components
+            .iter()
+            .map(|component| component.holes.len())
+            .sum::<usize>(),
+        1
+    );
+    let mut stale_nonconvex_split = nonconvex_split_consumed_holed.clone();
+    stale_nonconvex_split.components[0].holes.push(vec![
+        point3(7, 12, 0),
+        point3(9, 12, 0),
+        point3(9, 14, 0),
+        point3(7, 14, 0),
+    ]);
+    assert!(
+        stale_nonconvex_split
+            .validate_against_sources(
+                &nonconvex_split_left,
+                &nonconvex_split_crossing_consumed_and_retained_holes,
+            )
+            .is_err()
+    );
+
     let nonconvex_source_overlapping_crossing_openings =
         ExactMesh::from_i64_triangles_with_policy(
             &[

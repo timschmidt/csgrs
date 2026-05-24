@@ -6184,6 +6184,36 @@ fn simple_boundary_attachment_count(
     convex_boundary_attachment_count(outer, removed, projection)
 }
 
+/// Certify that a nonconvex source subtraction is truly split by removals.
+///
+/// The simple-source retained-fragment replay may emit several loops. For the
+/// consumed-hole crossing-cutter path that is a stronger topology claim than
+/// an ordinary bay opening: at least one source-owned removed loop must have
+/// exact positive-length attachment to two or more source boundary edges.
+/// This is the nonconvex-source analogue of
+/// [`certify_removed_openings_split_source_component`]. It keeps the shortcut
+/// in Yap's retained-object model from "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997): the split is promoted from exact
+/// side ownership plus area replay, not from a sampled point in each output
+/// component.
+#[cfg(feature = "exact-triangulation")]
+fn certify_simple_removed_openings_split_source_component(
+    outer: &[Point3],
+    removed_openings: &[Vec<Point3>],
+    projection: CoplanarProjection,
+) -> Option<()> {
+    let mut max_attachment_count = 0usize;
+    for opening in removed_openings {
+        max_attachment_count = max_attachment_count.max(simple_boundary_attachment_count(
+            outer, opening, projection,
+        )?);
+    }
+    if max_attachment_count < 2 {
+        return None;
+    }
+    Some(())
+}
+
 /// Stitch side-attached removed loops out of a simple nonconvex source disk.
 ///
 /// The output may be one loop or several loops when a removed side channel
@@ -9718,6 +9748,13 @@ fn materialize_simple_source_removed_opening_hole_contact_component_holed_differ
     for polygon in &mut cut_polygons {
         orient_polygon_ccw(polygon, projection)?;
     }
+    if cut_polygons.len() > 1 {
+        certify_simple_removed_openings_split_source_component(
+            &component.boundary,
+            &removed_openings,
+            projection,
+        )?;
+    }
     let retained_holes = holes
         .iter()
         .filter(|hole| !consumed_holes.contains(&hole.right_index))
@@ -9774,6 +9811,13 @@ fn materialize_simple_source_removed_opening_hole_contact_difference_consuming_h
     for polygon in &mut polygons {
         orient_polygon_ccw(polygon, projection)?;
         validate_projected_simple_loop(polygon, projection, label).ok()?;
+    }
+    if polygons.len() > 1 {
+        certify_simple_removed_openings_split_source_component(
+            &component.boundary,
+            &removed_openings,
+            projection,
+        )?;
     }
     validate_simple_component_loops_disjoint(&polygons, projection, label).ok()?;
     sort_polygons_for_replay(&mut polygons, projection);

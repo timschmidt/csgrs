@@ -16022,6 +16022,155 @@ fn exact_coplanar_surface_difference_materializes_nonconvex_source_side_opening(
         }
     );
 
+    let split_left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 30, 0, 0, 30, 10, 0, 10, 10, 0, 10, 30, 0, 0, 30, 0],
+        &[
+            0, 1, 2, //
+            0, 2, 3, //
+            0, 3, 5, //
+            3, 4, 5,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let split_crossing_consumed_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            7, 12, 0, 9, 12, 0, 9, 14, 0, 7, 14, 0, //
+            8, -2, 0, 12, -2, 0, 12, 32, 0, 8, 32, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_component_difference(
+            &split_left,
+            &split_crossing_consumed_hole,
+        )
+        .is_none()
+    );
+    assert!(
+        hypermesh::exact::arrange_coplanar_convex_surface_component_holed_difference(
+            &split_left,
+            &split_crossing_consumed_hole,
+        )
+        .is_none()
+    );
+    let split_consumed = hypermesh::exact::arrange_coplanar_surface_multi_difference(
+        &split_left,
+        &split_crossing_consumed_hole,
+    )
+    .expect(
+        "a clipped side-to-side opening should consume its hole and split the nonconvex source",
+    );
+    split_consumed.validate().unwrap();
+    split_consumed
+        .validate_difference_against_sources(&split_left, &split_crossing_consumed_hole)
+        .unwrap();
+    assert_eq!(split_consumed.polygons.len(), 2);
+    assert!(split_consumed.polygons.iter().any(|polygon| {
+        polygon.iter().any(|point| {
+            real_eq(&point.x, &ExactReal::from(0)) && real_eq(&point.y, &ExactReal::from(30))
+        })
+    }));
+    assert!(split_consumed.polygons.iter().any(|polygon| {
+        polygon.iter().any(|point| {
+            real_eq(&point.x, &ExactReal::from(30)) && real_eq(&point.y, &ExactReal::from(0))
+        })
+    }));
+    let split_consumed_preflight = hypermesh::exact::preflight_boolean_exact(
+        &split_left,
+        &split_crossing_consumed_hole,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    split_consumed_preflight.validate().unwrap();
+    split_consumed_preflight
+        .validate_against_sources(&split_left, &split_crossing_consumed_hole)
+        .unwrap();
+    assert_eq!(
+        split_consumed_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
+    );
+
+    let split_crossing_consumed_and_retained_holes = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            20, 2, 0, 22, 2, 0, 22, 4, 0, 20, 4, 0, //
+            7, 12, 0, 9, 12, 0, 9, 14, 0, 7, 14, 0, //
+            8, -2, 0, 12, -2, 0, 12, 32, 0, 8, 32, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7, //
+            8, 9, 10, 8, 10, 11,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let split_consumed_holed =
+        hypermesh::exact::arrange_coplanar_convex_surface_component_holed_difference(
+            &split_left,
+            &split_crossing_consumed_and_retained_holes,
+        )
+        .expect("a clipped side-to-side opening should split while retaining unrelated holes");
+    split_consumed_holed.validate().unwrap();
+    split_consumed_holed
+        .validate_against_sources(&split_left, &split_crossing_consumed_and_retained_holes)
+        .unwrap();
+    assert_eq!(split_consumed_holed.components.len(), 2);
+    assert_eq!(
+        split_consumed_holed
+            .components
+            .iter()
+            .map(|component| component.holes.len())
+            .sum::<usize>(),
+        1
+    );
+    assert!(split_consumed_holed.components.iter().any(|component| {
+        component.holes.iter().any(|hole| {
+            hole.iter().any(|point| {
+                real_eq(&point.x, &ExactReal::from(20)) && real_eq(&point.y, &ExactReal::from(2))
+            })
+        })
+    }));
+    assert!(!split_consumed_holed.components.iter().any(|component| {
+        component.holes.iter().any(|hole| {
+            hole.iter().any(|point| {
+                real_eq(&point.x, &ExactReal::from(7)) && real_eq(&point.y, &ExactReal::from(12))
+            })
+        })
+    }));
+    let mut stale_split_consumed_holed = split_consumed_holed.clone();
+    stale_split_consumed_holed.components[0].holes.push(vec![
+        p3(7, 12, 0),
+        p3(9, 12, 0),
+        p3(9, 14, 0),
+        p3(7, 14, 0),
+    ]);
+    assert!(
+        stale_split_consumed_holed
+            .validate_against_sources(&split_left, &split_crossing_consumed_and_retained_holes)
+            .is_err()
+    );
+    let split_consumed_holed_preflight = hypermesh::exact::preflight_boolean_exact(
+        &split_left,
+        &split_crossing_consumed_and_retained_holes,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    split_consumed_holed_preflight.validate().unwrap();
+    split_consumed_holed_preflight
+        .validate_against_sources(&split_left, &split_crossing_consumed_and_retained_holes)
+        .unwrap();
+    assert_eq!(
+        split_consumed_holed_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::
+            CertifiedCoplanarConvexSurfaceComponentHoledDifference
+    );
+
     let overlapping_crossing_openings = ExactMesh::from_i64_triangles_with_policy(
         &[
             4, 10, 0, 12, 10, 0, 12, 14, 0, 4, 14, 0, //

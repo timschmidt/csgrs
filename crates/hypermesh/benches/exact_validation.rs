@@ -4837,6 +4837,44 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
                 ValidationPolicy::ALLOW_BOUNDARY,
             )
             .unwrap();
+        let nonconvex_split_left = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 0, 30, 0, 0, 30, 10, 0, 10, 10, 0, 10, 30, 0, 0, 30, 0],
+            &[
+                0, 1, 2, //
+                0, 2, 3, //
+                0, 3, 5, //
+                3, 4, 5,
+            ],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let nonconvex_split_crossing_consumed_hole = ExactMesh::from_i64_triangles_with_policy(
+            &[
+                7, 12, 0, 9, 12, 0, 9, 14, 0, 7, 14, 0, //
+                8, -2, 0, 12, -2, 0, 12, 32, 0, 8, 32, 0,
+            ],
+            &[
+                0, 1, 2, 0, 2, 3, //
+                4, 5, 6, 4, 6, 7,
+            ],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let nonconvex_split_crossing_consumed_and_retained_holes =
+            ExactMesh::from_i64_triangles_with_policy(
+                &[
+                    20, 2, 0, 22, 2, 0, 22, 4, 0, 20, 4, 0, //
+                    7, 12, 0, 9, 12, 0, 9, 14, 0, 7, 14, 0, //
+                    8, -2, 0, 12, -2, 0, 12, 32, 0, 8, 32, 0,
+                ],
+                &[
+                    0, 1, 2, 0, 2, 3, //
+                    4, 5, 6, 4, 6, 7, //
+                    8, 9, 10, 8, 10, 11,
+                ],
+                ValidationPolicy::ALLOW_BOUNDARY,
+            )
+            .unwrap();
         let nonconvex_source_overlapping_crossing_openings =
             ExactMesh::from_i64_triangles_with_policy(
                 &[
@@ -6007,6 +6045,38 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
                         hypermesh::exact::preflight_boolean_exact(
                             &nonconvex_source_left,
                             &nonconvex_source_crossing_opening_consumed_hole,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                        )
+                        .map(|report| report.validate()),
+                        arrange_coplanar_surface_multi_difference(
+                            &nonconvex_split_left,
+                            &nonconvex_split_crossing_consumed_hole,
+                        )
+                        .map(|output| {
+                            output.validate_difference_against_sources(
+                                &nonconvex_split_left,
+                                &nonconvex_split_crossing_consumed_hole,
+                            )
+                        }),
+                        hypermesh::exact::preflight_boolean_exact(
+                            &nonconvex_split_left,
+                            &nonconvex_split_crossing_consumed_hole,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                        )
+                        .map(|report| report.validate()),
+                        arrange_coplanar_convex_surface_component_holed_difference(
+                            &nonconvex_split_left,
+                            &nonconvex_split_crossing_consumed_and_retained_holes,
+                        )
+                        .map(|output| {
+                            output.validate_against_sources(
+                                &nonconvex_split_left,
+                                &nonconvex_split_crossing_consumed_and_retained_holes,
+                            )
+                        }),
+                        hypermesh::exact::preflight_boolean_exact(
+                            &nonconvex_split_left,
+                            &nonconvex_split_crossing_consumed_and_retained_holes,
                             hypermesh::exact::ExactBooleanOperation::Difference,
                         )
                         .map(|report| report.validate()),
