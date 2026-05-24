@@ -8005,6 +8005,32 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
                             ValidationPolicy::CLOSED,
                         )
                         .unwrap(),
+                        hypermesh::exact::preflight_boolean_exact(
+                            &coplanar_left,
+                            &coplanar_right,
+                            hypermesh::exact::ExactBooleanOperation::Intersection,
+                        )
+                        .unwrap(),
+                        hypermesh::exact::boolean_exact(
+                            &coplanar_left,
+                            &coplanar_right,
+                            hypermesh::exact::ExactBooleanOperation::Intersection,
+                            ValidationPolicy::CLOSED,
+                        )
+                        .unwrap(),
+                        hypermesh::exact::preflight_boolean_exact(
+                            &coplanar_left,
+                            &coplanar_right,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                        )
+                        .unwrap(),
+                        hypermesh::exact::boolean_exact(
+                            &coplanar_left,
+                            &coplanar_right,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                            ValidationPolicy::CLOSED,
+                        )
+                        .unwrap(),
                     )
                 })
             },

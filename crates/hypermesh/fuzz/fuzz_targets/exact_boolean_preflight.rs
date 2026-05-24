@@ -7797,36 +7797,49 @@ fn exercise_mixed_coplanar_volumetric_materialization() {
         pair.relation == hypermesh::exact::MeshFacePairRelation::CoplanarOverlapping
     }));
 
-    let preflight = preflight_boolean_exact(&left, &right, ExactBooleanOperation::Union)
-        .expect("mixed coplanar-volumetric preflight should classify materialization");
-    preflight.validate().unwrap();
-    preflight.validate_against_sources(&left, &right).unwrap();
-    assert_eq!(
-        preflight.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedWindingMaterialized
-    );
+    for (operation, support) in [
+        (
+            ExactBooleanOperation::Union,
+            ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellUnion,
+        ),
+        (
+            ExactBooleanOperation::Intersection,
+            ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellIntersection,
+        ),
+        (
+            ExactBooleanOperation::Difference,
+            ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellDifference,
+        ),
+    ] {
+        let preflight = preflight_boolean_exact(&left, &right, operation)
+            .expect("mixed coplanar-volumetric preflight should classify materialization");
+        preflight.validate().unwrap();
+        preflight.validate_against_sources(&left, &right).unwrap();
+        assert_eq!(preflight.support, support);
 
-    let winding = certify_winding_readiness_report(&left, &right, ExactBooleanOperation::Union)
-        .expect("mixed coplanar-volumetric winding report should classify readiness");
-    winding.validate().unwrap();
-    assert_eq!(
-        winding.status,
-        hypermesh::exact::ExactWindingReadinessStatus::Ready
-    );
+        let winding = certify_winding_readiness_report(&left, &right, operation)
+            .expect("mixed coplanar-volumetric winding report should classify readiness");
+        winding.validate().unwrap();
+        assert_eq!(
+            winding.status,
+            hypermesh::exact::ExactWindingReadinessStatus::Ready
+        );
 
-    let result = hypermesh::exact::boolean_exact(
-        &left,
-        &right,
-        ExactBooleanOperation::Union,
-        ValidationPolicy::CLOSED,
-    )
-    .expect("mixed coplanar-volumetric union should materialize");
-    result.validate().unwrap();
-    assert!(matches!(
-        result.kind,
-        hypermesh::exact::ExactBooleanResultKind::WindingMaterialized { .. }
-    ));
-    assert!(result.mesh.facts().mesh.closed_manifold);
+        let result =
+            hypermesh::exact::boolean_exact(&left, &right, operation, ValidationPolicy::CLOSED)
+                .expect("mixed coplanar-volumetric boolean should materialize");
+        result.validate().unwrap();
+        result
+            .validate_operation_against_sources(
+                &left,
+                &right,
+                operation,
+                ValidationPolicy::CLOSED,
+                ExactBoundaryBooleanPolicy::Reject,
+            )
+            .unwrap();
+        assert!(result.mesh.facts().mesh.closed_manifold);
+    }
 }
 
 #[cfg(feature = "exact-triangulation")]

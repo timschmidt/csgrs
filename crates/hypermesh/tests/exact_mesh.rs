@@ -8127,62 +8127,61 @@ fn exact_mixed_coplanar_volumetric_overlap_materializes_from_face_cells() {
         hypermesh::exact::ExactBoundaryTouchingStatus::NotBoundaryOnly
     );
 
-    let preflight = hypermesh::exact::preflight_boolean_exact(
-        &left,
-        &right,
-        hypermesh::exact::ExactBooleanOperation::Union,
-    )
-    .unwrap();
-    preflight.validate().unwrap();
-    preflight.validate_against_sources(&left, &right).unwrap();
-    assert_eq!(
-        preflight.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellUnion
-    );
-    assert!(preflight.blocker.is_none());
-    assert_eq!(preflight.region_count, 0);
-
-    let winding_report = hypermesh::exact::certify_winding_readiness_report(
-        &left,
-        &right,
-        hypermesh::exact::ExactBooleanOperation::Union,
-    )
-    .unwrap();
-    winding_report.validate().unwrap();
-    winding_report
-        .validate_against_sources(&left, &right)
-        .unwrap();
-    assert_eq!(
-        winding_report.status,
-        hypermesh::exact::ExactWindingReadinessStatus::Ready
-    );
-    assert!(winding_report.region_count > 0);
-
-    let result = hypermesh::exact::boolean_exact(
-        &left,
-        &right,
-        hypermesh::exact::ExactBooleanOperation::Union,
-        ValidationPolicy::CLOSED,
-    )
-    .unwrap();
-    result.validate().unwrap();
-    result
-        .validate_operation_against_sources(
-            &left,
-            &right,
+    for (operation, support, shortcut) in [
+        (
             hypermesh::exact::ExactBooleanOperation::Union,
-            ValidationPolicy::CLOSED,
-            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
-        )
-        .unwrap();
-    assert_eq!(
-        result.kind,
-        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut:
-                hypermesh::exact::ExactBooleanShortcutKind::AxisAlignedOrthogonalSolidCellUnion
-        }
-    );
-    assert!(result.mesh.facts().mesh.closed_manifold);
+            hypermesh::exact::ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellUnion,
+            hypermesh::exact::ExactBooleanShortcutKind::AxisAlignedOrthogonalSolidCellUnion,
+        ),
+        (
+            hypermesh::exact::ExactBooleanOperation::Intersection,
+            hypermesh::exact::ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellIntersection,
+            hypermesh::exact::ExactBooleanShortcutKind::AxisAlignedOrthogonalSolidCellIntersection,
+        ),
+        (
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            hypermesh::exact::ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellDifference,
+            hypermesh::exact::ExactBooleanShortcutKind::AxisAlignedOrthogonalSolidCellDifference,
+        ),
+    ] {
+        let preflight = hypermesh::exact::preflight_boolean_exact(&left, &right, operation).unwrap();
+        preflight.validate().unwrap();
+        preflight.validate_against_sources(&left, &right).unwrap();
+        assert_eq!(preflight.support, support);
+        assert!(preflight.blocker.is_none());
+        assert_eq!(preflight.region_count, 0);
+
+        let winding_report =
+            hypermesh::exact::certify_winding_readiness_report(&left, &right, operation).unwrap();
+        winding_report.validate().unwrap();
+        winding_report
+            .validate_against_sources(&left, &right)
+            .unwrap();
+        assert_eq!(
+            winding_report.status,
+            hypermesh::exact::ExactWindingReadinessStatus::Ready
+        );
+        assert!(winding_report.region_count > 0);
+
+        let result =
+            hypermesh::exact::boolean_exact(&left, &right, operation, ValidationPolicy::CLOSED)
+                .unwrap();
+        result.validate().unwrap();
+        result
+            .validate_operation_against_sources(
+                &left,
+                &right,
+                operation,
+                ValidationPolicy::CLOSED,
+                hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+            )
+            .unwrap();
+        assert_eq!(
+            result.kind,
+            hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut { shortcut }
+        );
+        assert!(result.mesh.facts().mesh.closed_manifold);
+    }
 }
 
 #[cfg(feature = "exact-triangulation")]
