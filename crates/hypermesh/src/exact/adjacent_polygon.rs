@@ -29,6 +29,8 @@ use super::scalar::ExactReal;
 
 const MAX_POLYGON_PATCH_ENUMERATION_FACES: usize = 9;
 const MAX_POLYGON_PATCH_ENUMERATION_BOUNDARY: usize = 9;
+const MAX_POLYGON_PATCH_COMPONENT_FACES: usize = 32;
+const MAX_POLYGON_PATCH_COMPONENT_BOUNDARY: usize = 32;
 
 #[derive(Clone, Debug, PartialEq)]
 struct PolygonPatchCandidate {
@@ -98,7 +100,7 @@ fn polygon_patch_candidates(
         return None;
     }
     let max_faces = available.len().min(MAX_POLYGON_PATCH_ENUMERATION_FACES);
-    let max_boundary = available.len().min(MAX_POLYGON_PATCH_ENUMERATION_BOUNDARY);
+    let max_boundary = MAX_POLYGON_PATCH_ENUMERATION_BOUNDARY;
     let neighbors = edge_connected_face_neighbors(mesh, &available)?;
     let mut unassigned = available.iter().copied().collect::<BTreeSet<_>>();
     while let Some(start_face) = unassigned.iter().next().copied() {
@@ -110,25 +112,38 @@ fn polygon_patch_candidates(
         }
         let mut seen = BTreeSet::<Vec<usize>>::new();
         // The old bounded search rejected a valid full-face adjacency whenever a
-        // source-owned disk exceeded the practical subset-enumeration cap.  Yap,
+        // source-owned disk exceeded the practical subset-enumeration cap. Yap,
         // "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-        // (1997), draws the useful line here at exact source replay: the entire
-        // connected component is already a concrete exact object, so it can be
-        // certified directly without widening the exponential subset search.
-        if let Some(candidate) = polygon_patch_candidate(mesh, &component, usize::MAX)? {
+        // (1997), draws the useful line here at exact source replay: a whole
+        // connected component is a concrete exact object and may be certified
+        // directly. It is still a bounded certificate, so adversarial components
+        // above the explicit face/boundary caps must wait for the general planar
+        // arrangement path instead of triggering unbounded loop checks.
+        if component.len() <= MAX_POLYGON_PATCH_COMPONENT_FACES
+            && let Some(candidate) =
+                polygon_patch_candidate(mesh, &component, MAX_POLYGON_PATCH_COMPONENT_BOUNDARY)?
+        {
             seen.insert(component.clone());
             candidates.push(candidate);
         }
-        collect_polygon_patch_candidates(
-            mesh,
-            &neighbors,
-            component[0],
-            max_faces,
-            &mut vec![component[0]],
-            &mut seen,
-            &mut candidates,
-            max_boundary,
-        )?;
+        // Enumerate from every face in the component. The recursive collector keeps
+        // only extensions whose id is at least `start_face`, so each connected
+        // subset has a unique minimum-face root. Starting only at component[0]
+        // misses valid source disks nested inside a larger coplanar source
+        // component, which is exactly the kind of retained-object/topology split
+        // Yap's exact-computing model requires us to preserve.
+        for &start_face in &component {
+            collect_polygon_patch_candidates(
+                mesh,
+                &neighbors,
+                start_face,
+                max_faces,
+                &mut vec![start_face],
+                &mut seen,
+                &mut candidates,
+                max_boundary,
+            )?;
+        }
     }
 
     candidates.sort_by(|left, right| {
@@ -570,4 +585,67 @@ fn points_equal(left: &Point3, right: &Point3) -> Option<bool> {
             && compare_reals(&left.y, &right.y).value()? == Ordering::Equal
             && compare_reals(&left.z, &right.z).value()? == Ordering::Equal,
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use std::collections::BTreeSet;
+
+    use super::*;
+    use crate::exact::ValidationPolicy;
+
+    fn open_mesh(points: &[[i64; 3]], triangles: &[usize]) -> ExactMesh {
+        let mut coordinates = Vec::with_capacity(points.len() * 3);
+        for point in points {
+            coordinates.extend_from_slice(point);
+        }
+        ExactMesh::from_i64_triangles_with_policy(
+            &coordinates,
+            triangles,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap()
+    }
+
+    #[test]
+    fn polygon_patch_pairs_find_subpatch_not_rooted_at_component_minimum() {
+        let left = open_mesh(
+            &[[0, 0, 0], [1, 0, 0], [5, 0, 0], [5, 4, 0], [1, 4, 0]],
+            &[
+                0, 4, 1, //
+                1, 4, 2, 2, 4, 3,
+            ],
+        );
+        let right = open_mesh(
+            &[[1, 0, 0], [5, 0, 0], [5, 4, 0], [1, 4, 0]],
+            &[0, 1, 2, 0, 2, 3],
+        );
+
+        let pairs = polygon_patch_pairs(&left, &BTreeSet::new(), &right, &BTreeSet::new())
+            .expect("bounded source-disk candidates should be available");
+
+        assert_eq!(pairs, vec![(vec![1, 2], vec![0, 1])]);
+    }
+
+    #[test]
+    fn polygon_patch_candidates_do_not_emit_unbounded_whole_components() {
+        let mut points = Vec::new();
+        points.push([0, 0, 0]);
+        for index in 0..=MAX_POLYGON_PATCH_COMPONENT_FACES + 1 {
+            points.push([index as i64, 1, 0]);
+        }
+        let mut triangles = Vec::new();
+        for index in 1..points.len() - 1 {
+            triangles.extend([0, index, index + 1]);
+        }
+        let mesh = open_mesh(&points, &triangles);
+        let candidates = polygon_patch_candidates(&mesh, &BTreeSet::new())
+            .expect("bounded subpatch candidates should still be searched");
+
+        assert!(
+            candidates
+                .iter()
+                .all(|candidate| candidate.faces.len() <= MAX_POLYGON_PATCH_ENUMERATION_FACES)
+        );
+    }
 }
