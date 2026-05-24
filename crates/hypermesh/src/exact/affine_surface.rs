@@ -30,6 +30,7 @@ use super::orthogonal_surface::{
     CoplanarOrthogonalSurfaceArrangement, CoplanarOrthogonalSurfaceComponent,
     CoplanarOrthogonalSurfaceOperation, arrange_coplanar_orthogonal_surface_difference,
     arrange_coplanar_orthogonal_surface_intersection, arrange_coplanar_orthogonal_surface_union,
+    certify_axis_aligned_surface_cells,
 };
 use super::provenance::SourceProvenance;
 use super::scalar::ExactReal;
@@ -198,16 +199,45 @@ fn arrange_coplanar_affine_surface(
 
 #[cfg(feature = "exact-triangulation")]
 fn certify_affine_basis(left: &ExactMesh, right: &ExactMesh) -> Option<CoplanarAffineSurfaceBasis> {
-    let left_quads = extract_parallelogram_quads(left)?;
-    let right_quads = extract_parallelogram_quads(right)?;
-    let first = left_quads.first()?;
-    let projection = choose_projection(first)?;
-    let first_ordered = parallelogram_order(first, projection)?;
-    let basis = basis_from_ordered_parallelogram(&first_ordered, projection)?;
-    for quad in left_quads.iter().chain(right_quads.iter()) {
-        validate_affine_rectangle_quad(quad, &basis)?;
+    let left_quads = extract_parallelogram_quads(left).unwrap_or_default();
+    let right_quads = extract_parallelogram_quads(right).unwrap_or_default();
+    if left_quads.is_empty() && right_quads.is_empty() {
+        return None;
     }
-    Some(basis)
+
+    // A paired parallelogram from either operand is enough to define a
+    // candidate affine frame, but it is not enough to accept the boolean. Yap's
+    // EGC boundary is the replay step below: every source vertex must map back
+    // exactly and both normalized meshes must certify as orthogonal cells
+    // before this basis becomes evidence.
+    for seed in left_quads.iter().chain(right_quads.iter()) {
+        let Some(projection) = choose_projection(seed) else {
+            continue;
+        };
+        let Some(first_ordered) = parallelogram_order(seed, projection) else {
+            continue;
+        };
+        let Some(basis) = basis_from_ordered_parallelogram(&first_ordered, projection) else {
+            continue;
+        };
+        if left_quads
+            .iter()
+            .chain(right_quads.iter())
+            .all(|quad| validate_affine_rectangle_quad(quad, &basis).is_some())
+            && certify_affine_mesh_cells(left, &basis)
+            && certify_affine_mesh_cells(right, &basis)
+        {
+            return Some(basis);
+        }
+    }
+    None
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn certify_affine_mesh_cells(mesh: &ExactMesh, basis: &CoplanarAffineSurfaceBasis) -> bool {
+    mesh_to_uv(mesh, basis)
+        .as_ref()
+        .map_or(false, certify_axis_aligned_surface_cells)
 }
 
 #[cfg(feature = "exact-triangulation")]

@@ -222,14 +222,31 @@ struct RectangleGroup {
 
 /// Extract exact rectangular source cells from a triangulated open surface.
 ///
-/// The accepted input grammar is deliberately small: every triangle must be one
-/// half of an axis-aligned rectangle on a shared coordinate plane, and grouped
-/// halves must replay to exactly one rectangle area. This is the same
-/// proof-before-promotion discipline as Yap's EGC model; a more general
-/// rectilinear polygon import should arrive as its own certified source object
-/// rather than as guessed triangle topology.
+/// The first path accepts the common two-triangle rectangle grammar. The
+/// fallback below replays arbitrary triangulations against their exact vertex
+/// grid and promotes only cells whose clipped source area exactly equals the
+/// cell area. Both paths follow Yap's proof-before-promotion EGC discipline:
+/// accepted cells are certified by exact predicates and algebra, not by sampled
+/// occupancy or floating tolerances.
 #[cfg(feature = "exact-triangulation")]
 fn extract_axis_aligned_rectangles(mesh: &ExactMesh) -> Option<RectangleExtraction> {
+    extract_axis_aligned_rectangle_halves(mesh).or_else(|| extract_axis_aligned_surface_cells(mesh))
+}
+
+/// Return whether a mesh can be replayed as exact axis-aligned surface cells.
+///
+/// Affine surface booleans use this as the post-normalization replay gate: a
+/// candidate affine basis is only evidence if each source mesh becomes a
+/// certified orthogonal cell complex under exact coordinate transformation.
+/// This keeps the affine basis in Yap's exact-object model instead of treating
+/// it as a heuristic change of coordinates.
+#[cfg(feature = "exact-triangulation")]
+pub(super) fn certify_axis_aligned_surface_cells(mesh: &ExactMesh) -> bool {
+    extract_axis_aligned_rectangles(mesh).is_some()
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn extract_axis_aligned_rectangle_halves(mesh: &ExactMesh) -> Option<RectangleExtraction> {
     if mesh.triangles().is_empty() {
         return None;
     }
@@ -306,6 +323,248 @@ fn extract_axis_aligned_rectangles(mesh: &ExactMesh) -> Option<RectangleExtracti
         dropped,
         rectangles,
     })
+}
+
+/// Extract exact occupied rectangular surface cells from arbitrary triangulation.
+///
+/// The paired-rectangle fast path above is intentionally structural: it accepts
+/// only the common two-triangle rectangle grammar. This fallback is the bounded
+/// cell-arrangement importer for harder source meshes whose orthogonal surface
+/// cells were split by extra diagonals or fan vertices. It builds the exact
+/// coordinate grid from retained source vertices, clips every source triangle
+/// against every grid cell with the Sutherland-Hodgman half-plane construction
+/// (Sutherland and Hodgman, "Reentrant Polygon Clipping," *Communications of
+/// the ACM* 17.1, 1974), and promotes a cell only when the sum of clipped exact
+/// triangle areas equals the cell area exactly.
+///
+/// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
+/// 7.1-2 (1997), is the policy boundary: midpoint occupancy would be a sample,
+/// so this importer uses retained source triangles plus exact area replay. A
+/// partially covered cell, overlapping source coverage, or undecidable
+/// arithmetic rejects instead of being rounded into an orthogonal cell.
+#[cfg(feature = "exact-triangulation")]
+fn extract_axis_aligned_surface_cells(mesh: &ExactMesh) -> Option<RectangleExtraction> {
+    if mesh.triangles().is_empty() {
+        return None;
+    }
+    let points = mesh
+        .vertices()
+        .iter()
+        .map(ExactPoint3::to_hyperlimit_point)
+        .collect::<Vec<_>>();
+    let (projection, dropped) = choose_coordinate_plane(&points)?;
+    if points
+        .iter()
+        .any(|point| !real_equal(&dropped_coordinate(point, projection), &dropped))
+    {
+        return None;
+    }
+
+    let mut xs = Vec::new();
+    let mut ys = Vec::new();
+    for point in &points {
+        let projected = project_point(point, projection);
+        xs.push(projected.x);
+        ys.push(projected.y);
+    }
+    sort_reals_and_dedup(&mut xs)?;
+    sort_reals_and_dedup(&mut ys)?;
+    if xs.len() < 2 || ys.len() < 2 {
+        return None;
+    }
+
+    let triangles = mesh
+        .triangles()
+        .iter()
+        .map(|triangle| {
+            let projected = triangle
+                .0
+                .iter()
+                .map(|&index| {
+                    points
+                        .get(index)
+                        .map(|point| project_point(point, projection))
+                })
+                .collect::<Option<Vec<_>>>()?;
+            if projected.len() != 3
+                || compare_reals(&point2_polygon_area2_abs(&projected)?, &ExactReal::from(0))
+                    .value()?
+                    == Ordering::Equal
+            {
+                return None;
+            }
+            Some(projected)
+        })
+        .collect::<Option<Vec<_>>>()?;
+
+    let mut rectangles = Vec::new();
+    for x in 0..xs.len() - 1 {
+        for y in 0..ys.len() - 1 {
+            if real_order(&xs[x], &xs[x + 1])? != Ordering::Less
+                || real_order(&ys[y], &ys[y + 1])? != Ordering::Less
+            {
+                return None;
+            }
+            let rectangle = ProjectedRectangle {
+                min: Point2::new(xs[x].clone(), ys[y].clone()),
+                max: Point2::new(xs[x + 1].clone(), ys[y + 1].clone()),
+                dropped: dropped.clone(),
+            };
+            let cell_area = rectangle_area2(&rectangle);
+            let mut covered_area = ExactReal::from(0);
+            for triangle in &triangles {
+                let clipped = clip_projected_polygon_to_rectangle(triangle, &rectangle)?;
+                if clipped.len() >= 3 {
+                    covered_area = add(&covered_area, &point2_polygon_area2_abs(&clipped)?);
+                }
+                if compare_reals(&covered_area, &cell_area).value()? == Ordering::Greater {
+                    return None;
+                }
+            }
+            match compare_reals(&covered_area, &cell_area).value()? {
+                Ordering::Equal => rectangles.push(rectangle),
+                Ordering::Less
+                    if compare_reals(&covered_area, &ExactReal::from(0)).value()?
+                        == Ordering::Equal => {}
+                Ordering::Less | Ordering::Greater => return None,
+            }
+        }
+    }
+    if rectangles.is_empty() {
+        return None;
+    }
+    rectangles.sort_by(|left, right| {
+        compare_point2(&left.min, &right.min)
+            .and_then(|ordering| {
+                if ordering == Ordering::Equal {
+                    compare_point2(&left.max, &right.max)
+                } else {
+                    Some(ordering)
+                }
+            })
+            .unwrap_or(Ordering::Equal)
+    });
+    Some(RectangleExtraction {
+        projection,
+        dropped,
+        rectangles,
+    })
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum ClipBoundary {
+    MinX,
+    MaxX,
+    MinY,
+    MaxY,
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn clip_projected_polygon_to_rectangle(
+    polygon: &[Point2],
+    rectangle: &ProjectedRectangle,
+) -> Option<Vec<Point2>> {
+    let mut clipped = polygon.to_vec();
+    for boundary in [
+        ClipBoundary::MinX,
+        ClipBoundary::MaxX,
+        ClipBoundary::MinY,
+        ClipBoundary::MaxY,
+    ] {
+        clipped = clip_point2_polygon_half_plane(&clipped, rectangle, boundary)?;
+        if clipped.is_empty() {
+            break;
+        }
+    }
+    dedup_point2_neighbors(&mut clipped);
+    Some(clipped)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn clip_point2_polygon_half_plane(
+    polygon: &[Point2],
+    rectangle: &ProjectedRectangle,
+    boundary: ClipBoundary,
+) -> Option<Vec<Point2>> {
+    if polygon.is_empty() {
+        return Some(Vec::new());
+    }
+    let mut output = Vec::new();
+    for index in 0..polygon.len() {
+        let current = &polygon[index];
+        let next = &polygon[(index + 1) % polygon.len()];
+        let current_inside = point2_inside_clip_boundary(current, rectangle, boundary)?;
+        let next_inside = point2_inside_clip_boundary(next, rectangle, boundary)?;
+        match (current_inside, next_inside) {
+            (true, true) => output.push(next.clone()),
+            (true, false) => {
+                output.push(point2_segment_clip_intersection(
+                    current, next, rectangle, boundary,
+                )?);
+            }
+            (false, true) => {
+                output.push(point2_segment_clip_intersection(
+                    current, next, rectangle, boundary,
+                )?);
+                output.push(next.clone());
+            }
+            (false, false) => {}
+        }
+    }
+    dedup_point2_neighbors(&mut output);
+    Some(output)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn point2_inside_clip_boundary(
+    point: &Point2,
+    rectangle: &ProjectedRectangle,
+    boundary: ClipBoundary,
+) -> Option<bool> {
+    Some(match boundary {
+        ClipBoundary::MinX => real_order(&rectangle.min.x, &point.x)? != Ordering::Greater,
+        ClipBoundary::MaxX => real_order(&point.x, &rectangle.max.x)? != Ordering::Greater,
+        ClipBoundary::MinY => real_order(&rectangle.min.y, &point.y)? != Ordering::Greater,
+        ClipBoundary::MaxY => real_order(&point.y, &rectangle.max.y)? != Ordering::Greater,
+    })
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn point2_segment_clip_intersection(
+    start: &Point2,
+    end: &Point2,
+    rectangle: &ProjectedRectangle,
+    boundary: ClipBoundary,
+) -> Option<Point2> {
+    match boundary {
+        ClipBoundary::MinX | ClipBoundary::MaxX => {
+            let x = if boundary == ClipBoundary::MinX {
+                &rectangle.min.x
+            } else {
+                &rectangle.max.x
+            };
+            let dx = sub(&end.x, &start.x);
+            let t = (sub(x, &start.x) / &dx).ok()?;
+            Some(Point2::new(
+                x.clone(),
+                add(&start.y, &mul(&t, &sub(&end.y, &start.y))),
+            ))
+        }
+        ClipBoundary::MinY | ClipBoundary::MaxY => {
+            let y = if boundary == ClipBoundary::MinY {
+                &rectangle.min.y
+            } else {
+                &rectangle.max.y
+            };
+            let dy = sub(&end.y, &start.y);
+            let t = (sub(y, &start.y) / &dy).ok()?;
+            Some(Point2::new(
+                add(&start.x, &mul(&t, &sub(&end.x, &start.x))),
+                y.clone(),
+            ))
+        }
+    }
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -1578,6 +1837,34 @@ fn points_equal(left: &Point3, right: &Point3) -> bool {
 
 fn point2_equal(left: &Point2, right: &Point2) -> bool {
     real_equal(&left.x, &right.x) && real_equal(&left.y, &right.y)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn dedup_point2_neighbors(points: &mut Vec<Point2>) {
+    points.dedup_by(|right, left| point2_equal(left, right));
+    if points.len() > 1 && point2_equal(points.first().unwrap(), points.last().unwrap()) {
+        points.pop();
+    }
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn point2_polygon_area2_abs(points: &[Point2]) -> Option<ExactReal> {
+    if points.len() < 3 {
+        return Some(ExactReal::from(0));
+    }
+    let mut signed = ExactReal::from(0);
+    for index in 0..points.len() {
+        let current = &points[index];
+        let next = &points[(index + 1) % points.len()];
+        signed = add(
+            &signed,
+            &sub(&mul(&current.x, &next.y), &mul(&current.y, &next.x)),
+        );
+    }
+    match compare_reals(&signed, &ExactReal::from(0)).value()? {
+        Ordering::Less => Some(sub(&ExactReal::from(0), &signed)),
+        Ordering::Equal | Ordering::Greater => Some(signed),
+    }
 }
 
 fn real_order(left: &ExactReal, right: &ExactReal) -> Option<Ordering> {

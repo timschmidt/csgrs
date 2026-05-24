@@ -20458,6 +20458,44 @@ fn exact_coplanar_orthogonal_surface_cells_materialize_nonconvex_outputs() {
         }
     );
 
+    let fan_l_left = fan_rect_surface_i64(&[(0, 0, 2, 6), (2, 0, 6, 2)]);
+    assert!(
+        hypermesh::exact::arrange_coplanar_convex_surface_union(&fan_l_left, &l_right).is_none()
+    );
+    let fan_l_union =
+        hypermesh::exact::arrange_coplanar_orthogonal_surface_union(&fan_l_left, &l_right)
+            .expect("fan-split orthogonal source cells should replay by exact area coverage");
+    fan_l_union.validate().unwrap();
+    fan_l_union
+        .validate_against_sources(&fan_l_left, &l_right)
+        .unwrap();
+    assert_eq!(fan_l_union.components.len(), 1);
+    assert_eq!(fan_l_union.components[0].outer.len(), 8);
+    let fan_l_preflight = hypermesh::exact::preflight_boolean_exact(
+        &fan_l_left,
+        &l_right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+    )
+    .unwrap();
+    fan_l_preflight.validate().unwrap();
+    fan_l_preflight
+        .validate_against_sources(&fan_l_left, &l_right)
+        .unwrap();
+    assert_eq!(
+        fan_l_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceUnion
+    );
+    let partial_cell = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 2, 0, 0, 0, 2, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert!(
+        hypermesh::exact::arrange_coplanar_orthogonal_surface_union(&partial_cell, &l_right)
+            .is_none()
+    );
+
     let intersection_left = rect_surface_i64(&[(0, 0, 6, 2), (0, 2, 2, 6)]);
     let intersection_right = rect_surface_i64(&[(0, 0, 6, 6)]);
     let intersection = hypermesh::exact::arrange_coplanar_orthogonal_surface_intersection(
@@ -20753,6 +20791,46 @@ fn exact_coplanar_affine_surface_cells_materialize_rotated_nonconvex_outputs() {
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
             shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarAffineSurfaceUnion
         }
+    );
+
+    let fan_l_left =
+        affine_fan_rect_surface_i64(&[(0, 0, 2, 6), (2, 0, 6, 2)], origin, basis_u, basis_v);
+    assert!(
+        hypermesh::exact::arrange_coplanar_orthogonal_surface_union(&fan_l_left, &l_right)
+            .is_none()
+    );
+    let fan_l_union =
+        hypermesh::exact::arrange_coplanar_affine_surface_union(&fan_l_left, &l_right)
+            .expect("rotated fan-split surface cells should replay through affine cells");
+    fan_l_union.validate().unwrap();
+    fan_l_union
+        .validate_against_sources(&fan_l_left, &l_right)
+        .unwrap();
+    assert_eq!(fan_l_union.components.len(), 1);
+    assert_eq!(fan_l_union.components[0].outer.len(), 8);
+    let fan_l_preflight = hypermesh::exact::preflight_boolean_exact(
+        &fan_l_left,
+        &l_right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+    )
+    .unwrap();
+    fan_l_preflight.validate().unwrap();
+    fan_l_preflight
+        .validate_against_sources(&fan_l_left, &l_right)
+        .unwrap();
+    assert_eq!(
+        fan_l_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarAffineSurfaceUnion
+    );
+    let partial_affine_cell = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 4, 2, 0, -2, 4, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert!(
+        hypermesh::exact::arrange_coplanar_affine_surface_union(&partial_affine_cell, &l_right)
+            .is_none()
     );
 
     let intersection_left =
@@ -23439,6 +23517,40 @@ fn rect_surface_i64(rectangles: &[(i64, i64, i64, i64)]) -> ExactMesh {
 }
 
 #[cfg(feature = "exact-triangulation")]
+fn fan_rect_surface_i64(rectangles: &[(i64, i64, i64, i64)]) -> ExactMesh {
+    let mut coordinates = Vec::with_capacity(rectangles.len() * 15);
+    let mut indices = Vec::with_capacity(rectangles.len() * 12);
+    for (rectangle, &(x0, y0, x1, y1)) in rectangles.iter().enumerate() {
+        let base = rectangle * 5;
+        assert_eq!((x0 + x1) % 2, 0);
+        assert_eq!((y0 + y1) % 2, 0);
+        let cx = (x0 + x1) / 2;
+        let cy = (y0 + y1) / 2;
+        coordinates.extend_from_slice(&[x0, y0, 0, x1, y0, 0, x1, y1, 0, x0, y1, 0, cx, cy, 0]);
+        indices.extend_from_slice(&[
+            base,
+            base + 1,
+            base + 4,
+            base + 1,
+            base + 2,
+            base + 4,
+            base + 2,
+            base + 3,
+            base + 4,
+            base + 3,
+            base,
+            base + 4,
+        ]);
+    }
+    ExactMesh::from_i64_triangles_with_policy(
+        &coordinates,
+        &indices,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap()
+}
+
+#[cfg(feature = "exact-triangulation")]
 fn affine_rect_surface_i64(
     rectangles: &[(i64, i64, i64, i64)],
     origin: (i64, i64, i64),
@@ -23460,6 +23572,58 @@ fn affine_rect_surface_i64(
             coordinates.extend_from_slice(&point);
         }
         indices.extend_from_slice(&[base, base + 1, base + 2, base, base + 2, base + 3]);
+    }
+    ExactMesh::from_i64_triangles_with_policy(
+        &coordinates,
+        &indices,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap()
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn affine_fan_rect_surface_i64(
+    rectangles: &[(i64, i64, i64, i64)],
+    origin: (i64, i64, i64),
+    basis_u: (i64, i64, i64),
+    basis_v: (i64, i64, i64),
+) -> ExactMesh {
+    let mut coordinates = Vec::with_capacity(rectangles.len() * 15);
+    let mut indices = Vec::with_capacity(rectangles.len() * 12);
+    let lift = |u: i64, v: i64| -> [i64; 3] {
+        [
+            origin.0 + u * basis_u.0 + v * basis_v.0,
+            origin.1 + u * basis_u.1 + v * basis_v.1,
+            origin.2 + u * basis_u.2 + v * basis_v.2,
+        ]
+    };
+    for (rectangle, &(u0, v0, u1, v1)) in rectangles.iter().enumerate() {
+        let base = rectangle * 5;
+        assert_eq!((u0 + u1) % 2, 0);
+        assert_eq!((v0 + v1) % 2, 0);
+        for point in [
+            lift(u0, v0),
+            lift(u1, v0),
+            lift(u1, v1),
+            lift(u0, v1),
+            lift((u0 + u1) / 2, (v0 + v1) / 2),
+        ] {
+            coordinates.extend_from_slice(&point);
+        }
+        indices.extend_from_slice(&[
+            base,
+            base + 1,
+            base + 4,
+            base + 1,
+            base + 2,
+            base + 4,
+            base + 2,
+            base + 3,
+            base + 4,
+            base + 3,
+            base,
+            base + 4,
+        ]);
     }
     ExactMesh::from_i64_triangles_with_policy(
         &coordinates,
