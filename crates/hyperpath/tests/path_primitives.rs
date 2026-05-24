@@ -11,27 +11,28 @@ use hyperpath::{
     MeanderError, MeanderObstacle, MeanderPlacementCandidate, NetId, OffsetSide,
     PathMeshBooleanError, PathMeshBooleanOperation, PathMeshBooleanProgramStep,
     PathMeshBooleanSource, PathProvenance, PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad,
-    PcbCircularPad, PcbConvexBoardOutline, PcbConvexPolyPad, PcbCopperBooleanSource,
-    PcbHoledOrthogonalCopperSource, PcbLayerZModel, PcbOrthogonalBoardOutline,
-    PcbOrthogonalPolyPad, PcbRectPad, PcbTrace, PcbViaStack, PocketPlanError, PocketPlanStopReason,
-    QuadraticBezier, RationalQuadraticBezier, RationalQuadraticBezierError, RectangularPocket,
-    RectangularRegionRelation, RouteCertificationError, SegmentParameterOrder, SourceLengthUnit,
-    SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraImportError, SpecctraLayerAlias,
-    SpecctraNetAlias, SpecctraParseError, SupportFootprintStatus, SupportPlanError,
-    SweptLineSegment, TangentAlignment, TangentJoinClass, TangentJoinReport, TangentSpan,
-    TraceLayer, ViaAnnularRingReport, ViaDrillIntent, ViaDrillPolicyClass, ViaLayerSpanRelation,
+    PcbCircularPad, PcbCompositeCopperBooleanSource, PcbConvexBoardOutline, PcbConvexPolyPad,
+    PcbCopperBooleanSource, PcbHoledOrthogonalCopperSource, PcbLayerZModel,
+    PcbOrthogonalBoardOutline, PcbOrthogonalPolyPad, PcbRectPad, PcbTrace, PcbViaStack,
+    PocketPlanError, PocketPlanStopReason, QuadraticBezier, RationalQuadraticBezier,
+    RationalQuadraticBezierError, RectangularPocket, RectangularRegionRelation,
+    RouteCertificationError, SegmentParameterOrder, SourceLengthUnit, SpecctraGridTraceRecord,
+    SpecctraGridViaRecord, SpecctraImportError, SpecctraLayerAlias, SpecctraNetAlias,
+    SpecctraParseError, SupportFootprintStatus, SupportPlanError, SweptLineSegment,
+    TangentAlignment, TangentJoinClass, TangentJoinReport, TangentSpan, TraceLayer,
+    ViaAnnularRingReport, ViaDrillIntent, ViaDrillPolicyClass, ViaLayerSpanRelation,
     ViaLayerTransitionClass, boolean_path_mesh_program, boolean_path_mesh_sources,
     boolean_rectangular_prism_chain, boolean_rectangular_prisms,
     boolean_rectangular_prisms_with_boundary_policy, build_alternating_detour_meander,
     build_cam_rest_material_program, build_g1_join_problem, build_length_match_problem,
     build_multi_detour_meander, build_nonuniform_detour_meander,
     build_obstacle_aware_detour_meander, build_oriented_tangent_alignment_problem,
-    build_pcb_copper_union_program, build_pcb_holed_orthogonal_copper_program,
-    build_rectangular_bead_plan, build_rectangular_pocket_plan,
-    build_rectangular_serpentine_infill_graph, build_rectangular_support_plan,
-    build_single_detour_meander, build_tangent_alignment_problem, certify_constant_feed_time,
-    certify_differential_pair_skew, certify_g1_chain, certify_g1_join_candidate,
-    certify_length_extension, certify_tangent_alignment_candidate,
+    build_pcb_composite_copper_union_program, build_pcb_copper_union_program,
+    build_pcb_holed_orthogonal_copper_program, build_rectangular_bead_plan,
+    build_rectangular_pocket_plan, build_rectangular_serpentine_infill_graph,
+    build_rectangular_support_plan, build_single_detour_meander, build_tangent_alignment_problem,
+    certify_constant_feed_time, certify_differential_pair_skew, certify_g1_chain,
+    certify_g1_join_candidate, certify_length_extension, certify_tangent_alignment_candidate,
     check_cardinal_rect_pad_board_clearance, check_circular_pad_board_clearance,
     check_rect_pad_board_clearance, check_trace_board_clearance,
     check_trace_cardinal_rect_pad_clearance, check_trace_clearance,
@@ -625,6 +626,138 @@ fn pcb_holed_orthogonal_copper_program_replays_outer_minus_voids() {
         stale.validate_replay(PredicatePolicy::default()),
         Err(PathMeshBooleanError::Replay(_))
     ));
+}
+
+#[test]
+fn pcb_composite_copper_boolean_program_unions_solid_and_holed_sources() {
+    let z_model = PcbLayerZModel::new(r(0), r(10), r(2), PredicatePolicy::default()).unwrap();
+    let holed = PcbHoledOrthogonalCopperSource::new(
+        NetId(14),
+        TraceLayer(0),
+        vec![p(0, 0), p(16, 0), p(16, 10), p(0, 10)],
+        vec![
+            vec![p(4, 2), p(7, 2), p(7, 5), p(4, 5)],
+            vec![p(10, 4), p(13, 4), p(13, 8), p(10, 8)],
+        ],
+        PredicatePolicy::default(),
+    )
+    .expect("strict holed copper should materialize before composite union");
+    let bridge_trace = trace(14, 0, p(15, 5), p(22, 5), 2);
+    let l_pad = PcbOrthogonalPolyPad::new(
+        NetId(14),
+        TraceLayer(0),
+        vec![p(20, 3), p(26, 3), p(26, 6), p(24, 6), p(24, 8), p(20, 8)],
+    )
+    .unwrap();
+
+    let report = build_pcb_composite_copper_union_program(
+        vec![
+            PcbCompositeCopperBooleanSource::HoledOrthogonal(holed.clone()),
+            PcbCompositeCopperBooleanSource::Solid(PcbCopperBooleanSource::Trace(bridge_trace)),
+            PcbCompositeCopperBooleanSource::Solid(PcbCopperBooleanSource::OrthogonalPolyPad(
+                l_pad.clone(),
+            )),
+        ],
+        z_model.clone(),
+        PredicatePolicy::default(),
+    )
+    .expect("solid copper should union with retained holed copper");
+    report.validate_replay(PredicatePolicy::default()).unwrap();
+    assert_eq!(report.net, NetId(14));
+    assert_eq!(report.layer, TraceLayer(0));
+    assert_eq!(report.sources.len(), 3);
+    assert_eq!(report.steps.len(), 2);
+    assert!(report.initial.holed_program.is_some());
+    assert!(matches!(
+        &report.steps[0].right.source,
+        PcbCompositeCopperBooleanSource::Solid(PcbCopperBooleanSource::Trace(_))
+    ));
+    assert!(report.mesh().unwrap().facts().mesh.closed_manifold);
+    assert!(
+        report
+            .steps
+            .iter()
+            .all(|step| step.result.validate().is_ok())
+    );
+
+    let mut stale = report.clone();
+    stale.sources[0] = PcbCompositeCopperBooleanSource::HoledOrthogonal(
+        PcbHoledOrthogonalCopperSource::new(
+            NetId(14),
+            TraceLayer(0),
+            vec![p(0, 0), p(16, 0), p(16, 10), p(0, 10)],
+            vec![
+                vec![p(5, 2), p(8, 2), p(8, 5), p(5, 5)],
+                vec![p(10, 4), p(13, 4), p(13, 8), p(10, 8)],
+            ],
+            PredicatePolicy::default(),
+        )
+        .unwrap(),
+    );
+    assert!(matches!(
+        stale.validate_replay(PredicatePolicy::default()),
+        Err(PathMeshBooleanError::Replay(_))
+    ));
+
+    assert_eq!(
+        build_pcb_composite_copper_union_program(
+            vec![PcbCompositeCopperBooleanSource::HoledOrthogonal(holed)],
+            z_model,
+            PredicatePolicy::default(),
+        )
+        .unwrap_err(),
+        PathMeshBooleanError::NotEnoughSources
+    );
+}
+
+#[test]
+fn pcb_composite_copper_boolean_program_rejects_mixed_nets_and_layers() {
+    let z_model = PcbLayerZModel::new(r(0), r(10), r(2), PredicatePolicy::default()).unwrap();
+    let base = PcbHoledOrthogonalCopperSource::new(
+        NetId(15),
+        TraceLayer(0),
+        vec![p(0, 0), p(10, 0), p(10, 8), p(0, 8)],
+        vec![vec![p(3, 2), p(5, 2), p(5, 4), p(3, 4)]],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+
+    assert_eq!(
+        build_pcb_composite_copper_union_program(
+            vec![
+                PcbCompositeCopperBooleanSource::HoledOrthogonal(base.clone()),
+                PcbCompositeCopperBooleanSource::Solid(PcbCopperBooleanSource::Trace(trace(
+                    16,
+                    0,
+                    p(8, 4),
+                    p(12, 4),
+                    2
+                ))),
+            ],
+            z_model.clone(),
+            PredicatePolicy::default(),
+        )
+        .unwrap_err(),
+        PathMeshBooleanError::MixedPcbNets
+    );
+    assert_eq!(
+        build_pcb_composite_copper_union_program(
+            vec![
+                PcbCompositeCopperBooleanSource::HoledOrthogonal(base),
+                PcbCompositeCopperBooleanSource::Solid(PcbCopperBooleanSource::Trace(trace(
+                    15,
+                    1,
+                    p(8, 4),
+                    p(12, 4),
+                    2
+                ))),
+            ],
+            z_model,
+            PredicatePolicy::default(),
+        )
+        .unwrap_err(),
+        PathMeshBooleanError::MixedPcbLayers
+    );
 }
 
 #[test]

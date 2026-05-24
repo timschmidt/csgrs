@@ -6,8 +6,8 @@ use hyperpath::{
     CubicBezier, ExplicitCircularArc, HigherOrderBezier, LinePathSegment, MeanderObstacle,
     MeanderPlacementCandidate, NetId, OffsetSide, PathMeshBooleanOperation,
     PathMeshBooleanProgramStep, PathProvenance, PathSourceFormat, PcbBoardOutline,
-    PcbCardinalRectPad, PcbCircularPad, PcbConvexBoardOutline, PcbConvexPolyPad,
-    PcbCopperBooleanSource, PcbHoledOrthogonalCopperSource, PcbLayerZModel,
+    PcbCardinalRectPad, PcbCircularPad, PcbCompositeCopperBooleanSource, PcbConvexBoardOutline,
+    PcbConvexPolyPad, PcbCopperBooleanSource, PcbHoledOrthogonalCopperSource, PcbLayerZModel,
     PcbOrthogonalBoardOutline, PcbOrthogonalPolyPad, PcbRectPad, PcbTrace, PcbViaStack,
     QuadraticBezier, RationalQuadraticBezier, RectangularPocket, SourceLengthUnit,
     SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraLayerAlias, SpecctraNetAlias,
@@ -16,12 +16,12 @@ use hyperpath::{
     build_alternating_detour_meander, build_cam_rest_material_program, build_g1_join_problem,
     build_length_match_problem, build_multi_detour_meander, build_nonuniform_detour_meander,
     build_obstacle_aware_detour_meander, build_oriented_tangent_alignment_problem,
-    build_pcb_copper_union_program, build_pcb_holed_orthogonal_copper_program,
-    build_rectangular_bead_plan, build_rectangular_pocket_plan,
-    build_rectangular_serpentine_infill_graph, build_rectangular_support_plan,
-    build_single_detour_meander, build_tangent_alignment_problem, certify_constant_feed_time,
-    certify_differential_pair_skew, certify_g1_chain, certify_g1_join_candidate,
-    certify_length_extension, certify_tangent_alignment_candidate,
+    build_pcb_composite_copper_union_program, build_pcb_copper_union_program,
+    build_pcb_holed_orthogonal_copper_program, build_rectangular_bead_plan,
+    build_rectangular_pocket_plan, build_rectangular_serpentine_infill_graph,
+    build_rectangular_support_plan, build_single_detour_meander, build_tangent_alignment_problem,
+    certify_constant_feed_time, certify_differential_pair_skew, certify_g1_chain,
+    certify_g1_join_candidate, certify_length_extension, certify_tangent_alignment_candidate,
     check_cardinal_rect_pad_board_clearance, check_circular_pad_board_clearance,
     check_rect_pad_board_clearance, check_trace_board_clearance,
     check_trace_cardinal_rect_pad_clearance, check_trace_clearance,
@@ -937,6 +937,25 @@ fn path_predicates(c: &mut Criterion) {
         b.iter(|| {
             let report = build_pcb_holed_orthogonal_copper_program(
                 pcb_holed.clone(),
+                pcb_z.clone(),
+                PredicatePolicy::default(),
+            )
+            .unwrap();
+            report.validate_replay(PredicatePolicy::default())
+        })
+    });
+    c.bench_function("pcb_composite_copper_union_program_replay", |b| {
+        b.iter(|| {
+            let report = build_pcb_composite_copper_union_program(
+                vec![
+                    PcbCompositeCopperBooleanSource::HoledOrthogonal(pcb_holed.clone()),
+                    PcbCompositeCopperBooleanSource::Solid(PcbCopperBooleanSource::Trace(
+                        pcb_trace_second.clone(),
+                    )),
+                    PcbCompositeCopperBooleanSource::Solid(
+                        PcbCopperBooleanSource::OrthogonalPolyPad(pcb_orthogonal_polygon.clone()),
+                    ),
+                ],
                 pcb_z.clone(),
                 PredicatePolicy::default(),
             )

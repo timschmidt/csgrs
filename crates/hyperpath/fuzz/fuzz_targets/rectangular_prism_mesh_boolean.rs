@@ -4,11 +4,13 @@ use hyperlimit::{Point2, PredicatePolicy};
 use hyperpath::{
     AxisAlignedSweptSegmentPrism, CamRestMaterialCutter, CardinalRotation, LinePathSegment, NetId,
     PathMeshBooleanOperation, PathMeshBooleanProgramStep, PcbCardinalRectPad,
-    PcbConvexPolyPad, PcbCopperBooleanSource, PcbHoledOrthogonalCopperSource, PcbLayerZModel,
-    PcbOrthogonalPolyPad, PcbTrace, SweptLineSegment, TraceLayer, boolean_path_mesh_program,
-    boolean_path_mesh_sources, boolean_rectangular_prism_chain, boolean_rectangular_prisms,
+    PcbCompositeCopperBooleanSource, PcbConvexPolyPad, PcbCopperBooleanSource,
+    PcbHoledOrthogonalCopperSource, PcbLayerZModel, PcbOrthogonalPolyPad, PcbTrace,
+    SweptLineSegment, TraceLayer, boolean_path_mesh_program, boolean_path_mesh_sources,
+    boolean_rectangular_prism_chain, boolean_rectangular_prisms,
     boolean_rectangular_prisms_with_boundary_policy, build_cam_rest_material_program,
-    build_pcb_copper_union_program, build_pcb_holed_orthogonal_copper_program,
+    build_pcb_composite_copper_union_program, build_pcb_copper_union_program,
+    build_pcb_holed_orthogonal_copper_program,
     pcb_cardinal_rect_pad_mesh_boolean_source, pcb_trace_mesh_boolean_source,
     rectangular_prism_from_i64_bounds,
 };
@@ -367,12 +369,33 @@ fuzz_target!(|data: &[u8]| {
                 PredicatePolicy::default(),
             ) {
                 if let Ok(report) = build_pcb_holed_orthogonal_copper_program(
-                    source,
+                    source.clone(),
                     z_model.clone(),
                     PredicatePolicy::default(),
                 ) {
                     report.validate_replay(PredicatePolicy::default()).unwrap();
                     report.program.steps.last().unwrap().result.validate().unwrap();
+                }
+                let trace_start = Point2::new(min_x.clone() + Real::from(extent(11)), min_y.clone());
+                let trace_end = Point2::new(trace_start.x.clone() + Real::from(extent(17)), trace_start.y);
+                if let Ok(swept) = SweptLineSegment::new(
+                    LinePathSegment::new(trace_start, trace_end),
+                    Real::from(extent(5)),
+                ) {
+                    let trace = PcbTrace::new(NetId(u32::from(data[16])), layer, swept);
+                    if let Ok(report) = build_pcb_composite_copper_union_program(
+                        vec![
+                            PcbCompositeCopperBooleanSource::HoledOrthogonal(source),
+                            PcbCompositeCopperBooleanSource::Solid(PcbCopperBooleanSource::Trace(
+                                trace,
+                            )),
+                        ],
+                        z_model.clone(),
+                        PredicatePolicy::default(),
+                    ) {
+                        report.validate_replay(PredicatePolicy::default()).unwrap();
+                        report.steps.last().unwrap().result.validate().unwrap();
+                    }
                 }
             }
         }

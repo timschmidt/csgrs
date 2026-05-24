@@ -75,8 +75,9 @@ before downstream crates accept the path as ready.
   certified axis-aligned swept segments, and layer-aware PCB trace/rectangular
   pad, strictly convex polygonal copper, and simple orthogonal copper sources
   into exact solids, replay holed orthogonal copper as outer-minus-void
-  difference programs, fold multi-source boolean chains, mixed-operation boolean programs,
-  same-net/layer PCB copper union programs, and CAM stock-minus-cutter
+  difference programs, fold solid and retained-holed PCB copper through
+  composite same-net/layer union programs, fold multi-source boolean chains,
+  mixed-operation boolean programs, same-net/layer PCB copper union programs, and CAM stock-minus-cutter
   rest-material programs through `hypermesh`, and replay exact evidence before
   exposing accepted output topology.
 - PCB types describe traces, pads, vias, board outlines, clearance reports, annular

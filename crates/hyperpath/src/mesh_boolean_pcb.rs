@@ -18,6 +18,10 @@
 use std::cmp::Ordering;
 
 use hyperlimit::{Point2, PredicatePolicy, compare_reals_with_policy};
+use hypermesh::exact::{
+    ExactBooleanPreflight, ExactBooleanResult, ExactBoundaryBooleanPolicy, ExactMesh,
+    ValidationPolicy, boolean_exact_with_boundary_policy, preflight_boolean_exact,
+};
 use hyperreal::{Real, RealExactSetFacts};
 
 use crate::cam::{PocketPlanError, RectangularPocket};
@@ -127,6 +131,75 @@ pub struct PcbHoledCopperBooleanProgramReport {
     pub source: PcbHoledOrthogonalCopperSource,
     /// Accepted exact outer-minus-holes boolean program.
     pub program: PathMeshBooleanProgramReport,
+}
+
+/// Retained PCB copper operand for composite same-net union programs.
+///
+/// Solid sources lower directly to one exact mesh. Holed orthogonal sources
+/// first replay their retained outer-minus-holes program and then become a
+/// union operand. Keeping these cases distinct follows Yap, "Towards Exact
+/// Geometric Computation," *Computational Geometry* 7.1-2 (1997): topology
+/// produced by a boolean is accepted only with the replayable object/predicate
+/// evidence that generated it.
+#[derive(Clone, Debug, PartialEq)]
+pub enum PcbCompositeCopperBooleanSource {
+    /// Direct solid PCB copper source.
+    Solid(PcbCopperBooleanSource),
+    /// Retained orthogonal copper source with strict voids.
+    HoledOrthogonal(PcbHoledOrthogonalCopperSource),
+}
+
+/// Materialized composite operand with retained provenance.
+///
+/// The `mesh` itself is intentionally not stored here. A direct solid can be
+/// rederived from the source, while a holed source replays through
+/// [`PcbHoledCopperBooleanProgramReport`]. This prevents the report from
+/// treating an intermediate mesh as a new canonical PCB object.
+#[derive(Clone, Debug, PartialEq)]
+pub struct PcbCompositeCopperMaterialization {
+    /// Retained composite source.
+    pub source: PcbCompositeCopperBooleanSource,
+    /// Replayable holed-source program, present only for holed operands.
+    pub holed_program: Option<PcbHoledCopperBooleanProgramReport>,
+}
+
+/// Accepted evidence for one composite PCB copper union step.
+#[derive(Clone, Debug, PartialEq)]
+pub struct PcbCompositeCopperBooleanStepReport {
+    /// Zero-based union step index.
+    pub index: usize,
+    /// Right-hand retained operand materialized for this step.
+    pub right: PcbCompositeCopperMaterialization,
+    /// Exact `hypermesh` preflight report for accumulator/right.
+    pub preflight: ExactBooleanPreflight,
+    /// Accepted exact union result for accumulator/right.
+    pub result: ExactBooleanResult,
+}
+
+/// Exact same-net PCB copper-union program over solid and holed operands.
+///
+/// This is the next retained-source layer above
+/// [`PcbHoledCopperBooleanProgramReport`]. The first operand seeds the
+/// accumulator; every following operand is unioned with `hypermesh` and the
+/// exact result is replayed against the original retained PCB source. The
+/// regularized-solid interpretation is the one described by Requicha,
+/// "Representations for Rigid Solids: Theory, Methods, and Systems,"
+/// *ACM Computing Surveys* 12.4 (1980), while the replay boundary follows
+/// Yap's exact geometric computation discipline.
+#[derive(Clone, Debug, PartialEq)]
+pub struct PcbCompositeCopperBooleanProgramReport {
+    /// Net shared by every retained copper source.
+    pub net: NetId,
+    /// Layer shared by every retained copper source.
+    pub layer: TraceLayer,
+    /// Exact layer-to-Z model used for lowering.
+    pub z_model: PcbLayerZModel,
+    /// Retained composite sources in union order.
+    pub sources: Vec<PcbCompositeCopperBooleanSource>,
+    /// Accepted materialization of the first source.
+    pub initial: PcbCompositeCopperMaterialization,
+    /// Accepted per-step exact union evidence.
+    pub steps: Vec<PcbCompositeCopperBooleanStepReport>,
 }
 
 impl PcbLayerZModel {
@@ -283,6 +356,120 @@ impl PcbHoledCopperBooleanProgramReport {
     }
 }
 
+impl PcbCompositeCopperBooleanSource {
+    /// Return the source net.
+    pub const fn net(&self) -> NetId {
+        match self {
+            Self::Solid(source) => source.net(),
+            Self::HoledOrthogonal(source) => source.net(),
+        }
+    }
+
+    /// Return the source layer.
+    pub const fn layer(&self) -> TraceLayer {
+        match self {
+            Self::Solid(source) => source.layer(),
+            Self::HoledOrthogonal(source) => source.layer(),
+        }
+    }
+}
+
+impl From<PcbCopperBooleanSource> for PcbCompositeCopperBooleanSource {
+    fn from(source: PcbCopperBooleanSource) -> Self {
+        Self::Solid(source)
+    }
+}
+
+impl PcbCompositeCopperMaterialization {
+    /// Rebuild the exact mesh represented by this materialized operand.
+    ///
+    /// This method is deliberately a replay operation, not a mesh cache. Direct
+    /// solids lower from their retained source; holed operands ask their nested
+    /// boolean program for the accepted final mesh. That keeps the canonical
+    /// source on the PCB side of Yap's EGC boundary.
+    pub fn to_exact_mesh(
+        &self,
+        z_model: &PcbLayerZModel,
+        policy: PredicatePolicy,
+    ) -> Result<ExactMesh, PathMeshBooleanError> {
+        match (&self.source, &self.holed_program) {
+            (PcbCompositeCopperBooleanSource::Solid(source), None) => {
+                source.to_path_source(z_model, policy)?.to_exact_mesh()
+            }
+            (PcbCompositeCopperBooleanSource::HoledOrthogonal(_), Some(program)) => program
+                .program
+                .mesh()
+                .cloned()
+                .ok_or(PathMeshBooleanError::NotEnoughSources),
+            _ => Err(PathMeshBooleanError::Replay(
+                "composite copper materialization does not match retained source kind".into(),
+            )),
+        }
+    }
+}
+
+impl PcbCompositeCopperBooleanProgramReport {
+    /// Return the final accepted exact output mesh.
+    pub fn mesh(&self) -> Option<&ExactMesh> {
+        self.steps.last().map(|step| &step.result.mesh)
+    }
+
+    /// Rebuild source materialization, same-net grouping, and union evidence.
+    pub fn validate_replay(&self, policy: PredicatePolicy) -> Result<(), PathMeshBooleanError> {
+        let replayed = build_pcb_composite_copper_union_program(
+            self.sources.clone(),
+            self.z_model.clone(),
+            policy,
+        )?;
+        if replayed.net != self.net
+            || replayed.layer != self.layer
+            || replayed.initial != self.initial
+            || replayed.steps != self.steps
+        {
+            return Err(PathMeshBooleanError::Replay(
+                "retained PCB composite copper boolean program no longer matches replay".into(),
+            ));
+        }
+        if let Some(program) = &self.initial.holed_program {
+            program.validate_replay(policy)?;
+        }
+        let mut accumulator = self.initial.to_exact_mesh(&self.z_model, policy)?;
+        for (expected_index, step) in self.steps.iter().enumerate() {
+            if step.index != expected_index {
+                return Err(PathMeshBooleanError::Replay(
+                    "retained PCB composite copper step index no longer matches order".into(),
+                ));
+            }
+            match &step.right.holed_program {
+                Some(program) => program.validate_replay(policy)?,
+                None => {
+                    if !matches!(step.right.source, PcbCompositeCopperBooleanSource::Solid(_)) {
+                        return Err(PathMeshBooleanError::Replay(
+                            "composite holed operand is missing its nested replay program".into(),
+                        ));
+                    }
+                }
+            }
+            let operation = PathMeshBooleanOperation::Union.to_hypermesh();
+            let right_mesh = step.right.to_exact_mesh(&self.z_model, policy)?;
+            step.preflight
+                .validate_against_sources(&accumulator, &right_mesh)
+                .map_err(|error| PathMeshBooleanError::Replay(format!("{error:?}")))?;
+            step.result
+                .validate_operation_against_sources(
+                    &accumulator,
+                    &right_mesh,
+                    operation,
+                    ValidationPolicy::CLOSED,
+                    ExactBoundaryBooleanPolicy::Reject,
+                )
+                .map_err(|error| PathMeshBooleanError::Replay(format!("{error:?}")))?;
+            accumulator = step.result.mesh.clone();
+        }
+        Ok(())
+    }
+}
+
 impl PcbCopperBooleanSource {
     /// Return the source net.
     pub const fn net(&self) -> NetId {
@@ -416,6 +603,84 @@ pub fn build_pcb_holed_orthogonal_copper_program(
         z_model,
         source,
         program,
+    })
+}
+
+/// Build an exact same-net union over solid and retained holed PCB copper.
+///
+/// Single holed pours are first accepted as outer-minus-holes programs. This
+/// function then unions those accepted operands with ordinary solid copper,
+/// preserving nested replay evidence rather than converting a holed pour into
+/// an unowned mesh. The sequence is left-associative because exact mesh
+/// booleans are proof-bearing operations with accumulator topology, not a
+/// commutative bag rewrite.
+pub fn build_pcb_composite_copper_union_program(
+    sources: Vec<PcbCompositeCopperBooleanSource>,
+    z_model: PcbLayerZModel,
+    policy: PredicatePolicy,
+) -> Result<PcbCompositeCopperBooleanProgramReport, PathMeshBooleanError> {
+    if sources.len() < 2 {
+        return Err(PathMeshBooleanError::NotEnoughSources);
+    }
+    let net = sources[0].net();
+    let layer = sources[0].layer();
+    if sources.iter().any(|source| source.net() != net) {
+        return Err(PathMeshBooleanError::MixedPcbNets);
+    }
+    if sources.iter().any(|source| source.layer() != layer) {
+        return Err(PathMeshBooleanError::MixedPcbLayers);
+    }
+
+    let mut materialized = sources
+        .iter()
+        .cloned()
+        .map(|source| materialize_composite_copper_source(source, &z_model, policy))
+        .collect::<Result<Vec<_>, _>>()?;
+    let initial = materialized.remove(0);
+    let mut accumulator = initial.to_exact_mesh(&z_model, policy)?;
+    let mut steps = Vec::with_capacity(materialized.len());
+
+    for (index, right) in materialized.into_iter().enumerate() {
+        let right_mesh = right.to_exact_mesh(&z_model, policy)?;
+        let operation = PathMeshBooleanOperation::Union.to_hypermesh();
+        let preflight = preflight_boolean_exact(&accumulator, &right_mesh, operation)
+            .map_err(|error| PathMeshBooleanError::Preflight(format!("{error:?}")))?;
+        preflight
+            .validate_against_sources(&accumulator, &right_mesh)
+            .map_err(|error| PathMeshBooleanError::Replay(format!("{error:?}")))?;
+        let result = boolean_exact_with_boundary_policy(
+            &accumulator,
+            &right_mesh,
+            operation,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .map_err(|error| PathMeshBooleanError::Boolean(format!("{error:?}")))?;
+        result
+            .validate_operation_against_sources(
+                &accumulator,
+                &right_mesh,
+                operation,
+                ValidationPolicy::CLOSED,
+                ExactBoundaryBooleanPolicy::Reject,
+            )
+            .map_err(|error| PathMeshBooleanError::Replay(format!("{error:?}")))?;
+        accumulator = result.mesh.clone();
+        steps.push(PcbCompositeCopperBooleanStepReport {
+            index,
+            right,
+            preflight,
+            result,
+        });
+    }
+
+    Ok(PcbCompositeCopperBooleanProgramReport {
+        net,
+        layer,
+        z_model,
+        sources,
+        initial,
+        steps,
     })
 }
 
@@ -573,6 +838,23 @@ fn holed_orthogonal_exact_facts(
         );
     }
     Real::exact_set_facts(values)
+}
+
+fn materialize_composite_copper_source(
+    source: PcbCompositeCopperBooleanSource,
+    z_model: &PcbLayerZModel,
+    policy: PredicatePolicy,
+) -> Result<PcbCompositeCopperMaterialization, PathMeshBooleanError> {
+    let holed_program = match &source {
+        PcbCompositeCopperBooleanSource::Solid(_) => None,
+        PcbCompositeCopperBooleanSource::HoledOrthogonal(source) => Some(
+            build_pcb_holed_orthogonal_copper_program(source.clone(), z_model.clone(), policy)?,
+        ),
+    };
+    Ok(PcbCompositeCopperMaterialization {
+        source,
+        holed_program,
+    })
 }
 
 fn validate_holes_strictly_inside_outer(
