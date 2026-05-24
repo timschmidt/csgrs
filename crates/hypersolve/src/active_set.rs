@@ -16,11 +16,13 @@ use hyperreal::{CertifiedRealSign, Real, RealSign, RealSignCertificate};
 
 use crate::certification::CandidateCertificationConfig;
 use crate::direct::{
-    DirectAffineSystemReport, DirectAffineSystemStatus, solve_direct_affine_system,
+    DirectAffineSystemReport, DirectAffineSystemStatus, DirectQuadraticSolution, DirectSolveError,
+    solve_direct_affine_system, solve_direct_univariate_quadratic_equalities,
 };
 use crate::eval::EvaluationContext;
 use crate::model::ConstraintKind;
 use crate::prepared::PreparedProblem;
+use crate::symbolic::SymbolId;
 
 /// Certified relationship between one constraint and the supplied active mask.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -304,6 +306,103 @@ pub struct ActiveSetAffineRegenerationReport {
     pub audit: Option<ActiveSetAuditReport>,
 }
 
+/// Configuration for exact nonlinear active-set candidate regeneration.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ActiveSetQuadraticRegenerationConfig {
+    /// Candidate-certification controls used by exact active-mask audits.
+    pub certification: CandidateCertificationConfig,
+    /// Hard bound on Cartesian products of independent quadratic roots.
+    pub max_candidates: usize,
+}
+
+impl Default for ActiveSetQuadraticRegenerationConfig {
+    fn default() -> Self {
+        Self {
+            certification: CandidateCertificationConfig::default(),
+            max_candidates: 32,
+        }
+    }
+}
+
+/// Final status for exact nonlinear active-set candidate regeneration.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum ActiveSetQuadraticRegenerationStatus {
+    /// At least one generated candidate is certified consistent with the
+    /// supplied active mask.
+    Certified,
+    /// The supplied active mask did not match the source constraint count.
+    InvalidActiveMask,
+    /// Direct quadratic solving failed before candidates could be generated.
+    DirectSolveFailed,
+    /// No active univariate quadratic row produced roots.
+    NoCandidates,
+    /// Root combinations exceeded the configured exact enumeration budget.
+    CandidateLimitExceeded,
+    /// Every generated candidate had a certified residual violation or mask
+    /// mismatch.
+    RejectedCandidate,
+    /// At least one generated candidate reached exact replay but left a row
+    /// undecided, and none certified.
+    Unknown,
+    /// At least one generated candidate hit an expression/domain failure, and
+    /// none certified.
+    DomainFailure,
+}
+
+/// Status for one regenerated nonlinear active-set candidate.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum ActiveSetQuadraticCandidateStatus {
+    /// Exact replay certified this candidate and active mask.
+    Certified,
+    /// Exact replay found a residual violation or active-mask mismatch.
+    Rejected,
+    /// Exact replay did not decide at least one row.
+    Unknown,
+    /// Residual evaluation failed for at least one row.
+    DomainFailure,
+}
+
+/// One root binding used by a regenerated nonlinear active-set candidate.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ActiveSetQuadraticRootAssignment {
+    /// Source active quadratic row.
+    pub constraint_index: usize,
+    /// Symbol assigned by the univariate quadratic root.
+    pub symbol: SymbolId,
+    /// Root ordinal from the exact quadratic formula report.
+    pub root_index: usize,
+    /// Exact root value.
+    pub value: Real,
+}
+
+/// One regenerated nonlinear active-set candidate and its exact audit.
+#[derive(Clone, Debug)]
+pub struct ActiveSetQuadraticCandidateReport {
+    /// Exact root assignments applied to the base context.
+    pub assignments: Vec<ActiveSetQuadraticRootAssignment>,
+    /// Candidate context after applying assignments.
+    pub candidate: EvaluationContext,
+    /// Exact active-mask audit for this candidate.
+    pub audit: ActiveSetAuditReport,
+    /// Candidate replay status.
+    pub status: ActiveSetQuadraticCandidateStatus,
+}
+
+/// Exact nonlinear active-set regeneration report for quadratic rows.
+#[derive(Clone, Debug)]
+pub struct ActiveSetQuadraticRegenerationReport {
+    /// Final regeneration status.
+    pub status: ActiveSetQuadraticRegenerationStatus,
+    /// Active mask supplied by the caller.
+    pub active_mask: Vec<bool>,
+    /// Direct quadratic roots extracted from the masked active problem.
+    pub direct_solutions: Vec<DirectQuadraticSolution>,
+    /// Direct solve error, when root extraction failed.
+    pub direct_error: Option<DirectSolveError>,
+    /// Generated and audited candidates.
+    pub candidates: Vec<ActiveSetQuadraticCandidateReport>,
+}
+
 impl ActiveSetUpdateReport {
     /// Returns true when the policy produced a complete next active mask.
     pub fn has_complete_mask(&self) -> bool {
@@ -490,6 +589,117 @@ pub fn regenerate_active_set_affine_candidate(
     }
 }
 
+/// Regenerate exact nonlinear candidates from active univariate quadratics.
+///
+/// This is the nonlinear companion to
+/// [`regenerate_active_set_affine_candidate`]. It applies the caller's active
+/// mask to a cloned problem, extracts active univariate quadratic equality
+/// rows with [`crate::solve_direct_univariate_quadratic_equalities`], and
+/// enumerates exact root assignments into `base_context`. Every generated
+/// candidate is audited against the original problem and supplied mask before
+/// it can be reported as certified. The method follows the SolveSpace-style
+/// soluble-alone preprocessing idea while preserving Yap's EGC rule: exact
+/// construction is only proposal evidence until replay certifies it. See Yap,
+/// "Towards Exact Geometric Computation" (1997), and Nocedal-Wright,
+/// *Numerical Optimization* (2006), for the active-set/proposal boundary.
+pub fn regenerate_active_set_quadratic_candidates(
+    prepared: &PreparedProblem<'_>,
+    base_context: &EvaluationContext,
+    active_mask: &[bool],
+    config: ActiveSetQuadraticRegenerationConfig,
+) -> ActiveSetQuadraticRegenerationReport {
+    if active_mask.len() != prepared.problem().constraints.len() {
+        return ActiveSetQuadraticRegenerationReport {
+            status: ActiveSetQuadraticRegenerationStatus::InvalidActiveMask,
+            active_mask: active_mask.to_vec(),
+            direct_solutions: Vec::new(),
+            direct_error: None,
+            candidates: Vec::new(),
+        };
+    }
+
+    let mut masked_problem = prepared.problem().clone();
+    for (constraint, active) in masked_problem.constraints.iter_mut().zip(active_mask) {
+        constraint.active = *active;
+    }
+    let masked_prepared = PreparedProblem::new(&masked_problem);
+    let direct_solutions = match solve_direct_univariate_quadratic_equalities(&masked_prepared) {
+        Ok(solutions) => solutions,
+        Err(error) => {
+            return ActiveSetQuadraticRegenerationReport {
+                status: ActiveSetQuadraticRegenerationStatus::DirectSolveFailed,
+                active_mask: active_mask.to_vec(),
+                direct_solutions: Vec::new(),
+                direct_error: Some(error),
+                candidates: Vec::new(),
+            };
+        }
+    };
+    let root_sets = direct_solutions
+        .iter()
+        .filter(|solution| !solution.roots.is_empty())
+        .collect::<Vec<_>>();
+    if root_sets.is_empty() {
+        return ActiveSetQuadraticRegenerationReport {
+            status: ActiveSetQuadraticRegenerationStatus::NoCandidates,
+            active_mask: active_mask.to_vec(),
+            direct_solutions,
+            direct_error: None,
+            candidates: Vec::new(),
+        };
+    }
+    let candidate_count = root_sets.iter().try_fold(1usize, |count, solution| {
+        count.checked_mul(solution.roots.len())
+    });
+    if candidate_count.is_none_or(|count| count > config.max_candidates) {
+        return ActiveSetQuadraticRegenerationReport {
+            status: ActiveSetQuadraticRegenerationStatus::CandidateLimitExceeded,
+            active_mask: active_mask.to_vec(),
+            direct_solutions,
+            direct_error: None,
+            candidates: Vec::new(),
+        };
+    }
+
+    let mut candidates = Vec::new();
+    enumerate_quadratic_candidate_assignments(
+        prepared,
+        base_context,
+        active_mask,
+        config.certification,
+        &root_sets,
+        0,
+        Vec::new(),
+        &mut candidates,
+    );
+    let status = if candidates
+        .iter()
+        .any(|candidate| candidate.status == ActiveSetQuadraticCandidateStatus::Certified)
+    {
+        ActiveSetQuadraticRegenerationStatus::Certified
+    } else if candidates
+        .iter()
+        .any(|candidate| candidate.status == ActiveSetQuadraticCandidateStatus::Unknown)
+    {
+        ActiveSetQuadraticRegenerationStatus::Unknown
+    } else if candidates
+        .iter()
+        .any(|candidate| candidate.status == ActiveSetQuadraticCandidateStatus::DomainFailure)
+    {
+        ActiveSetQuadraticRegenerationStatus::DomainFailure
+    } else {
+        ActiveSetQuadraticRegenerationStatus::RejectedCandidate
+    };
+
+    ActiveSetQuadraticRegenerationReport {
+        status,
+        active_mask: active_mask.to_vec(),
+        direct_solutions,
+        direct_error: None,
+        candidates,
+    }
+}
+
 /// Audit every source constraint against its supplied active flag.
 ///
 /// This does not choose a new active set and does not run an active-set solver.
@@ -609,6 +819,63 @@ fn propose_active_mask_update(
 ) -> ActiveSetUpdateReport {
     let audit = audit_active_mask(prepared, context, active_mask, config);
     active_set_update_report_from_audit(audit)
+}
+
+#[allow(clippy::too_many_arguments)]
+fn enumerate_quadratic_candidate_assignments(
+    prepared: &PreparedProblem<'_>,
+    base_context: &EvaluationContext,
+    active_mask: &[bool],
+    certification: CandidateCertificationConfig,
+    root_sets: &[&DirectQuadraticSolution],
+    root_set_index: usize,
+    assignments: Vec<ActiveSetQuadraticRootAssignment>,
+    candidates: &mut Vec<ActiveSetQuadraticCandidateReport>,
+) {
+    if root_set_index == root_sets.len() {
+        let mut candidate = base_context.clone();
+        for assignment in &assignments {
+            candidate.bind(assignment.symbol, assignment.value.clone());
+        }
+        let audit = audit_active_mask(prepared, &candidate, active_mask, certification);
+        let status = if audit.all_consistent() {
+            ActiveSetQuadraticCandidateStatus::Certified
+        } else if audit.domain_failure_rows > 0 {
+            ActiveSetQuadraticCandidateStatus::DomainFailure
+        } else if audit.unknown_rows > 0 {
+            ActiveSetQuadraticCandidateStatus::Unknown
+        } else {
+            ActiveSetQuadraticCandidateStatus::Rejected
+        };
+        candidates.push(ActiveSetQuadraticCandidateReport {
+            assignments,
+            candidate,
+            audit,
+            status,
+        });
+        return;
+    }
+
+    let solution = root_sets[root_set_index];
+    for (root_index, root) in solution.roots.iter().enumerate() {
+        let mut next_assignments = assignments.clone();
+        next_assignments.push(ActiveSetQuadraticRootAssignment {
+            constraint_index: solution.constraint_index,
+            symbol: solution.symbol,
+            root_index,
+            value: root.clone(),
+        });
+        enumerate_quadratic_candidate_assignments(
+            prepared,
+            base_context,
+            active_mask,
+            certification,
+            root_sets,
+            root_set_index + 1,
+            next_assignments,
+            candidates,
+        );
+    }
 }
 
 fn active_set_update_report_from_audit(audit: ActiveSetAuditReport) -> ActiveSetUpdateReport {
@@ -1008,6 +1275,113 @@ mod tests {
         ));
     }
 
+    #[test]
+    fn quadratic_regeneration_enumerates_roots_and_audits_active_mask() {
+        let x = Expr::symbol(SymbolId(0), "x");
+        let mut problem = Problem::default();
+        problem.add_variable("x", real(0));
+        problem.add_constraint(Constraint::equality(
+            "quadratic roots",
+            x.clone() * x.clone() - Expr::int(4),
+        ));
+        let mut nonnegative = Constraint::equality("x nonnegative", x);
+        nonnegative.kind = ConstraintKind::GreaterOrEqual;
+        nonnegative.active = false;
+        problem.add_constraint(nonnegative);
+        let prepared = PreparedProblem::new(&problem);
+
+        let report = regenerate_active_set_quadratic_candidates(
+            &prepared,
+            &EvaluationContext::default(),
+            &[true, false],
+            ActiveSetQuadraticRegenerationConfig::default(),
+        );
+
+        assert_eq!(
+            report.status,
+            ActiveSetQuadraticRegenerationStatus::Certified
+        );
+        assert_eq!(report.candidates.len(), 2);
+        assert_eq!(
+            report
+                .candidates
+                .iter()
+                .filter(|candidate| candidate.status == ActiveSetQuadraticCandidateStatus::Certified)
+                .count(),
+            1
+        );
+        assert!(report.candidates.iter().any(|candidate| {
+            candidate.status == ActiveSetQuadraticCandidateStatus::Certified
+                && candidate.candidate.bindings().get(&SymbolId(0)) == Some(&real(2))
+        }));
+        assert!(report.candidates.iter().any(|candidate| {
+            candidate.status == ActiveSetQuadraticCandidateStatus::Rejected
+                && candidate.candidate.bindings().get(&SymbolId(0)) == Some(&real(-2))
+        }));
+    }
+
+    #[test]
+    fn quadratic_regeneration_reports_invalid_masks_no_roots_and_limits() {
+        let x = Expr::symbol(SymbolId(0), "x");
+        let mut problem = Problem::default();
+        problem.add_variable("x", real(0));
+        problem.add_constraint(Constraint::equality(
+            "no real roots",
+            x.clone() * x.clone() + Expr::int(1),
+        ));
+        let prepared = PreparedProblem::new(&problem);
+
+        let invalid = regenerate_active_set_quadratic_candidates(
+            &prepared,
+            &EvaluationContext::default(),
+            &[],
+            ActiveSetQuadraticRegenerationConfig::default(),
+        );
+        assert_eq!(
+            invalid.status,
+            ActiveSetQuadraticRegenerationStatus::InvalidActiveMask
+        );
+
+        let no_roots = regenerate_active_set_quadratic_candidates(
+            &prepared,
+            &EvaluationContext::default(),
+            &[true],
+            ActiveSetQuadraticRegenerationConfig::default(),
+        );
+        assert_eq!(
+            no_roots.status,
+            ActiveSetQuadraticRegenerationStatus::NoCandidates
+        );
+
+        let mut two_quadratics = Problem::default();
+        let x = Expr::symbol(SymbolId(0), "x");
+        let y = Expr::symbol(SymbolId(1), "y");
+        two_quadratics.add_variable("x", real(0));
+        two_quadratics.add_variable("y", real(0));
+        two_quadratics.add_constraint(Constraint::equality(
+            "x roots",
+            x.clone() * x - Expr::int(1),
+        ));
+        two_quadratics.add_constraint(Constraint::equality(
+            "y roots",
+            y.clone() * y - Expr::int(4),
+        ));
+        let prepared = PreparedProblem::new(&two_quadratics);
+        let limited = regenerate_active_set_quadratic_candidates(
+            &prepared,
+            &EvaluationContext::default(),
+            &[true, true],
+            ActiveSetQuadraticRegenerationConfig {
+                max_candidates: 3,
+                ..ActiveSetQuadraticRegenerationConfig::default()
+            },
+        );
+        assert_eq!(
+            limited.status,
+            ActiveSetQuadraticRegenerationStatus::CandidateLimitExceeded
+        );
+    }
+
     proptest::proptest! {
         #[test]
         fn generated_less_equal_active_masks_follow_exact_sign(
@@ -1081,6 +1455,44 @@ mod tests {
             prop_assert_eq!(candidate.bindings().get(&SymbolId(0)), Some(&real(x_value)));
             prop_assert_eq!(candidate.bindings().get(&SymbolId(1)), Some(&real(y_value)));
             prop_assert!(report.audit.as_ref().unwrap().all_consistent());
+        }
+
+        #[test]
+        fn generated_quadratic_regeneration_selects_nonnegative_root(
+            root in 1_i16..=32,
+        ) {
+            let root = i64::from(root);
+            let x = Expr::symbol(SymbolId(0), "x");
+            let mut problem = Problem::default();
+            problem.add_variable("x", real(0));
+            problem.add_constraint(Constraint::equality(
+                "generated quadratic roots",
+                x.clone() * x.clone() - Expr::int(root * root),
+            ));
+            let mut nonnegative = Constraint::equality("generated nonnegative", x);
+            nonnegative.kind = ConstraintKind::GreaterOrEqual;
+            nonnegative.active = false;
+            problem.add_constraint(nonnegative);
+            let prepared = PreparedProblem::new(&problem);
+
+            let report = regenerate_active_set_quadratic_candidates(
+                &prepared,
+                &EvaluationContext::default(),
+                &[true, false],
+                ActiveSetQuadraticRegenerationConfig::default(),
+            );
+
+            prop_assert_eq!(report.status, ActiveSetQuadraticRegenerationStatus::Certified);
+            let has_certified_root = report.candidates.iter().any(|candidate| {
+                candidate.status == ActiveSetQuadraticCandidateStatus::Certified
+                    && candidate.candidate.bindings().get(&SymbolId(0)) == Some(&real(root))
+            });
+            let has_rejected_root = report.candidates.iter().any(|candidate| {
+                candidate.status == ActiveSetQuadraticCandidateStatus::Rejected
+                    && candidate.candidate.bindings().get(&SymbolId(0)) == Some(&real(-root))
+            });
+            prop_assert!(has_certified_root);
+            prop_assert!(has_rejected_root);
         }
     }
 }

@@ -26,17 +26,17 @@ use hypersolve::{
     lift_sketch_point2_to_workplane3, preflight_sketch_degeneracies,
     preflight_sketch_entity_domains, preflight_sketch_parameter_domains,
     prepare_sparse_linear_residual_system, propose_active_set_update,
-    regenerate_active_set_affine_candidate, replay_dense_linear_residuals,
-    replay_sketch_compatibility_fixture, replay_sparse_linear_residuals,
-    report_lossy_adapter_only_candidate, represent_univariate_algebraic_roots,
-    resultant_univariate_polynomials, run_active_set_update_loop,
-    schedule_candidate_batch_predicates, schedule_univariate_resultant_pairs,
-    search_failed_constraint_pair_removals, search_failed_constraint_set_removals,
-    search_failed_constraint_single_removals, sketch_compatibility_fixtures,
-    solve_damped_least_squares, solve_dense_linear_system_bareiss, solve_direct_affine_system,
-    solve_direct_univariate_quadratic_equalities, solve_sparse_linear_system_bareiss,
-    solve_sparse_linear_system_bareiss_pattern_preserving, squared_distance_equation,
-    subdivide_bernstein_univariate_polynomial_interval_roots,
+    regenerate_active_set_affine_candidate, regenerate_active_set_quadratic_candidates,
+    replay_dense_linear_residuals, replay_sketch_compatibility_fixture,
+    replay_sparse_linear_residuals, report_lossy_adapter_only_candidate,
+    represent_univariate_algebraic_roots, resultant_univariate_polynomials,
+    run_active_set_update_loop, schedule_candidate_batch_predicates,
+    schedule_univariate_resultant_pairs, search_failed_constraint_pair_removals,
+    search_failed_constraint_set_removals, search_failed_constraint_single_removals,
+    sketch_compatibility_fixtures, solve_damped_least_squares, solve_dense_linear_system_bareiss,
+    solve_direct_affine_system, solve_direct_univariate_quadratic_equalities,
+    solve_sparse_linear_system_bareiss, solve_sparse_linear_system_bareiss_pattern_preserving,
+    squared_distance_equation, subdivide_bernstein_univariate_polynomial_interval_roots,
     subresultant_chain_univariate_polynomials, transform_algebraic_root_affine,
     transform_algebraic_root_mobius, transform_algebraic_root_polynomial_image,
     transform_algebraic_roots_binary,
@@ -1825,6 +1825,28 @@ fn certification(c: &mut Criterion) {
                 &krawczyk_prepared,
                 &krawczyk_active_mask,
                 hypersolve::CandidateCertificationConfig::default(),
+            )
+        })
+    });
+    let x = Expr::symbol(SymbolId(0), "x");
+    let mut quadratic_regeneration_problem = Problem::default();
+    quadratic_regeneration_problem.add_variable("x", r(0));
+    quadratic_regeneration_problem.add_constraint(Constraint::equality(
+        "bench active quadratic roots",
+        x.clone() * x.clone() - Expr::int(4),
+    ));
+    let mut quadratic_bound = Constraint::equality("bench active quadratic bound", x);
+    quadratic_bound.kind = hypersolve::ConstraintKind::GreaterOrEqual;
+    quadratic_bound.active = false;
+    quadratic_regeneration_problem.add_constraint(quadratic_bound);
+    let quadratic_regeneration_prepared = PreparedProblem::new(&quadratic_regeneration_problem);
+    c.bench_function("regenerate_active_set_quadratic_candidates", |b| {
+        b.iter(|| {
+            regenerate_active_set_quadratic_candidates(
+                &quadratic_regeneration_prepared,
+                &hypersolve::EvaluationContext::default(),
+                &[true, false],
+                hypersolve::ActiveSetQuadraticRegenerationConfig::default(),
             )
         })
     });

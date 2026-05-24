@@ -75,3 +75,10 @@ path = "fuzz_targets/sparse_pattern_preserving_bareiss.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "active_set_quadratic_regeneration"
+path = "fuzz_targets/active_set_quadratic_regeneration.rs"
+test = false
+doc = false
+bench = false
