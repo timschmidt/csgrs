@@ -60,10 +60,12 @@ fuzz_target!(|data: &[u8]| {
     let parallel = sketch.add_projected_parallel_lines3("projected parallel", workplane, a, b);
     let perpendicular =
         sketch.add_projected_perpendicular_lines3("projected perpendicular", workplane, a, c);
+    let same_direction =
+        sketch.add_projected_same_direction_lines3("projected same direction", workplane, a, b);
 
     let lowered = sketch.lower_to_problem();
     assert!(lowered.all_generated());
-    assert_eq!(lowered.problem.constraints.len(), 4);
+    assert_eq!(lowered.problem.constraints.len(), 7);
     assert_eq!(
         lowered.rows[1].strategy,
         Some(SketchResidualStrategy::ProjectedDirectionCrossProduct)
@@ -71,6 +73,14 @@ fuzz_target!(|data: &[u8]| {
     assert_eq!(
         lowered.rows[3].strategy,
         Some(SketchResidualStrategy::ProjectedDirectionDotProduct)
+    );
+    assert_eq!(
+        lowered.rows[5].strategy,
+        Some(SketchResidualStrategy::ProjectedDirectionSameOrientation)
+    );
+    assert_eq!(
+        lowered.rows[6].strategy,
+        Some(SketchResidualStrategy::ProjectedDirectionSameOrientation)
     );
 
     let certification = certify_candidate(
@@ -93,5 +103,14 @@ fuzz_target!(|data: &[u8]| {
     assert_eq!(
         perpendicular_forms.forms[1].kind,
         SketchResidualFormKind::ProjectedDirectionDotProductPolynomial
+    );
+    let same_direction_forms = sketch.residual_forms_for_constraint(same_direction);
+    assert_eq!(
+        same_direction_forms.status,
+        SketchResidualFormsStatus::Generated
+    );
+    assert_eq!(
+        same_direction_forms.forms[2].kind,
+        SketchResidualFormKind::ProjectedDirectionSameOrientationPredicate
     );
 });

@@ -2749,6 +2749,8 @@ proptest! {
         let parallel = sketch.add_projected_parallel_lines3("projected parallel", workplane, a, b);
         let perpendicular =
             sketch.add_projected_perpendicular_lines3("projected perpendicular", workplane, a, c);
+        let same_direction =
+            sketch.add_projected_same_direction_lines3("projected same direction", workplane, a, b);
 
         let lowered = sketch.lower_to_problem();
         let certification = certify_candidate(
@@ -2757,8 +2759,9 @@ proptest! {
         );
         let parallel_forms = sketch.residual_forms_for_constraint(parallel);
         let perpendicular_forms = sketch.residual_forms_for_constraint(perpendicular);
+        let same_direction_forms = sketch.residual_forms_for_constraint(same_direction);
 
-        prop_assert_eq!(lowered.problem.constraints.len(), 4);
+        prop_assert_eq!(lowered.problem.constraints.len(), 7);
         prop_assert!(lowered.all_generated());
         prop_assert!(certification.all_satisfied());
         prop_assert_eq!(
@@ -2769,6 +2772,14 @@ proptest! {
             lowered.rows[3].strategy,
             Some(SketchResidualStrategy::ProjectedDirectionDotProduct)
         );
+        prop_assert_eq!(
+            lowered.rows[5].strategy,
+            Some(SketchResidualStrategy::ProjectedDirectionSameOrientation)
+        );
+        prop_assert_eq!(
+            lowered.rows[6].strategy,
+            Some(SketchResidualStrategy::ProjectedDirectionSameOrientation)
+        );
         prop_assert_eq!(parallel_forms.status, SketchResidualFormsStatus::Generated);
         prop_assert_eq!(
             parallel_forms.forms[1].kind,
@@ -2778,6 +2789,12 @@ proptest! {
         prop_assert_eq!(
             perpendicular_forms.forms[1].kind,
             SketchResidualFormKind::ProjectedDirectionDotProductPolynomial
+        );
+        prop_assert_eq!(same_direction_forms.status, SketchResidualFormsStatus::Generated);
+        prop_assert_eq!(same_direction_forms.forms.len(), 3);
+        prop_assert_eq!(
+            same_direction_forms.forms[2].kind,
+            SketchResidualFormKind::ProjectedDirectionSameOrientationPredicate
         );
     }
 

@@ -1203,6 +1203,30 @@ pub mod orientation {
         }
     }
 
+    /// Add a retained workplane-projected 3D line same-direction relation.
+    ///
+    /// Lowering projects both 3D line directions into the certified workplane
+    /// frame and replays exact unnormalized predicates: cross product equality
+    /// for common support and dot product nonnegativity for the same branch.
+    /// This follows Yap's exact-geometric-computation boundary; Shoemake's
+    /// unit-quaternion frame supplies the projection polynomial.
+    pub fn projected_same_direction_lines3(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::ProjectedSameDirectionLines3 { workplane, a, b };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Orientation,
+            strategy: SketchResidualStrategy::ProjectedDirectionSameOrientation,
+            kind,
+        }
+    }
+
     /// Add a 2D line same-orientation relation.
     ///
     /// The lowered package uses exact unnormalized predicates: cross product

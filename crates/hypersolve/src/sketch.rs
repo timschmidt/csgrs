@@ -1062,6 +1062,25 @@ pub enum SketchConstraintKind {
         /// Second 3D line segment.
         b: SketchEntityHandle,
     },
+    /// Same-direction relation between two 3D line segments after workplane projection.
+    ///
+    /// Lowering emits the retained workplane unit-quaternion guard, the exact
+    /// projected direction cross product `a_u*b_v - a_v*b_u == 0`, and the
+    /// same-orientation branch predicate `a_u*b_u + a_v*b_v >= 0`. This is
+    /// the 3D/workplane counterpart of
+    /// [`SketchConstraintKind::SameDirectionLines2`]. The branch predicate is
+    /// retained exact evidence, not a normalized floating-angle comparison,
+    /// following Yap, "Towards Exact Geometric Computation" (1997), with
+    /// Shoemake's unit-quaternion frame from "Animating Rotation with
+    /// Quaternion Curves" (1985).
+    ProjectedSameDirectionLines3 {
+        /// Workplane entity that supplies origin and normal/quaternion.
+        workplane: SketchEntityHandle,
+        /// Candidate 3D line segment.
+        a: SketchEntityHandle,
+        /// Target 3D line segment.
+        b: SketchEntityHandle,
+    },
     /// 2D point-at-midpoint relation.
     ///
     /// Lowering emits exact linear coordinate equations without averaging in
@@ -1319,6 +1338,8 @@ pub enum SketchResidualStrategy {
     ProjectedDirectionCrossProduct,
     /// Exact projected 3D direction dot-product equality.
     ProjectedDirectionDotProduct,
+    /// Exact projected 3D same-direction predicate package.
+    ProjectedDirectionSameOrientation,
     /// Linear coordinate equality for a retained midpoint relation.
     MidpointCoordinateEquality,
     /// Linear coordinate equality for retained axis symmetry.
@@ -1434,6 +1455,8 @@ pub enum SketchResidualFormKind {
     ProjectedDirectionCrossProductPolynomial,
     /// Exact projected direction dot-product proof row.
     ProjectedDirectionDotProductPolynomial,
+    /// Exact projected same-orientation branch predicate.
+    ProjectedDirectionSameOrientationPredicate,
     /// Exact cross-product equality for a G1 tangent support proof row.
     TangentCrossProductPredicate,
     /// Exact dot-product inequality for a same-direction tangent proof row.
@@ -2520,6 +2543,20 @@ impl SketchSolveProblem {
         b: SketchEntityHandle,
     ) -> SketchConstraintHandle {
         orientation::projected_perpendicular_lines3(self, name, workplane, a, b).handle
+    }
+
+    /// Add retained same-direction between two 3D lines projected into a workplane.
+    ///
+    /// Lowering emits the workplane unit guard, exact projected cross-product
+    /// support row, and exact projected dot-product branch inequality.
+    pub fn add_projected_same_direction_lines3(
+        &mut self,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+    ) -> SketchConstraintHandle {
+        orientation::projected_same_direction_lines3(self, name, workplane, a, b).handle
     }
 
     /// Add a retained 2D point-at-midpoint relation.
@@ -3791,6 +3828,53 @@ impl SketchSolveProblem {
                             kind: SketchResidualFormKind::ProjectedDirectionDotProductPolynomial,
                             role: SketchResidualFormRole::ExactProof,
                             strategy: Some(SketchResidualStrategy::ProjectedDirectionDotProduct),
+                            residual: parts.dot,
+                        },
+                    ],
+                    diagnostics,
+                }
+            }
+            SketchConstraintKind::ProjectedSameDirectionLines3 { workplane, a, b } => {
+                let mut diagnostics = Vec::new();
+                let Some(parts) = self.projected_direction_relation_exprs(
+                    workplane,
+                    a,
+                    b,
+                    constraint,
+                    &mut diagnostics,
+                ) else {
+                    return SketchResidualFormsReport {
+                        constraint: handle,
+                        status: SketchResidualFormsStatus::InvalidInputs,
+                        forms: Vec::new(),
+                        diagnostics,
+                    };
+                };
+                SketchResidualFormsReport {
+                    constraint: handle,
+                    status: SketchResidualFormsStatus::Generated,
+                    forms: vec![
+                        SketchResidualForm {
+                            kind: SketchResidualFormKind::WorkplaneUnitQuaternionPolynomial,
+                            role: SketchResidualFormRole::ExactProof,
+                            strategy: Some(SketchResidualStrategy::WorkplaneUnitQuaternion),
+                            residual: unit_quaternion_residual(&parts.quaternion),
+                        },
+                        SketchResidualForm {
+                            kind: SketchResidualFormKind::ProjectedDirectionCrossProductPolynomial,
+                            role: SketchResidualFormRole::ExactProof,
+                            strategy: Some(
+                                SketchResidualStrategy::ProjectedDirectionSameOrientation,
+                            ),
+                            residual: parts.cross,
+                        },
+                        SketchResidualForm {
+                            kind:
+                                SketchResidualFormKind::ProjectedDirectionSameOrientationPredicate,
+                            role: SketchResidualFormRole::ExactProof,
+                            strategy: Some(
+                                SketchResidualStrategy::ProjectedDirectionSameOrientation,
+                            ),
                             residual: parts.dot,
                         },
                     ],
@@ -5862,6 +5946,44 @@ impl SketchSolveProblem {
                     format!("{} projected perpendicular", constraint.name),
                     parts.dot,
                     SketchResidualStrategy::ProjectedDirectionDotProduct,
+                );
+            }
+            SketchConstraintKind::ProjectedSameDirectionLines3 { workplane, a, b } => {
+                // This is the branch-sensitive projected counterpart of
+                // `SameDirectionLines2`: cross == 0 proves common projected
+                // support, and dot >= 0 certifies the same orientation branch.
+                // Both predicates are exact polynomial replay rows under the
+                // retained workplane unit guard, following Yap (1997).
+                let Some(parts) =
+                    self.projected_direction_relation_exprs(workplane, a, b, constraint, rows)
+                else {
+                    return;
+                };
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} workplane unit", constraint.name),
+                    unit_quaternion_residual(&parts.quaternion),
+                    SketchResidualStrategy::WorkplaneUnitQuaternion,
+                );
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} projected parallel support", constraint.name),
+                    parts.cross,
+                    SketchResidualStrategy::ProjectedDirectionSameOrientation,
+                );
+                self.push_residual_with_kind(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} projected orientation", constraint.name),
+                    parts.dot,
+                    SketchResidualStrategy::ProjectedDirectionSameOrientation,
+                    ConstraintKind::GreaterOrEqual,
+                    Real::one(),
                 );
             }
             SketchConstraintKind::AtMidpoint2 { point, a, b } => {

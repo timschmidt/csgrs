@@ -5068,10 +5068,12 @@ fn sketch_projected_line_orientation_lowers_exact_workplane_rows() {
     let px = sketch.add_point3d("px", real(5), real(0), real(11));
     let p2 = sketch.add_point3d("p2", real(1), real(2), real(-7));
     let p2x = sketch.add_point3d("p2x", real(11), real(2), real(17));
+    let p2negx = sketch.add_point3d("p2negx", real(-9), real(2), real(19));
     let py = sketch.add_point3d("py", real(0), real(7), real(23));
     let p2y = sketch.add_point3d("p2y", real(1), real(9), real(31));
     let x = sketch.add_line_segment3("x", p0, px);
     let shifted_x = sketch.add_line_segment3("shifted x", p2, p2x);
+    let reversed_x = sketch.add_line_segment3("reversed x", p2, p2negx);
     let y = sketch.add_line_segment3("y", p0, py);
     let shifted_y = sketch.add_line_segment3("shifted y", p2, p2y);
     let parallel = hypersolve::sketch_orientation_builders::projected_parallel_lines3(
@@ -5095,6 +5097,19 @@ fn sketch_projected_line_orientation_lowers_exact_workplane_rows() {
         x,
         shifted_x,
     );
+    let same_direction = hypersolve::sketch_orientation_builders::projected_same_direction_lines3(
+        &mut sketch,
+        "projected same direction",
+        workplane,
+        x,
+        shifted_x,
+    );
+    sketch.add_projected_same_direction_lines3(
+        "violated projected same direction",
+        workplane,
+        x,
+        reversed_x,
+    );
 
     let report = sketch.lower_to_problem();
 
@@ -5110,8 +5125,12 @@ fn sketch_projected_line_orientation_lowers_exact_workplane_rows() {
         perpendicular.strategy,
         SketchResidualStrategy::ProjectedDirectionDotProduct
     );
+    assert_eq!(
+        same_direction.strategy,
+        SketchResidualStrategy::ProjectedDirectionSameOrientation
+    );
     assert!(report.all_generated());
-    assert_eq!(report.problem.constraints.len(), 8);
+    assert_eq!(report.problem.constraints.len(), 14);
     assert_eq!(
         report.rows[0].strategy,
         Some(SketchResidualStrategy::WorkplaneUnitQuaternion)
@@ -5123,6 +5142,14 @@ fn sketch_projected_line_orientation_lowers_exact_workplane_rows() {
     assert_eq!(
         report.rows[5].strategy,
         Some(SketchResidualStrategy::ProjectedDirectionDotProduct)
+    );
+    assert_eq!(
+        report.rows[9].strategy,
+        Some(SketchResidualStrategy::ProjectedDirectionSameOrientation)
+    );
+    assert_eq!(
+        report.problem.constraints[10].kind,
+        ConstraintKind::GreaterOrEqual
     );
 
     let certification = certify_candidate(
@@ -5145,6 +5172,22 @@ fn sketch_projected_line_orientation_lowers_exact_workplane_rows() {
         certification.rows[7].status,
         CertifiedCandidateStatus::CertifiedViolation { .. }
     ));
+    assert!(matches!(
+        certification.rows[9].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[10].status,
+        CertifiedCandidateStatus::CertifiedSatisfiedInequality { .. }
+    ));
+    assert!(matches!(
+        certification.rows[12].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[13].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
 
     let parallel_forms = sketch.residual_forms_for_constraint(parallel.handle);
     assert_eq!(parallel_forms.status, SketchResidualFormsStatus::Generated);
@@ -5162,6 +5205,25 @@ fn sketch_projected_line_orientation_lowers_exact_workplane_rows() {
     assert_eq!(
         perpendicular_forms.forms[1].kind,
         SketchResidualFormKind::ProjectedDirectionDotProductPolynomial
+    );
+
+    let same_direction_forms = sketch.residual_forms_for_constraint(same_direction.handle);
+    assert_eq!(
+        same_direction_forms.status,
+        SketchResidualFormsStatus::Generated
+    );
+    assert_eq!(same_direction_forms.forms.len(), 3);
+    assert_eq!(
+        same_direction_forms.forms[1].kind,
+        SketchResidualFormKind::ProjectedDirectionCrossProductPolynomial
+    );
+    assert_eq!(
+        same_direction_forms.forms[2].kind,
+        SketchResidualFormKind::ProjectedDirectionSameOrientationPredicate
+    );
+    assert_eq!(
+        same_direction_forms.forms[2].role,
+        SketchResidualFormRole::ExactProof
     );
 
     let p2a = sketch.add_point2d("wrong 2d a", real(0), real(0));

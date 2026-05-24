@@ -557,6 +557,13 @@ fn sketch_problem_with_projected_line_orientation_relations(
             x,
             y_line,
         );
+        hypersolve::sketch_orientation_builders::projected_same_direction_lines3(
+            &mut sketch,
+            format!("projected same direction {index}"),
+            workplane,
+            x,
+            x2,
+        );
     }
     sketch
 }
@@ -1751,6 +1758,7 @@ fn certification(c: &mut Criterion) {
                 constraint.kind,
                 hypersolve::SketchConstraintKind::ProjectedParallelLines3 { .. }
                     | hypersolve::SketchConstraintKind::ProjectedPerpendicularLines3 { .. }
+                    | hypersolve::SketchConstraintKind::ProjectedSameDirectionLines3 { .. }
             )
         })
         .map(|constraint| constraint.handle)
