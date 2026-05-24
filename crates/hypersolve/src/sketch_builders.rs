@@ -172,6 +172,41 @@ pub mod tangency {
         }
     }
 
+    /// Add a retained 2D circular-arc/cubic-Bezier tangent relation.
+    ///
+    /// The selected arc endpoint is constrained to the exact cubic point
+    /// `B(t)`, and the arc radius vector is constrained perpendicular to the
+    /// exact cubic derivative `B'(t)` with a retained orientation branch. This
+    /// is the mixed conic/polynomial differential package: it preserves the
+    /// arc endpoint, cubic parameter, and branch as source evidence, then uses
+    /// exact replay for acceptance. The construction follows Yap's "Towards
+    /// Exact Geometric Computation" (1997), with the cubic derivative supplied
+    /// by Farin's Bernstein/de Casteljau control-net formula.
+    pub fn arc_cubic_tangent2(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        arc: SketchEntityHandle,
+        arc_endpoint: SketchArcEndpoint,
+        cubic: SketchEntityHandle,
+        parameter: SketchParameterHandle,
+        orientation: SketchTangentOrientation,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::ArcCubicTangent2 {
+            arc,
+            arc_endpoint,
+            cubic,
+            parameter,
+            orientation,
+        };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Tangency,
+            strategy: SketchResidualStrategy::ArcCubicTangent,
+            kind,
+        }
+    }
+
     /// Add a retained 2D cubic-Bezier/line tangent relation.
     ///
     /// The selected line endpoint is constrained to the exact cubic point

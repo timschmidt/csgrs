@@ -14,7 +14,9 @@
 use hyperreal::{Real, RealSign};
 
 use crate::model::{Constraint, ConstraintKind, Problem, VariableId};
-use crate::sketch_arc_tangent::{ArcLineTangentExprs, arc_line_tangent_exprs};
+use crate::sketch_arc_tangent::{
+    ArcCubicTangentExprs, ArcLineTangentExprs, arc_cubic_tangent_exprs, arc_line_tangent_exprs,
+};
 use crate::sketch_builders::{
     angle, distance, incidence, objective, orientation, ranges, symmetry, tangency,
 };
@@ -590,6 +592,28 @@ pub enum SketchConstraintKind {
         /// Signed orientation branch for the outgoing line tangent.
         orientation: SketchTangentOrientation,
     },
+    /// 2D circular-arc endpoint tangent to a cubic Bezier at a retained parameter.
+    ///
+    /// Lowering evaluates the cubic point and derivative exactly in Bernstein
+    /// form, then emits selected arc endpoint-on-radius, cubic/endpoint
+    /// incidence, radius/cubic-derivative perpendicularity, and a signed
+    /// orientation branch. No radius, speed, or curvature is normalized.
+    /// Degenerate arcs, stationary cubic parameters, and segment-domain policy
+    /// remain explicit report-bearing obligations, following Yap, "Towards
+    /// Exact Geometric Computation" (1997). The derivative control net follows
+    /// Farin's Bernstein/de Casteljau construction.
+    ArcCubicTangent2 {
+        /// Circular arc entity.
+        arc: SketchEntityHandle,
+        /// Endpoint of the arc where tangency is enforced.
+        arc_endpoint: SketchArcEndpoint,
+        /// Retained 2D cubic Bezier entity.
+        cubic: SketchEntityHandle,
+        /// Curve parameter used for point and derivative evaluation.
+        parameter: SketchParameterHandle,
+        /// Signed orientation branch for the outgoing cubic tangent.
+        orientation: SketchTangentOrientation,
+    },
     /// 2D cubic-Bezier tangent to a selected line endpoint at a retained parameter.
     ///
     /// Lowering evaluates the retained cubic point and derivative exactly in
@@ -903,6 +927,8 @@ pub enum SketchResidualStrategy {
     TangentSameDirection,
     /// Exact endpoint/radius/tangent predicate package for retained arc-line tangency.
     ArcLineTangent,
+    /// Exact endpoint/radius/cubic-derivative package for retained arc-cubic tangency.
+    ArcCubicTangent,
     /// Exact point/derivative package for retained cubic-line tangency.
     CubicLineTangent,
     /// Exact point/derivative package for retained cubic-cubic tangency.
@@ -1008,6 +1034,14 @@ pub enum SketchResidualFormKind {
     ArcLineTangentRadiusPerpendicularPolynomial,
     /// Exact signed orientation predicate for arc-line tangency.
     ArcLineTangentOrientationPredicate,
+    /// Exact selected arc endpoint-on-radius proof row for arc-cubic tangency.
+    ArcCubicTangentEndpointRadiusPolynomial,
+    /// Exact cubic point/arc endpoint coordinate-incidence proof row.
+    ArcCubicTangentEndpointIncidencePolynomial,
+    /// Exact radius/cubic-derivative perpendicularity proof row.
+    ArcCubicTangentRadiusPerpendicularPolynomial,
+    /// Exact signed orientation predicate for arc-cubic tangency.
+    ArcCubicTangentOrientationPredicate,
     /// Exact selected endpoint coordinate-incidence proof row for cubic-line tangency.
     CubicLineTangentEndpointIncidencePolynomial,
     /// Exact cubic derivative/line tangent cross-product proof row.
@@ -1647,6 +1681,26 @@ impl SketchSolveProblem {
             orientation,
         )
         .handle
+    }
+
+    /// Add a retained 2D arc/cubic tangent relation with explicit endpoint,
+    /// parameter, and orientation flags.
+    ///
+    /// The selected arc endpoint is constrained to the exact cubic point at
+    /// `parameter`, while the retained radius vector is constrained
+    /// perpendicular to the exact cubic derivative with the requested signed
+    /// branch.
+    pub fn add_arc_cubic_tangent2(
+        &mut self,
+        name: impl Into<String>,
+        arc: SketchEntityHandle,
+        arc_endpoint: SketchArcEndpoint,
+        cubic: SketchEntityHandle,
+        parameter: SketchParameterHandle,
+        orientation: SketchTangentOrientation,
+    ) -> SketchConstraintHandle {
+        tangency::arc_cubic_tangent2(self, name, arc, arc_endpoint, cubic, parameter, orientation)
+            .handle
     }
 
     /// Add a retained 2D cubic-Bezier/line tangent relation.
@@ -2458,6 +2512,69 @@ impl SketchSolveProblem {
                     diagnostics,
                 }
             }
+            SketchConstraintKind::ArcCubicTangent2 {
+                arc,
+                arc_endpoint,
+                cubic,
+                parameter,
+                orientation,
+            } => {
+                let mut diagnostics = Vec::new();
+                let Some(parts) = self.arc_cubic_tangent_exprs(
+                    arc,
+                    arc_endpoint,
+                    cubic,
+                    parameter,
+                    orientation,
+                    constraint,
+                    &mut diagnostics,
+                ) else {
+                    return SketchResidualFormsReport {
+                        constraint: handle,
+                        status: SketchResidualFormsStatus::InvalidInputs,
+                        forms: Vec::new(),
+                        diagnostics,
+                    };
+                };
+                let mut forms = vec![
+                    SketchResidualForm {
+                        kind: SketchResidualFormKind::ArcCubicTangentEndpointRadiusPolynomial,
+                        role: SketchResidualFormRole::ExactProof,
+                        strategy: Some(SketchResidualStrategy::ArcCubicTangent),
+                        residual: parts.arc_endpoint_radius,
+                    },
+                    SketchResidualForm {
+                        kind: SketchResidualFormKind::ArcCubicTangentEndpointIncidencePolynomial,
+                        role: SketchResidualFormRole::ExactProof,
+                        strategy: Some(SketchResidualStrategy::ArcCubicTangent),
+                        residual: parts.endpoint_incidence[0].clone(),
+                    },
+                    SketchResidualForm {
+                        kind: SketchResidualFormKind::ArcCubicTangentEndpointIncidencePolynomial,
+                        role: SketchResidualFormRole::ExactProof,
+                        strategy: Some(SketchResidualStrategy::ArcCubicTangent),
+                        residual: parts.endpoint_incidence[1].clone(),
+                    },
+                    SketchResidualForm {
+                        kind: SketchResidualFormKind::ArcCubicTangentRadiusPerpendicularPolynomial,
+                        role: SketchResidualFormRole::ExactProof,
+                        strategy: Some(SketchResidualStrategy::ArcCubicTangent),
+                        residual: parts.radius_perpendicular,
+                    },
+                ];
+                forms.push(SketchResidualForm {
+                    kind: SketchResidualFormKind::ArcCubicTangentOrientationPredicate,
+                    role: SketchResidualFormRole::ExactProof,
+                    strategy: Some(SketchResidualStrategy::ArcCubicTangent),
+                    residual: parts.orientation,
+                });
+                SketchResidualFormsReport {
+                    constraint: handle,
+                    status: SketchResidualFormsStatus::Generated,
+                    forms,
+                    diagnostics,
+                }
+            }
             SketchConstraintKind::CubicCubicTangent2 {
                 first,
                 first_parameter,
@@ -3156,6 +3273,66 @@ impl SketchSolveProblem {
                     format!("{} cubic tangent orientation", constraint.name),
                     parts.tangent_dot,
                     SketchResidualStrategy::CubicLineTangent,
+                    ConstraintKind::GreaterOrEqual,
+                    Real::one(),
+                );
+            }
+            SketchConstraintKind::ArcCubicTangent2 {
+                arc,
+                arc_endpoint,
+                cubic,
+                parameter,
+                orientation,
+            } => {
+                // This is the retained mixed arc/cubic differential package:
+                // exact arc endpoint/radius validation plus exact Bernstein
+                // point/derivative rows. No tangent vector is normalized, so
+                // stationary parameters and degenerate arcs stay explicit
+                // domain/preflight obligations.
+                let Some(parts) = self.arc_cubic_tangent_exprs(
+                    arc,
+                    arc_endpoint,
+                    cubic,
+                    parameter,
+                    orientation,
+                    constraint,
+                    rows,
+                ) else {
+                    return;
+                };
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} arc endpoint radius", constraint.name),
+                    parts.arc_endpoint_radius,
+                    SketchResidualStrategy::ArcCubicTangent,
+                );
+                for (axis, residual) in parts.endpoint_incidence.into_iter().enumerate() {
+                    self.push_residual(
+                        problem,
+                        rows,
+                        constraint,
+                        format!("{} cubic endpoint coordinate {axis}", constraint.name),
+                        residual,
+                        SketchResidualStrategy::ArcCubicTangent,
+                    );
+                }
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} radius cubic perpendicular", constraint.name),
+                    parts.radius_perpendicular,
+                    SketchResidualStrategy::ArcCubicTangent,
+                );
+                self.push_residual_with_kind(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} cubic tangent orientation", constraint.name),
+                    parts.orientation,
+                    SketchResidualStrategy::ArcCubicTangent,
                     ConstraintKind::GreaterOrEqual,
                     Real::one(),
                 );
@@ -3999,6 +4176,29 @@ impl SketchSolveProblem {
             arc.radius,
             &coordinate_exprs2(&line.endpoint),
             &line.tangent,
+            tangent_orientation_sign(orientation),
+        ))
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn arc_cubic_tangent_exprs(
+        &self,
+        arc: SketchEntityHandle,
+        arc_endpoint: SketchArcEndpoint,
+        cubic: SketchEntityHandle,
+        parameter: SketchParameterHandle,
+        orientation: SketchTangentOrientation,
+        constraint: &SketchConstraint,
+        rows: &mut Vec<SketchGeneratedRow>,
+    ) -> Option<ArcCubicTangentExprs> {
+        let arc = self.arc2_endpoint_parts(arc, arc_endpoint, constraint, rows)?;
+        let cubic = self.cubic2_point_tangent_exprs(cubic, parameter, constraint, rows)?;
+        Some(arc_cubic_tangent_exprs(
+            &coordinate_exprs2(&arc.center),
+            &coordinate_exprs2(&arc.endpoint),
+            arc.radius,
+            &cubic.point,
+            &cubic.tangent,
             tangent_orientation_sign(orientation),
         ))
     }
