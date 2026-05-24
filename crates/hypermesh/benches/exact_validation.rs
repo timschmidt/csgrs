@@ -3468,6 +3468,27 @@ fn exact_boolean_coplanar_convex_surface_multi_union(c: &mut Criterion) {
             ValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
+        let nonconvex_point_touch_left = ExactMesh::from_i64_triangles_with_policy(
+            &[
+                0, 0, 0, 10, 0, 0, 10, 4, 0, 7, 4, 0, 6, 6, 0, 10, 8, 0, 10, 12, 0, 0, 12, 0,
+            ],
+            &[
+                0, 1, 2, //
+                0, 2, 3, //
+                0, 3, 4, //
+                0, 4, 7, //
+                7, 4, 5, //
+                7, 5, 6,
+            ],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let nonconvex_point_touch_right = ExactMesh::from_i64_triangles_with_policy(
+            &[10, 12, 0, 12, 12, 0, 12, 14, 0],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
 
         c.bench_function("exact_boolean_coplanar_convex_surface_multi_union", |b| {
             b.iter(|| {
@@ -3506,6 +3527,10 @@ fn exact_boolean_coplanar_convex_surface_multi_union(c: &mut Criterion) {
                         &edge_touch_left,
                         &vertex_edge_point_touch_right,
                     );
+                let nonconvex_point_touch_arrangement = arrange_coplanar_surface_point_touch_union(
+                    &nonconvex_point_touch_left,
+                    &nonconvex_point_touch_right,
+                );
                 (
                     arrangement
                         .as_ref()
@@ -3598,6 +3623,16 @@ fn exact_boolean_coplanar_convex_surface_multi_union(c: &mut Criterion) {
                         .as_ref()
                         .map(|output| output.validate()),
                     vertex_edge_point_touch_arrangement,
+                    nonconvex_point_touch_arrangement.as_ref().map(|output| {
+                        output.validate_union_against_sources(
+                            &nonconvex_point_touch_left,
+                            &nonconvex_point_touch_right,
+                        )
+                    }),
+                    nonconvex_point_touch_arrangement
+                        .as_ref()
+                        .map(|output| output.validate()),
+                    nonconvex_point_touch_arrangement,
                     hypermesh::exact::preflight_boolean_exact(
                         &left,
                         &right,
@@ -3670,6 +3705,24 @@ fn exact_boolean_coplanar_convex_surface_multi_union(c: &mut Criterion) {
                         hypermesh::exact::ExactBooleanOperation::Union,
                     )
                     .map(|report| report.validate()),
+                    hypermesh::exact::preflight_boolean_exact(
+                        &nonconvex_point_touch_left,
+                        &nonconvex_point_touch_right,
+                        hypermesh::exact::ExactBooleanOperation::Union,
+                    )
+                    .map(|report| report.validate()),
+                    hypermesh::exact::preflight_boolean_exact(
+                        &nonconvex_point_touch_left,
+                        &nonconvex_point_touch_right,
+                        hypermesh::exact::ExactBooleanOperation::Intersection,
+                    )
+                    .map(|report| report.validate()),
+                    hypermesh::exact::preflight_boolean_exact(
+                        &nonconvex_point_touch_left,
+                        &nonconvex_point_touch_right,
+                        hypermesh::exact::ExactBooleanOperation::Difference,
+                    )
+                    .map(|report| report.validate()),
                     hypermesh::exact::boolean_exact(
                         &left,
                         &right,
@@ -3751,6 +3804,27 @@ fn exact_boolean_coplanar_convex_surface_multi_union(c: &mut Criterion) {
                         &edge_touch_left,
                         &vertex_edge_point_touch_right,
                         hypermesh::exact::ExactBooleanOperation::Union,
+                        ValidationPolicy::ALLOW_BOUNDARY,
+                    )
+                    .unwrap(),
+                    hypermesh::exact::boolean_exact(
+                        &nonconvex_point_touch_left,
+                        &nonconvex_point_touch_right,
+                        hypermesh::exact::ExactBooleanOperation::Union,
+                        ValidationPolicy::ALLOW_BOUNDARY,
+                    )
+                    .unwrap(),
+                    hypermesh::exact::boolean_exact(
+                        &nonconvex_point_touch_left,
+                        &nonconvex_point_touch_right,
+                        hypermesh::exact::ExactBooleanOperation::Intersection,
+                        ValidationPolicy::ALLOW_BOUNDARY,
+                    )
+                    .unwrap(),
+                    hypermesh::exact::boolean_exact(
+                        &nonconvex_point_touch_left,
+                        &nonconvex_point_touch_right,
+                        hypermesh::exact::ExactBooleanOperation::Difference,
                         ValidationPolicy::ALLOW_BOUNDARY,
                     )
                     .unwrap(),

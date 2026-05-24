@@ -1690,6 +1690,89 @@ fn exercise_multi_component_coplanar_union() {
         .validate_union_against_sources(&edge_touch_left, &vertex_edge_right)
         .unwrap();
 
+    let nonconvex_point_touch_left = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            0, 0, 0, 10, 0, 0, 10, 4, 0, 7, 4, 0, 6, 6, 0, 10, 8, 0, 10, 12, 0, 0, 12, 0,
+        ],
+        &[
+            0, 1, 2, //
+            0, 2, 3, //
+            0, 3, 4, //
+            0, 4, 7, //
+            7, 4, 5, //
+            7, 5, 6,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("nonconvex point-touch left fixture must import");
+    let nonconvex_point_touch_right = ExactMesh::from_i64_triangles_with_policy(
+        &[10, 12, 0, 12, 12, 0, 12, 14, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("nonconvex vertex-vertex point-touch fixture must import");
+    let nonconvex_point_touch_union = arrange_coplanar_surface_point_touch_union(
+        &nonconvex_point_touch_left,
+        &nonconvex_point_touch_right,
+    )
+    .expect("nonconvex branch-only point touch should materialize");
+    nonconvex_point_touch_union.validate().unwrap();
+    nonconvex_point_touch_union
+        .validate_union_against_sources(&nonconvex_point_touch_left, &nonconvex_point_touch_right)
+        .unwrap();
+    for operation in [
+        ExactBooleanOperation::Union,
+        ExactBooleanOperation::Intersection,
+        ExactBooleanOperation::Difference,
+    ] {
+        preflight_boolean_exact(
+            &nonconvex_point_touch_left,
+            &nonconvex_point_touch_right,
+            operation,
+        )
+        .expect("nonconvex point-touch preflight should classify")
+        .validate()
+        .unwrap();
+        hypermesh::exact::boolean_exact(
+            &nonconvex_point_touch_left,
+            &nonconvex_point_touch_right,
+            operation,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .expect("nonconvex point-touch boolean shortcut should materialize")
+        .validate()
+        .unwrap();
+    }
+    let nonconvex_vertex_edge_touch_right = ExactMesh::from_i64_triangles_with_policy(
+        &[5, 12, 0, 6, 14, 0, 4, 14, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("nonconvex vertex-edge point-touch fixture must import");
+    let nonconvex_vertex_edge_union = arrange_coplanar_surface_point_touch_union(
+        &nonconvex_point_touch_left,
+        &nonconvex_vertex_edge_touch_right,
+    )
+    .expect("nonconvex vertex-edge branch contact should materialize");
+    nonconvex_vertex_edge_union.validate().unwrap();
+    nonconvex_vertex_edge_union
+        .validate_union_against_sources(
+            &nonconvex_point_touch_left,
+            &nonconvex_vertex_edge_touch_right,
+        )
+        .unwrap();
+    let nonconvex_edge_touch_right = ExactMesh::from_i64_triangles_with_policy(
+        &[4, 12, 0, 6, 12, 0, 6, 14, 0, 4, 14, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("nonconvex edge-contact fixture must import");
+    assert!(arrange_coplanar_surface_point_touch_union(
+        &nonconvex_point_touch_left,
+        &nonconvex_edge_touch_right,
+    )
+    .is_none());
+
     let bridge_left = ExactMesh::from_i64_triangles_with_policy(
         &[
             0, 0, 0, 2, 0, 0, 2, 2, 0, 0, 2, 0, //

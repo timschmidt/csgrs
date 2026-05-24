@@ -13276,6 +13276,170 @@ fn exact_coplanar_surface_point_touch_union_materializes_vertex_edge_contact() {
 
 #[cfg(feature = "exact-triangulation")]
 #[test]
+fn exact_coplanar_nonconvex_surface_point_touch_union_materializes_branch_only_contact() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            0, 0, 0, 10, 0, 0, 10, 4, 0, 7, 4, 0, 6, 6, 0, 10, 8, 0, 10, 12, 0, 0, 12, 0,
+        ],
+        &[
+            0, 1, 2, //
+            0, 2, 3, //
+            0, 3, 4, //
+            0, 4, 7, //
+            7, 4, 5, //
+            7, 5, 6,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let point_touch_right = ExactMesh::from_i64_triangles_with_policy(
+        &[10, 12, 0, 12, 12, 0, 12, 14, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_component_union(&left, &point_touch_right,)
+            .is_none()
+    );
+    let union =
+        hypermesh::exact::arrange_coplanar_surface_point_touch_union(&left, &point_touch_right)
+            .expect("nonconvex source disk with branch-only point contact should materialize");
+    union.validate().unwrap();
+    union
+        .validate_union_against_sources(&left, &point_touch_right)
+        .unwrap();
+    assert_eq!(union.polygons.len(), 2);
+    assert!(union.polygons.iter().any(|polygon| polygon.len() > 4));
+    assert_eq!(
+        union
+            .polygons
+            .iter()
+            .flatten()
+            .filter(|point| real_eq(&point.x, &ExactReal::from(10))
+                && real_eq(&point.y, &ExactReal::from(12)))
+            .count(),
+        2
+    );
+
+    for operation in [
+        hypermesh::exact::ExactBooleanOperation::Union,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    ] {
+        let preflight =
+            hypermesh::exact::preflight_boolean_exact(&left, &point_touch_right, operation)
+                .unwrap();
+        preflight.validate().unwrap();
+        preflight
+            .validate_against_sources(&left, &point_touch_right)
+            .unwrap();
+        assert!(matches!(
+            (operation, preflight.support),
+            (
+                hypermesh::exact::ExactBooleanOperation::Union,
+                hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchUnion
+            ) | (
+                hypermesh::exact::ExactBooleanOperation::Intersection,
+                hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchIntersection
+            ) | (
+                hypermesh::exact::ExactBooleanOperation::Difference,
+                hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference
+            )
+        ));
+        let result = hypermesh::exact::boolean_exact(
+            &left,
+            &point_touch_right,
+            operation,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        result
+            .validate_operation_against_sources(
+                &left,
+                &point_touch_right,
+                operation,
+                ValidationPolicy::ALLOW_BOUNDARY,
+                hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+            )
+            .unwrap();
+    }
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
+fn exact_coplanar_nonconvex_surface_point_touch_union_splits_vertex_edge_contact() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            0, 0, 0, 10, 0, 0, 10, 4, 0, 7, 4, 0, 6, 6, 0, 10, 8, 0, 10, 12, 0, 0, 12, 0,
+        ],
+        &[
+            0, 1, 2, //
+            0, 2, 3, //
+            0, 3, 4, //
+            0, 4, 7, //
+            7, 4, 5, //
+            7, 5, 6,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let vertex_edge_right = ExactMesh::from_i64_triangles_with_policy(
+        &[5, 12, 0, 6, 14, 0, 4, 14, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+
+    let union =
+        hypermesh::exact::arrange_coplanar_surface_point_touch_union(&left, &vertex_edge_right)
+            .expect("nonconvex source vertex-edge point contact should split the source edge");
+    union.validate().unwrap();
+    union
+        .validate_union_against_sources(&left, &vertex_edge_right)
+        .unwrap();
+    assert!(union.polygons.iter().any(|polygon| {
+        polygon.len() > 8
+            && polygon.iter().any(|point| {
+                real_eq(&point.x, &ExactReal::from(5)) && real_eq(&point.y, &ExactReal::from(12))
+            })
+    }));
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
+fn exact_coplanar_nonconvex_surface_point_touch_union_rejects_positive_edge_contact() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            0, 0, 0, 10, 0, 0, 10, 4, 0, 7, 4, 0, 6, 6, 0, 10, 8, 0, 10, 12, 0, 0, 12, 0,
+        ],
+        &[
+            0, 1, 2, //
+            0, 2, 3, //
+            0, 3, 4, //
+            0, 4, 7, //
+            7, 4, 5, //
+            7, 5, 6,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let edge_touch_right = ExactMesh::from_i64_triangles_with_policy(
+        &[4, 12, 0, 6, 12, 0, 6, 14, 0, 4, 14, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_point_touch_union(&left, &edge_touch_right)
+            .is_none()
+    );
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
 fn exact_coplanar_surface_point_touch_union_materializes_multiple_branch_components() {
     let left = ExactMesh::from_i64_triangles_with_policy(
         &[

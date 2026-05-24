@@ -3148,6 +3148,43 @@ impl ConvexUnionComponent {
     }
 }
 
+/// A retained point-touch component for branch-only coplanar unions.
+///
+/// Convex inputs keep using [`ConvexUnionComponent`] in the original fast
+/// path. This type is the nonconvex-capable fallback: each connected source
+/// component is imported either as its exact convex hull or as one certified
+/// simple source boundary from [`SimpleSurfaceComponent`]. The output remains
+/// a list of source-owned disks, so it follows Yap's retained-object model
+/// from "Towards Exact Geometric Computation," *Computational Geometry*
+/// 7.1-2 (1997), instead of collapsing a branch vertex into an opaque
+/// triangle soup.
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Debug)]
+struct PointTouchSourceComponent {
+    side: MultiUnionSide,
+    projection: CoplanarProjection,
+    polygon: Vec<Point3>,
+}
+
+#[cfg(feature = "exact-triangulation")]
+impl PointTouchSourceComponent {
+    fn from_mesh(side: MultiUnionSide, mesh: ExactMesh) -> Option<Self> {
+        if let Some(component) = ConvexUnionComponent::from_mesh(side, mesh.clone()) {
+            return Some(Self {
+                side,
+                projection: component.projection,
+                polygon: component.hull,
+            });
+        }
+        let component = SimpleSurfaceComponent::from_mesh(mesh)?;
+        Some(Self {
+            side,
+            projection: component.projection,
+            polygon: component.boundary,
+        })
+    }
+}
+
 /// A connected coplanar source component with one retained simple boundary.
 ///
 /// This is the nonconvex-source counterpart to [`ConvexUnionComponent`]. It is
@@ -4103,14 +4140,23 @@ pub fn arrange_coplanar_surface_point_touch_union(
     }
 
     let mut components = Vec::new();
-    for mesh in left_components {
-        components.push(ConvexUnionComponent::from_mesh(MultiUnionSide::Left, mesh)?);
+    for mesh in left_components.iter().cloned() {
+        let Some(component) = ConvexUnionComponent::from_mesh(MultiUnionSide::Left, mesh) else {
+            return arrange_coplanar_simple_surface_point_touch_union_from_components(
+                left_components,
+                right_components,
+            );
+        };
+        components.push(component);
     }
-    for mesh in right_components {
-        components.push(ConvexUnionComponent::from_mesh(
-            MultiUnionSide::Right,
-            mesh,
-        )?);
+    for mesh in right_components.iter().cloned() {
+        let Some(component) = ConvexUnionComponent::from_mesh(MultiUnionSide::Right, mesh) else {
+            return arrange_coplanar_simple_surface_point_touch_union_from_components(
+                left_components,
+                right_components,
+            );
+        };
+        components.push(component);
     }
     let projection = components.first()?.projection;
     if components
@@ -4224,6 +4270,129 @@ pub fn arrange_coplanar_surface_point_touch_union(
         &polygons,
         projection,
         "exact coplanar point-touch surface union",
+    )?;
+    let union = CoplanarSurfacePointTouchUnion {
+        projection,
+        polygons,
+        mesh,
+    };
+    union.validate().ok()?;
+    Some(union)
+}
+
+/// Materialize nonconvex-capable coplanar unions that meet only at points.
+///
+/// This is the simple-loop sibling of
+/// [`arrange_coplanar_surface_point_touch_union`]'s convex-hull path. It is
+/// intentionally narrow: every connected input component must certify as one
+/// source-owned disk; same-side loops must be disjoint; cross-side loops may
+/// only have exact vertex-vertex or vertex-edge point contacts. Vertex-edge
+/// contacts are promoted to shared retained vertices before triangulation so
+/// branch incidence is explicit. The segment rejection predicates follow
+/// Guigue and Devillers, "Fast and Robust Triangle-Triangle Overlap Test Using
+/// Orientation Predicates," *Journal of Graphics Tools* 8.1 (2003), while
+/// simple-loop location and triangulation use Held, "FIST: Fast
+/// Industrial-Strength Triangulation of Polygons," *Algorithmica* 30 (2001).
+/// The retained branch topology follows Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997).
+#[cfg(feature = "exact-triangulation")]
+fn arrange_coplanar_simple_surface_point_touch_union_from_components(
+    left_components: Vec<ExactMesh>,
+    right_components: Vec<ExactMesh>,
+) -> Option<CoplanarSurfacePointTouchUnion> {
+    if left_components.is_empty() || right_components.is_empty() {
+        return None;
+    }
+    let mut components = Vec::new();
+    for mesh in left_components {
+        components.push(PointTouchSourceComponent::from_mesh(
+            MultiUnionSide::Left,
+            mesh,
+        )?);
+    }
+    for mesh in right_components {
+        components.push(PointTouchSourceComponent::from_mesh(
+            MultiUnionSide::Right,
+            mesh,
+        )?);
+    }
+    let projection = components.first()?.projection;
+    if components
+        .iter()
+        .any(|component| component.projection != projection)
+    {
+        return None;
+    }
+
+    let left_loops = components
+        .iter()
+        .filter(|component| component.side == MultiUnionSide::Left)
+        .map(|component| component.polygon.clone())
+        .collect::<Vec<_>>();
+    let right_loops = components
+        .iter()
+        .filter(|component| component.side == MultiUnionSide::Right)
+        .map(|component| component.polygon.clone())
+        .collect::<Vec<_>>();
+    validate_simple_component_loops_disjoint(
+        &left_loops,
+        projection,
+        "coplanar nonconvex point-touch surface union",
+    )
+    .ok()?;
+    validate_simple_component_loops_disjoint(
+        &right_loops,
+        projection,
+        "coplanar nonconvex point-touch surface union",
+    )
+    .ok()?;
+
+    let mut saw_point_touch = false;
+    let mut split_points = components
+        .iter()
+        .map(|component| component.polygon.clone())
+        .collect::<Vec<_>>();
+    for left_index in 0..components.len() {
+        for right_index in left_index + 1..components.len() {
+            if components[left_index].side == components[right_index].side {
+                continue;
+            }
+            let contact = simple_vertex_point_contact_plan(
+                &components[left_index].polygon,
+                &components[right_index].polygon,
+                projection,
+            )?;
+            match contact.relation {
+                VertexPointContactRelation::Disjoint => {}
+                VertexPointContactRelation::PointOnly => {
+                    saw_point_touch = true;
+                    split_points[left_index].extend(contact.left_split_points);
+                    split_points[right_index].extend(contact.right_split_points);
+                }
+                VertexPointContactRelation::InvalidBoundaryContact => return None,
+            }
+        }
+    }
+    if !saw_point_touch {
+        return None;
+    }
+
+    let mut polygons = components
+        .iter()
+        .zip(split_points.iter_mut())
+        .map(|(component, points)| {
+            dedup_points(points);
+            split_polygon_at_boundary_points(&component.polygon, points, projection)
+        })
+        .collect::<Option<Vec<_>>>()?;
+    for polygon in &mut polygons {
+        orient_polygon_ccw(polygon, projection)?;
+    }
+    sort_polygons_for_replay(&mut polygons, projection);
+    let mesh = polygons_to_retained_simple_open_mesh_with_label(
+        &polygons,
+        projection,
+        "exact coplanar nonconvex point-touch surface union",
     )?;
     let union = CoplanarSurfacePointTouchUnion {
         projection,
@@ -7585,6 +7754,110 @@ fn vertex_point_contact_plan(
     })
 }
 
+/// Plan exact point contacts between two retained simple polygon loops.
+///
+/// Unlike [`vertex_point_contact_plan`], this helper cannot use convex
+/// half-space tests. It first classifies vertices with the same
+/// FIST-backed simple-polygon location predicate used by nonconvex surface
+/// validation, then checks every segment pair with exact orientation
+/// predicates. Positive-area overlap, proper crossings, and collinear edge
+/// contact are rejected; vertex-edge touches are returned as split points so
+/// the caller can retain the branch vertex explicitly. This is the bounded
+/// exact-computation discipline described by Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997), with segment
+/// predicates following Guigue and Devillers (2003).
+#[cfg(feature = "exact-triangulation")]
+fn simple_vertex_point_contact_plan(
+    left: &[Point3],
+    right: &[Point3],
+    projection: CoplanarProjection,
+) -> Option<VertexPointContactPlan> {
+    let mut touched = false;
+    let mut left_split_points = left.to_vec();
+    let mut right_split_points = right.to_vec();
+    for point in left {
+        match simple_polygon_location(point, right, projection)? {
+            ConvexPolygonLocation::Outside => {}
+            ConvexPolygonLocation::Inside => {
+                return Some(VertexPointContactPlan::invalid());
+            }
+            ConvexPolygonLocation::Boundary => {
+                right_split_points.push(point.clone());
+                touched = true;
+            }
+        }
+    }
+    for point in right {
+        match simple_polygon_location(point, left, projection)? {
+            ConvexPolygonLocation::Outside => {}
+            ConvexPolygonLocation::Inside => {
+                return Some(VertexPointContactPlan::invalid());
+            }
+            ConvexPolygonLocation::Boundary => {
+                left_split_points.push(point.clone());
+                touched = true;
+            }
+        }
+    }
+
+    for left_edge in 0..left.len() {
+        let left_start = project_point(&left[left_edge], projection);
+        let left_end = project_point(&left[(left_edge + 1) % left.len()], projection);
+        for right_edge in 0..right.len() {
+            let right_start = project_point(&right[right_edge], projection);
+            let right_end = project_point(&right[(right_edge + 1) % right.len()], projection);
+            match classify_segment_intersection(&left_start, &left_end, &right_start, &right_end)
+                .value()?
+            {
+                SegmentIntersection::Disjoint => {}
+                SegmentIntersection::EndpointTouch => {
+                    let left_a = &left[left_edge];
+                    let left_b = &left[(left_edge + 1) % left.len()];
+                    let right_a = &right[right_edge];
+                    let right_b = &right[(right_edge + 1) % right.len()];
+                    let mut edge_touched = false;
+                    for point in [left_a, left_b] {
+                        if point_on_projected_segment(right_a, right_b, point, projection) {
+                            right_split_points.push(point.clone());
+                            edge_touched = true;
+                        }
+                    }
+                    for point in [right_a, right_b] {
+                        if point_on_projected_segment(left_a, left_b, point, projection) {
+                            left_split_points.push(point.clone());
+                            edge_touched = true;
+                        }
+                    }
+                    if !edge_touched {
+                        return Some(VertexPointContactPlan::invalid());
+                    }
+                    touched = true;
+                }
+                SegmentIntersection::Proper
+                | SegmentIntersection::CollinearOverlap
+                | SegmentIntersection::Identical => {
+                    return Some(VertexPointContactPlan::invalid());
+                }
+            }
+        }
+    }
+    dedup_points(&mut left_split_points);
+    dedup_points(&mut right_split_points);
+    Some(if touched {
+        VertexPointContactPlan {
+            relation: VertexPointContactRelation::PointOnly,
+            left_split_points,
+            right_split_points,
+        }
+    } else {
+        VertexPointContactPlan {
+            relation: VertexPointContactRelation::Disjoint,
+            left_split_points: Vec::new(),
+            right_split_points: Vec::new(),
+        }
+    })
+}
+
 #[cfg(feature = "exact-triangulation")]
 impl VertexPointContactPlan {
     fn invalid() -> Self {
@@ -10253,6 +10526,146 @@ fn polygons_to_earcut_open_mesh_with_label(
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .ok()
+}
+
+/// Triangulate simple loops while preserving every retained boundary vertex.
+///
+/// `hypertri`'s FIST-style earcut handoff is the preferred triangulator for
+/// nonconvex loops, following Held, "FIST: Fast Industrial-Strength
+/// Triangulation of Polygons," *Algorithmica* 30 (2001). Some point-touch
+/// branch certificates intentionally introduce a collinear vertex on a source
+/// edge; a triangulator may omit that coordinate from triangles while still
+/// covering the area. Yap's "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997), requires us to retain that branch
+/// vertex as combinatorial state, so this helper falls back to an exact
+/// predicate ear clipper when the earcut mesh does not use all retained
+/// vertices.
+#[cfg(feature = "exact-triangulation")]
+fn polygons_to_retained_simple_open_mesh_with_label(
+    polygons: &[Vec<Point3>],
+    projection: CoplanarProjection,
+    label: &'static str,
+) -> Option<ExactMesh> {
+    if polygons.is_empty() || polygons.iter().any(|polygon| polygon.len() < 3) {
+        return None;
+    }
+    let mut vertices = Vec::new();
+    let mut triangles = Vec::new();
+    for polygon in polygons {
+        let offset = vertices.len();
+        let mesh = polygon_to_retained_simple_open_mesh_with_label(polygon, projection, label)?;
+        vertices.extend(mesh.vertices().iter().cloned());
+        triangles.extend(mesh.triangles().iter().map(|triangle| {
+            let [a, b, c] = triangle.0;
+            Triangle([a + offset, b + offset, c + offset])
+        }));
+    }
+    ExactMesh::new_with_policy(
+        vertices,
+        triangles,
+        SourceProvenance::exact(label),
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .ok()
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn polygon_to_retained_simple_open_mesh_with_label(
+    polygon: &[Point3],
+    projection: CoplanarProjection,
+    label: &'static str,
+) -> Option<ExactMesh> {
+    if let Some(mesh) = polygon_to_earcut_open_mesh_with_label(polygon, projection, label) {
+        if validate_mesh_uses_all_retained_vertices(
+            &mesh,
+            polygon.len(),
+            label,
+            "surface mesh leaves a retained branch vertex unused",
+        )
+        .is_ok()
+        {
+            return Some(mesh);
+        }
+    }
+
+    let vertices = polygon
+        .iter()
+        .map(|point| ExactPoint3::new(point.x.clone(), point.y.clone(), point.z.clone()))
+        .collect::<Vec<_>>();
+    let triangles = retained_simple_polygon_ear_clip_triangles(polygon, projection)?;
+    ExactMesh::new_with_policy(
+        vertices,
+        triangles,
+        SourceProvenance::exact(label),
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .ok()
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn retained_simple_polygon_ear_clip_triangles(
+    polygon: &[Point3],
+    projection: CoplanarProjection,
+) -> Option<Vec<Triangle>> {
+    if polygon.len() < 3 {
+        return None;
+    }
+    let mut ring = (0..polygon.len()).collect::<Vec<_>>();
+    let mut triangles = Vec::with_capacity(polygon.len().saturating_sub(2));
+    while ring.len() > 3 {
+        let mut clipped = false;
+        for cursor in 0..ring.len() {
+            let prev = ring[(cursor + ring.len() - 1) % ring.len()];
+            let curr = ring[cursor];
+            let next = ring[(cursor + 1) % ring.len()];
+            if !is_positive_projected_triangle(polygon, [prev, curr, next], projection)? {
+                continue;
+            }
+            let ear = triangle_points(polygon, [prev, curr, next]);
+            let mut blocked = false;
+            for &candidate in &ring {
+                if candidate == prev || candidate == curr || candidate == next {
+                    continue;
+                }
+                match point_in_projected_triangle(&polygon[candidate], &ear, projection)? {
+                    TriangleLocation::Outside | TriangleLocation::Degenerate => {}
+                    TriangleLocation::Inside
+                    | TriangleLocation::OnEdge
+                    | TriangleLocation::OnVertex => {
+                        blocked = true;
+                        break;
+                    }
+                }
+            }
+            if blocked {
+                continue;
+            }
+            triangles.push(Triangle([prev, curr, next]));
+            ring.remove(cursor);
+            clipped = true;
+            break;
+        }
+        if !clipped {
+            return None;
+        }
+    }
+    let final_triangle = [ring[0], ring[1], ring[2]];
+    if !is_positive_projected_triangle(polygon, final_triangle, projection)? {
+        return None;
+    }
+    triangles.push(Triangle(final_triangle));
+    Some(triangles)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn is_positive_projected_triangle(
+    polygon: &[Point3],
+    triangle: [usize; 3],
+    projection: CoplanarProjection,
+) -> Option<bool> {
+    let points = triangle_points(polygon, triangle);
+    let area = projected_area2_signed(&points, projection)?;
+    Some(compare_reals(&area, &ExactReal::from(0)).value() == Some(Ordering::Greater))
 }
 
 /// Triangulate weakly convex point-touch components without dropping splits.
