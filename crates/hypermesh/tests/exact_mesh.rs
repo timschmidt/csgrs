@@ -14846,6 +14846,125 @@ fn exact_coplanar_surface_component_holed_union_materializes_nonconvex_positive_
 
 #[cfg(feature = "exact-triangulation")]
 #[test]
+fn exact_coplanar_surface_component_holed_union_materializes_point_branch_component() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            -1, 5, 0, 0, 2, 0, 2, 0, 0, 5, -1, 0, //
+            1, -5, 0, 0, -2, 0, -2, 0, 0, -5, 1, 0, //
+            5, 1, 0, 7, 1, 0, 6, 3, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7, //
+            8, 9, 10,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let right = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            5, 1, 0, 2, 0, 0, 0, -2, 0, 1, -5, 0, //
+            -5, -1, 0, -2, 0, 0, 0, 2, 0, -1, 5, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+
+    assert!(hypermesh::exact::arrange_coplanar_surface_component_union(&left, &right).is_none());
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_multi_component_union(&left, &right).is_none()
+    );
+    assert!(hypermesh::exact::arrange_coplanar_surface_point_touch_union(&left, &right).is_none());
+
+    let union = hypermesh::exact::arrange_coplanar_surface_component_holed_union(&left, &right)
+        .expect("point-branched component plus annulus should replay as component-holed union");
+    union.validate().unwrap();
+    union.validate_union_against_sources(&left, &right).unwrap();
+    assert_eq!(union.components.len(), 2);
+    assert_eq!(
+        union
+            .components
+            .iter()
+            .map(|component| component.holes.len())
+            .sum::<usize>(),
+        1
+    );
+    assert!(
+        union
+            .components
+            .iter()
+            .any(|component| component.holes.len() == 1)
+    );
+    assert!(
+        union
+            .components
+            .iter()
+            .any(|component| component.holes.is_empty())
+    );
+    let branch = p3(5, 1, 0);
+    assert_eq!(
+        union
+            .components
+            .iter()
+            .filter(|component| component
+                .outer
+                .iter()
+                .any(|point| real_eq(&point.x, &branch.x)
+                    && real_eq(&point.y, &branch.y)
+                    && real_eq(&point.z, &branch.z)))
+            .count(),
+        2
+    );
+
+    let mut merged_branch = union.clone();
+    let empty_component = merged_branch
+        .components
+        .iter()
+        .position(|component| component.holes.is_empty())
+        .unwrap();
+    merged_branch.components.remove(empty_component);
+    assert!(
+        merged_branch
+            .validate_union_against_sources(&left, &right)
+            .is_err()
+    );
+
+    let preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+    )
+    .unwrap();
+    preflight.validate().unwrap();
+    preflight.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
+    );
+
+    hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap()
+    .validate_operation_against_sources(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
 fn exact_coplanar_surface_component_holed_union_materializes_disconnected_annuli() {
     let left = ExactMesh::from_i64_triangles_with_policy(
         &[

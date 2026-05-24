@@ -4141,15 +4141,18 @@ pub fn arrange_coplanar_surface_multi_component_union(
 /// bounded positive-area overlaps whose source disks replay either directly as
 /// convex regions or as a small exact ear-clipped triangle set, rejects
 /// point-only connectivity, and then stitches exposed source boundary
-/// fragments into retained rings.
+/// fragments into retained rings. Point-only cross contacts may coexist only
+/// as lower-dimensional branches between final retained components; they split
+/// retained rings but never join the contact graph.
 /// Acceptance is component-local: each contact-connected source group,
 /// including the two-disk case where two nonconvex source sheets form one
 /// annulus, must replay as one outer loop with zero or more strict hole loops,
 /// at least one emitted component must retain a hole, and every component
 /// must satisfy exact area equality against the source loops that produced it.
-/// Disconnected annular groups are therefore materialized in one retained
-/// object, while point branches and non-simple planar subdivisions remain
-/// outside this bounded path.
+/// Disconnected annular groups and bounded branch-adjacent components are
+/// therefore materialized in one retained object, while point branches inside
+/// a positive-contact group and non-simple planar subdivisions remain outside
+/// this bounded path.
 ///
 /// The exposed-boundary traversal follows the Weiler-Atherton boundary
 /// fragment model (Weiler and Atherton, "Hidden Surface Removal Using Polygon
@@ -4241,6 +4244,11 @@ pub fn arrange_coplanar_surface_component_holed_union(
     let mut contact_graph = UnionFind::new(components.len());
     let mut saw_positive_cross_contact = false;
     let mut positive_area_contacts = Vec::new();
+    let mut point_only_contacts = Vec::new();
+    let mut split_points = components
+        .iter()
+        .map(|component| component.polygon.clone())
+        .collect::<Vec<_>>();
     for left_index in 0..components.len() {
         for right_index in left_index + 1..components.len() {
             let contact = simple_polygon_contact(
@@ -4261,7 +4269,17 @@ pub fn arrange_coplanar_surface_component_holed_union(
                     contact_graph.union(left_index, right_index);
                 }
                 SimplePolygonContact::PointOnly => {
-                    return None;
+                    let plan = simple_vertex_point_contact_plan(
+                        &components[left_index].polygon,
+                        &components[right_index].polygon,
+                        projection,
+                    )?;
+                    if plan.relation != VertexPointContactRelation::PointOnly {
+                        return None;
+                    }
+                    split_points[left_index].extend(plan.left_split_points);
+                    split_points[right_index].extend(plan.right_split_points);
+                    point_only_contacts.push((left_index, right_index));
                 }
                 SimplePolygonContact::PositiveArea => {
                     saw_positive_cross_contact = true;
@@ -4274,14 +4292,25 @@ pub fn arrange_coplanar_surface_component_holed_union(
     if !saw_positive_cross_contact {
         return None;
     }
+    for &(left_index, right_index) in &point_only_contacts {
+        if contact_graph.find(left_index) == contact_graph.find(right_index) {
+            return None;
+        }
+    }
     let groups = component_holed_union_contact_groups(&mut contact_graph, components.len());
     let mut retained_components = Vec::with_capacity(groups.len());
     for group in groups {
+        let mut group_split_points = group
+            .iter()
+            .flat_map(|&member| split_points[member].iter().cloned())
+            .collect::<Vec<_>>();
+        dedup_points(&mut group_split_points);
         retained_components.push(component_holed_union_component_from_group(
             &components,
             &group,
             projection,
             component_holed_union_group_has_positive_area_overlap(&group, &positive_area_contacts),
+            &group_split_points,
         )?);
     }
     if !retained_components
@@ -4352,13 +4381,16 @@ fn component_holed_union_group_has_positive_area_overlap(
 /// Chapter 2. Nonconvex positive-area overlaps are accepted only after exact
 /// ear clipping decomposes each simple source loop into a small set of convex
 /// retained triangles, preserving Yap's exact-object paradigm without widening
-/// this shortcut into a general planar arrangement engine.
+/// this shortcut into a general planar arrangement engine. Exact point
+/// contacts are lower-dimensional facts: they are inserted as retained split
+/// vertices on the output rings but do not contribute area or connectivity.
 #[cfg(feature = "exact-triangulation")]
 fn component_holed_union_component_from_group(
     components: &[PointTouchSourceComponent],
     group: &[usize],
     projection: CoplanarProjection,
     has_positive_area_overlap: bool,
+    split_points: &[Point3],
 ) -> Option<CoplanarConvexHoledComponent> {
     let source_loops = group
         .iter()
@@ -4366,6 +4398,7 @@ fn component_holed_union_component_from_group(
         .collect::<Vec<_>>();
     if source_loops.len() == 1 {
         let mut outer = source_loops.into_iter().next()?;
+        outer = split_polygon_at_boundary_points(&outer, split_points, projection)?;
         orient_polygon_ccw(&mut outer, projection)?;
         outer = simplify_projected_polygon(outer, projection);
         validate_projected_simple_loop(&outer, projection, "coplanar component-holed union")
@@ -4393,6 +4426,14 @@ fn component_holed_union_component_from_group(
         *hole = simplify_projected_polygon(core::mem::take(hole), projection);
     }
     sort_polygons_for_replay(&mut holes, projection);
+    outer = split_polygon_at_boundary_points(&outer, split_points, projection)?;
+    orient_polygon_ccw(&mut outer, projection)?;
+    outer = simplify_projected_polygon(outer, projection);
+    for hole in &mut holes {
+        *hole = split_polygon_at_boundary_points(hole, split_points, projection)?;
+        orient_polygon_cw(hole, projection)?;
+        *hole = simplify_projected_polygon(core::mem::take(hole), projection);
+    }
 
     validate_projected_simple_loop(&outer, projection, "coplanar component-holed union").ok()?;
     for hole in &holes {
@@ -13255,7 +13296,9 @@ fn validate_component_holed_surface_output(
         component_ranges.push(component_start..expected_vertices);
         outers.push(component.outer.clone());
     }
-    validate_simple_component_loops_disjoint(&outers, projection, label)?;
+    validate_simple_component_loops_disjoint_allowing_vertex_point_touches(
+        &outers, projection, label,
+    )?;
 
     if mesh.vertices().len() != expected_vertices {
         return Err(surface_validation_error(
@@ -13308,7 +13351,7 @@ fn validate_component_holed_surface_output(
             }
         }
     }
-    validate_mesh_edges_respect_retained_rings(
+    validate_mesh_edges_respect_retained_rings_allowing_exact_endpoint_touches(
         mesh,
         projection,
         &retained_rings,
@@ -13321,8 +13364,9 @@ fn validate_component_holed_surface_output(
         label,
         "component-holed mesh leaves a retained ring vertex unused",
     )?;
-    validate_mesh_boundary_matches_retained_rings(
+    validate_mesh_boundary_matches_retained_rings_allowing_collinear_splits(
         mesh,
+        projection,
         &retained_rings,
         label,
         "component-holed mesh boundary does not match retained rings",
