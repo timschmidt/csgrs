@@ -457,6 +457,28 @@ pub enum SketchConstraintKind {
         /// Distance entity.
         distance: SketchEntityHandle,
     },
+    /// Equality between two point-line distances after workplane projection.
+    ///
+    /// Lowering projects both 3D point/line pairs into the retained workplane
+    /// frame and cross-multiplies their squared distance expressions:
+    /// `cross(a)^2 * |line_b_uv|^2 - cross(b)^2 * |line_a_uv|^2 == 0`.
+    /// This keeps both line-length denominators explicit and avoids square
+    /// roots or normalized projected line coordinates. The proof boundary
+    /// follows Yap, "Towards Exact Geometric Computation" (1997); the
+    /// workplane axes use Shoemake's unit-quaternion rotation matrix from
+    /// "Animating Rotation with Quaternion Curves" (1985).
+    ProjectedEqualPointLineDistances3 {
+        /// Workplane entity that supplies origin and normal/quaternion.
+        workplane: SketchEntityHandle,
+        /// First 3D point entity.
+        a_point: SketchEntityHandle,
+        /// First 3D line segment entity.
+        a_line: SketchEntityHandle,
+        /// Second 3D point entity.
+        b_point: SketchEntityHandle,
+        /// Second 3D line segment entity.
+        b_line: SketchEntityHandle,
+    },
     /// Equal projected lengths for two 3D line segments in a retained workplane.
     ///
     /// Lowering projects both 3D line directions into the retained workplane
@@ -1126,6 +1148,8 @@ pub enum SketchResidualStrategy {
     SquaredProjectedLineLengthDifference,
     /// Squared equality between projected 3D line length and projected point-line distance.
     SquaredProjectedLineLengthPointLineDistance,
+    /// Squared equality between two projected 3D point-line distances.
+    SquaredProjectedEqualPointLineDistances,
     /// Squared 2D line length equality.
     SquaredLineLengthEquality,
     /// Squared 2D line length ratio equality.
@@ -1257,6 +1281,8 @@ pub enum SketchResidualFormKind {
     ProjectedLineLengthDifferenceBranchPredicate,
     /// Squared projected line-length to point-line-distance proof row.
     SquaredProjectedLineLengthPointLineDistancePolynomial,
+    /// Squared equality between two projected point-line distances.
+    SquaredProjectedEqualPointLineDistancesPolynomial,
     /// Positive signed projected point-line distance proposal branch.
     ProjectedPointLineSignedDistancePositiveProposal,
     /// Negative signed projected point-line distance proposal branch.
@@ -2069,6 +2095,25 @@ impl SketchSolveProblem {
             length_line,
             point,
             distance_line,
+        )
+        .handle
+    }
+
+    /// Add a workplane-projected equality between two point-line distances.
+    ///
+    /// Lowering emits the unit-workplane guard plus a denominator-cleared
+    /// polynomial equality between the two projected point-line distances.
+    pub fn add_projected_equal_point_line_distances3(
+        &mut self,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        a_point: SketchEntityHandle,
+        a_line: SketchEntityHandle,
+        b_point: SketchEntityHandle,
+        b_line: SketchEntityHandle,
+    ) -> SketchConstraintHandle {
+        distance::projected_equal_point_line_distances3(
+            self, name, workplane, a_point, a_line, b_point, b_line,
         )
         .handle
     }
@@ -2889,6 +2934,50 @@ impl SketchSolveProblem {
                             ),
                             residual: parts.length_squared * parts.distance_denominator
                                 - parts.distance_numerator,
+                        },
+                    ],
+                    diagnostics,
+                }
+            }
+            SketchConstraintKind::ProjectedEqualPointLineDistances3 {
+                workplane,
+                a_point,
+                a_line,
+                b_point,
+                b_line,
+            } => {
+                let mut diagnostics = Vec::new();
+                let Some(parts) = self.projected_equal_point_line_distances_exprs(
+                    workplane,
+                    [(a_point, a_line), (b_point, b_line)],
+                    constraint,
+                    &mut diagnostics,
+                ) else {
+                    return SketchResidualFormsReport {
+                        constraint: handle,
+                        status: SketchResidualFormsStatus::InvalidInputs,
+                        forms: Vec::new(),
+                        diagnostics,
+                    };
+                };
+                SketchResidualFormsReport {
+                    constraint: handle,
+                    status: SketchResidualFormsStatus::Generated,
+                    forms: vec![
+                        SketchResidualForm {
+                            kind: SketchResidualFormKind::WorkplaneUnitQuaternionPolynomial,
+                            role: SketchResidualFormRole::ExactProof,
+                            strategy: Some(SketchResidualStrategy::WorkplaneUnitQuaternion),
+                            residual: unit_quaternion_residual(&parts.quaternion),
+                        },
+                        SketchResidualForm {
+                            kind: SketchResidualFormKind::SquaredProjectedEqualPointLineDistancesPolynomial,
+                            role: SketchResidualFormRole::ExactProof,
+                            strategy: Some(
+                                SketchResidualStrategy::SquaredProjectedEqualPointLineDistances,
+                            ),
+                            residual: parts.a_numerator * parts.b_denominator
+                                - parts.b_numerator * parts.a_denominator,
                         },
                     ],
                     diagnostics,
@@ -4099,6 +4188,45 @@ impl SketchSolveProblem {
                     format!("{} projected length point-line distance", constraint.name),
                     parts.length_squared * parts.distance_denominator - parts.distance_numerator,
                     SketchResidualStrategy::SquaredProjectedLineLengthPointLineDistance,
+                );
+            }
+            SketchConstraintKind::ProjectedEqualPointLineDistances3 {
+                workplane,
+                a_point,
+                a_line,
+                b_point,
+                b_line,
+            } => {
+                // This is the workplane counterpart of equality between two
+                // point-line distances. Both projected line denominators are
+                // cross-multiplied, so neither distance is normalized through
+                // a lossy proposal coordinate. Yap (1997) keeps that exact
+                // polynomial replay as the trust boundary; Shoemake (1985)
+                // gives the retained quaternion frame polynomial.
+                let Some(parts) = self.projected_equal_point_line_distances_exprs(
+                    workplane,
+                    [(a_point, a_line), (b_point, b_line)],
+                    constraint,
+                    rows,
+                ) else {
+                    return;
+                };
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} workplane unit", constraint.name),
+                    unit_quaternion_residual(&parts.quaternion),
+                    SketchResidualStrategy::WorkplaneUnitQuaternion,
+                );
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} projected equal point-line distances", constraint.name),
+                    parts.a_numerator * parts.b_denominator
+                        - parts.b_numerator * parts.a_denominator,
+                    SketchResidualStrategy::SquaredProjectedEqualPointLineDistances,
                 );
             }
             SketchConstraintKind::EqualLengthLines2 { a, b } => {
@@ -5601,6 +5729,62 @@ impl SketchSolveProblem {
         })
     }
 
+    fn projected_point_line_distance_squared_parts(
+        &self,
+        point: SketchEntityHandle,
+        line: SketchEntityHandle,
+        quaternion: &[Expr; 4],
+        constraint: &SketchConstraint,
+        rows: &mut Vec<SketchGeneratedRow>,
+    ) -> Option<(Expr, Expr)> {
+        let point = self.point3_coordinates(point, constraint, rows)?;
+        let (start, end) = self.line3_points(line, constraint, rows)?;
+        let point_delta = [
+            point.exprs[0].clone() - start.exprs[0].clone(),
+            point.exprs[1].clone() - start.exprs[1].clone(),
+            point.exprs[2].clone() - start.exprs[2].clone(),
+        ];
+        let line_direction = [
+            end.exprs[0].clone() - start.exprs[0].clone(),
+            end.exprs[1].clone() - start.exprs[1].clone(),
+            end.exprs[2].clone() - start.exprs[2].clone(),
+        ];
+        let (signed_cross, denominator) =
+            projected_point_line_distance_squared_parts(&point_delta, &line_direction, quaternion);
+        Some((signed_cross.clone() * signed_cross, denominator))
+    }
+
+    fn projected_equal_point_line_distances_exprs(
+        &self,
+        workplane: SketchEntityHandle,
+        pairs: [(SketchEntityHandle, SketchEntityHandle); 2],
+        constraint: &SketchConstraint,
+        rows: &mut Vec<SketchGeneratedRow>,
+    ) -> Option<ProjectedEqualPointLineDistancesExprs> {
+        let quaternion = self.workplane_quaternion(workplane, constraint, rows)?;
+        let (a_numerator, a_denominator) = self.projected_point_line_distance_squared_parts(
+            pairs[0].0,
+            pairs[0].1,
+            &quaternion,
+            constraint,
+            rows,
+        )?;
+        let (b_numerator, b_denominator) = self.projected_point_line_distance_squared_parts(
+            pairs[1].0,
+            pairs[1].1,
+            &quaternion,
+            constraint,
+            rows,
+        )?;
+        Some(ProjectedEqualPointLineDistancesExprs {
+            quaternion,
+            a_numerator,
+            a_denominator,
+            b_numerator,
+            b_denominator,
+        })
+    }
+
     fn projected_line_length_equality_exprs(
         &self,
         workplane: SketchEntityHandle,
@@ -6268,6 +6452,15 @@ struct ProjectedPointLineDistanceExprs {
     distance_denominator: Expr,
     signed_cross: Expr,
     distance: Expr,
+}
+
+#[derive(Clone, Debug)]
+struct ProjectedEqualPointLineDistancesExprs {
+    quaternion: [Expr; 4],
+    a_numerator: Expr,
+    a_denominator: Expr,
+    b_numerator: Expr,
+    b_denominator: Expr,
 }
 
 #[derive(Clone, Debug)]

@@ -56,6 +56,13 @@ doc = false
 bench = false
 
 [[bin]]
+name = "sketch_projected_equal_point_line_distances"
+path = "fuzz_targets/sketch_projected_equal_point_line_distances.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
 name = "sketch_failed_constraints"
 path = "fuzz_targets/sketch_failed_constraints.rs"
 test = false

@@ -941,6 +941,41 @@ pub mod distance {
             kind,
         }
     }
+
+    /// Add equality between two retained projected 3D point-line distances.
+    ///
+    /// Lowering projects both point/line pairs into the same retained
+    /// workplane frame and replays
+    /// `cross(a)^2 * |line_b_uv|^2 - cross(b)^2 * |line_a_uv|^2 == 0`.
+    /// Cross-multiplication keeps denominator evidence explicit and follows
+    /// Yap, "Towards Exact Geometric Computation" (1997): candidate
+    /// acceptance rests on exact polynomial replay, while degenerate projected
+    /// line carriers remain separate domain obligations. The frame is the
+    /// unit-quaternion construction described by Shoemake (1985).
+    pub fn projected_equal_point_line_distances3(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        a_point: SketchEntityHandle,
+        a_line: SketchEntityHandle,
+        b_point: SketchEntityHandle,
+        b_line: SketchEntityHandle,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::ProjectedEqualPointLineDistances3 {
+            workplane,
+            a_point,
+            a_line,
+            b_point,
+            b_line,
+        };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Distance,
+            strategy: SketchResidualStrategy::SquaredProjectedEqualPointLineDistances,
+            kind,
+        }
+    }
 }
 
 /// Orientation relation builders.
