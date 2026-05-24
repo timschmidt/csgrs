@@ -42,6 +42,13 @@ doc = false
 bench = false
 
 [[bin]]
+name = "sketch_point_on_cubic"
+path = "fuzz_targets/sketch_point_on_cubic.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
 name = "algebraic_mobius"
 path = "fuzz_targets/algebraic_mobius.rs"
 test = false

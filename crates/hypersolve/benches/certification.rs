@@ -606,6 +606,30 @@ fn sketch_problem_with_arc_line_tangent_relations(
     sketch
 }
 
+fn sketch_problem_with_point_on_cubic_relations(
+    row_count: usize,
+) -> hypersolve::SketchSolveProblem {
+    let mut sketch = hypersolve::SketchSolveProblem::new();
+    for index in 0..row_count {
+        let x = index as i64;
+        let p0 = sketch.add_point2d(format!("cubic{index}.p0"), r(x), r(x + 1));
+        let p1 = sketch.add_point2d(format!("cubic{index}.p1"), r(x + 1), r(x + 2));
+        let p2 = sketch.add_point2d(format!("cubic{index}.p2"), r(x + 2), r(x + 3));
+        let p3 = sketch.add_point2d(format!("cubic{index}.p3"), r(x + 3), r(x + 4));
+        let cubic = sketch.add_cubic2(format!("cubic{index}"), p0, p1, p2, p3);
+        let parameter = sketch.add_parameter(format!("cubic{index}.t"), r(1));
+        let point = sketch.add_point2d(format!("cubic{index}.point"), r(x + 3), r(x + 4));
+        hypersolve::sketch_incidence_builders::point_on_cubic2(
+            &mut sketch,
+            format!("point on cubic {index}"),
+            point,
+            cubic,
+            parameter,
+        );
+    }
+    sketch
+}
+
 fn sketch_problem_with_parameter_orderings(row_count: usize) -> hypersolve::SketchSolveProblem {
     let mut sketch = hypersolve::SketchSolveProblem::new();
     let mut previous = sketch.add_parameter("order0", r(0));
@@ -854,6 +878,10 @@ fn certification(c: &mut Criterion) {
     c.bench_function("sketch_arc_line_tangent_lowering", |b| {
         b.iter(|| arc_line_tangent_sketch.lower_to_problem())
     });
+    let point_on_cubic_sketch = sketch_problem_with_point_on_cubic_relations(16);
+    c.bench_function("sketch_point_on_cubic_lowering", |b| {
+        b.iter(|| point_on_cubic_sketch.lower_to_problem())
+    });
     let ordering_sketch = sketch_problem_with_parameter_orderings(16);
     c.bench_function("sketch_parameter_ordering_lowering", |b| {
         b.iter(|| ordering_sketch.lower_to_problem())
@@ -926,6 +954,24 @@ fn certification(c: &mut Criterion) {
         b.iter(|| {
             for handle in &circle_form_handles {
                 let _ = sketch.residual_forms_for_constraint(*handle);
+            }
+        })
+    });
+    let cubic_form_handles = point_on_cubic_sketch
+        .constraints()
+        .iter()
+        .filter(|constraint| {
+            matches!(
+                constraint.kind,
+                hypersolve::SketchConstraintKind::PointOnCubic2 { .. }
+            )
+        })
+        .map(|constraint| constraint.handle)
+        .collect::<Vec<_>>();
+    c.bench_function("sketch_point_on_cubic_residual_forms", |b| {
+        b.iter(|| {
+            for handle in &cubic_form_handles {
+                let _ = point_on_cubic_sketch.residual_forms_for_constraint(*handle);
             }
         })
     });

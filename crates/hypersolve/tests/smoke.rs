@@ -417,6 +417,68 @@ fn sketch_point_on_circle_constraints_retain_exact_and_radial_forms() {
 }
 
 #[test]
+fn sketch_point_on_cubic_constraints_retain_exact_bernstein_rows() {
+    let mut sketch = SketchSolveProblem::new();
+    let p0 = sketch.add_point2d("p0", real(0), real(0));
+    let p1 = sketch.add_point2d("p1", real(2), real(0));
+    let p2 = sketch.add_point2d("p2", real(4), real(0));
+    let p3 = sketch.add_point2d("p3", real(6), real(0));
+    let cubic = sketch.add_cubic2("cubic", p0, p1, p2, p3);
+    let point = sketch.add_point2d("point", real(3), real(0));
+    let parameter = sketch.add_parameter(
+        "t",
+        Real::new(Rational::fraction(1, 2).expect("nonzero denominator")),
+    );
+    sketch.add_parameter_domain(
+        parameter,
+        SketchParameterDomain::Bounded {
+            lower: Some(real(0)),
+            upper: Some(real(1)),
+        },
+    );
+    let relation = sketch_incidence_builders::point_on_cubic2(
+        &mut sketch,
+        "point on cubic",
+        point,
+        cubic,
+        parameter,
+    );
+
+    let lowered = sketch.lower_to_problem();
+    let forms = sketch.residual_forms_for_constraint(relation.handle);
+    let context = context_from_problem(&lowered.problem);
+
+    assert_eq!(
+        relation.family,
+        hypersolve::SketchConstraintFamily::Incidence
+    );
+    assert_eq!(
+        relation.strategy,
+        SketchResidualStrategy::CubicBezierIncidence
+    );
+    assert!(lowered.all_generated());
+    assert_eq!(lowered.problem.constraints.len(), 2);
+    assert!(lowered.rows.iter().all(|row| {
+        row.strategy == Some(SketchResidualStrategy::CubicBezierIncidence)
+            && row.status == SketchGeneratedRowStatus::Generated
+    }));
+    assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+    assert!(forms.diagnostics.is_empty());
+    assert_eq!(forms.forms.len(), 2);
+    assert!(forms.forms.iter().all(|form| {
+        form.kind == SketchResidualFormKind::CubicBezierIncidencePolynomial
+            && form.role == SketchResidualFormRole::ExactProof
+            && form.strategy == Some(SketchResidualStrategy::CubicBezierIncidence)
+    }));
+    for form in &forms.forms {
+        assert_eq!(
+            form.residual.eval_real(context.bindings()).unwrap(),
+            Real::zero()
+        );
+    }
+}
+
+#[test]
 fn sketch_equal_angle_constraints_retain_exact_and_proposal_residual_forms() {
     let mut sketch = SketchSolveProblem::new();
     let origin = sketch.add_point2d("origin", real(0), real(0));
@@ -647,6 +709,15 @@ fn sketch_residual_form_reports_reject_unsupported_and_bad_inputs() {
     );
     assert!(bad_circle_forms.forms.is_empty());
     assert!(!bad_circle_forms.diagnostics.is_empty());
+    let t = sketch.add_parameter("t", real(0));
+    let bad_cubic = sketch.add_point_on_cubic2("bad cubic", point, distance, t);
+    let bad_cubic_forms = sketch.residual_forms_for_constraint(bad_cubic);
+    assert_eq!(
+        bad_cubic_forms.status,
+        SketchResidualFormsStatus::InvalidInputs
+    );
+    assert!(bad_cubic_forms.forms.is_empty());
+    assert!(!bad_cubic_forms.diagnostics.is_empty());
     let bad_angle_forms = sketch.residual_forms_for_constraint(bad_angle.handle);
     assert_eq!(
         bad_angle_forms.status,

@@ -707,6 +707,26 @@ pub enum SketchConstraintKind {
         /// Circle entity.
         circle: SketchEntityHandle,
     },
+    /// 2D point-on-cubic-Bezier incidence at a retained parameter.
+    ///
+    /// Lowering emits the two exact Bernstein-coordinate equations
+    /// `point.axis - B_axis(t) == 0`, where `B(t)` is the retained cubic
+    /// Bezier control net. The parameter is retained as ordinary sketch data;
+    /// callers should attach a [`SketchParameterDomain::Bounded`] obligation
+    /// when they need the usual segment domain `0 <= t <= 1`. This keeps the
+    /// proof package aligned with Yap, "Towards Exact Geometric Computation"
+    /// (1997): the curve object and parameter are preserved, while exact
+    /// residual replay, not sampled floating geometry, accepts candidates.
+    /// The Bernstein form follows de Casteljau's Bezier construction as
+    /// presented in Farin, *Curves and Surfaces for CAGD* (5th ed., 2002).
+    PointOnCubic2 {
+        /// Point constrained to the curve.
+        point: SketchEntityHandle,
+        /// Retained 2D cubic Bezier entity.
+        cubic: SketchEntityHandle,
+        /// Curve parameter used by the incidence equations.
+        parameter: SketchParameterHandle,
+    },
     /// Scalar parameter range constraint.
     ParameterRange {
         /// Parameter constrained by the range.
@@ -801,6 +821,8 @@ pub enum SketchResidualStrategy {
     RadiusEquality,
     /// Incidence represented as a squared-distance polynomial.
     SquaredIncidence,
+    /// Exact cubic-Bezier coordinate incidence in Bernstein form.
+    CubicBezierIncidence,
     /// Scalar parameter bound.
     ParameterRange,
     /// Scalar nondecreasing parameter relation.
@@ -920,6 +942,8 @@ pub enum SketchResidualFormKind {
     WorkplaneSymmetryMidpointPlanePolynomial,
     /// Exact normal-offset cross-product proof row for 3D workplane symmetry.
     WorkplaneSymmetryNormalOffsetPolynomial,
+    /// Exact cubic-Bezier coordinate incidence proof row.
+    CubicBezierIncidencePolynomial,
 }
 
 /// Proof role for a retained residual form.
@@ -1648,6 +1672,21 @@ impl SketchSolveProblem {
         incidence::point_on_circle(self, name, point, circle).handle
     }
 
+    /// Add a point-on-cubic-Bezier incidence constraint at a retained parameter.
+    ///
+    /// This emits exact Bernstein-coordinate proof rows. The curve parameter
+    /// is not implicitly clamped; use [`Self::add_parameter_domain`] or
+    /// [`Self::add_parameter_range`] to make the segment interval explicit.
+    pub fn add_point_on_cubic2(
+        &mut self,
+        name: impl Into<String>,
+        point: SketchEntityHandle,
+        cubic: SketchEntityHandle,
+        parameter: SketchParameterHandle,
+    ) -> SketchConstraintHandle {
+        incidence::point_on_cubic2(self, name, point, cubic, parameter).handle
+    }
+
     /// Add a scalar parameter range constraint.
     pub fn add_parameter_range(
         &mut self,
@@ -2080,6 +2119,41 @@ impl SketchSolveProblem {
                             residual: point_center_squared.sqrt() - radius,
                         },
                     ],
+                    diagnostics,
+                }
+            }
+            SketchConstraintKind::PointOnCubic2 {
+                point,
+                cubic,
+                parameter,
+            } => {
+                let mut diagnostics = Vec::new();
+                let Some(parts) = self.point_on_cubic2_exprs(
+                    point,
+                    cubic,
+                    parameter,
+                    constraint,
+                    &mut diagnostics,
+                ) else {
+                    return SketchResidualFormsReport {
+                        constraint: handle,
+                        status: SketchResidualFormsStatus::InvalidInputs,
+                        forms: Vec::new(),
+                        diagnostics,
+                    };
+                };
+                SketchResidualFormsReport {
+                    constraint: handle,
+                    status: SketchResidualFormsStatus::Generated,
+                    forms: parts
+                        .into_iter()
+                        .map(|residual| SketchResidualForm {
+                            kind: SketchResidualFormKind::CubicBezierIncidencePolynomial,
+                            role: SketchResidualFormRole::ExactProof,
+                            strategy: Some(SketchResidualStrategy::CubicBezierIncidence),
+                            residual,
+                        })
+                        .collect(),
                     diagnostics,
                 }
             }
@@ -3043,6 +3117,32 @@ impl SketchSolveProblem {
                     SketchResidualStrategy::SquaredIncidence,
                 );
             }
+            SketchConstraintKind::PointOnCubic2 {
+                point,
+                cubic,
+                parameter,
+            } => {
+                // This is retained cubic-Bezier incidence, not a sampled
+                // curve test. Yap (1997) puts trust in exact replay, so the
+                // de Casteljau/Bernstein curve equations are emitted per axis
+                // and the segment-domain assumption for `t` remains an
+                // explicit parameter-domain or range obligation.
+                let Some(residuals) =
+                    self.point_on_cubic2_exprs(point, cubic, parameter, constraint, rows)
+                else {
+                    return;
+                };
+                for (axis, residual) in residuals.into_iter().enumerate() {
+                    self.push_residual(
+                        problem,
+                        rows,
+                        constraint,
+                        format!("{} cubic coordinate {axis}", constraint.name),
+                        residual,
+                        SketchResidualStrategy::CubicBezierIncidence,
+                    );
+                }
+            }
             SketchConstraintKind::ParameterRange {
                 parameter,
                 ref lower,
@@ -3529,6 +3629,45 @@ impl SketchSolveProblem {
         ])
     }
 
+    fn point_on_cubic2_exprs(
+        &self,
+        point: SketchEntityHandle,
+        cubic: SketchEntityHandle,
+        parameter: SketchParameterHandle,
+        constraint: &SketchConstraint,
+        rows: &mut Vec<SketchGeneratedRow>,
+    ) -> Option<[Expr; 2]> {
+        let point = self.point2_coordinates(point, constraint, rows)?;
+        let Some(entity) = self.entity(cubic) else {
+            rows.push(missing_entity_row(constraint, cubic));
+            return None;
+        };
+        let SketchEntityKind::Cubic2(cubic) = &entity.kind else {
+            rows.push(wrong_entity_row(
+                constraint,
+                entity.handle,
+                "2D cubic Bezier",
+            ));
+            return None;
+        };
+        let p0 = self.point2_coordinates(cubic.p0, constraint, rows)?;
+        let p1 = self.point2_coordinates(cubic.p1, constraint, rows)?;
+        let p2 = self.point2_coordinates(cubic.p2, constraint, rows)?;
+        let p3 = self.point2_coordinates(cubic.p3, constraint, rows)?;
+        let parameter = self.parameter_expr(parameter, constraint, rows)?;
+        let curve = cubic_bezier_point2_exprs(
+            &coordinate_exprs2(&p0),
+            &coordinate_exprs2(&p1),
+            &coordinate_exprs2(&p2),
+            &coordinate_exprs2(&p3),
+            parameter,
+        );
+        Some([
+            point.exprs[0].clone() - curve[0].clone(),
+            point.exprs[1].clone() - curve[1].clone(),
+        ])
+    }
+
     fn arc2_endpoint_parts(
         &self,
         handle: SketchEntityHandle,
@@ -3615,6 +3754,28 @@ fn coordinate_exprs3(coordinates: &CoordinateExprs) -> [Expr; 3] {
         coordinates.exprs[0].clone(),
         coordinates.exprs[1].clone(),
         coordinates.exprs[2].clone(),
+    ]
+}
+
+fn cubic_bezier_point2_exprs(
+    p0: &[Expr; 2],
+    p1: &[Expr; 2],
+    p2: &[Expr; 2],
+    p3: &[Expr; 2],
+    parameter: Expr,
+) -> [Expr; 2] {
+    let one_minus_t = Expr::int(1) - parameter.clone();
+    let b0 = one_minus_t.clone() * one_minus_t.clone() * one_minus_t.clone();
+    let b1 = Expr::int(3) * one_minus_t.clone() * one_minus_t * parameter.clone();
+    let b2 =
+        Expr::int(3) * (Expr::int(1) - parameter.clone()) * parameter.clone() * parameter.clone();
+    let b3 = parameter.clone() * parameter.clone() * parameter;
+    [
+        p0[0].clone() * b0.clone()
+            + p1[0].clone() * b1.clone()
+            + p2[0].clone() * b2.clone()
+            + p3[0].clone() * b3.clone(),
+        p0[1].clone() * b0 + p1[1].clone() * b1 + p2[1].clone() * b2 + p3[1].clone() * b3,
     ]
 }
 

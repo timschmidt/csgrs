@@ -219,6 +219,36 @@ pub mod incidence {
             kind,
         }
     }
+
+    /// Add a point-on-cubic-Bezier incidence relation at a retained parameter.
+    ///
+    /// Lowering emits one exact Bernstein-coordinate equation per axis:
+    /// `point - ((1-t)^3*p0 + 3(1-t)^2*t*p1 + 3(1-t)*t^2*p2 + t^3*p3)`.
+    /// The builder deliberately does not clamp or sample `t`; callers express
+    /// segment-domain policy with explicit parameter domains or range
+    /// constraints. That separation follows Yap's "Towards Exact Geometric
+    /// Computation" (1997) and de Casteljau/Farin's Bernstein curve model:
+    /// retain the curve/parameter object, then certify the polynomial rows.
+    pub fn point_on_cubic2(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        point: SketchEntityHandle,
+        cubic: SketchEntityHandle,
+        parameter: SketchParameterHandle,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::PointOnCubic2 {
+            point,
+            cubic,
+            parameter,
+        };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Incidence,
+            strategy: SketchResidualStrategy::CubicBezierIncidence,
+            kind,
+        }
+    }
 }
 
 /// Dimensional relation builders.
