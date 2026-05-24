@@ -868,6 +868,50 @@ fn downward_nonagonal_pyramid_fan_i64(
 }
 
 #[cfg(feature = "exact-triangulation")]
+fn upward_polygonal_pyramid_i64(points: &[[i64; 3]], apex: [i64; 3]) -> ExactMesh {
+    assert!(points.len() >= 3);
+    let apex_index = points.len();
+    let mut coordinates = Vec::with_capacity((points.len() + 1) * 3);
+    for point in points {
+        coordinates.extend_from_slice(point);
+    }
+    coordinates.extend_from_slice(&apex);
+    let mut indices = Vec::with_capacity((points.len() - 2 + points.len()) * 3);
+    for index in 1..points.len() - 1 {
+        indices.extend([0, index + 1, index]);
+    }
+    for index in 0..points.len() {
+        indices.extend([index, (index + 1) % points.len(), apex_index]);
+    }
+    ExactMesh::from_i64_triangles(&coordinates, &indices).unwrap()
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn downward_polygonal_pyramid_fan_i64(
+    points: &[[i64; 3]],
+    center: [i64; 3],
+    apex: [i64; 3],
+) -> ExactMesh {
+    assert!(points.len() >= 3);
+    let center_index = points.len();
+    let apex_index = points.len() + 1;
+    let mut coordinates = Vec::with_capacity((points.len() + 2) * 3);
+    for point in points {
+        coordinates.extend_from_slice(point);
+    }
+    coordinates.extend_from_slice(&center);
+    coordinates.extend_from_slice(&apex);
+    let mut indices = Vec::with_capacity(points.len() * 6);
+    for index in 0..points.len() {
+        indices.extend([index, (index + 1) % points.len(), center_index]);
+    }
+    for index in 0..points.len() {
+        indices.extend([index, apex_index, (index + 1) % points.len()]);
+    }
+    ExactMesh::from_i64_triangles(&coordinates, &indices).unwrap()
+}
+
+#[cfg(feature = "exact-triangulation")]
 fn upward_square_pyramid_i64(
     a: [i64; 3],
     b: [i64; 3],
@@ -9554,6 +9598,92 @@ fn exact_full_face_adjacent_nonagon_to_fan_patch_union_deletes_internal_faces() 
         hypermesh::exact::materialize_full_face_adjacent_union(
             &left,
             &same_side_fan,
+            ValidationPolicy::CLOSED,
+        )
+        .is_none()
+    );
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
+fn exact_full_face_adjacent_decagon_component_disk_union_deletes_internal_faces() {
+    let boundary = [
+        [0, 0, 0],
+        [4, 0, 0],
+        [8, 2, 0],
+        [10, 5, 0],
+        [9, 8, 0],
+        [6, 10, 0],
+        [2, 11, 0],
+        [-1, 9, 0],
+        [-3, 6, 0],
+        [-2, 2, 0],
+    ];
+    let left = upward_polygonal_pyramid_i64(&boundary, [3, 5, 9]);
+    let right = downward_polygonal_pyramid_fan_i64(&boundary, [3, 5, 0], [3, 5, -9]);
+
+    let graph = build_intersection_graph(&left, &right).unwrap();
+    graph.validate_against_meshes(&left, &right).unwrap();
+    assert!(graph.face_pairs.iter().any(|pair| {
+        pair.left_face < 8
+            && pair.right_face < 10
+            && pair.relation == hypermesh::exact::MeshFacePairRelation::CoplanarOverlapping
+    }));
+
+    let union = hypermesh::exact::materialize_full_face_adjacent_union(
+        &left,
+        &right,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("full connected decagon disk should not be rejected by subset-enumeration caps");
+    union.validate().unwrap();
+    union.validate_against_sources(&left, &right).unwrap();
+    assert!(union.shared_faces.is_empty());
+    assert_eq!(
+        union.shared_patches,
+        vec![hypermesh::exact::FullFaceAdjacentPatch {
+            left_faces: (0..8).collect(),
+            right_faces: (0..10).collect(),
+        }]
+    );
+    assert!(union.mesh.facts().mesh.closed_manifold);
+
+    let preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+    )
+    .unwrap();
+    preflight.validate().unwrap();
+    preflight.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedFullFaceAdjacentUnion
+    );
+
+    let result = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    result
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            hypermesh::exact::ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(result.mesh, union.mesh);
+
+    let same_side = upward_polygonal_pyramid_i64(&boundary, [3, 5, 9]);
+    assert!(
+        hypermesh::exact::materialize_full_face_adjacent_union(
+            &left,
+            &same_side,
             ValidationPolicy::CLOSED,
         )
         .is_none()

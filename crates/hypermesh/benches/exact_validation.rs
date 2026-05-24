@@ -645,6 +645,50 @@ fn downward_nonagonal_pyramid_fan_i64(
 }
 
 #[cfg(feature = "exact-triangulation")]
+fn upward_polygonal_pyramid_i64(points: &[[i64; 3]], apex: [i64; 3]) -> ExactMesh {
+    assert!(points.len() >= 3);
+    let apex_index = points.len();
+    let mut coordinates = Vec::with_capacity((points.len() + 1) * 3);
+    for point in points {
+        coordinates.extend_from_slice(point);
+    }
+    coordinates.extend_from_slice(&apex);
+    let mut indices = Vec::with_capacity((points.len() - 2 + points.len()) * 3);
+    for index in 1..points.len() - 1 {
+        indices.extend([0, index + 1, index]);
+    }
+    for index in 0..points.len() {
+        indices.extend([index, (index + 1) % points.len(), apex_index]);
+    }
+    ExactMesh::from_i64_triangles(&coordinates, &indices).unwrap()
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn downward_polygonal_pyramid_fan_i64(
+    points: &[[i64; 3]],
+    center: [i64; 3],
+    apex: [i64; 3],
+) -> ExactMesh {
+    assert!(points.len() >= 3);
+    let center_index = points.len();
+    let apex_index = points.len() + 1;
+    let mut coordinates = Vec::with_capacity((points.len() + 2) * 3);
+    for point in points {
+        coordinates.extend_from_slice(point);
+    }
+    coordinates.extend_from_slice(&center);
+    coordinates.extend_from_slice(&apex);
+    let mut indices = Vec::with_capacity(points.len() * 6);
+    for index in 0..points.len() {
+        indices.extend([index, (index + 1) % points.len(), center_index]);
+    }
+    for index in 0..points.len() {
+        indices.extend([index, apex_index, (index + 1) % points.len()]);
+    }
+    ExactMesh::from_i64_triangles(&coordinates, &indices).unwrap()
+}
+
+#[cfg(feature = "exact-triangulation")]
 fn upward_square_pyramid_i64(
     a: [i64; 3],
     b: [i64; 3],
@@ -6561,6 +6605,22 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
             upward_nonagonal_pyramid_i64(adjacent_nonagon_boundary, [2, 4, 8]);
         let adjacent_nonagon_fan_right =
             downward_nonagonal_pyramid_fan_i64(adjacent_nonagon_boundary, [2, 4, 0], [2, 4, -8]);
+        let adjacent_decagon_boundary = [
+            [0, 0, 0],
+            [4, 0, 0],
+            [8, 2, 0],
+            [10, 5, 0],
+            [9, 8, 0],
+            [6, 10, 0],
+            [2, 11, 0],
+            [-1, 9, 0],
+            [-3, 6, 0],
+            [-2, 2, 0],
+        ];
+        let adjacent_decagon_left =
+            upward_polygonal_pyramid_i64(&adjacent_decagon_boundary, [3, 5, 9]);
+        let adjacent_decagon_fan_right =
+            downward_polygonal_pyramid_fan_i64(&adjacent_decagon_boundary, [3, 5, 0], [3, 5, -9]);
         let contained_adjacent_left = tetrahedron_i64([0, 0, 0], [6, 0, 0], [0, 6, 0], [0, 0, 6]);
         let contained_adjacent_right = tetrahedron_i64([1, 1, 0], [1, 2, 0], [2, 1, 0], [1, 1, -3]);
         let contained_multi_left = combine_exact_meshes(
@@ -7281,6 +7341,47 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
                                 .validate_operation_against_sources(
                                     &adjacent_nonagon_left,
                                     &adjacent_nonagon_fan_right,
+                                    hypermesh::exact::ExactBooleanOperation::Union,
+                                    ValidationPolicy::CLOSED,
+                                    hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+                                )
+                                .unwrap();
+                            result.mesh.triangles().len()
+                        }),
+                    )
+                })
+            },
+        );
+        c.bench_function(
+            "exact_boolean_full_face_adjacent_decagon_component_disk_union",
+            |b| {
+                b.iter(|| {
+                    (
+                        hypermesh::exact::materialize_full_face_adjacent_union(
+                            &adjacent_decagon_left,
+                            &adjacent_decagon_fan_right,
+                            ValidationPolicy::CLOSED,
+                        )
+                        .map(|union| {
+                            union
+                                .validate_against_sources(
+                                    &adjacent_decagon_left,
+                                    &adjacent_decagon_fan_right,
+                                )
+                                .unwrap();
+                            union.mesh.triangles().len()
+                        }),
+                        hypermesh::exact::boolean_exact(
+                            &adjacent_decagon_left,
+                            &adjacent_decagon_fan_right,
+                            hypermesh::exact::ExactBooleanOperation::Union,
+                            ValidationPolicy::CLOSED,
+                        )
+                        .map(|result| {
+                            result
+                                .validate_operation_against_sources(
+                                    &adjacent_decagon_left,
+                                    &adjacent_decagon_fan_right,
                                     hypermesh::exact::ExactBooleanOperation::Union,
                                     ValidationPolicy::CLOSED,
                                     hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,

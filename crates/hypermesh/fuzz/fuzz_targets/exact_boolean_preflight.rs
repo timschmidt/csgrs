@@ -1415,7 +1415,7 @@ fuzz_target!(|data: &[u8]| {
 
 #[cfg(feature = "exact-triangulation")]
 fn exercise_deterministic_case(selector: u8) {
-    match selector % 29 {
+    match selector % 30 {
         0 => exercise_partial_convex_union_boundary(),
         1 => exercise_face_interior_steiner_boundary(),
         2 => exercise_multi_component_coplanar_union(),
@@ -1444,6 +1444,7 @@ fn exercise_deterministic_case(selector: u8) {
         25 => exercise_side_cutter_opening_without_holes(),
         26 => exercise_mixed_consumed_hole_and_side_openings_without_retained_holes(),
         27 => exercise_nonagon_full_face_adjacent_union(),
+        28 => exercise_decagon_full_face_adjacent_union(),
         _ => exercise_nonrectangular_component_union_hull_coverage(),
     }
 }
@@ -5375,6 +5376,52 @@ fn downward_nonagonal_pyramid_fan_i64(
 }
 
 #[cfg(feature = "exact-triangulation")]
+fn upward_polygonal_pyramid_i64(points: &[[i64; 3]], apex: [i64; 3]) -> ExactMesh {
+    assert!(points.len() >= 3);
+    let apex_index = points.len();
+    let mut coordinates = Vec::with_capacity((points.len() + 1) * 3);
+    for point in points {
+        coordinates.extend_from_slice(point);
+    }
+    coordinates.extend_from_slice(&apex);
+    let mut indices = Vec::with_capacity((points.len() - 2 + points.len()) * 3);
+    for index in 1..points.len() - 1 {
+        indices.extend([0, index + 1, index]);
+    }
+    for index in 0..points.len() {
+        indices.extend([index, (index + 1) % points.len(), apex_index]);
+    }
+    ExactMesh::from_i64_triangles(&coordinates, &indices)
+        .expect("upward polygonal pyramid fixture should import")
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn downward_polygonal_pyramid_fan_i64(
+    points: &[[i64; 3]],
+    center: [i64; 3],
+    apex: [i64; 3],
+) -> ExactMesh {
+    assert!(points.len() >= 3);
+    let center_index = points.len();
+    let apex_index = points.len() + 1;
+    let mut coordinates = Vec::with_capacity((points.len() + 2) * 3);
+    for point in points {
+        coordinates.extend_from_slice(point);
+    }
+    coordinates.extend_from_slice(&center);
+    coordinates.extend_from_slice(&apex);
+    let mut indices = Vec::with_capacity(points.len() * 6);
+    for index in 0..points.len() {
+        indices.extend([index, (index + 1) % points.len(), center_index]);
+    }
+    for index in 0..points.len() {
+        indices.extend([index, apex_index, (index + 1) % points.len()]);
+    }
+    ExactMesh::from_i64_triangles(&coordinates, &indices)
+        .expect("downward polygonal fan pyramid fixture should import")
+}
+
+#[cfg(feature = "exact-triangulation")]
 fn upward_square_pyramid_i64(
     a: [i64; 3],
     b: [i64; 3],
@@ -6341,6 +6388,66 @@ fn exercise_nonagon_full_face_adjacent_union() {
         )
         .unwrap();
     assert_eq!(nonagon_result.mesh, nonagon_union.mesh);
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn exercise_decagon_full_face_adjacent_union() {
+    let boundary = [
+        [0, 0, 0],
+        [4, 0, 0],
+        [8, 2, 0],
+        [10, 5, 0],
+        [9, 8, 0],
+        [6, 10, 0],
+        [2, 11, 0],
+        [-1, 9, 0],
+        [-3, 6, 0],
+        [-2, 2, 0],
+    ];
+    let left = upward_polygonal_pyramid_i64(&boundary, [3, 5, 9]);
+    let right = downward_polygonal_pyramid_fan_i64(&boundary, [3, 5, 0], [3, 5, -9]);
+    let union = hypermesh::exact::materialize_full_face_adjacent_union(
+        &left,
+        &right,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("decagon full connected source disk should materialize");
+    union.validate().unwrap();
+    union.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(union.shared_patches[0].left_faces, (0..8).collect::<Vec<_>>());
+    assert_eq!(
+        union.shared_patches[0].right_faces,
+        (0..10).collect::<Vec<_>>()
+    );
+
+    let same_side = upward_polygonal_pyramid_i64(&boundary, [3, 5, 9]);
+    assert!(
+        hypermesh::exact::materialize_full_face_adjacent_union(
+            &left,
+            &same_side,
+            ValidationPolicy::CLOSED,
+        )
+        .is_none()
+    );
+
+    let result = boolean_exact_with_boundary_policy(
+        &left,
+        &right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+    result
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(result.mesh, union.mesh);
 }
 
 #[cfg(feature = "exact-triangulation")]

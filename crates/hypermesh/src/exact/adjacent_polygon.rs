@@ -27,8 +27,8 @@ use hyperlimit::{
 use super::mesh::ExactMesh;
 use super::scalar::ExactReal;
 
-const MAX_POLYGON_PATCH_FACES: usize = 9;
-const MAX_POLYGON_PATCH_BOUNDARY: usize = 9;
+const MAX_POLYGON_PATCH_ENUMERATION_FACES: usize = 9;
+const MAX_POLYGON_PATCH_ENUMERATION_BOUNDARY: usize = 9;
 
 #[derive(Clone, Debug, PartialEq)]
 struct PolygonPatchCandidate {
@@ -97,8 +97,8 @@ fn polygon_patch_candidates(
     if available.is_empty() {
         return None;
     }
-    let max_faces = available.len().min(MAX_POLYGON_PATCH_FACES);
-    let max_boundary = available.len().min(MAX_POLYGON_PATCH_BOUNDARY);
+    let max_faces = available.len().min(MAX_POLYGON_PATCH_ENUMERATION_FACES);
+    let max_boundary = available.len().min(MAX_POLYGON_PATCH_ENUMERATION_BOUNDARY);
     let neighbors = edge_connected_face_neighbors(mesh, &available)?;
     let mut unassigned = available.iter().copied().collect::<BTreeSet<_>>();
     while let Some(start_face) = unassigned.iter().next().copied() {
@@ -109,6 +109,16 @@ fn polygon_patch_candidates(
             continue;
         }
         let mut seen = BTreeSet::<Vec<usize>>::new();
+        // The old bounded search rejected a valid full-face adjacency whenever a
+        // source-owned disk exceeded the practical subset-enumeration cap.  Yap,
+        // "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+        // (1997), draws the useful line here at exact source replay: the entire
+        // connected component is already a concrete exact object, so it can be
+        // certified directly without widening the exponential subset search.
+        if let Some(candidate) = polygon_patch_candidate(mesh, &component, usize::MAX)? {
+            seen.insert(component.clone());
+            candidates.push(candidate);
+        }
         collect_polygon_patch_candidates(
             mesh,
             &neighbors,
@@ -303,13 +313,33 @@ fn edge_connected_face_neighbors(
     for edge_faces in edge_faces.values() {
         for &face in edge_faces {
             for &neighbor in edge_faces {
-                if neighbor != face {
+                if neighbor != face && faces_are_coplanar(mesh, face, neighbor)? {
                     neighbors.entry(face).or_default().insert(neighbor);
                 }
             }
         }
     }
     Some(neighbors)
+}
+
+fn faces_are_coplanar(mesh: &ExactMesh, left_face: usize, right_face: usize) -> Option<bool> {
+    // Source-disk discovery is a planar certificate, not a shell-connectivity
+    // walk.  Yap, "Towards Exact Geometric Computation," *Computational
+    // Geometry* 7.1-2 (1997), is the relevant boundary: we split source
+    // topology by exact retained planes before promoting a connected component
+    // to a planar disk candidate.
+    let left_triangle = mesh.triangles().get(left_face)?.0;
+    let right_triangle = mesh.triangles().get(right_face)?.0;
+    let left_points = triangle_points(mesh, left_triangle)?;
+    let right_points = triangle_points(mesh, right_triangle)?;
+    Some(
+        right_points
+            .iter()
+            .all(|point| point_on_triangle_plane_vec(&left_points, point) == Some(true))
+            && left_points
+                .iter()
+                .all(|point| point_on_triangle_plane_vec(&right_points, point) == Some(true)),
+    )
 }
 
 fn extract_polygon_patch_component(
