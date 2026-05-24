@@ -66,6 +66,8 @@ pub enum PathMeshBooleanOperation {
 /// Errors from the path-to-mesh boolean handoff.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum PathMeshBooleanError {
+    /// At least two prism sources are required for a boolean chain.
+    NotEnoughSources,
     /// Footprint bounds did not have strictly positive area.
     DegenerateFootprint,
     /// Z bounds were unordered, equal, or undecidable.
@@ -104,6 +106,45 @@ pub struct PathMeshBooleanReport {
     pub preflight: ExactBooleanPreflight,
     /// Materialized exact boolean result from `hypermesh`.
     pub result: ExactBooleanResult,
+}
+
+/// One certified step in a multi-prism boolean chain.
+///
+/// The left operand is implicit: step zero uses the first source prism, and
+/// every later step uses the accepted mesh produced by the previous step. This
+/// makes the accumulator explicit during replay without requiring `hyperpath`
+/// to reinterpret an intermediate mesh as a path primitive. The arrangement is
+/// a direct application of Yap's exact object model: each topology-changing
+/// step carries the exact `hypermesh` report that accepted it.
+#[derive(Clone, Debug, PartialEq)]
+pub struct PathMeshBooleanStep {
+    /// Zero-based step index.
+    pub index: usize,
+    /// Retained right-hand prism consumed by this step.
+    pub right: RectangularPrism,
+    /// Exact preflight report for this accumulator/right pair.
+    pub preflight: ExactBooleanPreflight,
+    /// Accepted exact boolean result for this step.
+    pub result: ExactBooleanResult,
+}
+
+/// Source-bound exact boolean chain over several path-domain prisms.
+///
+/// This is the CAM/rest-material and multi-obstacle companion to
+/// [`PathMeshBooleanReport`]. It never assumes that a later accumulator is a
+/// rectangular prism. Instead, every intermediate mesh remains an accepted
+/// `hypermesh` object, and [`Self::validate_replay`] rebuilds the whole chain
+/// from the retained path prisms before accepting the final mesh.
+#[derive(Clone, Debug, PartialEq)]
+pub struct PathMeshBooleanChainReport {
+    /// Retained path-domain prism sources. The first source seeds the chain.
+    pub sources: Vec<RectangularPrism>,
+    /// Named operation applied left-associatively through the chain.
+    pub operation: PathMeshBooleanOperation,
+    /// Boundary-contact projection policy passed to every `hypermesh` step.
+    pub boundary_policy: ExactBoundaryBooleanPolicy,
+    /// Per-step exact preflight and accepted mesh result.
+    pub steps: Vec<PathMeshBooleanStep>,
 }
 
 impl RectangularPrism {
@@ -253,6 +294,59 @@ impl PathMeshBooleanReport {
     }
 }
 
+impl PathMeshBooleanChainReport {
+    /// Rebuild and validate every retained boolean step from source prisms.
+    ///
+    /// Replay is left-associative: `(((source[0] op source[1]) op source[2])
+    /// ...)`. This order is a report contract, not an algebraic claim about
+    /// associativity. Regularized union/intersection are mathematically
+    /// associative, but mesh materializers may choose different certified
+    /// shortcuts; retaining the order keeps the proof boundary auditable, as
+    /// Yap requires in "Towards Exact Geometric Computation," *Computational
+    /// Geometry* 7.1-2 (1997).
+    pub fn validate_replay(&self) -> Result<(), PathMeshBooleanError> {
+        if self.sources.len() < 2 || self.steps.len() != self.sources.len() - 1 {
+            return Err(PathMeshBooleanError::NotEnoughSources);
+        }
+        let operation = self.operation.to_hypermesh();
+        let mut accumulator = self.sources[0].to_exact_mesh()?;
+        for (expected_index, step) in self.steps.iter().enumerate() {
+            if step.index != expected_index || step.right != self.sources[expected_index + 1] {
+                return Err(PathMeshBooleanError::Replay(
+                    "retained boolean-chain step no longer matches source order".into(),
+                ));
+            }
+            let right_mesh = step.right.to_exact_mesh()?;
+            let preflight = preflight_boolean_exact(&accumulator, &right_mesh, operation)
+                .map_err(|error| PathMeshBooleanError::Preflight(format!("{error:?}")))?;
+            preflight
+                .validate_against_sources(&accumulator, &right_mesh)
+                .map_err(|error| PathMeshBooleanError::Replay(format!("{error:?}")))?;
+            if preflight != step.preflight {
+                return Err(PathMeshBooleanError::Replay(
+                    "retained boolean-chain preflight no longer matches replay".into(),
+                ));
+            }
+            step.result
+                .validate_operation_against_sources(
+                    &accumulator,
+                    &right_mesh,
+                    operation,
+                    ValidationPolicy::CLOSED,
+                    self.boundary_policy,
+                )
+                .map_err(|error| PathMeshBooleanError::Replay(format!("{error:?}")))?;
+            accumulator = step.result.mesh.clone();
+        }
+        Ok(())
+    }
+
+    /// Return the final accepted exact output mesh.
+    pub fn mesh(&self) -> Option<&ExactMesh> {
+        self.steps.last().map(|step| &step.result.mesh)
+    }
+}
+
 /// Run an exact mesh boolean over two retained rectangular path prisms.
 pub fn boolean_rectangular_prisms(
     left: RectangularPrism,
@@ -311,6 +405,81 @@ pub fn boolean_rectangular_prisms_with_boundary_policy(
         boundary_policy,
         preflight,
         result,
+    })
+}
+
+/// Run a left-associative exact boolean chain over retained rectangular prisms.
+///
+/// This is intentionally stricter than a generic mesh batch API. Every input is
+/// a path-domain prism with exact source coordinates, but after the first step
+/// the left operand is the previously accepted `hypermesh` result. That allows
+/// multi-cutter difference and multi-obstacle union/intersection without
+/// inventing path-local mesh topology. The boolean materialization idea follows
+/// the regularized set-operation model summarized by Requicha,
+/// "Representations for Rigid Solids: Theory, Methods, and Systems,"
+/// *ACM Computing Surveys* 12.4 (1980), while the source replay follows Yap's
+/// exact-geometric-computation boundary.
+pub fn boolean_rectangular_prism_chain(
+    sources: Vec<RectangularPrism>,
+    operation: PathMeshBooleanOperation,
+) -> Result<PathMeshBooleanChainReport, PathMeshBooleanError> {
+    boolean_rectangular_prism_chain_with_boundary_policy(
+        sources,
+        operation,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+}
+
+/// Run a left-associative exact boolean chain with explicit boundary policy.
+pub fn boolean_rectangular_prism_chain_with_boundary_policy(
+    sources: Vec<RectangularPrism>,
+    operation: PathMeshBooleanOperation,
+    boundary_policy: ExactBoundaryBooleanPolicy,
+) -> Result<PathMeshBooleanChainReport, PathMeshBooleanError> {
+    if sources.len() < 2 {
+        return Err(PathMeshBooleanError::NotEnoughSources);
+    }
+    let mesh_operation = operation.to_hypermesh();
+    let mut accumulator = sources[0].to_exact_mesh()?;
+    let mut steps = Vec::with_capacity(sources.len() - 1);
+    for (index, right) in sources.iter().enumerate().skip(1) {
+        let right_mesh = right.to_exact_mesh()?;
+        let preflight = preflight_boolean_exact(&accumulator, &right_mesh, mesh_operation)
+            .map_err(|error| PathMeshBooleanError::Preflight(format!("{error:?}")))?;
+        preflight
+            .validate_against_sources(&accumulator, &right_mesh)
+            .map_err(|error| PathMeshBooleanError::Replay(format!("{error:?}")))?;
+        let result = boolean_exact_with_boundary_policy(
+            &accumulator,
+            &right_mesh,
+            mesh_operation,
+            ValidationPolicy::CLOSED,
+            boundary_policy,
+        )
+        .map_err(|error| PathMeshBooleanError::Boolean(format!("{error:?}")))?;
+        result
+            .validate_operation_against_sources(
+                &accumulator,
+                &right_mesh,
+                mesh_operation,
+                ValidationPolicy::CLOSED,
+                boundary_policy,
+            )
+            .map_err(|error| PathMeshBooleanError::Replay(format!("{error:?}")))?;
+        accumulator = result.mesh.clone();
+        steps.push(PathMeshBooleanStep {
+            index: index - 1,
+            right: right.clone(),
+            preflight,
+            result,
+        });
+    }
+
+    Ok(PathMeshBooleanChainReport {
+        sources,
+        operation,
+        boundary_policy,
+        steps,
     })
 }
 

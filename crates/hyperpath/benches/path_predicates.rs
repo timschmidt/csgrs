@@ -8,9 +8,9 @@ use hyperpath::{
     PcbConvexBoardOutline, PcbOrthogonalBoardOutline, PcbRectPad, PcbTrace, PcbViaStack,
     QuadraticBezier, RationalQuadraticBezier, RectangularPocket, SourceLengthUnit,
     SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraLayerAlias, SpecctraNetAlias,
-    SweptLineSegment, TangentSpan, TraceLayer, ViaDrillIntent, boolean_rectangular_prisms,
-    build_alternating_detour_meander, build_g1_join_problem, build_length_match_problem,
-    build_multi_detour_meander, build_nonuniform_detour_meander,
+    SweptLineSegment, TangentSpan, TraceLayer, ViaDrillIntent, boolean_rectangular_prism_chain,
+    boolean_rectangular_prisms, build_alternating_detour_meander, build_g1_join_problem,
+    build_length_match_problem, build_multi_detour_meander, build_nonuniform_detour_meander,
     build_obstacle_aware_detour_meander, build_oriented_tangent_alignment_problem,
     build_rectangular_bead_plan, build_rectangular_pocket_plan,
     build_rectangular_serpentine_infill_graph, build_rectangular_support_plan,
@@ -737,6 +737,22 @@ fn path_predicates(c: &mut Criterion) {
                 prism_left.clone(),
                 prism_right.clone(),
                 PathMeshBooleanOperation::Difference,
+            )
+            .unwrap();
+            report.validate_replay()
+        })
+    });
+    let prism_third = rectangular_prism_from_i64_bounds(
+        [4_000, 2_000, 0],
+        [12_000, 7_000, 500],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    c.bench_function("rectangular_prism_mesh_boolean_chain_union_replay", |b| {
+        b.iter(|| {
+            let report = boolean_rectangular_prism_chain(
+                vec![prism_left.clone(), prism_right.clone(), prism_third.clone()],
+                PathMeshBooleanOperation::Union,
             )
             .unwrap();
             report.validate_replay()

@@ -45,9 +45,10 @@ pub use cam::{
     build_rectangular_support_plan, intersect_rectangular_regions, subtract_rectangular_region,
 };
 pub use mesh_boolean::{
-    PathMeshBooleanError, PathMeshBooleanOperation, PathMeshBooleanReport, RectangularPrism,
-    boolean_rectangular_prisms, boolean_rectangular_prisms_with_boundary_policy,
-    rectangular_prism_from_i64_bounds,
+    PathMeshBooleanChainReport, PathMeshBooleanError, PathMeshBooleanOperation,
+    PathMeshBooleanReport, PathMeshBooleanStep, RectangularPrism, boolean_rectangular_prism_chain,
+    boolean_rectangular_prism_chain_with_boundary_policy, boolean_rectangular_prisms,
+    boolean_rectangular_prisms_with_boundary_policy, rectangular_prism_from_i64_bounds,
 };
 pub use offset::{
     ArcOffsetCandidate, ArcOffsetError, BezierOffsetError, BezierOffsetSampleCandidate,

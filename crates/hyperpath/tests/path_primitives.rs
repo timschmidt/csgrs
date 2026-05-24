@@ -18,7 +18,7 @@ use hyperpath::{
     SpecctraNetAlias, SpecctraParseError, SupportFootprintStatus, SupportPlanError,
     SweptLineSegment, TangentAlignment, TangentJoinClass, TangentJoinReport, TangentSpan,
     TraceLayer, ViaAnnularRingReport, ViaDrillIntent, ViaDrillPolicyClass, ViaLayerSpanRelation,
-    ViaLayerTransitionClass, boolean_rectangular_prisms,
+    ViaLayerTransitionClass, boolean_rectangular_prism_chain, boolean_rectangular_prisms,
     boolean_rectangular_prisms_with_boundary_policy, build_alternating_detour_meander,
     build_g1_join_problem, build_length_match_problem, build_multi_detour_meander,
     build_nonuniform_detour_meander, build_obstacle_aware_detour_meander,
@@ -179,6 +179,71 @@ fn rectangular_prism_mesh_boolean_generated_integer_fixtures_replay() {
         report.validate_replay().unwrap();
         assert!(report.mesh().facts().mesh.closed_manifold);
     }
+}
+
+#[test]
+fn rectangular_prism_boolean_chain_replays_intermediate_mesh_accumulators() {
+    let sources = vec![
+        prism([0, 0, 0], [10, 10, 4]),
+        prism([6, 0, 0], [14, 10, 4]),
+        prism([2, 4, 0], [12, 12, 4]),
+    ];
+    let union = boolean_rectangular_prism_chain(sources.clone(), PathMeshBooleanOperation::Union)
+        .expect("multi-prism union should replay through hypermesh");
+    union.validate_replay().unwrap();
+    assert_eq!(union.steps.len(), 2);
+    assert!(union.mesh().unwrap().facts().mesh.closed_manifold);
+
+    let mut stale_step_source = union.clone();
+    stale_step_source.steps[1].right = sources[0].clone();
+    assert!(matches!(
+        stale_step_source.validate_replay(),
+        Err(PathMeshBooleanError::Replay(_))
+    ));
+
+    let mut stale_operation = union.clone();
+    stale_operation.operation = PathMeshBooleanOperation::Intersection;
+    assert!(matches!(
+        stale_operation.validate_replay(),
+        Err(PathMeshBooleanError::Replay(_))
+    ));
+}
+
+#[test]
+fn rectangular_prism_boolean_chain_handles_multi_cutter_difference() {
+    let stock = prism([0, 0, 0], [20, 12, 6]);
+    let slot = prism([4, 0, 0], [8, 12, 6]);
+    let pocket = prism([10, 3, 0], [16, 9, 6]);
+    let report = boolean_rectangular_prism_chain(
+        vec![stock, slot, pocket],
+        PathMeshBooleanOperation::Difference,
+    )
+    .expect("stock minus two retained prism cutters should materialize");
+    report.validate_replay().unwrap();
+    assert_eq!(report.steps.len(), 2);
+    assert!(report.mesh().unwrap().facts().mesh.closed_manifold);
+    assert!(
+        report
+            .steps
+            .iter()
+            .all(|step| step.result.validate().is_ok())
+    );
+}
+
+#[test]
+fn rectangular_prism_boolean_chain_rejects_short_source_lists() {
+    assert_eq!(
+        boolean_rectangular_prism_chain(vec![], PathMeshBooleanOperation::Union).unwrap_err(),
+        PathMeshBooleanError::NotEnoughSources
+    );
+    assert_eq!(
+        boolean_rectangular_prism_chain(
+            vec![prism([0, 0, 0], [1, 1, 1])],
+            PathMeshBooleanOperation::Union
+        )
+        .unwrap_err(),
+        PathMeshBooleanError::NotEnoughSources
+    );
 }
 
 #[test]

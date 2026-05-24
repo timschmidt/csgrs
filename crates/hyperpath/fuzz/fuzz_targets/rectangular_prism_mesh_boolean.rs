@@ -2,7 +2,7 @@
 
 use hyperlimit::PredicatePolicy;
 use hyperpath::{
-    PathMeshBooleanOperation, boolean_rectangular_prisms,
+    PathMeshBooleanOperation, boolean_rectangular_prism_chain, boolean_rectangular_prisms,
     boolean_rectangular_prisms_with_boundary_policy, rectangular_prism_from_i64_bounds,
 };
 use libfuzzer_sys::fuzz_target;
@@ -53,5 +53,29 @@ fuzz_target!(|data: &[u8]| {
     if let Ok(report) = result {
         report.validate_replay().unwrap();
         report.result.validate().unwrap();
+    }
+
+    if data.len() >= 20 && data[14] & 1 == 1 {
+        let third_min = [coord(15), coord(16), coord(17)];
+        let third_max = [
+            third_min[0] + extent(3),
+            third_min[1] + extent(4),
+            third_min[2] + extent(5),
+        ];
+        if let Ok(third) =
+            rectangular_prism_from_i64_bounds(third_min, third_max, PredicatePolicy::default())
+        {
+            let left =
+                rectangular_prism_from_i64_bounds(left_min, left_max, PredicatePolicy::default())
+                    .unwrap();
+            let right =
+                rectangular_prism_from_i64_bounds(right_min, right_max, PredicatePolicy::default())
+                    .unwrap();
+            if let Ok(chain) = boolean_rectangular_prism_chain(vec![left, right, third], operation)
+            {
+                chain.validate_replay().unwrap();
+                chain.steps.last().unwrap().result.validate().unwrap();
+            }
+        }
     }
 });
