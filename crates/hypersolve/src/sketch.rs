@@ -1026,6 +1026,42 @@ pub enum SketchConstraintKind {
         /// Second 3D line in the second oriented angle.
         d: SketchEntityHandle,
     },
+    /// Parallelism between two 3D line segments after workplane projection.
+    ///
+    /// Lowering emits the retained workplane unit-quaternion guard and the
+    /// exact projected direction cross product `a_u*b_v - a_v*b_u == 0`.
+    /// This is the 3D/workplane counterpart of
+    /// [`SketchConstraintKind::ParallelLines2`]. It follows Yap, "Towards
+    /// Exact Geometric Computation" (1997), by replaying the predicate in
+    /// exact polynomial form rather than trusting rounded projected
+    /// coordinates; the frame polynomial is Shoemake's unit-quaternion
+    /// rotation matrix from "Animating Rotation with Quaternion Curves"
+    /// (1985).
+    ProjectedParallelLines3 {
+        /// Workplane entity that supplies origin and normal/quaternion.
+        workplane: SketchEntityHandle,
+        /// First 3D line segment.
+        a: SketchEntityHandle,
+        /// Second 3D line segment.
+        b: SketchEntityHandle,
+    },
+    /// Perpendicularity between two 3D line segments after workplane projection.
+    ///
+    /// Lowering emits the retained workplane unit-quaternion guard and the
+    /// exact projected direction dot product `a_u*b_u + a_v*b_v == 0`. This
+    /// keeps perpendicularity as an exact 3D/workplane predicate, not an angle
+    /// measured through primitive floats. The proof boundary follows Yap,
+    /// "Towards Exact Geometric Computation" (1997); the retained workplane
+    /// frame follows Shoemake, "Animating Rotation with Quaternion Curves"
+    /// (1985).
+    ProjectedPerpendicularLines3 {
+        /// Workplane entity that supplies origin and normal/quaternion.
+        workplane: SketchEntityHandle,
+        /// First 3D line segment.
+        a: SketchEntityHandle,
+        /// Second 3D line segment.
+        b: SketchEntityHandle,
+    },
     /// 2D point-at-midpoint relation.
     ///
     /// Lowering emits exact linear coordinate equations without averaging in
@@ -1279,6 +1315,10 @@ pub enum SketchResidualStrategy {
     OrientedAngleEquality,
     /// Exact workplane-projected oriented angle package for 3D line-pair angles.
     ProjectedOrientedAngleEquality,
+    /// Exact projected 3D direction cross-product equality.
+    ProjectedDirectionCrossProduct,
+    /// Exact projected 3D direction dot-product equality.
+    ProjectedDirectionDotProduct,
     /// Linear coordinate equality for a retained midpoint relation.
     MidpointCoordinateEquality,
     /// Linear coordinate equality for retained axis symmetry.
@@ -1390,6 +1430,10 @@ pub enum SketchResidualFormKind {
     ProjectedOrientedAngleVectorCollinearityPolynomial,
     /// Exact same-branch predicate for workplane-projected oriented angle equality.
     ProjectedOrientedAngleSameBranchPredicate,
+    /// Exact projected direction cross-product proof row.
+    ProjectedDirectionCrossProductPolynomial,
+    /// Exact projected direction dot-product proof row.
+    ProjectedDirectionDotProductPolynomial,
     /// Exact cross-product equality for a G1 tangent support proof row.
     TangentCrossProductPredicate,
     /// Exact dot-product inequality for a same-direction tangent proof row.
@@ -2448,6 +2492,34 @@ impl SketchSolveProblem {
         d: SketchEntityHandle,
     ) -> SketchConstraintHandle {
         angle::projected_equal_oriented_angle_lines3(self, name, workplane, a, b, c, d).handle
+    }
+
+    /// Add retained parallelism between two 3D lines projected into a workplane.
+    ///
+    /// Lowering emits the workplane unit guard and exact projected direction
+    /// cross-product row.
+    pub fn add_projected_parallel_lines3(
+        &mut self,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+    ) -> SketchConstraintHandle {
+        orientation::projected_parallel_lines3(self, name, workplane, a, b).handle
+    }
+
+    /// Add retained perpendicularity between two 3D lines projected into a workplane.
+    ///
+    /// Lowering emits the workplane unit guard and exact projected direction
+    /// dot-product row.
+    pub fn add_projected_perpendicular_lines3(
+        &mut self,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+    ) -> SketchConstraintHandle {
+        orientation::projected_perpendicular_lines3(self, name, workplane, a, b).handle
     }
 
     /// Add a retained 2D point-at-midpoint relation.
@@ -3648,6 +3720,78 @@ impl SketchSolveProblem {
                             role: SketchResidualFormRole::ExactProof,
                             strategy: Some(SketchResidualStrategy::ProjectedOrientedAngleEquality),
                             residual: parts.angle.same_branch,
+                        },
+                    ],
+                    diagnostics,
+                }
+            }
+            SketchConstraintKind::ProjectedParallelLines3 { workplane, a, b } => {
+                let mut diagnostics = Vec::new();
+                let Some(parts) = self.projected_direction_relation_exprs(
+                    workplane,
+                    a,
+                    b,
+                    constraint,
+                    &mut diagnostics,
+                ) else {
+                    return SketchResidualFormsReport {
+                        constraint: handle,
+                        status: SketchResidualFormsStatus::InvalidInputs,
+                        forms: Vec::new(),
+                        diagnostics,
+                    };
+                };
+                SketchResidualFormsReport {
+                    constraint: handle,
+                    status: SketchResidualFormsStatus::Generated,
+                    forms: vec![
+                        SketchResidualForm {
+                            kind: SketchResidualFormKind::WorkplaneUnitQuaternionPolynomial,
+                            role: SketchResidualFormRole::ExactProof,
+                            strategy: Some(SketchResidualStrategy::WorkplaneUnitQuaternion),
+                            residual: unit_quaternion_residual(&parts.quaternion),
+                        },
+                        SketchResidualForm {
+                            kind: SketchResidualFormKind::ProjectedDirectionCrossProductPolynomial,
+                            role: SketchResidualFormRole::ExactProof,
+                            strategy: Some(SketchResidualStrategy::ProjectedDirectionCrossProduct),
+                            residual: parts.cross,
+                        },
+                    ],
+                    diagnostics,
+                }
+            }
+            SketchConstraintKind::ProjectedPerpendicularLines3 { workplane, a, b } => {
+                let mut diagnostics = Vec::new();
+                let Some(parts) = self.projected_direction_relation_exprs(
+                    workplane,
+                    a,
+                    b,
+                    constraint,
+                    &mut diagnostics,
+                ) else {
+                    return SketchResidualFormsReport {
+                        constraint: handle,
+                        status: SketchResidualFormsStatus::InvalidInputs,
+                        forms: Vec::new(),
+                        diagnostics,
+                    };
+                };
+                SketchResidualFormsReport {
+                    constraint: handle,
+                    status: SketchResidualFormsStatus::Generated,
+                    forms: vec![
+                        SketchResidualForm {
+                            kind: SketchResidualFormKind::WorkplaneUnitQuaternionPolynomial,
+                            role: SketchResidualFormRole::ExactProof,
+                            strategy: Some(SketchResidualStrategy::WorkplaneUnitQuaternion),
+                            residual: unit_quaternion_residual(&parts.quaternion),
+                        },
+                        SketchResidualForm {
+                            kind: SketchResidualFormKind::ProjectedDirectionDotProductPolynomial,
+                            role: SketchResidualFormRole::ExactProof,
+                            strategy: Some(SketchResidualStrategy::ProjectedDirectionDotProduct),
+                            residual: parts.dot,
                         },
                     ],
                     diagnostics,
@@ -5665,6 +5809,61 @@ impl SketchSolveProblem {
                     Real::one(),
                 );
             }
+            SketchConstraintKind::ProjectedParallelLines3 { workplane, a, b } => {
+                // Projected parallelism is certified by the exact U/V
+                // direction cross product after replaying the retained
+                // workplane unit guard. Yap (1997) keeps the projected
+                // predicate as the acceptance boundary; Shoemake's (1985)
+                // quaternion frame supplies the polynomial projection.
+                let Some(parts) =
+                    self.projected_direction_relation_exprs(workplane, a, b, constraint, rows)
+                else {
+                    return;
+                };
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} workplane unit", constraint.name),
+                    unit_quaternion_residual(&parts.quaternion),
+                    SketchResidualStrategy::WorkplaneUnitQuaternion,
+                );
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} projected parallel", constraint.name),
+                    parts.cross,
+                    SketchResidualStrategy::ProjectedDirectionCrossProduct,
+                );
+            }
+            SketchConstraintKind::ProjectedPerpendicularLines3 { workplane, a, b } => {
+                // Projected perpendicularity replays the exact U/V direction
+                // dot product under the same retained workplane guard. No
+                // normalized projected directions or primitive-float angles
+                // are trusted as proof.
+                let Some(parts) =
+                    self.projected_direction_relation_exprs(workplane, a, b, constraint, rows)
+                else {
+                    return;
+                };
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} workplane unit", constraint.name),
+                    unit_quaternion_residual(&parts.quaternion),
+                    SketchResidualStrategy::WorkplaneUnitQuaternion,
+                );
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} projected perpendicular", constraint.name),
+                    parts.dot,
+                    SketchResidualStrategy::ProjectedDirectionDotProduct,
+                );
+            }
             SketchConstraintKind::AtMidpoint2 { point, a, b } => {
                 // Yap, "Towards Exact Geometric Computation" (1997), makes
                 // exact predicates the decision boundary. The midpoint
@@ -6628,6 +6827,24 @@ impl SketchSolveProblem {
         })
     }
 
+    fn projected_direction_relation_exprs(
+        &self,
+        workplane: SketchEntityHandle,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+        constraint: &SketchConstraint,
+        rows: &mut Vec<SketchGeneratedRow>,
+    ) -> Option<ProjectedDirectionRelationExprs> {
+        let quaternion = self.workplane_quaternion(workplane, constraint, rows)?;
+        let a = projected_direction2(&self.line3_direction(a, constraint, rows)?, &quaternion);
+        let b = projected_direction2(&self.line3_direction(b, constraint, rows)?, &quaternion);
+        Some(ProjectedDirectionRelationExprs {
+            cross: direction_cross2(&a, &b),
+            dot: direction_dot2(&a, &b),
+            quaternion,
+        })
+    }
+
     fn line2_points(
         &self,
         handle: SketchEntityHandle,
@@ -7121,6 +7338,13 @@ struct ProjectedLineLengthPointLineDistanceExprs {
 struct ProjectedOrientedAngleExprs {
     quaternion: [Expr; 4],
     angle: OrientedAngleExprs,
+}
+
+#[derive(Clone, Debug)]
+struct ProjectedDirectionRelationExprs {
+    quaternion: [Expr; 4],
+    cross: Expr,
+    dot: Expr,
 }
 
 fn missing_entity_row(

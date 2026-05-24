@@ -140,6 +140,13 @@ doc = false
 bench = false
 
 [[bin]]
+name = "sketch_projected_line_orientation"
+path = "fuzz_targets/sketch_projected_line_orientation.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
 name = "sketch_point_on_cubic"
 path = "fuzz_targets/sketch_point_on_cubic.rs"
 test = false

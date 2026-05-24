@@ -521,6 +521,46 @@ fn sketch_problem_with_projected_oriented_angle_relations(
     sketch
 }
 
+fn sketch_problem_with_projected_line_orientation_relations(
+    row_count: usize,
+) -> hypersolve::SketchSolveProblem {
+    let mut sketch = hypersolve::SketchSolveProblem::new();
+    let origin = sketch.add_point3d("projected-orient.origin", r(0), r(0), r(0));
+    let normal = sketch.add_normal3d("projected-orient.normal", r(1), r(0), r(0), r(0));
+    let workplane = sketch.add_workplane("projected-orient.workplane", origin, normal);
+    for index in 0..row_count {
+        let y = index as i64;
+        let base = sketch.add_point3d(format!("projected-orient{index}.base"), r(0), r(y), r(0));
+        let x_end = sketch.add_point3d(format!("projected-orient{index}.x"), r(5), r(y), r(y));
+        let x2_end =
+            sketch.add_point3d(format!("projected-orient{index}.x2"), r(10), r(y), r(9 - y));
+        let y_end = sketch.add_point3d(
+            format!("projected-orient{index}.y"),
+            r(0),
+            r(y + 7),
+            r(11 + y),
+        );
+        let x = sketch.add_line_segment3(format!("projected-orient{index}.lx"), base, x_end);
+        let x2 = sketch.add_line_segment3(format!("projected-orient{index}.lx2"), base, x2_end);
+        let y_line = sketch.add_line_segment3(format!("projected-orient{index}.ly"), base, y_end);
+        hypersolve::sketch_orientation_builders::projected_parallel_lines3(
+            &mut sketch,
+            format!("projected parallel {index}"),
+            workplane,
+            x,
+            x2,
+        );
+        hypersolve::sketch_orientation_builders::projected_perpendicular_lines3(
+            &mut sketch,
+            format!("projected perpendicular {index}"),
+            workplane,
+            x,
+            y_line,
+        );
+    }
+    sketch
+}
+
 fn sketch_problem_with_midpoint_relations(row_count: usize) -> hypersolve::SketchSolveProblem {
     let mut sketch = hypersolve::SketchSolveProblem::new();
     for index in 0..row_count {
@@ -1363,6 +1403,11 @@ fn certification(c: &mut Criterion) {
     c.bench_function("sketch_projected_oriented_angle_lowering", |b| {
         b.iter(|| projected_oriented_angle_sketch.lower_to_problem())
     });
+    let projected_line_orientation_sketch =
+        sketch_problem_with_projected_line_orientation_relations(16);
+    c.bench_function("sketch_projected_line_orientation_lowering", |b| {
+        b.iter(|| projected_line_orientation_sketch.lower_to_problem())
+    });
     let midpoint_sketch = sketch_problem_with_midpoint_relations(16);
     c.bench_function("sketch_midpoint_lowering", |b| {
         b.iter(|| midpoint_sketch.lower_to_problem())
@@ -1695,6 +1740,25 @@ fn certification(c: &mut Criterion) {
         b.iter(|| {
             for handle in &projected_oriented_angle_form_handles {
                 let _ = projected_oriented_angle_sketch.residual_forms_for_constraint(*handle);
+            }
+        })
+    });
+    let projected_line_orientation_form_handles = projected_line_orientation_sketch
+        .constraints()
+        .iter()
+        .filter(|constraint| {
+            matches!(
+                constraint.kind,
+                hypersolve::SketchConstraintKind::ProjectedParallelLines3 { .. }
+                    | hypersolve::SketchConstraintKind::ProjectedPerpendicularLines3 { .. }
+            )
+        })
+        .map(|constraint| constraint.handle)
+        .collect::<Vec<_>>();
+    c.bench_function("sketch_projected_line_orientation_residual_forms", |b| {
+        b.iter(|| {
+            for handle in &projected_line_orientation_form_handles {
+                let _ = projected_line_orientation_sketch.residual_forms_for_constraint(*handle);
             }
         })
     });

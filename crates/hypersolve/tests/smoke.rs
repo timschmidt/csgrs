@@ -5059,6 +5059,122 @@ fn sketch_projected_oriented_angle_lowers_exact_workplane_branch_rows() {
 }
 
 #[test]
+fn sketch_projected_line_orientation_lowers_exact_workplane_rows() {
+    let mut sketch = SketchSolveProblem::new();
+    let origin = sketch.add_point3d("origin", real(0), real(0), real(0));
+    let normal = sketch.add_normal3d("normal", real(1), real(0), real(0), real(0));
+    let workplane = sketch.add_workplane("workplane", origin, normal);
+    let p0 = sketch.add_point3d("p0", real(0), real(0), real(0));
+    let px = sketch.add_point3d("px", real(5), real(0), real(11));
+    let p2 = sketch.add_point3d("p2", real(1), real(2), real(-7));
+    let p2x = sketch.add_point3d("p2x", real(11), real(2), real(17));
+    let py = sketch.add_point3d("py", real(0), real(7), real(23));
+    let p2y = sketch.add_point3d("p2y", real(1), real(9), real(31));
+    let x = sketch.add_line_segment3("x", p0, px);
+    let shifted_x = sketch.add_line_segment3("shifted x", p2, p2x);
+    let y = sketch.add_line_segment3("y", p0, py);
+    let shifted_y = sketch.add_line_segment3("shifted y", p2, p2y);
+    let parallel = hypersolve::sketch_orientation_builders::projected_parallel_lines3(
+        &mut sketch,
+        "projected parallel",
+        workplane,
+        x,
+        shifted_x,
+    );
+    sketch.add_projected_parallel_lines3("violated projected parallel", workplane, x, y);
+    let perpendicular = hypersolve::sketch_orientation_builders::projected_perpendicular_lines3(
+        &mut sketch,
+        "projected perpendicular",
+        workplane,
+        x,
+        shifted_y,
+    );
+    sketch.add_projected_perpendicular_lines3(
+        "violated projected perpendicular",
+        workplane,
+        x,
+        shifted_x,
+    );
+
+    let report = sketch.lower_to_problem();
+
+    assert_eq!(
+        parallel.family,
+        hypersolve::sketch_builders::SketchConstraintFamily::Orientation
+    );
+    assert_eq!(
+        parallel.strategy,
+        SketchResidualStrategy::ProjectedDirectionCrossProduct
+    );
+    assert_eq!(
+        perpendicular.strategy,
+        SketchResidualStrategy::ProjectedDirectionDotProduct
+    );
+    assert!(report.all_generated());
+    assert_eq!(report.problem.constraints.len(), 8);
+    assert_eq!(
+        report.rows[0].strategy,
+        Some(SketchResidualStrategy::WorkplaneUnitQuaternion)
+    );
+    assert_eq!(
+        report.rows[1].strategy,
+        Some(SketchResidualStrategy::ProjectedDirectionCrossProduct)
+    );
+    assert_eq!(
+        report.rows[5].strategy,
+        Some(SketchResidualStrategy::ProjectedDirectionDotProduct)
+    );
+
+    let certification = certify_candidate(
+        &PreparedProblem::new(&report.problem),
+        &context_from_problem(&report.problem),
+    );
+    assert!(matches!(
+        certification.rows[1].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[3].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
+    assert!(matches!(
+        certification.rows[5].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[7].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
+
+    let parallel_forms = sketch.residual_forms_for_constraint(parallel.handle);
+    assert_eq!(parallel_forms.status, SketchResidualFormsStatus::Generated);
+    assert_eq!(parallel_forms.forms.len(), 2);
+    assert_eq!(
+        parallel_forms.forms[1].kind,
+        SketchResidualFormKind::ProjectedDirectionCrossProductPolynomial
+    );
+    assert_eq!(
+        parallel_forms.forms[1].role,
+        SketchResidualFormRole::ExactProof
+    );
+
+    let perpendicular_forms = sketch.residual_forms_for_constraint(perpendicular.handle);
+    assert_eq!(
+        perpendicular_forms.forms[1].kind,
+        SketchResidualFormKind::ProjectedDirectionDotProductPolynomial
+    );
+
+    let p2a = sketch.add_point2d("wrong 2d a", real(0), real(0));
+    let p2b = sketch.add_point2d("wrong 2d b", real(1), real(0));
+    let wrong_line = sketch.add_line_segment2("wrong 2d line", p2a, p2b);
+    let wrong =
+        sketch.add_projected_parallel_lines3("wrong projected parallel", workplane, wrong_line, x);
+    let wrong_forms = sketch.residual_forms_for_constraint(wrong);
+    assert_eq!(wrong_forms.status, SketchResidualFormsStatus::InvalidInputs);
+    assert!(!wrong_forms.diagnostics.is_empty());
+}
+
+#[test]
 fn sketch_workplane_frame_respects_rotated_unit_quaternion_basis() {
     let mut sketch = SketchSolveProblem::new();
     let origin = sketch.add_point3d("origin", real(0), real(0), real(5));

@@ -2702,6 +2702,86 @@ proptest! {
     }
 
     #[test]
+    fn sketch_projected_line_orientation_identity_workplane_matches_direction_predicates(
+        ox in -8_i16..=8,
+        oy in -8_i16..=8,
+        oz in -8_i16..=8,
+        dx in -8_i16..=8,
+        dy in -8_i16..=8,
+        parallel_scale in 1_i16..=4,
+        perpendicular_scale in 1_i16..=4,
+        a_z in -8_i16..=8,
+        b_z in -8_i16..=8,
+        c_z in -8_i16..=8,
+    ) {
+        prop_assume!(dx != 0 || dy != 0);
+        let ox = i64::from(ox);
+        let oy = i64::from(oy);
+        let oz = i64::from(oz);
+        let dx = i64::from(dx);
+        let dy = i64::from(dy);
+        let parallel_scale = i64::from(parallel_scale);
+        let perpendicular_scale = i64::from(perpendicular_scale);
+        let a_z = i64::from(a_z);
+        let b_z = i64::from(b_z);
+        let c_z = i64::from(c_z);
+        let mut sketch = SketchSolveProblem::new();
+        let origin = sketch.add_point3d("origin", Real::from(0), Real::from(0), Real::from(0));
+        let normal = sketch.add_normal3d("normal", Real::from(1), Real::from(0), Real::from(0), Real::from(0));
+        let workplane = sketch.add_workplane("workplane", origin, normal);
+        let base = sketch.add_point3d("base", Real::from(ox), Real::from(oy), Real::from(oz));
+        let a_end = sketch.add_point3d("a end", Real::from(ox + dx), Real::from(oy + dy), Real::from(oz + a_z));
+        let b_end = sketch.add_point3d(
+            "b end",
+            Real::from(ox + parallel_scale * dx),
+            Real::from(oy + parallel_scale * dy),
+            Real::from(oz + b_z),
+        );
+        let c_end = sketch.add_point3d(
+            "c end",
+            Real::from(ox - perpendicular_scale * dy),
+            Real::from(oy + perpendicular_scale * dx),
+            Real::from(oz + c_z),
+        );
+        let a = sketch.add_line_segment3("a", base, a_end);
+        let b = sketch.add_line_segment3("b", base, b_end);
+        let c = sketch.add_line_segment3("c", base, c_end);
+        let parallel = sketch.add_projected_parallel_lines3("projected parallel", workplane, a, b);
+        let perpendicular =
+            sketch.add_projected_perpendicular_lines3("projected perpendicular", workplane, a, c);
+
+        let lowered = sketch.lower_to_problem();
+        let certification = certify_candidate(
+            &PreparedProblem::new(&lowered.problem),
+            &context_from_problem(&lowered.problem),
+        );
+        let parallel_forms = sketch.residual_forms_for_constraint(parallel);
+        let perpendicular_forms = sketch.residual_forms_for_constraint(perpendicular);
+
+        prop_assert_eq!(lowered.problem.constraints.len(), 4);
+        prop_assert!(lowered.all_generated());
+        prop_assert!(certification.all_satisfied());
+        prop_assert_eq!(
+            lowered.rows[1].strategy,
+            Some(SketchResidualStrategy::ProjectedDirectionCrossProduct)
+        );
+        prop_assert_eq!(
+            lowered.rows[3].strategy,
+            Some(SketchResidualStrategy::ProjectedDirectionDotProduct)
+        );
+        prop_assert_eq!(parallel_forms.status, SketchResidualFormsStatus::Generated);
+        prop_assert_eq!(
+            parallel_forms.forms[1].kind,
+            SketchResidualFormKind::ProjectedDirectionCrossProductPolynomial
+        );
+        prop_assert_eq!(perpendicular_forms.status, SketchResidualFormsStatus::Generated);
+        prop_assert_eq!(
+            perpendicular_forms.forms[1].kind,
+            SketchResidualFormKind::ProjectedDirectionDotProductPolynomial
+        );
+    }
+
+    #[test]
     fn sketch_entity_domain_generated_tangent_lengths_match_integer_points(
         ax in -16_i16..=16,
         ay in -16_i16..=16,

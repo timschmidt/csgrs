@@ -1154,6 +1154,55 @@ pub mod orientation {
         }
     }
 
+    /// Add a retained workplane-projected 3D line parallelism relation.
+    ///
+    /// Lowering projects both 3D line directions into the certified workplane
+    /// frame and replays the exact 2D direction cross product beside the
+    /// unit-quaternion guard. This is the projected analogue of
+    /// [`parallel_lines2`], following Yap, "Towards Exact Geometric
+    /// Computation" (1997), with the retained frame polynomial from Shoemake
+    /// (1985).
+    pub fn projected_parallel_lines3(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::ProjectedParallelLines3 { workplane, a, b };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Orientation,
+            strategy: SketchResidualStrategy::ProjectedDirectionCrossProduct,
+            kind,
+        }
+    }
+
+    /// Add a retained workplane-projected 3D line perpendicularity relation.
+    ///
+    /// Lowering projects both 3D line directions into the certified workplane
+    /// frame and replays the exact 2D direction dot product beside the
+    /// unit-quaternion guard. This avoids normalizing projected directions or
+    /// evaluating primitive-float angles, following Yap's exact predicate
+    /// boundary and Shoemake's unit-quaternion frame.
+    pub fn projected_perpendicular_lines3(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::ProjectedPerpendicularLines3 { workplane, a, b };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Orientation,
+            strategy: SketchResidualStrategy::ProjectedDirectionDotProduct,
+            kind,
+        }
+    }
+
     /// Add a 2D line same-orientation relation.
     ///
     /// The lowered package uses exact unnormalized predicates: cross product
