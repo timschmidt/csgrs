@@ -311,6 +311,43 @@ pub mod tangency {
         }
     }
 
+    /// Add retained 3D/workplane arc-line tangency with endpoint and branch data.
+    ///
+    /// This projected package mirrors [`arc_line_tangent2`]: the selected
+    /// 3D line endpoint projects to the selected arc endpoint, while the
+    /// projected outgoing line tangent certifies radius-perpendicularity and
+    /// the signed orientation branch. The unit workplane guard is part of the
+    /// proof package, following Yap, "Towards Exact Geometric Computation"
+    /// (1997); endpoint/branch data follows Bouma et al. (1995), and the
+    /// retained frame uses Shoemake's quaternion construction (1985).
+    #[allow(clippy::too_many_arguments)]
+    pub fn projected_arc_line_tangent3(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        arc: SketchEntityHandle,
+        arc_endpoint: SketchArcEndpoint,
+        line: SketchEntityHandle,
+        line_endpoint: SketchLineEndpoint,
+        orientation: SketchTangentOrientation,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::ProjectedArcLineTangent3 {
+            workplane,
+            arc,
+            arc_endpoint,
+            line,
+            line_endpoint,
+            orientation,
+        };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Tangency,
+            strategy: SketchResidualStrategy::ProjectedArcLineTangent,
+            kind,
+        }
+    }
+
     /// Add retained 3D/workplane line/circle tangency.
     ///
     /// Lowering projects the 3D line into the retained workplane and replays

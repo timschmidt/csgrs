@@ -998,6 +998,83 @@ proptest! {
     }
 
     #[test]
+    fn sketch_projected_arc_line_tangent_rows_match_generated_integer_circle_tangents(
+        ox in -4_i16..=4,
+        oy in -4_i16..=4,
+        oz in -4_i16..=4,
+        cx in -8_i16..=8,
+        cy in -8_i16..=8,
+        radius in 1_i16..=12,
+        tangent_length in 1_i16..=12,
+        z0 in -8_i16..=8,
+        z1 in -8_i16..=8,
+    ) {
+        let ox = i64::from(ox);
+        let oy = i64::from(oy);
+        let oz = i64::from(oz);
+        let cx = i64::from(cx);
+        let cy = i64::from(cy);
+        let radius = i64::from(radius);
+        let tangent_length = i64::from(tangent_length);
+        let z0 = i64::from(z0);
+        let z1 = i64::from(z1);
+        let mut sketch = SketchSolveProblem::new();
+        let origin = sketch.add_point3d("origin", Real::from(ox), Real::from(oy), Real::from(oz));
+        let normal = sketch.add_normal3d("normal", Real::from(1), Real::from(0), Real::from(0), Real::from(0));
+        let workplane = sketch.add_workplane("workplane", origin, normal);
+        let center = sketch.add_point2d("center", Real::from(cx), Real::from(cy));
+        let start = sketch.add_point2d("start", Real::from(cx + radius), Real::from(cy));
+        let end = sketch.add_point2d("end", Real::from(cx), Real::from(cy + radius));
+        let radius_entity = sketch.add_distance("radius", Real::from(radius));
+        let arc = sketch.add_arc_of_circle2("arc", center, start, end, radius_entity);
+        let line_start = sketch.add_point3d(
+            "line start",
+            Real::from(ox + cx + radius),
+            Real::from(oy + cy),
+            Real::from(oz + z0),
+        );
+        let line_end = sketch.add_point3d(
+            "line end",
+            Real::from(ox + cx + radius),
+            Real::from(oy + cy + tangent_length),
+            Real::from(oz + z1),
+        );
+        let line = sketch.add_line_segment3("line", line_start, line_end);
+        let handle = sketch.add_projected_arc_line_tangent3(
+            "projected arc line tangent",
+            workplane,
+            arc,
+            SketchArcEndpoint::Start,
+            line,
+            SketchLineEndpoint::Start,
+            SketchTangentOrientation::CounterClockwise,
+        );
+
+        let lowered = sketch.lower_to_problem();
+        let context = context_from_problem(&lowered.problem);
+        let certification = certify_candidate(&PreparedProblem::new(&lowered.problem), &context);
+        let forms = sketch.residual_forms_for_constraint(handle);
+
+        prop_assert_eq!(lowered.rows.len(), 6);
+        prop_assert_eq!(lowered.rows[0].strategy, Some(SketchResidualStrategy::WorkplaneUnitQuaternion));
+        let all_tangent_rows_generated = lowered.rows[1..].iter().all(|row| {
+            row.strategy == Some(SketchResidualStrategy::ProjectedArcLineTangent)
+                && row.status == SketchGeneratedRowStatus::Generated
+        });
+        prop_assert!(all_tangent_rows_generated);
+        prop_assert!(certification.all_satisfied());
+        prop_assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+        prop_assert_eq!(forms.forms.len(), 6);
+        for form in &forms.forms[..5] {
+            prop_assert_eq!(form.role, SketchResidualFormRole::ExactProof);
+            prop_assert_eq!(form.residual.eval_real(context.bindings()).unwrap(), Real::zero());
+        }
+        prop_assert_eq!(forms.forms[5].role, SketchResidualFormRole::ExactProof);
+        let orientation = forms.forms[5].residual.eval_real(context.bindings()).unwrap();
+        prop_assert_eq!(orientation.structural_facts().sign, Some(RealSign::Positive));
+    }
+
+    #[test]
     fn sketch_arc_cubic_tangent_rows_match_generated_integer_circle_tangents(
         cx in -8_i16..=8,
         cy in -8_i16..=8,

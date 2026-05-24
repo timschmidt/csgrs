@@ -147,6 +147,13 @@ doc = false
 bench = false
 
 [[bin]]
+name = "sketch_projected_arc_line_tangent"
+path = "fuzz_targets/sketch_projected_arc_line_tangent.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
 name = "sketch_arc_arc_tangent"
 path = "fuzz_targets/sketch_arc_arc_tangent.rs"
 test = false

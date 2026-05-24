@@ -2272,6 +2272,117 @@ fn sketch_arc_line_tangent_relations_lower_endpoint_radius_and_orientation_rows(
 }
 
 #[test]
+fn sketch_projected_arc_line_tangent_replays_workplane_endpoint_and_orientation_rows() {
+    let mut sketch = SketchSolveProblem::new();
+    let origin3 = sketch.add_point3d("origin3", real(1), real(2), real(3));
+    let normal = sketch.add_normal3d("identity normal", real(1), real(0), real(0), real(0));
+    let workplane = sketch.add_workplane("workplane", origin3, normal);
+    let center = sketch.add_point2d("center", real(0), real(0));
+    let start = sketch.add_point2d("start", real(5), real(0));
+    let end = sketch.add_point2d("end", real(0), real(5));
+    let radius = sketch.add_distance("radius", real(5));
+    let arc = sketch.add_arc_of_circle2("arc", center, start, end, radius);
+    let line_start = sketch.add_point3d("line start", real(6), real(2), real(-7));
+    let line_end = sketch.add_point3d("line end", real(6), real(8), real(11));
+    let line = sketch.add_line_segment3("projected line", line_start, line_end);
+    let valid = sketch_tangency_builders::projected_arc_line_tangent3(
+        &mut sketch,
+        "projected arc line tangent",
+        workplane,
+        arc,
+        SketchArcEndpoint::Start,
+        line,
+        SketchLineEndpoint::Start,
+        SketchTangentOrientation::CounterClockwise,
+    );
+    sketch.add_projected_arc_line_tangent3(
+        "wrong projected tangent orientation",
+        workplane,
+        arc,
+        SketchArcEndpoint::Start,
+        line,
+        SketchLineEndpoint::Start,
+        SketchTangentOrientation::Clockwise,
+    );
+    let wrong = sketch.add_projected_arc_line_tangent3(
+        "wrong projected tangent line kind",
+        workplane,
+        arc,
+        SketchArcEndpoint::Start,
+        start,
+        SketchLineEndpoint::Start,
+        SketchTangentOrientation::CounterClockwise,
+    );
+
+    let lowered = sketch.lower_to_problem();
+
+    assert_eq!(
+        valid.strategy,
+        SketchResidualStrategy::ProjectedArcLineTangent
+    );
+    assert_eq!(lowered.problem.constraints.len(), 12);
+    assert!(lowered.rows[..12].iter().all(|row| row.strategy
+        == Some(SketchResidualStrategy::ProjectedArcLineTangent)
+        || row.strategy == Some(SketchResidualStrategy::WorkplaneUnitQuaternion)));
+    assert_eq!(
+        lowered.rows.last().unwrap().status,
+        SketchGeneratedRowStatus::WrongEntityKind {
+            handle: start,
+            expected: "3D line segment",
+        }
+    );
+
+    let certification = certify_candidate(
+        &PreparedProblem::new(&lowered.problem),
+        &context_from_problem(&lowered.problem),
+    );
+    assert!(certification.rows[..6].iter().all(|row| {
+        matches!(
+            row.status,
+            CertifiedCandidateStatus::CertifiedZero { .. }
+                | CertifiedCandidateStatus::CertifiedSatisfiedInequality { .. }
+        )
+    }));
+    assert!(matches!(
+        certification.rows[11].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
+
+    let forms = sketch.residual_forms_for_constraint(valid.handle);
+    assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+    assert_eq!(forms.forms.len(), 6);
+    assert_eq!(
+        forms.forms[0].kind,
+        SketchResidualFormKind::WorkplaneUnitQuaternionPolynomial
+    );
+    assert_eq!(
+        forms.forms[1].kind,
+        SketchResidualFormKind::ProjectedArcLineTangentEndpointRadiusPolynomial
+    );
+    assert_eq!(
+        forms.forms[2].kind,
+        SketchResidualFormKind::ProjectedArcLineTangentEndpointIncidencePolynomial
+    );
+    assert_eq!(
+        forms.forms[4].kind,
+        SketchResidualFormKind::ProjectedArcLineTangentRadiusPerpendicularPolynomial
+    );
+    assert_eq!(
+        forms.forms[5].kind,
+        SketchResidualFormKind::ProjectedArcLineTangentOrientationPredicate
+    );
+    assert!(
+        forms
+            .forms
+            .iter()
+            .all(|form| form.role == SketchResidualFormRole::ExactProof)
+    );
+
+    let wrong_forms = sketch.residual_forms_for_constraint(wrong);
+    assert_eq!(wrong_forms.status, SketchResidualFormsStatus::InvalidInputs);
+}
+
+#[test]
 fn sketch_arc_line_tangent_supports_end_endpoint_and_line_end_orientation() {
     let mut sketch = SketchSolveProblem::new();
     let center = sketch.add_point2d("center", real(0), real(0));
