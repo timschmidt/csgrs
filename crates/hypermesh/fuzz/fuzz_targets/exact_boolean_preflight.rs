@@ -4702,7 +4702,29 @@ fn exercise_closed_vertex_touch_boundary_policy() {
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        ExactBooleanSupport::RequiresBoundaryPolicy
+        ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion
+    );
+    let union = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("closed vertex-touch union should preserve separate closed shells");
+    union
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        union.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ClosedBoundaryTouchingUnion
+        }
     );
 
     let intersection_preflight =
@@ -7246,11 +7268,33 @@ fn exercise_axis_aligned_coplanar_volumetric_boxes() {
     let edge_right = axis_aligned_box_i64([2, 2, 0], [4, 4, 2]);
     assert!(intersect_closed_convex_solids(&face_left, &edge_right).is_none());
     let edge_union = preflight_boolean_exact(&face_left, &edge_right, ExactBooleanOperation::Union)
-        .expect("edge-adjacent axis-aligned box union should remain boundary policy");
+        .expect("edge-adjacent axis-aligned box union should preserve separate shells");
     edge_union.validate().unwrap();
     assert_eq!(
         edge_union.support,
-        ExactBooleanSupport::RequiresBoundaryPolicy
+        ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion
+    );
+    let edge_union_result = hypermesh::exact::boolean_exact(
+        &face_left,
+        &edge_right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("edge-adjacent axis-aligned box union should materialize separate shells");
+    edge_union_result
+        .validate_operation_against_sources(
+            &face_left,
+            &edge_right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        edge_union_result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ClosedBoundaryTouchingUnion
+        }
     );
     let edge_intersection =
         preflight_boolean_exact(&face_left, &edge_right, ExactBooleanOperation::Intersection)

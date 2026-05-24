@@ -745,6 +745,9 @@ pub enum ExactBooleanShortcutKind {
     /// Certified left-preserving regularized difference of closed solids whose
     /// only overlap is an exact full-face/fan-patch boundary contact.
     FullFaceAdjacentDifference,
+    /// Certified regularized union of closed solids whose exact graph proves
+    /// only lower-dimensional boundary contact.
+    ClosedBoundaryTouchingUnion,
     /// Certified empty regularized intersection of closed solids whose exact
     /// graph proves only lower-dimensional boundary contact.
     ClosedBoundaryTouchingIntersection,
@@ -1549,6 +1552,10 @@ pub enum ExactBooleanSupport {
     /// Difference was certified as the left solid because adjacent closed
     /// solids only share exact coincident whole faces or bounded fan patches.
     CertifiedFullFaceAdjacentDifference,
+    /// Union was materialized by preserving separate closed shells because
+    /// closed solids only touch at exact lower-dimensional boundary features
+    /// and share no interior volume.
+    CertifiedClosedBoundaryTouchingUnion,
     /// Intersection was certified empty because closed solids only touch at
     /// exact boundary features and share no interior volume.
     CertifiedClosedBoundaryTouchingIntersection,
@@ -1763,6 +1770,7 @@ impl ExactBooleanPreflight {
             | ExactBooleanSupport::CertifiedContainedFaceAdjacentDifference
             | ExactBooleanSupport::CertifiedFullFaceAdjacentIntersection
             | ExactBooleanSupport::CertifiedFullFaceAdjacentDifference
+            | ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion
             | ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
             | ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
             | ExactBooleanSupport::CertifiedOpenSurfaceDisjoint

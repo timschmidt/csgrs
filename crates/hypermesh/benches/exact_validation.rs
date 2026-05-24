@@ -2978,7 +2978,7 @@ fn exact_boolean_boundary_preflight(c: &mut Criterion) {
         )
         .unwrap();
 
-        c.bench_function("exact_closed_vertex_contact_boundary_policy", |b| {
+        c.bench_function("exact_closed_vertex_contact_union_shortcut", |b| {
             b.iter(|| {
                 (
                     hypermesh::exact::preflight_boolean_exact(
@@ -2987,15 +2987,26 @@ fn exact_boolean_boundary_preflight(c: &mut Criterion) {
                         hypermesh::exact::ExactBooleanOperation::Union,
                     )
                     .unwrap(),
-                    certify_boundary_touching_report(&vertex_left, &vertex_right).unwrap(),
-                    hypermesh::exact::boolean_exact_with_boundary_policy(
+                    hypermesh::exact::boolean_exact(
                         &vertex_left,
                         &vertex_right,
                         hypermesh::exact::ExactBooleanOperation::Union,
                         ValidationPolicy::CLOSED,
-                        hypermesh::exact::ExactBoundaryBooleanPolicy::PreserveSeparateShells,
                     )
+                    .map(|result| {
+                        result
+                            .validate_operation_against_sources(
+                                &vertex_left,
+                                &vertex_right,
+                                hypermesh::exact::ExactBooleanOperation::Union,
+                                ValidationPolicy::CLOSED,
+                                hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+                            )
+                            .unwrap();
+                        result.mesh.triangles().len()
+                    })
                     .unwrap(),
+                    certify_boundary_touching_report(&vertex_left, &vertex_right).unwrap(),
                     hypermesh::exact::preflight_boolean_exact(
                         &vertex_left,
                         &vertex_right,
@@ -3039,6 +3050,41 @@ fn exact_boolean_boundary_preflight(c: &mut Criterion) {
                                 &vertex_left,
                                 &vertex_right,
                                 hypermesh::exact::ExactBooleanOperation::Difference,
+                                ValidationPolicy::CLOSED,
+                                hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+                            )
+                            .unwrap();
+                        result.mesh.triangles().len()
+                    })
+                    .unwrap(),
+                )
+            })
+        });
+
+        let edge_left = axis_aligned_box_i64([0, 0, 0], [2, 2, 2]);
+        let edge_right = axis_aligned_box_i64([2, 2, 0], [4, 4, 2]);
+
+        c.bench_function("exact_closed_edge_contact_union_shortcut", |b| {
+            b.iter(|| {
+                (
+                    hypermesh::exact::preflight_boolean_exact(
+                        &edge_left,
+                        &edge_right,
+                        hypermesh::exact::ExactBooleanOperation::Union,
+                    )
+                    .unwrap(),
+                    hypermesh::exact::boolean_exact(
+                        &edge_left,
+                        &edge_right,
+                        hypermesh::exact::ExactBooleanOperation::Union,
+                        ValidationPolicy::CLOSED,
+                    )
+                    .map(|result| {
+                        result
+                            .validate_operation_against_sources(
+                                &edge_left,
+                                &edge_right,
+                                hypermesh::exact::ExactBooleanOperation::Union,
                                 ValidationPolicy::CLOSED,
                                 hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
                             )

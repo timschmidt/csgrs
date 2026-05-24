@@ -6383,7 +6383,33 @@ fn exact_closed_vertex_touch_contact_materializes_regularized_shortcuts() {
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::exact::ExactBooleanSupport::RequiresBoundaryPolicy
+        hypermesh::exact::ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion
+    );
+    let union = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    union
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            hypermesh::exact::ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        union.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ClosedBoundaryTouchingUnion
+        }
+    );
+    assert_eq!(
+        union.mesh.triangles().len(),
+        left.triangles().len() + right.triangles().len()
     );
 
     let intersection_preflight = hypermesh::exact::preflight_boolean_exact(
@@ -6643,7 +6669,33 @@ fn exact_axis_aligned_face_touching_boxes_materialize_regularized_union_only() {
         .unwrap();
     assert_eq!(
         edge_union_preflight.support,
-        hypermesh::exact::ExactBooleanSupport::RequiresBoundaryPolicy
+        hypermesh::exact::ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion
+    );
+    let edge_union = hypermesh::exact::boolean_exact(
+        &left,
+        &edge_touching,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    edge_union
+        .validate_operation_against_sources(
+            &left,
+            &edge_touching,
+            hypermesh::exact::ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        edge_union.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ClosedBoundaryTouchingUnion
+        }
+    );
+    assert_eq!(
+        edge_union.mesh.triangles().len(),
+        left.triangles().len() + edge_touching.triangles().len()
     );
     let edge_intersection_preflight = hypermesh::exact::preflight_boolean_exact(
         &left,

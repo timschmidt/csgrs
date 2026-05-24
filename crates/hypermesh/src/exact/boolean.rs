@@ -549,6 +549,11 @@ pub fn preflight_boolean_exact(
         {
             ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellDifference
         }
+        ExactBooleanOperation::Union
+            if certified_closed_boundary_touching_union_report(left, right)?.is_some() =>
+        {
+            ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion
+        }
         ExactBooleanOperation::Intersection
             if certified_closed_boundary_touching_regularized_report(left, right)?.is_some() =>
         {
@@ -674,6 +679,7 @@ pub fn preflight_boolean_exact(
             | ExactBooleanSupport::CertifiedContainedFaceAdjacentDifference
             | ExactBooleanSupport::CertifiedFullFaceAdjacentIntersection
             | ExactBooleanSupport::CertifiedFullFaceAdjacentDifference
+            | ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion
             | ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
             | ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
             | ExactBooleanSupport::CertifiedOpenSurfaceDisjoint
@@ -1554,6 +1560,11 @@ pub fn boolean_exact_with_boundary_policy(
                 AffineOrthogonalSolidOperation::Difference,
                 validation,
             )
+        }
+        ExactBooleanOperation::Union
+            if certified_closed_boundary_touching_union_report(left, right)?.is_some() =>
+        {
+            boolean_closed_boundary_touching_union(left, right, validation)
         }
         ExactBooleanOperation::Intersection
             if certified_closed_boundary_touching_regularized_report(left, right)?.is_some() =>
@@ -3164,6 +3175,58 @@ fn boolean_coplanar_convex_containment_surfaces(
 }
 
 #[cfg(feature = "exact-triangulation")]
+/// Certify union-safe lower-dimensional contact between closed solids.
+///
+/// [`certify_boundary_touching_report`] also certifies positive-area coplanar
+/// boundary overlaps. Union deliberately rejects those here unless an earlier
+/// face-patch/cell certificate handled them, because they require a stronger
+/// output-topology proof than simply preserving two exact shells.
+fn certified_closed_boundary_touching_union_report(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Result<Option<ExactBoundaryTouchingReport>, MeshError> {
+    let Some(report) = certified_closed_boundary_touching_regularized_report(left, right)? else {
+        return Ok(None);
+    };
+    // Regularized solid union may preserve separate shells when two closed
+    // solids meet only on lower-dimensional boundary features. Positive-area
+    // coplanar overlap is deliberately excluded here: those contacts need a
+    // full face-patch or volumetric-cell certificate before the two closed
+    // objects can be projected into one triangle mesh. This keeps the exact
+    // predicate/topology split explicit in the sense of Yap, "Towards Exact
+    // Geometric Computation," Comput. Geom. 7.1-2 (1997), and follows the
+    // regularized-set view of solid modeling described by Requicha,
+    // "Representations for Rigid Solids: Theory, Methods, and Systems,"
+    // ACM Computing Surveys 12.4 (1980).
+    if report.blocker.candidate_pairs
+        + report.blocker.coplanar_touching_pairs
+        + report.blocker.coplanar_overlapping_pairs
+        == 0
+    {
+        return Ok(None);
+    }
+    if report.blocker.coplanar_overlapping_pairs != 0 {
+        let coplanar_evidence =
+            super::volumetric_cells::certify_coplanar_volumetric_cell_evidence(left, right)?;
+        coplanar_evidence
+            .validate_against_sources(left, right)
+            .map_err(|error| {
+                MeshError::one(MeshDiagnostic::new(
+                    Severity::Error,
+                    DiagnosticKind::UnsupportedExactOperation,
+                    format!(
+                        "exact closed-boundary-touch coplanar evidence replay failed: {error:?}"
+                    ),
+                ))
+            })?;
+        if coplanar_evidence.positive_area_coplanar_overlapping_pairs != 0 {
+            return Ok(None);
+        }
+    }
+    Ok(Some(report))
+}
+
+#[cfg(feature = "exact-triangulation")]
 /// Certify regularized lower-dimensional contact between closed solids.
 ///
 /// [`certify_boundary_touching_report`] also certifies open-surface touching
@@ -3196,6 +3259,32 @@ fn certified_closed_boundary_touching_regularized_report(
             ))
         })?;
     Ok(Some(report))
+}
+
+#[cfg(feature = "exact-triangulation")]
+/// Materialize the regularized union for closed lower-dimensional contact.
+fn boolean_closed_boundary_touching_union(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    validation: ValidationPolicy,
+) -> Result<ExactBooleanResult, MeshError> {
+    certified_closed_boundary_touching_union_report(left, right)?.ok_or_else(|| {
+        MeshError::one(MeshDiagnostic::new(
+            Severity::Error,
+            DiagnosticKind::UnsupportedExactOperation,
+            "exact closed-boundary-touch union certificate did not replay",
+        ))
+    })?;
+    Ok(certified_shortcut_result(
+        concatenate_meshes_with_options(
+            left,
+            right,
+            false,
+            "exact closed-boundary-touch regularized union preserving separate shells",
+            validation,
+        )?,
+        ExactBooleanShortcutKind::ClosedBoundaryTouchingUnion,
+    ))
 }
 
 #[cfg(feature = "exact-triangulation")]
