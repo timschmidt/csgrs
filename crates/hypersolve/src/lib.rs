@@ -8,6 +8,7 @@
 pub mod active_set;
 pub mod affine;
 pub mod algebraic;
+pub mod algebraic_binary;
 pub mod algebraic_mobius;
 pub mod algebraic_polynomial_image;
 pub mod alpha;
@@ -73,6 +74,10 @@ pub use algebraic::{
     evaluate_rational_expression_at_algebraic_root, represent_univariate_algebraic_roots,
     represent_univariate_algebraic_roots_from_reports, transform_algebraic_root_affine,
     validate_algebraic_root_representation,
+};
+pub use algebraic_binary::{
+    AlgebraicRootBinaryTransformReport, AlgebraicRootBinaryTransformStatus,
+    transform_algebraic_roots_binary,
 };
 pub use algebraic_mobius::{
     AlgebraicRootMobiusTransformReport, AlgebraicRootMobiusTransformStatus,

@@ -26,8 +26,9 @@ use crate::root_isolation::{
 };
 use crate::symbolic::{Expr, SymbolId};
 use crate::{
-    AlgebraicRootMobiusTransformStatus, AlgebraicRootPolynomialImageStatus,
-    transform_algebraic_root_mobius, transform_algebraic_root_polynomial_image,
+    AlgebraicRootBinaryTransformStatus, AlgebraicRootMobiusTransformStatus,
+    AlgebraicRootPolynomialImageStatus, transform_algebraic_root_mobius,
+    transform_algebraic_root_polynomial_image, transform_algebraic_roots_binary,
 };
 
 /// Representation kind for one isolated algebraic root.
@@ -660,6 +661,14 @@ pub fn arithmetic_algebraic_root_representations(
     {
         return report;
     }
+    if let Some(report) = arithmetic_with_independent_representations(
+        left,
+        right,
+        operation,
+        PredicatePolicy::default(),
+    ) {
+        return report;
+    }
     let Some(left_value) = left.exact_rational_witness() else {
         if operation == AlgebraicRootArithmeticOp::Negate {
             let representation = negate_algebraic_root_representation(left);
@@ -978,6 +987,66 @@ fn arithmetic_with_same_representation(
         | AlgebraicRootPolynomialImageStatus::NonMonotoneImage
         | AlgebraicRootPolynomialImageStatus::UnsupportedDegree
         | AlgebraicRootPolynomialImageStatus::Undecided => algebraic_arithmetic_report(
+            operation,
+            AlgebraicRootArithmeticStatus::Undecided,
+            None,
+            transform.representation,
+            transform.message,
+        ),
+    })
+}
+
+/// Lowers independent add/subtract/multiply to resultant-backed construction.
+///
+/// This is the first bounded algebraic-number arithmetic slice for two
+/// non-rational operands.  The helper delegates to
+/// [`crate::transform_algebraic_roots_binary`], which cites Sylvester
+/// resultants, Sturm isolation, Collins-Loos real-root isolation, and Yap's
+/// exact geometric computation boundary near the actual elimination code.
+/// Division intentionally stays unresolved until independent denominator
+/// evidence can be represented without a primitive-float shortcut.
+fn arithmetic_with_independent_representations(
+    left: &AlgebraicRootRepresentation,
+    right: Option<&AlgebraicRootRepresentation>,
+    operation: AlgebraicRootArithmeticOp,
+    policy: PredicatePolicy,
+) -> Option<AlgebraicRootArithmeticReport> {
+    let right = right?;
+    if left.exact_rational_witness().is_some() || right.exact_rational_witness().is_some() {
+        return None;
+    }
+    if !matches!(
+        operation,
+        AlgebraicRootArithmeticOp::Add
+            | AlgebraicRootArithmeticOp::Subtract
+            | AlgebraicRootArithmeticOp::Multiply
+    ) {
+        return None;
+    }
+    let transform = transform_algebraic_roots_binary(left, right, operation, policy);
+    Some(match transform.status {
+        AlgebraicRootBinaryTransformStatus::Transformed => algebraic_arithmetic_report(
+            operation,
+            AlgebraicRootArithmeticStatus::ComputedRepresentation,
+            None,
+            transform.representation,
+            Some("independent represented-root arithmetic lowered to exact resultant".to_owned()),
+        ),
+        AlgebraicRootBinaryTransformStatus::InvalidEvidence
+        | AlgebraicRootBinaryTransformStatus::UnsupportedCoefficient
+        | AlgebraicRootBinaryTransformStatus::InvalidTransformedEvidence => {
+            algebraic_arithmetic_report(
+                operation,
+                AlgebraicRootArithmeticStatus::InvalidEvidence,
+                None,
+                transform.representation,
+                transform.message,
+            )
+        }
+        AlgebraicRootBinaryTransformStatus::UnsupportedOperation
+        | AlgebraicRootBinaryTransformStatus::UnsupportedDegree
+        | AlgebraicRootBinaryTransformStatus::NonIsolatingImageInterval
+        | AlgebraicRootBinaryTransformStatus::Undecided => algebraic_arithmetic_report(
             operation,
             AlgebraicRootArithmeticStatus::Undecided,
             None,
@@ -2778,6 +2847,46 @@ mod tests {
             AlgebraicRootArithmeticOp::Divide,
         );
         assert_eq!(same_quotient.exact_result, Some(Real::one()));
+
+        let sqrt_three = AlgebraicRootRepresentation {
+            constraint_index: 4,
+            symbol: SymbolId(1),
+            polynomial_coefficients: vec![real(-3), Real::zero(), Real::one()],
+            ..sqrt_two.clone()
+        };
+        let independent_sum = arithmetic_algebraic_root_representations(
+            &sqrt_two,
+            Some(&sqrt_three),
+            AlgebraicRootArithmeticOp::Add,
+        );
+        assert_eq!(
+            independent_sum.status,
+            AlgebraicRootArithmeticStatus::ComputedRepresentation
+        );
+        assert_eq!(
+            independent_sum
+                .result_representation
+                .as_ref()
+                .unwrap()
+                .polynomial_coefficients,
+            vec![
+                Real::one(),
+                Real::zero(),
+                real(-10),
+                Real::zero(),
+                Real::one()
+            ]
+        );
+
+        let independent_product = arithmetic_algebraic_root_representations(
+            &sqrt_two,
+            Some(&sqrt_three),
+            AlgebraicRootArithmeticOp::Multiply,
+        );
+        assert_eq!(
+            independent_product.status,
+            AlgebraicRootArithmeticStatus::ComputedRepresentation
+        );
     }
 
     #[test]

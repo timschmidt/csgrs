@@ -37,6 +37,7 @@ use hypersolve::{
     squared_distance_equation, subdivide_bernstein_univariate_polynomial_interval_roots,
     subresultant_chain_univariate_polynomials, transform_algebraic_root_affine,
     transform_algebraic_root_mobius, transform_algebraic_root_polynomial_image,
+    transform_algebraic_roots_binary,
 };
 
 fn r(value: i64) -> Real {
@@ -1480,6 +1481,16 @@ fn certification(c: &mut Criterion) {
             transform_algebraic_root_polynomial_image(
                 &sqrt_two,
                 &[r(0), r(1), r(1)],
+                hyperlimit::PredicatePolicy::default(),
+            )
+        })
+    });
+    c.bench_function("transform_algebraic_roots_binary", |b| {
+        b.iter(|| {
+            transform_algebraic_roots_binary(
+                &sqrt_two,
+                &sqrt_three,
+                AlgebraicRootArithmeticOp::Add,
                 hyperlimit::PredicatePolicy::default(),
             )
         })

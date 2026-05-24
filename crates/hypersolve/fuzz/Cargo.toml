@@ -54,3 +54,10 @@ path = "fuzz_targets/algebraic_polynomial_image.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "algebraic_binary"
+path = "fuzz_targets/algebraic_binary.rs"
+test = false
+doc = false
+bench = false
