@@ -818,6 +818,32 @@ pub mod distance {
             kind,
         }
     }
+
+    /// Add a retained workplane-projected equal-length relation for 3D lines.
+    ///
+    /// Lowering projects both retained 3D line directions into the workplane
+    /// `U/V` frame and replays `|a_uv|^2 - |b_uv|^2 == 0` beside the
+    /// unit-quaternion guard. This is the exact workplane counterpart of
+    /// SolveSpace-style line length equality: no projected coordinates are
+    /// rounded and no square root participates in proof. See Yap, "Towards
+    /// Exact Geometric Computation" (1997), and Shoemake, "Animating Rotation
+    /// with Quaternion Curves" (1985), for the retained frame polynomial.
+    pub fn projected_equal_length_lines3(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::ProjectedEqualLengthLines3 { workplane, a, b };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Distance,
+            strategy: SketchResidualStrategy::SquaredProjectedLineLengthEquality,
+            kind,
+        }
+    }
 }
 
 /// Orientation relation builders.

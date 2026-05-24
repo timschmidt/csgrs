@@ -25,8 +25,8 @@ use crate::sketch_builders::{
 use crate::sketch_cubic_tangent::{CubicPointTangentExprs, cubic_point_tangent_exprs};
 use crate::sketch_oriented_angle::{OrientedAngleExprs, oriented_angle_exprs};
 use crate::sketch_projection::{
-    projected_direction2, projected_distance_squared, projected_point_line_distance_squared_parts,
-    unit_quaternion_residual,
+    projected_direction_squared_length, projected_direction2, projected_distance_squared,
+    projected_point_line_distance_squared_parts, unit_quaternion_residual,
 };
 use crate::sketch_workplane_symmetry::{WorkplaneSymmetryExprs, workplane_point_symmetry_exprs};
 use crate::symbolic::{Expr, SymbolId};
@@ -456,6 +456,23 @@ pub enum SketchConstraintKind {
         line: SketchEntityHandle,
         /// Distance entity.
         distance: SketchEntityHandle,
+    },
+    /// Equal projected lengths for two 3D line segments in a retained workplane.
+    ///
+    /// Lowering projects both 3D line directions into the retained workplane
+    /// `U/V` frame and emits `|dir(a)_uv|^2 - |dir(b)_uv|^2 == 0` plus the
+    /// workplane unit-quaternion guard. This is the 3D/workplane counterpart
+    /// of [`SketchConstraintKind::EqualLengthLines2`]. It follows Yap,
+    /// "Towards Exact Geometric Computation" (1997), by retaining the
+    /// workplane object and replaying a polynomial proof row instead of
+    /// accepting lossy projected coordinates or square-root lengths.
+    ProjectedEqualLengthLines3 {
+        /// Workplane entity that supplies origin and normal/quaternion.
+        workplane: SketchEntityHandle,
+        /// First 3D line segment.
+        a: SketchEntityHandle,
+        /// Second 3D line segment.
+        b: SketchEntityHandle,
     },
     /// 2D line-segment equal-length relation.
     ///
@@ -1038,6 +1055,8 @@ pub enum SketchResidualStrategy {
     SquaredProjectedDistance,
     /// Squared point-line distance after exact projection onto a workplane.
     SquaredProjectedPointLineDistance,
+    /// Squared equality between 3D line lengths after exact workplane projection.
+    SquaredProjectedLineLengthEquality,
     /// Squared 2D line length equality.
     SquaredLineLengthEquality,
     /// Squared 2D line length ratio equality.
@@ -1159,6 +1178,8 @@ pub enum SketchResidualFormKind {
     TrueProjectedDistanceProposal,
     /// Squared projected point-line distance polynomial proof row.
     SquaredProjectedPointLineDistancePolynomial,
+    /// Squared projected line-length equality polynomial proof row.
+    SquaredProjectedLineLengthEqualityPolynomial,
     /// Positive signed projected point-line distance proposal branch.
     ProjectedPointLineSignedDistancePositiveProposal,
     /// Negative signed projected point-line distance proposal branch.
@@ -1713,6 +1734,20 @@ impl SketchSolveProblem {
         distance: SketchEntityHandle,
     ) -> SketchConstraintHandle {
         distance::projected_point_line_distance(self, name, workplane, point, line, distance).handle
+    }
+
+    /// Add a workplane-projected equal-length constraint for two 3D lines.
+    ///
+    /// The retained relation lowers to a unit-workplane guard and the exact
+    /// squared projected line-length equality polynomial.
+    pub fn add_projected_equal_length_lines3(
+        &mut self,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+    ) -> SketchConstraintHandle {
+        distance::projected_equal_length_lines3(self, name, workplane, a, b).handle
     }
 
     /// Add a retained 2D line equal-length relation.
@@ -2516,6 +2551,45 @@ impl SketchSolveProblem {
                             role: SketchResidualFormRole::ProposalOnly,
                             strategy: None,
                             residual: parts.signed_cross + scaled_distance,
+                        },
+                    ],
+                    diagnostics,
+                }
+            }
+            SketchConstraintKind::ProjectedEqualLengthLines3 { workplane, a, b } => {
+                let mut diagnostics = Vec::new();
+                let Some(parts) = self.projected_line_length_equality_exprs(
+                    workplane,
+                    a,
+                    b,
+                    constraint,
+                    &mut diagnostics,
+                ) else {
+                    return SketchResidualFormsReport {
+                        constraint: handle,
+                        status: SketchResidualFormsStatus::InvalidInputs,
+                        forms: Vec::new(),
+                        diagnostics,
+                    };
+                };
+                SketchResidualFormsReport {
+                    constraint: handle,
+                    status: SketchResidualFormsStatus::Generated,
+                    forms: vec![
+                        SketchResidualForm {
+                            kind: SketchResidualFormKind::WorkplaneUnitQuaternionPolynomial,
+                            role: SketchResidualFormRole::ExactProof,
+                            strategy: Some(SketchResidualStrategy::WorkplaneUnitQuaternion),
+                            residual: unit_quaternion_residual(&parts.quaternion),
+                        },
+                        SketchResidualForm {
+                            kind:
+                                SketchResidualFormKind::SquaredProjectedLineLengthEqualityPolynomial,
+                            role: SketchResidualFormRole::ExactProof,
+                            strategy: Some(
+                                SketchResidualStrategy::SquaredProjectedLineLengthEquality,
+                            ),
+                            residual: parts.first_squared - parts.second_squared,
                         },
                     ],
                     diagnostics,
@@ -3564,6 +3638,35 @@ impl SketchSolveProblem {
                     parts.distance_numerator
                         - parts.distance.clone() * parts.distance * parts.distance_denominator,
                     SketchResidualStrategy::SquaredProjectedPointLineDistance,
+                );
+            }
+            SketchConstraintKind::ProjectedEqualLengthLines3 { workplane, a, b } => {
+                // This is the retained 3D/workplane equal-length package. The
+                // workplane unit guard is generated as proof because the U/V
+                // projected metric is meaningful only for a certified frame.
+                // The line directions themselves are never normalized; Yap
+                // (1997) keeps the acceptance boundary at exact polynomial
+                // replay, while Shoemake (1985) gives the quaternion frame.
+                let Some(parts) =
+                    self.projected_line_length_equality_exprs(workplane, a, b, constraint, rows)
+                else {
+                    return;
+                };
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} workplane unit", constraint.name),
+                    unit_quaternion_residual(&parts.quaternion),
+                    SketchResidualStrategy::WorkplaneUnitQuaternion,
+                );
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} projected line length equality", constraint.name),
+                    parts.first_squared - parts.second_squared,
+                    SketchResidualStrategy::SquaredProjectedLineLengthEquality,
                 );
             }
             SketchConstraintKind::EqualLengthLines2 { a, b } => {
@@ -5060,6 +5163,24 @@ impl SketchSolveProblem {
         })
     }
 
+    fn projected_line_length_equality_exprs(
+        &self,
+        workplane: SketchEntityHandle,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+        constraint: &SketchConstraint,
+        rows: &mut Vec<SketchGeneratedRow>,
+    ) -> Option<ProjectedLineLengthEqualityExprs> {
+        let quaternion = self.workplane_quaternion(workplane, constraint, rows)?;
+        let first_direction = self.line3_direction(a, constraint, rows)?;
+        let second_direction = self.line3_direction(b, constraint, rows)?;
+        Some(ProjectedLineLengthEqualityExprs {
+            first_squared: projected_direction_squared_length(&first_direction, &quaternion),
+            second_squared: projected_direction_squared_length(&second_direction, &quaternion),
+            quaternion,
+        })
+    }
+
     fn workplane_symmetry_exprs(
         &self,
         workplane: SketchEntityHandle,
@@ -5656,6 +5777,13 @@ struct ProjectedPointLineDistanceExprs {
     distance_denominator: Expr,
     signed_cross: Expr,
     distance: Expr,
+}
+
+#[derive(Clone, Debug)]
+struct ProjectedLineLengthEqualityExprs {
+    quaternion: [Expr; 4],
+    first_squared: Expr,
+    second_squared: Expr,
 }
 
 #[derive(Clone, Debug)]

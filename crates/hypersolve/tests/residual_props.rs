@@ -2114,6 +2114,63 @@ proptest! {
     }
 
     #[test]
+    fn sketch_projected_equal_length_lines3_identity_workplane_ignores_normal_offsets(
+        ax in -12_i16..=12,
+        ay in -12_i16..=12,
+        bx in -12_i16..=12,
+        by in -12_i16..=12,
+        dx in -12_i16..=12,
+        dy in -12_i16..=12,
+        az0 in -12_i16..=12,
+        az1 in -12_i16..=12,
+        bz0 in -12_i16..=12,
+        bz1 in -12_i16..=12,
+    ) {
+        let ax = i64::from(ax);
+        let ay = i64::from(ay);
+        let bx = i64::from(bx);
+        let by = i64::from(by);
+        let dx = i64::from(dx);
+        let dy = i64::from(dy);
+        let az0 = i64::from(az0);
+        let az1 = i64::from(az1);
+        let bz0 = i64::from(bz0);
+        let bz1 = i64::from(bz1);
+        let mut sketch = SketchSolveProblem::new();
+        let origin = sketch.add_point3d("origin", Real::from(0), Real::from(0), Real::from(0));
+        let normal = sketch.add_normal3d("normal", Real::from(1), Real::from(0), Real::from(0), Real::from(0));
+        let workplane = sketch.add_workplane("workplane", origin, normal);
+        let a0 = sketch.add_point3d("a0", Real::from(ax), Real::from(ay), Real::from(az0));
+        let a1 = sketch.add_point3d("a1", Real::from(ax + dx), Real::from(ay + dy), Real::from(az1));
+        let b0 = sketch.add_point3d("b0", Real::from(bx), Real::from(by), Real::from(bz0));
+        let b1 = sketch.add_point3d("b1", Real::from(bx + dx), Real::from(by + dy), Real::from(bz1));
+        let a = sketch.add_line_segment3("a", a0, a1);
+        let b = sketch.add_line_segment3("b", b0, b1);
+        let handle = sketch.add_projected_equal_length_lines3("projected equal length", workplane, a, b);
+
+        let lowered = sketch.lower_to_problem();
+        let certification = certify_candidate(
+            &PreparedProblem::new(&lowered.problem),
+            &context_from_problem(&lowered.problem),
+        );
+        let forms = sketch.residual_forms_for_constraint(handle);
+
+        prop_assert_eq!(lowered.problem.constraints.len(), 2);
+        prop_assert!(lowered.all_generated());
+        prop_assert!(certification.all_satisfied());
+        prop_assert_eq!(
+            lowered.rows[1].strategy,
+            Some(SketchResidualStrategy::SquaredProjectedLineLengthEquality)
+        );
+        prop_assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+        prop_assert_eq!(forms.forms.len(), 2);
+        prop_assert_eq!(
+            forms.forms[1].kind,
+            SketchResidualFormKind::SquaredProjectedLineLengthEqualityPolynomial
+        );
+    }
+
+    #[test]
     fn sketch_projected_oriented_angle_identity_workplane_matches_scaled_directions(
         ox in -8_i16..=8,
         oy in -8_i16..=8,

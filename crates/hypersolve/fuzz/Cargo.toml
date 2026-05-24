@@ -28,6 +28,13 @@ doc = false
 bench = false
 
 [[bin]]
+name = "sketch_projected_equal_length"
+path = "fuzz_targets/sketch_projected_equal_length.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
 name = "sketch_failed_constraints"
 path = "fuzz_targets/sketch_failed_constraints.rs"
 test = false

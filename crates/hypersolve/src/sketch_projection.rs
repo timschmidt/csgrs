@@ -44,6 +44,22 @@ pub(crate) fn projected_direction2(direction: &[Expr; 3], quaternion: &[Expr; 4]
     [dot3(direction, &u_axis), dot3(direction, &v_axis)]
 }
 
+/// Build the exact squared length of a retained 3D direction after workplane projection.
+///
+/// The expression is `(direction . U)^2 + (direction . V)^2`, using the same
+/// retained unit-quaternion frame as projected distance rows.  This is the
+/// exact proof form for SolveSpace-style projected line-length equality: the
+/// true projected length and its square root stay out of topology/proof
+/// decisions, following Yap, "Towards Exact Geometric Computation" (1997),
+/// while the axes follow Shoemake's unit-quaternion frame formula.
+pub(crate) fn projected_direction_squared_length(
+    direction: &[Expr; 3],
+    quaternion: &[Expr; 4],
+) -> Expr {
+    let [u, v] = projected_direction2(direction, quaternion);
+    u.clone() * u + v.clone() * v
+}
+
 /// Build exact projected point-line distance parts in a workplane frame.
 ///
 /// The returned pair is `(cross_uv, |dir_uv|^2)`, where `cross_uv` is the
