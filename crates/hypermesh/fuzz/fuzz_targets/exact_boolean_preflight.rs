@@ -1724,6 +1724,58 @@ fn exercise_multi_component_coplanar_union() {
     .validate()
     .unwrap();
 
+    let mixed_overlap_left = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            0, 0, 0, 6, 0, 0, 6, 4, 0, 0, 4, 0, //
+            8, 4, 0, 10, 4, 0, 10, 6, 0, 8, 6, 0,
+        ],
+        &[0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("mixed overlap/point contact left fixture must import");
+    let mixed_overlap_right = ExactMesh::from_i64_triangles_with_policy(
+        &[4, 0, 0, 8, 0, 0, 8, 4, 0, 4, 4, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("mixed overlap/point contact right fixture must import");
+    assert!(
+        arrange_coplanar_surface_component_union(&mixed_overlap_left, &mixed_overlap_right)
+            .is_none()
+    );
+    let mixed_overlap_union =
+        arrange_coplanar_surface_point_touch_union(&mixed_overlap_left, &mixed_overlap_right)
+            .expect("mixed overlapping and point-touching union should materialize");
+    mixed_overlap_union.validate().unwrap();
+    mixed_overlap_union
+        .validate_union_against_sources(&mixed_overlap_left, &mixed_overlap_right)
+        .unwrap();
+    assert_eq!(
+        preflight_boolean_exact(
+            &mixed_overlap_left,
+            &mixed_overlap_right,
+            ExactBooleanOperation::Union,
+        )
+        .expect("mixed overlap/point union preflight should classify shortcut")
+        .support,
+        ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchUnion
+    );
+    hypermesh::exact::boolean_exact(
+        &mixed_overlap_left,
+        &mixed_overlap_right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("mixed overlap/point union should materialize")
+    .validate_operation_against_sources(
+        &mixed_overlap_left,
+        &mixed_overlap_right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+
     let vertex_edge_right = ExactMesh::from_i64_triangles_with_policy(
         &[1, 2, 0, 3, 3, 0, 3, 4, 0],
         &[0, 1, 2],

@@ -4206,7 +4206,7 @@ pub fn certify_coplanar_surface_boundary_touch(
 /// exact convex coplanar components, same-operand components must remain
 /// disjoint, and retained output loops may meet only through exact points.
 /// Pure point contacts keep each source component as a separate loop.
-/// Mixed lower-dimensional contacts first absorb positive-length boundary
+/// Mixed contacts first absorb positive-area or positive-length connected
 /// groups into retained simple loops, then split the surviving output loops at
 /// exact vertex-edge point contacts. The output intentionally duplicates the
 /// shared exact coordinate in the mesh, so downstream consumers see branch
@@ -4388,22 +4388,24 @@ pub fn arrange_coplanar_surface_point_touch_union(
     Some(union)
 }
 
-/// Materialize mixed edge-connected and point-touching coplanar unions.
+/// Materialize mixed area/edge-connected and point-touching coplanar unions.
 ///
 /// Pure point-touch unions keep every source component as a retained output
-/// loop, while pure positive-length contacts belong to the component-union
+/// loop, while pure connected contacts belong to the component-union
 /// materializers. The remaining bounded case has both: some cross-source
-/// components share positive-length boundary arcs and must be absorbed into
-/// one simple retained loop, while other cross-source contacts are exact
-/// point branches between those retained loops. This helper builds the
-/// positive-length contact groups first, validates that the final output loops
-/// meet only at exact points, and triangulates each loop independently.
+/// components overlap in positive area or share positive-length boundary arcs
+/// and must be absorbed into one simple retained loop, while other
+/// cross-source contacts are exact point branches between those retained
+/// loops. This helper builds the connected contact groups first, validates
+/// that the final output loops meet only at exact points, and triangulates
+/// each loop independently.
 ///
 /// The construction is still a retained-object shortcut in Yap's sense from
 /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997): no sampled arrangement cells are inferred. Positive-length groups
-/// use the same Weiler-Atherton exposed-fragment stitcher used by source
-/// component unions, and point branches are split using exact segment
+/// (1997): no sampled arrangement cells are inferred. Connected overlap and
+/// boundary-contact groups use the same Weiler-Atherton exposed-fragment
+/// stitcher used by source component unions, and point branches are split
+/// using exact segment
 /// predicates in the style of Guigue and Devillers, "Fast and Robust
 /// Triangle-Triangle Overlap Test Using Orientation Predicates," *Journal of
 /// Graphics Tools* 8.1 (2003).
@@ -4461,7 +4463,7 @@ fn arrange_coplanar_mixed_boundary_point_union_from_components(
     .ok()?;
 
     let mut contact_graph = UnionFind::new(components.len());
-    let mut saw_positive_boundary_contact = false;
+    let mut saw_connected_contact = false;
     let mut saw_point_touch = false;
     let mut split_points = components
         .iter()
@@ -4496,14 +4498,17 @@ fn arrange_coplanar_mixed_boundary_point_union_from_components(
                     split_points[right_index].extend(plan.right_split_points);
                 }
                 SimplePolygonContact::PositiveLengthBoundary => {
-                    saw_positive_boundary_contact = true;
+                    saw_connected_contact = true;
                     contact_graph.union(left_index, right_index);
                 }
-                SimplePolygonContact::PositiveArea => return None,
+                SimplePolygonContact::PositiveArea => {
+                    saw_connected_contact = true;
+                    contact_graph.union(left_index, right_index);
+                }
             }
         }
     }
-    if !saw_positive_boundary_contact || !saw_point_touch {
+    if !saw_connected_contact || !saw_point_touch {
         return None;
     }
 
