@@ -5,7 +5,8 @@
 //! triangle containment, positive-area intersection, convex union, simple
 //! single-loop planar-arrangement union/difference, one-hole and bounded
 //! multi-hole differences, nonconvex component-union loops, disconnected
-//! nonconvex component-union multi-loops, bounded cutter/hole openings with
+//! nonconvex component-union multi-loops, bounded component-holed unions,
+//! bounded cutter/hole openings with
 //! retained strict holes, independent consumed straddling-hole split groups,
 //! four-sided consumed branch groups, clipped nonconvex-source openings that
 //! consume strict holes, and the convex one-corner difference shapes that can
@@ -869,19 +870,17 @@ pub struct CoplanarConvexHoledComponent {
     pub holes: Vec<Vec<Point3>>,
 }
 
-/// Exact mixed component/holed coplanar difference output.
+/// Exact mixed component/holed coplanar surface output.
 ///
-/// This artifact covers the bounded case where a source difference contains
-/// one or more disjoint components and at least one component carries exact
-/// holes. Source decomposition remains convex, but a bounded cutter may leave
-/// either a convex remnant or a simple nonconvex remnant when every retained
-/// hole is assigned strictly inside exactly one output loop. Multiple
-/// independent cutter/hole openings may now be retained as one nonconvex
-/// outer loop when every opening has a certified side attachment and exact
-/// area replay, while unrelated strict holes stay as holes. More tangled
-/// cut/hole interactions still require a full planar subdivision. Each
+/// This artifact covers bounded cases where a surface boolean contains one or
+/// more disjoint components and at least one component carries exact holes.
+/// Difference paths retain convex or simple nonconvex remnants after bounded
+/// cutter replay; union paths may retain an annulus when source-owned disk
+/// components meet along exact positive-length boundary arcs and exposed
+/// boundary fragments replay as one outer ring plus strict hole rings. More
+/// tangled cut/hole interactions still require a full planar subdivision. Each
 /// retained component must replay from exact component decomposition,
-/// containment, disjointness, and convex difference certificates before the
+/// containment, disjointness, contact, and area certificates before the
 /// materialized mesh is accepted, matching the retained-object contract in
 /// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
 /// 7.1-2 (1997).
@@ -1030,6 +1029,40 @@ impl CoplanarConvexComponentHoledArrangement {
             Err(surface_validation_error(
                 "coplanar convex component-holed arrangement",
                 "retained arrangement does not match source replay",
+            ))
+        }
+    }
+
+    /// Validate this component-holed union against its exact sources.
+    ///
+    /// The union producer accepts a bounded annular planar arrangement: source
+    /// disk components may meet through exact positive-length boundary arcs,
+    /// their exposed boundary must replay as one outer ring plus strict hole
+    /// rings, and exact area must equal the sum of source component areas.
+    /// Replaying from the sources keeps the same Yap-style retained object
+    /// boundary as the difference producer, while making the operation
+    /// explicit so a holed union cannot be relabeled as a subtraction. This is
+    /// the retained-state contract described by Yap, "Towards Exact Geometric
+    /// Computation," *Computational Geometry* 7.1-2 (1997).
+    pub fn validate_union_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<(), MeshError> {
+        self.validate()?;
+        let replay =
+            arrange_coplanar_surface_component_holed_union(left, right).ok_or_else(|| {
+                surface_validation_error(
+                    "coplanar component-holed union arrangement",
+                    "source replay did not reproduce a component-holed union",
+                )
+            })?;
+        if self == &replay {
+            Ok(())
+        } else {
+            Err(surface_validation_error(
+                "coplanar component-holed union arrangement",
+                "retained component-holed union does not match source replay",
             ))
         }
     }
@@ -4098,6 +4131,260 @@ pub fn arrange_coplanar_surface_multi_component_union(
     };
     arrangement.validate().ok()?;
     Some(arrangement)
+}
+
+/// Certify and materialize one component-holed coplanar surface union.
+///
+/// This is a bounded annular slice of the remaining general planar
+/// arrangement work. It decomposes the operands into exact source-owned disk
+/// components, admits only cross-operand positive-length boundary contacts,
+/// rejects positive-area overlap and point-only connectivity, and then stitches
+/// exposed source boundary fragments into retained rings. Acceptance requires
+/// exactly one connected source group, one outer loop, at least one strict hole
+/// loop, and exact area equality between the retained annulus and the sum of
+/// the source components.
+///
+/// The exposed-boundary traversal follows the Weiler-Atherton boundary
+/// fragment model (Weiler and Atherton, "Hidden Surface Removal Using Polygon
+/// Area Sorting," *SIGGRAPH Computer Graphics* 11.2, 1977), while the retained
+/// ring triangulation uses Held, "FIST: Fast Industrial-Strength
+/// Triangulation of Polygons," *Algorithmica* 30 (2001). Yap, "Towards Exact
+/// Geometric Computation," *Computational Geometry* 7.1-2 (1997), is the
+/// acceptance policy: no hole topology is inferred from samples or a triangle
+/// soup; the retained rings, exact contacts, and exact area replay are the
+/// certificate.
+#[cfg(feature = "exact-triangulation")]
+pub fn arrange_coplanar_surface_component_holed_union(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Option<CoplanarConvexComponentHoledArrangement> {
+    if arrange_coplanar_convex_surface_union(left, right).is_some()
+        || arrange_coplanar_convex_surface_component_union(left, right).is_some()
+        || arrange_coplanar_convex_surface_multi_union(left, right).is_some()
+        || arrange_coplanar_surface_component_union(left, right).is_some()
+        || arrange_coplanar_surface_multi_component_union(left, right).is_some()
+        || arrange_coplanar_surface_point_touch_union(left, right).is_some()
+        || certify_coplanar_convex_surface_equivalence(left, right).is_some()
+        || certify_coplanar_convex_surface_containment(left, right).is_some()
+    {
+        return None;
+    }
+
+    let left_components = connected_face_component_meshes(left)?;
+    let right_components = connected_face_component_meshes(right)?;
+    if left_components.is_empty() || right_components.is_empty() {
+        return None;
+    }
+
+    let mut components = Vec::new();
+    for mesh in left_components {
+        components.push(PointTouchSourceComponent::from_mesh(
+            MultiUnionSide::Left,
+            mesh,
+        )?);
+    }
+    for mesh in right_components {
+        components.push(PointTouchSourceComponent::from_mesh(
+            MultiUnionSide::Right,
+            mesh,
+        )?);
+    }
+    if components.len() < 3 {
+        return None;
+    }
+    let projection = components.first()?.projection;
+    if components
+        .iter()
+        .any(|component| component.projection != projection)
+    {
+        return None;
+    }
+    let mut has_non_axis_aligned_edge = false;
+    for component in &components {
+        has_non_axis_aligned_edge |=
+            polygon_has_non_axis_aligned_edge(&component.polygon, projection)?;
+    }
+    if !has_non_axis_aligned_edge {
+        return None;
+    }
+
+    let left_loops = components
+        .iter()
+        .filter(|component| component.side == MultiUnionSide::Left)
+        .map(|component| component.polygon.clone())
+        .collect::<Vec<_>>();
+    let right_loops = components
+        .iter()
+        .filter(|component| component.side == MultiUnionSide::Right)
+        .map(|component| component.polygon.clone())
+        .collect::<Vec<_>>();
+    validate_simple_component_loops_disjoint(
+        &left_loops,
+        projection,
+        "coplanar component-holed union",
+    )
+    .ok()?;
+    validate_simple_component_loops_disjoint(
+        &right_loops,
+        projection,
+        "coplanar component-holed union",
+    )
+    .ok()?;
+
+    let mut contact_graph = UnionFind::new(components.len());
+    let mut saw_positive_length_cross_contact = false;
+    for left_index in 0..components.len() {
+        for right_index in left_index + 1..components.len() {
+            let contact = simple_polygon_contact(
+                &components[left_index].polygon,
+                &components[right_index].polygon,
+                projection,
+            )?;
+            if components[left_index].side == components[right_index].side {
+                if contact != SimplePolygonContact::Disjoint {
+                    return None;
+                }
+                continue;
+            }
+            match contact {
+                SimplePolygonContact::Disjoint => {}
+                SimplePolygonContact::PositiveLengthBoundary => {
+                    saw_positive_length_cross_contact = true;
+                    contact_graph.union(left_index, right_index);
+                }
+                SimplePolygonContact::PointOnly | SimplePolygonContact::PositiveArea => {
+                    return None;
+                }
+            }
+        }
+    }
+    if !saw_positive_length_cross_contact {
+        return None;
+    }
+    let root = contact_graph.find(0);
+    for index in 1..components.len() {
+        if contact_graph.find(index) != root {
+            return None;
+        }
+    }
+
+    let source_loops = components
+        .iter()
+        .map(|component| component.polygon.clone())
+        .collect::<Vec<_>>();
+    let mut fragments = Vec::new();
+    for index in 0..source_loops.len() {
+        collect_simple_union_boundary_fragments(index, &source_loops, projection, &mut fragments)?;
+    }
+    let loops = stitch_simple_union_loops(fragments, projection)?;
+    if loops.len() < 2 {
+        return None;
+    }
+    let (mut outer, mut holes) = component_holed_union_rings(loops, projection)?;
+    orient_polygon_ccw(&mut outer, projection)?;
+    outer = simplify_projected_polygon(outer, projection);
+    for hole in &mut holes {
+        orient_polygon_cw(hole, projection)?;
+        *hole = simplify_projected_polygon(core::mem::take(hole), projection);
+    }
+    sort_polygons_for_replay(&mut holes, projection);
+
+    validate_projected_simple_loop(&outer, projection, "coplanar component-holed union").ok()?;
+    for hole in &holes {
+        validate_projected_simple_loop(hole, projection, "coplanar component-holed union").ok()?;
+        if !polygon_strictly_inside_simple_polygon(hole, &outer, projection)? {
+            return None;
+        }
+    }
+    validate_component_loops_disjoint(&holes, projection, "coplanar component-holed union").ok()?;
+    if !component_holed_union_area_matches_sources(&outer, &holes, &source_loops, projection)? {
+        return None;
+    }
+
+    let mut components = vec![CoplanarConvexHoledComponent { outer, holes }];
+    sort_components_for_replay(&mut components, projection);
+    let mesh = component_holed_components_to_earcut_open_mesh(&components, projection)?;
+    let arrangement = CoplanarConvexComponentHoledArrangement {
+        projection,
+        components,
+        mesh,
+    };
+    arrangement.validate().ok()?;
+    Some(arrangement)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn polygon_has_non_axis_aligned_edge(
+    polygon: &[Point3],
+    projection: CoplanarProjection,
+) -> Option<bool> {
+    for index in 0..polygon.len() {
+        let start = project_point(&polygon[index], projection);
+        let end = project_point(&polygon[(index + 1) % polygon.len()], projection);
+        if !real_equal(&start.x, &end.x) && !real_equal(&start.y, &end.y) {
+            return Some(true);
+        }
+    }
+    Some(false)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn component_holed_union_rings(
+    loops: Vec<Vec<Point3>>,
+    projection: CoplanarProjection,
+) -> Option<(Vec<Point3>, Vec<Vec<Point3>>)> {
+    if loops.len() < 2 {
+        return None;
+    }
+    let mut largest_index = 0;
+    let mut largest_area = projected_area2_abs(loops.first()?, projection)?;
+    for (index, loop_points) in loops.iter().enumerate().skip(1) {
+        let area = projected_area2_abs(loop_points, projection)?;
+        match compare_reals(&area, &largest_area).value()? {
+            Ordering::Greater => {
+                largest_index = index;
+                largest_area = area;
+            }
+            Ordering::Equal => return None,
+            Ordering::Less => {}
+        }
+    }
+    if compare_reals(&largest_area, &ExactReal::from(0)).value()? != Ordering::Greater {
+        return None;
+    }
+    let mut outer = None;
+    let mut holes = Vec::new();
+    for (index, loop_points) in loops.into_iter().enumerate() {
+        if index == largest_index {
+            outer = Some(loop_points);
+        } else {
+            holes.push(loop_points);
+        }
+    }
+    Some((outer?, holes))
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn component_holed_union_area_matches_sources(
+    outer: &[Point3],
+    holes: &[Vec<Point3>],
+    source_loops: &[Vec<Point3>],
+    projection: CoplanarProjection,
+) -> Option<bool> {
+    let outer_area = projected_area2_abs(outer, projection)?;
+    let mut hole_area = ExactReal::from(0);
+    for hole in holes {
+        hole_area = add(&hole_area, &projected_area2_abs(hole, projection)?);
+    }
+    if compare_reals(&outer_area, &hole_area).value()? != Ordering::Greater {
+        return Some(false);
+    }
+    let retained_area = sub(&outer_area, &hole_area);
+    let mut source_area = ExactReal::from(0);
+    for source_loop in source_loops {
+        source_area = add(&source_area, &projected_area2_abs(source_loop, projection)?);
+    }
+    Some(compare_reals(&retained_area, &source_area).value() == Some(Ordering::Equal))
 }
 
 /// Certify that two coplanar surface meshes meet on positive-length boundary

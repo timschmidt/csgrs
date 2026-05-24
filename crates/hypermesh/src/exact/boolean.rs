@@ -108,8 +108,8 @@ use super::surface::{
     arrange_coplanar_convex_surface_multi_holed_difference,
     arrange_coplanar_convex_surface_multi_intersection,
     arrange_coplanar_convex_surface_multi_union, arrange_coplanar_convex_surface_union,
-    arrange_coplanar_surface_component_difference, arrange_coplanar_surface_component_intersection,
-    arrange_coplanar_surface_component_union,
+    arrange_coplanar_surface_component_difference, arrange_coplanar_surface_component_holed_union,
+    arrange_coplanar_surface_component_intersection, arrange_coplanar_surface_component_union,
     arrange_coplanar_surface_cutter_hole_contact_difference,
     arrange_coplanar_surface_multi_component_intersection,
     arrange_coplanar_surface_multi_component_union, arrange_coplanar_surface_multi_difference,
@@ -405,6 +405,11 @@ pub fn preflight_boolean_exact(
         }
         ExactBooleanOperation::Union
             if arrange_coplanar_surface_component_union(left, right).is_some() =>
+        {
+            ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
+        }
+        ExactBooleanOperation::Union
+            if arrange_coplanar_surface_component_holed_union(left, right).is_some() =>
         {
             ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
         }
@@ -1421,6 +1426,11 @@ pub fn boolean_exact_with_boundary_policy(
             boolean_coplanar_surface_component_union(left, right, validation)
         }
         ExactBooleanOperation::Union
+            if arrange_coplanar_surface_component_holed_union(left, right).is_some() =>
+        {
+            boolean_coplanar_surface_component_holed_union(left, right, validation)
+        }
+        ExactBooleanOperation::Union
             if arrange_coplanar_surface_multi_component_union(left, right).is_some() =>
         {
             boolean_coplanar_surface_multi_component_union(left, right, validation)
@@ -1820,6 +1830,26 @@ fn boolean_coplanar_surface_multi_component_union(
 }
 
 #[cfg(feature = "exact-triangulation")]
+fn boolean_coplanar_surface_component_holed_union(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    validation: ValidationPolicy,
+) -> Result<ExactBooleanResult, MeshError> {
+    let union = arrange_coplanar_surface_component_holed_union(left, right)
+        .expect("caller checked coplanar component-holed surface union");
+    union.validate_union_against_sources(left, right)?;
+    let mesh = copy_mesh(
+        &union.mesh,
+        "exact coplanar component-holed surface union",
+        validation,
+    )?;
+    Ok(certified_shortcut_result(
+        mesh,
+        ExactBooleanShortcutKind::CoplanarSurfaceArrangementUnion,
+    ))
+}
+
+#[cfg(feature = "exact-triangulation")]
 fn boolean_coplanar_surface_point_touch_union(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -2213,6 +2243,18 @@ fn boolean_coplanar_surface_arrangement_union(
             let mesh = copy_mesh(
                 &union.mesh,
                 "exact coplanar nonconvex component union",
+                validation,
+            )?;
+            return Ok(Some(certified_shortcut_result(
+                mesh,
+                ExactBooleanShortcutKind::CoplanarSurfaceArrangementUnion,
+            )));
+        }
+        if let Some(union) = arrange_coplanar_surface_component_holed_union(left, right) {
+            union.validate_union_against_sources(left, right)?;
+            let mesh = copy_mesh(
+                &union.mesh,
+                "exact coplanar component-holed surface union",
                 validation,
             )?;
             return Ok(Some(certified_shortcut_result(
@@ -3712,6 +3754,10 @@ fn coplanar_surface_output_already_materialized(
             arrange_coplanar_convex_surface_union(left, right).is_some()
                 || arrange_coplanar_convex_surface_component_union(left, right).is_some()
                 || arrange_coplanar_convex_surface_multi_union(left, right).is_some()
+                || arrange_coplanar_surface_component_union(left, right).is_some()
+                || arrange_coplanar_surface_component_holed_union(left, right).is_some()
+                || arrange_coplanar_surface_multi_component_union(left, right).is_some()
+                || arrange_coplanar_surface_point_touch_union(left, right).is_some()
                 || arrange_coplanar_orthogonal_surface_union(left, right).is_some()
                 || arrange_coplanar_affine_surface_union(left, right).is_some()
                 || union_single_triangle_coplanar_surfaces(left, right).is_some()

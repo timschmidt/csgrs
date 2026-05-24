@@ -16,8 +16,8 @@ use hypermesh::exact::{
     arrange_coplanar_convex_surface_multi_union, arrange_coplanar_convex_surface_union,
     arrange_coplanar_orthogonal_surface_difference,
     arrange_coplanar_orthogonal_surface_intersection, arrange_coplanar_orthogonal_surface_union,
-    arrange_coplanar_surface_component_difference, arrange_coplanar_surface_component_intersection,
-    arrange_coplanar_surface_component_union,
+    arrange_coplanar_surface_component_difference, arrange_coplanar_surface_component_holed_union,
+    arrange_coplanar_surface_component_intersection, arrange_coplanar_surface_component_union,
     arrange_coplanar_surface_cutter_hole_contact_difference,
     arrange_coplanar_surface_multi_component_intersection,
     arrange_coplanar_surface_multi_component_union, arrange_coplanar_surface_multi_difference,
@@ -3612,6 +3612,24 @@ fn exact_boolean_coplanar_convex_surface_multi_union(c: &mut Criterion) {
             ValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
+        let annular_union_left = ExactMesh::from_i64_triangles_with_policy(
+            &[
+                0, 4, 0, 0, 2, 0, 2, 0, 0, 4, 0, 0, //
+                0, -4, 0, 0, -2, 0, -2, 0, 0, -4, 0, 0,
+            ],
+            &[0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let annular_union_right = ExactMesh::from_i64_triangles_with_policy(
+            &[
+                4, 0, 0, 2, 0, 0, 0, -2, 0, 0, -4, 0, //
+                -4, 0, 0, -2, 0, 0, 0, 2, 0, 0, 4, 0,
+            ],
+            &[0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
 
         c.bench_function("exact_boolean_coplanar_convex_surface_multi_union", |b| {
             b.iter(|| {
@@ -3669,6 +3687,10 @@ fn exact_boolean_coplanar_convex_surface_multi_union(c: &mut Criterion) {
                 let mixed_overlap_arrangement = arrange_coplanar_surface_point_touch_union(
                     &mixed_overlap_left,
                     &mixed_overlap_right,
+                );
+                let annular_arrangement = arrange_coplanar_surface_component_holed_union(
+                    &annular_union_left,
+                    &annular_union_right,
                 );
                 (
                     arrangement
@@ -3803,6 +3825,14 @@ fn exact_boolean_coplanar_convex_surface_multi_union(c: &mut Criterion) {
                         .as_ref()
                         .map(|output| output.validate()),
                     mixed_overlap_arrangement,
+                    annular_arrangement.as_ref().map(|output| {
+                        output.validate_union_against_sources(
+                            &annular_union_left,
+                            &annular_union_right,
+                        )
+                    }),
+                    annular_arrangement.as_ref().map(|output| output.validate()),
+                    annular_arrangement,
                     hypermesh::exact::preflight_boolean_exact(
                         &left,
                         &right,

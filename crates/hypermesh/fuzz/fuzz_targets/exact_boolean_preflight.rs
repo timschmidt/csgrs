@@ -19,8 +19,9 @@ use hypermesh::exact::{
     arrange_coplanar_convex_surface_multi_union, arrange_coplanar_convex_surface_union,
     arrange_coplanar_orthogonal_surface_difference,
     arrange_coplanar_orthogonal_surface_intersection, arrange_coplanar_orthogonal_surface_union,
-    arrange_coplanar_surface_component_difference, arrange_coplanar_surface_component_intersection,
-    arrange_coplanar_surface_component_union, arrange_coplanar_surface_cutter_hole_contact_difference,
+    arrange_coplanar_surface_component_difference, arrange_coplanar_surface_component_holed_union,
+    arrange_coplanar_surface_component_intersection, arrange_coplanar_surface_component_union,
+    arrange_coplanar_surface_cutter_hole_contact_difference,
     arrange_coplanar_surface_multi_component_intersection,
     arrange_coplanar_surface_multi_component_union, arrange_coplanar_surface_multi_difference,
     arrange_coplanar_surface_point_touch_union, arrange_coplanar_surface_side_cutter_difference,
@@ -1416,7 +1417,7 @@ fuzz_target!(|data: &[u8]| {
 
 #[cfg(feature = "exact-triangulation")]
 fn exercise_deterministic_case(selector: u8) {
-    match selector % 30 {
+    match selector % 31 {
         0 => exercise_partial_convex_union_boundary(),
         1 => exercise_face_interior_steiner_boundary(),
         2 => exercise_multi_component_coplanar_union(),
@@ -1446,6 +1447,7 @@ fn exercise_deterministic_case(selector: u8) {
         26 => exercise_mixed_consumed_hole_and_side_openings_without_retained_holes(),
         27 => exercise_nonagon_full_face_adjacent_union(),
         28 => exercise_decagon_full_face_adjacent_union(),
+        29 => exercise_component_holed_coplanar_union(),
         _ => exercise_nonrectangular_component_union_hull_coverage(),
     }
 }
@@ -2367,6 +2369,84 @@ fn exercise_nonconvex_multi_component_union_loop() {
     point_only_union
         .validate_union_against_sources(&point_only_left, &right)
         .unwrap();
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn exercise_component_holed_coplanar_union() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            0, 4, 0, 0, 2, 0, 2, 0, 0, 4, 0, 0, //
+            0, -4, 0, 0, -2, 0, -2, 0, 0, -4, 0, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("component-holed union left fixture must import");
+    let right = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            4, 0, 0, 2, 0, 0, 0, -2, 0, 0, -4, 0, //
+            -4, 0, 0, -2, 0, 0, 0, 2, 0, 0, 4, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("component-holed union right fixture must import");
+
+    assert!(arrange_coplanar_surface_component_union(&left, &right).is_none());
+    assert!(arrange_coplanar_surface_multi_component_union(&left, &right).is_none());
+    assert!(arrange_coplanar_surface_point_touch_union(&left, &right).is_none());
+    assert!(arrange_coplanar_orthogonal_surface_union(&left, &right).is_none());
+    assert!(arrange_coplanar_affine_surface_union(&left, &right).is_none());
+
+    let union = arrange_coplanar_surface_component_holed_union(&left, &right)
+        .expect("annular positive-length component graph should retain a strict hole");
+    union.validate().unwrap();
+    union.validate_union_against_sources(&left, &right).unwrap();
+    assert_eq!(union.components.len(), 1);
+    assert_eq!(union.components[0].holes.len(), 1);
+    let mut stale = union.clone();
+    stale.components[0].holes[0].reverse();
+    assert!(stale.validate().is_err());
+
+    let preflight = preflight_boolean_exact(&left, &right, ExactBooleanOperation::Union)
+        .expect("component-holed union preflight should classify shortcut");
+    preflight.validate().unwrap();
+    preflight.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
+    );
+
+    let result = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("component-holed union boolean should materialize");
+    result
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+
+    let incomplete_right = ExactMesh::from_i64_triangles_with_policy(
+        &[4, 0, 0, 2, 0, 0, 0, -2, 0, 0, -4, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("incomplete annular union fixture must import");
+    assert!(arrange_coplanar_surface_component_holed_union(&left, &incomplete_right).is_none());
 }
 
 #[cfg(feature = "exact-triangulation")]
