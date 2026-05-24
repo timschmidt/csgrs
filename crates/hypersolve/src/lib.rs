@@ -128,10 +128,11 @@ pub use curve_resultant::{
 };
 pub use curve_substitution::{
     BezierPowerBasisSubstitutionConfig, BezierPowerBasisSubstitutionReport,
-    BezierPowerBasisSubstitutionStatus, PolynomialCurvePoint2,
+    BezierPowerBasisSubstitutionStatus, BsplineKnotSpanSubstitutionConfig,
+    BsplineKnotSpanSubstitutionReport, BsplineKnotSpanSubstitutionStatus, PolynomialCurvePoint2,
     RationalBezierPowerBasisSubstitutionReport, RationalBezierPowerBasisSubstitutionStatus,
     RationalCurveControlPoint2, RationalParametricCurve2, substitute_bezier_power_basis,
-    substitute_rational_bezier_power_basis,
+    substitute_bspline_knot_span_power_basis, substitute_rational_bezier_power_basis,
 };
 pub use diagnostics::{
     ConvergenceReason, ProposalEngineKind, ProposalEnginePrecision, ProposalEngineReport,

@@ -9,7 +9,7 @@
 //! Yap EGC boundary: preserve structure and report the algebraic transform,
 //! then let downstream geometry replay decide topology.
 
-use hyperreal::Real;
+use hyperreal::{CertifiedRealSign, Real, RealSign};
 
 use crate::curve_resultant::PolynomialParametricCurve2;
 
@@ -93,6 +93,24 @@ pub struct BezierPowerBasisSubstitutionConfig {
     pub max_degree: usize,
 }
 
+/// Configuration for bounded exact B-spline knot-span substitution.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct BsplineKnotSpanSubstitutionConfig {
+    /// Precision bound used when knot ordering and zero denominators are certified.
+    pub min_precision: i32,
+    /// Maximum B-spline degree this bounded exact package may expand.
+    pub max_degree: usize,
+}
+
+impl Default for BsplineKnotSpanSubstitutionConfig {
+    fn default() -> Self {
+        Self {
+            min_precision: -64,
+            max_degree: 8,
+        }
+    }
+}
+
 impl Default for BezierPowerBasisSubstitutionConfig {
     fn default() -> Self {
         Self { max_degree: 8 }
@@ -145,6 +163,48 @@ pub struct RationalBezierPowerBasisSubstitutionReport {
     pub control_points: Vec<RationalCurveControlPoint2>,
     /// Exact homogeneous power-basis curve when construction succeeds.
     pub homogeneous_power_basis: Option<RationalParametricCurve2>,
+}
+
+/// Final status for exact B-spline knot-span extraction.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum BsplineKnotSpanSubstitutionStatus {
+    /// The knot span was extracted and expanded exactly.
+    Constructed,
+    /// The control net or knot vector was empty.
+    EmptyInput,
+    /// The requested degree is zero or exceeds the configured bounded package.
+    InvalidDegree,
+    /// Knot vector length does not match `control_count + degree + 1`.
+    InvalidKnotVectorLength,
+    /// Knot vector order could not be certified as nondecreasing.
+    UndecidedKnotOrder,
+    /// Knot vector order is certified decreasing somewhere.
+    DecreasingKnotVector,
+    /// The requested span is outside the valid B-spline span range.
+    SpanOutOfRange,
+    /// The requested knot span has certified zero length.
+    ZeroLengthSpan,
+    /// A de Boor/blossom denominator was certified zero.
+    DivisionByZero,
+    /// Exact division failed while applying de Boor/blossom weights.
+    DivisionFailed,
+}
+
+/// Exact report for converting one B-spline knot span to Bezier/power basis.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BsplineKnotSpanSubstitutionReport {
+    /// Final substitution status.
+    pub status: BsplineKnotSpanSubstitutionStatus,
+    /// B-spline degree requested by the caller.
+    pub degree: usize,
+    /// Knot span index `k`, representing `[knots[k], knots[k + 1]]`.
+    pub span_index: usize,
+    /// Certified nonzero knot span domain when available.
+    pub span_domain: Option<(Real, Real)>,
+    /// Bezier control points over the normalized span parameter.
+    pub bezier_control_points: Vec<PolynomialCurvePoint2>,
+    /// Exact normalized-span power-basis curve when construction succeeds.
+    pub power_basis: Option<PolynomialParametricCurve2>,
 }
 
 /// Convert a polynomial Bezier control net to exact power basis.
@@ -261,6 +321,243 @@ pub fn substitute_rational_bezier_power_basis(
             weight,
         )),
     }
+}
+
+/// Extract one polynomial B-spline knot span as exact Bezier/power basis.
+///
+/// The returned Bezier controls use the normalized local parameter
+/// `s = (t - knots[span_index]) / (knots[span_index + 1] - knots[span_index])`.
+/// Control extraction evaluates the B-spline blossom at
+/// `a^(p-j), b^j`, where `a` and `b` are the span endpoints and `p` is the
+/// degree. This is the standard de Boor/blossom relationship for B-splines;
+/// see de Boor, *A Practical Guide to Splines* (1978), and Piegl and Tiller,
+/// *The NURBS Book* (1997). The function is report-bearing because Yap's EGC
+/// discipline requires knot ordering, span length, and exact divisions to be
+/// explicit evidence, not hidden preconditions.
+pub fn substitute_bspline_knot_span_power_basis(
+    control_points: &[PolynomialCurvePoint2],
+    knots: &[Real],
+    degree: usize,
+    span_index: usize,
+    config: BsplineKnotSpanSubstitutionConfig,
+) -> BsplineKnotSpanSubstitutionReport {
+    if control_points.is_empty() || knots.is_empty() {
+        return bspline_span_report(
+            BsplineKnotSpanSubstitutionStatus::EmptyInput,
+            degree,
+            span_index,
+            None,
+            Vec::new(),
+            None,
+        );
+    }
+    if degree == 0 || degree > config.max_degree || degree > MAX_INTERNAL_BEZIER_POWER_BASIS_DEGREE
+    {
+        return bspline_span_report(
+            BsplineKnotSpanSubstitutionStatus::InvalidDegree,
+            degree,
+            span_index,
+            None,
+            Vec::new(),
+            None,
+        );
+    }
+    if knots.len() != control_points.len() + degree + 1 {
+        return bspline_span_report(
+            BsplineKnotSpanSubstitutionStatus::InvalidKnotVectorLength,
+            degree,
+            span_index,
+            None,
+            Vec::new(),
+            None,
+        );
+    }
+    for pair in knots.windows(2) {
+        let difference = pair[1].clone() - pair[0].clone();
+        match difference.certified_sign_until(config.min_precision) {
+            CertifiedRealSign::Known {
+                sign: RealSign::Negative,
+                ..
+            } => {
+                return bspline_span_report(
+                    BsplineKnotSpanSubstitutionStatus::DecreasingKnotVector,
+                    degree,
+                    span_index,
+                    None,
+                    Vec::new(),
+                    None,
+                );
+            }
+            CertifiedRealSign::Known { .. } => {}
+            CertifiedRealSign::Unknown { .. } => {
+                return bspline_span_report(
+                    BsplineKnotSpanSubstitutionStatus::UndecidedKnotOrder,
+                    degree,
+                    span_index,
+                    None,
+                    Vec::new(),
+                    None,
+                );
+            }
+        }
+    }
+
+    let last_control = control_points.len() - 1;
+    if span_index < degree || span_index > last_control || span_index + 1 >= knots.len() {
+        return bspline_span_report(
+            BsplineKnotSpanSubstitutionStatus::SpanOutOfRange,
+            degree,
+            span_index,
+            None,
+            Vec::new(),
+            None,
+        );
+    }
+    let span_start = knots[span_index].clone();
+    let span_end = knots[span_index + 1].clone();
+    let span_length = span_end.clone() - span_start.clone();
+    match span_length.certified_sign_until(config.min_precision) {
+        CertifiedRealSign::Known {
+            sign: RealSign::Zero,
+            ..
+        } => {
+            return bspline_span_report(
+                BsplineKnotSpanSubstitutionStatus::ZeroLengthSpan,
+                degree,
+                span_index,
+                None,
+                Vec::new(),
+                None,
+            );
+        }
+        CertifiedRealSign::Known {
+            sign: RealSign::Positive,
+            ..
+        } => {}
+        CertifiedRealSign::Known { .. } => {
+            return bspline_span_report(
+                BsplineKnotSpanSubstitutionStatus::DecreasingKnotVector,
+                degree,
+                span_index,
+                None,
+                Vec::new(),
+                None,
+            );
+        }
+        CertifiedRealSign::Unknown { .. } => {
+            return bspline_span_report(
+                BsplineKnotSpanSubstitutionStatus::UndecidedKnotOrder,
+                degree,
+                span_index,
+                None,
+                Vec::new(),
+                None,
+            );
+        }
+    }
+
+    let mut bezier_control_points = Vec::with_capacity(degree + 1);
+    for bezier_index in 0..=degree {
+        let mut blossom_parameters = Vec::with_capacity(degree);
+        blossom_parameters.extend(std::iter::repeat_n(
+            span_start.clone(),
+            degree - bezier_index,
+        ));
+        blossom_parameters.extend(std::iter::repeat_n(span_end.clone(), bezier_index));
+        let point = match bspline_blossom_point(
+            control_points,
+            knots,
+            degree,
+            span_index,
+            &blossom_parameters,
+            config.min_precision,
+        ) {
+            Ok(point) => point,
+            Err(status) => {
+                return bspline_span_report(
+                    status,
+                    degree,
+                    span_index,
+                    Some((span_start, span_end)),
+                    bezier_control_points,
+                    None,
+                );
+            }
+        };
+        bezier_control_points.push(point);
+    }
+    let power_report = substitute_bezier_power_basis(
+        &bezier_control_points,
+        BezierPowerBasisSubstitutionConfig {
+            max_degree: config.max_degree,
+        },
+    );
+    bspline_span_report(
+        BsplineKnotSpanSubstitutionStatus::Constructed,
+        degree,
+        span_index,
+        Some((span_start, span_end)),
+        bezier_control_points,
+        power_report.power_basis,
+    )
+}
+
+fn bspline_span_report(
+    status: BsplineKnotSpanSubstitutionStatus,
+    degree: usize,
+    span_index: usize,
+    span_domain: Option<(Real, Real)>,
+    bezier_control_points: Vec<PolynomialCurvePoint2>,
+    power_basis: Option<PolynomialParametricCurve2>,
+) -> BsplineKnotSpanSubstitutionReport {
+    BsplineKnotSpanSubstitutionReport {
+        status,
+        degree,
+        span_index,
+        span_domain,
+        bezier_control_points,
+        power_basis,
+    }
+}
+
+fn bspline_blossom_point(
+    control_points: &[PolynomialCurvePoint2],
+    knots: &[Real],
+    degree: usize,
+    span_index: usize,
+    parameters: &[Real],
+    min_precision: i32,
+) -> Result<PolynomialCurvePoint2, BsplineKnotSpanSubstitutionStatus> {
+    let mut work = (0..=degree)
+        .map(|index| control_points[span_index - degree + index].clone())
+        .collect::<Vec<_>>();
+    for step in 1..=degree {
+        let parameter = &parameters[step - 1];
+        for index in (step..=degree).rev() {
+            let left_knot = knots[span_index - degree + index].clone();
+            let right_knot = knots[span_index + index + 1 - step].clone();
+            let denominator = right_knot - left_knot.clone();
+            match denominator.certified_sign_until(min_precision) {
+                CertifiedRealSign::Known {
+                    sign: RealSign::Zero,
+                    ..
+                } => return Err(BsplineKnotSpanSubstitutionStatus::DivisionByZero),
+                CertifiedRealSign::Unknown { .. } => {
+                    return Err(BsplineKnotSpanSubstitutionStatus::DivisionFailed);
+                }
+                CertifiedRealSign::Known { .. } => {}
+            }
+            let alpha = ((parameter.clone() - left_knot) / denominator)
+                .map_err(|_| BsplineKnotSpanSubstitutionStatus::DivisionFailed)?;
+            let one_minus_alpha = Real::one() - alpha.clone();
+            work[index] = PolynomialCurvePoint2 {
+                x: work[index - 1].x.clone() * one_minus_alpha.clone()
+                    + work[index].x.clone() * alpha.clone(),
+                y: work[index - 1].y.clone() * one_minus_alpha + work[index].y.clone() * alpha,
+            };
+        }
+    }
+    Ok(work[degree].clone())
 }
 
 fn bernstein_scalars_to_power_basis(values: &[Real]) -> Vec<Real> {
@@ -386,6 +683,104 @@ mod tests {
         assert!(too_large.homogeneous_power_basis.is_none());
     }
 
+    #[test]
+    fn quadratic_bspline_span_extracts_middle_bezier_segment_exactly() {
+        let controls = [point(0, 0), point(1, 2), point(3, 2), point(4, 0)];
+        let knots = [
+            real(0),
+            real(0),
+            real(0),
+            real(1),
+            real(2),
+            real(2),
+            real(2),
+        ];
+
+        let report = substitute_bspline_knot_span_power_basis(
+            &controls,
+            &knots,
+            2,
+            2,
+            BsplineKnotSpanSubstitutionConfig::default(),
+        );
+
+        assert_eq!(
+            report.status,
+            BsplineKnotSpanSubstitutionStatus::Constructed
+        );
+        assert_eq!(report.span_domain, Some((real(0), real(1))));
+        assert_eq!(
+            report.bezier_control_points,
+            vec![point(0, 0), point(1, 2), point(2, 2)]
+        );
+        let curve = report.power_basis.unwrap();
+        assert_eq!(curve.x_coefficients, vec![real(0), real(2), real(0)]);
+        assert_eq!(curve.y_coefficients, vec![real(0), real(4), real(-2)]);
+    }
+
+    #[test]
+    fn bspline_span_reports_bad_knots_ranges_and_zero_spans() {
+        let controls = [point(0, 0), point(1, 0), point(2, 0)];
+        let good_knots = [real(0), real(0), real(1), real(2), real(2)];
+        let bad_len = substitute_bspline_knot_span_power_basis(
+            &controls,
+            &good_knots[..4],
+            1,
+            1,
+            BsplineKnotSpanSubstitutionConfig::default(),
+        );
+        assert_eq!(
+            bad_len.status,
+            BsplineKnotSpanSubstitutionStatus::InvalidKnotVectorLength
+        );
+
+        let decreasing = [real(0), real(0), real(2), real(1), real(2)];
+        let bad_order = substitute_bspline_knot_span_power_basis(
+            &controls,
+            &decreasing,
+            1,
+            1,
+            BsplineKnotSpanSubstitutionConfig::default(),
+        );
+        assert_eq!(
+            bad_order.status,
+            BsplineKnotSpanSubstitutionStatus::DecreasingKnotVector
+        );
+
+        let out_of_range = substitute_bspline_knot_span_power_basis(
+            &controls,
+            &good_knots,
+            1,
+            0,
+            BsplineKnotSpanSubstitutionConfig::default(),
+        );
+        assert_eq!(
+            out_of_range.status,
+            BsplineKnotSpanSubstitutionStatus::SpanOutOfRange
+        );
+
+        let repeated_controls = [point(0, 0), point(1, 0), point(2, 0), point(3, 0)];
+        let repeated_span = substitute_bspline_knot_span_power_basis(
+            &repeated_controls,
+            &[
+                real(0),
+                real(0),
+                real(0),
+                real(1),
+                real(1),
+                real(2),
+                real(2),
+            ],
+            2,
+            3,
+            BsplineKnotSpanSubstitutionConfig::default(),
+        );
+        assert_eq!(
+            repeated_span.status,
+            BsplineKnotSpanSubstitutionStatus::ZeroLengthSpan
+        );
+    }
+
     proptest! {
         #[test]
         fn generated_linear_bezier_substitution_matches_endpoint_delta(
@@ -441,6 +836,36 @@ mod tests {
             prop_assert_eq!(curve.x_numerator, vec![real(x0 * w0), real(x1 * w1 - x0 * w0)]);
             prop_assert_eq!(curve.y_numerator, vec![real(y0 * w0), real(y1 * w1 - y0 * w0)]);
             prop_assert_eq!(curve.weight, vec![real(w0), real(w1 - w0)]);
+        }
+
+        #[test]
+        fn generated_linear_bspline_span_matches_segment_endpoints(
+            x0 in -32_i16..=32,
+            y0 in -32_i16..=32,
+            x1 in -32_i16..=32,
+            y1 in -32_i16..=32,
+        ) {
+            let (x0, y0, x1, y1) = (
+                i64::from(x0),
+                i64::from(y0),
+                i64::from(x1),
+                i64::from(y1),
+            );
+            let controls = [point(x0, y0), point(x1, y1)];
+            let knots = [real(0), real(0), real(1), real(1)];
+            let report = substitute_bspline_knot_span_power_basis(
+                &controls,
+                &knots,
+                1,
+                1,
+                BsplineKnotSpanSubstitutionConfig::default(),
+            );
+
+            prop_assert_eq!(report.status, BsplineKnotSpanSubstitutionStatus::Constructed);
+            prop_assert_eq!(report.bezier_control_points, vec![point(x0, y0), point(x1, y1)]);
+            let curve = report.power_basis.unwrap();
+            prop_assert_eq!(curve.x_coefficients, vec![real(x0), real(x1 - x0)]);
+            prop_assert_eq!(curve.y_coefficients, vec![real(y0), real(y1 - y0)]);
         }
     }
 }
