@@ -3692,6 +3692,24 @@ fn exact_boolean_coplanar_convex_surface_multi_union(c: &mut Criterion) {
             ValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
+        let nonconvex_overlapping_annular_union_left = ExactMesh::from_i64_triangles_with_policy(
+            &[
+                -1, 5, 0, 0, 2, 0, 2, 0, 0, 5, -1, 0, 2, 1, 0, //
+                1, -5, 0, 0, -2, 0, -2, 0, 0, -5, 1, 0,
+            ],
+            &[4, 0, 1, 4, 1, 2, 4, 2, 3, 5, 6, 7, 5, 7, 8],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let nonconvex_overlapping_annular_union_right = ExactMesh::from_i64_triangles_with_policy(
+            &[
+                5, 1, 0, 2, 0, 0, 0, -2, 0, 1, -5, 0, //
+                -5, -1, 0, -2, 0, 0, 0, 2, 0, -1, 5, 0,
+            ],
+            &[0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
 
         c.bench_function("exact_boolean_coplanar_convex_surface_multi_union", |b| {
             b.iter(|| {
@@ -3767,6 +3785,11 @@ fn exact_boolean_coplanar_convex_surface_multi_union(c: &mut Criterion) {
                     arrange_coplanar_surface_component_holed_union(
                         &overlapping_annular_union_left,
                         &overlapping_annular_union_right,
+                    );
+                let nonconvex_overlapping_annular_arrangement =
+                    arrange_coplanar_surface_component_holed_union(
+                        &nonconvex_overlapping_annular_union_left,
+                        &nonconvex_overlapping_annular_union_right,
                     );
                 (
                     arrangement
@@ -3939,6 +3962,18 @@ fn exact_boolean_coplanar_convex_surface_multi_union(c: &mut Criterion) {
                         .as_ref()
                         .map(|output| output.validate()),
                     overlapping_annular_arrangement,
+                    nonconvex_overlapping_annular_arrangement
+                        .as_ref()
+                        .map(|output| {
+                            output.validate_union_against_sources(
+                                &nonconvex_overlapping_annular_union_left,
+                                &nonconvex_overlapping_annular_union_right,
+                            )
+                        }),
+                    nonconvex_overlapping_annular_arrangement
+                        .as_ref()
+                        .map(|output| output.validate()),
+                    nonconvex_overlapping_annular_arrangement,
                     hypermesh::exact::preflight_boolean_exact(
                         &left,
                         &right,

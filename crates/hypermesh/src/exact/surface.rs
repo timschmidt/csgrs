@@ -4138,8 +4138,10 @@ pub fn arrange_coplanar_surface_multi_component_union(
 /// This is a bounded annular slice of the remaining general planar
 /// arrangement work. It decomposes the operands into exact source-owned disk
 /// components, admits cross-operand positive-length boundary contacts and
-/// bounded convex positive-area overlaps, rejects point-only connectivity, and
-/// then stitches exposed source boundary fragments into retained rings.
+/// bounded positive-area overlaps whose source disks replay either directly as
+/// convex regions or as a small exact ear-clipped triangle set, rejects
+/// point-only connectivity, and then stitches exposed source boundary
+/// fragments into retained rings.
 /// Acceptance is component-local: each contact-connected source group,
 /// including the two-disk case where two nonconvex source sheets form one
 /// annulus, must replay as one outer loop with zero or more strict hole loops,
@@ -4238,6 +4240,7 @@ pub fn arrange_coplanar_surface_component_holed_union(
 
     let mut contact_graph = UnionFind::new(components.len());
     let mut saw_positive_cross_contact = false;
+    let mut positive_area_contacts = Vec::new();
     for left_index in 0..components.len() {
         for right_index in left_index + 1..components.len() {
             let contact = simple_polygon_contact(
@@ -4262,6 +4265,7 @@ pub fn arrange_coplanar_surface_component_holed_union(
                 }
                 SimplePolygonContact::PositiveArea => {
                     saw_positive_cross_contact = true;
+                    positive_area_contacts.push((left_index, right_index));
                     contact_graph.union(left_index, right_index);
                 }
             }
@@ -4277,6 +4281,7 @@ pub fn arrange_coplanar_surface_component_holed_union(
             &components,
             &group,
             projection,
+            component_holed_union_group_has_positive_area_overlap(&group, &positive_area_contacts),
         )?);
     }
     if !retained_components
@@ -4318,6 +4323,16 @@ fn component_holed_union_contact_groups(
     groups
 }
 
+#[cfg(feature = "exact-triangulation")]
+fn component_holed_union_group_has_positive_area_overlap(
+    group: &[usize],
+    positive_area_contacts: &[(usize, usize)],
+) -> bool {
+    positive_area_contacts
+        .iter()
+        .any(|(left, right)| group.contains(left) && group.contains(right))
+}
+
 /// Materialize one disconnected component-holed union group.
 ///
 /// A group is either a copied source-owned disk with no holes or a connected
@@ -4334,12 +4349,16 @@ fn component_holed_union_contact_groups(
 /// overlaps use bounded convex inclusion-exclusion, the finite exact area
 /// replay described by de Berg, Cheong, van Kreveld, and Overmars,
 /// *Computational Geometry: Algorithms and Applications*, 3rd ed. (2008),
-/// Chapter 2; nonconvex overlaps remain outside this shortcut.
+/// Chapter 2. Nonconvex positive-area overlaps are accepted only after exact
+/// ear clipping decomposes each simple source loop into a small set of convex
+/// retained triangles, preserving Yap's exact-object paradigm without widening
+/// this shortcut into a general planar arrangement engine.
 #[cfg(feature = "exact-triangulation")]
 fn component_holed_union_component_from_group(
     components: &[PointTouchSourceComponent],
     group: &[usize],
     projection: CoplanarProjection,
+    has_positive_area_overlap: bool,
 ) -> Option<CoplanarConvexHoledComponent> {
     let source_loops = group
         .iter()
@@ -4383,7 +4402,13 @@ fn component_holed_union_component_from_group(
         }
     }
     validate_component_loops_disjoint(&holes, projection, "coplanar component-holed union").ok()?;
-    if !component_holed_union_area_matches_sources(&outer, &holes, &source_loops, projection)? {
+    if !component_holed_union_area_matches_sources(
+        &outer,
+        &holes,
+        &source_loops,
+        projection,
+        has_positive_area_overlap,
+    )? {
         return None;
     }
 
@@ -4447,6 +4472,7 @@ fn component_holed_union_area_matches_sources(
     holes: &[Vec<Point3>],
     source_loops: &[Vec<Point3>],
     projection: CoplanarProjection,
+    has_positive_area_overlap: bool,
 ) -> Option<bool> {
     let outer_area = projected_area2_abs(outer, projection)?;
     let mut hole_area = ExactReal::from(0);
@@ -4457,15 +4483,41 @@ fn component_holed_union_area_matches_sources(
         return Some(false);
     }
     let retained_area = sub(&outer_area, &hole_area);
-    let source_area = component_holed_union_source_area2(source_loops, projection)?;
+    let source_area =
+        component_holed_union_source_area2(source_loops, projection, has_positive_area_overlap)?;
     Some(compare_reals(&retained_area, &source_area).value() == Some(Ordering::Equal))
 }
 
+/// Return the exact doubled area of the source-loop union for one holed group.
+///
+/// Positive-length-only groups use the sum of source disk areas: the disjoint
+/// interiors make additivity the exact certificate, and keeping that path
+/// separate prevents a boundary-contact nonconvex annulus from being rejected
+/// only because its ear decomposition would exceed the bounded
+/// inclusion-exclusion budget. Positive-area groups need true union area. They
+/// first take the convex-region path and then fall back to exact
+/// triangulation-plus-inclusion-exclusion for simple nonconvex loops.
+///
+/// This mirrors Yap, "Towards Exact Geometric Computation," *Computational
+/// Geometry* 7.1-2 (1997): the certificate is a retained finite exact
+/// computation over source-owned regions. The finite union formula is the
+/// standard inclusion-exclusion proof over convex cells described by de Berg,
+/// Cheong, van Kreveld, and Overmars, *Computational Geometry: Algorithms and
+/// Applications*, 3rd ed. (2008), Chapter 2.
 #[cfg(feature = "exact-triangulation")]
 fn component_holed_union_source_area2(
     source_loops: &[Vec<Point3>],
     projection: CoplanarProjection,
+    has_positive_area_overlap: bool,
 ) -> Option<ExactReal> {
+    if !has_positive_area_overlap {
+        let mut source_area = ExactReal::from(0);
+        for source_loop in source_loops {
+            source_area = add(&source_area, &projected_area2_abs(source_loop, projection)?);
+        }
+        return Some(source_area);
+    }
+
     if source_loops.iter().all(|source_loop| {
         validate_projected_strictly_convex_loop(
             source_loop,
@@ -4476,12 +4528,63 @@ fn component_holed_union_source_area2(
     }) {
         convex_region_union_area_inclusion_exclusion(source_loops, projection)
     } else {
-        let mut source_area = ExactReal::from(0);
-        for source_loop in source_loops {
-            source_area = add(&source_area, &projected_area2_abs(source_loop, projection)?);
-        }
-        Some(source_area)
+        component_holed_union_triangulated_source_area2(source_loops, projection)
     }
+}
+
+/// Replay a nonconvex positive-area source union through exact source triangles.
+///
+/// Each simple source loop is oriented counter-clockwise and decomposed by the
+/// local exact ear clipper. Ear clipping is the finite triangulation theorem
+/// of Meisters, "Polygons Have Ears," *American Mathematical Monthly* 82.6
+/// (1975), implemented here with exact projected orientation and
+/// point-in-triangle predicates. The resulting convex source triangles are
+/// then fed to the same bounded inclusion-exclusion replay used by convex
+/// sectors, so the materializer can certify small nonconvex overlaps while
+/// still rejecting larger arrangements that need a real planar cell engine.
+#[cfg(feature = "exact-triangulation")]
+fn component_holed_union_triangulated_source_area2(
+    source_loops: &[Vec<Point3>],
+    projection: CoplanarProjection,
+) -> Option<ExactReal> {
+    let mut source_regions = Vec::new();
+    for source_loop in source_loops {
+        let mut polygon = source_loop.clone();
+        orient_polygon_ccw(&mut polygon, projection)?;
+        polygon = simplify_projected_polygon(polygon, projection);
+        validate_projected_simple_loop(
+            &polygon,
+            projection,
+            "coplanar component-holed union nonconvex source area",
+        )
+        .ok()?;
+
+        if validate_projected_strictly_convex_loop(
+            &polygon,
+            projection,
+            "coplanar component-holed union nonconvex source area",
+        )
+        .is_ok()
+        {
+            source_regions.push(polygon);
+            continue;
+        }
+
+        for triangle in retained_simple_polygon_ear_clip_triangles(&polygon, projection)? {
+            let mut region = triangle_points(&polygon, triangle.0);
+            orient_polygon_ccw(&mut region, projection)?;
+            region = simplify_projected_polygon(region, projection);
+            validate_projected_strictly_convex_loop(
+                &region,
+                projection,
+                "coplanar component-holed union source triangle",
+            )
+            .ok()?;
+            source_regions.push(region);
+        }
+    }
+
+    convex_region_union_area_inclusion_exclusion(&source_regions, projection)
 }
 
 /// Certify that two coplanar surface meshes meet on positive-length boundary
