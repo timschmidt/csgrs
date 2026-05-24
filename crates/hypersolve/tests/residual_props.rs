@@ -876,6 +876,72 @@ proptest! {
     }
 
     #[test]
+    fn sketch_projected_line_arc_sweep_length_rows_replay_identity_workplane_major_sweeps(
+        radius in 1_i16..=8,
+        x in -4_i16..=4,
+        y in -4_i16..=4,
+        z in -4_i16..=4,
+    ) {
+        let r = i64::from(radius);
+        let x = i64::from(x);
+        let y = i64::from(y);
+        let z = i64::from(z);
+        let three_halves = Real::new(hyperreal::Rational::fraction(3, 2).unwrap());
+        let mut sketch = SketchSolveProblem::new();
+        let origin3 = sketch.add_point3d("origin3", Real::from(0), Real::from(0), Real::from(0));
+        let normal = sketch.add_normal3d(
+            "normal",
+            Real::from(1),
+            Real::from(0),
+            Real::from(0),
+            Real::from(0),
+        );
+        let workplane = sketch.add_workplane("workplane", origin3, normal);
+        let center = sketch.add_point2d("center", Real::from(x), Real::from(y));
+        let start = sketch.add_point2d("start", Real::from(x + r), Real::from(y));
+        let end = sketch.add_point2d("end", Real::from(x), Real::from(y + r));
+        let radius_entity = sketch.add_distance("radius", Real::from(r));
+        let arc = sketch.add_arc_of_circle2("quarter arc", center, start, end, radius_entity);
+        let line_start = sketch.add_point3d("line start", Real::from(0), Real::from(0), Real::from(z));
+        let line_end = sketch.add_point3d(
+            "line end",
+            Real::from(r) * Real::pi() * three_halves,
+            Real::from(0),
+            Real::from(z + 7),
+        );
+        let line = sketch.add_line_segment3("projected major line", line_start, line_end);
+        let handle = sketch.add_projected_equal_line_arc_sweep_length3(
+            "projected sweep length",
+            workplane,
+            line,
+            arc,
+            SketchArcLengthSweep::ClockwiseMajor,
+        );
+
+        let lowered = sketch.lower_to_problem();
+        let certification = certify_candidate(
+            &PreparedProblem::new(&lowered.problem),
+            &context_from_problem(&lowered.problem),
+        );
+        let forms = sketch.residual_forms_for_constraint(handle);
+
+        prop_assert_eq!(lowered.rows.len(), 5);
+        prop_assert_eq!(lowered.rows[0].strategy, Some(SketchResidualStrategy::WorkplaneUnitQuaternion));
+        let all_arc_rows_generated = lowered.rows[1..].iter().all(|row| {
+            row.strategy == Some(SketchResidualStrategy::ProjectedLineArcSweepLength)
+                && row.status == SketchGeneratedRowStatus::Generated
+        });
+        prop_assert!(all_arc_rows_generated);
+        prop_assert!(certification.all_satisfied());
+        prop_assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+        prop_assert_eq!(forms.forms.len(), 5);
+        prop_assert_eq!(
+            forms.forms[4].kind,
+            SketchResidualFormKind::ProjectedLineArcSweepLengthTranscendentalEquality
+        );
+    }
+
+    #[test]
     fn sketch_arc_line_tangent_rows_match_generated_integer_circle_tangents(
         cx in -8_i16..=8,
         cy in -8_i16..=8,

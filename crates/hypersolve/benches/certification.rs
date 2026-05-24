@@ -411,6 +411,53 @@ fn sketch_problem_with_line_arc_sweep_lengths(row_count: usize) -> hypersolve::S
     sketch
 }
 
+fn sketch_problem_with_projected_line_arc_sweep_lengths(
+    row_count: usize,
+) -> hypersolve::SketchSolveProblem {
+    let mut sketch = hypersolve::SketchSolveProblem::new();
+    let three_halves = Real::new(Rational::fraction(3, 2).unwrap());
+    let origin3 = sketch.add_point3d("projected_sweep.origin", r(0), r(0), r(0));
+    let normal = sketch.add_normal3d("projected_sweep.normal", r(1), r(0), r(0), r(0));
+    let workplane = sketch.add_workplane("projected_sweep.workplane", origin3, normal);
+    for index in 0..row_count {
+        let y = index as i64;
+        let radius = (index % 5 + 1) as i64;
+        let center = sketch.add_point2d(format!("psweeplen{index}.center"), r(0), r(y));
+        let start = sketch.add_point2d(format!("psweeplen{index}.start"), r(radius), r(y));
+        let end = sketch.add_point2d(format!("psweeplen{index}.end"), r(0), r(y + radius));
+        let radius_entity = sketch.add_distance(format!("psweeplen{index}.radius"), r(radius));
+        let arc = sketch.add_arc_of_circle2(
+            format!("psweeplen{index}.arc"),
+            center,
+            start,
+            end,
+            radius_entity,
+        );
+        let line_start = sketch.add_point3d(
+            format!("psweeplen{index}.line_start"),
+            r(0),
+            r(y + 10),
+            r(5),
+        );
+        let line_end = sketch.add_point3d(
+            format!("psweeplen{index}.line_end"),
+            r(radius) * Real::pi() * three_halves.clone(),
+            r(y + 10),
+            r(9),
+        );
+        let line = sketch.add_line_segment3(format!("psweeplen{index}.line"), line_start, line_end);
+        hypersolve::sketch_distance_builders::projected_equal_line_arc_sweep_length3(
+            &mut sketch,
+            format!("projected line arc sweep length {index}"),
+            workplane,
+            line,
+            arc,
+            hypersolve::SketchArcLengthSweep::ClockwiseMajor,
+        );
+    }
+    sketch
+}
+
 fn sketch_problem_with_equal_point_line_distances(
     row_count: usize,
 ) -> hypersolve::SketchSolveProblem {
@@ -1465,6 +1512,11 @@ fn certification(c: &mut Criterion) {
     c.bench_function("sketch_line_arc_sweep_length_lowering", |b| {
         b.iter(|| line_arc_sweep_length_sketch.lower_to_problem())
     });
+    let projected_line_arc_sweep_length_sketch =
+        sketch_problem_with_projected_line_arc_sweep_lengths(16);
+    c.bench_function("sketch_projected_line_arc_sweep_length_lowering", |b| {
+        b.iter(|| projected_line_arc_sweep_length_sketch.lower_to_problem())
+    });
     let equal_point_line_sketch = sketch_problem_with_equal_point_line_distances(16);
     c.bench_function("sketch_equal_point_line_distance_lowering", |b| {
         b.iter(|| equal_point_line_sketch.lower_to_problem())
@@ -1670,6 +1722,22 @@ fn certification(c: &mut Criterion) {
             }
         })
     });
+    let projected_line_arc_sweep_form_handles = projected_line_arc_sweep_length_sketch
+        .constraints()
+        .iter()
+        .map(|constraint| constraint.handle)
+        .collect::<Vec<_>>();
+    c.bench_function(
+        "sketch_projected_line_arc_sweep_length_residual_forms",
+        |b| {
+            b.iter(|| {
+                for handle in &projected_line_arc_sweep_form_handles {
+                    let _ = projected_line_arc_sweep_length_sketch
+                        .residual_forms_for_constraint(*handle);
+                }
+            })
+        },
+    );
     let circle_form_handles = sketch
         .constraints()
         .iter()

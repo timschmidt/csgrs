@@ -5420,6 +5420,107 @@ fn sketch_line_arc_sweep_length_replays_major_minor_orientation_branches() {
 }
 
 #[test]
+fn sketch_projected_line_arc_sweep_length_replays_workplane_and_branch_rows() {
+    let mut sketch = SketchSolveProblem::new();
+    let origin3 = sketch.add_point3d("origin3", real(0), real(0), real(0));
+    let normal = sketch.add_normal3d("identity normal", real(1), real(0), real(0), real(0));
+    let workplane = sketch.add_workplane("workplane", origin3, normal);
+    let origin = sketch.add_point2d("origin", real(0), real(0));
+    let start = sketch.add_point2d("start", real(1), real(0));
+    let end = sketch.add_point2d("end", real(0), real(1));
+    let radius = sketch.add_distance("radius", real(1));
+    let arc = sketch.add_arc_of_circle2("quarter arc", origin, start, end, radius);
+    let three_halves = Real::new(Rational::fraction(3, 2).unwrap());
+    let line_start = sketch.add_point3d("line start", real(0), real(0), real(5));
+    let line_end = sketch.add_point3d("line end", Real::pi() * three_halves, real(0), real(7));
+    let line = sketch.add_line_segment3("projected major line", line_start, line_end);
+    let bad_line_end = sketch.add_point3d("bad line end", Real::pi(), real(0), real(7));
+    let bad_line = sketch.add_line_segment3("bad projected line", line_start, bad_line_end);
+    let valid = sketch.add_projected_equal_line_arc_sweep_length3(
+        "projected line equals cw major arc",
+        workplane,
+        line,
+        arc,
+        SketchArcLengthSweep::ClockwiseMajor,
+    );
+    sketch.add_projected_equal_line_arc_sweep_length3(
+        "projected line wrong branch and length",
+        workplane,
+        bad_line,
+        arc,
+        SketchArcLengthSweep::ClockwiseMinor,
+    );
+    let wrong = sketch.add_constraint(
+        "wrong projected line kind",
+        SketchConstraintKind::ProjectedEqualLineArcSweepLength3 {
+            workplane,
+            line: start,
+            arc,
+            sweep: SketchArcLengthSweep::ClockwiseMajor,
+        },
+        false,
+        true,
+    );
+
+    let lowered = sketch.lower_to_problem();
+    assert_eq!(lowered.problem.constraints.len(), 10);
+    assert_eq!(
+        lowered
+            .rows
+            .iter()
+            .filter(|row| {
+                row.strategy == Some(SketchResidualStrategy::ProjectedLineArcSweepLength)
+                    || row.strategy == Some(SketchResidualStrategy::WorkplaneUnitQuaternion)
+            })
+            .count(),
+        10
+    );
+    assert_eq!(
+        lowered.rows.last().unwrap().status,
+        SketchGeneratedRowStatus::WrongEntityKind {
+            handle: start,
+            expected: "3D line segment",
+        }
+    );
+
+    let certification = certify_candidate(
+        &PreparedProblem::new(&lowered.problem),
+        &context_from_problem(&lowered.problem),
+    );
+    assert!(matches!(
+        certification.rows[4].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[8].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
+    assert!(matches!(
+        certification.rows[9].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
+
+    let forms = sketch.residual_forms_for_constraint(valid);
+    assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+    assert_eq!(forms.forms.len(), 5);
+    assert_eq!(
+        forms.forms[0].kind,
+        SketchResidualFormKind::WorkplaneUnitQuaternionPolynomial
+    );
+    assert_eq!(
+        forms.forms[3].kind,
+        SketchResidualFormKind::LineArcSweepLengthBranchPredicate
+    );
+    assert_eq!(
+        forms.forms[4].kind,
+        SketchResidualFormKind::ProjectedLineArcSweepLengthTranscendentalEquality
+    );
+
+    let wrong_forms = sketch.residual_forms_for_constraint(wrong);
+    assert_eq!(wrong_forms.status, SketchResidualFormsStatus::InvalidInputs);
+}
+
+#[test]
 fn sketch_workplane_frame_respects_rotated_unit_quaternion_basis() {
     let mut sketch = SketchSolveProblem::new();
     let origin = sketch.add_point3d("origin", real(0), real(0), real(5));

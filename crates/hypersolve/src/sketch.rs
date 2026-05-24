@@ -739,6 +739,28 @@ pub enum SketchConstraintKind {
         /// Explicit sweep branch.
         sweep: SketchArcLengthSweep,
     },
+    /// Projected 3D line length equals a retained circular arc sweep length.
+    ///
+    /// The 3D line direction is measured in the retained workplane `U/V`
+    /// metric, then compared to a retained 2D circular arc sweep branch. The
+    /// lowered package emits the unit-quaternion guard, endpoint-on-radius
+    /// rows, a signed sweep branch predicate, and the exact symbolic
+    /// transcendental length row. This is the workplane counterpart of
+    /// [`SketchConstraintKind::EqualLineArcSweepLength2`], following Yap,
+    /// "Towards Exact Geometric Computation" (1997), by making both the
+    /// projection frame and the arc sweep branch explicit replay evidence.
+    /// The workplane frame uses Shoemake's unit-quaternion rotation matrix
+    /// from "Animating Rotation with Quaternion Curves" (1985).
+    ProjectedEqualLineArcSweepLength3 {
+        /// Workplane entity that supplies origin and normal/quaternion.
+        workplane: SketchEntityHandle,
+        /// 3D line whose projected length is compared.
+        line: SketchEntityHandle,
+        /// Circular arc whose retained sweep length is compared.
+        arc: SketchEntityHandle,
+        /// Explicit sweep branch.
+        sweep: SketchArcLengthSweep,
+    },
     /// 2D point-to-line distance relation.
     ///
     /// Lowering emits `cross(point-start, dir)^2 - distance^2*|dir|^2 == 0`.
@@ -1342,6 +1364,8 @@ pub enum SketchResidualStrategy {
     SquaredProjectedLineLengthPointLineDistance,
     /// Squared equality between two projected 3D point-line distances.
     SquaredProjectedEqualPointLineDistances,
+    /// Exact projected 3D line length to retained arc sweep length package.
+    ProjectedLineArcSweepLength,
     /// Squared 2D line length equality.
     SquaredLineLengthEquality,
     /// Squared 2D line length ratio equality.
@@ -1495,6 +1519,8 @@ pub enum SketchResidualFormKind {
     LineArcSweepLengthBranchPredicate,
     /// Exact symbolic branch-aware arc sweep length proof row.
     LineArcSweepLengthTranscendentalEquality,
+    /// Exact symbolic projected 3D line to retained arc sweep length proof row.
+    ProjectedLineArcSweepLengthTranscendentalEquality,
     /// Squared projected line-length to point-line-distance proof row.
     SquaredProjectedLineLengthPointLineDistancePolynomial,
     /// Squared equality between two projected point-line distances.
@@ -2213,6 +2239,20 @@ impl SketchSolveProblem {
         sweep: SketchArcLengthSweep,
     ) -> SketchConstraintHandle {
         distance::equal_line_arc_sweep_length2(self, name, line, arc, sweep).handle
+    }
+
+    /// Add a retained relation equating a projected 3D line length to an
+    /// explicit circular arc sweep length.
+    pub fn add_projected_equal_line_arc_sweep_length3(
+        &mut self,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        line: SketchEntityHandle,
+        arc: SketchEntityHandle,
+        sweep: SketchArcLengthSweep,
+    ) -> SketchConstraintHandle {
+        distance::projected_equal_line_arc_sweep_length3(self, name, workplane, line, arc, sweep)
+            .handle
     }
 
     /// Add a retained 2D point-to-line distance relation.
@@ -3714,6 +3754,66 @@ impl SketchSolveProblem {
                             role: SketchResidualFormRole::ExactProof,
                             strategy: Some(SketchResidualStrategy::LineArcSweepLength),
                             residual: parts.length_equality,
+                        },
+                    ],
+                    diagnostics,
+                }
+            }
+            SketchConstraintKind::ProjectedEqualLineArcSweepLength3 {
+                workplane,
+                line,
+                arc,
+                sweep,
+            } => {
+                let mut diagnostics = Vec::new();
+                let Some(parts) = self.projected_line_arc_sweep_length_exprs(
+                    workplane,
+                    line,
+                    arc,
+                    sweep,
+                    constraint,
+                    &mut diagnostics,
+                ) else {
+                    return SketchResidualFormsReport {
+                        constraint: handle,
+                        status: SketchResidualFormsStatus::InvalidInputs,
+                        forms: Vec::new(),
+                        diagnostics,
+                    };
+                };
+                SketchResidualFormsReport {
+                    constraint: handle,
+                    status: SketchResidualFormsStatus::Generated,
+                    forms: vec![
+                        SketchResidualForm {
+                            kind: SketchResidualFormKind::WorkplaneUnitQuaternionPolynomial,
+                            role: SketchResidualFormRole::ExactProof,
+                            strategy: Some(SketchResidualStrategy::WorkplaneUnitQuaternion),
+                            residual: unit_quaternion_residual(&parts.quaternion),
+                        },
+                        SketchResidualForm {
+                            kind: SketchResidualFormKind::LineArcLengthEndpointRadiusPolynomial,
+                            role: SketchResidualFormRole::ExactProof,
+                            strategy: Some(SketchResidualStrategy::ProjectedLineArcSweepLength),
+                            residual: parts.arc.endpoint_radius[0].clone(),
+                        },
+                        SketchResidualForm {
+                            kind: SketchResidualFormKind::LineArcLengthEndpointRadiusPolynomial,
+                            role: SketchResidualFormRole::ExactProof,
+                            strategy: Some(SketchResidualStrategy::ProjectedLineArcSweepLength),
+                            residual: parts.arc.endpoint_radius[1].clone(),
+                        },
+                        SketchResidualForm {
+                            kind: SketchResidualFormKind::LineArcSweepLengthBranchPredicate,
+                            role: SketchResidualFormRole::ExactProof,
+                            strategy: Some(SketchResidualStrategy::ProjectedLineArcSweepLength),
+                            residual: parts.arc.sweep_branch,
+                        },
+                        SketchResidualForm {
+                            kind: SketchResidualFormKind::ProjectedLineArcSweepLengthTranscendentalEquality,
+                            role: SketchResidualFormRole::ExactProof,
+                            strategy: Some(SketchResidualStrategy::ProjectedLineArcSweepLength),
+                            residual: parts.arc.length_equality,
                         },
                     ],
                     diagnostics,
@@ -5370,6 +5470,60 @@ impl SketchSolveProblem {
                     format!("{} sweep length", constraint.name),
                     parts.length_equality,
                     SketchResidualStrategy::LineArcSweepLength,
+                );
+            }
+            SketchConstraintKind::ProjectedEqualLineArcSweepLength3 {
+                workplane,
+                line,
+                arc,
+                sweep,
+            } => {
+                // This is the 3D/workplane counterpart of the branch-aware
+                // line-arc sweep package. The workplane unit guard proves the
+                // projected metric, the arc rows prove the retained sweep
+                // branch, and the exact `acos` length row remains
+                // non-polynomial and report-bearing.
+                let Some(parts) = self.projected_line_arc_sweep_length_exprs(
+                    workplane, line, arc, sweep, constraint, rows,
+                ) else {
+                    return;
+                };
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} workplane unit", constraint.name),
+                    unit_quaternion_residual(&parts.quaternion),
+                    SketchResidualStrategy::WorkplaneUnitQuaternion,
+                );
+                for (index, residual) in parts.arc.endpoint_radius.into_iter().enumerate() {
+                    let endpoint = if index == 0 { "start" } else { "end" };
+                    self.push_residual(
+                        problem,
+                        rows,
+                        constraint,
+                        format!("{} arc {} radius", constraint.name, endpoint),
+                        residual,
+                        SketchResidualStrategy::ProjectedLineArcSweepLength,
+                    );
+                }
+                self.push_residual_with_kind(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} sweep branch", constraint.name),
+                    parts.arc.sweep_branch,
+                    SketchResidualStrategy::ProjectedLineArcSweepLength,
+                    ConstraintKind::GreaterOrEqual,
+                    Real::one(),
+                );
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} projected sweep length", constraint.name),
+                    parts.arc.length_equality,
+                    SketchResidualStrategy::ProjectedLineArcSweepLength,
                 );
             }
             SketchConstraintKind::PointLineDistance2 {
@@ -7594,6 +7748,48 @@ impl SketchSolveProblem {
         ))
     }
 
+    fn projected_line_arc_sweep_length_exprs(
+        &self,
+        workplane: SketchEntityHandle,
+        line: SketchEntityHandle,
+        arc: SketchEntityHandle,
+        sweep: SketchArcLengthSweep,
+        constraint: &SketchConstraint,
+        rows: &mut Vec<SketchGeneratedRow>,
+    ) -> Option<ProjectedLineArcSweepLengthExprs> {
+        let quaternion = self.workplane_quaternion(workplane, constraint, rows)?;
+        let line_direction = self.line3_direction(line, constraint, rows)?;
+        let projected_direction = projected_direction2(&line_direction, &quaternion);
+        let Some(entity) = self.entity(arc) else {
+            rows.push(missing_entity_row(constraint, arc));
+            return None;
+        };
+        let SketchEntityKind::ArcOfCircle2(arc) = &entity.kind else {
+            rows.push(wrong_entity_row(
+                constraint,
+                entity.handle,
+                "2D circular arc",
+            ));
+            return None;
+        };
+        let center = self.point2_coordinates(arc.center, constraint, rows)?;
+        let start = self.point2_coordinates(arc.start, constraint, rows)?;
+        let end = self.point2_coordinates(arc.end, constraint, rows)?;
+        let radius = self.distance_expr(arc.radius, constraint, rows)?;
+        Some(ProjectedLineArcSweepLengthExprs {
+            arc: line_arc_sweep_length_exprs(
+                &coordinate_exprs2(&center),
+                &coordinate_exprs2(&start),
+                &coordinate_exprs2(&end),
+                radius,
+                &projected_direction,
+                sweep.is_major(),
+                sweep.requires_positive_cross(),
+            ),
+            quaternion,
+        })
+    }
+
     fn point_line_distance_squared_parts(
         &self,
         point: SketchEntityHandle,
@@ -7782,6 +7978,12 @@ struct ProjectedLineLengthPointLineDistanceExprs {
     length_squared: Expr,
     distance_numerator: Expr,
     distance_denominator: Expr,
+}
+
+#[derive(Clone, Debug)]
+struct ProjectedLineArcSweepLengthExprs {
+    quaternion: [Expr; 4],
+    arc: LineArcSweepLengthExprs,
 }
 
 #[derive(Clone, Debug)]

@@ -833,6 +833,37 @@ pub mod distance {
         }
     }
 
+    /// Add a workplane-projected 3D line length to circular arc sweep relation.
+    ///
+    /// Lowering certifies the retained workplane unit frame, projects the 3D
+    /// line direction into exact `U/V` coordinates, then reuses the branch
+    /// aware retained arc sweep package. The generated proof rows make both
+    /// the projection and the sweep branch explicit, following Yap's "Towards
+    /// Exact Geometric Computation" (1997); the workplane axes use Shoemake's
+    /// unit-quaternion frame formula.
+    pub fn projected_equal_line_arc_sweep_length3(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        line: SketchEntityHandle,
+        arc: SketchEntityHandle,
+        sweep: SketchArcLengthSweep,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::ProjectedEqualLineArcSweepLength3 {
+            workplane,
+            line,
+            arc,
+            sweep,
+        };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Distance,
+            strategy: SketchResidualStrategy::ProjectedLineArcSweepLength,
+            kind,
+        }
+    }
+
     /// Add a 2D point-to-line distance relation.
     ///
     /// Lowering uses the exact polynomial
