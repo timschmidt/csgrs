@@ -44,7 +44,7 @@ use hypersolve::{
     substitute_bspline_knot_span_power_basis, substitute_nurbs_knot_span_power_basis,
     substitute_rational_bezier_power_basis, transform_algebraic_root_affine,
     transform_algebraic_root_mobius, transform_algebraic_root_polynomial_image,
-    transform_algebraic_roots_binary,
+    transform_algebraic_root_rational_image, transform_algebraic_roots_binary,
 };
 
 fn r(value: i64) -> Real {
@@ -2167,6 +2167,16 @@ fn certification(c: &mut Criterion) {
             transform_algebraic_root_polynomial_image(
                 &sqrt_two,
                 &[r(0), r(1), r(1)],
+                hyperlimit::PredicatePolicy::default(),
+            )
+        })
+    });
+    c.bench_function("transform_algebraic_root_rational_image", |b| {
+        b.iter(|| {
+            transform_algebraic_root_rational_image(
+                &sqrt_two,
+                &[r(0), r(1)],
+                &[r(1), r(1)],
                 hyperlimit::PredicatePolicy::default(),
             )
         })

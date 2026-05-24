@@ -11,6 +11,7 @@ pub mod algebraic;
 pub mod algebraic_binary;
 pub mod algebraic_mobius;
 pub mod algebraic_polynomial_image;
+pub mod algebraic_rational_image;
 pub mod alpha;
 pub mod bareiss;
 pub mod batch;
@@ -94,6 +95,10 @@ pub use algebraic_mobius::{
 pub use algebraic_polynomial_image::{
     AlgebraicRootPolynomialImageReport, AlgebraicRootPolynomialImageStatus,
     transform_algebraic_root_polynomial_image,
+};
+pub use algebraic_rational_image::{
+    AlgebraicRootRationalImageReport, AlgebraicRootRationalImageStatus,
+    transform_algebraic_root_rational_image,
 };
 pub use alpha::{
     UnivariateQuadraticAlphaReport, UnivariateQuadraticAlphaRow, UnivariateQuadraticAlphaStatus,

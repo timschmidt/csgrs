@@ -133,6 +133,13 @@ doc = false
 bench = false
 
 [[bin]]
+name = "algebraic_rational_image"
+path = "fuzz_targets/algebraic_rational_image.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
 name = "algebraic_binary"
 path = "fuzz_targets/algebraic_binary.rs"
 test = false
