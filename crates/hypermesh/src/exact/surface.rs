@@ -4133,16 +4133,20 @@ pub fn arrange_coplanar_surface_multi_component_union(
     Some(arrangement)
 }
 
-/// Certify and materialize one component-holed coplanar surface union.
+/// Certify and materialize component-holed coplanar surface unions.
 ///
 /// This is a bounded annular slice of the remaining general planar
 /// arrangement work. It decomposes the operands into exact source-owned disk
 /// components, admits only cross-operand positive-length boundary contacts,
 /// rejects positive-area overlap and point-only connectivity, and then stitches
-/// exposed source boundary fragments into retained rings. Acceptance requires
-/// exactly one connected source group, one outer loop, at least one strict hole
-/// loop, and exact area equality between the retained annulus and the sum of
-/// the source components.
+/// exposed source boundary fragments into retained rings. Acceptance is now
+/// component-local: each contact-connected source group must replay as one
+/// outer loop with zero or more strict hole loops, at least one emitted
+/// component must retain a hole, and every component must satisfy exact area
+/// equality against the source loops that produced it. Disconnected annular
+/// groups are therefore materialized in one retained object, while point
+/// branches, positive-area overlap, and non-simple planar subdivisions remain
+/// outside this bounded path.
 ///
 /// The exposed-boundary traversal follows the Weiler-Atherton boundary
 /// fragment model (Weiler and Atherton, "Hidden Surface Removal Using Polygon
@@ -4261,26 +4265,99 @@ pub fn arrange_coplanar_surface_component_holed_union(
     if !saw_positive_length_cross_contact {
         return None;
     }
-    let root = contact_graph.find(0);
-    for index in 1..components.len() {
-        if contact_graph.find(index) != root {
-            return None;
-        }
+    let groups = component_holed_union_contact_groups(&mut contact_graph, components.len());
+    let mut retained_components = Vec::with_capacity(groups.len());
+    for group in groups {
+        retained_components.push(component_holed_union_component_from_group(
+            &components,
+            &group,
+            projection,
+        )?);
+    }
+    if !retained_components
+        .iter()
+        .any(|component| !component.holes.is_empty())
+    {
+        return None;
     }
 
-    let source_loops = components
+    sort_components_for_replay(&mut retained_components, projection);
+    let mesh = component_holed_components_to_earcut_open_mesh(&retained_components, projection)?;
+    let arrangement = CoplanarConvexComponentHoledArrangement {
+        projection,
+        components: retained_components,
+        mesh,
+    };
+    arrangement.validate().ok()?;
+    Some(arrangement)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn component_holed_union_contact_groups(
+    contact_graph: &mut UnionFind,
+    len: usize,
+) -> Vec<Vec<usize>> {
+    let mut groups: Vec<Vec<usize>> = Vec::new();
+    for index in 0..len {
+        let root = contact_graph.find(index);
+        if let Some((_, group)) = groups
+            .iter_mut()
+            .enumerate()
+            .find(|(_, group)| contact_graph.find(group[0]) == root)
+        {
+            group.push(index);
+        } else {
+            groups.push(vec![index]);
+        }
+    }
+    groups
+}
+
+/// Materialize one disconnected component-holed union group.
+///
+/// A group is either a copied source-owned disk with no holes or a connected
+/// union of source disks whose exposed boundary fragments replay as retained
+/// rings. The boundary-fragment traversal is the Weiler-Atherton area-sorting
+/// model (Weiler and Atherton, "Hidden Surface Removal Using Polygon Area
+/// Sorting," *SIGGRAPH Computer Graphics* 11.2, 1977), and the final retained
+/// rings are triangulated by the same Held FIST-style ear clipping cited on
+/// the public materializer. Following Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997), each group checks
+/// exact area equality against only the source loops that generated it, so a
+/// disconnected no-hole component cannot subsidize a holed component whose
+/// stitched boundary silently filled unsupported cells.
+#[cfg(feature = "exact-triangulation")]
+fn component_holed_union_component_from_group(
+    components: &[PointTouchSourceComponent],
+    group: &[usize],
+    projection: CoplanarProjection,
+) -> Option<CoplanarConvexHoledComponent> {
+    let source_loops = group
         .iter()
-        .map(|component| component.polygon.clone())
+        .map(|&index| components[index].polygon.clone())
         .collect::<Vec<_>>();
+    if source_loops.len() == 1 {
+        let mut outer = source_loops.into_iter().next()?;
+        orient_polygon_ccw(&mut outer, projection)?;
+        outer = simplify_projected_polygon(outer, projection);
+        validate_projected_simple_loop(&outer, projection, "coplanar component-holed union")
+            .ok()?;
+        return Some(CoplanarConvexHoledComponent {
+            outer,
+            holes: Vec::new(),
+        });
+    }
+
     let mut fragments = Vec::new();
     for index in 0..source_loops.len() {
         collect_simple_union_boundary_fragments(index, &source_loops, projection, &mut fragments)?;
     }
     let loops = stitch_simple_union_loops(fragments, projection)?;
-    if loops.len() < 2 {
-        return None;
-    }
-    let (mut outer, mut holes) = component_holed_union_rings(loops, projection)?;
+    let (mut outer, mut holes) = if loops.len() == 1 {
+        (loops.into_iter().next()?, Vec::new())
+    } else {
+        component_holed_union_rings(loops, projection)?
+    };
     orient_polygon_ccw(&mut outer, projection)?;
     outer = simplify_projected_polygon(outer, projection);
     for hole in &mut holes {
@@ -4301,16 +4378,7 @@ pub fn arrange_coplanar_surface_component_holed_union(
         return None;
     }
 
-    let mut components = vec![CoplanarConvexHoledComponent { outer, holes }];
-    sort_components_for_replay(&mut components, projection);
-    let mesh = component_holed_components_to_earcut_open_mesh(&components, projection)?;
-    let arrangement = CoplanarConvexComponentHoledArrangement {
-        projection,
-        components,
-        mesh,
-    };
-    arrangement.validate().ok()?;
-    Some(arrangement)
+    Some(CoplanarConvexHoledComponent { outer, holes })
 }
 
 #[cfg(feature = "exact-triangulation")]

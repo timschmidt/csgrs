@@ -3630,6 +3630,32 @@ fn exact_boolean_coplanar_convex_surface_multi_union(c: &mut Criterion) {
             ValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
+        let disconnected_annular_union_left = ExactMesh::from_i64_triangles_with_policy(
+            &[
+                0, 4, 0, 0, 2, 0, 2, 0, 0, 4, 0, 0, //
+                0, -4, 0, 0, -2, 0, -2, 0, 0, -4, 0, 0, //
+                12, 4, 0, 12, 2, 0, 14, 0, 0, 16, 0, 0, //
+                12, -4, 0, 12, -2, 0, 10, 0, 0, 8, 0, 0,
+            ],
+            &[
+                0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7, 8, 9, 10, 8, 10, 11, 12, 13, 14, 12, 14, 15,
+            ],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let disconnected_annular_union_right = ExactMesh::from_i64_triangles_with_policy(
+            &[
+                4, 0, 0, 2, 0, 0, 0, -2, 0, 0, -4, 0, //
+                -4, 0, 0, -2, 0, 0, 0, 2, 0, 0, 4, 0, //
+                16, 0, 0, 14, 0, 0, 12, -2, 0, 12, -4, 0, //
+                8, 0, 0, 10, 0, 0, 12, 2, 0, 12, 4, 0,
+            ],
+            &[
+                0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7, 8, 9, 10, 8, 10, 11, 12, 13, 14, 12, 14, 15,
+            ],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
 
         c.bench_function("exact_boolean_coplanar_convex_surface_multi_union", |b| {
             b.iter(|| {
@@ -3692,6 +3718,11 @@ fn exact_boolean_coplanar_convex_surface_multi_union(c: &mut Criterion) {
                     &annular_union_left,
                     &annular_union_right,
                 );
+                let disconnected_annular_arrangement =
+                    arrange_coplanar_surface_component_holed_union(
+                        &disconnected_annular_union_left,
+                        &disconnected_annular_union_right,
+                    );
                 (
                     arrangement
                         .as_ref()
@@ -3833,6 +3864,16 @@ fn exact_boolean_coplanar_convex_surface_multi_union(c: &mut Criterion) {
                     }),
                     annular_arrangement.as_ref().map(|output| output.validate()),
                     annular_arrangement,
+                    disconnected_annular_arrangement.as_ref().map(|output| {
+                        output.validate_union_against_sources(
+                            &disconnected_annular_union_left,
+                            &disconnected_annular_union_right,
+                        )
+                    }),
+                    disconnected_annular_arrangement
+                        .as_ref()
+                        .map(|output| output.validate()),
+                    disconnected_annular_arrangement,
                     hypermesh::exact::preflight_boolean_exact(
                         &left,
                         &right,

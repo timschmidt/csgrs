@@ -14593,6 +14593,118 @@ fn exact_coplanar_surface_component_holed_union_materializes_annular_contact_gra
 
 #[cfg(feature = "exact-triangulation")]
 #[test]
+fn exact_coplanar_surface_component_holed_union_materializes_disconnected_annuli() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            0, 4, 0, 0, 2, 0, 2, 0, 0, 4, 0, 0, //
+            0, -4, 0, 0, -2, 0, -2, 0, 0, -4, 0, 0, //
+            12, 4, 0, 12, 2, 0, 14, 0, 0, 16, 0, 0, //
+            12, -4, 0, 12, -2, 0, 10, 0, 0, 8, 0, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7, //
+            8, 9, 10, 8, 10, 11, //
+            12, 13, 14, 12, 14, 15,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let right = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            4, 0, 0, 2, 0, 0, 0, -2, 0, 0, -4, 0, //
+            -4, 0, 0, -2, 0, 0, 0, 2, 0, 0, 4, 0, //
+            16, 0, 0, 14, 0, 0, 12, -2, 0, 12, -4, 0, //
+            8, 0, 0, 10, 0, 0, 12, 2, 0, 12, 4, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7, //
+            8, 9, 10, 8, 10, 11, //
+            12, 13, 14, 12, 14, 15,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+
+    assert!(hypermesh::exact::arrange_coplanar_convex_surface_union(&left, &right).is_none());
+    assert!(hypermesh::exact::arrange_coplanar_surface_component_union(&left, &right).is_none());
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_multi_component_union(&left, &right).is_none()
+    );
+    assert!(hypermesh::exact::arrange_coplanar_surface_point_touch_union(&left, &right).is_none());
+    assert!(hypermesh::exact::arrange_coplanar_orthogonal_surface_union(&left, &right).is_none());
+    assert!(hypermesh::exact::arrange_coplanar_affine_surface_union(&left, &right).is_none());
+
+    let union = hypermesh::exact::arrange_coplanar_surface_component_holed_union(&left, &right)
+        .expect("two disconnected annular contact graphs should materialize together");
+    union.validate().unwrap();
+    union.validate_union_against_sources(&left, &right).unwrap();
+    assert_eq!(union.components.len(), 2);
+    assert_eq!(
+        union
+            .components
+            .iter()
+            .map(|component| component.holes.len())
+            .sum::<usize>(),
+        2
+    );
+    assert!(
+        union
+            .components
+            .iter()
+            .all(|component| component.holes.len() == 1)
+    );
+
+    let mut swapped = union.clone();
+    swapped.components.swap(0, 1);
+    assert!(
+        swapped
+            .validate_union_against_sources(&left, &right)
+            .is_err()
+    );
+
+    let preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+    )
+    .unwrap();
+    preflight.validate().unwrap();
+    preflight.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
+    );
+
+    let result = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    result
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            hypermesh::exact::ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfaceArrangementUnion
+        }
+    );
+    assert_eq!(result.mesh.vertices(), union.mesh.vertices());
+    assert_eq!(result.mesh.triangles(), union.mesh.triangles());
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
 fn exact_coplanar_surface_multi_component_union_materializes_disconnected_nonconvex_cluster() {
     let left = ExactMesh::from_i64_triangles_with_policy(
         &[
