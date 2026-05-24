@@ -89,3 +89,10 @@ path = "fuzz_targets/curve_resultant.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "curve_substitution"
+path = "fuzz_targets/curve_substitution.rs"
+test = false
+doc = false
+bench = false

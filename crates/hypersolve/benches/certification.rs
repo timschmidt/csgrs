@@ -5,14 +5,14 @@ use hypersolve::{
     AlgebraicRootRepresentation, AlgebraicRootValidationReport, AlgebraicRootValidationStatus,
     BatchPredicateScheduleConfig, Constraint, CurveResultantParameter, DraggedParameterWeight,
     EqualitySubstitution, Expr, IntervalBoxCertificationPackage, IsolatedRootInterval,
-    PolynomialParametricCurve2, PreparedProblem, PreparedSolverBlock, Problem, ProposalEngineKind,
-    ProposalEnginePrecision, ProposalEngineReport, SolverConfig, SolverPoint2, SolverState,
-    SparseResidualTerm, SymbolId, UnivariateResultantPairInput, VariableBall,
-    analyze_exact_affine_rank, analyze_sparse_bareiss_elimination_pattern,
-    apply_equality_substitution_classes, arithmetic_algebraic_root_representations,
-    audit_active_set, audit_sketch_unit_tolerances, build_equality_substitution_classes,
-    certify_affine_krawczyk_box, certify_candidate, certify_candidate_batch,
-    certify_candidate_domains, certify_direct_univariate_quadratic_roots,
+    PolynomialCurvePoint2, PolynomialParametricCurve2, PreparedProblem, PreparedSolverBlock,
+    Problem, ProposalEngineKind, ProposalEnginePrecision, ProposalEngineReport,
+    RationalParametricCurve2, SolverConfig, SolverPoint2, SolverState, SparseResidualTerm,
+    SymbolId, UnivariateResultantPairInput, VariableBall, analyze_exact_affine_rank,
+    analyze_sparse_bareiss_elimination_pattern, apply_equality_substitution_classes,
+    arithmetic_algebraic_root_representations, audit_active_set, audit_sketch_unit_tolerances,
+    build_equality_substitution_classes, certify_affine_krawczyk_box, certify_candidate,
+    certify_candidate_batch, certify_candidate_domains, certify_direct_univariate_quadratic_roots,
     certify_interval_box_candidate, certify_multivariate_quadratic_interval_candidate,
     certify_multivariate_quadratic_krawczyk_box, certify_quadratic_interval_candidate,
     certify_sketch_construction, certify_univariate_quadratic_alpha,
@@ -31,17 +31,17 @@ use hypersolve::{
     replay_dense_linear_residuals, replay_sketch_compatibility_fixture,
     replay_sparse_linear_residuals, report_lossy_adapter_only_candidate,
     represent_univariate_algebraic_roots, resultant_parametric_curve_intersection,
-    resultant_univariate_polynomials, run_active_set_update_loop,
-    schedule_candidate_batch_predicates, schedule_univariate_resultant_pairs,
-    search_failed_constraint_pair_removals, search_failed_constraint_set_removals,
-    search_failed_constraint_single_removals, sketch_compatibility_fixtures,
-    solve_damped_least_squares, solve_dense_linear_system_bareiss, solve_direct_affine_system,
-    solve_direct_univariate_quadratic_equalities, solve_sparse_linear_system_bareiss,
-    solve_sparse_linear_system_bareiss_pattern_preserving, squared_distance_equation,
-    subdivide_bernstein_univariate_polynomial_interval_roots,
-    subresultant_chain_univariate_polynomials, transform_algebraic_root_affine,
-    transform_algebraic_root_mobius, transform_algebraic_root_polynomial_image,
-    transform_algebraic_roots_binary,
+    resultant_rational_parametric_curve_intersection, resultant_univariate_polynomials,
+    run_active_set_update_loop, schedule_candidate_batch_predicates,
+    schedule_univariate_resultant_pairs, search_failed_constraint_pair_removals,
+    search_failed_constraint_set_removals, search_failed_constraint_single_removals,
+    sketch_compatibility_fixtures, solve_damped_least_squares, solve_dense_linear_system_bareiss,
+    solve_direct_affine_system, solve_direct_univariate_quadratic_equalities,
+    solve_sparse_linear_system_bareiss, solve_sparse_linear_system_bareiss_pattern_preserving,
+    squared_distance_equation, subdivide_bernstein_univariate_polynomial_interval_roots,
+    subresultant_chain_univariate_polynomials, substitute_bezier_power_basis,
+    transform_algebraic_root_affine, transform_algebraic_root_mobius,
+    transform_algebraic_root_polynomial_image, transform_algebraic_roots_binary,
 };
 
 fn r(value: i64) -> Real {
@@ -1242,6 +1242,32 @@ fn certification(c: &mut Criterion) {
             resultant_parametric_curve_intersection(
                 &parabola,
                 &horizontal,
+                CurveResultantParameter::First,
+                hypersolve::CurveIntersectionResultantConfig::default(),
+            )
+        })
+    });
+    let bezier_controls = [
+        PolynomialCurvePoint2::new(r(0), r(0)),
+        PolynomialCurvePoint2::new(r(1), r(2)),
+        PolynomialCurvePoint2::new(r(2), r(0)),
+    ];
+    c.bench_function("substitute_bezier_power_basis", |b| {
+        b.iter(|| {
+            substitute_bezier_power_basis(
+                &bezier_controls,
+                hypersolve::BezierPowerBasisSubstitutionConfig::default(),
+            )
+        })
+    });
+    let weighted_parabola =
+        RationalParametricCurve2::new(vec![r(0), r(1)], vec![r(0), r(0), r(1)], vec![r(1), r(1)]);
+    let rational_horizontal = RationalParametricCurve2::from_polynomial(&horizontal);
+    c.bench_function("resultant_rational_parametric_curve_intersection", |b| {
+        b.iter(|| {
+            resultant_rational_parametric_curve_intersection(
+                &weighted_parabola,
+                &rational_horizontal,
                 CurveResultantParameter::First,
                 hypersolve::CurveIntersectionResultantConfig::default(),
             )

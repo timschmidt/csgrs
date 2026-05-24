@@ -13,6 +13,7 @@
 
 use hyperreal::{CertifiedRealSign, Real, RealSign};
 
+use crate::curve_substitution::RationalParametricCurve2;
 use crate::resultant::{UnivariateResultantError, resultant_univariate_polynomials};
 
 /// Selects which curve parameter remains after exact elimination.
@@ -79,6 +80,8 @@ pub enum CurveIntersectionResultantStatus {
     ResultantError,
     /// Exact interpolation required a division that failed.
     InterpolationDivisionFailed,
+    /// A homogeneous rational curve had certified zero weight everywhere.
+    InvalidHomogeneousWeight,
 }
 
 /// One exact sample used to reconstruct the retained-parameter resultant.
@@ -248,6 +251,181 @@ pub fn resultant_parametric_curve_intersection(
     )
 }
 
+/// Eliminate one parameter from a pair of homogeneous rational parametric curves.
+///
+/// This is the rational/conic counterpart to
+/// [`resultant_parametric_curve_intersection`]. It constructs homogeneous
+/// coordinate equations
+/// `X1(t) * W2(u) - X2(u) * W1(t)` and
+/// `Y1(t) * W2(u) - Y2(u) * W1(t)`, then eliminates the other parameter by
+/// exact Sylvester resultants. The cross-multiplied form follows the standard
+/// rational Bezier model in Farin, *Curves and Surfaces for CAGD* (2002), and
+/// keeps Sederberg-Nishita style curve elimination (1990) inside Yap's EGC
+/// rule: denominator validity and topology are not inferred from this helper;
+/// downstream curve code must replay candidates against retained geometry.
+pub fn resultant_rational_parametric_curve_intersection(
+    first: &RationalParametricCurve2,
+    second: &RationalParametricCurve2,
+    retained_parameter: CurveResultantParameter,
+    config: CurveIntersectionResultantConfig,
+) -> CurveIntersectionResultantReport {
+    let (retained, eliminated, eliminated_parameter) = match retained_parameter {
+        CurveResultantParameter::First => (first, second, CurveResultantParameter::Second),
+        CurveResultantParameter::Second => (second, first, CurveResultantParameter::First),
+    };
+
+    if rational_curve_has_empty_polynomial(retained)
+        || rational_curve_has_empty_polynomial(eliminated)
+    {
+        return curve_resultant_report(
+            CurveIntersectionResultantStatus::EmptyCoordinatePolynomial,
+            retained_parameter,
+            eliminated_parameter,
+            0,
+            Vec::new(),
+            Vec::new(),
+            None,
+        );
+    }
+    let Ok(retained_weight_zero) =
+        is_certified_zero_polynomial(&retained.weight, config.min_precision)
+    else {
+        return undecided_report(retained_parameter, eliminated_parameter);
+    };
+    let Ok(eliminated_weight_zero) =
+        is_certified_zero_polynomial(&eliminated.weight, config.min_precision)
+    else {
+        return undecided_report(retained_parameter, eliminated_parameter);
+    };
+    if retained_weight_zero || eliminated_weight_zero {
+        return curve_resultant_report(
+            CurveIntersectionResultantStatus::InvalidHomogeneousWeight,
+            retained_parameter,
+            eliminated_parameter,
+            0,
+            Vec::new(),
+            Vec::new(),
+            None,
+        );
+    }
+
+    let Ok(retained_x_degree) = certified_degree(&retained.x_numerator, config.min_precision)
+    else {
+        return undecided_report(retained_parameter, eliminated_parameter);
+    };
+    let Ok(retained_y_degree) = certified_degree(&retained.y_numerator, config.min_precision)
+    else {
+        return undecided_report(retained_parameter, eliminated_parameter);
+    };
+    let Ok(retained_weight_degree) = certified_degree(&retained.weight, config.min_precision)
+    else {
+        return undecided_report(retained_parameter, eliminated_parameter);
+    };
+    let Ok(eliminated_x_degree) = certified_degree(&eliminated.x_numerator, config.min_precision)
+    else {
+        return undecided_report(retained_parameter, eliminated_parameter);
+    };
+    let Ok(eliminated_y_degree) = certified_degree(&eliminated.y_numerator, config.min_precision)
+    else {
+        return undecided_report(retained_parameter, eliminated_parameter);
+    };
+    let Ok(eliminated_weight_degree) = certified_degree(&eliminated.weight, config.min_precision)
+    else {
+        return undecided_report(retained_parameter, eliminated_parameter);
+    };
+
+    let x_retained_degree = retained_x_degree.max(retained_weight_degree);
+    let y_retained_degree = retained_y_degree.max(retained_weight_degree);
+    let x_eliminated_degree = eliminated_x_degree.max(eliminated_weight_degree);
+    let y_eliminated_degree = eliminated_y_degree.max(eliminated_weight_degree);
+    let degree_bound =
+        y_eliminated_degree * x_retained_degree + x_eliminated_degree * y_retained_degree;
+    if degree_bound > config.max_resultant_degree {
+        return curve_resultant_report(
+            CurveIntersectionResultantStatus::DegreeBoundExceeded,
+            retained_parameter,
+            eliminated_parameter,
+            degree_bound,
+            Vec::new(),
+            Vec::new(),
+            None,
+        );
+    }
+
+    let mut samples = Vec::with_capacity(degree_bound + 1);
+    for index in 0..=degree_bound {
+        let parameter_value = Real::from(index as i64);
+        let x_numerator = eval_univariate(&retained.x_numerator, &parameter_value);
+        let y_numerator = eval_univariate(&retained.y_numerator, &parameter_value);
+        let weight = eval_univariate(&retained.weight, &parameter_value);
+        let x_difference = polynomial_difference(
+            scale_polynomial(&eliminated.weight, x_numerator),
+            scale_polynomial(&eliminated.x_numerator, weight.clone()),
+        );
+        let y_difference = polynomial_difference(
+            scale_polynomial(&eliminated.weight, y_numerator),
+            scale_polynomial(&eliminated.y_numerator, weight),
+        );
+        let resultant = match resultant_univariate_polynomials(
+            &x_difference,
+            &y_difference,
+            config.min_precision,
+        ) {
+            Ok(report) => report.resultant,
+            Err(error) => {
+                return curve_resultant_report(
+                    CurveIntersectionResultantStatus::ResultantError,
+                    retained_parameter,
+                    eliminated_parameter,
+                    degree_bound,
+                    samples,
+                    Vec::new(),
+                    Some(error),
+                );
+            }
+        };
+        samples.push(CurveIntersectionResultantSample {
+            parameter_value,
+            resultant,
+        });
+    }
+
+    let Some(resultant_coefficients) = interpolate_samples(&samples, config.min_precision) else {
+        return curve_resultant_report(
+            CurveIntersectionResultantStatus::InterpolationDivisionFailed,
+            retained_parameter,
+            eliminated_parameter,
+            degree_bound,
+            samples,
+            Vec::new(),
+            None,
+        );
+    };
+    let Ok(resultant_coefficients) =
+        trim_trailing_zeroes(resultant_coefficients, config.min_precision)
+    else {
+        return curve_resultant_report(
+            CurveIntersectionResultantStatus::UndecidedCoefficient,
+            retained_parameter,
+            eliminated_parameter,
+            degree_bound,
+            samples,
+            Vec::new(),
+            None,
+        );
+    };
+
+    curve_resultant_report(
+        CurveIntersectionResultantStatus::Constructed,
+        retained_parameter,
+        eliminated_parameter,
+        degree_bound,
+        samples,
+        resultant_coefficients,
+        None,
+    )
+}
+
 fn curve_resultant_report(
     status: CurveIntersectionResultantStatus,
     retained_parameter: CurveResultantParameter,
@@ -318,6 +496,43 @@ fn shifted_negative_polynomial(polynomial: &[Real], shift: Real) -> Vec<Real> {
         .collect::<Vec<_>>();
     coefficients[0] += shift;
     coefficients
+}
+
+fn rational_curve_has_empty_polynomial(curve: &RationalParametricCurve2) -> bool {
+    curve.x_numerator.is_empty() || curve.y_numerator.is_empty() || curve.weight.is_empty()
+}
+
+fn is_certified_zero_polynomial(coefficients: &[Real], min_precision: i32) -> Result<bool, ()> {
+    for coefficient in coefficients {
+        match coefficient.certified_sign_until(min_precision) {
+            CertifiedRealSign::Known {
+                sign: RealSign::Zero,
+                ..
+            } => {}
+            CertifiedRealSign::Known { .. } => return Ok(false),
+            CertifiedRealSign::Unknown { .. } => return Err(()),
+        }
+    }
+    Ok(true)
+}
+
+fn scale_polynomial(polynomial: &[Real], scale: Real) -> Vec<Real> {
+    polynomial
+        .iter()
+        .map(|coefficient| coefficient.clone() * scale.clone())
+        .collect()
+}
+
+fn polynomial_difference(left: Vec<Real>, right: Vec<Real>) -> Vec<Real> {
+    let len = left.len().max(right.len());
+    let mut result = vec![Real::zero(); len];
+    for (index, coefficient) in left.into_iter().enumerate() {
+        result[index] += coefficient;
+    }
+    for (index, coefficient) in right.into_iter().enumerate() {
+        result[index] -= coefficient;
+    }
+    result
 }
 
 fn eval_univariate(coefficients: &[Real], value: &Real) -> Real {
@@ -466,6 +681,50 @@ mod tests {
         );
     }
 
+    #[test]
+    fn rational_curve_resultant_cross_multiplies_weighted_parabola() {
+        let weighted_parabola = RationalParametricCurve2::new(
+            vec![real(0), real(1)],
+            vec![real(0), real(0), real(1)],
+            vec![real(1), real(1)],
+        );
+        let horizontal = RationalParametricCurve2::from_polynomial(
+            &PolynomialParametricCurve2::new(vec![real(0), real(1)], vec![real(1)]),
+        );
+
+        let report = resultant_rational_parametric_curve_intersection(
+            &weighted_parabola,
+            &horizontal,
+            CurveResultantParameter::First,
+            CurveIntersectionResultantConfig::default(),
+        );
+
+        assert_eq!(report.status, CurveIntersectionResultantStatus::Constructed);
+        assert_eq!(
+            report.resultant_coefficients,
+            vec![real(-1), real(-1), real(1)]
+        );
+    }
+
+    #[test]
+    fn rational_curve_resultant_rejects_certified_zero_weight() {
+        let invalid =
+            RationalParametricCurve2::new(vec![real(0), real(1)], vec![real(1)], vec![real(0)]);
+        let line = RationalParametricCurve2::from_polynomial(&line_x_axis());
+
+        let report = resultant_rational_parametric_curve_intersection(
+            &invalid,
+            &line,
+            CurveResultantParameter::First,
+            CurveIntersectionResultantConfig::default(),
+        );
+
+        assert_eq!(
+            report.status,
+            CurveIntersectionResultantStatus::InvalidHomogeneousWeight
+        );
+    }
+
     proptest! {
         #[test]
         fn generated_horizontal_line_intersects_parabola_at_exact_height(
@@ -492,6 +751,34 @@ mod tests {
             prop_assert_eq!(
                 report.resultant_coefficients,
                 vec![real(-height), real(0), real(1)]
+            );
+        }
+
+        #[test]
+        fn generated_rational_weighted_parabola_resultant_cross_multiplies_height(
+            height in 1_i16..=32,
+        ) {
+            let height = i64::from(height);
+            let weighted_parabola = RationalParametricCurve2::new(
+                vec![real(0), real(1)],
+                vec![real(0), real(0), real(1)],
+                vec![real(1), real(1)],
+            );
+            let horizontal = RationalParametricCurve2::from_polynomial(
+                &PolynomialParametricCurve2::new(vec![real(0), real(1)], vec![real(height)]),
+            );
+
+            let report = resultant_rational_parametric_curve_intersection(
+                &weighted_parabola,
+                &horizontal,
+                CurveResultantParameter::First,
+                CurveIntersectionResultantConfig::default(),
+            );
+
+            prop_assert_eq!(report.status, CurveIntersectionResultantStatus::Constructed);
+            prop_assert_eq!(
+                report.resultant_coefficients,
+                vec![real(-height), real(-height), real(1)]
             );
         }
     }

@@ -17,6 +17,7 @@ pub mod batch;
 pub mod branches;
 pub mod certification;
 pub mod curve_resultant;
+pub mod curve_substitution;
 pub mod diagnostics;
 pub mod direct;
 pub mod domain;
@@ -123,6 +124,12 @@ pub use curve_resultant::{
     CurveIntersectionResultantConfig, CurveIntersectionResultantReport,
     CurveIntersectionResultantSample, CurveIntersectionResultantStatus, CurveResultantParameter,
     PolynomialParametricCurve2, resultant_parametric_curve_intersection,
+    resultant_rational_parametric_curve_intersection,
+};
+pub use curve_substitution::{
+    BezierPowerBasisSubstitutionConfig, BezierPowerBasisSubstitutionReport,
+    BezierPowerBasisSubstitutionStatus, PolynomialCurvePoint2, RationalParametricCurve2,
+    substitute_bezier_power_basis,
 };
 pub use diagnostics::{
     ConvergenceReason, ProposalEngineKind, ProposalEnginePrecision, ProposalEngineReport,
