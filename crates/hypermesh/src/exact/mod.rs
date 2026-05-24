@@ -262,6 +262,7 @@ pub use surface::{
     arrange_single_triangle_coplanar_difference, arrange_single_triangle_coplanar_holed_difference,
     arrange_single_triangle_coplanar_union, certify_coplanar_convex_surface_containment,
     certify_coplanar_convex_surface_equivalence, certify_coplanar_convex_surface_report,
+    certify_coplanar_surface_boundary_touch,
 };
 pub use surface::{
     CoplanarSurfaceContainment, CoplanarSurfaceContainmentReport,

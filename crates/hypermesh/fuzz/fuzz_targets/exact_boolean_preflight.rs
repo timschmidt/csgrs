@@ -29,8 +29,9 @@ use hypermesh::exact::{
     boolean_selected_regions, build_intersection_graph, build_selected_region_mesh,
     certify_boundary_touching_report, certify_convex_solid,
     certify_coplanar_convex_surface_containment, certify_coplanar_convex_surface_equivalence,
-    certify_coplanar_convex_surface_report, certify_coplanar_volumetric_cell_evidence,
-    certify_exact_mesh_proposal, certify_open_surface_disjoint_report,
+    certify_coplanar_convex_surface_report, certify_coplanar_surface_boundary_touch,
+    certify_coplanar_volumetric_cell_evidence, certify_exact_mesh_proposal,
+    certify_open_surface_disjoint_report,
     certify_planar_arrangement_evidence, certify_planar_arrangement_report,
     certify_refinement_report, certify_same_surface_report,
     certify_single_triangle_coplanar_containment,
@@ -1784,6 +1785,13 @@ fn exercise_multi_component_coplanar_union() {
             &nonconvex_edge_touch_right,
         )
         .unwrap();
+    assert!(
+        certify_coplanar_surface_boundary_touch(
+            &nonconvex_point_touch_left,
+            &nonconvex_edge_touch_right,
+        )
+        .is_some()
+    );
     let nonconvex_edge_preflight = preflight_boolean_exact(
         &nonconvex_point_touch_left,
         &nonconvex_edge_touch_right,
@@ -1804,6 +1812,76 @@ fn exercise_multi_component_coplanar_union() {
     .expect("nonconvex source edge-contact union should materialize")
     .validate()
     .unwrap();
+    let nonconvex_edge_intersection = preflight_boolean_exact(
+        &nonconvex_point_touch_left,
+        &nonconvex_edge_touch_right,
+        ExactBooleanOperation::Intersection,
+    )
+    .expect("nonconvex source edge-contact intersection preflight should classify shortcut");
+    nonconvex_edge_intersection.validate().unwrap();
+    assert_eq!(
+        nonconvex_edge_intersection.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfaceBoundaryTouchIntersection
+    );
+    let nonconvex_edge_intersection_result = hypermesh::exact::boolean_exact(
+        &nonconvex_point_touch_left,
+        &nonconvex_edge_touch_right,
+        ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("nonconvex source edge-contact intersection should materialize");
+    nonconvex_edge_intersection_result.validate().unwrap();
+    assert!(nonconvex_edge_intersection_result.mesh.triangles().is_empty());
+    let nonconvex_edge_difference = preflight_boolean_exact(
+        &nonconvex_point_touch_left,
+        &nonconvex_edge_touch_right,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("nonconvex source edge-contact difference preflight should classify shortcut");
+    nonconvex_edge_difference.validate().unwrap();
+    assert_eq!(
+        nonconvex_edge_difference.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfaceBoundaryTouchDifference
+    );
+    let nonconvex_edge_difference_result = hypermesh::exact::boolean_exact(
+        &nonconvex_point_touch_left,
+        &nonconvex_edge_touch_right,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("nonconvex source edge-contact difference should preserve left");
+    nonconvex_edge_difference_result.validate().unwrap();
+    assert_eq!(
+        nonconvex_edge_difference_result.mesh.vertices(),
+        nonconvex_point_touch_left.vertices()
+    );
+    assert_eq!(
+        nonconvex_edge_difference_result.mesh.triangles(),
+        nonconvex_point_touch_left.triangles()
+    );
+    let nonconvex_positive_overlap = ExactMesh::from_i64_triangles_with_policy(
+        &[4, 10, 0, 8, 10, 0, 8, 14, 0, 4, 14, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("nonconvex positive-overlap fixture must import");
+    assert!(
+        certify_coplanar_surface_boundary_touch(
+            &nonconvex_point_touch_left,
+            &nonconvex_positive_overlap,
+        )
+        .is_none()
+    );
+    let nonconvex_overlap_intersection = preflight_boolean_exact(
+        &nonconvex_point_touch_left,
+        &nonconvex_positive_overlap,
+        ExactBooleanOperation::Intersection,
+    )
+    .expect("positive-overlap preflight should not fail");
+    assert_ne!(
+        nonconvex_overlap_intersection.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfaceBoundaryTouchIntersection
+    );
 
     let bridge_left = ExactMesh::from_i64_triangles_with_policy(
         &[

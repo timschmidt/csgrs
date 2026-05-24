@@ -650,6 +650,12 @@ pub enum ExactBooleanShortcutKind {
     CoplanarSurfacePointTouchIntersection,
     /// Certified left-preserving coplanar difference for point-touching surfaces.
     CoplanarSurfacePointTouchDifference,
+    /// Certified empty coplanar intersection for positive-length boundary
+    /// touching surfaces.
+    CoplanarSurfaceBoundaryTouchIntersection,
+    /// Certified left-preserving coplanar difference for positive-length
+    /// boundary touching surfaces.
+    CoplanarSurfaceBoundaryTouchDifference,
     /// Certified simple-loop difference of convex coplanar surface meshes.
     CoplanarConvexSurfaceArrangementDifference,
     /// Certified multi-component difference of convex coplanar surface meshes.
@@ -1438,6 +1444,12 @@ pub enum ExactBooleanSupport {
     /// Difference preserves the left coplanar surface because the right
     /// surface meets it only at exact points.
     CertifiedCoplanarSurfacePointTouchDifference,
+    /// Intersection is empty as a surface because the operands meet only on
+    /// exact positive-length boundary arcs.
+    CertifiedCoplanarSurfaceBoundaryTouchIntersection,
+    /// Difference preserves the left coplanar surface because the right
+    /// surface only touches it on exact positive-length boundary arcs.
+    CertifiedCoplanarSurfaceBoundaryTouchDifference,
     /// Difference was materialized by a simple-loop arrangement between
     /// convex coplanar surface meshes.
     CertifiedCoplanarConvexSurfaceArrangementDifference,
@@ -1737,6 +1749,8 @@ impl ExactBooleanPreflight {
             | ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchUnion
             | ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchIntersection
             | ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference
+            | ExactBooleanSupport::CertifiedCoplanarSurfaceBoundaryTouchIntersection
+            | ExactBooleanSupport::CertifiedCoplanarSurfaceBoundaryTouchDifference
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceArrangementDifference
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceMultiDifference
             | ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference

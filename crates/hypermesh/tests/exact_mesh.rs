@@ -14143,6 +14143,147 @@ fn exact_coplanar_surface_component_union_materializes_nonconvex_source_edge_con
 
 #[cfg(feature = "exact-triangulation")]
 #[test]
+fn exact_coplanar_surface_boundary_touch_intersection_and_difference_are_lower_dimensional() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            0, 0, 0, 10, 0, 0, 10, 4, 0, 7, 4, 0, 6, 6, 0, 10, 8, 0, 10, 12, 0, 0, 12, 0,
+        ],
+        &[
+            0, 1, 2, //
+            0, 2, 3, //
+            0, 3, 4, //
+            0, 4, 7, //
+            7, 4, 5, //
+            7, 5, 6,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let boundary_touching_right = ExactMesh::from_i64_triangles_with_policy(
+        &[4, 12, 0, 8, 12, 0, 8, 14, 0, 4, 14, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+
+    assert!(
+        hypermesh::exact::certify_coplanar_surface_boundary_touch(&left, &boundary_touching_right)
+            .is_some()
+    );
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_point_touch_union(
+            &left,
+            &boundary_touching_right
+        )
+        .is_none()
+    );
+
+    let intersection_preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &boundary_touching_right,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+    )
+    .unwrap();
+    intersection_preflight.validate().unwrap();
+    intersection_preflight
+        .validate_against_sources(&left, &boundary_touching_right)
+        .unwrap();
+    assert_eq!(
+        intersection_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceBoundaryTouchIntersection
+    );
+
+    let intersection = hypermesh::exact::boolean_exact(
+        &left,
+        &boundary_touching_right,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    intersection
+        .validate_operation_against_sources(
+            &left,
+            &boundary_touching_right,
+            hypermesh::exact::ExactBooleanOperation::Intersection,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        intersection.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut:
+                hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfaceBoundaryTouchIntersection
+        }
+    );
+    assert!(intersection.mesh.triangles().is_empty());
+    assert!(intersection.mesh.vertices().is_empty());
+
+    let difference_preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &boundary_touching_right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    difference_preflight.validate().unwrap();
+    difference_preflight
+        .validate_against_sources(&left, &boundary_touching_right)
+        .unwrap();
+    assert_eq!(
+        difference_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceBoundaryTouchDifference
+    );
+
+    let difference = hypermesh::exact::boolean_exact(
+        &left,
+        &boundary_touching_right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    difference
+        .validate_operation_against_sources(
+            &left,
+            &boundary_touching_right,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        difference.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut:
+                hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfaceBoundaryTouchDifference
+        }
+    );
+    assert_eq!(difference.mesh.vertices(), left.vertices());
+    assert_eq!(difference.mesh.triangles(), left.triangles());
+
+    let positive_area_overlap = ExactMesh::from_i64_triangles_with_policy(
+        &[4, 10, 0, 8, 10, 0, 8, 14, 0, 4, 14, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert!(
+        hypermesh::exact::certify_coplanar_surface_boundary_touch(&left, &positive_area_overlap)
+            .is_none()
+    );
+    let overlap_preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &positive_area_overlap,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+    )
+    .unwrap();
+    assert_ne!(
+        overlap_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceBoundaryTouchIntersection
+    );
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
 fn exact_coplanar_surface_multi_component_union_materializes_disconnected_nonconvex_cluster() {
     let left = ExactMesh::from_i64_triangles_with_policy(
         &[

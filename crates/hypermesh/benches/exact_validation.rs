@@ -26,9 +26,10 @@ use hypermesh::exact::{
     audit_exact_mesh, build_intersection_graph, certify_boundary_touching_report,
     certify_convex_solid, certify_coplanar_convex_surface_containment,
     certify_coplanar_convex_surface_equivalence, certify_coplanar_convex_surface_report,
-    certify_coplanar_volumetric_cell_evidence, certify_exact_mesh_proposal,
-    certify_open_surface_disjoint_report, certify_planar_arrangement_evidence,
-    certify_planar_arrangement_report, certify_refinement_report, certify_same_surface_report,
+    certify_coplanar_surface_boundary_touch, certify_coplanar_volumetric_cell_evidence,
+    certify_exact_mesh_proposal, certify_open_surface_disjoint_report,
+    certify_planar_arrangement_evidence, certify_planar_arrangement_report,
+    certify_refinement_report, certify_same_surface_report,
     certify_single_triangle_coplanar_containment,
     certify_single_triangle_coplanar_containment_report, certify_winding_readiness_report,
     checked_classify_face_regions_against_opposite_planes, classify_coplanar_triangles,
@@ -3541,6 +3542,10 @@ fn exact_boolean_coplanar_convex_surface_multi_union(c: &mut Criterion) {
                     &nonconvex_point_touch_left,
                     &nonconvex_edge_touch_right,
                 );
+                let nonconvex_edge_touch_boundary = certify_coplanar_surface_boundary_touch(
+                    &nonconvex_point_touch_left,
+                    &nonconvex_edge_touch_right,
+                );
                 (
                     arrangement
                         .as_ref()
@@ -3653,6 +3658,7 @@ fn exact_boolean_coplanar_convex_surface_multi_union(c: &mut Criterion) {
                         .as_ref()
                         .map(|output| output.validate()),
                     nonconvex_edge_touch_arrangement,
+                    nonconvex_edge_touch_boundary,
                     hypermesh::exact::preflight_boolean_exact(
                         &left,
                         &right,
@@ -3749,6 +3755,18 @@ fn exact_boolean_coplanar_convex_surface_multi_union(c: &mut Criterion) {
                         hypermesh::exact::ExactBooleanOperation::Union,
                     )
                     .map(|report| report.validate()),
+                    hypermesh::exact::preflight_boolean_exact(
+                        &nonconvex_point_touch_left,
+                        &nonconvex_edge_touch_right,
+                        hypermesh::exact::ExactBooleanOperation::Intersection,
+                    )
+                    .map(|report| report.validate()),
+                    hypermesh::exact::preflight_boolean_exact(
+                        &nonconvex_point_touch_left,
+                        &nonconvex_edge_touch_right,
+                        hypermesh::exact::ExactBooleanOperation::Difference,
+                    )
+                    .map(|report| report.validate()),
                     hypermesh::exact::boolean_exact(
                         &left,
                         &right,
@@ -3858,6 +3876,20 @@ fn exact_boolean_coplanar_convex_surface_multi_union(c: &mut Criterion) {
                         &nonconvex_point_touch_left,
                         &nonconvex_edge_touch_right,
                         hypermesh::exact::ExactBooleanOperation::Union,
+                        ValidationPolicy::ALLOW_BOUNDARY,
+                    )
+                    .unwrap(),
+                    hypermesh::exact::boolean_exact(
+                        &nonconvex_point_touch_left,
+                        &nonconvex_edge_touch_right,
+                        hypermesh::exact::ExactBooleanOperation::Intersection,
+                        ValidationPolicy::ALLOW_BOUNDARY,
+                    )
+                    .unwrap(),
+                    hypermesh::exact::boolean_exact(
+                        &nonconvex_point_touch_left,
+                        &nonconvex_edge_touch_right,
+                        hypermesh::exact::ExactBooleanOperation::Difference,
                         ValidationPolicy::ALLOW_BOUNDARY,
                     )
                     .unwrap(),

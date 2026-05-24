@@ -4098,6 +4098,107 @@ pub fn arrange_coplanar_surface_multi_component_union(
     Some(arrangement)
 }
 
+/// Certify that two coplanar surface meshes meet on positive-length boundary
+/// arcs and have no positive-area overlap.
+///
+/// This is the lower-dimensional counterpart to the nonconvex component-union
+/// paths. It decomposes each source into exact connected surface components,
+/// imports each component as either a convex hull or a certified simple
+/// boundary, and then classifies every cross-source boundary relation with
+/// exact segment and point-in-simple-polygon predicates. The result is only a
+/// certificate: intersection is empty as a surface, and difference preserves
+/// the left surface, but no additional union topology is inferred here.
+///
+/// The promotion rule follows Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997): lower-dimensional topology is exposed
+/// only after the exact combinatorics prove the absence of positive-area cells.
+/// Edge contacts use the orientation-predicate segment relation of Guigue and
+/// Devillers, "Fast and Robust Triangle-Triangle Overlap Test Using
+/// Orientation Predicates," *Journal of Graphics Tools* 8.1 (2003), while
+/// strict containment uses the same exact earcut-based simple-polygon location
+/// replay used elsewhere in this module.
+#[cfg(feature = "exact-triangulation")]
+pub fn certify_coplanar_surface_boundary_touch(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Option<CoplanarProjection> {
+    let left_component_meshes = connected_face_component_meshes(left)?;
+    let right_component_meshes = connected_face_component_meshes(right)?;
+    if left_component_meshes.is_empty() || right_component_meshes.is_empty() {
+        return None;
+    }
+
+    let mut components = Vec::new();
+    for mesh in left_component_meshes {
+        components.push(PointTouchSourceComponent::from_mesh(
+            MultiUnionSide::Left,
+            mesh,
+        )?);
+    }
+    for mesh in right_component_meshes {
+        components.push(PointTouchSourceComponent::from_mesh(
+            MultiUnionSide::Right,
+            mesh,
+        )?);
+    }
+    let projection = components.first()?.projection;
+    if components
+        .iter()
+        .any(|component| component.projection != projection)
+    {
+        return None;
+    }
+
+    let left_loops = components
+        .iter()
+        .filter(|component| component.side == MultiUnionSide::Left)
+        .map(|component| component.polygon.clone())
+        .collect::<Vec<_>>();
+    let right_loops = components
+        .iter()
+        .filter(|component| component.side == MultiUnionSide::Right)
+        .map(|component| component.polygon.clone())
+        .collect::<Vec<_>>();
+    validate_simple_component_loops_disjoint(
+        &left_loops,
+        projection,
+        "coplanar boundary-touch left components",
+    )
+    .ok()?;
+    validate_simple_component_loops_disjoint(
+        &right_loops,
+        projection,
+        "coplanar boundary-touch right components",
+    )
+    .ok()?;
+
+    let mut saw_positive_length_boundary_touch = false;
+    for left_index in 0..components.len() {
+        for right_index in left_index + 1..components.len() {
+            let contact = simple_polygon_contact(
+                &components[left_index].polygon,
+                &components[right_index].polygon,
+                projection,
+            )?;
+            if components[left_index].side == components[right_index].side {
+                if contact != SimplePolygonContact::Disjoint {
+                    return None;
+                }
+                continue;
+            }
+            match contact {
+                SimplePolygonContact::Disjoint | SimplePolygonContact::PointOnly => {}
+                SimplePolygonContact::PositiveLengthBoundary => {
+                    saw_positive_length_boundary_touch = true;
+                }
+                SimplePolygonContact::PositiveArea => return None,
+            }
+        }
+    }
+
+    saw_positive_length_boundary_touch.then_some(projection)
+}
+
 /// Certify and materialize a bounded point-touch union.
 ///
 /// This path handles a hard branch-point case without weakening the existing
@@ -6061,6 +6162,15 @@ enum SimplePolygonInteraction {
 }
 
 #[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum SimplePolygonContact {
+    Disjoint,
+    PointOnly,
+    PositiveLengthBoundary,
+    PositiveArea,
+}
+
+#[cfg(feature = "exact-triangulation")]
 fn simple_polygon_interaction(
     left: &[Point3],
     right: &[Point3],
@@ -6100,6 +6210,69 @@ fn simple_polygon_interaction(
         Some(SimplePolygonInteraction::PointOnly)
     } else {
         Some(SimplePolygonInteraction::Disjoint)
+    }
+}
+
+/// Classify the dimensionality of contact between two retained simple loops.
+///
+/// Guigue and Devillers' orientation-predicate segment relation separates
+/// proper crossings from collinear boundary overlap, and exact simple-polygon
+/// location separates strict interior containment from lower-dimensional
+/// contact. Yap's exact-computation model is the reason this returns `None`
+/// rather than guessing when any predicate cannot certify the topology.
+#[cfg(feature = "exact-triangulation")]
+fn simple_polygon_contact(
+    left: &[Point3],
+    right: &[Point3],
+    projection: CoplanarProjection,
+) -> Option<SimplePolygonContact> {
+    let mut saw_point = false;
+    let mut saw_positive_length_boundary = false;
+    for left_edge in 0..left.len() {
+        let left_start = project_point(&left[left_edge], projection);
+        let left_end = project_point(&left[(left_edge + 1) % left.len()], projection);
+        for right_edge in 0..right.len() {
+            let right_start = project_point(&right[right_edge], projection);
+            let right_end = project_point(&right[(right_edge + 1) % right.len()], projection);
+            match classify_segment_intersection(&left_start, &left_end, &right_start, &right_end)
+                .value()?
+            {
+                SegmentIntersection::Proper => return Some(SimplePolygonContact::PositiveArea),
+                SegmentIntersection::CollinearOverlap | SegmentIntersection::Identical => {
+                    saw_positive_length_boundary = true;
+                }
+                SegmentIntersection::EndpointTouch => saw_point = true,
+                SegmentIntersection::Disjoint => {}
+            }
+        }
+    }
+
+    let mut all_left_vertices_on_right_boundary = !left.is_empty();
+    for point in left {
+        match simple_polygon_location(point, right, projection)? {
+            ConvexPolygonLocation::Inside => return Some(SimplePolygonContact::PositiveArea),
+            ConvexPolygonLocation::Boundary => {}
+            ConvexPolygonLocation::Outside => all_left_vertices_on_right_boundary = false,
+        }
+    }
+    let mut all_right_vertices_on_left_boundary = !right.is_empty();
+    for point in right {
+        match simple_polygon_location(point, left, projection)? {
+            ConvexPolygonLocation::Inside => return Some(SimplePolygonContact::PositiveArea),
+            ConvexPolygonLocation::Boundary => {}
+            ConvexPolygonLocation::Outside => all_right_vertices_on_left_boundary = false,
+        }
+    }
+
+    if all_left_vertices_on_right_boundary || all_right_vertices_on_left_boundary {
+        return Some(SimplePolygonContact::PositiveArea);
+    }
+    if saw_positive_length_boundary {
+        Some(SimplePolygonContact::PositiveLengthBoundary)
+    } else if saw_point {
+        Some(SimplePolygonContact::PointOnly)
+    } else {
+        Some(SimplePolygonContact::Disjoint)
     }
 }
 

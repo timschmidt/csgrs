@@ -116,9 +116,9 @@ use super::surface::{
     arrange_coplanar_surface_point_touch_union, arrange_coplanar_surface_side_cutter_difference,
     arrange_single_triangle_coplanar_difference, arrange_single_triangle_coplanar_holed_difference,
     arrange_single_triangle_coplanar_union, certify_coplanar_convex_surface_containment,
-    certify_coplanar_convex_surface_equivalence, certify_single_triangle_coplanar_containment,
-    difference_single_triangle_coplanar_surfaces, intersect_single_triangle_coplanar_surfaces,
-    union_single_triangle_coplanar_surfaces,
+    certify_coplanar_convex_surface_equivalence, certify_coplanar_surface_boundary_touch,
+    certify_single_triangle_coplanar_containment, difference_single_triangle_coplanar_surfaces,
+    intersect_single_triangle_coplanar_surfaces, union_single_triangle_coplanar_surfaces,
 };
 #[cfg(feature = "exact-triangulation")]
 use super::validation::ValidationPolicy;
@@ -424,6 +424,16 @@ pub fn preflight_boolean_exact(
             ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchUnion
         }
         ExactBooleanOperation::Intersection
+            if certify_coplanar_surface_boundary_touch(left, right).is_some() =>
+        {
+            ExactBooleanSupport::CertifiedCoplanarSurfaceBoundaryTouchIntersection
+        }
+        ExactBooleanOperation::Difference
+            if certify_coplanar_surface_boundary_touch(left, right).is_some() =>
+        {
+            ExactBooleanSupport::CertifiedCoplanarSurfaceBoundaryTouchDifference
+        }
+        ExactBooleanOperation::Intersection
             if arrange_coplanar_surface_point_touch_union(left, right).is_some() =>
         {
             ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchIntersection
@@ -649,6 +659,8 @@ pub fn preflight_boolean_exact(
             | ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchUnion
             | ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchIntersection
             | ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference
+            | ExactBooleanSupport::CertifiedCoplanarSurfaceBoundaryTouchIntersection
+            | ExactBooleanSupport::CertifiedCoplanarSurfaceBoundaryTouchDifference
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceArrangementDifference
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceMultiDifference
             | ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
@@ -1424,6 +1436,16 @@ pub fn boolean_exact_with_boundary_policy(
             boolean_coplanar_surface_point_touch_union(left, right, validation)
         }
         ExactBooleanOperation::Intersection
+            if certify_coplanar_surface_boundary_touch(left, right).is_some() =>
+        {
+            boolean_coplanar_surface_boundary_touch_intersection(left, right, validation)
+        }
+        ExactBooleanOperation::Difference
+            if certify_coplanar_surface_boundary_touch(left, right).is_some() =>
+        {
+            boolean_coplanar_surface_boundary_touch_difference(left, right, validation)
+        }
+        ExactBooleanOperation::Intersection
             if arrange_coplanar_surface_point_touch_union(left, right).is_some() =>
         {
             boolean_coplanar_surface_point_touch_intersection(left, right, validation)
@@ -1853,6 +1875,43 @@ fn boolean_coplanar_surface_point_touch_difference(
     Ok(certified_shortcut_result(
         mesh,
         ExactBooleanShortcutKind::CoplanarSurfacePointTouchDifference,
+    ))
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn boolean_coplanar_surface_boundary_touch_intersection(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    validation: ValidationPolicy,
+) -> Result<ExactBooleanResult, MeshError> {
+    certify_coplanar_surface_boundary_touch(left, right)
+        .expect("caller checked coplanar boundary-touch surface intersection");
+    let mesh = empty_mesh(
+        "empty exact coplanar boundary-touch surface intersection",
+        validation,
+    )?;
+    Ok(certified_shortcut_result(
+        mesh,
+        ExactBooleanShortcutKind::CoplanarSurfaceBoundaryTouchIntersection,
+    ))
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn boolean_coplanar_surface_boundary_touch_difference(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    validation: ValidationPolicy,
+) -> Result<ExactBooleanResult, MeshError> {
+    certify_coplanar_surface_boundary_touch(left, right)
+        .expect("caller checked coplanar boundary-touch surface difference");
+    let mesh = copy_mesh(
+        left,
+        "exact coplanar boundary-touch surface difference keeps left",
+        validation,
+    )?;
+    Ok(certified_shortcut_result(
+        mesh,
+        ExactBooleanShortcutKind::CoplanarSurfaceBoundaryTouchDifference,
     ))
 }
 
