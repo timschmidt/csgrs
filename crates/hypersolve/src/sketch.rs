@@ -3178,6 +3178,7 @@ impl SketchSolveProblem {
         );
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn push_residual_with_kind(
         &self,
         problem: &mut Problem,
@@ -3428,6 +3429,7 @@ impl SketchSolveProblem {
         ))
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn arc_line_tangent_exprs(
         &self,
         arc: SketchEntityHandle,

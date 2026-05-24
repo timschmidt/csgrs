@@ -93,7 +93,7 @@ impl PreparedQuadraticResidual {
             let variable = bindings
                 .get(&term.symbol)
                 .ok_or_else(|| ExprEvalError::UnboundSymbol(SymbolRef::new(term.symbol, None)))?;
-            value = value + term.coefficient.clone() * variable.clone();
+            value += term.coefficient.clone() * variable.clone();
         }
         for term in &self.quadratic_terms {
             let first = bindings
@@ -102,7 +102,7 @@ impl PreparedQuadraticResidual {
             let second = bindings
                 .get(&term.second)
                 .ok_or_else(|| ExprEvalError::UnboundSymbol(SymbolRef::new(term.second, None)))?;
-            value = value + term.coefficient.clone() * first.clone() * second.clone();
+            value += term.coefficient.clone() * first.clone() * second.clone();
         }
         Ok(value)
     }
@@ -288,10 +288,10 @@ impl PolynomialAccumulator {
     }
 
     fn scale(mut self, scale: Real) -> Self {
-        self.constant = self.constant * scale.clone();
-        self.linear = self.linear * scale.clone();
-        self.quadratic = self.quadratic * scale.clone();
-        self.higher = self.higher * scale;
+        self.constant *= scale.clone();
+        self.linear *= scale.clone();
+        self.quadratic *= scale.clone();
+        self.higher *= scale;
         self
     }
 
@@ -419,7 +419,7 @@ impl MultivariateQuadraticAccumulator {
         for coefficient in self.terms.values_mut() {
             *coefficient = coefficient.clone() * scale.clone();
         }
-        self.higher = self.higher * scale;
+        self.higher *= scale;
         self
     }
 
@@ -428,7 +428,7 @@ impl MultivariateQuadraticAccumulator {
             let entry = self.terms.entry(symbols).or_insert_with(Real::zero);
             *entry = entry.clone() + coefficient;
         }
-        self.higher = self.higher + other.higher;
+        self.higher += other.higher;
         self
     }
 
@@ -447,7 +447,7 @@ impl MultivariateQuadraticAccumulator {
                     let entry = result.terms.entry(symbols).or_insert_with(Real::zero);
                     *entry = entry.clone() + coefficient;
                 } else {
-                    result.higher = result.higher + coefficient;
+                    result.higher += coefficient;
                 }
             }
         }

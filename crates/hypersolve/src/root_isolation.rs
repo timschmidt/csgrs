@@ -92,7 +92,7 @@ pub struct UnivariateRootIsolationReport {
 /// certified distinct-root count. Acceptance still belongs to exact candidate
 /// replay or to a future algebraic-number package, preserving Yap's
 /// construction/proof boundary.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct RootIsolationConfig {
     /// Exact comparison/refinement policy used by `hyperlimit`.
     pub policy: PredicatePolicy,
@@ -101,16 +101,6 @@ pub struct RootIsolationConfig {
     /// Maximum additional bisection steps once an interval has one certified
     /// root. This bounds work for clustered roots.
     pub max_refinement_steps: usize,
-}
-
-impl Default for RootIsolationConfig {
-    fn default() -> Self {
-        Self {
-            policy: PredicatePolicy::default(),
-            max_interval_width: None,
-            max_refinement_steps: 0,
-        }
-    }
 }
 
 /// Status for refining one already-isolated algebraic root interval.
@@ -1770,7 +1760,7 @@ fn polynomial_gcd(
         left = right;
         right = trim_polynomial(remainder, policy)?;
     }
-    Some(gcd_monic_normalize(left, policy)?)
+    gcd_monic_normalize(left, policy)
 }
 
 fn square_free_part(polynomial: Vec<Real>, policy: PredicatePolicy) -> Option<Vec<Real>> {
@@ -1912,24 +1902,23 @@ fn power_to_bernstein_on_interval(
     let width = upper.clone() - lower.clone();
     let mut shifted_power = vec![Real::zero(); degree + 1];
     for (power, coefficient) in polynomial.iter().enumerate() {
-        for target_power in 0..=power {
+        for (target_power, target) in shifted_power.iter_mut().enumerate().take(power + 1) {
             let binomial = Real::from(binomial(power, target_power)? as i64);
             let lower_power = pow_real_nonnegative(lower, power - target_power);
             let width_power = pow_real_nonnegative(&width, target_power);
-            shifted_power[target_power] = shifted_power[target_power].clone()
-                + coefficient.clone() * binomial * lower_power * width_power;
+            *target += coefficient.clone() * binomial * lower_power * width_power;
         }
     }
 
     let mut bernstein = vec![Real::zero(); degree + 1];
-    for i in 0..=degree {
+    for (i, target) in bernstein.iter_mut().enumerate().take(degree + 1) {
         let mut value = Real::zero();
         for (j, coefficient) in shifted_power.iter().enumerate().take(i + 1) {
             let numerator = Real::from(binomial(i, j)? as i64);
             let denominator = Real::from(binomial(degree, j)? as i64);
-            value = value + ((coefficient.clone() * numerator) / denominator).ok()?;
+            value += ((coefficient.clone() * numerator) / denominator).ok()?;
         }
-        bernstein[i] = value;
+        *target = value;
     }
     Some(bernstein)
 }

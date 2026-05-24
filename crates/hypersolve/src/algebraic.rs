@@ -25,6 +25,7 @@ use crate::root_isolation::{
     refine_isolated_univariate_polynomial_interval,
 };
 use crate::symbolic::{Expr, SymbolId};
+use crate::{AlgebraicRootMobiusTransformStatus, transform_algebraic_root_mobius};
 
 /// Representation kind for one isolated algebraic root.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -130,6 +131,8 @@ pub enum AlgebraicRootArithmeticOp {
     Subtract,
     /// Multiply two represented roots.
     Multiply,
+    /// Divide the left represented root by the right.
+    Divide,
     /// Negate the left represented root.
     Negate,
 }
@@ -621,9 +624,9 @@ pub fn compare_algebraic_root_representations_with_refinement(
 /// This is deliberately a witness arithmetic package, not a full algebraic
 /// number field. When both required inputs carry exact rational witnesses, the
 /// result is computed exactly in [`Real`]. When exactly one binary operand is
-/// an exact rational witness, add/subtract/multiply by that scalar is lowered
-/// to the exact affine construction `beta = scale * alpha + offset`; unary
-/// negation is the same structural operation specialized to `scale = -1`.
+/// an exact rational witness, add/subtract/multiply/divide by that scalar is
+/// lowered to exact affine or linear-fractional construction; unary negation
+/// is the same structural operation specialized to `scale = -1`.
 /// These operations transform retained algebraic evidence rather than sampling
 /// approximations. Binary non-rational/non-rational arithmetic remains explicit
 /// [`AlgebraicRootArithmeticStatus::NonRationalInput`]. This follows Yap's
@@ -679,7 +682,8 @@ pub fn arithmetic_algebraic_root_representations(
         AlgebraicRootArithmeticOp::Negate => -left_value.clone(),
         AlgebraicRootArithmeticOp::Add
         | AlgebraicRootArithmeticOp::Subtract
-        | AlgebraicRootArithmeticOp::Multiply => {
+        | AlgebraicRootArithmeticOp::Multiply
+        | AlgebraicRootArithmeticOp::Divide => {
             let Some(right) = right else {
                 return algebraic_arithmetic_report(
                     operation,
@@ -702,6 +706,18 @@ pub fn arithmetic_algebraic_root_representations(
                 AlgebraicRootArithmeticOp::Add => left_value.clone() + right_value.clone(),
                 AlgebraicRootArithmeticOp::Subtract => left_value.clone() - right_value.clone(),
                 AlgebraicRootArithmeticOp::Multiply => left_value.clone() * right_value.clone(),
+                AlgebraicRootArithmeticOp::Divide => {
+                    let Ok(quotient) = left_value.clone() / right_value.clone() else {
+                        return algebraic_arithmetic_report(
+                            operation,
+                            AlgebraicRootArithmeticStatus::Undecided,
+                            None,
+                            None,
+                            Some("exact rational witness division failed".to_owned()),
+                        );
+                    };
+                    quotient
+                }
                 AlgebraicRootArithmeticOp::Negate => unreachable!("handled above"),
             }
         }
@@ -722,9 +738,11 @@ pub fn arithmetic_algebraic_root_representations(
 /// Geometric Computation" (1997). A scalar affine image of one represented
 /// root is a safe construction because `scale^n * P((y - offset) / scale)`
 /// gives exact polynomial evidence for the image and preserves interval
-/// evidence by exact endpoint transforms. General products or sums of two
-/// independent non-rational algebraic roots need resultants or a full
-/// algebraic-number package, so this helper refuses those cases.
+/// evidence by exact endpoint transforms. A rational scalar divided by a
+/// represented nonzero root is delegated to the linear-fractional construction
+/// package. General products, sums, or quotients of two independent
+/// non-rational algebraic roots need resultants or a full algebraic-number
+/// package, so this helper refuses those cases.
 fn arithmetic_with_one_rational_scalar(
     left: &AlgebraicRootRepresentation,
     right: Option<&AlgebraicRootRepresentation>,
@@ -759,6 +777,16 @@ fn arithmetic_with_one_rational_scalar(
             AlgebraicRootArithmeticOp::Multiply => Some(multiply_by_rational_scalar_report(
                 right, scalar, operation, policy,
             )),
+            AlgebraicRootArithmeticOp::Divide => Some(mobius_transform_arithmetic_report(
+                right,
+                Real::zero(),
+                scalar.clone(),
+                Real::one(),
+                Real::zero(),
+                operation,
+                policy,
+                "left rational scalar divided by represented right root",
+            )),
             AlgebraicRootArithmeticOp::Negate => unreachable!("handled above"),
         },
         (None, Some(scalar)) => match operation {
@@ -779,6 +807,9 @@ fn arithmetic_with_one_rational_scalar(
                 "right rational scalar subtracted from represented left root",
             )),
             AlgebraicRootArithmeticOp::Multiply => Some(multiply_by_rational_scalar_report(
+                left, scalar, operation, policy,
+            )),
+            AlgebraicRootArithmeticOp::Divide => Some(divide_by_rational_scalar_report(
                 left, scalar, operation, policy,
             )),
             AlgebraicRootArithmeticOp::Negate => unreachable!("handled above"),
@@ -820,6 +851,49 @@ fn multiply_by_rational_scalar_report(
     )
 }
 
+fn divide_by_rational_scalar_report(
+    root: &AlgebraicRootRepresentation,
+    scalar: &Real,
+    operation: AlgebraicRootArithmeticOp,
+    policy: PredicatePolicy,
+) -> AlgebraicRootArithmeticReport {
+    let Some(ordering) = compare_reals_with_policy(scalar, &Real::zero(), policy).value() else {
+        return algebraic_arithmetic_report(
+            operation,
+            AlgebraicRootArithmeticStatus::Undecided,
+            None,
+            None,
+            Some("could not certify rational divisor zero/nonzero".to_owned()),
+        );
+    };
+    if ordering == Ordering::Equal {
+        return algebraic_arithmetic_report(
+            operation,
+            AlgebraicRootArithmeticStatus::Undecided,
+            None,
+            None,
+            Some("division by zero rational witness is not a constructed value".to_owned()),
+        );
+    }
+    let Ok(scale) = Real::one() / scalar.clone() else {
+        return algebraic_arithmetic_report(
+            operation,
+            AlgebraicRootArithmeticStatus::Undecided,
+            None,
+            None,
+            Some("could not invert rational divisor exactly".to_owned()),
+        );
+    };
+    affine_transform_arithmetic_report(
+        root,
+        scale,
+        Real::zero(),
+        operation,
+        policy,
+        "represented root divided by nonzero rational scalar",
+    )
+}
+
 fn affine_transform_arithmetic_report(
     root: &AlgebraicRootRepresentation,
     scale: Real,
@@ -849,6 +923,55 @@ fn affine_transform_arithmetic_report(
         }
         AlgebraicRootAffineTransformStatus::ZeroScale
         | AlgebraicRootAffineTransformStatus::Undecided => algebraic_arithmetic_report(
+            operation,
+            AlgebraicRootArithmeticStatus::Undecided,
+            None,
+            transform.representation,
+            transform.message,
+        ),
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn mobius_transform_arithmetic_report(
+    root: &AlgebraicRootRepresentation,
+    numerator_scale: Real,
+    numerator_offset: Real,
+    denominator_scale: Real,
+    denominator_offset: Real,
+    operation: AlgebraicRootArithmeticOp,
+    policy: PredicatePolicy,
+    success_message: &str,
+) -> AlgebraicRootArithmeticReport {
+    let transform = transform_algebraic_root_mobius(
+        root,
+        numerator_scale,
+        numerator_offset,
+        denominator_scale,
+        denominator_offset,
+        policy,
+    );
+    match transform.status {
+        AlgebraicRootMobiusTransformStatus::Transformed => algebraic_arithmetic_report(
+            operation,
+            AlgebraicRootArithmeticStatus::ComputedRepresentation,
+            None,
+            transform.representation,
+            Some(success_message.to_owned()),
+        ),
+        AlgebraicRootMobiusTransformStatus::InvalidEvidence
+        | AlgebraicRootMobiusTransformStatus::InvalidTransformedEvidence => {
+            algebraic_arithmetic_report(
+                operation,
+                AlgebraicRootArithmeticStatus::InvalidEvidence,
+                None,
+                transform.representation,
+                transform.message,
+            )
+        }
+        AlgebraicRootMobiusTransformStatus::NonInvertible
+        | AlgebraicRootMobiusTransformStatus::DenominatorMayVanish
+        | AlgebraicRootMobiusTransformStatus::Undecided => algebraic_arithmetic_report(
             operation,
             AlgebraicRootArithmeticStatus::Undecided,
             None,
@@ -1724,7 +1847,7 @@ fn affine_transformed_interval(
 fn real_pow_nonnegative(value: &Real, exponent: usize) -> Real {
     let mut result = Real::one();
     for _ in 0..exponent {
-        result = result * value.clone();
+        result *= value.clone();
     }
     result
 }
@@ -2308,6 +2431,13 @@ mod tests {
         );
         assert_eq!(product.exact_result, Some(real(6)));
 
+        let quotient = arithmetic_algebraic_root_representations(
+            &right,
+            Some(&left),
+            AlgebraicRootArithmeticOp::Divide,
+        );
+        assert_eq!(quotient.exact_result, Some((real(3) / real(2)).unwrap()));
+
         let negation = arithmetic_algebraic_root_representations(
             &left,
             None,
@@ -2480,6 +2610,43 @@ mod tests {
             AlgebraicRootArithmeticStatus::ComputedExactRationalWitness
         );
         assert_eq!(zero_product.exact_result, Some(Real::zero()));
+
+        let divided_by_scalar = arithmetic_algebraic_root_representations(
+            &sqrt_two,
+            Some(&rational_two),
+            AlgebraicRootArithmeticOp::Divide,
+        );
+        assert_eq!(
+            divided_by_scalar.status,
+            AlgebraicRootArithmeticStatus::ComputedRepresentation
+        );
+        let divided_root = divided_by_scalar.result_representation.as_ref().unwrap();
+        assert_eq!(
+            divided_root.polynomial_coefficients,
+            vec![(real(-1) / real(2)).unwrap(), Real::zero(), Real::one()]
+        );
+        assert_eq!(divided_root.interval.lower, (real(1) / real(2)).unwrap());
+        assert_eq!(divided_root.interval.upper, Real::one());
+
+        let scalar_divided_by_root = arithmetic_algebraic_root_representations(
+            &rational_two,
+            Some(&sqrt_two),
+            AlgebraicRootArithmeticOp::Divide,
+        );
+        assert_eq!(
+            scalar_divided_by_root.status,
+            AlgebraicRootArithmeticStatus::ComputedRepresentation
+        );
+        let reciprocal_root = scalar_divided_by_root
+            .result_representation
+            .as_ref()
+            .unwrap();
+        assert_eq!(
+            reciprocal_root.polynomial_coefficients,
+            vec![real(4), Real::zero(), real(-2)]
+        );
+        assert_eq!(reciprocal_root.interval.lower, Real::one());
+        assert_eq!(reciprocal_root.interval.upper, real(2));
     }
 
     #[test]
@@ -2851,9 +3018,24 @@ mod tests {
                 Some(&right_root),
                 AlgebraicRootArithmeticOp::Subtract,
             );
+            let quotient = if right != 0 {
+                Some(arithmetic_algebraic_root_representations(
+                    &left_root,
+                    Some(&right_root),
+                    AlgebraicRootArithmeticOp::Divide,
+                ))
+            } else {
+                None
+            };
 
             prop_assert_eq!(sum.exact_result, Some(real(left + right)));
             prop_assert_eq!(difference.exact_result, Some(real(left - right)));
+            if let Some(quotient) = quotient {
+                prop_assert_eq!(
+                    quotient.exact_result,
+                    Some((real(left) / real(right)).unwrap())
+                );
+            }
         }
 
         #[test]

@@ -229,7 +229,7 @@ pub fn replay_dense_linear_residuals(
         .map(|(row, rhs)| {
             let mut sum = Real::zero();
             for (coefficient, value) in row.iter().zip(candidate) {
-                sum = sum + (coefficient * value);
+                sum += coefficient * value;
             }
             sum - rhs
         })

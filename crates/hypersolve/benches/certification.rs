@@ -36,6 +36,7 @@ use hypersolve::{
     solve_direct_univariate_quadratic_equalities, solve_sparse_linear_system_bareiss,
     squared_distance_equation, subdivide_bernstein_univariate_polynomial_interval_roots,
     subresultant_chain_univariate_polynomials, transform_algebraic_root_affine,
+    transform_algebraic_root_mobius,
 };
 
 fn r(value: i64) -> Real {
@@ -1457,6 +1458,18 @@ fn certification(c: &mut Criterion) {
             transform_algebraic_root_affine(
                 &sqrt_two,
                 r(2),
+                r(3),
+                hyperlimit::PredicatePolicy::default(),
+            )
+        })
+    });
+    c.bench_function("transform_algebraic_root_mobius", |b| {
+        b.iter(|| {
+            transform_algebraic_root_mobius(
+                &sqrt_two,
+                r(1),
+                r(1),
+                r(1),
                 r(3),
                 hyperlimit::PredicatePolicy::default(),
             )

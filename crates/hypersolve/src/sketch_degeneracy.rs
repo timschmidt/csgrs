@@ -346,7 +346,7 @@ fn check_normal3(
         } else {
             let mut squared_norm = Real::zero();
             for value in values.into_iter().map(Result::unwrap) {
-                squared_norm = squared_norm + value.clone() * value;
+                squared_norm += value.clone() * value;
             }
             (
                 Some(squared_norm.clone()),
@@ -399,13 +399,7 @@ fn check_workplane(
 }
 
 fn normal_status_to_workplane(status: SketchDegeneracyStatus) -> SketchDegeneracyStatus {
-    match status {
-        SketchDegeneracyStatus::CertifiedNondegenerate => {
-            SketchDegeneracyStatus::CertifiedNondegenerate
-        }
-        SketchDegeneracyStatus::CertifiedDegenerate => SketchDegeneracyStatus::CertifiedDegenerate,
-        other => other,
-    }
+    status
 }
 
 fn classify_zero_is_degenerate(value: &Real, policy: PredicatePolicy) -> SketchDegeneracyStatus {

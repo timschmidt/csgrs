@@ -178,23 +178,24 @@ pub fn determinant_bareiss(
         }
 
         let pivot_value = work[pivot][pivot].clone();
+        let pivot_work_row = work[pivot].clone();
         pivots.push(BareissPivot {
             pivot,
             row: pivot_row,
             value: pivot_value.clone(),
         });
 
-        for row in (pivot + 1)..n {
+        for row in work.iter_mut().take(n).skip(pivot + 1) {
             for column in (pivot + 1)..n {
-                let numerator = pivot_value.clone() * work[row][column].clone()
-                    - work[row][pivot].clone() * work[pivot][column].clone();
-                work[row][column] = (numerator / previous_pivot.clone())
+                let numerator = pivot_value.clone() * row[column].clone()
+                    - row[pivot].clone() * pivot_work_row[column].clone();
+                row[column] = (numerator / previous_pivot.clone())
                     .map_err(|_| BareissError::UnsupportedDivision { pivot })?;
             }
         }
 
-        for row in (pivot + 1)..n {
-            work[row][pivot] = Real::zero();
+        for row in work.iter_mut().take(n).skip(pivot + 1) {
+            row[pivot] = Real::zero();
         }
         previous_pivot = pivot_value;
     }
@@ -327,8 +328,8 @@ fn select_pivot_row(
     min_precision: i32,
 ) -> Result<Option<usize>, BareissError> {
     let mut saw_unknown = false;
-    for row in pivot..matrix.len() {
-        match certified_sign(&matrix[row][pivot], min_precision) {
+    for (row, matrix_row) in matrix.iter().enumerate().skip(pivot) {
+        match certified_sign(&matrix_row[pivot], min_precision) {
             Ok(RealSign::Negative | RealSign::Positive) => return Ok(Some(row)),
             Ok(RealSign::Zero) => {}
             Err(BareissError::UndecidedPivot { .. }) => saw_unknown = true,

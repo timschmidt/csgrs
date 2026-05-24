@@ -231,6 +231,7 @@ pub struct EqualitySubstitutionClass {
 /// see Yap, "Towards Exact Geometric Computation," *Computational Geometry*
 /// 7.1-2 (1997).
 #[derive(Clone, Debug, PartialEq)]
+#[allow(clippy::large_enum_variant)]
 pub enum EqualitySubstitutionClassApplicationStatus {
     /// At least one bound member anchored the class and every bound member was
     /// exactly consistent with that anchor.
@@ -1118,7 +1119,7 @@ pub fn eliminate_affine_rows_with_substitution_classes(
                 .get(&symbol)
                 .cloned()
                 .unwrap_or((symbol, Real::zero()));
-            constant = constant + coefficient.clone() * offset;
+            constant += coefficient.clone() * offset;
             let entry = coefficients.entry(target).or_insert_with(Real::zero);
             *entry = entry.clone() + coefficient.clone();
         }

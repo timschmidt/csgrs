@@ -695,7 +695,7 @@ fn identity_matrix(width: usize) -> Vec<Vec<f64>> {
     matrix
 }
 
-fn update_inverse_hessian_bfgs(inverse_hessian: &mut Vec<Vec<f64>>, s: &[f64], y: &[f64]) {
+fn update_inverse_hessian_bfgs(inverse_hessian: &mut [Vec<f64>], s: &[f64], y: &[f64]) {
     let ys = dot(y, s);
     if ys <= f64::EPSILON {
         return;

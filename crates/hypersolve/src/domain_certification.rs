@@ -418,6 +418,7 @@ fn collect_domain_checks(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn push_value_check(
     operand_expression: &Expr,
     path: &str,

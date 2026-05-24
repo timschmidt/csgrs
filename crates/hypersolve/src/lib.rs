@@ -8,6 +8,7 @@
 pub mod active_set;
 pub mod affine;
 pub mod algebraic;
+pub mod algebraic_mobius;
 pub mod alpha;
 pub mod bareiss;
 pub mod batch;
@@ -71,6 +72,10 @@ pub use algebraic::{
     evaluate_rational_expression_at_algebraic_root, represent_univariate_algebraic_roots,
     represent_univariate_algebraic_roots_from_reports, transform_algebraic_root_affine,
     validate_algebraic_root_representation,
+};
+pub use algebraic_mobius::{
+    AlgebraicRootMobiusTransformReport, AlgebraicRootMobiusTransformStatus,
+    transform_algebraic_root_mobius,
 };
 pub use alpha::{
     UnivariateQuadraticAlphaReport, UnivariateQuadraticAlphaRow, UnivariateQuadraticAlphaStatus,

@@ -489,7 +489,7 @@ pub fn certify_affine_interval_candidate(
                         constraint_index,
                         variable_column: column,
                     })?;
-                radius = radius + coefficient_abs * variable_radius.clone();
+                radius += coefficient_abs * variable_radius.clone();
             }
             residual_balls.push(CandidateResidualBall { active_row, radius });
         }
@@ -1317,7 +1317,7 @@ pub fn certify_multivariate_quadratic_interval_candidate(
                     .unwrap_or_else(Real::zero);
                 let gradient_abs = abs_real(&gradient)
                     .ok_or(QuadraticIntervalError::UnknownMagnitudeSign { constraint_index })?;
-                radius = radius + gradient_abs * variable_radius;
+                radius += gradient_abs * variable_radius;
             }
             for term in quadratic.quadratic_terms() {
                 let first_radius = radius_by_symbol
@@ -1330,7 +1330,7 @@ pub fn certify_multivariate_quadratic_interval_candidate(
                     .unwrap_or_else(Real::zero);
                 let coefficient_abs = abs_real(&term.coefficient)
                     .ok_or(QuadraticIntervalError::UnknownMagnitudeSign { constraint_index })?;
-                radius = radius + coefficient_abs * first_radius * second_radius;
+                radius += coefficient_abs * first_radius * second_radius;
             }
             residual_balls.push(CandidateResidualBall { active_row, radius });
         }
@@ -1503,7 +1503,7 @@ fn quadratic_remainder_radius(
             .get(&term.second)
             .cloned()
             .unwrap_or_else(Real::zero);
-        radius = radius + abs_real(&term.coefficient)? * first_radius * second_radius;
+        radius += abs_real(&term.coefficient)? * first_radius * second_radius;
     }
     Some(radius)
 }
@@ -1551,7 +1551,7 @@ fn quadratic_derivative_variation(
 fn negative_matrix_vector_entry(row: &[Real], values: &[Real]) -> Real {
     let mut value = Real::zero();
     for (coefficient, residual) in row.iter().zip(values) {
-        value = value - coefficient.clone() * residual.clone();
+        value -= coefficient.clone() * residual.clone();
     }
     value
 }
@@ -1559,7 +1559,7 @@ fn negative_matrix_vector_entry(row: &[Real], values: &[Real]) -> Real {
 fn weighted_sum_abs(weights: &[Real], values: &[Real]) -> Option<Real> {
     let mut sum = Real::zero();
     for (weight, value) in weights.iter().zip(values) {
-        sum = sum + abs_real(weight)? * value.clone();
+        sum += abs_real(weight)? * value.clone();
     }
     Some(sum)
 }
@@ -1574,17 +1574,18 @@ fn contraction_row_bound(
     for (column, variable) in variables.iter().enumerate() {
         let mut operator_entry = Real::zero();
         for (weight, row_variation) in inverse_row.iter().zip(derivative_variation) {
-            operator_entry = operator_entry + abs_real(weight)? * row_variation[column].clone();
+            operator_entry += abs_real(weight)? * row_variation[column].clone();
         }
         let radius = radius_by_symbol
             .get(&variable.symbol)
             .cloned()
             .unwrap_or_else(Real::zero);
-        bound = bound + operator_entry * radius;
+        bound += operator_entry * radius;
     }
     Some(bound)
 }
 
+#[allow(clippy::too_many_arguments)]
 fn classify_quadratic_krawczyk_row(
     constraint_index: usize,
     symbol: SymbolId,

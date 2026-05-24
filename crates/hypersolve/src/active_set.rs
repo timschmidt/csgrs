@@ -852,8 +852,8 @@ mod tests {
         assert_eq!(report.deactivate_rows, 1);
         assert_eq!(report.keep_rows, 1);
         assert_eq!(report.proposed_active_mask, Some(vec![true, false, true]));
-        assert_eq!(problem.constraints[0].active, false);
-        assert_eq!(problem.constraints[1].active, true);
+        assert!(!problem.constraints[0].active);
+        assert!(problem.constraints[1].active);
     }
 
     #[test]
@@ -904,8 +904,8 @@ mod tests {
         assert_eq!(report.status, ActiveSetLoopStatus::Stable);
         assert_eq!(report.final_mask, Some(vec![true, false]));
         assert_eq!(report.iterations.len(), 2);
-        assert_eq!(problem.constraints[0].active, false);
-        assert_eq!(problem.constraints[1].active, true);
+        assert!(!problem.constraints[0].active);
+        assert!(problem.constraints[1].active);
     }
 
     #[test]

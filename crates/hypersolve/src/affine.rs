@@ -206,7 +206,7 @@ impl PreparedAffineResidual {
                     Some(variable.name.clone()),
                 ))
             })?;
-            value = value + coefficient.clone() * binding.clone();
+            value += coefficient.clone() * binding.clone();
         }
         Ok(value)
     }

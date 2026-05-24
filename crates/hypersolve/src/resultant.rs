@@ -566,7 +566,7 @@ fn sylvester_matrix(left: &[Real], right: &[Real]) -> Vec<Vec<Real>> {
 fn real_pow(value: &Real, exponent: usize) -> Real {
     let mut result = Real::one();
     for _ in 0..exponent {
-        result = result * value.clone();
+        result *= value.clone();
     }
     result
 }

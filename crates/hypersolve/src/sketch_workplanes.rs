@@ -346,6 +346,7 @@ fn frame_error(
     }
 }
 
+#[allow(clippy::result_large_err)]
 fn entity_kind(
     sketch: &SketchSolveProblem,
     handle: SketchEntityHandle,
@@ -358,6 +359,7 @@ fn entity_kind(
         .ok_or(SketchWorkplaneFrameStatus::MissingEntity { handle })
 }
 
+#[allow(clippy::result_large_err)]
 fn parameter_value(
     sketch: &SketchSolveProblem,
     handle: SketchParameterHandle,
@@ -370,6 +372,7 @@ fn parameter_value(
         .ok_or(SketchWorkplaneFrameStatus::MissingParameter { handle })
 }
 
+#[allow(clippy::result_large_err)]
 fn point2_coordinates(
     sketch: &SketchSolveProblem,
     handle: SketchEntityHandle,
@@ -385,6 +388,7 @@ fn point2_coordinates(
     }
 }
 
+#[allow(clippy::result_large_err)]
 fn point3_coordinates(
     sketch: &SketchSolveProblem,
     handle: SketchEntityHandle,
@@ -402,6 +406,7 @@ fn point3_coordinates(
     }
 }
 
+#[allow(clippy::result_large_err)]
 fn normal3_quaternion(
     sketch: &SketchSolveProblem,
     handle: SketchEntityHandle,
