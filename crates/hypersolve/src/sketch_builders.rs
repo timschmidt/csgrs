@@ -171,6 +171,39 @@ pub mod tangency {
             kind,
         }
     }
+
+    /// Add a retained 2D cubic-Bezier/line tangent relation.
+    ///
+    /// The selected line endpoint is constrained to the exact cubic point
+    /// `B(t)`, and the line's outgoing tangent is constrained to the same
+    /// direction as the exact cubic derivative `B'(t)`. The proof package uses
+    /// unnormalized cross and dot predicates, so degenerate curve derivatives,
+    /// degenerate line tangents, and segment-domain policy remain explicit
+    /// report-bearing obligations. This follows Yap's "Towards Exact
+    /// Geometric Computation" (1997), while the derivative control-net formula
+    /// follows Farin's Bernstein/de Casteljau curve model.
+    pub fn cubic_line_tangent2(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        cubic: SketchEntityHandle,
+        parameter: SketchParameterHandle,
+        line: SketchEntityHandle,
+        line_endpoint: SketchLineEndpoint,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::CubicLineTangent2 {
+            cubic,
+            parameter,
+            line,
+            line_endpoint,
+        };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Tangency,
+            strategy: SketchResidualStrategy::CubicLineTangent,
+            kind,
+        }
+    }
 }
 
 /// Incidence and positional relation builders.

@@ -18,6 +18,7 @@ use crate::sketch_arc_tangent::{ArcLineTangentExprs, arc_line_tangent_exprs};
 use crate::sketch_builders::{
     angle, distance, incidence, objective, orientation, ranges, symmetry, tangency,
 };
+use crate::sketch_cubic_tangent::{CubicPointTangentExprs, cubic_point_tangent_exprs};
 use crate::sketch_oriented_angle::{OrientedAngleExprs, oriented_angle_exprs};
 use crate::sketch_projection::{projected_distance_squared, unit_quaternion_residual};
 use crate::sketch_workplane_symmetry::{WorkplaneSymmetryExprs, workplane_point_symmetry_exprs};
@@ -589,6 +590,28 @@ pub enum SketchConstraintKind {
         /// Signed orientation branch for the outgoing line tangent.
         orientation: SketchTangentOrientation,
     },
+    /// 2D cubic-Bezier tangent to a selected line endpoint at a retained parameter.
+    ///
+    /// Lowering evaluates the retained cubic point and derivative exactly in
+    /// Bernstein form, constrains the selected line endpoint to the curve
+    /// point, emits `B'(t) x line_tangent == 0`, and emits
+    /// `B'(t) . line_tangent >= 0` for the same-direction tangent branch.
+    /// No derivative or line vector is normalized. Degenerate tangents and the
+    /// usual segment domain for `t` remain explicit preflight/domain
+    /// obligations, following Yap, "Towards Exact Geometric Computation"
+    /// (1997). The derivative control-net formula is the standard
+    /// de Casteljau/Bernstein construction; see Farin, *Curves and Surfaces
+    /// for CAGD*, 5th ed. (2002).
+    CubicLineTangent2 {
+        /// Retained 2D cubic Bezier entity.
+        cubic: SketchEntityHandle,
+        /// Curve parameter used for point and derivative evaluation.
+        parameter: SketchParameterHandle,
+        /// Line segment entity whose selected endpoint lies on the cubic.
+        line: SketchEntityHandle,
+        /// Endpoint of the line used for incidence and outgoing tangent.
+        line_endpoint: SketchLineEndpoint,
+    },
     /// Unsigned equal-angle relation between two 2D line pairs.
     ///
     /// Lowering compares squared cosines, which certifies ordinary equal
@@ -839,6 +862,8 @@ pub enum SketchResidualStrategy {
     TangentSameDirection,
     /// Exact endpoint/radius/tangent predicate package for retained arc-line tangency.
     ArcLineTangent,
+    /// Exact point/derivative package for retained cubic-line tangency.
+    CubicLineTangent,
     /// Squared-cosine equality for unsigned 2D line angles.
     SquaredCosineAngleEquality,
     /// Exact angle-vector package for oriented 2D line-pair angles.
@@ -938,6 +963,12 @@ pub enum SketchResidualFormKind {
     ArcLineTangentRadiusPerpendicularPolynomial,
     /// Exact signed orientation predicate for arc-line tangency.
     ArcLineTangentOrientationPredicate,
+    /// Exact selected endpoint coordinate-incidence proof row for cubic-line tangency.
+    CubicLineTangentEndpointIncidencePolynomial,
+    /// Exact cubic derivative/line tangent cross-product proof row.
+    CubicLineTangentCrossProductPredicate,
+    /// Exact cubic derivative/line tangent dot-product branch predicate.
+    CubicLineTangentDotProductPredicate,
     /// Exact midpoint-on-workplane proof row for 3D workplane symmetry.
     WorkplaneSymmetryMidpointPlanePolynomial,
     /// Exact normal-offset cross-product proof row for 3D workplane symmetry.
@@ -1559,6 +1590,24 @@ impl SketchSolveProblem {
             orientation,
         )
         .handle
+    }
+
+    /// Add a retained 2D cubic-Bezier/line tangent relation.
+    ///
+    /// The selected line endpoint is constrained to the exact cubic point at
+    /// `parameter`, and the outgoing line direction is constrained to the same
+    /// direction as the exact cubic derivative. Segment-domain and
+    /// nondegenerate-tangent assumptions are explicit sketch obligations, not
+    /// hidden normalizations.
+    pub fn add_cubic_line_tangent2(
+        &mut self,
+        name: impl Into<String>,
+        cubic: SketchEntityHandle,
+        parameter: SketchParameterHandle,
+        line: SketchEntityHandle,
+        line_endpoint: SketchLineEndpoint,
+    ) -> SketchConstraintHandle {
+        tangency::cubic_line_tangent2(self, name, cubic, parameter, line, line_endpoint).handle
     }
 
     /// Add a retained unsigned 2D equal-angle relation between two line pairs.
@@ -2260,6 +2309,57 @@ impl SketchSolveProblem {
                     diagnostics,
                 }
             }
+            SketchConstraintKind::CubicLineTangent2 {
+                cubic,
+                parameter,
+                line,
+                line_endpoint,
+            } => {
+                let mut diagnostics = Vec::new();
+                let Some(parts) = self.cubic_line_tangent_exprs(
+                    cubic,
+                    parameter,
+                    line,
+                    line_endpoint,
+                    constraint,
+                    &mut diagnostics,
+                ) else {
+                    return SketchResidualFormsReport {
+                        constraint: handle,
+                        status: SketchResidualFormsStatus::InvalidInputs,
+                        forms: Vec::new(),
+                        diagnostics,
+                    };
+                };
+                let mut forms = parts
+                    .endpoint_incidence
+                    .into_iter()
+                    .map(|residual| SketchResidualForm {
+                        kind: SketchResidualFormKind::CubicLineTangentEndpointIncidencePolynomial,
+                        role: SketchResidualFormRole::ExactProof,
+                        strategy: Some(SketchResidualStrategy::CubicLineTangent),
+                        residual,
+                    })
+                    .collect::<Vec<_>>();
+                forms.push(SketchResidualForm {
+                    kind: SketchResidualFormKind::CubicLineTangentCrossProductPredicate,
+                    role: SketchResidualFormRole::ExactProof,
+                    strategy: Some(SketchResidualStrategy::CubicLineTangent),
+                    residual: parts.tangent_cross,
+                });
+                forms.push(SketchResidualForm {
+                    kind: SketchResidualFormKind::CubicLineTangentDotProductPredicate,
+                    role: SketchResidualFormRole::ExactProof,
+                    strategy: Some(SketchResidualStrategy::CubicLineTangent),
+                    residual: parts.tangent_dot,
+                });
+                SketchResidualFormsReport {
+                    constraint: handle,
+                    status: SketchResidualFormsStatus::Generated,
+                    forms,
+                    diagnostics,
+                }
+            }
             SketchConstraintKind::ArcLineTangent2 {
                 arc,
                 arc_endpoint,
@@ -2805,6 +2905,56 @@ impl SketchSolveProblem {
                     format!("{} tangent orientation", constraint.name),
                     direction_dot2(&candidate, &target),
                     SketchResidualStrategy::TangentSameDirection,
+                    ConstraintKind::GreaterOrEqual,
+                    Real::one(),
+                );
+            }
+            SketchConstraintKind::CubicLineTangent2 {
+                cubic,
+                parameter,
+                line,
+                line_endpoint,
+            } => {
+                // This is a retained differential cubic tangency package.
+                // The cubic point and derivative are exact Bernstein
+                // expressions, while acceptance is exact replay of endpoint
+                // incidence, tangent support, and same-direction branch. No
+                // derivative or line tangent is normalized by a proposal path.
+                let Some(parts) = self.cubic_line_tangent_exprs(
+                    cubic,
+                    parameter,
+                    line,
+                    line_endpoint,
+                    constraint,
+                    rows,
+                ) else {
+                    return;
+                };
+                for (axis, residual) in parts.endpoint_incidence.into_iter().enumerate() {
+                    self.push_residual(
+                        problem,
+                        rows,
+                        constraint,
+                        format!("{} cubic endpoint coordinate {axis}", constraint.name),
+                        residual,
+                        SketchResidualStrategy::CubicLineTangent,
+                    );
+                }
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} cubic tangent support", constraint.name),
+                    parts.tangent_cross,
+                    SketchResidualStrategy::CubicLineTangent,
+                );
+                self.push_residual_with_kind(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} cubic tangent orientation", constraint.name),
+                    parts.tangent_dot,
+                    SketchResidualStrategy::CubicLineTangent,
                     ConstraintKind::GreaterOrEqual,
                     Real::one(),
                 );
@@ -3668,6 +3818,60 @@ impl SketchSolveProblem {
         ])
     }
 
+    fn cubic_line_tangent_exprs(
+        &self,
+        cubic: SketchEntityHandle,
+        parameter: SketchParameterHandle,
+        line: SketchEntityHandle,
+        line_endpoint: SketchLineEndpoint,
+        constraint: &SketchConstraint,
+        rows: &mut Vec<SketchGeneratedRow>,
+    ) -> Option<CubicLineTangentExprs> {
+        let cubic = self.cubic2_point_tangent_exprs(cubic, parameter, constraint, rows)?;
+        let line = self.line2_endpoint_tangent(line, line_endpoint, constraint, rows)?;
+        Some(CubicLineTangentExprs {
+            endpoint_incidence: [
+                line.endpoint.exprs[0].clone() - cubic.point[0].clone(),
+                line.endpoint.exprs[1].clone() - cubic.point[1].clone(),
+            ],
+            tangent_cross: direction_cross2(&cubic.tangent, &line.tangent),
+            tangent_dot: direction_dot2(&cubic.tangent, &line.tangent),
+        })
+    }
+
+    fn cubic2_point_tangent_exprs(
+        &self,
+        handle: SketchEntityHandle,
+        parameter: SketchParameterHandle,
+        constraint: &SketchConstraint,
+        rows: &mut Vec<SketchGeneratedRow>,
+    ) -> Option<CubicPointTangentExprs> {
+        let Some(entity) = self.entity(handle) else {
+            rows.push(missing_entity_row(constraint, handle));
+            return None;
+        };
+        let SketchEntityKind::Cubic2(cubic) = &entity.kind else {
+            rows.push(wrong_entity_row(
+                constraint,
+                entity.handle,
+                "2D cubic Bezier",
+            ));
+            return None;
+        };
+        let p0 = self.point2_coordinates(cubic.p0, constraint, rows)?;
+        let p1 = self.point2_coordinates(cubic.p1, constraint, rows)?;
+        let p2 = self.point2_coordinates(cubic.p2, constraint, rows)?;
+        let p3 = self.point2_coordinates(cubic.p3, constraint, rows)?;
+        let parameter = self.parameter_expr(parameter, constraint, rows)?;
+        Some(cubic_point_tangent_exprs(
+            &coordinate_exprs2(&p0),
+            &coordinate_exprs2(&p1),
+            &coordinate_exprs2(&p2),
+            &coordinate_exprs2(&p3),
+            parameter,
+        ))
+    }
+
     fn arc2_endpoint_parts(
         &self,
         handle: SketchEntityHandle,
@@ -3741,6 +3945,13 @@ struct ArcEndpointExprs {
 struct LineEndpointTangentExprs {
     endpoint: CoordinateExprs,
     tangent: [Expr; 2],
+}
+
+#[derive(Clone, Debug)]
+struct CubicLineTangentExprs {
+    endpoint_incidence: [Expr; 2],
+    tangent_cross: Expr,
+    tangent_dot: Expr,
 }
 
 fn coordinate_exprs2(coordinates: &CoordinateExprs) -> [Expr; 2] {

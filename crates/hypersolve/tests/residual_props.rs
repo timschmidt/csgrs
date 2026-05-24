@@ -969,6 +969,64 @@ proptest! {
     }
 
     #[test]
+    fn sketch_cubic_line_tangent_rows_match_generated_affine_cubics(
+        ax in -8_i16..=8,
+        ay in -8_i16..=8,
+        dx in -4_i16..=4,
+        dy in -4_i16..=4,
+        t in -2_i16..=2,
+        tangent_scale in 1_i16..=4,
+    ) {
+        prop_assume!(dx != 0 || dy != 0);
+        let ax = i64::from(ax);
+        let ay = i64::from(ay);
+        let dx = i64::from(dx);
+        let dy = i64::from(dy);
+        let t = i64::from(t);
+        let tangent_scale = i64::from(tangent_scale);
+        let mut sketch = SketchSolveProblem::new();
+        let p0 = sketch.add_point2d("p0", Real::from(ax), Real::from(ay));
+        let p1 = sketch.add_point2d("p1", Real::from(ax + dx), Real::from(ay + dy));
+        let p2 = sketch.add_point2d("p2", Real::from(ax + 2 * dx), Real::from(ay + 2 * dy));
+        let p3 = sketch.add_point2d("p3", Real::from(ax + 3 * dx), Real::from(ay + 3 * dy));
+        let cubic = sketch.add_cubic2("cubic", p0, p1, p2, p3);
+        let point = sketch.add_point2d(
+            "point",
+            Real::from(ax + 3 * dx * t),
+            Real::from(ay + 3 * dy * t),
+        );
+        let tangent_end = sketch.add_point2d(
+            "tangent end",
+            Real::from(ax + 3 * dx * t + dx * tangent_scale),
+            Real::from(ay + 3 * dy * t + dy * tangent_scale),
+        );
+        let line = sketch.add_line_segment2("line", point, tangent_end);
+        let parameter = sketch.add_parameter("t", Real::from(t));
+        let handle = sketch.add_cubic_line_tangent2("cubic tangent", cubic, parameter, line, SketchLineEndpoint::Start);
+
+        let lowered = sketch.lower_to_problem();
+        let forms = sketch.residual_forms_for_constraint(handle);
+        let context = context_from_problem(&lowered.problem);
+        let certification = certify_candidate(&PreparedProblem::new(&lowered.problem), &context);
+
+        prop_assert!(lowered.all_generated());
+        prop_assert_eq!(lowered.problem.constraints.len(), 4);
+        prop_assert!(certification.all_satisfied());
+        prop_assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+        prop_assert_eq!(forms.forms.len(), 4);
+        for form in &forms.forms[..3] {
+            prop_assert_eq!(form.role, SketchResidualFormRole::ExactProof);
+            prop_assert_eq!(form.residual.eval_real(context.bindings()).unwrap(), Real::zero());
+        }
+        prop_assert_eq!(
+            forms.forms[3].kind,
+            SketchResidualFormKind::CubicLineTangentDotProductPredicate
+        );
+        let dot = forms.forms[3].residual.eval_real(context.bindings()).unwrap();
+        prop_assert_eq!(dot.structural_facts().sign, Some(RealSign::Positive));
+    }
+
+    #[test]
     fn sketch_equal_angle_rows_match_generated_scaled_line_pairs(
         ux in -6_i16..=6,
         uy in -6_i16..=6,

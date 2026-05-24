@@ -39,6 +39,7 @@ pub mod sketch;
 mod sketch_arc_tangent;
 pub mod sketch_builders;
 pub mod sketch_certificates;
+mod sketch_cubic_tangent;
 pub mod sketch_degeneracy;
 pub mod sketch_domains;
 pub mod sketch_entity_domains;

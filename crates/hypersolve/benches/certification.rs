@@ -630,6 +630,33 @@ fn sketch_problem_with_point_on_cubic_relations(
     sketch
 }
 
+fn sketch_problem_with_cubic_line_tangent_relations(
+    row_count: usize,
+) -> hypersolve::SketchSolveProblem {
+    let mut sketch = hypersolve::SketchSolveProblem::new();
+    for index in 0..row_count {
+        let x = index as i64;
+        let p0 = sketch.add_point2d(format!("cubictan{index}.p0"), r(x), r(x));
+        let p1 = sketch.add_point2d(format!("cubictan{index}.p1"), r(x + 1), r(x + 2));
+        let p2 = sketch.add_point2d(format!("cubictan{index}.p2"), r(x + 2), r(x + 4));
+        let p3 = sketch.add_point2d(format!("cubictan{index}.p3"), r(x + 3), r(x + 6));
+        let cubic = sketch.add_cubic2(format!("cubictan{index}"), p0, p1, p2, p3);
+        let parameter = sketch.add_parameter(format!("cubictan{index}.t"), r(1));
+        let tangent_end =
+            sketch.add_point2d(format!("cubictan{index}.tangent_end"), r(x + 4), r(x + 8));
+        let line = sketch.add_line_segment2(format!("cubictan{index}.line"), p3, tangent_end);
+        hypersolve::sketch_tangency_builders::cubic_line_tangent2(
+            &mut sketch,
+            format!("cubic line tangent {index}"),
+            cubic,
+            parameter,
+            line,
+            hypersolve::SketchLineEndpoint::Start,
+        );
+    }
+    sketch
+}
+
 fn sketch_problem_with_parameter_orderings(row_count: usize) -> hypersolve::SketchSolveProblem {
     let mut sketch = hypersolve::SketchSolveProblem::new();
     let mut previous = sketch.add_parameter("order0", r(0));
@@ -882,6 +909,10 @@ fn certification(c: &mut Criterion) {
     c.bench_function("sketch_point_on_cubic_lowering", |b| {
         b.iter(|| point_on_cubic_sketch.lower_to_problem())
     });
+    let cubic_line_tangent_sketch = sketch_problem_with_cubic_line_tangent_relations(16);
+    c.bench_function("sketch_cubic_line_tangent_lowering", |b| {
+        b.iter(|| cubic_line_tangent_sketch.lower_to_problem())
+    });
     let ordering_sketch = sketch_problem_with_parameter_orderings(16);
     c.bench_function("sketch_parameter_ordering_lowering", |b| {
         b.iter(|| ordering_sketch.lower_to_problem())
@@ -972,6 +1003,24 @@ fn certification(c: &mut Criterion) {
         b.iter(|| {
             for handle in &cubic_form_handles {
                 let _ = point_on_cubic_sketch.residual_forms_for_constraint(*handle);
+            }
+        })
+    });
+    let cubic_tangent_form_handles = cubic_line_tangent_sketch
+        .constraints()
+        .iter()
+        .filter(|constraint| {
+            matches!(
+                constraint.kind,
+                hypersolve::SketchConstraintKind::CubicLineTangent2 { .. }
+            )
+        })
+        .map(|constraint| constraint.handle)
+        .collect::<Vec<_>>();
+    c.bench_function("sketch_cubic_line_tangent_residual_forms", |b| {
+        b.iter(|| {
+            for handle in &cubic_tangent_form_handles {
+                let _ = cubic_line_tangent_sketch.residual_forms_for_constraint(*handle);
             }
         })
     });
