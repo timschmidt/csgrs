@@ -5695,6 +5695,88 @@ fn sketch_projected_point_on_circle_replays_workplane_and_incidence_rows() {
 }
 
 #[test]
+fn sketch_projected_line_circle_tangent_replays_workplane_and_tangency_rows() {
+    let mut sketch = SketchSolveProblem::new();
+    let origin3 = sketch.add_point3d("origin3", real(1), real(2), real(3));
+    let normal = sketch.add_normal3d("identity normal", real(1), real(0), real(0), real(0));
+    let workplane = sketch.add_workplane("workplane", origin3, normal);
+    let center = sketch.add_point2d("center", real(0), real(0));
+    let radius = sketch.add_distance("radius", real(5));
+    let circle = sketch.add_circle2("circle", center, radius);
+    let valid_start = sketch.add_point3d("valid start", real(-9), real(7), real(-11));
+    let valid_end = sketch.add_point3d("valid end", real(11), real(7), real(23));
+    let bad_start = sketch.add_point3d("bad start", real(-9), real(8), real(-11));
+    let bad_end = sketch.add_point3d("bad end", real(11), real(8), real(23));
+    let valid_line = sketch.add_line_segment3("valid line", valid_start, valid_end);
+    let bad_line = sketch.add_line_segment3("bad line", bad_start, bad_end);
+    let valid = sketch_tangency_builders::projected_line_circle_tangent3(
+        &mut sketch,
+        "projected line circle tangent",
+        workplane,
+        valid_line,
+        circle,
+    );
+    sketch.add_projected_line_circle_tangent3("bad projected tangent", workplane, bad_line, circle);
+    let wrong = sketch.add_constraint(
+        "wrong projected tangent circle kind",
+        SketchConstraintKind::ProjectedLineCircleTangent3 {
+            workplane,
+            line: valid_line,
+            circle: radius,
+        },
+        false,
+        true,
+    );
+
+    let lowered = sketch.lower_to_problem();
+    assert_eq!(
+        valid.strategy,
+        SketchResidualStrategy::ProjectedLineCircleTangency
+    );
+    assert_eq!(lowered.problem.constraints.len(), 4);
+    assert_eq!(
+        lowered.rows[1].strategy,
+        Some(SketchResidualStrategy::ProjectedLineCircleTangency)
+    );
+    assert_eq!(
+        lowered.rows[3].strategy,
+        Some(SketchResidualStrategy::ProjectedLineCircleTangency)
+    );
+    assert_eq!(
+        lowered.rows.last().unwrap().status,
+        SketchGeneratedRowStatus::WrongEntityKind {
+            handle: radius,
+            expected: "circle",
+        }
+    );
+
+    let certification = certify_candidate(
+        &PreparedProblem::new(&lowered.problem),
+        &context_from_problem(&lowered.problem),
+    );
+    assert!(matches!(
+        certification.rows[1].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[3].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
+
+    let forms = sketch.residual_forms_for_constraint(valid.handle);
+    assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+    assert_eq!(forms.forms.len(), 2);
+    assert_eq!(
+        forms.forms[1].kind,
+        SketchResidualFormKind::ProjectedLineCircleTangencyPolynomial
+    );
+    assert_eq!(forms.forms[1].role, SketchResidualFormRole::ExactProof);
+
+    let wrong_forms = sketch.residual_forms_for_constraint(wrong);
+    assert_eq!(wrong_forms.status, SketchResidualFormsStatus::InvalidInputs);
+}
+
+#[test]
 fn sketch_point_on_arc_replays_radius_and_branch_rows() {
     let mut sketch = SketchSolveProblem::new();
     let center = sketch.add_point2d("center", real(0), real(0));

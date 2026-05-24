@@ -1295,6 +1295,32 @@ fn sketch_problem_with_projected_point_on_circles(
     sketch
 }
 
+fn sketch_problem_with_projected_line_circle_tangencies(
+    row_count: usize,
+) -> hypersolve::SketchSolveProblem {
+    let mut sketch = hypersolve::SketchSolveProblem::new();
+    let origin = sketch.add_point3d("project-lct.origin", r(1), r(2), r(3));
+    let normal = sketch.add_normal3d("project-lct.normal", r(1), r(0), r(0), r(0));
+    let workplane = sketch.add_workplane("project-lct.workplane", origin, normal);
+    for index in 0..row_count {
+        let y = index as i64;
+        let center = sketch.add_point2d(format!("projlct{index}.center"), r(2), r(y));
+        let radius = sketch.add_distance(format!("projlct{index}.radius"), r(5));
+        let circle = sketch.add_circle2(format!("projlct{index}.circle"), center, radius);
+        let start = sketch.add_point3d(format!("projlct{index}.start"), r(-8), r(y + 7), r(-y));
+        let end = sketch.add_point3d(format!("projlct{index}.end"), r(12), r(y + 7), r(33 - y));
+        let line = sketch.add_line_segment3(format!("projlct{index}.line"), start, end);
+        hypersolve::sketch_tangency_builders::projected_line_circle_tangent3(
+            &mut sketch,
+            format!("projected line circle tangent {index}"),
+            workplane,
+            line,
+            circle,
+        );
+    }
+    sketch
+}
+
 fn sketch_problem_with_projected_point_on_arcs(row_count: usize) -> hypersolve::SketchSolveProblem {
     let mut sketch = hypersolve::SketchSolveProblem::new();
     let origin = sketch.add_point3d("project-arc.origin", r(1), r(2), r(3));
@@ -1752,6 +1778,11 @@ fn certification(c: &mut Criterion) {
     let projected_point_on_circle_sketch = sketch_problem_with_projected_point_on_circles(16);
     c.bench_function("sketch_projected_point_on_circle_lowering", |b| {
         b.iter(|| projected_point_on_circle_sketch.lower_to_problem())
+    });
+    let projected_line_circle_tangent_sketch =
+        sketch_problem_with_projected_line_circle_tangencies(16);
+    c.bench_function("sketch_projected_line_circle_tangent_lowering", |b| {
+        b.iter(|| projected_line_circle_tangent_sketch.lower_to_problem())
     });
     let projected_point_on_arc_sketch = sketch_problem_with_projected_point_on_arcs(16);
     c.bench_function("sketch_projected_point_on_arc_lowering", |b| {
@@ -2258,6 +2289,24 @@ fn certification(c: &mut Criterion) {
         b.iter(|| {
             for handle in &projected_point_on_circle_form_handles {
                 let _ = projected_point_on_circle_sketch.residual_forms_for_constraint(*handle);
+            }
+        })
+    });
+    let projected_line_circle_tangent_form_handles = projected_line_circle_tangent_sketch
+        .constraints()
+        .iter()
+        .filter(|constraint| {
+            matches!(
+                constraint.kind,
+                hypersolve::SketchConstraintKind::ProjectedLineCircleTangent3 { .. }
+            )
+        })
+        .map(|constraint| constraint.handle)
+        .collect::<Vec<_>>();
+    c.bench_function("sketch_projected_line_circle_tangent_residual_forms", |b| {
+        b.iter(|| {
+            for handle in &projected_line_circle_tangent_form_handles {
+                let _ = projected_line_circle_tangent_sketch.residual_forms_for_constraint(*handle);
             }
         })
     });

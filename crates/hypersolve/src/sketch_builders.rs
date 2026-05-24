@@ -311,6 +311,36 @@ pub mod tangency {
         }
     }
 
+    /// Add retained 3D/workplane line/circle tangency.
+    ///
+    /// Lowering projects the 3D line into the retained workplane and replays
+    /// the exact denominator-cleared circle-center-to-line distance equation
+    /// `cross_uv^2 - radius^2*|line_uv|^2 == 0` beside the workplane unit
+    /// guard. This follows Yap, "Towards Exact Geometric Computation" (1997),
+    /// by keeping the projected tangent proof polynomial explicit and never
+    /// normalizing the projected line through primitive floats. The workplane
+    /// frame is Shoemake's unit-quaternion construction (1985).
+    pub fn projected_line_circle_tangent3(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        line: SketchEntityHandle,
+        circle: SketchEntityHandle,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::ProjectedLineCircleTangent3 {
+            workplane,
+            line,
+            circle,
+        };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Tangency,
+            strategy: SketchResidualStrategy::ProjectedLineCircleTangency,
+            kind,
+        }
+    }
+
     /// Add a retained 2D cubic-Bezier/line tangent relation.
     ///
     /// The selected line endpoint is constrained to the exact cubic point

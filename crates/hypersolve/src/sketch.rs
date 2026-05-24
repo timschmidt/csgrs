@@ -597,6 +597,27 @@ pub enum SketchConstraintKind {
         /// Retained 2D circle entity in workplane coordinates.
         circle: SketchEntityHandle,
     },
+    /// Line/circle tangency after projecting a 3D line into a workplane.
+    ///
+    /// The retained 3D line segment is projected into the workplane `U/V`
+    /// frame and checked against a retained 2D circle by the
+    /// denominator-cleared row `cross(center-line_start, line_dir)_uv^2 -
+    /// radius^2*|line_dir_uv|^2 == 0`. This is the exact replay form of the
+    /// ordinary line/circle tangency distance test, without normalizing the
+    /// projected line or relying on rounded projection coordinates. The
+    /// retained workplane emits its unit-quaternion guard because the
+    /// projected metric is evidence only for a certified frame, following
+    /// Yap, "Towards Exact Geometric Computation" (1997). The `U/V` axes use
+    /// Shoemake's unit-quaternion rotation matrix from "Animating Rotation
+    /// with Quaternion Curves" (1985).
+    ProjectedLineCircleTangent3 {
+        /// Workplane entity that supplies origin and normal/quaternion.
+        workplane: SketchEntityHandle,
+        /// 3D line segment entity projected into the workplane.
+        line: SketchEntityHandle,
+        /// Retained 2D circle entity in workplane coordinates.
+        circle: SketchEntityHandle,
+    },
     /// Point-on-arc incidence after projecting a 3D point into a workplane.
     ///
     /// The retained 3D point is projected to exact `U/V` coordinates relative
@@ -1519,6 +1540,8 @@ pub enum SketchResidualStrategy {
     ProjectedLineArcSweepLength,
     /// Squared projected point-on-circle incidence.
     ProjectedSquaredIncidence,
+    /// Exact projected 3D line/circle tangency package.
+    ProjectedLineCircleTangency,
     /// Exact projected point-on-arc incidence and branch package.
     ProjectedPointArcIncidence,
     /// Squared 2D line length equality.
@@ -1696,6 +1719,8 @@ pub enum SketchResidualFormKind {
     PointLineSignedDistanceNegativeProposal,
     /// Squared circle-incidence polynomial proof row.
     SquaredCircleIncidencePolynomial,
+    /// Denominator-cleared projected 3D line/circle tangency proof row.
+    ProjectedLineCircleTangencyPolynomial,
     /// Point-on-arc endpoint-on-radius proof row.
     ArcIncidenceEndpointRadiusPolynomial,
     /// Point-on-arc point-on-radius proof row.
@@ -2994,6 +3019,20 @@ impl SketchSolveProblem {
         incidence::projected_point_on_circle3(self, name, workplane, point, circle).handle
     }
 
+    /// Add a retained projected 3D line/circle tangent relation.
+    ///
+    /// Lowering emits the workplane unit guard and an exact denominator-
+    /// cleared line/circle tangency row in projected `U/V` coordinates.
+    pub fn add_projected_line_circle_tangent3(
+        &mut self,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        line: SketchEntityHandle,
+        circle: SketchEntityHandle,
+    ) -> SketchConstraintHandle {
+        tangency::projected_line_circle_tangent3(self, name, workplane, line, circle).handle
+    }
+
     /// Add a retained projected 3D point-on-2D-circular-arc incidence constraint.
     pub fn add_projected_point_on_arc3(
         &mut self,
@@ -3390,6 +3429,46 @@ impl SketchSolveProblem {
                     constraint: handle,
                     status: SketchResidualFormsStatus::Generated,
                     forms,
+                    diagnostics,
+                }
+            }
+            SketchConstraintKind::ProjectedLineCircleTangent3 {
+                workplane,
+                line,
+                circle,
+            } => {
+                let mut diagnostics = Vec::new();
+                let Some(parts) = self.projected_line_circle_tangent_exprs(
+                    workplane,
+                    line,
+                    circle,
+                    constraint,
+                    &mut diagnostics,
+                ) else {
+                    return SketchResidualFormsReport {
+                        constraint: handle,
+                        status: SketchResidualFormsStatus::InvalidInputs,
+                        forms: Vec::new(),
+                        diagnostics,
+                    };
+                };
+                SketchResidualFormsReport {
+                    constraint: handle,
+                    status: SketchResidualFormsStatus::Generated,
+                    forms: vec![
+                        SketchResidualForm {
+                            kind: SketchResidualFormKind::WorkplaneUnitQuaternionPolynomial,
+                            role: SketchResidualFormRole::ExactProof,
+                            strategy: Some(SketchResidualStrategy::WorkplaneUnitQuaternion),
+                            residual: unit_quaternion_residual(&parts.quaternion),
+                        },
+                        SketchResidualForm {
+                            kind: SketchResidualFormKind::ProjectedLineCircleTangencyPolynomial,
+                            role: SketchResidualFormRole::ExactProof,
+                            strategy: Some(SketchResidualStrategy::ProjectedLineCircleTangency),
+                            residual: parts.tangency,
+                        },
+                    ],
                     diagnostics,
                 }
             }
@@ -5424,6 +5503,39 @@ impl SketchSolveProblem {
                     constraint.name.clone(),
                     parts.incidence,
                     SketchResidualStrategy::ProjectedSquaredIncidence,
+                );
+            }
+            SketchConstraintKind::ProjectedLineCircleTangent3 {
+                workplane,
+                line,
+                circle,
+            } => {
+                // This is the retained workplane analogue of line/circle
+                // tangency. The projected line is not normalized; instead the
+                // circle-center distance equation is denominator-cleared as
+                // `cross_uv^2 - r^2*|dir_uv|^2 == 0`. Yap (1997) keeps that
+                // polynomial replay as the trust boundary, while Shoemake's
+                // (1985) quaternion frame supplies the retained U/V axes.
+                let Some(parts) = self
+                    .projected_line_circle_tangent_exprs(workplane, line, circle, constraint, rows)
+                else {
+                    return;
+                };
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} workplane unit", constraint.name),
+                    unit_quaternion_residual(&parts.quaternion),
+                    SketchResidualStrategy::WorkplaneUnitQuaternion,
+                );
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} projected line circle tangent", constraint.name),
+                    parts.tangency,
+                    SketchResidualStrategy::ProjectedLineCircleTangency,
                 );
             }
             SketchConstraintKind::ProjectedPointOnArc3 {
@@ -7733,6 +7845,58 @@ impl SketchSolveProblem {
         })
     }
 
+    fn projected_line_circle_tangent_exprs(
+        &self,
+        workplane: SketchEntityHandle,
+        line: SketchEntityHandle,
+        circle: SketchEntityHandle,
+        constraint: &SketchConstraint,
+        rows: &mut Vec<SketchGeneratedRow>,
+    ) -> Option<ProjectedLineCircleTangentExprs> {
+        let (origin, quaternion) =
+            self.workplane_origin_and_quaternion(workplane, constraint, rows)?;
+        let (start, end) = self.line3_points(line, constraint, rows)?;
+        let Some(circle_entity) = self.entity(circle) else {
+            rows.push(missing_entity_row(constraint, circle));
+            return None;
+        };
+        let SketchEntityKind::Circle2(circle) = &circle_entity.kind else {
+            rows.push(wrong_entity_row(constraint, circle_entity.handle, "circle"));
+            return None;
+        };
+        let center = self.point2_coordinates(circle.center, constraint, rows)?;
+        let radius = self.distance_expr(circle.radius, constraint, rows)?;
+        let start_delta = [
+            start.exprs[0].clone() - origin.exprs[0].clone(),
+            start.exprs[1].clone() - origin.exprs[1].clone(),
+            start.exprs[2].clone() - origin.exprs[2].clone(),
+        ];
+        let direction = [
+            end.exprs[0].clone() - start.exprs[0].clone(),
+            end.exprs[1].clone() - start.exprs[1].clone(),
+            end.exprs[2].clone() - start.exprs[2].clone(),
+        ];
+        let (u_axis, v_axis, _) = quaternion_frame_axes_expr(&quaternion);
+        let start_uv = [
+            dot3_expr(&start_delta, &u_axis),
+            dot3_expr(&start_delta, &v_axis),
+        ];
+        let direction_uv = projected_direction2(&direction, &quaternion);
+        let center = coordinate_exprs2(&center);
+        let center_delta = [
+            center[0].clone() - start_uv[0].clone(),
+            center[1].clone() - start_uv[1].clone(),
+        ];
+        let cross = center_delta[0].clone() * direction_uv[1].clone()
+            - center_delta[1].clone() * direction_uv[0].clone();
+        let direction_squared = direction_uv[0].clone() * direction_uv[0].clone()
+            + direction_uv[1].clone() * direction_uv[1].clone();
+        Some(ProjectedLineCircleTangentExprs {
+            quaternion,
+            tangency: cross.clone() * cross - radius.clone() * radius * direction_squared,
+        })
+    }
+
     fn projected_point_range_exprs(
         &self,
         workplane: SketchEntityHandle,
@@ -8719,6 +8883,12 @@ struct ProjectedPointCircleIncidenceExprs {
 struct ProjectedPointArcIncidenceExprs {
     quaternion: [Expr; 4],
     arc: ArcPointIncidenceExprs,
+}
+
+#[derive(Clone, Debug)]
+struct ProjectedLineCircleTangentExprs {
+    quaternion: [Expr; 4],
+    tangency: Expr,
 }
 
 #[derive(Clone, Debug)]

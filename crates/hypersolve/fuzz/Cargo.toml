@@ -49,6 +49,13 @@ doc = false
 bench = false
 
 [[bin]]
+name = "sketch_projected_line_circle_tangent"
+path = "fuzz_targets/sketch_projected_line_circle_tangent.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
 name = "sketch_projected_point_on_arc"
 path = "fuzz_targets/sketch_projected_point_on_arc.rs"
 test = false
