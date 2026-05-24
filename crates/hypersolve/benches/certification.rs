@@ -35,7 +35,8 @@ use hypersolve::{
     search_failed_constraint_single_removals, sketch_compatibility_fixtures,
     solve_damped_least_squares, solve_dense_linear_system_bareiss, solve_direct_affine_system,
     solve_direct_univariate_quadratic_equalities, solve_sparse_linear_system_bareiss,
-    squared_distance_equation, subdivide_bernstein_univariate_polynomial_interval_roots,
+    solve_sparse_linear_system_bareiss_pattern_preserving, squared_distance_equation,
+    subdivide_bernstein_univariate_polynomial_interval_roots,
     subresultant_chain_univariate_polynomials, transform_algebraic_root_affine,
     transform_algebraic_root_mobius, transform_algebraic_root_polynomial_image,
     transform_algebraic_roots_binary,
@@ -1129,6 +1130,46 @@ fn certification(c: &mut Criterion) {
             )
         })
     });
+    c.bench_function(
+        "solve_sparse_linear_system_bareiss_pattern_preserving",
+        |b| {
+            b.iter(|| {
+                solve_sparse_linear_system_bareiss_pattern_preserving(
+                    3,
+                    3,
+                    &[
+                        SparseResidualTerm {
+                            row: 0,
+                            column: 0,
+                            coefficient: r(2),
+                        },
+                        SparseResidualTerm {
+                            row: 0,
+                            column: 2,
+                            coefficient: r(1),
+                        },
+                        SparseResidualTerm {
+                            row: 1,
+                            column: 0,
+                            coefficient: r(1),
+                        },
+                        SparseResidualTerm {
+                            row: 1,
+                            column: 1,
+                            coefficient: r(1),
+                        },
+                        SparseResidualTerm {
+                            row: 2,
+                            column: 2,
+                            coefficient: r(3),
+                        },
+                    ],
+                    &[r(4), r(3), r(6)],
+                    -64,
+                )
+            })
+        },
+    );
     c.bench_function("analyze_sparse_bareiss_elimination_pattern", |b| {
         b.iter(|| {
             analyze_sparse_bareiss_elimination_pattern(

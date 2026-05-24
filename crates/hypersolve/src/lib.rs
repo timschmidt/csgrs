@@ -94,8 +94,9 @@ pub use alpha::{
 };
 pub use bareiss::{
     BareissDeterminantReport, BareissError, BareissPivot, BareissSolveReport, SparseBareissError,
-    SparseBareissSolveReport, determinant_bareiss, solve_dense_linear_system_bareiss,
-    solve_sparse_linear_system_bareiss,
+    SparseBareissSolveReport, SparsePatternPreservingBareissSolveReport, determinant_bareiss,
+    solve_dense_linear_system_bareiss, solve_sparse_linear_system_bareiss,
+    solve_sparse_linear_system_bareiss_pattern_preserving,
 };
 pub use batch::{
     BatchCandidateCertificationReport, BatchCandidateReplay, BatchCandidateStatus,

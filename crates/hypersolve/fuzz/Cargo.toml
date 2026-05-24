@@ -68,3 +68,10 @@ path = "fuzz_targets/algebraic_difference_comparison.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "sparse_pattern_preserving_bareiss"
+path = "fuzz_targets/sparse_pattern_preserving_bareiss.rs"
+test = false
+doc = false
+bench = false
