@@ -12,9 +12,9 @@
 use hyperreal::Real;
 
 use crate::sketch::{
-    SketchArcEndpoint, SketchArcTangencyBranch, SketchConstraintHandle, SketchConstraintKind,
-    SketchEntityHandle, SketchLineEndpoint, SketchParameterHandle, SketchResidualStrategy,
-    SketchSolveProblem, SketchTangentOrientation,
+    SketchArcEndpoint, SketchArcLengthSweep, SketchArcTangencyBranch, SketchConstraintHandle,
+    SketchConstraintKind, SketchEntityHandle, SketchLineEndpoint, SketchParameterHandle,
+    SketchResidualStrategy, SketchSolveProblem, SketchTangentOrientation,
 };
 
 /// High-level constraint family retained before residual lowering.
@@ -803,6 +803,32 @@ pub mod distance {
             handle,
             family: SketchConstraintFamily::Distance,
             strategy: SketchResidualStrategy::LineArcLength,
+            kind,
+        }
+    }
+
+    /// Add a branch-aware 2D line length to circular arc sweep length relation.
+    ///
+    /// The sweep branch records clockwise/counterclockwise and minor/major
+    /// intent explicitly. Lowering emits endpoint-on-radius rows, a signed
+    /// branch predicate, and the exact symbolic row
+    /// `|line|^2 - (radius * sweep_angle)^2 == 0`, where `sweep_angle` is
+    /// either `theta` or `2*pi-theta`. This is the Yap exact-replay boundary
+    /// for arc-length branch decisions: no primitive sweep angle or UI
+    /// direction flag is trusted unless this retained branch replays.
+    pub fn equal_line_arc_sweep_length2(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        line: SketchEntityHandle,
+        arc: SketchEntityHandle,
+        sweep: SketchArcLengthSweep,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::EqualLineArcSweepLength2 { line, arc, sweep };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Distance,
+            strategy: SketchResidualStrategy::LineArcSweepLength,
             kind,
         }
     }

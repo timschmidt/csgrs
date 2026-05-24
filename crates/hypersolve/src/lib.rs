@@ -247,13 +247,13 @@ pub use root_isolation::{
     subdivide_bernstein_univariate_polynomial_interval_roots,
 };
 pub use sketch::{
-    SketchArcEndpoint, SketchArcOfCircle2, SketchArcTangencyBranch, SketchCircle2,
-    SketchConstraint, SketchConstraintHandle, SketchConstraintKind, SketchCubic2, SketchDistance,
-    SketchEntity, SketchEntityDomain, SketchEntityHandle, SketchEntityKind, SketchGeneratedRow,
-    SketchGeneratedRowStatus, SketchGroupHandle, SketchLineEndpoint, SketchLineSegment2,
-    SketchLineSegment3, SketchLoweringReport, SketchNormal2, SketchNormal3, SketchParameter,
-    SketchParameterDomain, SketchParameterHandle, SketchPoint2, SketchPoint3, SketchResidualForm,
-    SketchResidualFormKind, SketchResidualFormRole, SketchResidualFormsReport,
+    SketchArcEndpoint, SketchArcLengthSweep, SketchArcOfCircle2, SketchArcTangencyBranch,
+    SketchCircle2, SketchConstraint, SketchConstraintHandle, SketchConstraintKind, SketchCubic2,
+    SketchDistance, SketchEntity, SketchEntityDomain, SketchEntityHandle, SketchEntityKind,
+    SketchGeneratedRow, SketchGeneratedRowStatus, SketchGroupHandle, SketchLineEndpoint,
+    SketchLineSegment2, SketchLineSegment3, SketchLoweringReport, SketchNormal2, SketchNormal3,
+    SketchParameter, SketchParameterDomain, SketchParameterHandle, SketchPoint2, SketchPoint3,
+    SketchResidualForm, SketchResidualFormKind, SketchResidualFormRole, SketchResidualFormsReport,
     SketchResidualFormsStatus, SketchResidualStrategy, SketchRoundTripMetadata,
     SketchRoundTripRole, SketchSolveProblem, SketchTangentOrientation, SketchWorkplane,
 };

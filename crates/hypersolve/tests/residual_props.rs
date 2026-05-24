@@ -5,9 +5,9 @@ use hypersolve::{
     Expr, FailedConstraintRemovalStatus, FailedConstraintStatus, IntervalBoxCertificationPackage,
     IntervalBoxCertificationStatus, MultivariateQuadraticKrawczykStatus, PreparedProblem,
     PreparedSolverBlock, Problem, ProposalEngineKind, ProposalEnginePrecision,
-    ProposalEngineReport, RootIsolationStatus, SketchArcEndpoint, SketchArcTangencyBranch,
-    SketchConstructionCertificateStatus, SketchDegeneracyKind, SketchDegeneracyStatus,
-    SketchEntityDomain, SketchEntityDomainKind, SketchEntityDomainStatus,
+    ProposalEngineReport, RootIsolationStatus, SketchArcEndpoint, SketchArcLengthSweep,
+    SketchArcTangencyBranch, SketchConstructionCertificateStatus, SketchDegeneracyKind,
+    SketchDegeneracyStatus, SketchEntityDomain, SketchEntityDomainKind, SketchEntityDomainStatus,
     SketchFailedConstraintStatus, SketchGeneratedRowStatus, SketchLineEndpoint,
     SketchParameterDomain, SketchParameterDomainStatus, SketchResidualFormKind,
     SketchResidualFormRole, SketchResidualFormsStatus, SketchResidualStrategy,
@@ -817,6 +817,62 @@ proptest! {
             SketchResidualFormKind::LineArcLengthTranscendentalEquality
         );
         prop_assert_eq!(forms.forms[2].role, SketchResidualFormRole::ExactProof);
+    }
+
+    #[test]
+    fn sketch_line_arc_sweep_length_rows_replay_generated_quarter_major_sweeps(
+        radius in 1_i16..=8,
+        x in -4_i16..=4,
+        y in -4_i16..=4,
+    ) {
+        let r = i64::from(radius);
+        let x = i64::from(x);
+        let y = i64::from(y);
+        let three_halves = Real::new(hyperreal::Rational::fraction(3, 2).unwrap());
+        let mut sketch = SketchSolveProblem::new();
+        let center = sketch.add_point2d("center", Real::from(x), Real::from(y));
+        let start = sketch.add_point2d("start", Real::from(x + r), Real::from(y));
+        let end = sketch.add_point2d("end", Real::from(x), Real::from(y + r));
+        let radius_entity = sketch.add_distance("radius", Real::from(r));
+        let arc = sketch.add_arc_of_circle2("quarter arc", center, start, end, radius_entity);
+        let line_start = sketch.add_point2d("line start", Real::from(0), Real::from(0));
+        let line_end = sketch.add_point2d(
+            "line end",
+            Real::from(r) * Real::pi() * three_halves,
+            Real::from(0),
+        );
+        let line = sketch.add_line_segment2("major line", line_start, line_end);
+        let handle = sketch.add_equal_line_arc_sweep_length2(
+            "clockwise major sweep",
+            line,
+            arc,
+            SketchArcLengthSweep::ClockwiseMajor,
+        );
+
+        let lowered = sketch.lower_to_problem();
+        let certification = certify_candidate(
+            &PreparedProblem::new(&lowered.problem),
+            &context_from_problem(&lowered.problem),
+        );
+        let forms = sketch.residual_forms_for_constraint(handle);
+
+        prop_assert_eq!(lowered.rows.len(), 4);
+        let all_rows_generated = lowered.rows.iter().all(|row| {
+            row.strategy == Some(SketchResidualStrategy::LineArcSweepLength)
+                && row.status == SketchGeneratedRowStatus::Generated
+        });
+        prop_assert!(all_rows_generated);
+        prop_assert!(certification.all_satisfied());
+        prop_assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+        prop_assert_eq!(forms.forms.len(), 4);
+        prop_assert_eq!(
+            forms.forms[2].kind,
+            SketchResidualFormKind::LineArcSweepLengthBranchPredicate
+        );
+        prop_assert_eq!(
+            forms.forms[3].kind,
+            SketchResidualFormKind::LineArcSweepLengthTranscendentalEquality
+        );
     }
 
     #[test]

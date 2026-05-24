@@ -9,11 +9,11 @@ use hypersolve::{
     FailedConstraintStatus, IntervalBoxCertificationPackage, IntervalBoxCertificationStatus,
     LinearAdapterKind, LinearAdapterPrecision, LinearBackend, MultivariateQuadraticKrawczykStatus,
     PreparedProblem, PreparedSolverBlock, Problem, ProposalEngineKind, ProposalEnginePrecision,
-    RootIsolationStatus, RootMultiplicityStatus, SketchArcEndpoint, SketchArcTangencyBranch,
-    SketchConstraintKind, SketchConstructionCertificateStatus, SketchDegeneracyKind,
-    SketchDegeneracyStatus, SketchEntityDomain, SketchEntityDomainKind, SketchEntityDomainStatus,
-    SketchEntityHandle, SketchEntityKind, SketchFailedConstraintStatus, SketchGeneratedRowStatus,
-    SketchLineEndpoint, SketchParameterDomain, SketchParameterDomainKind,
+    RootIsolationStatus, RootMultiplicityStatus, SketchArcEndpoint, SketchArcLengthSweep,
+    SketchArcTangencyBranch, SketchConstraintKind, SketchConstructionCertificateStatus,
+    SketchDegeneracyKind, SketchDegeneracyStatus, SketchEntityDomain, SketchEntityDomainKind,
+    SketchEntityDomainStatus, SketchEntityHandle, SketchEntityKind, SketchFailedConstraintStatus,
+    SketchGeneratedRowStatus, SketchLineEndpoint, SketchParameterDomain, SketchParameterDomainKind,
     SketchParameterDomainStatus, SketchResidualFormKind, SketchResidualFormRole,
     SketchResidualFormsStatus, SketchResidualStrategy, SketchRoundTripMetadata,
     SketchRoundTripRole, SketchSolveProblem, SketchTangentOrientation, SketchUnitToleranceStatus,
@@ -5328,6 +5328,94 @@ fn sketch_line_arc_length_replays_endpoint_radius_and_transcendental_length() {
             handle: valid_line,
             expected: "2D circular arc",
         }
+    );
+}
+
+#[test]
+fn sketch_line_arc_sweep_length_replays_major_minor_orientation_branches() {
+    let mut sketch = SketchSolveProblem::new();
+    let origin = sketch.add_point2d("origin", real(0), real(0));
+    let start = sketch.add_point2d("start", real(1), real(0));
+    let end = sketch.add_point2d("end", real(0), real(1));
+    let radius = sketch.add_distance("radius", real(1));
+    let arc = sketch.add_arc_of_circle2("quarter arc", origin, start, end, radius);
+    let line_start = sketch.add_point2d("line start", real(0), real(0));
+    let half = Real::new(Rational::fraction(1, 2).unwrap());
+    let three_halves = Real::new(Rational::fraction(3, 2).unwrap());
+    let minor_end = sketch.add_point2d("minor end", Real::pi() * half, real(0));
+    let major_end = sketch.add_point2d("major end", Real::pi() * three_halves, real(0));
+    let invalid_end = sketch.add_point2d("invalid branch end", Real::pi() * real(2), real(0));
+    let minor_line = sketch.add_line_segment2("minor line", line_start, minor_end);
+    let major_line = sketch.add_line_segment2("major line", line_start, major_end);
+    let invalid_line = sketch.add_line_segment2("invalid branch line", line_start, invalid_end);
+    let minor = sketch.add_equal_line_arc_sweep_length2(
+        "ccw minor quarter",
+        minor_line,
+        arc,
+        SketchArcLengthSweep::CounterClockwiseMinor,
+    );
+    let major = sketch.add_equal_line_arc_sweep_length2(
+        "cw major quarter",
+        major_line,
+        arc,
+        SketchArcLengthSweep::ClockwiseMajor,
+    );
+    sketch.add_equal_line_arc_sweep_length2(
+        "wrong cw minor branch",
+        invalid_line,
+        arc,
+        SketchArcLengthSweep::ClockwiseMinor,
+    );
+
+    let lowered = sketch.lower_to_problem();
+    assert!(lowered.all_generated());
+    assert_eq!(lowered.problem.constraints.len(), 12);
+    assert!(lowered.rows.iter().all(|row| {
+        row.strategy == Some(SketchResidualStrategy::LineArcSweepLength)
+            && row.status == SketchGeneratedRowStatus::Generated
+    }));
+
+    let certification = certify_candidate(
+        &PreparedProblem::new(&lowered.problem),
+        &context_from_problem(&lowered.problem),
+    );
+    assert!(matches!(
+        certification.rows[3].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[7].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[10].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
+    assert!(matches!(
+        certification.rows[11].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
+
+    let minor_forms = sketch.residual_forms_for_constraint(minor);
+    assert_eq!(minor_forms.status, SketchResidualFormsStatus::Generated);
+    assert_eq!(minor_forms.forms.len(), 4);
+    assert_eq!(
+        minor_forms.forms[2].kind,
+        SketchResidualFormKind::LineArcSweepLengthBranchPredicate
+    );
+    assert_eq!(
+        minor_forms.forms[3].kind,
+        SketchResidualFormKind::LineArcSweepLengthTranscendentalEquality
+    );
+    assert!(minor_forms.forms.iter().all(|form| {
+        form.role == SketchResidualFormRole::ExactProof
+            && form.strategy == Some(SketchResidualStrategy::LineArcSweepLength)
+    }));
+
+    let major_forms = sketch.residual_forms_for_constraint(major);
+    assert_eq!(
+        major_forms.forms[3].kind,
+        SketchResidualFormKind::LineArcSweepLengthTranscendentalEquality
     );
 }
 

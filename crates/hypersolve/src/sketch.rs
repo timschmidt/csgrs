@@ -14,7 +14,9 @@
 use hyperreal::{Real, RealSign};
 
 use crate::model::{Constraint, ConstraintKind, Problem, VariableId};
-use crate::sketch_arc_length::{LineArcLengthExprs, line_arc_length_exprs};
+use crate::sketch_arc_length::{
+    LineArcLengthExprs, LineArcSweepLengthExprs, line_arc_length_exprs, line_arc_sweep_length_exprs,
+};
 use crate::sketch_arc_tangent::{
     ArcArcTangentExprs, ArcCubicSecondOrderContactExprs, ArcCubicTangentExprs, ArcLineTangentExprs,
     arc_arc_tangent_exprs, arc_cubic_second_order_contact_exprs, arc_cubic_tangent_exprs,
@@ -359,6 +361,31 @@ pub enum SketchArcTangencyBranch {
     OppositeRadiusDirection,
 }
 
+/// Explicit retained branch for circular arc-length constraints.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum SketchArcLengthSweep {
+    /// Counterclockwise minor sweep from start radius to end radius.
+    CounterClockwiseMinor,
+    /// Clockwise minor sweep from start radius to end radius.
+    ClockwiseMinor,
+    /// Counterclockwise major sweep from start radius to end radius.
+    CounterClockwiseMajor,
+    /// Clockwise major sweep from start radius to end radius.
+    ClockwiseMajor,
+}
+
+impl SketchArcLengthSweep {
+    /// Return true when this branch uses the major sweep angle `2*pi-theta`.
+    pub const fn is_major(self) -> bool {
+        matches!(self, Self::CounterClockwiseMajor | Self::ClockwiseMajor)
+    }
+
+    /// Return true when branch replay requires `(start-center) x (end-center) >= 0`.
+    pub const fn requires_positive_cross(self) -> bool {
+        matches!(self, Self::CounterClockwiseMinor | Self::ClockwiseMajor)
+    }
+}
+
 /// A retained source entity.
 #[derive(Clone, Debug, PartialEq)]
 pub struct SketchEntity {
@@ -694,6 +721,23 @@ pub enum SketchConstraintKind {
         line: SketchEntityHandle,
         /// Circular arc whose minor endpoint sweep length is compared.
         arc: SketchEntityHandle,
+    },
+    /// 2D line length equals a retained circular branch-aware arc length.
+    ///
+    /// The sweep branch explicitly records clockwise/counterclockwise and
+    /// minor/major intent. Lowering emits the same endpoint-on-radius proof
+    /// rows as [`SketchConstraintKind::EqualLineArcLength2`], a signed
+    /// orientation predicate for the selected branch, and a squared exact
+    /// symbolic row using either `theta` or `2*pi-theta`. This follows Yap,
+    /// "Towards Exact Geometric Computation" (1997), by making the branch
+    /// decision exact replay evidence rather than hidden UI sweep state.
+    EqualLineArcSweepLength2 {
+        /// Line whose length is compared.
+        line: SketchEntityHandle,
+        /// Circular arc whose retained sweep length is compared.
+        arc: SketchEntityHandle,
+        /// Explicit sweep branch.
+        sweep: SketchArcLengthSweep,
     },
     /// 2D point-to-line distance relation.
     ///
@@ -1306,6 +1350,8 @@ pub enum SketchResidualStrategy {
     SquaredLineLengthDifference,
     /// Exact retained line/minor-arc length package.
     LineArcLength,
+    /// Exact retained line/branch-aware-arc sweep length package.
+    LineArcSweepLength,
     /// Squared 2D point-to-line distance equality.
     SquaredPointLineDistance,
     /// Squared 2D line-length-to-point-line-distance equality.
@@ -1445,6 +1491,10 @@ pub enum SketchResidualFormKind {
     LineArcLengthEndpointRadiusPolynomial,
     /// Exact symbolic squared `line - radius * acos(cos(endpoint angle))` proof row.
     LineArcLengthTranscendentalEquality,
+    /// Exact signed orientation predicate for branch-aware arc sweep length.
+    LineArcSweepLengthBranchPredicate,
+    /// Exact symbolic branch-aware arc sweep length proof row.
+    LineArcSweepLengthTranscendentalEquality,
     /// Squared projected line-length to point-line-distance proof row.
     SquaredProjectedLineLengthPointLineDistancePolynomial,
     /// Squared equality between two projected point-line distances.
@@ -2151,6 +2201,18 @@ impl SketchSolveProblem {
         arc: SketchEntityHandle,
     ) -> SketchConstraintHandle {
         distance::equal_line_arc_length2(self, name, line, arc).handle
+    }
+
+    /// Add a retained relation equating a 2D line length to an explicit
+    /// circular arc sweep length.
+    pub fn add_equal_line_arc_sweep_length2(
+        &mut self,
+        name: impl Into<String>,
+        line: SketchEntityHandle,
+        arc: SketchEntityHandle,
+        sweep: SketchArcLengthSweep,
+    ) -> SketchConstraintHandle {
+        distance::equal_line_arc_sweep_length2(self, name, line, arc, sweep).handle
     }
 
     /// Add a retained 2D point-to-line distance relation.
@@ -3603,6 +3665,54 @@ impl SketchSolveProblem {
                             kind: SketchResidualFormKind::LineArcLengthTranscendentalEquality,
                             role: SketchResidualFormRole::ExactProof,
                             strategy: Some(SketchResidualStrategy::LineArcLength),
+                            residual: parts.length_equality,
+                        },
+                    ],
+                    diagnostics,
+                }
+            }
+            SketchConstraintKind::EqualLineArcSweepLength2 { line, arc, sweep } => {
+                let mut diagnostics = Vec::new();
+                let Some(parts) = self.line_arc_sweep_length_exprs(
+                    line,
+                    arc,
+                    sweep,
+                    constraint,
+                    &mut diagnostics,
+                ) else {
+                    return SketchResidualFormsReport {
+                        constraint: handle,
+                        status: SketchResidualFormsStatus::InvalidInputs,
+                        forms: Vec::new(),
+                        diagnostics,
+                    };
+                };
+                SketchResidualFormsReport {
+                    constraint: handle,
+                    status: SketchResidualFormsStatus::Generated,
+                    forms: vec![
+                        SketchResidualForm {
+                            kind: SketchResidualFormKind::LineArcLengthEndpointRadiusPolynomial,
+                            role: SketchResidualFormRole::ExactProof,
+                            strategy: Some(SketchResidualStrategy::LineArcSweepLength),
+                            residual: parts.endpoint_radius[0].clone(),
+                        },
+                        SketchResidualForm {
+                            kind: SketchResidualFormKind::LineArcLengthEndpointRadiusPolynomial,
+                            role: SketchResidualFormRole::ExactProof,
+                            strategy: Some(SketchResidualStrategy::LineArcSweepLength),
+                            residual: parts.endpoint_radius[1].clone(),
+                        },
+                        SketchResidualForm {
+                            kind: SketchResidualFormKind::LineArcSweepLengthBranchPredicate,
+                            role: SketchResidualFormRole::ExactProof,
+                            strategy: Some(SketchResidualStrategy::LineArcSweepLength),
+                            residual: parts.sweep_branch,
+                        },
+                        SketchResidualForm {
+                            kind: SketchResidualFormKind::LineArcSweepLengthTranscendentalEquality,
+                            role: SketchResidualFormRole::ExactProof,
+                            strategy: Some(SketchResidualStrategy::LineArcSweepLength),
                             residual: parts.length_equality,
                         },
                     ],
@@ -5219,6 +5329,47 @@ impl SketchSolveProblem {
                     format!("{} minor arc length", constraint.name),
                     parts.length_equality,
                     SketchResidualStrategy::LineArcLength,
+                );
+            }
+            SketchConstraintKind::EqualLineArcSweepLength2 { line, arc, sweep } => {
+                // This is the branch-aware companion to the minor-arc package:
+                // the signed cross-product predicate proves the retained
+                // clockwise/counterclockwise major/minor choice, while the
+                // exact `acos` row keeps circular sweep length non-polynomial
+                // and report-bearing.
+                let Some(parts) =
+                    self.line_arc_sweep_length_exprs(line, arc, sweep, constraint, rows)
+                else {
+                    return;
+                };
+                for (index, residual) in parts.endpoint_radius.into_iter().enumerate() {
+                    let endpoint = if index == 0 { "start" } else { "end" };
+                    self.push_residual(
+                        problem,
+                        rows,
+                        constraint,
+                        format!("{} arc {} radius", constraint.name, endpoint),
+                        residual,
+                        SketchResidualStrategy::LineArcSweepLength,
+                    );
+                }
+                self.push_residual_with_kind(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} sweep branch", constraint.name),
+                    parts.sweep_branch,
+                    SketchResidualStrategy::LineArcSweepLength,
+                    ConstraintKind::GreaterOrEqual,
+                    Real::one(),
+                );
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} sweep length", constraint.name),
+                    parts.length_equality,
+                    SketchResidualStrategy::LineArcSweepLength,
                 );
             }
             SketchConstraintKind::PointLineDistance2 {
@@ -7404,6 +7555,42 @@ impl SketchSolveProblem {
             &coordinate_exprs2(&end),
             radius,
             &line_direction,
+        ))
+    }
+
+    fn line_arc_sweep_length_exprs(
+        &self,
+        line: SketchEntityHandle,
+        arc: SketchEntityHandle,
+        sweep: SketchArcLengthSweep,
+        constraint: &SketchConstraint,
+        rows: &mut Vec<SketchGeneratedRow>,
+    ) -> Option<LineArcSweepLengthExprs> {
+        let line_direction = self.line2_direction(line, constraint, rows)?;
+        let Some(entity) = self.entity(arc) else {
+            rows.push(missing_entity_row(constraint, arc));
+            return None;
+        };
+        let SketchEntityKind::ArcOfCircle2(arc) = &entity.kind else {
+            rows.push(wrong_entity_row(
+                constraint,
+                entity.handle,
+                "2D circular arc",
+            ));
+            return None;
+        };
+        let center = self.point2_coordinates(arc.center, constraint, rows)?;
+        let start = self.point2_coordinates(arc.start, constraint, rows)?;
+        let end = self.point2_coordinates(arc.end, constraint, rows)?;
+        let radius = self.distance_expr(arc.radius, constraint, rows)?;
+        Some(line_arc_sweep_length_exprs(
+            &coordinate_exprs2(&center),
+            &coordinate_exprs2(&start),
+            &coordinate_exprs2(&end),
+            radius,
+            &line_direction,
+            sweep.is_major(),
+            sweep.requires_positive_cross(),
         ))
     }
 

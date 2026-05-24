@@ -13,6 +13,8 @@
 //! (1995): construction objects are retained, and replay checks the exact rows
 //! appropriate to each object.
 
+use hyperreal::Real;
+
 use crate::symbolic::Expr;
 
 /// Exact residual expressions for a retained 2D line/minor-arc length relation.
@@ -27,6 +29,20 @@ pub(crate) struct LineArcLengthExprs {
     /// and end radius vectors, so this is the minor arc length in `[0, pi]`.
     /// Major or oriented arc lengths require an explicit branch carrier and
     /// are intentionally not inferred from floating sweep data.
+    pub(crate) length_equality: Expr,
+}
+
+/// Exact residual expressions for a retained branch-aware 2D line/arc sweep
+/// length relation.
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) struct LineArcSweepLengthExprs {
+    /// Equations certifying that the start and end points lie on the retained
+    /// radius circle.
+    pub(crate) endpoint_radius: [Expr; 2],
+    /// Signed orientation predicate for the chosen sweep branch. Callers lower
+    /// this as `>= 0`.
+    pub(crate) sweep_branch: Expr,
+    /// Exact symbolic residual `|line|^2 - (radius * sweep_angle)^2`.
     pub(crate) length_equality: Expr,
 }
 
@@ -73,8 +89,70 @@ pub(crate) fn line_arc_length_exprs(
     }
 }
 
+/// Build exact rows for a retained line length equal to an explicit circular
+/// sweep branch.
+///
+/// `theta = acos(cos(s,e))` is the principal unsigned endpoint angle. The
+/// retained [`SketchArcLengthSweep`] chooses both a direction and whether that
+/// direction follows the minor or major sweep:
+///
+/// - counterclockwise minor: `s x e >= 0`, angle `theta`;
+/// - clockwise minor: `-(s x e) >= 0`, angle `theta`;
+/// - counterclockwise major: `-(s x e) >= 0`, angle `2*pi - theta`;
+/// - clockwise major: `s x e >= 0`, angle `2*pi - theta`.
+///
+/// The signed branch row is not redundant metadata. It is the exact replay
+/// evidence for the semantic branch, following Yap's requirement that branch
+/// decisions stay reportable instead of being folded into a numerical solver
+/// proposal. The transcendental row stays explicit because circular sweep
+/// length is not generally an algebraic predicate.
+pub(crate) fn line_arc_sweep_length_exprs(
+    center: &[Expr; 2],
+    start: &[Expr; 2],
+    end: &[Expr; 2],
+    radius: Expr,
+    line_direction: &[Expr; 2],
+    major_sweep: bool,
+    positive_cross_branch: bool,
+) -> LineArcSweepLengthExprs {
+    let start_radius = [
+        start[0].clone() - center[0].clone(),
+        start[1].clone() - center[1].clone(),
+    ];
+    let end_radius = [
+        end[0].clone() - center[0].clone(),
+        end[1].clone() - center[1].clone(),
+    ];
+    let theta = angle_cosine_expr(&start_radius, &end_radius).acos();
+    let sweep_angle = if major_sweep {
+        Expr::real(Real::from(2) * Real::pi()) - theta
+    } else {
+        theta
+    };
+    let signed_cross = cross2(&start_radius, &end_radius);
+    let sweep_branch = if positive_cross_branch {
+        signed_cross
+    } else {
+        Expr::zero() - signed_cross
+    };
+    let arc_length = radius.clone() * sweep_angle;
+
+    LineArcSweepLengthExprs {
+        endpoint_radius: [
+            squared_norm2(&start_radius) - radius.clone() * radius.clone(),
+            squared_norm2(&end_radius) - radius.clone() * radius,
+        ],
+        sweep_branch,
+        length_equality: squared_norm2(line_direction) - arc_length.clone() * arc_length,
+    }
+}
+
 fn angle_cosine_expr(a: &[Expr; 2], b: &[Expr; 2]) -> Expr {
     dot2(a, b) / (squared_norm2(a).sqrt() * squared_norm2(b).sqrt())
+}
+
+fn cross2(a: &[Expr; 2], b: &[Expr; 2]) -> Expr {
+    a[0].clone() * b[1].clone() - a[1].clone() * b[0].clone()
 }
 
 fn dot2(a: &[Expr; 2], b: &[Expr; 2]) -> Expr {
