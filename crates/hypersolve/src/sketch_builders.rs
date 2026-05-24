@@ -567,6 +567,38 @@ pub mod distance {
         }
     }
 
+    /// Add a retained workplane-projected point-to-line distance relation.
+    ///
+    /// Lowering projects the 3D point offset and 3D line direction into the
+    /// retained workplane frame, emits a unit-quaternion guard, and replays
+    /// `cross_uv^2 - distance^2 * |line_uv|^2 == 0` exactly. The row clears
+    /// the line-length denominator rather than normalizing the line with
+    /// primitive floats, following Yap, "Towards Exact Geometric Computation"
+    /// (1997). The workplane axes are the unit-quaternion frame of Shoemake,
+    /// "Animating Rotation with Quaternion Curves" (1985).
+    pub fn projected_point_line_distance(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        point: SketchEntityHandle,
+        line: SketchEntityHandle,
+        distance: SketchEntityHandle,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::ProjectedPointLineDistance {
+            workplane,
+            point,
+            line,
+            distance,
+        };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Distance,
+            strategy: SketchResidualStrategy::SquaredProjectedPointLineDistance,
+            kind,
+        }
+    }
+
     /// Add a 2D line equal-length relation.
     ///
     /// Lowering compares squared segment lengths exactly. This is the

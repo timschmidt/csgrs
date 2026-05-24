@@ -18,8 +18,8 @@ use hyperreal::Real;
 
 use crate::sketch::{
     SketchArcOfCircle2, SketchCircle2, SketchDistance, SketchEntityDomain, SketchEntityHandle,
-    SketchEntityKind, SketchLineSegment2, SketchNormal2, SketchNormal3, SketchParameterHandle,
-    SketchPoint2, SketchSolveProblem,
+    SketchEntityKind, SketchLineSegment2, SketchLineSegment3, SketchNormal2, SketchNormal3,
+    SketchParameterHandle, SketchPoint2, SketchSolveProblem,
 };
 
 /// Stable family name for a retained sketch entity-domain check.
@@ -31,6 +31,8 @@ pub enum SketchEntityDomainKind {
     PositiveRadius,
     /// Nonzero retained 2D line length.
     NonzeroLengthLineSegment2,
+    /// Nonzero retained 3D line length.
+    NonzeroLengthLineSegment3,
     /// Distinct retained start/end points for a 2D arc.
     NondegenerateArc2,
     /// Nonzero retained 2D tangent-carrier direction.
@@ -247,12 +249,23 @@ fn check_entity_domain(
             | SketchEntityDomain::NonzeroTangentLineSegment2,
             SketchEntityKind::LineSegment2(line),
         ) => check_line_segment_nonzero(sketch, line, policy),
+        (SketchEntityDomain::NonzeroLengthLineSegment3, SketchEntityKind::LineSegment3(line)) => {
+            check_line_segment3_nonzero(sketch, line, policy)
+        }
         (SketchEntityDomain::NonzeroLengthLineSegment2, _) => (
             Vec::new(),
             None,
             SketchEntityDomainStatus::WrongEntityKind {
                 handle: entity,
                 expected: "2D line segment",
+            },
+        ),
+        (SketchEntityDomain::NonzeroLengthLineSegment3, _) => (
+            Vec::new(),
+            None,
+            SketchEntityDomainStatus::WrongEntityKind {
+                handle: entity,
+                expected: "3D line segment",
             },
         ),
         (SketchEntityDomain::NonzeroTangentLineSegment2, _) => (
@@ -294,6 +307,9 @@ fn domain_kind(domain: &SketchEntityDomain) -> SketchEntityDomainKind {
         SketchEntityDomain::PositiveRadius => SketchEntityDomainKind::PositiveRadius,
         SketchEntityDomain::NonzeroLengthLineSegment2 => {
             SketchEntityDomainKind::NonzeroLengthLineSegment2
+        }
+        SketchEntityDomain::NonzeroLengthLineSegment3 => {
+            SketchEntityDomainKind::NonzeroLengthLineSegment3
         }
         SketchEntityDomain::NondegenerateArc2 => SketchEntityDomainKind::NondegenerateArc2,
         SketchEntityDomain::NonzeroTangentLineSegment2 => {
@@ -428,6 +444,28 @@ fn check_line_segment_nonzero(
     }
 }
 
+fn check_line_segment3_nonzero(
+    sketch: &SketchSolveProblem,
+    line: &SketchLineSegment3,
+    policy: PredicatePolicy,
+) -> (
+    Vec<SketchEntityHandle>,
+    Option<Real>,
+    SketchEntityDomainStatus,
+) {
+    match (
+        point3_coordinates(sketch, line.start),
+        point3_coordinates(sketch, line.end),
+    ) {
+        (Ok(start), Ok(end)) => {
+            let witness = squared_distance3(&start, &end);
+            let status = classify_positive_is_valid(&witness, policy);
+            (vec![line.start, line.end], Some(witness), status)
+        }
+        (Err(status), _) | (_, Err(status)) => (vec![line.start, line.end], None, status),
+    }
+}
+
 fn check_arc_nondegenerate(
     sketch: &SketchSolveProblem,
     arc: &SketchArcOfCircle2,
@@ -479,6 +517,19 @@ fn point2_coordinates(
     }
 }
 
+fn point3_coordinates(
+    sketch: &SketchSolveProblem,
+    handle: SketchEntityHandle,
+) -> Result<[Real; 3], SketchEntityDomainStatus> {
+    match entity_kind(sketch, handle)? {
+        SketchEntityKind::Point3D(point) => point3_values(sketch, point),
+        _ => Err(SketchEntityDomainStatus::WrongEntityKind {
+            handle,
+            expected: "3D point",
+        }),
+    }
+}
+
 fn point2_values(
     sketch: &SketchSolveProblem,
     point: &SketchPoint2,
@@ -486,6 +537,17 @@ fn point2_values(
     Ok([
         parameter_value(sketch, point.x)?,
         parameter_value(sketch, point.y)?,
+    ])
+}
+
+fn point3_values(
+    sketch: &SketchSolveProblem,
+    point: &crate::sketch::SketchPoint3,
+) -> Result<[Real; 3], SketchEntityDomainStatus> {
+    Ok([
+        parameter_value(sketch, point.x)?,
+        parameter_value(sketch, point.y)?,
+        parameter_value(sketch, point.z)?,
     ])
 }
 
@@ -530,4 +592,11 @@ fn squared_distance2(start: &[Real; 2], end: &[Real; 2]) -> Real {
     let dx = start[0].clone() - end[0].clone();
     let dy = start[1].clone() - end[1].clone();
     dx.clone() * dx + dy.clone() * dy
+}
+
+fn squared_distance3(start: &[Real; 3], end: &[Real; 3]) -> Real {
+    let dx = start[0].clone() - end[0].clone();
+    let dy = start[1].clone() - end[1].clone();
+    let dz = start[2].clone() - end[2].clone();
+    dx.clone() * dx + dy.clone() * dy + dz.clone() * dz
 }

@@ -31,6 +31,30 @@ pub(crate) fn projected_distance_squared(delta: &[Expr; 3], quaternion: &[Expr; 
     u.clone() * u + v.clone() * v
 }
 
+/// Build exact projected point-line distance parts in a workplane frame.
+///
+/// The returned pair is `(cross_uv, |dir_uv|^2)`, where `cross_uv` is the
+/// 2D cross product after projecting both vectors to the workplane `U/V`
+/// basis. Callers can compare `cross_uv^2` with `distance^2 * |dir_uv|^2`
+/// without normalizing the line direction. This is the same denominator-
+/// clearing proof style advocated by Yap, "Towards Exact Geometric
+/// Computation" (1997), with the retained unit-quaternion frame from
+/// Shoemake, "Animating Rotation with Quaternion Curves" (1985).
+pub(crate) fn projected_point_line_distance_squared_parts(
+    point_delta: &[Expr; 3],
+    line_direction: &[Expr; 3],
+    quaternion: &[Expr; 4],
+) -> (Expr, Expr) {
+    let (u_axis, v_axis, _) = quaternion_frame_axes_expr(quaternion);
+    let point_u = dot3(point_delta, &u_axis);
+    let point_v = dot3(point_delta, &v_axis);
+    let line_u = dot3(line_direction, &u_axis);
+    let line_v = dot3(line_direction, &v_axis);
+    let cross = point_u * line_v.clone() - point_v * line_u.clone();
+    let direction_squared = line_u.clone() * line_u + line_v.clone() * line_v;
+    (cross, direction_squared)
+}
+
 fn squared_norm4(direction: &[Expr; 4]) -> Expr {
     direction[0].clone() * direction[0].clone()
         + direction[1].clone() * direction[1].clone()

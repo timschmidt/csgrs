@@ -21,6 +21,13 @@ doc = false
 bench = false
 
 [[bin]]
+name = "sketch_projected_point_line_distance"
+path = "fuzz_targets/sketch_projected_point_line_distance.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
 name = "sketch_workplane_symmetry"
 path = "fuzz_targets/sketch_workplane_symmetry.rs"
 test = false

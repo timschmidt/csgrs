@@ -15,8 +15,8 @@ use hyperreal::Real;
 
 use crate::sketch::{
     SketchArcOfCircle2, SketchCircle2, SketchDistance, SketchEntityHandle, SketchEntityKind,
-    SketchLineSegment2, SketchNormal2, SketchNormal3, SketchParameterHandle, SketchSolveProblem,
-    SketchWorkplane,
+    SketchLineSegment2, SketchLineSegment3, SketchNormal2, SketchNormal3, SketchParameterHandle,
+    SketchSolveProblem, SketchWorkplane,
 };
 
 /// Entity-level degeneracy family checked during sketch preflight.
@@ -24,6 +24,8 @@ use crate::sketch::{
 pub enum SketchDegeneracyKind {
     /// A 2D line segment has equal start and end coordinates.
     ZeroLengthLineSegment2,
+    /// A 3D line segment has equal start and end coordinates.
+    ZeroLengthLineSegment3,
     /// A circle's retained distance radius is zero.
     ZeroRadiusCircle2,
     /// A circular arc has equal start and end coordinates.
@@ -134,6 +136,13 @@ pub fn preflight_sketch_degeneracies_with_policy(
                 line,
                 policy,
             )),
+            SketchEntityKind::LineSegment3(line) => checks.push(check_line_segment3(
+                sketch,
+                entity.handle,
+                entity.name.clone(),
+                line,
+                policy,
+            )),
             SketchEntityKind::Circle2(circle) => checks.push(check_circle2(
                 sketch,
                 entity.handle,
@@ -234,6 +243,36 @@ fn check_line_segment2(
         entity,
         entity_name,
         kind: SketchDegeneracyKind::ZeroLengthLineSegment2,
+        related_entities: vec![line.start, line.end],
+        witness,
+        status,
+    }
+}
+
+fn check_line_segment3(
+    sketch: &SketchSolveProblem,
+    entity: SketchEntityHandle,
+    entity_name: String,
+    line: &SketchLineSegment3,
+    policy: PredicatePolicy,
+) -> SketchDegeneracyCheck {
+    let (witness, status) = match (
+        point3_coordinates(sketch, line.start),
+        point3_coordinates(sketch, line.end),
+    ) {
+        (Ok(start), Ok(end)) => {
+            let squared = squared_distance3(&start, &end);
+            (
+                Some(squared.clone()),
+                classify_zero_is_degenerate(&squared, policy),
+            )
+        }
+        (Err(status), _) | (_, Err(status)) => (None, status),
+    };
+    SketchDegeneracyCheck {
+        entity,
+        entity_name,
+        kind: SketchDegeneracyKind::ZeroLengthLineSegment3,
         related_entities: vec![line.start, line.end],
         witness,
         status,
@@ -434,6 +473,23 @@ fn point2_coordinates(
     }
 }
 
+fn point3_coordinates(
+    sketch: &SketchSolveProblem,
+    handle: SketchEntityHandle,
+) -> Result<[Real; 3], SketchDegeneracyStatus> {
+    match entity_kind(sketch, handle)? {
+        SketchEntityKind::Point3D(point) => Ok([
+            parameter_value(sketch, point.x)?,
+            parameter_value(sketch, point.y)?,
+            parameter_value(sketch, point.z)?,
+        ]),
+        _ => Err(SketchDegeneracyStatus::WrongEntityKind {
+            handle,
+            expected: "3D point",
+        }),
+    }
+}
+
 fn distance_value(
     sketch: &SketchSolveProblem,
     handle: SketchEntityHandle,
@@ -475,4 +531,11 @@ fn squared_distance2(a: &[Real; 2], b: &[Real; 2]) -> Real {
     let dx = a[0].clone() - b[0].clone();
     let dy = a[1].clone() - b[1].clone();
     dx.clone() * dx + dy.clone() * dy
+}
+
+fn squared_distance3(a: &[Real; 3], b: &[Real; 3]) -> Real {
+    let dx = a[0].clone() - b[0].clone();
+    let dy = a[1].clone() - b[1].clone();
+    let dz = a[2].clone() - b[2].clone();
+    dx.clone() * dx + dy.clone() * dy + dz.clone() * dz
 }

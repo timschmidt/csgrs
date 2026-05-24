@@ -4017,6 +4017,111 @@ fn sketch_projected_distance_reports_bad_workplanes_and_nonunit_frames() {
 }
 
 #[test]
+fn sketch_projected_point_line_distance_lowers_exact_workplane_rows() {
+    let mut sketch = SketchSolveProblem::new();
+    let origin = sketch.add_point3d("origin", real(0), real(0), real(10));
+    let normal = sketch.add_normal3d("normal", real(1), real(0), real(0), real(0));
+    let workplane = sketch.add_workplane("workplane", origin, normal);
+    let point = sketch.add_point3d("point", real(2), real(3), real(17));
+    let line_start = sketch.add_point3d("line start", real(0), real(0), real(-5));
+    let line_end = sketch.add_point3d("line end", real(4), real(0), real(99));
+    let bad_point = sketch.add_point3d("bad point", real(2), real(4), real(17));
+    let line = sketch.add_line_segment3("line", line_start, line_end);
+    let distance = sketch.add_distance("distance three", real(3));
+    let valid = sketch_distance_builders::projected_point_line_distance(
+        &mut sketch,
+        "projected point-line",
+        workplane,
+        point,
+        line,
+        distance,
+    );
+    sketch.add_projected_point_line_distance(
+        "bad projected point-line",
+        workplane,
+        bad_point,
+        line,
+        distance,
+    );
+
+    let report = sketch.lower_to_problem();
+
+    assert_eq!(
+        valid.family,
+        hypersolve::sketch_builders::SketchConstraintFamily::Distance
+    );
+    assert_eq!(
+        valid.strategy,
+        SketchResidualStrategy::SquaredProjectedPointLineDistance
+    );
+    assert!(report.all_generated());
+    assert_eq!(report.problem.constraints.len(), 4);
+    assert_eq!(
+        report.rows[0].strategy,
+        Some(SketchResidualStrategy::WorkplaneUnitQuaternion)
+    );
+    assert_eq!(
+        report.rows[1].strategy,
+        Some(SketchResidualStrategy::SquaredProjectedPointLineDistance)
+    );
+    assert_eq!(
+        report.rows[3].strategy,
+        Some(SketchResidualStrategy::SquaredProjectedPointLineDistance)
+    );
+
+    let certification = certify_candidate(
+        &PreparedProblem::new(&report.problem),
+        &context_from_problem(&report.problem),
+    );
+    assert!(matches!(
+        certification.rows[0].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[1].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[3].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
+
+    let forms = sketch.residual_forms_for_constraint(valid.handle);
+    assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+    assert_eq!(forms.forms.len(), 4);
+    assert_eq!(
+        forms.forms[0].kind,
+        SketchResidualFormKind::WorkplaneUnitQuaternionPolynomial
+    );
+    assert_eq!(
+        forms.forms[1].kind,
+        SketchResidualFormKind::SquaredProjectedPointLineDistancePolynomial
+    );
+    assert_eq!(
+        forms.forms[2].kind,
+        SketchResidualFormKind::ProjectedPointLineSignedDistancePositiveProposal
+    );
+    assert_eq!(
+        forms.forms[3].kind,
+        SketchResidualFormKind::ProjectedPointLineSignedDistanceNegativeProposal
+    );
+    assert_eq!(forms.forms[1].role, SketchResidualFormRole::ExactProof);
+    assert_eq!(forms.forms[2].role, SketchResidualFormRole::ProposalOnly);
+
+    let wrong_line = sketch.add_line_segment2("wrong 2d line", line_start, line_end);
+    let bad = sketch.add_projected_point_line_distance(
+        "wrong line family",
+        workplane,
+        point,
+        wrong_line,
+        distance,
+    );
+    let bad_forms = sketch.residual_forms_for_constraint(bad);
+    assert_eq!(bad_forms.status, SketchResidualFormsStatus::InvalidInputs);
+    assert!(!bad_forms.diagnostics.is_empty());
+}
+
+#[test]
 fn sketch_workplane_frame_respects_rotated_unit_quaternion_basis() {
     let mut sketch = SketchSolveProblem::new();
     let origin = sketch.add_point3d("origin", real(0), real(0), real(5));
@@ -4092,6 +4197,11 @@ fn sketch_entity_domains_certify_unit_normals_radii_tangents_and_arcs() {
     let nonunit_normal = sketch.add_normal3d("bad normal", real(2), real(0), real(0), real(0));
     let line = sketch.add_line_segment2("line", origin, unit_x);
     let zero_tangent = sketch.add_line_segment2("zero tangent", origin, same);
+    let origin3 = sketch.add_point3d("origin3", real(0), real(0), real(0));
+    let unit_z = sketch.add_point3d("unit z", real(0), real(0), real(1));
+    let same3 = sketch.add_point3d("same3", real(0), real(0), real(0));
+    let line3 = sketch.add_line_segment3("line3", origin3, unit_z);
+    let zero_line3 = sketch.add_line_segment3("zero line3", origin3, same3);
     let arc = sketch.add_arc_of_circle2("arc", origin, origin, unit_x, radius);
     let full_arc = sketch.add_arc_of_circle2("full arc", origin, same, same, radius);
     let circle = sketch.add_circle2("circle", origin, zero_radius);
@@ -4101,6 +4211,8 @@ fn sketch_entity_domains_certify_unit_normals_radii_tangents_and_arcs() {
     assert!(sketch.add_entity_domain(radius, SketchEntityDomain::PositiveRadius));
     assert!(sketch.add_entity_domain(circle, SketchEntityDomain::PositiveRadius));
     assert!(sketch.add_entity_domain(line, SketchEntityDomain::NonzeroLengthLineSegment2));
+    assert!(sketch.add_entity_domain(line3, SketchEntityDomain::NonzeroLengthLineSegment3));
+    assert!(sketch.add_entity_domain(zero_line3, SketchEntityDomain::NonzeroLengthLineSegment3));
     assert!(
         sketch.add_entity_domain(zero_tangent, SketchEntityDomain::NonzeroTangentLineSegment2,)
     );
@@ -4110,9 +4222,9 @@ fn sketch_entity_domains_certify_unit_normals_radii_tangents_and_arcs() {
     let report = preflight_sketch_entity_domains(&sketch);
 
     assert_eq!(report.entity_count, sketch.entities().len());
-    assert_eq!(report.checks.len(), 8);
-    assert_eq!(report.certified_valid_checks, 4);
-    assert_eq!(report.certified_invalid_checks, 4);
+    assert_eq!(report.checks.len(), 10);
+    assert_eq!(report.certified_valid_checks, 5);
+    assert_eq!(report.certified_invalid_checks, 5);
     assert_eq!(report.unknown_checks, 0);
     assert_eq!(report.invalid_reference_checks, 0);
     assert!(report.has_certified_invalid_domain());
@@ -4135,6 +4247,16 @@ fn sketch_entity_domains_certify_unit_normals_radii_tangents_and_arcs() {
     assert!(report.checks.iter().any(|check| {
         check.entity == zero_tangent
             && check.kind == SketchEntityDomainKind::NonzeroTangentLineSegment2
+            && check.status == SketchEntityDomainStatus::CertifiedInvalid
+    }));
+    assert!(report.checks.iter().any(|check| {
+        check.entity == line3
+            && check.kind == SketchEntityDomainKind::NonzeroLengthLineSegment3
+            && check.status == SketchEntityDomainStatus::CertifiedValid
+    }));
+    assert!(report.checks.iter().any(|check| {
+        check.entity == zero_line3
+            && check.kind == SketchEntityDomainKind::NonzeroLengthLineSegment3
             && check.status == SketchEntityDomainStatus::CertifiedInvalid
     }));
     assert!(report.checks.iter().any(|check| {
