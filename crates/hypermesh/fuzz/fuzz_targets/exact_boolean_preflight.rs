@@ -3428,6 +3428,52 @@ fn exercise_component_coplanar_difference() {
         )
         .unwrap();
 
+    let nonconvex_source_straddling_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            2, 2, 0, 3, 2, 0, 2, 3, 0, //
+            5, 10, 0, 7, 10, 0, 7, 11, 0, 5, 11, 0, //
+            2, 8, 0, 6, 8, 0, 6, 12, 0, 2, 12, 0,
+        ],
+        &[
+            0, 1, 2, //
+            3, 4, 5, 3, 5, 6, //
+            7, 8, 9, 7, 9, 10,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("nonconvex source straddling-hole fixture must import");
+    let nonconvex_source_straddling =
+        arrange_coplanar_convex_surface_component_holed_difference(
+            &nonconvex_source_left,
+            &nonconvex_source_straddling_hole,
+        )
+        .expect("nonconvex source side opening should consume overlapping strict holes");
+    nonconvex_source_straddling.validate().unwrap();
+    nonconvex_source_straddling
+        .validate_against_sources(
+            &nonconvex_source_left,
+            &nonconvex_source_straddling_hole,
+        )
+        .unwrap();
+    assert_eq!(nonconvex_source_straddling.components[0].holes.len(), 1);
+    let mut stale_nonconvex_source_straddling = nonconvex_source_straddling.clone();
+    stale_nonconvex_source_straddling.components[0]
+        .holes
+        .push(vec![
+            point3(5, 10, 0),
+            point3(7, 10, 0),
+            point3(7, 11, 0),
+            point3(5, 11, 0),
+        ]);
+    assert!(
+        stale_nonconvex_source_straddling
+            .validate_against_sources(
+                &nonconvex_source_left,
+                &nonconvex_source_straddling_hole,
+            )
+            .is_err()
+    );
+
     let nonconvex_source_boundary_touching_hole = ExactMesh::from_i64_triangles_with_policy(
         &[0, 4, 0, 1, 4, 0, 1, 5, 0],
         &[0, 1, 2],

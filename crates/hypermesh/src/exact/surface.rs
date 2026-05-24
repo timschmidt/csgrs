@@ -7945,7 +7945,7 @@ fn arrange_coplanar_simple_surface_component_holed_difference(
     let mut components = Vec::new();
     for component in &mut left_components {
         let mut dropped = false;
-        let mut removed = Vec::new();
+        let mut side_cutter_indices = Vec::new();
         let mut holes = Vec::new();
         for (right_index, right_component) in right_components.iter().enumerate() {
             if polygons_equal(&component.boundary, &right_component.hull)
@@ -7955,7 +7955,7 @@ fn arrange_coplanar_simple_surface_component_holed_difference(
                     projection,
                 )?
             {
-                if dropped || !removed.is_empty() || !holes.is_empty() {
+                if dropped || !side_cutter_indices.is_empty() || !holes.is_empty() {
                     return None;
                 }
                 dropped = true;
@@ -7975,9 +7975,7 @@ fn arrange_coplanar_simple_surface_component_holed_difference(
                     if dropped {
                         return None;
                     }
-                    let mut cutter = right_component.hull.clone();
-                    orient_polygon_ccw(&mut cutter, projection)?;
-                    removed.push(cutter);
+                    side_cutter_indices.push(right_index);
                 } else if polygon_strictly_inside_simple_polygon(
                     &right_component.hull,
                     &component.boundary,
@@ -8009,7 +8007,7 @@ fn arrange_coplanar_simple_surface_component_holed_difference(
             .iter()
             .map(|hole| hole.ring.clone())
             .collect::<Vec<_>>();
-        if removed.is_empty() {
+        if side_cutter_indices.is_empty() {
             let mut outer = component.boundary.clone();
             orient_polygon_ccw(&mut outer, projection)?;
             components.push(CoplanarConvexHoledComponent {
@@ -8017,23 +8015,42 @@ fn arrange_coplanar_simple_surface_component_holed_difference(
                 holes: hole_rings,
             });
         } else {
-            let (removed_openings, mut cut_polygons) =
-                materialize_simple_source_side_cutter_difference_core(component, &removed)?;
-            for polygon in &mut cut_polygons {
-                orient_polygon_ccw(polygon, projection)?;
+            if let Some(opened) =
+                materialize_simple_source_cutter_hole_contact_component_holed_difference(
+                    component,
+                    &side_cutter_indices,
+                    &holes,
+                    &right_components,
+                )
+            {
+                components.extend(opened);
+            } else {
+                let removed = side_cutter_indices
+                    .iter()
+                    .map(|&index| {
+                        let mut cutter = right_components.get(index)?.hull.clone();
+                        orient_polygon_ccw(&mut cutter, projection)?;
+                        Some(cutter)
+                    })
+                    .collect::<Option<Vec<_>>>()?;
+                let (removed_openings, mut cut_polygons) =
+                    materialize_simple_source_side_cutter_difference_core(component, &removed)?;
+                for polygon in &mut cut_polygons {
+                    orient_polygon_ccw(polygon, projection)?;
+                }
+                let holes_by_cut = assign_holes_to_side_cutter_split_outputs(
+                    &hole_rings,
+                    &cut_polygons,
+                    &removed_openings,
+                    projection,
+                )?;
+                components.extend(
+                    cut_polygons
+                        .into_iter()
+                        .zip(holes_by_cut)
+                        .map(|(outer, holes)| CoplanarConvexHoledComponent { outer, holes }),
+                );
             }
-            let holes_by_cut = assign_holes_to_side_cutter_split_outputs(
-                &hole_rings,
-                &cut_polygons,
-                &removed_openings,
-                projection,
-            )?;
-            components.extend(
-                cut_polygons
-                    .into_iter()
-                    .zip(holes_by_cut)
-                    .map(|(outer, holes)| CoplanarConvexHoledComponent { outer, holes }),
-            );
         }
     }
     if components.is_empty()
@@ -8066,6 +8083,152 @@ struct RemovedRegionCandidate {
     right_index: usize,
     is_cutter: bool,
     region: Vec<Point3>,
+}
+
+/// Replay cutter/hole contact groups on nonconvex simple source disks.
+///
+/// This is the nonconvex-source counterpart to
+/// [`materialize_cutter_hole_contact_component_holed_difference`]. The source
+/// boundary still comes from [`SimpleSurfaceComponent`] mesh incidence, so a
+/// cutter is admitted only when its whole exact convex ring lies in the closed
+/// source disk and owns positive-length source-boundary contact. Strict source
+/// holes may be consumed only when the exact removed-region contact graph
+/// connects them to at least one such side cutter; unrelated strict holes are
+/// retained and assigned to emitted output loops after the side openings are
+/// stitched.
+///
+/// This keeps the shortcut inside Yap's retained-object model from "Towards
+/// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997):
+/// consumed topology is named by exact contact groups and exact area replay,
+/// never by a sampled witness point. The removed-loop and final source
+/// difference boundaries are Weiler-Atherton retained-fragment traversals; see
+/// Weiler and Atherton, "Hidden Surface Removal Using Polygon Area Sorting,"
+/// *SIGGRAPH Computer Graphics* 11.2 (1977). Point-only contact remains
+/// unsupported because it is a branch decision for the later planar-cell
+/// extractor, and segment contact is classified by the exact orientation
+/// predicates of Guigue and Devillers, "Fast and Robust Triangle-Triangle
+/// Overlap Test Using Orientation Predicates," *Journal of Graphics Tools*
+/// 8.1 (2003).
+#[cfg(feature = "exact-triangulation")]
+fn materialize_simple_source_cutter_hole_contact_component_holed_difference(
+    component: &SimpleSurfaceComponent,
+    cut_indices: &[usize],
+    holes: &[ComponentHoleCandidate],
+    right_components: &[ConvexUnionComponent],
+) -> Option<Vec<CoplanarConvexHoledComponent>> {
+    if cut_indices.is_empty() || holes.is_empty() {
+        return None;
+    }
+    let projection = component.projection;
+    let mut regions = Vec::with_capacity(cut_indices.len() + holes.len());
+    for &right_index in cut_indices {
+        let mut region = right_components.get(right_index)?.hull.clone();
+        orient_polygon_ccw(&mut region, projection)?;
+        validate_projected_strictly_convex_loop(
+            &region,
+            projection,
+            "coplanar nonconvex source cutter-hole contact",
+        )
+        .ok()?;
+        if !polygon_lies_in_closed_simple_polygon(&region, &component.boundary, projection)? {
+            return None;
+        }
+        if simple_boundary_attachment_count(&component.boundary, &region, projection)? == 0 {
+            return None;
+        }
+        regions.push(RemovedRegionCandidate {
+            right_index,
+            is_cutter: true,
+            region,
+        });
+    }
+    for hole in holes {
+        let mut region = right_components.get(hole.right_index)?.hull.clone();
+        orient_polygon_ccw(&mut region, projection)?;
+        validate_projected_strictly_convex_loop(
+            &region,
+            projection,
+            "coplanar nonconvex source cutter-hole contact",
+        )
+        .ok()?;
+        if !polygon_strictly_inside_simple_polygon(&hole.ring, &component.boundary, projection)? {
+            return None;
+        }
+        regions.push(RemovedRegionCandidate {
+            right_index: hole.right_index,
+            is_cutter: false,
+            region,
+        });
+    }
+
+    let groups = removed_region_contact_groups(&regions, projection)?;
+    let mut saw_mixed_group = false;
+    let mut removed_openings = Vec::new();
+    let mut consumed_holes = Vec::new();
+    for group in &groups {
+        let has_cutter = group.iter().any(|&index| regions[index].is_cutter);
+        let has_hole = group.iter().any(|&index| !regions[index].is_cutter);
+        if !has_cutter {
+            continue;
+        }
+        let mut opening = if has_hole {
+            saw_mixed_group = true;
+            materialize_removed_region_group_polygon(&regions, group, projection)?
+        } else {
+            materialize_removed_region_group_or_single_polygon(&regions, group, projection)?
+        };
+        orient_polygon_ccw(&mut opening, projection)?;
+        opening = simplify_projected_polygon(opening, projection);
+        validate_projected_simple_loop(
+            &opening,
+            projection,
+            "coplanar nonconvex source cutter-hole contact",
+        )
+        .ok()?;
+        if !polygon_lies_in_closed_simple_polygon(&opening, &component.boundary, projection)? {
+            return None;
+        }
+        if simple_boundary_attachment_count(&component.boundary, &opening, projection)? == 0 {
+            return None;
+        }
+        if has_hole {
+            consumed_holes.extend(
+                group
+                    .iter()
+                    .copied()
+                    .filter(|&index| !regions[index].is_cutter)
+                    .map(|index| regions[index].right_index),
+            );
+        }
+        removed_openings.push(opening);
+    }
+    if !saw_mixed_group {
+        return None;
+    }
+
+    let (removed_openings, mut cut_polygons) =
+        materialize_simple_source_side_cutter_difference_core(component, &removed_openings)?;
+    for polygon in &mut cut_polygons {
+        orient_polygon_ccw(polygon, projection)?;
+    }
+    let retained_holes = holes
+        .iter()
+        .filter(|hole| !consumed_holes.contains(&hole.right_index))
+        .map(|hole| hole.ring.clone())
+        .collect::<Vec<_>>();
+    let holes_by_cut = assign_holes_to_side_cutter_split_outputs(
+        &retained_holes,
+        &cut_polygons,
+        &removed_openings,
+        projection,
+    )?;
+    Some(
+        cut_polygons
+            .into_iter()
+            .zip(holes_by_cut)
+            .map(|(outer, holes)| CoplanarConvexHoledComponent { outer, holes })
+            .collect(),
+    )
 }
 
 /// Check only the right components that affect one left component.
