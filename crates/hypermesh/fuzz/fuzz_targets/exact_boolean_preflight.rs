@@ -2848,6 +2848,63 @@ fn exercise_consumed_hole_side_cutter_openings() {
         ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
     );
 
+    let split_straddling_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            15, 16, 0, 17, 16, 0, 17, 18, 0, 15, 18, 0, //
+            9, 10, 0, 11, 10, 0, 11, 14, 0, 9, 14, 0, //
+            -2, 8, 0, 10, 8, 0, 10, 12, 0, -2, 12, 0, //
+            10, 8, 0, 22, 8, 0, 22, 12, 0, 10, 13, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7, //
+            8, 9, 10, 8, 10, 11, //
+            12, 13, 14, 12, 14, 15,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("split straddling-hole fixture must import");
+    assert!(
+        arrange_coplanar_surface_cutter_hole_contact_difference(&left, &split_straddling_hole)
+            .is_none()
+    );
+    let split =
+        arrange_coplanar_convex_surface_component_holed_difference(&left, &split_straddling_hole)
+            .expect("side-to-side straddling-hole group should split the source");
+    split.validate().unwrap();
+    split
+        .validate_against_sources(&left, &split_straddling_hole)
+        .unwrap();
+    assert_eq!(split.components.len(), 2);
+    assert_eq!(
+        split
+            .components
+            .iter()
+            .map(|component| component.holes.len())
+            .sum::<usize>(),
+        1
+    );
+    let mut stale_split = split.clone();
+    stale_split.components[0].holes.push(vec![
+        point3(9, 10, 0),
+        point3(11, 10, 0),
+        point3(11, 14, 0),
+        point3(9, 14, 0),
+    ]);
+    assert!(
+        stale_split
+            .validate_against_sources(&left, &split_straddling_hole)
+            .is_err()
+    );
+    let split_preflight =
+        preflight_boolean_exact(&left, &split_straddling_hole, ExactBooleanOperation::Difference)
+            .expect("split straddling-hole preflight should classify component-holed shortcut");
+    split_preflight.validate().unwrap();
+    assert_eq!(
+        split_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+    );
+
     let multi_component_consumed = ExactMesh::from_i64_triangles_with_policy(
         &[
             0, 0, 0, 20, 0, 0, 20, 20, 0, 0, 20, 0, //

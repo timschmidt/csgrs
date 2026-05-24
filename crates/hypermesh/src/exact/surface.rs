@@ -8058,6 +8058,92 @@ fn multi_side_opened_difference_polygon(
     Some(polygon)
 }
 
+/// Subtract removed loops that may split one convex source into components.
+///
+/// This is the multi-output sibling of
+/// [`multi_side_opened_difference_polygon`]. It is used when a certified
+/// removed cutter/hole group touches more than one side of the same convex
+/// source component, so the retained result can be several disjoint simple
+/// outer loops instead of one opened loop. The input removed loops have
+/// already been promoted by exact contact/union replay; this helper only
+/// replays the source subtraction by retaining outer-boundary fragments
+/// outside every removed loop and reversed removed-boundary fragments inside
+/// the source. That is the Weiler-Atherton retained-boundary traversal from
+/// Weiler and Atherton, "Hidden Surface Removal Using Polygon Area Sorting,"
+/// *SIGGRAPH Computer Graphics* 11.2 (1977).
+///
+/// The promotion boundary follows Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997): every removed loop must lie in the
+/// closed convex source, own at least one positive-length source-boundary
+/// attachment, stitch to simple disjoint retained loops, and satisfy the exact
+/// area equation `area(source) = sum(area(output_i)) + sum(area(removed_j))`.
+/// If any of those object-level facts fail, the later general planar-cell
+/// materializer must carry the topology explicitly.
+#[cfg(feature = "exact-triangulation")]
+fn multi_side_opened_difference_polygons(
+    outer: &[Point3],
+    removed: &[Vec<Point3>],
+    projection: CoplanarProjection,
+    label: &'static str,
+) -> Option<Vec<Vec<Point3>>> {
+    if outer.len() < 3 || removed.is_empty() {
+        return None;
+    }
+    let mut outer = outer.to_vec();
+    orient_polygon_ccw(&mut outer, projection)?;
+    validate_projected_strictly_convex_loop(&outer, projection, label).ok()?;
+
+    let mut removed = removed.to_vec();
+    for polygon in &mut removed {
+        orient_polygon_ccw(polygon, projection)?;
+        validate_projected_simple_loop(polygon, projection, label).ok()?;
+        for point in polygon.iter() {
+            if convex_polygon_location(point, &outer, projection)? == ConvexPolygonLocation::Outside
+            {
+                return None;
+            }
+        }
+        if convex_boundary_attachment_count(&outer, polygon, projection)? == 0 {
+            return None;
+        }
+    }
+    validate_simple_component_loops_disjoint(&removed, projection, label).ok()?;
+
+    let mut fragments = Vec::new();
+    collect_outer_difference_fragments(&outer, &removed, projection, &mut fragments)?;
+    for index in 0..removed.len() {
+        collect_removed_difference_fragments(index, &outer, &removed, projection, &mut fragments)?;
+    }
+    let mut polygons = stitch_disjoint_simple_loops(fragments, projection)?;
+    if polygons.is_empty() {
+        return None;
+    }
+    let mut output_area = ExactReal::from(0);
+    for polygon in &mut polygons {
+        orient_polygon_ccw(polygon, projection)?;
+        *polygon = simplify_projected_polygon(polygon.clone(), projection);
+        validate_projected_simple_loop(polygon, projection, label).ok()?;
+        output_area = add(&output_area, &projected_area2_abs(polygon, projection)?);
+    }
+    validate_simple_component_loops_disjoint(&polygons, projection, label).ok()?;
+
+    let mut removed_area = ExactReal::from(0);
+    for removed_polygon in &removed {
+        removed_area = add(
+            &removed_area,
+            &projected_area2_abs(removed_polygon, projection)?,
+        );
+    }
+    let outer_area = projected_area2_abs(&outer, projection)?;
+    if compare_reals(&add(&output_area, &removed_area), &outer_area).value()
+        != Some(Ordering::Equal)
+    {
+        return None;
+    }
+    sort_polygons_for_replay(&mut polygons, projection);
+    Some(polygons)
+}
+
 #[cfg(feature = "exact-triangulation")]
 fn collect_outer_difference_fragments(
     outer: &[Point3],
@@ -9764,10 +9850,11 @@ fn component_relevant_right_regions_are_disjoint(
 /// certificate: [`validate_component_holed_surface_output`] still requires at
 /// least one retained hole in the complete arrangement. This is the necessary
 /// multi-component case where one source component is opened and another
-/// independent source component still carries retained holes. The final outer
-/// loop is accepted only when every removed group has one positive-length side
-/// attachment, the stitched output is simple, and exact projected area replays
-/// `outer = output + sum(removed_i)`.
+/// independent source component still carries retained holes. A removed group
+/// may also touch multiple source sides and split its own source component;
+/// that multi-output case is accepted only when exact fragment replay produces
+/// disjoint simple retained loops and exact projected area replays
+/// `outer = sum(output_i) + sum(removed_i)`.
 ///
 /// This covers the bounded partially straddling-hole case without claiming a
 /// general planar subdivision: a hole overlapping a side-opening group is
@@ -9833,13 +9920,25 @@ fn materialize_cutter_hole_contact_component_holed_difference(
         return None;
     }
 
-    let opening = if opening_groups.len() == 1 {
-        if !opening_groups[0]
+    let mut removed_openings = Vec::with_capacity(opening_groups.len());
+    for group in &opening_groups {
+        if group.iter().any(|&index| !regions[index].is_cutter) {
+            removed_openings.push(
+                materialize_removed_region_group_polygon_allowing_incidental_points(
+                    &regions, group, projection,
+                )?,
+            );
+        } else {
+            removed_openings.push(materialize_removed_region_group_or_single_polygon(
+                &regions, group, projection,
+            )?);
+        }
+    }
+    let opened_polygons = if opening_groups.len() == 1
+        && opening_groups[0]
             .iter()
             .any(|&index| !regions[index].is_cutter)
-        {
-            return None;
-        }
+    {
         let opening_indices = opening_groups[0]
             .iter()
             .map(|&index| regions[index].right_index)
@@ -9850,32 +9949,35 @@ fn materialize_cutter_hole_contact_component_holed_difference(
                 .map(|&index| &right_components[index].mesh),
             "exact coplanar cutter-hole contact opening source",
         )?;
-        arrange_coplanar_surface_cutter_hole_contact_difference(&component.mesh, &opening_mesh)?
-            .polygon
-    } else {
-        let mut removed_openings = Vec::with_capacity(opening_groups.len());
-        for group in &opening_groups {
-            if group.iter().any(|&index| !regions[index].is_cutter) {
-                removed_openings.push(
-                    materialize_removed_region_group_polygon_allowing_incidental_points(
-                        &regions, group, projection,
-                    )?,
-                );
-            } else {
-                removed_openings.push(materialize_removed_region_group_or_single_polygon(
-                    &regions, group, projection,
-                )?);
-            }
+        if let Some(opening) =
+            arrange_coplanar_surface_cutter_hole_contact_difference(&component.mesh, &opening_mesh)
+        {
+            vec![opening.polygon]
+        } else {
+            multi_side_opened_difference_polygons(
+                &component.hull,
+                &removed_openings,
+                projection,
+                "coplanar component-holed cutter-hole contact split difference",
+            )?
         }
-        multi_side_opened_difference_polygon(
+    } else if let Some(opening) = multi_side_opened_difference_polygon(
+        &component.hull,
+        &removed_openings,
+        projection,
+        "coplanar component-holed multi-opening difference",
+    ) {
+        vec![opening]
+    } else {
+        multi_side_opened_difference_polygons(
             &component.hull,
             &removed_openings,
             projection,
-            "coplanar component-holed multi-opening difference",
+            "coplanar component-holed cutter-hole contact split difference",
         )?
     };
 
-    let mut retained_holes = Vec::new();
+    let mut holes_by_opening = vec![Vec::new(); opened_polygons.len()];
     for hole in holes {
         let member_index = regions
             .iter()
@@ -9886,16 +9988,27 @@ fn materialize_cutter_hole_contact_component_holed_difference(
         {
             continue;
         }
-        if !polygon_strictly_inside_simple_polygon(&hole.ring, &opening, projection)? {
-            return None;
+        let mut owner = None;
+        for (index, opening) in opened_polygons.iter().enumerate() {
+            if polygon_strictly_inside_simple_polygon(&hole.ring, opening, projection)? {
+                if owner.is_some() {
+                    return None;
+                }
+                owner = Some(index);
+            }
         }
-        retained_holes.push(hole.ring.clone());
+        holes_by_opening[owner?].push(hole.ring.clone());
     }
-    sort_polygons_for_replay(&mut retained_holes, projection);
-    Some(vec![CoplanarConvexHoledComponent {
-        outer: opening,
-        holes: retained_holes,
-    }])
+    for retained_holes in &mut holes_by_opening {
+        sort_polygons_for_replay(retained_holes, projection);
+    }
+    Some(
+        opened_polygons
+            .into_iter()
+            .zip(holes_by_opening)
+            .map(|(outer, holes)| CoplanarConvexHoledComponent { outer, holes })
+            .collect(),
+    )
 }
 
 /// Replay non-rectilinear side-cutter openings while retaining strict holes.

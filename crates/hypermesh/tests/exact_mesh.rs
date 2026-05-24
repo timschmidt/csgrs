@@ -19140,6 +19140,124 @@ fn exact_coplanar_component_holed_difference_omits_holes_consumed_by_side_cutter
                 CoplanarConvexSurfaceComponentHoledDifference
         }
     );
+
+    let split_straddling_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            15, 16, 0, 17, 16, 0, 17, 18, 0, 15, 18, 0, //
+            9, 10, 0, 11, 10, 0, 11, 14, 0, 9, 14, 0, //
+            -2, 8, 0, 10, 8, 0, 10, 12, 0, -2, 12, 0, //
+            10, 8, 0, 22, 8, 0, 22, 12, 0, 10, 13, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7, //
+            8, 9, 10, 8, 10, 11, //
+            12, 13, 14, 12, 14, 15,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_cutter_hole_contact_difference(
+            &left,
+            &split_straddling_hole,
+        )
+        .is_none()
+    );
+    let split = hypermesh::exact::arrange_coplanar_convex_surface_component_holed_difference(
+        &left,
+        &split_straddling_hole,
+    )
+    .expect("a side-to-side straddling-hole group should split the source exactly");
+    split.validate().unwrap();
+    split
+        .validate_against_sources(&left, &split_straddling_hole)
+        .unwrap();
+    assert_eq!(split.components.len(), 2);
+    assert_eq!(
+        split
+            .components
+            .iter()
+            .map(|component| component.holes.len())
+            .sum::<usize>(),
+        1
+    );
+    assert!(split.components.iter().any(|component| {
+        component.holes.iter().any(|hole| {
+            hole.iter().any(|point| {
+                real_eq(&point.x, &ExactReal::from(15)) && real_eq(&point.y, &ExactReal::from(16))
+            })
+        })
+    }));
+    assert!(!split.components.iter().any(|component| {
+        component.holes.iter().any(|hole| {
+            hole.iter().any(|point| {
+                real_eq(&point.x, &ExactReal::from(9)) && real_eq(&point.y, &ExactReal::from(10))
+            })
+        })
+    }));
+    assert!(split.components.iter().any(|component| {
+        component.outer.iter().any(|point| {
+            real_eq(&point.x, &ExactReal::from(11)) && real_eq(&point.y, &ExactReal::from(14))
+        })
+    }));
+    assert!(split.components.iter().any(|component| {
+        component.outer.iter().any(|point| {
+            real_eq(&point.x, &ExactReal::from(0)) && real_eq(&point.y, &ExactReal::from(0))
+        })
+    }));
+    let mut stale_split = split.clone();
+    stale_split.components[0].holes.push(vec![
+        p3(9, 10, 0),
+        p3(11, 10, 0),
+        p3(11, 14, 0),
+        p3(9, 14, 0),
+    ]);
+    assert!(
+        stale_split
+            .validate_against_sources(&left, &split_straddling_hole)
+            .is_err()
+    );
+
+    let split_preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &split_straddling_hole,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    split_preflight.validate().unwrap();
+    split_preflight
+        .validate_against_sources(&left, &split_straddling_hole)
+        .unwrap();
+    assert_eq!(
+        split_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::
+            CertifiedCoplanarConvexSurfaceComponentHoledDifference
+    );
+
+    let split_result = hypermesh::exact::boolean_exact(
+        &left,
+        &split_straddling_hole,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    split_result
+        .validate_operation_against_sources(
+            &left,
+            &split_straddling_hole,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        split_result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::
+                CoplanarConvexSurfaceComponentHoledDifference
+        }
+    );
 }
 
 #[cfg(feature = "exact-triangulation")]
