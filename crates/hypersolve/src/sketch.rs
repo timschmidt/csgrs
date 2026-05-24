@@ -287,6 +287,19 @@ pub struct SketchCubic2 {
     pub p3: SketchEntityHandle,
 }
 
+/// Retained 3D cubic Bezier carrier.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct SketchCubic3 {
+    /// First control point.
+    pub p0: SketchEntityHandle,
+    /// Second control point.
+    pub p1: SketchEntityHandle,
+    /// Third control point.
+    pub p2: SketchEntityHandle,
+    /// Fourth control point.
+    pub p3: SketchEntityHandle,
+}
+
 /// Retained workplane carrier.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SketchWorkplane {
@@ -315,6 +328,8 @@ pub enum SketchEntityKind {
     LineSegment3(SketchLineSegment3),
     /// SolveSpace-style `CUBIC`.
     Cubic2(SketchCubic2),
+    /// 3D cubic Bezier carrier retained for projected workplane replay.
+    Cubic3(SketchCubic3),
     /// SolveSpace-style `CIRCLE`.
     Circle2(SketchCircle2),
     /// SolveSpace-style `ARC_OF_CIRCLE`.
@@ -1573,6 +1588,30 @@ pub enum SketchConstraintKind {
         /// Curve parameter used by the incidence equations.
         parameter: SketchParameterHandle,
     },
+    /// 3D/workplane point-on-3D-cubic-Bezier incidence at a retained parameter.
+    ///
+    /// Lowering first proves the workplane unit-quaternion guard, projects the
+    /// retained 3D point and all four retained 3D cubic control points relative
+    /// to the workplane origin, evaluates the projected cubic in exact
+    /// Bernstein form, then replays `point_uv.axis - B_uv.axis(t) == 0`.
+    /// The curve remains a 3D source object; the workplane projection is part
+    /// of the proof package rather than a lossy preprocessing step. This is
+    /// the exact-object/replay boundary advocated by Yap, "Towards Exact
+    /// Geometric Computation" (1997). The frame uses Shoemake's unit
+    /// quaternion rotation matrix from "Animating Rotation with Quaternion
+    /// Curves" (1985), and the cubic evaluation follows the
+    /// Bernstein/de Casteljau model in Farin, *Curves and Surfaces for CAGD*,
+    /// 5th ed. (2002).
+    ProjectedPointOnCubicCurve3 {
+        /// Workplane entity that supplies origin and normal/quaternion.
+        workplane: SketchEntityHandle,
+        /// 3D point constrained to the projected curve point.
+        point: SketchEntityHandle,
+        /// Retained 3D cubic Bezier entity.
+        cubic: SketchEntityHandle,
+        /// Curve parameter used by the incidence equations.
+        parameter: SketchParameterHandle,
+    },
     /// Scalar parameter range constraint.
     ParameterRange {
         /// Parameter constrained by the range.
@@ -1709,6 +1748,8 @@ pub enum SketchResidualStrategy {
     CubicBezierIncidence,
     /// Exact workplane-projected cubic-Bezier coordinate incidence package.
     ProjectedCubicBezierIncidence,
+    /// Exact workplane-projected 3D cubic-Bezier coordinate incidence package.
+    ProjectedCubicCurveIncidence,
     /// Scalar parameter bound.
     ParameterRange,
     /// Scalar nondecreasing parameter relation.
@@ -2002,6 +2043,8 @@ pub enum SketchResidualFormKind {
     CubicBezierIncidencePolynomial,
     /// Exact projected cubic-Bezier coordinate incidence proof row.
     ProjectedCubicBezierIncidencePolynomial,
+    /// Exact projected 3D cubic-Bezier coordinate incidence proof row.
+    ProjectedCubicCurveIncidencePolynomial,
 }
 
 /// Proof role for a retained residual form.
@@ -2283,6 +2326,21 @@ impl SketchSolveProblem {
         self.add_entity(
             name,
             SketchEntityKind::Cubic2(SketchCubic2 { p0, p1, p2, p3 }),
+        )
+    }
+
+    /// Add a retained 3D cubic Bezier carrier.
+    pub fn add_cubic3(
+        &mut self,
+        name: impl Into<String>,
+        p0: SketchEntityHandle,
+        p1: SketchEntityHandle,
+        p2: SketchEntityHandle,
+        p3: SketchEntityHandle,
+    ) -> SketchEntityHandle {
+        self.add_entity(
+            name,
+            SketchEntityKind::Cubic3(SketchCubic3 { p0, p1, p2, p3 }),
         )
     }
 
@@ -3307,6 +3365,23 @@ impl SketchSolveProblem {
         parameter: SketchParameterHandle,
     ) -> SketchConstraintHandle {
         incidence::projected_point_on_cubic3(self, name, workplane, point, cubic, parameter).handle
+    }
+
+    /// Add projected 3D point-on-3D-cubic incidence at a retained parameter.
+    ///
+    /// The point and cubic control net are projected into the workplane before
+    /// exact Bernstein-coordinate replay. Segment-domain policy for the
+    /// parameter remains explicit.
+    pub fn add_projected_point_on_cubic_curve3(
+        &mut self,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        point: SketchEntityHandle,
+        cubic: SketchEntityHandle,
+        parameter: SketchParameterHandle,
+    ) -> SketchConstraintHandle {
+        incidence::projected_point_on_cubic_curve3(self, name, workplane, point, cubic, parameter)
+            .handle
     }
 
     /// Add projected 3D line/cubic tangency at a retained cubic parameter.
@@ -4866,6 +4941,52 @@ impl SketchSolveProblem {
                             kind: SketchResidualFormKind::ProjectedCubicBezierIncidencePolynomial,
                             role: SketchResidualFormRole::ExactProof,
                             strategy: Some(SketchResidualStrategy::ProjectedCubicBezierIncidence),
+                            residual,
+                        }),
+                );
+                SketchResidualFormsReport {
+                    constraint: handle,
+                    status: SketchResidualFormsStatus::Generated,
+                    forms,
+                    diagnostics,
+                }
+            }
+            SketchConstraintKind::ProjectedPointOnCubicCurve3 {
+                workplane,
+                point,
+                cubic,
+                parameter,
+            } => {
+                let mut diagnostics = Vec::new();
+                let Some(parts) = self.projected_point_on_cubic_curve3_exprs(
+                    workplane,
+                    point,
+                    cubic,
+                    parameter,
+                    constraint,
+                    &mut diagnostics,
+                ) else {
+                    return SketchResidualFormsReport {
+                        constraint: handle,
+                        status: SketchResidualFormsStatus::InvalidInputs,
+                        forms: Vec::new(),
+                        diagnostics,
+                    };
+                };
+                let mut forms = vec![SketchResidualForm {
+                    kind: SketchResidualFormKind::WorkplaneUnitQuaternionPolynomial,
+                    role: SketchResidualFormRole::ExactProof,
+                    strategy: Some(SketchResidualStrategy::WorkplaneUnitQuaternion),
+                    residual: unit_quaternion_residual(&parts.quaternion),
+                }];
+                forms.extend(
+                    parts
+                        .incidence
+                        .into_iter()
+                        .map(|residual| SketchResidualForm {
+                            kind: SketchResidualFormKind::ProjectedCubicCurveIncidencePolynomial,
+                            role: SketchResidualFormRole::ExactProof,
+                            strategy: Some(SketchResidualStrategy::ProjectedCubicCurveIncidence),
                             residual,
                         }),
                 );
@@ -8186,6 +8307,41 @@ impl SketchSolveProblem {
                     );
                 }
             }
+            SketchConstraintKind::ProjectedPointOnCubicCurve3 {
+                workplane,
+                point,
+                cubic,
+                parameter,
+            } => {
+                // This is retained 3D cubic incidence through a workplane
+                // projection: the point and every cubic control point are
+                // projected into U/V before exact Bernstein replay. Projection
+                // and curve evaluation both remain proof rows rather than
+                // proposal-side coordinate baking.
+                let Some(parts) = self.projected_point_on_cubic_curve3_exprs(
+                    workplane, point, cubic, parameter, constraint, rows,
+                ) else {
+                    return;
+                };
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} workplane unit", constraint.name),
+                    unit_quaternion_residual(&parts.quaternion),
+                    SketchResidualStrategy::WorkplaneUnitQuaternion,
+                );
+                for (axis, residual) in parts.incidence.into_iter().enumerate() {
+                    self.push_residual(
+                        problem,
+                        rows,
+                        constraint,
+                        format!("{} projected 3D cubic coordinate {axis}", constraint.name),
+                        residual,
+                        SketchResidualStrategy::ProjectedCubicCurveIncidence,
+                    );
+                }
+            }
             SketchConstraintKind::ParameterRange {
                 parameter,
                 ref lower,
@@ -9490,6 +9646,72 @@ impl SketchSolveProblem {
                 projected_point[1].clone() - curve[1].clone(),
             ],
         })
+    }
+
+    fn projected_point_on_cubic_curve3_exprs(
+        &self,
+        workplane: SketchEntityHandle,
+        point: SketchEntityHandle,
+        cubic: SketchEntityHandle,
+        parameter: SketchParameterHandle,
+        constraint: &SketchConstraint,
+        rows: &mut Vec<SketchGeneratedRow>,
+    ) -> Option<ProjectedCubicBezierIncidenceExprs> {
+        let (origin, quaternion) =
+            self.workplane_origin_and_quaternion(workplane, constraint, rows)?;
+        let point = self.point3_coordinates(point, constraint, rows)?;
+        let Some(entity) = self.entity(cubic) else {
+            rows.push(missing_entity_row(constraint, cubic));
+            return None;
+        };
+        let SketchEntityKind::Cubic3(cubic) = &entity.kind else {
+            rows.push(wrong_entity_row(
+                constraint,
+                entity.handle,
+                "3D cubic Bezier",
+            ));
+            return None;
+        };
+        let p0 =
+            self.projected_point3_coordinates(cubic.p0, &origin, &quaternion, constraint, rows)?;
+        let p1 =
+            self.projected_point3_coordinates(cubic.p1, &origin, &quaternion, constraint, rows)?;
+        let p2 =
+            self.projected_point3_coordinates(cubic.p2, &origin, &quaternion, constraint, rows)?;
+        let p3 =
+            self.projected_point3_coordinates(cubic.p3, &origin, &quaternion, constraint, rows)?;
+        let parameter = self.parameter_expr(parameter, constraint, rows)?;
+        let point_delta = [
+            point.exprs[0].clone() - origin.exprs[0].clone(),
+            point.exprs[1].clone() - origin.exprs[1].clone(),
+            point.exprs[2].clone() - origin.exprs[2].clone(),
+        ];
+        let projected_point = projected_direction2(&point_delta, &quaternion);
+        let curve = cubic_bezier_point2_exprs(&p0, &p1, &p2, &p3, parameter);
+        Some(ProjectedCubicBezierIncidenceExprs {
+            quaternion,
+            incidence: [
+                projected_point[0].clone() - curve[0].clone(),
+                projected_point[1].clone() - curve[1].clone(),
+            ],
+        })
+    }
+
+    fn projected_point3_coordinates(
+        &self,
+        point: SketchEntityHandle,
+        origin: &CoordinateExprs,
+        quaternion: &[Expr; 4],
+        constraint: &SketchConstraint,
+        rows: &mut Vec<SketchGeneratedRow>,
+    ) -> Option<[Expr; 2]> {
+        let point = self.point3_coordinates(point, constraint, rows)?;
+        let delta = [
+            point.exprs[0].clone() - origin.exprs[0].clone(),
+            point.exprs[1].clone() - origin.exprs[1].clone(),
+            point.exprs[2].clone() - origin.exprs[2].clone(),
+        ];
+        Some(projected_direction2(&delta, quaternion))
     }
 
     fn cubic_line_tangent_exprs(

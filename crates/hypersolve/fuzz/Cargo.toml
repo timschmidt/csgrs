@@ -245,6 +245,13 @@ doc = false
 bench = false
 
 [[bin]]
+name = "sketch_projected_point_on_cubic_curve"
+path = "fuzz_targets/sketch_projected_point_on_cubic_curve.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
 name = "sketch_cubic_line_tangent"
 path = "fuzz_targets/sketch_cubic_line_tangent.rs"
 test = false

@@ -181,7 +181,8 @@ pub fn preflight_sketch_degeneracies_with_policy(
             SketchEntityKind::Point2D(_)
             | SketchEntityKind::Point3D(_)
             | SketchEntityKind::Distance(_)
-            | SketchEntityKind::Cubic2(_) => {}
+            | SketchEntityKind::Cubic2(_)
+            | SketchEntityKind::Cubic3(_) => {}
         }
     }
 

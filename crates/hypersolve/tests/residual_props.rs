@@ -1532,6 +1532,106 @@ proptest! {
     }
 
     #[test]
+    fn sketch_projected_point_on_cubic_curve3_rows_replay_projected_affine_cubics(
+        ox in -4_i16..=4,
+        oy in -4_i16..=4,
+        oz in -4_i16..=4,
+        ax in -8_i16..=8,
+        ay in -8_i16..=8,
+        dx in -4_i16..=4,
+        dy in -4_i16..=4,
+        t in -2_i16..=2,
+        z0 in -8_i16..=8,
+        z1 in -8_i16..=8,
+        z2 in -8_i16..=8,
+        z3 in -8_i16..=8,
+        point_z in -8_i16..=8,
+    ) {
+        let ox = i64::from(ox);
+        let oy = i64::from(oy);
+        let oz = i64::from(oz);
+        let ax = i64::from(ax);
+        let ay = i64::from(ay);
+        let dx = i64::from(dx);
+        let dy = i64::from(dy);
+        let t = i64::from(t);
+        let z0 = i64::from(z0);
+        let z1 = i64::from(z1);
+        let z2 = i64::from(z2);
+        let z3 = i64::from(z3);
+        let point_z = i64::from(point_z);
+        let mut sketch = SketchSolveProblem::new();
+        let origin = sketch.add_point3d("origin", Real::from(ox), Real::from(oy), Real::from(oz));
+        let normal = sketch.add_normal3d("normal", Real::from(1), Real::from(0), Real::from(0), Real::from(0));
+        let workplane = sketch.add_workplane("workplane", origin, normal);
+        let p0 = sketch.add_point3d("p0", Real::from(ox + ax), Real::from(oy + ay), Real::from(oz + z0));
+        let p1 = sketch.add_point3d(
+            "p1",
+            Real::from(ox + ax + dx),
+            Real::from(oy + ay + dy),
+            Real::from(oz + z1),
+        );
+        let p2 = sketch.add_point3d(
+            "p2",
+            Real::from(ox + ax + 2 * dx),
+            Real::from(oy + ay + 2 * dy),
+            Real::from(oz + z2),
+        );
+        let p3 = sketch.add_point3d(
+            "p3",
+            Real::from(ox + ax + 3 * dx),
+            Real::from(oy + ay + 3 * dy),
+            Real::from(oz + z3),
+        );
+        let cubic = sketch.add_cubic3("cubic", p0, p1, p2, p3);
+        let point = sketch.add_point3d(
+            "point",
+            Real::from(ox + ax + 3 * dx * t),
+            Real::from(oy + ay + 3 * dy * t),
+            Real::from(oz + point_z),
+        );
+        let parameter = sketch.add_parameter("t", Real::from(t));
+        let handle = sketch.add_projected_point_on_cubic_curve3(
+            "projected point on cubic curve",
+            workplane,
+            point,
+            cubic,
+            parameter,
+        );
+
+        let lowered = sketch.lower_to_problem();
+        let forms = sketch.residual_forms_for_constraint(handle);
+        let context = context_from_problem(&lowered.problem);
+        let certification = certify_candidate(&PreparedProblem::new(&lowered.problem), &context);
+
+        prop_assert!(lowered.all_generated());
+        prop_assert_eq!(lowered.problem.constraints.len(), 3);
+        prop_assert_eq!(
+            lowered.rows[0].strategy,
+            Some(SketchResidualStrategy::WorkplaneUnitQuaternion)
+        );
+        let all_projected_cubic_rows = lowered.rows[1..].iter().all(|row| {
+            row.strategy == Some(SketchResidualStrategy::ProjectedCubicCurveIncidence)
+        });
+        prop_assert!(all_projected_cubic_rows);
+        prop_assert!(certification.all_satisfied());
+        prop_assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+        prop_assert_eq!(forms.forms.len(), 3);
+        prop_assert_eq!(
+            forms.forms[0].kind,
+            SketchResidualFormKind::WorkplaneUnitQuaternionPolynomial
+        );
+        for form in &forms.forms[1..] {
+            prop_assert_eq!(form.kind, SketchResidualFormKind::ProjectedCubicCurveIncidencePolynomial);
+            prop_assert_eq!(form.role, SketchResidualFormRole::ExactProof);
+            prop_assert_eq!(
+                form.residual.eval_real(context.bindings()).unwrap(),
+                Real::zero()
+            );
+        }
+    }
+
+    #[test]
     fn sketch_cubic_line_tangent_rows_match_generated_affine_cubics(
         ax in -8_i16..=8,
         ay in -8_i16..=8,

@@ -784,6 +784,37 @@ pub mod incidence {
             kind,
         }
     }
+
+    /// Add projected 3D point-on-3D-cubic-Bezier incidence.
+    ///
+    /// The point and retained 3D cubic control net are projected through the
+    /// workplane frame before exact Bernstein-coordinate replay. This keeps
+    /// the 3D curve, point, parameter, and projection frame as retained source
+    /// objects, following Yap (1997); Shoemake's unit-quaternion frame and
+    /// Farin's Bernstein/de Casteljau curve construction supply the exact
+    /// polynomial rows.
+    pub fn projected_point_on_cubic_curve3(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        point: SketchEntityHandle,
+        cubic: SketchEntityHandle,
+        parameter: SketchParameterHandle,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::ProjectedPointOnCubicCurve3 {
+            workplane,
+            point,
+            cubic,
+            parameter,
+        };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Incidence,
+            strategy: SketchResidualStrategy::ProjectedCubicCurveIncidence,
+            kind,
+        }
+    }
 }
 
 /// Dimensional relation builders.

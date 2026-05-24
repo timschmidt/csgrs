@@ -647,6 +647,106 @@ fn sketch_projected_point_on_cubic_replays_workplane_and_bernstein_rows() {
 }
 
 #[test]
+fn sketch_projected_point_on_cubic_curve3_replays_projected_control_net_rows() {
+    let mut sketch = SketchSolveProblem::new();
+    let origin = sketch.add_point3d("origin", real(1), real(2), real(3));
+    let normal = sketch.add_normal3d("identity normal", real(1), real(0), real(0), real(0));
+    let workplane = sketch.add_workplane("workplane", origin, normal);
+    let p0 = sketch.add_point3d("p0", real(1), real(2), real(3));
+    let p1 = sketch.add_point3d("p1", real(3), real(2), real(9));
+    let p2 = sketch.add_point3d("p2", real(5), real(2), real(-4));
+    let p3 = sketch.add_point3d("p3", real(7), real(2), real(11));
+    let cubic = sketch.add_cubic3("cubic3", p0, p1, p2, p3);
+    let point = sketch.add_point3d("point", real(4), real(2), real(99));
+    let off_curve = sketch.add_point3d("off curve", real(4), real(3), real(99));
+    let parameter = sketch.add_parameter(
+        "t",
+        Real::new(Rational::fraction(1, 2).expect("nonzero denominator")),
+    );
+    let valid = sketch_incidence_builders::projected_point_on_cubic_curve3(
+        &mut sketch,
+        "projected point on 3D cubic",
+        workplane,
+        point,
+        cubic,
+        parameter,
+    );
+    sketch.add_projected_point_on_cubic_curve3(
+        "off projected 3D cubic",
+        workplane,
+        off_curve,
+        cubic,
+        parameter,
+    );
+    let wrong = sketch.add_projected_point_on_cubic_curve3(
+        "wrong projected 3D cubic",
+        workplane,
+        point,
+        point,
+        parameter,
+    );
+
+    assert_eq!(valid.family, hypersolve::SketchConstraintFamily::Incidence);
+    assert_eq!(
+        valid.strategy,
+        SketchResidualStrategy::ProjectedCubicCurveIncidence
+    );
+
+    let lowered = sketch.lower_to_problem();
+    let forms = sketch.residual_forms_for_constraint(valid.handle);
+    let context = context_from_problem(&lowered.problem);
+    let certification = certify_candidate(&PreparedProblem::new(&lowered.problem), &context);
+
+    assert_eq!(lowered.problem.constraints.len(), 6);
+    assert_eq!(lowered.rows.len(), 7);
+    assert_eq!(
+        lowered.rows.last().unwrap().status,
+        SketchGeneratedRowStatus::WrongEntityKind {
+            handle: point,
+            expected: "3D cubic Bezier",
+        }
+    );
+    assert_eq!(
+        lowered.rows[0].strategy,
+        Some(SketchResidualStrategy::WorkplaneUnitQuaternion)
+    );
+    assert!(lowered.rows[1..3].iter().all(|row| {
+        row.strategy == Some(SketchResidualStrategy::ProjectedCubicCurveIncidence)
+            && row.status == SketchGeneratedRowStatus::Generated
+    }));
+    assert!(
+        certification.rows[..3]
+            .iter()
+            .all(|row| matches!(row.status, CertifiedCandidateStatus::CertifiedZero { .. }))
+    );
+    assert!(matches!(
+        certification.rows[5].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
+
+    assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+    assert_eq!(forms.forms.len(), 3);
+    assert_eq!(
+        forms.forms[0].kind,
+        SketchResidualFormKind::WorkplaneUnitQuaternionPolynomial
+    );
+    assert!(forms.forms[1..].iter().all(|form| {
+        form.kind == SketchResidualFormKind::ProjectedCubicCurveIncidencePolynomial
+            && form.role == SketchResidualFormRole::ExactProof
+            && form.strategy == Some(SketchResidualStrategy::ProjectedCubicCurveIncidence)
+    }));
+    for form in &forms.forms {
+        assert_eq!(
+            form.residual.eval_real(context.bindings()).unwrap(),
+            Real::zero()
+        );
+    }
+
+    let wrong_forms = sketch.residual_forms_for_constraint(wrong);
+    assert_eq!(wrong_forms.status, SketchResidualFormsStatus::InvalidInputs);
+}
+
+#[test]
 fn sketch_cubic_line_tangent_lowers_exact_derivative_branch_rows() {
     let mut sketch = SketchSolveProblem::new();
     let p0 = sketch.add_point2d("p0", real(0), real(0));
