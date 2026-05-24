@@ -6379,6 +6379,8 @@ fn exact_boolean_coplanar_orthogonal_surface_cells(c: &mut Criterion) {
         let overlap_source_right = rect_surface_i64(&[(8, 2, 10, 4)]);
         let rectangular_overlap_left = rect_surface_i64(&[(0, 0, 20, 20)]);
         let rectangular_overlap_right = rect_surface_i64(&[(8, 8, 12, 12), (0, 9, 10, 11)]);
+        let branch_left = rect_surface_i64(&[(0, 0, 4, 4)]);
+        let branch_right = rect_surface_i64(&[(0, 2, 2, 4), (2, 0, 4, 2)]);
         let retained_outer = vec![
             p3(0, 0, 0),
             p3(6, 0, 0),
@@ -6423,6 +6425,8 @@ fn exact_boolean_coplanar_orthogonal_surface_cells(c: &mut Criterion) {
                     &rectangular_overlap_left,
                     &rectangular_overlap_right,
                 );
+                let branch_difference =
+                    arrange_coplanar_orthogonal_surface_difference(&branch_left, &branch_right);
                 let union_result = hypermesh::exact::boolean_exact(
                     &l_left,
                     &l_right,
@@ -6454,6 +6458,13 @@ fn exact_boolean_coplanar_orthogonal_surface_cells(c: &mut Criterion) {
                 let rectangular_overlap_difference_result = hypermesh::exact::boolean_exact(
                     &rectangular_overlap_left,
                     &rectangular_overlap_right,
+                    hypermesh::exact::ExactBooleanOperation::Difference,
+                    ValidationPolicy::ALLOW_BOUNDARY,
+                )
+                .unwrap();
+                let branch_difference_result = hypermesh::exact::boolean_exact(
+                    &branch_left,
+                    &branch_right,
                     hypermesh::exact::ExactBooleanOperation::Difference,
                     ValidationPolicy::ALLOW_BOUNDARY,
                 )
@@ -6566,6 +6577,23 @@ fn exact_boolean_coplanar_orthogonal_surface_cells(c: &mut Criterion) {
                         ValidationPolicy::ALLOW_BOUNDARY,
                         hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
                     ),
+                    branch_difference
+                        .as_ref()
+                        .map(|output| output.validate_against_sources(&branch_left, &branch_right)),
+                    branch_difference.as_ref().map(|output| output.validate()),
+                    hypermesh::exact::preflight_boolean_exact(
+                        &branch_left,
+                        &branch_right,
+                        hypermesh::exact::ExactBooleanOperation::Difference,
+                    )
+                    .map(|report| report.validate()),
+                    branch_difference_result.validate_operation_against_sources(
+                        &branch_left,
+                        &branch_right,
+                        hypermesh::exact::ExactBooleanOperation::Difference,
+                        ValidationPolicy::ALLOW_BOUNDARY,
+                        hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+                    ),
                 )
             })
         });
@@ -6591,6 +6619,9 @@ fn exact_boolean_coplanar_affine_surface_cells(c: &mut Criterion) {
         let holed_left =
             affine_rect_surface_i64(&[(0, 0, 10, 10), (10, 0, 12, 2)], origin, basis_u, basis_v);
         let holed_right = affine_rect_surface_i64(&[(2, 2, 4, 4)], origin, basis_u, basis_v);
+        let branch_left = affine_rect_surface_i64(&[(0, 0, 4, 4)], origin, basis_u, basis_v);
+        let branch_right =
+            affine_rect_surface_i64(&[(0, 2, 2, 4), (2, 0, 4, 2)], origin, basis_u, basis_v);
         let lift = |u: i32, v: i32| p3(2 * u - v, u + 2 * v, 0);
         let affine_outer = vec![
             lift(0, 0),
@@ -6626,6 +6657,8 @@ fn exact_boolean_coplanar_affine_surface_cells(c: &mut Criterion) {
                 );
                 let difference =
                     arrange_coplanar_affine_surface_difference(&holed_left, &holed_right);
+                let branch_difference =
+                    arrange_coplanar_affine_surface_difference(&branch_left, &branch_right);
                 let union_result = hypermesh::exact::boolean_exact(
                     &l_left,
                     &l_right,
@@ -6666,6 +6699,16 @@ fn exact_boolean_coplanar_affine_surface_cells(c: &mut Criterion) {
                     hypermesh::exact::preflight_boolean_exact(
                         &holed_left,
                         &holed_right,
+                        hypermesh::exact::ExactBooleanOperation::Difference,
+                    )
+                    .map(|report| report.validate()),
+                    branch_difference
+                        .as_ref()
+                        .map(|output| output.validate_against_sources(&branch_left, &branch_right)),
+                    branch_difference.as_ref().map(|output| output.validate()),
+                    hypermesh::exact::preflight_boolean_exact(
+                        &branch_left,
+                        &branch_right,
                         hypermesh::exact::ExactBooleanOperation::Difference,
                     )
                     .map(|report| report.validate()),

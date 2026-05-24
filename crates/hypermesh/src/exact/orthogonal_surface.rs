@@ -12,7 +12,9 @@
 //! occupancy (`covered by at least one retained source rectangle`) and are
 //! accepted only when the resulting loops and mesh replay. This keeps
 //! multiplicity out of the topology certificate while still retaining the exact
-//! grid facts that justified the set boundary.
+//! grid facts that justified the set boundary. Retained output components may
+//! meet at exact grid vertices only; those branch points are kept as separate
+//! component vertices instead of being welded into non-manifold mesh topology.
 //!
 //! The grid subdivision is the orthogonal analogue of the arrangement viewpoint
 //! in de Berg, Cheong, van Kreveld, and Overmars, *Computational Geometry:
@@ -64,9 +66,14 @@ pub struct CoplanarOrthogonalSurfaceComponent {
 /// This artifact represents bounded rectilinear arrangements that are wider
 /// than the convex/simple-loop shortcuts: multi-component outputs, nonconvex
 /// outer loops, retained holes, and cutter/hole contact graphs are accepted when
-/// an exact axis-aligned cell replay proves the topology. Cases outside that
-/// model stay explicit planar-arrangement work instead of being decided by a
-/// tolerance polygon kernel.
+/// an exact axis-aligned cell replay proves the topology. Components that meet
+/// only at exact grid vertices are retained as separate components with
+/// duplicated coordinates, which is the cell-complex analogue of the bounded
+/// point-touch branch artifact in [`crate::exact::surface`]. Positive-length
+/// component contact, nesting, and hole/boundary contact stay rejected because
+/// they require a stronger planar-subdivision object. Cases outside that model
+/// stay explicit planar-arrangement work instead of being decided by a tolerance
+/// polygon kernel.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CoplanarOrthogonalSurfaceArrangement {
     /// Projection plane used by the exact cell grid.
@@ -792,14 +799,17 @@ fn validate_components(
     }
     for left in 0..components.len() {
         for right in left + 1..components.len() {
-            if loop_edges_intersect(
+            match loop_contact(
                 &components[left].outer,
                 &components[right].outer,
                 projection,
             )? {
-                return Err(orthogonal_error(
-                    "orthogonal output components touch or cross",
-                ));
+                LoopContact::Disjoint | LoopContact::PointOnly => {}
+                LoopContact::PositiveLengthOrArea => {
+                    return Err(orthogonal_error(
+                        "orthogonal output components overlap or share an edge",
+                    ));
+                }
             }
             let witness = components[right]
                 .outer
@@ -1083,7 +1093,13 @@ fn validate_mesh_edges_respect_retained_rings(
                     if edge_a == ring_a
                         || edge_a == ring_b
                         || edge_b == ring_a
-                        || edge_b == ring_b => {}
+                        || edge_b == ring_b
+                        || segment_endpoint_touch_shares_exact_coordinate(
+                            &edge_start,
+                            &edge_end,
+                            &ring_start,
+                            &ring_end,
+                        ) => {}
                 Some(
                     SegmentIntersection::Proper
                     | SegmentIntersection::EndpointTouch
@@ -1222,6 +1238,72 @@ fn loop_edges_intersect(
         }
     }
     Ok(false)
+}
+
+/// Dimensional contact between two retained component loops.
+///
+/// Orthogonal cell booleans can leave several retained components meeting at a
+/// grid vertex, for example a checkerboard difference. Under Yap, "Towards
+/// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997), that
+/// branch is acceptable only when it is explicitly retained as object topology:
+/// the loops remain separate and the mesh duplicates the shared coordinate.
+/// The segment relation itself is the orientation-predicate classifier of
+/// Guigue and Devillers, "Fast and Robust Triangle-Triangle Overlap Test Using
+/// Orientation Predicates," *Journal of Graphics Tools* 8.1 (2003).
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum LoopContact {
+    Disjoint,
+    PointOnly,
+    PositiveLengthOrArea,
+}
+
+fn loop_contact(
+    left: &[Point3],
+    right: &[Point3],
+    projection: CoplanarProjection,
+) -> Result<LoopContact, MeshError> {
+    let mut saw_point = false;
+    for left_edge in 0..left.len() {
+        let left_start = project_point(&left[left_edge], projection);
+        let left_end = project_point(&left[(left_edge + 1) % left.len()], projection);
+        for right_edge in 0..right.len() {
+            let right_start = project_point(&right[right_edge], projection);
+            let right_end = project_point(&right[(right_edge + 1) % right.len()], projection);
+            match classify_segment_intersection(&left_start, &left_end, &right_start, &right_end)
+                .value()
+            {
+                Some(SegmentIntersection::Disjoint) => {}
+                Some(SegmentIntersection::EndpointTouch) => saw_point = true,
+                Some(
+                    SegmentIntersection::Proper
+                    | SegmentIntersection::CollinearOverlap
+                    | SegmentIntersection::Identical,
+                ) => return Ok(LoopContact::PositiveLengthOrArea),
+                None => {
+                    return Err(orthogonal_error(
+                        "orthogonal cross-loop contact predicate was undecided",
+                    ));
+                }
+            }
+        }
+    }
+    if saw_point {
+        Ok(LoopContact::PointOnly)
+    } else {
+        Ok(LoopContact::Disjoint)
+    }
+}
+
+fn segment_endpoint_touch_shares_exact_coordinate(
+    edge_start: &Point3,
+    edge_end: &Point3,
+    ring_start: &Point3,
+    ring_end: &Point3,
+) -> bool {
+    points_equal(edge_start, ring_start)
+        || points_equal(edge_start, ring_end)
+        || points_equal(edge_end, ring_start)
+        || points_equal(edge_end, ring_end)
 }
 
 fn point_strictly_inside_loop(

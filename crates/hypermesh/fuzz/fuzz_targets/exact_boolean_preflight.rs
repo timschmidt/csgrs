@@ -5616,6 +5616,65 @@ fn exercise_component_coplanar_difference() {
         assert!(crossing_fan.validate().is_err());
     }
 
+    let branch_left = rect_surface_i64(&[(0, 0, 4, 4)]);
+    let branch_right = rect_surface_i64(&[(0, 2, 2, 4), (2, 0, 4, 2)]);
+    let branch_difference =
+        arrange_coplanar_orthogonal_surface_difference(&branch_left, &branch_right)
+            .expect("orthogonal point-branch cell difference should materialize");
+    branch_difference.validate().unwrap();
+    branch_difference
+        .validate_against_sources(&branch_left, &branch_right)
+        .unwrap();
+    assert_eq!(branch_difference.components.len(), 2);
+    assert!(branch_difference.components.iter().all(|component| {
+        component.holes.is_empty()
+            && component
+                .outer
+                .iter()
+                .any(|point| point == &point3(2, 2, 0))
+    }));
+    let branch_preflight =
+        preflight_boolean_exact(&branch_left, &branch_right, ExactBooleanOperation::Difference)
+            .expect("orthogonal point-branch preflight should classify shortcut");
+    branch_preflight.validate().unwrap();
+    assert_eq!(
+        branch_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceDifference
+    );
+    let mut stale_branch = branch_difference.clone();
+    stale_branch.components[0].outer[0] = point3(99, 99, 0);
+    assert!(
+        stale_branch
+            .validate_against_sources(&branch_left, &branch_right)
+            .is_err()
+    );
+    let invalid_edge_touch = CoplanarOrthogonalSurfaceArrangement {
+        projection: CoplanarProjection::Xy,
+        operation: CoplanarOrthogonalSurfaceOperation::Difference,
+        components: vec![
+            CoplanarOrthogonalSurfaceComponent {
+                outer: vec![
+                    point3(0, 0, 0),
+                    point3(2, 0, 0),
+                    point3(2, 2, 0),
+                    point3(0, 2, 0),
+                ],
+                holes: Vec::new(),
+            },
+            CoplanarOrthogonalSurfaceComponent {
+                outer: vec![
+                    point3(2, 0, 0),
+                    point3(4, 0, 0),
+                    point3(4, 2, 0),
+                    point3(2, 2, 0),
+                ],
+                holes: Vec::new(),
+            },
+        ],
+        mesh: rect_surface_i64(&[(0, 0, 2, 2), (2, 0, 4, 2)]),
+    };
+    assert!(invalid_edge_touch.validate().is_err());
+
     let overlap_source_left = rect_surface_i64(&[(0, 0, 4, 6), (2, 2, 8, 4)]);
     let overlap_source_right = rect_surface_i64(&[(8, 2, 10, 4)]);
     let overlap_union =
@@ -5722,6 +5781,38 @@ fn exercise_component_coplanar_difference() {
         crossing_fan.mesh = mesh;
         assert!(crossing_fan.validate().is_err());
     }
+
+    let affine_branch_left = affine_rect_surface_i64(&[(0, 0, 4, 4)], origin, basis_u, basis_v);
+    let affine_branch_right =
+        affine_rect_surface_i64(&[(0, 2, 2, 4), (2, 0, 4, 2)], origin, basis_u, basis_v);
+    let affine_branch_difference = arrange_coplanar_affine_surface_difference(
+        &affine_branch_left,
+        &affine_branch_right,
+    )
+    .expect("affine point-branch cell difference should materialize");
+    affine_branch_difference.validate().unwrap();
+    affine_branch_difference
+        .validate_against_sources(&affine_branch_left, &affine_branch_right)
+        .unwrap();
+    assert_eq!(affine_branch_difference.components.len(), 2);
+    assert!(affine_branch_difference.components.iter().all(|component| {
+        component.holes.is_empty()
+            && component
+                .outer
+                .iter()
+                .any(|point| point == &point3(2, 6, 0))
+    }));
+    let affine_branch_preflight = preflight_boolean_exact(
+        &affine_branch_left,
+        &affine_branch_right,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("affine point-branch preflight should classify shortcut");
+    affine_branch_preflight.validate().unwrap();
+    assert_eq!(
+        affine_branch_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarAffineSurfaceDifference
+    );
 
     let retained_outer = vec![
         point3(0, 0, 0),

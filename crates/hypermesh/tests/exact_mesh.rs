@@ -20553,6 +20553,78 @@ fn exact_coplanar_orthogonal_surface_cells_materialize_nonconvex_outputs() {
         hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceDifference
     );
 
+    let branch_left = rect_surface_i64(&[(0, 0, 4, 4)]);
+    let branch_right = rect_surface_i64(&[(0, 2, 2, 4), (2, 0, 4, 2)]);
+    let branch_difference = hypermesh::exact::arrange_coplanar_orthogonal_surface_difference(
+        &branch_left,
+        &branch_right,
+    )
+    .expect("checkerboard difference should retain exact point-touch cell components");
+    branch_difference.validate().unwrap();
+    branch_difference
+        .validate_against_sources(&branch_left, &branch_right)
+        .unwrap();
+    assert_eq!(branch_difference.components.len(), 2);
+    assert!(branch_difference.components.iter().all(|component| {
+        component.holes.is_empty()
+            && component.outer.iter().any(|point| {
+                real_eq(&point.x, &ExactReal::from(2)) && real_eq(&point.y, &ExactReal::from(2))
+            })
+    }));
+    let mut stale_branch = branch_difference.clone();
+    stale_branch.components[0].outer[0] = p3(99, 99, 0);
+    assert!(
+        stale_branch
+            .validate_against_sources(&branch_left, &branch_right)
+            .is_err()
+    );
+    let branch_preflight = hypermesh::exact::preflight_boolean_exact(
+        &branch_left,
+        &branch_right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    branch_preflight.validate().unwrap();
+    branch_preflight
+        .validate_against_sources(&branch_left, &branch_right)
+        .unwrap();
+    assert_eq!(
+        branch_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceDifference
+    );
+    let branch_result = hypermesh::exact::boolean_exact(
+        &branch_left,
+        &branch_right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    branch_result.validate().unwrap();
+    assert_eq!(
+        branch_result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut:
+                hypermesh::exact::ExactBooleanShortcutKind::CoplanarOrthogonalSurfaceDifference
+        }
+    );
+
+    let invalid_edge_touch = hypermesh::exact::CoplanarOrthogonalSurfaceArrangement {
+        projection: CoplanarProjection::Xy,
+        operation: hypermesh::exact::CoplanarOrthogonalSurfaceOperation::Difference,
+        components: vec![
+            hypermesh::exact::CoplanarOrthogonalSurfaceComponent {
+                outer: vec![p3(0, 0, 0), p3(2, 0, 0), p3(2, 2, 0), p3(0, 2, 0)],
+                holes: Vec::new(),
+            },
+            hypermesh::exact::CoplanarOrthogonalSurfaceComponent {
+                outer: vec![p3(2, 0, 0), p3(4, 0, 0), p3(4, 2, 0), p3(2, 2, 0)],
+                holes: Vec::new(),
+            },
+        ],
+        mesh: rect_surface_i64(&[(0, 0, 2, 2), (2, 0, 4, 2)]),
+    };
+    assert!(invalid_edge_touch.validate().is_err());
+
     let overlap_source_left = rect_surface_i64(&[(0, 0, 4, 6), (2, 2, 8, 4)]);
     let overlap_source_right = rect_surface_i64(&[(8, 2, 10, 4)]);
     assert!(
@@ -20771,6 +20843,36 @@ fn exact_coplanar_affine_surface_cells_materialize_rotated_nonconvex_outputs() {
         .unwrap();
     assert_eq!(graph_difference.components.len(), 1);
     assert!(graph_difference.components[0].holes.is_empty());
+
+    let branch_left = affine_rect_surface_i64(&[(0, 0, 4, 4)], origin, basis_u, basis_v);
+    let branch_right =
+        affine_rect_surface_i64(&[(0, 2, 2, 4), (2, 0, 4, 2)], origin, basis_u, basis_v);
+    let branch_difference =
+        hypermesh::exact::arrange_coplanar_affine_surface_difference(&branch_left, &branch_right)
+            .expect("rotated checkerboard difference should retain exact point-touch cells");
+    branch_difference.validate().unwrap();
+    branch_difference
+        .validate_against_sources(&branch_left, &branch_right)
+        .unwrap();
+    assert_eq!(branch_difference.components.len(), 2);
+    let branch_point = Point3::new(ExactReal::from(2), ExactReal::from(6), ExactReal::from(0));
+    assert!(branch_difference.components.iter().all(|component| {
+        component.holes.is_empty() && component.outer.iter().any(|point| point == &branch_point)
+    }));
+    let branch_preflight = hypermesh::exact::preflight_boolean_exact(
+        &branch_left,
+        &branch_right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    branch_preflight.validate().unwrap();
+    branch_preflight
+        .validate_against_sources(&branch_left, &branch_right)
+        .unwrap();
+    assert_eq!(
+        branch_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarAffineSurfaceDifference
+    );
 }
 
 #[cfg(feature = "exact-triangulation")]
