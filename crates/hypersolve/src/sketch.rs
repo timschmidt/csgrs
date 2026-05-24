@@ -15,8 +15,9 @@ use hyperreal::{Real, RealSign};
 
 use crate::model::{Constraint, ConstraintKind, Problem, VariableId};
 use crate::sketch_arc_tangent::{
-    ArcArcTangentExprs, ArcCubicTangentExprs, ArcLineTangentExprs, arc_arc_tangent_exprs,
-    arc_cubic_tangent_exprs, arc_line_tangent_exprs,
+    ArcArcTangentExprs, ArcCubicSecondOrderContactExprs, ArcCubicTangentExprs, ArcLineTangentExprs,
+    arc_arc_tangent_exprs, arc_cubic_second_order_contact_exprs, arc_cubic_tangent_exprs,
+    arc_line_tangent_exprs,
 };
 use crate::sketch_builders::{
     angle, distance, incidence, objective, orientation, ranges, symmetry, tangency,
@@ -648,6 +649,28 @@ pub enum SketchConstraintKind {
         /// Signed orientation branch for the outgoing cubic tangent.
         orientation: SketchTangentOrientation,
     },
+    /// 2D circular-arc endpoint second-order contact with a cubic Bezier.
+    ///
+    /// Lowering extends [`SketchConstraintKind::ArcCubicTangent2`] with the
+    /// exact circle-contact second derivative row
+    /// `B'(t).B'(t) + (B(t)-C).B''(t) == 0`. This is a curvature-sensitive
+    /// retained proof package, not a sampled osculating-circle heuristic. It
+    /// avoids division by speed, radius, or curvature; stationary cubic
+    /// parameters and degenerate arcs stay explicit domain obligations,
+    /// following Yap, "Towards Exact Geometric Computation" (1997). The cubic
+    /// derivative control nets follow Farin's Bernstein/de Casteljau model.
+    ArcCubicSecondOrderContact2 {
+        /// Circular arc entity.
+        arc: SketchEntityHandle,
+        /// Endpoint of the arc where contact is enforced.
+        arc_endpoint: SketchArcEndpoint,
+        /// Retained 2D cubic Bezier entity.
+        cubic: SketchEntityHandle,
+        /// Curve parameter used for point and derivative evaluation.
+        parameter: SketchParameterHandle,
+        /// Signed orientation branch for the outgoing cubic tangent.
+        orientation: SketchTangentOrientation,
+    },
     /// 2D cubic-Bezier tangent to a selected line endpoint at a retained parameter.
     ///
     /// Lowering evaluates the retained cubic point and derivative exactly in
@@ -965,6 +988,8 @@ pub enum SketchResidualStrategy {
     ArcArcTangent,
     /// Exact endpoint/radius/cubic-derivative package for retained arc-cubic tangency.
     ArcCubicTangent,
+    /// Exact endpoint/radius/cubic first- and second-derivative contact package.
+    ArcCubicSecondOrderContact,
     /// Exact point/derivative package for retained cubic-line tangency.
     CubicLineTangent,
     /// Exact point/derivative package for retained cubic-cubic tangency.
@@ -1086,6 +1111,16 @@ pub enum SketchResidualFormKind {
     ArcCubicTangentRadiusPerpendicularPolynomial,
     /// Exact signed orientation predicate for arc-cubic tangency.
     ArcCubicTangentOrientationPredicate,
+    /// Exact selected arc endpoint-on-radius proof row for arc-cubic second-order contact.
+    ArcCubicSecondOrderEndpointRadiusPolynomial,
+    /// Exact cubic point/arc endpoint coordinate-incidence proof row for arc-cubic second-order contact.
+    ArcCubicSecondOrderEndpointIncidencePolynomial,
+    /// Exact radius/cubic-derivative perpendicularity proof row for arc-cubic second-order contact.
+    ArcCubicSecondOrderRadiusPerpendicularPolynomial,
+    /// Exact signed orientation predicate for arc-cubic second-order contact.
+    ArcCubicSecondOrderOrientationPredicate,
+    /// Exact differentiated circle-incidence proof row for arc-cubic second-order contact.
+    ArcCubicSecondOrderContactPolynomial,
     /// Exact selected endpoint coordinate-incidence proof row for cubic-line tangency.
     CubicLineTangentEndpointIncidencePolynomial,
     /// Exact cubic derivative/line tangent cross-product proof row.
@@ -1772,6 +1807,31 @@ impl SketchSolveProblem {
     ) -> SketchConstraintHandle {
         tangency::arc_cubic_tangent2(self, name, arc, arc_endpoint, cubic, parameter, orientation)
             .handle
+    }
+
+    /// Add retained second-order contact between a 2D arc endpoint and cubic.
+    ///
+    /// The proof package includes arc/cubic tangency plus the exact
+    /// differentiated circle-incidence row for `B''(t)`.
+    pub fn add_arc_cubic_second_order_contact2(
+        &mut self,
+        name: impl Into<String>,
+        arc: SketchEntityHandle,
+        arc_endpoint: SketchArcEndpoint,
+        cubic: SketchEntityHandle,
+        parameter: SketchParameterHandle,
+        orientation: SketchTangentOrientation,
+    ) -> SketchConstraintHandle {
+        tangency::arc_cubic_second_order_contact2(
+            self,
+            name,
+            arc,
+            arc_endpoint,
+            cubic,
+            parameter,
+            orientation,
+        )
+        .handle
     }
 
     /// Add a retained 2D cubic-Bezier/line tangent relation.
@@ -2706,6 +2766,78 @@ impl SketchSolveProblem {
                     diagnostics,
                 }
             }
+            SketchConstraintKind::ArcCubicSecondOrderContact2 {
+                arc,
+                arc_endpoint,
+                cubic,
+                parameter,
+                orientation,
+            } => {
+                let mut diagnostics = Vec::new();
+                let Some(parts) = self.arc_cubic_second_order_contact_exprs(
+                    arc,
+                    arc_endpoint,
+                    cubic,
+                    parameter,
+                    orientation,
+                    constraint,
+                    &mut diagnostics,
+                ) else {
+                    return SketchResidualFormsReport {
+                        constraint: handle,
+                        status: SketchResidualFormsStatus::InvalidInputs,
+                        forms: Vec::new(),
+                        diagnostics,
+                    };
+                };
+                let mut forms = vec![
+                    SketchResidualForm {
+                        kind: SketchResidualFormKind::ArcCubicSecondOrderEndpointRadiusPolynomial,
+                        role: SketchResidualFormRole::ExactProof,
+                        strategy: Some(SketchResidualStrategy::ArcCubicSecondOrderContact),
+                        residual: parts.arc_endpoint_radius,
+                    },
+                    SketchResidualForm {
+                        kind:
+                            SketchResidualFormKind::ArcCubicSecondOrderEndpointIncidencePolynomial,
+                        role: SketchResidualFormRole::ExactProof,
+                        strategy: Some(SketchResidualStrategy::ArcCubicSecondOrderContact),
+                        residual: parts.endpoint_incidence[0].clone(),
+                    },
+                    SketchResidualForm {
+                        kind:
+                            SketchResidualFormKind::ArcCubicSecondOrderEndpointIncidencePolynomial,
+                        role: SketchResidualFormRole::ExactProof,
+                        strategy: Some(SketchResidualStrategy::ArcCubicSecondOrderContact),
+                        residual: parts.endpoint_incidence[1].clone(),
+                    },
+                    SketchResidualForm {
+                        kind:
+                            SketchResidualFormKind::ArcCubicSecondOrderRadiusPerpendicularPolynomial,
+                        role: SketchResidualFormRole::ExactProof,
+                        strategy: Some(SketchResidualStrategy::ArcCubicSecondOrderContact),
+                        residual: parts.radius_perpendicular,
+                    },
+                    SketchResidualForm {
+                        kind: SketchResidualFormKind::ArcCubicSecondOrderOrientationPredicate,
+                        role: SketchResidualFormRole::ExactProof,
+                        strategy: Some(SketchResidualStrategy::ArcCubicSecondOrderContact),
+                        residual: parts.orientation,
+                    },
+                ];
+                forms.push(SketchResidualForm {
+                    kind: SketchResidualFormKind::ArcCubicSecondOrderContactPolynomial,
+                    role: SketchResidualFormRole::ExactProof,
+                    strategy: Some(SketchResidualStrategy::ArcCubicSecondOrderContact),
+                    residual: parts.second_order_contact,
+                });
+                SketchResidualFormsReport {
+                    constraint: handle,
+                    status: SketchResidualFormsStatus::Generated,
+                    forms,
+                    diagnostics,
+                }
+            }
             SketchConstraintKind::CubicCubicTangent2 {
                 first,
                 first_parameter,
@@ -3527,6 +3659,72 @@ impl SketchSolveProblem {
                     SketchResidualStrategy::ArcArcTangent,
                     ConstraintKind::GreaterOrEqual,
                     Real::one(),
+                );
+            }
+            SketchConstraintKind::ArcCubicSecondOrderContact2 {
+                arc,
+                arc_endpoint,
+                cubic,
+                parameter,
+                orientation,
+            } => {
+                // Second-order arc/cubic contact differentiates the retained
+                // circle incidence equation instead of computing curvature
+                // through primitive-float normalization.
+                let Some(parts) = self.arc_cubic_second_order_contact_exprs(
+                    arc,
+                    arc_endpoint,
+                    cubic,
+                    parameter,
+                    orientation,
+                    constraint,
+                    rows,
+                ) else {
+                    return;
+                };
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} arc endpoint radius", constraint.name),
+                    parts.arc_endpoint_radius,
+                    SketchResidualStrategy::ArcCubicSecondOrderContact,
+                );
+                for (axis, residual) in parts.endpoint_incidence.into_iter().enumerate() {
+                    self.push_residual(
+                        problem,
+                        rows,
+                        constraint,
+                        format!("{} cubic endpoint coordinate {axis}", constraint.name),
+                        residual,
+                        SketchResidualStrategy::ArcCubicSecondOrderContact,
+                    );
+                }
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} radius cubic perpendicular", constraint.name),
+                    parts.radius_perpendicular,
+                    SketchResidualStrategy::ArcCubicSecondOrderContact,
+                );
+                self.push_residual_with_kind(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} cubic tangent orientation", constraint.name),
+                    parts.orientation,
+                    SketchResidualStrategy::ArcCubicSecondOrderContact,
+                    ConstraintKind::GreaterOrEqual,
+                    Real::one(),
+                );
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} cubic second order circle contact", constraint.name),
+                    parts.second_order_contact,
+                    SketchResidualStrategy::ArcCubicSecondOrderContact,
                 );
             }
             SketchConstraintKind::CubicCubicTangent2 {
@@ -4416,6 +4614,30 @@ impl SketchSolveProblem {
             &coordinate_exprs2(&second.endpoint),
             second.radius,
             arc_tangency_branch_sign(branch),
+        ))
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn arc_cubic_second_order_contact_exprs(
+        &self,
+        arc: SketchEntityHandle,
+        arc_endpoint: SketchArcEndpoint,
+        cubic: SketchEntityHandle,
+        parameter: SketchParameterHandle,
+        orientation: SketchTangentOrientation,
+        constraint: &SketchConstraint,
+        rows: &mut Vec<SketchGeneratedRow>,
+    ) -> Option<ArcCubicSecondOrderContactExprs> {
+        let arc = self.arc2_endpoint_parts(arc, arc_endpoint, constraint, rows)?;
+        let cubic = self.cubic2_point_tangent_exprs(cubic, parameter, constraint, rows)?;
+        Some(arc_cubic_second_order_contact_exprs(
+            &coordinate_exprs2(&arc.center),
+            &coordinate_exprs2(&arc.endpoint),
+            arc.radius,
+            &cubic.point,
+            &cubic.tangent,
+            &cubic.second_derivative,
+            tangent_orientation_sign(orientation),
         ))
     }
 

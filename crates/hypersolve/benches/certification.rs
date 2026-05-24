@@ -677,6 +677,36 @@ fn sketch_problem_with_arc_cubic_tangent_relations(
     sketch
 }
 
+fn sketch_problem_with_arc_cubic_second_order_relations(
+    row_count: usize,
+) -> hypersolve::SketchSolveProblem {
+    let mut sketch = hypersolve::SketchSolveProblem::new();
+    for index in 0..row_count {
+        let x = index as i64;
+        let center = sketch.add_point2d(format!("arcsecond{index}.center"), r(x), r(0));
+        let start = sketch.add_point2d(format!("arcsecond{index}.start"), r(x + 5), r(0));
+        let end = sketch.add_point2d(format!("arcsecond{index}.end"), r(x), r(5));
+        let radius = sketch.add_distance(format!("arcsecond{index}.radius"), r(5));
+        let arc =
+            sketch.add_arc_of_circle2(format!("arcsecond{index}.arc"), center, start, end, radius);
+        let p1 = sketch.add_point2d(format!("arcsecond{index}.p1"), r(x + 5), r(10));
+        let p2 = sketch.add_point2d(format!("arcsecond{index}.p2"), r(x - 25), r(20));
+        let p3 = sketch.add_point2d(format!("arcsecond{index}.p3"), r(x - 55), r(30));
+        let cubic = sketch.add_cubic2(format!("arcsecond{index}.cubic"), start, p1, p2, p3);
+        let parameter = sketch.add_parameter(format!("arcsecond{index}.t"), r(0));
+        hypersolve::sketch_tangency_builders::arc_cubic_second_order_contact2(
+            &mut sketch,
+            format!("arc cubic second order {index}"),
+            arc,
+            hypersolve::SketchArcEndpoint::Start,
+            cubic,
+            parameter,
+            hypersolve::SketchTangentOrientation::CounterClockwise,
+        );
+    }
+    sketch
+}
+
 fn sketch_problem_with_point_on_cubic_relations(
     row_count: usize,
 ) -> hypersolve::SketchSolveProblem {
@@ -1042,6 +1072,10 @@ fn certification(c: &mut Criterion) {
     c.bench_function("sketch_arc_cubic_tangent_lowering", |b| {
         b.iter(|| arc_cubic_tangent_sketch.lower_to_problem())
     });
+    let arc_cubic_second_order_sketch = sketch_problem_with_arc_cubic_second_order_relations(16);
+    c.bench_function("sketch_arc_cubic_second_order_lowering", |b| {
+        b.iter(|| arc_cubic_second_order_sketch.lower_to_problem())
+    });
     let point_on_cubic_sketch = sketch_problem_with_point_on_cubic_relations(16);
     c.bench_function("sketch_point_on_cubic_lowering", |b| {
         b.iter(|| point_on_cubic_sketch.lower_to_problem())
@@ -1328,6 +1362,24 @@ fn certification(c: &mut Criterion) {
         b.iter(|| {
             for handle in &arc_cubic_tangent_form_handles {
                 let _ = arc_cubic_tangent_sketch.residual_forms_for_constraint(*handle);
+            }
+        })
+    });
+    let arc_cubic_second_order_form_handles = arc_cubic_second_order_sketch
+        .constraints()
+        .iter()
+        .filter(|constraint| {
+            matches!(
+                constraint.kind,
+                hypersolve::SketchConstraintKind::ArcCubicSecondOrderContact2 { .. }
+            )
+        })
+        .map(|constraint| constraint.handle)
+        .collect::<Vec<_>>();
+    c.bench_function("sketch_arc_cubic_second_order_residual_forms", |b| {
+        b.iter(|| {
+            for handle in &arc_cubic_second_order_form_handles {
+                let _ = arc_cubic_second_order_sketch.residual_forms_for_constraint(*handle);
             }
         })
     });

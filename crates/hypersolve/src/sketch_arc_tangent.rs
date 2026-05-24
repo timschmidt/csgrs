@@ -50,6 +50,26 @@ pub(crate) struct ArcCubicTangentExprs {
     pub(crate) orientation: Expr,
 }
 
+/// Exact residual expressions for retained 2D arc-cubic second-order contact.
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) struct ArcCubicSecondOrderContactExprs {
+    /// Equation certifying that the selected arc endpoint lies on the retained
+    /// radius circle.
+    pub(crate) arc_endpoint_radius: Expr,
+    /// Coordinate incidence rows between the exact cubic point and selected
+    /// arc endpoint.
+    pub(crate) endpoint_incidence: [Expr; 2],
+    /// Equation certifying that the radius vector is perpendicular to the
+    /// exact cubic derivative.
+    pub(crate) radius_perpendicular: Expr,
+    /// Signed orientation row. Callers lower this as `>= 0`; clockwise callers
+    /// pass the negated cross product so the same inequality convention works.
+    pub(crate) orientation: Expr,
+    /// Exact second-order circle-contact row
+    /// `B'(t).B'(t) + (B(t)-C).B''(t)`.
+    pub(crate) second_order_contact: Expr,
+}
+
 /// Exact residual expressions for a retained 2D arc-arc tangency relation.
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct ArcArcTangentExprs {
@@ -154,6 +174,55 @@ pub(crate) fn arc_cubic_tangent_exprs(
         endpoint_incidence: endpoint_delta,
         radius_perpendicular: dot2(&radius_vector, cubic_tangent),
         orientation,
+    }
+}
+
+/// Build exact rows for second-order contact between an arc endpoint and a
+/// retained cubic Bezier evaluated at a retained parameter.
+///
+/// The first four rows are the same proof package as
+/// [`arc_cubic_tangent_exprs`]. The additional row differentiates the retained
+/// circle incidence equation `|B(t)-C|^2 - r^2 == 0` twice:
+///
+/// `B'(t).B'(t) + (B(t)-C).B''(t) == 0`.
+///
+/// This polynomial identity certifies that the cubic has second-order contact
+/// with the retained circle at the selected point without dividing by speed,
+/// radius, or curvature. Stationary parameters and zero-radius arcs therefore
+/// remain explicit domain/preflight obligations. This is the Yap exact
+/// geometric computation split applied to curvature-sensitive evidence, with
+/// `B'` and `B''` supplied by Farin's Bernstein/de Casteljau derivative
+/// control nets.
+pub(crate) fn arc_cubic_second_order_contact_exprs(
+    center: &[Expr; 2],
+    arc_endpoint: &[Expr; 2],
+    radius: Expr,
+    cubic_point: &[Expr; 2],
+    cubic_tangent: &[Expr; 2],
+    cubic_second_derivative: &[Expr; 2],
+    orientation_sign: i8,
+) -> ArcCubicSecondOrderContactExprs {
+    let tangent = arc_cubic_tangent_exprs(
+        center,
+        arc_endpoint,
+        radius,
+        cubic_point,
+        cubic_tangent,
+        orientation_sign,
+    );
+    let contact_radius_vector = [
+        cubic_point[0].clone() - center[0].clone(),
+        cubic_point[1].clone() - center[1].clone(),
+    ];
+    let speed_squared = dot2(cubic_tangent, cubic_tangent);
+    let radial_acceleration = dot2(&contact_radius_vector, cubic_second_derivative);
+
+    ArcCubicSecondOrderContactExprs {
+        arc_endpoint_radius: tangent.arc_endpoint_radius,
+        endpoint_incidence: tangent.endpoint_incidence,
+        radius_perpendicular: tangent.radius_perpendicular,
+        orientation: tangent.orientation,
+        second_order_contact: speed_squared + radial_acceleration,
     }
 }
 

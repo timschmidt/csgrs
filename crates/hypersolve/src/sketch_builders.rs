@@ -241,6 +241,41 @@ pub mod tangency {
         }
     }
 
+    /// Add retained second-order contact between a circular arc and cubic.
+    ///
+    /// This extends arc/cubic tangency with the exact differentiated
+    /// circle-incidence row
+    /// `B'(t).B'(t) + (B(t)-C).B''(t) == 0`. It is a curvature-sensitive
+    /// proof package expressed without square roots or curvature division.
+    /// Degenerate arcs and stationary parameters remain explicit retained
+    /// domain obligations, following Yap's "Towards Exact Geometric
+    /// Computation" (1997), while Farin's Bernstein/de Casteljau derivative
+    /// control nets supply `B'` and `B''`.
+    pub fn arc_cubic_second_order_contact2(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        arc: SketchEntityHandle,
+        arc_endpoint: SketchArcEndpoint,
+        cubic: SketchEntityHandle,
+        parameter: SketchParameterHandle,
+        orientation: SketchTangentOrientation,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::ArcCubicSecondOrderContact2 {
+            arc,
+            arc_endpoint,
+            cubic,
+            parameter,
+            orientation,
+        };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Tangency,
+            strategy: SketchResidualStrategy::ArcCubicSecondOrderContact,
+            kind,
+        }
+    }
+
     /// Add a retained 2D cubic-Bezier/line tangent relation.
     ///
     /// The selected line endpoint is constrained to the exact cubic point

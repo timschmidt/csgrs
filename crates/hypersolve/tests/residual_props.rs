@@ -899,6 +899,75 @@ proptest! {
     }
 
     #[test]
+    fn sketch_arc_cubic_second_order_contact_rows_match_generated_circle_jets(
+        cx in -8_i16..=8,
+        cy in -8_i16..=8,
+        radius in 1_i16..=12,
+    ) {
+        let cx = i64::from(cx);
+        let cy = i64::from(cy);
+        let radius = i64::from(radius);
+        let mut sketch = SketchSolveProblem::new();
+        let center = sketch.add_point2d("center", Real::from(cx), Real::from(cy));
+        let start = sketch.add_point2d("start", Real::from(cx + radius), Real::from(cy));
+        let end = sketch.add_point2d("end", Real::from(cx), Real::from(cy + radius));
+        let radius_entity = sketch.add_distance("radius", Real::from(radius));
+        let arc = sketch.add_arc_of_circle2("arc", center, start, end, radius_entity);
+        let p1 = sketch.add_point2d(
+            "p1",
+            Real::from(cx + radius),
+            Real::from(cy + 2 * radius),
+        );
+        let p2 = sketch.add_point2d(
+            "p2",
+            Real::from(cx - 5 * radius),
+            Real::from(cy + 4 * radius),
+        );
+        let p3 = sketch.add_point2d(
+            "p3",
+            Real::from(cx - 11 * radius),
+            Real::from(cy + 6 * radius),
+        );
+        let cubic = sketch.add_cubic2("cubic", start, p1, p2, p3);
+        let parameter = sketch.add_parameter("t", Real::from(0));
+        let handle = sketch.add_arc_cubic_second_order_contact2(
+            "arc cubic second order",
+            arc,
+            SketchArcEndpoint::Start,
+            cubic,
+            parameter,
+            SketchTangentOrientation::CounterClockwise,
+        );
+
+        let lowered = sketch.lower_to_problem();
+        let context = context_from_problem(&lowered.problem);
+        let certification = certify_candidate(&PreparedProblem::new(&lowered.problem), &context);
+        let forms = sketch.residual_forms_for_constraint(handle);
+
+        prop_assert_eq!(lowered.rows.len(), 6);
+        let all_rows_generated = lowered.rows.iter().all(|row| {
+            row.strategy == Some(SketchResidualStrategy::ArcCubicSecondOrderContact)
+                && row.status == SketchGeneratedRowStatus::Generated
+        });
+        prop_assert!(all_rows_generated);
+        prop_assert!(certification.all_satisfied());
+        prop_assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+        prop_assert_eq!(forms.forms.len(), 6);
+        for form in &forms.forms[..4] {
+            prop_assert_eq!(form.role, SketchResidualFormRole::ExactProof);
+            prop_assert_eq!(form.residual.eval_real(context.bindings()).unwrap(), Real::zero());
+        }
+        prop_assert_eq!(
+            forms.forms[5].kind,
+            SketchResidualFormKind::ArcCubicSecondOrderContactPolynomial
+        );
+        prop_assert_eq!(
+            forms.forms[5].residual.eval_real(context.bindings()).unwrap(),
+            Real::zero()
+        );
+    }
+
+    #[test]
     fn sketch_arc_arc_tangent_rows_match_generated_external_circle_tangents(
         cx in -8_i16..=8,
         cy in -8_i16..=8,
