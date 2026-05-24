@@ -4112,6 +4112,51 @@ fn exercise_component_coplanar_difference() {
         )
         .unwrap();
 
+    let nonconvex_source_crossing_opening_consumed_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            5, 9, 0, 7, 9, 0, 7, 11, 0, 5, 11, 0, //
+            4, 10, 0, 12, 10, 0, 12, 14, 0, 4, 14, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("nonconvex source crossing consumed-hole fixture must import");
+    assert!(
+        arrange_coplanar_convex_surface_component_holed_difference(
+            &nonconvex_source_left,
+            &nonconvex_source_crossing_opening_consumed_hole,
+        )
+        .is_none()
+    );
+    let nonconvex_source_consumed_clipped = arrange_coplanar_surface_component_difference(
+        &nonconvex_source_left,
+        &nonconvex_source_crossing_opening_consumed_hole,
+    )
+    .expect("clipped crossing opening should consume a partially overlapping strict hole");
+    nonconvex_source_consumed_clipped.validate().unwrap();
+    nonconvex_source_consumed_clipped
+        .validate_component_difference_against_sources(
+            &nonconvex_source_left,
+            &nonconvex_source_crossing_opening_consumed_hole,
+        )
+        .unwrap();
+    let nonconvex_source_consumed_clipped_preflight = preflight_boolean_exact(
+        &nonconvex_source_left,
+        &nonconvex_source_crossing_opening_consumed_hole,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("clipped consumed-hole preflight should classify component difference");
+    nonconvex_source_consumed_clipped_preflight
+        .validate()
+        .unwrap();
+    assert_eq!(
+        nonconvex_source_consumed_clipped_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementDifference
+    );
+
     let nonconvex_source_overlapping_crossing_openings =
         ExactMesh::from_i64_triangles_with_policy(
             &[
@@ -4258,6 +4303,58 @@ fn exercise_component_coplanar_difference() {
             .holes
             .len(),
         1
+    );
+
+    let nonconvex_source_clipped_straddling_hole_and_retained_hole =
+        ExactMesh::from_i64_triangles_with_policy(
+            &[
+                2, 2, 0, 3, 2, 0, 2, 3, 0, //
+                5, 9, 0, 7, 9, 0, 7, 11, 0, 5, 11, 0, //
+                4, 10, 0, 12, 10, 0, 12, 14, 0, 4, 14, 0,
+            ],
+            &[
+                0, 1, 2, //
+                3, 4, 5, 3, 5, 6, //
+                7, 8, 9, 7, 9, 10,
+            ],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .expect("nonconvex source clipped straddling-hole fixture must import");
+    let nonconvex_source_clipped_straddling_holed =
+        arrange_coplanar_convex_surface_component_holed_difference(
+            &nonconvex_source_left,
+            &nonconvex_source_clipped_straddling_hole_and_retained_hole,
+        )
+        .expect("clipped crossing opening should consume one hole and retain another");
+    nonconvex_source_clipped_straddling_holed
+        .validate()
+        .unwrap();
+    nonconvex_source_clipped_straddling_holed
+        .validate_against_sources(
+            &nonconvex_source_left,
+            &nonconvex_source_clipped_straddling_hole_and_retained_hole,
+        )
+        .unwrap();
+    assert_eq!(
+        nonconvex_source_clipped_straddling_holed.components[0]
+            .holes
+            .len(),
+        1
+    );
+    let mut stale_clipped_straddling = nonconvex_source_clipped_straddling_holed.clone();
+    stale_clipped_straddling.components[0].holes.push(vec![
+        point3(5, 9, 0),
+        point3(7, 9, 0),
+        point3(7, 11, 0),
+        point3(5, 11, 0),
+    ]);
+    assert!(
+        stale_clipped_straddling
+            .validate_against_sources(
+                &nonconvex_source_left,
+                &nonconvex_source_clipped_straddling_hole_and_retained_hole,
+            )
+            .is_err()
     );
 
     let nonconvex_source_straddling_hole = ExactMesh::from_i64_triangles_with_policy(

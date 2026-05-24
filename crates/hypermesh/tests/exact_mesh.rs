@@ -15949,6 +15949,79 @@ fn exact_coplanar_surface_difference_materializes_nonconvex_source_side_opening(
         )
         .unwrap();
 
+    let crossing_opening_consumed_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            5, 9, 0, 7, 9, 0, 7, 11, 0, 5, 11, 0, //
+            4, 10, 0, 12, 10, 0, 12, 14, 0, 4, 14, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let consumed_clipped = hypermesh::exact::arrange_coplanar_surface_component_difference(
+        &left,
+        &crossing_opening_consumed_hole,
+    )
+    .expect("a clipped crossing opening should consume a partially overlapping strict hole");
+    consumed_clipped.validate().unwrap();
+    consumed_clipped
+        .validate_component_difference_against_sources(&left, &crossing_opening_consumed_hole)
+        .unwrap();
+    assert!(
+        consumed_clipped
+            .polygon
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(5))
+                && real_eq(&point.y, &ExactReal::from(9)))
+    );
+    assert!(
+        hypermesh::exact::arrange_coplanar_convex_surface_component_holed_difference(
+            &left,
+            &crossing_opening_consumed_hole,
+        )
+        .is_none()
+    );
+    let consumed_clipped_preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &crossing_opening_consumed_hole,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    consumed_clipped_preflight.validate().unwrap();
+    consumed_clipped_preflight
+        .validate_against_sources(&left, &crossing_opening_consumed_hole)
+        .unwrap();
+    assert_eq!(
+        consumed_clipped_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementDifference
+    );
+    let consumed_clipped_result = hypermesh::exact::boolean_exact(
+        &left,
+        &crossing_opening_consumed_hole,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    consumed_clipped_result
+        .validate_operation_against_sources(
+            &left,
+            &crossing_opening_consumed_hole,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        consumed_clipped_result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut:
+                hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfaceArrangementDifference
+        }
+    );
+
     let overlapping_crossing_openings = ExactMesh::from_i64_triangles_with_policy(
         &[
             4, 10, 0, 12, 10, 0, 12, 14, 0, 4, 14, 0, //
@@ -16388,6 +16461,79 @@ fn exact_coplanar_component_holed_difference_materializes_nonconvex_source_disk_
             .iter()
             .any(|point| real_eq(&point.x, &ExactReal::from(8))
                 && real_eq(&point.y, &ExactReal::from(8)))
+    );
+
+    let clipped_straddling_hole_and_retained_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            2, 2, 0, 3, 2, 0, 2, 3, 0, //
+            5, 9, 0, 7, 9, 0, 7, 11, 0, 5, 11, 0, //
+            4, 10, 0, 12, 10, 0, 12, 14, 0, 4, 14, 0,
+        ],
+        &[
+            0, 1, 2, //
+            3, 4, 5, 3, 5, 6, //
+            7, 8, 9, 7, 9, 10,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let clipped_straddling_holed =
+        hypermesh::exact::arrange_coplanar_convex_surface_component_holed_difference(
+            &left,
+            &clipped_straddling_hole_and_retained_hole,
+        )
+        .expect("a clipped crossing opening should consume a straddling hole and retain others");
+    clipped_straddling_holed.validate().unwrap();
+    clipped_straddling_holed
+        .validate_against_sources(&left, &clipped_straddling_hole_and_retained_hole)
+        .unwrap();
+    assert_eq!(clipped_straddling_holed.components.len(), 1);
+    assert_eq!(clipped_straddling_holed.components[0].holes.len(), 1);
+    assert!(
+        clipped_straddling_holed.components[0].holes[0]
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(2))
+                && real_eq(&point.y, &ExactReal::from(2)))
+    );
+    assert!(
+        !clipped_straddling_holed.components[0].holes[0]
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(5))
+                && real_eq(&point.y, &ExactReal::from(9)))
+    );
+    assert!(
+        clipped_straddling_holed.components[0]
+            .outer
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(5))
+                && real_eq(&point.y, &ExactReal::from(9)))
+    );
+    let mut stale_clipped_straddling = clipped_straddling_holed.clone();
+    stale_clipped_straddling.components[0].holes.push(vec![
+        p3(5, 9, 0),
+        p3(7, 9, 0),
+        p3(7, 11, 0),
+        p3(5, 11, 0),
+    ]);
+    assert!(
+        stale_clipped_straddling
+            .validate_against_sources(&left, &clipped_straddling_hole_and_retained_hole)
+            .is_err()
+    );
+    let clipped_straddling_preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &clipped_straddling_hole_and_retained_hole,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    clipped_straddling_preflight.validate().unwrap();
+    clipped_straddling_preflight
+        .validate_against_sources(&left, &clipped_straddling_hole_and_retained_hole)
+        .unwrap();
+    assert_eq!(
+        clipped_straddling_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::
+            CertifiedCoplanarConvexSurfaceComponentHoledDifference
     );
 }
 

@@ -7,8 +7,9 @@
 //! multi-hole differences, nonconvex component-union loops, disconnected
 //! nonconvex component-union multi-loops, bounded cutter/hole openings with
 //! retained strict holes, independent consumed straddling-hole split groups,
-//! four-sided consumed branch groups, and the convex one-corner difference
-//! shapes that can be represented as an open triangle mesh. The
+//! four-sided consumed branch groups, clipped nonconvex-source openings that
+//! consume strict holes, and the convex one-corner difference shapes that can
+//! be represented as an open triangle mesh. The
 //! predicates are the same projected orientation and point-in-triangle facts
 //! used by the coplanar overlap classifier, following
 //! Yap, "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
@@ -5814,7 +5815,8 @@ fn coplanar_simple_surface_difference_polygons(
     for component in &mut left_components {
         let mut drop_component = false;
         let mut removed = Vec::new();
-        for right_component in &right_components {
+        let mut holes = Vec::new();
+        for (right_index, right_component) in right_components.iter().enumerate() {
             if polygons_equal(&component.boundary, &right_component.hull)
                 || polygon_in_closed_convex_polygon(
                     &component.boundary,
@@ -5839,6 +5841,16 @@ fn coplanar_simple_surface_difference_polygons(
                     projection,
                 )?;
                 if attachment_count == 0 {
+                    if polygon_strictly_inside_simple_polygon(
+                        &right_component.hull,
+                        &component.boundary,
+                        projection,
+                    )? {
+                        let mut ring = right_component.hull.clone();
+                        orient_polygon_cw(&mut ring, projection)?;
+                        holes.push(ComponentHoleCandidate { ring, right_index });
+                        continue;
+                    }
                     return None;
                 }
                 let mut cutter = right_component.hull.clone();
@@ -5866,8 +5878,19 @@ fn coplanar_simple_surface_difference_polygons(
         if drop_component {
             continue;
         }
-        if removed.is_empty() {
+        if removed.is_empty() && holes.is_empty() {
             polygons.push(component.boundary.clone());
+        } else if removed.is_empty() {
+            return None;
+        } else if !holes.is_empty() {
+            let mut remnants =
+                materialize_simple_source_removed_opening_hole_contact_difference_consuming_holes(
+                    component,
+                    &removed,
+                    &holes,
+                    "coplanar nonconvex source consumed-hole component difference",
+                )?;
+            polygons.append(&mut remnants);
         } else {
             let mut remnants =
                 materialize_simple_source_side_cutter_difference(component, &removed)?;
@@ -9552,6 +9575,14 @@ fn arrange_coplanar_simple_surface_component_holed_difference(
                 outer,
                 holes: hole_rings,
             });
+        } else if let Some(opened) =
+            materialize_simple_source_removed_opening_hole_contact_component_holed_difference(
+                component,
+                &side_removed,
+                &holes,
+            )
+        {
+            components.extend(opened);
         } else if side_removed.len() == side_cutter_indices.len() {
             if let Some(opened) =
                 materialize_simple_source_cutter_hole_contact_component_holed_difference(
@@ -9634,6 +9665,243 @@ struct RemovedRegionCandidate {
     right_index: usize,
     is_cutter: bool,
     region: Vec<Point3>,
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Debug)]
+struct SimpleRemovedRegionCandidate {
+    right_index: Option<usize>,
+    is_cutter: bool,
+    region: Vec<Point3>,
+}
+
+/// Replay clipped simple openings that consume strict holes on a source disk.
+///
+/// This is the crossing-cutter sibling of
+/// [`materialize_simple_source_cutter_hole_contact_component_holed_difference`].
+/// A cutter that crosses a nonconvex source is first clipped to one or more
+/// source-owned simple removed openings. If a strict hole overlaps one of
+/// those openings, the hole can be consumed only after the exact union of the
+/// opening and hole replays as one simple removed loop. Unrelated strict holes
+/// remain holes and must be assigned to exactly one retained output loop.
+///
+/// The helper deliberately uses simple-polygon contact and exposed-fragment
+/// replay instead of convex-only contact facts, because clipped
+/// `source ∩ cutter` openings need not remain convex. This is still a bounded
+/// retained-object certificate, not a general arrangement solver: point-only
+/// contacts do not connect components, non-simple unions reject, and the final
+/// source subtraction must replay exact area. That follows Yap, "Towards
+/// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997). The
+/// exposed boundary construction is Weiler-Atherton retained traversal from
+/// Weiler and Atherton, "Hidden Surface Removal Using Polygon Area Sorting,"
+/// *SIGGRAPH Computer Graphics* 11.2 (1977), with segment relations certified
+/// by the Guigue-Devillers orientation-predicate classifier.
+#[cfg(feature = "exact-triangulation")]
+fn materialize_simple_source_removed_opening_hole_contact_component_holed_difference(
+    component: &SimpleSurfaceComponent,
+    removed_openings: &[Vec<Point3>],
+    holes: &[ComponentHoleCandidate],
+) -> Option<Vec<CoplanarConvexHoledComponent>> {
+    if removed_openings.is_empty() || holes.is_empty() {
+        return None;
+    }
+    let projection = component.projection;
+    let (removed_openings, consumed_holes) =
+        materialize_simple_source_removed_opening_hole_contact_openings(
+            component,
+            removed_openings,
+            holes,
+            "coplanar nonconvex source clipped cutter-hole contact",
+        )?;
+    let (removed_openings, mut cut_polygons) =
+        materialize_simple_source_side_cutter_difference_core(component, &removed_openings)?;
+    for polygon in &mut cut_polygons {
+        orient_polygon_ccw(polygon, projection)?;
+    }
+    let retained_holes = holes
+        .iter()
+        .filter(|hole| !consumed_holes.contains(&hole.right_index))
+        .map(|hole| hole.ring.clone())
+        .collect::<Vec<_>>();
+    let holes_by_cut = assign_holes_to_side_cutter_split_outputs(
+        &retained_holes,
+        &cut_polygons,
+        &removed_openings,
+        projection,
+    )?;
+    Some(
+        cut_polygons
+            .into_iter()
+            .zip(holes_by_cut)
+            .map(|(outer, holes)| CoplanarConvexHoledComponent { outer, holes })
+            .collect(),
+    )
+}
+
+/// Replay a nonconvex source difference whose strict holes are all consumed.
+///
+/// The public no-hole artifact must not route through a component-holed object
+/// with empty hole lists. This helper shares the same clipped-opening/hole
+/// contact proof as the component-holed path, then promotes only when every
+/// strict hole belongs to a consumed exact union group and the retained loops
+/// are disjoint simple source-owned outputs.
+#[cfg(feature = "exact-triangulation")]
+fn materialize_simple_source_removed_opening_hole_contact_difference_consuming_holes(
+    component: &SimpleSurfaceComponent,
+    removed_openings: &[Vec<Point3>],
+    holes: &[ComponentHoleCandidate],
+    label: &'static str,
+) -> Option<Vec<Vec<Point3>>> {
+    if removed_openings.is_empty() || holes.is_empty() {
+        return None;
+    }
+    let projection = component.projection;
+    let (removed_openings, consumed_holes) =
+        materialize_simple_source_removed_opening_hole_contact_openings(
+            component,
+            removed_openings,
+            holes,
+            label,
+        )?;
+    if holes
+        .iter()
+        .any(|hole| !consumed_holes.contains(&hole.right_index))
+    {
+        return None;
+    }
+    let (_, mut polygons) =
+        materialize_simple_source_side_cutter_difference_core(component, &removed_openings)?;
+    for polygon in &mut polygons {
+        orient_polygon_ccw(polygon, projection)?;
+        validate_projected_simple_loop(polygon, projection, label).ok()?;
+    }
+    validate_simple_component_loops_disjoint(&polygons, projection, label).ok()?;
+    sort_polygons_for_replay(&mut polygons, projection);
+    Some(polygons)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn materialize_simple_source_removed_opening_hole_contact_openings(
+    component: &SimpleSurfaceComponent,
+    removed_openings: &[Vec<Point3>],
+    holes: &[ComponentHoleCandidate],
+    label: &'static str,
+) -> Option<(Vec<Vec<Point3>>, Vec<usize>)> {
+    let projection = component.projection;
+    let mut regions = Vec::with_capacity(removed_openings.len() + holes.len());
+    for opening in removed_openings {
+        let mut region = opening.clone();
+        orient_polygon_ccw(&mut region, projection)?;
+        region = simplify_projected_polygon(region, projection);
+        validate_projected_simple_loop(&region, projection, label).ok()?;
+        if !polygon_lies_in_closed_simple_polygon(&region, &component.boundary, projection)? {
+            return None;
+        }
+        if simple_boundary_attachment_count(&component.boundary, &region, projection)? == 0 {
+            return None;
+        }
+        regions.push(SimpleRemovedRegionCandidate {
+            right_index: None,
+            is_cutter: true,
+            region,
+        });
+    }
+    for hole in holes {
+        let mut region = hole.ring.clone();
+        orient_polygon_ccw(&mut region, projection)?;
+        region = simplify_projected_polygon(region, projection);
+        validate_projected_simple_loop(&region, projection, label).ok()?;
+        if !polygon_strictly_inside_simple_polygon(&hole.ring, &component.boundary, projection)? {
+            return None;
+        }
+        regions.push(SimpleRemovedRegionCandidate {
+            right_index: Some(hole.right_index),
+            is_cutter: false,
+            region,
+        });
+    }
+
+    let groups = simple_removed_region_contact_groups(&regions, projection)?;
+    let mut saw_mixed_group = false;
+    let mut consumed_holes = Vec::new();
+    let mut merged_openings = Vec::new();
+    for group in &groups {
+        let has_cutter = group.iter().any(|&index| regions[index].is_cutter);
+        let has_hole = group.iter().any(|&index| !regions[index].is_cutter);
+        if !has_cutter {
+            continue;
+        }
+        let mut opening = if group.len() == 1 {
+            regions[group[0]].region.clone()
+        } else {
+            let polygons = group
+                .iter()
+                .map(|&index| regions[index].region.clone())
+                .collect::<Vec<_>>();
+            let all = (0..polygons.len()).collect::<Vec<_>>();
+            materialize_simple_polygon_union_group(&polygons, &all, projection, label)?
+        };
+        orient_polygon_ccw(&mut opening, projection)?;
+        opening = simplify_projected_polygon(opening, projection);
+        validate_projected_simple_loop(&opening, projection, label).ok()?;
+        if !polygon_lies_in_closed_simple_polygon(&opening, &component.boundary, projection)? {
+            return None;
+        }
+        if simple_boundary_attachment_count(&component.boundary, &opening, projection)? == 0 {
+            return None;
+        }
+        if has_hole {
+            saw_mixed_group = true;
+            consumed_holes.extend(group.iter().filter_map(|&index| regions[index].right_index));
+        }
+        merged_openings.push(opening);
+    }
+    if !saw_mixed_group {
+        return None;
+    }
+    Some((merged_openings, consumed_holes))
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn simple_removed_region_contact_groups(
+    regions: &[SimpleRemovedRegionCandidate],
+    projection: CoplanarProjection,
+) -> Option<Vec<Vec<usize>>> {
+    if regions.is_empty() {
+        return None;
+    }
+    let mut contact_graph = UnionFind::new(regions.len());
+    let mut point_contacts = Vec::new();
+    for left in 0..regions.len() {
+        for right in left + 1..regions.len() {
+            match simple_polygon_interaction(
+                &regions[left].region,
+                &regions[right].region,
+                projection,
+            )? {
+                SimplePolygonInteraction::Disjoint => {}
+                SimplePolygonInteraction::PointOnly => point_contacts.push((left, right)),
+                SimplePolygonInteraction::Connected => contact_graph.union(left, right),
+            }
+        }
+    }
+    for (left, right) in point_contacts {
+        if contact_graph.find(left) != contact_graph.find(right) {
+            return None;
+        }
+    }
+
+    let mut groups: Vec<(usize, Vec<usize>)> = Vec::new();
+    for index in 0..regions.len() {
+        let root = contact_graph.find(index);
+        if let Some((_, members)) = groups.iter_mut().find(|(candidate, _)| *candidate == root) {
+            members.push(index);
+        } else {
+            groups.push((root, vec![index]));
+        }
+    }
+    groups.sort_by_key(|(_, members)| members.first().copied().unwrap_or(usize::MAX));
+    Some(groups.into_iter().map(|(_, members)| members).collect())
 }
 
 /// Replay cutter/hole contact groups on nonconvex simple source disks.
