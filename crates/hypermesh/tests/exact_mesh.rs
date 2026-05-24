@@ -13046,6 +13046,25 @@ fn exact_coplanar_convex_surface_union_materializes_full_edge_touching_rectangle
         hypermesh::exact::arrange_coplanar_convex_surface_union(&left, &point_touching_right)
             .is_none()
     );
+    let point_union =
+        hypermesh::exact::arrange_coplanar_surface_point_touch_union(&left, &point_touching_right)
+            .expect("vertex-vertex point-touch surface union should retain two components");
+    point_union.validate().unwrap();
+    point_union
+        .validate_union_against_sources(&left, &point_touching_right)
+        .unwrap();
+    assert_eq!(point_union.polygons.len(), 2);
+    assert_eq!(point_union.mesh.vertices().len(), 8);
+    assert_eq!(
+        point_union
+            .polygons
+            .iter()
+            .flatten()
+            .filter(|point| real_eq(&point.x, &ExactReal::from(2))
+                && real_eq(&point.y, &ExactReal::from(2)))
+            .count(),
+        2
+    );
     let point_preflight = hypermesh::exact::preflight_boolean_exact(
         &left,
         &point_touching_right,
@@ -13055,7 +13074,126 @@ fn exact_coplanar_convex_surface_union_materializes_full_edge_touching_rectangle
     point_preflight.validate().unwrap();
     assert_eq!(
         point_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchUnion
+    );
+    let point_result = hypermesh::exact::boolean_exact(
+        &left,
+        &point_touching_right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    point_result
+        .validate_operation_against_sources(
+            &left,
+            &point_touching_right,
+            hypermesh::exact::ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        point_result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfacePointTouchUnion
+        }
+    );
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
+fn exact_coplanar_surface_point_touch_union_rejects_t_junction_contact() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 2, 0, 0, 2, 2, 0, 0, 2, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let vertex_edge_right = ExactMesh::from_i64_triangles_with_policy(
+        &[1, 2, 0, 3, 3, 0, 3, 4, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_point_touch_union(&left, &vertex_edge_right)
+            .is_none()
+    );
+    let preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &vertex_edge_right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+    )
+    .unwrap();
+    preflight.validate().unwrap();
+    assert_eq!(
+        preflight.support,
         hypermesh::exact::ExactBooleanSupport::RequiresBoundaryPolicy
+    );
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
+fn exact_coplanar_surface_point_touch_union_materializes_multiple_branch_components() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            2, 2, 0, 4, -2, 0, 6, -2, 0, //
+            2, 6, 0, -2, 6, 0, -2, 4, 0,
+        ],
+        &[
+            0, 1, 2, //
+            3, 4, 5,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let right = ExactMesh::from_i64_triangles_with_policy(
+        &[2, 2, 0, 6, 2, 0, 6, 6, 0, 2, 6, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+
+    assert!(hypermesh::exact::arrange_coplanar_convex_surface_union(&left, &right).is_none());
+    assert!(hypermesh::exact::arrange_coplanar_surface_component_union(&left, &right).is_none());
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_multi_component_union(&left, &right).is_none()
+    );
+
+    let union = hypermesh::exact::arrange_coplanar_surface_point_touch_union(&left, &right)
+        .expect("two exact vertex-vertex branch contacts should materialize explicitly");
+    union.validate().unwrap();
+    union.validate_union_against_sources(&left, &right).unwrap();
+    assert_eq!(union.polygons.len(), 3);
+    assert_eq!(union.mesh.vertices().len(), 10);
+    assert_eq!(
+        union
+            .polygons
+            .iter()
+            .flatten()
+            .filter(|point| real_eq(&point.x, &ExactReal::from(2))
+                && (real_eq(&point.y, &ExactReal::from(2))
+                    || real_eq(&point.y, &ExactReal::from(6))))
+            .count(),
+        4
+    );
+
+    let mut stale = union.clone();
+    stale.polygons[0][0] = p3(1, 1, 0);
+    assert!(stale.validate_union_against_sources(&left, &right).is_err());
+
+    let preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+    )
+    .unwrap();
+    preflight.validate().unwrap();
+    preflight.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchUnion
     );
 }
 
@@ -13600,6 +13738,10 @@ fn exact_coplanar_surface_component_union_materializes_nonconvex_contact_graph()
         hypermesh::exact::arrange_coplanar_surface_component_union(&point_only_left, &right)
             .is_none()
     );
+    hypermesh::exact::arrange_coplanar_surface_point_touch_union(&point_only_left, &right)
+        .expect("point-only component contact should route to explicit point-touch union")
+        .validate_union_against_sources(&point_only_left, &right)
+        .unwrap();
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -13726,6 +13868,10 @@ fn exact_coplanar_surface_multi_component_union_materializes_disconnected_noncon
         hypermesh::exact::arrange_coplanar_surface_multi_component_union(&point_only_left, &right)
             .is_none()
     );
+    hypermesh::exact::arrange_coplanar_surface_point_touch_union(&point_only_left, &right)
+        .expect("point-only multi-component contact should route to explicit point-touch union")
+        .validate_union_against_sources(&point_only_left, &right)
+        .unwrap();
 }
 
 #[cfg(feature = "exact-triangulation")]

@@ -1168,6 +1168,33 @@ pub struct CoplanarSurfaceMultiArrangement {
     pub mesh: ExactMesh,
 }
 
+/// Exact coplanar union output whose components meet only at shared vertices.
+///
+/// This artifact is deliberately separate from
+/// [`CoplanarSurfaceMultiArrangement`]. A point-touch union has branch
+/// incidence in the geometric image, but its retained mesh keeps each disk
+/// component as a separate loop and separate mesh vertex at the same exact
+/// coordinate. That is the bounded form of the branch-point work: the exact
+/// vertex-vertex contacts are certified and replayable, while edge contacts,
+/// vertex-edge T-junctions, proper overlaps, nesting, and general planar
+/// subdivisions remain with the stronger arrangement paths. This follows
+/// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
+/// 7.1-2 (1997): the combinatorial contract is named and validated rather
+/// than inferred from floating tolerances. The segment contact tests use the
+/// same orientation-predicate model as Guigue and Devillers, "Fast and Robust
+/// Triangle-Triangle Overlap Test Using Orientation Predicates," *Journal of
+/// Graphics Tools* 8.1 (2003).
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Debug, PartialEq)]
+pub struct CoplanarSurfacePointTouchUnion {
+    /// Projection used by exact 2D contact predicates and triangulation.
+    pub projection: CoplanarProjection,
+    /// Exact 3D simple boundary loops, one per retained disk component.
+    pub polygons: Vec<Vec<Point3>>,
+    /// Exact triangulated open surface mesh containing all retained disks.
+    pub mesh: ExactMesh,
+}
+
 /// Exact single-loop arrangement output for nonconvex coplanar surfaces.
 ///
 /// This is the single-component counterpart to
@@ -1650,6 +1677,56 @@ impl CoplanarSurfaceMultiArrangement {
             Err(surface_validation_error(
                 "coplanar nonconvex multi-component arrangement",
                 "retained intersection does not match source replay",
+            ))
+        }
+    }
+}
+
+#[cfg(feature = "exact-triangulation")]
+impl CoplanarSurfacePointTouchUnion {
+    /// Validate branch-point component loops, exact point contacts, and mesh state.
+    ///
+    /// Validation allows repeated exact coordinates only across different
+    /// retained loops, and only when the loops meet through exact
+    /// vertex-vertex contacts. The retained mesh itself keeps those vertices
+    /// duplicated so each disk component still has an ordinary boundary loop.
+    /// This mirrors Yap's retained-state discipline from "Towards Exact
+    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997): the
+    /// branch incidence is part of the explicit artifact contract.
+    pub fn validate(&self) -> Result<(), MeshError> {
+        validate_multi_surface_output_allowing_vertex_point_touches(
+            self.projection,
+            &self.polygons,
+            &self.mesh,
+            "coplanar point-touch surface union",
+            true,
+        )
+    }
+
+    /// Validate this point-touch union against its exact sources.
+    ///
+    /// The replay must reproduce the same ordered component loops and the same
+    /// duplicate branch vertices. A stale object that merely has a locally
+    /// valid mesh is rejected unless the source operands still certify exactly
+    /// this bounded vertex-vertex branch union.
+    pub fn validate_union_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<(), MeshError> {
+        self.validate()?;
+        let replay = arrange_coplanar_surface_point_touch_union(left, right).ok_or_else(|| {
+            surface_validation_error(
+                "coplanar point-touch surface union",
+                "source replay did not reproduce a point-touch union",
+            )
+        })?;
+        if self == &replay {
+            Ok(())
+        } else {
+            Err(surface_validation_error(
+                "coplanar point-touch surface union",
+                "retained union does not match source replay",
             ))
         }
     }
@@ -2956,6 +3033,14 @@ enum ConvexUnionComponentRelation {
     PositiveArea,
 }
 
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum VertexPointContactRelation {
+    Disjoint,
+    VertexOnly,
+    InvalidBoundaryContact,
+}
+
 /// Certify one source component as a convex coplanar sheet.
 ///
 /// This helper intentionally accepts single-triangle components, unlike the
@@ -3779,6 +3864,159 @@ pub fn arrange_coplanar_surface_multi_component_union(
     };
     arrangement.validate().ok()?;
     Some(arrangement)
+}
+
+/// Certify and materialize a bounded vertex-vertex point-touch union.
+///
+/// This path handles a hard branch-point case without weakening the existing
+/// simple-loop and multi-loop arrangements. Source topology is decomposed into
+/// exact convex coplanar components, same-operand components must remain
+/// disjoint, and cross-operand contact is accepted only when exact predicates
+/// prove that every contact is a shared source vertex. The output keeps each
+/// component as a separate loop and intentionally duplicates the shared exact
+/// coordinate in the mesh, so downstream consumers see the branch incidence
+/// through the named artifact rather than through an accidental welded vertex.
+///
+/// The construction follows Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997), by promoting topology only from
+/// replayable exact source facts. Segment contacts are classified with the
+/// orientation-predicate model used by Guigue and Devillers, "Fast and Robust
+/// Triangle-Triangle Overlap Test Using Orientation Predicates," *Journal of
+/// Graphics Tools* 8.1 (2003).
+#[cfg(feature = "exact-triangulation")]
+pub fn arrange_coplanar_surface_point_touch_union(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Option<CoplanarSurfacePointTouchUnion> {
+    if arrange_coplanar_convex_surface_union(left, right).is_some()
+        || arrange_coplanar_convex_surface_component_union(left, right).is_some()
+        || arrange_coplanar_surface_component_union(left, right).is_some()
+        || arrange_coplanar_surface_multi_component_union(left, right).is_some()
+        || arrange_coplanar_convex_surface_multi_union(left, right).is_some()
+        || certify_coplanar_convex_surface_equivalence(left, right).is_some()
+        || certify_coplanar_convex_surface_containment(left, right).is_some()
+    {
+        return None;
+    }
+
+    let left_components = connected_face_component_meshes(left)?;
+    let right_components = connected_face_component_meshes(right)?;
+    if left_components.is_empty() || right_components.is_empty() {
+        return None;
+    }
+
+    let mut components = Vec::new();
+    for mesh in left_components {
+        components.push(ConvexUnionComponent::from_mesh(MultiUnionSide::Left, mesh)?);
+    }
+    for mesh in right_components {
+        components.push(ConvexUnionComponent::from_mesh(
+            MultiUnionSide::Right,
+            mesh,
+        )?);
+    }
+    let projection = components.first()?.projection;
+    if components
+        .iter()
+        .any(|component| component.projection != projection)
+    {
+        return None;
+    }
+
+    let left_hulls = components
+        .iter()
+        .filter(|component| component.side == MultiUnionSide::Left)
+        .map(|component| component.hull.clone())
+        .collect::<Vec<_>>();
+    let right_hulls = components
+        .iter()
+        .filter(|component| component.side == MultiUnionSide::Right)
+        .map(|component| component.hull.clone())
+        .collect::<Vec<_>>();
+    validate_component_loops_disjoint(
+        &left_hulls,
+        projection,
+        "coplanar point-touch surface union",
+    )
+    .ok()?;
+    validate_component_loops_disjoint(
+        &right_hulls,
+        projection,
+        "coplanar point-touch surface union",
+    )
+    .ok()?;
+
+    let mut saw_point_touch = false;
+    for left_index in 0..components.len() {
+        for right_index in left_index + 1..components.len() {
+            match convex_union_component_relation(
+                &components[left_index].hull,
+                &components[right_index].hull,
+                projection,
+            )? {
+                ConvexUnionComponentRelation::Disjoint => {
+                    if components[left_index].side == components[right_index].side {
+                        continue;
+                    }
+                    match vertex_point_contact_relation(
+                        &components[left_index].hull,
+                        &components[right_index].hull,
+                        projection,
+                    )? {
+                        VertexPointContactRelation::Disjoint => {}
+                        VertexPointContactRelation::VertexOnly => saw_point_touch = true,
+                        VertexPointContactRelation::InvalidBoundaryContact => return None,
+                    }
+                }
+                ConvexUnionComponentRelation::PositiveArea => return None,
+                ConvexUnionComponentRelation::BoundaryOnly => {
+                    if components[left_index].side == components[right_index].side {
+                        return None;
+                    }
+                    if convex_polygons_touch_on_positive_boundary(
+                        &components[left_index].hull,
+                        &components[right_index].hull,
+                        projection,
+                    )? {
+                        return None;
+                    }
+                    if vertex_point_contact_relation(
+                        &components[left_index].hull,
+                        &components[right_index].hull,
+                        projection,
+                    )? != VertexPointContactRelation::VertexOnly
+                    {
+                        return None;
+                    }
+                    saw_point_touch = true;
+                }
+            }
+        }
+    }
+    if !saw_point_touch {
+        return None;
+    }
+
+    let mut polygons = components
+        .iter()
+        .map(|component| component.hull.clone())
+        .collect::<Vec<_>>();
+    for polygon in &mut polygons {
+        orient_polygon_ccw(polygon, projection)?;
+    }
+    sort_polygons_for_replay(&mut polygons, projection);
+    let mesh = polygons_to_earcut_open_mesh_with_label(
+        &polygons,
+        projection,
+        "exact coplanar point-touch surface union",
+    )?;
+    let union = CoplanarSurfacePointTouchUnion {
+        projection,
+        polygons,
+        mesh,
+    };
+    union.validate().ok()?;
+    Some(union)
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -6073,6 +6311,98 @@ fn convex_polygons_touch_on_positive_boundary(
         }
     }
     Some(false)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn vertex_point_contact_relation(
+    left: &[Point3],
+    right: &[Point3],
+    projection: CoplanarProjection,
+) -> Option<VertexPointContactRelation> {
+    let mut touched = false;
+    for point in left {
+        match convex_polygon_location(point, right, projection)? {
+            ConvexPolygonLocation::Outside => {}
+            ConvexPolygonLocation::Inside => {
+                return Some(VertexPointContactRelation::InvalidBoundaryContact);
+            }
+            ConvexPolygonLocation::Boundary => {
+                if !polygon_has_exact_vertex(right, point) {
+                    return Some(VertexPointContactRelation::InvalidBoundaryContact);
+                }
+                touched = true;
+            }
+        }
+    }
+    for point in right {
+        match convex_polygon_location(point, left, projection)? {
+            ConvexPolygonLocation::Outside => {}
+            ConvexPolygonLocation::Inside => {
+                return Some(VertexPointContactRelation::InvalidBoundaryContact);
+            }
+            ConvexPolygonLocation::Boundary => {
+                if !polygon_has_exact_vertex(left, point) {
+                    return Some(VertexPointContactRelation::InvalidBoundaryContact);
+                }
+                touched = true;
+            }
+        }
+    }
+
+    for left_edge in 0..left.len() {
+        let left_start = project_point(&left[left_edge], projection);
+        let left_end = project_point(&left[(left_edge + 1) % left.len()], projection);
+        for right_edge in 0..right.len() {
+            let right_start = project_point(&right[right_edge], projection);
+            let right_end = project_point(&right[(right_edge + 1) % right.len()], projection);
+            match classify_segment_intersection(&left_start, &left_end, &right_start, &right_end)
+                .value()?
+            {
+                SegmentIntersection::Disjoint => {}
+                SegmentIntersection::EndpointTouch => {
+                    if !segments_share_exact_endpoint(
+                        &left[left_edge],
+                        &left[(left_edge + 1) % left.len()],
+                        &right[right_edge],
+                        &right[(right_edge + 1) % right.len()],
+                    ) {
+                        return Some(VertexPointContactRelation::InvalidBoundaryContact);
+                    }
+                    touched = true;
+                }
+                SegmentIntersection::Proper
+                | SegmentIntersection::CollinearOverlap
+                | SegmentIntersection::Identical => {
+                    return Some(VertexPointContactRelation::InvalidBoundaryContact);
+                }
+            }
+        }
+    }
+    Some(if touched {
+        VertexPointContactRelation::VertexOnly
+    } else {
+        VertexPointContactRelation::Disjoint
+    })
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn polygon_has_exact_vertex(polygon: &[Point3], point: &Point3) -> bool {
+    polygon
+        .iter()
+        .any(|candidate| points_equal(candidate, point))
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn segments_share_exact_endpoint(
+    left_start: &Point3,
+    left_end: &Point3,
+    right_start: &Point3,
+    right_end: &Point3,
+) -> bool {
+    points_equal(left_start, right_start)
+        || points_equal(left_start, right_end)
+        || points_equal(left_end, right_start)
+        || points_equal(left_end, right_end)
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -8492,7 +8822,7 @@ fn validate_multi_surface_output(
     mesh: &ExactMesh,
     label: &'static str,
 ) -> Result<(), MeshError> {
-    validate_multi_surface_output_with_loop_policy(projection, polygons, mesh, label, true)
+    validate_multi_surface_output_with_loop_policy(projection, polygons, mesh, label, true, false)
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -8502,7 +8832,25 @@ fn validate_multi_simple_surface_output(
     mesh: &ExactMesh,
     label: &'static str,
 ) -> Result<(), MeshError> {
-    validate_multi_surface_output_with_loop_policy(projection, polygons, mesh, label, false)
+    validate_multi_surface_output_with_loop_policy(projection, polygons, mesh, label, false, false)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn validate_multi_surface_output_allowing_vertex_point_touches(
+    projection: CoplanarProjection,
+    polygons: &[Vec<Point3>],
+    mesh: &ExactMesh,
+    label: &'static str,
+    require_strict_convex: bool,
+) -> Result<(), MeshError> {
+    validate_multi_surface_output_with_loop_policy(
+        projection,
+        polygons,
+        mesh,
+        label,
+        require_strict_convex,
+        true,
+    )
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -8512,6 +8860,7 @@ fn validate_multi_surface_output_with_loop_policy(
     mesh: &ExactMesh,
     label: &'static str,
     require_strict_convex: bool,
+    allow_vertex_point_touches: bool,
 ) -> Result<(), MeshError> {
     if polygons.len() < 2 {
         return Err(surface_validation_error(
@@ -8578,19 +8927,33 @@ fn validate_multi_surface_output_with_loop_policy(
             for other_polygon in polygons.iter().skip(component + 1) {
                 for other in other_polygon {
                     if points_equal(point, other) {
-                        return Err(surface_validation_error(
-                            label,
-                            "component loops share an exact point",
-                        ));
+                        if !allow_vertex_point_touches {
+                            return Err(surface_validation_error(
+                                label,
+                                "component loops share an exact point",
+                            ));
+                        }
                     }
                 }
             }
         }
     }
     if require_strict_convex {
-        validate_component_loops_disjoint(polygons, projection, label)?;
+        if allow_vertex_point_touches {
+            validate_component_loops_disjoint_allowing_vertex_point_touches(
+                polygons, projection, label,
+            )?;
+        } else {
+            validate_component_loops_disjoint(polygons, projection, label)?;
+        }
     } else {
-        validate_simple_component_loops_disjoint(polygons, projection, label)?;
+        if allow_vertex_point_touches {
+            validate_simple_component_loops_disjoint_allowing_vertex_point_touches(
+                polygons, projection, label,
+            )?;
+        } else {
+            validate_simple_component_loops_disjoint(polygons, projection, label)?;
+        }
     }
 
     let mut vertex_offset = 0;
@@ -8628,13 +8991,23 @@ fn validate_multi_surface_output_with_loop_policy(
             ));
         }
     }
-    validate_mesh_edges_respect_retained_rings(
-        mesh,
-        projection,
-        &component_ranges,
-        label,
-        "multi-component mesh edge crosses a retained component loop",
-    )?;
+    if allow_vertex_point_touches {
+        validate_mesh_edges_respect_retained_rings_allowing_exact_endpoint_touches(
+            mesh,
+            projection,
+            &component_ranges,
+            label,
+            "multi-component mesh edge crosses a retained component loop",
+        )?;
+    } else {
+        validate_mesh_edges_respect_retained_rings(
+            mesh,
+            projection,
+            &component_ranges,
+            label,
+            "multi-component mesh edge crosses a retained component loop",
+        )?;
+    }
     validate_mesh_uses_all_retained_vertices(
         mesh,
         expected_vertices,
@@ -8676,10 +9049,12 @@ fn validate_multi_surface_output_with_loop_policy(
     for left in 0..retained_points.len() {
         for right in left + 1..retained_points.len() {
             if points_equal(retained_points[left], retained_points[right]) {
-                return Err(surface_validation_error(
-                    label,
-                    "multi-component retained loops repeat an exact point",
-                ));
+                if !allow_vertex_point_touches {
+                    return Err(surface_validation_error(
+                        label,
+                        "multi-component retained loops repeat an exact point",
+                    ));
+                }
             }
         }
     }
@@ -9056,6 +9431,41 @@ fn validate_mesh_edges_respect_retained_rings(
     label: &'static str,
     message: &'static str,
 ) -> Result<(), MeshError> {
+    validate_mesh_edges_respect_retained_rings_with_policy(
+        mesh,
+        projection,
+        retained_rings,
+        label,
+        message,
+        false,
+    )
+}
+
+fn validate_mesh_edges_respect_retained_rings_allowing_exact_endpoint_touches(
+    mesh: &ExactMesh,
+    projection: CoplanarProjection,
+    retained_rings: &[core::ops::Range<usize>],
+    label: &'static str,
+    message: &'static str,
+) -> Result<(), MeshError> {
+    validate_mesh_edges_respect_retained_rings_with_policy(
+        mesh,
+        projection,
+        retained_rings,
+        label,
+        message,
+        true,
+    )
+}
+
+fn validate_mesh_edges_respect_retained_rings_with_policy(
+    mesh: &ExactMesh,
+    projection: CoplanarProjection,
+    retained_rings: &[core::ops::Range<usize>],
+    label: &'static str,
+    message: &'static str,
+    allow_exact_endpoint_touches: bool,
+) -> Result<(), MeshError> {
     let retained_edges = retained_ring_edges(retained_rings, label)?;
     let mut mesh_edges = Vec::new();
     for triangle in mesh.triangles() {
@@ -9092,6 +9502,14 @@ fn validate_mesh_edges_respect_retained_rings(
                         || edge_a == ring_b
                         || edge_b == ring_a
                         || edge_b == ring_b => {}
+                Some(SegmentIntersection::EndpointTouch)
+                    if allow_exact_endpoint_touches
+                        && segments_share_exact_endpoint(
+                            &edge_start,
+                            &edge_end,
+                            &ring_start,
+                            &ring_end,
+                        ) => {}
                 Some(
                     SegmentIntersection::Proper
                     | SegmentIntersection::EndpointTouch
@@ -9394,6 +9812,82 @@ fn validate_component_loops_disjoint(
     Ok(())
 }
 
+/// Validate convex component loops that may meet at exact shared vertices.
+///
+/// This is used only by the point-touch union artifact. It intentionally does
+/// not relax the ordinary multi-component invariant: exact vertex-vertex
+/// contact is the only allowed cross-loop incidence. Vertex-edge T-junctions,
+/// positive-length edge contact, crossings, and nesting are rejected with the
+/// same orientation-predicate segment model cited above from Guigue and
+/// Devillers (2003), keeping the branch case bounded in Yap's sense.
+#[cfg(feature = "exact-triangulation")]
+fn validate_component_loops_disjoint_allowing_vertex_point_touches(
+    polygons: &[Vec<Point3>],
+    projection: CoplanarProjection,
+    label: &'static str,
+) -> Result<(), MeshError> {
+    for left_index in 0..polygons.len() {
+        for right_index in left_index + 1..polygons.len() {
+            let left = &polygons[left_index];
+            let right = &polygons[right_index];
+
+            for point in left {
+                match convex_polygon_location(point, right, projection) {
+                    Some(ConvexPolygonLocation::Outside) => {}
+                    Some(ConvexPolygonLocation::Inside) => {
+                        return Err(surface_validation_error(
+                            label,
+                            "component loops overlap or nest",
+                        ));
+                    }
+                    Some(ConvexPolygonLocation::Boundary) => {
+                        if !polygon_has_exact_vertex(right, point) {
+                            return Err(surface_validation_error(
+                                label,
+                                "component loops touch away from exact shared vertices",
+                            ));
+                        }
+                    }
+                    None => {
+                        return Err(surface_validation_error(
+                            label,
+                            "component loop containment predicate was undecided",
+                        ));
+                    }
+                }
+            }
+            for point in right {
+                match convex_polygon_location(point, left, projection) {
+                    Some(ConvexPolygonLocation::Outside) => {}
+                    Some(ConvexPolygonLocation::Inside) => {
+                        return Err(surface_validation_error(
+                            label,
+                            "component loops overlap or nest",
+                        ));
+                    }
+                    Some(ConvexPolygonLocation::Boundary) => {
+                        if !polygon_has_exact_vertex(left, point) {
+                            return Err(surface_validation_error(
+                                label,
+                                "component loops touch away from exact shared vertices",
+                            ));
+                        }
+                    }
+                    None => {
+                        return Err(surface_validation_error(
+                            label,
+                            "component loop containment predicate was undecided",
+                        ));
+                    }
+                }
+            }
+
+            validate_loop_segments_disjoint_or_shared_vertices(left, right, projection, label)?;
+        }
+    }
+    Ok(())
+}
+
 /// Validate that retained simple component loops are pairwise disjoint.
 ///
 /// Component-holed outputs may now retain nonconvex outer loops produced by
@@ -9458,6 +9952,132 @@ fn validate_simple_component_loops_disjoint(
                             "component loop containment predicate was undecided",
                         ));
                     }
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+/// Validate simple component loops that may meet at exact shared vertices.
+///
+/// This nonconvex-capable sibling mirrors
+/// [`validate_component_loops_disjoint_allowing_vertex_point_touches`] while
+/// using the triangulated simple-polygon location predicate. It is not used by
+/// the first point-touch producer, which emits convex component hulls, but it
+/// keeps the validation API semantically complete for future bounded branch
+/// artifacts without weakening existing disjoint-loop validators.
+#[cfg(feature = "exact-triangulation")]
+fn validate_simple_component_loops_disjoint_allowing_vertex_point_touches(
+    polygons: &[Vec<Point3>],
+    projection: CoplanarProjection,
+    label: &'static str,
+) -> Result<(), MeshError> {
+    for left_index in 0..polygons.len() {
+        for right_index in left_index + 1..polygons.len() {
+            let left = &polygons[left_index];
+            let right = &polygons[right_index];
+            validate_loop_segments_disjoint_or_shared_vertices(left, right, projection, label)?;
+            for point in left {
+                match simple_polygon_location(point, right, projection) {
+                    Some(ConvexPolygonLocation::Outside) => {}
+                    Some(ConvexPolygonLocation::Inside) => {
+                        return Err(surface_validation_error(
+                            label,
+                            "component loops overlap or nest",
+                        ));
+                    }
+                    Some(ConvexPolygonLocation::Boundary) => {
+                        if !polygon_has_exact_vertex(right, point) {
+                            return Err(surface_validation_error(
+                                label,
+                                "component loops touch away from exact shared vertices",
+                            ));
+                        }
+                    }
+                    None => {
+                        return Err(surface_validation_error(
+                            label,
+                            "component loop containment predicate was undecided",
+                        ));
+                    }
+                }
+            }
+            for point in right {
+                match simple_polygon_location(point, left, projection) {
+                    Some(ConvexPolygonLocation::Outside) => {}
+                    Some(ConvexPolygonLocation::Inside) => {
+                        return Err(surface_validation_error(
+                            label,
+                            "component loops overlap or nest",
+                        ));
+                    }
+                    Some(ConvexPolygonLocation::Boundary) => {
+                        if !polygon_has_exact_vertex(left, point) {
+                            return Err(surface_validation_error(
+                                label,
+                                "component loops touch away from exact shared vertices",
+                            ));
+                        }
+                    }
+                    None => {
+                        return Err(surface_validation_error(
+                            label,
+                            "component loop containment predicate was undecided",
+                        ));
+                    }
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn validate_loop_segments_disjoint_or_shared_vertices(
+    left: &[Point3],
+    right: &[Point3],
+    projection: CoplanarProjection,
+    label: &'static str,
+) -> Result<(), MeshError> {
+    for left_edge in 0..left.len() {
+        let left_start = project_point(&left[left_edge], projection);
+        let left_end = project_point(&left[(left_edge + 1) % left.len()], projection);
+        for right_edge in 0..right.len() {
+            let right_start = project_point(&right[right_edge], projection);
+            let right_end = project_point(&right[(right_edge + 1) % right.len()], projection);
+            match classify_segment_intersection(&left_start, &left_end, &right_start, &right_end)
+                .value()
+            {
+                Some(SegmentIntersection::Disjoint) => {}
+                Some(SegmentIntersection::EndpointTouch) => {
+                    if !segments_share_exact_endpoint(
+                        &left[left_edge],
+                        &left[(left_edge + 1) % left.len()],
+                        &right[right_edge],
+                        &right[(right_edge + 1) % right.len()],
+                    ) {
+                        return Err(surface_validation_error(
+                            label,
+                            "component loops touch away from exact shared vertices",
+                        ));
+                    }
+                }
+                Some(
+                    SegmentIntersection::Proper
+                    | SegmentIntersection::CollinearOverlap
+                    | SegmentIntersection::Identical,
+                ) => {
+                    return Err(surface_validation_error(
+                        label,
+                        "component loop edges intersect beyond exact shared vertices",
+                    ));
+                }
+                None => {
+                    return Err(surface_validation_error(
+                        label,
+                        "component loop segment-intersection predicate was undecided",
+                    ));
                 }
             }
         }

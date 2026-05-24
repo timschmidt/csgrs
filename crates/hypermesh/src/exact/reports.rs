@@ -643,6 +643,9 @@ pub enum ExactBooleanShortcutKind {
     /// Certified multi-component union with at least one nonconvex coplanar
     /// simple-loop component.
     CoplanarSurfaceMultiUnion,
+    /// Certified coplanar union whose retained surface components meet only
+    /// at exact shared vertices.
+    CoplanarSurfacePointTouchUnion,
     /// Certified simple-loop difference of convex coplanar surface meshes.
     CoplanarConvexSurfaceArrangementDifference,
     /// Certified multi-component difference of convex coplanar surface meshes.
@@ -1419,6 +1422,9 @@ pub enum ExactBooleanSupport {
     /// Union was materialized as multiple exact simple-loop components with
     /// at least one nonconvex retained coplanar loop.
     CertifiedCoplanarSurfaceMultiUnion,
+    /// Union was materialized as retained coplanar surface components that
+    /// meet only at exact shared vertices.
+    CertifiedCoplanarSurfacePointTouchUnion,
     /// Difference was materialized by a simple-loop arrangement between
     /// convex coplanar surface meshes.
     CertifiedCoplanarConvexSurfaceArrangementDifference,
@@ -1711,6 +1717,7 @@ impl ExactBooleanPreflight {
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceArrangementUnion
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceMultiUnion
             | ExactBooleanSupport::CertifiedCoplanarSurfaceMultiUnion
+            | ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchUnion
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceArrangementDifference
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceMultiDifference
             | ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference

@@ -23,9 +23,9 @@ use hypermesh::exact::{
     arrange_coplanar_surface_component_union, arrange_coplanar_surface_cutter_hole_contact_difference,
     arrange_coplanar_surface_multi_component_intersection,
     arrange_coplanar_surface_multi_component_union, arrange_coplanar_surface_multi_difference,
-    arrange_coplanar_surface_side_cutter_difference, arrange_single_triangle_coplanar_difference,
-    arrange_single_triangle_coplanar_holed_difference, arrange_single_triangle_coplanar_union,
-    boolean_exact_with_boundary_policy,
+    arrange_coplanar_surface_point_touch_union, arrange_coplanar_surface_side_cutter_difference,
+    arrange_single_triangle_coplanar_difference, arrange_single_triangle_coplanar_holed_difference,
+    arrange_single_triangle_coplanar_union, boolean_exact_with_boundary_policy,
     boolean_selected_regions, build_intersection_graph, build_selected_region_mesh,
     certify_boundary_touching_report, certify_convex_solid,
     certify_coplanar_convex_surface_containment, certify_coplanar_convex_surface_equivalence,
@@ -1611,16 +1611,49 @@ fn exercise_multi_component_coplanar_union() {
     )
     .expect("point-touching convex surface fixture must import");
     assert!(arrange_coplanar_convex_surface_union(&edge_touch_left, &point_touch_right).is_none());
+    let point_touch_union =
+        arrange_coplanar_surface_point_touch_union(&edge_touch_left, &point_touch_right)
+            .expect("exact vertex-vertex point-touch surface union should materialize");
+    point_touch_union.validate().unwrap();
+    point_touch_union
+        .validate_union_against_sources(&edge_touch_left, &point_touch_right)
+        .unwrap();
     let point_touch_preflight = preflight_boolean_exact(
         &edge_touch_left,
         &point_touch_right,
         ExactBooleanOperation::Union,
     )
-    .expect("point-touching convex surface preflight should classify policy gap");
+    .expect("point-touching convex surface preflight should classify certified point-touch union");
     point_touch_preflight.validate().unwrap();
     assert_eq!(
         point_touch_preflight.support,
-        ExactBooleanSupport::RequiresBoundaryPolicy
+        ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchUnion
+    );
+    let point_touch_result = hypermesh::exact::boolean_exact(
+        &edge_touch_left,
+        &point_touch_right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("point-touching convex surface union should materialize");
+    point_touch_result
+        .validate_operation_against_sources(
+            &edge_touch_left,
+            &point_touch_right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+
+    let vertex_edge_right = ExactMesh::from_i64_triangles_with_policy(
+        &[1, 2, 0, 3, 3, 0, 3, 4, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("vertex-edge point contact fixture must import");
+    assert!(
+        arrange_coplanar_surface_point_touch_union(&edge_touch_left, &vertex_edge_right).is_none()
     );
 
     let bridge_left = ExactMesh::from_i64_triangles_with_policy(
@@ -1916,6 +1949,12 @@ fn exercise_nonconvex_component_union_loop() {
     )
     .expect("point-only component union fixture must import");
     assert!(arrange_coplanar_surface_component_union(&point_only_left, &right).is_none());
+    let point_only_union = arrange_coplanar_surface_point_touch_union(&point_only_left, &right)
+        .expect("exact vertex-vertex point-only component union should materialize separately");
+    point_only_union.validate().unwrap();
+    point_only_union
+        .validate_union_against_sources(&point_only_left, &right)
+        .unwrap();
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -1996,6 +2035,12 @@ fn exercise_nonconvex_multi_component_union_loop() {
     )
     .expect("point-only disconnected component union fixture must import");
     assert!(arrange_coplanar_surface_multi_component_union(&point_only_left, &right).is_none());
+    let point_only_union = arrange_coplanar_surface_point_touch_union(&point_only_left, &right)
+        .expect("disconnected exact vertex-vertex point-touch union should materialize");
+    point_only_union.validate().unwrap();
+    point_only_union
+        .validate_union_against_sources(&point_only_left, &right)
+        .unwrap();
 }
 
 #[cfg(feature = "exact-triangulation")]
