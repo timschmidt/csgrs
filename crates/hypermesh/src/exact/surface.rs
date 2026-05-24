@@ -4137,17 +4137,17 @@ pub fn arrange_coplanar_surface_multi_component_union(
 ///
 /// This is a bounded annular slice of the remaining general planar
 /// arrangement work. It decomposes the operands into exact source-owned disk
-/// components, admits only cross-operand positive-length boundary contacts,
-/// rejects positive-area overlap and point-only connectivity, and then stitches
-/// exposed source boundary fragments into retained rings. Acceptance is now
-/// component-local: each contact-connected source group, including the
-/// two-disk case where two nonconvex source sheets form one annulus, must
-/// replay as one outer loop with zero or more strict hole loops, at least one
-/// emitted component must retain a hole, and every component must satisfy
-/// exact area equality against the source loops that produced it.
+/// components, admits cross-operand positive-length boundary contacts and
+/// bounded convex positive-area overlaps, rejects point-only connectivity, and
+/// then stitches exposed source boundary fragments into retained rings.
+/// Acceptance is component-local: each contact-connected source group,
+/// including the two-disk case where two nonconvex source sheets form one
+/// annulus, must replay as one outer loop with zero or more strict hole loops,
+/// at least one emitted component must retain a hole, and every component
+/// must satisfy exact area equality against the source loops that produced it.
 /// Disconnected annular groups are therefore materialized in one retained
-/// object, while point branches, positive-area overlap, and non-simple planar
-/// subdivisions remain outside this bounded path.
+/// object, while point branches and non-simple planar subdivisions remain
+/// outside this bounded path.
 ///
 /// The exposed-boundary traversal follows the Weiler-Atherton boundary
 /// fragment model (Weiler and Atherton, "Hidden Surface Removal Using Polygon
@@ -4237,7 +4237,7 @@ pub fn arrange_coplanar_surface_component_holed_union(
     .ok()?;
 
     let mut contact_graph = UnionFind::new(components.len());
-    let mut saw_positive_length_cross_contact = false;
+    let mut saw_positive_cross_contact = false;
     for left_index in 0..components.len() {
         for right_index in left_index + 1..components.len() {
             let contact = simple_polygon_contact(
@@ -4254,16 +4254,20 @@ pub fn arrange_coplanar_surface_component_holed_union(
             match contact {
                 SimplePolygonContact::Disjoint => {}
                 SimplePolygonContact::PositiveLengthBoundary => {
-                    saw_positive_length_cross_contact = true;
+                    saw_positive_cross_contact = true;
                     contact_graph.union(left_index, right_index);
                 }
-                SimplePolygonContact::PointOnly | SimplePolygonContact::PositiveArea => {
+                SimplePolygonContact::PointOnly => {
                     return None;
+                }
+                SimplePolygonContact::PositiveArea => {
+                    saw_positive_cross_contact = true;
+                    contact_graph.union(left_index, right_index);
                 }
             }
         }
     }
-    if !saw_positive_length_cross_contact {
+    if !saw_positive_cross_contact {
         return None;
     }
     let groups = component_holed_union_contact_groups(&mut contact_graph, components.len());
@@ -4326,7 +4330,11 @@ fn component_holed_union_contact_groups(
 /// Computation," *Computational Geometry* 7.1-2 (1997), each group checks
 /// exact area equality against only the source loops that generated it, so a
 /// disconnected no-hole component cannot subsidize a holed component whose
-/// stitched boundary silently filled unsupported cells.
+/// stitched boundary silently filled unsupported cells. Positive-area source
+/// overlaps use bounded convex inclusion-exclusion, the finite exact area
+/// replay described by de Berg, Cheong, van Kreveld, and Overmars,
+/// *Computational Geometry: Algorithms and Applications*, 3rd ed. (2008),
+/// Chapter 2; nonconvex overlaps remain outside this shortcut.
 #[cfg(feature = "exact-triangulation")]
 fn component_holed_union_component_from_group(
     components: &[PointTouchSourceComponent],
@@ -4449,11 +4457,31 @@ fn component_holed_union_area_matches_sources(
         return Some(false);
     }
     let retained_area = sub(&outer_area, &hole_area);
-    let mut source_area = ExactReal::from(0);
-    for source_loop in source_loops {
-        source_area = add(&source_area, &projected_area2_abs(source_loop, projection)?);
-    }
+    let source_area = component_holed_union_source_area2(source_loops, projection)?;
     Some(compare_reals(&retained_area, &source_area).value() == Some(Ordering::Equal))
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn component_holed_union_source_area2(
+    source_loops: &[Vec<Point3>],
+    projection: CoplanarProjection,
+) -> Option<ExactReal> {
+    if source_loops.iter().all(|source_loop| {
+        validate_projected_strictly_convex_loop(
+            source_loop,
+            projection,
+            "coplanar component-holed union source area",
+        )
+        .is_ok()
+    }) {
+        convex_region_union_area_inclusion_exclusion(source_loops, projection)
+    } else {
+        let mut source_area = ExactReal::from(0);
+        for source_loop in source_loops {
+            source_area = add(&source_area, &projected_area2_abs(source_loop, projection)?);
+        }
+        Some(source_area)
+    }
 }
 
 /// Certify that two coplanar surface meshes meet on positive-length boundary
@@ -12415,7 +12443,7 @@ fn component_holed_component_to_earcut_open_mesh(
     component: &CoplanarConvexHoledComponent,
     projection: CoplanarProjection,
 ) -> Option<ExactMesh> {
-    match component.holes.len() {
+    let earcut_mesh = match component.holes.len() {
         0 => polygon_to_earcut_open_mesh(&component.outer, projection),
         1 => polygon_to_earcut_open_mesh_with_hole(
             &component.outer,
@@ -12428,7 +12456,184 @@ fn component_holed_component_to_earcut_open_mesh(
             projection,
             "exact coplanar convex component-holed sub-arrangement",
         ),
+    };
+    earcut_mesh.or_else(|| component_holed_component_to_keyholed_open_mesh(component, projection))
+}
+
+/// Triangulate a one-hole retained component by opening it along a bridge.
+///
+/// A holed polygon can be reduced to a simple polygon by adding a visible
+/// bridge between the outer ring and the hole. The construction is the same
+/// keyhole idea used by Held, "FIST: Fast Industrial-Strength Triangulation
+/// of Polygons," *Algorithmica* 30 (2001), but the bridge is selected with
+/// exact segment and containment predicates and duplicate bridge endpoints are
+/// mapped back to the retained rings. Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997), is the acceptance
+/// rule: the bridge is not new boundary state, and the resulting mesh is
+/// accepted only if retained-ring validation proves it is an interior edge.
+#[cfg(feature = "exact-triangulation")]
+fn component_holed_component_to_keyholed_open_mesh(
+    component: &CoplanarConvexHoledComponent,
+    projection: CoplanarProjection,
+) -> Option<ExactMesh> {
+    if component.holes.len() != 1 || component.outer.len() < 3 {
+        return None;
     }
+    let hole = component.holes.first()?;
+    if hole.len() < 3 {
+        return None;
+    }
+    for outer_index in 0..component.outer.len() {
+        for hole_index in 0..hole.len() {
+            if !component_holed_bridge_is_valid(
+                &component.outer,
+                hole,
+                outer_index,
+                hole_index,
+                projection,
+            )? {
+                continue;
+            }
+            if let Some(mesh) = component_holed_keyhole_mesh_for_bridge(
+                &component.outer,
+                hole,
+                outer_index,
+                hole_index,
+                projection,
+            ) {
+                return Some(mesh);
+            }
+        }
+    }
+    None
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn component_holed_keyhole_mesh_for_bridge(
+    outer: &[Point3],
+    hole: &[Point3],
+    outer_index: usize,
+    hole_index: usize,
+    projection: CoplanarProjection,
+) -> Option<ExactMesh> {
+    let mut keyhole_points = Vec::with_capacity(outer.len() + hole.len() + 2);
+    let mut index_map = Vec::with_capacity(outer.len() + hole.len() + 2);
+    keyhole_points.push(outer[outer_index].clone());
+    index_map.push(outer_index);
+    keyhole_points.push(hole[hole_index].clone());
+    index_map.push(outer.len() + hole_index);
+    for step in 1..hole.len() {
+        let index = (hole_index + step) % hole.len();
+        keyhole_points.push(hole[index].clone());
+        index_map.push(outer.len() + index);
+    }
+    keyhole_points.push(hole[hole_index].clone());
+    index_map.push(outer.len() + hole_index);
+    keyhole_points.push(outer[outer_index].clone());
+    index_map.push(outer_index);
+    for step in 1..outer.len() {
+        let index = (outer_index + step) % outer.len();
+        keyhole_points.push(outer[index].clone());
+        index_map.push(index);
+    }
+
+    let vertices2 = keyhole_points
+        .iter()
+        .map(|point| project_for_hypertri(point, projection))
+        .collect::<Vec<_>>();
+    let indices = hypertri::earcut(&vertices2, &[]).ok()?;
+    if indices.len() % 3 != 0 || indices.is_empty() {
+        return None;
+    }
+
+    let points = outer.iter().chain(hole).cloned().collect::<Vec<_>>();
+    let mut triangles = Vec::new();
+    for chunk in indices.chunks_exact(3) {
+        let mapped = [
+            *index_map.get(chunk[0])?,
+            *index_map.get(chunk[1])?,
+            *index_map.get(chunk[2])?,
+        ];
+        if mapped[0] == mapped[1] || mapped[1] == mapped[2] || mapped[2] == mapped[0] {
+            continue;
+        }
+        let cell = triangle_points(&points, mapped);
+        let signed_area = projected_area2_signed(&cell, projection)?;
+        match compare_reals(&signed_area, &ExactReal::from(0)).value()? {
+            Ordering::Greater => triangles.push(Triangle(mapped)),
+            Ordering::Less => triangles.push(Triangle([mapped[2], mapped[1], mapped[0]])),
+            Ordering::Equal => {}
+        }
+    }
+    if triangles.is_empty() {
+        return None;
+    }
+    let vertices = points
+        .iter()
+        .map(|point| ExactPoint3::new(point.x.clone(), point.y.clone(), point.z.clone()))
+        .collect::<Vec<_>>();
+    ExactMesh::new_with_policy(
+        vertices,
+        triangles,
+        SourceProvenance::exact("exact coplanar keyholed holed arrangement"),
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .ok()
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn component_holed_bridge_is_valid(
+    outer: &[Point3],
+    hole: &[Point3],
+    outer_index: usize,
+    hole_index: usize,
+    projection: CoplanarProjection,
+) -> Option<bool> {
+    let a = outer.get(outer_index)?;
+    let b = hole.get(hole_index)?;
+    let midpoint = midpoint3(a, b);
+    if simple_polygon_location(&midpoint, outer, projection)? != ConvexPolygonLocation::Inside {
+        return Some(false);
+    }
+    if simple_polygon_location(&midpoint, hole, projection)? != ConvexPolygonLocation::Outside {
+        return Some(false);
+    }
+    if !component_holed_bridge_respects_ring(a, b, outer, outer_index, projection)? {
+        return Some(false);
+    }
+    if !component_holed_bridge_respects_ring(a, b, hole, hole_index, projection)? {
+        return Some(false);
+    }
+    Some(true)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn component_holed_bridge_respects_ring(
+    a: &Point3,
+    b: &Point3,
+    ring: &[Point3],
+    allowed_vertex: usize,
+    projection: CoplanarProjection,
+) -> Option<bool> {
+    let start = project_point(a, projection);
+    let end = project_point(b, projection);
+    for edge in 0..ring.len() {
+        let edge_start = project_point(&ring[edge], projection);
+        let edge_end = project_point(&ring[(edge + 1) % ring.len()], projection);
+        match classify_segment_intersection(&start, &end, &edge_start, &edge_end).value()? {
+            SegmentIntersection::Disjoint => {}
+            SegmentIntersection::EndpointTouch => {
+                let incident = edge == allowed_vertex || (edge + 1) % ring.len() == allowed_vertex;
+                if !incident {
+                    return Some(false);
+                }
+            }
+            SegmentIntersection::Proper
+            | SegmentIntersection::CollinearOverlap
+            | SegmentIntersection::Identical => return Some(false),
+        }
+    }
+    Some(true)
 }
 
 #[cfg(feature = "exact-triangulation")]
