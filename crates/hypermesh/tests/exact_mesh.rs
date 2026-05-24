@@ -19379,6 +19379,125 @@ fn exact_coplanar_component_holed_difference_omits_holes_consumed_by_side_cutter
                 CoplanarConvexSurfaceComponentHoledDifference
         }
     );
+
+    let branch_group_left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 30, 0, 0, 30, 30, 0, 0, 30, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let branch_group_with_retained_holes = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            3, 3, 0, 5, 3, 0, 5, 5, 0, 3, 5, 0, //
+            25, 3, 0, 27, 3, 0, 27, 5, 0, 25, 5, 0, //
+            3, 25, 0, 5, 25, 0, 5, 27, 0, 3, 27, 0, //
+            25, 25, 0, 27, 25, 0, 27, 27, 0, 25, 27, 0, //
+            12, 12, 0, 18, 12, 0, 18, 18, 0, 12, 18, 0, //
+            -2, 14, 0, 14, 14, 0, 14, 16, 0, -2, 16, 0, //
+            16, 14, 0, 32, 14, 0, 32, 16, 0, 16, 16, 0, //
+            14, -2, 0, 16, -2, 0, 16, 14, 0, 14, 14, 0, //
+            14, 16, 0, 16, 16, 0, 16, 32, 0, 14, 32, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7, //
+            8, 9, 10, 8, 10, 11, //
+            12, 13, 14, 12, 14, 15, //
+            16, 17, 18, 16, 18, 19, //
+            20, 21, 22, 20, 22, 23, //
+            24, 25, 26, 24, 26, 27, //
+            28, 29, 30, 28, 30, 31, //
+            32, 33, 34, 32, 34, 35,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let branch_group =
+        hypermesh::exact::arrange_coplanar_convex_surface_component_holed_difference(
+            &branch_group_left,
+            &branch_group_with_retained_holes,
+        )
+        .expect("one four-sided consumed cutter/hole branch should split into corner components");
+    branch_group.validate().unwrap();
+    branch_group
+        .validate_against_sources(&branch_group_left, &branch_group_with_retained_holes)
+        .unwrap();
+    assert_eq!(branch_group.components.len(), 4);
+    assert_eq!(
+        branch_group
+            .components
+            .iter()
+            .map(|component| component.holes.len())
+            .sum::<usize>(),
+        4
+    );
+    for (expected_x, expected_y) in [(3, 3), (25, 3), (3, 25), (25, 25)] {
+        assert!(branch_group.components.iter().any(|component| {
+            component.holes.iter().any(|hole| {
+                hole.iter().any(|point| {
+                    real_eq(&point.x, &ExactReal::from(expected_x))
+                        && real_eq(&point.y, &ExactReal::from(expected_y))
+                })
+            })
+        }));
+    }
+    assert!(!branch_group.components.iter().any(|component| {
+        component.holes.iter().any(|hole| {
+            hole.iter().any(|point| {
+                real_eq(&point.x, &ExactReal::from(12)) && real_eq(&point.y, &ExactReal::from(12))
+            })
+        })
+    }));
+    let mut stale_branch_group = branch_group.clone();
+    stale_branch_group.components[0].holes.push(vec![
+        p3(12, 12, 0),
+        p3(18, 12, 0),
+        p3(18, 18, 0),
+        p3(12, 18, 0),
+    ]);
+    assert!(
+        stale_branch_group
+            .validate_against_sources(&branch_group_left, &branch_group_with_retained_holes)
+            .is_err()
+    );
+    let branch_group_preflight = hypermesh::exact::preflight_boolean_exact(
+        &branch_group_left,
+        &branch_group_with_retained_holes,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    branch_group_preflight.validate().unwrap();
+    branch_group_preflight
+        .validate_against_sources(&branch_group_left, &branch_group_with_retained_holes)
+        .unwrap();
+    assert_eq!(
+        branch_group_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::
+            CertifiedCoplanarConvexSurfaceComponentHoledDifference
+    );
+    let branch_group_result = hypermesh::exact::boolean_exact(
+        &branch_group_left,
+        &branch_group_with_retained_holes,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    branch_group_result
+        .validate_operation_against_sources(
+            &branch_group_left,
+            &branch_group_with_retained_holes,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        branch_group_result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::
+                CoplanarConvexSurfaceComponentHoledDifference
+        }
+    );
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -19776,6 +19895,99 @@ fn exact_coplanar_multi_difference_consumes_holes_into_independent_openings() {
         .unwrap();
     assert_eq!(
         multi_branch_result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfaceMultiDifference
+        }
+    );
+
+    let branch_group_left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 30, 0, 0, 30, 30, 0, 0, 30, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let branch_group_all_consumed = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            12, 12, 0, 18, 12, 0, 18, 18, 0, 12, 18, 0, //
+            -2, 14, 0, 14, 14, 0, 14, 16, 0, -2, 16, 0, //
+            16, 14, 0, 32, 14, 0, 32, 16, 0, 16, 16, 0, //
+            14, -2, 0, 16, -2, 0, 16, 14, 0, 14, 14, 0, //
+            14, 16, 0, 16, 16, 0, 16, 32, 0, 14, 32, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7, //
+            8, 9, 10, 8, 10, 11, //
+            12, 13, 14, 12, 14, 15, //
+            16, 17, 18, 16, 18, 19,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_cutter_hole_contact_difference(
+            &branch_group_left,
+            &branch_group_all_consumed,
+        )
+        .is_none()
+    );
+    assert!(
+        hypermesh::exact::arrange_coplanar_convex_surface_component_holed_difference(
+            &branch_group_left,
+            &branch_group_all_consumed,
+        )
+        .is_none()
+    );
+    let branch_group_difference = hypermesh::exact::arrange_coplanar_surface_multi_difference(
+        &branch_group_left,
+        &branch_group_all_consumed,
+    )
+    .expect("one four-sided consumed cutter/hole branch should emit four retained loops");
+    branch_group_difference.validate().unwrap();
+    branch_group_difference
+        .validate_difference_against_sources(&branch_group_left, &branch_group_all_consumed)
+        .unwrap();
+    assert_eq!(branch_group_difference.polygons.len(), 4);
+    for (expected_x, expected_y) in [(0, 0), (30, 0), (0, 30), (30, 30)] {
+        assert!(branch_group_difference.polygons.iter().any(|polygon| {
+            polygon.iter().any(|point| {
+                real_eq(&point.x, &ExactReal::from(expected_x))
+                    && real_eq(&point.y, &ExactReal::from(expected_y))
+            })
+        }));
+    }
+    let branch_group_preflight = hypermesh::exact::preflight_boolean_exact(
+        &branch_group_left,
+        &branch_group_all_consumed,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    branch_group_preflight.validate().unwrap();
+    branch_group_preflight
+        .validate_against_sources(&branch_group_left, &branch_group_all_consumed)
+        .unwrap();
+    assert_eq!(
+        branch_group_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
+    );
+    let branch_group_result = hypermesh::exact::boolean_exact(
+        &branch_group_left,
+        &branch_group_all_consumed,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    branch_group_result
+        .validate_operation_against_sources(
+            &branch_group_left,
+            &branch_group_all_consumed,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        branch_group_result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
             shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfaceMultiDifference
         }

@@ -7,8 +7,8 @@
 //! multi-hole differences, nonconvex component-union loops, disconnected
 //! nonconvex component-union multi-loops, bounded cutter/hole openings with
 //! retained strict holes, independent consumed straddling-hole split groups,
-//! and the convex one-corner difference shapes that can be represented as an
-//! open triangle mesh. The
+//! four-sided consumed branch groups, and the convex one-corner difference
+//! shapes that can be represented as an open triangle mesh. The
 //! predicates are the same projected orientation and point-in-triangle facts
 //! used by the coplanar overlap classifier, following
 //! Yap, "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
@@ -9976,6 +9976,13 @@ fn materialize_cutter_hole_contact_split_components(
             "coplanar cutter-hole contact split difference",
         )?
     };
+    if opened_polygons.len() > 1 {
+        certify_removed_openings_split_source_component(
+            &component.hull,
+            &removed_openings,
+            projection,
+        )?;
+    }
 
     let mut holes_by_opening = vec![Vec::new(); opened_polygons.len()];
     for hole in holes {
@@ -10589,6 +10596,36 @@ fn convex_boundary_attachment_count(
         }
     }
     Some(attached_outer_edges.len())
+}
+
+/// Certify that retained replay is a source-splitting removed topology.
+///
+/// Multi-output cutter/hole replay is stronger than an ordinary side opening:
+/// at least one exact removed loop must own positive-length attachment to two
+/// or more source sides. This admits both independent side-to-side barriers
+/// and the higher-order four-sided branch-group fixture, while rejecting a
+/// speculative split caused only by point contacts or interior stitching. The
+/// policy is deliberately predicate-first in Yap's sense from "Towards Exact
+/// Geometric Computation," *Computational Geometry* 7.1-2 (1997): a retained
+/// multi-component object is exposed only after exact side ownership has been
+/// proved, with the actual rings still validated by the Weiler-Atherton
+/// retained-fragment replay in [`multi_side_opened_difference_polygons`].
+#[cfg(feature = "exact-triangulation")]
+fn certify_removed_openings_split_source_component(
+    outer: &[Point3],
+    removed_openings: &[Vec<Point3>],
+    projection: CoplanarProjection,
+) -> Option<()> {
+    let mut max_attachment_count = 0usize;
+    for opening in removed_openings {
+        max_attachment_count = max_attachment_count.max(convex_boundary_attachment_count(
+            outer, opening, projection,
+        )?);
+    }
+    if max_attachment_count < 2 {
+        return None;
+    }
+    Some(())
 }
 
 /// Return whether a strict hole is wholly removed by one side opening.

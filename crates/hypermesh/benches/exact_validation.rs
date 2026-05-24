@@ -4666,6 +4666,51 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
                 ValidationPolicy::ALLOW_BOUNDARY,
             )
             .unwrap();
+        let branch_group_consumed_with_retained_holes = ExactMesh::from_i64_triangles_with_policy(
+            &[
+                3, 3, 0, 5, 3, 0, 5, 5, 0, 3, 5, 0, //
+                25, 3, 0, 27, 3, 0, 27, 5, 0, 25, 5, 0, //
+                3, 25, 0, 5, 25, 0, 5, 27, 0, 3, 27, 0, //
+                25, 25, 0, 27, 25, 0, 27, 27, 0, 25, 27, 0, //
+                12, 12, 0, 18, 12, 0, 18, 18, 0, 12, 18, 0, //
+                -2, 14, 0, 14, 14, 0, 14, 16, 0, -2, 16, 0, //
+                16, 14, 0, 32, 14, 0, 32, 16, 0, 16, 16, 0, //
+                14, -2, 0, 16, -2, 0, 16, 14, 0, 14, 14, 0, //
+                14, 16, 0, 16, 16, 0, 16, 32, 0, 14, 32, 0,
+            ],
+            &[
+                0, 1, 2, 0, 2, 3, //
+                4, 5, 6, 4, 6, 7, //
+                8, 9, 10, 8, 10, 11, //
+                12, 13, 14, 12, 14, 15, //
+                16, 17, 18, 16, 18, 19, //
+                20, 21, 22, 20, 22, 23, //
+                24, 25, 26, 24, 26, 27, //
+                28, 29, 30, 28, 30, 31, //
+                32, 33, 34, 32, 34, 35,
+            ],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let branch_group_all_consumed_side_cutter_right =
+            ExactMesh::from_i64_triangles_with_policy(
+                &[
+                    12, 12, 0, 18, 12, 0, 18, 18, 0, 12, 18, 0, //
+                    -2, 14, 0, 14, 14, 0, 14, 16, 0, -2, 16, 0, //
+                    16, 14, 0, 32, 14, 0, 32, 16, 0, 16, 16, 0, //
+                    14, -2, 0, 16, -2, 0, 16, 14, 0, 14, 14, 0, //
+                    14, 16, 0, 16, 16, 0, 16, 32, 0, 14, 32, 0,
+                ],
+                &[
+                    0, 1, 2, 0, 2, 3, //
+                    4, 5, 6, 4, 6, 7, //
+                    8, 9, 10, 8, 10, 11, //
+                    12, 13, 14, 12, 14, 15, //
+                    16, 17, 18, 16, 18, 19,
+                ],
+                ValidationPolicy::ALLOW_BOUNDARY,
+            )
+            .unwrap();
         let mixed_consumed_hole_side_cutter_right = ExactMesh::from_i64_triangles_with_policy(
             &[
                 8, 8, 0, 12, 10, 0, 8, 12, 0, //
@@ -5708,6 +5753,52 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
                         hypermesh::exact::boolean_exact(
                             &multi_branch_consumed_left,
                             &multi_branch_all_consumed_side_cutter_right,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                            ValidationPolicy::ALLOW_BOUNDARY,
+                        )
+                        .unwrap(),
+                        arrange_coplanar_convex_surface_component_holed_difference(
+                            &multi_branch_consumed_left,
+                            &branch_group_consumed_with_retained_holes,
+                        )
+                        .map(|output| {
+                            output.validate_against_sources(
+                                &multi_branch_consumed_left,
+                                &branch_group_consumed_with_retained_holes,
+                            )
+                        }),
+                        hypermesh::exact::preflight_boolean_exact(
+                            &multi_branch_consumed_left,
+                            &branch_group_consumed_with_retained_holes,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                        )
+                        .map(|report| report.validate()),
+                        hypermesh::exact::boolean_exact(
+                            &multi_branch_consumed_left,
+                            &branch_group_consumed_with_retained_holes,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                            ValidationPolicy::ALLOW_BOUNDARY,
+                        )
+                        .unwrap(),
+                        arrange_coplanar_surface_multi_difference(
+                            &multi_branch_consumed_left,
+                            &branch_group_all_consumed_side_cutter_right,
+                        )
+                        .map(|output| {
+                            output.validate_difference_against_sources(
+                                &multi_branch_consumed_left,
+                                &branch_group_all_consumed_side_cutter_right,
+                            )
+                        }),
+                        hypermesh::exact::preflight_boolean_exact(
+                            &multi_branch_consumed_left,
+                            &branch_group_all_consumed_side_cutter_right,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                        )
+                        .map(|report| report.validate()),
+                        hypermesh::exact::boolean_exact(
+                            &multi_branch_consumed_left,
+                            &branch_group_all_consumed_side_cutter_right,
                             hypermesh::exact::ExactBooleanOperation::Difference,
                             ValidationPolicy::ALLOW_BOUNDARY,
                         )

@@ -2979,6 +2979,74 @@ fn exercise_consumed_hole_side_cutter_openings() {
         ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
     );
 
+    let branch_group_with_retained_holes = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            3, 3, 0, 5, 3, 0, 5, 5, 0, 3, 5, 0, //
+            25, 3, 0, 27, 3, 0, 27, 5, 0, 25, 5, 0, //
+            3, 25, 0, 5, 25, 0, 5, 27, 0, 3, 27, 0, //
+            25, 25, 0, 27, 25, 0, 27, 27, 0, 25, 27, 0, //
+            12, 12, 0, 18, 12, 0, 18, 18, 0, 12, 18, 0, //
+            -2, 14, 0, 14, 14, 0, 14, 16, 0, -2, 16, 0, //
+            16, 14, 0, 32, 14, 0, 32, 16, 0, 16, 16, 0, //
+            14, -2, 0, 16, -2, 0, 16, 14, 0, 14, 14, 0, //
+            14, 16, 0, 16, 16, 0, 16, 32, 0, 14, 32, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7, //
+            8, 9, 10, 8, 10, 11, //
+            12, 13, 14, 12, 14, 15, //
+            16, 17, 18, 16, 18, 19, //
+            20, 21, 22, 20, 22, 23, //
+            24, 25, 26, 24, 26, 27, //
+            28, 29, 30, 28, 30, 31, //
+            32, 33, 34, 32, 34, 35,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("branch consumed-hole retained-hole fixture must import");
+    let branch_group = arrange_coplanar_convex_surface_component_holed_difference(
+        &multi_branch_left,
+        &branch_group_with_retained_holes,
+    )
+    .expect("one four-sided consumed branch should split and retain corner holes");
+    branch_group.validate().unwrap();
+    branch_group
+        .validate_against_sources(&multi_branch_left, &branch_group_with_retained_holes)
+        .unwrap();
+    assert_eq!(branch_group.components.len(), 4);
+    assert_eq!(
+        branch_group
+            .components
+            .iter()
+            .map(|component| component.holes.len())
+            .sum::<usize>(),
+        4
+    );
+    let mut stale_branch_group = branch_group.clone();
+    stale_branch_group.components[0].holes.push(vec![
+        point3(12, 12, 0),
+        point3(18, 12, 0),
+        point3(18, 18, 0),
+        point3(12, 18, 0),
+    ]);
+    assert!(
+        stale_branch_group
+            .validate_against_sources(&multi_branch_left, &branch_group_with_retained_holes)
+            .is_err()
+    );
+    let branch_group_preflight = preflight_boolean_exact(
+        &multi_branch_left,
+        &branch_group_with_retained_holes,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("four-sided consumed branch preflight should classify component-holed shortcut");
+    branch_group_preflight.validate().unwrap();
+    assert_eq!(
+        branch_group_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+    );
+
     let multi_component_consumed = ExactMesh::from_i64_triangles_with_policy(
         &[
             0, 0, 0, 20, 0, 0, 20, 20, 0, 0, 20, 0, //
@@ -3196,6 +3264,51 @@ fn exercise_consumed_hole_side_cutter_openings() {
     multi_branch_no_hole_preflight.validate().unwrap();
     assert_eq!(
         multi_branch_no_hole_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
+    );
+
+    let branch_group_all_consumed = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            12, 12, 0, 18, 12, 0, 18, 18, 0, 12, 18, 0, //
+            -2, 14, 0, 14, 14, 0, 14, 16, 0, -2, 16, 0, //
+            16, 14, 0, 32, 14, 0, 32, 16, 0, 16, 16, 0, //
+            14, -2, 0, 16, -2, 0, 16, 14, 0, 14, 14, 0, //
+            14, 16, 0, 16, 16, 0, 16, 32, 0, 14, 32, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7, //
+            8, 9, 10, 8, 10, 11, //
+            12, 13, 14, 12, 14, 15, //
+            16, 17, 18, 16, 18, 19,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("branch all-consumed no-hole fixture must import");
+    assert!(
+        arrange_coplanar_convex_surface_component_holed_difference(
+            &multi_branch_left,
+            &branch_group_all_consumed,
+        )
+        .is_none()
+    );
+    let branch_group_no_hole =
+        arrange_coplanar_surface_multi_difference(&multi_branch_left, &branch_group_all_consumed)
+            .expect("one four-sided consumed branch should emit four retained loops");
+    branch_group_no_hole.validate().unwrap();
+    branch_group_no_hole
+        .validate_difference_against_sources(&multi_branch_left, &branch_group_all_consumed)
+        .unwrap();
+    assert_eq!(branch_group_no_hole.polygons.len(), 4);
+    let branch_group_no_hole_preflight = preflight_boolean_exact(
+        &multi_branch_left,
+        &branch_group_all_consumed,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("four-sided consumed branch no-hole split should classify multi-difference shortcut");
+    branch_group_no_hole_preflight.validate().unwrap();
+    assert_eq!(
+        branch_group_no_hole_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
     );
 }
