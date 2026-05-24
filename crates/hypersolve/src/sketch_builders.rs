@@ -479,6 +479,39 @@ pub mod tangency {
         }
     }
 
+    /// Add projected G1 tangency between retained 3D cubic Bezier carriers.
+    ///
+    /// Both retained 3D control nets are projected into the workplane before
+    /// exact Bernstein point/derivative replay. The package keeps the
+    /// unit-frame guard, point incidence, derivative cross product, and
+    /// same-direction branch as exact proof rows, following Yap (1997),
+    /// Shoemake's quaternion frame, and Farin's Bernstein/de Casteljau
+    /// construction.
+    pub fn projected_cubic_curve_cubic_curve_tangent3(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        first: SketchEntityHandle,
+        first_parameter: SketchParameterHandle,
+        second: SketchEntityHandle,
+        second_parameter: SketchParameterHandle,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::ProjectedCubicCurveCubicCurveTangent3 {
+            workplane,
+            first,
+            first_parameter,
+            second,
+            second_parameter,
+        };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Tangency,
+            strategy: SketchResidualStrategy::ProjectedCubicCurveCubicCurveTangent,
+            kind,
+        }
+    }
+
     /// Add a retained 2D cubic-Bezier/cubic-Bezier tangent relation.
     ///
     /// The two curve points `B_a(t_a)` and `B_b(t_b)` are constrained to

@@ -1897,6 +1897,139 @@ proptest! {
     }
 
     #[test]
+    fn sketch_projected_cubic_curve_cubic_curve_tangent_rows_match_projected_affine_cubics(
+        ox in -4_i16..=4,
+        oy in -4_i16..=4,
+        oz in -4_i16..=4,
+        ax in -8_i16..=8,
+        ay in -8_i16..=8,
+        dx in -4_i16..=4,
+        dy in -4_i16..=4,
+        t in -2_i16..=2,
+        z0 in -8_i16..=8,
+        z1 in -8_i16..=8,
+        z2 in -8_i16..=8,
+        z3 in -8_i16..=8,
+        qz0 in -8_i16..=8,
+        qz1 in -8_i16..=8,
+        qz2 in -8_i16..=8,
+        qz3 in -8_i16..=8,
+        tangent_scale in 1_i16..=4,
+    ) {
+        prop_assume!(dx != 0 || dy != 0);
+        let ox = i64::from(ox);
+        let oy = i64::from(oy);
+        let oz = i64::from(oz);
+        let ax = i64::from(ax);
+        let ay = i64::from(ay);
+        let dx = i64::from(dx);
+        let dy = i64::from(dy);
+        let t = i64::from(t);
+        let z0 = i64::from(z0);
+        let z1 = i64::from(z1);
+        let z2 = i64::from(z2);
+        let z3 = i64::from(z3);
+        let qz0 = i64::from(qz0);
+        let qz1 = i64::from(qz1);
+        let qz2 = i64::from(qz2);
+        let qz3 = i64::from(qz3);
+        let tangent_scale = i64::from(tangent_scale);
+        let mut sketch = SketchSolveProblem::new();
+        let origin = sketch.add_point3d("origin", Real::from(ox), Real::from(oy), Real::from(oz));
+        let normal = sketch.add_normal3d("normal", Real::from(1), Real::from(0), Real::from(0), Real::from(0));
+        let workplane = sketch.add_workplane("workplane", origin, normal);
+        let p0 = sketch.add_point3d("p0", Real::from(ox + ax), Real::from(oy + ay), Real::from(oz + z0));
+        let p1 = sketch.add_point3d(
+            "p1",
+            Real::from(ox + ax + dx),
+            Real::from(oy + ay + dy),
+            Real::from(oz + z1),
+        );
+        let p2 = sketch.add_point3d(
+            "p2",
+            Real::from(ox + ax + 2 * dx),
+            Real::from(oy + ay + 2 * dy),
+            Real::from(oz + z2),
+        );
+        let p3 = sketch.add_point3d(
+            "p3",
+            Real::from(ox + ax + 3 * dx),
+            Real::from(oy + ay + 3 * dy),
+            Real::from(oz + z3),
+        );
+        let first = sketch.add_cubic3("first", p0, p1, p2, p3);
+        let junction_x = ox + ax + 3 * dx * t;
+        let junction_y = oy + ay + 3 * dy * t;
+        let q0 = sketch.add_point3d(
+            "q0",
+            Real::from(junction_x),
+            Real::from(junction_y),
+            Real::from(oz + qz0),
+        );
+        let q1 = sketch.add_point3d(
+            "q1",
+            Real::from(junction_x + dx * tangent_scale),
+            Real::from(junction_y + dy * tangent_scale),
+            Real::from(oz + qz1),
+        );
+        let q2 = sketch.add_point3d(
+            "q2",
+            Real::from(junction_x + 2 * dx * tangent_scale),
+            Real::from(junction_y + 2 * dy * tangent_scale),
+            Real::from(oz + qz2),
+        );
+        let q3 = sketch.add_point3d(
+            "q3",
+            Real::from(junction_x + 3 * dx * tangent_scale),
+            Real::from(junction_y + 3 * dy * tangent_scale),
+            Real::from(oz + qz3),
+        );
+        let second = sketch.add_cubic3("second", q0, q1, q2, q3);
+        let first_parameter = sketch.add_parameter("first t", Real::from(t));
+        let second_parameter = sketch.add_parameter("second t", Real::zero());
+        let handle = sketch.add_projected_cubic_curve_cubic_curve_tangent3(
+            "projected 3D cubic/cubic tangent",
+            workplane,
+            first,
+            first_parameter,
+            second,
+            second_parameter,
+        );
+
+        let lowered = sketch.lower_to_problem();
+        let forms = sketch.residual_forms_for_constraint(handle);
+        let context = context_from_problem(&lowered.problem);
+        let certification = certify_candidate(&PreparedProblem::new(&lowered.problem), &context);
+
+        prop_assert!(lowered.all_generated());
+        prop_assert_eq!(lowered.problem.constraints.len(), 5);
+        prop_assert_eq!(
+            lowered.rows[0].strategy,
+            Some(SketchResidualStrategy::WorkplaneUnitQuaternion)
+        );
+        let all_projected_tangent_rows = lowered.rows[1..].iter().all(|row| {
+            row.strategy == Some(SketchResidualStrategy::ProjectedCubicCurveCubicCurveTangent)
+        });
+        prop_assert!(all_projected_tangent_rows);
+        prop_assert!(certification.all_satisfied());
+        prop_assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+        prop_assert_eq!(forms.forms.len(), 5);
+        for form in &forms.forms[..4] {
+            prop_assert_eq!(form.role, SketchResidualFormRole::ExactProof);
+            prop_assert_eq!(
+                form.residual.eval_real(context.bindings()).unwrap(),
+                Real::zero()
+            );
+        }
+        prop_assert_eq!(
+            forms.forms[4].kind,
+            SketchResidualFormKind::ProjectedCubicCurveCubicCurveTangentDotProductPredicate
+        );
+        let dot = forms.forms[4].residual.eval_real(context.bindings()).unwrap();
+        prop_assert_eq!(dot.structural_facts().sign, Some(RealSign::Positive));
+    }
+
+    #[test]
     fn sketch_cubic_cubic_tangent_rows_match_generated_affine_cubics(
         ax in -8_i16..=8,
         ay in -8_i16..=8,
