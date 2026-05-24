@@ -80,6 +80,14 @@ pub enum PathMeshBooleanError {
     CopperThicknessExceedsPitch,
     /// A rectangular PCB pad did not have certified positive width and height.
     NonPositivePadExtent,
+    /// A polygonal source had fewer than three retained vertices.
+    TooFewPolygonVertices,
+    /// A polygonal source had zero exact area.
+    DegeneratePolygon,
+    /// A polygonal source had undecidable orientation or convexity.
+    UnknownPolygonOrientation,
+    /// A polygonal source was not strictly convex.
+    NonConvexPolygon,
     /// A PCB copper boolean program mixed multiple nets.
     MixedPcbNets,
     /// A PCB copper boolean program mixed multiple layers.

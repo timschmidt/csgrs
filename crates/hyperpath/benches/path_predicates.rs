@@ -6,14 +6,14 @@ use hyperpath::{
     CubicBezier, ExplicitCircularArc, HigherOrderBezier, LinePathSegment, MeanderObstacle,
     MeanderPlacementCandidate, NetId, OffsetSide, PathMeshBooleanOperation,
     PathMeshBooleanProgramStep, PathProvenance, PathSourceFormat, PcbBoardOutline,
-    PcbCardinalRectPad, PcbCircularPad, PcbConvexBoardOutline, PcbCopperBooleanSource,
-    PcbLayerZModel, PcbOrthogonalBoardOutline, PcbRectPad, PcbTrace, PcbViaStack, QuadraticBezier,
-    RationalQuadraticBezier, RectangularPocket, SourceLengthUnit, SpecctraGridTraceRecord,
-    SpecctraGridViaRecord, SpecctraLayerAlias, SpecctraNetAlias, SweptLineSegment, TangentSpan,
-    TraceLayer, ViaDrillIntent, boolean_path_mesh_program, boolean_path_mesh_sources,
-    boolean_rectangular_prism_chain, boolean_rectangular_prisms, build_alternating_detour_meander,
-    build_cam_rest_material_program, build_g1_join_problem, build_length_match_problem,
-    build_multi_detour_meander, build_nonuniform_detour_meander,
+    PcbCardinalRectPad, PcbCircularPad, PcbConvexBoardOutline, PcbConvexPolyPad,
+    PcbCopperBooleanSource, PcbLayerZModel, PcbOrthogonalBoardOutline, PcbRectPad, PcbTrace,
+    PcbViaStack, QuadraticBezier, RationalQuadraticBezier, RectangularPocket, SourceLengthUnit,
+    SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraLayerAlias, SpecctraNetAlias,
+    SweptLineSegment, TangentSpan, TraceLayer, ViaDrillIntent, boolean_path_mesh_program,
+    boolean_path_mesh_sources, boolean_rectangular_prism_chain, boolean_rectangular_prisms,
+    build_alternating_detour_meander, build_cam_rest_material_program, build_g1_join_problem,
+    build_length_match_problem, build_multi_detour_meander, build_nonuniform_detour_meander,
     build_obstacle_aware_detour_meander, build_oriented_tangent_alignment_problem,
     build_pcb_copper_union_program, build_rectangular_bead_plan, build_rectangular_pocket_plan,
     build_rectangular_serpentine_infill_graph, build_rectangular_support_plan,
@@ -843,6 +843,32 @@ fn path_predicates(c: &mut Criterion) {
                     PcbCopperBooleanSource::Trace(pcb_trace.clone()),
                     PcbCopperBooleanSource::Trace(pcb_trace_second.clone()),
                     PcbCopperBooleanSource::CardinalRectPad(pcb_pad.clone()),
+                ],
+                pcb_z.clone(),
+                PredicatePolicy::default(),
+            )
+            .unwrap();
+            report.validate_replay(PredicatePolicy::default())
+        })
+    });
+    let pcb_polygon = PcbConvexPolyPad::new(
+        NetId(7),
+        TraceLayer(0),
+        vec![
+            p(11_000, 3_000),
+            p(14_000, 1_000),
+            p(17_000, 3_000),
+            p(14_000, 5_000),
+        ],
+    )
+    .unwrap();
+    c.bench_function("pcb_convex_polygon_copper_union_program_replay", |b| {
+        b.iter(|| {
+            let report = build_pcb_copper_union_program(
+                vec![
+                    PcbCopperBooleanSource::Trace(pcb_trace.clone()),
+                    PcbCopperBooleanSource::Trace(pcb_trace_second.clone()),
+                    PcbCopperBooleanSource::ConvexPolyPad(pcb_polygon.clone()),
                 ],
                 pcb_z.clone(),
                 PredicatePolicy::default(),

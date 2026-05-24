@@ -13,6 +13,7 @@ pub mod cam;
 pub mod mesh_boolean;
 pub mod mesh_boolean_cam;
 pub mod mesh_boolean_pcb;
+pub mod mesh_boolean_polygon;
 pub mod mesh_boolean_program;
 pub mod mesh_boolean_sources;
 pub mod offset;
@@ -61,7 +62,11 @@ pub use mesh_boolean_cam::{
 pub use mesh_boolean_pcb::{
     PcbCopperBooleanProgramReport, PcbCopperBooleanSource, PcbLayerSlab, PcbLayerZModel,
     build_pcb_copper_union_program, pcb_cardinal_rect_pad_mesh_boolean_source,
-    pcb_rect_pad_mesh_boolean_source, pcb_rect_pad_prism, pcb_trace_mesh_boolean_source,
+    pcb_convex_poly_pad_mesh_boolean_source, pcb_rect_pad_mesh_boolean_source, pcb_rect_pad_prism,
+    pcb_trace_mesh_boolean_source,
+};
+pub use mesh_boolean_polygon::{
+    ConvexPolygonPrism, ConvexPolygonWinding, convex_polygon_prism_from_i64_vertices,
 };
 pub use mesh_boolean_program::{
     PathMeshBooleanProgramReport, PathMeshBooleanProgramStep, PathMeshBooleanProgramStepReport,
@@ -81,13 +86,13 @@ pub use offset::{
 pub use pcb::{
     BoardContourError, BoardContourOrientation, CardinalRotation, ClearanceStatus,
     DrillBoardClearanceReport, NetId, PadBoardClearanceReport, PcbBoardOutline, PcbCardinalRectPad,
-    PcbCircularPad, PcbConvexBoardOutline, PcbOrthogonalBoardOutline, PcbPadFacts, PcbRectPad,
-    PcbTrace, PcbTraceFacts, PcbViaStack, TraceClearanceReport, TraceLayer, TraceWidthClass,
-    ViaAnnularRingReport, ViaDrillIntent, ViaDrillPolicyClass, ViaDrillPolicyReport,
-    ViaLayerSpanRelation, ViaLayerSpanReport, ViaLayerTransitionClass, ViaLayerTransitionReport,
-    check_cardinal_rect_pad_board_clearance, check_circular_pad_board_clearance,
-    check_rect_pad_board_clearance, check_trace_board_clearance,
-    check_trace_cardinal_rect_pad_clearance, check_trace_clearance,
+    PcbCircularPad, PcbConvexBoardOutline, PcbConvexPolyPad, PcbOrthogonalBoardOutline,
+    PcbPadFacts, PcbRectPad, PcbTrace, PcbTraceFacts, PcbViaStack, TraceClearanceReport,
+    TraceLayer, TraceWidthClass, ViaAnnularRingReport, ViaDrillIntent, ViaDrillPolicyClass,
+    ViaDrillPolicyReport, ViaLayerSpanRelation, ViaLayerSpanReport, ViaLayerTransitionClass,
+    ViaLayerTransitionReport, check_cardinal_rect_pad_board_clearance,
+    check_circular_pad_board_clearance, check_rect_pad_board_clearance,
+    check_trace_board_clearance, check_trace_cardinal_rect_pad_clearance, check_trace_clearance,
     check_trace_convex_board_clearance, check_trace_orthogonal_board_clearance,
     check_trace_pad_clearance, check_trace_rect_pad_clearance, check_trace_via_clearance,
     check_trace_via_drill_clearance, check_via_drill_board_clearance,

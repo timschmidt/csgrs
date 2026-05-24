@@ -2,8 +2,9 @@
 //!
 //! PCB routing objects are not generic boxes: they carry net, layer, source
 //! provenance, and exact swept geometry. This module lowers the subset that is
-//! already exact in `hyperpath`--axis-aligned traces and rectangular/cardinal
-//! rectangular pads--into retained mesh-boolean sources. The lowering is
+//! already exact in `hyperpath`--axis-aligned traces, rectangular/cardinal
+//! rectangular pads, and strictly convex polygonal copper--into retained
+//! mesh-boolean sources. The lowering is
 //! layer-aware through [`PcbLayerZModel`], so boolean programs can operate over
 //! copper solids while replay still starts from PCB path objects.
 //!
@@ -21,11 +22,12 @@ use hyperreal::{Real, RealExactSetFacts};
 
 use crate::cam::{PocketPlanError, RectangularPocket};
 use crate::mesh_boolean::{PathMeshBooleanError, PathMeshBooleanOperation, RectangularPrism};
+use crate::mesh_boolean_polygon::ConvexPolygonPrism;
 use crate::mesh_boolean_program::{
     PathMeshBooleanProgramReport, PathMeshBooleanProgramStep, boolean_path_mesh_program,
 };
 use crate::mesh_boolean_sources::{AxisAlignedSweptSegmentPrism, PathMeshBooleanSource};
-use crate::pcb::{NetId, PcbCardinalRectPad, PcbRectPad, PcbTrace, TraceLayer};
+use crate::pcb::{NetId, PcbCardinalRectPad, PcbConvexPolyPad, PcbRectPad, PcbTrace, TraceLayer};
 
 /// Exact Z mapping for discrete PCB copper layers.
 ///
@@ -55,9 +57,9 @@ pub struct PcbLayerSlab {
 /// Retained PCB copper source supported by the exact mesh-boolean handoff.
 ///
 /// This enum keeps PCB semantics attached until the final lowering step. It is
-/// intentionally narrower than all PCB geometry: circular pads and arbitrary
-/// rotations need exact curved/arrangement evidence before they can become
-/// mesh-boolean operands without approximation.
+/// intentionally narrower than all PCB geometry: circular/rounded pads and
+/// nonconvex copper pours need curved or arrangement evidence before they can
+/// become mesh-boolean operands without approximation.
 #[derive(Clone, Debug, PartialEq)]
 pub enum PcbCopperBooleanSource {
     /// Axis-aligned retained trace.
@@ -66,6 +68,8 @@ pub enum PcbCopperBooleanSource {
     RectPad(PcbRectPad),
     /// Cardinally rotated rectangular pad.
     CardinalRectPad(PcbCardinalRectPad),
+    /// Strictly convex polygonal pad or copper zone.
+    ConvexPolyPad(PcbConvexPolyPad),
 }
 
 /// Exact PCB copper-union program for one net on one layer.
@@ -164,6 +168,7 @@ impl PcbCopperBooleanSource {
             Self::Trace(source) => source.net(),
             Self::RectPad(source) => source.net(),
             Self::CardinalRectPad(source) => source.net(),
+            Self::ConvexPolyPad(source) => source.net(),
         }
     }
 
@@ -173,6 +178,7 @@ impl PcbCopperBooleanSource {
             Self::Trace(source) => source.layer(),
             Self::RectPad(source) => source.layer(),
             Self::CardinalRectPad(source) => source.layer(),
+            Self::ConvexPolyPad(source) => source.layer(),
         }
     }
 
@@ -187,6 +193,9 @@ impl PcbCopperBooleanSource {
             Self::RectPad(source) => pcb_rect_pad_mesh_boolean_source(source, z_model, policy),
             Self::CardinalRectPad(source) => {
                 pcb_cardinal_rect_pad_mesh_boolean_source(source, z_model, policy)
+            }
+            Self::ConvexPolyPad(source) => {
+                pcb_convex_poly_pad_mesh_boolean_source(source, z_model, policy)
             }
         }
     }
@@ -291,6 +300,28 @@ pub fn pcb_cardinal_rect_pad_mesh_boolean_source(
         .effective_rect()
         .map_err(|_| PathMeshBooleanError::InvalidScalar)?;
     pcb_rect_pad_mesh_boolean_source(&effective, z_model, policy)
+}
+
+/// Lower a retained strictly convex polygonal PCB pad into an exact source.
+///
+/// The prism triangulation is a convex fan over retained vertices. This is
+/// intentionally not a general pour/zone arrangement: nonconvex and holed
+/// copper need a retained planar-cell decomposition before mesh topology is
+/// accepted, matching Yap's object-before-predicate guidance.
+pub fn pcb_convex_poly_pad_mesh_boolean_source(
+    pad: &PcbConvexPolyPad,
+    z_model: &PcbLayerZModel,
+    policy: PredicatePolicy,
+) -> Result<PathMeshBooleanSource, PathMeshBooleanError> {
+    let slab = z_model.slab_for_layer(pad.layer());
+    Ok(ConvexPolygonPrism::new(
+        pad.vertices().to_vec(),
+        slab.z_min,
+        slab.z_max,
+        pad.provenance(),
+        policy,
+    )?
+    .into())
 }
 
 /// Lower an axis-aligned rectangular PCB pad into an exact rectangular prism.

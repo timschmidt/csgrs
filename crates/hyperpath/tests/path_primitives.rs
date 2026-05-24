@@ -11,8 +11,8 @@ use hyperpath::{
     MeanderError, MeanderObstacle, MeanderPlacementCandidate, NetId, OffsetSide,
     PathMeshBooleanError, PathMeshBooleanOperation, PathMeshBooleanProgramStep,
     PathMeshBooleanSource, PathProvenance, PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad,
-    PcbCircularPad, PcbConvexBoardOutline, PcbCopperBooleanSource, PcbLayerZModel,
-    PcbOrthogonalBoardOutline, PcbRectPad, PcbTrace, PcbViaStack, PocketPlanError,
+    PcbCircularPad, PcbConvexBoardOutline, PcbConvexPolyPad, PcbCopperBooleanSource,
+    PcbLayerZModel, PcbOrthogonalBoardOutline, PcbRectPad, PcbTrace, PcbViaStack, PocketPlanError,
     PocketPlanStopReason, QuadraticBezier, RationalQuadraticBezier, RationalQuadraticBezierError,
     RectangularPocket, RectangularRegionRelation, RouteCertificationError, SegmentParameterOrder,
     SourceLengthUnit, SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraImportError,
@@ -43,11 +43,11 @@ use hyperpath::{
     offset_cubic_bezier_sample, offset_explicit_arc, offset_higher_order_bezier_sample,
     offset_quadratic_bezier_sample, parse_specctra_grid_route_records,
     parse_specctra_grid_trace_records, pcb_cardinal_rect_pad_mesh_boolean_source,
-    pcb_rect_pad_mesh_boolean_source, pcb_rect_pad_prism, pcb_trace_mesh_boolean_source,
-    rectangular_prism_from_i64_bounds, serialize_specctra_grid_route_records,
-    serialize_specctra_grid_trace_records, serialize_specctra_grid_via_records,
-    specctra_grid_trace_record, specctra_grid_via_record, subtract_rectangular_region,
-    tangent_cross, tangent_dot, tangent_norm_squared,
+    pcb_convex_poly_pad_mesh_boolean_source, pcb_rect_pad_mesh_boolean_source, pcb_rect_pad_prism,
+    pcb_trace_mesh_boolean_source, rectangular_prism_from_i64_bounds,
+    serialize_specctra_grid_route_records, serialize_specctra_grid_trace_records,
+    serialize_specctra_grid_via_records, specctra_grid_trace_record, specctra_grid_via_record,
+    subtract_rectangular_region, tangent_cross, tangent_dot, tangent_norm_squared,
 };
 use hyperreal::{Rational, Real};
 use proptest::prelude::*;
@@ -478,6 +478,52 @@ fn pcb_copper_boolean_program_unions_same_net_layer_sources() {
 }
 
 #[test]
+fn pcb_copper_boolean_program_unions_convex_polygon_pad_sources() {
+    let z_model = PcbLayerZModel::new(r(0), r(10), r(2), PredicatePolicy::default()).unwrap();
+    let trace = trace(11, 0, p(0, 2), p(8, 2), 2);
+    let diamond = PcbConvexPolyPad::new(
+        NetId(11),
+        TraceLayer(0),
+        vec![p(7, 2), p(10, 0), p(13, 2), p(10, 4)],
+    )
+    .unwrap();
+    let source =
+        pcb_convex_poly_pad_mesh_boolean_source(&diamond, &z_model, PredicatePolicy::default())
+            .expect("strictly convex polygon pad should lower to exact mesh source");
+    let mesh = source.to_exact_mesh().unwrap();
+    mesh.audit().unwrap();
+    assert!(mesh.facts().mesh.closed_manifold);
+
+    let report = build_pcb_copper_union_program(
+        vec![
+            PcbCopperBooleanSource::Trace(trace),
+            PcbCopperBooleanSource::ConvexPolyPad(diamond.clone()),
+        ],
+        z_model,
+        PredicatePolicy::default(),
+    )
+    .expect("same-net convex polygon copper should union through exact mesh booleans");
+    report.validate_replay(PredicatePolicy::default()).unwrap();
+    assert_eq!(report.sources.len(), 2);
+    assert_eq!(report.program.steps.len(), 1);
+    assert!(report.program.mesh().unwrap().facts().mesh.closed_manifold);
+
+    let mut stale = report.clone();
+    stale.sources[1] = PcbCopperBooleanSource::ConvexPolyPad(
+        PcbConvexPolyPad::new(
+            NetId(11),
+            TraceLayer(0),
+            vec![p(7, 3), p(10, 1), p(13, 3), p(10, 5)],
+        )
+        .unwrap(),
+    );
+    assert!(matches!(
+        stale.validate_replay(PredicatePolicy::default()),
+        Err(PathMeshBooleanError::Replay(_))
+    ));
+}
+
+#[test]
 fn pcb_copper_boolean_program_rejects_mixed_nets_and_layers() {
     let z_model = PcbLayerZModel::new(r(0), r(10), r(2), PredicatePolicy::default()).unwrap();
     assert_eq!(
@@ -518,6 +564,28 @@ fn pcb_copper_boolean_program_rejects_mixed_nets_and_layers() {
         )
         .unwrap_err(),
         PathMeshBooleanError::MixedPcbLayers
+    );
+}
+
+#[test]
+fn pcb_convex_polygon_boolean_sources_reject_degenerate_and_nonconvex_inputs() {
+    assert_eq!(
+        PcbConvexPolyPad::new(NetId(1), TraceLayer(0), vec![p(0, 0), p(1, 0)]).unwrap_err(),
+        BoardContourError::TooFewVertices
+    );
+    assert_eq!(
+        PcbConvexPolyPad::new(NetId(1), TraceLayer(0), vec![p(0, 0), p(2, 0), p(4, 0)])
+            .unwrap_err(),
+        BoardContourError::DegenerateArea
+    );
+    assert_eq!(
+        PcbConvexPolyPad::new(
+            NetId(1),
+            TraceLayer(0),
+            vec![p(0, 0), p(4, 0), p(1, 1), p(4, 4), p(0, 4)]
+        )
+        .unwrap_err(),
+        BoardContourError::NonConvex
     );
 }
 
