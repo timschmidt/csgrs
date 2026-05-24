@@ -3,14 +3,15 @@
 use hyperlimit::{Point2, PredicatePolicy};
 use hyperpath::{
     AxisAlignedSweptSegmentPrism, CamOrthogonalIslandPocketCutter, CamRestMaterialCutter,
-    CardinalRotation, LinePathSegment, NetId, PathMeshBooleanOperation, PathMeshBooleanProgramStep, PcbCardinalRectPad,
-    PcbCompositeCopperBooleanSource, PcbConvexPolyPad, PcbCopperBooleanSource,
-    PcbHoledOrthogonalCopperSource, PcbLayerZModel, PcbOrthogonalPolyPad, PcbTrace,
-    SweptLineSegment, TraceLayer, boolean_path_mesh_program, boolean_path_mesh_sources,
+    CardinalRotation, LinePathSegment, NetId, PathMeshBooleanOperation, PathMeshBooleanProgramStep,
+    PcbCardinalRectPad, PcbCompositeCopperBooleanSource, PcbCopperBoardClipOutline,
+    PcbConvexPolyPad, PcbCopperBooleanSource, PcbHoledOrthogonalCopperSource, PcbLayerZModel,
+    PcbOrthogonalBoardOutline, PcbOrthogonalPolyPad, PcbRectPad, PcbTrace, SweptLineSegment, TraceLayer,
+    boolean_path_mesh_program, boolean_path_mesh_sources,
     boolean_rectangular_prism_chain, boolean_rectangular_prisms,
     boolean_rectangular_prisms_with_boundary_policy, build_cam_rest_material_program,
-    build_pcb_composite_copper_union_program, build_pcb_copper_union_program,
-    build_pcb_holed_orthogonal_copper_program,
+    build_pcb_composite_copper_union_program, build_pcb_copper_board_clip_program,
+    build_pcb_copper_union_program, build_pcb_holed_orthogonal_copper_program,
     pcb_cardinal_rect_pad_mesh_boolean_source, pcb_trace_mesh_boolean_source,
     rectangular_prism_from_i64_bounds,
 };
@@ -357,8 +358,8 @@ fuzz_target!(|data: &[u8]| {
                 vec![
                     Point2::new(min_x.clone(), min_y.clone()),
                     Point2::new(min_x.clone() + w.clone(), min_y.clone()),
-                    Point2::new(min_x.clone() + w, min_y.clone() + h.clone()),
-                    Point2::new(min_x, min_y.clone() + h),
+                    Point2::new(min_x.clone() + w.clone(), min_y.clone() + h.clone()),
+                    Point2::new(min_x.clone(), min_y.clone() + h.clone()),
                 ],
                 vec![vec![
                     Point2::new(hole_x0.clone(), hole_y0.clone()),
@@ -385,9 +386,9 @@ fuzz_target!(|data: &[u8]| {
                     let trace = PcbTrace::new(NetId(u32::from(data[16])), layer, swept);
                     if let Ok(report) = build_pcb_composite_copper_union_program(
                         vec![
-                            PcbCompositeCopperBooleanSource::HoledOrthogonal(source),
+                            PcbCompositeCopperBooleanSource::HoledOrthogonal(source.clone()),
                             PcbCompositeCopperBooleanSource::Solid(PcbCopperBooleanSource::Trace(
-                                trace,
+                                trace.clone(),
                             )),
                         ],
                         z_model.clone(),
@@ -395,6 +396,40 @@ fuzz_target!(|data: &[u8]| {
                     ) {
                         report.validate_replay(PredicatePolicy::default()).unwrap();
                         report.steps.last().unwrap().result.validate().unwrap();
+                    }
+                    let clip_min = Point2::new(min_x.clone(), min_y.clone());
+                    let clip_max = Point2::new(
+                        min_x.clone() + Real::from(2),
+                        min_y.clone() + Real::from(2),
+                    );
+                    if let Ok(board) = PcbOrthogonalBoardOutline::new(vec![
+                        clip_min.clone(),
+                        Point2::new(clip_max.x.clone(), clip_min.y.clone()),
+                        clip_max.clone(),
+                        Point2::new(clip_min.x.clone(), clip_max.y.clone()),
+                    ]) {
+                        let pad = PcbRectPad::new(
+                            NetId(u32::from(data[16])),
+                            layer,
+                            Point2::new(
+                                min_x.clone() + Real::from(1),
+                                min_y.clone() + Real::from(1),
+                            ),
+                            Real::from(2),
+                            Real::from(2),
+                        )
+                        .unwrap();
+                        if let Ok(report) = build_pcb_copper_board_clip_program(
+                            vec![PcbCompositeCopperBooleanSource::Solid(
+                                PcbCopperBooleanSource::RectPad(pad),
+                            )],
+                            PcbCopperBoardClipOutline::Orthogonal(board),
+                            z_model.clone(),
+                            PredicatePolicy::default(),
+                        ) {
+                            report.validate_replay(PredicatePolicy::default()).unwrap();
+                            report.clip_step.result.validate().unwrap();
+                        }
                     }
                 }
             }

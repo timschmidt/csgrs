@@ -63,12 +63,14 @@ pub use mesh_boolean_cam::{
 pub use mesh_boolean_pcb::{
     PcbCompositeCopperBooleanProgramReport, PcbCompositeCopperBooleanSource,
     PcbCompositeCopperBooleanStepReport, PcbCompositeCopperMaterialization,
+    PcbCopperBoardClipOutline, PcbCopperBoardClipProgramReport, PcbCopperBoardClipStepReport,
     PcbCopperBooleanProgramReport, PcbCopperBooleanSource, PcbHoledCopperBooleanProgramReport,
     PcbHoledOrthogonalCopperSource, PcbLayerSlab, PcbLayerZModel,
-    build_pcb_composite_copper_union_program, build_pcb_copper_union_program,
-    build_pcb_holed_orthogonal_copper_program, pcb_cardinal_rect_pad_mesh_boolean_source,
-    pcb_convex_poly_pad_mesh_boolean_source, pcb_orthogonal_poly_pad_mesh_boolean_source,
-    pcb_rect_pad_mesh_boolean_source, pcb_rect_pad_prism, pcb_trace_mesh_boolean_source,
+    build_pcb_composite_copper_union_program, build_pcb_copper_board_clip_program,
+    build_pcb_copper_union_program, build_pcb_holed_orthogonal_copper_program,
+    pcb_cardinal_rect_pad_mesh_boolean_source, pcb_convex_poly_pad_mesh_boolean_source,
+    pcb_orthogonal_poly_pad_mesh_boolean_source, pcb_rect_pad_mesh_boolean_source,
+    pcb_rect_pad_prism, pcb_trace_mesh_boolean_source,
 };
 pub use mesh_boolean_polygon::{
     ConvexPolygonPrism, ConvexPolygonWinding, OrthogonalPolygonPrism,

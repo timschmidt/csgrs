@@ -33,8 +33,8 @@ use crate::mesh_boolean_program::{
 };
 use crate::mesh_boolean_sources::{AxisAlignedSweptSegmentPrism, PathMeshBooleanSource};
 use crate::pcb::{
-    BoardContourError, NetId, PcbCardinalRectPad, PcbConvexPolyPad, PcbOrthogonalPolyPad,
-    PcbRectPad, PcbTrace, TraceLayer,
+    BoardContourError, NetId, PcbCardinalRectPad, PcbConvexBoardOutline, PcbConvexPolyPad,
+    PcbOrthogonalBoardOutline, PcbOrthogonalPolyPad, PcbRectPad, PcbTrace, TraceLayer,
 };
 
 /// Exact Z mapping for discrete PCB copper layers.
@@ -201,6 +201,58 @@ pub struct PcbCompositeCopperBooleanProgramReport {
     pub initial: PcbCompositeCopperMaterialization,
     /// Accepted per-step exact union evidence.
     pub steps: Vec<PcbCompositeCopperBooleanStepReport>,
+}
+
+/// Retained straight-edge board outline used to clip PCB copper solids.
+///
+/// Board clipping is an intersection, not a copper-source union. This enum
+/// keeps board geometry in the PCB domain until the final exact boolean step,
+/// following Yap, "Towards Exact Geometric Computation," *Computational
+/// Geometry* 7.1-2 (1997): the retained board object remains the authority,
+/// while accepted mesh topology is replayable evidence.
+#[derive(Clone, Debug, PartialEq)]
+pub enum PcbCopperBoardClipOutline {
+    /// Strictly convex straight-edge board outline.
+    Convex(PcbConvexBoardOutline),
+    /// Simple orthogonal board outline, including rectilinear notches.
+    Orthogonal(PcbOrthogonalBoardOutline),
+}
+
+/// Accepted evidence for the final copper/board intersection step.
+#[derive(Clone, Debug, PartialEq)]
+pub struct PcbCopperBoardClipStepReport {
+    /// Retained board outline consumed by this intersection.
+    pub outline: PcbCopperBoardClipOutline,
+    /// Exact `hypermesh` preflight report for copper accumulator/board slab.
+    pub preflight: ExactBooleanPreflight,
+    /// Accepted exact clipped copper result.
+    pub result: ExactBooleanResult,
+}
+
+/// Exact same-net PCB copper program clipped to a retained board outline.
+///
+/// The report first materializes retained copper sources exactly, then clips
+/// the accepted copper accumulator to a layer slab of the retained board
+/// outline. The operation is a Requicha regularized solid intersection
+/// ("Representations for Rigid Solids: Theory, Methods, and Systems,"
+/// *ACM Computing Surveys* 12.4 (1980)); the source retention and replay
+/// boundary follow Yap's exact-geometric-computation model.
+#[derive(Clone, Debug, PartialEq)]
+pub struct PcbCopperBoardClipProgramReport {
+    /// Net shared by every retained copper source.
+    pub net: NetId,
+    /// Layer shared by every retained copper source and board slab.
+    pub layer: TraceLayer,
+    /// Exact layer-to-Z model used for lowering.
+    pub z_model: PcbLayerZModel,
+    /// Retained copper sources in union order before board clipping.
+    pub sources: Vec<PcbCompositeCopperBooleanSource>,
+    /// Accepted materialization of the first copper source.
+    pub initial: PcbCompositeCopperMaterialization,
+    /// Accepted same-net copper union evidence before clipping.
+    pub union_steps: Vec<PcbCompositeCopperBooleanStepReport>,
+    /// Accepted exact board-intersection evidence.
+    pub clip_step: PcbCopperBoardClipStepReport,
 }
 
 impl PcbLayerZModel {
@@ -470,6 +522,101 @@ impl PcbCompositeCopperBooleanProgramReport {
     }
 }
 
+impl PcbCopperBoardClipOutline {
+    /// Lower this retained board outline into a layer-aware clipping source.
+    pub fn to_path_source(
+        &self,
+        z_model: &PcbLayerZModel,
+        layer: TraceLayer,
+        policy: PredicatePolicy,
+    ) -> Result<PathMeshBooleanSource, PathMeshBooleanError> {
+        let slab = z_model.slab_for_layer(layer);
+        match self {
+            Self::Convex(outline) => Ok(ConvexPolygonPrism::new(
+                outline.vertices().to_vec(),
+                slab.z_min,
+                slab.z_max,
+                outline.provenance(),
+                policy,
+            )?
+            .into()),
+            Self::Orthogonal(outline) => Ok(OrthogonalPolygonPrism::new(
+                outline.vertices().to_vec(),
+                slab.z_min,
+                slab.z_max,
+                outline.provenance(),
+                policy,
+            )?
+            .into()),
+        }
+    }
+}
+
+impl PcbCopperBoardClipProgramReport {
+    /// Return the final accepted exact clipped copper mesh.
+    pub const fn mesh(&self) -> &ExactMesh {
+        &self.clip_step.result.mesh
+    }
+
+    /// Rebuild copper materialization, board lowering, and clipping evidence.
+    pub fn validate_replay(&self, policy: PredicatePolicy) -> Result<(), PathMeshBooleanError> {
+        let replayed = build_pcb_copper_board_clip_program(
+            self.sources.clone(),
+            self.clip_step.outline.clone(),
+            self.z_model.clone(),
+            policy,
+        )?;
+        if replayed.net != self.net
+            || replayed.layer != self.layer
+            || replayed.initial != self.initial
+            || replayed.union_steps != self.union_steps
+            || replayed.clip_step != self.clip_step
+        {
+            return Err(PathMeshBooleanError::Replay(
+                "retained PCB copper board-clip program no longer matches replay".into(),
+            ));
+        }
+        if let Some(program) = &self.initial.holed_program {
+            program.validate_replay(policy)?;
+        }
+        let mut accumulator = self.initial.to_exact_mesh(&self.z_model, policy)?;
+        for (expected_index, step) in self.union_steps.iter().enumerate() {
+            if step.index != expected_index {
+                return Err(PathMeshBooleanError::Replay(
+                    "retained PCB board-clip union step index no longer matches order".into(),
+                ));
+            }
+            let right_mesh = step.right.to_exact_mesh(&self.z_model, policy)?;
+            step.result
+                .validate_operation_against_sources(
+                    &accumulator,
+                    &right_mesh,
+                    PathMeshBooleanOperation::Union.to_hypermesh(),
+                    ValidationPolicy::CLOSED,
+                    ExactBoundaryBooleanPolicy::Reject,
+                )
+                .map_err(|error| PathMeshBooleanError::Replay(format!("{error:?}")))?;
+            accumulator = step.result.mesh.clone();
+        }
+        let board_source =
+            self.clip_step
+                .outline
+                .to_path_source(&self.z_model, self.layer, policy)?;
+        let board_mesh = board_source.to_exact_mesh()?;
+        self.clip_step
+            .result
+            .validate_operation_against_sources(
+                &accumulator,
+                &board_mesh,
+                PathMeshBooleanOperation::Intersection.to_hypermesh(),
+                ValidationPolicy::CLOSED,
+                ExactBoundaryBooleanPolicy::Reject,
+            )
+            .map_err(|error| PathMeshBooleanError::Replay(format!("{error:?}")))?;
+        Ok(())
+    }
+}
+
 impl PcbCopperBooleanSource {
     /// Return the source net.
     pub const fn net(&self) -> NetId {
@@ -680,6 +827,116 @@ pub fn build_pcb_composite_copper_union_program(
         sources,
         initial,
         steps,
+    })
+}
+
+/// Build an exact same-net copper program clipped to a retained board outline.
+///
+/// Copper sources are first materialized and unioned left-to-right. The final
+/// accumulator is intersected with the retained board outline extruded over the
+/// same copper layer slab. This handles the common PCB manufacturing boundary
+/// where copper artwork may be imported or routed beyond the board edge but
+/// the accepted output topology must replay against the exact board contour.
+pub fn build_pcb_copper_board_clip_program(
+    sources: Vec<PcbCompositeCopperBooleanSource>,
+    outline: PcbCopperBoardClipOutline,
+    z_model: PcbLayerZModel,
+    policy: PredicatePolicy,
+) -> Result<PcbCopperBoardClipProgramReport, PathMeshBooleanError> {
+    if sources.is_empty() {
+        return Err(PathMeshBooleanError::NotEnoughSources);
+    }
+    let net = sources[0].net();
+    let layer = sources[0].layer();
+    if sources.iter().any(|source| source.net() != net) {
+        return Err(PathMeshBooleanError::MixedPcbNets);
+    }
+    if sources.iter().any(|source| source.layer() != layer) {
+        return Err(PathMeshBooleanError::MixedPcbLayers);
+    }
+
+    let mut materialized = sources
+        .iter()
+        .cloned()
+        .map(|source| materialize_composite_copper_source(source, &z_model, policy))
+        .collect::<Result<Vec<_>, _>>()?;
+    let initial = materialized.remove(0);
+    let mut accumulator = initial.to_exact_mesh(&z_model, policy)?;
+    let mut union_steps = Vec::with_capacity(materialized.len());
+
+    for (index, right) in materialized.into_iter().enumerate() {
+        let right_mesh = right.to_exact_mesh(&z_model, policy)?;
+        let operation = PathMeshBooleanOperation::Union.to_hypermesh();
+        let preflight = preflight_boolean_exact(&accumulator, &right_mesh, operation)
+            .map_err(|error| PathMeshBooleanError::Preflight(format!("{error:?}")))?;
+        preflight
+            .validate_against_sources(&accumulator, &right_mesh)
+            .map_err(|error| PathMeshBooleanError::Replay(format!("{error:?}")))?;
+        let result = boolean_exact_with_boundary_policy(
+            &accumulator,
+            &right_mesh,
+            operation,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .map_err(|error| PathMeshBooleanError::Boolean(format!("{error:?}")))?;
+        result
+            .validate_operation_against_sources(
+                &accumulator,
+                &right_mesh,
+                operation,
+                ValidationPolicy::CLOSED,
+                ExactBoundaryBooleanPolicy::Reject,
+            )
+            .map_err(|error| PathMeshBooleanError::Replay(format!("{error:?}")))?;
+        accumulator = result.mesh.clone();
+        union_steps.push(PcbCompositeCopperBooleanStepReport {
+            index,
+            right,
+            preflight,
+            result,
+        });
+    }
+
+    let board_source = outline.to_path_source(&z_model, layer, policy)?;
+    let board_mesh = board_source.to_exact_mesh()?;
+    let operation = PathMeshBooleanOperation::Intersection.to_hypermesh();
+    let preflight = preflight_boolean_exact(&accumulator, &board_mesh, operation)
+        .map_err(|error| PathMeshBooleanError::Preflight(format!("{error:?}")))?;
+    preflight
+        .validate_against_sources(&accumulator, &board_mesh)
+        .map_err(|error| PathMeshBooleanError::Replay(format!("{error:?}")))?;
+    let result = boolean_exact_with_boundary_policy(
+        &accumulator,
+        &board_mesh,
+        operation,
+        ValidationPolicy::CLOSED,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .map_err(|error| PathMeshBooleanError::Boolean(format!("{error:?}")))?;
+    result
+        .validate_operation_against_sources(
+            &accumulator,
+            &board_mesh,
+            operation,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .map_err(|error| PathMeshBooleanError::Replay(format!("{error:?}")))?;
+    let clip_step = PcbCopperBoardClipStepReport {
+        outline,
+        preflight,
+        result,
+    };
+
+    Ok(PcbCopperBoardClipProgramReport {
+        net,
+        layer,
+        z_model,
+        sources,
+        initial,
+        union_steps,
+        clip_step,
     })
 }
 

@@ -13,9 +13,9 @@ use hyperpath::{
     PathMeshBooleanOperation, PathMeshBooleanProgramStep, PathMeshBooleanSource, PathProvenance,
     PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad, PcbCircularPad,
     PcbCompositeCopperBooleanSource, PcbConvexBoardOutline, PcbConvexPolyPad,
-    PcbCopperBooleanSource, PcbHoledOrthogonalCopperSource, PcbLayerZModel,
-    PcbOrthogonalBoardOutline, PcbOrthogonalPolyPad, PcbRectPad, PcbTrace, PcbViaStack,
-    PocketPlanError, PocketPlanStopReason, QuadraticBezier, RationalQuadraticBezier,
+    PcbCopperBoardClipOutline, PcbCopperBooleanSource, PcbHoledOrthogonalCopperSource,
+    PcbLayerZModel, PcbOrthogonalBoardOutline, PcbOrthogonalPolyPad, PcbRectPad, PcbTrace,
+    PcbViaStack, PocketPlanError, PocketPlanStopReason, QuadraticBezier, RationalQuadraticBezier,
     RationalQuadraticBezierError, RectangularPocket, RectangularRegionRelation,
     RouteCertificationError, SegmentParameterOrder, SourceLengthUnit, SpecctraGridTraceRecord,
     SpecctraGridViaRecord, SpecctraImportError, SpecctraLayerAlias, SpecctraNetAlias,
@@ -28,12 +28,13 @@ use hyperpath::{
     build_cam_rest_material_program, build_g1_join_problem, build_length_match_problem,
     build_multi_detour_meander, build_nonuniform_detour_meander,
     build_obstacle_aware_detour_meander, build_oriented_tangent_alignment_problem,
-    build_pcb_composite_copper_union_program, build_pcb_copper_union_program,
-    build_pcb_holed_orthogonal_copper_program, build_rectangular_bead_plan,
-    build_rectangular_pocket_plan, build_rectangular_serpentine_infill_graph,
-    build_rectangular_support_plan, build_single_detour_meander, build_tangent_alignment_problem,
-    certify_constant_feed_time, certify_differential_pair_skew, certify_g1_chain,
-    certify_g1_join_candidate, certify_length_extension, certify_tangent_alignment_candidate,
+    build_pcb_composite_copper_union_program, build_pcb_copper_board_clip_program,
+    build_pcb_copper_union_program, build_pcb_holed_orthogonal_copper_program,
+    build_rectangular_bead_plan, build_rectangular_pocket_plan,
+    build_rectangular_serpentine_infill_graph, build_rectangular_support_plan,
+    build_single_detour_meander, build_tangent_alignment_problem, certify_constant_feed_time,
+    certify_differential_pair_skew, certify_g1_chain, certify_g1_join_candidate,
+    certify_length_extension, certify_tangent_alignment_candidate,
     check_cardinal_rect_pad_board_clearance, check_circular_pad_board_clearance,
     check_rect_pad_board_clearance, check_trace_board_clearance,
     check_trace_cardinal_rect_pad_clearance, check_trace_clearance,
@@ -753,6 +754,125 @@ fn pcb_composite_copper_boolean_program_rejects_mixed_nets_and_layers() {
                     2
                 ))),
             ],
+            z_model,
+            PredicatePolicy::default(),
+        )
+        .unwrap_err(),
+        PathMeshBooleanError::MixedPcbLayers
+    );
+}
+
+#[test]
+fn pcb_copper_board_clip_program_intersects_union_with_retained_board_outline() {
+    let z_model = PcbLayerZModel::new(r(0), r(10), r(2), PredicatePolicy::default()).unwrap();
+    let copper = PcbRectPad::new(NetId(17), TraceLayer(0), p(5, 2), r(10), r(4)).unwrap();
+    let board = PcbConvexBoardOutline::new(vec![p(0, 0), p(10, 0), p(10, 4), p(0, 4)]).unwrap();
+
+    let report = build_pcb_copper_board_clip_program(
+        vec![PcbCompositeCopperBooleanSource::Solid(
+            PcbCopperBooleanSource::RectPad(copper),
+        )],
+        PcbCopperBoardClipOutline::Convex(board.clone()),
+        z_model.clone(),
+        PredicatePolicy::default(),
+    )
+    .expect("same-net copper should clip to retained board outline");
+    report.validate_replay(PredicatePolicy::default()).unwrap();
+    assert_eq!(report.net, NetId(17));
+    assert_eq!(report.layer, TraceLayer(0));
+    assert_eq!(report.sources.len(), 1);
+    assert!(report.union_steps.is_empty());
+    assert!(report.mesh().facts().mesh.closed_manifold);
+    assert!(report.clip_step.result.validate().is_ok());
+
+    let mut stale = report.clone();
+    stale.sources[0] = PcbCompositeCopperBooleanSource::Solid(PcbCopperBooleanSource::RectPad(
+        PcbRectPad::new(NetId(17), TraceLayer(0), p(6, 2), r(10), r(4)).unwrap(),
+    ));
+    assert!(matches!(
+        stale.validate_replay(PredicatePolicy::default()),
+        Err(PathMeshBooleanError::Replay(_))
+    ));
+
+    let orthogonal_report = build_pcb_copper_board_clip_program(
+        vec![PcbCompositeCopperBooleanSource::Solid(
+            PcbCopperBooleanSource::RectPad(
+                PcbRectPad::new(NetId(17), TraceLayer(0), p(5, 2), r(10), r(4)).unwrap(),
+            ),
+        )],
+        PcbCopperBoardClipOutline::Orthogonal(
+            PcbOrthogonalBoardOutline::new(vec![p(0, 0), p(10, 0), p(10, 4), p(0, 4)]).unwrap(),
+        ),
+        z_model,
+        PredicatePolicy::default(),
+    )
+    .expect("single copper source should clip to orthogonal retained board outline");
+    orthogonal_report
+        .validate_replay(PredicatePolicy::default())
+        .unwrap();
+    assert!(orthogonal_report.mesh().facts().mesh.closed_manifold);
+}
+
+#[test]
+fn pcb_copper_board_clip_program_rejects_empty_mixed_net_and_layer_sources() {
+    let z_model = PcbLayerZModel::new(r(0), r(10), r(2), PredicatePolicy::default()).unwrap();
+    let board = PcbCopperBoardClipOutline::Orthogonal(
+        PcbOrthogonalBoardOutline::new(vec![p(0, 0), p(10, 0), p(10, 10), p(0, 10)]).unwrap(),
+    );
+    assert_eq!(
+        build_pcb_copper_board_clip_program(
+            vec![],
+            board.clone(),
+            z_model.clone(),
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        PathMeshBooleanError::NotEnoughSources
+    );
+    assert_eq!(
+        build_pcb_copper_board_clip_program(
+            vec![
+                PcbCompositeCopperBooleanSource::Solid(PcbCopperBooleanSource::Trace(trace(
+                    1,
+                    0,
+                    p(0, 1),
+                    p(4, 1),
+                    2
+                ))),
+                PcbCompositeCopperBooleanSource::Solid(PcbCopperBooleanSource::Trace(trace(
+                    2,
+                    0,
+                    p(2, 1),
+                    p(6, 1),
+                    2
+                ))),
+            ],
+            board.clone(),
+            z_model.clone(),
+            PredicatePolicy::default(),
+        )
+        .unwrap_err(),
+        PathMeshBooleanError::MixedPcbNets
+    );
+    assert_eq!(
+        build_pcb_copper_board_clip_program(
+            vec![
+                PcbCompositeCopperBooleanSource::Solid(PcbCopperBooleanSource::Trace(trace(
+                    1,
+                    0,
+                    p(0, 1),
+                    p(4, 1),
+                    2
+                ))),
+                PcbCompositeCopperBooleanSource::Solid(PcbCopperBooleanSource::Trace(trace(
+                    1,
+                    1,
+                    p(2, 1),
+                    p(6, 1),
+                    2
+                ))),
+            ],
+            board,
             z_model,
             PredicatePolicy::default(),
         )
