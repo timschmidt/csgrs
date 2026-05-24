@@ -82,3 +82,10 @@ path = "fuzz_targets/active_set_quadratic_regeneration.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "curve_resultant"
+path = "fuzz_targets/curve_resultant.rs"
+test = false
+doc = false
+bench = false

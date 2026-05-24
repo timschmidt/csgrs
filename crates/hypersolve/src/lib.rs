@@ -16,6 +16,7 @@ pub mod bareiss;
 pub mod batch;
 pub mod branches;
 pub mod certification;
+pub mod curve_resultant;
 pub mod diagnostics;
 pub mod direct;
 pub mod domain;
@@ -117,6 +118,11 @@ pub use certification::{
     CertifiedCandidateRow, CertifiedCandidateStatus, certify_candidate,
     certify_candidate_with_config, certify_candidate_with_residual_balls,
     report_lossy_adapter_only_candidate,
+};
+pub use curve_resultant::{
+    CurveIntersectionResultantConfig, CurveIntersectionResultantReport,
+    CurveIntersectionResultantSample, CurveIntersectionResultantStatus, CurveResultantParameter,
+    PolynomialParametricCurve2, resultant_parametric_curve_intersection,
 };
 pub use diagnostics::{
     ConvergenceReason, ProposalEngineKind, ProposalEnginePrecision, ProposalEngineReport,
