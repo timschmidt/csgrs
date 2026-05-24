@@ -877,6 +877,37 @@ pub mod distance {
             kind,
         }
     }
+
+    /// Add a retained workplane-projected length-difference relation for 3D lines.
+    ///
+    /// The retained relation is `length(longer_uv) = length(shorter_uv) +
+    /// difference`. Lowering emits the exact square-root-free polynomial and
+    /// branch inequality used by the 2D length-difference package, but with
+    /// both squared lengths computed in the certified workplane frame. This
+    /// follows Yap, "Towards Exact Geometric Computation" (1997), by making
+    /// the ordering branch explicit proof data.
+    pub fn projected_length_difference_lines3(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        longer: SketchEntityHandle,
+        shorter: SketchEntityHandle,
+        difference: SketchEntityHandle,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::ProjectedLengthDifferenceLines3 {
+            workplane,
+            longer,
+            shorter,
+            difference,
+        };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Distance,
+            strategy: SketchResidualStrategy::SquaredProjectedLineLengthDifference,
+            kind,
+        }
+    }
 }
 
 /// Orientation relation builders.

@@ -42,6 +42,13 @@ doc = false
 bench = false
 
 [[bin]]
+name = "sketch_projected_length_difference"
+path = "fuzz_targets/sketch_projected_length_difference.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
 name = "sketch_failed_constraints"
 path = "fuzz_targets/sketch_failed_constraints.rs"
 test = false
