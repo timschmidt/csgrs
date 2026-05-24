@@ -2210,6 +2210,68 @@ proptest! {
     }
 
     #[test]
+    fn sketch_projected_equal_point_point_distances3_identity_workplane_ignores_normal_offsets(
+        ax in -12_i16..=12,
+        ay in -12_i16..=12,
+        bx in -12_i16..=12,
+        by in -12_i16..=12,
+        dx in -12_i16..=12,
+        dy in -12_i16..=12,
+        az0 in -12_i16..=12,
+        az1 in -12_i16..=12,
+        bz0 in -12_i16..=12,
+        bz1 in -12_i16..=12,
+    ) {
+        let ax = i64::from(ax);
+        let ay = i64::from(ay);
+        let bx = i64::from(bx);
+        let by = i64::from(by);
+        let dx = i64::from(dx);
+        let dy = i64::from(dy);
+        let az0 = i64::from(az0);
+        let az1 = i64::from(az1);
+        let bz0 = i64::from(bz0);
+        let bz1 = i64::from(bz1);
+        let mut sketch = SketchSolveProblem::new();
+        let origin = sketch.add_point3d("origin", Real::from(0), Real::from(0), Real::from(0));
+        let normal = sketch.add_normal3d("normal", Real::from(1), Real::from(0), Real::from(0), Real::from(0));
+        let workplane = sketch.add_workplane("workplane", origin, normal);
+        let a = sketch.add_point3d("a", Real::from(ax), Real::from(ay), Real::from(az0));
+        let b = sketch.add_point3d("b", Real::from(ax + dx), Real::from(ay + dy), Real::from(az1));
+        let c = sketch.add_point3d("c", Real::from(bx), Real::from(by), Real::from(bz0));
+        let d = sketch.add_point3d("d", Real::from(bx + dx), Real::from(by + dy), Real::from(bz1));
+        let handle = sketch.add_projected_equal_point_point_distances3(
+            "projected equal point distances",
+            workplane,
+            a,
+            b,
+            c,
+            d,
+        );
+
+        let lowered = sketch.lower_to_problem();
+        let certification = certify_candidate(
+            &PreparedProblem::new(&lowered.problem),
+            &context_from_problem(&lowered.problem),
+        );
+        let forms = sketch.residual_forms_for_constraint(handle);
+
+        prop_assert_eq!(lowered.problem.constraints.len(), 2);
+        prop_assert!(lowered.all_generated());
+        prop_assert!(certification.all_satisfied());
+        prop_assert_eq!(
+            lowered.rows[1].strategy,
+            Some(SketchResidualStrategy::SquaredProjectedEqualPointPointDistances)
+        );
+        prop_assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+        prop_assert_eq!(forms.forms.len(), 2);
+        prop_assert_eq!(
+            forms.forms[1].kind,
+            SketchResidualFormKind::SquaredProjectedEqualPointPointDistancesPolynomial
+        );
+    }
+
+    #[test]
     fn sketch_projected_point_on_circle_rows_replay_identity_workplane_points(
         ox in -4_i16..=4,
         oy in -4_i16..=4,

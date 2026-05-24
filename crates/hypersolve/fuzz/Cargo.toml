@@ -28,6 +28,13 @@ doc = false
 bench = false
 
 [[bin]]
+name = "sketch_projected_equal_point_point_distances"
+path = "fuzz_targets/sketch_projected_equal_point_point_distances.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
 name = "sketch_projected_point_line_distance"
 path = "fuzz_targets/sketch_projected_point_line_distance.rs"
 test = false

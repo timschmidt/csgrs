@@ -1214,6 +1214,32 @@ fn sketch_problem_with_projected_distance_ranges(
     sketch
 }
 
+fn sketch_problem_with_projected_equal_point_distances(
+    row_count: usize,
+) -> hypersolve::SketchSolveProblem {
+    let mut sketch = hypersolve::SketchSolveProblem::new();
+    let origin = sketch.add_point3d("project-epp.origin", r(0), r(0), r(0));
+    let normal = sketch.add_normal3d("project-epp.normal", r(1), r(0), r(0), r(0));
+    let workplane = sketch.add_workplane("project-epp.workplane", origin, normal);
+    for index in 0..row_count {
+        let x = index as i64;
+        let a = sketch.add_point3d(format!("projepp{index}.a"), r(x), r(x + 1), r(x + 2));
+        let b = sketch.add_point3d(format!("projepp{index}.b"), r(x + 3), r(x + 5), r(x + 99));
+        let c = sketch.add_point3d(format!("projepp{index}.c"), r(x + 20), r(x - 4), r(-x));
+        let d = sketch.add_point3d(format!("projepp{index}.d"), r(x + 23), r(x), r(7 - x));
+        hypersolve::sketch_distance_builders::projected_equal_point_point_distances3(
+            &mut sketch,
+            format!("projected equal point distances {index}"),
+            workplane,
+            a,
+            b,
+            c,
+            d,
+        );
+    }
+    sketch
+}
+
 fn sketch_problem_with_projected_point_line_distances(
     row_count: usize,
 ) -> hypersolve::SketchSolveProblem {
@@ -1713,6 +1739,11 @@ fn certification(c: &mut Criterion) {
     c.bench_function("sketch_projected_distance_range_lowering", |b| {
         b.iter(|| projected_distance_range_sketch.lower_to_problem())
     });
+    let projected_equal_point_distance_sketch =
+        sketch_problem_with_projected_equal_point_distances(16);
+    c.bench_function("sketch_projected_equal_point_distances_lowering", |b| {
+        b.iter(|| projected_equal_point_distance_sketch.lower_to_problem())
+    });
     let projected_point_line_distance_sketch =
         sketch_problem_with_projected_point_line_distances(16);
     c.bench_function("sketch_projected_point_line_distance_lowering", |b| {
@@ -2172,6 +2203,28 @@ fn certification(c: &mut Criterion) {
             }
         })
     });
+    let projected_equal_point_distance_form_handles = projected_equal_point_distance_sketch
+        .constraints()
+        .iter()
+        .filter(|constraint| {
+            matches!(
+                constraint.kind,
+                hypersolve::SketchConstraintKind::ProjectedEqualPointPointDistances3 { .. }
+            )
+        })
+        .map(|constraint| constraint.handle)
+        .collect::<Vec<_>>();
+    c.bench_function(
+        "sketch_projected_equal_point_distances_residual_forms",
+        |b| {
+            b.iter(|| {
+                for handle in &projected_equal_point_distance_form_handles {
+                    let _ = projected_equal_point_distance_sketch
+                        .residual_forms_for_constraint(*handle);
+                }
+            })
+        },
+    );
     let projected_point_line_form_handles = projected_point_line_distance_sketch
         .constraints()
         .iter()

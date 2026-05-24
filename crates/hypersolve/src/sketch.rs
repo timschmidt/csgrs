@@ -553,6 +553,30 @@ pub enum SketchConstraintKind {
         /// Distance entity.
         distance: SketchEntityHandle,
     },
+    /// Equality between two point-to-point distances after workplane projection.
+    ///
+    /// Lowering projects both 3D point pairs into the retained workplane frame
+    /// and replays `|a-b|_uv^2 - |c-d|_uv^2 == 0` plus the unit-quaternion
+    /// guard. The relation is the point-pair analogue of
+    /// [`SketchConstraintKind::ProjectedEqualLengthLines3`], but it keeps the
+    /// source objects as points rather than forcing callers to manufacture
+    /// line entities. This follows Yap, "Towards Exact Geometric Computation"
+    /// (1997), by retaining the workplane and point carriers and accepting
+    /// candidates only through exact polynomial replay. The `U/V` frame uses
+    /// Shoemake's unit-quaternion rotation matrix from "Animating Rotation
+    /// with Quaternion Curves" (1985).
+    ProjectedEqualPointPointDistances3 {
+        /// Workplane entity that supplies origin and normal/quaternion.
+        workplane: SketchEntityHandle,
+        /// First point of the first projected distance.
+        a: SketchEntityHandle,
+        /// Second point of the first projected distance.
+        b: SketchEntityHandle,
+        /// First point of the second projected distance.
+        c: SketchEntityHandle,
+        /// Second point of the second projected distance.
+        d: SketchEntityHandle,
+    },
     /// Point-on-circle incidence after projecting a 3D point into a workplane.
     ///
     /// The retained 3D point is projected into exact `U/V` coordinates
@@ -1473,6 +1497,8 @@ pub enum SketchResidualStrategy {
     WorkplaneUnitQuaternion,
     /// Squared distance after exact projection onto a retained workplane.
     SquaredProjectedDistance,
+    /// Squared equality between two point-pair distances after exact workplane projection.
+    SquaredProjectedEqualPointPointDistances,
     /// Squared point-line distance after exact projection onto a workplane.
     SquaredProjectedPointLineDistance,
     /// Squared projected point-line distance inequality with denominator clearing.
@@ -1624,6 +1650,8 @@ pub enum SketchResidualFormKind {
     WorkplaneUnitQuaternionPolynomial,
     /// Squared projected-distance polynomial proof row.
     SquaredProjectedDistancePolynomial,
+    /// Squared equality between two projected point-pair distances.
+    SquaredProjectedEqualPointPointDistancesPolynomial,
     /// Squared projected-distance range inequality proof row.
     BoundedSquaredProjectedDistancePolynomial,
     /// True projected distance residual retained for proposal/UI parity.
@@ -2236,6 +2264,22 @@ impl SketchSolveProblem {
         distance: SketchEntityHandle,
     ) -> SketchConstraintHandle {
         distance::projected_point_point_distance(self, name, workplane, a, b, distance).handle
+    }
+
+    /// Add equality between two retained workplane-projected point distances.
+    ///
+    /// Lowering emits the unit-workplane guard and a single exact polynomial
+    /// row comparing the two squared projected point-pair distances.
+    pub fn add_projected_equal_point_point_distances3(
+        &mut self,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+        c: SketchEntityHandle,
+        d: SketchEntityHandle,
+    ) -> SketchConstraintHandle {
+        distance::projected_equal_point_point_distances3(self, name, workplane, a, b, c, d).handle
     }
 
     /// Add a workplane-projected point-to-line distance constraint.
@@ -3235,6 +3279,49 @@ impl SketchSolveProblem {
                             role: SketchResidualFormRole::ProposalOnly,
                             strategy: None,
                             residual: true_distance,
+                        },
+                    ],
+                    diagnostics,
+                }
+            }
+            SketchConstraintKind::ProjectedEqualPointPointDistances3 {
+                workplane,
+                a,
+                b,
+                c,
+                d,
+            } => {
+                let mut diagnostics = Vec::new();
+                let Some(parts) = self.projected_equal_point_point_distances_exprs(
+                    workplane,
+                    [(a, b), (c, d)],
+                    constraint,
+                    &mut diagnostics,
+                ) else {
+                    return SketchResidualFormsReport {
+                        constraint: handle,
+                        status: SketchResidualFormsStatus::InvalidInputs,
+                        forms: Vec::new(),
+                        diagnostics,
+                    };
+                };
+                SketchResidualFormsReport {
+                    constraint: handle,
+                    status: SketchResidualFormsStatus::Generated,
+                    forms: vec![
+                        SketchResidualForm {
+                            kind: SketchResidualFormKind::WorkplaneUnitQuaternionPolynomial,
+                            role: SketchResidualFormRole::ExactProof,
+                            strategy: Some(SketchResidualStrategy::WorkplaneUnitQuaternion),
+                            residual: unit_quaternion_residual(&parts.quaternion),
+                        },
+                        SketchResidualForm {
+                            kind: SketchResidualFormKind::SquaredProjectedEqualPointPointDistancesPolynomial,
+                            role: SketchResidualFormRole::ExactProof,
+                            strategy: Some(
+                                SketchResidualStrategy::SquaredProjectedEqualPointPointDistances,
+                            ),
+                            residual: parts.first_squared - parts.second_squared,
                         },
                     ],
                     diagnostics,
@@ -5267,6 +5354,44 @@ impl SketchSolveProblem {
                     format!("{} projected distance", constraint.name),
                     parts.projected_squared - parts.distance.clone() * parts.distance,
                     SketchResidualStrategy::SquaredProjectedDistance,
+                );
+            }
+            SketchConstraintKind::ProjectedEqualPointPointDistances3 {
+                workplane,
+                a,
+                b,
+                c,
+                d,
+            } => {
+                // This is the point-pair counterpart of projected line-length
+                // equality. The workplane unit guard proves the retained
+                // metric frame, and the two projected squared distances are
+                // compared directly without constructing normalized projected
+                // coordinates. This is Yap's (1997) retained-object/exact-
+                // replay boundary with Shoemake's (1985) quaternion frame.
+                let Some(parts) = self.projected_equal_point_point_distances_exprs(
+                    workplane,
+                    [(a, b), (c, d)],
+                    constraint,
+                    rows,
+                ) else {
+                    return;
+                };
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} workplane unit", constraint.name),
+                    unit_quaternion_residual(&parts.quaternion),
+                    SketchResidualStrategy::WorkplaneUnitQuaternion,
+                );
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} projected equal point distances", constraint.name),
+                    parts.first_squared - parts.second_squared,
+                    SketchResidualStrategy::SquaredProjectedEqualPointPointDistances,
                 );
             }
             SketchConstraintKind::ProjectedPointOnCircle3 {
@@ -7630,6 +7755,42 @@ impl SketchSolveProblem {
         })
     }
 
+    fn projected_equal_point_point_distances_exprs(
+        &self,
+        workplane: SketchEntityHandle,
+        pairs: [(SketchEntityHandle, SketchEntityHandle); 2],
+        constraint: &SketchConstraint,
+        rows: &mut Vec<SketchGeneratedRow>,
+    ) -> Option<ProjectedEqualPointPointDistancesExprs> {
+        let quaternion = self.workplane_quaternion(workplane, constraint, rows)?;
+        let first_squared =
+            self.projected_point_pair_distance_squared(pairs[0], &quaternion, constraint, rows)?;
+        let second_squared =
+            self.projected_point_pair_distance_squared(pairs[1], &quaternion, constraint, rows)?;
+        Some(ProjectedEqualPointPointDistancesExprs {
+            quaternion,
+            first_squared,
+            second_squared,
+        })
+    }
+
+    fn projected_point_pair_distance_squared(
+        &self,
+        pair: (SketchEntityHandle, SketchEntityHandle),
+        quaternion: &[Expr; 4],
+        constraint: &SketchConstraint,
+        rows: &mut Vec<SketchGeneratedRow>,
+    ) -> Option<Expr> {
+        let a = self.point3_coordinates(pair.0, constraint, rows)?;
+        let b = self.point3_coordinates(pair.1, constraint, rows)?;
+        let delta = [
+            a.exprs[0].clone() - b.exprs[0].clone(),
+            a.exprs[1].clone() - b.exprs[1].clone(),
+            a.exprs[2].clone() - b.exprs[2].clone(),
+        ];
+        Some(projected_distance_squared(&delta, quaternion))
+    }
+
     fn projected_point_line_distance_exprs(
         &self,
         workplane: SketchEntityHandle,
@@ -8564,6 +8725,13 @@ struct ProjectedPointArcIncidenceExprs {
 struct ProjectedPointRangeExprs {
     quaternion: [Expr; 4],
     projected_squared: Expr,
+}
+
+#[derive(Clone, Debug)]
+struct ProjectedEqualPointPointDistancesExprs {
+    quaternion: [Expr; 4],
+    first_squared: Expr,
+    second_squared: Expr,
 }
 
 #[derive(Clone, Debug)]

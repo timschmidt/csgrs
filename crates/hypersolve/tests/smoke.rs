@@ -3973,6 +3973,88 @@ fn sketch_projected_distance_lowers_unit_guard_and_exact_projection_rows() {
 }
 
 #[test]
+fn sketch_projected_equal_point_point_distances3_lowers_exact_workplane_rows() {
+    let mut sketch = SketchSolveProblem::new();
+    let origin = sketch.add_point3d("origin", real(10), real(20), real(30));
+    let normal = sketch.add_normal3d("normal", real(1), real(0), real(0), real(0));
+    let workplane = sketch.add_workplane("workplane", origin, normal);
+    let a = sketch.add_point3d("a", real(10), real(20), real(30));
+    let b = sketch.add_point3d("b", real(13), real(24), real(99));
+    let c = sketch.add_point3d("c", real(-10), real(7), real(-88));
+    let d = sketch.add_point3d("d", real(-7), real(11), real(12));
+    let bad = sketch.add_point3d("bad", real(-6), real(11), real(12));
+    let valid = sketch_distance_builders::projected_equal_point_point_distances3(
+        &mut sketch,
+        "projected equal point distances",
+        workplane,
+        a,
+        b,
+        c,
+        d,
+    );
+    sketch.add_projected_equal_point_point_distances3(
+        "violated projected equal point distances",
+        workplane,
+        a,
+        b,
+        c,
+        bad,
+    );
+
+    let report = sketch.lower_to_problem();
+
+    assert_eq!(
+        valid.strategy,
+        SketchResidualStrategy::SquaredProjectedEqualPointPointDistances
+    );
+    assert!(report.all_generated());
+    assert_eq!(report.problem.constraints.len(), 4);
+    assert_eq!(
+        report.rows[1].strategy,
+        Some(SketchResidualStrategy::SquaredProjectedEqualPointPointDistances)
+    );
+    assert_eq!(
+        report.rows[3].strategy,
+        Some(SketchResidualStrategy::SquaredProjectedEqualPointPointDistances)
+    );
+
+    let certification = certify_candidate(
+        &PreparedProblem::new(&report.problem),
+        &context_from_problem(&report.problem),
+    );
+    assert!(matches!(
+        certification.rows[1].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[3].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
+
+    let forms = sketch.residual_forms_for_constraint(valid.handle);
+    assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+    assert_eq!(forms.forms.len(), 2);
+    assert_eq!(
+        forms.forms[1].kind,
+        SketchResidualFormKind::SquaredProjectedEqualPointPointDistancesPolynomial
+    );
+    assert_eq!(forms.forms[1].role, SketchResidualFormRole::ExactProof);
+
+    let wrong_2d = sketch.add_point2d("wrong 2d", real(0), real(0));
+    let wrong = sketch.add_projected_equal_point_point_distances3(
+        "wrong point",
+        workplane,
+        a,
+        wrong_2d,
+        c,
+        d,
+    );
+    let wrong_forms = sketch.residual_forms_for_constraint(wrong);
+    assert_eq!(wrong_forms.status, SketchResidualFormsStatus::InvalidInputs);
+    assert!(!wrong_forms.diagnostics.is_empty());
+}
+
+#[test]
 fn sketch_projected_distance_ranges_lower_to_exact_squared_inequalities() {
     let mut sketch = SketchSolveProblem::new();
     let origin = sketch.add_point3d("origin", real(10), real(20), real(30));

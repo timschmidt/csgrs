@@ -716,6 +716,39 @@ pub mod distance {
         }
     }
 
+    /// Add equality between two retained projected 3D point-to-point distances.
+    ///
+    /// Lowering emits the retained workplane unit guard plus
+    /// `|a-b|_uv^2 - |c-d|_uv^2 == 0`. This is deliberately a point-pair
+    /// relation, not an implicit line conversion: callers keep their source
+    /// objects, and exact replay proves the projected metric under Yap,
+    /// "Towards Exact Geometric Computation" (1997). The frame polynomial is
+    /// Shoemake's retained unit-quaternion construction (1985).
+    pub fn projected_equal_point_point_distances3(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+        c: SketchEntityHandle,
+        d: SketchEntityHandle,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::ProjectedEqualPointPointDistances3 {
+            workplane,
+            a,
+            b,
+            c,
+            d,
+        };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Distance,
+            strategy: SketchResidualStrategy::SquaredProjectedEqualPointPointDistances,
+            kind,
+        }
+    }
+
     /// Add a retained workplane-projected point-to-line distance relation.
     ///
     /// Lowering projects the 3D point offset and 3D line direction into the
