@@ -7555,12 +7555,48 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
                         hypermesh::exact::ExactBooleanOperation::Intersection,
                     )
                     .map(|report| report.validate()),
+                    hypermesh::exact::boolean_exact(
+                        &contained_adjacent_left,
+                        &contained_adjacent_right,
+                        hypermesh::exact::ExactBooleanOperation::Intersection,
+                        ValidationPolicy::CLOSED,
+                    )
+                    .map(|result| {
+                        result
+                            .validate_operation_against_sources(
+                                &contained_adjacent_left,
+                                &contained_adjacent_right,
+                                hypermesh::exact::ExactBooleanOperation::Intersection,
+                                ValidationPolicy::CLOSED,
+                                hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+                            )
+                            .unwrap();
+                        result.mesh.triangles().len()
+                    }),
                     hypermesh::exact::preflight_boolean_exact(
                         &contained_adjacent_left,
                         &contained_adjacent_right,
                         hypermesh::exact::ExactBooleanOperation::Difference,
                     )
                     .map(|report| report.validate()),
+                    hypermesh::exact::boolean_exact(
+                        &contained_adjacent_left,
+                        &contained_adjacent_right,
+                        hypermesh::exact::ExactBooleanOperation::Difference,
+                        ValidationPolicy::CLOSED,
+                    )
+                    .map(|result| {
+                        result
+                            .validate_operation_against_sources(
+                                &contained_adjacent_left,
+                                &contained_adjacent_right,
+                                hypermesh::exact::ExactBooleanOperation::Difference,
+                                ValidationPolicy::CLOSED,
+                                hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+                            )
+                            .unwrap();
+                        result.mesh.triangles().len()
+                    }),
                     hypermesh::exact::materialize_contained_face_adjacent_union(
                         &contained_multi_left,
                         &contained_multi_right,

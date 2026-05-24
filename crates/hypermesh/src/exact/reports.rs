@@ -727,6 +727,12 @@ pub enum ExactBooleanShortcutKind {
     /// contained opposite-oriented triangular boundary face.
     ContainedFaceAdjacentUnion,
     /// Certified empty regularized intersection of closed solids whose only
+    /// overlap is an exact contained-face boundary contact.
+    ContainedFaceAdjacentIntersection,
+    /// Certified left-preserving regularized difference of closed solids whose
+    /// only overlap is an exact contained-face boundary contact.
+    ContainedFaceAdjacentDifference,
+    /// Certified empty regularized intersection of closed solids whose only
     /// overlap is an exact full-face/fan-patch boundary contact.
     FullFaceAdjacentIntersection,
     /// Certified left-preserving regularized difference of closed solids whose
@@ -1516,6 +1522,12 @@ pub enum ExactBooleanSupport {
     /// holed remnant and deleting the strictly contained opposite face.
     CertifiedContainedFaceAdjacentUnion,
     /// Intersection was certified empty because adjacent closed solids only
+    /// share exact contained-face boundary contact.
+    CertifiedContainedFaceAdjacentIntersection,
+    /// Difference was certified as the left solid because adjacent closed
+    /// solids only share exact contained-face boundary contact.
+    CertifiedContainedFaceAdjacentDifference,
+    /// Intersection was certified empty because adjacent closed solids only
     /// share exact coincident whole faces or bounded fan patches.
     CertifiedFullFaceAdjacentIntersection,
     /// Difference was certified as the left solid because adjacent closed
@@ -1728,6 +1740,8 @@ impl ExactBooleanPreflight {
             | ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellDifference
             | ExactBooleanSupport::CertifiedFullFaceAdjacentUnion
             | ExactBooleanSupport::CertifiedContainedFaceAdjacentUnion
+            | ExactBooleanSupport::CertifiedContainedFaceAdjacentIntersection
+            | ExactBooleanSupport::CertifiedContainedFaceAdjacentDifference
             | ExactBooleanSupport::CertifiedFullFaceAdjacentIntersection
             | ExactBooleanSupport::CertifiedFullFaceAdjacentDifference
             | ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection

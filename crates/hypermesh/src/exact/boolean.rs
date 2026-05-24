@@ -341,6 +341,12 @@ pub fn preflight_boolean_exact(
         ExactBooleanOperation::Union if has_contained_face_adjacent_union(left, right) => {
             ExactBooleanSupport::CertifiedContainedFaceAdjacentUnion
         }
+        ExactBooleanOperation::Intersection if has_contained_face_adjacent_union(left, right) => {
+            ExactBooleanSupport::CertifiedContainedFaceAdjacentIntersection
+        }
+        ExactBooleanOperation::Difference if has_contained_face_adjacent_union(left, right) => {
+            ExactBooleanSupport::CertifiedContainedFaceAdjacentDifference
+        }
         ExactBooleanOperation::Intersection if non_box_full_face_adjacency(left, right) => {
             ExactBooleanSupport::CertifiedFullFaceAdjacentIntersection
         }
@@ -645,6 +651,8 @@ pub fn preflight_boolean_exact(
             | ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellDifference
             | ExactBooleanSupport::CertifiedFullFaceAdjacentUnion
             | ExactBooleanSupport::CertifiedContainedFaceAdjacentUnion
+            | ExactBooleanSupport::CertifiedContainedFaceAdjacentIntersection
+            | ExactBooleanSupport::CertifiedContainedFaceAdjacentDifference
             | ExactBooleanSupport::CertifiedFullFaceAdjacentIntersection
             | ExactBooleanSupport::CertifiedFullFaceAdjacentDifference
             | ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
@@ -1309,6 +1317,12 @@ pub fn boolean_exact_with_boundary_policy(
         }
         ExactBooleanOperation::Union if has_contained_face_adjacent_union(left, right) => {
             boolean_contained_face_adjacent_union(left, right, validation)
+        }
+        ExactBooleanOperation::Intersection if has_contained_face_adjacent_union(left, right) => {
+            boolean_contained_face_adjacent_intersection(left, right, validation)
+        }
+        ExactBooleanOperation::Difference if has_contained_face_adjacent_union(left, right) => {
+            boolean_contained_face_adjacent_difference(left, right, validation)
         }
         ExactBooleanOperation::Intersection if non_box_full_face_adjacency(left, right) => {
             boolean_full_face_adjacent_intersection(left, right, validation)
@@ -2818,6 +2832,53 @@ fn boolean_contained_face_adjacent_union(
     Ok(certified_shortcut_result(
         union.mesh,
         ExactBooleanShortcutKind::ContainedFaceAdjacentUnion,
+    ))
+}
+
+#[cfg(feature = "exact-triangulation")]
+/// Materialize the empty regularized intersection for contained-face adjacency.
+///
+/// A strictly contained opposite-oriented boundary face proves contact along a
+/// two-dimensional boundary subset, not positive volume. The contained-face
+/// union artifact is replayed before returning the empty mesh so the shortcut
+/// remains source-bound; this follows Yap, "Towards Exact Geometric
+/// Computation," *Comput. Geom.* 7.1-2 (1997), where exact programs expose the
+/// predicates and objects that justify each topological branch.
+fn boolean_contained_face_adjacent_intersection(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    validation: ValidationPolicy,
+) -> Result<ExactBooleanResult, MeshError> {
+    replay_contained_face_adjacent_union(left, right, ValidationPolicy::CLOSED)?;
+    Ok(certified_shortcut_result(
+        empty_mesh(
+            "empty exact contained-face adjacent regularized intersection",
+            validation,
+        )?,
+        ExactBooleanShortcutKind::ContainedFaceAdjacentIntersection,
+    ))
+}
+
+#[cfg(feature = "exact-triangulation")]
+/// Materialize the left-preserving regularized difference for contained-face adjacency.
+///
+/// Boundary-only contained-face contact removes no left volume. Replaying the
+/// contained-face certificate first keeps the difference shortcut tied to the
+/// same exact source evidence as the holed union path, rather than relying on
+/// tolerance-side effects at the shared patch.
+fn boolean_contained_face_adjacent_difference(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    validation: ValidationPolicy,
+) -> Result<ExactBooleanResult, MeshError> {
+    replay_contained_face_adjacent_union(left, right, ValidationPolicy::CLOSED)?;
+    Ok(certified_shortcut_result(
+        copy_mesh(
+            left,
+            "exact contained-face adjacent regularized difference keeps left",
+            validation,
+        )?,
+        ExactBooleanShortcutKind::ContainedFaceAdjacentDifference,
     ))
 }
 

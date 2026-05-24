@@ -6702,7 +6702,43 @@ fn exercise_contained_face_adjacent_union() {
         .unwrap();
     assert_eq!(
         intersection_preflight.support,
-        ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
+        ExactBooleanSupport::CertifiedContainedFaceAdjacentIntersection
+    );
+    let intersection = boolean_exact_with_boundary_policy(
+        &left,
+        &right,
+        ExactBooleanOperation::Intersection,
+        ValidationPolicy::CLOSED,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+    intersection
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            ExactBooleanOperation::Intersection,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        intersection.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ContainedFaceAdjacentIntersection
+        }
+    );
+    assert!(intersection.mesh.vertices().is_empty());
+    assert!(intersection.mesh.triangles().is_empty());
+
+    let difference_preflight =
+        preflight_boolean_exact(&left, &right, ExactBooleanOperation::Difference).unwrap();
+    difference_preflight.validate().unwrap();
+    difference_preflight
+        .validate_against_sources(&left, &right)
+        .unwrap();
+    assert_eq!(
+        difference_preflight.support,
+        ExactBooleanSupport::CertifiedContainedFaceAdjacentDifference
     );
 
     let difference = boolean_exact_with_boundary_policy(
@@ -6725,9 +6761,37 @@ fn exercise_contained_face_adjacent_union() {
     assert_eq!(
         difference.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ContainedFaceAdjacentDifference
         }
     );
+    assert_eq!(difference.mesh.vertices(), left.vertices());
+    assert_eq!(difference.mesh.triangles(), left.triangles());
+
+    let reverse_difference = boolean_exact_with_boundary_policy(
+        &right,
+        &left,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::CLOSED,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+    reverse_difference
+        .validate_operation_against_sources(
+            &right,
+            &left,
+            ExactBooleanOperation::Difference,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        reverse_difference.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ContainedFaceAdjacentDifference
+        }
+    );
+    assert_eq!(reverse_difference.mesh.vertices(), right.vertices());
+    assert_eq!(reverse_difference.mesh.triangles(), right.triangles());
 
     let same_side_inner = tetrahedron_i64([1, 1, 0], [2, 1, 0], [1, 2, 0], [1, 1, 3]);
     assert!(
