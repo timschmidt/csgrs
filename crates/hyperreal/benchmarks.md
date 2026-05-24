@@ -349,6 +349,9 @@ Construction-time shortcuts for exact rational multiples of pi and inverse compo
 | `exact_transcendental_special_forms/asinh_large` | not run | not run | Builds a large inverse hyperbolic sine without exact intermediate Reals. |
 | `exact_transcendental_special_forms/atanh_sqrt_half` | 192.18 ns | 189.98 ns - 194.71 ns | Builds atanh(sqrt(2)/2) after exact structural domain checks. |
 | `exact_transcendental_special_forms/atanh_sqrt_two_error` | 199.45 ns | 121.09 ns - 355.20 ns | Rejects atanh(sqrt(2)) through exact structural domain checks. |
+| `exact_transcendental_special_forms/log2_power_of_two` | 173.46 ns | 171.28 ns - 175.58 ns | Folds log2(1024) to the exact rational 10 via the integer-log-detection shortcut. |
+| `exact_transcendental_special_forms/log2_rational_three` | 289.47 ns | 284.87 ns - 294.52 ns | Builds log2(3) as a lightweight Log2 symbolic certificate. |
+| `exact_transcendental_special_forms/log2_ln_quotient_fold` | 1.283 us | 1.228 us - 1.371 us | Folds ln(5) / ln(2) into a Log2 certificate via the divide-recognize shortcut. |
 
 ### `symbolic_reductions`
 
