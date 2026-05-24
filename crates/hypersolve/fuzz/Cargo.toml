@@ -61,3 +61,10 @@ path = "fuzz_targets/algebraic_binary.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "algebraic_difference_comparison"
+path = "fuzz_targets/algebraic_difference_comparison.rs"
+test = false
+doc = false
+bench = false

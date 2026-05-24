@@ -16,6 +16,7 @@ use hypersolve::{
     certify_multivariate_quadratic_krawczyk_box, certify_quadratic_interval_candidate,
     certify_sketch_construction, certify_univariate_quadratic_alpha,
     certify_univariate_quadratic_krawczyk_box, compare_algebraic_root_representations,
+    compare_algebraic_root_representations_by_difference,
     compare_algebraic_root_representations_with_refinement, context_from_problem,
     count_bernstein_univariate_polynomial_interval_roots,
     count_descartes_univariate_polynomial_roots, determinant_bareiss, diagnose_failed_constraints,
@@ -1380,6 +1381,21 @@ fn certification(c: &mut Criterion) {
                     AlgebraicRootRefinementComparisonConfig {
                         max_refinement_rounds: 8,
                         steps_per_round: 1,
+                        ..AlgebraicRootRefinementComparisonConfig::default()
+                    },
+                )
+            })
+        },
+    );
+    c.bench_function(
+        "compare_algebraic_root_representations_by_difference",
+        |b| {
+            b.iter(|| {
+                compare_algebraic_root_representations_by_difference(
+                    &sqrt_two,
+                    &sqrt_three,
+                    AlgebraicRootRefinementComparisonConfig {
+                        max_refinement_rounds: 0,
                         ..AlgebraicRootRefinementComparisonConfig::default()
                     },
                 )

@@ -126,6 +126,19 @@ pub struct AlgebraicRootRefinementComparisonReport {
     pub refinement_rounds: usize,
 }
 
+/// Difference-backed comparison report for constructed algebraic values.
+#[derive(Clone, Debug, PartialEq)]
+pub struct AlgebraicRootDifferenceComparisonReport {
+    /// First comparison pass, using direct interval order and configured
+    /// source-root refinement.
+    pub refinement: AlgebraicRootRefinementComparisonReport,
+    /// Arithmetic evidence for `left - right` when the refinement pass still
+    /// left overlapping intervals.
+    pub difference: Option<AlgebraicRootArithmeticReport>,
+    /// Final comparison after optional difference construction.
+    pub comparison: AlgebraicRootComparisonReport,
+}
+
 /// Arithmetic operation over represented algebraic roots.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum AlgebraicRootArithmeticOp {
@@ -621,6 +634,103 @@ pub fn compare_algebraic_root_representations_with_refinement(
         right_refinements,
         refinement_rounds,
     )
+}
+
+/// Compare represented roots by constructing and signing `left - right`.
+///
+/// This is the comparison counterpart to the bounded independent arithmetic
+/// package. It first tries ordinary interval comparison plus exact Sturm
+/// refinement. If source intervals still overlap, it constructs the algebraic
+/// difference and decides the sign of that constructed value from its
+/// certified isolating interval. This is the Yap construction/decision split:
+/// the value is built as exact evidence, then the sign predicate reads only
+/// certified interval data. See Yap, "Towards Exact Geometric Computation"
+/// (1997), Sturm (1835), and Collins-Loos (1982), matching the arithmetic and
+/// refinement modules cited at the point of use.
+pub fn compare_algebraic_root_representations_by_difference(
+    left: &AlgebraicRootRepresentation,
+    right: &AlgebraicRootRepresentation,
+    config: AlgebraicRootRefinementComparisonConfig,
+) -> AlgebraicRootDifferenceComparisonReport {
+    let refinement =
+        compare_algebraic_root_representations_with_refinement(left, right, config.clone());
+    if refinement.comparison.status != AlgebraicRootComparisonStatus::OverlappingIntervals {
+        return algebraic_difference_comparison_report(
+            refinement.comparison.clone(),
+            refinement,
+            None,
+        );
+    }
+
+    let difference = arithmetic_algebraic_root_representations(
+        left,
+        Some(right),
+        AlgebraicRootArithmeticOp::Subtract,
+    );
+    let comparison = match difference.status {
+        AlgebraicRootArithmeticStatus::ComputedExactRationalWitness => {
+            let Some(value) = difference.exact_result.as_ref() else {
+                return algebraic_difference_comparison_report(
+                    algebraic_comparison_report(
+                        AlgebraicRootComparisonStatus::Undecided,
+                        None,
+                        Some("difference arithmetic omitted exact witness".to_owned()),
+                    ),
+                    refinement,
+                    Some(difference),
+                );
+            };
+            match compare_reals_with_policy(value, &Real::zero(), config.policy).value() {
+                Some(ordering) => algebraic_comparison_report(
+                    AlgebraicRootComparisonStatus::Compared,
+                    Some(ordering),
+                    Some("comparison decided by exact rational difference".to_owned()),
+                ),
+                None => algebraic_comparison_report(
+                    AlgebraicRootComparisonStatus::Undecided,
+                    None,
+                    Some("could not compare exact difference to zero".to_owned()),
+                ),
+            }
+        }
+        AlgebraicRootArithmeticStatus::ComputedRepresentation => {
+            let Some(root) = difference.result_representation.as_ref() else {
+                return algebraic_difference_comparison_report(
+                    algebraic_comparison_report(
+                        AlgebraicRootComparisonStatus::Undecided,
+                        None,
+                        Some("difference arithmetic omitted represented result".to_owned()),
+                    ),
+                    refinement,
+                    Some(difference),
+                );
+            };
+            match represented_root_sign(root, config.policy) {
+                Some(ordering) => algebraic_comparison_report(
+                    AlgebraicRootComparisonStatus::Compared,
+                    Some(ordering),
+                    Some("comparison decided by constructed algebraic difference".to_owned()),
+                ),
+                None => algebraic_comparison_report(
+                    AlgebraicRootComparisonStatus::Undecided,
+                    None,
+                    Some("constructed difference interval did not separate from zero".to_owned()),
+                ),
+            }
+        }
+        AlgebraicRootArithmeticStatus::InvalidEvidence => algebraic_comparison_report(
+            AlgebraicRootComparisonStatus::InvalidEvidence,
+            None,
+            difference.message.clone(),
+        ),
+        AlgebraicRootArithmeticStatus::NonRationalInput
+        | AlgebraicRootArithmeticStatus::Undecided => algebraic_comparison_report(
+            AlgebraicRootComparisonStatus::Undecided,
+            None,
+            difference.message.clone(),
+        ),
+    };
+    algebraic_difference_comparison_report(comparison, refinement, Some(difference))
 }
 
 /// Compute exact arithmetic for represented roots with rational witnesses.
@@ -2177,6 +2287,24 @@ fn apply_refined_interval(
     root.is_valid()
 }
 
+fn represented_root_sign(
+    root: &AlgebraicRootRepresentation,
+    policy: PredicatePolicy,
+) -> Option<Ordering> {
+    if let Some(value) = root.exact_rational_witness() {
+        return compare_reals_with_policy(value, &Real::zero(), policy).value();
+    }
+    let upper = compare_reals_with_policy(&root.interval.upper, &Real::zero(), policy).value()?;
+    if upper == Ordering::Less {
+        return Some(Ordering::Less);
+    }
+    let lower = compare_reals_with_policy(&root.interval.lower, &Real::zero(), policy).value()?;
+    if lower == Ordering::Greater {
+        return Some(Ordering::Greater);
+    }
+    None
+}
+
 fn algebraic_comparison_report(
     status: AlgebraicRootComparisonStatus,
     ordering: Option<Ordering>,
@@ -2186,6 +2314,18 @@ fn algebraic_comparison_report(
         status,
         ordering,
         message,
+    }
+}
+
+fn algebraic_difference_comparison_report(
+    comparison: AlgebraicRootComparisonReport,
+    refinement: AlgebraicRootRefinementComparisonReport,
+    difference: Option<AlgebraicRootArithmeticReport>,
+) -> AlgebraicRootDifferenceComparisonReport {
+    AlgebraicRootDifferenceComparisonReport {
+        refinement,
+        difference,
+        comparison,
     }
 }
 
@@ -2300,6 +2440,10 @@ mod tests {
 
     fn real(value: i64) -> Real {
         Real::from(value)
+    }
+
+    fn ratio(numerator: i64, denominator: i64) -> Real {
+        (real(numerator) / real(denominator)).unwrap()
     }
 
     #[test]
@@ -2508,8 +2652,8 @@ mod tests {
             interval_index: 0,
             polynomial_coefficients: vec![real(-2), Real::zero(), Real::one()],
             interval: IsolatedRootInterval {
-                lower: real(1),
-                upper: real(2),
+                lower: ratio(7, 5),
+                upper: ratio(3, 2),
                 exact_root: None,
                 distinct_root_count: 1,
             },
@@ -2556,6 +2700,62 @@ mod tests {
         assert!(!refined.left_refinements.is_empty());
         assert!(!refined.right_refinements.is_empty());
         assert!(refined.refined_left.interval.upper < refined.refined_right.interval.lower);
+    }
+
+    #[test]
+    fn algebraic_root_difference_comparison_orders_constructed_overlap() {
+        let sqrt_two = AlgebraicRootRepresentation {
+            constraint_index: 0,
+            symbol: SymbolId(0),
+            interval_index: 0,
+            polynomial_coefficients: vec![real(-2), Real::zero(), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: ratio(7, 5),
+                upper: ratio(3, 2),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            kind: AlgebraicRootKind::IsolatingInterval,
+            validation: AlgebraicRootValidationReport::valid(),
+        };
+        let sqrt_three = AlgebraicRootRepresentation {
+            constraint_index: 1,
+            symbol: SymbolId(1),
+            polynomial_coefficients: vec![real(-3), Real::zero(), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: ratio(29, 20),
+                upper: ratio(9, 5),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            ..sqrt_two.clone()
+        };
+
+        let report = compare_algebraic_root_representations_by_difference(
+            &sqrt_two,
+            &sqrt_three,
+            AlgebraicRootRefinementComparisonConfig {
+                max_refinement_rounds: 0,
+                ..AlgebraicRootRefinementComparisonConfig::default()
+            },
+        );
+
+        assert_eq!(
+            report.refinement.comparison.status,
+            AlgebraicRootComparisonStatus::OverlappingIntervals
+        );
+        assert_eq!(
+            report.comparison.status,
+            AlgebraicRootComparisonStatus::Compared
+        );
+        assert_eq!(report.comparison.ordering, Some(Ordering::Less));
+        let difference = report.difference.as_ref().unwrap();
+        assert_eq!(
+            difference.status,
+            AlgebraicRootArithmeticStatus::ComputedRepresentation
+        );
+        let difference_root = difference.result_representation.as_ref().unwrap();
+        assert!(difference_root.interval.upper < Real::zero());
     }
 
     #[test]
