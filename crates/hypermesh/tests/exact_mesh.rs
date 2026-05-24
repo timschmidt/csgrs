@@ -14051,6 +14051,98 @@ fn exact_coplanar_surface_component_union_materializes_nonconvex_contact_graph()
 
 #[cfg(feature = "exact-triangulation")]
 #[test]
+fn exact_coplanar_surface_component_union_materializes_nonconvex_source_edge_contact() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            0, 0, 0, 10, 0, 0, 10, 4, 0, 7, 4, 0, 6, 6, 0, 10, 8, 0, 10, 12, 0, 0, 12, 0,
+        ],
+        &[
+            0, 1, 2, //
+            0, 2, 3, //
+            0, 3, 4, //
+            0, 4, 7, //
+            7, 4, 5, //
+            7, 5, 6,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let right = ExactMesh::from_i64_triangles_with_policy(
+        &[4, 12, 0, 8, 12, 0, 8, 14, 0, 4, 14, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+
+    assert!(hypermesh::exact::arrange_coplanar_convex_surface_union(&left, &right).is_none());
+    assert!(
+        hypermesh::exact::arrange_coplanar_convex_surface_component_union(&left, &right).is_none()
+    );
+    assert!(hypermesh::exact::arrange_coplanar_surface_point_touch_union(&left, &right).is_none());
+    let union = hypermesh::exact::arrange_coplanar_surface_component_union(&left, &right)
+        .expect("nonconvex source disk plus edge-attached component should stitch one loop");
+    union.validate().unwrap();
+    union
+        .validate_component_union_against_sources(&left, &right)
+        .unwrap();
+    assert!(union.polygon.len() > 8);
+    assert!(union.polygon.iter().any(|point| {
+        real_eq(&point.x, &ExactReal::from(4)) && real_eq(&point.y, &ExactReal::from(14))
+    }));
+    assert!(union.polygon.iter().any(|point| {
+        real_eq(&point.x, &ExactReal::from(8)) && real_eq(&point.y, &ExactReal::from(14))
+    }));
+    assert_eq!(
+        union
+            .polygon
+            .iter()
+            .filter(|point| real_eq(&point.y, &ExactReal::from(12))
+                && (real_eq(&point.x, &ExactReal::from(4))
+                    || real_eq(&point.x, &ExactReal::from(8))))
+            .count(),
+        2
+    );
+
+    let preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+    )
+    .unwrap();
+    preflight.validate().unwrap();
+    preflight.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
+    );
+
+    let result = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    result
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            hypermesh::exact::ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfaceArrangementUnion
+        }
+    );
+    assert_eq!(result.mesh, union.mesh);
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
 fn exact_coplanar_surface_multi_component_union_materializes_disconnected_nonconvex_cluster() {
     let left = ExactMesh::from_i64_triangles_with_policy(
         &[

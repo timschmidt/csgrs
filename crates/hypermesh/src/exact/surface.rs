@@ -4419,19 +4419,52 @@ fn coplanar_surface_component_union_loop(
 
     let left_components = connected_face_component_meshes(left)?;
     let right_components = connected_face_component_meshes(right)?;
-    if left_components.len() + right_components.len() < 3 {
+    if left_components.len() + right_components.len() < 2 {
         return None;
     }
 
     let mut components = Vec::new();
-    for mesh in left_components {
-        components.push(ConvexUnionComponent::from_mesh(MultiUnionSide::Left, mesh)?);
+    for mesh in left_components.iter().cloned() {
+        let Some(component) = ConvexUnionComponent::from_mesh(MultiUnionSide::Left, mesh) else {
+            let (projection, mut polygons) = coplanar_simple_surface_component_union_polygons(
+                left_components,
+                right_components,
+                "coplanar nonconvex simple-source component union",
+            )?;
+            return if polygons.len() == 1 {
+                Some((projection, polygons.pop()?))
+            } else {
+                None
+            };
+        };
+        components.push(component);
     }
-    for mesh in right_components {
-        components.push(ConvexUnionComponent::from_mesh(
-            MultiUnionSide::Right,
-            mesh,
-        )?);
+    for mesh in right_components.iter().cloned() {
+        let Some(component) = ConvexUnionComponent::from_mesh(MultiUnionSide::Right, mesh) else {
+            let (projection, mut polygons) = coplanar_simple_surface_component_union_polygons(
+                left_components,
+                right_components,
+                "coplanar nonconvex simple-source component union",
+            )?;
+            return if polygons.len() == 1 {
+                Some((projection, polygons.pop()?))
+            } else {
+                None
+            };
+        };
+        components.push(component);
+    }
+    if components.len() < 3 {
+        let (projection, mut polygons) = coplanar_simple_surface_component_union_polygons(
+            left_components,
+            right_components,
+            "coplanar nonconvex simple-source component union",
+        )?;
+        return if polygons.len() == 1 {
+            Some((projection, polygons.pop()?))
+        } else {
+            None
+        };
     }
     let projection = components.first()?.projection;
     if components
@@ -4533,14 +4566,25 @@ fn coplanar_surface_component_union_polygons(
     }
 
     let mut components = Vec::new();
-    for mesh in left_components {
-        components.push(ConvexUnionComponent::from_mesh(MultiUnionSide::Left, mesh)?);
+    for mesh in left_components.iter().cloned() {
+        let Some(component) = ConvexUnionComponent::from_mesh(MultiUnionSide::Left, mesh) else {
+            return coplanar_simple_surface_component_union_polygons(
+                left_components,
+                right_components,
+                "coplanar nonconvex simple-source multi-component union",
+            );
+        };
+        components.push(component);
     }
-    for mesh in right_components {
-        components.push(ConvexUnionComponent::from_mesh(
-            MultiUnionSide::Right,
-            mesh,
-        )?);
+    for mesh in right_components.iter().cloned() {
+        let Some(component) = ConvexUnionComponent::from_mesh(MultiUnionSide::Right, mesh) else {
+            return coplanar_simple_surface_component_union_polygons(
+                left_components,
+                right_components,
+                "coplanar nonconvex simple-source multi-component union",
+            );
+        };
+        components.push(component);
     }
     let projection = components.first()?.projection;
     if components
@@ -4642,6 +4686,128 @@ fn coplanar_surface_component_union_polygons(
         "coplanar nonconvex multi-component union",
     )
     .ok()?;
+    Some((projection, polygons))
+}
+
+/// Materialize unions of simple source disks by exposed-boundary replay.
+///
+/// This is the nonconvex-source sibling of the convex component-union
+/// materializer. Each connected source component is replayed either as a
+/// convex component hull or as one exact simple source boundary. Cross-source
+/// components may then be clustered only when exact segment/containment
+/// predicates prove positive-area overlap or positive-length boundary contact;
+/// point-only contacts stay on [`arrange_coplanar_surface_point_touch_union`].
+/// A cluster is accepted only when its exposed boundary stitches into one
+/// simple loop, every source loop lies in that retained loop, and exact area
+/// proves the loop has not filled an unsupported hole.
+///
+/// The exposed-boundary traversal follows Weiler and Atherton, "Hidden
+/// Surface Removal Using Polygon Area Sorting," *SIGGRAPH Computer Graphics*
+/// 11.2 (1977). The promotion rule is Yap's retained-object discipline from
+/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+/// (1997): no output topology is accepted unless the exact source loops and
+/// exact replayed boundary determine it.
+#[cfg(feature = "exact-triangulation")]
+fn coplanar_simple_surface_component_union_polygons(
+    left_component_meshes: Vec<ExactMesh>,
+    right_component_meshes: Vec<ExactMesh>,
+    label: &'static str,
+) -> Option<(CoplanarProjection, Vec<Vec<Point3>>)> {
+    if left_component_meshes.is_empty() || right_component_meshes.is_empty() {
+        return None;
+    }
+    let mut components = Vec::new();
+    for mesh in left_component_meshes {
+        components.push(PointTouchSourceComponent::from_mesh(
+            MultiUnionSide::Left,
+            mesh,
+        )?);
+    }
+    for mesh in right_component_meshes {
+        components.push(PointTouchSourceComponent::from_mesh(
+            MultiUnionSide::Right,
+            mesh,
+        )?);
+    }
+    let projection = components.first()?.projection;
+    if components
+        .iter()
+        .any(|component| component.projection != projection)
+    {
+        return None;
+    }
+
+    let left_loops = components
+        .iter()
+        .filter(|component| component.side == MultiUnionSide::Left)
+        .map(|component| component.polygon.clone())
+        .collect::<Vec<_>>();
+    let right_loops = components
+        .iter()
+        .filter(|component| component.side == MultiUnionSide::Right)
+        .map(|component| component.polygon.clone())
+        .collect::<Vec<_>>();
+    validate_simple_component_loops_disjoint(&left_loops, projection, label).ok()?;
+    validate_simple_component_loops_disjoint(&right_loops, projection, label).ok()?;
+
+    let mut contact_graph = UnionFind::new(components.len());
+    let mut saw_connected_cross_source = false;
+    for left_index in 0..components.len() {
+        for right_index in left_index + 1..components.len() {
+            let interaction = simple_polygon_interaction(
+                &components[left_index].polygon,
+                &components[right_index].polygon,
+                projection,
+            )?;
+            if components[left_index].side == components[right_index].side {
+                if interaction != SimplePolygonInteraction::Disjoint {
+                    return None;
+                }
+                continue;
+            }
+            match interaction {
+                SimplePolygonInteraction::Disjoint => {}
+                SimplePolygonInteraction::PointOnly => return None,
+                SimplePolygonInteraction::Connected => {
+                    saw_connected_cross_source = true;
+                    contact_graph.union(left_index, right_index);
+                }
+            }
+        }
+    }
+    if !saw_connected_cross_source {
+        return None;
+    }
+
+    let mut groups: Vec<(usize, Vec<usize>)> = Vec::new();
+    for index in 0..components.len() {
+        let root = contact_graph.find(index);
+        if let Some((_, members)) = groups.iter_mut().find(|(candidate, _)| *candidate == root) {
+            members.push(index);
+        } else {
+            groups.push((root, vec![index]));
+        }
+    }
+    groups.sort_by_key(|(_, members)| members.first().copied().unwrap_or(usize::MAX));
+
+    let source_loops = components
+        .iter()
+        .map(|component| component.polygon.clone())
+        .collect::<Vec<_>>();
+    let mut polygons = Vec::with_capacity(groups.len());
+    for (_, members) in groups {
+        let mut polygon = if members.len() == 1 {
+            source_loops[*members.first()?].clone()
+        } else {
+            materialize_simple_polygon_union_group(&source_loops, &members, projection, label)?
+        };
+        orient_polygon_ccw(&mut polygon, projection)?;
+        polygon = simplify_projected_polygon(polygon, projection);
+        validate_projected_simple_loop(&polygon, projection, label).ok()?;
+        polygons.push(polygon);
+    }
+    sort_polygons_for_replay(&mut polygons, projection);
+    validate_simple_component_loops_disjoint(&polygons, projection, label).ok()?;
     Some((projection, polygons))
 }
 
@@ -5944,9 +6110,32 @@ fn materialize_simple_removed_opening_union_group(
     projection: CoplanarProjection,
     label: &'static str,
 ) -> Option<Vec<Point3>> {
+    materialize_simple_polygon_union_group(openings, group, projection, label)
+}
+
+/// Materialize one connected union of retained simple polygon loops.
+///
+/// The helper is shared by removed-opening replay and nonconvex source-union
+/// replay. It keeps only boundary fragments exposed to the exterior of all
+/// other loops, stitches those fragments into one simple ring, verifies every
+/// source loop lies in the retained ring, and rejects any candidate whose area
+/// exceeds the sum of exact input areas. That last inequality is a compact
+/// Yap-style promotion gate from "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997): a stitched outer ring that silently
+/// fills an unsupported hole cannot be accepted as a boolean result. The
+/// retained-fragment traversal is the Weiler-Atherton idea from Weiler and
+/// Atherton, "Hidden Surface Removal Using Polygon Area Sorting," *SIGGRAPH
+/// Computer Graphics* 11.2 (1977).
+#[cfg(feature = "exact-triangulation")]
+fn materialize_simple_polygon_union_group(
+    polygons: &[Vec<Point3>],
+    group: &[usize],
+    projection: CoplanarProjection,
+    label: &'static str,
+) -> Option<Vec<Point3>> {
     let group_openings = group
         .iter()
-        .map(|&index| openings[index].clone())
+        .map(|&index| polygons[index].clone())
         .collect::<Vec<_>>();
     let mut fragments = Vec::new();
     for index in 0..group_openings.len() {

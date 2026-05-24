@@ -1772,6 +1772,38 @@ fn exercise_multi_component_coplanar_union() {
         &nonconvex_edge_touch_right,
     )
     .is_none());
+    let nonconvex_edge_union = arrange_coplanar_surface_component_union(
+        &nonconvex_point_touch_left,
+        &nonconvex_edge_touch_right,
+    )
+    .expect("nonconvex source positive edge contact should materialize as component union");
+    nonconvex_edge_union.validate().unwrap();
+    nonconvex_edge_union
+        .validate_component_union_against_sources(
+            &nonconvex_point_touch_left,
+            &nonconvex_edge_touch_right,
+        )
+        .unwrap();
+    let nonconvex_edge_preflight = preflight_boolean_exact(
+        &nonconvex_point_touch_left,
+        &nonconvex_edge_touch_right,
+        ExactBooleanOperation::Union,
+    )
+    .expect("nonconvex source edge-contact union preflight should classify shortcut");
+    nonconvex_edge_preflight.validate().unwrap();
+    assert_eq!(
+        nonconvex_edge_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
+    );
+    hypermesh::exact::boolean_exact(
+        &nonconvex_point_touch_left,
+        &nonconvex_edge_touch_right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("nonconvex source edge-contact union should materialize")
+    .validate()
+    .unwrap();
 
     let bridge_left = ExactMesh::from_i64_triangles_with_policy(
         &[
