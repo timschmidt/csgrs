@@ -544,6 +544,27 @@ pub enum SketchConstraintKind {
         /// Second 3D line segment.
         b: SketchEntityHandle,
     },
+    /// Bounded projected length for a 3D line segment in a retained workplane.
+    ///
+    /// Bounds are exact projected line lengths. Lowering validates
+    /// nonnegative ordered bounds, emits the workplane unit-quaternion guard,
+    /// and replays `|dir_uv|^2 - lower^2 >= 0` and
+    /// `|dir_uv|^2 - upper^2 <= 0`. This is the line-length analogue of
+    /// projected clearance ranges: Yap, "Towards Exact Geometric
+    /// Computation" (1997), requires the semantic bound checks before
+    /// squaring, and Shoemake's unit-quaternion frame from "Animating
+    /// Rotation with Quaternion Curves" (1985) supplies the exact workplane
+    /// axes.
+    ProjectedLineLengthRange3 {
+        /// Workplane entity that supplies origin and normal/quaternion.
+        workplane: SketchEntityHandle,
+        /// 3D line segment whose projected length is bounded.
+        line: SketchEntityHandle,
+        /// Optional exact lower projected length bound.
+        lower: Option<Real>,
+        /// Optional exact upper projected length bound.
+        upper: Option<Real>,
+    },
     /// Projected 3D line length-ratio relation in a retained workplane.
     ///
     /// The retained relation is `length(a_uv) / length(b_uv) = numerator /
@@ -1194,6 +1215,8 @@ pub enum SketchResidualStrategy {
     BoundedSquaredProjectedPointLineDistance,
     /// Squared equality between 3D line lengths after exact workplane projection.
     SquaredProjectedLineLengthEquality,
+    /// Squared projected 3D line-length inequality after exact workplane projection.
+    BoundedSquaredProjectedLineLength,
     /// Squared ratio between 3D line lengths after exact workplane projection.
     SquaredProjectedLineLengthRatio,
     /// Squared 3D line length difference after exact workplane projection.
@@ -1329,6 +1352,8 @@ pub enum SketchResidualFormKind {
     BoundedSquaredProjectedPointLineDistancePolynomial,
     /// Squared projected line-length equality polynomial proof row.
     SquaredProjectedLineLengthEqualityPolynomial,
+    /// Squared projected line-length range inequality proof row.
+    BoundedSquaredProjectedLineLengthPolynomial,
     /// Squared projected line-length ratio polynomial proof row.
     SquaredProjectedLineLengthRatioPolynomial,
     /// Squared projected line-length difference polynomial proof row.
@@ -1944,6 +1969,21 @@ impl SketchSolveProblem {
         b: SketchEntityHandle,
     ) -> SketchConstraintHandle {
         distance::projected_equal_length_lines3(self, name, workplane, a, b).handle
+    }
+
+    /// Add a bounded workplane-projected length constraint for one 3D line.
+    ///
+    /// The retained relation lowers to a unit-workplane guard and exact
+    /// squared projected line-length inequalities after bound validation.
+    pub fn add_projected_line_length_range3(
+        &mut self,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        line: SketchEntityHandle,
+        lower: Option<Real>,
+        upper: Option<Real>,
+    ) -> SketchConstraintHandle {
+        distance::projected_line_length_range3(self, name, workplane, line, lower, upper).handle
     }
 
     /// Add a workplane-projected length-ratio constraint for two 3D lines.
@@ -3008,6 +3048,74 @@ impl SketchSolveProblem {
                             residual: parts.first_squared - parts.second_squared,
                         },
                     ],
+                    diagnostics,
+                }
+            }
+            SketchConstraintKind::ProjectedLineLengthRange3 {
+                workplane,
+                line,
+                ref lower,
+                ref upper,
+            } => {
+                let mut diagnostics = Vec::new();
+                if !validate_distance_bounds_with_strategy(
+                    constraint,
+                    lower.as_ref(),
+                    upper.as_ref(),
+                    SketchResidualStrategy::BoundedSquaredProjectedLineLength,
+                    &mut diagnostics,
+                ) {
+                    return SketchResidualFormsReport {
+                        constraint: handle,
+                        status: SketchResidualFormsStatus::InvalidInputs,
+                        forms: Vec::new(),
+                        diagnostics,
+                    };
+                }
+                let Some(parts) = self.projected_line_length_range_exprs(
+                    workplane,
+                    line,
+                    constraint,
+                    &mut diagnostics,
+                ) else {
+                    return SketchResidualFormsReport {
+                        constraint: handle,
+                        status: SketchResidualFormsStatus::InvalidInputs,
+                        forms: Vec::new(),
+                        diagnostics,
+                    };
+                };
+                let mut forms = Vec::new();
+                if lower.is_some() || upper.is_some() {
+                    forms.push(SketchResidualForm {
+                        kind: SketchResidualFormKind::WorkplaneUnitQuaternionPolynomial,
+                        role: SketchResidualFormRole::ExactProof,
+                        strategy: Some(SketchResidualStrategy::WorkplaneUnitQuaternion),
+                        residual: unit_quaternion_residual(&parts.quaternion),
+                    });
+                }
+                if let Some(lower) = lower {
+                    forms.push(SketchResidualForm {
+                        kind: SketchResidualFormKind::BoundedSquaredProjectedLineLengthPolynomial,
+                        role: SketchResidualFormRole::ExactProof,
+                        strategy: Some(SketchResidualStrategy::BoundedSquaredProjectedLineLength),
+                        residual: parts.projected_squared.clone()
+                            - Expr::real(lower.clone() * lower.clone()),
+                    });
+                }
+                if let Some(upper) = upper {
+                    forms.push(SketchResidualForm {
+                        kind: SketchResidualFormKind::BoundedSquaredProjectedLineLengthPolynomial,
+                        role: SketchResidualFormRole::ExactProof,
+                        strategy: Some(SketchResidualStrategy::BoundedSquaredProjectedLineLength),
+                        residual: parts.projected_squared
+                            - Expr::real(upper.clone() * upper.clone()),
+                    });
+                }
+                SketchResidualFormsReport {
+                    constraint: handle,
+                    status: SketchResidualFormsStatus::Generated,
+                    forms,
                     diagnostics,
                 }
             }
@@ -4437,6 +4545,76 @@ impl SketchSolveProblem {
                     parts.first_squared - parts.second_squared,
                     SketchResidualStrategy::SquaredProjectedLineLengthEquality,
                 );
+            }
+            SketchConstraintKind::ProjectedLineLengthRange3 {
+                workplane,
+                line,
+                ref lower,
+                ref upper,
+            } => {
+                // This bounded line-length relation follows Yap's (1997)
+                // construction/decision split: exact length bounds are
+                // validated before squaring, then the projected squared
+                // length is replayed as lower/upper polynomial inequalities.
+                // Shoemake's (1985) quaternion frame remains an explicit
+                // proof row because the U/V metric is valid only for unit
+                // workplanes.
+                if !validate_distance_bounds_with_strategy(
+                    constraint,
+                    lower.as_ref(),
+                    upper.as_ref(),
+                    SketchResidualStrategy::BoundedSquaredProjectedLineLength,
+                    rows,
+                ) {
+                    return;
+                }
+                if lower.is_none() && upper.is_none() {
+                    rows.push(SketchGeneratedRow {
+                        constraint: constraint.handle,
+                        residual_index: None,
+                        name: constraint.name.clone(),
+                        strategy: Some(SketchResidualStrategy::BoundedSquaredProjectedLineLength),
+                        status: SketchGeneratedRowStatus::ReferenceOnly,
+                    });
+                    return;
+                }
+                let Some(parts) =
+                    self.projected_line_length_range_exprs(workplane, line, constraint, rows)
+                else {
+                    return;
+                };
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} workplane unit", constraint.name),
+                    unit_quaternion_residual(&parts.quaternion),
+                    SketchResidualStrategy::WorkplaneUnitQuaternion,
+                );
+                if let Some(lower) = lower {
+                    self.push_residual_with_kind(
+                        problem,
+                        rows,
+                        constraint,
+                        format!("{} lower projected line length", constraint.name),
+                        parts.projected_squared.clone() - Expr::real(lower.clone() * lower.clone()),
+                        SketchResidualStrategy::BoundedSquaredProjectedLineLength,
+                        ConstraintKind::GreaterOrEqual,
+                        Real::one(),
+                    );
+                }
+                if let Some(upper) = upper {
+                    self.push_residual_with_kind(
+                        problem,
+                        rows,
+                        constraint,
+                        format!("{} upper projected line length", constraint.name),
+                        parts.projected_squared - Expr::real(upper.clone() * upper.clone()),
+                        SketchResidualStrategy::BoundedSquaredProjectedLineLength,
+                        ConstraintKind::LessOrEqual,
+                        Real::one(),
+                    );
+                }
             }
             SketchConstraintKind::ProjectedLengthRatioLines3 {
                 workplane,
@@ -6230,6 +6408,21 @@ impl SketchSolveProblem {
         })
     }
 
+    fn projected_line_length_range_exprs(
+        &self,
+        workplane: SketchEntityHandle,
+        line: SketchEntityHandle,
+        constraint: &SketchConstraint,
+        rows: &mut Vec<SketchGeneratedRow>,
+    ) -> Option<ProjectedLineLengthRangeExprs> {
+        let quaternion = self.workplane_quaternion(workplane, constraint, rows)?;
+        let direction = self.line3_direction(line, constraint, rows)?;
+        Some(ProjectedLineLengthRangeExprs {
+            projected_squared: projected_direction_squared_length(&direction, &quaternion),
+            quaternion,
+        })
+    }
+
     fn projected_line_length_difference_exprs(
         &self,
         workplane: SketchEntityHandle,
@@ -6908,6 +7101,12 @@ struct ProjectedLineLengthEqualityExprs {
     quaternion: [Expr; 4],
     first_squared: Expr,
     second_squared: Expr,
+}
+
+#[derive(Clone, Debug)]
+struct ProjectedLineLengthRangeExprs {
+    quaternion: [Expr; 4],
+    projected_squared: Expr,
 }
 
 #[derive(Clone, Debug)]

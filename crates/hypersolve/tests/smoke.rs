@@ -4492,6 +4492,144 @@ fn sketch_projected_equal_length_lines3_lowers_exact_workplane_rows() {
 }
 
 #[test]
+fn sketch_projected_line_length_ranges_lower_to_exact_inequalities() {
+    let mut sketch = SketchSolveProblem::new();
+    let origin = sketch.add_point3d("origin", real(0), real(0), real(0));
+    let normal = sketch.add_normal3d("normal", real(1), real(0), real(0), real(0));
+    let workplane = sketch.add_workplane("workplane", origin, normal);
+    let line_start = sketch.add_point3d("line start", real(0), real(0), real(-5));
+    let line_end = sketch.add_point3d("line end", real(3), real(4), real(99));
+    let bad_start = sketch.add_point3d("bad start", real(0), real(0), real(0));
+    let bad_end = sketch.add_point3d("bad end", real(9), real(0), real(17));
+    let line = sketch.add_line_segment3("line", line_start, line_end);
+    let bad_line = sketch.add_line_segment3("bad line", bad_start, bad_end);
+    let valid = sketch_distance_builders::projected_line_length_range3(
+        &mut sketch,
+        "projected line length window",
+        workplane,
+        line,
+        Some(real(4)),
+        Some(real(6)),
+    );
+    sketch.add_projected_line_length_range3(
+        "violated projected line length window",
+        workplane,
+        bad_line,
+        Some(real(0)),
+        Some(real(6)),
+    );
+
+    let report = sketch.lower_to_problem();
+
+    assert_eq!(
+        valid.strategy,
+        SketchResidualStrategy::BoundedSquaredProjectedLineLength
+    );
+    assert!(report.all_generated());
+    assert_eq!(report.problem.constraints.len(), 6);
+    assert_eq!(
+        report.problem.constraints[1].kind,
+        ConstraintKind::GreaterOrEqual
+    );
+    assert_eq!(
+        report.problem.constraints[2].kind,
+        ConstraintKind::LessOrEqual
+    );
+    assert_eq!(
+        report.rows[1].strategy,
+        Some(SketchResidualStrategy::BoundedSquaredProjectedLineLength)
+    );
+    assert_eq!(
+        report.rows[5].strategy,
+        Some(SketchResidualStrategy::BoundedSquaredProjectedLineLength)
+    );
+
+    let certification = certify_candidate(
+        &PreparedProblem::new(&report.problem),
+        &context_from_problem(&report.problem),
+    );
+    assert!(matches!(
+        certification.rows[1].status,
+        CertifiedCandidateStatus::CertifiedSatisfiedInequality { .. }
+    ));
+    assert!(matches!(
+        certification.rows[2].status,
+        CertifiedCandidateStatus::CertifiedSatisfiedInequality { .. }
+    ));
+    assert!(matches!(
+        certification.rows[5].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
+
+    let forms = sketch.residual_forms_for_constraint(valid.handle);
+    assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+    assert_eq!(forms.forms.len(), 3);
+    assert_eq!(
+        forms.forms[1].kind,
+        SketchResidualFormKind::BoundedSquaredProjectedLineLengthPolynomial
+    );
+    assert_eq!(forms.forms[1].role, SketchResidualFormRole::ExactProof);
+}
+
+#[test]
+fn sketch_projected_line_length_ranges_report_invalid_empty_and_stale_inputs() {
+    let mut sketch = SketchSolveProblem::new();
+    let origin = sketch.add_point3d("origin", real(0), real(0), real(0));
+    let normal = sketch.add_normal3d("normal", real(1), real(0), real(0), real(0));
+    let workplane = sketch.add_workplane("workplane", origin, normal);
+    let line_start = sketch.add_point3d("line start", real(0), real(0), real(0));
+    let line_end = sketch.add_point3d("line end", real(3), real(4), real(7));
+    let line = sketch.add_line_segment3("line", line_start, line_end);
+    sketch.add_projected_line_length_range3(
+        "negative lower",
+        workplane,
+        line,
+        Some(real(-1)),
+        None,
+    );
+    sketch.add_projected_line_length_range3(
+        "inverted",
+        workplane,
+        line,
+        Some(real(6)),
+        Some(real(4)),
+    );
+    sketch.add_projected_line_length_range3("empty", workplane, line, None, None);
+    sketch.add_projected_line_length_range3(
+        "stale",
+        workplane,
+        SketchEntityHandle(999),
+        Some(real(0)),
+        Some(real(2)),
+    );
+
+    let lowered = sketch.lower_to_problem();
+
+    assert_eq!(lowered.problem.constraints.len(), 0);
+    assert_eq!(lowered.rows.len(), 4);
+    assert_eq!(
+        lowered.rows[0].strategy,
+        Some(SketchResidualStrategy::BoundedSquaredProjectedLineLength)
+    );
+    assert_eq!(
+        lowered.rows[0].status,
+        SketchGeneratedRowStatus::InvalidExactBound
+    );
+    assert_eq!(
+        lowered.rows[1].status,
+        SketchGeneratedRowStatus::InvalidExactBound
+    );
+    assert_eq!(
+        lowered.rows[2].status,
+        SketchGeneratedRowStatus::ReferenceOnly
+    );
+    assert_eq!(
+        lowered.rows[3].status,
+        SketchGeneratedRowStatus::MissingEntity(SketchEntityHandle(999))
+    );
+}
+
+#[test]
 fn sketch_projected_length_ratio_lines3_lowers_exact_workplane_rows() {
     let mut sketch = SketchSolveProblem::new();
     let origin = sketch.add_point3d("origin", real(0), real(0), real(0));

@@ -911,6 +911,37 @@ pub mod distance {
         }
     }
 
+    /// Add a bounded retained workplane-projected line-length relation.
+    ///
+    /// Bounds are exact projected line lengths. Lowering validates
+    /// nonnegative ordered bounds before replaying `|dir_uv|^2 - bound^2`
+    /// inequalities beside the workplane unit guard. This follows Yap,
+    /// "Towards Exact Geometric Computation" (1997), by keeping semantic
+    /// range validation outside the squared polynomial rows; the retained
+    /// workplane frame uses Shoemake's unit-quaternion construction (1985).
+    pub fn projected_line_length_range3(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        line: SketchEntityHandle,
+        lower: Option<Real>,
+        upper: Option<Real>,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::ProjectedLineLengthRange3 {
+            workplane,
+            line,
+            lower,
+            upper,
+        };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Distance,
+            strategy: SketchResidualStrategy::BoundedSquaredProjectedLineLength,
+            kind,
+        }
+    }
+
     /// Add a retained workplane-projected length-ratio relation for 3D lines.
     ///
     /// The exact ratio is retained as semantic data and checked before

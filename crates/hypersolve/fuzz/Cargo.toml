@@ -49,6 +49,13 @@ doc = false
 bench = false
 
 [[bin]]
+name = "sketch_projected_line_length_range"
+path = "fuzz_targets/sketch_projected_line_length_range.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
 name = "sketch_projected_length_ratio"
 path = "fuzz_targets/sketch_projected_length_ratio.rs"
 test = false
