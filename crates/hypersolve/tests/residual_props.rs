@@ -2304,6 +2304,66 @@ proptest! {
     }
 
     #[test]
+    fn sketch_projected_equal_length_point_line_distance3_identity_workplane_matches_horizontal_distance(
+        x0 in -8_i16..=8,
+        y0 in -8_i16..=8,
+        length in 0_i16..=12,
+        z0 in -8_i16..=8,
+        z1 in -8_i16..=8,
+        z2 in -8_i16..=8,
+        z3 in -8_i16..=8,
+        z4 in -8_i16..=8,
+    ) {
+        let x0 = i64::from(x0);
+        let y0 = i64::from(y0);
+        let length = i64::from(length);
+        let z0 = i64::from(z0);
+        let z1 = i64::from(z1);
+        let z2 = i64::from(z2);
+        let z3 = i64::from(z3);
+        let z4 = i64::from(z4);
+        let mut sketch = SketchSolveProblem::new();
+        let origin = sketch.add_point3d("origin", Real::from(0), Real::from(0), Real::from(0));
+        let normal = sketch.add_normal3d("normal", Real::from(1), Real::from(0), Real::from(0), Real::from(0));
+        let workplane = sketch.add_workplane("workplane", origin, normal);
+        let len0 = sketch.add_point3d("len0", Real::from(x0), Real::from(y0 + 9), Real::from(z0));
+        let len1 = sketch.add_point3d("len1", Real::from(x0 + length), Real::from(y0 + 9), Real::from(z1));
+        let point = sketch.add_point3d("point", Real::from(x0), Real::from(y0 + length), Real::from(z2));
+        let dist0 = sketch.add_point3d("dist0", Real::from(x0 - 5), Real::from(y0), Real::from(z3));
+        let dist1 = sketch.add_point3d("dist1", Real::from(x0 + 5), Real::from(y0), Real::from(z4));
+        let length_line = sketch.add_line_segment3("length_line", len0, len1);
+        let distance_line = sketch.add_line_segment3("distance_line", dist0, dist1);
+        let handle = sketch.add_projected_equal_length_point_line_distance3(
+            "projected length equals point-line distance",
+            workplane,
+            length_line,
+            point,
+            distance_line,
+        );
+
+        let lowered = sketch.lower_to_problem();
+        let certification = certify_candidate(
+            &PreparedProblem::new(&lowered.problem),
+            &context_from_problem(&lowered.problem),
+        );
+        let forms = sketch.residual_forms_for_constraint(handle);
+
+        prop_assert_eq!(lowered.problem.constraints.len(), 2);
+        prop_assert!(lowered.all_generated());
+        prop_assert!(certification.all_satisfied());
+        prop_assert_eq!(
+            lowered.rows[1].strategy,
+            Some(SketchResidualStrategy::SquaredProjectedLineLengthPointLineDistance)
+        );
+        prop_assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+        prop_assert_eq!(forms.forms.len(), 2);
+        prop_assert_eq!(
+            forms.forms[1].kind,
+            SketchResidualFormKind::SquaredProjectedLineLengthPointLineDistancePolynomial
+        );
+    }
+
+    #[test]
     fn sketch_projected_oriented_angle_identity_workplane_matches_scaled_directions(
         ox in -8_i16..=8,
         oy in -8_i16..=8,

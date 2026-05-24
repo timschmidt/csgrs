@@ -908,6 +908,39 @@ pub mod distance {
             kind,
         }
     }
+
+    /// Add a retained projected line-length to point-line-distance equality.
+    ///
+    /// The retained relation is
+    /// `length(length_line_uv) = distance(point_uv, distance_line_uv)`.
+    /// Lowering clears the point-line distance denominator exactly:
+    /// `|length_line_uv|^2 * |distance_line_uv|^2 - cross_uv^2 == 0`. This is
+    /// the workplane counterpart of the 2D length/distance relation, and
+    /// follows Yap, "Towards Exact Geometric Computation" (1997), by keeping
+    /// the projected proof polynomial explicit. The `U/V` frame is the
+    /// retained unit-quaternion frame described by Shoemake (1985).
+    pub fn projected_equal_length_point_line_distance3(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        length_line: SketchEntityHandle,
+        point: SketchEntityHandle,
+        distance_line: SketchEntityHandle,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::ProjectedEqualLengthPointLineDistance3 {
+            workplane,
+            length_line,
+            point,
+            distance_line,
+        };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Distance,
+            strategy: SketchResidualStrategy::SquaredProjectedLineLengthPointLineDistance,
+            kind,
+        }
+    }
 }
 
 /// Orientation relation builders.

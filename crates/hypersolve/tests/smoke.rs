@@ -4378,6 +4378,78 @@ fn sketch_projected_length_difference_lines3_lowers_exact_workplane_rows() {
 }
 
 #[test]
+fn sketch_projected_equal_length_point_line_distance3_lowers_exact_workplane_rows() {
+    let mut sketch = SketchSolveProblem::new();
+    let origin = sketch.add_point3d("origin", real(0), real(0), real(0));
+    let normal = sketch.add_normal3d("normal", real(1), real(0), real(0), real(0));
+    let workplane = sketch.add_workplane("workplane", origin, normal);
+    let len0 = sketch.add_point3d("len0", real(0), real(20), real(-7));
+    let len1 = sketch.add_point3d("len1", real(5), real(20), real(13));
+    let bad_len0 = sketch.add_point3d("bad_len0", real(0), real(30), real(7));
+    let bad_len1 = sketch.add_point3d("bad_len1", real(4), real(30), real(13));
+    let distance_point = sketch.add_point3d("distance_point", real(0), real(5), real(99));
+    let distance0 = sketch.add_point3d("distance0", real(-10), real(0), real(-3));
+    let distance1 = sketch.add_point3d("distance1", real(10), real(0), real(21));
+    let length_line = sketch.add_line_segment3("length_line", len0, len1);
+    let bad_length_line = sketch.add_line_segment3("bad_length_line", bad_len0, bad_len1);
+    let distance_line = sketch.add_line_segment3("distance_line", distance0, distance1);
+    let valid = sketch_distance_builders::projected_equal_length_point_line_distance3(
+        &mut sketch,
+        "projected length equals point-line distance",
+        workplane,
+        length_line,
+        distance_point,
+        distance_line,
+    );
+    sketch.add_projected_equal_length_point_line_distance3(
+        "violated projected length equals point-line distance",
+        workplane,
+        bad_length_line,
+        distance_point,
+        distance_line,
+    );
+
+    let report = sketch.lower_to_problem();
+
+    assert_eq!(
+        valid.strategy,
+        SketchResidualStrategy::SquaredProjectedLineLengthPointLineDistance
+    );
+    assert!(report.all_generated());
+    assert_eq!(report.problem.constraints.len(), 4);
+    assert_eq!(
+        report.rows[1].strategy,
+        Some(SketchResidualStrategy::SquaredProjectedLineLengthPointLineDistance)
+    );
+    assert_eq!(
+        report.rows[3].strategy,
+        Some(SketchResidualStrategy::SquaredProjectedLineLengthPointLineDistance)
+    );
+
+    let certification = certify_candidate(
+        &PreparedProblem::new(&report.problem),
+        &context_from_problem(&report.problem),
+    );
+    assert!(matches!(
+        certification.rows[1].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[3].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
+
+    let forms = sketch.residual_forms_for_constraint(valid.handle);
+    assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+    assert_eq!(forms.forms.len(), 2);
+    assert_eq!(
+        forms.forms[1].kind,
+        SketchResidualFormKind::SquaredProjectedLineLengthPointLineDistancePolynomial
+    );
+    assert_eq!(forms.forms[1].role, SketchResidualFormRole::ExactProof);
+}
+
+#[test]
 fn sketch_projected_oriented_angle_lowers_exact_workplane_branch_rows() {
     let mut sketch = SketchSolveProblem::new();
     let origin = sketch.add_point3d("origin", real(0), real(0), real(10));

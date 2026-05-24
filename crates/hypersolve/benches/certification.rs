@@ -1109,6 +1109,35 @@ fn sketch_problem_with_projected_length_differences(
     sketch
 }
 
+fn sketch_problem_with_projected_length_point_line_distances(
+    row_count: usize,
+) -> hypersolve::SketchSolveProblem {
+    let mut sketch = hypersolve::SketchSolveProblem::new();
+    let origin = sketch.add_point3d("project-lpl.origin", r(0), r(0), r(0));
+    let normal = sketch.add_normal3d("project-lpl.normal", r(1), r(0), r(0), r(0));
+    let workplane = sketch.add_workplane("project-lpl.workplane", origin, normal);
+    for index in 0..row_count {
+        let y = index as i64;
+        let len0 = sketch.add_point3d(format!("projlpl{index}.len0"), r(0), r(y + 10), r(-y));
+        let len1 = sketch.add_point3d(format!("projlpl{index}.len1"), r(5), r(y + 10), r(12 + y));
+        let point = sketch.add_point3d(format!("projlpl{index}.point"), r(0), r(y + 5), r(30 - y));
+        let dist0 = sketch.add_point3d(format!("projlpl{index}.dist0"), r(-8), r(y), r(y));
+        let dist1 = sketch.add_point3d(format!("projlpl{index}.dist1"), r(8), r(y), r(99 - y));
+        let length_line = sketch.add_line_segment3(format!("projlpl{index}.length"), len0, len1);
+        let distance_line =
+            sketch.add_line_segment3(format!("projlpl{index}.distance"), dist0, dist1);
+        hypersolve::sketch_distance_builders::projected_equal_length_point_line_distance3(
+            &mut sketch,
+            format!("projected length point-line distance {index}"),
+            workplane,
+            length_line,
+            point,
+            distance_line,
+        );
+    }
+    sketch
+}
+
 fn sketch_problem_with_workplane_symmetry(row_count: usize) -> hypersolve::SketchSolveProblem {
     let mut sketch = hypersolve::SketchSolveProblem::new();
     let origin = sketch.add_point3d("sym.origin", r(0), r(0), r(0));
@@ -1330,6 +1359,12 @@ fn certification(c: &mut Criterion) {
     c.bench_function("sketch_projected_length_difference_lowering", |b| {
         b.iter(|| projected_length_difference_sketch.lower_to_problem())
     });
+    let projected_length_point_line_distance_sketch =
+        sketch_problem_with_projected_length_point_line_distances(16);
+    c.bench_function(
+        "sketch_projected_length_point_line_distance_lowering",
+        |b| b.iter(|| projected_length_point_line_distance_sketch.lower_to_problem()),
+    );
     let workplane_symmetry_sketch = sketch_problem_with_workplane_symmetry(16);
     c.bench_function("sketch_workplane_symmetry_lowering", |b| {
         b.iter(|| workplane_symmetry_sketch.lower_to_problem())
@@ -1719,6 +1754,29 @@ fn certification(c: &mut Criterion) {
             }
         })
     });
+    let projected_length_point_line_distance_form_handles =
+        projected_length_point_line_distance_sketch
+            .constraints()
+            .iter()
+            .filter(|constraint| {
+                matches!(
+                    constraint.kind,
+                    hypersolve::SketchConstraintKind::ProjectedEqualLengthPointLineDistance3 { .. }
+                )
+            })
+            .map(|constraint| constraint.handle)
+            .collect::<Vec<_>>();
+    c.bench_function(
+        "sketch_projected_length_point_line_distance_residual_forms",
+        |b| {
+            b.iter(|| {
+                for handle in &projected_length_point_line_distance_form_handles {
+                    let _ = projected_length_point_line_distance_sketch
+                        .residual_forms_for_constraint(*handle);
+                }
+            })
+        },
+    );
     let workplane_symmetry_form_handles = workplane_symmetry_sketch
         .constraints()
         .iter()
