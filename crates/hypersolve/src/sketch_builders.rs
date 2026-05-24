@@ -488,6 +488,34 @@ pub mod incidence {
         }
     }
 
+    /// Add a projected 3D point-on-2D-circle incidence relation.
+    ///
+    /// The 3D point is projected through the retained workplane origin and
+    /// unit frame before replaying the exact 2D circle incidence row. This is
+    /// a 3D/workplane incidence package, not a sampled projection: the
+    /// workplane unit guard is part of the proof boundary in Yap's sense, and
+    /// the axes follow Shoemake's unit-quaternion rotation matrix.
+    pub fn projected_point_on_circle3(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        point: SketchEntityHandle,
+        circle: SketchEntityHandle,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::ProjectedPointOnCircle3 {
+            workplane,
+            point,
+            circle,
+        };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Incidence,
+            strategy: SketchResidualStrategy::ProjectedSquaredIncidence,
+            kind,
+        }
+    }
+
     /// Add a point-on-cubic-Bezier incidence relation at a retained parameter.
     ///
     /// Lowering emits one exact Bernstein-coordinate equation per axis:

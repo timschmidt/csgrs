@@ -5521,6 +5521,96 @@ fn sketch_projected_line_arc_sweep_length_replays_workplane_and_branch_rows() {
 }
 
 #[test]
+fn sketch_projected_point_on_circle_replays_workplane_and_incidence_rows() {
+    let mut sketch = SketchSolveProblem::new();
+    let origin3 = sketch.add_point3d("origin3", real(1), real(2), real(3));
+    let normal = sketch.add_normal3d("identity normal", real(1), real(0), real(0), real(0));
+    let workplane = sketch.add_workplane("workplane", origin3, normal);
+    let center = sketch.add_point2d("center", real(0), real(0));
+    let radius = sketch.add_distance("radius", real(5));
+    let circle = sketch.add_circle2("circle", center, radius);
+    let valid_point = sketch.add_point3d("valid projected point", real(4), real(6), real(11));
+    let invalid_point = sketch.add_point3d("invalid projected point", real(7), real(2), real(11));
+    let valid = sketch.add_projected_point_on_circle3(
+        "projected point on circle",
+        workplane,
+        valid_point,
+        circle,
+    );
+    sketch.add_projected_point_on_circle3(
+        "bad projected point on circle",
+        workplane,
+        invalid_point,
+        circle,
+    );
+    let wrong = sketch.add_constraint(
+        "wrong projected circle kind",
+        SketchConstraintKind::ProjectedPointOnCircle3 {
+            workplane,
+            point: valid_point,
+            circle: radius,
+        },
+        false,
+        true,
+    );
+
+    let lowered = sketch.lower_to_problem();
+    assert_eq!(lowered.problem.constraints.len(), 4);
+    assert_eq!(
+        lowered
+            .rows
+            .iter()
+            .filter(|row| {
+                row.strategy == Some(SketchResidualStrategy::ProjectedSquaredIncidence)
+                    || row.strategy == Some(SketchResidualStrategy::WorkplaneUnitQuaternion)
+            })
+            .count(),
+        4
+    );
+    assert_eq!(
+        lowered.rows.last().unwrap().status,
+        SketchGeneratedRowStatus::WrongEntityKind {
+            handle: radius,
+            expected: "circle",
+        }
+    );
+
+    let certification = certify_candidate(
+        &PreparedProblem::new(&lowered.problem),
+        &context_from_problem(&lowered.problem),
+    );
+    assert!(matches!(
+        certification.rows[1].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[3].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
+
+    let forms = sketch.residual_forms_for_constraint(valid);
+    assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+    assert_eq!(forms.forms.len(), 2);
+    assert_eq!(
+        forms.forms[0].kind,
+        SketchResidualFormKind::WorkplaneUnitQuaternionPolynomial
+    );
+    assert_eq!(
+        forms.forms[1].kind,
+        SketchResidualFormKind::ProjectedCircleIncidencePolynomial
+    );
+    assert!(
+        forms
+            .forms
+            .iter()
+            .all(|form| form.role == SketchResidualFormRole::ExactProof)
+    );
+
+    let wrong_forms = sketch.residual_forms_for_constraint(wrong);
+    assert_eq!(wrong_forms.status, SketchResidualFormsStatus::InvalidInputs);
+}
+
+#[test]
 fn sketch_workplane_frame_respects_rotated_unit_quaternion_basis() {
     let mut sketch = SketchSolveProblem::new();
     let origin = sketch.add_point3d("origin", real(0), real(0), real(5));

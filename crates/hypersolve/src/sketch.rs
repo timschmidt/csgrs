@@ -29,7 +29,8 @@ use crate::sketch_cubic_tangent::{CubicPointTangentExprs, cubic_point_tangent_ex
 use crate::sketch_oriented_angle::{OrientedAngleExprs, oriented_angle_exprs};
 use crate::sketch_projection::{
     projected_direction_squared_length, projected_direction2, projected_distance_squared,
-    projected_point_line_distance_squared_parts, unit_quaternion_residual,
+    projected_point_line_distance_squared_parts, quaternion_frame_axes_expr,
+    unit_quaternion_residual,
 };
 use crate::sketch_workplane_symmetry::{WorkplaneSymmetryExprs, workplane_point_symmetry_exprs};
 use crate::symbolic::{Expr, SymbolId};
@@ -486,6 +487,26 @@ pub enum SketchConstraintKind {
         b: SketchEntityHandle,
         /// Distance entity.
         distance: SketchEntityHandle,
+    },
+    /// Point-on-circle incidence after projecting a 3D point into a workplane.
+    ///
+    /// The retained 3D point is projected into exact `U/V` coordinates
+    /// relative to the retained workplane origin, then checked against a
+    /// retained 2D circle by the polynomial row
+    /// `|(P-O)_uv - center|^2 - radius^2 == 0`. Lowering also emits the
+    /// workplane unit-quaternion guard because the projected coordinates are
+    /// metric evidence only for a certified unit frame. This is the
+    /// 3D/workplane counterpart of [`SketchConstraintKind::PointOnCircle`],
+    /// following Yap, "Towards Exact Geometric Computation" (1997), with the
+    /// frame axes from Shoemake, "Animating Rotation with Quaternion Curves"
+    /// (1985).
+    ProjectedPointOnCircle3 {
+        /// Workplane entity that supplies origin and normal/quaternion.
+        workplane: SketchEntityHandle,
+        /// 3D point entity projected into the workplane.
+        point: SketchEntityHandle,
+        /// Retained 2D circle entity in workplane coordinates.
+        circle: SketchEntityHandle,
     },
     /// Point-to-line distance after orthogonal projection into a workplane.
     ///
@@ -1366,6 +1387,8 @@ pub enum SketchResidualStrategy {
     SquaredProjectedEqualPointLineDistances,
     /// Exact projected 3D line length to retained arc sweep length package.
     ProjectedLineArcSweepLength,
+    /// Squared projected point-on-circle incidence.
+    ProjectedSquaredIncidence,
     /// Squared 2D line length equality.
     SquaredLineLengthEquality,
     /// Squared 2D line length ratio equality.
@@ -1537,6 +1560,8 @@ pub enum SketchResidualFormKind {
     PointLineSignedDistanceNegativeProposal,
     /// Squared circle-incidence polynomial proof row.
     SquaredCircleIncidencePolynomial,
+    /// Squared projected point-on-circle incidence proof row.
+    ProjectedCircleIncidencePolynomial,
     /// True radial circle-incidence proposal form.
     CircleRadialDistanceProposal,
     /// Squared-cosine equality for an unsigned angle proof row.
@@ -2779,6 +2804,17 @@ impl SketchSolveProblem {
         incidence::point_on_circle(self, name, point, circle).handle
     }
 
+    /// Add a retained projected 3D point-on-2D-circle incidence constraint.
+    pub fn add_projected_point_on_circle3(
+        &mut self,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        point: SketchEntityHandle,
+        circle: SketchEntityHandle,
+    ) -> SketchConstraintHandle {
+        incidence::projected_point_on_circle3(self, name, workplane, point, circle).handle
+    }
+
     /// Add a point-on-cubic-Bezier incidence constraint at a retained parameter.
     ///
     /// This emits exact Bernstein-coordinate proof rows. The curve parameter
@@ -3259,6 +3295,46 @@ impl SketchSolveProblem {
                     constraint: handle,
                     status: SketchResidualFormsStatus::Generated,
                     forms,
+                    diagnostics,
+                }
+            }
+            SketchConstraintKind::ProjectedPointOnCircle3 {
+                workplane,
+                point,
+                circle,
+            } => {
+                let mut diagnostics = Vec::new();
+                let Some(parts) = self.projected_point_circle_incidence_exprs(
+                    workplane,
+                    point,
+                    circle,
+                    constraint,
+                    &mut diagnostics,
+                ) else {
+                    return SketchResidualFormsReport {
+                        constraint: handle,
+                        status: SketchResidualFormsStatus::InvalidInputs,
+                        forms: Vec::new(),
+                        diagnostics,
+                    };
+                };
+                SketchResidualFormsReport {
+                    constraint: handle,
+                    status: SketchResidualFormsStatus::Generated,
+                    forms: vec![
+                        SketchResidualForm {
+                            kind: SketchResidualFormKind::WorkplaneUnitQuaternionPolynomial,
+                            role: SketchResidualFormRole::ExactProof,
+                            strategy: Some(SketchResidualStrategy::WorkplaneUnitQuaternion),
+                            residual: unit_quaternion_residual(&parts.quaternion),
+                        },
+                        SketchResidualForm {
+                            kind: SketchResidualFormKind::ProjectedCircleIncidencePolynomial,
+                            role: SketchResidualFormRole::ExactProof,
+                            strategy: Some(SketchResidualStrategy::ProjectedSquaredIncidence),
+                            residual: parts.incidence,
+                        },
+                    ],
                     diagnostics,
                 }
             }
@@ -4919,6 +4995,38 @@ impl SketchSolveProblem {
                     format!("{} projected distance", constraint.name),
                     parts.projected_squared - parts.distance.clone() * parts.distance,
                     SketchResidualStrategy::SquaredProjectedDistance,
+                );
+            }
+            SketchConstraintKind::ProjectedPointOnCircle3 {
+                workplane,
+                point,
+                circle,
+            } => {
+                // Project a retained 3D point into a certified workplane
+                // frame, then replay the ordinary circle-incidence polynomial
+                // in workplane coordinates. Yap (1997) keeps the frame guard
+                // and incidence row as separate proof obligations; Shoemake's
+                // quaternion frame supplies the exact U/V axes.
+                let Some(parts) = self.projected_point_circle_incidence_exprs(
+                    workplane, point, circle, constraint, rows,
+                ) else {
+                    return;
+                };
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} workplane unit", constraint.name),
+                    unit_quaternion_residual(&parts.quaternion),
+                    SketchResidualStrategy::WorkplaneUnitQuaternion,
+                );
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    constraint.name.clone(),
+                    parts.incidence,
+                    SketchResidualStrategy::ProjectedSquaredIncidence,
                 );
             }
             SketchConstraintKind::ProjectedPointLineDistance {
@@ -6988,6 +7096,45 @@ impl SketchSolveProblem {
         })
     }
 
+    fn projected_point_circle_incidence_exprs(
+        &self,
+        workplane: SketchEntityHandle,
+        point: SketchEntityHandle,
+        circle: SketchEntityHandle,
+        constraint: &SketchConstraint,
+        rows: &mut Vec<SketchGeneratedRow>,
+    ) -> Option<ProjectedPointCircleIncidenceExprs> {
+        let (origin, quaternion) =
+            self.workplane_origin_and_quaternion(workplane, constraint, rows)?;
+        let point = self.point3_coordinates(point, constraint, rows)?;
+        let Some(circle_entity) = self.entity(circle) else {
+            rows.push(missing_entity_row(constraint, circle));
+            return None;
+        };
+        let SketchEntityKind::Circle2(circle) = &circle_entity.kind else {
+            rows.push(wrong_entity_row(constraint, circle_entity.handle, "circle"));
+            return None;
+        };
+        let center = self.point2_coordinates(circle.center, constraint, rows)?;
+        let radius = self.distance_expr(circle.radius, constraint, rows)?;
+        let delta = [
+            point.exprs[0].clone() - origin.exprs[0].clone(),
+            point.exprs[1].clone() - origin.exprs[1].clone(),
+            point.exprs[2].clone() - origin.exprs[2].clone(),
+        ];
+        let (u_axis, v_axis, _) = quaternion_frame_axes_expr(&quaternion);
+        let projected = [dot3_expr(&delta, &u_axis), dot3_expr(&delta, &v_axis)];
+        let center = coordinate_exprs2(&center);
+        let offset = [
+            projected[0].clone() - center[0].clone(),
+            projected[1].clone() - center[1].clone(),
+        ];
+        Some(ProjectedPointCircleIncidenceExprs {
+            incidence: squared_norm2(&offset) - radius.clone() * radius,
+            quaternion,
+        })
+    }
+
     fn projected_point_range_exprs(
         &self,
         workplane: SketchEntityHandle,
@@ -7929,6 +8076,12 @@ struct ProjectedPointDistanceExprs {
 }
 
 #[derive(Clone, Debug)]
+struct ProjectedPointCircleIncidenceExprs {
+    quaternion: [Expr; 4],
+    incidence: Expr,
+}
+
+#[derive(Clone, Debug)]
 struct ProjectedPointRangeExprs {
     quaternion: [Expr; 4],
     projected_squared: Expr,
@@ -8230,6 +8383,10 @@ fn direction_cross2(a: &[Expr; 2], b: &[Expr; 2]) -> Expr {
 
 fn direction_dot2(a: &[Expr; 2], b: &[Expr; 2]) -> Expr {
     a[0].clone() * b[0].clone() + a[1].clone() * b[1].clone()
+}
+
+fn dot3_expr(a: &[Expr; 3], b: &[Expr; 3]) -> Expr {
+    a[0].clone() * b[0].clone() + a[1].clone() * b[1].clone() + a[2].clone() * b[2].clone()
 }
 
 fn squared_norm2(direction: &[Expr; 2]) -> Expr {

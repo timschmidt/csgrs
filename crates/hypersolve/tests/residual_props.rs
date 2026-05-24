@@ -2209,6 +2209,64 @@ proptest! {
     }
 
     #[test]
+    fn sketch_projected_point_on_circle_rows_replay_identity_workplane_points(
+        ox in -4_i16..=4,
+        oy in -4_i16..=4,
+        oz in -4_i16..=4,
+        cx in -4_i16..=4,
+        cy in -4_i16..=4,
+        radius in 1_i16..=8,
+        normal_offset in -8_i16..=8,
+    ) {
+        let ox = i64::from(ox);
+        let oy = i64::from(oy);
+        let oz = i64::from(oz);
+        let cx = i64::from(cx);
+        let cy = i64::from(cy);
+        let radius = i64::from(radius);
+        let normal_offset = i64::from(normal_offset);
+        let mut sketch = SketchSolveProblem::new();
+        let origin = sketch.add_point3d("origin", Real::from(ox), Real::from(oy), Real::from(oz));
+        let normal = sketch.add_normal3d(
+            "normal",
+            Real::from(1),
+            Real::from(0),
+            Real::from(0),
+            Real::from(0),
+        );
+        let workplane = sketch.add_workplane("workplane", origin, normal);
+        let center = sketch.add_point2d("center", Real::from(cx), Real::from(cy));
+        let radius_entity = sketch.add_distance("radius", Real::from(radius));
+        let circle = sketch.add_circle2("circle", center, radius_entity);
+        let point = sketch.add_point3d(
+            "point",
+            Real::from(ox + cx + radius),
+            Real::from(oy + cy),
+            Real::from(oz + normal_offset),
+        );
+        let handle =
+            sketch.add_projected_point_on_circle3("projected point on circle", workplane, point, circle);
+
+        let lowered = sketch.lower_to_problem();
+        let certification = certify_candidate(
+            &PreparedProblem::new(&lowered.problem),
+            &context_from_problem(&lowered.problem),
+        );
+        let forms = sketch.residual_forms_for_constraint(handle);
+
+        prop_assert_eq!(lowered.rows.len(), 2);
+        prop_assert_eq!(lowered.rows[0].strategy, Some(SketchResidualStrategy::WorkplaneUnitQuaternion));
+        prop_assert_eq!(lowered.rows[1].strategy, Some(SketchResidualStrategy::ProjectedSquaredIncidence));
+        prop_assert!(certification.all_satisfied());
+        prop_assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+        prop_assert_eq!(forms.forms.len(), 2);
+        prop_assert_eq!(
+            forms.forms[1].kind,
+            SketchResidualFormKind::ProjectedCircleIncidencePolynomial
+        );
+    }
+
+    #[test]
     fn sketch_projected_distance_range_identity_workplane_matches_horizontal_bounds(
         ax in -16_i16..=16,
         ay in -16_i16..=16,
