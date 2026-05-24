@@ -996,15 +996,15 @@ fn arithmetic_with_same_representation(
     })
 }
 
-/// Lowers independent add/subtract/multiply to resultant-backed construction.
+/// Lowers independent add/subtract/multiply/divide to resultant-backed construction.
 ///
 /// This is the first bounded algebraic-number arithmetic slice for two
 /// non-rational operands.  The helper delegates to
 /// [`crate::transform_algebraic_roots_binary`], which cites Sylvester
 /// resultants, Sturm isolation, Collins-Loos real-root isolation, and Yap's
 /// exact geometric computation boundary near the actual elimination code.
-/// Division intentionally stays unresolved until independent denominator
-/// evidence can be represented without a primitive-float shortcut.
+/// Division is accepted only when the binary construction package certifies
+/// the divisor interval away from zero without a primitive-float shortcut.
 fn arithmetic_with_independent_representations(
     left: &AlgebraicRootRepresentation,
     right: Option<&AlgebraicRootRepresentation>,
@@ -1020,6 +1020,7 @@ fn arithmetic_with_independent_representations(
         AlgebraicRootArithmeticOp::Add
             | AlgebraicRootArithmeticOp::Subtract
             | AlgebraicRootArithmeticOp::Multiply
+            | AlgebraicRootArithmeticOp::Divide
     ) {
         return None;
     }
@@ -1044,6 +1045,7 @@ fn arithmetic_with_independent_representations(
             )
         }
         AlgebraicRootBinaryTransformStatus::UnsupportedOperation
+        | AlgebraicRootBinaryTransformStatus::DenominatorMayContainZero
         | AlgebraicRootBinaryTransformStatus::UnsupportedDegree
         | AlgebraicRootBinaryTransformStatus::NonIsolatingImageInterval
         | AlgebraicRootBinaryTransformStatus::Undecided => algebraic_arithmetic_report(
@@ -2885,6 +2887,16 @@ mod tests {
         );
         assert_eq!(
             independent_product.status,
+            AlgebraicRootArithmeticStatus::ComputedRepresentation
+        );
+
+        let independent_quotient = arithmetic_algebraic_root_representations(
+            &sqrt_two,
+            Some(&sqrt_three),
+            AlgebraicRootArithmeticOp::Divide,
+        );
+        assert_eq!(
+            independent_quotient.status,
             AlgebraicRootArithmeticStatus::ComputedRepresentation
         );
     }

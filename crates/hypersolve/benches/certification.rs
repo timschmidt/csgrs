@@ -1495,6 +1495,16 @@ fn certification(c: &mut Criterion) {
             )
         })
     });
+    c.bench_function("transform_algebraic_roots_binary_divide", |b| {
+        b.iter(|| {
+            transform_algebraic_roots_binary(
+                &sqrt_two,
+                &sqrt_three,
+                AlgebraicRootArithmeticOp::Divide,
+                hyperlimit::PredicatePolicy::default(),
+            )
+        })
+    });
     c.bench_function("count_descartes_univariate_polynomial_roots", |b| {
         b.iter(|| {
             count_descartes_univariate_polynomial_roots(

@@ -36,10 +36,11 @@ fn sqrt_root(square: i64) -> AlgebraicRootRepresentation {
 fuzz_target!(|data: [u8; 3]| {
     let left_square = i64::from(data[0] % 15) + 2;
     let right_square = i64::from(data[1] % 15) + 17;
-    let operation = match data[2] % 3 {
+    let operation = match data[2] % 4 {
         0 => AlgebraicRootArithmeticOp::Add,
         1 => AlgebraicRootArithmeticOp::Subtract,
-        _ => AlgebraicRootArithmeticOp::Multiply,
+        2 => AlgebraicRootArithmeticOp::Multiply,
+        _ => AlgebraicRootArithmeticOp::Divide,
     };
     let report = transform_algebraic_roots_binary(
         &sqrt_root(left_square),

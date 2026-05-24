@@ -1,8 +1,9 @@
 //! Binary algebraic-number construction for represented real roots.
 //!
 //! This module constructs the first bounded independent-root arithmetic
-//! package for `hypersolve`: `gamma = alpha + beta`, `alpha - beta`, and
-//! `alpha * beta` for two represented real algebraic roots.  It uses exact
+//! package for `hypersolve`: `gamma = alpha + beta`, `alpha - beta`,
+//! `alpha * beta`, and guarded `alpha / beta` for two represented real
+//! algebraic roots.  It uses exact
 //! resultants to eliminate one source variable, then asks the existing Sturm
 //! refinement package to certify that the exact image interval contains one
 //! distinct real root of the resultant.  That last step is the important Yap
@@ -44,6 +45,9 @@ pub enum AlgebraicRootBinaryTransformStatus {
     /// This bounded package does not support the requested arithmetic
     /// operation.
     UnsupportedOperation,
+    /// Division was requested, but the divisor interval was not certified
+    /// away from zero.
+    DenominatorMayContainZero,
     /// The source coefficients are not exact rationals.
     UnsupportedCoefficient,
     /// The resultant degree exceeds the configured bounded exact package.
@@ -72,20 +76,22 @@ pub struct AlgebraicRootBinaryTransformReport {
     pub message: Option<String>,
 }
 
-/// Construct `alpha (+|-|*) beta` as a represented algebraic root.
+/// Construct `alpha (+|-|*|/) beta` as a represented algebraic root.
 ///
-/// The supported operations are addition, subtraction, and multiplication.
-/// Division is deliberately excluded until denominator-domain evidence for an
-/// independent algebraic divisor is available.  The defining polynomial is
-/// obtained by exact univariate resultants:
+/// The supported operations are addition, subtraction, multiplication, and
+/// denominator-certified division.  The defining polynomial is obtained by
+/// exact univariate resultants:
 ///
 /// - `alpha + beta`: `Res_x(P(x), Q(y - x))`
 /// - `alpha - beta`: `Res_x(P(x), Q(x - y))`
 /// - `alpha * beta`: `Res_x(P(x), x^m Q(y / x))`, where `m = deg(Q)`
+/// - `alpha / beta`: `Res_x(P(x), y^m Q(x / y))`, after proving `beta != 0`
 ///
 /// The resultant is sampled at exact integer `y` values and interpolated
 /// exactly.  This keeps the multivariate polynomial machinery bounded while
-/// preserving a replayable elimination certificate.
+/// preserving a replayable elimination certificate.  Quotient construction is
+/// still not a total field API: it refuses divisors whose isolating interval
+/// may contain zero.
 pub fn transform_algebraic_roots_binary(
     left: &AlgebraicRootRepresentation,
     right: &AlgebraicRootRepresentation,
@@ -105,12 +111,28 @@ pub fn transform_algebraic_roots_binary(
         AlgebraicRootArithmeticOp::Add
             | AlgebraicRootArithmeticOp::Subtract
             | AlgebraicRootArithmeticOp::Multiply
+            | AlgebraicRootArithmeticOp::Divide
     ) {
         return binary_report(
             operation,
             AlgebraicRootBinaryTransformStatus::UnsupportedOperation,
             None,
-            Some("bounded independent-root construction supports add/subtract/multiply".to_owned()),
+            Some(
+                "bounded independent-root construction supports add/subtract/multiply/divide"
+                    .to_owned(),
+            ),
+        );
+    }
+    if operation == AlgebraicRootArithmeticOp::Divide
+        && interval_contains_zero(&right.interval, policy).unwrap_or(true)
+    {
+        return binary_report(
+            operation,
+            AlgebraicRootBinaryTransformStatus::DenominatorMayContainZero,
+            None,
+            Some(
+                "independent division requires divisor interval evidence away from zero".to_owned(),
+            ),
         );
     }
     if !has_exact_coefficients(&left.polynomial_coefficients)
@@ -244,7 +266,8 @@ fn resultant_polynomial_for_binary_image(
             AlgebraicRootArithmeticOp::Multiply => {
                 reciprocal_product_polynomial(right_polynomial, &y)
             }
-            AlgebraicRootArithmeticOp::Divide | AlgebraicRootArithmeticOp::Negate => return None,
+            AlgebraicRootArithmeticOp::Divide => quotient_product_polynomial(right_polynomial, &y),
+            AlgebraicRootArithmeticOp::Negate => return None,
         };
         let resultant = resultant_univariate_polynomials(left_polynomial, &right_in_x, -64)
             .ok()?
@@ -280,7 +303,18 @@ fn binary_image_interval(
             },
             policy,
         )?,
-        AlgebraicRootArithmeticOp::Divide | AlgebraicRootArithmeticOp::Negate => return None,
+        AlgebraicRootArithmeticOp::Divide => interval_div(
+            &ValueInterval {
+                lower: left.lower.clone(),
+                upper: left.upper.clone(),
+            },
+            &ValueInterval {
+                lower: right.lower.clone(),
+                upper: right.upper.clone(),
+            },
+            policy,
+        )?,
+        AlgebraicRootArithmeticOp::Negate => return None,
     };
     Some(IsolatedRootInterval {
         lower: value.lower,
@@ -297,6 +331,15 @@ fn reciprocal_product_polynomial(right_polynomial: &[Real], y: &Real) -> Vec<Rea
         result[degree - power] = coefficient.clone() * real_pow(y, power);
     }
     result
+}
+
+fn quotient_product_polynomial(right_polynomial: &[Real], y: &Real) -> Vec<Real> {
+    let degree = right_polynomial.len() - 1;
+    right_polynomial
+        .iter()
+        .enumerate()
+        .map(|(power, coefficient)| coefficient.clone() * real_pow(y, degree - power))
+        .collect()
 }
 
 fn compose_with_linear(polynomial: &[Real], constant: Real, linear: Real) -> Vec<Real> {
@@ -363,6 +406,47 @@ fn interval_mul(
         lower: products[0].clone(),
         upper: products[3].clone(),
     })
+}
+
+fn interval_div(
+    left: &ValueInterval,
+    right: &ValueInterval,
+    policy: PredicatePolicy,
+) -> Option<ValueInterval> {
+    if interval_value_contains_zero(right, policy)? {
+        return None;
+    }
+    let lower_reciprocal = (Real::one() / right.lower.clone()).ok()?;
+    let upper_reciprocal = (Real::one() / right.upper.clone()).ok()?;
+    let mut reciprocal = [lower_reciprocal, upper_reciprocal];
+    sort_reals_exact(&mut reciprocal, policy)?;
+    interval_mul(
+        left,
+        &ValueInterval {
+            lower: reciprocal[0].clone(),
+            upper: reciprocal[1].clone(),
+        },
+        policy,
+    )
+}
+
+fn interval_contains_zero(
+    interval: &IsolatedRootInterval,
+    policy: PredicatePolicy,
+) -> Option<bool> {
+    interval_value_contains_zero(
+        &ValueInterval {
+            lower: interval.lower.clone(),
+            upper: interval.upper.clone(),
+        },
+        policy,
+    )
+}
+
+fn interval_value_contains_zero(interval: &ValueInterval, policy: PredicatePolicy) -> Option<bool> {
+    let lower = compare_reals_with_policy(&interval.lower, &Real::zero(), policy).value()?;
+    let upper = compare_reals_with_policy(&interval.upper, &Real::zero(), policy).value()?;
+    Some(lower != Ordering::Greater && upper != Ordering::Less)
 }
 
 fn real_pow(base: &Real, exponent: usize) -> Real {
@@ -534,7 +618,7 @@ mod tests {
     }
 
     #[test]
-    fn binary_refuses_division_until_denominator_evidence_exists() {
+    fn binary_constructs_quotient_of_independent_square_roots() {
         let report = transform_algebraic_roots_binary(
             &sqrt_root(2, 1, 2),
             &sqrt_root(3, 1, 2),
@@ -544,8 +628,39 @@ mod tests {
 
         assert_eq!(
             report.status,
-            AlgebraicRootBinaryTransformStatus::UnsupportedOperation
+            AlgebraicRootBinaryTransformStatus::Transformed
         );
+        let root = report.representation.as_ref().unwrap();
+        assert_eq!(
+            root.polynomial_coefficients,
+            vec![real(4), Real::zero(), real(-12), Real::zero(), real(9)]
+        );
+        assert!(root.is_valid());
+    }
+
+    #[test]
+    fn binary_refuses_division_when_denominator_interval_may_contain_zero() {
+        let denominator = AlgebraicRootRepresentation {
+            interval: IsolatedRootInterval {
+                lower: real(-2),
+                upper: real(2),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            ..sqrt_root(3, 1, 2)
+        };
+        let report = transform_algebraic_roots_binary(
+            &sqrt_root(2, 1, 2),
+            &denominator,
+            AlgebraicRootArithmeticOp::Divide,
+            PredicatePolicy::default(),
+        );
+
+        assert_eq!(
+            report.status,
+            AlgebraicRootBinaryTransformStatus::DenominatorMayContainZero
+        );
+        assert!(report.representation.is_none());
     }
 
     proptest! {
