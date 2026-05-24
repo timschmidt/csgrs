@@ -3813,6 +3813,66 @@ fn exercise_component_coplanar_difference() {
         )
         .unwrap();
 
+    let nonconvex_source_incidental_left = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            0, 0, 0, 20, 0, 0, 20, 8, 0, 16, 8, 0, 16, 12, 0, 20, 12, 0, 20, 20, 0, 0, 20, 0,
+        ],
+        &[
+            0, 1, 2, //
+            0, 2, 3, //
+            0, 3, 4, //
+            0, 4, 7, //
+            7, 4, 5, //
+            7, 5, 6,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("nonconvex incidental-point source fixture must import");
+    let nonconvex_source_incidental_openings = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            0, 8, 0, 8, 8, 0, 8, 12, 0, 0, 12, 0, //
+            0, 11, 0, 10, 12, 0, 0, 15, 0, //
+            8, 12, 0, 0, 14, 0, 0, 18, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, //
+            7, 8, 9,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("nonconvex incidental-point opening fixture must import");
+    assert!(
+        arrange_coplanar_convex_surface_multi_difference(
+            &nonconvex_source_incidental_left,
+            &nonconvex_source_incidental_openings,
+        )
+        .is_none()
+    );
+    let nonconvex_source_incidental = arrange_coplanar_surface_component_difference(
+        &nonconvex_source_incidental_left,
+        &nonconvex_source_incidental_openings,
+    )
+    .expect("incidental point-only openings should replay through positive contact");
+    nonconvex_source_incidental.validate().unwrap();
+    nonconvex_source_incidental
+        .validate_component_difference_against_sources(
+            &nonconvex_source_incidental_left,
+            &nonconvex_source_incidental_openings,
+        )
+        .unwrap();
+    let nonconvex_source_incidental_preflight = preflight_boolean_exact(
+        &nonconvex_source_incidental_left,
+        &nonconvex_source_incidental_openings,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("nonconvex incidental-point preflight should classify shortcut");
+    nonconvex_source_incidental_preflight.validate().unwrap();
+    assert_eq!(
+        nonconvex_source_incidental_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementDifference
+    );
+
     let nonconvex_source_crossing_opening_and_hole = ExactMesh::from_i64_triangles_with_policy(
         &[
             2, 2, 0, 3, 2, 0, 2, 3, 0, //

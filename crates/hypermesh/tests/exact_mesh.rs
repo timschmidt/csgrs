@@ -16005,6 +16005,98 @@ fn exact_coplanar_surface_difference_materializes_nonconvex_source_side_opening(
         .is_none()
     );
 
+    let incidental_left = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            0, 0, 0, 20, 0, 0, 20, 8, 0, 16, 8, 0, 16, 12, 0, 20, 12, 0, 20, 20, 0, 0, 20, 0,
+        ],
+        &[
+            0, 1, 2, //
+            0, 2, 3, //
+            0, 3, 4, //
+            0, 4, 7, //
+            7, 4, 5, //
+            7, 5, 6,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let incidental_point_openings = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            0, 8, 0, 8, 8, 0, 8, 12, 0, 0, 12, 0, //
+            0, 11, 0, 10, 12, 0, 0, 15, 0, //
+            8, 12, 0, 0, 14, 0, 0, 18, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, //
+            7, 8, 9,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert!(
+        hypermesh::exact::arrange_coplanar_convex_surface_multi_difference(
+            &incidental_left,
+            &incidental_point_openings,
+        )
+        .is_none()
+    );
+    let incidental = hypermesh::exact::arrange_coplanar_surface_component_difference(
+        &incidental_left,
+        &incidental_point_openings,
+    )
+    .expect(
+        "point-only contact inside a positive-connected nonconvex source opening should replay",
+    );
+    incidental.validate().unwrap();
+    incidental
+        .validate_component_difference_against_sources(&incidental_left, &incidental_point_openings)
+        .unwrap();
+    assert!(
+        incidental
+            .polygon
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(10))
+                && real_eq(&point.y, &ExactReal::from(12)))
+    );
+    let incidental_preflight = hypermesh::exact::preflight_boolean_exact(
+        &incidental_left,
+        &incidental_point_openings,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    incidental_preflight.validate().unwrap();
+    incidental_preflight
+        .validate_against_sources(&incidental_left, &incidental_point_openings)
+        .unwrap();
+    assert_eq!(
+        incidental_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementDifference
+    );
+    let incidental_result = hypermesh::exact::boolean_exact(
+        &incidental_left,
+        &incidental_point_openings,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    incidental_result
+        .validate_operation_against_sources(
+            &incidental_left,
+            &incidental_point_openings,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        incidental_result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut:
+                hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfaceArrangementDifference
+        }
+    );
+
     let multi_left = ExactMesh::from_i64_triangles_with_policy(
         &[
             0, 0, 0, 10, 0, 0, 10, 4, 0, 7, 4, 0, 6, 6, 0, 10, 8, 0, 10, 12, 0, 0, 12, 0, //

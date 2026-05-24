@@ -6170,8 +6170,14 @@ fn simple_boundary_attachment_count(
 /// separates the source disk. Every retained loop must be simple and the exact
 /// area equation `area(source) = sum(area(output_i)) + sum(area(removed_j))`
 /// must replay before the loops are exported. This is the same retained-edge
-/// contract used by the convex side-cutter path, generalized only at the
-/// source-boundary containment predicate.
+/// contract used by the convex side-cutter path, generalized at the
+/// source-boundary containment predicate. Point-only contacts between removed
+/// openings are admitted only when a positive-area or positive-length contact
+/// already connects those openings through the same removed group. In Yap's
+/// terminology from "Towards Exact Geometric Computation," *Computational
+/// Geometry* 7.1-2 (1997), the point is lower-dimensional evidence that may
+/// be replayed after the exact 2D/1D ownership certificate exists; it is never
+/// allowed to supply graph connectivity for the boolean topology.
 #[cfg(feature = "exact-triangulation")]
 fn materialize_simple_source_side_cutter_difference(
     component: &SimpleSurfaceComponent,
@@ -6293,8 +6299,12 @@ fn materialize_simple_source_side_cutter_difference_core(
 /// exact boundary facts and exact area inequalities, not by choosing sample
 /// points in overlapping bays.
 ///
-/// Point-only contacts are rejected because they introduce a branch vertex for
-/// the later planar-cell extractor. Boundary and crossing tests use the exact
+/// Point-only contacts do not add connectivity because they introduce a branch
+/// vertex for the later planar-cell extractor. A point contact is accepted
+/// only when both openings are already connected by positive-area or
+/// positive-length contact through other openings; this mirrors the
+/// lower-dimensional-incidence policy used by the convex side-cutter and
+/// cutter/hole materializers. Boundary and crossing tests use the exact
 /// orientation-predicate classifier of Guigue and Devillers, "Fast and Robust
 /// Triangle-Triangle Overlap Test Using Orientation Predicates," *Journal of
 /// Graphics Tools* 8.1 (2003). The exposed-fragment replay follows the
@@ -6311,13 +6321,19 @@ fn merge_connected_simple_removed_openings(
         return Some(openings.to_vec());
     }
     let mut contact_graph = UnionFind::new(openings.len());
+    let mut point_only_contacts = Vec::new();
     for left in 0..openings.len() {
         for right in left + 1..openings.len() {
             match simple_polygon_interaction(&openings[left], &openings[right], projection)? {
                 SimplePolygonInteraction::Disjoint => {}
-                SimplePolygonInteraction::PointOnly => return None,
+                SimplePolygonInteraction::PointOnly => point_only_contacts.push((left, right)),
                 SimplePolygonInteraction::Connected => contact_graph.union(left, right),
             }
+        }
+    }
+    for (left, right) in point_only_contacts {
+        if contact_graph.find(left) != contact_graph.find(right) {
+            return None;
         }
     }
 
@@ -9320,9 +9336,12 @@ pub fn arrange_coplanar_convex_surface_component_holed_difference(
 /// retained holes, or side-owned removed openings. A strict hole may be
 /// retained only when exact simple-polygon containment assigns it to one
 /// emitted output loop, and it may be omitted only when exactly one removed
-/// opening strictly contains it. Ambiguous ownership, point-only contacts,
-/// boundary-straddling holes, and cutters that need clipping against a
-/// nonconvex source boundary remain outside this certificate.
+/// opening strictly contains it or an exact removed-region contact group
+/// connects it to a side-owned opening. Point-only contact may be replayed
+/// only as incidental lower-dimensional evidence inside a positive-connected
+/// removed group; point-only connectivity, ambiguous ownership, non-simple
+/// branch outputs, and unsupported boundary-straddling holes remain outside
+/// this certificate.
 ///
 /// The source disk is retained object state in Yap's sense: topology is read
 /// from mesh incidence and replayed by exact containment/area predicates; see
