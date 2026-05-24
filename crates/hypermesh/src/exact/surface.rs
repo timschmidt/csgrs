@@ -7814,25 +7814,6 @@ fn materialize_mixed_cutter_hole_and_side_opening_difference(
     )
 }
 
-/// Build exact contact groups among removed convex regions.
-///
-/// Boundary-only contact is useful only when the shared boundary has positive
-/// length; point-only contact remains unsupported because it would create a
-/// branch decision in the planar subdivision. Cutter/hole paths use
-/// [`removed_region_contact_groups_allowing_incidental_points`] for the
-/// narrower case where a point coincidence is already inside a
-/// positive-connected removed group. The positive-length test uses the same
-/// exact segment relation surface as the rest of this module, matching Guigue
-/// and Devillers, "Fast and Robust Triangle-Triangle Overlap Test Using
-/// Orientation Predicates," *Journal of Graphics Tools* 8.1 (2003).
-#[cfg(feature = "exact-triangulation")]
-fn removed_region_contact_groups(
-    regions: &[RemovedRegionCandidate],
-    projection: CoplanarProjection,
-) -> Option<Vec<Vec<usize>>> {
-    removed_region_contact_groups_with_policy(regions, projection, false)
-}
-
 /// Build removed-region contact groups while allowing incidental point touches.
 ///
 /// Cutter/hole-contact differences sometimes produce a retained removed
@@ -7953,6 +7934,15 @@ fn materialize_removed_region_group_polygon_with_policy(
             &group_regions,
             projection,
         )
+        .or_else(|| {
+            let all_members = (0..group_regions.len()).collect::<Vec<_>>();
+            materialize_simple_polygon_union_group(
+                &group_regions,
+                &all_members,
+                projection,
+                "coplanar removed-region incidental-point union",
+            )
+        })
     } else {
         connected_convex_contact_union_polygon(&group_regions, projection)
     }
@@ -10011,10 +10001,18 @@ fn materialize_side_cutter_multi_component_holed_difference(
 ///
 /// The returned pair is `(removed_openings, output)`. Each removed opening is
 /// either one clipped convex cutter or an exact retained union of a connected
-/// cutter contact group; disconnected groups become independent openings. The
-/// final output loop is accepted only after exact simple-loop validation,
-/// nonconvexity, and exact area replay. This is the reusable no-hole core for
-/// side-cutter-only differences and mixed component/holed differences.
+/// cutter contact group; disconnected groups become independent openings.
+/// Point-only coincidences inside a group are accepted only when positive
+/// contacts already connect the same group and the removed boundary still
+/// replays as one simple loop. The final output loop is accepted only after
+/// exact simple-loop validation, nonconvexity, and exact area replay. This is
+/// the reusable no-hole core for side-cutter-only differences and mixed
+/// component/holed differences.
+///
+/// This is the retained-object discipline from Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997): a point coincidence is
+/// retained evidence, but it is not a topological adjacency unless the
+/// positive-contact graph and exact area replay already prove the object.
 #[cfg(feature = "exact-triangulation")]
 fn materialize_nonrectilinear_side_cutter_opening(
     component: &ConvexUnionComponent,
@@ -10051,13 +10049,15 @@ fn materialize_nonrectilinear_side_cutter_opening(
         return None;
     }
 
-    let groups = removed_region_contact_groups(&regions, projection)?;
+    let groups = removed_region_contact_groups_allowing_incidental_points(&regions, projection)?;
     let mut removed_openings = Vec::with_capacity(groups.len());
     for group in &groups {
         let mut opening = if group.len() == 1 {
             regions[group[0]].region.clone()
         } else {
-            materialize_removed_region_group_polygon(&regions, group, projection)?
+            materialize_removed_region_group_polygon_allowing_incidental_points(
+                &regions, group, projection,
+            )?
         };
         orient_polygon_ccw(&mut opening, projection)?;
         opening = simplify_projected_polygon(opening, projection);
@@ -10226,13 +10226,15 @@ fn materialize_side_cutter_multi_component_difference_core(
         return None;
     }
 
-    let groups = removed_region_contact_groups(&regions, projection)?;
+    let groups = removed_region_contact_groups_allowing_incidental_points(&regions, projection)?;
     let mut removed_openings = Vec::with_capacity(groups.len());
     for group in &groups {
         let mut opening = if group.len() == 1 {
             regions[group[0]].region.clone()
         } else {
-            materialize_removed_region_group_polygon(&regions, group, projection)?
+            materialize_removed_region_group_polygon_allowing_incidental_points(
+                &regions, group, projection,
+            )?
         };
         orient_polygon_ccw(&mut opening, projection)?;
         opening = simplify_projected_polygon(opening, projection);

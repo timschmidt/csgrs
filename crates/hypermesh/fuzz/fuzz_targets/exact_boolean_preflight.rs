@@ -3117,6 +3117,54 @@ fn exercise_side_cutter_opening_without_holes() {
     )
     .expect("point-only side-cutter fixture must import");
     assert!(arrange_coplanar_surface_side_cutter_difference(&left, &point_only).is_none());
+
+    let incidental_point_cutters = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            0, 8, 0, 8, 8, 0, 8, 12, 0, 0, 12, 0, //
+            0, 11, 0, 10, 12, 0, 0, 15, 0, //
+            8, 12, 0, 0, 14, 0, 0, 18, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, //
+            7, 8, 9,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("incidental point side-cutter fixture must import");
+    let incidental_opening =
+        arrange_coplanar_surface_side_cutter_difference(&left, &incidental_point_cutters)
+            .expect("positive side-cutter group should ignore non-connective point contact");
+    incidental_opening.validate().unwrap();
+    incidental_opening
+        .validate_side_cutter_difference_against_sources(&left, &incidental_point_cutters)
+        .unwrap();
+    let incidental_preflight = preflight_boolean_exact(
+        &left,
+        &incidental_point_cutters,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("incidental side-cutter preflight should classify shortcut");
+    incidental_preflight.validate().unwrap();
+    assert_eq!(
+        incidental_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfaceSideCutterDifference
+    );
+    hypermesh::exact::boolean_exact(
+        &left,
+        &incidental_point_cutters,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("incidental side-cutter boolean should materialize")
+    .validate_operation_against_sources(
+        &left,
+        &incidental_point_cutters,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
 }
 
 #[cfg(feature = "exact-triangulation")]
