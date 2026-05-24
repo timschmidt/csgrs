@@ -3380,6 +3380,66 @@ fn exercise_component_coplanar_difference() {
         )
         .unwrap();
 
+    let nonconvex_source_holed =
+        arrange_coplanar_convex_surface_component_holed_difference(
+            &nonconvex_source_left,
+            &nonconvex_source_hole,
+        )
+        .expect("strict hole in a retained nonconvex source disk should materialize");
+    nonconvex_source_holed.validate().unwrap();
+    nonconvex_source_holed
+        .validate_against_sources(&nonconvex_source_left, &nonconvex_source_hole)
+        .unwrap();
+    let nonconvex_source_holed_preflight = preflight_boolean_exact(
+        &nonconvex_source_left,
+        &nonconvex_source_hole,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("nonconvex source retained-hole preflight should classify shortcut");
+    nonconvex_source_holed_preflight.validate().unwrap();
+    assert_eq!(
+        nonconvex_source_holed_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+    );
+
+    let nonconvex_source_opening_and_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            2, 2, 0, 3, 2, 0, 2, 3, 0, //
+            2, 12, 0, 5, 9, 0, 7, 10, 0, 4, 12, 0,
+        ],
+        &[
+            0, 1, 2, //
+            3, 4, 5, 3, 5, 6,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("nonconvex source opening-and-hole fixture must import");
+    let nonconvex_source_opening_holed =
+        arrange_coplanar_convex_surface_component_holed_difference(
+            &nonconvex_source_left,
+            &nonconvex_source_opening_and_hole,
+        )
+        .expect("side opening and unrelated hole should replay on a nonconvex source disk");
+    nonconvex_source_opening_holed.validate().unwrap();
+    nonconvex_source_opening_holed
+        .validate_against_sources(
+            &nonconvex_source_left,
+            &nonconvex_source_opening_and_hole,
+        )
+        .unwrap();
+
+    let nonconvex_source_boundary_touching_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 4, 0, 1, 4, 0, 1, 5, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("nonconvex source boundary-touching hole fixture must import");
+    assert!(arrange_coplanar_convex_surface_component_holed_difference(
+        &nonconvex_source_left,
+        &nonconvex_source_boundary_touching_hole,
+    )
+    .is_none());
+
     let partial_height_cutters = ExactMesh::from_i64_triangles_with_policy(
         &[
             1, 0, 0, 2, 0, 0, 2, 1, 0, 1, 1, 0, //

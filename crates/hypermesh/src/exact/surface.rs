@@ -5394,6 +5394,15 @@ fn materialize_simple_source_side_cutter_difference(
     component: &SimpleSurfaceComponent,
     removed: &[Vec<Point3>],
 ) -> Option<Vec<Vec<Point3>>> {
+    materialize_simple_source_side_cutter_difference_core(component, removed)
+        .map(|(_, polygons)| polygons)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn materialize_simple_source_side_cutter_difference_core(
+    component: &SimpleSurfaceComponent,
+    removed: &[Vec<Point3>],
+) -> Option<(Vec<Vec<Point3>>, Vec<Vec<Point3>>)> {
     if removed.is_empty() {
         return None;
     }
@@ -5464,7 +5473,7 @@ fn materialize_simple_source_side_cutter_difference(
     {
         return None;
     }
-    Some(polygons)
+    Some((removed, polygons))
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -7110,7 +7119,6 @@ fn polygon_has_exact_vertex(polygon: &[Point3], point: &Point3) -> bool {
         .any(|candidate| points_equal(candidate, point))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn segments_share_exact_endpoint(
     left_start: &Point3,
     left_end: &Point3,
@@ -7615,9 +7623,14 @@ fn exact_max_real(left: &ExactReal, right: &ExactReal) -> Option<ExactReal> {
 /// outer ring and unrelated strictly contained holes replay inside that opened
 /// ring. Connected non-rectilinear side cutters are also accepted when their
 /// exact clipped union opens one or more outer sides and all unrelated holes
-/// replay strictly inside the opened ring. Point-only contacts, branch opening
-/// graphs, and overlapping multi-cutter outputs that leave unassigned holes
-/// still need a full planar subdivision. This preserves Yap's rule from
+/// replay strictly inside the opened ring. A nonconvex left component may be
+/// consumed through the bounded source-disk path when its mesh boundary
+/// replays as one exact simple loop, each cutter is wholly source-owned with
+/// positive-length side ownership, and strict holes are retained in exactly
+/// one output loop or consumed by exactly one removed opening. Point-only
+/// contacts, branch opening graphs, and overlapping multi-cutter outputs that
+/// leave unassigned holes still need a full planar subdivision. This preserves
+/// Yap's rule from
 /// "Towards Exact Geometric Computation,"
 /// *Computational Geometry* 7.1-2 (1997): every promoted loop is justified by
 /// exact source topology, containment, or area replay, and unsupported
@@ -7631,21 +7644,37 @@ pub fn arrange_coplanar_convex_surface_component_holed_difference(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Option<CoplanarConvexComponentHoledArrangement> {
-    let left_components = connected_face_component_meshes(left)?;
-    let right_components = connected_face_component_meshes(right)?;
-    if right_components.is_empty() {
+    let left_component_meshes = connected_face_component_meshes(left)?;
+    let right_component_meshes = connected_face_component_meshes(right)?;
+    if right_component_meshes.is_empty() {
         return None;
     }
 
-    let mut left_components = left_components
+    let Some(mut left_components) = left_component_meshes
+        .iter()
+        .cloned()
         .into_iter()
         .map(|mesh| ConvexUnionComponent::from_mesh(MultiUnionSide::Left, mesh))
-        .collect::<Option<Vec<_>>>()?;
+        .collect::<Option<Vec<_>>>()
+    else {
+        return arrange_coplanar_simple_surface_component_holed_difference(
+            left_component_meshes,
+            right_component_meshes,
+        );
+    };
     let source_component_count = left_components.len();
-    let right_components = right_components
+    let Some(right_components) = right_component_meshes
+        .iter()
+        .cloned()
         .into_iter()
         .map(|mesh| ConvexUnionComponent::from_mesh(MultiUnionSide::Right, mesh))
-        .collect::<Option<Vec<_>>>()?;
+        .collect::<Option<Vec<_>>>()
+    else {
+        return arrange_coplanar_simple_surface_component_holed_difference(
+            left_component_meshes,
+            right_component_meshes,
+        );
+    };
     let projection = left_components.first()?.projection;
     if left_components
         .iter()
@@ -7841,6 +7870,171 @@ pub fn arrange_coplanar_convex_surface_component_holed_difference(
     }
     if !emitted_cut && source_component_count < 2 {
         return None;
+    }
+    if components.is_empty()
+        || !components
+            .iter()
+            .any(|component| !component.holes.is_empty())
+    {
+        return None;
+    }
+    sort_components_for_replay(&mut components, projection);
+    let mesh = component_holed_components_to_earcut_open_mesh(&components, projection)?;
+    let arrangement = CoplanarConvexComponentHoledArrangement {
+        projection,
+        components,
+        mesh,
+    };
+    arrangement.validate().ok()?;
+    Some(arrangement)
+}
+
+/// Certify component-holed differences on nonconvex simple source disks.
+///
+/// This is the holed-output sibling of
+/// [`coplanar_simple_surface_difference_polygons`]. It accepts only source
+/// components whose retained mesh boundary replays as one simple disk, then
+/// classifies convex right components as whole-component removals, strict
+/// retained holes, or side-owned removed openings. A strict hole may be
+/// retained only when exact simple-polygon containment assigns it to one
+/// emitted output loop, and it may be omitted only when exactly one removed
+/// opening strictly contains it. Ambiguous ownership, point-only contacts,
+/// boundary-straddling holes, and cutters that need clipping against a
+/// nonconvex source boundary remain outside this certificate.
+///
+/// The source disk is retained object state in Yap's sense: topology is read
+/// from mesh incidence and replayed by exact containment/area predicates; see
+/// Yap, "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+/// (1997). The opened boundaries use the Weiler-Atherton retained-fragment
+/// traversal cited by the no-hole nonconvex source path. Hole triangulation is
+/// delegated to `hypertri`'s exact earcut adapter, following Held, "FIST: Fast
+/// Industrial-Strength Triangulation of Polygons," *Algorithmica* 30 (2001).
+#[cfg(feature = "exact-triangulation")]
+fn arrange_coplanar_simple_surface_component_holed_difference(
+    left_component_meshes: Vec<ExactMesh>,
+    right_component_meshes: Vec<ExactMesh>,
+) -> Option<CoplanarConvexComponentHoledArrangement> {
+    let mut left_components = left_component_meshes
+        .into_iter()
+        .map(SimpleSurfaceComponent::from_mesh)
+        .collect::<Option<Vec<_>>>()?;
+    let right_components = right_component_meshes
+        .into_iter()
+        .map(|mesh| ConvexUnionComponent::from_mesh(MultiUnionSide::Right, mesh))
+        .collect::<Option<Vec<_>>>()?;
+    let projection = left_components.first()?.projection;
+    if left_components
+        .iter()
+        .any(|component| component.projection != projection)
+        || right_components
+            .iter()
+            .any(|component| component.projection != projection)
+    {
+        return None;
+    }
+    let source_boundaries = left_components
+        .iter()
+        .map(|component| component.boundary.clone())
+        .collect::<Vec<_>>();
+    validate_simple_component_loops_disjoint(
+        &source_boundaries,
+        projection,
+        "coplanar nonconvex source component-holed arrangement",
+    )
+    .ok()?;
+    let mut components = Vec::new();
+    for component in &mut left_components {
+        let mut dropped = false;
+        let mut removed = Vec::new();
+        let mut holes = Vec::new();
+        for (right_index, right_component) in right_components.iter().enumerate() {
+            if polygons_equal(&component.boundary, &right_component.hull)
+                || polygon_in_closed_convex_polygon(
+                    &component.boundary,
+                    &right_component.hull,
+                    projection,
+                )?
+            {
+                if dropped || !removed.is_empty() || !holes.is_empty() {
+                    return None;
+                }
+                dropped = true;
+                continue;
+            }
+            if polygon_lies_in_closed_simple_polygon(
+                &right_component.hull,
+                &component.boundary,
+                projection,
+            )? {
+                let attachment_count = simple_boundary_attachment_count(
+                    &component.boundary,
+                    &right_component.hull,
+                    projection,
+                )?;
+                if attachment_count > 0 {
+                    if dropped {
+                        return None;
+                    }
+                    let mut cutter = right_component.hull.clone();
+                    orient_polygon_ccw(&mut cutter, projection)?;
+                    removed.push(cutter);
+                } else if polygon_strictly_inside_simple_polygon(
+                    &right_component.hull,
+                    &component.boundary,
+                    projection,
+                )? {
+                    let mut ring = right_component.hull.clone();
+                    orient_polygon_cw(&mut ring, projection)?;
+                    holes.push(ComponentHoleCandidate { ring, right_index });
+                } else {
+                    return None;
+                }
+                continue;
+            }
+            match simple_source_convex_region_relation(
+                &component.boundary,
+                &right_component.hull,
+                projection,
+            )? {
+                SimpleSourceConvexRegionRelation::Disjoint => {}
+                SimpleSourceConvexRegionRelation::BoundaryOnly
+                | SimpleSourceConvexRegionRelation::UnsupportedCrossing => return None,
+            }
+        }
+
+        if dropped {
+            continue;
+        }
+        let hole_rings = holes
+            .iter()
+            .map(|hole| hole.ring.clone())
+            .collect::<Vec<_>>();
+        if removed.is_empty() {
+            let mut outer = component.boundary.clone();
+            orient_polygon_ccw(&mut outer, projection)?;
+            components.push(CoplanarConvexHoledComponent {
+                outer,
+                holes: hole_rings,
+            });
+        } else {
+            let (removed_openings, mut cut_polygons) =
+                materialize_simple_source_side_cutter_difference_core(component, &removed)?;
+            for polygon in &mut cut_polygons {
+                orient_polygon_ccw(polygon, projection)?;
+            }
+            let holes_by_cut = assign_holes_to_side_cutter_split_outputs(
+                &hole_rings,
+                &cut_polygons,
+                &removed_openings,
+                projection,
+            )?;
+            components.extend(
+                cut_polygons
+                    .into_iter()
+                    .zip(holes_by_cut)
+                    .map(|(outer, holes)| CoplanarConvexHoledComponent { outer, holes }),
+            );
+        }
     }
     if components.is_empty()
         || !components
@@ -10274,6 +10468,7 @@ fn validate_mesh_edges_respect_retained_rings(
     )
 }
 
+#[cfg(feature = "exact-triangulation")]
 fn validate_mesh_edges_respect_retained_rings_allowing_exact_endpoint_touches(
     mesh: &ExactMesh,
     projection: CoplanarProjection,
@@ -10431,6 +10626,7 @@ fn mesh_edge_contains_retained_endpoint_touch(
 /// covers a same-component chain of retained collinear ring edges exactly.
 /// This keeps the split point as retained Yap-style state while avoiding a
 /// tolerance weld or a degenerate boundary triangle.
+#[cfg(feature = "exact-triangulation")]
 fn validate_mesh_boundary_matches_retained_rings_allowing_collinear_splits(
     mesh: &ExactMesh,
     projection: CoplanarProjection,
@@ -10485,6 +10681,7 @@ fn validate_mesh_boundary_matches_retained_rings_allowing_collinear_splits(
     Ok(())
 }
 
+#[cfg(feature = "exact-triangulation")]
 fn retained_collinear_boundary_chain(
     mesh: &ExactMesh,
     projection: CoplanarProjection,
@@ -10504,6 +10701,7 @@ fn retained_collinear_boundary_chain(
         })
 }
 
+#[cfg(feature = "exact-triangulation")]
 fn retained_collinear_boundary_chain_direction(
     mesh: &ExactMesh,
     projection: CoplanarProjection,
