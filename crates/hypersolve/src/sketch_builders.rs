@@ -341,6 +341,38 @@ pub mod tangency {
         }
     }
 
+    /// Add retained geometric G2 curvature continuity between two cubics.
+    ///
+    /// The package keeps point coincidence and same-direction tangent replay,
+    /// then compares signed curvature without dividing by speed:
+    /// `cross(Ba',Ba'')^2 * |Bb'|^6 - cross(Bb',Bb'')^2 * |Ba'|^6 == 0`
+    /// plus a same-sign branch predicate. This is geometric G2, not
+    /// parametric C2. The proof split follows Yap's "Towards Exact Geometric
+    /// Computation" (1997), and the first/second derivative vectors follow
+    /// Farin's Bernstein/de Casteljau control-net formulas.
+    pub fn cubic_cubic_g2_continuity2(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        first: SketchEntityHandle,
+        first_parameter: SketchParameterHandle,
+        second: SketchEntityHandle,
+        second_parameter: SketchParameterHandle,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::CubicCubicG2Continuity2 {
+            first,
+            first_parameter,
+            second,
+            second_parameter,
+        };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Tangency,
+            strategy: SketchResidualStrategy::CubicCubicG2Continuity,
+            kind,
+        }
+    }
+
     /// Add a retained parametric C2 continuity relation between two cubics.
     ///
     /// The generated proof package equates the exact cubic point, first
