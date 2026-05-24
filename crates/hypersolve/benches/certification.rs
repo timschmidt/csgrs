@@ -1083,6 +1083,39 @@ fn sketch_problem_with_point_on_cubic_relations(
     sketch
 }
 
+fn sketch_problem_with_projected_point_on_cubic_relations(
+    row_count: usize,
+) -> hypersolve::SketchSolveProblem {
+    let mut sketch = hypersolve::SketchSolveProblem::new();
+    let origin = sketch.add_point3d("project-cubic.origin", r(1), r(2), r(3));
+    let normal = sketch.add_normal3d("project-cubic.normal", r(1), r(0), r(0), r(0));
+    let workplane = sketch.add_workplane("project-cubic.workplane", origin, normal);
+    for index in 0..row_count {
+        let x = index as i64;
+        let p0 = sketch.add_point2d(format!("project-cubic{index}.p0"), r(x), r(x + 1));
+        let p1 = sketch.add_point2d(format!("project-cubic{index}.p1"), r(x + 1), r(x + 2));
+        let p2 = sketch.add_point2d(format!("project-cubic{index}.p2"), r(x + 2), r(x + 3));
+        let p3 = sketch.add_point2d(format!("project-cubic{index}.p3"), r(x + 3), r(x + 4));
+        let cubic = sketch.add_cubic2(format!("project-cubic{index}"), p0, p1, p2, p3);
+        let parameter = sketch.add_parameter(format!("project-cubic{index}.t"), r(1));
+        let point = sketch.add_point3d(
+            format!("project-cubic{index}.point"),
+            r(x + 4),
+            r(x + 6),
+            r(99 - x),
+        );
+        hypersolve::sketch_incidence_builders::projected_point_on_cubic3(
+            &mut sketch,
+            format!("projected point on cubic {index}"),
+            workplane,
+            point,
+            cubic,
+            parameter,
+        );
+    }
+    sketch
+}
+
 fn sketch_problem_with_cubic_line_tangent_relations(
     row_count: usize,
 ) -> hypersolve::SketchSolveProblem {
@@ -1870,6 +1903,11 @@ fn certification(c: &mut Criterion) {
     c.bench_function("sketch_point_on_cubic_lowering", |b| {
         b.iter(|| point_on_cubic_sketch.lower_to_problem())
     });
+    let projected_point_on_cubic_sketch =
+        sketch_problem_with_projected_point_on_cubic_relations(16);
+    c.bench_function("sketch_projected_point_on_cubic_lowering", |b| {
+        b.iter(|| projected_point_on_cubic_sketch.lower_to_problem())
+    });
     let cubic_line_tangent_sketch = sketch_problem_with_cubic_line_tangent_relations(16);
     c.bench_function("sketch_cubic_line_tangent_lowering", |b| {
         b.iter(|| cubic_line_tangent_sketch.lower_to_problem())
@@ -2116,6 +2154,24 @@ fn certification(c: &mut Criterion) {
         b.iter(|| {
             for handle in &cubic_form_handles {
                 let _ = point_on_cubic_sketch.residual_forms_for_constraint(*handle);
+            }
+        })
+    });
+    let projected_cubic_form_handles = projected_point_on_cubic_sketch
+        .constraints()
+        .iter()
+        .filter(|constraint| {
+            matches!(
+                constraint.kind,
+                hypersolve::SketchConstraintKind::ProjectedPointOnCubic3 { .. }
+            )
+        })
+        .map(|constraint| constraint.handle)
+        .collect::<Vec<_>>();
+    c.bench_function("sketch_projected_point_on_cubic_residual_forms", |b| {
+        b.iter(|| {
+            for handle in &projected_cubic_form_handles {
+                let _ = projected_point_on_cubic_sketch.residual_forms_for_constraint(*handle);
             }
         })
     });

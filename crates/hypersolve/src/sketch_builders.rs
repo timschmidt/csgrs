@@ -719,6 +719,36 @@ pub mod incidence {
             kind,
         }
     }
+
+    /// Add projected 3D point-on-cubic-Bezier incidence at a retained parameter.
+    ///
+    /// Lowering proves the workplane unit frame, projects the 3D point into
+    /// exact `U/V` coordinates, and replays the retained 2D cubic's Bernstein
+    /// point equations at the exact sketch parameter. This keeps projection
+    /// and curve evaluation as explicit proof rows in Yap's sense; the frame
+    /// follows Shoemake (1985), and the cubic basis follows de Casteljau/Farin.
+    pub fn projected_point_on_cubic3(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        point: SketchEntityHandle,
+        cubic: SketchEntityHandle,
+        parameter: SketchParameterHandle,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::ProjectedPointOnCubic3 {
+            workplane,
+            point,
+            cubic,
+            parameter,
+        };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Incidence,
+            strategy: SketchResidualStrategy::ProjectedCubicBezierIncidence,
+            kind,
+        }
+    }
 }
 
 /// Dimensional relation builders.

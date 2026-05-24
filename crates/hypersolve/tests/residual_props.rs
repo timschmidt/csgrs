@@ -1463,6 +1463,75 @@ proptest! {
     }
 
     #[test]
+    fn sketch_projected_point_on_cubic_rows_replay_identity_workplane_affine_cubics(
+        ox in -4_i16..=4,
+        oy in -4_i16..=4,
+        oz in -4_i16..=4,
+        ax in -8_i16..=8,
+        ay in -8_i16..=8,
+        dx in -4_i16..=4,
+        dy in -4_i16..=4,
+        t in -2_i16..=2,
+        z in -8_i16..=8,
+    ) {
+        let ox = i64::from(ox);
+        let oy = i64::from(oy);
+        let oz = i64::from(oz);
+        let ax = i64::from(ax);
+        let ay = i64::from(ay);
+        let dx = i64::from(dx);
+        let dy = i64::from(dy);
+        let t = i64::from(t);
+        let z = i64::from(z);
+        let mut sketch = SketchSolveProblem::new();
+        let origin = sketch.add_point3d("origin", Real::from(ox), Real::from(oy), Real::from(oz));
+        let normal = sketch.add_normal3d("normal", Real::from(1), Real::from(0), Real::from(0), Real::from(0));
+        let workplane = sketch.add_workplane("workplane", origin, normal);
+        let p0 = sketch.add_point2d("p0", Real::from(ax), Real::from(ay));
+        let p1 = sketch.add_point2d("p1", Real::from(ax + dx), Real::from(ay + dy));
+        let p2 = sketch.add_point2d("p2", Real::from(ax + 2 * dx), Real::from(ay + 2 * dy));
+        let p3 = sketch.add_point2d("p3", Real::from(ax + 3 * dx), Real::from(ay + 3 * dy));
+        let cubic = sketch.add_cubic2("cubic", p0, p1, p2, p3);
+        let point = sketch.add_point3d(
+            "point",
+            Real::from(ox + ax + 3 * dx * t),
+            Real::from(oy + ay + 3 * dy * t),
+            Real::from(oz + z),
+        );
+        let parameter = sketch.add_parameter("t", Real::from(t));
+        let handle =
+            sketch.add_projected_point_on_cubic3("projected point on cubic", workplane, point, cubic, parameter);
+
+        let lowered = sketch.lower_to_problem();
+        let forms = sketch.residual_forms_for_constraint(handle);
+        let context = context_from_problem(&lowered.problem);
+        let certification = certify_candidate(&PreparedProblem::new(&lowered.problem), &context);
+
+        prop_assert!(lowered.all_generated());
+        prop_assert_eq!(lowered.problem.constraints.len(), 3);
+        prop_assert_eq!(lowered.rows[0].strategy, Some(SketchResidualStrategy::WorkplaneUnitQuaternion));
+        let all_projected_cubic_rows = lowered.rows[1..].iter().all(|row| {
+            row.strategy == Some(SketchResidualStrategy::ProjectedCubicBezierIncidence)
+        });
+        prop_assert!(all_projected_cubic_rows);
+        prop_assert!(certification.all_satisfied());
+        prop_assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+        prop_assert_eq!(forms.forms.len(), 3);
+        prop_assert_eq!(
+            forms.forms[0].kind,
+            SketchResidualFormKind::WorkplaneUnitQuaternionPolynomial
+        );
+        for form in &forms.forms[1..] {
+            prop_assert_eq!(form.kind, SketchResidualFormKind::ProjectedCubicBezierIncidencePolynomial);
+            prop_assert_eq!(form.role, SketchResidualFormRole::ExactProof);
+            prop_assert_eq!(
+                form.residual.eval_real(context.bindings()).unwrap(),
+                Real::zero()
+            );
+        }
+    }
+
+    #[test]
     fn sketch_cubic_line_tangent_rows_match_generated_affine_cubics(
         ax in -8_i16..=8,
         ay in -8_i16..=8,
