@@ -25,7 +25,10 @@ use crate::root_isolation::{
     refine_isolated_univariate_polynomial_interval,
 };
 use crate::symbolic::{Expr, SymbolId};
-use crate::{AlgebraicRootMobiusTransformStatus, transform_algebraic_root_mobius};
+use crate::{
+    AlgebraicRootMobiusTransformStatus, AlgebraicRootPolynomialImageStatus,
+    transform_algebraic_root_mobius, transform_algebraic_root_polynomial_image,
+};
 
 /// Representation kind for one isolated algebraic root.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -652,6 +655,11 @@ pub fn arithmetic_algebraic_root_representations(
     {
         return report;
     }
+    if let Some(report) =
+        arithmetic_with_same_representation(left, right, operation, PredicatePolicy::default())
+    {
+        return report;
+    }
     let Some(left_value) = left.exact_rational_witness() else {
         if operation == AlgebraicRootArithmeticOp::Negate {
             let representation = negate_algebraic_root_representation(left);
@@ -892,6 +900,100 @@ fn divide_by_rational_scalar_report(
         policy,
         "represented root divided by nonzero rational scalar",
     )
+}
+
+/// Lowers operations involving the same represented root to polynomial images.
+///
+/// If both operands name the same algebraic object `alpha`, then `alpha +
+/// alpha`, `alpha - alpha`, `alpha * alpha`, and `alpha / alpha` do not need a
+/// general two-root algebraic-number field. They are respectively the exact
+/// polynomial images `2*x`, `0`, `x^2`, and the constant `1` on the same
+/// source evidence. This uses the resultant-backed image package and keeps the
+/// Yap construction boundary explicit: independent non-rational operands still
+/// return [`AlgebraicRootArithmeticStatus::NonRationalInput`].
+fn arithmetic_with_same_representation(
+    left: &AlgebraicRootRepresentation,
+    right: Option<&AlgebraicRootRepresentation>,
+    operation: AlgebraicRootArithmeticOp,
+    policy: PredicatePolicy,
+) -> Option<AlgebraicRootArithmeticReport> {
+    let right = right?;
+    if !same_represented_root(left, right) {
+        return None;
+    }
+    let image = match operation {
+        AlgebraicRootArithmeticOp::Add => vec![Real::zero(), Real::from(2)],
+        AlgebraicRootArithmeticOp::Subtract => {
+            return Some(algebraic_arithmetic_report(
+                operation,
+                AlgebraicRootArithmeticStatus::ComputedExactRationalWitness,
+                Some(Real::zero()),
+                None,
+                Some("same represented root subtracted from itself".to_owned()),
+            ));
+        }
+        AlgebraicRootArithmeticOp::Multiply => vec![Real::zero(), Real::zero(), Real::one()],
+        AlgebraicRootArithmeticOp::Divide => {
+            if root_interval_contains_zero(&left.interval, policy).unwrap_or(true) {
+                return Some(algebraic_arithmetic_report(
+                    operation,
+                    AlgebraicRootArithmeticStatus::Undecided,
+                    None,
+                    None,
+                    Some(
+                        "same represented root division requires nonzero root evidence".to_owned(),
+                    ),
+                ));
+            }
+            return Some(algebraic_arithmetic_report(
+                operation,
+                AlgebraicRootArithmeticStatus::ComputedExactRationalWitness,
+                Some(Real::one()),
+                None,
+                Some("same nonzero represented root divided by itself".to_owned()),
+            ));
+        }
+        AlgebraicRootArithmeticOp::Negate => return None,
+    };
+    let transform = transform_algebraic_root_polynomial_image(left, &image, policy);
+    Some(match transform.status {
+        AlgebraicRootPolynomialImageStatus::Transformed => algebraic_arithmetic_report(
+            operation,
+            AlgebraicRootArithmeticStatus::ComputedRepresentation,
+            None,
+            transform.representation,
+            Some("same represented root arithmetic lowered to polynomial image".to_owned()),
+        ),
+        AlgebraicRootPolynomialImageStatus::InvalidEvidence
+        | AlgebraicRootPolynomialImageStatus::InvalidTransformedEvidence => {
+            algebraic_arithmetic_report(
+                operation,
+                AlgebraicRootArithmeticStatus::InvalidEvidence,
+                None,
+                transform.representation,
+                transform.message,
+            )
+        }
+        AlgebraicRootPolynomialImageStatus::InvalidImagePolynomial
+        | AlgebraicRootPolynomialImageStatus::NonMonotoneImage
+        | AlgebraicRootPolynomialImageStatus::UnsupportedDegree
+        | AlgebraicRootPolynomialImageStatus::Undecided => algebraic_arithmetic_report(
+            operation,
+            AlgebraicRootArithmeticStatus::Undecided,
+            None,
+            transform.representation,
+            transform.message,
+        ),
+    })
+}
+
+fn root_interval_contains_zero(
+    interval: &IsolatedRootInterval,
+    policy: PredicatePolicy,
+) -> Option<bool> {
+    let lower = compare_reals_with_policy(&interval.lower, &Real::zero(), policy).value()?;
+    let upper = compare_reals_with_policy(&interval.upper, &Real::zero(), policy).value()?;
+    Some(lower != Ordering::Greater && upper != Ordering::Less)
 }
 
 fn affine_transform_arithmetic_report(
@@ -2647,6 +2749,35 @@ mod tests {
         );
         assert_eq!(reciprocal_root.interval.lower, Real::one());
         assert_eq!(reciprocal_root.interval.upper, real(2));
+
+        let same_product = arithmetic_algebraic_root_representations(
+            &sqrt_two,
+            Some(&sqrt_two),
+            AlgebraicRootArithmeticOp::Multiply,
+        );
+        assert_eq!(
+            same_product.status,
+            AlgebraicRootArithmeticStatus::ComputedRepresentation
+        );
+        let square_root = same_product.result_representation.as_ref().unwrap();
+        assert_eq!(
+            square_root.polynomial_coefficients,
+            vec![real(4), real(-4), Real::one()]
+        );
+
+        let same_difference = arithmetic_algebraic_root_representations(
+            &sqrt_two,
+            Some(&sqrt_two),
+            AlgebraicRootArithmeticOp::Subtract,
+        );
+        assert_eq!(same_difference.exact_result, Some(Real::zero()));
+
+        let same_quotient = arithmetic_algebraic_root_representations(
+            &sqrt_two,
+            Some(&sqrt_two),
+            AlgebraicRootArithmeticOp::Divide,
+        );
+        assert_eq!(same_quotient.exact_result, Some(Real::one()));
     }
 
     #[test]

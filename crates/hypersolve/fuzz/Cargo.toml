@@ -47,3 +47,10 @@ path = "fuzz_targets/algebraic_mobius.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "algebraic_polynomial_image"
+path = "fuzz_targets/algebraic_polynomial_image.rs"
+test = false
+doc = false
+bench = false

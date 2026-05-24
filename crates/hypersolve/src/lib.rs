@@ -9,6 +9,7 @@ pub mod active_set;
 pub mod affine;
 pub mod algebraic;
 pub mod algebraic_mobius;
+pub mod algebraic_polynomial_image;
 pub mod alpha;
 pub mod bareiss;
 pub mod batch;
@@ -76,6 +77,10 @@ pub use algebraic::{
 pub use algebraic_mobius::{
     AlgebraicRootMobiusTransformReport, AlgebraicRootMobiusTransformStatus,
     transform_algebraic_root_mobius,
+};
+pub use algebraic_polynomial_image::{
+    AlgebraicRootPolynomialImageReport, AlgebraicRootPolynomialImageStatus,
+    transform_algebraic_root_polynomial_image,
 };
 pub use alpha::{
     UnivariateQuadraticAlphaReport, UnivariateQuadraticAlphaRow, UnivariateQuadraticAlphaStatus,
