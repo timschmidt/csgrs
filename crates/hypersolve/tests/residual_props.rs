@@ -2044,6 +2044,70 @@ proptest! {
     }
 
     #[test]
+    fn sketch_projected_distance_range_identity_workplane_matches_horizontal_bounds(
+        ax in -16_i16..=16,
+        ay in -16_i16..=16,
+        az in -16_i16..=16,
+        u in -16_i16..=16,
+        normal_offset in -16_i16..=16,
+        lower_slack in 0_i16..=8,
+        upper_slack in 0_i16..=8,
+    ) {
+        let ax = i64::from(ax);
+        let ay = i64::from(ay);
+        let az = i64::from(az);
+        let u = i64::from(u);
+        let normal_offset = i64::from(normal_offset);
+        let distance = u.abs();
+        let lower = (distance - i64::from(lower_slack)).max(0);
+        let upper = distance + i64::from(upper_slack);
+        let mut sketch = SketchSolveProblem::new();
+        let origin = sketch.add_point3d("origin", Real::from(0), Real::from(0), Real::from(0));
+        let normal = sketch.add_normal3d("normal", Real::from(1), Real::from(0), Real::from(0), Real::from(0));
+        let workplane = sketch.add_workplane("workplane", origin, normal);
+        let a = sketch.add_point3d("a", Real::from(ax), Real::from(ay), Real::from(az));
+        let b = sketch.add_point3d(
+            "b",
+            Real::from(ax + u),
+            Real::from(ay),
+            Real::from(az + normal_offset),
+        );
+        let handle = sketch.add_projected_point_point_distance_range(
+            "projected clearance window",
+            workplane,
+            a,
+            b,
+            Some(Real::from(lower)),
+            Some(Real::from(upper)),
+        );
+
+        let lowered = sketch.lower_to_problem();
+        let certification = certify_candidate(
+            &PreparedProblem::new(&lowered.problem),
+            &context_from_problem(&lowered.problem),
+        );
+        let forms = sketch.residual_forms_for_constraint(handle);
+
+        prop_assert_eq!(lowered.problem.constraints.len(), 3);
+        prop_assert!(lowered.all_generated());
+        prop_assert!(certification.all_satisfied());
+        prop_assert_eq!(
+            lowered.rows[0].strategy,
+            Some(SketchResidualStrategy::WorkplaneUnitQuaternion)
+        );
+        prop_assert_eq!(
+            lowered.rows[1].strategy,
+            Some(SketchResidualStrategy::BoundedSquaredProjectedDistance)
+        );
+        prop_assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+        prop_assert_eq!(forms.forms.len(), 3);
+        prop_assert_eq!(
+            forms.forms[1].kind,
+            SketchResidualFormKind::BoundedSquaredProjectedDistancePolynomial
+        );
+    }
+
+    #[test]
     fn sketch_projected_point_line_distance_identity_workplane_ignores_normal_offsets(
         lx in -12_i16..=12,
         ly in -12_i16..=12,

@@ -570,6 +570,39 @@ pub mod distance {
         }
     }
 
+    /// Add a bounded projected point-to-point distance relation.
+    ///
+    /// Bounds are exact distances measured in the retained workplane metric.
+    /// Lowering validates nonnegative ordered bounds before replaying the
+    /// unit-quaternion guard and squared projected-distance inequalities.
+    /// This follows Yap, "Towards Exact Geometric Computation" (1997), by
+    /// rejecting invalid semantic bounds before squaring; the workplane frame
+    /// is Shoemake's unit-quaternion rotation matrix (1985).
+    pub fn projected_point_point_distance_range(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+        lower: Option<Real>,
+        upper: Option<Real>,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::ProjectedPointPointDistanceRange {
+            workplane,
+            a,
+            b,
+            lower,
+            upper,
+        };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Distance,
+            strategy: SketchResidualStrategy::BoundedSquaredProjectedDistance,
+            kind,
+        }
+    }
+
     /// Add a retained workplane-projected point-to-point distance relation.
     ///
     /// This is the SolveSpace-style projected-distance row with Hyper's exact

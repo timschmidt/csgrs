@@ -3971,6 +3971,149 @@ fn sketch_projected_distance_lowers_unit_guard_and_exact_projection_rows() {
 }
 
 #[test]
+fn sketch_projected_distance_ranges_lower_to_exact_squared_inequalities() {
+    let mut sketch = SketchSolveProblem::new();
+    let origin = sketch.add_point3d("origin", real(10), real(20), real(30));
+    let normal = sketch.add_normal3d("normal", real(1), real(0), real(0), real(0));
+    let workplane = sketch.add_workplane("workplane", origin, normal);
+    let a = sketch.add_point3d("a", real(10), real(20), real(30));
+    let b = sketch.add_point3d("b", real(13), real(24), real(99));
+    let bad = sketch.add_point3d("bad", real(20), real(20), real(-7));
+    let range = sketch_distance_builders::projected_point_point_distance_range(
+        &mut sketch,
+        "projected clearance window",
+        workplane,
+        a,
+        b,
+        Some(real(4)),
+        Some(real(6)),
+    );
+    sketch.add_projected_point_point_distance_range(
+        "violated projected clearance window",
+        workplane,
+        a,
+        bad,
+        Some(real(0)),
+        Some(real(6)),
+    );
+
+    let report = sketch.lower_to_problem();
+
+    assert_eq!(range.family, hypersolve::SketchConstraintFamily::Distance);
+    assert_eq!(
+        range.strategy,
+        SketchResidualStrategy::BoundedSquaredProjectedDistance
+    );
+    assert!(report.all_generated());
+    assert_eq!(report.problem.constraints.len(), 6);
+    assert_eq!(
+        report.problem.constraints[1].kind,
+        ConstraintKind::GreaterOrEqual
+    );
+    assert_eq!(
+        report.problem.constraints[2].kind,
+        ConstraintKind::LessOrEqual
+    );
+    assert_eq!(
+        report.rows[1].strategy,
+        Some(SketchResidualStrategy::BoundedSquaredProjectedDistance)
+    );
+    assert_eq!(
+        report.rows[5].strategy,
+        Some(SketchResidualStrategy::BoundedSquaredProjectedDistance)
+    );
+
+    let certification = certify_candidate(
+        &PreparedProblem::new(&report.problem),
+        &context_from_problem(&report.problem),
+    );
+    assert!(matches!(
+        certification.rows[1].status,
+        CertifiedCandidateStatus::CertifiedSatisfiedInequality { .. }
+    ));
+    assert!(matches!(
+        certification.rows[2].status,
+        CertifiedCandidateStatus::CertifiedSatisfiedInequality { .. }
+    ));
+    assert!(matches!(
+        certification.rows[5].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
+
+    let forms = sketch.residual_forms_for_constraint(range.handle);
+    assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+    assert_eq!(forms.forms.len(), 3);
+    assert_eq!(
+        forms.forms[0].kind,
+        SketchResidualFormKind::WorkplaneUnitQuaternionPolynomial
+    );
+    assert_eq!(
+        forms.forms[1].kind,
+        SketchResidualFormKind::BoundedSquaredProjectedDistancePolynomial
+    );
+}
+
+#[test]
+fn sketch_projected_distance_ranges_report_invalid_empty_and_stale_inputs() {
+    let mut sketch = SketchSolveProblem::new();
+    let origin = sketch.add_point3d("origin", real(0), real(0), real(0));
+    let normal = sketch.add_normal3d("normal", real(1), real(0), real(0), real(0));
+    let workplane = sketch.add_workplane("workplane", origin, normal);
+    let a = sketch.add_point3d("a", real(0), real(0), real(0));
+    let b = sketch.add_point3d("b", real(1), real(0), real(5));
+    sketch.add_projected_point_point_distance_range(
+        "negative lower",
+        workplane,
+        a,
+        b,
+        Some(real(-1)),
+        None,
+    );
+    sketch.add_projected_point_point_distance_range(
+        "inverted",
+        workplane,
+        a,
+        b,
+        Some(real(6)),
+        Some(real(4)),
+    );
+    sketch.add_projected_point_point_distance_range("empty", workplane, a, b, None, None);
+    sketch.add_projected_point_point_distance_range(
+        "stale",
+        workplane,
+        a,
+        SketchEntityHandle(999),
+        Some(real(0)),
+        Some(real(2)),
+    );
+
+    let lowered = sketch.lower_to_problem();
+
+    assert_eq!(lowered.problem.constraints.len(), 0);
+    assert_eq!(lowered.rows.len(), 4);
+    assert_eq!(
+        lowered.rows[0].strategy,
+        Some(SketchResidualStrategy::BoundedSquaredProjectedDistance)
+    );
+    assert_eq!(
+        lowered.rows[0].status,
+        SketchGeneratedRowStatus::InvalidExactBound
+    );
+    assert_eq!(
+        lowered.rows[1].status,
+        SketchGeneratedRowStatus::InvalidExactBound
+    );
+    assert_eq!(
+        lowered.rows[2].status,
+        SketchGeneratedRowStatus::ReferenceOnly
+    );
+    assert_eq!(
+        lowered.rows[3].status,
+        SketchGeneratedRowStatus::MissingEntity(SketchEntityHandle(999))
+    );
+}
+
+#[test]
 fn sketch_projected_distance_reports_bad_workplanes_and_nonunit_frames() {
     let mut sketch = SketchSolveProblem::new();
     let origin = sketch.add_point3d("origin", real(0), real(0), real(0));

@@ -412,6 +412,30 @@ pub enum SketchConstraintKind {
         /// Optional exact upper distance bound.
         upper: Option<Real>,
     },
+    /// Bounded point-to-point distance after projection into a workplane.
+    ///
+    /// Bounds are exact distance values in the retained workplane metric.
+    /// Lowering first validates that the lower and upper bounds are
+    /// nonnegative and ordered, then emits the workplane unit-quaternion guard
+    /// and squared projected-distance inequalities. This is the range
+    /// counterpart of [`SketchConstraintKind::ProjectedPointPointDistance`].
+    /// It follows Yap, "Towards Exact Geometric Computation" (1997), by
+    /// keeping invalid semantic bounds as diagnostics instead of accepting
+    /// misleading squared rows. The retained frame uses Shoemake's
+    /// unit-quaternion rotation matrix from "Animating Rotation with
+    /// Quaternion Curves" (1985).
+    ProjectedPointPointDistanceRange {
+        /// Workplane entity that supplies origin and normal/quaternion.
+        workplane: SketchEntityHandle,
+        /// First 3D point entity.
+        a: SketchEntityHandle,
+        /// Second 3D point entity.
+        b: SketchEntityHandle,
+        /// Optional exact lower projected distance bound.
+        lower: Option<Real>,
+        /// Optional exact upper projected distance bound.
+        upper: Option<Real>,
+    },
     /// Point-to-point distance after orthogonal projection into a workplane.
     ///
     /// The retained relation is SolveSpace-style projected distance: two 3D
@@ -1134,6 +1158,8 @@ pub enum SketchResidualStrategy {
     SquaredDistance,
     /// Squared Euclidean distance inequality for bounded-distance constraints.
     BoundedSquaredDistance,
+    /// Squared projected-distance inequality for bounded projected-distance constraints.
+    BoundedSquaredProjectedDistance,
     /// Unit-quaternion guard for retained workplane projection rows.
     WorkplaneUnitQuaternion,
     /// Squared distance after exact projection onto a retained workplane.
@@ -1267,6 +1293,8 @@ pub enum SketchResidualFormKind {
     WorkplaneUnitQuaternionPolynomial,
     /// Squared projected-distance polynomial proof row.
     SquaredProjectedDistancePolynomial,
+    /// Squared projected-distance range inequality proof row.
+    BoundedSquaredProjectedDistancePolynomial,
     /// True projected distance residual retained for proposal/UI parity.
     TrueProjectedDistanceProposal,
     /// Squared projected point-line distance polynomial proof row.
@@ -1806,6 +1834,23 @@ impl SketchSolveProblem {
         upper: Option<Real>,
     ) -> SketchConstraintHandle {
         distance::point_point_distance_range(self, name, a, b, lower, upper).handle
+    }
+
+    /// Add a bounded workplane-projected distance relation between two 3D points.
+    ///
+    /// Lowering validates exact nonnegative/ordered bounds before emitting the
+    /// workplane unit guard and projected squared-distance inequalities.
+    pub fn add_projected_point_point_distance_range(
+        &mut self,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+        lower: Option<Real>,
+        upper: Option<Real>,
+    ) -> SketchConstraintHandle {
+        distance::projected_point_point_distance_range(self, name, workplane, a, b, lower, upper)
+            .handle
     }
 
     /// Add a workplane-projected point-to-point distance constraint.
@@ -2671,6 +2716,72 @@ impl SketchSolveProblem {
                             residual: true_distance,
                         },
                     ],
+                    diagnostics,
+                }
+            }
+            SketchConstraintKind::ProjectedPointPointDistanceRange {
+                workplane,
+                a,
+                b,
+                ref lower,
+                ref upper,
+            } => {
+                let mut diagnostics = Vec::new();
+                if !validate_distance_bounds_with_strategy(
+                    constraint,
+                    lower.as_ref(),
+                    upper.as_ref(),
+                    SketchResidualStrategy::BoundedSquaredProjectedDistance,
+                    &mut diagnostics,
+                ) {
+                    return SketchResidualFormsReport {
+                        constraint: handle,
+                        status: SketchResidualFormsStatus::InvalidInputs,
+                        forms: Vec::new(),
+                        diagnostics,
+                    };
+                }
+                let Some(parts) =
+                    self.projected_point_range_exprs(workplane, a, b, constraint, &mut diagnostics)
+                else {
+                    return SketchResidualFormsReport {
+                        constraint: handle,
+                        status: SketchResidualFormsStatus::InvalidInputs,
+                        forms: Vec::new(),
+                        diagnostics,
+                    };
+                };
+                let mut forms = Vec::new();
+                if lower.is_some() || upper.is_some() {
+                    forms.push(SketchResidualForm {
+                        kind: SketchResidualFormKind::WorkplaneUnitQuaternionPolynomial,
+                        role: SketchResidualFormRole::ExactProof,
+                        strategy: Some(SketchResidualStrategy::WorkplaneUnitQuaternion),
+                        residual: unit_quaternion_residual(&parts.quaternion),
+                    });
+                }
+                if let Some(lower) = lower {
+                    forms.push(SketchResidualForm {
+                        kind: SketchResidualFormKind::BoundedSquaredProjectedDistancePolynomial,
+                        role: SketchResidualFormRole::ExactProof,
+                        strategy: Some(SketchResidualStrategy::BoundedSquaredProjectedDistance),
+                        residual: parts.projected_squared.clone()
+                            - Expr::real(lower.clone() * lower.clone()),
+                    });
+                }
+                if let Some(upper) = upper {
+                    forms.push(SketchResidualForm {
+                        kind: SketchResidualFormKind::BoundedSquaredProjectedDistancePolynomial,
+                        role: SketchResidualFormRole::ExactProof,
+                        strategy: Some(SketchResidualStrategy::BoundedSquaredProjectedDistance),
+                        residual: parts.projected_squared
+                            - Expr::real(upper.clone() * upper.clone()),
+                    });
+                }
+                SketchResidualFormsReport {
+                    constraint: handle,
+                    status: SketchResidualFormsStatus::Generated,
+                    forms,
                     diagnostics,
                 }
             }
@@ -3957,6 +4068,76 @@ impl SketchSolveProblem {
                         strategy: Some(SketchResidualStrategy::BoundedSquaredDistance),
                         status: SketchGeneratedRowStatus::ReferenceOnly,
                     });
+                }
+            }
+            SketchConstraintKind::ProjectedPointPointDistanceRange {
+                workplane,
+                a,
+                b,
+                ref lower,
+                ref upper,
+            } => {
+                // This is the exact workplane-projected counterpart of
+                // bounded point distance. Validate the retained bounds before
+                // squaring, then replay the workplane unit predicate and
+                // projected squared-distance inequalities. This keeps Yap's
+                // exact predicate boundary explicit and avoids accepting a
+                // negative or inverted range by accident.
+                if !validate_distance_bounds_with_strategy(
+                    constraint,
+                    lower.as_ref(),
+                    upper.as_ref(),
+                    SketchResidualStrategy::BoundedSquaredProjectedDistance,
+                    rows,
+                ) {
+                    return;
+                }
+                if lower.is_none() && upper.is_none() {
+                    rows.push(SketchGeneratedRow {
+                        constraint: constraint.handle,
+                        residual_index: None,
+                        name: constraint.name.clone(),
+                        strategy: Some(SketchResidualStrategy::BoundedSquaredProjectedDistance),
+                        status: SketchGeneratedRowStatus::ReferenceOnly,
+                    });
+                    return;
+                }
+                let Some(parts) =
+                    self.projected_point_range_exprs(workplane, a, b, constraint, rows)
+                else {
+                    return;
+                };
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} workplane unit", constraint.name),
+                    unit_quaternion_residual(&parts.quaternion),
+                    SketchResidualStrategy::WorkplaneUnitQuaternion,
+                );
+                if let Some(lower) = lower {
+                    self.push_residual_with_kind(
+                        problem,
+                        rows,
+                        constraint,
+                        format!("{} lower projected distance", constraint.name),
+                        parts.projected_squared.clone() - Expr::real(lower.clone() * lower.clone()),
+                        SketchResidualStrategy::BoundedSquaredProjectedDistance,
+                        ConstraintKind::GreaterOrEqual,
+                        Real::one(),
+                    );
+                }
+                if let Some(upper) = upper {
+                    self.push_residual_with_kind(
+                        problem,
+                        rows,
+                        constraint,
+                        format!("{} upper projected distance", constraint.name),
+                        parts.projected_squared - Expr::real(upper.clone() * upper.clone()),
+                        SketchResidualStrategy::BoundedSquaredProjectedDistance,
+                        ConstraintKind::LessOrEqual,
+                        Real::one(),
+                    );
                 }
             }
             SketchConstraintKind::ProjectedPointPointDistance {
@@ -5695,6 +5876,28 @@ impl SketchSolveProblem {
         })
     }
 
+    fn projected_point_range_exprs(
+        &self,
+        workplane: SketchEntityHandle,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+        constraint: &SketchConstraint,
+        rows: &mut Vec<SketchGeneratedRow>,
+    ) -> Option<ProjectedPointRangeExprs> {
+        let quaternion = self.workplane_quaternion(workplane, constraint, rows)?;
+        let a = self.point3_coordinates(a, constraint, rows)?;
+        let b = self.point3_coordinates(b, constraint, rows)?;
+        let delta = [
+            a.exprs[0].clone() - b.exprs[0].clone(),
+            a.exprs[1].clone() - b.exprs[1].clone(),
+            a.exprs[2].clone() - b.exprs[2].clone(),
+        ];
+        Some(ProjectedPointRangeExprs {
+            projected_squared: projected_distance_squared(&delta, &quaternion),
+            quaternion,
+        })
+    }
+
     fn projected_point_line_distance_exprs(
         &self,
         workplane: SketchEntityHandle,
@@ -6446,6 +6649,12 @@ struct ProjectedPointDistanceExprs {
 }
 
 #[derive(Clone, Debug)]
+struct ProjectedPointRangeExprs {
+    quaternion: [Expr; 4],
+    projected_squared: Expr,
+}
+
+#[derive(Clone, Debug)]
 struct ProjectedPointLineDistanceExprs {
     quaternion: [Expr; 4],
     distance_numerator: Expr,
@@ -6514,13 +6723,14 @@ fn wrong_entity_row(
 fn invalid_bound_row(
     constraint: &SketchConstraint,
     name: impl Into<String>,
+    strategy: SketchResidualStrategy,
     status: SketchGeneratedRowStatus,
 ) -> SketchGeneratedRow {
     SketchGeneratedRow {
         constraint: constraint.handle,
         residual_index: None,
         name: name.into(),
-        strategy: Some(SketchResidualStrategy::BoundedSquaredDistance),
+        strategy: Some(strategy),
         status,
     }
 }
@@ -6531,6 +6741,22 @@ fn validate_distance_bounds(
     upper: Option<&Real>,
     rows: &mut Vec<SketchGeneratedRow>,
 ) -> bool {
+    validate_distance_bounds_with_strategy(
+        constraint,
+        lower,
+        upper,
+        SketchResidualStrategy::BoundedSquaredDistance,
+        rows,
+    )
+}
+
+fn validate_distance_bounds_with_strategy(
+    constraint: &SketchConstraint,
+    lower: Option<&Real>,
+    upper: Option<&Real>,
+    strategy: SketchResidualStrategy,
+    rows: &mut Vec<SketchGeneratedRow>,
+) -> bool {
     for (label, bound) in [("lower", lower), ("upper", upper)] {
         if let Some(bound) = bound {
             match bound.structural_facts().sign {
@@ -6538,6 +6764,7 @@ fn validate_distance_bounds(
                     rows.push(invalid_bound_row(
                         constraint,
                         format!("{} {label} distance", constraint.name),
+                        strategy,
                         SketchGeneratedRowStatus::InvalidExactBound,
                     ));
                     return false;
@@ -6547,6 +6774,7 @@ fn validate_distance_bounds(
                     rows.push(invalid_bound_row(
                         constraint,
                         format!("{} {label} distance", constraint.name),
+                        strategy,
                         SketchGeneratedRowStatus::UnresolvedExactBound,
                     ));
                     return false;
@@ -6560,6 +6788,7 @@ fn validate_distance_bounds(
                 rows.push(invalid_bound_row(
                     constraint,
                     constraint.name.clone(),
+                    strategy,
                     SketchGeneratedRowStatus::InvalidExactBound,
                 ));
                 return false;
@@ -6569,6 +6798,7 @@ fn validate_distance_bounds(
                 rows.push(invalid_bound_row(
                     constraint,
                     constraint.name.clone(),
+                    strategy,
                     SketchGeneratedRowStatus::UnresolvedExactBound,
                 ));
                 return false;
