@@ -646,6 +646,10 @@ pub enum ExactBooleanShortcutKind {
     /// Certified coplanar union whose retained surface components meet only
     /// at exact shared vertices.
     CoplanarSurfacePointTouchUnion,
+    /// Certified empty coplanar intersection for point-touching surfaces.
+    CoplanarSurfacePointTouchIntersection,
+    /// Certified left-preserving coplanar difference for point-touching surfaces.
+    CoplanarSurfacePointTouchDifference,
     /// Certified simple-loop difference of convex coplanar surface meshes.
     CoplanarConvexSurfaceArrangementDifference,
     /// Certified multi-component difference of convex coplanar surface meshes.
@@ -1425,6 +1429,12 @@ pub enum ExactBooleanSupport {
     /// Union was materialized as retained coplanar surface components that
     /// meet only at exact shared vertices.
     CertifiedCoplanarSurfacePointTouchUnion,
+    /// Intersection was materialized as empty because coplanar surfaces meet
+    /// only at exact points.
+    CertifiedCoplanarSurfacePointTouchIntersection,
+    /// Difference preserves the left coplanar surface because the right
+    /// surface meets it only at exact points.
+    CertifiedCoplanarSurfacePointTouchDifference,
     /// Difference was materialized by a simple-loop arrangement between
     /// convex coplanar surface meshes.
     CertifiedCoplanarConvexSurfaceArrangementDifference,
@@ -1718,6 +1728,8 @@ impl ExactBooleanPreflight {
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceMultiUnion
             | ExactBooleanSupport::CertifiedCoplanarSurfaceMultiUnion
             | ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchUnion
+            | ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchIntersection
+            | ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceArrangementDifference
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceMultiDifference
             | ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference

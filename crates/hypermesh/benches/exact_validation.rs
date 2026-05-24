@@ -3607,6 +3607,18 @@ fn exact_boolean_coplanar_convex_surface_multi_union(c: &mut Criterion) {
                     .map(|report| report.validate()),
                     hypermesh::exact::preflight_boolean_exact(
                         &edge_touch_left,
+                        &point_touch_right,
+                        hypermesh::exact::ExactBooleanOperation::Intersection,
+                    )
+                    .map(|report| report.validate()),
+                    hypermesh::exact::preflight_boolean_exact(
+                        &edge_touch_left,
+                        &point_touch_right,
+                        hypermesh::exact::ExactBooleanOperation::Difference,
+                    )
+                    .map(|report| report.validate()),
+                    hypermesh::exact::preflight_boolean_exact(
+                        &edge_touch_left,
                         &vertex_edge_point_touch_right,
                         hypermesh::exact::ExactBooleanOperation::Union,
                     )
@@ -3671,6 +3683,20 @@ fn exact_boolean_coplanar_convex_surface_multi_union(c: &mut Criterion) {
                         &edge_touch_left,
                         &point_touch_right,
                         hypermesh::exact::ExactBooleanOperation::Union,
+                        ValidationPolicy::ALLOW_BOUNDARY,
+                    )
+                    .unwrap(),
+                    hypermesh::exact::boolean_exact(
+                        &edge_touch_left,
+                        &point_touch_right,
+                        hypermesh::exact::ExactBooleanOperation::Intersection,
+                        ValidationPolicy::ALLOW_BOUNDARY,
+                    )
+                    .unwrap(),
+                    hypermesh::exact::boolean_exact(
+                        &edge_touch_left,
+                        &point_touch_right,
+                        hypermesh::exact::ExactBooleanOperation::Difference,
                         ValidationPolicy::ALLOW_BOUNDARY,
                     )
                     .unwrap(),

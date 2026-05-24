@@ -1645,6 +1645,36 @@ fn exercise_multi_component_coplanar_union() {
             ExactBoundaryBooleanPolicy::Reject,
         )
         .unwrap();
+    let point_touch_intersection =
+        preflight_boolean_exact(&edge_touch_left, &point_touch_right, ExactBooleanOperation::Intersection)
+            .expect("point-touching convex surface intersection should classify empty shortcut");
+    point_touch_intersection.validate().unwrap();
+    assert_eq!(
+        point_touch_intersection.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchIntersection
+    );
+    let point_touch_difference =
+        preflight_boolean_exact(&edge_touch_left, &point_touch_right, ExactBooleanOperation::Difference)
+            .expect("point-touching convex surface difference should classify left-preserving shortcut");
+    point_touch_difference.validate().unwrap();
+    assert_eq!(
+        point_touch_difference.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference
+    );
+    hypermesh::exact::boolean_exact(
+        &edge_touch_left,
+        &point_touch_right,
+        ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("point-touching convex surface intersection should materialize empty");
+    hypermesh::exact::boolean_exact(
+        &edge_touch_left,
+        &point_touch_right,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("point-touching convex surface difference should keep left");
 
     let vertex_edge_right = ExactMesh::from_i64_triangles_with_policy(
         &[1, 2, 0, 3, 3, 0, 3, 4, 0],
