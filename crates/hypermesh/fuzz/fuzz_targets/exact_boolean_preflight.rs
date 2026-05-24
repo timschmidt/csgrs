@@ -3043,6 +3043,40 @@ fn exercise_consumed_hole_side_cutter_openings() {
         multi_no_hole_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
     );
+
+    let split_all_consumed = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            9, 10, 0, 11, 10, 0, 11, 14, 0, 9, 14, 0, //
+            -2, 8, 0, 10, 8, 0, 10, 12, 0, -2, 12, 0, //
+            10, 8, 0, 22, 8, 0, 22, 12, 0, 10, 13, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7, //
+            8, 9, 10, 8, 10, 11,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("split all-consumed no-hole fixture must import");
+    assert!(
+        arrange_coplanar_convex_surface_component_holed_difference(&left, &split_all_consumed)
+            .is_none()
+    );
+    let split_no_hole = arrange_coplanar_surface_multi_difference(&left, &split_all_consumed)
+        .expect("fully consumed side-to-side cutter/hole group should emit no-hole split loops");
+    split_no_hole.validate().unwrap();
+    split_no_hole
+        .validate_difference_against_sources(&left, &split_all_consumed)
+        .unwrap();
+    assert_eq!(split_no_hole.polygons.len(), 2);
+    let split_no_hole_preflight =
+        preflight_boolean_exact(&left, &split_all_consumed, ExactBooleanOperation::Difference)
+            .expect("all-consumed split preflight should classify multi-difference shortcut");
+    split_no_hole_preflight.validate().unwrap();
+    assert_eq!(
+        split_no_hole_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
+    );
 }
 
 #[cfg(feature = "exact-triangulation")]

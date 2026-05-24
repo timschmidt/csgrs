@@ -4599,6 +4599,20 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
             ValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
+        let split_all_consumed_side_cutter_right = ExactMesh::from_i64_triangles_with_policy(
+            &[
+                9, 10, 0, 11, 10, 0, 11, 14, 0, 9, 14, 0, //
+                -2, 8, 0, 10, 8, 0, 10, 12, 0, -2, 12, 0, //
+                10, 8, 0, 22, 8, 0, 22, 12, 0, 10, 13, 0,
+            ],
+            &[
+                0, 1, 2, 0, 2, 3, //
+                4, 5, 6, 4, 6, 7, //
+                8, 9, 10, 8, 10, 11,
+            ],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
         let mixed_consumed_hole_side_cutter_right = ExactMesh::from_i64_triangles_with_policy(
             &[
                 8, 8, 0, 12, 10, 0, 8, 12, 0, //
@@ -5572,6 +5586,29 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
                         hypermesh::exact::boolean_exact(
                             &contact_opening_holed_left,
                             &split_straddling_hole_side_cutter_right,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                            ValidationPolicy::ALLOW_BOUNDARY,
+                        )
+                        .unwrap(),
+                        arrange_coplanar_surface_multi_difference(
+                            &contact_opening_holed_left,
+                            &split_all_consumed_side_cutter_right,
+                        )
+                        .map(|output| {
+                            output.validate_difference_against_sources(
+                                &contact_opening_holed_left,
+                                &split_all_consumed_side_cutter_right,
+                            )
+                        }),
+                        hypermesh::exact::preflight_boolean_exact(
+                            &contact_opening_holed_left,
+                            &split_all_consumed_side_cutter_right,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                        )
+                        .map(|report| report.validate()),
+                        hypermesh::exact::boolean_exact(
+                            &contact_opening_holed_left,
+                            &split_all_consumed_side_cutter_right,
                             hypermesh::exact::ExactBooleanOperation::Difference,
                             ValidationPolicy::ALLOW_BOUNDARY,
                         )

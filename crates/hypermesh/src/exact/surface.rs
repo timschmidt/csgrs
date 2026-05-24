@@ -5670,16 +5670,15 @@ fn coplanar_surface_difference_polygons(
             [] => polygons.push(component.hull.clone()),
             [right_index] => {
                 if !holes.is_empty() {
-                    let opened = materialize_cutter_hole_contact_component_holed_difference(
-                        component,
-                        &cutter_indices,
-                        &holes,
-                        &right_components,
-                    )?;
-                    if opened.iter().any(|component| !component.holes.is_empty()) {
-                        return None;
-                    }
-                    polygons.extend(opened.into_iter().map(|component| component.outer));
+                    let opened =
+                        materialize_cutter_hole_contact_multi_component_difference_consuming_holes(
+                            component,
+                            &cutter_indices,
+                            &holes,
+                            &right_components,
+                            "coplanar no-hole cutter-hole contact consumed-hole difference",
+                        )?;
+                    polygons.extend(opened);
                 } else {
                     let right_component = &right_components[*right_index];
                     if let Some(difference) = arrange_coplanar_convex_surface_difference(
@@ -5701,19 +5700,16 @@ fn coplanar_surface_difference_polygons(
             }
             _ => {
                 let mut remnants = if !holes.is_empty() {
-                    if let Some(opened) = materialize_cutter_hole_contact_component_holed_difference(
-                        component,
-                        &cutter_indices,
-                        &holes,
-                        &right_components,
-                    ) {
-                        if opened.iter().any(|component| !component.holes.is_empty()) {
-                            return None;
-                        }
+                    if let Some(opened) =
+                        materialize_cutter_hole_contact_multi_component_difference_consuming_holes(
+                            component,
+                            &cutter_indices,
+                            &holes,
+                            &right_components,
+                            "coplanar no-hole cutter-hole contact consumed-hole difference",
+                        )
+                    {
                         opened
-                            .into_iter()
-                            .map(|component| component.outer)
-                            .collect::<Vec<_>>()
                     } else if let Some(remnants) =
                         materialize_side_cutter_multi_component_difference_consuming_holes(
                             component,
@@ -10009,6 +10005,61 @@ fn materialize_cutter_hole_contact_component_holed_difference(
             .map(|(outer, holes)| CoplanarConvexHoledComponent { outer, holes })
             .collect(),
     )
+}
+
+/// Replay a cutter/hole-contact difference whose holes are all consumed.
+///
+/// This is the no-hole counterpart to
+/// [`materialize_cutter_hole_contact_component_holed_difference`]. It accepts
+/// the same exact removed-region contact groups, including side-to-side
+/// groups that split the source component, but promotes them only when every
+/// strict hole belongs to a consumed group and no retained hole remains in any
+/// emitted component. The output is therefore a vector of plain retained
+/// outer loops for [`arrange_coplanar_surface_multi_difference`], not a
+/// component-holed artifact with empty hole lists.
+///
+/// The distinction is the object/predicate separation in Yap, "Towards Exact
+/// Geometric Computation," *Computational Geometry* 7.1-2 (1997): once exact
+/// contact topology proves the holes are removed, the retained boolean object
+/// should expose only the no-hole surface loops it actually owns. The loop
+/// construction is still the Weiler-Atherton retained-fragment traversal cited
+/// by the holed sibling; see Weiler and Atherton, "Hidden Surface Removal
+/// Using Polygon Area Sorting," *SIGGRAPH Computer Graphics* 11.2 (1977).
+#[cfg(feature = "exact-triangulation")]
+fn materialize_cutter_hole_contact_multi_component_difference_consuming_holes(
+    component: &ConvexUnionComponent,
+    cut_indices: &[usize],
+    holes: &[ComponentHoleCandidate],
+    right_components: &[ConvexUnionComponent],
+    label: &'static str,
+) -> Option<Vec<Vec<Point3>>> {
+    if cut_indices.is_empty() || holes.is_empty() {
+        return None;
+    }
+    let mut components = materialize_cutter_hole_contact_component_holed_difference(
+        component,
+        cut_indices,
+        holes,
+        right_components,
+    )?;
+    if components
+        .iter()
+        .any(|component| !component.holes.is_empty())
+    {
+        return None;
+    }
+    let projection = component.projection;
+    let mut polygons = components
+        .drain(..)
+        .map(|component| component.outer)
+        .collect::<Vec<_>>();
+    for polygon in &mut polygons {
+        orient_polygon_ccw(polygon, projection)?;
+        validate_projected_simple_loop(polygon, projection, label).ok()?;
+    }
+    validate_simple_component_loops_disjoint(&polygons, projection, label).ok()?;
+    sort_polygons_for_replay(&mut polygons, projection);
+    Some(polygons)
 }
 
 /// Replay non-rectilinear side-cutter openings while retaining strict holes.

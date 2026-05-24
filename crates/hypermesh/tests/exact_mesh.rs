@@ -19464,6 +19464,97 @@ fn exact_coplanar_multi_difference_consumes_holes_into_independent_openings() {
             shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfaceMultiDifference
         }
     );
+
+    let split_left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 20, 0, 0, 20, 20, 0, 0, 20, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let split_all_consumed = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            9, 10, 0, 11, 10, 0, 11, 14, 0, 9, 14, 0, //
+            -2, 8, 0, 10, 8, 0, 10, 12, 0, -2, 12, 0, //
+            10, 8, 0, 22, 8, 0, 22, 12, 0, 10, 13, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7, //
+            8, 9, 10, 8, 10, 11,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_cutter_hole_contact_difference(
+            &split_left,
+            &split_all_consumed,
+        )
+        .is_none()
+    );
+    assert!(
+        hypermesh::exact::arrange_coplanar_convex_surface_component_holed_difference(
+            &split_left,
+            &split_all_consumed,
+        )
+        .is_none()
+    );
+    let split_difference = hypermesh::exact::arrange_coplanar_surface_multi_difference(
+        &split_left,
+        &split_all_consumed,
+    )
+    .expect("a fully consumed side-to-side cutter/hole group should emit no-hole split loops");
+    split_difference.validate().unwrap();
+    split_difference
+        .validate_difference_against_sources(&split_left, &split_all_consumed)
+        .unwrap();
+    assert_eq!(split_difference.polygons.len(), 2);
+    assert!(split_difference.polygons.iter().any(|polygon| {
+        polygon.iter().any(|point| {
+            real_eq(&point.x, &ExactReal::from(11)) && real_eq(&point.y, &ExactReal::from(14))
+        })
+    }));
+    assert!(split_difference.polygons.iter().any(|polygon| {
+        polygon.iter().any(|point| {
+            real_eq(&point.x, &ExactReal::from(0)) && real_eq(&point.y, &ExactReal::from(0))
+        })
+    }));
+    let split_preflight = hypermesh::exact::preflight_boolean_exact(
+        &split_left,
+        &split_all_consumed,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    split_preflight.validate().unwrap();
+    split_preflight
+        .validate_against_sources(&split_left, &split_all_consumed)
+        .unwrap();
+    assert_eq!(
+        split_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
+    );
+    let split_result = hypermesh::exact::boolean_exact(
+        &split_left,
+        &split_all_consumed,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    split_result
+        .validate_operation_against_sources(
+            &split_left,
+            &split_all_consumed,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        split_result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfaceMultiDifference
+        }
+    );
 }
 
 #[cfg(feature = "exact-triangulation")]
