@@ -4811,6 +4811,58 @@ fn exercise_component_coplanar_difference() {
         )
         .is_none()
     );
+    let incidental_point_group_right = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            -1, 8, 0, 8, 8, 0, 8, 12, 0, -1, 12, 0, //
+            6, 9, 0, 10, 10, 0, 6, 11, 0, //
+            8, 10, 0, 12, 8, 0, 12, 12, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, //
+            7, 8, 9,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("incidental point cutter-hole contact fixture must import");
+    let incidental_point_group = arrange_coplanar_surface_cutter_hole_contact_difference(
+        &nonrect_contact_left,
+        &incidental_point_group_right,
+    )
+    .expect("incidental point contact inside positive removed group should materialize");
+    incidental_point_group.validate().unwrap();
+    incidental_point_group
+        .validate_cutter_hole_contact_difference_against_sources(
+            &nonrect_contact_left,
+            &incidental_point_group_right,
+        )
+        .unwrap();
+    let incidental_point_preflight = preflight_boolean_exact(
+        &nonrect_contact_left,
+        &incidental_point_group_right,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("incidental point removed group preflight should classify shortcut");
+    incidental_point_preflight.validate().unwrap();
+    assert_eq!(
+        incidental_point_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfaceCutterHoleContactDifference
+    );
+    hypermesh::exact::boolean_exact(
+        &nonrect_contact_left,
+        &incidental_point_group_right,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("incidental point removed group difference should materialize")
+    .validate_operation_against_sources(
+        &nonrect_contact_left,
+        &incidental_point_group_right,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
     let point_only_contact_right = ExactMesh::from_i64_triangles_with_policy(
         &[
             8, 10, 0, 10, 8, 0, 10, 12, 0, //

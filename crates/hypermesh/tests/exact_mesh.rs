@@ -18195,6 +18195,129 @@ fn exact_coplanar_surface_cutter_hole_contact_accepts_nonrectangular_contact_cha
 
 #[cfg(feature = "exact-triangulation")]
 #[test]
+fn exact_coplanar_surface_cutter_hole_contact_allows_incidental_point_in_positive_group() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 20, 0, 0, 20, 20, 0, 0, 20, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let incidental_point_group = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            -1, 8, 0, 8, 8, 0, 8, 12, 0, -1, 12, 0, //
+            6, 9, 0, 10, 10, 0, 6, 11, 0, //
+            8, 10, 0, 12, 8, 0, 12, 12, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, //
+            7, 8, 9,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+
+    assert!(
+        hypermesh::exact::arrange_coplanar_convex_surface_component_holed_difference(
+            &left,
+            &incidental_point_group,
+        )
+        .is_none()
+    );
+    let difference = hypermesh::exact::arrange_coplanar_surface_cutter_hole_contact_difference(
+        &left,
+        &incidental_point_group,
+    )
+    .expect("positive cutter/hole chain should ignore non-connective point contact");
+    difference.validate().unwrap();
+    difference
+        .validate_cutter_hole_contact_difference_against_sources(&left, &incidental_point_group)
+        .unwrap();
+    assert!(difference.polygon.len() > 8);
+    assert!(
+        difference
+            .polygon
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(8))
+                && real_eq(&point.y, &ExactReal::from(8)))
+    );
+
+    let point_only_connectivity = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            -1, 8, 0, 8, 8, 0, 8, 12, 0, -1, 12, 0, //
+            8, 10, 0, 12, 8, 0, 12, 12, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_cutter_hole_contact_difference(
+            &left,
+            &point_only_connectivity,
+        )
+        .is_none()
+    );
+
+    let mut stale = difference.clone();
+    stale.polygon.reverse();
+    assert!(stale.validate().is_err());
+    assert!(
+        stale
+            .validate_cutter_hole_contact_difference_against_sources(
+                &left,
+                &incidental_point_group,
+            )
+            .is_err()
+    );
+
+    let preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &incidental_point_group,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    preflight.validate().unwrap();
+    preflight
+        .validate_against_sources(&left, &incidental_point_group)
+        .unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceCutterHoleContactDifference
+    );
+
+    let result = hypermesh::exact::boolean_exact(
+        &left,
+        &incidental_point_group,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    result
+        .validate_operation_against_sources(
+            &left,
+            &incidental_point_group,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::
+                CoplanarSurfaceCutterHoleContactDifference
+        }
+    );
+    assert_eq!(result.mesh.vertices(), difference.mesh.vertices());
+    assert_eq!(result.mesh.triangles(), difference.mesh.triangles());
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
 fn exact_coplanar_component_holed_difference_accepts_nonconvex_outer_with_strict_hole() {
     let left = ExactMesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 20, 0, 0, 20, 20, 0, 0, 20, 0],

@@ -6880,7 +6880,10 @@ pub fn arrange_coplanar_surface_side_cutter_difference(
 /// two-component rectangular contact case uses exact interval-cell replay;
 /// non-rectangular contact, overlap, and chain cases stitch exact simple union
 /// loops from retained convex boundary fragments before the left side is
-/// opened. This follows Yap, "Towards Exact Geometric Computation,"
+/// opened. Point coincidences inside a removed group are accepted only when
+/// positive-area or positive-length contacts already connect the same group,
+/// so point-only contact never supplies the ownership edge. This follows
+/// Yap, "Towards Exact Geometric Computation,"
 /// *Computational Geometry* 7.1-2 (1997), with the fragment
 /// traversal matching the retained boundary idea from Weiler and Atherton,
 /// "Hidden Surface Removal Using Polygon Area Sorting," *SIGGRAPH Computer
@@ -7008,7 +7011,10 @@ pub fn arrange_coplanar_surface_cutter_hole_contact_difference(
             if all_removed_regions_are_rectangles {
                 return None;
             }
-            connected_convex_contact_union_polygon(&removed_regions, projection)?
+            connected_convex_contact_union_polygon_allowing_incidental_point_touches(
+                &removed_regions,
+                projection,
+            )?
         };
         replay_removed_area = Some(projected_area2_abs(&removed_polygon, projection)?);
         orient_polygon_ccw(&mut removed_polygon, projection)?;
@@ -7602,6 +7608,24 @@ fn connected_convex_face_cell_union_polygon(
     regions: &[Vec<Point3>],
     projection: CoplanarProjection,
 ) -> Option<Vec<Point3>> {
+    connected_convex_contact_union_polygon_allowing_incidental_point_touches(regions, projection)
+}
+
+/// Stitch a positive-connected convex union with incidental point contacts.
+///
+/// The positive-area/positive-length graph must still connect every region;
+/// point-only contacts are ignored by the connectivity graph and are allowed
+/// only when the final stitched boundary is one simple loop with exact area
+/// replay. This is useful for removed cutter/hole groups where one point
+/// coincidence is covered by another positive overlap, and follows Yap,
+/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+/// (1997), by making the accepted topology depend on replayed object facts
+/// instead of a representative sample.
+#[cfg(feature = "exact-triangulation")]
+fn connected_convex_contact_union_polygon_allowing_incidental_point_touches(
+    regions: &[Vec<Point3>],
+    projection: CoplanarProjection,
+) -> Option<Vec<Point3>> {
     connected_convex_union_polygon_with_contact_policy(regions, projection, false)
 }
 
@@ -7692,7 +7716,8 @@ fn materialize_multi_cutter_hole_opening_difference(
     removed_regions: &[RemovedRegionCandidate],
     projection: CoplanarProjection,
 ) -> Option<Vec<Point3>> {
-    let groups = removed_region_contact_groups(removed_regions, projection)?;
+    let groups =
+        removed_region_contact_groups_allowing_incidental_points(removed_regions, projection)?;
     if groups.len() < 2 {
         return None;
     }
@@ -7704,11 +7729,13 @@ fn materialize_multi_cutter_hole_opening_difference(
         {
             return None;
         }
-        removed_openings.push(materialize_removed_region_group_polygon(
-            removed_regions,
-            group,
-            projection,
-        )?);
+        removed_openings.push(
+            materialize_removed_region_group_polygon_allowing_incidental_points(
+                removed_regions,
+                group,
+                projection,
+            )?,
+        );
     }
 
     multi_side_opened_difference_polygon(
@@ -7744,7 +7771,8 @@ fn materialize_mixed_cutter_hole_and_side_opening_difference(
     removed_regions: &[RemovedRegionCandidate],
     projection: CoplanarProjection,
 ) -> Option<Vec<Point3>> {
-    let groups = removed_region_contact_groups(removed_regions, projection)?;
+    let groups =
+        removed_region_contact_groups_allowing_incidental_points(removed_regions, projection)?;
     if groups.len() < 2 {
         return None;
     }
@@ -7759,11 +7787,13 @@ fn materialize_mixed_cutter_hole_and_side_opening_difference(
         }
         if has_hole {
             saw_mixed_group = true;
-            removed_openings.push(materialize_removed_region_group_polygon(
-                removed_regions,
-                group,
-                projection,
-            )?);
+            removed_openings.push(
+                materialize_removed_region_group_polygon_allowing_incidental_points(
+                    removed_regions,
+                    group,
+                    projection,
+                )?,
+            );
         } else {
             removed_openings.push(materialize_removed_region_group_or_single_polygon(
                 removed_regions,
@@ -7788,19 +7818,52 @@ fn materialize_mixed_cutter_hole_and_side_opening_difference(
 ///
 /// Boundary-only contact is useful only when the shared boundary has positive
 /// length; point-only contact remains unsupported because it would create a
-/// branch decision in the planar subdivision. The positive-length test uses
-/// the same exact segment relation surface as the rest of this module, matching
-/// Guigue and Devillers, "Fast and Robust Triangle-Triangle Overlap Test Using
+/// branch decision in the planar subdivision. Cutter/hole paths use
+/// [`removed_region_contact_groups_allowing_incidental_points`] for the
+/// narrower case where a point coincidence is already inside a
+/// positive-connected removed group. The positive-length test uses the same
+/// exact segment relation surface as the rest of this module, matching Guigue
+/// and Devillers, "Fast and Robust Triangle-Triangle Overlap Test Using
 /// Orientation Predicates," *Journal of Graphics Tools* 8.1 (2003).
 #[cfg(feature = "exact-triangulation")]
 fn removed_region_contact_groups(
     regions: &[RemovedRegionCandidate],
     projection: CoplanarProjection,
 ) -> Option<Vec<Vec<usize>>> {
+    removed_region_contact_groups_with_policy(regions, projection, false)
+}
+
+/// Build removed-region contact groups while allowing incidental point touches.
+///
+/// Cutter/hole-contact differences sometimes produce a retained removed
+/// region that is already connected by positive-area or positive-length
+/// contacts, while two non-neighbor convex pieces also meet at an exact point.
+/// That point is not allowed to provide connectivity: it is accepted only when
+/// both incident regions are already in the same positive-connected group and
+/// the later retained-fragment stitch plus exact area replay still proves one
+/// simple removed boundary. This is the same object-level gate Yap requires in
+/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+/// (1997): point coincidences may be retained as facts, but they cannot invent
+/// topology.
+#[cfg(feature = "exact-triangulation")]
+fn removed_region_contact_groups_allowing_incidental_points(
+    regions: &[RemovedRegionCandidate],
+    projection: CoplanarProjection,
+) -> Option<Vec<Vec<usize>>> {
+    removed_region_contact_groups_with_policy(regions, projection, true)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn removed_region_contact_groups_with_policy(
+    regions: &[RemovedRegionCandidate],
+    projection: CoplanarProjection,
+    allow_incidental_point_contacts: bool,
+) -> Option<Vec<Vec<usize>>> {
     if regions.is_empty() {
         return None;
     }
     let mut contact_graph = UnionFind::new(regions.len());
+    let mut point_contacts = Vec::new();
     for left in 0..regions.len() {
         for right in left + 1..regions.len() {
             match convex_union_component_relation(
@@ -7810,17 +7873,25 @@ fn removed_region_contact_groups(
             )? {
                 ConvexUnionComponentRelation::Disjoint => {}
                 ConvexUnionComponentRelation::BoundaryOnly => {
-                    if !convex_polygons_touch_on_positive_boundary(
+                    match convex_polygons_touch_on_positive_boundary(
                         &regions[left].region,
                         &regions[right].region,
                         projection,
-                    )? {
-                        return None;
+                    ) {
+                        Some(true) => contact_graph.union(left, right),
+                        Some(false) if allow_incidental_point_contacts => {
+                            point_contacts.push((left, right));
+                        }
+                        Some(false) | None => return None,
                     }
-                    contact_graph.union(left, right);
                 }
                 ConvexUnionComponentRelation::PositiveArea => contact_graph.union(left, right),
             }
+        }
+    }
+    for (left, right) in point_contacts {
+        if contact_graph.find(left) != contact_graph.find(right) {
+            return None;
         }
     }
 
@@ -7851,6 +7922,25 @@ fn materialize_removed_region_group_polygon(
     group: &[usize],
     projection: CoplanarProjection,
 ) -> Option<Vec<Point3>> {
+    materialize_removed_region_group_polygon_with_policy(regions, group, projection, false)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn materialize_removed_region_group_polygon_allowing_incidental_points(
+    regions: &[RemovedRegionCandidate],
+    group: &[usize],
+    projection: CoplanarProjection,
+) -> Option<Vec<Point3>> {
+    materialize_removed_region_group_polygon_with_policy(regions, group, projection, true)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn materialize_removed_region_group_polygon_with_policy(
+    regions: &[RemovedRegionCandidate],
+    group: &[usize],
+    projection: CoplanarProjection,
+    allow_incidental_point_contacts: bool,
+) -> Option<Vec<Point3>> {
     if group.len() < 2 {
         return None;
     }
@@ -7858,7 +7948,14 @@ fn materialize_removed_region_group_polygon(
         .iter()
         .map(|&index| regions[index].region.clone())
         .collect::<Vec<_>>();
-    connected_convex_contact_union_polygon(&group_regions, projection)
+    if allow_incidental_point_contacts {
+        connected_convex_contact_union_polygon_allowing_incidental_point_touches(
+            &group_regions,
+            projection,
+        )
+    } else {
+        connected_convex_contact_union_polygon(&group_regions, projection)
+    }
 }
 
 /// Materialize one removed-region group, allowing a single convex group.
@@ -9465,12 +9562,13 @@ struct RemovedRegionCandidate {
 /// never by a sampled witness point. The removed-loop and final source
 /// difference boundaries are Weiler-Atherton retained-fragment traversals; see
 /// Weiler and Atherton, "Hidden Surface Removal Using Polygon Area Sorting,"
-/// *SIGGRAPH Computer Graphics* 11.2 (1977). Point-only contact remains
+/// *SIGGRAPH Computer Graphics* 11.2 (1977). Point-only connectivity remains
 /// unsupported because it is a branch decision for the later planar-cell
-/// extractor, and segment contact is classified by the exact orientation
-/// predicates of Guigue and Devillers, "Fast and Robust Triangle-Triangle
-/// Overlap Test Using Orientation Predicates," *Journal of Graphics Tools*
-/// 8.1 (2003).
+/// extractor; incidental point contacts are admitted only inside an already
+/// positive-connected removed group. Segment contact is classified by the
+/// exact orientation predicates of Guigue and Devillers, "Fast and Robust
+/// Triangle-Triangle Overlap Test Using Orientation Predicates," *Journal of
+/// Graphics Tools* 8.1 (2003).
 #[cfg(feature = "exact-triangulation")]
 fn materialize_simple_source_cutter_hole_contact_component_holed_difference(
     component: &SimpleSurfaceComponent,
@@ -9523,7 +9621,7 @@ fn materialize_simple_source_cutter_hole_contact_component_holed_difference(
         });
     }
 
-    let groups = removed_region_contact_groups(&regions, projection)?;
+    let groups = removed_region_contact_groups_allowing_incidental_points(&regions, projection)?;
     let mut saw_mixed_group = false;
     let mut removed_openings = Vec::new();
     let mut consumed_holes = Vec::new();
@@ -9535,7 +9633,9 @@ fn materialize_simple_source_cutter_hole_contact_component_holed_difference(
         }
         let mut opening = if has_hole {
             saw_mixed_group = true;
-            materialize_removed_region_group_polygon(&regions, group, projection)?
+            materialize_removed_region_group_polygon_allowing_incidental_points(
+                &regions, group, projection,
+            )?
         } else {
             materialize_removed_region_group_or_single_polygon(&regions, group, projection)?
         };
@@ -9664,11 +9764,13 @@ fn component_relevant_right_regions_are_disjoint(
 /// general planar subdivision: a hole overlapping a side-opening group is
 /// consumed by that exact removed union, while unrelated strict holes are
 /// retained only if exact simple-polygon containment proves they lie inside
-/// the opened loop. Point-only contacts and branch graphs still require a full
-/// planar subdivision. Boundary fragments follow Weiler and Atherton, "Hidden
-/// Surface Removal Using Polygon Area Sorting," *SIGGRAPH Computer Graphics*
-/// 11.2 (1977), and the replay/retained ring split follows Yap, "Towards
-/// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+/// the opened loop. Point-only connectivity and branch graphs still require a
+/// full planar subdivision; incidental point contacts are admitted only inside
+/// an already positive-connected removed group. Boundary fragments follow
+/// Weiler and Atherton, "Hidden Surface Removal Using Polygon Area Sorting,"
+/// *SIGGRAPH Computer Graphics* 11.2 (1977), and the replay/retained ring
+/// split follows Yap, "Towards Exact Geometric Computation," *Computational
+/// Geometry* 7.1-2 (1997).
 #[cfg(feature = "exact-triangulation")]
 fn materialize_cutter_hole_contact_component_holed_difference(
     component: &ConvexUnionComponent,
@@ -9707,7 +9809,7 @@ fn materialize_cutter_hole_contact_component_holed_difference(
         });
     }
 
-    let groups = removed_region_contact_groups(&regions, projection)?;
+    let groups = removed_region_contact_groups_allowing_incidental_points(&regions, projection)?;
     let mut opening_groups = Vec::new();
     let mut consumed_hole_groups = 0usize;
     for group in &groups {
@@ -9744,9 +9846,17 @@ fn materialize_cutter_hole_contact_component_holed_difference(
     } else {
         let mut removed_openings = Vec::with_capacity(opening_groups.len());
         for group in &opening_groups {
-            removed_openings.push(materialize_removed_region_group_or_single_polygon(
-                &regions, group, projection,
-            )?);
+            if group.iter().any(|&index| !regions[index].is_cutter) {
+                removed_openings.push(
+                    materialize_removed_region_group_polygon_allowing_incidental_points(
+                        &regions, group, projection,
+                    )?,
+                );
+            } else {
+                removed_openings.push(materialize_removed_region_group_or_single_polygon(
+                    &regions, group, projection,
+                )?);
+            }
         }
         multi_side_opened_difference_polygon(
             &component.hull,
