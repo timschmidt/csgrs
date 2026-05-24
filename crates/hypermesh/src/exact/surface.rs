@@ -5139,9 +5139,11 @@ fn coplanar_surface_difference_polygons(
 /// source object. For a nonconvex left component, a right object may either be
 /// disjoint, remove the whole component, or be a side-attached removed loop
 /// that lies in the closed source ring and owns positive-length boundary
-/// contact. Strict interior cutters would create retained holes, and cutters
-/// crossing out of a nonconvex source would require general clipping, so both
-/// remain explicit unsupported arrangement work.
+/// contact. One or more convex cutters may also cross out of the source when
+/// their clipped source intersections replay as simple side-owned openings;
+/// connected overlapping clipped openings are merged by exact exposed-fragment
+/// replay before subtraction. Strict interior cutters would create retained
+/// holes, so no-hole artifacts still leave them to the component-holed path.
 ///
 /// The emitted loops are stitched from retained source-boundary fragments and
 /// reversed removed-boundary fragments, following Weiler and Atherton,
@@ -5178,16 +5180,6 @@ fn coplanar_simple_surface_difference_polygons(
         .collect::<Vec<_>>();
     validate_simple_component_loops_disjoint(
         &left_boundaries,
-        projection,
-        "coplanar nonconvex source component difference",
-    )
-    .ok()?;
-    let right_hulls = right_components
-        .iter()
-        .map(|component| component.hull.clone())
-        .collect::<Vec<_>>();
-    validate_component_loops_disjoint(
-        &right_hulls,
         projection,
         "coplanar nonconvex source component difference",
     )
@@ -5280,7 +5272,7 @@ fn coplanar_simple_surface_difference_polygons(
 /// fragments whose midpoints lie in the source. The emitted removed openings
 /// are then rechecked by the existing nonconvex source side-cutter
 /// materializer, including source containment, positive-length boundary
-/// ownership, disjointness, and exact area replay.
+/// ownership, connected-opening union, and exact area replay.
 ///
 /// The fragment traversal is the same retained-boundary construction as
 /// Weiler and Atherton, "Hidden Surface Removal Using Polygon Area Sorting,"
@@ -5586,6 +5578,26 @@ fn materialize_simple_source_side_cutter_difference_core(
             return None;
         }
     }
+    removed = merge_connected_simple_removed_openings(
+        &removed,
+        projection,
+        "coplanar nonconvex source removed-opening union",
+    )?;
+    for polygon in &mut removed {
+        orient_polygon_ccw(polygon, projection)?;
+        validate_projected_simple_loop(
+            polygon,
+            projection,
+            "coplanar nonconvex source side-cutter difference",
+        )
+        .ok()?;
+        if !polygon_lies_in_closed_simple_polygon(polygon, &component.boundary, projection)? {
+            return None;
+        }
+        if simple_boundary_attachment_count(&component.boundary, polygon, projection)? == 0 {
+            return None;
+        }
+    }
     validate_simple_component_loops_disjoint(
         &removed,
         projection,
@@ -5637,6 +5649,315 @@ fn materialize_simple_source_side_cutter_difference_core(
         return None;
     }
     Some((removed, polygons))
+}
+
+/// Merge connected removed openings before subtracting from a simple source.
+///
+/// Clipped crossing cutters can overlap after `source ∩ cutter` replay even
+/// when each individual clipped opening is a valid side-owned removed loop.
+/// The general arrangement is still out of scope, but connected openings that
+/// stitch into one simple union boundary can be certified locally: exposed
+/// boundary fragments from every opening are replayed, every original opening
+/// must lie in the stitched union, and the union area must not exceed the sum
+/// of the exact input areas. This is the same retained-object discipline Yap
+/// argues for in "Towards Exact Geometric Computation," *Computational
+/// Geometry* 7.1-2 (1997): the merged topology is promoted only from retained
+/// exact boundary facts and exact area inequalities, not by choosing sample
+/// points in overlapping bays.
+///
+/// Point-only contacts are rejected because they introduce a branch vertex for
+/// the later planar-cell extractor. Boundary and crossing tests use the exact
+/// orientation-predicate classifier of Guigue and Devillers, "Fast and Robust
+/// Triangle-Triangle Overlap Test Using Orientation Predicates," *Journal of
+/// Graphics Tools* 8.1 (2003). The exposed-fragment replay follows the
+/// Weiler-Atherton boundary traversal; see Weiler and Atherton, "Hidden
+/// Surface Removal Using Polygon Area Sorting," *SIGGRAPH Computer Graphics*
+/// 11.2 (1977).
+#[cfg(feature = "exact-triangulation")]
+fn merge_connected_simple_removed_openings(
+    openings: &[Vec<Point3>],
+    projection: CoplanarProjection,
+    label: &'static str,
+) -> Option<Vec<Vec<Point3>>> {
+    if openings.len() < 2 {
+        return Some(openings.to_vec());
+    }
+    let mut contact_graph = UnionFind::new(openings.len());
+    for left in 0..openings.len() {
+        for right in left + 1..openings.len() {
+            match simple_polygon_interaction(&openings[left], &openings[right], projection)? {
+                SimplePolygonInteraction::Disjoint => {}
+                SimplePolygonInteraction::PointOnly => return None,
+                SimplePolygonInteraction::Connected => contact_graph.union(left, right),
+            }
+        }
+    }
+
+    let mut groups: Vec<(usize, Vec<usize>)> = Vec::new();
+    for index in 0..openings.len() {
+        let root = contact_graph.find(index);
+        if let Some((_, members)) = groups.iter_mut().find(|(candidate, _)| *candidate == root) {
+            members.push(index);
+        } else {
+            groups.push((root, vec![index]));
+        }
+    }
+    groups.sort_by_key(|(_, members)| members.first().copied().unwrap_or(usize::MAX));
+
+    let mut merged = Vec::with_capacity(groups.len());
+    for (_, group) in groups {
+        if group.len() == 1 {
+            merged.push(openings[group[0]].clone());
+        } else {
+            merged.push(materialize_simple_removed_opening_union_group(
+                openings, &group, projection, label,
+            )?);
+        }
+    }
+    Some(merged)
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum SimplePolygonInteraction {
+    Disjoint,
+    PointOnly,
+    Connected,
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn simple_polygon_interaction(
+    left: &[Point3],
+    right: &[Point3],
+    projection: CoplanarProjection,
+) -> Option<SimplePolygonInteraction> {
+    let mut saw_point = false;
+    for left_edge in 0..left.len() {
+        let left_start = project_point(&left[left_edge], projection);
+        let left_end = project_point(&left[(left_edge + 1) % left.len()], projection);
+        for right_edge in 0..right.len() {
+            let right_start = project_point(&right[right_edge], projection);
+            let right_end = project_point(&right[(right_edge + 1) % right.len()], projection);
+            match classify_segment_intersection(&left_start, &left_end, &right_start, &right_end)
+                .value()?
+            {
+                SegmentIntersection::Proper
+                | SegmentIntersection::CollinearOverlap
+                | SegmentIntersection::Identical => {
+                    return Some(SimplePolygonInteraction::Connected);
+                }
+                SegmentIntersection::EndpointTouch => saw_point = true,
+                SegmentIntersection::Disjoint => {}
+            }
+        }
+    }
+    for point in left {
+        if simple_polygon_location(point, right, projection)? == ConvexPolygonLocation::Inside {
+            return Some(SimplePolygonInteraction::Connected);
+        }
+    }
+    for point in right {
+        if simple_polygon_location(point, left, projection)? == ConvexPolygonLocation::Inside {
+            return Some(SimplePolygonInteraction::Connected);
+        }
+    }
+    if saw_point {
+        Some(SimplePolygonInteraction::PointOnly)
+    } else {
+        Some(SimplePolygonInteraction::Disjoint)
+    }
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn materialize_simple_removed_opening_union_group(
+    openings: &[Vec<Point3>],
+    group: &[usize],
+    projection: CoplanarProjection,
+    label: &'static str,
+) -> Option<Vec<Point3>> {
+    let group_openings = group
+        .iter()
+        .map(|&index| openings[index].clone())
+        .collect::<Vec<_>>();
+    let mut fragments = Vec::new();
+    for index in 0..group_openings.len() {
+        collect_simple_union_boundary_fragments(
+            index,
+            &group_openings,
+            projection,
+            &mut fragments,
+        )?;
+    }
+    let mut union_loops = stitch_simple_union_loops(fragments, projection)?;
+    if union_loops.len() != 1 {
+        return None;
+    }
+    let mut union = union_loops.pop()?;
+    orient_polygon_ccw(&mut union, projection)?;
+    union = simplify_projected_polygon(union, projection);
+    validate_projected_simple_loop(&union, projection, label).ok()?;
+
+    let mut input_area = ExactReal::from(0);
+    for opening in &group_openings {
+        if !polygon_lies_in_closed_simple_polygon(opening, &union, projection)? {
+            return None;
+        }
+        input_area = add(&input_area, &projected_area2_abs(opening, projection)?);
+    }
+    let union_area = projected_area2_abs(&union, projection)?;
+    match compare_reals(&union_area, &input_area).value()? {
+        Ordering::Greater => None,
+        Ordering::Less | Ordering::Equal => Some(union),
+    }
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn stitch_simple_union_loops(
+    mut fragments: Vec<DirectedFragment>,
+    projection: CoplanarProjection,
+) -> Option<Vec<Vec<Point3>>> {
+    if fragments.len() < 3 {
+        return None;
+    }
+    let mut loops = Vec::new();
+    while !fragments.is_empty() {
+        let first = fragments.remove(0);
+        let mut polygon = vec![first.start, first.end];
+        loop {
+            let current = polygon.last()?.clone();
+            if points_equal(&current, polygon.first()?) {
+                polygon.pop();
+                break;
+            }
+            let (next_index, reversed) =
+                fragments.iter().enumerate().find_map(|(index, fragment)| {
+                    if points_equal(&fragment.start, &current) {
+                        Some((index, false))
+                    } else if points_equal(&fragment.end, &current) {
+                        Some((index, true))
+                    } else {
+                        None
+                    }
+                })?;
+            let next = fragments.remove(next_index);
+            polygon.push(if reversed { next.start } else { next.end });
+            if polygon.len() > 128 {
+                return None;
+            }
+        }
+        let polygon = simplify_projected_polygon(polygon, projection);
+        if polygon.len() < 3 {
+            return None;
+        }
+        loops.push(polygon);
+    }
+    Some(loops)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn collect_simple_union_boundary_fragments(
+    polygon_index: usize,
+    polygons: &[Vec<Point3>],
+    projection: CoplanarProjection,
+    fragments: &mut Vec<DirectedFragment>,
+) -> Option<()> {
+    let polygon = polygons.get(polygon_index)?;
+    for edge in 0..polygon.len() {
+        let start = &polygon[edge];
+        let end = &polygon[(edge + 1) % polygon.len()];
+        let mut splits = vec![start.clone(), end.clone()];
+        for (other_index, other) in polygons.iter().enumerate() {
+            if other_index == polygon_index {
+                continue;
+            }
+            for other_edge in 0..other.len() {
+                add_projected_edge_intersections(
+                    start,
+                    end,
+                    &other[other_edge],
+                    &other[(other_edge + 1) % other.len()],
+                    projection,
+                    &mut splits,
+                )?;
+            }
+        }
+        sort_points_along_segment(&mut splits, start, end, projection)?;
+        dedup_points(&mut splits);
+        for pair in splits.windows(2) {
+            let a = &pair[0];
+            let b = &pair[1];
+            if points_equal(a, b) {
+                continue;
+            }
+            if simple_union_fragment_is_exposed(a, b, polygon_index, polygons, projection)? {
+                fragments.push(DirectedFragment {
+                    start: a.clone(),
+                    end: b.clone(),
+                });
+            }
+        }
+    }
+    Some(())
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn simple_union_fragment_is_exposed(
+    a: &Point3,
+    b: &Point3,
+    polygon_index: usize,
+    polygons: &[Vec<Point3>],
+    projection: CoplanarProjection,
+) -> Option<bool> {
+    let midpoint = midpoint3(a, b);
+    for (other_index, other) in polygons.iter().enumerate() {
+        if other_index == polygon_index {
+            continue;
+        }
+        match simple_polygon_location(&midpoint, other, projection)? {
+            ConvexPolygonLocation::Outside => {}
+            ConvexPolygonLocation::Inside => return Some(false),
+            ConvexPolygonLocation::Boundary => {
+                if polygon_index < other_index
+                    && segment_has_same_direction_boundary_overlap(a, b, other, projection)?
+                {
+                    continue;
+                }
+                return Some(false);
+            }
+        }
+    }
+    Some(true)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn segment_has_same_direction_boundary_overlap(
+    a: &Point3,
+    b: &Point3,
+    polygon: &[Point3],
+    projection: CoplanarProjection,
+) -> Option<bool> {
+    let start = project_point(a, projection);
+    let end = project_point(b, projection);
+    for edge in 0..polygon.len() {
+        let other_start = project_point(&polygon[edge], projection);
+        let other_end = project_point(&polygon[(edge + 1) % polygon.len()], projection);
+        match classify_segment_intersection(&start, &end, &other_start, &other_end).value()? {
+            SegmentIntersection::CollinearOverlap | SegmentIntersection::Identical => {
+                let dx = sub(&end.x, &start.x);
+                let dy = sub(&end.y, &start.y);
+                let other_dx = sub(&other_end.x, &other_start.x);
+                let other_dy = sub(&other_end.y, &other_start.y);
+                let dot = add(&mul(&dx, &other_dx), &mul(&dy, &other_dy));
+                return Some(
+                    compare_reals(&dot, &ExactReal::from(0)).value()? == Ordering::Greater,
+                );
+            }
+            SegmentIntersection::Disjoint
+            | SegmentIntersection::EndpointTouch
+            | SegmentIntersection::Proper => {}
+        }
+    }
+    Some(false)
 }
 
 #[cfg(feature = "exact-triangulation")]

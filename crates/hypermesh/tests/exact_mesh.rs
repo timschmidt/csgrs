@@ -15368,6 +15368,62 @@ fn exact_coplanar_surface_difference_materializes_nonconvex_source_side_opening(
         )
         .unwrap();
 
+    let overlapping_crossing_openings = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            4, 10, 0, 12, 10, 0, 12, 14, 0, 4, 14, 0, //
+            2, 8, 0, 8, 8, 0, 8, 14, 0, 2, 14, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let merged_crossing = hypermesh::exact::arrange_coplanar_surface_component_difference(
+        &left,
+        &overlapping_crossing_openings,
+    )
+    .expect("overlapping clipped crossing openings should merge before source subtraction");
+    merged_crossing.validate().unwrap();
+    merged_crossing
+        .validate_component_difference_against_sources(&left, &overlapping_crossing_openings)
+        .unwrap();
+    assert!(
+        merged_crossing
+            .polygon
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(8))
+                && real_eq(&point.y, &ExactReal::from(8)))
+    );
+    assert!(
+        merged_crossing
+            .polygon
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(2))
+                && real_eq(&point.y, &ExactReal::from(12)))
+    );
+
+    let point_only_openings = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            4, 10, 0, 12, 10, 0, 12, 14, 0, 4, 14, 0, //
+            0, 8, 0, 4, 8, 0, 4, 10, 0, 0, 10, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_component_difference(
+            &left,
+            &point_only_openings,
+        )
+        .is_none()
+    );
+
     let multi_left = ExactMesh::from_i64_triangles_with_policy(
         &[
             0, 0, 0, 10, 0, 0, 10, 4, 0, 7, 4, 0, 6, 6, 0, 10, 8, 0, 10, 12, 0, 0, 12, 0, //
@@ -15625,6 +15681,40 @@ fn exact_coplanar_component_holed_difference_materializes_nonconvex_source_disk_
         clipped_holed_preflight.support,
         hypermesh::exact::ExactBooleanSupport::
             CertifiedCoplanarConvexSurfaceComponentHoledDifference
+    );
+
+    let overlapping_clipped_openings_and_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            2, 2, 0, 3, 2, 0, 2, 3, 0, //
+            4, 10, 0, 12, 10, 0, 12, 14, 0, 4, 14, 0, //
+            2, 8, 0, 8, 8, 0, 8, 14, 0, 2, 14, 0,
+        ],
+        &[
+            0, 1, 2, //
+            3, 4, 5, 3, 5, 6, //
+            7, 8, 9, 7, 9, 10,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let merged_clipped_holed =
+        hypermesh::exact::arrange_coplanar_convex_surface_component_holed_difference(
+            &left,
+            &overlapping_clipped_openings_and_hole,
+        )
+        .expect("overlapping clipped openings should merge while retaining unrelated holes");
+    merged_clipped_holed.validate().unwrap();
+    merged_clipped_holed
+        .validate_against_sources(&left, &overlapping_clipped_openings_and_hole)
+        .unwrap();
+    assert_eq!(merged_clipped_holed.components.len(), 1);
+    assert_eq!(merged_clipped_holed.components[0].holes.len(), 1);
+    assert!(
+        merged_clipped_holed.components[0]
+            .outer
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(8))
+                && real_eq(&point.y, &ExactReal::from(8)))
     );
 }
 
