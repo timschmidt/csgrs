@@ -1163,6 +1163,20 @@ mod tests {
     }
 
     #[test]
+    fn log2_of_fractional_non_power_rational_matches_f64() {
+        for (numerator, denominator) in [(3_i64, 8_u64), (5, 12), (17, 1024)] {
+            let value = Real::new(Rational::fraction(numerator, denominator).unwrap())
+                .log2()
+                .unwrap();
+            assert_close(
+                value,
+                ((numerator as f64) / (denominator as f64)).log2(),
+                1e-12,
+            );
+        }
+    }
+
+    #[test]
     fn log2_of_negative_errors() {
         let negative = Real::new(Rational::new(-3));
         assert_eq!(negative.log2(), Err(Problem::NotANumber));
@@ -1204,6 +1218,30 @@ mod tests {
         let quotient = (numerator / denominator).unwrap();
         let expected = Real::new(Rational::new(5)).log2().unwrap();
         assert_eq!(quotient, expected);
+    }
+
+    #[test]
+    fn log2_ln_quotient_preserves_exact_scaled_logs() {
+        let numerator = Real::new(Rational::new(9)).ln().unwrap();
+        let denominator = Real::new(Rational::new(4)).ln().unwrap();
+        let quotient = (numerator / denominator).unwrap();
+        let expected = Real::new(Rational::new(3)).log2().unwrap();
+        assert_eq!(quotient, expected);
+
+        let numerator = Real::new(Rational::new(32)).ln().unwrap();
+        let denominator = Real::new(Rational::fraction(1, 2).unwrap()).ln().unwrap();
+        assert_eq!((numerator / denominator).unwrap(), Rational::new(-5));
+    }
+
+    #[test]
+    fn log2_ln_quotient_ignores_warmed_numerator_cache() {
+        let numerator = Real::new(Rational::new(5)).ln().unwrap();
+        let warmed = numerator.to_f64_approx().unwrap();
+        assert!((warmed - 5.0_f64.ln()).abs() < 1e-12);
+
+        let denominator = Real::new(Rational::new(2)).ln().unwrap();
+        let quotient = (numerator / denominator).unwrap();
+        assert_close(quotient, 5.0_f64.log2(), 1e-12);
     }
 
     fn assert_close(value: Real, expected: f64, tolerance: f64) {

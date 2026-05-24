@@ -544,7 +544,7 @@ impl Class {
                 Self::ln_computable(base).multiply(Self::ln_computable(&rationals::TEN).inverse())
             }
             Log2(base) => {
-                Self::ln_computable(base).multiply(Self::ln_computable(&*rationals::TWO).inverse())
+                Self::ln_computable(base).multiply(Self::ln_computable(&rationals::TWO).inverse())
             }
             SinPi(rational) => {
                 let argument =
@@ -1533,7 +1533,8 @@ impl Real {
                 Irrational => "scaled-computable",
                 Pi | PiPow(_) | PiInv | PiExp(_) | PiInvExp(_) | PiSqrt(_) | ConstProduct(_)
                 | ConstOffset(_) | ConstProductSqrt(_) | Sqrt(_) | Exp(_) | Ln(_) | LnAffine(_)
-                | LnProduct(_) | Log10(_) | Log2(_) | SinPi(_) | TanPi(_) => "symbolic-nonzero-scale",
+                | LnProduct(_) | Log10(_) | Log2(_) | SinPi(_) | TanPi(_) =>
+                    "symbolic-nonzero-scale",
             }
         );
 
@@ -3345,7 +3346,7 @@ impl Real {
 
         crate::trace_dispatch!("real", "log2", "rational-log2-special-form");
         let computable =
-            Class::ln_computable(&r).multiply(Class::ln_computable(&*rationals::TWO).inverse());
+            Class::ln_computable(&r).multiply(Class::ln_computable(&rationals::TWO).inverse());
         Ok(Self {
             rational: Rational::one(),
             class: Log2(r),

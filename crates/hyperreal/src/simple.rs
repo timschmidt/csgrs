@@ -280,7 +280,7 @@ impl Simple {
                 };
                 let mut value = first.value(names)?;
                 for operand in operands {
-                    value = value + operand.value(names)?;
+                    value += operand.value(names)?;
                 }
                 Ok(value)
             }
@@ -323,7 +323,7 @@ impl Simple {
                     let mut value: Real = self.operands.first().unwrap().value(names)?;
                     let operands = self.operands.iter().skip(1);
                     for operand in operands {
-                        value = value - (operand.value(names)?);
+                        value -= operand.value(names)?;
                     }
                     Ok(value)
                 }
@@ -353,7 +353,7 @@ impl Simple {
                 };
                 let mut value = first.value(names)?;
                 for operand in operands {
-                    value = value * operand.value(names)?;
+                    value *= operand.value(names)?;
                 }
                 Ok(value)
             }
@@ -703,6 +703,8 @@ mod tests {
             "(l 5)",
             "(log 5)",
             "(log10 5)",
+            "(log2 5)",
+            "(lg 5)",
             "(exp 5)",
             "(e 5)",
             "(sqrt 5)",
@@ -821,6 +823,28 @@ mod tests {
             assert!(result.is_integer(), "{case}");
             assert_eq!(format!("{result}"), "2", "{case}");
         }
+    }
+
+    #[test]
+    fn log2_aliases_parse_as_base2() {
+        let empty = HashMap::new();
+        for case in ["(log2 1024)", "(lg 1024)"] {
+            let xpr: Simple = case.parse().unwrap();
+            let result = xpr.evaluate(&empty).unwrap();
+            assert!(result.is_integer(), "{case}");
+            assert_eq!(format!("{result}"), "10", "{case}");
+        }
+    }
+
+    #[test]
+    fn log2_parser_rejects_bad_domain_and_arity() {
+        let empty = HashMap::new();
+
+        let negative: Simple = "(lg -1)".parse().unwrap();
+        assert_eq!(negative.evaluate(&empty), Err(Problem::NotANumber));
+
+        let wrong_arity: Simple = "(log2 2 4)".parse().unwrap();
+        assert_eq!(wrong_arity.evaluate(&empty), Err(Problem::ParseError));
     }
 
     #[test]
