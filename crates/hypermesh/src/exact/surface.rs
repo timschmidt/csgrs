@@ -4140,13 +4140,14 @@ pub fn arrange_coplanar_surface_multi_component_union(
 /// components, admits only cross-operand positive-length boundary contacts,
 /// rejects positive-area overlap and point-only connectivity, and then stitches
 /// exposed source boundary fragments into retained rings. Acceptance is now
-/// component-local: each contact-connected source group must replay as one
-/// outer loop with zero or more strict hole loops, at least one emitted
-/// component must retain a hole, and every component must satisfy exact area
-/// equality against the source loops that produced it. Disconnected annular
-/// groups are therefore materialized in one retained object, while point
-/// branches, positive-area overlap, and non-simple planar subdivisions remain
-/// outside this bounded path.
+/// component-local: each contact-connected source group, including the
+/// two-disk case where two nonconvex source sheets form one annulus, must
+/// replay as one outer loop with zero or more strict hole loops, at least one
+/// emitted component must retain a hole, and every component must satisfy
+/// exact area equality against the source loops that produced it.
+/// Disconnected annular groups are therefore materialized in one retained
+/// object, while point branches, positive-area overlap, and non-simple planar
+/// subdivisions remain outside this bounded path.
 ///
 /// The exposed-boundary traversal follows the Weiler-Atherton boundary
 /// fragment model (Weiler and Atherton, "Hidden Surface Removal Using Polygon
@@ -4193,7 +4194,7 @@ pub fn arrange_coplanar_surface_component_holed_union(
             mesh,
         )?);
     }
-    if components.len() < 3 {
+    if components.len() < 2 {
         return None;
     }
     let projection = components.first()?.projection;

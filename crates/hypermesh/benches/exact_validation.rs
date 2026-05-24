@@ -3656,6 +3656,24 @@ fn exact_boolean_coplanar_convex_surface_multi_union(c: &mut Criterion) {
             ValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
+        let two_disk_annular_union_left = ExactMesh::from_i64_triangles_with_policy(
+            &[
+                0, 4, 0, -4, 0, 0, 0, -4, 0, //
+                0, -2, 0, -2, 0, 0, 0, 2, 0,
+            ],
+            &[0, 1, 4, 0, 4, 5, 1, 2, 3, 1, 3, 4],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let two_disk_annular_union_right = ExactMesh::from_i64_triangles_with_policy(
+            &[
+                0, -4, 0, 4, 0, 0, 0, 4, 0, //
+                0, 2, 0, 2, 0, 0, 0, -2, 0,
+            ],
+            &[1, 2, 3, 1, 3, 4, 0, 1, 4, 0, 4, 5],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
 
         c.bench_function("exact_boolean_coplanar_convex_surface_multi_union", |b| {
             b.iter(|| {
@@ -3723,6 +3741,10 @@ fn exact_boolean_coplanar_convex_surface_multi_union(c: &mut Criterion) {
                         &disconnected_annular_union_left,
                         &disconnected_annular_union_right,
                     );
+                let two_disk_annular_arrangement = arrange_coplanar_surface_component_holed_union(
+                    &two_disk_annular_union_left,
+                    &two_disk_annular_union_right,
+                );
                 (
                     arrangement
                         .as_ref()
@@ -3874,6 +3896,16 @@ fn exact_boolean_coplanar_convex_surface_multi_union(c: &mut Criterion) {
                         .as_ref()
                         .map(|output| output.validate()),
                     disconnected_annular_arrangement,
+                    two_disk_annular_arrangement.as_ref().map(|output| {
+                        output.validate_union_against_sources(
+                            &two_disk_annular_union_left,
+                            &two_disk_annular_union_right,
+                        )
+                    }),
+                    two_disk_annular_arrangement
+                        .as_ref()
+                        .map(|output| output.validate()),
+                    two_disk_annular_arrangement,
                     hypermesh::exact::preflight_boolean_exact(
                         &left,
                         &right,

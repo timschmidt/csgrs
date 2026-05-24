@@ -1417,7 +1417,7 @@ fuzz_target!(|data: &[u8]| {
 
 #[cfg(feature = "exact-triangulation")]
 fn exercise_deterministic_case(selector: u8) {
-    match selector % 32 {
+    match selector % 33 {
         0 => exercise_partial_convex_union_boundary(),
         1 => exercise_face_interior_steiner_boundary(),
         2 => exercise_multi_component_coplanar_union(),
@@ -1449,6 +1449,7 @@ fn exercise_deterministic_case(selector: u8) {
         28 => exercise_decagon_full_face_adjacent_union(),
         29 => exercise_component_holed_coplanar_union(),
         30 => exercise_disconnected_component_holed_coplanar_union(),
+        31 => exercise_two_disk_component_holed_coplanar_union(),
         _ => exercise_nonrectangular_component_union_hull_coverage(),
     }
 }
@@ -2519,6 +2520,77 @@ fn exercise_disconnected_component_holed_coplanar_union() {
             ExactBoundaryBooleanPolicy::Reject,
         )
         .unwrap();
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn exercise_two_disk_component_holed_coplanar_union() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            0, 4, 0, -4, 0, 0, 0, -4, 0, //
+            0, -2, 0, -2, 0, 0, 0, 2, 0,
+        ],
+        &[
+            0, 1, 4, 0, 4, 5, //
+            1, 2, 3, 1, 3, 4,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("two-disk component-holed union left fixture must import");
+    let right = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            0, -4, 0, 4, 0, 0, 0, 4, 0, //
+            0, 2, 0, 2, 0, 0, 0, -2, 0,
+        ],
+        &[
+            1, 2, 3, 1, 3, 4, //
+            0, 1, 4, 0, 4, 5,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("two-disk component-holed union right fixture must import");
+
+    assert!(arrange_coplanar_surface_component_union(&left, &right).is_none());
+    assert!(arrange_coplanar_surface_multi_component_union(&left, &right).is_none());
+    assert!(arrange_coplanar_surface_point_touch_union(&left, &right).is_none());
+    let union = arrange_coplanar_surface_component_holed_union(&left, &right)
+        .expect("two nonconvex source disks should replay one annular union");
+    union.validate().unwrap();
+    union.validate_union_against_sources(&left, &right).unwrap();
+    assert_eq!(union.components.len(), 1);
+    assert_eq!(union.components[0].holes.len(), 1);
+
+    let mut filled_hole = union.clone();
+    filled_hole.components[0].holes.clear();
+    assert!(
+        filled_hole
+            .validate_union_against_sources(&left, &right)
+            .is_err()
+    );
+
+    let preflight = preflight_boolean_exact(&left, &right, ExactBooleanOperation::Union)
+        .expect("two-disk component-holed union preflight should classify shortcut");
+    preflight.validate().unwrap();
+    preflight.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
+    );
+
+    hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("two-disk component-holed union boolean should materialize")
+    .validate_operation_against_sources(
+        &left,
+        &right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
 }
 
 #[cfg(feature = "exact-triangulation")]
