@@ -5,10 +5,12 @@ use hypersolve::{
     BezierPowerBasisSubstitutionConfig, BezierPowerBasisSubstitutionStatus,
     BsplineKnotSpanSubstitutionConfig, BsplineKnotSpanSubstitutionStatus,
     CurveIntersectionResultantConfig, CurveIntersectionResultantStatus, CurveResultantParameter,
-    PolynomialCurvePoint2, PolynomialParametricCurve2, RationalBezierPowerBasisSubstitutionStatus,
-    RationalCurveControlPoint2, RationalParametricCurve2,
+    HomogeneousCurveControlPoint2, PolynomialCurvePoint2, PolynomialParametricCurve2,
+    RationalBezierPowerBasisSubstitutionStatus, RationalCurveControlPoint2,
+    RationalParametricCurve2,
     resultant_rational_parametric_curve_intersection, substitute_bezier_power_basis,
-    substitute_bspline_knot_span_power_basis, substitute_rational_bezier_power_basis,
+    substitute_bspline_knot_span_power_basis, substitute_nurbs_knot_span_power_basis,
+    substitute_rational_bezier_power_basis,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -76,6 +78,22 @@ fuzz_target!(|data: [i16; 4]| {
     assert_eq!(
         bspline.bezier_control_points,
         vec![point(x0, y0), point(x1, y1)]
+    );
+
+    let nurbs = substitute_nurbs_knot_span_power_basis(
+        &[weighted(x0, y0, w0), weighted(x1, y1, w1)],
+        &[real(0), real(0), real(1), real(1)],
+        1,
+        1,
+        BsplineKnotSpanSubstitutionConfig::default(),
+    );
+    assert_eq!(nurbs.status, BsplineKnotSpanSubstitutionStatus::Constructed);
+    assert_eq!(
+        nurbs.homogeneous_bezier_control_points,
+        vec![
+            HomogeneousCurveControlPoint2::new(real(x0 * w0), real(y0 * w0), real(w0)),
+            HomogeneousCurveControlPoint2::new(real(x1 * w1), real(y1 * w1), real(w1)),
+        ]
     );
 
     let height = i64::from((data[0] % 16).abs()) + 1;

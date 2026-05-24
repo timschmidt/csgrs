@@ -41,9 +41,10 @@ use hypersolve::{
     solve_sparse_linear_system_bareiss, solve_sparse_linear_system_bareiss_pattern_preserving,
     squared_distance_equation, subdivide_bernstein_univariate_polynomial_interval_roots,
     subresultant_chain_univariate_polynomials, substitute_bezier_power_basis,
-    substitute_bspline_knot_span_power_basis, substitute_rational_bezier_power_basis,
-    transform_algebraic_root_affine, transform_algebraic_root_mobius,
-    transform_algebraic_root_polynomial_image, transform_algebraic_roots_binary,
+    substitute_bspline_knot_span_power_basis, substitute_nurbs_knot_span_power_basis,
+    substitute_rational_bezier_power_basis, transform_algebraic_root_affine,
+    transform_algebraic_root_mobius, transform_algebraic_root_polynomial_image,
+    transform_algebraic_roots_binary,
 };
 
 fn r(value: i64) -> Real {
@@ -1286,6 +1287,23 @@ fn certification(c: &mut Criterion) {
         b.iter(|| {
             substitute_bspline_knot_span_power_basis(
                 &bspline_controls,
+                &bspline_knots,
+                2,
+                2,
+                BsplineKnotSpanSubstitutionConfig::default(),
+            )
+        })
+    });
+    let nurbs_controls = [
+        RationalCurveControlPoint2::new(r(0), r(0), r(1)),
+        RationalCurveControlPoint2::new(r(1), r(2), r(2)),
+        RationalCurveControlPoint2::new(r(3), r(2), r(2)),
+        RationalCurveControlPoint2::new(r(4), r(0), r(1)),
+    ];
+    c.bench_function("substitute_nurbs_knot_span_power_basis", |b| {
+        b.iter(|| {
+            substitute_nurbs_knot_span_power_basis(
+                &nurbs_controls,
                 &bspline_knots,
                 2,
                 2,
