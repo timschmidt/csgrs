@@ -178,15 +178,17 @@ pub use eval::{
     EvalError, EvaluationContext, ResidualEvaluation, context_from_problem, evaluate_residuals,
 };
 pub use failed_constraints::{
-    FailedConstraintPairRemovalProbe, FailedConstraintPairRemovalSearchReport,
-    FailedConstraintRemovalProbe, FailedConstraintRemovalSearchReport,
-    FailedConstraintRemovalStatus, FailedConstraintReport, FailedConstraintRow,
-    FailedConstraintSetRemovalProbe, FailedConstraintSetRemovalSearchReport,
+    FailedConstraintMinimalRemovalSearchReport, FailedConstraintPairRemovalProbe,
+    FailedConstraintPairRemovalSearchReport, FailedConstraintRemovalProbe,
+    FailedConstraintRemovalSearchReport, FailedConstraintRemovalStatus, FailedConstraintReport,
+    FailedConstraintRow, FailedConstraintSetRemovalProbe, FailedConstraintSetRemovalSearchReport,
     FailedConstraintStatus, diagnose_failed_constraints,
     diagnose_failed_constraints_from_certification, diagnose_failed_constraints_with_config,
-    search_failed_constraint_pair_removals, search_failed_constraint_pair_removals_with_config,
-    search_failed_constraint_set_removals, search_failed_constraint_set_removals_with_config,
-    search_failed_constraint_single_removals, search_failed_constraint_single_removals_with_config,
+    search_failed_constraint_minimal_removals,
+    search_failed_constraint_minimal_removals_with_config, search_failed_constraint_pair_removals,
+    search_failed_constraint_pair_removals_with_config, search_failed_constraint_set_removals,
+    search_failed_constraint_set_removals_with_config, search_failed_constraint_single_removals,
+    search_failed_constraint_single_removals_with_config,
 };
 pub use interval::{
     AffineIntervalError, AffineKrawczykReport, AffineKrawczykStatus, AffineKrawczykVariableStep,

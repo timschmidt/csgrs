@@ -39,14 +39,15 @@ use hypersolve::{
     prepare_sparse_linear_residual_system, project_sketch_point3_to_workplane2,
     regenerate_active_set_affine_candidate, replay_sketch_compatibility_fixture,
     replay_sparse_linear_residual_batch, report_lossy_adapter_only_candidate,
-    schedule_candidate_batch_predicates, search_failed_constraint_pair_removals,
-    search_failed_constraint_set_removals, search_failed_constraint_single_removals,
-    sketch_angle_builders, sketch_compatibility_fixtures, sketch_distance_builders,
-    sketch_incidence_builders, sketch_objective_builders, sketch_orientation_builders,
-    sketch_range_builders, sketch_symmetry_builders, sketch_tangency_builders,
-    solve_damped_least_squares, solve_direct_affine_equalities, solve_direct_affine_system,
-    solve_direct_univariate_quadratic_equalities, squared_distance_equation,
-    tangent_parallel_equation, tangent_same_direction_constraint, validate_equality_substitutions,
+    schedule_candidate_batch_predicates, search_failed_constraint_minimal_removals,
+    search_failed_constraint_pair_removals, search_failed_constraint_set_removals,
+    search_failed_constraint_single_removals, sketch_angle_builders, sketch_compatibility_fixtures,
+    sketch_distance_builders, sketch_incidence_builders, sketch_objective_builders,
+    sketch_orientation_builders, sketch_range_builders, sketch_symmetry_builders,
+    sketch_tangency_builders, solve_damped_least_squares, solve_direct_affine_equalities,
+    solve_direct_affine_system, solve_direct_univariate_quadratic_equalities,
+    squared_distance_equation, tangent_parallel_equation, tangent_same_direction_constraint,
+    validate_equality_substitutions,
 };
 
 fn real(value: i64) -> Real {
@@ -7023,6 +7024,50 @@ fn failed_constraint_set_removal_search_reports_bounded_cardinality_resolutions(
             .last()
             .expect("triple combination should be probed")
             .removal_status,
+        FailedConstraintRemovalStatus::ClearsAllBlockingRows
+    );
+}
+
+#[test]
+fn failed_constraint_minimal_removal_search_reports_first_clearing_cardinality() {
+    let y = Expr::symbol(SymbolId(0), "y");
+    let mut triple = Problem::default();
+    triple.add_variable("y", real(0));
+    triple.add_constraint(Constraint::equality(
+        "first triple miss",
+        y.clone() - Expr::int(1),
+    ));
+    triple.add_constraint(Constraint::equality(
+        "second triple miss",
+        y.clone() - Expr::int(2),
+    ));
+    triple.add_constraint(Constraint::equality("third triple miss", y - Expr::int(3)));
+
+    let pair_bound = search_failed_constraint_minimal_removals(
+        &PreparedProblem::new(&triple),
+        &context_from_problem(&triple),
+        2,
+    );
+    assert_eq!(pair_bound.original.blocking_rows, 3);
+    assert_eq!(pair_bound.max_cardinality, 2);
+    assert_eq!(pair_bound.minimal_cardinality, None);
+    assert_eq!(pair_bound.probes.len(), 6);
+    assert_eq!(pair_bound.clearing_removals, 0);
+    assert!(!pair_bound.has_minimal_removal_resolution());
+
+    let triple_bound = search_failed_constraint_minimal_removals(
+        &PreparedProblem::new(&triple),
+        &context_from_problem(&triple),
+        3,
+    );
+    assert_eq!(triple_bound.original.blocking_rows, 3);
+    assert_eq!(triple_bound.minimal_cardinality, Some(3));
+    assert_eq!(triple_bound.probes.len(), 1);
+    assert_eq!(triple_bound.clearing_removals, 1);
+    assert!(triple_bound.has_minimal_removal_resolution());
+    assert_eq!(triple_bound.probes[0].constraint_indices, vec![0, 1, 2]);
+    assert_eq!(
+        triple_bound.probes[0].removal_status,
         FailedConstraintRemovalStatus::ClearsAllBlockingRows
     );
 }

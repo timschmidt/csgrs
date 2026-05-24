@@ -34,12 +34,13 @@ use hypersolve::{
     represent_univariate_algebraic_roots, resultant_parametric_curve_intersection,
     resultant_rational_parametric_curve_intersection, resultant_univariate_polynomials,
     run_active_set_update_loop, schedule_candidate_batch_predicates,
-    schedule_univariate_resultant_pairs, search_failed_constraint_pair_removals,
-    search_failed_constraint_set_removals, search_failed_constraint_single_removals,
-    sketch_compatibility_fixtures, solve_damped_least_squares, solve_dense_linear_system_bareiss,
-    solve_direct_affine_system, solve_direct_univariate_quadratic_equalities,
-    solve_sparse_linear_system_bareiss, solve_sparse_linear_system_bareiss_pattern_preserving,
-    squared_distance_equation, subdivide_bernstein_univariate_polynomial_interval_roots,
+    schedule_univariate_resultant_pairs, search_failed_constraint_minimal_removals,
+    search_failed_constraint_pair_removals, search_failed_constraint_set_removals,
+    search_failed_constraint_single_removals, sketch_compatibility_fixtures,
+    solve_damped_least_squares, solve_dense_linear_system_bareiss, solve_direct_affine_system,
+    solve_direct_univariate_quadratic_equalities, solve_sparse_linear_system_bareiss,
+    solve_sparse_linear_system_bareiss_pattern_preserving, squared_distance_equation,
+    subdivide_bernstein_univariate_polynomial_interval_roots,
     subresultant_chain_univariate_polynomials, substitute_bezier_power_basis,
     substitute_bspline_knot_span_power_basis, substitute_nurbs_knot_span_power_basis,
     substitute_rational_bezier_power_basis, transform_algebraic_root_affine,
@@ -3210,6 +3211,15 @@ fn certification(c: &mut Criterion) {
     c.bench_function("search_failed_constraint_set_removals", |b| {
         b.iter(|| {
             search_failed_constraint_set_removals(
+                &failed_set_search_prepared,
+                &failed_set_search_context,
+                3,
+            )
+        })
+    });
+    c.bench_function("search_failed_constraint_minimal_removals", |b| {
+        b.iter(|| {
+            search_failed_constraint_minimal_removals(
                 &failed_set_search_prepared,
                 &failed_set_search_context,
                 3,

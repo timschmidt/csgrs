@@ -206,6 +206,30 @@ pub struct FailedConstraintSetRemovalSearchReport {
     pub clearing_removals: usize,
 }
 
+/// Deterministic bounded minimal clearing-set report.
+///
+/// This report is a bounded exact replay minimizer for failed-constraint
+/// displays. It searches blocking-row combinations by increasing cardinality
+/// and stops after the first cardinality with at least one clearing set. That
+/// makes the result minimal within `max_cardinality`, without claiming an
+/// unbounded global unsatisfiable core. Every probe reruns exact diagnostics,
+/// following Yap, "Towards Exact Geometric Computation," *Computational
+/// Geometry* 7.1-2 (1997), so the minimizer never trusts proposal labels.
+#[derive(Clone, Debug, PartialEq)]
+pub struct FailedConstraintMinimalRemovalSearchReport {
+    /// Original exact failed-constraint diagnostics.
+    pub original: FailedConstraintReport,
+    /// Maximum set cardinality requested by the caller.
+    pub max_cardinality: usize,
+    /// Minimal clearing cardinality found within the bound, if any.
+    pub minimal_cardinality: Option<usize>,
+    /// Probes at the minimal cardinality when a clearing set is found, or all
+    /// probed cardinalities up to the exhausted bound when none is found.
+    pub probes: Vec<FailedConstraintSetRemovalProbe>,
+    /// Number of minimal-cardinality probes whose removal clears all blocking rows.
+    pub clearing_removals: usize,
+}
+
 impl FailedConstraintReport {
     /// Returns true when any diagnostic row blocks accepting the candidate.
     pub fn has_blocking_rows(&self) -> bool {
@@ -239,6 +263,13 @@ impl FailedConstraintSetRemovalSearchReport {
     }
 }
 
+impl FailedConstraintMinimalRemovalSearchReport {
+    /// Return whether a bounded minimal clearing set was found.
+    pub fn has_minimal_removal_resolution(&self) -> bool {
+        self.minimal_cardinality.is_some()
+    }
+}
+
 /// Certify a candidate and emit exact failed-constraint diagnostics.
 pub fn diagnose_failed_constraints(
     prepared: &PreparedProblem<'_>,
@@ -257,7 +288,8 @@ pub fn diagnose_failed_constraints(
 /// This is deliberately a first-order failed-constraint search, not a full
 /// minimal unsat-core extractor. It gives UI and API callers a certified,
 /// deterministic candidate list for "try removing this one constraint" while
-/// leaving multi-row core minimization explicit future work.
+/// bounded multi-row minimization is handled by
+/// [`search_failed_constraint_minimal_removals`].
 pub fn search_failed_constraint_single_removals(
     prepared: &PreparedProblem<'_>,
     context: &EvaluationContext,
@@ -307,6 +339,85 @@ pub fn search_failed_constraint_set_removals(
         CandidateCertificationConfig::default(),
         CandidateCertificationConfig::default().min_precision,
     )
+}
+
+/// Search for minimal clearing blocking-row sets up to `max_cardinality`.
+///
+/// The search is bounded and cardinality-ordered. If no clearing set exists
+/// within the bound, the report contains every probe up to that bound and
+/// [`FailedConstraintMinimalRemovalSearchReport::minimal_cardinality`] is
+/// `None`. If a clearing set exists, only probes at the first clearing
+/// cardinality are retained in the final report.
+pub fn search_failed_constraint_minimal_removals(
+    prepared: &PreparedProblem<'_>,
+    context: &EvaluationContext,
+    max_cardinality: usize,
+) -> FailedConstraintMinimalRemovalSearchReport {
+    search_failed_constraint_minimal_removals_with_config(
+        prepared,
+        context,
+        max_cardinality,
+        CandidateCertificationConfig::default(),
+        CandidateCertificationConfig::default().min_precision,
+    )
+}
+
+/// Search for minimal clearing blocking-row sets with explicit certification
+/// and rank policies.
+pub fn search_failed_constraint_minimal_removals_with_config(
+    prepared: &PreparedProblem<'_>,
+    context: &EvaluationContext,
+    max_cardinality: usize,
+    certification_config: CandidateCertificationConfig,
+    rank_min_precision: i32,
+) -> FailedConstraintMinimalRemovalSearchReport {
+    let original = diagnose_failed_constraints_with_config(
+        prepared,
+        context,
+        certification_config,
+        rank_min_precision,
+    );
+    let blocking = original
+        .rows
+        .iter()
+        .filter(|row| row.status.blocks_candidate_acceptance())
+        .collect::<Vec<_>>();
+    let capped_cardinality = max_cardinality.min(blocking.len());
+    let mut exhausted_probes = Vec::new();
+    for size in 1..=capped_cardinality {
+        let mut selected = Vec::with_capacity(size);
+        let mut cardinality_probes = Vec::new();
+        let mut clearing_removals = 0;
+        collect_failed_constraint_set_removal_probes(
+            prepared,
+            context,
+            &blocking,
+            size,
+            0,
+            &mut selected,
+            certification_config,
+            rank_min_precision,
+            &mut cardinality_probes,
+            &mut clearing_removals,
+        );
+        if clearing_removals > 0 {
+            return FailedConstraintMinimalRemovalSearchReport {
+                original,
+                max_cardinality,
+                minimal_cardinality: Some(size),
+                probes: cardinality_probes,
+                clearing_removals,
+            };
+        }
+        exhausted_probes.extend(cardinality_probes);
+    }
+    FailedConstraintMinimalRemovalSearchReport {
+        original,
+        max_cardinality,
+        minimal_cardinality: None,
+        probes: exhausted_probes,
+        clearing_removals: 0,
+    }
 }
 
 /// Probe bounded blocking-row sets with explicit certification and rank
