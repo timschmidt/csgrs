@@ -35,6 +35,13 @@ doc = false
 bench = false
 
 [[bin]]
+name = "sketch_projected_point_line_distance_range"
+path = "fuzz_targets/sketch_projected_point_line_distance_range.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
 name = "sketch_projected_equal_length"
 path = "fuzz_targets/sketch_projected_equal_length.rs"
 test = false

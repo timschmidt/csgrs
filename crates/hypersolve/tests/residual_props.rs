@@ -2178,6 +2178,80 @@ proptest! {
     }
 
     #[test]
+    fn sketch_projected_point_line_distance_range_identity_workplane_matches_horizontal_bounds(
+        lx in -12_i16..=12,
+        ly in -12_i16..=12,
+        lz in -12_i16..=12,
+        length in 1_i16..=12,
+        distance in 0_i16..=12,
+        lower_slack in 0_i16..=8,
+        upper_slack in 0_i16..=8,
+        point_z_offset in -12_i16..=12,
+        line_z_offset in -12_i16..=12,
+    ) {
+        let lx = i64::from(lx);
+        let ly = i64::from(ly);
+        let lz = i64::from(lz);
+        let length = i64::from(length);
+        let distance = i64::from(distance);
+        let lower = (distance - i64::from(lower_slack)).max(0);
+        let upper = distance + i64::from(upper_slack);
+        let point_z_offset = i64::from(point_z_offset);
+        let line_z_offset = i64::from(line_z_offset);
+        let mut sketch = SketchSolveProblem::new();
+        let origin = sketch.add_point3d("origin", Real::from(0), Real::from(0), Real::from(0));
+        let normal = sketch.add_normal3d("normal", Real::from(1), Real::from(0), Real::from(0), Real::from(0));
+        let workplane = sketch.add_workplane("workplane", origin, normal);
+        let line_start = sketch.add_point3d("line start", Real::from(lx), Real::from(ly), Real::from(lz));
+        let line_end = sketch.add_point3d(
+            "line end",
+            Real::from(lx + length),
+            Real::from(ly),
+            Real::from(lz + line_z_offset),
+        );
+        let line = sketch.add_line_segment3("line", line_start, line_end);
+        let point = sketch.add_point3d(
+            "point",
+            Real::from(lx + length / 2),
+            Real::from(ly + distance),
+            Real::from(lz + point_z_offset),
+        );
+        let handle = sketch.add_projected_point_line_distance_range(
+            "projected point-line clearance window",
+            workplane,
+            point,
+            line,
+            Some(Real::from(lower)),
+            Some(Real::from(upper)),
+        );
+
+        let lowered = sketch.lower_to_problem();
+        let certification = certify_candidate(
+            &PreparedProblem::new(&lowered.problem),
+            &context_from_problem(&lowered.problem),
+        );
+        let forms = sketch.residual_forms_for_constraint(handle);
+
+        prop_assert_eq!(lowered.problem.constraints.len(), 3);
+        prop_assert!(lowered.all_generated());
+        prop_assert!(certification.all_satisfied());
+        prop_assert_eq!(
+            lowered.rows[0].strategy,
+            Some(SketchResidualStrategy::WorkplaneUnitQuaternion)
+        );
+        prop_assert_eq!(
+            lowered.rows[1].strategy,
+            Some(SketchResidualStrategy::BoundedSquaredProjectedPointLineDistance)
+        );
+        prop_assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+        prop_assert_eq!(forms.forms.len(), 3);
+        prop_assert_eq!(
+            forms.forms[1].kind,
+            SketchResidualFormKind::BoundedSquaredProjectedPointLineDistancePolynomial
+        );
+    }
+
+    #[test]
     fn sketch_projected_equal_length_lines3_identity_workplane_ignores_normal_offsets(
         ax in -12_i16..=12,
         ay in -12_i16..=12,

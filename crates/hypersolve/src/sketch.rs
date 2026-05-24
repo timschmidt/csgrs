@@ -481,6 +481,30 @@ pub enum SketchConstraintKind {
         /// Distance entity.
         distance: SketchEntityHandle,
     },
+    /// Bounded point-line distance after projection into a workplane.
+    ///
+    /// Bounds are exact projected distances from a 3D point to a 3D line
+    /// segment after both are interpreted in the retained workplane frame.
+    /// Lowering validates nonnegative ordered bounds, emits the workplane
+    /// unit-quaternion guard, and clears the projected line-length denominator:
+    /// `cross_uv^2 - lower^2*|line_uv|^2 >= 0` and
+    /// `cross_uv^2 - upper^2*|line_uv|^2 <= 0`. This follows Yap, "Towards
+    /// Exact Geometric Computation" (1997), by rejecting invalid bounds before
+    /// squaring and replaying polynomial predicates exactly. The frame uses
+    /// Shoemake's unit-quaternion rotation matrix from "Animating Rotation
+    /// with Quaternion Curves" (1985).
+    ProjectedPointLineDistanceRange {
+        /// Workplane entity that supplies origin and normal/quaternion.
+        workplane: SketchEntityHandle,
+        /// 3D point entity.
+        point: SketchEntityHandle,
+        /// 3D line segment entity.
+        line: SketchEntityHandle,
+        /// Optional exact lower projected point-line distance bound.
+        lower: Option<Real>,
+        /// Optional exact upper projected point-line distance bound.
+        upper: Option<Real>,
+    },
     /// Equality between two point-line distances after workplane projection.
     ///
     /// Lowering projects both 3D point/line pairs into the retained workplane
@@ -1166,6 +1190,8 @@ pub enum SketchResidualStrategy {
     SquaredProjectedDistance,
     /// Squared point-line distance after exact projection onto a workplane.
     SquaredProjectedPointLineDistance,
+    /// Squared projected point-line distance inequality with denominator clearing.
+    BoundedSquaredProjectedPointLineDistance,
     /// Squared equality between 3D line lengths after exact workplane projection.
     SquaredProjectedLineLengthEquality,
     /// Squared ratio between 3D line lengths after exact workplane projection.
@@ -1299,6 +1325,8 @@ pub enum SketchResidualFormKind {
     TrueProjectedDistanceProposal,
     /// Squared projected point-line distance polynomial proof row.
     SquaredProjectedPointLineDistancePolynomial,
+    /// Squared projected point-line distance range inequality proof row.
+    BoundedSquaredProjectedPointLineDistancePolynomial,
     /// Squared projected line-length equality polynomial proof row.
     SquaredProjectedLineLengthEqualityPolynomial,
     /// Squared projected line-length ratio polynomial proof row.
@@ -1882,6 +1910,26 @@ impl SketchSolveProblem {
         distance: SketchEntityHandle,
     ) -> SketchConstraintHandle {
         distance::projected_point_line_distance(self, name, workplane, point, line, distance).handle
+    }
+
+    /// Add a bounded workplane-projected point-line distance relation.
+    ///
+    /// Lowering validates exact nonnegative/ordered bounds before emitting the
+    /// workplane unit guard and denominator-cleared projected point-line
+    /// distance inequalities.
+    pub fn add_projected_point_line_distance_range(
+        &mut self,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        point: SketchEntityHandle,
+        line: SketchEntityHandle,
+        lower: Option<Real>,
+        upper: Option<Real>,
+    ) -> SketchConstraintHandle {
+        distance::projected_point_line_distance_range(
+            self, name, workplane, point, line, lower, upper,
+        )
+        .handle
     }
 
     /// Add a workplane-projected equal-length constraint for two 3D lines.
@@ -2845,6 +2893,82 @@ impl SketchSolveProblem {
                             residual: parts.signed_cross + scaled_distance,
                         },
                     ],
+                    diagnostics,
+                }
+            }
+            SketchConstraintKind::ProjectedPointLineDistanceRange {
+                workplane,
+                point,
+                line,
+                ref lower,
+                ref upper,
+            } => {
+                let mut diagnostics = Vec::new();
+                if !validate_distance_bounds_with_strategy(
+                    constraint,
+                    lower.as_ref(),
+                    upper.as_ref(),
+                    SketchResidualStrategy::BoundedSquaredProjectedPointLineDistance,
+                    &mut diagnostics,
+                ) {
+                    return SketchResidualFormsReport {
+                        constraint: handle,
+                        status: SketchResidualFormsStatus::InvalidInputs,
+                        forms: Vec::new(),
+                        diagnostics,
+                    };
+                }
+                let Some(parts) = self.projected_point_line_range_exprs(
+                    workplane,
+                    point,
+                    line,
+                    constraint,
+                    &mut diagnostics,
+                ) else {
+                    return SketchResidualFormsReport {
+                        constraint: handle,
+                        status: SketchResidualFormsStatus::InvalidInputs,
+                        forms: Vec::new(),
+                        diagnostics,
+                    };
+                };
+                let mut forms = Vec::new();
+                if lower.is_some() || upper.is_some() {
+                    forms.push(SketchResidualForm {
+                        kind: SketchResidualFormKind::WorkplaneUnitQuaternionPolynomial,
+                        role: SketchResidualFormRole::ExactProof,
+                        strategy: Some(SketchResidualStrategy::WorkplaneUnitQuaternion),
+                        residual: unit_quaternion_residual(&parts.quaternion),
+                    });
+                }
+                if let Some(lower) = lower {
+                    forms.push(SketchResidualForm {
+                        kind: SketchResidualFormKind::BoundedSquaredProjectedPointLineDistancePolynomial,
+                        role: SketchResidualFormRole::ExactProof,
+                        strategy: Some(
+                            SketchResidualStrategy::BoundedSquaredProjectedPointLineDistance,
+                        ),
+                        residual: parts.distance_numerator.clone()
+                            - Expr::real(lower.clone() * lower.clone())
+                                * parts.distance_denominator.clone(),
+                    });
+                }
+                if let Some(upper) = upper {
+                    forms.push(SketchResidualForm {
+                        kind: SketchResidualFormKind::BoundedSquaredProjectedPointLineDistancePolynomial,
+                        role: SketchResidualFormRole::ExactProof,
+                        strategy: Some(
+                            SketchResidualStrategy::BoundedSquaredProjectedPointLineDistance,
+                        ),
+                        residual: parts.distance_numerator
+                            - Expr::real(upper.clone() * upper.clone())
+                                * parts.distance_denominator,
+                    });
+                }
+                SketchResidualFormsReport {
+                    constraint: handle,
+                    status: SketchResidualFormsStatus::Generated,
+                    forms,
                     diagnostics,
                 }
             }
@@ -4208,6 +4332,82 @@ impl SketchSolveProblem {
                         - parts.distance.clone() * parts.distance * parts.distance_denominator,
                     SketchResidualStrategy::SquaredProjectedPointLineDistance,
                 );
+            }
+            SketchConstraintKind::ProjectedPointLineDistanceRange {
+                workplane,
+                point,
+                line,
+                ref lower,
+                ref upper,
+            } => {
+                // This range relation is the inequality analogue of
+                // projected point-line distance. Bounds are validated before
+                // squaring, and the projected line denominator is cleared
+                // exactly in both inequality rows. Yap (1997) keeps the
+                // candidate trust boundary at these exact predicates; the
+                // workplane frame remains Shoemake's quaternion polynomial.
+                if !validate_distance_bounds_with_strategy(
+                    constraint,
+                    lower.as_ref(),
+                    upper.as_ref(),
+                    SketchResidualStrategy::BoundedSquaredProjectedPointLineDistance,
+                    rows,
+                ) {
+                    return;
+                }
+                if lower.is_none() && upper.is_none() {
+                    rows.push(SketchGeneratedRow {
+                        constraint: constraint.handle,
+                        residual_index: None,
+                        name: constraint.name.clone(),
+                        strategy: Some(
+                            SketchResidualStrategy::BoundedSquaredProjectedPointLineDistance,
+                        ),
+                        status: SketchGeneratedRowStatus::ReferenceOnly,
+                    });
+                    return;
+                }
+                let Some(parts) =
+                    self.projected_point_line_range_exprs(workplane, point, line, constraint, rows)
+                else {
+                    return;
+                };
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} workplane unit", constraint.name),
+                    unit_quaternion_residual(&parts.quaternion),
+                    SketchResidualStrategy::WorkplaneUnitQuaternion,
+                );
+                if let Some(lower) = lower {
+                    self.push_residual_with_kind(
+                        problem,
+                        rows,
+                        constraint,
+                        format!("{} lower projected point-line distance", constraint.name),
+                        parts.distance_numerator.clone()
+                            - Expr::real(lower.clone() * lower.clone())
+                                * parts.distance_denominator.clone(),
+                        SketchResidualStrategy::BoundedSquaredProjectedPointLineDistance,
+                        ConstraintKind::GreaterOrEqual,
+                        Real::one(),
+                    );
+                }
+                if let Some(upper) = upper {
+                    self.push_residual_with_kind(
+                        problem,
+                        rows,
+                        constraint,
+                        format!("{} upper projected point-line distance", constraint.name),
+                        parts.distance_numerator
+                            - Expr::real(upper.clone() * upper.clone())
+                                * parts.distance_denominator,
+                        SketchResidualStrategy::BoundedSquaredProjectedPointLineDistance,
+                        ConstraintKind::LessOrEqual,
+                        Real::one(),
+                    );
+                }
             }
             SketchConstraintKind::ProjectedEqualLengthLines3 { workplane, a, b } => {
                 // This is the retained 3D/workplane equal-length package. The
@@ -5957,6 +6157,30 @@ impl SketchSolveProblem {
         Some((signed_cross.clone() * signed_cross, denominator))
     }
 
+    fn projected_point_line_range_exprs(
+        &self,
+        workplane: SketchEntityHandle,
+        point: SketchEntityHandle,
+        line: SketchEntityHandle,
+        constraint: &SketchConstraint,
+        rows: &mut Vec<SketchGeneratedRow>,
+    ) -> Option<ProjectedPointLineRangeExprs> {
+        let quaternion = self.workplane_quaternion(workplane, constraint, rows)?;
+        let (distance_numerator, distance_denominator) = self
+            .projected_point_line_distance_squared_parts(
+                point,
+                line,
+                &quaternion,
+                constraint,
+                rows,
+            )?;
+        Some(ProjectedPointLineRangeExprs {
+            quaternion,
+            distance_numerator,
+            distance_denominator,
+        })
+    }
+
     fn projected_equal_point_line_distances_exprs(
         &self,
         workplane: SketchEntityHandle,
@@ -6661,6 +6885,13 @@ struct ProjectedPointLineDistanceExprs {
     distance_denominator: Expr,
     signed_cross: Expr,
     distance: Expr,
+}
+
+#[derive(Clone, Debug)]
+struct ProjectedPointLineRangeExprs {
+    quaternion: [Expr; 4],
+    distance_numerator: Expr,
+    distance_denominator: Expr,
 }
 
 #[derive(Clone, Debug)]

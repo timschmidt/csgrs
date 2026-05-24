@@ -667,6 +667,39 @@ pub mod distance {
         }
     }
 
+    /// Add a bounded retained workplane-projected point-line distance relation.
+    ///
+    /// Bounds are exact projected point-line distances. Lowering validates
+    /// nonnegative ordered bounds and replays denominator-cleared inequalities
+    /// over `cross_uv^2` and `|line_uv|^2`, plus the workplane unit guard.
+    /// This follows Yap, "Towards Exact Geometric Computation" (1997), by
+    /// certifying semantic bounds before squaring; the retained frame is the
+    /// unit-quaternion construction of Shoemake (1985).
+    pub fn projected_point_line_distance_range(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        point: SketchEntityHandle,
+        line: SketchEntityHandle,
+        lower: Option<Real>,
+        upper: Option<Real>,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::ProjectedPointLineDistanceRange {
+            workplane,
+            point,
+            line,
+            lower,
+            upper,
+        };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Distance,
+            strategy: SketchResidualStrategy::BoundedSquaredProjectedPointLineDistance,
+            kind,
+        }
+    }
+
     /// Add a 2D line equal-length relation.
     ///
     /// Lowering compares squared segment lengths exactly. This is the
