@@ -577,6 +577,103 @@ fn sketch_cubic_line_tangent_lowers_exact_derivative_branch_rows() {
 }
 
 #[test]
+fn sketch_cubic_cubic_tangent_lowers_exact_derivative_branch_rows() {
+    let mut sketch = SketchSolveProblem::new();
+    let a0 = sketch.add_point2d("a0", real(0), real(0));
+    let a1 = sketch.add_point2d("a1", real(1), real(1));
+    let a2 = sketch.add_point2d("a2", real(2), real(2));
+    let join = sketch.add_point2d("join", real(3), real(3));
+    let b1 = sketch.add_point2d("b1", real(4), real(4));
+    let b2 = sketch.add_point2d("b2", real(5), real(5));
+    let b3 = sketch.add_point2d("b3", real(6), real(6));
+    let reverse1 = sketch.add_point2d("reverse1", real(2), real(2));
+    let reverse2 = sketch.add_point2d("reverse2", real(1), real(1));
+    let reverse3 = sketch.add_point2d("reverse3", real(0), real(0));
+    let first = sketch.add_cubic2("first", a0, a1, a2, join);
+    let second = sketch.add_cubic2("second", join, b1, b2, b3);
+    let opposite = sketch.add_cubic2("opposite", join, reverse1, reverse2, reverse3);
+    let t_end = sketch.add_parameter("t_end", real(1));
+    let t_start = sketch.add_parameter("t_start", real(0));
+    let valid = sketch_tangency_builders::cubic_cubic_tangent2(
+        &mut sketch,
+        "cubic cubic tangent",
+        first,
+        t_end,
+        second,
+        t_start,
+    );
+    sketch.add_cubic_cubic_tangent2("opposite cubic tangent", first, t_end, opposite, t_start);
+
+    assert_eq!(valid.family, hypersolve::SketchConstraintFamily::Tangency);
+    assert_eq!(valid.strategy, SketchResidualStrategy::CubicCubicTangent);
+
+    let lowered = sketch.lower_to_problem();
+    let certification = certify_candidate(
+        &PreparedProblem::new(&lowered.problem),
+        &context_from_problem(&lowered.problem),
+    );
+    let forms = sketch.residual_forms_for_constraint(valid.handle);
+    let context = context_from_problem(&lowered.problem);
+
+    assert_eq!(lowered.problem.constraints.len(), 8);
+    assert_eq!(lowered.rows.len(), 8);
+    assert!(lowered.rows.iter().all(|row| {
+        row.strategy == Some(SketchResidualStrategy::CubicCubicTangent)
+            && row.status == SketchGeneratedRowStatus::Generated
+    }));
+    assert!(matches!(
+        certification.rows[0].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[1].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[2].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[3].status,
+        CertifiedCandidateStatus::CertifiedSatisfiedInequality { .. }
+    ));
+    assert!(matches!(
+        certification.rows[7].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
+    assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+    assert!(forms.diagnostics.is_empty());
+    assert_eq!(forms.forms.len(), 4);
+    assert_eq!(
+        forms.forms[0].kind,
+        SketchResidualFormKind::CubicCubicTangentPointIncidencePolynomial
+    );
+    assert_eq!(
+        forms.forms[2].kind,
+        SketchResidualFormKind::CubicCubicTangentCrossProductPredicate
+    );
+    assert_eq!(
+        forms.forms[3].kind,
+        SketchResidualFormKind::CubicCubicTangentDotProductPredicate
+    );
+    for form in &forms.forms[..3] {
+        assert_eq!(
+            form.residual.eval_real(context.bindings()).unwrap(),
+            Real::zero()
+        );
+    }
+    assert_eq!(
+        forms.forms[3]
+            .residual
+            .eval_real(context.bindings())
+            .unwrap()
+            .structural_facts()
+            .sign,
+        Some(hyperreal::RealSign::Positive)
+    );
+}
+
+#[test]
 fn sketch_equal_angle_constraints_retain_exact_and_proposal_residual_forms() {
     let mut sketch = SketchSolveProblem::new();
     let origin = sketch.add_point2d("origin", real(0), real(0));
@@ -830,6 +927,16 @@ fn sketch_residual_form_reports_reject_unsupported_and_bad_inputs() {
     );
     assert!(bad_cubic_tangent_forms.forms.is_empty());
     assert!(!bad_cubic_tangent_forms.diagnostics.is_empty());
+    let bad_cubic_cubic_tangent =
+        sketch.add_cubic_cubic_tangent2("bad cubic cubic", distance, t, distance, t);
+    let bad_cubic_cubic_tangent_forms =
+        sketch.residual_forms_for_constraint(bad_cubic_cubic_tangent);
+    assert_eq!(
+        bad_cubic_cubic_tangent_forms.status,
+        SketchResidualFormsStatus::InvalidInputs
+    );
+    assert!(bad_cubic_cubic_tangent_forms.forms.is_empty());
+    assert!(!bad_cubic_cubic_tangent_forms.diagnostics.is_empty());
     let bad_angle_forms = sketch.residual_forms_for_constraint(bad_angle.handle);
     assert_eq!(
         bad_angle_forms.status,

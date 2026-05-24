@@ -204,6 +204,38 @@ pub mod tangency {
             kind,
         }
     }
+
+    /// Add a retained 2D cubic-Bezier/cubic-Bezier tangent relation.
+    ///
+    /// The two curve points `B_a(t_a)` and `B_b(t_b)` are constrained to
+    /// coincide, and the exact derivatives are constrained to have common
+    /// support and the same orientation branch. This is the curve/curve
+    /// analogue of G1 tangency: no sampled nearest point, derivative
+    /// normalization, or primitive-float angle is trusted as evidence. The
+    /// package follows Yap's "Towards Exact Geometric Computation" (1997) and
+    /// Farin's Bernstein derivative construction.
+    pub fn cubic_cubic_tangent2(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        first: SketchEntityHandle,
+        first_parameter: SketchParameterHandle,
+        second: SketchEntityHandle,
+        second_parameter: SketchParameterHandle,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::CubicCubicTangent2 {
+            first,
+            first_parameter,
+            second,
+            second_parameter,
+        };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Tangency,
+            strategy: SketchResidualStrategy::CubicCubicTangent,
+            kind,
+        }
+    }
 }
 
 /// Incidence and positional relation builders.
