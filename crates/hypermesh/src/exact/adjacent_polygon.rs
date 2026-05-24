@@ -88,6 +88,43 @@ pub(crate) fn polygon_patch_pairs(
     Some(pairs)
 }
 
+/// Internal fuzz hook for source-disk full-face adjacency discovery.
+///
+/// This is intentionally available only under `internal-fuzzing`. It lets the
+/// fuzz crate exercise the exact object replay boundary described by Yap,
+/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+/// (1997), without making the private polygon-patch candidate model part of the
+/// stable hypermesh API.
+#[cfg(feature = "internal-fuzzing")]
+#[doc(hidden)]
+pub fn polygon_patch_pairs_for_internal_fuzz(
+    left: &ExactMesh,
+    consumed_left_faces: &BTreeSet<usize>,
+    right: &ExactMesh,
+    consumed_right_faces: &BTreeSet<usize>,
+) -> Option<Vec<(Vec<usize>, Vec<usize>)>> {
+    polygon_patch_pairs(left, consumed_left_faces, right, consumed_right_faces)
+}
+
+/// Internal fuzz hook returning only candidate face sets.
+///
+/// The hook deliberately strips geometry from the result so fuzz assertions can
+/// check bounded-certificate invariants without depending on private candidate
+/// fields or serializing exact coordinates.
+#[cfg(feature = "internal-fuzzing")]
+#[doc(hidden)]
+pub fn polygon_patch_candidate_face_sets_for_internal_fuzz(
+    mesh: &ExactMesh,
+    consumed_faces: &BTreeSet<usize>,
+) -> Option<Vec<Vec<usize>>> {
+    Some(
+        polygon_patch_candidates(mesh, consumed_faces)?
+            .into_iter()
+            .map(|candidate| candidate.faces)
+            .collect(),
+    )
+}
+
 fn polygon_patch_candidates(
     mesh: &ExactMesh,
     consumed_faces: &BTreeSet<usize>,
@@ -593,6 +630,7 @@ mod tests {
 
     use super::*;
     use crate::exact::ValidationPolicy;
+    use proptest::prelude::*;
 
     fn open_mesh(points: &[[i64; 3]], triangles: &[usize]) -> ExactMesh {
         let mut coordinates = Vec::with_capacity(points.len() * 3);
@@ -607,19 +645,52 @@ mod tests {
         .unwrap()
     }
 
-    #[test]
-    fn polygon_patch_pairs_find_subpatch_not_rooted_at_component_minimum() {
+    fn shifted_square_subpatch_pair(
+        prefix: i64,
+        width: i64,
+        height: i64,
+    ) -> (ExactMesh, ExactMesh) {
         let left = open_mesh(
-            &[[0, 0, 0], [1, 0, 0], [5, 0, 0], [5, 4, 0], [1, 4, 0]],
+            &[
+                [0, 0, 0],
+                [prefix, 0, 0],
+                [prefix + width, 0, 0],
+                [prefix + width, height, 0],
+                [prefix, height, 0],
+            ],
             &[
                 0, 4, 1, //
                 1, 4, 2, 2, 4, 3,
             ],
         );
         let right = open_mesh(
-            &[[1, 0, 0], [5, 0, 0], [5, 4, 0], [1, 4, 0]],
+            &[
+                [prefix, 0, 0],
+                [prefix + width, 0, 0],
+                [prefix + width, height, 0],
+                [prefix, height, 0],
+            ],
             &[0, 1, 2, 0, 2, 3],
         );
+        (left, right)
+    }
+
+    fn oversized_component_fan(face_count: usize) -> ExactMesh {
+        let mut points = Vec::new();
+        points.push([0, 0, 0]);
+        for index in 0..=face_count {
+            points.push([index as i64, 1, 0]);
+        }
+        let mut triangles = Vec::new();
+        for index in 1..points.len() - 1 {
+            triangles.extend([0, index, index + 1]);
+        }
+        open_mesh(&points, &triangles)
+    }
+
+    #[test]
+    fn polygon_patch_pairs_find_subpatch_not_rooted_at_component_minimum() {
+        let (left, right) = shifted_square_subpatch_pair(1, 4, 4);
 
         let pairs = polygon_patch_pairs(&left, &BTreeSet::new(), &right, &BTreeSet::new())
             .expect("bounded source-disk candidates should be available");
@@ -629,16 +700,7 @@ mod tests {
 
     #[test]
     fn polygon_patch_candidates_do_not_emit_unbounded_whole_components() {
-        let mut points = Vec::new();
-        points.push([0, 0, 0]);
-        for index in 0..=MAX_POLYGON_PATCH_COMPONENT_FACES + 1 {
-            points.push([index as i64, 1, 0]);
-        }
-        let mut triangles = Vec::new();
-        for index in 1..points.len() - 1 {
-            triangles.extend([0, index, index + 1]);
-        }
-        let mesh = open_mesh(&points, &triangles);
+        let mesh = oversized_component_fan(MAX_POLYGON_PATCH_COMPONENT_FACES + 1);
         let candidates = polygon_patch_candidates(&mesh, &BTreeSet::new())
             .expect("bounded subpatch candidates should still be searched");
 
@@ -647,5 +709,37 @@ mod tests {
                 .iter()
                 .all(|candidate| candidate.faces.len() <= MAX_POLYGON_PATCH_ENUMERATION_FACES)
         );
+    }
+
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(32))]
+
+        #[test]
+        fn generated_subpatch_excluding_component_minimum_is_still_found(
+            prefix in 1_i64..24,
+            width in 2_i64..24,
+            height in 2_i64..24,
+        ) {
+            let (left, right) = shifted_square_subpatch_pair(prefix, width, height);
+            let pairs = polygon_patch_pairs(&left, &BTreeSet::new(), &right, &BTreeSet::new())
+                .expect("bounded source-disk candidates should be available");
+
+            prop_assert_eq!(pairs, vec![(vec![1, 2], vec![0, 1])]);
+        }
+
+        #[test]
+        fn generated_oversized_components_remain_bounded(
+            extra_faces in 1_usize..12,
+        ) {
+            let mesh = oversized_component_fan(MAX_POLYGON_PATCH_COMPONENT_FACES + extra_faces);
+            let candidates = polygon_patch_candidates(&mesh, &BTreeSet::new())
+                .expect("bounded subpatch candidates should still be searched");
+
+            prop_assert!(
+                candidates
+                    .iter()
+                    .all(|candidate| candidate.faces.len() <= MAX_POLYGON_PATCH_ENUMERATION_FACES)
+            );
+        }
     }
 }

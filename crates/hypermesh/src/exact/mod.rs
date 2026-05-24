@@ -76,6 +76,10 @@ pub use adjacent::{
     FullFaceAdjacentFacePair, FullFaceAdjacentPatch, FullFaceAdjacentUnion,
     FullFaceAdjacentUnionError, has_full_face_adjacent_union, materialize_full_face_adjacent_union,
 };
+#[cfg(all(feature = "exact-triangulation", feature = "internal-fuzzing"))]
+pub use adjacent_polygon::{
+    polygon_patch_candidate_face_sets_for_internal_fuzz, polygon_patch_pairs_for_internal_fuzz,
+};
 #[cfg(feature = "exact-triangulation")]
 pub use affine_box::{
     AffineBoxArrangement, AffineBoxBasis, AffineBoxOperation, has_affine_box_difference,

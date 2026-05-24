@@ -10,7 +10,7 @@ cargo-fuzz = true
 [dependencies]
 # Hyper sibling dependency switch: keep both local path and crates.io lines; do not remove either.
 # Development mode uses the local path lines. For release, comment those and uncomment the crates.io lines.
-hypermesh = { path = "..", default-features = false, features = ["exact"] }
+hypermesh = { path = "..", default-features = false, features = ["exact", "internal-fuzzing"] }
 hyperlimit = { path = "../../hyperlimit", optional = true }
 hypertri = { path = "../../hypertri", default-features = false, optional = true }
 # hypermesh = { version = "0.3.0", default-features = false, features = ["exact"] }
@@ -52,6 +52,14 @@ bench = false
 [[bin]]
 name = "exact_boolean_preflight"
 path = "fuzz_targets/exact_boolean_preflight.rs"
+test = false
+doc = false
+bench = false
+required-features = ["exact-triangulation"]
+
+[[bin]]
+name = "exact_adjacent_polygon"
+path = "fuzz_targets/exact_adjacent_polygon.rs"
 test = false
 doc = false
 bench = false
