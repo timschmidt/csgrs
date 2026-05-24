@@ -108,7 +108,8 @@ use super::surface::{
     arrange_coplanar_convex_surface_multi_holed_difference,
     arrange_coplanar_convex_surface_multi_intersection,
     arrange_coplanar_convex_surface_multi_union, arrange_coplanar_convex_surface_union,
-    arrange_coplanar_surface_component_intersection, arrange_coplanar_surface_component_union,
+    arrange_coplanar_surface_component_difference, arrange_coplanar_surface_component_intersection,
+    arrange_coplanar_surface_component_union,
     arrange_coplanar_surface_cutter_hole_contact_difference,
     arrange_coplanar_surface_multi_component_intersection,
     arrange_coplanar_surface_multi_component_union, arrange_coplanar_surface_multi_difference,
@@ -451,6 +452,11 @@ pub fn preflight_boolean_exact(
             if arrange_coplanar_convex_surface_multi_difference(left, right).is_some() =>
         {
             ExactBooleanSupport::CertifiedCoplanarConvexSurfaceMultiDifference
+        }
+        ExactBooleanOperation::Difference
+            if arrange_coplanar_surface_component_difference(left, right).is_some() =>
+        {
+            ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementDifference
         }
         ExactBooleanOperation::Difference
             if arrange_coplanar_surface_multi_difference(left, right).is_some() =>
@@ -1448,6 +1454,11 @@ pub fn boolean_exact_with_boundary_policy(
             boolean_coplanar_convex_multi_difference(left, right, validation)
         }
         ExactBooleanOperation::Difference
+            if arrange_coplanar_surface_component_difference(left, right).is_some() =>
+        {
+            boolean_coplanar_component_difference(left, right, validation)
+        }
+        ExactBooleanOperation::Difference
             if arrange_coplanar_surface_multi_difference(left, right).is_some() =>
         {
             boolean_coplanar_multi_difference(left, right, validation)
@@ -1969,6 +1980,26 @@ fn boolean_coplanar_multi_difference(
     Ok(certified_shortcut_result(
         mesh,
         ExactBooleanShortcutKind::CoplanarSurfaceMultiDifference,
+    ))
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn boolean_coplanar_component_difference(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    validation: ValidationPolicy,
+) -> Result<ExactBooleanResult, MeshError> {
+    let difference = arrange_coplanar_surface_component_difference(left, right)
+        .expect("caller checked coplanar nonconvex component difference");
+    difference.validate_component_difference_against_sources(left, right)?;
+    let mesh = copy_mesh(
+        &difference.mesh,
+        "exact coplanar nonconvex component difference",
+        validation,
+    )?;
+    Ok(certified_shortcut_result(
+        mesh,
+        ExactBooleanShortcutKind::CoplanarSurfaceArrangementDifference,
     ))
 }
 
@@ -3630,6 +3661,7 @@ fn coplanar_surface_output_already_materialized(
         ExactBooleanOperation::Difference => {
             arrange_coplanar_convex_surface_difference(left, right).is_some()
                 || arrange_coplanar_convex_surface_multi_difference(left, right).is_some()
+                || arrange_coplanar_surface_component_difference(left, right).is_some()
                 || arrange_coplanar_surface_multi_difference(left, right).is_some()
                 || arrange_coplanar_surface_cutter_hole_contact_difference(left, right).is_some()
                 || arrange_coplanar_convex_surface_holed_difference(left, right).is_some()

@@ -16,7 +16,8 @@ use hypermesh::exact::{
     arrange_coplanar_convex_surface_multi_union, arrange_coplanar_convex_surface_union,
     arrange_coplanar_orthogonal_surface_difference,
     arrange_coplanar_orthogonal_surface_intersection, arrange_coplanar_orthogonal_surface_union,
-    arrange_coplanar_surface_component_intersection, arrange_coplanar_surface_component_union,
+    arrange_coplanar_surface_component_difference, arrange_coplanar_surface_component_intersection,
+    arrange_coplanar_surface_component_union,
     arrange_coplanar_surface_cutter_hole_contact_difference,
     arrange_coplanar_surface_multi_component_intersection,
     arrange_coplanar_surface_multi_component_union, arrange_coplanar_surface_multi_difference,
@@ -4389,6 +4390,30 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
             ValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
+        let component_opening_left = ExactMesh::from_i64_triangles_with_policy(
+            &[
+                0, 0, 0, 4, 0, 0, 4, 4, 0, 0, 4, 0, //
+                10, 0, 0, 12, 0, 0, 12, 2, 0, 10, 2, 0,
+            ],
+            &[
+                0, 1, 2, 0, 2, 3, //
+                4, 5, 6, 4, 6, 7,
+            ],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let component_opening_right = ExactMesh::from_i64_triangles_with_policy(
+            &[
+                2, 2, 0, 6, 2, 0, 6, 6, 0, 2, 6, 0, //
+                10, 0, 0, 12, 0, 0, 12, 2, 0, 10, 2, 0,
+            ],
+            &[
+                0, 1, 2, 0, 2, 3, //
+                4, 5, 6, 4, 6, 7,
+            ],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
         let affine_contact_left = ExactMesh::from_i64_triangles_with_policy(
             &[0, 0, 0, 20, 4, 0, 18, 18, 0, -2, 14, 0],
             &[0, 1, 2, 0, 2, 3],
@@ -5175,6 +5200,29 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
                         hypermesh::exact::boolean_exact(
                             &contact_opening_holed_left,
                             &side_cutter_no_hole_right,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                            ValidationPolicy::ALLOW_BOUNDARY,
+                        )
+                        .unwrap(),
+                        arrange_coplanar_surface_component_difference(
+                            &component_opening_left,
+                            &component_opening_right,
+                        )
+                        .map(|output| {
+                            output.validate_component_difference_against_sources(
+                                &component_opening_left,
+                                &component_opening_right,
+                            )
+                        }),
+                        hypermesh::exact::preflight_boolean_exact(
+                            &component_opening_left,
+                            &component_opening_right,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                        )
+                        .map(|report| report.validate()),
+                        hypermesh::exact::boolean_exact(
+                            &component_opening_left,
+                            &component_opening_right,
                             hypermesh::exact::ExactBooleanOperation::Difference,
                             ValidationPolicy::ALLOW_BOUNDARY,
                         )

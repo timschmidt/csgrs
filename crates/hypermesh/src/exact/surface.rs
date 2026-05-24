@@ -1847,6 +1847,38 @@ impl CoplanarSurfaceArrangement {
         }
     }
 
+    /// Validate this nonconvex component-difference loop against its sources.
+    ///
+    /// This replay is intentionally narrower than arbitrary planar
+    /// subtraction: it rebuilds the exact connected source components, drops
+    /// wholly covered components, and then requires the one retained nonconvex
+    /// remnant to match this loop and triangulation exactly. Keeping that
+    /// construction history attached to the artifact is the certified-object
+    /// boundary required by Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7.1-2 (1997).
+    pub fn validate_component_difference_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<(), MeshError> {
+        self.validate()?;
+        let replay =
+            arrange_coplanar_surface_component_difference(left, right).ok_or_else(|| {
+                surface_validation_error(
+                    "coplanar nonconvex simple-loop arrangement",
+                    "source replay did not reproduce a component-difference loop",
+                )
+            })?;
+        if self == &replay {
+            Ok(())
+        } else {
+            Err(surface_validation_error(
+                "coplanar nonconvex simple-loop arrangement",
+                "retained component difference does not match source replay",
+            ))
+        }
+    }
+
     /// Validate this nonconvex simple-loop intersection against its sources.
     ///
     /// Source replay recomputes the exact pairwise triangle clips, the
@@ -4641,6 +4673,98 @@ pub fn arrange_coplanar_surface_multi_difference(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Option<CoplanarSurfaceMultiArrangement> {
+    let (projection, polygons) = coplanar_surface_difference_polygons(left, right)?;
+    if polygons.len() < 2 {
+        return None;
+    }
+    if polygons.iter().all(|polygon| {
+        validate_projected_strictly_convex_loop(
+            polygon,
+            projection,
+            "coplanar nonconvex multi-component difference",
+        )
+        .is_ok()
+    }) {
+        return None;
+    }
+    let mesh = polygons_to_earcut_open_mesh_with_label(
+        &polygons,
+        projection,
+        "exact coplanar nonconvex multi-component arrangement",
+    )?;
+    let arrangement = CoplanarSurfaceMultiArrangement {
+        projection,
+        polygons,
+        mesh,
+    };
+    arrangement.validate().ok()?;
+    Some(arrangement)
+}
+
+/// Certify a nonconvex single-loop coplanar component difference.
+///
+/// This is the single-output counterpart to
+/// [`arrange_coplanar_surface_multi_difference`]. It covers the bounded case
+/// where source topology has several left components, exact component replay
+/// deletes some components completely, and the only retained component is a
+/// nonconvex simple loop produced by the existing cutter/remnant certificates.
+/// The shortcut deliberately refuses cases already handled by
+/// [`arrange_single_triangle_coplanar_difference`],
+/// [`arrange_coplanar_convex_surface_difference`], and
+/// [`arrange_coplanar_surface_cutter_hole_contact_difference`] or
+/// [`arrange_coplanar_surface_side_cutter_difference`], and it still rejects
+/// holes, point-only branch contacts, and multiple retained loops.
+///
+/// The loop is promoted only after exact source-component replay and retained
+/// area/topology checks, following Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997). The boundary
+/// construction underneath is the Weiler-Atherton retained-fragment model
+/// cited by the multi-difference path.
+#[cfg(feature = "exact-triangulation")]
+pub fn arrange_coplanar_surface_component_difference(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Option<CoplanarSurfaceArrangement> {
+    if arrange_single_triangle_coplanar_difference(left, right).is_some()
+        || arrange_coplanar_convex_surface_difference(left, right).is_some()
+        || arrange_coplanar_surface_cutter_hole_contact_difference(left, right).is_some()
+        || arrange_coplanar_surface_side_cutter_difference(left, right).is_some()
+    {
+        return None;
+    }
+    let (projection, mut polygons) = coplanar_surface_difference_polygons(left, right)?;
+    if polygons.len() != 1 {
+        return None;
+    }
+    let polygon = polygons.pop()?;
+    if validate_projected_strictly_convex_loop(
+        &polygon,
+        projection,
+        "coplanar nonconvex component difference",
+    )
+    .is_ok()
+    {
+        return None;
+    }
+    let mesh = polygon_to_earcut_open_mesh_with_label(
+        &polygon,
+        projection,
+        "exact coplanar nonconvex component difference",
+    )?;
+    let arrangement = CoplanarSurfaceArrangement {
+        projection,
+        polygon,
+        mesh,
+    };
+    arrangement.validate().ok()?;
+    Some(arrangement)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn coplanar_surface_difference_polygons(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Option<(CoplanarProjection, Vec<Vec<Point3>>)> {
     let left_components = connected_face_component_meshes(left)?;
     let right_components = connected_face_component_meshes(right)
         .or_else(|| triangle_piece_component_meshes(right))?;
@@ -4827,9 +4951,6 @@ pub fn arrange_coplanar_surface_multi_difference(
             }
         }
     }
-    if polygons.len() < 2 {
-        return None;
-    }
     for polygon in &mut polygons {
         orient_polygon_ccw(polygon, projection)?;
     }
@@ -4840,28 +4961,7 @@ pub fn arrange_coplanar_surface_multi_difference(
         "coplanar nonconvex multi-component difference",
     )
     .ok()?;
-    if polygons.iter().all(|polygon| {
-        validate_projected_strictly_convex_loop(
-            polygon,
-            projection,
-            "coplanar nonconvex multi-component difference",
-        )
-        .is_ok()
-    }) {
-        return None;
-    }
-    let mesh = polygons_to_earcut_open_mesh_with_label(
-        &polygons,
-        projection,
-        "exact coplanar nonconvex multi-component arrangement",
-    )?;
-    let arrangement = CoplanarSurfaceMultiArrangement {
-        projection,
-        polygons,
-        mesh,
-    };
-    arrangement.validate().ok()?;
-    Some(arrangement)
+    Some((projection, polygons))
 }
 
 /// Certify a side-cutter-only nonconvex coplanar difference.

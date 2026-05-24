@@ -19,7 +19,7 @@ use hypermesh::exact::{
     arrange_coplanar_convex_surface_multi_union, arrange_coplanar_convex_surface_union,
     arrange_coplanar_orthogonal_surface_difference,
     arrange_coplanar_orthogonal_surface_intersection, arrange_coplanar_orthogonal_surface_union,
-    arrange_coplanar_surface_component_intersection,
+    arrange_coplanar_surface_component_difference, arrange_coplanar_surface_component_intersection,
     arrange_coplanar_surface_component_union, arrange_coplanar_surface_cutter_hole_contact_difference,
     arrange_coplanar_surface_multi_component_intersection,
     arrange_coplanar_surface_multi_component_union, arrange_coplanar_surface_multi_difference,
@@ -3216,6 +3216,72 @@ fn exercise_component_coplanar_difference() {
         nonconvex_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
     );
+
+    let component_opening_left = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            0, 0, 0, 4, 0, 0, 4, 4, 0, 0, 4, 0, //
+            10, 0, 0, 12, 0, 0, 12, 2, 0, 10, 2, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("component-opening left fixture must import");
+    let component_opening_right = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            2, 2, 0, 6, 2, 0, 6, 6, 0, 2, 6, 0, //
+            10, 0, 0, 12, 0, 0, 12, 2, 0, 10, 2, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("component-opening right fixture must import");
+    assert!(
+        arrange_coplanar_surface_multi_difference(&component_opening_left, &component_opening_right)
+            .is_none()
+    );
+    let component_opening =
+        arrange_coplanar_surface_component_difference(&component_opening_left, &component_opening_right)
+            .expect("single retained nonconvex remnant should materialize");
+    component_opening.validate().unwrap();
+    component_opening
+        .validate_component_difference_against_sources(
+            &component_opening_left,
+            &component_opening_right,
+        )
+        .unwrap();
+    let component_opening_preflight = preflight_boolean_exact(
+        &component_opening_left,
+        &component_opening_right,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("component-opening preflight should classify single-loop shortcut");
+    component_opening_preflight.validate().unwrap();
+    assert_eq!(
+        component_opening_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementDifference
+    );
+    let component_opening_result = hypermesh::exact::boolean_exact(
+        &component_opening_left,
+        &component_opening_right,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("component-opening difference should materialize");
+    component_opening_result
+        .validate_operation_against_sources(
+            &component_opening_left,
+            &component_opening_right,
+            ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
 
     let partial_height_cutters = ExactMesh::from_i64_triangles_with_policy(
         &[
