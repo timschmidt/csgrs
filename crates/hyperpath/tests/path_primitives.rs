@@ -2,16 +2,17 @@ use hyperlimit::{Point2, PredicatePolicy};
 use hyperpath::{
     ArcDirection, ArcOffsetError, Axis, AxisAlignedSweptSegmentPrism, BeadFillAxis, BeadPlanError,
     BezierOffsetError, BezierParameter, BezierParameterError, BoardContourError,
-    BoardContourOrientation, CamRestMaterialCutter, CardinalPoint, CardinalRotation, CircularArc,
-    CircularArcError, ClearanceStatus, ConstructionStamp, CubicBezier, DrillBoardClearanceReport,
-    ExplicitArcArrangementClass, ExplicitArcIntersectionClass, ExplicitArcOverlapClass,
-    ExplicitArcPointClassification, ExplicitArcSweepClass, ExplicitArcTangentClass,
-    ExplicitCircleRelationClass, ExplicitCircularArc, HigherOrderBezier, HigherOrderBezierError,
-    InfillGraphError, LineExplicitArcIntersectionClass, LineOffsetError, LinePathSegment,
-    MeanderError, MeanderObstacle, MeanderPlacementCandidate, NetId, OffsetSide,
-    PathMeshBooleanError, PathMeshBooleanOperation, PathMeshBooleanProgramStep,
-    PathMeshBooleanSource, PathProvenance, PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad,
-    PcbCircularPad, PcbCompositeCopperBooleanSource, PcbConvexBoardOutline, PcbConvexPolyPad,
+    BoardContourOrientation, CamOrthogonalIslandPocketCutter, CamRestMaterialCutter, CardinalPoint,
+    CardinalRotation, CircularArc, CircularArcError, ClearanceStatus, ConstructionStamp,
+    CubicBezier, DrillBoardClearanceReport, ExplicitArcArrangementClass,
+    ExplicitArcIntersectionClass, ExplicitArcOverlapClass, ExplicitArcPointClassification,
+    ExplicitArcSweepClass, ExplicitArcTangentClass, ExplicitCircleRelationClass,
+    ExplicitCircularArc, HigherOrderBezier, HigherOrderBezierError, InfillGraphError,
+    LineExplicitArcIntersectionClass, LineOffsetError, LinePathSegment, MeanderError,
+    MeanderObstacle, MeanderPlacementCandidate, NetId, OffsetSide, PathMeshBooleanError,
+    PathMeshBooleanOperation, PathMeshBooleanProgramStep, PathMeshBooleanSource, PathProvenance,
+    PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad, PcbCircularPad,
+    PcbCompositeCopperBooleanSource, PcbConvexBoardOutline, PcbConvexPolyPad,
     PcbCopperBooleanSource, PcbHoledOrthogonalCopperSource, PcbLayerZModel,
     PcbOrthogonalBoardOutline, PcbOrthogonalPolyPad, PcbRectPad, PcbTrace, PcbViaStack,
     PocketPlanError, PocketPlanStopReason, QuadraticBezier, RationalQuadraticBezier,
@@ -942,6 +943,96 @@ fn cam_rest_material_program_replays_stock_minus_retained_cutters() {
         stale.validate_replay(PredicatePolicy::default()),
         Err(PathMeshBooleanError::Replay(_))
     ));
+}
+
+#[test]
+fn cam_rest_material_program_replays_orthogonal_island_pocket() {
+    let stock = RectangularPocket::new(p(0, 0), p(24, 14)).unwrap();
+    let island_pocket = CamOrthogonalIslandPocketCutter::new(
+        vec![p(3, 2), p(21, 2), p(21, 12), p(3, 12)],
+        vec![
+            vec![p(6, 4), p(9, 4), p(9, 7), p(6, 7)],
+            vec![p(14, 5), p(18, 5), p(18, 10), p(14, 10)],
+        ],
+        PredicatePolicy::default(),
+    )
+    .expect("strict CAM island pocket should retain exact loops");
+    assert_eq!(island_pocket.islands().len(), 2);
+    assert!(island_pocket.exact_facts().all_exact_rational);
+
+    let report = build_cam_rest_material_program(
+        stock.clone(),
+        r(0),
+        r(5),
+        vec![CamRestMaterialCutter::OrthogonalIslandPocket(
+            island_pocket.clone(),
+        )],
+        PredicatePolicy::default(),
+    )
+    .expect("stock minus orthogonal pocket plus exact islands should replay");
+    report.validate_replay(PredicatePolicy::default()).unwrap();
+    assert_eq!(report.stock, stock);
+    assert_eq!(report.cutters.len(), 1);
+    assert_eq!(report.program.steps.len(), 3);
+    assert_eq!(
+        report.program.steps[0].operation,
+        PathMeshBooleanOperation::Difference
+    );
+    assert!(
+        report.program.steps[1..]
+            .iter()
+            .all(|step| step.operation == PathMeshBooleanOperation::Union)
+    );
+    assert!(report.program.mesh().unwrap().facts().mesh.closed_manifold);
+    assert!(
+        report
+            .program
+            .steps
+            .iter()
+            .all(|step| step.result.validate().is_ok())
+    );
+
+    let mut stale = report.clone();
+    stale.cutters[0] = CamRestMaterialCutter::OrthogonalIslandPocket(
+        CamOrthogonalIslandPocketCutter::new(
+            vec![p(3, 2), p(21, 2), p(21, 12), p(3, 12)],
+            vec![
+                vec![p(7, 4), p(10, 4), p(10, 7), p(7, 7)],
+                vec![p(14, 5), p(18, 5), p(18, 10), p(14, 10)],
+            ],
+            PredicatePolicy::default(),
+        )
+        .unwrap(),
+    );
+    assert!(matches!(
+        stale.validate_replay(PredicatePolicy::default()),
+        Err(PathMeshBooleanError::Replay(_))
+    ));
+}
+
+#[test]
+fn cam_orthogonal_island_pocket_rejects_ambiguous_islands() {
+    assert_eq!(
+        CamOrthogonalIslandPocketCutter::new(
+            vec![p(0, 0), p(10, 0), p(10, 8), p(0, 8)],
+            vec![vec![p(8, 2), p(12, 2), p(12, 5), p(8, 5)]],
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        PathMeshBooleanError::PolygonHoleOutsideOuter
+    );
+    assert_eq!(
+        CamOrthogonalIslandPocketCutter::new(
+            vec![p(0, 0), p(12, 0), p(12, 10), p(0, 10)],
+            vec![
+                vec![p(3, 2), p(7, 2), p(7, 6), p(3, 6)],
+                vec![p(5, 4), p(9, 4), p(9, 8), p(5, 8)]
+            ],
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        PathMeshBooleanError::PolygonHoleOverlap
+    );
 }
 
 #[test]

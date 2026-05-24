@@ -12,6 +12,7 @@ pub mod bezier;
 pub mod cam;
 pub mod mesh_boolean;
 pub mod mesh_boolean_cam;
+mod mesh_boolean_holes;
 pub mod mesh_boolean_pcb;
 pub mod mesh_boolean_polygon;
 pub mod mesh_boolean_program;
@@ -56,8 +57,8 @@ pub use mesh_boolean::{
     boolean_rectangular_prisms_with_boundary_policy, rectangular_prism_from_i64_bounds,
 };
 pub use mesh_boolean_cam::{
-    CamRestMaterialCutter, CamRestMaterialProgramReport, build_cam_rest_material_program,
-    cam_rectangular_pocket_cutter_from_i64_bounds,
+    CamOrthogonalIslandPocketCutter, CamRestMaterialCutter, CamRestMaterialProgramReport,
+    build_cam_rest_material_program, cam_rectangular_pocket_cutter_from_i64_bounds,
 };
 pub use mesh_boolean_pcb::{
     PcbCompositeCopperBooleanProgramReport, PcbCompositeCopperBooleanSource,

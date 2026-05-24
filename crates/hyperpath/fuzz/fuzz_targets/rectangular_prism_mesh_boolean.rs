@@ -2,8 +2,8 @@
 
 use hyperlimit::{Point2, PredicatePolicy};
 use hyperpath::{
-    AxisAlignedSweptSegmentPrism, CamRestMaterialCutter, CardinalRotation, LinePathSegment, NetId,
-    PathMeshBooleanOperation, PathMeshBooleanProgramStep, PcbCardinalRectPad,
+    AxisAlignedSweptSegmentPrism, CamOrthogonalIslandPocketCutter, CamRestMaterialCutter,
+    CardinalRotation, LinePathSegment, NetId, PathMeshBooleanOperation, PathMeshBooleanProgramStep, PcbCardinalRectPad,
     PcbCompositeCopperBooleanSource, PcbConvexPolyPad, PcbCopperBooleanSource,
     PcbHoledOrthogonalCopperSource, PcbLayerZModel, PcbOrthogonalPolyPad, PcbTrace,
     SweptLineSegment, TraceLayer, boolean_path_mesh_program, boolean_path_mesh_sources,
@@ -420,13 +420,51 @@ fuzz_target!(|data: &[u8]| {
             let pocket_max = Point2::new(Real::from(right_max[0]), Real::from(right_max[1]));
             if let Ok(pocket) = hyperpath::RectangularPocket::new(pocket_min, pocket_max) {
                 if let Ok(report) = build_cam_rest_material_program(
-                    stock,
+                    stock.clone(),
                     Real::from(left_min[2]),
                     Real::from(left_max[2]),
                     vec![
                         CamRestMaterialCutter::AxisAlignedSweep(swept),
                         CamRestMaterialCutter::RectangularPocket(pocket),
                     ],
+                    PredicatePolicy::default(),
+                ) {
+                    report.validate_replay(PredicatePolicy::default()).unwrap();
+                    report.program.steps.last().unwrap().result.validate().unwrap();
+                }
+            }
+            let outer_min = Point2::new(Real::from(left_min[0]), Real::from(left_min[1]));
+            let outer_w = Real::from(extent(3) + extent(4) + extent(5) + 2);
+            let outer_h = Real::from(extent(6) + extent(7) + extent(8) + 2);
+            let island_min = Point2::new(
+                outer_min.x.clone() + Real::from(extent(3)),
+                outer_min.y.clone() + Real::from(extent(4)),
+            );
+            let island_w = Real::from(extent(5));
+            let island_h = Real::from(extent(6));
+            if let Ok(island_pocket) = CamOrthogonalIslandPocketCutter::new(
+                vec![
+                    outer_min.clone(),
+                    Point2::new(outer_min.x.clone() + outer_w.clone(), outer_min.y.clone()),
+                    Point2::new(
+                        outer_min.x.clone() + outer_w,
+                        outer_min.y.clone() + outer_h.clone(),
+                    ),
+                    Point2::new(outer_min.x, outer_min.y + outer_h),
+                ],
+                vec![vec![
+                    island_min.clone(),
+                    Point2::new(island_min.x.clone() + island_w.clone(), island_min.y.clone()),
+                    Point2::new(island_min.x.clone() + island_w, island_min.y.clone() + island_h.clone()),
+                    Point2::new(island_min.x, island_min.y + island_h),
+                ]],
+                PredicatePolicy::default(),
+            ) {
+                if let Ok(report) = build_cam_rest_material_program(
+                    stock,
+                    Real::from(left_min[2]),
+                    Real::from(left_max[2]),
+                    vec![CamRestMaterialCutter::OrthogonalIslandPocket(island_pocket)],
                     PredicatePolicy::default(),
                 ) {
                     report.validate_replay(PredicatePolicy::default()).unwrap();
