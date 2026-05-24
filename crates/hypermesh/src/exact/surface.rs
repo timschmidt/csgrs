@@ -4204,13 +4204,14 @@ pub fn certify_coplanar_surface_boundary_touch(
 /// This path handles a hard branch-point case without weakening the existing
 /// simple-loop and multi-loop arrangements. Source topology is decomposed into
 /// exact convex coplanar components, same-operand components must remain
-/// disjoint, and cross-operand contact is accepted only when exact predicates
-/// prove that every contact is a single point. Vertex-edge contacts split the
-/// touched component edge at the exact source vertex before triangulation. The
-/// output keeps each component as a separate loop and intentionally duplicates
-/// the shared exact coordinate in the mesh, so downstream consumers see the
-/// branch incidence through the named artifact rather than through an
-/// accidental welded vertex.
+/// disjoint, and retained output loops may meet only through exact points.
+/// Pure point contacts keep each source component as a separate loop.
+/// Mixed lower-dimensional contacts first absorb positive-length boundary
+/// groups into retained simple loops, then split the surviving output loops at
+/// exact vertex-edge point contacts. The output intentionally duplicates the
+/// shared exact coordinate in the mesh, so downstream consumers see branch
+/// incidence through the named artifact rather than through an accidental
+/// welded vertex.
 ///
 /// The construction follows Yap, "Towards Exact Geometric Computation,"
 /// *Computational Geometry* 7.1-2 (1997), by promoting topology only from
@@ -4238,6 +4239,12 @@ pub fn arrange_coplanar_surface_point_touch_union(
     let right_components = connected_face_component_meshes(right)?;
     if left_components.is_empty() || right_components.is_empty() {
         return None;
+    }
+    if let Some(union) = arrange_coplanar_mixed_boundary_point_union_from_components(
+        left_components.clone(),
+        right_components.clone(),
+    ) {
+        return Some(union);
     }
 
     let mut components = Vec::new();
@@ -4371,6 +4378,186 @@ pub fn arrange_coplanar_surface_point_touch_union(
         &polygons,
         projection,
         "exact coplanar point-touch surface union",
+    )?;
+    let union = CoplanarSurfacePointTouchUnion {
+        projection,
+        polygons,
+        mesh,
+    };
+    union.validate().ok()?;
+    Some(union)
+}
+
+/// Materialize mixed edge-connected and point-touching coplanar unions.
+///
+/// Pure point-touch unions keep every source component as a retained output
+/// loop, while pure positive-length contacts belong to the component-union
+/// materializers. The remaining bounded case has both: some cross-source
+/// components share positive-length boundary arcs and must be absorbed into
+/// one simple retained loop, while other cross-source contacts are exact
+/// point branches between those retained loops. This helper builds the
+/// positive-length contact groups first, validates that the final output loops
+/// meet only at exact points, and triangulates each loop independently.
+///
+/// The construction is still a retained-object shortcut in Yap's sense from
+/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+/// (1997): no sampled arrangement cells are inferred. Positive-length groups
+/// use the same Weiler-Atherton exposed-fragment stitcher used by source
+/// component unions, and point branches are split using exact segment
+/// predicates in the style of Guigue and Devillers, "Fast and Robust
+/// Triangle-Triangle Overlap Test Using Orientation Predicates," *Journal of
+/// Graphics Tools* 8.1 (2003).
+#[cfg(feature = "exact-triangulation")]
+fn arrange_coplanar_mixed_boundary_point_union_from_components(
+    left_components: Vec<ExactMesh>,
+    right_components: Vec<ExactMesh>,
+) -> Option<CoplanarSurfacePointTouchUnion> {
+    if left_components.is_empty() || right_components.is_empty() {
+        return None;
+    }
+
+    let mut components = Vec::new();
+    for mesh in left_components {
+        components.push(PointTouchSourceComponent::from_mesh(
+            MultiUnionSide::Left,
+            mesh,
+        )?);
+    }
+    for mesh in right_components {
+        components.push(PointTouchSourceComponent::from_mesh(
+            MultiUnionSide::Right,
+            mesh,
+        )?);
+    }
+    let projection = components.first()?.projection;
+    if components
+        .iter()
+        .any(|component| component.projection != projection)
+    {
+        return None;
+    }
+
+    let left_loops = components
+        .iter()
+        .filter(|component| component.side == MultiUnionSide::Left)
+        .map(|component| component.polygon.clone())
+        .collect::<Vec<_>>();
+    let right_loops = components
+        .iter()
+        .filter(|component| component.side == MultiUnionSide::Right)
+        .map(|component| component.polygon.clone())
+        .collect::<Vec<_>>();
+    validate_simple_component_loops_disjoint(
+        &left_loops,
+        projection,
+        "coplanar mixed boundary-point surface union",
+    )
+    .ok()?;
+    validate_simple_component_loops_disjoint(
+        &right_loops,
+        projection,
+        "coplanar mixed boundary-point surface union",
+    )
+    .ok()?;
+
+    let mut contact_graph = UnionFind::new(components.len());
+    let mut saw_positive_boundary_contact = false;
+    let mut saw_point_touch = false;
+    let mut split_points = components
+        .iter()
+        .map(|component| component.polygon.clone())
+        .collect::<Vec<_>>();
+    for left_index in 0..components.len() {
+        for right_index in left_index + 1..components.len() {
+            let contact = simple_polygon_contact(
+                &components[left_index].polygon,
+                &components[right_index].polygon,
+                projection,
+            )?;
+            if components[left_index].side == components[right_index].side {
+                if contact != SimplePolygonContact::Disjoint {
+                    return None;
+                }
+                continue;
+            }
+            match contact {
+                SimplePolygonContact::Disjoint => {}
+                SimplePolygonContact::PointOnly => {
+                    let plan = simple_vertex_point_contact_plan(
+                        &components[left_index].polygon,
+                        &components[right_index].polygon,
+                        projection,
+                    )?;
+                    if plan.relation != VertexPointContactRelation::PointOnly {
+                        return None;
+                    }
+                    saw_point_touch = true;
+                    split_points[left_index].extend(plan.left_split_points);
+                    split_points[right_index].extend(plan.right_split_points);
+                }
+                SimplePolygonContact::PositiveLengthBoundary => {
+                    saw_positive_boundary_contact = true;
+                    contact_graph.union(left_index, right_index);
+                }
+                SimplePolygonContact::PositiveArea => return None,
+            }
+        }
+    }
+    if !saw_positive_boundary_contact || !saw_point_touch {
+        return None;
+    }
+
+    let source_loops = components
+        .iter()
+        .map(|component| component.polygon.clone())
+        .collect::<Vec<_>>();
+    let mut groups: Vec<(usize, Vec<usize>)> = Vec::new();
+    for index in 0..components.len() {
+        let root = contact_graph.find(index);
+        if let Some((_, members)) = groups.iter_mut().find(|(candidate, _)| *candidate == root) {
+            members.push(index);
+        } else {
+            groups.push((root, vec![index]));
+        }
+    }
+    groups.sort_by_key(|(_, members)| members.first().copied().unwrap_or(usize::MAX));
+
+    let mut polygons = Vec::with_capacity(groups.len());
+    for (_, members) in groups {
+        let mut polygon = if members.len() == 1 {
+            source_loops[*members.first()?].clone()
+        } else {
+            materialize_simple_polygon_union_group(
+                &source_loops,
+                &members,
+                projection,
+                "coplanar mixed boundary-point surface union",
+            )?
+        };
+        let mut group_split_points = members
+            .iter()
+            .flat_map(|&member| split_points[member].iter().cloned())
+            .collect::<Vec<_>>();
+        dedup_points(&mut group_split_points);
+        polygon = split_polygon_at_boundary_points(&polygon, &group_split_points, projection)?;
+        orient_polygon_ccw(&mut polygon, projection)?;
+        polygon = simplify_projected_polygon(polygon, projection);
+        validate_projected_simple_loop(
+            &polygon,
+            projection,
+            "coplanar mixed boundary-point surface union",
+        )
+        .ok()?;
+        polygons.push(polygon);
+    }
+    if !final_loops_have_only_point_touches(&polygons, projection)? {
+        return None;
+    }
+    sort_polygons_for_replay(&mut polygons, projection);
+    let mesh = polygons_to_retained_simple_open_mesh_with_label(
+        &polygons,
+        projection,
+        "exact coplanar mixed boundary-point surface union",
     )?;
     let union = CoplanarSurfacePointTouchUnion {
         projection,
@@ -6274,6 +6461,30 @@ fn simple_polygon_contact(
     } else {
         Some(SimplePolygonContact::Disjoint)
     }
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn final_loops_have_only_point_touches(
+    polygons: &[Vec<Point3>],
+    projection: CoplanarProjection,
+) -> Option<bool> {
+    if polygons.len() < 2 {
+        return Some(false);
+    }
+    let mut saw_point_touch = false;
+    for left in 0..polygons.len() {
+        for right in left + 1..polygons.len() {
+            match simple_polygon_contact(&polygons[left], &polygons[right], projection)? {
+                SimplePolygonContact::Disjoint => {}
+                SimplePolygonContact::PointOnly => saw_point_touch = true,
+                SimplePolygonContact::PositiveLengthBoundary
+                | SimplePolygonContact::PositiveArea => {
+                    return Some(false);
+                }
+            }
+        }
+    }
+    Some(saw_point_touch)
 }
 
 #[cfg(feature = "exact-triangulation")]

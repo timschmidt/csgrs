@@ -1677,6 +1677,53 @@ fn exercise_multi_component_coplanar_union() {
     )
     .expect("point-touching convex surface difference should keep left");
 
+    let mixed_contact_left = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            0, 0, 0, 4, 0, 0, 4, 4, 0, 0, 4, 0, //
+            8, 4, 0, 10, 4, 0, 10, 6, 0, 8, 6, 0,
+        ],
+        &[0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("mixed edge/point contact left fixture must import");
+    let mixed_contact_right = ExactMesh::from_i64_triangles_with_policy(
+        &[4, 0, 0, 8, 0, 0, 8, 4, 0, 4, 4, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("mixed edge/point contact right fixture must import");
+    assert!(
+        arrange_coplanar_surface_component_union(&mixed_contact_left, &mixed_contact_right)
+            .is_none()
+    );
+    let mixed_contact_union =
+        arrange_coplanar_surface_point_touch_union(&mixed_contact_left, &mixed_contact_right)
+            .expect("mixed edge-connected and point-touching union should materialize");
+    mixed_contact_union.validate().unwrap();
+    mixed_contact_union
+        .validate_union_against_sources(&mixed_contact_left, &mixed_contact_right)
+        .unwrap();
+    assert_eq!(mixed_contact_union.polygons.len(), 2);
+    assert_eq!(
+        preflight_boolean_exact(
+            &mixed_contact_left,
+            &mixed_contact_right,
+            ExactBooleanOperation::Union,
+        )
+        .expect("mixed edge/point union preflight should classify shortcut")
+        .support,
+        ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchUnion
+    );
+    hypermesh::exact::boolean_exact(
+        &mixed_contact_left,
+        &mixed_contact_right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("mixed edge/point union should materialize")
+    .validate()
+    .unwrap();
+
     let vertex_edge_right = ExactMesh::from_i64_triangles_with_policy(
         &[1, 2, 0, 3, 3, 0, 3, 4, 0],
         &[0, 1, 2],
