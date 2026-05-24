@@ -844,6 +844,39 @@ pub mod distance {
             kind,
         }
     }
+
+    /// Add a retained workplane-projected length-ratio relation for 3D lines.
+    ///
+    /// The exact ratio is retained as semantic data and checked before
+    /// lowering to the squared projected-length polynomial. Negative
+    /// numerators and nonpositive denominators therefore become diagnostics
+    /// rather than false successes introduced by squaring. The proof boundary
+    /// follows Yap, "Towards Exact Geometric Computation" (1997), with the
+    /// workplane frame polynomial from Shoemake (1985).
+    pub fn projected_length_ratio_lines3(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+        numerator: Real,
+        denominator: Real,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::ProjectedLengthRatioLines3 {
+            workplane,
+            a,
+            b,
+            numerator,
+            denominator,
+        };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Distance,
+            strategy: SketchResidualStrategy::SquaredProjectedLineLengthRatio,
+            kind,
+        }
+    }
 }
 
 /// Orientation relation builders.

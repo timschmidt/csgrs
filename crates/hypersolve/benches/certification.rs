@@ -1055,6 +1055,32 @@ fn sketch_problem_with_projected_equal_lengths(row_count: usize) -> hypersolve::
     sketch
 }
 
+fn sketch_problem_with_projected_length_ratios(row_count: usize) -> hypersolve::SketchSolveProblem {
+    let mut sketch = hypersolve::SketchSolveProblem::new();
+    let origin = sketch.add_point3d("project-ratio.origin", r(0), r(0), r(0));
+    let normal = sketch.add_normal3d("project-ratio.normal", r(1), r(0), r(0), r(0));
+    let workplane = sketch.add_workplane("project-ratio.workplane", origin, normal);
+    for index in 0..row_count {
+        let y = index as i64;
+        let a0 = sketch.add_point3d(format!("projratio{index}.a0"), r(0), r(y), r(-y));
+        let a1 = sketch.add_point3d(format!("projratio{index}.a1"), r(6), r(y + 8), r(12 + y));
+        let b0 = sketch.add_point3d(format!("projratio{index}.b0"), r(10), r(y + 8), r(y));
+        let b1 = sketch.add_point3d(format!("projratio{index}.b1"), r(13), r(y + 12), r(99 - y));
+        let a = sketch.add_line_segment3(format!("projratio{index}.a"), a0, a1);
+        let b = sketch.add_line_segment3(format!("projratio{index}.b"), b0, b1);
+        hypersolve::sketch_distance_builders::projected_length_ratio_lines3(
+            &mut sketch,
+            format!("projected length ratio {index}"),
+            workplane,
+            a,
+            b,
+            r(2),
+            r(1),
+        );
+    }
+    sketch
+}
+
 fn sketch_problem_with_workplane_symmetry(row_count: usize) -> hypersolve::SketchSolveProblem {
     let mut sketch = hypersolve::SketchSolveProblem::new();
     let origin = sketch.add_point3d("sym.origin", r(0), r(0), r(0));
@@ -1267,6 +1293,10 @@ fn certification(c: &mut Criterion) {
     let projected_equal_length_sketch = sketch_problem_with_projected_equal_lengths(16);
     c.bench_function("sketch_projected_equal_length_lowering", |b| {
         b.iter(|| projected_equal_length_sketch.lower_to_problem())
+    });
+    let projected_length_ratio_sketch = sketch_problem_with_projected_length_ratios(16);
+    c.bench_function("sketch_projected_length_ratio_lowering", |b| {
+        b.iter(|| projected_length_ratio_sketch.lower_to_problem())
     });
     let workplane_symmetry_sketch = sketch_problem_with_workplane_symmetry(16);
     c.bench_function("sketch_workplane_symmetry_lowering", |b| {
@@ -1618,6 +1648,24 @@ fn certification(c: &mut Criterion) {
         b.iter(|| {
             for handle in &projected_equal_length_form_handles {
                 let _ = projected_equal_length_sketch.residual_forms_for_constraint(*handle);
+            }
+        })
+    });
+    let projected_length_ratio_form_handles = projected_length_ratio_sketch
+        .constraints()
+        .iter()
+        .filter(|constraint| {
+            matches!(
+                constraint.kind,
+                hypersolve::SketchConstraintKind::ProjectedLengthRatioLines3 { .. }
+            )
+        })
+        .map(|constraint| constraint.handle)
+        .collect::<Vec<_>>();
+    c.bench_function("sketch_projected_length_ratio_residual_forms", |b| {
+        b.iter(|| {
+            for handle in &projected_length_ratio_form_handles {
+                let _ = projected_length_ratio_sketch.residual_forms_for_constraint(*handle);
             }
         })
     });

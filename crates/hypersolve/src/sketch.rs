@@ -474,6 +474,27 @@ pub enum SketchConstraintKind {
         /// Second 3D line segment.
         b: SketchEntityHandle,
     },
+    /// Projected 3D line length-ratio relation in a retained workplane.
+    ///
+    /// The retained relation is `length(a_uv) / length(b_uv) = numerator /
+    /// denominator`, where `a_uv` and `b_uv` are the exact projections of 3D
+    /// line directions into the workplane frame. Lowering emits
+    /// `|a_uv|^2 * denominator^2 - |b_uv|^2 * numerator^2 == 0` after exact
+    /// ratio sign validation, plus the workplane unit-quaternion guard. This
+    /// follows Yap, "Towards Exact Geometric Computation" (1997): squaring is
+    /// accepted only after semantic ratio-domain checks are explicit.
+    ProjectedLengthRatioLines3 {
+        /// Workplane entity that supplies origin and normal/quaternion.
+        workplane: SketchEntityHandle,
+        /// First 3D line segment.
+        a: SketchEntityHandle,
+        /// Second 3D line segment.
+        b: SketchEntityHandle,
+        /// Exact nonnegative ratio numerator.
+        numerator: Real,
+        /// Exact strictly positive ratio denominator.
+        denominator: Real,
+    },
     /// 2D line-segment equal-length relation.
     ///
     /// Lowering emits `|dir(a)|^2 - |dir(b)|^2 == 0`, a polynomial exact
@@ -1057,6 +1078,8 @@ pub enum SketchResidualStrategy {
     SquaredProjectedPointLineDistance,
     /// Squared equality between 3D line lengths after exact workplane projection.
     SquaredProjectedLineLengthEquality,
+    /// Squared ratio between 3D line lengths after exact workplane projection.
+    SquaredProjectedLineLengthRatio,
     /// Squared 2D line length equality.
     SquaredLineLengthEquality,
     /// Squared 2D line length ratio equality.
@@ -1180,6 +1203,8 @@ pub enum SketchResidualFormKind {
     SquaredProjectedPointLineDistancePolynomial,
     /// Squared projected line-length equality polynomial proof row.
     SquaredProjectedLineLengthEqualityPolynomial,
+    /// Squared projected line-length ratio polynomial proof row.
+    SquaredProjectedLineLengthRatioPolynomial,
     /// Positive signed projected point-line distance proposal branch.
     ProjectedPointLineSignedDistancePositiveProposal,
     /// Negative signed projected point-line distance proposal branch.
@@ -1748,6 +1773,24 @@ impl SketchSolveProblem {
         b: SketchEntityHandle,
     ) -> SketchConstraintHandle {
         distance::projected_equal_length_lines3(self, name, workplane, a, b).handle
+    }
+
+    /// Add a workplane-projected length-ratio constraint for two 3D lines.
+    ///
+    /// The retained relation lowers to a unit-workplane guard and the exact
+    /// squared projected line-length ratio polynomial after ratio-domain
+    /// validation.
+    pub fn add_projected_length_ratio_lines3(
+        &mut self,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+        numerator: Real,
+        denominator: Real,
+    ) -> SketchConstraintHandle {
+        distance::projected_length_ratio_lines3(self, name, workplane, a, b, numerator, denominator)
+            .handle
     }
 
     /// Add a retained 2D line equal-length relation.
@@ -2590,6 +2633,65 @@ impl SketchSolveProblem {
                                 SketchResidualStrategy::SquaredProjectedLineLengthEquality,
                             ),
                             residual: parts.first_squared - parts.second_squared,
+                        },
+                    ],
+                    diagnostics,
+                }
+            }
+            SketchConstraintKind::ProjectedLengthRatioLines3 {
+                workplane,
+                a,
+                b,
+                ref numerator,
+                ref denominator,
+            } => {
+                let mut diagnostics = Vec::new();
+                if !validate_length_ratio(
+                    constraint,
+                    numerator,
+                    denominator,
+                    SketchResidualStrategy::SquaredProjectedLineLengthRatio,
+                    &mut diagnostics,
+                ) {
+                    return SketchResidualFormsReport {
+                        constraint: handle,
+                        status: SketchResidualFormsStatus::InvalidInputs,
+                        forms: Vec::new(),
+                        diagnostics,
+                    };
+                }
+                let Some(parts) = self.projected_line_length_equality_exprs(
+                    workplane,
+                    a,
+                    b,
+                    constraint,
+                    &mut diagnostics,
+                ) else {
+                    return SketchResidualFormsReport {
+                        constraint: handle,
+                        status: SketchResidualFormsStatus::InvalidInputs,
+                        forms: Vec::new(),
+                        diagnostics,
+                    };
+                };
+                let numerator_squared = Expr::real(numerator.clone() * numerator.clone());
+                let denominator_squared = Expr::real(denominator.clone() * denominator.clone());
+                SketchResidualFormsReport {
+                    constraint: handle,
+                    status: SketchResidualFormsStatus::Generated,
+                    forms: vec![
+                        SketchResidualForm {
+                            kind: SketchResidualFormKind::WorkplaneUnitQuaternionPolynomial,
+                            role: SketchResidualFormRole::ExactProof,
+                            strategy: Some(SketchResidualStrategy::WorkplaneUnitQuaternion),
+                            residual: unit_quaternion_residual(&parts.quaternion),
+                        },
+                        SketchResidualForm {
+                            kind: SketchResidualFormKind::SquaredProjectedLineLengthRatioPolynomial,
+                            role: SketchResidualFormRole::ExactProof,
+                            strategy: Some(SketchResidualStrategy::SquaredProjectedLineLengthRatio),
+                            residual: parts.first_squared * denominator_squared
+                                - parts.second_squared * numerator_squared,
                         },
                     ],
                     diagnostics,
@@ -3669,6 +3771,52 @@ impl SketchSolveProblem {
                     SketchResidualStrategy::SquaredProjectedLineLengthEquality,
                 );
             }
+            SketchConstraintKind::ProjectedLengthRatioLines3 {
+                workplane,
+                a,
+                b,
+                ref numerator,
+                ref denominator,
+            } => {
+                // This extends projected line length from equality to exact
+                // ratios. The ratio signs are certified before the polynomial
+                // row is squared, so invalid semantic inputs cannot pass by
+                // symmetry of squares. Yap (1997) keeps the ratio-domain and
+                // workplane-frame obligations explicit proof rows.
+                if !validate_length_ratio(
+                    constraint,
+                    numerator,
+                    denominator,
+                    SketchResidualStrategy::SquaredProjectedLineLengthRatio,
+                    rows,
+                ) {
+                    return;
+                }
+                let Some(parts) =
+                    self.projected_line_length_equality_exprs(workplane, a, b, constraint, rows)
+                else {
+                    return;
+                };
+                let numerator_squared = Expr::real(numerator.clone() * numerator.clone());
+                let denominator_squared = Expr::real(denominator.clone() * denominator.clone());
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} workplane unit", constraint.name),
+                    unit_quaternion_residual(&parts.quaternion),
+                    SketchResidualStrategy::WorkplaneUnitQuaternion,
+                );
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} projected line length ratio", constraint.name),
+                    parts.first_squared * denominator_squared
+                        - parts.second_squared * numerator_squared,
+                    SketchResidualStrategy::SquaredProjectedLineLengthRatio,
+                );
+            }
             SketchConstraintKind::EqualLengthLines2 { a, b } => {
                 // Equal segment length has a square-root proposal reading, but
                 // Yap's exact-geometric-computation boundary is cleaner as
@@ -3697,7 +3845,13 @@ impl SketchSolveProblem {
                 // This keeps the exact proof in polynomial space. Squaring the
                 // ratio is safe only after exact sign validation, otherwise a
                 // negative ratio could be silently accepted.
-                if !validate_length_ratio(constraint, numerator, denominator, rows) {
+                if !validate_length_ratio(
+                    constraint,
+                    numerator,
+                    denominator,
+                    SketchResidualStrategy::SquaredLineLengthRatio,
+                    rows,
+                ) {
                     return;
                 }
                 let (Some(a), Some(b)) = (
@@ -5925,13 +6079,14 @@ fn validate_parameter_margin(
 
 fn invalid_length_ratio_row(
     constraint: &SketchConstraint,
+    strategy: SketchResidualStrategy,
     status: SketchGeneratedRowStatus,
 ) -> SketchGeneratedRow {
     SketchGeneratedRow {
         constraint: constraint.handle,
         residual_index: None,
         name: constraint.name.clone(),
-        strategy: Some(SketchResidualStrategy::SquaredLineLengthRatio),
+        strategy: Some(strategy),
         status,
     }
 }
@@ -5940,6 +6095,7 @@ fn validate_length_ratio(
     constraint: &SketchConstraint,
     numerator: &Real,
     denominator: &Real,
+    strategy: SketchResidualStrategy,
     rows: &mut Vec<SketchGeneratedRow>,
 ) -> bool {
     let numerator_ok = match numerator.structural_facts().sign {
@@ -5947,6 +6103,7 @@ fn validate_length_ratio(
         Some(RealSign::Negative) => {
             rows.push(invalid_length_ratio_row(
                 constraint,
+                strategy,
                 SketchGeneratedRowStatus::InvalidExactBound,
             ));
             false
@@ -5954,6 +6111,7 @@ fn validate_length_ratio(
         None => {
             rows.push(invalid_length_ratio_row(
                 constraint,
+                strategy,
                 SketchGeneratedRowStatus::UnresolvedExactBound,
             ));
             false
@@ -5967,6 +6125,7 @@ fn validate_length_ratio(
         Some(RealSign::Negative | RealSign::Zero) => {
             rows.push(invalid_length_ratio_row(
                 constraint,
+                strategy,
                 SketchGeneratedRowStatus::InvalidExactBound,
             ));
             false
@@ -5974,6 +6133,7 @@ fn validate_length_ratio(
         None => {
             rows.push(invalid_length_ratio_row(
                 constraint,
+                strategy,
                 SketchGeneratedRowStatus::UnresolvedExactBound,
             ));
             false
