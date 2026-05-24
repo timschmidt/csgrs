@@ -1243,6 +1243,33 @@ pub enum SketchConstraintKind {
         /// Endpoint of the 3D line used for incidence and outgoing tangent.
         line_endpoint: SketchLineEndpoint,
     },
+    /// Projected 3D line endpoint tangent to a retained 3D cubic Bezier.
+    ///
+    /// Lowering proves the workplane unit-quaternion guard, projects the
+    /// selected 3D line endpoint and outgoing line tangent, projects the 3D
+    /// cubic control net relative to the same workplane origin, evaluates the
+    /// projected cubic point and derivative exactly in Bernstein form, then
+    /// replays endpoint incidence, tangent support, and same-direction branch
+    /// rows. Projection is linear, so differentiating the projected control
+    /// net is the same exact polynomial proof as projecting the 3D derivative;
+    /// no vector is normalized. This follows Yap, "Towards Exact Geometric
+    /// Computation" (1997), by retaining the frame, curve, parameter, line
+    /// endpoint, and branch as proof objects. The workplane frame follows
+    /// Shoemake, "Animating Rotation with Quaternion Curves" (1985), and the
+    /// Bernstein derivative follows Farin, *Curves and Surfaces for CAGD*,
+    /// 5th ed. (2002).
+    ProjectedCubicCurveLineTangent3 {
+        /// Workplane entity that supplies origin and normal/quaternion.
+        workplane: SketchEntityHandle,
+        /// Retained 3D cubic Bezier entity.
+        cubic: SketchEntityHandle,
+        /// Curve parameter used for point and derivative evaluation.
+        parameter: SketchParameterHandle,
+        /// 3D line segment whose selected endpoint projects onto the cubic.
+        line: SketchEntityHandle,
+        /// Endpoint of the 3D line used for incidence and outgoing tangent.
+        line_endpoint: SketchLineEndpoint,
+    },
     /// 2D cubic-Bezier tangent to another cubic Bezier at retained parameters.
     ///
     /// Lowering evaluates both retained cubic points and derivatives exactly
@@ -1778,6 +1805,8 @@ pub enum SketchResidualStrategy {
     CubicLineTangent,
     /// Exact workplane-projected cubic/3D-line tangency package.
     ProjectedCubicLineTangent,
+    /// Exact workplane-projected 3D cubic/3D-line tangency package.
+    ProjectedCubicCurveLineTangent,
     /// Exact point/derivative package for retained cubic-cubic tangency.
     CubicCubicTangent,
     /// Exact point/tangent/signed-curvature package for geometric cubic G2 continuity.
@@ -2009,6 +2038,12 @@ pub enum SketchResidualFormKind {
     ProjectedCubicLineTangentCrossProductPredicate,
     /// Exact projected cubic derivative/line tangent dot-product branch predicate.
     ProjectedCubicLineTangentDotProductPredicate,
+    /// Exact projected 3D cubic endpoint incidence row for cubic-line tangency.
+    ProjectedCubicCurveLineTangentEndpointIncidencePolynomial,
+    /// Exact projected 3D cubic derivative/line tangent cross-product proof row.
+    ProjectedCubicCurveLineTangentCrossProductPredicate,
+    /// Exact projected 3D cubic derivative/line tangent dot-product branch predicate.
+    ProjectedCubicCurveLineTangentDotProductPredicate,
     /// Exact cubic/cubic point coordinate-incidence proof row.
     CubicCubicTangentPointIncidencePolynomial,
     /// Exact cubic/cubic derivative cross-product proof row.
@@ -3399,6 +3434,32 @@ impl SketchSolveProblem {
         line_endpoint: SketchLineEndpoint,
     ) -> SketchConstraintHandle {
         tangency::projected_cubic_line_tangent3(
+            self,
+            name,
+            workplane,
+            cubic,
+            parameter,
+            line,
+            line_endpoint,
+        )
+        .handle
+    }
+
+    /// Add projected 3D line/3D-cubic tangency at a retained cubic parameter.
+    ///
+    /// The selected 3D line endpoint, line tangent, and cubic control net are
+    /// projected into the workplane before exact Bernstein point/derivative
+    /// replay. The same-direction tangent branch is explicit.
+    pub fn add_projected_cubic_curve_line_tangent3(
+        &mut self,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        cubic: SketchEntityHandle,
+        parameter: SketchParameterHandle,
+        line: SketchEntityHandle,
+        line_endpoint: SketchLineEndpoint,
+    ) -> SketchConstraintHandle {
+        tangency::projected_cubic_curve_line_tangent3(
             self,
             name,
             workplane,
@@ -5378,6 +5439,65 @@ impl SketchSolveProblem {
                     diagnostics,
                 }
             }
+            SketchConstraintKind::ProjectedCubicCurveLineTangent3 {
+                workplane,
+                cubic,
+                parameter,
+                line,
+                line_endpoint,
+            } => {
+                let mut diagnostics = Vec::new();
+                let Some(parts) = self.projected_cubic_curve_line_tangent_exprs(
+                    workplane,
+                    cubic,
+                    parameter,
+                    line,
+                    line_endpoint,
+                    constraint,
+                    &mut diagnostics,
+                ) else {
+                    return SketchResidualFormsReport {
+                        constraint: handle,
+                        status: SketchResidualFormsStatus::InvalidInputs,
+                        forms: Vec::new(),
+                        diagnostics,
+                    };
+                };
+                let mut forms = Vec::with_capacity(5);
+                forms.push(SketchResidualForm {
+                    kind: SketchResidualFormKind::WorkplaneUnitQuaternionPolynomial,
+                    role: SketchResidualFormRole::ExactProof,
+                    strategy: Some(SketchResidualStrategy::WorkplaneUnitQuaternion),
+                    residual: unit_quaternion_residual(&parts.quaternion),
+                });
+                forms.extend(parts.tangent.endpoint_incidence.into_iter().map(|residual| {
+                    SketchResidualForm {
+                        kind: SketchResidualFormKind::ProjectedCubicCurveLineTangentEndpointIncidencePolynomial,
+                        role: SketchResidualFormRole::ExactProof,
+                        strategy: Some(SketchResidualStrategy::ProjectedCubicCurveLineTangent),
+                        residual,
+                    }
+                }));
+                forms.push(SketchResidualForm {
+                    kind:
+                        SketchResidualFormKind::ProjectedCubicCurveLineTangentCrossProductPredicate,
+                    role: SketchResidualFormRole::ExactProof,
+                    strategy: Some(SketchResidualStrategy::ProjectedCubicCurveLineTangent),
+                    residual: parts.tangent.tangent_cross,
+                });
+                forms.push(SketchResidualForm {
+                    kind: SketchResidualFormKind::ProjectedCubicCurveLineTangentDotProductPredicate,
+                    role: SketchResidualFormRole::ExactProof,
+                    strategy: Some(SketchResidualStrategy::ProjectedCubicCurveLineTangent),
+                    residual: parts.tangent.tangent_dot,
+                });
+                SketchResidualFormsReport {
+                    constraint: handle,
+                    status: SketchResidualFormsStatus::Generated,
+                    forms,
+                    diagnostics,
+                }
+            }
             SketchConstraintKind::ArcCubicTangent2 {
                 arc,
                 arc_endpoint,
@@ -7272,6 +7392,68 @@ impl SketchSolveProblem {
                     format!("{} projected cubic tangent orientation", constraint.name),
                     parts.tangent.tangent_dot,
                     SketchResidualStrategy::ProjectedCubicLineTangent,
+                    ConstraintKind::GreaterOrEqual,
+                    Real::one(),
+                );
+            }
+            SketchConstraintKind::ProjectedCubicCurveLineTangent3 {
+                workplane,
+                cubic,
+                parameter,
+                line,
+                line_endpoint,
+            } => {
+                // This extends projected cubic/line tangency to a retained 3D
+                // cubic carrier. The cubic control net and line tangent are
+                // projected through the same certified workplane frame before
+                // exact Bernstein point/derivative replay.
+                let Some(parts) = self.projected_cubic_curve_line_tangent_exprs(
+                    workplane,
+                    cubic,
+                    parameter,
+                    line,
+                    line_endpoint,
+                    constraint,
+                    rows,
+                ) else {
+                    return;
+                };
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} workplane unit quaternion", constraint.name),
+                    unit_quaternion_residual(&parts.quaternion),
+                    SketchResidualStrategy::WorkplaneUnitQuaternion,
+                );
+                for (axis, residual) in parts.tangent.endpoint_incidence.into_iter().enumerate() {
+                    self.push_residual(
+                        problem,
+                        rows,
+                        constraint,
+                        format!(
+                            "{} projected 3D cubic endpoint coordinate {axis}",
+                            constraint.name
+                        ),
+                        residual,
+                        SketchResidualStrategy::ProjectedCubicCurveLineTangent,
+                    );
+                }
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} projected 3D cubic tangent support", constraint.name),
+                    parts.tangent.tangent_cross,
+                    SketchResidualStrategy::ProjectedCubicCurveLineTangent,
+                );
+                self.push_residual_with_kind(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} projected 3D cubic tangent orientation", constraint.name),
+                    parts.tangent.tangent_dot,
+                    SketchResidualStrategy::ProjectedCubicCurveLineTangent,
                     ConstraintKind::GreaterOrEqual,
                     Real::one(),
                 );
@@ -9714,6 +9896,39 @@ impl SketchSolveProblem {
         Some(projected_direction2(&delta, quaternion))
     }
 
+    fn projected_cubic3_point_tangent_exprs(
+        &self,
+        cubic: SketchEntityHandle,
+        parameter: SketchParameterHandle,
+        origin: &CoordinateExprs,
+        quaternion: &[Expr; 4],
+        constraint: &SketchConstraint,
+        rows: &mut Vec<SketchGeneratedRow>,
+    ) -> Option<CubicPointTangentExprs> {
+        let Some(entity) = self.entity(cubic) else {
+            rows.push(missing_entity_row(constraint, cubic));
+            return None;
+        };
+        let SketchEntityKind::Cubic3(cubic) = &entity.kind else {
+            rows.push(wrong_entity_row(
+                constraint,
+                entity.handle,
+                "3D cubic Bezier",
+            ));
+            return None;
+        };
+        let p0 =
+            self.projected_point3_coordinates(cubic.p0, origin, quaternion, constraint, rows)?;
+        let p1 =
+            self.projected_point3_coordinates(cubic.p1, origin, quaternion, constraint, rows)?;
+        let p2 =
+            self.projected_point3_coordinates(cubic.p2, origin, quaternion, constraint, rows)?;
+        let p3 =
+            self.projected_point3_coordinates(cubic.p3, origin, quaternion, constraint, rows)?;
+        let parameter = self.parameter_expr(parameter, constraint, rows)?;
+        Some(cubic_point_tangent_exprs(&p0, &p1, &p2, &p3, parameter))
+    }
+
     fn cubic_line_tangent_exprs(
         &self,
         cubic: SketchEntityHandle,
@@ -9749,6 +9964,48 @@ impl SketchSolveProblem {
         let (origin, quaternion) =
             self.workplane_origin_and_quaternion(workplane, constraint, rows)?;
         let cubic = self.cubic2_point_tangent_exprs(cubic, parameter, constraint, rows)?;
+        let line = self.line3_endpoint_tangent(line, line_endpoint, constraint, rows)?;
+        let endpoint_delta = [
+            line.endpoint.exprs[0].clone() - origin.exprs[0].clone(),
+            line.endpoint.exprs[1].clone() - origin.exprs[1].clone(),
+            line.endpoint.exprs[2].clone() - origin.exprs[2].clone(),
+        ];
+        let projected_endpoint = projected_direction2(&endpoint_delta, &quaternion);
+        let projected_tangent = projected_direction2(&line.tangent, &quaternion);
+        Some(ProjectedCubicLineTangentExprs {
+            quaternion,
+            tangent: CubicLineTangentExprs {
+                endpoint_incidence: [
+                    projected_endpoint[0].clone() - cubic.point[0].clone(),
+                    projected_endpoint[1].clone() - cubic.point[1].clone(),
+                ],
+                tangent_cross: direction_cross2(&cubic.tangent, &projected_tangent),
+                tangent_dot: direction_dot2(&cubic.tangent, &projected_tangent),
+            },
+        })
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn projected_cubic_curve_line_tangent_exprs(
+        &self,
+        workplane: SketchEntityHandle,
+        cubic: SketchEntityHandle,
+        parameter: SketchParameterHandle,
+        line: SketchEntityHandle,
+        line_endpoint: SketchLineEndpoint,
+        constraint: &SketchConstraint,
+        rows: &mut Vec<SketchGeneratedRow>,
+    ) -> Option<ProjectedCubicLineTangentExprs> {
+        let (origin, quaternion) =
+            self.workplane_origin_and_quaternion(workplane, constraint, rows)?;
+        let cubic = self.projected_cubic3_point_tangent_exprs(
+            cubic,
+            parameter,
+            &origin,
+            &quaternion,
+            constraint,
+            rows,
+        )?;
         let line = self.line3_endpoint_tangent(line, line_endpoint, constraint, rows)?;
         let endpoint_delta = [
             line.endpoint.exprs[0].clone() - origin.exprs[0].clone(),

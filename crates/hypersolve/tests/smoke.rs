@@ -970,6 +970,124 @@ fn sketch_projected_cubic_line_tangent_replays_workplane_endpoint_and_branch_row
 }
 
 #[test]
+fn sketch_projected_cubic_curve_line_tangent_replays_projected_control_net_and_branch_rows() {
+    let mut sketch = SketchSolveProblem::new();
+    let origin = sketch.add_point3d("origin", real(1), real(2), real(3));
+    let normal = sketch.add_normal3d("identity normal", real(1), real(0), real(0), real(0));
+    let workplane = sketch.add_workplane("workplane", origin, normal);
+    let p0 = sketch.add_point3d("p0", real(1), real(2), real(3));
+    let p1 = sketch.add_point3d("p1", real(3), real(2), real(7));
+    let p2 = sketch.add_point3d("p2", real(5), real(2), real(-5));
+    let p3 = sketch.add_point3d("p3", real(7), real(2), real(11));
+    let cubic = sketch.add_cubic3("cubic3", p0, p1, p2, p3);
+    let parameter = sketch.add_parameter(
+        "t",
+        Real::new(Rational::fraction(1, 2).expect("nonzero denominator")),
+    );
+    let line_start = sketch.add_point3d("line start", real(4), real(2), real(99));
+    let line_end = sketch.add_point3d("line end", real(10), real(2), real(-7));
+    let line = sketch.add_line_segment3("line", line_start, line_end);
+    let reversed_end = sketch.add_point3d("reversed end", real(-2), real(2), real(8));
+    let reversed = sketch.add_line_segment3("reversed", line_start, reversed_end);
+    let wrong_cubic = sketch.add_cubic2("wrong cubic2", p0, p1, p2, p3);
+    let valid = sketch_tangency_builders::projected_cubic_curve_line_tangent3(
+        &mut sketch,
+        "projected 3D cubic line tangent",
+        workplane,
+        cubic,
+        parameter,
+        line,
+        SketchLineEndpoint::Start,
+    );
+    sketch.add_projected_cubic_curve_line_tangent3(
+        "reversed projected 3D cubic line tangent",
+        workplane,
+        cubic,
+        parameter,
+        reversed,
+        SketchLineEndpoint::Start,
+    );
+    let wrong = sketch.add_projected_cubic_curve_line_tangent3(
+        "wrong projected 3D cubic line tangent kind",
+        workplane,
+        wrong_cubic,
+        parameter,
+        line,
+        SketchLineEndpoint::Start,
+    );
+
+    assert_eq!(valid.family, hypersolve::SketchConstraintFamily::Tangency);
+    assert_eq!(
+        valid.strategy,
+        SketchResidualStrategy::ProjectedCubicCurveLineTangent
+    );
+
+    let lowered = sketch.lower_to_problem();
+    let context = context_from_problem(&lowered.problem);
+    let certification = certify_candidate(&PreparedProblem::new(&lowered.problem), &context);
+    let forms = sketch.residual_forms_for_constraint(valid.handle);
+
+    assert_eq!(lowered.problem.constraints.len(), 10);
+    assert_eq!(lowered.rows.len(), 11);
+    assert!(lowered.rows[..10].iter().all(|row| {
+        (row.strategy == Some(SketchResidualStrategy::ProjectedCubicCurveLineTangent)
+            || row.strategy == Some(SketchResidualStrategy::WorkplaneUnitQuaternion))
+            && row.status == SketchGeneratedRowStatus::Generated
+    }));
+    assert_eq!(
+        lowered.rows.last().unwrap().status,
+        SketchGeneratedRowStatus::WrongEntityKind {
+            handle: wrong_cubic,
+            expected: "3D cubic Bezier",
+        }
+    );
+    assert!(certification.rows[..5].iter().all(|row| {
+        matches!(
+            row.status,
+            CertifiedCandidateStatus::CertifiedZero { .. }
+                | CertifiedCandidateStatus::CertifiedSatisfiedInequality { .. }
+        )
+    }));
+    assert!(matches!(
+        certification.rows[9].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
+
+    assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+    assert_eq!(forms.forms.len(), 5);
+    assert_eq!(
+        forms.forms[0].kind,
+        SketchResidualFormKind::WorkplaneUnitQuaternionPolynomial
+    );
+    assert_eq!(
+        forms.forms[1].kind,
+        SketchResidualFormKind::ProjectedCubicCurveLineTangentEndpointIncidencePolynomial
+    );
+    assert_eq!(
+        forms.forms[3].kind,
+        SketchResidualFormKind::ProjectedCubicCurveLineTangentCrossProductPredicate
+    );
+    assert_eq!(
+        forms.forms[4].kind,
+        SketchResidualFormKind::ProjectedCubicCurveLineTangentDotProductPredicate
+    );
+    assert!(forms.forms.iter().all(|form| {
+        form.role == SketchResidualFormRole::ExactProof
+            && (form.strategy == Some(SketchResidualStrategy::ProjectedCubicCurveLineTangent)
+                || form.strategy == Some(SketchResidualStrategy::WorkplaneUnitQuaternion))
+    }));
+    for form in &forms.forms[..4] {
+        assert_eq!(
+            form.residual.eval_real(context.bindings()).unwrap(),
+            Real::zero()
+        );
+    }
+
+    let wrong_forms = sketch.residual_forms_for_constraint(wrong);
+    assert_eq!(wrong_forms.status, SketchResidualFormsStatus::InvalidInputs);
+}
+
+#[test]
 fn sketch_cubic_cubic_tangent_lowers_exact_derivative_branch_rows() {
     let mut sketch = SketchSolveProblem::new();
     let a0 = sketch.add_point2d("a0", real(0), real(0));

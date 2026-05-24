@@ -1241,6 +1241,71 @@ fn sketch_problem_with_projected_cubic_line_tangent_relations(
     sketch
 }
 
+fn sketch_problem_with_projected_cubic_curve_line_tangent_relations(
+    row_count: usize,
+) -> hypersolve::SketchSolveProblem {
+    let mut sketch = hypersolve::SketchSolveProblem::new();
+    let origin = sketch.add_point3d("project-cubic3-tan.origin", r(1), r(2), r(3));
+    let normal = sketch.add_normal3d("project-cubic3-tan.normal", r(1), r(0), r(0), r(0));
+    let workplane = sketch.add_workplane("project-cubic3-tan.workplane", origin, normal);
+    for index in 0..row_count {
+        let x = index as i64;
+        let p0 = sketch.add_point3d(
+            format!("project-cubic3tan{index}.p0"),
+            r(x + 1),
+            r(x + 2),
+            r(3),
+        );
+        let p1 = sketch.add_point3d(
+            format!("project-cubic3tan{index}.p1"),
+            r(x + 2),
+            r(x + 4),
+            r(5),
+        );
+        let p2 = sketch.add_point3d(
+            format!("project-cubic3tan{index}.p2"),
+            r(x + 3),
+            r(x + 6),
+            r(7),
+        );
+        let p3 = sketch.add_point3d(
+            format!("project-cubic3tan{index}.p3"),
+            r(x + 4),
+            r(x + 8),
+            r(11),
+        );
+        let cubic = sketch.add_cubic3(format!("project-cubic3tan{index}"), p0, p1, p2, p3);
+        let parameter = sketch.add_parameter(format!("project-cubic3tan{index}.t"), r(1));
+        let endpoint = sketch.add_point3d(
+            format!("project-cubic3tan{index}.endpoint"),
+            r(x + 4),
+            r(x + 8),
+            r(30 - x),
+        );
+        let tangent_end = sketch.add_point3d(
+            format!("project-cubic3tan{index}.tangent_end"),
+            r(x + 5),
+            r(x + 10),
+            r(20 + x),
+        );
+        let line = sketch.add_line_segment3(
+            format!("project-cubic3tan{index}.line"),
+            endpoint,
+            tangent_end,
+        );
+        hypersolve::sketch_tangency_builders::projected_cubic_curve_line_tangent3(
+            &mut sketch,
+            format!("projected 3D cubic line tangent {index}"),
+            workplane,
+            cubic,
+            parameter,
+            line,
+            hypersolve::SketchLineEndpoint::Start,
+        );
+    }
+    sketch
+}
+
 fn sketch_problem_with_cubic_cubic_tangent_relations(
     row_count: usize,
 ) -> hypersolve::SketchSolveProblem {
@@ -2020,6 +2085,11 @@ fn certification(c: &mut Criterion) {
     c.bench_function("sketch_projected_cubic_line_tangent_lowering", |b| {
         b.iter(|| projected_cubic_line_tangent_sketch.lower_to_problem())
     });
+    let projected_cubic_curve_line_tangent_sketch =
+        sketch_problem_with_projected_cubic_curve_line_tangent_relations(16);
+    c.bench_function("sketch_projected_cubic_curve_line_tangent_lowering", |b| {
+        b.iter(|| projected_cubic_curve_line_tangent_sketch.lower_to_problem())
+    });
     let cubic_cubic_tangent_sketch = sketch_problem_with_cubic_cubic_tangent_relations(16);
     c.bench_function("sketch_cubic_cubic_tangent_lowering", |b| {
         b.iter(|| cubic_cubic_tangent_sketch.lower_to_problem())
@@ -2341,6 +2411,28 @@ fn certification(c: &mut Criterion) {
             }
         })
     });
+    let projected_cubic_curve_tangent_form_handles = projected_cubic_curve_line_tangent_sketch
+        .constraints()
+        .iter()
+        .filter(|constraint| {
+            matches!(
+                constraint.kind,
+                hypersolve::SketchConstraintKind::ProjectedCubicCurveLineTangent3 { .. }
+            )
+        })
+        .map(|constraint| constraint.handle)
+        .collect::<Vec<_>>();
+    c.bench_function(
+        "sketch_projected_cubic_curve_line_tangent_residual_forms",
+        |b| {
+            b.iter(|| {
+                for handle in &projected_cubic_curve_tangent_form_handles {
+                    let _ = projected_cubic_curve_line_tangent_sketch
+                        .residual_forms_for_constraint(*handle);
+                }
+            })
+        },
+    );
     let cubic_cubic_tangent_form_handles = cubic_cubic_tangent_sketch
         .constraints()
         .iter()

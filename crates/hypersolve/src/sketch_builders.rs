@@ -446,6 +446,39 @@ pub mod tangency {
         }
     }
 
+    /// Add projected 3D line/3D-cubic tangency at a retained cubic parameter.
+    ///
+    /// The selected 3D line endpoint, outgoing line direction, and retained
+    /// 3D cubic control net are projected into the workplane before exact
+    /// Bernstein point/derivative replay. The package keeps the unit-frame
+    /// guard, endpoint incidence, tangent cross product, and same-direction
+    /// branch as exact proof rows, following Yap (1997), Shoemake's
+    /// quaternion frame, and Farin's Bernstein/de Casteljau construction.
+    pub fn projected_cubic_curve_line_tangent3(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        cubic: SketchEntityHandle,
+        parameter: SketchParameterHandle,
+        line: SketchEntityHandle,
+        line_endpoint: SketchLineEndpoint,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::ProjectedCubicCurveLineTangent3 {
+            workplane,
+            cubic,
+            parameter,
+            line,
+            line_endpoint,
+        };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Tangency,
+            strategy: SketchResidualStrategy::ProjectedCubicCurveLineTangent,
+            kind,
+        }
+    }
+
     /// Add a retained 2D cubic-Bezier/cubic-Bezier tangent relation.
     ///
     /// The two curve points `B_a(t_a)` and `B_b(t_b)` are constrained to
