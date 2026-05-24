@@ -7024,22 +7024,22 @@ fn materialize_connected_multi_cutter_component_holed_difference(
     }])
 }
 
-/// Replay a non-rectilinear side-cutter split while retaining strict holes.
+/// Replay a non-rectilinear side-cutter split while owning strict holes.
 ///
-/// [`materialize_side_cutter_multi_component_difference`] already proves the
-/// no-hole case where several side-attached cutters split one convex source
-/// sheet into two or more simple retained loops. This helper lifts that exact
-/// cell evidence into the component/holed artifact: after the split loops are
-/// replayed, each strict hole must be assigned to exactly one emitted loop by
-/// [`assign_holes_to_cut_component_outputs`]. Holes inside removed openings or
-/// touching split boundaries are deliberately rejected because they require
-/// explicit planar-cell ownership instead of a local loop assignment.
+/// The side-cutter split helper proves the no-hole case where several
+/// side-attached cutters divide one convex source sheet into two or more
+/// simple retained loops. This helper lifts the same exact cell evidence into
+/// the component/holed artifact: after the split loops are replayed, each
+/// strict hole must be owned by exactly one retained output loop or wholly
+/// consumed by exactly one removed side opening. Boundary contact, overlap
+/// with several removed openings, or holes that straddle a split boundary stay
+/// outside this bounded certificate.
 ///
 /// The construction follows Yap's retained-object rule from "Towards Exact
 /// Geometric Computation," *Computational Geometry* 7.1-2 (1997): the wider
-/// shortcut is admitted only when the retained split loops and hole ownership
-/// replay from exact predicates. The split-loop boundary traversal is the
-/// Weiler-Atherton retained-fragment construction used by
+/// shortcut is admitted only when retained split loops, consumed holes, and
+/// retained holes replay from exact predicates. The split-loop boundary
+/// traversal is the Weiler-Atherton retained-fragment construction used by
 /// [`materialize_side_cutter_multi_component_difference`]; see Weiler and
 /// Atherton, "Hidden Surface Removal Using Polygon Area Sorting," *SIGGRAPH
 /// Computer Graphics* 11.2 (1977).
@@ -7054,7 +7054,7 @@ fn materialize_side_cutter_multi_component_holed_difference(
         return None;
     }
     let projection = component.projection;
-    let cut_polygons = materialize_side_cutter_multi_component_difference(
+    let (removed_openings, cut_polygons) = materialize_side_cutter_multi_component_difference_core(
         component,
         cut_indices,
         right_components,
@@ -7067,8 +7067,12 @@ fn materialize_side_cutter_multi_component_holed_difference(
         .iter()
         .map(|hole| hole.ring.clone())
         .collect::<Vec<_>>();
-    let holes_by_cut =
-        assign_holes_to_cut_component_outputs(&hole_rings, &cut_polygons, projection)?;
+    let holes_by_cut = assign_holes_to_side_cutter_split_outputs(
+        &hole_rings,
+        &cut_polygons,
+        &removed_openings,
+        projection,
+    )?;
     if holes_by_cut.iter().all(Vec::is_empty) {
         return None;
     }
@@ -7209,6 +7213,22 @@ fn materialize_side_cutter_multi_component_difference(
     right_components: &[ConvexUnionComponent],
     label: &'static str,
 ) -> Option<Vec<Vec<Point3>>> {
+    materialize_side_cutter_multi_component_difference_core(
+        component,
+        cut_indices,
+        right_components,
+        label,
+    )
+    .map(|(_, polygons)| polygons)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn materialize_side_cutter_multi_component_difference_core(
+    component: &ConvexUnionComponent,
+    cut_indices: &[usize],
+    right_components: &[ConvexUnionComponent],
+    label: &'static str,
+) -> Option<(Vec<Vec<Point3>>, Vec<Vec<Point3>>)> {
     if cut_indices.is_empty() {
         return None;
     }
@@ -7311,7 +7331,7 @@ fn materialize_side_cutter_multi_component_difference(
     {
         return None;
     }
-    Some(polygons)
+    Some((removed_openings, polygons))
 }
 
 /// Count positive-length retained contacts between a removed loop and source.
@@ -7553,6 +7573,50 @@ fn assign_holes_to_cut_component_outputs(
             }
         }
         holes_by_cut[owner?].push(hole.clone());
+    }
+    Some(holes_by_cut)
+}
+
+/// Assign holes to side-cutter split outputs or consume them by openings.
+///
+/// This is the multi-output sibling of
+/// [`assign_holes_to_connected_multi_cutter_opening`]. A source hole is
+/// retained only when exact simple-polygon containment proves it lies strictly
+/// inside one emitted retained loop. If it is not retained, it may be omitted
+/// only when [`hole_strictly_consumed_by_one_removed_opening`] proves exactly
+/// one removed side opening owns the whole ring. Yap's "Towards Exact
+/// Geometric Computation," *Computational Geometry* 7.1-2 (1997), is the
+/// governing rule here: the topology of a hole cannot be inferred from a
+/// representative sample or floating tolerance, so every unowned or multiply
+/// owned ring rejects the shortcut and waits for a full planar-cell
+/// materializer.
+#[cfg(feature = "exact-triangulation")]
+fn assign_holes_to_side_cutter_split_outputs(
+    holes: &[Vec<Point3>],
+    cut_polygons: &[Vec<Point3>],
+    removed_openings: &[Vec<Point3>],
+    projection: CoplanarProjection,
+) -> Option<Vec<Vec<Vec<Point3>>>> {
+    let mut holes_by_cut = vec![Vec::new(); cut_polygons.len()];
+    for hole in holes {
+        let mut owner = None;
+        for (index, polygon) in cut_polygons.iter().enumerate() {
+            if polygon_strictly_inside_simple_polygon(hole, polygon, projection)? {
+                if owner.is_some() {
+                    return None;
+                }
+                owner = Some(index);
+            }
+        }
+        if let Some(owner) = owner {
+            holes_by_cut[owner].push(hole.clone());
+        } else if !hole_strictly_consumed_by_one_removed_opening(
+            hole,
+            removed_openings,
+            projection,
+        )? {
+            return None;
+        }
     }
     Some(holes_by_cut)
 }

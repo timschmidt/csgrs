@@ -15150,6 +15150,97 @@ fn exact_coplanar_convex_surface_difference_materializes_component_holes() {
         }
     );
 
+    let nonrectilinear_channel_with_consumed_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            2, 17, 0, 4, 17, 0, 4, 19, 0, 2, 19, 0, //
+            15, 4, 0, 17, 4, 0, 17, 6, 0, 15, 6, 0, //
+            1, 5, 0, 2, 5, 0, 2, 6, 0, 1, 6, 0, //
+            8, -2, 0, 12, -2, 0, 12, 22, 0, 8, 22, 0, //
+            -2, 4, 0, 5, 4, 0, 3, 8, 0, -2, 8, 0, -2, 12, 0, 4, 11, 0, 5, 15, 0, -2, 16, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7, //
+            8, 9, 10, 8, 10, 11, //
+            12, 13, 14, 12, 14, 15, //
+            16, 17, 18, 16, 18, 19, 20, 21, 22, 20, 22, 23,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_multi_difference(
+            &channel_holed_left,
+            &nonrectilinear_channel_with_consumed_hole,
+        )
+        .is_none()
+    );
+    let consumed_channel_holed =
+        hypermesh::exact::arrange_coplanar_convex_surface_component_holed_difference(
+            &channel_holed_left,
+            &nonrectilinear_channel_with_consumed_hole,
+        )
+        .expect("non-rectilinear split should consume holes wholly inside removed openings");
+    consumed_channel_holed.validate().unwrap();
+    consumed_channel_holed
+        .validate_against_sources(
+            &channel_holed_left,
+            &nonrectilinear_channel_with_consumed_hole,
+        )
+        .unwrap();
+    assert_eq!(consumed_channel_holed.components.len(), 2);
+    assert_eq!(
+        consumed_channel_holed
+            .components
+            .iter()
+            .map(|component| component.holes.len())
+            .sum::<usize>(),
+        2
+    );
+    assert!(
+        !consumed_channel_holed
+            .components
+            .iter()
+            .flat_map(|component| component.holes.iter())
+            .any(|hole| hole
+                .iter()
+                .any(|point| real_eq(&point.x, &ExactReal::from(1))
+                    && real_eq(&point.y, &ExactReal::from(5))))
+    );
+    let mut stale_consumed_channel = consumed_channel_holed.clone();
+    stale_consumed_channel.components[0].holes.push(vec![
+        p3(1, 5, 0),
+        p3(2, 5, 0),
+        p3(2, 6, 0),
+        p3(1, 6, 0),
+    ]);
+    assert!(
+        stale_consumed_channel
+            .validate_against_sources(
+                &channel_holed_left,
+                &nonrectilinear_channel_with_consumed_hole
+            )
+            .is_err()
+    );
+    let consumed_channel_preflight = hypermesh::exact::preflight_boolean_exact(
+        &channel_holed_left,
+        &nonrectilinear_channel_with_consumed_hole,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    consumed_channel_preflight.validate().unwrap();
+    consumed_channel_preflight
+        .validate_against_sources(
+            &channel_holed_left,
+            &nonrectilinear_channel_with_consumed_hole,
+        )
+        .unwrap();
+    assert_eq!(
+        consumed_channel_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::
+            CertifiedCoplanarConvexSurfaceComponentHoledDifference
+    );
+
     let cutter_hole_contact = ExactMesh::from_i64_triangles_with_policy(
         &[
             4, 4, 0, 6, 4, 0, 6, 6, 0, 4, 6, 0, //
