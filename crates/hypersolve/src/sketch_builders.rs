@@ -488,6 +488,29 @@ pub mod incidence {
         }
     }
 
+    /// Add a 2D point-on-circular-arc incidence relation.
+    ///
+    /// This is stronger than point-on-circle: the point must satisfy the
+    /// retained radius equation and the selected arc-sector branch. Major arcs
+    /// carry an explicit point half-branch so exact replay stays conjunctive
+    /// and reportable, following Yap's exact-geometric-computation boundary.
+    pub fn point_on_arc2(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        point: SketchEntityHandle,
+        arc: SketchEntityHandle,
+        sweep: SketchArcPointSweep,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::PointOnArc2 { point, arc, sweep };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Incidence,
+            strategy: SketchResidualStrategy::PointArcIncidence,
+            kind,
+        }
+    }
+
     /// Add a projected 3D point-on-2D-circle incidence relation.
     ///
     /// The 3D point is projected through the retained workplane origin and

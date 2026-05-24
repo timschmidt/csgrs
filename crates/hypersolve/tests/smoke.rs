@@ -5612,6 +5612,100 @@ fn sketch_projected_point_on_circle_replays_workplane_and_incidence_rows() {
 }
 
 #[test]
+fn sketch_point_on_arc_replays_radius_and_branch_rows() {
+    let mut sketch = SketchSolveProblem::new();
+    let center = sketch.add_point2d("center", real(0), real(0));
+    let start = sketch.add_point2d("start", real(5), real(0));
+    let end = sketch.add_point2d("end", real(0), real(5));
+    let radius = sketch.add_distance("radius", real(5));
+    let arc = sketch.add_arc_of_circle2("arc", center, start, end, radius);
+    let valid_point = sketch.add_point2d("valid point", real(3), real(4));
+    let outside_point = sketch.add_point2d("outside point", real(-3), real(4));
+    let valid = sketch.add_point_on_arc2(
+        "point on ccw minor arc",
+        valid_point,
+        arc,
+        SketchArcPointSweep::CounterClockwiseMinor,
+    );
+    sketch.add_point_on_arc2(
+        "point on wrong arc branch",
+        outside_point,
+        arc,
+        SketchArcPointSweep::CounterClockwiseMinor,
+    );
+    let wrong = sketch.add_constraint(
+        "wrong arc kind",
+        SketchConstraintKind::PointOnArc2 {
+            point: valid_point,
+            arc: radius,
+            sweep: SketchArcPointSweep::CounterClockwiseMinor,
+        },
+        false,
+        true,
+    );
+
+    let lowered = sketch.lower_to_problem();
+    assert_eq!(lowered.problem.constraints.len(), 12);
+    assert_eq!(
+        lowered
+            .rows
+            .iter()
+            .filter(|row| row.strategy == Some(SketchResidualStrategy::PointArcIncidence))
+            .count(),
+        12
+    );
+    assert_eq!(
+        lowered.rows.last().unwrap().status,
+        SketchGeneratedRowStatus::WrongEntityKind {
+            handle: radius,
+            expected: "2D circular arc",
+        }
+    );
+
+    let certification = certify_candidate(
+        &PreparedProblem::new(&lowered.problem),
+        &context_from_problem(&lowered.problem),
+    );
+    assert!(matches!(
+        certification.rows[2].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[11].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
+
+    let forms = sketch.residual_forms_for_constraint(valid);
+    assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+    assert_eq!(forms.forms.len(), 6);
+    assert_eq!(
+        forms.forms[0].kind,
+        SketchResidualFormKind::ArcIncidenceEndpointRadiusPolynomial
+    );
+    assert_eq!(
+        forms.forms[2].kind,
+        SketchResidualFormKind::ArcIncidencePointRadiusPolynomial
+    );
+    assert_eq!(
+        forms.forms[3].kind,
+        SketchResidualFormKind::ArcIncidenceSweepBranchPredicate
+    );
+    assert_eq!(
+        forms.forms[5].kind,
+        SketchResidualFormKind::ArcIncidencePointBranchPredicate
+    );
+    assert!(
+        forms
+            .forms
+            .iter()
+            .all(|form| form.role == SketchResidualFormRole::ExactProof)
+    );
+
+    let wrong_forms = sketch.residual_forms_for_constraint(wrong);
+    assert_eq!(wrong_forms.status, SketchResidualFormsStatus::InvalidInputs);
+}
+
+#[test]
 fn sketch_projected_point_on_arc_replays_radius_and_branch_rows() {
     let mut sketch = SketchSolveProblem::new();
     let origin3 = sketch.add_point3d("origin3", real(1), real(2), real(3));

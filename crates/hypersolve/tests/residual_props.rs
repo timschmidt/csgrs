@@ -2267,6 +2267,55 @@ proptest! {
     }
 
     #[test]
+    fn sketch_point_on_arc_rows_replay_generated_ccw_minor_branches(
+        cx in -4_i16..=4,
+        cy in -4_i16..=4,
+        radius in 1_i16..=8,
+    ) {
+        let cx = i64::from(cx);
+        let cy = i64::from(cy);
+        let radius = i64::from(radius);
+        let mut sketch = SketchSolveProblem::new();
+        let center = sketch.add_point2d("center", Real::from(cx), Real::from(cy));
+        let start = sketch.add_point2d("start", Real::from(cx + radius), Real::from(cy));
+        let end = sketch.add_point2d("end", Real::from(cx), Real::from(cy + radius));
+        let radius_entity = sketch.add_distance("radius", Real::from(radius));
+        let arc = sketch.add_arc_of_circle2("arc", center, start, end, radius_entity);
+        let point = sketch.add_point2d("point", Real::from(cx + radius), Real::from(cy));
+        let handle = sketch.add_point_on_arc2(
+            "point on arc",
+            point,
+            arc,
+            SketchArcPointSweep::CounterClockwiseMinor,
+        );
+
+        let lowered = sketch.lower_to_problem();
+        let certification = certify_candidate(
+            &PreparedProblem::new(&lowered.problem),
+            &context_from_problem(&lowered.problem),
+        );
+        let forms = sketch.residual_forms_for_constraint(handle);
+
+        prop_assert_eq!(lowered.rows.len(), 6);
+        let arc_rows = lowered
+            .rows
+            .iter()
+            .all(|row| row.strategy == Some(SketchResidualStrategy::PointArcIncidence));
+        prop_assert!(arc_rows);
+        prop_assert!(certification.all_satisfied());
+        prop_assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+        prop_assert_eq!(forms.forms.len(), 6);
+        prop_assert_eq!(
+            forms.forms[3].kind,
+            SketchResidualFormKind::ArcIncidenceSweepBranchPredicate
+        );
+        prop_assert_eq!(
+            forms.forms[5].kind,
+            SketchResidualFormKind::ArcIncidencePointBranchPredicate
+        );
+    }
+
+    #[test]
     fn sketch_projected_point_on_arc_rows_replay_identity_workplane_branches(
         ox in -4_i16..=4,
         oy in -4_i16..=4,

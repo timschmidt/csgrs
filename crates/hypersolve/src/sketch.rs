@@ -1356,6 +1356,23 @@ pub enum SketchConstraintKind {
         /// Circle entity.
         circle: SketchEntityHandle,
     },
+    /// Point-on-circular-arc incidence with retained sweep branch.
+    ///
+    /// Lowering proves both arc endpoints on the retained radius circle, the
+    /// point on that same radius circle, the selected sweep orientation, and
+    /// the selected point-sector branch. Major arcs carry an explicit
+    /// half-branch through [`SketchArcPointSweep`] so exact replay remains a
+    /// conjunction of reportable predicates. This follows Yap, "Towards Exact
+    /// Geometric Computation" (1997): arc membership is retained branch
+    /// evidence, not a rounded angle or tolerance check.
+    PointOnArc2 {
+        /// Point entity.
+        point: SketchEntityHandle,
+        /// Circular arc entity.
+        arc: SketchEntityHandle,
+        /// Explicit arc and point-sector branch.
+        sweep: SketchArcPointSweep,
+    },
     /// 2D point-on-cubic-Bezier incidence at a retained parameter.
     ///
     /// Lowering emits the two exact Bernstein-coordinate equations
@@ -1498,6 +1515,8 @@ pub enum SketchResidualStrategy {
     RadiusEquality,
     /// Incidence represented as a squared-distance polynomial.
     SquaredIncidence,
+    /// Exact point-on-arc incidence and branch package.
+    PointArcIncidence,
     /// Exact cubic-Bezier coordinate incidence in Bernstein form.
     CubicBezierIncidence,
     /// Scalar parameter bound.
@@ -1649,6 +1668,14 @@ pub enum SketchResidualFormKind {
     PointLineSignedDistanceNegativeProposal,
     /// Squared circle-incidence polynomial proof row.
     SquaredCircleIncidencePolynomial,
+    /// Point-on-arc endpoint-on-radius proof row.
+    ArcIncidenceEndpointRadiusPolynomial,
+    /// Point-on-arc point-on-radius proof row.
+    ArcIncidencePointRadiusPolynomial,
+    /// Point-on-arc retained sweep branch predicate.
+    ArcIncidenceSweepBranchPredicate,
+    /// Point-on-arc retained point branch predicate.
+    ArcIncidencePointBranchPredicate,
     /// Squared projected point-on-circle incidence proof row.
     ProjectedCircleIncidencePolynomial,
     /// Projected point-on-arc endpoint-on-radius proof row.
@@ -2901,6 +2928,17 @@ impl SketchSolveProblem {
         incidence::point_on_circle(self, name, point, circle).handle
     }
 
+    /// Add a retained 2D point-on-circular-arc incidence constraint.
+    pub fn add_point_on_arc2(
+        &mut self,
+        name: impl Into<String>,
+        point: SketchEntityHandle,
+        arc: SketchEntityHandle,
+        sweep: SketchArcPointSweep,
+    ) -> SketchConstraintHandle {
+        incidence::point_on_arc2(self, name, point, arc, sweep).handle
+    }
+
     /// Add a retained projected 3D point-on-2D-circle incidence constraint.
     pub fn add_projected_point_on_circle3(
         &mut self,
@@ -4145,6 +4183,62 @@ impl SketchSolveProblem {
                             residual: point_center_squared.sqrt() - radius,
                         },
                     ],
+                    diagnostics,
+                }
+            }
+            SketchConstraintKind::PointOnArc2 { point, arc, sweep } => {
+                let mut diagnostics = Vec::new();
+                let Some(parts) =
+                    self.point_arc_incidence_exprs(point, arc, sweep, constraint, &mut diagnostics)
+                else {
+                    return SketchResidualFormsReport {
+                        constraint: handle,
+                        status: SketchResidualFormsStatus::InvalidInputs,
+                        forms: Vec::new(),
+                        diagnostics,
+                    };
+                };
+                let mut forms = vec![
+                    SketchResidualForm {
+                        kind: SketchResidualFormKind::ArcIncidenceEndpointRadiusPolynomial,
+                        role: SketchResidualFormRole::ExactProof,
+                        strategy: Some(SketchResidualStrategy::PointArcIncidence),
+                        residual: parts.endpoint_radius[0].clone(),
+                    },
+                    SketchResidualForm {
+                        kind: SketchResidualFormKind::ArcIncidenceEndpointRadiusPolynomial,
+                        role: SketchResidualFormRole::ExactProof,
+                        strategy: Some(SketchResidualStrategy::PointArcIncidence),
+                        residual: parts.endpoint_radius[1].clone(),
+                    },
+                    SketchResidualForm {
+                        kind: SketchResidualFormKind::ArcIncidencePointRadiusPolynomial,
+                        role: SketchResidualFormRole::ExactProof,
+                        strategy: Some(SketchResidualStrategy::PointArcIncidence),
+                        residual: parts.point_radius,
+                    },
+                    SketchResidualForm {
+                        kind: SketchResidualFormKind::ArcIncidenceSweepBranchPredicate,
+                        role: SketchResidualFormRole::ExactProof,
+                        strategy: Some(SketchResidualStrategy::PointArcIncidence),
+                        residual: parts.sweep_branch,
+                    },
+                ];
+                forms.extend(
+                    parts
+                        .point_branch
+                        .into_iter()
+                        .map(|residual| SketchResidualForm {
+                            kind: SketchResidualFormKind::ArcIncidencePointBranchPredicate,
+                            role: SketchResidualFormRole::ExactProof,
+                            strategy: Some(SketchResidualStrategy::PointArcIncidence),
+                            residual,
+                        }),
+                );
+                SketchResidualFormsReport {
+                    constraint: handle,
+                    status: SketchResidualFormsStatus::Generated,
+                    forms,
                     diagnostics,
                 }
             }
@@ -6948,6 +7042,58 @@ impl SketchSolveProblem {
                     SketchResidualStrategy::SquaredIncidence,
                 );
             }
+            SketchConstraintKind::PointOnArc2 { point, arc, sweep } => {
+                // Point-on-arc incidence is a retained branch package, not a
+                // point-on-circle shortcut. Yap (1997) requires the endpoint
+                // radius facts, point radius fact, selected sweep predicate,
+                // and selected point-sector predicate to replay explicitly.
+                let Some(parts) =
+                    self.point_arc_incidence_exprs(point, arc, sweep, constraint, rows)
+                else {
+                    return;
+                };
+                for (index, residual) in parts.endpoint_radius.into_iter().enumerate() {
+                    let endpoint = if index == 0 { "start" } else { "end" };
+                    self.push_residual(
+                        problem,
+                        rows,
+                        constraint,
+                        format!("{} arc {} radius", constraint.name, endpoint),
+                        residual,
+                        SketchResidualStrategy::PointArcIncidence,
+                    );
+                }
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} point radius", constraint.name),
+                    parts.point_radius,
+                    SketchResidualStrategy::PointArcIncidence,
+                );
+                self.push_residual_with_kind(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} arc sweep branch", constraint.name),
+                    parts.sweep_branch,
+                    SketchResidualStrategy::PointArcIncidence,
+                    ConstraintKind::GreaterOrEqual,
+                    Real::one(),
+                );
+                for (index, residual) in parts.point_branch.into_iter().enumerate() {
+                    self.push_residual_with_kind(
+                        problem,
+                        rows,
+                        constraint,
+                        format!("{} point branch {index}", constraint.name),
+                        residual,
+                        SketchResidualStrategy::PointArcIncidence,
+                        ConstraintKind::GreaterOrEqual,
+                        Real::one(),
+                    );
+                }
+            }
             SketchConstraintKind::PointOnCubic2 {
                 point,
                 cubic,
@@ -7338,6 +7484,41 @@ impl SketchSolveProblem {
             quaternion,
             distance,
         })
+    }
+
+    fn point_arc_incidence_exprs(
+        &self,
+        point: SketchEntityHandle,
+        arc: SketchEntityHandle,
+        sweep: SketchArcPointSweep,
+        constraint: &SketchConstraint,
+        rows: &mut Vec<SketchGeneratedRow>,
+    ) -> Option<ArcPointIncidenceExprs> {
+        let point = self.point2_coordinates(point, constraint, rows)?;
+        let Some(arc_entity) = self.entity(arc) else {
+            rows.push(missing_entity_row(constraint, arc));
+            return None;
+        };
+        let SketchEntityKind::ArcOfCircle2(arc) = &arc_entity.kind else {
+            rows.push(wrong_entity_row(
+                constraint,
+                arc_entity.handle,
+                "2D circular arc",
+            ));
+            return None;
+        };
+        let center = self.point2_coordinates(arc.center, constraint, rows)?;
+        let start = self.point2_coordinates(arc.start, constraint, rows)?;
+        let end = self.point2_coordinates(arc.end, constraint, rows)?;
+        let radius = self.distance_expr(arc.radius, constraint, rows)?;
+        Some(arc_point_incidence_exprs(
+            &coordinate_exprs2(&center),
+            &coordinate_exprs2(&start),
+            &coordinate_exprs2(&end),
+            &coordinate_exprs2(&point),
+            radius,
+            sweep,
+        ))
     }
 
     fn projected_point_circle_incidence_exprs(

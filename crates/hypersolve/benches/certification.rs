@@ -191,6 +191,28 @@ fn sketch_problem(row_count: usize) -> hypersolve::SketchSolveProblem {
     sketch
 }
 
+fn sketch_problem_with_point_on_arcs(row_count: usize) -> hypersolve::SketchSolveProblem {
+    let mut sketch = hypersolve::SketchSolveProblem::new();
+    for index in 0..row_count {
+        let y = index as i64;
+        let center = sketch.add_point2d(format!("arcpnt{index}.center"), r(0), r(y));
+        let start = sketch.add_point2d(format!("arcpnt{index}.start"), r(5), r(y));
+        let end = sketch.add_point2d(format!("arcpnt{index}.end"), r(0), r(y + 5));
+        let radius = sketch.add_distance(format!("arcpnt{index}.radius"), r(5));
+        let arc =
+            sketch.add_arc_of_circle2(format!("arcpnt{index}.arc"), center, start, end, radius);
+        let point = sketch.add_point2d(format!("arcpnt{index}.point"), r(3), r(y + 4));
+        hypersolve::sketch_incidence_builders::point_on_arc2(
+            &mut sketch,
+            format!("point on arc {index}"),
+            point,
+            arc,
+            hypersolve::SketchArcPointSweep::CounterClockwiseMinor,
+        );
+    }
+    sketch
+}
+
 fn sketch_problem_with_metadata(row_count: usize) -> hypersolve::SketchSolveProblem {
     let mut sketch = sketch_problem(row_count);
     for index in 0..sketch.parameters().len() {
@@ -1567,6 +1589,10 @@ fn certification(c: &mut Criterion) {
     c.bench_function("sketch_line_arc_sweep_length_lowering", |b| {
         b.iter(|| line_arc_sweep_length_sketch.lower_to_problem())
     });
+    let point_on_arc_sketch = sketch_problem_with_point_on_arcs(16);
+    c.bench_function("sketch_point_on_arc_lowering", |b| {
+        b.iter(|| point_on_arc_sketch.lower_to_problem())
+    });
     let projected_line_arc_sweep_length_sketch =
         sketch_problem_with_projected_line_arc_sweep_lengths(16);
     c.bench_function("sketch_projected_line_arc_sweep_length_lowering", |b| {
@@ -1816,6 +1842,24 @@ fn certification(c: &mut Criterion) {
         b.iter(|| {
             for handle in &circle_form_handles {
                 let _ = sketch.residual_forms_for_constraint(*handle);
+            }
+        })
+    });
+    let point_on_arc_form_handles = point_on_arc_sketch
+        .constraints()
+        .iter()
+        .filter(|constraint| {
+            matches!(
+                constraint.kind,
+                hypersolve::SketchConstraintKind::PointOnArc2 { .. }
+            )
+        })
+        .map(|constraint| constraint.handle)
+        .collect::<Vec<_>>();
+    c.bench_function("sketch_point_on_arc_residual_forms", |b| {
+        b.iter(|| {
+            for handle in &point_on_arc_form_handles {
+                let _ = point_on_arc_sketch.residual_forms_for_constraint(*handle);
             }
         })
     });
