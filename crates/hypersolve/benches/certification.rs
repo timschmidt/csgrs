@@ -22,7 +22,7 @@ use hypersolve::{
     compare_algebraic_root_representations_with_refinement, context_from_problem,
     count_bernstein_univariate_polynomial_interval_roots,
     count_descartes_univariate_polynomial_roots, determinant_bareiss, diagnose_failed_constraints,
-    eliminate_affine_rows_with_substitution_classes,
+    diagnose_sketch_failed_constraints, eliminate_affine_rows_with_substitution_classes,
     enumerate_direct_univariate_quadratic_branches, evaluate_polynomial_at_algebraic_root,
     evaluate_rational_expression_at_algebraic_root, isolate_univariate_polynomial_roots,
     lift_sketch_point2_to_workplane3, preflight_sketch_degeneracies,
@@ -2258,6 +2258,25 @@ fn certification(c: &mut Criterion) {
     });
     c.bench_function("diagnose_failed_constraints_affine", |b| {
         b.iter(|| diagnose_failed_constraints(&prepared, &context))
+    });
+    let sketch_failed_problem = {
+        let mut sketch = hypersolve::SketchSolveProblem::new();
+        for index in 0..16 {
+            let y = index as i64;
+            let a = sketch.add_point2d(format!("failed{index}.a"), r(0), r(y));
+            let b = sketch.add_point2d(format!("failed{index}.b"), r(3), r(y + 4));
+            let distance = sketch.add_distance(format!("failed{index}.d"), r(4));
+            sketch.add_point_point_distance(
+                format!("failed sketch distance {index}"),
+                a,
+                b,
+                distance,
+            );
+        }
+        sketch
+    };
+    c.bench_function("diagnose_sketch_failed_constraints", |b| {
+        b.iter(|| diagnose_sketch_failed_constraints(&sketch_failed_problem))
     });
     let failed_search_problem = {
         let x = Expr::symbol(SymbolId(0), "x");

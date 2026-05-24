@@ -12,14 +12,14 @@ use hypersolve::{
     RootIsolationStatus, RootMultiplicityStatus, SketchArcEndpoint, SketchArcTangencyBranch,
     SketchConstraintKind, SketchConstructionCertificateStatus, SketchDegeneracyKind,
     SketchDegeneracyStatus, SketchEntityDomain, SketchEntityDomainKind, SketchEntityDomainStatus,
-    SketchEntityHandle, SketchEntityKind, SketchGeneratedRowStatus, SketchLineEndpoint,
-    SketchParameterDomain, SketchParameterDomainKind, SketchParameterDomainStatus,
-    SketchResidualFormKind, SketchResidualFormRole, SketchResidualFormsStatus,
-    SketchResidualStrategy, SketchRoundTripMetadata, SketchRoundTripRole, SketchSolveProblem,
-    SketchTangentOrientation, SketchUnitToleranceStatus, SketchWorkplaneFrameStatus,
-    SolverBlockRowKind, SolverConfig, SolverPoint2, SolverState, SparseResidualBatchStatus,
-    SparseResidualTerm, SymbolId, VariableBall, analyze_exact_affine_rank,
-    apply_equality_substitution_classes, apply_equality_substitutions,
+    SketchEntityHandle, SketchEntityKind, SketchFailedConstraintStatus, SketchGeneratedRowStatus,
+    SketchLineEndpoint, SketchParameterDomain, SketchParameterDomainKind,
+    SketchParameterDomainStatus, SketchResidualFormKind, SketchResidualFormRole,
+    SketchResidualFormsStatus, SketchResidualStrategy, SketchRoundTripMetadata,
+    SketchRoundTripRole, SketchSolveProblem, SketchTangentOrientation, SketchUnitToleranceStatus,
+    SketchWorkplaneFrameStatus, SolverBlockRowKind, SolverConfig, SolverPoint2, SolverState,
+    SparseResidualBatchStatus, SparseResidualTerm, SymbolId, VariableBall,
+    analyze_exact_affine_rank, apply_equality_substitution_classes, apply_equality_substitutions,
     audit_sketch_unit_tolerances, build_equality_substitution_classes,
     build_sketch_workplane_frame, certify_affine_interval_candidate, certify_affine_krawczyk_box,
     certify_candidate, certify_candidate_batch, certify_candidate_domains,
@@ -29,7 +29,7 @@ use hypersolve::{
     certify_quadratic_interval_candidate, certify_sketch_construction,
     certify_univariate_quadratic_alpha, certify_univariate_quadratic_krawczyk_box,
     context_from_problem, diagnose_failed_constraints,
-    diagnose_failed_constraints_from_certification,
+    diagnose_failed_constraints_from_certification, diagnose_sketch_failed_constraints,
     eliminate_affine_rows_with_substitution_classes,
     enumerate_direct_univariate_quadratic_branches, evaluate_residuals, facts_depend_on_symbol,
     find_equality_substitutions, isolate_univariate_polynomial_roots,
@@ -5195,6 +5195,98 @@ fn failed_constraint_set_removal_search_reports_bounded_cardinality_resolutions(
             .expect("triple combination should be probed")
             .removal_status,
         FailedConstraintRemovalStatus::ClearsAllBlockingRows
+    );
+}
+
+#[test]
+fn sketch_failed_constraint_report_maps_exact_rows_to_retained_constraints() {
+    let mut sketch = SketchSolveProblem::new();
+    let a = sketch.add_point2d("a", real(0), real(0));
+    let b = sketch.add_point2d("b", real(3), real(4));
+    let too_short = sketch.add_distance("too short", real(4));
+    let valid_distance = sketch.add_distance("valid distance", real(5));
+    let failed = sketch.add_point_point_distance("failed sketch distance", a, b, too_short);
+    let valid = sketch.add_point_point_distance("valid sketch distance", a, b, valid_distance);
+    let stale = sketch.add_point_point_distance(
+        "stale sketch distance",
+        a,
+        SketchEntityHandle(999),
+        valid_distance,
+    );
+
+    let report = diagnose_sketch_failed_constraints(&sketch);
+
+    assert!(report.has_blocking_rows());
+    assert_eq!(report.lowering_failure_rows, 1);
+    assert_eq!(report.exact_failure_rows, 1);
+    assert_eq!(report.rank_redundant_rows, 0);
+    assert_eq!(report.blocking_rows, 2);
+    assert!(report.rows.iter().any(|row| {
+        row.constraint == failed
+            && row.constraint_name == "failed sketch distance"
+            && matches!(
+                row.status,
+                SketchFailedConstraintStatus::ExactFailure(
+                    FailedConstraintStatus::CertifiedCandidateViolation
+                )
+            )
+            && row
+                .failed
+                .as_ref()
+                .is_some_and(|failed| failed.name == "failed sketch distance")
+    }));
+    assert!(report.rows.iter().any(|row| {
+        row.constraint == stale
+            && matches!(
+                row.status,
+                SketchFailedConstraintStatus::LoweringFailure(
+                    SketchGeneratedRowStatus::MissingEntity(SketchEntityHandle(999))
+                )
+            )
+            && row.failed.is_none()
+    }));
+    assert!(!report.rows.iter().any(|row| row.constraint == valid));
+}
+
+#[test]
+fn sketch_failed_constraint_report_maps_affine_rank_redundancy_to_sources() {
+    let mut sketch = SketchSolveProblem::new();
+    let a = sketch.add_point2d("a", real(0), real(0));
+    let b = sketch.add_point2d("b", real(0), real(0));
+    let redundant_a = sketch.add_points_coincident("redundant coincidence a", a, b);
+    let redundant_b = sketch.add_points_coincident("redundant coincidence b", a, b);
+
+    let report = diagnose_sketch_failed_constraints(&sketch);
+
+    assert!(!report.has_blocking_rows());
+    assert!(report.only_rank_redundancy());
+    assert_eq!(report.blocking_rows, 0);
+    assert_eq!(report.lowering_failure_rows, 0);
+    assert_eq!(report.exact_failure_rows, 0);
+    assert_eq!(report.rank_redundant_rows, 4);
+    assert_eq!(report.rows.len(), 4);
+    assert!(report.rows.iter().all(|row| {
+        row.status == SketchFailedConstraintStatus::RankRedundant
+            && row
+                .failed
+                .as_ref()
+                .is_some_and(|failed| failed.rank_without_row.is_some())
+    }));
+    assert_eq!(
+        report
+            .rows
+            .iter()
+            .filter(|row| row.constraint == redundant_a)
+            .count(),
+        2
+    );
+    assert_eq!(
+        report
+            .rows
+            .iter()
+            .filter(|row| row.constraint == redundant_b)
+            .count(),
+        2
     );
 }
 

@@ -28,6 +28,13 @@ doc = false
 bench = false
 
 [[bin]]
+name = "sketch_failed_constraints"
+path = "fuzz_targets/sketch_failed_constraints.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
 name = "sketch_workplane_symmetry"
 path = "fuzz_targets/sketch_workplane_symmetry.rs"
 test = false

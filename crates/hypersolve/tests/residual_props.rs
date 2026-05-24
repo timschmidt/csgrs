@@ -7,8 +7,9 @@ use hypersolve::{
     PreparedSolverBlock, Problem, ProposalEngineKind, ProposalEnginePrecision,
     ProposalEngineReport, RootIsolationStatus, SketchArcEndpoint, SketchArcTangencyBranch,
     SketchConstructionCertificateStatus, SketchDegeneracyKind, SketchDegeneracyStatus,
-    SketchEntityDomain, SketchEntityDomainKind, SketchEntityDomainStatus, SketchGeneratedRowStatus,
-    SketchLineEndpoint, SketchParameterDomain, SketchParameterDomainStatus, SketchResidualFormKind,
+    SketchEntityDomain, SketchEntityDomainKind, SketchEntityDomainStatus,
+    SketchFailedConstraintStatus, SketchGeneratedRowStatus, SketchLineEndpoint,
+    SketchParameterDomain, SketchParameterDomainStatus, SketchResidualFormKind,
     SketchResidualFormRole, SketchResidualFormsStatus, SketchResidualStrategy,
     SketchRoundTripMetadata, SketchSolveProblem, SketchTangentOrientation,
     SketchUnitToleranceStatus, SketchWorkplaneFrameStatus, SolverBlockRowKind, SolverConfig,
@@ -19,7 +20,8 @@ use hypersolve::{
     certify_multivariate_quadratic_krawczyk_box, certify_quadratic_interval_candidate,
     certify_sketch_construction, certify_univariate_quadratic_alpha,
     certify_univariate_quadratic_krawczyk_box, context_from_problem, determinant_bareiss,
-    diagnose_failed_constraints, eliminate_affine_rows_with_substitution_classes,
+    diagnose_failed_constraints, diagnose_sketch_failed_constraints,
+    eliminate_affine_rows_with_substitution_classes,
     enumerate_direct_univariate_quadratic_branches, isolate_univariate_polynomial_roots,
     lift_sketch_point2_to_workplane3, preflight_sketch_degeneracies,
     preflight_sketch_entity_domains, preflight_sketch_parameter_domains,
@@ -2181,6 +2183,44 @@ proptest! {
             .rows
             .iter()
             .all(|row| row.status == FailedConstraintStatus::RankRedundant));
+    }
+
+    #[test]
+    fn sketch_failed_constraint_report_generated_distance_misses_source_constraint(
+        ax in -16_i16..=16,
+        ay in -16_i16..=16,
+        dx in -16_i16..=16,
+        dy in -16_i16..=16,
+        wrong_distance in 0_i16..=32,
+    ) {
+        let ax = i64::from(ax);
+        let ay = i64::from(ay);
+        let dx = i64::from(dx);
+        let dy = i64::from(dy);
+        let squared = dx * dx + dy * dy;
+        let wrong_distance = i64::from(wrong_distance);
+        prop_assume!(squared != wrong_distance * wrong_distance);
+
+        let mut sketch = SketchSolveProblem::new();
+        let a = sketch.add_point2d("a", Real::from(ax), Real::from(ay));
+        let b = sketch.add_point2d("b", Real::from(ax + dx), Real::from(ay + dy));
+        let distance = sketch.add_distance("wrong distance", Real::from(wrong_distance));
+        let handle = sketch.add_point_point_distance("generated sketch miss", a, b, distance);
+
+        let report = diagnose_sketch_failed_constraints(&sketch);
+
+        prop_assert!(report.has_blocking_rows());
+        prop_assert_eq!(report.blocking_rows, 1);
+        prop_assert_eq!(report.exact_failure_rows, 1);
+        prop_assert_eq!(report.lowering_failure_rows, 0);
+        prop_assert_eq!(report.rows.len(), 1);
+        prop_assert_eq!(report.rows[0].constraint, handle);
+        prop_assert!(matches!(
+            report.rows[0].status,
+            SketchFailedConstraintStatus::ExactFailure(
+                FailedConstraintStatus::CertifiedCandidateViolation
+            )
+        ));
     }
 
     #[test]

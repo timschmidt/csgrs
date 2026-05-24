@@ -43,6 +43,7 @@ mod sketch_cubic_tangent;
 pub mod sketch_degeneracy;
 pub mod sketch_domains;
 pub mod sketch_entity_domains;
+pub mod sketch_failed_constraints;
 pub mod sketch_fixtures;
 mod sketch_oriented_angle;
 mod sketch_projection;
@@ -244,11 +245,11 @@ pub use sketch::{
     SketchConstraint, SketchConstraintHandle, SketchConstraintKind, SketchCubic2, SketchDistance,
     SketchEntity, SketchEntityDomain, SketchEntityHandle, SketchEntityKind, SketchGeneratedRow,
     SketchGeneratedRowStatus, SketchGroupHandle, SketchLineEndpoint, SketchLineSegment2,
-    SketchLoweringReport, SketchNormal2, SketchNormal3, SketchParameter, SketchParameterDomain,
-    SketchParameterHandle, SketchPoint2, SketchPoint3, SketchResidualForm, SketchResidualFormKind,
-    SketchResidualFormRole, SketchResidualFormsReport, SketchResidualFormsStatus,
-    SketchResidualStrategy, SketchRoundTripMetadata, SketchRoundTripRole, SketchSolveProblem,
-    SketchTangentOrientation, SketchWorkplane,
+    SketchLineSegment3, SketchLoweringReport, SketchNormal2, SketchNormal3, SketchParameter,
+    SketchParameterDomain, SketchParameterHandle, SketchPoint2, SketchPoint3, SketchResidualForm,
+    SketchResidualFormKind, SketchResidualFormRole, SketchResidualFormsReport,
+    SketchResidualFormsStatus, SketchResidualStrategy, SketchRoundTripMetadata,
+    SketchRoundTripRole, SketchSolveProblem, SketchTangentOrientation, SketchWorkplane,
 };
 pub use sketch_builders::{
     SketchConstraintBuildReport, SketchConstraintFamily, angle as sketch_angle_builders,
@@ -274,6 +275,10 @@ pub use sketch_entity_domains::{
     SketchEntityDomainCheck, SketchEntityDomainKind, SketchEntityDomainReport,
     SketchEntityDomainStatus, preflight_sketch_entity_domains,
     preflight_sketch_entity_domains_with_policy,
+};
+pub use sketch_failed_constraints::{
+    SketchFailedConstraintReport, SketchFailedConstraintRow, SketchFailedConstraintStatus,
+    diagnose_sketch_failed_constraints, diagnose_sketch_failed_constraints_with_config,
 };
 pub use sketch_fixtures::{
     SketchCompatibilityFixture, SketchCompatibilityFixtureKind, SketchCompatibilityReplayReport,
