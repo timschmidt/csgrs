@@ -781,6 +781,32 @@ pub mod distance {
         }
     }
 
+    /// Add a 2D line length to circular minor-arc length relation.
+    ///
+    /// Lowering emits endpoint-on-radius polynomial proof rows for the arc and
+    /// an exact symbolic squared row
+    /// `|line|^2 - (radius * acos(cos(theta)))^2 == 0`, where `theta` is the
+    /// principal unsigned angle between the retained arc endpoints. This is
+    /// deliberately not advertised as a polynomial package: Yap's "Towards
+    /// Exact Geometric Computation" (1997) requires the non-algebraic
+    /// arc-length boundary to remain visible. Major or oriented sweeps need an
+    /// explicit branch carrier instead of a hidden UI angle.
+    pub fn equal_line_arc_length2(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        line: SketchEntityHandle,
+        arc: SketchEntityHandle,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::EqualLineArcLength2 { line, arc };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Distance,
+            strategy: SketchResidualStrategy::LineArcLength,
+            kind,
+        }
+    }
+
     /// Add a 2D point-to-line distance relation.
     ///
     /// Lowering uses the exact polynomial

@@ -777,6 +777,49 @@ proptest! {
     }
 
     #[test]
+    fn sketch_line_arc_length_rows_replay_generated_half_circles(
+        radius in 1_i16..=8,
+        x in -4_i16..=4,
+        y in -4_i16..=4,
+    ) {
+        let r = i64::from(radius);
+        let x = i64::from(x);
+        let y = i64::from(y);
+        let mut sketch = SketchSolveProblem::new();
+        let center = sketch.add_point2d("center", Real::from(x), Real::from(y));
+        let start = sketch.add_point2d("start", Real::from(x + r), Real::from(y));
+        let end = sketch.add_point2d("end", Real::from(x - r), Real::from(y));
+        let radius_entity = sketch.add_distance("radius", Real::from(r));
+        let arc = sketch.add_arc_of_circle2("half arc", center, start, end, radius_entity);
+        let line_start = sketch.add_point2d("line start", Real::from(0), Real::from(0));
+        let line_end = sketch.add_point2d("line end", Real::from(r) * Real::pi(), Real::from(0));
+        let line = sketch.add_line_segment2("matching line", line_start, line_end);
+        let handle = sketch.add_equal_line_arc_length2("line arc length", line, arc);
+
+        let lowered = sketch.lower_to_problem();
+        let certification = certify_candidate(
+            &PreparedProblem::new(&lowered.problem),
+            &context_from_problem(&lowered.problem),
+        );
+        let forms = sketch.residual_forms_for_constraint(handle);
+
+        prop_assert_eq!(lowered.rows.len(), 3);
+        let all_rows_generated = lowered.rows.iter().all(|row| {
+            row.strategy == Some(SketchResidualStrategy::LineArcLength)
+                && row.status == SketchGeneratedRowStatus::Generated
+        });
+        prop_assert!(all_rows_generated);
+        prop_assert!(certification.all_satisfied());
+        prop_assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+        prop_assert_eq!(forms.forms.len(), 3);
+        prop_assert_eq!(
+            forms.forms[2].kind,
+            SketchResidualFormKind::LineArcLengthTranscendentalEquality
+        );
+        prop_assert_eq!(forms.forms[2].role, SketchResidualFormRole::ExactProof);
+    }
+
+    #[test]
     fn sketch_arc_line_tangent_rows_match_generated_integer_circle_tangents(
         cx in -8_i16..=8,
         cy in -8_i16..=8,

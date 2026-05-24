@@ -343,6 +343,39 @@ fn sketch_problem_with_length_differences(row_count: usize) -> hypersolve::Sketc
     sketch
 }
 
+fn sketch_problem_with_line_arc_lengths(row_count: usize) -> hypersolve::SketchSolveProblem {
+    let mut sketch = hypersolve::SketchSolveProblem::new();
+    for index in 0..row_count {
+        let y = index as i64;
+        let radius = (index % 5 + 1) as i64;
+        let center = sketch.add_point2d(format!("linarc{index}.center"), r(0), r(y));
+        let start = sketch.add_point2d(format!("linarc{index}.start"), r(radius), r(y));
+        let end = sketch.add_point2d(format!("linarc{index}.end"), r(-radius), r(y));
+        let radius_entity = sketch.add_distance(format!("linarc{index}.radius"), r(radius));
+        let arc = sketch.add_arc_of_circle2(
+            format!("linarc{index}.arc"),
+            center,
+            start,
+            end,
+            radius_entity,
+        );
+        let line_start = sketch.add_point2d(format!("linarc{index}.line_start"), r(0), r(y + 10));
+        let line_end = sketch.add_point2d(
+            format!("linarc{index}.line_end"),
+            r(radius) * Real::pi(),
+            r(y + 10),
+        );
+        let line = sketch.add_line_segment2(format!("linarc{index}.line"), line_start, line_end);
+        hypersolve::sketch_distance_builders::equal_line_arc_length2(
+            &mut sketch,
+            format!("line arc length {index}"),
+            line,
+            arc,
+        );
+    }
+    sketch
+}
+
 fn sketch_problem_with_equal_point_line_distances(
     row_count: usize,
 ) -> hypersolve::SketchSolveProblem {
@@ -1389,6 +1422,10 @@ fn certification(c: &mut Criterion) {
     c.bench_function("sketch_length_difference_lowering", |b| {
         b.iter(|| length_difference_sketch.lower_to_problem())
     });
+    let line_arc_length_sketch = sketch_problem_with_line_arc_lengths(16);
+    c.bench_function("sketch_line_arc_length_lowering", |b| {
+        b.iter(|| line_arc_length_sketch.lower_to_problem())
+    });
     let equal_point_line_sketch = sketch_problem_with_equal_point_line_distances(16);
     c.bench_function("sketch_equal_point_line_distance_lowering", |b| {
         b.iter(|| equal_point_line_sketch.lower_to_problem())
@@ -1567,6 +1604,18 @@ fn certification(c: &mut Criterion) {
         b.iter(|| {
             for handle in &form_handles {
                 let _ = sketch.residual_forms_for_constraint(*handle);
+            }
+        })
+    });
+    let line_arc_form_handles = line_arc_length_sketch
+        .constraints()
+        .iter()
+        .map(|constraint| constraint.handle)
+        .collect::<Vec<_>>();
+    c.bench_function("sketch_line_arc_length_residual_forms", |b| {
+        b.iter(|| {
+            for handle in &line_arc_form_handles {
+                let _ = line_arc_length_sketch.residual_forms_for_constraint(*handle);
             }
         })
     });

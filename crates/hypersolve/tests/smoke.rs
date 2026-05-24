@@ -5237,6 +5237,101 @@ fn sketch_projected_line_orientation_lowers_exact_workplane_rows() {
 }
 
 #[test]
+fn sketch_line_arc_length_replays_endpoint_radius_and_transcendental_length() {
+    let mut sketch = SketchSolveProblem::new();
+    let origin = sketch.add_point2d("origin", real(0), real(0));
+    let start = sketch.add_point2d("start", real(1), real(0));
+    let end = sketch.add_point2d("end", real(-1), real(0));
+    let radius = sketch.add_distance("radius", real(1));
+    let arc = sketch.add_arc_of_circle2("half arc", origin, start, end, radius);
+    let line_start = sketch.add_point2d("line start", real(0), real(0));
+    let line_end = sketch.add_point2d("line end", Real::pi(), real(0));
+    let valid_line = sketch.add_line_segment2("pi line", line_start, line_end);
+    let short_end = sketch.add_point2d("short end", real(2), real(0));
+    let short_line = sketch.add_line_segment2("short line", line_start, short_end);
+    let valid = sketch.add_equal_line_arc_length2("line equals half arc", valid_line, arc);
+    sketch.add_equal_line_arc_length2("short line rejects half arc", short_line, arc);
+    let wrong = sketch.add_constraint(
+        "wrong arc kind",
+        SketchConstraintKind::EqualLineArcLength2 {
+            line: valid_line,
+            arc: valid_line,
+        },
+        false,
+        true,
+    );
+
+    let lowered = sketch.lower_to_problem();
+    assert_eq!(lowered.problem.constraints.len(), 6);
+    assert_eq!(
+        lowered
+            .rows
+            .iter()
+            .filter(|row| row.strategy == Some(SketchResidualStrategy::LineArcLength))
+            .count(),
+        6
+    );
+    assert_eq!(
+        lowered.rows.last().unwrap().status,
+        SketchGeneratedRowStatus::WrongEntityKind {
+            handle: valid_line,
+            expected: "2D circular arc",
+        }
+    );
+
+    let certification = certify_candidate(
+        &PreparedProblem::new(&lowered.problem),
+        &context_from_problem(&lowered.problem),
+    );
+    assert!(matches!(
+        certification.rows[0].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[1].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[2].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[5].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
+
+    let forms = sketch.residual_forms_for_constraint(valid);
+    assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+    assert_eq!(forms.forms.len(), 3);
+    assert_eq!(
+        forms.forms[0].kind,
+        SketchResidualFormKind::LineArcLengthEndpointRadiusPolynomial
+    );
+    assert_eq!(
+        forms.forms[1].kind,
+        SketchResidualFormKind::LineArcLengthEndpointRadiusPolynomial
+    );
+    assert_eq!(
+        forms.forms[2].kind,
+        SketchResidualFormKind::LineArcLengthTranscendentalEquality
+    );
+    assert!(forms.forms.iter().all(|form| {
+        form.role == SketchResidualFormRole::ExactProof
+            && form.strategy == Some(SketchResidualStrategy::LineArcLength)
+    }));
+
+    let wrong_forms = sketch.residual_forms_for_constraint(wrong);
+    assert_eq!(wrong_forms.status, SketchResidualFormsStatus::InvalidInputs);
+    assert_eq!(
+        wrong_forms.diagnostics[0].status,
+        SketchGeneratedRowStatus::WrongEntityKind {
+            handle: valid_line,
+            expected: "2D circular arc",
+        }
+    );
+}
+
+#[test]
 fn sketch_workplane_frame_respects_rotated_unit_quaternion_basis() {
     let mut sketch = SketchSolveProblem::new();
     let origin = sketch.add_point3d("origin", real(0), real(0), real(5));

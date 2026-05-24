@@ -37,6 +37,7 @@ pub mod residual_replay;
 pub mod resultant;
 pub mod root_isolation;
 pub mod sketch;
+mod sketch_arc_length;
 mod sketch_arc_tangent;
 pub mod sketch_builders;
 pub mod sketch_certificates;

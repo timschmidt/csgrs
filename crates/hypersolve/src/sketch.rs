@@ -14,6 +14,7 @@
 use hyperreal::{Real, RealSign};
 
 use crate::model::{Constraint, ConstraintKind, Problem, VariableId};
+use crate::sketch_arc_length::{LineArcLengthExprs, line_arc_length_exprs};
 use crate::sketch_arc_tangent::{
     ArcArcTangentExprs, ArcCubicSecondOrderContactExprs, ArcCubicTangentExprs, ArcLineTangentExprs,
     arc_arc_tangent_exprs, arc_cubic_second_order_contact_exprs, arc_cubic_tangent_exprs,
@@ -677,6 +678,23 @@ pub enum SketchConstraintKind {
         /// Distance entity for the exact length difference.
         difference: SketchEntityHandle,
     },
+    /// 2D line length equals a retained circular minor-arc length.
+    ///
+    /// The retained relation is `length(line) = radius * theta`, where
+    /// `theta = acos((start-center) . (end-center) / (|start-center| *
+    /// |end-center|))` is the principal unsigned endpoint angle. Lowering
+    /// emits polynomial endpoint-on-radius proof rows plus an exact symbolic
+    /// squared transcendental length row. This follows Yap, "Towards Exact Geometric
+    /// Computation" (1997), by preserving the non-algebraic nature of circular
+    /// arc length instead of hiding it behind primitive-float sweep data.
+    /// Major and oriented arc lengths require an explicit branch carrier and
+    /// are intentionally not inferred here.
+    EqualLineArcLength2 {
+        /// Line whose length is compared.
+        line: SketchEntityHandle,
+        /// Circular arc whose minor endpoint sweep length is compared.
+        arc: SketchEntityHandle,
+    },
     /// 2D point-to-line distance relation.
     ///
     /// Lowering emits `cross(point-start, dir)^2 - distance^2*|dir|^2 == 0`.
@@ -1286,6 +1304,8 @@ pub enum SketchResidualStrategy {
     SquaredLineLengthRatio,
     /// Squared 2D line length difference equality/order package.
     SquaredLineLengthDifference,
+    /// Exact retained line/minor-arc length package.
+    LineArcLength,
     /// Squared 2D point-to-line distance equality.
     SquaredPointLineDistance,
     /// Squared 2D line-length-to-point-line-distance equality.
@@ -1421,6 +1441,10 @@ pub enum SketchResidualFormKind {
     SquaredProjectedLineLengthDifferencePolynomial,
     /// Projected line-length difference branch predicate.
     ProjectedLineLengthDifferenceBranchPredicate,
+    /// Polynomial endpoint-on-radius proof row for line/minor-arc length.
+    LineArcLengthEndpointRadiusPolynomial,
+    /// Exact symbolic squared `line - radius * acos(cos(endpoint angle))` proof row.
+    LineArcLengthTranscendentalEquality,
     /// Squared projected line-length to point-line-distance proof row.
     SquaredProjectedLineLengthPointLineDistancePolynomial,
     /// Squared equality between two projected point-line distances.
@@ -2112,6 +2136,21 @@ impl SketchSolveProblem {
         difference: SketchEntityHandle,
     ) -> SketchConstraintHandle {
         distance::length_difference_lines2(self, name, longer, shorter, difference).handle
+    }
+
+    /// Add a retained relation equating a 2D line length to a circular minor
+    /// arc length.
+    ///
+    /// The proof package keeps the arc's endpoint-on-radius equations
+    /// polynomial and the non-polynomial `radius * acos(cos(theta))` row
+    /// explicit.
+    pub fn add_equal_line_arc_length2(
+        &mut self,
+        name: impl Into<String>,
+        line: SketchEntityHandle,
+        arc: SketchEntityHandle,
+    ) -> SketchConstraintHandle {
+        distance::equal_line_arc_length2(self, name, line, arc).handle
     }
 
     /// Add a retained 2D point-to-line distance relation.
@@ -3527,6 +3566,44 @@ impl SketchSolveProblem {
                             role: SketchResidualFormRole::ProposalOnly,
                             strategy: None,
                             residual: cross + scaled_distance,
+                        },
+                    ],
+                    diagnostics,
+                }
+            }
+            SketchConstraintKind::EqualLineArcLength2 { line, arc } => {
+                let mut diagnostics = Vec::new();
+                let Some(parts) =
+                    self.line_arc_length_exprs(line, arc, constraint, &mut diagnostics)
+                else {
+                    return SketchResidualFormsReport {
+                        constraint: handle,
+                        status: SketchResidualFormsStatus::InvalidInputs,
+                        forms: Vec::new(),
+                        diagnostics,
+                    };
+                };
+                SketchResidualFormsReport {
+                    constraint: handle,
+                    status: SketchResidualFormsStatus::Generated,
+                    forms: vec![
+                        SketchResidualForm {
+                            kind: SketchResidualFormKind::LineArcLengthEndpointRadiusPolynomial,
+                            role: SketchResidualFormRole::ExactProof,
+                            strategy: Some(SketchResidualStrategy::LineArcLength),
+                            residual: parts.endpoint_radius[0].clone(),
+                        },
+                        SketchResidualForm {
+                            kind: SketchResidualFormKind::LineArcLengthEndpointRadiusPolynomial,
+                            role: SketchResidualFormRole::ExactProof,
+                            strategy: Some(SketchResidualStrategy::LineArcLength),
+                            residual: parts.endpoint_radius[1].clone(),
+                        },
+                        SketchResidualForm {
+                            kind: SketchResidualFormKind::LineArcLengthTranscendentalEquality,
+                            role: SketchResidualFormRole::ExactProof,
+                            strategy: Some(SketchResidualStrategy::LineArcLength),
+                            residual: parts.length_equality,
                         },
                     ],
                     diagnostics,
@@ -5111,6 +5188,37 @@ impl SketchSolveProblem {
                     SketchResidualStrategy::SquaredLineLengthDifference,
                     ConstraintKind::GreaterOrEqual,
                     Real::one(),
+                );
+            }
+            SketchConstraintKind::EqualLineArcLength2 { line, arc } => {
+                // Arc length is generally transcendental, so this package
+                // keeps the boundary visible: polynomial endpoint-radius rows
+                // prove the retained arc geometry, and the exact symbolic
+                // squared `acos` residual proves the minor-sweep length
+                // relation without adding a line-length square-root branch.
+                // This is the Yap (1997) exact replay policy applied without
+                // pretending circular arc length is a polynomial predicate.
+                let Some(parts) = self.line_arc_length_exprs(line, arc, constraint, rows) else {
+                    return;
+                };
+                for (index, residual) in parts.endpoint_radius.into_iter().enumerate() {
+                    let endpoint = if index == 0 { "start" } else { "end" };
+                    self.push_residual(
+                        problem,
+                        rows,
+                        constraint,
+                        format!("{} arc {} radius", constraint.name, endpoint),
+                        residual,
+                        SketchResidualStrategy::LineArcLength,
+                    );
+                }
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} minor arc length", constraint.name),
+                    parts.length_equality,
+                    SketchResidualStrategy::LineArcLength,
                 );
             }
             SketchConstraintKind::PointLineDistance2 {
@@ -7264,6 +7372,39 @@ impl SketchSolveProblem {
             endpoint,
             radius,
         })
+    }
+
+    fn line_arc_length_exprs(
+        &self,
+        line: SketchEntityHandle,
+        arc: SketchEntityHandle,
+        constraint: &SketchConstraint,
+        rows: &mut Vec<SketchGeneratedRow>,
+    ) -> Option<LineArcLengthExprs> {
+        let line_direction = self.line2_direction(line, constraint, rows)?;
+        let Some(entity) = self.entity(arc) else {
+            rows.push(missing_entity_row(constraint, arc));
+            return None;
+        };
+        let SketchEntityKind::ArcOfCircle2(arc) = &entity.kind else {
+            rows.push(wrong_entity_row(
+                constraint,
+                entity.handle,
+                "2D circular arc",
+            ));
+            return None;
+        };
+        let center = self.point2_coordinates(arc.center, constraint, rows)?;
+        let start = self.point2_coordinates(arc.start, constraint, rows)?;
+        let end = self.point2_coordinates(arc.end, constraint, rows)?;
+        let radius = self.distance_expr(arc.radius, constraint, rows)?;
+        Some(line_arc_length_exprs(
+            &coordinate_exprs2(&center),
+            &coordinate_exprs2(&start),
+            &coordinate_exprs2(&end),
+            radius,
+            &line_direction,
+        ))
     }
 
     fn point_line_distance_squared_parts(

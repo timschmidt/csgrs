@@ -147,6 +147,13 @@ doc = false
 bench = false
 
 [[bin]]
+name = "sketch_line_arc_length"
+path = "fuzz_targets/sketch_line_arc_length.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
 name = "sketch_point_on_cubic"
 path = "fuzz_targets/sketch_point_on_cubic.rs"
 test = false
