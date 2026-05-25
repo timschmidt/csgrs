@@ -3218,6 +3218,38 @@ fn exercise_consumed_hole_side_cutter_openings() {
         ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
     );
 
+    let single_consumed_only = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            4, 8, 0, 5, 8, 0, 5, 9, 0, 4, 9, 0, //
+            -2, 4, 0, 9, 4, 0, 7, 10, 0, -2, 10, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("single consumed-only side-cutter fixture must import");
+    assert!(arrange_coplanar_surface_component_difference(&left, &single_consumed_only).is_none());
+    let single_consumed =
+        arrange_coplanar_surface_cutter_hole_contact_difference(&left, &single_consumed_only)
+            .expect("single-source consumed holes stay in cutter/hole-contact replay");
+    single_consumed.validate().unwrap();
+    single_consumed
+        .validate_cutter_hole_contact_difference_against_sources(&left, &single_consumed_only)
+        .unwrap();
+    let single_consumed_preflight =
+        preflight_boolean_exact(&left, &single_consumed_only, ExactBooleanOperation::Difference)
+            .expect("single consumed-only side opening preflight should classify shortcut");
+    single_consumed_preflight.validate().unwrap();
+    single_consumed_preflight
+        .validate_against_sources(&left, &single_consumed_only)
+        .unwrap();
+    assert_eq!(
+        single_consumed_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfaceCutterHoleContactDifference
+    );
+
     let retained_and_consumed = ExactMesh::from_i64_triangles_with_policy(
         &[
             15, 16, 0, 17, 16, 0, 17, 18, 0, 15, 18, 0, //

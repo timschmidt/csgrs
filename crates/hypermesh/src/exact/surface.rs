@@ -6299,15 +6299,29 @@ fn coplanar_surface_difference_polygons(
             [] => polygons.push(component.hull.clone()),
             [right_index] => {
                 if !holes.is_empty() {
-                    let opened =
+                    if let Some(opened) =
                         materialize_cutter_hole_contact_multi_component_difference_consuming_holes(
                             component,
                             &cutter_indices,
                             &holes,
                             &right_components,
                             "coplanar no-hole cutter-hole contact consumed-hole difference",
-                        )?;
-                    polygons.extend(opened);
+                        )
+                    {
+                        polygons.extend(opened);
+                    } else if let Some(opened) =
+                        materialize_side_cutter_opening_difference_consuming_holes(
+                            component,
+                            &cutter_indices,
+                            &holes,
+                            &right_components,
+                            "coplanar no-hole single side-cutter consumed-hole difference",
+                        )
+                    {
+                        polygons.extend(opened);
+                    } else {
+                        return None;
+                    }
                 } else {
                     let right_component = &right_components[*right_index];
                     if let Some(difference) = arrange_coplanar_convex_surface_difference(
@@ -6358,6 +6372,16 @@ fn coplanar_surface_difference_polygons(
                         )
                     {
                         remnants
+                    } else if let Some(opened) =
+                        materialize_side_cutter_opening_difference_consuming_holes(
+                            component,
+                            &cutter_indices,
+                            &holes,
+                            &right_components,
+                            "coplanar no-hole side-cutter opening consumed-hole difference",
+                        )
+                    {
+                        opened
                     } else {
                         return None;
                     }
@@ -11748,6 +11772,58 @@ fn materialize_connected_multi_cutter_component_holed_difference(
         outer: opening,
         holes: retained_holes,
     }])
+}
+
+/// Replay a no-hole side-cutter opening that consumes strict holes.
+///
+/// This is the no-hole counterpart to
+/// [`materialize_connected_multi_cutter_component_holed_difference`]. It
+/// admits the same exact non-rectilinear side-opening replay, but promotes
+/// only when every strict interior right ring is wholly contained in exactly
+/// one removed opening. Any retained, boundary-touching, or ambiguously owned
+/// ring must stay with the component-holed or planar-cell materializer.
+///
+/// The rule is deliberately object-level, following Yap, "Towards Exact
+/// Geometric Computation," *Computational Geometry* 7.1-2 (1997): deleting a
+/// hole is a topology change justified by exact containment in a named
+/// removed object. The removed/opened boundary replay is the
+/// Weiler-Atherton retained-fragment traversal from Weiler and Atherton,
+/// "Hidden Surface Removal Using Polygon Area Sorting," *SIGGRAPH Computer
+/// Graphics* 11.2 (1977).
+#[cfg(feature = "exact-triangulation")]
+fn materialize_side_cutter_opening_difference_consuming_holes(
+    component: &ConvexUnionComponent,
+    cut_indices: &[usize],
+    holes: &[ComponentHoleCandidate],
+    right_components: &[ConvexUnionComponent],
+    label: &'static str,
+) -> Option<Vec<Vec<Point3>>> {
+    if cut_indices.is_empty() || holes.is_empty() {
+        return None;
+    }
+    let projection = component.projection;
+    let Some((removed_openings, mut opening)) = materialize_nonrectilinear_side_cutter_opening(
+        component,
+        cut_indices,
+        right_components,
+        label,
+    ) else {
+        return None;
+    };
+    for hole in holes {
+        if !hole_strictly_consumed_by_one_removed_opening(
+            &hole.ring,
+            &removed_openings,
+            projection,
+        )? {
+            return None;
+        }
+    }
+    orient_polygon_ccw(&mut opening, projection)?;
+    if validate_projected_simple_loop(&opening, projection, label).is_err() {
+        return None;
+    }
+    Some(vec![opening])
 }
 
 /// Replay a non-rectilinear side-cutter split while owning strict holes.

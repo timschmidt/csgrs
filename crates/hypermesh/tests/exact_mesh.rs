@@ -21132,6 +21132,170 @@ fn exact_coplanar_component_holed_difference_omits_holes_consumed_by_side_cutter
         }
     );
 
+    let single_consumed_only = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            4, 8, 0, 5, 8, 0, 5, 9, 0, 4, 9, 0, //
+            -2, 4, 0, 9, 4, 0, 7, 10, 0, -2, 10, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert!(
+        hypermesh::exact::arrange_coplanar_convex_surface_component_holed_difference(
+            &left,
+            &single_consumed_only,
+        )
+        .is_none()
+    );
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_component_difference(
+            &left,
+            &single_consumed_only,
+        )
+        .is_none()
+    );
+    let single_consumed =
+        hypermesh::exact::arrange_coplanar_surface_cutter_hole_contact_difference(
+            &left,
+            &single_consumed_only,
+        )
+        .expect("single-source consumed holes remain classified by cutter/hole-contact replay");
+    single_consumed.validate().unwrap();
+    single_consumed
+        .validate_cutter_hole_contact_difference_against_sources(&left, &single_consumed_only)
+        .unwrap();
+    assert!(
+        single_consumed
+            .polygon
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(9))
+                && real_eq(&point.y, &ExactReal::from(4)))
+    );
+    let mut stale_single_consumed = single_consumed.clone();
+    stale_single_consumed.polygon.push(p3(99, 99, 0));
+    assert!(stale_single_consumed.validate().is_err());
+    let single_consumed_preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &single_consumed_only,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    single_consumed_preflight.validate().unwrap();
+    single_consumed_preflight
+        .validate_against_sources(&left, &single_consumed_only)
+        .unwrap();
+    assert_eq!(
+        single_consumed_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceCutterHoleContactDifference
+    );
+    let single_consumed_result = hypermesh::exact::boolean_exact(
+        &left,
+        &single_consumed_only,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    single_consumed_result
+        .validate_operation_against_sources(
+            &left,
+            &single_consumed_only,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        single_consumed_result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut:
+                hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfaceCutterHoleContactDifference
+        }
+    );
+
+    let multi_left = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            0, 0, 0, 20, 0, 0, 20, 20, 0, 0, 20, 0, //
+            30, 0, 0, 40, 0, 0, 40, 10, 0, 30, 10, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let multi_single_consumed = hypermesh::exact::arrange_coplanar_surface_multi_difference(
+        &multi_left,
+        &single_consumed_only,
+    )
+    .expect("source-local single side opening should consume holes beside retained components");
+    multi_single_consumed.validate().unwrap();
+    multi_single_consumed
+        .validate_difference_against_sources(&multi_left, &single_consumed_only)
+        .unwrap();
+    assert_eq!(multi_single_consumed.polygons.len(), 2);
+    assert!(multi_single_consumed.polygons.iter().any(|polygon| {
+        polygon.iter().any(|point| {
+            real_eq(&point.x, &ExactReal::from(30)) && real_eq(&point.y, &ExactReal::from(0))
+        })
+    }));
+    assert!(multi_single_consumed.polygons.iter().any(|polygon| {
+        polygon.iter().any(|point| {
+            real_eq(&point.x, &ExactReal::from(9)) && real_eq(&point.y, &ExactReal::from(4))
+        })
+    }));
+    let mut stale_multi_single_consumed = multi_single_consumed.clone();
+    stale_multi_single_consumed.polygons.retain(|polygon| {
+        !polygon
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(30)))
+    });
+    assert!(
+        stale_multi_single_consumed
+            .validate_difference_against_sources(&multi_left, &single_consumed_only)
+            .is_err()
+    );
+    let multi_single_consumed_preflight = hypermesh::exact::preflight_boolean_exact(
+        &multi_left,
+        &single_consumed_only,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    multi_single_consumed_preflight.validate().unwrap();
+    multi_single_consumed_preflight
+        .validate_against_sources(&multi_left, &single_consumed_only)
+        .unwrap();
+    assert_eq!(
+        multi_single_consumed_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
+    );
+    let multi_single_consumed_result = hypermesh::exact::boolean_exact(
+        &multi_left,
+        &single_consumed_only,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    multi_single_consumed_result
+        .validate_operation_against_sources(
+            &multi_left,
+            &single_consumed_only,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        multi_single_consumed_result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfaceMultiDifference
+        }
+    );
+
     let retained_and_consumed = ExactMesh::from_i64_triangles_with_policy(
         &[
             15, 16, 0, 17, 16, 0, 17, 18, 0, 15, 18, 0, //
