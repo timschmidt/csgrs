@@ -26052,6 +26052,152 @@ fn exact_coplanar_component_holed_intersection_merges_same_outer_holes() {
 
 #[cfg(feature = "exact-triangulation")]
 #[test]
+fn exact_coplanar_component_union_materializes_same_outer_disjoint_holed_fill() {
+    let outer = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 10, 0, 0, 10, 10, 0, 0, 10, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let left_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[2, 2, 0, 4, 2, 0, 4, 4, 0, 2, 4, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let right_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[6, 6, 0, 8, 6, 0, 8, 8, 0, 6, 8, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let left =
+        hypermesh::exact::arrange_coplanar_convex_surface_holed_difference(&outer, &left_hole)
+            .expect("left annulus should materialize")
+            .mesh;
+    let right =
+        hypermesh::exact::arrange_coplanar_convex_surface_holed_difference(&outer, &right_hole)
+            .expect("right annulus should materialize")
+            .mesh;
+
+    assert!(
+        hypermesh::exact::arrange_coplanar_convex_surface_union(&left, &right).is_none(),
+        "source-holed inputs are not ordinary convex surface components"
+    );
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_component_holed_union(&left, &right).is_none(),
+        "filled-hole same-outer union has no retained hole artifact"
+    );
+    let union = hypermesh::exact::arrange_coplanar_surface_component_union(&left, &right)
+        .expect("same-outer disjoint holes should union to the filled outer sheet");
+    union.validate().unwrap();
+    union
+        .validate_component_union_against_sources(&left, &right)
+        .unwrap();
+    assert_eq!(union.polygon.len(), 4);
+    assert!(
+        union
+            .polygon
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(10)))
+    );
+    assert_eq!(union.mesh.triangles().len(), 2);
+
+    let mut stale = union.clone();
+    stale.polygon.reverse();
+    assert!(stale.validate().is_err());
+    assert!(
+        stale
+            .validate_component_union_against_sources(&left, &right)
+            .is_err()
+    );
+
+    let overlapping_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[3, 2, 0, 5, 2, 0, 5, 4, 0, 3, 4, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let overlapping = hypermesh::exact::arrange_coplanar_convex_surface_holed_difference(
+        &outer,
+        &overlapping_hole,
+    )
+    .expect("overlapping annulus should materialize")
+    .mesh;
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_component_union(&left, &overlapping).is_none(),
+        "overlapping retained holes require full planar arrangement"
+    );
+
+    let touching_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[4, 2, 0, 6, 2, 0, 6, 4, 0, 4, 4, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let touching =
+        hypermesh::exact::arrange_coplanar_convex_surface_holed_difference(&outer, &touching_hole)
+            .expect("touching annulus should materialize")
+            .mesh;
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_component_union(&left, &touching).is_none(),
+        "point/edge hole contact is not a filled-outer certificate"
+    );
+
+    let nested_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[1, 1, 0, 5, 1, 0, 5, 5, 0, 1, 5, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let nested =
+        hypermesh::exact::arrange_coplanar_convex_surface_holed_difference(&outer, &nested_hole)
+            .expect("nested annulus should materialize")
+            .mesh;
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_component_union(&left, &nested).is_none(),
+        "nested retained holes belong to containment/copy or later planar work"
+    );
+
+    let preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+    )
+    .unwrap();
+    preflight.validate().unwrap();
+    preflight.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
+    );
+
+    let result = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    result
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            hypermesh::exact::ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfaceArrangementUnion
+        }
+    );
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
 fn exact_coplanar_component_holed_difference_materializes_nested_same_outer_holes() {
     let outer = ExactMesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 10, 0, 0, 10, 10, 0, 0, 10, 0],

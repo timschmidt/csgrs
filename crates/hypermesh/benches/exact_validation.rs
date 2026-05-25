@@ -6160,6 +6160,22 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
                             hypermesh::exact::ExactBooleanOperation::Difference,
                         )
                         .map(|report| report.validate()),
+                        arrange_coplanar_surface_component_union(
+                            &same_outer_nested_left,
+                            &same_outer_disjoint_single_right,
+                        )
+                        .map(|output| {
+                            output.validate_component_union_against_sources(
+                                &same_outer_nested_left,
+                                &same_outer_disjoint_single_right,
+                            )
+                        }),
+                        hypermesh::exact::preflight_boolean_exact(
+                            &same_outer_nested_left,
+                            &same_outer_disjoint_single_right,
+                            hypermesh::exact::ExactBooleanOperation::Union,
+                        )
+                        .map(|report| report.validate()),
                         arrange_coplanar_convex_surface_component_holed_difference(
                             &component_holed_left,
                             &component_holed_cut_right,

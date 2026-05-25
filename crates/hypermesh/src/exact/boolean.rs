@@ -2350,11 +2350,7 @@ fn boolean_coplanar_surface_arrangement_union(
     let Some(union) = arrange_single_triangle_coplanar_union(left, right) else {
         if let Some(union) = arrange_coplanar_surface_component_union(left, right) {
             union.validate_component_union_against_sources(left, right)?;
-            let mesh = copy_mesh(
-                &union.mesh,
-                "exact coplanar nonconvex component union",
-                validation,
-            )?;
+            let mesh = copy_mesh(&union.mesh, "exact coplanar component union", validation)?;
             return Ok(Some(certified_shortcut_result(
                 mesh,
                 ExactBooleanShortcutKind::CoplanarSurfaceArrangementUnion,
