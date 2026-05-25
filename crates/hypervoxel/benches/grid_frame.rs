@@ -40,6 +40,7 @@ use hypervoxel::{
     voxelize_prepared_exact_triangle_solid_mesh_by_adaptive_axis_sweeps,
     voxelize_prepared_exact_triangle_solid_mesh_by_axis_sweeps,
     voxelize_prepared_exact_triangle_solid_mesh_by_components,
+    voxelize_prepared_exact_triangle_solid_mesh_by_verified_adaptive_axis_sweeps,
     voxelize_prepared_exact_triangle_solid_mesh_by_verified_components,
 };
 
@@ -349,6 +350,20 @@ fn bench_exact_box_voxelization(c: &mut Criterion) {
         |b| {
             b.iter(|| {
                 voxelize_prepared_exact_triangle_solid_mesh_by_adaptive_axis_sweeps(
+                    frame.clone(),
+                    &prepared_triangle_solid,
+                    MaterialRegionId(10),
+                    VoxelizationPolicy::conservative_cover(),
+                )
+                .unwrap()
+            })
+        },
+    );
+    c.bench_function(
+        "verified_adaptive_axis_sweep_prepared_exact_triangle_solid_mesh_voxelization",
+        |b| {
+            b.iter(|| {
+                voxelize_prepared_exact_triangle_solid_mesh_by_verified_adaptive_axis_sweeps(
                     frame.clone(),
                     &prepared_triangle_solid,
                     MaterialRegionId(10),

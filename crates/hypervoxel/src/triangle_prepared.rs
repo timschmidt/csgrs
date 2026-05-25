@@ -801,6 +801,81 @@ pub fn voxelize_prepared_exact_triangle_solid_mesh_by_adaptive_axis_sweeps(
     Ok((grid, report, adaptive_report))
 }
 
+/// Voxelize by adaptive row sweeps and verify against per-cell exact replay.
+///
+/// This is the audit-heavy arrangement path. It first runs
+/// [`voxelize_prepared_exact_triangle_solid_mesh_by_adaptive_axis_sweeps`],
+/// then replays the ordinary per-cell exact classifier over the same frame and
+/// policy. The accelerated result is exact-ready only when the verifier
+/// produces the same cell payloads, predicate certificate counts, boundary and
+/// unknown counts, and aggregate facts.
+///
+/// This follows Yap, "Towards Exact Geometric Computation," *Computational
+/// Geometry* 7(1-2), 1997: acceleration is acceptable only when replay can
+/// validate the retained object facts. The row-sweep side is the exact
+/// arrangement batching described in
+/// [`voxelize_prepared_exact_triangle_solid_mesh_by_adaptive_axis_sweeps`],
+/// while the verifier intentionally uses the slower cell-local ray parity path
+/// as an independent acceptance replay.
+pub fn voxelize_prepared_exact_triangle_solid_mesh_by_verified_adaptive_axis_sweeps(
+    frame: GridFrame,
+    prepared: &PreparedExactTriangleSolidMesh,
+    material: MaterialRegionId,
+    policy: VoxelizationPolicy,
+) -> HypervoxelResult<(
+    SparseVoxelGrid,
+    VoxelizationReport,
+    PreparedTriangleSolidVerifiedAdaptiveAxisSweepVoxelizationReport,
+)> {
+    let verifier_frame = frame.clone();
+    let (adaptive_grid, adaptive_voxelization, adaptive) =
+        voxelize_prepared_exact_triangle_solid_mesh_by_adaptive_axis_sweeps(
+            frame,
+            prepared,
+            material,
+            policy.clone(),
+        )?;
+    let (verifier_grid, verifier_voxelization, verifier_schedule) =
+        voxelize_prepared_exact_triangle_solid_mesh(
+            verifier_frame.clone(),
+            prepared,
+            material,
+            policy,
+        )?;
+
+    let grid_mismatch_cells =
+        count_frame_cell_mismatches(&adaptive_grid, &verifier_grid, &verifier_frame)?;
+    let predicate_certificates_match = adaptive_voxelization.predicate_certificates
+        == verifier_voxelization.predicate_certificates;
+    let boundary_counts_match =
+        adaptive_voxelization.boundary_cells == verifier_voxelization.boundary_cells;
+    let unknown_counts_match =
+        adaptive_voxelization.unknown_cells == verifier_voxelization.unknown_cells;
+    let aggregate_matches = adaptive_voxelization.aggregate == verifier_voxelization.aggregate;
+    let exact_verified_adaptive_axis_sweep_ready = adaptive.exact_adaptive_axis_sweep_ready
+        && grid_mismatch_cells == 0
+        && predicate_certificates_match
+        && boundary_counts_match
+        && unknown_counts_match
+        && aggregate_matches
+        && adaptive_voxelization.exact_topology_ready()
+        && verifier_voxelization.exact_topology_ready();
+
+    let report = PreparedTriangleSolidVerifiedAdaptiveAxisSweepVoxelizationReport {
+        adaptive,
+        verifier: verifier_schedule,
+        compared_cells: logical_frame_cells(&verifier_frame)?,
+        grid_mismatch_cells,
+        predicate_certificates_match,
+        boundary_counts_match,
+        unknown_counts_match,
+        aggregate_matches,
+        verifier_exact_topology_ready: verifier_voxelization.exact_topology_ready(),
+        exact_verified_adaptive_axis_sweep_ready,
+    };
+    Ok((adaptive_grid, adaptive_voxelization, report))
+}
+
 fn voxelize_prepared_exact_triangle_solid_mesh_by_components_impl(
     frame: GridFrame,
     prepared: &PreparedExactTriangleSolidMesh,
@@ -1182,6 +1257,32 @@ pub struct PreparedTriangleSolidAdaptiveAxisSweepVoxelizationReport {
     /// Whether the adaptive multi-axis sweep produced exact arrangement
     /// evidence for all cells.
     pub exact_adaptive_axis_sweep_ready: bool,
+}
+
+/// Verification report for adaptive axis sweeps.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct PreparedTriangleSolidVerifiedAdaptiveAxisSweepVoxelizationReport {
+    /// Accelerated adaptive sweep evidence.
+    pub adaptive: PreparedTriangleSolidAdaptiveAxisSweepVoxelizationReport,
+    /// Independent per-cell verifier evidence.
+    pub verifier: PreparedTriangleSolidVoxelizationReport,
+    /// Number of frame cells compared between accelerated and verifier grids.
+    pub compared_cells: usize,
+    /// Number of frame cells whose materialized voxel payload differed.
+    pub grid_mismatch_cells: usize,
+    /// Whether predicate certificate counts match the verifier.
+    pub predicate_certificates_match: bool,
+    /// Whether materialized boundary-cell counts match the verifier.
+    pub boundary_counts_match: bool,
+    /// Whether materialized unknown-cell counts match the verifier.
+    pub unknown_counts_match: bool,
+    /// Whether aggregate facts match the verifier.
+    pub aggregate_matches: bool,
+    /// Whether the independent per-cell replay produced exact topology-ready
+    /// voxelization evidence.
+    pub verifier_exact_topology_ready: bool,
+    /// Whether accelerated adaptive sweeps survived exact per-cell replay.
+    pub exact_verified_adaptive_axis_sweep_ready: bool,
 }
 
 impl PreparedTriangleSolidVoxelizationReport {
@@ -1581,6 +1682,30 @@ fn materialize_prepared_classifiers(
         legacy_adapter: None,
     };
     Ok((grid, report))
+}
+
+fn count_frame_cell_mismatches(
+    left: &SparseVoxelGrid,
+    right: &SparseVoxelGrid,
+    frame: &GridFrame,
+) -> HypervoxelResult<usize> {
+    let cells_per_axis = frame.cells_per_axis();
+    let mut mismatches = 0_usize;
+    for z in 0..cells_per_axis {
+        for y in 0..cells_per_axis {
+            for x in 0..cells_per_axis {
+                let address = VoxelAddress::new(frame.depth(), [x, y, z])?;
+                if left.get(address)? != right.get(address)? {
+                    mismatches += 1;
+                }
+            }
+        }
+    }
+    Ok(mismatches)
+}
+
+fn logical_frame_cells(frame: &GridFrame) -> HypervoxelResult<usize> {
+    usize::try_from(frame.cells_per_axis().pow(3)).map_err(|_| HypervoxelError::AddressOverflow)
 }
 
 fn cell_index(cells_per_axis: u64, coords: [u64; 3]) -> HypervoxelResult<usize> {

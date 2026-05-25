@@ -230,12 +230,14 @@ pub use triangle_prepared::{
     PreparedExactTriangle, PreparedExactTriangleSolidMesh, PreparedExactTriangleSolidMeshReport,
     PreparedRayParityAttemptReport, PreparedTriangleSolidAdaptiveAxisSweepVoxelizationReport,
     PreparedTriangleSolidAxisSweepVoxelizationReport, PreparedTriangleSolidCellReport,
-    PreparedTriangleSolidComponentVoxelizationReport, PreparedTriangleSolidVoxelizationReport,
-    classify_cell_against_prepared_triangle_solid_mesh,
+    PreparedTriangleSolidComponentVoxelizationReport,
+    PreparedTriangleSolidVerifiedAdaptiveAxisSweepVoxelizationReport,
+    PreparedTriangleSolidVoxelizationReport, classify_cell_against_prepared_triangle_solid_mesh,
     voxelize_prepared_exact_triangle_solid_mesh,
     voxelize_prepared_exact_triangle_solid_mesh_by_adaptive_axis_sweeps,
     voxelize_prepared_exact_triangle_solid_mesh_by_axis_sweeps,
     voxelize_prepared_exact_triangle_solid_mesh_by_components,
+    voxelize_prepared_exact_triangle_solid_mesh_by_verified_adaptive_axis_sweeps,
     voxelize_prepared_exact_triangle_solid_mesh_by_verified_components,
 };
 #[cfg(feature = "legacy-voxelis")]

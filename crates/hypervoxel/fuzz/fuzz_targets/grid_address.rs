@@ -38,7 +38,9 @@ use hypervoxel::{
     sample_signed_manhattan_distance_field, select_lod_cells, sweep_address_segment,
     trace_address_ray, voxel_neighbors6, voxelize_exact_box, voxelize_exact_convex_halfspace_set,
     voxelize_exact_halfspace, voxelize_prepared_exact_triangle_solid_mesh,
-    voxelize_prepared_exact_triangle_solid_mesh_by_adaptive_axis_sweeps, VoxelAggregateFacts,
+    voxelize_prepared_exact_triangle_solid_mesh_by_adaptive_axis_sweeps,
+    voxelize_prepared_exact_triangle_solid_mesh_by_verified_adaptive_axis_sweeps,
+    VoxelAggregateFacts,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -241,6 +243,14 @@ fuzz_target!(|data: (u8, u64, u64, u64)| {
         .unwrap();
     let (triangle_adaptive, triangle_adaptive_report, adaptive_sweep) =
         voxelize_prepared_exact_triangle_solid_mesh_by_adaptive_axis_sweeps(
+            triangle_frame.clone(),
+            &prepared_triangle,
+            MaterialRegionId(6),
+            VoxelizationPolicy::conservative_cover(),
+        )
+        .unwrap();
+    let (triangle_verified, triangle_verified_report, verified_sweep) =
+        voxelize_prepared_exact_triangle_solid_mesh_by_verified_adaptive_axis_sweeps(
             triangle_frame,
             &prepared_triangle,
             MaterialRegionId(6),
@@ -248,8 +258,13 @@ fuzz_target!(|data: (u8, u64, u64, u64)| {
         )
         .unwrap();
     assert_eq!(triangle_adaptive, triangle_per_cell);
+    assert_eq!(triangle_verified, triangle_per_cell);
     assert_eq!(
         triangle_adaptive_report.predicate_certificates,
+        triangle_per_cell_report.predicate_certificates
+    );
+    assert_eq!(
+        triangle_verified_report.predicate_certificates,
         triangle_per_cell_report.predicate_certificates
     );
     assert_eq!(
@@ -263,6 +278,18 @@ fuzz_target!(|data: (u8, u64, u64, u64)| {
             && adaptive_sweep.fallback_boundary_regression_cells == 0
             && adaptive_sweep.row_parameter_order_unknowns == 0
             && adaptive_sweep.classified_cells > 0
+    );
+    assert_eq!(verified_sweep.adaptive, adaptive_sweep);
+    assert_eq!(verified_sweep.grid_mismatch_cells, 0);
+    assert_eq!(
+        verified_sweep.exact_verified_adaptive_axis_sweep_ready,
+        verified_sweep.adaptive.exact_adaptive_axis_sweep_ready
+            && verified_sweep.grid_mismatch_cells == 0
+            && verified_sweep.predicate_certificates_match
+            && verified_sweep.boundary_counts_match
+            && verified_sweep.unknown_counts_match
+            && verified_sweep.aggregate_matches
+            && verified_sweep.verifier_exact_topology_ready
     );
     assert!(report.aggregate.occupancy_interval.lower <= report.aggregate.occupancy_interval.upper);
     assert_eq!(

@@ -10,6 +10,7 @@ use hypervoxel::{
     voxelize_prepared_exact_triangle_solid_mesh_by_adaptive_axis_sweeps,
     voxelize_prepared_exact_triangle_solid_mesh_by_axis_sweeps,
     voxelize_prepared_exact_triangle_solid_mesh_by_components,
+    voxelize_prepared_exact_triangle_solid_mesh_by_verified_adaptive_axis_sweeps,
     voxelize_prepared_exact_triangle_solid_mesh_by_verified_components,
 };
 use proptest::prelude::*;
@@ -503,7 +504,15 @@ fn adaptive_axis_sweep_tries_three_exact_arrangement_axes_before_fallback() {
     .unwrap();
     let (adaptive_grid, adaptive_report, adaptive) =
         voxelize_prepared_exact_triangle_solid_mesh_by_adaptive_axis_sweeps(
-            frame,
+            frame.clone(),
+            &prepared,
+            MaterialRegionId(4),
+            VoxelizationPolicy::conservative_cover(),
+        )
+        .unwrap();
+    let (verified_grid, verified_report, verified) =
+        voxelize_prepared_exact_triangle_solid_mesh_by_verified_adaptive_axis_sweeps(
+            frame.clone(),
             &prepared,
             MaterialRegionId(4),
             VoxelizationPolicy::conservative_cover(),
@@ -512,8 +521,13 @@ fn adaptive_axis_sweep_tries_three_exact_arrangement_axes_before_fallback() {
 
     assert_eq!(adaptive_grid, per_cell_grid);
     assert_eq!(adaptive_grid, x_sweep_grid);
+    assert_eq!(verified_grid, per_cell_grid);
     assert_eq!(
         adaptive_report.predicate_certificates,
+        per_cell_report.predicate_certificates
+    );
+    assert_eq!(
+        verified_report.predicate_certificates,
         per_cell_report.predicate_certificates
     );
     assert_eq!(adaptive.boundary_cells, x_sweep.boundary_cells);
@@ -532,6 +546,34 @@ fn adaptive_axis_sweep_tries_three_exact_arrangement_axes_before_fallback() {
     assert_eq!(adaptive.row_parameter_order_unknowns, 0);
     assert!(adaptive.exact_adaptive_axis_sweep_ready);
     assert!(adaptive_report.exact_topology_ready());
+    assert_eq!(verified.compared_cells, 512);
+    assert_eq!(verified.grid_mismatch_cells, 0);
+    assert!(verified.predicate_certificates_match);
+    assert!(verified.boundary_counts_match);
+    assert!(verified.unknown_counts_match);
+    assert!(verified.aggregate_matches);
+    assert!(verified.verifier_exact_topology_ready);
+    assert_eq!(verified.adaptive, adaptive);
+    assert_eq!(verified.verifier, per_cell_schedule);
+    assert!(verified.exact_verified_adaptive_axis_sweep_ready);
+
+    let lossy_policy = VoxelizationPolicy {
+        quantization: QuantizationPolicy::ConservativeCover,
+        boundary: BoundaryPolicy::LossySideChoice,
+    };
+    let (_, lossy_report, lossy_verified) =
+        voxelize_prepared_exact_triangle_solid_mesh_by_verified_adaptive_axis_sweeps(
+            frame,
+            &prepared,
+            MaterialRegionId(4),
+            lossy_policy,
+        )
+        .unwrap();
+    assert!(lossy_report.aggregate.has_lossy);
+    assert_eq!(lossy_verified.grid_mismatch_cells, 0);
+    assert!(lossy_verified.predicate_certificates_match);
+    assert!(!lossy_verified.verifier_exact_topology_ready);
+    assert!(!lossy_verified.exact_verified_adaptive_axis_sweep_ready);
 }
 
 #[test]
