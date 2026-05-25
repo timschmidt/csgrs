@@ -1,7 +1,10 @@
 use std::hint::black_box;
 use std::time::Instant;
 
-use hypercurve::{Classification, CurvePolicy, CurveResult, Point2, PolynomialBSplineCurve2, Real};
+use hypercurve::{
+    Classification, CurvePolicy, CurveResult, Point2, PolynomialBSplineCurve2,
+    RationalQuadraticBSplineCurve2, Real,
+};
 
 fn r(value: i32) -> Real {
     value.into()
@@ -37,6 +40,24 @@ fn main() -> CurveResult<()> {
     let elapsed = started.elapsed();
     println!(
         "bspline_bezier_extraction: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={checksum}",
+        elapsed / iterations
+    );
+
+    let rational = decided(RationalQuadraticBSplineCurve2::try_new(
+        vec![p(0, 0), p(2, 4), p(4, 4), p(6, 0)],
+        vec![r(1), r(2), r(4), r(1)],
+        vec![r(0), r(0), r(0), r(1), r(2), r(2), r(2)],
+        &policy,
+    )?);
+    let started = Instant::now();
+    let mut rational_checksum = 0_usize;
+    for _ in 0..iterations {
+        let extraction = decided(rational.extract_bezier_spans(&policy)?);
+        rational_checksum ^= black_box(extraction.spans().len() + extraction.inserted_knot_count());
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "rational_quadratic_bspline_bezier_extraction: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={rational_checksum}",
         elapsed / iterations
     );
 

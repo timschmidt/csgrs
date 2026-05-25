@@ -118,7 +118,10 @@ pub use boolean_boundary::{
     BooleanBoundaryChain, BooleanBoundaryChainSet, BooleanBoundaryFragmentSet, BooleanBoundaryLoop,
     BooleanBoundaryLoopSet, DirectedBooleanFragment,
 };
-pub use bspline::{PolynomialBSplineBezierExtraction2, PolynomialBSplineCurve2};
+pub use bspline::{
+    PolynomialBSplineBezierExtraction2, PolynomialBSplineCurve2,
+    RationalQuadraticBSplineBezierExtraction2, RationalQuadraticBSplineCurve2,
+};
 pub use bulge::BulgeVertex2;
 pub use classify::{Classification, LineSide, UncertaintyReason};
 pub use contour::{Contour2, ContourPointLocation, FillRule};

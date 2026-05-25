@@ -15,10 +15,10 @@ use std::cmp::Ordering;
 
 use hyperreal::Real;
 
-use crate::classify::compare_reals;
+use crate::classify::{compare_reals, is_zero};
 use crate::{
     BezierSubcurve2, Classification, CubicBezier2, CurveError, CurvePolicy, CurveResult, Point2,
-    QuadraticBezier2, UncertaintyReason,
+    QuadraticBezier2, RationalQuadraticBezier2, UncertaintyReason,
 };
 
 /// Exact polynomial B-spline curve in the plane.
@@ -42,6 +42,34 @@ pub struct PolynomialBSplineCurve2 {
 pub struct PolynomialBSplineBezierExtraction2 {
     degree: usize,
     refined_control_points: Vec<Point2>,
+    refined_knots: Vec<Real>,
+    spans: Vec<BezierSubcurve2>,
+    inserted_knot_count: usize,
+}
+
+/// Exact quadratic NURBS curve in the plane.
+///
+/// This is the rational counterpart to [`PolynomialBSplineCurve2`] for the
+/// family that can be consumed by the existing rational quadratic Bezier/conic
+/// topology code.  The carrier stores affine control points, homogeneous
+/// weights, and the authored knot vector exactly; extraction is performed by
+/// Boehm insertion on homogeneous controls.
+#[derive(Clone, Debug, PartialEq)]
+pub struct RationalQuadraticBSplineCurve2 {
+    control_points: Vec<Point2>,
+    weights: Vec<Real>,
+    knots: Vec<Real>,
+}
+
+/// Exact rational Bezier extraction report for one quadratic NURBS curve.
+///
+/// The refined controls are affine rational Bezier controls.  Refined weights
+/// are stored beside them so callers can audit the homogeneous knot-insertion
+/// replay instead of accepting an unlabelled approximation.
+#[derive(Clone, Debug, PartialEq)]
+pub struct RationalQuadraticBSplineBezierExtraction2 {
+    refined_control_points: Vec<Point2>,
+    refined_weights: Vec<Real>,
     refined_knots: Vec<Real>,
     spans: Vec<BezierSubcurve2>,
     inserted_knot_count: usize,
@@ -174,12 +202,196 @@ impl PolynomialBSplineBezierExtraction2 {
     }
 }
 
+impl RationalQuadraticBSplineCurve2 {
+    /// Constructs a clamped quadratic NURBS curve.
+    ///
+    /// The control and weight arrays must have equal length, every input weight
+    /// must be certified nonzero, and the knot vector must be clamped and
+    /// nondecreasing.  Mixed signs are allowed at construction because a
+    /// projective NURBS carrier can represent them exactly; extraction rejects
+    /// only spans whose refined homogeneous weight cannot be converted to an
+    /// affine rational Bezier control.
+    pub fn try_new(
+        control_points: Vec<Point2>,
+        weights: Vec<Real>,
+        knots: Vec<Real>,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<Self>> {
+        let degree = 2;
+        if control_points.len() != weights.len()
+            || control_points.len() < degree + 1
+            || knots.len() != control_points.len() + degree + 1
+        {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        }
+        for weight in &weights {
+            match is_zero(weight, policy) {
+                Some(false) => {}
+                Some(true) => return Err(CurveError::ZeroRationalBezierWeight),
+                None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+            }
+        }
+        match validate_nondecreasing_knots(&knots, policy) {
+            Classification::Decided(()) => {}
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        }
+        if !endpoint_multiplicity_is_clamped(&knots, degree, policy)? {
+            return Err(CurveError::InvalidBSpline);
+        }
+        if !has_positive_span(&knots, degree, control_points.len(), policy)? {
+            return Err(CurveError::InvalidBSpline);
+        }
+        Ok(Classification::Decided(Self {
+            control_points,
+            weights,
+            knots,
+        }))
+    }
+
+    /// Returns the retained affine control net.
+    pub fn control_points(&self) -> &[Point2] {
+        &self.control_points
+    }
+
+    /// Returns the retained homogeneous weights.
+    pub fn weights(&self) -> &[Real] {
+        &self.weights
+    }
+
+    /// Returns the retained knot vector.
+    pub fn knots(&self) -> &[Real] {
+        &self.knots
+    }
+
+    /// Extracts exact rational quadratic Bezier spans from this clamped NURBS curve.
+    ///
+    /// Knot insertion is performed on homogeneous triples `(w*x, w*y, w)`.
+    /// Only after every interior knot reaches multiplicity two does the method
+    /// divide by each refined weight to produce affine rational Bezier controls.
+    /// This is the rational Boehm/de Boor construction described by Farin
+    /// (2002), kept as exact object replay in Yap's EGC sense.
+    pub fn extract_bezier_spans(
+        &self,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<RationalQuadraticBSplineBezierExtraction2>> {
+        let mut refined = HomogeneousBSplineWorkingCurve {
+            degree: 2,
+            controls: self
+                .control_points
+                .iter()
+                .zip(&self.weights)
+                .map(|(point, weight)| HomogeneousControl2::from_affine(point, weight))
+                .collect(),
+            knots: self.knots.clone(),
+            inserted_knot_count: 0,
+        };
+        let interior_knots = match distinct_interior_knots(&refined.knots, 2, policy) {
+            Classification::Decided(knots) => knots,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        for knot in interior_knots {
+            loop {
+                let multiplicity = knot_multiplicity(&refined.knots, &knot, policy)?;
+                if multiplicity >= 2 {
+                    break;
+                }
+                match refined.insert_knot(knot.clone(), policy)? {
+                    Classification::Decided(()) => {}
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            }
+        }
+        let extraction = match extract_refined_rational_quadratic_spans(&refined, policy)? {
+            Classification::Decided(extraction) => extraction,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        Ok(Classification::Decided(extraction))
+    }
+}
+
+impl RationalQuadraticBSplineBezierExtraction2 {
+    /// Returns the exact refined affine control net.
+    pub fn refined_control_points(&self) -> &[Point2] {
+        &self.refined_control_points
+    }
+
+    /// Returns the exact refined homogeneous weights.
+    pub fn refined_weights(&self) -> &[Real] {
+        &self.refined_weights
+    }
+
+    /// Returns the exact refined knot vector.
+    pub fn refined_knots(&self) -> &[Real] {
+        &self.refined_knots
+    }
+
+    /// Returns extracted rational quadratic Bezier spans in parameter order.
+    pub fn spans(&self) -> &[BezierSubcurve2] {
+        &self.spans
+    }
+
+    /// Returns how many knots were inserted to produce the rational Bezier form.
+    pub const fn inserted_knot_count(&self) -> usize {
+        self.inserted_knot_count
+    }
+}
+
 #[derive(Clone, Debug)]
 struct BSplineWorkingCurve {
     degree: usize,
     control_points: Vec<Point2>,
     knots: Vec<Real>,
     inserted_knot_count: usize,
+}
+
+#[derive(Clone, Debug)]
+struct HomogeneousControl2 {
+    x: Real,
+    y: Real,
+    weight: Real,
+}
+
+#[derive(Clone, Debug)]
+struct HomogeneousBSplineWorkingCurve {
+    degree: usize,
+    controls: Vec<HomogeneousControl2>,
+    knots: Vec<Real>,
+    inserted_knot_count: usize,
+}
+
+impl HomogeneousControl2 {
+    fn from_affine(point: &Point2, weight: &Real) -> Self {
+        Self {
+            x: point.x() * weight,
+            y: point.y() * weight,
+            weight: weight.clone(),
+        }
+    }
+
+    fn lerp(&self, other: &Self, t: Real) -> Self {
+        let one_minus_t = Real::one() - &t;
+        Self {
+            x: (&self.x * &one_minus_t) + (&other.x * &t),
+            y: (&self.y * &one_minus_t) + (&other.y * &t),
+            weight: (&self.weight * &one_minus_t) + (&other.weight * &t),
+        }
+    }
+
+    fn to_affine(&self, policy: &CurvePolicy) -> CurveResult<Classification<(Point2, Real)>> {
+        match is_zero(&self.weight, policy) {
+            Some(false) => {}
+            Some(true) => return Err(CurveError::ZeroRationalBezierWeight),
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        }
+        let x = (&self.x / &self.weight)?;
+        let y = (&self.y / &self.weight)?;
+        Ok(Classification::Decided((
+            Point2::new(x, y),
+            self.weight.clone(),
+        )))
+    }
 }
 
 impl BSplineWorkingCurve {
@@ -227,6 +439,51 @@ impl BSplineWorkingCurve {
 
         self.knots.insert(span + 1, knot);
         self.control_points = new_points;
+        self.inserted_knot_count += 1;
+        Ok(Classification::Decided(()))
+    }
+}
+
+impl HomogeneousBSplineWorkingCurve {
+    fn insert_knot(&mut self, knot: Real, policy: &CurvePolicy) -> CurveResult<Classification<()>> {
+        let Some(span) =
+            find_insertion_span(&self.knots, self.degree, self.controls.len(), &knot, policy)?
+        else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Ordering));
+        };
+        let multiplicity = knot_multiplicity(&self.knots, &knot, policy)?;
+        if multiplicity >= self.degree {
+            return Ok(Classification::Decided(()));
+        }
+
+        let n = self.controls.len() - 1;
+        let p = self.degree;
+        let mut new_controls = vec![self.controls[0].clone(); self.controls.len() + 1];
+        for (i, control) in new_controls
+            .iter_mut()
+            .enumerate()
+            .take(span.saturating_sub(p) + 1)
+        {
+            *control = self.controls[i].clone();
+        }
+        let right_start = span - multiplicity + 1;
+        new_controls[right_start..=n + 1].clone_from_slice(&self.controls[right_start - 1..=n]);
+        for (i, control) in new_controls
+            .iter_mut()
+            .enumerate()
+            .take(span - multiplicity + 1)
+            .skip(span - p + 1)
+        {
+            let denominator = &self.knots[i + p] - &self.knots[i];
+            let alpha = match (knot.clone() - &self.knots[i]) / denominator {
+                Ok(alpha) => alpha,
+                Err(_) => return Ok(Classification::Uncertain(UncertaintyReason::Boundary)),
+            };
+            *control = self.controls[i - 1].lerp(&self.controls[i], alpha);
+        }
+
+        self.knots.insert(span + 1, knot);
+        self.controls = new_controls;
         self.inserted_knot_count += 1;
         Ok(Classification::Decided(()))
     }
@@ -358,4 +615,53 @@ fn extract_refined_bezier_spans(
         spans.push(span);
     }
     Ok(Classification::Decided(spans))
+}
+
+fn extract_refined_rational_quadratic_spans(
+    refined: &HomogeneousBSplineWorkingCurve,
+    policy: &CurvePolicy,
+) -> CurveResult<Classification<RationalQuadraticBSplineBezierExtraction2>> {
+    let mut affine_controls = Vec::with_capacity(refined.controls.len());
+    let mut weights = Vec::with_capacity(refined.controls.len());
+    for control in &refined.controls {
+        match control.to_affine(policy)? {
+            Classification::Decided((point, weight)) => {
+                affine_controls.push(point);
+                weights.push(weight);
+            }
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        }
+    }
+
+    let mut spans = Vec::new();
+    for knot_index in refined.degree..refined.controls.len() {
+        if compare_reals(
+            &refined.knots[knot_index],
+            &refined.knots[knot_index + 1],
+            policy,
+        ) != Some(Ordering::Less)
+        {
+            continue;
+        }
+        let start = knot_index - refined.degree;
+        let curve = RationalQuadraticBezier2::try_new(
+            affine_controls[start].clone(),
+            affine_controls[start + 1].clone(),
+            affine_controls[start + 2].clone(),
+            weights[start].clone(),
+            weights[start + 1].clone(),
+            weights[start + 2].clone(),
+        )?;
+        spans.push(BezierSubcurve2::RationalQuadratic(curve));
+    }
+
+    Ok(Classification::Decided(
+        RationalQuadraticBSplineBezierExtraction2 {
+            refined_control_points: affine_controls,
+            refined_weights: weights,
+            refined_knots: refined.knots.clone(),
+            spans,
+            inserted_knot_count: refined.inserted_knot_count,
+        },
+    ))
 }
