@@ -26043,6 +26043,117 @@ fn exact_coplanar_component_holed_intersection_merges_same_outer_holes() {
     )
     .unwrap();
 
+    let bridge_left_holes = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            2, 2, 0, 4, 2, 0, 4, 4, 0, 2, 4, 0, //
+            6, 6, 0, 8, 6, 0, 8, 8, 0, 6, 8, 0,
+        ],
+        &[0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let bridge_right_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[3, 3, 0, 7, 3, 0, 7, 7, 0, 3, 7, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let bridge_left = hypermesh::exact::arrange_coplanar_convex_surface_multi_holed_difference(
+        &outer,
+        &bridge_left_holes,
+    )
+    .expect("same-outer two-hole fixture should materialize")
+    .mesh;
+    let bridge_right = hypermesh::exact::arrange_coplanar_convex_surface_holed_difference(
+        &outer,
+        &bridge_right_hole,
+    )
+    .expect("same-outer bridge-hole fixture should materialize")
+    .mesh;
+    let bridge_intersection =
+        hypermesh::exact::arrange_coplanar_surface_component_holed_intersection(
+            &bridge_left,
+            &bridge_right,
+        )
+        .expect("rectangular bridge should merge the connected retained-hole cluster");
+    bridge_intersection.validate().unwrap();
+    bridge_intersection
+        .validate_intersection_against_sources(&bridge_left, &bridge_right)
+        .unwrap();
+    assert_eq!(bridge_intersection.components.len(), 1);
+    assert_eq!(bridge_intersection.components[0].holes.len(), 1);
+    assert!(
+        bridge_intersection.components[0].holes[0].len() >= 8,
+        "bridging two retained holes should not collapse to a single rectangle"
+    );
+    assert!(
+        bridge_intersection.components[0].holes[0]
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(2)))
+    );
+    assert!(
+        bridge_intersection.components[0].holes[0]
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(8)))
+    );
+    assert_eq!(
+        hypermesh::exact::arrange_coplanar_surface_component_holed_intersection(
+            &bridge_right,
+            &bridge_left,
+        ),
+        Some(bridge_intersection)
+    );
+    let bridge_preflight = hypermesh::exact::preflight_boolean_exact(
+        &bridge_left,
+        &bridge_right,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+    )
+    .expect("same-outer bridge preflight should classify the component-holed shortcut");
+    bridge_preflight.validate().unwrap();
+    bridge_preflight
+        .validate_against_sources(&bridge_left, &bridge_right)
+        .unwrap();
+    assert_eq!(
+        bridge_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+    );
+    hypermesh::exact::boolean_exact(
+        &bridge_left,
+        &bridge_right,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("same-outer bridge boolean should materialize")
+    .validate_operation_against_sources(
+        &bridge_left,
+        &bridge_right,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+
+    let nonrect_bridge_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[3, 3, 0, 7, 3, 0, 7, 7, 0, 3, 6, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let nonrect_bridge = hypermesh::exact::arrange_coplanar_convex_surface_holed_difference(
+        &outer,
+        &nonrect_bridge_hole,
+    )
+    .expect("same-outer nonrectangular bridge-hole fixture should materialize")
+    .mesh;
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_component_holed_intersection(
+            &bridge_left,
+            &nonrect_bridge,
+        )
+        .is_none(),
+        "the rectangular bridge shortcut must not accept nonrectangular retained-hole unions"
+    );
+
     let touching_hole = ExactMesh::from_i64_triangles_with_policy(
         &[4, 2, 0, 6, 2, 0, 6, 4, 0, 4, 4, 0],
         &[0, 1, 2, 0, 2, 3],

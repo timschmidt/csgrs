@@ -3373,13 +3373,17 @@ fn merged_same_outer_intersection_holes(
     right: &SourceHoledSurfaceComponent,
     projection: CoplanarProjection,
 ) -> Option<Vec<Vec<Point3>>> {
-    let mut holes = left.holes.clone();
-    for hole in &mut holes {
-        orient_polygon_cw(hole, projection)?;
+    let mut holes: Vec<Vec<Point3>> = Vec::with_capacity(left.holes.len() + right.holes.len());
+    for source_hole in left.holes.iter().chain(right.holes.iter()) {
+        if holes.iter().any(|hole| polygons_equal(hole, source_hole)) {
+            continue;
+        }
+        let mut hole = source_hole.clone();
+        orient_polygon_cw(&mut hole, projection)?;
+        holes.push(hole);
     }
-    for right_hole in &right.holes {
-        insert_same_outer_intersection_hole(&mut holes, right_hole, projection)?;
-    }
+    remove_nested_same_outer_intersection_holes(&mut holes, projection)?;
+    let holes = merge_same_outer_intersection_hole_components(&holes, projection)?;
     validate_simple_component_loops_disjoint(
         &holes,
         projection,
@@ -3390,70 +3394,138 @@ fn merged_same_outer_intersection_holes(
 }
 
 #[cfg(feature = "exact-triangulation")]
-fn insert_same_outer_intersection_hole(
+fn remove_nested_same_outer_intersection_holes(
     holes: &mut Vec<Vec<Point3>>,
-    candidate: &[Point3],
     projection: CoplanarProjection,
 ) -> Option<()> {
-    if holes.iter().any(|hole| polygons_equal(hole, candidate)) {
-        return Some(());
-    }
-
     let mut index = 0;
     while index < holes.len() {
-        if polygon_strictly_inside_simple_polygon(&holes[index], candidate, projection)? {
+        let nested_in_other =
+            holes
+                .iter()
+                .enumerate()
+                .try_fold(false, |found, (other_index, other_hole)| {
+                    if found || other_index == index {
+                        Some(found)
+                    } else {
+                        Some(polygon_strictly_inside_simple_polygon(
+                            &holes[index],
+                            other_hole,
+                            projection,
+                        )?)
+                    }
+                })?;
+        if nested_in_other {
             holes.remove(index);
-            continue;
-        }
-        if polygon_strictly_inside_simple_polygon(candidate, &holes[index], projection)? {
-            return Some(());
-        }
-        match simple_polygon_interaction(&holes[index], candidate, projection)? {
-            SimplePolygonInteraction::Disjoint => {
-                index += 1;
-            }
-            SimplePolygonInteraction::PointOnly => return None,
-            SimplePolygonInteraction::Connected => {
-                let retained = same_outer_intersection_rectangular_hole_union(
-                    &holes[index],
-                    candidate,
-                    projection,
-                )?;
-                holes.remove(index);
-                holes.push(retained);
-                return Some(());
-            }
+        } else {
+            index += 1;
         }
     }
-
-    let mut retained = candidate.to_vec();
-    orient_polygon_cw(&mut retained, projection)?;
-    holes.push(retained);
     Some(())
 }
 
-/// Replay the removed union of two overlapping rectangular retained holes.
+/// Replay connected same-outer retained-hole components symmetrically.
 ///
-/// This is the smallest same-outer intersection cell certificate beyond
-/// disjoint and nested holes. The output hole is named by exact retained input
-/// rectangles and then stitched from exact orthogonal cells, matching Yap's
-/// retained-object discipline from "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997). The cell decomposition is the
-/// orthogonal arrangement model described by de Berg, Cheong, van Kreveld, and
-/// Overmars, *Computational Geometry: Algorithms and Applications*, 3rd ed.
-/// (2008), Chapter 2.
+/// Same-outer intersection computes `outer - union(left_holes, right_holes)`.
+/// This pass keeps all source retained holes available until after the
+/// interaction graph is known. That avoids operand-order artifacts where an
+/// early two-rectangle union would erase the rectangles needed to prove a
+/// later transitive union. The branch model follows Yap, "Towards Exact
+/// Geometric Computation," *Computational Geometry* 7.1-2 (1997): exact
+/// source objects are classified first, and only a certified connected
+/// rectangular component is promoted into one retained polygon.
 #[cfg(feature = "exact-triangulation")]
-fn same_outer_intersection_rectangular_hole_union(
-    left_hole: &[Point3],
-    right_hole: &[Point3],
+fn merge_same_outer_intersection_hole_components(
+    holes: &[Vec<Point3>],
+    projection: CoplanarProjection,
+) -> Option<Vec<Vec<Point3>>> {
+    let mut visited = vec![false; holes.len()];
+    let mut merged = Vec::new();
+    for start in 0..holes.len() {
+        if visited[start] {
+            continue;
+        }
+        visited[start] = true;
+        let mut component = vec![start];
+        let mut cursor = 0;
+        while cursor < component.len() {
+            let current = component[cursor];
+            for other in 0..holes.len() {
+                if visited[other] {
+                    continue;
+                }
+                match simple_polygon_interaction(&holes[current], &holes[other], projection)? {
+                    SimplePolygonInteraction::Disjoint => {}
+                    SimplePolygonInteraction::PointOnly => return None,
+                    SimplePolygonInteraction::Connected => {
+                        visited[other] = true;
+                        component.push(other);
+                    }
+                }
+            }
+            cursor += 1;
+        }
+
+        if component.len() == 1 {
+            merged.push(holes[component[0]].clone());
+        } else {
+            let component_holes = component
+                .into_iter()
+                .map(|index| holes[index].clone())
+                .collect::<Vec<_>>();
+            merged.push(same_outer_intersection_rectangular_hole_union_component(
+                &component_holes,
+                projection,
+            )?);
+        }
+    }
+    Some(merged)
+}
+
+/// Replay the removed union of a connected rectangular retained-hole component.
+///
+/// The only promoted partial-overlap same-outer intersection is the case where
+/// every participating retained hole is an exact projected axis-aligned
+/// rectangle and their positive-area overlap graph forms a single component.
+/// This mirrors Yap's retained-object discipline in "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997): topology is advanced
+/// from exact predicates over the source objects, then accepted only after the
+/// resulting loop validates as one simple retained hole. The rectangular cell
+/// union is the standard planar subdivision construction from de Berg,
+/// Cheong, van Kreveld, and Overmars, *Computational Geometry: Algorithms and
+/// Applications*, 3rd ed. (2008).
+#[cfg(feature = "exact-triangulation")]
+fn same_outer_intersection_rectangular_hole_union_component(
+    holes: &[Vec<Point3>],
     projection: CoplanarProjection,
 ) -> Option<Vec<Point3>> {
-    let left_rect = projected_axis_aligned_rectangle(left_hole, projection)?;
-    let right_rect = projected_axis_aligned_rectangle(right_hole, projection)?;
-    if !rectangles_overlap_with_positive_area(&left_rect, &right_rect)? {
+    if holes.len() < 2 {
         return None;
     }
-    let mut union = axis_aligned_rectangle_union_polygon(&[left_rect, right_rect], projection)?;
+    let source_rects = holes
+        .iter()
+        .map(|hole| projected_axis_aligned_rectangle(hole, projection))
+        .collect::<Option<Vec<_>>>()?;
+    let mut visited = vec![false; source_rects.len()];
+    visited[0] = true;
+    let mut stack = vec![0];
+    while let Some(current) = stack.pop() {
+        for other in 0..source_rects.len() {
+            if visited[other] {
+                continue;
+            }
+            if rectangles_overlap_with_positive_area(&source_rects[current], &source_rects[other])?
+            {
+                visited[other] = true;
+                stack.push(other);
+            }
+        }
+    }
+    if !visited.into_iter().all(|value| value) {
+        return None;
+    }
+
+    let mut union = axis_aligned_rectangle_union_polygon(&source_rects, projection)?;
     union = simplify_projected_polygon(union, projection);
     orient_polygon_cw(&mut union, projection)?;
     validate_projected_simple_loop(
@@ -10615,12 +10687,24 @@ fn rectangle_interval_polygon(
     ])
 }
 
+/// Replay one simple union of exact projected axis-aligned rectangles.
+///
+/// The rectangle set is interpreted as retained exact geometry, not as a
+/// rounded floating approximation. The cell decomposition follows the
+/// arrangement model used by de Berg, Cheong, van Kreveld, and Overmars,
+/// *Computational Geometry: Algorithms and Applications*, 3rd ed. (2008):
+/// rectangle coordinates induce exact vertical and horizontal slabs, occupied
+/// cells contribute boundary fragments, and the result is accepted only when
+/// those fragments stitch into one simple loop. Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997), is the governing
+/// rule here: every branch decision is made from exact coordinates and
+/// predicates, and unsupported topology is rejected rather than approximated.
 #[cfg(feature = "exact-triangulation")]
 fn axis_aligned_rectangle_union_polygon(
     rectangles: &[ProjectedRectangle],
     projection: CoplanarProjection,
 ) -> Option<Vec<Point3>> {
-    if rectangles.len() != 2
+    if rectangles.len() < 2
         || !rectangles
             .iter()
             .all(|rect| real_equal(&rect.dropped, &rectangles[0].dropped))

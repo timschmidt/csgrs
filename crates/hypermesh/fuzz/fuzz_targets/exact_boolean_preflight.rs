@@ -2458,6 +2458,85 @@ fn exercise_same_outer_component_holed_coplanar_intersection() {
     )
     .unwrap();
 
+    let bridge_left_holes = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            2, 2, 0, 4, 2, 0, 4, 4, 0, 2, 4, 0, //
+            6, 6, 0, 8, 6, 0, 8, 8, 0, 6, 8, 0,
+        ],
+        &[0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("same-outer bridge left holes fixture must import");
+    let bridge_right_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[3, 3, 0, 7, 3, 0, 7, 7, 0, 3, 7, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("same-outer bridge right hole fixture must import");
+    let bridge_left =
+        arrange_coplanar_convex_surface_multi_holed_difference(&outer, &bridge_left_holes)
+            .expect("same-outer bridge left fixture should materialize")
+            .mesh;
+    let bridge_right =
+        arrange_coplanar_convex_surface_holed_difference(&outer, &bridge_right_hole)
+            .expect("same-outer bridge right fixture should materialize")
+            .mesh;
+    let bridge_intersection =
+        arrange_coplanar_surface_component_holed_intersection(&bridge_left, &bridge_right)
+            .expect("same-outer rectangular bridge should retain one connected merged hole");
+    bridge_intersection.validate().unwrap();
+    bridge_intersection
+        .validate_intersection_against_sources(&bridge_left, &bridge_right)
+        .unwrap();
+    assert_eq!(bridge_intersection.components.len(), 1);
+    assert_eq!(bridge_intersection.components[0].holes.len(), 1);
+    assert!(
+        bridge_intersection.components[0].holes[0].len() >= 8,
+        "bridge fixture should exercise non-rectangular orthogonal retained-hole output"
+    );
+    assert_eq!(
+        arrange_coplanar_surface_component_holed_intersection(&bridge_right, &bridge_left),
+        Some(bridge_intersection)
+    );
+    let bridge_preflight =
+        preflight_boolean_exact(&bridge_left, &bridge_right, ExactBooleanOperation::Intersection)
+            .expect("same-outer bridge preflight should classify shortcut");
+    bridge_preflight.validate().unwrap();
+    bridge_preflight
+        .validate_against_sources(&bridge_left, &bridge_right)
+        .unwrap();
+    hypermesh::exact::boolean_exact(
+        &bridge_left,
+        &bridge_right,
+        ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("same-outer bridge boolean should materialize")
+    .validate_operation_against_sources(
+        &bridge_left,
+        &bridge_right,
+        ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+
+    let nonrect_bridge_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[3, 3, 0, 7, 3, 0, 7, 7, 0, 3, 6, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("same-outer nonrectangular bridge hole fixture must import");
+    let nonrect_bridge =
+        arrange_coplanar_convex_surface_holed_difference(&outer, &nonrect_bridge_hole)
+            .expect("same-outer nonrectangular bridge fixture should materialize")
+            .mesh;
+    assert!(
+        arrange_coplanar_surface_component_holed_intersection(&bridge_left, &nonrect_bridge)
+            .is_none(),
+        "same-outer bridge shortcut must reject nonrectangular retained-hole unions"
+    );
+
     let small_hole = ExactMesh::from_i64_triangles_with_policy(
         &[4, 4, 0, 6, 4, 0, 6, 6, 0, 4, 6, 0],
         &[0, 1, 2, 0, 2, 3],
