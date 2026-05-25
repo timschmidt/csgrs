@@ -20,15 +20,16 @@ use hyperpath::{
     SpecctraParseError, SupportFootprintStatus, SupportPlanError, SweptLineSegment,
     TangentAlignment, TangentJoinClass, TangentJoinReport, TangentSpan, TraceLayer,
     ViaAnnularRingReport, ViaDrillIntent, ViaDrillPolicyClass, ViaLayerSpanRelation,
-    ViaLayerTransitionClass, arrange_explicit_arcs, arrange_line_segments,
-    arrange_line_segments_with_explicit_arcs, build_alternating_detour_meander,
-    build_g1_join_problem, build_length_match_problem, build_multi_detour_meander,
-    build_nonuniform_detour_meander, build_obstacle_aware_detour_meander,
-    build_oriented_tangent_alignment_problem, build_rectangular_bead_plan,
-    build_rectangular_pocket_plan, build_rectangular_serpentine_infill_graph,
-    build_rectangular_support_plan, build_single_detour_meander, build_tangent_alignment_problem,
-    certify_constant_feed_time, certify_differential_pair_skew, certify_g1_chain,
-    certify_g1_join_candidate, certify_length_extension, certify_tangent_alignment_candidate,
+    ViaLayerTransitionClass, arrange_cubic_beziers, arrange_explicit_arcs, arrange_line_segments,
+    arrange_line_segments_with_explicit_arcs, arrange_quadratic_beziers,
+    arrange_rational_quadratic_beziers, build_alternating_detour_meander, build_g1_join_problem,
+    build_length_match_problem, build_multi_detour_meander, build_nonuniform_detour_meander,
+    build_obstacle_aware_detour_meander, build_oriented_tangent_alignment_problem,
+    build_rectangular_bead_plan, build_rectangular_pocket_plan,
+    build_rectangular_serpentine_infill_graph, build_rectangular_support_plan,
+    build_single_detour_meander, build_tangent_alignment_problem, certify_constant_feed_time,
+    certify_differential_pair_skew, certify_g1_chain, certify_g1_join_candidate,
+    certify_length_extension, certify_tangent_alignment_candidate,
     check_cardinal_rect_pad_board_clearance, check_circular_pad_board_clearance,
     check_circular_pad_circular_board_clearance, check_convex_pad_board_clearance,
     check_obround_pad_board_clearance, check_oriented_rect_pad_board_clearance,
@@ -410,6 +411,78 @@ fn explicit_arc_arrangement_orders_full_circle_secant_points_from_branch() {
         vec![p(-3, -5), p(0, -4), p(0, 4)]
     );
     assert_eq!(report.fragments.len(), 6);
+}
+
+#[test]
+fn quadratic_bezier_arrangement_splits_at_rational_events() {
+    let curve = QuadraticBezier::new(p(0, 0), p(4, 8), p(8, 0));
+    let half = BezierParameter::new(1, 2).unwrap();
+
+    let report =
+        arrange_quadratic_beziers(&[curve], &[vec![half]], PredicatePolicy::default()).unwrap();
+
+    assert_eq!(
+        report.breakpoints[0]
+            .iter()
+            .map(|breakpoint| breakpoint.parameter)
+            .collect::<Vec<_>>(),
+        vec![
+            BezierParameter::new(0, 1).unwrap(),
+            half,
+            BezierParameter::new(1, 1).unwrap()
+        ]
+    );
+    assert_eq!(report.fragments.len(), 2);
+    assert_eq!(report.fragments[0].curve.start(), &p(0, 0));
+    assert_eq!(report.fragments[0].curve.control(), &p(2, 4));
+    assert_eq!(report.fragments[0].curve.end(), &p(4, 4));
+    assert_eq!(report.fragments[1].curve.start(), &p(4, 4));
+    assert_eq!(report.fragments[1].curve.end(), &p(8, 0));
+}
+
+#[test]
+fn cubic_bezier_arrangement_sorts_and_dedups_parameters() {
+    let curve = CubicBezier::new(p(0, 0), p(3, 9), p(6, 9), p(9, 0));
+    let one_third = BezierParameter::new(1, 3).unwrap();
+    let two_thirds = BezierParameter::new(2, 3).unwrap();
+
+    let report = arrange_cubic_beziers(
+        &[curve.clone()],
+        &[vec![two_thirds, one_third, one_third]],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+
+    assert_eq!(report.breakpoints[0].len(), 4);
+    assert_eq!(report.fragments.len(), 3);
+    assert_eq!(report.fragments[0].curve.start(), curve.start());
+    assert_eq!(report.fragments[0].curve.end(), &curve.eval(one_third));
+    assert_eq!(report.fragments[1].curve.start(), &curve.eval(one_third));
+    assert_eq!(report.fragments[1].curve.end(), &curve.eval(two_thirds));
+    assert_eq!(report.fragments[2].curve.end(), curve.end());
+}
+
+#[test]
+fn rational_quadratic_bezier_arrangement_emits_homogeneous_fragments() {
+    let curve = RationalQuadraticBezier::new(p(0, 0), p(2, 4), p(4, 0), r(2)).unwrap();
+    let half = BezierParameter::new(1, 2).unwrap();
+
+    let report =
+        arrange_rational_quadratic_beziers(&[curve], &[vec![half]], PredicatePolicy::default())
+            .unwrap();
+
+    assert_eq!(report.breakpoints[0].len(), 3);
+    assert_eq!(report.fragments.len(), 2);
+    assert_eq!(report.fragments[0].start_control.x, r(0));
+    assert_eq!(report.fragments[0].start_control.y, r(0));
+    assert_eq!(report.fragments[0].start_control.w, r(1));
+    assert_eq!(report.fragments[0].end_control.x, r(3));
+    assert_eq!(report.fragments[0].end_control.y, r(4));
+    assert_eq!(report.fragments[0].end_control.w, rq(3, 2));
+    assert_eq!(
+        report.fragments[1].start_control,
+        report.fragments[0].end_control
+    );
 }
 
 #[test]
@@ -6160,6 +6233,59 @@ proptest! {
         prop_assert_eq!(report.line_fragments.len(), 3);
         prop_assert!(report.line_breakpoints[0].iter().any(|breakpoint| breakpoint.point == p(cx - radius, cy)));
         prop_assert!(report.line_breakpoints[0].iter().any(|breakpoint| breakpoint.point == p(cx + radius, cy)));
+    }
+
+    #[test]
+    fn quadratic_bezier_arrangement_generated_split_preserves_endpoints(
+        x0 in -50_i16..=50,
+        y0 in -50_i16..=50,
+        x1 in -50_i16..=50,
+        y1 in -50_i16..=50,
+        x2 in -50_i16..=50,
+        y2 in -50_i16..=50,
+        numerator in 1_i64..=9,
+    ) {
+        let parameter = BezierParameter::new(numerator, 10).unwrap();
+        let curve = QuadraticBezier::new(
+            p(i64::from(x0), i64::from(y0)),
+            p(i64::from(x1), i64::from(y1)),
+            p(i64::from(x2), i64::from(y2)),
+        );
+        let report = arrange_quadratic_beziers(&[curve.clone()], &[vec![parameter]], PredicatePolicy::default()).unwrap();
+
+        prop_assert_eq!(report.fragments.len(), 2);
+        prop_assert_eq!(report.fragments[0].curve.start(), curve.start());
+        prop_assert_eq!(report.fragments[0].curve.end(), &curve.eval(parameter));
+        prop_assert_eq!(report.fragments[1].curve.start(), &curve.eval(parameter));
+        prop_assert_eq!(report.fragments[1].curve.end(), curve.end());
+    }
+
+    #[test]
+    fn cubic_bezier_arrangement_generated_split_preserves_endpoints(
+        x0 in -20_i16..=20,
+        y0 in -20_i16..=20,
+        x1 in -20_i16..=20,
+        y1 in -20_i16..=20,
+        x2 in -20_i16..=20,
+        y2 in -20_i16..=20,
+        x3 in -20_i16..=20,
+        y3 in -20_i16..=20,
+        numerator in 1_i64..=9,
+    ) {
+        let parameter = BezierParameter::new(numerator, 10).unwrap();
+        let curve = CubicBezier::new(
+            p(i64::from(x0), i64::from(y0)),
+            p(i64::from(x1), i64::from(y1)),
+            p(i64::from(x2), i64::from(y2)),
+            p(i64::from(x3), i64::from(y3)),
+        );
+        let report = arrange_cubic_beziers(&[curve.clone()], &[vec![parameter]], PredicatePolicy::default()).unwrap();
+
+        prop_assert_eq!(report.fragments.len(), 2);
+        prop_assert_eq!(report.fragments[0].curve.start(), curve.start());
+        prop_assert_eq!(report.fragments[0].curve.end(), &curve.eval(parameter));
+        prop_assert_eq!(report.fragments[1].curve.start(), &curve.eval(parameter));
+        prop_assert_eq!(report.fragments[1].curve.end(), curve.end());
     }
 
     #[test]

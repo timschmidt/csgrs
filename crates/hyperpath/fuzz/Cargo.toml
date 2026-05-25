@@ -75,3 +75,10 @@ path = "fuzz_targets/explicit_arc_arrangement.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "bezier_arrangement"
+path = "fuzz_targets/bezier_arrangement.rs"
+test = false
+doc = false
+bench = false

@@ -1,0 +1,77 @@
+#![no_main]
+
+use hyperlimit::PredicatePolicy;
+use hyperpath::{
+    BezierParameter, CubicBezier, QuadraticBezier, RationalQuadraticBezier, arrange_cubic_beziers,
+    arrange_quadratic_beziers, arrange_rational_quadratic_beziers,
+};
+use hyperreal::{Rational, Real};
+use libfuzzer_sys::fuzz_target;
+
+fn r(value: i64) -> Real {
+    Real::new(Rational::new(value))
+}
+
+fn p(x: i64, y: i64) -> hyperlimit::Point2 {
+    hyperlimit::Point2::new(r(x), r(y))
+}
+
+fn signed(byte: u8) -> i64 {
+    i64::from(i8::from_ne_bytes([byte]))
+}
+
+fn parameter(byte: u8) -> BezierParameter {
+    BezierParameter::new(i64::from(byte % 9) + 1, 10).unwrap()
+}
+
+fuzz_target!(|data: &[u8]| {
+    if data.len() < 18 {
+        return;
+    }
+
+    let t = parameter(data[0]);
+    let quadratic = QuadraticBezier::new(
+        p(signed(data[1]), signed(data[2])),
+        p(signed(data[3]), signed(data[4])),
+        p(signed(data[5]), signed(data[6])),
+    );
+    let q_report =
+        arrange_quadratic_beziers(&[quadratic.clone()], &[vec![t]], PredicatePolicy::default())
+            .unwrap();
+    assert_eq!(q_report.fragments.len(), 2);
+    assert_eq!(q_report.fragments[0].curve.start(), quadratic.start());
+    assert_eq!(q_report.fragments[0].curve.end(), &quadratic.eval(t));
+    assert_eq!(q_report.fragments[1].curve.start(), &quadratic.eval(t));
+    assert_eq!(q_report.fragments[1].curve.end(), quadratic.end());
+
+    let cubic = CubicBezier::new(
+        p(signed(data[1]), signed(data[2])),
+        p(signed(data[7]), signed(data[8])),
+        p(signed(data[9]), signed(data[10])),
+        p(signed(data[5]), signed(data[6])),
+    );
+    let c_report =
+        arrange_cubic_beziers(&[cubic.clone()], &[vec![t]], PredicatePolicy::default()).unwrap();
+    assert_eq!(c_report.fragments.len(), 2);
+    assert_eq!(c_report.fragments[0].curve.start(), cubic.start());
+    assert_eq!(c_report.fragments[0].curve.end(), &cubic.eval(t));
+    assert_eq!(c_report.fragments[1].curve.start(), &cubic.eval(t));
+    assert_eq!(c_report.fragments[1].curve.end(), cubic.end());
+
+    let weight = r(i64::from(data[11] % 16));
+    let conic = RationalQuadraticBezier::new(
+        p(signed(data[12]), signed(data[13])),
+        p(signed(data[14]), signed(data[15])),
+        p(signed(data[16]), signed(data[17])),
+        weight,
+    )
+    .unwrap();
+    let r_report =
+        arrange_rational_quadratic_beziers(&[conic], &[vec![t]], PredicatePolicy::default())
+            .unwrap();
+    assert_eq!(r_report.fragments.len(), 2);
+    assert_eq!(
+        r_report.fragments[0].end_control,
+        r_report.fragments[1].start_control
+    );
+});

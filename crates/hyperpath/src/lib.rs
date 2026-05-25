@@ -10,6 +10,7 @@
 pub mod arc;
 pub mod arrangement;
 pub mod bezier;
+pub mod bezier_arrangement;
 pub mod cam;
 pub mod offset;
 pub mod pcb;
@@ -49,6 +50,15 @@ pub use bezier::{
     BezierParameter, BezierParameterError, CubicBezier, CubicBezierFacts, HigherOrderBezier,
     HigherOrderBezierError, HigherOrderBezierFacts, QuadraticBezier, QuadraticBezierFacts,
     RationalQuadraticBezier, RationalQuadraticBezierError, RationalQuadraticBezierFacts,
+};
+pub use bezier_arrangement::{
+    BezierArrangementBreakpoint, BezierArrangementError, CubicBezierArrangementFragment,
+    CubicBezierArrangementReport, HomogeneousPoint2, QuadraticBezierArrangementFragment,
+    QuadraticBezierArrangementReport, RationalQuadraticBezierArrangementFragment,
+    RationalQuadraticBezierArrangementReport, arrange_cubic_beziers,
+    arrange_cubic_beziers_with_provenance, arrange_quadratic_beziers,
+    arrange_quadratic_beziers_with_provenance, arrange_rational_quadratic_beziers,
+    arrange_rational_quadratic_beziers_with_provenance,
 };
 pub use cam::{
     AdditiveBeadLine, AdditiveInfillLink, BeadFillAxis, BeadPlanError, InfillGraphError,

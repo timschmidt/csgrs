@@ -9,8 +9,9 @@ use hyperpath::{
     PcbOrthogonalBoardOutline, PcbRectPad, PcbRoundedRectPad, PcbTrace, PcbViaStack,
     QuadraticBezier, RationalQuadraticBezier, RectangularPocket, SourceLengthUnit,
     SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraLayerAlias, SpecctraNetAlias,
-    SweptLineSegment, TangentSpan, TraceLayer, ViaDrillIntent, arrange_explicit_arcs,
-    arrange_line_segments, arrange_line_segments_with_explicit_arcs,
+    SweptLineSegment, TangentSpan, TraceLayer, ViaDrillIntent, arrange_cubic_beziers,
+    arrange_explicit_arcs, arrange_line_segments, arrange_line_segments_with_explicit_arcs,
+    arrange_quadratic_beziers, arrange_rational_quadratic_beziers,
     build_alternating_detour_meander, build_g1_join_problem, build_length_match_problem,
     build_multi_detour_meander, build_nonuniform_detour_meander,
     build_obstacle_aware_detour_meander, build_oriented_tangent_alignment_problem,
@@ -206,6 +207,20 @@ fn path_predicates(c: &mut Criterion) {
     c.bench_function("quadratic_bezier_exact_speed_squared", |b| {
         b.iter(|| bezier.speed_squared(half))
     });
+    let bezier_events = vec![vec![
+        BezierParameter::new(1, 4).unwrap(),
+        BezierParameter::new(1, 2).unwrap(),
+        BezierParameter::new(3, 4).unwrap(),
+    ]];
+    c.bench_function("quadratic_bezier_arrangement_split_cleanup", |b| {
+        b.iter(|| {
+            arrange_quadratic_beziers(
+                std::slice::from_ref(&bezier),
+                &bezier_events,
+                PredicatePolicy::default(),
+            )
+        })
+    });
     let conic = RationalQuadraticBezier::new(p(0, 0), p(500, 200), p(1000, 0), r(2)).unwrap();
     c.bench_function("rational_quadratic_bezier_exact_eval", |b| {
         b.iter(|| conic.eval(half))
@@ -216,6 +231,15 @@ fn path_predicates(c: &mut Criterion) {
     c.bench_function("rational_quadratic_bezier_exact_speed_squared", |b| {
         b.iter(|| conic.speed_squared(half))
     });
+    c.bench_function("rational_quadratic_bezier_arrangement_split_cleanup", |b| {
+        b.iter(|| {
+            arrange_rational_quadratic_beziers(
+                std::slice::from_ref(&conic),
+                &bezier_events,
+                PredicatePolicy::default(),
+            )
+        })
+    });
     let cubic = CubicBezier::new(p(0, 0), p(300, 300), p(700, 300), p(1000, 0));
     c.bench_function("cubic_bezier_exact_eval", |b| b.iter(|| cubic.eval(half)));
     c.bench_function("cubic_bezier_exact_hodograph", |b| {
@@ -223,6 +247,15 @@ fn path_predicates(c: &mut Criterion) {
     });
     c.bench_function("cubic_bezier_exact_speed_squared", |b| {
         b.iter(|| cubic.speed_squared(half))
+    });
+    c.bench_function("cubic_bezier_arrangement_split_cleanup", |b| {
+        b.iter(|| {
+            arrange_cubic_beziers(
+                std::slice::from_ref(&cubic),
+                &bezier_events,
+                PredicatePolicy::default(),
+            )
+        })
     });
     let quintic = HigherOrderBezier::quintic(
         p(0, 0),
