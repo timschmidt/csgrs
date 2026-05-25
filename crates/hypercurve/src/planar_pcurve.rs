@@ -10,7 +10,7 @@
 
 use crate::{
     Classification, Contour2, CurveError, CurvePolicy, CurveResult, CurveString2, Point2,
-    RegionPointLocation, RegionView2, Segment2, UncertaintyReason,
+    PreparedRegionView2, RegionPointLocation, RegionView2, Segment2, UncertaintyReason,
 };
 
 /// Opaque identity of a retained planar support surface.
@@ -64,6 +64,21 @@ pub struct RetainedPlanarFace2 {
     surface: RetainedPlanarSurfaceIdentity2,
     material_loops: Vec<RetainedPlanarTrimLoop2>,
     hole_loops: Vec<RetainedPlanarTrimLoop2>,
+}
+
+/// Prepared retained planar face for repeated support-surface and UV queries.
+///
+/// The prepared object keeps the retained BREP support identity beside a
+/// prepared borrowed UV region. Cached boxes and prepared segment predicates
+/// are only broad-phase evidence: support-surface mismatch, boundary hits, and
+/// inside/outside status still replay through the exact classifiers. That
+/// separation follows Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7(1-2), 3-23 (1997), and the pcurve-on-surface
+/// face model in Piegl and Tiller, *The NURBS Book* (2nd ed., 1997).
+#[derive(Clone, Debug, PartialEq)]
+pub struct PreparedRetainedPlanarFace2<'a> {
+    face: &'a RetainedPlanarFace2,
+    region: PreparedRegionView2<'a>,
 }
 
 /// Point classification result for a retained planar face.
@@ -275,6 +290,44 @@ impl RetainedPlanarFace2 {
         &self.hole_loops
     }
 
+    /// Prepares this face for repeated support-surface and UV point queries.
+    ///
+    /// Preparation borrows the retained trim loops and caches the UV
+    /// [`PreparedRegionView2`] used by repeated point-in-face calls. It does
+    /// not certify any query by itself; every call still first checks the
+    /// retained support-surface identity and then delegates to the exact
+    /// boundary-first region classifier.
+    pub fn prepare_point_queries(&self, policy: &CurvePolicy) -> PreparedRetainedPlanarFace2<'_> {
+        let material = self
+            .material_loops
+            .iter()
+            .map(|trim| trim.contour())
+            .collect::<Vec<_>>();
+        let holes = self
+            .hole_loops
+            .iter()
+            .map(|trim| trim.contour())
+            .collect::<Vec<_>>();
+        let region = RegionView2::from_contours(material, holes);
+        PreparedRetainedPlanarFace2 {
+            face: self,
+            region: PreparedRegionView2::from_region_view(&region, policy),
+        }
+    }
+
+    /// Prepares this face for repeated retained topology queries.
+    ///
+    /// This currently exposes the same point-query package as
+    /// [`RetainedPlanarFace2::prepare_point_queries`]. Segment/edge-use and
+    /// analytic-surface frame packages can extend the prepared face handle
+    /// without changing the support-surface-first report contract.
+    pub fn prepare_topology_queries(
+        &self,
+        policy: &CurvePolicy,
+    ) -> PreparedRetainedPlanarFace2<'_> {
+        self.prepare_point_queries(policy)
+    }
+
     /// Classifies a UV point against this retained planar face.
     ///
     /// The query first checks retained support-surface identity. Only matching
@@ -310,29 +363,70 @@ impl RetainedPlanarFace2 {
             .map(|trim| trim.contour())
             .collect::<Vec<_>>();
         let region = RegionView2::from_contours(material, holes);
-        let location = match region.classify_point(uv, policy) {
-            Classification::Decided(RegionPointLocation::Outside) => {
-                RetainedPlanarFacePointLocation2::Outside
-            }
-            Classification::Decided(RegionPointLocation::Boundary) => {
-                RetainedPlanarFacePointLocation2::Boundary
-            }
-            Classification::Decided(RegionPointLocation::Inside) => {
-                RetainedPlanarFacePointLocation2::Inside
-            }
-            Classification::Uncertain(UncertaintyReason::Boundary) => {
-                RetainedPlanarFacePointLocation2::Boundary
-            }
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        Ok(Classification::Decided(
-            RetainedPlanarFacePointReport2::new(
-                location,
-                Some(self.surface),
-                self.material_loops.len(),
-                self.hole_loops.len(),
-            ),
-        ))
+        face_point_report_from_region_classification(
+            region.classify_point(uv, policy),
+            self.surface,
+            self.material_loops.len(),
+            self.hole_loops.len(),
+        )
+    }
+}
+
+impl<'a> PreparedRetainedPlanarFace2<'a> {
+    /// Returns the retained planar face that supplied this prepared view.
+    pub const fn face(&self) -> &'a RetainedPlanarFace2 {
+        self.face
+    }
+
+    /// Returns the retained planar support surface.
+    pub const fn surface(&self) -> RetainedPlanarSurfaceIdentity2 {
+        self.face.surface
+    }
+
+    /// Returns the prepared borrowed UV region.
+    pub const fn prepared_region(&self) -> &PreparedRegionView2<'a> {
+        &self.region
+    }
+
+    /// Returns the number of retained material trim loops.
+    pub fn material_loop_count(&self) -> usize {
+        self.face.material_loops.len()
+    }
+
+    /// Returns the number of retained hole trim loops.
+    pub fn hole_loop_count(&self) -> usize {
+        self.face.hole_loops.len()
+    }
+
+    /// Classifies a UV point against this prepared retained planar face.
+    ///
+    /// The support-surface identity check intentionally stays outside the
+    /// prepared UV region. In Yap's EGC terms, preparation only retains
+    /// reusable object structure; it does not turn a query against the wrong
+    /// supporting surface into a geometric predicate.
+    pub fn classify_uv_point(
+        &self,
+        query_surface: RetainedPlanarSurfaceIdentity2,
+        uv: &Point2,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<RetainedPlanarFacePointReport2>> {
+        if query_surface != self.face.surface {
+            return Ok(Classification::Decided(
+                RetainedPlanarFacePointReport2::new(
+                    RetainedPlanarFacePointLocation2::SurfaceMismatch,
+                    None,
+                    self.material_loop_count(),
+                    self.hole_loop_count(),
+                ),
+            ));
+        }
+
+        face_point_report_from_region_classification(
+            self.region.classify_point(uv, policy),
+            self.face.surface,
+            self.material_loop_count(),
+            self.hole_loop_count(),
+        )
     }
 }
 
@@ -416,4 +510,35 @@ fn same_reversed_segment_cycle(first: &[Segment2], second: &[Segment2]) -> bool 
             segment == &second[reversed_index].reversed()
         })
     })
+}
+
+fn face_point_report_from_region_classification(
+    classification: Classification<RegionPointLocation>,
+    surface: RetainedPlanarSurfaceIdentity2,
+    material_loop_count: usize,
+    hole_loop_count: usize,
+) -> CurveResult<Classification<RetainedPlanarFacePointReport2>> {
+    let location = match classification {
+        Classification::Decided(RegionPointLocation::Outside) => {
+            RetainedPlanarFacePointLocation2::Outside
+        }
+        Classification::Decided(RegionPointLocation::Boundary) => {
+            RetainedPlanarFacePointLocation2::Boundary
+        }
+        Classification::Decided(RegionPointLocation::Inside) => {
+            RetainedPlanarFacePointLocation2::Inside
+        }
+        Classification::Uncertain(UncertaintyReason::Boundary) => {
+            RetainedPlanarFacePointLocation2::Boundary
+        }
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    Ok(Classification::Decided(
+        RetainedPlanarFacePointReport2::new(
+            location,
+            Some(surface),
+            material_loop_count,
+            hole_loop_count,
+        ),
+    ))
 }

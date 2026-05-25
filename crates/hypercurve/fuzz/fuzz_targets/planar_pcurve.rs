@@ -69,8 +69,25 @@ fuzz_target!(|data: &[u8]| {
                 Vec::new(),
             );
             if let Ok(face) = face {
-                let report = face.classify_uv_point(surface, &point(data[1], data[2]), &Default::default());
+                let policy = Default::default();
+                let uv = point(data[1], data[2]);
+                let report = face.classify_uv_point(surface, &uv, &policy);
                 if let Ok(classification) = report {
+                    let _ = classification.map(|report| {
+                        let _ = report.location();
+                        let _ = report.surface();
+                        let _ = report.material_loop_count();
+                        let _ = report.hole_loop_count();
+                    });
+                }
+                let prepared = face.prepare_point_queries(&policy);
+                let _ = prepared.face();
+                let _ = prepared.surface();
+                let _ = prepared.prepared_region().region_box();
+                let _ = prepared.material_loop_count();
+                let _ = prepared.hole_loop_count();
+                let prepared_report = prepared.classify_uv_point(surface, &uv, &policy);
+                if let Ok(classification) = prepared_report {
                     let _ = classification.map(|report| {
                         let _ = report.location();
                         let _ = report.surface();

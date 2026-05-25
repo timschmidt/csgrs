@@ -199,6 +199,62 @@ fn retained_planar_face_reports_surface_mismatch_before_trim_classification() {
 }
 
 #[test]
+fn prepared_retained_planar_face_matches_plain_uv_classification() {
+    let surface = RetainedPlanarSurfaceIdentity2::new(51);
+    let face = RetainedPlanarFace2::try_new(
+        surface,
+        vec![trim(surface, &[(0, 0), (10, 0), (10, 10), (0, 10)])],
+        vec![trim(surface, &[(3, 3), (7, 3), (7, 7), (3, 7)])],
+    )
+    .unwrap();
+    let policy = policy();
+    let prepared = face.prepare_point_queries(&policy);
+
+    assert_eq!(prepared.face(), &face);
+    assert_eq!(prepared.surface(), surface);
+    assert_eq!(prepared.material_loop_count(), 1);
+    assert_eq!(prepared.hole_loop_count(), 1);
+    assert_eq!(prepared.prepared_region().material_contours().len(), 1);
+    assert_eq!(prepared.prepared_region().hole_contours().len(), 1);
+    assert_eq!(face.prepare_topology_queries(&policy).surface(), surface);
+
+    for point in [p(1, 1), p(5, 5), p(3, 5), p(12, 5)] {
+        let plain = face.classify_uv_point(surface, &point, &policy).unwrap();
+        let prepared = prepared
+            .classify_uv_point(surface, &point, &policy)
+            .unwrap();
+        assert_eq!(prepared, plain, "prepared query diverged at {point:?}");
+    }
+}
+
+#[test]
+fn prepared_retained_planar_face_blocks_surface_mismatch_before_cached_region() {
+    let surface = RetainedPlanarSurfaceIdentity2::new(61);
+    let face = RetainedPlanarFace2::try_new(
+        surface,
+        vec![trim(surface, &[(0, 0), (4, 0), (4, 4), (0, 4)])],
+        Vec::new(),
+    )
+    .unwrap();
+    let policy = policy();
+    let prepared = face.prepare_point_queries(&policy);
+
+    let report = decided(
+        prepared
+            .classify_uv_point(RetainedPlanarSurfaceIdentity2::new(62), &p(1, 1), &policy)
+            .unwrap(),
+    );
+    assert_eq!(
+        report.location(),
+        RetainedPlanarFacePointLocation2::SurfaceMismatch
+    );
+    assert_eq!(report.surface(), None);
+    assert_eq!(report.material_loop_count(), 1);
+    assert_eq!(report.hole_loop_count(), 0);
+    assert!(!report.location().is_trim_classification());
+}
+
+#[test]
 fn retained_planar_face_rejects_missing_material_or_mixed_surface_trims() {
     let surface = RetainedPlanarSurfaceIdentity2::new(41);
     let other = RetainedPlanarSurfaceIdentity2::new(42);

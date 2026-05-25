@@ -302,6 +302,47 @@ fn bench_retained_planar_face_point_query(iterations: u32) -> CurveResult<()> {
     Ok(())
 }
 
+fn bench_prepared_retained_planar_face_point_query(iterations: u32) -> CurveResult<()> {
+    let surface = RetainedPlanarSurfaceIdentity2::new(6);
+    let face = RetainedPlanarFace2::try_new(
+        surface,
+        vec![RetainedPlanarTrimLoop2::new(
+            surface,
+            rectangle(0, 0, 100, 100),
+        )],
+        vec![RetainedPlanarTrimLoop2::new(
+            surface,
+            rectangle(40, 40, 60, 60),
+        )],
+    )?;
+    let point = p(10, 10);
+    let policy = CurvePolicy::certified();
+    let prepared = face.prepare_point_queries(&policy);
+    let started = Instant::now();
+    let mut inside_count = 0_usize;
+
+    for _ in 0..iterations {
+        let report = match prepared.classify_uv_point(surface, &point, &policy)? {
+            Classification::Decided(report) => report,
+            other => {
+                panic!(
+                    "prepared retained planar face benchmark expected decided report, got {other:?}"
+                )
+            }
+        };
+        if report.location() == RetainedPlanarFacePointLocation2::Inside {
+            inside_count += black_box(1);
+        }
+    }
+
+    let elapsed = started.elapsed();
+    println!(
+        "prepared_retained_planar_face_point_query: {iterations} iterations in {elapsed:?} ({:?}/iter), inside={inside_count}",
+        elapsed / iterations
+    );
+    Ok(())
+}
+
 fn bench_prepared_sparse_region_single_hit(iterations: u32) -> CurveResult<()> {
     let region = sparse_region(120);
     let point = p(612, 2);
@@ -339,5 +380,6 @@ fn main() -> CurveResult<()> {
     bench_sparse_region_filled_area(10_000)?;
     bench_planar_trim_loop_image_equality(100_000)?;
     bench_retained_planar_face_point_query(100_000)?;
+    bench_prepared_retained_planar_face_point_query(100_000)?;
     Ok(())
 }
