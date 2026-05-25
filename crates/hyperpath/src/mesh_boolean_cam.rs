@@ -25,7 +25,7 @@ use crate::cam::{
 };
 use crate::mesh_boolean::{PathMeshBooleanError, PathMeshBooleanOperation, RectangularPrism};
 use crate::mesh_boolean_holes::validate_strict_orthogonal_holes;
-use crate::mesh_boolean_polygon::{ConvexPolygonPrism, OrthogonalPolygonPrism};
+use crate::mesh_boolean_polygon::{ConvexPolygonPrism, OrthogonalPolygonPrism, SimplePolygonPrism};
 use crate::mesh_boolean_program::{
     PathMeshBooleanProgramReport, PathMeshBooleanProgramStep, boolean_path_mesh_program,
 };
@@ -114,6 +114,15 @@ pub enum CamSupportClipBoundary {
     },
     /// Simple orthogonal clip boundary.
     Orthogonal {
+        /// Retained boundary vertices.
+        vertices: Vec<Point2>,
+        /// Source provenance shared by the retained loop.
+        provenance: PathProvenance,
+        /// Exact-set facts for retained coordinates.
+        exact: RealExactSetFacts,
+    },
+    /// Simple hole-free straight-edge clip boundary.
+    Simple {
         /// Retained boundary vertices.
         vertices: Vec<Point2>,
         /// Source provenance shared by the retained loop.
@@ -344,24 +353,64 @@ impl CamSupportClipBoundary {
         })
     }
 
+    /// Construct a retained simple straight-edge support clipping boundary.
+    ///
+    /// This accepts nonconvex, non-orthogonal, hole-free loops after exact
+    /// simplicity and triangulation checks. The derived prism uses the
+    /// Meisters ear theorem during replay, but the retained loop remains the
+    /// authoritative CAM object as required by Yap's EGC model.
+    pub fn simple(
+        vertices: Vec<Point2>,
+        policy: PredicatePolicy,
+    ) -> Result<Self, PathMeshBooleanError> {
+        Self::simple_with_provenance(vertices, PathProvenance::native(), policy)
+    }
+
+    /// Construct a retained simple straight-edge clipping boundary with provenance.
+    pub fn simple_with_provenance(
+        vertices: Vec<Point2>,
+        provenance: PathProvenance,
+        policy: PredicatePolicy,
+    ) -> Result<Self, PathMeshBooleanError> {
+        SimplePolygonPrism::new(
+            vertices.clone(),
+            Real::zero(),
+            Real::one(),
+            provenance,
+            policy,
+        )?;
+        let exact = loop_exact_facts(&vertices);
+        Ok(Self::Simple {
+            vertices,
+            provenance,
+            exact,
+        })
+    }
+
     /// Return retained boundary vertices.
     pub fn vertices(&self) -> &[Point2] {
         match self {
-            Self::Convex { vertices, .. } | Self::Orthogonal { vertices, .. } => vertices,
+            Self::Convex { vertices, .. }
+            | Self::Orthogonal { vertices, .. }
+            | Self::Simple { vertices, .. } => vertices,
         }
     }
 
     /// Return retained source provenance.
     pub const fn provenance(&self) -> PathProvenance {
         match self {
-            Self::Convex { provenance, .. } | Self::Orthogonal { provenance, .. } => *provenance,
+            Self::Convex { provenance, .. }
+            | Self::Orthogonal { provenance, .. }
+            | Self::Simple { provenance, .. } => *provenance,
         }
     }
 
     /// Return exact-set facts for retained boundary coordinates.
     pub const fn exact_facts(&self) -> &RealExactSetFacts {
         match self {
-            Self::Convex { exact, .. } | Self::Orthogonal { exact, .. } => exact,
+            Self::Convex { exact, .. }
+            | Self::Orthogonal { exact, .. }
+            | Self::Simple { exact, .. } => exact,
         }
     }
 
@@ -385,6 +434,14 @@ impl CamSupportClipBoundary {
                 provenance,
                 ..
             } => orthogonal_loop_path_source(vertices, z_min, z_max, *provenance, policy),
+            Self::Simple {
+                vertices,
+                provenance,
+                ..
+            } => Ok(
+                SimplePolygonPrism::new(vertices.clone(), z_min, z_max, *provenance, policy)?
+                    .into(),
+            ),
         }
     }
 }

@@ -2,9 +2,10 @@
 //!
 //! Rectangular prisms are not enough for PCB copper zones, chamfered pads, and
 //! polygonal CAM fixtures. This module admits retained straight-edge polygons
-//! extruded over one exact Z interval, first as strictly convex polygons and
-//! then as simple orthogonal polygons. No curve flattening or tolerance repair
-//! is performed. The design follows Yap, "Towards Exact Geometric
+//! extruded over one exact Z interval, first as strictly convex polygons, then
+//! simple orthogonal polygons, and now simple hole-free straight-edge polygons
+//! for additive clipping envelopes. No curve flattening or tolerance repair is
+//! performed. The design follows Yap, "Towards Exact Geometric
 //! Computation," *Computational Geometry* 7.1-2 (1997): the polygon vertices
 //! remain the authoritative object, while the triangulated prism is a
 //! replayable handoff to `hypermesh`. The solid interpretation remains
@@ -42,6 +43,23 @@ pub struct ConvexPolygonPrism {
 /// Exact prism swept from a simple orthogonal retained polygon.
 #[derive(Clone, Debug, PartialEq)]
 pub struct OrthogonalPolygonPrism {
+    vertices: Vec<Point2>,
+    winding: ConvexPolygonWinding,
+    z_min: Real,
+    z_max: Real,
+    provenance: PathProvenance,
+    exact: RealExactSetFacts,
+    cap_triangles: Vec<[usize; 3]>,
+}
+
+/// Exact prism swept from a simple hole-free retained polygon.
+///
+/// This is the general straight-edge counterpart to [`ConvexPolygonPrism`] and
+/// [`OrthogonalPolygonPrism`]. It deliberately rejects holes, self-touching
+/// loops, and collinear consecutive triples so that the cap triangulation is a
+/// replayable exact certificate rather than a tolerance-repaired polygon.
+#[derive(Clone, Debug, PartialEq)]
+pub struct SimplePolygonPrism {
     vertices: Vec<Point2>,
     winding: ConvexPolygonWinding,
     z_min: Real,
@@ -279,6 +297,129 @@ impl OrthogonalPolygonPrism {
     }
 }
 
+impl SimplePolygonPrism {
+    /// Construct a positive-height prism from retained simple polygon vertices.
+    ///
+    /// The constructor validates exact area, rejects self-intersection and
+    /// self-touching, and stores an exact ear-clipping cap triangulation. The
+    /// triangulation follows Meisters, "Polygons Have Ears," *The American
+    /// Mathematical Monthly* 82.6 (1975), while the decision to retain the
+    /// input loop and replay the derived mesh follows Yap, "Towards Exact
+    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+    pub fn new(
+        vertices: Vec<Point2>,
+        z_min: Real,
+        z_max: Real,
+        provenance: PathProvenance,
+        policy: PredicatePolicy,
+    ) -> Result<Self, PathMeshBooleanError> {
+        if vertices.len() < 3 {
+            return Err(PathMeshBooleanError::TooFewPolygonVertices);
+        }
+        if compare_reals_with_policy(&z_min, &z_max, policy).value() != Some(Ordering::Less) {
+            return Err(PathMeshBooleanError::DegenerateHeight);
+        }
+        let area_twice = polygon_signed_area_twice(&vertices);
+        let winding = match compare_reals_with_policy(&area_twice, &Real::zero(), policy).value() {
+            Some(Ordering::Greater) => ConvexPolygonWinding::CounterClockwise,
+            Some(Ordering::Less) => ConvexPolygonWinding::Clockwise,
+            Some(Ordering::Equal) => return Err(PathMeshBooleanError::DegeneratePolygon),
+            None => return Err(PathMeshBooleanError::UnknownPolygonOrientation),
+        };
+        validate_simple_polygon_edges(&vertices, policy)?;
+        validate_no_collinear_polygon_turns(&vertices, policy)?;
+        let cap_triangles = triangulate_simple_polygon(&vertices, winding, policy)?;
+        let mut refs = vertices
+            .iter()
+            .flat_map(|point| [&point.x, &point.y])
+            .collect::<Vec<_>>();
+        refs.extend([&z_min, &z_max]);
+        let exact = Real::exact_set_facts(refs);
+        Ok(Self {
+            vertices,
+            winding,
+            z_min,
+            z_max,
+            provenance,
+            exact,
+            cap_triangles,
+        })
+    }
+
+    /// Return retained polygon vertices in source order.
+    pub fn vertices(&self) -> &[Point2] {
+        &self.vertices
+    }
+
+    /// Return certified source winding.
+    pub const fn winding(&self) -> ConvexPolygonWinding {
+        self.winding
+    }
+
+    /// Return exact minimum Z.
+    pub const fn z_min(&self) -> &Real {
+        &self.z_min
+    }
+
+    /// Return exact maximum Z.
+    pub const fn z_max(&self) -> &Real {
+        &self.z_max
+    }
+
+    /// Return retained source provenance.
+    pub const fn provenance(&self) -> PathProvenance {
+        self.provenance
+    }
+
+    /// Return exact-set facts for polygon coordinates and Z bounds.
+    pub const fn exact_facts(&self) -> &RealExactSetFacts {
+        &self.exact
+    }
+
+    /// Return retained cap triangulation over [`Self::vertices`].
+    pub fn cap_triangles(&self) -> &[[usize; 3]] {
+        &self.cap_triangles
+    }
+
+    /// Derive the exact `hypermesh` solid used for boolean certification.
+    ///
+    /// Cap orientation is normalized to outward prism faces in the same way as
+    /// [`OrthogonalPolygonPrism`]. Only the retained vertices and the stored
+    /// ear triangles are consumed, so replay detects any source mutation before
+    /// cached topology can be trusted.
+    pub fn to_exact_mesh(&self) -> Result<ExactMesh, PathMeshBooleanError> {
+        let n = self.vertices.len();
+        let mut positions = Vec::with_capacity(n * 6);
+        for point in &self.vertices {
+            positions.extend([point.x.clone(), point.y.clone(), self.z_min.clone()]);
+        }
+        for point in &self.vertices {
+            positions.extend([point.x.clone(), point.y.clone(), self.z_max.clone()]);
+        }
+
+        let mut indices = Vec::with_capacity(self.cap_triangles.len() * 6 + n * 6);
+        for [a, b, c] in &self.cap_triangles {
+            indices.extend([*a, *c, *b]);
+            indices.extend([n + *a, n + *b, n + *c]);
+        }
+        for i in 0..n {
+            let j = (i + 1) % n;
+            match self.winding {
+                ConvexPolygonWinding::CounterClockwise => {
+                    indices.extend([i, j, n + j]);
+                    indices.extend([i, n + j, n + i]);
+                }
+                ConvexPolygonWinding::Clockwise => {
+                    indices.extend([i, n + j, j]);
+                    indices.extend([i, n + i, n + j]);
+                }
+            }
+        }
+        ExactMesh::from_real_triangles(&positions, &indices)
+            .map_err(|error| PathMeshBooleanError::MeshConstruction(format!("{error:?}")))
+    }
+}
+
 /// Convenience constructor for an exact integer convex-polygon prism.
 pub fn convex_polygon_prism_from_i64_vertices(
     vertices: Vec<[i64; 2]>,
@@ -319,6 +460,26 @@ pub fn orthogonal_polygon_prism_from_i64_vertices(
     )
 }
 
+/// Convenience constructor for an exact integer simple-polygon prism.
+pub fn simple_polygon_prism_from_i64_vertices(
+    vertices: Vec<[i64; 2]>,
+    z_min: i64,
+    z_max: i64,
+    policy: PredicatePolicy,
+) -> Result<SimplePolygonPrism, PathMeshBooleanError> {
+    let vertices = vertices
+        .into_iter()
+        .map(|point| Point2::new(Real::from(point[0]), Real::from(point[1])))
+        .collect::<Vec<_>>();
+    SimplePolygonPrism::new(
+        vertices,
+        Real::from(z_min),
+        Real::from(z_max),
+        PathProvenance::native(),
+        policy,
+    )
+}
+
 fn polygon_signed_area_twice(vertices: &[Point2]) -> Real {
     let mut area = Real::zero();
     for index in 0..vertices.len() {
@@ -327,6 +488,63 @@ fn polygon_signed_area_twice(vertices: &[Point2]) -> Real {
         area = area + current.x.clone() * next.y.clone() - next.x.clone() * current.y.clone();
     }
     area
+}
+
+fn validate_simple_polygon_edges(
+    vertices: &[Point2],
+    policy: PredicatePolicy,
+) -> Result<(), PathMeshBooleanError> {
+    for index in 0..vertices.len() {
+        if real_equal(
+            &vertices[index].x,
+            &vertices[(index + 1) % vertices.len()].x,
+            policy,
+        )? && real_equal(
+            &vertices[index].y,
+            &vertices[(index + 1) % vertices.len()].y,
+            policy,
+        )? {
+            return Err(PathMeshBooleanError::DegeneratePolygon);
+        }
+    }
+    for left in 0..vertices.len() {
+        let left_next = (left + 1) % vertices.len();
+        for right in left + 1..vertices.len() {
+            let right_next = (right + 1) % vertices.len();
+            if left == right_next || left_next == right {
+                continue;
+            }
+            if segments_intersect_closed(
+                &vertices[left],
+                &vertices[left_next],
+                &vertices[right],
+                &vertices[right_next],
+                policy,
+            )? {
+                return Err(PathMeshBooleanError::PolygonTriangulationFailed);
+            }
+        }
+    }
+    Ok(())
+}
+
+fn validate_no_collinear_polygon_turns(
+    vertices: &[Point2],
+    policy: PredicatePolicy,
+) -> Result<(), PathMeshBooleanError> {
+    for index in 0..vertices.len() {
+        let previous = &vertices[(index + vertices.len() - 1) % vertices.len()];
+        let current = &vertices[index];
+        let next = &vertices[(index + 1) % vertices.len()];
+        match compare_reals_with_policy(&orient2(previous, current, next), &Real::zero(), policy)
+            .value()
+        {
+            Some(Ordering::Equal) => return Err(PathMeshBooleanError::DegeneratePolygon),
+            Some(_) => {}
+            None => return Err(PathMeshBooleanError::UnknownPolygonOrientation),
+        }
+    }
+    Ok(())
 }
 
 fn validate_orthogonal_edges(
@@ -376,6 +594,54 @@ fn validate_simple_orthogonal_polygon_edges(
         }
     }
     Ok(())
+}
+
+fn segments_intersect_closed(
+    a0: &Point2,
+    a1: &Point2,
+    b0: &Point2,
+    b1: &Point2,
+    policy: PredicatePolicy,
+) -> Result<bool, PathMeshBooleanError> {
+    let o1 = orient_order(a0, a1, b0, policy)?;
+    let o2 = orient_order(a0, a1, b1, policy)?;
+    let o3 = orient_order(b0, b1, a0, policy)?;
+    let o4 = orient_order(b0, b1, a1, policy)?;
+
+    if o1 == Ordering::Equal && point_on_segment_closed(b0, a0, a1, policy)? {
+        return Ok(true);
+    }
+    if o2 == Ordering::Equal && point_on_segment_closed(b1, a0, a1, policy)? {
+        return Ok(true);
+    }
+    if o3 == Ordering::Equal && point_on_segment_closed(a0, b0, b1, policy)? {
+        return Ok(true);
+    }
+    if o4 == Ordering::Equal && point_on_segment_closed(a1, b0, b1, policy)? {
+        return Ok(true);
+    }
+    Ok(o1 != o2 && o3 != o4)
+}
+
+fn orient_order(
+    a: &Point2,
+    b: &Point2,
+    c: &Point2,
+    policy: PredicatePolicy,
+) -> Result<Ordering, PathMeshBooleanError> {
+    compare_reals_with_policy(&orient2(a, b, c), &Real::zero(), policy)
+        .value()
+        .ok_or(PathMeshBooleanError::UnknownPolygonOrientation)
+}
+
+fn point_on_segment_closed(
+    point: &Point2,
+    a: &Point2,
+    b: &Point2,
+    policy: PredicatePolicy,
+) -> Result<bool, PathMeshBooleanError> {
+    Ok(real_between_closed(&point.x, &a.x, &b.x, policy)?
+        && real_between_closed(&point.y, &a.y, &b.y, policy)?)
 }
 
 fn orthogonal_segments_intersect(

@@ -75,8 +75,9 @@ pub use mesh_boolean_pcb::{
     pcb_rect_pad_prism, pcb_trace_mesh_boolean_source,
 };
 pub use mesh_boolean_polygon::{
-    ConvexPolygonPrism, ConvexPolygonWinding, OrthogonalPolygonPrism,
+    ConvexPolygonPrism, ConvexPolygonWinding, OrthogonalPolygonPrism, SimplePolygonPrism,
     convex_polygon_prism_from_i64_vertices, orthogonal_polygon_prism_from_i64_vertices,
+    simple_polygon_prism_from_i64_vertices,
 };
 pub use mesh_boolean_program::{
     PathMeshBooleanProgramReport, PathMeshBooleanProgramStep, PathMeshBooleanProgramStepReport,

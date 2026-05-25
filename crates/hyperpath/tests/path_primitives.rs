@@ -52,8 +52,8 @@ use hyperpath::{
     pcb_rect_pad_mesh_boolean_source, pcb_rect_pad_prism, pcb_trace_mesh_boolean_source,
     rectangular_prism_from_i64_bounds, serialize_specctra_grid_route_records,
     serialize_specctra_grid_trace_records, serialize_specctra_grid_via_records,
-    specctra_grid_trace_record, specctra_grid_via_record, subtract_rectangular_region,
-    tangent_cross, tangent_dot, tangent_norm_squared,
+    simple_polygon_prism_from_i64_vertices, specctra_grid_trace_record, specctra_grid_via_record,
+    subtract_rectangular_region, tangent_cross, tangent_dot, tangent_norm_squared,
 };
 use hyperreal::{Rational, Real};
 use proptest::prelude::*;
@@ -970,6 +970,58 @@ fn pcb_orthogonal_polygon_boolean_sources_reject_bad_loops() {
         )
         .unwrap_err(),
         BoardContourError::SelfIntersecting
+    );
+}
+
+#[test]
+fn simple_polygon_prism_triangulates_nonconvex_straight_edge_source() {
+    let prism = simple_polygon_prism_from_i64_vertices(
+        vec![[0, 0], [6, 0], [4, 3], [6, 6], [0, 6]],
+        0,
+        2,
+        PredicatePolicy::default(),
+    )
+    .expect("simple nonconvex polygon should lower to exact prism");
+    assert_eq!(prism.vertices().len(), 5);
+    assert_eq!(prism.cap_triangles().len(), 3);
+    assert!(prism.exact_facts().all_exact_rational);
+    let mesh = prism.to_exact_mesh().unwrap();
+    mesh.audit().unwrap();
+    assert!(mesh.facts().mesh.closed_manifold);
+    assert_eq!(mesh.triangles().len(), 16);
+}
+
+#[test]
+fn simple_polygon_prism_rejects_self_touching_crossing_and_collinear_loops() {
+    assert_eq!(
+        simple_polygon_prism_from_i64_vertices(
+            vec![[0, 0], [5, 5], [0, 4], [4, 0]],
+            0,
+            2,
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        PathMeshBooleanError::PolygonTriangulationFailed
+    );
+    assert_eq!(
+        simple_polygon_prism_from_i64_vertices(
+            vec![[0, 0], [4, 0], [4, 0], [0, 4]],
+            0,
+            2,
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        PathMeshBooleanError::DegeneratePolygon
+    );
+    assert_eq!(
+        simple_polygon_prism_from_i64_vertices(
+            vec![[0, 0], [2, 0], [4, 0], [4, 4], [0, 4]],
+            0,
+            2,
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        PathMeshBooleanError::DegeneratePolygon
     );
 }
 
@@ -3550,6 +3602,36 @@ fn cam_infill_clip_program_unions_retained_beads_and_clips_boundary() {
             .mesh
             .closed_manifold
     );
+
+    let simple = CamSupportClipBoundary::simple(
+        vec![p(0, 0), p(10, 0), p(8, 1), p(10, 2), p(0, 2)],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    let simple_report = build_cam_infill_clip_program(
+        build_rectangular_serpentine_infill_graph(
+            build_rectangular_bead_plan(
+                RectangularPocket::new(p(0, 0), p(10, 2)).unwrap(),
+                BeadFillAxis::Horizontal,
+                r(2),
+                r(2),
+                8,
+                PredicatePolicy::default(),
+            )
+            .unwrap(),
+            PredicatePolicy::default(),
+        )
+        .unwrap(),
+        r(0),
+        r(3),
+        simple,
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    simple_report
+        .validate_replay(PredicatePolicy::default())
+        .unwrap();
+    assert!(simple_report.mesh().unwrap().facts().mesh.closed_manifold);
 }
 
 #[test]
@@ -3746,6 +3828,30 @@ fn cam_support_clip_program_intersects_retained_support_with_polygon_boundaries(
             .mesh
             .closed_manifold
     );
+
+    let simple = CamSupportClipBoundary::simple(
+        vec![p(2, 2), p(8, 2), p(6, 5), p(8, 8), p(2, 8)],
+        PredicatePolicy::default(),
+    )
+    .expect("nonconvex straight-edge support clip boundary should be retained");
+    let simple_report = build_cam_support_clip_program(
+        build_rectangular_support_plan(
+            RectangularPocket::new(p(3, 3), p(7, 7)).unwrap(),
+            RectangularPocket::new(p(0, 0), p(12, 12)).unwrap(),
+            r(1),
+            PredicatePolicy::default(),
+        )
+        .unwrap(),
+        r(0),
+        r(3),
+        simple,
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    simple_report
+        .validate_replay(PredicatePolicy::default())
+        .unwrap();
+    assert!(simple_report.mesh().unwrap().facts().mesh.closed_manifold);
 }
 
 #[test]
@@ -3774,6 +3880,14 @@ fn cam_support_clip_program_rejects_invalid_boundaries_and_height() {
         build_cam_support_clip_program(support, r(3), r(3), boundary, PredicatePolicy::default())
             .unwrap_err(),
         PathMeshBooleanError::DegenerateHeight
+    );
+    assert_eq!(
+        CamSupportClipBoundary::simple(
+            vec![p(0, 0), p(5, 5), p(0, 4), p(4, 0)],
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        PathMeshBooleanError::PolygonTriangulationFailed
     );
 }
 

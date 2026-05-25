@@ -596,6 +596,38 @@ fuzz_target!(|data: &[u8]| {
                             PredicatePolicy::default(),
                         ) {
                             if let Ok(report) = build_cam_infill_clip_program(
+                                infill_graph.clone(),
+                                Real::from(left_min[2]),
+                                Real::from(left_max[2]),
+                                boundary,
+                                PredicatePolicy::default(),
+                            ) {
+                                report.validate_replay(PredicatePolicy::default()).unwrap();
+                                report
+                                    .program
+                                    .steps
+                                    .last()
+                                    .unwrap()
+                                    .result
+                                    .validate()
+                                    .unwrap();
+                            }
+                        }
+                        let simple_mid = Point2::new(
+                            infill_min.x.clone() + Real::from(3),
+                            infill_min.y.clone() + Real::from(1),
+                        );
+                        if let Ok(boundary) = CamSupportClipBoundary::simple(
+                            vec![
+                                infill_min.clone(),
+                                Point2::new(infill_max.x.clone(), infill_min.y.clone()),
+                                simple_mid,
+                                infill_max.clone(),
+                                Point2::new(infill_min.x.clone(), infill_max.y.clone()),
+                            ],
+                            PredicatePolicy::default(),
+                        ) {
+                            if let Ok(report) = build_cam_infill_clip_program(
                                 infill_graph,
                                 Real::from(left_min[2]),
                                 Real::from(left_max[2]),

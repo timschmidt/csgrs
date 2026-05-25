@@ -19,7 +19,7 @@ use hyperreal::{Real, RealExactSetFacts};
 
 use crate::cam::{PocketPlanError, RectangularPocket};
 use crate::mesh_boolean::{PathMeshBooleanError, PathMeshBooleanOperation, RectangularPrism};
-use crate::mesh_boolean_polygon::{ConvexPolygonPrism, OrthogonalPolygonPrism};
+use crate::mesh_boolean_polygon::{ConvexPolygonPrism, OrthogonalPolygonPrism, SimplePolygonPrism};
 use crate::provenance::PathProvenance;
 use crate::segment::Axis;
 use crate::swept::SweptLineSegment;
@@ -54,6 +54,8 @@ pub enum PathMeshBooleanSource {
     ConvexPolygonPrism(ConvexPolygonPrism),
     /// Simple orthogonal polygonal prism.
     OrthogonalPolygonPrism(OrthogonalPolygonPrism),
+    /// Simple hole-free straight-edge polygonal prism.
+    SimplePolygonPrism(SimplePolygonPrism),
     /// Axis-aligned swept trace/tool slab.
     AxisAlignedSweptSegmentPrism(AxisAlignedSweptSegmentPrism),
 }
@@ -240,6 +242,12 @@ impl From<OrthogonalPolygonPrism> for PathMeshBooleanSource {
     }
 }
 
+impl From<SimplePolygonPrism> for PathMeshBooleanSource {
+    fn from(value: SimplePolygonPrism) -> Self {
+        Self::SimplePolygonPrism(value)
+    }
+}
+
 impl PathMeshBooleanSource {
     /// Derive the exact `hypermesh` operand for this retained source.
     pub fn to_exact_mesh(&self) -> Result<ExactMesh, PathMeshBooleanError> {
@@ -247,6 +255,7 @@ impl PathMeshBooleanSource {
             Self::RectangularPrism(source) => source.to_exact_mesh(),
             Self::ConvexPolygonPrism(source) => source.to_exact_mesh(),
             Self::OrthogonalPolygonPrism(source) => source.to_exact_mesh(),
+            Self::SimplePolygonPrism(source) => source.to_exact_mesh(),
             Self::AxisAlignedSweptSegmentPrism(source) => source.to_exact_mesh(),
         }
     }

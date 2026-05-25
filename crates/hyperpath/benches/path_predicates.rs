@@ -765,6 +765,30 @@ fn path_predicates(c: &mut Criterion) {
             report.validate_replay(PredicatePolicy::default())
         })
     });
+    let simple_infill_clip_boundary = CamSupportClipBoundary::simple(
+        vec![
+            p(0, 0),
+            p(10_000, 0),
+            p(8_000, 1_000),
+            p(10_000, 2_000),
+            p(0, 2_000),
+        ],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    c.bench_function("cam_simple_infill_clip_program_replay", |b| {
+        b.iter(|| {
+            let report = build_cam_infill_clip_program(
+                clip_infill_graph.clone(),
+                r(0),
+                r(500),
+                simple_infill_clip_boundary.clone(),
+                PredicatePolicy::default(),
+            )
+            .unwrap();
+            report.validate_replay(PredicatePolicy::default())
+        })
+    });
     c.bench_function("rectangular_region_intersection", |b| {
         b.iter(|| {
             intersect_rectangular_regions(
