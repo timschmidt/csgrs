@@ -10,14 +10,6 @@
 pub mod arc;
 pub mod bezier;
 pub mod cam;
-pub mod mesh_boolean;
-pub mod mesh_boolean_cam;
-pub mod mesh_boolean_handoff;
-mod mesh_boolean_holes;
-pub mod mesh_boolean_pcb;
-pub mod mesh_boolean_polygon;
-pub mod mesh_boolean_program;
-pub mod mesh_boolean_sources;
 pub mod offset;
 pub mod pcb;
 pub mod provenance;
@@ -51,51 +43,6 @@ pub use cam::{
     build_rectangular_pocket_plan, build_rectangular_serpentine_infill_graph,
     build_rectangular_support_plan, intersect_rectangular_regions, subtract_rectangular_region,
 };
-pub use mesh_boolean::{
-    PathMeshBooleanChainReport, PathMeshBooleanError, PathMeshBooleanOperation,
-    PathMeshBooleanReport, PathMeshBooleanStep, RectangularPrism, boolean_rectangular_prism_chain,
-    boolean_rectangular_prism_chain_with_boundary_policy, boolean_rectangular_prisms,
-    boolean_rectangular_prisms_with_boundary_policy, rectangular_prism_from_i64_bounds,
-};
-pub use mesh_boolean_cam::{
-    CamExactClipBoundaryHandoff, CamExactClipCutoutHandoff, CamExactRestMaterialCutterHandoff,
-    CamExactRestMaterialIslandHandoff, CamExactRestMaterialStockHandoff,
-    CamExactStockRestMaterialProgramReport, CamInfillClipProgramReport,
-    CamOrthogonalIslandPocketCutter, CamRestMaterialCutter, CamRestMaterialProgramReport,
-    CamSupportClipBoundary, CamSupportClipCutout, CamSupportClipProgramReport,
-    build_cam_exact_stock_rest_material_program, build_cam_infill_clip_program,
-    build_cam_rest_material_program, build_cam_support_clip_program,
-    cam_rectangular_pocket_cutter_from_i64_bounds,
-};
-pub use mesh_boolean_handoff::PathExactMeshHandoffSource;
-pub use mesh_boolean_pcb::{
-    PcbBoardClipCutout, PcbCompositeCopperBooleanProgramReport, PcbCompositeCopperBooleanSource,
-    PcbCompositeCopperBooleanStepReport, PcbCompositeCopperMaterialization,
-    PcbCopperBoardClipOutline, PcbCopperBoardClipProgramReport, PcbCopperBoardClipStepReport,
-    PcbCopperBoardClipVoidStepReport, PcbCopperBooleanProgramReport, PcbCopperBooleanSource,
-    PcbExactBoardCutoutHandoff, PcbExactBoardHandoffOutline, PcbExactCopperHandoffSource,
-    PcbExactCopperVoidHandoff, PcbHoledCopperBooleanProgramReport,
-    PcbHoledOrthogonalBoardClipOutline, PcbHoledOrthogonalCopperSource, PcbLayerSlab,
-    PcbLayerZModel, build_pcb_composite_copper_union_program, build_pcb_copper_board_clip_program,
-    build_pcb_copper_union_program, build_pcb_holed_orthogonal_copper_program,
-    pcb_cardinal_rect_pad_mesh_boolean_source, pcb_convex_poly_pad_mesh_boolean_source,
-    pcb_orthogonal_poly_pad_mesh_boolean_source, pcb_rect_pad_mesh_boolean_source,
-    pcb_rect_pad_prism, pcb_trace_mesh_boolean_source,
-};
-pub use mesh_boolean_polygon::{
-    ConvexPolygonPrism, ConvexPolygonWinding, OrthogonalPolygonPrism, SimplePolygonPrism,
-    convex_polygon_prism_from_i64_vertices, orthogonal_polygon_prism_from_i64_vertices,
-    simple_polygon_prism_from_i64_vertices,
-};
-pub use mesh_boolean_program::{
-    PathMeshBooleanProgramReport, PathMeshBooleanProgramStep, PathMeshBooleanProgramStepReport,
-    boolean_path_mesh_program,
-};
-pub use mesh_boolean_sources::{
-    AxisAlignedSweptSegmentPrism, PathMeshBooleanSource, PathMeshBooleanSourceChainReport,
-    PathMeshBooleanSourceStep, boolean_path_mesh_sources,
-    boolean_path_mesh_sources_with_boundary_policy,
-};
 pub use offset::{
     ArcOffsetCandidate, ArcOffsetError, BezierOffsetError, BezierOffsetSampleCandidate,
     ExplicitArcOffsetCandidate, LineOffsetCandidate, LineOffsetError, OffsetSide,
@@ -105,13 +52,13 @@ pub use offset::{
 pub use pcb::{
     BoardContourError, BoardContourOrientation, CardinalRotation, ClearanceStatus,
     DrillBoardClearanceReport, NetId, PadBoardClearanceReport, PcbBoardOutline, PcbCardinalRectPad,
-    PcbCircularPad, PcbConvexBoardOutline, PcbConvexPolyPad, PcbOrthogonalBoardOutline,
-    PcbOrthogonalPolyPad, PcbPadFacts, PcbRectPad, PcbTrace, PcbTraceFacts, PcbViaStack,
-    TraceClearanceReport, TraceLayer, TraceWidthClass, ViaAnnularRingReport, ViaDrillIntent,
-    ViaDrillPolicyClass, ViaDrillPolicyReport, ViaLayerSpanRelation, ViaLayerSpanReport,
-    ViaLayerTransitionClass, ViaLayerTransitionReport, check_cardinal_rect_pad_board_clearance,
-    check_circular_pad_board_clearance, check_rect_pad_board_clearance,
-    check_trace_board_clearance, check_trace_cardinal_rect_pad_clearance, check_trace_clearance,
+    PcbCircularPad, PcbConvexBoardOutline, PcbOrthogonalBoardOutline, PcbPadFacts, PcbRectPad,
+    PcbTrace, PcbTraceFacts, PcbViaStack, TraceClearanceReport, TraceLayer, TraceWidthClass,
+    ViaAnnularRingReport, ViaDrillIntent, ViaDrillPolicyClass, ViaDrillPolicyReport,
+    ViaLayerSpanRelation, ViaLayerSpanReport, ViaLayerTransitionClass, ViaLayerTransitionReport,
+    check_cardinal_rect_pad_board_clearance, check_circular_pad_board_clearance,
+    check_rect_pad_board_clearance, check_trace_board_clearance,
+    check_trace_cardinal_rect_pad_clearance, check_trace_clearance,
     check_trace_convex_board_clearance, check_trace_orthogonal_board_clearance,
     check_trace_pad_clearance, check_trace_rect_pad_clearance, check_trace_via_clearance,
     check_trace_via_drill_clearance, check_via_drill_board_clearance,

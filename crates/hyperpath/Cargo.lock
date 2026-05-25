@@ -336,22 +336,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "hypermesh"
-version = "0.3.0"
-dependencies = [
- "hyperlattice",
- "hyperlimit",
- "hyperreal",
- "hypertri",
-]
-
-[[package]]
 name = "hyperpath"
 version = "0.3.0"
 dependencies = [
  "criterion",
  "hyperlimit",
- "hypermesh",
  "hyperreal",
  "hypersolve",
  "proptest",
@@ -372,14 +361,6 @@ name = "hypersolve"
 version = "0.3.0"
 dependencies = [
  "hyperlattice",
- "hyperlimit",
- "hyperreal",
-]
-
-[[package]]
-name = "hypertri"
-version = "0.3.0"
-dependencies = [
  "hyperlimit",
  "hyperreal",
 ]
