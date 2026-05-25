@@ -89,3 +89,10 @@ path = "fuzz_targets/routing_feed.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "cam_pocket_link"
+path = "fuzz_targets/cam_pocket_link.rs"
+test = false
+doc = false
+bench = false

@@ -16,9 +16,9 @@ use hyperpath::{
     arrange_rational_quadratic_beziers, build_alternating_detour_meander, build_g1_join_problem,
     build_length_match_problem, build_multi_detour_meander, build_nonuniform_detour_meander,
     build_obstacle_aware_detour_meander, build_oriented_tangent_alignment_problem,
-    build_rectangular_bead_plan, build_rectangular_pocket_plan,
-    build_rectangular_serpentine_infill_graph, build_rectangular_support_plan,
-    build_single_detour_meander, build_tangent_alignment_problem,
+    build_rectangular_bead_plan, build_rectangular_pocket_link_graph,
+    build_rectangular_pocket_plan, build_rectangular_serpentine_infill_graph,
+    build_rectangular_support_plan, build_single_detour_meander, build_tangent_alignment_problem,
     certify_acceleration_limited_feed_time, certify_constant_feed_time,
     certify_differential_pair_skew, certify_g1_chain, certify_g1_join_candidate,
     certify_length_extension, certify_tangent_alignment_candidate,
@@ -994,6 +994,19 @@ fn path_predicates(c: &mut Criterion) {
                 128,
                 PredicatePolicy::default(),
             )
+        })
+    });
+    let pocket_plan = build_rectangular_pocket_plan(
+        pocket.clone(),
+        r(125),
+        r(250),
+        24,
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    c.bench_function("rectangular_pocket_link_graph", |b| {
+        b.iter(|| {
+            build_rectangular_pocket_link_graph(pocket_plan.clone(), PredicatePolicy::default())
         })
     });
     c.bench_function("rectangular_additive_bead_schedule", |b| {

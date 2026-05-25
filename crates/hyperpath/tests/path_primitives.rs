@@ -14,22 +14,22 @@ use hyperpath::{
     PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad, PcbCircularBoardOutline, PcbCircularPad,
     PcbConvexBoardOutline, PcbConvexPad, PcbObroundPad, PcbOrientedRectPad,
     PcbOrthogonalBoardOutline, PcbRectPad, PcbRoundedRectPad, PcbTrace, PcbViaStack,
-    PocketPlanError, PocketPlanStopReason, QuadraticBezier, RationalQuadraticBezier,
-    RationalQuadraticBezierError, RectangularPocket, RectangularRegionRelation,
-    RouteCertificationError, SegmentParameterOrder, SourceLengthUnit, SpecctraGridTraceRecord,
-    SpecctraGridViaRecord, SpecctraImportError, SpecctraLayerAlias, SpecctraNetAlias,
-    SpecctraParseError, SupportFootprintStatus, SupportPlanError, SweptLineSegment,
-    TangentAlignment, TangentJoinClass, TangentJoinReport, TangentSpan, TraceLayer,
-    ViaAnnularRingReport, ViaDrillIntent, ViaDrillPolicyClass, ViaLayerSpanRelation,
+    PocketLinkGraphError, PocketPlanError, PocketPlanStopReason, PocketRingSide, QuadraticBezier,
+    RationalQuadraticBezier, RationalQuadraticBezierError, RectangularPocket,
+    RectangularRegionRelation, RouteCertificationError, SegmentParameterOrder, SourceLengthUnit,
+    SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraImportError, SpecctraLayerAlias,
+    SpecctraNetAlias, SpecctraParseError, SupportFootprintStatus, SupportPlanError,
+    SweptLineSegment, TangentAlignment, TangentJoinClass, TangentJoinReport, TangentSpan,
+    TraceLayer, ViaAnnularRingReport, ViaDrillIntent, ViaDrillPolicyClass, ViaLayerSpanRelation,
     ViaLayerTransitionClass, arrange_cubic_beziers, arrange_explicit_arcs, arrange_line_segments,
     arrange_line_segments_with_explicit_arcs, arrange_line_segments_with_quadratic_beziers,
     arrange_line_segments_with_rational_quadratic_beziers, arrange_quadratic_beziers,
     arrange_rational_quadratic_beziers, build_alternating_detour_meander, build_g1_join_problem,
     build_length_match_problem, build_multi_detour_meander, build_nonuniform_detour_meander,
     build_obstacle_aware_detour_meander, build_oriented_tangent_alignment_problem,
-    build_rectangular_bead_plan, build_rectangular_pocket_plan,
-    build_rectangular_serpentine_infill_graph, build_rectangular_support_plan,
-    build_single_detour_meander, build_tangent_alignment_problem,
+    build_rectangular_bead_plan, build_rectangular_pocket_link_graph,
+    build_rectangular_pocket_plan, build_rectangular_serpentine_infill_graph,
+    build_rectangular_support_plan, build_single_detour_meander, build_tangent_alignment_problem,
     certify_acceleration_limited_feed_time, certify_constant_feed_time,
     certify_differential_pair_skew, certify_g1_chain, certify_g1_join_candidate,
     certify_length_extension, certify_tangent_alignment_candidate,
@@ -3322,6 +3322,100 @@ fn rectangular_pocket_plan_rejects_invalid_inputs_and_respects_ring_limit() {
 }
 
 #[test]
+fn rectangular_pocket_link_graph_emits_retained_ring_segments_and_doglegs() {
+    let pocket = RectangularPocket::new(p(0, 0), p(10, 10)).unwrap();
+    let plan =
+        build_rectangular_pocket_plan(pocket, r(1), r(2), 2, PredicatePolicy::default()).unwrap();
+    let graph =
+        build_rectangular_pocket_link_graph(plan.clone(), PredicatePolicy::default()).unwrap();
+
+    assert_eq!(graph.plan, plan);
+    assert_eq!(graph.ring_segments.len(), 8);
+    assert_eq!(graph.links.len(), 2);
+    assert_eq!(graph.ring_segments[0].ring_index, 0);
+    assert_eq!(graph.ring_segments[0].side, PocketRingSide::MinY);
+    assert_eq!(graph.ring_segments[0].segment.start(), &p(1, 1));
+    assert_eq!(graph.ring_segments[0].segment.end(), &p(9, 1));
+    assert_eq!(graph.ring_segments[1].side, PocketRingSide::MaxX);
+    assert_eq!(graph.ring_segments[1].segment.start(), &p(9, 1));
+    assert_eq!(graph.ring_segments[1].segment.end(), &p(9, 9));
+    assert_eq!(graph.ring_segments[2].side, PocketRingSide::MaxY);
+    assert_eq!(graph.ring_segments[2].segment.start(), &p(9, 9));
+    assert_eq!(graph.ring_segments[2].segment.end(), &p(1, 9));
+    assert_eq!(graph.ring_segments[3].side, PocketRingSide::MinX);
+    assert_eq!(graph.ring_segments[3].segment.start(), &p(1, 9));
+    assert_eq!(graph.ring_segments[3].segment.end(), &p(1, 1));
+
+    assert_eq!(graph.links[0].from_ring, 0);
+    assert_eq!(graph.links[0].to_ring, 1);
+    assert_eq!(graph.links[0].leg_index, 0);
+    assert_eq!(graph.links[0].segment.start(), &p(1, 1));
+    assert_eq!(graph.links[0].segment.end(), &p(3, 1));
+    assert_eq!(graph.links[1].leg_index, 1);
+    assert_eq!(graph.links[1].segment.start(), &p(3, 1));
+    assert_eq!(graph.links[1].segment.end(), &p(3, 3));
+}
+
+#[test]
+fn rectangular_pocket_link_graph_rejects_empty_and_collapsed_ring_plans() {
+    let empty = build_rectangular_pocket_plan(
+        RectangularPocket::new(p(0, 0), p(2, 2)).unwrap(),
+        r(2),
+        r(1),
+        4,
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert!(empty.rings.is_empty());
+    assert_eq!(
+        build_rectangular_pocket_link_graph(empty, PredicatePolicy::default()).unwrap_err(),
+        PocketLinkGraphError::EmptyPlan
+    );
+
+    let collapsed = build_rectangular_pocket_plan(
+        RectangularPocket::new(p(0, 0), p(10, 10)).unwrap(),
+        r(5),
+        r(1),
+        1,
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert_eq!(collapsed.rings[0].min, collapsed.rings[0].max);
+    assert_eq!(
+        build_rectangular_pocket_link_graph(collapsed, PredicatePolicy::default()).unwrap_err(),
+        PocketLinkGraphError::DegenerateRing
+    );
+
+    let mut bad_index = build_rectangular_pocket_plan(
+        RectangularPocket::new(p(0, 0), p(10, 10)).unwrap(),
+        r(1),
+        r(2),
+        2,
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    bad_index.rings[1].index = 4;
+    assert_eq!(
+        build_rectangular_pocket_link_graph(bad_index, PredicatePolicy::default()).unwrap_err(),
+        PocketLinkGraphError::InvalidRingIndex
+    );
+
+    let mut non_nested = build_rectangular_pocket_plan(
+        RectangularPocket::new(p(0, 0), p(10, 10)).unwrap(),
+        r(1),
+        r(2),
+        2,
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    non_nested.rings[1].min = p(0, 3);
+    assert_eq!(
+        build_rectangular_pocket_link_graph(non_nested, PredicatePolicy::default()).unwrap_err(),
+        PocketLinkGraphError::NonNestedRings
+    );
+}
+
+#[test]
 fn rectangular_bead_plan_schedules_exact_centerlines() {
     let region = RectangularPocket::new(p(0, 0), p(10, 6)).unwrap();
     let plan = build_rectangular_bead_plan(
@@ -5281,6 +5375,53 @@ proptest! {
             prop_assert_eq!(ring.min.y.clone(), ring.inset.clone());
             prop_assert_eq!(ring.max.x.clone(), r(size) - ring.inset.clone());
             prop_assert_eq!(ring.max.y.clone(), r(size) - ring.inset.clone());
+        }
+    }
+
+    #[test]
+    fn rectangular_pocket_link_graph_generated_square_links_preserve_ring_chain(
+        size in 8_i16..=100,
+        stepover in 1_i16..=10,
+        max_rings in 2_usize..=16,
+    ) {
+        let size = i64::from(size);
+        let stepover = i64::from(stepover);
+        let pocket = RectangularPocket::new(p(0, 0), p(size, size)).unwrap();
+        let plan = build_rectangular_pocket_plan(
+            pocket,
+            r(1),
+            r(stepover),
+            max_rings,
+            PredicatePolicy::default(),
+        ).unwrap();
+        let positive_rings = plan.rings.iter().take_while(|ring| {
+            ring.min.x != ring.max.x && ring.min.y != ring.max.y
+        }).count();
+
+        if positive_rings == 0 || positive_rings != plan.rings.len() {
+            prop_assert!(build_rectangular_pocket_link_graph(plan, PredicatePolicy::default()).is_err());
+            return Ok(());
+        }
+
+        let graph = build_rectangular_pocket_link_graph(plan, PredicatePolicy::default()).unwrap();
+        prop_assert_eq!(graph.ring_segments.len(), graph.plan.rings.len() * 4);
+        prop_assert_eq!(
+            graph.links.len(),
+            graph.plan.rings.len().saturating_sub(1) * 2
+        );
+        for (ring, sides) in graph.plan.rings.iter().zip(graph.ring_segments.chunks(4)) {
+            prop_assert_eq!(sides[0].segment.start(), &ring.min);
+            prop_assert_eq!(
+                sides[3].segment.end(),
+                &ring.min
+            );
+        }
+        for (index, pair) in graph.plan.rings.windows(2).enumerate() {
+            let first = &graph.links[index * 2];
+            let second = &graph.links[index * 2 + 1];
+            prop_assert_eq!(first.segment.start(), &pair[0].min);
+            prop_assert_eq!(first.segment.end(), second.segment.start());
+            prop_assert_eq!(second.segment.end(), &pair[1].min);
         }
     }
 

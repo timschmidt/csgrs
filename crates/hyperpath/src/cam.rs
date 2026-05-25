@@ -16,6 +16,13 @@ use hyperreal::{Real, RealExactSetFacts, RealSign};
 
 use crate::provenance::PathProvenance;
 
+mod pocket_link;
+
+pub use pocket_link::{
+    PocketLinkGraphError, PocketLinkSegment, PocketRingSegment, PocketRingSide,
+    RectangularPocketLinkGraph, build_rectangular_pocket_link_graph,
+};
+
 /// Exact axis-aligned rectangular pocket boundary.
 #[derive(Clone, Debug, PartialEq)]
 pub struct RectangularPocket {
