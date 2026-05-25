@@ -26433,10 +26433,85 @@ fn exact_coplanar_component_holed_union_retains_same_outer_common_holes() {
     )
     .expect("overlapping-hole source fixture should materialize")
     .mesh;
-    assert!(
+    let overlapping_union =
         hypermesh::exact::arrange_coplanar_surface_component_holed_union(&left, &overlapping)
-            .is_none(),
-        "partial retained-hole overlap requires a real planar subdivision"
+            .expect("rectangular retained-hole overlap should retain the exact common rectangle");
+    overlapping_union.validate().unwrap();
+    overlapping_union
+        .validate_union_against_sources(&left, &overlapping)
+        .unwrap();
+    assert_eq!(overlapping_union.components.len(), 1);
+    assert_eq!(overlapping_union.components[0].holes.len(), 1);
+    assert!(
+        overlapping_union.components[0].holes[0]
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(3)))
+    );
+    assert!(
+        overlapping_union.components[0].holes[0]
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(4)))
+    );
+    let overlapping_reverse =
+        hypermesh::exact::arrange_coplanar_surface_component_holed_union(&overlapping, &left)
+            .expect("rectangular retained-hole overlap should be symmetric");
+    overlapping_reverse.validate().unwrap();
+    overlapping_reverse
+        .validate_union_against_sources(&overlapping, &left)
+        .unwrap();
+    let overlapping_preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &overlapping,
+        hypermesh::exact::ExactBooleanOperation::Union,
+    )
+    .expect("rectangular retained-hole overlap preflight should classify shortcut");
+    overlapping_preflight.validate().unwrap();
+    overlapping_preflight
+        .validate_against_sources(&left, &overlapping)
+        .unwrap();
+    assert_eq!(
+        overlapping_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
+    );
+    hypermesh::exact::boolean_exact(
+        &left,
+        &overlapping,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("rectangular retained-hole overlap union should materialize")
+    .validate_operation_against_sources(
+        &left,
+        &overlapping,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+
+    let nonrectangular_overlap_holes = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            3, 2, 0, 5, 2, 0, 5, 4, 0, //
+            6, 1, 0, 8, 1, 0, 8, 3, 0, 6, 3, 0,
+        ],
+        &[0, 1, 2, 3, 4, 5, 3, 5, 6],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let nonrectangular_overlap =
+        hypermesh::exact::arrange_coplanar_convex_surface_multi_holed_difference(
+            &outer,
+            &nonrectangular_overlap_holes,
+        )
+        .expect("nonrectangular overlap source fixture should materialize")
+        .mesh;
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_component_holed_union(
+            &left,
+            &nonrectangular_overlap
+        )
+        .is_none(),
+        "nonrectangular retained-hole overlap remains outside the bounded union certificate"
     );
 
     let touching_holes = ExactMesh::from_i64_triangles_with_policy(

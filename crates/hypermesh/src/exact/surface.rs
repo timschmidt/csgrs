@@ -4490,11 +4490,12 @@ fn same_outer_holed_filled_union_polygons(
 /// `(outer - left_holes) union (outer - right_holes)` is
 /// `outer - (left_holes intersect right_holes)`. This certificate handles the
 /// named-ring cases where that hole intersection is either an identical
-/// retained hole or the smaller of two strictly nested retained holes. Holes
+/// retained hole, the smaller of two strictly nested retained holes, or the
+/// exact projected-rectangle intersection of two retained source holes. Holes
 /// that are strictly disjoint are filled by the opposite operand. Touching,
-/// crossing, and partial-overlap hole relations reject to the general planar
-/// arrangement layer because their output boundary is not a retained source
-/// ring.
+/// crossing, nonrectangular partial-overlap, and higher-order hole relations
+/// reject to the general planar arrangement layer because their output
+/// boundary is not a bounded retained-cell certificate.
 ///
 /// This follows Yap, "Towards Exact Geometric Computation," *Computational
 /// Geometry* 7.1-2 (1997): the topology is expressed in source-owned objects
@@ -4629,26 +4630,29 @@ fn same_outer_retained_union_holes(
     for left_hole in &left.holes {
         for right_hole in &right.holes {
             let retained = if polygons_equal(left_hole, right_hole) {
-                Some(left_hole)
+                Some(left_hole.clone())
             } else if polygon_strictly_inside_simple_polygon(left_hole, right_hole, projection)? {
-                Some(left_hole)
+                Some(left_hole.clone())
             } else if polygon_strictly_inside_simple_polygon(right_hole, left_hole, projection)? {
-                Some(right_hole)
+                Some(right_hole.clone())
             } else {
                 match simple_polygon_interaction(left_hole, right_hole, projection)? {
                     SimplePolygonInteraction::Disjoint => None,
-                    SimplePolygonInteraction::PointOnly | SimplePolygonInteraction::Connected => {
-                        return None;
+                    SimplePolygonInteraction::PointOnly => return None,
+                    SimplePolygonInteraction::Connected => {
+                        Some(projected_rectangular_hole_intersection_polygon(
+                            left_hole, right_hole, projection,
+                        )?)
                     }
                 }
             };
             let Some(retained) = retained else {
                 continue;
             };
-            if holes.iter().any(|hole| polygons_equal(hole, retained)) {
+            if holes.iter().any(|hole| polygons_equal(hole, &retained)) {
                 continue;
             }
-            let mut retained = retained.clone();
+            let mut retained = retained;
             orient_polygon_cw(&mut retained, projection)?;
             holes.push(retained);
         }
@@ -4660,6 +4664,47 @@ fn same_outer_retained_union_holes(
     )
     .ok()?;
     Some(holes)
+}
+
+/// Return the retained removed region common to two rectangular source holes.
+///
+/// Same-outer union computes `outer - (left_holes intersect right_holes)`.
+/// Equal and nested intersections are retained source rings directly; this
+/// helper covers the bounded cell-arrangement case where the overlap of two
+/// source-owned holes is itself an exact projected axis-aligned rectangle. The
+/// construction follows Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997): the candidate topology is emitted
+/// only from exact source objects and exact interval comparisons, then the
+/// caller replays global area equality before accepting the Boolean. The
+/// rectangle-cell view is the standard orthogonal arrangement model described
+/// by de Berg, Cheong, van Kreveld, and Overmars, *Computational Geometry:
+/// Algorithms and Applications*, 3rd ed. (2008), Chapter 2.
+#[cfg(feature = "exact-triangulation")]
+fn projected_rectangular_hole_intersection_polygon(
+    left: &[Point3],
+    right: &[Point3],
+    projection: CoplanarProjection,
+) -> Option<Vec<Point3>> {
+    let left_rect = projected_axis_aligned_rectangle(left, projection)?;
+    let right_rect = projected_axis_aligned_rectangle(right, projection)?;
+    if !real_equal(&left_rect.dropped, &right_rect.dropped) {
+        return None;
+    }
+    let min_x = exact_max_real(&left_rect.min.x, &right_rect.min.x)?;
+    let max_x = exact_min_real(&left_rect.max.x, &right_rect.max.x)?;
+    let min_y = exact_max_real(&left_rect.min.y, &right_rect.min.y)?;
+    let max_y = exact_min_real(&left_rect.max.y, &right_rect.max.y)?;
+    if real_order(&min_x, &max_x)? != Ordering::Less
+        || real_order(&min_y, &max_y)? != Ordering::Less
+    {
+        return None;
+    }
+    Some(vec![
+        point_from_projection(&min_x, &min_y, &left_rect.dropped, projection),
+        point_from_projection(&max_x, &min_y, &left_rect.dropped, projection),
+        point_from_projection(&max_x, &max_y, &left_rect.dropped, projection),
+        point_from_projection(&min_x, &max_y, &left_rect.dropped, projection),
+    ])
 }
 
 #[cfg(feature = "exact-triangulation")]

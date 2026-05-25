@@ -2983,7 +2983,39 @@ fn exercise_same_outer_holed_coplanar_retained_union() {
         arrange_coplanar_convex_surface_multi_holed_difference(&outer, &overlapping_holes)
             .expect("same-outer overlapping source should materialize")
             .mesh;
-    assert!(arrange_coplanar_surface_component_holed_union(&left, &overlapping).is_none());
+    let overlapping_union = arrange_coplanar_surface_component_holed_union(&left, &overlapping)
+        .expect("same-outer rectangular retained-hole overlap should materialize");
+    overlapping_union.validate().unwrap();
+    overlapping_union
+        .validate_union_against_sources(&left, &overlapping)
+        .unwrap();
+    assert_eq!(overlapping_union.components.len(), 1);
+    assert_eq!(overlapping_union.components[0].holes.len(), 1);
+    let overlapping_reverse = arrange_coplanar_surface_component_holed_union(&overlapping, &left)
+        .expect("same-outer rectangular retained-hole overlap should be symmetric");
+    overlapping_reverse.validate().unwrap();
+    overlapping_reverse
+        .validate_union_against_sources(&overlapping, &left)
+        .unwrap();
+
+    let nonrectangular_overlap_holes = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            3, 2, 0, 5, 2, 0, 5, 4, 0, //
+            6, 1, 0, 8, 1, 0, 8, 3, 0, 6, 3, 0,
+        ],
+        &[0, 1, 2, 3, 4, 5, 3, 5, 6],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("same-outer nonrectangular retained-union fixture must import");
+    let nonrectangular_overlap = arrange_coplanar_convex_surface_multi_holed_difference(
+        &outer,
+        &nonrectangular_overlap_holes,
+    )
+    .expect("same-outer nonrectangular source should materialize")
+    .mesh;
+    assert!(
+        arrange_coplanar_surface_component_holed_union(&left, &nonrectangular_overlap).is_none()
+    );
 
     let touching_holes = ExactMesh::from_i64_triangles_with_policy(
         &[
@@ -3017,6 +3049,33 @@ fn exercise_same_outer_holed_coplanar_retained_union() {
     .validate_operation_against_sources(
         &left,
         &right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+
+    let overlapping_preflight =
+        preflight_boolean_exact(&left, &overlapping, ExactBooleanOperation::Union)
+            .expect("same-outer rectangular retained-union preflight should classify shortcut");
+    overlapping_preflight.validate().unwrap();
+    overlapping_preflight
+        .validate_against_sources(&left, &overlapping)
+        .unwrap();
+    assert_eq!(
+        overlapping_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
+    );
+    hypermesh::exact::boolean_exact(
+        &left,
+        &overlapping,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("same-outer rectangular retained union should materialize")
+    .validate_operation_against_sources(
+        &left,
+        &overlapping,
         ExactBooleanOperation::Union,
         ValidationPolicy::ALLOW_BOUNDARY,
         ExactBoundaryBooleanPolicy::Reject,
