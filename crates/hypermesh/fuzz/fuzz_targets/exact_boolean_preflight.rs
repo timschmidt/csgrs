@@ -4329,6 +4329,86 @@ fn exercise_side_cutter_opening_without_holes() {
         ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference
     );
 
+    let grouped_straddling_branch_left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 30, 0, 0, 30, 30, 0, 0, 30, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("grouped point-branch straddling-hole source fixture must import");
+    let grouped_straddling_branch_right = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            11, 11, 0, 13, 11, 0, 13, 13, 0, 11, 13, 0, //
+            -2, 8, 0, 12, 8, 0, 12, 12, 0, -2, 12, 0, //
+            12, 12, 0, 32, 12, 0, 32, 16, 0, 14, 16, 0, //
+            12, 16, 0, 14, 16, 0, 14, 32, 0, 12, 32, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7, //
+            8, 9, 10, 8, 10, 11, //
+            12, 13, 14, 12, 14, 15,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("grouped point-branch straddling-hole cutter fixture must import");
+    assert!(arrange_coplanar_surface_multi_difference(
+        &grouped_straddling_branch_left,
+        &grouped_straddling_branch_right,
+    )
+    .is_none());
+    assert!(
+        arrange_coplanar_convex_surface_component_holed_difference(
+            &grouped_straddling_branch_left,
+            &grouped_straddling_branch_right,
+        )
+        .is_none()
+    );
+    let grouped_straddling_branch = arrange_coplanar_surface_point_touch_difference(
+        &grouped_straddling_branch_left,
+        &grouped_straddling_branch_right,
+    )
+    .expect("point-touch replay should consume a grouped straddling hole");
+    grouped_straddling_branch.validate().unwrap();
+    grouped_straddling_branch
+        .validate_difference_against_sources(
+            &grouped_straddling_branch_left,
+            &grouped_straddling_branch_right,
+        )
+        .unwrap();
+    let grouped_straddling_preflight = preflight_boolean_exact(
+        &grouped_straddling_branch_left,
+        &grouped_straddling_branch_right,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("grouped straddling-hole preflight should classify point-touch shortcut");
+    grouped_straddling_preflight.validate().unwrap();
+    grouped_straddling_preflight
+        .validate_against_sources(
+            &grouped_straddling_branch_left,
+            &grouped_straddling_branch_right,
+        )
+        .unwrap();
+    assert_eq!(
+        grouped_straddling_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference
+    );
+    let grouped_straddling_result = hypermesh::exact::boolean_exact(
+        &grouped_straddling_branch_left,
+        &grouped_straddling_branch_right,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("grouped straddling-hole boolean should materialize");
+    grouped_straddling_result
+        .validate_operation_against_sources(
+            &grouped_straddling_branch_left,
+            &grouped_straddling_branch_right,
+            ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+
     let point_branch_straddling_retained = ExactMesh::from_i64_triangles_with_policy(
         &[
             2, 1, 0, 4, 1, 0, 4, 3, 0, 2, 3, 0, //
