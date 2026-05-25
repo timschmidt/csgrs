@@ -2,17 +2,19 @@
 
 use hyperlimit::{Point2, PredicatePolicy};
 use hyperpath::{
-    AxisAlignedSweptSegmentPrism, CamOrthogonalIslandPocketCutter, CamRestMaterialCutter,
-    CamSupportClipBoundary, CardinalRotation, LinePathSegment, NetId, PathMeshBooleanOperation,
-    PathMeshBooleanProgramStep, PcbCardinalRectPad, PcbCompositeCopperBooleanSource, PcbCopperBoardClipOutline,
-    PcbConvexPolyPad, PcbCopperBooleanSource, PcbHoledOrthogonalCopperSource, PcbLayerZModel,
-    PcbOrthogonalBoardOutline, PcbOrthogonalPolyPad, PcbRectPad, PcbTrace, SweptLineSegment, TraceLayer,
-    boolean_path_mesh_program, boolean_path_mesh_sources,
+    AxisAlignedSweptSegmentPrism, BeadFillAxis, CamOrthogonalIslandPocketCutter,
+    CamRestMaterialCutter, CamSupportClipBoundary, CardinalRotation, LinePathSegment, NetId,
+    PathMeshBooleanOperation, PathMeshBooleanProgramStep, PcbCardinalRectPad,
+    PcbCompositeCopperBooleanSource, PcbConvexPolyPad, PcbCopperBoardClipOutline,
+    PcbCopperBooleanSource, PcbHoledOrthogonalCopperSource, PcbLayerZModel,
+    PcbOrthogonalBoardOutline, PcbOrthogonalPolyPad, PcbRectPad, PcbTrace, SweptLineSegment,
+    TraceLayer, boolean_path_mesh_program, boolean_path_mesh_sources,
     boolean_rectangular_prism_chain, boolean_rectangular_prisms,
-    boolean_rectangular_prisms_with_boundary_policy, build_cam_rest_material_program,
-    build_cam_support_clip_program,
+    boolean_rectangular_prisms_with_boundary_policy, build_cam_infill_clip_program,
+    build_cam_rest_material_program, build_cam_support_clip_program,
     build_pcb_composite_copper_union_program, build_pcb_copper_board_clip_program,
     build_pcb_copper_union_program, build_pcb_holed_orthogonal_copper_program,
+    build_rectangular_bead_plan, build_rectangular_serpentine_infill_graph,
     pcb_cardinal_rect_pad_mesh_boolean_source, pcb_trace_mesh_boolean_source,
     rectangular_prism_from_i64_bounds,
 };
@@ -48,7 +50,8 @@ fuzz_target!(|data: &[u8]| {
         hypermesh::exact::ExactBoundaryBooleanPolicy::PreserveSeparateShells
     };
 
-    let Ok(left) = rectangular_prism_from_i64_bounds(left_min, left_max, PredicatePolicy::default())
+    let Ok(left) =
+        rectangular_prism_from_i64_bounds(left_min, left_max, PredicatePolicy::default())
     else {
         return;
     };
@@ -199,7 +202,11 @@ fuzz_target!(|data: &[u8]| {
             .unwrap();
             if let (Ok(trace_source), Ok(pad_source)) = (
                 pcb_trace_mesh_boolean_source(&trace, &z_model, PredicatePolicy::default()),
-                pcb_cardinal_rect_pad_mesh_boolean_source(&pad, &z_model, PredicatePolicy::default()),
+                pcb_cardinal_rect_pad_mesh_boolean_source(
+                    &pad,
+                    &z_model,
+                    PredicatePolicy::default(),
+                ),
             ) {
                 if let Ok(program) = boolean_path_mesh_program(
                     trace_source,
@@ -217,9 +224,15 @@ fuzz_target!(|data: &[u8]| {
         if data[14] & 64 == 64 {
             let first_start = Point2::new(Real::from(coord(0)), Real::from(coord(1)));
             let first_end = if data[14] & 4 == 4 {
-                Point2::new(first_start.x.clone() + Real::from(extent(17)), first_start.y.clone())
+                Point2::new(
+                    first_start.x.clone() + Real::from(extent(17)),
+                    first_start.y.clone(),
+                )
             } else {
-                Point2::new(first_start.x.clone(), first_start.y.clone() + Real::from(extent(17)))
+                Point2::new(
+                    first_start.x.clone(),
+                    first_start.y.clone() + Real::from(extent(17)),
+                )
             };
             let second_start = Point2::new(Real::from(coord(8)), Real::from(coord(9)));
             let second_end = if data[14] & 4 == 4 {
@@ -268,7 +281,14 @@ fuzz_target!(|data: &[u8]| {
                     PredicatePolicy::default(),
                 ) {
                     report.validate_replay(PredicatePolicy::default()).unwrap();
-                    report.program.steps.last().unwrap().result.validate().unwrap();
+                    report
+                        .program
+                        .steps
+                        .last()
+                        .unwrap()
+                        .result
+                        .validate()
+                        .unwrap();
                 }
             }
         }
@@ -299,7 +319,14 @@ fuzz_target!(|data: &[u8]| {
                         PredicatePolicy::default(),
                     ) {
                         report.validate_replay(PredicatePolicy::default()).unwrap();
-                        report.program.steps.last().unwrap().result.validate().unwrap();
+                        report
+                            .program
+                            .steps
+                            .last()
+                            .unwrap()
+                            .result
+                            .validate()
+                            .unwrap();
                     }
                 }
             }
@@ -320,8 +347,7 @@ fuzz_target!(|data: &[u8]| {
                 Point2::new(min_x.clone() + notch_w, min_y.clone() + h.clone()),
                 Point2::new(min_x, min_y.clone() + h),
             ];
-            if let Ok(poly) =
-                PcbOrthogonalPolyPad::new(NetId(u32::from(data[16])), layer, vertices)
+            if let Ok(poly) = PcbOrthogonalPolyPad::new(NetId(u32::from(data[16])), layer, vertices)
             {
                 let start = Point2::new(Real::from(coord(0)), Real::from(coord(1)));
                 let end = Point2::new(start.x.clone() + Real::from(extent(17)), start.y.clone());
@@ -338,7 +364,14 @@ fuzz_target!(|data: &[u8]| {
                         PredicatePolicy::default(),
                     ) {
                         report.validate_replay(PredicatePolicy::default()).unwrap();
-                        report.program.steps.last().unwrap().result.validate().unwrap();
+                        report
+                            .program
+                            .steps
+                            .last()
+                            .unwrap()
+                            .result
+                            .validate()
+                            .unwrap();
                     }
                 }
             }
@@ -376,10 +409,21 @@ fuzz_target!(|data: &[u8]| {
                     PredicatePolicy::default(),
                 ) {
                     report.validate_replay(PredicatePolicy::default()).unwrap();
-                    report.program.steps.last().unwrap().result.validate().unwrap();
+                    report
+                        .program
+                        .steps
+                        .last()
+                        .unwrap()
+                        .result
+                        .validate()
+                        .unwrap();
                 }
-                let trace_start = Point2::new(min_x.clone() + Real::from(extent(11)), min_y.clone());
-                let trace_end = Point2::new(trace_start.x.clone() + Real::from(extent(17)), trace_start.y);
+                let trace_start =
+                    Point2::new(min_x.clone() + Real::from(extent(11)), min_y.clone());
+                let trace_end = Point2::new(
+                    trace_start.x.clone() + Real::from(extent(17)),
+                    trace_start.y.clone(),
+                );
                 if let Ok(swept) = SweptLineSegment::new(
                     LinePathSegment::new(trace_start, trace_end),
                     Real::from(extent(5)),
@@ -399,10 +443,8 @@ fuzz_target!(|data: &[u8]| {
                         report.steps.last().unwrap().result.validate().unwrap();
                     }
                     let clip_min = Point2::new(min_x.clone(), min_y.clone());
-                    let clip_max = Point2::new(
-                        min_x.clone() + Real::from(2),
-                        min_y.clone() + Real::from(2),
-                    );
+                    let clip_max =
+                        Point2::new(min_x.clone() + Real::from(2), min_y.clone() + Real::from(2));
                     if let Ok(board) = PcbOrthogonalBoardOutline::new(vec![
                         clip_min.clone(),
                         Point2::new(clip_max.x.clone(), clip_min.y.clone()),
@@ -466,13 +508,24 @@ fuzz_target!(|data: &[u8]| {
                     PredicatePolicy::default(),
                 ) {
                     report.validate_replay(PredicatePolicy::default()).unwrap();
-                    report.program.steps.last().unwrap().result.validate().unwrap();
+                    report
+                        .program
+                        .steps
+                        .last()
+                        .unwrap()
+                        .result
+                        .validate()
+                        .unwrap();
                 }
             }
-            let support_overhang_min =
-                Point2::new(Real::from(left_min[0]) + Real::from(1), Real::from(left_min[1]) + Real::from(1));
-            let support_overhang_max =
-                Point2::new(support_overhang_min.x.clone() + Real::from(2), support_overhang_min.y.clone() + Real::from(2));
+            let support_overhang_min = Point2::new(
+                Real::from(left_min[0]) + Real::from(1),
+                Real::from(left_min[1]) + Real::from(1),
+            );
+            let support_overhang_max = Point2::new(
+                support_overhang_min.x.clone() + Real::from(2),
+                support_overhang_min.y.clone() + Real::from(2),
+            );
             if let Ok(overhang) =
                 hyperpath::RectangularPocket::new(support_overhang_min, support_overhang_max)
             {
@@ -501,7 +554,64 @@ fuzz_target!(|data: &[u8]| {
                             PredicatePolicy::default(),
                         ) {
                             report.validate_replay(PredicatePolicy::default()).unwrap();
-                            report.program.steps.last().unwrap().result.validate().unwrap();
+                            report
+                                .program
+                                .steps
+                                .last()
+                                .unwrap()
+                                .result
+                                .validate()
+                                .unwrap();
+                        }
+                    }
+                }
+            }
+            let infill_min = Point2::new(Real::from(left_min[0]), Real::from(left_min[1]));
+            let infill_max = Point2::new(
+                infill_min.x.clone() + Real::from(4),
+                infill_min.y.clone() + Real::from(2),
+            );
+            if let Ok(infill_region) =
+                hyperpath::RectangularPocket::new(infill_min.clone(), infill_max.clone())
+            {
+                if let Ok(infill_plan) = build_rectangular_bead_plan(
+                    infill_region,
+                    BeadFillAxis::Horizontal,
+                    Real::from(2),
+                    Real::from(2),
+                    8,
+                    PredicatePolicy::default(),
+                ) {
+                    if let Ok(infill_graph) = build_rectangular_serpentine_infill_graph(
+                        infill_plan,
+                        PredicatePolicy::default(),
+                    ) {
+                        if let Ok(boundary) = CamSupportClipBoundary::orthogonal(
+                            vec![
+                                infill_min.clone(),
+                                Point2::new(infill_max.x.clone(), infill_min.y.clone()),
+                                infill_max.clone(),
+                                Point2::new(infill_min.x.clone(), infill_max.y.clone()),
+                            ],
+                            PredicatePolicy::default(),
+                        ) {
+                            if let Ok(report) = build_cam_infill_clip_program(
+                                infill_graph,
+                                Real::from(left_min[2]),
+                                Real::from(left_max[2]),
+                                boundary,
+                                PredicatePolicy::default(),
+                            ) {
+                                report.validate_replay(PredicatePolicy::default()).unwrap();
+                                report
+                                    .program
+                                    .steps
+                                    .last()
+                                    .unwrap()
+                                    .result
+                                    .validate()
+                                    .unwrap();
+                            }
                         }
                     }
                 }
@@ -527,8 +637,14 @@ fuzz_target!(|data: &[u8]| {
                 ],
                 vec![vec![
                     island_min.clone(),
-                    Point2::new(island_min.x.clone() + island_w.clone(), island_min.y.clone()),
-                    Point2::new(island_min.x.clone() + island_w, island_min.y.clone() + island_h.clone()),
+                    Point2::new(
+                        island_min.x.clone() + island_w.clone(),
+                        island_min.y.clone(),
+                    ),
+                    Point2::new(
+                        island_min.x.clone() + island_w,
+                        island_min.y.clone() + island_h.clone(),
+                    ),
                     Point2::new(island_min.x, island_min.y + island_h),
                 ]],
                 PredicatePolicy::default(),
@@ -541,7 +657,14 @@ fuzz_target!(|data: &[u8]| {
                     PredicatePolicy::default(),
                 ) {
                     report.validate_replay(PredicatePolicy::default()).unwrap();
-                    report.program.steps.last().unwrap().result.validate().unwrap();
+                    report
+                        .program
+                        .steps
+                        .last()
+                        .unwrap()
+                        .result
+                        .validate()
+                        .unwrap();
                 }
             }
         }

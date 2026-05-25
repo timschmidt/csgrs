@@ -16,25 +16,25 @@ use hyperpath::{
     PcbCopperBoardClipOutline, PcbCopperBooleanSource, PcbHoledOrthogonalCopperSource,
     PcbLayerZModel, PcbOrthogonalBoardOutline, PcbOrthogonalPolyPad, PcbRectPad, PcbTrace,
     PcbViaStack, PocketPlanError, PocketPlanStopReason, QuadraticBezier, RationalQuadraticBezier,
-    RationalQuadraticBezierError, RectangularPocket, RectangularRegionRelation,
-    RouteCertificationError, SegmentParameterOrder, SourceLengthUnit, SpecctraGridTraceRecord,
-    SpecctraGridViaRecord, SpecctraImportError, SpecctraLayerAlias, SpecctraNetAlias,
-    SpecctraParseError, SupportFootprintStatus, SupportPlanError, SweptLineSegment,
-    TangentAlignment, TangentJoinClass, TangentJoinReport, TangentSpan, TraceLayer,
-    ViaAnnularRingReport, ViaDrillIntent, ViaDrillPolicyClass, ViaLayerSpanRelation,
+    RationalQuadraticBezierError, RectangularInfillGraph, RectangularPocket,
+    RectangularRegionRelation, RouteCertificationError, SegmentParameterOrder, SourceLengthUnit,
+    SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraImportError, SpecctraLayerAlias,
+    SpecctraNetAlias, SpecctraParseError, SupportFootprintStatus, SupportPlanError,
+    SweptLineSegment, TangentAlignment, TangentJoinClass, TangentJoinReport, TangentSpan,
+    TraceLayer, ViaAnnularRingReport, ViaDrillIntent, ViaDrillPolicyClass, ViaLayerSpanRelation,
     ViaLayerTransitionClass, boolean_path_mesh_program, boolean_path_mesh_sources,
     boolean_rectangular_prism_chain, boolean_rectangular_prisms,
     boolean_rectangular_prisms_with_boundary_policy, build_alternating_detour_meander,
-    build_cam_rest_material_program, build_cam_support_clip_program, build_g1_join_problem,
-    build_length_match_problem, build_multi_detour_meander, build_nonuniform_detour_meander,
-    build_obstacle_aware_detour_meander, build_oriented_tangent_alignment_problem,
-    build_pcb_composite_copper_union_program, build_pcb_copper_board_clip_program,
-    build_pcb_copper_union_program, build_pcb_holed_orthogonal_copper_program,
-    build_rectangular_bead_plan, build_rectangular_pocket_plan,
-    build_rectangular_serpentine_infill_graph, build_rectangular_support_plan,
-    build_single_detour_meander, build_tangent_alignment_problem, certify_constant_feed_time,
-    certify_differential_pair_skew, certify_g1_chain, certify_g1_join_candidate,
-    certify_length_extension, certify_tangent_alignment_candidate,
+    build_cam_infill_clip_program, build_cam_rest_material_program, build_cam_support_clip_program,
+    build_g1_join_problem, build_length_match_problem, build_multi_detour_meander,
+    build_nonuniform_detour_meander, build_obstacle_aware_detour_meander,
+    build_oriented_tangent_alignment_problem, build_pcb_composite_copper_union_program,
+    build_pcb_copper_board_clip_program, build_pcb_copper_union_program,
+    build_pcb_holed_orthogonal_copper_program, build_rectangular_bead_plan,
+    build_rectangular_pocket_plan, build_rectangular_serpentine_infill_graph,
+    build_rectangular_support_plan, build_single_detour_meander, build_tangent_alignment_problem,
+    certify_constant_feed_time, certify_differential_pair_skew, certify_g1_chain,
+    certify_g1_join_candidate, certify_length_extension, certify_tangent_alignment_candidate,
     check_cardinal_rect_pad_board_clearance, check_circular_pad_board_clearance,
     check_rect_pad_board_clearance, check_trace_board_clearance,
     check_trace_cardinal_rect_pad_clearance, check_trace_clearance,
@@ -3478,6 +3478,156 @@ fn rectangular_serpentine_infill_graph_rejects_empty_bead_plans() {
     assert_eq!(
         build_rectangular_serpentine_infill_graph(plan, PredicatePolicy::default()).unwrap_err(),
         InfillGraphError::EmptyBeadPlan
+    );
+}
+
+#[test]
+fn cam_infill_clip_program_unions_retained_beads_and_clips_boundary() {
+    let plan = build_rectangular_bead_plan(
+        RectangularPocket::new(p(0, 0), p(10, 2)).unwrap(),
+        BeadFillAxis::Horizontal,
+        r(2),
+        r(2),
+        8,
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    let graph = build_rectangular_serpentine_infill_graph(plan.clone(), PredicatePolicy::default())
+        .unwrap();
+    assert_eq!(graph.deposition_segments.len(), 1);
+    let boundary = CamSupportClipBoundary::convex(
+        vec![p(0, 0), p(10, 0), p(10, 2), p(0, 2)],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+
+    let report = build_cam_infill_clip_program(
+        graph.clone(),
+        r(0),
+        r(3),
+        boundary,
+        PredicatePolicy::default(),
+    )
+    .expect("retained infill graph should clip through exact mesh booleans");
+    report.validate_replay(PredicatePolicy::default()).unwrap();
+    assert_eq!(report.graph, graph);
+    assert_eq!(report.program.steps.len(), 1);
+    assert_eq!(
+        report.program.steps[0].operation,
+        PathMeshBooleanOperation::Intersection
+    );
+    assert!(report.mesh().unwrap().facts().mesh.closed_manifold);
+    assert!(report.program.steps[0].result.validate().is_ok());
+
+    let mut stale = report.clone();
+    stale.z_max = r(4);
+    assert!(matches!(
+        stale.validate_replay(PredicatePolicy::default()),
+        Err(PathMeshBooleanError::Replay(_))
+    ));
+
+    let orthogonal = CamSupportClipBoundary::orthogonal(
+        vec![p(0, 0), p(10, 0), p(10, 2), p(0, 2)],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    let orthogonal_report = build_cam_infill_clip_program(
+        build_rectangular_serpentine_infill_graph(plan, PredicatePolicy::default()).unwrap(),
+        r(0),
+        r(3),
+        orthogonal,
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    orthogonal_report
+        .validate_replay(PredicatePolicy::default())
+        .unwrap();
+    assert!(
+        orthogonal_report
+            .mesh()
+            .unwrap()
+            .facts()
+            .mesh
+            .closed_manifold
+    );
+}
+
+#[test]
+fn cam_infill_clip_program_rejects_empty_bad_z_and_non_axis_edges() {
+    let empty_plan = build_rectangular_bead_plan(
+        RectangularPocket::new(p(0, 0), p(10, 1)).unwrap(),
+        BeadFillAxis::Horizontal,
+        r(2),
+        r(2),
+        8,
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    let empty_graph = RectangularInfillGraph {
+        plan: empty_plan,
+        deposition_segments: vec![],
+        links: vec![],
+    };
+    let boundary = CamSupportClipBoundary::orthogonal(
+        vec![p(0, 0), p(10, 0), p(10, 2), p(0, 2)],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert_eq!(
+        build_cam_infill_clip_program(
+            empty_graph,
+            r(0),
+            r(3),
+            boundary.clone(),
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        PathMeshBooleanError::NotEnoughSources
+    );
+
+    let plan = build_rectangular_bead_plan(
+        RectangularPocket::new(p(0, 0), p(10, 2)).unwrap(),
+        BeadFillAxis::Horizontal,
+        r(2),
+        r(2),
+        8,
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    let diagonal_graph = RectangularInfillGraph {
+        plan,
+        deposition_segments: vec![LinePathSegment::new(p(0, 0), p(10, 2))],
+        links: vec![],
+    };
+    assert_eq!(
+        build_cam_infill_clip_program(
+            diagonal_graph,
+            r(0),
+            r(3),
+            boundary.clone(),
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        PathMeshBooleanError::NonAxisAlignedSweep
+    );
+
+    let graph = build_rectangular_serpentine_infill_graph(
+        build_rectangular_bead_plan(
+            RectangularPocket::new(p(0, 0), p(10, 2)).unwrap(),
+            BeadFillAxis::Horizontal,
+            r(2),
+            r(2),
+            8,
+            PredicatePolicy::default(),
+        )
+        .unwrap(),
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert_eq!(
+        build_cam_infill_clip_program(graph, r(3), r(3), boundary, PredicatePolicy::default())
+            .unwrap_err(),
+        PathMeshBooleanError::DegenerateHeight
     );
 }
 

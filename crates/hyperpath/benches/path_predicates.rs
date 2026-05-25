@@ -14,9 +14,9 @@ use hyperpath::{
     SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraLayerAlias, SpecctraNetAlias,
     SweptLineSegment, TangentSpan, TraceLayer, ViaDrillIntent, boolean_path_mesh_program,
     boolean_path_mesh_sources, boolean_rectangular_prism_chain, boolean_rectangular_prisms,
-    build_alternating_detour_meander, build_cam_rest_material_program,
-    build_cam_support_clip_program, build_g1_join_problem, build_length_match_problem,
-    build_multi_detour_meander, build_nonuniform_detour_meander,
+    build_alternating_detour_meander, build_cam_infill_clip_program,
+    build_cam_rest_material_program, build_cam_support_clip_program, build_g1_join_problem,
+    build_length_match_problem, build_multi_detour_meander, build_nonuniform_detour_meander,
     build_obstacle_aware_detour_meander, build_oriented_tangent_alignment_problem,
     build_pcb_composite_copper_union_program, build_pcb_copper_board_clip_program,
     build_pcb_copper_union_program, build_pcb_holed_orthogonal_copper_program,
@@ -729,6 +729,36 @@ fn path_predicates(c: &mut Criterion) {
                 r(0),
                 r(500),
                 support_clip_boundary.clone(),
+                PredicatePolicy::default(),
+            )
+            .unwrap();
+            report.validate_replay(PredicatePolicy::default())
+        })
+    });
+    let clip_infill_plan = build_rectangular_bead_plan(
+        RectangularPocket::new(p(0, 0), p(10_000, 2_000)).unwrap(),
+        BeadFillAxis::Horizontal,
+        r(2_000),
+        r(2_000),
+        8,
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    let clip_infill_graph =
+        build_rectangular_serpentine_infill_graph(clip_infill_plan, PredicatePolicy::default())
+            .unwrap();
+    let infill_clip_boundary = CamSupportClipBoundary::orthogonal(
+        vec![p(0, 0), p(10_000, 0), p(10_000, 2_000), p(0, 2_000)],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    c.bench_function("cam_infill_clip_program_replay", |b| {
+        b.iter(|| {
+            let report = build_cam_infill_clip_program(
+                clip_infill_graph.clone(),
+                r(0),
+                r(500),
+                infill_clip_boundary.clone(),
                 PredicatePolicy::default(),
             )
             .unwrap();

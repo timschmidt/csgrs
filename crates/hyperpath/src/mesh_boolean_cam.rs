@@ -20,7 +20,9 @@ use std::cmp::Ordering;
 use hyperlimit::{Point2, PredicatePolicy, compare_reals_with_policy};
 use hyperreal::{Real, RealExactSetFacts};
 
-use crate::cam::{PocketPlanError, RectangularPocket, RectangularSupportPlan};
+use crate::cam::{
+    PocketPlanError, RectangularInfillGraph, RectangularPocket, RectangularSupportPlan,
+};
 use crate::mesh_boolean::{PathMeshBooleanError, PathMeshBooleanOperation, RectangularPrism};
 use crate::mesh_boolean_holes::validate_strict_orthogonal_holes;
 use crate::mesh_boolean_polygon::{ConvexPolygonPrism, OrthogonalPolygonPrism};
@@ -139,6 +141,32 @@ pub struct CamSupportClipProgramReport {
     /// Retained clipping boundary.
     pub boundary: CamSupportClipBoundary,
     /// Accepted exact support/boundary intersection program.
+    pub program: PathMeshBooleanProgramReport,
+}
+
+/// Exact additive infill clipping program.
+///
+/// The retained serpentine graph supplies deposition bead centerlines and
+/// connector centerlines. Each centerline is swept by the exact bead width,
+/// unioned in graph order, and then intersected with a retained straight-edge
+/// boundary. This mirrors Zhao et al., "Continuous toolpath planning in a
+/// graphical framework for sparse infill additive manufacturing," at the graph
+/// generation layer, while applying Yap's exact-geometric-computation rule:
+/// graph topology may propose material paths, but accepted swept topology must
+/// replay through exact source objects and `hypermesh` evidence.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CamInfillClipProgramReport {
+    /// Retained infill graph.
+    pub graph: RectangularInfillGraph,
+    /// Exact lower infill slab face.
+    pub z_min: Real,
+    /// Exact upper infill slab face.
+    pub z_max: Real,
+    /// Retained clipping boundary.
+    pub boundary: CamSupportClipBoundary,
+    /// Exact-set facts for retained graph, boundary, bead width, and Z inputs.
+    pub exact: RealExactSetFacts,
+    /// Accepted exact infill union and boundary-intersection program.
     pub program: PathMeshBooleanProgramReport,
 }
 
@@ -404,6 +432,30 @@ impl CamSupportClipProgramReport {
     }
 }
 
+impl CamInfillClipProgramReport {
+    /// Rebuild infill sweep lowering, boundary lowering, and exact boolean evidence.
+    pub fn validate_replay(&self, policy: PredicatePolicy) -> Result<(), PathMeshBooleanError> {
+        let replayed = build_cam_infill_clip_program(
+            self.graph.clone(),
+            self.z_min.clone(),
+            self.z_max.clone(),
+            self.boundary.clone(),
+            policy,
+        )?;
+        if replayed.program != self.program || replayed.exact != self.exact {
+            return Err(PathMeshBooleanError::Replay(
+                "retained CAM infill clip program no longer matches replay".into(),
+            ));
+        }
+        self.program.validate_replay()
+    }
+
+    /// Return the final accepted exact clipped infill mesh.
+    pub fn mesh(&self) -> Option<&hypermesh::exact::ExactMesh> {
+        self.program.mesh()
+    }
+}
+
 /// Build an exact rest-material difference program for rectangular stock.
 ///
 /// Simple cutters are subtracted from the current accumulator in the provided
@@ -502,6 +554,48 @@ pub fn build_cam_support_clip_program(
     })
 }
 
+/// Build an exact additive infill clipping program.
+///
+/// Deposition centerlines are swept first; connector centerlines are swept
+/// after them, preserving the retained graph order. The union accumulator is
+/// then clipped by the retained boundary. Non-axis-aligned graph edges are
+/// rejected by [`AxisAlignedSweptSegmentPrism`], so the function does not
+/// smuggle approximate normals or curve offsets through the mesh handoff.
+pub fn build_cam_infill_clip_program(
+    graph: RectangularInfillGraph,
+    z_min: Real,
+    z_max: Real,
+    boundary: CamSupportClipBoundary,
+    policy: PredicatePolicy,
+) -> Result<CamInfillClipProgramReport, PathMeshBooleanError> {
+    if compare_reals_with_policy(&z_min, &z_max, policy).value() != Some(Ordering::Less) {
+        return Err(PathMeshBooleanError::DegenerateHeight);
+    }
+    let mut sources = infill_graph_path_sources(&graph, z_min.clone(), z_max.clone(), policy)?;
+    if sources.is_empty() {
+        return Err(PathMeshBooleanError::NotEnoughSources);
+    }
+    let initial = sources.remove(0);
+    let mut steps = sources
+        .into_iter()
+        .map(|source| PathMeshBooleanProgramStep::new(PathMeshBooleanOperation::Union, source))
+        .collect::<Vec<_>>();
+    steps.push(PathMeshBooleanProgramStep::new(
+        PathMeshBooleanOperation::Intersection,
+        boundary.to_path_source(z_min.clone(), z_max.clone(), policy)?,
+    ));
+    let exact = infill_clip_exact_facts(&graph, &boundary, &z_min, &z_max);
+    let program = boolean_path_mesh_program(initial, steps)?;
+    Ok(CamInfillClipProgramReport {
+        graph,
+        z_min,
+        z_max,
+        boundary,
+        exact,
+        program,
+    })
+}
+
 /// Convenience constructor for a rectangular pocket cutter from integer bounds.
 pub fn cam_rectangular_pocket_cutter_from_i64_bounds(
     min: [i64; 2],
@@ -587,6 +681,46 @@ fn orthogonal_loop_path_source(
     Ok(OrthogonalPolygonPrism::new(vertices.to_vec(), z_min, z_max, provenance, policy)?.into())
 }
 
+fn infill_graph_path_sources(
+    graph: &RectangularInfillGraph,
+    z_min: Real,
+    z_max: Real,
+    policy: PredicatePolicy,
+) -> Result<Vec<PathMeshBooleanSource>, PathMeshBooleanError> {
+    let mut sources = Vec::with_capacity(graph.deposition_segments.len() + graph.links.len());
+    for segment in &graph.deposition_segments {
+        sources.push(infill_segment_path_source(
+            segment,
+            graph.plan.bead_width.clone(),
+            z_min.clone(),
+            z_max.clone(),
+            policy,
+        )?);
+    }
+    for link in &graph.links {
+        sources.push(infill_segment_path_source(
+            &link.connector,
+            graph.plan.bead_width.clone(),
+            z_min.clone(),
+            z_max.clone(),
+            policy,
+        )?);
+    }
+    Ok(sources)
+}
+
+fn infill_segment_path_source(
+    segment: &crate::segment::LinePathSegment,
+    bead_width: Real,
+    z_min: Real,
+    z_max: Real,
+    policy: PredicatePolicy,
+) -> Result<PathMeshBooleanSource, PathMeshBooleanError> {
+    let swept = SweptLineSegment::new(segment.clone(), bead_width)
+        .map_err(|_| PathMeshBooleanError::NonPositiveSweepWidth)?;
+    Ok(AxisAlignedSweptSegmentPrism::new(swept, z_min, z_max, policy)?.into())
+}
+
 fn island_pocket_exact_facts(outer: &[Point2], islands: &[Vec<Point2>]) -> RealExactSetFacts {
     let mut values = outer
         .iter()
@@ -600,4 +734,36 @@ fn island_pocket_exact_facts(outer: &[Point2], islands: &[Vec<Point2>]) -> RealE
 
 fn loop_exact_facts(vertices: &[Point2]) -> RealExactSetFacts {
     Real::exact_set_facts(vertices.iter().flat_map(|point| [&point.x, &point.y]))
+}
+
+fn infill_clip_exact_facts(
+    graph: &RectangularInfillGraph,
+    boundary: &CamSupportClipBoundary,
+    z_min: &Real,
+    z_max: &Real,
+) -> RealExactSetFacts {
+    let mut values = vec![&graph.plan.bead_width, z_min, z_max];
+    for segment in &graph.deposition_segments {
+        values.extend([
+            &segment.start().x,
+            &segment.start().y,
+            &segment.end().x,
+            &segment.end().y,
+        ]);
+    }
+    for link in &graph.links {
+        values.extend([
+            &link.connector.start().x,
+            &link.connector.start().y,
+            &link.connector.end().x,
+            &link.connector.end().y,
+        ]);
+    }
+    values.extend(
+        boundary
+            .vertices()
+            .iter()
+            .flat_map(|point| [&point.x, &point.y]),
+    );
+    Real::exact_set_facts(values)
 }
