@@ -34,6 +34,7 @@ use hypervoxel::{
     trace_address_ray, voxelize_exact_box, voxelize_exact_convex_halfspace_set,
     voxelize_exact_halfspace, voxelize_exact_triangle_solid_mesh,
     voxelize_exact_triangle_surface_mesh, voxelize_prepared_exact_triangle_solid_mesh,
+    voxelize_prepared_exact_triangle_solid_mesh_by_axis_sweeps,
     voxelize_prepared_exact_triangle_solid_mesh_by_components,
     voxelize_prepared_exact_triangle_solid_mesh_by_verified_components,
 };
@@ -316,6 +317,20 @@ fn bench_exact_box_voxelization(c: &mut Criterion) {
         |b| {
             b.iter(|| {
                 voxelize_prepared_exact_triangle_solid_mesh_by_components(
+                    frame.clone(),
+                    &prepared_triangle_solid,
+                    MaterialRegionId(10),
+                    VoxelizationPolicy::conservative_cover(),
+                )
+                .unwrap()
+            })
+        },
+    );
+    c.bench_function(
+        "axis_sweep_prepared_exact_triangle_solid_mesh_voxelization",
+        |b| {
+            b.iter(|| {
+                voxelize_prepared_exact_triangle_solid_mesh_by_axis_sweeps(
                     frame.clone(),
                     &prepared_triangle_solid,
                     MaterialRegionId(10),

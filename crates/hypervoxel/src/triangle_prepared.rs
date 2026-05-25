@@ -10,10 +10,12 @@
 
 use std::collections::VecDeque;
 
+use core::cmp::Ordering;
 use hyperlimit::{
     Aabb3Intersection, RayTriangleIntersection, classify_aabb3_intersection,
     classify_ray_triangle3_intersection_report,
 };
+
 use hyperreal::Real;
 
 use crate::ray_schedule::{RayAabbIntersection, classify_ray_aabb_intersection};
@@ -469,6 +471,165 @@ pub fn voxelize_prepared_exact_triangle_solid_mesh_by_verified_components(
     )
 }
 
+/// Voxelize a prepared exact closed triangle solid by exact row-parity sweeps.
+///
+/// This is an arrangement/winding accelerator beyond the connected-cell
+/// scheduler. It still performs the exact triangle/cell boundary pass for
+/// every cell. For cells proven disjoint from the retained boundary, it then
+/// classifies each `(y,z)` row by one exact `+X` ray/triangle sweep and reuses
+/// the sorted exact intersection parameters for all open cell centers on that
+/// row. If a row ray hits an edge/vertex/coplanar case, the row is not trusted:
+/// every open cell on that row falls back to the existing multi-direction
+/// per-cell parity classifier, and the fallback work is reported.
+///
+/// The row sweep is the same parity/winding idea used by point-in-polyhedron
+/// tests, but lifted to a report-bearing arrangement pass. Its sorting and
+/// unique-parameter replay follow Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7(1-2), 1997: the accelerated row decision is exact
+/// only when the combinatorial crossing sequence is certified. The sweep-line
+/// batching is in the spirit of Bentley and Ottmann, "Algorithms for Reporting
+/// and Counting Geometric Intersections," *IEEE Transactions on Computers*
+/// C-28(9), 1979, but all acceptance still comes from exact ray/triangle
+/// predicates.
+pub fn voxelize_prepared_exact_triangle_solid_mesh_by_axis_sweeps(
+    frame: GridFrame,
+    prepared: &PreparedExactTriangleSolidMesh,
+    material: MaterialRegionId,
+    policy: VoxelizationPolicy,
+) -> HypervoxelResult<(
+    SparseVoxelGrid,
+    VoxelizationReport,
+    PreparedTriangleSolidAxisSweepVoxelizationReport,
+)> {
+    if !prepared.report.exact_prepared_solid_ready {
+        return Err(HypervoxelError::InvalidSourceGeometry {
+            reason: "prepared triangle solid mesh is not exact-ready",
+        });
+    }
+
+    let cells_per_axis = frame.cells_per_axis();
+    let total_cells =
+        usize::try_from(cells_per_axis.pow(3)).map_err(|_| HypervoxelError::AddressOverflow)?;
+    let mut classifiers = vec![VoxelTriangleSolidClassifier::Unknown; total_cells];
+    let mut open = vec![false; total_cells];
+    let mut sweep_report = PreparedTriangleSolidAxisSweepVoxelizationReport {
+        classified_cells: total_cells,
+        ..PreparedTriangleSolidAxisSweepVoxelizationReport::default()
+    };
+
+    for z in 0..cells_per_axis {
+        for y in 0..cells_per_axis {
+            for x in 0..cells_per_axis {
+                let address = VoxelAddress::new(frame.depth(), [x, y, z])?;
+                let bounds = address.bounds(&frame)?;
+                let boundary =
+                    classify_cell_boundary_against_prepared_triangle_solid(&bounds, prepared)?;
+                let index = cell_index(cells_per_axis, [x, y, z])?;
+                sweep_report.boundary_aabb_rejections += boundary.boundary_aabb_rejections;
+                sweep_report.boundary_triangle_tests += boundary.boundary_triangle_tests;
+                match boundary.classifier {
+                    VoxelTriangleSolidClassifier::Boundary => {
+                        classifiers[index] = VoxelTriangleSolidClassifier::Boundary;
+                        sweep_report.boundary_cells += 1;
+                    }
+                    VoxelTriangleSolidClassifier::Unknown => {
+                        classifiers[index] = VoxelTriangleSolidClassifier::Unknown;
+                        sweep_report.boundary_unknown_cells += 1;
+                    }
+                    VoxelTriangleSolidClassifier::Outside => {
+                        open[index] = true;
+                        sweep_report.open_cells += 1;
+                    }
+                    VoxelTriangleSolidClassifier::Inside => unreachable!(
+                        "boundary-only prepared classification never emits inside cells"
+                    ),
+                }
+            }
+        }
+    }
+
+    for z in 0..cells_per_axis {
+        for y in 0..cells_per_axis {
+            let mut open_x = Vec::new();
+            for x in 0..cells_per_axis {
+                if open[cell_index(cells_per_axis, [x, y, z])?] {
+                    open_x.push(x);
+                }
+            }
+            if open_x.is_empty() {
+                sweep_report.empty_sweep_rows += 1;
+                continue;
+            }
+            sweep_report.sweep_rows += 1;
+
+            let row_origin = VoxelAddress::new(frame.depth(), [0, y, z])?
+                .bounds(&frame)?
+                .center();
+            let row = classify_axis_row_against_prepared_triangle_solid(
+                &row_origin,
+                prepared,
+                &mut sweep_report,
+            )?;
+
+            match row {
+                AxisRowParity::Certified { parameters } => {
+                    sweep_report.certified_sweep_rows += 1;
+                    for x in open_x {
+                        let address = VoxelAddress::new(frame.depth(), [x, y, z])?;
+                        let center = address.bounds(&frame)?.center();
+                        let threshold = &center[0] - &row_origin[0];
+                        let Some(classifier) = classify_axis_sweep_center(&parameters, &threshold)?
+                        else {
+                            sweep_report.row_parameter_order_unknowns += 1;
+                            classify_axis_sweep_fallback_cell(
+                                [x, y, z],
+                                &frame,
+                                prepared,
+                                &mut classifiers,
+                                cells_per_axis,
+                                &mut sweep_report,
+                            )?;
+                            continue;
+                        };
+                        let index = cell_index(cells_per_axis, [x, y, z])?;
+                        classifiers[index] = classifier;
+                        sweep_report.sweep_classified_cells += 1;
+                    }
+                }
+                AxisRowParity::Ambiguous => {
+                    sweep_report.ambiguous_sweep_rows += 1;
+                    for x in open_x {
+                        classify_axis_sweep_fallback_cell(
+                            [x, y, z],
+                            &frame,
+                            prepared,
+                            &mut classifiers,
+                            cells_per_axis,
+                            &mut sweep_report,
+                        )?;
+                    }
+                }
+            }
+        }
+    }
+
+    let exact_axis_sweep_ready = sweep_report.boundary_unknown_cells == 0
+        && sweep_report.fallback_unknown_cells == 0
+        && sweep_report.fallback_boundary_regression_cells == 0
+        && sweep_report.row_parameter_order_unknowns == 0
+        && sweep_report.classified_cells > 0;
+    sweep_report.exact_axis_sweep_ready = exact_axis_sweep_ready;
+
+    let (grid, report) = materialize_prepared_classifiers(
+        frame,
+        prepared.solid.surface.source.clone(),
+        policy,
+        material,
+        &classifiers,
+    )?;
+    Ok((grid, report, sweep_report))
+}
+
 fn voxelize_prepared_exact_triangle_solid_mesh_by_components_impl(
     frame: GridFrame,
     prepared: &PreparedExactTriangleSolidMesh,
@@ -635,14 +796,14 @@ fn voxelize_prepared_exact_triangle_solid_mesh_by_components_impl(
         }
     }
 
-    materialize_component_classifiers(
+    let (grid, report) = materialize_prepared_classifiers(
         frame,
         prepared.solid.surface.source.clone(),
         policy,
         material,
         &classifiers,
-        component_report,
-    )
+    )?;
+    Ok((grid, report, component_report))
 }
 
 /// Aggregate prepared-schedule evidence over a voxelization pass.
@@ -727,6 +888,67 @@ pub struct PreparedTriangleSolidComponentVoxelizationReport {
     pub ambiguous_arrangement_ray_attempts: usize,
 }
 
+/// Aggregate exact row-sweep evidence over a prepared triangle-solid pass.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct PreparedTriangleSolidAxisSweepVoxelizationReport {
+    /// Number of cells classified.
+    pub classified_cells: usize,
+    /// Number of cells proven to intersect the retained triangle boundary.
+    pub boundary_cells: usize,
+    /// Number of cells whose boundary relation was undecided.
+    pub boundary_unknown_cells: usize,
+    /// Number of cells proven disjoint from the retained triangle boundary.
+    pub open_cells: usize,
+    /// Total exact AABB broad-phase rejections in the boundary pass.
+    pub boundary_aabb_rejections: usize,
+    /// Total exact triangle/cell narrow-phase tests in the boundary pass.
+    pub boundary_triangle_tests: usize,
+    /// Number of `(y,z)` rows containing at least one open cell.
+    pub sweep_rows: usize,
+    /// Number of rows with no open cells.
+    pub empty_sweep_rows: usize,
+    /// Rows classified by a certified exact `+X` crossing sequence.
+    pub certified_sweep_rows: usize,
+    /// Rows rejected from sweep reuse because of edge/vertex/coplanar
+    /// ambiguity.
+    pub ambiguous_sweep_rows: usize,
+    /// Open cells classified directly by certified row-sweep parity.
+    pub sweep_classified_cells: usize,
+    /// Open cells classified by the per-cell fallback path.
+    pub fallback_cells: usize,
+    /// Fallback cells that remained unknown.
+    pub fallback_unknown_cells: usize,
+    /// Fallback cells that unexpectedly reclassified as boundary after the
+    /// boundary pass marked them open.
+    pub fallback_boundary_regression_cells: usize,
+    /// Exact ray/AABB broad-phase rejections consumed by row sweeps.
+    pub row_ray_aabb_rejections: usize,
+    /// Exact ray/triangle predicates consumed by row sweeps.
+    pub row_ray_triangle_tests: usize,
+    /// Proper row-ray/triangle intersections before unique-parameter collapse.
+    pub row_proper_intersections: usize,
+    /// Sum of unique exact crossing parameters retained by certified rows.
+    pub row_unique_parameters: usize,
+    /// Boundary-touch events that made row sweeps ambiguous.
+    pub row_boundary_touches: usize,
+    /// Coplanar events that made row sweeps ambiguous.
+    pub row_coplanar_events: usize,
+    /// Certified row parameters that could not be ordered against a cell
+    /// center threshold.
+    pub row_parameter_order_unknowns: usize,
+    /// Exact ray-parity attempts consumed by fallback cells.
+    pub fallback_ray_attempts: usize,
+    /// Exact ray/AABB broad-phase rejections consumed by fallback cells.
+    pub fallback_ray_aabb_rejections: usize,
+    /// Exact ray/triangle predicates consumed by fallback cells.
+    pub fallback_ray_triangle_tests: usize,
+    /// Ambiguous ray attempts seen during fallback classification.
+    pub ambiguous_fallback_ray_attempts: usize,
+    /// Whether the row-sweep pass produced exact arrangement evidence for all
+    /// cells.
+    pub exact_axis_sweep_ready: bool,
+}
+
 impl PreparedTriangleSolidVoxelizationReport {
     fn accumulate(&mut self, cell: &PreparedTriangleSolidCellReport) {
         self.classified_cells += 1;
@@ -791,18 +1013,133 @@ fn verify_component_arrangement_classification(
     Ok(exact_arrangement_ready)
 }
 
-fn materialize_component_classifiers(
+enum AxisRowParity {
+    Certified { parameters: Vec<Real> },
+    Ambiguous,
+}
+
+fn classify_axis_row_against_prepared_triangle_solid(
+    row_origin: &[Real; 3],
+    prepared: &PreparedExactTriangleSolidMesh,
+    sweep_report: &mut PreparedTriangleSolidAxisSweepVoxelizationReport,
+) -> HypervoxelResult<AxisRowParity> {
+    let origin = point3(row_origin);
+    let direction = hyperlimit::Point3::new(Real::from(1), Real::from(0), Real::from(0));
+    let direction_components = point_components(&direction);
+    let mut parameters = Vec::<Real>::new();
+
+    for triangle in &prepared.triangles {
+        match classify_ray_aabb_intersection(row_origin, &direction_components, &triangle.bounds)? {
+            RayAabbIntersection::Disjoint => {
+                sweep_report.row_ray_aabb_rejections += 1;
+                continue;
+            }
+            RayAabbIntersection::Intersects => {}
+        }
+
+        sweep_report.row_ray_triangle_tests += 1;
+        let report = classify_ray_triangle3_intersection_report(
+            &origin,
+            &direction,
+            &triangle.points[0],
+            &triangle.points[1],
+            &triangle.points[2],
+        )
+        .value()
+        .ok_or(HypervoxelError::UnknownScalarOrdering {
+            field: "axis-sweep-triangle-solid-ray",
+        })?;
+        match report.relation {
+            RayTriangleIntersection::Disjoint => {}
+            RayTriangleIntersection::Proper => {
+                let Some(parameter) = report.parameter else {
+                    return Ok(AxisRowParity::Ambiguous);
+                };
+                sweep_report.row_proper_intersections += 1;
+                insert_unique_parameter(&mut parameters, parameter)?;
+            }
+            RayTriangleIntersection::BoundaryTouch => {
+                sweep_report.row_boundary_touches += 1;
+                return Ok(AxisRowParity::Ambiguous);
+            }
+            RayTriangleIntersection::Coplanar => {
+                sweep_report.row_coplanar_events += 1;
+                return Ok(AxisRowParity::Ambiguous);
+            }
+        }
+    }
+
+    sweep_report.row_unique_parameters += parameters.len();
+    Ok(AxisRowParity::Certified { parameters })
+}
+
+fn classify_axis_sweep_center(
+    parameters: &[Real],
+    threshold: &Real,
+) -> HypervoxelResult<Option<VoxelTriangleSolidClassifier>> {
+    let mut crossings_after_center = 0_usize;
+    for parameter in parameters {
+        match hyperlimit::compare_reals(parameter, threshold).value() {
+            Some(Ordering::Greater) => crossings_after_center += 1,
+            Some(Ordering::Less) => {}
+            Some(Ordering::Equal) => return Ok(None),
+            None => {
+                return Err(HypervoxelError::UnknownScalarOrdering {
+                    field: "axis-sweep-parameter-order",
+                });
+            }
+        }
+    }
+    Ok(Some(if crossings_after_center % 2 == 0 {
+        VoxelTriangleSolidClassifier::Outside
+    } else {
+        VoxelTriangleSolidClassifier::Inside
+    }))
+}
+
+fn classify_axis_sweep_fallback_cell(
+    coords: [u64; 3],
+    frame: &GridFrame,
+    prepared: &PreparedExactTriangleSolidMesh,
+    classifiers: &mut [VoxelTriangleSolidClassifier],
+    cells_per_axis: u64,
+    sweep_report: &mut PreparedTriangleSolidAxisSweepVoxelizationReport,
+) -> HypervoxelResult<()> {
+    let address = VoxelAddress::new(frame.depth(), coords)?;
+    let cell = classify_cell_against_prepared_triangle_solid_mesh(address, frame, prepared)?;
+    sweep_report.fallback_cells += 1;
+    sweep_report.fallback_ray_attempts += cell.ray_attempts.len();
+    sweep_report.fallback_ray_aabb_rejections += cell
+        .ray_attempts
+        .iter()
+        .map(|attempt| attempt.ray_aabb_rejections)
+        .sum::<usize>();
+    sweep_report.fallback_ray_triangle_tests += cell.ray_triangle_tests();
+    sweep_report.ambiguous_fallback_ray_attempts += cell
+        .ray_attempts
+        .iter()
+        .filter(|attempt| !attempt.certified)
+        .count();
+
+    match cell.classifier {
+        VoxelTriangleSolidClassifier::Inside | VoxelTriangleSolidClassifier::Outside => {}
+        VoxelTriangleSolidClassifier::Unknown => sweep_report.fallback_unknown_cells += 1,
+        VoxelTriangleSolidClassifier::Boundary => {
+            sweep_report.fallback_boundary_regression_cells += 1;
+        }
+    }
+    let index = cell_index(cells_per_axis, coords)?;
+    classifiers[index] = cell.classifier;
+    Ok(())
+}
+
+fn materialize_prepared_classifiers(
     frame: GridFrame,
     source: Option<crate::GridSource>,
     policy: VoxelizationPolicy,
     material: MaterialRegionId,
     classifiers: &[VoxelTriangleSolidClassifier],
-    component_report: PreparedTriangleSolidComponentVoxelizationReport,
-) -> HypervoxelResult<(
-    SparseVoxelGrid,
-    VoxelizationReport,
-    PreparedTriangleSolidComponentVoxelizationReport,
-)> {
+) -> HypervoxelResult<(SparseVoxelGrid, VoxelizationReport)> {
     let mut grid = SparseVoxelGrid::new(frame.clone());
     let mut inside_cells = 0_usize;
     let mut outside_cells = 0_usize;
@@ -897,7 +1234,7 @@ fn materialize_component_classifiers(
         ),
         legacy_adapter: None,
     };
-    Ok((grid, report, component_report))
+    Ok((grid, report))
 }
 
 fn cell_index(cells_per_axis: u64, coords: [u64; 3]) -> HypervoxelResult<usize> {

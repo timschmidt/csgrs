@@ -7,6 +7,7 @@ use hypervoxel::{
     classify_cell_against_triangle_solid_mesh, classify_cell_against_triangle_surface_mesh,
     voxelize_exact_triangle_solid_mesh, voxelize_exact_triangle_surface_mesh,
     voxelize_prepared_exact_triangle_solid_mesh,
+    voxelize_prepared_exact_triangle_solid_mesh_by_axis_sweeps,
     voxelize_prepared_exact_triangle_solid_mesh_by_components,
     voxelize_prepared_exact_triangle_solid_mesh_by_verified_components,
 };
@@ -412,6 +413,71 @@ fn component_prepared_triangle_solid_classifies_components_with_fewer_rays() {
     assert!(verified_components.arrangement_ray_attempts > 0);
     assert!(verified_components.arrangement_ray_aabb_rejections > 0);
     assert!(verified_report.exact_topology_ready());
+}
+
+#[test]
+fn axis_sweep_prepared_triangle_solid_batches_exact_row_parity() {
+    let frame = frame(3);
+    let solid = ExactTriangleSolidMesh::new(cube_surface(2, 6, &frame), true);
+    let prepared = PreparedExactTriangleSolidMesh::prepare(solid).unwrap();
+    let (per_cell_grid, per_cell_report, per_cell_schedule) =
+        voxelize_prepared_exact_triangle_solid_mesh(
+            frame.clone(),
+            &prepared,
+            MaterialRegionId(4),
+            VoxelizationPolicy::conservative_cover(),
+        )
+        .unwrap();
+    let (sweep_grid, sweep_report, sweep) =
+        voxelize_prepared_exact_triangle_solid_mesh_by_axis_sweeps(
+            frame,
+            &prepared,
+            MaterialRegionId(4),
+            VoxelizationPolicy::conservative_cover(),
+        )
+        .unwrap();
+
+    assert_eq!(sweep_grid, per_cell_grid);
+    assert_eq!(
+        sweep_report.predicate_certificates,
+        per_cell_report.predicate_certificates
+    );
+    assert_eq!(sweep_report.unknown_cells, 0);
+    assert_eq!(sweep.classified_cells, 512);
+    assert_eq!(sweep.boundary_cells, 208);
+    assert_eq!(sweep.open_cells, 304);
+    assert_eq!(
+        sweep.sweep_classified_cells + sweep.fallback_cells,
+        sweep.open_cells
+    );
+    assert!(sweep.sweep_rows > 0);
+    assert!(sweep.certified_sweep_rows > 0);
+    assert!(sweep.row_ray_triangle_tests < per_cell_schedule.ray_triangle_tests);
+    assert_eq!(sweep.fallback_unknown_cells, 0);
+    assert_eq!(sweep.fallback_boundary_regression_cells, 0);
+    assert!(sweep.exact_axis_sweep_ready);
+    assert!(sweep_report.exact_topology_ready());
+
+    let lossy_policy = VoxelizationPolicy {
+        quantization: QuantizationPolicy::ConservativeCover,
+        boundary: BoundaryPolicy::LossySideChoice,
+    };
+    let (_, lossy_report, lossy_sweep) =
+        voxelize_prepared_exact_triangle_solid_mesh_by_axis_sweeps(
+            GridFrame::builder()
+                .depth(3)
+                .source(GridSource::new("mesh:triangle-surface", 1))
+                .build()
+                .unwrap(),
+            &prepared,
+            MaterialRegionId(4),
+            lossy_policy,
+        )
+        .unwrap();
+    assert_eq!(lossy_report.boundary_cells, sweep_report.boundary_cells);
+    assert!(lossy_report.aggregate.has_lossy);
+    assert!(!lossy_report.exact_topology_ready());
+    assert!(lossy_sweep.exact_axis_sweep_ready);
 }
 
 #[test]
